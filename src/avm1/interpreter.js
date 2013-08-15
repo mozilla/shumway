@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 /*global Proxy, AS2Globals, AS2MovieClip, Multiname, ActionsDataStream,
-         createBuiltinType */
+         createBuiltinType, isNumeric, forEachPublicProperty */
 
 var AVM1_TRACE_ENABLED = false;
 var AVM1_ERRORS_IGNORED = true;
@@ -35,7 +35,7 @@ AS2ScopeListItem.prototype = {
 
 function AS2Context(swfVersion) {
   this.swfVersion = swfVersion;
-  this.globals = new AS2Globals(this);
+  this.globals = AS2Globals.create(this);
   this.initialScope = new AS2ScopeListItem(this.globals, null);
   this.assets = {};
   this.instructionsExecuted = 0;
@@ -56,7 +56,8 @@ AS2Context.prototype = {
     if (!target) {
       target = this.defaultTarget;
     } else if (typeof target === 'string') {
-      target = lookupAS2Children(target, this.defaultTarget, this.globals._root);
+      target = lookupAS2Children(target, this.defaultTarget,
+                                 this.globals.getMultinameProperty(undefined, '_root', 0));
     }
     if (typeof target !== 'object' || target === null ||
         !('$nativeObject' in target)) {
@@ -87,6 +88,11 @@ function AS2Error(error) {
   this.error = error;
 }
 
+function isAS2MovieClip(obj) {
+  return typeof obj === 'object' && obj &&
+         obj instanceof AS2Globals.prototype.MovieClip;
+}
+
 function as2GetType(v) {
   if (v === null) {
     return 'null';
@@ -96,7 +102,7 @@ function as2GetType(v) {
   if (type === 'function') {
     return 'object';
   }
-  if (type === 'object' && v instanceof AS2MovieClip) {
+  if (type === 'object' && isAS2MovieClip(v)) {
     return 'movieclip';
   }
   return type;
@@ -223,22 +229,22 @@ function as2ResolveProperty(obj, name) {
   // checking if avm2 public property is present
   var avm2PublicName = Multiname.getPublicQualifiedName(name);
   if (avm2PublicName in obj) {
-    return avm2PublicName;
-  }
-  if (name in obj) {
     return name;
   }
-  var lowerCaseName = name.toLowerCase();
+  if (isNumeric(name)) {
+    return null;
+  }
+  var lowerCaseName = avm2PublicName.toLowerCase();
   for (var i in obj) {
     if (i.toLowerCase() === lowerCaseName) {
-      return i;
+      return i.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
     }
   }
   return null;
 }
 
 function as2CreatePrototypeProxy(obj) {
-  var prototype = obj.prototype;
+  var prototype = obj.getMultinameProperty(undefined, 'prototype', 0);
   if (typeof Proxy === 'undefined') {
     console.error('ES6 proxies are not found');
     return prototype;
@@ -297,7 +303,7 @@ function executeActions(actionsData, context, scope, assets) {
   try {
     AS2Context.instance = context;
     context.defaultTarget = scope;
-    context.globals['this'] = scope;
+    context.globals.setMultinameProperty(undefined, 'this', 0, scope);
     if (assets) {
       context.addAssets(assets);
     }
@@ -350,7 +356,7 @@ function interpretActions(actionsData, scopeContainer,
 
     try {
       currentContext.defaultTarget =
-        lookupAS2Children(targetPath, defaultTarget, _global._root);
+        lookupAS2Children(targetPath, defaultTarget, _global.getMultinameProperty(undefined, '_root', 0));
     } catch (e) {
       currentContext.defaultTarget = null;
       throw e;
@@ -361,8 +367,11 @@ function interpretActions(actionsData, scopeContainer,
                           registersAllocation, actionsData) {
     var ownerClass;
     var fn = (function() {
-      var newScope = { 'this': this, 'arguments': arguments,
-                       'super': AS2_SUPER_STUB, '__class': ownerClass };
+      var newScope = {};
+      newScope.setMultinameProperty(undefined, 'this', 0, this);
+      newScope.setMultinameProperty(undefined, 'arguments', 0, arguments);
+      newScope.setMultinameProperty(undefined, 'super', 0, AS2_SUPER_STUB);
+      newScope.setMultinameProperty(undefined, '__class', 0, ownerClass);
       var newScopeContainer = scopeContainer.create(newScope);
       var i;
 
@@ -393,10 +402,10 @@ function interpretActions(actionsData, scopeContainer,
                 registers[i] = _global;
                 break;
               case '_parent':
-                registers[i] = scope._parent;
+                registers[i] = scope.getMultinameProperty(undefined, '_parent', 0);
                 break;
               case '_root':
-                registers[i] = _global._root;
+                registers[i] = _global.getMultinameProperty(undefined, '_root', 0);
                 break;
             }
           }
@@ -437,20 +446,23 @@ function interpretActions(actionsData, scopeContainer,
   }
   function deleteProperty(propertyName) {
     for (var p = scopeContainer; p; p = p.next) {
-      if (propertyName in p.scope) {
-        p.scope[propertyName] = undefined; // in some cases we need to cleanup events binding
-        delete p.scope[propertyName];
-        return !(propertyName in p.scope);
+      if (p.scope.hasMultinameProperty(undefined, propertyName, 0)) {
+        p.scope.setMultinameProperty(undefined, propertyName, 0, undefined); // in some cases we need to cleanup events binding
+        return p.scope.deleteMultinameProperty(undefined, propertyName, 0);
       }
     }
     return false;
   }
-  function resolveVariableName(variableName) {
+  function resolveVariableName(variableName, nonStrict) {
     var obj, name, i;
     if (variableName.indexOf(':') >= 0) {
       // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
       var parts = variableName.split(':');
-      obj = lookupAS2Children(parts[0], defaultTarget, _global._root);
+      obj = lookupAS2Children(parts[0], defaultTarget,
+                              _global.getMultinameProperty(undefined, '_root', 0));
+      if (!obj) {
+        throw new Error(parts[0] + ' is undefined');
+      }
       name = parts[1];
     } else if (variableName.indexOf('.') >= 0) {
       // new object reference
@@ -458,7 +470,7 @@ function interpretActions(actionsData, scopeContainer,
       name = objPath.pop();
       obj = _global;
       for (i = 0; i < objPath.length; i++) {
-        obj = obj[objPath[i]];
+        obj = obj.getMultinameProperty(undefined, objPath[i], 0) || obj[objPath[i]];
         if (!obj) {
           throw new Error(objPath.slice(0, i + 1) + ' is undefined');
         }
@@ -470,24 +482,25 @@ function interpretActions(actionsData, scopeContainer,
     }
 
     var resolvedName = as2ResolveProperty(obj, name);
-    if (resolvedName !== null) {
-      return { obj: obj, name: resolvedName };
+    var resolved = resolvedName !== null;
+    if (resolved || nonStrict) {
+      return { obj: obj, name: resolvedName || name, resolved: resolved };
     }
 
     return null;
   }
   function getVariable(variableName) {
     // fast check if variable in the current scope
-    if (variableName in scope) {
-      return scope[variableName];
+    if (scope.hasMultinameProperty(undefined, variableName, 0)) {
+      return scope.getMultinameProperty(undefined, variableName, 0);
     }
 
     var target = resolveVariableName(variableName);
     if (target) {
-      return target.obj[target.name];
+      return target.obj.getMultinameProperty(undefined, target.name, 0);
     }
     // trying movie clip children (if object is a MovieClip)
-    var mc = defaultTarget instanceof AS2MovieClip &&
+    var mc = isAS2MovieClip(defaultTarget) &&
              defaultTarget.$lookupChild(variableName);
     if (mc) {
       return mc;
@@ -495,24 +508,25 @@ function interpretActions(actionsData, scopeContainer,
     for (var p = scopeContainer; p; p = p.next) {
       var resolvedName = as2ResolveProperty(p.scope, variableName);
       if (resolvedName !== null) {
-        return p.scope[resolvedName];
+        return p.scope.getMultinameProperty(undefined, resolvedName, 0);
       }
     }
   }
+
   function setVariable(variableName, value) {
     // fast check if variable in the current scope
-    if (variableName in scope) {
-      scope[variableName] = value;
+    if (scope.hasMultinameProperty(undefined, variableName, 0)) {
+      scope.setMultinameProperty(undefined, variableName, 0, value);
       return;
     }
 
-    var target = resolveVariableName(variableName);
+    var target = resolveVariableName(variableName, true);
     if (target) {
-      target.obj[target.name] = value;
+      target.obj.setMultinameProperty(undefined, target.name, 0, value);
       return;
     }
-    var _this = scope.this || getVariable('this');
-    _this[variableName] = value;
+    var _this = scope.getMultinameProperty(undefined, 'this', 0) || getVariable('this');
+    _this.setMultinameProperty(undefined, variableName, 0, value);
   }
   function getFunction(functionName) {
     var fn = getVariable(functionName);
@@ -865,13 +879,13 @@ function interpretActions(actionsData, scopeContainer,
         index = stack.pop();
         target = stack.pop();
         stackItemsExpected++;
-        stack.push(_global.getProperty(target, index));
+        stack.push(_global.getAS2Property(target, index));
         break;
       case 0x23: // ActionSetProperty
         value = stack.pop();
         index = stack.pop();
         target = stack.pop();
-        _global.setProperty(target, index, value);
+        _global.setAS2Property(target, index, value);
         break;
       case 0x24: // ActionCloneSprite
         var depth = stack.pop();
@@ -946,7 +960,7 @@ function interpretActions(actionsData, scopeContainer,
           if (resolvedName === null) {
             throw new Error('Method ' + methodName + ' is not defined.');
           }
-          result = target[resolvedName].apply(obj, args);
+          result = target.getMultinameProperty(undefined, resolvedName, 0).apply(obj, args);
         } else if (obj !== AS2_SUPER_STUB) {
           result = obj.apply(obj, args);
         } else {
@@ -975,7 +989,7 @@ function interpretActions(actionsData, scopeContainer,
         fn = defineFunction(functionName, args, null,
                             stream.readBytes(codeSize));
         if (functionName) {
-          scope[functionName] = fn;
+          scope.setMultinameProperty(undefined, functionName, 0, fn);
         } else {
           stack.push(fn);
         }
@@ -983,18 +997,18 @@ function interpretActions(actionsData, scopeContainer,
       case 0x3C: // ActionDefineLocal
         value = stack.pop();
         name = stack.pop();
-        scope[name] = value;
+        scope.setMultinameProperty(undefined, name, 0, value);
         break;
       case 0x41: // ActionDefineLocal2
         name = stack.pop();
-        scope[name] = void(0);
+        scope.setMultinameProperty(undefined, name, 0, undefined);
         break;
       case 0x3A: // ActionDelete
         name = stack.pop();
         obj = stack.pop();
-        obj[name] = undefined; // in some cases we need to cleanup events binding
-        delete obj[name];
-        stack.push(!(name in obj));
+         // in some cases we need to cleanup events binding
+        obj.setMultinameProperty(undefined, name, 0, undefined);
+        stack.push(obj.deleteMultinameProperty(undefined, name, 0));
         break;
       case 0x3B: // ActionDelete2
         name = stack.pop();
@@ -1005,9 +1019,10 @@ function interpretActions(actionsData, scopeContainer,
         objectName = stack.pop();
         stack.push(null);
         obj = getObjectByName(objectName);
-        for (name in obj) {
+        /*jshint -W083 */
+        forEachPublicProperty(obj, function (name) {
           stack.push(name);
-        }
+        });
         break;
       case 0x49: // ActionEquals2
         a = stack.pop();
@@ -1022,7 +1037,8 @@ function interpretActions(actionsData, scopeContainer,
           stack.push(as2CreatePrototypeProxy(obj));
         } else {
           resolvedName = as2ResolveProperty(Object(obj), name);
-          stack.push(resolvedName !== null ? obj[resolvedName] : undefined);
+          stack.push(resolvedName === null ? undefined :
+                     obj.getMultinameProperty(undefined, resolvedName, 0));
         }
         break;
       case 0x42: // ActionInitArray
@@ -1036,7 +1052,7 @@ function interpretActions(actionsData, scopeContainer,
         for (i = 0; i < count; i++) {
           value = stack.pop();
           name = stack.pop();
-          obj[name] = value;
+          obj.setMultinameProperty(undefined, name, 0, value);
         }
         stack.push(obj);
         break;
@@ -1052,7 +1068,7 @@ function interpretActions(actionsData, scopeContainer,
           if (resolvedName === null) {
             throw new Error('Method ' + methodName + ' is not defined.');
           }
-          method = obj[resolvedName];
+          method = obj.getMultinameProperty(undefined, resolvedName, 0);
         } else {
           method = obj;
         }
@@ -1079,7 +1095,7 @@ function interpretActions(actionsData, scopeContainer,
         value = stack.pop();
         name = stack.pop();
         obj = stack.pop();
-        obj[name] = value;
+        obj.setMultinameProperty(undefined, name, 0, value);
         break;
       case 0x45: // ActionTargetPath
         obj = stack.pop();
@@ -1182,9 +1198,10 @@ function interpretActions(actionsData, scopeContainer,
       case 0x55: // ActionEnumerate2
         obj = stack.pop();
         stack.push(null);
-        for (name in obj) {
+        /*jshint -W083 */
+        forEachPublicProperty(obj, function (name) {
           stack.push(name);
-        }
+        });
         break;
       case 0x66: // ActionStrictEquals
         a = stack.pop();
@@ -1249,7 +1266,7 @@ function interpretActions(actionsData, scopeContainer,
         fn = defineFunction(functionName, args,
                             registerAllocation, stream.readBytes(codeSize));
         if (functionName) {
-          scope[functionName] = fn;
+          scope.setMultinameProperty(undefined, functionName, 0, fn);
         } else {
           stack.push(fn);
         }

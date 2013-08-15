@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-/*global AS2Context, avm2, flash, AS2URLRequest */
+/*global AS2Context, avm2, flash, isAS2MovieClip */
 
 function proxyNativeProperty(propertyName) {
   return {
@@ -76,7 +76,7 @@ function proxyEventHandler(eventName, argsConverter) {
       }
     },
     configurable: false,
-    enumerable: false
+    enumerable: true
   };
 }
 
@@ -114,6 +114,9 @@ function initDefaultListeners(thisArg) {
 function AS2MovieClip() {
 }
 AS2MovieClip.prototype = Object.create(Object.prototype, {
+  $$internalAS2Properties: {
+    value: ['$defaultListeners', '$attachNativeObject', '$lookupChild', '$targetPath']
+  },
   $defaultListeners: {
     value: []
   },
@@ -144,7 +147,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
       var prefix = '_level0'; // TODO use needed level number here
       return target != '/' ? prefix + target.replace(/\//g, '.') : prefix;
     },
-    enumerable: true
+    enumerable: false
   },
   _alpha: proxyNativeProperty('alpha'),
   attachAudio: {
@@ -350,7 +353,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   },
   getURL: {
     value: function getURL(url, window, method) {
-      var request = new AS2URLRequest(url);
+      var request = new flash.net.URLRequest(url);
       if (method) {
         request.method = method;
       }
@@ -379,7 +382,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   },
   hitTest: {
     value: function hitTest(x, y, shapeFlag) {
-      if (x instanceof AS2MovieClip) {
+      if (isAS2MovieClip(x)) {
         return this.$nativeObject.hitTestObject(x.$nativeObject);
       } else {
         return this.$nativeObject.hitTestPoint(x, y, shapeFlag);
@@ -419,9 +422,12 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   },
   localToGlobal: {
     value: function localToGlobal(pt) {
-      var tmp = this.$nativeObject.localToGlobal(pt);
-      pt.x = tmp.x;
-      pt.y = tmp.y;
+      var tmp = new flash.geom.Point(
+        pt.getMultinameProperty(undefined, 'x', 0),
+        pt.getMultinameProperty(undefined, 'y', 0));
+      tmp = this.$nativeObject.localToGlobal(tmp);
+      pt.setMultinameProperty(undefined, 'x', 0, tmp.x);
+      pt.setMultinameProperty(undefined, 'y', 0, tmp.y);
     },
     enumerable: true
   },
@@ -505,7 +511,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   startDrag: {
     value: function startDrag(lock, left, top, right, bottom) {
       this.$nativeObject.startDrag(lock, arguments.length < 3 ? null :
-        new AS2Rectangle(left, top, right - left, bottom - top));
+        new flash.geom.Rectangle(left, top, right - left, bottom - top));
     },
     enumerable: true
   },
@@ -577,6 +583,9 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
 function AS2Button() {
 }
 AS2Button.prototype = Object.create(Object.prototype, {
+  $$internalAS2Properties: {
+    value: ['$defaultListeners', '$attachNativeObject']
+  },
   $defaultListeners: {
     value: []
   },
@@ -751,6 +760,9 @@ AS2Button.prototype = Object.create(Object.prototype, {
 function AS2TextField() {
 }
 AS2TextField.prototype = Object.create(Object.prototype, {
+  $$internalAS2Properties: {
+    value: ['$defaultListeners', '$attachNativeObject']
+  },
   $defaultListeners: {
     value: []
   },
@@ -1066,6 +1078,9 @@ AS2Broadcaster.prototype = Object.create(Object.prototype, {
 
 function AS2Key() {}
 defineObjectProperties(AS2Key, {
+  $$internalAS2Properties: {
+    value: ['$keyStates', '$lastKeyCode', '$bind']
+  },
   DOWN: createConstant(40),
   LEFT: createConstant(37),
   RIGHT: createConstant(39),
@@ -1099,13 +1114,17 @@ defineObjectProperties(AS2Key, {
   isDown: {
     value: function isDown(code) {
       return !!AS2Key.$keyStates[code];
-    }
+    },
+    enumerable: true
   }
 });
 AS2Broadcaster.initialize(AS2Key);
 
 function AS2Mouse() {}
 defineObjectProperties(AS2Mouse, {
+  $$internalAS2Properties: {
+    value: ['$lastX', '$lastY', '$bind']
+  },
   $lastX: {
     value: 0,
     writable: true,
@@ -1172,6 +1191,9 @@ AS2Broadcaster.initialize(AS2Mouse);
 function AS2Stage() {
 }
 defineObjectProperties(AS2Stage, {
+  $$internalAS2Properties: {
+    value: ['$stage']
+  },
   $stage: {
     get: function get$stage() {
       return AS2Context.instance.stage;
@@ -1179,58 +1201,58 @@ defineObjectProperties(AS2Stage, {
   },
   align: {
     get: function get$align() {
-      return this.$stage.align;
+      return this.$stage.getMultinameProperty(undefined, 'align', 0);
     },
     set: function set$align(value) {
-      this.$stage.align = value;
+      this.$stage.setMultinameProperty(undefined, 'align', 0, value);
     },
     enumerable: true
   },
   displayState: {
     get: function get$displayState() {
-      return this.$stage.displayState;
+      return this.$stage.getMultinameProperty(undefined, 'displayState', 0);
     },
     set: function set$displayState(value) {
-      this.$stage.displayState = value;
+      this.$stage.setMultinameProperty(undefined, 'displayState', 0, value);
     },
     enumerable: true
   },
   fullScreenSourceRect: {
     get: function get$fullScreenSourceRect() {
-      return this.$stage.fullScreenSourceRect;
+      return this.$stage.getMultinameProperty(undefined, 'fullScreenSourceRect', 0);
     },
     set: function set$fullScreenSourceRect(value) {
-      this.$stage.fullScreenSourceRect = value;
+      this.$stage.setMultinameProperty(undefined, 'fullScreenSourceRect', 0, value);
     },
     enumerable: true
   },
   height: {
     get: function get$height() {
-      return this.$stage.stageHeight;
+      return this.$stage.getMultinameProperty(undefined, 'stageHeight', 0);
     },
     enumerable: true
   },
   scaleMode: {
     get: function get$scaleMode() {
-      return this.$stage.scaleMode;
+      return this.$stage.getMultinameProperty(undefined, 'scaleMode', 0);
     },
     set: function set$scaleMode(value) {
-      this.$stage.scaleMode = value;
+      this.$stage.setMultinameProperty(undefined, 'scaleMode', 0, value);
     },
     enumerable: true
   },
   showMenu: {
     get: function get$showMenu() {
-      return this.$stage.showDefaultContextMenu;
+      return this.$stage.getMultinameProperty(undefined, 'showDefaultContextMenu', 0);
     },
     set: function set$showMenu(value) {
-      this.$stage.showDefaultContextMenu = value;
+      this.$stage.setMultinameProperty(undefined, 'showDefaultContextMenu', 0, value);
     },
     enumerable: true
   },
   width: {
     get: function get$width() {
-      return this.$stage.stageWidth;
+      return this.$stage.getMultinameProperty(undefined, 'stageWidth', 0);
     },
     enumerable: true
   }
@@ -1270,16 +1292,6 @@ AS2Color.prototype = Object.create(Object.prototype, {
   }
 });
 
-function AS2Rectangle(x, y, width, height) {
-  this.x = x;
-  this.y = y;
-  this.width = width;
-  this.height = height;
-}
-AS2Rectangle.prototype = Object.create(Object.prototype, {
-  // TODO methods
-});
-
 var AS2System = Object.create(Object.prototype, {
   capabilities: {
     get: function get$capabilities() {
@@ -1290,14 +1302,16 @@ var AS2System = Object.create(Object.prototype, {
 
 // Built-in classes modifications
 
-defineObjectProperties(Object.prototype, {
-  watch: {
-    get: function watch() { throw 'Not implemented: watch'; },
-    enumerable: false
-  },
-  unwatch: {
-    get: function unwatch() { throw 'Not implemented: unwatch'; },
-    enumerable: false
+function AS2Object() {}
+defineObjectProperties(AS2Object, {
+  $install: {
+    value: function(ObjectClass) {
+      var proto = ObjectClass.getMultinameProperty(undefined, 'prototype', 0);
+      proto.defineMultinameProperty(undefined, 'addProperty', 0,
+        Object.getOwnPropertyDescriptor(AS2Object, 'addProperty'));
+      proto.defineMultinameProperty(undefined, 'registerClass', 0,
+        Object.getOwnPropertyDescriptor(AS2Object, 'registerClass'));
+    }
   },
   addProperty: {
     value: function addProperty(name, getter, setter) {
@@ -1318,6 +1332,7 @@ defineObjectProperties(Object.prototype, {
       });
       return true;
     },
+    configurable: true,
     enumerable: false
   },
   registerClass: {
@@ -1326,90 +1341,7 @@ defineObjectProperties(Object.prototype, {
         (AS2Context.instance.classes = {});
       classes[name] = theClass;
     },
-    enumerable: false
-  }
-});
-
-defineObjectProperties(Array, {
-  CASEINSENSITIVE: createConstant(1),
-  DESCENDING: createConstant(2),
-  UNIQUESORT: createConstant(4),
-  RETURNINDEXEDARRAY: createConstant(8),
-  NUMERIC: createConstant(16)
-});
-defineObjectProperties(Array.prototype, {
-  sort: {
-    value: (function() {
-      var originalSort = Array.prototype.sort;
-      return (function sort(compareFunction, options) {
-        if (arguments.length <= 1 && typeof compareFunction !== 'number') {
-          return originalSort.apply(this, arguments);
-        }
-        if (typeof compareFunction === 'number') {
-          options = compareFunction;
-          compareFunction = null;
-        }
-        var subject = !!(options & Array.UNIQUESORT) ||
-          !!(options & Array.RETURNINDEXEDARRAY) ? this.slice(0) : this;
-        if (options & Array.CASEINSENSITIVE) {
-          compareFunction = (function(x, y) {
-            var valueX = String(x).toLowerCase();
-            var valueY = String(y).toLowerCase();
-            return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
-          });
-        }
-        if (options & Array.NUMERIC) {
-          compareFunction = (function(x, y) {
-            var result = x - y;
-            return result < 0 ? -1 : result > 0 ? 1 : 0;
-          });
-        }
-        originalSort.call(subject, compareFunction);
-        if (options & Array.UNIQUESORT) {
-          var i;
-          for (i = 1; i < subject.length; ++i) {
-            if (subject[i - 1] !== subject[i]) {
-              return; // keeping array unmodified
-            }
-          }
-          for (i = 0; i < subject.length; ++i) {
-            this[i] = subject[i];
-          }
-          subject = this;
-        }
-        if (options.DESCENDING) {
-          subject.reverse();
-        }
-        return subject;
-      });
-    })(),
-    enumerable: false
-  },
-  sortOn: {
-    value: function sortOn(fieldName, options) {
-      var comparer;
-      if (options & Array.NUMERIC) {
-        comparer = (function(x, y) {
-          var valueX = Number(x[fieldName]);
-          var valueY = Number(y[fieldName]);
-          return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
-        });
-      } else if (options & Array.CASEINSENSITIVE) {
-        comparer = (function(x, y) {
-          var valueX = String(x[fieldName]).toLowerCase();
-          var valueY = String(y[fieldName]).toLowerCase();
-          return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
-        });
-      } else {
-        comparer = (function(x, y) {
-          var valueX = String(x[fieldName]);
-          var valueY = String(y[fieldName]);
-          return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
-        });
-      }
-      return arguments.length <= 1 ? this.sort(comparer) :
-        this.sort(comparer, options & ~(Array.NUMERIC | Array.CASEINSENSITIVE));
-    },
+    configurable: true,
     enumerable: false
   }
 });
@@ -1457,7 +1389,6 @@ if (typeof GLOBAL !== 'undefined') {
   GLOBAL.AS2Mouse = AS2Mouse;
   GLOBAL.AS2Stage = AS2Stage;
   GLOBAL.AS2Color = AS2Color;
-  GLOBAL.AS2Rectangle = AS2Rectangle;
   GLOBAL.AS2System = AS2System;
   GLOBAL.createBuiltinType = createBuiltinType;
 }

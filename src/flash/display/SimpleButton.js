@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2Button, executeActions */
+/*global AS2Globals, executeActions */
 
 var SimpleButtonDefinition = (function () {
   var AVM1KeyCodeMap = [0, 37, 39, 36, 35, 45, 46, 0, 8, 0, 0, 0, 0, 13, 38, 40, 33, 34, 9, 27];
@@ -137,7 +137,8 @@ var SimpleButtonDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        new AS2Button().$attachNativeObject(this);
+        var AS2ButtonClass = AS2Globals.prototype.Button;
+        new AS2ButtonClass().$attachNativeObject(this);
       }
       return this.$as2Object;
     },
@@ -177,9 +178,9 @@ var SimpleButtonDefinition = (function () {
         // XXX: attaching events to the stage for now
         var KeyboardEventClass = flash.events.KeyboardEvent;
         this.stage._addEventListener(KeyboardEventClass.class.KEY_DOWN, keyListener, false);
-        this._addEventListener('removedFromStage', function () {
-          this.stage._removeEventListener(KeyboardEventClass.class.KEY_DOWN, keyListener, false);
-        }.bind(this), false);
+        this._addEventListener('removedFromStage', function (stage) {
+          stage._removeEventListener(KeyboardEventClass.class.KEY_DOWN, keyListener, false);
+        }.bind(this, this.stage), false);
       }
     },
     _processAvm1MouseEvents: function (mouseEvents) {
