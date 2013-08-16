@@ -263,7 +263,7 @@ function resolveMultinameProperty(namespaces, name, flags) {
 }
 
 function asGetPublicProperty(name) {
-  return asGetPublicProperty(name);
+  return asGetProperty(undefined, name, 0);
 }
 
 function asGetProperty(namespaces, name, flags, isMethod) {
@@ -275,7 +275,7 @@ function asGetProperty(namespaces, name, flags, isMethod) {
 }
 
 function asSetPublicProperty(name, value) {
-  return asSetPublicProperty(name, value);
+  return asSetProperty(undefined, name, 0, value);
 }
 
 function asSetProperty(namespaces, name, flags, value) {
