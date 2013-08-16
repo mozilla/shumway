@@ -378,7 +378,7 @@ function initializeGlobalObject(global) {
     this[resolved] = value;
   });
 
-  defineNonEnumerableProperty(global.Object.prototype, "defineMultinameProperty", function setMultinameProperty(namespaces, name, flags, value) {
+  defineNonEnumerableProperty(global.Object.prototype, "defineMultinameProperty", function defineMultinameProperty(namespaces, name, flags, value) {
     if (this.setProperty) {
       return this.setProperty(namespaces, name, flags, value);
     }
@@ -800,67 +800,6 @@ var Scope = (function () {
     return this.global.object;
   };
 
-  scope.prototype.findScopeProperty3 = function findScopeProperty(mn, domain, strict, scopeOnly) {
-    release || assert(this.object);
-    release || assert(Multiname.isMultiname(mn));
-    var object;
-    var cache = this.cache;
-
-    var id = typeof mn === "string" ? mn : mn.id;
-    if (!scopeOnly && id && (object = cache[id])) {
-      return object;
-    }
-
-    object = this.object;
-    if (Multiname.isQName(mn)) {
-      if (this.isWith) {
-        if (object.hasProperty && object.hasProperty(mn) ||
-            Multiname.getQualifiedName(mn) in object) {
-          return object;
-        }
-      } else {
-        if (nameInTraits(object, Multiname.getQualifiedName(mn))) {
-          id && (cache[id] = object);
-          return object;
-        }
-      }
-    } else {
-      if (this.isWith) {
-        if (object.hasProperty && object.hasProperty(mn) ||
-            resolveMultiname(object, mn)) {
-          return object;
-        }
-      } else {
-        if (resolveMultinameInTraits(object, mn)) {
-          id && (cache[id] = object);
-          return object;
-        }
-      }
-    }
-
-    if (this.parent) {
-      object = this.parent.findScopeProperty(mn, domain, strict, scopeOnly);
-      id && (cache[mn.id] = object);
-      return object;
-    }
-
-    if (scopeOnly) {
-      return null;
-    }
-
-    // If we can't find it still, then look at the domain toplevel.
-    var r;
-    if ((r = domain.findDomainProperty(mn, strict, true))) {
-      return r;
-    }
-
-    if (strict) {
-      unexpected("Cannot find property " + mn);
-    }
-
-    return this.global.object;
-  };
-
   scope.prototype.trace = function () {
     var current = this;
     while (current) {
@@ -929,54 +868,6 @@ function bindFreeMethodScope(methodInfo, scope) {
   return boundMethod;
 }
 
-var TraitsInfo = (function () {
-  function traitsInfo(parent, array) {
-    this.parent = parent;
-    var traits = this.traits = createEmptyObject();
-    if (parent) {
-      for (var k in parent.traits) {
-        traits[k] = parent.traits[k];
-        if (traits[k] instanceof Array) {
-          traits[k] = traits[k].slice();
-        }
-      }
-    }
-    for (var i = 0; i < array.length; i++) {
-      var trait = array[i];
-      var traitQn = Multiname.getQualifiedName(trait.name);
-      if (trait.isGetter() || trait.isSetter()) {
-        if (!traits[traitQn]) {
-          traits[traitQn] = {get: undefined, set: undefined};
-        }
-        if (trait.isGetter()) {
-          traits[traitQn].get = trait;
-        } else if (trait.isSetter()) {
-          traits[traitQn].set = trait;
-        }
-      } else {
-        traits[traitQn] = trait;
-      }
-    }
-  }
-  traitsInfo.prototype.trace = function trace(writer) {
-    function nameOf(value) {
-      return value;
-    }
-    for (var k in this.traits) {
-      var value = this.traits[k];
-      if (value instanceof Trait) {
-        writer.writeLn(value.kindName() + ": " + nameOf(value));
-      } else {
-        writer.writeLn("Getter / Setter: {" + nameOf(value.get) + ", " + nameOf(value.set) + "}");
-      }
-    }
-  };
-  traitsInfo.prototype.getTrait = function getTrait(qn, isSetter) {
-
-  };
-  return traitsInfo;
-})();
-
 /**
  * Check if a qualified name is in an object's traits.
  */
@@ -992,21 +883,6 @@ function nameInTraits(object, qn) {
   var proto = Object.getPrototypeOf(object);
   return proto.hasOwnProperty(VM_BINDINGS) && proto.hasOwnProperty(qn);
 }
-
-function resolveMultinameInTraits(object, mn) {
-  release || assert(!Multiname.isQName(mn), mn, " already resolved");
-
-  object = boxValue(object);
-
-  for (var i = 0, j = mn.namespaces.length; i < j; i++) {
-    var qn = mn.getQName(i);
-    if (nameInTraits(object, Multiname.getQualifiedName(qn))) {
-      return qn;
-    }
-  }
-  return undefined;
-}
-
 
 /**
  * Resolving a multiname on an object using linear search.
@@ -1133,92 +1009,6 @@ function resolveName(object, name) {
     return name;
   }
 }
-
-function resolveNameWithIC(object, name, ic) {
-  var qn;
-  if (object.shape) {
-    if (ic.key === object.shape) {
-      qn = ic.value;
-    } else {
-      if (!ic.key) {
-        Counter.count("resolveName: IC Miss");
-      }
-      ic.key = object.shape;
-      qn = ic.value = resolveName(object, name);
-    }
-  } else {
-    qn = resolveName(object, name);
-  }
-  return qn;
-}
-
-/*
-function getPropertyWithIC(object, name, isMethod, ic) {
-  if (object.getProperty) {
-    return object.getProperty(name, isMethod);
-  }
-  var qn = resolveNameWithIC(object, name, ic);
-  if (object.indexGet && Multiname.isNumeric(qn)) {
-    return object.indexGet(qn);
-  }
-  return object[qn];
-}
-
-function getProperty(object, name, isMethod) {
-  if (object.getProperty) {
-    return object.getProperty(name, isMethod);
-  }
-  var qn = resolveName(object, name);
-  if (object.indexGet && Multiname.isNumeric(qn)) {
-    return object.indexGet(qn);
-  }
-  return object[qn];
-}
-
-function setPropertyWithIC(object, name, value, ic) {
-  if (object.setProperty) {
-    return object.setProperty(name, value);
-  }
-  var qn = resolveNameWithIC(object, name, ic);
-  if (object.indexGet && Multiname.isNumeric(qn)) {
-    return object.indexSet(qn, value);
-  }
-  object[qn] = value;
-}
-
-function setProperty(object, name, value) {
-  if (object.setProperty) {
-    return object.setProperty(name, value);
-  }
-  var qn = resolveName(object, name);
-  if (object.indexGet && Multiname.isNumeric(qn)) {
-    return object.indexSet(qn, value);
-  }
-  object[qn] = value;
-}
-*/
-
-//function deleteProperty(object, name) {
-//  if (object.deleteProperty) {
-//    return object.deleteProperty(name);
-//  }
-//  var qn = resolveName(object, name);
-//  if (object.indexDelete && Multiname.isNumeric(qn)) {
-//    return object.indexDelete(qn);
-//  }
-//  /**
-//   * If we're in the middle of an enumeration, we need to remove the property name
-//   * from the enumeration keys as well. Setting it to |VM_TOMBSTONE| will cause it
-//   * to be skipped by the enumeration code.
-//   */
-//  if (object[VM_ENUMERATION_KEYS]) {
-//    var index = object[VM_ENUMERATION_KEYS].indexOf(qn);
-//    if (index >= 0) {
-//      object[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
-//    }
-//  }
-//  return delete object[qn];
-//}
 
 function setSuper(scope, object, mn, value) {
   release || assert(object);
