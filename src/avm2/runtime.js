@@ -400,8 +400,23 @@ function initializeGlobalObject(global) {
     if (isProxyObject(this)) {
       result = this[VM_CALL_PROXY](new Multiname(namespaces, name, flags), receiver, args);
     } else {
-      var property = this.getMultinameProperty(namespaces, name, flags, true);
-      result = property.apply(receiver, args);
+      var method;
+      if (this.getProperty) {
+        method = this.getProperty(namespaces, name, flags, true);
+      } else {
+        var resolved = this.resolveMultinameProperty(namespaces, name, flags);
+        if (this.indexGet && Multiname.isNumeric(resolved)) {
+          method = this.indexGet(resolved);
+        } else {
+          var openMethods = this[VM_OPEN_METHODS];
+          if (openMethods && openMethods[resolved]) {
+            method = openMethods[resolved];
+          } else {
+            method = this[resolved];
+          }
+        }
+      }
+      result = method.apply(receiver, args);
     }
     traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
     return result;
