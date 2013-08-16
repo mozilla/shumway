@@ -194,8 +194,8 @@ var SimpleButtonDefinition = (function () {
     _processAvm1MouseEvents: function (mouseEvents) {
       // state codes: 0 - idle, 1 - outDown, 2 - overUp, 3 - overDown
       var prevAvm1StateCode = this._avm1StateCode;
-      var avm1StateCode = (this._isMouseDown ? 1 : 0) |
-                            (this._isMouseOver ? 2 : 0);
+      var avm1StateCode = (this._currentButtonState === 'down' ? 1 : 0) |
+                          (this._currentButtonState !== 'up' ? 2 : 0);
       if (prevAvm1StateCode !== avm1StateCode) {
         this._prevAvm1StateCode = prevAvm1StateCode;
         this._avm1StateCode = avm1StateCode;

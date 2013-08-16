@@ -174,6 +174,7 @@ var StageDefinition = (function () {
       var y = this._mouseY;
 
       var candidates = this._qtree.retrieve({ x: x, y: y, width: 1, height: 1 });
+      var target;
 
       var targets = [];
       for (var i = 0; i < candidates.length; i++) {
@@ -184,32 +185,33 @@ var StageDefinition = (function () {
             x <= item.x + item.width &&
             y >= item.y &&
             y <= item.y + item.height) {
-          var hitArea = displayObject._hitTestState || displayObject;
-          if (!hitArea._parent) {
-            hitArea._parent = displayObject;
+          if (displayObject._hitTestState) {
+            displayObject._hitTestState._parent = displayObject;
+            if (displayObject._hitTestState._hitTest(true, x, y, true, null)) {
+              target = displayObject;
+              break;
+            }
           }
-          if (hitArea._hitTest(true, x, y, true, null, true)) {
+          if (displayObject._hitTest(true, x, y, true, null)) {
             targets.push(displayObject);
           }
         }
       }
 
-      var target;
-      if (targets.length) {
+      if (!target && targets.length) {
         targets.sort(sortByDepth);
         target = targets.pop();
-        if (!flash.display.InteractiveObject.class.isInstanceOf(target)) {
-          var interactiveObject;
-          var currentNode = target;
-          while (currentNode !== this) {
-            if (flash.display.InteractiveObject.class.isInstanceOf(currentNode) &&
-                !flash.display.SimpleButton.class.isInstanceOf(currentNode) &&
-                !currentNode._hitArea &&
-                (!interactiveObject || !currentNode._mouseChildren)) {
-              target = interactiveObject = currentNode;
-            }
-            currentNode = currentNode._parent;
+
+        var interactiveObject;
+        var currentNode = target;
+        while (currentNode !== this) {
+          if (flash.display.InteractiveObject.class.isInstanceOf(currentNode) &&
+              !flash.display.SimpleButton.class.isInstanceOf(currentNode) &&
+              !currentNode._hitArea &&
+              (!interactiveObject || !currentNode._mouseChildren)) {
+            target = interactiveObject = currentNode;
           }
+          currentNode = currentNode._parent;
         }
       }
 
