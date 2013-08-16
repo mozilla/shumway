@@ -459,7 +459,7 @@
     if (this.isIndexed) {
       assert (this.isMethod === false);
       if (this.isIndexed) {
-        return call(property(object, "indexGet"), [compileValue(this.name.name, cx)]);
+        return call(property(object, "asGetNumericProperty"), [compileValue(this.name.name, cx)]);
       }
     }
     var name = compileMultiname(this.name, cx);
@@ -569,7 +569,7 @@
     var object = compileValue(this.object, cx);
     var value = compileValue(this.value, cx);
     if (this.isIndexed) {
-      return call(property(object, "indexSet"), [compileValue(this.name.name, cx), value]);
+      return call(property(object, "asSetNumericProperty"), [compileValue(this.name.name, cx), value]);
     }
     var name = compileMultiname(this.name, cx);
     return call(property(object, "asSetProperty"), name.concat(value));

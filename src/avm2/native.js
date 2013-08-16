@@ -1161,13 +1161,13 @@ var natives = (function () {
     c.extendBuiltin(baseClass);
 
     var BAp = ByteArray.prototype;
-    BAp.indexGet = function (i) {
+    BAp.asGetNumericProperty = function (i) {
       if (i >= this.length) {
         return undefined;
       }
       return this.uint8v[i];
     };
-    BAp.indexSet = function (i, v) {
+    BAp.asSetNumericProperty = function (i, v) {
       var len = i + 1;
       this.ensureCapacity(len);
       this.uint8v[i] = v;

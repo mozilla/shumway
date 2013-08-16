@@ -177,18 +177,29 @@ function objectConstantName(object) {
   return name;
 }
 
-
 /**
- * Property Access Methods:
+ * Property Accessors:
  *
- * Define the following get/set/has/call/delete "virtual" methods on every global Object.prototype:
+ * Every AS3 object has the following "virtual" accessors methods:
  * - asGetProperty(namespaces, name, flags, isMethod)
  * - asSetProperty(namespaces, name, flags, value)
  * - asHasProperty(namespaces, name, flags)
  * - asCallProperty(namespaces, name, flags, isLex, args)
  * - asDeleteProperty(namespaces, name, flags)
  *
- * Define multiname resolution methods:
+ * The default implementation of as[Get|Set]Property checks if these properties are defined on the object and
+ * calls them if the name is numeric:
+ *
+ * - asGetNumericProperty(index)
+ * - asSetNumericProperty(index, value)
+ *
+ * Not yet implemented:
+ * - asGetDescendants(namespaces, name, flags)
+ * - asNextName(index)
+ * - asNextNameIndex(index)
+ * - asNextValue(index)
+ *
+ * Multiname resolution methods:
  * - getNamespaceResolutionMap(namespaces)
  * - resolveMultinameProperty(namespaces, name, flags)
  *
@@ -213,14 +224,7 @@ function objectConstantName(object) {
  *
  * a[a.resolutionMap[1]["x"]] -> a[{x: n1$$x, y: n1$$y}["x"]] -> a[n1$$x]
  *
- ASGetProperty(name:*):*
- ASSetProperty(name:*, value:*):void
- ASHasProperty(name:*):Boolean
- ASCallProperty(name:*, ... rest):*
- ASDeleteProperty(name:*):Boolean
-
  */
-
 
 function getNamespaceResolutionMap(namespaces) {
   var map = this.resolutionMap[namespaces.id];
@@ -263,19 +267,19 @@ function resolveMultinameProperty(namespaces, name, flags) {
 }
 
 function asGetPublicProperty(name) {
-  return asGetProperty(undefined, name, 0);
+  return this.asGetProperty(undefined, name, 0);
 }
 
 function asGetProperty(namespaces, name, flags, isMethod) {
   var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-  if (this.indexGet && Multiname.isNumeric(resolved)) {
-    return this.indexGet(resolved);
+  if (this.asGetNumericProperty && Multiname.isNumeric(resolved)) {
+    return this.asGetNumericProperty(resolved);
   }
   return this[resolved];
 }
 
 function asSetPublicProperty(name, value) {
-  return asSetProperty(undefined, name, 0, value);
+  return this.asSetProperty(undefined, name, 0, value);
 }
 
 function asSetProperty(namespaces, name, flags, value) {
@@ -283,14 +287,14 @@ function asSetProperty(namespaces, name, flags, value) {
     name = String(name);
   }
   var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-  if (this.indexSet && Multiname.isNumeric(resolved)) {
-    return this.indexSet(resolved, value);
+  if (this.asSetNumericProperty && Multiname.isNumeric(resolved)) {
+    return this.asSetNumericProperty(resolved, value);
   }
   this[resolved] = value;
 }
 
 function asDefinePublicProperty(name, descriptor) {
-  return asDefineProperty(undefined, name, 0, descriptor);
+  return this.asDefineProperty(undefined, name, 0, descriptor);
 }
 
 function asDefineProperty(namespaces, name, flags, descriptor) {
@@ -314,8 +318,8 @@ function asCallProperty(namespaces, name, flags, isLex, args) {
   } else {
     var method;
     var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-    if (this.indexGet && Multiname.isNumeric(resolved)) {
-      method = this.indexGet(resolved);
+    if (this.asGetNumericProperty && Multiname.isNumeric(resolved)) {
+      method = this.asGetNumericProperty(resolved);
     } else {
       var openMethods = this[VM_OPEN_METHODS];
       if (openMethods && openMethods[resolved]) {
@@ -363,11 +367,11 @@ function asDeleteProperty(namespaces, name, flags) {
   return delete this[resolved];
 }
 
-function indexGet(i) {
+function asGetNumericProperty(i) {
   return this[i];
 }
 
-function indexSet(i, v) {
+function asSetNumericProperty(i, v) {
   this[i] = v;
 }
 
@@ -498,8 +502,8 @@ function initializeGlobalObject(global) {
   defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
 
-  defineNonEnumerableProperty(global.Object.prototype, "indexGet", indexGet);
-  defineNonEnumerableProperty(global.Object.prototype, "indexSet", indexSet);
+  defineNonEnumerableProperty(global.Object.prototype, "asGetNumericProperty", asGetNumericProperty);
+  defineNonEnumerableProperty(global.Object.prototype, "asSetNumericProperty", asSetNumericProperty);
 }
 
 initializeGlobalObject(jsGlobal);
@@ -985,8 +989,8 @@ function getSuper(scope, object, mn) {
   var resolved = mn.isQName() ? mn : resolveMultiname(superTraitsPrototype, mn);
   var value = undefined;
   if (resolved) {
-    if (Multiname.isNumeric(resolved) && superTraitsPrototype.indexGet) {
-      value = superTraitsPrototype.indexGet(Multiname.getQualifiedName(resolved), value);
+    if (Multiname.isNumeric(resolved) && superTraitsPrototype.asGetNumericProperty) {
+      value = superTraitsPrototype.asGetNumericProperty(Multiname.getQualifiedName(resolved), value);
     } else {
       // Which class is it really on?
       var qn = Multiname.getQualifiedName(resolved);
@@ -1043,8 +1047,8 @@ function setSuper(scope, object, mn, value) {
   var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(superTraitsPrototype, mn);
 
   if (resolved !== undefined) {
-    if (Multiname.isNumeric(resolved) && superTraitsPrototype.indexSet) {
-      superTraitsPrototype.indexSet(Multiname.getQualifiedName(resolved), value);
+    if (Multiname.isNumeric(resolved) && superTraitsPrototype.asSetNumericProperty) {
+      superTraitsPrototype.asSetNumericProperty(Multiname.getQualifiedName(resolved), value);
     } else {
       var qn = Multiname.getQualifiedName(resolved);
       var descriptor = Object.getOwnPropertyDescriptor(superTraitsPrototype, qn);
