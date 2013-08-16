@@ -495,36 +495,47 @@ var ActivationQueue = {
   }
 };
 
-function createSandbox(window, preview) {
-  function initScripts() {
-    var scriptLoader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
-                         .getService(Ci.mozIJSSubScriptLoader);
-    if (preview) {
-      scriptLoader.loadSubScript('resource://shumway/web/preview.js', sandbox);
-      sandbox.runSniffer();
-    } else {
-      scriptLoader.loadSubScript('resource://shumway/shumway.js', sandbox);
-      scriptLoader.loadSubScript('resource://shumway/web/avm-sandbox.js',
-                                 sandbox);
-      sandbox.runViewer();
+function activateShumwayScripts(window, preview) {
+  function loadScripts(scripts, callback) {
+    function scriptLoaded() {
+      leftToLoad--;
+      if (leftToLoad === 0) {
+        callback();
+      }
+    }
+    var leftToLoad = scripts.length;
+    var document = window.document.wrappedJSObject;
+    var head = document.getElementsByTagName('head')[0];
+    for (var i = 0; i < scripts.length; i++) {
+      var script = document.createElement('script');
+      script.type = "text/javascript";
+      script.src = scripts[i];
+      script.onload = scriptLoaded;
+      head.appendChild(script);
     }
   }
 
-  let sandbox = new Cu.Sandbox(window, {
-    sandboxName : 'Shumway Sandbox',
-    sandboxPrototype: window,
-    wantXrays : false,
-    wantXHRConstructor : true,
-    wantComponents : false});
-  sandbox.SHUMWAY_ROOT = "resource://shumway/";
+  function initScripts() {
+    if (preview) {
+      loadScripts(['resource://shumway/web/preview.js'], function () {
+        window.wrappedJSObject.runSniffer();
+      });
+    } else {
+      loadScripts(['resource://shumway/shumway.js',
+                   'resource://shumway/web/avm-sandbox.js'], function () {
+        window.wrappedJSObject.runViewer();
+      });
+    }
+  }
 
-  if (sandbox.document.readyState === "interactive" ||
-      sandbox.document.readyState === "complete") {
+  window.wrappedJSObject.SHUMWAY_ROOT = "resource://shumway/";
+
+  if (window.document.readyState === "interactive" ||
+      window.document.readyState === "complete") {
     initScripts();
   } else {
-    sandbox.document.addEventListener('DOMContentLoaded', initScripts);
+    window.document.addEventListener('DOMContentLoaded', initScripts);
   }
-  return sandbox;
 }
 
 function initExternalCom(wrappedWindow, wrappedObject, targetDocument) {
@@ -771,7 +782,7 @@ FlashStreamConverterBase.prototype = {
 
           actions.activationCallback = function(domWindow, isSimpleMode) {
             delete this.activationCallback;
-            createSandbox(domWindow, isSimpleMode);
+            activateShumwayScripts(domWindow, isSimpleMode);
           }.bind(actions, domWindow, isSimpleMode);
           ActivationQueue.enqueue(actions);
 
