@@ -88,12 +88,13 @@ function createFill(fillStyle, dictionary, dependencies) {
   case GRAPHICS_FILL_CLIPPED_BITMAP:
   case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
   case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
+    var repeat = (fillStyle.type === GRAPHICS_FILL_REPEATING_BITMAP) || (fillStyle.type === GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP);
     var bitmap = dictionary[fillStyle.bitmapId];
     dependencies.push(bitmap.id);
     fill = '(' +
       'f=c._createPattern(' +
         'd[' + bitmap.id + '].value.props.img,' +
-        (fillStyle.repeat ? '"repeat"' : '"no-repeat"') +
+        (repeat ? '"repeat"' : '"no-repeat"') +
       '),' +
       'f.currentTransform=' +
         toMatrixInstance(fillStyle.matrix, fillStyle.matrixMorph, 1) + ',' +

@@ -63,11 +63,9 @@ var GraphicsDefinition = (function () {
       var repeatStyle = (repeat === false) ? 'no-repeat' : 'repeat';
       var pattern = this._createPattern(bitmap._drawable, repeatStyle);
 
-      // NOTE firefox really sensitive to really small scale when painting gradients
-      var scale = 819.2;
       pattern.currentTransform = matrix ?
         { a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d, e: matrix.tx, f: matrix.ty } :
-        { a: scale, b: 0, c: 0, d: scale, e: 0, f: 0 };
+        { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
 
       return pattern;
     },
