@@ -146,7 +146,6 @@ var StageDefinition = (function () {
           }
         }
 
-        displayObject._invalid = false;
         displayObject._invalidRegion = null;
       }
     },
@@ -161,11 +160,34 @@ var StageDefinition = (function () {
       var right = (~~((region.x + region.width) * scaleX + offsetX + 0.5) - offsetX) / scaleX + 2;
       var bottom = (~~((region.y + region.height) * scaleY + offsetY + 0.5) - offsetY) / scaleY + 2;
 
-      ctx.rect(left, top, right - left, bottom - top);
+      var x = left;
+      var y = top;
+      var width = right - left;
+      var height = bottom - top;
+
+      var candidates = this._qtree.retrieve({ x: x, y: y, width: width, height: height });
+
+      for (var i = 0; i < candidates.length; i++) {
+        var item = candidates[i];
+        var displayObject = item.obj;
+        var currentRegion = displayObject._region;
+
+        if (displayObject._invalid ||
+            (left > currentRegion.x + currentRegion.width) ||
+            (right < currentRegion.x) ||
+            (top > currentRegion.y + currentRegion.height) ||
+            (bottom < currentRegion.y)) {
+          continue;
+        }
+
+        displayObject._invalid = true;
+      }
+
+      ctx.rect(x, y, width, height);
 
       if (this._redrawRegionColor) {
         ctx.strokeStyle = this._redrawRegionColor;
-        ctx.strokeRect(left, top, right - left, bottom - top);
+        ctx.strokeRect(x, y, width, height);
       }
     },
 

@@ -189,7 +189,7 @@ RenderVisitor.prototype = {
       tempCanvas = CanvasCache.getCanvas(ctx.canvas);
       tempCtx = tempCanvas.ctx;
       tempCtx.currentTransform = ctx.currentTransform;
-      renderDisplayObject(child, tempCtx, child._currentTransform, child._cxform, clippingMask);
+      renderDisplayObject(child, tempCtx, child._currentTransform, child._cxform, clippingMask, this.refreshStage);
 
       if (isContainer) {
         this.ctx = tempCtx;
@@ -209,7 +209,7 @@ RenderVisitor.prototype = {
       CanvasCache.releaseCanvas(tempCanvas);
       CanvasCache.releaseCanvas(maskCanvas);
     } else {
-      renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask);
+      renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask, this.refreshStage);
 
       if (isContainer) {
         visitContainer(child, this);
@@ -224,7 +224,7 @@ RenderVisitor.prototype = {
   }
 };
 
-function renderDisplayObject(child, ctx, transform, cxform, clip) {
+function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) {
   if (transform) {
     var m = transform;
     if (m.a * m.d == m.b * m.c) {
@@ -243,6 +243,10 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
   }
   if (child._alpha !== 1) {
     ctx.globalAlpha *= child._alpha;
+  }
+
+  if (!refreshStage && !child._invalid) {
+    return;
   }
 
   if (child._graphics) {
@@ -303,6 +307,8 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
 
   if (child.draw)
     child.draw(ctx, child.ratio);
+
+  child._invalid = false;
 }
 
 var renderingTerminated = false;
