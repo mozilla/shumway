@@ -23,6 +23,7 @@ var SpriteDefinition = (function () {
 
     initialize: function () {
       this._buttonMode = false;
+      this._hitArea = null;
       this._useHandCursor = true;
       this._hitTarget = null;
 

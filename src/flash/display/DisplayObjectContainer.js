@@ -55,7 +55,7 @@ var DisplayObjectContainerDefinition = (function () {
         throw RangeError();
       }
 
-      if (child._parent) {
+      if (child._index > -1) {
         var LoaderClass = avm2.systemDomain.getClass('flash.display.Loader');
         if (LoaderClass.isInstanceOf(child._parent)) {
           def.removeChild.call(child._parent, child);
