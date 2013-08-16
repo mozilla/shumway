@@ -89,7 +89,6 @@ var DisplayObjectDefinition = (function () {
       this._qtree = null;
       this._level = -1;
       this._index = -1;
-      this._mouseEnabled = true;
 
       var s = this.symbol;
       if (s) {
@@ -439,7 +438,7 @@ var DisplayObjectDefinition = (function () {
       this._opaqueBackground = val;
     },
     get parent() {
-      return this._parent;
+      return this._index > -1 ? this._parent : null;
     },
     get root() {
       return this._stage && this._stage._root;
@@ -676,7 +675,7 @@ var DisplayObjectDefinition = (function () {
       }
       return this._bounds;
     },
-    _getDrawRegion: function getDrawRegion() {
+    _getRegion: function getRegion() {
       if (!this._graphics) {
         return this.getBounds();
       }

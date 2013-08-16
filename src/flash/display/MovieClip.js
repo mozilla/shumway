@@ -363,9 +363,9 @@ var MovieClipDefinition = (function () {
       }
     },
 
-    _gotoButtonState: function gotoButtonState(buttonState) {
+    _gotoButtonState: function gotoButtonState(stateName) {
       if (this._enabled) {
-        this.gotoLabel('_' + buttonState);
+        this.gotoLabel('_' + stateName);
       }
     },
 
