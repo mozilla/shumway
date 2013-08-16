@@ -192,7 +192,7 @@ var DisplayObjectDefinition = (function () {
       if (targetCoordSpace)
         targetCoordSpace._applyCurrentInverseTransform(point);
     },
-    _hitTest: function (use_xy, x, y, useShape, hitTestObject, ignoreChildren) {
+    _hitTest: function (use_xy, x, y, useShape, hitTestObject) {
       if (use_xy) {
         var pt = { x: x, y: y };
         this._applyCurrentInverseTransform(pt);
@@ -229,13 +229,11 @@ var DisplayObjectDefinition = (function () {
             }
           }
 
-          if (!ignoreChildren) {
-            var children = this._children;
-            for (var i = 0, n = children.length; i < n; i++) {
-              var child = children[i];
-              if (child._hitTest(true, x, y, true))
-                return true;
-            }
+          var children = this._children;
+          for (var i = 0, n = children.length; i < n; i++) {
+            var child = children[i];
+            if (child._hitTest(true, x, y, true))
+              return true;
           }
 
           return false;
