@@ -60,7 +60,7 @@ AS2Context.prototype = {
       target = this.defaultTarget;
     } else if (typeof target === 'string') {
       target = lookupAS2Children(target, this.defaultTarget,
-                                 this.globals.asGetProperty(undefined, '_root', 0));
+                                 this.globals.asGetPublicProperty('_root'));
     }
     if (typeof target !== 'object' || target === null ||
         !('$nativeObject' in target)) {
@@ -254,7 +254,7 @@ function as2ResolveProperty(obj, name) {
 }
 
 function as2CreatePrototypeProxy(obj) {
-  var prototype = obj.asGetProperty(undefined, 'prototype', 0);
+  var prototype = obj.asGetPublicProperty('prototype');
   if (typeof Proxy === 'undefined') {
     console.error('ES6 proxies are not found');
     return prototype;
@@ -313,7 +313,7 @@ function executeActions(actionsData, context, scope, assets) {
   try {
     AS2Context.instance = context;
     context.defaultTarget = scope;
-    context.globals.asSetProperty(undefined, 'this', 0, scope);
+    context.globals.asSetPublicProperty('this', scope);
     if (assets) {
       context.addAssets(assets);
     }
@@ -366,7 +366,7 @@ function interpretActions(actionsData, scopeContainer,
 
     try {
       currentContext.defaultTarget =
-        lookupAS2Children(targetPath, defaultTarget, _global.asGetProperty(undefined, '_root', 0));
+        lookupAS2Children(targetPath, defaultTarget, _global.asGetPublicProperty('_root'));
     } catch (e) {
       currentContext.defaultTarget = null;
       throw e;
@@ -378,10 +378,10 @@ function interpretActions(actionsData, scopeContainer,
     var ownerClass;
     var fn = (function() {
       var newScope = {};
-      newScope.asSetProperty(undefined, 'this', 0, this);
-      newScope.asSetProperty(undefined, 'arguments', 0, arguments);
-      newScope.asSetProperty(undefined, 'super', 0, AS2_SUPER_STUB);
-      newScope.asSetProperty(undefined, '__class', 0, ownerClass);
+      newScope.asSetPublicProperty('this', this);
+      newScope.asSetPublicProperty('arguments', arguments);
+      newScope.asSetPublicProperty('super', AS2_SUPER_STUB);
+      newScope.asSetPublicProperty('__class', ownerClass);
       var newScopeContainer = scopeContainer.create(newScope);
       var i;
 
@@ -412,10 +412,10 @@ function interpretActions(actionsData, scopeContainer,
                 registers[i] = _global;
                 break;
               case '_parent':
-                registers[i] = scope.asGetProperty(undefined, '_parent', 0);
+                registers[i] = scope.asGetPublicProperty('_parent');
                 break;
               case '_root':
-                registers[i] = _global.asGetProperty(undefined, '_root', 0);
+                registers[i] = _global.asGetPublicProperty('_root');
                 break;
             }
           }
@@ -462,7 +462,7 @@ function interpretActions(actionsData, scopeContainer,
   function deleteProperty(propertyName) {
     for (var p = scopeContainer; p; p = p.next) {
       if (p.scope.asHasProperty(undefined, propertyName, 0)) {
-        p.scope.asSetProperty(undefined, propertyName, 0, undefined); // in some cases we need to cleanup events binding
+        p.scope.asSetPublicProperty(propertyName, undefined); // in some cases we need to cleanup events binding
         return p.scope.asDeleteProperty(undefined, propertyName, 0);
       }
     }
@@ -474,7 +474,7 @@ function interpretActions(actionsData, scopeContainer,
       // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
       var parts = variableName.split(':');
       obj = lookupAS2Children(parts[0], defaultTarget,
-                              _global.asGetProperty(undefined, '_root', 0));
+                              _global.asGetPublicProperty('_root'));
       if (!obj) {
         throw new Error(parts[0] + ' is undefined');
       }
@@ -485,7 +485,7 @@ function interpretActions(actionsData, scopeContainer,
       name = objPath.pop();
       obj = _global;
       for (i = 0; i < objPath.length; i++) {
-        obj = obj.asGetProperty(undefined, objPath[i], 0) || obj[objPath[i]];
+        obj = obj.asGetPublicProperty(objPath[i]) || obj[objPath[i]];
         if (!obj) {
           throw new Error(objPath.slice(0, i + 1) + ' is undefined');
         }
@@ -507,12 +507,12 @@ function interpretActions(actionsData, scopeContainer,
   function getVariable(variableName) {
     // fast check if variable in the current scope
     if (scope.asHasProperty(undefined, variableName, 0)) {
-      return scope.asGetProperty(undefined, variableName, 0);
+      return scope.asGetPublicProperty(variableName);
     }
 
     var target = resolveVariableName(variableName);
     if (target) {
-      return target.obj.asGetProperty(undefined, target.name, 0);
+      return target.obj.asGetPublicProperty(target.name);
     }
     // trying movie clip children (if object is a MovieClip)
     var mc = isAS2MovieClip(defaultTarget) &&
@@ -523,7 +523,7 @@ function interpretActions(actionsData, scopeContainer,
     for (var p = scopeContainer; p; p = p.next) {
       var resolvedName = as2ResolveProperty(p.scope, variableName);
       if (resolvedName !== null) {
-        return p.scope.asGetProperty(undefined, resolvedName, 0);
+        return p.scope.asGetPublicProperty(resolvedName);
       }
     }
   }
@@ -531,17 +531,17 @@ function interpretActions(actionsData, scopeContainer,
   function setVariable(variableName, value) {
     // fast check if variable in the current scope
     if (scope.asHasProperty(undefined, variableName, 0)) {
-      scope.asSetProperty(undefined, variableName, 0, value);
+      scope.asSetPublicProperty(variableName, value);
       return;
     }
 
     var target = resolveVariableName(variableName, true);
     if (target) {
-      target.obj.asSetProperty(undefined, target.name, 0, value);
+      target.obj.asSetPublicProperty(target.name, value);
       return;
     }
-    var _this = scope.asGetProperty(undefined, 'this', 0) || getVariable('this');
-    _this.asSetProperty(undefined, variableName, 0, value);
+    var _this = scope.asGetPublicProperty('this') || getVariable('this');
+    _this.asSetPublicProperty(variableName, value);
   }
   function getFunction(functionName) {
     var fn = getVariable(functionName);
@@ -980,7 +980,7 @@ function interpretActions(actionsData, scopeContainer,
           if (resolvedName === null) {
             throw new Error('Method ' + methodName + ' is not defined.');
           }
-          result = target.asGetProperty(undefined, resolvedName, 0).apply(obj, args);
+          result = target.asGetPublicProperty(resolvedName).apply(obj, args);
         } else if (obj !== AS2_SUPER_STUB) {
           result = obj.apply(obj, args);
         } else {
@@ -1009,7 +1009,7 @@ function interpretActions(actionsData, scopeContainer,
         fn = defineFunction(functionName, args, null,
                             stream.readBytes(codeSize));
         if (functionName) {
-          scope.asSetProperty(undefined, functionName, 0, fn);
+          scope.asSetPublicProperty(functionName, fn);
         } else {
           stack.push(fn);
         }
@@ -1017,17 +1017,17 @@ function interpretActions(actionsData, scopeContainer,
       case 0x3C: // ActionDefineLocal
         value = stack.pop();
         name = stack.pop();
-        scope.asSetProperty(undefined, name, 0, value);
+        scope.asSetPublicProperty(name, value);
         break;
       case 0x41: // ActionDefineLocal2
         name = stack.pop();
-        scope.asSetProperty(undefined, name, 0, undefined);
+        scope.asSetPublicProperty(name, undefined);
         break;
       case 0x3A: // ActionDelete
         name = stack.pop();
         obj = stack.pop();
          // in some cases we need to cleanup events binding
-        obj.asSetProperty(undefined, name, 0, undefined);
+        obj.asSetPublicProperty(name, undefined);
         stack.push(obj.asDeleteProperty(undefined, name, 0));
         break;
       case 0x3B: // ActionDelete2
@@ -1058,7 +1058,7 @@ function interpretActions(actionsData, scopeContainer,
         } else {
           resolvedName = as2ResolveProperty(Object(obj), name);
           stack.push(resolvedName === null ? undefined :
-                     obj.asGetProperty(undefined, resolvedName, 0));
+                     obj.asGetPublicProperty(resolvedName));
         }
         break;
       case 0x42: // ActionInitArray
@@ -1072,7 +1072,7 @@ function interpretActions(actionsData, scopeContainer,
         for (i = 0; i < count; i++) {
           value = stack.pop();
           name = stack.pop();
-          obj.asSetProperty(undefined, name, 0, value);
+          obj.asSetPublicProperty(name, value);
         }
         stack.push(obj);
         break;
@@ -1091,7 +1091,7 @@ function interpretActions(actionsData, scopeContainer,
           if (obj === null || obj === undefined) {
             throw new Error('Cannot call new using method ' + resolvedName + ' of ' + typeof obj);
           }
-          method = obj.asGetProperty(undefined, resolvedName, 0);
+          method = obj.asGetPublicProperty(resolvedName);
         } else {
           if (obj === null || obj === undefined) {
             throw new Error('Cannot call new using ' + typeof obj);
@@ -1121,7 +1121,7 @@ function interpretActions(actionsData, scopeContainer,
         value = stack.pop();
         name = stack.pop();
         obj = stack.pop();
-        obj.asSetProperty(undefined, name, 0, value);
+        obj.asSetPublicProperty(name, value);
         break;
       case 0x45: // ActionTargetPath
         obj = stack.pop();
@@ -1292,7 +1292,7 @@ function interpretActions(actionsData, scopeContainer,
         fn = defineFunction(functionName, args,
                             registerAllocation, stream.readBytes(codeSize));
         if (functionName) {
-          scope.asSetProperty(undefined, functionName, 0, fn);
+          scope.asSetPublicProperty(functionName, fn);
         } else {
           stack.push(fn);
         }

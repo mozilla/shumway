@@ -205,7 +205,7 @@ var SpriteDefinition = (function () {
           }
           while (targetPath.length > 0) {
             var childName = targetPath.shift();
-            clip = clip.asGetProperty(undefined, childName, 0) || clip[childName];
+            clip = clip.asGetPublicProperty(childName) || clip[childName];
             if (!clip) {
               throw new Error('Cannot find ' + childName + ' variable');
             }
@@ -213,10 +213,10 @@ var SpriteDefinition = (function () {
         } else
           clip = instance._getAS2Object();
         if (!clip.asHasProperty(undefined, variableName, 0)) {
-          clip.asSetProperty(undefined, variableName, 0, instance.text);
+          clip.asSetPublicProperty(variableName, instance.text);
         }
         instance._addEventListener('constructFrame', function() {
-          instance.text = clip.asGetProperty(undefined, variableName, 0);
+          instance.text = clip.asGetPublicProperty(variableName);
         });
       }
 

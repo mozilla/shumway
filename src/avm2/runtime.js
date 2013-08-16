@@ -262,12 +262,20 @@ function resolveMultinameProperty(namespaces, name, flags) {
   }
 }
 
+function asGetPublicProperty(name) {
+  return asGetPublicProperty(name);
+}
+
 function asGetProperty(namespaces, name, flags, isMethod) {
   var resolved = this.resolveMultinameProperty(namespaces, name, flags);
   if (this.indexGet && Multiname.isNumeric(resolved)) {
     return this.indexGet(resolved);
   }
   return this[resolved];
+}
+
+function asSetPublicProperty(name, value) {
+  return asSetPublicProperty(name, value);
 }
 
 function asSetProperty(namespaces, name, flags, value) {
@@ -279,6 +287,10 @@ function asSetProperty(namespaces, name, flags, value) {
     return this.indexSet(resolved, value);
   }
   this[resolved] = value;
+}
+
+function asDefinePublicProperty(name, descriptor) {
+  return asDefineProperty(undefined, name, 0, descriptor);
 }
 
 function asDefineProperty(namespaces, name, flags, descriptor) {
@@ -477,8 +489,11 @@ function initializeGlobalObject(global) {
   defineNonEnumerableProperty(global.Object.prototype, "getNamespaceResolutionMap", getNamespaceResolutionMap);
   defineNonEnumerableProperty(global.Object.prototype, "resolveMultinameProperty", resolveMultinameProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asGetProperty", asGetProperty);
+  defineNonEnumerableProperty(global.Object.prototype, "asGetPublicProperty", asGetPublicProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asSetProperty", asSetProperty);
+  defineNonEnumerableProperty(global.Object.prototype, "asSetPublicProperty", asSetPublicProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDefineProperty", asDefineProperty);
+  defineNonEnumerableProperty(global.Object.prototype, "asDefinePublicProperty", asDefinePublicProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asCallProperty", asCallProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
@@ -493,7 +508,7 @@ initializeGlobalObject(jsGlobal);
  * Checks if the specified |object| is the prototype of a native JavaScript object.
  */
 function isNativePrototype(object) {
-  return Object.prototype.hasOwnProperty.call(object, VM_NATIVE_PROTOTYPE_FLAG)
+  return Object.prototype.hasOwnProperty.call(object, VM_NATIVE_PROTOTYPE_FLAG);
 }
 
 /**
