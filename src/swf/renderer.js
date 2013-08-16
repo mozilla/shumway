@@ -492,7 +492,7 @@ function renderStage(stage, ctx, events) {
       FrameCounter.clear();
       var frameStartTime = performance.now();
       traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
-      if (!disableMouseVisitor.value) {
+      if (mouseMoved && !disableMouseVisitor.value) {
         traceRenderer.value && frameWriter.enter("> Mouse Visitor");
         stage._handleMouse();
         traceRenderer.value && frameWriter.leave("< Mouse Visitor");
