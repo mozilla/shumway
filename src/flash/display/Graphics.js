@@ -109,9 +109,10 @@ var GraphicsDefinition = (function () {
                 break;
             }
           }
-          if (path.fillStyle) {
-            ctx.fillStyle = path.fillStyle.style;
-            var m = path.fillStyle.currentTransform;
+          var fillStyle = path.fillStyle;
+          if (fillStyle) {
+            ctx.fillStyle = fillStyle.style;
+            var m = fillStyle.currentTransform;
             if (m) {
               ctx.save();
               ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
@@ -121,9 +122,13 @@ var GraphicsDefinition = (function () {
               ctx.fill();
             }
           }
-          if (path.lineStyle) {
-            ctx.lineWidth = path.lineStyle.width;
-            ctx.strokeStyle = path.lineStyle.style;
+          var lineStyle = path.lineStyle;
+          if (lineStyle) {
+            ctx.lineWidth = lineStyle.width;
+            ctx.strokeStyle = lineStyle.style;
+            ctx.lineCap = lineStyle.lineCap;
+            ctx.lineJoin = lineStyle.lineJoin;
+            ctx.miterLimit = lineStyle.miterLimit;
             ctx.stroke();
           }
           ctx.closePath();

@@ -309,9 +309,16 @@ function segmentedPathToShapePath(path) {
   return shape;
 }
 
-function processStyle(style, dictionary, dependencies) {
+var CAPS_STYLE_TYPES = ['round', 'none', 'square'];
+var JOIN_STYLE_TYPES = ['round', 'bevel', 'miter'];
+function processStyle(style, isLineStyle, dictionary, dependencies) {
+  if (isLineStyle) {
+    // TODO: Figure out how to handle startCapStyle
+    style.lineCap = CAPS_STYLE_TYPES[style.endCapStyle|0];
+    style.lineJoin = JOIN_STYLE_TYPES[style.joinStyle|0];
+    style.miterLimit = style.miterLimitFactor * 2;
+  }
   var color;
-  // TODO: fully support line styles
   if (style.type === undefined) {
     color = style.color;
     style.style = 'rgba(' + color.red + ',' + color.green + ',' +
@@ -366,7 +373,7 @@ function processStyle(style, dictionary, dependencies) {
 function createPathsList(styles, isLineStyle, dictionary, dependencies) {
   var paths = [];
   for (var i = 0; i < styles.length; i++) {
-    var style = processStyle(styles[i], dictionary, dependencies);
+    var style = processStyle(styles[i], isLineStyle, dictionary, dependencies);
     if (!isLineStyle) {
       paths[i] = new SegmentedPath(style, null);
     } else {
