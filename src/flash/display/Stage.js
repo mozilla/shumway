@@ -196,7 +196,7 @@ var StageDefinition = (function () {
       var y = this._mouseY;
 
       var candidates = this._qtree.retrieve({ x: x, y: y, width: 1, height: 1 });
-      var target;
+      var interactiveObject;
 
       var targets = [];
       for (var i = 0; i < candidates.length; i++) {
@@ -207,44 +207,45 @@ var StageDefinition = (function () {
             x <= item.x + item.width &&
             y >= item.y &&
             y <= item.y + item.height) {
-          if (displayObject._hitTestState) {
+          if (flash.display.SimpleButton.class.isInstanceOf(displayObject)) {
+            // TODO: move this into the SimpleButton class
             displayObject._hitTestState._parent = displayObject;
-            if (displayObject._hitTestState._hitTest(true, x, y, true, null)) {
-              target = displayObject;
+            if (displayObject._hitTestState._hitTest(true, x, y, true)) {
+              interactiveObject = displayObject;
               break;
             }
           }
-          if (displayObject._hitTest(true, x, y, true, null)) {
+          if (displayObject._hitTest(true, x, y, true)) {
             targets.push(displayObject);
           }
         }
       }
 
-      if (!target && targets.length) {
+      var currentNode;
+      if (interactiveObject) {
+        currentNode = interactiveObject._parent;
+      } else if (targets.length) {
         targets.sort(sortByDepth);
-        target = targets.pop();
-
-        var interactiveObject;
-        var currentNode = target;
-        while (currentNode !== this) {
-          if (flash.display.InteractiveObject.class.isInstanceOf(currentNode) &&
-              !flash.display.SimpleButton.class.isInstanceOf(currentNode) &&
-              !currentNode._hitArea &&
-              (!interactiveObject || !currentNode._mouseChildren)) {
-            target = interactiveObject = currentNode;
-          }
-          currentNode = currentNode._parent;
+        currentNode = targets.pop();
+      } else {
+        interactiveObject = this;
+      }
+      while (currentNode) {
+        if (flash.display.InteractiveObject.class.isInstanceOf(currentNode) &&
+            !flash.display.SimpleButton.class.isInstanceOf(currentNode) &&
+            !currentNode._hitArea &&
+            (!interactiveObject || !currentNode._mouseChildren)) {
+          interactiveObject = currentNode;
         }
+        currentNode = currentNode._parent;
       }
 
-      if (!target) {
-        target = this;
-      } else if (target._hitTarget) {
-        target = target._hitTarget;
+      if (interactiveObject._hitTarget) {
+        interactiveObject = interactiveObject._hitTarget;
       }
 
-      if (target === this._clickTarget) {
-        target._dispatchEvent(new flash.events.MouseEvent('mouseMove'));
+      if (interactiveObject === this._clickTarget) {
+        interactiveObject._dispatchEvent(new flash.events.MouseEvent('mouseMove'));
       } else {
         if (this._clickTarget) {
           if (this._clickTarget._buttonMode) {
@@ -254,13 +255,13 @@ var StageDefinition = (function () {
           this._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseOut'));
         }
 
-        if (target._buttonMode) {
-          target._gotoButtonState('over');
+        if (interactiveObject._buttonMode) {
+          interactiveObject._gotoButtonState('over');
         }
 
-        target._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+        interactiveObject._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
 
-        this._clickTarget = target;
+        this._clickTarget = interactiveObject;
       }
     },
 
