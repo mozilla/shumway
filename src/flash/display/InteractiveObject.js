@@ -19,11 +19,11 @@
 var InteractiveObjectDefinition = (function () {
   var def = {
     initialize: function () {
-      this._doubleClickEnabled = false;
-      this._hitArea = null;
-      this._tabEnabled = false;
-      this._focusRect = null;
       this._contextMenu = null;
+      this._doubleClickEnabled = false;
+      this._focusRect = null;
+      this._mouseEnabled = true;
+      this._tabEnabled = false;
     },
 
     get accessibilityImplementation() {
