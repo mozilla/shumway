@@ -32,7 +32,7 @@ var SimpleButtonDefinition = (function () {
       this._overState = null;
       this._downState = null;
       this._hitTestState = null;
-      this._currentState = null;
+      this._currentButtonState = 'up';
       this._mouseChildren = false;
       this._buttonMode = true;
       this._prevAvm1StateCode = 0;
@@ -46,11 +46,7 @@ var SimpleButtonDefinition = (function () {
           this._downState = this._constructState(states.down.value, this);
         }
         if (states.hitTest) {
-          this._hitTestState =this._constructState(states.hitTest.value, this);
-          this._hitTestState._alpha = 0;
-          this._hitTestState._parent = this;
-          this._hitTestState._index = 1;
-          this._children.push(this._hitTestState);
+          this._hitTestState = this._constructState(states.hitTest.value, this);
         }
         if (states.over) {
           this._overState = this._constructState(states.over.value, this);
@@ -72,67 +68,79 @@ var SimpleButtonDefinition = (function () {
                           avm2.systemDomain.getClass(symbolInfo.className) :
                           avm2.applicationDomain.getClass(symbolInfo.className);
 
-      var props = Object.create(symbolInfo.props);
-      props.animated = true;
-
-      var instance = symbolClass.createAsSymbol(props);
+      var instance = symbolClass.createAsSymbol(symbolInfo.props);
       symbolClass.instanceConstructor.call(instance);
 
       if (instance._children.length === 1) {
-        return instance._children[0];
+        instance = instance._children[0];
+        instance._parent = null;
+        instance._index = -1;
       }
 
       return instance;
     },
-
-    _gotoButtonState: function gotoButtonState(buttonState) {
-      this._bounds = null;
-
-      var state;
-      switch (buttonState) {
-        case 'up':
-          state = this._upState;
-          break;
-        case 'over':
-          state = this._overState;
-          break;
-        case 'down':
-          state = this._downState;
-          break;
+    _updateButton: function updateButton() {
+      var state = null;
+      switch (this._currentButtonState) {
+        case 'up': state = this._upState; break;
+        case 'over': state = this._overState; break;
+        case 'down': state = this._downState; break;
       }
 
-      if (this._currentState) {
-        if (this._currentState === state) {
+      if (this._children[0]) {
+        if (this._children[0] === state) {
           return;
         }
 
         if (this._stage) {
-          this._stage._removeFromStage(this._currentState);
+          this._stage._removeFromStage(this._children[0]);
         }
-
-        this._currentState._parent = null;
-        this._children.shift();
       }
 
-      this._currentState = state;
-
-      if (!state) {
-        return;
-      }
+      this._children[0] = state;
 
       state._parent = this;
-      state._parent._index = 0;
-      state._mouseEnabled = false;
-
-      this._children.unshift(state);
 
       if (this._stage) {
         this._stage._addToStage(state);
       }
+    },
+    _gotoButtonState: function gotoButtonState(buttonState) {
+      this._bounds = null;
+      this._currentButtonState = buttonState;
+      this._updateButton();
 
       if (this._avm1MouseEvents) {
         this._processAvm1MouseEvents(this._avm1MouseEvents);
       }
+    },
+
+    _getRegion: function getRegion() {
+      if (!this._hitTestState) {
+        return { x: 0, y: 0, width: 0, height: 0 };
+      }
+
+      var b = this._hitTestState.getBounds();
+
+      if (!b || (!b.width && !b.height)) {
+        return b;
+      }
+
+      var p1 = { x: b.x, y: b.y };
+      this._applyCurrentTransform(p1);
+      var p2 = { x: b.x + b.width, y: b.y };
+      this._applyCurrentTransform(p2);
+      var p3 = { x: b.x + b.width, y: b.y + b.height };
+      this._applyCurrentTransform(p3);
+      var p4 = { x: b.x, y: b.y + b.height };
+      this._applyCurrentTransform(p4);
+
+      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
+      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
+      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
+      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
+
+      return { x: xMin, y: yMin, width: xMax - xMin, height: yMax - yMin };
     },
 
     _getAS2Object: function () {
@@ -186,8 +194,8 @@ var SimpleButtonDefinition = (function () {
     _processAvm1MouseEvents: function (mouseEvents) {
       // state codes: 0 - idle, 1 - outDown, 2 - overUp, 3 - overDown
       var prevAvm1StateCode = this._avm1StateCode;
-      var avm1StateCode = (this._isMouseDown ? 1 : 0) |
-                            (this._isMouseOver ? 2 : 0);
+      var avm1StateCode = (this._currentButtonState === 'down' ? 1 : 0) |
+                          (this._currentButtonState !== 'up' ? 2 : 0);
       if (prevAvm1StateCode !== avm1StateCode) {
         this._prevAvm1StateCode = prevAvm1StateCode;
         this._avm1StateCode = avm1StateCode;
@@ -205,7 +213,7 @@ var SimpleButtonDefinition = (function () {
       native: {
         instance: {
           _updateButton: function _updateButton() { // (void) -> void
-            this._gotoButtonState('up');
+            this._updateButton();
           },
           useHandCursor: {
             get: function useHandCursor() { // (void) -> Boolean
@@ -239,6 +247,7 @@ var SimpleButtonDefinition = (function () {
             },
             set: function upState(value) { // (value:DisplayObject) -> void
               this._upState = value;
+              this._updateButton();
             }
           },
           overState: {
@@ -247,6 +256,7 @@ var SimpleButtonDefinition = (function () {
             },
             set: function overState(value) { // (value:DisplayObject) -> void
               this._overState = value;
+              this._updateButton();
             }
           },
           downState: {
@@ -255,6 +265,7 @@ var SimpleButtonDefinition = (function () {
             },
             set: function downState(value) { // (value:DisplayObject) -> void
               this._downState = value;
+              this._updateButton();
             }
           },
           hitTestState: {
@@ -262,19 +273,13 @@ var SimpleButtonDefinition = (function () {
               return this._hitTestState;
             },
             set: function hitTestState(value) { // (value:DisplayObject) -> void
-              if (this._hitTestState === value) {
+              if (value === this._hitTestState) {
                 return;
               }
 
+              this._invalidate();
+
               this._hitTestState = value;
-
-              value._alpha = 0;
-              value._parent = this;
-              value._index = 1;
-              value._stage = this._stage;
-              this._children.splice(-1, 1, value);
-
-              value._invalidate();
             }
           },
           soundTransform: {

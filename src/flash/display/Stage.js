@@ -81,7 +81,7 @@ var StageDefinition = (function () {
         return;
       }
 
-      var region = displayObject._getDrawRegion();
+      var region = displayObject._getRegion();
 
       if (!region) {
         return;
@@ -108,12 +108,12 @@ var StageDefinition = (function () {
           this._addRedrawRegion(ctx, invalidRegion);
         }
 
-        var drawRegion = displayObject._getDrawRegion();
+        var region = displayObject._getRegion();
         var currentRegion = displayObject._region;
-        var hasChanged = currentRegion && (drawRegion.x !== currentRegion.x ||
-                                           drawRegion.y !== currentRegion.y ||
-                                           drawRegion.width !== currentRegion.width ||
-                                           drawRegion.height !== currentRegion.height);
+        var hasChanged = currentRegion && (region.x !== currentRegion.x ||
+                                           region.y !== currentRegion.y ||
+                                           region.width !== currentRegion.width ||
+                                           region.height !== currentRegion.height);
 
         if (currentRegion && (hasChanged || !displayObject._stage)) {
           // TODO: move this into the QuadTree class
@@ -131,22 +131,21 @@ var StageDefinition = (function () {
           displayObject._region = null;
         }
 
-        if (drawRegion.width && drawRegion.height && displayObject._stage) {
+        if (region.width && region.height && displayObject._stage) {
           if (!currentRegion || hasChanged) {
-            drawRegion.obj = displayObject;
-            this._qtree.insert(drawRegion);
-            displayObject._region = drawRegion;
+            region.obj = displayObject;
+            this._qtree.insert(region);
+            displayObject._region = region;
           }
 
-          if (drawRegion.x !== invalidRegion.x ||
-              drawRegion.y !== invalidRegion.y ||
-              drawRegion.width !== invalidRegion.width ||
-              drawRegion.height !== invalidRegion.height) {
-            this._addRedrawRegion(ctx, drawRegion);
+          if (region.x !== invalidRegion.x ||
+              region.y !== invalidRegion.y ||
+              region.width !== invalidRegion.width ||
+              region.height !== invalidRegion.height) {
+            this._addRedrawRegion(ctx, region);
           }
         }
 
-        displayObject._invalid = false;
         displayObject._invalidRegion = null;
       }
     },
@@ -161,11 +160,34 @@ var StageDefinition = (function () {
       var right = (~~((region.x + region.width) * scaleX + offsetX + 0.5) - offsetX) / scaleX + 2;
       var bottom = (~~((region.y + region.height) * scaleY + offsetY + 0.5) - offsetY) / scaleY + 2;
 
-      ctx.rect(left, top, right - left, bottom - top);
+      var x = left;
+      var y = top;
+      var width = right - left;
+      var height = bottom - top;
+
+      var candidates = this._qtree.retrieve({ x: x, y: y, width: width, height: height });
+
+      for (var i = 0; i < candidates.length; i++) {
+        var item = candidates[i];
+        var displayObject = item.obj;
+        var currentRegion = displayObject._region;
+
+        if (displayObject._invalid ||
+            (left > currentRegion.x + currentRegion.width) ||
+            (right < currentRegion.x) ||
+            (top > currentRegion.y + currentRegion.height) ||
+            (bottom < currentRegion.y)) {
+          continue;
+        }
+
+        displayObject._invalid = true;
+      }
+
+      ctx.rect(x, y, width, height);
 
       if (this._redrawRegionColor) {
         ctx.strokeStyle = this._redrawRegionColor;
-        ctx.strokeRect(left, top, right - left, bottom - top);
+        ctx.strokeRect(x, y, width, height);
       }
     },
 
@@ -173,55 +195,57 @@ var StageDefinition = (function () {
       var x = this._mouseX;
       var y = this._mouseY;
 
-      var targets = [];
       var candidates = this._qtree.retrieve({ x: x, y: y, width: 1, height: 1 });
+      var interactiveObject;
 
+      var targets = [];
       for (var i = 0; i < candidates.length; i++) {
         var item = candidates[i];
         var displayObject = item.obj;
         if (displayObject._visible &&
-            !displayObject._hitArea &&
             x >= item.x &&
             x <= item.x + item.width &&
             y >= item.y &&
-            y <= item.y + item.height &&
-            displayObject._hitTest(true, x, y, true, null, true)) {
-          targets.push(displayObject);
-        }
-      }
-
-      var target;
-      if (targets.length) {
-        targets.sort(sortByDepth);
-        target = targets.pop();
-
-        if (target._hitTarget) {
-          target = target._hitTarget;
-        } else {
-          var interactiveObject;
-          var currentNode = target;
-          while (currentNode !== this) {
-            if (!currentNode._mouseEnabled) {
-              interactiveObject = null;
+            y <= item.y + item.height) {
+          if (flash.display.SimpleButton.class.isInstanceOf(displayObject)) {
+            // TODO: move this into the SimpleButton class
+            displayObject._hitTestState._parent = displayObject;
+            if (displayObject._hitTestState._hitTest(true, x, y, true)) {
+              interactiveObject = displayObject;
               break;
             }
-            if (flash.display.InteractiveObject.class.isInstanceOf(currentNode)) {
-              if (!interactiveObject || !currentNode._mouseChildren) {
-                interactiveObject = currentNode;
-              }
-            }
-            currentNode = currentNode._parent;
           }
-          target = interactiveObject;
+          if (displayObject._hitTest(true, x, y, true)) {
+            targets.push(displayObject);
+          }
         }
       }
 
-      if (!target) {
-        target = this;
+      var currentNode;
+      if (interactiveObject) {
+        currentNode = interactiveObject._parent;
+      } else if (targets.length) {
+        targets.sort(sortByDepth);
+        currentNode = targets.pop();
+      } else {
+        interactiveObject = this;
+      }
+      while (currentNode) {
+        if (flash.display.InteractiveObject.class.isInstanceOf(currentNode) &&
+            !flash.display.SimpleButton.class.isInstanceOf(currentNode) &&
+            !currentNode._hitArea &&
+            (!interactiveObject || !currentNode._mouseChildren)) {
+          interactiveObject = currentNode;
+        }
+        currentNode = currentNode._parent;
       }
 
-      if (target === this._clickTarget) {
-        target._dispatchEvent(new flash.events.MouseEvent('mouseMove'));
+      if (interactiveObject._hitTarget) {
+        interactiveObject = interactiveObject._hitTarget;
+      }
+
+      if (interactiveObject === this._clickTarget) {
+        interactiveObject._dispatchEvent(new flash.events.MouseEvent('mouseMove'));
       } else {
         if (this._clickTarget) {
           if (this._clickTarget._buttonMode) {
@@ -231,13 +255,13 @@ var StageDefinition = (function () {
           this._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseOut'));
         }
 
-        if (target._buttonMode) {
-          target._gotoButtonState('over');
+        if (interactiveObject._buttonMode) {
+          interactiveObject._gotoButtonState('over');
         }
 
-        target._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+        interactiveObject._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
 
-        this._clickTarget = target;
+        this._clickTarget = interactiveObject;
       }
     },
 

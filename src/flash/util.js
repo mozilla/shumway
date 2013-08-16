@@ -32,13 +32,16 @@ function cloneObject(obj) {
 }
 
 function sortByDepth(a, b) {
-  if (a._parent !== b._parent) {
-    if (a._level > b._level) {
+  var levelA = a._level;
+  var levelB = b._level;
+
+  if (a._parent !== b._parent && a._index > -1 && b._index > -1) {
+    if (a._level > levelB) {
       while (a._level !== b._level) {
         a = a._parent;
       }
     } else {
-      while (b._level !== a._level) {
+      while (b._level !== levelA) {
         b = b._parent;
       }
     }
@@ -50,6 +53,11 @@ function sortByDepth(a, b) {
       b = b._parent;
     }
   }
+
+  if (a === b) {
+    return levelA - levelB;
+  }
+
   return a._index - b._index;
 }
 

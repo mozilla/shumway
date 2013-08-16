@@ -89,7 +89,6 @@ var DisplayObjectDefinition = (function () {
       this._qtree = null;
       this._level = -1;
       this._index = -1;
-      this._mouseEnabled = true;
 
       var s = this.symbol;
       if (s) {
@@ -193,7 +192,7 @@ var DisplayObjectDefinition = (function () {
       if (targetCoordSpace)
         targetCoordSpace._applyCurrentInverseTransform(point);
     },
-    _hitTest: function (use_xy, x, y, useShape, hitTestObject, ignoreChildren) {
+    _hitTest: function (use_xy, x, y, useShape, hitTestObject) {
       if (use_xy) {
         var pt = { x: x, y: y };
         this._applyCurrentInverseTransform(pt);
@@ -230,13 +229,11 @@ var DisplayObjectDefinition = (function () {
             }
           }
 
-          if (!ignoreChildren) {
-            var children = this._children;
-            for (var i = 0, n = children.length; i < n; i++) {
-              var child = children[i];
-              if (child._hitTest(true, x, y, true))
-                return true;
-            }
+          var children = this._children;
+          for (var i = 0, n = children.length; i < n; i++) {
+            var child = children[i];
+            if (child._hitTest(true, x, y, true))
+              return true;
           }
 
           return false;
@@ -439,7 +436,7 @@ var DisplayObjectDefinition = (function () {
       this._opaqueBackground = val;
     },
     get parent() {
-      return this._parent;
+      return this._index > -1 ? this._parent : null;
     },
     get root() {
       return this._stage && this._stage._root;
@@ -676,7 +673,7 @@ var DisplayObjectDefinition = (function () {
       }
       return this._bounds;
     },
-    _getDrawRegion: function getDrawRegion() {
+    _getRegion: function getRegion() {
       if (!this._graphics) {
         return this.getBounds();
       }
