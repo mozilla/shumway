@@ -95,6 +95,7 @@ load($SHUMWAY_ROOT + "src/avm2/xml.js");
 load($SHUMWAY_ROOT + "src/avm2/json2.js");
 load($SHUMWAY_ROOT + "src/avm2/amf.js");
 load($SHUMWAY_ROOT + "src/avm2/proxy.js");
+load($SHUMWAY_ROOT + "src/avm2/dictionary.js");
 load($SHUMWAY_ROOT + "src/avm2/native.js");
 load($SHUMWAY_ROOT + "src/avm2/disassembler.js");
 load($SHUMWAY_ROOT + "src/avm2/interpreter.js");
