@@ -28,6 +28,9 @@
     </style>
 
     <script>
+      // IE10 has no console.time functions
+      console.time || (console.time = console.timeEnd = function () {});
+
       SHUMWAY_ROOT = "../../src/";
     </script>
 
