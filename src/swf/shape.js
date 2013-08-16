@@ -102,7 +102,7 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths)
  * See http://blogs.msdn.com/b/mswanson/archive/2006/02/27/539749.aspx and
  * http://wahlers.com.br/claus/blog/hacking-swf-1-shapes-in-flash/ for details.
  */
-function convertRecordsToStyledPaths(records, linePaths, fillPaths,
+function convertRecordsToStyledPaths(records, fillPaths, linePaths,
                                      dictionary, dependencies)
 {
   var styles = {fill0: 0, fill1: 0, line: 0};
@@ -196,7 +196,7 @@ function convertRecordsToStyledPaths(records, linePaths, fillPaths,
 
   var removeCount = 0;
   for (i = 0; i < allFillPaths.length; i++) {
-    var path = allFillPaths[i];
+    path = allFillPaths[i];
     if (!path.head()) {
       removeCount++;
       continue;
@@ -310,71 +310,52 @@ function segmentedPathToShapePath(path) {
 }
 
 function processStyle(style, dictionary, dependencies) {
+  var color;
   // TODO: fully support line styles
-  if (!style.hasFill) {
+  if (style.type === undefined) {
+    color = style.color;
+    style.style = 'rgba(' + color.red + ',' + color.green + ',' +
+                  color.blue + ',' + color.alpha / 255 + ')';
+    style.color = null; // No need to keep data around we won't use anymore.
     return style;
   }
-  var styleStr;
-  var color;
+  var scale;
   switch (style.type) {
     case GRAPHICS_FILL_SOLID:
       color = style.color;
-      styleStr = 'rgba(' + color.red + ',' + color.green + ',' + color.blue +
-                 ',' + color.alpha / 255 + ')';
+      style.style = 'rgba(' + color.red + ',' + color.green + ',' +
+                    color.blue + ',' + color.alpha / 255 + ')';
+      style.color = null; // No need to keep data around we won't use anymore.
       break;
     case GRAPHICS_FILL_LINEAR_GRADIENT:
     case GRAPHICS_FILL_RADIAL_GRADIENT:
     case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
-      // TODO: support gradients
-//      var records = fillStyle.records;
-//      var stops = [];
-//      for (var j = 0, n = records.length; j < n; j++) {
-//        var record = records[j];
-//        color = record.color;
-//        if (record.colorMorph) {
-//          stops.push('f.addColorStop(' +
-//                     morph(record.ratio / 255, record.ratioMorph / 255) + ',' +
-//                     morphColor(color, record.colorMorph) +
-//                     ')');
-//        } else {
-//          stops.push('f.addColorStop(' +
-//                     (record.ratio / 255) + ',' +
-//                     '"rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')"' +
-//                     ')');
-//        }
-//      }
-//      var isLinear = fillStyle.type === GRAPHICS_FILL_LINEAR_GRADIENT;
-//      fill = '(' +
-//             'f=ctx._create' + (isLinear ? 'Linear' : 'Radial') + 'Gradient(' +
-//             (isLinear ?
-//              '-1, 0, 1, 0' :
-//              '(' + morph(fillStyle.focalPoint, fillStyle.focalPointMorph) + ' || 0), 0, 0, 0, 0, 1'
-//                 ) +
-//             '),' +
-//             stops.join(',') + ',' +
-//             'f.currentTransform=' +
-//             toMatrixInstance(fillStyle.matrix, fillStyle.matrixMorph, 20 * 819.2) + ',' +
-//             'f)';
+      scale = 20 * 819.2;
       break;
     case GRAPHICS_FILL_REPEATING_BITMAP:
     case GRAPHICS_FILL_CLIPPED_BITMAP:
     case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
     case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
-      var bitmap = dictionary[style.bitmapId];
-      dependencies.push(bitmap.id);
-//
-//      fill = '(' +
-//             'f=ctx._createPattern(' +
-//             'd[' + bitmap.id + '].value.props.img,' +
-//             (fillStyle.repeat ? '"repeat"' : '"no-repeat"') +
-//             '),' +
-//             'f.currentTransform=' +
-//             toMatrixInstance(fillStyle.matrix, fillStyle.matrixMorph, 1) + ',' +
-//             'f)';
+      if (dictionary[style.bitmapId]) {
+        dependencies.push(dictionary[style.bitmapId].id);
+        scale = 1;
+      }
       break;
     default:
       fail('invalid fill style', 'shape');
   }
+  if (!style.matrix) {
+    return style;
+  }
+  var matrix = style.matrix;
+  style.currentTransform = {
+    a: (matrix.a * scale),
+    b: (matrix.b * scale),
+    c: (matrix.c * scale),
+    d: (matrix.d * scale),
+    e: (matrix.tx * 20),
+    f: (matrix.ty * 20)
+  };
   return style;
 }
 
@@ -395,23 +376,20 @@ function createPathsList(styles, isLineStyle, dictionary, dependencies) {
   return paths;
 }
 function defineShape(tag, dictionary) {
-  Timer.start('defineShape');
   var dependencies = [];
   var fillPaths = createPathsList(tag.fillStyles, false,
                                   dictionary, dependencies);
   var linePaths = createPathsList(tag.lineStyles, true,
                                   dictionary, dependencies);
-  var paths = convertRecordsToStyledPaths(tag.records, linePaths, fillPaths,
+  var paths = convertRecordsToStyledPaths(tag.records, fillPaths, linePaths,
                                           dictionary, dependencies);
 
-  Timer.stop();
   return {
     type: 'shape',
     id: tag.id,
-    bbox: tag.bbox,
-    strokeBbox: tag.strokeBbox,
+    bbox: tag.strokeBbox || tag.bbox,
     paths: paths,
-    dependencies: dependencies.length ? dependencies : null,
+    require: dependencies.length ? dependencies : null
   };
 }
 

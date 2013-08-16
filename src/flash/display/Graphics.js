@@ -110,12 +110,20 @@ var GraphicsDefinition = (function () {
             }
           }
           if (path.fillStyle) {
-            ctx.fillStyle = toStringRgba(path.fillStyle.color || {red: (Math.random() * 256) | 0, green: (Math.random() * 256) | 0, blue: (Math.random() * 256) | 0, alpha: 255});
-            ctx.fill();
+            ctx.fillStyle = path.fillStyle.style;
+            var m = path.fillStyle.currentTransform;
+            if (m) {
+              ctx.save();
+              ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+              ctx.fill();
+              ctx.restore();
+            } else {
+              ctx.fill();
+            }
           }
           if (path.lineStyle) {
             ctx.lineWidth = path.lineStyle.width;
-            ctx.strokeStyle = toStringRgba(path.lineStyle.color || {red: (Math.random() * 256) | 0, green: (Math.random() * 256) | 0, blue: (Math.random() * 256) | 0, alpha: 255});
+            ctx.strokeStyle = path.lineStyle.style;
             ctx.stroke();
           }
           ctx.closePath();
