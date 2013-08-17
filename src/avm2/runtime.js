@@ -502,8 +502,8 @@ function initializeGlobalObject(global) {
   defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
 
-  defineNonEnumerableProperty(global.Object.prototype, "asGetNumericProperty", asGetNumericProperty);
-  defineNonEnumerableProperty(global.Object.prototype, "asSetNumericProperty", asSetNumericProperty);
+  defineNonEnumerableProperty(global.Array.prototype, "asGetNumericProperty", asGetNumericProperty);
+  defineNonEnumerableProperty(global.Array.prototype, "asSetNumericProperty", asSetNumericProperty);
 }
 
 initializeGlobalObject(jsGlobal);
