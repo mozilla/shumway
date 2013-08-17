@@ -81,13 +81,8 @@ var SpriteDefinition = (function () {
         props.name = cmd.name;
       if (cmd.hasRatio)
         props.ratio = cmd.ratio / 0xffff;
-      if (cmd.blend) {
-        props.blendMode = typeof blendModes[cmd.blendMode] !== "undefined" ?
-                            blendModes[cmd.blendMode] :
-                            "normal";
-      } else {
-        props.blendMode = "normal";
-      }
+      if (cmd.blend)
+        props.blendMode = cmd.blendMode;
 
       var child = {
         className: symbolInfo.className,

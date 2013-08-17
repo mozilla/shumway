@@ -239,8 +239,45 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
     ctx.globalAlpha *= child._alpha;
   }
 
-  if (child._blendModeCanvas !== "normal") {
-    ctx.globalCompositeOperation = child._blendModeCanvas;
+  var blendModeClass = flash.display.BlendMode.class;
+  if (child._blendMode !== blendModeClass.NORMAL) {
+    // TODO:
+    // blendModeClass.LAYER
+    // blendModeClass.SUBTRACT
+    // blendModeClass.INVERT
+    // blendModeClass.SHADER
+    switch (child._blendMode) {
+      case blendModeClass.MULTIPLY:
+        ctx.globalCompositeOperation = "multiply";
+        break;
+      case blendModeClass.SCREEN:
+        ctx.globalCompositeOperation = "screen";
+        break;
+      case blendModeClass.LIGHTEN:
+        ctx.globalCompositeOperation = "lighten";
+        break;
+      case blendModeClass.DARKEN:
+        ctx.globalCompositeOperation = "darken";
+        break;
+      case blendModeClass.DIFFERENCE:
+        ctx.globalCompositeOperation = "difference";
+        break;
+      case blendModeClass.ADD:
+        ctx.globalCompositeOperation = "lighter";
+        break;
+      case blendModeClass.ALPHA:
+        ctx.globalCompositeOperation = "destination-in";
+        break;
+      case blendModeClass.ERASE:
+        ctx.globalCompositeOperation = "destination-out";
+        break;
+      case blendModeClass.OVERLAY:
+        ctx.globalCompositeOperation = "overlay";
+        break;
+      case blendModeClass.HARDLIGHT:
+        ctx.globalCompositeOperation = "hard-light";
+        break;
+    }
   }
 
   if (child._graphics) {

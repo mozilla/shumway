@@ -21,7 +21,7 @@ var TRACE_SYMBOLS_INFO = false;
 
 var DisplayObjectDefinition = (function () {
 
-  var blendModeMap;
+  var blendModes;
 
   var nextInstanceId = 1;
   function generateName() {
@@ -36,11 +36,13 @@ var DisplayObjectDefinition = (function () {
     __class__: 'flash.display.DisplayObject',
 
     initialize: function () {
+      var blendModeClass = flash.display.BlendMode.class;
+
       this._alpha = 1;
       this._animated = false;
       this._bbox = null;
       this._bitmap = null;
-      this._blendMode = "normal";
+      this._blendMode = blendModeClass.NORMAL;
       this._bounds = null;
       this._cacheAsBitmap = false;
       this._children = [];
@@ -79,35 +81,30 @@ var DisplayObjectDefinition = (function () {
       this._width = null;
       this._height = null;
 
-      // Maps Flash blendMode to Canvas globalCompositeOperation blendMode
-      if (typeof blendModeMap === "undefined") {
-        var blendModeClass = flash.display.BlendMode.class;
-        blendModeMap = createEmptyObject();
-        blendModeMap[blendModeClass.NORMAL]     = "normal";
-        blendModeMap[blendModeClass.LAYER]      = false;
-        blendModeMap[blendModeClass.MULTIPLY]   = "multiply";
-        blendModeMap[blendModeClass.SCREEN]     = "screen";
-        blendModeMap[blendModeClass.LIGHTEN]    = "lighten";
-        blendModeMap[blendModeClass.DARKEN]     = "darken";
-        blendModeMap[blendModeClass.DIFFERENCE] = "difference";
-        blendModeMap[blendModeClass.ADD]        = false;
-        blendModeMap[blendModeClass.SUBTRACT]   = false;
-        blendModeMap[blendModeClass.INVERT]     = false;
-        blendModeMap[blendModeClass.ALPHA]      = false;
-        blendModeMap[blendModeClass.ERASE]      = false;
-        blendModeMap[blendModeClass.OVERLAY]    = "overlay";
-        blendModeMap[blendModeClass.HARDLIGHT]  = "hard-light";
-        blendModeMap[blendModeClass.SHADER]     = false;
-      }
-
-      // Mapped Canvas globalCompositeOperation blendMode
-      this._blendModeCanvas = "normal";
+      blendModes = [
+        blendModeClass.NORMAL,     // 0
+        blendModeClass.NORMAL,     // 1
+        blendModeClass.LAYER,      // 2
+        blendModeClass.MULTIPLY,   // 3
+        blendModeClass.SCREEN,     // 4
+        blendModeClass.LIGHTEN,    // 5
+        blendModeClass.DARKEN,     // 6
+        blendModeClass.DIFFERENCE, // 7
+        blendModeClass.ADD,        // 8
+        blendModeClass.SUBTRACT,   // 9
+        blendModeClass.INVERT,     // 10
+        blendModeClass.ALPHA,      // 11
+        blendModeClass.ERASE,      // 12
+        blendModeClass.OVERLAY,    // 13
+        blendModeClass.HARDLIGHT,  // 14
+        blendModeClass.SHADER
+      ];
 
       var s = this.symbol;
       if (s) {
         this._animated = s.animated || false;
         this._bbox = s.bbox || null;
-        this._blendMode = s.blendMode || "normal";
+        this._blendMode = blendModes[s.blendMode] || blendModeClass.NORMAL;
         this._children = s.children || [];
         this._clipDepth = s.clipDepth || null;
         this._cxform = s.cxform || null;
@@ -118,12 +115,6 @@ var DisplayObjectDefinition = (function () {
         this._parent = s.parent || null;
         this._root = s.root || null;
         this._stage = s.stage || null;
-
-        if (isString(blendModeMap[s.blendMode])) {
-          this._blendModeCanvas = blendModeMap[s.blendMode];
-        } else {
-          notImplemented("DisplayObject.blendMode: " + s.blendMode);
-        }
 
         var scale9Grid = s.scale9Grid;
         if (scale9Grid) {
@@ -368,14 +359,8 @@ var DisplayObjectDefinition = (function () {
       return this._blendMode;
     },
     set blendMode(val) {
-      if (typeof blendModeMap[val] !== "undefined") {
+      if (blendModes.indexOf(val) >= 0) {
         this._blendMode = val;
-        if (isString(blendModeMap[val])) {
-          // Flash blendMode maps directly to globalCompositeOperation
-          this._blendModeCanvas = blendModeMap[val];
-        } else {
-          notImplemented("DisplayObject.blendMode: " + val);
-        }
       } else {
         throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
       }
