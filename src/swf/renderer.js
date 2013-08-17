@@ -246,6 +246,9 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
     // blendModeClass.SUBTRACT
     // blendModeClass.INVERT
     // blendModeClass.SHADER
+    // blendModeClass.ADD (lighter)
+    // blendModeClass.ALPHA (destination-in)
+    // blendModeClass.ERASE (destination-out)
     switch (child._blendMode) {
       case blendModeClass.MULTIPLY:
         ctx.globalCompositeOperation = "multiply";
@@ -261,15 +264,6 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
         break;
       case blendModeClass.DIFFERENCE:
         ctx.globalCompositeOperation = "difference";
-        break;
-      case blendModeClass.ADD:
-        ctx.globalCompositeOperation = "lighter";
-        break;
-      case blendModeClass.ALPHA:
-        ctx.globalCompositeOperation = "destination-in";
-        break;
-      case blendModeClass.ERASE:
-        ctx.globalCompositeOperation = "destination-out";
         break;
       case blendModeClass.OVERLAY:
         ctx.globalCompositeOperation = "overlay";
