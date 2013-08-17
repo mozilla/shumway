@@ -251,5 +251,13 @@
          "swfs/timeline/scene/Scene_6_GotoAndPlay_FrameScene.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "blendmode_trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/blendmode/blendmode_1.swf",
+         "swfs/blendmode/blendmode_2.swf"
+       ],
+       "type": "stas"
     }
 ]

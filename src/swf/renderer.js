@@ -249,6 +249,39 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
     return;
   }
 
+  var blendModeClass = flash.display.BlendMode.class;
+  if (child._blendMode !== blendModeClass.NORMAL) {
+
+    // TODO:
+
+    // These Flash blend modes have no canvas equivalent:
+    // - blendModeClass.SUBTRACT
+    // - blendModeClass.INVERT
+    // - blendModeClass.SHADER
+    // - blendModeClass.ADD
+
+    // These blend modes are actually Porter-Duff compositing operators.
+    // The backdrop is the nearest parent with blendMode set to LAYER.
+    // When there is no LAYER parent, they are ignored (treated as NORMAL).
+    // - blendModeClass.ALPHA (destination-in)
+    // - blendModeClass.ERASE (destination-out)
+    // - blendModeClass.LAYER [defines backdrop]
+
+    var blendModeCanvas;
+    switch (child._blendMode) {
+      case blendModeClass.MULTIPLY:   blendModeCanvas = "multiply";        break;
+      case blendModeClass.SCREEN:     blendModeCanvas = "screen";          break;
+      case blendModeClass.LIGHTEN:    blendModeCanvas = "lighten";         break;
+      case blendModeClass.DARKEN:     blendModeCanvas = "darken";          break;
+      case blendModeClass.DIFFERENCE: blendModeCanvas = "difference";      break;
+      case blendModeClass.OVERLAY:    blendModeCanvas = "overlay";         break;
+      case blendModeClass.HARDLIGHT:  blendModeCanvas = "hard-light";      break;
+    }
+    if (blendModeCanvas !== undefined) {
+      ctx.globalCompositeOperation = blendModeCanvas;
+    }
+  }
+
   if (child._graphics) {
     var graphics = child._graphics;
 
