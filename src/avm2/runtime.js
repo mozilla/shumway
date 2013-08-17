@@ -322,7 +322,8 @@ function asCallProperty(namespaces, name, flags, isLex, args) {
       method = this.asGetNumericProperty(resolved);
     } else {
       var openMethods = this[VM_OPEN_METHODS];
-      if (openMethods && openMethods[resolved]) {
+      // TODO: Find out why this doesn't work when passing null as this.
+      if (false && openMethods && openMethods[resolved]) {
         method = openMethods[resolved];
       } else {
         method = this[resolved];
