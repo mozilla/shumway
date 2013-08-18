@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global fail, push */
+/*global fail, push, cloneObject */
 
 var GRAPHICS_FILL_CLIPPED_BITMAP               = 65;
 var GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT        = 19;
@@ -66,7 +66,8 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
       targetSegment.data = [];
       targetSegment.morphData = isMorph ? [] : null;
     } else {
-      targetSegment = path.addSegment([], [], isMorph ? [] : null);
+      targetSegment = path.addSegment([], [], isMorph ? [] : null,
+                                      segment.bounds);
     }
 
     // For reversing the fill0 segments, we rely on the fact that each segment
@@ -102,7 +103,7 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
   if (styles.line && styles.fill1)
   {
     path = linePaths[styles.line - 1];
-    path.addSegment(commands, data, morphData);
+    path.addSegment(commands, data, morphData, segment.bounds);
   }
 }
 
@@ -130,6 +131,8 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
   //TODO: remove the `- 1` once we stop even parsing the EOS record
   var numRecords = records.length - 1;
   var morphsOffset = 0;
+  // TODO: probably add morphBounds
+  var bounds = null;
   var x = 0;
   var y = 0;
   var morphX = 0;
@@ -175,8 +178,6 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         path = fillPaths[styles.fill0 - 1];
       }
 
-      segment = path.addSegment([], [], isMorph ? [] : null);
-
       if (record.move) {
         x = record.moveX|0;
         y = record.moveY|0;
@@ -187,6 +188,9 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       } else if (isMorph) {
         morphsOffset++;
       }
+
+      bounds = {minX: x, minY: y, maxX: x, maxY: y};
+      segment = path.addSegment([], [], isMorph ? [] : null, bounds);
 
       // Move or not, we want this path segment to start where the last one left
       // off. Even if the last one belonged to a different style.
@@ -199,29 +203,62 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       assert(record.type === 1);
       assert(segment);
       if (record.isStraight) {
-        x += record.deltaX|0;
-        y += record.deltaY|0;
+        x = (x + record.deltaX)|0;
+        y = (y + record.deltaY)|0;
+        if (x < bounds.minX) {
+          bounds.minX = x;
+        } else if (x > bounds.maxX) {
+          bounds.maxX = x;
+        }
+        if (y < bounds.minY) {
+          bounds.minY = y;
+        } else if (y > bounds.maxY) {
+          bounds.maxY = y;
+        }
+
         segment.commands.push(GRAPHICS_PATH_COMMAND_LINE_TO);
         segment.data.push(x, y);
         if (isMorph) {
-          morphX += morphRecord.deltaX|0;
-          morphY += morphRecord.deltaY|0;
+          morphX = (morphX + morphRecord.deltaX)|0;
+          morphY = (morphY + morphRecord.deltaY)|0;
           segment.morphData.push(morphX, morphY);
         }
       } else {
         segment.commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
-        x += record.controlDeltaX|0;
-        y += record.controlDeltaY|0;
+        x = (x + record.controlDeltaX)|0;
+        y = (y + record.controlDeltaY)|0;
+        if (x < bounds.minX) {
+          bounds.minX = x;
+        } else if (x > bounds.maxX) {
+          bounds.maxX = x;
+        }
+        if (y < bounds.minY) {
+          bounds.minY = y;
+        } else if (y > bounds.maxY) {
+          bounds.maxY = y;
+        }
+
         segment.data.push(x, y);
-        x += record.anchorDeltaX|0;
-        y += record.anchorDeltaY|0;
+        x = (x + record.anchorDeltaX)|0;
+        y = (y + record.anchorDeltaY)|0;
+        if (x < bounds.minX) {
+          bounds.minX = x;
+        } else if (x > bounds.maxX) {
+          bounds.maxX = x;
+        }
+        if (y < bounds.minY) {
+          bounds.minY = y;
+        } else if (y > bounds.maxY) {
+          bounds.maxY = y;
+        }
+
         segment.data.push(x, y);
         if (isMorph) {
-          morphX += morphRecord.controlDeltaX|0;
-          morphY += morphRecord.controlDeltaY|0;
+          morphX = (morphX + morphRecord.controlDeltaX)|0;
+          morphY = (morphY + morphRecord.controlDeltaY)|0;
           segment.morphData.push(morphX, morphY);
-          morphX += morphRecord.anchorDeltaX|0;
-          morphY += morphRecord.anchorDeltaY|0;
+          morphX = (morphX + morphRecord.anchorDeltaX)|0;
+          morphY = (morphY + morphRecord.anchorDeltaY)|0;
           segment.morphData.push(morphX, morphY);
         }
       }
@@ -307,7 +344,7 @@ function segmentedPathToShapePath(path, isMorph) {
   }
 
   var totalCommandsLength = -skippedMoves;
-  var totalDataLength = -skippedMoves * 2;
+  var totalDataLength = -skippedMoves << 1;
   current = finalRoot;
   while (current) {
     totalCommandsLength += current.commands.length;
@@ -315,14 +352,16 @@ function segmentedPathToShapePath(path, isMorph) {
     current = current.next;
   }
 
-  var shape = new ShapePath(path.fillStyle, path.lineStyle,
-                            totalCommandsLength, totalDataLength, isMorph);
+  var pathBounds = cloneObject(finalRoot.bounds);
+  var shape = new ShapePath(path.fillStyle, path.lineStyle, totalCommandsLength,
+                            totalDataLength, pathBounds, isMorph);
   var allCommands = shape.commands;
   var allData = shape.data;
   var allMorphData = shape.morphData;
 
   var commandsIndex = 0;
   var dataIndex = 0;
+
 
   current = finalRoot;
   while (current) {
@@ -342,11 +381,22 @@ function segmentedPathToShapePath(path, isMorph) {
     for (var i = offset; i < commands.length; i++, commandsIndex++) {
       allCommands[commandsIndex] = commands[i];
     }
-    for (i = offset * 2; i < data.length; i++, dataIndex++) {
+    for (i = offset << 1; i < data.length; i++, dataIndex++) {
       allData[dataIndex] = data[i];
       if (isMorph) {
         allMorphData[dataIndex] = morphData[i];
       }
+    }
+    var bounds = current.bounds;
+    if (bounds.minX < pathBounds.minX) {
+      pathBounds.minX = bounds.minX;
+    } else if (bounds.maxX > pathBounds.maxX) {
+      pathBounds.maxX = bounds.maxX;
+    }
+    if (bounds.minY < pathBounds.minY) {
+      pathBounds.minY = bounds.minY;
+    } else if (bounds.maxY > pathBounds.maxY) {
+      pathBounds.maxY = bounds.maxY;
     }
     current = current.next;
   }
@@ -453,12 +503,12 @@ function SegmentedPath(fillStyle, lineStyle) {
   this._head = null;
 }
 SegmentedPath.prototype = {
-  addSegment: function(commands, data, morphData)
+  addSegment: function (commands, data, morphData, bounds)
   {
     assert(commands);
     assert(data);
     var segment = {commands: commands, data: data, morphData: morphData,
-                   prev: this._head, next: null};
+                   bounds: bounds, prev: this._head, next: null};
     if (this._head) {
       this._head.next = segment;
     }
@@ -495,15 +545,20 @@ SegmentedPath.prototype = {
   }
 }
 
-function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph) {
+function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, bounds,
+                   isMorph)
+{
   this.fillStyle = fillStyle;
   this.lineStyle = lineStyle;
 
   // TODO: turn into typed arrays
   this.commands = new Uint8Array(commandsCount);
   this.data = new Int32Array(dataLength);
+  this.bounds = bounds;
+
   this.isMorph = isMorph;
   this.morphData = isMorph ? new Int32Array(dataLength) : null;
+
   this.isShapePath = true;
 }
 
