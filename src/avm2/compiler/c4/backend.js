@@ -459,12 +459,12 @@
     if (this.isIndexed) {
       assert (this.isMethod === false);
       if (this.isIndexed) {
-        return call(property(object, "indexGet"), [compileValue(this.name.name, cx)]);
+        return call(property(object, "asGetNumericProperty"), [compileValue(this.name.name, cx)]);
       }
     }
     var name = compileMultiname(this.name, cx);
     var isMethod = new Literal(this.isMethod);
-    return call(property(object, "getMultinameProperty"), name.concat(isMethod));
+    return call(property(object, "asGetProperty"), name.concat(isMethod));
   };
 
   IR.Latch.prototype.compile = function (cx) {
@@ -515,7 +515,7 @@
     var args = this.arguments.map(function (arg) {
       return compileValue(arg, cx);
     });
-    return call(property(object, "callMultinameProperty"), name.concat([new Literal(this.isLex), new ArrayExpression(args)]));
+    return call(property(object, "asCallProperty"), name.concat([new Literal(this.isLex), new ArrayExpression(args)]));
   };
 
   IR.Call.prototype.compile = function (cx) {
@@ -569,22 +569,22 @@
     var object = compileValue(this.object, cx);
     var value = compileValue(this.value, cx);
     if (this.isIndexed) {
-      return call(property(object, "indexSet"), [compileValue(this.name.name, cx), value]);
+      return call(property(object, "asSetNumericProperty"), [compileValue(this.name.name, cx), value]);
     }
     var name = compileMultiname(this.name, cx);
-    return call(property(object, "setMultinameProperty"), name.concat(value));
+    return call(property(object, "asSetProperty"), name.concat(value));
   };
 
   IR.AVM2DeleteProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
-    return call(property(object, "deleteMultinameProperty"), name);
+    return call(property(object, "asDeleteProperty"), name);
   };
 
   IR.AVM2HasProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
-    return call(property(object, "hasMultinameProperty"), name);
+    return call(property(object, "asHasProperty"), name);
   };
 
   IR.GlobalProperty.prototype.compile = function (cx) {

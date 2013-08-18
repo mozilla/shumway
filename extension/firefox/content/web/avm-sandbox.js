@@ -120,11 +120,29 @@ function runViewer() {
   }
   var showURLMenu = document.getElementById('showURLMenu');
   showURLMenu.addEventListener('click', showURL);
+
+  document.getElementById('copyProfileMenu').addEventListener('click', copyProfile);
 }
 
 function showURL() {
   var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
   window.prompt("Copy to clipboard", flashParams.url);
+}
+
+function copyProfile() {
+  function toArray(v) {
+    var array = [];
+    for (var i = 0; i < v.length; i++) {
+      array.push(v[i]);
+    }
+    return array;
+  }
+  var profile = {
+    loops: {counts: toArray($L), lines: $LL},
+    functions: {counts: toArray($F), lines: $FL},
+    allocations: {counts: toArray($A), lines: $AL}
+  };
+  FirefoxCom.request('unsafeSetClipboard', JSON.stringify(profile));
 }
 
 var movieUrl, movieParams, objectParams;

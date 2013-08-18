@@ -20,15 +20,15 @@
 
 function proxyNativeProperty(propertyName) {
   return {
-    get: function getter() { return this.$nativeObject.getMultinameProperty(undefined, propertyName, 0); },
-    set: function setter(value) { this.$nativeObject.setMultinameProperty(undefined, propertyName, 0, value); },
+    get: function getter() { return this.$nativeObject.asGetPublicProperty(propertyName); },
+    set: function setter(value) { this.$nativeObject.asSetPublicProperty(propertyName, value); },
     enumerable: true
   };
 }
 
 function proxyNativeReadonlyProperty(propertyName) {
   return {
-    get: function getter() { return this.$nativeObject.getMultinameProperty(undefined, propertyName, 0); },
+    get: function getter() { return this.$nativeObject.asGetPublicProperty(propertyName); },
     enumerable: true
   };
 }
@@ -36,7 +36,7 @@ function proxyNativeReadonlyProperty(propertyName) {
 function proxyNativeMethod(methodName) {
   return {
     value: function proxyMethod(id) {
-      return this.$nativeObject.callMultinameProperty(undefined, methodName,
+      return this.$nativeObject.asCallProperty(undefined, methodName,
         0, true, arguments);
     },
     enumerable: true
@@ -424,11 +424,11 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   localToGlobal: {
     value: function localToGlobal(pt) {
       var tmp = new flash.geom.Point(
-        pt.getMultinameProperty(undefined, 'x', 0),
-        pt.getMultinameProperty(undefined, 'y', 0));
+        pt.asGetPublicProperty('x'),
+        pt.asGetPublicProperty('y'));
       tmp = this.$nativeObject.localToGlobal(tmp);
-      pt.setMultinameProperty(undefined, 'x', 0, tmp.x);
-      pt.setMultinameProperty(undefined, 'y', 0, tmp.y);
+      pt.asSetPublicProperty('x', tmp.x);
+      pt.asSetPublicProperty('y', tmp.y);
     },
     enumerable: true
   },
@@ -1202,58 +1202,58 @@ defineObjectProperties(AS2Stage, {
   },
   align: {
     get: function get$align() {
-      return this.$stage.getMultinameProperty(undefined, 'align', 0);
+      return this.$stage.asGetPublicProperty('align');
     },
     set: function set$align(value) {
-      this.$stage.setMultinameProperty(undefined, 'align', 0, value);
+      this.$stage.asSetPublicProperty('align', value);
     },
     enumerable: true
   },
   displayState: {
     get: function get$displayState() {
-      return this.$stage.getMultinameProperty(undefined, 'displayState', 0);
+      return this.$stage.asGetPublicProperty('displayState');
     },
     set: function set$displayState(value) {
-      this.$stage.setMultinameProperty(undefined, 'displayState', 0, value);
+      this.$stage.asSetPublicProperty('displayState', value);
     },
     enumerable: true
   },
   fullScreenSourceRect: {
     get: function get$fullScreenSourceRect() {
-      return this.$stage.getMultinameProperty(undefined, 'fullScreenSourceRect', 0);
+      return this.$stage.asGetPublicProperty('fullScreenSourceRect');
     },
     set: function set$fullScreenSourceRect(value) {
-      this.$stage.setMultinameProperty(undefined, 'fullScreenSourceRect', 0, value);
+      this.$stage.asSetPublicProperty('fullScreenSourceRect', value);
     },
     enumerable: true
   },
   height: {
     get: function get$height() {
-      return this.$stage.getMultinameProperty(undefined, 'stageHeight', 0);
+      return this.$stage.asGetPublicProperty('stageHeight');
     },
     enumerable: true
   },
   scaleMode: {
     get: function get$scaleMode() {
-      return this.$stage.getMultinameProperty(undefined, 'scaleMode', 0);
+      return this.$stage.asGetPublicProperty('scaleMode');
     },
     set: function set$scaleMode(value) {
-      this.$stage.setMultinameProperty(undefined, 'scaleMode', 0, value);
+      this.$stage.asSetPublicProperty('scaleMode', value);
     },
     enumerable: true
   },
   showMenu: {
     get: function get$showMenu() {
-      return this.$stage.getMultinameProperty(undefined, 'showDefaultContextMenu', 0);
+      return this.$stage.asGetPublicProperty('showDefaultContextMenu');
     },
     set: function set$showMenu(value) {
-      this.$stage.setMultinameProperty(undefined, 'showDefaultContextMenu', 0, value);
+      this.$stage.asSetPublicProperty('showDefaultContextMenu', value);
     },
     enumerable: true
   },
   width: {
     get: function get$width() {
-      return this.$stage.getMultinameProperty(undefined, 'stageWidth', 0);
+      return this.$stage.asGetPublicProperty('stageWidth');
     },
     enumerable: true
   }
@@ -1307,10 +1307,10 @@ function AS2Object() {}
 defineObjectProperties(AS2Object, {
   $install: {
     value: function(ObjectClass) {
-      var proto = ObjectClass.getMultinameProperty(undefined, 'prototype', 0);
-      proto.defineMultinameProperty(undefined, 'addProperty', 0,
+      var proto = ObjectClass.asGetPublicProperty('prototype');
+      proto.asDefinePublicProperty('addProperty',
         Object.getOwnPropertyDescriptor(AS2Object, 'addProperty'));
-      proto.defineMultinameProperty(undefined, 'registerClass', 0,
+      proto.asDefinePublicProperty('registerClass',
         Object.getOwnPropertyDescriptor(AS2Object, 'registerClass'));
     }
   },

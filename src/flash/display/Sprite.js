@@ -207,18 +207,18 @@ var SpriteDefinition = (function () {
           }
           while (targetPath.length > 0) {
             var childName = targetPath.shift();
-            clip = clip.getMultinameProperty(undefined, childName, 0) || clip[childName];
+            clip = clip.asGetPublicProperty(childName) || clip[childName];
             if (!clip) {
               throw new Error('Cannot find ' + childName + ' variable');
             }
           }
         } else
           clip = instance._getAS2Object();
-        if (!clip.hasMultinameProperty(undefined, variableName, 0)) {
-          clip.setMultinameProperty(undefined, variableName, 0, instance.text);
+        if (!clip.asHasProperty(undefined, variableName, 0)) {
+          clip.asSetPublicProperty(variableName, instance.text);
         }
         instance._addEventListener('constructFrame', function() {
-          instance.text = clip.getMultinameProperty(undefined, variableName, 0);
+          instance.text = clip.asGetPublicProperty(variableName);
         });
       }
 
@@ -251,7 +251,7 @@ var SpriteDefinition = (function () {
       }
 
       if (name) {
-        this._getAS2Object().setMultinameProperty(undefined, name, 0,
+        this._getAS2Object().asSetProperty(undefined, name, 0,
           instance._getAS2Object());
       }
     },

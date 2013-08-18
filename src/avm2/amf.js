@@ -85,7 +85,7 @@ var AMFUtils = (function AMFUtilsClosure() {
   }
 
   function setAvmProperty(obj, propertyName, value) {
-    obj.setMultinameProperty(undefined, propertyName, 0, value);
+    obj.asSetPublicProperty(propertyName, value);
   }
 
   var amf0 = {

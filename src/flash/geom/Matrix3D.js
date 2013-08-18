@@ -266,7 +266,7 @@ var Matrix3DDefinition = (function () {
                 m31 = m[2], m32 = m[6], m33 = m[10], m34 = m[14],
                 m41 = m[3], m42 = m[7], m43 = m[11], m44 = m[15];
             for (var i = 0; i < vin.length - 2; i += 3) {
-              var x = vin.indexGet(i), y = vin.indexGet(i + 1), z = vin.indexGet(i + 2);
+              var x = vin.asGetNumericProperty(i), y = vin.asGetNumericProperty(i + 1), z = vin.asGetNumericProperty(i + 2);
 
               vout.push(m11 * x + m12 * y + m13 * z + m14);
               vout.push(m21 * x + m22 * y + m23 * z + m24);
@@ -296,11 +296,11 @@ var Matrix3DDefinition = (function () {
             var m = this._matrix;
             if (transpose) {
               for (var i = 0, j = index | 0; i < 16; i++, j++) {
-                vector.indexSet(j, m[transposeTransform[i]]);
+                vector.asSetNumericProperty(j, m[transposeTransform[i]]);
               }
             } else {
               for (var i = 0, j = index | 0; i < 16; i++, j++) {
-                vector.indexSet(j, m[i]);
+                vector.asSetNumericProperty(j, m[i]);
               }
             }
           },
@@ -308,11 +308,11 @@ var Matrix3DDefinition = (function () {
             var m = this._matrix;
             if (transpose) {
               for (var i = 0, j = index | 0; i < 16; i++, j++) {
-                m[transposeTransform[i]] = vector.indexGet(j) || 0; // removing NaN
+                m[transposeTransform[i]] = vector.asGetNumericProperty(j) || 0; // removing NaN
               }
             } else {
               for (var i = 0, j = index | 0; i < 16; i++, j++) {
-                m[i] = vector.indexGet(j) || 0; // removing NaN
+                m[i] = vector.asGetNumericProperty(j) || 0; // removing NaN
               }
             }
           },

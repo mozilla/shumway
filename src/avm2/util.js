@@ -1416,3 +1416,8 @@ function dumpBytes(buffer, start, length) {
   return s;
 }      
 
+function addProfileMarker(marker) {
+  if (typeof FirefoxCom !== "undefined") {
+    FirefoxCom.requestSync('addProfilerMarker', marker );
+  }
+}
