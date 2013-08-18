@@ -322,8 +322,9 @@ function asCallProperty(namespaces, name, flags, isLex, args) {
       method = this.asGetNumericProperty(resolved);
     } else {
       var openMethods = this[VM_OPEN_METHODS];
-      // TODO: Find out why this doesn't work when passing null as this.
-      if (false && openMethods && openMethods[resolved]) {
+      // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to work
+      // when using memoizers because the function gets bound to |this|.
+      if (receiver && openMethods && openMethods[resolved]) {
         method = openMethods[resolved];
       } else {
         method = this[resolved];
@@ -503,8 +504,21 @@ function initializeGlobalObject(global) {
   defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
 
-  defineNonEnumerableProperty(global.Array.prototype, "asGetNumericProperty", asGetNumericProperty);
-  defineNonEnumerableProperty(global.Array.prototype, "asSetNumericProperty", asSetNumericProperty);
+  [
+    "Array",
+    "Int8Array",
+    "Uint8Array",
+    "Uint8ClampedArray",
+    "Int16Array",
+    "Uint16Array",
+    "Int32Array",
+    "Uint32Array",
+    "Float32Array",
+    "Float64Array"
+  ].forEach(function (name) {
+    defineNonEnumerableProperty(global[name].prototype, "asGetNumericProperty", asGetNumericProperty);
+    defineNonEnumerableProperty(global[name].prototype, "asSetNumericProperty", asSetNumericProperty);
+  });
 }
 
 initializeGlobalObject(jsGlobal);
