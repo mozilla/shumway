@@ -202,8 +202,8 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       assert(record.type === 1);
       assert(segment);
       if (record.isStraight) {
-        x = (x + record.deltaX)|0;
-        y = (y + record.deltaY)|0;
+        x += record.deltaX|0;
+        y += record.deltaY|0;
         if (x < bounds.minX) {
           bounds.minX = x;
         } else if (x > bounds.maxX) {
@@ -224,8 +224,8 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         }
       } else {
         segment.commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
-        x = (x + record.controlDeltaX)|0;
-        y = (y + record.controlDeltaY)|0;
+        x += record.controlDeltaX|0;
+        y += record.controlDeltaY|0;
         if (x < bounds.minX) {
           bounds.minX = x;
         } else if (x > bounds.maxX) {
@@ -238,8 +238,8 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         }
 
         segment.data.push(x, y);
-        x = (x + record.anchorDeltaX)|0;
-        y = (y + record.anchorDeltaY)|0;
+        x += record.anchorDeltaX|0;
+        y += record.anchorDeltaY|0;
         if (x < bounds.minX) {
           bounds.minX = x;
         } else if (x > bounds.maxX) {
@@ -581,14 +581,14 @@ ShapePath.prototype = {
     this.commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
     this.data.push(controlX, controlY, anchorX, anchorY);
   },
-  isPointInPath: function(pt) {
+  isPointInPath: function(x, y) {
     var bounds = this.bounds;
-    if (pt.x < bounds.minX || pt.x > bounds.maxX ||
-        pt.y < bounds.minY || pt.y > bounds.maxY)
+    if (x < bounds.minX || x > bounds.maxX ||
+        y < bounds.minY || y > bounds.maxY)
     {
       return false;
     }
-    return true;
+    return this.fillStyle !== null;
   },
   toString: function() {
     var out = 'ShapePath [\n';
