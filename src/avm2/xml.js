@@ -545,26 +545,26 @@ var XMLParser;
   }
 
 
-  function getMultinameProperty(namespaces, name, flags, isMethod) {
+  function asGetProperty(namespaces, name, flags, isMethod) {
     var mn = isNumeric(name) ? Number(name) : new Multiname(namespaces, name, flags);
     return this.getProperty(mn, isMethod);
   }
 
-  function setMultinameProperty(namespaces, name, flags, value) {
+  function asSetProperty(namespaces, name, flags, value) {
     var mn = isNumeric(name) ? Number(name) : new Multiname(namespaces, name, flags);
     this.setProperty(mn, value);
   }
 
-  function hasMultinameProperty(namespaces, name, flags) {
+  function asHasProperty(namespaces, name, flags) {
     var mn = isNumeric(name) ? Number(name) : new Multiname(namespaces, name, flags);
     return this.hasProperty(mn);
   }
 
-  function callMultinameProperty(namespaces, name, flags, isLex, args) {
+  function asCallProperty(namespaces, name, flags, isLex, args) {
     var receiver = isLex ? null : this;
-    var property = this.getMultinameProperty(namespaces, name, flags, true);
+    var property = this.asGetProperty(namespaces, name, flags, true);
     if (!property) {
-      return this.toString().callMultinameProperty(namespaces, name, flags, isLex, args);
+      return this.toString().asCallProperty(namespaces, name, flags, isLex, args);
     }
     return property.apply(receiver, args);
   }
@@ -854,10 +854,10 @@ var XMLParser;
       return;
     };
 
-    Xp.getMultinameProperty = getMultinameProperty;
-    Xp.setMultinameProperty = setMultinameProperty;
-    Xp.hasMultinameProperty = hasMultinameProperty;
-    Xp.callMultinameProperty = callMultinameProperty;
+    Xp.asGetProperty = asGetProperty;
+    Xp.asSetProperty = asSetProperty;
+    Xp.asHasProperty = asHasProperty;
+    Xp.asCallProperty = asCallProperty;
 
     // 9.1.1.1 XML.[[Get]] (P)
     Xp.getProperty = function (mn, isMethod) {
@@ -1388,10 +1388,10 @@ var XMLParser;
       return result;
     }
 
-    XLp.getMultinameProperty = getMultinameProperty;
-    XLp.setMultinameProperty = setMultinameProperty;
-    XLp.hasMultinameProperty = hasMultinameProperty;
-    XLp.callMultinameProperty = callMultinameProperty;
+    XLp.asGetProperty = asGetProperty;
+    XLp.asSetProperty = asSetProperty;
+    XLp.asHasProperty = asHasProperty;
+    XLp.asCallProperty = asCallProperty;
 
     XLp.setProperty = function (mn, v, isMethod) {
       var x, i, r;

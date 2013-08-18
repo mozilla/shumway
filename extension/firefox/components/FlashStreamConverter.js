@@ -45,6 +45,8 @@ let Svc = {};
 XPCOMUtils.defineLazyServiceGetter(Svc, 'mime',
                                    '@mozilla.org/mime;1', 'nsIMIMEService');
 
+let profiler = Cc["@mozilla.org/tools/profiler;1"].getService(Ci.nsIProfiler);
+
 function getBoolPref(pref, def) {
   try {
     return Services.prefs.getBoolPref(pref);
@@ -187,6 +189,9 @@ ChromeActions.prototype = {
       verifier: getBoolPref('shumway.verifier', true)
     });
   },
+  addProfilerMarker: function (marker) {
+    profiler.AddMarker(marker);
+  },
   getPluginParams: function getPluginParams() {
     return JSON.stringify({
       url: this.url,
@@ -323,6 +328,13 @@ ChromeActions.prototype = {
 
     let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"]
                       .getService(Ci.nsIClipboardHelper);
+    clipboard.copyString(data);
+  },
+  unsafeSetClipboard: function (data) {
+    if (typeof data !== 'string') {
+      return;
+    }
+    let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
     clipboard.copyString(data);
   },
   endActivation: function () {

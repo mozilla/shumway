@@ -27,8 +27,8 @@ function ASSetPropFlags(obj, children, flags, allowFalse) {
 function wrapAS2Class(container, className, fn) {
   function proxyForProperty(obj, name, target) {
     Object.defineProperty(obj, name, {
-      get: function () { return this.getMultinameProperty(undefined, name, 0); },
-      set: function (value) { this.setMultinameProperty(undefined, name, 0, value); },
+      get: function () { return this.asGetPublicProperty(name); },
+      set: function (value) { this.asSetPublicProperty(name, value); },
       enumerable: true,
       configurable: true
     });
@@ -45,7 +45,7 @@ function wrapAS2Class(container, className, fn) {
     if (!desc) {
       continue;
     }
-    c.defineMultinameProperty(undefined, i, 0, desc);
+    c.asDefinePublicProperty(i, desc);
     proxyForProperty(c, i);
   }
   internalAS2Properties = fn.$$internalAS2Properties;
@@ -55,13 +55,13 @@ function wrapAS2Class(container, className, fn) {
       Object.defineProperty(c, internalAS2Properties[j], desc);
     }
   }
-  proto = c.getMultinameProperty(undefined, 'prototype', 0);
+  proto = c.asGetPublicProperty('prototype');
   for (i in fn.prototype) {
     desc = Object.getOwnPropertyDescriptor(fn.prototype, i);
     if (!desc) {
       continue;
     }
-    proto.defineMultinameProperty(undefined, i, 0, desc);
+    proto.asDefinePublicProperty(i, desc);
     proxyForProperty(c.prototype, i);
   }
   internalAS2Properties = fn.prototype.$$internalAS2Properties;
@@ -100,7 +100,7 @@ AS2Globals.create = function (context) {
   wrapAS2Class(container, 'AS2Globals', AS2Globals);
   AS2Globals.create = function (context) {
     var globals = new container.AS2Globals();
-    globals.setMultinameProperty(undefined, '_global', 0, globals);
+    globals.asSetPublicProperty('_global', globals);
     return globals;
   };
   return AS2Globals.create(context);
@@ -138,7 +138,7 @@ AS2Globals.prototype = {
   },
   getAS2Property: function(target, index) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
-    return nativeTarget.getMultinameProperty(undefined, PropertiesIndexMap[index], 0);
+    return nativeTarget.asGetPublicProperty(PropertiesIndexMap[index]);
   },
   getTimer: function() {
     var getTimer = avm2.applicationDomain.getProperty(
@@ -294,7 +294,7 @@ AS2Globals.prototype = {
   },
   setAS2Property: function(target, index, value) {
     var nativeTarget = AS2Context.instance.resolveTarget(target);
-    nativeTarget.setMultinameProperty(undefined, PropertiesIndexMap[index], 0, value);
+    nativeTarget.asSetPublicProperty(PropertiesIndexMap[index], value);
   },
   setTimeout: function () {
     var setTimeout = avm2.applicationDomain.getProperty(

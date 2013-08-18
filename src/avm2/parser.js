@@ -150,6 +150,18 @@ var AbcStream = (function () {
     }
   };
 
+  /**
+   * Use the TextDecoder API whenever available.
+   * http://encoding.spec.whatwg.org/#concept-encoding-get
+   */
+  if (typeof TextDecoder !== "undefined") {
+    var decoder = new TextDecoder();
+    abcStream.prototype.readUTFString = function (length) {
+      var pos = this.pos;
+      this.pos += length;
+      return decoder.decode(this.bytes.subarray(pos, pos + length));
+    };
+  }
   return abcStream;
 })();
 
