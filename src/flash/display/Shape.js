@@ -32,6 +32,7 @@ var ShapeDefinition = (function () {
         graphics._scale = 0.05;
         if (this._stage && this._stage._quality === 'low' && !graphics._bitmap)
           graphics._cacheAsBitmap(this._bbox);
+        this.ratio = s.ratio || 0;
       }
     }
   };

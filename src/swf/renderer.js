@@ -241,7 +241,7 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
       ctx.translate(child._bbox.left, child._bbox.top);
       ctx.drawImage(graphics._bitmap, 0, 0);
     } else {
-      graphics.draw(ctx, child.ratio);
+      graphics.draw(ctx, clip, child.ratio);
     }
   }
 

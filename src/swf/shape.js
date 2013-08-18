@@ -41,29 +41,32 @@ var GRAPHICS_PATH_COMMAND_CURVE_TO       = 3;
  * and have to duplicate them for the other styles. The order is: fill1, line,
  * fill0.
  */
-function applySegmentToStyles(segment, styles, linePaths, fillPaths)
+function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
 {
   if (!segment) {
     return;
   }
   var commands = segment.commands;
   var data = segment.data;
+  var morphData = segment.morphData;
   assert(commands);
   assert(data);
+  assert(isMorph === (morphData !== null));
   var path;
   var targetSegment;
   var command;
   var i;
   if (styles.fill0) {
     path = fillPaths[styles.fill0 - 1];
-    // If fill0 is the only style, we have pushed the segment to it's stack. In
+    // If fill0 is the only style, we have pushed the segment to its stack. In
     // that case, we have to replace its commands and data in place.
     if (!(styles.fill1 || styles.line)) {
       targetSegment = path.head();
       targetSegment.commands = [];
       targetSegment.data = [];
+      targetSegment.morphData = isMorph ? [] : null;
     } else {
-      targetSegment = path.addSegment();
+      targetSegment = path.addSegment([], [], isMorph ? [] : null);
     }
 
     // For reversing the fill0 segments, we rely on the fact that each segment
@@ -74,6 +77,7 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths)
     // the ones from the original first moveTo.
     var targetCommands = targetSegment.commands;
     var targetData = targetSegment.data;
+    var targetMorphData = targetSegment.morphData;
     targetCommands.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
     var j = data.length - 2;
     targetData.push(data[j], data[j + 1]);
@@ -85,13 +89,20 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths)
         targetData.push(data[j - 4], data[j - 3]);
         j -= 2;
       }
+      if (isMorph) {
+        targetMorphData.push(morphData[j - 2], morphData[j - 1]);
+        if (command === GRAPHICS_PATH_COMMAND_CURVE_TO) {
+          targetMorphData.push(morphData[j - 4], morphData[j - 3]);
+          j -= 2;
+        }
+      }
     }
     assert(j === 0);
   }
   if (styles.line && styles.fill1)
   {
     path = linePaths[styles.line - 1];
-    path.addSegment(commands, data);
+    path.addSegment(commands, data, morphData);
   }
 }
 
@@ -103,8 +114,9 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths)
  * http://wahlers.com.br/claus/blog/hacking-swf-1-shapes-in-flash/ for details.
  */
 function convertRecordsToStyledPaths(records, fillPaths, linePaths,
-                                     dictionary, dependencies)
+                                     dictionary, dependencies, recordsMorph)
 {
+  var isMorph = recordsMorph !== null;
   var styles = {fill0: 0, fill1: 0, line: 0};
   var segment = null;
 
@@ -117,15 +129,22 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
 
   //TODO: remove the `- 1` once we stop even parsing the EOS record
   var numRecords = records.length - 1;
+  var morphsOffset = 0;
   var x = 0;
   var y = 0;
+  var morphX = 0;
+  var morphY = 0;
   for (var i = 0; i < numRecords; i++) {
     var record = records[i];
+    var morphRecord;
+    if (isMorph) {
+      morphRecord = recordsMorph[i - morphsOffset];
+    }
     // type 0 is a StyleChange record
     if (record.type === 0) {
       //TODO: make the `has*` fields bitflags
       if (segment) {
-        applySegmentToStyles(segment, styles, linePaths, fillPaths);
+        applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph);
       }
 
       if (record.hasNewStyles) {
@@ -155,11 +174,18 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       } else if (styles.fill0) {
         path = fillPaths[styles.fill0 - 1];
       }
-      segment = path.addSegment();
+
+      segment = path.addSegment([], [], isMorph ? [] : null);
 
       if (record.move) {
         x = record.moveX|0;
         y = record.moveY|0;
+        if (isMorph) {
+          morphX = morphRecord.moveX|0;
+          morphY = morphRecord.moveY|0;
+        }
+      } else if (isMorph) {
+        morphsOffset++;
       }
 
       // Move or not, we want this path segment to start where the last one left
@@ -177,6 +203,11 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         y += record.deltaY|0;
         segment.commands.push(GRAPHICS_PATH_COMMAND_LINE_TO);
         segment.data.push(x, y);
+        if (isMorph) {
+          morphX += morphRecord.deltaX|0;
+          morphY += morphRecord.deltaY|0;
+          segment.morphData.push(morphX, morphY);
+        }
       } else {
         segment.commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
         x += record.controlDeltaX|0;
@@ -185,10 +216,18 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         x += record.anchorDeltaX|0;
         y += record.anchorDeltaY|0;
         segment.data.push(x, y);
+        if (isMorph) {
+          morphX += morphRecord.controlDeltaX|0;
+          morphY += morphRecord.controlDeltaY|0;
+          segment.morphData.push(morphX, morphY);
+          morphX += morphRecord.anchorDeltaX|0;
+          morphY += morphRecord.anchorDeltaY|0;
+          segment.morphData.push(morphX, morphY);
+        }
       }
     }
   }
-  applySegmentToStyles(segment, styles, linePaths, fillPaths);
+  applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph);
 
   // After records processing completed, we can treat line paths just as we do
   // fill paths. The important thing is for them to come last.
@@ -201,13 +240,13 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       removeCount++;
       continue;
     }
-    allFillPaths[i - removeCount] = segmentedPathToShapePath(path);
+    allFillPaths[i - removeCount] = segmentedPathToShapePath(path, isMorph);
   }
   allFillPaths.length -= removeCount;
   return allFillPaths;
 }
 
-function segmentedPathToShapePath(path) {
+function segmentedPathToShapePath(path, isMorph) {
   var start = path.head();
   var end = start;
 
@@ -277,9 +316,10 @@ function segmentedPathToShapePath(path) {
   }
 
   var shape = new ShapePath(path.fillStyle, path.lineStyle,
-                            totalCommandsLength, totalDataLength);
+                            totalCommandsLength, totalDataLength, isMorph);
   var allCommands = shape.commands;
   var allData = shape.data;
+  var allMorphData = shape.morphData;
 
   var commandsIndex = 0;
   var dataIndex = 0;
@@ -289,6 +329,7 @@ function segmentedPathToShapePath(path) {
     var offset = 0;
     var commands = current.commands;
     var data = current.data;
+    var morphData = current.morphData;
 
     // If the segment's first moveTo goes to the current coordinates,
     // we have to skip it. Removing those in the previous loop would be too
@@ -303,6 +344,9 @@ function segmentedPathToShapePath(path) {
     }
     for (i = offset * 2; i < data.length; i++, dataIndex++) {
       allData[dataIndex] = data[i];
+      if (isMorph) {
+        allMorphData[dataIndex] = morphData[i];
+      }
     }
     current = current.next;
   }
@@ -389,12 +433,15 @@ function defineShape(tag, dictionary) {
   var linePaths = createPathsList(tag.lineStyles, true,
                                   dictionary, dependencies);
   var paths = convertRecordsToStyledPaths(tag.records, fillPaths, linePaths,
-                                          dictionary, dependencies);
+                                          dictionary, dependencies,
+                                          tag.recordsMorph || null);
 
   return {
     type: 'shape',
     id: tag.id,
     bbox: tag.strokeBbox || tag.bbox,
+    bboxMorph: tag.bboxMorph,
+    isMorph: tag.isMorph,
     paths: paths,
     require: dependencies.length ? dependencies : null
   };
@@ -406,8 +453,11 @@ function SegmentedPath(fillStyle, lineStyle) {
   this._head = null;
 }
 SegmentedPath.prototype = {
-  addSegment: function(commands /* = null */, data /* = null */) {
-    var segment = {commands: commands || [], data: data || [],
+  addSegment: function(commands, data, morphData)
+  {
+    assert(commands);
+    assert(data);
+    var segment = {commands: commands, data: data, morphData: morphData,
                    prev: this._head, next: null};
     if (this._head) {
       this._head.next = segment;
@@ -415,7 +465,7 @@ SegmentedPath.prototype = {
     this._head = segment;
     return segment;
   },
-  // Does *not* reset the segments prev and next pointers!
+  // Does *not* reset the segment's prev and next pointers!
   removeSegment: function(segment) {
     if (segment.prev) {
       segment.prev.next = segment.next;
@@ -445,13 +495,15 @@ SegmentedPath.prototype = {
   }
 }
 
-function ShapePath(fillStyle, lineStyle, commandsCount, dataLength) {
+function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph) {
   this.fillStyle = fillStyle;
   this.lineStyle = lineStyle;
 
   // TODO: turn into typed arrays
   this.commands = new Uint8Array(commandsCount);
   this.data = new Int32Array(dataLength);
+  this.isMorph = isMorph;
+  this.morphData = isMorph ? new Int32Array(dataLength) : null;
   this.isShapePath = true;
 }
 

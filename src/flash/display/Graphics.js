@@ -37,6 +37,10 @@ var GraphicsDefinition = (function () {
     return 'rgba(' + red + ',' + green + ',' + blue + ',' + alpha + ')';
   }
 
+  function morph(start, end, ratio) {
+    return start + (end - start) * ratio;
+  }
+
   var def = {
     __class__: 'flash.display.Graphics',
 
@@ -83,7 +87,7 @@ var GraphicsDefinition = (function () {
       return path;
     },
 
-    draw: function(ctx, ratio) {
+    draw: function(ctx, clip, ratio) {
       var scale = this._scale;
       if (scale !== 1) {
         ctx.scale(scale, scale);
@@ -96,40 +100,64 @@ var GraphicsDefinition = (function () {
           ctx.beginPath();
           var commands = path.commands;
           var data = path.data;
+          var morphData = path.morphData;
           for (var j = 0, k = 0; j < commands.length; j++) {
-            switch (commands[j]) {
-              case GRAPHICS_PATH_COMMAND_MOVE_TO:
-                ctx.moveTo(data[k++], data[k++]);
-                break;
-              case GRAPHICS_PATH_COMMAND_LINE_TO:
-                ctx.lineTo(data[k++], data[k++]);
-                break;
-              case GRAPHICS_PATH_COMMAND_CURVE_TO:
-                ctx.quadraticCurveTo(data[k++], data[k++], data[k++], data[k++]);
-                break;
-            }
-          }
-          var fillStyle = path.fillStyle;
-          if (fillStyle) {
-            ctx.fillStyle = fillStyle.style;
-            var m = fillStyle.currentTransform;
-            if (m) {
-              ctx.save();
-              ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
-              ctx.fill();
-              ctx.restore();
+            if (!path.isMorph) {
+              switch (commands[j]) {
+                case GRAPHICS_PATH_COMMAND_MOVE_TO:
+                  ctx.moveTo(data[k++], data[k++]);
+                  break;
+                case GRAPHICS_PATH_COMMAND_LINE_TO:
+                  ctx.lineTo(data[k++], data[k++]);
+                  break;
+                case GRAPHICS_PATH_COMMAND_CURVE_TO:
+                  ctx.quadraticCurveTo(data[k++], data[k++], data[k++],
+                                       data[k++]);
+                  break;
+              }
             } else {
-              ctx.fill();
+              switch (commands[j]) {
+                case GRAPHICS_PATH_COMMAND_MOVE_TO:
+                  ctx.moveTo(morph(data[k], morphData[k++], ratio),
+                             morph(data[k], morphData[k++], ratio));
+                  break;
+                case GRAPHICS_PATH_COMMAND_LINE_TO:
+                  ctx.lineTo(morph(data[k], morphData[k++], ratio),
+                             morph(data[k], morphData[k++], ratio));
+                  break;
+                case GRAPHICS_PATH_COMMAND_CURVE_TO:
+                  ctx.quadraticCurveTo(morph(data[k], morphData[k++], ratio),
+                                       morph(data[k], morphData[k++], ratio),
+                                       morph(data[k], morphData[k++], ratio),
+                                       morph(data[k], morphData[k++], ratio));
+                  break;
+              }
             }
           }
-          var lineStyle = path.lineStyle;
-          if (lineStyle) {
-            ctx.lineWidth = lineStyle.width;
-            ctx.strokeStyle = lineStyle.style;
-            ctx.lineCap = lineStyle.lineCap;
-            ctx.lineJoin = lineStyle.lineJoin;
-            ctx.miterLimit = lineStyle.miterLimit;
-            ctx.stroke();
+
+          if (!clip) {
+            var fillStyle = path.fillStyle;
+            if (fillStyle) {
+              ctx.fillStyle = fillStyle.style;
+              var m = fillStyle.currentTransform;
+              if (m) {
+                ctx.save();
+                ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+                ctx.fill();
+                ctx.restore();
+              } else {
+                ctx.fill();
+              }
+            }
+            var lineStyle = path.lineStyle;
+            if (lineStyle) {
+              ctx.lineWidth = lineStyle.width;
+              ctx.strokeStyle = lineStyle.style;
+              ctx.lineCap = lineStyle.lineCap;
+              ctx.lineJoin = lineStyle.lineJoin;
+              ctx.miterLimit = lineStyle.miterLimit;
+              ctx.stroke();
+            }
           }
           ctx.closePath();
           continue;
