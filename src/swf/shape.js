@@ -86,16 +86,15 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
       command = commands[i];
       targetCommands.push(command);
       targetData.push(data[j - 2], data[j - 1]);
-      if (command === GRAPHICS_PATH_COMMAND_CURVE_TO) {
-        targetData.push(data[j - 4], data[j - 3]);
-        j -= 2;
-      }
       if (isMorph) {
         targetMorphData.push(morphData[j - 2], morphData[j - 1]);
-        if (command === GRAPHICS_PATH_COMMAND_CURVE_TO) {
-          targetMorphData.push(morphData[j - 4], morphData[j - 3]);
-          j -= 2;
+      }
+      if (command === GRAPHICS_PATH_COMMAND_CURVE_TO) {
+        targetData.push(data[j - 4], data[j - 3]);
+        if (isMorph) {
+            targetMorphData.push(morphData[j - 4], morphData[j - 3]);
         }
+        j -= 2;
       }
     }
     assert(j === 0);
@@ -551,15 +550,22 @@ function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, bounds,
   this.fillStyle = fillStyle;
   this.lineStyle = lineStyle;
 
-  // TODO: turn into typed arrays
-  this.commands = new Uint8Array(commandsCount);
-  this.data = new Int32Array(dataLength);
+  if (commandsCount) {
+    this.commands = new Uint8Array(commandsCount);
+    this.data = new Int32Array(dataLength);
+    this.morphData = isMorph ? new Int32Array(dataLength) : null;
+  } else {
+    // For non-defineShape paths, we don't know their length, so can't use
+    // typed arrays for their commands and data.
+    this.commands = [];
+    this.data = [];
+  }
+
   this.bounds = bounds;
 
   this.isMorph = isMorph;
-  this.morphData = isMorph ? new Int32Array(dataLength) : null;
-
   this.isShapePath = true;
+  this.fullyInitialized = false;
 }
 
 ShapePath.prototype = {
@@ -574,6 +580,15 @@ ShapePath.prototype = {
   curveTo: function(controlX, controlY, anchorX, anchorY) {
     this.commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
     this.data.push(controlX, controlY, anchorX, anchorY);
+  },
+  isPointInPath: function(pt) {
+    var bounds = this.bounds;
+    if (pt.x < bounds.minX || pt.x > bounds.maxX ||
+        pt.y < bounds.minY || pt.y > bounds.maxY)
+    {
+      return false;
+    }
+    return true;
   },
   toString: function() {
     var out = 'ShapePath [\n';
@@ -604,5 +619,79 @@ ShapePath.prototype = {
     }
 
     return out + ']';
+  }
+}
+
+/**
+ * For shapes parsed in a worker thread, we have to finish their
+ * initialization after receiving the data in the main thread.
+ *
+ * This entails creating proper instances for all the contained data types.
+ */
+function finishShapePaths(paths, dictionary) {
+  assert(window);
+
+  for (var i = 0; i < paths.length; i++) {
+    var path = paths[i];
+    if (path.fullyInitialized) {
+      continue;
+    }
+    if (!(path instanceof (ShapePath))) {
+      var untypedPath = path;
+      path = paths[i] = new ShapePath(path.fillStyle, path.lineStyle, 0, 0,
+                                      path.bounds, path.isMorph);
+      path.commands = untypedPath.commands;
+      path.data = untypedPath.data;
+      path.morphData = untypedPath.morphData;
+    }
+    path.fillStyle && initStyle(path.fillStyle, dictionary);
+    path.lineStyle && initStyle(path.lineStyle, dictionary);
+    path.fullyInitialized = true;
+  }
+}
+
+// Used for creating gradients and patterns
+var factoryCtx = window ?
+                 document.createElement('canvas').getContext('kanvas-2d') :
+                 null;
+
+function initStyle(style, dictionary) {
+  if (style.type === undefined) {
+    return;
+  }
+  switch (style.type) {
+    case GRAPHICS_FILL_SOLID:
+      // Solid fill styles are fully processed in shape.js's processStyle
+      break;
+    case GRAPHICS_FILL_LINEAR_GRADIENT:
+    case GRAPHICS_FILL_RADIAL_GRADIENT:
+    case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
+      var isLinear = style.type === GRAPHICS_FILL_LINEAR_GRADIENT;
+      var gradient;
+      if (isLinear) {
+        gradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
+      } else {
+        gradient = factoryCtx.createRadialGradient(style.focalPoint || 0,
+                                                   0, 0, 0, 0, 1);
+      }
+      var records = style.records;
+      for (var j = 0, n = records.length; j < n; j++) {
+        var record = records[j];
+        var colorStr = toStringRgba(record.color);
+        gradient.addColorStop(record.ratio / 255, colorStr);
+      }
+      style.style = gradient;
+      break;
+    case GRAPHICS_FILL_REPEATING_BITMAP:
+    case GRAPHICS_FILL_CLIPPED_BITMAP:
+    case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
+    case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
+      var bitmap = dictionary[style.bitmapId];
+      style.style = factoryCtx.createPattern(bitmap.value.props.img,
+                                             style.repeat ? "repeat"
+                                                 : "no-repeat");
+      break;
+    default:
+      fail('invalid fill style', 'shape');
   }
 }

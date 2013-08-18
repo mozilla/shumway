@@ -24,8 +24,10 @@ var ShapeDefinition = (function () {
       var graphics = this._graphics = new flash.display.Graphics();
       var s = this.symbol;
       if (s && s.paths) {
-        initPathStyles(s.paths, s.dictionary);
         graphics._subpaths = s.paths;
+        // TODO: this really should be done only once, but I don't know how I
+        // can know when all the required data has been loaded.
+        finishShapePaths(s.paths, s.dictionary);
         graphics.bbox = s.bbox;
         graphics.strokeBbox = s.strokeBbox;
         graphics.dictionary = s.dictionary;
@@ -49,55 +51,3 @@ var ShapeDefinition = (function () {
 
   return def;
 }).call(this);
-
-function initPathStyles(paths, dictionary) {
-  for (var i = paths.length; i--;) {
-    var path = paths[i];
-    path.fillStyle && initStyle(path.fillStyle, dictionary);
-    path.lineStyle && initStyle(path.lineStyle, dictionary);
-  }
-}
-
-// Used for creating gradients and patterns
-var factoryCtx = document.createElement('canvas').getContext('kanvas-2d');
-
-function initStyle(style, dictionary) {
-  if (style.type === undefined) {
-    return;
-  }
-  switch (style.type) {
-    case GRAPHICS_FILL_SOLID:
-    // Solid fill styles are fully processed in shape.js's processStyle
-      break;
-    case GRAPHICS_FILL_LINEAR_GRADIENT:
-    case GRAPHICS_FILL_RADIAL_GRADIENT:
-    case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
-      var isLinear = style.type === GRAPHICS_FILL_LINEAR_GRADIENT;
-      var gradient;
-      if (isLinear) {
-        gradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
-      } else {
-        gradient = factoryCtx.createRadialGradient(style.focalPoint || 0,
-                                                   0, 0, 0, 0, 1);
-      }
-      var records = style.records;
-      for (var j = 0, n = records.length; j < n; j++) {
-        var record = records[j];
-        var colorStr = toStringRgba(record.color);
-        gradient.addColorStop(record.ratio / 255, colorStr);
-      }
-      style.style = gradient;
-      break;
-    case GRAPHICS_FILL_REPEATING_BITMAP:
-    case GRAPHICS_FILL_CLIPPED_BITMAP:
-    case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
-    case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
-      var bitmap = dictionary[style.bitmapId];
-      style.style = factoryCtx.createPattern(bitmap.value.props.img,
-                                             style.repeat ? "repeat"
-                                                          : "no-repeat");
-      break;
-    default:
-      fail('invalid fill style', 'shape');
-  }
-}
