@@ -180,6 +180,7 @@ var Stubs = new (function () {
     M("flash.display.NativeMenuItem", "MenuItemClass", NativeMenuItemDefinition),
     M("flash.display.FrameLabel", "FrameLabelClass", FrameLabelDefinition),
     M("flash.display.Scene"),
+    M("flash.display.BlendMode"),
 
     M("flash.filters.BevelFilter", "BevelFilterClass", BevelFilterDefinition),
     M("flash.filters.BitmapFilter", "BitmapFilterClass", BitmapFilterDefinition),

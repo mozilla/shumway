@@ -15,23 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global createEmptyObject, throwError, Errors, isString */
 
 var DisplayObjectDefinition = (function () {
-  var BLEND_MODE_ADD        = 'add';
-  var BLEND_MODE_ALPHA      = 'alpha';
-  var BLEND_MODE_DARKEN     = 'darken';
-  var BLEND_MODE_DIFFERENCE = 'difference';
-  var BLEND_MODE_ERASE      = 'erase';
-  var BLEND_MODE_HARDLIGHT  = 'hardlight';
-  var BLEND_MODE_INVERT     = 'invert';
-  var BLEND_MODE_LAYER      = 'layer';
-  var BLEND_MODE_LIGHTEN    = 'lighten';
-  var BLEND_MODE_MULTIPLY   = 'multiply';
-  var BLEND_MODE_NORMAL     = 'normal';
-  var BLEND_MODE_OVERLAY    = 'overlay';
-  var BLEND_MODE_SCREEN     = 'screen';
-  var BLEND_MODE_SHADER     = 'shader';
-  var BLEND_MODE_SUBTRACT   = 'subtract';
+
+  var blendModes;
 
   var nextInstanceId = 1;
   function generateName() {
@@ -46,10 +34,13 @@ var DisplayObjectDefinition = (function () {
     __class__: 'flash.display.DisplayObject',
 
     initialize: function () {
+      var blendModeClass = flash.display.BlendMode.class;
+
       this._alpha = 1;
       this._animated = false;
       this._bbox = null;
       this._bitmap = null;
+      this._blendMode = blendModeClass.NORMAL;
       this._bounds = null;
       this._cacheAsBitmap = false;
       this._children = [];
@@ -90,10 +81,30 @@ var DisplayObjectDefinition = (function () {
       this._level = -1;
       this._index = -1;
 
+      blendModes = [
+        blendModeClass.NORMAL,     // 0
+        blendModeClass.NORMAL,     // 1
+        blendModeClass.LAYER,      // 2
+        blendModeClass.MULTIPLY,   // 3
+        blendModeClass.SCREEN,     // 4
+        blendModeClass.LIGHTEN,    // 5
+        blendModeClass.DARKEN,     // 6
+        blendModeClass.DIFFERENCE, // 7
+        blendModeClass.ADD,        // 8
+        blendModeClass.SUBTRACT,   // 9
+        blendModeClass.INVERT,     // 10
+        blendModeClass.ALPHA,      // 11
+        blendModeClass.ERASE,      // 12
+        blendModeClass.OVERLAY,    // 13
+        blendModeClass.HARDLIGHT,  // 14
+        blendModeClass.SHADER
+      ];
+
       var s = this.symbol;
       if (s) {
         this._animated = s.animated || false;
         this._bbox = s.bbox || null;
+        this._blendMode = blendModes[s.blendMode] || blendModeClass.NORMAL;
         this._children = s.children || [];
         this._clipDepth = s.clipDepth || null;
         this._cxform = s.cxform || null;
@@ -322,11 +333,14 @@ var DisplayObjectDefinition = (function () {
       this._invalidate();
     },
     get blendMode() {
-      return BLEND_MODE_NORMAL;
+      return this._blendMode;
     },
     set blendMode(val) {
-      if (val === BLEND_MODE_NORMAL) return;
-      notImplemented();
+      if (blendModes.indexOf(val) >= 0) {
+        this._blendMode = val;
+      } else {
+        throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
+      }
     },
     get cacheAsBitmap() {
       return this._cacheAsBitmap;
