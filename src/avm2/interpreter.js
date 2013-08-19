@@ -27,23 +27,6 @@ var Interpreter = new ((function () {
 
   }
 
-  function applyNew(constructor, args) {
-    if (constructor.classInfo) {
-      // return primitive values for new'd boxes
-      var qn = constructor.classInfo.instanceInfo.name.qualifiedName;
-      if (qn === Multiname.getPublicQualifiedName("String")) {
-        return String.apply(null, args);
-      }
-      if (qn === Multiname.getPublicQualifiedName("Boolean")) {
-        return Boolean.apply(null, args);
-      }
-      if (qn === Multiname.getPublicQualifiedName("Number")) {
-        return Number.apply(null, args);
-      }
-    }
-    return new (Function.bind.apply(constructor.instanceConstructor, [,].concat(args)));
-  }
-
   function popName(stack, mn) {
     if (Multiname.isRuntime(mn)) {
       var namespaces = mn.namespaces, name = mn.name;
@@ -298,8 +281,7 @@ var Interpreter = new ((function () {
             break;
           case 0x42: // OP_construct
             popManyInto(stack, bc.argCount, args);
-            obj = stack.pop();
-            stack.push(applyNew(obj, args));
+            stack.push(construct(stack.pop(), args));
             break;
           case 0x45: // OP_callsuper
             popManyInto(stack, bc.argCount, args);
@@ -321,11 +303,7 @@ var Interpreter = new ((function () {
           case 0x4A: // OP_constructprop
             popManyInto(stack, bc.argCount, args);
             popNameInto(stack, multinames[bc.index], tmpMultiname);
-            property = boxValue(stack.pop()).asGetProperty(tmpMultiname.namespaces, tmpMultiname.name, tmpMultiname.flags);
-            if (!property) {
-              throwErrorFromVM(domain, "ReferenceError", tmpMultiname.name + " not found.");
-            }
-            stack.push(applyNew(property, args));
+            stack.push(boxValue(stack.pop()).asConstructProperty(tmpMultiname.namespaces, tmpMultiname.name, tmpMultiname.flags, args));
             break;
           case 0x4B: // OP_callsuperid
             notImplemented();
