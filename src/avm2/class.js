@@ -283,7 +283,7 @@ var ActivationBindings = (function () {
     var traits = methodInfo.traits;
     for (var i = 0; i < traits.length; i++) {
       var trait = traits[i];
-      release || assert (trait.isSlot(), "Only slot traits are allowed in activation objects.");
+      release || assert (trait.isSlot() || trait.isConst(), "Only slot or constant traits are allowed in activation objects.");
       var key = Multiname.getQualifiedName(trait.name);
       this.map[key] = new Binding(trait);
       this.assignNextSlot(trait);
