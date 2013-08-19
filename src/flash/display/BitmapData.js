@@ -35,8 +35,9 @@ var BitmapDataDefinition = (function () {
 
     ctor : function(width, height, transparent, backgroundColor) {
       if (this._img) {
-        width = this._img.naturalWidth;
-        height = this._img.naturalHeight;
+        // the image can be HTML image or canvas
+        width = this._img.naturalWidth || this._img.width;
+        height = this._img.naturalHeight || this._img.height;
       } else if (isNaN(width + height) || width <= 0 || height <= 0) {
         throw ArgumentError();
       }
@@ -75,7 +76,7 @@ var BitmapDataDefinition = (function () {
       if (matrix) {
         this._ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
       }
-      (new RenderVisitor(source, this._ctx, true)).start();
+      (new RenderVisitor(source, this._ctx, true)).startFragment();
       this._ctx.restore();
     },
     fillRect : function(rect, color) {
