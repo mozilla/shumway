@@ -24,7 +24,7 @@ var ShapeDefinition = (function () {
       var graphics = this._graphics = new flash.display.Graphics();
       var s = this.symbol;
       if (s && s.paths) {
-        graphics._subpaths = s.paths;
+        graphics._paths = s.paths;
         // TODO: this really should be done only once, but I don't know how I
         // can know when all the required data has been loaded.
         finishShapePaths(s.paths, s.dictionary);

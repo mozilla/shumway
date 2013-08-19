@@ -28,7 +28,7 @@ var MorphShapeDefinition = (function () {
       var s = this.symbol;
       if (s && s.paths) {
         initPathStyles(s.paths, s.dictionary);
-        graphics._subpaths = s.paths;
+        graphics._paths = s.paths;
         graphics.bbox = s.bbox;
         graphics.strokeBbox = s.strokeBbox;
         graphics.dictionary = s.dictionary;

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Kanvas, describeProperty, ShapePath */
+/*global Kanvas, describeProperty, ShapePath, factoryCtx */
 
 var GraphicsDefinition = (function () {
   var GRAPHICS_PATH_COMMAND_MOVE_TO        = 1;
@@ -27,8 +27,6 @@ var GraphicsDefinition = (function () {
 
   var GRAPHICS_PATH_WINDING_EVEN_ODD       = 'evenOdd';
   var GRAPHICS_PATH_WINDING_NON_ZERO       = 'nonZero';
-
-  var fillContext = document.createElement('canvas').getContext('2d');
 
   function toRgba(color, alpha) {
     var red = color >> 16 & 0xFF;
@@ -53,18 +51,9 @@ var GraphicsDefinition = (function () {
       this._revision = 0;
       this._scale = 1;
       this._strokeStyle = null;
-      this._subpaths = [];
+      this._paths = [];
     },
 
-    _createLinearGradient: function (x0, y0, x1, y1) {
-      return fillContext.createLinearGradient(x0, y0, x1, y1);
-    },
-    _createRadialGradient: function (x0, y0, r0, x1, y1, r1) {
-      return fillContext.createRadialGradient(x0, y0, r0, x1, y1, r1);
-    },
-    _createPattern: function(image, repetition) {
-      return fillContext.createPattern(image, repetition);
-    },
     _drawPathObject: function (path) {
       if (path.__class__ === 'flash.display.GraphicsPath')
         this.drawPath(path.commands, path.data, path.winding);
@@ -81,7 +70,7 @@ var GraphicsDefinition = (function () {
       path.drawingStyles = this._drawingStyles;
       path.fillStyle = this._fillStyle;
       path.lineStyle = this._strokeStyle;
-      this._subpaths.push(path);
+      this._paths.push(path);
       // Cache as an own property.
       Object.defineProperty(this, '_currentPath', { value: path, configurable: true });
       return path;
@@ -93,85 +82,51 @@ var GraphicsDefinition = (function () {
         ctx.scale(scale, scale);
       }
 
-      var subpaths = this._subpaths;
+      var subpaths = this._paths;
       for (var i = 0, o = subpaths.length; i < o; i++) {
         var path = subpaths[i];
-        if (path.isShapePath) {
-          ctx.beginPath();
-          var commands = path.commands;
-          var data = path.data;
-          var morphData = path.morphData;
-          for (var j = 0, k = 0; j < commands.length; j++) {
-            if (!path.isMorph) {
-              switch (commands[j]) {
-                case GRAPHICS_PATH_COMMAND_MOVE_TO:
-                  ctx.moveTo(data[k++], data[k++]);
-                  break;
-                case GRAPHICS_PATH_COMMAND_LINE_TO:
-                  ctx.lineTo(data[k++], data[k++]);
-                  break;
-                case GRAPHICS_PATH_COMMAND_CURVE_TO:
-                  ctx.quadraticCurveTo(data[k++], data[k++], data[k++],
-                                       data[k++]);
-                  break;
-              }
-            } else {
-              switch (commands[j]) {
-                case GRAPHICS_PATH_COMMAND_MOVE_TO:
-                  ctx.moveTo(morph(data[k], morphData[k++], ratio),
-                             morph(data[k], morphData[k++], ratio));
-                  break;
-                case GRAPHICS_PATH_COMMAND_LINE_TO:
-                  ctx.lineTo(morph(data[k], morphData[k++], ratio),
-                             morph(data[k], morphData[k++], ratio));
-                  break;
-                case GRAPHICS_PATH_COMMAND_CURVE_TO:
-                  ctx.quadraticCurveTo(morph(data[k], morphData[k++], ratio),
-                                       morph(data[k], morphData[k++], ratio),
-                                       morph(data[k], morphData[k++], ratio),
-                                       morph(data[k], morphData[k++], ratio));
-                  break;
-              }
+        ctx.beginPath();
+        var commands = path.commands;
+        var data = path.data;
+        var morphData = path.morphData;
+        for (var j = 0, k = 0; j < commands.length; j++) {
+          if (!path.isMorph) {
+            switch (commands[j]) {
+              case GRAPHICS_PATH_COMMAND_MOVE_TO:
+                ctx.moveTo(data[k++], data[k++]);
+                break;
+              case GRAPHICS_PATH_COMMAND_LINE_TO:
+                ctx.lineTo(data[k++], data[k++]);
+                break;
+              case GRAPHICS_PATH_COMMAND_CURVE_TO:
+                ctx.quadraticCurveTo(data[k++], data[k++], data[k++],
+                                     data[k++]);
+                break;
+            }
+          } else {
+            switch (commands[j]) {
+              case GRAPHICS_PATH_COMMAND_MOVE_TO:
+                ctx.moveTo(morph(data[k], morphData[k++], ratio),
+                           morph(data[k], morphData[k++], ratio));
+                break;
+              case GRAPHICS_PATH_COMMAND_LINE_TO:
+                ctx.lineTo(morph(data[k], morphData[k++], ratio),
+                           morph(data[k], morphData[k++], ratio));
+                break;
+              case GRAPHICS_PATH_COMMAND_CURVE_TO:
+                ctx.quadraticCurveTo(morph(data[k], morphData[k++], ratio),
+                                     morph(data[k], morphData[k++], ratio),
+                                     morph(data[k], morphData[k++], ratio),
+                                     morph(data[k], morphData[k++], ratio));
+                break;
             }
           }
-
-          if (!clip) {
-            var fillStyle = path.fillStyle;
-            if (fillStyle) {
-              ctx.fillStyle = fillStyle.style;
-              var m = fillStyle.currentTransform;
-              if (m) {
-                ctx.save();
-                ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
-                ctx.fill();
-                ctx.restore();
-              } else {
-                ctx.fill();
-              }
-            }
-            var lineStyle = path.lineStyle;
-            if (lineStyle) {
-              ctx.lineWidth = lineStyle.width;
-              ctx.strokeStyle = lineStyle.style;
-              ctx.lineCap = lineStyle.lineCap;
-              ctx.lineJoin = lineStyle.lineJoin;
-              ctx.miterLimit = lineStyle.miterLimit;
-              ctx.stroke();
-            }
-          }
-          ctx.closePath();
-          continue;
         }
-
-        ctx.currentPath = path;
-
-        if (clip) {
-          ctx.closePath();
-        } else {
-          if (path.fillStyle) {
-            ctx.fillStyle = path.fillStyle;
-
-            var m = path.fillStyle.currentTransform;
+        if (!clip) {
+          var fillStyle = path.fillStyle;
+          if (fillStyle) {
+            ctx.fillStyle = fillStyle.style;
+            var m = fillStyle.currentTransform;
             if (m) {
               ctx.save();
               ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
@@ -181,54 +136,57 @@ var GraphicsDefinition = (function () {
               ctx.fill();
             }
           }
-          if (path.strokeStyle) {
-            ctx.strokeStyle = path.strokeStyle;
-            var drawingStyles = path.drawingStyles;
-            for (var prop in drawingStyles)
-              ctx[prop] = drawingStyles[prop];
+          var lineStyle = path.lineStyle;
+          if (lineStyle) {
+            ctx.lineWidth = lineStyle.width;
+            ctx.strokeStyle = lineStyle.style;
+            ctx.lineCap = lineStyle.lineCap;
+            ctx.lineJoin = lineStyle.lineJoin;
+            ctx.miterLimit = lineStyle.miterLimit;
             ctx.stroke();
           }
         }
+        ctx.closePath();
       }
     },
-
     beginFill: function (color, alpha) {
       if (alpha === undefined)
         alpha = 1;
 
       delete this._currentPath;
 
-      this._fillStyle = alpha ? toRgba(color, alpha) : null;
+      this._fillStyle = alpha ? {style:toRgba(color, alpha)} : null;
     },
     beginGradientFill: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
       var gradient;
-      if (type === 'linear')
-        gradient = this._createLinearGradient(-1, 0, 1, 0);
-      else if (type == 'radial')
-        gradient = this._createRadialGradient((focalPos || 0), 0, 0, 0, 0, 1);
+      if (type === 'linear') {
+        gradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
+      }
+      else if (type == 'radial') {
+        gradient = factoryCtx.createRadialGradient((focalPos || 0), 0, 0, 0, 0, 1);
+      }
       else
         throw ArgumentError();
 
       for (var i = 0, n = colors.length; i < n; i++)
         gradient.addColorStop(ratios[i] / 255, toRgba(colors[i], alphas[i]));
 
-      this._fillStyle = gradient;
+      this._fillStyle = {style:gradient};
 
       // NOTE firefox really sensitive to really small scale when painting gradients
       var scale = 819.2;
-      gradient.currentTransform = matrix ?
+      this._fillStyle.currentTransform = matrix ?
         { a: scale * matrix.a, b: scale * matrix.b, c: scale * matrix.c, d: scale * matrix.d, e: matrix.tx, f: matrix.ty } :
         { a: scale, b: 0, c: 0, d: scale, e: 0, f: 0 };
     },
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
       var repeatStyle = repeat ? 'repeat' : 'no-repeat';
-      var pattern = this._createPattern(bitmap._drawable, repeatStyle);
-
-      this._fillStyle = pattern;
+      var pattern = factoryCtx.createPattern(bitmap._drawable, repeatStyle);
+      this._fillStyle = {style:pattern};
 
       // NOTE firefox really sensitive to really small scale when painting gradients
       var scale = 819.2;
-      pattern.currentTransform = matrix ?
+      this._fillStyle.currentTransform = matrix ?
         { a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d, e: matrix.tx, f: matrix.ty } :
         { a: scale, b: 0, c: 0, d: scale, e: 0, f: 0 };
     },
@@ -238,7 +196,8 @@ var GraphicsDefinition = (function () {
       this._drawingStyles = null;
       this._fillStyle = null;
       this._strokeStyle = null;
-      this._subpaths = [];
+      this._paths = [];
+      this._revision++;
     },
     copyFrom: function (sourceGraphics) {
       notImplemented();
@@ -248,7 +207,7 @@ var GraphicsDefinition = (function () {
       this._revision++;
     },
     curveTo: function (cpx, cpy, x, y) {
-      this._currentPath.quadraticCurveTo(cpx, cpy, x, y);
+      this._currentPath.curveTo(cpx, cpy, x, y);
       this._revision++;
     },
     drawCircle: function (x, y, radius) {
@@ -262,27 +221,9 @@ var GraphicsDefinition = (function () {
     drawPath: function (commands, data, winding) {
       delete this._currentPath;
       this._currentPath.fillRule = winding || GRAPHICS_PATH_WINDING_EVEN_ODD;
-
-      for (var i = 0, j = 0, n = commands.length; i < n; i++) {
-        switch (commands[i]) {
-        case GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO:
-          this.cubicCurveTo(data[j++], data[j++], data[j++], data[j++], data[j++], data[j++]);
-          break;
-        case GRAPHICS_PATH_COMMAND_CURVE_TO:
-          this.curveTo(data[j++], data[j++], data[j++], data[j++]);
-          break;
-        case GRAPHICS_PATH_COMMAND_LINE_TO:
-          this.lineTo(data[j++], data[j++]);
-          break;
-        case GRAPHICS_PATH_COMMAND_MOVE_TO:
-          this.moveTo(data[j++], data[j++]);
-          break;
-        case GRAPHICS_PATH_COMMAND_WIDE_LINE_TO:
-        case GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO:
-          this.curveTo(0, 0, data[j++], data[j++]);
-          break;
-        }
-      }
+      this.currentPath.commands = commands;
+      this.currentPath.data = data;
+      this._revision++;
     },
     drawRect: function (x, y, w, h) {
       if (isNaN(w + h))
@@ -400,17 +341,17 @@ var GraphicsDefinition = (function () {
       if (this.bbox) {
         return this.bbox;
       }
-      var subpaths = this._subpaths;
+      var subpaths = this._paths;
       var xMins = [], yMins = [], xMaxs = [], yMaxs = [];
       for (var i = 0, n = subpaths.length; i < n; i++) {
         var path = subpaths[i];
-        var b = path.getBounds();
+        var b = path.bounds;
         if (b) {
           if (includeStroke && path.strokeStyle) {
             var lh = path.drawingStyles.lineWidth / 2;
-            xMins.push(b.x - lh); yMins.push(b.y - lh); xMaxs.push(b.x + b.width + lh); yMaxs.push(b.y + b.height + lh);
+            xMins.push(b.left - lh); yMins.push(b.top - lh); xMaxs.push(b.right + lh); yMaxs.push(b.bottom + lh);
           } else {
-            xMins.push(b.x); yMins.push(b.y); xMaxs.push(b.x + b.width); yMaxs.push(b.y + b.height);
+            xMins.push(b.left); yMins.push(b.top); xMaxs.push(b.right); yMaxs.push(b.bottom);
           }
         }
 

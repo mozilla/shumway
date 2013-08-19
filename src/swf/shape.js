@@ -29,6 +29,9 @@ var GRAPHICS_FILL_SOLID                        =  0;
 var GRAPHICS_PATH_COMMAND_MOVE_TO        = 1;
 var GRAPHICS_PATH_COMMAND_LINE_TO        = 2;
 var GRAPHICS_PATH_COMMAND_CURVE_TO       = 3;
+var GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO   = 4;
+var GRAPHICS_PATH_COMMAND_WIDE_LINE_TO   = 5;
+var GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO = 6;
 
 /*
  * Applies the current segment to the paths of all styles specified in the last
@@ -188,7 +191,7 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         morphsOffset++;
       }
 
-      bounds = {minX: x, minY: y, maxX: x, maxY: y};
+      bounds = {left: x, top: y, right: x, bottom: y};
       segment = path.addSegment([], [], isMorph ? [] : null, bounds);
 
       // Move or not, we want this path segment to start where the last one left
@@ -204,15 +207,15 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       if (record.isStraight) {
         x += record.deltaX|0;
         y += record.deltaY|0;
-        if (x < bounds.minX) {
-          bounds.minX = x;
-        } else if (x > bounds.maxX) {
-          bounds.maxX = x;
+        if (x < bounds.left) {
+          bounds.left = x;
+        } else if (x > bounds.right) {
+          bounds.right = x;
         }
-        if (y < bounds.minY) {
-          bounds.minY = y;
-        } else if (y > bounds.maxY) {
-          bounds.maxY = y;
+        if (y < bounds.top) {
+          bounds.top = y;
+        } else if (y > bounds.bottom) {
+          bounds.bottom = y;
         }
 
         segment.commands.push(GRAPHICS_PATH_COMMAND_LINE_TO);
@@ -226,29 +229,29 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         segment.commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
         x += record.controlDeltaX|0;
         y += record.controlDeltaY|0;
-        if (x < bounds.minX) {
-          bounds.minX = x;
-        } else if (x > bounds.maxX) {
-          bounds.maxX = x;
+        if (x < bounds.left) {
+          bounds.left = x;
+        } else if (x > bounds.right) {
+          bounds.right = x;
         }
-        if (y < bounds.minY) {
-          bounds.minY = y;
-        } else if (y > bounds.maxY) {
-          bounds.maxY = y;
+        if (y < bounds.top) {
+          bounds.top = y;
+        } else if (y > bounds.bottom) {
+          bounds.bottom = y;
         }
 
         segment.data.push(x, y);
         x += record.anchorDeltaX|0;
         y += record.anchorDeltaY|0;
-        if (x < bounds.minX) {
-          bounds.minX = x;
-        } else if (x > bounds.maxX) {
-          bounds.maxX = x;
+        if (x < bounds.left) {
+          bounds.left = x;
+        } else if (x > bounds.right) {
+          bounds.right = x;
         }
-        if (y < bounds.minY) {
-          bounds.minY = y;
-        } else if (y > bounds.maxY) {
-          bounds.maxY = y;
+        if (y < bounds.top) {
+          bounds.top = y;
+        } else if (y > bounds.bottom) {
+          bounds.bottom = y;
         }
 
         segment.data.push(x, y);
@@ -387,15 +390,15 @@ function segmentedPathToShapePath(path, isMorph) {
       }
     }
     var bounds = current.bounds;
-    if (bounds.minX < pathBounds.minX) {
-      pathBounds.minX = bounds.minX;
-    } else if (bounds.maxX > pathBounds.maxX) {
-      pathBounds.maxX = bounds.maxX;
+    if (bounds.left < pathBounds.left) {
+      pathBounds.left = bounds.left;
+    } else if (bounds.right > pathBounds.right) {
+      pathBounds.right = bounds.right;
     }
-    if (bounds.minY < pathBounds.minY) {
-      pathBounds.minY = bounds.minY;
-    } else if (bounds.maxY > pathBounds.maxY) {
-      pathBounds.maxY = bounds.maxY;
+    if (bounds.top < pathBounds.top) {
+      pathBounds.top = bounds.top;
+    } else if (bounds.bottom > pathBounds.bottom) {
+      pathBounds.bottom = bounds.bottom;
     }
     current = current.next;
   }
@@ -488,7 +491,8 @@ function defineShape(tag, dictionary) {
   return {
     type: 'shape',
     id: tag.id,
-    bbox: tag.strokeBbox || tag.bbox,
+    strokeBox: tag.strokeBox,
+    bbox: tag.bbox,
     bboxMorph: tag.bboxMorph,
     isMorph: tag.isMorph,
     paths: paths,
@@ -565,7 +569,7 @@ function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, bounds,
 
   this.isMorph = isMorph;
   this.isShapePath = true;
-  this.fullyInitialized = false;
+  this.fullyInitialized = !inWorker;
 }
 
 ShapePath.prototype = {
@@ -581,14 +585,30 @@ ShapePath.prototype = {
     this.commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
     this.data.push(controlX, controlY, anchorX, anchorY);
   },
+  cubicCurveTo: function(control1X, control1Y, control2X, control2Y,
+                         anchorX, anchorY)
+  {
+    this.commands.push(GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO);
+    this.data.push(control1X, control1Y, control2X, control2Y,
+                   anchorX, anchorY);
+  },
   isPointInPath: function(x, y) {
     var bounds = this.bounds;
-    if (x < bounds.minX || x > bounds.maxX ||
-        y < bounds.minY || y > bounds.maxY)
+    if (x < bounds.left || x > bounds.right ||
+        y < bounds.top || y > bounds.bottom)
     {
       return false;
     }
     return this.fillStyle !== null;
+  },
+  getBounds: function() {
+    var bounds = this.bounds;
+    if (!bounds) {
+      return {x: 0, y: 0, width: 0, height: 0};
+    }
+    var x = bounds.left;
+    var y = bounds.top;
+    return {x: x, y: y, width: bounds.right - x, height: bounds.bottom - y};
   },
   toString: function() {
     var out = 'ShapePath [\n';
@@ -602,6 +622,11 @@ ShapePath.prototype = {
           break;
         case GRAPHICS_PATH_COMMAND_LINE_TO:
           out += '\tlineTo(' + data[dataIndex++] + ', ' + data[dataIndex++] + ');\n';
+          break;
+        case GRAPHICS_PATH_COMMAND_CURVE_TO:
+          out += '\tquadraticCurveTo(' + data[dataIndex++] + ', ' +
+                 data[dataIndex++] + ', ' + data[dataIndex++] + ', ' +
+                 data[dataIndex++] + ');\n';
           break;
         case GRAPHICS_PATH_COMMAND_CURVE_TO:
           out += '\tquadraticCurveTo(' + data[dataIndex++] + ', ' +
@@ -650,6 +675,7 @@ function finishShapePaths(paths, dictionary) {
   }
 }
 
+var inWorker = (typeof window) === 'undefined';
 // Used for creating gradients and patterns
 var factoryCtx = window ?
                  document.createElement('canvas').getContext('kanvas-2d') :

@@ -233,7 +233,7 @@ var DisplayObjectDefinition = (function () {
               pt.y += bbox.top;
             }
 
-            var subpaths = this._graphics._subpaths;
+            var subpaths = this._graphics._paths;
             for (var i = 0, n = subpaths.length; i < n; i++) {
               var path = subpaths[i];
 
