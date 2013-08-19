@@ -91,6 +91,12 @@ RenderVisitor.prototype = {
   start: function () {
     visitContainer(this.root, this);
   },
+  startFragment: function() {
+    var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(this.root) ||
+                      flash.display.SimpleButton.class.isInstanceOf(this.root);
+
+    this.visit(this.root, isContainer, visitContainer);
+  },
   childrenStart: function(parent) {
     if (this.depth === 0) {
       var ctx = this.ctx;
