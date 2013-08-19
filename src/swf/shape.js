@@ -69,8 +69,7 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
       targetSegment.data = [];
       targetSegment.morphData = isMorph ? [] : null;
     } else {
-      targetSegment = path.addSegment([], [], isMorph ? [] : null,
-                                      segment.bounds);
+      targetSegment = path.addSegment([], [], isMorph ? [] : null);
     }
 
     // For reversing the fill0 segments, we rely on the fact that each segment
@@ -105,7 +104,7 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
   if (styles.line && styles.fill1)
   {
     path = linePaths[styles.line - 1];
-    path.addSegment(commands, data, morphData, segment.bounds);
+    path.addSegment(commands, data, morphData);
   }
 }
 
@@ -133,8 +132,6 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
   //TODO: remove the `- 1` once we stop even parsing the EOS record
   var numRecords = records.length - 1;
   var morphsOffset = 0;
-  // TODO: probably add morphBounds
-  var bounds = null;
   var x = 0;
   var y = 0;
   var morphX = 0;
@@ -191,8 +188,7 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         morphsOffset++;
       }
 
-      bounds = {left: x, top: y, right: x, bottom: y};
-      segment = path.addSegment([], [], isMorph ? [] : null, bounds);
+      segment = path.addSegment([], [], isMorph ? [] : null);
 
       // Move or not, we want this path segment to start where the last one left
       // off. Even if the last one belonged to a different style.
@@ -207,16 +203,6 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       if (record.isStraight) {
         x += record.deltaX|0;
         y += record.deltaY|0;
-        if (x < bounds.left) {
-          bounds.left = x;
-        } else if (x > bounds.right) {
-          bounds.right = x;
-        }
-        if (y < bounds.top) {
-          bounds.top = y;
-        } else if (y > bounds.bottom) {
-          bounds.bottom = y;
-        }
 
         segment.commands.push(GRAPHICS_PATH_COMMAND_LINE_TO);
         segment.data.push(x, y);
@@ -229,30 +215,10 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         segment.commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
         x += record.controlDeltaX|0;
         y += record.controlDeltaY|0;
-        if (x < bounds.left) {
-          bounds.left = x;
-        } else if (x > bounds.right) {
-          bounds.right = x;
-        }
-        if (y < bounds.top) {
-          bounds.top = y;
-        } else if (y > bounds.bottom) {
-          bounds.bottom = y;
-        }
 
         segment.data.push(x, y);
         x += record.anchorDeltaX|0;
         y += record.anchorDeltaY|0;
-        if (x < bounds.left) {
-          bounds.left = x;
-        } else if (x > bounds.right) {
-          bounds.right = x;
-        }
-        if (y < bounds.top) {
-          bounds.top = y;
-        } else if (y > bounds.bottom) {
-          bounds.bottom = y;
-        }
 
         segment.data.push(x, y);
         if (isMorph) {
@@ -354,9 +320,8 @@ function segmentedPathToShapePath(path, isMorph) {
     current = current.next;
   }
 
-  var pathBounds = cloneObject(finalRoot.bounds);
   var shape = new ShapePath(path.fillStyle, path.lineStyle, totalCommandsLength,
-                            totalDataLength, pathBounds, isMorph);
+                            totalDataLength, isMorph);
   var allCommands = shape.commands;
   var allData = shape.data;
   var allMorphData = shape.morphData;
@@ -388,17 +353,6 @@ function segmentedPathToShapePath(path, isMorph) {
       if (isMorph) {
         allMorphData[dataIndex] = morphData[i];
       }
-    }
-    var bounds = current.bounds;
-    if (bounds.left < pathBounds.left) {
-      pathBounds.left = bounds.left;
-    } else if (bounds.right > pathBounds.right) {
-      pathBounds.right = bounds.right;
-    }
-    if (bounds.top < pathBounds.top) {
-      pathBounds.top = bounds.top;
-    } else if (bounds.bottom > pathBounds.bottom) {
-      pathBounds.bottom = bounds.bottom;
     }
     current = current.next;
   }
@@ -506,12 +460,12 @@ function SegmentedPath(fillStyle, lineStyle) {
   this._head = null;
 }
 SegmentedPath.prototype = {
-  addSegment: function (commands, data, morphData, bounds)
+  addSegment: function (commands, data, morphData)
   {
     assert(commands);
     assert(data);
     var segment = {commands: commands, data: data, morphData: morphData,
-                   bounds: bounds, prev: this._head, next: null};
+                   prev: this._head, next: null};
     if (this._head) {
       this._head.next = segment;
     }
@@ -548,8 +502,7 @@ SegmentedPath.prototype = {
   }
 }
 
-function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, bounds,
-                   isMorph)
+function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph)
 {
   this.fillStyle = fillStyle;
   this.lineStyle = lineStyle;
@@ -565,10 +518,10 @@ function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, bounds,
     this.data = [];
   }
 
-  this.bounds = bounds;
+  this.bounds = null;
+  this.strokeBounds = null;
 
   this.isMorph = isMorph;
-  this.isShapePath = true;
   this.fullyInitialized = !inWorker;
 }
 
@@ -593,7 +546,7 @@ ShapePath.prototype = {
                    anchorX, anchorY);
   },
   isPointInPath: function(x, y) {
-    var bounds = this.bounds;
+    var bounds = this.strokeBounds || this.bounds || this._calculateBounds();
     if (x < bounds.left || x > bounds.right ||
         y < bounds.top || y > bounds.bottom)
     {
@@ -601,14 +554,51 @@ ShapePath.prototype = {
     }
     return this.fillStyle !== null;
   },
-  getBounds: function() {
-    var bounds = this.bounds;
-    if (!bounds) {
-      return {x: 0, y: 0, width: 0, height: 0};
+  _calculateBounds: function() {
+    var commands = this.commands;
+    var data = this.data;
+    var length = commands.length;
+    var commandIndex = 0;
+    var dataIndex = 0;
+    var bounds;
+    if (this.commands[0] === GRAPHICS_PATH_COMMAND_MOVE_TO) {
+      bounds = {left: this.data[0], top: this.data[1]};
+      commandIndex = 1;
+      dataIndex = 2;
+    } else {
+      bounds = {left: 0, top: 0};
     }
-    var x = bounds.left;
-    var y = bounds.top;
-    return {x: x, y: y, width: bounds.right - x, height: bounds.bottom - y};
+    bounds.right = bounds.left;
+    bounds.bottom = bounds.top;
+
+    for (; commandIndex < length; commandIndex++) {
+      extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
+      switch (commands[commandIndex]) {
+        //TODO: maybe calculate tighter bounds for control points
+        case GRAPHICS_PATH_COMMAND_CURVE_TO:
+          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
+          break;
+        case GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO:
+          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
+          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
+          break;
+        case GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO:
+        case GRAPHICS_PATH_COMMAND_WIDE_LINE_TO:
+          dataIndex += 2;
+          break;
+        default:
+      }
+    }
+    this.bounds = bounds;
+    if (this.lineStyle) {
+      var halfLineWidth = this.lineStyle.width / 2;
+      this.strokeBounds = {left: bounds.left - halfLineWidth,
+                           top: bounds.top - halfLineWidth,
+                           right: bounds.right + halfLineWidth,
+                           bottom: bounds.bottom + halfLineWidth};
+      return this.strokeBounds;
+    }
+    return bounds;
   },
   toString: function() {
     var out = 'ShapePath [\n';
@@ -647,6 +637,18 @@ ShapePath.prototype = {
   }
 }
 
+function extendBoundsByPoint(bounds, x, y) {
+  if (x < bounds.left) {
+    bounds.left = x;
+  } else if (x > bounds.right) {
+    bounds.right = x;
+  }
+  if (y < bounds.top) {
+    bounds.top = y;
+  } else if (y > bounds.bottom) {
+    bounds.bottom = y;
+  }
+}
 /**
  * For shapes parsed in a worker thread, we have to finish their
  * initialization after receiving the data in the main thread.
@@ -664,7 +666,7 @@ function finishShapePaths(paths, dictionary) {
     if (!(path instanceof (ShapePath))) {
       var untypedPath = path;
       path = paths[i] = new ShapePath(path.fillStyle, path.lineStyle, 0, 0,
-                                      path.bounds, path.isMorph);
+                                      path.isMorph);
       path.commands = untypedPath.commands;
       path.data = untypedPath.data;
       path.morphData = untypedPath.morphData;
