@@ -306,6 +306,7 @@ function asDefineProperty(namespaces, name, flags, descriptor) {
 }
 
 var callCounter = new metrics.Counter(true);
+
 function asCallProperty(namespaces, name, flags, isLex, args) {
   if (traceCallExecution.value) {
     var receiver = this.class ? this.class.className + " ": "";
@@ -332,6 +333,33 @@ function asCallProperty(namespaces, name, flags, isLex, args) {
     }
     result = method.apply(receiver, args);
   }
+  traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
+  return result;
+}
+
+function construct(constructor, args) {
+  if (constructor.classInfo) {
+    // return primitive values for new'd boxes
+    var qn = constructor.classInfo.instanceInfo.name.qualifiedName;
+    if (qn === Multiname.getPublicQualifiedName("String")) {
+      return String.apply(null, args);
+    }
+    if (qn === Multiname.getPublicQualifiedName("Boolean")) {
+      return Boolean.apply(null, args);
+    }
+    if (qn === Multiname.getPublicQualifiedName("Number")) {
+      return Number.apply(null, args);
+    }
+  }
+  return new (Function.bind.apply(constructor.instanceConstructor, [,].concat(args)));
+}
+
+function asConstructProperty(namespaces, name, flags, args) {
+  var constructor = this.asGetProperty(namespaces, name, flags);
+  if (traceCallExecution.value) {
+    callWriter.enter("construct " + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
+  }
+  var result = construct(constructor, args);
   traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
   return result;
 }
@@ -501,6 +529,7 @@ function initializeGlobalObject(global) {
   defineNonEnumerableProperty(global.Object.prototype, "asDefineProperty", asDefineProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDefinePublicProperty", asDefinePublicProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asCallProperty", asCallProperty);
+  defineNonEnumerableProperty(global.Object.prototype, "asConstructProperty", asConstructProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
 
@@ -1788,7 +1817,7 @@ function sealConstantTraits(object, traits) {
             return value;
           },
           set: function () {
-            rt.throwErrorFromVM("ReferenceError", "Illegal write to read-only property " + qn + ".");
+            throwErrorFromVM(AVM2.currentDomain(), "ReferenceError", "Illegal write to read-only property " + qn + ".");
           }
         });
       })(qn, value);
