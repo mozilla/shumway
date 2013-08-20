@@ -469,7 +469,9 @@ var MovieClipDefinition = (function () {
     },
     nextFrame: function () {
       this.stop();
-      this._gotoFrame(this._currentFrame % this._totalFrames + 1);
+      if (this._currentFrame < this._totalFrames) {
+        this._gotoFrame(this._currentFrame + 1);
+      }
     },
     nextScene: function () {
       notImplemented();
@@ -484,7 +486,9 @@ var MovieClipDefinition = (function () {
     },
     prevFrame: function () {
       this.stop();
-      this._gotoFrame(this._currentFrame > 1 ? this._currentFrame - 1 : this._totalFrames);
+      if (this._currentFrame > 1) {
+        this._gotoFrame(this._currentFrame - 1);
+      }
     },
     prevScene: function () {
       notImplemented();
