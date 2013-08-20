@@ -156,25 +156,46 @@ RenderVisitor.prototype = {
       this.ctx.restore();
     }
   },
-  visit: function (child, isContainer, visitContainer) {
+  visit: function (child, isContainer, visitContainer, isClippingMask) {
     var ctx = this.ctx;
 
-    var clippingMask = false;
-    // removing clipping if the required character depth is achived
-    while (this.clipDepth && this.clipDepth.length > 0 &&
-        child._depth > this.clipDepth[0]) {
-      this.clipDepth.shift();
-      ctx.restore();
-    }
-    // TODO: handle container as a clipping mask
-    if (child._clipDepth && !isContainer) {
-      if (!this.clipDepth) {
-        this.clipDepth = [];
+    var clippingMask = isClippingMask === true;
+
+    if (!clippingMask) {
+      // removing clipping if the required character depth is achived
+      while (this.clipDepth && this.clipDepth.length > 0 &&
+          child._depth > this.clipDepth[0]) {
+        this.clipDepth.shift();
+        ctx.restore();
       }
-      clippingMask = true;
-      // saving clipping until certain character depth
-      this.clipDepth.unshift(child._clipDepth);
+      if (child._clipDepth) {
+        if (!this.clipDepth) {
+          this.clipDepth = [];
+        }
+        clippingMask = true;
+        // saving clipping until certain character depth
+        this.clipDepth.unshift(child._clipDepth);
+        ctx.save();
+      }
+    }
+
+    if (clippingMask && isContainer) {
       ctx.save();
+      renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask, this.refreshStage);
+      for (var i = 0, n = child._children.length; i < n; i++) {
+        var child1 = child._children[i];
+        if (!child1) {
+          continue;
+        }
+        if (this.ignoreVisibleAttribute || (child1._visible && !child1._maskedObject)) {
+          var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child1) ||
+                            flash.display.SimpleButton.class.isInstanceOf(child1);
+          this.visit(child1, isContainer, this, true);
+        }
+      }
+      ctx.restore();
+      ctx.clip();
+      return;
     }
 
     ctx.save();
