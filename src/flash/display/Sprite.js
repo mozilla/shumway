@@ -256,6 +256,10 @@ var SpriteDefinition = (function () {
       }
     },
 
+    _gotoButtonState: function gotoButtonState(stateName) {
+      // does nothing for sprite?
+    },
+
     get buttonMode() {
       return this._buttonMode;
     },
