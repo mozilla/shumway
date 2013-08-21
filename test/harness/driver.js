@@ -31,6 +31,8 @@ function execManifest(path) {
         return;
       }
       var test = manifest[i++];
+      postData('/progress?browser=' + escape(browser) + '&id=' + escape(test.id));
+
       switch (test.type) {
       case 'stas':
         // using specified number (or 1) as frame rate by default
