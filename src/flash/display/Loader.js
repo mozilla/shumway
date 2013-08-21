@@ -21,7 +21,8 @@
          defineLabel, defineButton, defineText,
          AS2Globals, AS2Context, executeActions,
          createSoundStream, MP3DecoderSession, PLAY_USING_AUDIO_TAG,
-         cloneObject, createEmptyObject, fromCharCode */
+         cloneObject, createEmptyObject, fromCharCode,
+         isNullOrUndefined */
 /*global SWF_TAG_CODE_DEFINE_BITS, SWF_TAG_CODE_DEFINE_BITS_JPEG2,
           SWF_TAG_CODE_DEFINE_BITS_JPEG3, SWF_TAG_CODE_DEFINE_BITS_JPEG4,
           SWF_TAG_CODE_DEFINE_BITS_LOSSLESS, SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2,
@@ -563,7 +564,7 @@ var LoaderDefinition = (function () {
 
       if (frame.bgcolor)
         loaderInfo._backgroundColor = frame.bgcolor;
-      else if (typeof loaderInfo._backgroundColor === "undefined")
+      else if (isNullOrUndefined(loaderInfo._backgroundColor))
         loaderInfo._backgroundColor = { red: 255, green: 255, blue: 255, alpha: 255 };
 
       Promise.when.apply(Promise, promiseQueue).then(function () {
