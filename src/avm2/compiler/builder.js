@@ -202,6 +202,10 @@ var createName = function createName(namespaces, name) {
     return new Constant(value);
   }
 
+  function qualifiedNameConstant(name) {
+    return constant(Multiname.getQualifiedName(name));
+  }
+
   function getJSPropertyWithState(state, object, path) {
     assert (isString(path));
     var names = path.split(".");
@@ -291,7 +295,7 @@ var createName = function createName(namespaces, name) {
             local = coercer(local);
           } else {
             var type = this.abc.domain.getProperty(parameter.type, true, false);
-            if (type && compatibility) {
+            if (type && COERCE_PARAMETERS) {
               local = new Call(start, state.store, globalProperty("coerce"), null, [local, constant(type)], true);
             } else {
               // unexpected();
@@ -559,6 +563,22 @@ var createName = function createName(namespaces, name) {
 
         function buildMultiname(index) {
           var multiname = multinames[index];
+          var namespaces, name, flags = multiname.flags;
+          if (multiname.isRuntimeName()) {
+            name = stack.pop();
+          } else {
+            name = constant(multiname.name);
+          }
+          if (multiname.isRuntimeNamespace()) {
+            namespaces = shouldFloat(new NewArray(region, [pop()]));
+          } else {
+            namespaces = constant(multiname.namespaces);
+          }
+          return new IR.AVM2Multiname(namespaces, name, flags);
+        }
+
+        function buildMultiname2(index) {
+          var multiname = multinames[index];
           if (multiname.isRuntime()) {
             var namespaces = new Constant(multiname.namespaces);
             var name = new Constant(multiname.name);
@@ -572,7 +592,7 @@ var createName = function createName(namespaces, name) {
               // assert (false, "Is |namespaces| an array or not?");
               namespaces = pop();
             }
-            return new IR.AVM2RuntimeMultiname(new Constant(multiname), namespaces, name);
+            return new IR.AVM2Multiname(new Constant(multiname), namespaces, name);
           } else {
             return new Constant(multiname);
           }
@@ -585,14 +605,14 @@ var createName = function createName(namespaces, name) {
           return name;
         }
 
-        function findProperty(name, strict, ti) {
-          var slowPath = new IR.AVM2FindProperty(null, state.store, topScope(), name, domain, strict);
+        function findProperty(multiname, strict, ti) {
+          var slowPath = new IR.AVM2FindProperty(region, state.store, topScope(), multiname, domain, strict);
           if (ti) {
             if (ti.object) {
               if (ti.object instanceof Global && !ti.object.isExecuting()) {
                 // If we find the property in a global whose script hasn't been executed yet
                 // we have to emit the slow path so it gets executed.
-                warn("Can't optimize findProperty " + name + ", global object is not yet executed or executing.");
+                warn("Can't optimize findProperty " + multiname + ", global object is not yet executed or executing.");
                 return slowPath;
               }
               return constant(ti.object);
@@ -600,7 +620,7 @@ var createName = function createName(namespaces, name) {
               return getScopeObject(topScope(ti.scopeDepth));
             }
           }
-          warn("Can't optimize findProperty " + name);
+          warn("Can't optimize findProperty " + multiname);
           return slowPath;
         }
 
@@ -632,7 +652,7 @@ var createName = function createName(namespaces, name) {
               return coercer(value);
             }
           }
-          if (compatibility) {
+          if (COERCE) {
             return call(globalProperty("coerce"), null, [value, constant(type)]);
           }
           return value;
@@ -664,8 +684,8 @@ var createName = function createName(namespaces, name) {
           return node;
         }
 
-        function callProperty(object, name, args, isLex, ti, ic) {
-          name = simplifyName(name);
+        function callProperty(object, multiname, args, isLex, ti, ic) {
+          // name = simplifyName(name);
           if (ti && ti.trait) {
             if (ti.trait.isMethod()) {
               var openQn;
@@ -696,90 +716,60 @@ var createName = function createName(namespaces, name) {
           } else if (ti && ti.propertyQName) {
             return store(new IR.CallProperty(region, state.store, object, constant(ti.propertyQName), args, true));
           }
-          if (isConstant(name)) {
+          if (isConstant(multiname)) {
             assert (ic);
-            return store(new IR.AVM2CallProperty(region, state.store, object, name, isLex, args, true, constant(ic)));
+            return store(new IR.AVM2CallProperty(region, state.store, object, multiname, isLex, args, true, constant(ic)));
           } else {
-            warn("Can't optimize call to " + name.value);
-            return store(new IR.AVM2CallProperty(region, state.store, object, name, isLex, args, true));
+            warn("Can't optimize call to " + multiname.value);
+            return store(new IR.AVM2CallProperty(region, state.store, object, multiname, isLex, args, true));
           }
         }
 
-        function getProperty(object, name, ti, getOpenMethod, ic) {
-          var get;
-          name = simplifyName(name);
-          if (ti && ti.trait && object.ty &&
-              !(object.ty === Type.Any || object.ty === Type.XML || object.ty === Type.XMLList)) {
-            if (ti.trait.isConst() && ti.trait.hasDefaultValue) {
-              return constant(ti.trait.value);
+        function getProperty(object, multiname, ti, getOpenMethod, ic) {
+          assert (multiname instanceof IR.AVM2Multiname);
+          getOpenMethod = !!getOpenMethod;
+          if (ti) {
+            if (ti.trait) {
+              if (ti.trait.isConst() && ti.trait.hasDefaultValue) {
+                return constant(ti.trait.value);
+              }
+              var get = new IR.GetProperty(region, state.store, object, qualifiedNameConstant(ti.trait.name));
+              return ti.trait.isGetter() ? store(get) : load(get);
             }
-            get = new IR.GetProperty(region, state.store, object, constant(Multiname.getQualifiedName(ti.trait.name)));
-            return ti.trait.isGetter() ? store(get) : load(get);
+            if (ti.propertyQName) {
+              return store(new IR.GetProperty(region, state.store, object, constant(ti.propertyQName)));
+            } else if (ti.isDirectlyReadable) {
+              return store(new IR.GetProperty(region, state.store, object, multiname.name));
+            }
           }
-          if (hasNumericType(name) || isStringConstant(name)) {
-            get = store(new IR.GetProperty(region, state.store, object, name));
-            if (!hasNumericType(name)) {
-              return get;
+          return store(new IR.AVM2GetProperty(region, state.store, object, multiname, false, getOpenMethod));
+        }
+
+        function setProperty(object, multiname, value, ti, ic) {
+          assert (multiname instanceof IR.AVM2Multiname);
+          if (ti) {
+            if (ti.trait) {
+              store(new IR.SetProperty(region, state.store, object, qualifiedNameConstant(ti.trait.name), value));
+              return;
             }
-            if (object.ty && object.ty.isParameterizedType()) {
-              return get;
+            if (ti.propertyQName) {
+              return store(new IR.SetProperty(region, state.store, object, constant(ti.propertyQName), value));
+            } else if (ti.isDirectlyWriteable) {
+              return store(new IR.SetProperty(region, state.store, object, multiname.name, value));
+            } else if (ti.isDirectlyWriteableWithCoercion) {
+              var coercer = getCoercerForType(ti.targetType);
+              if (coercer) {
+                value = coercer(value);
+                return store(new IR.SetProperty(region, state.store, object, multiname.name, value));
+              }
             }
-            if (object.ty && object.ty.isDirectlyIndexable()) {
-              return get;
-            }
-            return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
           }
-          if (isConstant(name)) {
-            assert (ic);
-            return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod, constant(ic)));
-          } else {
-            warn("Can't optimize getProperty name: " + name);
-            return store(new IR.AVM2GetProperty(region, state.store, object, name, false, !!getOpenMethod));
-          }
+          return store(new IR.AVM2SetProperty(region, state.store, object, multiname, value, false));
         }
 
         function getDescendants(object, name, ti) {
           name = simplifyName(name);
           return new IR.AVM2GetDescendants(region, state.store, object, name);
-        }
-
-        function setProperty(object, name, value, ti, ic) {
-          name = simplifyName(name);
-          if (hasNumericType(name) || isStringConstant(name)) {
-            var set = new IR.SetProperty(region, state.store, object, name, value);
-            if (!hasNumericType(name)) {
-              return store(set);
-            }
-            if (object.ty && object.ty.isParameterizedType()) {
-              if (object.ty.parameter.isSubtypeOf(value.ty)) {
-                return store(set);
-              } else {
-                var coercer = getCoercerForType(object.ty.parameter);
-                if (coercer) {
-                  value = coercer(value);
-                  return store(new IR.SetProperty(region, state.store, object, name, value));
-                }
-              }
-            }
-            if (object.ty && object.ty.isDirectlyIndexable()) {
-              return store(set);
-            }
-            warn("Can't optimize setProperty, name: " + name);
-            store(new IR.AVM2SetProperty(region, state.store, object, name, value, false));
-            return;
-          }
-          if (ti && ti.trait && object.ty &&
-              !(object.ty === Type.Any || object.ty === Type.XML || object.ty === Type.XMLList)) {
-            store(new IR.SetProperty(region, state.store, object, constant(Multiname.getQualifiedName(ti.trait.name)), value));
-            return;
-          }
-          if (isConstant(name)) {
-            assert (ic);
-            store(new IR.AVM2SetProperty(region, state.store, object, name, value, false, constant(ic)));
-          } else {
-            warn("Can't optimize setProperty, name: " + name);
-            store(new IR.AVM2SetProperty(region, state.store, object, name, value, false));
-          }
         }
 
         function getSlot(object, index, ti) {
@@ -1013,7 +1003,7 @@ var createName = function createName(namespaces, name) {
             case OP_deleteproperty:
               multiname = buildMultiname(bc.index);
               object = pop();
-              push(call(globalProperty("deleteProperty"), null, [object, multiname]));
+              push(store(new IR.AVM2DeleteProperty(region, state.store, object, multiname)));
               break;
             case OP_getslot:
               object = pop();
@@ -1097,9 +1087,7 @@ var createName = function createName(namespaces, name) {
                 Counter.count("Compiler: CoercionNeeded");
               }
               value = pop();
-              multiname = buildMultiname(bc.index);
-              assert (isMultinameConstant(multiname));
-              push(coerceValue(value, multiname.value));
+              push(coerceValue(value, multinames[bc.index]));
               break;
             case OP_coerce_i: case OP_convert_i:
               push(toInt32(pop()));
@@ -1267,12 +1255,8 @@ var createName = function createName(namespaces, name) {
             case OP_in:
               object = pop();
               value = pop();
-              if (isConstant(value)) {
-                multiname = getPublicQualifiedName(value);
-              } else {
-                multiname = call(globalProperty("getPublicQualifiedName"), null, [value]);
-              }
-              push(call(globalProperty("hasProperty"), null, [object, multiname]));
+              multiname = new IR.AVM2Multiname(Undefined, value, 0);
+              push(store(new IR.AVM2HasProperty(region, state.store, object, multiname)));
               break;
             case OP_typeof:
               push(call(globalProperty("typeOf"), null, [pop()]));

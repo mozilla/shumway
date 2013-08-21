@@ -80,6 +80,14 @@
        "swf": "/examples/Box2DFlashAS3/demo.swf",
        "type": "eq"
     },
+    {  "id": "avm1timeline",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/avm1timeline1.swf",
+         "swfs/avm1timeline2.swf"
+       ],
+       "type": "stas"
+    },
     {  "id": "flash_utils_ByteArray",
        "stas": "swfs/trace.stas",
        "filenames": [
@@ -189,6 +197,13 @@
        "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_filters_GlowFilter.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "flash_geom_Matrix3D trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/flash_geom_Matrix3D.swf"
        ],
        "type": "stas"
     },

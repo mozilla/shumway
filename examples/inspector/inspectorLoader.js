@@ -111,3 +111,33 @@ document.addEventListener("keydown", function (event) {
     pauseExecution = !pauseExecution;
   }
 });
+
+var terminal = new Terminal(document.getElementById("terminal")); terminal.refreshEvery(100);
+function appendToTerminal(str, color) {
+  var scroll = terminal.isScrolledToBottom();
+  terminal.buffer.append(str, color);
+  if (scroll) {
+    terminal.gotoLine(terminal.buffer.length - 1);
+    terminal.scrollIntoView();
+  }
+}
+
+console.info = console.log = appendToTerminal;
+console.warn = function (str) {
+  appendToTerminal(str, "#FF6700");
+};
+
+var frameInfoTerminal = new Terminal(document.getElementById("frameInfoTerminal")); frameInfoTerminal.refreshEvery(100);
+
+function appendToFrameTerminal(str, color) {
+  var scroll = frameInfoTerminal.isScrolledToBottom();
+  frameInfoTerminal.buffer.append(str, color);
+  if (scroll) {
+    frameInfoTerminal.gotoLine(frameInfoTerminal.buffer.length - 1);
+    frameInfoTerminal.scrollIntoView();
+  }
+}
+
+var frameWriter = new IndentingWriter(false, function (str){
+  appendToFrameTerminal(str);
+});

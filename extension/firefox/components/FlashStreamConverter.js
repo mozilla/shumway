@@ -657,6 +657,10 @@ FlashStreamConverterBase.prototype = {
           let actions = converter.createChromeActions(domWindow,
                                                       domWindow.document,
                                                       originalURI.spec);
+          if (actions.objectParams['shumwaymode'] === 'off') {
+            actions.fallback();
+            return;
+          }
           createSandbox(domWindow, isSimpleMode);
           let requestListener = new RequestListener(actions);
           domWindow.addEventListener('shumway.message', function(event) {

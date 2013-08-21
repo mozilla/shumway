@@ -113,8 +113,20 @@ var Type = (function () {
     return this === Type.String;
   };
 
-  type.prototype.isDirectlyIndexable = function () {
-    return this === Type.Array;
+  type.prototype.isDirectlyReadable = function () {
+    return this === Type.Array || this.isParameterizedType();
+  };
+
+  type.prototype.isDirectlyWriteable = function () {
+    return this === Type.Array || this.isParameterizedType() && this.parameter === Type.Any;
+  };
+
+  type.prototype.isVector = function () {
+    return this.isParameterizedType();
+  };
+
+  type.prototype.isNotDirectlyIndexable = function () {
+    return this === Type.Any || this === Type.XML || this === Type.XMLList || this === Type.Dictionary;
   };
 
   type.prototype.isParameterizedType = function () {
@@ -160,6 +172,7 @@ var Type = (function () {
     type.Function = Type.fromSimpleName("Function", domain).instance();
     type.XML = Type.fromSimpleName("XML", domain).instance();
     type.XMLList = Type.fromSimpleName("XMLList", domain).instance();
+    type.Dictionary = Type.fromSimpleName("flash.utils.Dictionary", domain).instance();
     typesInitialized = true;
   };
   return type;
@@ -287,7 +300,9 @@ var TraitsType = (function () {
 
   traitsType.prototype.getTrait = function (mn, isSetter, followSuperType) {
     assert (arguments.length === 3);
-
+    if (mn instanceof MultinameType) {
+      return null;
+    }
     if (followSuperType && this.isInstanceInfo()) {
       var that = this;
       do {
@@ -381,9 +396,10 @@ var TraitsType = (function () {
 })();
 
 var MultinameType = (function () {
-  function multinameType(namespaces, name) {
+  function multinameType(namespaces, name, flags) {
     this.namespaces = namespaces;
-    this.name = name
+    this.name = name;
+    this.flags = flags;
   }
   multinameType.prototype = Object.create(Type.prototype);
   multinameType.prototype.toString = function () {
@@ -422,6 +438,12 @@ var ParameterizedType = (function () {
   return parameterizedType;
 })();
 
+/**
+ * Type information attached to Bytecode instructions.
+ *
+ * isDirectlyReadable/Writeable: Assigned to get/setProperty whenever the name part of a multiname can be used as an index. This is
+ * only possible for Arrays and Vectors whenever the index is provably numeric.
+ */
 var TypeInformation = (function () {
   function typeInformation () {
 
@@ -724,7 +746,7 @@ var Verifier = (function() {
 
         // Try the saved scope.
         if (savedScope && savedScope.object && mn instanceof Multiname) {
-          var obj = savedScope.findProperty(mn, domain, strict, true);
+          var obj = savedScope.findScopeProperty(mn.namespaces, mn.name, mn.flags, domain, strict, true);
           if (obj) {
             var savedScopeDepth = savedScope.findDepth(obj);
             release || assert(savedScopeDepth >= 0);
@@ -762,7 +784,7 @@ var Verifier = (function() {
           if (mn.isRuntimeNamespace()) {
             namespaces = [pop()];
           }
-          return new MultinameType(namespaces, mn, name);
+          return new MultinameType(namespaces, name, mn.flags);
         }
         return mn;
       }
@@ -783,8 +805,13 @@ var Verifier = (function() {
         return Type.Any;
       }
 
+      function isNumericMultiname(mn) {
+        return mn instanceof Multiname && isNumeric(mn.name) ||
+               mn instanceof MultinameType && mn.name.isNumeric();
+      }
+
       function getProperty(obj, mn) {
-        if (obj instanceof TraitsType && mn instanceof Multiname) {
+        if (obj instanceof TraitsType || obj instanceof ParameterizedType) {
           var trait = obj.getTrait(mn, false, true);
           writer && writer.debugLn("getProperty(" + mn + ") -> " + trait);
           if (trait) {
@@ -798,23 +825,39 @@ var Verifier = (function() {
             } else if (trait.isMethod()) {
               return Type.from(trait.methodInfo, domain);
             }
-          } else {
+          } else if (obj.isDirectlyReadable() && mn instanceof Multiname) {
             ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
           }
-        } else if (obj instanceof ParameterizedType) {
-          return obj.parameter;
+          if (isNumericMultiname(mn) && obj.isDirectlyReadable()) {
+            ti().isDirectlyReadable = true;
+            if (obj.isVector()) {
+              return obj.parameter
+            }
+          }
         }
         return Type.Any;
       }
 
-      function setProperty(obj, mn) {
-        if (obj instanceof TraitsType && mn instanceof Multiname) {
+      function setProperty(obj, mn, value) {
+        if (obj instanceof TraitsType || obj instanceof ParameterizedType) {
           var trait = obj.getTrait(mn, true, true);
           writer && writer.debugLn("setProperty(" + mn + ") -> " + trait);
           if (trait) {
             ti().trait = trait;
-          } else {
+          } else if (obj.isDirectlyWriteable() && mn instanceof Multiname) {
             ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
+          }
+          if (isNumericMultiname(mn)) {
+            if (obj.isDirectlyWriteable()) {
+              ti().isDirectlyWriteable = true;
+            } else if (obj.isVector()) {
+              if (obj.parameter.isSubtypeOf(value)) {
+                ti().isDirectlyWriteable = true;
+              } else {
+                ti().isDirectlyWriteableWithCoercion = true;
+                ti().targetType = obj.parameter;
+              }
+            }
           }
         }
       }
@@ -845,7 +888,7 @@ var Verifier = (function() {
             mn = popMultiname();
             obj = pop();
             release || assert(obj.super());
-            setProperty(obj.super(), mn);
+            setProperty(obj.super(), mn, val);
             break;
           case OP_dxns:
             notImplemented(bc);
@@ -1116,7 +1159,7 @@ var Verifier = (function() {
             val = pop();
             mn = popMultiname();
             obj = pop();
-            setProperty(obj, mn, bc);
+            setProperty(obj, mn, val, bc);
             break;
           case OP_getlocal:
             push(local[bc.index]);

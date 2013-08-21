@@ -80,7 +80,7 @@ function somewhatImplemented(message) {
 }
 
 function unexpected(message) {
-  release || assert(false, "Unexpected: " + message);
+  assert(false, "Unexpected: " + message);
 }
 
 function makeForwardingGetter(target) {
@@ -102,7 +102,7 @@ function defineReadOnlyProperty(obj, name, value) {
  * Makes sure you never re-bind a method.
  */
 function bindSafely(fn, obj) {
-  assert (!fn.boundTo && obj);
+  release || assert (!fn.boundTo && obj);
   var f = fn.bind(obj);
   f.boundTo = obj;
   return f;
@@ -124,6 +124,25 @@ function copyProperties(object, template) {
   for (var property in template) {
     object[property] = template[property];
   }
+}
+
+/*
+ * Stringify functions that try not to call |toString| inadvertently.
+ */
+
+function toSafeString(value) {
+  if (typeof value === "number" || typeof value === "string" || typeof value === "boolean") {
+    return String(value);
+  }
+  return typeof value;
+}
+
+function toSafeArrayString(array) {
+  var str = [];
+  for (var i = 0; i < array.length; i++) {
+    str.push(toSafeString(array[i]));
+  }
+  return str.join(", ");
 }
 
 function getLatestGetterOrSetterPropertyDescriptor(obj, name) {
@@ -184,7 +203,7 @@ function defineNonEnumerableForwardingProperty(obj, name, otherName) {
 }
 
 function defineNewNonEnumerableProperty(obj, name, value) {
-  assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
+  release || assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
   defineNonEnumerableProperty(obj, name, value);
 }
 
@@ -213,6 +232,18 @@ function clamp(x, min, max) {
     return max;
   }
   return x;
+}
+
+/**
+ * Workaround for max stack size limit.
+ */
+function fromCharCodeArray(buffer) {
+  var str = "", SLICE = 1024 * 16;
+  for (var i = 0; i < buffer.length; i += SLICE) {
+    var chunk = Math.min(buffer.length - i, SLICE);
+    str += String.fromCharCode.apply(null, buffer.subarray(i, i + chunk));
+  }
+  return str;
 }
 
 function hasOwnProperty(object, name) {
@@ -335,6 +366,19 @@ function popManyInto(src, count, dst) {
     var max = (n - length) / c.length;
     for (var i = 0; i < max; i++) {
       str += c;
+    }
+    return str;
+  });
+
+  extendBuiltin(Sp, "padLeft", function (c, n) {
+    var str = this;
+    var length = str.length;
+    if (!c || length >= n) {
+      return str;
+    }
+    var max = (n - length) / c.length;
+    for (var i = 0; i < max; i++) {
+      str = c + str;
     }
     return str;
   });

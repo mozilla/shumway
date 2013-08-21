@@ -180,6 +180,8 @@ var Stubs = new (function () {
     M("flash.geom.Point", "PointClass", PointDefinition),
     M("flash.geom.Rectangle", "RectangleClass", RectangleDefinition),
     M("flash.geom.Matrix", "MatrixClass", MatrixDefinition),
+    M("flash.geom.Matrix3D", "Matrix3DClass", Matrix3DDefinition),
+    M("flash.geom.Vector3D", "Vector3DClass", Vector3DDefinition),
     M("flash.geom.Transform", "TransformClass", TransformDefinition),
     M("flash.geom.ColorTransform", "ColorTransformClass", ColorTransformDefinition),
 

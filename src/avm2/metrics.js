@@ -93,10 +93,13 @@
   var Counter = (function () {
     function counter(enabled) {
       this.enabled = !!enabled;
-      this.counts = {};
+      this.counts = createEmptyObject();
     }
     counter.prototype.setEnabled = function (enabled) {
       this.enabled = enabled;
+    };
+    counter.prototype.clear = function () {
+      this.counts = {};
     };
     counter.prototype.toJSON = function () {
       return {counts: this.counts};
@@ -110,6 +113,7 @@
         this.counts[name] = 0;
       }
       this.counts[name] += increment;
+      return this.counts[name];
     };
     counter.prototype.trace = function (writer, json) {
       if (json) {

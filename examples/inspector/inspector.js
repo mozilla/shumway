@@ -204,6 +204,11 @@ if (yt) {
   xhr.send(null);
 }
 
+var simpleMode = getQueryVariable("simpleMode") === "true";
+if (simpleMode) {
+  document.body.setAttribute('class', 'simple');
+}
+
 function showMessage(msg) {
   document.getElementById('message').textContent = msg;
   document.getElementById('message').parentElement.removeAttribute('hidden');

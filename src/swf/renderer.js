@@ -15,7 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO, Timer */
+/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO, Timer, FrameCounter, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter*/
+
+var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
+var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
 
 var CanvasCache = {
   cache: [],
@@ -570,6 +573,8 @@ function renderStage(stage, ctx, events) {
   console.timeEnd("Initialize Renderer");
   console.timeEnd("Total");
 
+  var frameCount = 0;
+
   (function draw() {
     var now = Date.now();
     var renderFrame;
@@ -606,10 +611,11 @@ function renderStage(stage, ctx, events) {
     }
 
     if (renderFrame || refreshStage || mouseMoved) {
-
-      Timer.start("MouseVisitor");
+      FrameCounter.clear();
+      traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
+      traceRenderer.value && frameWriter.enter("> Mouse Visitor");
       (new MouseVisitor(stage)).start();
-      Timer.stop();
+      traceRenderer.value && frameWriter.leave("< Mouse Visitor");
 
       var domain = avm2.systemDomain;
 
@@ -632,10 +638,10 @@ function renderStage(stage, ctx, events) {
 
       if (refreshStage || renderFrame) {
         ctx.beginPath();
-        Timer.start("PreVisitor");
+        traceRenderer.value && frameWriter.enter("> Pre Visitor");
         (new PreVisitor(stage, ctx)).start();
         (new RenderVisitor(stage, ctx, refreshStage)).start();
-        Timer.stop();
+        traceRenderer.value && frameWriter.leave("< Pre Visitor");
       }
 
       if (renderFrame) {
@@ -648,6 +654,14 @@ function renderStage(stage, ctx, events) {
       }
 
       stage._syncCursor();
+
+      if (traceRenderer.value) {
+        for (var name in FrameCounter.counts) {
+          appendToFrameTerminal(name + ": " + FrameCounter.counts[name], "gray");
+        }
+      }
+    } else {
+      traceRenderer.value && appendToFrameTerminal("Skip Frame", "black");
     }
 
     sampleEnd();
