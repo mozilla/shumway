@@ -109,9 +109,9 @@ var MovieClipDefinition = (function () {
       }
       return this.$as2Object;
     },
-    _gotoFrame: function (frameNum, scene) {
+    _getAbsFrameNum: function (frameNum, scene) {
       // If a scene name is specified in gotoAndStop or gotoAndPlay,
-      // amd the specified frame is a number, the frame number is
+      // and the specified frame is a number, the frame number is
       // relative to the scene.
       if (typeof scene === "string" && this._scenes && this._scenes.length > 1) {
         var scenes = this._scenes;
@@ -122,7 +122,9 @@ var MovieClipDefinition = (function () {
           }
         }
       }
-
+      return frameNum;
+    },
+    _gotoFrame: function (frameNum) {
       if (frameNum < 1 || frameNum > this._totalFrames)
         frameNum = 1;
 
@@ -447,7 +449,7 @@ var MovieClipDefinition = (function () {
       if (isNaN(frame)) {
         this.gotoLabel(frame);
       } else {
-        this._gotoFrame(frame, scene);
+        this._gotoFrame(this._getAbsFrameNum(frame, scene));
       }
     },
     gotoAndStop: function (frame, scene) {
@@ -455,7 +457,7 @@ var MovieClipDefinition = (function () {
       if (isNaN(frame)) {
         this.gotoLabel(frame);
       } else {
-        this._gotoFrame(frame, scene);
+        this._gotoFrame(this._getAbsFrameNum(frame, scene));
       }
     },
     gotoLabel: function (labelName) {
@@ -474,7 +476,9 @@ var MovieClipDefinition = (function () {
       }
     },
     nextScene: function () {
-      notImplemented();
+      if (this._scenes && this._currentScene < this._scenes.length - 1) {
+        this._gotoFrame(this._scenes[this._currentScene + 1]._startFrame);
+      }
     },
     play: function () {
       if (!this._isPlaying) {
@@ -491,7 +495,9 @@ var MovieClipDefinition = (function () {
       }
     },
     prevScene: function () {
-      notImplemented();
+      if (this._scenes && this._currentScene > 0) {
+        this._gotoFrame(this._scenes[this._currentScene - 1]._startFrame);
+      }
     },
     stop: function () {
       if (this._isPlaying) {
