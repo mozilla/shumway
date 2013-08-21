@@ -249,7 +249,8 @@
          "swfs/timeline/scene/Scene_3_GotoAndStop_LabelScene.swf",
          "swfs/timeline/scene/Scene_4_GotoAndStop_FrameScene.swf",
          "swfs/timeline/scene/Scene_5_GotoAndPlay_LabelScene.swf",
-         "swfs/timeline/scene/Scene_6_GotoAndPlay_FrameScene.swf"
+         "swfs/timeline/scene/Scene_6_GotoAndPlay_FrameScene.swf",
+         "swfs/timeline/scene/Scene_7_NextPrevScene.swf"
        ],
        "type": "stas"
     },
