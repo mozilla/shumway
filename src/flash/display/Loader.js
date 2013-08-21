@@ -563,7 +563,7 @@ var LoaderDefinition = (function () {
 
       if (frame.bgcolor)
         loaderInfo._backgroundColor = frame.bgcolor;
-      else
+      else if (typeof loaderInfo._backgroundColor === "undefined")
         loaderInfo._backgroundColor = { red: 255, green: 255, blue: 255, alpha: 255 };
 
       Promise.when.apply(Promise, promiseQueue).then(function () {
