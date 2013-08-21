@@ -111,6 +111,7 @@ class State:
     eqLog = None
     traceLog = None
     lastPost = { }
+    currentTest = { }
 
 class Result:
     def __init__(self, snapshot, failure, item):
@@ -217,6 +218,12 @@ class PDFTestHandler(TestHandlerBase):
           url = urlparse(self.path)
           if url.path == "/tellMeToQuit":
               tellAppToQuit(url.path, url.query)
+              return
+          if url.path == "/progress":
+              progressInfo = parse_qs(url.query)
+              browser = progressInfo['browser'][0]
+              State.lastPost[browser] = int(time.time())
+              State.currentTest[browser] = progressInfo['id'][0]
               return
 
           result = json.loads(self.rfile.read(numBytes))
@@ -607,7 +614,7 @@ def runTests(options, browsers):
         while not State.done:
             for b in State.lastPost:
                 if State.remaining[b] > 0 and int(time.time()) - State.lastPost[b] > BROWSER_TIMEOUT:
-                    print 'TEST-UNEXPECTED-FAIL | test failed', b, "has not responded in", BROWSER_TIMEOUT, "s"
+                    print 'TEST-UNEXPECTED-FAIL | test', State.currentTest[b], 'failed', b, "has not responded in", BROWSER_TIMEOUT, "s"
                     State.numErrors += State.remaining[b]
                     State.remaining[b] = 0
                     checkIfDone()
