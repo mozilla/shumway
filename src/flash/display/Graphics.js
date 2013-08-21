@@ -24,6 +24,11 @@ var GraphicsDefinition = (function () {
   var GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO   = 4;
   var GRAPHICS_PATH_COMMAND_WIDE_LINE_TO   = 5;
   var GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO = 6;
+  // The following commands aren't available in the Flash Player. We use them as
+  // shortcuts for complex operations that exist natively on Canvas.
+  var SHAPE_CIRCLE         = 7;
+  var SHAPE_ARC_TO         = 8;
+  var SHAPE_ELLIPSE        = 9;
 
   var GRAPHICS_PATH_WINDING_EVEN_ODD       = 'evenOdd';
   var GRAPHICS_PATH_WINDING_NON_ZERO       = 'nonZero';
@@ -50,7 +55,7 @@ var GraphicsDefinition = (function () {
       this._my = null;
       this._revision = 0;
       this._scale = 1;
-      this._strokeStyle = null;
+      this._lineStyle = null;
       this._paths = [];
     },
 
@@ -69,7 +74,7 @@ var GraphicsDefinition = (function () {
       }
       path.drawingStyles = this._drawingStyles;
       path.fillStyle = this._fillStyle;
-      path.lineStyle = this._strokeStyle;
+      path.lineStyle = this._lineStyle;
       this._paths.push(path);
       // Cache as an own property.
       Object.defineProperty(this, '_currentPath', { value: path, configurable: true });
@@ -95,13 +100,38 @@ var GraphicsDefinition = (function () {
               case GRAPHICS_PATH_COMMAND_MOVE_TO:
                 ctx.moveTo(data[k++], data[k++]);
                 break;
+              case GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO:
+                ctx.moveTo(data[k++], data[k++]);
+                k += 2;
+                break;
               case GRAPHICS_PATH_COMMAND_LINE_TO:
                 ctx.lineTo(data[k++], data[k++]);
                 break;
-              case GRAPHICS_PATH_COMMAND_CURVE_TO:
-                ctx.quadraticCurveTo(data[k++], data[k++], data[k++],
-                                     data[k++]);
+              case GRAPHICS_PATH_COMMAND_WIDE_LINE_TO:
+                ctx.lineTo(data[k++], data[k++]);
+                k += 2;
                 break;
+              case GRAPHICS_PATH_COMMAND_CURVE_TO:
+                ctx.quadraticCurveTo(data[k++], data[k++],
+                                     data[k++], data[k++]);
+                break;
+              case GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO:
+                ctx.bezierCurveTo(data[k++], data[k++], data[k++], data[k++],
+                                  data[k++], data[k++]);
+                break;
+              case SHAPE_CIRCLE:
+                ctx.arc(data[k++], data[k++], data[k++], 0, Math.PI * 2, false);
+                break;
+              case SHAPE_ARC_TO:
+                ctx.arcTo(data[k++], data[k++], data[k++], data[k++],
+                          data[k++]);
+                break;
+              case SHAPE_ELLIPSE:
+                ctx.ellipse(data[k++], data[k++], data[k++], data[k++],
+                            0, 0, Math.PI * 2);
+                break;
+              default:
+                warn("Unknown drawing command encountered: " + commands[j]);
             }
           } else {
             switch (commands[j]) {
@@ -119,6 +149,9 @@ var GraphicsDefinition = (function () {
                                      morph(data[k], morphData[k++], ratio),
                                      morph(data[k], morphData[k++], ratio));
                 break;
+              default:
+                warn("Drawing command not supported for morph shapes: " +
+                     commands[j]);
             }
           }
         }
@@ -195,12 +228,12 @@ var GraphicsDefinition = (function () {
 
       this._drawingStyles = null;
       this._fillStyle = null;
-      this._strokeStyle = null;
+      this._lineStyle = null;
       this._paths = [];
       this._revision++;
     },
     copyFrom: function (sourceGraphics) {
-      notImplemented();
+      notImplemented("Graphics#copyFrom");
     },
     cubicCurveTo: function (cp1x, cp1y, cp2x, cp2y, x, y) {
       this._currentPath.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
@@ -211,11 +244,13 @@ var GraphicsDefinition = (function () {
       this._revision++;
     },
     drawCircle: function (x, y, radius) {
-      this._currentPath.arc(x, y, radius, 0, Math.PI * 2);
+      this._currentPath.circle(x, y, radius);
       this._revision++;
     },
     drawEllipse: function (x, y, width, height) {
-      this._currentPath.ellipse(x, y, width / 2, height / 2, 0, 0, Math.PI * 2);
+      var radiusX = width / 2;
+      var radiusY = height / 2;
+      this._currentPath.ellipse(x + radiusX, y + radiusY, radiusX, radiusY);
       this._revision++;
     },
     drawPath: function (commands, data, winding) {
@@ -233,19 +268,22 @@ var GraphicsDefinition = (function () {
       this._revision++;
     },
     drawRoundRect: function (x, y, w, h, ellipseWidth, ellipseHeight) {
-      if (isNaN(w + h + ellipseWidth) || (ellipseHeight !== undefined && isNaN(ellipseHeight)))
+      if (isNaN(w + h + ellipseWidth) ||
+          (ellipseHeight !== undefined && isNaN(ellipseHeight)))
+      {
         throw ArgumentError();
+      }
 
-      var radiusW = ellipseWidth / 2;
-      var radiusH = ellipseHeight / 2;
+      var radiusX = ellipseWidth / 2;
+      var radiusY = ellipseHeight / 2;
 
-      this._currentPath.moveTo(x+w, y+h-radiusH);
 
       if (w === ellipseWidth && h === ellipseHeight) {
         if (ellipseWidth === ellipseHeight)
-          this._currentPath.arc(x+radiusW, y+radiusH, radiusW, 0, Math.PI * 2);
+          this._currentPath.circle(x+radiusX, y+radiusY, radiusX);
         else
-          this._currentPath.ellipse(x+radiusW, y+radiusH, radiusW, radiusH, 0, 0, Math.PI * 2);
+          this._currentPath.ellipse(x+radiusX, y+radiusY, radiusX, radiusY,
+                                    0, 0, Math.PI * 2);
         this._revision++;
         return;
       }
@@ -257,27 +295,39 @@ var GraphicsDefinition = (function () {
       //
       // Through some testing, it has been discovered
       // tha the Flash player starts and stops the pen
-      // at 'D', so we will too.
+      // at 'D', so we will, too.
+      var x2 = x + w;
+      var y2 = y + h;
+      this._currentPath.moveTo(x2, y2 - radiusY);
 
-      this._currentPath.arcTo(x+w, y+h, x+w-radiusW, y+h, radiusW, radiusH);
-      this._currentPath.arcTo(x, y+h, x, y+h-radiusH, radiusW, radiusH);
-      this._currentPath.arcTo(x, y, x+radiusW, y, radiusW, radiusH);
-      this._currentPath.arcTo(x+w, y, x+w, y+radiusH, radiusW, radiusH);
+      this._currentPath.arcTo(x2, y2, x2-radiusX, y2, radiusX, radiusY);
+      this._currentPath.arcTo(x, y2, x, y2-radiusY, radiusX, radiusY);
+      this._currentPath.arcTo(x, y, x+radiusX, y, radiusX, radiusY);
+      this._currentPath.arcTo(x2, y, x2, y+radiusY, radiusX, radiusY);
+      this._currentPath.lineTo(x2, y2-radiusY);
       this._revision++;
     },
-    drawRoundRectComplex: function (x, y, w, h, topLeftRadius, topRightRadius, bottomLeftRadius, bottomRightRadius) {
-      if (isNaN(w + h + topLeftRadius + topRightRadius + bottomLeftRadius + bottomRightRadius))
+    drawRoundRectComplex: function (x, y, w, h, topLeftRadius, topRightRadius,
+                                    bottomLeftRadius, bottomRightRadius)
+    {
+      if (isNaN(w + h + topLeftRadius + topRightRadius + bottomLeftRadius +
+                bottomRightRadius))
+      {
         throw ArgumentError();
+      }
 
-      this._currentPath.moveTo(x+w, y+h-bottomRightRadius);
-      this._currentPath.arcTo(x+w, y+h, x+w-bottomRightRadius, y+h, bottomRightRadius);
-      this._currentPath.arcTo(x, y+h, x, y+h-bottomLeftRadius, bottomLeftRadius);
+      var x2 = x + w;
+      var y2 = y + h;
+      this._currentPath.moveTo(x2, y2-bottomRightRadius);
+      this._currentPath.arcTo(x2, y2, x2-bottomRightRadius, y2,
+                              bottomRightRadius);
+      this._currentPath.arcTo(x, y2, x, y2-bottomLeftRadius, bottomLeftRadius);
       this._currentPath.arcTo(x, y, x+topLeftRadius, y, topLeftRadius);
-      this._currentPath.arcTo(x+w, y, x+w, y+topRightRadius, topRightRadius);
+      this._currentPath.arcTo(x2, y, x2, y+topRightRadius, topRightRadius);
       this._revision++;
     },
     drawTriangles: function (vertices, indices, uvtData, culling) {
-      notImplemented();
+      notImplemented("Graphics#drawTriangles");
     },
     endFill: function () {
       delete this._currentPath;
@@ -291,7 +341,9 @@ var GraphicsDefinition = (function () {
       notImplemented();
     },
 
-    lineStyle: function (width, color, alpha, pxHinting, scale, cap, joint, mlimit) {
+    lineStyle: function (width, color, alpha, pxHinting, scale, cap, joint,
+                         mlimit)
+    {
       delete this._currentPath;
 
       if (width) {
@@ -306,10 +358,10 @@ var GraphicsDefinition = (function () {
           lineWidth: width,
           miterLimit: mlimit * 2
         };
-        this._strokeStyle = toRgba(color, alpha);
+        this._lineStyle = toRgba(color, alpha);
       } else {
         this._drawingStyles = null;
-        this._strokeStyle = null;
+        this._lineStyle = null;
       }
     },
     lineTo: function (x, y) {
@@ -345,14 +397,12 @@ var GraphicsDefinition = (function () {
       var xMins = [], yMins = [], xMaxs = [], yMaxs = [];
       for (var i = 0, n = subpaths.length; i < n; i++) {
         var path = subpaths[i];
-        var b = path.bounds;
+        var b = path.getBounds(true);
         if (b) {
-          if (includeStroke && path.strokeStyle) {
-            var lh = path.drawingStyles.lineWidth / 2;
-            xMins.push(b.left - lh); yMins.push(b.top - lh); xMaxs.push(b.right + lh); yMaxs.push(b.bottom + lh);
-          } else {
-            xMins.push(b.left); yMins.push(b.top); xMaxs.push(b.right); yMaxs.push(b.bottom);
-          }
+          xMins.push(b.left);
+          yMins.push(b.top);
+          xMaxs.push(b.right);
+          yMaxs.push(b.bottom);
         }
 
       }

@@ -26,13 +26,6 @@ var GRAPHICS_FILL_RADIAL_GRADIENT              = 18;
 var GRAPHICS_FILL_REPEATING_BITMAP             = 64;
 var GRAPHICS_FILL_SOLID                        =  0;
 
-var GRAPHICS_PATH_COMMAND_MOVE_TO        = 1;
-var GRAPHICS_PATH_COMMAND_LINE_TO        = 2;
-var GRAPHICS_PATH_COMMAND_CURVE_TO       = 3;
-var GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO   = 4;
-var GRAPHICS_PATH_COMMAND_WIDE_LINE_TO   = 5;
-var GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO = 6;
-
 /*
  * Applies the current segment to the paths of all styles specified in the last
  * style-change record.
@@ -81,7 +74,7 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
     var targetCommands = targetSegment.commands;
     var targetData = targetSegment.data;
     var targetMorphData = targetSegment.morphData;
-    targetCommands.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
+    targetCommands.push(SHAPE_MOVE_TO);
     var j = data.length - 2;
     targetData.push(data[j], data[j + 1]);
     for (i = commands.length; i-- > 1; j -= 2) {
@@ -91,7 +84,7 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
       if (isMorph) {
         targetMorphData.push(morphData[j - 2], morphData[j - 1]);
       }
-      if (command === GRAPHICS_PATH_COMMAND_CURVE_TO) {
+      if (command === SHAPE_CURVE_TO) {
         targetData.push(data[j - 4], data[j - 3]);
         if (isMorph) {
             targetMorphData.push(morphData[j - 4], morphData[j - 3]);
@@ -193,7 +186,7 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       // Move or not, we want this path segment to start where the last one left
       // off. Even if the last one belonged to a different style.
       // "Huh," you say? Yup.
-      segment.commands.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
+      segment.commands.push(SHAPE_MOVE_TO);
       segment.data.push(x, y);
     }
     // type 1 is a StraightEdge or CurvedEdge record
@@ -204,7 +197,7 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         x += record.deltaX|0;
         y += record.deltaY|0;
 
-        segment.commands.push(GRAPHICS_PATH_COMMAND_LINE_TO);
+        segment.commands.push(SHAPE_LINE_TO);
         segment.data.push(x, y);
         if (isMorph) {
           morphX = (morphX + morphRecord.deltaX)|0;
@@ -212,7 +205,7 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
           segment.morphData.push(morphX, morphY);
         }
       } else {
-        segment.commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
+        segment.commands.push(SHAPE_CURVE_TO);
         x += record.controlDeltaX|0;
         y += record.controlDeltaY|0;
 
@@ -494,13 +487,25 @@ SegmentedPath.prototype = {
     return this._head;
   },
   segmentsConnect: function(first, second) {
-    assert(second.commands[0] === GRAPHICS_PATH_COMMAND_MOVE_TO);
+    assert(second.commands[0] === SHAPE_MOVE_TO);
 
     var firstLength = first.data.length;
     return first.data[firstLength - 2] === second.data[0] &&
            first.data[firstLength - 1] === second.data[1];
   }
 }
+
+var SHAPE_MOVE_TO        = 1;
+var SHAPE_LINE_TO        = 2;
+var SHAPE_CURVE_TO       = 3;
+var SHAPE_WIDE_MOVE_TO   = 4;
+var SHAPE_WIDE_LINE_TO   = 5;
+var SHAPE_CUBIC_CURVE_TO = 6;
+// The following commands aren't available in the Flash Player. We use them as
+// shortcuts for complex operations that exist natively on Canvas.
+var SHAPE_ARC_TO         = 7;
+var SHAPE_CIRCLE         = 8;
+var SHAPE_ELLIPSE        = 9;
 
 function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph)
 {
@@ -522,28 +527,47 @@ function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph)
   this.strokeBounds = null;
 
   this.isMorph = isMorph;
-  this.fullyInitialized = !inWorker;
+  this.fullyInitialized = false;
 }
 
 ShapePath.prototype = {
   moveTo: function(x, y) {
-    this.commands.push(GRAPHICS_PATH_COMMAND_MOVE_TO);
+    this.commands.push(SHAPE_MOVE_TO);
     this.data.push(x, y);
   },
   lineTo: function(x, y) {
-    this.commands.push(GRAPHICS_PATH_COMMAND_LINE_TO);
+    this.commands.push(SHAPE_LINE_TO);
     this.data.push(x, y);
   },
   curveTo: function(controlX, controlY, anchorX, anchorY) {
-    this.commands.push(GRAPHICS_PATH_COMMAND_CURVE_TO);
+    this.commands.push(SHAPE_CURVE_TO);
     this.data.push(controlX, controlY, anchorX, anchorY);
   },
   cubicCurveTo: function(control1X, control1Y, control2X, control2Y,
                          anchorX, anchorY)
   {
-    this.commands.push(GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO);
+    this.commands.push(SHAPE_CUBIC_CURVE_TO);
     this.data.push(control1X, control1Y, control2X, control2Y,
                    anchorX, anchorY);
+  },
+  rect: function(x, y, w, h) {
+    var x2 = x + w;
+    var y2 = y + h;
+    this.commands.push(SHAPE_MOVE_TO, SHAPE_LINE_TO, SHAPE_LINE_TO,
+                       SHAPE_LINE_TO, SHAPE_LINE_TO);
+    this.data.push(x, y, x2, y, x2, y2, x, y2, x, y);
+  },
+  circle: function(x, y, radius) {
+    this.commands.push(SHAPE_CIRCLE);
+    this.data.push(x, y, radius);
+  },
+  arcTo: function(x1, y1, x2, y2, radius) {
+    this.commands.push(SHAPE_ARC_TO);
+    this.data.push(x1, y1, x2, y2, radius);
+  },
+  ellipse: function(x, y, radiusX, radiusY) {
+    this.commands.push(SHAPE_ELLIPSE);
+    this.data.push(x, y, radiusX, radiusY);
   },
   isPointInPath: function(x, y) {
     var bounds = this.strokeBounds || this.bounds || this._calculateBounds();
@@ -554,39 +578,75 @@ ShapePath.prototype = {
     }
     return this.fillStyle !== null;
   },
+  getBounds: function(includeStroke) {
+    var bounds = includeStroke ? this.strokeBounds : this.bounds;
+    if (!bounds) {
+      this._calculateBounds();
+      bounds = includeStroke ? this.strokeBounds : this.bounds;
+    }
+    return bounds;
+  },
   _calculateBounds: function() {
     var commands = this.commands;
     var data = this.data;
     var length = commands.length;
-    var commandIndex = 0;
-    var dataIndex = 0;
     var bounds;
-    if (this.commands[0] === GRAPHICS_PATH_COMMAND_MOVE_TO) {
-      bounds = {left: this.data[0], top: this.data[1]};
-      commandIndex = 1;
-      dataIndex = 2;
+    if (commands[0] === SHAPE_MOVE_TO || commands[0] > SHAPE_ARC_TO) {
+      bounds = {left: data[0], top: data[1]};
     } else {
+      // only the various single-line-drawing commands start out at zero
+      // they're the first command.
       bounds = {left: 0, top: 0};
     }
     bounds.right = bounds.left;
     bounds.bottom = bounds.top;
 
-    for (; commandIndex < length; commandIndex++) {
+    for (var commandIndex = 0, dataIndex = 0; commandIndex < length;
+         commandIndex++)
+    {
       extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
       switch (commands[commandIndex]) {
-        //TODO: maybe calculate tighter bounds for control points
-        case GRAPHICS_PATH_COMMAND_CURVE_TO:
+        case SHAPE_MOVE_TO:
+        case SHAPE_LINE_TO:
+          break;
+        //TODO: calculate tighter bounds for control points
+        case SHAPE_CURVE_TO:
           extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
           break;
-        case GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO:
+        case SHAPE_CUBIC_CURVE_TO:
           extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
           extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
           break;
-        case GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO:
-        case GRAPHICS_PATH_COMMAND_WIDE_LINE_TO:
+        case SHAPE_WIDE_MOVE_TO:
+        case SHAPE_WIDE_LINE_TO:
           dataIndex += 2;
           break;
+        case SHAPE_ARC_TO:
+          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
+          dataIndex++;
+          break;
+        case SHAPE_CIRCLE:
+          var x = data[dataIndex-2];
+          var y = data[dataIndex-1];
+          var radius = data[dataIndex++];
+          extendBoundsByPoint(bounds, x - radius, y - radius);
+          extendBoundsByPoint(bounds, x + radius, y + radius);
+          dataIndex++;
+          break;
+        case SHAPE_ELLIPSE:
+          var x = data[dataIndex-2];
+          var y = data[dataIndex-1];
+          var radiusX = data[dataIndex++];
+          var radiusY = data[dataIndex++];
+          extendBoundsByPoint(bounds, x - radiusX, y - radiusY);
+          extendBoundsByPoint(bounds, x + radiusX, y + radiusY);
+          dataIndex++;
+          break;
         default:
+          if (!isWorker) {
+            warn("Drawing command not handled in bounds calculation: " +
+                 commands[commandIndex]);
+          }
       }
     }
     this.bounds = bounds;
@@ -597,6 +657,8 @@ ShapePath.prototype = {
                            right: bounds.right + halfLineWidth,
                            bottom: bounds.bottom + halfLineWidth};
       return this.strokeBounds;
+    } else {
+      this.strokeBounds = bounds;
     }
     return bounds;
   },
@@ -607,18 +669,18 @@ ShapePath.prototype = {
     var dataIndex = 0;
     this.commands.forEach(function(command) {
       switch (command) {
-        case GRAPHICS_PATH_COMMAND_MOVE_TO:
+        case SHAPE_MOVE_TO:
           out += '\tmoveTo(' + data[dataIndex++] + ', ' + data[dataIndex++] + ');\n';
           break;
-        case GRAPHICS_PATH_COMMAND_LINE_TO:
+        case SHAPE_LINE_TO:
           out += '\tlineTo(' + data[dataIndex++] + ', ' + data[dataIndex++] + ');\n';
           break;
-        case GRAPHICS_PATH_COMMAND_CURVE_TO:
+        case SHAPE_CURVE_TO:
           out += '\tquadraticCurveTo(' + data[dataIndex++] + ', ' +
                  data[dataIndex++] + ', ' + data[dataIndex++] + ', ' +
                  data[dataIndex++] + ');\n';
           break;
-        case GRAPHICS_PATH_COMMAND_CURVE_TO:
+        case SHAPE_CURVE_TO:
           out += '\tquadraticCurveTo(' + data[dataIndex++] + ', ' +
                  data[dataIndex++] + ', ' + data[dataIndex++] + ', ' +
                  data[dataIndex++] + ');\n';
