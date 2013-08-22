@@ -53,6 +53,7 @@ var FirefoxCom = (function FirefoxComClosure() {
         }
         var cookie = "requestId" + (FirefoxCom.request.nextId++);
         e.detail.cookie = cookie;
+        e.detail.callback = true;
 
         document.addEventListener('shumway.response', function listener(event) {
           if (cookie !== event.detail.cookie)
@@ -84,6 +85,12 @@ function runViewer() {
   FileLoadingService.setBaseUrl(flashParams.baseUrl);
 
   movieUrl = flashParams.url;
+  if (!movieUrl) {
+    console.log("no movie url provided -- stopping here");
+    FirefoxCom.request('endActivation', null);
+    return;
+  }
+
   movieParams = flashParams.movieParams;
   objectParams = flashParams.objectParams;
   var isOverlay = flashParams.isOverlay;
@@ -113,11 +120,29 @@ function runViewer() {
   }
   var showURLMenu = document.getElementById('showURLMenu');
   showURLMenu.addEventListener('click', showURL);
+
+  document.getElementById('copyProfileMenu').addEventListener('click', copyProfile);
 }
 
 function showURL() {
   var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
   window.prompt("Copy to clipboard", flashParams.url);
+}
+
+function copyProfile() {
+  function toArray(v) {
+    var array = [];
+    for (var i = 0; i < v.length; i++) {
+      array.push(v[i]);
+    }
+    return array;
+  }
+  var profile = {
+    loops: {counts: toArray($L), lines: $LL},
+    functions: {counts: toArray($F), lines: $FL},
+    allocations: {counts: toArray($A), lines: $AL}
+  };
+  FirefoxCom.request('unsafeSetClipboard', JSON.stringify(profile));
 }
 
 var movieUrl, movieParams, objectParams;
@@ -194,7 +219,10 @@ function parseSwf(url, movieParams, objectParams) {
 
   console.log("Compiler settings: " + JSON.stringify(compilerSettings));
   console.log("Parsing " + url + "...");
-  function loaded() {}
+  function loaded() {
+    FirefoxCom.request('endActivation', null);
+  }
+
   createAVM2(builtinPath, playerGlobalPath,
     compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
@@ -206,7 +234,7 @@ function parseSwf(url, movieParams, objectParams) {
          objectParams: objectParams,
          onComplete: loaded,
          onBeforeFrame: frame
-    });
+      });
   });
 }
 

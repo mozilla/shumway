@@ -19,9 +19,9 @@
          URL, FileLoadingService, Promise, AbcFile, SHUMWAY_ROOT, SWF,
          defineBitmap, defineImage, defineFont, defineShape, defineSound,
          defineLabel, defineButton, defineText,
-         AS2Key, AS2Mouse, AS2Context, executeActions,
+         AS2Globals, AS2Context, executeActions,
          createSoundStream, MP3DecoderSession, PLAY_USING_AUDIO_TAG,
-         cloneObject, fromCharCode */
+         cloneObject, createEmptyObject, fromCharCode */
 /*global SWF_TAG_CODE_DEFINE_BITS, SWF_TAG_CODE_DEFINE_BITS_JPEG2,
           SWF_TAG_CODE_DEFINE_BITS_JPEG3, SWF_TAG_CODE_DEFINE_BITS_JPEG4,
           SWF_TAG_CODE_DEFINE_BITS_LOSSLESS, SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2,
@@ -261,7 +261,7 @@ var LoaderDefinition = (function () {
 
             switch (tag.code) {
             case SWF_TAG_CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA:
-              frame.sceneData = tag.data;
+              frame.sceneData = tag;
               break;
             case SWF_TAG_CODE_DEFINE_SCALING_GRID:
               var symbolUpdate = {
@@ -289,11 +289,9 @@ var LoaderDefinition = (function () {
                 frame.actionBlocks = [tag.actionsData];
               break;
             case SWF_TAG_CODE_DO_INIT_ACTION:
-              var initActionBlocks = frame.initActionBlocks;
-              if (!initActionBlocks) {
-                frame.initActionBlocks = initActionBlocks = {};
-              }
-              initActionBlocks[tag.spriteId] = tag.actionsData;
+              var initActionBlocks = frame.initActionBlocks ||
+                (frame.initActionBlocks = []);
+              initActionBlocks.push({spriteId: tag.spriteId, actionsData: tag.actionsData});
               break;
             case SWF_TAG_CODE_START_SOUND:
               var startSounds = frame.startSounds;
@@ -605,6 +603,7 @@ var LoaderDefinition = (function () {
         }
      }).then(function () {
         var root = loader._content;
+        var labelMap;
 
         if (!root) {
           var parent = loader._parent;
@@ -626,22 +625,57 @@ var LoaderDefinition = (function () {
             parent._stageHeight = loaderInfo._height;
             parent._stageWidth = loaderInfo._width;
             parent._root = root;
+            parent._setup();
           } else {
             loader._children.push(root);
           }
 
-          if (labelName) {
-            var labelMap = { };
-            labelMap[labelName] = frameNum;
-            root.symbol.labelMap = labelMap;
+          var labels;
+          labelMap = root.symbol.labelMap = createEmptyObject();
+          if (sceneData) {
+            var scenes = [];
+            var startFrame;
+            var endFrame = root.symbol.totalFrames - 1;
+            var sd = sceneData.scenes;
+            var ld = sceneData.labels;
+            var i = sd.length;
+            while (i--) {
+              var s = sd[i];
+              startFrame = s.offset;
+              labels = [];
+              var j = ld.length;
+              while (j--) {
+                var lbl = ld[j];
+                if (lbl.frame >= startFrame && lbl.frame <= endFrame) {
+                  labelMap[lbl.name] = lbl.frame + 1;
+                  labels.unshift(new flash.display.FrameLabel(lbl.name, lbl.frame - startFrame + 1));
+                }
+              }
+              var scene = new flash.display.Scene(s.name, labels, endFrame - startFrame + 1);
+              scene._startFrame = startFrame + 1;
+              scene._endFrame = endFrame + 1;
+              scenes.unshift(scene);
+              endFrame = startFrame - 1;
+            }
+            root.symbol.scenes = scenes;
+          } else {
+            labels = [];
+            if (labelName) {
+              labelMap[labelName] = frameNum;
+              labels.push(new flash.display.FrameLabel(labelName, frameNum));
+            }
+            var scene = new flash.display.Scene("Scene 1", labels, root.symbol.totalFrames);
+            scene._endFrame = root.symbol.totalFrames;
+            root.symbol.scenes = [scene];
           }
 
           if (!loader._isAvm2Enabled) {
             var avm1Context = loader._avm1Context;
 
             var as2Object = root._getAS2Object();
-            avm1Context.globals._root = as2Object;
-            avm1Context.globals._level0 = as2Object;
+            avm1Context.globals.asSetPublicProperty('_root', as2Object);
+            avm1Context.globals.asSetPublicProperty('_level0', as2Object);
+            avm1Context.globals.asSetPublicProperty('_level1', as2Object);
 
             // transfer parameters
             var parameters = loader.loaderInfo._parameters;
@@ -652,24 +686,6 @@ var LoaderDefinition = (function () {
             }
           }
 
-          if (sceneData) {
-            var sd = sceneData.scenes;
-            var ld = sceneData.labels;
-            var scenes = [];
-            var i = sd.length;
-            while (i--) {
-              var s = sd[i];
-              var labels = [];
-              for (var j = 0; j < ld.length; j++) {
-                var lbl = ld[j];
-                labels.push(new flash.display.FrameLabel(lbl.name, lbl.frame + 1));
-              }
-              var scene = new flash.display.Scene(s.name, labels, s.offset);
-              scenes.push(scene);
-            }
-            root.symbol.scenes = scenes;
-          }
-
           rootClass.instanceConstructor.call(root);
 
           loader._content = root;
@@ -677,7 +693,16 @@ var LoaderDefinition = (function () {
           root._framesLoaded += frame.repeat;
 
           if (labelName && root._labelMap) {
-            root._labelMap[labelName] = frameNum;
+            if (root._labelMap[labelName] === undefined) {
+              root._labelMap[labelName] = frameNum;
+              for (var i = 0, n = root.symbol.scenes.length; i < n; i++) {
+                var scene = root.symbol.scenes[i];
+                if (frameNum >= scene._startFrame && frameNum <= scene._endFrame) {
+                  scene.labels.push(new flash.display.FrameLabel(labelName, frameNum - scene._startFrame));
+                  break;
+                }
+              }
+            }
           }
         }
 
@@ -697,12 +722,14 @@ var LoaderDefinition = (function () {
           if (initActionBlocks) {
             // HACK using symbol init actions as regular action blocks, the spec has a note
             // "DoAction tag is not the same as specifying them in a DoInitAction tag"
-            for (var symbolId in initActionBlocks) {
-              root.addFrameScript(frameNum - 1, function(actionBlock, state) {
+            for (var i = 0; i < initActionBlocks.length; i++) {
+              var spriteId = initActionBlocks[i].spriteId;
+              var actionsData = initActionBlocks[i].actionsData;
+              root.addFrameScript(frameNum - 1, function(actionsData, spriteId, state) {
                 if (state.executed) return;
                 state.executed = true;
-                return executeActions(actionBlock, avm1Context, this._getAS2Object(), exports);
-              }.bind(root, initActionBlocks[symbolId], {executed: false}));
+                return executeActions(actionsData, avm1Context, this._getAS2Object(), exports);
+              }.bind(root, actionsData, spriteId, {executed: false}));
             }
           }
 
@@ -765,7 +792,7 @@ var LoaderDefinition = (function () {
       var className = 'flash.display.DisplayObject';
       var dependencies = symbol.require;
       var promiseQueue = [];
-      var props = { loader: this };
+      var props = { symbolId: symbol.id, loader: this };
       var symbolPromise = new Promise();
 
       if (dependencies && dependencies.length) {
@@ -996,8 +1023,8 @@ var LoaderDefinition = (function () {
       loaderInfo._swfVersion = info.swfVersion;
 
       var bbox = info.bbox;
-      loaderInfo._width = bbox.right - bbox.left;
-      loaderInfo._height = bbox.bottom - bbox.top;
+      loaderInfo._width = bbox.xMax - bbox.xMin;
+      loaderInfo._height = bbox.yMax - bbox.yMin;
       loaderInfo._frameRate = info.frameRate;
 
       var documentPromise = new Promise();
@@ -1063,8 +1090,8 @@ var LoaderDefinition = (function () {
         avm1Context.stage = stage;
         loader._avm1Context = avm1Context;
 
-        AS2Key.$bind(stage);
-        AS2Mouse.$bind(stage);
+        AS2Globals.prototype.Key.$bind(stage);
+        AS2Globals.prototype.Mouse.$bind(stage);
 
         stage._addEventListener('frameConstructed',
                                 avm1Context.flushPendingScripts.bind(avm1Context),

@@ -23,7 +23,9 @@ var SpriteDefinition = (function () {
 
     initialize: function () {
       this._buttonMode = false;
+      this._hitArea = null;
       this._useHandCursor = true;
+      this._hitTarget = null;
 
       var s = this.symbol;
       if (s) {
@@ -42,6 +44,7 @@ var SpriteDefinition = (function () {
       } else {
         this._graphics = new flash.display.Graphics();
       }
+      this._graphics._parent = this;
     },
 
     _addTimelineChild: function(cmd, index, replace) {
@@ -62,6 +65,8 @@ var SpriteDefinition = (function () {
         props.name = cmd.name;
       if (cmd.hasRatio)
         props.ratio = cmd.ratio / 0xffff;
+      if (cmd.blend)
+        props.blendMode = cmd.blendMode;
 
       var child = {
         className: symbolInfo.className,
@@ -81,7 +86,9 @@ var SpriteDefinition = (function () {
       for (var i = 0, n = children.length; i < n; i++) {
         var symbolInfo = children[i];
 
-        if (!flash.display.DisplayObject.class.isInstanceOf(symbolInfo)) {
+        if (flash.display.DisplayObject.class.isInstanceOf(symbolInfo)) {
+          symbolInfo._index = i;
+        } else {
           // HACK application domain may have the symbol class --
           // checking which domain has a symbol class
           var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
@@ -94,7 +101,7 @@ var SpriteDefinition = (function () {
           props.animated = true;
           props.owned = true;
           props.parent = this;
-          props.stage = this.stage;
+          props.stage = this._stage;
 
           var instance = symbolClass.createAsSymbol(props);
 
@@ -118,18 +125,18 @@ var SpriteDefinition = (function () {
             flash.display.Bitmap.class.instanceConstructor.call(instance, bitmapData);
           }
 
-          assert(instance._control);
-          this._control.appendChild(instance._control);
-
-          if (!loader._isAvm2Enabled)
+          if (!loader._isAvm2Enabled) {
             this._initAvm1Bindings(instance, name, symbolInfo.events);
+            instance._dispatchEvent(new flash.events.Event("init"));
+          }
 
-          instance._markAsDirty();
+          instance._index = i;
 
           instance._dispatchEvent(new flash.events.Event("load"));
           instance._dispatchEvent(new flash.events.Event("added"));
-          if (this.stage)
-            instance._dispatchEvent(new flash.events.Event("addedToStage"));
+          if (this._stage) {
+            this._stage._addToStage(instance);
+          }
 
           children[i] = instance;
         }
@@ -157,16 +164,16 @@ var SpriteDefinition = (function () {
 
       symbolClass.instanceConstructor.call(instance);
 
-      assert(instance._control);
-      parent._control.appendChild(instance._control);
-
-      if (!loader._isAvm2Enabled)
+      if (!loader._isAvm2Enabled) {
         parent._initAvm1Bindings(instance, name, symbolInfo && symbolInfo.events);
-
-      instance._markAsDirty();
+        instance._dispatchEvent(new flash.events.Event("init"));
+      }
 
       instance._dispatchEvent(new flash.events.Event("load"));
       instance._dispatchEvent(new flash.events.Event("added"));
+      if (this._stage) {
+        instance._invalidate();
+      }
 
       children.push(instance);
 
@@ -183,28 +190,35 @@ var SpriteDefinition = (function () {
 
       if (symbolProps && symbolProps.variableName) {
         var variableName = symbolProps.variableName;
-        var i = variableName.lastIndexOf('.');
+        var hasPath = variableName.lastIndexOf('.') >= 0 ||
+                      variableName.lastIndexOf(':') >= 0;
         var clip;
-        if (i >= 0) {
-          var targetPath = variableName.substring(0, i).split('.');
-          if (targetPath[0] == '_root') {
+        if (hasPath) {
+          var targetPath = variableName.split(/[.:\/]/g);
+          variableName = targetPath.pop();
+          if (targetPath[0] == '_root' || targetPath[0] === '') {
             clip = this.root._getAS2Object();
             targetPath.shift();
+            if (targetPath[0] === '') {
+              targetPath.shift();
+            }
           } else {
             clip = instance._getAS2Object();
           }
           while (targetPath.length > 0) {
-            if (!(targetPath[0] in clip))
-              throw 'Cannot find ' + variableName + ' variable';
-            clip = clip[targetPath.shift()];
+            var childName = targetPath.shift();
+            clip = clip.asGetPublicProperty(childName) || clip[childName];
+            if (!clip) {
+              throw new Error('Cannot find ' + childName + ' variable');
+            }
           }
-          variableName = variableName.substring(i + 1);
         } else
           clip = instance._getAS2Object();
-        if (!(variableName in clip))
-          clip[variableName] = instance.text;
+        if (!clip.asHasProperty(undefined, variableName, 0)) {
+          clip.asSetPublicProperty(variableName, instance.text);
+        }
         instance._addEventListener('constructFrame', function() {
-          instance.text = clip[variableName];
+          instance.text = clip.asGetPublicProperty(variableName);
         });
       }
 
@@ -223,22 +237,27 @@ var SpriteDefinition = (function () {
             if (eventName.indexOf("on") !== 0 || !event[eventName])
               continue;
             var avm2EventName = eventName[2].toLowerCase() + eventName.substring(3);
-            this._addEventListener(avm2EventName, fn, false);
+            instance._addEventListener(avm2EventName, fn, false);
             eventsBound.push({name: avm2EventName, fn: fn});
           }
         }
         if (eventsBound.length > 0) {
           instance._addEventListener('removed', function (eventsBound) {
             for (var i = 0; i < eventsBound.length; i++) {
-              this._removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
+              instance._removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
             }
           }.bind(instance, eventsBound), false);
         }
       }
 
       if (name) {
-        this._getAS2Object()[name] = instance._getAS2Object();
+        this._getAS2Object().asSetProperty(undefined, name, 0,
+          instance._getAS2Object());
       }
+    },
+
+    _gotoButtonState: function gotoButtonState(stateName) {
+      // does nothing for sprite?
     },
 
     get buttonMode() {
@@ -254,7 +273,18 @@ var SpriteDefinition = (function () {
       return this._hitArea;
     },
     set hitArea(val) {
+      if (this._hitArea === val) {
+        return;
+      }
+
+      if (val && val._hitTarget) {
+        val._hitTarget.hitArea = null;
+      }
+
       this._hitArea = val;
+      if (val) {
+        val._hitTarget = this;
+      }
     },
     get soundTransform() {
       notImplemented();
@@ -267,12 +297,9 @@ var SpriteDefinition = (function () {
     },
     set useHandCursor(val) {
       this._useHandCursor = val;
-      if (this.stage) {
-        this.stage._syncCursor();
+      if (this._stage) {
+        this._stage._syncCursor();
       }
-    },
-    get shouldHaveHandCursor() {
-      return this._buttonMode && this._useHandCursor;
     },
 
     startDrag: function (lockCenter, bounds) {

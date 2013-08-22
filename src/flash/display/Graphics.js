@@ -26,8 +26,8 @@ var GraphicsDefinition = (function () {
   var GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO = 6;
   // The following commands aren't available in the Flash Player. We use them as
   // shortcuts for complex operations that exist natively on Canvas.
-  var SHAPE_CIRCLE         = 7;
-  var SHAPE_ARC_TO         = 8;
+  var SHAPE_ARC_TO         = 7;
+  var SHAPE_CIRCLE         = 8;
   var SHAPE_ELLIPSE        = 9;
 
   var GRAPHICS_PATH_WINDING_EVEN_ODD       = 'evenOdd';
@@ -49,14 +49,20 @@ var GraphicsDefinition = (function () {
 
     initialize: function () {
       this._bitmap = null;
-      this._drawingStyles = null;
       this._fillStyle = null;
       this._mx = null;
       this._my = null;
-      this._revision = 0;
       this._scale = 1;
       this._lineStyle = null;
       this._paths = [];
+      this._parent = 0;
+    },
+
+    _invalidate: function () {
+      if (this._parent._stage) {
+        this._parent._stage._invalidateOnStage(this._parent);
+      }
+      this._parent._bounds = null;
     },
 
     _drawPathObject: function (path) {
@@ -72,7 +78,6 @@ var GraphicsDefinition = (function () {
         path.moveTo(this._mx, this._my);
         this._mx = this._my = null;
       }
-      path.drawingStyles = this._drawingStyles;
       path.fillStyle = this._fillStyle;
       path.lineStyle = this._lineStyle;
       this._paths.push(path);
@@ -159,7 +164,7 @@ var GraphicsDefinition = (function () {
           var fillStyle = path.fillStyle;
           if (fillStyle) {
             ctx.fillStyle = fillStyle.style;
-            var m = fillStyle.currentTransform;
+            var m = fillStyle.transform;
             if (m) {
               ctx.save();
               ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
@@ -190,70 +195,48 @@ var GraphicsDefinition = (function () {
 
       this._fillStyle = alpha ? {style:toRgba(color, alpha)} : null;
     },
-    beginGradientFill: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
-      var gradient;
-      if (type === 'linear') {
-        gradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
-      }
-      else if (type == 'radial') {
-        gradient = factoryCtx.createRadialGradient((focalPos || 0), 0, 0, 0, 0, 1);
-      }
-      else
-        throw ArgumentError();
-
-      for (var i = 0, n = colors.length; i < n; i++)
-        gradient.addColorStop(ratios[i] / 255, toRgba(colors[i], alphas[i]));
-
-      this._fillStyle = {style:gradient};
-
-      // NOTE firefox really sensitive to really small scale when painting gradients
-      var scale = 819.2;
-      this._fillStyle.currentTransform = matrix ?
-        { a: scale * matrix.a, b: scale * matrix.b, c: scale * matrix.c, d: scale * matrix.d, e: matrix.tx, f: matrix.ty } :
-        { a: scale, b: 0, c: 0, d: scale, e: 0, f: 0 };
+    beginGradientFill: function(type, colors, alphas, ratios, matrix,
+                                spreadMethod, interpolationMethod, focalPos)
+    {
+      this._fillStyle = createGradientStyle(type, colors, alphas, ratios,
+                                            matrix, spreadMethod,
+                                            interpolationMethod, focalPos);
     },
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
-      var repeatStyle = repeat ? 'repeat' : 'no-repeat';
-      var pattern = factoryCtx.createPattern(bitmap._drawable, repeatStyle);
-      this._fillStyle = {style:pattern};
-
-      // NOTE firefox really sensitive to really small scale when painting gradients
-      var scale = 819.2;
-      this._fillStyle.currentTransform = matrix ?
-        { a: matrix.a, b: matrix.b, c: matrix.c, d: matrix.d, e: matrix.tx, f: matrix.ty } :
-        { a: scale, b: 0, c: 0, d: scale, e: 0, f: 0 };
+      this._fillStyle = createPatternStyle(bitmap, matrix, repeat, smooth);
     },
     clear: function () {
+      this._invalidate();
+
       delete this._currentPath;
 
-      this._drawingStyles = null;
       this._fillStyle = null;
       this._lineStyle = null;
       this._paths = [];
-      this._revision++;
     },
     copyFrom: function (sourceGraphics) {
       notImplemented("Graphics#copyFrom");
     },
     cubicCurveTo: function (cp1x, cp1y, cp2x, cp2y, x, y) {
+      this._invalidate();
       this._currentPath.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
-      this._revision++;
     },
     curveTo: function (cpx, cpy, x, y) {
+      this._invalidate();
       this._currentPath.curveTo(cpx, cpy, x, y);
-      this._revision++;
     },
     drawCircle: function (x, y, radius) {
+      this._invalidate();
       this._currentPath.circle(x, y, radius);
-      this._revision++;
     },
     drawEllipse: function (x, y, width, height) {
+      this._invalidate();
       var radiusX = width / 2;
       var radiusY = height / 2;
       this._currentPath.ellipse(x + radiusX, y + radiusY, radiusX, radiusY);
-      this._revision++;
     },
     drawPath: function (commands, data, winding) {
+      this._invalidate();
       delete this._currentPath;
       this._currentPath.fillRule = winding || GRAPHICS_PATH_WINDING_EVEN_ODD;
       this.currentPath.commands = commands;
@@ -264,8 +247,8 @@ var GraphicsDefinition = (function () {
       if (isNaN(w + h))
         throw ArgumentError();
 
+      this._invalidate();
       this._currentPath.rect(x, y, w, h);
-      this._revision++;
     },
     drawRoundRect: function (x, y, w, h, ellipseWidth, ellipseHeight) {
       if (isNaN(w + h + ellipseWidth) ||
@@ -273,6 +256,7 @@ var GraphicsDefinition = (function () {
       {
         throw ArgumentError();
       }
+      this._invalidate();
 
       var radiusX = ellipseWidth / 2;
       var radiusY = ellipseHeight / 2;
@@ -284,7 +268,6 @@ var GraphicsDefinition = (function () {
         else
           this._currentPath.ellipse(x+radiusX, y+radiusY, radiusX, radiusY,
                                     0, 0, Math.PI * 2);
-        this._revision++;
         return;
       }
 
@@ -305,7 +288,6 @@ var GraphicsDefinition = (function () {
       this._currentPath.arcTo(x, y, x+radiusX, y, radiusX, radiusY);
       this._currentPath.arcTo(x2, y, x2, y+radiusY, radiusX, radiusY);
       this._currentPath.lineTo(x2, y2-radiusY);
-      this._revision++;
     },
     drawRoundRectComplex: function (x, y, w, h, topLeftRadius, topRightRadius,
                                     bottomLeftRadius, bottomRightRadius)
@@ -315,6 +297,7 @@ var GraphicsDefinition = (function () {
       {
         throw ArgumentError();
       }
+      this._invalidate();
 
       var x2 = x + w;
       var y2 = y + h;
@@ -324,9 +307,8 @@ var GraphicsDefinition = (function () {
       this._currentPath.arcTo(x, y2, x, y2-bottomLeftRadius, bottomLeftRadius);
       this._currentPath.arcTo(x, y, x+topLeftRadius, y, topLeftRadius);
       this._currentPath.arcTo(x2, y, x2, y+topRightRadius, topRightRadius);
-      this._revision++;
     },
-    drawTriangles: function (vertices, indices, uvtData, culling) {
+    drawTriangles: function(vertices, indices, uvtData, culling) {
       notImplemented("Graphics#drawTriangles");
     },
     endFill: function () {
@@ -334,11 +316,15 @@ var GraphicsDefinition = (function () {
 
       this._fillStyle = null;
     },
-    lineBitmapStyle: function (bitmap, matrix, repeat, smooth) {
-      notImplemented();
+    lineBitmapStyle: function(bitmap, matrix, repeat, smooth) {
+      this._lineStyle = createPatternStyle(bitmap, matrix, repeat, smooth);
     },
-    lineGradientStyle: function (type, colors, alphas, ratios, matrix, spreadMethod, interpolationMethod, focalPos) {
-      notImplemented();
+    lineGradientStyle: function(type, colors, alphas, ratios, matrix,
+                                spreadMethod, interpolationMethod, focalPos)
+    {
+      this._lineStyle = createGradientStyle(type, colors, alphas, ratios,
+                                            matrix, spreadMethod,
+                                            interpolationMethod, focalPos);
     },
 
     lineStyle: function (width, color, alpha, pxHinting, scale, cap, joint,
@@ -352,21 +338,20 @@ var GraphicsDefinition = (function () {
         if (mlimit === undefined)
           mlimit = 3;
 
-        this._drawingStyles = {
+        this._lineStyle = {
+          style: toRgba(color, alpha),
           lineCap: cap || 'round',
           lineJoin: cap || 'round',
           lineWidth: width,
           miterLimit: mlimit * 2
         };
-        this._lineStyle = toRgba(color, alpha);
       } else {
-        this._drawingStyles = null;
         this._lineStyle = null;
       }
     },
     lineTo: function (x, y) {
+      this._invalidate();
       this._currentPath.lineTo(x, y);
-      this._revision++;
     },
     moveTo: function (x, y) {
       delete this._currentPath;
@@ -383,10 +368,10 @@ var GraphicsDefinition = (function () {
       }
       if (bbox) {
         return {
-          x: bbox.left,
-          y: bbox.top,
-          width: bbox.right - bbox.left,
-          height: bbox.bottom - bbox.top
+          x: bbox.xMin,
+          y: bbox.yMin,
+          width: bbox.xMax - bbox.xMin,
+          height: bbox.yMax - bbox.yMin
         };
       }
       // TODO: support cached includeStroke bbox without strokeBox from shape.js
@@ -399,10 +384,10 @@ var GraphicsDefinition = (function () {
         var path = subpaths[i];
         var b = path.getBounds(true);
         if (b) {
-          xMins.push(b.left);
-          yMins.push(b.top);
-          xMaxs.push(b.right);
-          yMaxs.push(b.bottom);
+          xMins.push(b.xMin);
+          yMins.push(b.yMin);
+          xMaxs.push(b.xMax);
+          yMaxs.push(b.yMax);
         }
 
       }
@@ -410,7 +395,6 @@ var GraphicsDefinition = (function () {
         return 0;
       }
 
-      // TODO: check if including the scale in the bbox is correct
       // TODO: cache bbox
       var scale = this._scale;
       var xMin = Math.min.apply(Math, xMins) * scale;
@@ -452,3 +436,46 @@ var GraphicsDefinition = (function () {
 
   return def;
 }).call(this);
+
+
+
+function createPatternStyle(bitmap, matrix, repeat, smooth) {
+  var repeatStyle = (repeat === false) ? 'no-repeat' : 'repeat';
+  var pattern = factoryCtx.createPattern(bitmap._drawable, repeatStyle);
+
+  var transform = matrix ?
+                  { a: matrix.a, b: matrix.b, c: matrix.c,
+                    d: matrix.d, e: matrix.tx, f: matrix.ty
+                  } :
+                  { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
+
+  return {style: pattern, transform: transform};
+}
+
+function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
+                             interpolationMethod, focalPos)
+{
+  var gradient;
+  if (type === 'linear') {
+    gradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
+  } else if (type == 'radial') {
+    gradient = factoryCtx.createRadialGradient((focalPos || 0), 0, 0, 0, 0, 1);
+  } else {
+    throw ArgumentError();
+  }
+
+  for (var i = 0, n = colors.length; i < n; i++) {
+    gradient.addColorStop(ratios[i] / 255, toRgba(colors[i], alphas[i]));
+  }
+
+  // NOTE firefox is really sensitive to very small scale when painting gradients
+  var scale = 819.2;
+  var transform = matrix ?
+                  { a: scale * matrix.a, b: scale * matrix.b,
+                    c: scale * matrix.c, d: scale * matrix.d,
+                    e: matrix.tx, f: matrix.ty
+                  } :
+                  {a: scale, b: 0, c: 0, d: scale, e: 0, f: 0};
+
+  return {style: gradient, transform: transform};
+}

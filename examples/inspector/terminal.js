@@ -23,10 +23,17 @@ var Terminal = (function () {
       this.lines = [];
       this.format = [];
       this.time = [];
+      this.repeat = [];
       this.length = 0;
     }
     buffer.prototype.append = function append(line, color) {
+      var lines = this.lines;
+      if (lines.length > 0 && lines[lines.length - 1] === line) {
+        this.repeat[lines.length - 1] ++;
+        return;
+      }
       this.lines.push(line);
+      this.repeat.push(1);
       this.format.push(color ? {backgroundFillStyle: color} : undefined);
       this.time.push(performance.now());
       this.length ++;
@@ -39,6 +46,9 @@ var Terminal = (function () {
     };
     buffer.prototype.getTime = function getTime(i) {
       return this.time[i];
+    };
+    buffer.prototype.getRepeat = function getRepeat(i) {
+      return this.repeat[i];
     };
     return buffer;
   })();
@@ -90,10 +100,25 @@ var Terminal = (function () {
     var RIGHT = 39;
     var KEY_A = 65;
     var KEY_C = 67;
+    var KEY_F = 70;
+    var ESCAPE = 27;
+    var KEY_N = 78;
+    var KEY_T = 84;
+
+    this.showLineNumbers = true;
+    this.showLineTime = false;
+    this.showLineCounter = false;
 
     function onKeyDown(event) {
       var delta = 0;
       switch (event.keyCode) {
+
+        case KEY_N:
+          this.showLineNumbers = !this.showLineNumbers;
+          break;
+        case KEY_T:
+          this.showLineTime = !this.showLineTime;
+          break;
         case UP:
           delta = -1;
           break;
@@ -187,11 +212,10 @@ var Terminal = (function () {
     }
 
     var charSize = 5 * this.pixelRatio;
-    var lineNumberTextSize = String(this.buffer.length).length * charSize + charSize;
-    var lineTimeTextSize = 8 * charSize;
-    var lineNumberMarginLeft = this.textMarginLeft;
-    var lineTimeMarginLeft = this.textMarginLeft + lineNumberTextSize;
-    var lineMarginLeft = lineTimeMarginLeft + lineTimeTextSize + charSize;
+    var lineNumberMargin = this.textMarginLeft;
+    var lineTimeMargin = lineNumberMargin + (this.showLineNumbers ? String(this.buffer.length).length * charSize : 0);
+    var lineRepeatMargin = lineTimeMargin + (this.showLineTime ? charSize * 8 : 2 * charSize);
+    var lineMargin = lineRepeatMargin + charSize * 5;
 
     var w = this.canvas.width;
     var h = this.lineHeight;
@@ -200,6 +224,7 @@ var Terminal = (function () {
       var lineIndex = this.pageIndex + i;
       var line = this.buffer.get(lineIndex);
       var lineFormat = this.buffer.getFormat(lineIndex);
+      var lineRepeat = this.buffer.getRepeat(lineIndex);
       var lineTimeDelta = lineIndex > 1 ? this.buffer.getTime(lineIndex) - this.buffer.getTime(lineIndex - 1) : 0;
 
       this.context.fillStyle = lineIndex % 2 ? lineColor : alternateLineColor;
@@ -224,9 +249,16 @@ var Terminal = (function () {
         line = line.substring(this.columnIndex);
       }
       var marginTop = (i + 1) * this.lineHeight - this.textMarginBottom;
-      this.context.fillText(lineIndex, lineNumberMarginLeft, marginTop);
-      this.context.fillText(lineTimeDelta.toFixed(1).padLeft(' ', 6), lineTimeMarginLeft, marginTop);
-      this.context.fillText(line, lineMarginLeft, marginTop);
+      if (this.showLineNumbers) {
+        this.context.fillText(lineIndex, lineNumberMargin, marginTop);
+      }
+      if (this.showLineTime) {
+        this.context.fillText(lineTimeDelta.toFixed(1).padLeft(' ', 6), lineTimeMargin, marginTop);
+      }
+      if (lineRepeat > 1) {
+        this.context.fillText(String(lineRepeat).padLeft(' ', 3), lineRepeatMargin, marginTop);
+      }
+      this.context.fillText(line, lineMargin, marginTop);
     }
   };
 

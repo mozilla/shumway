@@ -456,17 +456,15 @@
 
   IR.AVM2GetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var name = compileMultiname(this.name, cx);
     if (this.isIndexed) {
       assert (this.isMethod === false);
-      return new ConditionalExpression (
-        property(object, "indexGet"),
-        call(property(object, "indexGet"), [name]),
-        property(object, name)
-      );
+      if (this.isIndexed) {
+        return call(property(object, "asGetNumericProperty"), [compileValue(this.name.name, cx)]);
+      }
     }
+    var name = compileMultiname(this.name, cx);
     var isMethod = new Literal(this.isMethod);
-    return call(property(object, "getMultinameProperty"), name.concat(isMethod));
+    return call(property(object, "asGetProperty"), name.concat(isMethod));
   };
 
   IR.Latch.prototype.compile = function (cx) {
@@ -517,7 +515,7 @@
     var args = this.arguments.map(function (arg) {
       return compileValue(arg, cx);
     });
-    return call(property(object, "callMultinameProperty"), name.concat([new Literal(this.isLex), new ArrayExpression(args)]));
+    return call(property(object, "asCallProperty"), name.concat([new Literal(this.isLex), new ArrayExpression(args)]));
   };
 
   IR.Call.prototype.compile = function (cx) {
@@ -569,28 +567,24 @@
 
   IR.AVM2SetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var name = compileMultiname(this.name, cx);
     var value = compileValue(this.value, cx);
     if (this.isIndexed) {
-      return new ConditionalExpression (
-        property(object, "indexSet"),
-        call(property(object, "indexSet"), [name, value]),
-        assignment(property(object, name), value)
-      );
+      return call(property(object, "asSetNumericProperty"), [compileValue(this.name.name, cx), value]);
     }
-    return call(property(object, "setMultinameProperty"), name.concat(value));
+    var name = compileMultiname(this.name, cx);
+    return call(property(object, "asSetProperty"), name.concat(value));
   };
 
   IR.AVM2DeleteProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
-    return call(property(object, "deleteMultinameProperty"), name);
+    return call(property(object, "asDeleteProperty"), name);
   };
 
   IR.AVM2HasProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
-    return call(property(object, "hasMultinameProperty"), name);
+    return call(property(object, "asHasProperty"), name);
   };
 
   IR.GlobalProperty.prototype.compile = function (cx) {
@@ -663,7 +657,7 @@
     return escodegen.generate(node, {base: "", indent: "  ", comment: true});
   }
 
-  function generate(cfg) {
+  function generate(cfg, useRegisterAllocator) {
     var root = Looper.analyze(cfg);
 
     var writer = new IndentingWriter();
@@ -686,13 +680,25 @@
       code.body.unshift(variables);
     }
 
-    // var node = new FunctionDeclaration(id("fn"), parameters, code);
+    var node = new FunctionDeclaration(id("fn"), parameters, code);
 
-    // writer.writeLn("==================================");
-    // writer.writeLn(generateSource(node));
-    // writer.writeLn("==================================");
-
-    return generateSource(code);
+    if (useRegisterAllocator) {
+      if (c4TraceLevel.value > 0) {
+        writer.writeLn("=== BEFORE ===============================");
+        writer.writeLn(generateSource(node));
+        writer.writeLn("=== TRANSFORMING =========================");
+      }
+      Transform.transform(node);
+      if (c4TraceLevel.value > 0) {
+        writer.writeLn("=== AFTER ================================");
+        writer.writeLn(generateSource(node));
+        writer.writeLn("==========================================");
+      }
+      var body = generateSource(code);
+      // body = " { debugger; " + body + " }";
+      return {parameters: parameters.map(function (p) { return p.name; }), body: body};
+    }
+    return {parameters: parameters.map(function (p) { return p.name; }), body: generateSource(code)};
   }
 
   Backend.generate = generate;

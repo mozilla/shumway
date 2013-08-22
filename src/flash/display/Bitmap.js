@@ -32,7 +32,7 @@ var BitmapDefinition = (function () {
     } else {
       this._bbox = { left: 0, top: 0, right: 0, bottom: 0 };
     }
-    this._markAsDirty();
+    this._invalidate();
   }
 
   return {
@@ -44,10 +44,12 @@ var BitmapDefinition = (function () {
       }
       if (this._pixelSnapping === 'auto' || this._pixelSnapping === 'always') {
         var transform = ctx.currentTransform;
-        var EPSILON = 0.0001;
-        if (Math.abs(transform.a - 1) <= EPSILON && Math.abs(transform.d - 1) <= EPSILON &&
+        var EPSILON = 0.001;
+        if (Math.abs(Math.abs(transform.a) - 1) <= EPSILON &&
+            Math.abs(Math.abs(transform.d) - 1) <= EPSILON &&
             Math.abs(transform.b) <= EPSILON && Math.abs(transform.c) <= EPSILON) {
-          ctx.setTransform(1, 0, 0, 1, Math.floor(transform.e), Math.floor(transform.f));
+          ctx.setTransform(transform.a < 0 ? -1 : 1, 0, 0, transform.d < 0 ? -1 : 1,
+                           Math.floor(transform.e), Math.floor(transform.f));
         }
         // TODO this._pixelSnapping === 'always'; does it even make sense in other cases?
       }

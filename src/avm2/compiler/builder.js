@@ -19,6 +19,7 @@
 var c4Options = systemOptions.register(new OptionSet("C4 Options"));
 var enableC4 = c4Options.register(new Option("c4", "c4", "boolean", false, "Enable the C4 compiler."));
 var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Compiler Trace Level"));
+var enableRegisterAllocator = c4Options.register(new Option("ra", "ra", "boolean", false, "Enable register allocator."));
 
 /**
  * Helper functions used by the compiler.
@@ -740,6 +741,8 @@ var createName = function createName(namespaces, name) {
               return store(new IR.GetProperty(region, state.store, object, constant(ti.propertyQName)));
             } else if (ti.isDirectlyReadable) {
               return store(new IR.GetProperty(region, state.store, object, multiname.name));
+            } else if (ti.isIndexedReadable) {
+              return store(new IR.AVM2GetProperty(region, state.store, object, multiname, true, getOpenMethod));
             }
           }
           return store(new IR.AVM2GetProperty(region, state.store, object, multiname, false, getOpenMethod));
@@ -756,12 +759,8 @@ var createName = function createName(namespaces, name) {
               return store(new IR.SetProperty(region, state.store, object, constant(ti.propertyQName), value));
             } else if (ti.isDirectlyWriteable) {
               return store(new IR.SetProperty(region, state.store, object, multiname.name, value));
-            } else if (ti.isDirectlyWriteableWithCoercion) {
-              var coercer = getCoercerForType(ti.targetType);
-              if (coercer) {
-                value = coercer(value);
-                return store(new IR.SetProperty(region, state.store, object, multiname.name, value));
-              }
+            } else if (ti.isIndexedWriteable) {
+              return store(new IR.AVM2SetProperty(region, state.store, object, multiname, value, true));
             }
           }
           return store(new IR.AVM2SetProperty(region, state.store, object, multiname, value, false));
@@ -1392,12 +1391,12 @@ var createName = function createName(namespaces, name) {
     cfg.allocateVariables();
     Timer.stop();
 
-    var src = Backend.generate(cfg);
-    traceSource && writer.writeLn(src);
+    var result = Backend.generate(cfg, enableRegisterAllocator.value);
+    traceSource && writer.writeLn(result.body);
     Node.stopNumbering();
     Timer.stop();
 
-    return src;
+    return result;
   }
 
   exports.buildMethod = buildMethod;

@@ -360,6 +360,14 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     style.lineCap = CAPS_STYLE_TYPES[style.endCapStyle|0];
     style.lineJoin = JOIN_STYLE_TYPES[style.joinStyle|0];
     style.miterLimit = style.miterLimitFactor * 2;
+    if (!style.color && style.hasFill) {
+      var fillStyle = processStyle(style.fillStyle, false, dictionary,
+                                   dependencies);
+      style.style = fillStyle.style;
+      style.transform = fillStyle.transform;
+      style.fillStyle = null;
+      return style;
+    }
   }
   var color;
   if (style.type === undefined) {
@@ -398,7 +406,7 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     return style;
   }
   var matrix = style.matrix;
-  style.currentTransform = {
+  style.transform = {
     a: (matrix.a * scale),
     b: (matrix.b * scale),
     c: (matrix.c * scale),
@@ -571,8 +579,8 @@ ShapePath.prototype = {
   },
   isPointInPath: function(x, y) {
     var bounds = this.strokeBounds || this.bounds || this._calculateBounds();
-    if (x < bounds.left || x > bounds.right ||
-        y < bounds.top || y > bounds.bottom)
+    if (x < bounds.xMin || x > bounds.xMax ||
+        y < bounds.yMin || y > bounds.yMax)
     {
       return false;
     }
@@ -592,14 +600,14 @@ ShapePath.prototype = {
     var length = commands.length;
     var bounds;
     if (commands[0] === SHAPE_MOVE_TO || commands[0] > SHAPE_ARC_TO) {
-      bounds = {left: data[0], top: data[1]};
+      bounds = {xMin: data[0], yMin: data[1]};
     } else {
       // only the various single-line-drawing commands start out at zero
       // they're the first command.
-      bounds = {left: 0, top: 0};
+      bounds = {xMin: 0, yMin: 0};
     }
-    bounds.right = bounds.left;
-    bounds.bottom = bounds.top;
+    bounds.xMax = bounds.xMin;
+    bounds.yMax = bounds.yMin;
 
     for (var commandIndex = 0, dataIndex = 0; commandIndex < length;
          commandIndex++)
@@ -651,11 +659,11 @@ ShapePath.prototype = {
     }
     this.bounds = bounds;
     if (this.lineStyle) {
-      var halfLineWidth = this.lineStyle.width / 2;
-      this.strokeBounds = {left: bounds.left - halfLineWidth,
-                           top: bounds.top - halfLineWidth,
-                           right: bounds.right + halfLineWidth,
-                           bottom: bounds.bottom + halfLineWidth};
+      var halfLineWidth = this.lineStyle.lineWidth / 2;
+      this.strokeBounds = {xMin: bounds.xMin - halfLineWidth,
+                           yMin: bounds.yMin - halfLineWidth,
+                           xMax: bounds.xMax + halfLineWidth,
+                           yMax: bounds.yMax + halfLineWidth};
       return this.strokeBounds;
     } else {
       this.strokeBounds = bounds;
@@ -700,15 +708,15 @@ ShapePath.prototype = {
 }
 
 function extendBoundsByPoint(bounds, x, y) {
-  if (x < bounds.left) {
-    bounds.left = x;
-  } else if (x > bounds.right) {
-    bounds.right = x;
+  if (x < bounds.xMin) {
+    bounds.xMin = x;
+  } else if (x > bounds.xMax) {
+    bounds.xMax = x;
   }
-  if (y < bounds.top) {
-    bounds.top = y;
-  } else if (y > bounds.bottom) {
-    bounds.bottom = y;
+  if (y < bounds.yMin) {
+    bounds.yMin = y;
+  } else if (y > bounds.yMax) {
+    bounds.yMax = y;
   }
 }
 /**

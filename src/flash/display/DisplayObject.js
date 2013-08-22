@@ -15,25 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-var TRACE_SYMBOLS_INFO = false;
+/*global createEmptyObject, throwError, Errors, isString */
 
 var DisplayObjectDefinition = (function () {
-  var BLEND_MODE_ADD        = 'add';
-  var BLEND_MODE_ALPHA      = 'alpha';
-  var BLEND_MODE_DARKEN     = 'darken';
-  var BLEND_MODE_DIFFERENCE = 'difference';
-  var BLEND_MODE_ERASE      = 'erase';
-  var BLEND_MODE_HARDLIGHT  = 'hardlight';
-  var BLEND_MODE_INVERT     = 'invert';
-  var BLEND_MODE_LAYER      = 'layer';
-  var BLEND_MODE_LIGHTEN    = 'lighten';
-  var BLEND_MODE_MULTIPLY   = 'multiply';
-  var BLEND_MODE_NORMAL     = 'normal';
-  var BLEND_MODE_OVERLAY    = 'overlay';
-  var BLEND_MODE_SCREEN     = 'screen';
-  var BLEND_MODE_SHADER     = 'shader';
-  var BLEND_MODE_SUBTRACT   = 'subtract';
+
+  var blendModes;
 
   var nextInstanceId = 1;
   function generateName() {
@@ -48,19 +34,21 @@ var DisplayObjectDefinition = (function () {
     __class__: 'flash.display.DisplayObject',
 
     initialize: function () {
+      var blendModeClass = flash.display.BlendMode.class;
+
       this._alpha = 1;
       this._animated = false;
       this._bbox = null;
       this._bitmap = null;
+      this._blendMode = blendModeClass.NORMAL;
       this._bounds = null;
       this._cacheAsBitmap = false;
       this._children = [];
-      this._control = document.createElement('div');
       this._clipDepth = null;
       this._currentTransform = null;
       this._cxform = null;
       this._depth = null;
-      this._dirtyArea = null;
+      this._invalidArea = null;
       this._graphics = null;
       this._filters = [];
       this._loader = null;
@@ -72,7 +60,6 @@ var DisplayObjectDefinition = (function () {
       this._opaqueBackground = null;
       this._owned = false;
       this._parent = null;
-      this._revision = 0;
       this._root = null;
       this._rotation = 0;
       this._scale9Grid = null;
@@ -89,11 +76,35 @@ var DisplayObjectDefinition = (function () {
       this._scrollRect = null;
       this._width = null;
       this._height = null;
+      this._invalid = false;
+      this._qtree = null;
+      this._level = -1;
+      this._index = -1;
+
+      blendModes = [
+        blendModeClass.NORMAL,     // 0
+        blendModeClass.NORMAL,     // 1
+        blendModeClass.LAYER,      // 2
+        blendModeClass.MULTIPLY,   // 3
+        blendModeClass.SCREEN,     // 4
+        blendModeClass.LIGHTEN,    // 5
+        blendModeClass.DARKEN,     // 6
+        blendModeClass.DIFFERENCE, // 7
+        blendModeClass.ADD,        // 8
+        blendModeClass.SUBTRACT,   // 9
+        blendModeClass.INVERT,     // 10
+        blendModeClass.ALPHA,      // 11
+        blendModeClass.ERASE,      // 12
+        blendModeClass.OVERLAY,    // 13
+        blendModeClass.HARDLIGHT,  // 14
+        blendModeClass.SHADER
+      ];
 
       var s = this.symbol;
       if (s) {
         this._animated = s.animated || false;
         this._bbox = s.bbox || null;
+        this._blendMode = blendModes[s.blendMode] || blendModeClass.NORMAL;
         this._children = s.children || [];
         this._clipDepth = s.clipDepth || null;
         this._cxform = s.cxform || null;
@@ -134,7 +145,6 @@ var DisplayObjectDefinition = (function () {
           this._currentTransform = matrix;
         }
       }
-      TRACE_SYMBOLS_INFO && this._updateTraceSymbolInfo();
 
       this._updateCurrentTransform();
 
@@ -168,28 +178,6 @@ var DisplayObjectDefinition = (function () {
       }
     },
 
-    _updateTraceSymbolInfo: function () {
-      var s = this.symbol;
-      var info = {
-        className: this.__class__,
-        symbolId: s && s.symbolId,
-        name: this._name
-      };
-      this._control.dataset.symbolInfo = info;
-      this._control.title =
-        (info.symbolId ? 'symbolId: ' + info.symbolId + '\n' : '') +
-        (info.name ? 'name: ' + info.name + '\n' : '') +
-        'class: ' + this.__class__;
-      this._control.className = 'c_' + this.__class__.replace(/\./g, '_');
-    },
-    _addedToStage: function (e) {
-      var children = this._children;
-      for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        child._addedToStage(e);
-      }
-      this._dispatchEvent(e);
-    },
     _applyCurrentInverseTransform: function (point, immediate) {
       if (this._parent && this._parent !== this._stage && !immediate)
         this._parent._applyCurrentInverseTransform(point);
@@ -215,7 +203,7 @@ var DisplayObjectDefinition = (function () {
       if (targetCoordSpace)
         targetCoordSpace._applyCurrentInverseTransform(point);
     },
-    _hitTest: function (use_xy, x, y, useShape, hitTestObject, ignoreChildren) {
+    _hitTest: function (use_xy, x, y, useShape, hitTestObject) {
       if (use_xy) {
         var pt = { x: x, y: y };
         this._applyCurrentInverseTransform(pt);
@@ -229,8 +217,8 @@ var DisplayObjectDefinition = (function () {
             }
             var bbox = this._bbox;
             if (bbox) {
-              pt.x += bbox.left;
-              pt.y += bbox.top;
+              pt.x += bbox.xMin;
+              pt.y += bbox.yMin;
             }
 
             var subpaths = this._graphics._paths;
@@ -252,13 +240,11 @@ var DisplayObjectDefinition = (function () {
             }
           }
 
-          if (!ignoreChildren) {
-            var children = this._children;
-            for (var i = 0, n = children.length; i < n; i++) {
-              var child = children[i];
-              if (child._hitTest(true, x, y, true))
-                return true;
-            }
+          var children = this._children;
+          for (var i = 0, n = children.length; i < n; i++) {
+            var child = children[i];
+            if (child._hitTest(true, x, y, true))
+              return true;
           }
 
           return false;
@@ -277,18 +263,15 @@ var DisplayObjectDefinition = (function () {
       var height = Math.min(b1.y + b1.height, b2.y + b2.height) - y;
       return width > 0 && height > 0;
     },
-    _markAsDirty: function() {
-      if (!this._dirtyArea)
-        this._dirtyArea = this.getBounds();
-      this._bounds = null;
-    },
-    _removedFromStage: function (e) {
-      var children = this._children;
-      for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        child._removedFromStage(e);
+    _invalidate: function () {
+      if (this._stage) {
+        this._stage._invalidateOnStage(this);
+
+        var children = this._children;
+        for (var i = 0; i < children.length; i++) {
+          children[i]._invalidate();
+        }
       }
-      this._dispatchEvent(e);
     },
     _updateCurrentTransform: function () {
       var scaleX = this._scaleX;
@@ -339,17 +322,25 @@ var DisplayObjectDefinition = (function () {
       return this._alpha;
     },
     set alpha(val) {
-      this._alpha = val;
       this._slave = false;
 
-      this._markAsDirty();
+      if (val === this._alpha) {
+        return;
+      }
+
+      this._alpha = val;
+
+      this._invalidate();
     },
     get blendMode() {
-      return BLEND_MODE_NORMAL;
+      return this._blendMode;
     },
     set blendMode(val) {
-      if (val === BLEND_MODE_NORMAL) return;
-      notImplemented();
+      if (blendModes.indexOf(val) >= 0) {
+        this._blendMode = val;
+      } else {
+        throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
+      }
     },
     get cacheAsBitmap() {
       return this._cacheAsBitmap;
@@ -420,23 +411,37 @@ var DisplayObjectDefinition = (function () {
       }
 
       this._mask = val;
-      if (val) { val._maskedObject = this;
+      if (val) {
+        val._maskedObject = this;
       }
 
-      this._markAsDirty();
+      this._invalidate();
     },
     get name() {
       return this._name || (this._name = generateName());
     },
     set name(val) {
       this._name = val;
-      TRACE_SYMBOLS_INFO && this._updateTraceSymbolInfo();
     },
     get mouseX() {
-      return this._mouseX;
+      if (!this._stage) {
+        // TODO: calc local point for display objects that are not on the stage
+        return 0;
+      }
+
+      var pt = this.globalToLocal(new flash.geom.Point(this._stage._mouseX,
+                                                       this._stage._mouseY));
+      return pt.x;
     },
     get mouseY() {
-      return this._mouseY;
+      if (!this._stage) {
+        // TODO: calc local point for display objects that are not on the stage
+        return 0;
+      }
+
+      var pt = this.globalToLocal(new flash.geom.Point(this._stage._mouseX,
+                                                       this._stage._mouseY));
+      return pt.y;
     },
     get opaqueBackground() {
       return this._opaqueBackground;
@@ -445,10 +450,10 @@ var DisplayObjectDefinition = (function () {
       this._opaqueBackground = val;
     },
     get parent() {
-      return this._parent;
+      return this._index > -1 ? this._parent : null;
     },
     get root() {
-      return this._root || (this._parent ? this._parent.root : null);
+      return this._stage && this._stage._root;
     },
     get rotation() {
       return this._rotation;
@@ -459,14 +464,15 @@ var DisplayObjectDefinition = (function () {
       if (val === this._rotation)
         return;
 
-      this._markAsDirty();
+      this._invalidate();
+      this._bounds = null;
 
       this._rotation = val;
 
       this._updateCurrentTransform();
     },
     get stage() {
-      return this._stage || (this._parent ? this._parent.stage : null);
+      return this._stage;
     },
     get scaleX() {
       return this._scaleX;
@@ -477,7 +483,8 @@ var DisplayObjectDefinition = (function () {
       if (val === this._scaleX)
         return;
 
-      this._markAsDirty();
+      this._invalidate();
+      this._bounds = null;
 
       this._scaleX = val;
 
@@ -492,7 +499,8 @@ var DisplayObjectDefinition = (function () {
       if (val === this._scaleY)
         return;
 
-      this._markAsDirty();
+      this._invalidate();
+      this._bounds = null;
 
       this._scaleY = val;
 
@@ -523,7 +531,8 @@ var DisplayObjectDefinition = (function () {
       transform.colorTransform = val.colorTransform;
       transform.matrix = val.matrix;
 
-      this._markAsDirty();
+      this._invalidate();
+      this._bounds = null;
     },
     get visible() {
       return this._visible;
@@ -536,7 +545,7 @@ var DisplayObjectDefinition = (function () {
 
       this._visible = val;
 
-      this._markAsDirty();
+      this._invalidate();
     },
     get width() {
       var bounds = this._getContentBounds();
@@ -579,7 +588,13 @@ var DisplayObjectDefinition = (function () {
       if (val === this._x)
         return;
 
-      this._markAsDirty();
+      this._invalidate();
+
+      if (this._bounds) {
+        var dx = val - this._bounds.xMin;
+        this._bounds.xMin += dx;
+        this._bounds.xMax += dx;
+      }
 
       this._x = val;
 
@@ -594,7 +609,13 @@ var DisplayObjectDefinition = (function () {
       if (val === this._y)
         return;
 
-      this._markAsDirty();
+      this._invalidate();
+
+      if (this._bounds) {
+        var dy = val - this._bounds.yMin;
+        this._bounds.yMin += dy;
+        this._bounds.yMax += dy;
+      }
 
       this._y = val;
 
@@ -633,10 +654,10 @@ var DisplayObjectDefinition = (function () {
             yMax = Math.max(yMax, y1, y2);
           }
         } else {
-          xMin = bbox.left;
-          xMax = bbox.right;
-          yMin = bbox.top;
-          yMax = bbox.bottom;
+          xMin = bbox.xMin;
+          xMax = bbox.xMax;
+          yMin = bbox.yMin;
+          yMax = bbox.yMax;
         }
 
         if (this._graphics) {
@@ -665,6 +686,33 @@ var DisplayObjectDefinition = (function () {
         };
       }
       return this._bounds;
+    },
+    _getRegion: function getRegion() {
+      if (!this._graphics) {
+        return this.getBounds();
+      }
+
+      var b = this._graphics._getBounds(true);
+
+      if (!b || (!b.width && !b.height)) {
+        return b;
+      }
+
+      var p1 = { x: b.x, y: b.y };
+      this._applyCurrentTransform(p1);
+      var p2 = { x: b.x + b.width, y: b.y };
+      this._applyCurrentTransform(p2);
+      var p3 = { x: b.x + b.width, y: b.y + b.height };
+      this._applyCurrentTransform(p3);
+      var p4 = { x: b.x, y: b.y + b.height };
+      this._applyCurrentTransform(p4);
+
+      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
+      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
+      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
+      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
+
+      return { x: xMin, y: yMin, width: xMax - xMin, height: yMax - yMin };
     },
 
     getBounds: function (targetCoordSpace) {

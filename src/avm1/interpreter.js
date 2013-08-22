@@ -16,12 +16,13 @@
  * limitations under the License.
  */
 /*global Proxy, AS2Globals, AS2MovieClip, Multiname, ActionsDataStream,
-         createBuiltinType */
+         createBuiltinType, isNumeric, forEachPublicProperty */
 
 var AVM1_TRACE_ENABLED = false;
 var AVM1_ERRORS_IGNORED = true;
 var MAX_AVM1_INSTRUCTIONS_LIMIT = 100000;
 var MAX_AVM1_ERRORS_LIMIT = 1000;
+var MAX_AVM1_STACK_LIMIT = 256;
 
 function AS2ScopeListItem(scope, next) {
   this.scope = scope;
@@ -35,10 +36,12 @@ AS2ScopeListItem.prototype = {
 
 function AS2Context(swfVersion) {
   this.swfVersion = swfVersion;
-  this.globals = new AS2Globals(this);
+  this.globals = AS2Globals.create(this);
   this.initialScope = new AS2ScopeListItem(this.globals, null);
   this.assets = {};
   this.instructionsExecuted = 0;
+  this.stackDepth = 0;
+  this.isTryCatchListening = false;
   this.errorsIgnored = 0;
   this.deferScriptExecution = true;
   this.pendingScripts = [];
@@ -56,7 +59,8 @@ AS2Context.prototype = {
     if (!target) {
       target = this.defaultTarget;
     } else if (typeof target === 'string') {
-      target = lookupAS2Children(target, this.defaultTarget, this.globals._root);
+      target = lookupAS2Children(target, this.defaultTarget,
+                                 this.globals.asGetPublicProperty('_root'));
     }
     if (typeof target !== 'object' || target === null ||
         !('$nativeObject' in target)) {
@@ -83,8 +87,20 @@ AS2Context.prototype = {
     this.deferScriptExecution = false;
   }
 };
+
 function AS2Error(error) {
   this.error = error;
+}
+
+function AS2CriticalError(message, error) {
+  this.message = message;
+  this.error = error;
+}
+AS2CriticalError.prototype = Object.create(Error.prototype);
+
+function isAS2MovieClip(obj) {
+  return typeof obj === 'object' && obj &&
+         obj instanceof AS2Globals.prototype.MovieClip;
 }
 
 function as2GetType(v) {
@@ -96,7 +112,7 @@ function as2GetType(v) {
   if (type === 'function') {
     return 'object';
   }
-  if (type === 'object' && v instanceof AS2MovieClip) {
+  if (type === 'object' && isAS2MovieClip(v)) {
     return 'movieclip';
   }
   return type;
@@ -223,22 +239,22 @@ function as2ResolveProperty(obj, name) {
   // checking if avm2 public property is present
   var avm2PublicName = Multiname.getPublicQualifiedName(name);
   if (avm2PublicName in obj) {
-    return avm2PublicName;
-  }
-  if (name in obj) {
     return name;
   }
-  var lowerCaseName = name.toLowerCase();
+  if (isNumeric(name)) {
+    return null;
+  }
+  var lowerCaseName = avm2PublicName.toLowerCase();
   for (var i in obj) {
     if (i.toLowerCase() === lowerCaseName) {
-      return i;
+      return i.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
     }
   }
   return null;
 }
 
 function as2CreatePrototypeProxy(obj) {
-  var prototype = obj.prototype;
+  var prototype = obj.asGetPublicProperty('prototype');
   if (typeof Proxy === 'undefined') {
     console.error('ES6 proxies are not found');
     return prototype;
@@ -297,7 +313,7 @@ function executeActions(actionsData, context, scope, assets) {
   try {
     AS2Context.instance = context;
     context.defaultTarget = scope;
-    context.globals['this'] = scope;
+    context.globals.asSetPublicProperty('this', scope);
     if (assets) {
       context.addAssets(assets);
     }
@@ -350,7 +366,7 @@ function interpretActions(actionsData, scopeContainer,
 
     try {
       currentContext.defaultTarget =
-        lookupAS2Children(targetPath, defaultTarget, _global._root);
+        lookupAS2Children(targetPath, defaultTarget, _global.asGetPublicProperty('_root'));
     } catch (e) {
       currentContext.defaultTarget = null;
       throw e;
@@ -361,8 +377,11 @@ function interpretActions(actionsData, scopeContainer,
                           registersAllocation, actionsData) {
     var ownerClass;
     var fn = (function() {
-      var newScope = { 'this': this, 'arguments': arguments,
-                       'super': AS2_SUPER_STUB, '__class': ownerClass };
+      var newScope = {};
+      newScope.asSetPublicProperty('this', this);
+      newScope.asSetPublicProperty('arguments', arguments);
+      newScope.asSetPublicProperty('super', AS2_SUPER_STUB);
+      newScope.asSetPublicProperty('__class', ownerClass);
       var newScopeContainer = scopeContainer.create(newScope);
       var i;
 
@@ -393,10 +412,10 @@ function interpretActions(actionsData, scopeContainer,
                 registers[i] = _global;
                 break;
               case '_parent':
-                registers[i] = _global._parent;
+                registers[i] = scope.asGetPublicProperty('_parent');
                 break;
               case '_root':
-                registers[i] = _global._root;
+                registers[i] = _global.asGetPublicProperty('_root');
                 break;
             }
           }
@@ -412,6 +431,10 @@ function interpretActions(actionsData, scopeContainer,
         resetCounters = currentContext.instructionsExecuted === 0;
         currentContext.defaultTarget = scope;
         actionTracer.indent();
+        currentContext.stackDepth++;
+        if (currentContext.stackDepth >= MAX_AVM1_STACK_LIMIT) {
+          throw new AS2CriticalError('long running script -- AVM1 recursion limit is reached');
+        }
         return interpretActions(actionsData, newScopeContainer,
           constantPool, registers);
       } finally {
@@ -419,6 +442,7 @@ function interpretActions(actionsData, scopeContainer,
           currentContext.instructionsExecuted = 0;
           currentContext.errorsIgnored = 0;
         }
+        currentContext.stackDepth--;
         actionTracer.unindent();
         currentContext.defaultTarget = defaultTarget;
         AS2Context.instance = savedContext;
@@ -437,20 +461,23 @@ function interpretActions(actionsData, scopeContainer,
   }
   function deleteProperty(propertyName) {
     for (var p = scopeContainer; p; p = p.next) {
-      if (propertyName in p.scope) {
-        p.scope[propertyName] = undefined; // in some cases we need to cleanup events binding
-        delete p.scope[propertyName];
-        return !(propertyName in p.scope);
+      if (p.scope.asHasProperty(undefined, propertyName, 0)) {
+        p.scope.asSetPublicProperty(propertyName, undefined); // in some cases we need to cleanup events binding
+        return p.scope.asDeleteProperty(undefined, propertyName, 0);
       }
     }
     return false;
   }
-  function resolveVariableName(variableName) {
+  function resolveVariableName(variableName, nonStrict) {
     var obj, name, i;
     if (variableName.indexOf(':') >= 0) {
       // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
       var parts = variableName.split(':');
-      obj = lookupAS2Children(parts[0], defaultTarget, _global._root);
+      obj = lookupAS2Children(parts[0], defaultTarget,
+                              _global.asGetPublicProperty('_root'));
+      if (!obj) {
+        throw new Error(parts[0] + ' is undefined');
+      }
       name = parts[1];
     } else if (variableName.indexOf('.') >= 0) {
       // new object reference
@@ -458,7 +485,7 @@ function interpretActions(actionsData, scopeContainer,
       name = objPath.pop();
       obj = _global;
       for (i = 0; i < objPath.length; i++) {
-        obj = obj[objPath[i]];
+        obj = obj.asGetPublicProperty(objPath[i]) || obj[objPath[i]];
         if (!obj) {
           throw new Error(objPath.slice(0, i + 1) + ' is undefined');
         }
@@ -470,24 +497,25 @@ function interpretActions(actionsData, scopeContainer,
     }
 
     var resolvedName = as2ResolveProperty(obj, name);
-    if (resolvedName !== null) {
-      return { obj: obj, name: resolvedName };
+    var resolved = resolvedName !== null;
+    if (resolved || nonStrict) {
+      return { obj: obj, name: resolvedName || name, resolved: resolved };
     }
 
     return null;
   }
   function getVariable(variableName) {
     // fast check if variable in the current scope
-    if (variableName in scope) {
-      return scope[variableName];
+    if (scope.asHasProperty(undefined, variableName, 0)) {
+      return scope.asGetPublicProperty(variableName);
     }
 
     var target = resolveVariableName(variableName);
     if (target) {
-      return target.obj[target.name];
+      return target.obj.asGetPublicProperty(target.name);
     }
     // trying movie clip children (if object is a MovieClip)
-    var mc = defaultTarget instanceof AS2MovieClip &&
+    var mc = isAS2MovieClip(defaultTarget) &&
              defaultTarget.$lookupChild(variableName);
     if (mc) {
       return mc;
@@ -495,24 +523,25 @@ function interpretActions(actionsData, scopeContainer,
     for (var p = scopeContainer; p; p = p.next) {
       var resolvedName = as2ResolveProperty(p.scope, variableName);
       if (resolvedName !== null) {
-        return p.scope[resolvedName];
+        return p.scope.asGetPublicProperty(resolvedName);
       }
     }
   }
+
   function setVariable(variableName, value) {
     // fast check if variable in the current scope
-    if (variableName in scope) {
-      scope[variableName] = value;
+    if (scope.asHasProperty(undefined, variableName, 0)) {
+      scope.asSetPublicProperty(variableName, value);
       return;
     }
 
-    var target = resolveVariableName(variableName);
+    var target = resolveVariableName(variableName, true);
     if (target) {
-      target.obj[target.name] = value;
+      target.obj.asSetPublicProperty(target.name, value);
       return;
     }
-    var _this = scope.this || getVariable('this');
-    _this[variableName] = value;
+    var _this = scope.asGetPublicProperty('this') || getVariable('this');
+    _this.asSetPublicProperty(variableName, value);
   }
   function getFunction(functionName) {
     var fn = getVariable(functionName);
@@ -534,9 +563,13 @@ function interpretActions(actionsData, scopeContainer,
   }
   function processTry(catchIsRegisterFlag, finallyBlockFlag, catchBlockFlag, catchTarget,
                       tryBlock, catchBlock, finallyBlock) {
+
+    var savedTryCatchState = currentContext.isTryCatchListening;
     try {
+      currentContext.isTryCatchListening = true;
       interpretActions(tryBlock, scopeContainer, constantPool, registers);
     } catch (e) {
+      currentContext.isTryCatchListening = savedTryCatchState;
       if (!catchBlockFlag) {
         throw e;
       }
@@ -550,6 +583,7 @@ function interpretActions(actionsData, scopeContainer,
       }
       interpretActions(catchBlock, scopeContainer, constantPool, registers);
     } finally {
+      currentContext.isTryCatchListening = savedTryCatchState;
       if (finallyBlockFlag) {
         interpretActions(finallyBlock, scopeContainer, constantPool, registers);
       }
@@ -595,16 +629,14 @@ function interpretActions(actionsData, scopeContainer,
   }
 
   var recoveringFromError = false;
-  var executionAborted = false;
   var stackItemsExpected;
   // will try again if we are skipping errors
-  while (stream.position < stream.end && !executionAborted) {
+  while (stream.position < stream.end) {
     try {
 
   while (stream.position < stream.end) {
     if (currentContext.instructionsExecuted++ >= MAX_AVM1_INSTRUCTIONS_LIMIT) {
-      executionAborted = true;
-      throw new Error('long running script -- AVM1 instruction limit is reached');
+      throw new AS2CriticalError('long running script -- AVM1 instruction limit is reached');
     }
 
     var actionCode = stream.readUI8();
@@ -865,13 +897,13 @@ function interpretActions(actionsData, scopeContainer,
         index = stack.pop();
         target = stack.pop();
         stackItemsExpected++;
-        stack.push(_global.getProperty(target, index));
+        stack.push(_global.getAS2Property(target, index));
         break;
       case 0x23: // ActionSetProperty
         value = stack.pop();
         index = stack.pop();
         target = stack.pop();
-        _global.setProperty(target, index, value);
+        _global.setAS2Property(target, index, value);
         break;
       case 0x24: // ActionCloneSprite
         var depth = stack.pop();
@@ -936,7 +968,9 @@ function interpretActions(actionsData, scopeContainer,
         // checking "if the method name is blank or undefined"
         if (methodName !== null && methodName !== undefined &&
             methodName !== '') {
-          if (obj !== AS2_SUPER_STUB) {
+          if (obj === null || obj === undefined) {
+            throw new Error('Cannot call method ' + methodName + ' of ' + typeof obj);
+          } else if (obj !== AS2_SUPER_STUB) {
             target = Object(obj);
           } else {
             target = getVariable('__class').__super.prototype;
@@ -946,7 +980,7 @@ function interpretActions(actionsData, scopeContainer,
           if (resolvedName === null) {
             throw new Error('Method ' + methodName + ' is not defined.');
           }
-          result = target[resolvedName].apply(obj, args);
+          result = target.asGetPublicProperty(resolvedName).apply(obj, args);
         } else if (obj !== AS2_SUPER_STUB) {
           result = obj.apply(obj, args);
         } else {
@@ -975,7 +1009,7 @@ function interpretActions(actionsData, scopeContainer,
         fn = defineFunction(functionName, args, null,
                             stream.readBytes(codeSize));
         if (functionName) {
-          scope[functionName] = fn;
+          scope.asSetPublicProperty(functionName, fn);
         } else {
           stack.push(fn);
         }
@@ -983,18 +1017,18 @@ function interpretActions(actionsData, scopeContainer,
       case 0x3C: // ActionDefineLocal
         value = stack.pop();
         name = stack.pop();
-        scope[name] = value;
+        scope.asSetPublicProperty(name, value);
         break;
       case 0x41: // ActionDefineLocal2
         name = stack.pop();
-        scope[name] = void(0);
+        scope.asSetPublicProperty(name, undefined);
         break;
       case 0x3A: // ActionDelete
         name = stack.pop();
         obj = stack.pop();
-        obj[name] = undefined; // in some cases we need to cleanup events binding
-        delete obj[name];
-        stack.push(!(name in obj));
+         // in some cases we need to cleanup events binding
+        obj.asSetPublicProperty(name, undefined);
+        stack.push(obj.asDeleteProperty(undefined, name, 0));
         break;
       case 0x3B: // ActionDelete2
         name = stack.pop();
@@ -1005,9 +1039,10 @@ function interpretActions(actionsData, scopeContainer,
         objectName = stack.pop();
         stack.push(null);
         obj = getObjectByName(objectName);
-        for (name in obj) {
+        /*jshint -W083 */
+        forEachPublicProperty(obj, function (name) {
           stack.push(name);
-        }
+        });
         break;
       case 0x49: // ActionEquals2
         a = stack.pop();
@@ -1021,8 +1056,9 @@ function interpretActions(actionsData, scopeContainer,
           // special case to track members
           stack.push(as2CreatePrototypeProxy(obj));
         } else {
-          resolvedName = as2ResolveProperty(obj, name);
-          stack.push(resolvedName !== null ? obj[resolvedName] : undefined);
+          resolvedName = as2ResolveProperty(Object(obj), name);
+          stack.push(resolvedName === null ? undefined :
+                     obj.asGetPublicProperty(resolvedName));
         }
         break;
       case 0x42: // ActionInitArray
@@ -1036,7 +1072,7 @@ function interpretActions(actionsData, scopeContainer,
         for (i = 0; i < count; i++) {
           value = stack.pop();
           name = stack.pop();
-          obj[name] = value;
+          obj.asSetPublicProperty(name, value);
         }
         stack.push(obj);
         break;
@@ -1052,8 +1088,14 @@ function interpretActions(actionsData, scopeContainer,
           if (resolvedName === null) {
             throw new Error('Method ' + methodName + ' is not defined.');
           }
-          method = obj[resolvedName];
+          if (obj === null || obj === undefined) {
+            throw new Error('Cannot call new using method ' + resolvedName + ' of ' + typeof obj);
+          }
+          method = obj.asGetPublicProperty(resolvedName);
         } else {
+          if (obj === null || obj === undefined) {
+            throw new Error('Cannot call new using ' + typeof obj);
+          }
           method = obj;
         }
         result = Object.create(method.prototype || Object.prototype);
@@ -1079,7 +1121,7 @@ function interpretActions(actionsData, scopeContainer,
         value = stack.pop();
         name = stack.pop();
         obj = stack.pop();
-        obj[name] = value;
+        obj.asSetPublicProperty(name, value);
         break;
       case 0x45: // ActionTargetPath
         obj = stack.pop();
@@ -1182,9 +1224,10 @@ function interpretActions(actionsData, scopeContainer,
       case 0x55: // ActionEnumerate2
         obj = stack.pop();
         stack.push(null);
-        for (name in obj) {
+        /*jshint -W083 */
+        forEachPublicProperty(obj, function (name) {
           stack.push(name);
-        }
+        });
         break;
       case 0x66: // ActionStrictEquals
         a = stack.pop();
@@ -1249,7 +1292,7 @@ function interpretActions(actionsData, scopeContainer,
         fn = defineFunction(functionName, args,
                             registerAllocation, stream.readBytes(codeSize));
         if (functionName) {
-          scope[functionName] = fn;
+          scope.asSetPublicProperty(functionName, fn);
         } else {
           stack.push(fn);
         }
@@ -1315,7 +1358,8 @@ function interpretActions(actionsData, scopeContainer,
 
     // handling AVM1 errors
     } catch (e) {
-      if (!AVM1_ERRORS_IGNORED || executionAborted) {
+      if ((!AVM1_ERRORS_IGNORED && !currentContext.isTryCatchListening) ||
+          e instanceof AS2CriticalError) {
         throw e;
       }
       if (e instanceof AS2Error) {
@@ -1329,8 +1373,7 @@ function interpretActions(actionsData, scopeContainer,
       }
       if (!recoveringFromError) {
         if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
-          executionAborted = true;
-          throw new Error('long running script -- AVM1 errors limit is reached');
+          throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
         }
         console.error('AVM1 error: ' + e);
         recoveringFromError = true;

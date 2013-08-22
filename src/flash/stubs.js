@@ -119,6 +119,22 @@ var Stubs = new (function () {
     });
   }
 
+  // Make special stubs for standard JavaScript classes.
+
+  [
+    "Boolean",
+    "Date",
+    "String",
+    "Function",
+    "Object",
+    "Number",
+    "Math",
+    "Array",
+    "RegExp"
+  ].forEach(function (classSimpleName) {
+    makeStub(that, classSimpleName, classSimpleName);
+  });
+
   // Make special stubs for errors, which shouldn't conflict with JavaScript
   // error constructors.
 
@@ -164,6 +180,7 @@ var Stubs = new (function () {
     M("flash.display.NativeMenuItem", "MenuItemClass", NativeMenuItemDefinition),
     M("flash.display.FrameLabel", "FrameLabelClass", FrameLabelDefinition),
     M("flash.display.Scene"),
+    M("flash.display.BlendMode"),
 
     M("flash.filters.BevelFilter", "BevelFilterClass", BevelFilterDefinition),
     M("flash.filters.BitmapFilter", "BitmapFilterClass", BitmapFilterDefinition),

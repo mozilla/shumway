@@ -112,29 +112,30 @@ document.addEventListener("keydown", function (event) {
   }
 });
 
-var terminal = new Terminal(document.getElementById("terminal")); terminal.refreshEvery(100);
-function appendToTerminal(str, color) {
-  var scroll = terminal.isScrolledToBottom();
-  terminal.buffer.append(str, color);
+var traceTerminal = new Terminal(document.getElementById("traceTerminal")); traceTerminal.refreshEvery(100);
+
+function appendToTraceTerminal(str, color) {
+  var scroll = traceTerminal.isScrolledToBottom();
+  traceTerminal.buffer.append(str, color);
   if (scroll) {
-    terminal.gotoLine(terminal.buffer.length - 1);
-    terminal.scrollIntoView();
+    traceTerminal.gotoLine(traceTerminal.buffer.length - 1);
+    traceTerminal.scrollIntoView();
   }
 }
 
-console.info = console.log = appendToTerminal;
+console.info = console.log = appendToTraceTerminal;
 console.warn = function (str) {
-  appendToTerminal(str, "#FF6700");
+  appendToTraceTerminal(str, "#FF6700");
 };
 
-var frameInfoTerminal = new Terminal(document.getElementById("frameInfoTerminal")); frameInfoTerminal.refreshEvery(100);
+var frameTerminal = new Terminal(document.getElementById("frameTerminal")); frameTerminal.refreshEvery(100);
 
 function appendToFrameTerminal(str, color) {
-  var scroll = frameInfoTerminal.isScrolledToBottom();
-  frameInfoTerminal.buffer.append(str, color);
+  var scroll = frameTerminal.isScrolledToBottom();
+  frameTerminal.buffer.append(str, color);
   if (scroll) {
-    frameInfoTerminal.gotoLine(frameInfoTerminal.buffer.length - 1);
-    frameInfoTerminal.scrollIntoView();
+    frameTerminal.gotoLine(frameTerminal.buffer.length - 1);
+    frameTerminal.scrollIntoView();
   }
 }
 

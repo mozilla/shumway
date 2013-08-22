@@ -28,6 +28,14 @@
     </style>
 
     <script>
+      // IE10 has no console.time functions
+      console.time || (console.time = console.timeEnd = function () {});
+      console.profile || (console.profile = console.profileEnd = function () {});
+      // Safari has no perfomance
+      if (typeof performance === 'undefined') {
+        window.performance = { now: Date.now };
+      }
+
       SHUMWAY_ROOT = "../../src/";
     </script>
 
@@ -102,15 +110,18 @@
     <script src="../../src/avm2/compiler/c4/ir.js"></script>
     <script src="../../src/avm2/compiler/builder.js"></script>
     <script src="../../src/avm2/compiler/c4/looper.js"></script>
+    <script src="../../src/avm2/compiler/c4/transform.js"></script>
     <script src="../../src/avm2/compiler/c4/backend.js"></script>
     <script src="../../src/avm2/domain.js"></script>
     <script src="../../src/avm2/class.js"></script>
     <script src="../../src/avm2/xregexp.js"></script>
     <script src="../../src/avm2/runtime.js"></script>
+    <script src="../../src/avm2/vectors.js"></script>
     <script src="../../src/avm2/xml.js"></script>
     <script src="../../src/avm2/json2.js"></script>
     <script src="../../src/avm2/amf.js"></script>
     <script src="../../src/avm2/proxy.js"></script>
+    <script src="../../src/avm2/dictionary.js"></script>
     <script src="../../src/avm2/native.js"></script>
     <script src="../../src/avm2/disassembler.js"></script>
     <script src="../../src/avm2/interpreter.js"></script>

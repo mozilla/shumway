@@ -45,6 +45,8 @@ let Svc = {};
 XPCOMUtils.defineLazyServiceGetter(Svc, 'mime',
                                    '@mozilla.org/mime;1', 'nsIMIMEService');
 
+let profiler = Cc["@mozilla.org/tools/profiler;1"].getService(Ci.nsIProfiler);
+
 function getBoolPref(pref, def) {
   try {
     return Services.prefs.getBoolPref(pref);
@@ -187,6 +189,9 @@ ChromeActions.prototype = {
       verifier: getBoolPref('shumway.verifier', true)
     });
   },
+  addProfilerMarker: function (marker) {
+    profiler.AddMarker(marker);
+  },
   getPluginParams: function getPluginParams() {
     return JSON.stringify({
       url: this.url,
@@ -325,6 +330,18 @@ ChromeActions.prototype = {
                       .getService(Ci.nsIClipboardHelper);
     clipboard.copyString(data);
   },
+  unsafeSetClipboard: function (data) {
+    if (typeof data !== 'string') {
+      return;
+    }
+    let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
+    clipboard.copyString(data);
+  },
+  endActivation: function () {
+    if (ActivationQueue.currentNonActive === this) {
+      ActivationQueue.activateNext();
+    }
+  },
   externalCom: function (data) {
     if (!this.allowScriptAccess)
       return;
@@ -362,7 +379,6 @@ function RequestListener(actions) {
 // Receive an event and synchronously or asynchronously responds.
 RequestListener.prototype.receive = function(event) {
   var message = event.target;
-  var doc = message.ownerDocument;
   var action = event.detail.action;
   var data = event.detail.data;
   var sync = event.detail.sync;
@@ -381,6 +397,7 @@ RequestListener.prototype.receive = function(event) {
     if (event.detail.callback) {
       var cookie = event.detail.cookie;
       response = function sendResponse(response) {
+        var doc = actions.document;
         try {
           var listener = doc.createEvent('CustomEvent');
           listener.initCustomEvent('shumway.response', true, false,
@@ -399,29 +416,138 @@ RequestListener.prototype.receive = function(event) {
   }
 };
 
-function createSandbox(window, preview) {
-  let sandbox = new Cu.Sandbox(window, {
-    sandboxName : 'Shumway Sandbox',
-    sandboxPrototype: window,
-    wantXrays : false,
-    wantXHRConstructor : true,
-    wantComponents : false});
-  sandbox.SHUMWAY_ROOT = "resource://shumway/";
-
-  sandbox.document.addEventListener('DOMContentLoaded', function() {
-    var scriptLoader = Cc["@mozilla.org/moz/jssubscript-loader;1"]
-                         .getService(Ci.mozIJSSubScriptLoader);
-    if (preview) {
-      scriptLoader.loadSubScript('resource://shumway/web/preview.js', sandbox);
-      sandbox.runSniffer();
-    } else {
-      scriptLoader.loadSubScript('resource://shumway/shumway.js', sandbox);
-      scriptLoader.loadSubScript('resource://shumway/web/avm-sandbox.js',
-                                 sandbox);
-      sandbox.runViewer();
+var ActivationQueue = {
+  nonActive: [],
+  initializing: -1,
+  activationTimeout: null,
+  get currentNonActive() {
+    return this.nonActive[this.initializing];
+  },
+  enqueue: function ActivationQueue_enqueue(actions) {
+    this.nonActive.push(actions);
+    if (this.nonActive.length === 1) {
+      this.activateNext();
     }
-  });
-  return sandbox;
+  },
+  activateNext: function ActivationQueue_activateNext() {
+    function weightInstance(actions) {
+      // set of heuristics for find the most important instance to load
+      var weight = 0;
+      // using linear distance to the top-left of the view area
+      if (actions.embedTag) {
+        var window = actions.window;
+        var clientRect = actions.embedTag.getBoundingClientRect();
+        weight -= Math.abs(clientRect.left - window.scrollX) +
+                  Math.abs(clientRect.top - window.scrollY);
+      }
+      var doc = actions.document;
+      if (!doc.hidden) {
+        weight += 100000; // might not be that important if hidden
+      }
+      if (actions.embedTag &&
+          actions.embedTag.ownerDocument.hasFocus()) {
+        weight += 10000; // parent document is focused
+      }
+      return weight;
+    }
+
+    if (this.activationTimeout) {
+      this.activationTimeout.cancel();
+      this.activationTimeout = null;
+    }
+
+    if (this.initializing >= 0) {
+      this.nonActive.splice(this.initializing, 1);
+    }
+    var weights = [];
+    for (var i = 0; i < this.nonActive.length; i++) {
+      try {
+        var weight = weightInstance(this.nonActive[i]);
+        weights.push(weight);
+      } catch (ex) {
+        // unable to calc weight the instance, removing
+        log('Shumway instance weight calculation failed: ' + ex);
+        this.nonActive.splice(i, 1);
+        i--;
+      }
+    }
+
+    do {
+      if (this.nonActive.length === 0) {
+        this.initializing = -1;
+        return;
+      }
+
+      var maxWeightIndex = 0;
+      var maxWeight = weights[0];
+      for (var i = 1; i < weights.length; i++) {
+        if (maxWeight < weights[i]) {
+          maxWeight = weights[i];
+          maxWeightIndex = i;
+        }
+      }
+      try {
+        this.initializing = maxWeightIndex;
+        this.nonActive[maxWeightIndex].activationCallback();
+        break;
+      } catch (ex) {
+        // unable to initialize the instance, trying another one
+        log('Shumway instance initialization failed: ' + ex);
+        this.nonActive.splice(maxWeightIndex, 1);
+        weights.splice(maxWeightIndex, 1);
+      }
+    } while (true);
+
+    var ACTIVATION_TIMEOUT = 3000;
+    this.activationTimeout = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+    this.activationTimeout.initWithCallback(function () {
+      log('Timeout during shumway instance initialization');
+      this.activateNext();
+    }.bind(this), ACTIVATION_TIMEOUT, Ci.nsITimer.TYPE_ONE_SHOT);
+  }
+};
+
+function activateShumwayScripts(window, preview) {
+  function loadScripts(scripts, callback) {
+    function scriptLoaded() {
+      leftToLoad--;
+      if (leftToLoad === 0) {
+        callback();
+      }
+    }
+    var leftToLoad = scripts.length;
+    var document = window.document.wrappedJSObject;
+    var head = document.getElementsByTagName('head')[0];
+    for (var i = 0; i < scripts.length; i++) {
+      var script = document.createElement('script');
+      script.type = "text/javascript";
+      script.src = scripts[i];
+      script.onload = scriptLoaded;
+      head.appendChild(script);
+    }
+  }
+
+  function initScripts() {
+    if (preview) {
+      loadScripts(['resource://shumway/web/preview.js'], function () {
+        window.wrappedJSObject.runSniffer();
+      });
+    } else {
+      loadScripts(['resource://shumway/shumway.js',
+                   'resource://shumway/web/avm-sandbox.js'], function () {
+        window.wrappedJSObject.runViewer();
+      });
+    }
+  }
+
+  window.wrappedJSObject.SHUMWAY_ROOT = "resource://shumway/";
+
+  if (window.document.readyState === "interactive" ||
+      window.document.readyState === "complete") {
+    initScripts();
+  } else {
+    window.document.addEventListener('DOMContentLoaded', initScripts);
+  }
 }
 
 function initExternalCom(wrappedWindow, wrappedObject, targetDocument) {
@@ -514,6 +640,10 @@ FlashStreamConverterBase.prototype = {
 
   isValidRequest: function() {
     return true;
+  },
+
+  getUrlHint: function(requestUrl) {
+    return requestUrl.spec;
   },
 
   createChromeActions: function(window, document, urlHint) {
@@ -656,12 +786,18 @@ FlashStreamConverterBase.prototype = {
           // Double check the url is still the correct one.
           let actions = converter.createChromeActions(domWindow,
                                                       domWindow.document,
-                                                      originalURI.spec);
+                                                      converter.getUrlHint(originalURI));
           if (actions.objectParams['shumwaymode'] === 'off') {
             actions.fallback();
             return;
           }
-          createSandbox(domWindow, isSimpleMode);
+
+          actions.activationCallback = function(domWindow, isSimpleMode) {
+            delete this.activationCallback;
+            activateShumwayScripts(domWindow, isSimpleMode);
+          }.bind(actions, domWindow, isSimpleMode);
+          ActivationQueue.enqueue(actions);
+
           let requestListener = new RequestListener(actions);
           domWindow.addEventListener('shumway.message', function(event) {
             requestListener.receive(event);
@@ -715,6 +851,9 @@ FlashStreamConverter2.prototype.isValidRequest =
       return false;
     }
   });
+FlashStreamConverter2.prototype.getUrlHint = function (requestUrl) {
+  return '';
+};
 
 var NSGetFactory1 = XPCOMUtils.generateNSGetFactory([FlashStreamConverter1]);
 var NSGetFactory2 = XPCOMUtils.generateNSGetFactory([FlashStreamConverter2]);

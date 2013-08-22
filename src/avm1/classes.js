@@ -16,19 +16,19 @@
  * limitations under the License.
  */
 
-/*global AS2Context, avm2, flash, AS2URLRequest */
+/*global AS2Context, avm2, flash, isAS2MovieClip */
 
 function proxyNativeProperty(propertyName) {
   return {
-    get: function getter() { return this.$nativeObject[propertyName]; },
-    set: function setter(value) { this.$nativeObject[propertyName] = value; },
+    get: function getter() { return this.$nativeObject.asGetPublicProperty(propertyName); },
+    set: function setter(value) { this.$nativeObject.asSetPublicProperty(propertyName, value); },
     enumerable: true
   };
 }
 
 function proxyNativeReadonlyProperty(propertyName) {
   return {
-    get: function getter() { return this.$nativeObject[propertyName]; },
+    get: function getter() { return this.$nativeObject.asGetPublicProperty(propertyName); },
     enumerable: true
   };
 }
@@ -36,7 +36,8 @@ function proxyNativeReadonlyProperty(propertyName) {
 function proxyNativeMethod(methodName) {
   return {
     value: function proxyMethod(id) {
-      return this.$nativeObject[methodName].apply(this.$nativeObject, arguments);
+      return this.$nativeObject.asCallProperty(undefined, methodName,
+        0, true, arguments);
     },
     enumerable: true
   };
@@ -49,7 +50,15 @@ function proxyEventHandler(eventName, argsConverter) {
     get: function() {
       return currentHandler;
     },
-    set: function(newHandler) {
+    set: function setter(newHandler) {
+      if (!this.$nativeObject) { // prototype/class ?
+        var defaultListeners = this.$defaultListeners ||
+          (this.$defaultListeners = []);
+        defaultListeners.push({setter: setter, value: newHandler});
+        // see also initDefaultListeners()
+        return;
+      }
+
       if (currentHandler === newHandler) {
         return;
       }
@@ -58,17 +67,17 @@ function proxyEventHandler(eventName, argsConverter) {
       }
       currentHandler = newHandler;
       if (currentHandler) {
-        handlerRunner = function handlerRunner() {
+        handlerRunner = function handlerRunner(handler) {
           var args = argsConverter ? argsConverter(arguments) : null;
-          return currentHandler.apply(this, args);
-        }.bind(this);
+          return handler.apply(this, args);
+        }.bind(this, currentHandler);
         this.$nativeObject._addEventListener(eventName, handlerRunner);
       } else {
         handlerRunner = null;
       }
     },
     configurable: false,
-    enumerable: false
+    enumerable: true
   };
 }
 
@@ -91,19 +100,32 @@ function getAS2Object(nativeObject) {
   return nativeObject ? nativeObject._getAS2Object() : null;
 }
 
+function initDefaultListeners(thisArg) {
+  if (!thisArg.$defaultListeners) {
+    return;
+  }
+  for (var i = 0; i < thisArg.$defaultListeners.length; i++) {
+    var p = thisArg.$defaultListeners[i];
+    p.setter.call(thisArg, p.value);
+  }
+}
+
 // AS2 Classes
 
 function AS2MovieClip() {
 }
 AS2MovieClip.prototype = Object.create(Object.prototype, {
-  $nativeObject: {
-    value: null,
-    writable: true
+  $$internalAS2Properties: {
+    value: ['$defaultListeners', '$attachNativeObject', '$lookupChild', '$targetPath']
+  },
+  $defaultListeners: {
+    value: []
   },
   $attachNativeObject: {
     value: function attachNativeObject(nativeMovieClip) {
-      this.$nativeObject = nativeMovieClip;
+      Object.defineProperty(this, '$nativeObject', { value: nativeMovieClip });
       nativeMovieClip.$as2Object = this;
+      initDefaultListeners(this);
     },
     enumerable: false
   },
@@ -126,7 +148,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
       var prefix = '_level0'; // TODO use needed level number here
       return target != '/' ? prefix + target.replace(/\//g, '.') : prefix;
     },
-    enumerable: true
+    enumerable: false
   },
   _alpha: proxyNativeProperty('alpha'),
   attachAudio: {
@@ -143,12 +165,17 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   },
   attachMovie: {
     value: function attachMovie(symbolId, name, depth, initObject) {
-      var mc = this.$nativeObject._constructSymbol(symbolId, name);
-      this._insertChildAtDepth(mc, depth);
+      var MovieClipClass = flash.display.MovieClip.class;
+      var mc = MovieClipClass.createAsSymbol({name: name});
+      MovieClipClass.instanceConstructor.call(mc);
+
+      this.$nativeObject._insertChildAtDepth(mc, depth);
 
       var as2mc = mc._getAS2Object();
       for (var i in initObject) {
-        as2mc[i] = initObject[i];
+        if (initObject.hasOwnProperty(i)) {
+          as2mc[i] = initObject[i];
+        }
       }
 
       return as2mc;
@@ -249,7 +276,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
     set: function set$forceSmoothing(value) { throw 'Not implemented: set$forceSmoothing'; },
     enumerable: true
   },
-  _framesloaded: proxyNativeReadonlyProperty('_framesLoaded'),
+  _framesloaded: proxyNativeReadonlyProperty('framesLoaded'),
   getBounds: {
     value: function getBounds(bounds) {
       var obj = bounds.$nativeObject;
@@ -327,7 +354,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   },
   getURL: {
     value: function getURL(url, window, method) {
-      var request = new AS2URLRequest(url);
+      var request = new flash.net.URLRequest(url);
       if (method) {
         request.method = method;
       }
@@ -356,7 +383,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   },
   hitTest: {
     value: function hitTest(x, y, shapeFlag) {
-      if (x instanceof AS2MovieClip) {
+      if (isAS2MovieClip(x)) {
         return this.$nativeObject.hitTestObject(x.$nativeObject);
       } else {
         return this.$nativeObject.hitTestPoint(x, y, shapeFlag);
@@ -396,9 +423,12 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   },
   localToGlobal: {
     value: function localToGlobal(pt) {
-      var tmp = this.$nativeObject.localToGlobal(pt);
-      pt.x = tmp.x;
-      pt.y = tmp.y;
+      var tmp = new flash.geom.Point(
+        pt.asGetPublicProperty('x'),
+        pt.asGetPublicProperty('y'));
+      tmp = this.$nativeObject.localToGlobal(tmp);
+      pt.asSetPublicProperty('x', tmp.x);
+      pt.asSetPublicProperty('y', tmp.y);
     },
     enumerable: true
   },
@@ -433,8 +463,8 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   onPress: proxyEventHandler('mouseDown'),
   onRelease: proxyEventHandler('mouseUp'),
   onReleaseOutside: proxyEventHandler('releaseOutside'),
-  onRollOut: proxyEventHandler('rollOut'),
-  onRollOver: proxyEventHandler('rollOver'),
+  onRollOut: proxyEventHandler('mouseOut'),
+  onRollOver: proxyEventHandler('mouseOver'),
   onSetFocus: proxyEventHandler('focusIn', function(e) { return [e.relatedObject]; }),
   onUnload: proxyEventHandler('unload'),
   opaqueBackground: proxyNativeProperty('opaqueBackground'),
@@ -482,7 +512,7 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
   startDrag: {
     value: function startDrag(lock, left, top, right, bottom) {
       this.$nativeObject.startDrag(lock, arguments.length < 3 ? null :
-        new AS2Rectangle(left, top, right - left, bottom - top));
+        new flash.geom.Rectangle(left, top, right - left, bottom - top));
     },
     enumerable: true
   },
@@ -554,14 +584,17 @@ AS2MovieClip.prototype = Object.create(Object.prototype, {
 function AS2Button() {
 }
 AS2Button.prototype = Object.create(Object.prototype, {
-  $nativeObject: {
-    value: null,
-    writable: true
+  $$internalAS2Properties: {
+    value: ['$defaultListeners', '$attachNativeObject']
+  },
+  $defaultListeners: {
+    value: []
   },
   $attachNativeObject: {
     value: function attachNativeObject(nativeButton) {
-      this.$nativeObject = nativeButton;
+      Object.defineProperty(this, '$nativeObject', { value: nativeButton });
       nativeButton.$as2Object = this;
+      initDefaultListeners(this);
     },
     enumerable: false
   },
@@ -629,8 +662,8 @@ AS2Button.prototype = Object.create(Object.prototype, {
   onPress: proxyEventHandler('mouseDown'),
   onRelease: proxyEventHandler('mouseUp'),
   onReleaseOutside: proxyEventHandler('releaseOutside'),
-  onRollOut: proxyEventHandler('rollOut'),
-  onRollOver: proxyEventHandler('rollOver'),
+  onRollOut: proxyEventHandler('mouseOut'),
+  onRollOver: proxyEventHandler('mouseOver'),
   onSetFocus: proxyEventHandler('focusIn', function(e) { return [e.relatedObject]; }),
   _parent: { // @flash.display.DisplayObject
     get: function get$_parent() { return getAS2Object(this.$nativeObject.parent); },
@@ -728,14 +761,17 @@ AS2Button.prototype = Object.create(Object.prototype, {
 function AS2TextField() {
 }
 AS2TextField.prototype = Object.create(Object.prototype, {
-  $nativeObject: {
-    value: null,
-    writable: true
+  $$internalAS2Properties: {
+    value: ['$defaultListeners', '$attachNativeObject']
+  },
+  $defaultListeners: {
+    value: []
   },
   $attachNativeObject: {
-    value: function attachNativeObject(nativeButton) {
-      this.$nativeObject = nativeButton;
-      nativeButton.$as2Object = this;
+    value: function attachNativeObject(nativeTextField) {
+      Object.defineProperty(this, '$nativeObject', { value: nativeTextField });
+      nativeTextField.$as2Object = this;
+      initDefaultListeners(this);
     },
     enumerable: false
   },
@@ -855,8 +891,8 @@ AS2TextField.prototype = Object.create(Object.prototype, {
   onPress: proxyEventHandler('mouseDown'),
   onRelease: proxyEventHandler('mouseUp'),
   onReleaseOutside: proxyEventHandler('releaseOutside'),
-  onRollOut: proxyEventHandler('rollOut'),
-  onRollOver: proxyEventHandler('rollOver'),
+  onRollOut: proxyEventHandler('mouseOut'),
+  onRollOver: proxyEventHandler('mouseOver'),
   onSetFocus: proxyEventHandler('focusIn', function(e) { return [e.relatedObject]; }),
   _parent: { // @flash.display.DisplayObject
     get: function get$_parent() { return getAS2Object(this.$nativeObject.parent); },
@@ -1043,6 +1079,9 @@ AS2Broadcaster.prototype = Object.create(Object.prototype, {
 
 function AS2Key() {}
 defineObjectProperties(AS2Key, {
+  $$internalAS2Properties: {
+    value: ['$keyStates', '$lastKeyCode', '$bind']
+  },
   DOWN: createConstant(40),
   LEFT: createConstant(37),
   RIGHT: createConstant(39),
@@ -1076,13 +1115,17 @@ defineObjectProperties(AS2Key, {
   isDown: {
     value: function isDown(code) {
       return !!AS2Key.$keyStates[code];
-    }
+    },
+    enumerable: true
   }
 });
 AS2Broadcaster.initialize(AS2Key);
 
 function AS2Mouse() {}
 defineObjectProperties(AS2Mouse, {
+  $$internalAS2Properties: {
+    value: ['$lastX', '$lastY', '$bind']
+  },
   $lastX: {
     value: 0,
     writable: true,
@@ -1149,6 +1192,9 @@ AS2Broadcaster.initialize(AS2Mouse);
 function AS2Stage() {
 }
 defineObjectProperties(AS2Stage, {
+  $$internalAS2Properties: {
+    value: ['$stage']
+  },
   $stage: {
     get: function get$stage() {
       return AS2Context.instance.stage;
@@ -1156,58 +1202,58 @@ defineObjectProperties(AS2Stage, {
   },
   align: {
     get: function get$align() {
-      return this.$stage.align;
+      return this.$stage.asGetPublicProperty('align');
     },
     set: function set$align(value) {
-      this.$stage.align = value;
+      this.$stage.asSetPublicProperty('align', value);
     },
     enumerable: true
   },
   displayState: {
     get: function get$displayState() {
-      return this.$stage.displayState;
+      return this.$stage.asGetPublicProperty('displayState');
     },
     set: function set$displayState(value) {
-      this.$stage.displayState = value;
+      this.$stage.asSetPublicProperty('displayState', value);
     },
     enumerable: true
   },
   fullScreenSourceRect: {
     get: function get$fullScreenSourceRect() {
-      return this.$stage.fullScreenSourceRect;
+      return this.$stage.asGetPublicProperty('fullScreenSourceRect');
     },
     set: function set$fullScreenSourceRect(value) {
-      this.$stage.fullScreenSourceRect = value;
+      this.$stage.asSetPublicProperty('fullScreenSourceRect', value);
     },
     enumerable: true
   },
   height: {
     get: function get$height() {
-      return this.$stage.stageHeight;
+      return this.$stage.asGetPublicProperty('stageHeight');
     },
     enumerable: true
   },
   scaleMode: {
     get: function get$scaleMode() {
-      return this.$stage.scaleMode;
+      return this.$stage.asGetPublicProperty('scaleMode');
     },
     set: function set$scaleMode(value) {
-      this.$stage.scaleMode = value;
+      this.$stage.asSetPublicProperty('scaleMode', value);
     },
     enumerable: true
   },
   showMenu: {
     get: function get$showMenu() {
-      return this.$stage.showDefaultContextMenu;
+      return this.$stage.asGetPublicProperty('showDefaultContextMenu');
     },
     set: function set$showMenu(value) {
-      this.$stage.showDefaultContextMenu = value;
+      this.$stage.asSetPublicProperty('showDefaultContextMenu', value);
     },
     enumerable: true
   },
   width: {
     get: function get$width() {
-      return this.$stage.stageWidth;
+      return this.$stage.asGetPublicProperty('stageWidth');
     },
     enumerable: true
   }
@@ -1247,16 +1293,6 @@ AS2Color.prototype = Object.create(Object.prototype, {
   }
 });
 
-function AS2Rectangle(x, y, width, height) {
-  this.x = x;
-  this.y = y;
-  this.width = width;
-  this.height = height;
-}
-AS2Rectangle.prototype = Object.create(Object.prototype, {
-  // TODO methods
-});
-
 var AS2System = Object.create(Object.prototype, {
   capabilities: {
     get: function get$capabilities() {
@@ -1267,14 +1303,16 @@ var AS2System = Object.create(Object.prototype, {
 
 // Built-in classes modifications
 
-defineObjectProperties(Object.prototype, {
-  watch: {
-    get: function watch() { throw 'Not implemented: watch'; },
-    enumerable: false
-  },
-  unwatch: {
-    get: function unwatch() { throw 'Not implemented: unwatch'; },
-    enumerable: false
+function AS2Object() {}
+defineObjectProperties(AS2Object, {
+  $install: {
+    value: function(ObjectClass) {
+      var proto = ObjectClass.asGetPublicProperty('prototype');
+      proto.asDefinePublicProperty('addProperty',
+        Object.getOwnPropertyDescriptor(AS2Object, 'addProperty'));
+      proto.asDefinePublicProperty('registerClass',
+        Object.getOwnPropertyDescriptor(AS2Object, 'registerClass'));
+    }
   },
   addProperty: {
     value: function addProperty(name, getter, setter) {
@@ -1295,94 +1333,16 @@ defineObjectProperties(Object.prototype, {
       });
       return true;
     },
+    configurable: true,
     enumerable: false
   },
   registerClass: {
-    value: function registerClass() { throw 'Not implemented: registerClass'; },
-    enumerable: false
-  }
-});
-
-defineObjectProperties(Array, {
-  CASEINSENSITIVE: createConstant(1),
-  DESCENDING: createConstant(2),
-  UNIQUESORT: createConstant(4),
-  RETURNINDEXEDARRAY: createConstant(8),
-  NUMERIC: createConstant(16)
-});
-defineObjectProperties(Array.prototype, {
-  sort: {
-    value: (function() {
-      var originalSort = Array.prototype.sort;
-      return (function sort(compareFunction, options) {
-        if (arguments.length <= 1 && typeof compareFunction !== 'number') {
-          return originalSort.apply(this, arguments);
-        }
-        if (typeof compareFunction === 'number') {
-          options = compareFunction;
-          compareFunction = null;
-        }
-        var subject = !!(options & Array.UNIQUESORT) ||
-          !!(options & Array.RETURNINDEXEDARRAY) ? this.slice(0) : this;
-        if (options & Array.CASEINSENSITIVE) {
-          compareFunction = (function(x, y) {
-            var valueX = String(x).toLowerCase();
-            var valueY = String(y).toLowerCase();
-            return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
-          });
-        }
-        if (options & Array.NUMERIC) {
-          compareFunction = (function(x, y) {
-            var result = x - y;
-            return result < 0 ? -1 : result > 0 ? 1 : 0;
-          });
-        }
-        originalSort.call(subject, compareFunction);
-        if (options & Array.UNIQUESORT) {
-          var i;
-          for (i = 1; i < subject.length; ++i) {
-            if (subject[i - 1] !== subject[i]) {
-              return; // keeping array unmodified
-            }
-          }
-          for (i = 0; i < subject.length; ++i) {
-            this[i] = subject[i];
-          }
-          subject = this;
-        }
-        if (options.DESCENDING) {
-          subject.reverse();
-        }
-        return subject;
-      });
-    })(),
-    enumerable: false
-  },
-  sortOn: {
-    value: function sortOn(fieldName, options) {
-      var comparer;
-      if (options & Array.NUMERIC) {
-        comparer = (function(x, y) {
-          var valueX = Number(x[fieldName]);
-          var valueY = Number(y[fieldName]);
-          return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
-        });
-      } else if (options & Array.CASEINSENSITIVE) {
-        comparer = (function(x, y) {
-          var valueX = String(x[fieldName]).toLowerCase();
-          var valueY = String(y[fieldName]).toLowerCase();
-          return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
-        });
-      } else {
-        comparer = (function(x, y) {
-          var valueX = String(x[fieldName]);
-          var valueY = String(y[fieldName]);
-          return valueX < valueY ? -1 : valueX == valueY ? 0 : 1;
-        });
-      }
-      return arguments.length <= 1 ? this.sort(comparer) :
-        this.sort(comparer, options & ~(Array.NUMERIC | Array.CASEINSENSITIVE));
+    value: function registerClass(name, theClass) {
+      var classes = AS2Context.instance.classes ||
+        (AS2Context.instance.classes = {});
+      classes[name] = theClass;
     },
+    configurable: true,
     enumerable: false
   }
 });
@@ -1430,7 +1390,6 @@ if (typeof GLOBAL !== 'undefined') {
   GLOBAL.AS2Mouse = AS2Mouse;
   GLOBAL.AS2Stage = AS2Stage;
   GLOBAL.AS2Color = AS2Color;
-  GLOBAL.AS2Rectangle = AS2Rectangle;
   GLOBAL.AS2System = AS2System;
   GLOBAL.createBuiltinType = createBuiltinType;
 }

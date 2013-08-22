@@ -15,10 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global toStringRgba, FirefoxCom, TRACE_SYMBOLS_INFO, Timer, FrameCounter, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter*/
+/*global toStringRgba, FirefoxCom, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter*/
 
 var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
+var disablePreVisitor = rendererOptions.register(new Option("dpv", "disablePreVisitor", "boolean", false, "disable pre visitor"));
+var disableRenderVisitor = rendererOptions.register(new Option("drv", "disableRenderVisitor", "boolean", false, "disable render visitor"));
+var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMouseVisitor", "boolean", false, "disable mouse visitor"));
+var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
 
 var CanvasCache = {
   cache: [],
@@ -41,9 +45,18 @@ var CanvasCache = {
   }
 };
 
+function isCanvasVisible(canvas) {
+  if (canvas.ownerDocument.hidden) { // Page Visibility API
+    return false;
+  }
+  if (canvas.mozVisible === false) { // HACK Canvas Visibility API
+    return false;
+  }
+  return true;
+}
+
 function visitContainer(container, visitor) {
   var children = container._children;
-  var dirty = false;
 
   visitor.childrenStart(container);
 
@@ -58,16 +71,10 @@ function visitContainer(container, visitor) {
                         flash.display.SimpleButton.class.isInstanceOf(child);
 
       visitor.visit(child, isContainer, visitContainer);
-
-      if (child._dirtyArea)
-        dirty = true;
     }
   }
 
   visitor.childrenEnd(container);
-
-  if (dirty)
-    container._bounds = null;
 }
 
 function RenderVisitor(root, ctx, refreshStage) {
@@ -83,6 +90,12 @@ RenderVisitor.prototype = {
   ignoreVisibleAttribute: false,
   start: function () {
     visitContainer(this.root, this);
+  },
+  startFragment: function() {
+    var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(this.root) ||
+                      flash.display.SimpleButton.class.isInstanceOf(this.root);
+
+    this.visit(this.root, isContainer, visitContainer);
   },
   childrenStart: function(parent) {
     if (this.depth === 0) {
@@ -101,7 +114,11 @@ RenderVisitor.prototype = {
         }
         if (bgcolor.alpha > 0) {
           ctx.fillStyle = toStringRgba(bgcolor);
-          ctx.fill();
+          if (this.refreshStage) {
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+          } else {
+            ctx.fill();
+          }
         }
       }
 
@@ -139,28 +156,81 @@ RenderVisitor.prototype = {
       this.ctx.restore();
     }
   },
-  visit: function (child, isContainer, visitContainer) {
+  visit: function (child, isContainer, visitContainer, isClippingMask) {
     var ctx = this.ctx;
 
-    var clippingMask = false;
-    // removing clipping if the required character depth is achived
-    while (this.clipDepth && this.clipDepth.length > 0 &&
-        child._depth > this.clipDepth[0]) {
-      this.clipDepth.shift();
-      ctx.restore();
-    }
-    // TODO: handle container as a clipping mask
-    if (child._clipDepth && !isContainer) {
-      if (!this.clipDepth) {
-        this.clipDepth = [];
+    var clippingMask = isClippingMask === true;
+
+    if (!clippingMask) {
+      // removing clipping if the required character depth is achived
+      while (this.clipDepth && this.clipDepth.length > 0 &&
+          child._depth > this.clipDepth[0]) {
+        this.clipDepth.shift();
+        ctx.restore();
       }
-      clippingMask = true;
-      // saving clipping until certain character depth
-      this.clipDepth.unshift(child._clipDepth);
+      if (child._clipDepth) {
+        if (!this.clipDepth) {
+          this.clipDepth = [];
+        }
+        clippingMask = true;
+        // saving clipping until certain character depth
+        this.clipDepth.unshift(child._clipDepth);
+        ctx.save();
+      }
+    }
+
+    if (clippingMask && isContainer) {
       ctx.save();
+      renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask, this.refreshStage);
+      for (var i = 0, n = child._children.length; i < n; i++) {
+        var child1 = child._children[i];
+        if (!child1) {
+          continue;
+        }
+        if (this.ignoreVisibleAttribute || (child1._visible && !child1._maskedObject)) {
+          var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child1) ||
+                            flash.display.SimpleButton.class.isInstanceOf(child1);
+          this.visit(child1, isContainer, this, true);
+        }
+      }
+      ctx.restore();
+      ctx.clip();
+      return;
     }
 
     ctx.save();
+
+    var blendModeCanvas;
+    var blendModeClass = flash.display.BlendMode.class;
+    if (child._blendMode !== blendModeClass.NORMAL) {
+
+      // TODO:
+
+      // These Flash blend modes have no canvas equivalent:
+      // - blendModeClass.SUBTRACT
+      // - blendModeClass.INVERT
+      // - blendModeClass.SHADER
+      // - blendModeClass.ADD
+
+      // These blend modes are actually Porter-Duff compositing operators.
+      // The backdrop is the nearest parent with blendMode set to LAYER.
+      // When there is no LAYER parent, they are ignored (treated as NORMAL).
+      // - blendModeClass.ALPHA (destination-in)
+      // - blendModeClass.ERASE (destination-out)
+      // - blendModeClass.LAYER [defines backdrop]
+
+      var blendModeCanvas;
+      switch (child._blendMode) {
+        case blendModeClass.MULTIPLY:   blendModeCanvas = "multiply";        break;
+        case blendModeClass.SCREEN:     blendModeCanvas = "screen";          break;
+        case blendModeClass.LIGHTEN:    blendModeCanvas = "lighten";         break;
+        case blendModeClass.DARKEN:     blendModeCanvas = "darken";          break;
+        case blendModeClass.DIFFERENCE: blendModeCanvas = "difference";      break;
+        case blendModeClass.OVERLAY:    blendModeCanvas = "overlay";         break;
+        case blendModeClass.HARDLIGHT:  blendModeCanvas = "hard-light";      break;
+      }
+    }
+    ctx.globalCompositeOperation = (blendModeCanvas !== undefined) ? blendModeCanvas : "normal";
 
     if (child._mask) {
       // TODO create canvas small enough to fit the object and
@@ -178,7 +248,7 @@ RenderVisitor.prototype = {
       tempCanvas = CanvasCache.getCanvas(ctx.canvas);
       tempCtx = tempCanvas.ctx;
       tempCtx.currentTransform = ctx.currentTransform;
-      renderDisplayObject(child, tempCtx, child._currentTransform, child._cxform, clippingMask);
+      renderDisplayObject(child, tempCtx, child._currentTransform, child._cxform, clippingMask, this.refreshStage);
 
       if (isContainer) {
         this.ctx = tempCtx;
@@ -198,7 +268,7 @@ RenderVisitor.prototype = {
       CanvasCache.releaseCanvas(tempCanvas);
       CanvasCache.releaseCanvas(maskCanvas);
     } else {
-      renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask);
+      renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask, this.refreshStage);
 
       if (isContainer) {
         visitContainer(child, this);
@@ -210,12 +280,10 @@ RenderVisitor.prototype = {
     if (clippingMask) {
       ctx.clip();
     }
-
-    child._dirtyArea = null;
   }
 };
 
-function renderDisplayObject(child, ctx, transform, cxform, clip) {
+function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) {
   if (transform) {
     var m = transform;
     if (m.a * m.d == m.b * m.c) {
@@ -236,12 +304,16 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
     ctx.globalAlpha *= child._alpha;
   }
 
+  if (!refreshStage && !child._invalid) {
+    return;
+  }
+
   // TODO: move into Graphics class
   if (child._graphics) {
     var graphics = child._graphics;
 
     if (graphics._bitmap) {
-      ctx.translate(child._bbox.left, child._bbox.top);
+      ctx.translate(child._bbox.xMin, child._bbox.yMin);
       ctx.drawImage(graphics._bitmap, 0, 0);
     } else {
       graphics.draw(ctx, clip, child.ratio);
@@ -250,6 +322,8 @@ function renderDisplayObject(child, ctx, transform, cxform, clip) {
 
   if (child.draw)
     child.draw(ctx, child.ratio);
+
+  child._invalid = false;
 }
 
 var renderingTerminated = false;
@@ -348,170 +422,6 @@ function renderStage(stage, ctx, events) {
 
   updateRenderTransform();
 
-  function roundForClipping(bounds) {
-    var scaleX = stage._canvasState.scaleX;
-    var scaleY = stage._canvasState.scaleY;
-    var offsetX = stage._canvasState.offsetX;
-    var offsetY = stage._canvasState.offsetY;
-
-    var x = (Math.floor(bounds.x * scaleX + offsetX) - offsetX) / scaleX;
-    var y = (Math.floor(bounds.y * scaleY + offsetY) - offsetY) / scaleY;
-    var x2 = (Math.ceil((bounds.x + bounds.width) * scaleX + offsetX) - offsetX) / scaleX;
-    var y2 = (Math.ceil((bounds.y + bounds.height) * scaleY + offsetY) - offsetY) / scaleY;
-    return { x: x, y: y, width: x2 - x, height: y2 - y };
-  }
-
-  function PreVisitor(root, ctx) {
-    this.root = root;
-    this.ctx = ctx;
-  }
-  PreVisitor.prototype = {
-    ignoreVisibleAttribute: true,
-    start: function () {
-      visitContainer(this.root, this);
-    },
-    childrenStart: function() {},
-    childrenEnd: function() {},
-    visit: function (child, isContainer, visitContainer) {
-      if (child._dirtyArea) {
-        var b1 = roundForClipping(child._dirtyArea);
-        var b2 = roundForClipping(child.getBounds());
-        this.ctx.rect(b1.x, b1.y, b1.width, b1.height);
-        this.ctx.rect(b2.x, b2.y, b2.width, b2.height);
-      } else if (child._graphics && (child._graphics._revision !== child._revision)) {
-        child._revision = child._graphics._revision;
-        child._markAsDirty();
-        // redraw entire stage till we calculate bounding boxes for dynamic graphics
-        this.ctx.rect(0, 0, frameWidth, frameHeight);
-      }
-      if (isContainer) {
-        visitContainer(child, this);
-      }
-    }
-  };
-
-  function MouseVisitor(root) {
-    this.root = root;
-    this.interactiveParent = stage;
-    this.parentsStack = [stage];
-    this.mouseOverEvt = new flash.events.MouseEvent("mouseOver");
-    this.mouseOutEvt = new flash.events.MouseEvent("mouseOut");
-    this.mouseMoveEvt = new flash.events.MouseEvent("mouseMove");
-
-    this.mouseOverTargets = [stage._mouseOver ? stage : null];
-    this.oldMouseOverTargets = [];
-    if (stage._mouseJustLeft) {
-      this.oldMouseOverTargets.push(stage);
-      stage._mouseJustLeft = false;
-    }
-  }
-  MouseVisitor.prototype = {
-    ignoreVisibleAttribute: false,
-    start: function () {
-      this.mouseMoveEvt._stageX = stage._mouseX;
-      this.mouseMoveEvt._stageY = stage._mouseY;
-
-      visitContainer(this.root, this);
-    },
-    childrenStart: function() {},
-    childrenEnd: function(container) {
-      this.interactiveParent = this.parentsStack.pop();
-
-      if (container === stage) {
-        var newMouseOverTargets = [];
-        var oldMouseOverTargets = this.oldMouseOverTargets;
-        var target = this.mouseOverTargets.pop();
-        stage._clickTarget = target;
-        if (target) {
-          // removing duplicates from this.mouseOverTargets and removing symbols
-          // from this.oldMouseOverTargets if they are in "mouseOver" state
-          do {
-            var i = oldMouseOverTargets.indexOf(target);
-            if (i >= 0) {
-              oldMouseOverTargets[i] = null;
-            }
-            if (!target._mouseOver) {
-              newMouseOverTargets.push(target);
-            }
-            var prev = target;
-            do {
-              target = this.mouseOverTargets.pop();
-            } while (prev === target);
-          } while(target);
-        }
-        // generating mouseOut events for non-processed oldMouseOverTargets
-        while (oldMouseOverTargets.length > 0) {
-          target = oldMouseOverTargets.pop();
-          if (!target) {
-            continue;
-          }
-          target._mouseOver = false;
-          target._dispatchEvent(this.mouseOutEvt);
-
-          if (TRACE_SYMBOLS_INFO && target._control) {
-            delete target._control.dataset.mouseOver;
-          }
-        }
-        // generating mouseOver events for new "mouseOver" symbols
-        while (newMouseOverTargets.length > 0) {
-          target = newMouseOverTargets.pop();
-          target._mouseOver = true;
-          target._dispatchEvent(this.mouseOverEvt);
-
-          if (TRACE_SYMBOLS_INFO && target._control) {
-            target._control.dataset.mouseOver = true;
-          }
-        }
-      }
-    },
-    visit: function (child, isContainer, visitContainer) {
-      var interactiveParent = this.interactiveParent;
-      if (flash.display.InteractiveObject.class.isInstanceOf(child) && child._mouseEnabled &&
-          interactiveParent._mouseChildren) {
-        interactiveParent = child;
-      }
-
-      if (child._mouseOver) {
-        // remembering all symbols in "mouseOver" state
-        this.oldMouseOverTargets.push(child);
-      }
-
-      var mouseMoved = false;
-
-      var parent = child._parent;
-      var pt = { x: parent._mouseX, y: parent._mouseY };
-      child._applyCurrentInverseTransform(pt, true);
-
-      if (pt.x !== child._mouseX || pt.y !== child._mouseY) {
-        mouseMoved = true;
-      }
-
-      child._mouseX = pt.x;
-      child._mouseY = pt.y;
-
-      var hitArea = child._hitArea || child;
-      if (stage._mouseOver &&
-          hitArea._hitTest(true, stage._mouseX, stage._mouseY, true, null, true)) {
-        if (mouseMoved) {
-          this.mouseMoveEvt._localX = interactiveParent._mouseX;
-          this.mouseMoveEvt._localY = interactiveParent._mouseY;
-
-          interactiveParent._dispatchEvent(this.mouseMoveEvt);
-        }
-        // saving the current interactive symbol and whole stack of
-        // its parents (including duplicates)
-        this.mouseOverTargets = this.parentsStack.concat([interactiveParent]);
-      }
-
-      if (isContainer) {
-        this.parentsStack.push(this.interactiveParent);
-        this.interactiveParent = interactiveParent;
-
-        visitContainer(child, this);
-      }
-    }
-  };
-
   var frameTime = 0;
   var maxDelay = 1000 / stage._frameRate;
   var nextRenderAt = Date.now();
@@ -607,15 +517,18 @@ function renderStage(stage, ctx, events) {
     var mouseMoved = false;
     if (stage._mouseMoved) {
       stage._mouseMoved = false;
-      mouseMoved = true;
+      mouseMoved = stage._mouseOver;
     }
 
     if (renderFrame || refreshStage || mouseMoved) {
       FrameCounter.clear();
+      var frameStartTime = performance.now();
       traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
-      traceRenderer.value && frameWriter.enter("> Mouse Visitor");
-      (new MouseVisitor(stage)).start();
-      traceRenderer.value && frameWriter.leave("< Mouse Visitor");
+      if (mouseMoved && !disableMouseVisitor.value) {
+        traceRenderer.value && frameWriter.enter("> Mouse Visitor");
+        stage._handleMouse();
+        traceRenderer.value && frameWriter.leave("< Mouse Visitor");
+      }
 
       var domain = avm2.systemDomain;
 
@@ -637,11 +550,19 @@ function renderStage(stage, ctx, events) {
       }
 
       if (refreshStage || renderFrame) {
+        var canvasVisible = isCanvasVisible(ctx.canvas);
         ctx.beginPath();
-        traceRenderer.value && frameWriter.enter("> Pre Visitor");
-        (new PreVisitor(stage, ctx)).start();
-        (new RenderVisitor(stage, ctx, refreshStage)).start();
-        traceRenderer.value && frameWriter.leave("< Pre Visitor");
+        if (canvasVisible && !disablePreVisitor.value) {
+          stage._showRedrawRegions(showRedrawRegions.value);
+          traceRenderer.value && frameWriter.enter("> Pre Visitor");
+          stage._prepareInvalidRegions(ctx);
+          traceRenderer.value && frameWriter.leave("< Pre Visitor");
+        }
+        if (canvasVisible && !disableRenderVisitor.value) {
+          traceRenderer.value && frameWriter.enter("> Render Visitor");
+          (new RenderVisitor(stage, ctx, refreshStage)).start();
+          traceRenderer.value && frameWriter.leave("< Render Visitor");
+        }
       }
 
       if (renderFrame) {
@@ -659,6 +580,11 @@ function renderStage(stage, ctx, events) {
         for (var name in FrameCounter.counts) {
           appendToFrameTerminal(name + ": " + FrameCounter.counts[name], "gray");
         }
+        var frameElapsedTime = performance.now() - frameStartTime;
+        var frameFPS = 1000 / frameElapsedTime;
+        frameFPSAverage.push(frameFPS);
+        traceRenderer.value && appendToFrameTerminal("End Frame Time: " + frameElapsedTime.toFixed(2) + " (" + frameFPS.toFixed(2) + " fps, " + frameFPSAverage.average().toFixed(2) + " average fps)", "purple");
+
       }
     } else {
       traceRenderer.value && appendToFrameTerminal("Skip Frame", "black");

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2TextField, toStringRgba, warning */
+/*global AS2Globals, toStringRgba, warning */
 
 var TextFieldDefinition = (function () {
 
@@ -316,8 +316,8 @@ var TextFieldDefinition = (function () {
   function renderToCanvas(ctx, bounds, runs) {
     ctx.save();
     ctx.beginPath();
-    ctx.rect(bounds.left, bounds.top,
-                 bounds.right - bounds.left, bounds.bottom - bounds.top);
+    ctx.rect(bounds.xMin, bounds.yMin,
+                 bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin);
     ctx.clip();
     for (var i = 0; i < runs.length; i++) {
       var run = runs[i];
@@ -521,7 +521,8 @@ var TextFieldDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        new AS2TextField().$attachNativeObject(this);
+        var AS2TextFieldClass = AS2Globals.prototype.TextField;
+        new AS2TextFieldClass().$attachNativeObject(this);
       }
       return this.$as2Object;
     },
@@ -538,7 +539,7 @@ var TextFieldDefinition = (function () {
     },
 
     invalidateDimensions: function() {
-      this._markAsDirty();
+      this._invalidate();
       this._dimensionsValid = false;
     },
 
@@ -549,8 +550,8 @@ var TextFieldDefinition = (function () {
       var bounds = this._bbox;
       var initialFormat = this._defaultTextFormat;
       var firstRun = {type: 'f', format: initialFormat};
-      var width = bounds.right - bounds.left;
-      var height = bounds.bottom - bounds.top;
+      var width = bounds.xMax - bounds.xMin;
+      var height = bounds.yMax - bounds.yMin;
       var state = {ctx: measureCtx, y: 0, x: 0, w: width, h: height, line: [],
                    lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
                    currentFormat: initialFormat, runs: [firstRun]};
@@ -601,13 +602,13 @@ var TextFieldDefinition = (function () {
     },
 
     get width() { // (void) -> Number
-      return this._bbox.right - this._bbox.left;
+      return this._bbox.xMax - this._bbox.xMin;
     },
     set width(value) { // (Number) -> Number
       if (value < 0) {
         return;
       }
-      this._bbox.right = this._bbox.left + value;
+      this._bbox.xMax = this._bbox.xMin + value;
       // TODO: optimization potential: don't invalidate if !wordWrap and no \n
       if (this._multiline || this._wordWrap) {
         this.invalidateDimensions();
@@ -615,14 +616,14 @@ var TextFieldDefinition = (function () {
     },
 
     get height() { // (void) -> Number
-      return this._bbox.bottom - this._bbox.top;
+      return this._bbox.yMax - this._bbox.yMin;
     },
     set height(value) { // (Number) -> Number
       if (value < 0) {
         return;
       }
-      this._bbox.bottom = this._bbox.top + value;
-      this._markAsDirty();
+      this._bbox.yMax = this._bbox.yMin + value;
+      this._invalidate();
     }
   };
 

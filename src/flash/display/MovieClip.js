@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global MP3DecoderSession, AS2MovieClip, $DEBUG */
+/*global MP3DecoderSession, AS2Globals, $DEBUG */
 
 var MovieClipDefinition = (function () {
   var def = {
@@ -25,10 +25,10 @@ var MovieClipDefinition = (function () {
       this._currentFrame = 0;
       this._actualFrame = 0;
       this._currentFrameLabel = null;
-      this._currentLabel = false;
+      this._currentLabel = null;
       this._currentScene = 0;
       this._deferScriptExecution = false;
-      this._enabled = null;
+      this._enabled = true;
       this._frameScripts = { };
       this._framesLoaded = 1;
       this._isPlaying = true;
@@ -48,28 +48,32 @@ var MovieClipDefinition = (function () {
         this._frameScripts = Object.create(s.frameScripts || null);
         this._totalFrames = s.totalFrames || 1;
         this._startSoundRegistrations = s.startSoundRegistrations || [];
+        this._scenes = s.scenes || null;
 
-        if (s.scenes) {
-          this._scenes = s.scenes;
-        } else {
-          var map = this._labelMap;
-          var labels = [];
-          for (var name in map) {
-            var frame = map[name];
-            labels.push(new flash.display.FrameLabel(name, frame));
+        var map = this._labelMap;
+        for (var name in map) {
+          var frame = map[name];
+          if (frame == 1) {
+            this._currentFrameLabel = this._currentLabel = name;
           }
-          var scene = new flash.display.Scene('Scene 1', labels, this._totalFrames);
-          this._scenes = [scene];
         }
       }
 
       this._needAdvance = true;
       this._onConstructFrame = function () {
-        this._gotoFrame(this._currentFrame + 1);
-        this._needAdvance = false;
-        if (!this._isPlaying) {
-          this._removeEventListener('constructFrame', this._onConstructFrame);
-        }
+//        try {
+          this._gotoFrame(this._currentFrame + 1);
+          this._needAdvance = false;
+          if (!this._isPlaying) {
+            this._removeEventListener('constructFrame', this._onConstructFrame);
+          }
+//        } catch (e) {
+//          if ($DEBUG) {
+//            console.error('error ' + e + ', stack: \n' + e.stack);
+//          }
+//          this.stop();
+//          throw e;
+//        }
       }.bind(this);
       this._addEventListener('constructFrame', this._onConstructFrame);
     },
@@ -79,15 +83,7 @@ var MovieClipDefinition = (function () {
       if (frameNum in this._frameScripts) {
         var scripts = this._frameScripts[frameNum];
         for (var i = 0, n = scripts.length; i < n; i++) {
-          if ($DEBUG) {
-            try {
-              scripts[i].call(this);
-            } catch (e) {
-              console.error('error ' + e + ', stack: \n' + e.stack);
-            }
-          } else {
-            scripts[i].call(this);
-          }
+          scripts[i].call(this);
         }
       }
       this._deferScriptExecution = false;
@@ -108,11 +104,25 @@ var MovieClipDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        new AS2MovieClip().$attachNativeObject(this);
+        var AS2MovieClipClass = AS2Globals.prototype.MovieClip;
+        new AS2MovieClipClass().$attachNativeObject(this);
       }
       return this.$as2Object;
     },
     _gotoFrame: function (frameNum, scene) {
+      // If a scene name is specified in gotoAndStop or gotoAndPlay,
+      // amd the specified frame is a number, the frame number is
+      // relative to the scene.
+      if (typeof scene === "string" && this._scenes && this._scenes.length > 1) {
+        var scenes = this._scenes;
+        for (var i = 0, n = scenes.length; i < n; i++) {
+          if (scene === scenes[i].name) {
+            frameNum += (scenes[i]._startFrame - 1);
+            break;
+          }
+        }
+      }
+
       if (frameNum < 1 || frameNum > this._totalFrames)
         frameNum = 1;
 
@@ -137,7 +147,6 @@ var MovieClipDefinition = (function () {
         var displayList = timeline[frameNum - 1];
 
         if (displayList !== currentDisplayList) {
-          this._markAsDirty();
           var walkList = frameNum > currentFrame ? displayList : currentDisplayList;
 
           for (var depth in walkList) {
@@ -164,10 +173,10 @@ var MovieClipDefinition = (function () {
               if (currentChild && currentChild._owned) {
                 children.splice(currentIndex, 1);
 
-                this._control.removeChild(currentChild._control);
                 currentChild._dispatchEvent(new flash.events.Event("removed"));
-                if (this.stage)
-                    currentChild._removedFromStage(new flash.events.Event("removedFromStage"));
+                if (this._stage) {
+                  this._stage._removeFromStage(currentChild);
+                }
                 currentChild.destroy();
               }
             } else if (cmd !== currentListCmd) {
@@ -175,6 +184,9 @@ var MovieClipDefinition = (function () {
                   cmd.symbolId === currentListCmd.symbolId &&
                   cmd.ratio === currentListCmd.ratio) {
                 if (currentChild._animated) {
+                  currentChild._invalidate();
+                  currentChild._bounds = null;
+
                   if (cmd.hasClipDepth)
                     currentChild._clipDepth = cmd.clipDepth;
 
@@ -207,16 +219,18 @@ var MovieClipDefinition = (function () {
                   index = currentIndex;
                   replace = true;
 
-                  this._control.removeChild(currentChild._control);
                   currentChild._dispatchEvent(new flash.events.Event("removed"));
-                  if (this.stage)
-                    currentChild._removedFromStage(new flash.events.Event("removedFromStage"));
+                  if (this._stage) {
+                    this._stage._removeFromStage(currentChild);
+                  }
                   currentChild.destroy();
                 }
 
                 this._addTimelineChild(cmd, index, replace);
               }
             }
+
+            this._bounds = null;
           }
 
           this._constructChildren();
@@ -224,6 +238,31 @@ var MovieClipDefinition = (function () {
       }
 
       this._currentFrame = frameNum;
+
+      // update currentLabel and currentFrameLabel
+      this._currentFrameLabel = null;
+      if (frameNum === 1) {
+        this._currentLabel = null;
+      }
+      var map = this._labelMap;
+      for (var name in map) {
+        if (map[name] === frameNum) {
+          this._currentFrameLabel = this._currentLabel = name;
+          break;
+        }
+      }
+
+      // update currentScene
+      if (this._scenes) {
+        var scenes = this._scenes;
+        for (var j = 0, n = scenes.length; j < n; j++) {
+          var scene = scenes[j];
+          if (frameNum >= scene._startFrame && frameNum <= scene._endFrame) {
+            this._currentScene = j;
+            break;
+          }
+        }
+      }
 
       if (frameNum) {
         this._callFrame(frameNum);
@@ -325,8 +364,18 @@ var MovieClipDefinition = (function () {
       }
     },
 
+    _gotoButtonState: function gotoButtonState(stateName) {
+      if (this._enabled) {
+        this.gotoLabel('_' + stateName);
+      }
+    },
+
     get currentFrame() {
-      return this._currentFrame || 1;
+      // currentFrame is relative to the current scene, if available
+      var frameNum = this._currentFrame || 1;
+      return this._scenes ?
+              frameNum - this.currentScene._startFrame + 1 :
+              frameNum;
     },
     get currentFrameLabel() {
       return this._currentFrameLabel;
@@ -335,10 +384,27 @@ var MovieClipDefinition = (function () {
       return this._currentLabel;
     },
     get currentLabels() {
-      return this._scenes[this._currentScene].labels;
+      // Returns an array of FrameLabel objects from the current scene.
+      // If the MovieClip instance does not use scenes, the array includes all
+      // frame labels from the entire MovieClip instance
+      if (this._scenes) {
+        return this._scenes[this._currentScene].labels;
+      } else {
+        var labels = [];
+        var map = this._labelMap;
+        for (var name in map) {
+          labels.push(new flash.display.FrameLabel(name, map[name]));
+        }
+        return labels;
+      }
     },
     get currentScene() {
-      return this._scenes[this._currentScene];
+      // The current scene in which the playhead is located in the timeline of
+      // the MovieClip instance. Returns a new Scene instance with empty name
+      // if the MovieClip instance does not use scenes.
+      return this._scenes ?
+              this._scenes[this._currentScene] :
+              new flash.display.Scene("", this.currentLabels, this._totalFrames);
     },
     get enabled() {
       return this._enabled;
@@ -381,7 +447,7 @@ var MovieClipDefinition = (function () {
       if (isNaN(frame)) {
         this.gotoLabel(frame);
       } else {
-        this._gotoFrame(frame);
+        this._gotoFrame(frame, scene);
       }
     },
     gotoAndStop: function (frame, scene) {
@@ -389,7 +455,7 @@ var MovieClipDefinition = (function () {
       if (isNaN(frame)) {
         this.gotoLabel(frame);
       } else {
-        this._gotoFrame(frame);
+        this._gotoFrame(frame, scene);
       }
     },
     gotoLabel: function (labelName) {
@@ -403,7 +469,9 @@ var MovieClipDefinition = (function () {
     },
     nextFrame: function () {
       this.stop();
-      this._gotoFrame(this._currentFrame % this._totalFrames + 1);
+      if (this._currentFrame < this._totalFrames) {
+        this._gotoFrame(this._currentFrame + 1);
+      }
     },
     nextScene: function () {
       notImplemented();
@@ -418,7 +486,9 @@ var MovieClipDefinition = (function () {
     },
     prevFrame: function () {
       this.stop();
-      this._gotoFrame(this._currentFrame > 1 ? this._currentFrame - 1 : this._totalFrames);
+      if (this._currentFrame > 1) {
+        this._gotoFrame(this._currentFrame - 1);
+      }
     },
     prevScene: function () {
       notImplemented();

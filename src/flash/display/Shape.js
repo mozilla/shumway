@@ -22,6 +22,7 @@ var ShapeDefinition = (function () {
 
     initialize: function () {
       var graphics = this._graphics = new flash.display.Graphics();
+      graphics._parent = this;
       var s = this.symbol;
       if (s && s.paths) {
         graphics._paths = s.paths;
