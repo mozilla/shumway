@@ -323,11 +323,13 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
       for (var j = 0, o = subpaths.length; j < o; j++) {
         var path = subpaths[j];
 
-        ctx.currentPath = path;
-
         if (clip) {
-          ctx.closePath();
+          if (typeof path.fillStyle !== "undefined") {
+            ctx.currentPath = path;
+            ctx.closePath();
+          }
         } else {
+          ctx.currentPath = path;
           if (path.fillStyle) {
             ctx.fillStyle = path.fillStyle;
 
