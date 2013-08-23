@@ -266,12 +266,15 @@ var DisplayObjectDefinition = (function () {
       return width > 0 && height > 0;
     },
     _invalidate: function () {
-      if (this._stage) {
+      if (!this._invalid && this._stage) {
         this._stage._invalidateOnStage(this);
 
         var children = this._children;
         for (var i = 0; i < children.length; i++) {
-          children[i]._invalidate();
+          var child = children[i];
+          if (child._invalid === false) {
+            child._invalidate();
+          }
         }
       }
     },
