@@ -16,10 +16,34 @@
  * limitations under the License.
  */
 
+/*
+  NOTE ON E4X METHOD CALLS
+
+  E4X specifies some magic when making calls on XML and XMLList values. If a
+  callee is not found on an XMLList value and the list has only one XML
+  child, then the call is delegated to that XML child. If a callee is not
+  found on an XML value and that value has simple content, then the simple
+  content is converted to a string value and the call is made on that string
+  value.
+
+  Here are the relevant texts from the spec section 11.2.2.1:
+
+  "If no such property exists and base is an XMLList of size 1, CallMethod
+  delegates the method invocation to the single property it contains. This
+  treatment intentionally blurs the distinction between XML objects and XMLLists
+  of size 1."
+
+  "If no such property exists and base is an XML object containing no XML valued
+  children (i.e., an attribute, leaf node or element with simple content),
+  CallMethod attempts to delegate the method lookup to the string value
+  contained in the leaf node. This treatment allows users to perform operations
+  directly on the value of a leaf node without having to explicitly select it."
+*/
+
 // The XML parser is designed only for parsing of simple XML documents
 
-var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList, isXMLType, isXMLName;
-var XMLParser;
+var XMLClass, XMLListClass, QNameClass, ASXML, XML, ASXMLList, XMLList;
+var isXMLType, isXMLName, XMLParser;
 
 (function () {
   function XMLEncoder(ancestorNamespaces, indentLevel, prettyPrinting) {
@@ -946,7 +970,25 @@ var XMLParser;
     };
 
     Xp.delete = function (key, isMethod) {
-      debugger;
+      notImplemented("XML.[[Delete]]");
+    };
+
+    Xp.deleteByIndex = function (p) {
+      var x = this;
+      var i = p >>> 0;
+      if (String(i) !== String(p)) {
+        throw "TypeError in XML.prototype.deleteByIndex(): invalid index " + p;
+      }
+      if (p < x.length()) {
+        if (x.children[p]) {
+          x.children[p].parent = null;
+          delete x.children[p];
+          for (q = i + 1; q < x.length(); q++) {
+            x.children[q - 1] = x.children[q];
+          }
+          x.children.length = x.children.length - 1;
+        }
+      }
     };
 
     Xp.isXML = true;
@@ -1296,7 +1338,40 @@ var XMLParser;
           notImplemented("XML.removeNamespace");
         },
         replace: function replace(propertyName, value) { // (propertyName, value) -> XML
-          notImplemented("XML.replace");
+          var c, x, s, i;
+          x = this;
+          if (x.kind === "text" ||
+              x.kind === "comment" ||
+              x.kind === "processing-instruction" ||
+              x.kind === "attribute") {
+            return x;
+          }
+          if (!isXMLType(value)) {
+            c = value.toString();
+          } else {
+            c = value.deepCopy();
+          }
+          var i = propertyName >>> 0;
+          if (String(propertyName) === String(i)) {
+            x.replace(propertyName, c);
+            return x;
+          }
+          n = new QName(propertyName);
+          i = undefined;
+          for (k = x.length() - 1; k >= 0; k--) {
+            var v = x.children[k];
+            if (n.isAny || (v.kind === "element" && v.name.localName === n.localName &&
+                            (n.uri === null || (v.kind === "element" && v.name.uri === n.uri)))) {
+              if (i !== undefined) {
+                x.deleteByIndex(i.toString());
+              }
+              i = k;
+            }
+          }
+          if (i !== undefined) {
+            x.replace(i.toString(), c);
+          }
+          return x;
         },
         setChildren: function setChildren(value) { // (value) -> XML
           notImplemented("XML.setChildren");
@@ -1311,7 +1386,7 @@ var XMLParser;
           notImplemented("XML.setNamespace");
         },
         text: function text() { // (void) -> XMLList
-          return this.comments();
+          return this.text();
         },
         toXMLString: function () { // (void) -> String
           return toXMLString(this)
@@ -1773,7 +1848,7 @@ var XMLParser;
           var x = this;
           var xl = new XMLList(x, null);
           x.children.forEach(function (v, i) {
-            if (v.kind === "element") {
+            if (v.kind === "text") {
               xl.append(v.text());
             }
           });
@@ -1821,7 +1896,8 @@ var XMLParser;
           notImplemented("XMLList.removeNamespace");
         },
         replace: function replace(propertyName, value) { // (propertyName, value) -> XML
-          notImplemented("XMLList.replace");
+          toXML(this).replace(propertyName, value);
+          return this;
         },
         setChildren: function setChildren(value) { // (value) -> XML
           notImplemented("XMLList.setChildren");

@@ -484,7 +484,7 @@ function renderStage(stage, ctx, events) {
   console.timeEnd("Total");
 
   var frameCount = 0;
-
+  var frameFPSAverage = new metrics.Average(120);
   (function draw() {
     var now = Date.now();
     var renderFrame;

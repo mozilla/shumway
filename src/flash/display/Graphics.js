@@ -95,6 +95,9 @@ var GraphicsDefinition = (function () {
       var subpaths = this._paths;
       for (var i = 0, o = subpaths.length; i < o; i++) {
         var path = subpaths[i];
+        if (clip && !path.fillStyle) {
+          continue;
+        }
         ctx.beginPath();
         var commands = path.commands;
         var data = path.data;
