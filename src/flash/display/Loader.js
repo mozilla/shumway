@@ -616,6 +616,8 @@ var LoaderDefinition = (function () {
             framesLoaded: timeline.length,
             loader: loader,
             parent: parent,
+            index: 0,
+            level: 0,
             timeline: timeline,
             totalFrames: rootInfo.props.totalFrames,
             stage: loader._stage
