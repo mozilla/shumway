@@ -38,6 +38,7 @@ var StageDefinition = (function () {
       this._stageFocusRect = true;
       this._fullScreenSourceRect = null;
       this._wmodeGPU = false;
+      this._root = null;
       this._invalidObjects = [];
       this._mouseMoved = false;
       this._clickTarget = null;
@@ -59,8 +60,12 @@ var StageDefinition = (function () {
 
       var children = displayObject._children;
       for (var i = 0; i < children.length; i++) {
-        this._addToStage(children[i]);
+        var child = children[i];
+        if (!child._stage) {
+          this._addToStage(child);
+        }
       }
+
       displayObject._dispatchEvent(new flash.events.Event('addedToStage'));
     },
     _removeFromStage: function removeFromStage(displayObject) {
@@ -73,6 +78,7 @@ var StageDefinition = (function () {
       for (var i = 0; i < children.length; i++) {
         this._removeFromStage(children[i]);
       }
+
       displayObject._dispatchEvent(new flash.events.Event('removedFromStage'));
     },
 

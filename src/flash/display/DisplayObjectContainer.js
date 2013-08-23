@@ -96,14 +96,20 @@ var DisplayObjectContainerDefinition = (function () {
         throw RangeError();
       }
 
-      return children[index];
+      var child = children[index];
+
+      if (!flash.display.DisplayObject.class.isInstanceOf(child)) {
+        return null;
+      }
+
+      return child;
     },
     getChildByName: function (name) {
       var children = this._children;
       for (var i = 0, n = children.length; i < n; i++) {
         var child = children[i];
         if (child.name === name) {
-          return child;
+          return this.getChildAt(i);
         }
       }
       return null;
