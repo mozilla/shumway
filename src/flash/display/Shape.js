@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+/* global finishShapePaths */
+
 var ShapeDefinition = (function () {
   var def = {
     __class__: 'flash.display.Shape',

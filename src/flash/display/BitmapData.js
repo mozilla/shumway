@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global renderDisplayObject, RenderVisitor */
+/*global renderDisplayObject, RenderVisitor, argbUintToStr */
 
 var BitmapDataDefinition = (function () {
   var def = {
@@ -85,7 +85,7 @@ var BitmapDataDefinition = (function () {
         color |= 0xff000000;
       }
       var ctx = this._ctx;
-      ctx.fillStyle = ARGBtoCSSColor(color);
+      ctx.fillStyle = argbUintToStr(color);
       ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
     },
     getPixel : function(x, y) {
@@ -114,7 +114,7 @@ var BitmapDataDefinition = (function () {
       this._checkCanvas();
       this._ctx.draw(this._drawable, x, y);
       this._ctx.save();
-      this._ctx.fillStyle = ARGBtoCSSColor(this._backgroundColor);
+      this._ctx.fillStyle = argbUintToStr(this._backgroundColor);
       var w = this._drawable.width;
       var h = this._drawable.height;
       if (x > 0) {
@@ -168,11 +168,4 @@ function dataToRGB(data) {
 }
 function dataToARGB(data) {
   return data[3] << 24 | dataToRGB(data);
-}
-function ARGBtoRGBA(argb) {
-  return (argb >>> 24 | argb << 8) >>> 0;
-}
-function ARGBtoCSSColor(argb) {
-  return 'rgba(' + (argb >>> 16 & 0xff) + ',' + (argb >>> 8 & 0xff) + ',' +
-               (argb & 0xff) + ',' + (argb >>> 24 & 0xff) / 0xff + ')';
 }

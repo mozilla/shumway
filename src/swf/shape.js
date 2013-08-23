@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global fail, push, cloneObject */
+/*global fail, push, cloneObject, rgbaObjToStr */
 
 var GRAPHICS_FILL_CLIPPED_BITMAP               = 65;
 var GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT        = 19;
@@ -129,6 +129,7 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
   var y = 0;
   var morphX = 0;
   var morphY = 0;
+  var path;
   for (var i = 0; i < numRecords; i++) {
     var record = records[i];
     var morphRecord;
@@ -161,7 +162,6 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       if (record.hasLineStyle) {
         styles.line = record.lineStyle;
       }
-      var path;
       if (styles.fill1) {
         path = fillPaths[styles.fill1 - 1];
       } else if (styles.line) {
@@ -501,7 +501,7 @@ SegmentedPath.prototype = {
     return first.data[firstLength - 2] === second.data[0] &&
            first.data[firstLength - 1] === second.data[1];
   }
-}
+};
 
 var SHAPE_MOVE_TO        = 1;
 var SHAPE_LINE_TO        = 2;
@@ -651,9 +651,9 @@ ShapePath.prototype = {
           dataIndex++;
           break;
         default:
-          if (!isWorker) {
-            warn("Drawing command not handled in bounds calculation: " +
-                 commands[commandIndex]);
+          if (!inWorker) {
+            console.warn("Drawing command not handled in bounds calculation: " +
+                         commands[commandIndex]);
           }
       }
     }
@@ -697,15 +697,15 @@ ShapePath.prototype = {
     });
 
     if (this.fillStyle && this.fillStyle.color) {
-      out += '\tfillStyle = ' + toStringRgba(this.fillStyle.color) + ';\n';
+      out += '\tfillStyle = ' + rgbaObjToStr(this.fillStyle.color) + ';\n';
     }
     if (this.lineStyle && this.lineStyle.color) {
-      out += '\tstrokeStyle = ' + toStringRgba(this.lineStyle.color) + ';\n';
+      out += '\tstrokeStyle = ' + rgbaObjToStr(this.lineStyle.color) + ';\n';
     }
 
     return out + ']';
   }
-}
+};
 
 function extendBoundsByPoint(bounds, x, y) {
   if (x < bounds.xMin) {
@@ -749,7 +749,7 @@ function finishShapePaths(paths, dictionary) {
 
 var inWorker = (typeof window) === 'undefined';
 // Used for creating gradients and patterns
-var factoryCtx = window ?
+var factoryCtx = !inWorker ?
                  document.createElement('canvas').getContext('kanvas-2d') :
                  null;
 
@@ -775,7 +775,7 @@ function initStyle(style, dictionary) {
       var records = style.records;
       for (var j = 0, n = records.length; j < n; j++) {
         var record = records[j];
-        var colorStr = toStringRgba(record.color);
+        var colorStr = rgbaObjToStr(record.color);
         gradient.addColorStop(record.ratio / 255, colorStr);
       }
       style.style = gradient;

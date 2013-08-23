@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2Globals, toStringRgba, warning */
+/*global AS2Globals, rgbaObjToStr, warning */
 
 var TextFieldDefinition = (function () {
 
@@ -501,7 +501,7 @@ var TextFieldDefinition = (function () {
         initialFormat.size = tag.fontHeight / 20;
       }
       if (tag.hasColor) {
-        initialFormat.color = toStringRgba(tag.color);
+        initialFormat.color = rgbaObjToStr(tag.color);
       }
       if (tag.hasFont) {
         initialFormat.font = convertFontFamily(tag.font);

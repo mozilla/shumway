@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Kanvas, describeProperty, ShapePath, factoryCtx */
+/*global Kanvas, describeProperty, ShapePath, factoryCtx, rgbIntAlphaToStr */
 
 var GraphicsDefinition = (function () {
   var GRAPHICS_PATH_COMMAND_MOVE_TO        = 1;
@@ -32,13 +32,6 @@ var GraphicsDefinition = (function () {
 
   var GRAPHICS_PATH_WINDING_EVEN_ODD       = 'evenOdd';
   var GRAPHICS_PATH_WINDING_NON_ZERO       = 'nonZero';
-
-  function toRgba(color, alpha) {
-    var red = color >> 16 & 0xFF;
-    var green = color >> 8 & 0xFF;
-    var blue = color & 0xFF;
-    return 'rgba(' + red + ',' + green + ',' + blue + ',' + alpha + ')';
-  }
 
   function morph(start, end, ratio) {
     return start + (end - start) * ratio;
@@ -139,7 +132,8 @@ var GraphicsDefinition = (function () {
                             0, 0, Math.PI * 2);
                 break;
               default:
-                warn("Unknown drawing command encountered: " + commands[j]);
+                console.warn("Unknown drawing command encountered: " +
+                             commands[j]);
             }
           } else {
             switch (commands[j]) {
@@ -158,8 +152,8 @@ var GraphicsDefinition = (function () {
                                      morph(data[k], morphData[k++], ratio));
                 break;
               default:
-                warn("Drawing command not supported for morph shapes: " +
-                     commands[j]);
+                console.warn("Drawing command not supported for morph " +
+                             "shapes: " + commands[j]);
             }
           }
         }
@@ -196,7 +190,7 @@ var GraphicsDefinition = (function () {
 
       delete this._currentPath;
 
-      this._fillStyle = alpha ? {style:toRgba(color, alpha)} : null;
+      this._fillStyle = alpha ? {style:rgbIntAlphaToStr(color, alpha)} : null;
     },
     beginGradientFill: function(type, colors, alphas, ratios, matrix,
                                 spreadMethod, interpolationMethod, focalPos)
@@ -342,7 +336,7 @@ var GraphicsDefinition = (function () {
           mlimit = 3;
 
         this._lineStyle = {
-          style: toRgba(color, alpha),
+          style: rgbIntAlphaToStr(color, alpha),
           lineCap: cap || 'round',
           lineJoin: cap || 'round',
           lineWidth: width,
@@ -468,7 +462,8 @@ function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
   }
 
   for (var i = 0, n = colors.length; i < n; i++) {
-    gradient.addColorStop(ratios[i] / 255, toRgba(colors[i], alphas[i]));
+    gradient.addColorStop(ratios[i] / 255,
+                          rgbIntAlphaToStr(colors[i], alphas[i]));
   }
 
   // NOTE firefox is really sensitive to very small scale when painting gradients
@@ -482,3 +477,4 @@ function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
 
   return {style: gradient, transform: transform};
 }
+

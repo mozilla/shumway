@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global toStringRgba, FirefoxCom, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter*/
+/*global rgbaObjToStr, FirefoxCom, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter*/
 
 var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
@@ -113,7 +113,7 @@ RenderVisitor.prototype = {
           ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         }
         if (bgcolor.alpha > 0) {
-          ctx.fillStyle = toStringRgba(bgcolor);
+          ctx.fillStyle = rgbaObjToStr(bgcolor);
           if (this.refreshStage) {
             ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
           } else {
