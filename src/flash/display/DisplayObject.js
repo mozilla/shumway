@@ -113,6 +113,8 @@ var DisplayObjectDefinition = (function () {
         this._name = s.name || null;
         this._owned = s.owned || false;
         this._parent = s.parent || null;
+        this._level = isNaN(s.level) ? -1 : s.level;
+        this._index = isNaN(s.index) ? -1 : s.index;
         this._root = s.root || null;
         this._stage = s.stage || null;
 
