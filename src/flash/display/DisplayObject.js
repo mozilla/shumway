@@ -26,9 +26,12 @@ var DisplayObjectDefinition = (function () {
     return 'instance' + (nextInstanceId++);
   }
 
-  var broadcastedEvents = { constructFrame: true, frameConstructed: true,
-                            enterFrame: true, render: true, exitFrame: true
-                          };
+  // Dictionary of all broadcasted events with the event type as key and a
+  // value specifying if public or internal only.
+  var broadcastedEvents = { declareFrame: false, enterFrame: true,
+                            constructChildren: false, frameConstructed: true,
+                            executeFrame: false, exitFrame: true,
+                            destructChildren: false, render: true };
 
   var def = {
     __class__: 'flash.display.DisplayObject',
@@ -60,7 +63,6 @@ var DisplayObjectDefinition = (function () {
       this._opaqueBackground = null;
       this._owned = false;
       this._parent = null;
-      this._root = null;
       this._rotation = 0;
       this._scale9Grid = null;
       this._scaleX = 1;
@@ -153,12 +155,11 @@ var DisplayObjectDefinition = (function () {
       this._accessibilityProperties = null;
 
       var self = this;
-      this._onBroadcastMessage = function (type, msg) {
+      this._onBroadcastMessage = function (type) {
         var listeners = self._listeners;
         // shortcut: checking if the listeners are exist before dispatching
         if (listeners[type]) {
-          var evt = msg.data;
-          self._dispatchEvent(evt);
+          self._dispatchEvent(new flash.events.Event(type));
         }
       };
     },
@@ -166,7 +167,12 @@ var DisplayObjectDefinition = (function () {
     _addEventListener: function addEventListener(type, listener, useCapture,
                                                  priority)
     {
-      if (broadcastedEvents[type] && !this._listeners[type]) {
+      if (broadcastedEvents[type] === false) {
+        avm2.systemDomain.onMessage.register(type, listener);
+        return;
+      }
+
+      if (type in broadcastedEvents && !this._listeners[type]) {
         avm2.systemDomain.onMessage.register(type, this._onBroadcastMessage);
       }
       this._addEventListenerImpl(type, listener, useCapture, priority);
@@ -174,8 +180,13 @@ var DisplayObjectDefinition = (function () {
 
     _removeEventListener: function addEventListener(type, listener, useCapture)
     {
+      if (broadcastedEvents[type] === false) {
+        avm2.systemDomain.onMessage.unregister(type, listener);
+        return;
+      }
+
       this._removeEventListenerImpl(type, listener, useCapture);
-      if (broadcastedEvents[type] && !this._listeners[type]) {
+      if (type in broadcastedEvents && !this._listeners[type]) {
         avm2.systemDomain.onMessage.unregister(type, this._onBroadcastMessage);
       }
     },

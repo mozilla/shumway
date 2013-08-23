@@ -1377,6 +1377,7 @@ var Callback = (function () {
     if (!queue) {
       return;
     }
+    queue = queue.slice();
     var args = sliceArguments(arguments, 0);
     for (var i = 0; i < queue.length; i++) {
       if ($DEBUG) {
@@ -1391,6 +1392,7 @@ var Callback = (function () {
     if (!queue) {
       return;
     }
+    queue = queue.slice();
     for (var i = 0; i < queue.length; i++) {
       if ($DEBUG) {
         Counter.count("callback(" + type + ").notify1");
@@ -1414,7 +1416,7 @@ function dumpBytes(buffer, start, length) {
     s += bytes[i] + " ";
   }
   return s;
-}      
+}
 
 function addProfileMarker(marker) {
   if (typeof FirefoxCom !== "undefined") {

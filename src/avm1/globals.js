@@ -112,7 +112,7 @@ AS2Globals.prototype = {
   ASSetPropFlags: ASSetPropFlags,
   call: function(frame) {
     var nativeTarget = AS2Context.instance.resolveTarget();
-    nativeTarget.$nativeObject._as2CallFrame(frame);
+    nativeTarget.$nativeObject._callFrame(frame);
   },
   chr: function(number) {
     return String.fromCharCode(number);
