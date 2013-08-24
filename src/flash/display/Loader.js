@@ -19,7 +19,7 @@
          URL, FileLoadingService, Promise, AbcFile, SHUMWAY_ROOT, SWF,
          defineBitmap, defineImage, defineFont, defineShape, defineSound,
          defineLabel, defineButton, defineText,
-         AS2Globals, AS2Context, executeActions,
+         avm1lib, AS2Context, executeActions,
          createSoundStream, MP3DecoderSession, PLAY_USING_AUDIO_TAG,
          cloneObject, createEmptyObject, fromCharCode,
          isNullOrUndefined */
@@ -992,16 +992,16 @@ var LoaderDefinition = (function () {
         var frameScripts = { };
         if (!this._isAvm2Enabled) {
           if (symbol.frameScripts) {
-            var avm1Context = this._avm1Context;
             var data = symbol.frameScripts;
             for (var i = 0; i < data.length; i += 2) {
                 var frameNum = data[i] + 1;
                 var block = data[i + 1];
-                var script = (function(block) {
+                var script = (function(block, loader) {
                   return function () {
+                    var avm1Context = loader._avm1Context;
                     return executeActions(block, avm1Context, this._getAS2Object());
                   };
-                })(block);
+                })(block, this);
                 if (!frameScripts[frameNum])
                   frameScripts[frameNum] = [script];
                 else
@@ -1095,23 +1095,29 @@ var LoaderDefinition = (function () {
         // HACK: bind the mouse through awful shenanigans.
         var mouseClass = avm2.systemDomain.getClass("flash.ui.Mouse");
         mouseClass._stage = stage;
-      } else {
+        loader._vmPromise.resolve();
+        return;
+      }
+
+      if (!avm2.loadAVM1) {
+        loader._vmPromise.reject('AVM1 loader is not found');
+      }
+      avm2.loadAVM1(function () {
         // avm1 initialization
         var loaderInfo = loader.contentLoaderInfo;
         var avm1Context = new AS2Context(loaderInfo._swfVersion);
         avm1Context.stage = stage;
         loader._avm1Context = avm1Context;
 
-        AS2Globals.prototype.Key.$bind(stage);
-        AS2Globals.prototype.Mouse.$bind(stage);
+        avm1lib.AS2Key.class.$bind(stage);
+        avm1lib.AS2Mouse.class.$bind(stage);
 
         stage._addEventListener('frameConstructed',
                                 avm1Context.flushPendingScripts.bind(avm1Context),
                                 false,
                                 Number.MAX_VALUE);
-      }
-
-      loader._vmPromise.resolve();
+        loader._vmPromise.resolve();
+      });
     },
     get contentLoaderInfo() {
         return this._contentLoaderInfo;
