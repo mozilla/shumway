@@ -95,11 +95,17 @@ var GraphicsDefinition = (function () {
         var commands = path.commands;
         var data = path.data;
         var morphData = path.morphData;
+        var formOpen = false;
+        var formOpenX = 0;
+        var formOpenY = 0;
         for (var j = 0, k = 0; j < commands.length; j++) {
           if (!path.isMorph) {
             switch (commands[j]) {
               case GRAPHICS_PATH_COMMAND_MOVE_TO:
-                ctx.moveTo(data[k++], data[k++]);
+                formOpen = true;
+                formOpenX = data[k++];
+                formOpenY = data[k++];
+                ctx.moveTo(formOpenX, formOpenY);
                 break;
               case GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO:
                 ctx.moveTo(data[k++], data[k++]);
@@ -120,16 +126,48 @@ var GraphicsDefinition = (function () {
                 ctx.bezierCurveTo(data[k++], data[k++], data[k++], data[k++],
                                   data[k++], data[k++]);
                 break;
-              case SHAPE_CIRCLE:
-                ctx.arc(data[k++], data[k++], data[k++], 0, Math.PI * 2, false);
-                break;
               case SHAPE_ARC_TO:
                 ctx.arcTo(data[k++], data[k++], data[k++], data[k++],
                           data[k++]);
                 break;
+              case SHAPE_CIRCLE:
+                if (formOpen) {
+                  ctx.lineTo(formOpenX, formOpenY);
+                  formOpen = false;
+                }
+                ctx.moveTo(data[k] + data[k+2], data[k+1]);
+                ctx.arc(data[k++], data[k++], data[k++], 0, Math.PI * 2, false);
+                break;
               case SHAPE_ELLIPSE:
-                ctx.ellipse(data[k++], data[k++], data[k++], data[k++],
-                            0, 0, Math.PI * 2);
+                if (formOpen) {
+                  ctx.lineTo(formOpenX, formOpenY);
+                  formOpen = false;
+                }
+                var x = data[k++];
+                var y = data[k++];
+                var rX = data[k++];
+                var rY = data[k++];
+                var radius;
+                if (rX !== rY) {
+                  ctx.save();
+                  var ellipseScale;
+                  if (rX > rY) {
+                    ellipseScale = rX / rY;
+                    radius = rY;
+                    x /= ellipseScale;
+                    ctx.scale(ellipseScale, 1);
+                  } else {
+                    ellipseScale = rY / rX;
+                    radius = rX;
+                    y /= ellipseScale;
+                    ctx.scale(1, ellipseScale);
+                  }
+                }
+                ctx.moveTo(x + radius, y);
+                ctx.arc(x, y, radius, 0, Math.PI * 2, false);
+                if (rX !== rY) {
+                  ctx.restore();
+                }
                 break;
               default:
                 console.warn("Unknown drawing command encountered: " +
@@ -157,6 +195,7 @@ var GraphicsDefinition = (function () {
             }
           }
         }
+        ctx.closePath();
         if (!clip) {
           var fillStyle = path.fillStyle;
           if (fillStyle) {
@@ -181,7 +220,6 @@ var GraphicsDefinition = (function () {
             ctx.stroke();
           }
         }
-        ctx.closePath();
       }
     },
     beginFill: function (color, alpha) {
@@ -339,7 +377,7 @@ var GraphicsDefinition = (function () {
           style: rgbIntAlphaToStr(color, alpha),
           lineCap: cap || 'round',
           lineJoin: cap || 'round',
-          lineWidth: width,
+          width: width,
           miterLimit: mlimit * 2
         };
       } else {

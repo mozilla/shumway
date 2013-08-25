@@ -578,13 +578,30 @@ ShapePath.prototype = {
     this.data.push(x, y, radiusX, radiusY);
   },
   isPointInPath: function(x, y) {
+    if (!this.fillStyle) {
+      return false;
+    }
     var bounds = this.strokeBounds || this.bounds || this._calculateBounds();
     if (x < bounds.xMin || x > bounds.xMax ||
         y < bounds.yMin || y > bounds.yMax)
     {
       return false;
     }
-    return this.fillStyle !== null;
+
+    var commands = this.commands;
+    var data = this.data;
+    var length = commands.length;
+
+    var inside = false;
+
+    var pathX = 0;
+    var pathY = 0;
+    if (commands[0] === SHAPE_MOVE_TO || commands[0] > SHAPE_ARC_TO) {
+      pathX = data[0];
+      pathY = data[1];
+    }
+
+    return true;
   },
   getBounds: function(includeStroke) {
     var bounds = includeStroke ? this.strokeBounds : this.bounds;
@@ -659,7 +676,7 @@ ShapePath.prototype = {
     }
     this.bounds = bounds;
     if (this.lineStyle) {
-      var halfLineWidth = this.lineStyle.lineWidth / 2;
+      var halfLineWidth = this.lineStyle.width / 2;
       this.strokeBounds = {xMin: bounds.xMin - halfLineWidth,
                            yMin: bounds.yMin - halfLineWidth,
                            xMax: bounds.xMax + halfLineWidth,
