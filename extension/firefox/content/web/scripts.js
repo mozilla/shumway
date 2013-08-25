@@ -52,8 +52,6 @@ load($SHUMWAY_ROOT + "src/swf/embed.js");
 load($SHUMWAY_ROOT + "src/swf/renderer.js");
 load($SHUMWAY_ROOT + "src/swf/handlers.js");
 load($SHUMWAY_ROOT + "src/swf/parser.js");
-load($SHUMWAY_ROOT + "src/avm1/classes.js");
-load($SHUMWAY_ROOT + "src/avm1/globals.js");
 load($SHUMWAY_ROOT + "src/avm1/stream.js");
 load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
 
@@ -120,5 +118,6 @@ load($SHUMWAY_ROOT + "src/flash/text");
 load($SHUMWAY_ROOT + "src/flash/ui");
 load($SHUMWAY_ROOT + "src/flash/utils");
 load($SHUMWAY_ROOT + "src/flash/accessibility");
+load($SHUMWAY_ROOT + "src/flash/avm1lib");
 
 load($SHUMWAY_ROOT + "src/flash/stubs.js");

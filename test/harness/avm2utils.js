@@ -22,6 +22,7 @@ release = true;
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
 var playerGlobalPath = SHUMWAY_ROOT + "flash/playerglobal.abc";
 
 var BinaryFileReader = (function binaryFileReader() {
@@ -124,10 +125,10 @@ var sanityTests = [];
 var libraryScripts = playerGlobalScripts;    // defined in playerglobal.js
 var libraryNames = playerGlobalNames;        // ditto
 
-function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
+function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
   assert (builtinPath);
-  avm2 = new AVM2(sysMode, appMode, findDefiningAbc);
-  var builtinAbc, libraryAbc;
+  avm2 = new AVM2(sysMode, appMode, findDefiningAbc, loadAVM1);
+  var builtinAbc, libraryAbc, avm1Abc;
 
   // Batch I/O requests.
   new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
@@ -138,6 +139,13 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     });
   });
 
+  function loadAVM1(next) {
+    new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
+      avm1Abc = new AbcFile(new Uint8Array(buffer), "avm1.abc");;
+      avm2.systemDomain.executeAbc(avm1Abc);
+      next();
+    });
+  }
   function executeAbc() {
     assert (builtinAbc);
     avm2.builtinsLoaded = false;

@@ -74,8 +74,6 @@ update-flash-refs:
 	node utils/update-flash-refs.js examples/racing/index.html src/flash
 	node utils/update-flash-refs.js test/harness/slave.html src/flash
 
-test: test-avm1 test-avm2
-
 test-avm1:
 	make -C src/avm1/tests/ test
 

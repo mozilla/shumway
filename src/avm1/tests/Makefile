@@ -14,8 +14,6 @@
 
 TESTS = \
 	test.stream.js \
-	test.classes.js \
-#	test.globals.js \
 #	test.interpreter.js \
 	$(NULL)
 

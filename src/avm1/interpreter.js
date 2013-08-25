@@ -15,8 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Proxy, AS2Globals, AS2MovieClip, Multiname, ActionsDataStream,
-         createBuiltinType, isNumeric, forEachPublicProperty */
+/*global avm1lib, Proxy, Multiname, ActionsDataStream,
+         isNumeric, forEachPublicProperty */
 
 var AVM1_TRACE_ENABLED = false;
 var AVM1_ERRORS_IGNORED = true;
@@ -36,7 +36,7 @@ AS2ScopeListItem.prototype = {
 
 function AS2Context(swfVersion) {
   this.swfVersion = swfVersion;
-  this.globals = AS2Globals.create(this);
+  this.globals = new avm1lib.AS2Globals(this);
   this.initialScope = new AS2ScopeListItem(this.globals, null);
   this.assets = {};
   this.instructionsExecuted = 0;
@@ -100,7 +100,7 @@ AS2CriticalError.prototype = Object.create(Error.prototype);
 
 function isAS2MovieClip(obj) {
   return typeof obj === 'object' && obj &&
-         obj instanceof AS2Globals.prototype.MovieClip;
+         obj instanceof avm1lib.AS2MovieClip;
 }
 
 function as2GetType(v) {
@@ -350,6 +350,39 @@ function lookupAS2Children(targetPath, defaultTarget, root) {
     path.shift();
   }
   return obj;
+}
+
+function createBuiltinType(obj, args) {
+  if (obj === Array) {
+    // special case of array
+    var result = args;
+    if (args.length == 1 && typeof args[0] === 'number') {
+      result = [];
+      result.length = args[0];
+    }
+    return result;
+  }
+  if (obj === Boolean || obj === Number || obj === String || obj === Function) {
+    return obj.apply(null, args);
+  }
+  if (obj === Date) {
+    switch (args.length) {
+      case 0:
+        return new Date();
+      case 1:
+        return new Date(args[0]);
+      default:
+        return new Date(args[0], args[1],
+          args.length > 2 ? args[2] : 1,
+          args.length > 3 ? args[3] : 0,
+          args.length > 4 ? args[4] : 0,
+          args.length > 5 ? args[5] : 0,
+          args.length > 6 ? args[6] : 0);
+    }
+  }
+  if (obj === Object) {
+    return {};
+  }
 }
 
 var AS2_SUPER_STUB = {};
@@ -1530,6 +1563,7 @@ var ActionNamesMap = {
 
 // exports for testing
 if (typeof GLOBAL !== 'undefined') {
+  GLOBAL.createBuiltinType = createBuiltinType;
   GLOBAL.executeActions = executeActions;
   GLOBAL.AS2Context = AS2Context;
 }

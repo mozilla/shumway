@@ -251,7 +251,19 @@ var Stubs = new (function () {
     M("flash.system.ApplicationDomain", "ApplicationDomainClass", ApplicationDomainDefinition),
 
     M("flash.accessibility.Accessibility", "AccessibilityClass", AccessibilityDefinition),
-    M("flash.utils.Timer", "TimerClass", TimerDefinition)
+    M("flash.utils.Timer", "TimerClass", TimerDefinition),
+
+    M("avm1lib.AS2Utils", "AS2Utils", AS2UtilsDefinition),
+    M("avm1lib.AS2Broadcaster"),
+    M("avm1lib.AS2Key"),
+    M("avm1lib.AS2Mouse"),
+    M("avm1lib.AS2MovieClip", "AS2MovieClip", AS2MovieClipDefinition),
+    M("avm1lib.AS2Button", "AS2Button", AS2ButtonDefinition),
+    M("avm1lib.AS2TextField", "AS2TextField", AS2TextFieldDefinition),
+    M("avm1lib.AS2Stage"),
+    M("avm1lib.AS2System"),
+    M("avm1lib.AS2Color"),
+    M("avm1lib.AS2Globals", "AS2Globals", AS2GlobalsDefinition),
   ].forEach(function (m) {
     var className = Multiname.fromSimpleName(m.classSimpleName);
     var path = className.getOriginalName().split(".");
