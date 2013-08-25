@@ -26,18 +26,20 @@ sanityTests.push(function runInspectorSanityTests(console, avm2) {
   })();
 
   (function loadStubs() {
+    function loadStubFor(className) {
+      if (className.indexOf('avm1lib.') === 0) {
+        return; // skipping avm1lib classes
+      }
+      eval(className);
+    }
     log("--- Load all defined stubs ---");
     check (Stubs, "Has Stubs");
     avm2.systemDomain.onMessage.register('classCreated', function (eventType, cls) {
       console.info("Loaded: " + cls);
     });
-    Stubs.getClassNames().forEach(function (className) {
-      eval(className);
-    });
+    Stubs.getClassNames().forEach(loadStubFor);
     log("--- Shouldn't reload stubs past this point ---");
-    Stubs.getClassNames().forEach(function (className) {
-      eval(className);
-    });
+    Stubs.getClassNames().forEach(loadStubFor);
   })();
 
   (function URLVariables() {
