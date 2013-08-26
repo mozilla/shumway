@@ -31,7 +31,10 @@ var AS2MovieClipDefinition = (function () {
     },
     _constructSymbol: function constructSymbol(symbolId, name) {
       notImplemented("AS2MovieClip._constructSymbol");
-    }
+    },
+    _callFrame: function callFrame(frame) {
+      this.$nativeObject._as2CallFrame(frame);
+    },
   };
 
   var desc = Object.getOwnPropertyDescriptor;
@@ -49,6 +52,10 @@ var AS2MovieClipDefinition = (function () {
           nativeMovieClip.$as2Object = this;
           initDefaultListeners(this);
         },
+        _insertChildAtDepth: def._insertChildAtDepth,
+        _duplicate: def._duplicate,
+        _constructSymbol: def._constructSymbol,
+        _callFrame: def._callFrame,
       }
     },
     script: {
