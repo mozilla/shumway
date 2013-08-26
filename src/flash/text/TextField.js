@@ -516,7 +516,7 @@ var TextFieldDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        new avm1lib.AS2TextField().$attachNativeObject(this);
+        new avm1lib.AS2TextField(this);
       }
       return this.$as2Object;
     },

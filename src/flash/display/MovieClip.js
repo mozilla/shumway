@@ -104,7 +104,7 @@ var MovieClipDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        new avm1lib.AS2MovieClip().$attachNativeObject(this);
+        new avm1lib.AS2MovieClip(this);
       }
       return this.$as2Object;
     },
