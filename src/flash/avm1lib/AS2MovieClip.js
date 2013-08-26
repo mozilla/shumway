@@ -49,6 +49,9 @@ var AS2MovieClipDefinition = (function () {
           nativeMovieClip.$as2Object = this;
           initDefaultListeners(this);
         },
+        _insertChildAtDepth: def._insertChildAtDepth,
+        _duplicate: def._duplicate,
+        _constructSymbol: def._constructSymbol,
       }
     },
     script: {
