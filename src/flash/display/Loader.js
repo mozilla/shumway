@@ -1103,8 +1103,9 @@ var LoaderDefinition = (function () {
 
       if (!avm2.loadAVM1) {
         loader._vmPromise.reject('AVM1 loader is not found');
+        return;
       }
-      avm2.loadAVM1(function () {
+      var loaded = function () {
         // avm1 initialization
         var loaderInfo = loader.contentLoaderInfo;
         var avm1Context = new AS2Context(loaderInfo._swfVersion);
@@ -1119,7 +1120,13 @@ var LoaderDefinition = (function () {
                                 false,
                                 Number.MAX_VALUE);
         loader._vmPromise.resolve();
-      });
+        avm2.isAVM1Loaded = true;
+      };
+      if (avm2.isAVM1Loaded) {
+        loaded();
+      } else {
+        avm2.loadAVM1(loaded);
+      }
     },
     get contentLoaderInfo() {
         return this._contentLoaderInfo;
