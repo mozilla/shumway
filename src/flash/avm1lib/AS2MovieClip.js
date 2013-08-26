@@ -23,11 +23,6 @@ var AS2MovieClipDefinition = (function () {
     initialize: function () {
     },
 
-    $attachNativeObject: function attachNativeObject(nativeMovieClip) {
-      Object.defineProperty(this, '$nativeObject', { value: nativeMovieClip });
-      nativeMovieClip.$as2Object = this;
-      initDefaultListeners(this);
-    },
     _insertChildAtDepth: function _insertChildAtDepth(mc, depth) {
       return this.$nativeObject._insertChildAtDepth(mc, depth);
     },
@@ -48,7 +43,12 @@ var AS2MovieClipDefinition = (function () {
           get: function () {
             return this.$nativeObject;
           }
-        }
+        },
+        init: function init(nativeMovieClip) {
+          Object.defineProperty(this, '$nativeObject', { value: nativeMovieClip });
+          nativeMovieClip.$as2Object = this;
+          initDefaultListeners(this);
+        },
       }
     },
     script: {
