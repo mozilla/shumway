@@ -74,8 +74,9 @@ build: ensureoutputdir \
 	cp $(SHUMWAY_ROOT)/lib/DataView.js/* $(BUILD_DIR)/lib/DataView.js/
 	mkdir $(BUILD_DIR)/lib/mp3
 	cp $(SHUMWAY_ROOT)/lib/mp3/* $(BUILD_DIR)/lib/mp3/
-	mkdir $(BUILD_DIR)/lib/xstats
-	cp -R $(SHUMWAY_ROOT)/lib/xstats/* $(BUILD_DIR)/lib/xstats/
+	mkdir $(BUILD_DIR)/lib/stats
+	cp -R $(SHUMWAY_ROOT)/lib/stats/LICENSE $(BUILD_DIR)/lib/stats/
+	cp -R $(SHUMWAY_ROOT)/lib/stats/build $(BUILD_DIR)/lib/stats/
 	# Copy examples
 	cp -R $(SHUMWAY_ROOT)/examples $(BUILD_DIR)
 	# Copy extensions

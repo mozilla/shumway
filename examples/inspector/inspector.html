@@ -43,7 +43,7 @@ limitations under the License.
         window.performance = { now: Date.now };
       }
     </script>
-    <script src="../../lib/xstats/xstats.js"></script>
+    <script src="../../lib/stats/build/stats.min.js"></script>
 
     <script>
       console.time("Load");
@@ -310,8 +310,8 @@ limitations under the License.
     </script>
 
     <script>
-        var stats = new xStats;
-        document.getElementById('xstats').appendChild(stats.element);
+        var stats = new Stats();
+        document.getElementById('xstats').appendChild(stats.domElement);
     </script>
 
   </body>
