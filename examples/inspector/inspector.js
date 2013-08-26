@@ -254,6 +254,7 @@ function executeFile(file, buffer, movieParams) {
         SWF.embed(buffer || file, document, document.getElementById('stage'), {
           onComplete: terminate,
           onBeforeFrame: frame,
+          onAfterFrame: afterFrame,
           url: swfURL,
           loaderURL: loaderURL,
           movieParams: movieParams || {},
@@ -323,6 +324,10 @@ function frame(e) {
   if (pauseExecution) {
     e.cancel = true;
   }
+  stats.begin();
+}
+function afterFrame() {
+  stats.end();
 }
 
 (function setStageSize() {
