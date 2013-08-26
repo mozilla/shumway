@@ -288,9 +288,11 @@ package avm1lib {
     public function set scale9Grid(value) { throw 'Not implemented: set$scale9Grid';  }
     public function get scrollRect() { throw 'Not implemented: get$scrollRect';  }
     public function set scrollRect(value) { throw 'Not implemented: set$scrollRect';  }
-    public function setMask(mc)
+    public function setMask(mc: Object)
     {
-      throw 'Not implemented: setMask';
+      var nativeObject = this.$nativeObject;
+      var mask = AS2Utils.resolveTarget(mc).$nativeObject;
+      nativeObject.mask = mask;
     }
     public function get _soundbuftime() { throw 'Not implemented: get$_soundbuftime';  }
     public function set _soundbuftime(value) { throw 'Not implemented: set$_soundbuftime';  }
