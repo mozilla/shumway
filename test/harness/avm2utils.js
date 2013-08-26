@@ -57,6 +57,13 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.send(null);
     },
     readAsync: function(ondata, onerror, onopen, oncomplete) {
+      function flushData(chunk, total) {
+        var data = new Uint8Array(chunk.length);
+        for (var i = 0; i < data.length; i++)
+          data[i] = chunk.charCodeAt(i) & 0xFF;
+        lastPosition += data.length;
+        ondata(data, { loaded: lastPosition, total: total });
+      }
       var xhr = new XMLHttpRequest();
       xhr.open("GET", this.url, true);
       // arraybuffer is not provide onprogress, fetching as regular chars
@@ -66,19 +73,24 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.onprogress = function (e) {
         var position = e.loaded;
         var chunk = xhr.responseText.substring(lastPosition, position);
-        var data = new Uint8Array(chunk.length);
-        for (var i = 0; i < data.length; i++)
-          data[i] = chunk.charCodeAt(i) & 0xFF;
-        ondata(data, { loaded: e.loaded, total: e.total });
-        lastPosition = position;
+        if (chunk.length === 0) {
+          // chrome is not giving us response, cannot use onprogress
+          return;
+        }
+        flushData(chunk, e.total);
       };
       xhr.onreadystatechange = function(event) {
         if (xhr.readyState === 4) {
           if (xhr.status !== 200 && xhr.status !== 0) {
             onerror(xhr.statusText);
           }
-          if (oncomplete)
+          var response = xhr.responseText;
+          if (lastPosition < response.length) {
+            flushData(response.substring(lastPosition), response.length);
+          }
+          if (oncomplete) {
             oncomplete();
+          }
         } else if (xhr.readyState === 1 && onopen) {
           onopen();
         }
