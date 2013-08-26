@@ -43,6 +43,7 @@ package avm1lib {
   import flash.geom.ColorTransform;
   import flash.geom.Point;
   import flash.text.TextFormat;
+  import avm1lib.AS2MovieClipLoader;
 
   [native(cls="AS2Globals")]
   public dynamic class AS2Globals {
@@ -311,6 +312,7 @@ package avm1lib {
     public var Color: Class = AS2Color;
     public var Key : Class = AS2Key;
     public var Mouse : Class = AS2Mouse;
+    public var MovieClipLoader : Class = AS2MovieClipLoader;
 
     public var Sound : Class = flash.media.Sound;
     public var SharedObject : Class = flash.net.SharedObject;

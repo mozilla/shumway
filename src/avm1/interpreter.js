@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 /*global avm1lib, Proxy, Multiname, ActionsDataStream,
-         isNumeric, forEachPublicProperty */
+         isNumeric, forEachPublicProperty, construct */
 
 var AVM1_TRACE_ENABLED = false;
 var AVM1_ERRORS_IGNORED = true;
@@ -1131,9 +1131,13 @@ function interpretActions(actionsData, scopeContainer,
           }
           method = obj;
         }
-        result = Object.create(method.prototype || Object.prototype);
+        if (typeof obj === 'object' && 'instanceConstructor' in obj) {
+          result = construct(obj, args);
+        } else {
+          result = Object.create(method.prototype || Object.prototype);
+          method.apply(result, args);
+        }
         result.constructor = method;
-        method.apply(result, args);
         stack.push(result);
         break;
       case 0x40: // ActionNewObject
@@ -1144,8 +1148,12 @@ function interpretActions(actionsData, scopeContainer,
         result = createBuiltinType(obj, args);
         if (typeof result === 'undefined') {
           // obj in not a built-in type
-          result = Object.create(obj.prototype || Object.prototype);
-          obj.apply(result, args);
+          if (typeof obj === 'object' && 'instanceConstructor' in obj) {
+            result = construct(obj, args);
+          } else {
+            result = Object.create(obj.prototype || Object.prototype);
+            obj.apply(result, args);
+          }
           result.constructor = obj;
         }
         stack.push(result);

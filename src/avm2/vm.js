@@ -25,6 +25,7 @@ var AVM2 = (function () {
     this.applicationDomain = new Domain(this, this.systemDomain, appMode, false);
     this.findDefiningAbc = findDefiningAbc;
     this.loadAVM1 = loadAVM1;
+    this.isAVM1Loaded = false;
 
     /**
      * All runtime exceptions are boxed in this object to tag them as having

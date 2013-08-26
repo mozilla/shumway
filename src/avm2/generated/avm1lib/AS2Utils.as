@@ -41,6 +41,9 @@ package avm1lib {
 }
 
 import avm1lib.AS2Utils;
+
+AS2Utils;
+
 function _addEventHandlerProxy(obj: Object, propertyName: String, eventName: String, argsConverter: Function)
 {
   var currentHandler: Function = null;

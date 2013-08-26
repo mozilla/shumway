@@ -17,11 +17,16 @@
  */
 package avm1lib {
   import flash.system.Capabilities;
+  import flash.system.Security;
 
   public class AS2System {
     public static function get capabilities()
     {
       return flash.system.Capabilities;
+    }
+    public static function get security()
+    {
+      return flash.system.Security;
     }
   }
 }
