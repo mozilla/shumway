@@ -301,9 +301,16 @@ package avm1lib {
     }
     public function stop() { return this.$nativeObject.stop(); }
     public function stopDrag() { return this.$nativeObject.stopDrag(); }
-    public function swapDepths(target)
+    public function swapDepths(target: Object)
     {
-      throw 'Not implemented: swapDepths';
+      var child1 = this.$nativeObject;
+      var child2 = typeof target === 'number' ?
+        AS2Utils.resolveLevel(target).$nativeObject :
+        AS2Utils.resolveTarget(target).$nativeObject;
+      if (child1.parent !== child2.parent) {
+        return; // must be the same parent
+      }
+      child1.parent.swapChildren(child1, child2);
     }
     public function get tabChildren() { return this.$nativeObject.tabChildren;  }
     public function set tabChildren(value) { this.$nativeObject.tabChildren = value;  }
