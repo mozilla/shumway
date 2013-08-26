@@ -37,6 +37,16 @@ function _broadcastMessage(eventName) {
   }
 }
 function _addListener(listener) {
+  if (this._broadcastEventsRegistrationNeeded) {
+    this._broadcastEventsRegistrationNeeded = false;
+    for (var i = 0; i < this._broadcastEvents.length; i++) {
+      (function (subject, eventName) {
+        subject[eventName] = function () {
+          _broadcastMessage.apply(subject, [eventName].concat(arguments));
+        };
+      })(this, this._broadcastEvents[i]);
+    }
+  }
   this._listeners.push(listener);
 }
 function _removeListener(listener) {

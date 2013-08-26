@@ -675,7 +675,17 @@ var LoaderDefinition = (function () {
           if (!loader._isAvm2Enabled) {
             var avm1Context = loader._avm1Context;
 
-            var as2Object = root._getAS2Object();
+            // Finding movie top root
+            var _root = root;
+            if (parent && parent !== loader._stage) {
+              var parentLoader = parent._loader;
+              while (parentLoader._parent && parentLoader._parent !== loader._stage) {
+                parentLoader = parentLoader._parent._loader;
+              }
+              _root = parentLoader._content;
+            }
+
+            var as2Object = _root._getAS2Object();
             avm1Context.globals.asSetPublicProperty('_root', as2Object);
             avm1Context.globals.asSetPublicProperty('_level0', as2Object);
             avm1Context.globals.asSetPublicProperty('_level1', as2Object);
@@ -1120,11 +1130,11 @@ var LoaderDefinition = (function () {
                                 false,
                                 Number.MAX_VALUE);
         loader._vmPromise.resolve();
-        avm2.isAVM1Loaded = true;
       };
       if (avm2.isAVM1Loaded) {
         loaded();
       } else {
+        avm2.isAVM1Loaded = true;
         avm2.loadAVM1(loaded);
       }
     },
