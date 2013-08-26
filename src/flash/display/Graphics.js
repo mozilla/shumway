@@ -195,7 +195,6 @@ var GraphicsDefinition = (function () {
             }
           }
         }
-        ctx.closePath();
         if (!clip) {
           var fillStyle = path.fillStyle;
           if (fillStyle) {
@@ -220,6 +219,7 @@ var GraphicsDefinition = (function () {
             ctx.stroke();
           }
         }
+        ctx.closePath();
       }
     },
     beginFill: function (color, alpha) {
@@ -389,10 +389,7 @@ var GraphicsDefinition = (function () {
       this._currentPath.lineTo(x, y);
     },
     moveTo: function (x, y) {
-      delete this._currentPath;
-
-      this._mx = x;
-      this._my = y;
+      this._currentPath.moveTo(x, y);
     },
     _getBounds: function (includeStroke) {
       var bbox;

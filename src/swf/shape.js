@@ -596,12 +596,78 @@ ShapePath.prototype = {
 
     var pathX = 0;
     var pathY = 0;
-    if (commands[0] === SHAPE_MOVE_TO || commands[0] > SHAPE_ARC_TO) {
-      pathX = data[0];
-      pathY = data[1];
+    var prevX = 0;
+    var prevY = 0;
+
+    var formOpen = false;
+    var formOpenX = 0;
+    var formOpenY = 0;
+
+    function intersectsLine(x, y, x1, y1, x2, y2) {
+      var intersects = (y2 > y) != (y1 > y) &&
+             x < (x1 - x2) * (y - y2) / (y1 - y2) + x2;
+      return intersects;
     }
 
-    return true;
+    // Rough outline of the algorithm's mode of operation:
+    // from x,y an infinite ray to the right is "cast". All operations are then
+    // tested for intersections with this ray, where each intersection means
+    // switching between being outside and inside the shape.
+    // as
+    for (var commandIndex = 0, dataIndex = 0; commandIndex < length;
+         commandIndex++)
+    {
+      switch (commands[commandIndex]) {
+        case SHAPE_MOVE_TO:
+          pathX = data[dataIndex++];
+          pathY = data[dataIndex++];
+          if (formOpen &&
+              intersectsLine(x, y, prevX, prevY, formOpenX, formOpenY))
+          {
+            inside = !inside;
+          }
+          formOpen = true;
+          formOpenX = pathX;
+          formOpenY = pathY;
+          break;
+        case SHAPE_LINE_TO:
+          pathX = data[dataIndex++];
+          pathY = data[dataIndex++];
+          if (intersectsLine(x, y, prevX, prevY, pathX, pathY))
+          {
+            inside = !inside;
+          }
+          break;
+        case SHAPE_CURVE_TO:
+          break;
+        case SHAPE_CUBIC_CURVE_TO:
+          break;
+        case SHAPE_WIDE_MOVE_TO:
+        case SHAPE_WIDE_LINE_TO:
+          break;
+        case SHAPE_ARC_TO:
+          break;
+        case SHAPE_CIRCLE:
+          break;
+        case SHAPE_ELLIPSE:
+          break;
+        default:
+          if (!inWorker) {
+            console.warn("Drawing command not handled in isPointInPath: " +
+                         commands[commandIndex]);
+          }
+      }
+      prevX = pathX;
+      prevY = pathY;
+    }
+
+    if (formOpen &&
+        intersectsLine(x, y, prevX, prevY, formOpenX, formOpenY))
+    {
+      inside = !inside;
+    }
+
+    return inside;
   },
   getBounds: function(includeStroke) {
     var bounds = includeStroke ? this.strokeBounds : this.bounds;
@@ -629,6 +695,8 @@ ShapePath.prototype = {
     for (var commandIndex = 0, dataIndex = 0; commandIndex < length;
          commandIndex++)
     {
+      var x;
+      var y;
       extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
       switch (commands[commandIndex]) {
         case SHAPE_MOVE_TO:
@@ -651,16 +719,16 @@ ShapePath.prototype = {
           dataIndex++;
           break;
         case SHAPE_CIRCLE:
-          var x = data[dataIndex-2];
-          var y = data[dataIndex-1];
+          x = data[dataIndex-2];
+          y = data[dataIndex-1];
           var radius = data[dataIndex++];
           extendBoundsByPoint(bounds, x - radius, y - radius);
           extendBoundsByPoint(bounds, x + radius, y + radius);
           dataIndex++;
           break;
         case SHAPE_ELLIPSE:
-          var x = data[dataIndex-2];
-          var y = data[dataIndex-1];
+          x = data[dataIndex-2];
+          y = data[dataIndex-1];
           var radiusX = data[dataIndex++];
           var radiusY = data[dataIndex++];
           extendBoundsByPoint(bounds, x - radiusX, y - radiusY);
