@@ -21,11 +21,14 @@ package avm1lib {
 
   [native(cls="AS2Button")]
   public dynamic class AS2Button extends Object {
-    function AS2Button()
+    private native function init(nativeButton: flash.display.SimpleButton);
+
+    function AS2Button(nativeButton: flash.display.SimpleButton)
     {
+      init(nativeButton);
     }
 
-    public native function get $nativeObject(); //: flash.display.SimpleButton;
+    public native function get $nativeObject(): flash.display.SimpleButton;
 
     public function get _alpha() { return this.$nativeObject.alpha; }
     public function set _alpha(value) { this.$nativeObject.alpha = value; }

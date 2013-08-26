@@ -145,7 +145,7 @@ var SimpleButtonDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        new avm1lib.AS2Button().$attachNativeObject(this);
+        new avm1lib.AS2Button(this);
       }
       return this.$as2Object;
     },

@@ -22,12 +22,6 @@ var AS2ButtonDefinition = (function () {
 
     initialize: function () {
     },
-
-    $attachNativeObject: function attachNativeObject(nativeButton) {
-      Object.defineProperty(this, '$nativeObject', { value: nativeButton });
-      nativeButton.$as2Object = this;
-      initDefaultListeners(this);
-    }
   };
 
   var desc = Object.getOwnPropertyDescriptor;
@@ -39,7 +33,12 @@ var AS2ButtonDefinition = (function () {
           get: function () {
             return this.$nativeObject;
           }
-        }
+        },
+        init: function init(nativeButton) {
+          Object.defineProperty(this, '$nativeObject', { value: nativeButton });
+          nativeButton.$as2Object = this;
+          initDefaultListeners(this);
+        },
       }
     },
     script: {

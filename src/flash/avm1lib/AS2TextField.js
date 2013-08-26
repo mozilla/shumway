@@ -22,12 +22,6 @@ var AS2TextFieldDefinition = (function () {
 
     initialize: function () {
     },
-
-    $attachNativeObject: function attachNativeObject(nativeTextField) {
-      Object.defineProperty(this, '$nativeObject', { value: nativeTextField });
-      nativeTextField.$as2Object = this;
-      initDefaultListeners(this);
-    }
   };
 
   var desc = Object.getOwnPropertyDescriptor;
@@ -39,7 +33,12 @@ var AS2TextFieldDefinition = (function () {
           get: function () {
             return this.$nativeObject;
           }
-        }
+        },
+        init: function init(nativeTextField) {
+          Object.defineProperty(this, '$nativeObject', { value: nativeTextField });
+          nativeTextField.$as2Object = this;
+          initDefaultListeners(this);
+        },
       }
     },
     script: {

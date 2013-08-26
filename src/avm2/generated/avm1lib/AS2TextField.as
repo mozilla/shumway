@@ -21,10 +21,13 @@ package avm1lib {
 
   [native(cls="AS2TextField")]
   public dynamic class AS2TextField extends Object {
-    function AS2TextField() {
+    private native function init(nativeTextField: flash.text.TextField);
+
+    function AS2TextField(nativeTextField: flash.text.TextField) {
+      init(nativeTextField);
     }
 
-    public native function get $nativeObject(); //: flash.text.TextField;
+    public native function get $nativeObject(): flash.text.TextField;
 
     public function get _alpha() { return this.$nativeObject.alpha; }
     public function set _alpha(value) { this.$nativeObject.alpha = value; }

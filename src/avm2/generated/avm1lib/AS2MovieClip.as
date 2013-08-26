@@ -29,8 +29,11 @@ package avm1lib {
 
   [native(cls="AS2MovieClip")]
   public dynamic class AS2MovieClip extends Object {
-    function AS2MovieClip()
+    private native function init(nativeMovieClip: flash.display.MovieClip);
+
+    function AS2MovieClip(nativeMovieClip: flash.display.MovieClip)
     {
+      init(nativeMovieClip);
     }
 
     public native function get $nativeObject(): flash.display.MovieClip;
