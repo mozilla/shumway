@@ -210,20 +210,6 @@ function debugBreak(message) {
   print("\033[91mdebugBreak: " + message + "\033[0m");
 }
 
-/*
-defineReadOnlyProperty(Object.prototype, "isInstanceOf", function () {
-  release || assert(false, "isInstanceOf() is not implemented on type " + this);
-});
-
-defineReadOnlyProperty(Object.prototype, "coerce", function () {
-  release || assert(false, "coerce() is not implemented on type " + this);
-});
-
-defineReadOnlyProperty(Object.prototype, "isInstance", function () {
-  release || assert(false, "isInstance() is not implemented on type " + this);
-});
-*/
-
 var ASNamespace;
 
 var natives = (function () {

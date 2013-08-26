@@ -294,13 +294,8 @@ var createName = function createName(namespaces, name) {
           var coercer = this.coercers[Multiname.getQualifiedName(parameter.type)];
           if (coercer) {
             local = coercer(local);
-          } else {
-            var type = this.abc.domain.getProperty(parameter.type, true, false);
-            if (type && COERCE_PARAMETERS) {
-              local = new Call(start, state.store, globalProperty("coerce"), null, [local, constant(type)], true);
-            } else {
-              // unexpected();
-            }
+          } else if (COERCE_PARAMETERS) {
+            local = new Call(start, state.store, globalProperty("asCoerceByMultiname"), null, [constant(this.abc.domain), constant(parameter.type), local], true);
           }
         }
         state.local[index] = local;
@@ -388,7 +383,7 @@ var createName = function createName(namespaces, name) {
       }
 
       function coerceString(value) {
-        return new Call(null, start.entryState.store, globalProperty("coerceString"), null, [value], true);
+        return new Call(null, start.entryState.store, globalProperty("asCoerceString"), null, [value], true);
       }
 
       assert(!this.coercers);
@@ -646,7 +641,7 @@ var createName = function createName(namespaces, name) {
             return value;
           }
           if (isConstant(value)) {
-            return constant(coerce(value.value, type));
+            return constant(asCoerce(type, value.value));
           } else {
             var coercer = coercers[Multiname.getQualifiedName(multiname)];
             if (coercer) {
@@ -654,7 +649,7 @@ var createName = function createName(namespaces, name) {
             }
           }
           if (COERCE) {
-            return call(globalProperty("coerce"), null, [value, constant(type)]);
+            return call(globalProperty("asCoerce"), null, [constant(type), value]);
           }
           return value;
         }
@@ -1113,7 +1108,7 @@ var createName = function createName(namespaces, name) {
             case OP_astypelate:
               type = pop();
               value = pop();
-              push(call(globalProperty("asInstance"), null, [value, type]));
+              push(call(globalProperty("asAsType"), null, [type, value]));
               break;
             case OP_returnvalue:
             case OP_returnvoid:
@@ -1244,12 +1239,12 @@ var createName = function createName(namespaces, name) {
               value = pop();
               multiname = buildMultiname(bc.index);
               type = getProperty(findProperty(multiname, false), multiname);
-              push(call(globalProperty("isInstance"), null, [value, type]));
+              push(call(globalProperty("asIsType"), null, [type, value]));
               break;
             case OP_istypelate:
               type = pop();
               value = pop();
-              push(call(globalProperty("isInstance"), null, [value, type]));
+              push(call(globalProperty("asIsType"), null, [type, value]));
               break;
             case OP_in:
               object = pop();
@@ -1258,7 +1253,7 @@ var createName = function createName(namespaces, name) {
               push(store(new IR.AVM2HasProperty(region, state.store, object, multiname)));
               break;
             case OP_typeof:
-              push(call(globalProperty("typeOf"), null, [pop()]));
+              push(call(globalProperty("asTypeOf"), null, [pop()]));
               break;
             case OP_kill:
               push(Undefined);
