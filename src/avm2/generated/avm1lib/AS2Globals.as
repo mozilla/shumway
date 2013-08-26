@@ -61,7 +61,7 @@ package avm1lib {
 
     public function call(frame) {
       var nativeTarget = AS2Utils.resolveTarget();
-      nativeTarget.$nativeObject._as2CallFrame(frame);
+      nativeTarget._callFrame(frame);
     }
     public function chr(number) {
       return String.fromCharCode(number);
@@ -100,7 +100,6 @@ package avm1lib {
     public function gotoAndPlay(scene, frame) {
       var nativeTarget = AS2Utils.resolveTarget();
       if (arguments.length < 2) {
-        nativeTarget.gotoAndPlay(arguments[0]); // Remove???
         _addToPendingScripts(nativeTarget, nativeTarget.gotoAndPlay, [arguments[0]]);
       } else {
         _addToPendingScripts(nativeTarget, nativeTarget.gotoAndPlay, [arguments[1], arguments[0]]); // scene and frame are swapped for AS3

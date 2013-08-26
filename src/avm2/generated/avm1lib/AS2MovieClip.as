@@ -97,6 +97,7 @@ package avm1lib {
     public function set blendMode(value) { this.$nativeObject.blendMode = value; }
     public function get cacheAsBitmap() { return this.$nativeObject.cacheAsBitmap; }
     public function set cacheAsBitmap(value) { this.$nativeObject.cacheAsBitmap = value; }
+    public native function _callFrame(frame);
     public function clear()
     {
       this.$nativeObject.graphics.clear();

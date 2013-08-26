@@ -35,6 +35,7 @@ var AS2GlobalsDefinition = (function () {
           // TODO
         },
         _addToPendingScripts: function _addToPendingScripts(subject, fn, args) {
+          assert(fn, 'invalid function in _addToPendingScripts');
           AS2Context.instance.addToPendingScripts(function () {
             fn.apply(subject, args);
           });
