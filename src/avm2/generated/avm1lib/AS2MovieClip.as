@@ -97,6 +97,7 @@ package avm1lib {
     public function set blendMode(value) { this.$nativeObject.blendMode = value; }
     public function get cacheAsBitmap() { return this.$nativeObject.cacheAsBitmap; }
     public function set cacheAsBitmap(value) { this.$nativeObject.cacheAsBitmap = value; }
+    public native function _callFrame(frame);
     public function clear()
     {
       this.$nativeObject.graphics.clear();
@@ -287,9 +288,11 @@ package avm1lib {
     public function set scale9Grid(value) { throw 'Not implemented: set$scale9Grid';  }
     public function get scrollRect() { throw 'Not implemented: get$scrollRect';  }
     public function set scrollRect(value) { throw 'Not implemented: set$scrollRect';  }
-    public function setMask(mc)
+    public function setMask(mc: Object)
     {
-      throw 'Not implemented: setMask';
+      var nativeObject = this.$nativeObject;
+      var mask = AS2Utils.resolveTarget(mc).$nativeObject;
+      nativeObject.mask = mask;
     }
     public function get _soundbuftime() { throw 'Not implemented: get$_soundbuftime';  }
     public function set _soundbuftime(value) { throw 'Not implemented: set$_soundbuftime';  }
@@ -300,9 +303,16 @@ package avm1lib {
     }
     public function stop() { return this.$nativeObject.stop(); }
     public function stopDrag() { return this.$nativeObject.stopDrag(); }
-    public function swapDepths(target)
+    public function swapDepths(target: Object)
     {
-      throw 'Not implemented: swapDepths';
+      var child1 = this.$nativeObject;
+      var child2 = typeof target === 'number' ?
+        AS2Utils.resolveLevel(target).$nativeObject :
+        AS2Utils.resolveTarget(target).$nativeObject;
+      if (child1.parent !== child2.parent) {
+        return; // must be the same parent
+      }
+      child1.parent.swapChildren(child1, child2);
     }
     public function get tabChildren() { return this.$nativeObject.tabChildren;  }
     public function set tabChildren(value) { this.$nativeObject.tabChildren = value;  }
