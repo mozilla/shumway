@@ -67,6 +67,8 @@ build: ensureoutputdir \
 	cp $(SHUMWAY_ROOT)/src/avm2/compiler/lljs/src/*.js $(BUILD_DIR)/src/avm2/compiler/lljs/src/
 	mkdir -p $(BUILD_DIR)/src/avm2/generated/builtin
 	cp $(SHUMWAY_ROOT)/src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/src/avm2/generated/builtin/
+	mkdir -p $(BUILD_DIR)/src/avm2/generated/avm1lib
+	cp $(SHUMWAY_ROOT)/src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_DIR)/src/avm2/generated/avm1lib/
 	mkdir $(BUILD_DIR)/lib
 	mkdir $(BUILD_DIR)/lib/Kanvas
 	cp $(SHUMWAY_ROOT)/lib/Kanvas/* $(BUILD_DIR)/lib/Kanvas/
