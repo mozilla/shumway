@@ -264,6 +264,7 @@ var Stubs = new (function () {
     M("avm1lib.AS2System"),
     M("avm1lib.AS2Color"),
     M("avm1lib.AS2Globals", "AS2Globals", AS2GlobalsDefinition),
+    M("avm1lib.AS2MovieClipLoader", "AS2MovieClipLoader", AS2MovieClipLoaderDefinition),
   ].forEach(function (m) {
     var className = Multiname.fromSimpleName(m.classSimpleName);
     var path = className.getOriginalName().split(".");
