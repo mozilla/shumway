@@ -815,7 +815,8 @@ var Verifier = (function() {
 
       function isNumericMultiname(mn) {
         return mn instanceof Multiname && isNumeric(mn.name) ||
-               mn instanceof MultinameType && mn.name.isNumeric();
+               mn instanceof MultinameType && (mn.name instanceof TraitsType &&
+                 mn.name.isNumeric() || isNumeric(mn.name));
       }
 
       function getProperty(obj, mn) {
