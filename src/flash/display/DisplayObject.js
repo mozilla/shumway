@@ -26,9 +26,12 @@ var DisplayObjectDefinition = (function () {
     return 'instance' + (nextInstanceId++);
   }
 
-  var broadcastedEvents = { constructFrame: true, frameConstructed: true,
-                            enterFrame: true, render: true, exitFrame: true
-                          };
+  // Dictionary of all broadcasted events with the event type as key and a
+  // value specifying if public or internal only.
+  var broadcastedEvents = { declareFrame: false, enterFrame: true,
+                            constructChildren: false, frameConstructed: true,
+                            executeFrame: false, exitFrame: true,
+                            destructFrame: false, render: true };
 
   var def = {
     __class__: 'flash.display.DisplayObject',
@@ -49,7 +52,6 @@ var DisplayObjectDefinition = (function () {
       this._current3DTransform = null;
       this._cxform = null;
       this._depth = null;
-      this._invalidArea = null;
       this._graphics = null;
       this._filters = [];
       this._loader = null;
@@ -61,7 +63,6 @@ var DisplayObjectDefinition = (function () {
       this._opaqueBackground = null;
       this._owned = false;
       this._parent = null;
-      this._root = null;
       this._rotation = 0;
       this._scale9Grid = null;
       this._scaleX = 1;
@@ -78,7 +79,7 @@ var DisplayObjectDefinition = (function () {
       this._width = null;
       this._height = null;
       this._invalid = false;
-      this._qtree = null;
+      this._region = null;
       this._level = -1;
       this._index = -1;
 
@@ -154,12 +155,11 @@ var DisplayObjectDefinition = (function () {
       this._accessibilityProperties = null;
 
       var self = this;
-      this._onBroadcastMessage = function (type, msg) {
+      this._onBroadcastMessage = function (type) {
         var listeners = self._listeners;
         // shortcut: checking if the listeners are exist before dispatching
         if (listeners[type]) {
-          var evt = msg.data;
-          self._dispatchEvent(evt);
+          self._dispatchEvent(new flash.events.Event(type));
         }
       };
     },
@@ -167,7 +167,12 @@ var DisplayObjectDefinition = (function () {
     _addEventListener: function addEventListener(type, listener, useCapture,
                                                  priority)
     {
-      if (broadcastedEvents[type] && !this._listeners[type]) {
+      if (broadcastedEvents[type] === false) {
+        avm2.systemDomain.onMessage.register(type, listener);
+        return;
+      }
+
+      if (type in broadcastedEvents && !this._listeners[type]) {
         avm2.systemDomain.onMessage.register(type, this._onBroadcastMessage);
       }
       this._addEventListenerImpl(type, listener, useCapture, priority);
@@ -175,8 +180,13 @@ var DisplayObjectDefinition = (function () {
 
     _removeEventListener: function addEventListener(type, listener, useCapture)
     {
+      if (broadcastedEvents[type] === false) {
+        avm2.systemDomain.onMessage.unregister(type, listener);
+        return;
+      }
+
       this._removeEventListenerImpl(type, listener, useCapture);
-      if (broadcastedEvents[type] && !this._listeners[type]) {
+      if (type in broadcastedEvents && !this._listeners[type]) {
         avm2.systemDomain.onMessage.unregister(type, this._onBroadcastMessage);
       }
     },
@@ -267,12 +277,15 @@ var DisplayObjectDefinition = (function () {
       return width > 0 && height > 0;
     },
     _invalidate: function () {
-      if (this._stage) {
+      if (!this._invalid && this._stage) {
         this._stage._invalidateOnStage(this);
 
         var children = this._children;
         for (var i = 0; i < children.length; i++) {
-          children[i]._invalidate();
+          var child = children[i];
+          if (child._invalid === false) {
+            child._invalidate();
+          }
         }
       }
     },
@@ -552,15 +565,14 @@ var DisplayObjectDefinition = (function () {
       return this._transform || new flash.geom.Transform(this);
     },
     set transform(val) {
-      this._currentTransform = val.matrix;
-      this._slave = false;
+      this._animated = false;
+
+      this._invalidate();
+      this._bounds = null;
 
       var transform = this._transform;
       transform.colorTransform = val.colorTransform;
       transform.matrix = val.matrix;
-
-      this._invalidate();
-      this._bounds = null;
     },
     get visible() {
       return this._visible;
@@ -722,13 +734,14 @@ var DisplayObjectDefinition = (function () {
     },
     _getRegion: function getRegion() {
       if (!this._graphics) {
-        return this.getBounds();
+        var b = this.getBounds();
+        return { x: b.x, y: b.y, width: b.width, height: b.height };
       }
 
       var b = this._graphics._getBounds(true);
 
       if (!b || (!b.width && !b.height)) {
-        return b;
+        return { x: 0, y: 0, width: 0, height: 0 };
       }
 
       var p1 = { x: b.x, y: b.y };

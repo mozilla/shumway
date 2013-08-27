@@ -336,7 +336,7 @@ var Domain = (function () {
 
     broadcastMessage: function (type, message, origin) {
       if ($DEBUG) {
-        Timer.start("broadcast: " + message._type);
+        Timer.start("broadcast: " + type);
       }
       this.onMessage.notify1(type, {
         data: message,

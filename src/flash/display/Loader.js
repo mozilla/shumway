@@ -463,8 +463,8 @@ var LoaderDefinition = (function () {
         break;
       case 'complete':
         var frameConstructed = new Promise();
-        avm2.systemDomain.onMessage.register('frameConstructed', function waitForFrame(type, e) {
-          if (e.data._type === 'frameConstructed') {
+        avm2.systemDomain.onMessage.register('frameConstructed', function waitForFrame(type) {
+          if (type === 'frameConstructed') {
             frameConstructed.resolve();
             avm2.systemDomain.onMessage.unregister('frameConstructed', waitForFrame);
           }
