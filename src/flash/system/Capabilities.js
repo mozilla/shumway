@@ -28,6 +28,8 @@ var CapabilitiesDefinition = (function () {
     os = "Windows XP";
   } else if (userAgent.indexOf("Linux") > 0) {
     os = "Linux";
+  } else if (/(iPad|iPhone|iPod|Android)/.test(userAgent)) {
+    os = "iPhone3,1";
   } else {
     notImplemented();
   }
