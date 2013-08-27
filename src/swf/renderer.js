@@ -603,7 +603,7 @@ function renderStage(stage, ctx, events) {
         if (canvasVisible && !disablePreVisitor.value) {
           stage._showRedrawRegions(showRedrawRegions.value);
           traceRenderer.value && frameWriter.enter("> Pre Visitor");
-          stage._prepareInvalidRegions(ctx);
+          stage._processInvalidRegions(ctx);
           traceRenderer.value && frameWriter.leave("< Pre Visitor");
         }
         if (canvasVisible && !disableRenderVisitor.value) {

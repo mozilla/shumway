@@ -51,7 +51,6 @@ var DisplayObjectDefinition = (function () {
       this._currentTransform = null;
       this._cxform = null;
       this._depth = null;
-      this._invalidArea = null;
       this._graphics = null;
       this._filters = [];
       this._loader = null;
@@ -79,7 +78,7 @@ var DisplayObjectDefinition = (function () {
       this._width = null;
       this._height = null;
       this._invalid = false;
-      this._qtree = null;
+      this._region = null;
       this._level = -1;
       this._index = -1;
 
@@ -277,12 +276,15 @@ var DisplayObjectDefinition = (function () {
       return width > 0 && height > 0;
     },
     _invalidate: function () {
-      if (this._stage) {
+      if (!this._invalid && this._stage) {
         this._stage._invalidateOnStage(this);
 
         var children = this._children;
         for (var i = 0; i < children.length; i++) {
-          children[i]._invalidate();
+          var child = children[i];
+          if (child._invalid === false) {
+            child._invalidate();
+          }
         }
       }
     },
@@ -537,15 +539,14 @@ var DisplayObjectDefinition = (function () {
       return this._transform || new flash.geom.Transform(this);
     },
     set transform(val) {
-      this._currentTransform = val.matrix;
-      this._slave = false;
+      this._animated = false;
+
+      this._invalidate();
+      this._bounds = null;
 
       var transform = this._transform;
       transform.colorTransform = val.colorTransform;
       transform.matrix = val.matrix;
-
-      this._invalidate();
-      this._bounds = null;
     },
     get visible() {
       return this._visible;
@@ -702,13 +703,14 @@ var DisplayObjectDefinition = (function () {
     },
     _getRegion: function getRegion() {
       if (!this._graphics) {
-        return this.getBounds();
+        var b = this.getBounds();
+        return { x: b.x, y: b.y, width: b.width, height: b.height };
       }
 
       var b = this._graphics._getBounds(true);
 
       if (!b || (!b.width && !b.height)) {
-        return b;
+        return { x: 0, y: 0, width: 0, height: 0 };
       }
 
       var p1 = { x: b.x, y: b.y };
