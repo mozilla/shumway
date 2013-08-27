@@ -73,10 +73,11 @@ var MovieClipDefinition = (function () {
           return;
         }
 
+        self._executeFrame = false;
+
         self._allowFrameNavigation = false;
         self._callFrame(self._currentFrame);
         self._allowFrameNavigation = true;
-        self._executeFrame = false;
 
         // If playhead moved, process deferred inter-frame navigation.
         if (self._playHead !== self._currentFrame) {
