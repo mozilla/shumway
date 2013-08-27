@@ -471,8 +471,7 @@ var MovieClipDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        var AS2MovieClipClass = AS2Globals.prototype.MovieClip;
-        new AS2MovieClipClass().$attachNativeObject(this);
+        new avm1lib.AS2MovieClip(this);
       }
       return this.$as2Object;
     },
