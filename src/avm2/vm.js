@@ -18,13 +18,14 @@
 
 var AVM2 = (function () {
 
-  function avm2(sysMode, appMode, findDefiningAbc) {
+  function avm2(sysMode, appMode, findDefiningAbc, loadAVM1) {
     // console.log("ION is " + (Math.toSource() ? " ENABLED" : " DISABLED"));
     // TODO: this will change when we implement security domains.
     this.systemDomain = new Domain(this, null, sysMode, true);
     this.applicationDomain = new Domain(this, this.systemDomain, appMode, false);
     this.findDefiningAbc = findDefiningAbc;
-
+    this.loadAVM1 = loadAVM1;
+    this.isAVM1Loaded = false;
 
     /**
      * All runtime exceptions are boxed in this object to tag them as having

@@ -223,7 +223,7 @@ function parseSwf(url, movieParams, objectParams) {
     FirefoxCom.request('endActivation', null);
   }
 
-  createAVM2(builtinPath, playerGlobalPath,
+  createAVM2(builtinPath, playerGlobalPath, avm1Path,
     compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     function (avm2) {

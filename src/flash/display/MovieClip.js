@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global MP3DecoderSession, AS2Globals, $DEBUG */
+/*global MP3DecoderSession, avm1lib, $DEBUG */
 
 var MovieClipDefinition = (function () {
   var def = {
@@ -646,7 +646,10 @@ var MovieClipDefinition = (function () {
         gotoAndStop: def.gotoAndStop,
         addFrameScript: def.addFrameScript,
         prevScene: def.prevScene,
-        nextScene: def.nextScene
+        nextScene: def.nextScene,
+        _depth: {
+          get: function () { return this._depth; }
+        }
       }
     }
   };

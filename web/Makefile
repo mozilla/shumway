@@ -31,6 +31,8 @@ build: ensureoutputdir \
 	cp $(SHUMWAY_ROOT)/src/flash/playerglobal.abc $(BUILD_DIR)/src/flash/
 	mkdir $(BUILD_DIR)/src/flash/accessibility
 	cp $(SHUMWAY_ROOT)/src/flash/accessibility/*.js $(BUILD_DIR)/src/flash/accessibility/
+	mkdir $(BUILD_DIR)/src/flash/avm1lib
+	cp $(SHUMWAY_ROOT)/src/flash/avm1lib/*.js $(BUILD_DIR)/src/flash/avm1lib/
 	mkdir $(BUILD_DIR)/src/flash/display
 	cp $(SHUMWAY_ROOT)/src/flash/display/*.js $(BUILD_DIR)/src/flash/display/
 	mkdir $(BUILD_DIR)/src/flash/events
@@ -49,6 +51,8 @@ build: ensureoutputdir \
 	cp $(SHUMWAY_ROOT)/src/flash/system/*.js $(BUILD_DIR)/src/flash/system/
 	mkdir $(BUILD_DIR)/src/flash/text
 	cp $(SHUMWAY_ROOT)/src/flash/text/*.js $(BUILD_DIR)/src/flash/text/
+	mkdir $(BUILD_DIR)/src/flash/text/engine
+	cp $(SHUMWAY_ROOT)/src/flash/text/engine/*.js $(BUILD_DIR)/src/flash/text/engine/
 	mkdir $(BUILD_DIR)/src/flash/ui
 	cp $(SHUMWAY_ROOT)/src/flash/ui/*.js $(BUILD_DIR)/src/flash/ui/
 	mkdir $(BUILD_DIR)/src/flash/utils
@@ -65,6 +69,8 @@ build: ensureoutputdir \
 	cp $(SHUMWAY_ROOT)/src/avm2/compiler/lljs/src/*.js $(BUILD_DIR)/src/avm2/compiler/lljs/src/
 	mkdir -p $(BUILD_DIR)/src/avm2/generated/builtin
 	cp $(SHUMWAY_ROOT)/src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/src/avm2/generated/builtin/
+	mkdir -p $(BUILD_DIR)/src/avm2/generated/avm1lib
+	cp $(SHUMWAY_ROOT)/src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_DIR)/src/avm2/generated/avm1lib/
 	mkdir $(BUILD_DIR)/lib
 	mkdir $(BUILD_DIR)/lib/Kanvas
 	cp $(SHUMWAY_ROOT)/lib/Kanvas/* $(BUILD_DIR)/lib/Kanvas/
@@ -72,8 +78,9 @@ build: ensureoutputdir \
 	cp $(SHUMWAY_ROOT)/lib/DataView.js/* $(BUILD_DIR)/lib/DataView.js/
 	mkdir $(BUILD_DIR)/lib/mp3
 	cp $(SHUMWAY_ROOT)/lib/mp3/* $(BUILD_DIR)/lib/mp3/
-	mkdir $(BUILD_DIR)/lib/xstats
-	cp -R $(SHUMWAY_ROOT)/lib/xstats/* $(BUILD_DIR)/lib/xstats/
+	mkdir $(BUILD_DIR)/lib/stats
+	cp -R $(SHUMWAY_ROOT)/lib/stats/LICENSE $(BUILD_DIR)/lib/stats/
+	cp -R $(SHUMWAY_ROOT)/lib/stats/build $(BUILD_DIR)/lib/stats/
 	# Copy examples
 	cp -R $(SHUMWAY_ROOT)/examples $(BUILD_DIR)
 	# Copy extensions

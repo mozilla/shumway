@@ -22,6 +22,7 @@ release = true;
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
 var playerGlobalPath = SHUMWAY_ROOT + "flash/playerglobal.abc";
 
 var BinaryFileReader = (function binaryFileReader() {
@@ -56,6 +57,13 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.send(null);
     },
     readAsync: function(ondata, onerror, onopen, oncomplete) {
+      function flushData(chunk, total) {
+        var data = new Uint8Array(chunk.length);
+        for (var i = 0; i < data.length; i++)
+          data[i] = chunk.charCodeAt(i) & 0xFF;
+        lastPosition += data.length;
+        ondata(data, { loaded: lastPosition, total: total });
+      }
       var xhr = new XMLHttpRequest();
       xhr.open("GET", this.url, true);
       // arraybuffer is not provide onprogress, fetching as regular chars
@@ -65,19 +73,24 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.onprogress = function (e) {
         var position = e.loaded;
         var chunk = xhr.responseText.substring(lastPosition, position);
-        var data = new Uint8Array(chunk.length);
-        for (var i = 0; i < data.length; i++)
-          data[i] = chunk.charCodeAt(i) & 0xFF;
-        ondata(data, { loaded: e.loaded, total: e.total });
-        lastPosition = position;
+        if (chunk.length === 0) {
+          // chrome is not giving us response, cannot use onprogress
+          return;
+        }
+        flushData(chunk, e.total);
       };
       xhr.onreadystatechange = function(event) {
         if (xhr.readyState === 4) {
           if (xhr.status !== 200 && xhr.status !== 0) {
             onerror(xhr.statusText);
           }
-          if (oncomplete)
+          var response = xhr.responseText;
+          if (lastPosition < response.length) {
+            flushData(response.substring(lastPosition), response.length);
+          }
+          if (oncomplete) {
             oncomplete();
+          }
         } else if (xhr.readyState === 1 && onopen) {
           onopen();
         }
@@ -124,10 +137,10 @@ var sanityTests = [];
 var libraryScripts = playerGlobalScripts;    // defined in playerglobal.js
 var libraryNames = playerGlobalNames;        // ditto
 
-function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
+function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
   assert (builtinPath);
-  avm2 = new AVM2(sysMode, appMode, findDefiningAbc);
-  var builtinAbc, libraryAbc;
+  avm2 = new AVM2(sysMode, appMode, findDefiningAbc, loadAVM1);
+  var builtinAbc, libraryAbc, avm1Abc;
 
   // Batch I/O requests.
   new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
@@ -138,6 +151,13 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     });
   });
 
+  function loadAVM1(next) {
+    new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
+      avm1Abc = new AbcFile(new Uint8Array(buffer), "avm1.abc");;
+      avm2.systemDomain.executeAbc(avm1Abc);
+      next();
+    });
+  }
   function executeAbc() {
     assert (builtinAbc);
     avm2.builtinsLoaded = false;

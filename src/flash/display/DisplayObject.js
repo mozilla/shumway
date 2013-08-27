@@ -49,6 +49,7 @@ var DisplayObjectDefinition = (function () {
       this._children = [];
       this._clipDepth = null;
       this._currentTransform = null;
+      this._current3DTransform = null;
       this._cxform = null;
       this._depth = null;
       this._graphics = null;
@@ -486,6 +487,25 @@ var DisplayObjectDefinition = (function () {
 
       this._updateCurrentTransform();
     },
+    get rotationX() {
+      return 0;
+    },
+    set rotationX(val) {
+      somewhatImplemented('DisplayObject.rotationX');
+    },
+    get rotationY() {
+      return 0;
+    },
+    set rotationY(val) {
+      somewhatImplemented('DisplayObject.rotationY');
+    },
+    get rotationZ() {
+      return this.rotation;
+    },
+    set rotationZ(val) {
+      this.rotation = val;
+      somewhatImplemented('DisplayObject.rotationZ');
+    },
     get stage() {
       return this._stage;
     },
@@ -520,6 +540,12 @@ var DisplayObjectDefinition = (function () {
       this._scaleY = val;
 
       this._updateCurrentTransform();
+    },
+    get scaleZ() {
+      return 1;
+    },
+    set scaleZ(val) {
+      somewhatImplemented('DisplayObject.scaleZ');
     },
     get scale9Grid() {
       return this._scale9Grid;
@@ -635,7 +661,12 @@ var DisplayObjectDefinition = (function () {
 
       this._updateCurrentTransform();
     },
-
+    get z() {
+      return 0;
+    },
+    set z(val) {
+      somewhatImplemented('DisplayObject.z');
+    },
     _getContentBounds: function () {
       if (!this._bounds) {
         var bbox = this._bbox;

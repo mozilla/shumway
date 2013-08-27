@@ -68,6 +68,8 @@ build: ensureoutputdir ../src/flash/playerglobal.abc
 	cp ../../src/avm2/compiler/lljs/src/*.js $(BUILD_DIR)/content/avm2/compiler/lljs/src/
 	mkdir -p $(BUILD_DIR)/content/avm2/generated/builtin
 	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/content/avm2/generated/builtin/
+	mkdir -p $(BUILD_DIR)/content/avm2/generated/avm1lib
+	cp ../../src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_DIR)/content/avm2/generated/avm1lib/
 	# Extract UTF Strings
 	mkdir $(BUILD_DIR)/content/lib
 	mkdir $(BUILD_DIR)/content/lib/Kanvas

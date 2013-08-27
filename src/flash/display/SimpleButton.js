@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2Globals, executeActions */
+/*global avm1lib, executeActions */
 
 var SimpleButtonDefinition = (function () {
   var AVM1KeyCodeMap = [0, 37, 39, 36, 35, 45, 46, 0, 8, 0, 0, 0, 0, 13, 38, 40, 33, 34, 9, 27];
@@ -145,8 +145,7 @@ var SimpleButtonDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        var AS2ButtonClass = AS2Globals.prototype.Button;
-        new AS2ButtonClass().$attachNativeObject(this);
+        new avm1lib.AS2Button(this);
       }
       return this.$as2Object;
     },

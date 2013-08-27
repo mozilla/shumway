@@ -271,6 +271,9 @@ var StageDefinition = (function () {
     __glue__: {
       native: {
         instance: {
+          $canvasState: {
+            get: function () { return this._canvasState; }
+          },
           invalidate: function invalidate() { // (void) -> void
             this._invalid = true;
             this._deferRenderEvent = true;

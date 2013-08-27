@@ -545,6 +545,10 @@ function initializeGlobalObject(global) {
     "Float32Array",
     "Float64Array"
   ].forEach(function (name) {
+    if (!(name in global)) {
+      console.error(name + ' was not found in globals');
+      return;
+    }
     defineNonEnumerableProperty(global[name].prototype, "asGetNumericProperty", asGetNumericProperty);
     defineNonEnumerableProperty(global[name].prototype, "asSetNumericProperty", asSetNumericProperty);
   });

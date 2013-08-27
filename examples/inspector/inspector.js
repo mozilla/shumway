@@ -52,6 +52,13 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.send(this.data || null);
     },
     readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
+      function flushData(chunk, total) {
+        var data = new Uint8Array(chunk.length);
+        for (var i = 0; i < data.length; i++)
+          data[i] = chunk.charCodeAt(i) & 0xFF;
+        lastPosition += data.length;
+        ondata(data, { loaded: lastPosition, total: total });
+      }
       var xhr = new XMLHttpRequest({mozSystem:true});
       var url = this.url;
       xhr.open(this.method || "GET", url, true);
@@ -62,11 +69,11 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.onprogress = function (e) {
         var position = e.loaded;
         var chunk = xhr.responseText.substring(lastPosition, position);
-        var data = new Uint8Array(chunk.length);
-        for (var i = 0; i < data.length; i++)
-          data[i] = chunk.charCodeAt(i) & 0xFF;
-        ondata(data, { loaded: e.loaded, total: e.total });
-        lastPosition = position;
+        if (chunk.length === 0) {
+          // chrome is not giving us response, cannot use onprogress
+          return;
+        }
+        flushData(chunk, e.total);
       };
       xhr.onreadystatechange = function(event) {
         if(xhr.readyState === 2 && onhttpstatus) {
@@ -76,8 +83,13 @@ var BinaryFileReader = (function binaryFileReader() {
           if (xhr.status !== 200 && xhr.status !== 0) {
             onerror(xhr.statusText);
           }
-          if (oncomplete)
+          var response = xhr.responseText;
+          if (lastPosition < response.length) {
+            flushData(response.substring(lastPosition), response.length);
+          }
+          if (oncomplete) {
             oncomplete();
+          }
         }
       }
       if (this.mimeType)
@@ -126,10 +138,17 @@ var sanityTests = [];
 
 // avm2 must be global.
 var avm2;
-function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
+function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
+  function loadAVM1(next) {
+    new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
+      avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "avm1.abc"));
+      next();
+    });
+  }
+
   assert (builtinPath);
   new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
-    avm2 = new AVM2(sysMode, appMode, findDefiningAbc);
+    avm2 = new AVM2(sysMode, appMode, findDefiningAbc, avm1Path && loadAVM1);
     console.time("Execute builtin.abc");
     avm2.loadedAbcs = {};
     // Avoid loading more Abcs while the builtins are loaded
@@ -138,6 +157,7 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
     avm2.builtinsLoaded = true;
     console.timeEnd("Execute builtin.abc");
+
     new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
       // If library is shell.abc, then just go ahead and run it now since
       // it's not worth doing it lazily given that it is so small.
@@ -155,6 +175,7 @@ var avm2Root = "../../src/avm2/";
 var remoteFile = getQueryVariable("rfile");
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var shellAbcPath = avm2Root + "generated/shell/shell.abc";
+var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
 var playerGlobalAbcPath = "../../src/flash/playerglobal.abc";
 
 function parseQueryString(qs) {
@@ -223,7 +244,7 @@ function executeFile(file, buffer, movieParams) {
   var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   if (file.endsWith(".abc")) {
     libraryScripts = {};
-    createAVM2(builtinPath, shellAbcPath, sysMode, appMode, function (avm2) {
+    createAVM2(builtinPath, shellAbcPath, null, sysMode, appMode, function (avm2) {
       function runAbc(file, buffer) {
         avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
         terminate();
@@ -238,13 +259,14 @@ function executeFile(file, buffer, movieParams) {
     });
   } else if (file.endsWith(".swf")) {
     libraryScripts = playerGlobalScripts;
-    createAVM2(builtinPath, playerGlobalAbcPath, sysMode, appMode, function (avm2) {
+    createAVM2(builtinPath, playerGlobalAbcPath, avm1Path, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
         var swfURL = FileLoadingService.resolveUrl(file);
         var loaderURL = getQueryVariable("loaderURL") || swfURL;
         SWF.embed(buffer || file, document, document.getElementById('stage'), {
           onComplete: terminate,
           onBeforeFrame: frame,
+          onAfterFrame: afterFrame,
           url: swfURL,
           loaderURL: loaderURL,
           movieParams: movieParams || {},
@@ -269,7 +291,7 @@ function executeFile(file, buffer, movieParams) {
     libraryScripts = playerGlobalScripts;
     var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
     var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-    createAVM2(builtinPath, playerGlobalAbcPath, sysMode, appMode, function (avm2) {
+    createAVM2(builtinPath, playerGlobalAbcPath, null, sysMode, appMode, function (avm2) {
       if (file.endsWith("/")) {
         readDirectoryListing(file, function (files) {
           function loadNextScript(done) {
@@ -314,6 +336,10 @@ function frame(e) {
   if (pauseExecution) {
     e.cancel = true;
   }
+  stats.begin();
+}
+function afterFrame() {
+  stats.end();
 }
 
 (function setStageSize() {
