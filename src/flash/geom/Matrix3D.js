@@ -29,6 +29,33 @@ var Matrix3DDefinition = (function () {
   var transposeTransform = new Uint32Array([0, 4, 8, 12, 1, 5, 9, 13,
     2, 6, 10, 14, 3, 7, 11, 15]);
 
+  function getRotationMatrix(theta, u, v, w, a, b, c) {
+    // http://inside.mines.edu/~gmurray/ArbitraryAxisRotation/
+    var u2 = u * u, v2 = v * v, w2 = w * w;
+    var L2 = u2 + v2 + w2, L = Math.sqrt(L2);
+    u /= L; v /= L; w /= L;
+    u2 /= L2; v2 /= L2; w2 /= L2;
+    var cos = Math.cos(theta), sin = Math.sin(theta);
+
+    return new flash.geom.Matrix3D([
+      u2 + (v2 + w2) * cos,
+      u * v * (1 - cos) + w * sin,
+      u * w * (1 - cos) - v * sin,
+      0,
+      u * v * (1 - cos) - w * sin,
+      v2 + (u2 + w2) * cos,
+      v * w * (1 - cos) + u * sin,
+      0,
+      u * w * (1 - cos) + v * sin,
+      v * w * (1 - cos) - u * sin,
+      w2 + (u2 + v2) * cos,
+      0,
+      (a * (v2 + w2) - u * (b * v + c * w)) * (1 - cos) + (b * w - c * v) * sin,
+      (b * (u2 + w2) - v * (a * u + c * w)) * (1 - cos) + (c * u - a * w) * sin,
+      (c * (u2 + v2) - w * (a * u + b * v)) * (1 - cos) + (a * v - b * u) * sin,
+      1]);
+  }
+
   return {
     // (v:Vector = null)
     __class__: "flash.geom.Matrix3D",
@@ -187,7 +214,8 @@ var Matrix3DDefinition = (function () {
             m[14] += z * m44;
           },
           appendRotation: function appendRotation(degrees, axis, pivotPoint) { // (degrees:Number, axis:Vector3D, pivotPoint:Vector3D = null) -> void
-            notImplemented("Matrix3D.appendRotation");
+            this.append(getRotationMatrix(degrees / 180 * Math.PI, axis.x, axis.y, axis.z,
+              pivotPoint ? pivotPoint.x : 0, pivotPoint ? pivotPoint.y : 0, pivotPoint ? pivotPoint.z : 0));
           },
           appendScale: function appendScale(xScale, yScale, zScale) { // (xScale:Number, yScale:Number, zScale:Number) -> void
             var m = this._matrix;
@@ -221,7 +249,8 @@ var Matrix3DDefinition = (function () {
             m[15] += m41 * x + m42 * y + m43 * z;
           },
           prependRotation: function prependRotation(degrees, axis, pivotPoint) { // (degrees:Number, axis:Vector3D, pivotPoint:Vector3D = null) -> void
-            notImplemented("Matrix3D.prependRotation");
+            this.prepend(getRotationMatrix(degrees / 180 * Math.PI, axis.x, axis.y, axis.z,
+              pivotPoint ? pivotPoint.x : 0, pivotPoint ? pivotPoint.y : 0, pivotPoint ? pivotPoint.z : 0));
           },
           prependScale: function prependScale(xScale, yScale, zScale) { // (xScale:Number, yScale:Number, zScale:Number) -> void
             var m = this._matrix;
