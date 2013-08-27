@@ -74,16 +74,18 @@ var MovieClipDefinition = (function () {
         }
 
         self._allowFrameNavigation = false;
-        self._executeFrame = false;
-
         self._callFrame(self._currentFrame);
-
         self._allowFrameNavigation = true;
 
         // If playhead moved, process deferred inter-frame navigation.
         if (self._playHead !== self._currentFrame) {
           self._gotoFrame(self._playHead, true);
+          if (self._executeFrame) {
+            self._callFrame(self._playHead);
+          }
         }
+
+        self._executeFrame = false;
       };
       this._addEventListener('executeFrame', this._onExecuteFrame);
 
@@ -94,8 +96,8 @@ var MovieClipDefinition = (function () {
       // Declare current timeline objects that were not on last frame.
       this._onDeclareFrame = function onDeclareFrame() {
         var frameNum = self._playHead === self._currentFrame ?
-                                            self._playHead + 1 :
-                                            self._playHead;
+                        self._currentFrame + 1 :
+                        self._playHead;
 
         if (frameNum > self._totalFrames) {
           frameNum = 1;
@@ -113,6 +115,10 @@ var MovieClipDefinition = (function () {
 
       // Destroy current timeline objects that are not on next frame.
       this._onDestructChildren = function onDestructChildren() {
+        if (this._playHead !== this._currentFrame) {
+          return;
+        }
+
         var frameNum = self._currentFrame + 1;
 
         if (frameNum > self._totalFrames) {
@@ -265,26 +271,32 @@ var MovieClipDefinition = (function () {
     },
 
     _gotoFrame: function gotoFrame(frameNum, navigate) {
-      if (navigate) {
-        // For SWF9-, the only thing that happens when going to a new frame
-        // is the removal of the old frame's objects.
-        this._destructChildren(frameNum);
-
-        if (this.loaderInfo._swfVersion >= 10) {
-          // For SWF10+, executing framescripts and constructing timeline objects
-          // happens immediately after navigating to the new frame.
-          this._declareChildren(frameNum);
-          this._enterFrame(frameNum);
-          this._constructChildren();
-
-          var domain = avm2.systemDomain;
-          domain.broadcastMessage("frameConstructed");
-          domain.broadcastMessage("executeFrame");
-          domain.broadcastMessage("exitFrame");
-        }
-      } else if (frameNum !== this._currentFrame) {
+      if (frameNum !== this._currentFrame) {
         this._playHead = frameNum;
         this._executeFrame = true;
+      }
+
+      if (navigate) {
+        this._destructChildren(frameNum);
+
+        if (this._loader._isAvm2Enabled) {
+          if (this.loaderInfo._swfVersion >= 10) {
+            // For SWF10+, executing framescripts and constructing timeline objects
+            // happens immediately after navigating to the new frame.
+            this._declareChildren(frameNum);
+            this._enterFrame(frameNum);
+            this._constructChildren();
+
+            var domain = avm2.systemDomain;
+            domain.broadcastMessage("frameConstructed");
+            domain.broadcastMessage("executeFrame");
+            domain.broadcastMessage("exitFrame");
+          } else {
+            // For SWF9, the only thing that happens when going to a new frame
+            // is the removal of the old frame's objects.
+            this._enterFrame(frameNum);
+          }
+        }
       }
 
       // Is this really the right place to start frame sounds?
@@ -550,7 +562,6 @@ var MovieClipDefinition = (function () {
       }
     },
     gotoAndPlay: function (frame, scene) {
-      debugger;
       this.play();
       if (isNaN(frame)) {
         this.gotoLabel(frame);
