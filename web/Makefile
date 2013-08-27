@@ -51,6 +51,8 @@ build: ensureoutputdir \
 	cp $(SHUMWAY_ROOT)/src/flash/system/*.js $(BUILD_DIR)/src/flash/system/
 	mkdir $(BUILD_DIR)/src/flash/text
 	cp $(SHUMWAY_ROOT)/src/flash/text/*.js $(BUILD_DIR)/src/flash/text/
+	mkdir $(BUILD_DIR)/src/flash/text/engine
+	cp $(SHUMWAY_ROOT)/src/flash/text/engine/*.js $(BUILD_DIR)/src/flash/text/engine/
 	mkdir $(BUILD_DIR)/src/flash/ui
 	cp $(SHUMWAY_ROOT)/src/flash/ui/*.js $(BUILD_DIR)/src/flash/ui/
 	mkdir $(BUILD_DIR)/src/flash/utils
