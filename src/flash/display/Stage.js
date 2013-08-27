@@ -38,10 +38,12 @@ var StageDefinition = (function () {
       this._stageFocusRect = true;
       this._fullScreenSourceRect = null;
       this._wmodeGPU = false;
+      this._root = null;
+      this._qtree = null;
       this._invalidObjects = [];
+      this._redrawRegionColor = null;
       this._mouseMoved = false;
       this._clickTarget = null;
-      this._redrawRegionColor = null;
     },
 
     _setup: function setup(ctx, options) {
@@ -50,29 +52,37 @@ var StageDefinition = (function () {
     },
 
     _addToStage: function addToStage(displayObject) {
-      this._invalidateOnStage(displayObject);
-
       displayObject._stage = this;
 
       var parent = displayObject._parent;
       displayObject._level = parent._level + 1;
 
+      this._invalidateOnStage(displayObject);
+
       var children = displayObject._children;
       for (var i = 0; i < children.length; i++) {
-        this._addToStage(children[i]);
+        var child = children[i];
+        if (!child._stage) {
+          this._addToStage(child);
+        }
       }
+
       displayObject._dispatchEvent(new flash.events.Event('addedToStage'));
     },
     _removeFromStage: function removeFromStage(displayObject) {
-      this._invalidateOnStage(displayObject);
-
       displayObject._stage = null;
       displayObject._level = -1;
 
+      this._invalidateOnStage(displayObject);
+
       var children = displayObject._children;
       for (var i = 0; i < children.length; i++) {
-        this._removeFromStage(children[i]);
+        var child = children[i];
+        if (child._stage) {
+          this._removeFromStage(children[i]);
+        }
       }
+
       displayObject._dispatchEvent(new flash.events.Event('removedFromStage'));
     },
 
@@ -81,72 +91,49 @@ var StageDefinition = (function () {
         return;
       }
 
-      var region = displayObject._getRegion();
-
-      if (!region) {
-        return;
-      }
-
       displayObject._invalid = true;
-      displayObject._invalidRegion = region;
 
       this._invalidObjects.push(displayObject);
     },
 
-    _prepareInvalidRegions: function prepareInvalidRegions(ctx) {
+    _processInvalidRegions: function processInvalidRegions(ctx) {
       var objects = this._invalidObjects;
 
       while (objects.length) {
         var displayObject = objects.shift();
 
-        if (!displayObject._invalid) {
-          continue;
-        }
+        var invalidRegion = displayObject._region;
+        var currentRegion = displayObject._getRegion();
+        var hasChanged = !invalidRegion ||
+                         currentRegion.x !== invalidRegion.x ||
+                         currentRegion.y !== invalidRegion.y ||
+                         currentRegion.width !== invalidRegion.width ||
+                         currentRegion.height !== invalidRegion.height;
 
-        var invalidRegion = displayObject._invalidRegion;
-        if (invalidRegion.width && invalidRegion.height) {
+        if (invalidRegion && (hasChanged || !displayObject.stage)) {
+          var qtree = invalidRegion._qtree;
+
+          // TODO: move this into the QuadTree class
+          var index = qtree.objects.indexOf(invalidRegion);
+          qtree.objects.splice(index, 1);
+          displayObject._region = null;
+
           this._addRedrawRegion(ctx, invalidRegion);
         }
 
-        var region = displayObject._getRegion();
-        var currentRegion = displayObject._region;
-        var hasChanged = currentRegion && (region.x !== currentRegion.x ||
-                                           region.y !== currentRegion.y ||
-                                           region.width !== currentRegion.width ||
-                                           region.height !== currentRegion.height);
+        if (displayObject._stage &&
+            currentRegion.width && currentRegion.height) {
+          this._addRedrawRegion(ctx, currentRegion);
 
-        if (currentRegion && (hasChanged || !displayObject._stage)) {
-          // TODO: move this into the QuadTree class
-          var qtree = currentRegion._qtree;
-          var list = qtree.children;
-          var index = list.indexOf(currentRegion);
-          if (index < 0) {
-            list = qtree.stuckChildren;
-            index = list.indexOf(currentRegion);
+          if (hasChanged) {
+            this._qtree.insert(currentRegion);
+
+            currentRegion.obj = displayObject;
+            displayObject._region = currentRegion;
           }
-          if (index > -1) {
-            list.splice(index, 1);
-          }
-          displayObject._qtree = null;
-          displayObject._region = null;
+        } else {
+          displayObject._invalid = false;
         }
-
-        if (region.width && region.height && displayObject._stage) {
-          if (!currentRegion || hasChanged) {
-            region.obj = displayObject;
-            this._qtree.insert(region);
-            displayObject._region = region;
-          }
-
-          if (region.x !== invalidRegion.x ||
-              region.y !== invalidRegion.y ||
-              region.width !== invalidRegion.width ||
-              region.height !== invalidRegion.height) {
-            this._addRedrawRegion(ctx, region);
-          }
-        }
-
-        displayObject._invalidRegion = null;
       }
     },
     _addRedrawRegion: function clipRegion(ctx, region) {
@@ -192,52 +179,57 @@ var StageDefinition = (function () {
     },
 
     _handleMouse: function handleMouse() {
-      var x = this._mouseX;
-      var y = this._mouseY;
+      var mouseX = this._mouseX;
+      var mouseY = this._mouseY;
 
-      var candidates = this._qtree.retrieve({ x: x, y: y, width: 1, height: 1 });
+      var candidates = this._qtree.retrieve({
+        x: mouseX,
+        y: mouseY,
+        width: 1,
+        height: 1
+      });
       var interactiveObject;
 
-      var targets = [];
+      var objectsUnderMouse = [];
       for (var i = 0; i < candidates.length; i++) {
         var item = candidates[i];
         var displayObject = item.obj;
         if (displayObject._visible &&
-            x >= item.x &&
-            x <= item.x + item.width &&
-            y >= item.y &&
-            y <= item.y + item.height) {
+            mouseX >= item.x &&
+            mouseX <= item.x + item.width &&
+            mouseY >= item.y &&
+            mouseY <= item.y + item.height) {
           if (flash.display.SimpleButton.class.isInstanceOf(displayObject)) {
             // TODO: move this into the SimpleButton class
             displayObject._hitTestState._parent = displayObject;
-            if (displayObject._hitTestState._hitTest(true, x, y, true)) {
+            if (displayObject._hitTestState._hitTest(true, mouseX, mouseY, true)) {
               interactiveObject = displayObject;
               break;
             }
           }
-          if (displayObject._hitTest(true, x, y, true)) {
-            targets.push(displayObject);
+          if (displayObject._hitTest(true, mouseX, mouseY, true)) {
+            objectsUnderMouse.push(displayObject);
           }
         }
       }
 
-      var currentNode;
+      var ancestor;
       if (interactiveObject) {
-        currentNode = interactiveObject._parent;
-      } else if (targets.length) {
-        targets.sort(sortByDepth);
-        currentNode = targets.pop();
+        ancestor = interactiveObject._parent;
+      } else if (objectsUnderMouse.length) {
+        objectsUnderMouse.sort(sortByDepth);
+        ancestor = objectsUnderMouse.pop()._parent;
       } else {
         interactiveObject = this;
       }
-      while (currentNode) {
-        if (flash.display.InteractiveObject.class.isInstanceOf(currentNode) &&
-            !flash.display.SimpleButton.class.isInstanceOf(currentNode) &&
-            !currentNode._hitArea &&
-            (!interactiveObject || !currentNode._mouseChildren)) {
-          interactiveObject = currentNode;
+      while (ancestor) {
+        if (flash.display.InteractiveObject.class.isInstanceOf(ancestor) &&
+            !flash.display.SimpleButton.class.isInstanceOf(ancestor) &&
+            !ancestor._hitArea &&
+            (!interactiveObject || !ancestor._mouseChildren)) {
+          interactiveObject = ancestor;
         }
-        currentNode = currentNode._parent;
+        ancestor = ancestor._parent;
       }
 
       if (interactiveObject._hitTarget) {

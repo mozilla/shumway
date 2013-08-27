@@ -33,7 +33,7 @@ var AS2MovieClipDefinition = (function () {
       notImplemented("AS2MovieClip._constructSymbol");
     },
     _callFrame: function callFrame(frame) {
-      this.$nativeObject._as2CallFrame(frame);
+      this.$nativeObject._callFrame(frame);
     },
   };
 
