@@ -224,6 +224,7 @@ var Stubs = new (function () {
     M("flash.text.TextField", "TextFieldClass", TextFieldDefinition),
     M("flash.text.StaticText", "StaticTextClass", StaticTextDefinition),
     M("flash.text.TextFormat", "TextFormatClass", TextFormatDefinition),
+    M("flash.text.engine.FontDescription", "FontDescriptionClass", FontDescriptionDefinition),
 
     M("flash.media.Sound", "SoundClass", SoundDefinition),
     M("flash.media.SoundChannel", "SoundChannelClass", SoundChannelDefinition),
