@@ -622,7 +622,7 @@ function renderStage(stage, ctx, events) {
       }
 
       if (renderFrame) {
-        domain.broadcastMessage("destructChildren");
+        domain.broadcastMessage("destructFrame");
       }
 
       if (renderFrame && events.onAfterFrame) {

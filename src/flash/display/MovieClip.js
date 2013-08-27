@@ -76,16 +76,16 @@ var MovieClipDefinition = (function () {
         self._allowFrameNavigation = false;
         self._callFrame(self._currentFrame);
         self._allowFrameNavigation = true;
+        self._executeFrame = false;
 
         // If playhead moved, process deferred inter-frame navigation.
         if (self._playHead !== self._currentFrame) {
-          self._gotoFrame(self._playHead, true);
+          self._gotoFrame(self._playHead);
           if (self._executeFrame) {
             self._callFrame(self._playHead);
+            self._executeFrame = false;
           }
         }
-
-        self._executeFrame = false;
       };
       this._addEventListener('executeFrame', this._onExecuteFrame);
 
@@ -95,39 +95,32 @@ var MovieClipDefinition = (function () {
 
       // Declare current timeline objects that were not on last frame.
       this._onDeclareFrame = function onDeclareFrame() {
-        var frameNum = self._playHead === self._currentFrame ?
-                        self._currentFrame + 1 :
-                        self._playHead;
-
-        if (frameNum > self._totalFrames) {
-          frameNum = 1;
-        } else if (frameNum > self._framesLoaded) {
-          return;
-        }
-
-        self._declareChildren(frameNum);
-        self._gotoFrame(frameNum);
-        self._enterFrame(frameNum);
+        var frameNum = self._playHead;
+        self._declareChildren(self._playHead);
+        self._startSounds(self._playHead);
+        self._enterFrame(self._playHead);
       };
 
       // Run each new children's constructor.
       this._onConstructChildren = this._constructChildren.bind(this);
 
       // Destroy current timeline objects that are not on next frame.
-      this._onDestructChildren = function onDestructChildren() {
-        if (this._playHead !== this._currentFrame) {
-          return;
-        }
+      this._onDestructFrame = function onDestructFrame() {
+        var frameNum = self._playHead;
 
-        var frameNum = self._currentFrame + 1;
-
-        if (frameNum > self._totalFrames) {
-          frameNum = 1;
-        } else if (frameNum > self._framesLoaded) {
-          return;
+        if (frameNum === self._currentFrame) {
+          if (frameNum >= self._totalFrames) {
+            frameNum = 1;
+          } else if (frameNum >= self._framesLoaded) {
+            return;
+          } else {
+            frameNum++;
+          }
+          self._playHead = frameNum;
         }
 
         self._destructChildren(frameNum);
+        self._executeFrame = true;
       };
 
       this.play();
@@ -207,14 +200,14 @@ var MovieClipDefinition = (function () {
                 if (nextCmd.hasName) {
                   currentChild.name = nextCmd.name;
                 }
-                if (nextCmd.blend) {
-                  currentChild.blendMode = nextCmd.blendMode;
-                }
+                //if (nextCmd.blend) {
+                //  currentChild.blendMode = nextCmd.blendMode;
+                //}
               } else {
                 this._addTimelineChild(nextCmd, highestIndex);
               }
             } else {
-              this._addTimelineChild(nextCmd);
+              this._addTimelineChild(nextCmd, highestIndex);
             }
           }
         }
@@ -270,37 +263,35 @@ var MovieClipDefinition = (function () {
       }
     },
 
-    _gotoFrame: function gotoFrame(frameNum, navigate) {
-      if (frameNum !== this._currentFrame) {
+    _gotoFrame: function gotoFrame(frameNum) {
+      var enterFrame = frameNum !== this._currentFrame;
+
+      if (enterFrame) {
         this._playHead = frameNum;
-        this._executeFrame = true;
+        this._executeFrame = enterFrame;
       }
 
-      if (navigate) {
-        this._destructChildren(frameNum);
+      if (this._allowFrameNavigation || !this._loader._isAvm2Enabled) {
+        if (enterFrame) {
+          this._destructChildren(frameNum);
+          this._declareChildren(frameNum);
+          this._enterFrame(frameNum);
+        }
+
+        this._constructChildren();
 
         if (this._loader._isAvm2Enabled) {
           if (this.loaderInfo._swfVersion >= 10) {
-            // For SWF10+, executing framescripts and constructing timeline objects
-            // happens immediately after navigating to the new frame.
-            this._declareChildren(frameNum);
-            this._enterFrame(frameNum);
-            this._constructChildren();
-
             var domain = avm2.systemDomain;
             domain.broadcastMessage("frameConstructed");
             domain.broadcastMessage("executeFrame");
             domain.broadcastMessage("exitFrame");
-          } else {
-            // For SWF9, the only thing that happens when going to a new frame
-            // is the removal of the old frame's objects.
-            this._enterFrame(frameNum);
           }
+        } else if (enterFrame) {
+          this._callFrame(frameNum);
+          this._executeFrame = false;
         }
       }
-
-      // Is this really the right place to start frame sounds?
-      this._startSounds(frameNum);
     },
     _enterFrame: function navigate(frameNum) {
       if (frameNum === this._currentFrame) {
@@ -566,8 +557,7 @@ var MovieClipDefinition = (function () {
       if (isNaN(frame)) {
         this.gotoLabel(frame);
       } else {
-        this._gotoFrame(this._getAbsFrameNum(frame, scene),
-                        this._allowFrameNavigation);
+        this._gotoFrame(this._getAbsFrameNum(frame, scene));
       }
     },
     gotoAndStop: function (frame, scene) {
@@ -575,14 +565,13 @@ var MovieClipDefinition = (function () {
       if (isNaN(frame)) {
         this.gotoLabel(frame);
       } else {
-        this._gotoFrame(this._getAbsFrameNum(frame, scene),
-                        this._allowFrameNavigation);
+        this._gotoFrame(this._getAbsFrameNum(frame, scene));
       }
     },
     gotoLabel: function (labelName) {
       var frameNum = this._labelMap[labelName];
       if (frameNum !== undefined) {
-        this._gotoFrame(frameNum, this._allowFrameNavigation);
+        this._gotoFrame(frameNum);
       }
     },
     isPlaying: function () {
@@ -591,13 +580,12 @@ var MovieClipDefinition = (function () {
     nextFrame: function () {
       this.stop();
       if (this._currentFrame < this._framesLoaded) {
-        this._gotoFrame(this._currentFrame + 1, this._allowFrameNavigation);
+        this._gotoFrame(this._currentFrame + 1);
       }
     },
     nextScene: function () {
       if (this._scenes && this._currentScene < this._scenes.length - 1) {
-        this._gotoFrame(this._scenes[this._currentScene + 1]._startFrame,
-                        this._allowFrameNavigation);
+        this._gotoFrame(this._scenes[this._currentScene + 1]._startFrame);
       }
     },
     play: function () {
@@ -609,18 +597,17 @@ var MovieClipDefinition = (function () {
 
       this._addEventListener('declareFrame', this._onDeclareFrame);
       this._addEventListener('constructChildren', this._onConstructChildren);
-      this._addEventListener('destructChildren', this._onDestructChildren);
+      this._addEventListener('destructFrame', this._onDestructFrame);
     },
     prevFrame: function () {
       this.stop();
       if (this._currentFrame > 1) {
-        this._gotoFrame(this._currentFrame - 1, this._allowFrameNavigation);
+        this._gotoFrame(this._currentFrame - 1);
       }
     },
     prevScene: function () {
       if (this._scenes && this._currentScene > 0) {
-        this._gotoFrame(this._scenes[this._currentScene - 1]._startFrame,
-                        this._allowFrameNavigation);
+        this._gotoFrame(this._scenes[this._currentScene - 1]._startFrame);
       }
     },
     stop: function () {
@@ -632,7 +619,7 @@ var MovieClipDefinition = (function () {
 
       this._removeEventListener('declareFrame', this._onDeclareFrame);
       this._removeEventListener('constructChildren', this._onConstructChildren);
-      this._removeEventListener('destructChildren', this._onDestructChildren);
+      this._removeEventListener('destructFrame', this._onDestructFrame);
     }
   };
 

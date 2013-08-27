@@ -31,7 +31,7 @@ var DisplayObjectDefinition = (function () {
   var broadcastedEvents = { declareFrame: false, enterFrame: true,
                             constructChildren: false, frameConstructed: true,
                             executeFrame: false, exitFrame: true,
-                            destructChildren: false, render: true };
+                            destructFrame: false, render: true };
 
   var def = {
     __class__: 'flash.display.DisplayObject',
