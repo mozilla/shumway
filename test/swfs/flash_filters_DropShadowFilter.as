@@ -13,7 +13,7 @@ package {
     public class DropShadowFilterTest extends Sprite {
         public var loader;
         public function DropShadowFilterTest() {
-            stage.frameRate = 20;
+            stage.frameRate = 30;
             var child = new TestObject();
             background(0xFFFFFF);
             addEventListener(Event.ENTER_FRAME, child.enterFrameHandler);
