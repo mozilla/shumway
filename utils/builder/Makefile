@@ -70,8 +70,6 @@ build: ensureoutputdir
 	cp ../../lib/mp3/* $(BUILD_DIR)/lib/mp3/
 	# Pre-compile tag handlers
 	$(UTILS_HOME)/jsshell/js generate-tag-handlers.js > $(BUILD_DIR)/swf/handlers.js
-	# Build Loader.js, since it's loaded in a worker.
-	CLOSURE=$(CLOSURE) node build.js ../../src/flash/display/Loader.js > $(BUILD_DIR)/flash/display/Loader.js
 	# Package all the source files into two files.
 	cp templates/LICENSE.js $(BUILD_DIR)/shumway.js
 	CLOSURE=$(CLOSURE) node build.js templates/scripts.js -fc -c s >> $(BUILD_DIR)/shumway.js

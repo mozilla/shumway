@@ -29,8 +29,7 @@ build: ensureoutputdir ../src/flash/playerglobal.abc
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ install.rdf > $(BUILD_DIR)/install.rdf
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ update.rdf > $(BUILD_DIR)/update.rdf
 	# Coping JavaScript content files
-	mkdir -p $(BUILD_DIR)/content/flash/display
-	cp $(GENERIC_DIR)/flash/display/Loader.js $(BUILD_DIR)/content/flash/display/
+	mkdir -p $(BUILD_DIR)/content/flash
 	cp ../../src/flash/playerglobal.abc $(BUILD_DIR)/content/flash/
 	mkdir -p $(BUILD_DIR)/content/avm2/generated/builtin
 	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/content/avm2/generated/builtin/

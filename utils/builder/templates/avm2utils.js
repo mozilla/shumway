@@ -24,6 +24,7 @@ var avm2Root = SHUMWAY_ROOT + "avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
 var playerGlobalPath = SHUMWAY_ROOT + "flash/playerglobal.abc";
+
 var BinaryFileReader = (function binaryFileReader() {
   function constructor(url, responseType) {
     this.url = url;
@@ -32,6 +33,7 @@ var BinaryFileReader = (function binaryFileReader() {
 
   constructor.prototype = {
     readAll: function(progress, complete) {
+      var url = this.url;
       var xhr = new XMLHttpRequest();
       var async = true;
       xhr.open("GET", this.url, async);
@@ -44,10 +46,54 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.onreadystatechange = function(event) {
         if (xhr.readyState === 4) {
           if (xhr.status !== 200 && xhr.status !== 0) {
+            unexpected("Path: " + url + " not found.");
             complete(null, xhr.statusText);
             return;
           }
           complete(xhr.response);
+        }
+      }
+      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+      xhr.send(null);
+    },
+    readAsync: function(ondata, onerror, onopen, oncomplete) {
+      function flushData(chunk, total) {
+        var buffer = new ArrayBuffer(chunk.length);
+        var data = new Uint8Array(buffer);
+        for (var i = 0; i < data.length; i++)
+          data[i] = chunk.charCodeAt(i) & 0xFF;
+        lastPosition += data.length;
+        ondata(data, { loaded: lastPosition, total: total });
+      }
+      var xhr = new XMLHttpRequest();
+      xhr.open("GET", this.url, true);
+      // arraybuffer is not provide onprogress, fetching as regular chars
+      if ('overrideMimeType' in xhr)
+        xhr.overrideMimeType('text/plain; charset=x-user-defined');
+      var lastPosition = 0;
+      xhr.onprogress = function (e) {
+        var position = e.loaded;
+        var chunk = xhr.responseText.substring(lastPosition, position);
+        if (chunk.length === 0) {
+          // chrome is not giving us response, cannot use onprogress
+          return;
+        }
+        flushData(chunk, e.total);
+      };
+      xhr.onreadystatechange = function(event) {
+        if (xhr.readyState === 4) {
+          if (xhr.status !== 200 && xhr.status !== 0) {
+            onerror(xhr.statusText);
+          }
+          var response = xhr.responseText;
+          if (lastPosition < response.length) {
+            flushData(response.substring(lastPosition), response.length);
+          }
+          if (oncomplete) {
+            oncomplete();
+          }
+        } else if (xhr.readyState === 2 && onopen) {
+          onopen();
         }
       }
       xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache

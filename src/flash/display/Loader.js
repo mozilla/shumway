@@ -53,14 +53,13 @@ var $RELEASE = false;
 
 var LoaderDefinition = (function () {
   var WORKERS_ENABLED = true;
-  var LOADER_PATH = 'flash/display/Loader.js';
+  var LOADER_PATH;
 
   var workerScripts;
   if ($RELEASE) {
-    workerScripts = [
-      '../../shumway-worker.js'
-    ];
+    LOADER_PATH = 'shumway-worker.js';
   } else {
+    LOADER_PATH = 'flash/display/Loader.js';
     workerScripts = [
       '../../../lib/DataView.js/DataView.js',
       '../util.js',
@@ -415,23 +414,26 @@ var LoaderDefinition = (function () {
   // If we're inside a worker, do the parsing work and return undefined, since
   // communication is done by posting messages to the main thread.
   if (isWorker) {
-    importScripts.apply(null, workerScripts);
+    if (workerScripts) {
+      importScripts.apply(null, workerScripts);
+    }
 
+    var subscription = null;
     self.onmessage = function (evt) {
-      if (evt.data !== 'pipe:') {
+      if (subscription) {
+        subscription.callback(evt.data.data, evt.data.progress);
+      } else if (evt.data === 'pipe:') {
+        // progressive data loading is requested, replacing onmessage handler
+        // for the following messages
+        subscription = {
+          subscribe: function (callback) {
+            this.callback = callback;
+          }
+        };
+        loadFromWorker(null, subscription);
+      } else {
         loadFromWorker(null, evt.data);
       }
-      // progressive data loading is requested, replacing onmessage handler
-      // for the following messages
-      var subscription = {
-        subscribe: function (callback) {
-          this.callback = callback;
-        }
-      };
-      loadFromWorker(null, subscription);
-      self.onmessage = function (evt) {
-        subscription.callback(evt.data.data, evt.data.progress);
-      };
     };
 
     return;
