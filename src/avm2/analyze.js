@@ -309,6 +309,18 @@ var Analysis = (function () {
         return code;
       }
 
+      var method = this.method;
+
+      /**
+       * Marks the parameter as used if it's ever accessed via getLocal.
+       */
+      function accessLocal(index) {
+        if (index-- === 0) return; // First index is |this|.
+        if (index < method.parameters.length) {
+          method.parameters[index].isUsed = true;
+        }
+      }
+
       // This array is sparse, indexed by offset.
       var bytecodesOffset = [];
       // This array is dense.
@@ -353,8 +365,17 @@ var Analysis = (function () {
         case OP_iffalse:
           code.offset += codeStream.position;
           break;
-
+        case OP_getlocal0:
+        case OP_getlocal1:
+        case OP_getlocal2:
+        case OP_getlocal3:
+          accessLocal(code.op - OP_getlocal0);
+          break;
+        case OP_getlocal:
+          accessLocal(code.index);
+          break;
         default:
+          break;
         }
 
         // Cache the position in the bytecode array.
@@ -927,146 +948,8 @@ var Analysis = (function () {
 
       this.markedLoops = true;
       return true;
-    },
-
-    //
-    // Prints a normalized bytecode along with metainfo.
-    //
-    trace: function (writer) {
-      function bid(node) {
-        return node.bid;
-      }
-
-      function traceBlock(block) {
-        if (!block.dominator) {
-          writer.enter("block unreachable {");
-        } else {
-          writer.enter("block " + block.bid +
-                       (block.succs.length > 0 ? " -> " +
-                        block.succs.map(bid).join(",") : "") + " {");
-
-          writer.writeLn("npreds".padRight(' ', 10) + block.npreds);
-          writer.writeLn("idom".padRight(' ', 10) + block.dominator.bid);
-          writer.writeLn("domcs".padRight(' ', 10) + block.dominatees.map(bid).join(","));
-          if (block.frontier) {
-            writer.writeLn("frontier".padRight(' ', 10) + "{" + block.frontier.toArray().join(",") + "}");
-          }
-          writer.writeLn("level".padRight(' ', 10) + block.level);
-        }
-
-        if (block.loop) {
-          writer.writeLn("loop".padRight(' ', 10) + "{" + block.loop.body.toArray().join(",") + "}");
-          writer.writeLn("  id".padRight(' ', 10) + block.loop.id);
-          writer.writeLn("  head".padRight(' ', 10) + "{" + block.loop.head.toArray().join(",") + "}");
-          writer.writeLn("  exit".padRight(' ', 10) + "{" + block.loop.exit.toArray().join(",") + "}");
-          writer.writeLn("  npreds".padRight(' ', 10) + block.loop.npreds);
-        }
-
-        writer.writeLn("");
-
-        if (block.position >= 0) {
-          for (var bci = block.position; bci <= block.end.position; bci++) {
-            writer.writeLn(("" + bci).padRight(' ', 5) + bytecodes[bci]);
-          }
-        } else {
-          writer.writeLn("abstract");
-        }
-
-        writer.leave("}");
-      }
-
-      var bytecodes = this.bytecodes;
-
-      writer.enter("analysis {");
-      writer.enter("cfg {");
-      this.blocks.forEach(traceBlock);
-      writer.leave("}");
-
-      if (this.controlTree) {
-        writer.enter("control-tree {");
-        this.controlTree.trace(writer);
-        writer.leave("}");
-      }
-
-      writer.leave("}");
-    },
-
-    traceCFG: makeVizTrace([{ fn: function (n) { return n.succs || []; },
-                              style: "" }],
-                           [{ fn: function (n) { return n.preds || []; },
-                              style: "" }]),
-
-    traceDJ: makeVizTrace([{ fn: function (n) { return n.dominatees || []; },
-                             style: "style=dashed" },
-                           { fn:
-                             function (n) {
-                               var crosses = new this.BlockSet();
-                               crosses.setBlocks(n.succs);
-                               crosses.subtract(this.BlockSet.fromBlocks(n.dominatees));
-                               n.spbacks && crosses.subtract(n.spbacks);
-                               return crosses.members();
-                             },
-                             style: "" },
-                           { fn: function (n) { return n.spbacks ? n.spbacks.members() : []; },
-                             style: "style=bold" }],
-                          [{ fn: function (n) { return n.preds || []; },
-                             style: "" }],
-                          function (idFn, writer) {
-                            var root = this.bytecodes[0];
-                            var worklist = [root];
-                            var n;
-                            var level = root.level;
-                            var currentLevel = [];
-                            while ((n = worklist.shift())) {
-                              if (level != n.level) {
-                                writer.writeLn("{rank=same; " +
-                                               currentLevel.map(function (n) {
-                                                 return "block_" + idFn(n);
-                                               }).join(" ") + "}");
-                                currentLevel.length = 0;
-                                level = n.level;
-                              }
-                              currentLevel.push(n);
-                              worklist.push.apply(worklist, n.dominatees);
-                            }
-                          })
-  };
-
-  function makeVizTrace(succFns, predFns, postHook) {
-    return function (writer, name, prefix) {
-      function idFn(n) {
-        return prefix + n.bid;
-      }
-
-      var analysis = this;
-      function bindToThis(x) {
-        x.fn = x.fn.bind(analysis);
-      }
-
-      prefix = prefix || "";
-      var bytecodes = this.bytecodes;
-      if (!bytecodes) {
-        return;
-      }
-
-      succFns.forEach(bindToThis);
-      predFns.forEach(bindToThis);
-
-      writeGraphViz(writer, name.toString(), bytecodes[0], idFn,
-                    function (n) { return n.succs || []; },
-                    succFns, predFns,
-                    function (n) {
-                      var str = "Block: " + n.bid + "\\l";
-                      /*
-                      for (var bci = n.position; bci <= n.end.position; bci++) {
-                        str += bci + ": " + bytecodes[bci] + "\\l";
-                      }
-                      */
-                      return str;
-                    },
-                    postHook && postHook.bind(this, idFn));
     }
-  }
+  };
 
   return Analysis;
 
