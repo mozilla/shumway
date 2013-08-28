@@ -94,7 +94,7 @@ var Interpreter = new ((function () {
           value = parameter.value;
         }
         if (parameter.type && !parameter.type.isAnyName()) {
-          value = coerce(value, domain.getProperty(parameter.type, true, true));
+          value = asCoerceByMultiname(domain, parameter.type, value);
         }
         locals.push(value);
       }
@@ -294,6 +294,9 @@ var Interpreter = new ((function () {
             return;
           case 0x48: // OP_returnvalue
             // AVM2.callStack.pop();
+            if (method.returnType) {
+              return asCoerceByMultiname(domain, method.returnType, stack.pop());
+            }
             return stack.pop();
           case 0x49: // OP_constructsuper
             popManyInto(stack, bc.argCount, args);
@@ -401,41 +404,37 @@ var Interpreter = new ((function () {
             setSlot(obj, bc.index, value);
             break;
           case 0x70: // OP_convert_s
-            stack.push(toString(stack.pop()));
+            stack.push(String(stack.pop()));
             break;
           case 0x83: // OP_coerce_i
           case 0x73: // OP_convert_i
-            stack.push(toInt(stack.pop()));
+            stack.push(asCoerceInt(stack.pop()));
             break;
           case 0x88: // OP_coerce_u
           case 0x74: // OP_convert_u
-            stack.push(toUint(stack.pop()));
+            stack.push(asCoerceUint(stack.pop()));
             break;
           case 0x84: // OP_coerce_d
           case 0x75: // OP_convert_d
-            stack.push(toDouble(stack.pop()));
+            stack.push(asCoerceNumber(stack.pop()));
             break;
           case 0x81: // OP_coerce_b
           case 0x76: // OP_convert_b
-            stack.push(toBoolean(stack.pop()));
+            stack.push(asCoerceBoolean(stack.pop()));
             break;
           case 0x78: // OP_checkfilter
             stack.push(checkFilter(stack.pop()));
             break;
           case 0x80: // OP_coerce
-            value = stack.pop();
-            multiname = multinames[bc.index];
-            stack.push(coerce(value, domain.getProperty(multiname, true, true)));
+            stack.push(asCoerce(domain.getType(multinames[bc.index]), stack.pop()));
             break;
           case 0x82: // OP_coerce_a
             /* NOP */ break;
           case 0x85: // OP_coerce_s
-            stack.push(coerceString(stack.pop()));
+            stack.push(asCoerceString(stack.pop()));
             break;
           case 0x87: // OP_astypelate
-            type = stack.pop();
-            value = stack.pop();
-            stack.push(asInstance(value, type));
+            stack.push(asAsType(stack.pop(), stack.pop()));
             break;
           case 0x89: // OP_coerce_o
             obj = stack.pop();
@@ -461,7 +460,7 @@ var Interpreter = new ((function () {
             --locals[bc.index];
             break;
           case 0x95: // OP_typeof
-            stack.push(typeOf(stack.pop()));
+            stack.push(asTypeOf(stack.pop()));
             break;
           case 0x96: // OP_not
             stack.push(!stack.pop());
@@ -555,21 +554,13 @@ var Interpreter = new ((function () {
             stack.push(a >= b);
             break;
           case 0xB1: // OP_instanceof
-            type = stack.pop();
-            value = stack.pop();
-            stack.push(isInstanceOf(value, type));
+            stack.push(asIsInstanceOf(stack.pop(), stack.pop()));
             break;
           case 0xB2: // OP_istype
-            value = stack.pop();
-            multiname = multinames[bc.index];
-            release || assert(!multiname.isRuntime());
-            type = domain.getProperty(multiname, true, true);
-            stack.push(isInstance(value, type));
+            stack.push(asIsType(domain.getType(multinames[bc.index]), stack.pop()));
             break;
           case 0xB3: // OP_istypelate
-            type = stack.pop();
-            value = stack.pop();
-            stack.push(isInstance(value, type));
+            stack.push(asIsType(stack.pop(), stack.pop()));
             break;
           case 0xB4: // OP_in
             stack.push(boxValue(stack.pop()).asHasProperty(null, stack.pop()));
@@ -642,7 +633,7 @@ var Interpreter = new ((function () {
             var handler = exceptions[i];
             if (pc >= handler.start && pc <= handler.end &&
               (!handler.typeName ||
-                domain.getProperty(handler.typeName, true, true).isInstance(e))) {
+                domain.getType(handler.typeName).isInstance(e))) {
               stack.length = 0;
               stack.push(e);
               scopeStack.clear();
