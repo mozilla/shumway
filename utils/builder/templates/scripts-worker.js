@@ -38,3 +38,5 @@ load($SHUMWAY_ROOT + "src/swf/label.js");
 load($SHUMWAY_ROOT + "src/swf/shape.js");
 load($SHUMWAY_ROOT + "src/swf/sound.js");
 load($SHUMWAY_ROOT + "src/swf/text.js");
+
+load($SHUMWAY_ROOT + "src/flash/display/Loader.js");
