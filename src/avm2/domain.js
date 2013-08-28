@@ -121,10 +121,10 @@ var Domain = (function () {
   Domain.coerceCallable = function coerceCallable(type) {
     return {
       call: function ($this, value) {
-        return coerce(value, type);
+        return asCoerce(type, value);
       },
       apply: function ($this, args) {
-        return coerce(args[0], type);
+        return asCoerce(type, args[0]);
       }
     };
   };
@@ -141,6 +141,9 @@ var Domain = (function () {
   };
 
   Domain.prototype = {
+    getType: function getType(multiname) {
+      return this.getProperty(multiname, true, true);
+    },
     getProperty: function getProperty(multiname, strict, execute) {
       var resolved = this.findDefiningScript(multiname, execute);
       if (resolved) {

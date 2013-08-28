@@ -1075,7 +1075,13 @@ var Verifier = (function() {
             this.returnType.merge(Type.Undefined);
             break;
           case OP_returnvalue:
-            pop();
+            type = pop();
+            if (mi.returnType) {
+              var coerceType = Type.fromName(mi.returnType, this.domain).instance();
+              if (coerceType.isSubtypeOf(type)) {
+                ti().noCoercionNeeded = true;
+              }
+            }
             break;
           case OP_constructsuper:
             stack.popMany(bc.argCount);
