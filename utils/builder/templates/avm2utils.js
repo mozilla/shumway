@@ -33,6 +33,7 @@ var BinaryFileReader = (function binaryFileReader() {
 
   constructor.prototype = {
     readAll: function(progress, complete) {
+      var url = this.url;
       var xhr = new XMLHttpRequest();
       var async = true;
       xhr.open("GET", this.url, async);
@@ -45,12 +46,48 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.onreadystatechange = function(event) {
         if (xhr.readyState === 4) {
           if (xhr.status !== 200 && xhr.status !== 0) {
+            unexpected("Path: " + url + " not found.");
             complete(null, xhr.statusText);
             return;
           }
           complete(xhr.response);
         }
       }
+      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+      xhr.send(null);
+    },
+    readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
+      var xhr = new XMLHttpRequest({mozSystem:true});
+      var url = this.url;
+      xhr.open(this.method || "GET", url, true);
+      xhr.responseType = 'moz-chunked-arraybuffer';
+      var isNotProgressive = xhr.responseType !== 'moz-chunked-arraybuffer';
+      if (isNotProgressive) {
+        xhr.responseType = 'arraybuffer';
+      }
+      xhr.onprogress = function (e) {
+        if (isNotProgressive) return;
+        ondata(new Uint8Array(xhr.response), { loaded: e.loaded, total: e.total });
+      };
+      xhr.onreadystatechange = function(event) {
+        if(xhr.readyState === 2 && onhttpstatus) {
+          onhttpstatus(url, xhr.status, xhr.getAllResponseHeaders());
+        }
+        if (xhr.readyState === 4) {
+          if (xhr.status !== 200 && xhr.status !== 0) {
+            onerror(xhr.statusText);
+          }
+          if (isNotProgressive) {
+            var buffer = xhr.response;
+            ondata(new Uint8Array(buffer), { loaded: buffer.byteLength, total: buffer.byteLength });
+          }
+          if (oncomplete) {
+            oncomplete();
+          }
+        } else if (xhr.readyState === 2 && onopen) {
+          onopen();
+        }
+       }
       xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
       xhr.send(null);
     }
@@ -119,6 +156,9 @@ function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) 
     avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
     avm2.systemDomain.executeAbc(builtinAbc);
     avm2.builtinsLoaded = true;
+    console.info(JSON.stringify(Counter.toJSON()));
+    console.timeEnd("Load AVM2");
+    addProfileMarker("End Load AVM2");
     next(avm2);
   }
 }

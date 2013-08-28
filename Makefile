@@ -53,7 +53,10 @@ run-tamarin-tests:
 build-playerglobal:
 	make -C utils/ build-playerglobal
 
-build-extension:
+build-bundle:
+	make -C utils/builder build
+
+build-extension: build-bundle
 	make -C extension/firefox/ build
 
 FIREFOX_PATH ?= $(error ERROR: Specify FIREFOX_PATH)
@@ -61,7 +64,7 @@ FIREFOX_PATH ?= $(error ERROR: Specify FIREFOX_PATH)
 check-extension: build-extension
 	cd test/extension; python check.py -b "$(FIREFOX_PATH)"
 
-build-web:
+build-web: build-bundle build-extension
 	make -C web/ build
 
 MXMLC_FLAGS ?= -static-link-runtime-shared-libraries
