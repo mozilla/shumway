@@ -16,6 +16,14 @@
  * limitations under the License.
  */
 
+// IE10 has no console.time functions
+console.time || (console.time = console.timeEnd = function () {});
+console.profile || (console.profile = console.profileEnd = function () {});
+// Safari has no perfomance
+if (typeof performance === 'undefined') {
+  window.performance = { now: Date.now };
+}
+
 var SHUMWAY_ROOT = "../src/";
 
 function parseQueryString(qs) {
