@@ -15,21 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Kanvas, describeProperty, ShapePath, factoryCtx, rgbIntAlphaToStr */
+/*global Kanvas, describeProperty, ShapePath, factoryCtx, rgbIntAlphaToStr,
+  SHAPE_MOVE_TO, SHAPE_LINE_TO, SHAPE_CURVE_TO, SHAPE_WIDE_MOVE_TO,
+  SHAPE_WIDE_LINE_TO, SHAPE_CUBIC_CURVE_TO, SHAPE_CIRCLE, SHAPE_ELLIPSE,
+  SHAPE_ROUND_CORNER */
 
 var GraphicsDefinition = (function () {
-  var GRAPHICS_PATH_COMMAND_MOVE_TO        = 1;
-  var GRAPHICS_PATH_COMMAND_LINE_TO        = 2;
-  var GRAPHICS_PATH_COMMAND_CURVE_TO       = 3;
-  var GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO   = 4;
-  var GRAPHICS_PATH_COMMAND_WIDE_LINE_TO   = 5;
-  var GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO = 6;
-  // The following commands aren't available in the Flash Player. We use them as
-  // shortcuts for complex operations that exist natively on Canvas.
-  var SHAPE_ARC_TO         = 7;
-  var SHAPE_CIRCLE         = 8;
-  var SHAPE_ELLIPSE        = 9;
-
   var GRAPHICS_PATH_WINDING_EVEN_ODD       = 'evenOdd';
   var GRAPHICS_PATH_WINDING_NON_ZERO       = 'nonZero';
 
@@ -101,34 +92,34 @@ var GraphicsDefinition = (function () {
         for (var j = 0, k = 0; j < commands.length; j++) {
           if (!path.isMorph) {
             switch (commands[j]) {
-              case GRAPHICS_PATH_COMMAND_MOVE_TO:
+              case SHAPE_MOVE_TO:
                 formOpen = true;
                 formOpenX = data[k++];
                 formOpenY = data[k++];
                 ctx.moveTo(formOpenX, formOpenY);
                 break;
-              case GRAPHICS_PATH_COMMAND_WIDE_MOVE_TO:
+              case SHAPE_WIDE_MOVE_TO:
                 ctx.moveTo(data[k++], data[k++]);
                 k += 2;
                 break;
-              case GRAPHICS_PATH_COMMAND_LINE_TO:
+              case SHAPE_LINE_TO:
                 ctx.lineTo(data[k++], data[k++]);
                 break;
-              case GRAPHICS_PATH_COMMAND_WIDE_LINE_TO:
+              case SHAPE_WIDE_LINE_TO:
                 ctx.lineTo(data[k++], data[k++]);
                 k += 2;
                 break;
-              case GRAPHICS_PATH_COMMAND_CURVE_TO:
+              case SHAPE_CURVE_TO:
                 ctx.quadraticCurveTo(data[k++], data[k++],
                                      data[k++], data[k++]);
                 break;
-              case GRAPHICS_PATH_COMMAND_CUBIC_CURVE_TO:
+              case SHAPE_CUBIC_CURVE_TO:
                 ctx.bezierCurveTo(data[k++], data[k++], data[k++], data[k++],
                                   data[k++], data[k++]);
                 break;
-              case SHAPE_ARC_TO:
+              case SHAPE_ROUND_CORNER:
                 ctx.arcTo(data[k++], data[k++], data[k++], data[k++],
-                          data[k++]);
+                          data[k++], data[k++]);
                 break;
               case SHAPE_CIRCLE:
                 if (formOpen) {
@@ -175,15 +166,15 @@ var GraphicsDefinition = (function () {
             }
           } else {
             switch (commands[j]) {
-              case GRAPHICS_PATH_COMMAND_MOVE_TO:
+              case SHAPE_MOVE_TO:
                 ctx.moveTo(morph(data[k], morphData[k++], ratio),
                            morph(data[k], morphData[k++], ratio));
                 break;
-              case GRAPHICS_PATH_COMMAND_LINE_TO:
+              case SHAPE_LINE_TO:
                 ctx.lineTo(morph(data[k], morphData[k++], ratio),
                            morph(data[k], morphData[k++], ratio));
                 break;
-              case GRAPHICS_PATH_COMMAND_CURVE_TO:
+              case SHAPE_CURVE_TO:
                 ctx.quadraticCurveTo(morph(data[k], morphData[k++], ratio),
                                      morph(data[k], morphData[k++], ratio),
                                      morph(data[k], morphData[k++], ratio),
@@ -302,7 +293,7 @@ var GraphicsDefinition = (function () {
           this._currentPath.circle(x+radiusX, y+radiusY, radiusX);
         else
           this._currentPath.ellipse(x+radiusX, y+radiusY, radiusX, radiusY,
-                                    0, 0, Math.PI * 2);
+                                    0, Math.PI * 2);
         return;
       }
 
@@ -318,10 +309,14 @@ var GraphicsDefinition = (function () {
       var y2 = y + h;
       this._currentPath.moveTo(x2, y2 - radiusY);
 
-      this._currentPath.arcTo(x2, y2, x2-radiusX, y2, radiusX, radiusY);
-      this._currentPath.arcTo(x, y2, x, y2-radiusY, radiusX, radiusY);
-      this._currentPath.arcTo(x, y, x+radiusX, y, radiusX, radiusY);
-      this._currentPath.arcTo(x2, y, x2, y+radiusY, radiusX, radiusY);
+      this._currentPath.drawRoundCorner(x2, y2, x2-radiusX, y2,
+                                        radiusX, radiusY);
+      this._currentPath.lineTo(x + radiusX, y2);
+      this._currentPath.drawRoundCorner(x, y2, x, y2-radiusY, radiusX, radiusY);
+      this._currentPath.lineTo(x, y + radiusY);
+      this._currentPath.drawRoundCorner(x, y, x+radiusX, y, radiusX, radiusY);
+      this._currentPath.lineTo(x2 - radiusX, y);
+      this._currentPath.drawRoundCorner(x2, y, x2, y+radiusY, radiusX, radiusY);
       this._currentPath.lineTo(x2, y2-radiusY);
     },
     drawRoundRectComplex: function (x, y, w, h, topLeftRadius, topRightRadius,
@@ -337,11 +332,18 @@ var GraphicsDefinition = (function () {
       var x2 = x + w;
       var y2 = y + h;
       this._currentPath.moveTo(x2, y2-bottomRightRadius);
-      this._currentPath.arcTo(x2, y2, x2-bottomRightRadius, y2,
-                              bottomRightRadius);
-      this._currentPath.arcTo(x, y2, x, y2-bottomLeftRadius, bottomLeftRadius);
-      this._currentPath.arcTo(x, y, x+topLeftRadius, y, topLeftRadius);
-      this._currentPath.arcTo(x2, y, x2, y+topRightRadius, topRightRadius);
+      this._currentPath.drawRoundCorner(x2, y2, x2-bottomRightRadius, y2,
+                                        bottomRightRadius);
+      this._currentPath.lineTo(x + bottomLeftRadius, y2);
+      this._currentPath.drawRoundCorner(x, y2, x, y2-bottomLeftRadius,
+                                        bottomLeftRadius);
+      this._currentPath.lineTo(x, y + topLeftRadius);
+      this._currentPath.drawRoundCorner(x, y, x+topLeftRadius, y,
+                                        topLeftRadius);
+      this._currentPath.lineTo(x2 - topRightRadius, y);
+      this._currentPath.drawRoundCorner(x2, y, x2, y+topRightRadius,
+                                        topRightRadius);
+      this._currentPath.lineTo(x2, y2-bottomRightRadius);
     },
     drawTriangles: function(vertices, indices, uvtData, culling) {
       notImplemented("Graphics#drawTriangles");

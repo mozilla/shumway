@@ -509,9 +509,13 @@ var SHAPE_CURVE_TO       = 3;
 var SHAPE_WIDE_MOVE_TO   = 4;
 var SHAPE_WIDE_LINE_TO   = 5;
 var SHAPE_CUBIC_CURVE_TO = 6;
+// Round corners can be drawn using arcTo, but hit-testing those is a bit of a
+// pain. By creating a command with much narrower scope, we make both drawing
+// and hit-testing easy and fast.
+// Data: cornerX, cornerY, curveEndX, curveEndY, radiusX, radiusY.
+var SHAPE_ROUND_CORNER   = 7;
 // The following commands aren't available in the Flash Player. We use them as
 // shortcuts for complex operations that exist natively on Canvas.
-var SHAPE_ARC_TO         = 7;
 var SHAPE_CIRCLE         = 8;
 var SHAPE_ELLIPSE        = 9;
 
@@ -569,9 +573,11 @@ ShapePath.prototype = {
     this.commands.push(SHAPE_CIRCLE);
     this.data.push(x, y, radius);
   },
-  arcTo: function(x1, y1, x2, y2, radius) {
-    this.commands.push(SHAPE_ARC_TO);
-    this.data.push(x1, y1, x2, y2, radius);
+  drawRoundCorner: function(cornerX, cornerY, curveEndX, curveEndY,
+                            radiusX, radiusY)
+  {
+    this.commands.push(SHAPE_ROUND_CORNER);
+    this.data.push(cornerX, cornerY, curveEndX, curveEndY, radiusX, radiusY);
   },
   ellipse: function(x, y, radiusX, radiusY) {
     this.commands.push(SHAPE_ELLIPSE);
@@ -598,13 +604,19 @@ ShapePath.prototype = {
     var pathY = 0;
     var prevX = 0;
     var prevY = 0;
+    var localX;
+    var localY;
+    var cpX;
+    var cpY;
+    var rX;
+    var rY;
 
     var formOpen = false;
     var formOpenX = 0;
     var formOpenY = 0;
 
     function intersectsLine(x, y, x1, y1, x2, y2) {
-      var intersects = (y2 > y) != (y1 > y) &&
+      var intersects = (y2 > y) !== (y1 > y) &&
              x < (x1 - x2) * (y - y2) / (y1 - y2) + x2;
       return intersects;
     }
@@ -613,11 +625,15 @@ ShapePath.prototype = {
     // from x,y an infinite ray to the right is "cast". All operations are then
     // tested for intersections with this ray, where each intersection means
     // switching between being outside and inside the shape.
-    // as
+    // See http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+    // for the line intersection algorithm.
     for (var commandIndex = 0, dataIndex = 0; commandIndex < length;
          commandIndex++)
     {
       switch (commands[commandIndex]) {
+        case SHAPE_WIDE_MOVE_TO:
+          dataIndex += 2;
+          /* falls through */
         case SHAPE_MOVE_TO:
           pathX = data[dataIndex++];
           pathY = data[dataIndex++];
@@ -630,6 +646,9 @@ ShapePath.prototype = {
           formOpenX = pathX;
           formOpenY = pathY;
           break;
+        case SHAPE_WIDE_LINE_TO:
+          dataIndex += 2;
+          /* falls through */
         case SHAPE_LINE_TO:
           pathX = data[dataIndex++];
           pathY = data[dataIndex++];
@@ -639,17 +658,86 @@ ShapePath.prototype = {
           }
           break;
         case SHAPE_CURVE_TO:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          pathX = data[dataIndex++];
+          pathY = data[dataIndex++];
+          if ((cpY > y) === (prevY > y) && (pathY > y) === (prevY > y)) {
+            break;
+          }
           break;
         case SHAPE_CUBIC_CURVE_TO:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          var cp2X = data[dataIndex++];
+          var cp2Y = data[dataIndex++];
+          pathX = data[dataIndex++];
+          pathY = data[dataIndex++];
+          if ((cpY > y) === (prevY > y) && (cp2Y > y) === (prevY > y) &&
+              (pathY > y) === (prevY > y))
+          {
+            break;
+          }
           break;
-        case SHAPE_WIDE_MOVE_TO:
-        case SHAPE_WIDE_LINE_TO:
-          break;
-        case SHAPE_ARC_TO:
+        case SHAPE_ROUND_CORNER:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          pathX = data[dataIndex++];
+          pathY = data[dataIndex++];
+          rX = data[dataIndex++];
+          rY = data[dataIndex++];
+          // The round corner being fully to the left, top or bottom of x,y
+          // means it's irrelevant.
+          if ((pathY > y) === (prevY > y) || prevX < x && pathX < x) {
+            break;
+          }
+          // The round corner crossing y and being fully to the right means
+          // it crosses the ray.
+          if (prevX >= x && pathX >= x) {
+            inside = !inside;
+            break;
+          }
+          // we want the ellipse's center
+          if ((pathX > prevX) === (pathY > prevY)) {
+            cp2X = prevX;
+            cp2Y = pathY;
+          } else {
+            cp2X = pathX;
+            cp2Y = prevY;
+          }
+          localX = x - cp2X;
+          localY = y - cp2Y;
+          // We already established that x,y lies somewhere in the ellipse's
+          // right quadrant. Hence, a simple "is in the ellipse XOR has negative
+          // localX" test suffices.
+          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) <= 1 !==
+              localX <= 0)
+          {
+              inside = !inside;
+          }
           break;
         case SHAPE_CIRCLE:
+          pathX = data[dataIndex++];
+          pathY = data[dataIndex++];
+          var r = data[dataIndex++];
+          localX = x - pathX;
+          localY = y - pathY;
+          if (localX * localX + localY * localY < r * r) {
+            inside = !inside;
+          }
           break;
         case SHAPE_ELLIPSE:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          rX = data[dataIndex++];
+          rY = data[dataIndex++];
+          localX = x - cpX;
+          localY = y - cpY;
+          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) <= 1) {
+            inside = !inside;
+          }
+          pathX = cpX + rX;
+          pathY = cpY;
           break;
         default:
           if (!inWorker) {
@@ -682,7 +770,7 @@ ShapePath.prototype = {
     var data = this.data;
     var length = commands.length;
     var bounds;
-    if (commands[0] === SHAPE_MOVE_TO || commands[0] > SHAPE_ARC_TO) {
+    if (commands[0] === SHAPE_MOVE_TO || commands[0] > SHAPE_ROUND_CORNER) {
       bounds = {xMin: data[0], yMin: data[1]};
     } else {
       // only the various single-line-drawing commands start out at zero
@@ -697,43 +785,48 @@ ShapePath.prototype = {
     {
       var x;
       var y;
-      extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
       switch (commands[commandIndex]) {
+        case SHAPE_WIDE_MOVE_TO:
+          dataIndex += 2;
+          /* falls through */
         case SHAPE_MOVE_TO:
+          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
+          break;
+        case SHAPE_WIDE_LINE_TO:
+          dataIndex += 2;
+          /* falls through */
         case SHAPE_LINE_TO:
+          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
           break;
         //TODO: calculate tighter bounds for control points
         case SHAPE_CURVE_TO:
+          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
           extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
           break;
         case SHAPE_CUBIC_CURVE_TO:
           extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
           extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
-          break;
-        case SHAPE_WIDE_MOVE_TO:
-        case SHAPE_WIDE_LINE_TO:
-          dataIndex += 2;
-          break;
-        case SHAPE_ARC_TO:
           extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
-          dataIndex++;
+          break;
+        case SHAPE_ROUND_CORNER:
+          // Relying on the fact that round corners never lie outside their
+          // rectangle, we ignore them.
+          dataIndex += 6;
           break;
         case SHAPE_CIRCLE:
-          x = data[dataIndex-2];
-          y = data[dataIndex-1];
+          x = data[dataIndex++];
+          y = data[dataIndex++];
           var radius = data[dataIndex++];
           extendBoundsByPoint(bounds, x - radius, y - radius);
           extendBoundsByPoint(bounds, x + radius, y + radius);
-          dataIndex++;
           break;
         case SHAPE_ELLIPSE:
-          x = data[dataIndex-2];
-          y = data[dataIndex-1];
+          x = data[dataIndex++];
+          y = data[dataIndex++];
           var radiusX = data[dataIndex++];
           var radiusY = data[dataIndex++];
           extendBoundsByPoint(bounds, x - radiusX, y - radiusY);
           extendBoundsByPoint(bounds, x + radiusX, y + radiusY);
-          dataIndex++;
           break;
         default:
           if (!inWorker) {
@@ -745,10 +838,12 @@ ShapePath.prototype = {
     this.bounds = bounds;
     if (this.lineStyle) {
       var halfLineWidth = this.lineStyle.width / 2;
-      this.strokeBounds = {xMin: bounds.xMin - halfLineWidth,
-                           yMin: bounds.yMin - halfLineWidth,
-                           xMax: bounds.xMax + halfLineWidth,
-                           yMax: bounds.yMax + halfLineWidth};
+      this.strokeBounds = {
+        xMin: bounds.xMin - halfLineWidth,
+        yMin: bounds.yMin - halfLineWidth,
+        xMax: bounds.xMax + halfLineWidth,
+        yMax: bounds.yMax + halfLineWidth
+      };
       return this.strokeBounds;
     } else {
       this.strokeBounds = bounds;
