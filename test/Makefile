@@ -15,7 +15,7 @@
 default:
 
 BROWSER_MANIFEST ?= resources/browser_manifests/browser_manifest.json
-TEST_CMD = python test.py
+TEST_CMD = python -u test.py
 
 check-browser-manifest:
 	@ls $(BROWSER_MANIFEST) || { echo "ERROR: Browser manifest file is not found at test/$(BROWSER_MANIFEST). Create one using the examples at test/resources/browser_manifests/."; exit 1; }
