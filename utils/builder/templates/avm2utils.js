@@ -60,8 +60,13 @@ var BinaryFileReader = (function binaryFileReader() {
       var xhr = new XMLHttpRequest({mozSystem:true});
       var url = this.url;
       xhr.open(this.method || "GET", url, true);
-      xhr.responseType = 'moz-chunked-arraybuffer';
-      var isNotProgressive = xhr.responseType !== 'moz-chunked-arraybuffer';
+      var isNotProgressive;
+      try {
+        xhr.responseType = 'moz-chunked-arraybuffer';
+        isNotProgressive = xhr.responseType !== 'moz-chunked-arraybuffer';
+      } catch (e) {
+        isNotProgressive = true;
+      }
       if (isNotProgressive) {
         xhr.responseType = 'arraybuffer';
       }
