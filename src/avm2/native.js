@@ -265,14 +265,7 @@ var natives = (function () {
     c.defaultValue = null;
 
     c.coerce = function (value) {
-      if (isNullOrUndefined(value)) {
-        return null;
-      }
-      if (typeof value === 'string' ||
-          typeof value === 'number') {
-        return value;
-      }
-      return Object(value);
+      return asCoerceObject(value);
     };
 
     c.isInstanceOf = function (value) {

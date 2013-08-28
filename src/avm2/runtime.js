@@ -1827,10 +1827,18 @@ function asAsType(type, value) {
 function asCoerceByMultiname(domain, multiname, value) {
   release || assert(multiname.isQName());
   switch (Multiname.getQualifiedName(multiname)) {
-    case Multiname.Int: return asCoerceInt(value);
-    case Multiname.Uint: return asCoerceUint(value);
-    case Multiname.String: return asCoerceString(value);
-    case Multiname.Number: return asCoerceNumber(value);
+    case Multiname.Int:
+      return asCoerceInt(value);
+    case Multiname.Uint:
+      return asCoerceUint(value);
+    case Multiname.String:
+      return asCoerceString(value);
+    case Multiname.Number:
+      return asCoerceNumber(value);
+    case Multiname.Boolean:
+      return asCoerceBoolean(value);
+    case Multiname.Object:
+      return asCoerceObject(value);
   }
   return asCoerce(domain.getType(multiname), value);
 }
@@ -1884,4 +1892,14 @@ function asCoerceNumber(x) {
 
 function asCoerceBoolean(x) {
   return !!x;
+}
+
+function asCoerceObject(x) {
+  if (x == undefined) {
+    return null;
+  }
+  if (typeof x === 'string' || typeof x === 'number') {
+    return x;
+  }
+  return Object(x);
 }

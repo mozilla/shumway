@@ -404,7 +404,7 @@ var Interpreter = new ((function () {
             setSlot(obj, bc.index, value);
             break;
           case 0x70: // OP_convert_s
-            stack.push(toString(stack.pop()));
+            stack.push(String(stack.pop()));
             break;
           case 0x83: // OP_coerce_i
           case 0x73: // OP_convert_i

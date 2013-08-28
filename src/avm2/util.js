@@ -327,8 +327,8 @@ function toBoolean(x) {
 }
 
 function toUint(x) {
-  var object = x | 0;
-  return object < 0 ? (object + 4294967296) : object;
+  x = x | 0;
+  return x < 0 ? (x + 4294967296) : x;
 }
 
 function toInt(x) {

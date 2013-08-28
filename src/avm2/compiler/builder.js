@@ -58,6 +58,7 @@ var createName = function createName(namespaces, name) {
   var CFG = IR.CFG;
 
   var writer = new IndentingWriter();
+  var peepholeOptimizer = new IR.PeepholeOptimizer();
 
   var State = (function() {
     var nextID = 0;
@@ -229,6 +230,97 @@ var createName = function createName(namespaces, name) {
     console.warn(message);
   }
 
+  function unary(operator, argument) {
+    var node = new Unary(operator, argument);
+    if (peepholeOptimizer) {
+      node = peepholeOptimizer.tryFold(node);
+    }
+    return node;
+  }
+
+  function binary(operator, left, right) {
+    var node = new Binary(operator, left, right);
+    if (left.ty && left.ty === right.ty) {
+      if (operator === Operator.EQ) {
+        node.operator = Operator.SEQ;
+      } else if (operator === Operator.NE) {
+        node.operator = Operator.SNE;
+      }
+    }
+    if (peepholeOptimizer) {
+      node = peepholeOptimizer.tryFold(node);
+    }
+    return node;
+  }
+
+  function coerceInt(value) {
+    return binary(Operator.OR, value, constant(0));
+  }
+
+  function coerceUint(value) {
+    return binary(Operator.URSH, value, constant(0));
+  }
+
+  function coerceNumber(value) {
+    if (hasNumericType(value)) {
+      return value;
+    }
+    return unary(Operator.PLUS, value);
+  }
+
+  function coerceBoolean(value) {
+    return unary(Operator.FALSE, unary(Operator.FALSE, value));
+  }
+
+  function shouldNotFloat(node) {
+    node.shouldNotFloat = true;
+    return node;
+  }
+
+  function shouldFloat(node) {
+    assert (!(node instanceof IR.GetProperty), "Cannot float node : " + node);
+    node.shouldFloat = true;
+    return node;
+  }
+
+  function mustFloat(node) {
+    node.mustFloat = true;
+    return node;
+  }
+
+  function callPure(callee, object, args) {
+    return new Call(null, null, callee, object, args, true);
+  }
+
+  function convertString(value) {
+    if (isStringConstant(value)) {
+      return value;
+    }
+    return callPure(globalProperty("String"), null, [value]);
+  }
+
+  function coerceString(value) {
+    return callPure(globalProperty("asCoerceString"), null, [value]);
+  }
+
+  function coerceObject(value) {
+    return callPure(globalProperty("asCoerceObject"), null, [value]);
+  }
+
+  var coercers = createEmptyObject();
+
+  coercers[Multiname.Int] = coerceInt;
+  coercers[Multiname.Uint] = coerceUint;
+  coercers[Multiname.Number] = coerceNumber;
+  coercers[Multiname.Boolean] = coerceBoolean;
+  coercers[Multiname.String] = coerceString;
+  coercers[Multiname.Object] = coerceObject;
+
+  function getCoercerForType(multiname) {
+    assert (multiname instanceof Multiname);
+    return coercers[Multiname.getQualifiedName(multiname)];
+  }
+
   var Builder = (function () {
     function builder(methodInfo, scope, hasDynamicScope) {
       assert (methodInfo && methodInfo.abc && scope);
@@ -236,7 +328,6 @@ var createName = function createName(namespaces, name) {
       this.scope = scope;
       this.methodInfo = methodInfo;
       this.hasDynamicScope = hasDynamicScope;
-      this.peepholeOptimizer = new IR.PeepholeOptimizer();
     }
 
     builder.prototype.buildStart = function (start) {
@@ -291,7 +382,7 @@ var createName = function createName(namespaces, name) {
           local = new IR.Latch(null, condition, constant(parameter.value), local);
         }
         if (parameter.type && !parameter.type.isAnyName()) {
-          var coercer = this.coercers[Multiname.getQualifiedName(parameter.type)];
+          var coercer = getCoercerForType(parameter.type);
           if (coercer) {
             local = coercer(local);
           } else if (COERCE_PARAMETERS) {
@@ -309,7 +400,6 @@ var createName = function createName(namespaces, name) {
       var blocks = analysis.blocks;
       var bytecodes = analysis.bytecodes;
       var methodInfo = this.methodInfo;
-      var peepholeOptimizer = this.peepholeOptimizer;
 
       var ints = this.abc.constantPool.ints;
       var uints = this.abc.constantPool.uints;
@@ -321,97 +411,6 @@ var createName = function createName(namespaces, name) {
       var domain = new Constant(this.abc.domain);
 
       var traceBuilder = c4TraceLevel.value > 2;
-
-      function unary(operator, argument) {
-        var node = new Unary(operator, argument);
-        if (peepholeOptimizer) {
-          node = peepholeOptimizer.tryFold(node);
-        }
-        return node;
-      }
-
-      function binary(operator, left, right) {
-        var node = new Binary(operator, left, right);
-        if (left.ty && left.ty === right.ty) {
-          if (operator === Operator.EQ) {
-            node.operator = Operator.SEQ;
-          } else if (operator === Operator.NE) {
-            node.operator = Operator.SNE;
-          }
-        }
-        if (peepholeOptimizer) {
-          node = peepholeOptimizer.tryFold(node);
-        }
-        return node;
-      }
-
-      function toInt32(value) {
-        return binary(Operator.OR, value, constant(0));
-      }
-
-      function toUInt32(value) {
-        return binary(Operator.URSH, value, constant(0));
-      }
-
-      function toNumber(value) {
-        return unary(Operator.PLUS, value);
-      }
-
-      function toDouble(value) {
-        if (hasNumericType(value)) {
-          return value;
-        }
-        return toNumber(value);
-      }
-
-      function toBoolean(value) {
-        return unary(Operator.FALSE, unary(Operator.FALSE, value));
-      }
-
-      function convertString(value) {
-        return binary(Operator.ADD, constant(""), value);
-      }
-
-      function getPublicQualifiedName(value) {
-        assert (isConstant(value));
-        if (isNumericConstant(value)) {
-          return value;
-        } else if (isStringConstant(value) || value === Null || value === Undefined) {
-          return binary(Operator.ADD, constant(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX), value);
-        }
-        unexpected();
-      }
-
-      function coerceString(value) {
-        return new Call(null, start.entryState.store, globalProperty("asCoerceString"), null, [value], true);
-      }
-
-      assert(!this.coercers);
-
-      var coercers = this.coercers = createEmptyObject();
-
-      coercers[Multiname.Int] = toInt32;
-      coercers[Multiname.Uint] = toUInt32;
-      coercers[Multiname.Number] = toNumber;
-      coercers[Multiname.Boolean] = toBoolean;
-      coercers[Multiname.String] = coerceString;
-
-      function getCoercerForType(type) {
-        switch (type) {
-          case Type.Int:
-            return toInt32;
-          case Type.Uint:
-            return toUInt32;
-          case Type.Number:
-            return toNumber;
-          case Type.Boolean:
-            return toBoolean;
-          case Type.String:
-            return coerceString;
-        }
-      }
-
-      var regions = [];
 
       var stopPoints = [];
 
@@ -525,22 +524,6 @@ var createName = function createName(namespaces, name) {
           stack.push(x);
         }
 
-        function shouldNotFloat(node) {
-          node.shouldNotFloat = true;
-          return node;
-        }
-
-        function shouldFloat(node) {
-          assert (!(node instanceof IR.GetProperty), "Cannot float node : " + node);
-          node.shouldFloat = true;
-          return node;
-        }
-
-        function mustFloat(node) {
-          node.mustFloat = true;
-          return node;
-        }
-
         function pop() {
           return stack.pop();
         }
@@ -571,27 +554,6 @@ var createName = function createName(namespaces, name) {
             namespaces = constant(multiname.namespaces);
           }
           return new IR.AVM2Multiname(namespaces, name, flags);
-        }
-
-        function buildMultiname2(index) {
-          var multiname = multinames[index];
-          if (multiname.isRuntime()) {
-            var namespaces = new Constant(multiname.namespaces);
-            var name = new Constant(multiname.name);
-            if (multiname.isRuntimeName()) {
-              name = pop();
-              if (hasNumericType(name)) {
-                return name;
-              }
-            }
-            if (multiname.isRuntimeNamespace()) {
-              // assert (false, "Is |namespaces| an array or not?");
-              namespaces = pop();
-            }
-            return new IR.AVM2Multiname(new Constant(multiname), namespaces, name);
-          } else {
-            return new Constant(multiname);
-          }
         }
 
         function simplifyName(name) {
@@ -634,22 +596,17 @@ var createName = function createName(namespaces, name) {
           return getProperty(findProperty(name, true), name);
         }
 
-        function coerceValue(value, multiname) {
-          var type = domain.value.getProperty(multiname, true, true);
-          if (!type) {
-            warn("This is because the type is not available yet, we need to fix this by using ClassInfo's for types.");
-            return value;
-          }
+        function coerce(multiname, value) {
           if (isConstant(value)) {
-            return constant(asCoerce(type, value.value));
+            return constant(asCoerceByMultiname(domain.value, multiname, value.value));
           } else {
-            var coercer = coercers[Multiname.getQualifiedName(multiname)];
+            var coercer = getCoercerForType(multiname);
             if (coercer) {
               return coercer(value);
             }
           }
           if (COERCE) {
-            return call(globalProperty("asCoerce"), null, [constant(type), value]);
+            return call(globalProperty("asCoerceByMultiname"), null, [domain, constant(multiname), value]);
           }
           return value;
         }
@@ -694,19 +651,11 @@ var createName = function createName(namespaces, name) {
               openQn = VM_OPEN_METHOD_PREFIX + openQn;
               return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, true));
             } else if (ti.trait.isClass()) {
+//              var coercer = getCoercerForType(ti.trait.name);
+//              if (coercer) {
+//                return coercer(args[0]);
+//              }
               var qn = Multiname.getQualifiedName(ti.trait.name);
-              switch (qn) {
-                case Multiname.Int:
-                  return toInt32(args[0]);
-                case Multiname.Uint:
-                  return toUInt32(args[0]);
-                case Multiname.Boolean:
-                  return toBoolean(args[0]);
-                case Multiname.Number:
-                  return toNumber(args[0]);
-                case Multiname.String:
-                  return convertString(args[0]);
-              }
               return store(new IR.CallProperty(region, state.store, object, constant(qn), args, false));
             }
           } else if (ti && ti.propertyQName) {
@@ -796,10 +745,6 @@ var createName = function createName(namespaces, name) {
           return store(new Call(region, state.store, callee, object, args, true));
         }
 
-        function callPure(callee, object, args) {
-          return new Call(null, null, callee, object, args, true);
-        }
-
         function callCall(callee, object, args, pristine) {
           return store(new Call(region, state.store, callee, object, args, pristine));
         }
@@ -836,14 +781,14 @@ var createName = function createName(namespaces, name) {
             right = pop();
             left = pop();
             if (toInt) {
-              right = toInt32(right);
-              left = toInt32(left);
+              right = coerceInt(right);
+              left = coerceInt(left);
             }
             push(binary(operator, left, right));
           } else {
             left = pop();
             if (toInt) {
-              left = toInt32(left);
+              left = coerceInt(left);
             }
             push(unary(operator, left));
           }
@@ -1081,19 +1026,19 @@ var createName = function createName(namespaces, name) {
                 Counter.count("Compiler: CoercionNeeded");
               }
               value = pop();
-              push(coerceValue(value, multinames[bc.index]));
+              push(coerce(multinames[bc.index], value));
               break;
             case OP_coerce_i: case OP_convert_i:
-              push(toInt32(pop()));
+              push(coerceInt(pop()));
               break;
             case OP_coerce_u: case OP_convert_u:
-              push(toUInt32(pop()));
+              push(coerceUint(pop()));
               break;
             case OP_coerce_d: case OP_convert_d:
-              push(toDouble(pop()));
+              push(coerceNumber(pop()));
               break;
             case OP_coerce_b: case OP_convert_b:
-              push(toBoolean(pop()));
+              push(coerceBoolean(pop()));
               break;
             case OP_checkfilter:
               push(call(globalProperty("checkFilter"), null, [pop()]));
@@ -1112,7 +1057,15 @@ var createName = function createName(namespaces, name) {
               break;
             case OP_returnvalue:
             case OP_returnvoid:
-              value = op === OP_returnvalue ? pop() : Undefined;
+              value = Undefined;
+              if (op === OP_returnvalue) {
+                value = pop();
+                if (methodInfo.returnType) {
+                  if (!(bc.ti && bc.ti.noCoercionNeeded)) {
+                    value = coerce(methodInfo.returnType, value);
+                  }
+                }
+              }
               stopPoints.push({
                 region: region,
                 store: state.store,
@@ -1205,9 +1158,9 @@ var createName = function createName(namespaces, name) {
             case OP_decrement:  case OP_decrement_i:
               push(constant(1));
               if (op === OP_increment || op === OP_decrement) {
-                push(toNumber(pop()));
+                push(coerceNumber(pop()));
               } else {
-                push(toInt32(pop()));
+                push(coerceInt(pop()));
               }
               if (op === OP_increment || op === OP_increment_i) {
                 pushExpression(Operator.ADD);
@@ -1219,9 +1172,9 @@ var createName = function createName(namespaces, name) {
             case OP_declocal: case OP_declocal_i:
               push(constant(1));
               if (op === OP_inclocal || op === OP_declocal) {
-                push(toNumber(local[bc.index]));
+                push(coerceNumber(local[bc.index]));
               } else {
-                push(toInt32(local[bc.index]));
+                push(coerceInt(local[bc.index]));
               }
               if (op === OP_inclocal || op === OP_inclocal_i) {
                 pushExpression(Operator.ADD);
