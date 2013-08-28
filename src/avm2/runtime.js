@@ -1903,3 +1903,28 @@ function asCoerceObject(x) {
   }
   return Object(x);
 }
+
+function asDefaultCompareFunction(a, b) {
+  return String(a).localeCompare(String(b));
+}
+
+function asCompare(a, b, options, compareFunction) {
+  release || assertNotImplemented (!(options & SORT_CASEINSENSITIVE), "CASEINSENSITIVE");
+  release || assertNotImplemented (!(options & SORT_UNIQUESORT), "UNIQUESORT");
+  release || assertNotImplemented (!(options & SORT_RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+  var result = 0;
+  if (!compareFunction) {
+    compareFunction = asDefaultCompareFunction;
+  }
+  if (options & SORT_NUMERIC) {
+    a = toNumber(a);
+    b = toNumber(b);
+    result = a < b ? -1 : (a > b ? 1 : 0);
+  } else {
+    result = compareFunction(a, b);
+  }
+  if (options & SORT_DESCENDING) {
+    result *= -1;
+  }
+  return result;
+}

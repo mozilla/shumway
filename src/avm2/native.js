@@ -458,38 +458,11 @@ var natives = (function () {
     var c = new Class("Array", Array, C(Array));
     c.extendBuiltin(baseClass);
 
-    var CASEINSENSITIVE = 1;
-    var DESCENDING = 2;
-    var UNIQUESORT = 4;
-    var RETURNINDEXEDARRAY = 8;
-    var NUMERIC = 16;
-
-    function defaultCompareFunction(a, b) {
-      return String(a).localeCompare(String(b));
-    }
-
-    function compare(a, b, options, compareFunction) {
-      assertNotImplemented (!(options & CASEINSENSITIVE), "CASEINSENSITIVE");
-      assertNotImplemented (!(options & UNIQUESORT), "UNIQUESORT");
-      assertNotImplemented (!(options & RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
-      var result = 0;
-      if (!compareFunction) {
-        compareFunction = defaultCompareFunction;
-      }
-      if (options & NUMERIC) {
-        a = Number(a);
-        b = Number(b);
-        result = a < b ? -1 : (a > b ? 1 : 0);
-      } else {
-        result = compareFunction(a, b);
-      }
-      if (options & DESCENDING) {
-        result *= -1;
-      }
-      return result;
-    }
-
     var Ap = Array.prototype;
+
+    var CACHE_NUMERIC_COMPARATORS = true;
+
+    var numericComparatorCache = createEmptyObject();
 
     c.native = {
       instance: {
@@ -527,9 +500,23 @@ var natives = (function () {
           }
           for (var i = names.length - 1; i >= 0; i--) {
             var key = Multiname.getPublicQualifiedName(names[i]);
-            o.sort(function (a, b) {
-              return compare(a[key], b[key], options[i] | 0);
-            });
+            if (CACHE_NUMERIC_COMPARATORS && options[i] & SORT_NUMERIC) {
+              var str = "var x = toNumber(a." + key + "), y = toNumber(b." + key + ");";
+              if (options[i] & SORT_DESCENDING) {
+                str += "return x < y ? 1 : (x > y ? -1 : 0);";
+              } else {
+                str += "return x < y ? -1 : (x > y ? 1 : 0);";
+              }
+              var numericComparator = numericComparatorCache[str];
+              if (!numericComparator) {
+                numericComparator = numericComparatorCache[str] = new Function("a", "b", str);
+              }
+              o.sort(numericComparator);
+            } else {
+              o.sort(function (a, b) {
+                return asCompare(a[key], b[key], options[i] | 0);
+              });
+            }
           }
           return o;
         },
@@ -550,7 +537,7 @@ var natives = (function () {
             options = args[1];
           }
           o.sort(function (a, b) {
-            return compare(a, b, options, compareFunction);
+            return asCompare(a, b, options, compareFunction);
           });
           return o;
         }
