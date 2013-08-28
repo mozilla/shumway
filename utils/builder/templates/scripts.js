@@ -100,7 +100,7 @@ load($SHUMWAY_ROOT + "src/avm2/interpreter.js");
 load($SHUMWAY_ROOT + "src/avm2/vm.js");
 
 load($SHUMWAY_ROOT + "src/flash/playerglobal.js");  // this needs to come before avm2utils.js
-load($SHUMWAY_ROOT + "extension/firefox/content/web/avm2utils.js");
+load($SHUMWAY_ROOT + "utils/builder/templates/avm2utils.js");
 load($SHUMWAY_ROOT + "src/flash/util.js");
 
 // Manually add directories here, this doesn't get automatically updated by
