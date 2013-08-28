@@ -27,9 +27,7 @@ package {
             bg.graphics.endFill();
             addChild(bg);
         }
-
     }
-
 }
 
 import flash.display.*;
@@ -108,7 +106,7 @@ class TestObject extends Sprite {
                 trace(result + ": flash.filters::DropShadowFilter/get blurX ()");
             })();
             break;
-        case 4:
+        case 5:
             (function () {
                 filter.blurY = 128;
                 filters = [filter];
@@ -117,7 +115,7 @@ class TestObject extends Sprite {
                 trace(result + ": flash.filters::DropShadowFilter/get blurY ()");
             })();
             break;
-        case 5:
+        case 6:
             (function () {
                 filter.color = 0xFF0000;
                 filters = [filter];
@@ -126,7 +124,7 @@ class TestObject extends Sprite {
                 trace(result + ": flash.filters::DropShadowFilter/get color ()");
             })();
             break; 
-        case 6:
+        case 7:
             (function () {
                 filter.distance = 20;
                 filters = [filter];
@@ -135,7 +133,7 @@ class TestObject extends Sprite {
                 trace(result + ": flash.filters::DropShadowFilter/get distance ()");
             })();
             break;
-        case 7:
+        case 8:
             (function () {
                 filter.hideObject = true;
                 filters = [filter];
@@ -143,8 +141,6 @@ class TestObject extends Sprite {
                 trace(result + ": flash.filters::DropShadowFilter/set hideObject ()");
                 trace(result + ": flash.filters::DropShadowFilter/get hideObject ()");
             })();
-            break;
-        case 8:
             (function () {
                 filter.inner = true;
                 filters = [filter];
@@ -152,8 +148,6 @@ class TestObject extends Sprite {
                 trace(result + ": flash.filters::DropShadowFilter/set inner ()");
                 trace(result + ": flash.filters::DropShadowFilter/get inner ()");
             })();
-            break;
-        case 9:
             (function () {
                 filter.knockout = true;
                 filters = [filter];
@@ -161,8 +155,6 @@ class TestObject extends Sprite {
                 trace(result + ": flash.filters::DropShadowFilter/set knockout ()");
                 trace(result + ": flash.filters::DropShadowFilter/get knockout ()");
             })();
-            break;
-        case 10:
             (function () {
                 filter.quality = BitmapFilterQuality.HIGH;
                 filters = [filter];
@@ -170,8 +162,6 @@ class TestObject extends Sprite {
                 trace(result + ": flash.filters::DropShadowFilter/set quality ()");
                 trace(result + ": flash.filters::DropShadowFilter/get quality ()");
             })();
-            break;
-        case 11:
             (function () {
                 filter.strength = 255;
                 filters = [filter];
