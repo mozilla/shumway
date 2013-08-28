@@ -809,7 +809,7 @@ var Multiname = (function () {
   multiname.PUBLIC_QUALIFIED_NAME_PREFIX = PUBLIC_QUALIFIED_NAME_PREFIX;
   multiname.getPublicQualifiedName = function getPublicQualifiedName(name) {
     if (isNumeric(name)) {
-      return Number(name);
+      return toNumber(name);
     } else if (name !== null && isObject(name)) {
       return name;
     }

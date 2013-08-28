@@ -252,7 +252,7 @@ function resolveMultinameProperty(namespaces, name, flags) {
     name = String(name);
   }
   if (isNumeric(name)) {
-    return Number(name);
+    return toNumber(name);
   }
   if (!namespaces) {
     return Multiname.getPublicQualifiedName(name);

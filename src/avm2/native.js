@@ -714,7 +714,7 @@ var natives = (function () {
   }
 
   function Int(x) {
-    return Number(x) | 0;
+    return toNumber(x) | 0;
   }
 
   function boxedInt(x) {
@@ -739,7 +739,7 @@ var natives = (function () {
   }
 
   function Uint(x) {
-    return Number(x) >>> 0;
+    return toNumber(x) >>> 0;
   }
 
   function boxedUint(x) {
