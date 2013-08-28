@@ -576,7 +576,7 @@ function renderStage(stage, ctx, events) {
 
       if (renderFrame) {
         frameTime = now;
-        nextRenderAt = frameTime + maxDelay;
+        nextRenderAt = frameTime + (1000 / stage._frameRate);
 
         if (firstRun) {
           // Initial display list is already constructed, skip frame construction phase.
