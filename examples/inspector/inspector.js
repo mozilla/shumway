@@ -52,28 +52,17 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.send(this.data || null);
     },
     readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
-      function flushData(chunk, total) {
-        var data = new Uint8Array(chunk.length);
-        for (var i = 0; i < data.length; i++)
-          data[i] = chunk.charCodeAt(i) & 0xFF;
-        lastPosition += data.length;
-        ondata(data, { loaded: lastPosition, total: total });
-      }
       var xhr = new XMLHttpRequest({mozSystem:true});
       var url = this.url;
       xhr.open(this.method || "GET", url, true);
-      // arraybuffer is not provide onprogress, fetching as regular chars
-      if ('overrideMimeType' in xhr)
-        xhr.overrideMimeType('text/plain; charset=x-user-defined');
-      var lastPosition = 0;
+      xhr.responseType = 'moz-chunked-arraybuffer';
+      var isNotProgressive = xhr.responseType !== 'moz-chunked-arraybuffer';
+      if (isNotProgressive) {
+        xhr.responseType = 'arraybuffer';
+      }
       xhr.onprogress = function (e) {
-        var position = e.loaded;
-        var chunk = xhr.responseText.substring(lastPosition, position);
-        if (chunk.length === 0) {
-          // chrome is not giving us response, cannot use onprogress
-          return;
-        }
-        flushData(chunk, e.total);
+        if (isNotProgressive) return;
+        ondata(new Uint8Array(xhr.response), { loaded: e.loaded, total: e.total });
       };
       xhr.onreadystatechange = function(event) {
         if(xhr.readyState === 2 && onhttpstatus) {
@@ -83,9 +72,9 @@ var BinaryFileReader = (function binaryFileReader() {
           if (xhr.status !== 200 && xhr.status !== 0) {
             onerror(xhr.statusText);
           }
-          var response = xhr.responseText;
-          if (lastPosition < response.length) {
-            flushData(response.substring(lastPosition), response.length);
+          if (isNotProgressive) {
+            var buffer = xhr.response;
+            ondata(new Uint8Array(buffer), { loaded: 0, total: buffer.byteLength });
           }
           if (oncomplete) {
             oncomplete();
