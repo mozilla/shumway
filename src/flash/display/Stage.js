@@ -104,13 +104,20 @@ var StageDefinition = (function () {
 
         var invalidRegion = displayObject._region;
         var currentRegion = displayObject._getRegion();
-        var hasChanged = !invalidRegion ||
+
+        var isVisible = displayObject._stage && displayObject._visible &&
+                        currentRegion.x + currentRegion.width > 0 &&
+                        currentRegion.x < this._stageWidth &&
+                        currentRegion.y + currentRegion.height > 0 &&
+                        currentRegion.y < this._stageHeight;
+
+        var syncQtree = !invalidRegion || !isVisible ||
                          currentRegion.x !== invalidRegion.x ||
                          currentRegion.y !== invalidRegion.y ||
                          currentRegion.width !== invalidRegion.width ||
                          currentRegion.height !== invalidRegion.height;
 
-        if (invalidRegion && (hasChanged || !displayObject.stage)) {
+        if (invalidRegion && syncQtree) {
           var qtree = invalidRegion._qtree;
 
           // TODO: move this into the QuadTree class
@@ -121,11 +128,10 @@ var StageDefinition = (function () {
           this._addRedrawRegion(ctx, invalidRegion);
         }
 
-        if (displayObject._stage &&
-            currentRegion.width && currentRegion.height) {
+        if (isVisible) {
           this._addRedrawRegion(ctx, currentRegion);
 
-          if (hasChanged) {
+          if (syncQtree) {
             this._qtree.insert(currentRegion);
 
             currentRegion.obj = displayObject;
