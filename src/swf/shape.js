@@ -600,10 +600,10 @@ ShapePath.prototype = {
 
     var inside = false;
 
-    var pathX = 0;
-    var pathY = 0;
-    var prevX = 0;
-    var prevY = 0;
+    var fromX = 0;
+    var fromY = 0;
+    var toX = 0;
+    var toY = 0;
     var localX;
     var localY;
     var cpX;
@@ -627,24 +627,24 @@ ShapePath.prototype = {
           dataIndex += 2;
           /* falls through */
         case SHAPE_MOVE_TO:
-          pathX = data[dataIndex++];
-          pathY = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
           if (formOpen &&
-              intersectsLine(x, y, prevX, prevY, formOpenX, formOpenY))
+              intersectsLine(x, y, fromX, fromY, formOpenX, formOpenY))
           {
             inside = !inside;
           }
           formOpen = true;
-          formOpenX = pathX;
-          formOpenY = pathY;
+          formOpenX = toX;
+          formOpenY = toY;
           break;
         case SHAPE_WIDE_LINE_TO:
           dataIndex += 2;
           /* falls through */
         case SHAPE_LINE_TO:
-          pathX = data[dataIndex++];
-          pathY = data[dataIndex++];
-          if (intersectsLine(x, y, prevX, prevY, pathX, pathY))
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          if (intersectsLine(x, y, fromX, fromY, toX, toY))
           {
             inside = !inside;
           }
@@ -652,12 +652,12 @@ ShapePath.prototype = {
         case SHAPE_CURVE_TO:
           cpX = data[dataIndex++];
           cpY = data[dataIndex++];
-          pathX = data[dataIndex++];
-          pathY = data[dataIndex++];
-          if ((cpY > y) === (prevY > y) && (pathY > y) === (prevY > y)) {
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          if ((cpY > y) === (fromY > y) && (toY > y) === (fromY > y)) {
             break;
           }
-          if (prevX >= x && cpX >= x && pathX >= x) {
+          if (fromX >= x && cpX >= x && toX >= x) {
             inside = !inside;
             break;
           }
@@ -666,9 +666,9 @@ ShapePath.prototype = {
           // equation of the form y = ax^2 + bx + c for y.
           // See http://en.wikipedia.org/wiki/Quadratic_equation and
           // http://code.google.com/p/degrafa/source/browse/trunk/Degrafa/com/degrafa/geometry/AdvancedQuadraticBezier.as?r=613#394
-          var c = prevY - y;
-          var b = 2.0 * (cpY - prevY);
-          var a = prevY - 2.0 * cpY + pathY;
+          var c = fromY - y;
+          var b = 2.0 * (cpY - fromY);
+          var a = fromY - 2.0 * cpY + toY;
 
           var discriminant = b * b - 4 * a * c;
           if(discriminant < 0) {
@@ -676,7 +676,7 @@ ShapePath.prototype = {
           }
           var t = -b / (a + a);
           if (discriminant === 0) {
-            if (quadraticXAtT(t, prevX, cpX, pathX) > x) {
+            if (quadraticXAtT(t, fromX, cpX, toX) > x) {
               inside = !inside;
             }
             break;
@@ -684,11 +684,11 @@ ShapePath.prototype = {
           var dRoot = Math.sqrt(discriminant);
           a = 1/(a + a);
           t = (dRoot - b) * a;
-          if (quadraticXAtT(t, prevX, cpX, pathX) > x) {
+          if (quadraticXAtT(t, fromX, cpX, toX) > x) {
             inside = !inside;
           }
           t = (-b - dRoot) * a;
-          if (quadraticXAtT(t, prevX, cpX, pathX) > x) {
+          if (quadraticXAtT(t, fromX, cpX, toX) > x) {
             inside = !inside;
           }
           break;
@@ -697,19 +697,19 @@ ShapePath.prototype = {
           cpY = data[dataIndex++];
           var cp2X = data[dataIndex++];
           var cp2Y = data[dataIndex++];
-          pathX = data[dataIndex++];
-          pathY = data[dataIndex++];
-          if ((cpY > y) === (prevY > y) && (cp2Y > y) === (prevY > y) &&
-              (pathY > y) === (prevY > y))
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          if ((cpY > y) === (fromY > y) && (cp2Y > y) === (fromY > y) &&
+              (toY > y) === (fromY > y))
           {
             break;
           }
-          if (prevX >= x && cpX >= x && cp2X >= x && pathX >= x) {
+          if (fromX >= x && cpX >= x && cp2X >= x && toX >= x) {
             inside = !inside;
             break;
           }
-          var roots = cubicXAtY(prevX, prevY, cpX, cpY, cp2X, cp2Y,
-                                pathX, pathY, y);
+          var roots = cubicXAtY(fromX, fromY, cpX, cpY, cp2X, cp2Y,
+                                toX, toY, y);
           for (var i = roots.length; i--;) {
             if (roots[i] >= x) {
               inside = !inside;
@@ -719,28 +719,28 @@ ShapePath.prototype = {
         case SHAPE_ROUND_CORNER:
           cpX = data[dataIndex++];
           cpY = data[dataIndex++];
-          pathX = data[dataIndex++];
-          pathY = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
           rX = data[dataIndex++];
           rY = data[dataIndex++];
           // The round corner being fully to the left, top or bottom of x,y
           // means it's irrelevant.
-          if ((pathY > y) === (prevY > y) || prevX < x && pathX < x) {
+          if ((toY > y) === (fromY > y) || fromX < x && toX < x) {
             break;
           }
           // The round corner crossing y and being fully to the right means
           // it crosses the ray.
-          if (prevX >= x && pathX >= x) {
+          if (fromX >= x && toX >= x) {
             inside = !inside;
             break;
           }
           // we want the ellipse's center
-          if ((pathX > prevX) === (pathY > prevY)) {
-            cp2X = prevX;
-            cp2Y = pathY;
+          if ((toX > fromX) === (toY > fromY)) {
+            cp2X = fromX;
+            cp2Y = toY;
           } else {
-            cp2X = pathX;
-            cp2Y = prevY;
+            cp2X = toX;
+            cp2Y = fromY;
           }
           localX = x - cp2X;
           localY = y - cp2Y;
@@ -754,11 +754,11 @@ ShapePath.prototype = {
           }
           break;
         case SHAPE_CIRCLE:
-          pathX = data[dataIndex++];
-          pathY = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
           var r = data[dataIndex++];
-          localX = x - pathX;
-          localY = y - pathY;
+          localX = x - toX;
+          localY = y - toY;
           if (localX * localX + localY * localY < r * r) {
             inside = !inside;
           }
@@ -773,8 +773,8 @@ ShapePath.prototype = {
           if (localX * localX / (rX * rX) + localY * localY / (rY * rY) <= 1) {
             inside = !inside;
           }
-          pathX = cpX + rX;
-          pathY = cpY;
+          toX = cpX + rX;
+          toY = cpY;
           break;
         default:
           if (!inWorker) {
@@ -782,12 +782,12 @@ ShapePath.prototype = {
                          commands[commandIndex]);
           }
       }
-      prevX = pathX;
-      prevY = pathY;
+      fromX = toX;
+      fromY = toY;
     }
 
     if (formOpen &&
-        intersectsLine(x, y, prevX, prevY, formOpenX, formOpenY))
+        intersectsLine(x, y, fromX, fromY, formOpenX, formOpenY))
     {
       inside = !inside;
     }
@@ -886,46 +886,10 @@ ShapePath.prototype = {
       this.strokeBounds = bounds;
     }
     return bounds;
-  },
-  toString: function() {
-    var out = 'ShapePath [\n';
-
-    var data = this.data;
-    var dataIndex = 0;
-    this.commands.forEach(function(command) {
-      switch (command) {
-        case SHAPE_MOVE_TO:
-          out += '\tmoveTo(' + data[dataIndex++] + ', ' + data[dataIndex++] + ');\n';
-          break;
-        case SHAPE_LINE_TO:
-          out += '\tlineTo(' + data[dataIndex++] + ', ' + data[dataIndex++] + ');\n';
-          break;
-        case SHAPE_CURVE_TO:
-          out += '\tquadraticCurveTo(' + data[dataIndex++] + ', ' +
-                 data[dataIndex++] + ', ' + data[dataIndex++] + ', ' +
-                 data[dataIndex++] + ');\n';
-          break;
-        case SHAPE_CURVE_TO:
-          out += '\tquadraticCurveTo(' + data[dataIndex++] + ', ' +
-                 data[dataIndex++] + ', ' + data[dataIndex++] + ', ' +
-                 data[dataIndex++] + ');\n';
-          break;
-      }
-    });
-
-    if (this.fillStyle && this.fillStyle.color) {
-      out += '\tfillStyle = ' + rgbaObjToStr(this.fillStyle.color) + ';\n';
-    }
-    if (this.lineStyle && this.lineStyle.color) {
-      out += '\tstrokeStyle = ' + rgbaObjToStr(this.lineStyle.color) + ';\n';
-    }
-
-    return out + ']';
   }
 };
 
 // See http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-// for the line intersection algorithm.
 function intersectsLine(x, y, x1, y1, x2, y2) {
   return (y2 > y) !== (y1 > y) &&
          x < (x1 - x2) * (y - y2) / (y1 - y2) + x2;
@@ -937,11 +901,6 @@ function quadraticXAtT(t, fromX, cpX, toX) {
 }
 
 function cubicXAtY(x0, y0, cx, cy, cx1, cy1, x1, y1, y) {
-  // the necessary y-coordinates are the intersection of the curve with the line y = y.  The curve is generated in the
-  // form c0 + c1*t + c2*t^2 + c3*t^3, so the intersection satisfies the equation
-  // By(t) = y or By(t) - y = 0, or c0y-y + c1y*t + c2y*t^2 + c3y*t^3 = 0.
-
-
   var dX = 3.0 * (cx - x0);
   var dY = 3.0 * (cy - y0);
 
@@ -950,7 +909,7 @@ function cubicXAtY(x0, y0, cx, cy, cx1, cy1, x1, y1, y) {
 
   var c3X = x1 - x0 - dX - bX;
   var c3Y = y1 - y0 - dY - bY;
-  // Find one root - any root - then factor out (t-r) to get a quadratic poly. for the remaining roots
+  // Find one root - any root - then factor out (t-r) to get a quadratic poly.
   function f(t) {
     return t * (dY + t * (bY + t * c3Y)) + y0 - y;
   }
@@ -964,21 +923,21 @@ function cubicXAtY(x0, y0, cx, cy, cx1, cy1, x1, y1, y) {
 
     return x0 + t * (dX + t * (bX + t * c3X));
   }
-  // bisect the specified range to isolate an interval with a root.
-    function bisectCubicBezierRange(f, l, r, limit) {
-      if (Math.abs(r - l) <= limit) {
-        return;
-      }
-
-      var middle = 0.5 * (l + r);
-      if (f(l) * f(r) <= 0) {
-        left = l;
-        right = r;
-        return;
-      }
-      bisectCubicBezierRange(f, l, middle, limit);
-      bisectCubicBezierRange(f, middle, r, limit);
+  // Bisect the specified range to isolate an interval with a root.
+  function bisectCubicBezierRange(f, l, r, limit) {
+    if (Math.abs(r - l) <= limit) {
+      return;
     }
+
+    var middle = 0.5 * (l + r);
+    if (f(l) * f(r) <= 0) {
+      left = l;
+      right = r;
+      return;
+    }
+    bisectCubicBezierRange(f, l, middle, limit);
+    bisectCubicBezierRange(f, middle, r, limit);
+  }
 
   // some curves that loop around on themselves may require bisection
   var left = 0;
@@ -1003,7 +962,7 @@ function cubicXAtY(x0, y0, cx, cy, cx1, cy1, x1, y1, y) {
   var b = t0 * a + bY;
   var c = t0 * b + dY;
 
-  // process the quadratic for the remaining two possible roots
+  // Process the quadratic for the remaining two possible roots
   var d = b * b - 4 * a * c;
   if (d < 0) {
     return result;
