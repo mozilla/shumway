@@ -190,7 +190,7 @@ function parseQueryString(qs) {
  * when the page loads.
  */
 if (remoteFile) {
-  document.getElementById('openFileToolbar').setAttribute('hidden', true);
+  document.getElementById('openFile').setAttribute('hidden', true);
   executeFile(remoteFile, null, parseQueryString(window.location.search));
 }
 
@@ -208,7 +208,7 @@ if (yt) {
 
     var swf = config.url;
 
-    document.getElementById('openFileToolbar').setAttribute('hidden', true);
+    document.getElementById('openFile').setAttribute('hidden', true);
     executeFile(swf, null, config.args);
   };
   xhr.send(null);
