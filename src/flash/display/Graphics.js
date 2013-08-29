@@ -186,9 +186,10 @@ var GraphicsDefinition = (function () {
             }
           }
         }
-        if (formOpen) {
-          ctx.lineTo(formOpenX, formOpenY);
-        }
+        // TODO: enable in-path line-style changes
+//        if (formOpen) {
+//          ctx.lineTo(formOpenX, formOpenY);
+//        }
         if (!clip) {
           var fillStyle = path.fillStyle;
           if (fillStyle) {
@@ -205,7 +206,8 @@ var GraphicsDefinition = (function () {
           }
           var lineStyle = path.lineStyle;
           if (lineStyle) {
-            ctx.lineWidth = lineStyle.width;
+            // Flash's lines are always at least 1px
+            ctx.lineWidth = Math.max(lineStyle.width, 1);
             ctx.strokeStyle = lineStyle.style;
             ctx.lineCap = lineStyle.lineCap;
             ctx.lineJoin = lineStyle.lineJoin;
