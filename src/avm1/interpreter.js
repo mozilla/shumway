@@ -253,6 +253,10 @@ function as2ResolveProperty(obj, name) {
   return null;
 }
 
+function isAvm2Class(obj) {
+  typeof obj === 'object' && obj !== null && 'instanceConstructor' in obj;
+}
+
 function as2CreatePrototypeProxy(obj) {
   var prototype = obj.asGetPublicProperty('prototype');
   if (typeof Proxy === 'undefined') {
@@ -547,17 +551,17 @@ function interpretActions(actionsData, scopeContainer,
     if (target) {
       return target.obj.asGetPublicProperty(target.name);
     }
-    // trying movie clip children (if object is a MovieClip)
-    var mc = isAS2MovieClip(defaultTarget) &&
-             defaultTarget.$lookupChild(variableName);
-    if (mc) {
-      return mc;
-    }
     for (var p = scopeContainer; p; p = p.next) {
       var resolvedName = as2ResolveProperty(p.scope, variableName);
       if (resolvedName !== null) {
         return p.scope.asGetPublicProperty(resolvedName);
       }
+    }
+    // trying movie clip children (if object is a MovieClip)
+    var mc = isAS2MovieClip(defaultTarget) &&
+             defaultTarget.$lookupChild(variableName);
+    if (mc) {
+      return mc;
     }
   }
 
@@ -678,7 +682,6 @@ function interpretActions(actionsData, scopeContainer,
     stackItemsExpected = 0;
 
     actionTracer.print(stream.position, actionCode, stack);
-
     var frame, type, count, index, target, method, constr, codeSize, offset;
     var name, variableName, methodName, functionName, targetName;
     var paramName, resolvedName, objectName;
@@ -1131,7 +1134,7 @@ function interpretActions(actionsData, scopeContainer,
           }
           method = obj;
         }
-        if (typeof obj === 'object' && 'instanceConstructor' in obj) {
+        if (isAvm2Class(obj)) {
           result = construct(obj, args);
         } else {
           result = Object.create(method.prototype || Object.prototype);
@@ -1148,7 +1151,7 @@ function interpretActions(actionsData, scopeContainer,
         result = createBuiltinType(obj, args);
         if (typeof result === 'undefined') {
           // obj in not a built-in type
-          if (typeof obj === 'object' && 'instanceConstructor' in obj) {
+          if (isAvm2Class(obj)) {
             result = construct(obj, args);
           } else {
             result = Object.create(obj.prototype || Object.prototype);
@@ -1341,7 +1344,7 @@ function interpretActions(actionsData, scopeContainer,
       case 0x69: // ActionExtends
         var constrSuper = stack.pop();
         constr = stack.pop();
-        obj = Object.create(constrSuper.prototype, {
+        obj = Object.create(constrSuper.asGetPublicProperty('prototype'), {
           constructor: { value: constr, enumerable: false }
         });
         constr.__super = constrSuper;
