@@ -234,7 +234,9 @@ var DisplayObjectContainerDefinition = (function () {
       }
       this._destroyed = true;
       this._children.forEach(function (child) {
-        child.destroy();
+        if (child.destroy) {
+          child.destroy();
+        }
       });
       this.cleanupBroadcastListeners();
     }
