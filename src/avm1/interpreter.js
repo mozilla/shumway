@@ -491,6 +491,8 @@ function interpretActions(actionsData, scopeContainer,
       ownerClass = class_;
     };
 
+    fn.instanceConstructor = fn;
+    fn.debugName = 'avm1 ' + (functionName || '<function>');
     if (functionName) {
       fn.name = functionName;
     }
