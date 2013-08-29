@@ -10,6 +10,9 @@ body {
 *[hidden] {
   display: none;
 }
+*:focus {
+  outline: none;
+}
 
 body.simple {
   text-align: center;
@@ -60,9 +63,6 @@ body.simple #xstats {
 #timerInfo {
   line-height: 1.6em;
   padding: 3px;
-}
-canvas:focus {
-  outline: none;
 }
 
 #debugInfoContainer {
