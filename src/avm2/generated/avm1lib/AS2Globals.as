@@ -49,8 +49,21 @@ package avm1lib {
   public dynamic class AS2Globals {
     public var _global;
 
+    public var flash: Object;
+
     public function AS2Globals() {
-      _global = this;
+      this._global = this;
+      this.flash = createFlashObject();
+    }
+
+    private function createFlashObject() : Object {
+      return {
+        _MovieClip: AS2MovieClip,
+        display: {},
+        geom: {},
+        filters: {},
+        text: {}
+      };
     }
 
     public function $asfunction(link) {
