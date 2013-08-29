@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global initDefaultListeners */
+/*global initDefaultListeners, AS2Context */
 var AS2MovieClipDefinition = (function () {
   var def = {
     __class__: 'avm1lib.AS2MovieClip',
@@ -30,10 +30,26 @@ var AS2MovieClipDefinition = (function () {
       return this.$nativeObject._duplicate(name, depth, initObject);
     },
     _constructSymbol: function constructSymbol(symbolId, name) {
-      notImplemented("AS2MovieClip._constructSymbol");
+      var theClass = AS2Context.instance.classes && AS2Context.instance.classes[name];
+      if (!theClass) {
+        return;
+      }
+
+      var mc = new flash.display.MovieClip();
+      mc._avm1SymbolClass = theClass;
+      this.$nativeObject.addChild(mc);
+      return mc._getAS2Object();
     },
     _callFrame: function callFrame(frame) {
       this.$nativeObject._callFrame(frame);
+    },
+    init: function init(nativeMovieClip) {
+      if (!nativeMovieClip) {
+        return; // delaying initialization, see also _constructSymbol
+      }
+      Object.defineProperty(this, '$nativeObject', { value: nativeMovieClip });
+      nativeMovieClip.$as2Object = this;
+      initDefaultListeners(this);
     },
   };
 
@@ -47,11 +63,7 @@ var AS2MovieClipDefinition = (function () {
             return this.$nativeObject;
           }
         },
-        init: function init(nativeMovieClip) {
-          Object.defineProperty(this, '$nativeObject', { value: nativeMovieClip });
-          nativeMovieClip.$as2Object = this;
-          initDefaultListeners(this);
-        },
+        init: def.init,
         _insertChildAtDepth: def._insertChildAtDepth,
         _duplicate: def._duplicate,
         _constructSymbol: def._constructSymbol,
