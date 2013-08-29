@@ -80,6 +80,12 @@ var EventDispatcherDefinition = (function () {
 
       for (var i = 0; i < queue.length; i++) {
         var item = queue[i];
+        var methodInfo = item.handleEvent.methodInfo;
+        if (methodInfo) {
+          if (methodInfo.parameters.length > 0) {
+            // NOTE: console.info("Event isUsed: " + methodInfo.parameters[0].isUsed);
+          }
+        }
         item.handleEvent(event);
         if (event._stopImmediatePropagation) {
           break;
