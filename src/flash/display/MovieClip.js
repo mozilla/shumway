@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global MP3DecoderSession, avm1lib, $DEBUG */
+/*global MP3DecoderSession, avm1lib, construct, $DEBUG */
 
 var MovieClipDefinition = (function () {
   var def = {
@@ -472,7 +472,20 @@ var MovieClipDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        new avm1lib.AS2MovieClip(this);
+        if (this._avm1SymbolClass) {
+          // hacking wrapper to pass/initialize AS2MovieClip with nativeObject before AS2 constructor is run
+          var nativeObject = this, nativeObjectClass = this._avm1SymbolClass;
+          var constructWrapper = function () {
+            this.init(nativeObject);
+            nativeObjectClass.call(this);
+          };
+          constructWrapper.prototype = Object.create(nativeObjectClass.prototype);
+          constructWrapper.instanceConstructor = constructWrapper;
+          constructWrapper.debugName = 'avm1 <symbol constructor wrapper>';
+          construct(constructWrapper);
+        } else {
+          new avm1lib.AS2MovieClip(this);
+        }
       }
       return this.$as2Object;
     },

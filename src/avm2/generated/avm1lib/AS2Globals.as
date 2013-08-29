@@ -49,8 +49,21 @@ package avm1lib {
   public dynamic class AS2Globals {
     public var _global;
 
+    public var flash: Object;
+
     public function AS2Globals() {
-      _global = this;
+      this._global = this;
+      this.flash = createFlashObject();
+    }
+
+    private function createFlashObject() : Object {
+      return {
+        _MovieClip: AS2MovieClip,
+        display: {},
+        geom: {},
+        filters: {},
+        text: {}
+      };
     }
 
     public function $asfunction(link) {
@@ -322,25 +335,18 @@ package avm1lib {
     public var Rectangle : Class = flash.geom.Rectangle;
     public var TextFormat : Class = flash.text.TextFormat;
 
+    private static native function _addInternalClasses(proto: Object): void;
+
     {
-      AS2Utils.addProperty(prototype, 'length', function length(expression) {
-        return ('' + expression).length; // ASCII Only?
-      }, null);
-
-      prototype['Object'] = Object;
-      prototype['Function'] = Function;
-      prototype['Array'] = Array;
-      prototype['Number'] = Number;
-      prototype['Math'] = Math;
-      prototype['Boolean'] = Boolean;
-      prototype['Date'] = Date;
-      prototype['RegExp'] = RegExp;
-      prototype['String'] = String;
-
+      AS2Utils.addProperty(prototype, 'length', __string_length, null);
+      _addInternalClasses(prototype);
     }
   }
 }
 
+function __string_length(expression) {
+  return ('' + expression).length; // ASCII Only?
+}
 
 var PropertiesIndexMap: Array = [
   '_x', '_y', '_xscale', '_yscale', '_currentframe', '_totalframes', '_alpha',

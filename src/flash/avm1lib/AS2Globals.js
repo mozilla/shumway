@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2Context, Multiname */
+/*global AS2Context, Multiname, Stubs */
 var AS2GlobalsDefinition = (function () {
   var def = {
     __class__: 'avm1lib.AS2Globals',
@@ -44,6 +44,19 @@ var AS2GlobalsDefinition = (function () {
           var trace = avm2.applicationDomain.getProperty(
             Multiname.fromSimpleName('trace'), true, true);
           trace(expression);
+        }
+      },
+      static: {
+        _addInternalClasses: function _addInternalClasses(proto) {
+          proto.asSetPublicProperty('Object', Stubs.Object);
+          proto.asSetPublicProperty('Function', Stubs.Function);
+          proto.asSetPublicProperty('Array', Stubs.Array);
+          proto.asSetPublicProperty('Number', Stubs.Number);
+          proto.asSetPublicProperty('Math', avm2.systemDomain.getClass('Math')); // Cannot create a stub for Math
+          proto.asSetPublicProperty('Boolean', Stubs.Boolean);
+          proto.asSetPublicProperty('Date', Stubs.Date);
+          proto.asSetPublicProperty('RegExp', Stubs.RegExp);
+          proto.asSetPublicProperty('String', Stubs.String);
         }
       }
     },
