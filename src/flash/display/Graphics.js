@@ -186,6 +186,9 @@ var GraphicsDefinition = (function () {
             }
           }
         }
+        if (formOpen) {
+          ctx.lineTo(formOpenX, formOpenY);
+        }
         if (!clip) {
           var fillStyle = path.fillStyle;
           if (fillStyle) {
@@ -245,7 +248,7 @@ var GraphicsDefinition = (function () {
     },
     cubicCurveTo: function (cp1x, cp1y, cp2x, cp2y, x, y) {
       this._invalidate();
-      this._currentPath.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
+      this._currentPath.cubicCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
     },
     curveTo: function (cpx, cpy, x, y) {
       this._invalidate();

@@ -615,18 +615,10 @@ ShapePath.prototype = {
     var formOpenX = 0;
     var formOpenY = 0;
 
-    function intersectsLine(x, y, x1, y1, x2, y2) {
-      var intersects = (y2 > y) !== (y1 > y) &&
-             x < (x1 - x2) * (y - y2) / (y1 - y2) + x2;
-      return intersects;
-    }
-
     // Rough outline of the algorithm's mode of operation:
     // from x,y an infinite ray to the right is "cast". All operations are then
     // tested for intersections with this ray, where each intersection means
     // switching between being outside and inside the shape.
-    // See http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
-    // for the line intersection algorithm.
     for (var commandIndex = 0, dataIndex = 0; commandIndex < length;
          commandIndex++)
     {
@@ -665,6 +657,40 @@ ShapePath.prototype = {
           if ((cpY > y) === (prevY > y) && (pathY > y) === (prevY > y)) {
             break;
           }
+          if (prevX >= x && cpX >= x && pathX >= x) {
+            inside = !inside;
+            break;
+          }
+
+          // Finding the intersections with our ray means solving a quadratic
+          // equation of the form y = ax^2 + bx + c for y.
+          // See http://en.wikipedia.org/wiki/Quadratic_equation and
+          // http://code.google.com/p/degrafa/source/browse/trunk/Degrafa/com/degrafa/geometry/AdvancedQuadraticBezier.as?r=613#394
+          var c = prevY - y;
+          var b = 2.0 * (cpY - prevY);
+          var a = prevY - 2.0 * cpY + pathY;
+
+          var discriminant = b * b - 4 * a * c;
+          if(discriminant < 0) {
+            break;
+          }
+          var t = -b / (a + a);
+          if (discriminant === 0) {
+            if (quadraticXAtT(t, prevX, cpX, pathX) > x) {
+              inside = !inside;
+            }
+            break;
+          }
+          var dRoot = Math.sqrt(discriminant);
+          a = 1/(a + a);
+          t = (dRoot - b) * a;
+          if (quadraticXAtT(t, prevX, cpX, pathX) > x) {
+            inside = !inside;
+          }
+          t = (-b - dRoot) * a;
+          if (quadraticXAtT(t, prevX, cpX, pathX) > x) {
+            inside = !inside;
+          }
           break;
         case SHAPE_CUBIC_CURVE_TO:
           cpX = data[dataIndex++];
@@ -677,6 +703,9 @@ ShapePath.prototype = {
               (pathY > y) === (prevY > y))
           {
             break;
+          }
+          if (prevX >= x && cpX >= x && cp2X >= x && pathX >= x) {
+            inside = !inside;
           }
           break;
         case SHAPE_ROUND_CORNER:
@@ -886,6 +915,18 @@ ShapePath.prototype = {
     return out + ']';
   }
 };
+
+function quadraticXAtT(t, fromX, cpX, toX) {
+  var tInvert = 1 - t;
+  return tInvert * tInvert * fromX + 2 * tInvert * t * cpX + t * t * toX;
+}
+
+// See http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+// for the line intersection algorithm.
+function intersectsLine(x, y, x1, y1, x2, y2) {
+  return (y2 > y) !== (y1 > y) &&
+         x < (x1 - x2) * (y - y2) / (y1 - y2) + x2;
+}
 
 function extendBoundsByPoint(bounds, x, y) {
   if (x < bounds.xMin) {
