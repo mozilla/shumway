@@ -58,39 +58,46 @@ var Terminal = (function () {
     this.canvas.focus();
     this.context = canvas.getContext('2d');
     this.context.fillStyle = "#FFFFFF";
-    this.fontSize = 11;
+    this.fontSize = 10;
     this.lineIndex = 0;
     this.pageIndex = 0;
     this.columnIndex = 0;
     this.selection = null;
-    this.lineHeight = 16;
-    this.pageLineCount = Math.floor(this.canvas.height / this.lineHeight) - 1;
+    this.lineHeight = 15;
+    this.hasFocus = false;
+    this.pageLineCount = Math.floor(this.canvas.height / this.lineHeight);
 
-    // HACK support of HiDPI displays
-    this.pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
-    this.pixelRatio = 1;
-    if (this.pixelRatio > 1) {
-      var cssScale = 'scale(' + (1 / this.pixelRatio) + ', ' + (1 / this.pixelRatio) + ')';
-      canvas.setAttribute('style', '-moz-transform: ' + cssScale + ';' +
-        '-webkit-transform: ' + cssScale + ';' +
-        'transform: ' + cssScale + ';' +
-        '-moz-transform-origin: 0% 0%;' +
-        '-webkit-transform-origin: 0% 0%;' +
-        'transform-origin: 0% 0%;');
+    // Support for HiDPI displays
+    var devicePixelRatio = window.devicePixelRatio || 1;
+    var backingStoreRatio = this.context.webkitBackingStorePixelRatio ||
+                            this.context.mozBackingStorePixelRatio ||
+                            this.context.msBackingStorePixelRatio ||
+                            this.context.oBackingStorePixelRatio ||
+                            this.context.backingStorePixelRatio || 1;
+
+    if (devicePixelRatio !== backingStoreRatio) {
+      // Upscale the canvas if the two ratios don't match
+      var ratio = devicePixelRatio / backingStoreRatio;
+      var oldWidth = this.canvas.width;
+      var oldHeight = this.canvas.height;
+      this.canvas.width = oldWidth * ratio;
+      this.canvas.height = oldHeight * ratio;
+      this.canvas.style.width = oldWidth + 'px';
+      this.canvas.style.height = oldHeight + 'px';
+      // Now scale the context to counter the fact that we've manually scaled our canvas element
+      this.context.scale(ratio, ratio);
     }
 
-    this.lineHeight *= this.pixelRatio;
-    this.canvas.width *= this.pixelRatio;
-    this.canvas.height *= this.pixelRatio;
-    this.fontSize *= this.pixelRatio;
-    this.context.font = this.fontSize + 'px Consolas';
-    this.textMarginLeft = 4 * this.pixelRatio;
-    this.textMarginBottom = 4 * this.pixelRatio;
+    this.context.font = this.fontSize + 'px Consolas, "Liberation Mono", Courier, monospace';
+    this.textMarginLeft = 4;
+    this.textMarginBottom = 4;
     this.refreshFrequency = 0;
 
     this.buffer = new Buffer();
 
     canvas.addEventListener('keydown', onKeyDown.bind(this), false);
+    canvas.addEventListener('focus', onFocusIn.bind(this), false);
+    canvas.addEventListener('blur', onFocusOut.bind(this), false);
 
     var PAGE_UP = 33;
     var PAGE_DOWN = 34;
@@ -108,6 +115,13 @@ var Terminal = (function () {
     this.showLineNumbers = true;
     this.showLineTime = false;
     this.showLineCounter = false;
+
+    function onFocusIn(event) {
+      this.hasFocus = true;
+    }
+    function onFocusOut(event) {
+      this.hasFocus = false;
+    }
 
     function onKeyDown(event) {
       var delta = 0;
@@ -211,7 +225,7 @@ var Terminal = (function () {
       lineCount = this.buffer.length - this.pageIndex;
     }
 
-    var charSize = 5 * this.pixelRatio;
+    var charSize = 5;
     var lineNumberMargin = this.textMarginLeft;
     var lineTimeMargin = lineNumberMargin + (this.showLineNumbers ? String(this.buffer.length).length * charSize : 0);
     var lineRepeatMargin = lineTimeMargin + (this.showLineTime ? charSize * 8 : 2 * charSize);
@@ -240,7 +254,7 @@ var Terminal = (function () {
         this.context.fillRect(0, y, w, h);
         this.context.fillStyle = selectionTextColor;
       }
-      if (lineIndex === this.lineIndex) {
+      if (this.hasFocus && lineIndex === this.lineIndex) {
         this.context.fillStyle = selectionColor;
         this.context.fillRect(0, y, w, h);
         this.context.fillStyle = selectionTextColor;
