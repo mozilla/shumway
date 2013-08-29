@@ -42,7 +42,7 @@ var AVM2 = (function () {
     var maxDepth = 20;
     var domain;
     for (var i = 0; i < maxDepth && caller; i++) {
-      var mi = caller[VM_METHOD_INFO];
+      var mi = caller.methodInfo;
       if (mi) {
         domain = mi.abc.domain;
         break;

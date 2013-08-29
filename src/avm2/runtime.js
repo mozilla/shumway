@@ -47,7 +47,6 @@ var VM_NEXT_NAME = "vm next name";
 var VM_NEXT_NAME_INDEX = "vm next name index";
 var VM_IS_CLASS = "vm is class";
 var VM_OPEN_METHOD_PREFIX = "open_";
-var VM_METHOD_INFO = "method info";
 
 var VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
@@ -902,6 +901,7 @@ function bindFreeMethodScope(methodInfo, scope) {
       return fn.apply(global, arguments);
     };
   }
+  boundMethod.methodInfo = methodInfo;
   boundMethod.instanceConstructor = boundMethod;
   methodInfo.lastBoundMethod = {
     scope: scope,
@@ -1505,6 +1505,7 @@ function makeMemoizer(qn, target) {
       return this[qn];
     }
     mc = bindSafely(target.value, this);
+    mc.methodInfo = target.value.methodInfo;
     defineReadOnlyProperty(mc, Multiname.getPublicQualifiedName("prototype"), null);
     defineReadOnlyProperty(this, qn, mc);
     return mc;
@@ -1578,7 +1579,7 @@ function createFunction(mi, scope, hasDynamicScope, breakpoint) {
     mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint);
   }
 
-  mi.freeMethod[VM_METHOD_INFO] = mi;
+  mi.freeMethod.methodInfo = mi;
 
   if (hasDynamicScope) {
     return bindFreeMethodScope(mi, scope);
