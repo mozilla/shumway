@@ -220,8 +220,7 @@ if (simpleMode) {
 }
 
 function showMessage(msg) {
-  document.getElementById('message').textContent = msg;
-  document.getElementById('message').parentElement.removeAttribute('hidden');
+  document.getElementById('message').textContent = "(" + msg + ")";
 }
 
 function executeFile(file, buffer, movieParams) {
