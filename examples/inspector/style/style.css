@@ -48,6 +48,10 @@ body.simple #xstats {
   left: 0;
 }
 
+#message {
+  padding-left: 6px;
+  opacity: 0.7;
+}
 #openFile {
   float: right;
 }
