@@ -706,6 +706,14 @@ ShapePath.prototype = {
           }
           if (prevX >= x && cpX >= x && cp2X >= x && pathX >= x) {
             inside = !inside;
+            break;
+          }
+          var roots = cubicXAtY(prevX, prevY, cpX, cpY, cp2X, cp2Y,
+                                pathX, pathY, y);
+          for (var i = roots.length; i--;) {
+            if (roots[i] >= x) {
+              inside = !inside;
+            }
           }
           break;
         case SHAPE_ROUND_CORNER:
@@ -916,16 +924,194 @@ ShapePath.prototype = {
   }
 };
 
-function quadraticXAtT(t, fromX, cpX, toX) {
-  var tInvert = 1 - t;
-  return tInvert * tInvert * fromX + 2 * tInvert * t * cpX + t * t * toX;
-}
-
 // See http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
 // for the line intersection algorithm.
 function intersectsLine(x, y, x1, y1, x2, y2) {
   return (y2 > y) !== (y1 > y) &&
          x < (x1 - x2) * (y - y2) / (y1 - y2) + x2;
+}
+
+function quadraticXAtT(t, fromX, cpX, toX) {
+  var tInvert = 1 - t;
+  return tInvert * tInvert * fromX + 2 * tInvert * t * cpX + t * t * toX;
+}
+
+function cubicXAtY(x0, y0, cx, cy, cx1, cy1, x1, y1, y) {
+  // the necessary y-coordinates are the intersection of the curve with the line y = y.  The curve is generated in the
+  // form c0 + c1*t + c2*t^2 + c3*t^3, so the intersection satisfies the equation
+  // By(t) = y or By(t) - y = 0, or c0y-y + c1y*t + c2y*t^2 + c3y*t^3 = 0.
+
+
+  var dX = 3.0 * (cx - x0);
+  var dY = 3.0 * (cy - y0);
+
+  var bX = 3.0 * (cx1 - cx) - dX;
+  var bY = 3.0 * (cy1 - cy) - dY;
+
+  var c3X = x1 - x0 - dX - bX;
+  var c3Y = y1 - y0 - dY - bY;
+  // Find one root - any root - then factor out (t-r) to get a quadratic poly. for the remaining roots
+  function f(t) {
+    return t * (dY + t * (bY + t * c3Y)) + y0 - y;
+  }
+  function pointAt(t)
+  {
+    if (t < 0) {
+      t = 0;
+    } else if (t > 1) {
+      t = 1;
+    }
+
+    return x0 + t * (dX + t * (bX + t * c3X));
+  }
+  // bisect the specified range to isolate an interval with a root.
+    function bisectCubicBezierRange(f, l, r, limit) {
+      if (Math.abs(r - l) <= limit) {
+        return;
+      }
+
+      var middle = 0.5 * (l + r);
+      if (f(l) * f(r) <= 0) {
+        left = l;
+        right = r;
+        return;
+      }
+      bisectCubicBezierRange(f, l, middle, limit);
+      bisectCubicBezierRange(f, middle, r, limit);
+    }
+
+  // some curves that loop around on themselves may require bisection
+  var left = 0;
+  var right = 1;
+  bisectCubicBezierRange(f, 0, 1, 0.05);
+
+  // experiment with tolerance - but not too tight :)
+  var t0 = findRoot(left, right, f, 50, 0.000001);
+  var evalResult = Math.abs(f(t0));
+  if (evalResult > 0.00001) {
+    return [];
+  }
+
+  var result = [];
+  if (t0 <= 1) {
+    result.push(pointAt(t0));
+  }
+
+  // Factor theorem: t-r is a factor of the cubic polynomial if r is a root.
+  // Use this to reduce to a quadratic poly. using synthetic division
+  var a = c3Y;
+  var b = t0 * a + bY;
+  var c = t0 * b + dY;
+
+  // process the quadratic for the remaining two possible roots
+  var d = b * b - 4 * a * c;
+  if (d < 0) {
+    return result;
+  }
+
+  d = Math.sqrt(d);
+  a = 1 / (a + a);
+  var t1 = (d - b) * a;
+  var t2 = (-b - d) * a;
+
+  if (t1 >= 0 && t1 <= 1) {
+    result.push(pointAt(t1));
+  }
+
+  if (t2 >= 0 && t2 <= 1) {
+    result.push(pointAt(t2));
+  }
+
+  return result;
+}
+function findRoot(x0, x2, f, maxIterations, epsilon) {
+  var x1;
+  var y0;
+  var y1;
+  var y2;
+  var b;
+  var c;
+  var y10;
+  var y20;
+  var y21;
+  var xm;
+  var ym;
+  var temp;
+
+  var xmlast = x0;
+  y0 = f(x0);
+
+  if (y0 === 0) {
+    return x0;
+  }
+
+  y2 = f(x2);
+  if (y2 === 0) {
+    return x2;
+  }
+
+  if (y2 * y0 > 0) {
+//    dispatchEvent( new Event(ERROR) );
+    return x0;
+  }
+
+  var __iter = 0;
+  for (var i = 0; i < maxIterations; ++i) {
+    __iter++;
+
+    x1 = 0.5 * (x2 + x0);
+    y1 = f(x1);
+    if (y1 === 0) {
+      return x1;
+    }
+
+    if (Math.abs(x1 - x0) < epsilon) {
+      return x1;
+    }
+
+    if (y1 * y0 > 0) {
+      temp = x0;
+      x0 = x2;
+      x2 = temp;
+      temp = y0;
+      y0 = y2;
+      y2 = temp;
+    }
+
+    y10 = y1 - y0;
+    y21 = y2 - y1;
+    y20 = y2 - y0;
+    if (y2 * y20 < 2 * y1 * y10) {
+      x2 = x1;
+      y2 = y1;
+    }
+    else {
+      b = (x1 - x0 ) / y10;
+      c = (y10 - y21) / (y21 * y20);
+      xm = x0 - b * y0 * (1 - c * y1);
+      ym = f(xm);
+      if (ym === 0) {
+        return xm;
+      }
+
+      if (Math.abs(xm - xmlast) < epsilon) {
+        return xm;
+      }
+
+      xmlast = xm;
+      if (ym * y0 < 0) {
+        x2 = xm;
+        y2 = ym;
+      }
+      else {
+        x0 = xm;
+        y0 = ym;
+        x2 = x1;
+        y2 = y1;
+      }
+    }
+  }
+  return x1;
 }
 
 function extendBoundsByPoint(bounds, x, y) {
