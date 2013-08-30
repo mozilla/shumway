@@ -727,7 +727,6 @@ var Class = (function () {
     defineNonEnumerableProperty(cls.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), cls);
     defineReadOnlyProperty(cls.traitsPrototype, "class", cls);
     defineReadOnlyProperty(cls.instanceConstructor, "class", cls);
-    defineObjectShape(cls.traitsPrototype);
   }
 
   Class.prototype = {
