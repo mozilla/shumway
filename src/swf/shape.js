@@ -817,33 +817,91 @@ ShapePath.prototype = {
     bounds.xMax = bounds.xMin;
     bounds.yMax = bounds.yMin;
 
+    var fromX = bounds.xMin;
+    var fromY = bounds.yMin;
+
     for (var commandIndex = 0, dataIndex = 0; commandIndex < length;
          commandIndex++)
     {
-      var x;
-      var y;
+      var toX;
+      var toY;
+      var cpX;
+      var cpY;
       switch (commands[commandIndex]) {
         case SHAPE_WIDE_MOVE_TO:
           dataIndex += 2;
           /* falls through */
         case SHAPE_MOVE_TO:
-          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          extendBoundsByPoint(bounds, toX, toY);
           break;
         case SHAPE_WIDE_LINE_TO:
           dataIndex += 2;
           /* falls through */
         case SHAPE_LINE_TO:
-          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          extendBoundsByPoint(bounds, toX, toY);
           break;
         //TODO: calculate tighter bounds for control points
         case SHAPE_CURVE_TO:
-          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
-          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          extendBoundsByPoint(bounds, toX, toY);
+          var extreme;
+          if (cpX < fromX || cpX > toX) {
+            extreme = quadraticBezierExtreme(fromX, cpX, toX);
+            if (extreme < bounds.xMin) {
+              bounds.xMin = extreme;
+            } else if (extreme > bounds.xMax) {
+              bounds.xMax = extreme;
+            }
+          }
+          if (cpY < fromY || cpY > toY) {
+            extreme = quadraticBezierExtreme(fromY, cpY, toY);
+            if (extreme < bounds.yMin) {
+              bounds.yMin = extreme;
+            } else if (extreme > bounds.yMax) {
+              bounds.yMax = extreme;
+            }
+          }
           break;
         case SHAPE_CUBIC_CURVE_TO:
-          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
-          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
-          extendBoundsByPoint(bounds, data[dataIndex++], data[dataIndex++]);
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          var cp2X = data[dataIndex++];
+          var cp2Y = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          extendBoundsByPoint(bounds, toX, toY);
+          var extremes;
+          var extreme;
+          var i;
+          if (cpX < fromX || cp2X < fromX || cpX > toX || cp2X > toX) {
+            extremes = cubicBezierExtremes(fromX, cpX, cp2X, toX);
+            for (i = extremes.length; i--;) {
+              extreme = extremes[i];
+              if (extreme < bounds.xMin) {
+                bounds.xMin = extreme;
+              } else if (extreme > bounds.xMax) {
+                bounds.xMax = extreme;
+              }
+            }
+          }
+          if (cpY < fromY || cp2Y < fromY || cpY > toY || cp2Y > toY) {
+            extremes = cubicBezierExtremes(fromY, cpY, cp2Y, toY);
+            for (i = extremes.length; i--;) {
+              extreme = extremes[i];
+              if (extreme < bounds.yMin) {
+                bounds.yMin = extreme;
+              } else if (extreme > bounds.yMax) {
+                bounds.yMax = extreme;
+              }
+            }
+          }
           break;
         case SHAPE_ROUND_CORNER:
           // Relying on the fact that round corners never lie outside their
@@ -851,19 +909,21 @@ ShapePath.prototype = {
           dataIndex += 6;
           break;
         case SHAPE_CIRCLE:
-          x = data[dataIndex++];
-          y = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
           var radius = data[dataIndex++];
-          extendBoundsByPoint(bounds, x - radius, y - radius);
-          extendBoundsByPoint(bounds, x + radius, y + radius);
+          extendBoundsByPoint(bounds, toX - radius, toY - radius);
+          extendBoundsByPoint(bounds, toX + radius, toY + radius);
+          toX += radius;
           break;
         case SHAPE_ELLIPSE:
-          x = data[dataIndex++];
-          y = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
           var radiusX = data[dataIndex++];
           var radiusY = data[dataIndex++];
-          extendBoundsByPoint(bounds, x - radiusX, y - radiusY);
-          extendBoundsByPoint(bounds, x + radiusX, y + radiusY);
+          extendBoundsByPoint(bounds, toX - radiusX, toY - radiusY);
+          extendBoundsByPoint(bounds, toX + radiusX, toY + radiusY);
+          toX += radiusX;
           break;
         default:
           if (!inWorker) {
@@ -871,6 +931,8 @@ ShapePath.prototype = {
                          commands[commandIndex]);
           }
       }
+      fromX = toX;
+      fromY = toY;
     }
     this.bounds = bounds;
     if (this.lineStyle) {
@@ -895,9 +957,53 @@ function intersectsLine(x, y, x1, y1, x2, y2) {
          x < (x1 - x2) * (y - y2) / (y1 - y2) + x2;
 }
 
+function quadraticBezier(from, cp, to, t) {
+  var inverseT = 1 - t;
+  return from * inverseT * inverseT + 2 * cp * inverseT * t + to * t * t;
+}
+
+function quadraticBezierExtreme(from, cp, to) {
+  var t = (from - cp) / (from - 2 * cp + to);
+  return quadraticBezier(from, cp, to, t);
+}
+
 function quadraticXAtT(t, fromX, cpX, toX) {
   var tInvert = 1 - t;
   return tInvert * tInvert * fromX + 2 * tInvert * t * cpX + t * t * toX;
+}
+
+function cubicBezier(from, cp, cp2, to, t) {
+  var tSq = t * t;
+  var inverseT = 1 - t;
+  var inverseTSq = inverseT * inverseT;
+  return from * inverseT * inverseTSq + 3 * cp * t * inverseTSq +
+         3 * cp2 * inverseT * tSq + to * t * tSq;
+}
+
+function cubicBezierExtremes(from, cp, cp2, to) {
+  var d1 = cp - from;
+  var d2 = cp2 - cp;
+  // We only ever need d2 * 2
+  d2 *= 2;
+  var d3 = to - cp2;
+  // Prevent division by zero by very slightly changing d3 if that would happen
+  if (d1 + d3 === d2) {
+    d3 *= 1.0001;
+  }
+  var fHead = 2 * d1 - d2;
+  var part1 = d2 - 2 * d1;
+  var fCenter = Math.sqrt(part1 * part1 - 4 * d1 * (d1 - d2 + d3));
+  var fTail = 2 * (d1 - d2 + d3);
+  var t1 = (fHead + fCenter) / fTail;
+  var t2 = (fHead - fCenter ) / fTail;
+  var result = [];
+  if (t1 >= 0 && t1 <= 1) {
+    result.push(cubicBezier(from, cp, cp2, to, t1));
+  }
+  if (t2 >= 0 && t2 <= 1) {
+    result.push(cubicBezier(from, cp, cp2, to, t2));
+  }
+  return result;
 }
 
 function cubicXAtY(x0, y0, cx, cy, cx1, cy1, x1, y1, y) {
