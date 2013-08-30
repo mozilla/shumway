@@ -124,9 +124,14 @@ function appendToTraceTerminal(str, color) {
   }
 }
 
-console.info = console.log = appendToTraceTerminal;
+console.log = function (str) {
+  appendToTraceTerminal([].join.call(arguments, " "));
+};
+console.info = function (str) {
+  appendToTraceTerminal([].join.call(arguments, " "), "#666600");
+};
 console.warn = function (str) {
-  appendToTraceTerminal(str, "#FF6700");
+  appendToTraceTerminal([].join.call(arguments, " "), "#FF6700");
 };
 
 var frameTerminal = new Terminal(document.getElementById("frameTerminal")); frameTerminal.refreshEvery(100);
