@@ -16,11 +16,12 @@
 
 SHUMWAY_ROOT=..
 BUILD_DIR=../build/web
+BUNDLE_DIR=../build/bundle
 EXTENSION_DIR=../build/firefox
 
 build: ensureoutputdir \
-       $(SHUMWAY_ROOT)/src/flash/playerglobal.abc \
-       build-extension
+       $(SHUMWAY_ROOT)/src/flash/playerglobal.abc
+
 	cp -R $(SHUMWAY_ROOT)/LICENSE index.html images $(BUILD_DIR)/
 	# Coping JavaScript content files
 	mkdir $(BUILD_DIR)/src
@@ -31,6 +32,8 @@ build: ensureoutputdir \
 	cp $(SHUMWAY_ROOT)/src/flash/playerglobal.abc $(BUILD_DIR)/src/flash/
 	mkdir $(BUILD_DIR)/src/flash/accessibility
 	cp $(SHUMWAY_ROOT)/src/flash/accessibility/*.js $(BUILD_DIR)/src/flash/accessibility/
+	mkdir $(BUILD_DIR)/src/flash/avm1lib
+	cp $(SHUMWAY_ROOT)/src/flash/avm1lib/*.js $(BUILD_DIR)/src/flash/avm1lib/
 	mkdir $(BUILD_DIR)/src/flash/display
 	cp $(SHUMWAY_ROOT)/src/flash/display/*.js $(BUILD_DIR)/src/flash/display/
 	mkdir $(BUILD_DIR)/src/flash/events
@@ -49,6 +52,8 @@ build: ensureoutputdir \
 	cp $(SHUMWAY_ROOT)/src/flash/system/*.js $(BUILD_DIR)/src/flash/system/
 	mkdir $(BUILD_DIR)/src/flash/text
 	cp $(SHUMWAY_ROOT)/src/flash/text/*.js $(BUILD_DIR)/src/flash/text/
+	mkdir $(BUILD_DIR)/src/flash/text/engine
+	cp $(SHUMWAY_ROOT)/src/flash/text/engine/*.js $(BUILD_DIR)/src/flash/text/engine/
 	mkdir $(BUILD_DIR)/src/flash/ui
 	cp $(SHUMWAY_ROOT)/src/flash/ui/*.js $(BUILD_DIR)/src/flash/ui/
 	mkdir $(BUILD_DIR)/src/flash/utils
@@ -65,6 +70,8 @@ build: ensureoutputdir \
 	cp $(SHUMWAY_ROOT)/src/avm2/compiler/lljs/src/*.js $(BUILD_DIR)/src/avm2/compiler/lljs/src/
 	mkdir -p $(BUILD_DIR)/src/avm2/generated/builtin
 	cp $(SHUMWAY_ROOT)/src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/src/avm2/generated/builtin/
+	mkdir -p $(BUILD_DIR)/src/avm2/generated/avm1lib
+	cp $(SHUMWAY_ROOT)/src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_DIR)/src/avm2/generated/avm1lib/
 	mkdir $(BUILD_DIR)/lib
 	mkdir $(BUILD_DIR)/lib/Kanvas
 	cp $(SHUMWAY_ROOT)/lib/Kanvas/* $(BUILD_DIR)/lib/Kanvas/
@@ -72,10 +79,14 @@ build: ensureoutputdir \
 	cp $(SHUMWAY_ROOT)/lib/DataView.js/* $(BUILD_DIR)/lib/DataView.js/
 	mkdir $(BUILD_DIR)/lib/mp3
 	cp $(SHUMWAY_ROOT)/lib/mp3/* $(BUILD_DIR)/lib/mp3/
-	mkdir $(BUILD_DIR)/lib/xstats
-	cp -R $(SHUMWAY_ROOT)/lib/xstats/* $(BUILD_DIR)/lib/xstats/
+	mkdir $(BUILD_DIR)/lib/stats
+	cp -R $(SHUMWAY_ROOT)/lib/stats/LICENSE $(BUILD_DIR)/lib/stats/
+	cp -R $(SHUMWAY_ROOT)/lib/stats/build $(BUILD_DIR)/lib/stats/
 	# Copy examples
 	cp -R $(SHUMWAY_ROOT)/examples $(BUILD_DIR)
+	# Copy build and iframe files
+	cp -R iframe $(BUILD_DIR)/
+	cp -R $(BUNDLE_DIR)/shumway*.js $(BUILD_DIR)/src
 	# Copy extensions
 	mkdir -p $(BUILD_DIR)/extension/firefox
 	cp $(EXTENSION_DIR)/shumway.xpi $(BUILD_DIR)/extension/firefox/
@@ -87,9 +98,6 @@ build: ensureoutputdir \
 	cd $(BUILD_DIR); git add -A; git commit -m "Updates shumway gh-pages files"
 	echo "Success gh-pages is created. To push:"
 	echo "  cd build/web; git push -f git@github.com:mozilla/shumway.git gh-pages"
-
-build-extension:
-	$(MAKE) -C $(SHUMWAY_ROOT)/extension/firefox build
 
 $(SHUMWAY_ROOT)/src/flash/playerglobal.abc:
 	make -C $(SHUMWAY_ROOT) build-playerglobal

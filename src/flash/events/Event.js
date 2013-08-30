@@ -37,8 +37,6 @@ var EventDefinition = (function () {
             this._type = type;
             this._bubbles = bubbles;
             this._cancelable = cancelable;
-
-            this._handlerName = 'on' + type[0].toUpperCase() + type.substr(1);
           },
           stopPropagation: function stopPropagation() { // (void) -> void
             this._stopPropagation = true;

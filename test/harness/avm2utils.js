@@ -22,6 +22,7 @@ release = true;
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
 var playerGlobalPath = SHUMWAY_ROOT + "flash/playerglobal.abc";
 
 var BinaryFileReader = (function binaryFileReader() {
@@ -55,30 +56,40 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
       xhr.send(null);
     },
-    readAsync: function(ondata, onerror, onopen, oncomplete) {
-      var xhr = new XMLHttpRequest();
-      xhr.open("GET", this.url, true);
-      // arraybuffer is not provide onprogress, fetching as regular chars
-      if ('overrideMimeType' in xhr)
-        xhr.overrideMimeType('text/plain; charset=x-user-defined');
-      var lastPosition = 0;
+    readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
+      var xhr = new XMLHttpRequest({mozSystem:true});
+      var url = this.url;
+      xhr.open(this.method || "GET", url, true);
+      var isNotProgressive;
+      try {
+        xhr.responseType = 'moz-chunked-arraybuffer';
+        isNotProgressive = xhr.responseType !== 'moz-chunked-arraybuffer';
+      } catch (e) {
+        isNotProgressive = true;
+      }
+      if (isNotProgressive) {
+        xhr.responseType = 'arraybuffer';
+      }
       xhr.onprogress = function (e) {
-        var position = e.loaded;
-        var chunk = xhr.responseText.substring(lastPosition, position);
-        var data = new Uint8Array(chunk.length);
-        for (var i = 0; i < data.length; i++)
-          data[i] = chunk.charCodeAt(i) & 0xFF;
-        ondata(data, { loaded: e.loaded, total: e.total });
-        lastPosition = position;
+        if (isNotProgressive) return;
+        ondata(new Uint8Array(xhr.response), { loaded: e.loaded, total: e.total });
       };
       xhr.onreadystatechange = function(event) {
+        if(xhr.readyState === 2 && onhttpstatus) {
+          onhttpstatus(url, xhr.status, xhr.getAllResponseHeaders());
+        }
         if (xhr.readyState === 4) {
           if (xhr.status !== 200 && xhr.status !== 0) {
             onerror(xhr.statusText);
           }
-          if (oncomplete)
+          if (isNotProgressive) {
+            var buffer = xhr.response;
+            ondata(new Uint8Array(buffer), { loaded: buffer.byteLength, total: buffer.byteLength });
+          }
+          if (oncomplete) {
             oncomplete();
-        } else if (xhr.readyState === 1 && onopen) {
+          }
+        } else if (xhr.readyState === 2 && onopen) {
           onopen();
         }
       }
@@ -124,10 +135,10 @@ var sanityTests = [];
 var libraryScripts = playerGlobalScripts;    // defined in playerglobal.js
 var libraryNames = playerGlobalNames;        // ditto
 
-function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
+function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
   assert (builtinPath);
-  avm2 = new AVM2(sysMode, appMode, findDefiningAbc);
-  var builtinAbc, libraryAbc;
+  avm2 = new AVM2(sysMode, appMode, findDefiningAbc, loadAVM1);
+  var builtinAbc, libraryAbc, avm1Abc;
 
   // Batch I/O requests.
   new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
@@ -138,6 +149,13 @@ function createAVM2(builtinPath, libraryPath, sysMode, appMode, next) {
     });
   });
 
+  function loadAVM1(next) {
+    new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
+      avm1Abc = new AbcFile(new Uint8Array(buffer), "avm1.abc");;
+      avm2.systemDomain.executeAbc(avm1Abc);
+      next();
+    });
+  }
   function executeAbc() {
     assert (builtinAbc);
     avm2.builtinsLoaded = false;

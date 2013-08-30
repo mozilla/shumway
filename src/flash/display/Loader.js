@@ -19,7 +19,7 @@
          URL, FileLoadingService, Promise, AbcFile, SHUMWAY_ROOT, SWF,
          defineBitmap, defineImage, defineFont, defineShape, defineSound,
          defineLabel, defineButton, defineText,
-         AS2Globals, AS2Context, executeActions,
+         avm1lib, AS2Context, executeActions,
          createSoundStream, MP3DecoderSession, PLAY_USING_AUDIO_TAG,
          cloneObject, createEmptyObject, fromCharCode,
          isNullOrUndefined */
@@ -53,14 +53,13 @@ var $RELEASE = false;
 
 var LoaderDefinition = (function () {
   var WORKERS_ENABLED = true;
-  var LOADER_PATH = 'flash/display/Loader.js';
+  var LOADER_PATH;
 
   var workerScripts;
   if ($RELEASE) {
-    workerScripts = [
-      '../../shumway-worker.js'
-    ];
+    LOADER_PATH = 'shumway-worker.js';
   } else {
+    LOADER_PATH = 'flash/display/Loader.js';
     workerScripts = [
       '../../../lib/DataView.js/DataView.js',
       '../util.js',
@@ -415,23 +414,26 @@ var LoaderDefinition = (function () {
   // If we're inside a worker, do the parsing work and return undefined, since
   // communication is done by posting messages to the main thread.
   if (isWorker) {
-    importScripts.apply(null, workerScripts);
+    if (workerScripts) {
+      importScripts.apply(null, workerScripts);
+    }
 
+    var subscription = null;
     self.onmessage = function (evt) {
-      if (evt.data !== 'pipe:') {
+      if (subscription) {
+        subscription.callback(evt.data.data, evt.data.progress);
+      } else if (evt.data === 'pipe:') {
+        // progressive data loading is requested, replacing onmessage handler
+        // for the following messages
+        subscription = {
+          subscribe: function (callback) {
+            this.callback = callback;
+          }
+        };
+        loadFromWorker(null, subscription);
+      } else {
         loadFromWorker(null, evt.data);
       }
-      // progressive data loading is requested, replacing onmessage handler
-      // for the following messages
-      var subscription = {
-        subscribe: function (callback) {
-          this.callback = callback;
-        }
-      };
-      loadFromWorker(null, subscription);
-      self.onmessage = function (evt) {
-        subscription.callback(evt.data.data, evt.data.progress);
-      };
     };
 
     return;
@@ -463,8 +465,8 @@ var LoaderDefinition = (function () {
         break;
       case 'complete':
         var frameConstructed = new Promise();
-        avm2.systemDomain.onMessage.register('frameConstructed', function waitForFrame(type, e) {
-          if (e.data._type === 'frameConstructed') {
+        avm2.systemDomain.onMessage.register('frameConstructed', function waitForFrame(type) {
+          if (type === 'frameConstructed') {
             frameConstructed.resolve();
             avm2.systemDomain.onMessage.unregister('frameConstructed', waitForFrame);
           }
@@ -616,6 +618,8 @@ var LoaderDefinition = (function () {
             framesLoaded: timeline.length,
             loader: loader,
             parent: parent,
+            index: 0,
+            level: 0,
             timeline: timeline,
             totalFrames: rootInfo.props.totalFrames,
             stage: loader._stage
@@ -673,7 +677,17 @@ var LoaderDefinition = (function () {
           if (!loader._isAvm2Enabled) {
             var avm1Context = loader._avm1Context;
 
-            var as2Object = root._getAS2Object();
+            // Finding movie top root
+            var _root = root;
+            if (parent && parent !== loader._stage) {
+              var parentLoader = parent._loader;
+              while (parentLoader._parent && parentLoader._parent !== loader._stage) {
+                parentLoader = parentLoader._parent._loader;
+              }
+              _root = parentLoader._content;
+            }
+
+            var as2Object = _root._getAS2Object();
             avm1Context.globals.asSetPublicProperty('_root', as2Object);
             avm1Context.globals.asSetPublicProperty('_level0', as2Object);
             avm1Context.globals.asSetPublicProperty('_level1', as2Object);
@@ -981,16 +995,16 @@ var LoaderDefinition = (function () {
         var frameScripts = { };
         if (!this._isAvm2Enabled) {
           if (symbol.frameScripts) {
-            var avm1Context = this._avm1Context;
             var data = symbol.frameScripts;
             for (var i = 0; i < data.length; i += 2) {
                 var frameNum = data[i] + 1;
                 var block = data[i + 1];
-                var script = (function(block) {
+                var script = (function(block, loader) {
                   return function () {
+                    var avm1Context = loader._avm1Context;
                     return executeActions(block, avm1Context, this._getAS2Object());
                   };
-                })(block);
+                })(block, this);
                 if (!frameScripts[frameNum])
                   frameScripts[frameNum] = [script];
                 else
@@ -1084,23 +1098,36 @@ var LoaderDefinition = (function () {
         // HACK: bind the mouse through awful shenanigans.
         var mouseClass = avm2.systemDomain.getClass("flash.ui.Mouse");
         mouseClass._stage = stage;
-      } else {
+        loader._vmPromise.resolve();
+        return;
+      }
+
+      if (!avm2.loadAVM1) {
+        loader._vmPromise.reject('AVM1 loader is not found');
+        return;
+      }
+      var loaded = function () {
         // avm1 initialization
         var loaderInfo = loader.contentLoaderInfo;
         var avm1Context = new AS2Context(loaderInfo._swfVersion);
         avm1Context.stage = stage;
         loader._avm1Context = avm1Context;
 
-        AS2Globals.prototype.Key.$bind(stage);
-        AS2Globals.prototype.Mouse.$bind(stage);
+        avm1lib.AS2Key.class.$bind(stage);
+        avm1lib.AS2Mouse.class.$bind(stage);
 
         stage._addEventListener('frameConstructed',
                                 avm1Context.flushPendingScripts.bind(avm1Context),
                                 false,
                                 Number.MAX_VALUE);
+        loader._vmPromise.resolve();
+      };
+      if (avm2.isAVM1Loaded) {
+        loaded();
+      } else {
+        avm2.isAVM1Loaded = true;
+        avm2.loadAVM1(loaded);
       }
-
-      loader._vmPromise.resolve();
     },
     get contentLoaderInfo() {
         return this._contentLoaderInfo;

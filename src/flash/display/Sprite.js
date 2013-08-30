@@ -47,7 +47,7 @@ var SpriteDefinition = (function () {
       this._graphics._parent = this;
     },
 
-    _addTimelineChild: function(cmd, index, replace) {
+    _addTimelineChild: function(cmd, index) {
       var symbolPromise = cmd.promise;
       var symbolInfo = symbolPromise.value;
       var props = Object.create(symbolInfo.props);
@@ -75,7 +75,7 @@ var SpriteDefinition = (function () {
       };
 
       if (index !== undefined)
-        this._children.splice(index, replace ? 1 : 0, child);
+        this._children.splice(index, 0, child);
       else
         this._children.push(child);
     },
@@ -217,7 +217,7 @@ var SpriteDefinition = (function () {
         if (!clip.asHasProperty(undefined, variableName, 0)) {
           clip.asSetPublicProperty(variableName, instance.text);
         }
-        instance._addEventListener('constructFrame', function() {
+        instance._addEventListener('declareFrame', function() {
           instance.text = clip.asGetPublicProperty(variableName);
         });
       }
@@ -237,6 +237,9 @@ var SpriteDefinition = (function () {
             if (eventName.indexOf("on") !== 0 || !event[eventName])
               continue;
             var avm2EventName = eventName[2].toLowerCase() + eventName.substring(3);
+            if (avm2EventName === 'enterFrame') {
+              avm2EventName = 'frameConstructed';
+            }
             instance._addEventListener(avm2EventName, fn, false);
             eventsBound.push({name: avm2EventName, fn: fn});
           }

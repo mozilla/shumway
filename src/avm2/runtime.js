@@ -47,7 +47,6 @@ var VM_NEXT_NAME = "vm next name";
 var VM_NEXT_NAME_INDEX = "vm next name index";
 var VM_IS_CLASS = "vm is class";
 var VM_OPEN_METHOD_PREFIX = "open_";
-var VM_METHOD_INFO = "method info";
 
 var VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
 
@@ -252,7 +251,7 @@ function resolveMultinameProperty(namespaces, name, flags) {
     name = String(name);
   }
   if (isNumeric(name)) {
-    return Number(name);
+    return toNumber(name);
   }
   if (!namespaces) {
     return Multiname.getPublicQualifiedName(name);
@@ -341,13 +340,13 @@ function construct(constructor, args) {
   if (constructor.classInfo) {
     // return primitive values for new'd boxes
     var qn = constructor.classInfo.instanceInfo.name.qualifiedName;
-    if (qn === Multiname.getPublicQualifiedName("String")) {
+    if (qn === Multiname.String) {
       return String.apply(null, args);
     }
-    if (qn === Multiname.getPublicQualifiedName("Boolean")) {
+    if (qn === Multiname.Boolean) {
       return Boolean.apply(null, args);
     }
-    if (qn === Multiname.getPublicQualifiedName("Number")) {
+    if (qn === Multiname.Number) {
       return Number.apply(null, args);
     }
   }
@@ -545,6 +544,10 @@ function initializeGlobalObject(global) {
     "Float32Array",
     "Float64Array"
   ].forEach(function (name) {
+    if (!(name in global)) {
+      console.error(name + ' was not found in globals');
+      return;
+    }
     defineNonEnumerableProperty(global[name].prototype, "asGetNumericProperty", asGetNumericProperty);
     defineNonEnumerableProperty(global[name].prototype, "asSetNumericProperty", asSetNumericProperty);
   });
@@ -572,42 +575,9 @@ function avm2Add(l, r) {
   return l + r;
 }
 
-function coerce(value, type) {
-  if (type.coerce) {
-    return type.coerce(value);
-  }
 
-  if (isNullOrUndefined(value)) {
-    return null;
-  }
 
-  if (type.isInstance(value)) {
-    return value;
-  } else {
-    // FIXME throwErrorFromVM needs to be called from within the runtime
-    // because it needs access to the domain or the domain has to be
-    // aquired through some other mechanism.
-    // throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
-
-    // For now just assert false to print the message.
-    release || assert(false, "Cannot coerce " + value + " to type " + type);
-  }
-}
-
-/**
- * Similar to |toString| but returns |null| for |null| or |undefined| instead
- * of "null" or "undefined".
- */
-function coerceString(x) {
-  if (typeof x === "string") {
-    return x;
-  } else if (x === null || x === undefined) {
-    return null;
-  }
-  return String(x);
-}
-
-function typeOf(x) {
+function asTypeOf(x) {
   // ABC doesn't box primitives, so typeof returns the primitive type even when
   // the value is new'd
   if (x) {
@@ -931,6 +901,7 @@ function bindFreeMethodScope(methodInfo, scope) {
       return fn.apply(global, arguments);
     };
   }
+  boundMethod.methodInfo = methodInfo;
   boundMethod.instanceConstructor = boundMethod;
   methodInfo.lastBoundMethod = {
     scope: scope,
@@ -1139,27 +1110,6 @@ function wrapJSObject(object) {
     })(object, i));
   }
   return wrapper;
-}
-
-function isInstanceOf(value, type) {
-  /*
-  if (type instanceof Class) {
-    return value instanceof type.instanceConstructor;
-  } else if (typeof type === "function") {
-    return value instanceof type;
-  } else {
-    return false;
-  }
-  */
-  return type.isInstanceOf(value);
-}
-
-function asInstance(value, type) {
-  return type.isInstance(value) ? value : null;
-}
-
-function isInstance(value, type) {
-  return type.isInstance(value);
 }
 
 function createActivation(methodInfo) {
@@ -1555,6 +1505,7 @@ function makeMemoizer(qn, target) {
       return this[qn];
     }
     mc = bindSafely(target.value, this);
+    mc.methodInfo = target.value.methodInfo;
     defineReadOnlyProperty(mc, Multiname.getPublicQualifiedName("prototype"), null);
     defineReadOnlyProperty(this, qn, mc);
     return mc;
@@ -1628,7 +1579,7 @@ function createFunction(mi, scope, hasDynamicScope, breakpoint) {
     mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint);
   }
 
-  mi.freeMethod[VM_METHOD_INFO] = mi;
+  mi.freeMethod.methodInfo = mi;
 
   if (hasDynamicScope) {
     return bindFreeMethodScope(mi, scope);
@@ -1860,4 +1811,121 @@ function translateError(domain, error) {
     unexpected("Can't translate error: " + error);
   }
   return error;
+}
+
+function asIsInstanceOf(type, value) {
+  return type.isInstanceOf(value);
+}
+
+function asIsType(type, value) {
+  return type.isInstance(value);
+}
+
+function asAsType(type, value) {
+  return asIsType(type, value) ? value : null;
+}
+
+function asCoerceByMultiname(domain, multiname, value) {
+  release || assert(multiname.isQName());
+  switch (Multiname.getQualifiedName(multiname)) {
+    case Multiname.Int:
+      return asCoerceInt(value);
+    case Multiname.Uint:
+      return asCoerceUint(value);
+    case Multiname.String:
+      return asCoerceString(value);
+    case Multiname.Number:
+      return asCoerceNumber(value);
+    case Multiname.Boolean:
+      return asCoerceBoolean(value);
+    case Multiname.Object:
+      return asCoerceObject(value);
+  }
+  return asCoerce(domain.getType(multiname), value);
+}
+
+function asCoerce(type, value) {
+  if (type.coerce) {
+    return type.coerce(value);
+  }
+
+  if (isNullOrUndefined(value)) {
+    return null;
+  }
+
+  if (type.isInstance(value)) {
+    return value;
+  } else {
+    // FIXME throwErrorFromVM needs to be called from within the runtime
+    // because it needs access to the domain or the domain has to be
+    // aquired through some other mechanism.
+    // throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
+
+    // For now just assert false to print the message.
+    release || assert(false, "Cannot coerce " + value + " to type " + type);
+  }
+}
+
+/**
+ * Similar to |toString| but returns |null| for |null| or |undefined| instead
+ * of "null" or "undefined".
+ */
+function asCoerceString(x) {
+  if (typeof x === "string") {
+    return x;
+  } else if (x == undefined) {
+    return null;
+  }
+  return String(x);
+}
+
+function asCoerceInt(x) {
+  return x | 0;
+}
+
+function asCoerceUint(x) {
+  return toUint(x);
+}
+
+function asCoerceNumber(x) {
+  return +x;
+}
+
+function asCoerceBoolean(x) {
+  return !!x;
+}
+
+function asCoerceObject(x) {
+  if (x == undefined) {
+    return null;
+  }
+  if (typeof x === 'string' || typeof x === 'number') {
+    return x;
+  }
+  return Object(x);
+}
+
+function asDefaultCompareFunction(a, b) {
+  return String(a).localeCompare(String(b));
+}
+
+function asCompare(a, b, options, compareFunction) {
+  release || assertNotImplemented (!(options & SORT_CASEINSENSITIVE), "CASEINSENSITIVE");
+  release || assertNotImplemented (!(options & SORT_UNIQUESORT), "UNIQUESORT");
+  release || assertNotImplemented (!(options & SORT_RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+  var result = 0;
+  if (!compareFunction) {
+    compareFunction = asDefaultCompareFunction;
+  }
+  if (options & SORT_NUMERIC) {
+    a = toNumber(a);
+    b = toNumber(b);
+    result = a < b ? -1 : (a > b ? 1 : 0);
+  } else {
+    result = compareFunction(a, b);
+  }
+  if (options & SORT_DESCENDING) {
+    result *= -1;
+  }
+  return result;
 }

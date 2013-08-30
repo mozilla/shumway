@@ -483,6 +483,7 @@ function renderStage(stage, ctx, events) {
   console.timeEnd("Initialize Renderer");
   console.timeEnd("Total");
 
+  var firstRun = true;
   var frameCount = 0;
   var frameFPSAverage = new metrics.Average(120);
   (function draw() {
@@ -524,29 +525,30 @@ function renderStage(stage, ctx, events) {
       FrameCounter.clear();
       var frameStartTime = performance.now();
       traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
-      if (mouseMoved && !disableMouseVisitor.value) {
-        traceRenderer.value && frameWriter.enter("> Mouse Visitor");
-        stage._handleMouse();
-        traceRenderer.value && frameWriter.leave("< Mouse Visitor");
-      }
 
       var domain = avm2.systemDomain;
 
       if (renderFrame) {
         frameTime = now;
-        nextRenderAt = frameTime + maxDelay;
+        nextRenderAt = frameTime + (1000 / stage._frameRate);
 
-        domain.broadcastMessage("constructFrame",
-                                new flash.events.Event("constructFrame"));
-        domain.broadcastMessage("frameConstructed",
-                                new flash.events.Event("frameConstructed"));
-        domain.broadcastMessage("enterFrame",
-                                new flash.events.Event("enterFrame"));
+        if (firstRun) {
+          // Initial display list is already constructed, skip frame construction phase.
+          firstRun = false;
+        } else {
+          domain.broadcastMessage("declareFrame");
+          domain.broadcastMessage("enterFrame");
+          domain.broadcastMessage("constructChildren");
+        }
+
+        domain.broadcastMessage("frameConstructed");
+        domain.broadcastMessage("executeFrame");
+        domain.broadcastMessage("exitFrame");
       }
 
       if (stage._deferRenderEvent) {
         stage._deferRenderEvent = false;
-        domain.broadcastMessage("render", new flash.events.Event("render"));
+        domain.broadcastMessage("render", "render");
       }
 
       if (refreshStage || renderFrame) {
@@ -555,7 +557,7 @@ function renderStage(stage, ctx, events) {
         if (canvasVisible && !disablePreVisitor.value) {
           stage._showRedrawRegions(showRedrawRegions.value);
           traceRenderer.value && frameWriter.enter("> Pre Visitor");
-          stage._prepareInvalidRegions(ctx);
+          stage._processInvalidRegions(ctx);
           traceRenderer.value && frameWriter.leave("< Pre Visitor");
         }
         if (canvasVisible && !disableRenderVisitor.value) {
@@ -565,16 +567,21 @@ function renderStage(stage, ctx, events) {
         }
       }
 
-      if (renderFrame) {
-        domain.broadcastMessage("exitFrame",
-                                new flash.events.Event("exitFrame"));
+      if (mouseMoved && !disableMouseVisitor.value) {
+        traceRenderer.value && frameWriter.enter("> Mouse Visitor");
+        stage._handleMouse();
+        traceRenderer.value && frameWriter.leave("< Mouse Visitor");
 
-        if (events.onAfterFrame) {
-          events.onAfterFrame();
-        }
+        stage._syncCursor();
       }
 
-      stage._syncCursor();
+      if (renderFrame) {
+        domain.broadcastMessage("destructFrame");
+      }
+
+      if (renderFrame && events.onAfterFrame) {
+        events.onAfterFrame();
+      }
 
       if (traceRenderer.value) {
         for (var name in FrameCounter.counts) {

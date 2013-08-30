@@ -64,6 +64,9 @@ var TransformDefinition = (function () {
       return m;
     },
     get matrix() {
+      if (this._target._current3DTransform) {
+        return null;
+      }
       var m = this._target._currentTransform;
       return new flash.geom.Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
     },
@@ -97,6 +100,22 @@ var TransformDefinition = (function () {
         tx: tx,
         ty: ty
       };
+      target._current3DTransform = null;
+    },
+
+    get matrix3D() {
+      var m = this._target._current3DTransform;
+      return m && m.clone();
+    },
+    set matrix3D(val) {
+      var Matrix3DClass = avm2.systemDomain.getClass("flash.geom.Matrix3D");
+      if (!Matrix3DClass.isInstanceOf(val))
+        throw TypeError();
+
+      var raw = val.rawData;
+      this.matrix = new flash.geom.Matrix(raw[0], raw[1], raw[4], raw[5], raw[12], raw[13]);
+      // this.matrix will reset this._target._current3DTransform
+      this._target._current3DTransform = val;
     },
 
     ctor: function (target) {
@@ -115,6 +134,7 @@ var TransformDefinition = (function () {
         concatenatedColorTransform: desc(def, "concatenatedColorTransform"),
         concatenatedMatrix: desc(def, "concatenatedMatrix"),
         matrix: desc(def, "matrix"),
+        matrix3D: desc(def, "matrix3D"),
         ctor: def.ctor
       }
     }

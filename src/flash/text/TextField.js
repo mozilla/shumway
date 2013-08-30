@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2Globals, rgbaObjToStr, warning */
+/*global avm1lib, rgbaObjToStr, warning */
 
 var TextFieldDefinition = (function () {
 
@@ -521,8 +521,7 @@ var TextFieldDefinition = (function () {
 
     _getAS2Object: function () {
       if (!this.$as2Object) {
-        var AS2TextFieldClass = AS2Globals.prototype.TextField;
-        new AS2TextFieldClass().$attachNativeObject(this);
+        new avm1lib.AS2TextField(this);
       }
       return this.$as2Object;
     },

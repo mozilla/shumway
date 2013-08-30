@@ -14,7 +14,7 @@
 
 default:
 	@echo "run: make [check-system|install-utils|install-libs|build-tamarin-tests|"
-	@echo "           build-playerglobal|build-extension|build-web|"
+	@echo "           build-playerglobal|build-extension|build-bundle|build-web|"
 	@echo "           run-tamarin-tests|run-tamarin-sanity-tests|check-extension|"
 	@echo "           test|push-test|build-bot|start-build-bot|update-flash-refs]"
 
@@ -53,7 +53,10 @@ run-tamarin-tests:
 build-playerglobal:
 	make -C utils/ build-playerglobal
 
-build-extension:
+build-bundle:
+	make -C utils/builder build
+
+build-extension: build-bundle
 	make -C extension/firefox/ build
 
 FIREFOX_PATH ?= $(error ERROR: Specify FIREFOX_PATH)
@@ -61,7 +64,7 @@ FIREFOX_PATH ?= $(error ERROR: Specify FIREFOX_PATH)
 check-extension: build-extension
 	cd test/extension; python check.py -b "$(FIREFOX_PATH)"
 
-build-web:
+build-web: build-bundle build-extension
 	make -C web/ build
 
 MXMLC_FLAGS ?= -static-link-runtime-shared-libraries
@@ -73,8 +76,6 @@ update-flash-refs:
 	node utils/update-flash-refs.js examples/inspector/inspector.html src/flash
 	node utils/update-flash-refs.js examples/racing/index.html src/flash
 	node utils/update-flash-refs.js test/harness/slave.html src/flash
-
-test: test-avm1 test-avm2
 
 test-avm1:
 	make -C src/avm1/tests/ test

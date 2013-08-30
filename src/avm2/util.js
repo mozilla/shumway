@@ -319,7 +319,15 @@ function isNumber(value) {
 }
 
 function toDouble(x) {
-  return Number(x);
+  return toNumber(x);
+}
+
+/**
+ * Avoids a call to |Number()| if the type of |x| is already a number. We're hoping that this
+ * function gets inlined.
+ */
+function toNumber(x) {
+  return typeof x === "number" ? x : Number(x);
 }
 
 function toBoolean(x) {
@@ -327,8 +335,8 @@ function toBoolean(x) {
 }
 
 function toUint(x) {
-  var object = x | 0;
-  return object < 0 ? (object + 4294967296) : object;
+  x = x | 0;
+  return x < 0 ? (x + 4294967296) : x;
 }
 
 function toInt(x) {
@@ -1377,6 +1385,7 @@ var Callback = (function () {
     if (!queue) {
       return;
     }
+    queue = queue.slice();
     var args = sliceArguments(arguments, 0);
     for (var i = 0; i < queue.length; i++) {
       if ($DEBUG) {
@@ -1391,6 +1400,7 @@ var Callback = (function () {
     if (!queue) {
       return;
     }
+    queue = queue.slice();
     for (var i = 0; i < queue.length; i++) {
       if ($DEBUG) {
         Counter.count("callback(" + type + ").notify1");
@@ -1414,7 +1424,7 @@ function dumpBytes(buffer, start, length) {
     s += bytes[i] + " ";
   }
   return s;
-}      
+}
 
 function addProfileMarker(marker) {
   if (typeof FirefoxCom !== "undefined") {

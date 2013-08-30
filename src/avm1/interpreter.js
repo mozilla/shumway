@@ -15,8 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Proxy, AS2Globals, AS2MovieClip, Multiname, ActionsDataStream,
-         createBuiltinType, isNumeric, forEachPublicProperty */
+/*global avm1lib, Proxy, Multiname, ActionsDataStream,
+         isNumeric, forEachPublicProperty, construct */
 
 var AVM1_TRACE_ENABLED = false;
 var AVM1_ERRORS_IGNORED = true;
@@ -36,7 +36,7 @@ AS2ScopeListItem.prototype = {
 
 function AS2Context(swfVersion) {
   this.swfVersion = swfVersion;
-  this.globals = AS2Globals.create(this);
+  this.globals = new avm1lib.AS2Globals(this);
   this.initialScope = new AS2ScopeListItem(this.globals, null);
   this.assets = {};
   this.instructionsExecuted = 0;
@@ -100,7 +100,7 @@ AS2CriticalError.prototype = Object.create(Error.prototype);
 
 function isAS2MovieClip(obj) {
   return typeof obj === 'object' && obj &&
-         obj instanceof AS2Globals.prototype.MovieClip;
+         obj instanceof avm1lib.AS2MovieClip;
 }
 
 function as2GetType(v) {
@@ -253,6 +253,10 @@ function as2ResolveProperty(obj, name) {
   return null;
 }
 
+function isAvm2Class(obj) {
+  typeof obj === 'object' && obj !== null && 'instanceConstructor' in obj;
+}
+
 function as2CreatePrototypeProxy(obj) {
   var prototype = obj.asGetPublicProperty('prototype');
   if (typeof Proxy === 'undefined') {
@@ -350,6 +354,39 @@ function lookupAS2Children(targetPath, defaultTarget, root) {
     path.shift();
   }
   return obj;
+}
+
+function createBuiltinType(obj, args) {
+  if (obj === Array) {
+    // special case of array
+    var result = args;
+    if (args.length == 1 && typeof args[0] === 'number') {
+      result = [];
+      result.length = args[0];
+    }
+    return result;
+  }
+  if (obj === Boolean || obj === Number || obj === String || obj === Function) {
+    return obj.apply(null, args);
+  }
+  if (obj === Date) {
+    switch (args.length) {
+      case 0:
+        return new Date();
+      case 1:
+        return new Date(args[0]);
+      default:
+        return new Date(args[0], args[1],
+          args.length > 2 ? args[2] : 1,
+          args.length > 3 ? args[3] : 0,
+          args.length > 4 ? args[4] : 0,
+          args.length > 5 ? args[5] : 0,
+          args.length > 6 ? args[6] : 0);
+    }
+  }
+  if (obj === Object) {
+    return {};
+  }
 }
 
 var AS2_SUPER_STUB = {};
@@ -454,6 +491,8 @@ function interpretActions(actionsData, scopeContainer,
       ownerClass = class_;
     };
 
+    fn.instanceConstructor = fn;
+    fn.debugName = 'avm1 ' + (functionName || '<function>');
     if (functionName) {
       fn.name = functionName;
     }
@@ -514,17 +553,17 @@ function interpretActions(actionsData, scopeContainer,
     if (target) {
       return target.obj.asGetPublicProperty(target.name);
     }
-    // trying movie clip children (if object is a MovieClip)
-    var mc = isAS2MovieClip(defaultTarget) &&
-             defaultTarget.$lookupChild(variableName);
-    if (mc) {
-      return mc;
-    }
     for (var p = scopeContainer; p; p = p.next) {
       var resolvedName = as2ResolveProperty(p.scope, variableName);
       if (resolvedName !== null) {
         return p.scope.asGetPublicProperty(resolvedName);
       }
+    }
+    // trying movie clip children (if object is a MovieClip)
+    var mc = isAS2MovieClip(defaultTarget) &&
+             defaultTarget.$lookupChild(variableName);
+    if (mc) {
+      return mc;
     }
   }
 
@@ -645,7 +684,6 @@ function interpretActions(actionsData, scopeContainer,
     stackItemsExpected = 0;
 
     actionTracer.print(stream.position, actionCode, stack);
-
     var frame, type, count, index, target, method, constr, codeSize, offset;
     var name, variableName, methodName, functionName, targetName;
     var paramName, resolvedName, objectName;
@@ -1098,9 +1136,13 @@ function interpretActions(actionsData, scopeContainer,
           }
           method = obj;
         }
-        result = Object.create(method.prototype || Object.prototype);
+        if (isAvm2Class(obj)) {
+          result = construct(obj, args);
+        } else {
+          result = Object.create(method.prototype || Object.prototype);
+          method.apply(result, args);
+        }
         result.constructor = method;
-        method.apply(result, args);
         stack.push(result);
         break;
       case 0x40: // ActionNewObject
@@ -1111,8 +1153,12 @@ function interpretActions(actionsData, scopeContainer,
         result = createBuiltinType(obj, args);
         if (typeof result === 'undefined') {
           // obj in not a built-in type
-          result = Object.create(obj.prototype || Object.prototype);
-          obj.apply(result, args);
+          if (isAvm2Class(obj)) {
+            result = construct(obj, args);
+          } else {
+            result = Object.create(obj.prototype || Object.prototype);
+            obj.apply(result, args);
+          }
           result.constructor = obj;
         }
         stack.push(result);
@@ -1300,7 +1346,7 @@ function interpretActions(actionsData, scopeContainer,
       case 0x69: // ActionExtends
         var constrSuper = stack.pop();
         constr = stack.pop();
-        obj = Object.create(constrSuper.prototype, {
+        obj = Object.create(constrSuper.asGetPublicProperty('prototype'), {
           constructor: { value: constr, enumerable: false }
         });
         constr.__super = constrSuper;
@@ -1530,6 +1576,7 @@ var ActionNamesMap = {
 
 // exports for testing
 if (typeof GLOBAL !== 'undefined') {
+  GLOBAL.createBuiltinType = createBuiltinType;
   GLOBAL.executeActions = executeActions;
   GLOBAL.AS2Context = AS2Context;
 }
