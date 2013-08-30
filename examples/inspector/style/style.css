@@ -37,13 +37,13 @@ body.simple #xstats {
 
 #topToolbar {
   top: 0;
-  right: 600px;
+  right: 500px;
   left: 0;
 }
 #debugInfoToolbar {
   top: 0;
   right: 0;
-  width: 600px;
+  width: 500px;
 }
 #bottomToolbar {
   bottom: 0;
@@ -70,7 +70,7 @@ body.simple #xstats {
   top: 32px;
   bottom: 32px;
   right: 0;
-  width: 600px;
+  width: 500px;
   background-color: #333;
   overflow-y: auto;
   overflow-x: hidden;
@@ -108,7 +108,7 @@ body.simple #xstats {
 #xstats {
   position: absolute;
   top: 32px;
-  right: 600px;
+  right: 500px;
   z-index: 1;
 }
 
