@@ -695,7 +695,6 @@ function checkFilter(value) {
 
 function Activation(methodInfo) {
   this.methodInfo = methodInfo;
-  defineObjectShape(this);
 }
 
 
@@ -1151,7 +1150,6 @@ var Global = (function () {
     script.scriptBindings.applyTo(script.abc.domain, this);
     // applyScriptTraits(script.abc.domain, this, new Scope(null, this), script.traits);
     script.loaded = true;
-    defineObjectShape(this);
   }
   Global.prototype.toString = function () {
     return "[object global]";
