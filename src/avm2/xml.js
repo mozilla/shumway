@@ -448,7 +448,7 @@ var isXMLType, isXMLName, XMLParser;
           var str = "";
           node.children.forEach(function (v, i) {
             str += toString(v);
-          })
+          });
           return str;
         }
         return toXMLString(node);
@@ -1848,7 +1848,7 @@ var isXMLType, isXMLName, XMLParser;
           var x = this;
           var xl = new XMLList(x, null);
           x.children.forEach(function (v, i) {
-            if (v.kind === "text") {
+            if (v.kind === "text" || v.kind === "element") {
               xl.append(v.text());
             }
           });

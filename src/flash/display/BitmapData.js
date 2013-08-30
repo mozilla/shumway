@@ -33,7 +33,7 @@ var BitmapDataDefinition = (function () {
         throw ArgumentError();
     },
 
-    ctor : function(width, height, transparent, backgroundColor) {
+    ctor: function(width, height, transparent, backgroundColor) {
       if (this._img) {
         // the image can be HTML image or canvas
         width = this._img.naturalWidth || this._img.width;
@@ -65,7 +65,7 @@ var BitmapDataDefinition = (function () {
       this._drawable.height = 0;
       this._drawable = null;
     },
-    draw : function(source, matrix, colorTransform, blendMode, clipRect, smoothing) {
+    draw: function(source, matrix, colorTransform, blendMode, clipRect, smoothing) {
       this._checkCanvas();
       this._ctx.save();
       this._ctx.beginPath();
@@ -79,7 +79,7 @@ var BitmapDataDefinition = (function () {
       (new RenderVisitor(source, this._ctx, true)).startFragment();
       this._ctx.restore();
     },
-    fillRect : function(rect, color) {
+    fillRect: function(rect, color) {
       this._checkCanvas();
       if (!this._transparent) {
         color |= 0xff000000;
@@ -88,29 +88,58 @@ var BitmapDataDefinition = (function () {
       ctx.fillStyle = ARGBtoCSSColor(color);
       ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
     },
-    getPixel : function(x, y) {
+    getPixel: function(x, y) {
       this._checkCanvas();
       var data = this._ctx.getImageData(x, y, 1, 1).data;
       return dataToRGB(data);
     },
-    getPixel32 : function(x, y) {
+    getPixel32: function(x, y) {
       this._checkCanvas();
       var data = this._ctx.getImageData(x, y, 1, 1).data;
       return dataToARGB(data);
     },
-    setPixel : function(x, y, color) {
+    setPixel: function(x, y, color) {
       this.fillRect({ x: x, y: y, width: 1, height: 1 }, color | 0xFF000000);
     },
-    setPixel32 : function(x, y, color) {
+    setPixel32: function(x, y, color) {
       this.fillRect({ x: x, y: y, width: 1, height: 1 }, color);
     },
-    clone : function() {
+    /**
+     * Provides a fast routine to perform pixel manipulation between images with no stretching, rotation, or color effects.
+     */
+    copyPixels: function copyPixels(sourceBitmapData, sourceRect, destPoint, alphaBitmapData, alphaPoint, mergeAlpha) {
+      if (alphaBitmapData) {
+        notImplemented("BitmapData.copyPixels w/ alpha");
+      }
+      var w = sourceRect.width;
+      var h = sourceRect.height;
+      var sx = sourceRect.x;
+      var sy = sourceRect.y;
+      var dx = destPoint.x;
+      var dy = destPoint.y;
+      this._ctx.drawImage(sourceBitmapData._drawable, sx, sy, w, h, dx, dy, w, h);
+    },
+    /**
+     * Locks an image so that any objects that reference the BitmapData object, such as Bitmap objects,
+     * are not updated when this BitmapData object changes.
+     */
+    lock: function lock() { // (void) -> void
+      somewhatImplemented("BitmapData.lock");
+    },
+    /**
+     * Unlocks an image so that any objects that reference the BitmapData object, such as Bitmap
+     * objects, are updated when this BitmapData object changes.
+     */
+    unlock: function unlock(changeRect) { // (changeRect:Rectangle = null) -> void
+      somewhatImplemented("BitmapData.unlock");
+    },
+    clone: function() {
       this._checkCanvas();
       var bd = new flash.display.BitmapData(this._drawable.width, this._drawable.height, true, 0);
       bd._ctx.drawImage(this._drawable, 0, 0);
       return bd;
     },
-    scroll : function(x, y) {
+    scroll: function(x, y) {
       this._checkCanvas();
       this._ctx.draw(this._drawable, x, y);
       this._ctx.save();
@@ -129,14 +158,12 @@ var BitmapDataDefinition = (function () {
       }
       this._ctx.restore();
     },
-
     get width() {
       return this._drawable.width;
     },
-
     get height() {
       return this._drawable.height;
-    },
+    }
   };
 
   var desc = Object.getOwnPropertyDescriptor;
@@ -151,11 +178,14 @@ var BitmapDataDefinition = (function () {
         getPixel32 : def.getPixel32,
         setPixel : def.setPixel,
         setPixel32 : def.setPixel32,
+        copyPixels: def.copyPixels,
+        lock: def.lock,
+        unlock: def.unlock,
         draw : def.draw,
         clone : def.clone,
         scroll : def.scroll,
         width : desc(def, "width"),
-        height : desc(def, "height"),
+        height : desc(def, "height")
       }
     }
   };
