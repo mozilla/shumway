@@ -454,6 +454,7 @@ var LoaderDefinition = (function () {
       this._timeline = [];
       this._lastPromise = null;
       this._uncaughtErrorEvents = null;
+      this._worker = null;
     },
     _commitData: function (data) {
       switch (data.command) {
@@ -474,6 +475,7 @@ var LoaderDefinition = (function () {
         Promise.when(frameConstructed, this._lastPromise).then(function () {
           this.contentLoaderInfo._dispatchEvent("complete");
         }.bind(this));
+        this._worker.terminate();
         break;
       case 'empty':
         this._lastPromise = new Promise();
@@ -1075,7 +1077,7 @@ var LoaderDefinition = (function () {
     {
       if (!isWorker && WORKERS_ENABLED) {
         var loader = this;
-        var worker = new Worker(SHUMWAY_ROOT + LOADER_PATH);
+        var worker = loader._worker = new Worker(SHUMWAY_ROOT + LOADER_PATH)
         worker.onmessage = function (evt) {
           loader._commitData(evt.data);
         };
