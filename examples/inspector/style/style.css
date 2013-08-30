@@ -71,9 +71,12 @@ body.simple #xstats {
   bottom: 32px;
   right: 0;
   width: 500px;
-  background-color: #333;
   overflow-y: auto;
   overflow-x: hidden;
+}
+#debugInfoContainer > canvas {
+  padding-bottom: 4px;
+  border-bottom: 1px solid #888;
 }
 
 #stageContainer {
