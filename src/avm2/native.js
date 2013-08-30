@@ -261,7 +261,7 @@ var natives = (function () {
     };
 
     c.dynamicPrototype = c.traitsPrototype = Object.prototype;
-    // c.setDefaultProperties();
+    c.setDefaultProperties();
     c.defaultValue = null;
 
     c.coerce = function (value) {
@@ -1505,6 +1505,11 @@ var natives = (function () {
      * DescribeType.as
      */
     getQualifiedClassName: constant(function (value) {
+      if (value === null) {
+        return "null";
+      } else if (value === undefined) {
+        return "void";
+      }
       switch (typeof value) {
         case "number":
           if ((value | 0) === value) {
@@ -1520,8 +1525,10 @@ var natives = (function () {
             return "Date";
           }
           var cls;
-          if (value.class) {
-            cls = value.class
+          if (value instanceof Class) {
+            cls = value;
+          } else if (value.class) {
+            cls = value.class;
           } else if (value.classInfo) {
             cls = value;
           }
