@@ -780,7 +780,7 @@ var LoaderDefinition = (function () {
         var Bitmap = avm2.systemDomain.getClass("flash.display.Bitmap");
         var BitmapData = avm2.systemDomain.getClass("flash.display.BitmapData");
         var bitmapData = BitmapData.createAsSymbol(props);
-        BitmapData.instanceConstructor.call(bitmapData, 0, 0, true, 0xffffff00);
+        BitmapData.instanceConstructor.call(bitmapData, 0, 0, true, 0xffffffff);
         var image = Bitmap.createAsSymbol(bitmapData);
         loader._children.push(image);
         Bitmap.instanceConstructor.call(image, bitmapData);
