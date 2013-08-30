@@ -18,6 +18,15 @@
 /*global renderDisplayObject, RenderVisitor */
 
 var BitmapDataDefinition = (function () {
+  function replaceRect(ctx, x, y, w, h, alpha) {
+    if (alpha < 255) {
+      ctx.clearRect(x, y, w, h);
+    }
+    if (alpha > 0) {
+      ctx.fillRect(x, y, w, h);
+    }
+  }
+
   var def = {
     __class__: 'flash.display.BitmapData',
 
@@ -43,7 +52,10 @@ var BitmapDataDefinition = (function () {
       }
 
       this._transparent = transparent === undefined ? true : !!transparent;
-      this._backgroundColor = backgroundColor || 0xFFFFFF;
+      this._backgroundColor = backgroundColor === undefined ? 0xffffffff : backgroundColor;
+      if (!this._transparent) {
+        this._backgroundColor |= 0xff000000;
+      }
 
       if (this._skipCopyToCanvas) {
         this._drawable = this._img;
@@ -53,10 +65,12 @@ var BitmapDataDefinition = (function () {
         canvas.width = width | 0;
         canvas.height = height | 0;
         this._drawable = canvas;
-        if (!transparent)
-          this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), backgroundColor);
-        if (this._img)
+        if (!this._transparent || (!this._img && this._backgroundColor)) {
+          this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), this._backgroundColor);
+        }
+        if (this._img) {
           this._ctx.drawImage(this._img, 0, 0);
+        }
       }
     },
     dispose: function() {
@@ -86,7 +100,7 @@ var BitmapDataDefinition = (function () {
       }
       var ctx = this._ctx;
       ctx.fillStyle = ARGBtoCSSColor(color);
-      ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+      replaceRect(ctx, rect.x, rect.y, rect.width, rect.height, color >>> 24 & 0xff);
     },
     getPixel: function(x, y) {
       this._checkCanvas();
@@ -117,6 +131,9 @@ var BitmapDataDefinition = (function () {
       var sy = sourceRect.y;
       var dx = destPoint.x;
       var dy = destPoint.y;
+      if (!mergeAlpha) {
+        this._ctx.clearRect(dx, dy, w, h);
+      }
       this._ctx.drawImage(sourceBitmapData._drawable, sx, sy, w, h, dx, dy, w, h);
     },
     /**
@@ -143,18 +160,23 @@ var BitmapDataDefinition = (function () {
       this._checkCanvas();
       this._ctx.draw(this._drawable, x, y);
       this._ctx.save();
-      this._ctx.fillStyle = ARGBtoCSSColor(this._backgroundColor);
+      var color = this._img ? 0 : this._backgroundColor;
+      if (!this._transparent) {
+        color |= 0xff000000;
+      }
+      var alpha = color >>> 24 & 0xff;
+      this._ctx.fillStyle = ARGBtoCSSColor(color);
       var w = this._drawable.width;
       var h = this._drawable.height;
       if (x > 0) {
-        this._ctx.fillRect(0, 0, x, h);
+        replaceRect(this._ctx, 0, 0, x, h, alpha);
       } else if (x < 0) {
-        this._ctx.fillRect(x, 0, w, h);
+        replaceRect(this._ctx, w + x, 0, -x, h, alpha);
       }
       if (y > 0) {
-        this._ctx.fillRect(x, y, w, h);
+        replaceRect(this._ctx, 0, 0, w, y, alpha);
       } else if (y < 0) {
-        this._ctx.fillRect(0, y, w, h);
+        replaceRect(this._ctx, h + y, w, -y, alpha);
       }
       this._ctx.restore();
     },
