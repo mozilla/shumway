@@ -17,9 +17,9 @@
  */
 
 var EventDispatcherDefinition = (function () {
-  function doDispatchEvent(dispatcher, event) {
+  function doDispatchEvent(dispatcher, event, eventClass) {
     var target = dispatcher._target;
-    var type = event._type;
+    var type = event._type || event;
     var listeners = dispatcher._listeners[type];
 
     if (event._bubbles) {
@@ -36,10 +36,6 @@ var EventDispatcherDefinition = (function () {
         return true;
       }
 
-      if (event._target) {
-        event = event.clone();
-      }
-
       var keepPropagating = true;
 
       var i = ancestors.length;
@@ -47,45 +43,59 @@ var EventDispatcherDefinition = (function () {
         var currentTarget = ancestors[i];
         var queue = currentTarget._captureListeners[type];
         keepPropagating =
-          processListeners(queue, event, target, currentTarget, 1);
+          processListeners(queue, event, null, target, currentTarget, 1);
       }
 
       if (listeners && keepPropagating) {
-        keepPropagating = processListeners(listeners, event, target);
+        keepPropagating = processListeners(listeners, event, null, target);
       }
 
       for (var i = 0; i < ancestors.length && keepPropagating; i++) {
         var currentTarget = ancestors[i];
         var queue = currentTarget._listeners[type];
         keepPropagating =
-          processListeners(queue, event, target, currentTarget, 3);
+          processListeners(queue, event, null, target, currentTarget, 3);
       }
     } else if (listeners) {
-      if (event._target) {
-        event = event.clone();
-      }
-
-      processListeners(listeners, event, target);
+      processListeners(listeners, event, null, target);
     }
 
     return !event._isDefaultPrevented;
   }
-  function processListeners(queue, event, target, currentTarget, eventPhase) {
+  function processListeners(queue, event, eventClass, target, currentTarget, eventPhase) {
     if (queue) {
       queue = queue.slice();
 
-      event._target = target;
-      event._currentTarget = currentTarget || target;
-      event._eventPhase = eventPhase || 2;
+      var needsInit = true;
 
       for (var i = 0; i < queue.length; i++) {
         var item = queue[i];
+
         var methodInfo = item.handleEvent.methodInfo;
         if (methodInfo) {
-          if (methodInfo.parameters.length > 0) {
-            // NOTE: console.info("Event isUsed: " + methodInfo.parameters[0].isUsed);
+          if (methodInfo.parameters.length) {
+            if (!methodInfo.parameters[0].isUsed) {
+              item.handleEvent();
+              continue;
+            }
           }
         }
+
+        if (needsInit) {
+          if (typeof event === 'string') {
+            event = eventClass ? new eventClass(event) :
+                                 new flash.events.Event(event);
+          } else if (event._target) {
+            event = event.clone();
+          }
+
+          event._target = target;
+          event._currentTarget = currentTarget || target;
+          event._eventPhase = eventPhase || 2;
+
+          needsInit = false;
+        }
+
         item.handleEvent(event);
         if (event._stopImmediatePropagation) {
           break;
@@ -166,8 +176,8 @@ var EventDispatcherDefinition = (function () {
     _hasEventListener: function hasEventListener(type) { // (type:String) -> Boolean
       return type in this._listeners || type in this._captureListeners;
     },
-    _dispatchEvent: function dispatchEvent(event) {
-      doDispatchEvent(this, event);
+    _dispatchEvent: function dispatchEvent(event, eventClass) {
+      doDispatchEvent(this, event, eventClass);
     },
 
     __glue__: {
