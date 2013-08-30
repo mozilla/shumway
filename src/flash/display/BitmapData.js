@@ -111,13 +111,13 @@ var BitmapDataDefinition = (function () {
       if (alphaBitmapData) {
         notImplemented("BitmapData.copyPixels w/ alpha");
       }
-      var dx = destPoint.x;
-      var dy = destPoint.y;
-      var dw = sourceRect.width;
-      var dh = sourceRect.height;
+      var w = sourceRect.width;
+      var h = sourceRect.height;
       var sx = sourceRect.x;
       var sy = sourceRect.y;
-      this._ctx.drawImage(sourceBitmapData._drawable, dx, dy, dw, dh, sx, sy, dw, dh);
+      var dx = destPoint.x;
+      var dy = destPoint.y;
+      this._ctx.drawImage(sourceBitmapData._drawable, sx, sy, w, h, dx, dy, w, h);
     },
     /**
      * Locks an image so that any objects that reference the BitmapData object, such as Bitmap objects,
