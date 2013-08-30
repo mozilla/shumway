@@ -37,8 +37,8 @@ limitations under the License.
 
     <div id="debugInfoToolbar" class="toolbarBox withEmphasis">
       <div class="toolbarButtonBar">
-        <div id="showDebugInfo" class="toolbarButton pressedState">Debug Info</div>
-        <div id="showDisplayList" class="toolbarButton">Display List</div>
+        <div id="showDebugInfo" class="toolbarButton pressedState" data-panelid="debugInfoContainer">Debug Info</div>
+        <div id="showDisplayList" class="toolbarButton" data-panelid="displayListContainer">Display List</div>
       </div>
       <div id="openFile" class="toolbarButton" title="Select SWF/ABC file (or drag'n'drop the file on the stage).">Open File</div>
     </div>
@@ -49,7 +49,7 @@ limitations under the License.
       <div id="info" class="debugPanel" tabindex='4'></div>
       <div id="timerInfo" class="debugPanel" tabindex='5'></div>
     </div>
-    <div id="displayListTreeContainer">
+    <div id="displayTreeContainer">
     </div>
 
     <div id="bottomToolbar" class="toolbarBox">

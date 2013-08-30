@@ -113,21 +113,21 @@ Array.prototype.forEach.call(document.querySelectorAll(".toolbarButtonBar > .too
   });
 });
 
-Array.prototype.forEach.call(document.querySelectorAll("#debugInfoToolbar > .toolbarButtonBar > .toolbarButton"), function (element) {
-  element.addEventListener("click", function (event) {
-    var debugInfoContainer = document.getElementById("debugInfoContainer");
-    var displayListTreeContainer = document.getElementById("displayListTreeContainer");
-    switch(event.target.id) {
-      case "showDebugInfo":
-        debugInfoContainer.classList.add("active");
-        displayListTreeContainer.classList.remove("active");
-        break;
-      case "showDisplayList":
-        debugInfoContainer.classList.remove("active");
-        displayListTreeContainer.classList.add("active");
-        break;
+var panelToggleButtonSelect = "#debugInfoToolbar > .toolbarButtonBar > .toolbarButton";
+
+function panelToggleButtonClickHandler(event) {
+  Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelect), function (element) {
+    var panelId = element.dataset.panelid;
+    var panel = document.getElementById(panelId);
+    if (event.target == element) {
+      panel.classList.add("active");
+    } else {
+      panel.classList.remove("active");
     }
   });
+}
+Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelect), function (element) {
+  element.addEventListener("click", panelToggleButtonClickHandler);
 });
 
 document.addEventListener("keydown", function (event) {

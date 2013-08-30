@@ -82,7 +82,7 @@ body.simple #xstats {
   width: 500px;
   overflow-y: auto;
   overflow-x: hidden;
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(0, 0, 0, 0.2);
   border-left: 1px solid #666;
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
