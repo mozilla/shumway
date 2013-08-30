@@ -127,13 +127,13 @@ var SpriteDefinition = (function () {
 
           if (!loader._isAvm2Enabled) {
             this._initAvm1Bindings(instance, name, symbolInfo.events);
-            instance._dispatchEvent(new flash.events.Event("init"));
+            instance._dispatchEvent("init");
           }
 
           instance._index = i;
 
-          instance._dispatchEvent(new flash.events.Event("load"));
-          instance._dispatchEvent(new flash.events.Event("added"));
+          instance._dispatchEvent("load");
+          instance._dispatchEvent("added");
           if (this._stage) {
             this._stage._addToStage(instance);
           }
@@ -166,11 +166,11 @@ var SpriteDefinition = (function () {
 
       if (!loader._isAvm2Enabled) {
         parent._initAvm1Bindings(instance, name, symbolInfo && symbolInfo.events);
-        instance._dispatchEvent(new flash.events.Event("init"));
+        instance._dispatchEvent("init");
       }
 
-      instance._dispatchEvent(new flash.events.Event("load"));
-      instance._dispatchEvent(new flash.events.Event("added"));
+      instance._dispatchEvent("load");
+      instance._dispatchEvent("added");
       if (this._stage) {
         instance._invalidate();
       }

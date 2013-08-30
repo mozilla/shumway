@@ -472,7 +472,7 @@ var LoaderDefinition = (function () {
           }
         });
         Promise.when(frameConstructed, this._lastPromise).then(function () {
-          this.contentLoaderInfo._dispatchEvent(new flash.events.Event("complete"));
+          this.contentLoaderInfo._dispatchEvent("complete");
         }.bind(this));
         break;
       case 'empty':
@@ -480,7 +480,7 @@ var LoaderDefinition = (function () {
         this._lastPromise.resolve();
         break;
       case 'error':
-        this.contentLoaderInfo._dispatchEvent(new flash.events.IOErrorEvent("ioError"));
+        this.contentLoaderInfo._dispatchEvent("ioError", flash.events.IOErrorEvent);
         break;
       default:
         //TODO: fix special-casing. Might have to move document class out of dictionary[0]
@@ -788,7 +788,7 @@ var LoaderDefinition = (function () {
         loader._control.appendChild(image._control);
         loader._content = image;
         imgPromise.resolve(imageInfo);
-        loader.contentLoaderInfo._dispatchEvent(new flash.events.Event("init"));
+        loader.contentLoaderInfo._dispatchEvent("init");
       };
       img.src = URL.createObjectURL(imageInfo.data);
       delete imageInfo.data;

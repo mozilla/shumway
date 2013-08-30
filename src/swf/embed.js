@@ -183,8 +183,8 @@ SWF.embed = function(file, doc, container, options) {
 
     stage._children[0] = root;
 
-    root._dispatchEvent(new flash.events.Event("added"));
-    root._dispatchEvent(new flash.events.Event("addedToStage"));
+    root._dispatchEvent("added");
+    root._dispatchEvent("addedToStage");
 
     syncCursor();
 

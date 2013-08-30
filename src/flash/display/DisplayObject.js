@@ -159,7 +159,7 @@ var DisplayObjectDefinition = (function () {
         var listeners = self._listeners;
         // shortcut: checking if the listeners are exist before dispatching
         if (listeners[type]) {
-          self._dispatchEvent(new flash.events.Event(type));
+          self._dispatchEvent(type);
         }
       };
     },
