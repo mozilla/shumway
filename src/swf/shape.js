@@ -851,22 +851,11 @@ ShapePath.prototype = {
           toX = data[dataIndex++];
           toY = data[dataIndex++];
           extendBoundsByPoint(bounds, toX, toY);
-          var extreme;
           if (cpX < fromX || cpX > toX) {
-            extreme = quadraticBezierExtreme(fromX, cpX, toX);
-            if (extreme < bounds.xMin) {
-              bounds.xMin = extreme;
-            } else if (extreme > bounds.xMax) {
-              bounds.xMax = extreme;
-            }
+            extendBoundsByX(bounds, quadraticBezierExtreme(fromX, cpX, toX));
           }
           if (cpY < fromY || cpY > toY) {
-            extreme = quadraticBezierExtreme(fromY, cpY, toY);
-            if (extreme < bounds.yMin) {
-              bounds.yMin = extreme;
-            } else if (extreme > bounds.yMax) {
-              bounds.yMax = extreme;
-            }
+            extendBoundsByY(bounds, quadraticBezierExtreme(fromY, cpY, toY));
           }
           break;
         case SHAPE_CUBIC_CURVE_TO:
@@ -878,28 +867,17 @@ ShapePath.prototype = {
           toY = data[dataIndex++];
           extendBoundsByPoint(bounds, toX, toY);
           var extremes;
-          var extreme;
           var i;
           if (cpX < fromX || cp2X < fromX || cpX > toX || cp2X > toX) {
             extremes = cubicBezierExtremes(fromX, cpX, cp2X, toX);
             for (i = extremes.length; i--;) {
-              extreme = extremes[i];
-              if (extreme < bounds.xMin) {
-                bounds.xMin = extreme;
-              } else if (extreme > bounds.xMax) {
-                bounds.xMax = extreme;
-              }
+              extendBoundsByX(bounds, extremes[i]);
             }
           }
           if (cpY < fromY || cp2Y < fromY || cpY > toY || cp2Y > toY) {
             extremes = cubicBezierExtremes(fromY, cpY, cp2Y, toY);
             for (i = extremes.length; i--;) {
-              extreme = extremes[i];
-              if (extreme < bounds.yMin) {
-                bounds.yMin = extreme;
-              } else if (extreme > bounds.yMax) {
-                bounds.yMax = extreme;
-              }
+              extendBoundsByY(bounds, extremes[i]);
             }
           }
           break;
@@ -1185,6 +1163,22 @@ function extendBoundsByPoint(bounds, x, y) {
   } else if (x > bounds.xMax) {
     bounds.xMax = x;
   }
+  if (y < bounds.yMin) {
+    bounds.yMin = y;
+  } else if (y > bounds.yMax) {
+    bounds.yMax = y;
+  }
+}
+
+function extendBoundsByX(bounds, x) {
+  if (x < bounds.xMin) {
+    bounds.xMin = x;
+  } else if (x > bounds.xMax) {
+    bounds.xMax = x;
+  }
+}
+
+function extendBoundsByY(bounds, y) {
   if (y < bounds.yMin) {
     bounds.yMin = y;
   } else if (y > bounds.yMax) {
