@@ -57,7 +57,6 @@
 
 .toolbarLabel {
   display: inline-block;
-  width: 78px;
   height: 22px;
   margin-right: 10px;
   color: hsl(210,30%,85%);
@@ -75,8 +74,8 @@
 
 .toolbarButton {
   display: inline-block;
-  width: 78px;
   height: 22px;
+  padding: 0 8px;
   border: 1px solid hsla(210,8%,5%,.45);
   border-radius: 3px;
   background: linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
