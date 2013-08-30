@@ -101,12 +101,6 @@ document.getElementById("openFile").addEventListener("click", function () {
   document.getElementById("files").click();
 });
 
-Array.prototype.forEach.call(document.querySelectorAll(".closeButton"), function (element) {
-  element.addEventListener("click", function (event) {
-    event.target.parentElement.setAttribute('hidden', true);
-  });
-});
-
 Array.prototype.forEach.call(document.querySelectorAll(".toolbarButtonBar > .toolbarButton"), function (element) {
   element.addEventListener("click", function (event) {
     Array.prototype.forEach.call(event.target.parentElement.children, function (button) {
