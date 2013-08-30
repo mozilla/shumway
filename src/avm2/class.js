@@ -727,7 +727,6 @@ var Class = (function () {
     defineNonEnumerableProperty(cls.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), cls);
     defineReadOnlyProperty(cls.traitsPrototype, "class", cls);
     defineReadOnlyProperty(cls.instanceConstructor, "class", cls);
-    defineObjectShape(cls.traitsPrototype);
   }
 
   Class.prototype = {
@@ -937,9 +936,9 @@ var Class = (function () {
       release || assert (dP === instanceConstructor.prototype || dP === Object.getPrototypeOf(instanceConstructor.prototype));
       release || assert (isClass(this));
       if (tP !== Object.prototype) {
-        // We don't want to put "class" and "shape" on the Object.prototype.
-        release || assert (Object.hasOwnProperty.call(tP, "class"));
-        release || assert (Object.hasOwnProperty.call(tP, "shape"), "Classes should have a shape ID.");
+        // TODO: Don't remember why I had this assertion.
+        // We don't want to put "class" on the Object.prototype.
+        // release || assert (Object.hasOwnProperty.call(tP, "class"));
       }
       release || assert (instanceConstructor.class === this);
     },
