@@ -44,6 +44,7 @@ body.simple #xstats {
   top: 0;
   right: 0;
   width: 500px;
+  padding-left: 0;
 }
 #bottomToolbar {
   bottom: 0;
@@ -65,7 +66,15 @@ body.simple #xstats {
   padding: 3px;
 }
 
-#debugInfoContainer {
+#debugInfoToolbar > .toolbarButtonBar {
+  font-size: 0;
+}
+
+#debugInfoContainer.active, #displayListTreeContainer.active {
+  display: block;
+}
+#debugInfoContainer, #displayListTreeContainer {
+  display: none;
   position: absolute;
   top: 32px;
   bottom: 32px;

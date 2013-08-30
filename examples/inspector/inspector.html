@@ -36,18 +36,20 @@ limitations under the License.
     </div>
 
     <div id="debugInfoToolbar" class="toolbarBox withEmphasis">
-      <!--<div class="toolbarButton" style="width: 60px">Panel 1</div>
-      <div class="toolbarButton" pressedState style="width: 60px">Panel 2</div>
-      <div class="toolbarButton pressedState" style="width: 60px">Panel 3</div>
-      <div class="toolbarButton pressedState" style="width: 60px">Panel 4</div>-->
+      <div class="toolbarButtonBar">
+        <div id="showDebugInfo" class="toolbarButton pressedState">Debug Info</div>
+        <div id="showDisplayList" class="toolbarButton">Display List</div>
+      </div>
       <div id="openFile" class="toolbarButton" title="Select SWF/ABC file (or drag'n'drop the file on the stage).">Open File</div>
     </div>
 
-    <div id="debugInfoContainer">
+    <div id="debugInfoContainer" class="active">
       <canvas id="traceTerminal" width="600" height="210" tabindex='2'></canvas>
       <canvas id="frameTerminal" width="600" height="210" tabindex='3'></canvas>
       <div id="info" class="debugPanel" tabindex='4'></div>
       <div id="timerInfo" class="debugPanel" tabindex='5'></div>
+    </div>
+    <div id="displayListTreeContainer">
     </div>
 
     <div id="bottomToolbar" class="toolbarBox">

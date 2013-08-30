@@ -107,8 +107,37 @@ Array.prototype.forEach.call(document.querySelectorAll(".closeButton"), function
   });
 });
 
+Array.prototype.forEach.call(document.querySelectorAll(".toolbarButtonBar > .toolbarButton"), function (element) {
+  element.addEventListener("click", function (event) {
+    Array.prototype.forEach.call(event.target.parentElement.children, function (button) {
+      if (button == event.target) {
+        button.classList.add("pressedState");
+      } else {
+        button.classList.remove("pressedState");
+      }
+    });
+  });
+});
+
+Array.prototype.forEach.call(document.querySelectorAll("#debugInfoToolbar > .toolbarButtonBar > .toolbarButton"), function (element) {
+  element.addEventListener("click", function (event) {
+    var debugInfoContainer = document.getElementById("debugInfoContainer");
+    var displayListTreeContainer = document.getElementById("displayListTreeContainer");
+    switch(event.target.id) {
+      case "showDebugInfo":
+        debugInfoContainer.classList.add("active");
+        displayListTreeContainer.classList.remove("active");
+        break;
+      case "showDisplayList":
+        debugInfoContainer.classList.remove("active");
+        displayListTreeContainer.classList.add("active");
+        break;
+    }
+  });
+});
+
 document.addEventListener("keydown", function (event) {
-  if (event.keyCode == 119 && event.ctrlKey) { // Ctrl+F8
+  if ((event.keyCode == 119 || event.keyCode == 80) && event.ctrlKey) { // Ctrl+F8 or Ctrl-p
     pauseExecution = !pauseExecution;
   }
 });

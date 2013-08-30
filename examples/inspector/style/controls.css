@@ -72,6 +72,22 @@
   cursor: default;
 }
 
+.toolbarButtonBar {
+  display: inline-block;
+  height: 22px;
+}
+.toolbarButtonBar > .toolbarButton {
+  border-radius: 0;
+}
+.toolbarButtonBar > .toolbarButton:first-child {
+  border-radius: 3px 0 0 3px;
+  border-right: none !important;
+}
+.toolbarButtonBar > .toolbarButton:last-child {
+  border-radius: 0 3px 3px 0;
+  border-right: none !important;
+}
+
 .toolbarButton {
   display: inline-block;
   height: 22px;
