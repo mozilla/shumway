@@ -67,7 +67,7 @@ var StageDefinition = (function () {
         }
       }
 
-      displayObject._dispatchEvent(new flash.events.Event('addedToStage'));
+      displayObject._dispatchEvent('addedToStage');
     },
     _removeFromStage: function removeFromStage(displayObject) {
       displayObject._stage = null;
@@ -83,7 +83,7 @@ var StageDefinition = (function () {
         }
       }
 
-      displayObject._dispatchEvent(new flash.events.Event('removedFromStage'));
+      displayObject._dispatchEvent('removedFromStage');
     },
 
     _invalidateOnStage: function invalidateOnStage(displayObject) {
