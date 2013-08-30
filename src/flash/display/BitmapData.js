@@ -43,7 +43,7 @@ var BitmapDataDefinition = (function () {
       }
 
       this._transparent = transparent === undefined ? true : !!transparent;
-      this._backgroundColor = backgroundColor | 0;
+      this._backgroundColor = backgroundColor || 0xFFFFFF;
 
       if (this._skipCopyToCanvas) {
         this._drawable = this._img;
@@ -53,7 +53,7 @@ var BitmapDataDefinition = (function () {
         canvas.width = width | 0;
         canvas.height = height | 0;
         this._drawable = canvas;
-        if (!transparent || this._backgroundColor)
+        if (!transparent)
           this.fillRect(new flash.geom.Rectangle(0, 0, width | 0, height | 0), backgroundColor);
         if (this._img)
           this._ctx.drawImage(this._img, 0, 0);
