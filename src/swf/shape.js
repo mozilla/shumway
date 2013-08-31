@@ -1604,6 +1604,11 @@ function extendBoundsByY(bounds, y) {
     bounds.yMax = y;
   }
 }
+
+function morph(start, end, ratio) {
+  return start + (end - start) * ratio;
+}
+
 /**
  * For shapes parsed in a worker thread, we have to finish their
  * initialization after receiving the data in the main thread.

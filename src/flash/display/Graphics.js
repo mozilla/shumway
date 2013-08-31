@@ -24,10 +24,6 @@ var GraphicsDefinition = (function () {
   var GRAPHICS_PATH_WINDING_EVEN_ODD       = 'evenOdd';
   var GRAPHICS_PATH_WINDING_NON_ZERO       = 'nonZero';
 
-  function morph(start, end, ratio) {
-    return start + (end - start) * ratio;
-  }
-
   var def = {
     __class__: 'flash.display.Graphics',
 
