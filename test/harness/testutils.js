@@ -254,7 +254,8 @@ var TestContext = {
   },
   onprogress: null,
   defaultRate: 1,
-  _id: Date.now,
+  _id: Date.now(),
+  _slavePath: 'harness/slave.html',
   _driverWindow: null,
   _resultPromise: new Promise,
   _currentResultPromise: null,
@@ -286,7 +287,7 @@ var TestContext = {
           path: file.indexOf(':') >= 0 || file[0] === '/' ? file : '../' + file
         }, '*');
       });
-      movieFrame.src = 'harness/slave.html?n=' + id;
+      movieFrame.src = TestContext._slavePath + '?n=' + id;
     });
     TestContext._resultPromise = resultPromise;
 
@@ -364,7 +365,7 @@ function execEq(file, frames, onprogress) {
           reportFrames: frames
         }, '*');
       });
-      movieFrame.src = 'harness/slave.html?n=' + id;
+      movieFrame.src = TestContext._slavePath + '?n=' + id;
     });
     TestContext._resultPromise = resultPromise;
 }
@@ -421,7 +422,7 @@ function execSanity(tests, onprogress) {
           })
         }, '*');
       });
-      movieFrame.src = 'harness/slave.html?n=' + id;
+      movieFrame.src = TestContext._slavePath + '?n=' + id;
     });
     TestContext._resultPromise = resultPromise;
 }
