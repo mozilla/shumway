@@ -820,29 +820,25 @@ ShapePath.prototype = {
           // equation of the form y = ax^2 + bx + c for y.
           // See http://en.wikipedia.org/wiki/Quadratic_equation and
           // http://code.google.com/p/degrafa/source/browse/trunk/Degrafa/com/degrafa/geometry/AdvancedQuadraticBezier.as?r=613#394
+          var a = fromY - 2 * cpY + toY;
           var c = fromY - y;
-          var b = 2.0 * (cpY - fromY);
-          var a = fromY - 2.0 * cpY + toY;
+          var b = 2 * (cpY - fromY);
 
-          var discriminant = b * b - 4 * a * c;
-          if(discriminant < 0) {
+          var d = b * b - 4 * a * c;
+          if (d < 0) {
             break;
           }
-          var t = -b / (a + a);
-          if (discriminant === 0) {
-            if (quadraticXAtT(t, fromX, cpX, toX) > x) {
-              inside = !inside;
-            }
-            break;
-          }
-          var dRoot = Math.sqrt(discriminant);
-          a = 1/(a + a);
-          t = (dRoot - b) * a;
-          if (quadraticXAtT(t, fromX, cpX, toX) > x) {
+
+          d = Math.sqrt(d);
+          a = 1 / (a + a);
+          var t1 = (d - b) * a;
+          var t2 = (-b - d) * a;
+
+          if (t1 >= 0 && t1 <= 1 && quadraticBezier(fromX, cpX, toX, t1) > x) {
             inside = !inside;
           }
-          t = (-b - dRoot) * a;
-          if (quadraticXAtT(t, fromX, cpX, toX) > x) {
+
+          if (t2 >= 0 && t2 <= 1 && quadraticBezier(fromX, cpX, toX, t2) > x) {
             inside = !inside;
           }
           break;
@@ -1362,11 +1358,6 @@ function quadraticBezierExtreme(from, cp, to) {
     return to;
   }
   return quadraticBezier(from, cp, to, t);
-}
-
-function quadraticXAtT(t, fromX, cpX, toX) {
-  var tInvert = 1 - t;
-  return tInvert * tInvert * fromX + 2 * tInvert * t * cpX + t * t * toX;
 }
 
 function cubicBezier(from, cp, cp2, to, t) {
