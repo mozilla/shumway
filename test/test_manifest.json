@@ -1,11 +1,4 @@
 [
-    {  "id": "NameCache trace",
-       "stas": "swfs/trace2s.stas",
-       "filenames": [
-         "swfs/NameCache.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "events",
        "stas": "swfs/trace.stas",
        "filenames": [
@@ -264,6 +257,13 @@
        "filenames": [
          "swfs/blendmode/blendmode_1.swf",
          "swfs/blendmode/blendmode_2.swf"
+       ],
+       "type": "stas"
+    },
+    {  "id": "NameCache trace",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/NameCache.swf"
        ],
        "type": "stas"
     }
