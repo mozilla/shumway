@@ -55,6 +55,9 @@ class TestOptions(OptionParser):
         self.add_option("--reftest", action="store_true", dest="reftest",
                         help="Automatically start reftest showing comparison test failures, if there are any.",
                         default=False)
+        self.add_option("--bundle", action="store_true", dest="bundle",
+                        help="Runs tests for compiled/bundled files.",
+                        default=False)
         self.add_option("--port", action="store", dest="port", type="int",
                         help="The port the HTTP server should listen on.", default=8080)
         self.set_usage(USAGE_EXAMPLE)
@@ -416,6 +419,8 @@ def startBrowsers(browsers, options, path):
         print 'Launching', b.name
         host = 'http://%s:%s' % (SERVER_HOST, options.port) 
         qs = '?browser='+ urllib.quote(b.name) +'&manifestFile='+ urllib.quote(options.manifestFile)
+        if options.bundle:
+          qs += '&bundle=true'
         qs += '&path=' + b.path
         b.start(host + path + qs)
 
