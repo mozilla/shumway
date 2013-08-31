@@ -89,6 +89,7 @@ var GraphicsDefinition = (function () {
     beginGradientFill: function(type, colors, alphas, ratios, matrix,
                                 spreadMethod, interpolationMethod, focalPos)
     {
+      this.beginPath();
       this._currentPath.fillStyle = createGradientStyle(type, colors, alphas,
                                                         ratios, matrix,
                                                         spreadMethod,
@@ -96,6 +97,7 @@ var GraphicsDefinition = (function () {
                                                         focalPos);
     },
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
+      this.beginPath();
       this._currentPath.fillStyle = createPatternStyle(bitmap, matrix, repeat,
                                                        smooth);
     },
@@ -217,12 +219,14 @@ var GraphicsDefinition = (function () {
       this._currentPath.fillStyle = null;
     },
     lineBitmapStyle: function(bitmap, matrix, repeat, smooth) {
+      this.beginPath();
       this._currentPath.lineStyle = createPatternStyle(bitmap, matrix, repeat,
                                                        smooth);
     },
     lineGradientStyle: function(type, colors, alphas, ratios, matrix,
                                 spreadMethod, interpolationMethod, focalPos)
     {
+      this.beginPath();
       this._currentPath.lineStyle = createGradientStyle(type, colors, alphas,
                                                         ratios, matrix,
                                                         spreadMethod,
