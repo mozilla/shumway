@@ -588,6 +588,146 @@ ShapePath.prototype = {
     this.commands.push(SHAPE_ELLIPSE);
     this.data.push(x, y, radiusX, radiusY);
   },
+  draw: function(ctx, scale, clip, ratio) {
+    if (clip && !this.fillStyle) {
+      return;
+    }
+    ctx.beginPath();
+    var commands = this.commands;
+    var data = this.data;
+    var morphData = this.morphData;
+    var formOpen = false;
+    var formOpenX = 0;
+    var formOpenY = 0;
+    for (var j = 0, k = 0; j < commands.length; j++) {
+      if (!this.isMorph) {
+        switch (commands[j]) {
+          case SHAPE_MOVE_TO:
+            formOpen = true;
+            formOpenX = data[k++];
+            formOpenY = data[k++];
+            ctx.moveTo(formOpenX, formOpenY);
+            break;
+          case SHAPE_WIDE_MOVE_TO:
+            ctx.moveTo(data[k++], data[k++]);
+            k += 2;
+            break;
+          case SHAPE_LINE_TO:
+            ctx.lineTo(data[k++], data[k++]);
+            break;
+          case SHAPE_WIDE_LINE_TO:
+            ctx.lineTo(data[k++], data[k++]);
+            k += 2;
+            break;
+          case SHAPE_CURVE_TO:
+            ctx.quadraticCurveTo(data[k++], data[k++],
+                                 data[k++], data[k++]);
+            break;
+          case SHAPE_CUBIC_CURVE_TO:
+            ctx.bezierCurveTo(data[k++], data[k++], data[k++], data[k++],
+                              data[k++], data[k++]);
+            break;
+          case SHAPE_ROUND_CORNER:
+            ctx.arcTo(data[k++], data[k++], data[k++], data[k++],
+                      data[k++], data[k++]);
+            break;
+          case SHAPE_CIRCLE:
+            if (formOpen) {
+              ctx.lineTo(formOpenX, formOpenY);
+              formOpen = false;
+            }
+            ctx.moveTo(data[k] + data[k+2], data[k+1]);
+            ctx.arc(data[k++], data[k++], data[k++], 0, Math.PI * 2, false);
+            break;
+          case SHAPE_ELLIPSE:
+            if (formOpen) {
+              ctx.lineTo(formOpenX, formOpenY);
+              formOpen = false;
+            }
+            var x = data[k++];
+            var y = data[k++];
+            var rX = data[k++];
+            var rY = data[k++];
+            var radius;
+            if (rX !== rY) {
+              ctx.save();
+              var ellipseScale;
+              if (rX > rY) {
+                ellipseScale = rX / rY;
+                radius = rY;
+                x /= ellipseScale;
+                ctx.scale(ellipseScale, 1);
+              } else {
+                ellipseScale = rY / rX;
+                radius = rX;
+                y /= ellipseScale;
+                ctx.scale(1, ellipseScale);
+              }
+            }
+            ctx.moveTo(x + radius, y);
+            ctx.arc(x, y, radius, 0, Math.PI * 2, false);
+            if (rX !== rY) {
+              ctx.restore();
+            }
+            break;
+          default:
+            console.warn("Unknown drawing command encountered: " +
+                         commands[j]);
+        }
+      } else {
+        switch (commands[j]) {
+          case SHAPE_MOVE_TO:
+            ctx.moveTo(morph(data[k], morphData[k++], ratio),
+                       morph(data[k], morphData[k++], ratio));
+            break;
+          case SHAPE_LINE_TO:
+            ctx.lineTo(morph(data[k], morphData[k++], ratio),
+                       morph(data[k], morphData[k++], ratio));
+            break;
+          case SHAPE_CURVE_TO:
+            ctx.quadraticCurveTo(morph(data[k], morphData[k++], ratio),
+                                 morph(data[k], morphData[k++], ratio),
+                                 morph(data[k], morphData[k++], ratio),
+                                 morph(data[k], morphData[k++], ratio));
+            break;
+          default:
+            console.warn("Drawing command not supported for morph " +
+                         "shapes: " + commands[j]);
+        }
+      }
+    }
+    // TODO: enable in-path line-style changes
+//        if (formOpen) {
+//          ctx.lineTo(formOpenX, formOpenY);
+//        }
+    if (!clip) {
+      var fillStyle = this.fillStyle;
+      if (fillStyle) {
+        ctx.fillStyle = fillStyle.style;
+        var m = fillStyle.transform;
+        if (m) {
+          ctx.save();
+          ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+          ctx.fill();
+          ctx.restore();
+        } else {
+          ctx.fill();
+        }
+      }
+      var lineStyle = this.lineStyle;
+      // TODO: All widths except for `undefined` and `NaN` draw something
+      if (lineStyle) {
+        // Flash's lines are always at least 1px
+        ctx.lineWidth = Math.max(lineStyle.width, 1);
+        ctx.strokeStyle = lineStyle.style;
+        ctx.lineCap = lineStyle.lineCap;
+        ctx.lineJoin = lineStyle.lineJoin;
+        ctx.miterLimit = lineStyle.miterLimit;
+        ctx.stroke();
+      }
+    }
+    ctx.closePath();
+  },
   isPointInPath: function(x, y) {
     if (!(this.fillStyle || this.lineStyle)) {
       return false;
