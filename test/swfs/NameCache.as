@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf NameCacheTest,300,250 test/swfs/NameCache.as
+   java -jar utils/asc.jar -import playerglobal.abc -swf NameCacheTest,605,605 test/swfs/NameCache.as
 */
 
 package {
@@ -35,15 +35,11 @@ class CustomLoader extends Loader {
     private var url           = "2cba84b4c5109f373dbd8eb83dd1797b3244942aa9a82396e8c60bb762d1bebf.swf";
 
     public function CustomLoader() {
-        configureListeners(contentLoaderInfo);
         var request:URLRequest = new URLRequest(url);
         load(request);
+        contentLoaderInfo.addEventListener(Event.COMPLETE, completeHandler);
     }
 
-    private function configureListeners(dispatcher:IEventDispatcher):void {
-        dispatcher.addEventListener(Event.COMPLETE, completeHandler);
-    }
-    
     private function completeHandler(event:Event):void {
         trace("completeHandler()");
     }
