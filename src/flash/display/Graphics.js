@@ -205,6 +205,7 @@ var GraphicsDefinition = (function () {
             }
           }
           var lineStyle = path.lineStyle;
+          // TODO: All widths except for `undefined` and `NaN` draw something
           if (lineStyle) {
             // Flash's lines are always at least 1px
             ctx.lineWidth = Math.max(lineStyle.width, 1);

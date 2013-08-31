@@ -584,7 +584,7 @@ ShapePath.prototype = {
     this.data.push(x, y, radiusX, radiusY);
   },
   isPointInPath: function(x, y) {
-    if (!this.fillStyle) {
+    if (!(this.fillStyle || this.lineStyle)) {
       return false;
     }
     var bounds = this.strokeBounds || this.bounds || this._calculateBounds();
@@ -594,6 +594,15 @@ ShapePath.prototype = {
       return false;
     }
 
+    if (this.fillStyle && this.isPointInFill(x, y)) {
+      return true;
+    }
+
+    return this.lineStyle && this.lineStyle.width !== undefined &&
+           this.isPointInStroke(x, y);
+
+  },
+  isPointInFill: function(x, y) {
     var commands = this.commands;
     var data = this.data;
     var length = commands.length;
@@ -762,6 +771,7 @@ ShapePath.prototype = {
           if (localX * localX + localY * localY < r * r) {
             inside = !inside;
           }
+          toX += r;
           break;
         case SHAPE_ELLIPSE:
           cpX = data[dataIndex++];
@@ -793,6 +803,258 @@ ShapePath.prototype = {
     }
 
     return inside;
+  },
+  isPointInStroke: function(x, y) {
+    var commands = this.commands;
+    var data = this.data;
+    var length = commands.length;
+
+    var width = this.lineStyle.width;
+    var halfWidth = width / 2;
+    var halfWidthSq = halfWidth * halfWidth;
+    var minX = x - halfWidth;
+    var maxX = x + halfWidth;
+    var minY = y - halfWidth;
+    var maxY = y + halfWidth;
+
+    var fromX = 0;
+    var fromY = 0;
+    var toX = 0;
+    var toY = 0;
+    var localX;
+    var localY;
+    var cpX;
+    var cpY;
+    var rX;
+    var rY;
+    var curveX;
+    var curveY;
+    var t;
+
+    for (var commandIndex = 0, dataIndex = 0; commandIndex < length;
+         commandIndex++)
+    {
+      switch (commands[commandIndex]) {
+        case SHAPE_WIDE_MOVE_TO:
+          dataIndex += 2;
+        /* falls through */
+        case SHAPE_MOVE_TO:
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          break;
+        case SHAPE_WIDE_LINE_TO:
+          dataIndex += 2;
+        /* falls through */
+        case SHAPE_LINE_TO:
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          // Lines with length == 0 aren't rendered
+          // TODO: make sure we get this right in the actual rendering
+          if (fromX === toX && fromY === toY) {
+            break;
+          }
+          // Eliminate based on bounds
+          if (maxX < fromX && maxX < toX || minX > fromX && minX > toX ||
+              maxY < fromY && maxY < toY || minY > fromY && minY > toY)
+          {
+            break;
+          }
+          // Vertical and horizontal lines are a certain hit at this point
+          if (toX === fromX || toY === fromY) {
+            return true;
+          }
+          // http://stackoverflow.com/a/1501725/517791
+          t = ((x - fromX) * (toX - fromX) + (y - fromY) * (toY - fromY)) /
+              distanceSq(fromX, fromY, toX, toY);
+          if (t < 0) {
+            if (distanceSq(x, y, fromX, fromY) <= halfWidthSq) {
+              return true;
+            }
+            break;
+          }
+          if (t > 1) {
+            if (distanceSq(x, y, toX, toY) <= halfWidthSq) {
+              return true;
+            }
+            break;
+          }
+          if (distanceSq(x, y, fromX + t * (toX - fromX),
+                         fromY + t * (toY - fromY)) <= halfWidthSq)
+          {
+            return true;
+          }
+          break;
+        case SHAPE_CURVE_TO:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          // Eliminate based on bounds
+          var extremeX = quadraticBezierExtreme(fromX, cpX, toX);
+          if (maxX < fromX && maxX < extremeX && maxX < toX ||
+              minX > fromX && minX > extremeX && minX > toX)
+          {
+            break;
+          }
+          var extremeY = quadraticBezierExtreme(fromY, cpY, toY);
+          if (maxY < fromY && maxY < extremeY && maxY < toY ||
+              minY > fromY && minY > extremeY && minY > toY)
+          {
+            break;
+          }
+          // So, this is very much not ideal, but I'll punt on proper curve
+          // hit-testing for now and just sample an amount of points that seems
+          // sufficient.
+          for (t = 0; t < 1; t += 0.02) {
+            curveX = quadraticBezier(fromX, cpX, toX, t);
+            if (curveX < minX  || curveX > maxX) {
+              continue;
+            }
+            curveY = quadraticBezier(fromY, cpY, toY, t);
+            if (curveY < minY  || curveY > maxY) {
+              continue;
+            }
+            if ((x - curveX) * (x - curveX) + (y - curveY) * (y - curveY) <
+                halfWidthSq)
+            {
+              return true;
+            }
+          }
+          break;
+        case SHAPE_CUBIC_CURVE_TO:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          var cp2X = data[dataIndex++];
+          var cp2Y = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          // Eliminate based on bounds
+          var extremesX = cubicBezierExtremes(fromX, cpX, cp2X, toX);
+          while(extremesX.length < 2) {
+            extremesX.push(toX);
+          }
+          if (maxX < fromX && maxX < toX && maxX < extremesX[0] &&
+              maxX < extremesX[1]  ||
+              minX > fromX && minX > toX && minX > extremesX[0] &&
+              minX > extremesX[1])
+          {
+            break;
+          }
+          var extremesY = cubicBezierExtremes(fromY, cpY, cp2Y, toY);
+          while(extremesY.length < 2) {
+            extremesY.push(toY);
+          }
+          if (maxY < fromY && maxY < toY && maxY < extremesY[0] &&
+              maxY < extremesY[1] ||
+              minY > fromY && minY > toY && minY > extremesY[0] &&
+              minY > extremesY[1])
+          {
+            break;
+          }
+          // So, this is very much not ideal, but I'll punt on proper curve
+          // hit-testing for now and just sample an amount of points that seems
+          // sufficient.
+          for (t = 0; t < 1; t += 0.02) {
+            curveX = cubicBezier(fromX, cpX, cp2X, toX, t);
+            if (curveX < minX  || curveX > maxX) {
+              continue;
+            }
+            curveY = cubicBezier(fromY, cpY, cp2Y, toY, t);
+            if (curveY < minY  || curveY > maxY) {
+              continue;
+            }
+            if ((x - curveX) * (x - curveX) + (y - curveY) * (y - curveY) <
+                halfWidthSq)
+            {
+              return true;
+            }
+          }
+          break;
+        case SHAPE_ROUND_CORNER:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          rX = data[dataIndex++];
+          rY = data[dataIndex++];
+          // Eliminate based on bounds
+          if (maxX < fromX && maxX < toX || minX > fromX && minX > toX ||
+              maxY < fromY && maxY < toY || minY > fromY && minY > toY)
+          {
+            break;
+          }
+          // we want the ellipse's center
+          if ((toX > fromX) === (toY > fromY)) {
+            cp2X = fromX;
+            cp2Y = toY;
+          } else {
+            cp2X = toX;
+            cp2Y = fromY;
+          }
+          localX = Math.abs(x - cp2X);
+          localY = Math.abs(y - cp2Y);
+          localX -= halfWidth;
+          localY -= halfWidth;
+          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) > 1) {
+            break;
+          }
+          localX += width;
+          localY += width;
+          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) > 1) {
+            return true;
+          }
+          break;
+        case SHAPE_CIRCLE:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          var r = data[dataIndex++];
+          toX = cpX + r;
+          toY = cpY;
+          // Eliminate based on bounds
+          if (maxX < cpX - r || minX > cpX + r ||
+              maxY < cpY - r || minY > cpY + r)
+          {
+            break;
+          }
+          localX = x - cpX;
+          localY = y - cpY;
+          var rMin = r - halfWidth;
+          var rMax = r + halfWidth;
+          var distSq = localX * localX + localY * localY;
+          if (distSq >= rMin * rMin && distSq <= rMax * rMax) {
+            return true;
+          }
+          break;
+        case SHAPE_ELLIPSE:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          rX = data[dataIndex++];
+          rY = data[dataIndex++];
+          toX = cpX + rX;
+          toY = cpY;
+          localX = Math.abs(x - cpX);
+          localY = Math.abs(y - cpY);
+          localX -= halfWidth;
+          localY -= halfWidth;
+          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) > 1) {
+            break;
+          }
+          localX += width;
+          localY += width;
+          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) > 1) {
+            return true;
+          }
+          break;
+        default:
+          if (!inWorker) {
+            console.warn("Drawing command not handled in isPointInPath: " +
+                         commands[commandIndex]);
+          }
+      }
+      fromX = toX;
+      fromY = toY;
+    }
+    return false;
   },
   getBounds: function(includeStroke) {
     var bounds = includeStroke ? this.strokeBounds : this.bounds;
@@ -929,6 +1191,12 @@ ShapePath.prototype = {
   }
 };
 
+function distanceSq(x1, y1, x2, y2) {
+  var dX = x2 - x1;
+  var dY = y2 - y1;
+  return dX * dX + dY * dY;
+}
+
 // See http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
 function intersectsLine(x, y, x1, y1, x2, y2) {
   return (y2 > y) !== (y1 > y) &&
@@ -942,6 +1210,12 @@ function quadraticBezier(from, cp, to, t) {
 
 function quadraticBezierExtreme(from, cp, to) {
   var t = (from - cp) / (from - 2 * cp + to);
+  if (t < 0) {
+    return from;
+  }
+  if (t > 1) {
+    return to;
+  }
   return quadraticBezier(from, cp, to, t);
 }
 
