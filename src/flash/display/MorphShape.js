@@ -16,18 +16,26 @@
  * limitations under the License.
  */
 
+/* global initPathStyles */
+
+// TODO: share initialize method with ShapeDefinition
 var MorphShapeDefinition = (function () {
   var def = {
     __class__: 'flash.display.MorphShape',
 
     initialize: function () {
-      this._graphics = new flash.display.Graphics();
-
+      var graphics = this._graphics = new flash.display.Graphics();
       var s = this.symbol;
-      if (s && s.graphicsFactory)
-        this._graphics = s.graphicsFactory(s.ratio || 0);
-      else
-        this._graphics = new flash.display.Graphics();
+      if (s && s.paths) {
+        initPathStyles(s.paths, s.dictionary);
+        graphics._paths = s.paths;
+        graphics.bbox = s.bbox;
+        graphics.strokeBbox = s.strokeBbox;
+        graphics.dictionary = s.dictionary;
+        graphics._scale = 0.05;
+        if (this._stage && this._stage._quality === 'low' && !graphics._bitmap)
+          graphics._cacheAsBitmap(this._bbox);
+      }
     }
   };
 

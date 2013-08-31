@@ -785,10 +785,10 @@ var tagHandler=(function (global) {
     var xMax = readSb($bytes, $stream, bits);
     var yMin = readSb($bytes, $stream, bits);
     var yMax = readSb($bytes, $stream, bits);
-    $.left = xMin / 20;
-    $.right = xMax / 20;
-    $.top = yMin / 20;
-    $.bottom = yMax / 20;
+    $.xMin = xMin / 20;
+    $.xMax = xMax / 20;
+    $.yMin = yMin / 20;
+    $.yMax = yMax / 20;
     align($bytes, $stream);
   }
   function rgb($bytes, $stream, $, swfVersion, tagCode) {
@@ -1604,10 +1604,10 @@ var readHeader = function readHeader($bytes, $stream, $, swfVersion, tagCode) {
   var xMax = readSb($bytes, $stream, bits);
   var yMin = readSb($bytes, $stream, bits);
   var yMax = readSb($bytes, $stream, bits);
-  $0.left = xMin/20;
-  $0.right = xMax/20;
-  $0.top = yMin/20;
-  $0.bottom = yMax/20;
+  $0.xMin = xMin/20;
+  $0.xMax = xMax/20;
+  $0.yMin = yMin/20;
+  $0.yMax = yMax/20;
   align($bytes, $stream);
   var reserved = readUi8($bytes, $stream);
   $.frameRate = readUi8($bytes, $stream);

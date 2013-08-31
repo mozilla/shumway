@@ -1,0 +1,124 @@
+<DOMDocument xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://ns.adobe.com/xfl/2008/" currentTimeline="1" xflVersion="2.2" creatorInfo="Adobe Flash Professional CS6" platform="Macintosh" versionInfo="Saved by Adobe Flash Macintosh 12.0 build 537" majorVersion="12" buildNumber="537" nextSceneIdentifier="2" playOptionsPlayLoop="false" playOptionsPlayPages="false" playOptionsPlayFrameActions="false" autoSaveHasPrompted="true">
+     <timelines>
+          <DOMTimeline name="Scene 1">
+               <layers>
+                    <DOMLayer name="Layer 1" color="#4FFF4F" current="true" isSelected="true">
+                         <frames>
+                              <DOMFrame index="0" keyMode="9728">
+                                   <Actionscript>
+                                        <script><![CDATA[import flash.display.Graphics;
+import flash.display.Sprite;
+import flash.display.Shape;
+import flash.events.MouseEvent;
+
+var s:Sprite = new Sprite();
+this.addChild(s);
+var gfx:Graphics = s.graphics;
+
+gfx.lineStyle(5, 0xff00ff);
+gfx.moveTo(10, 10);
+gfx.lineTo(110, 10);
+gfx.lineTo(110, 110);
+gfx.lineTo(10, 110);
+
+gfx.moveTo(120, 10);
+gfx.lineTo(220, 110);
+
+gfx.moveTo(90, 30);
+gfx.lineTo(90, 90);
+gfx.lineTo(30, 90);
+gfx.lineTo(30, 30);
+
+gfx.lineStyle(5, 0x77aa33);
+gfx.moveTo(120, 10);
+gfx.lineTo(220, 10);
+gfx.lineTo(220, 110);
+gfx.lineTo(120, 110);
+
+gfx.moveTo(200, 30);
+gfx.lineTo(140, 30);
+gfx.lineTo(140, 90);
+gfx.lineTo(200, 90);
+
+gfx.moveTo(240, 10);
+gfx.lineTo(340, 10);
+gfx.lineStyle(5, 0xff00ff);
+gfx.lineTo(340, 110);
+gfx.lineStyle(5, 0x77aa33);
+gfx.lineTo(240, 110);
+gfx.lineStyle(5, 0xff00ff);
+
+gfx.drawRoundRect(360, 10, 100, 100, 30, 20);
+
+gfx.drawCircle(60, 170, 50);
+gfx.drawCircle(60, 170, 35);
+
+gfx.drawEllipse(140, 120, 60, 100);
+
+gfx.moveTo(10, 240);
+gfx.lineTo(80, 240);
+gfx.curveTo(135, 280, 80, 340);
+gfx.curveTo(50, 280, 10, 340);
+
+gfx.moveTo(120, 240);
+gfx.lineTo(220, 240);
+gfx.cubicCurveTo(275, 273, 175, 306, 220, 340);
+gfx.cubicCurveTo(187, 370, 153, 290, 120, 340);
+
+
+/*	var bounds = this.getBounds(this);
+	trace(bounds);
+	
+	gfx.lineStyle(1, 0xff00aa);
+	gfx.moveTo(bounds.left, bounds.top);
+	gfx.lineTo(bounds.right, bounds.top);
+	gfx.lineTo(bounds.right, bounds.bottom);
+	gfx.lineTo(bounds.left, bounds.bottom);
+	gfx.lineTo(bounds.left, bounds.top);
+*/
+
+s.buttonMode = true;
+s.useHandCursor = true;
+
+var indicator:Shape = new Shape();
+addChild(indicator);
+indicator.graphics.beginFill(0x0);
+indicator.graphics.drawCircle(0, 0, 10);
+indicator.x = 500;
+indicator.y = 350;
+indicator.visible = false;
+
+addEventListener(MouseEvent.MOUSE_OVER, function(e) {indicator.visible = true});
+addEventListener(MouseEvent.MOUSE_OUT, function(e) {indicator.visible = false});]]></script>
+                                   </Actionscript>
+                                   <elements/>
+                              </DOMFrame>
+                         </frames>
+                    </DOMLayer>
+               </layers>
+          </DOMTimeline>
+     </timelines>
+     <PrinterSettings platform="macintosh"/>
+     <publishHistory>
+          <PublishItem publishSize="1425" publishTime="1377956018"/>
+          <PublishItem publishSize="1423" publishTime="1377955602"/>
+          <PublishItem publishSize="1246" publishTime="1377954066"/>
+          <PublishItem publishSize="1218" publishTime="1377953500"/>
+          <PublishItem publishSize="1192" publishTime="1377953076"/>
+          <PublishItem publishSize="1196" publishTime="1377953070"/>
+          <PublishItem publishSize="1199" publishTime="1377953064"/>
+          <PublishItem publishSize="1196" publishTime="1377953034"/>
+          <PublishItem publishSize="1218" publishTime="1377953014"/>
+          <PublishItem publishSize="1198" publishTime="1377953007"/>
+          <PublishItem publishSize="1296" publishTime="1377952984"/>
+          <PublishItem publishSize="1256" publishTime="1377952967"/>
+          <PublishItem publishSize="1349" publishTime="1377952305"/>
+          <PublishItem publishSize="1312" publishTime="1377952213"/>
+          <PublishItem publishSize="1334" publishTime="1377952132"/>
+          <PublishItem publishSize="1237" publishTime="1377949964"/>
+          <PublishItem publishSize="1214" publishTime="1377948616"/>
+          <PublishItem publishSize="1214" publishTime="1377947763"/>
+          <PublishItem publishSize="1239" publishTime="1377947732"/>
+          <PublishItem publishSize="1200" publishTime="1377896918"/>
+     </publishHistory>
+</DOMDocument>

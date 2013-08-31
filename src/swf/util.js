@@ -25,9 +25,9 @@ var logE = Math.log;
 var max = Math.max;
 var min = Math.min;
 var pow = Math.pow;
-var push = [].push;
-var slice = [].slice;
-var splice = [].splice;
+var push = Array.prototype.push;
+var slice = Array.prototype.slice;
+var splice = Array.prototype.splice;
 
 function fail(msg, context) {
   throw new Error((context ? context + ': ' : '') + msg);
@@ -37,13 +37,19 @@ function assert(cond, msg, context) {
     fail(msg, context);
 }
 
-function toStringRgba(color) {
-  return 'rgba(' + [
-    color.red,
-    color.green,
-    color.blue,
-    color.alpha / 255
-  ].join(',') + ')';
+function rgbaObjToStr(color) {
+  return 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' +
+         color.alpha / 255 + ')';
+}
+function rgbIntAlphaToStr(color, alpha) {
+  var red = color >> 16 & 0xFF;
+  var green = color >> 8 & 0xFF;
+  var blue = color & 0xFF;
+  return 'rgba(' + red + ',' + green + ',' + blue + ',' + alpha + ')';
+}
+function argbUintToStr(argb) {
+  return 'rgba(' + (argb >>> 16 & 0xff) + ',' + (argb >>> 8 & 0xff) + ',' +
+         (argb & 0xff) + ',' + (argb >>> 24 & 0xff) / 0xff + ')';
 }
 
 // Some browser feature testing

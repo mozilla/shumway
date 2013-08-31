@@ -259,5 +259,20 @@
          "swfs/blendmode/blendmode_2.swf"
        ],
        "type": "stas"
+    },
+    {  "id": "graphics-fills-ref",
+      "frames": [1],
+      "swf": "/examples/graphics/various-shapes.swf",
+      "type": "eq"
+    },
+    {  "id": "graphics-strokes-ref",
+      "frames": [1],
+      "swf": "/examples/graphics/various-strokes.swf",
+      "type": "eq"
+    },
+    {  "id": "graphics-bounding-boxes-ref",
+      "frames": [1],
+      "swf": "/examples/graphics/bounding-boxes.swf",
+      "type": "eq"
     }
 ]
