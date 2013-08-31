@@ -32,13 +32,10 @@ var GraphicsDefinition = (function () {
     __class__: 'flash.display.Graphics',
 
     initialize: function () {
-      this._bitmap = null;
-      this._fillStyle = null;
-      this._mx = null;
-      this._my = null;
-      this._scale = 1;
-      this._lineStyle = null;
       this._paths = [];
+      this.beginPath();
+      this._bitmap = null;
+      this._scale = 1;
       this._parent = 0;
     },
 
@@ -49,25 +46,28 @@ var GraphicsDefinition = (function () {
       this._parent._bounds = null;
     },
 
+    beginPath: function() {
+      var oldPath = this._currentPath;
+      if (oldPath &&
+          (oldPath.commands.length === 0 || oldPath.commands.length === 1 &&
+           oldPath.commands[0] === SHAPE_MOVE_TO))
+      {
+        return;
+      }
+      var path = this._currentPath = new ShapePath(null, null);
+      this._paths.push(path);
+      if (oldPath) {
+        path.fillStyle = oldPath.fillStyle;
+        path.lineStyle = oldPath.lineStyle;
+        path.fillRule = oldPath.fillRule;
+      }
+    },
+
     _drawPathObject: function (path) {
       if (path.__class__ === 'flash.display.GraphicsPath')
         this.drawPath(path.commands, path.data, path.winding);
       else if (path.__class__ === 'flash.display.GraphicsTrianglePath')
         this.drawTriangles(path.vertices, path.indices, path.uvtData, path.culling);
-    },
-
-    get _currentPath() {
-      var path = new ShapePath();
-      if (this._mx !== null || this._my !== null) {
-        path.moveTo(this._mx, this._my);
-        this._mx = this._my = null;
-      }
-      path.fillStyle = this._fillStyle;
-      path.lineStyle = this._lineStyle;
-      this._paths.push(path);
-      // Cache as an own property.
-      Object.defineProperty(this, '_currentPath', { value: path, configurable: true });
-      return path;
     },
 
     draw: function(ctx, clip, ratio) {
@@ -223,28 +223,29 @@ var GraphicsDefinition = (function () {
       if (alpha === undefined)
         alpha = 1;
 
-      delete this._currentPath;
-
-      this._fillStyle = alpha ? {style:rgbIntAlphaToStr(color, alpha)} : null;
+      this.beginPath();
+      this._currentPath.fillStyle = alpha ?
+                                    {style:rgbIntAlphaToStr(color, alpha)} :
+                                    null;
     },
     beginGradientFill: function(type, colors, alphas, ratios, matrix,
                                 spreadMethod, interpolationMethod, focalPos)
     {
-      this._fillStyle = createGradientStyle(type, colors, alphas, ratios,
-                                            matrix, spreadMethod,
-                                            interpolationMethod, focalPos);
+      this._currentPath.fillStyle = createGradientStyle(type, colors, alphas,
+                                                        ratios, matrix,
+                                                        spreadMethod,
+                                                        interpolationMethod,
+                                                        focalPos);
     },
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
-      this._fillStyle = createPatternStyle(bitmap, matrix, repeat, smooth);
+      this._currentPath.fillStyle = createPatternStyle(bitmap, matrix, repeat,
+                                                       smooth);
     },
     clear: function () {
       this._invalidate();
-
-      delete this._currentPath;
-
-      this._fillStyle = null;
-      this._lineStyle = null;
       this._paths = [];
+      this._currentPath = null;
+      this.beginPath();
     },
     copyFrom: function (sourceGraphics) {
       notImplemented("Graphics#copyFrom");
@@ -269,11 +270,10 @@ var GraphicsDefinition = (function () {
     },
     drawPath: function (commands, data, winding) {
       this._invalidate();
-      delete this._currentPath;
+      this.beginPath();
       this._currentPath.fillRule = winding || GRAPHICS_PATH_WINDING_EVEN_ODD;
-      this.currentPath.commands = commands;
-      this.currentPath.data = data;
-      this._revision++;
+      this._currentPath.commands = commands;
+      this._currentPath.data = data;
     },
     drawRect: function (x, y, w, h) {
       if (isNaN(w + h))
@@ -355,25 +355,27 @@ var GraphicsDefinition = (function () {
       notImplemented("Graphics#drawTriangles");
     },
     endFill: function () {
-      delete this._currentPath;
-
-      this._fillStyle = null;
+      this.beginPath();
+      this._currentPath.fillStyle = null;
     },
     lineBitmapStyle: function(bitmap, matrix, repeat, smooth) {
-      this._lineStyle = createPatternStyle(bitmap, matrix, repeat, smooth);
+      this._currentPath.lineStyle = createPatternStyle(bitmap, matrix, repeat,
+                                                       smooth);
     },
     lineGradientStyle: function(type, colors, alphas, ratios, matrix,
                                 spreadMethod, interpolationMethod, focalPos)
     {
-      this._lineStyle = createGradientStyle(type, colors, alphas, ratios,
-                                            matrix, spreadMethod,
-                                            interpolationMethod, focalPos);
+      this._currentPath.lineStyle = createGradientStyle(type, colors, alphas,
+                                                        ratios, matrix,
+                                                        spreadMethod,
+                                                        interpolationMethod,
+                                                        focalPos);
     },
 
     lineStyle: function (width, color, alpha, pxHinting, scale, cap, joint,
                          mlimit)
     {
-      delete this._currentPath;
+      this.beginPath();
 
       if (width) {
         if (alpha === undefined)
@@ -381,7 +383,7 @@ var GraphicsDefinition = (function () {
         if (mlimit === undefined)
           mlimit = 3;
 
-        this._lineStyle = {
+        this._currentPath.lineStyle = {
           style: rgbIntAlphaToStr(color, alpha),
           lineCap: cap || 'round',
           lineJoin: cap || 'round',
@@ -389,7 +391,7 @@ var GraphicsDefinition = (function () {
           miterLimit: mlimit * 2
         };
       } else {
-        this._lineStyle = null;
+        this._currentPath.lineStyle = null;
       }
     },
     lineTo: function (x, y) {

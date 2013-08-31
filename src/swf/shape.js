@@ -544,6 +544,11 @@ function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph)
 
 ShapePath.prototype = {
   moveTo: function(x, y) {
+    if (this.commands[this.commands.length -1] === SHAPE_MOVE_TO) {
+      this.data[this.data.length - 2] = x;
+      this.data[this.data.length - 1] = y;
+      return;
+    }
     this.commands.push(SHAPE_MOVE_TO);
     this.data.push(x, y);
   },
