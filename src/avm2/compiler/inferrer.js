@@ -837,10 +837,14 @@ var Verifier = (function() {
           } else if (obj.isDirectlyReadable() && mn instanceof Multiname) {
             ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
           }
-          if (isNumericMultiname(mn) && obj.isIndexedReadable()) {
-            ti().isIndexedReadable = true;
-            if (obj.isVector()) {
-              return obj.parameter
+          if (isNumericMultiname(mn)) {
+            if (obj.isIndexedReadable()) {
+              ti().isIndexedReadable = true;
+              if (obj.isVector()) {
+                return obj.parameter
+              }
+            } else if (obj.isDirectlyReadable()) {
+              ti().isDirectlyReadable = true;
             }
           }
         }
