@@ -926,12 +926,10 @@ var LoaderDefinition = (function () {
         props.height = symbol.height;
         break;
       case 'label':
-        var drawFn = new Function('d,c,r', symbol.data);
+        var drawFn = new Function('c,r', symbol.data);
         className = 'flash.text.StaticText';
         props.bbox = symbol.bbox;
-        props.draw = function (c, r) {
-          return drawFn.call(this, dictionary, c, r);
-        };
+        props.draw = drawFn;
         break;
       case 'text':
         props.bbox = symbol.bbox;
@@ -945,21 +943,12 @@ var LoaderDefinition = (function () {
         }
         break;
       case 'shape':
-        var createGraphicsSubPaths = new Function('c,d,r', 'return ' + symbol.data);
-        className = symbol.morph ? 'flash.display.MorphShape' : 'flash.display.Shape';
+        className = symbol.morph ?
+                    'flash.display.MorphShape' : 'flash.display.Shape';
         props.bbox = symbol.bbox;
-        props.graphicsFactory = function graphicsFactory(ratio) {
-          if (graphicsFactory[ratio])
-            return graphicsFactory[ratio];
-
-          var graphics = new flash.display.Graphics();
-          graphics._scale = 0.05;
-          graphics._subpaths = createGraphicsSubPaths(graphics, dictionary, ratio);
-
-          graphicsFactory[ratio] = graphics;
-
-          return graphics;
-        };
+        props.strokeBbox = symbol.strokeBbox;
+        props.paths = symbol.paths;
+        props.dictionary = dictionary;
         break;
       case 'sound':
         if (!symbol.pcm && !PLAY_USING_AUDIO_TAG) {
@@ -1056,8 +1045,8 @@ var LoaderDefinition = (function () {
       loaderInfo._swfVersion = info.swfVersion;
 
       var bbox = info.bbox;
-      loaderInfo._width = bbox.right - bbox.left;
-      loaderInfo._height = bbox.bottom - bbox.top;
+      loaderInfo._width = bbox.xMax - bbox.xMin;
+      loaderInfo._height = bbox.yMax - bbox.yMin;
       loaderInfo._frameRate = info.frameRate;
 
       var documentPromise = new Promise();

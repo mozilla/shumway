@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global SWF, renderStage, toStringRgba, ShumwayKeyboardListener */
+/*global SWF, renderStage, rgbaObjToStr, ShumwayKeyboardListener */
 
 SWF.embed = function(file, doc, container, options) {
   var canvas = doc.createElement('canvas');
@@ -174,7 +174,7 @@ SWF.embed = function(file, doc, container, options) {
     }
     stage._color = bgcolor;
 
-    ctx.fillStyle = toStringRgba(bgcolor);
+    ctx.fillStyle = rgbaObjToStr(bgcolor);
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     var root = loader._content;
