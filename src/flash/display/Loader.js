@@ -1077,7 +1077,7 @@ var LoaderDefinition = (function () {
     {
       if (!isWorker && WORKERS_ENABLED) {
         var loader = this;
-        var worker = loader._worker = new Worker(SHUMWAY_ROOT + LOADER_PATH)
+        var worker = loader._worker = new Worker(SHUMWAY_ROOT + LOADER_PATH);
         worker.onmessage = function (evt) {
           loader._commitData(evt.data);
         };
