@@ -256,7 +256,9 @@ var DisplayObjectDefinition = (function () {
           var children = this._children;
           for (var i = 0, n = children.length; i < n; i++) {
             var child = children[i];
-            if (child._hitTest(true, x, y, true))
+            // FIXME first condition avoids crash in second expression. This
+            // issue does not occur in Chrome or FF22, but does in FF23.0.1.
+            if (child._hitTest && child._hitTest(true, x, y, true))
               return true;
           }
 

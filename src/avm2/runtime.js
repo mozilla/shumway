@@ -802,13 +802,13 @@ var Scope = (function () {
   };
 
   function makeCacheKey(namespaces, name, flags) {
-    return name;
-//    if (!namespaces) return name;
-//    if (namespaces.length > 1) {
-//      return namespaces.id + "$" + name;
-//    } else {
-//      return namespaces[0].qualifiedName + "$" + name;
-//    }
+    if (!namespaces) {
+      return name;
+    } else if (namespaces.length > 1) {
+      return namespaces.id + "$" + name;
+    } else {
+      return namespaces[0].qualifiedName + "$" + name;
+    }
   }
 
   /**
