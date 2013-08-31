@@ -76,7 +76,7 @@ var DisplayObjectContainerDefinition = (function () {
 
       this._bounds = null;
 
-      child._dispatchEvent(new flash.events.Event("added"));
+      child._dispatchEvent("added");
       if (this._stage) {
         this._stage._addToStage(child);
       }
@@ -140,7 +140,7 @@ var DisplayObjectContainerDefinition = (function () {
 
       var child = children[index];
 
-      child._dispatchEvent(new flash.events.Event("removed"));
+      child._dispatchEvent("removed");
       if (this._stage) {
         this._stage._removeFromStage(child);
       }

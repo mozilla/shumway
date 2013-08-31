@@ -113,7 +113,12 @@ var TransformDefinition = (function () {
         throw TypeError();
 
       var raw = val.rawData;
-      this.matrix = new flash.geom.Matrix(raw[0], raw[1], raw[4], raw[5], raw[12], raw[13]);
+      this.matrix = new flash.geom.Matrix(raw.asGetPublicProperty(0),
+                                          raw.asGetPublicProperty(1),
+                                          raw.asGetPublicProperty(4),
+                                          raw.asGetPublicProperty(5),
+                                          raw.asGetPublicProperty(12),
+                                          raw.asGetPublicProperty(13));
       // this.matrix will reset this._target._current3DTransform
       this._target._current3DTransform = val;
     },

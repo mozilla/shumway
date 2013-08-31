@@ -240,16 +240,21 @@ var LoaderDefinition = (function () {
       var frame = { type: 'frame' };
       var tagsProcessed = 0;
       var soundStream = null;
+      var lastProgressSent = 0;
 
       return {
         onstart: function(result) {
           commitData({command: 'init', result: result});
         },
         onprogress: function(result) {
-          commitData({command: 'progress', result: {
-            bytesLoaded: result.bytesLoaded,
-            bytesTotal: result.bytesTotal
-          }});
+          if (Date.now() - lastProgressSent > 1000 / 24 ||
+              result.bytesLoaded === result.bytesTotal) {
+            commitData({command: 'progress', result: {
+              bytesLoaded: result.bytesLoaded,
+              bytesTotal: result.bytesTotal
+            }});
+            lastProgressSent = Date.now();
+          }
 
           var tags = result.tags;
           for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
@@ -454,6 +459,7 @@ var LoaderDefinition = (function () {
       this._timeline = [];
       this._lastPromise = null;
       this._uncaughtErrorEvents = null;
+      this._worker = null;
     },
     _commitData: function (data) {
       switch (data.command) {
@@ -472,15 +478,16 @@ var LoaderDefinition = (function () {
           }
         });
         Promise.when(frameConstructed, this._lastPromise).then(function () {
-          this.contentLoaderInfo._dispatchEvent(new flash.events.Event("complete"));
+          this.contentLoaderInfo._dispatchEvent("complete");
         }.bind(this));
+        this._worker.terminate();
         break;
       case 'empty':
         this._lastPromise = new Promise();
         this._lastPromise.resolve();
         break;
       case 'error':
-        this.contentLoaderInfo._dispatchEvent(new flash.events.IOErrorEvent("ioError"));
+        this.contentLoaderInfo._dispatchEvent("ioError", flash.events.IOErrorEvent);
         break;
       default:
         //TODO: fix special-casing. Might have to move document class out of dictionary[0]
@@ -780,7 +787,7 @@ var LoaderDefinition = (function () {
         var Bitmap = avm2.systemDomain.getClass("flash.display.Bitmap");
         var BitmapData = avm2.systemDomain.getClass("flash.display.BitmapData");
         var bitmapData = BitmapData.createAsSymbol(props);
-        BitmapData.instanceConstructor.call(bitmapData, 0, 0, true, 0xffffff00);
+        BitmapData.instanceConstructor.call(bitmapData, 0, 0, true, 0xffffffff);
         var image = Bitmap.createAsSymbol(bitmapData);
         loader._children.push(image);
         Bitmap.instanceConstructor.call(image, bitmapData);
@@ -788,7 +795,7 @@ var LoaderDefinition = (function () {
         loader._control.appendChild(image._control);
         loader._content = image;
         imgPromise.resolve(imageInfo);
-        loader.contentLoaderInfo._dispatchEvent(new flash.events.Event("init"));
+        loader.contentLoaderInfo._dispatchEvent("init");
       };
       img.src = URL.createObjectURL(imageInfo.data);
       delete imageInfo.data;
@@ -1064,7 +1071,7 @@ var LoaderDefinition = (function () {
     {
       if (!isWorker && WORKERS_ENABLED) {
         var loader = this;
-        var worker = new Worker(SHUMWAY_ROOT + LOADER_PATH);
+        var worker = loader._worker = new Worker(SHUMWAY_ROOT + LOADER_PATH);
         worker.onmessage = function (evt) {
           loader._commitData(evt.data);
         };

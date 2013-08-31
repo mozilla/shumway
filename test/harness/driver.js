@@ -22,7 +22,7 @@ function postData(path, data) {
   xhr.send(data);
 }
 
-function execManifest(path) {
+function execManifest(path, bundle) {
   function exec(manifest) {
     var i = 0;
     function next() {
@@ -32,6 +32,9 @@ function execManifest(path) {
       }
       var test = manifest[i++];
       postData('/progress?browser=' + escape(browser) + '&id=' + escape(test.id));
+
+      TestContext._slavePath = bundle ? 'harness/slave-bundle.html' :
+                                        'harness/slave.html';
 
       switch (test.type) {
       case 'stas':
@@ -125,6 +128,7 @@ function getQueryVariable(variable) {
 var manifestFile = getQueryVariable("manifestFile");
 var browser = getQueryVariable("browser");
 var path = getQueryVariable("path");
+var bundle = getQueryVariable("bundle") === "true";
 
-execManifest(manifestFile);
+execManifest(manifestFile, bundle);
 

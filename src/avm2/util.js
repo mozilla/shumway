@@ -1360,7 +1360,11 @@ var Callback = (function () {
     assert(type);
     assert(callback);
     var queue = this.queues[type];
-    if (!queue) {
+    if (queue) {
+      if (queue.indexOf(callback) > -1) {
+        return;
+      }
+    } else {
       queue = this.queues[type] = [];
     }
     queue.push(callback);

@@ -19,8 +19,8 @@ GENERIC_DIR = ../../build/bundle
 
 # Just builds a ff extension
 
-VERSION_BASELINE=a92fa8b98949f76adfc2741e
-VERSION=0.6.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
+VERSION_BASELINE=53e176ef900a83e379
+VERSION=0.7.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
 
 build: ensureoutputdir ../src/flash/playerglobal.abc
 	# Coping extension files
