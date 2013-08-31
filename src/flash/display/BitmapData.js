@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global renderDisplayObject, RenderVisitor */
+/*global renderDisplayObject, RenderVisitor, argbUintToStr */
 
 var BitmapDataDefinition = (function () {
   function replaceRect(ctx, x, y, w, h, alpha) {
@@ -99,7 +99,7 @@ var BitmapDataDefinition = (function () {
         color |= 0xff000000;
       }
       var ctx = this._ctx;
-      ctx.fillStyle = ARGBtoCSSColor(color);
+      ctx.fillStyle = argbUintToStr(color);
       replaceRect(ctx, rect.x, rect.y, rect.width, rect.height, color >>> 24 & 0xff);
     },
     getPixel: function(x, y) {
@@ -165,7 +165,7 @@ var BitmapDataDefinition = (function () {
         color |= 0xff000000;
       }
       var alpha = color >>> 24 & 0xff;
-      this._ctx.fillStyle = ARGBtoCSSColor(color);
+      this._ctx.fillStyle = argbUintToStr(color);
       var w = this._drawable.width;
       var h = this._drawable.height;
       if (x > 0) {
@@ -220,11 +220,4 @@ function dataToRGB(data) {
 }
 function dataToARGB(data) {
   return data[3] << 24 | dataToRGB(data);
-}
-function ARGBtoRGBA(argb) {
-  return (argb >>> 24 | argb << 8) >>> 0;
-}
-function ARGBtoCSSColor(argb) {
-  return 'rgba(' + (argb >>> 16 & 0xff) + ',' + (argb >>> 8 & 0xff) + ',' +
-               (argb & 0xff) + ',' + (argb >>> 24 & 0xff) / 0xff + ')';
 }

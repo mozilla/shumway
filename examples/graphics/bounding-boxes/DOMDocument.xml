@@ -1,0 +1,79 @@
+<DOMDocument xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://ns.adobe.com/xfl/2008/" currentTimeline="1" xflVersion="2.2" creatorInfo="Adobe Flash Professional CS6" platform="Macintosh" versionInfo="Saved by Adobe Flash Macintosh 12.0 build 537" majorVersion="12" buildNumber="537" nextSceneIdentifier="2" playOptionsPlayLoop="false" playOptionsPlayPages="false" playOptionsPlayFrameActions="false" autoSaveEnabled="true" autoSaveHasPrompted="true">
+     <timelines>
+          <DOMTimeline name="Scene 1">
+               <layers>
+                    <DOMLayer name="Layer 1" color="#4FFF4F" current="true" isSelected="true">
+                         <frames>
+                              <DOMFrame index="0" keyMode="9728">
+                                   <Actionscript>
+                                        <script><![CDATA[import flash.display.Graphics;
+import flash.display.Shape;
+
+var shape:Shape = new Shape();
+this.addChild(shape);
+var gfx:Graphics = shape.graphics;
+
+gfx.lineStyle(NaN);
+
+gfx.moveTo(30, 130);
+gfx.curveTo(0, 0, 130, 30);
+
+drawBounds(shape);
+
+shape = new Shape();
+this.addChild(shape);
+
+shape.x = 150;
+shape.y = 0;
+gfx = shape.graphics;
+gfx.lineStyle(1);
+gfx.moveTo(30, 50);
+gfx.cubicCurveTo(60, -10, 180, 200, 150, 100);
+
+drawBounds(shape);
+
+
+function drawBounds(target:Shape) {
+	var gfx:Graphics = target.graphics;
+	var bounds = target.getBounds(target);
+	trace(bounds);
+	
+	gfx.lineStyle(1, 0xff00aa);
+	gfx.moveTo(bounds.left, bounds.top);
+	gfx.lineTo(bounds.right, bounds.top);
+	gfx.lineTo(bounds.right, bounds.bottom);
+	gfx.lineTo(bounds.left, bounds.bottom);
+	gfx.lineTo(bounds.left, bounds.top);
+}]]></script>
+                                   </Actionscript>
+                                   <elements/>
+                              </DOMFrame>
+                         </frames>
+                    </DOMLayer>
+               </layers>
+          </DOMTimeline>
+     </timelines>
+     <PrinterSettings platform="macintosh"/>
+     <publishHistory>
+          <PublishItem publishSize="1443" publishTime="1377874592"/>
+          <PublishItem publishSize="1436" publishTime="1377874563"/>
+          <PublishItem publishSize="1445" publishTime="1377874554"/>
+          <PublishItem publishSize="1445" publishTime="1377874524"/>
+          <PublishItem publishSize="1435" publishTime="1377874475"/>
+          <PublishItem publishSize="1435" publishTime="1377874362"/>
+          <PublishItem publishSize="1432" publishTime="1377874359"/>
+          <PublishItem publishSize="1434" publishTime="1377874351"/>
+          <PublishItem publishSize="1431" publishTime="1377869212"/>
+          <PublishItem publishSize="1425" publishTime="1377869203"/>
+          <PublishItem publishSize="1427" publishTime="1377869016"/>
+          <PublishItem publishSize="1426" publishTime="1377868980"/>
+          <PublishItem publishSize="1427" publishTime="1377868971"/>
+          <PublishItem publishSize="1427" publishTime="1377868963"/>
+          <PublishItem publishSize="1427" publishTime="1377868959"/>
+          <PublishItem publishSize="1426" publishTime="1377868952"/>
+          <PublishItem publishSize="1426" publishTime="1377868948"/>
+          <PublishItem publishSize="1428" publishTime="1377868940"/>
+          <PublishItem publishSize="1429" publishTime="1377868934"/>
+          <PublishItem publishSize="1426" publishTime="1377868918"/>
+     </publishHistory>
+</DOMDocument>
