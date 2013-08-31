@@ -651,10 +651,6 @@ var createName = function createName(namespaces, name) {
               openQn = VM_OPEN_METHOD_PREFIX + openQn;
               return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, true));
             } else if (ti.trait.isClass()) {
-//              var coercer = getCoercerForType(ti.trait.name);
-//              if (coercer) {
-//                return coercer(args[0]);
-//              }
               var coercer = getCoercerForType(ti.trait.name);
               if (coercer) {
                 return coercer(args[0]);
