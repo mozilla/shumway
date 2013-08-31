@@ -67,14 +67,16 @@ var MovieClipDefinition = (function () {
 
       var self = this;
 
-      // Call frame scripts.
       this._onExecuteFrame = function onExecuteFrame() {
+        self._removeEventListener('executeFrame', onExecuteFrame);
+
         if (!self._executeFrame) {
           return;
         }
 
         self._executeFrame = false;
 
+        // Call frame scripts.
         self._allowFrameNavigation = false;
         self._callFrame(self._currentFrame);
         self._allowFrameNavigation = true;
@@ -94,34 +96,37 @@ var MovieClipDefinition = (function () {
         return this;
       }
 
-      // Declare current timeline objects that were not on last frame.
       this._onDeclareFrame = function onDeclareFrame() {
         var frameNum = self._playHead;
-        self._declareChildren(self._playHead);
-        self._startSounds(self._playHead);
-        self._enterFrame(self._playHead);
+
+        // Declare current timeline objects that were not on last frame.
+        self._declareChildren(frameNum);
+
+        self._startSounds(frameNum);
+        self._enterFrame(frameNum);
       };
 
       // Run each new children's constructor.
       this._onConstructChildren = this._constructChildren.bind(this);
 
-      // Destroy current timeline objects that are not on next frame.
       this._onDestructFrame = function onDestructFrame() {
-        var frameNum = self._playHead;
+        var frameNum = self._playHead + 1;
 
-        if (frameNum === self._currentFrame) {
-          if (frameNum >= self._totalFrames) {
-            frameNum = 1;
-          } else if (frameNum >= self._framesLoaded) {
-            return;
-          } else {
-            frameNum++;
-          }
-          self._playHead = frameNum;
+        if (frameNum > self._totalFrames) {
+          frameNum = 1;
+        } else if (frameNum > self._framesLoaded) {
+          return;
         }
 
+        // Destroy current timeline objects that are not on next frame.
         self._destructChildren(frameNum);
-        self._executeFrame = true;
+
+        self._playHead = frameNum;
+
+        if (frameNum in self._frameScripts) {
+          self._executeFrame = true;
+          self._addEventListener('executeFrame', self._onExecuteFrame);
+        }
       };
 
       this.play();
@@ -267,31 +272,39 @@ var MovieClipDefinition = (function () {
     _gotoFrame: function gotoFrame(frameNum) {
       var enterFrame = frameNum !== this._currentFrame;
 
-      if (enterFrame) {
-        this._playHead = frameNum;
-        this._executeFrame = enterFrame;
-      }
-
       if (this._allowFrameNavigation || !this._loader._isAvm2Enabled) {
-        if (enterFrame) {
-          this._destructChildren(frameNum);
-          this._declareChildren(frameNum);
-          this._enterFrame(frameNum);
-        }
-
-        this._constructChildren();
-
         if (this._loader._isAvm2Enabled) {
+          if (enterFrame) {
+            this._destructChildren(frameNum);
+            this._declareChildren(frameNum);
+            this._enterFrame(frameNum);
+          }
+
+          this._constructChildren();
+
           if (this.loaderInfo._swfVersion >= 10) {
+            if (enterFrame) {
+              this._executeFrame = true;
+              this._addEventListener('executeFrame', this._onExecuteFrame);
+            }
+
             var domain = avm2.systemDomain;
             domain.broadcastMessage("frameConstructed");
             domain.broadcastMessage("executeFrame");
             domain.broadcastMessage("exitFrame");
+          } else if (enterFrame) {
+            this._executeFrame = true;
           }
         } else if (enterFrame) {
           this._callFrame(frameNum);
           this._executeFrame = false;
         }
+
+        return;
+      }
+
+      if (enterFrame) {
+        this._playHead = frameNum;
       }
     },
     _enterFrame: function navigate(frameNum) {
@@ -556,12 +569,14 @@ var MovieClipDefinition = (function () {
         var frameNum = arguments[i] + 1;
         var fn = arguments[i + 1];
         var scripts = frameScripts[frameNum];
-        if (scripts)
+        if (scripts) {
           scripts.push(fn);
-        else
+        } else {
           frameScripts[frameNum] = [fn];
-        if (frameNum === this._currentFrame) {
+        }
+        if (frameNum === this._playHead) {
           this._executeFrame = true;
+          this._addEventListener('executeFrame', this._onExecuteFrame);
         }
       }
     },
