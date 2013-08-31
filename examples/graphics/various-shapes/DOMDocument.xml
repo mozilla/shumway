@@ -1,0 +1,107 @@
+<DOMDocument xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://ns.adobe.com/xfl/2008/" currentTimeline="1" xflVersion="2.2" creatorInfo="Adobe Flash Professional CS6" platform="Macintosh" versionInfo="Saved by Adobe Flash Macintosh 12.0 build 537" majorVersion="12" buildNumber="537" nextSceneIdentifier="2" playOptionsPlayLoop="false" playOptionsPlayPages="false" playOptionsPlayFrameActions="false" autoSaveHasPrompted="true">
+     <timelines>
+          <DOMTimeline name="Scene 1">
+               <layers>
+                    <DOMLayer name="Layer 1" color="#4FFF4F" current="true" isSelected="true">
+                         <frames>
+                              <DOMFrame index="0" keyMode="9728">
+                                   <Actionscript>
+                                        <script><![CDATA[import flash.display.Graphics;
+import flash.display.Sprite;
+
+var s:Sprite = new Sprite();
+this.addChild(s);
+var gfx:Graphics = s.graphics;
+
+gfx.lineStyle(2, 0xff00ff);
+gfx.beginFill(0x0055ff);
+gfx.moveTo(10, 10);
+gfx.lineTo(110, 10);
+gfx.lineTo(110, 110);
+gfx.lineTo(10, 110);
+
+gfx.moveTo(90, 30);
+gfx.lineTo(90, 90);
+gfx.lineTo(30, 90);
+gfx.lineTo(30, 30);
+
+gfx.lineStyle(2, 0x77aa33);
+gfx.beginFill(0x0055ff);
+gfx.moveTo(120, 10);
+gfx.lineTo(220, 10);
+gfx.lineTo(220, 110);
+gfx.lineTo(120, 110);
+
+gfx.moveTo(200, 30);
+gfx.lineTo(140, 30);
+gfx.lineTo(140, 90);
+gfx.lineTo(200, 90);
+
+gfx.beginFill(0x0055ff);
+gfx.moveTo(240, 10);
+gfx.lineTo(340, 10);
+gfx.lineStyle(2, 0xff00ff);
+gfx.lineTo(340, 110);
+gfx.lineStyle(2, 0x77aa33);
+gfx.lineTo(240, 110);
+gfx.lineStyle(2, 0xff00ff);
+
+gfx.beginFill(0x0055ff);
+gfx.drawRoundRect(360, 10, 100, 100, 30, 20);
+
+gfx.beginFill(0x0055ff);
+gfx.drawCircle(60, 170, 50);
+gfx.drawCircle(60, 170, 45);
+gfx.drawCircle(60, 170, 40);
+gfx.drawCircle(60, 170, 35);
+
+gfx.beginFill(0x0055ff);
+gfx.drawEllipse(140, 120, 60, 100);
+
+gfx.beginFill(0x0055ff);
+gfx.moveTo(10, 240);
+gfx.lineTo(80, 240);
+gfx.curveTo(135, 280, 80, 340);
+gfx.curveTo(50, 280, 10, 340);
+
+gfx.beginFill(0x0055ff);
+gfx.moveTo(120, 240);
+gfx.lineTo(220, 240);
+//gfx.lineTo(220, 340);
+gfx.cubicCurveTo(275, 273, 175, 306, 220, 340);
+gfx.cubicCurveTo(187, 370, 153, 290, 120, 340);
+
+s.buttonMode = true;
+s.useHandCursor = true;]]></script>
+                                   </Actionscript>
+                                   <elements/>
+                              </DOMFrame>
+                         </frames>
+                    </DOMLayer>
+               </layers>
+          </DOMTimeline>
+     </timelines>
+     <PrinterSettings platform="macintosh"/>
+     <publishHistory>
+          <PublishItem publishSize="1272" publishTime="1377865942"/>
+          <PublishItem publishSize="1273" publishTime="1377865936"/>
+          <PublishItem publishSize="1279" publishTime="1377815504"/>
+          <PublishItem publishSize="1277" publishTime="1377815313"/>
+          <PublishItem publishSize="1277" publishTime="1377815307"/>
+          <PublishItem publishSize="1277" publishTime="1377815299"/>
+          <PublishItem publishSize="1273" publishTime="1377815280"/>
+          <PublishItem publishSize="1259" publishTime="1377815230"/>
+          <PublishItem publishSize="1258" publishTime="1377815218"/>
+          <PublishItem publishSize="1257" publishTime="1377815208"/>
+          <PublishItem publishSize="1255" publishTime="1377815062"/>
+          <PublishItem publishSize="1255" publishTime="1377814980"/>
+          <PublishItem publishSize="1246" publishTime="1377807522"/>
+          <PublishItem publishSize="1234" publishTime="1377807469"/>
+          <PublishItem publishSize="1246" publishTime="1377729724"/>
+          <PublishItem publishSize="1246" publishTime="1377729717"/>
+          <PublishItem publishSize="1246" publishTime="1377729703"/>
+          <PublishItem publishSize="1238" publishTime="1377729633"/>
+          <PublishItem publishSize="1236" publishTime="1377729619"/>
+          <PublishItem publishSize="1236" publishTime="1377729607"/>
+     </publishHistory>
+</DOMDocument>

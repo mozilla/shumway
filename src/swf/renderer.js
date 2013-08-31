@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global toStringRgba, FirefoxCom, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter*/
+/*global rgbaObjToStr, FirefoxCom, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter*/
 
 var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
@@ -113,7 +113,7 @@ RenderVisitor.prototype = {
           ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         }
         if (bgcolor.alpha > 0) {
-          ctx.fillStyle = toStringRgba(bgcolor);
+          ctx.fillStyle = rgbaObjToStr(bgcolor);
           if (this.refreshStage) {
             ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
           } else {
@@ -308,61 +308,15 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
     return;
   }
 
+  // TODO: move into Graphics class
   if (child._graphics) {
     var graphics = child._graphics;
 
     if (graphics._bitmap) {
-      ctx.translate(child._bbox.left, child._bbox.top);
+      ctx.translate(child._bbox.xMin, child._bbox.yMin);
       ctx.drawImage(graphics._bitmap, 0, 0);
     } else {
-      var scale = graphics._scale;
-      if (scale !== 1)
-        ctx.scale(scale, scale);
-
-      var subpaths = graphics._subpaths;
-      for (var j = 0, o = subpaths.length; j < o; j++) {
-        var path = subpaths[j];
-
-        if (clip) {
-          if (typeof path.fillStyle !== "undefined") {
-            ctx.currentPath = path;
-            ctx.closePath();
-          }
-        } else {
-          ctx.currentPath = path;
-          if (path.fillStyle) {
-            ctx.fillStyle = path.fillStyle;
-
-            var m = path.fillStyle.currentTransform;
-            if (m) {
-              ctx.save();
-              ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
-              ctx.fill();
-              ctx.restore();
-            } else {
-              ctx.fill();
-            }
-          }
-          if (path.strokeStyle) {
-            var m = path.strokeStyle.currentTransform;
-            if (m) {
-              ctx.fillStyle = path.strokeStyle;
-              ctx.currentPath = path.strokePath(path.drawingStyles);
-              ctx.save();
-              ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
-              ctx.fill();
-              ctx.restore();
-            } else {
-              ctx.strokeStyle = path.strokeStyle;
-              var drawingStyles = path.drawingStyles;
-              for (var prop in drawingStyles) {
-                ctx[prop] = drawingStyles[prop];
-              }
-              ctx.stroke();
-            }
-          }
-        }
-      }
+      graphics.draw(ctx, clip, child.ratio);
     }
   }
 

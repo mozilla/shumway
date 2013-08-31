@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global toStringRgba, fromCharCode */
+/*global rgbaObjToStr, fromCharCode */
 
 function defineLabel(tag, dictionary) {
   var records = tag.records;
@@ -42,7 +42,7 @@ function defineLabel(tag, dictionary) {
       dependencies.push(font.id);
     }
     if (record.hasColor)
-      cmds.push('c.fillStyle="' + toStringRgba(record.color) + '"');
+      cmds.push('c.fillStyle="' + rgbaObjToStr(record.color) + '"');
     if (record.hasMoveX)
       x = record.moveX;
     if (record.hasMoveY)

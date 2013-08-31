@@ -230,11 +230,11 @@ var DisplayObjectDefinition = (function () {
             }
             var bbox = this._bbox;
             if (bbox) {
-              pt.x += bbox.left;
-              pt.y += bbox.top;
+              pt.x += bbox.xMin;
+              pt.y += bbox.yMin;
             }
 
-            var subpaths = this._graphics._subpaths;
+            var subpaths = this._graphics._paths;
             for (var i = 0, n = subpaths.length; i < n; i++) {
               var path = subpaths[i];
 
@@ -699,10 +699,10 @@ var DisplayObjectDefinition = (function () {
             yMax = Math.max(yMax, y1, y2);
           }
         } else {
-          xMin = bbox.left;
-          xMax = bbox.right;
-          yMin = bbox.top;
-          yMax = bbox.bottom;
+          xMin = bbox.xMin;
+          xMax = bbox.xMax;
+          yMin = bbox.yMin;
+          yMax = bbox.yMax;
         }
 
         if (this._graphics) {

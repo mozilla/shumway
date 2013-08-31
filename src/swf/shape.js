@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global push, fail */
+/*global fail, push, cloneObject, rgbaObjToStr */
 
 var GRAPHICS_FILL_CLIPPED_BITMAP               = 65;
 var GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT        = 19;
@@ -26,443 +26,1655 @@ var GRAPHICS_FILL_RADIAL_GRADIENT              = 18;
 var GRAPHICS_FILL_REPEATING_BITMAP             = 64;
 var GRAPHICS_FILL_SOLID                        =  0;
 
-function morph(start, end) {
-  if (!isNaN(end) && end !== start)
-    return start + '+' + (end - start) + '*r';
-
-  return start;
-}
-function morphColor(color, colorMorph) {
-  return '"rgba(" + (' +
-    morph(color.red, colorMorph.red) + '|0) + "," + (' +
-    morph(color.green, colorMorph.green) + '|0) + "," + (' +
-    morph(color.blue, colorMorph.blue) + '|0) + "," + (' +
-    morph(color.alpha / 255, colorMorph.alpha / 255) +
-  ') + ")"';
-}
-function createFill(fillStyle, dictionary, dependencies) {
-  var fill;
-  switch (fillStyle.type) {
-  case GRAPHICS_FILL_SOLID:
-    if (fillStyle.colorMorph) {
-      fill = morphColor(fillStyle.color, fillStyle.colorMorph);
-    } else {
-      var color = fillStyle.color;
-      fill = '"rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')"';
-    }
-    break;
-  case GRAPHICS_FILL_LINEAR_GRADIENT:
-  case GRAPHICS_FILL_RADIAL_GRADIENT:
-  case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
-    var records = fillStyle.records;
-    var stops = [];
-    for (var j = 0, n = records.length; j < n; j++) {
-      var record = records[j];
-      var color = record.color;
-      if (record.colorMorph) {
-        stops.push('f.addColorStop(' +
-          morph(record.ratio / 255, record.ratioMorph / 255) + ',' +
-          morphColor(color, record.colorMorph) +
-        ')');
-      } else {
-        stops.push('f.addColorStop(' +
-          (record.ratio / 255) + ',' +
-          '"rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')"' +
-        ')');
-      }
-    }
-    var isLinear = fillStyle.type === GRAPHICS_FILL_LINEAR_GRADIENT;
-    fill = '(' +
-      'f=c._create' + (isLinear ? 'Linear' : 'Radial') + 'Gradient(' +
-        (isLinear ?
-          '-1, 0, 1, 0' :
-          '(' + morph(fillStyle.focalPoint, fillStyle.focalPointMorph) + ' || 0), 0, 0, 0, 0, 1'
-        ) +
-      '),' +
-      stops.join(',') + ',' +
-      'f.currentTransform=' +
-        toMatrixInstance(fillStyle.matrix, fillStyle.matrixMorph, 20 * 819.2) + ',' +
-    'f)';
-    break;
-  case GRAPHICS_FILL_REPEATING_BITMAP:
-  case GRAPHICS_FILL_CLIPPED_BITMAP:
-  case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
-  case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
-    var repeat = (fillStyle.type === GRAPHICS_FILL_REPEATING_BITMAP) || (fillStyle.type === GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP);
-    var bitmap = dictionary[fillStyle.bitmapId];
-    dependencies.push(bitmap.id);
-    fill = '(' +
-      'f=c._createPattern(' +
-        'd[' + bitmap.id + '].value.props.img,' +
-        (repeat ? '"repeat"' : '"no-repeat"') +
-      '),' +
-      'f.currentTransform=' +
-        toMatrixInstance(fillStyle.matrix, fillStyle.matrixMorph, 1) + ',' +
-    'f)';
-    break;
-  default:
-    fail('invalid fill style', 'shape');
+/*
+ * Applies the current segment to the paths of all styles specified in the last
+ * style-change record.
+ *
+ * For fill0, we have to apply commands and their data in reverse order, to turn
+ * left fills into right ones.
+ *
+ * If we have more than one style, we only recorded commands for the first one
+ * and have to duplicate them for the other styles. The order is: fill1, line,
+ * fill0.
+ */
+function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
+{
+  if (!segment) {
+    return;
   }
-  return fill;
-}
-function toMatrixInstance(matrix, matrixMorph, scale) {
-  if (scale === undefined)
-    scale = 20;
-
-  if (matrixMorph) {
-    return '{' +
-      'a:' + morph(matrix.a * scale, matrixMorph.a * scale) + ',' +
-      'b:' + morph(matrix.b * scale, matrixMorph.b * scale) + ',' +
-      'c:' + morph(matrix.c * scale, matrixMorph.c * scale) + ',' +
-      'd:' + morph(matrix.d * scale, matrixMorph.d * scale) + ',' +
-      'e:' + morph(matrix.tx * 20, matrixMorph.ty * 20) + ',' +
-      'f:' + morph(matrix.tx * 20, matrixMorph.ty * 20) +
-    '}';
-  }
-
-  return '{' +
-    'a:' + (matrix.a * scale) + ',' +
-    'b:' + (matrix.b * scale) + ',' +
-    'c:' + (matrix.c * scale) + ',' +
-    'd:' + (matrix.d * scale) + ',' +
-    'e:' + (matrix.tx * 20) + ',' +
-    'f:' + (matrix.ty * 20) +
-  '}';
-}
-
-function defineShape(tag, dictionary) {
-  var records = tag.records;
-  var isMorph = tag.isMorph;
-  var recordsMorph = isMorph ? tag.recordsMorph : [];
-  var fillStyles = tag.fillStyles;
-  var lineStyles = tag.lineStyles;
-  var fillSegments = { };
-  var lineSegments = { };
-  var paths = [];
-  var dependencies = [];
-
-  var sx = 0;
-  var sy = 0;
-  var dx = 0;
-  var dy = 0;
-  var sxm = 0;
-  var sym = 0;
-  var dxm = 0;
-  var dym = 0;
-  var dpt = '0,0';
-  var edges = [];
-  var fillOffset = 0;
-  var lineOffset = 0;
-  var fill0 = 0;
-  var fill1 = 0;
-  var line = 0;
-  for (var i = 0, j = 0, record; (record = records[i]); ++i) {
-    if (record.type) {
-      sx = dx;
-      sy = dy;
-      sxm = dxm;
-      sym = dym;
-      var edge = { i: i, spt: dpt };
-      if (record.isStraight) {
-        if (record.isGeneral) {
-          dx += record.deltaX;
-          dy += record.deltaY;
-        } else if (record.isVertical) {
-          dy += record.deltaY;
-        } else {
-          dx += record.deltaX;
-        }
-        if (isMorph) {
-          var recordMorph = recordsMorph[j++];
-          if (recordMorph.isStraight) {
-            if (recordMorph.isGeneral) {
-              dxm += recordMorph.deltaX;
-              dym += recordMorph.deltaY;
-            } else if (recordMorph.isVertical) {
-              dym += recordMorph.deltaY;
-            } else {
-              dxm += recordMorph.deltaX;
-            }
-          } else {
-            var cxm = sxm + recordMorph.controlDeltaX;
-            var cym = sym + recordMorph.controlDeltaY;
-            dxm = cxm + recordMorph.anchorDeltaX;
-            dym = cym + recordMorph.anchorDeltaY;
-            edge.cpt = morph(sx + ((dx - sx) / 2), cxm) + ',' + morph(sy + ((dy - sy) / 2), cym);
-          }
-        }
-      } else {
-        var cx = sx + record.controlDeltaX;
-        var cy = sy + record.controlDeltaY;
-        var cxm, cym;
-        dx = cx + record.anchorDeltaX;
-        dy = cy + record.anchorDeltaY;
-        if (isMorph) {
-          var recordMorph = recordsMorph[j++];
-          if (recordMorph.isStraight) {
-            if (recordMorph.isGeneral) {
-              dxm += recordMorph.deltaX;
-              dym += recordMorph.deltaY;
-            } else if (recordMorph.isVertical) {
-              dym += recordMorph.deltaY;
-            } else {
-              dxm += recordMorph.deltaX;
-            }
-            cxm = sxm + ((dxm - sxm) / 2);
-            cym = sym + ((dym - sym) / 2);
-          } else {
-            cxm = sxm + recordMorph.controlDeltaX;
-            cym = sym + recordMorph.controlDeltaY;
-            dxm = cxm + recordMorph.anchorDeltaX;
-            dym = cym + recordMorph.anchorDeltaY;
-          }
-          edge.cpt = morph(cx, cxm) + ',' + morph(cy, cym);
-        } else {
-          edge.cpt = cx + ',' + cy;
-        }
-      }
-      if (isMorph)
-        dpt = morph(dx, dxm) + ',' + morph(dy, dym);
-      else
-        dpt = dx + ',' + dy;
-      edge.dpt = dpt;
-      edges.push(edge);
-    } else {
-      if (edges.length) {
-        if (fill0) {
-          var list = fillSegments[fillOffset + fill0];
-          if (!list)
-            list = fillSegments[fillOffset + fill0] = [];
-          list.push({
-            i: i,
-            spt: edges[0].spt,
-            dpt: dpt,
-            edges: edges
-          });
-        }
-        if (fill1) {
-          var list = fillSegments[fillOffset + fill1];
-          if (!list)
-            list = fillSegments[fillOffset + fill1] = [];
-          list.push({
-            i: i,
-            spt: edges[edges.length - 1].dpt,
-            dpt: edges[0].spt,
-            edges: edges,
-            flip: true
-          });
-        }
-        if (line) {
-          var list = lineSegments[lineOffset + line];
-          if (!list)
-            list = lineSegments[lineOffset + line] = [];
-          list.push({
-            i: i,
-            spt: edges[0].spt,
-            dpt: dpt,
-            edges: edges
-          });
-        }
-        edges = [];
-      }
-      if (record.eos)
-        break;
-      if (record.hasNewStyles) {
-        fillOffset = fillStyles.length;
-        lineOffset = lineStyles.length;
-        push.apply(fillStyles, record.fillStyles);
-        push.apply(lineStyles, record.lineStyles);
-      }
-      if (record.hasFillStyle0)
-        fill0 = record.fillStyle0;
-      if (record.hasFillStyle1)
-        fill1 = record.fillStyle1;
-      if (record.hasLineStyle)
-        line = record.lineStyle;
-      if (record.move) {
-        dx = record.moveX;
-        dy = record.moveY;
-        if (isMorph) {
-          var recordMorph = recordsMorph[j++];
-          dxm = recordMorph.moveX;
-          dym = recordMorph.moveY;
-          dpt = morph(dx, dxm) + ',' + morph(dy, dym);
-        } else {
-          dpt = dx + ',' + dy;
-        }
-      }
-    }
-  }
-
-  var i = 0;
-  while (fillStyles[i++]) {
-    var path = [];
-    var segments = fillSegments[i];
-    if (!segments)
-      continue;
-    var map = { };
-    var j = 0;
-    var segment;
-    while ((segment = segments[j++])) {
-      var list = map[segment.spt];
-      if (!list)
-        list = map[segment.spt] = [];
-      list.push(segment);
-    }
-    var numSegments = segments.length;
-    var j = 0;
-    var count = 0;
-    while ((segment = segments[j++]) && count < numSegments) {
-      if (segment.skip)
-        continue;
-      var subpath = [segment];
-      segment.skip = true;
-      ++count;
-      var spt = segment.spt;
-      var list = map[spt];
-      var k = list.length;
-      while (k--) {
-        if (list[k] === segment) {
-          list.splice(k, 1);
-          break;
-        }
-      }
-      var dpt = segment.dpt;
-      while (dpt !== spt && (list = map[dpt]) && list.length !== 0) {
-        segment = list.shift();
-        subpath.push(segment);
-        segment.skip = true;
-        ++count;
-        dpt = segment.dpt;
-      }
-      push.apply(path, subpath);
-    }
-    if (path.length) {
-      var commands = [];
-
-      var fillStyle = fillStyles[i - 1];
-      var fill = createFill(fillStyle, dictionary, dependencies);
-
-      var cmds = [];
-      var j = 0;
-      var subpath;
-      var prev = { };
-      while ((subpath = path[j++])) {
-        if (subpath.spt !== prev.dpt)
-          cmds.push('M' + subpath.spt);
-        var edges = subpath.edges;
-        if (subpath.flip) {
-          var k = edges.length;
-          var edge;
-          while ((edge = edges[--k])) {
-            if (edge.cpt)
-              cmds.push('Q' + edge.cpt + ',' + edge.spt);
-            else
-              cmds.push('L' + edge.spt);
-          }
-        } else {
-          var k = 0;
-          var edge;
-          while ((edge = edges[k++])) {
-            if (edge.cpt)
-              cmds.push('Q' + edge.cpt + ',' + edge.dpt);
-            else
-              cmds.push('L' + edge.dpt);
-          }
-        }
-        prev = subpath;
-      }
-
-      commands.push(
-        '(' +
-          'p=Kanvas.Path("' + cmds.join('') + '"),' +
-          'p.fillStyle=' + fill + ',' +
-        'p)'
-      );
-
-      paths.push({ i: path[0].i, commands: commands});
-    }
-  }
-
-  var i = 0;
-  var lineStyle;
-  while ((lineStyle = lineStyles[i++])) {
-    var segments = lineSegments[i], segment;
-    if (segments) {
-      var stroke;
-      var color = lineStyle.color;
-      if (!color) {
-        if (lineStyle.hasFill) {
-          stroke = createFill(lineStyle.fillStyle, dictionary, dependencies);
-        } else {
-          stroke = '"rgba(' + [255, 0, 128, 1].join(',') + ')"';
-        }
-      } else {
-        stroke = lineStyle.colorMorph ?
-          morphColor(color, lineStyle.colorMorph) :
-          '"rgba(' + [color.red, color.green, color.blue, color.alpha / 255].join(',') + ')"';
-      }
-      var lineWidth =
-        morph(lineStyle.width || 20, isMorph ? lineStyle.widthMorph || 20 : undefined);
-      // ignoring startCapStyle ?
-      var capsStyle = lineStyle.endCapStyle === 1 ? 'none' :
-                      lineStyle.endCapStyle === 2 ? 'square' : 'round';
-      var joinStyle = lineStyle.joinStyle === 1 ? 'bevel' :
-                       lineStyle.joinStyle === 2 ? 'miter' : 'round';
-      var miterLimitFactor = lineStyle.miterLimitFactor;
-
-      var cmds = [];
-      var j = 0;
-      var prev = { };
-      while ((segment = segments[j++])) {
-        var edges = segment.edges;
-        var k = 0;
-        var edge;
-        while ((edge = edges[k++])) {
-          if (edge.spt !== prev.dpt)
-            cmds.push('M' + edge.spt);
-          if (edge.cpt)
-            cmds.push('Q' + edge.cpt + ',' + edge.dpt);
-          else
-            cmds.push('L' + edge.dpt);
-          prev = edge;
-        }
-      }
-
-      paths.push({
-        i: Number.MAX_VALUE,
-        commands: [
-          '(' +
-            'p=Kanvas.Path("' + cmds.join('') + '"),' +
-            'p.strokeStyle=' + stroke + ',' +
-            'p.drawingStyles={' +
-              'lineWidth:' + lineWidth + ',' +
-              'lineCap:"' + capsStyle + '",' +
-              'lineJoin:"' + joinStyle + '",' +
-              'miterLimit:' + (miterLimitFactor * 2) +
-            '},' +
-          'p)'
-        ]
-      });
-    }
-  }
-
-  paths.sort(function (a, b) {
-    return a.i - b.i;
-  });
-  var commands = [];
-  var i = 0;
+  var commands = segment.commands;
+  var data = segment.data;
+  var morphData = segment.morphData;
+  assert(commands);
+  assert(data);
+  assert(isMorph === (morphData !== null));
   var path;
-  while ((path = paths[i++]))
-    push.apply(commands, path.commands);
-  var shape = {
+  var targetSegment;
+  var command;
+  var i;
+  if (styles.fill0) {
+    path = fillPaths[styles.fill0 - 1];
+    // If fill0 is the only style, we have pushed the segment to its stack. In
+    // that case, we have to replace its commands and data in place.
+    if (!(styles.fill1 || styles.line)) {
+      targetSegment = path.head();
+      targetSegment.commands = [];
+      targetSegment.data = [];
+      targetSegment.morphData = isMorph ? [] : null;
+    } else {
+      targetSegment = path.addSegment([], [], isMorph ? [] : null);
+    }
+
+    // For reversing the fill0 segments, we rely on the fact that each segment
+    // starts with a moveTo. We push a new moveTo on the reversed stack, with
+    // the final drawing command's target coordinates. For each of the following
+    // commands, we take the coordinates of the command originally *preceding*
+    // it as the new target coordinates. The final coordinates we target will be
+    // the ones from the original first moveTo.
+    var targetCommands = targetSegment.commands;
+    var targetData = targetSegment.data;
+    var targetMorphData = targetSegment.morphData;
+    targetCommands.push(SHAPE_MOVE_TO);
+    var j = data.length - 2;
+    targetData.push(data[j], data[j + 1]);
+    for (i = commands.length; i-- > 1; j -= 2) {
+      command = commands[i];
+      targetCommands.push(command);
+      targetData.push(data[j - 2], data[j - 1]);
+      if (isMorph) {
+        targetMorphData.push(morphData[j - 2], morphData[j - 1]);
+      }
+      if (command === SHAPE_CURVE_TO) {
+        targetData.push(data[j - 4], data[j - 3]);
+        if (isMorph) {
+            targetMorphData.push(morphData[j - 4], morphData[j - 3]);
+        }
+        j -= 2;
+      }
+    }
+    assert(j === 0);
+  }
+  if (styles.line && styles.fill1)
+  {
+    path = linePaths[styles.line - 1];
+    path.addSegment(commands, data, morphData);
+  }
+}
+
+/*
+ * Converts records from the space-optimized format they're stored in to a
+ * format that's more amenable to fast rendering.
+ *
+ * See http://blogs.msdn.com/b/mswanson/archive/2006/02/27/539749.aspx and
+ * http://wahlers.com.br/claus/blog/hacking-swf-1-shapes-in-flash/ for details.
+ */
+function convertRecordsToStyledPaths(records, fillPaths, linePaths,
+                                     dictionary, dependencies, recordsMorph)
+{
+  var isMorph = recordsMorph !== null;
+  var styles = {fill0: 0, fill1: 0, line: 0};
+  var segment = null;
+
+  // fill- and lineStyles can be added by style change records in the middle of
+  // a shape records list. All records refer to those new styles with a starting
+  // offset of 1 again, so we just replace the current lists, but append all new
+  // list entries to the original list which are stored in the generated symbol.
+  var allFillPaths = fillPaths;
+  var allLinePaths = linePaths;
+
+  //TODO: remove the `- 1` once we stop even parsing the EOS record
+  var numRecords = records.length - 1;
+  var morphsOffset = 0;
+  var x = 0;
+  var y = 0;
+  var morphX = 0;
+  var morphY = 0;
+  var path;
+  for (var i = 0; i < numRecords; i++) {
+    var record = records[i];
+    var morphRecord;
+    if (isMorph) {
+      morphRecord = recordsMorph[i - morphsOffset];
+    }
+    // type 0 is a StyleChange record
+    if (record.type === 0) {
+      //TODO: make the `has*` fields bitflags
+      if (segment) {
+        applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph);
+      }
+
+      if (record.hasNewStyles) {
+        fillPaths = createPathsList(record.fillStyles, false,
+                                    dictionary, dependencies);
+        push.apply(allFillPaths, fillPaths);
+        linePaths = createPathsList(record.lineStyles, true,
+                                    dictionary, dependencies);
+        push.apply(allLinePaths, linePaths);
+        styles = {fill0: 0, fill1: 0, line: 0};
+      }
+
+      if (record.hasFillStyle0) {
+        styles.fill0 = record.fillStyle0;
+      }
+      if (record.hasFillStyle1) {
+        styles.fill1 = record.fillStyle1;
+      }
+      if (record.hasLineStyle) {
+        styles.line = record.lineStyle;
+      }
+      if (styles.fill1) {
+        path = fillPaths[styles.fill1 - 1];
+      } else if (styles.line) {
+        path = linePaths[styles.line - 1];
+      } else if (styles.fill0) {
+        path = fillPaths[styles.fill0 - 1];
+      }
+
+      if (record.move) {
+        x = record.moveX|0;
+        y = record.moveY|0;
+        if (isMorph) {
+          morphX = morphRecord.moveX|0;
+          morphY = morphRecord.moveY|0;
+        }
+      } else if (isMorph) {
+        morphsOffset++;
+      }
+
+      segment = path.addSegment([], [], isMorph ? [] : null);
+
+      // Move or not, we want this path segment to start where the last one left
+      // off. Even if the last one belonged to a different style.
+      // "Huh," you say? Yup.
+      segment.commands.push(SHAPE_MOVE_TO);
+      segment.data.push(x, y);
+    }
+    // type 1 is a StraightEdge or CurvedEdge record
+    else {
+      assert(record.type === 1);
+      assert(segment);
+      if (record.isStraight) {
+        x += record.deltaX|0;
+        y += record.deltaY|0;
+
+        segment.commands.push(SHAPE_LINE_TO);
+        segment.data.push(x, y);
+        if (isMorph) {
+          morphX = (morphX + morphRecord.deltaX)|0;
+          morphY = (morphY + morphRecord.deltaY)|0;
+          segment.morphData.push(morphX, morphY);
+        }
+      } else {
+        segment.commands.push(SHAPE_CURVE_TO);
+        x += record.controlDeltaX|0;
+        y += record.controlDeltaY|0;
+
+        segment.data.push(x, y);
+        x += record.anchorDeltaX|0;
+        y += record.anchorDeltaY|0;
+
+        segment.data.push(x, y);
+        if (isMorph) {
+          morphX = (morphX + morphRecord.controlDeltaX)|0;
+          morphY = (morphY + morphRecord.controlDeltaY)|0;
+          segment.morphData.push(morphX, morphY);
+          morphX = (morphX + morphRecord.anchorDeltaX)|0;
+          morphY = (morphY + morphRecord.anchorDeltaY)|0;
+          segment.morphData.push(morphX, morphY);
+        }
+      }
+    }
+  }
+  applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph);
+
+  // After records processing completed, we can treat line paths just as we do
+  // fill paths. The important thing is for them to come last.
+  push.apply(allFillPaths, allLinePaths);
+
+  var removeCount = 0;
+  for (i = 0; i < allFillPaths.length; i++) {
+    path = allFillPaths[i];
+    if (!path.head()) {
+      removeCount++;
+      continue;
+    }
+    allFillPaths[i - removeCount] = segmentedPathToShapePath(path, isMorph);
+  }
+  allFillPaths.length -= removeCount;
+  return allFillPaths;
+}
+
+function segmentedPathToShapePath(path, isMorph) {
+  var start = path.head();
+  var end = start;
+
+  var finalRoot = null;
+  var finalHead = null;
+
+  var skippedMoves = 0;
+
+  // Path segments for one style can appear in whatever order in the tag's list
+  // of edge records.
+  // Before we linearize them, we have to identify all pairs of segments where
+  // one ends at a coordinate the other starts at.
+  // The following loop does that, by creating ever-growing runs of matching
+  // segments. If no more segments are found that match the current run (either
+  // at the beginning, or at the end), the current run is complete, and a new
+  // one is started. Rinse, repeat, until no solitary segments remain.
+  var current = start.prev;
+  while (start) {
+    while (current) {
+      if (path.segmentsConnect(current, start)) {
+        if (current.next !== start) {
+          path.removeSegment(current);
+          path.insertSegment(current, start);
+        }
+        start = current;
+        current = start.prev;
+        skippedMoves++;
+        continue;
+      }
+      if (path.segmentsConnect(end, current)) {
+        path.removeSegment(current);
+        end.next = current;
+        current = current.prev;
+        end.next.prev = end;
+        end.next.next = null;
+        end = end.next;
+        skippedMoves++;
+        continue;
+      }
+      current = current.prev;
+    }
+    // This run of segments is finished. Store and forget it (for this loop).
+    current = start.prev;
+    if (!finalRoot) {
+      finalRoot = start;
+      finalHead = end;
+    } else {
+      finalHead.next = start;
+      start.prev = finalHead;
+      finalHead = end;
+      finalHead.next = null;
+    }
+    if (!current) {
+      break;
+    }
+    start = end = current;
+    current = start.prev;
+  }
+
+  var totalCommandsLength = -skippedMoves;
+  var totalDataLength = -skippedMoves << 1;
+  current = finalRoot;
+  while (current) {
+    totalCommandsLength += current.commands.length;
+    totalDataLength += current.data.length;
+    current = current.next;
+  }
+
+  var shape = new ShapePath(path.fillStyle, path.lineStyle, totalCommandsLength,
+                            totalDataLength, isMorph);
+  var allCommands = shape.commands;
+  var allData = shape.data;
+  var allMorphData = shape.morphData;
+
+  var commandsIndex = 0;
+  var dataIndex = 0;
+
+
+  current = finalRoot;
+  while (current) {
+    var offset = 0;
+    var commands = current.commands;
+    var data = current.data;
+    var morphData = current.morphData;
+
+    // If the segment's first moveTo goes to the current coordinates,
+    // we have to skip it. Removing those in the previous loop would be too
+    // costly, and we might share the arrays with another style's path.
+    if (data[0] === allData[dataIndex - 2] &&
+        data[1] === allData[dataIndex - 1])
+    {
+      offset = 1;
+    }
+    for (var i = offset; i < commands.length; i++, commandsIndex++) {
+      allCommands[commandsIndex] = commands[i];
+    }
+    for (i = offset << 1; i < data.length; i++, dataIndex++) {
+      allData[dataIndex] = data[i];
+      if (isMorph) {
+        allMorphData[dataIndex] = morphData[i];
+      }
+    }
+    current = current.next;
+  }
+  return shape;
+}
+
+var CAPS_STYLE_TYPES = ['round', 'none', 'square'];
+var JOIN_STYLE_TYPES = ['round', 'bevel', 'miter'];
+function processStyle(style, isLineStyle, dictionary, dependencies) {
+  if (isLineStyle) {
+    // TODO: Figure out how to handle startCapStyle
+    style.lineCap = CAPS_STYLE_TYPES[style.endCapStyle|0];
+    style.lineJoin = JOIN_STYLE_TYPES[style.joinStyle|0];
+    style.miterLimit = style.miterLimitFactor * 2;
+    if (!style.color && style.hasFill) {
+      var fillStyle = processStyle(style.fillStyle, false, dictionary,
+                                   dependencies);
+      style.style = fillStyle.style;
+      style.transform = fillStyle.transform;
+      style.fillStyle = null;
+      return style;
+    }
+  }
+  var color;
+  if (style.type === undefined) {
+    color = style.color;
+    style.style = 'rgba(' + color.red + ',' + color.green + ',' +
+                  color.blue + ',' + color.alpha / 255 + ')';
+    style.color = null; // No need to keep data around we won't use anymore.
+    return style;
+  }
+  var scale;
+  switch (style.type) {
+    case GRAPHICS_FILL_SOLID:
+      color = style.color;
+      style.style = 'rgba(' + color.red + ',' + color.green + ',' +
+                    color.blue + ',' + color.alpha / 255 + ')';
+      style.color = null; // No need to keep data around we won't use anymore.
+      break;
+    case GRAPHICS_FILL_LINEAR_GRADIENT:
+    case GRAPHICS_FILL_RADIAL_GRADIENT:
+    case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
+      scale = 20 * 819.2;
+      break;
+    case GRAPHICS_FILL_REPEATING_BITMAP:
+    case GRAPHICS_FILL_CLIPPED_BITMAP:
+    case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
+    case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
+      if (dictionary[style.bitmapId]) {
+        dependencies.push(dictionary[style.bitmapId].id);
+        scale = 1;
+      }
+      break;
+    default:
+      fail('invalid fill style', 'shape');
+  }
+  if (!style.matrix) {
+    return style;
+  }
+  var matrix = style.matrix;
+  style.transform = {
+    a: (matrix.a * scale),
+    b: (matrix.b * scale),
+    c: (matrix.c * scale),
+    d: (matrix.d * scale),
+    e: (matrix.tx * 20),
+    f: (matrix.ty * 20)
+  };
+  return style;
+}
+
+/*
+ * Paths are stored in 2-dimensional arrays. Each of the inner arrays contains
+ * all the paths for a certain fill or line style.
+ */
+function createPathsList(styles, isLineStyle, dictionary, dependencies) {
+  var paths = [];
+  for (var i = 0; i < styles.length; i++) {
+    var style = processStyle(styles[i], isLineStyle, dictionary, dependencies);
+    if (!isLineStyle) {
+      paths[i] = new SegmentedPath(style, null);
+    } else {
+      paths[i] = new SegmentedPath(null, style);
+    }
+  }
+  return paths;
+}
+function defineShape(tag, dictionary) {
+  var dependencies = [];
+  var fillPaths = createPathsList(tag.fillStyles, false,
+                                  dictionary, dependencies);
+  var linePaths = createPathsList(tag.lineStyles, true,
+                                  dictionary, dependencies);
+  var paths = convertRecordsToStyledPaths(tag.records, fillPaths, linePaths,
+                                          dictionary, dependencies,
+                                          tag.recordsMorph || null);
+
+  return {
     type: 'shape',
     id: tag.id,
-    morph: isMorph,
-    bbox: tag.strokeBbox || tag.bbox,
-    data: '[' + commands.join(',') + ']'
+    strokeBox: tag.strokeBox,
+    bbox: tag.bbox,
+    bboxMorph: tag.bboxMorph,
+    isMorph: tag.isMorph,
+    paths: paths,
+    require: dependencies.length ? dependencies : null
   };
-  if (dependencies.length)
-    shape.require = dependencies;
-  return shape;
+}
+
+function SegmentedPath(fillStyle, lineStyle) {
+  this.fillStyle = fillStyle;
+  this.lineStyle = lineStyle;
+  this._head = null;
+}
+SegmentedPath.prototype = {
+  addSegment: function (commands, data, morphData)
+  {
+    assert(commands);
+    assert(data);
+    var segment = {commands: commands, data: data, morphData: morphData,
+                   prev: this._head, next: null};
+    if (this._head) {
+      this._head.next = segment;
+    }
+    this._head = segment;
+    return segment;
+  },
+  // Does *not* reset the segment's prev and next pointers!
+  removeSegment: function(segment) {
+    if (segment.prev) {
+      segment.prev.next = segment.next;
+    }
+    if (segment.next) {
+      segment.next.prev = segment.prev;
+    }
+  },
+  insertSegment: function(segment, next) {
+    var prev = next.prev;
+    segment.prev = prev;
+    segment.next = next;
+    if (prev) {
+      prev.next = segment;
+    }
+    next.prev = segment;
+  },
+  head: function() {
+    return this._head;
+  },
+  segmentsConnect: function(first, second) {
+    assert(second.commands[0] === SHAPE_MOVE_TO);
+
+    var firstLength = first.data.length;
+    return first.data[firstLength - 2] === second.data[0] &&
+           first.data[firstLength - 1] === second.data[1];
+  }
+};
+
+var SHAPE_MOVE_TO        = 1;
+var SHAPE_LINE_TO        = 2;
+var SHAPE_CURVE_TO       = 3;
+var SHAPE_WIDE_MOVE_TO   = 4;
+var SHAPE_WIDE_LINE_TO   = 5;
+var SHAPE_CUBIC_CURVE_TO = 6;
+// Round corners can be drawn using arcTo, but hit-testing those is a bit of a
+// pain. By creating a command with much narrower scope, we make both drawing
+// and hit-testing easy and fast.
+// Data: cornerX, cornerY, curveEndX, curveEndY, radiusX, radiusY.
+var SHAPE_ROUND_CORNER   = 7;
+// The following commands aren't available in the Flash Player. We use them as
+// shortcuts for complex operations that exist natively on Canvas.
+var SHAPE_CIRCLE         = 8;
+var SHAPE_ELLIPSE        = 9;
+
+function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph)
+{
+  this.fillStyle = fillStyle;
+  this.lineStyle = lineStyle;
+
+  if (commandsCount) {
+    this.commands = new Uint8Array(commandsCount);
+    this.data = new Int32Array(dataLength);
+    this.morphData = isMorph ? new Int32Array(dataLength) : null;
+  } else {
+    // For non-defineShape paths, we don't know their length, so can't use
+    // typed arrays for their commands and data.
+    this.commands = [];
+    this.data = [];
+  }
+
+  this.bounds = null;
+  this.strokeBounds = null;
+
+  this.isMorph = isMorph;
+  this.fullyInitialized = false;
+}
+
+ShapePath.prototype = {
+  moveTo: function(x, y) {
+    if (this.commands[this.commands.length -1] === SHAPE_MOVE_TO) {
+      this.data[this.data.length - 2] = x;
+      this.data[this.data.length - 1] = y;
+      return;
+    }
+    this.commands.push(SHAPE_MOVE_TO);
+    this.data.push(x, y);
+  },
+  lineTo: function(x, y) {
+    this.commands.push(SHAPE_LINE_TO);
+    this.data.push(x, y);
+  },
+  curveTo: function(controlX, controlY, anchorX, anchorY) {
+    this.commands.push(SHAPE_CURVE_TO);
+    this.data.push(controlX, controlY, anchorX, anchorY);
+  },
+  cubicCurveTo: function(control1X, control1Y, control2X, control2Y,
+                         anchorX, anchorY)
+  {
+    this.commands.push(SHAPE_CUBIC_CURVE_TO);
+    this.data.push(control1X, control1Y, control2X, control2Y,
+                   anchorX, anchorY);
+  },
+  rect: function(x, y, w, h) {
+    var x2 = x + w;
+    var y2 = y + h;
+    this.commands.push(SHAPE_MOVE_TO, SHAPE_LINE_TO, SHAPE_LINE_TO,
+                       SHAPE_LINE_TO, SHAPE_LINE_TO);
+    this.data.push(x, y, x2, y, x2, y2, x, y2, x, y);
+  },
+  circle: function(x, y, radius) {
+    this.commands.push(SHAPE_CIRCLE);
+    this.data.push(x, y, radius);
+  },
+  drawRoundCorner: function(cornerX, cornerY, curveEndX, curveEndY,
+                            radiusX, radiusY)
+  {
+    this.commands.push(SHAPE_ROUND_CORNER);
+    this.data.push(cornerX, cornerY, curveEndX, curveEndY, radiusX, radiusY);
+  },
+  ellipse: function(x, y, radiusX, radiusY) {
+    this.commands.push(SHAPE_ELLIPSE);
+    this.data.push(x, y, radiusX, radiusY);
+  },
+  draw: function(ctx, scale, clip, ratio) {
+    if (clip && !this.fillStyle) {
+      return;
+    }
+    ctx.beginPath();
+    var commands = this.commands;
+    var data = this.data;
+    var morphData = this.morphData;
+    var formOpen = false;
+    var formOpenX = 0;
+    var formOpenY = 0;
+    for (var j = 0, k = 0; j < commands.length; j++) {
+      if (!this.isMorph) {
+        switch (commands[j]) {
+          case SHAPE_MOVE_TO:
+            formOpen = true;
+            formOpenX = data[k++];
+            formOpenY = data[k++];
+            ctx.moveTo(formOpenX, formOpenY);
+            break;
+          case SHAPE_WIDE_MOVE_TO:
+            ctx.moveTo(data[k++], data[k++]);
+            k += 2;
+            break;
+          case SHAPE_LINE_TO:
+            ctx.lineTo(data[k++], data[k++]);
+            break;
+          case SHAPE_WIDE_LINE_TO:
+            ctx.lineTo(data[k++], data[k++]);
+            k += 2;
+            break;
+          case SHAPE_CURVE_TO:
+            ctx.quadraticCurveTo(data[k++], data[k++],
+                                 data[k++], data[k++]);
+            break;
+          case SHAPE_CUBIC_CURVE_TO:
+            ctx.bezierCurveTo(data[k++], data[k++], data[k++], data[k++],
+                              data[k++], data[k++]);
+            break;
+          case SHAPE_ROUND_CORNER:
+            ctx.arcTo(data[k++], data[k++], data[k++], data[k++],
+                      data[k++], data[k++]);
+            break;
+          case SHAPE_CIRCLE:
+            if (formOpen) {
+              ctx.lineTo(formOpenX, formOpenY);
+              formOpen = false;
+            }
+            ctx.moveTo(data[k] + data[k+2], data[k+1]);
+            ctx.arc(data[k++], data[k++], data[k++], 0, Math.PI * 2, false);
+            break;
+          case SHAPE_ELLIPSE:
+            if (formOpen) {
+              ctx.lineTo(formOpenX, formOpenY);
+              formOpen = false;
+            }
+            var x = data[k++];
+            var y = data[k++];
+            var rX = data[k++];
+            var rY = data[k++];
+            var radius;
+            if (rX !== rY) {
+              ctx.save();
+              var ellipseScale;
+              if (rX > rY) {
+                ellipseScale = rX / rY;
+                radius = rY;
+                x /= ellipseScale;
+                ctx.scale(ellipseScale, 1);
+              } else {
+                ellipseScale = rY / rX;
+                radius = rX;
+                y /= ellipseScale;
+                ctx.scale(1, ellipseScale);
+              }
+            }
+            ctx.moveTo(x + radius, y);
+            ctx.arc(x, y, radius, 0, Math.PI * 2, false);
+            if (rX !== rY) {
+              ctx.restore();
+            }
+            break;
+          default:
+            console.warn("Unknown drawing command encountered: " +
+                         commands[j]);
+        }
+      } else {
+        switch (commands[j]) {
+          case SHAPE_MOVE_TO:
+            ctx.moveTo(morph(data[k], morphData[k++], ratio),
+                       morph(data[k], morphData[k++], ratio));
+            break;
+          case SHAPE_LINE_TO:
+            ctx.lineTo(morph(data[k], morphData[k++], ratio),
+                       morph(data[k], morphData[k++], ratio));
+            break;
+          case SHAPE_CURVE_TO:
+            ctx.quadraticCurveTo(morph(data[k], morphData[k++], ratio),
+                                 morph(data[k], morphData[k++], ratio),
+                                 morph(data[k], morphData[k++], ratio),
+                                 morph(data[k], morphData[k++], ratio));
+            break;
+          default:
+            console.warn("Drawing command not supported for morph " +
+                         "shapes: " + commands[j]);
+        }
+      }
+    }
+    // TODO: enable in-path line-style changes
+//        if (formOpen) {
+//          ctx.lineTo(formOpenX, formOpenY);
+//        }
+    if (!clip) {
+      var fillStyle = this.fillStyle;
+      if (fillStyle) {
+        ctx.fillStyle = fillStyle.style;
+        var m = fillStyle.transform;
+        if (m) {
+          ctx.save();
+          ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+          ctx.fill();
+          ctx.restore();
+        } else {
+          ctx.fill();
+        }
+      }
+      var lineStyle = this.lineStyle;
+      // TODO: All widths except for `undefined` and `NaN` draw something
+      if (lineStyle) {
+        // Flash's lines are always at least 1px
+        ctx.lineWidth = Math.max(lineStyle.width, 1);
+        ctx.strokeStyle = lineStyle.style;
+        ctx.lineCap = lineStyle.lineCap;
+        ctx.lineJoin = lineStyle.lineJoin;
+        ctx.miterLimit = lineStyle.miterLimit;
+        ctx.stroke();
+      }
+    }
+    ctx.closePath();
+  },
+  isPointInPath: function(x, y) {
+    if (!(this.fillStyle || this.lineStyle)) {
+      return false;
+    }
+    var bounds = this.strokeBounds || this.bounds || this._calculateBounds();
+    if (x < bounds.xMin || x > bounds.xMax ||
+        y < bounds.yMin || y > bounds.yMax)
+    {
+      return false;
+    }
+
+    if (this.fillStyle && this.isPointInFill(x, y)) {
+      return true;
+    }
+
+    return this.lineStyle && this.lineStyle.width !== undefined &&
+           this.isPointInStroke(x, y);
+
+  },
+  isPointInFill: function(x, y) {
+    var commands = this.commands;
+    var data = this.data;
+    var length = commands.length;
+
+    var inside = false;
+
+    var fromX = 0;
+    var fromY = 0;
+    var toX = 0;
+    var toY = 0;
+    var localX;
+    var localY;
+    var cpX;
+    var cpY;
+    var rX;
+    var rY;
+
+    var formOpen = false;
+    var formOpenX = 0;
+    var formOpenY = 0;
+
+    // Rough outline of the algorithm's mode of operation:
+    // from x,y an infinite ray to the right is "cast". All operations are then
+    // tested for intersections with this ray, where each intersection means
+    // switching between being outside and inside the shape.
+    for (var commandIndex = 0, dataIndex = 0; commandIndex < length;
+         commandIndex++)
+    {
+      switch (commands[commandIndex]) {
+        case SHAPE_WIDE_MOVE_TO:
+          dataIndex += 2;
+          /* falls through */
+        case SHAPE_MOVE_TO:
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          if (formOpen &&
+              intersectsLine(x, y, fromX, fromY, formOpenX, formOpenY))
+          {
+            inside = !inside;
+          }
+          formOpen = true;
+          formOpenX = toX;
+          formOpenY = toY;
+          break;
+        case SHAPE_WIDE_LINE_TO:
+          dataIndex += 2;
+          /* falls through */
+        case SHAPE_LINE_TO:
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          if (intersectsLine(x, y, fromX, fromY, toX, toY))
+          {
+            inside = !inside;
+          }
+          break;
+        case SHAPE_CURVE_TO:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          if ((cpY > y) === (fromY > y) && (toY > y) === (fromY > y)) {
+            break;
+          }
+          if (fromX >= x && cpX >= x && toX >= x) {
+            inside = !inside;
+            break;
+          }
+
+          // Finding the intersections with our ray means solving a quadratic
+          // equation of the form y = ax^2 + bx + c for y.
+          // See http://en.wikipedia.org/wiki/Quadratic_equation and
+          // http://code.google.com/p/degrafa/source/browse/trunk/Degrafa/com/degrafa/geometry/AdvancedQuadraticBezier.as?r=613#394
+          var c = fromY - y;
+          var b = 2.0 * (cpY - fromY);
+          var a = fromY - 2.0 * cpY + toY;
+
+          var discriminant = b * b - 4 * a * c;
+          if(discriminant < 0) {
+            break;
+          }
+          var t = -b / (a + a);
+          if (discriminant === 0) {
+            if (quadraticXAtT(t, fromX, cpX, toX) > x) {
+              inside = !inside;
+            }
+            break;
+          }
+          var dRoot = Math.sqrt(discriminant);
+          a = 1/(a + a);
+          t = (dRoot - b) * a;
+          if (quadraticXAtT(t, fromX, cpX, toX) > x) {
+            inside = !inside;
+          }
+          t = (-b - dRoot) * a;
+          if (quadraticXAtT(t, fromX, cpX, toX) > x) {
+            inside = !inside;
+          }
+          break;
+        case SHAPE_CUBIC_CURVE_TO:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          var cp2X = data[dataIndex++];
+          var cp2Y = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          if ((cpY > y) === (fromY > y) && (cp2Y > y) === (fromY > y) &&
+              (toY > y) === (fromY > y))
+          {
+            break;
+          }
+          if (fromX >= x && cpX >= x && cp2X >= x && toX >= x) {
+            inside = !inside;
+            break;
+          }
+          var roots = cubicXAtY(fromX, fromY, cpX, cpY, cp2X, cp2Y,
+                                toX, toY, y);
+          for (var i = roots.length; i--;) {
+            if (roots[i] >= x) {
+              inside = !inside;
+            }
+          }
+          break;
+        case SHAPE_ROUND_CORNER:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          rX = data[dataIndex++];
+          rY = data[dataIndex++];
+          // The round corner being fully to the left, top or bottom of x,y
+          // means it's irrelevant.
+          if ((toY > y) === (fromY > y) || fromX < x && toX < x) {
+            break;
+          }
+          // The round corner crossing y and being fully to the right means
+          // it crosses the ray.
+          if (fromX >= x && toX >= x) {
+            inside = !inside;
+            break;
+          }
+          // we want the ellipse's center
+          if ((toX > fromX) === (toY > fromY)) {
+            cp2X = fromX;
+            cp2Y = toY;
+          } else {
+            cp2X = toX;
+            cp2Y = fromY;
+          }
+          localX = x - cp2X;
+          localY = y - cp2Y;
+          // We already established that x,y lies somewhere in the ellipse's
+          // right quadrant. Hence, a simple "is in the ellipse XOR has negative
+          // localX" test suffices.
+          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) <= 1 !==
+              localX <= 0)
+          {
+              inside = !inside;
+          }
+          break;
+        case SHAPE_CIRCLE:
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          var r = data[dataIndex++];
+          localX = x - toX;
+          localY = y - toY;
+          if (localX * localX + localY * localY < r * r) {
+            inside = !inside;
+          }
+          toX += r;
+          break;
+        case SHAPE_ELLIPSE:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          rX = data[dataIndex++];
+          rY = data[dataIndex++];
+          localX = x - cpX;
+          localY = y - cpY;
+          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) <= 1) {
+            inside = !inside;
+          }
+          toX = cpX + rX;
+          toY = cpY;
+          break;
+        default:
+          if (!inWorker) {
+            console.warn("Drawing command not handled in isPointInPath: " +
+                         commands[commandIndex]);
+          }
+      }
+      fromX = toX;
+      fromY = toY;
+    }
+
+    if (formOpen &&
+        intersectsLine(x, y, fromX, fromY, formOpenX, formOpenY))
+    {
+      inside = !inside;
+    }
+
+    return inside;
+  },
+  isPointInStroke: function(x, y) {
+    var commands = this.commands;
+    var data = this.data;
+    var length = commands.length;
+
+    var width = this.lineStyle.width;
+    var halfWidth = width / 2;
+    var halfWidthSq = halfWidth * halfWidth;
+    var minX = x - halfWidth;
+    var maxX = x + halfWidth;
+    var minY = y - halfWidth;
+    var maxY = y + halfWidth;
+
+    var fromX = 0;
+    var fromY = 0;
+    var toX = 0;
+    var toY = 0;
+    var localX;
+    var localY;
+    var cpX;
+    var cpY;
+    var rX;
+    var rY;
+    var curveX;
+    var curveY;
+    var t;
+
+    for (var commandIndex = 0, dataIndex = 0; commandIndex < length;
+         commandIndex++)
+    {
+      switch (commands[commandIndex]) {
+        case SHAPE_WIDE_MOVE_TO:
+          dataIndex += 2;
+        /* falls through */
+        case SHAPE_MOVE_TO:
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          break;
+        case SHAPE_WIDE_LINE_TO:
+          dataIndex += 2;
+        /* falls through */
+        case SHAPE_LINE_TO:
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          // Lines with length == 0 aren't rendered
+          // TODO: make sure we get this right in the actual rendering
+          if (fromX === toX && fromY === toY) {
+            break;
+          }
+          // Eliminate based on bounds
+          if (maxX < fromX && maxX < toX || minX > fromX && minX > toX ||
+              maxY < fromY && maxY < toY || minY > fromY && minY > toY)
+          {
+            break;
+          }
+          // Vertical and horizontal lines are a certain hit at this point
+          if (toX === fromX || toY === fromY) {
+            return true;
+          }
+          // http://stackoverflow.com/a/1501725/517791
+          t = ((x - fromX) * (toX - fromX) + (y - fromY) * (toY - fromY)) /
+              distanceSq(fromX, fromY, toX, toY);
+          if (t < 0) {
+            if (distanceSq(x, y, fromX, fromY) <= halfWidthSq) {
+              return true;
+            }
+            break;
+          }
+          if (t > 1) {
+            if (distanceSq(x, y, toX, toY) <= halfWidthSq) {
+              return true;
+            }
+            break;
+          }
+          if (distanceSq(x, y, fromX + t * (toX - fromX),
+                         fromY + t * (toY - fromY)) <= halfWidthSq)
+          {
+            return true;
+          }
+          break;
+        case SHAPE_CURVE_TO:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          // Eliminate based on bounds
+          var extremeX = quadraticBezierExtreme(fromX, cpX, toX);
+          if (maxX < fromX && maxX < extremeX && maxX < toX ||
+              minX > fromX && minX > extremeX && minX > toX)
+          {
+            break;
+          }
+          var extremeY = quadraticBezierExtreme(fromY, cpY, toY);
+          if (maxY < fromY && maxY < extremeY && maxY < toY ||
+              minY > fromY && minY > extremeY && minY > toY)
+          {
+            break;
+          }
+          // So, this is very much not ideal, but I'll punt on proper curve
+          // hit-testing for now and just sample an amount of points that seems
+          // sufficient.
+          for (t = 0; t < 1; t += 0.02) {
+            curveX = quadraticBezier(fromX, cpX, toX, t);
+            if (curveX < minX  || curveX > maxX) {
+              continue;
+            }
+            curveY = quadraticBezier(fromY, cpY, toY, t);
+            if (curveY < minY  || curveY > maxY) {
+              continue;
+            }
+            if ((x - curveX) * (x - curveX) + (y - curveY) * (y - curveY) <
+                halfWidthSq)
+            {
+              return true;
+            }
+          }
+          break;
+        case SHAPE_CUBIC_CURVE_TO:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          var cp2X = data[dataIndex++];
+          var cp2Y = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          // Eliminate based on bounds
+          var extremesX = cubicBezierExtremes(fromX, cpX, cp2X, toX);
+          while(extremesX.length < 2) {
+            extremesX.push(toX);
+          }
+          if (maxX < fromX && maxX < toX && maxX < extremesX[0] &&
+              maxX < extremesX[1]  ||
+              minX > fromX && minX > toX && minX > extremesX[0] &&
+              minX > extremesX[1])
+          {
+            break;
+          }
+          var extremesY = cubicBezierExtremes(fromY, cpY, cp2Y, toY);
+          while(extremesY.length < 2) {
+            extremesY.push(toY);
+          }
+          if (maxY < fromY && maxY < toY && maxY < extremesY[0] &&
+              maxY < extremesY[1] ||
+              minY > fromY && minY > toY && minY > extremesY[0] &&
+              minY > extremesY[1])
+          {
+            break;
+          }
+          // So, this is very much not ideal, but I'll punt on proper curve
+          // hit-testing for now and just sample an amount of points that seems
+          // sufficient.
+          for (t = 0; t < 1; t += 0.02) {
+            curveX = cubicBezier(fromX, cpX, cp2X, toX, t);
+            if (curveX < minX  || curveX > maxX) {
+              continue;
+            }
+            curveY = cubicBezier(fromY, cpY, cp2Y, toY, t);
+            if (curveY < minY  || curveY > maxY) {
+              continue;
+            }
+            if ((x - curveX) * (x - curveX) + (y - curveY) * (y - curveY) <
+                halfWidthSq)
+            {
+              return true;
+            }
+          }
+          break;
+        case SHAPE_ROUND_CORNER:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          rX = data[dataIndex++];
+          rY = data[dataIndex++];
+          // Eliminate based on bounds
+          if (maxX < fromX && maxX < toX || minX > fromX && minX > toX ||
+              maxY < fromY && maxY < toY || minY > fromY && minY > toY)
+          {
+            break;
+          }
+          // we want the ellipse's center
+          if ((toX > fromX) === (toY > fromY)) {
+            cp2X = fromX;
+            cp2Y = toY;
+          } else {
+            cp2X = toX;
+            cp2Y = fromY;
+          }
+          localX = Math.abs(x - cp2X);
+          localY = Math.abs(y - cp2Y);
+          localX -= halfWidth;
+          localY -= halfWidth;
+          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) > 1) {
+            break;
+          }
+          localX += width;
+          localY += width;
+          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) > 1) {
+            return true;
+          }
+          break;
+        case SHAPE_CIRCLE:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          var r = data[dataIndex++];
+          toX = cpX + r;
+          toY = cpY;
+          // Eliminate based on bounds
+          if (maxX < cpX - r || minX > cpX + r ||
+              maxY < cpY - r || minY > cpY + r)
+          {
+            break;
+          }
+          localX = x - cpX;
+          localY = y - cpY;
+          var rMin = r - halfWidth;
+          var rMax = r + halfWidth;
+          var distSq = localX * localX + localY * localY;
+          if (distSq >= rMin * rMin && distSq <= rMax * rMax) {
+            return true;
+          }
+          break;
+        case SHAPE_ELLIPSE:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          rX = data[dataIndex++];
+          rY = data[dataIndex++];
+          toX = cpX + rX;
+          toY = cpY;
+          localX = Math.abs(x - cpX);
+          localY = Math.abs(y - cpY);
+          localX -= halfWidth;
+          localY -= halfWidth;
+          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) > 1) {
+            break;
+          }
+          localX += width;
+          localY += width;
+          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) > 1) {
+            return true;
+          }
+          break;
+        default:
+          if (!inWorker) {
+            console.warn("Drawing command not handled in isPointInPath: " +
+                         commands[commandIndex]);
+          }
+      }
+      fromX = toX;
+      fromY = toY;
+    }
+    return false;
+  },
+  getBounds: function(includeStroke) {
+    var bounds = includeStroke ? this.strokeBounds : this.bounds;
+    if (!bounds) {
+      this._calculateBounds();
+      bounds = includeStroke ? this.strokeBounds : this.bounds;
+    }
+    return bounds;
+  },
+  _calculateBounds: function() {
+    var commands = this.commands;
+    var data = this.data;
+    var length = commands.length;
+    var bounds;
+    if (commands[0] === SHAPE_MOVE_TO || commands[0] > SHAPE_ROUND_CORNER) {
+      bounds = {xMin: data[0], yMin: data[1]};
+    } else {
+      // only the various single-line-drawing commands start out at zero
+      // they're the first command.
+      bounds = {xMin: 0, yMin: 0};
+    }
+    bounds.xMax = bounds.xMin;
+    bounds.yMax = bounds.yMin;
+
+    var fromX = bounds.xMin;
+    var fromY = bounds.yMin;
+
+    for (var commandIndex = 0, dataIndex = 0; commandIndex < length;
+         commandIndex++)
+    {
+      var toX;
+      var toY;
+      var cpX;
+      var cpY;
+      switch (commands[commandIndex]) {
+        case SHAPE_WIDE_MOVE_TO:
+          dataIndex += 2;
+          /* falls through */
+        case SHAPE_MOVE_TO:
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          extendBoundsByPoint(bounds, toX, toY);
+          break;
+        case SHAPE_WIDE_LINE_TO:
+          dataIndex += 2;
+          /* falls through */
+        case SHAPE_LINE_TO:
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          extendBoundsByPoint(bounds, toX, toY);
+          break;
+        //TODO: calculate tighter bounds for control points
+        case SHAPE_CURVE_TO:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          extendBoundsByPoint(bounds, toX, toY);
+          if (cpX < fromX || cpX > toX) {
+            extendBoundsByX(bounds, quadraticBezierExtreme(fromX, cpX, toX));
+          }
+          if (cpY < fromY || cpY > toY) {
+            extendBoundsByY(bounds, quadraticBezierExtreme(fromY, cpY, toY));
+          }
+          break;
+        case SHAPE_CUBIC_CURVE_TO:
+          cpX = data[dataIndex++];
+          cpY = data[dataIndex++];
+          var cp2X = data[dataIndex++];
+          var cp2Y = data[dataIndex++];
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          extendBoundsByPoint(bounds, toX, toY);
+          var extremes;
+          var i;
+          if (cpX < fromX || cp2X < fromX || cpX > toX || cp2X > toX) {
+            extremes = cubicBezierExtremes(fromX, cpX, cp2X, toX);
+            for (i = extremes.length; i--;) {
+              extendBoundsByX(bounds, extremes[i]);
+            }
+          }
+          if (cpY < fromY || cp2Y < fromY || cpY > toY || cp2Y > toY) {
+            extremes = cubicBezierExtremes(fromY, cpY, cp2Y, toY);
+            for (i = extremes.length; i--;) {
+              extendBoundsByY(bounds, extremes[i]);
+            }
+          }
+          break;
+        case SHAPE_ROUND_CORNER:
+          // Relying on the fact that round corners never lie outside their
+          // rectangle, we ignore them.
+          dataIndex += 6;
+          break;
+        case SHAPE_CIRCLE:
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          var radius = data[dataIndex++];
+          extendBoundsByPoint(bounds, toX - radius, toY - radius);
+          extendBoundsByPoint(bounds, toX + radius, toY + radius);
+          toX += radius;
+          break;
+        case SHAPE_ELLIPSE:
+          toX = data[dataIndex++];
+          toY = data[dataIndex++];
+          var radiusX = data[dataIndex++];
+          var radiusY = data[dataIndex++];
+          extendBoundsByPoint(bounds, toX - radiusX, toY - radiusY);
+          extendBoundsByPoint(bounds, toX + radiusX, toY + radiusY);
+          toX += radiusX;
+          break;
+        default:
+          if (!inWorker) {
+            console.warn("Drawing command not handled in bounds calculation: " +
+                         commands[commandIndex]);
+          }
+      }
+      fromX = toX;
+      fromY = toY;
+    }
+    this.bounds = bounds;
+    if (this.lineStyle) {
+      var halfLineWidth = this.lineStyle.width / 2;
+      this.strokeBounds = {
+        xMin: bounds.xMin - halfLineWidth,
+        yMin: bounds.yMin - halfLineWidth,
+        xMax: bounds.xMax + halfLineWidth,
+        yMax: bounds.yMax + halfLineWidth
+      };
+      return this.strokeBounds;
+    } else {
+      this.strokeBounds = bounds;
+    }
+    return bounds;
+  }
+};
+
+function distanceSq(x1, y1, x2, y2) {
+  var dX = x2 - x1;
+  var dY = y2 - y1;
+  return dX * dX + dY * dY;
+}
+
+// See http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html
+function intersectsLine(x, y, x1, y1, x2, y2) {
+  return (y2 > y) !== (y1 > y) &&
+         x < (x1 - x2) * (y - y2) / (y1 - y2) + x2;
+}
+
+function quadraticBezier(from, cp, to, t) {
+  var inverseT = 1 - t;
+  return from * inverseT * inverseT + 2 * cp * inverseT * t + to * t * t;
+}
+
+function quadraticBezierExtreme(from, cp, to) {
+  var t = (from - cp) / (from - 2 * cp + to);
+  if (t < 0) {
+    return from;
+  }
+  if (t > 1) {
+    return to;
+  }
+  return quadraticBezier(from, cp, to, t);
+}
+
+function quadraticXAtT(t, fromX, cpX, toX) {
+  var tInvert = 1 - t;
+  return tInvert * tInvert * fromX + 2 * tInvert * t * cpX + t * t * toX;
+}
+
+function cubicBezier(from, cp, cp2, to, t) {
+  var tSq = t * t;
+  var inverseT = 1 - t;
+  var inverseTSq = inverseT * inverseT;
+  return from * inverseT * inverseTSq + 3 * cp * t * inverseTSq +
+         3 * cp2 * inverseT * tSq + to * t * tSq;
+}
+
+function cubicBezierExtremes(from, cp, cp2, to) {
+  var d1 = cp - from;
+  var d2 = cp2 - cp;
+  // We only ever need d2 * 2
+  d2 *= 2;
+  var d3 = to - cp2;
+  // Prevent division by zero by very slightly changing d3 if that would happen
+  if (d1 + d3 === d2) {
+    d3 *= 1.0001;
+  }
+  var fHead = 2 * d1 - d2;
+  var part1 = d2 - 2 * d1;
+  var fCenter = Math.sqrt(part1 * part1 - 4 * d1 * (d1 - d2 + d3));
+  var fTail = 2 * (d1 - d2 + d3);
+  var t1 = (fHead + fCenter) / fTail;
+  var t2 = (fHead - fCenter ) / fTail;
+  var result = [];
+  if (t1 >= 0 && t1 <= 1) {
+    result.push(cubicBezier(from, cp, cp2, to, t1));
+  }
+  if (t2 >= 0 && t2 <= 1) {
+    result.push(cubicBezier(from, cp, cp2, to, t2));
+  }
+  return result;
+}
+
+function cubicXAtY(x0, y0, cx, cy, cx1, cy1, x1, y1, y) {
+  var dX = 3.0 * (cx - x0);
+  var dY = 3.0 * (cy - y0);
+
+  var bX = 3.0 * (cx1 - cx) - dX;
+  var bY = 3.0 * (cy1 - cy) - dY;
+
+  var c3X = x1 - x0 - dX - bX;
+  var c3Y = y1 - y0 - dY - bY;
+  // Find one root - any root - then factor out (t-r) to get a quadratic poly.
+  function f(t) {
+    return t * (dY + t * (bY + t * c3Y)) + y0 - y;
+  }
+  function pointAt(t)
+  {
+    if (t < 0) {
+      t = 0;
+    } else if (t > 1) {
+      t = 1;
+    }
+
+    return x0 + t * (dX + t * (bX + t * c3X));
+  }
+  // Bisect the specified range to isolate an interval with a root.
+  function bisectCubicBezierRange(f, l, r, limit) {
+    if (Math.abs(r - l) <= limit) {
+      return;
+    }
+
+    var middle = 0.5 * (l + r);
+    if (f(l) * f(r) <= 0) {
+      left = l;
+      right = r;
+      return;
+    }
+    bisectCubicBezierRange(f, l, middle, limit);
+    bisectCubicBezierRange(f, middle, r, limit);
+  }
+
+  // some curves that loop around on themselves may require bisection
+  var left = 0;
+  var right = 1;
+  bisectCubicBezierRange(f, 0, 1, 0.05);
+
+  // experiment with tolerance - but not too tight :)
+  var t0 = findRoot(left, right, f, 50, 0.000001);
+  var evalResult = Math.abs(f(t0));
+  if (evalResult > 0.00001) {
+    return [];
+  }
+
+  var result = [];
+  if (t0 <= 1) {
+    result.push(pointAt(t0));
+  }
+
+  // Factor theorem: t-r is a factor of the cubic polynomial if r is a root.
+  // Use this to reduce to a quadratic poly. using synthetic division
+  var a = c3Y;
+  var b = t0 * a + bY;
+  var c = t0 * b + dY;
+
+  // Process the quadratic for the remaining two possible roots
+  var d = b * b - 4 * a * c;
+  if (d < 0) {
+    return result;
+  }
+
+  d = Math.sqrt(d);
+  a = 1 / (a + a);
+  var t1 = (d - b) * a;
+  var t2 = (-b - d) * a;
+
+  if (t1 >= 0 && t1 <= 1) {
+    result.push(pointAt(t1));
+  }
+
+  if (t2 >= 0 && t2 <= 1) {
+    result.push(pointAt(t2));
+  }
+
+  return result;
+}
+function findRoot(x0, x2, f, maxIterations, epsilon) {
+  var x1;
+  var y0;
+  var y1;
+  var y2;
+  var b;
+  var c;
+  var y10;
+  var y20;
+  var y21;
+  var xm;
+  var ym;
+  var temp;
+
+  var xmlast = x0;
+  y0 = f(x0);
+
+  if (y0 === 0) {
+    return x0;
+  }
+
+  y2 = f(x2);
+  if (y2 === 0) {
+    return x2;
+  }
+
+  if (y2 * y0 > 0) {
+//    dispatchEvent( new Event(ERROR) );
+    return x0;
+  }
+
+  var __iter = 0;
+  for (var i = 0; i < maxIterations; ++i) {
+    __iter++;
+
+    x1 = 0.5 * (x2 + x0);
+    y1 = f(x1);
+    if (y1 === 0) {
+      return x1;
+    }
+
+    if (Math.abs(x1 - x0) < epsilon) {
+      return x1;
+    }
+
+    if (y1 * y0 > 0) {
+      temp = x0;
+      x0 = x2;
+      x2 = temp;
+      temp = y0;
+      y0 = y2;
+      y2 = temp;
+    }
+
+    y10 = y1 - y0;
+    y21 = y2 - y1;
+    y20 = y2 - y0;
+    if (y2 * y20 < 2 * y1 * y10) {
+      x2 = x1;
+      y2 = y1;
+    }
+    else {
+      b = (x1 - x0 ) / y10;
+      c = (y10 - y21) / (y21 * y20);
+      xm = x0 - b * y0 * (1 - c * y1);
+      ym = f(xm);
+      if (ym === 0) {
+        return xm;
+      }
+
+      if (Math.abs(xm - xmlast) < epsilon) {
+        return xm;
+      }
+
+      xmlast = xm;
+      if (ym * y0 < 0) {
+        x2 = xm;
+        y2 = ym;
+      }
+      else {
+        x0 = xm;
+        y0 = ym;
+        x2 = x1;
+        y2 = y1;
+      }
+    }
+  }
+  return x1;
+}
+
+function extendBoundsByPoint(bounds, x, y) {
+  if (x < bounds.xMin) {
+    bounds.xMin = x;
+  } else if (x > bounds.xMax) {
+    bounds.xMax = x;
+  }
+  if (y < bounds.yMin) {
+    bounds.yMin = y;
+  } else if (y > bounds.yMax) {
+    bounds.yMax = y;
+  }
+}
+
+function extendBoundsByX(bounds, x) {
+  if (x < bounds.xMin) {
+    bounds.xMin = x;
+  } else if (x > bounds.xMax) {
+    bounds.xMax = x;
+  }
+}
+
+function extendBoundsByY(bounds, y) {
+  if (y < bounds.yMin) {
+    bounds.yMin = y;
+  } else if (y > bounds.yMax) {
+    bounds.yMax = y;
+  }
+}
+/**
+ * For shapes parsed in a worker thread, we have to finish their
+ * initialization after receiving the data in the main thread.
+ *
+ * This entails creating proper instances for all the contained data types.
+ */
+function finishShapePaths(paths, dictionary) {
+  assert(window);
+
+  for (var i = 0; i < paths.length; i++) {
+    var path = paths[i];
+    if (path.fullyInitialized) {
+      continue;
+    }
+    if (!(path instanceof (ShapePath))) {
+      var untypedPath = path;
+      path = paths[i] = new ShapePath(path.fillStyle, path.lineStyle, 0, 0,
+                                      path.isMorph);
+      path.commands = untypedPath.commands;
+      path.data = untypedPath.data;
+      path.morphData = untypedPath.morphData;
+    }
+    path.fillStyle && initStyle(path.fillStyle, dictionary);
+    path.lineStyle && initStyle(path.lineStyle, dictionary);
+    path.fullyInitialized = true;
+  }
+}
+
+var inWorker = (typeof window) === 'undefined';
+// Used for creating gradients and patterns
+var factoryCtx = !inWorker ?
+                 document.createElement('canvas').getContext('kanvas-2d') :
+                 null;
+
+function initStyle(style, dictionary) {
+  if (style.type === undefined) {
+    return;
+  }
+  switch (style.type) {
+    case GRAPHICS_FILL_SOLID:
+      // Solid fill styles are fully processed in shape.js's processStyle
+      break;
+    case GRAPHICS_FILL_LINEAR_GRADIENT:
+    case GRAPHICS_FILL_RADIAL_GRADIENT:
+    case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
+      var isLinear = style.type === GRAPHICS_FILL_LINEAR_GRADIENT;
+      var gradient;
+      if (isLinear) {
+        gradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
+      } else {
+        gradient = factoryCtx.createRadialGradient(style.focalPoint || 0,
+                                                   0, 0, 0, 0, 1);
+      }
+      var records = style.records;
+      for (var j = 0, n = records.length; j < n; j++) {
+        var record = records[j];
+        var colorStr = rgbaObjToStr(record.color);
+        gradient.addColorStop(record.ratio / 255, colorStr);
+      }
+      style.style = gradient;
+      break;
+    case GRAPHICS_FILL_REPEATING_BITMAP:
+    case GRAPHICS_FILL_CLIPPED_BITMAP:
+    case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
+    case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
+      var bitmap = dictionary[style.bitmapId];
+      style.style = factoryCtx.createPattern(bitmap.value.props.img,
+                                             style.repeat ? "repeat"
+                                                 : "no-repeat");
+      break;
+    default:
+      fail('invalid fill style', 'shape');
+  }
 }
