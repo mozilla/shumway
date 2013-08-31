@@ -655,6 +655,10 @@ var createName = function createName(namespaces, name) {
 //              if (coercer) {
 //                return coercer(args[0]);
 //              }
+              var coercer = getCoercerForType(ti.trait.name);
+              if (coercer) {
+                return coercer(args[0]);
+              }
               var qn = Multiname.getQualifiedName(ti.trait.name);
               return store(new IR.CallProperty(region, state.store, object, constant(qn), args, false));
             }
