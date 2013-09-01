@@ -223,6 +223,7 @@ function showMessage(msg) {
   document.getElementById('message').textContent = "(" + msg + ")";
 }
 
+var inspectorSWFLoader;
 function executeFile(file, buffer, movieParams) {
   // All execution paths must now load AVM2.
   if (!state.appCompiler) {
@@ -251,9 +252,9 @@ function executeFile(file, buffer, movieParams) {
       function runSWF(file, buffer) {
         var swfURL = FileLoadingService.resolveUrl(file);
         var loaderURL = getQueryVariable("loaderURL") || swfURL;
-        SWF.embed(buffer || file, document, document.getElementById('stage'), {
+        inspectorSWFLoader = SWF.embed(buffer || file, document, document.getElementById('stage'), {
           onComplete: terminate,
-          onBeforeFrame: frame,
+          onBeforeFrame: beforeFrame,
           onAfterFrame: afterFrame,
           url: swfURL,
           loaderURL: loaderURL,
@@ -311,24 +312,35 @@ function executeFile(file, buffer, movieParams) {
   }
 }
 
-function terminate() {}
-
 var initializeFrameControl = true;
 var pauseExecution = getQueryVariable("paused") === "true";
-function frame(e) {
+var isPaused = false;
+
+function terminate() {
+}
+function beforeFrame(e) {
   if (initializeFrameControl) {
     // skipping frame 0
     initializeFrameControl = false;
+    initUI();
     return;
   }
   if (pauseExecution) {
     e.cancel = true;
+    paused();
   }
+  isPaused = e.cancel;
   stats.begin();
 }
 function afterFrame() {
   stats.end();
 }
+
+document.addEventListener("keydown", function (event) {
+  if ((event.keyCode == 119 || event.keyCode == 80) && event.ctrlKey) { // Ctrl+F8 or Ctrl-p
+    pauseExecution = !pauseExecution;
+  }
+});
 
 (function setStageSize() {
   var stageSize = getQueryVariable("size");
@@ -389,3 +401,110 @@ var FileLoadingService = {
     return base + url;
   }
 };
+
+// toggle button states in button bars
+Array.prototype.forEach.call(document.querySelectorAll(".toolbarButtonBar > .toolbarButton"), function (element) {
+  element.addEventListener("click", function (event) {
+    Array.prototype.forEach.call(event.target.parentElement.children, function (button) {
+      if (button == event.target) {
+        button.classList.add("pressedState");
+      } else {
+        button.classList.remove("pressedState");
+      }
+    });
+  });
+});
+
+// toggle info panels (debug info, display list)
+var showDisplayList = false;
+var panelToggleButtonSelector = "#debugInfoToolbar > .toolbarButtonBar > .toolbarButton";
+function panelToggleButtonClickHandler(event) {
+  Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
+    var panelId = element.dataset.panelid;
+    var panel = document.getElementById(panelId);
+    if (event.target == element) {
+      panel.classList.add("active");
+    } else {
+      panel.classList.remove("active");
+    }
+  });
+  if (event.target.dataset.panelid == "displayListContainer") {
+    if (isPaused) {
+      initDisplayListTree();
+    }
+    showDisplayList = true;
+    pauseExecution = true;
+  } else {
+    showDisplayList = false;
+    pauseExecution = false;
+  }
+}
+Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
+  element.addEventListener("click", panelToggleButtonClickHandler);
+});
+
+function initUI() {
+  document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
+}
+
+function paused() {
+  if (!isPaused && showDisplayList) {
+    initDisplayListTree();
+  }
+}
+
+function initDisplayListTree() {
+  var displayList = new DisplayListTree(inspectorSWFLoader._stage);
+  displayList.updateDom(document.getElementById("displayListContainer"));
+}
+
+var DisplayListTree = (function() {
+
+  function processChildren(parent) {
+    var children = parent.displayObject._children;
+    for (var i = 0, n = children.length; i < n; i++) {
+      var child = children[i];
+      if (child) {
+        var item = { displayObject: child, children: [] };
+        var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child) ||
+                          flash.display.SimpleButton.class.isInstanceOf(child);
+        if (isContainer) {
+          processChildren(item);
+        }
+        parent.children.push(item);
+      }
+    }
+  }
+
+  var ctor = function(root) {
+    this.root = { displayObject: root, children: [] };
+    processChildren(this.root);
+  }
+
+  ctor.prototype = {
+
+    updateDom: function updateDom(elRoot) {
+      function updateChildren(elContainer, item) {
+        var li = document.createElement("li");
+        var span = document.createElement("span");
+        span.textContent = item.displayObject.class.className;
+        li.appendChild(span);
+        elContainer.appendChild(li);
+        if (item.children.length > 0) {
+          var ul = document.createElement("ul");
+          for (var i = 0, n = item.children.length; i < n; i++) {
+            updateChildren(ul, item.children[i]);
+          }
+          li.appendChild(ul);
+        }
+      }
+      elRoot.innerHTML = '<ul id="displayListRoot"></ul>';
+      updateChildren(document.getElementById("displayListRoot"), this.root);
+    }
+
+  };
+
+  return ctor;
+
+})();
+

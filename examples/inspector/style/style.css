@@ -67,13 +67,17 @@ body.simple #xstats {
 }
 
 #debugInfoToolbar > .toolbarButtonBar {
+  display: none;
   font-size: 0;
 }
+#debugInfoToolbar > .toolbarButtonBar.active {
+  display: inline-block;
+}
 
-#debugInfoContainer.active, #displayListTreeContainer.active {
+#debugInfoContainer.active, #displayListContainer.active {
   display: block;
 }
-#debugInfoContainer, #displayListTreeContainer {
+#debugInfoContainer, #displayListContainer {
   display: none;
   position: absolute;
   top: 32px;
@@ -91,6 +95,26 @@ body.simple #xstats {
 #debugInfoContainer > canvas {
   padding-bottom: 4px;
   border-bottom: 1px solid #666;
+}
+
+#displayListContainer {
+  color: #ccc;
+  font: 11px Consolas, "Liberation Mono", Courier, monospace;
+}
+#displayListContainer ul {
+  padding: 0 0 0 14px;
+  margin: 0;
+}
+#displayListContainer > ul {
+  padding: 0;
+  margin: 4px 6px;
+}
+#displayListContainer li {
+  list-style: none;
+}
+#displayListContainer li > span {
+  display: inline-block;
+  padding: 2px 0;
 }
 
 #stageContainer {
