@@ -16,84 +16,13 @@
  * limitations under the License.
  */
 
-var BinaryFileReader = (function binaryFileReader() {
-  function constructor(url, method, mimeType, data) {
-    this.url = url;
-    this.method = method;
-    this.mimeType = mimeType;
-    this.data = data;
-  }
-
-  constructor.prototype = {
-    readAll: function(progress, complete) {
-      var url = this.url;
-      var xhr = new XMLHttpRequest({mozSystem:true});
-      var async = true;
-      xhr.open(this.method || "GET", this.url, async);
-      xhr.responseType = "arraybuffer";
-      if (progress) {
-        xhr.onprogress = function(event) {
-          progress(xhr.response, event.loaded, event.total);
-        };
-      }
-      xhr.onreadystatechange = function(event) {
-        if (xhr.readyState === 4) {
-          if (xhr.status !== 200 && xhr.status !== 0) {
-            unexpected("Path: " + url + " not found.");
-            complete(null, xhr.statusText);
-            return;
-          }
-          complete(xhr.response);
-        }
-      }
-      if (this.mimeType)
-        xhr.setRequestHeader("Content-Type", this.mimeType);
-      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
-      xhr.send(this.data || null);
-    },
-    readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
-      var xhr = new XMLHttpRequest({mozSystem:true});
-      var url = this.url;
-      xhr.open(this.method || "GET", url, true);
-      xhr.responseType = 'moz-chunked-arraybuffer';
-      var isNotProgressive = xhr.responseType !== 'moz-chunked-arraybuffer';
-      if (isNotProgressive) {
-        xhr.responseType = 'arraybuffer';
-      }
-      xhr.onprogress = function (e) {
-        if (isNotProgressive) return;
-        ondata(new Uint8Array(xhr.response), { loaded: e.loaded, total: e.total });
-      };
-      xhr.onreadystatechange = function(event) {
-        if(xhr.readyState === 2 && onhttpstatus) {
-          onhttpstatus(url, xhr.status, xhr.getAllResponseHeaders());
-        }
-        if (xhr.readyState === 4) {
-          if (xhr.status !== 200 && xhr.status !== 0) {
-            onerror(xhr.statusText);
-          }
-          if (isNotProgressive) {
-            var buffer = xhr.response;
-            ondata(new Uint8Array(buffer), { loaded: 0, total: buffer.byteLength });
-          }
-          if (oncomplete) {
-            oncomplete();
-          }
-        }
-      }
-      if (this.mimeType)
-        xhr.setRequestHeader("Content-Type", this.mimeType);
-      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
-      xhr.send(this.data || null);
-      if (onopen)
-        onopen();
-    }
-  };
-  return constructor;
-})();
-
 var asyncLoading = getQueryVariable("async") === "true";
-var libraryAbcs
+var simpleMode = getQueryVariable("simpleMode") === "true";
+var pauseExecution = getQueryVariable("paused") === "true";
+var remoteFile = getQueryVariable("rfile");
+var yt = getQueryVariable('yt');
+
+var libraryAbcs;
 function grabAbc(abcName) {
   var entry = libraryScripts[abcName];
   if (entry) {
@@ -161,7 +90,6 @@ function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) 
 }
 
 var avm2Root = "../../src/avm2/";
-var remoteFile = getQueryVariable("rfile");
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var shellAbcPath = avm2Root + "generated/shell/shell.abc";
 var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
@@ -194,7 +122,6 @@ if (remoteFile) {
   executeFile(remoteFile, null, parseQueryString(window.location.search));
 }
 
-var yt = getQueryVariable('yt');
 if (yt) {
   var xhr = new XMLHttpRequest({mozSystem: true});
   xhr.open('GET', 'http://www.youtube.com/watch?v=' + yt, true);
@@ -214,7 +141,6 @@ if (yt) {
   xhr.send(null);
 }
 
-var simpleMode = getQueryVariable("simpleMode") === "true";
 if (simpleMode) {
   document.body.setAttribute('class', 'simple');
 }
@@ -313,7 +239,6 @@ function executeFile(file, buffer, movieParams) {
 }
 
 var initializeFrameControl = true;
-var pauseExecution = getQueryVariable("paused") === "true";
 var isPaused = false;
 
 function terminate() {
@@ -327,7 +252,9 @@ function beforeFrame(e) {
   }
   if (pauseExecution) {
     e.cancel = true;
-    paused();
+    if (!isPaused) {
+      paused();
+    }
   }
   isPaused = e.cancel;
   stats.begin();
@@ -448,7 +375,7 @@ function initUI() {
 }
 
 function paused() {
-  if (!isPaused && showDisplayList) {
+  if (showDisplayList) {
     initDisplayListTree();
   }
 }
@@ -457,54 +384,3 @@ function initDisplayListTree() {
   var displayList = new DisplayListTree(inspectorSWFLoader._stage);
   displayList.updateDom(document.getElementById("displayListContainer"));
 }
-
-var DisplayListTree = (function() {
-
-  function processChildren(parent) {
-    var children = parent.displayObject._children;
-    for (var i = 0, n = children.length; i < n; i++) {
-      var child = children[i];
-      if (child) {
-        var item = { displayObject: child, children: [] };
-        var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child) ||
-                          flash.display.SimpleButton.class.isInstanceOf(child);
-        if (isContainer) {
-          processChildren(item);
-        }
-        parent.children.push(item);
-      }
-    }
-  }
-
-  var ctor = function(root) {
-    this.root = { displayObject: root, children: [] };
-    processChildren(this.root);
-  }
-
-  ctor.prototype = {
-
-    updateDom: function updateDom(elRoot) {
-      function updateChildren(elContainer, item) {
-        var li = document.createElement("li");
-        var span = document.createElement("span");
-        span.textContent = item.displayObject.class.className;
-        li.appendChild(span);
-        elContainer.appendChild(li);
-        if (item.children.length > 0) {
-          var ul = document.createElement("ul");
-          for (var i = 0, n = item.children.length; i < n; i++) {
-            updateChildren(ul, item.children[i]);
-          }
-          li.appendChild(ul);
-        }
-      }
-      elRoot.innerHTML = '<ul id="displayListRoot"></ul>';
-      updateChildren(document.getElementById("displayListRoot"), this.root);
-    }
-
-  };
-
-  return ctor;
-
-})();
-
