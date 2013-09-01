@@ -292,6 +292,10 @@ var createName = function createName(namespaces, name) {
     return new Call(null, null, callee, object, args, true);
   }
 
+  function callGlobalProperty(name, value) {
+    return callPure(globalProperty(name), null, [value]);
+  }
+
   function convertString(value) {
     if (isStringConstant(value)) {
       return value;
@@ -299,26 +303,33 @@ var createName = function createName(namespaces, name) {
     return callPure(globalProperty("String"), null, [value]);
   }
 
-  function coerceString(value) {
-    return callPure(globalProperty("asCoerceString"), null, [value]);
-  }
-
-  function coerceObject(value) {
-    return callPure(globalProperty("asCoerceObject"), null, [value]);
-  }
+  var coerceString = callGlobalProperty.bind(null, "asCoerceString");
+  var coerceObject = callGlobalProperty.bind(null, "asCoerceObject");
 
   var coercers = createEmptyObject();
-
   coercers[Multiname.Int] = coerceInt;
   coercers[Multiname.Uint] = coerceUint;
   coercers[Multiname.Number] = coerceNumber;
-  coercers[Multiname.Boolean] = coerceBoolean;
   coercers[Multiname.String] = coerceString;
   coercers[Multiname.Object] = coerceObject;
+  coercers[Multiname.Boolean] = coerceBoolean;
 
   function getCoercerForType(multiname) {
     assert (multiname instanceof Multiname);
     return coercers[Multiname.getQualifiedName(multiname)];
+  }
+
+  var callableConstructors = createEmptyObject();
+  callableConstructors[Multiname.Int] = coerceInt;
+  callableConstructors[Multiname.Uint] = coerceUint;
+  callableConstructors[Multiname.Number] = callGlobalProperty.bind(null, "Number");
+  callableConstructors[Multiname.String] = callGlobalProperty.bind(null, "String");
+  callableConstructors[Multiname.Object] = callGlobalProperty.bind(null, "Object");
+  callableConstructors[Multiname.Boolean] = callGlobalProperty.bind(null, "Boolean");
+
+  function getCallableConstructorForType(multiname) {
+    assert (multiname instanceof Multiname);
+    return callableConstructors[Multiname.getQualifiedName(multiname)];
   }
 
   var Builder = (function () {
@@ -385,7 +396,7 @@ var createName = function createName(namespaces, name) {
           var coercer = getCoercerForType(parameter.type);
           if (coercer) {
             local = coercer(local);
-          } else if (COERCE_PARAMETERS) {
+          } else if (c4CoerceParameters) {
             local = new Call(start, state.store, globalProperty("asCoerceByMultiname"), null, [constant(this.abc.domain), constant(parameter.type), local], true);
           }
         }
@@ -605,7 +616,7 @@ var createName = function createName(namespaces, name) {
               return coercer(value);
             }
           }
-          if (COERCE) {
+          if (c4Coerce) {
             return call(globalProperty("asCoerceByMultiname"), null, [domain, constant(multiname), value]);
           }
           return value;
@@ -651,9 +662,9 @@ var createName = function createName(namespaces, name) {
               openQn = VM_OPEN_METHOD_PREFIX + openQn;
               return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, true));
             } else if (ti.trait.isClass()) {
-              var coercer = getCoercerForType(ti.trait.name);
-              if (coercer) {
-                return coercer(args[0]);
+              var constructor = getCallableConstructorForType(ti.trait.name);
+              if (constructor) {
+                return constructor(args[0]);
               }
               var qn = Multiname.getQualifiedName(ti.trait.name);
               return store(new IR.CallProperty(region, state.store, object, constant(qn), args, false));
@@ -1052,8 +1063,10 @@ var createName = function createName(namespaces, name) {
               break;
             case OP_astypelate:
               type = pop();
-              value = pop();
-              push(call(globalProperty("asAsType"), null, [type, value]));
+              if (c4AsTypeLate) {
+                value = pop();
+                push(call(globalProperty("asAsType"), null, [type, value]));
+              }
               break;
             case OP_returnvalue:
             case OP_returnvoid:

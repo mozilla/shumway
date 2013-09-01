@@ -1766,7 +1766,9 @@ function createClass(classInfo, baseClass, scope) {
   createFunction(classInfo.init, scope).call(cls);
 
   // Seal constant traits in the class object.
-  this.sealConstantTraits(cls, ci.traits);
+  if (sealConstTraits) {
+    this.sealConstantTraits(cls, ci.traits);
+  }
 
   return cls;
 }

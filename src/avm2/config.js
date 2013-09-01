@@ -20,6 +20,11 @@ var debug = true;
 var $DEBUG;
 var release = false;
 var compatibility = true;
+var sealConstTraits = false;
 
-var COERCE_PARAMETERS = true;
-var COERCE = true;
+/**
+ * Compiler Settings
+ */
+var c4CoerceParameters = false;
+var c4Coerce = false;
+var c4AsTypeLate = true;
