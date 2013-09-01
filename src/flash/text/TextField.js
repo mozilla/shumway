@@ -489,7 +489,7 @@ var TextFieldDefinition = (function () {
 
       var s = this.symbol;
       if (!s) {
-        this._bbox = {top: -2, right: 102, bottom: 22, left: -2};
+        this._bbox = {xMin: -2, yMin: -2, xMax: 102, yMax: 22};
         this.text = '';
         return;
       }
