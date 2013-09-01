@@ -24,13 +24,13 @@ var BitmapDefinition = (function () {
     if (value) {
       var canvas = value._drawable;
       this._bbox = {
-        left: 0,
-        top: 0,
-        right: canvas.width,
-        bottom: canvas.height
+        xMin: 0,
+        yMin: 0,
+        xMax: canvas.width,
+        yMax: canvas.height
       };
     } else {
-      this._bbox = { left: 0, top: 0, right: 0, bottom: 0 };
+      this._bbox = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
     }
     this._invalidate();
   }
