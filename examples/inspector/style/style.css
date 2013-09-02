@@ -99,37 +99,61 @@ body.simple #xstats {
 
 #displayListContainer {
   color: #ccc;
-  font: 11px Consolas, "Liberation Mono", Courier, monospace;
+  font: 10px Consolas, "Liberation Mono", Courier, monospace;
   cursor: default;
 }
-#displayListContainer ul {
+#displayList {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  overflow-y: auto;
+}
+#displayList ul {
   padding: 0 0 0 10px;
   margin: 0;
 }
-#displayListContainer > ul {
+#displayList > ul {
   padding: 0;
   margin: 4px 6px;
 }
-#displayListContainer li {
+#displayList li {
   list-style: none;
 }
-#displayListContainer li > div {
+#displayList li > div {
   display: block;
   padding: 3px 0 1px 4px;
 }
-#displayListContainer li > div:hover {
+#displayList li > div:hover {
   background-color: rgba(255,255,255, 0.1);
 }
-#displayListContainer li > div.selected {
+#displayList li > div.selected {
   background-color: rgba(255,255,255, 0.2);
 }
-#displayListContainer li > div.selected:hover {
+#displayList li > div.selected:hover {
   background-color: rgba(255,255,255, 0.3);
 }
-#displayListContainer li > div > span {
+#displayList li > div > span {
   padding-right: 4px;
   float: right;
   color: #f88;
+}
+#displayObjectProperties {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100px;
+  border-top: 1px solid #666;
+  padding: 6px 8px;
+}
+#displayListContainer.hasProperties > #displayList {
+  bottom: 113px;
+}
+#displayListContainer.hasProperties > #displayObjectProperties {
+  display: block;
 }
 
 #stageContainer {
