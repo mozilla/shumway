@@ -14,15 +14,21 @@ var console_info = console.info;
 var console_warn = console.warn;
 
 console.log = function (str) {
-  console_log.apply(console, arguments);
+  if (state.logToConsole) {
+    console_log.apply(console, arguments);
+  }
   appendToTraceTerminal([].join.call(arguments, " "));
 };
 console.info = function (str) {
-  console_info.apply(console, arguments);
+  if (state.logToConsole) {
+    console_info.apply(console, arguments);
+  }
   appendToTraceTerminal([].join.call(arguments, " "), "#666600");
 };
 console.warn = function (str) {
-  console_warn.apply(console, arguments);
+  if (state.logToConsole) {
+    console_warn.apply(console, arguments);
+  }
   appendToTraceTerminal([].join.call(arguments, " "), "#FF6700");
 };
 

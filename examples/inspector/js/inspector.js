@@ -355,15 +355,20 @@ function panelToggleButtonClickHandler(event) {
       panel.classList.remove("active");
     }
   });
-  if (event.target.dataset.panelid == "displayListContainer") {
-    if (isPaused) {
-      initDisplayListTree();
-    }
-    showDisplayList = true;
-    pauseExecution = true;
-  } else {
-    showDisplayList = false;
-    pauseExecution = false;
+  switch (event.target.dataset.panelid) {
+    case "displayListContainer":
+      if (isPaused) {
+        initDisplayListTree();
+      }
+      showDisplayList = true;
+      pauseExecution = true;
+      document.getElementById("ctrlLogToConsole").classList.remove("active");
+      break;
+    default:
+      showDisplayList = false;
+      pauseExecution = false;
+      document.getElementById("ctrlLogToConsole").classList.add("active");
+      break;
   }
 }
 Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
@@ -372,6 +377,7 @@ Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector
 
 function initUI() {
   document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
+  document.getElementById("ctrlLogToConsole").classList.add("active");
 }
 
 function paused() {
