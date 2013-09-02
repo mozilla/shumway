@@ -161,7 +161,7 @@ body.simple #xstats {
   top: 36px;
   bottom: 36px;
   left: 4px;
-  right: 604px;
+  right: 504px;
   overflow: auto;
   display: -webkit-box;
   display: -moz-box;
@@ -206,4 +206,15 @@ body.simple #xstats {
   body {
     background-color: #1a2633;
   }
+}
+
+@media only screen and (max-width: 1024px) {
+  #stageContainer { right: 354px; }
+  #topToolbar, #xstats { right: 350px; }
+  #debugInfoToolbar, #debugInfoContainer, #displayListContainer { width: 350px; }
+}
+
+@media only screen and (max-width: 768px) {
+  #stageContainer, #topToolbar, #xstats { right: 0; }
+  #debugInfoToolbar, #debugInfoContainer, #displayListContainer { display: none !important; }
 }
