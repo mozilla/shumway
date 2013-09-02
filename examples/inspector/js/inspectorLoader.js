@@ -94,51 +94,9 @@ document.body.addEventListener("drop", function(event) {
 document.getElementById("files").addEventListener("change", function(event) {
   var file = event.target.files[0];
   readFile(file);
+  document.getElementById('openFile').setAttribute('hidden', true);
 });
 
 document.getElementById("openFile").addEventListener("click", function () {
   document.getElementById("files").click();
-});
-
-Array.prototype.forEach.call(document.querySelectorAll(".closeButton"), function (element) {
-  element.addEventListener("click", function (event) {
-    event.target.parentElement.setAttribute('hidden', true);
-  });
-});
-
-document.addEventListener("keydown", function (event) {
-  if (event.keyCode == 119 && event.ctrlKey) { // Ctrl+F8
-    pauseExecution = !pauseExecution;
-  }
-});
-
-var traceTerminal = new Terminal(document.getElementById("traceTerminal")); traceTerminal.refreshEvery(100);
-
-function appendToTraceTerminal(str, color) {
-  var scroll = traceTerminal.isScrolledToBottom();
-  traceTerminal.buffer.append(str, color);
-  if (scroll) {
-    traceTerminal.gotoLine(traceTerminal.buffer.length - 1);
-    traceTerminal.scrollIntoView();
-  }
-}
-
-console.info = console.log = appendToTraceTerminal;
-console.warn = function (str) {
-  appendToTraceTerminal(str, "#FF6700");
-};
-
-var frameTerminal = new Terminal(document.getElementById("frameTerminal")); frameTerminal.refreshEvery(100);
-
-function appendToFrameTerminal(str, color) {
-  var scroll = frameTerminal.isScrolledToBottom();
-  frameTerminal.buffer.append(str, color);
-  if (scroll) {
-    frameTerminal.gotoLine(frameTerminal.buffer.length - 1);
-    frameTerminal.scrollIntoView();
-  }
-}
-
-var frameWriter = new IndentingWriter(false, function (str){
-  appendToFrameTerminal(str);
 });

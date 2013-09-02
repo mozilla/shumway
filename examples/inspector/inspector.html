@@ -32,40 +32,45 @@ limitations under the License.
     <div id="xstats"></div>
 
     <div id="topToolbar" class="toolbarBox withEmphasis">
-      <div class="toolbarLabel " style="width: 300px; text-align: left;">Shumway Inspector <span id="message"></span></div>
+      <div class="toolbarLabel">Shumway Inspector <span id="message"></span></div>
     </div>
 
     <div id="debugInfoToolbar" class="toolbarBox withEmphasis">
-      <!--<div class="toolbarButton" style="width: 60px">Panel 1</div>
-      <div class="toolbarButton" pressedState style="width: 60px">Panel 2</div>
-      <div class="toolbarButton pressedState" style="width: 60px">Panel 3</div>
-      <div class="toolbarButton pressedState" style="width: 60px">Panel 4</div>-->
+      <div class="toolbarButtonBar">
+        <div id="showDebugInfo" class="toolbarButton pressedState" data-panelid="debugInfoContainer">Debug Info</div>
+        <div id="showDisplayList" class="toolbarButton" data-panelid="displayListContainer">Display List</div>
+      </div>
+      <div id="ctrlLogToConsole">
+        <label for="chkLogToConsole">Log to Browser Console</label>
+        <input id="chkLogToConsole" type="checkbox" />
+      </div>
       <div id="openFile" class="toolbarButton" title="Select SWF/ABC file (or drag'n'drop the file on the stage).">Open File</div>
     </div>
 
-    <div id="debugInfoContainer">
+    <div id="debugInfoContainer" class="active">
       <canvas id="traceTerminal" width="600" height="210" tabindex='2'></canvas>
       <canvas id="frameTerminal" width="600" height="210" tabindex='3'></canvas>
       <div id="info" class="debugPanel" tabindex='4'></div>
       <div id="timerInfo" class="debugPanel" tabindex='5'></div>
     </div>
+    <div id="displayListContainer">
+    </div>
 
     <div id="bottomToolbar" class="toolbarBox">
-      <!--<div class="closeButton"></div>-->
-      <div class="toolbarLabel" style="width: 100px; text-align: left;">AVM2 Options</div>
-      <div class="avm2Option toolbarButton" style="width: 40px" id="sysCompiler">Sys</div>
-      <div class="avm2Option toolbarButton" style="width: 40px" id="appCompiler">App</div>
-      <div class="avm2Option toolbarButton" style="width: 60px" id="verifier">Verifier</div>
-      <div class="avm2Option toolbarButton" style="width: 70px" id="allocator">Allocator</div>
-      <div class="avm2Option toolbarButton" style="width: 50px" id="trace">Trace</div>
-      <div class="avm2Option toolbarButton" style="width: 80px" id="traceCalls">Trace Calls</div>
-      <div class="avm2Option toolbarButton" style="width: 100px" id="traceRuntime">Trace Runtime</div>
-      <div class="avm2Option toolbarButton" style="width: 60px" id="release">Release</div>
-      <div class="avm2Option toolbarButton" style="width: 40px" id="pre">Pre</div>
-      <div class="avm2Option toolbarButton" style="width: 60px" id="render">Render</div>
-      <div class="avm2Option toolbarButton" style="width: 60px" id="mouse">Mouse</div>
-      <div class="avm2Option toolbarButton" style="width: 60px" id="redraw">Redraw</div>
-      <div class="toolbarButton" style="width: 60px" id="sample">Sample</div>
+      <div class="toolbarLabel">AVM2 Options</div>
+      <div class="avm2Option toolbarButton" id="sysCompiler">Sys</div>
+      <div class="avm2Option toolbarButton" id="appCompiler">App</div>
+      <div class="avm2Option toolbarButton" id="verifier">Verifier</div>
+      <div class="avm2Option toolbarButton" id="allocator">Allocator</div>
+      <div class="avm2Option toolbarButton" id="trace">Trace</div>
+      <div class="avm2Option toolbarButton" id="traceCalls">Trace Calls</div>
+      <div class="avm2Option toolbarButton" id="traceRuntime">Trace Runtime</div>
+      <div class="avm2Option toolbarButton" id="release">Release</div>
+      <div class="avm2Option toolbarButton" id="pre">Pre</div>
+      <div class="avm2Option toolbarButton" id="render">Render</div>
+      <div class="avm2Option toolbarButton" id="mouse">Mouse</div>
+      <div class="avm2Option toolbarButton" id="redraw">Redraw</div>
+      <div class="toolbarButton" id="sample">Sample</div>
     </div>
 
     <script>
@@ -302,10 +307,13 @@ limitations under the License.
 
     <input type="file" id="files" name="files[]" multiple style="visibility: hidden;" accept="application/x-shockwave-flash">
 
-    <script src="terminal.js"></script>
-    <script src="inspectorSettings.js"></script>
-    <script src="inspectorLoader.js"></script>
-    <script src="inspector.js"></script>
+    <script src="js/classes/BinaryFileReader.js"></script>
+    <script src="js/classes/DisplayListTree.js"></script>
+    <script src="js/classes/Terminal.js"></script>
+    <script src="js/inspectorSettings.js"></script>
+    <script src="js/inspectorLoader.js"></script>
+    <script src="js/inspectorLogging.js"></script>
+    <script src="js/inspector.js"></script>
 
     <script>
         SHUMWAY_ROOT = "../../src/";
