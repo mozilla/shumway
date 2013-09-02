@@ -499,7 +499,7 @@
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     var callee = property(object, name);
-    var args = this.arguments.map(function (arg) {
+    var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
     if (this.pristine) {
@@ -512,14 +512,14 @@
   IR.AVM2CallProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
-    var args = this.arguments.map(function (arg) {
+    var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
     return call(property(object, "asCallProperty"), name.concat([new Literal(this.isLex), new ArrayExpression(args)]));
   };
 
   IR.Call.prototype.compile = function (cx) {
-    var args = this.arguments.map(function (arg) {
+    var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
     var callee = compileValue(this.callee, cx);
@@ -539,7 +539,7 @@
   };
 
   IR.AVM2New.prototype.compile = function (cx) {
-    var args = this.arguments.map(function (arg) {
+    var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
     var callee = compileValue(this.callee, cx);
