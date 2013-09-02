@@ -16,84 +16,13 @@
  * limitations under the License.
  */
 
-var BinaryFileReader = (function binaryFileReader() {
-  function constructor(url, method, mimeType, data) {
-    this.url = url;
-    this.method = method;
-    this.mimeType = mimeType;
-    this.data = data;
-  }
-
-  constructor.prototype = {
-    readAll: function(progress, complete) {
-      var url = this.url;
-      var xhr = new XMLHttpRequest({mozSystem:true});
-      var async = true;
-      xhr.open(this.method || "GET", this.url, async);
-      xhr.responseType = "arraybuffer";
-      if (progress) {
-        xhr.onprogress = function(event) {
-          progress(xhr.response, event.loaded, event.total);
-        };
-      }
-      xhr.onreadystatechange = function(event) {
-        if (xhr.readyState === 4) {
-          if (xhr.status !== 200 && xhr.status !== 0) {
-            unexpected("Path: " + url + " not found.");
-            complete(null, xhr.statusText);
-            return;
-          }
-          complete(xhr.response);
-        }
-      }
-      if (this.mimeType)
-        xhr.setRequestHeader("Content-Type", this.mimeType);
-      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
-      xhr.send(this.data || null);
-    },
-    readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
-      var xhr = new XMLHttpRequest({mozSystem:true});
-      var url = this.url;
-      xhr.open(this.method || "GET", url, true);
-      xhr.responseType = 'moz-chunked-arraybuffer';
-      var isNotProgressive = xhr.responseType !== 'moz-chunked-arraybuffer';
-      if (isNotProgressive) {
-        xhr.responseType = 'arraybuffer';
-      }
-      xhr.onprogress = function (e) {
-        if (isNotProgressive) return;
-        ondata(new Uint8Array(xhr.response), { loaded: e.loaded, total: e.total });
-      };
-      xhr.onreadystatechange = function(event) {
-        if(xhr.readyState === 2 && onhttpstatus) {
-          onhttpstatus(url, xhr.status, xhr.getAllResponseHeaders());
-        }
-        if (xhr.readyState === 4) {
-          if (xhr.status !== 200 && xhr.status !== 0) {
-            onerror(xhr.statusText);
-          }
-          if (isNotProgressive) {
-            var buffer = xhr.response;
-            ondata(new Uint8Array(buffer), { loaded: 0, total: buffer.byteLength });
-          }
-          if (oncomplete) {
-            oncomplete();
-          }
-        }
-      }
-      if (this.mimeType)
-        xhr.setRequestHeader("Content-Type", this.mimeType);
-      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
-      xhr.send(this.data || null);
-      if (onopen)
-        onopen();
-    }
-  };
-  return constructor;
-})();
-
 var asyncLoading = getQueryVariable("async") === "true";
-var libraryAbcs
+var simpleMode = getQueryVariable("simpleMode") === "true";
+var pauseExecution = getQueryVariable("paused") === "true";
+var remoteFile = getQueryVariable("rfile");
+var yt = getQueryVariable('yt');
+
+var libraryAbcs;
 function grabAbc(abcName) {
   var entry = libraryScripts[abcName];
   if (entry) {
@@ -161,7 +90,6 @@ function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) 
 }
 
 var avm2Root = "../../src/avm2/";
-var remoteFile = getQueryVariable("rfile");
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var shellAbcPath = avm2Root + "generated/shell/shell.abc";
 var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
@@ -194,7 +122,6 @@ if (remoteFile) {
   executeFile(remoteFile, null, parseQueryString(window.location.search));
 }
 
-var yt = getQueryVariable('yt');
 if (yt) {
   var xhr = new XMLHttpRequest({mozSystem: true});
   xhr.open('GET', 'http://www.youtube.com/watch?v=' + yt, true);
@@ -214,7 +141,6 @@ if (yt) {
   xhr.send(null);
 }
 
-var simpleMode = getQueryVariable("simpleMode") === "true";
 if (simpleMode) {
   document.body.setAttribute('class', 'simple');
 }
@@ -223,6 +149,7 @@ function showMessage(msg) {
   document.getElementById('message').textContent = "(" + msg + ")";
 }
 
+var inspectorSWFLoader;
 function executeFile(file, buffer, movieParams) {
   // All execution paths must now load AVM2.
   if (!state.appCompiler) {
@@ -251,9 +178,9 @@ function executeFile(file, buffer, movieParams) {
       function runSWF(file, buffer) {
         var swfURL = FileLoadingService.resolveUrl(file);
         var loaderURL = getQueryVariable("loaderURL") || swfURL;
-        SWF.embed(buffer || file, document, document.getElementById('stage'), {
+        inspectorSWFLoader = SWF.embed(buffer || file, document, document.getElementById('stage'), {
           onComplete: terminate,
-          onBeforeFrame: frame,
+          onBeforeFrame: beforeFrame,
           onAfterFrame: afterFrame,
           url: swfURL,
           loaderURL: loaderURL,
@@ -311,24 +238,36 @@ function executeFile(file, buffer, movieParams) {
   }
 }
 
-function terminate() {}
-
 var initializeFrameControl = true;
-var pauseExecution = getQueryVariable("paused") === "true";
-function frame(e) {
+var isPaused = false;
+
+function terminate() {
+}
+function beforeFrame(e) {
   if (initializeFrameControl) {
     // skipping frame 0
     initializeFrameControl = false;
+    initUI();
     return;
   }
   if (pauseExecution) {
     e.cancel = true;
+    if (!isPaused) {
+      paused();
+    }
   }
+  isPaused = e.cancel;
   stats.begin();
 }
 function afterFrame() {
   stats.end();
 }
+
+document.addEventListener("keydown", function (event) {
+  if ((event.keyCode == 119 || event.keyCode == 80) && event.ctrlKey) { // Ctrl+F8 or Ctrl-p
+    pauseExecution = !pauseExecution;
+  }
+});
 
 (function setStageSize() {
   var stageSize = getQueryVariable("size");
@@ -389,3 +328,65 @@ var FileLoadingService = {
     return base + url;
   }
 };
+
+// toggle button states in button bars
+Array.prototype.forEach.call(document.querySelectorAll(".toolbarButtonBar > .toolbarButton"), function (element) {
+  element.addEventListener("click", function (event) {
+    Array.prototype.forEach.call(event.target.parentElement.children, function (button) {
+      if (button == event.target) {
+        button.classList.add("pressedState");
+      } else {
+        button.classList.remove("pressedState");
+      }
+    });
+  });
+});
+
+// toggle info panels (debug info, display list)
+var showDisplayList = false;
+var panelToggleButtonSelector = "#debugInfoToolbar > .toolbarButtonBar > .toolbarButton";
+function panelToggleButtonClickHandler(event) {
+  Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
+    var panelId = element.dataset.panelid;
+    var panel = document.getElementById(panelId);
+    if (event.target == element) {
+      panel.classList.add("active");
+    } else {
+      panel.classList.remove("active");
+    }
+  });
+  switch (event.target.dataset.panelid) {
+    case "displayListContainer":
+      if (isPaused) {
+        initDisplayListTree();
+      }
+      showDisplayList = true;
+      pauseExecution = true;
+      document.getElementById("ctrlLogToConsole").classList.remove("active");
+      break;
+    default:
+      showDisplayList = false;
+      pauseExecution = false;
+      document.getElementById("ctrlLogToConsole").classList.add("active");
+      break;
+  }
+}
+Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
+  element.addEventListener("click", panelToggleButtonClickHandler);
+});
+
+function initUI() {
+  document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
+  document.getElementById("ctrlLogToConsole").classList.add("active");
+}
+
+function paused() {
+  if (showDisplayList) {
+    initDisplayListTree();
+  }
+}
+
+function initDisplayListTree() {
+  var displayList = new DisplayListTree(inspectorSWFLoader._stage);
+  displayList.updateDom(document.getElementById("displayListContainer"));
+}

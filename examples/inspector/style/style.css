@@ -37,13 +37,14 @@ body.simple #xstats {
 
 #topToolbar {
   top: 0;
-  right: 600px;
+  right: 500px;
   left: 0;
 }
 #debugInfoToolbar {
   top: 0;
   right: 0;
-  width: 600px;
+  width: 500px;
+  padding-left: 0;
 }
 #bottomToolbar {
   bottom: 0;
@@ -65,15 +66,105 @@ body.simple #xstats {
   padding: 3px;
 }
 
-#debugInfoContainer {
+#debugInfoToolbar > .toolbarButtonBar {
+  display: none;
+  font-size: 0;
+}
+#debugInfoToolbar > .toolbarButtonBar.active {
+  display: inline-block;
+}
+
+#ctrlLogToConsole {
+  display: none;
+  float: right;
+  font: 12px Lucida Grande, sans-serif;
+  color: hsl(210,30%,85%);
+  padding-top: 3px;
+}
+#ctrlLogToConsole.active {
+  display: inline-block;
+}
+
+#debugInfoContainer.active, #displayListContainer.active {
+  display: block;
+}
+#debugInfoContainer, #displayListContainer {
+  display: none;
   position: absolute;
   top: 32px;
   bottom: 32px;
   right: 0;
-  width: 600px;
-  background-color: #333;
+  width: 500px;
   overflow-y: auto;
   overflow-x: hidden;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-left: 1px solid #666;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+#debugInfoContainer > canvas {
+  padding-bottom: 4px;
+  border-bottom: 1px solid #666;
+}
+
+#displayListContainer {
+  color: #ccc;
+  font: 10px Consolas, "Liberation Mono", Courier, monospace;
+  cursor: default;
+}
+#displayList {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  overflow-y: auto;
+}
+#displayList ul {
+  padding: 0 0 0 10px;
+  margin: 0;
+}
+#displayList > ul {
+  padding: 0;
+  margin: 4px 6px;
+}
+#displayList li {
+  list-style: none;
+}
+#displayList li > div {
+  display: block;
+  padding: 3px 0 1px 4px;
+}
+#displayList li > div:hover {
+  background-color: rgba(255,255,255, 0.1);
+}
+#displayList li > div.selected {
+  background-color: rgba(255,255,255, 0.2);
+}
+#displayList li > div.selected:hover {
+  background-color: rgba(255,255,255, 0.3);
+}
+#displayList li > div > span {
+  padding-right: 4px;
+  float: right;
+  color: #f88;
+}
+#displayObjectProperties {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100px;
+  border-top: 1px solid #666;
+  padding: 6px 8px;
+}
+#displayListContainer.hasProperties > #displayList {
+  bottom: 113px;
+}
+#displayListContainer.hasProperties > #displayObjectProperties {
+  display: block;
 }
 
 #stageContainer {
@@ -81,7 +172,7 @@ body.simple #xstats {
   top: 36px;
   bottom: 36px;
   left: 4px;
-  right: 604px;
+  right: 504px;
   overflow: auto;
   display: -webkit-box;
   display: -moz-box;
@@ -108,7 +199,7 @@ body.simple #xstats {
 #xstats {
   position: absolute;
   top: 32px;
-  right: 600px;
+  right: 500px;
   z-index: 1;
 }
 
@@ -126,4 +217,15 @@ body.simple #xstats {
   body {
     background-color: #1a2633;
   }
+}
+
+@media only screen and (max-width: 1024px) {
+  #stageContainer { right: 354px; }
+  #topToolbar, #xstats { right: 350px; }
+  #debugInfoToolbar, #debugInfoContainer, #displayListContainer { width: 350px; }
+}
+
+@media only screen and (max-width: 768px) {
+  #stageContainer, #topToolbar, #xstats { right: 0; }
+  #debugInfoToolbar, #debugInfoContainer, #displayListContainer { display: none !important; }
 }

@@ -28,7 +28,8 @@ var DEFAULT_SETTINGS = {
   render: true,
   mouse: true,
   redraw: false,
-  release: true
+  release: true,
+  logToConsole: false
 };
 
 function loadState() {
@@ -144,3 +145,11 @@ document.getElementById("sample").addEventListener("click", function () {
   triggerSampling(5);
 });
 
+(function() {
+  var chkLogToConsole = document.getElementById("chkLogToConsole")
+  chkLogToConsole.checked = state.logToConsole;
+  chkLogToConsole.addEventListener("click", function (event) {
+    state.logToConsole = event.target.checked;
+    saveState(state);
+  });
+})();

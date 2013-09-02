@@ -57,7 +57,6 @@
 
 .toolbarLabel {
   display: inline-block;
-  width: 78px;
   height: 22px;
   margin-right: 10px;
   color: hsl(210,30%,85%);
@@ -73,10 +72,26 @@
   cursor: default;
 }
 
+.toolbarButtonBar {
+  display: inline-block;
+  height: 22px;
+}
+.toolbarButtonBar > .toolbarButton {
+  border-radius: 0;
+}
+.toolbarButtonBar > .toolbarButton:first-child {
+  border-radius: 3px 0 0 3px;
+  border-right: none !important;
+}
+.toolbarButtonBar > .toolbarButton:last-child {
+  border-radius: 0 3px 3px 0;
+  border-right: none !important;
+}
+
 .toolbarButton {
   display: inline-block;
-  width: 78px;
   height: 22px;
+  padding: 0 8px;
   border: 1px solid hsla(210,8%,5%,.45);
   border-radius: 3px;
   background: linear-gradient(hsla(212,7%,57%,.35), hsla(212,7%,57%,.1));
