@@ -100,9 +100,10 @@ body.simple #xstats {
 #displayListContainer {
   color: #ccc;
   font: 11px Consolas, "Liberation Mono", Courier, monospace;
+  cursor: default;
 }
 #displayListContainer ul {
-  padding: 0 0 0 14px;
+  padding: 0 0 0 10px;
   margin: 0;
 }
 #displayListContainer > ul {
@@ -112,9 +113,23 @@ body.simple #xstats {
 #displayListContainer li {
   list-style: none;
 }
-#displayListContainer li > span {
-  display: inline-block;
-  padding: 2px 0;
+#displayListContainer li > div {
+  display: block;
+  padding: 3px 0 1px 4px;
+}
+#displayListContainer li > div:hover {
+  background-color: rgba(255,255,255, 0.1);
+}
+#displayListContainer li > div.selected {
+  background-color: rgba(255,255,255, 0.2);
+}
+#displayListContainer li > div.selected:hover {
+  background-color: rgba(255,255,255, 0.3);
+}
+#displayListContainer li > div > span {
+  padding-right: 4px;
+  float: right;
+  color: #f88;
 }
 
 #stageContainer {
