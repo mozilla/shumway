@@ -149,7 +149,6 @@ function showMessage(msg) {
   document.getElementById('message').textContent = "(" + msg + ")";
 }
 
-var inspectorSWFLoader;
 function executeFile(file, buffer, movieParams) {
   // All execution paths must now load AVM2.
   if (!state.appCompiler) {
@@ -178,10 +177,11 @@ function executeFile(file, buffer, movieParams) {
       function runSWF(file, buffer) {
         var swfURL = FileLoadingService.resolveUrl(file);
         var loaderURL = getQueryVariable("loaderURL") || swfURL;
-        inspectorSWFLoader = SWF.embed(buffer || file, document, document.getElementById('stage'), {
+        SWF.embed(buffer || file, document, document.getElementById('stage'), {
           onComplete: terminate,
           onBeforeFrame: beforeFrame,
           onAfterFrame: afterFrame,
+          onStageInitialized: stageInitialized,
           url: swfURL,
           loaderURL: loaderURL,
           movieParams: movieParams || {},
@@ -240,7 +240,11 @@ function executeFile(file, buffer, movieParams) {
 
 var initializeFrameControl = true;
 var isPaused = false;
+var inspectorSWFStage;
 
+function stageInitialized(stage) {
+  inspectorSWFStage = stage;
+}
 function terminate() {
 }
 function beforeFrame(e) {
@@ -387,6 +391,6 @@ function paused() {
 }
 
 function initDisplayListTree() {
-  var displayList = new DisplayListTree(inspectorSWFLoader._stage);
+  var displayList = new DisplayListTree(inspectorSWFStage);
   displayList.updateDom(document.getElementById("displayListContainer"));
 }
