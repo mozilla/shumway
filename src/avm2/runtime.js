@@ -821,7 +821,9 @@ var Scope = (function () {
   scope.prototype.findScopeProperty = function findScopeProperty(namespaces, name, flags, domain, strict, scopeOnly) {
     var object;
     var key = makeCacheKey(namespaces, name, flags);
-    if (!scopeOnly && (object = this.cache[key])) return object;
+    if (!scopeOnly && (object = this.cache[key])) {
+      return object;
+    }
     if (this.object.asHasProperty(namespaces, name, flags, true)) {
       return this.isWith ? this.object : (this.cache[key] = this.object);
     }
@@ -1261,8 +1263,29 @@ function debugName(value) {
   return value;
 }
 
-function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint) {
+function createCompiledFunctionTrampoline(methodInfo, scope, hasDynamicScope, breakpoint) {
   var mi = methodInfo;
+  // Return a trampoline that compiles the instance initializer when called for the first time.
+  return function trampolineContext() {
+    var fn;
+    return function () {
+      if (!fn) {
+        // Compile function and patch callers.
+        // FIXME Many call sites have already been compiled (e.g. from derived class constructors). Might need
+        // a better patching strategy.
+        fn = mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint);
+        mi.freeMethod.methodInfo = mi;
+      }
+      return fn.apply(this, arguments);
+    }
+  }();
+}
+
+function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
+  var mi = methodInfo;
+  if (deferCompilation) {
+    return createCompiledFunctionTrampoline(methodInfo, scope, hasDynamicScope, breakpoint);
+  }
   $M.push(mi);
   var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
   var parameters = result.parameters;
@@ -1574,7 +1597,7 @@ function createFunction(mi, scope, hasDynamicScope, breakpoint) {
     if (compileOnly.value >= 0 || compileUntil.value >= 0) {
       print("Compiling " + totalFunctionCount);
     }
-    mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint);
+    mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint, mi.isInstanceInitializer);
   }
 
   mi.freeMethod.methodInfo = mi;
