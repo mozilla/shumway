@@ -81,20 +81,7 @@ var MovieClipDefinition = (function () {
         return this;
       }
 
-      this._onDeclareFrame = function onDeclareFrame() {
-        var frameNum = self._playHead;
-
-        // Declare current timeline objects that were not on last frame.
-        self._declareChildren(frameNum);
-
-        self._startSounds(frameNum);
-        self._enterFrame(frameNum);
-      };
-
-      // Run each new children's constructor.
-      this._onConstructChildren = this._constructChildren.bind(this);
-
-      this._onDestructFrame = function onDestructFrame() {
+      this._onAdvanceFrame = function onAdvanceFrame() {
         var frameNum = self._playHead + 1;
 
         if (frameNum > self._totalFrames) {
@@ -106,12 +93,19 @@ var MovieClipDefinition = (function () {
         // Destroy current timeline objects that are not on next frame.
         self._destructChildren(frameNum);
 
-        self._playHead = frameNum;
+        // Declare current timeline objects that were not on last frame.
+        self._declareChildren(frameNum);
+
+        self._startSounds(frameNum);
+        self._enterFrame(frameNum);
 
         if (frameNum in self._frameScripts) {
           self._addEventListener('executeFrame', self._onExecuteFrame);
         }
       };
+
+      // Run each new children's constructor.
+      this._onConstructChildren = this._constructChildren.bind(this);
 
       this.play();
     },
@@ -604,9 +598,8 @@ var MovieClipDefinition = (function () {
 
       this._isPlaying = true;
 
-      this._addEventListener('declareFrame', this._onDeclareFrame);
+      this._addEventListener('advanceFrame', this._onAdvanceFrame);
       this._addEventListener('constructChildren', this._onConstructChildren);
-      this._addEventListener('destructFrame', this._onDestructFrame);
     },
     prevFrame: function () {
       this.stop();
@@ -626,9 +619,8 @@ var MovieClipDefinition = (function () {
 
       this._isPlaying = false;
 
-      this._removeEventListener('declareFrame', this._onDeclareFrame);
+      this._removeEventListener('advanceFrame', this._onAdvanceFrame);
       this._removeEventListener('constructChildren', this._onConstructChildren);
-      this._removeEventListener('destructFrame', this._onDestructFrame);
     }
   };
 

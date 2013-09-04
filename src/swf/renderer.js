@@ -536,7 +536,7 @@ function renderStage(stage, ctx, events) {
           // Initial display list is already constructed, skip frame construction phase.
           firstRun = false;
         } else {
-          domain.broadcastMessage("declareFrame");
+          domain.broadcastMessage("advanceFrame");
           domain.broadcastMessage("enterFrame");
           domain.broadcastMessage("constructChildren");
         }
@@ -573,10 +573,6 @@ function renderStage(stage, ctx, events) {
         traceRenderer.value && frameWriter.leave("< Mouse Visitor");
 
         stage._syncCursor();
-      }
-
-      if (renderFrame) {
-        domain.broadcastMessage("destructFrame");
       }
 
       if (renderFrame && events.onAfterFrame) {

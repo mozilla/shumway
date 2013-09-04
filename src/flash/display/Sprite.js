@@ -219,7 +219,7 @@ var SpriteDefinition = (function () {
         if (!clip.asHasProperty(undefined, variableName, 0)) {
           clip.asSetPublicProperty(variableName, instance.text);
         }
-        instance._addEventListener('declareFrame', function() {
+        instance._addEventListener('advanceFrame', function() {
           instance.text = clip.asGetPublicProperty(variableName);
         });
       }
