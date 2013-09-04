@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Multiname, MP3DecoderSession, base64ArrayBuffer */
+/*global Multiname, MP3DecoderSession, base64ArrayBuffer, isNullOrUndefined */
 
 var PLAY_USING_AUDIO_TAG = true;
 
@@ -162,7 +162,9 @@ var SoundDefinition = (function () {
       loops = loops || 0;
       var channel = new flash.media.SoundChannel();
       channel._sound = this;
-      channel._soundTransform = soundTransform;
+      channel._soundTransform = isNullOrUndefined(soundTransform) ?
+                                  new flash.media.SoundTransform() :
+                                  soundTransform;;
       this._playQueue.push({
         channel: channel,
         startTime: startTime

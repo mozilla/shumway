@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global base64ArrayBuffer, AudioContext, webkitAudioContext, Audio */
+/*global base64ArrayBuffer, AudioContext, webkitAudioContext, Audio,
+  isNullOrUndefined */
 
 var SoundChannelDefinition = (function () {
   return {
@@ -26,15 +27,28 @@ var SoundChannelDefinition = (function () {
       this._leftPeak = 0;
       this._rightPeak = 0;
       this._pcmData = null;
-      this._soundTransform = null;
+      this._soundTransform = new flash.media.SoundTransform();
+      this._soundMixerClass = avm2.systemDomain.getClass("flash.media.SoundMixer");
     },
     _registerWithSoundMixer: function () {
-      var soundMixerClass = avm2.systemDomain.getClass("flash.media.SoundMixer");
-      soundMixerClass.native.static._registerChannel(this);
+      this._soundMixerClass.native.static._registerChannel(this);
     },
     _unregisterWithSoundMixer: function () {
-      var soundMixerClass = avm2.systemDomain.getClass("flash.media.SoundMixer");
-      soundMixerClass.native.static._unregisterChannel(this);
+      this._soundMixerClass.native.static._unregisterChannel(this);
+    },
+    _applySoundTransform: function () {
+      // TODO: apply pan
+      var volume = this._soundTransform._volume;
+      if (this._soundMixerClass._soundTransform) {
+        volume *= this._soundMixerClass._soundTransform._volume;
+      }
+      volume *= this._soundMixerClass.native.static._getMasterVolume();
+      if (this._element) {
+        this._element.volume = volume;
+      }
+      if (this._audioChannel) {
+        // TODO
+      }
     },
     _playSoundDataViaChannel: function (soundData, startTime, loops) {
       assert(soundData.pcm, 'no pcm data found');
@@ -75,6 +89,7 @@ var SoundChannelDefinition = (function () {
         self._position = position / soundData.sampleRate / soundData.channels * 1000;
       };
       this._audioChannel.start();
+      this._applySoundTransform();
     },
     _playSoundDataViaAudio: function (soundData, startTime, loops) {
       if (!soundData.mimeType)
@@ -113,6 +128,7 @@ var SoundChannelDefinition = (function () {
         self._dispatchEvent(new flash.events.Event("soundComplete", false, false));
       });
       this._element = element;
+      this._applySoundTransform();
     },
     __glue__: {
       native: {
@@ -150,10 +166,15 @@ var SoundChannelDefinition = (function () {
           },
           "soundTransform": {
             get: function soundTransform() {
-              return this._soundTransform;
+              somewhatImplemented("SoundChannel.soundTransform");
+              return new flash.media.SoundTransform(this._soundTransform._volume, this._soundTransform.pan);
             },
-            set: function soundTransform(val) {
-              this._soundTransform = val;
+            set: function soundTransform(soundTransform) {
+              somewhatImplemented("SoundChannel.soundTransform");
+              this._soundTransform = isNullOrUndefined(soundTransform) ?
+                                       new flash.media.SoundTransform() :
+                                       soundTransform;
+              this._applySoundTransform();
             }
           }
         }

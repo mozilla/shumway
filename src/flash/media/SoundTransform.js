@@ -78,6 +78,11 @@ var SoundTransformDefinition = (function () {
           }
         }
       },
+      script: {
+        instance: {
+          pan: "public pan"
+        }
+      }
     }
   };
 }).call(this);
