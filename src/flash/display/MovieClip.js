@@ -38,7 +38,6 @@ var MovieClipDefinition = (function () {
       this._totalFrames = 1;
       this._startSoundRegistrations = [];
       this._allowFrameNavigation = true;
-      this._executeFrame = false;
 
       var s = this.symbol;
       if (s) {
@@ -57,10 +56,6 @@ var MovieClipDefinition = (function () {
             this._currentFrameLabel = this._currentLabel = name;
           }
         }
-
-        if (1 in this._frameScripts) {
-          this._executeFrame = true;
-        }
       }
 
       this._enterFrame(1);
@@ -70,12 +65,6 @@ var MovieClipDefinition = (function () {
       this._onExecuteFrame = function onExecuteFrame() {
         self._removeEventListener('executeFrame', onExecuteFrame);
 
-        if (!self._executeFrame) {
-          return;
-        }
-
-        self._executeFrame = false;
-
         // Call frame scripts.
         self._allowFrameNavigation = false;
         self._callFrame(self._currentFrame);
@@ -83,11 +72,7 @@ var MovieClipDefinition = (function () {
 
         // If playhead moved, process deferred inter-frame navigation.
         if (self._playHead !== self._currentFrame) {
-          self._gotoFrame(self._playHead);
-          if (self._executeFrame) {
-            self._callFrame(self._playHead);
-            self._executeFrame = false;
-          }
+          self._gotoFrame(self._playHead, true);
         }
       };
       this._addEventListener('executeFrame', this._onExecuteFrame);
@@ -124,7 +109,6 @@ var MovieClipDefinition = (function () {
         self._playHead = frameNum;
 
         if (frameNum in self._frameScripts) {
-          self._executeFrame = true;
           self._addEventListener('executeFrame', self._onExecuteFrame);
         }
       };
@@ -269,35 +253,33 @@ var MovieClipDefinition = (function () {
       }
     },
 
-    _gotoFrame: function gotoFrame(frameNum) {
+    _gotoFrame: function gotoFrame(frameNum, execute) {
       var enterFrame = frameNum !== this._currentFrame;
 
       if (this._allowFrameNavigation || !this._loader._isAvm2Enabled) {
-        if (this._loader._isAvm2Enabled) {
+        if (enterFrame) {
+          this._destructChildren(frameNum);
+          this._declareChildren(frameNum);
+          this._enterFrame(frameNum);
+        }
+
+        this._constructChildren();
+
+        if (this._loader._isAvm2Enabled && this.loaderInfo._swfVersion >= 10) {
           if (enterFrame) {
-            this._destructChildren(frameNum);
-            this._declareChildren(frameNum);
-            this._enterFrame(frameNum);
+            this._addEventListener('executeFrame', this._onExecuteFrame);
           }
 
-          this._constructChildren();
+          var domain = avm2.systemDomain;
+          domain.broadcastMessage("frameConstructed");
+          domain.broadcastMessage("executeFrame");
+          domain.broadcastMessage("exitFrame");
 
-          if (this.loaderInfo._swfVersion >= 10) {
-            if (enterFrame) {
-              this._executeFrame = true;
-              this._addEventListener('executeFrame', this._onExecuteFrame);
-            }
+          return;
+        }
 
-            var domain = avm2.systemDomain;
-            domain.broadcastMessage("frameConstructed");
-            domain.broadcastMessage("executeFrame");
-            domain.broadcastMessage("exitFrame");
-          } else if (enterFrame) {
-            this._executeFrame = true;
-          }
-        } else if (enterFrame) {
+        if (enterFrame && execute) {
           this._callFrame(frameNum);
-          this._executeFrame = false;
         }
 
         return;
@@ -574,8 +556,7 @@ var MovieClipDefinition = (function () {
         } else {
           frameScripts[frameNum] = [fn];
         }
-        if (frameNum === this._playHead) {
-          this._executeFrame = true;
+        if (frameNum === this._currentFrame) {
           this._addEventListener('executeFrame', this._onExecuteFrame);
         }
       }
