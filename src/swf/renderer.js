@@ -96,10 +96,15 @@ RenderVisitor.prototype = {
                       flash.display.SimpleButton.class.isInstanceOf(this.root);
 
     // HACK compensate for visit()/renderDisplayObject() transform
-    var t = this.root.transform.matrix;
-    t.invert();
+    var t = this.root._currentTransform, inverse;
+    if (t) {
+      inverse = new flash.geom.Matrix(t.a, t.b, t.c, t.d, t.tx, t.ty);
+      inverse.invert();
+    } else {
+      inverse = new flash.geom.Matrix();
+    }
     this.ctx.save();
-    this.ctx.transform(t.a, t.b, t.c, t.d, t.tx, t.ty);
+    this.ctx.transform(inverse.a, inverse.b, inverse.c, inverse.d, inverse.tx, inverse.ty);
 
     this.visit(this.root, isContainer, visitContainer);
 
