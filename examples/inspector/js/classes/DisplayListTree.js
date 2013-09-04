@@ -98,9 +98,17 @@ var DisplayListTree = (function() {
         var div = document.createElement("div");
         div.textContent = item.displayObject.class.className + " ";
         if (item.hasTimeline) {
-          var span = document.createElement("span");
-          span.textContent = item.displayObject._currentFrame + "/" + item.displayObject._totalFrames;
-          div.appendChild(span);
+          console.log(item.displayObject.class.className, item.displayObject)
+          if (item.displayObject._name) {
+            var spanName = document.createElement("span");
+            spanName.textContent = "'" + item.displayObject._name + "'";
+            spanName.className = "dobName";
+            div.appendChild(spanName);
+          }
+          var spanFrameInfo = document.createElement("span");
+          spanFrameInfo.textContent = item.displayObject._currentFrame + "/" + item.displayObject._totalFrames;
+          spanFrameInfo.className = "mcFrameInfo";
+          div.appendChild(spanFrameInfo);
         }
         div.className = "item";
         div.dataset.dosidx = item.index;

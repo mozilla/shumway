@@ -133,7 +133,7 @@ body.simple #xstats {
   overflow-y: auto;
 }
 #displayList ul {
-  padding: 0 0 0 10px;
+  padding: 0 0 0 12px;
   margin: 0;
 }
 #displayList > ul {
@@ -145,7 +145,7 @@ body.simple #xstats {
 }
 #displayList li > div {
   display: block;
-  padding: 3px 0 1px 4px;
+  padding: 1px 0 1px 4px;
 }
 #displayList li > div:hover {
   background-color: rgba(255,255,255, 0.1);
@@ -156,10 +156,13 @@ body.simple #xstats {
 #displayList li > div.selected:hover {
   background-color: rgba(255,255,255, 0.3);
 }
-#displayList li > div > span {
+#displayList li > div > span.mcFrameInfo {
   padding-right: 4px;
   float: right;
-  color: #f88;
+  color: rgba(255, 136, 136, 0.75);
+}
+#displayList li > div > span.dobName {
+  color: rgba(136, 136, 255, 1);
 }
 #displayObjectProperties {
   display: none;
