@@ -26,6 +26,7 @@ var SpriteDefinition = (function () {
       this._hitArea = null;
       this._useHandCursor = true;
       this._hitTarget = null;
+      this._depthMap = { };
 
       var s = this.symbol;
       if (s) {
@@ -34,10 +35,12 @@ var SpriteDefinition = (function () {
         if (s.timeline) {
           var displayList = s.timeline[0];
           if (displayList) {
-            var children = this._children;
-            for (var depth in displayList) {
-              var cmd = displayList[depth];
-              this._addTimelineChild(cmd);
+            var depths = displayList.depths;
+            for (var i = 0; i < depths.length; i++) {
+              var cmd = displayList[depths[i]];
+              if (cmd) {
+                this._addTimelineChild(cmd);
+              }
             }
           }
         }
@@ -55,18 +58,24 @@ var SpriteDefinition = (function () {
       props.depth = cmd.depth;
       props.symbolId = cmd.symbolId;
 
-      if (cmd.clip)
+      if (cmd.clip) {
         props.clipDepth = cmd.clipDepth;
-      if (cmd.hasCxform)
+      }
+      if (cmd.hasCxform) {
         props.cxform = cmd.cxform;
-      if (cmd.hasMatrix)
+      }
+      if (cmd.hasMatrix) {
         props.currentTransform = cmd.matrix;
-      if (cmd.hasName)
+      }
+      if (cmd.hasName) {
         props.name = cmd.name;
-      if (cmd.hasRatio)
+      }
+      if (cmd.hasRatio) {
         props.ratio = cmd.ratio / 0xffff;
-      if (cmd.blend)
+      }
+      if (cmd.blend) {
         props.blendMode = cmd.blendMode;
+      }
 
       var child = {
         className: symbolInfo.className,
@@ -74,12 +83,19 @@ var SpriteDefinition = (function () {
         props: props
       };
 
-      if (index !== undefined)
+      if (index !== undefined) {
         this._children.splice(index, 0, child);
-      else
+      } else {
         this._children.push(child);
+      }
+
+      this._sparse = true;
     },
     _constructChildren: function () {
+      if (!this._sparse) {
+        return;
+      }
+
       var loader = this._loader;
 
       var children = this._children;
@@ -102,16 +118,15 @@ var SpriteDefinition = (function () {
           props.owned = true;
           props.parent = this;
           props.stage = this._stage;
-          props.level = this._level + 1;
-          props.index = i;
 
           var instance = symbolClass.createAsSymbol(props);
 
           // If we bound the instance to a name, set it.
           //
           // XXX: I think this always has to be a trait.
-          if (name)
+          if (name) {
             this[Multiname.getPublicQualifiedName(name)] = instance;
+          }
 
           // Call the constructor now that we've made the symbol instance,
           // instantiated all its children, and set the display list-specific
@@ -141,8 +156,12 @@ var SpriteDefinition = (function () {
           }
 
           children[i] = instance;
+
+          this._depthMap[instance._depth] = instance;
         }
       }
+
+      this._sparse = false;
     },
     _duplicate: function (name, depth, initObject) {
       // TODO proper child cloning, initObject and display list insertion
@@ -219,7 +238,7 @@ var SpriteDefinition = (function () {
         if (!clip.asHasProperty(undefined, variableName, 0)) {
           clip.asSetPublicProperty(variableName, instance.text);
         }
-        instance._addEventListener('declareFrame', function() {
+        instance._addEventListener('advanceFrame', function() {
           instance.text = clip.asGetPublicProperty(variableName);
         });
       }

@@ -119,7 +119,7 @@ var DisplayObjectContainerDefinition = (function () {
         throw ArgumentError();
       }
 
-      return child._index;
+      return this._sparse ? this._children.indexOf(child) : child._index;
     },
     getObjectsUnderPoint: function (pt) {
       notImplemented();
@@ -129,7 +129,7 @@ var DisplayObjectContainerDefinition = (function () {
         throw ArgumentError();
       }
 
-      return this.removeChildAt(child._index);
+      return this.removeChildAt(this.getChildIndex(child));
     },
     removeChildAt: function (index) {
       var children = this._children;
@@ -162,7 +162,9 @@ var DisplayObjectContainerDefinition = (function () {
         throw ArgumentError();
       }
 
-      if (child._index === index) {
+      var currentIndex = this.getChildIndex(child);
+
+      if (currentIndex === index) {
         return;
       }
 
@@ -172,10 +174,10 @@ var DisplayObjectContainerDefinition = (function () {
         throw RangeError();
       }
 
-      children.splice(child._index, 1);
+      children.splice(currentIndex, 1);
       children.splice(index, 0, child);
 
-      var i = child._index < index ? child._index : index;
+      var i = currentIndex < index ? currentIndex : index;
       while (i < children.length) {
         children[i]._index = i++;
       }
@@ -204,13 +206,15 @@ var DisplayObjectContainerDefinition = (function () {
         throw ArgumentError();
       }
 
-      this.swapChildrenAt(child1._index, child2._index);
+      this.swapChildrenAt(this.getChildIndex(child1),
+                          this.getChildIndex(child2));
     },
     swapChildrenAt: function (index1, index2) {
       var children = this._children;
       var numChildren = children.length;
 
-      if (index1 < 0 || index1 > numChildren || index2 < 0 || index2 > numChildren) {
+      if (index1 < 0 || index1 > numChildren ||
+          index2 < 0 || index2 > numChildren) {
         throw RangeError();
       }
 
@@ -247,6 +251,7 @@ var DisplayObjectContainerDefinition = (function () {
   def.initialize = function () {
     this._mouseChildren = true;
     this._tabChildren = true;
+    this._sparse = false;
   };
 
   def.__glue__ = {

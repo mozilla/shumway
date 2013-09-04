@@ -38,7 +38,6 @@ var MovieClipDefinition = (function () {
       this._totalFrames = 1;
       this._startSoundRegistrations = [];
       this._allowFrameNavigation = true;
-      this._executeFrame = false;
 
       var s = this.symbol;
       if (s) {
@@ -57,10 +56,6 @@ var MovieClipDefinition = (function () {
             this._currentFrameLabel = this._currentLabel = name;
           }
         }
-
-        if (1 in this._frameScripts) {
-          this._executeFrame = true;
-        }
       }
 
       this._enterFrame(1);
@@ -70,12 +65,6 @@ var MovieClipDefinition = (function () {
       this._onExecuteFrame = function onExecuteFrame() {
         self._removeEventListener('executeFrame', onExecuteFrame);
 
-        if (!self._executeFrame) {
-          return;
-        }
-
-        self._executeFrame = false;
-
         // Call frame scripts.
         self._allowFrameNavigation = false;
         self._callFrame(self._currentFrame);
@@ -83,11 +72,7 @@ var MovieClipDefinition = (function () {
 
         // If playhead moved, process deferred inter-frame navigation.
         if (self._playHead !== self._currentFrame) {
-          self._gotoFrame(self._playHead);
-          if (self._executeFrame) {
-            self._callFrame(self._playHead);
-            self._executeFrame = false;
-          }
+          self._gotoFrame(self._playHead, true);
         }
       };
       this._addEventListener('executeFrame', this._onExecuteFrame);
@@ -96,20 +81,7 @@ var MovieClipDefinition = (function () {
         return this;
       }
 
-      this._onDeclareFrame = function onDeclareFrame() {
-        var frameNum = self._playHead;
-
-        // Declare current timeline objects that were not on last frame.
-        self._declareChildren(frameNum);
-
-        self._startSounds(frameNum);
-        self._enterFrame(frameNum);
-      };
-
-      // Run each new children's constructor.
-      this._onConstructChildren = this._constructChildren.bind(this);
-
-      this._onDestructFrame = function onDestructFrame() {
+      this._onAdvanceFrame = function onAdvanceFrame() {
         var frameNum = self._playHead + 1;
 
         if (frameNum > self._totalFrames) {
@@ -121,12 +93,26 @@ var MovieClipDefinition = (function () {
         // Destroy current timeline objects that are not on next frame.
         self._destructChildren(frameNum);
 
-        self._playHead = frameNum;
+        // Declare current timeline objects that were not on last frame.
+        self._declareChildren(frameNum);
+
+        if (self._sparse) {
+          self._addEventListener('constructChildren', self._onConstructChildren);
+        }
+
+        self._startSounds(frameNum);
+        self._enterFrame(frameNum);
 
         if (frameNum in self._frameScripts) {
-          self._executeFrame = true;
           self._addEventListener('executeFrame', self._onExecuteFrame);
         }
+      };
+
+      this._onConstructChildren = function onConstructChildren() {
+        self._removeEventListener('constructChildren', onConstructChildren);
+
+        // Run each new children's constructor.
+        self._constructChildren();
       };
 
       this.play();
@@ -143,80 +129,77 @@ var MovieClipDefinition = (function () {
       var currentDisplayList = timeline[currentFrame - 1];
       var nextDisplayList = timeline[nextFrameNum - 1];
 
+      if (nextDisplayList === currentDisplayList) {
+        return;
+      }
+
       var children = this._children;
+      var depths = nextFrameNum > currentFrame ? nextDisplayList.depths :
+                                                 currentDisplayList.depths;
 
-      if (nextDisplayList !== currentDisplayList) {
-        var refList = nextFrameNum > currentFrame ? nextDisplayList :
-                                                    currentDisplayList;
+      var depthMap = this._depthMap;
 
-        for (var depth in refList) {
-          var nextCmd = nextDisplayList[depth];
-          var currentCmd = currentDisplayList[depth];
+      var index = children.length;
 
-          if (nextCmd && nextCmd !== currentCmd) {
-            var currentChild = null;
-            var highestIndex = children.length;
+      var i = depths.length;
+      while (i--) {
+        var depth = depths[i];
+        var currentCmd = currentDisplayList[depth];
+        var nextCmd = nextDisplayList[depth];
 
-            var i = highestIndex;
-            while (i--) {
-              var child = children[i];
-              if (child._depth > depth) {
-                if (child._animated) {
-                  highestIndex = i;
-                }
-              } else if (child._depth == depth) {
-                currentChild = child;
-                break;
-              }
-            }
+        var currentChild = depthMap[depth];
 
-            if (currentChild) {
-              if (currentCmd &&
-                  nextCmd.symbolId === currentCmd.symbolId &&
-                  nextCmd.ratio === currentCmd.ratio &&
-                  currentChild._animated) {
-                currentChild._invalidate();
-                currentChild._bounds = null;
-
-                if (nextCmd.hasMatrix) {
-                  var m = nextCmd.matrix;
-                  var a = m.a;
-                  var b = m.b;
-                  var c = m.c;
-                  var d = m.d;
-
-                  currentChild._rotation = Math.atan2(b, a) * 180 / Math.PI;
-                  var sx = Math.sqrt(a * a + b * b);
-                  currentChild._scaleX = a > 0 ? sx : -sx;
-                  var sy = Math.sqrt(d * d + c * c);
-                  currentChild._scaleY = d > 0 ? sy : -sy;
-                  var x = currentChild._x = m.tx;
-                  var y = currentChild._y = m.ty;
-
-                  currentChild._currentTransform = m;
-                }
-
-                if (nextCmd.hasCxform) {
-                  currentChild._cxform = nextCmd.cxform;
-                }
-                if (nextCmd.clip) {
-                  currentChild._clipDepth = nextCmd.clipDepth;
-                }
-
-                if (nextCmd.hasName) {
-                  currentChild.name = nextCmd.name;
-                }
-                //if (nextCmd.blend) {
-                //  currentChild.blendMode = nextCmd.blendMode;
-                //}
-              } else {
-                this._addTimelineChild(nextCmd, highestIndex);
-              }
-            } else {
-              this._addTimelineChild(nextCmd, highestIndex);
-            }
-          }
+        if (currentChild && currentChild._owned) {
+          index = this.getChildIndex(currentChild);
         }
+
+        if (!nextCmd || nextCmd === currentCmd) {
+          continue;
+        }
+
+        if (currentCmd &&
+            currentChild && currentChild._animated &&
+            nextCmd.symbolId === currentCmd.symbolId &&
+            nextCmd.ratio === currentCmd.ratio) {
+          currentChild._invalidate();
+          currentChild._bounds = null;
+
+          if (nextCmd.hasMatrix) {
+            var m = nextCmd.matrix;
+            var a = m.a;
+            var b = m.b;
+            var c = m.c;
+            var d = m.d;
+
+            currentChild._rotation = Math.atan2(b, a) * 180 / Math.PI;
+            var sx = Math.sqrt(a * a + b * b);
+            currentChild._scaleX = a > 0 ? sx : -sx;
+            var sy = Math.sqrt(d * d + c * c);
+            currentChild._scaleY = d > 0 ? sy : -sy;
+            var x = currentChild._x = m.tx;
+            var y = currentChild._y = m.ty;
+
+            currentChild._currentTransform = m;
+          }
+
+          if (nextCmd.hasCxform) {
+            currentChild._cxform = nextCmd.cxform;
+          }
+          if (nextCmd.clip) {
+            currentChild._clipDepth = nextCmd.clipDepth;
+          }
+
+          if (nextCmd.hasName) {
+            currentChild.name = nextCmd.name;
+          }
+          //if (nextCmd.blend) {
+          //  currentChild.blendMode = nextCmd.blendMode;
+          //}
+
+          continue;
+        }
+
+        this._addTimelineChild(nextCmd, index);
       }
     },
     _destructChildren: function destructObjects(nextFrameNum) {
@@ -230,74 +213,71 @@ var MovieClipDefinition = (function () {
       var currentDisplayList = timeline[currentFrame - 1];
       var nextDisplayList = timeline[nextFrameNum - 1];
 
+      if (nextDisplayList === currentDisplayList) {
+        return;
+      }
+
       var children = this._children;
+      var depths = nextFrameNum > currentFrame ? currentDisplayList.depths:
+                                                 nextDisplayList.depths;
 
-      if (nextDisplayList !== currentDisplayList) {
-        var refList = nextFrameNum > currentFrame ? nextDisplayList :
-                                                    currentDisplayList;
+      var depthMap = this._depthMap;
 
-        for (var depth in refList) {
-          var currentCmd = currentDisplayList[depth];
+      for (var i = 0; i < depths.length; i++) {
+        var depth = depths[i];
+        var child = depthMap[depth];
 
-          if (currentCmd) {
-            var nextCmd = nextDisplayList[depth];
-            var currentChild = null;
+        if (!child || !child._owned) {
+          continue;
+        }
 
-            var i = children.length;
-            while (i--) {
-              var child = children[i];
-              if (child._depth == depth) {
-                currentChild = child;
-                break;
-              }
-            }
+        var currentCmd = currentDisplayList[depth];
+        var nextCmd = nextDisplayList[depth];
 
-            if (currentChild && currentChild._owned &&
-                (!nextCmd ||
-                 nextCmd.symbolId !== currentCmd.symbolId ||
-                 nextCmd.ratio !== currentCmd.ratio)) {
-              this.removeChild(currentChild);
+        if (!nextCmd || nextCmd.symbolId !== currentCmd.symbolId ||
+                        nextCmd.ratio !== currentCmd.ratio) {
+          this.removeChild(child);
 
-              currentChild.destroy();
+          child.destroy();
 
-              if (currentChild._isPlaying) {
-                currentChild.stop();
-              }
-            }
+          if (child._isPlaying) {
+            child.stop();
           }
+
+          depthMap[depth] = null;
+
+          child._depth = null;
         }
       }
     },
 
-    _gotoFrame: function gotoFrame(frameNum) {
+    _gotoFrame: function gotoFrame(frameNum, execute) {
       var enterFrame = frameNum !== this._currentFrame;
 
       if (this._allowFrameNavigation || !this._loader._isAvm2Enabled) {
-        if (this._loader._isAvm2Enabled) {
+        if (enterFrame) {
+          this._destructChildren(frameNum);
+          this._declareChildren(frameNum);
+          this._enterFrame(frameNum);
+        }
+
+        this._constructChildren();
+
+        if (this._loader._isAvm2Enabled && this.loaderInfo._swfVersion >= 10) {
           if (enterFrame) {
-            this._destructChildren(frameNum);
-            this._declareChildren(frameNum);
-            this._enterFrame(frameNum);
+            this._addEventListener('executeFrame', this._onExecuteFrame);
           }
 
-          this._constructChildren();
+          var domain = avm2.systemDomain;
+          domain.broadcastMessage("frameConstructed");
+          domain.broadcastMessage("executeFrame");
+          domain.broadcastMessage("exitFrame");
 
-          if (this.loaderInfo._swfVersion >= 10) {
-            if (enterFrame) {
-              this._executeFrame = true;
-              this._addEventListener('executeFrame', this._onExecuteFrame);
-            }
+          return;
+        }
 
-            var domain = avm2.systemDomain;
-            domain.broadcastMessage("frameConstructed");
-            domain.broadcastMessage("executeFrame");
-            domain.broadcastMessage("exitFrame");
-          } else if (enterFrame) {
-            this._executeFrame = true;
-          }
-        } else if (enterFrame) {
+        if (enterFrame && execute) {
           this._callFrame(frameNum);
-          this._executeFrame = false;
         }
 
         return;
@@ -574,8 +554,7 @@ var MovieClipDefinition = (function () {
         } else {
           frameScripts[frameNum] = [fn];
         }
-        if (frameNum === this._playHead) {
-          this._executeFrame = true;
+        if (frameNum === this._currentFrame) {
           this._addEventListener('executeFrame', this._onExecuteFrame);
         }
       }
@@ -623,9 +602,7 @@ var MovieClipDefinition = (function () {
 
       this._isPlaying = true;
 
-      this._addEventListener('declareFrame', this._onDeclareFrame);
-      this._addEventListener('constructChildren', this._onConstructChildren);
-      this._addEventListener('destructFrame', this._onDestructFrame);
+      this._addEventListener('advanceFrame', this._onAdvanceFrame);
     },
     prevFrame: function () {
       this.stop();
@@ -645,9 +622,7 @@ var MovieClipDefinition = (function () {
 
       this._isPlaying = false;
 
-      this._removeEventListener('declareFrame', this._onDeclareFrame);
-      this._removeEventListener('constructChildren', this._onConstructChildren);
-      this._removeEventListener('destructFrame', this._onDestructFrame);
+      this._removeEventListener('advanceFrame', this._onAdvanceFrame);
     }
   };
 
