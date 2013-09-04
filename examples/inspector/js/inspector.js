@@ -22,6 +22,8 @@ var pauseExecution = getQueryVariable("paused") === "true";
 var remoteFile = getQueryVariable("rfile");
 var yt = getQueryVariable('yt');
 
+var swfController = new SWFController(stats, pauseExecution);
+
 var libraryAbcs;
 function grabAbc(abcName) {
   var entry = libraryScripts[abcName];
@@ -178,10 +180,10 @@ function executeFile(file, buffer, movieParams) {
         var swfURL = FileLoadingService.resolveUrl(file);
         var loaderURL = getQueryVariable("loaderURL") || swfURL;
         SWF.embed(buffer || file, document, document.getElementById('stage'), {
-          onComplete: terminate,
-          onBeforeFrame: beforeFrame,
-          onAfterFrame: afterFrame,
-          onStageInitialized: stageInitialized,
+          onComplete: swfController.completeCallback.bind(swfController),
+          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
+          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
+          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
           url: swfURL,
           loaderURL: loaderURL,
           movieParams: movieParams || {},
@@ -237,41 +239,6 @@ function executeFile(file, buffer, movieParams) {
     });
   }
 }
-
-var initializeFrameControl = true;
-var isPaused = false;
-var inspectorSWFStage;
-
-function stageInitialized(stage) {
-  inspectorSWFStage = stage;
-}
-function terminate() {
-}
-function beforeFrame(e) {
-  if (initializeFrameControl) {
-    // skipping frame 0
-    initializeFrameControl = false;
-    initUI();
-    return;
-  }
-  if (pauseExecution) {
-    e.cancel = true;
-    if (!isPaused) {
-      paused();
-    }
-  }
-  isPaused = e.cancel;
-  stats.begin();
-}
-function afterFrame() {
-  stats.end();
-}
-
-document.addEventListener("keydown", function (event) {
-  if ((event.keyCode == 119 || event.keyCode == 80) && event.ctrlKey) { // Ctrl+F8 or Ctrl-p
-    pauseExecution = !pauseExecution;
-  }
-});
 
 (function setStageSize() {
   var stageSize = getQueryVariable("size");
@@ -347,7 +314,6 @@ Array.prototype.forEach.call(document.querySelectorAll(".toolbarButtonBar > .too
 });
 
 // toggle info panels (debug info, display list)
-var showDisplayList = false;
 var panelToggleButtonSelector = "#debugInfoToolbar > .toolbarButtonBar > .toolbarButton";
 function panelToggleButtonClickHandler(event) {
   Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
@@ -361,16 +327,17 @@ function panelToggleButtonClickHandler(event) {
   });
   switch (event.target.dataset.panelid) {
     case "displayListContainer":
-      if (isPaused) {
+      if (swfController.isPlaying()) {
+        swfController.pause(function() {
+          initDisplayListTree();
+        });
+      } else {
         initDisplayListTree();
       }
-      showDisplayList = true;
-      pauseExecution = true;
       document.getElementById("ctrlLogToConsole").classList.remove("active");
       break;
     default:
-      showDisplayList = false;
-      pauseExecution = false;
+      swfController.play();
       document.getElementById("ctrlLogToConsole").classList.add("active");
       break;
   }
@@ -379,6 +346,18 @@ Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector
   element.addEventListener("click", panelToggleButtonClickHandler);
 });
 
+swfController.onStateChange = function onStateChange(newState, oldState) {
+  if (oldState === swfController.STATE_INIT) {
+    initUI();
+  }
+  switch (newState) {
+    case swfController.STATE_PLAYING:
+      break;
+    case swfController.STATE_PAUSED:
+      break;
+  }
+}
+
 function initUI() {
   document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
   document.getElementById("ctrlLogToConsole").classList.add("active");
@@ -386,13 +365,15 @@ function initUI() {
   avm2.systemDomain.getClass("flash.media.SoundMixer").native.static._setMasterVolume(state.mute ? 0 : 1);
 }
 
-function paused() {
-  if (showDisplayList) {
-    initDisplayListTree();
-  }
-}
-
 function initDisplayListTree() {
-  var displayList = new DisplayListTree(inspectorSWFStage);
+  var displayList = new DisplayListTree(swfController.stage);
   displayList.updateDom(document.getElementById("displayListContainer"));
 }
+
+/*
+document.addEventListener("keydown", function (event) {
+  if ((event.keyCode == 119 || event.keyCode == 80) && event.ctrlKey) { // Ctrl+F8 or Ctrl-p
+    swfController.togglePause();
+  }
+});
+*/
