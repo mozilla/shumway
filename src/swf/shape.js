@@ -181,13 +181,16 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         morphsOffset++;
       }
 
-      segment = path.addSegment([], [], isMorph ? [] : null);
+      // Very first record can be just fill/line-style definition record.
+      if (path) {
+        segment = path.addSegment([], [], isMorph ? [] : null);
 
-      // Move or not, we want this path segment to start where the last one left
-      // off. Even if the last one belonged to a different style.
-      // "Huh," you say? Yup.
-      segment.commands.push(SHAPE_MOVE_TO);
-      segment.data.push(x, y);
+        // Move or not, we want this path segment to start where the last one
+        // left off. Even if the last one belonged to a different style.
+        // "Huh," you say? Yup.
+        segment.commands.push(SHAPE_MOVE_TO);
+        segment.data.push(x, y);
+      }
     }
     // type 1 is a StraightEdge or CurvedEdge record
     else {
