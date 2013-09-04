@@ -39,6 +39,29 @@
   font-family: Lucida Grande, sans-serif;
 }
 
+.iconButton {
+  float: left;
+  width: 16px;
+  height: 22px;
+  background-repeat: no-repeat;
+  background-position: 0px center;
+}
+.iconButton:hover {
+  background-position: -16px center;
+}
+.iconButton:hover:active {
+  background-position: -32px center;
+}
+.iconButton.active {
+  background-position: -48px center;
+}
+.iconButton.active:hover {
+  background-position: -64px center;
+}
+.iconButton.active:hover:active {
+  background-position: -80px center;
+}
+
 .closeButton {
   float: left;
   width: 16px;
