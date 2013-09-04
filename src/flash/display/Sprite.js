@@ -102,6 +102,8 @@ var SpriteDefinition = (function () {
           props.owned = true;
           props.parent = this;
           props.stage = this._stage;
+          props.level = this._level + 1;
+          props.index = i;
 
           var instance = symbolClass.createAsSymbol(props);
 
