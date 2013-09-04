@@ -27,3 +27,7 @@ VM_METHOD_OVERRIDES["static mochi.as3.MochiServices::connect"] = function () {
 VM_METHOD_OVERRIDES["static MochiBot::track"] = function () {
   return;
 };
+
+VM_METHOD_OVERRIDES["com.midasplayer.debug.DebugLog::trace"] = function (msg) {
+  console.log(msg);
+};
