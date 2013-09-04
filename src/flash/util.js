@@ -43,14 +43,11 @@ function sortByDepth(a, b) {
   var levelB = b._level;
 
   if (a._parent !== b._parent && a._index > -1 && b._index > -1) {
-    if (a._level > levelB) {
-      while (a._level !== b._level) {
-        a = a._parent;
-      }
-    } else {
-      while (b._level !== levelA) {
-        b = b._parent;
-      }
+    while (a._level > levelB) {
+      a = a._parent;
+    }
+    while (b._level > levelA) {
+      b = b._parent;
     }
     while (a._level > 1) {
       if (a._parent === b._parent) {
