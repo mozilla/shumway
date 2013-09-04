@@ -43,7 +43,7 @@ var StageDefinition = (function () {
       this._invalidObjects = [];
       this._redrawRegionColor = null;
       this._mouseMoved = false;
-      this._clickTarget = null;
+      this._clickTarget = this;
     },
 
     _setup: function setup(ctx, options) {
@@ -245,13 +245,11 @@ var StageDefinition = (function () {
       if (interactiveObject === this._clickTarget) {
         interactiveObject._dispatchEvent(new flash.events.MouseEvent('mouseMove'));
       } else {
-        if (this._clickTarget) {
-          if (this._clickTarget._buttonMode) {
-            this._clickTarget._gotoButtonState('up');
-          }
-
-          this._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseOut'));
+        if (this._clickTarget._buttonMode) {
+          this._clickTarget._gotoButtonState('up');
         }
+
+        this._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseOut'));
 
         if (interactiveObject._buttonMode) {
           interactiveObject._gotoButtonState('over');
