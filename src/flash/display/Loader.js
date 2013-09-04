@@ -22,7 +22,7 @@
          avm1lib, AS2Context, executeActions,
          createSoundStream, MP3DecoderSession, PLAY_USING_AUDIO_TAG,
          cloneObject, createEmptyObject, fromCharCode,
-         isNullOrUndefined */
+         isNullOrUndefined, sortNumeric */
 /*global SWF_TAG_CODE_DEFINE_BITS, SWF_TAG_CODE_DEFINE_BITS_JPEG2,
           SWF_TAG_CODE_DEFINE_BITS_JPEG3, SWF_TAG_CODE_DEFINE_BITS_JPEG4,
           SWF_TAG_CODE_DEFINE_BITS_LOSSLESS, SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2,
@@ -511,44 +511,72 @@ var LoaderDefinition = (function () {
                                                  loaderInfo._bytesTotal);
       loaderInfo._dispatchEvent(event);
     },
-    _buildFrame: function (displayList, timeline, promiseQueue, frame, frameNum) {
+    _buildFrame: function (currentDisplayList, timeline, promiseQueue, frame, frameNum) {
       var loader = this;
       var dictionary = loader._dictionary;
-      var labelName = frame.labelName;
 
-      displayList = cloneObject(displayList);
+      var displayList = { };
+      var depths = [];
 
-      var depths = frame.depths;
-      if (depths) {
-        for (var depth in depths) {
-          var cmd = depths[depth];
-          if (cmd) {
-            if (displayList[depth] && cmd.move) {
-              var oldCmd = cmd;
-              cmd = cloneObject(displayList[depth]);
-              for (var prop in oldCmd) {
-                var val = oldCmd[prop];
-                if (val)
-                  cmd[prop] = val;
-              }
-            }
+      var cmds = frame.depths;
 
-            if (cmd.symbolId) {
-              var itemPromise = dictionary[cmd.symbolId];
-              if (itemPromise && !itemPromise.resolved)
-                promiseQueue.push(itemPromise);
+      if (currentDisplayList) {
+        var currentDepths = currentDisplayList.depths;
+        for (var i = 0; i < currentDepths.length; i++) {
+          var depth = currentDepths[i];
 
-              cmd = cloneObject(cmd);
-              cmd.promise = itemPromise;
-            }
+          if (cmds[depth] === null) {
+            continue;
           }
-          displayList[depth] = cmd;
+
+          displayList[depth] = currentDisplayList[depth];
+          depths.push(depth);
         }
       }
 
+      for (var depth in cmds) {
+        var cmd = cmds[depth];
+
+        if (!cmd) {
+          continue;
+        }
+
+        if (cmd.move) {
+          var oldCmd = cmd;
+          cmd = cloneObject(currentDisplayList[depth]);
+          for (var prop in oldCmd) {
+            var val = oldCmd[prop];
+            if (val) {
+              cmd[prop] = val;
+            }
+          }
+        }
+
+        if (cmd.symbolId) {
+          var itemPromise = dictionary[cmd.symbolId];
+          if (itemPromise && !itemPromise.resolved) {
+            promiseQueue.push(itemPromise);
+          }
+
+          cmd = cloneObject(cmd);
+          cmd.promise = itemPromise;
+        }
+
+        if (!displayList[depth]) {
+          depths.push(depth);
+        }
+
+        displayList[depth] = cmd;
+      }
+
+      depths.sort(sortNumeric);
+
+      displayList.depths = depths;
+
       var i = frame.repeat;
-      while (i--)
+      while (i--) {
         timeline.push(displayList);
+      }
 
       return displayList;
     },
@@ -833,9 +861,12 @@ var LoaderDefinition = (function () {
           var characters = [];
           var displayList = { };
 
-          var depths = symbol.states[stateName];
-          for (var depth in depths) {
-            var cmd = depths[depth];
+          var state = symbol.states[stateName];
+          var depths = Object.keys(state);
+
+          for (var i = 0; i < depths.length; i++) {
+            var depth = depths[i];
+            var cmd = state[depth];
             var characterPromise = dictionary[cmd.symbolId];
             if (characterPromise && !characterPromise.resolved)
               promiseQueue.push(characterPromise);
@@ -845,6 +876,10 @@ var LoaderDefinition = (function () {
               promise: { value: characterPromise }
             });
           }
+
+          depths.sort(sortNumeric);
+
+          displayList.depths = depths;
 
           var statePromise = new Promise();
           statePromise.resolve({
