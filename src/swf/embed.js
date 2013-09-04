@@ -55,8 +55,7 @@ SWF.embed = function(file, doc, container, options) {
     var newCursor;
     if (!cursorVisible) {
       newCursor = 'none';
-    } else if (stage._clickTarget &&
-               stage._clickTarget._buttonMode &&
+    } else if (stage._clickTarget._buttonMode &&
                stage._clickTarget._useHandCursor) {
       newCursor = 'pointer';
     } else {
@@ -152,7 +151,6 @@ SWF.embed = function(file, doc, container, options) {
     canvas.addEventListener('mouseout', function () {
       stage._mouseMoved = true;
       stage._mouseOver = false;
-      stage._clickTarget = null;
     });
 
     var bgcolor = loaderInfo._backgroundColor;
