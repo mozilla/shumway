@@ -19,6 +19,7 @@
          readUi32, readUi16, Blob, StreamNoDataError, parseJpegChunks,
          generateParser, inflateBlock, verifyDeflateHeader, InflateNoDataError,
          readHeader */
+/*jshint -W069 */
 
 function readTags(context, stream, swfVersion, onprogress) {
   var tags = context.tags;

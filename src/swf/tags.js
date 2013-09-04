@@ -277,7 +277,7 @@ var PLACE_OBJECT = {
           $hasClassName: 'flags>>11&1',
           $cache: 'flags>>10&1',
           $blend: 'flags>>9&1',
-          $hasFilters: 'flags>>8&1',
+          $hasFilters: 'flags>>8&1'
         },
         {
           $cache: '0',
