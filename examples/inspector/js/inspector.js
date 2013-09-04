@@ -382,6 +382,8 @@ Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector
 function initUI() {
   document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
   document.getElementById("ctrlLogToConsole").classList.add("active");
+  document.getElementById("muteButton").classList.add("active");
+  avm2.systemDomain.getClass("flash.media.SoundMixer").native.static._setMasterVolume(state.mute ? 0 : 1);
 }
 
 function paused() {

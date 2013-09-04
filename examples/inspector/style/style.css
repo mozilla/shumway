@@ -28,6 +28,8 @@ body.simple #xstats {
   display: none;
 }
 
+.muteButton { background-image: url(images/mute-button.png); }
+
 .toolbarBox {
   position: absolute;
   width: auto;
@@ -64,6 +66,15 @@ body.simple #xstats {
 #timerInfo {
   line-height: 1.6em;
   padding: 3px;
+}
+
+#muteButton {
+  display: none;
+  float: right;
+  padding: 0 6px;
+}
+#muteButton.active {
+  display: inline-block;
 }
 
 #debugInfoToolbar > .toolbarButtonBar {
