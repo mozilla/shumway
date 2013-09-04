@@ -44,10 +44,10 @@ var BinaryFileReader = (function binaryFileReader() {
           }
           complete(xhr.response);
         }
-      }
-      if (this.mimeType)
+      };
+      if (this.mimeType) {
         xhr.setRequestHeader("Content-Type", this.mimeType);
-      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+      }
       xhr.send(this.data || null);
     },
     readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
@@ -79,10 +79,10 @@ var BinaryFileReader = (function binaryFileReader() {
             oncomplete();
           }
         }
-      }
-      if (this.mimeType)
+      };
+      if (this.mimeType) {
         xhr.setRequestHeader("Content-Type", this.mimeType);
-      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+      }
       xhr.send(this.data || null);
       if (onopen)
         onopen();

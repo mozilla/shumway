@@ -52,8 +52,7 @@ var BinaryFileReader = (function binaryFileReader() {
           }
           complete(xhr.response);
         }
-      }
-      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+      };
       xhr.send(null);
     },
     readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
@@ -92,8 +91,7 @@ var BinaryFileReader = (function binaryFileReader() {
         } else if (xhr.readyState === 2 && onopen) {
           onopen();
         }
-      }
-      xhr.setRequestHeader("If-Modified-Since", "Fri, 01 Jan 1960 00:00:00 GMT"); // no-cache
+      };
       xhr.send(null);
     }
   };
