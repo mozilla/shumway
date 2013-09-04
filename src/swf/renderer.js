@@ -95,7 +95,15 @@ RenderVisitor.prototype = {
     var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(this.root) ||
                       flash.display.SimpleButton.class.isInstanceOf(this.root);
 
+    // HACK compensate for visit()/renderDisplayObject() transform
+    var t = this.root.transform.matrix;
+    t.invert();
+    this.ctx.save();
+    this.ctx.transform(t.a, t.b, t.c, t.d, t.tx, t.ty);
+
     this.visit(this.root, isContainer, visitContainer);
+
+    this.ctx.restore();
   },
   childrenStart: function(parent) {
     if (this.depth === 0) {
