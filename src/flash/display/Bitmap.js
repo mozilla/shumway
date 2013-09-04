@@ -19,7 +19,13 @@
 
 var BitmapDefinition = (function () {
   function setBitmapData(value) {
+    if (this._bitmapData) {
+      this._bitmapData._changeNotificationTarget = null;
+    }
     this._bitmapData = value;
+    if (this._bitmapData) {
+      this._bitmapData._changeNotificationTarget = this;
+    }
 
     if (value) {
       var canvas = value._drawable;

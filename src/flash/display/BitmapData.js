@@ -31,6 +31,9 @@ var BitmapDataDefinition = (function () {
     __class__: 'flash.display.BitmapData',
 
     initialize: function () {
+      this._changeNotificationTarget = null;
+      this._locked = false;
+
       if (this.symbol) {
         this._img = this.symbol.img;
         this._skipCopyToCanvas = this.symbol.skipCopyToCanvas;
@@ -92,6 +95,7 @@ var BitmapDataDefinition = (function () {
       }
       (new RenderVisitor(source, this._ctx, true)).startFragment();
       this._ctx.restore();
+      this._invalidate();
     },
     fillRect: function(rect, color) {
       this._checkCanvas();
@@ -101,6 +105,7 @@ var BitmapDataDefinition = (function () {
       var ctx = this._ctx;
       ctx.fillStyle = argbUintToStr(color);
       replaceRect(ctx, rect.x, rect.y, rect.width, rect.height, color >>> 24 & 0xff);
+      this._invalidate();
     },
     getPixel: function(x, y) {
       this._checkCanvas();
@@ -112,11 +117,24 @@ var BitmapDataDefinition = (function () {
       var data = this._ctx.getImageData(x, y, 1, 1).data;
       return dataToARGB(data);
     },
+    _invalidate: function(changeRect) {
+      if (changeRect) {
+        somewhatImplemented("BitmapData._invalidate(changeRect)");
+      }
+      if (this._locked) {
+        return;
+      }
+      if (this._changeNotificationTarget) {
+        this._changeNotificationTarget._invalidate();
+      }
+    },
     setPixel: function(x, y, color) {
       this.fillRect({ x: x, y: y, width: 1, height: 1 }, color | 0xFF000000);
+      this._invalidate();
     },
     setPixel32: function(x, y, color) {
       this.fillRect({ x: x, y: y, width: 1, height: 1 }, color);
+      this._invalidate();
     },
     /**
      * Provides a fast routine to perform pixel manipulation between images with no stretching, rotation, or color effects.
@@ -135,20 +153,22 @@ var BitmapDataDefinition = (function () {
         this._ctx.clearRect(dx, dy, w, h);
       }
       this._ctx.drawImage(sourceBitmapData._drawable, sx, sy, w, h, dx, dy, w, h);
+      this._invalidate();
     },
     /**
      * Locks an image so that any objects that reference the BitmapData object, such as Bitmap objects,
      * are not updated when this BitmapData object changes.
      */
     lock: function lock() { // (void) -> void
-      somewhatImplemented("BitmapData.lock");
+      this._locked = true;
     },
     /**
      * Unlocks an image so that any objects that reference the BitmapData object, such as Bitmap
      * objects, are updated when this BitmapData object changes.
      */
     unlock: function unlock(changeRect) { // (changeRect:Rectangle = null) -> void
-      somewhatImplemented("BitmapData.unlock");
+      this._locked = false;
+      this._invalidate(changeRect);
     },
     clone: function() {
       this._checkCanvas();
@@ -179,6 +199,7 @@ var BitmapDataDefinition = (function () {
         replaceRect(this._ctx, h + y, w, -y, alpha);
       }
       this._ctx.restore();
+      this._invalidate();
     },
     get width() {
       return this._drawable.width;
