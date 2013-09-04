@@ -64,6 +64,9 @@ function sortByDepth(a, b) {
 
   return a._index - b._index;
 }
+function sortNumeric(a, b) {
+  return a - b;
+}
 
 var Promise = (function PromiseClosure() {
   function isPromise(obj) {

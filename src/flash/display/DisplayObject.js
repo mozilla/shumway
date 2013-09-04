@@ -28,10 +28,10 @@ var DisplayObjectDefinition = (function () {
 
   // Dictionary of all broadcasted events with the event type as key and a
   // value specifying if public or internal only.
-  var broadcastedEvents = { declareFrame: false, enterFrame: true,
+  var broadcastedEvents = { advanceFrame: false, enterFrame: true,
                             constructChildren: false, frameConstructed: true,
                             executeFrame: false, exitFrame: true,
-                            destructFrame: false, render: true };
+                            render: true };
 
   var def = {
     __class__: 'flash.display.DisplayObject',
