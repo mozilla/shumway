@@ -396,7 +396,7 @@ var createName = function createName(namespaces, name) {
           var coercer = getCoercerForType(parameter.type);
           if (coercer) {
             local = coercer(local);
-          } else if (c4CoerceParameters) {
+          } else if (c4CoerceNonPrimitiveParameters) {
             local = new Call(start, state.store, globalProperty("asCoerceByMultiname"), null, [constant(this.abc.domain), constant(parameter.type), local], true);
           }
         }
@@ -616,7 +616,7 @@ var createName = function createName(namespaces, name) {
               return coercer(value);
             }
           }
-          if (c4Coerce) {
+          if (c4CoerceNonPrimitive) {
             return call(globalProperty("asCoerceByMultiname"), null, [domain, constant(multiname), value]);
           }
           return value;
@@ -1139,8 +1139,8 @@ var createName = function createName(namespaces, name) {
               left = pop();
               if (typesAreEqual(left, right)) {
                 operator = Operator.ADD;
-              } else if (compatibility) {
-                operator = Operator.AVM2ADD;
+              } else if (useAsAdd) {
+                operator = Operator.AS_ADD;
               } else {
                 operator = Operator.ADD;
               }

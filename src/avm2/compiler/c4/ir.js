@@ -77,7 +77,7 @@
     operator.TRUE = new operator("!!", function (a) { return !!a; }, false);
     operator.FALSE = new operator("!", function (a) { return !a; }, false);
 
-    operator.AVM2ADD = new operator("+", function (l, r) {
+    operator.AS_ADD = new operator("+", function (l, r) {
       if (typeof l === "string" || typeof r === "string") {
         return String(l) + String(r);
       }

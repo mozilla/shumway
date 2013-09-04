@@ -503,7 +503,7 @@ function initializeGlobalObject(global) {
       // Save the original method in case |getNative| needs it.
       originals[object.name][originalFunctionName] = originalFunction;
       var overrideFunctionName = Multiname.getPublicQualifiedName(originalFunctionName);
-      if (compatibility) {
+      if (useSurrogates) {
         // Patch the native builtin with a surrogate.
         global[object.name].prototype[originalFunctionName] = function surrogate() {
           if (this[overrideFunctionName]) {
@@ -561,21 +561,6 @@ initializeGlobalObject(jsGlobal);
 function isNativePrototype(object) {
   return Object.prototype.hasOwnProperty.call(object, VM_NATIVE_PROTOTYPE_FLAG);
 }
-
-/**
- * ActionScript 3 has different behaviour when deciding whether to call toString or valueOf
- * when one operand is a string. Unlike JavaScript, it calls toString if one operand is a
- * string and valueOf otherwise. This sucks, but we have to emulate this behaviour because
- * YouTube depends on it.
- */
-function avm2Add(l, r) {
-  if (typeof l === "string" || typeof r === "string") {
-    return String(l) + String(r);
-  }
-  return l + r;
-}
-
-
 
 function asTypeOf(x) {
   // ABC doesn't box primitives, so typeof returns the primitive type even when
@@ -1779,7 +1764,6 @@ function createClass(classInfo, baseClass, scope) {
  * we "seal" constant traits properties by replacing them with setters that throw exceptions.
  */
 function sealConstantTraits(object, traits) {
-  var rt = this;
   for (var i = 0, j = traits.length; i < j; i++) {
     var trait = traits[i];
     if (trait.isConst()) {
@@ -1951,4 +1935,17 @@ function asCompare(a, b, options, compareFunction) {
     result *= -1;
   }
   return result;
+}
+
+/**
+ * ActionScript 3 has different behaviour when deciding whether to call toString or valueOf
+ * when one operand is a string. Unlike JavaScript, it calls toString if one operand is a
+ * string and valueOf otherwise. This sucks, but we have to emulate this behaviour because
+ * YouTube depends on it.
+ */
+function asAdd(l, r) {
+  if (typeof l === "string" || typeof r === "string") {
+    return String(l) + String(r);
+  }
+  return l + r;
 }

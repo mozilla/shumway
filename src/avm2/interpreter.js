@@ -471,7 +471,7 @@ var Interpreter = new ((function () {
           case 0xA0: // OP_add
             b = stack.pop();
             a = stack.pop();
-            stack.push(avm2Add(a, b));
+            stack.push(asAdd(a, b));
             break;
           case 0xA1: // OP_subtract
             b = stack.pop();

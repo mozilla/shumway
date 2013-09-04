@@ -20,11 +20,32 @@ var debug = true;
 var $DEBUG;
 var release = false;
 var compatibility = true;
+
+/**
+ * Allow overwriting of the native toString / valueOf with AS3 versions.
+ */
+var useSurrogates = true;
+
+/**
+ * Match AS3 add semantics related to toString/valueOf when adding values.
+ */
+var useAsAdd = true;
+
+/**
+ * Seals const traits. Technically we need to throw an exception if they are ever modified after
+ * the static or instance constructor executes, but we can safely ignore this incompatibility.
+ */
 var sealConstTraits = false;
 
 /**
- * Compiler Settings
+ * Coerce non-primitive parameters. We can "safely" ignore non-primitive coercions because AS3
+ * programs with invalid coercions would throw runtime exceptions.
  */
-var c4CoerceParameters = false;
-var c4Coerce = false;
+var c4CoerceNonPrimitiveParameters = false;
+
+/**
+ * Coerce non-primitive values. Same logic as above.
+ */
+var c4CoerceNonPrimitive = false;
+
 var c4AsTypeLate = true;
