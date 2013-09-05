@@ -27,6 +27,14 @@ var SoundChannelDefinition = (function () {
       this._rightPeak = 0;
       this._pcmData = null;
       this._soundTransform = null;
+
+      var s = this.symbol;
+      if (s) {
+        this._element = s.element || null;
+      }
+      if (this._element) {
+        this._registerWithSoundMixer();
+      }
     },
     _registerWithSoundMixer: function () {
       var soundMixerClass = avm2.systemDomain.getClass("flash.media.SoundMixer");
