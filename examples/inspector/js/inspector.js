@@ -351,14 +351,17 @@ swfController.onStateChange = function onStateChange(newState, oldState) {
     initUI();
   }
   var pauseButton = document.getElementById("pauseButton");
+  var stepButton = document.getElementById("stepButton");
   switch (newState) {
     case swfController.STATE_PLAYING:
       pauseButton.classList.remove("icon-play");
       pauseButton.classList.add("icon-pause");
+      stepButton.classList.add("disabled");
       break;
     case swfController.STATE_PAUSED:
       pauseButton.classList.add("icon-play");
       pauseButton.classList.remove("icon-pause");
+      stepButton.classList.remove("disabled");
       break;
   }
 }
@@ -376,7 +379,9 @@ function initUI() {
     swfController.togglePause();
   });
   document.getElementById("stepButton").addEventListener("click", function (event) {
-    swfController.play(1);
+    if (swfController.isPaused()) {
+      swfController.play(1);
+    }
   });
 }
 

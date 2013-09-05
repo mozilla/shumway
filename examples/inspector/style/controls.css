@@ -53,6 +53,9 @@
 .iconButton:hover {
   color: hsl(210,30%,100%);
 }
+.iconButton.disabled, .iconButton.disabled:hover {
+  opacity: 0.3;
+}
 
 .closeButton {
   float: left;
