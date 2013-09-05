@@ -1,0 +1,24 @@
+// 3_joystick.swf test script
+
+run_test = function (t, file) {
+  var initx = 115.1, inity = 116, delta = 70;
+  print ("Testing " + file);
+  t.reset (file);
+  var expected = Buffer.load (file + ".trace");
+  t.advance (100);
+  t.mouse_move (initx, inity);
+  t.advance (100);
+  t.mouse_press (initx, inity);
+  t.advance (100);
+  t.mouse_move (initx + delta, inity);
+  t.advance (1600);
+  t.mouse_release (initx + delta, inity);
+  t.advance (100);
+  var diff = t.trace.diff (expected);
+};
+
+t = new Test ();
+for (var i = 0; i < filenames.length; i++) {
+  run_test (t, filenames[i]);
+}
+
