@@ -29,7 +29,8 @@ var DEFAULT_SETTINGS = {
   mouse: true,
   redraw: false,
   release: true,
-  logToConsole: false
+  logToConsole: false,
+  mute: false
 };
 
 function loadState() {
@@ -152,4 +153,24 @@ document.getElementById("sample").addEventListener("click", function () {
     state.logToConsole = event.target.checked;
     saveState(state);
   });
+})();
+
+(function() {
+  var muteButton = document.getElementById("muteButton");
+  function setElementState() {
+    if (state.mute) {
+      muteButton.classList.remove("icon-volume-up");
+      muteButton.classList.add("icon-volume-off");
+    } else {
+      muteButton.classList.add("icon-volume-up");
+      muteButton.classList.remove("icon-volume-off");
+    }
+  }
+  muteButton.addEventListener("click", function (event) {
+    state.mute = !state.mute;
+    avm2.systemDomain.getClass("flash.media.SoundMixer").native.static._setMasterVolume(state.mute ? 0 : 1);
+    setElementState();
+    saveState(state);
+  });
+  setElementState();
 })();

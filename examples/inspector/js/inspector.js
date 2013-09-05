@@ -22,6 +22,8 @@ var pauseExecution = getQueryVariable("paused") === "true";
 var remoteFile = getQueryVariable("rfile");
 var yt = getQueryVariable('yt');
 
+var swfController = new SWFController(stats, pauseExecution);
+
 var libraryAbcs;
 function grabAbc(abcName) {
   var entry = libraryScripts[abcName];
@@ -149,7 +151,6 @@ function showMessage(msg) {
   document.getElementById('message').textContent = "(" + msg + ")";
 }
 
-var inspectorSWFLoader;
 function executeFile(file, buffer, movieParams) {
   // All execution paths must now load AVM2.
   if (!state.appCompiler) {
@@ -178,10 +179,11 @@ function executeFile(file, buffer, movieParams) {
       function runSWF(file, buffer) {
         var swfURL = FileLoadingService.resolveUrl(file);
         var loaderURL = getQueryVariable("loaderURL") || swfURL;
-        inspectorSWFLoader = SWF.embed(buffer || file, document, document.getElementById('stage'), {
-          onComplete: terminate,
-          onBeforeFrame: beforeFrame,
-          onAfterFrame: afterFrame,
+        SWF.embed(buffer || file, document, document.getElementById('stage'), {
+          onComplete: swfController.completeCallback.bind(swfController),
+          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
+          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
+          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
           url: swfURL,
           loaderURL: loaderURL,
           movieParams: movieParams || {},
@@ -237,37 +239,6 @@ function executeFile(file, buffer, movieParams) {
     });
   }
 }
-
-var initializeFrameControl = true;
-var isPaused = false;
-
-function terminate() {
-}
-function beforeFrame(e) {
-  if (initializeFrameControl) {
-    // skipping frame 0
-    initializeFrameControl = false;
-    initUI();
-    return;
-  }
-  if (pauseExecution) {
-    e.cancel = true;
-    if (!isPaused) {
-      paused();
-    }
-  }
-  isPaused = e.cancel;
-  stats.begin();
-}
-function afterFrame() {
-  stats.end();
-}
-
-document.addEventListener("keydown", function (event) {
-  if ((event.keyCode == 119 || event.keyCode == 80) && event.ctrlKey) { // Ctrl+F8 or Ctrl-p
-    pauseExecution = !pauseExecution;
-  }
-});
 
 (function setStageSize() {
   var stageSize = getQueryVariable("size");
@@ -343,7 +314,6 @@ Array.prototype.forEach.call(document.querySelectorAll(".toolbarButtonBar > .too
 });
 
 // toggle info panels (debug info, display list)
-var showDisplayList = false;
 var panelToggleButtonSelector = "#debugInfoToolbar > .toolbarButtonBar > .toolbarButton";
 function panelToggleButtonClickHandler(event) {
   Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
@@ -357,16 +327,16 @@ function panelToggleButtonClickHandler(event) {
   });
   switch (event.target.dataset.panelid) {
     case "displayListContainer":
-      if (isPaused) {
-        initDisplayListTree();
+      if (swfController.isPlaying()) {
+        swfController.pause(function() {
+          updateDisplayListTree();
+        });
+      } else {
+        updateDisplayListTree();
       }
-      showDisplayList = true;
-      pauseExecution = true;
       document.getElementById("ctrlLogToConsole").classList.remove("active");
       break;
     default:
-      showDisplayList = false;
-      pauseExecution = false;
       document.getElementById("ctrlLogToConsole").classList.add("active");
       break;
   }
@@ -375,18 +345,47 @@ Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector
   element.addEventListener("click", panelToggleButtonClickHandler);
 });
 
-function initUI() {
-  document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
-  document.getElementById("ctrlLogToConsole").classList.add("active");
-}
-
-function paused() {
-  if (showDisplayList) {
-    initDisplayListTree();
+swfController.onStateChange = function onStateChange(newState, oldState) {
+  if (oldState === swfController.STATE_INIT) {
+    initUI();
+  }
+  var pauseButton = document.getElementById("pauseButton");
+  var stepButton = document.getElementById("stepButton");
+  switch (newState) {
+    case swfController.STATE_PLAYING:
+      pauseButton.classList.remove("icon-play");
+      pauseButton.classList.add("icon-pause");
+      stepButton.classList.add("disabled");
+      break;
+    case swfController.STATE_PAUSED:
+      pauseButton.classList.add("icon-play");
+      pauseButton.classList.remove("icon-pause");
+      stepButton.classList.remove("disabled");
+      updateDisplayListTree();
+      break;
   }
 }
 
-function initDisplayListTree() {
-  var displayList = new DisplayListTree(inspectorSWFLoader._stage);
+function initUI() {
+  document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
+  document.getElementById("ctrlLogToConsole").classList.add("active");
+  document.getElementById("muteButton").classList.add("active");
+  document.getElementById("pauseButton").classList.add("active");
+  document.getElementById("stepButton").classList.add("active");
+
+  avm2.systemDomain.getClass("flash.media.SoundMixer").native.static._setMasterVolume(state.mute ? 0 : 1);
+
+  document.getElementById("pauseButton").addEventListener("click", function (event) {
+    swfController.togglePause();
+  });
+  document.getElementById("stepButton").addEventListener("click", function (event) {
+    if (swfController.isPaused()) {
+      swfController.play(1);
+    }
+  });
+}
+
+function updateDisplayListTree() {
+  var displayList = new DisplayListTree(swfController.stage);
   displayList.updateDom(document.getElementById("displayListContainer"));
 }

@@ -15,8 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global isNullOrUndefined */
 
 var SoundMixerDefinition = (function () {
+  var masterVolume = 1;
   var registeredChannels = [];
   return {
     // ()
@@ -33,6 +35,15 @@ var SoundMixerDefinition = (function () {
             var index = registeredChannels.indexOf(channel);
             if (index >= 0)
               registeredChannels.splice(index, 1);
+          },
+          _getMasterVolume: function _getMasterVolume() {
+            return masterVolume;
+          },
+          _setMasterVolume: function _setMasterVolume(volume) {
+            masterVolume = volume;
+            registeredChannels.forEach(function (channel) {
+              channel._applySoundTransform();
+            });
           },
           stopAll: function stopAll() {
             registeredChannels.forEach(function (channel) {
@@ -62,10 +73,19 @@ var SoundMixerDefinition = (function () {
           },
           soundTransform: {
             get: function soundTransform() { // (void) -> SoundTransform
-              notImplemented("SoundMixer.soundTransform");
+              somewhatImplemented("SoundMixer.soundTransform");
+              return isNullOrUndefined(this._soundTransform) ?
+                       new flash.media.SoundTransform() :
+                       new flash.media.SoundTransform(this._soundTransform._volume, this._soundTransform.pan);
             },
-            set: function soundTransform(pA) { // (pA:SoundTransform) -> void
-              notImplemented("SoundMixer.soundTransform");
+            set: function soundTransform(soundTransform) { // (soundTransform:SoundTransform) -> void
+              somewhatImplemented("SoundMixer.soundTransform");
+              this._soundTransform = isNullOrUndefined(soundTransform) ?
+                                       new flash.media.SoundTransform() :
+                                       soundTransform;
+              registeredChannels.forEach(function (channel) {
+                channel._applySoundTransform();
+              });
             }
           },
           audioPlaybackMode: {

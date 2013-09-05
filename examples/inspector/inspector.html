@@ -18,6 +18,7 @@ limitations under the License.
   <head>
     <meta charset="utf-8">
     <title>Shumway Inspector</title>
+    <link rel="stylesheet" href="style/font-awesome.css">
     <link rel="stylesheet" href="style/controls.css">
     <link rel="stylesheet" href="style/style.css">
   </head>
@@ -33,6 +34,9 @@ limitations under the License.
 
     <div id="topToolbar" class="toolbarBox withEmphasis">
       <div class="toolbarLabel">Shumway Inspector <span id="message"></span></div>
+      <div id="stepButton" class="iconButton icon-step-forward"></div>
+      <div id="pauseButton" class="iconButton icon-pause"></div>
+      <div id="muteButton" class="iconButton icon-volume-up"></div>
     </div>
 
     <div id="debugInfoToolbar" class="toolbarBox withEmphasis">
@@ -307,8 +311,14 @@ limitations under the License.
 
     <input type="file" id="files" name="files[]" multiple style="visibility: hidden;" accept="application/x-shockwave-flash">
 
+    <script>
+        var stats = new Stats();
+        document.getElementById('xstats').appendChild(stats.domElement);
+    </script>
+
     <script src="js/classes/BinaryFileReader.js"></script>
     <script src="js/classes/DisplayListTree.js"></script>
+    <script src="js/classes/SWFController.js"></script>
     <script src="js/classes/Terminal.js"></script>
     <script src="js/inspectorSettings.js"></script>
     <script src="js/inspectorLoader.js"></script>
@@ -317,11 +327,6 @@ limitations under the License.
 
     <script>
         SHUMWAY_ROOT = "../../src/";
-    </script>
-
-    <script>
-        var stats = new Stats();
-        document.getElementById('xstats').appendChild(stats.domElement);
     </script>
 
   </body>

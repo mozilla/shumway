@@ -39,6 +39,24 @@
   font-family: Lucida Grande, sans-serif;
 }
 
+.iconButton {
+  display: inline-block;
+  float: left;
+  width: 16px;
+  height: 22px;
+  line-height: 24px;
+  font-size: 14px;
+  text-align: center;
+  color: hsl(210,30%,85%);
+  cursor: default;
+}
+.iconButton:hover {
+  color: hsl(210,30%,100%);
+}
+.iconButton.disabled, .iconButton.disabled:hover {
+  opacity: 0.3;
+}
+
 .closeButton {
   float: left;
   width: 16px;
