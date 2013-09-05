@@ -69,15 +69,19 @@ var SWFController = (function() {
 
     pause: function pause(callback) {
       if (!pauseTrigger) {
-        onPauseCallback = callback;
         frames = 0;
+        onPauseCallback = callback;
         pauseTrigger = true;
       }
     },
     play: function play(numFrames, callback) {
       if (pauseTrigger) {
-        onPlayCallback = callback;
         frames = numFrames || 0;
+        if (frames > 0) {
+          onPauseCallback = callback;
+        } else {
+          onPlayCallback = callback;
+        }
         pauseTrigger = false;
       }
     },

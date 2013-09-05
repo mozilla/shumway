@@ -329,15 +329,14 @@ function panelToggleButtonClickHandler(event) {
     case "displayListContainer":
       if (swfController.isPlaying()) {
         swfController.pause(function() {
-          initDisplayListTree();
+          updateDisplayListTree();
         });
       } else {
-        initDisplayListTree();
+        updateDisplayListTree();
       }
       document.getElementById("ctrlLogToConsole").classList.remove("active");
       break;
     default:
-      swfController.play();
       document.getElementById("ctrlLogToConsole").classList.add("active");
       break;
   }
@@ -362,6 +361,7 @@ swfController.onStateChange = function onStateChange(newState, oldState) {
       pauseButton.classList.add("icon-play");
       pauseButton.classList.remove("icon-pause");
       stepButton.classList.remove("disabled");
+      updateDisplayListTree();
       break;
   }
 }
@@ -385,15 +385,7 @@ function initUI() {
   });
 }
 
-function initDisplayListTree() {
+function updateDisplayListTree() {
   var displayList = new DisplayListTree(swfController.stage);
   displayList.updateDom(document.getElementById("displayListContainer"));
 }
-
-/*
-document.addEventListener("keydown", function (event) {
-  if ((event.keyCode == 119 || event.keyCode == 80) && event.ctrlKey) { // Ctrl+F8 or Ctrl-p
-    swfController.togglePause();
-  }
-});
-*/
