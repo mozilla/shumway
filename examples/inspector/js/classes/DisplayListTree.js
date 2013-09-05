@@ -98,7 +98,6 @@ var DisplayListTree = (function() {
         var div = document.createElement("div");
         div.textContent = item.displayObject.class.className + " ";
         if (item.hasTimeline) {
-          console.log(item.displayObject.class.className, item.displayObject)
           if (item.displayObject._name) {
             var spanName = document.createElement("span");
             spanName.textContent = "'" + item.displayObject._name + "'";
