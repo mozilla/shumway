@@ -159,9 +159,11 @@ document.getElementById("sample").addEventListener("click", function () {
   var muteButton = document.getElementById("muteButton");
   function setElementState() {
     if (state.mute) {
-      muteButton.classList.add("pressedState");
+      muteButton.classList.remove("icon-volume-up");
+      muteButton.classList.add("icon-volume-off");
     } else {
-      muteButton.classList.remove("pressedState");
+      muteButton.classList.add("icon-volume-up");
+      muteButton.classList.remove("icon-volume-off");
     }
   }
   muteButton.addEventListener("click", function (event) {

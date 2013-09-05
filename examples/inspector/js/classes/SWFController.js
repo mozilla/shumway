@@ -26,6 +26,7 @@ var SWFController = (function() {
   var stats = null;
 
   var pauseTrigger = false;
+  var frames = 0;
 
   var onPauseCallback = null;
   var onPlayCallback = null;
@@ -59,6 +60,7 @@ var SWFController = (function() {
     this.STATE_INIT = STATE_INIT;
     this.STATE_PAUSED = STATE_PAUSED;
     this.STATE_PLAYING = STATE_PLAYING;
+    this.onStateChange = null;
     this.frameCount = 0;
     this.stage = null;
   }
@@ -66,12 +68,18 @@ var SWFController = (function() {
   SWFController.prototype = {
 
     pause: function pause(callback) {
-      pauseTrigger = true;
-      onPauseCallback = callback;
+      if (!pauseTrigger) {
+        onPauseCallback = callback;
+        frames = 0;
+        pauseTrigger = true;
+      }
     },
-    play: function play(callback) {
-      pauseTrigger = false;
-      onPlayCallback = callback;
+    play: function play(numFrames, callback) {
+      if (pauseTrigger) {
+        onPlayCallback = callback;
+        frames = numFrames || 0;
+        pauseTrigger = false;
+      }
     },
 
     togglePause: function togglePause() {
@@ -91,8 +99,10 @@ var SWFController = (function() {
     completeCallback: function completeCallback() {
     },
     beforeFrameCallback: function beforeFrameCallback(options) {
+      // make sure the first frame is always executed
       if (++this.frameCount > 1) {
         if (pauseTrigger) {
+          // pause execution
           options.cancel = true;
           if (state !== STATE_PAUSED) {
             stateChange.call(this, STATE_PAUSED);
@@ -113,6 +123,15 @@ var SWFController = (function() {
     afterFrameCallback: function afterFrameCallback() {
       if (state === STATE_PLAYING) {
         stats.end();
+        // if play() is called with numFrames != 0
+        if (frames > 0) {
+          // count down number of executed frame since
+          if (--frames === 0) {
+            // pause execution
+            pauseTrigger = true;
+            stateChange.call(this, STATE_PAUSED);
+          }
+        }
       }
     }
 

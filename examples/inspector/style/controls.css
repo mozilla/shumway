@@ -40,26 +40,18 @@
 }
 
 .iconButton {
+  display: inline-block;
   float: left;
   width: 16px;
   height: 22px;
-  background-repeat: no-repeat;
-  background-position: 0px center;
+  line-height: 24px;
+  font-size: 14px;
+  text-align: center;
+  color: hsl(210,30%,85%);
+  cursor: default;
 }
 .iconButton:hover {
-  background-position: -16px center;
-}
-.iconButton:hover:active {
-  background-position: -32px center;
-}
-.iconButton.active {
-  background-position: -48px center;
-}
-.iconButton.active:hover {
-  background-position: -64px center;
-}
-.iconButton.active:hover:active {
-  background-position: -80px center;
+  color: hsl(210,30%,100%);
 }
 
 .closeButton {

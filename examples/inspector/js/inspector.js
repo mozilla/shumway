@@ -350,10 +350,15 @@ swfController.onStateChange = function onStateChange(newState, oldState) {
   if (oldState === swfController.STATE_INIT) {
     initUI();
   }
+  var pauseButton = document.getElementById("pauseButton");
   switch (newState) {
     case swfController.STATE_PLAYING:
+      pauseButton.classList.remove("icon-play");
+      pauseButton.classList.add("icon-pause");
       break;
     case swfController.STATE_PAUSED:
+      pauseButton.classList.add("icon-play");
+      pauseButton.classList.remove("icon-pause");
       break;
   }
 }
@@ -362,7 +367,17 @@ function initUI() {
   document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
   document.getElementById("ctrlLogToConsole").classList.add("active");
   document.getElementById("muteButton").classList.add("active");
+  document.getElementById("pauseButton").classList.add("active");
+  document.getElementById("stepButton").classList.add("active");
+
   avm2.systemDomain.getClass("flash.media.SoundMixer").native.static._setMasterVolume(state.mute ? 0 : 1);
+
+  document.getElementById("pauseButton").addEventListener("click", function (event) {
+    swfController.togglePause();
+  });
+  document.getElementById("stepButton").addEventListener("click", function (event) {
+    swfController.play(1);
+  });
 }
 
 function initDisplayListTree() {

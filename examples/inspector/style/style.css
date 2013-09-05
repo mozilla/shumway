@@ -68,13 +68,23 @@ body.simple #xstats {
   padding: 3px;
 }
 
-#muteButton {
+#topToolbar > .iconButton {
   display: none;
   float: right;
-  padding: 0 6px;
+  padding: 0 2px;
 }
-#muteButton.active {
+#topToolbar > .iconButton.active {
   display: inline-block;
+}
+
+#muteButton {
+  margin-right: 8px;
+}
+#pauseButton {
+  font-size: 10px;
+}
+#stepButton {
+  font-size: 12px;
 }
 
 #debugInfoToolbar > .toolbarButtonBar {
