@@ -164,7 +164,7 @@ var SoundDefinition = (function () {
       channel._sound = this;
       channel._soundTransform = isNullOrUndefined(soundTransform) ?
                                   new flash.media.SoundTransform() :
-                                  soundTransform;;
+                                  soundTransform;
       this._playQueue.push({
         channel: channel,
         startTime: startTime
