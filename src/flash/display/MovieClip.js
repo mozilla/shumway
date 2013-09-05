@@ -202,7 +202,7 @@ var MovieClipDefinition = (function () {
         this._addTimelineChild(nextCmd, index);
       }
     },
-    _destructChildren: function destructObjects(nextFrameNum) {
+    _destructChildren: function destructChildren(nextFrameNum) {
       var currentFrame = this._currentFrame;
 
       if (nextFrameNum === currentFrame) {
@@ -349,21 +349,35 @@ var MovieClipDefinition = (function () {
       }
     },
 
-    _getAbsFrameNum: function (frameNum, scene) {
+    _getAbsFrameNum: function (frameNum, sceneName) {
+      if (frameNum < 0) {
+        frameNum = 1;
+      }
+
       // If a scene name is specified in gotoAndStop or gotoAndPlay,
       // and the specified frame is a number, the frame number is
       // relative to the scene.
-      if (typeof scene === "string" && this._scenes && this._scenes.length > 1) {
+      if (sceneName && this._scenes && this._scenes.length > 1) {
         var scenes = this._scenes;
-        for (var i = 0, n = scenes.length; i < n; i++) {
-          if (scene === scenes[i].name) {
-            frameNum += (scenes[i]._startFrame - 1);
+        for (var i = 0; i < scenes.length; i++) {
+          var scene = scenes[i];
+          if (scene.name === sceneName) {
+            frameNum += (scene._startFrame - 1);
+            if (frameNum > scene._endFrame) {
+              frameNum = scene._endFrame;
+            }
             break;
           }
         }
       }
 
-      // TODO: validate frameNum
+      if (frameNum > this._totalFrames) {
+        return 1;
+      }
+
+      if (frameNum > this._framesLoaded) {
+        return this._framesLoaded;
+      }
 
       return frameNum;
     },
