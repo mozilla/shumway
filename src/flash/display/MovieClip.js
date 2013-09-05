@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global MP3DecoderSession, avm1lib, construct, $DEBUG */
+/*global MP3DecoderSession, avm1lib, construct, URL, Blob, PLAY_USING_AUDIO_TAG, $DEBUG */
 
 var MovieClipDefinition = (function () {
   var def = {
@@ -374,14 +374,23 @@ var MovieClipDefinition = (function () {
     _initSoundStream: function (streamInfo) {
       var soundStream = this._soundStream = {
         data: {
-          pcm: new Float32Array(streamInfo.samplesCount * streamInfo.channels),
           sampleRate: streamInfo.sampleRate,
           channels: streamInfo.channels
         },
         seekIndex: [],
         position: 0
       };
-      if (streamInfo.format === 'mp3') {
+      var isMP3 = streamInfo.format === 'mp3';
+      if (isMP3 && PLAY_USING_AUDIO_TAG) {
+        var element = document.createElement('audio');
+        if (element.canPlayType('audio/mpeg')) {
+          soundStream.element = element;
+          soundStream.rawFrames = [];
+          return;
+        }
+      }
+      soundStream.data.pcm = new Float32Array(streamInfo.samplesCount * streamInfo.channels);
+      if (isMP3) {
         soundStream.decoderPosition = 0;
         soundStream.decoderSession = new MP3DecoderSession();
         soundStream.decoderSession.onframedata = function (frameData) {
@@ -402,6 +411,10 @@ var MovieClipDefinition = (function () {
         streamBlock.seek * soundStream.data.channels;
       soundStream.position = streamPosition +
         streamBlock.samplesCount * soundStream.data.channels;
+      if (soundStream.rawFrames) {
+        soundStream.rawFrames.push(streamBlock.data);
+        return;
+      }
 
       var decoderSession = soundStream.decoderSession;
       if (decoderSession) {
@@ -446,19 +459,43 @@ var MovieClipDefinition = (function () {
           }
         }
       }
-      if (this._soundStream) {
-        // Start from some seek offset, stopping
-        if (!this._soundStream.sound && this._soundStream.seekIndex[frameNum]) {
-          var className = 'flash.media.Sound';
-          var symbolClass = avm2.systemDomain.findClass(className) ?
-            avm2.systemDomain.getClass(className) :
-            avm2.applicationDomain.getClass(className);
+      if (this._soundStream && !isNaN(this._soundStream.seekIndex[frameNum])) {
+        var PAUSE_WHEN_OF_SYNC_GREATER = 2.0;
+        var RESET_WHEN_OF_SYNC_GREATER = 4.0;
+        var soundStream = this._soundStream;
+        var element = soundStream.element;
+        if (element) {
+          var soundStreamData = soundStream.data;
+          var time = soundStream.seekIndex[frameNum] / soundStreamData.sampleRate / soundStreamData.channels;
+          if (this._framesLoaded >= this._totalFrames && !soundStream.channel) {
+            var blob = new Blob(soundStream.rawFrames);
+            element.preload = 'metadata'; // for mobile devices
+            element.loop = false;
+            element.src = URL.createObjectURL(blob);
 
+            var symbolClass = flash.media.SoundChannel.class;
+            var channel = symbolClass.createAsSymbol({element: element});
+            symbolClass.instanceConstructor.call(channel);
+            soundStream.channel = channel;
+          } else if (!isNaN(element.duration) && element.currentTime > time + PAUSE_WHEN_OF_SYNC_GREATER &&
+            element.currentTime < time + RESET_WHEN_OF_SYNC_GREATER) {
+            element.pause();
+          } else if (!isNaN(element.duration) &&
+                     (element.paused || Math.abs(element.currentTime - time) > RESET_WHEN_OF_SYNC_GREATER)) {
+            if (Math.abs(element.currentTime - time) > PAUSE_WHEN_OF_SYNC_GREATER) {
+              element.pause();
+              element.currentTime = time;
+            }
+            element.play();
+          }
+        } else if (!soundStream.sound) {
+          // Start from some seek offset, stopping
+          var symbolClass = flash.media.Sound.class;
           var sound = symbolClass.createAsSymbol(this._soundStream.data);
           symbolClass.instanceConstructor.call(sound);
           var channel = sound.play();
-          this._soundStream.sound = sound;
-          this._soundStream.channel = channel;
+          soundStream.sound = sound;
+          soundStream.channel = channel;
         }
       }
     },
