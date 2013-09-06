@@ -583,7 +583,7 @@ var MovieClipDefinition = (function () {
       return this._totalFrames;
     },
     get scenes() {
-      return this._scenes;
+      return this._scenes || [];
     },
     get trackAsMenu() {
       return false;

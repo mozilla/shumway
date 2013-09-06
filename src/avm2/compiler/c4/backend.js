@@ -489,8 +489,8 @@
   IR.Binary.prototype.compile = function (cx) {
     var left = compileValue(this.left, cx);
     var right = compileValue(this.right, cx);
-    if (this.operator === Operator.AVM2ADD) {
-      return call(id("avm2Add"), [left, right]);
+    if (this.operator === Operator.AS_ADD) {
+      return call(id("asAdd"), [left, right]);
     }
     return new BinaryExpression (this.operator.name, left, right);
   };

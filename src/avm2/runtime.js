@@ -119,6 +119,7 @@ function ic(object) {
   return object.ic || (object.ic = new InlineCache());
 }
 
+
 /* This is used to keep track if we're in a runtime context. For instance, proxies need to
  * know if a proxied operation is triggered by AS3 code or VM code.
 */
@@ -161,6 +162,9 @@ function objectConstantName(object) {
   if (object.hasOwnProperty(OBJECT_NAME)) {
     return object[OBJECT_NAME];
   }
+  if (object instanceof LazyInitializer) {
+    return object.getName();
+  }
   var name, id = objectIDs++;
   if (object instanceof Global) {
     name = "$G" + id;
@@ -175,6 +179,56 @@ function objectConstantName(object) {
   jsGlobal[name] = object;
   return name;
 }
+
+/**
+ * Self patching global property stub that lazily initializes objects like scripts and
+ * classes.
+ */
+var LazyInitializer = (function () {
+  var holder = jsGlobal;
+  lazyInitializer.create = function (target) {
+    if (target.lazyInitializer) {
+      return target.lazyInitializer;
+    }
+    return target.lazyInitializer = new LazyInitializer(target);
+  };
+  function lazyInitializer(target) {
+    assert (!target.lazyInitializer);
+    this.target = target;
+  }
+  lazyInitializer.prototype.getName = function getName() {
+    if (this.name) {
+      return this.name;
+    }
+    var target = this.target, initialize;
+    if (this.target instanceof ScriptInfo) {
+      this.name = "$S" + objectIDs++;
+      initialize = function () {
+        ensureScriptIsExecuted(target, "Lazy Initializer");
+        return target.global;
+      };
+    } else if (this.target instanceof ClassInfo) {
+      this.name = Multiname.getQualifiedName(target.instanceInfo.name);
+      initialize = function () {
+        return target.abc.domain.getProperty(target.instanceInfo.name);
+      };
+    } else {
+      notImplemented(target);
+    }
+    var name = this.name;
+    assert (!holder[name]);
+    Object.defineProperty(holder, name, {
+      get: function () {
+        var value = initialize();
+        assert (value);
+        Object.defineProperty(holder, name, { value: value, writable: true });
+        return value;
+      }, configurable: true
+    });
+    return name;
+  };
+  return lazyInitializer;
+})();
 
 /**
  * Property Accessors:
@@ -503,7 +557,7 @@ function initializeGlobalObject(global) {
       // Save the original method in case |getNative| needs it.
       originals[object.name][originalFunctionName] = originalFunction;
       var overrideFunctionName = Multiname.getPublicQualifiedName(originalFunctionName);
-      if (compatibility) {
+      if (useSurrogates) {
         // Patch the native builtin with a surrogate.
         global[object.name].prototype[originalFunctionName] = function surrogate() {
           if (this[overrideFunctionName]) {
@@ -561,21 +615,6 @@ initializeGlobalObject(jsGlobal);
 function isNativePrototype(object) {
   return Object.prototype.hasOwnProperty.call(object, VM_NATIVE_PROTOTYPE_FLAG);
 }
-
-/**
- * ActionScript 3 has different behaviour when deciding whether to call toString or valueOf
- * when one operand is a string. Unlike JavaScript, it calls toString if one operand is a
- * string and valueOf otherwise. This sucks, but we have to emulate this behaviour because
- * YouTube depends on it.
- */
-function avm2Add(l, r) {
-  if (typeof l === "string" || typeof r === "string") {
-    return String(l) + String(r);
-  }
-  return l + r;
-}
-
-
 
 function asTypeOf(x) {
   // ABC doesn't box primitives, so typeof returns the primitive type even when
@@ -1171,16 +1210,23 @@ var Global = (function () {
   return Global;
 })();
 
-/**
- * Checks if the specified method should be compiled. For now we just ignore very large methods.
- */
-function shouldCompile(mi) {
+function canCompile(mi) {
   if (!mi.hasBody) {
     return false;
   }
   if (mi.hasExceptions() && !compilerEnableExceptions.value) {
     return false;
   } else if (mi.code.length > compilerMaximumMethodSize.value) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Checks if the specified method should be compiled. For now we just ignore very large methods.
+ */
+function shouldCompile(mi) {
+  if (!canCompile(mi)) {
     return false;
   }
   // Don't compile class and script initializers since they only run once.
@@ -1283,7 +1329,7 @@ function createCompiledFunctionTrampoline(methodInfo, scope, hasDynamicScope, br
 
 function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
   var mi = methodInfo;
-  if (deferCompilation) {
+  if (false && deferCompilation) {
     return createCompiledFunctionTrampoline(methodInfo, scope, hasDynamicScope, breakpoint);
   }
   $M.push(mi);
@@ -1766,7 +1812,9 @@ function createClass(classInfo, baseClass, scope) {
   createFunction(classInfo.init, scope).call(cls);
 
   // Seal constant traits in the class object.
-  this.sealConstantTraits(cls, ci.traits);
+  if (sealConstTraits) {
+    this.sealConstantTraits(cls, ci.traits);
+  }
 
   return cls;
 }
@@ -1777,7 +1825,6 @@ function createClass(classInfo, baseClass, scope) {
  * we "seal" constant traits properties by replacing them with setters that throw exceptions.
  */
 function sealConstantTraits(object, traits) {
-  var rt = this;
   for (var i = 0, j = traits.length; i < j; i++) {
     var trait = traits[i];
     if (trait.isConst()) {
@@ -1949,4 +1996,17 @@ function asCompare(a, b, options, compareFunction) {
     result *= -1;
   }
   return result;
+}
+
+/**
+ * ActionScript 3 has different behaviour when deciding whether to call toString or valueOf
+ * when one operand is a string. Unlike JavaScript, it calls toString if one operand is a
+ * string and valueOf otherwise. This sucks, but we have to emulate this behaviour because
+ * YouTube depends on it.
+ */
+function asAdd(l, r) {
+  if (typeof l === "string" || typeof r === "string") {
+    return String(l) + String(r);
+  }
+  return l + r;
 }
