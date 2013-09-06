@@ -131,7 +131,8 @@ var MovieClipDefinition = (function () {
         return;
       }
 
-      var currentDisplayList = this._currentDisplayList;
+      var prevDisplayListItem = null;
+      var currentDisplayListItem = this._currentDisplayList;
 
       var children = this._children;
       var depths = nextDisplayList.depths;
@@ -142,16 +143,21 @@ var MovieClipDefinition = (function () {
 
       var i = depths.length;
       while (i--) {
-        var depth = depths[i];
-        var currentCmd = currentDisplayList[depth];
-        var nextCmd = nextDisplayList[depth];
+        var depth = depths[i], depthInt = +depth;
+        while (currentDisplayListItem && currentDisplayListItem.depth > depthInt) {
+          // skipping non-changed items
+          prevDisplayListItem = currentDisplayListItem;
+          currentDisplayListItem = currentDisplayListItem.next;
+        }
 
         var currentChild = depthMap[depth];
-
         if (currentChild && currentChild._owned) {
           index = this.getChildIndex(currentChild);
         }
 
+        var currentCmd = currentDisplayListItem && currentDisplayListItem.depth === depthInt ?
+          currentDisplayListItem.cmd : null;
+        var nextCmd = nextDisplayList[depth];
         if (!nextCmd || nextCmd === currentCmd) {
           continue;
         }
@@ -198,7 +204,18 @@ var MovieClipDefinition = (function () {
           continue;
         }
 
-        currentDisplayList[depth] = nextCmd;
+        var newDisplayListItem = {
+          depth: depthInt,
+          cmd: nextCmd,
+          next: currentDisplayListItem
+        };
+        if (prevDisplayListItem) {
+          prevDisplayListItem.next = newDisplayListItem;
+        } else {
+          this._currentDisplayList = newDisplayListItem;
+        }
+        prevDisplayListItem = newDisplayListItem;
+
         this._addTimelineChild(nextCmd, index);
       }
     },
@@ -215,22 +232,34 @@ var MovieClipDefinition = (function () {
         return;
       }
 
-      var currentDisplayList = this._currentDisplayList;
-
-      for (var i = 0; i < currentDisplayList.length; i++) {
-        var depth = i;
-        var currentCmd = currentDisplayList[depth];
-        if (!currentCmd) {
-          continue;
-        }
-
+      var prevDisplayListItem = null;
+      var currentDisplayListItem = this._currentDisplayList;
+      var toRemove = null;
+      while (currentDisplayListItem) {
+        var depth = currentDisplayListItem.depth;
+        var currentCmd = currentDisplayListItem.cmd;
         var nextCmd = nextDisplayList[depth];
         if (!nextCmd ||
-            nextCmd.symbolId !== currentCmd.symbolId ||
-            nextCmd.ratio !== currentCmd.ratio) {
-          this._removeTimelineChild(currentCmd);
-          currentDisplayList[depth] = null;
+          nextCmd.symbolId !== currentCmd.symbolId ||
+          nextCmd.ratio !== currentCmd.ratio) {
+
+          var nextDisplayListItem = currentDisplayListItem.next;
+          if (prevDisplayListItem) {
+            prevDisplayListItem.next = nextDisplayListItem;
+          } else {
+            this._currentDisplayList = nextDisplayListItem;
+          }
+          currentDisplayListItem.next = toRemove;
+          toRemove = currentDisplayListItem;
+          currentDisplayListItem = nextDisplayListItem;
+        } else {
+          prevDisplayListItem = currentDisplayListItem;
+          currentDisplayListItem = currentDisplayListItem.next;
         }
+      }
+      while (toRemove) {
+        this._removeTimelineChild(toRemove.cmd);
+        toRemove = toRemove.next;
       }
     },
 
