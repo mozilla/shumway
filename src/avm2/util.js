@@ -299,6 +299,9 @@ function isNumeric(x) {
 }
 
 function boxValue(value) {
+  if (isNullOrUndefined(value)) {
+    return value;
+  }
   return Object(value);
 }
 
