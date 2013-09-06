@@ -1103,6 +1103,13 @@ var IndentingWriter = (function () {
     }
   };
 
+  indentingWriter.prototype.writeLns = function writeLns(str) {
+    var lines = str.split("\n");
+    for (var i = 0; i < lines.length; i++) {
+      this.writeLn(lines[i]);
+    }
+  };
+
   indentingWriter.prototype.debugLn = function debugLn(str) {
     this.colorLn(PURPLE, str);
   };
