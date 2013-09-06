@@ -240,7 +240,7 @@ var createName = function createName(namespaces, name) {
 
   function binary(operator, left, right) {
     var node = new Binary(operator, left, right);
-    if (left.ty && left.ty === right.ty) {
+    if (left.ty && left.ty !== Type.Any && left.ty === right.ty) {
       if (operator === Operator.EQ) {
         node.operator = Operator.SEQ;
       } else if (operator === Operator.NE) {
