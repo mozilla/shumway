@@ -258,7 +258,7 @@ var MovieClipDefinition = (function () {
           return;
         }
 
-        if (enterFrame && execute) {
+        if (enterFrame && (execute || !this._loader._isAvm2Enabled)) {
           this._callFrame(frameNum);
         }
 
