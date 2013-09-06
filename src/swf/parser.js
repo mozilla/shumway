@@ -19,6 +19,7 @@
          readUi32, readUi16, Blob, StreamNoDataError, parseJpegChunks,
          generateParser, inflateBlock, verifyDeflateHeader, InflateNoDataError,
          readHeader */
+/*jshint -W069 */
 
 function readTags(context, stream, swfVersion, onprogress) {
   var tags = context.tags;
@@ -315,7 +316,7 @@ SWF.parseAsync = function swf_parseAsync(options) {
       target = new CompressedPipe(target, bodyLength);
     }
     target.push(buffer.getTail(8), progressInfo);
-    pipe.target = target;
+    pipe["target"] = target;
   }
 
   function parseImage(data, bytesTotal, type) {
@@ -323,7 +324,7 @@ SWF.parseAsync = function swf_parseAsync(options) {
     buffer.set(data);
     var bufferPos = data.length;
 
-    pipe.target = {
+    pipe["target"] = {
       push: function (data) {
         buffer.set(data, bufferPos);
         bufferPos += data.length;

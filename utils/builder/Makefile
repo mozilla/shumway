@@ -78,6 +78,7 @@ build: ensureoutputdir
 	# cp $(BUILD_DIR)/shumway.js $(BUILD_DIR)/shumway.js.original && node instrument.js $(BUILD_DIR)/shumway.js > $(BUILD_DIR)/shumway.js.instrumented && mv $(BUILD_DIR)/shumway.js.instrumented $(BUILD_DIR)/shumway.js
 	cp templates/LICENSE.js $(BUILD_DIR)/shumway-worker.js
 	CLOSURE=$(CLOSURE) node build.js templates/scripts-worker.js >> $(BUILD_DIR)/shumway-worker.js
+	CLOSURE=$(CLOSURE) node build.js templates/scripts-worker-compiled.js -fc -c a >> $(BUILD_DIR)/shumway-worker.js
 	# Removing hidden files
 	-find $(BUILD_DIR) -name ".DS_Store" -exec rm {} \;
 
