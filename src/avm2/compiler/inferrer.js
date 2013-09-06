@@ -141,7 +141,7 @@ var Type = (function () {
     return this instanceof ParameterizedType;
   };
 
-  type.prototype.instance = function () {
+  type.prototype.instanceType = function () {
     return this;
   };
 
@@ -169,18 +169,18 @@ var Type = (function () {
     type.Null = new AtomType("Null");
     type.Undefined = new AtomType("Undefined");
     type.Void = new AtomType("Void");
-    type.Int = Type.fromSimpleName("int", domain).instance();
-    type.Uint = Type.fromSimpleName("uint", domain).instance();
-    type.Class = Type.fromSimpleName("Class", domain).instance();
-    type.Array = Type.fromSimpleName("Array", domain).instance();
-    type.Object = Type.fromSimpleName("Object", domain).instance();
-    type.String = Type.fromSimpleName("String", domain).instance();
-    type.Number = Type.fromSimpleName("Number", domain).instance();
-    type.Boolean = Type.fromSimpleName("Boolean", domain).instance();
-    type.Function = Type.fromSimpleName("Function", domain).instance();
-    type.XML = Type.fromSimpleName("XML", domain).instance();
-    type.XMLList = Type.fromSimpleName("XMLList", domain).instance();
-    type.Dictionary = Type.fromSimpleName("flash.utils.Dictionary", domain).instance();
+    type.Int = Type.fromSimpleName("int", domain).instanceType();
+    type.Uint = Type.fromSimpleName("uint", domain).instanceType();
+    type.Class = Type.fromSimpleName("Class", domain).instanceType();
+    type.Array = Type.fromSimpleName("Array", domain).instanceType();
+    type.Object = Type.fromSimpleName("Object", domain).instanceType();
+    type.String = Type.fromSimpleName("String", domain).instanceType();
+    type.Number = Type.fromSimpleName("Number", domain).instanceType();
+    type.Boolean = Type.fromSimpleName("Boolean", domain).instanceType();
+    type.Function = Type.fromSimpleName("Function", domain).instanceType();
+    type.XML = Type.fromSimpleName("XML", domain).instanceType();
+    type.XMLList = Type.fromSimpleName("XMLList", domain).instanceType();
+    type.Dictionary = Type.fromSimpleName("flash.utils.Dictionary", domain).instanceType();
     typesInitialized = true;
   };
   return type;
@@ -311,7 +311,7 @@ var TraitsType = (function () {
     if (mn instanceof MultinameType) {
       return null;
     }
-    if (followSuperType && this.isInstanceInfo()) {
+    if (followSuperType && (this.isInstanceInfo() || this.isClassInfo())) {
       var that = this;
       do {
         var trait = that.getTrait(mn, isSetter, false);
@@ -346,15 +346,23 @@ var TraitsType = (function () {
     return nameOf(this.object);
   };
 
-  traitsType.prototype.instance = function () {
+  traitsType.prototype.instanceType = function () {
     release || assert(this.object instanceof ClassInfo);
     return this.instanceCache || (this.instanceCache = Type.from(this.object.instanceInfo, this.domain));
   };
 
+  traitsType.prototype.classType = function () {
+    release || assert(this.object instanceof InstanceInfo);
+    return this.instanceCache || (this.instanceCache = Type.from(this.object.classInfo, this.domain));
+  };
+
   traitsType.prototype.super = function () {
+    if (this.object instanceof ClassInfo) {
+      return Type.Class;
+    }
     release || assert(this.object instanceof InstanceInfo);
     if (this.object.superName) {
-      var result = Type.fromName(this.object.superName, this.domain).instance();
+      var result = Type.fromName(this.object.superName, this.domain).instanceType();
       release || assert(result instanceof TraitsType && result.object instanceof InstanceInfo);
       return result;
     }
@@ -367,6 +375,10 @@ var TraitsType = (function () {
 
   traitsType.prototype.isInstanceInfo = function () {
     return this.object instanceof InstanceInfo;
+  };
+
+  traitsType.prototype.isInstanceOrClassInfo = function () {
+    return this.isInstanceInfo() || this.isClassInfo();
   };
 
   traitsType.prototype.equals = function (other) {
@@ -425,9 +437,9 @@ var ParameterizedType = (function () {
   parameterizedType.prototype.toString = function () {
     return this.type + "<" + this.parameter + ">";
   };
-  parameterizedType.prototype.instance = function () {
+  parameterizedType.prototype.instanceType = function () {
     release || assert(this.type instanceof TraitsType);
-    return new ParameterizedType(this.type.instance(), this.parameter.instance());
+    return new ParameterizedType(this.type.instanceType(), this.parameter.instanceType());
   };
   parameterizedType.prototype.equals = function (other) {
     if (other instanceof ParameterizedType) {
@@ -583,7 +595,7 @@ var Verifier = (function() {
 
       // Initialize entry state with parameter types.
       for (var i = 0; i < mi.parameters.length; i++) {
-        entryState.local.push(Type.fromName(mi.parameters[i].type, this.domain).instance());
+        entryState.local.push(Type.fromName(mi.parameters[i].type, this.domain).instanceType());
       }
 
       var remainingLocals = mi.localCount - mi.parameters.length - 1;
@@ -709,7 +721,7 @@ var Verifier = (function() {
           if (obj === Type.Function || obj === Type.Class || obj === Type.Object) {
             return Type.Object;
           }
-          return obj.instance();
+          return obj.instanceType();
         } else {
           return Type.Any;
         }
@@ -738,7 +750,10 @@ var Verifier = (function() {
           return Type.Any;
         }
         
-        // Try to find it in the scope stack.
+        /**
+         * Try to find the property in the scope stack. For instance methods the scope
+         * stack should already have the instance object.
+         */
         for (var i = scope.length - 1; i >= 0; i--) {
           if (scope[i] instanceof TraitsType) {
             // TODO: Should we be looking for getter / setter traits?
@@ -752,30 +767,40 @@ var Verifier = (function() {
           }
         }
 
-        // Try the saved scope.
+        /**
+         * If this is a static or instance method then look for the property in the
+         * class object.
+         */
+        if (isClassOrInstanceInfo(mi.holder)) {
+          var classType;
+          if (mi.holder instanceof ClassInfo) {
+            classType = Type.from(mi.holder, domain);
+          } else if (mi.holder instanceof InstanceInfo) {
+            classType = Type.from(mi.holder, domain).classType();
+          }
+          var trait = classType.getTrait(mn, false, true);
+          if (trait) {
+            ti().object = LazyInitializer.create(classType.object);
+            return classType;
+          }
+        }
+
+        /**
+         * Try the saved scope.
+         */
         if (savedScope && savedScope.object && mn instanceof Multiname) {
           var obj = savedScope.findScopeProperty(mn.namespaces, mn.name, mn.flags, domain, strict, true);
           if (obj) {
             var savedScopeDepth = savedScope.findDepth(obj);
             release || assert(savedScopeDepth >= 0);
             ti().scopeDepth = savedScopeDepth + scope.length;
-            if (obj instanceof Global || isClass(obj)) {
-              ti().object = obj;
-            }
             return Type.from(obj, domain);
           }
         }
 
-        // var resolved = domain.findDefiningScript(mn, !mi.isInstanceInitializer);
-        var resolved = domain.findDefiningScript(mn, true);
+        var resolved = domain.findDefiningScript(mn, false);
         if (resolved) {
-          var global = resolved.script.global;
-          if (global) {
-            release || assert(global instanceof Global);
-            ti().object = global;
-          } else if (resolved.script) {
-            ti().script = resolved.script;
-          }
+          ti().object = LazyInitializer.create(resolved.script);
           return Type.from(resolved.script, domain);
         }
         return Type.Any;
@@ -804,7 +829,7 @@ var Verifier = (function() {
           if (trait) {
             ti().trait = trait;
             if (trait.isSlot()) {
-              return Type.fromName(trait.typeName, domain).instance();
+              return Type.fromName(trait.typeName, domain).instanceType();
             } else if (trait.isClass()) {
               return Type.from(trait.classInfo, domain);
             }
@@ -826,15 +851,17 @@ var Verifier = (function() {
           if (trait) {
             ti().trait = trait;
             if (trait.isSlot() || trait.isConst()) {
-              return Type.fromName(trait.typeName, domain).instance();
+              return Type.fromName(trait.typeName, domain).instanceType();
             } else if (trait.isGetter()) {
-              return Type.fromName(trait.methodInfo.returnType, domain).instance();
+              return Type.fromName(trait.methodInfo.returnType, domain).instanceType();
             } else if (trait.isClass()) {
               return Type.from(trait.classInfo, domain);
             } else if (trait.isMethod()) {
               return Type.from(trait.methodInfo, domain);
             }
           } else if (obj.isDirectlyReadable() && mn instanceof Multiname) {
+            ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
+          } else if (obj === Type.Object && mn instanceof Multiname) {
             ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
           }
           if (isNumericMultiname(mn)) {
@@ -1067,9 +1094,9 @@ var Verifier = (function() {
               break;
             }
             if (type instanceof MethodType) {
-              returnType = Type.fromName(type.methodInfo.returnType, domain).instance();
+              returnType = Type.fromName(type.methodInfo.returnType, domain).instanceType();
             } else if (type instanceof TraitsType && type.isClassInfo()) {
-              returnType = type.instance();
+              returnType = type.instanceType();
             } else {
               returnType = Type.Any;
             }
@@ -1081,7 +1108,7 @@ var Verifier = (function() {
           case OP_returnvalue:
             type = pop();
             if (mi.returnType) {
-              var coerceType = Type.fromName(mi.returnType, this.domain).instance();
+              var coerceType = Type.fromName(mi.returnType, this.domain).instanceType();
               if (coerceType.isSubtypeOf(type)) {
                 ti().noCoercionNeeded = true;
               }
@@ -1275,7 +1302,7 @@ var Verifier = (function() {
           case OP_coerce:
             // print("<<< " + multinames[bc.index] + " >>>");
             type = pop();
-            var coerceType = Type.fromName(multinames[bc.index], this.domain).instance();
+            var coerceType = Type.fromName(multinames[bc.index], this.domain).instanceType();
             if (coerceType.isSubtypeOf(type)) {
               ti().noCoercionNeeded = true;
             }
@@ -1295,7 +1322,7 @@ var Verifier = (function() {
             type = pop();
             pop();
             if (type instanceof TraitsType) {
-              push(type.instance());
+              push(type.instanceType());
             } else {
               push(Type.Any);
             }

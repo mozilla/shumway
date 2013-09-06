@@ -1212,6 +1212,15 @@ var MethodInfo = (function () {
     },
     isNative: function isNative() {
       return !!(this.flags & METHOD_Native);
+    },
+    isClassMember: function isClassMember() {
+      return this.holder instanceof ClassInfo;
+    },
+    isInstanceMember: function isInstanceMember() {
+      return this.holder instanceof InstanceInfo;
+    },
+    isScriptMember: function isScriptMember() {
+      return this.holder instanceof ScriptInfo;
     }
   };
 
@@ -1356,6 +1365,7 @@ var ClassInfo = (function () {
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
     this.instanceInfo = instanceInfo;
+    this.instanceInfo.classInfo = this;
     this.defaultValue = getDefaultValue(this.instanceInfo.name);
   }
 
@@ -1379,14 +1389,19 @@ var ClassInfo = (function () {
   return classInfo;
 })();
 
+function isClassOrInstanceInfo(x) {
+  return x instanceof ClassInfo || x instanceof InstanceInfo;
+}
+
 var ScriptInfo = (function scriptInfo() {
   var nextID = 1;
-  function scriptInfo(abc, idx, stream) {
+  function scriptInfo(abc, index, stream) {
     this.id = nextID ++;
     this.abc = abc;
-    this.name = abc.name + "$script" + idx;
+    this.name = abc.name + "$script" + index;
     this.init = abc.methods[stream.readU30()];
     this.init.isScriptInitializer = true;
+    this.index = index;
     attachHolder(this.init, this);
     this.traits = parseTraits(abc, stream, this);
     this.traits.verified = true;

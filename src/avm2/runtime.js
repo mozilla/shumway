@@ -119,6 +119,7 @@ function ic(object) {
   return object.ic || (object.ic = new InlineCache());
 }
 
+
 /* This is used to keep track if we're in a runtime context. For instance, proxies need to
  * know if a proxied operation is triggered by AS3 code or VM code.
 */
@@ -161,6 +162,9 @@ function objectConstantName(object) {
   if (object.hasOwnProperty(OBJECT_NAME)) {
     return object[OBJECT_NAME];
   }
+  if (object instanceof LazyInitializer) {
+    return object.getName();
+  }
   var name, id = objectIDs++;
   if (object instanceof Global) {
     name = "$G" + id;
@@ -175,6 +179,56 @@ function objectConstantName(object) {
   jsGlobal[name] = object;
   return name;
 }
+
+/**
+ * Self patching global property stub that lazily initializes objects like scripts and
+ * classes.
+ */
+var LazyInitializer = (function () {
+  var holder = jsGlobal;
+  lazyInitializer.create = function (target) {
+    if (target.lazyInitializer) {
+      return target.lazyInitializer;
+    }
+    return target.lazyInitializer = new LazyInitializer(target);
+  };
+  function lazyInitializer(target) {
+    assert (!target.lazyInitializer);
+    this.target = target;
+  }
+  lazyInitializer.prototype.getName = function getName() {
+    if (this.name) {
+      return this.name;
+    }
+    var target = this.target, initialize;
+    if (this.target instanceof ScriptInfo) {
+      this.name = "$S" + objectIDs++;
+      initialize = function () {
+        ensureScriptIsExecuted(target, "Lazy Initializer");
+        return target.global;
+      };
+    } else if (this.target instanceof ClassInfo) {
+      this.name = Multiname.getQualifiedName(target.instanceInfo.name);
+      initialize = function () {
+        return target.abc.domain.getProperty(target.instanceInfo.name);
+      };
+    } else {
+      notImplemented(target);
+    }
+    var name = this.name;
+    assert (!holder[name]);
+    Object.defineProperty(holder, name, {
+      get: function () {
+        var value = initialize();
+        assert (value);
+        Object.defineProperty(holder, name, { value: value, writable: true });
+        return value;
+      }, configurable: true
+    });
+    return name;
+  };
+  return lazyInitializer;
+})();
 
 /**
  * Property Accessors:
