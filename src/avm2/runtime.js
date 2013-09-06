@@ -1210,16 +1210,23 @@ var Global = (function () {
   return Global;
 })();
 
-/**
- * Checks if the specified method should be compiled. For now we just ignore very large methods.
- */
-function shouldCompile(mi) {
+function canCompile(mi) {
   if (!mi.hasBody) {
     return false;
   }
   if (mi.hasExceptions() && !compilerEnableExceptions.value) {
     return false;
   } else if (mi.code.length > compilerMaximumMethodSize.value) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Checks if the specified method should be compiled. For now we just ignore very large methods.
+ */
+function shouldCompile(mi) {
+  if (!canCompile(mi)) {
     return false;
   }
   // Don't compile class and script initializers since they only run once.
@@ -1322,7 +1329,7 @@ function createCompiledFunctionTrampoline(methodInfo, scope, hasDynamicScope, br
 
 function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
   var mi = methodInfo;
-  if (deferCompilation) {
+  if (false && deferCompilation) {
     return createCompiledFunctionTrampoline(methodInfo, scope, hasDynamicScope, breakpoint);
   }
   $M.push(mi);
