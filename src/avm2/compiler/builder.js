@@ -722,7 +722,7 @@ var createName = function createName(namespaces, name) {
           if (ti) {
             var trait = ti.trait;
             if (trait) {
-              if (trait.isConst()) {
+              if (trait.isConst() && ti.trait.hasDefaultValue) {
                 return constant(trait.value);
               }
               var slotQn = Multiname.getQualifiedName(trait.name);
