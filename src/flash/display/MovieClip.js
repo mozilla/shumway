@@ -33,7 +33,7 @@ var MovieClipDefinition = (function () {
       this._labelMap = { };
       this._sceneFrameMap = { };
       this._sceneMap = { };
-      this._scenes = [];
+      this._scenes = null;
       this._timeline = null;
       this._totalFrames = 1;
       this._startSoundRegistrations = [];
@@ -583,7 +583,7 @@ var MovieClipDefinition = (function () {
       return this._totalFrames;
     },
     get scenes() {
-      return this._scenes || [];
+      return this._scenes || [new flash.display.Scene("", this.currentLabels, this._totalFrames)];
     },
     get trackAsMenu() {
       return false;
