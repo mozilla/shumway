@@ -299,6 +299,9 @@ function isNumeric(x) {
 }
 
 function boxValue(value) {
+  if (isNullOrUndefined(value)) {
+    return value;
+  }
   return Object(value);
 }
 
@@ -1100,6 +1103,13 @@ var IndentingWriter = (function () {
   indentingWriter.prototype.writeLn = function writeLn(str) {
     if (!this.suppressOutput) {
       this.out(this.padding + str);
+    }
+  };
+
+  indentingWriter.prototype.writeLns = function writeLns(str) {
+    var lines = str.split("\n");
+    for (var i = 0; i < lines.length; i++) {
+      this.writeLn(lines[i]);
     }
   };
 

@@ -240,7 +240,7 @@ var createName = function createName(namespaces, name) {
 
   function binary(operator, left, right) {
     var node = new Binary(operator, left, right);
-    if (left.ty && left.ty === right.ty) {
+    if (left.ty && left.ty !== Type.Any && left.ty === right.ty) {
       if (operator === Operator.EQ) {
         node.operator = Operator.SEQ;
       } else if (operator === Operator.NE) {
@@ -292,6 +292,10 @@ var createName = function createName(namespaces, name) {
     return new Call(null, null, callee, object, args, true);
   }
 
+  function callGlobalProperty(name, value) {
+    return callPure(globalProperty(name), null, [value]);
+  }
+
   function convertString(value) {
     if (isStringConstant(value)) {
       return value;
@@ -299,26 +303,33 @@ var createName = function createName(namespaces, name) {
     return callPure(globalProperty("String"), null, [value]);
   }
 
-  function coerceString(value) {
-    return callPure(globalProperty("asCoerceString"), null, [value]);
-  }
-
-  function coerceObject(value) {
-    return callPure(globalProperty("asCoerceObject"), null, [value]);
-  }
+  var coerceString = callGlobalProperty.bind(null, "asCoerceString");
+  var coerceObject = callGlobalProperty.bind(null, "asCoerceObject");
 
   var coercers = createEmptyObject();
-
   coercers[Multiname.Int] = coerceInt;
   coercers[Multiname.Uint] = coerceUint;
   coercers[Multiname.Number] = coerceNumber;
-  coercers[Multiname.Boolean] = coerceBoolean;
   coercers[Multiname.String] = coerceString;
   coercers[Multiname.Object] = coerceObject;
+  coercers[Multiname.Boolean] = coerceBoolean;
 
   function getCoercerForType(multiname) {
     assert (multiname instanceof Multiname);
     return coercers[Multiname.getQualifiedName(multiname)];
+  }
+
+  var callableConstructors = createEmptyObject();
+  callableConstructors[Multiname.Int] = coerceInt;
+  callableConstructors[Multiname.Uint] = coerceUint;
+  callableConstructors[Multiname.Number] = callGlobalProperty.bind(null, "Number");
+  callableConstructors[Multiname.String] = callGlobalProperty.bind(null, "String");
+  callableConstructors[Multiname.Object] = callGlobalProperty.bind(null, "Object");
+  callableConstructors[Multiname.Boolean] = callGlobalProperty.bind(null, "Boolean");
+
+  function getCallableConstructorForType(multiname) {
+    assert (multiname instanceof Multiname);
+    return callableConstructors[Multiname.getQualifiedName(multiname)];
   }
 
   var Builder = (function () {
@@ -385,7 +396,7 @@ var createName = function createName(namespaces, name) {
           var coercer = getCoercerForType(parameter.type);
           if (coercer) {
             local = coercer(local);
-          } else if (COERCE_PARAMETERS) {
+          } else if (c4CoerceNonPrimitiveParameters) {
             local = new Call(start, state.store, globalProperty("asCoerceByMultiname"), null, [constant(this.abc.domain), constant(parameter.type), local], true);
           }
         }
@@ -586,18 +597,10 @@ var createName = function createName(namespaces, name) {
           return getJSPropertyWithState(state, object, path);
         }
 
-        function getDomainProperty(name) {
-          if (isMultinameConstant(name)) {
-            var value = domain.value.getProperty(name.value, true, true);
-            if (value) {
-              return constant(value);
-            }
-          }
-          return getProperty(findProperty(name, true), name);
-        }
-
         function coerce(multiname, value) {
-          if (isConstant(value)) {
+          // TODO: Try to do the coercion of constant values without causing classes to be
+          // loaded, as is the case when calling |asCoerceByMultiname|.
+          if (false && isConstant(value)) {
             return constant(asCoerceByMultiname(domain.value, multiname, value.value));
           } else {
             var coercer = getCoercerForType(multiname);
@@ -605,7 +608,7 @@ var createName = function createName(namespaces, name) {
               return coercer(value);
             }
           }
-          if (COERCE) {
+          if (c4CoerceNonPrimitive) {
             return call(globalProperty("asCoerceByMultiname"), null, [domain, constant(multiname), value]);
           }
           return value;
@@ -651,10 +654,10 @@ var createName = function createName(namespaces, name) {
               openQn = VM_OPEN_METHOD_PREFIX + openQn;
               return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, true));
             } else if (ti.trait.isClass()) {
-//              var coercer = getCoercerForType(ti.trait.name);
-//              if (coercer) {
-//                return coercer(args[0]);
-//              }
+              var constructor = getCallableConstructorForType(ti.trait.name);
+              if (constructor) {
+                return constructor(args[0]);
+              }
               var qn = Multiname.getQualifiedName(ti.trait.name);
               return store(new IR.CallProperty(region, state.store, object, constant(qn), args, false));
             }
@@ -719,7 +722,7 @@ var createName = function createName(namespaces, name) {
           if (ti) {
             var trait = ti.trait;
             if (trait) {
-              if (trait.isConst()) {
+              if (trait.isConst() && ti.trait.hasDefaultValue) {
                 return constant(trait.value);
               }
               var slotQn = Multiname.getQualifiedName(trait.name);
@@ -1052,8 +1055,10 @@ var createName = function createName(namespaces, name) {
               break;
             case OP_astypelate:
               type = pop();
-              value = pop();
-              push(call(globalProperty("asAsType"), null, [type, value]));
+              if (c4AsTypeLate) {
+                value = pop();
+                push(call(globalProperty("asAsType"), null, [type, value]));
+              }
               break;
             case OP_returnvalue:
             case OP_returnvoid:
@@ -1126,8 +1131,8 @@ var createName = function createName(namespaces, name) {
               left = pop();
               if (typesAreEqual(left, right)) {
                 operator = Operator.ADD;
-              } else if (compatibility) {
-                operator = Operator.AVM2ADD;
+              } else if (useAsAdd) {
+                operator = Operator.AS_ADD;
               } else {
                 operator = Operator.ADD;
               }

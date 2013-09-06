@@ -57,6 +57,7 @@ var traceJson = shellOptions.register(new Option("tj", "traceJson", "boolean", f
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", false, "run in release mode (!release is the default)"));
 var unsafeMode = shellOptions.register(new Option("u", "unsafe", "boolean", false, "run in unsafe mode"));
+var aot = shellOptions.register(new Option("a", "aot", "boolean", false, "run aot compiler"));
 
 var test = shellOptions.register(new Option("test", "test", "boolean", false, "test"));
 
@@ -91,6 +92,7 @@ load(homePath + "src/avm2/compiler/c4/ir.js");
 load(homePath + "src/avm2/compiler/c4/looper.js");
 load(homePath + "src/avm2/compiler/c4/transform.js");
 load(homePath + "src/avm2/compiler/c4/backend.js");
+load(homePath + "src/avm2/compiler/aot.js");
 load(homePath + "src/avm2/compiler/builder.js");
 Timer.stop();
 
@@ -177,26 +179,43 @@ if (execute.value) {
   Timer.stop();
 }
 
+var self = {};
+var SWF;
 for (var f = 0; f < files.length; f++) {
   var file = files[f];
   if (file.endsWith(".swf")) {
+    if (!SWF) {
+      /**
+       * Load SWF Dependencies
+       */
+      SWF = {};
+      load(homePath + "src/swf/swf.js");
+      load(homePath + "src/swf/util.js");
+      load(homePath + "src/swf/types.js");
+      load(homePath + "src/swf/structs.js");
+      load(homePath + "src/swf/tags.js");
+      load(homePath + "src/swf/inflate.js");
+      load(homePath + "src/swf/stream.js");
+      load(homePath + "src/swf/templates.js");
+      load(homePath + "src/swf/generator.js");
+      load(homePath + "src/swf/handlers.js");
+      load(homePath + "src/swf/parser.js");
+      load(homePath + "src/swf/bitmap.js");
+      load(homePath + "src/swf/button.js");
+      load(homePath + "src/swf/font.js");
+      load(homePath + "src/swf/image.js");
+      load(homePath + "src/swf/label.js");
+      load(homePath + "src/swf/shape.js");
+      load(homePath + "src/swf/text.js");
+    }
+    print("Processing; " + file);
     SWF.parse(snarf(file, "binary"), {
       oncomplete: function(result) {
         var tags = result.tags;
         for (var i = 0, n = tags.length; i < n; i++) {
           var tag = tags[i];
-          if (tag.type === "abc") {
+          if (tag.code === SWF_TAG_CODE_DO_ABC) {
             processAbc(new AbcFile(tag.data, file.value + " [Tag ID: " + i + "]"));
-          } else if (tag.type === "symbols") {
-            for (var j = tag.references.length - 1; j >= 0; j--) {
-              if (tag.references[j].id === 0) {
-                avm2.applicationDomain.getProperty(
-                  Multiname.fromSimpleName(tag.references[j].name),
-                  true, true
-                );
-                break;
-              }
-            }
           }
         }
       }
@@ -220,7 +239,11 @@ function processAbc(abc, loadOnly) {
       if (loadOnly) {
         avm2.applicationDomain.loadAbc(abc);
       } else {
-        avm2.applicationDomain.executeAbc(abc);
+        if (aot.value) {
+          avm2.applicationDomain.compileAbc(abc);
+        } else {
+          avm2.applicationDomain.executeAbc(abc);
+        }
       }
     } catch(e) {
       print(e);
