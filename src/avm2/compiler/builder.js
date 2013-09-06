@@ -597,16 +597,6 @@ var createName = function createName(namespaces, name) {
           return getJSPropertyWithState(state, object, path);
         }
 
-        function getDomainProperty(name) {
-          if (isMultinameConstant(name)) {
-            var value = domain.value.getProperty(name.value, true, true);
-            if (value) {
-              return constant(value);
-            }
-          }
-          return getProperty(findProperty(name, true), name);
-        }
-
         function coerce(multiname, value) {
           if (isConstant(value)) {
             return constant(asCoerceByMultiname(domain.value, multiname, value.value));
