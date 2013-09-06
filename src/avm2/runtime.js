@@ -1643,7 +1643,15 @@ function createFunction(mi, scope, hasDynamicScope, breakpoint) {
     if (compileOnly.value >= 0 || compileUntil.value >= 0) {
       print("Compiling " + totalFunctionCount);
     }
-    mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint, mi.isInstanceInitializer);
+    // Avoid circular dependencies during class initialization.
+    var deferCompilation = false;
+    var s = scope;
+    if (mi.isClassInitializer || mi.isInstanceInitializer) {
+      deferCompilation = true;
+    } else {
+      while ((s = s.parent) && !(deferCompilation = s.inClassInit)) {}
+    }
+    mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint, deferCompilation);
   }
 
   mi.freeMethod.methodInfo = mi;
@@ -1809,7 +1817,9 @@ function createClass(classInfo, baseClass, scope) {
   }
 
   // Run the static initializer.
+  scope.inClassInit = true;
   createFunction(classInfo.init, scope).call(cls);
+  delete scope.inClassInit;
 
   // Seal constant traits in the class object.
   if (sealConstTraits) {
