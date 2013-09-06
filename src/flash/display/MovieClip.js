@@ -126,16 +126,15 @@ var MovieClipDefinition = (function () {
       }
 
       var timeline = this._timeline;
-      var currentDisplayList = timeline[currentFrame - 1];
       var nextDisplayList = timeline[nextFrameNum - 1];
-
-      if (nextDisplayList === currentDisplayList) {
+      if (nextDisplayList === timeline[currentFrame - 1]) {
         return;
       }
 
+      var currentDisplayList = this._currentDisplayList;
+
       var children = this._children;
-      var depths = nextFrameNum > currentFrame ? nextDisplayList.depths :
-                                                 currentDisplayList.depths;
+      var depths = nextDisplayList.depths;
 
       var depthMap = this._depthMap;
 
@@ -199,6 +198,7 @@ var MovieClipDefinition = (function () {
           continue;
         }
 
+        currentDisplayList[depth] = nextCmd;
         this._addTimelineChild(nextCmd, index);
       }
     },
@@ -210,25 +210,26 @@ var MovieClipDefinition = (function () {
       }
 
       var timeline = this._timeline;
-      var currentDisplayList = timeline[currentFrame - 1];
       var nextDisplayList = timeline[nextFrameNum - 1];
-
-      if (nextDisplayList === currentDisplayList) {
+      if (nextDisplayList === timeline[currentFrame - 1]) {
         return;
       }
 
-      var depths = nextFrameNum > currentFrame ? currentDisplayList.depths:
-                                                 nextDisplayList.depths;
+      var currentDisplayList = this._currentDisplayList;
 
-      for (var i = 0; i < depths.length; i++) {
-        var depth = depths[i];
+      for (var i = 0; i < currentDisplayList.length; i++) {
+        var depth = i;
         var currentCmd = currentDisplayList[depth];
-        var nextCmd = nextDisplayList[depth];
+        if (!currentCmd) {
+          continue;
+        }
 
-        if (currentCmd && (!nextCmd ||
-                           nextCmd.symbolId !== currentCmd.symbolId ||
-                           nextCmd.ratio !== currentCmd.ratio)) {
+        var nextCmd = nextDisplayList[depth];
+        if (!nextCmd ||
+            nextCmd.symbolId !== currentCmd.symbolId ||
+            nextCmd.ratio !== currentCmd.ratio) {
           this._removeTimelineChild(currentCmd);
+          currentDisplayList[depth] = null;
         }
       }
     },
