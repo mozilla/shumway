@@ -64,8 +64,10 @@ var DisplayObjectContainerDefinition = (function () {
         }
       }
 
-      for (var i = children.length; i && i > index; i--) {
-        children[i - 1]._index++;
+      if (!this._sparse) {
+        for (var i = children.length; i && i > index; i--) {
+          children[i - 1]._index++;
+        }
       }
       children.splice(index, 0, child);
 
@@ -145,11 +147,14 @@ var DisplayObjectContainerDefinition = (function () {
         this._stage._removeFromStage(child);
       }
 
-      for (var i = children.length; i && i > index; i--) {
-        children[i - 1]._index--;
+      if (!this._sparse) {
+        for (var i = children.length; i && i > index; i--) {
+          children[i - 1]._index--;
+        }
       }
       children.splice(index, 1);
 
+      child._owned = false;
       child._parent = null;
       child._index = -1;
 
@@ -177,9 +182,11 @@ var DisplayObjectContainerDefinition = (function () {
       children.splice(currentIndex, 1);
       children.splice(index, 0, child);
 
-      var i = currentIndex < index ? currentIndex : index;
-      while (i < children.length) {
-        children[i]._index = i++;
+      if (!this._sparse) {
+        var i = currentIndex < index ? currentIndex : index;
+        while (i < children.length) {
+          children[i]._index = i++;
+        }
       }
 
       child._owned = false;
