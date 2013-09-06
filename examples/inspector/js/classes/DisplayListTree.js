@@ -28,11 +28,11 @@ var DisplayListTree = (function() {
   var displayObjectStore;
 
   var displayObjectProps = [
+    "_name",
     "alpha",
     "blendMode",
     "cacheAsBitmap",
     "height",
-    "name",
     "scaleX",
     "scaleY",
     "visible",
@@ -50,7 +50,7 @@ var DisplayListTree = (function() {
   }
 
   function updateProperties(displayObject) {
-    if (typeof displayObject === "undefined") {
+    if (isNullOrUndefined(displayObject)) {
       containerElement.classList.remove("hasProperties");
       propertiesElement.innerHTML = "";
     } else {
@@ -65,11 +65,12 @@ var DisplayListTree = (function() {
 
   function createLabel(displayObject) {
     var div = document.createElement("div");
+    div.className = "item";
     div.textContent = displayObject.class.className + " ";
-    if (displayObject._name) {
+    if (!isNullOrUndefined(displayObject._name)) {
       var spanName = document.createElement("span");
       spanName.textContent = "'" + displayObject._name + "'";
-      spanName.className = "dobName";
+      spanName.className = "doName";
       div.appendChild(spanName);
     }
     if (flash.display.MovieClip.class.isInstanceOf(displayObject)) {
@@ -78,7 +79,6 @@ var DisplayListTree = (function() {
       spanFrameInfo.className = "mcFrameInfo";
       div.appendChild(spanFrameInfo);
     }
-    div.className = "item";
     return div;
   }
 
@@ -133,7 +133,20 @@ var DisplayListTree = (function() {
       rootElement.addEventListener("click", boundClickListener);
       rootElement.addEventListener("mouseover", boundMouseOverListener);
       updateChildren(stage, document.getElementById("displayListRoot"));
-      updateProperties();
+
+      if (selectedItem) {
+        var dosidx = displayObjectStore.indexOf(selectedItem);
+        if (dosidx > -1) {
+          selectedElement = document.querySelector("#displayListRoot .item[data-dosidx=\"" + dosidx + "\"]");
+          selectedElement.classList.add("selected");
+          console.log(selectedElement);
+        } else {
+          selectedItem = null;
+          selectedElement = null;
+        }
+      }
+
+      updateProperties(selectedItem);
     },
 
     _onClick: function _onClick(event) {
@@ -147,7 +160,7 @@ var DisplayListTree = (function() {
           // SELECT
           selectedElement = el;
           selectedElement.classList.add("selected");
-          selectedItem = displayObjectStore[el.dataset.dosidx];
+          selectedItem = displayObjectStore[parseInt(el.dataset.dosidx)];
           updateProperties(selectedItem);
         } else if (selectedElement) {
           // UNSELECT

@@ -171,7 +171,7 @@ body.simple #xstats {
   float: right;
   color: rgba(255, 136, 136, 0.75);
 }
-#displayList li > div > span.dobName {
+#displayList li > div > span.doName {
   color: rgba(136, 136, 255, 1);
 }
 #displayObjectProperties {
