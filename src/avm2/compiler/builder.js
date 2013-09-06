@@ -598,7 +598,9 @@ var createName = function createName(namespaces, name) {
         }
 
         function coerce(multiname, value) {
-          if (isConstant(value)) {
+          // TODO: Try to do the coercion of constant values without causing classes to be
+          // loaded, as is the case when calling |asCoerceByMultiname|.
+          if (false && isConstant(value)) {
             return constant(asCoerceByMultiname(domain.value, multiname, value.value));
           } else {
             var coercer = getCoercerForType(multiname);
