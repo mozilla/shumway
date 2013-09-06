@@ -50,7 +50,7 @@ var SpriteDefinition = (function () {
       this._graphics._parent = this;
     },
 
-    _addTimelineChild: function(cmd, index) {
+    _addTimelineChild: function addTimelineChild(cmd, index) {
       var symbolPromise = cmd.promise;
       var symbolInfo = symbolPromise.value;
       var props = Object.create(symbolInfo.props);
@@ -91,6 +91,28 @@ var SpriteDefinition = (function () {
 
       this._sparse = true;
     },
+    _removeTimelineChild: function removeTimelineChild(cmd) {
+      var child = this._depthMap[cmd.depth];
+
+      if (!child) {
+        return;
+      }
+
+      this._depthMap[child._depth] = null;
+      child._depth = null;
+
+      if (!child._owned) {
+        return;
+      }
+
+      this._sparse = true;
+      this.removeChild(child);
+
+      child.destroy();
+      if (child._isPlaying) {
+        child.stop();
+      }
+    },
     _constructChildren: function () {
       if (!this._sparse) {
         return;
@@ -99,7 +121,7 @@ var SpriteDefinition = (function () {
       var loader = this._loader;
 
       var children = this._children;
-      for (var i = 0, n = children.length; i < n; i++) {
+      for (var i = 0; i < children.length; i++) {
         var symbolInfo = children[i];
 
         if (flash.display.DisplayObject.class.isInstanceOf(symbolInfo)) {
@@ -118,7 +140,11 @@ var SpriteDefinition = (function () {
           props.owned = true;
           props.parent = this;
           props.stage = this._stage;
-          props.level = this._level + 1;
+
+          if (this._level > -1) {
+            props.level = this._level + 1;
+          }
+
           props.index = i;
 
           var instance = symbolClass.createAsSymbol(props);
@@ -149,8 +175,6 @@ var SpriteDefinition = (function () {
             instance._dispatchEvent("init");
           }
 
-          instance._index = i;
-
           instance._dispatchEvent("load");
           instance._dispatchEvent("added");
           if (this._stage) {
@@ -165,6 +189,7 @@ var SpriteDefinition = (function () {
 
       this._sparse = false;
     },
+
     _duplicate: function (name, depth, initObject) {
       // TODO proper child cloning, initObject and display list insertion
       // for now just created symbol based on previous timeline information

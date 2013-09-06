@@ -62,7 +62,7 @@ var StageDefinition = (function () {
       var children = displayObject._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
-        if (!child._stage) {
+        if (child._stage === null) {
           this._addToStage(child);
         }
       }
