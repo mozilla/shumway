@@ -15,22 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global Stream */
+/*jshint -W069 */
 
-/**
- * Package file that includes all Shumway files needed by the Loader worker.
- */
-
-load($SHUMWAY_ROOT + "lib/DataView.js/DataView.js");
-load($SHUMWAY_ROOT + "src/flash/util.js");
-load($SHUMWAY_ROOT + "src/swf/util.js");
-load($SHUMWAY_ROOT + "src/swf/swf.js");
-load($SHUMWAY_ROOT + "src/swf/bitmap.js");
-load($SHUMWAY_ROOT + "src/swf/button.js");
-load($SHUMWAY_ROOT + "src/swf/font.js");
-load($SHUMWAY_ROOT + "src/swf/image.js");
-load($SHUMWAY_ROOT + "src/swf/label.js");
-load($SHUMWAY_ROOT + "src/swf/shape.js");
-load($SHUMWAY_ROOT + "src/swf/sound.js");
-load($SHUMWAY_ROOT + "src/swf/text.js");
-
-load($SHUMWAY_ROOT + "src/flash/display/Loader.js");
+(function (global) {
+  global["Stream"] = Stream;
+})(this);
