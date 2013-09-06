@@ -583,6 +583,10 @@ var MovieClipDefinition = (function () {
       return this._totalFrames;
     },
     get scenes() {
+      somewhatImplemented("MovieClip.scenes, temporarily returning an empty array if _scenes is null.");
+      if (!this._scenes) {
+        return [];
+      }
       return this._scenes;
     },
     get trackAsMenu() {
