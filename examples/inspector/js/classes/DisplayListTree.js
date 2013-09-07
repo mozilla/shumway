@@ -131,8 +131,6 @@ var DisplayListTree = (function() {
       rootElement = document.createElement("div");
       rootElement.setAttribute("id", "displayList");
       rootElement.setAttribute("tabindex", "6");
-      rootElement.addEventListener("click", boundClickListener);
-      rootElement.addEventListener("mouseover", boundMouseOverListener);
       rootElement.appendChild(displayListRoot);
 
       this._addEventListeners(rootElement);
