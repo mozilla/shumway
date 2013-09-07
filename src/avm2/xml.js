@@ -570,17 +570,29 @@ var isXMLType, isXMLName, XMLParser;
 
 
   function asGetProperty(namespaces, name, flags, isMethod) {
-    var mn = isNumeric(name) ? toNumber(name) : new Multiname(namespaces, name, flags);
+    var mn = isNumeric(name) 
+      ? toNumber(name) 
+      : name instanceof QName 
+        ? name.mn
+        : new Multiname(namespaces, name, flags);
     return this.getProperty(mn, isMethod);
   }
 
   function asSetProperty(namespaces, name, flags, value) {
-    var mn = isNumeric(name) ? toNumber(name) : new Multiname(namespaces, name, flags);
+    var mn = isNumeric(name) 
+      ? toNumber(name) 
+      : name instanceof QName 
+        ? name.mn
+        : new Multiname(namespaces, name, flags);
     this.setProperty(mn, value);
   }
 
   function asHasProperty(namespaces, name, flags) {
-    var mn = isNumeric(name) ? toNumber(name) : new Multiname(namespaces, name, flags);
+    var mn = isNumeric(name) 
+      ? toNumber(name) 
+      : name instanceof QName 
+        ? name.mn
+        : new Multiname(namespaces, name, flags);
     return this.hasProperty(mn);
   }
 
