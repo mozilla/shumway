@@ -173,10 +173,18 @@ var TextFieldDefinition = (function () {
     var blockNode = false;
     switch (node.type) {
       case 'text': addRunsForText(state, node.text); return;
-      case 'BR': finishLine(state); return;
+      case 'BR':
+        if (state.multiline) {
+          finishLine(state);
+        }
+        return;
 
       case 'LI': /* TODO: draw bullet points. */ /* falls through */
-      case 'P': finishLine(state); blockNode = true; break;
+      case 'P':
+        if (state.multiline) {
+          finishLine(state);
+        }
+        blockNode = true; break;
 
       case 'B': /* falls through */
       case 'I': /* falls through */
@@ -201,7 +209,7 @@ var TextFieldDefinition = (function () {
     if (formatNode) {
       popFormat(state);
     }
-    if (blockNode) {
+    if (blockNode && state.multiline) {
       finishLine(state);
     }
   }
@@ -213,6 +221,10 @@ var TextFieldDefinition = (function () {
   };
   function addRunsForText(state, text) {
     if (!text) {
+      return;
+    }
+    if (!(state.wordWrap && state.multiline)) {
+      addTextRun(state, text, state.ctx.measureText(text).width);
       return;
     }
     while (text.length) {
@@ -252,7 +264,11 @@ var TextFieldDefinition = (function () {
         var runText = text.substr(0, wrapOffset);
         width = state.ctx.measureText(runText).width;
         addTextRun(state, runText, width);
-        finishLine(state);
+
+        if (state.wordWrap) {
+          finishLine(state);
+        }
+
         text = text.substr(wrapOffset);
       }
     }
@@ -517,7 +533,7 @@ var TextFieldDefinition = (function () {
     initialize: function () {
       var initialFormat = this._defaultTextFormat = {
         align: 'LEFT', font: 'serif', size: 12,
-        letterspacing: 0, kerning: 0
+        letterspacing: 0, kerning: 0, color: "black"
       };
       this._type = 'dynamic';
       this._selectable = true;
@@ -554,6 +570,11 @@ var TextFieldDefinition = (function () {
         initialFormat.font = convertFontFamily(tag.font);
       }
       initialFormat.str = makeFormatString(initialFormat);
+
+      this._selectable = !tag.noSelect;
+      this._multiline = !!tag.multiline;
+      this._wordWrap = !!tag.wordWrap;
+      this._border = !!tag.border;
 
       if (tag.initialText) {
         if (tag.html) {
@@ -600,8 +621,12 @@ var TextFieldDefinition = (function () {
       var height = bounds.yMax - bounds.yMin - 4;
       var state = {ctx: measureCtx, y: 0, x: 0, w: width, h: height, line: [],
                    lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
-                   currentFormat: initialFormat, runs: [firstRun]};
+                   currentFormat: initialFormat, runs: [firstRun],
+                   multiline: this._multiline, wordWrap: this._wordWrap};
       collectRuns(this._content.tree, state);
+      if (!state.multiline) {
+        finishLine(state);
+      }
       this._textWidth = state.maxLineWidth;
       this._textHeight = state.y;
       this._content.textruns = state.runs;
