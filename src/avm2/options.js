@@ -69,18 +69,18 @@
       return argument;
     })();
     function argumentParser() {
-      this.arguments = [];
+      this.args = [];
     }
     argumentParser.prototype.addArgument = function addArgument(shortName, longName, type, options) {
       var argument = new Argument(shortName, longName, type, options);
-      this.arguments.push(argument);
+      this.args.push(argument);
       return argument;
     };
     argumentParser.prototype.addBoundOption = function addBoundOption(option) {
       var options = {parse: function (x) {
         option.value = x;
       }};
-      this.arguments.push(new Argument(option.shortName, option.longName, option.type, options));
+      this.args.push(new Argument(option.shortName, option.longName, option.type, options));
     };
     argumentParser.prototype.addBoundOptionSet = function addBoundOptionSet(optionSet) {
       var self = this;
@@ -95,7 +95,7 @@
     };
     argumentParser.prototype.getUsage = function getUsage() {
       var str = "";
-      this.arguments.forEach(function (x) {
+      this.args.forEach(function (x) {
         if (!x.positional) {
           str += "[-" + x.shortName + "|--" + x.longName + (x.type === "boolean" ? "" : " " + x.type[0].toUpperCase()) + "]";
         } else {
@@ -108,7 +108,7 @@
     argumentParser.prototype.parse = function parse(args) {
       var nonPositionalArgumentMap = {};
       var positionalArgumentList = [];
-      this.arguments.forEach(function (x) {
+      this.args.forEach(function (x) {
         if (x.positional) {
           positionalArgumentList.push(x);
         } else {

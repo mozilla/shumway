@@ -480,7 +480,7 @@ var LoaderDefinition = (function () {
         Promise.when(frameConstructed, this._lastPromise).then(function () {
           this.contentLoaderInfo._dispatchEvent("complete");
         }.bind(this));
-        this._worker.terminate();
+        this._worker && this._worker.terminate();
         break;
       case 'empty':
         this._lastPromise = new Promise();

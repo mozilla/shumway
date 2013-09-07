@@ -1374,6 +1374,7 @@ function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, 
   }
   // mi.freeMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
   // mi.freeMethod = new Function(parameters, body);
+
   var fn = new Function("return " + fnSource)();
   fn.debugName = "Compiled Function #" + vmNextCompiledFunctionId++;
   return fn;

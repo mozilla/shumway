@@ -314,6 +314,9 @@ var TextFieldDefinition = (function () {
   }
 
   function renderToCanvas(ctx, bounds, runs) {
+    if (bounds.xMax <= bounds.xMin || bounds.yMax <= bounds.yMin) {
+      return;
+    }
     ctx.save();
     ctx.beginPath();
     ctx.rect(bounds.xMin, bounds.yMin,

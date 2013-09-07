@@ -86,7 +86,7 @@ var BitmapDataDefinition = (function () {
       this._checkCanvas();
       this._ctx.save();
       this._ctx.beginPath();
-      if (clipRect) {
+      if (clipRect && clipRect.width > 0 && clipRect.height > 0) {
         this._ctx.rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
         this._ctx.clip();
       }
