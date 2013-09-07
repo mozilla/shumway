@@ -81,7 +81,8 @@ var TextFieldDefinition = (function () {
     // The first child is then a <FONT>, with FACE, LETTERSPACING and KERNING
     var fontAttributes = { FACE: initialFormat.font,
                            LETTERSPACING: initialFormat.letterSpacing,
-                           KERNING: initialFormat.kerning
+                           KERNING: initialFormat.kerning,
+                           LEADING: initialFormat.leading
                          };
     trunk.children[0] = {type: 'FONT', format: fontAttributes, children: []};
     return trunk;
@@ -230,7 +231,7 @@ var TextFieldDefinition = (function () {
     while (text.length) {
       var width = state.ctx.measureText(text).width;
       var availableWidth = state.w - state.x;
-      if (state.x + width <= state.w) {
+      if (width <= availableWidth) {
         addTextRun(state, text, width);
         break;
       } else {
@@ -284,6 +285,9 @@ var TextFieldDefinition = (function () {
     }
 }
   function finishLine(state) {
+    if (state.lineHeight === 0) {
+      return;
+    }
     state.maxLineWidth = Math.max(state.maxLineWidth, state.x);
     state.x = 0;
     state.y += state.lineHeight;
@@ -292,6 +296,9 @@ var TextFieldDefinition = (function () {
       var run = state.line.pop();
       run.y = y;
     }
+    // TODO: it seems like Flash makes lines 2px higher than just the font-size.
+    // Verify this.
+    state.y += state.currentFormat.leading + 2;
     state.lineHeight = 0;
   }
   function pushFormat(state, node) {
@@ -316,6 +323,9 @@ var TextFieldDefinition = (function () {
         if ('KERNING' in attributes) {
           format.kerning = parseFloat(attributes.KERNING);
         }
+        if ('LEADING' in attributes) {
+          format.leading = parseFloat(attributes.LEADING);
+        }
       /* falls through */
       case 'TEXTFORMAT':
         // `textFormat` has, among others, the same attributes as `font`
@@ -323,7 +333,6 @@ var TextFieldDefinition = (function () {
           state.x += attributes.INDENT;
         }
         // TODO: support leftMargin, rightMargin & blockIndent
-        // TODO: support leading
         // TODO: support tabStops, if possible
         break;
       default:
@@ -371,7 +380,6 @@ var TextFieldDefinition = (function () {
   }
 
   function renderToCanvas(ctx, bounds, runs) {
-    console.log(bounds);
     if (bounds.xMax <= bounds.xMin || bounds.yMax <= bounds.yMin) {
       return;
     }
@@ -387,7 +395,6 @@ var TextFieldDefinition = (function () {
         ctx.fillStyle = run.format.color;
       } else {
         assert(run.type === 't', 'Invalid run type: ' + run.type);
-        console.log(run.text);
         ctx.fillText(run.text, run.x, run.y);
       }
     }
@@ -533,7 +540,7 @@ var TextFieldDefinition = (function () {
     initialize: function () {
       var initialFormat = this._defaultTextFormat = {
         align: 'LEFT', font: 'serif', size: 12,
-        letterspacing: 0, kerning: 0, color: "black"
+        letterspacing: 0, kerning: 0, color: "black", leading: 2
       };
       this._type = 'dynamic';
       this._selectable = true;
@@ -562,6 +569,9 @@ var TextFieldDefinition = (function () {
 
       if (tag.hasLayout) {
         initialFormat.size = tag.fontHeight / 20;
+        if (typeof initialFormat.leading === 'number') {
+          initialFormat.leading = tag.leading / 20;
+        }
       }
       if (tag.hasColor) {
         initialFormat.color = rgbaObjToStr(tag.color);
