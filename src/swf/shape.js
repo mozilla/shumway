@@ -367,7 +367,12 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
       var fillStyle = processStyle(style.fillStyle, false, dictionary,
                                    dependencies);
       style.style = fillStyle.style;
+      style.type = fillStyle.type;
       style.transform = fillStyle.transform;
+      style.records = fillStyle.records;
+      style.focalPoint = fillStyle.focalPoint;
+      style.bitmapId = fillStyle.bitmapId;
+      style.repeat = fillStyle.repeat;
       style.fillStyle = null;
       return style;
     }
@@ -417,6 +422,8 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     e: (matrix.tx * 20),
     f: (matrix.ty * 20)
   };
+  // null data that's unused from here on out
+  style.matrix = null;
   return style;
 }
 
@@ -1617,7 +1624,7 @@ function finishShapePaths(paths, dictionary) {
     if (path.fullyInitialized) {
       continue;
     }
-    if (!(path instanceof (ShapePath))) {
+    if (!(path instanceof ShapePath)) {
       var untypedPath = path;
       path = paths[i] = new ShapePath(path.fillStyle, path.lineStyle, 0, 0,
                                       path.isMorph);
@@ -1669,9 +1676,10 @@ function initStyle(style, dictionary) {
     case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
     case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
       var bitmap = dictionary[style.bitmapId];
+      var repeat = (style.type === GRAPHICS_FILL_REPEATING_BITMAP) ||
+                   (style.type === GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP);
       style.style = factoryCtx.createPattern(bitmap.value.props.img,
-                                             style.repeat ? "repeat"
-                                                 : "no-repeat");
+                                             repeat ? "repeat" : "no-repeat");
       break;
     default:
       fail('invalid fill style', 'shape');

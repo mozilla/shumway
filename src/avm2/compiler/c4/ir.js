@@ -263,7 +263,7 @@
       if (predecessors.length > 1) {
         this.phis.forEach(function (x) {
           assert (x instanceof Phi);
-          assert (x.arguments.length === predecessors.length);
+          assert (x.args.length === predecessors.length);
         });
       }
     };
@@ -284,7 +284,7 @@
       Node.call(this);
       assert (control instanceof Region);
       this.control = control;
-      this.arguments = value ? [value] : [];
+      this.args = value ? [value] : [];
       this.sealed = false;
     }
     phi.prototype = extend(Value, "Phi");
@@ -294,7 +294,7 @@
     phi.prototype.pushValue = function pushValue(x) {
       assert (isValue(x));
       assert (!this.sealed);
-      this.arguments.push(x);
+      this.args.push(x);
     };
     return phi;
   })();
@@ -822,7 +822,7 @@
       this.callee = callee;
       this.object = object;
       this.store = store;
-      this.arguments = args;
+      this.args = args;
       this.pristine = pristine;
     }
     call.prototype = extend(Value, "Call");
@@ -841,7 +841,7 @@
       this.store = store;
       this.object = object;
       this.name = name;
-      this.arguments = args;
+      this.args = args;
       this.pristine = pristine;
     }
     callProperty.prototype = extend(Value, "CallProperty");
@@ -871,7 +871,7 @@
       this.control = control;
       this.callee = callee;
       this.store = store;
-      this.arguments = args;
+      this.args = args;
     }
     newNode.prototype = extend(Value, "New");
     return newNode;
@@ -1497,7 +1497,7 @@
         if (block.phis) {
           block.phis.forEach(function (phi) {
             assert (phi.control === block.region);
-            assert (phi.arguments.length === block.predecessors.length);
+            assert (phi.args.length === block.predecessors.length);
           });
         }
       });
@@ -1571,7 +1571,7 @@
         iterations ++;
         changed = false;
         phis.forEach(function (phi) {
-          var value = simplify(phi, phi.arguments);
+          var value = simplify(phi, phi.args);
           if (value !== phi) {
             if (updateUses(phi, value)) {
               changed = true;
@@ -1694,7 +1694,7 @@
           for (var j = 0; j < phis.length; j++) {
             var phi = phis[j];
             debug && writer.writeLn("Emitting moves for: " + phi);
-            var arguments = phi.arguments;
+            var arguments = phi.args;
             assert (predecessors.length === arguments.length);
             for (var k = 0; k < predecessors.length; k++) {
               var predecessor = predecessors[k];
@@ -1800,7 +1800,7 @@
            * TODO: Find out if this requirement is too expensive. We can make the move insertion algorithm
            * more intelligent so that it walks the inputs of floating nodes when looking for dependencies.
            */
-          node.arguments.forEach(function (input) {
+          node.args.forEach(function (input) {
             if (shouldFloat(input)) {
               input.mustNotFloat = true;
             }
