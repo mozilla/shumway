@@ -160,15 +160,6 @@ var TextFieldDefinition = (function () {
     return attributesMap;
   }
 
-  function renderContent(content, bounds, drawBorder, borderColor,
-                         drawBackground, backgroundColor, ctx) {
-//    if (!ctx) {
-//      return renderNode(content.tree);
-//    }
-    return renderToCanvas(ctx, bounds, drawBorder, borderColor,
-                          drawBackground, backgroundColor, content.textruns);
-  }
-
   function collectRuns(node, state) {
     // for formatNodes, the format is popped after child processing
     var formatNode = false;
@@ -384,174 +375,6 @@ var TextFieldDefinition = (function () {
     return family || face;
   }
 
-  function renderToCanvas(ctx, bounds, drawBorder, borderColor, drawBackground,
-                          backgroundColor, runs) {
-    if (bounds.xMax <= bounds.xMin || bounds.yMax <= bounds.yMin) {
-      return;
-    }
-    ctx.save();
-    ctx.beginPath();
-    ctx.rect(bounds.xMin, bounds.yMin,
-                 bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin);
-    ctx.clip();
-    if (drawBackground) {
-      ctx.fillStyle = backgroundColor;
-      ctx.fill();
-    }
-    if (drawBorder) {
-      ctx.strokeStyle = borderColor;
-      ctx.lineCap = "square";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(bounds.xMin +.5, bounds.yMin +.5,
-                     (bounds.xMax - bounds.xMin - 1)|0,
-                     (bounds.yMax - bounds.yMin - 1)|0);
-    }
-    ctx.closePath();
-    for (var i = 0; i < runs.length; i++) {
-      var run = runs[i];
-      if (run.type === 'f') {
-        ctx.font = run.format.str;
-        ctx.fillStyle = run.format.color;
-      } else {
-        assert(run.type === 't', 'Invalid run type: ' + run.type);
-        ctx.fillText(run.text, run.x, run.y);
-      }
-    }
-    ctx.restore();
-  }
-
-//  function renderNode(node) {
-//    if (node.type === 'text') {
-//      return node.text;
-//    }
-//
-//    var output = renderNodeStart(node);
-//    var children = node.children;
-//
-//    for (var i = 0; i < children.length; i++) {
-//      var childNode = children[i];
-//      output += renderNode(childNode);
-//    }
-//    return output + renderNodeEnd(node);
-//  }
-//
-//  function renderNodeStart(node) {
-//    var format = node.format;
-//    var output;
-//    var styles;
-//    switch (node.type) {
-//      case 'BR': return '<br />';
-//      case 'B': return '<strong>';
-//      case 'I': return '<i>';
-//      // TODO: check if we need to emit <ul>'s around runs of <li>'s
-//      case 'LI': return '<li>';
-//      case 'U': return '<span style="text-decoration: underline;">';
-//      case 'A':
-//        output = '<a';
-//        if ('href' in format) {
-//          output += ' href="' + format.href + '"';
-//        }
-//        if ('target' in format) {
-//          output += ' target="' + format.href + '"';
-//        }
-//        break;
-//      case 'FONT':
-//        output = '<span';
-//        styles = '';
-//        if ('color' in format) {
-//          styles += 'color:' + format.color + ';';
-//        }
-//        if ('face' in format) {
-//          var fontFace = convertFontFamily(format.face);
-//          styles += 'font-family:' + fontFace + ';';
-//        }
-//        if ('size' in format) {
-//          //TODO: verify that px is the right unit
-//          styles += 'font-size:' + format.size + 'px;';
-//        }
-//        break;
-//      case 'IMG':
-//        output = '<img src="' + (format.src || '') + '"';
-//        styles = '';
-//        if ('width' in format) {
-//          styles += 'width:' + format.width + 'px;';
-//        }
-//        if ('height' in format) {
-//          styles += 'height:' + format.height + 'px;';
-//        }
-//        if ('hspace' in format && 'vspace' in format) {
-//          styles += 'margin:' + format.vspace + 'px ' +
-//                    format.hspace + 'px;';
-//        } else if ('hspace' in format) {
-//          styles += 'margin:0 ' + format.hspace + 'px;';
-//        } else if ('vspace' in format) {
-//          styles += 'margin:' + format.hspace + 'px 0;';
-//        }
-//        // TODO: support `align`, `id` and `checkPolicyFile`
-//        output += ' /';
-//        break;
-//      case 'P':
-//        output = '<p';
-//        styles = '';
-//        if ('class' in format) {
-//          styles += ' class="' + format['class'] + '"';
-//        }
-//        if ('align' in format) {
-//          styles += 'text-align:' + format.align;
-//        }
-//        break;
-//      case 'SPAN':
-//        output = '<span';
-//        if ('class' in format) {
-//          output += ' class="' + format['class'] + '"';
-//        }
-//        break;
-//      case 'TEXTFORMAT':
-//        // TODO: we probably need to merge textformat nodes with <p> nodes
-//        output = '<span';
-//        styles = '';
-//        var marginLeft = 0;
-//        if ('blockIdent' in format) {
-//          marginLeft += parseInt(format.blockIndent, 10);
-//        }
-//        if ('leftMargin' in format) {
-//          marginLeft += parseInt(format.leftMargin, 10);
-//        }
-//        if (marginLeft !== 0) {
-//          styles += 'margin-left:' + marginLeft + 'px"';
-//        }
-//        if ('indent' in format) {
-//          styles += 'text-indent:' + format.indent + 'px"';
-//        }
-//        if ('rightMargin' in format) {
-//          styles += 'margin-left:' + marginLeft + 'px"';
-//        }
-//        // TODO: support leading
-//        // TODO: support tabStops, if possible
-//        break;
-//      default:
-//        // For all unknown nodes, we just emit spans. We might not actually
-//        // need to, but it doesn't do any harm, either.
-//        return '<span>';
-//    }
-//    if (styles) {
-//      output += ' style="' + styles + '"';
-//    }
-//    return output + '>';
-//  }
-//
-//  function renderNodeEnd(node) {
-//    switch (node.type) {
-//      case 'B': return '</strong>';
-//      case 'I': /* falls through */
-//      case 'LI': /* falls through */
-//      case 'A': /* falls through */
-//      case 'P': return '</' + node.type + '>';
-//      default: // <u>, <font>, <span>, <textformat>, and all others
-//        return '</span>';
-//    }
-//  }
-
   var def = {
     __class__: 'flash.text.TextField',
 
@@ -576,6 +399,7 @@ var TextFieldDefinition = (function () {
       this._borderColor = 0x0;
       this._borderColorStr = "#000000";
       this._textColor = null;
+      this._drawingOffsetH = 0;
 
       var s = this.symbol;
       if (!s) {
@@ -633,9 +457,41 @@ var TextFieldDefinition = (function () {
 
     draw: function (ctx) {
       this.ensureDimensions();
-      renderContent(this._content, this._bbox, this._border,
-                    this._borderColorStr, this._background,
-                    this._backgroundColorStr, ctx);
+      var bounds = this._bbox;
+      var x = bounds.xMin;
+      var y = bounds.yMin;
+      var width = bounds.xMax - x;
+      var height = bounds.yMax - y;
+      if (width <= 0 || height <= 0) {
+        return;
+      }
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, width, height);
+      ctx.clip();
+      if (this._background) {
+        ctx.fillStyle = this._backgroundColorStr;
+        ctx.fill();
+      }
+      if (this._border) {
+        ctx.strokeStyle = this._borderColorStr;
+        ctx.lineCap = "square";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(x +.5, y +.5, (width - 1)|0, (height - 1)|0);
+      }
+      ctx.closePath();
+      var runs = this._content.textruns;
+      for (var i = 0; i < runs.length; i++) {
+        var run = runs[i];
+        if (run.type === 'f') {
+          ctx.font = run.format.str;
+          ctx.fillStyle = run.format.color;
+        } else {
+          assert(run.type === 't', 'Invalid run type: ' + run.type);
+          ctx.fillText(run.text, run.x + this._drawingOffsetH, run.y);
+        }
+      }
+      ctx.restore();
     },
 
     invalidateDimensions: function() {
@@ -664,6 +520,21 @@ var TextFieldDefinition = (function () {
       this._textWidth = state.maxLineWidth;
       this._textHeight = state.y;
       this._content.textruns = state.runs;
+      if (this._autoSize !== 'none') {
+        width += 4;
+        var targetWidth = this._textWidth + 4;
+        var diffX = 0;
+        switch (this._autoSize) {
+          case 'left': break;
+          case 'center': diffX = (targetWidth - width) / 2; break;
+          case 'right': diffX = targetWidth - width;
+        }
+        // TODO: update .x
+        bounds.xMin -= diffX;
+        this._drawingOffsetH = -diffX;
+        bounds.xMax = bounds.xMin + targetWidth;
+        bounds.yMax = bounds.yMin + this._textHeight + 4;
+      }
       this._dimensionsValid = true;
     },
 
