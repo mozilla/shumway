@@ -42,6 +42,13 @@ function rgbaObjToStr(color) {
          color.alpha / 255 + ')';
 }
 function rgbIntAlphaToStr(color, alpha) {
+  if (alpha >= 1) {
+    var colorStr = color.toString(16);
+    while (colorStr.length < 6) {
+      colorStr = '0' + colorStr;
+    }
+    return "#" + colorStr;
+  }
   var red = color >> 16 & 0xFF;
   var green = color >> 8 & 0xFF;
   var blue = color & 0xFF;

@@ -160,11 +160,13 @@ var TextFieldDefinition = (function () {
     return attributesMap;
   }
 
-  function renderContent(content, bounds, ctx) {
+  function renderContent(content, bounds, drawBorder, borderColor,
+                         drawBackground, backgroundColor, ctx) {
 //    if (!ctx) {
 //      return renderNode(content.tree);
 //    }
-    return renderToCanvas(ctx, bounds, content.textruns);
+    return renderToCanvas(ctx, bounds, drawBorder, borderColor,
+                          drawBackground, backgroundColor, content.textruns);
   }
 
   function collectRuns(node, state) {
@@ -338,6 +340,9 @@ var TextFieldDefinition = (function () {
       default:
         warning('Unknown format node encountered: ' + node.type); return;
     }
+    if (state.textColor !== null) {
+      format.color = rgbIntAlphaToStr(state.textColor, 1);
+    }
     format.str = makeFormatString(format);
     state.formats.push(format);
     state.runs.push({type: 'f', format: format});
@@ -379,7 +384,8 @@ var TextFieldDefinition = (function () {
     return family || face;
   }
 
-  function renderToCanvas(ctx, bounds, runs) {
+  function renderToCanvas(ctx, bounds, drawBorder, borderColor, drawBackground,
+                          backgroundColor, runs) {
     if (bounds.xMax <= bounds.xMin || bounds.yMax <= bounds.yMin) {
       return;
     }
@@ -388,6 +394,19 @@ var TextFieldDefinition = (function () {
     ctx.rect(bounds.xMin, bounds.yMin,
                  bounds.xMax - bounds.xMin, bounds.yMax - bounds.yMin);
     ctx.clip();
+    if (drawBackground) {
+      ctx.fillStyle = backgroundColor;
+      ctx.fill();
+    }
+    if (drawBorder) {
+      ctx.strokeStyle = borderColor;
+      ctx.lineCap = "square";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bounds.xMin +.5, bounds.yMin +.5,
+                     (bounds.xMax - bounds.xMin - 1)|0,
+                     (bounds.yMax - bounds.yMin - 1)|0);
+    }
+    ctx.closePath();
     for (var i = 0; i < runs.length; i++) {
       var run = runs[i];
       if (run.type === 'f') {
@@ -398,7 +417,6 @@ var TextFieldDefinition = (function () {
         ctx.fillText(run.text, run.x, run.y);
       }
     }
-    ctx.closePath();
     ctx.restore();
   }
 
@@ -554,8 +572,10 @@ var TextFieldDefinition = (function () {
       this._background = false;
       this._border = false;
       this._backgroundColor = 0xffffff;
-      this._borderColor = 0x000000;
-      this._textColor = 0x000000;
+      this._backgroundColorStr = "#ffffff";
+      this._borderColor = 0x0;
+      this._borderColorStr = "#000000";
+      this._textColor = null;
 
       var s = this.symbol;
       if (!s) {
@@ -585,6 +605,7 @@ var TextFieldDefinition = (function () {
       this._multiline = !!tag.multiline;
       this._wordWrap = !!tag.wordWrap;
       this._border = !!tag.border;
+      // TODO: Find out how the IDE causes textfields to have a background
 
       if (tag.initialText) {
         if (tag.html) {
@@ -612,7 +633,9 @@ var TextFieldDefinition = (function () {
 
     draw: function (ctx) {
       this.ensureDimensions();
-      renderContent(this._content, this._bbox, ctx);
+      renderContent(this._content, this._bbox, this._border,
+                    this._borderColorStr, this._background,
+                    this._backgroundColorStr, ctx);
     },
 
     invalidateDimensions: function() {
@@ -632,7 +655,8 @@ var TextFieldDefinition = (function () {
       var state = {ctx: measureCtx, y: 0, x: 0, w: width, h: height, line: [],
                    lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
                    currentFormat: initialFormat, runs: [firstRun],
-                   multiline: this._multiline, wordWrap: this._wordWrap};
+                   multiline: this._multiline, wordWrap: this._wordWrap,
+                   textColor: this._textColor};
       collectRuns(this._content.tree, state);
       if (!state.multiline) {
         finishLine(state);
@@ -743,7 +767,6 @@ var TextFieldDefinition = (function () {
             return this._textColor;
           },
           set: function textColor(value) { // (value:uint) -> void
-            somewhatImplemented("TextField.textColor");
             this._textColor = value;
           }
         },
@@ -793,8 +816,8 @@ var TextFieldDefinition = (function () {
             return this._backgroundColor;
           },
           set: function backgroundColor(value) { // (value:uint) -> void
-            somewhatImplemented("TextField.backgroundColor");
             this._backgroundColor = value;
+            this._backgroundColorStr = rgbIntAlphaToStr(value, 1);
           }
         },
         border: {
@@ -802,7 +825,6 @@ var TextFieldDefinition = (function () {
             return this._border;
           },
           set: function border(value) { // (value:Boolean) -> void
-            somewhatImplemented("TextField.border");
             this._border = value;
           }
         },
@@ -811,8 +833,8 @@ var TextFieldDefinition = (function () {
             return this._borderColor;
           },
           set: function borderColor(value) { // (value:uint) -> void
-            somewhatImplemented("TextField.borderColor");
             this._borderColor = value;
+            this._borderColorStr = rgbIntAlphaToStr(value, 1);
           }
         },
         type: {
