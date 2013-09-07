@@ -81,7 +81,8 @@ var TextFieldDefinition = (function () {
     // The first child is then a <FONT>, with FACE, LETTERSPACING and KERNING
     var fontAttributes = { FACE: initialFormat.font,
                            LETTERSPACING: initialFormat.letterSpacing,
-                           KERNING: initialFormat.kerning
+                           KERNING: initialFormat.kerning,
+                           LEADING: initialFormat.leading
                          };
     trunk.children[0] = {type: 'FONT', format: fontAttributes, children: []};
     return trunk;
@@ -172,11 +173,19 @@ var TextFieldDefinition = (function () {
     // for blockNodes, the current line is finished after child processing
     var blockNode = false;
     switch (node.type) {
-      case 'text': addTextRun(state, node); return;
-      case 'BR': finishLine(state); return;
+      case 'text': addRunsForText(state, node.text); return;
+      case 'BR':
+        if (state.multiline) {
+          finishLine(state);
+        }
+        return;
 
       case 'LI': /* TODO: draw bullet points. */ /* falls through */
-      case 'P': finishLine(state); blockNode = true; break;
+      case 'P':
+        if (state.multiline) {
+          finishLine(state);
+        }
+        blockNode = true; break;
 
       case 'B': /* falls through */
       case 'I': /* falls through */
@@ -201,32 +210,84 @@ var TextFieldDefinition = (function () {
     if (formatNode) {
       popFormat(state);
     }
-    if (blockNode) {
+    if (blockNode && state.multiline) {
       finishLine(state);
     }
   }
-  function addTextRun(state, node) {
-    var text = node.text;
+  var WRAP_OPPORTUNITIES = {
+    " ": true,
+    ".": true,
+    "-": true,
+    "\t": true
+  };
+  function addRunsForText(state, text) {
     if (!text) {
       return;
     }
+    if (!(state.wordWrap && state.multiline)) {
+      addTextRun(state, text, state.ctx.measureText(text).width);
+      return;
+    }
+    while (text.length) {
+      var width = state.ctx.measureText(text).width;
+      var availableWidth = state.w - state.x;
+      if (width <= availableWidth) {
+        addTextRun(state, text, width);
+        break;
+      } else {
+        // Find offset close to where we can wrap by treating all chars as
+        // same-width.
+        var offset = (text.length / width * availableWidth)|0;
+        // Expand to offset we know to be to the right of wrapping position
+        while (state.ctx.measureText(text.substr(0, offset)).width <
+               availableWidth)
+        {
+          offset++;
+        }
+        // Find last wrapping-allowing character before that
+        var wrapOffset = offset;
+        while (wrapOffset > -1) {
+          if (WRAP_OPPORTUNITIES[text[wrapOffset]]) {
+            wrapOffset++;
+            break;
+          }
+          wrapOffset--;
+        }
+        if (wrapOffset === -1) {
+          // No wrapping opportunity found, wrap mid-word
+          while (state.ctx.measureText(text.substr(0, offset)).width >
+                 availableWidth)
+          {
+            offset--;
+          }
+          wrapOffset = offset;
+        }
+        var runText = text.substr(0, wrapOffset);
+        width = state.ctx.measureText(runText).width;
+        addTextRun(state, runText, width);
+
+        if (state.wordWrap) {
+          finishLine(state);
+        }
+
+        text = text.substr(wrapOffset);
+      }
+    }
+  }
+  function addTextRun(state, text, width) {
     // `y` is set by `finishLine`
     var run = {type: 't', text: text, x: state.x, y: 0};
     state.runs.push(run);
     state.line.push(run);
-    state.x += state.ctx.measureText(text).width;
+    state.x += width;
     if (state.currentFormat.size > state.lineHeight) {
       state.lineHeight = state.currentFormat.size;
     }
-    // TODO: implement wordWrap
-//    var overflow = '';
-//    var ctx = state.ctx;
-//    var space = state.width = state.x;
-//    while (ctx.measureText(text) > space) {
-//
-//    }
-  }
+}
   function finishLine(state) {
+    if (state.lineHeight === 0) {
+      return;
+    }
     state.maxLineWidth = Math.max(state.maxLineWidth, state.x);
     state.x = 0;
     state.y += state.lineHeight;
@@ -235,6 +296,9 @@ var TextFieldDefinition = (function () {
       var run = state.line.pop();
       run.y = y;
     }
+    // TODO: it seems like Flash makes lines 2px higher than just the font-size.
+    // Verify this.
+    state.y += state.currentFormat.leading + 2;
     state.lineHeight = 0;
   }
   function pushFormat(state, node) {
@@ -259,6 +323,9 @@ var TextFieldDefinition = (function () {
         if ('KERNING' in attributes) {
           format.kerning = parseFloat(attributes.KERNING);
         }
+        if ('LEADING' in attributes) {
+          format.leading = parseFloat(attributes.LEADING);
+        }
       /* falls through */
       case 'TEXTFORMAT':
         // `textFormat` has, among others, the same attributes as `font`
@@ -266,7 +333,6 @@ var TextFieldDefinition = (function () {
           state.x += attributes.INDENT;
         }
         // TODO: support leftMargin, rightMargin & blockIndent
-        // TODO: support leading
         // TODO: support tabStops, if possible
         break;
       default:
@@ -332,6 +398,7 @@ var TextFieldDefinition = (function () {
         ctx.fillText(run.text, run.x, run.y);
       }
     }
+    ctx.closePath();
     ctx.restore();
   }
 
@@ -473,7 +540,7 @@ var TextFieldDefinition = (function () {
     initialize: function () {
       var initialFormat = this._defaultTextFormat = {
         align: 'LEFT', font: 'serif', size: 12,
-        letterspacing: 0, kerning: 0
+        letterspacing: 0, kerning: 0, color: "black", leading: 2
       };
       this._type = 'dynamic';
       this._selectable = true;
@@ -502,6 +569,9 @@ var TextFieldDefinition = (function () {
 
       if (tag.hasLayout) {
         initialFormat.size = tag.fontHeight / 20;
+        if (typeof initialFormat.leading === 'number') {
+          initialFormat.leading = tag.leading / 20;
+        }
       }
       if (tag.hasColor) {
         initialFormat.color = rgbaObjToStr(tag.color);
@@ -510,6 +580,11 @@ var TextFieldDefinition = (function () {
         initialFormat.font = convertFontFamily(tag.font);
       }
       initialFormat.str = makeFormatString(initialFormat);
+
+      this._selectable = !tag.noSelect;
+      this._multiline = !!tag.multiline;
+      this._wordWrap = !!tag.wordWrap;
+      this._border = !!tag.border;
 
       if (tag.initialText) {
         if (tag.html) {
@@ -552,12 +627,16 @@ var TextFieldDefinition = (function () {
       var bounds = this._bbox;
       var initialFormat = this._defaultTextFormat;
       var firstRun = {type: 'f', format: initialFormat};
-      var width = bounds.xMax - bounds.xMin;
-      var height = bounds.yMax - bounds.yMin;
+      var width = bounds.xMax - bounds.xMin - 4;
+      var height = bounds.yMax - bounds.yMin - 4;
       var state = {ctx: measureCtx, y: 0, x: 0, w: width, h: height, line: [],
                    lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
-                   currentFormat: initialFormat, runs: [firstRun]};
+                   currentFormat: initialFormat, runs: [firstRun],
+                   multiline: this._multiline, wordWrap: this._wordWrap};
       collectRuns(this._content.tree, state);
+      if (!state.multiline) {
+        finishLine(state);
+      }
       this._textWidth = state.maxLineWidth;
       this._textHeight = state.y;
       this._content.textruns = state.runs;
