@@ -114,7 +114,7 @@
 
 
   function extend(c, name) {
-    assert (c);
+    release || assert (c);
     return Object.create(c.prototype, {nodeName: { value: name }});
   }
 
@@ -257,13 +257,13 @@
     region.prototype.verify = function () {
       var predecessors = this.predecessors;
       predecessors.forEach(function (x) {
-        assert (x);
-        // assert (x instanceof Control, x);
+        release || assert (x);
+        // release || assert (x instanceof Control, x);
       });
       if (predecessors.length > 1) {
         this.phis.forEach(function (x) {
-          assert (x instanceof Phi);
-          assert (x.args.length === predecessors.length);
+          release || assert (x instanceof Phi);
+          release || assert (x.args.length === predecessors.length);
         });
       }
     };
@@ -282,7 +282,7 @@
   var Phi = (function () {
     function phi(control, value) {
       Node.call(this);
-      assert (control instanceof Region);
+      release || assert (control instanceof Region);
       this.control = control;
       this.args = value ? [value] : [];
       this.sealed = false;
@@ -292,8 +292,8 @@
       this.sealed = true;
     };
     phi.prototype.pushValue = function pushValue(x) {
-      assert (isValue(x));
-      assert (!this.sealed);
+      release || assert (isValue(x));
+      release || assert (!this.sealed);
       this.args.push(x);
     };
     return phi;
@@ -301,7 +301,7 @@
 
   var Variable = (function () {
     function variable(name) {
-      assert (isString(name));
+      release || assert (isString(name));
       this.name = name;
     }
     variable.prototype = extend(Value, "Variable");
@@ -311,7 +311,7 @@
   var Copy = (function () {
     function copy(argument) {
       Node.call(this);
-      assert (argument);
+      release || assert (argument);
       this.argument = argument;
     }
     copy.prototype = extend(Value, "Copy");
@@ -320,9 +320,9 @@
 
   var Move = (function () {
     function move(to, from) {
-      assert (to instanceof Variable);
-      assert (from instanceof Variable || from instanceof Constant, from);
-      assert (to !== from);
+      release || assert (to instanceof Variable);
+      release || assert (from instanceof Variable || from instanceof Constant, from);
+      release || assert (to !== from);
       this.to = to;
       this.from = from;
     }
@@ -344,7 +344,7 @@
   var If = (function () {
     function ifNode(control, predicate) {
       Control.call(this);
-      assert (predicate);
+      release || assert (predicate);
       this.control = control;
       this.predicate = predicate;
     }
@@ -374,9 +374,9 @@
   var Stop = (function () {
     function stop(control, store, argument) {
       Control.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (argument);
+      release || assert (isControlOrNull(control));
+      release || assert (isStore(store));
+      release || assert (argument);
       this.control = control;
       this.store = store;
       this.argument = argument;
@@ -388,8 +388,8 @@
   var Projection = (function () {
     function projection(argument, type, selector) {
       Value.call(this);
-      assert (type);
-      assert (!(argument instanceof Projection));
+      release || assert (type);
+      release || assert (!(argument instanceof Projection));
       this.argument = argument;
       this.type = type;
       if (selector) {
@@ -420,7 +420,7 @@
   var Latch = (function () {
     function latch(control, condition, left, right) {
       Node.call(this);
-      assert (isControlOrNull(control));
+      release || assert (isControlOrNull(control));
       this.control = control;
       this.condition = condition;
       this.left = left;
@@ -447,8 +447,8 @@
   var Unary = (function () {
     function unary(operator, argument) {
       Node.call(this);
-      assert (operator instanceof Operator);
-      assert (argument);
+      release || assert (operator instanceof Operator);
+      release || assert (argument);
       this.operator = operator;
       this.argument = argument;
     }
@@ -512,9 +512,9 @@
   var AVM2Scope = (function () {
     function constructor(parent, object, isWith) {
       Node.call(this);
-      assert (isScope(parent));
-      assert (object);
-      assert (isBoolean(isWith));
+      release || assert (isScope(parent));
+      release || assert (object);
+      release || assert (isBoolean(isWith));
       this.parent = parent;
       this.object = object;
       this.isWith = isWith;
@@ -526,7 +526,7 @@
   var This = (function () {
     function thisNode(control) {
       Node.call(this);
-      assert (control);
+      release || assert (control);
       this.control = control;
     }
     thisNode.prototype = extend(Value, "This");
@@ -536,7 +536,7 @@
   var Throw = (function () {
     function throwNode(control, argument) {
       Node.call(this);
-      assert (control);
+      release || assert (control);
       this.control = control;
       this.argument = argument;
     }
@@ -547,7 +547,7 @@
   var Arguments = (function () {
     function argumentsNode(control) {
       Node.call(this);
-      assert (control);
+      release || assert (control);
       this.control = control;
     }
     argumentsNode.prototype = extend(Value, "Arguments");
@@ -557,8 +557,8 @@
   var AVM2Global = (function () {
     function constructor(control, scope) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isScope(scope));
+      release || assert (isControlOrNull(control));
+      release || assert (isScope(scope));
       this.control = control;
       this.scope = scope;
     }
@@ -585,7 +585,7 @@
   var GlobalProperty = (function () {
     function globalProperty(name) {
       Node.call(this);
-      assert (isString(name));
+      release || assert (isString(name));
       this.name = name;
     }
     globalProperty.prototype = extend(Value, "GlobalProperty");
@@ -595,10 +595,10 @@
   var GetProperty = (function () {
     function getProperty(control, store, object, name) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (store === null || isStore(store));
-      assert (object);
-      assert (name);
+      release || assert (isControlOrNull(control));
+      release || assert (store === null || isStore(store));
+      release || assert (object);
+      release || assert (name);
       this.control = control;
       this.store = store;
       this.object = object;
@@ -611,10 +611,10 @@
   var AVM2GetProperty = (function () {
     function avm2GetProperty(control, store, object, name, isIndexed, isMethod, ic) {
       GetProperty.call(this, control, store, object, name);
-      assert (isBoolean(isIndexed));
-      assert (isBoolean(isMethod));
-      assert (isNullOrUndefined(ic) || isConstant(ic));
-      assert (isMultiname(name));
+      release || assert (isBoolean(isIndexed));
+      release || assert (isBoolean(isMethod));
+      release || assert (isNullOrUndefined(ic) || isConstant(ic));
+      release || assert (isMultiname(name));
       this.isIndexed = isIndexed;
       this.isMethod = isMethod;
       this.ic = ic;
@@ -626,10 +626,10 @@
   var AVM2DeleteProperty = (function () {
     function avm2DeleteProperty(control, store, object, name) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (object);
-      assert (name);
+      release || assert (isControlOrNull(control));
+      release || assert (isStore(store));
+      release || assert (object);
+      release || assert (name);
       this.control = control;
       this.store = store;
       this.object = object;
@@ -642,10 +642,10 @@
   var AVM2HasProperty = (function () {
     function avm2HasProperty(control, store, object, name) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (object);
-      assert (name);
+      release || assert (isControlOrNull(control));
+      release || assert (isStore(store));
+      release || assert (object);
+      release || assert (name);
       this.control = control;
       this.store = store;
       this.object = object;
@@ -667,11 +667,11 @@
   var SetProperty = (function () {
     function setProperty(control, store, object, name, value) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (object);
-      assert (name);
-      assert (value);
+      release || assert (isControlOrNull(control));
+      release || assert (isStore(store));
+      release || assert (object);
+      release || assert (name);
+      release || assert (value);
       this.control = control;
       this.store = store;
       this.object = object;
@@ -685,9 +685,9 @@
   var AVM2SetProperty = (function () {
     function avm2SetProperty(control, store, object, name, value, isIndexed, ic) {
       SetProperty.call(this, control, store, object, name, value);
-      assert (isBoolean(isIndexed));
-      assert (isNullOrUndefined(ic) || isConstant(ic));
-      assert (isMultiname(name));
+      release || assert (isBoolean(isIndexed));
+      release || assert (isNullOrUndefined(ic) || isConstant(ic));
+      release || assert (isMultiname(name));
       this.isIndexed = isIndexed;
       this.ic = ic;
     }
@@ -698,10 +698,10 @@
   var AVM2GetSlot = (function () {
     function avm2GetSlot(control, store, object, index) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (object);
-      assert (isValue(index));
+      release || assert (isControlOrNull(control));
+      release || assert (isStore(store));
+      release || assert (object);
+      release || assert (isValue(index));
       this.control = control;
       this.store = store;
       this.object = object;
@@ -714,11 +714,11 @@
   var AVM2SetSlot = (function () {
     function avm2SetSlot(control, store, object, index, value) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (object);
-      assert (isValue(index));
-      assert (value);
+      release || assert (isControlOrNull(control));
+      release || assert (isStore(store));
+      release || assert (object);
+      release || assert (isValue(index));
+      release || assert (value);
       this.control = control;
       this.store = store;
       this.object = object;
@@ -732,12 +732,12 @@
   var AVM2FindProperty = (function () {
     function avm2FindProperty(control, store, scope, name, domain, strict) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (isScope(scope));
-      assert (isMultiname(name), name);
-      assert (isConstant(domain));
-      assert (isBoolean(strict));
+      release || assert (isControlOrNull(control));
+      release || assert (isStore(store));
+      release || assert (isScope(scope));
+      release || assert (isMultiname(name), name);
+      release || assert (isConstant(domain));
+      release || assert (isBoolean(strict));
       this.control = control;
       this.store = store;
       this.scope = scope;
@@ -752,8 +752,8 @@
   var NewArray = (function () {
     function newArray(control, elements) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isArray(elements));
+      release || assert (isControlOrNull(control));
+      release || assert (isArray(elements));
       this.control = control;
       this.elements = elements;
     }
@@ -764,8 +764,8 @@
   var KeyValuePair = (function () {
     function keyValuePair(key, value) {
       Node.call(this);
-      assert (key);
-      assert (value);
+      release || assert (key);
+      release || assert (value);
       this.key = key;
       this.value = value;
     }
@@ -777,8 +777,8 @@
   var NewObject = (function () {
     function newObject(control, properties) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isArray(properties));
+      release || assert (isControlOrNull(control));
+      release || assert (isArray(properties));
       this.control = control;
       this.properties = properties;
     }
@@ -789,7 +789,7 @@
   var AVM2NewActivation = (function () {
     function avm2NewActivation(methodInfo) {
       Node.call(this);
-      assert (isConstant(methodInfo));
+      release || assert (isConstant(methodInfo));
       this.methodInfo = methodInfo;
     }
     avm2NewActivation.prototype = extend(Value, "AVM2_NewActivation");
@@ -799,8 +799,8 @@
   var AVM2Multiname = (function () {
     function avm2Multiname(namespaces, name, flags) {
       Node.call(this);
-      assert (namespaces);
-      assert (name);
+      release || assert (namespaces);
+      release || assert (name);
       this.namespaces = namespaces;
       this.name = name;
       this.flags = flags;
@@ -813,11 +813,11 @@
   var Call = (function () {
     function call(control, store, callee, object, args, pristine) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (callee);
-      assert (isValueOrNull(object));
-      assert (store === null || isStore(store));
-      assert (isArray(args));
+      release || assert (isControlOrNull(control));
+      release || assert (callee);
+      release || assert (isValueOrNull(object));
+      release || assert (store === null || isStore(store));
+      release || assert (isArray(args));
       this.control = control;
       this.callee = callee;
       this.object = object;
@@ -832,11 +832,11 @@
   var CallProperty = (function () {
     function callProperty(control, store, object, name, args, pristine) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isValueOrNull(object));
-      assert (name);
-      assert (store === null || isStore(store));
-      assert (isArray(args));
+      release || assert (isControlOrNull(control));
+      release || assert (isValueOrNull(object));
+      release || assert (name);
+      release || assert (store === null || isStore(store));
+      release || assert (isArray(args));
       this.control = control;
       this.store = store;
       this.object = object;
@@ -851,9 +851,9 @@
   var AVM2CallProperty = (function () {
     function avm2CallProperty(control, store, object, name, isLex, args, pristine, ic) {
       CallProperty.call(this, control, store, object, name, args, pristine);
-      assert (isBoolean(isLex));
-      assert (isNullOrUndefined(ic) || isConstant(ic));
-      assert (isMultiname(name));
+      release || assert (isBoolean(isLex));
+      release || assert (isNullOrUndefined(ic) || isConstant(ic));
+      release || assert (isMultiname(name));
       this.isLex = isLex;
       this.ic = ic;
     }
@@ -864,10 +864,10 @@
   var New = (function () {
     function newNode(control, store, callee, args) {
       Node.call(this);
-      assert (isControlOrNull(control));
-      assert (callee);
-      assert (isStore(store));
-      assert (isArray(args));
+      release || assert (isControlOrNull(control));
+      release || assert (callee);
+      release || assert (isStore(store));
+      release || assert (isArray(args));
       this.control = control;
       this.callee = callee;
       this.store = store;
@@ -903,9 +903,9 @@
   var Parameter = (function () {
     function parameter(control, index, name) {
       Node.call(this);
-      assert (control);
-      assert (isInteger(index));
-      assert (isString(name));
+      release || assert (control);
+      release || assert (isInteger(index));
+      release || assert (isString(name));
       this.control = control;
       this.index = index;
       this.name = name;
@@ -917,7 +917,7 @@
   var Block = (function () {
     function block(id, start, end) {
       if (start) {
-        assert (start instanceof Region);
+        release || assert (start instanceof Region);
       }
       this.region = start;
       this.id = id;
@@ -926,22 +926,22 @@
       this.nodes = [start, end];
     }
     block.prototype.pushSuccessorAt = function pushSuccessor(successor, index, pushPredecessor) {
-      assert (successor);
-      assert (!this.successors[index]);
+      release || assert (successor);
+      release || assert (!this.successors[index]);
       this.successors[index] = successor;
       if (pushPredecessor) {
         successor.pushPredecessor(this);
       }
     };
     block.prototype.pushSuccessor = function pushSuccessor(successor, pushPredecessor) {
-      assert (successor);
+      release || assert (successor);
       this.successors.push(successor);
       if (pushPredecessor) {
         successor.pushPredecessor(this);
       }
     };
     block.prototype.pushPredecessor = function pushPredecessor(predecessor) {
-      assert (predecessor);
+      release || assert (predecessor);
       this.predecessors.push(predecessor);
     };
     block.prototype.visitNodes = function (fn) {
@@ -954,10 +954,10 @@
       this.predecessors.forEach(fn);
     };
     block.prototype.append = function (node) {
-      assert (this.nodes.length >= 2);
-      assert (isValue(node), node);
-      assert (isNotPhi(node));
-      assert (this.nodes.indexOf(node) < 0);
+      release || assert (this.nodes.length >= 2);
+      release || assert (isValue(node), node);
+      release || assert (isNotPhi(node));
+      release || assert (this.nodes.indexOf(node) < 0);
       if (node.mustFloat) {
         return;
       }
@@ -1123,7 +1123,7 @@
     constructor.fromDFG = function fromDFG(dfg) {
       var cfg = new CFG();
 
-      assert (dfg && dfg instanceof DFG);
+      release || assert (dfg && dfg instanceof DFG);
       cfg.dfg = dfg;
 
       var visited = [];
@@ -1132,7 +1132,7 @@
         if (end instanceof Projection) {
           end = end.project();
         }
-        assert (end instanceof End || end instanceof Start, end);
+        release || assert (end instanceof End || end instanceof Start, end);
         if (visited[end.id]) {
           return;
         }
@@ -1165,7 +1165,7 @@
           buildEnd(d);
           var controlBlock = d.control.block;
           if (d instanceof Switch) {
-            assert (isProjection(c, Projection.Type.CASE));
+            release || assert (isProjection(c, Projection.Type.CASE));
             controlBlock.pushSuccessorAt(block, c.selector.value, true);
           } else if (trueProjection && controlBlock.successors.length > 0) {
             controlBlock.pushSuccessor(block, true);
@@ -1188,7 +1188,7 @@
      * exit node.
      */
     constructor.prototype.buildRootAndExit = function buildRootAndExit() {
-      assert (!this.root && !this.exit);
+      release || assert (!this.root && !this.exit);
 
       // Create new root node if the root node has predecessors.
       if (this.blocks[0].predecessors.length > 0) {
@@ -1221,8 +1221,8 @@
         }
       }
 
-      assert (this.root && this.exit);
-      assert (this.root !== this.exit);
+      release || assert (this.root && this.exit);
+      release || assert (this.root !== this.exit);
     };
 
     constructor.prototype.fromString = function (list, rootName) {
@@ -1260,7 +1260,7 @@
         buildBlock(from).pushSuccessor(buildBlock(to), true);
       }
 
-      assert (rootName && names[rootName]);
+      release || assert (rootName && names[rootName]);
       this.root = names[rootName];
     };
 
@@ -1308,7 +1308,7 @@
     };
 
     constructor.prototype.computeDominators = function (apply) {
-      assert (this.root.predecessors.length === 0, "Root node ", this.root, " must not have predecessors.");
+      release || assert (this.root.predecessors.length === 0, "Root node ", this.root, " must not have predecessors.");
 
       var dom = new Int32Array(this.blocks.length);
       for (var i = 0; i < dom.length; i++) {
@@ -1435,7 +1435,7 @@
         entry.uses.forEach(function (use) {
           count += use.replaceInput(def, value);
         });
-        assert (count >= entry.uses.length);
+        release || assert (count >= entry.uses.length);
         entry.uses = [];
         return true;
       };
@@ -1450,7 +1450,7 @@
         entry.uses.forEach(function (use) {
           count += use.replaceInput(def, value);
         });
-        assert (count >= entry.uses.length);
+        release || assert (count >= entry.uses.length);
         entry.uses = [];
         return true;
       }
@@ -1463,6 +1463,7 @@
      * () -> Map[id -> {def:Node, uses:Array[Node]}]
      */
     constructor.prototype.computeUses = function computeUses() {
+      Timer.start("computeUses");
       var writer = debug && new IndentingWriter();
 
       debug && writer.enter("> Compute Uses");
@@ -1484,6 +1485,7 @@
         writer.leave("<");
         writer.leave("<");
       }
+      Timer.stop();
       return uses;
     };
 
@@ -1496,8 +1498,8 @@
       order.forEach(function (block) {
         if (block.phis) {
           block.phis.forEach(function (phi) {
-            assert (phi.control === block.region);
-            assert (phi.args.length === block.predecessors.length);
+            release || assert (phi.control === block.region);
+            release || assert (phi.args.length === block.predecessors.length);
           });
         }
       });
@@ -1540,7 +1542,7 @@
         entry.uses.forEach(function (use) {
           count += use.replaceInput(def, value);
         });
-        assert (count >= entry.uses.length);
+        release || assert (count >= entry.uses.length);
         entry.uses = [];
         return true;
       }
@@ -1618,7 +1620,7 @@
       while ((edge = criticalEdges.pop())) {
         var fromIndex = edge.from.successors.indexOf(edge.to);
         var toIndex = edge.to.predecessors.indexOf(edge.from);
-        assert (fromIndex >= 0 && toIndex >= 0);
+        release || assert (fromIndex >= 0 && toIndex >= 0);
         debug && writer.writeLn("Splitting critical edge: " + edge.from + " -> " + edge.to);
         var toBlock = edge.to;
         var toRegion = toBlock.region;
@@ -1640,7 +1642,7 @@
       }
 
       if (criticalEdgeCount && !release) {
-        assert (this.splitCriticalEdges() === 0);
+        release || assert (this.splitCriticalEdges() === 0);
       }
 
       debug && writer.leave("<");
@@ -1695,7 +1697,7 @@
             var phi = phis[j];
             debug && writer.writeLn("Emitting moves for: " + phi);
             var arguments = phi.args;
-            assert (predecessors.length === arguments.length);
+            release || assert (predecessors.length === arguments.length);
             for (var k = 0; k < predecessors.length; k++) {
               var predecessor = predecessors[k];
               var argument = arguments[k];
@@ -1843,9 +1845,9 @@
       }
 
       function append(node) {
-        assert (!isScheduled(node), "Already scheduled " + node);
+        release || assert (!isScheduled(node), "Already scheduled " + node);
         scheduled[node.id] = true;
-        assert (node.control, node);
+        release || assert (node.control, node);
         if (shouldFloat(node)) {
 
         } else {
@@ -1854,9 +1856,9 @@
       }
 
       function scheduleIn(node, region) {
-        assert (!node.control, node);
-        assert (!isScheduled(node));
-        assert (region);
+        release || assert (!node.control, node);
+        release || assert (!isScheduled(node));
+        release || assert (region);
         debugScheduler && writer.writeLn("Scheduled: " + node + " in " + region);
         node.control = region;
         append(node);
@@ -1912,7 +1914,7 @@
         if (node === dfg.start || node instanceof Region) {
           return;
         }
-        assert (node.control, "Node is not scheduled: " + node);
+        release || assert (node.control, "Node is not scheduled: " + node);
       });
     };
 
@@ -1942,7 +1944,7 @@
       }
 
       function shapeOf(block) {
-        assert (block);
+        release || assert (block);
         if (block === root) {
           return "house";
         } else if (block === exit) {
@@ -2006,7 +2008,7 @@
 
     }
     function foldUnary(node, truthy) {
-      assert (node instanceof Unary);
+      release || assert (node instanceof Unary);
       if (isConstant(node.argument)) {
         return new Constant(node.operator.evaluate(node.argument.value));
       }
@@ -2026,7 +2028,7 @@
       return node;
     }
     function foldBinary(node, truthy) {
-      assert (node instanceof Binary);
+      release || assert (node instanceof Binary);
       if (isConstant(node.left) && isConstant(node.right)) {
         return new Constant(node.operator.evaluate(node.left.value, node.right.value));
       }
