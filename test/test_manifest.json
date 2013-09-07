@@ -235,7 +235,7 @@
        "type": "stas"
     },
     {  "id": "NameCache trace",
-       "stas": "swfs/trace2s.stas",
+       "stas": "swfs/trace4s.stas",
        "filenames": [
          "swfs/NameCache.swf"
        ],
