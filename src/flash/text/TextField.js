@@ -172,7 +172,7 @@ var TextFieldDefinition = (function () {
     // for blockNodes, the current line is finished after child processing
     var blockNode = false;
     switch (node.type) {
-      case 'text': addTextRun(state, node); return;
+      case 'text': addRunsForText(state, node.text); return;
       case 'BR': finishLine(state); return;
 
       case 'LI': /* TODO: draw bullet points. */ /* falls through */
@@ -205,27 +205,68 @@ var TextFieldDefinition = (function () {
       finishLine(state);
     }
   }
-  function addTextRun(state, node) {
-    var text = node.text;
+  var WRAP_OPPORTUNITIES = {
+    " ": true,
+    ".": true,
+    "-": true,
+    "\t": true
+  };
+  function addRunsForText(state, text) {
     if (!text) {
       return;
     }
+    while (text.length) {
+      var width = state.ctx.measureText(text).width;
+      var availableWidth = state.w - state.x;
+      if (state.x + width <= state.w) {
+        addTextRun(state, text, width);
+        break;
+      } else {
+        // Find offset close to where we can wrap by treating all chars as
+        // same-width.
+        var offset = (text.length / width * availableWidth)|0;
+        // Expand to offset we know to be to the right of wrapping position
+        while (state.ctx.measureText(text.substr(0, offset)).width <
+               availableWidth)
+        {
+          offset++;
+        }
+        // Find last wrapping-allowing character before that
+        var wrapOffset = offset;
+        while (wrapOffset > -1) {
+          if (WRAP_OPPORTUNITIES[text[wrapOffset]]) {
+            wrapOffset++;
+            break;
+          }
+          wrapOffset--;
+        }
+        if (wrapOffset === -1) {
+          // No wrapping opportunity found, wrap mid-word
+          while (state.ctx.measureText(text.substr(0, offset)).width >
+                 availableWidth)
+          {
+            offset--;
+          }
+          wrapOffset = offset;
+        }
+        var runText = text.substr(0, wrapOffset);
+        width = state.ctx.measureText(runText).width;
+        addTextRun(state, runText, width);
+        finishLine(state);
+        text = text.substr(wrapOffset);
+      }
+    }
+  }
+  function addTextRun(state, text, width) {
     // `y` is set by `finishLine`
     var run = {type: 't', text: text, x: state.x, y: 0};
     state.runs.push(run);
     state.line.push(run);
-    state.x += state.ctx.measureText(text).width;
+    state.x += width;
     if (state.currentFormat.size > state.lineHeight) {
       state.lineHeight = state.currentFormat.size;
     }
-    // TODO: implement wordWrap
-//    var overflow = '';
-//    var ctx = state.ctx;
-//    var space = state.width = state.x;
-//    while (ctx.measureText(text) > space) {
-//
-//    }
-  }
+}
   function finishLine(state) {
     state.maxLineWidth = Math.max(state.maxLineWidth, state.x);
     state.x = 0;
@@ -314,6 +355,7 @@ var TextFieldDefinition = (function () {
   }
 
   function renderToCanvas(ctx, bounds, runs) {
+    console.log(bounds);
     if (bounds.xMax <= bounds.xMin || bounds.yMax <= bounds.yMin) {
       return;
     }
@@ -329,9 +371,11 @@ var TextFieldDefinition = (function () {
         ctx.fillStyle = run.format.color;
       } else {
         assert(run.type === 't', 'Invalid run type: ' + run.type);
+        console.log(run.text);
         ctx.fillText(run.text, run.x, run.y);
       }
     }
+    ctx.closePath();
     ctx.restore();
   }
 
@@ -552,8 +596,8 @@ var TextFieldDefinition = (function () {
       var bounds = this._bbox;
       var initialFormat = this._defaultTextFormat;
       var firstRun = {type: 'f', format: initialFormat};
-      var width = bounds.xMax - bounds.xMin;
-      var height = bounds.yMax - bounds.yMin;
+      var width = bounds.xMax - bounds.xMin - 4;
+      var height = bounds.yMax - bounds.yMin - 4;
       var state = {ctx: measureCtx, y: 0, x: 0, w: width, h: height, line: [],
                    lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
                    currentFormat: initialFormat, runs: [firstRun]};
