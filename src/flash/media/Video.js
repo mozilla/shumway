@@ -57,12 +57,14 @@ var VideoDefinition = (function () {
       var width = this._initialWidth;
       var height = this._initialHeight;
 
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(0, 0, width, height);
-      ctx.clip();
-      ctx.clearRect(0, 0, width, height);
-      ctx.restore();
+      if (width > 0 && height > 0) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(0, 0, width, height);
+        ctx.clip();
+        ctx.clearRect(0, 0, width, height);
+        ctx.restore();
+      }
 
       var matrix = ctx.currentTransform;
       var sx = width / this._videoWidth;
