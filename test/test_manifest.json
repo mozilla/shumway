@@ -234,13 +234,6 @@
        ],
        "type": "stas"
     },
-    {  "id": "NameCache trace",
-       "stas": "swfs/trace4s.stas",
-       "filenames": [
-         "swfs/NameCache.swf"
-       ],
-       "type": "stas"
-    },
     {  "id": "zombo trace",
        "stas": "swfs/trace.stas",
        "filenames": [
