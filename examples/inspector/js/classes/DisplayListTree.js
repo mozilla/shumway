@@ -225,6 +225,7 @@ var DisplayListTree = (function() {
           selectedElement.classList.add("selected");
           updateProperties(selectedItem);
         }
+        event.preventDefault();
       }
     },
 
