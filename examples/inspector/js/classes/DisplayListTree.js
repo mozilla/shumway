@@ -25,6 +25,9 @@ var DisplayListTree = (function() {
   var selectedItem;
   var boundClickListener;
   var boundMouseOverListener;
+  var boundFocusListener;
+  var boundBlurListener;
+  var boundKeyDownListener;
   var displayObjectStore;
 
   var displayObjectProps = [
@@ -114,32 +117,39 @@ var DisplayListTree = (function() {
 
   DisplayListTree.prototype = {
 
-    updateDom: function updateDom(stage, elContainer) {
+    update: function updateDom(stage, container) {
       displayObjectStore = [];
-      if (rootElement) {
-        if (boundClickListener) {
-          rootElement.removeEventListener("click", boundClickListener);
-        }
-        if (boundMouseOverListener) {
-          rootElement.removeEventListener("mouseover", boundMouseOverListener);
-        }
-      }
-      boundClickListener = this._onClick.bind(this);
-      boundMouseOverListener = this._onMouseOver.bind(this);
-      containerElement = elContainer;
-      containerElement.innerHTML = '<div id="displayList"><ul id="displayListRoot"></ul></div><div id="displayObjectProperties"></div>';
-      propertiesElement = document.getElementById("displayObjectProperties");
-      rootElement = document.getElementById("displayList");
+
+      containerElement = container;
+      containerElement.innerHTML = "";
+
+      var displayListRoot = document.createElement("div");
+      displayListRoot.setAttribute("id", "displayListRoot");
+
+      this._removeEventListeners(rootElement);
+
+      rootElement = document.createElement("div");
+      rootElement.setAttribute("id", "displayList");
+      rootElement.setAttribute("tabindex", "6");
       rootElement.addEventListener("click", boundClickListener);
       rootElement.addEventListener("mouseover", boundMouseOverListener);
-      updateChildren(stage, document.getElementById("displayListRoot"));
+      rootElement.appendChild(displayListRoot);
+
+      this._addEventListeners(rootElement);
+
+      propertiesElement = document.createElement("div");
+      propertiesElement.setAttribute("id", "displayObjectProperties");
+
+      updateChildren(stage, displayListRoot);
+
+      containerElement.appendChild(rootElement);
+      containerElement.appendChild(propertiesElement);
 
       if (selectedItem) {
         var dosidx = displayObjectStore.indexOf(selectedItem);
         if (dosidx > -1) {
           selectedElement = document.querySelector("#displayListRoot .item[data-dosidx=\"" + dosidx + "\"]");
           selectedElement.classList.add("selected");
-          console.log(selectedElement);
         } else {
           selectedItem = null;
           selectedElement = null;
@@ -181,6 +191,73 @@ var DisplayListTree = (function() {
       } else {
         // OUT
         hoveredElement = null;
+      }
+    },
+
+    _onFocus: function _onFocus(event) {
+      boundKeyDownListener = this._onKeyDown.bind(this);
+      event.target.addEventListener('keydown', boundKeyDownListener, false);
+    },
+
+    _onBlur: function _onBlur(event) {
+      if (boundKeyDownListener) {
+        event.target.removeEventListener("keydown", boundKeyDownListener);
+      }
+    },
+
+    _onKeyDown: function _onBlur(event) {
+      var dir = 0;
+      switch (event.keyCode) {
+        case 40:
+          dir = 1;
+          break;
+        case 38:
+          dir = -1;
+          break;
+      }
+      if (dir != 0) {
+        var dosidx = clamp(selectedElement ? +selectedElement.dataset.dosidx + dir : 0, 0, displayObjectStore.length - 1);
+        var newSelectedItem = displayObjectStore[dosidx];
+        if (selectedItem !== newSelectedItem) {
+          if (selectedElement) {
+            selectedElement.classList.remove("selected");
+          }
+          selectedItem = newSelectedItem;
+          selectedElement = document.querySelector("#displayListRoot .item[data-dosidx=\"" + dosidx + "\"]");
+          selectedElement.classList.add("selected");
+          updateProperties(selectedItem);
+        }
+      }
+    },
+
+    _addEventListeners: function _addEventListeners(el) {
+        boundClickListener = this._onClick.bind(this);
+        boundMouseOverListener = this._onMouseOver.bind(this);
+        boundFocusListener = this._onFocus.bind(this);
+        boundBlurListener = this._onBlur.bind(this);
+        el.addEventListener("click", boundClickListener);
+        el.addEventListener("mouseover", boundMouseOverListener);
+        el.addEventListener("focus", boundFocusListener);
+        el.addEventListener("blur", boundBlurListener);
+    },
+
+    _removeEventListeners: function _removeEventListeners(el) {
+      if (el) {
+        if (boundClickListener) {
+          el.removeEventListener("click", boundClickListener);
+        }
+        if (boundMouseOverListener) {
+          el.removeEventListener("mouseover", boundMouseOverListener);
+        }
+        if (boundFocusListener) {
+          el.removeEventListener("focus", boundFocusListener);
+        }
+        if (boundBlurListener) {
+          el.removeEventListener("blur", boundBlurListener);
+        }
+        if (boundKeyDownListener) {
+          el.removeEventListener("keydown", boundKeyDownListener);
+        }
       }
     }
 

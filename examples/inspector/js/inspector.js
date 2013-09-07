@@ -387,5 +387,5 @@ function initUI() {
 
 function updateDisplayListTree() {
   var displayList = new DisplayListTree();
-  displayList.updateDom(swfController.stage, document.getElementById("displayListContainer"));
+  displayList.update(swfController.stage, document.getElementById("displayListContainer"));
 }
