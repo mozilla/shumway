@@ -233,7 +233,7 @@ var TextFieldDefinition = (function () {
         var offset = (text.length / width * availableWidth)|0;
         // Expand to offset we know to be to the right of wrapping position
         while (state.ctx.measureText(text.substr(0, offset)).width <
-               availableWidth)
+               availableWidth && offset < text.length)
         {
           offset++;
         }
@@ -252,6 +252,9 @@ var TextFieldDefinition = (function () {
                  availableWidth)
           {
             offset--;
+          }
+          if (offset === 0) {
+            offset = 1;
           }
           wrapOffset = offset;
         }
@@ -568,6 +571,7 @@ var TextFieldDefinition = (function () {
     },
     set defaultTextFormat(val) {
       this._defaultTextFormat = val.toObject();
+      this.invalidateDimensions();
     },
 
     getTextFormat: function (beginIndex /*:int = -1*/, endIndex /*:int = -1*/) {
@@ -575,6 +579,7 @@ var TextFieldDefinition = (function () {
     },
     setTextFormat: function (format, beginIndex /*:int = -1*/, endIndex /*:int = -1*/) {
       this.defaultTextFormat = format;// TODO
+      this.invalidateDimensions();
     },
 
     get width() { // (void) -> Number
@@ -599,7 +604,7 @@ var TextFieldDefinition = (function () {
         return;
       }
       this._bbox.yMax = this._bbox.yMin + value;
-      this._invalidate();
+      this.invalidateDimensions();
     }
   };
 
@@ -622,6 +627,7 @@ var TextFieldDefinition = (function () {
           set: function autoSize(value) { // (value:String) -> void
             somewhatImplemented("TextField.autoSize");
             this._autoSize = value;
+            this.invalidateDimensions();
           }
         },
         multiline: {
@@ -639,6 +645,7 @@ var TextFieldDefinition = (function () {
           },
           set: function textColor(value) { // (value:uint) -> void
             this._textColor = value;
+            this._invalidate();
           }
         },
         selectable: {
@@ -657,18 +664,17 @@ var TextFieldDefinition = (function () {
           set: function wordWrap(value) { // (value:Boolean) -> void
             somewhatImplemented("TextField.wordWrap");
             this._wordWrap = value;
+            this.invalidateDimensions();
           }
         },
         textHeight: {
           get: function textHeight() { // (void) -> Number
-            somewhatImplemented("TextField.textHeight");
             this.ensureDimensions();
             return this._textHeight;
           }
         },
         textWidth: {
           get: function textWidth() { // (void) -> Number
-            somewhatImplemented("TextField.textWidth");
             this.ensureDimensions();
             return this._textWidth;
           }
@@ -680,6 +686,7 @@ var TextFieldDefinition = (function () {
           set: function background(value) { // (value:Boolean) -> void
             somewhatImplemented("TextField.background");
             this._background = value;
+            this._invalidate();
           }
         },
         backgroundColor: {
@@ -689,6 +696,9 @@ var TextFieldDefinition = (function () {
           set: function backgroundColor(value) { // (value:uint) -> void
             this._backgroundColor = value;
             this._backgroundColorStr = rgbIntAlphaToStr(value, 1);
+            if (this._background) {
+              this._invalidate();
+            }
           }
         },
         border: {
@@ -697,6 +707,7 @@ var TextFieldDefinition = (function () {
           },
           set: function border(value) { // (value:Boolean) -> void
             this._border = value;
+            this._invalidate();
           }
         },
         borderColor: {
@@ -706,6 +717,9 @@ var TextFieldDefinition = (function () {
           set: function borderColor(value) { // (value:uint) -> void
             this._borderColor = value;
             this._borderColorStr = rgbIntAlphaToStr(value, 1);
+            if (this._border) {
+              this._invalidate();
+            }
           }
         },
         type: {
