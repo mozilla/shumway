@@ -41,6 +41,415 @@
    * Graph Builder -> IR (DFG) -> Optimizations -> CFG -> Restructuring -> Backend
    *
    */
+ 
+  var IRDefinition = {
+    name: "Node",
+    properties: [],
+    children: [{
+      name: "Control",
+      properties: [
+
+      ],
+      children: [{
+        name: "Region",
+        properties: [{ name: "predecessors", array: true, expand: "control" }],
+        children: [{
+          name: "Start",
+          constructorText: "this.control = this;",
+          properties: [
+            { name: "scope", dynamic: true }, { name: "domain", dynamic: true }
+          ]
+        }]
+      }, {
+        name: "End",
+        properties: [
+          { name: "control", assert: "isControlOrNull" },
+        ],
+        children: [{
+          name: "Stop",
+          properties: [
+            { name: "store", assert: "isStore" },
+            { name: "argument", assert: "" }
+          ]
+        }, {
+          name: "If",
+          properties: [{ name: "predicate", assert: "" }]
+        }, {
+          name: "Switch",
+          properties: [{ name: "determinant", assert: "" }]
+        }, {
+          name: "Jump",
+          properties: []
+        }]
+      }]
+    }, {
+      name: "Value",
+      properties: [],
+      children: [{
+        name: "StoreDependent",
+        properties: [
+          { name: "control", assert: "isControlOrNull", nullable: true },
+          { name: "store", assert: "isStoreOrNull", nullable: true },
+          { name: "loads", dynamic: true, nullable: true, array: true }
+        ],
+        children: [{
+          name: "Call",
+          properties: [
+            { name: "callee", assert: "" },
+            { name: "object", assert: "isValueOrNull", nullable: true },
+            { name: "args", assert: "isArray", array: true },
+            { name: "pristine", internal: true }
+          ]
+        }, {
+          name: "CallProperty",
+          properties: [
+            { name: "object", assert: ""},
+            { name: "name", assert: "" },
+            { name: "args", assert: "isArray", array: true },
+            { name: "pristine", internal: true }
+          ],
+          children: [{
+            name: "ASCallProperty",
+            properties: [
+              { name: "isLex", assert: "", internal: true }
+            ]
+          }]
+        }, {
+          name: "New",
+          properties: [
+            { name: "callee", assert: "" },
+            { name: "args", assert: "", array: true },
+          ],
+          children: [{
+            name: "ASNew",
+            properties: [
+            ]
+          }]
+        }, {
+          name: "GetProperty",
+          properties: [
+            { name: "object", assert: ""},
+            { name: "name", assert: "" },
+          ],
+          children: [{
+            name: "ASGetProperty",
+            properties: [
+              { name: "isIndexed", assert: "", internal: true },
+              { name: "isMethod", assert: "", internal: true }
+            ]
+          }, {
+            name: "ASGetDescendants",
+            properties: [
+
+            ]
+          }, {
+            name: "ASHasProperty",
+            properties: []
+          }, {
+            name: "ASGetSlot",
+            properties: []
+          }]
+        }, {
+          name: "SetProperty",
+          properties: [
+            { name: "object", assert: ""},
+            { name: "name", assert: "" },
+            { name: "value", assert: "" }
+          ],
+          children: [{
+            name: "ASSetProperty",
+            properties: [
+              { name: "isIndexed", assert: "", internal: true }
+            ]
+          }, {
+            name: "ASSetSlot",
+            properties: []
+          }]
+        }, {
+          name: "DeleteProperty",
+          properties: [
+            { name: "object", assert: ""},
+            { name: "name", assert: "" },
+          ],
+          children: [{
+            name: "ASDeleteProperty",
+            properties: []
+          }]
+        }, {
+          name: "ASFindProperty",
+          properties: [
+            { name: "scope", assert: "" },
+            { name: "name", assert: "" },
+            { name: "domain", assert: "" },
+            { name: "strict", internal: true }
+          ]
+        }]
+      }, {
+        name: "Phi",
+        properties: [
+          { name: "control", assert: "isControl", nullable: true },
+          { name: "args", array: true, expand: "value" }
+        ]
+      }, {
+        name: "Variable",
+        properties: [{ name: "name", internal: true }]
+      }, {
+        name: "Copy",
+        properties: [{ name: "argument" }]
+      }, {
+        name: "Move",
+        properties: [{ name: "to" }, { name: "from" }]
+      }, {
+        name: "Projection",
+        properties: [{ name: "argument" }, { name: "type", internal: true }, { name: "selector", internal: true, optional: true }]
+      }, {
+        name: "Latch",
+        properties: [
+          { name: "control", assert: "isControlOrNull", nullable: true },
+          { name: "condition" },
+          { name: "left"},
+          { name: "right" }
+        ]
+      }, {
+        name: "Binary",
+        properties: [{ name: "operator", internal: true}, { name: "left"}, { name: "right" }]
+      }, {
+        name: "Unary",
+        properties: [{ name: "operator", internal: true}, { name: "argument"}]
+      }, {
+        name: "Constant",
+        properties: [{ name: "value", internal: true}]
+      }, {
+        name: "Store",
+        properties: []
+      }, {
+        name: "GlobalProperty",
+        properties: [{ name: "name", internal: true}]
+      }, {
+        name: "This",
+        properties: [{ name: "control", assert: "isControl" }]
+      }, {
+        name: "Throw",
+        properties: [{ name: "control", assert: "isControl" }, { name: "argument" }]
+      }, {
+        name: "Arguments",
+        properties: [{ name: "control", assert: "isControl" }]
+      }, {
+        name: "Parameter",
+        properties: [
+          { name: "control", assert: "isControl" },
+          { name: "index", internal: true },
+          { name: "name", internal: true }
+        ]
+      }, {
+        name: "NewArray",
+        properties: [{ name: "control", assert: "isControl" }, { name: "elements", array: true }]
+      }, {
+        name: "NewObject",
+        properties: [{ name: "control", assert: "isControl" }, { name: "properties", array: true }]
+      }, {
+        name: "KeyValuePair",
+        properties: [{ name: "key" }, { name: "value" }]
+      }, {
+        name: "ASScope",
+        properties: [{ name: "parent" }, { name: "object" }, { name: "isWith", internal: true }]
+      }, {
+        name: "ASGlobal",
+        properties: [{ name: "control", assert: "isControlOrNull", nullable: true }, { name: "scope", assert: "isScope" }]
+      }, {
+        name: "ASNewActivation",
+        properties: [{ name: "methodInfo", internal: true }]
+      }, {
+        name: "ASMultiname",
+        properties: [
+          { name: "namespaces" },
+          { name: "name" },
+          { name: "flags", internal: true }]
+      }]
+    }]
+  };
+
+  var IRSource = (function IRGenerator(root) {
+    var str = "";
+    function out(s) {
+      str += s + "\n";
+    }
+    var writer = new IndentingWriter(false, out);
+    function generate(node, path) {
+      path = path.concat([node]);
+      writer.enter("var " + node.name + " = (function () {")
+      var constructorName = node.name[0].toLowerCase() + node.name.slice(1) + "Node";
+      if (constructorName.substring(0, 2) === "aS") {
+        constructorName = "as" + constructorName.substring(2);
+      }
+      // var constructorName = "constructor";
+      var prototypeName = constructorName + ".prototype";
+      var properties = path.reduce(function (a, v) {
+        return a.concat(v.properties);
+      }, []);
+      var parameters = properties.filter(function (property) {
+        return !property.dynamic;
+      });
+      var optionalParameters = parameters.filter(function (property) {
+        return property.optional;
+      });
+      var parameterString = parameters.map(function (property) {
+        if (property.expand) {
+          return property.expand;
+        }
+        return property.name;
+      }).join(", ");
+      writer.enter("function " + constructorName + "(" + parameterString + ") {");
+      properties.forEach(function (property) {
+        if (property.assert === "") {
+          writer.writeLn("release || assert (!(" + property.name + " == undefined));");
+        } else if (property.assert) {
+          writer.writeLn("release || assert (" + property.assert + "(" + property.name + "));");
+        }
+      });
+      writer.writeLn("release || assert (arguments.length >= " + (parameters.length - optionalParameters.length) + ", \"" + node.name + " not enough args.\");");
+
+      writer.writeLn("this.id = nextID[nextID.length - 1] += 1;");
+      if (node.constructorText) {
+        writer.writeLn(node.constructorText);
+      }
+
+      properties.forEach(function (property) {
+        if (property.expand) {
+          writer.writeLn("this." + property.name + " = " + property.expand + " ? [" + property.expand + "] : [];");
+        } else if (property.dynamic) {
+          writer.writeLn("this." + property.name + " = undefined;");
+        } else {
+          writer.writeLn("this." + property.name + " = " + property.name + ";");
+        }
+      });
+
+      writer.leave("}");
+      if (path.length > 1) {
+        writer.writeLn(prototypeName + " = " + "extend(" + path[path.length - 2].name + ", \"" + node.name + "\")");
+      }
+
+      writer.writeLn(prototypeName + ".nodeName = \"" + node.name + "\";");
+
+      writer.enter(prototypeName + ".visitInputs = function (visitor) {");
+      properties.forEach(function (property) {
+        if (property.internal) {
+          return;
+        }
+        var str = "";
+        if (property.nullable) {
+          str += "this." + property.name + " && ";
+        }
+        if (property.array) {
+          str += "visitArrayInputs(this." + property.name + ", visitor);";
+        } else {
+          str += "visitor(this." + property.name + ");";
+        }
+        writer.writeLn(str);
+      });
+      writer.leave("};");
+
+      writer.writeLn("return " + constructorName + ";");
+      writer.leave("})();");
+      writer.writeLn("");
+      if (node.children) {
+        node.children.forEach(function (child) {
+          generate(child, path);
+        });
+      }
+    }
+    generate(IRDefinition, []);
+    return str;
+  })(IR);
+
+
+  var nextID = [];
+
+  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  // print(IRSource);
+  eval(IRSource); // TODO: We can pre-generate this in production builds.
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  function node() {
+    this.id = nextID[nextID.length - 1] += 1;
+  }
+
+  Node.startNumbering = function () {
+    nextID.push(0);
+  };
+
+  Node.stopNumbering = function () {
+    nextID.pop();
+  };
+
+  Node.prototype.toString = function (brief) {
+    if (brief) {
+      return nameOf(this);
+    }
+    var inputs = [];
+    this.visitInputsNoConstants(function (input) {
+      inputs.push(nameOf(input));
+    }, true);
+    var str = nameOf(this) + " = " + this.nodeName.toUpperCase();
+    if (this.toStringDetails) {
+      str += " " + this.toStringDetails();
+    }
+    if (inputs.length) {
+      str += " " + inputs.join(", ");
+    }
+    return str;
+  };
+
+  Node.prototype.visitInputsNoConstants = function visitInputs(visitor) {
+    this.visitInputs(function (node) {
+      if (isConstant(node)) {
+        return;
+      }
+      visitor(node);
+    });
+  };
+
+  Node.prototype.replaceInput = function(oldInput, newInput) {
+    var count = 0;
+    for (var k in this) {
+      var v = this[k];
+      if (v instanceof Node) {
+        if (v === oldInput) {
+          this[k] = newInput;
+          count ++;
+        }
+      }
+      if (v instanceof Array) {
+        count += v.replace(oldInput, newInput);
+      }
+    }
+    return count;
+  };
+
+  Projection.Type = {
+    CASE: "case",
+    TRUE: "true",
+    FALSE: "false",
+    STORE: "store",
+    SCOPE: "scope"
+  };
+
+  Projection.prototype.project = function () {
+    return this.argument;
+  };
+
+  Phi.prototype.seal = function seal() {
+    this.sealed = true;
+  };
+
+  Phi.prototype.pushValue = function pushValue(x) {
+    release || assert (isValue(x));
+    release || assert (!this.sealed);
+    this.args.push(x);
+  };
+
+  KeyValuePair.prototype.mustFloat = true;
+  ASMultiname.prototype.mustFloat = true;
 
   var Operator = (function () {
     var map = {};
@@ -149,325 +558,15 @@
     return node.id;
   }
 
-  var Node = (function () {
-    var nextID = [];
-    function node() {
-      this.id = nextID[nextID.length - 1] += 1;
+  function visitArrayInputs(array, visitor) {
+    for (var i = 0; i < array.length; i++) {
+      visitor(array[i]);
     }
-    node.startNumbering = function () {
-      nextID.push(0);
-    };
-    node.stopNumbering = function () {
-      nextID.pop();
-    };
-    node.prototype.nodeName = "Node";
-    node.prototype.toString = function (brief) {
-      if (brief) {
-        return nameOf(this);
-      }
-      var inputs = [];
-      this.visitInputs(function (input) {
-        inputs.push(nameOf(input));
-      }, true);
-      var str = nameOf(this) + " = " + this.nodeName.toUpperCase();
-      if (this.toStringDetails) {
-        str += " " + this.toStringDetails();
-      }
-      if (inputs.length) {
-        str += " " + inputs.join(", ");
-      }
-      return str;
-    };
-
-    node.prototype.visitInputs = function (fn, visitConstants) {
-      if (isConstant(this)) {
-        // Don't visit properties of constants.
-        return;
-      }
-      for (var k in this) {
-        var v = this[k];
-        if (v instanceof Constant && !visitConstants) {
-          continue;
-        }
-        if (v instanceof Node) {
-          fn(v);
-        }
-        if (v instanceof Array) {
-          v.forEach(function (x) {
-            if (x instanceof Constant && !visitConstants) {
-              return;
-            }
-            fn(x);
-          });
-        }
-      }
-    };
-
-    node.prototype.replaceInput = function(oldInput, newInput) {
-      var count = 0;
-      for (var k in this) {
-        var v = this[k];
-        if (v instanceof Node) {
-          if (v === oldInput) {
-            this[k] = newInput;
-            count ++;
-          }
-        }
-        if (v instanceof Array) {
-          count += v.replace(oldInput, newInput);
-        }
-      }
-      return count;
-    };
-
-    node.prototype.push = function (value) {
-      if (this.length === undefined) {
-        this.length = 0;
-      }
-      this[this.length ++] = value;
-    };
-    return node;
-  })();
-
-  var Control = (function () {
-    function control() {
-      Node.apply(this);
-    }
-    control.prototype = extend(Node);
-    return control;
-  })();
-
-  var Value = (function () {
-    function value() {
-      Node.apply(this);
-    }
-    value.prototype = extend(Node);
-    value.prototype.mustFloat = false;
-    return value;
-  })();
-
-  var Region = (function () {
-    function region(predecessor) {
-      Control.call(this);
-      this.predecessors = predecessor ? [predecessor] : [];
-      this.phis = [];
-    }
-    region.prototype = extend(Control, "Region");
-
-    region.prototype.verify = function () {
-      var predecessors = this.predecessors;
-      predecessors.forEach(function (x) {
-        release || assert (x);
-        // release || assert (x instanceof Control, x);
-      });
-      if (predecessors.length > 1) {
-        this.phis.forEach(function (x) {
-          release || assert (x instanceof Phi);
-          release || assert (x.args.length === predecessors.length);
-        });
-      }
-    };
-    return region;
-  })();
-
-  var Start = (function () {
-    function start() {
-      Region.call(this);
-      this.control = this;
-    }
-    start.prototype = extend(Region, "Start");
-    return start;
-  })();
-
-  var Phi = (function () {
-    function phi(control, value) {
-      Node.call(this);
-      release || assert (control instanceof Region);
-      this.control = control;
-      this.args = value ? [value] : [];
-      this.sealed = false;
-    }
-    phi.prototype = extend(Value, "Phi");
-    phi.prototype.seal = function seal() {
-      this.sealed = true;
-    };
-    phi.prototype.pushValue = function pushValue(x) {
-      release || assert (isValue(x));
-      release || assert (!this.sealed);
-      this.args.push(x);
-    };
-    return phi;
-  })();
-
-  var Variable = (function () {
-    function variable(name) {
-      release || assert (isString(name));
-      this.name = name;
-    }
-    variable.prototype = extend(Value, "Variable");
-    return variable;
-  })();
-
-  var Copy = (function () {
-    function copy(argument) {
-      Node.call(this);
-      release || assert (argument);
-      this.argument = argument;
-    }
-    copy.prototype = extend(Value, "Copy");
-    return copy;
-  })();
-
-  var Move = (function () {
-    function move(to, from) {
-      release || assert (to instanceof Variable);
-      release || assert (from instanceof Variable || from instanceof Constant, from);
-      release || assert (to !== from);
-      this.to = to;
-      this.from = from;
-    }
-    move.prototype = extend(Value, "Move");
-    move.prototype.toString = function () {
-      return this.to.name + " <= " + this.from;
-    };
-    return move;
-  })();
-
-  var End = (function () {
-    function end(control) {
-      Control.call(this, control);
-    }
-    end.prototype = extend(Control, "End");
-    return end;
-  })();
-
-  var If = (function () {
-    function ifNode(control, predicate) {
-      Control.call(this);
-      release || assert (predicate);
-      this.control = control;
-      this.predicate = predicate;
-    }
-    ifNode.prototype = extend(End, "If");
-    return ifNode;
-  })();
-
-  var Switch = (function () {
-    function switchNode(control, determinant) {
-      Control.call(this);
-      this.control = control;
-      this.determinant = determinant;
-    }
-    switchNode.prototype = extend(End, "Switch");
-    return switchNode;
-  })();
-
-  var Jump = (function () {
-    function jump(control) {
-      Control.call(this);
-      this.control = control;
-    }
-    jump.prototype = extend(End, "Jump");
-    return jump;
-  })();
-
-  var Stop = (function () {
-    function stop(control, store, argument) {
-      Control.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (isStore(store));
-      release || assert (argument);
-      this.control = control;
-      this.store = store;
-      this.argument = argument;
-    }
-    stop.prototype = extend(End, "Stop");
-    return stop;
-  })();
-
-  var Projection = (function () {
-    function projection(argument, type, selector) {
-      Value.call(this);
-      release || assert (type);
-      release || assert (!(argument instanceof Projection));
-      this.argument = argument;
-      this.type = type;
-      if (selector) {
-        this.selector = selector;
-      }
-    }
-    projection.Type = {
-      CASE: "case",
-      TRUE: "true",
-      FALSE: "false",
-      STORE: "store",
-      SCOPE: "scope"
-    };
-    projection.prototype = extend(Value, "Projection");
-    projection.prototype.project = function () {
-      return this.argument;
-    };
-    projection.prototype.toStringDetails = function () {
-      return String(this.type).toUpperCase();
-    };
-    return projection;
-  })();
-
-  function isProjection(node, type) {
-    return node instanceof Projection && (!type || node.type === type);
   }
 
-  var Latch = (function () {
-    function latch(control, condition, left, right) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      this.control = control;
-      this.condition = condition;
-      this.left = left;
-      this.right = right;
-    }
-    latch.prototype = extend(Value, "Latch");
-    return latch;
-  })();
+  function visitNothing() {
 
-  var Binary = (function () {
-    function binary(operator, left, right) {
-      Node.call(this);
-      this.operator = operator;
-      this.left = left;
-      this.right = right;
-    }
-    binary.prototype = extend(Value, "Binary");
-    binary.prototype.toStringDetails = function () {
-      return String(this.operator.name).toUpperCase();
-    };
-    return binary;
-  })();
-
-  var Unary = (function () {
-    function unary(operator, argument) {
-      Node.call(this);
-      release || assert (operator instanceof Operator);
-      release || assert (argument);
-      this.operator = operator;
-      this.argument = argument;
-    }
-    unary.prototype = extend(Value, "Unary");
-    unary.prototype.toStringDetails = function () {
-      return String(this.operator.name).toUpperCase();
-    };
-    return unary;
-  })();
-
-  var Constant = (function () {
-    function constant(value) {
-      Node.call(this);
-      this.value = value;
-    }
-    constant.prototype = extend(Value, "Constant");
-    return constant;
-  })();
-
+  }
 
   function isNotPhi(phi) {
     return !isPhi(phi);
@@ -478,7 +577,7 @@
   }
 
   function isScope(scope) {
-    return isPhi(scope) || scope instanceof AVM2Scope || isProjection(scope, Projection.Type.SCOPE);
+    return isPhi(scope) || scope instanceof ASScope || isProjection(scope, Projection.Type.SCOPE);
   }
 
   function isMultinameConstant(node) {
@@ -486,7 +585,7 @@
   }
 
   function isMultiname(name) {
-    return isMultinameConstant(name) || name instanceof AVM2Multiname;
+    return isMultinameConstant(name) || name instanceof ASMultiname;
   }
 
   function isStore(store) {
@@ -509,65 +608,12 @@
     return array instanceof Array;
   }
 
-  var AVM2Scope = (function () {
-    function constructor(parent, object, isWith) {
-      Node.call(this);
-      release || assert (isScope(parent));
-      release || assert (object);
-      release || assert (isBoolean(isWith));
-      this.parent = parent;
-      this.object = object;
-      this.isWith = isWith;
-    }
-    constructor.prototype = extend(Value, "AVM2_Scope");
-    return constructor;
-  })();
-
-  var This = (function () {
-    function thisNode(control) {
-      Node.call(this);
-      release || assert (control);
-      this.control = control;
-    }
-    thisNode.prototype = extend(Value, "This");
-    return thisNode;
-  })();
-
-  var Throw = (function () {
-    function throwNode(control, argument) {
-      Node.call(this);
-      release || assert (control);
-      this.control = control;
-      this.argument = argument;
-    }
-    throwNode.prototype = extend(Value, "Throw");
-    return throwNode;
-  })();
-
-  var Arguments = (function () {
-    function argumentsNode(control) {
-      Node.call(this);
-      release || assert (control);
-      this.control = control;
-    }
-    argumentsNode.prototype = extend(Value, "Arguments");
-    return argumentsNode;
-  })();
-
-  var AVM2Global = (function () {
-    function constructor(control, scope) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (isScope(scope));
-      this.control = control;
-      this.scope = scope;
-    }
-    constructor.prototype = extend(Value, "AVM2_Global");
-    return constructor;
-  })();
-
   function isControlOrNull(control) {
     return isControl(control) || control === null;
+  }
+
+  function isStoreOrNull(store) {
+    return isStore(store) || store === null;
   }
 
   function isControl(control) {
@@ -582,316 +628,9 @@
     return value instanceof Value;
   }
 
-  var GlobalProperty = (function () {
-    function globalProperty(name) {
-      Node.call(this);
-      release || assert (isString(name));
-      this.name = name;
-    }
-    globalProperty.prototype = extend(Value, "GlobalProperty");
-    return globalProperty;
-  })();
-
-  var GetProperty = (function () {
-    function getProperty(control, store, object, name) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (store === null || isStore(store));
-      release || assert (object);
-      release || assert (name);
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.name = name;
-    }
-    getProperty.prototype = extend(Value, "GetProperty");
-    return getProperty;
-  })();
-
-  var AVM2GetProperty = (function () {
-    function avm2GetProperty(control, store, object, name, isIndexed, isMethod, ic) {
-      GetProperty.call(this, control, store, object, name);
-      release || assert (isBoolean(isIndexed));
-      release || assert (isBoolean(isMethod));
-      release || assert (isNullOrUndefined(ic) || isConstant(ic));
-      release || assert (isMultiname(name));
-      this.isIndexed = isIndexed;
-      this.isMethod = isMethod;
-      this.ic = ic;
-    }
-    avm2GetProperty.prototype = extend(GetProperty, "AVM2_GetProperty");
-    return avm2GetProperty;
-  })();
-
-  var AVM2DeleteProperty = (function () {
-    function avm2DeleteProperty(control, store, object, name) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (isStore(store));
-      release || assert (object);
-      release || assert (name);
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.name = name;
-    }
-    avm2DeleteProperty.prototype = extend(Value, "AVM2_DeleteProperty");
-    return avm2DeleteProperty;
-  })();
-
-  var AVM2HasProperty = (function () {
-    function avm2HasProperty(control, store, object, name) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (isStore(store));
-      release || assert (object);
-      release || assert (name);
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.name = name;
-    }
-    avm2HasProperty.prototype = extend(Value, "AVM2_HasProperty");
-    return avm2HasProperty;
-  })();
-
-  // Override GetProperty to take advantage of its common structure
-  var AVM2GetDescendants = (function () {
-    function avm2GetDescendants(control, store, object, name) {
-      GetProperty.call(this, control, store, object, name, false);
-    }
-    avm2GetDescendants.prototype = extend(GetProperty, "AVM2_GetDescendants");
-    return avm2GetDescendants;
-  })();
-
-  var SetProperty = (function () {
-    function setProperty(control, store, object, name, value) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (isStore(store));
-      release || assert (object);
-      release || assert (name);
-      release || assert (value);
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.name = name;
-      this.value = value;
-    }
-    setProperty.prototype = extend(Value, "SetProperty");
-    return setProperty;
-  })();
-
-  var AVM2SetProperty = (function () {
-    function avm2SetProperty(control, store, object, name, value, isIndexed, ic) {
-      SetProperty.call(this, control, store, object, name, value);
-      release || assert (isBoolean(isIndexed));
-      release || assert (isNullOrUndefined(ic) || isConstant(ic));
-      release || assert (isMultiname(name));
-      this.isIndexed = isIndexed;
-      this.ic = ic;
-    }
-    avm2SetProperty.prototype = extend(SetProperty, "AVM2_SetProperty");
-    return avm2SetProperty;
-  })();
-
-  var AVM2GetSlot = (function () {
-    function avm2GetSlot(control, store, object, index) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (isStore(store));
-      release || assert (object);
-      release || assert (isValue(index));
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.index = index;
-    }
-    avm2GetSlot.prototype = extend(Value, "AVM2_GetSlot");
-    return avm2GetSlot;
-   })();
-
-  var AVM2SetSlot = (function () {
-    function avm2SetSlot(control, store, object, index, value) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (isStore(store));
-      release || assert (object);
-      release || assert (isValue(index));
-      release || assert (value);
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.index = index;
-      this.value = value;
-     }
-     avm2SetSlot.prototype = extend(Value, "AVM2_SetSlot");
-     return avm2SetSlot;
-  })();
-
-  var AVM2FindProperty = (function () {
-    function avm2FindProperty(control, store, scope, name, domain, strict) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (isStore(store));
-      release || assert (isScope(scope));
-      release || assert (isMultiname(name), name);
-      release || assert (isConstant(domain));
-      release || assert (isBoolean(strict));
-      this.control = control;
-      this.store = store;
-      this.scope = scope;
-      this.name = name;
-      this.domain = domain;
-      this.strict = strict;
-    }
-    avm2FindProperty.prototype = extend(Value, "AVM2_FindProperty");
-    return avm2FindProperty;
-  })();
-
-  var NewArray = (function () {
-    function newArray(control, elements) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (isArray(elements));
-      this.control = control;
-      this.elements = elements;
-    }
-    newArray.prototype = extend(Value, "NewArray");
-    return newArray;
-  })();
-
-  var KeyValuePair = (function () {
-    function keyValuePair(key, value) {
-      Node.call(this);
-      release || assert (key);
-      release || assert (value);
-      this.key = key;
-      this.value = value;
-    }
-    keyValuePair.prototype = extend(Value, "KeyValuePair");
-    keyValuePair.prototype.mustFloat = true;
-    return keyValuePair;
-  })();
-
-  var NewObject = (function () {
-    function newObject(control, properties) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (isArray(properties));
-      this.control = control;
-      this.properties = properties;
-    }
-    newObject.prototype = extend(Value, "NewObject");
-    return newObject;
-  })();
-
-  var AVM2NewActivation = (function () {
-    function avm2NewActivation(methodInfo) {
-      Node.call(this);
-      release || assert (isConstant(methodInfo));
-      this.methodInfo = methodInfo;
-    }
-    avm2NewActivation.prototype = extend(Value, "AVM2_NewActivation");
-    return avm2NewActivation;
-  })();
-
-  var AVM2Multiname = (function () {
-    function avm2Multiname(namespaces, name, flags) {
-      Node.call(this);
-      release || assert (namespaces);
-      release || assert (name);
-      this.namespaces = namespaces;
-      this.name = name;
-      this.flags = flags;
-    }
-    avm2Multiname.prototype = extend(Value, "AVM2_Multiname");
-    avm2Multiname.prototype.mustFloat = true;
-    return avm2Multiname;
-  })();
-
-  var Call = (function () {
-    function call(control, store, callee, object, args, pristine) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (callee);
-      release || assert (isValueOrNull(object));
-      release || assert (store === null || isStore(store));
-      release || assert (isArray(args));
-      this.control = control;
-      this.callee = callee;
-      this.object = object;
-      this.store = store;
-      this.args = args;
-      this.pristine = pristine;
-    }
-    call.prototype = extend(Value, "Call");
-    return call;
-  })();
-
-  var CallProperty = (function () {
-    function callProperty(control, store, object, name, args, pristine) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (isValueOrNull(object));
-      release || assert (name);
-      release || assert (store === null || isStore(store));
-      release || assert (isArray(args));
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.name = name;
-      this.args = args;
-      this.pristine = pristine;
-    }
-    callProperty.prototype = extend(Value, "CallProperty");
-    return callProperty;
-  })();
-
-  var AVM2CallProperty = (function () {
-    function avm2CallProperty(control, store, object, name, isLex, args, pristine, ic) {
-      CallProperty.call(this, control, store, object, name, args, pristine);
-      release || assert (isBoolean(isLex));
-      release || assert (isNullOrUndefined(ic) || isConstant(ic));
-      release || assert (isMultiname(name));
-      this.isLex = isLex;
-      this.ic = ic;
-    }
-    avm2CallProperty.prototype = extend(GetProperty, "AVM2_CallProperty");
-    return avm2CallProperty;
-  })();
-
-  var New = (function () {
-    function newNode(control, store, callee, args) {
-      Node.call(this);
-      release || assert (isControlOrNull(control));
-      release || assert (callee);
-      release || assert (isStore(store));
-      release || assert (isArray(args));
-      this.control = control;
-      this.callee = callee;
-      this.store = store;
-      this.args = args;
-    }
-    newNode.prototype = extend(Value, "New");
-    return newNode;
-  })();
-
-  var AVM2New = (function () {
-    function avm2New(control, store, object, name) {
-      New.call(this, control, store, object, name);
-    }
-    avm2New.prototype = extend(New, "AVM2_New");
-    return avm2New;
-  })();
-
-  var Store = (function () {
-    function store() {
-      Node.call(this);
-    }
-    store.prototype = extend(Value, "Store");
-    return store;
-  })();
+  function isProjection(node, type) {
+    return node instanceof Projection && (!type || node.type === type);
+  }
 
   var Null = new Constant(null);
   var Undefined = new Constant(undefined);
@@ -899,20 +638,6 @@
   Undefined.toString = function () {
     return "_";
   };
-
-  var Parameter = (function () {
-    function parameter(control, index, name) {
-      Node.call(this);
-      release || assert (control);
-      release || assert (isInteger(index));
-      release || assert (isString(name));
-      this.control = control;
-      this.index = index;
-      this.name = name;
-    }
-    parameter.prototype = extend(Value, "Parameter");
-    return parameter;
-  })();
 
   var Block = (function () {
     function block(id, start, end) {
@@ -945,13 +670,22 @@
       this.predecessors.push(predecessor);
     };
     block.prototype.visitNodes = function (fn) {
-      this.nodes.forEach(fn);
+      var nodes = this.nodes;
+      for (var i = 0, j = nodes.length; i < j; i++) {
+        fn(nodes[i]);
+      }
     };
     block.prototype.visitSuccessors = function (fn) {
-      this.successors.forEach(fn);
+      var successors = this.successors;
+      for (var i = 0, j = successors.length; i < j; i++) {
+        fn(successors[i]);
+      }
     };
     block.prototype.visitPredecessors = function (fn) {
-      this.predecessors.forEach(fn);
+      var predecessors = this.predecessors;
+      for (var i = 0, j = predecessors.length; i < j; i++) {
+        fn(predecessors[i]);
+      }
     };
     block.prototype.append = function (node) {
       release || assert (this.nodes.length >= 2);
@@ -985,11 +719,12 @@
       var visited = [];
       var worklist = [root];
       var push = worklist.push.bind(worklist);
+      var node;
       while ((node = worklist.pop())) {
         if (visited[node.id]) {
           continue;
         }
-        visited[node.id] = true;
+        visited[node.id] = 1;
         pre(node);
         worklist.push(node);
         visitChildren(node, push);
@@ -1020,17 +755,36 @@
       }
     }
 
-    constructor.prototype.forEach = function visitAll(visitor, postOrder) {
+    constructor.prototype.forEachInPreOrderDepthFirstSearch = function forEachInPreOrderDepthFirstSearch(visitor) {
+      var visited = new Array(1024);
+      var worklist = [this.exit];
+      function push(node) {
+        assert (node instanceof Node);
+        worklist.push(node);
+      }
+      var node;
+      while ((node = worklist.pop())) {
+        if (visited[node.id] === 1) {
+          continue;
+        }
+        visited[node.id] = 1;
+        visitor(node);
+        worklist.push(node);
+        node.visitInputsNoConstants(push);
+      }
+    };
+
+    constructor.prototype.forEach = function forEach(visitor, postOrder) {
       var search = postOrder ? postOrderDepthFirstSearch : preOrderDepthFirstSearch;
       search(this.exit, function (node, v) {
-        node.visitInputs(v);
+        node.visitInputsNoConstants(v);
       }, visitor);
     };
 
     constructor.prototype.traceMetrics = function (writer) {
       var counter = new metrics.Counter(true);
       preOrderDepthFirstSearch(this.exit, function (node, visitor) {
-        node.visitInputs(visitor);
+        node.visitInputsNoConstants(visitor);
       }, function (node) {
         counter.count(node.nodeName);
       });
@@ -1066,7 +820,7 @@
             blocks.push(node.block);
           }
           nodes.push(node);
-          node.visitInputs(next);
+          node.visitInputsNoConstants(next);
         }
       }
 
@@ -1099,7 +853,7 @@
       nodes.forEach(writeNode);
 
       nodes.forEach(function (node) {
-        node.visitInputs(function (input) {
+        node.visitInputsNoConstants(function (input) {
           input = followProjection(input);
           writer.writeLn("N" + node.id + " -> " + "N" + input.id + " [color=" + colorOf(input) + "];");
         });
@@ -1471,7 +1225,7 @@
 
       var uses = new Uses();
 
-      dfg.forEach(function (use) {
+      dfg.forEachInPreOrderDepthFirstSearch(function (use) {
         use.visitInputs(function (def) {
           uses.addUse(def, use);
         });
@@ -1539,9 +1293,10 @@
         }
         debug && writer.writeLn("Replacing: " + def.id + " in [" + entry.uses.map(toID).join(", ") + "] with " + value.id);
         var count = 0;
-        entry.uses.forEach(function (use) {
-          count += use.replaceInput(def, value);
-        });
+        var entryUses = entry.uses;
+        for (var i = 0, j = entryUses.length; i < j; i++) {
+          count += entryUses[i].replaceInput(def, value);
+        }
         release || assert (count >= entry.uses.length);
         entry.uses = [];
         return true;
@@ -1785,7 +1540,7 @@
 
       var roots = [];
 
-      dfg.forEach(function (node) {
+      dfg.forEachInPreOrderDepthFirstSearch(function (node) {
         if (node instanceof Region || node instanceof Jump) {
           return;
         }
@@ -1816,15 +1571,16 @@
         });
       }
 
-      roots.forEach(function (node) {
-        if (node instanceof Phi) {
-          var block = node.control.block;
-          (block.phis || (block.phis = [])).push(node);
+      for (var i = 0; i < roots.length; i++) {
+        var root = roots[i];
+        if (root instanceof Phi) {
+          var block = root.control.block;
+          (block.phis || (block.phis = [])).push(root);
         }
-        if (node.control) {
-          schedule(node);
+        if (root.control) {
+          schedule(root);
         }
-      });
+      }
 
       function isScheduled(node) {
         return scheduled[node.id];
@@ -1841,7 +1597,6 @@
           return true;
         }
         return node instanceof Binary || node instanceof Unary || node instanceof Parameter;
-        // return false;
       }
 
       function append(node) {
@@ -1868,7 +1623,11 @@
         debugScheduler && writer.enter("> Schedule: " + node);
 
         var inputs = [];
+        // node.checkInputVisitors();
         node.visitInputs(function (input) {
+          if (isConstant(input)) {{
+            return;
+          }}
           if (isValue(input)) {
             inputs.push(followProjection(input));
           }
@@ -2056,35 +1815,35 @@
   exports.This = This;
   exports.Throw = Throw;
   exports.Arguments = Arguments;
-  exports.AVM2Global = AVM2Global;
+  exports.ASGlobal = ASGlobal;
   exports.Projection = Projection;
   exports.Region = Region;
   exports.Latch = Latch;
   exports.Binary = Binary;
   exports.Unary = Unary;
   exports.Constant = Constant;
-  exports.AVM2FindProperty = AVM2FindProperty;
+  exports.ASFindProperty = ASFindProperty;
   exports.GlobalProperty = GlobalProperty;
   exports.GetProperty = GetProperty;
   exports.SetProperty = SetProperty;
   exports.CallProperty = CallProperty;
-  exports.AVM2CallProperty = AVM2CallProperty;
-  exports.AVM2GetProperty = AVM2GetProperty;
-  exports.AVM2HasProperty = AVM2HasProperty;
-  exports.AVM2DeleteProperty = AVM2DeleteProperty;
-  exports.AVM2GetDescendants = AVM2GetDescendants;
-  exports.AVM2SetProperty = AVM2SetProperty;
-  exports.AVM2GetSlot = AVM2GetSlot;
-  exports.AVM2SetSlot = AVM2SetSlot;
+  exports.ASCallProperty = ASCallProperty;
+  exports.ASGetProperty = ASGetProperty;
+  exports.ASHasProperty = ASHasProperty;
+  exports.ASDeleteProperty = ASDeleteProperty;
+  exports.ASGetDescendants = ASGetDescendants;
+  exports.ASSetProperty = ASSetProperty;
+  exports.ASGetSlot = ASGetSlot;
+  exports.ASSetSlot = ASSetSlot;
   exports.Call = Call;
-  exports.AVM2New = AVM2New;
+  exports.ASNew = ASNew;
   exports.Phi = Phi;
   exports.Stop = Stop;
   exports.If = If;
   exports.Switch = Switch;
   exports.End = End;
   exports.Jump = Jump;
-  exports.AVM2Scope = AVM2Scope;
+  exports.ASScope = ASScope;
   exports.Operator = Operator;
   exports.Variable = Variable;
   exports.Move = Move;
@@ -2092,9 +1851,9 @@
   exports.Parameter = Parameter;
   exports.NewArray = NewArray;
   exports.NewObject = NewObject;
-  exports.AVM2NewActivation = AVM2NewActivation;
+  exports.ASNewActivation = ASNewActivation;
   exports.KeyValuePair = KeyValuePair;
-  exports.AVM2Multiname = AVM2Multiname;
+  exports.ASMultiname = ASMultiname;
 
   exports.DFG = DFG;
   exports.CFG = CFG;

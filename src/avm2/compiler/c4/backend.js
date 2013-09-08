@@ -438,7 +438,7 @@
     return compileValue(this.variable, cx);
   };
 
-  IR.AVM2Scope.prototype.compile = function (cx) {
+  IR.ASScope.prototype.compile = function (cx) {
     var parent = compileValue(this.parent, cx);
     var object = compileValue(this.object, cx);
     var isWith = new Literal(this.isWith);
@@ -446,7 +446,7 @@
   };
 
 
-  IR.AVM2FindProperty.prototype.compile = function (cx) {
+  IR.ASFindProperty.prototype.compile = function (cx) {
     var scope = compileValue(this.scope, cx);
     var name = compileMultiname(this.name, cx);
     var domain = compileValue(this.domain, cx);
@@ -454,7 +454,7 @@
     return call(property(scope, "findScopeProperty"), name.concat([domain, strict]));
   };
 
-  IR.AVM2GetProperty.prototype.compile = function (cx) {
+  IR.ASGetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     if (this.isIndexed) {
       assert (this.isMethod === false);
@@ -509,7 +509,7 @@
     }
   };
 
-  IR.AVM2CallProperty.prototype.compile = function (cx) {
+  IR.ASCallProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
     var args = this.args.map(function (arg) {
@@ -538,7 +538,7 @@
     }
   };
 
-  IR.AVM2New.prototype.compile = function (cx) {
+  IR.ASNew.prototype.compile = function (cx) {
     var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
@@ -560,12 +560,12 @@
     return id("arguments");
   };
 
-  IR.AVM2Global.prototype.compile = function (cx) {
+  IR.ASGlobal.prototype.compile = function (cx) {
     var scope = compileValue(this.scope, cx);
     return property(scope, "global", "object");
   };
 
-  IR.AVM2SetProperty.prototype.compile = function (cx) {
+  IR.ASSetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var value = compileValue(this.value, cx);
     if (this.isIndexed) {
@@ -575,13 +575,13 @@
     return call(property(object, "asSetProperty"), name.concat(value));
   };
 
-  IR.AVM2DeleteProperty.prototype.compile = function (cx) {
+  IR.ASDeleteProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
     return call(property(object, "asDeleteProperty"), name);
   };
 
-  IR.AVM2HasProperty.prototype.compile = function (cx) {
+  IR.ASHasProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
     return call(property(object, "asHasProperty"), name);
@@ -604,23 +604,23 @@
     return assignment(property(object, name), value);
   };
 
-  IR.AVM2GetDescendants.prototype.compile = function (cx) {
+  IR.ASGetDescendants.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     return call(id("getDescendants"), [object, name]);
   };
 
-  IR.AVM2SetSlot.prototype.compile = function (cx) {
+  IR.ASSetSlot.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var index = compileValue(this.index, cx);
+    var name = compileValue(this.name, cx);
     var value = compileValue(this.value, cx);
-    return(call(id("setSlot"), [object, index, value]));
+    return(call(id("setSlot"), [object, name, value]));
   };
 
-  IR.AVM2GetSlot.prototype.compile = function (cx) {
+  IR.ASGetSlot.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var index = compileValue(this.index, cx);
-    return(call(id("getSlot"), [object, index]));
+    var name = compileValue(this.name, cx);
+    return(call(id("getSlot"), [object, name]));
   };
 
   IR.Projection.prototype.compile = function (cx) {
@@ -642,19 +642,19 @@
     return new ObjectExpression(properties);
   };
 
-  IR.AVM2NewActivation.prototype.compile = function (cx) {
+  IR.ASNewActivation.prototype.compile = function (cx) {
     var methodInfo = compileValue(this.methodInfo, cx);
     return call(id("createActivation"), [methodInfo]);
   };
 
-  IR.AVM2Multiname.prototype.compile = function (cx) {
+  IR.ASMultiname.prototype.compile = function (cx) {
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);
     return call(id("createName"), [namespaces, name]);
   };
 
   function generateSource(node) {
-    return escodegen.generate(node, {base: "", indent: "  ", comment: true});
+    return escodegen.generate(node, {base: "", indent: "  ", comment: true, format: { compact: false }});
   }
 
   function generate(cfg, useRegisterAllocator) {
@@ -698,7 +698,10 @@
       // body = " { debugger; " + body + " }";
       return {parameters: parameters.map(function (p) { return p.name; }), body: body};
     }
-    return {parameters: parameters.map(function (p) { return p.name; }), body: generateSource(code)};
+    Timer.start("CODE GEN");
+    var source = generateSource(code);
+    Timer.stop();
+    return {parameters: parameters.map(function (p) { return p.name; }), body: source};
   }
 
   Backend.generate = generate;

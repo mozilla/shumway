@@ -433,7 +433,7 @@ var createName = function createName(namespaces, name) {
         return a.block.blockDominatorOrder - b.block.blockDominatorOrder;
       });
 
-      var start = new Start();
+      var start = new Start(null);
       this.buildStart(start);
 
       var createFunctionCallee = globalProperty("createFunction");
@@ -564,7 +564,7 @@ var createName = function createName(namespaces, name) {
           } else {
             namespaces = constant(multiname.namespaces);
           }
-          return new IR.AVM2Multiname(namespaces, name, flags);
+          return new IR.ASMultiname(namespaces, name, flags);
         }
 
         function simplifyName(name) {
@@ -575,7 +575,7 @@ var createName = function createName(namespaces, name) {
         }
 
         function findProperty(multiname, strict, ti) {
-          var slowPath = new IR.AVM2FindProperty(region, state.store, topScope(), multiname, domain, strict);
+          var slowPath = new IR.ASFindProperty(region, state.store, topScope(), multiname, domain, strict);
           if (ti) {
             if (ti.object) {
               if (ti.object instanceof Global && !ti.object.isExecuting()) {
@@ -615,7 +615,7 @@ var createName = function createName(namespaces, name) {
         }
 
         function getScopeObject(scope) {
-          if (scope instanceof IR.AVM2Scope) {
+          if (scope instanceof IR.ASScope) {
             return scope.object;
           }
           return getJSProperty(scope, "object");
@@ -666,15 +666,15 @@ var createName = function createName(namespaces, name) {
           }
           if (isConstant(multiname)) {
             release || assert (ic);
-            return store(new IR.AVM2CallProperty(region, state.store, object, multiname, isLex, args, true, constant(ic)));
+            return store(new IR.ASCallProperty(region, state.store, object, multiname, args, true, isLex, constant(ic)));
           } else {
             warn("Can't optimize call to " + multiname.value);
-            return store(new IR.AVM2CallProperty(region, state.store, object, multiname, isLex, args, true));
+            return store(new IR.ASCallProperty(region, state.store, object, multiname, args, true, isLex));
           }
         }
 
         function getProperty(object, multiname, ti, getOpenMethod, ic) {
-          release || assert (multiname instanceof IR.AVM2Multiname);
+          release || assert (multiname instanceof IR.ASMultiname);
           getOpenMethod = !!getOpenMethod;
           if (ti) {
             if (ti.trait) {
@@ -689,14 +689,14 @@ var createName = function createName(namespaces, name) {
             } else if (ti.isDirectlyReadable) {
               return store(new IR.GetProperty(region, state.store, object, multiname.name));
             } else if (ti.isIndexedReadable) {
-              return store(new IR.AVM2GetProperty(region, state.store, object, multiname, true, getOpenMethod));
+              return store(new IR.ASGetProperty(region, state.store, object, multiname, true, getOpenMethod));
             }
           }
-          return store(new IR.AVM2GetProperty(region, state.store, object, multiname, false, getOpenMethod));
+          return store(new IR.ASGetProperty(region, state.store, object, multiname, false, getOpenMethod));
         }
 
         function setProperty(object, multiname, value, ti, ic) {
-          release || assert (multiname instanceof IR.AVM2Multiname);
+          release || assert (multiname instanceof IR.ASMultiname);
           if (ti) {
             if (ti.trait) {
               store(new IR.SetProperty(region, state.store, object, qualifiedNameConstant(ti.trait.name), value));
@@ -707,15 +707,15 @@ var createName = function createName(namespaces, name) {
             } else if (ti.isDirectlyWriteable) {
               return store(new IR.SetProperty(region, state.store, object, multiname.name, value));
             } else if (ti.isIndexedWriteable) {
-              return store(new IR.AVM2SetProperty(region, state.store, object, multiname, value, true));
+              return store(new IR.ASSetProperty(region, state.store, object, multiname, value, true));
             }
           }
-          return store(new IR.AVM2SetProperty(region, state.store, object, multiname, value, false));
+          return store(new IR.ASSetProperty(region, state.store, object, multiname, value, false));
         }
 
         function getDescendants(object, name, ti) {
           name = simplifyName(name);
-          return new IR.AVM2GetDescendants(region, state.store, object, name);
+          return new IR.ASGetDescendants(region, state.store, object, name);
         }
 
         function getSlot(object, index, ti) {
@@ -729,7 +729,7 @@ var createName = function createName(namespaces, name) {
               return store(new IR.GetProperty(region, state.store, object, constant(slotQn)));
             }
           }
-          return store(new IR.AVM2GetSlot(null, state.store, object, index));
+          return store(new IR.ASGetSlot(null, state.store, object, index));
         }
 
         function setSlot(object, index, value, ti) {
@@ -741,7 +741,7 @@ var createName = function createName(namespaces, name) {
               return;
             }
           }
-          store(new IR.AVM2SetSlot(region, state.store, object, index, value));
+          store(new IR.ASSetSlot(region, state.store, object, index, value));
         }
 
         function call(callee, object, args) {
@@ -901,16 +901,16 @@ var createName = function createName(namespaces, name) {
               popLocal(op - OP_setlocal0);
               break;
             case 0x1C: // OP_pushwith
-              scope.push(new IR.AVM2Scope(topScope(), pop(), true));
+              scope.push(new IR.ASScope(topScope(), pop(), true));
               break;
             case 0x30: // OP_pushscope
-              scope.push(new IR.AVM2Scope(topScope(), pop(), false));
+              scope.push(new IR.ASScope(topScope(), pop(), false));
               break;
             case 0x1D: // OP_popscope
               scope.pop();
               break;
             case 0x64: // OP_getglobalscope
-              push(new IR.AVM2Global(null, topScope()));
+              push(new IR.ASGlobal(null, topScope()));
               break;
             case 0x65: // OP_getscopeobject
               push(getScopeObject(state.scope[bc.index]));
@@ -945,7 +945,7 @@ var createName = function createName(namespaces, name) {
             case 0x6A: // OP_deleteproperty
               multiname = buildMultiname(bc.index);
               object = pop();
-              push(store(new IR.AVM2DeleteProperty(region, state.store, object, multiname)));
+              push(store(new IR.ASDeleteProperty(region, state.store, object, multiname)));
               break;
             case 0x6C: // OP_getslot
               object = pop();
@@ -1004,7 +1004,7 @@ var createName = function createName(namespaces, name) {
             case 0x42: // OP_construct
               args = popMany(bc.argCount);
               object = pop();
-              push(store(new IR.AVM2New(region, state.store, object, args)));
+              push(store(new IR.ASNew(region, state.store, object, args)));
               break;
             case 0x49: // OP_constructsuper
               args = popMany(bc.argCount);
@@ -1019,7 +1019,7 @@ var createName = function createName(namespaces, name) {
               multiname = buildMultiname(bc.index);
               object = pop();
               callee = getProperty(object, multiname, bc.ti, false, ic(bc));
-              push(store(new IR.AVM2New(region, state.store, callee, args)));
+              push(store(new IR.ASNew(region, state.store, callee, args)));
               break;
             case 0x80: // OP_coerce
               if (bc.ti && bc.ti.noCoercionNeeded) {
@@ -1323,8 +1323,8 @@ var createName = function createName(namespaces, name) {
             case 0xB4: // OP_in
               object = pop();
               value = pop();
-              multiname = new IR.AVM2Multiname(Undefined, value, 0);
-              push(store(new IR.AVM2HasProperty(region, state.store, object, multiname)));
+              multiname = new IR.ASMultiname(Undefined, value, 0);
+              push(store(new IR.ASHasProperty(region, state.store, object, multiname)));
               break;
             case 0x95: // OP_typeof
               push(call(globalProperty("asTypeOf"), null, [pop()]));
@@ -1355,7 +1355,7 @@ var createName = function createName(namespaces, name) {
               push(new NewObject(region, properties));
               break;
             case 0x57: // OP_newactivation
-              push(new IR.AVM2NewActivation(constant(methodInfo)));
+              push(new IR.ASNewActivation(constant(methodInfo)));
               break;
             case 0x58: // OP_newclass
               callee = globalProperty("createClass");
@@ -1392,9 +1392,9 @@ var createName = function createName(namespaces, name) {
 
       var stop;
       if (stopPoints.length > 1) {
-        var stopRegion = new Region();
-        var stopValuePhi = new Phi(stopRegion);
-        var stopStorePhi = new Phi(stopRegion);
+        var stopRegion = new Region(null);
+        var stopValuePhi = new Phi(stopRegion, null);
+        var stopStorePhi = new Phi(stopRegion, null);
         stopPoints.forEach(function (stopPoint) {
           stopRegion.predecessors.push(stopPoint.region);
           stopValuePhi.pushValue(stopPoint.value);
