@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global avm1lib, rgbaObjToStr, warning */
+/*global avm1lib, rgbaObjToStr, rgbIntAlphaToStr, warning */
 
 var TextFieldDefinition = (function () {
 
@@ -480,7 +480,7 @@ var TextFieldDefinition = (function () {
         ctx.strokeStyle = this._borderColorStr;
         ctx.lineCap = "square";
         ctx.lineWidth = 1;
-        ctx.strokeRect(x +.5, y +.5, (width - 1)|0, (height - 1)|0);
+        ctx.strokeRect(x + 0.5, y + 0.5, (width - 1)|0, (height - 1)|0);
       }
       ctx.closePath();
       var runs = this._content.textruns;
