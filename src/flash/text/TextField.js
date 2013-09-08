@@ -406,13 +406,13 @@ var TextFieldDefinition = (function () {
 
       var s = this.symbol;
       if (!s) {
-        this._bbox = {xMin: -2, yMin: -2, xMax: 102, yMax: 22};
+        this._bounds = {xMin: -2, yMin: -2, xMax: 102, yMax: 22};
         this.text = '';
         return;
       }
 
       var tag = s.tag;
-      this._bbox = tag.bbox;
+      this._bounds = tag.bbox;
 
       if (tag.hasLayout) {
         initialFormat.size = tag.fontHeight / 20;
@@ -460,7 +460,7 @@ var TextFieldDefinition = (function () {
 
     draw: function (ctx) {
       this.ensureDimensions();
-      var bounds = this._bbox;
+      var bounds = this._bounds;
       var x = bounds.xMin;
       var y = bounds.yMin;
       var width = bounds.xMax - x;
@@ -506,7 +506,7 @@ var TextFieldDefinition = (function () {
       if (this._dimensionsValid) {
         return;
       }
-      var bounds = this._bbox;
+      var bounds = this._bounds;
       var initialFormat = this._defaultTextFormat;
       var firstRun = {type: 'f', format: initialFormat};
       var width = bounds.xMax - bounds.xMin - 4;
@@ -523,19 +523,19 @@ var TextFieldDefinition = (function () {
       this._textWidth = state.maxLineWidth;
       this._textHeight = state.y;
       this._content.textruns = state.runs;
+      this._drawingOffsetH = 0;
       if (this._autoSize !== 'none') {
-        width += 4;
-        var targetWidth = this._textWidth + 4;
+        var targetWidth = this._textWidth;
         var diffX = 0;
         switch (this._autoSize) {
           case 'left': break;
           case 'center': diffX = (targetWidth - width) / 2; break;
           case 'right': diffX = targetWidth - width;
         }
-        // TODO: update .x
         bounds.xMin -= diffX;
+        this._x -= diffX;
         this._drawingOffsetH = -diffX;
-        bounds.xMax = bounds.xMin + targetWidth;
+        bounds.xMax = bounds.xMin + targetWidth + 4;
         bounds.yMax = bounds.yMin + this._textHeight + 4;
       }
       this._dimensionsValid = true;
@@ -583,13 +583,14 @@ var TextFieldDefinition = (function () {
     },
 
     get width() { // (void) -> Number
-      return this._bbox.xMax - this._bbox.xMin;
+      this.ensureDimensions();
+      return this._bounds.xMax - this._bounds.xMin;
     },
     set width(value) { // (Number) -> Number
       if (value < 0) {
         return;
       }
-      this._bbox.xMax = this._bbox.xMin + value;
+      this._bounds.xMax = this._bounds.xMin + value;
       // TODO: optimization potential: don't invalidate if !wordWrap and no \n
       if (this._multiline || this._wordWrap) {
         this.invalidateDimensions();
@@ -597,13 +598,14 @@ var TextFieldDefinition = (function () {
     },
 
     get height() { // (void) -> Number
-      return this._bbox.yMax - this._bbox.yMin;
+      this.ensureDimensions();
+      return this._bounds.yMax - this._bounds.yMin;
     },
     set height(value) { // (Number) -> Number
       if (value < 0) {
         return;
       }
-      this._bbox.yMax = this._bbox.yMin + value;
+      this._bounds.yMax = this._bounds.yMin + value;
       this.invalidateDimensions();
     }
   };
