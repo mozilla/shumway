@@ -143,14 +143,16 @@ var DisplayObjectDefinition = (function () {
           this._scaleX = a > 0 ? sx : -sx;
           var sy = Math.sqrt(d * d + c * c);
           this._scaleY = d > 0 ? sy : -sy;
-          var x = this._x = matrix.tx;
-          var y = this._y = matrix.ty;
+          this._x = matrix.tx;
+          this._y = matrix.ty;
 
           this._currentTransform = matrix;
         }
       }
 
-      this._updateCurrentTransform();
+      if (!this._currentTransform) {
+        this._updateCurrentTransform();
+      }
 
       this._accessibilityProperties = null;
 
@@ -625,10 +627,9 @@ var DisplayObjectDefinition = (function () {
       return this._x;
     },
     set x(val) {
-      this._slave = false;
-
-      if (val === this._x)
+      if (val === this._x) {
         return;
+      }
 
       this._invalidate();
 
@@ -638,18 +639,15 @@ var DisplayObjectDefinition = (function () {
         this._bounds.xMax += dx;
       }
 
-      this._x = val;
-
-      this._updateCurrentTransform();
+      this._x = this._currentTransform.tx = val;
     },
     get y() {
       return this._y;
     },
     set y(val) {
-      this._slave = false;
-
-      if (val === this._y)
+      if (val === this._y) {
         return;
+      }
 
       this._invalidate();
 
@@ -659,9 +657,7 @@ var DisplayObjectDefinition = (function () {
         this._bounds.yMax += dy;
       }
 
-      this._y = val;
-
-      this._updateCurrentTransform();
+      this._y = this._currentTransform.ty = val;
     },
     get z() {
       return 0;
