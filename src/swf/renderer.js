@@ -311,7 +311,7 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
 
   if (cxform) {
     // We only support alpha channel transformation for now
-    ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset) / 256;
+    ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset / 256);
   }
   if (child._alpha !== 1) {
     ctx.globalAlpha *= child._alpha;
