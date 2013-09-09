@@ -69,7 +69,19 @@ var DisplayListTree = (function() {
   function createLabel(displayObject) {
     var div = document.createElement("div");
     div.className = "item";
-    div.textContent = displayObject.class.className + " ";
+    var spanOutline = document.createElement("span");
+    spanOutline.className = "doOutline";
+    if (!isNullOrUndefined(displayObject._wireframeStrokeStyle)) {
+      spanOutline.innerHTML = "&#xf0c8;";
+      spanOutline.setAttribute("style", "color:" + displayObject._wireframeStrokeStyle);
+    } else {
+      spanOutline.innerHTML = "&#xf096;";
+    }
+    div.appendChild(spanOutline);
+    var spanClass = document.createElement("span");
+    spanClass.textContent = displayObject.class.className;
+    spanClass.className = "doClass";
+    div.appendChild(spanClass);
     if (!isNullOrUndefined(displayObject._name)) {
       var spanName = document.createElement("span");
       spanName.textContent = "'" + displayObject._name + "'";

@@ -321,6 +321,9 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
   }
 
   if (!refreshStage && !child._invalid) {
+    if (renderAsWireframe.value) {
+      child._wireframeStrokeStyle = null;
+    }
     return;
   }
 
@@ -343,10 +346,13 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
   } else {
     if (child.getBounds) {
       var b = child.getBounds(child);
-      ctx.save();
-      ctx.strokeStyle = '#'+('00000'+(Math.random()*(1<<24)|0).toString(16)).slice(-6);
-      ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.width - 1, b.height - 1);
-      ctx.restore();
+      if (b && b.width && b.height) {
+        child._wireframeStrokeStyle = '#'+('00000'+(Math.random()*(1<<24)|0).toString(16)).slice(-6)
+        ctx.save();
+        ctx.strokeStyle = child._wireframeStrokeStyle;
+        ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.width - 1, b.height - 1);
+        ctx.restore();
+      }
     }
   }
 

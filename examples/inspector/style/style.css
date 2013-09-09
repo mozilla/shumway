@@ -172,8 +172,18 @@ body.simple #xstats {
   color: rgba(255, 136, 136, 0.75);
 }
 #displayList li > div > span.doName {
+  padding-left: 5px;
   color: rgba(136, 136, 255, 1);
 }
+#displayList li > div > span.doOutline {
+  font-family: FontAwesome;
+  font-weight: normal;
+  font-style: normal;
+  -webkit-font-smoothing: antialiased;
+  padding-right: 5px;
+  color: #666;
+}
+
 #displayObjectProperties {
   display: none;
   position: absolute;
