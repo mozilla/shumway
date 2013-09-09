@@ -451,6 +451,13 @@ var tagHandler=(function (global) {
     rgb($bytes, $stream, $0, swfVersion, tagCode);
     return $;
   }
+  function defineBinaryData($bytes, $stream, $, swfVersion, tagCode) {
+    $ || ($ = {});
+    $.id = readUi16($bytes, $stream);
+    var reserved = readUi32($bytes, $stream);
+    $.data = readBinary($bytes, $stream, 0);
+    return $;
+  }
   function defineFont($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
@@ -1587,7 +1594,7 @@ var tagHandler=(function (global) {
     /* DefineShape4 */                  83: defineShape,
     /* DefineMorphShape2 */             84: defineShape,
     /* DefineSceneAndFrameLabelData */  86: defineScene,
-    /* DefineBinaryData */              87: undefined,
+    /* DefineBinaryData */              87: defineBinaryData,
     /* DefineFontName */                88: undefined,
     /* StartSound2 */                   89: startSound,
     /* DefineBitsJPEG4 */               90: defineImage,
