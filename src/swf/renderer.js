@@ -341,11 +341,11 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
       child.draw(ctx, child.ratio);
     }
   } else {
-    if (child._bbox) {
-      var b = child._bbox;
+    if (child.getBounds) {
+      var b = child.getBounds(child);
       ctx.save();
       ctx.strokeStyle = '#'+('00000'+(Math.random()*(1<<24)|0).toString(16)).slice(-6);
-      ctx.strokeRect(b.xMin, b.yMin, b.xMax - b.xMin, b.yMax - b.yMin);
+      ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.width - 1, b.height - 1);
       ctx.restore();
     }
   }
