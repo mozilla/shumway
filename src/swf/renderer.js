@@ -23,6 +23,7 @@ var disablePreVisitor = rendererOptions.register(new Option("dpv", "disablePreVi
 var disableRenderVisitor = rendererOptions.register(new Option("drv", "disableRenderVisitor", "boolean", false, "disable render visitor"));
 var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMouseVisitor", "boolean", false, "disable mouse visitor"));
 var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
+var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
 
 var CanvasCache = {
   cache: [],
@@ -309,32 +310,45 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
     }
   }
 
-  if (cxform) {
-    // We only support alpha channel transformation for now
-    ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset) / 256;
-  }
-  if (child._alpha !== 1) {
-    ctx.globalAlpha *= child._alpha;
+  if (!renderAsWireframe.value) {
+    if (cxform) {
+      // We only support alpha channel transformation for now
+      ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset) / 256;
+    }
+    if (child._alpha !== 1) {
+      ctx.globalAlpha *= child._alpha;
+    }
   }
 
   if (!refreshStage && !child._invalid) {
     return;
   }
 
-  // TODO: move into Graphics class
-  if (child._graphics) {
-    var graphics = child._graphics;
+  if (!renderAsWireframe.value) {
+    // TODO: move into Graphics class
+    if (child._graphics) {
+      var graphics = child._graphics;
 
-    if (graphics._bitmap) {
-      ctx.translate(child._bbox.xMin, child._bbox.yMin);
-      ctx.drawImage(graphics._bitmap, 0, 0);
-    } else {
-      graphics.draw(ctx, clip, child.ratio);
+      if (graphics._bitmap) {
+        ctx.translate(child._bbox.xMin, child._bbox.yMin);
+        ctx.drawImage(graphics._bitmap, 0, 0);
+      } else {
+        graphics.draw(ctx, clip, child.ratio);
+      }
+    }
+
+    if (child.draw) {
+      child.draw(ctx, child.ratio);
+    }
+  } else {
+    if (child._bbox) {
+      var b = child._bbox;
+      ctx.save();
+      ctx.strokeStyle = '#'+('00000'+(Math.random()*(1<<24)|0).toString(16)).slice(-6);
+      ctx.strokeRect(b.xMin, b.yMin, b.xMax - b.xMin, b.yMax - b.yMin);
+      ctx.restore();
     }
   }
-
-  if (child.draw)
-    child.draw(ctx, child.ratio);
 
   child._invalid = false;
 }
