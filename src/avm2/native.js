@@ -1079,8 +1079,8 @@ var natives = (function () {
 
     var defaultObjectEncoding = 3;
 
-    function ByteArray() {
-      var initData = this.symbol && this.symbol.data;
+    function ByteArray(bytes) {
+      var initData = bytes || (this.symbol && this.symbol.data);
       if (initData) {
         this.a = new ArrayBuffer(initData.length);
         this.length = initData.length;
