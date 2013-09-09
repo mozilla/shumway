@@ -120,6 +120,11 @@ var DisplayListTree = (function() {
     update: function updateDom(stage, container) {
       displayObjectStore = [];
 
+      var scrollTopOld = 0;
+      if (rootElement) {
+        scrollTopOld = rootElement.scrollTop;
+      }
+
       containerElement = container;
       containerElement.innerHTML = "";
 
@@ -155,6 +160,10 @@ var DisplayListTree = (function() {
       }
 
       updateProperties(selectedItem);
+
+      if (scrollTopOld !== 0) {
+        rootElement.scrollTop = scrollTopOld;
+      }
     },
 
     _onClick: function _onClick(event) {
