@@ -314,7 +314,7 @@
       return nameOf(this);
     }
     var inputs = [];
-    this.visitInputsNoConstants(function (input) {
+    this.visitInputs(function (input) {
       inputs.push(nameOf(input));
     }, true);
     var str = nameOf(this) + " = " + this.nodeName.toUpperCase();
