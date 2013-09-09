@@ -648,7 +648,7 @@
       var push = worklist.push.bind(worklist);
       var node;
       while ((node = worklist.pop())) {
-        if (visited[node.id]) {
+        if (visited[node.id] === 1) {
           continue;
         }
         visited[node.id] = 1;
@@ -686,18 +686,21 @@
       var visited = new Array(1024);
       var worklist = [this.exit];
       function push(node) {
-        assert (node instanceof Node);
+        if (isConstant(node)) {
+          return;
+        }
+        release || assert (node instanceof Node);
         worklist.push(node);
       }
       var node;
       while ((node = worklist.pop())) {
-        if (visited[node.id] === 1) {
+        if (visited[node.id]) {
           continue;
         }
         visited[node.id] = 1;
-        visitor(node);
+        visitor && visitor(node);
         worklist.push(node);
-        node.visitInputsNoConstants(push);
+        node.visitInputs(push);
       }
     };
 
