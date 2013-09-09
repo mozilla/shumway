@@ -43,230 +43,143 @@
    */
  
   var IRDefinition = {
-    name: "Node",
-    properties: [],
-    children: [{
-      name: "Control",
-      properties: [
-
-      ],
-      children: [{
-        name: "Region",
-        properties: [{ name: "predecessors", array: true, expand: "control" }],
-        children: [{
-          name: "Start",
-          constructorText: "this.control = this;",
-          properties: [
-            { name: "scope", dynamic: true }, { name: "domain", dynamic: true }
-          ]
-        }]
-      }, {
-        name: "End",
-        properties: [
-          { name: "control", assert: "isControlOrNull" },
-        ],
-        children: [{
-          name: "Stop",
-          properties: [
-            { name: "store", assert: "isStore" },
-            { name: "argument", assert: "" }
-          ]
-        }, {
-          name: "If",
-          properties: [{ name: "predicate", assert: "" }]
-        }, {
-          name: "Switch",
-          properties: [{ name: "determinant", assert: "" }]
-        }, {
-          name: "Jump",
-          properties: []
-        }]
-      }]
-    }, {
-      name: "Value",
-      properties: [],
-      children: [{
-        name: "StoreDependent",
-        properties: [
-          { name: "control", assert: "isControlOrNull", nullable: true },
-          { name: "store", assert: "isStoreOrNull", nullable: true },
-          { name: "loads", dynamic: true, nullable: true, array: true }
-        ],
-        children: [{
-          name: "Call",
-          properties: [
-            { name: "callee", assert: "" },
-            { name: "object", assert: "isValueOrNull", nullable: true },
-            { name: "args", assert: "isArray", array: true },
-            { name: "pristine", internal: true }
-          ]
-        }, {
-          name: "CallProperty",
-          properties: [
-            { name: "object", assert: ""},
-            { name: "name", assert: "" },
-            { name: "args", assert: "isArray", array: true },
-            { name: "pristine", internal: true }
-          ],
-          children: [{
-            name: "ASCallProperty",
-            properties: [
-              { name: "isLex", assert: "", internal: true }
-            ]
-          }]
-        }, {
-          name: "New",
-          properties: [
-            { name: "callee", assert: "" },
-            { name: "args", assert: "", array: true },
-          ],
-          children: [{
-            name: "ASNew",
-            properties: [
-            ]
-          }]
-        }, {
-          name: "GetProperty",
-          properties: [
-            { name: "object", assert: ""},
-            { name: "name", assert: "" },
-          ],
-          children: [{
-            name: "ASGetProperty",
-            properties: [
-              { name: "isIndexed", assert: "", internal: true },
-              { name: "isMethod", assert: "", internal: true }
-            ]
-          }, {
-            name: "ASGetDescendants",
-            properties: [
-
-            ]
-          }, {
-            name: "ASHasProperty",
-            properties: []
-          }, {
-            name: "ASGetSlot",
-            properties: []
-          }]
-        }, {
-          name: "SetProperty",
-          properties: [
-            { name: "object", assert: ""},
-            { name: "name", assert: "" },
-            { name: "value", assert: "" }
-          ],
-          children: [{
-            name: "ASSetProperty",
-            properties: [
-              { name: "isIndexed", assert: "", internal: true }
-            ]
-          }, {
-            name: "ASSetSlot",
-            properties: []
-          }]
-        }, {
-          name: "DeleteProperty",
-          properties: [
-            { name: "object", assert: ""},
-            { name: "name", assert: "" },
-          ],
-          children: [{
-            name: "ASDeleteProperty",
-            properties: []
-          }]
-        }, {
-          name: "ASFindProperty",
-          properties: [
-            { name: "scope", assert: "" },
-            { name: "name", assert: "" },
-            { name: "domain", assert: "" },
-            { name: "strict", internal: true }
-          ]
-        }]
-      }, {
-        name: "Phi",
-        properties: [
-          { name: "control", assert: "isControl", nullable: true },
-          { name: "args", array: true, expand: "value" }
-        ]
-      }, {
-        name: "Variable",
-        properties: [{ name: "name", internal: true }]
-      }, {
-        name: "Copy",
-        properties: [{ name: "argument" }]
-      }, {
-        name: "Move",
-        properties: [{ name: "to" }, { name: "from" }]
-      }, {
-        name: "Projection",
-        properties: [{ name: "argument" }, { name: "type", internal: true }, { name: "selector", internal: true, optional: true }]
-      }, {
-        name: "Latch",
-        properties: [
-          { name: "control", assert: "isControlOrNull", nullable: true },
-          { name: "condition" },
-          { name: "left"},
-          { name: "right" }
-        ]
-      }, {
-        name: "Binary",
-        properties: [{ name: "operator", internal: true}, { name: "left"}, { name: "right" }]
-      }, {
-        name: "Unary",
-        properties: [{ name: "operator", internal: true}, { name: "argument"}]
-      }, {
-        name: "Constant",
-        properties: [{ name: "value", internal: true}]
-      }, {
-        name: "Store",
-        properties: []
-      }, {
-        name: "GlobalProperty",
-        properties: [{ name: "name", internal: true}]
-      }, {
-        name: "This",
-        properties: [{ name: "control", assert: "isControl" }]
-      }, {
-        name: "Throw",
-        properties: [{ name: "control", assert: "isControl" }, { name: "argument" }]
-      }, {
-        name: "Arguments",
-        properties: [{ name: "control", assert: "isControl" }]
-      }, {
-        name: "Parameter",
-        properties: [
-          { name: "control", assert: "isControl" },
-          { name: "index", internal: true },
-          { name: "name", internal: true }
-        ]
-      }, {
-        name: "NewArray",
-        properties: [{ name: "control", assert: "isControl" }, { name: "elements", array: true }]
-      }, {
-        name: "NewObject",
-        properties: [{ name: "control", assert: "isControl" }, { name: "properties", array: true }]
-      }, {
-        name: "KeyValuePair",
-        properties: [{ name: "key" }, { name: "value" }]
-      }, {
-        name: "ASScope",
-        properties: [{ name: "parent" }, { name: "object" }, { name: "isWith", internal: true }]
-      }, {
-        name: "ASGlobal",
-        properties: [{ name: "control", assert: "isControlOrNull", nullable: true }, { name: "scope", assert: "isScope" }]
-      }, {
-        name: "ASNewActivation",
-        properties: [{ name: "methodInfo", internal: true }]
-      }, {
-        name: "ASMultiname",
-        properties: [
-          { name: "namespaces" },
-          { name: "name" },
-          { name: "flags", internal: true }]
-      }]
-    }]
+    Control: {
+      Region: {
+        _properties: {predecessors: {array: true, expand: "control"}},
+        Start: {
+            _constructorText: "this.control = this;",
+            _properties: {
+              scope: {dynamic: true},
+              domain: {dynamic: true}
+            }
+          }
+        },
+      End: {
+        _properties: {
+          control: {assert: "isControlOrNull"}
+        },
+        Stop: {
+          _properties: {
+            store: {assert: "isStore"},
+            argument: {assert: ""}
+          }
+        },
+        If: {
+          _properties: {predicate: {assert: ""}}
+        },
+        Switch: {
+          _properties: {determinant: {assert: "" }}
+        },
+        Jump: {}
+      }
+    },
+    Value: {
+      _properties: [],
+      StoreDependent: {
+        _properties: {control: {assert: "isControlOrNull", nullable: true}, store: {assert: "isStoreOrNull", nullable: true}, loads: {dynamic: true, nullable: true, array: true}
+        },
+        Call: {
+          _properties: {callee: {assert: ""}, object: {assert: "isValueOrNull", nullable: true}, args: {assert: "isArray", array: true}, pristine: {internal: true}}
+        },
+        CallProperty: {
+          _properties: {object: {assert: ""}, name: {assert: ""}, args: {assert: "isArray", array: true}, pristine: {internal: true}},
+          ASCallProperty: {
+            _properties: {isLex: {assert: "", internal: true}}
+          }
+        },
+        New: {
+          _properties: {callee: { assert: "" }, args: {assert: "", array: true}},
+          ASNew: {}
+        },
+        GetProperty: {
+          _properties: {object: {assert: ""}, name: {assert: "" }},
+          ASGetProperty: {
+            _properties: {isIndexed: {assert: "", internal: true}, isMethod: {assert: "", internal: true}}
+          },
+          ASGetDescendants: {},
+          ASHasProperty: {},
+          ASGetSlot: {}
+        },
+        SetProperty: {
+          _properties: {object: {assert: ""}, name: {assert: ""}, value: {assert: ""}},
+          ASSetProperty: {
+            _properties: {isIndexed: {assert: "", internal: true}}
+          },
+          ASSetSlot: {}
+        },
+        DeleteProperty: {
+          _properties: {object: {assert: ""}, name: {assert: ""}},
+          ASDeleteProperty: {}
+        },
+        ASFindProperty: {
+          _properties: {scope: {assert: ""}, name: {assert: ""}, domain: {assert: ""}, strict: {internal: true}}
+        }
+      },
+      Store: {},
+      Phi: {
+        _properties: {control: {assert: "isControl", nullable: true}, args: {array: true, expand: "value"}}
+      },
+      Variable: {
+        _properties: {name: {internal: true }}
+      },
+      Copy: {
+        _properties: {argument: {}}
+      },
+      Move: {
+        _properties: {to: {}, from: {}}
+      },
+      Projection: {
+        _properties: {argument: {}, type: {internal: true}, selector: {internal: true, optional: true}}
+      },
+      Latch: {
+        _properties: {control: {assert: "isControlOrNull", nullable: true}, condition: {}, left: {}, right: {}}
+      },
+      Binary: {
+        _properties: {operator: {internal: true}, left: {}, right: {}}
+      },
+      Unary: {
+        _properties: {operator: {internal: true}, argument: {}}
+      },
+      Constant: {
+        _properties: {value: {internal: true}}
+      },
+      GlobalProperty: {
+        _properties: {name: {internal: true}}
+      },
+      This: {
+        _properties: {control: {assert: "isControl"}}
+      },
+      Throw: {
+        _properties: {control: {assert: "isControl"}, argument: {}}
+      },
+      Arguments: {
+        _properties: {control: {assert: "isControl"}}
+      },
+      Parameter: {
+        _properties: {control: {assert: "isControl"}, index: {internal: true}, name: {internal: true}}
+      },
+      NewArray: {
+        _properties: {control: {assert: "isControl"}, elements: {array: true}}
+      },
+      NewObject: {
+        _properties: {control: {assert: "isControl"}, properties: {array: true}}
+      },
+      KeyValuePair: {
+        _properties: {key: {}, value: {}}
+      },
+      ASScope: {
+        _properties: {parent: {}, object: {}, isWith: {internal: true}}
+      },
+      ASGlobal: {
+        _properties: {control: {assert: "isControlOrNull", nullable: true}, scope: {assert: "isScope"}}
+      },
+      ASNewActivation: {
+        _properties: {methodInfo: {internal: true}}
+      },
+      ASMultiname: {
+        _properties: {namespaces: {}, name: {}, flags: {internal: true}}
+      }
+    }
   };
 
   var IRSource = (function IRGenerator(root) {
@@ -275,17 +188,26 @@
       str += s + "\n";
     }
     var writer = new IndentingWriter(false, out);
+    function makeProperties(properties) {
+      var result = [];
+      for (var k in properties) {
+        properties[k].name = k;
+        result.push(properties[k]);
+      }
+      return result;
+    }
     function generate(node, path) {
       path = path.concat([node]);
-      writer.enter("var " + node.name + " = (function () {")
-      var constructorName = node.name[0].toLowerCase() + node.name.slice(1) + "Node";
+      print(path.map(function (node) { return node._name; }).join(" -> "));
+      writer.enter("var " + node._name + " = (function () {")
+      var constructorName = node._name[0].toLowerCase() + node._name.slice(1) + "Node";
       if (constructorName.substring(0, 2) === "aS") {
         constructorName = "as" + constructorName.substring(2);
       }
       // var constructorName = "constructor";
       var prototypeName = constructorName + ".prototype";
       var properties = path.reduce(function (a, v) {
-        return a.concat(v.properties);
+        return v._properties ? a.concat(makeProperties(v._properties)) : a;
       }, []);
       var parameters = properties.filter(function (property) {
         return !property.dynamic;
@@ -300,20 +222,19 @@
         return property.name;
       }).join(", ");
       writer.enter("function " + constructorName + "(" + parameterString + ") {");
-      properties.forEach(function (property) {
-        if (property.assert === "") {
-          writer.writeLn("release || assert (!(" + property.name + " == undefined));");
-        } else if (property.assert) {
-          writer.writeLn("release || assert (" + property.assert + "(" + property.name + "));");
-        }
-      });
-      writer.writeLn("release || assert (arguments.length >= " + (parameters.length - optionalParameters.length) + ", \"" + node.name + " not enough args.\");");
-
-      writer.writeLn("this.id = nextID[nextID.length - 1] += 1;");
-      if (node.constructorText) {
-        writer.writeLn(node.constructorText);
+      if (true) {
+        properties.forEach(function (property) {
+          if (property.assert === "") {
+            writer.writeLn("release || assert (!(" + property.name + " == undefined));");
+          } else if (property.assert) {
+            writer.writeLn("release || assert (" + property.assert + "(" + property.name + "));");
+          }
+        });
+        writer.writeLn("release || assert (arguments.length >= " + (parameters.length - optionalParameters.length) + ", \"" + node._name + " not enough args.\");");
       }
-
+      if (node._constructorText) {
+        writer.writeLn(node._constructorText);
+      }
       properties.forEach(function (property) {
         if (property.expand) {
           writer.writeLn("this." + property.name + " = " + property.expand + " ? [" + property.expand + "] : [];");
@@ -323,13 +244,14 @@
           writer.writeLn("this." + property.name + " = " + property.name + ";");
         }
       });
-
+      writer.writeLn("this.id = nextID[nextID.length - 1] += 1;");
       writer.leave("}");
       if (path.length > 1) {
-        writer.writeLn(prototypeName + " = " + "extend(" + path[path.length - 2].name + ", \"" + node.name + "\")");
+        writer.writeLn(prototypeName + " = " + "extend(" + path[path.length - 2]._name + ", \"" + node._name + "\")");
       }
 
-      writer.writeLn(prototypeName + ".nodeName = \"" + node.name + "\";");
+      writer.writeLn(prototypeName + ".nodeName = \"" + node._name + "\";");
+      // writer.writeLn(prototypeName + ".is" + node.name + " = true;");
 
       writer.enter(prototypeName + ".visitInputs = function (visitor) {");
       properties.forEach(function (property) {
@@ -352,12 +274,17 @@
       writer.writeLn("return " + constructorName + ";");
       writer.leave("})();");
       writer.writeLn("");
-      if (node.children) {
-        node.children.forEach(function (child) {
-          generate(child, path);
-        });
+      for (var name in node) {
+        if (name[0] === "_") {
+          continue;
+        }
+        print("A: " + name);
+        var child = node[name];
+        child._name = name;
+        generate(child, path);
       }
     }
+    IRDefinition._name = "Node";
     generate(IRDefinition, []);
     return str;
   })(IR);
