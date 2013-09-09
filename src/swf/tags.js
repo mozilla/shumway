@@ -246,6 +246,11 @@ var DO_ACTION = {
   spriteId: ['tagCode===59', [UI16]],
   actionsData: BINARY(0)
 };
+var DEFINE_BINARY_DATA = {
+  id: UI16,
+  $$reserved: UI32,
+  data: BINARY(0)
+};
 var FILE_ATTRIBUTES = {
   $$reserved: UB(1),
   useDirectBlit: UB(1),

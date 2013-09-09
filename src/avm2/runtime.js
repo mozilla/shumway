@@ -1804,9 +1804,11 @@ function createClass(classInfo, baseClass, scope) {
   // TODO: Seal constant traits in the instance object. This should be done after
   // the instance constructor has executed.
 
-  if (baseClass && Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy") {
+  if (baseClass && (Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy" ||
+                    baseClass.isProxy)) {
     // TODO: This is very hackish.
     installProxyClassWrapper(cls);
+    cls.isProxy = true;
   }
 
   // Run the static initializer.

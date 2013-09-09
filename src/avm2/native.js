@@ -1079,9 +1079,16 @@ var natives = (function () {
 
     var defaultObjectEncoding = 3;
 
-    function ByteArray() {
-      this.a = new ArrayBuffer(INITIAL_SIZE);
-      this.length = 0;
+    function ByteArray(bytes) {
+      var initData = bytes || (this.symbol && this.symbol.data);
+      if (initData) {
+        this.a = new ArrayBuffer(initData.length);
+        this.length = initData.length;
+        new Uint8Array(this.a).set(initData);
+      } else {
+        this.a = new ArrayBuffer(INITIAL_SIZE);
+        this.length = 0;
+      }
       this.position = 0;
       this.cacheViews();
       this.nativele = new Int8Array(new Int32Array([]).buffer)[0] === 1;
@@ -1203,6 +1210,10 @@ var natives = (function () {
       if (pos + length > this.length) {
         throwEOFError();
       }
+      if (bytes.length < offset + length) {
+        bytes.ensureCapacity(offset + length);
+        bytes.length = offset + length;
+      }
       bytes.int8v.set(new Int8Array(this.a, pos, length), offset);
       this.position += length;
     };
@@ -1323,7 +1334,7 @@ var natives = (function () {
         },
 
         bytesAvailable: {
-          get: function () { return this.a.byteLength - this.position; }
+          get: function () { return this.length - this.position; }
         },
 
         position: {
