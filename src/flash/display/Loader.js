@@ -43,7 +43,8 @@
           SWF_TAG_CODE_REMOVE_OBJECT, SWF_TAG_CODE_REMOVE_OBJECT2,
           SWF_TAG_CODE_SET_BACKGROUND_COLOR, SWF_TAG_CODE_SHOW_FRAME,
           SWF_TAG_CODE_SOUND_STREAM_BLOCK, SWF_TAG_CODE_SOUND_STREAM_HEAD,
-          SWF_TAG_CODE_START_SOUND, SWF_TAG_CODE_SYMBOL_CLASS */
+          SWF_TAG_CODE_START_SOUND, SWF_TAG_CODE_SYMBOL_CLASS,
+          SWF_TAG_CODE_DEFINE_BINARY_DATA */
 // Ignoring "The Function constructor is a form of eval."
 /*jshint -W054 */
 // TODO: Investigate "Don't make functions within a loop."
@@ -142,6 +143,13 @@ var LoaderDefinition = (function () {
         break;
       case SWF_TAG_CODE_DEFINE_SOUND:
         symbol = defineSound(swfTag, symbols);
+        break;
+      case SWF_TAG_CODE_DEFINE_BINARY_DATA:
+        symbol = {
+          type: 'binary',
+          id: swfTag.id,
+          data: swfTag.data
+        };
         break;
       case SWF_TAG_CODE_DEFINE_SPRITE:
         var depths = { };
@@ -1006,6 +1014,9 @@ var LoaderDefinition = (function () {
         props.channels = symbol.channels;
         props.pcm = symbol.pcm;
         props.packaged = symbol.packaged;
+        break;
+      case 'binary':
+        props.data = symbol.data;
         break;
       case 'sprite':
         var displayList = null;
