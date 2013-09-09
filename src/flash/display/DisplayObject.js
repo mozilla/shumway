@@ -735,7 +735,7 @@ var DisplayObjectDefinition = (function () {
       return this._bounds;
     },
     _getRegion: function getRegion() {
-      if (!this._graphics) {
+      if (!this._graphics /*|| renderAsWireframe.value*/) {
         var b = this.getBounds();
         return { x: b.x, y: b.y, width: b.width, height: b.height };
       }
