@@ -117,7 +117,7 @@ RenderVisitor.prototype = {
 
       ctx.save();
 
-      if (!this.refreshStage) {
+      if (!this.refreshStage && !renderAsWireframe.value) {
         ctx.clip();
       }
 
