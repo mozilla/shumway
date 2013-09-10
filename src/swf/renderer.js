@@ -310,7 +310,10 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
     }
   }
 
+  child._wireframeStrokeStyle = null;
+
   if (!renderAsWireframe.value) {
+
     if (cxform) {
       // We only support alpha channel transformation for now
       ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset) / 256;
@@ -318,16 +321,11 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
     if (child._alpha !== 1) {
       ctx.globalAlpha *= child._alpha;
     }
-  }
 
-  if (!refreshStage && !child._invalid) {
-    if (renderAsWireframe.value) {
-      child._wireframeStrokeStyle = null;
+    if (!refreshStage && !child._invalid) {
+      return;
     }
-    return;
-  }
 
-  if (!renderAsWireframe.value) {
     // TODO: move into Graphics class
     if (child._graphics) {
       var graphics = child._graphics;
@@ -343,7 +341,13 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
     if (child.draw) {
       child.draw(ctx, child.ratio);
     }
+
   } else {
+
+    if (!refreshStage && !child._invalid) {
+      return;
+    }
+
     if (child.getBounds) {
       var b = child.getBounds(child);
       if (b && b.width && b.height) {
@@ -354,6 +358,7 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
         ctx.restore();
       }
     }
+
   }
 
   child._invalid = false;
