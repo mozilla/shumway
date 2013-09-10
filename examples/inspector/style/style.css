@@ -176,10 +176,12 @@ body.simple #xstats {
   color: rgba(136, 136, 255, 1);
 }
 #displayList li > div > span.doOutline {
+  display: inline-block;
   font-family: FontAwesome;
   font-weight: normal;
   font-style: normal;
   -webkit-font-smoothing: antialiased;
+  padding-top: 1px;
   padding-right: 5px;
   color: #666;
 }
