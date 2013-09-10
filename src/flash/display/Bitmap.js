@@ -44,10 +44,11 @@ var BitmapDefinition = (function () {
   return {
     // (bitmapData:BitmapData = null, pixelSnapping:String = "auto", smoothing:Boolean = false)
     __class__: "flash.display.Bitmap",
-    draw : function(ctx, ratio) {
+    draw: function(ctx, ratio, colorTransform) {
       if (!this._bitmapData) {
         return;
       }
+      ctx.save();
       if (this._pixelSnapping === 'auto' || this._pixelSnapping === 'always') {
         var transform = ctx.currentTransform;
         var EPSILON = 0.001;
@@ -59,7 +60,9 @@ var BitmapDefinition = (function () {
         }
         // TODO this._pixelSnapping === 'always'; does it even make sense in other cases?
       }
+      colorTransform.setAlpha(ctx, true);
       ctx.drawImage(this._bitmapData._drawable, 0, 0);
+      ctx.restore();
       traceRenderer.value && frameWriter.writeLn("Bitmap.draw() snapping: " + this._pixelSnapping +
         ", dimensions: " + this._bitmapData._drawable.width + " x " + this._bitmapData._drawable.height);
       FrameCounter.count("Bitmap.draw()");

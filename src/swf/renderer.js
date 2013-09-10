@@ -55,7 +55,7 @@ function isCanvasVisible(canvas) {
   return true;
 }
 
-function visitContainer(container, visitor) {
+function visitContainer(container, visitor, context) {
   var children = container._children;
 
   visitor.childrenStart(container);
@@ -70,7 +70,7 @@ function visitContainer(container, visitor) {
       var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child) ||
                         flash.display.SimpleButton.class.isInstanceOf(child);
 
-      visitor.visit(child, isContainer, visitContainer);
+      visitor.visit(child, isContainer, visitContainer, context);
     }
   }
 
@@ -89,7 +89,7 @@ function RenderVisitor(root, ctx, refreshStage) {
 RenderVisitor.prototype = {
   ignoreVisibleAttribute: false,
   start: function () {
-    visitContainer(this.root, this);
+    visitContainer(this.root, this, new RenderingContext(this.refreshStage));
   },
   startFragment: function() {
     var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(this.root) ||
@@ -106,7 +106,7 @@ RenderVisitor.prototype = {
     this.ctx.save();
     this.ctx.transform(inverse.a, inverse.b, inverse.c, inverse.d, inverse.tx, inverse.ty);
 
-    this.visit(this.root, isContainer, visitContainer);
+    this.visit(this.root, isContainer, visitContainer, new RenderingContext(this.refreshStage));
 
     this.ctx.restore();
   },
@@ -169,10 +169,16 @@ RenderVisitor.prototype = {
       this.ctx.restore();
     }
   },
-  visit: function (child, isContainer, visitContainer, isClippingMask) {
+  visit: function (child, isContainer, visitContainer, context) {
     var ctx = this.ctx;
 
-    var clippingMask = isClippingMask === true;
+    var parentHasClippingMask = context.isClippingMask;
+    var parentColorTransform = context.colorTransform;
+
+    var clippingMask = parentHasClippingMask === true;
+    if (child._cxform) {
+      context.colorTransform = parentColorTransform.applyCXForm(child._cxform);
+    }
 
     if (!clippingMask) {
       // removing clipping if the required character depth is achived
@@ -185,7 +191,7 @@ RenderVisitor.prototype = {
         if (!this.clipDepth) {
           this.clipDepth = [];
         }
-        clippingMask = true;
+        context.isClippingMask = clippingMask = true;
         // saving clipping until certain character depth
         this.clipDepth.unshift(child._clipDepth);
         ctx.save();
@@ -194,7 +200,7 @@ RenderVisitor.prototype = {
 
     if (clippingMask && isContainer) {
       ctx.save();
-      renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask, this.refreshStage);
+      renderDisplayObject(child, ctx, child._currentTransform, context);
       for (var i = 0, n = child._children.length; i < n; i++) {
         var child1 = child._children[i];
         if (!child1) {
@@ -203,11 +209,13 @@ RenderVisitor.prototype = {
         if (this.ignoreVisibleAttribute || (child1._visible && !child1._maskedObject)) {
           var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child1) ||
                             flash.display.SimpleButton.class.isInstanceOf(child1);
-          this.visit(child1, isContainer, this, true);
+          this.visit(child1, isContainer, visitContainer, context);
         }
       }
       ctx.restore();
       ctx.clip();
+      context.isClippingMask = parentHasClippingMask;
+      context.colorTransform = parentColorTransform;
       return;
     }
 
@@ -255,17 +263,17 @@ RenderVisitor.prototype = {
       var isMaskContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child._mask) ||
                             flash.display.SimpleButton.class.isInstanceOf(child._mask);
       this.ctx = maskCtx;
-      this.visit(child._mask, isMaskContainer, visitContainer);
+      this.visit(child._mask, isMaskContainer, visitContainer, new RenderingContext(this.refreshStage));
       this.ctx = ctx;
 
       tempCanvas = CanvasCache.getCanvas(ctx.canvas);
       tempCtx = tempCanvas.ctx;
       tempCtx.currentTransform = ctx.currentTransform;
-      renderDisplayObject(child, tempCtx, child._currentTransform, child._cxform, clippingMask, this.refreshStage);
+      renderDisplayObject(child, tempCtx, child._currentTransform, context);
 
       if (isContainer) {
         this.ctx = tempCtx;
-        visitContainer(child, this);
+        visitContainer(child, this, context);
         this.ctx = ctx;
       }
 
@@ -281,10 +289,10 @@ RenderVisitor.prototype = {
       CanvasCache.releaseCanvas(tempCanvas);
       CanvasCache.releaseCanvas(maskCanvas);
     } else {
-      renderDisplayObject(child, ctx, child._currentTransform, child._cxform, clippingMask, this.refreshStage);
+      renderDisplayObject(child, ctx, child._currentTransform, context);
 
       if (isContainer) {
-        visitContainer(child, this);
+        visitContainer(child, this, context);
       }
     }
 
@@ -293,10 +301,106 @@ RenderVisitor.prototype = {
     if (clippingMask) {
       ctx.clip();
     }
+    context.isClippingMask = parentHasClippingMask;
+    context.colorTransform = parentColorTransform;
   }
 };
 
-function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) {
+function RenderingColorTransform() {
+  this.mode = null;
+  this.transform = [1, 1, 1, 1, 0, 0, 0, 0];
+}
+RenderingColorTransform.prototype = {
+  applyCXForm: function (cxform) {
+    var t = this.transform;
+    t = [
+      t[0] * cxform.redMultiplier / 256,
+      t[1] * cxform.greenMultiplier / 256,
+      t[2] * cxform.blueMultiplier / 256,
+      t[3] * cxform.alphaMultiplier / 256,
+      t[4] * cxform.redMultiplier / 256 + cxform.redOffset,
+      t[5] * cxform.greenMultiplier / 256 + cxform.greenOffset,
+      t[6] * cxform.blueMultiplier / 256 + cxform.blueOffset,
+      t[7] * cxform.alphaMultiplier / 256 + cxform.alphaOffset
+    ];
+
+    var mode;
+    var PRECISION = 1e-4;
+    if (Math.abs(t[0] - 1) < PRECISION && Math.abs(t[1] - 1) < PRECISION &&
+        Math.abs(t[2] - 1) < PRECISION && t[3] >= 0 &&
+        Math.abs(t[4]) < PRECISION && Math.abs(t[5]) < PRECISION &&
+        Math.abs(t[6]) < PRECISION && Math.abs(t[7]) < PRECISION) {
+      mode = Math.abs(t[3] - 1) < PRECISION ? null : 'simple';
+    } else {
+      mode = 'complex';
+    }
+    var clone = Object.create(RenderingColorTransform.prototype);
+    clone.mode = mode;
+    clone.transform = t;
+    return clone;
+  },
+  setFillStyle: function (ctx, style) {
+    if (this.mode === 'complex') {
+      style = this.convertColor(style);
+    } else if (typeof style === 'number') {
+      style = this.convertNumericColor(style);
+    }
+    ctx.fillStyle = style;
+  },
+  setStrokeStyle: function (ctx, style) {
+    if (this.mode === 'complex') {
+      style = this.convertColor(style);
+    } else if (typeof style === 'number') {
+      style = this.convertNumericColor(style);
+    }
+    ctx.strokeStyle = style;
+  },
+  setAlpha: function (ctx, force) {
+    if (this.mode === 'simple' || force) {
+      var t = this.transform;
+      ctx.globalAlpha = Math.min(1, Math.max(0, ctx.globalAlpha * t[3]));
+    }
+  },
+  convertNumericColor: function (num) {
+    return '#' + (num | 0x1000000).toString(16).substr(1);
+  },
+  convertColor: function (style) {
+    var t = this.transform;
+    var m;
+    switch (typeof style) {
+    case 'string':
+      if (style[0] === '#') {
+        m = [undefined, parseInt(style.substr(1, 2), 16),
+          parseInt(style.substr(3, 2), 16), parseInt(style.substr(5, 2), 16), 1.0];
+      }
+      m = m || /rgba\(([^,]+),([^,]+),([^,]+),([^)]+)\)/.exec(style);
+      if (!m) { // unknown string color
+        return style;
+      }
+      break;
+    case 'number':
+      m = [style, style >> 16 & 0xff, style >> 8 & 0xff, style & 0xff, 1.0];
+      break;
+    default:
+      // TODO gradient
+      return style;
+    }
+
+    var r = Math.min(255, Math.max(0, m[1] * t[0] + t[4])) | 0;
+    var g = Math.min(255, Math.max(0, m[2] * t[1] + t[5])) | 0;
+    var b = Math.min(255, Math.max(0, m[3] * t[2] + t[6])) | 0;
+    var a = Math.min(1, Math.max(0, m[4] * t[3] + (t[7] / 256)));
+    return "rgba(" + r + ',' + g + ',' + b + ',' + a + ')';
+  }
+};
+
+function RenderingContext(refreshStage) {
+  this.refreshStage = refreshStage === true;
+  this.isClippingMask = false;
+  this.colorTransform = new RenderingColorTransform();
+}
+
+function renderDisplayObject(child, ctx, transform, context) {
   if (transform) {
     var m = transform;
     if (m.a * m.d == m.b * m.c) {
@@ -309,15 +413,11 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
     }
   }
 
-  if (cxform) {
-    // We only support alpha channel transformation for now
-    ctx.globalAlpha = (ctx.globalAlpha * cxform.alphaMultiplier + cxform.alphaOffset) / 256;
-  }
   if (child._alpha !== 1) {
     ctx.globalAlpha *= child._alpha;
   }
 
-  if (!refreshStage && !child._invalid) {
+  if (!context.refreshStage && !child._invalid) {
     return;
   }
 
@@ -326,15 +426,19 @@ function renderDisplayObject(child, ctx, transform, cxform, clip, refreshStage) 
     var graphics = child._graphics;
 
     if (graphics._bitmap) {
+      ctx.save();
       ctx.translate(child._bbox.xMin, child._bbox.yMin);
+      context.colorTransform.setAlpha(ctx, true);
       ctx.drawImage(graphics._bitmap, 0, 0);
+      ctx.restore();
     } else {
-      graphics.draw(ctx, clip, child.ratio);
+      graphics.draw(ctx, context.isClippingMask, child.ratio, context.colorTransform);
     }
   }
 
-  if (child.draw)
-    child.draw(ctx, child.ratio);
+  if (child.draw) {
+    child.draw(ctx, child.ratio, context.colorTransform);
+  }
 
   child._invalid = false;
 }

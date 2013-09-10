@@ -598,7 +598,7 @@ ShapePath.prototype = {
     this.commands.push(SHAPE_ELLIPSE);
     this.data.push(x, y, radiusX, radiusY);
   },
-  draw: function(ctx, scale, clip, ratio) {
+  draw: function(ctx, scale, clip, ratio, colorTransform) {
     if (clip && !this.fillStyle) {
       return;
     }
@@ -713,27 +713,29 @@ ShapePath.prototype = {
     if (!clip) {
       var fillStyle = this.fillStyle;
       if (fillStyle) {
-        ctx.fillStyle = fillStyle.style;
+        colorTransform.setFillStyle(ctx, fillStyle.style);
         var m = fillStyle.transform;
+        ctx.save();
+        colorTransform.setAlpha(ctx);
         if (m) {
-          ctx.save();
           ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
-          ctx.fill();
-          ctx.restore();
-        } else {
-          ctx.fill();
         }
+        ctx.fill();
+        ctx.restore();
       }
       var lineStyle = this.lineStyle;
       // TODO: All widths except for `undefined` and `NaN` draw something
       if (lineStyle) {
+        colorTransform.setStrokeStyle(ctx, lineStyle.style);
+        ctx.save();
+        colorTransform.setAlpha(ctx);
         // Flash's lines are always at least 1px
         ctx.lineWidth = Math.max(lineStyle.width, 1);
-        ctx.strokeStyle = lineStyle.style;
         ctx.lineCap = lineStyle.lineCap;
         ctx.lineJoin = lineStyle.lineJoin;
         ctx.miterLimit = lineStyle.miterLimit;
         ctx.stroke();
+        ctx.restore();
       }
     }
     ctx.closePath();

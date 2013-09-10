@@ -458,7 +458,7 @@ var TextFieldDefinition = (function () {
       this.text = text.substring(0, begin) + str + text.substring(end);
     },
 
-    draw: function (ctx) {
+    draw: function (ctx, ratio, colorTransform) {
       this.ensureDimensions();
       var bounds = this._bounds;
       var x = bounds.xMin;
@@ -473,27 +473,33 @@ var TextFieldDefinition = (function () {
       ctx.rect(x, y, width, height);
       ctx.clip();
       if (this._background) {
-        ctx.fillStyle = this._backgroundColorStr;
+        colorTransform.setFillStyle(ctx, this._backgroundColorStr);
         ctx.fill();
       }
       if (this._border) {
-        ctx.strokeStyle = this._borderColorStr;
+        colorTransform.setStrokeStyle(ctx, this._borderColorStr);
         ctx.lineCap = "square";
         ctx.lineWidth = 1;
         ctx.strokeRect(x + 0.5, y + 0.5, (width - 1)|0, (height - 1)|0);
       }
       ctx.closePath();
       var runs = this._content.textruns;
+      ctx.save();
+      colorTransform.setAlpha(ctx);
       for (var i = 0; i < runs.length; i++) {
         var run = runs[i];
         if (run.type === 'f') {
+          ctx.restore();
           ctx.font = run.format.str;
-          ctx.fillStyle = run.format.color;
+          colorTransform.setFillStyle(ctx, run.format.color);
+          ctx.save();
+          colorTransform.setAlpha(ctx);
         } else {
           assert(run.type === 't', 'Invalid run type: ' + run.type);
           ctx.fillText(run.text, run.x + this._drawingOffsetH, run.y);
         }
       }
+      ctx.restore();
       ctx.restore();
     },
 
