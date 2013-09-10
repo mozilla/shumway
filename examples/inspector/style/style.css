@@ -133,6 +133,7 @@ body.simple #xstats {
   color: #ccc;
   font: 10px Consolas, "Liberation Mono", Courier, monospace;
   cursor: default;
+  overflow-y: hidden;
 }
 #displayList {
   position: absolute;
