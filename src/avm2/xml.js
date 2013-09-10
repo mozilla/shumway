@@ -570,17 +570,29 @@ var isXMLType, isXMLName, XMLParser;
 
 
   function asGetProperty(namespaces, name, flags, isMethod) {
-    var mn = isNumeric(name) ? toNumber(name) : new Multiname(namespaces, name, flags);
+    var mn = isNumeric(name) 
+      ? toNumber(name) 
+      : name instanceof QName 
+        ? name.mn
+        : new Multiname(namespaces, name, flags);
     return this.getProperty(mn, isMethod);
   }
 
   function asSetProperty(namespaces, name, flags, value) {
-    var mn = isNumeric(name) ? toNumber(name) : new Multiname(namespaces, name, flags);
+    var mn = isNumeric(name) 
+      ? toNumber(name) 
+      : name instanceof QName 
+        ? name.mn
+        : new Multiname(namespaces, name, flags);
     this.setProperty(mn, value);
   }
 
   function asHasProperty(namespaces, name, flags) {
-    var mn = isNumeric(name) ? toNumber(name) : new Multiname(namespaces, name, flags);
+    var mn = isNumeric(name) 
+      ? toNumber(name) 
+      : name instanceof QName 
+        ? name.mn
+        : new Multiname(namespaces, name, flags);
     return this.hasProperty(mn);
   }
 
@@ -591,6 +603,24 @@ var isXMLType, isXMLName, XMLParser;
       return this.toString().asCallProperty(namespaces, name, flags, isLex, args);
     }
     return property.apply(receiver, args);
+  }
+
+  var ATTR_NAME = 1;
+  var ANY_ATTR_NAME = 2;
+  var ANY_NAME = 3;
+  var ELEM_NAME = 4;
+  function nameKind(mn) {
+    if (mn.isAnyName()) {
+      if (mn.isAttribute()) {
+        return ANY_ATTR_NAME;
+      } else {
+        return ANY_NAME;
+      }
+    } else if (mn.isAttribute()) {
+      return ATTR_NAME;
+    } else {
+      return ELEM_NAME;
+    }
   }
 
   /**
@@ -763,24 +793,6 @@ var isXMLType, isXMLName, XMLParser;
       return keys;
     };
 
-    var ATTR_NAME = 1;
-    var ANY_ATTR_NAME = 2;
-    var ANY_NAME = 3;
-    var ELEM_NAME = 4;
-    function nameKind(mn) {
-      if (mn.isAnyName()) {
-        if (mn.isAttribute()) {
-          return ANY_ATTR_NAME;
-        } else {
-          return ANY_NAME;
-        }
-      } else if (mn.isAttribute()) {
-        return ATTR_NAME;
-      } else {
-        return ELEM_NAME;
-      }
-    }
-
     function setAttribute(node, name, value) {
       if (node.nodeType === Node.DOCUMENT_NODE) {
         node.childNodes[0].setAttribute(name, value);
@@ -885,7 +897,6 @@ var isXMLType, isXMLName, XMLParser;
 
     // 9.1.1.1 XML.[[Get]] (P)
     Xp.getProperty = function (mn, isMethod) {
-      var val;
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
         return this[Multiname.getQualifiedName(resolved)];
@@ -900,7 +911,7 @@ var isXMLType, isXMLName, XMLParser;
       }
       var x = this;
       var name = toXMLName(mn);
-      val = new XMLList(x, name);
+      var xl = new XMLList(x, name);
       switch (nameKind(name.mn)) {
       case ANY_ATTR_NAME:
         var any = true;
@@ -910,7 +921,7 @@ var isXMLType, isXMLName, XMLParser;
           x.attributes.forEach(function (v, i) {
             if ((any || (v.name.localName === name.localName)) &&
                 ((name.uri === null || v.name.uri === name.uri))) {
-              val.append(v);
+              xl.append(v);
             }
           });
         }
@@ -921,13 +932,13 @@ var isXMLType, isXMLName, XMLParser;
       default:
         x.children.forEach(function (v, i) {
           if ((any || v.kind === "element" && v.name.localName === name.localName) &&
-              ((name.uri === null || v.kind === "element" && v.name.uri === name.uri))) {
-            val.append(v);
+              ((name.uri == null || v.kind === "element" && v.name.uri === name.uri))) {
+            xl.append(v);
           }
         });
         break;
       }
-      return val;
+      return xl;
     };
 
     Xp.hasProperty = function (mn, isMethod) {
@@ -1617,12 +1628,16 @@ var isXMLType, isXMLName, XMLParser;
       if (String(mn) === String(i)) {
         return x.children[mn];
       }
+
       var name = toXMLName(mn);
       var xl = new XMLList(this, name);
-      this.children.forEach(function (v, i) {
-        var xl2 = v.getProperty(mn);
-        if (xl2.length() > 0) {
-          xl.append(xl2);
+      x.children.forEach(function (v, i) {
+        var xl2;
+        if (v.kind === "element") {
+          xl2 = v.getProperty(mn);
+          if (xl2.length() > 0) {
+            xl.append(xl2);
+          }
         }
       });
       return xl;
@@ -1990,7 +2005,7 @@ var isXMLType, isXMLName, XMLParser;
     defineNonEnumerableGetter(QNp, "uri", function () {
       if (this._uri === undefined) {
         var ns = this.mn.namespaces[0]
-        this._uri = ns && ns.originalURI ? ns.originalURI : "";
+        this._uri = ns && ns.originalURI ? ns.originalURI : this.isAny ? null : "";
       }
       return this._uri;
     });

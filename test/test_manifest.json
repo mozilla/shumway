@@ -74,6 +74,13 @@
        ],
        "type": "stas"
     },
+    {  "id": "timeline_as2",
+       "stas": "swfs/trace.stas",
+       "filenames": [
+         "swfs/timeline/timeline_as2_1.swf"
+       ],
+       "type": "stas"
+    },
     {  "id": "box2d-ref",
        "frames": [50, 150, 300],
        "swf": "/examples/Box2DFlashAS3/demo.swf",
@@ -206,6 +213,11 @@
        ],
        "type": "stas"
     },
+    {  "id": "flash_geom_ColorTransform",
+       "frames": [1],
+       "swf": "swfs/flash_geom_ColorTransform.swf",
+       "type": "eq"
+    },
     {  "id": "flash_text_TextField trace",
        "stas": "swfs/trace.stas",
        "filenames": [
@@ -224,13 +236,6 @@
        "stas": "swfs/trace.stas",
        "filenames": [
          "swfs/flash_ui_ContextMenu.swf"
-       ],
-       "type": "stas"
-    },
-    {  "id": "NameCache trace",
-       "stas": "swfs/trace2s.stas",
-       "filenames": [
-         "swfs/NameCache.swf"
        ],
        "type": "stas"
     },
@@ -288,5 +293,10 @@
       "frames": [1],
       "swf": "/examples/graphics/bounding-boxes.swf",
       "type": "eq"
+    },
+    {  "id": "Class init: Pepsi ad",
+       "frames": [30],
+       "swf": "swfs/3d785ea4dd0c00e52ca27887f20341fa709f78bb5d860d045bba4ab6f972069b.swf",
+       "type": "eq"
     }
 ]

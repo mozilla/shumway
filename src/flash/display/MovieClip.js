@@ -217,36 +217,18 @@ var MovieClipDefinition = (function () {
         return;
       }
 
-      var children = this._children;
       var depths = nextFrameNum > currentFrame ? currentDisplayList.depths:
                                                  nextDisplayList.depths;
 
-      var depthMap = this._depthMap;
-
       for (var i = 0; i < depths.length; i++) {
         var depth = depths[i];
-        var child = depthMap[depth];
-
-        if (!child || !child._owned) {
-          continue;
-        }
-
         var currentCmd = currentDisplayList[depth];
         var nextCmd = nextDisplayList[depth];
 
-        if (!nextCmd || nextCmd.symbolId !== currentCmd.symbolId ||
-                        nextCmd.ratio !== currentCmd.ratio) {
-          this.removeChild(child);
-
-          child.destroy();
-
-          if (child._isPlaying) {
-            child.stop();
-          }
-
-          depthMap[depth] = null;
-
-          child._depth = null;
+        if (currentCmd && (!nextCmd ||
+                           nextCmd.symbolId !== currentCmd.symbolId ||
+                           nextCmd.ratio !== currentCmd.ratio)) {
+          this._removeTimelineChild(currentCmd);
         }
       }
     },
@@ -276,7 +258,7 @@ var MovieClipDefinition = (function () {
           return;
         }
 
-        if (enterFrame && execute) {
+        if (enterFrame && (execute || !this._loader._isAvm2Enabled)) {
           this._callFrame(frameNum);
         }
 
@@ -350,7 +332,7 @@ var MovieClipDefinition = (function () {
     },
 
     _getAbsFrameNum: function (frameNum, sceneName) {
-      if (frameNum < 0) {
+      if (frameNum < 1) {
         frameNum = 1;
       }
 

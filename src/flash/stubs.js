@@ -69,8 +69,19 @@
 
 // Ignoring all "is not defined." errors in this file
 /*jshint undef: false */
-
+// Ignoring "Weird construction. Is 'new' unnecessary?" near Stubs definition
 /*jshint -W057 */
+
+function bindNativeClassDefinition(nativeName, definition) {
+  // Hook up the native.
+  natives[nativeName] = function (runtime, scope, instanceConstructor, baseClass) {
+    var c = new Class(undefined, instanceConstructor, Domain.coerceCallable);
+    c.extend(baseClass);
+    c.linkNatives(definition);
+    return c;
+  };
+}
+
 var Stubs = new (function () {
 
   var that = this;
@@ -278,13 +289,7 @@ var Stubs = new (function () {
     }
     makeStub(container, m.classSimpleName, path[path.length - 1]);
     if (m.nativeName) {
-      // Hook up the native.
-      natives[m.nativeName] = function (runtime, scope, instanceConstructor, baseClass) {
-        var c = new Class(undefined, instanceConstructor, Domain.coerceCallable);
-        c.extend(baseClass);
-        c.linkNatives(m.definition);
-        return c;
-      };
+      bindNativeClassDefinition(m.nativeName, m.definition);
     }
     definitions[className.getOriginalName()] = m.definition;
   });

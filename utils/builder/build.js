@@ -362,11 +362,6 @@ if (closure.value) {
   }
   var closureOptions = ["-jar", process.env["CLOSURE"]];
   closureOptions.push("--accept_const_keyword");
-
-  // There's some bug in Closure that gets triggered if we don't use pretty printing.
-  closureOptions.push("--formatting");
-  closureOptions.push("PRETTY_PRINT");
-
   closureOptions.push("--language_in");
   closureOptions.push("ECMASCRIPT5");
   closureOptions.push("--compilation_level");
@@ -377,6 +372,10 @@ if (closure.value) {
     process.exit();
   }
   closureOptions.push(optimizations[closure.value]);
+  if (closure.value === "a") {
+    closureOptions.push("--externs");
+    closureOptions.push("templates/externs.js");
+  }
   var cc = spawn("java", closureOptions);
   cc.stdout.on('data', function (data) {
     process.stdout.write(data);

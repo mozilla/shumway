@@ -43,7 +43,8 @@
           SWF_TAG_CODE_REMOVE_OBJECT, SWF_TAG_CODE_REMOVE_OBJECT2,
           SWF_TAG_CODE_SET_BACKGROUND_COLOR, SWF_TAG_CODE_SHOW_FRAME,
           SWF_TAG_CODE_SOUND_STREAM_BLOCK, SWF_TAG_CODE_SOUND_STREAM_HEAD,
-          SWF_TAG_CODE_START_SOUND, SWF_TAG_CODE_SYMBOL_CLASS */
+          SWF_TAG_CODE_START_SOUND, SWF_TAG_CODE_SYMBOL_CLASS,
+          SWF_TAG_CODE_DEFINE_BINARY_DATA */
 // Ignoring "The Function constructor is a form of eval."
 /*jshint -W054 */
 // TODO: Investigate "Don't make functions within a loop."
@@ -142,6 +143,13 @@ var LoaderDefinition = (function () {
         break;
       case SWF_TAG_CODE_DEFINE_SOUND:
         symbol = defineSound(swfTag, symbols);
+        break;
+      case SWF_TAG_CODE_DEFINE_BINARY_DATA:
+        symbol = {
+          type: 'binary',
+          id: swfTag.id,
+          data: swfTag.data
+        };
         break;
       case SWF_TAG_CODE_DEFINE_SPRITE:
         var depths = { };
@@ -480,7 +488,7 @@ var LoaderDefinition = (function () {
         Promise.when(frameConstructed, this._lastPromise).then(function () {
           this.contentLoaderInfo._dispatchEvent("complete");
         }.bind(this));
-        this._worker.terminate();
+        this._worker && this._worker.terminate();
         break;
       case 'empty':
         this._lastPromise = new Promise();
@@ -653,8 +661,8 @@ var LoaderDefinition = (function () {
             framesLoaded: timeline.length,
             loader: loader,
             parent: parent,
-            index: 0,
-            level: 0,
+            index: parent ? 0 : -1,
+            level: parent ? 0 : -1,
             timeline: timeline,
             totalFrames: rootInfo.props.totalFrames,
             stage: loader._stage
@@ -961,7 +969,7 @@ var LoaderDefinition = (function () {
         props.height = symbol.height;
         break;
       case 'label':
-        var drawFn = new Function('c,r', symbol.data);
+        var drawFn = new Function('c,r,ct', symbol.data);
         className = 'flash.text.StaticText';
         props.bbox = symbol.bbox;
         props.draw = drawFn;
@@ -1006,6 +1014,9 @@ var LoaderDefinition = (function () {
         props.channels = symbol.channels;
         props.pcm = symbol.pcm;
         props.packaged = symbol.packaged;
+        break;
+      case 'binary':
+        props.data = symbol.data;
         break;
       case 'sprite':
         var displayList = null;

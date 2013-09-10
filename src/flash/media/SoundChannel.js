@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 /*global base64ArrayBuffer, AudioContext, webkitAudioContext, Audio,
-  isNullOrUndefined */
+  isNullOrUndefined, clamp */
 
 var SoundChannelDefinition = (function () {
   return {
@@ -52,7 +52,7 @@ var SoundChannelDefinition = (function () {
       }
       volume *= this._soundMixerClass.native.static._getMasterVolume();
       if (this._element) {
-        this._element.volume = volume;
+        this._element.volume = clamp(volume, 0, 1);
       }
       if (this._audioChannel) {
         // TODO

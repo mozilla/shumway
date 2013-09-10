@@ -108,7 +108,7 @@ var createName = function createName(namespaces, name) {
     constructor.prototype.optimize = function optimize() {
       function optimize(x) {
         if (x instanceof Phi && !x.isLoop) {
-          var args = x.arguments.unique();
+          var args = x.args.unique();
           if (args.length === 1) {
             x.seal();
             Counter.count("Builder: OptimizedPhi");

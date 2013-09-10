@@ -41,8 +41,15 @@ function defineLabel(tag, dictionary) {
       cmds.push('c.font="' + record.fontHeight + 'px \'' + font.name + '\'"');
       dependencies.push(font.id);
     }
-    if (record.hasColor)
-      cmds.push('c.fillStyle="' + rgbaObjToStr(record.color) + '"');
+
+    if (record.hasColor) {
+      cmds.push('ct.setFillStyle(c,"' + rgbaObjToStr(record.color) + '")');
+      cmds.push('ct.setAlpha(c)');
+    } else {
+      // FIXME what sets color of the text?
+      cmds.push('ct.setAlpha(c,true)');
+    }
+
     if (record.hasMoveX)
       x = record.moveX;
     if (record.hasMoveY)

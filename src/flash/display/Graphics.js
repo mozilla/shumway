@@ -66,7 +66,7 @@ var GraphicsDefinition = (function () {
         this.drawTriangles(path.vertices, path.indices, path.uvtData, path.culling);
     },
 
-    draw: function(ctx, clip, ratio) {
+    draw: function(ctx, clip, ratio, colorTransform) {
       var scale = this._scale;
       if (scale !== 1) {
         ctx.scale(scale, scale);
@@ -74,7 +74,7 @@ var GraphicsDefinition = (function () {
 
       var paths = this._paths;
       for (var i = 0; i < paths.length; i++) {
-        paths[i].draw(ctx, scale, clip, ratio);
+        paths[i].draw(ctx, scale, clip, ratio, colorTransform);
       }
     },
     beginFill: function (color, alpha) {

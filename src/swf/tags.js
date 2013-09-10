@@ -246,6 +246,11 @@ var DO_ACTION = {
   spriteId: ['tagCode===59', [UI16]],
   actionsData: BINARY(0)
 };
+var DEFINE_BINARY_DATA = {
+  id: UI16,
+  $$reserved: UI32,
+  data: BINARY(0)
+};
 var FILE_ATTRIBUTES = {
   $$reserved: UB(1),
   useDirectBlit: UB(1),
@@ -277,7 +282,7 @@ var PLACE_OBJECT = {
           $hasClassName: 'flags>>11&1',
           $cache: 'flags>>10&1',
           $blend: 'flags>>9&1',
-          $hasFilters: 'flags>>8&1',
+          $hasFilters: 'flags>>8&1'
         },
         {
           $cache: '0',
