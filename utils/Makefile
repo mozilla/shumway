@@ -99,6 +99,9 @@ run-tamarin-tests: install-tamarin-tests
 	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --threads $(THREADS) --vmargs "-rel -i" --log as3.log as3
 	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --threads $(THREADS) --vmargs "-rel -i" --log ecma3.log ecma3
 
+run-tamarin-e4x-tests: install-tamarin-tests
+	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway  --threads $(THREADS) --timeout 360 --vmargs "-rel -i" --log test.log e4x
+
 run-tamarin-sanity-tests: install-tamarin-tests
 	cd $(TAMARIN_HOME)/test/acceptance; SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway  --threads $(THREADS) --timeout 360 --vmargs "-rel -i" --log test.log ecma3/String ecma3/Function ecma3/ExecutionContexts ecma3/Math/e15_8_2_1.as
 
