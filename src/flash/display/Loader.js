@@ -969,7 +969,7 @@ var LoaderDefinition = (function () {
         props.height = symbol.height;
         break;
       case 'label':
-        var drawFn = new Function('c,r', symbol.data);
+        var drawFn = new Function('c,r,ct', symbol.data);
         className = 'flash.text.StaticText';
         props.bbox = symbol.bbox;
         props.draw = drawFn;

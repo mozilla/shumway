@@ -213,6 +213,11 @@
        ],
        "type": "stas"
     },
+    {  "id": "flash_geom_ColorTransform",
+       "frames": [1],
+       "swf": "swfs/flash_geom_ColorTransform.swf",
+       "type": "eq"
+    },
     {  "id": "flash_text_TextField trace",
        "stas": "swfs/trace.stas",
        "filenames": [

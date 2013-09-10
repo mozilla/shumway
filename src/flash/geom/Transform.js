@@ -24,10 +24,10 @@ var TransformDefinition = (function () {
       var cxform = this._target._cxform;
       if (cxform) {
         return new flash.geom.ColorTransform(
-          cxform.redMultiplier,
-          cxform.greenMultiplier,
-          cxform.blueMultiplier,
-          cxform.alphaMultiplier,
+          cxform.redMultiplier / 256,
+          cxform.greenMultiplier / 256,
+          cxform.blueMultiplier / 256,
+          cxform.alphaMultiplier / 256,
           cxform.redOffset,
           cxform.greenOffset,
           cxform.blueOffset,
@@ -43,15 +43,16 @@ var TransformDefinition = (function () {
         throw TypeError();
 
       this._target._cxform = {
-        redMultiplier: val.redMultiplier,
-        greenMultiplier: val.greenMultiplier,
-        blueMultiplier: val.blueMultiplier,
-        alphaMultiplier: val.alphaMultiplier,
+        redMultiplier: val.redMultiplier * 256,
+        greenMultiplier: val.greenMultiplier * 256,
+        blueMultiplier: val.blueMultiplier * 256,
+        alphaMultiplier: val.alphaMultiplier * 256,
         redOffset: val.redOffset,
         greenOffset: val.greenOffset,
         blueOffset: val.blueOffset,
         alphaOffset: val.alphaOffset
       };
+      this._target._invalidate();
     },
     get concatenatedColorTransform() {
       var cxform = this.colorTransform;
