@@ -28,6 +28,7 @@ var DEFAULT_SETTINGS = {
   render: true,
   mouse: true,
   redraw: false,
+  wireframe: false,
   release: true,
   logToConsole: false,
   mute: false
@@ -64,6 +65,7 @@ function updateAVM2State() {
   disableRenderVisitor.value = state.render ? false : true;
   disableMouseVisitor.value = state.mouse ? false : true;
   showRedrawRegions.value = state.redraw ? true : false;
+  renderAsWireframe.value = state.wireframe ? true : false;
   traceCallExecution.value = state.traceCalls ? 1 : 0;
   traceCallExecution.value = state.traceRuntime ? 2 : traceCallExecution.value;
   debuggerMode.value = true;
@@ -138,6 +140,9 @@ Array.prototype.forEach.call(document.querySelectorAll(".avm2Option"), function(
     setElementState(state[id] = !state[id]);
     updateAVM2State();
     saveState(state);
+    if (id === "wireframe" && swfController.stage) {
+      swfController.stage._invalid = true;
+    }
   });
   setElementState(state[id]);
 });
