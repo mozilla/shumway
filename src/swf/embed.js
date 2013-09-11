@@ -115,21 +115,12 @@ SWF.embed = function(file, doc, container, options) {
       stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseDown'));
     });
     canvas.addEventListener('mousemove', function (domEvt) {
-      var node = this;
-      var left = 0;
-      var top = 0;
-      if (node.offsetParent) {
-        do {
-          left += node.offsetLeft;
-          top += node.offsetTop;
-        } while ((node = node.offsetParent));
-      }
-
+      var bounds = this.getBoundingClientRect();
       var canvasState = stage._canvasState;
 
-      var mouseX = ((domEvt.pageX - left) * pixelRatio - canvasState.offsetX) /
+      var mouseX = ((domEvt.pageX - bounds.left) - canvasState.offsetX) /
         canvasState.scaleX;
-      var mouseY = ((domEvt.pageY - top) * pixelRatio - canvasState.offsetY) /
+      var mouseY = ((domEvt.pageY - bounds.top) - canvasState.offsetY) /
         canvasState.scaleY;
 
       if (mouseX !== stage._mouseX || mouseY !== stage._mouseY) {
