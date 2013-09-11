@@ -289,7 +289,7 @@ var createName = function createName(namespaces, name) {
   }
 
   function callPure(callee, object, args) {
-    return new Call(null, null, callee, object, args, true);
+    return new Call(null, null, callee, object, args, IR.Flags.PRISTINE);
   }
 
   function callGlobalProperty(name, value) {
@@ -379,7 +379,7 @@ var createName = function createName(namespaces, name) {
       if (mi.needsRest() || mi.needsArguments()) {
         var offset = constant(parameterIndexOffset + (mi.needsRest() ? parameterCount : 0));
         state.local[parameterCount + 1] =
-          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset], true);
+          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset], IR.Flags.PRISTINE);
       }
 
       var argumentsLength = getJSPropertyWithState(state, args, "length");
@@ -640,7 +640,24 @@ var createName = function createName(namespaces, name) {
           return node;
         }
 
-        function callProperty(object, multiname, args, isLex, ti, ic) {
+        function resolveMultinameGlobally(multiname) {
+          var namespaces = multiname.namespaces;
+          var name = multiname.name;
+          if (!globalMultinameAnalysis.value) {
+            return;
+          }
+          if (!isConstant(namespaces) || !isConstant(name) || multiname.isAttribute()) {
+            Counter.count("GlobalMultinameResolver: Cannot resolve runtime multiname or attribute.");
+            return;
+          }
+          if (isNumeric(name.value) || !isString(name.value) || !name.value) {
+            Counter.count("GlobalMultinameResolver: Cannot resolve numeric or any names.");
+            return false;
+          }
+          return GlobalMultinameResolver.resolveMultiname(new Multiname(namespaces.value, name.value, multiname.flags));
+        }
+
+        function callProperty(object, multiname, args, isLex, ti) {
           // name = simplifyName(name);
           if (ti && ti.trait) {
             if (ti.trait.isMethod()) {
@@ -652,25 +669,23 @@ var createName = function createName(namespaces, name) {
                 openQn = Multiname.getQualifiedName(ti.trait.name);
               }
               openQn = VM_OPEN_METHOD_PREFIX + openQn;
-              return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, true));
+              return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, IR.Flags.PRISTINE));
             } else if (ti.trait.isClass()) {
               var constructor = getCallableConstructorForType(ti.trait.name);
               if (constructor) {
                 return constructor(args[0]);
               }
               var qn = Multiname.getQualifiedName(ti.trait.name);
-              return store(new IR.CallProperty(region, state.store, object, constant(qn), args, false));
+              return store(new IR.CallProperty(region, state.store, object, constant(qn), args, 0));
             }
           } else if (ti && ti.propertyQName) {
-            return store(new IR.CallProperty(region, state.store, object, constant(ti.propertyQName), args, true));
+            return store(new IR.CallProperty(region, state.store, object, constant(ti.propertyQName), args, IR.Flags.PRISTINE));
           }
-          if (isConstant(multiname)) {
-            release || assert (ic);
-            return store(new IR.ASCallProperty(region, state.store, object, multiname, args, true, isLex, constant(ic)));
-          } else {
-            warn("Can't optimize call to " + multiname.value);
-            return store(new IR.ASCallProperty(region, state.store, object, multiname, args, true, isLex));
+          var qn = resolveMultinameGlobally(multiname);
+          if (qn) {
+            return store(new IR.ASCallProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), args, IR.Flags.PRISTINE | IR.Flags.RESOLVED, isLex));
           }
+          return store(new IR.ASCallProperty(region, state.store, object, multiname, args, IR.Flags.PRISTINE, isLex));
         }
 
         function getProperty(object, multiname, ti, getOpenMethod, ic) {
@@ -689,10 +704,16 @@ var createName = function createName(namespaces, name) {
             } else if (ti.isDirectlyReadable) {
               return store(new IR.GetProperty(region, state.store, object, multiname.name));
             } else if (ti.isIndexedReadable) {
-              return store(new IR.ASGetProperty(region, state.store, object, multiname, true, getOpenMethod));
+              return store(new IR.ASGetProperty(region, state.store, object, multiname, IR.Flags.INDEXED | (getOpenMethod ? IR.Flagas.IS_METHOD : 0)));
             }
           }
-          return store(new IR.ASGetProperty(region, state.store, object, multiname, false, getOpenMethod));
+          warn("Can't optimize getProperty " + multiname);
+          var qn = resolveMultinameGlobally(multiname);
+          if (qn) {
+            return store(new IR.ASGetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), IR.Flags.RESOLVED | (getOpenMethod ? IR.Flagas.IS_METHOD : 0)));
+          }
+          Counter.count("Compiler: Slow ASGetProperty");
+          return store(new IR.ASGetProperty(region, state.store, object, multiname, (getOpenMethod ? IR.Flagas.IS_METHOD : 0)));
         }
 
         function setProperty(object, multiname, value, ti, ic) {
@@ -707,10 +728,15 @@ var createName = function createName(namespaces, name) {
             } else if (ti.isDirectlyWriteable) {
               return store(new IR.SetProperty(region, state.store, object, multiname.name, value));
             } else if (ti.isIndexedWriteable) {
-              return store(new IR.ASSetProperty(region, state.store, object, multiname, value, true));
+              return store(new IR.ASSetProperty(region, state.store, object, multiname, value, IR.Flags.INDEXED));
             }
           }
-          return store(new IR.ASSetProperty(region, state.store, object, multiname, value, false));
+          warn("Can't optimize setProperty " + multiname);
+          var qn = resolveMultinameGlobally(multiname);
+          if (qn) {
+            // TODO: return store(new IR.SetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), value));
+          }
+          return store(new IR.ASSetProperty(region, state.store, object, multiname, value, 0));
         }
 
         function getDescendants(object, name, ti) {
@@ -745,11 +771,11 @@ var createName = function createName(namespaces, name) {
         }
 
         function call(callee, object, args) {
-          return store(new Call(region, state.store, callee, object, args, true));
+          return store(new Call(region, state.store, callee, object, args, IR.Flags.PRISTINE));
         }
 
         function callCall(callee, object, args, pristine) {
-          return store(new Call(region, state.store, callee, object, args, pristine));
+          return store(new Call(region, state.store, callee, object, args, pristine ? IR.Flags.PRISTINE : 0));
         }
 
         function truthyCondition(operator) {
@@ -985,7 +1011,7 @@ var createName = function createName(namespaces, name) {
               args = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
-              value = callProperty(object, multiname, args, op === OP_callproplex, bc.ti, ic(bc));
+              value = callProperty(object, multiname, args, op === OP_callproplex, bc.ti);
               if (op !== OP_callpropvoid) {
                 push(value);
               }

@@ -456,14 +456,14 @@
 
   IR.ASGetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    if (this.isIndexed) {
-      assert (this.isMethod === false);
-      if (this.isIndexed) {
-        return call(property(object, "asGetNumericProperty"), [compileValue(this.name.name, cx)]);
-      }
+    if (this.flags & IR.Flags.INDEXED) {
+      release || assert (!(this.flags & IR.Flags.IS_METHOD));
+      return call(property(object, "asGetNumericProperty"), [compileValue(this.name.name, cx)]);
+    } else if (this.flags & IR.Flags.RESOLVED) {
+      return call(property(object, "asGetResolvedStringProperty"), [compileValue(this.name, cx)]);
     }
     var name = compileMultiname(this.name, cx);
-    var isMethod = new Literal(this.isMethod);
+    var isMethod = new Literal(this.flags & IR.Flags.IS_METHOD);
     return call(property(object, "asGetProperty"), name.concat(isMethod));
   };
 
@@ -511,10 +511,13 @@
 
   IR.ASCallProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var name = compileMultiname(this.name, cx);
     var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
+    if (this.flags & IR.Flags.RESOLVED) {
+      return call(property(object, "asCallResolvedStringProperty"), [compileValue(this.name, cx), new Literal(this.isLex), new ArrayExpression(args)]);
+    }
+    var name = compileMultiname(this.name, cx);
     return call(property(object, "asCallProperty"), name.concat([new Literal(this.isLex), new ArrayExpression(args)]));
   };
 
@@ -568,7 +571,7 @@
   IR.ASSetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var value = compileValue(this.value, cx);
-    if (this.isIndexed) {
+    if (this.flags & IR.Flags.INDEXED) {
       return call(property(object, "asSetNumericProperty"), [compileValue(this.name.name, cx), value]);
     }
     var name = compileMultiname(this.name, cx);

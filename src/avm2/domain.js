@@ -343,6 +343,7 @@ var Domain = (function () {
         print("Loading: " + abc.name);
       }
       abc.domain = this;
+      GlobalMultinameResolver.loadAbc(abc);
       this.abcs.push(abc);
       if (!this.base) {
         Type.initializeTypes(this);

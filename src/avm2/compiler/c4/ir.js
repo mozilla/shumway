@@ -41,143 +41,310 @@
    * Graph Builder -> IR (DFG) -> Optimizations -> CFG -> Restructuring -> Backend
    *
    */
- 
+
   var IRDefinition = {
     Control: {
       Region: {
-        _properties: {predecessors: {array: true, expand: "control"}},
-        Start: {
-            _constructorText: "this.control = this;",
-            _properties: {
-              scope: {dynamic: true},
-              domain: {dynamic: true}
-            }
-          }
+        predecessors: {
+          array: true,
+          expand: "control"
         },
+        Start: {
+          _constructorText: "this.control = this;",
+          scope: {
+            dynamic: true
+          },
+          domain: {
+            dynamic: true
+          }
+        }
+      },
       End: {
-        _properties: {
-          control: {assert: "isControlOrNull"}
+        control: {
+          assert: "isControlOrNull"
         },
         Stop: {
-          _properties: {
-            store: {assert: "isStore"},
-            argument: {assert: ""}
+          store: {
+            assert: "isStore"
+          },
+          argument: {
+            assert: ""
           }
         },
         If: {
-          _properties: {predicate: {assert: ""}}
+          predicate: {
+            assert: ""
+          }
         },
         Switch: {
-          _properties: {determinant: {assert: "" }}
+          determinant: {
+            assert: ""
+          }
         },
         Jump: {}
       }
     },
     Value: {
-      _properties: [],
       StoreDependent: {
-        _properties: {control: {assert: "isControlOrNull", nullable: true}, store: {assert: "isStoreOrNull", nullable: true}, loads: {dynamic: true, nullable: true, array: true}
+        control: {
+          assert: "isControlOrNull",
+          nullable: true
+        },
+        store: {
+          assert: "isStoreOrNull",
+          nullable: true
+        },
+        loads: {
+          dynamic: true,
+          nullable: true,
+          array: true
         },
         Call: {
-          _properties: {callee: {assert: ""}, object: {assert: "isValueOrNull", nullable: true}, args: {assert: "isArray", array: true}, pristine: {internal: true}}
+          callee: {
+            assert: ""
+          },
+          object: {
+            assert: "isValueOrNull",
+            nullable: true
+          },
+          args: {
+            assert: "isArray",
+            array: true
+          },
+          flags: {
+            internal: true,
+            assert: "isNumber"
+          }
         },
         CallProperty: {
-          _properties: {object: {assert: ""}, name: {assert: ""}, args: {assert: "isArray", array: true}, pristine: {internal: true}},
+          object: {
+            assert: ""
+          },
+          name: {
+            assert: ""
+          },
+          args: {
+            assert: "isArray",
+            array: true
+          },
+          flags: {
+            internal: true,
+            assert: "isNumber"
+          },
           ASCallProperty: {
-            _properties: {isLex: {assert: "", internal: true}}
+            isLex: {
+              assert: "",
+              internal: true
+            }
           }
         },
         New: {
-          _properties: {callee: { assert: "" }, args: {assert: "", array: true}},
+          callee: {
+            assert: ""
+          },
+          args: {
+            assert: "",
+            array: true
+          },
           ASNew: {}
         },
         GetProperty: {
-          _properties: {object: {assert: ""}, name: {assert: "" }},
+          object: {
+            assert: ""
+          },
+          name: {
+            assert: ""
+          },
           ASGetProperty: {
-            _properties: {isIndexed: {assert: "", internal: true}, isMethod: {assert: "", internal: true}}
+            flags: {
+              internal: true,
+              assert: "isNumber"
+            }
           },
           ASGetDescendants: {},
           ASHasProperty: {},
           ASGetSlot: {}
         },
         SetProperty: {
-          _properties: {object: {assert: ""}, name: {assert: ""}, value: {assert: ""}},
+          object: {
+            assert: ""
+          },
+          name: {
+            assert: ""
+          },
+          value: {
+            assert: ""
+          },
           ASSetProperty: {
-            _properties: {isIndexed: {assert: "", internal: true}}
+            flags: {
+              internal: true
+            }
           },
           ASSetSlot: {}
         },
         DeleteProperty: {
-          _properties: {object: {assert: ""}, name: {assert: ""}},
+          object: {
+            assert: ""
+          },
+          name: {
+            assert: ""
+          },
           ASDeleteProperty: {}
         },
         ASFindProperty: {
-          _properties: {scope: {assert: ""}, name: {assert: ""}, domain: {assert: ""}, strict: {internal: true}}
+          scope: {
+            assert: ""
+          },
+          name: {
+            assert: ""
+          },
+          domain: {
+            assert: ""
+          },
+          strict: {
+            internal: true
+          }
         }
       },
       Store: {},
       Phi: {
-        _properties: {control: {assert: "isControl", nullable: true}, args: {array: true, expand: "value"}}
+        control: {
+          assert: "isControl",
+          nullable: true
+        },
+        args: {
+          array: true,
+          expand: "value"
+        }
       },
       Variable: {
-        _properties: {name: {internal: true }}
+        name: {
+          internal: true
+        }
       },
       Copy: {
-        _properties: {argument: {}}
+        argument: {}
       },
       Move: {
-        _properties: {to: {}, from: {}}
+        to: {},
+        from: {}
       },
       Projection: {
-        _properties: {argument: {}, type: {internal: true}, selector: {internal: true, optional: true}}
+        argument: {},
+        type: {
+          internal: true
+        },
+        selector: {
+          internal: true,
+          optional: true
+        }
       },
       Latch: {
-        _properties: {control: {assert: "isControlOrNull", nullable: true}, condition: {}, left: {}, right: {}}
+        control: {
+          assert: "isControlOrNull",
+          nullable: true
+        },
+        condition: {},
+        left: {},
+        right: {}
       },
       Binary: {
-        _properties: {operator: {internal: true}, left: {}, right: {}}
+        operator: {
+          internal: true
+        },
+        left: {},
+        right: {}
       },
       Unary: {
-        _properties: {operator: {internal: true}, argument: {}}
+        operator: {
+          internal: true
+        },
+        argument: {}
       },
       Constant: {
-        _properties: {value: {internal: true}}
+        value: {
+          internal: true
+        }
       },
       GlobalProperty: {
-        _properties: {name: {internal: true}}
+        name: {
+          internal: true
+        }
       },
       This: {
-        _properties: {control: {assert: "isControl"}}
+        control: {
+          assert: "isControl"
+        }
       },
       Throw: {
-        _properties: {control: {assert: "isControl"}, argument: {}}
+        control: {
+          assert: "isControl"
+        },
+        argument: {}
       },
       Arguments: {
-        _properties: {control: {assert: "isControl"}}
+        control: {
+          assert: "isControl"
+        }
       },
       Parameter: {
-        _properties: {control: {assert: "isControl"}, index: {internal: true}, name: {internal: true}}
+        control: {
+          assert: "isControl"
+        },
+        index: {
+          internal: true
+        },
+        name: {
+          internal: true
+        }
       },
       NewArray: {
-        _properties: {control: {assert: "isControl"}, elements: {array: true}}
+        control: {
+          assert: "isControl"
+        },
+        elements: {
+          array: true
+        }
       },
       NewObject: {
-        _properties: {control: {assert: "isControl"}, properties: {array: true}}
+        control: {
+          assert: "isControl"
+        },
+        properties: {
+          array: true
+        }
       },
       KeyValuePair: {
-        _properties: {key: {}, value: {}}
+        key: {},
+        value: {}
       },
       ASScope: {
-        _properties: {parent: {}, object: {}, isWith: {internal: true}}
+        parent: {},
+        object: {},
+        isWith: {
+          internal: true
+        }
       },
       ASGlobal: {
-        _properties: {control: {assert: "isControlOrNull", nullable: true}, scope: {assert: "isScope"}}
+        control: {
+          assert: "isControlOrNull",
+          nullable: true
+        },
+        scope: {
+          assert: "isScope"
+        }
       },
       ASNewActivation: {
-        _properties: {methodInfo: {internal: true}}
+        methodInfo: {
+          internal: true
+        }
       },
       ASMultiname: {
-        _properties: {namespaces: {}, name: {}, flags: {internal: true}}
+        namespaces: {},
+        name: {},
+        flags: {
+          internal: true
+        }
       }
     }
   };
@@ -188,17 +355,25 @@
       str += s + "\n";
     }
     var writer = new IndentingWriter(false, out);
-    function makeProperties(properties) {
+    function makeProperties(node) {
       var result = [];
-      for (var k in properties) {
-        properties[k].name = k;
-        result.push(properties[k]);
+      for (var k in node) {
+        if (isProperty(k)) {
+          node[k].name = k;
+          result.push(node[k]);
+        }
       }
       return result;
     }
+    function isProperty(v) {
+      if (v[0] === "_") {
+        return false;
+      }
+      return v[0].toLowerCase() === v[0];
+    }
     function generate(node, path) {
       path = path.concat([node]);
-      print(path.map(function (node) { return node._name; }).join(" -> "));
+      // print(path.map(function (node) { return node._name; }).join(" -> "));
       writer.enter("var " + node._name + " = (function () {")
       var constructorName = node._name[0].toLowerCase() + node._name.slice(1) + "Node";
       if (constructorName.substring(0, 2) === "aS") {
@@ -207,7 +382,7 @@
       // var constructorName = "constructor";
       var prototypeName = constructorName + ".prototype";
       var properties = path.reduce(function (a, v) {
-        return v._properties ? a.concat(makeProperties(v._properties)) : a;
+        return a.concat(makeProperties(v));
       }, []);
       var parameters = properties.filter(function (property) {
         return !property.dynamic;
@@ -225,9 +400,9 @@
       if (true) {
         properties.forEach(function (property) {
           if (property.assert === "") {
-            writer.writeLn("release || assert (!(" + property.name + " == undefined));");
+            writer.writeLn("release || assert (!(" + property.name + " == undefined), \"" + property.name + "\");");
           } else if (property.assert) {
-            writer.writeLn("release || assert (" + property.assert + "(" + property.name + "));");
+            writer.writeLn("release || assert (" + property.assert + "(" + property.name + "), \"" + property.name + "\");");
           }
         });
         writer.writeLn("release || assert (arguments.length >= " + (parameters.length - optionalParameters.length) + ", \"" + node._name + " not enough args.\");");
@@ -275,10 +450,9 @@
       writer.leave("})();");
       writer.writeLn("");
       for (var name in node) {
-        if (name[0] === "_") {
+        if (name[0] === "_" || isProperty(name)) {
           continue;
         }
-        print("A: " + name);
         var child = node[name];
         child._name = name;
         generate(child, path);
@@ -377,6 +551,16 @@
 
   KeyValuePair.prototype.mustFloat = true;
   ASMultiname.prototype.mustFloat = true;
+  ASMultiname.prototype.isAttribute = function () {
+    return this.flags & 0x01;
+  };
+
+  var Flags = {
+    INDEXED: 0x01,
+    RESOLVED: 0x02,
+    PRISTINE: 0x04,
+    IS_METHOD: 0x08
+  };
 
   var Operator = (function () {
     var map = {};
@@ -1787,6 +1971,7 @@
 
   exports.DFG = DFG;
   exports.CFG = CFG;
+  exports.Flags = Flags;
 
   exports.PeepholeOptimizer = PeepholeOptimizer;
 
