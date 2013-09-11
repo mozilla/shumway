@@ -300,10 +300,5 @@
       "frames": [1],
       "swf": "/examples/graphics/bounding-boxes.swf",
       "type": "eq"
-    },
-    {  "id": "Class init: Pepsi ad",
-       "frames": [30],
-       "swf": "swfs/3d785ea4dd0c00e52ca27887f20341fa709f78bb5d860d045bba4ab6f972069b.swf",
-       "type": "eq"
     }
 ]
