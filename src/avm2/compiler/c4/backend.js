@@ -129,7 +129,7 @@
   }
 
   function id(name) {
-    assert (typeof name === "string");
+    release || assert (typeof name === "string");
     return new Identifier(name);
   }
 
@@ -138,8 +138,7 @@
   }
 
   function isIdentifierPart(c) {
-    return (c === '$') || (c === '_') || (c === '\\') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-      ((c >= '0') && (c <= '9'));
+    return (c === '$') || (c === '_') || (c === '\\') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || ((c >= '0') && (c <= '9'));
   }
 
   function isIdentifierName(s) {
@@ -155,8 +154,8 @@
   }
 
   function property(obj) {
-    var path = Array.prototype.slice.call(arguments, 1);
-    path.forEach(function(x) {
+    for (var i = 1; i < arguments.length; i++) {
+      var x = arguments[i];
       if (typeof x === "string") {
         if (isIdentifierName(x)) {
           obj = new MemberExpression(obj, new Identifier(x), false);
@@ -168,15 +167,15 @@
       } else {
         obj = new MemberExpression(obj, x, true);
       }
-    });
+    }
     return obj;
   }
 
   function call(callee, args) {
-    assert(args instanceof Array);
-    args.forEach(function (x) {
-      assert(!(x instanceof Array));
-      assert(x !== undefined);
+    release || assert(args instanceof Array);
+    release || args.forEach(function (x) {
+      release || assert(!(x instanceof Array));
+      release || assert(x !== undefined);
     });
     return new CallExpression(callee, args);
   }
@@ -186,7 +185,7 @@
   }
 
   function assignment(left, right) {
-    assert(left && right);
+    release || assert(left && right);
     return new AssignmentExpression(left, "=", right);
   }
 
@@ -230,7 +229,7 @@
   }
 
   Context.prototype.useVariable = function (variable) {
-    assert (variable);
+    release || assert (variable);
     return this.variables.pushUnique(variable);
   };
 
@@ -383,21 +382,21 @@
     }
     var result = new BlockStatement(body);
     result.end = block.nodes.last();
-    assert (result.end instanceof IR.End);
+    release || assert (result.end instanceof IR.End);
     // print("Block: " + block + " -> " + generateSource(result));
     return result;
   };
 
   function compileValue(value, cx, noVariable) {
-    assert (value);
-    assert (value.compile, "Implement |compile| for ", value, " (", value.nodeName + ")");
-    assert (cx instanceof Context);
-    assert (!isArray(value));
+    release || assert (value);
+    release || assert (value.compile, "Implement |compile| for ", value, " (", value.nodeName + ")");
+    release || assert (cx instanceof Context);
+    release || assert (!isArray(value));
     if (noVariable || !value.variable) {
       var node = value.compile(cx);
       return node;
     }
-    assert (value.variable, "Value has no variable: ", value);
+    release || assert (value.variable, "Value has no variable: ", value);
     return id(value.variable.name);
   }
 
@@ -414,7 +413,7 @@
   }
 
   function compileValues(values, cx) {
-    assert (isArray(values));
+    release || assert (isArray(values));
     return values.map(function (value) {
       return compileValue(value, cx);
     });
@@ -434,7 +433,7 @@
   };
 
   IR.Phi.prototype.compile = function (cx) {
-    assert (this.variable);
+    release || assert (this.variable);
     return compileValue(this.variable, cx);
   };
 
@@ -444,7 +443,6 @@
     var isWith = new Literal(this.isWith);
     return new NewExpression(id("Scope"), [parent, object, isWith]);
   };
-
 
   IR.ASFindProperty.prototype.compile = function (cx) {
     var scope = compileValue(this.scope, cx);
@@ -627,8 +625,8 @@
   };
 
   IR.Projection.prototype.compile = function (cx) {
-    assert (this.type === Projection.Type.SCOPE);
-    assert (this.argument instanceof Start);
+    release || assert (this.type === Projection.Type.SCOPE);
+    release || assert (this.argument instanceof Start);
     return compileValue(this.argument.scope, cx);
   };
 
