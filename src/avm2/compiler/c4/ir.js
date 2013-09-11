@@ -42,6 +42,12 @@
    *
    */
 
+  /**
+   * We generate the IR node constructors from a specification. Any time you make a change to this you should uncomment
+   * the print statement below, run Shumway (avm) from the command line and then paste back the generated IR below
+   * between <<<< and >>>> markers.
+   */
+
   var IRDefinition = {
     Control: {
       Region: {
@@ -349,7 +355,7 @@
     }
   };
 
-  var IRSource = (function IRGenerator(root) {
+  function IRGenerator(root) {
     var str = "";
     function out(s) {
       str += s + "\n";
@@ -461,14 +467,981 @@
     IRDefinition._name = "Node";
     generate(IRDefinition, []);
     return str;
-  })(IR);
-
+  }
 
   var nextID = [];
 
+  // print(IRGenerator(IR));
   // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-  // print(IRSource);
-  eval(IRSource); // TODO: We can pre-generate this in production builds.
+  var Node = (function () {
+    function nodeNode() {
+      release || assert (arguments.length >= 0, "Node not enough args.");
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    nodeNode.prototype.nodeName = "Node";
+    nodeNode.prototype.visitInputs = function (visitor) {
+    };
+    return nodeNode;
+  })();
+
+  var Control = (function () {
+    function controlNode() {
+      release || assert (arguments.length >= 0, "Control not enough args.");
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    controlNode.prototype = extend(Node, "Control")
+    controlNode.prototype.nodeName = "Control";
+    controlNode.prototype.visitInputs = function (visitor) {
+    };
+    return controlNode;
+  })();
+
+  var Region = (function () {
+    function regionNode(control) {
+      release || assert (arguments.length >= 1, "Region not enough args.");
+      this.predecessors = control ? [control] : [];
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    regionNode.prototype = extend(Control, "Region")
+    regionNode.prototype.nodeName = "Region";
+    regionNode.prototype.visitInputs = function (visitor) {
+      visitArrayInputs(this.predecessors, visitor);
+    };
+    return regionNode;
+  })();
+
+  var Start = (function () {
+    function startNode(control) {
+      release || assert (arguments.length >= 1, "Start not enough args.");
+      this.control = this;
+      this.predecessors = control ? [control] : [];
+      this.scope = undefined;
+      this.domain = undefined;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    startNode.prototype = extend(Region, "Start")
+    startNode.prototype.nodeName = "Start";
+    startNode.prototype.visitInputs = function (visitor) {
+      visitArrayInputs(this.predecessors, visitor);
+      visitor(this.scope);
+      visitor(this.domain);
+    };
+    return startNode;
+  })();
+
+  var End = (function () {
+    function endNode(control) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (arguments.length >= 1, "End not enough args.");
+      this.control = control;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    endNode.prototype = extend(Control, "End")
+    endNode.prototype.nodeName = "End";
+    endNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+    };
+    return endNode;
+  })();
+
+  var Stop = (function () {
+    function stopNode(control, store, argument) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStore(store), "store");
+      release || assert (!(argument == undefined), "argument");
+      release || assert (arguments.length >= 3, "Stop not enough args.");
+      this.control = control;
+      this.store = store;
+      this.argument = argument;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    stopNode.prototype = extend(End, "Stop")
+    stopNode.prototype.nodeName = "Stop";
+    stopNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+      visitor(this.store);
+      visitor(this.argument);
+    };
+    return stopNode;
+  })();
+
+  var If = (function () {
+    function ifNode(control, predicate) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (!(predicate == undefined), "predicate");
+      release || assert (arguments.length >= 2, "If not enough args.");
+      this.control = control;
+      this.predicate = predicate;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    ifNode.prototype = extend(End, "If")
+    ifNode.prototype.nodeName = "If";
+    ifNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+      visitor(this.predicate);
+    };
+    return ifNode;
+  })();
+
+  var Switch = (function () {
+    function switchNode(control, determinant) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (!(determinant == undefined), "determinant");
+      release || assert (arguments.length >= 2, "Switch not enough args.");
+      this.control = control;
+      this.determinant = determinant;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    switchNode.prototype = extend(End, "Switch")
+    switchNode.prototype.nodeName = "Switch";
+    switchNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+      visitor(this.determinant);
+    };
+    return switchNode;
+  })();
+
+  var Jump = (function () {
+    function jumpNode(control) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (arguments.length >= 1, "Jump not enough args.");
+      this.control = control;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    jumpNode.prototype = extend(End, "Jump")
+    jumpNode.prototype.nodeName = "Jump";
+    jumpNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+    };
+    return jumpNode;
+  })();
+
+  var Value = (function () {
+    function valueNode() {
+      release || assert (arguments.length >= 0, "Value not enough args.");
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    valueNode.prototype = extend(Node, "Value")
+    valueNode.prototype.nodeName = "Value";
+    valueNode.prototype.visitInputs = function (visitor) {
+    };
+    return valueNode;
+  })();
+
+  var StoreDependent = (function () {
+    function storeDependentNode(control, store) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (arguments.length >= 2, "StoreDependent not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    storeDependentNode.prototype = extend(Value, "StoreDependent")
+    storeDependentNode.prototype.nodeName = "StoreDependent";
+    storeDependentNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+    };
+    return storeDependentNode;
+  })();
+
+  var Call = (function () {
+    function callNode(control, store, callee, object, args, flags) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(callee == undefined), "callee");
+      release || assert (isValueOrNull(object), "object");
+      release || assert (isArray(args), "args");
+      release || assert (isNumber(flags), "flags");
+      release || assert (arguments.length >= 6, "Call not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.callee = callee;
+      this.object = object;
+      this.args = args;
+      this.flags = flags;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    callNode.prototype = extend(StoreDependent, "Call")
+    callNode.prototype.nodeName = "Call";
+    callNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.callee);
+      this.object && visitor(this.object);
+      visitArrayInputs(this.args, visitor);
+    };
+    return callNode;
+  })();
+
+  var CallProperty = (function () {
+    function callPropertyNode(control, store, object, name, args, flags) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (isArray(args), "args");
+      release || assert (isNumber(flags), "flags");
+      release || assert (arguments.length >= 6, "CallProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.args = args;
+      this.flags = flags;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    callPropertyNode.prototype = extend(StoreDependent, "CallProperty")
+    callPropertyNode.prototype.nodeName = "CallProperty";
+    callPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitArrayInputs(this.args, visitor);
+    };
+    return callPropertyNode;
+  })();
+
+  var ASCallProperty = (function () {
+    function asCallPropertyNode(control, store, object, name, args, flags, isLex) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (isArray(args), "args");
+      release || assert (isNumber(flags), "flags");
+      release || assert (!(isLex == undefined), "isLex");
+      release || assert (arguments.length >= 7, "ASCallProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.args = args;
+      this.flags = flags;
+      this.isLex = isLex;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asCallPropertyNode.prototype = extend(CallProperty, "ASCallProperty")
+    asCallPropertyNode.prototype.nodeName = "ASCallProperty";
+    asCallPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitArrayInputs(this.args, visitor);
+    };
+    return asCallPropertyNode;
+  })();
+
+  var New = (function () {
+    function newNode(control, store, callee, args) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(callee == undefined), "callee");
+      release || assert (!(args == undefined), "args");
+      release || assert (arguments.length >= 4, "New not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.callee = callee;
+      this.args = args;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    newNode.prototype = extend(StoreDependent, "New")
+    newNode.prototype.nodeName = "New";
+    newNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.callee);
+      visitArrayInputs(this.args, visitor);
+    };
+    return newNode;
+  })();
+
+  var ASNew = (function () {
+    function asNewNode(control, store, callee, args) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(callee == undefined), "callee");
+      release || assert (!(args == undefined), "args");
+      release || assert (arguments.length >= 4, "ASNew not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.callee = callee;
+      this.args = args;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asNewNode.prototype = extend(New, "ASNew")
+    asNewNode.prototype.nodeName = "ASNew";
+    asNewNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.callee);
+      visitArrayInputs(this.args, visitor);
+    };
+    return asNewNode;
+  })();
+
+  var GetProperty = (function () {
+    function getPropertyNode(control, store, object, name) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (arguments.length >= 4, "GetProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    getPropertyNode.prototype = extend(StoreDependent, "GetProperty")
+    getPropertyNode.prototype.nodeName = "GetProperty";
+    getPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return getPropertyNode;
+  })();
+
+  var ASGetProperty = (function () {
+    function asGetPropertyNode(control, store, object, name, flags) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (isNumber(flags), "flags");
+      release || assert (arguments.length >= 5, "ASGetProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.flags = flags;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asGetPropertyNode.prototype = extend(GetProperty, "ASGetProperty")
+    asGetPropertyNode.prototype.nodeName = "ASGetProperty";
+    asGetPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return asGetPropertyNode;
+  })();
+
+  var ASGetDescendants = (function () {
+    function asGetDescendantsNode(control, store, object, name) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (arguments.length >= 4, "ASGetDescendants not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asGetDescendantsNode.prototype = extend(GetProperty, "ASGetDescendants")
+    asGetDescendantsNode.prototype.nodeName = "ASGetDescendants";
+    asGetDescendantsNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return asGetDescendantsNode;
+  })();
+
+  var ASHasProperty = (function () {
+    function asHasPropertyNode(control, store, object, name) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (arguments.length >= 4, "ASHasProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asHasPropertyNode.prototype = extend(GetProperty, "ASHasProperty")
+    asHasPropertyNode.prototype.nodeName = "ASHasProperty";
+    asHasPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return asHasPropertyNode;
+  })();
+
+  var ASGetSlot = (function () {
+    function asGetSlotNode(control, store, object, name) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (arguments.length >= 4, "ASGetSlot not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asGetSlotNode.prototype = extend(GetProperty, "ASGetSlot")
+    asGetSlotNode.prototype.nodeName = "ASGetSlot";
+    asGetSlotNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return asGetSlotNode;
+  })();
+
+  var SetProperty = (function () {
+    function setPropertyNode(control, store, object, name, value) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (!(value == undefined), "value");
+      release || assert (arguments.length >= 5, "SetProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.value = value;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    setPropertyNode.prototype = extend(StoreDependent, "SetProperty")
+    setPropertyNode.prototype.nodeName = "SetProperty";
+    setPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitor(this.value);
+    };
+    return setPropertyNode;
+  })();
+
+  var ASSetProperty = (function () {
+    function asSetPropertyNode(control, store, object, name, value, flags) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (!(value == undefined), "value");
+      release || assert (arguments.length >= 6, "ASSetProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.value = value;
+      this.flags = flags;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asSetPropertyNode.prototype = extend(SetProperty, "ASSetProperty")
+    asSetPropertyNode.prototype.nodeName = "ASSetProperty";
+    asSetPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitor(this.value);
+    };
+    return asSetPropertyNode;
+  })();
+
+  var ASSetSlot = (function () {
+    function asSetSlotNode(control, store, object, name, value) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (!(value == undefined), "value");
+      release || assert (arguments.length >= 5, "ASSetSlot not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.value = value;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asSetSlotNode.prototype = extend(SetProperty, "ASSetSlot")
+    asSetSlotNode.prototype.nodeName = "ASSetSlot";
+    asSetSlotNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitor(this.value);
+    };
+    return asSetSlotNode;
+  })();
+
+  var DeleteProperty = (function () {
+    function deletePropertyNode(control, store, object, name) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (arguments.length >= 4, "DeleteProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    deletePropertyNode.prototype = extend(StoreDependent, "DeleteProperty")
+    deletePropertyNode.prototype.nodeName = "DeleteProperty";
+    deletePropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return deletePropertyNode;
+  })();
+
+  var ASDeleteProperty = (function () {
+    function asDeletePropertyNode(control, store, object, name) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (arguments.length >= 4, "ASDeleteProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asDeletePropertyNode.prototype = extend(DeleteProperty, "ASDeleteProperty")
+    asDeletePropertyNode.prototype.nodeName = "ASDeleteProperty";
+    asDeletePropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return asDeletePropertyNode;
+  })();
+
+  var ASFindProperty = (function () {
+    function asFindPropertyNode(control, store, scope, name, domain, strict) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(scope == undefined), "scope");
+      release || assert (!(name == undefined), "name");
+      release || assert (!(domain == undefined), "domain");
+      release || assert (arguments.length >= 6, "ASFindProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.scope = scope;
+      this.name = name;
+      this.domain = domain;
+      this.strict = strict;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asFindPropertyNode.prototype = extend(StoreDependent, "ASFindProperty")
+    asFindPropertyNode.prototype.nodeName = "ASFindProperty";
+    asFindPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.scope);
+      visitor(this.name);
+      visitor(this.domain);
+    };
+    return asFindPropertyNode;
+  })();
+
+  var Store = (function () {
+    function storeNode() {
+      release || assert (arguments.length >= 0, "Store not enough args.");
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    storeNode.prototype = extend(Value, "Store")
+    storeNode.prototype.nodeName = "Store";
+    storeNode.prototype.visitInputs = function (visitor) {
+    };
+    return storeNode;
+  })();
+
+  var Phi = (function () {
+    function phiNode(control, value) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 2, "Phi not enough args.");
+      this.control = control;
+      this.args = value ? [value] : [];
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    phiNode.prototype = extend(Value, "Phi")
+    phiNode.prototype.nodeName = "Phi";
+    phiNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      visitArrayInputs(this.args, visitor);
+    };
+    return phiNode;
+  })();
+
+  var Variable = (function () {
+    function variableNode(name) {
+      release || assert (arguments.length >= 1, "Variable not enough args.");
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    variableNode.prototype = extend(Value, "Variable")
+    variableNode.prototype.nodeName = "Variable";
+    variableNode.prototype.visitInputs = function (visitor) {
+    };
+    return variableNode;
+  })();
+
+  var Copy = (function () {
+    function copyNode(argument) {
+      release || assert (arguments.length >= 1, "Copy not enough args.");
+      this.argument = argument;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    copyNode.prototype = extend(Value, "Copy")
+    copyNode.prototype.nodeName = "Copy";
+    copyNode.prototype.visitInputs = function (visitor) {
+      visitor(this.argument);
+    };
+    return copyNode;
+  })();
+
+  var Move = (function () {
+    function moveNode(to, from) {
+      release || assert (arguments.length >= 2, "Move not enough args.");
+      this.to = to;
+      this.from = from;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    moveNode.prototype = extend(Value, "Move")
+    moveNode.prototype.nodeName = "Move";
+    moveNode.prototype.visitInputs = function (visitor) {
+      visitor(this.to);
+      visitor(this.from);
+    };
+    return moveNode;
+  })();
+
+  var Projection = (function () {
+    function projectionNode(argument, type, selector) {
+      release || assert (arguments.length >= 2, "Projection not enough args.");
+      this.argument = argument;
+      this.type = type;
+      this.selector = selector;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    projectionNode.prototype = extend(Value, "Projection")
+    projectionNode.prototype.nodeName = "Projection";
+    projectionNode.prototype.visitInputs = function (visitor) {
+      visitor(this.argument);
+    };
+    return projectionNode;
+  })();
+
+  var Latch = (function () {
+    function latchNode(control, condition, left, right) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (arguments.length >= 4, "Latch not enough args.");
+      this.control = control;
+      this.condition = condition;
+      this.left = left;
+      this.right = right;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    latchNode.prototype = extend(Value, "Latch")
+    latchNode.prototype.nodeName = "Latch";
+    latchNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      visitor(this.condition);
+      visitor(this.left);
+      visitor(this.right);
+    };
+    return latchNode;
+  })();
+
+  var Binary = (function () {
+    function binaryNode(operator, left, right) {
+      release || assert (arguments.length >= 3, "Binary not enough args.");
+      this.operator = operator;
+      this.left = left;
+      this.right = right;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    binaryNode.prototype = extend(Value, "Binary")
+    binaryNode.prototype.nodeName = "Binary";
+    binaryNode.prototype.visitInputs = function (visitor) {
+      visitor(this.left);
+      visitor(this.right);
+    };
+    return binaryNode;
+  })();
+
+  var Unary = (function () {
+    function unaryNode(operator, argument) {
+      release || assert (arguments.length >= 2, "Unary not enough args.");
+      this.operator = operator;
+      this.argument = argument;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    unaryNode.prototype = extend(Value, "Unary")
+    unaryNode.prototype.nodeName = "Unary";
+    unaryNode.prototype.visitInputs = function (visitor) {
+      visitor(this.argument);
+    };
+    return unaryNode;
+  })();
+
+  var Constant = (function () {
+    function constantNode(value) {
+      release || assert (arguments.length >= 1, "Constant not enough args.");
+      this.value = value;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    constantNode.prototype = extend(Value, "Constant")
+    constantNode.prototype.nodeName = "Constant";
+    constantNode.prototype.visitInputs = function (visitor) {
+    };
+    return constantNode;
+  })();
+
+  var GlobalProperty = (function () {
+    function globalPropertyNode(name) {
+      release || assert (arguments.length >= 1, "GlobalProperty not enough args.");
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    globalPropertyNode.prototype = extend(Value, "GlobalProperty")
+    globalPropertyNode.prototype.nodeName = "GlobalProperty";
+    globalPropertyNode.prototype.visitInputs = function (visitor) {
+    };
+    return globalPropertyNode;
+  })();
+
+  var This = (function () {
+    function thisNode(control) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 1, "This not enough args.");
+      this.control = control;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    thisNode.prototype = extend(Value, "This")
+    thisNode.prototype.nodeName = "This";
+    thisNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+    };
+    return thisNode;
+  })();
+
+  var Throw = (function () {
+    function throwNode(control, argument) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 2, "Throw not enough args.");
+      this.control = control;
+      this.argument = argument;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    throwNode.prototype = extend(Value, "Throw")
+    throwNode.prototype.nodeName = "Throw";
+    throwNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+      visitor(this.argument);
+    };
+    return throwNode;
+  })();
+
+  var Arguments = (function () {
+    function argumentsNode(control) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 1, "Arguments not enough args.");
+      this.control = control;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    argumentsNode.prototype = extend(Value, "Arguments")
+    argumentsNode.prototype.nodeName = "Arguments";
+    argumentsNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+    };
+    return argumentsNode;
+  })();
+
+  var Parameter = (function () {
+    function parameterNode(control, index, name) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 3, "Parameter not enough args.");
+      this.control = control;
+      this.index = index;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    parameterNode.prototype = extend(Value, "Parameter")
+    parameterNode.prototype.nodeName = "Parameter";
+    parameterNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+    };
+    return parameterNode;
+  })();
+
+  var NewArray = (function () {
+    function newArrayNode(control, elements) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 2, "NewArray not enough args.");
+      this.control = control;
+      this.elements = elements;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    newArrayNode.prototype = extend(Value, "NewArray")
+    newArrayNode.prototype.nodeName = "NewArray";
+    newArrayNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+      visitArrayInputs(this.elements, visitor);
+    };
+    return newArrayNode;
+  })();
+
+  var NewObject = (function () {
+    function newObjectNode(control, properties) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 2, "NewObject not enough args.");
+      this.control = control;
+      this.properties = properties;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    newObjectNode.prototype = extend(Value, "NewObject")
+    newObjectNode.prototype.nodeName = "NewObject";
+    newObjectNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+      visitArrayInputs(this.properties, visitor);
+    };
+    return newObjectNode;
+  })();
+
+  var KeyValuePair = (function () {
+    function keyValuePairNode(key, value) {
+      release || assert (arguments.length >= 2, "KeyValuePair not enough args.");
+      this.key = key;
+      this.value = value;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    keyValuePairNode.prototype = extend(Value, "KeyValuePair")
+    keyValuePairNode.prototype.nodeName = "KeyValuePair";
+    keyValuePairNode.prototype.visitInputs = function (visitor) {
+      visitor(this.key);
+      visitor(this.value);
+    };
+    return keyValuePairNode;
+  })();
+
+  var ASScope = (function () {
+    function asScopeNode(parent, object, isWith) {
+      release || assert (arguments.length >= 3, "ASScope not enough args.");
+      this.parent = parent;
+      this.object = object;
+      this.isWith = isWith;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asScopeNode.prototype = extend(Value, "ASScope")
+    asScopeNode.prototype.nodeName = "ASScope";
+    asScopeNode.prototype.visitInputs = function (visitor) {
+      visitor(this.parent);
+      visitor(this.object);
+    };
+    return asScopeNode;
+  })();
+
+  var ASGlobal = (function () {
+    function asGlobalNode(control, scope) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isScope(scope), "scope");
+      release || assert (arguments.length >= 2, "ASGlobal not enough args.");
+      this.control = control;
+      this.scope = scope;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asGlobalNode.prototype = extend(Value, "ASGlobal")
+    asGlobalNode.prototype.nodeName = "ASGlobal";
+    asGlobalNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      visitor(this.scope);
+    };
+    return asGlobalNode;
+  })();
+
+  var ASNewActivation = (function () {
+    function asNewActivationNode(methodInfo) {
+      release || assert (arguments.length >= 1, "ASNewActivation not enough args.");
+      this.methodInfo = methodInfo;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asNewActivationNode.prototype = extend(Value, "ASNewActivation")
+    asNewActivationNode.prototype.nodeName = "ASNewActivation";
+    asNewActivationNode.prototype.visitInputs = function (visitor) {
+    };
+    return asNewActivationNode;
+  })();
+
+  var ASMultiname = (function () {
+    function asMultinameNode(namespaces, name, flags) {
+      release || assert (arguments.length >= 3, "ASMultiname not enough args.");
+      this.namespaces = namespaces;
+      this.name = name;
+      this.flags = flags;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asMultinameNode.prototype = extend(Value, "ASMultiname")
+    asMultinameNode.prototype.nodeName = "ASMultiname";
+    asMultinameNode.prototype.visitInputs = function (visitor) {
+      visitor(this.namespaces);
+      visitor(this.name);
+    };
+    return asMultinameNode;
+  })();
   // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
   function node() {
@@ -631,7 +1604,6 @@
     };
     return operator;
   })();
-
 
   function extend(c, name) {
     release || assert (c);
