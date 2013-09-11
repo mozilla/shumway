@@ -24,6 +24,7 @@ var disableRenderVisitor = rendererOptions.register(new Option("drv", "disableRe
 var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMouseVisitor", "boolean", false, "disable mouse visitor"));
 var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
 var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
+var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
 
 var CanvasCache = {
   cache: [],
@@ -692,19 +693,32 @@ function renderStage(stage, ctx, events) {
         domain.broadcastMessage("render", "render");
       }
 
-      if (refreshStage || renderFrame) {
-        var canvasVisible = isCanvasVisible(ctx.canvas);
-        ctx.beginPath();
-        if (canvasVisible && !disablePreVisitor.value) {
+      if (isCanvasVisible(ctx.canvas) && (refreshStage || renderFrame)) {
+        if (!disablePreVisitor.value) {
+          ctx.beginPath();
           stage._showRedrawRegions(showRedrawRegions.value);
           traceRenderer.value && frameWriter.enter("> Pre Visitor");
           stage._processInvalidRegions(ctx);
           traceRenderer.value && frameWriter.leave("< Pre Visitor");
         }
-        if (canvasVisible && !disableRenderVisitor.value) {
+
+        if (!disableRenderVisitor.value) {
           traceRenderer.value && frameWriter.enter("> Render Visitor");
           (new RenderVisitor(stage, ctx, refreshStage)).start();
           traceRenderer.value && frameWriter.leave("< Render Visitor");
+        }
+
+        if (showQuadTree.value) {
+          ctx.save();
+          ctx.strokeStyle = 'green';
+          (function renderQuadTree(tree) {
+            ctx.strokeRect(tree.x, tree.y, tree.width, tree.height);
+            var nodes = tree.nodes;
+            for (var i = 0; i < nodes.length; i++) {
+              renderQuadTree(nodes[i]);
+            }
+          })(stage._qtree);
+          ctx.restore;
         }
       }
 
