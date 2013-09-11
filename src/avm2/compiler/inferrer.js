@@ -906,186 +906,186 @@ var Verifier = (function() {
         }
 
         switch (op) {
-          case OP_bkpt:
+          case 0x01: // OP_bkpt
             // Nop.
             break;
-          case OP_throw:
+          case 0x03: // OP_throw
             pop();
             break;
-          case OP_getsuper:
+          case 0x04: // OP_getsuper
             mn = popMultiname();
             obj = pop();
             release || assert(obj.super());
             push(getProperty(obj.super(), mn));
             break;
-          case OP_setsuper:
+          case 0x05: // OP_setsuper
             val = pop();
             mn = popMultiname();
             obj = pop();
             release || assert(obj.super());
             setProperty(obj.super(), mn, val);
             break;
-          case OP_dxns:
+          case 0x06: // OP_dxns
             notImplemented(bc);
             break;
-          case OP_dxnslate:
+          case 0x07: // OP_dxnslate
             notImplemented(bc);
             break;
-          case OP_kill:
+          case 0x08: // OP_kill
             state.local[bc.index] = Type.Undefined;
             break;
-          case OP_lf32x4:
+          case 0x0A: // OP_lf32x4
             notImplemented(bc);
             break;
-          case OP_sf32x4:
+          case 0x0B: // OP_sf32x4
             notImplemented(bc);
             break;
-          case OP_ifnlt:
-          case OP_ifge:
-          case OP_ifnle:
-          case OP_ifgt:
-          case OP_ifngt:
-          case OP_ifle:
-          case OP_ifnge:
-          case OP_iflt:
-          case OP_ifeq:
-          case OP_ifne:
-          case OP_ifstricteq:
-          case OP_ifstrictne:
+          case 0x0C: // OP_ifnlt
+          case 0x18: // OP_ifge
+          case 0x0D: // OP_ifnle
+          case 0x17: // OP_ifgt
+          case 0x0E: // OP_ifngt
+          case 0x16: // OP_ifle
+          case 0x0F: // OP_ifnge
+          case 0x15: // OP_iflt
+          case 0x13: // OP_ifeq
+          case 0x14: // OP_ifne
+          case 0x19: // OP_ifstricteq
+          case 0x1A: // OP_ifstrictne
             pop();
             pop();
             break;
-          case OP_jump:
+          case 0x10: // OP_jump
             // Nop.
             break;
-          case OP_iftrue:
-          case OP_iffalse:
+          case 0x11: // OP_iftrue
+          case 0x12: // OP_iffalse
             pop();
             break;
-          case OP_lookupswitch:
+          case 0x1B: // OP_lookupswitch
             pop(Type.Int);
             break;
-          case OP_popscope:
+          case 0x1D: // OP_popscope
             scope.pop();
             break;
-          case OP_nextname:
-          case OP_nextvalue:
+          case 0x1E: // OP_nextname
+          case 0x23: // OP_nextvalue
             pop(Type.Int);
             pop();
             push(Type.Any);
             break;
-          case OP_hasnext:
+          case 0x1F: // OP_hasnext
             push(Type.Boolean);
             break;
-          case OP_hasnext2:
+          case 0x32: // OP_hasnext2
             push(Type.Boolean);
             break;
-          case OP_pushnull:
+          case 0x20: // OP_pushnull
             push(Type.Null);
             break;
-          case OP_pushundefined:
+          case 0x21: // OP_pushundefined
             push(Type.Undefined);
             break;
-          case OP_pushfloat:
+          case 0x22: // OP_pushfloat
             notImplemented(bc);
             break;
-          case OP_pushbyte:
+          case 0x24: // OP_pushbyte
             push(Type.Int);
             break;
-          case OP_pushshort:
+          case 0x25: // OP_pushshort
             push(Type.Int);
             break;
-          case OP_pushstring:
+          case 0x2C: // OP_pushstring
             push(Type.String);
             break;
-          case OP_pushint:
+          case 0x2D: // OP_pushint
             push(Type.Int);
             break;
-          case OP_pushuint:
+          case 0x2E: // OP_pushuint
             push(Type.Uint);
             break;
-          case OP_pushdouble:
+          case 0x2F: // OP_pushdouble
             push(Type.Number);
             break;
-          case OP_pushtrue:
+          case 0x26: // OP_pushtrue
             push(Type.Boolean);
             break;
-          case OP_pushfalse:
+          case 0x27: // OP_pushfalse
             push(Type.Boolean);
             break;
-          case OP_pushnan:
+          case 0x28: // OP_pushnan
             push(Type.Number);
             break;
-          case OP_pop:
+          case 0x29: // OP_pop
             pop();
             break;
-          case OP_dup:
+          case 0x2A: // OP_dup
             val = pop();
             push(val);
             push(val);
             break;
-          case OP_swap:
+          case 0x2B: // OP_swap
             l = pop();
             r = pop();
             push(l);
             push(r);
             break;
-          case OP_pushwith:
+          case 0x1C: // OP_pushwith
             // TODO: We need to keep track that this is a with scope and thus it can have dynamic properties
             // attached to it. For now, push |Type.Any|.
             pop();
             scope.push(Type.Any);
             break;
-          case OP_pushscope:
+          case 0x30: // OP_pushscope
             scope.push(pop());
             break;
-          case OP_pushnamespace:
+          case 0x31: // OP_pushnamespace
             notImplemented(bc);
             break;
-          case OP_li8:
-          case OP_li16:
-          case OP_li32:
+          case 0x35: // OP_li8
+          case 0x36: // OP_li16
+          case 0x37: // OP_li32
             push(Type.Int);
             break;
-          case OP_lf32:
-          case OP_lf64:
+          case 0x38: // OP_lf32
+          case 0x39: // OP_lf64
             push(Type.Number);
             break;
-          case OP_si8:
-          case OP_si16:
-          case OP_si32:
+          case 0x3A: // OP_si8
+          case 0x3B: // OP_si16
+          case 0x3C: // OP_si32
             pop(Type.Int);
             break;
-          case OP_sf32:
-          case OP_sf64:
+          case 0x3D: // OP_sf32
+          case 0x3E: // OP_sf64
             pop(Type.Number);
             break;
-          case OP_newfunction:
+          case 0x40: // OP_newfunction
             push(Type.Function);
             break;
-          case OP_call:
+          case 0x41: // OP_call
             stack.popMany(bc.argCount);
             obj = pop();
             fn = pop();
             push(Type.Any);
             break;
-          case OP_callmethod:
+          case 0x43: // OP_callmethod
             // callmethod is always invalid
             // http://hg.mozilla.org/tamarin-redux/file/eb8f916bb232/core/Verifier.cpp#l1846
             throw new VerifierError("callmethod");
-          case OP_callstatic:
+          case 0x44: // OP_callstatic
             notImplemented(bc);
             break;
-          case OP_callsuper:
+          case 0x45: // OP_callsuper
             stack.popMany(bc.argCount);
             mn = popMultiname();
             obj = pop();
             getProperty(obj, mn);
             push(Type.Any);
             break;
-          case OP_callpropvoid:
-          case OP_callproperty:
-          case OP_callproplex:
+          case 0x4F: // OP_callpropvoid
+          case 0x46: // OP_callproperty
+          case 0x4C: // OP_callproplex
             stack.popMany(bc.argCount);
             mn = popMultiname();
             obj = pop();
@@ -1102,10 +1102,10 @@ var Verifier = (function() {
             }
             push(returnType);
             break;
-          case OP_returnvoid:
+          case 0x47: // OP_returnvoid
             this.returnType.merge(Type.Undefined);
             break;
-          case OP_returnvalue:
+          case 0x48: // OP_returnvalue
             type = pop();
             if (mi.returnType) {
               var coerceType = Type.fromName(mi.returnType, this.domain).instanceType();
@@ -1114,61 +1114,61 @@ var Verifier = (function() {
               }
             }
             break;
-          case OP_constructsuper:
+          case 0x49: // OP_constructsuper
             stack.popMany(bc.argCount);
             stack.pop();
             if (this.thisType.isInstanceInfo() && this.thisType.super() === Type.Object) {
               ti().noCallSuperNeeded = true;
             }
             break;
-          case OP_construct:
+          case 0x42: // OP_construct
             stack.popMany(bc.argCount);
             push(construct(pop()));
             break;
-          case OP_constructprop:
+          case 0x4A: // OP_constructprop
             stack.popMany(bc.argCount);
             mn = popMultiname();
             push(construct(getProperty(stack.pop(), mn)));
             break;
-          case OP_callsuperid:
+          case 0x4B: // OP_callsuperid
             notImplemented(bc);
             break;
-          case OP_callinterface:
+          case 0x4D: // OP_callinterface
             notImplemented(bc);
             break;
-          case OP_callsupervoid:
+          case 0x4E: // OP_callsupervoid
             stack.popMany(bc.argCount);
             popMultiname();
             pop();
             break;
-          case OP_sxi1:
-          case OP_sxi8:
-          case OP_sxi16:
+          case 0x50: // OP_sxi1
+          case 0x51: // OP_sxi8
+          case 0x52: // OP_sxi16
             // Sign extend, nop.
             break;
-          case OP_applytype:
+          case 0x53: // OP_applytype
             release || assert(bc.argCount === 1);
             val = pop();
             obj = pop();
             push(obj.applyType(val));
             break;
-          case OP_pushfloat4:
+          case 0x54: // OP_pushfloat4
             notImplemented(bc);
             break;
-          case OP_newobject:
+          case 0x55: // OP_newobject
             stack.popMany(bc.argCount * 2);
             push(Type.Object);
             break;
-          case OP_newarray:
+          case 0x56: // OP_newarray
             // Pops values, pushes result.
             stack.popMany(bc.argCount);
             push(Type.Array);
             break;
-          case OP_newactivation:
+          case 0x57: // OP_newactivation
             // push(Type.fromReference(new Activation(this.methodInfo)));
             push(Type.from(new Activation(this.methodInfo)));
             break;
-          case OP_newclass:
+          case 0x58: // OP_newclass
             // The newclass bytecode is not supported because it needs
             // the base class which might not always be available.
             // The functions initializing classes should not be performance
@@ -1176,130 +1176,130 @@ var Verifier = (function() {
             // throw new VerifierError("Not Supported");
             push(Type.Any);
             break;
-          case OP_getdescendants:
+          case 0x59: // OP_getdescendants
             push(Type.XMLList);
             break;
-          case OP_newcatch:
+          case 0x5A: // OP_newcatch
             push(Type.Any);
             break;
-          case OP_findpropstrict:
+          case 0x5D: // OP_findpropstrict
             push(findProperty(popMultiname(), true));
             break;
-          case OP_findproperty:
+          case 0x5E: // OP_findproperty
             push(findProperty(popMultiname(), false));
             break;
-          case OP_finddef:
+          case 0x5F: // OP_finddef
             notImplemented(bc);
             break;
-          case OP_getlex:
+          case 0x60: // OP_getlex
             mn = popMultiname();
             push(getProperty(findProperty(mn, true), mn));
             break;
-          case OP_initproperty:
-          case OP_setproperty:
+          case 0x68: // OP_initproperty
+          case 0x61: // OP_setproperty
             val = pop();
             mn = popMultiname();
             obj = pop();
             setProperty(obj, mn, val, bc);
             break;
-          case OP_getlocal:
+          case 0x62: // OP_getlocal
             push(local[bc.index]);
             break;
-          case OP_setlocal:
+          case 0x63: // OP_setlocal
             local[bc.index] = pop();
             break;
-          case OP_getglobalscope:
+          case 0x64: // OP_getglobalscope
             if (savedScope.object) {
               push(Type.from(savedScope.global.object));
             } else {
               push(Type.Any);
             }
             break;
-          case OP_getscopeobject:
+          case 0x65: // OP_getscopeobject
             push(scope[bc.index]);
             break;
-          case OP_getproperty:
+          case 0x66: // OP_getproperty
             mn = popMultiname();
             obj = pop();
             push(getProperty(obj, mn));
             break;
-          case OP_getouterscope:
+          case 0x67: // OP_getouterscope
             notImplemented(bc);
             break;
-          case OP_setpropertylate:
+          case 0x69: // OP_setpropertylate
             notImplemented(bc);
             break;
-          case OP_deleteproperty:
+          case 0x6A: // OP_deleteproperty
             popMultiname();
             pop();
             push(Type.Boolean);
             break;
-          case OP_deletepropertylate:
+          case 0x6B: // OP_deletepropertylate
             notImplemented(bc);
             break;
-          case OP_getslot:
+          case 0x6C: // OP_getslot
             push(accessSlot(pop()));
             break;
-          case OP_setslot:
+          case 0x6D: // OP_setslot
             val = pop();
             obj = pop();
             accessSlot(obj);
             break;
-          case OP_getglobalslot:
+          case 0x6E: // OP_getglobalslot
             notImplemented(bc);
             break;
-          case OP_setglobalslot:
+          case 0x6F: // OP_setglobalslot
             notImplemented(bc);
             break;
-          case OP_convert_s:
+          case 0x70: // OP_convert_s
             pop();
             push(Type.String);
             break;
-          case OP_esc_xelem:
+          case 0x71: // OP_esc_xelem
             pop();
             push(Type.String);
             break;
-          case OP_esc_xattr:
+          case 0x72: // OP_esc_xattr
             pop();
             push(Type.String);
             break;
-          case OP_coerce_i:
-          case OP_convert_i:
+          case 0x83: // OP_coerce_i
+          case 0x73: // OP_convert_i
             pop();
             push(Type.Int);
             break;
-          case OP_coerce_u:
-          case OP_convert_u:
+          case 0x88: // OP_coerce_u
+          case 0x74: // OP_convert_u
             pop();
             push(Type.Uint);
             break;
-          case OP_coerce_d:
-          case OP_convert_d:
+          case 0x84: // OP_coerce_d
+          case 0x75: // OP_convert_d
             pop();
             push(Type.Number);
             break;
-          case OP_coerce_b:
-          case OP_convert_b:
+          case 0x81: // OP_coerce_b
+          case 0x76: // OP_convert_b
             pop();
             push(Type.Boolean);
             break;
-          case OP_convert_o:
+          case 0x77: // OP_convert_o
             notImplemented(bc);
             break;
-          case OP_checkfilter:
+          case 0x78: // OP_checkfilter
             // nop.
             break;
-          case OP_convert_f:
+          case 0x79: // OP_convert_f
             pop();
             push(Type.Number);
             break;
-          case OP_unplus:
+          case 0x7a: // OP_unplus
             notImplemented(bc);
             break;
-          case OP_convert_f4:
+          case 0x7b: // OP_convert_f4
             notImplemented(bc);
             break;
-          case OP_coerce:
+          case 0x80: // OP_coerce
             // print("<<< " + multinames[bc.index] + " >>>");
             type = pop();
             var coerceType = Type.fromName(multinames[bc.index], this.domain).instanceType();
@@ -1308,17 +1308,17 @@ var Verifier = (function() {
             }
             push(coerceType);
             break;
-          case OP_coerce_a:
+          case 0x82: // OP_coerce_a
             // pop(); push(Type.Any);
             break;
-          case OP_coerce_s:
+          case 0x85: // OP_coerce_s
             pop();
             push(Type.String);
             break;
-          case OP_astype:
+          case 0x86: // OP_astype
             notImplemented(bc);
             break;
-          case OP_astypelate:
+          case 0x87: // OP_astypelate
             type = pop();
             pop();
             if (type instanceof TraitsType) {
@@ -1327,28 +1327,28 @@ var Verifier = (function() {
               push(Type.Any);
             }
             break;
-          case OP_coerce_o:
+          case 0x89: // OP_coerce_o
             notImplemented(bc);
             break;
-          case OP_negate:
-          case OP_increment:
-          case OP_decrement:
+          case 0x90: // OP_negate
+          case 0x91: // OP_increment
+          case 0x93: // OP_decrement
             pop();
             push(Type.Number);
             break;
-          case OP_inclocal:
-          case OP_declocal:
+          case 0x92: // OP_inclocal
+          case 0x94: // OP_declocal
             local[bc.index] = Type.Number;
             break;
-          case OP_typeof:
+          case 0x95: // OP_typeof
             pop();
             push(Type.String);
             break;
-          case OP_not:
+          case 0x96: // OP_not
             pop();
             push(Type.Boolean);
             break;
-          case OP_add:
+          case 0xA0: // OP_add
             r = pop();
             l = pop();
             if (l.isNumeric() && r.isNumeric()) {
@@ -1359,91 +1359,91 @@ var Verifier = (function() {
               push(Type.Any);
             }
             break;
-          case OP_subtract:
-          case OP_multiply:
-          case OP_divide:
-          case OP_modulo:
+          case 0xA1: // OP_subtract
+          case 0xA2: // OP_multiply
+          case 0xA3: // OP_divide
+          case 0xA4: // OP_modulo
             pop();
             pop();
             push(Type.Number);
             break;
-          case OP_bitand:
-          case OP_bitor:
-          case OP_bitxor:
-          case OP_lshift:
-          case OP_rshift:
-          case OP_urshift:
+          case 0xA8: // OP_bitand
+          case 0xA9: // OP_bitor
+          case 0xAA: // OP_bitxor
+          case 0xA5: // OP_lshift
+          case 0xA6: // OP_rshift
+          case 0xA7: // OP_urshift
             pop();
             pop();
             push(Type.Int);
             break;
-          case OP_bitnot:
+          case 0x97: // OP_bitnot
             pop();
             push(Type.Int);
             break;
-          case OP_equals:
-          case OP_strictequals:
-          case OP_lessthan:
-          case OP_lessequals:
-          case OP_greaterthan:
-          case OP_greaterequals:
-          case OP_instanceof:
-          case OP_in:
+          case 0xAB: // OP_equals
+          case 0xAC: // OP_strictequals
+          case 0xAD: // OP_lessthan
+          case 0xAE: // OP_lessequals
+          case 0xAF: // OP_greaterthan
+          case 0xB0: // OP_greaterequals
+          case 0xB1: // OP_instanceof
+          case 0xB4: // OP_in
             pop();
             pop();
             push(Type.Boolean);
             break;
-          case OP_istype:
+          case 0xB2: // OP_istype
             pop();
             push(Type.Boolean);
             break;
-          case OP_istypelate:
+          case 0xB3: // OP_istypelate
             pop();
             pop();
             push(Type.Boolean);
             break;
-          case OP_inclocal_i:
-          case OP_declocal_i:
+          case 0xC2: // OP_inclocal_i
+          case 0xC3: // OP_declocal_i
             local[bc.index] = Type.Int;
             break;
-          case OP_decrement_i:
-          case OP_increment_i:
-          case OP_negate_i:
+          case 0xC1: // OP_decrement_i
+          case 0xC0: // OP_increment_i
+          case 0xC4: // OP_negate_i
             pop();
             push(Type.Int);
             break;
-          case OP_add_i:
-          case OP_subtract_i:
-          case OP_multiply_i:
+          case 0xC5: // OP_add_i
+          case 0xC6: // OP_subtract_i
+          case 0xC7: // OP_multiply_i
             pop();
             pop();
             push(Type.Int); // or Number?
             break;
-          case OP_getlocal0:
-          case OP_getlocal1:
-          case OP_getlocal2:
-          case OP_getlocal3:
+          case 0xD0: // OP_getlocal0
+          case 0xD1: // OP_getlocal1
+          case 0xD2: // OP_getlocal2
+          case 0xD3: // OP_getlocal3
             push(local[op - OP_getlocal0]);
             break;
-          case OP_setlocal0:
-          case OP_setlocal1:
-          case OP_setlocal2:
-          case OP_setlocal3:
+          case 0xD4: // OP_setlocal0
+          case 0xD5: // OP_setlocal1
+          case 0xD6: // OP_setlocal2
+          case 0xD7: // OP_setlocal3
             local[op - OP_setlocal0] = pop();
             break;
-          case OP_debug:
+          case 0xEF: // OP_debug
             // Nop.
             break;
-          case OP_debugline:
+          case 0xF0: // OP_debugline
             // Nop.
             break;
-          case OP_debugfile:
+          case 0xF1: // OP_debugfile
             // Nop.
             break;
-          case OP_bkptline:
+          case 0xF2: // OP_bkptline
             // Nop.
             break;
-          case OP_timestamp:
+          case 0xF3: // OP_timestamp
             // Nop.
             break;
           default:

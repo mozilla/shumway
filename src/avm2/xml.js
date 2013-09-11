@@ -891,6 +891,7 @@ var isXMLType, isXMLName, XMLParser;
     };
 
     Xp.asGetProperty = asGetProperty;
+    Xp.asGetResolvedStringProperty = asGetResolvedStringPropertyFallback;
     Xp.asSetProperty = asSetProperty;
     Xp.asHasProperty = asHasProperty;
     Xp.asCallProperty = asCallProperty;
@@ -1475,6 +1476,7 @@ var isXMLType, isXMLName, XMLParser;
     }
 
     XLp.asGetProperty = asGetProperty;
+    XLp.asGetResolvedStringProperty = asGetResolvedStringPropertyFallback;
     XLp.asSetProperty = asSetProperty;
     XLp.asHasProperty = asHasProperty;
     XLp.asCallProperty = asCallProperty;
