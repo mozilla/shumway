@@ -85,17 +85,18 @@ var isXMLType, isXMLName, XMLParser;
             namespaceDeclarations.push(ns)
           }
           if (prefix) {
-            namespaceDeclarations[prefix] = true;
+            namespaceDeclarations[ns.prefix] = true;
           }
-          for (var i = 0; i < n.inScopeNamespaces.length; i++) {
-            if (true) { // FIXME add check for ancestor
-              somewhatImplemented("xml.js Encoder.encode() inscope namespaces");
-              ns = n.inScopeNamespaces[i];
+          var t = n;
+          while (t) {
+            for (var i = 0; i < t.inScopeNamespaces.length; i++) {
+              ns = t.inScopeNamespaces[i];
               if (!namespaceDeclarations[ns.prefix]) {
                 namespaceDeclarations.push(ns);
                 namespaceDeclarations[ns.prefix] = true;  // flag inclusion
               }
             }
+            t = t.parent;
           }
           for (var i = 0; i < namespaceDeclarations.length; i++) {
             a = namespaceDeclarations[i];
@@ -846,22 +847,16 @@ var isXMLType, isXMLName, XMLParser;
       var i = undefined;
       var primitiveAssign = !isXMLType(c) && n.localName !== "*";
       for (var k = x.length() - 1; k >= 0; k--) {
-        // FIXME not ready from prime-time yet
-        /*
-        print("Xp.setProperty() x[k].localName="+x.children[k].name.localName+" localName="+n.localName);
-        if ((n.localName === "*" ||
-             x.children[k].kind === "element" &&
-             x.children[k].localName === n.localName) &&
+        if ((n.isAny || x.children[k].kind === "element" &&
+             x.children[k].name.localName === n.localName) &&
             (n.uri === null ||
              x.children[k].kind === "element" &&
-             x.children[k].uri === n.uri)) {
+             x.children[k].name.uri === n.uri)) {
           if (i !== undefined) {
-            print("Xp.setProperty() mn="+mn);
             x.deleteByIndex(String(i));
           }
+          i = k;
         }
-        i = k;
-        */
       }
       if (i === undefined) {
         i = x.length();
@@ -1374,7 +1369,7 @@ var isXMLType, isXMLName, XMLParser;
             if (n.isAny || (v.kind === "element" && v.name.localName === n.localName &&
                             (n.uri === null || (v.kind === "element" && v.name.uri === n.uri)))) {
               if (i !== undefined) {
-                x.deleteByIndex(i.toString());
+                x.deleteByIndex(String(i));
               }
               i = k;
             }
@@ -1614,7 +1609,7 @@ var isXMLType, isXMLName, XMLParser;
           }
           x.append(r)
         }
-        x.children[0].setProperty(p, v);
+        x.children[0].setProperty(mn, v);
       }
     };
 
@@ -1663,7 +1658,6 @@ var isXMLType, isXMLName, XMLParser;
     };
 
     XLp.delete = function (key, isMethod) {
-      debugger;
     };
 
     XLp.append = function (val) {
