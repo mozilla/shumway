@@ -1,24 +1,40 @@
+// Based on https://github.com/dherman/space-twits
+
 // Licensed under the MIT license: http://www.opensource.org/licenses/mit-license.php
 
 // A freakishly stupid game. Doesn't even adhere very strictly to MVC.
 // May Dijkstra have mercy on this sinner's soul.
 
+bindNativeClassDefinition('GameClass', {
+  __class__: 'twits.Game',
+  __glue__: {
+    native: {
+      instance: {
+        ctor: function () {
+          play(this, this.width, this.height - 40);
+        }
+      }
+    }
+  }
+});
+
 
 // Scene graph classes (model / view).
 
-function Scene(context, width, height, images) {
-    this.context = context;
+function Scene(game_mc, width, height) {
+    this.game_mc = game_mc;
     this.width = width;
     this.height = height;
-    this.images = images;
     this.actors = [];
 }
 
 Scene.prototype.register = function(actor) {
     this.actors.push(actor);
+    this.game_mc.addChild(actor.mc);
 };
 
 Scene.prototype.unregister = function(actor) {
+    this.game_mc.removeChild(actor.mc);
     var i = this.actors.indexOf(actor);
     if (i >= 0) {
         this.actors.splice(i, 1);
@@ -29,42 +45,33 @@ Scene.prototype.toString = function() {
     return "[object Scene]";
 };
 
-Scene.prototype.draw = function() {
-    this.context.clearRect(0, 0, this.width, this.height);
-    for (var a = this.actors, i = 0, n = a.length; i < n; i++) {
-        a[i].draw();
-    }
-};
-
-function Actor(scene, x, y) {
+function Actor(scene, mc, x, y) {
     this.scene = scene;
     this.x = x;
     this.y = y;
+    this.mc = mc;
+    this.mc.x = x;
+    this.mc.y = y;
     scene.register(this);
 }
 
 Actor.prototype.moveTo = function(x, y) {
     this.x = x;
     this.y = y;
-    this.scene.draw();
+    this.mc.x = x;
+    this.mc.y = y;
 }
 
-Actor.prototype.draw = function() {
-    var image = this.scene.images[this.type];
-    this.scene.context.drawImage(image, this.x, this.y);
-};
-
 Actor.prototype.width = function() {
-    return this.scene.images[this.type].width;
+    return this.mc.width;
 };
 
 Actor.prototype.height = function() {
-    return this.scene.images[this.type].height;
+    return this.mc.height;
 };
 
 Actor.prototype.exit = function() {
     this.scene.unregister(this);
-    this.scene.draw();
 };
 
 Actor.prototype.toString = function() {
@@ -73,7 +80,8 @@ Actor.prototype.toString = function() {
 
 
 function Alien(scene, x, y, direction, speed, strength) {
-    Actor.call(this, scene, x, y);
+    var SpaceshipClass = avm2.applicationDomain.getClass('twits.Spaceship');
+    Actor.call(this, scene, new SpaceshipClass.instanceConstructor(), x, y);
     this.direction = direction;
     this.speed = speed;
     this.strength = strength;
@@ -86,20 +94,15 @@ Alien.prototype.type = "alien";
 
 Alien.prototype.hit = function() {
     this.damage++;
+    this.mc.alpha = 1 - (this.damage / this.strength);
 };
 
 Alien.prototype.dead = function() {
     return this.damage >= this.strength;
 };
 
-Alien.prototype.draw = function() {
-    this.scene.context.globalAlpha = 1 - (this.damage / this.strength);
-    Actor.prototype.draw.call(this);
-    this.scene.context.globalAlpha = 1;
-};
-
 Alien.prototype.collidesWith = function(x, y, width, height) {
-    var left = this.x, right = left + this.width(),
+    var left = this.x - this.width() / 2, right = left + this.width(),
         top = this.y, bottom = top + this.height();
     return ((x > left && x < right) ||
             (x + width > left && x + width < right))
@@ -109,7 +112,7 @@ Alien.prototype.collidesWith = function(x, y, width, height) {
 
 Alien.prototype.move = function() {
     var newX = this.x + (this.speed * this.direction);
-    if (newX < 0 || newX > this.scene.width - this.width()) {
+    if (newX < this.width() / 2 || newX > this.scene.width - this.width() / 2) {
         this.direction *= -1;
         newX = this.x + (this.speed * this.direction);
     }
@@ -118,7 +121,8 @@ Alien.prototype.move = function() {
 
 
 function SpaceShip(scene, x, y) {
-    Actor.call(this, scene, x, y);
+    var RocketClass = avm2.applicationDomain.getClass('twits.Rocket');
+    Actor.call(this, scene, new RocketClass.instanceConstructor(), x, y);
     this.points = 0;
 }
 
@@ -131,17 +135,19 @@ SpaceShip.prototype.score = function() {
 SpaceShip.prototype.type = "spaceShip";
 
 SpaceShip.prototype.left = function() {
-    this.moveTo(Math.max(this.x - 10, 0), this.y);
+    var minPosition = this.width() / 2;
+    this.moveTo(Math.max(this.x - 10, minPosition), this.y);
 };
 
 SpaceShip.prototype.right = function() {
-    var maxWidth = this.scene.width - this.width();
-    this.moveTo(Math.min(this.x + 10, maxWidth), this.y);
+    var maxPosition = this.scene.width - this.width() / 2;
+    this.moveTo(Math.min(this.x + 10, maxPosition), this.y);
 };
 
 
 function Shot(scene, x, y) {
-    Actor.call(this, scene, x, y);
+    var ShotClass = avm2.applicationDomain.getClass('twits.Shot');
+    Actor.call(this, scene, new ShotClass.instanceConstructor(), x, y);
 }
 
 Shot.prototype = Object.create(Actor.prototype);
@@ -152,22 +158,24 @@ Shot.prototype.type = "shot";
 
 // Controller
 
-function play(context, width, height, images) {
+function play(game_mc, width, height) {
+    var SPACESHIP_HEIGHT = 50;
+    var ALIEN_WIDTH = 50;
+
     var mid = width / 2;
 
     var scene, spaceShip, alien;
 
-    scene = new Scene(context, width, height, images);
+    scene = new Scene(game_mc, width, height);
     spaceShip = new SpaceShip(scene,
-                              mid - images.spaceShip.width / 2,
-                              height - images.spaceShip.height - 10);
+                              mid,
+                              height - SPACESHIP_HEIGHT - 10);
     alien = newAlien();
-    scene.draw();
 
     var moving;
 
     function newAlien() {
-        var x = Math.random() * (width - images.alien.width);
+        var x = Math.random() * (width - ALIEN_WIDTH) + (ALIEN_WIDTH / 2);
         var strength = Math.floor(Math.random() * 4) + 2;
         var direction = Math.random() < 0.5 ? -1 : 1;
         var speed = (Math.random() * 10) + 5;
@@ -203,7 +211,8 @@ function play(context, width, height, images) {
 
     function score() {
         spaceShip.score();
-        document.getElementById("score").innerHTML = (spaceShip.points * 1000);
+        game_mc.getChildByName("score").asSetPublicProperty('text',
+            String(spaceShip.points * 1000));
     }
 
     var holdingLeft, holdingRight;
