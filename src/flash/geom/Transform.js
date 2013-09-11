@@ -102,6 +102,7 @@ var TransformDefinition = (function () {
         ty: ty
       };
       target._current3DTransform = null;
+      target._invalidate();
     },
 
     get matrix3D() {
