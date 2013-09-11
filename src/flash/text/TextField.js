@@ -224,6 +224,11 @@ var TextFieldDefinition = (function () {
     while (text.length) {
       var width = state.ctx.measureText(text).width;
       var availableWidth = state.w - state.x;
+      if (availableWidth <= 0) {
+        finishLine(state);
+        availableWidth = state.w - state.x;
+      }
+      assert(availableWidth > 0);
       if (width <= availableWidth) {
         addTextRun(state, text, width);
         break;
@@ -247,6 +252,10 @@ var TextFieldDefinition = (function () {
           wrapOffset--;
         }
         if (wrapOffset === -1) {
+          if (state.x > 0) {
+            finishLine(state);
+            continue;
+          }
           // No wrapping opportunity found, wrap mid-word
           while (state.ctx.measureText(text.substr(0, offset)).width >
                  availableWidth)
@@ -515,9 +524,8 @@ var TextFieldDefinition = (function () {
       var bounds = this._bounds;
       var initialFormat = this._defaultTextFormat;
       var firstRun = {type: 'f', format: initialFormat};
-      var width = bounds.xMax - bounds.xMin - 4;
-      var height = bounds.yMax - bounds.yMin - 4;
-      var state = {ctx: measureCtx, y: 0, x: 0, w: width, h: height, line: [],
+      var width = Math.max(bounds.xMax - bounds.xMin - 4, 1);
+      var state = {ctx: measureCtx, y: 0, x: 0, w: width, line: [],
                    lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
                    currentFormat: initialFormat, runs: [firstRun],
                    multiline: this._multiline, wordWrap: this._wordWrap,
