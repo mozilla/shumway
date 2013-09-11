@@ -632,10 +632,12 @@ function renderStage(stage, ctx, events) {
   var firstRun = true;
   var frameCount = 0;
   var frameFPSAverage = new metrics.Average(120);
+
   (function draw() {
+
     var now = Date.now();
-    var renderFrame;
     var renderFrame = now >= nextRenderAt;
+
     if (renderFrame && events.onBeforeFrame) {
       var e = { cancel: false };
       events.onBeforeFrame(e);
@@ -676,7 +678,10 @@ function renderStage(stage, ctx, events) {
 
       if (renderFrame) {
         frameTime = now;
-        nextRenderAt = frameTime + (1000 / stage._frameRate);
+        maxDelay = 1000 / stage._frameRate;
+        while (nextRenderAt < now) {
+          nextRenderAt += maxDelay;
+        }
 
         if (firstRun) {
           // Initial display list is already constructed, skip frame construction phase.
