@@ -129,7 +129,7 @@
   }
 
   function id(name) {
-    assert (typeof name === "string");
+    release || assert (typeof name === "string");
     return new Identifier(name);
   }
 
@@ -138,8 +138,7 @@
   }
 
   function isIdentifierPart(c) {
-    return (c === '$') || (c === '_') || (c === '\\') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-      ((c >= '0') && (c <= '9'));
+    return (c === '$') || (c === '_') || (c === '\\') || (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || ((c >= '0') && (c <= '9'));
   }
 
   function isIdentifierName(s) {
@@ -155,8 +154,8 @@
   }
 
   function property(obj) {
-    var path = Array.prototype.slice.call(arguments, 1);
-    path.forEach(function(x) {
+    for (var i = 1; i < arguments.length; i++) {
+      var x = arguments[i];
       if (typeof x === "string") {
         if (isIdentifierName(x)) {
           obj = new MemberExpression(obj, new Identifier(x), false);
@@ -168,15 +167,15 @@
       } else {
         obj = new MemberExpression(obj, x, true);
       }
-    });
+    }
     return obj;
   }
 
   function call(callee, args) {
-    assert(args instanceof Array);
-    args.forEach(function (x) {
-      assert(!(x instanceof Array));
-      assert(x !== undefined);
+    release || assert(args instanceof Array);
+    release || args.forEach(function (x) {
+      release || assert(!(x instanceof Array));
+      release || assert(x !== undefined);
     });
     return new CallExpression(callee, args);
   }
@@ -186,7 +185,7 @@
   }
 
   function assignment(left, right) {
-    assert(left && right);
+    release || assert(left && right);
     return new AssignmentExpression(left, "=", right);
   }
 
@@ -230,7 +229,7 @@
   }
 
   Context.prototype.useVariable = function (variable) {
-    assert (variable);
+    release || assert (variable);
     return this.variables.pushUnique(variable);
   };
 
@@ -383,21 +382,21 @@
     }
     var result = new BlockStatement(body);
     result.end = block.nodes.last();
-    assert (result.end instanceof IR.End);
+    release || assert (result.end instanceof IR.End);
     // print("Block: " + block + " -> " + generateSource(result));
     return result;
   };
 
   function compileValue(value, cx, noVariable) {
-    assert (value);
-    assert (value.compile, "Implement |compile| for ", value, " (", value.nodeName + ")");
-    assert (cx instanceof Context);
-    assert (!isArray(value));
+    release || assert (value);
+    release || assert (value.compile, "Implement |compile| for ", value, " (", value.nodeName + ")");
+    release || assert (cx instanceof Context);
+    release || assert (!isArray(value));
     if (noVariable || !value.variable) {
       var node = value.compile(cx);
       return node;
     }
-    assert (value.variable, "Value has no variable: ", value);
+    release || assert (value.variable, "Value has no variable: ", value);
     return id(value.variable.name);
   }
 
@@ -414,7 +413,7 @@
   }
 
   function compileValues(values, cx) {
-    assert (isArray(values));
+    release || assert (isArray(values));
     return values.map(function (value) {
       return compileValue(value, cx);
     });
@@ -434,19 +433,18 @@
   };
 
   IR.Phi.prototype.compile = function (cx) {
-    assert (this.variable);
+    release || assert (this.variable);
     return compileValue(this.variable, cx);
   };
 
-  IR.AVM2Scope.prototype.compile = function (cx) {
+  IR.ASScope.prototype.compile = function (cx) {
     var parent = compileValue(this.parent, cx);
     var object = compileValue(this.object, cx);
     var isWith = new Literal(this.isWith);
     return new NewExpression(id("Scope"), [parent, object, isWith]);
   };
 
-
-  IR.AVM2FindProperty.prototype.compile = function (cx) {
+  IR.ASFindProperty.prototype.compile = function (cx) {
     var scope = compileValue(this.scope, cx);
     var name = compileMultiname(this.name, cx);
     var domain = compileValue(this.domain, cx);
@@ -454,16 +452,16 @@
     return call(property(scope, "findScopeProperty"), name.concat([domain, strict]));
   };
 
-  IR.AVM2GetProperty.prototype.compile = function (cx) {
+  IR.ASGetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    if (this.isIndexed) {
-      assert (this.isMethod === false);
-      if (this.isIndexed) {
-        return call(property(object, "asGetNumericProperty"), [compileValue(this.name.name, cx)]);
-      }
+    if (this.flags & IR.Flags.INDEXED) {
+      release || assert (!(this.flags & IR.Flags.IS_METHOD));
+      return call(property(object, "asGetNumericProperty"), [compileValue(this.name.name, cx)]);
+    } else if (this.flags & IR.Flags.RESOLVED) {
+      return call(property(object, "asGetResolvedStringProperty"), [compileValue(this.name, cx)]);
     }
     var name = compileMultiname(this.name, cx);
-    var isMethod = new Literal(this.isMethod);
+    var isMethod = new Literal(this.flags & IR.Flags.IS_METHOD);
     return call(property(object, "asGetProperty"), name.concat(isMethod));
   };
 
@@ -509,12 +507,15 @@
     }
   };
 
-  IR.AVM2CallProperty.prototype.compile = function (cx) {
+  IR.ASCallProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var name = compileMultiname(this.name, cx);
     var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
+    if (this.flags & IR.Flags.RESOLVED) {
+      return call(property(object, "asCallResolvedStringProperty"), [compileValue(this.name, cx), new Literal(this.isLex), new ArrayExpression(args)]);
+    }
+    var name = compileMultiname(this.name, cx);
     return call(property(object, "asCallProperty"), name.concat([new Literal(this.isLex), new ArrayExpression(args)]));
   };
 
@@ -538,7 +539,7 @@
     }
   };
 
-  IR.AVM2New.prototype.compile = function (cx) {
+  IR.ASNew.prototype.compile = function (cx) {
     var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
@@ -560,28 +561,28 @@
     return id("arguments");
   };
 
-  IR.AVM2Global.prototype.compile = function (cx) {
+  IR.ASGlobal.prototype.compile = function (cx) {
     var scope = compileValue(this.scope, cx);
     return property(scope, "global", "object");
   };
 
-  IR.AVM2SetProperty.prototype.compile = function (cx) {
+  IR.ASSetProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var value = compileValue(this.value, cx);
-    if (this.isIndexed) {
+    if (this.flags & IR.Flags.INDEXED) {
       return call(property(object, "asSetNumericProperty"), [compileValue(this.name.name, cx), value]);
     }
     var name = compileMultiname(this.name, cx);
     return call(property(object, "asSetProperty"), name.concat(value));
   };
 
-  IR.AVM2DeleteProperty.prototype.compile = function (cx) {
+  IR.ASDeleteProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
     return call(property(object, "asDeleteProperty"), name);
   };
 
-  IR.AVM2HasProperty.prototype.compile = function (cx) {
+  IR.ASHasProperty.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
     return call(property(object, "asHasProperty"), name);
@@ -604,28 +605,28 @@
     return assignment(property(object, name), value);
   };
 
-  IR.AVM2GetDescendants.prototype.compile = function (cx) {
+  IR.ASGetDescendants.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     return call(id("getDescendants"), [object, name]);
   };
 
-  IR.AVM2SetSlot.prototype.compile = function (cx) {
+  IR.ASSetSlot.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var index = compileValue(this.index, cx);
+    var name = compileValue(this.name, cx);
     var value = compileValue(this.value, cx);
-    return(call(id("setSlot"), [object, index, value]));
+    return(call(id("setSlot"), [object, name, value]));
   };
 
-  IR.AVM2GetSlot.prototype.compile = function (cx) {
+  IR.ASGetSlot.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
-    var index = compileValue(this.index, cx);
-    return(call(id("getSlot"), [object, index]));
+    var name = compileValue(this.name, cx);
+    return(call(id("getSlot"), [object, name]));
   };
 
   IR.Projection.prototype.compile = function (cx) {
-    assert (this.type === Projection.Type.SCOPE);
-    assert (this.argument instanceof Start);
+    release || assert (this.type === Projection.Type.SCOPE);
+    release || assert (this.argument instanceof Start);
     return compileValue(this.argument.scope, cx);
   };
 
@@ -642,29 +643,33 @@
     return new ObjectExpression(properties);
   };
 
-  IR.AVM2NewActivation.prototype.compile = function (cx) {
+  IR.ASNewActivation.prototype.compile = function (cx) {
     var methodInfo = compileValue(this.methodInfo, cx);
     return call(id("createActivation"), [methodInfo]);
   };
 
-  IR.AVM2Multiname.prototype.compile = function (cx) {
+  IR.ASMultiname.prototype.compile = function (cx) {
     var namespaces = compileValue(this.namespaces, cx);
     var name = compileValue(this.name, cx);
     return call(id("createName"), [namespaces, name]);
   };
 
   function generateSource(node) {
-    return escodegen.generate(node, {base: "", indent: "  ", comment: true});
+    return escodegen.generate(node, {base: "", indent: "  ", comment: true, format: { compact: false }});
   }
 
   function generate(cfg, useRegisterAllocator) {
+    Timer.start("Looper");
     var root = Looper.analyze(cfg);
+    Timer.stop();
 
     var writer = new IndentingWriter();
     // root.trace(writer);
 
     var cx = new Context();
+    Timer.start("Construct AST");
     var code = root.compile(cx);
+    Timer.stop();
 
     var parameters = [];
     for (var i = 0; i < cx.parameters.length; i++) {
@@ -698,7 +703,10 @@
       // body = " { debugger; " + body + " }";
       return {parameters: parameters.map(function (p) { return p.name; }), body: body};
     }
-    return {parameters: parameters.map(function (p) { return p.name; }), body: generateSource(code)};
+    Timer.start("Serialize AST");
+    var source = generateSource(code);
+    Timer.stop();
+    return {parameters: parameters.map(function (p) { return p.name; }), body: source};
   }
 
   Backend.generate = generate;

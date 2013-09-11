@@ -90,7 +90,7 @@ var createName = function createName(namespaces, name) {
     };
     constructor.prototype.makeLoopPhis = function makeLoopPhis(control) {
       var s = new State();
-      assert (control);
+      release || assert (control);
       function makePhi(x) {
         var phi = new Phi(control, x);
         phi.isLoop = true;
@@ -137,8 +137,8 @@ var createName = function createName(namespaces, name) {
     }
 
     constructor.prototype.merge = function merge(control, other) {
-      assert (control);
-      assert (this.matches(other), this, " !== ", other);
+      release || assert (control);
+      release || assert (this.matches(other), this, " !== ", other);
       mergeValues(control, this.local, other.local);
       mergeValues(control, this.stack, other.stack);
       mergeValues(control, this.scope, other.scope);
@@ -209,7 +209,7 @@ var createName = function createName(namespaces, name) {
   }
 
   function getJSPropertyWithState(state, object, path) {
-    assert (isString(path));
+    release || assert (isString(path));
     var names = path.split(".");
     var node = object;
     for (var i = 0; i < names.length; i++) {
@@ -278,7 +278,7 @@ var createName = function createName(namespaces, name) {
   }
 
   function shouldFloat(node) {
-    assert (!(node instanceof IR.GetProperty), "Cannot float node : " + node);
+    release || assert (!(node instanceof IR.GetProperty), "Cannot float node : " + node);
     node.shouldFloat = true;
     return node;
   }
@@ -289,7 +289,7 @@ var createName = function createName(namespaces, name) {
   }
 
   function callPure(callee, object, args) {
-    return new Call(null, null, callee, object, args, true);
+    return new Call(null, null, callee, object, args, IR.Flags.PRISTINE);
   }
 
   function callGlobalProperty(name, value) {
@@ -315,7 +315,7 @@ var createName = function createName(namespaces, name) {
   coercers[Multiname.Boolean] = coerceBoolean;
 
   function getCoercerForType(multiname) {
-    assert (multiname instanceof Multiname);
+    release || assert (multiname instanceof Multiname);
     return coercers[Multiname.getQualifiedName(multiname)];
   }
 
@@ -328,13 +328,13 @@ var createName = function createName(namespaces, name) {
   callableConstructors[Multiname.Boolean] = callGlobalProperty.bind(null, "Boolean");
 
   function getCallableConstructorForType(multiname) {
-    assert (multiname instanceof Multiname);
+    release || assert (multiname instanceof Multiname);
     return callableConstructors[Multiname.getQualifiedName(multiname)];
   }
 
   var Builder = (function () {
     function builder(methodInfo, scope, hasDynamicScope) {
-      assert (methodInfo && methodInfo.abc && scope);
+      release || assert (methodInfo && methodInfo.abc && scope);
       this.abc = methodInfo.abc;
       this.scope = scope;
       this.methodInfo = methodInfo;
@@ -379,7 +379,7 @@ var createName = function createName(namespaces, name) {
       if (mi.needsRest() || mi.needsArguments()) {
         var offset = constant(parameterIndexOffset + (mi.needsRest() ? parameterCount : 0));
         state.local[parameterCount + 1] =
-          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset], true);
+          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset], IR.Flags.PRISTINE);
       }
 
       var argumentsLength = getJSPropertyWithState(state, args, "length");
@@ -433,7 +433,7 @@ var createName = function createName(namespaces, name) {
         return a.block.blockDominatorOrder - b.block.blockDominatorOrder;
       });
 
-      var start = new Start();
+      var start = new Start(null);
       this.buildStart(start);
 
       var createFunctionCallee = globalProperty("createFunction");
@@ -476,7 +476,7 @@ var createName = function createName(namespaces, name) {
       traceBuilder && writer.writeLn("Done");
 
       function buildBlock(region, block, state) {
-        assert (region && block && state);
+        release || assert (region && block && state);
         state.optimize();
         var typeState = block.entryState;
         if (typeState) {
@@ -524,7 +524,7 @@ var createName = function createName(namespaces, name) {
         var object, receiver, index, callee, value, multiname, type, args, pristine, left, right, operator;
 
         function push(x) {
-          assert (x instanceof IR.Node);
+          release || assert (x instanceof IR.Node);
           if (bc.ti) {
             if (x.ty) {
               // assert (x.ty == bc.ti.type);
@@ -564,7 +564,7 @@ var createName = function createName(namespaces, name) {
           } else {
             namespaces = constant(multiname.namespaces);
           }
-          return new IR.AVM2Multiname(namespaces, name, flags);
+          return new IR.ASMultiname(namespaces, name, flags);
         }
 
         function simplifyName(name) {
@@ -575,7 +575,7 @@ var createName = function createName(namespaces, name) {
         }
 
         function findProperty(multiname, strict, ti) {
-          var slowPath = new IR.AVM2FindProperty(region, state.store, topScope(), multiname, domain, strict);
+          var slowPath = new IR.ASFindProperty(region, state.store, topScope(), multiname, domain, strict);
           if (ti) {
             if (ti.object) {
               if (ti.object instanceof Global && !ti.object.isExecuting()) {
@@ -615,7 +615,7 @@ var createName = function createName(namespaces, name) {
         }
 
         function getScopeObject(scope) {
-          if (scope instanceof IR.AVM2Scope) {
+          if (scope instanceof IR.ASScope) {
             return scope.object;
           }
           return getJSProperty(scope, "object");
@@ -640,7 +640,24 @@ var createName = function createName(namespaces, name) {
           return node;
         }
 
-        function callProperty(object, multiname, args, isLex, ti, ic) {
+        function resolveMultinameGlobally(multiname) {
+          var namespaces = multiname.namespaces;
+          var name = multiname.name;
+          if (!globalMultinameAnalysis.value) {
+            return;
+          }
+          if (!isConstant(namespaces) || !isConstant(name) || multiname.isAttribute()) {
+            Counter.count("GlobalMultinameResolver: Cannot resolve runtime multiname or attribute.");
+            return;
+          }
+          if (isNumeric(name.value) || !isString(name.value) || !name.value) {
+            Counter.count("GlobalMultinameResolver: Cannot resolve numeric or any names.");
+            return false;
+          }
+          return GlobalMultinameResolver.resolveMultiname(new Multiname(namespaces.value, name.value, multiname.flags));
+        }
+
+        function callProperty(object, multiname, args, isLex, ti) {
           // name = simplifyName(name);
           if (ti && ti.trait) {
             if (ti.trait.isMethod()) {
@@ -652,29 +669,27 @@ var createName = function createName(namespaces, name) {
                 openQn = Multiname.getQualifiedName(ti.trait.name);
               }
               openQn = VM_OPEN_METHOD_PREFIX + openQn;
-              return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, true));
+              return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, IR.Flags.PRISTINE));
             } else if (ti.trait.isClass()) {
               var constructor = getCallableConstructorForType(ti.trait.name);
               if (constructor) {
                 return constructor(args[0]);
               }
               var qn = Multiname.getQualifiedName(ti.trait.name);
-              return store(new IR.CallProperty(region, state.store, object, constant(qn), args, false));
+              return store(new IR.CallProperty(region, state.store, object, constant(qn), args, 0));
             }
           } else if (ti && ti.propertyQName) {
-            return store(new IR.CallProperty(region, state.store, object, constant(ti.propertyQName), args, true));
+            return store(new IR.CallProperty(region, state.store, object, constant(ti.propertyQName), args, IR.Flags.PRISTINE));
           }
-          if (isConstant(multiname)) {
-            assert (ic);
-            return store(new IR.AVM2CallProperty(region, state.store, object, multiname, isLex, args, true, constant(ic)));
-          } else {
-            warn("Can't optimize call to " + multiname.value);
-            return store(new IR.AVM2CallProperty(region, state.store, object, multiname, isLex, args, true));
+          var qn = resolveMultinameGlobally(multiname);
+          if (qn) {
+            return store(new IR.ASCallProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), args, IR.Flags.PRISTINE | IR.Flags.RESOLVED, isLex));
           }
+          return store(new IR.ASCallProperty(region, state.store, object, multiname, args, IR.Flags.PRISTINE, isLex));
         }
 
         function getProperty(object, multiname, ti, getOpenMethod, ic) {
-          assert (multiname instanceof IR.AVM2Multiname);
+          release || assert (multiname instanceof IR.ASMultiname);
           getOpenMethod = !!getOpenMethod;
           if (ti) {
             if (ti.trait) {
@@ -689,14 +704,20 @@ var createName = function createName(namespaces, name) {
             } else if (ti.isDirectlyReadable) {
               return store(new IR.GetProperty(region, state.store, object, multiname.name));
             } else if (ti.isIndexedReadable) {
-              return store(new IR.AVM2GetProperty(region, state.store, object, multiname, true, getOpenMethod));
+              return store(new IR.ASGetProperty(region, state.store, object, multiname, IR.Flags.INDEXED | (getOpenMethod ? IR.Flagas.IS_METHOD : 0)));
             }
           }
-          return store(new IR.AVM2GetProperty(region, state.store, object, multiname, false, getOpenMethod));
+          warn("Can't optimize getProperty " + multiname);
+          var qn = resolveMultinameGlobally(multiname);
+          if (qn) {
+            return store(new IR.ASGetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), IR.Flags.RESOLVED | (getOpenMethod ? IR.Flagas.IS_METHOD : 0)));
+          }
+          Counter.count("Compiler: Slow ASGetProperty");
+          return store(new IR.ASGetProperty(region, state.store, object, multiname, (getOpenMethod ? IR.Flagas.IS_METHOD : 0)));
         }
 
         function setProperty(object, multiname, value, ti, ic) {
-          assert (multiname instanceof IR.AVM2Multiname);
+          release || assert (multiname instanceof IR.ASMultiname);
           if (ti) {
             if (ti.trait) {
               store(new IR.SetProperty(region, state.store, object, qualifiedNameConstant(ti.trait.name), value));
@@ -707,15 +728,20 @@ var createName = function createName(namespaces, name) {
             } else if (ti.isDirectlyWriteable) {
               return store(new IR.SetProperty(region, state.store, object, multiname.name, value));
             } else if (ti.isIndexedWriteable) {
-              return store(new IR.AVM2SetProperty(region, state.store, object, multiname, value, true));
+              return store(new IR.ASSetProperty(region, state.store, object, multiname, value, IR.Flags.INDEXED));
             }
           }
-          return store(new IR.AVM2SetProperty(region, state.store, object, multiname, value, false));
+          warn("Can't optimize setProperty " + multiname);
+          var qn = resolveMultinameGlobally(multiname);
+          if (qn) {
+            // TODO: return store(new IR.SetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), value));
+          }
+          return store(new IR.ASSetProperty(region, state.store, object, multiname, value, 0));
         }
 
         function getDescendants(object, name, ti) {
           name = simplifyName(name);
-          return new IR.AVM2GetDescendants(region, state.store, object, name);
+          return new IR.ASGetDescendants(region, state.store, object, name);
         }
 
         function getSlot(object, index, ti) {
@@ -729,7 +755,7 @@ var createName = function createName(namespaces, name) {
               return store(new IR.GetProperty(region, state.store, object, constant(slotQn)));
             }
           }
-          return store(new IR.AVM2GetSlot(null, state.store, object, index));
+          return store(new IR.ASGetSlot(null, state.store, object, index));
         }
 
         function setSlot(object, index, value, ti) {
@@ -741,15 +767,15 @@ var createName = function createName(namespaces, name) {
               return;
             }
           }
-          store(new IR.AVM2SetSlot(region, state.store, object, index, value));
+          store(new IR.ASSetSlot(region, state.store, object, index, value));
         }
 
         function call(callee, object, args) {
-          return store(new Call(region, state.store, callee, object, args, true));
+          return store(new Call(region, state.store, callee, object, args, IR.Flags.PRISTINE));
         }
 
         function callCall(callee, object, args, pristine) {
-          return store(new Call(region, state.store, callee, object, args, pristine));
+          return store(new Call(region, state.store, callee, object, args, pristine ? IR.Flags.PRISTINE : 0));
         }
 
         function truthyCondition(operator) {
@@ -800,7 +826,7 @@ var createName = function createName(namespaces, name) {
         var stops = null;
 
         function buildIfStops(predicate) {
-          assert (!stops);
+          release || assert (!stops);
           var _if = new IR.If(region, predicate);
           stops = [{
             control: new Projection(_if, Projection.Type.FALSE),
@@ -814,7 +840,7 @@ var createName = function createName(namespaces, name) {
         }
 
         function buildJumpStop() {
-          assert (!stops);
+          release || assert (!stops);
           stops = [{
             control: region,
             target: bc.target,
@@ -823,17 +849,17 @@ var createName = function createName(namespaces, name) {
         }
 
         function buildThrowStop() {
-          assert (!stops);
+          release || assert (!stops);
           stops = [];
         }
 
         function buildReturnStop() {
-          assert (!stops);
+          release || assert (!stops);
           stops = [];
         }
 
         function buildSwitchStops(determinant) {
-          assert (!stops);
+          release || assert (!stops);
           if (bc.targets.length > 2) {
             stops = [];
             var _switch = new IR.Switch(region, determinant);
@@ -845,7 +871,7 @@ var createName = function createName(namespaces, name) {
               });
             }
           } else {
-            assert (bc.targets.length === 2);
+            release || assert (bc.targets.length === 2);
             var predicate = binary(Operator.SEQ, determinant, constant(0));
             var _if = new IR.If(region, predicate);
             stops = [{
@@ -873,7 +899,7 @@ var createName = function createName(namespaces, name) {
           var op = bc.op;
           state.index = bci;
           switch (op) {
-            case OP_throw:
+            case 0x03: // OP_throw
               store(new IR.Throw(region, pop()));
               stopPoints.push({
                 region: region,
@@ -882,116 +908,116 @@ var createName = function createName(namespaces, name) {
               });
               buildThrowStop();
               break;
-            case OP_getlocal:
+            case 0x62: // OP_getlocal
               pushLocal(bc.index);
               break;
-            case OP_getlocal0:
-            case OP_getlocal1:
-            case OP_getlocal2:
-            case OP_getlocal3:
+            case 0xD0: // OP_getlocal0
+            case 0xD1: // OP_getlocal1
+            case 0xD2: // OP_getlocal2
+            case 0xD3: // OP_getlocal3
               pushLocal(op - OP_getlocal0);
               break;
-            case OP_setlocal:
+            case 0x63: // OP_setlocal
               popLocal(bc.index);
               break;
-            case OP_setlocal0:
-            case OP_setlocal1:
-            case OP_setlocal2:
-            case OP_setlocal3:
+            case 0xD4: // OP_setlocal0
+            case 0xD5: // OP_setlocal1
+            case 0xD6: // OP_setlocal2
+            case 0xD7: // OP_setlocal3
               popLocal(op - OP_setlocal0);
               break;
-            case OP_pushwith:
-              scope.push(new IR.AVM2Scope(topScope(), pop(), true));
+            case 0x1C: // OP_pushwith
+              scope.push(new IR.ASScope(topScope(), pop(), true));
               break;
-            case OP_pushscope:
-              scope.push(new IR.AVM2Scope(topScope(), pop(), false));
+            case 0x30: // OP_pushscope
+              scope.push(new IR.ASScope(topScope(), pop(), false));
               break;
-            case OP_popscope:
+            case 0x1D: // OP_popscope
               scope.pop();
               break;
-            case OP_getglobalscope:
-              push(new IR.AVM2Global(null, topScope()));
+            case 0x64: // OP_getglobalscope
+              push(new IR.ASGlobal(null, topScope()));
               break;
-            case OP_getscopeobject:
+            case 0x65: // OP_getscopeobject
               push(getScopeObject(state.scope[bc.index]));
               break;
-            case OP_findpropstrict:
+            case 0x5D: // OP_findpropstrict
               push(findProperty(buildMultiname(bc.index), true, bc.ti));
               break;
-            case OP_findproperty:
+            case 0x5E: // OP_findproperty
               push(findProperty(buildMultiname(bc.index), false, bc.ti));
               break;
-            case OP_getproperty:
+            case 0x66: // OP_getproperty
               multiname = buildMultiname(bc.index);
               object = pop();
               push(getProperty(object, multiname, bc.ti, false, ic(bc)));
               break;
-            case OP_getdescendants:
+            case 0x59: // OP_getdescendants
               multiname = buildMultiname(bc.index);
               object = pop();
               push(getDescendants(object, multiname, bc.ti));
               break;
-            case OP_getlex:
+            case 0x60: // OP_getlex
               multiname = buildMultiname(bc.index);
               push(getProperty(findProperty(multiname, true, bc.ti), multiname, bc.ti, false, ic(bc)));
               break;
-            case OP_initproperty:
-            case OP_setproperty:
+            case 0x68: // OP_initproperty
+            case 0x61: // OP_setproperty
               value = pop();
               multiname = buildMultiname(bc.index);
               object = pop();
               setProperty(object, multiname, value, bc.ti, ic(bc));
               break;
-            case OP_deleteproperty:
+            case 0x6A: // OP_deleteproperty
               multiname = buildMultiname(bc.index);
               object = pop();
-              push(store(new IR.AVM2DeleteProperty(region, state.store, object, multiname)));
+              push(store(new IR.ASDeleteProperty(region, state.store, object, multiname)));
               break;
-            case OP_getslot:
+            case 0x6C: // OP_getslot
               object = pop();
               push(getSlot(object, constant(bc.index), bc.ti));
               break;
-            case OP_setslot:
+            case 0x6D: // OP_setslot
               value = pop();
               object = pop();
               setSlot(object, constant(bc.index), value, bc.ti);
               break;
-            case OP_getsuper:
+            case 0x04: // OP_getsuper
               multiname = buildMultiname(bc.index);
               object = pop();
               push(call(globalProperty("getSuper"), null, [savedScope(), object, multiname]));
               break;
-            case OP_setsuper:
+            case 0x05: // OP_setsuper
               value = pop();
               multiname = buildMultiname(bc.index);
               object = pop();
               store(call(globalProperty("setSuper"), null, [savedScope(), object, multiname, value]));
               break;
-            case OP_debugfile:
-            case OP_debugline:
+            case 0xF1: // OP_debugfile
+            case 0xF0: // OP_debugline
               break;
-            case OP_newfunction:
+            case 0x40: // OP_newfunction
               push(callPure(createFunctionCallee, null, [constant(methods[bc.index]), topScope(), constant(true)]));
               break;
-            case OP_call:
+            case 0x41: // OP_call
               args = popMany(bc.argCount);
               object = pop();
               callee = pop();
               push(callCall(callee, object, args));
               break;
-            case OP_callproperty:
-            case OP_callpropvoid:
-            case OP_callproplex:
+            case 0x46: // OP_callproperty
+            case 0x4F: // OP_callpropvoid
+            case 0x4C: // OP_callproplex
               args = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
-              value = callProperty(object, multiname, args, op === OP_callproplex, bc.ti, ic(bc));
+              value = callProperty(object, multiname, args, op === OP_callproplex, bc.ti);
               if (op !== OP_callpropvoid) {
                 push(value);
               }
               break;
-            case OP_callsuper:
-            case OP_callsupervoid:
+            case 0x45: // OP_callsuper
+            case 0x4E: // OP_callsupervoid
               multiname = buildMultiname(bc.index);
               args = popMany(bc.argCount);
               object = pop();
@@ -1001,12 +1027,12 @@ var createName = function createName(namespaces, name) {
                 push(value);
               }
               break;
-            case OP_construct:
+            case 0x42: // OP_construct
               args = popMany(bc.argCount);
               object = pop();
-              push(store(new IR.AVM2New(region, state.store, object, args)));
+              push(store(new IR.ASNew(region, state.store, object, args)));
               break;
-            case OP_constructsuper:
+            case 0x49: // OP_constructsuper
               args = popMany(bc.argCount);
               object = pop();
               if (!(bc.ti && bc.ti.noCallSuperNeeded)) {
@@ -1014,14 +1040,14 @@ var createName = function createName(namespaces, name) {
                 call(callee, object, args);
               }
               break;
-            case OP_constructprop:
+            case 0x4A: // OP_constructprop
               args = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
               callee = getProperty(object, multiname, bc.ti, false, ic(bc));
-              push(store(new IR.AVM2New(region, state.store, callee, args)));
+              push(store(new IR.ASNew(region, state.store, callee, args)));
               break;
-            case OP_coerce:
+            case 0x80: // OP_coerce
               if (bc.ti && bc.ti.noCoercionNeeded) {
                 Counter.count("Compiler: NoCoercionNeeded");
                 break;
@@ -1031,37 +1057,42 @@ var createName = function createName(namespaces, name) {
               value = pop();
               push(coerce(multinames[bc.index], value));
               break;
-            case OP_coerce_i: case OP_convert_i:
+            case 0x83: // OP_coerce_i
+            case 0x73: // OP_convert_i
               push(coerceInt(pop()));
               break;
-            case OP_coerce_u: case OP_convert_u:
+            case 0x88: // OP_coerce_u
+            case 0x74: // OP_convert_u
               push(coerceUint(pop()));
               break;
-            case OP_coerce_d: case OP_convert_d:
+            case 0x84: // OP_coerce_d
+            case 0x75: // OP_convert_d
               push(coerceNumber(pop()));
               break;
-            case OP_coerce_b: case OP_convert_b:
+            case 0x81: // OP_coerce_b
+            case 0x76: // OP_convert_b
               push(coerceBoolean(pop()));
               break;
-            case OP_checkfilter:
+            case 0x78: // OP_checkfilter
               push(call(globalProperty("checkFilter"), null, [pop()]));
               break;
-            case OP_coerce_a:       /* NOP */ break;
-            case OP_coerce_s:
+            case 0x82: // OP_coerce_a
+              /* NOP */ break;
+            case 0x85: // OP_coerce_s
               push(coerceString(pop()));
               break;
-            case OP_convert_s:
+            case 0x70: // OP_convert_s
               push(convertString(pop()));
               break;
-            case OP_astypelate:
+            case 0x87: // OP_astypelate
               type = pop();
               if (c4AsTypeLate) {
                 value = pop();
                 push(call(globalProperty("asAsType"), null, [type, value]));
               }
               break;
-            case OP_returnvalue:
-            case OP_returnvoid:
+            case 0x48: // OP_returnvalue
+            case 0x47: // OP_returnvoid
               value = Undefined;
               if (op === OP_returnvalue) {
                 value = pop();
@@ -1078,55 +1109,120 @@ var createName = function createName(namespaces, name) {
               });
               buildReturnStop();
               break;
-            case OP_nextname:
-            case OP_nextvalue:
+            case 0x1E: // OP_nextname
+            case 0x23: // OP_nextvalue
               index = pop();
               object = pop();
               push(call(globalProperty(op === OP_nextname ? "nextName" : "nextValue"), null, [object, index]));
               break;
-            case OP_hasnext2:
+            case 0x32: // OP_hasnext2
               var temp = call(globalProperty("hasNext2"), null, [local[bc.object], local[bc.index]]);
               local[bc.object] = getJSProperty(temp, "object");
               push(local[bc.index] = getJSProperty(temp, "index"));
               break;
-            case OP_pushnull:       push(Null); break;
-            case OP_pushundefined:  push(Undefined); break;
-            case OP_pushfloat:      notImplemented(); break;
-            case OP_pushbyte:       push(constant(bc.value)); break;
-            case OP_pushshort:      push(constant(bc.value)); break;
-            case OP_pushstring:     push(constant(strings[bc.index])); break;
-            case OP_pushint:        push(constant(ints[bc.index])); break;
-            case OP_pushuint:       push(constant(uints[bc.index])); break;
-            case OP_pushdouble:     push(constant(doubles[bc.index])); break;
-            case OP_pushtrue:       push(constant(true)); break;
-            case OP_pushfalse:      push(constant(false)); break;
-            case OP_pushnan:        push(constant(NaN)); break;
-            case OP_pop:            pop(); break;
-            case OP_dup:            value = shouldNotFloat(pop()); push(value); push(value); break;
-            case OP_swap:           state.stack.push(pop(), pop()); break;
-            case OP_debug:
+            case 0x20: // OP_pushnull
+              push(Null);
+              break;
+            case 0x21: // OP_pushundefined
+              push(Undefined);
+              break;
+            case 0x22: // OP_pushfloat
+              notImplemented();
+              break;
+            case 0x24: // OP_pushbyte
+              push(constant(bc.value));
+              break;
+            case 0x25: // OP_pushshort
+              push(constant(bc.value));
+              break;
+            case 0x2C: // OP_pushstring
+              push(constant(strings[bc.index]));
+              break;
+            case 0x2D: // OP_pushint
+              push(constant(ints[bc.index]));
+              break;
+            case 0x2E: // OP_pushuint
+              push(constant(uints[bc.index]));
+              break;
+            case 0x2F: // OP_pushdouble
+              push(constant(doubles[bc.index]));
+              break;
+            case 0x26: // OP_pushtrue
+              push(constant(true));
+              break;
+            case 0x27: // OP_pushfalse
+              push(constant(false));
+              break;
+            case 0x28: // OP_pushnan
+              push(constant(NaN));
+              break;
+            case 0x29: // OP_pop
+              pop(); break;
+            case 0x2A: // OP_dup
+              value = shouldNotFloat(pop()); push(value); push(value);
+              break;
+            case 0x2B: // OP_swap
+              state.stack.push(pop(), pop());
+              break;
+            case 0xEF: // OP_debug
             case OP_debugline:
             case OP_debugfile:
               break;
-            case OP_ifnlt:          buildIfStops(negatedTruthyCondition(Operator.LT)); break;
-            case OP_ifge:           buildIfStops(truthyCondition(Operator.GE)); break;
-            case OP_ifnle:          buildIfStops(negatedTruthyCondition(Operator.LE)); break;
-            case OP_ifgt:           buildIfStops(truthyCondition(Operator.GT)); break;
-            case OP_ifngt:          buildIfStops(negatedTruthyCondition(Operator.GT)); break;
-            case OP_ifle:           buildIfStops(truthyCondition(Operator.LE)); break;
-            case OP_ifnge:          buildIfStops(negatedTruthyCondition(Operator.GE)); break;
-            case OP_iflt:           buildIfStops(truthyCondition(Operator.LT)); break;
-            case OP_jump:           buildJumpStop(); break;
-            case OP_iftrue:         buildIfStops(truthyCondition(Operator.TRUE)); break;
-            case OP_iffalse:        buildIfStops(truthyCondition(Operator.FALSE)); break;
-            case OP_ifeq:           buildIfStops(truthyCondition(Operator.EQ)); break;
-            case OP_ifne:           buildIfStops(truthyCondition(Operator.NE)); break;
-            case OP_ifstricteq:     buildIfStops(truthyCondition(Operator.SEQ)); break;
-            case OP_ifstrictne:     buildIfStops(truthyCondition(Operator.SNE)); break;
-            case OP_lookupswitch:   buildSwitchStops(pop()); break;
-            case OP_not:            pushExpression(Operator.FALSE); break;
-            case OP_bitnot:         pushExpression(Operator.BITWISE_NOT); break;
-            case OP_add:
+            case 0x0C: // OP_ifnlt
+              buildIfStops(negatedTruthyCondition(Operator.LT));
+              break;
+            case 0x18: // OP_ifge
+              buildIfStops(truthyCondition(Operator.GE));
+              break;
+            case 0x0D: // OP_ifnle
+              buildIfStops(negatedTruthyCondition(Operator.LE));
+              break;
+            case 0x17: // OP_ifgt
+              buildIfStops(truthyCondition(Operator.GT));
+              break;
+            case 0x0E: // OP_ifngt
+              buildIfStops(negatedTruthyCondition(Operator.GT));
+              break;
+            case 0x16: // OP_ifle
+              buildIfStops(truthyCondition(Operator.LE));
+              break;
+            case 0x0F: // OP_ifnge
+              buildIfStops(negatedTruthyCondition(Operator.GE));
+              break;
+            case 0x15: // OP_iflt
+              buildIfStops(truthyCondition(Operator.LT));
+              break;
+            case 0x10: // OP_jump
+              buildJumpStop();
+              break;
+            case 0x11: // OP_iftrue
+              buildIfStops(truthyCondition(Operator.TRUE));
+              break;
+            case 0x12: // OP_iffalse
+              buildIfStops(truthyCondition(Operator.FALSE));
+              break;
+            case 0x13: // OP_ifeq
+              buildIfStops(truthyCondition(Operator.EQ));
+              break;
+            case 0x14: // OP_ifne
+              buildIfStops(truthyCondition(Operator.NE));
+              break;
+            case 0x19: // OP_ifstricteq
+              buildIfStops(truthyCondition(Operator.SEQ));
+              break;
+            case 0x1A: // OP_ifstrictne
+              buildIfStops(truthyCondition(Operator.SNE));
+              break;
+            case 0x1B: // OP_lookupswitch
+              buildSwitchStops(pop());
+              break;
+            case 0x96: // OP_not
+              pushExpression(Operator.FALSE);
+              break;
+            case 0x97: // OP_bitnot
+              pushExpression(Operator.BITWISE_NOT);
+              break;
+            case 0xA0: // OP_add
               right = pop();
               left = pop();
               if (typesAreEqual(left, right)) {
@@ -1138,29 +1234,73 @@ var createName = function createName(namespaces, name) {
               }
               push(binary(operator, left, right));
               break;
-            case OP_add_i:          pushExpression(Operator.ADD, true); break;
-            case OP_subtract:       pushExpression(Operator.SUB); break;
-            case OP_subtract_i:     pushExpression(Operator.SUB, true); break;
-            case OP_multiply:       pushExpression(Operator.MUL); break;
-            case OP_multiply_i:     pushExpression(Operator.MUL, true); break;
-            case OP_divide:         pushExpression(Operator.DIV); break;
-            case OP_modulo:         pushExpression(Operator.MOD); break;
-            case OP_lshift:         pushExpression(Operator.LSH); break;
-            case OP_rshift:         pushExpression(Operator.RSH); break;
-            case OP_urshift:        pushExpression(Operator.URSH); break;
-            case OP_bitand:         pushExpression(Operator.AND); break;
-            case OP_bitor:          pushExpression(Operator.OR); break;
-            case OP_bitxor:         pushExpression(Operator.XOR); break;
-            case OP_equals:         pushExpression(Operator.EQ); break;
-            case OP_strictequals:   pushExpression(Operator.SEQ); break;
-            case OP_lessthan:       pushExpression(Operator.LT); break;
-            case OP_lessequals:     pushExpression(Operator.LE); break;
-            case OP_greaterthan:    pushExpression(Operator.GT); break;
-            case OP_greaterequals:  pushExpression(Operator.GE); break;
-            case OP_negate:         pushExpression(Operator.NEG); break;
-            case OP_negate_i:       pushExpression(Operator.NEG, true); break;
-            case OP_increment:  case OP_increment_i:
-            case OP_decrement:  case OP_decrement_i:
+            case 0xC5: // OP_add_i
+              pushExpression(Operator.ADD, true);
+              break;
+            case 0xA1: // OP_subtract
+              pushExpression(Operator.SUB);
+              break;
+            case 0xC6: // OP_subtract_i
+              pushExpression(Operator.SUB, true);
+              break;
+            case 0xA2: // OP_multiply
+              pushExpression(Operator.MUL);
+              break;
+            case 0xC7: // OP_multiply_i
+              pushExpression(Operator.MUL, true);
+              break;
+            case 0xA3: // OP_divide
+              pushExpression(Operator.DIV);
+              break;
+            case 0xA4: // OP_modulo
+              pushExpression(Operator.MOD);
+              break;
+            case 0xA5: // OP_lshift
+              pushExpression(Operator.LSH);
+              break;
+            case 0xA6: // OP_rshift
+              pushExpression(Operator.RSH);
+              break;
+            case 0xA7: // OP_urshift
+              pushExpression(Operator.URSH);
+              break;
+            case 0xA8: // OP_bitand
+              pushExpression(Operator.AND);
+              break;
+            case 0xA9: // OP_bitor
+              pushExpression(Operator.OR);
+              break;
+            case 0xAA: // OP_bitxor
+              pushExpression(Operator.XOR);
+              break;
+            case 0xAB: // OP_equals
+              pushExpression(Operator.EQ);
+              break;
+            case 0xAC: // OP_strictequals
+              pushExpression(Operator.SEQ);
+              break;
+            case 0xAD: // OP_lessthan
+              pushExpression(Operator.LT);
+              break;
+            case 0xAE: // OP_lessequals
+              pushExpression(Operator.LE);
+              break;
+            case 0xAF: // OP_greaterthan
+              pushExpression(Operator.GT);
+              break;
+            case 0xB0: // OP_greaterequals
+              pushExpression(Operator.GE);
+              break;
+            case 0x90: // OP_negate
+              pushExpression(Operator.NEG);
+              break;
+            case 0xC4: // OP_negate_i
+              pushExpression(Operator.NEG, true);
+              break;
+            case 0x91: // OP_increment
+            case 0xC0: // OP_increment_i
+            case 0x93: // OP_decrement
+            case 0xC1: // OP_decrement_i
               push(constant(1));
               if (op === OP_increment || op === OP_decrement) {
                 push(coerceNumber(pop()));
@@ -1173,8 +1313,10 @@ var createName = function createName(namespaces, name) {
                 pushExpression(Operator.SUB);
               }
               break;
-            case OP_inclocal: case OP_inclocal_i:
-            case OP_declocal: case OP_declocal_i:
+            case 0x92: // OP_inclocal
+            case 0xC2: // OP_inclocal_i
+            case 0x94: // OP_declocal
+            case 0xC3: // OP_declocal_i
               push(constant(1));
               if (op === OP_inclocal || op === OP_declocal) {
                 push(coerceNumber(local[bc.index]));
@@ -1188,60 +1330,60 @@ var createName = function createName(namespaces, name) {
               }
               popLocal(bc.index);
               break;
-            case OP_instanceof:
+            case 0xB1: // OP_instanceof
               type = pop();
               value = pop();
               push(call(getJSProperty(type, "isInstanceOf"), null, [value]));
               break;
-            case OP_istype:
+            case 0xB2: // OP_istype
               value = pop();
               multiname = buildMultiname(bc.index);
               type = getProperty(findProperty(multiname, false), multiname);
               push(call(globalProperty("asIsType"), null, [type, value]));
               break;
-            case OP_istypelate:
+            case 0xB3: // OP_istypelate
               type = pop();
               value = pop();
               push(call(globalProperty("asIsType"), null, [type, value]));
               break;
-            case OP_in:
+            case 0xB4: // OP_in
               object = pop();
               value = pop();
-              multiname = new IR.AVM2Multiname(Undefined, value, 0);
-              push(store(new IR.AVM2HasProperty(region, state.store, object, multiname)));
+              multiname = new IR.ASMultiname(Undefined, value, 0);
+              push(store(new IR.ASHasProperty(region, state.store, object, multiname)));
               break;
-            case OP_typeof:
+            case 0x95: // OP_typeof
               push(call(globalProperty("asTypeOf"), null, [pop()]));
               break;
-            case OP_kill:
+            case 0x08: // OP_kill
               push(Undefined);
               popLocal(bc.index);
               break;
-            case OP_applytype:
+            case 0x53: // OP_applytype
               args = popMany(bc.argCount);
               type = pop();
               callee = globalProperty("applyType");
               push(call(callee, null, [domain, type, new NewArray(region, args)]));
               break;
-            case OP_newarray:
+            case 0x56: // OP_newarray
               args = popMany(bc.argCount);
               push(new NewArray(region, args));
               break;
-            case OP_newobject:
+            case 0x55: // OP_newobject
               var properties = [];
               for (var i = 0; i < bc.argCount; i++) {
                 var value = pop();
                 var key = pop();
-                assert (isConstant(key) && isString(key.value));
+                release || assert (isConstant(key) && isString(key.value));
                 key = constant(Multiname.getPublicQualifiedName(key.value));
                 properties.push(new KeyValuePair(key, value));
               }
               push(new NewObject(region, properties));
               break;
-            case OP_newactivation:
-              push(new IR.AVM2NewActivation(constant(methodInfo)));
+            case 0x57: // OP_newactivation
+              push(new IR.ASNewActivation(constant(methodInfo)));
               break;
-            case OP_newclass:
+            case 0x58: // OP_newclass
               callee = globalProperty("createClass");
               push(call(callee, null, [constant(classes[bc.index]), pop(), topScope()]));
               break;
@@ -1276,9 +1418,9 @@ var createName = function createName(namespaces, name) {
 
       var stop;
       if (stopPoints.length > 1) {
-        var stopRegion = new Region();
-        var stopValuePhi = new Phi(stopRegion);
-        var stopStorePhi = new Phi(stopRegion);
+        var stopRegion = new Region(null);
+        var stopValuePhi = new Phi(stopRegion, null);
+        var stopStorePhi = new Phi(stopRegion, null);
         stopPoints.forEach(function (stopPoint) {
           stopRegion.predecessors.push(stopPoint.region);
           stopValuePhi.pushValue(stopPoint.value);
@@ -1302,12 +1444,13 @@ var createName = function createName(namespaces, name) {
     Counter.count("Compiler: Compiled Methods");
 
     Timer.start("Compiler");
-
+    Timer.start("Mark Loops");
     methodInfo.analysis.markLoops();
+    Timer.stop();
 
     if (enableVerifier.value) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?
-      Timer.start("ver");
+      Timer.start("Verify");
       verifier.verifyMethod(methodInfo, scope);
       Timer.stop();
     }
@@ -1315,22 +1458,22 @@ var createName = function createName(namespaces, name) {
     var traceSource = c4TraceLevel.value > 0;
     var traceIR = c4TraceLevel.value > 1;
 
-    Timer.start("IR Builder");
+    Timer.start("Build IR");
     Node.startNumbering();
     var dfg = new Builder(methodInfo, scope, hasDynamicScope).buildGraph();
     Timer.stop();
 
     traceIR && dfg.trace(writer);
 
-    Timer.start("IR CFG");
+    Timer.start("Build CFG");
     var cfg = dfg.buildCFG();
     Timer.stop();
 
-    Timer.start("IR OPTIMIZE PHIs");
+    Timer.start("Optimize Phis");
     cfg.optimizePhis();
     Timer.stop();
 
-    Timer.start("IR SCHEDULE");
+    Timer.start("Schedule Nodes");
     cfg.scheduleEarly();
     Timer.stop();
 
@@ -1338,13 +1481,17 @@ var createName = function createName(namespaces, name) {
 
     traceIR && cfg.trace(writer);
 
+    Timer.start("Verify IR");
     cfg.verify();
+    Timer.stop();
 
-    Timer.start("IR ALLOCATE VARIABLES");
+    Timer.start("Allocate Variables");
     cfg.allocateVariables();
     Timer.stop();
 
+    Timer.start("Generate Source");
     var result = Backend.generate(cfg, enableRegisterAllocator.value);
+    Timer.stop();
     traceSource && writer.writeLn(result.body);
     Node.stopNumbering();
     Timer.stop();
