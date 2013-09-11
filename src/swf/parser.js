@@ -69,7 +69,7 @@ function readTags(context, stream, swfVersion, onprogress) {
         }
         if (onprogress)
           onprogress(context);
-      } else if (onprogress && 'id' in tag) {
+      } else if (onprogress && tag.id !== undefined) {
         onprogress(context);
       }
     } while (stream.pos < stream.end);
@@ -253,7 +253,7 @@ SWF.parseAsync = function swf_parseAsync(options) {
   var buffer = new HeadTailBuffer();
   var pipe = {
     push: function (data, progressInfo) {
-      if ('target' in this) {
+      if (this.target !== undefined) {
         return this.target.push(data, progressInfo);
       }
       if (!buffer.push(data, 8)) {
@@ -299,7 +299,7 @@ SWF.parseAsync = function swf_parseAsync(options) {
         };
         options.oncomplete && options.oncomplete(symbol);
       }
-      if ('target' in this && this.target.close) {
+      if (this.target !== undefined && this.target.close) {
         this.target.close();
       }
     }
