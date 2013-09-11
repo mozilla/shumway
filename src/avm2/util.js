@@ -464,9 +464,12 @@ function popManyInto(src, count, dst) {
   });
 
   extendBuiltin(Ap, "pushUnique", function(v) {
-    if (this.indexOf(v) < 0) {
-      this.push(v);
+    for (var i = 0, j = this.length; i < j; i++) {
+      if (this[i] === v) {
+        return;
+      }
     }
+    this.push(v);
   });
 
   extendBuiltin(Ap, "unique", function() {
