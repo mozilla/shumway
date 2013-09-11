@@ -87,7 +87,7 @@ function createInflatedStream(bytes, outputLength) {
 var InflateNoDataError = {};
 
 function inflateBlock(stream, output, state) {
-  var header = 'header' in state ? state.header :
+  var header = state.header !== undefined ? state.header :
     (state.header = readBits(stream.bytes, stream, 3));
   switch (header >> 1) {
   case 0:
@@ -113,7 +113,7 @@ function inflateBlock(stream, output, state) {
     break;
   case 2:
     var distanceTable, literalTable;
-    if ('distanceTable' in state) {
+    if (state.distanceTable !== undefined) {
       distanceTable = state.distanceTable;
       literalTable = state.literalTable;
     } else {
@@ -201,7 +201,7 @@ function inflate(stream, output, literalTable, distanceTable, state) {
   var pos = output.available;
   var dbytes = output.data;
   var sbytes = stream.bytes;
-  var sym = 'sym' in state ? state.sym :
+  var sym = state.sym !== undefined ? state.sym :
                              readCode(sbytes, stream, literalTable);
   while (sym !== 256) {
     if (sym < 256) {
@@ -209,9 +209,9 @@ function inflate(stream, output, literalTable, distanceTable, state) {
     } else {
       state.sym = sym;
       sym -= 257;
-      var len = 'len' in state ? state.len :
+      var len = state.len !== undefined ? state.len :
         (state.len = lengthCodes[sym] + readBits(sbytes, stream, lengthExtraBits[sym]));
-      var sym2 = 'sym2' in state ? state.sym2 :
+      var sym2 = state.sym2 !== undefined ? state.sym2 :
         (state.sym2 = readCode(sbytes, stream, distanceTable));
       var distance = distanceCodes[sym2] + readBits(sbytes, stream, distanceExtraBits[sym2]);
       var i = pos - distance;
