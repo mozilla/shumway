@@ -224,7 +224,7 @@ var StageDefinition = (function () {
         ancestor = interactiveObject._parent;
       } else if (objectsUnderMouse.length) {
         objectsUnderMouse.sort(sortByDepth);
-        ancestor = objectsUnderMouse.pop()._parent;
+        ancestor = objectsUnderMouse.pop();
       } else {
         interactiveObject = this;
       }

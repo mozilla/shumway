@@ -36,6 +36,13 @@
        ],
        "type": "stas"
     },
+    {  "id": "ZeroClipboardTest",
+       "stas": "swfs/ZeroClipboardTest.stas",
+       "filenames": [
+         "swfs/ZeroClipboardTest.swf"
+       ],
+       "type": "stas"
+    },
     {  "id": "button-ref",
        "frames": [10],
        "swf": "swfs/button1.swf",
