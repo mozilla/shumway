@@ -571,12 +571,15 @@ var DisplayObjectDefinition = (function () {
     set transform(val) {
       this._animated = false;
 
-      this._invalidate();
       this._bounds = null;
 
       var transform = this._transform;
       transform.colorTransform = val.colorTransform;
-      transform.matrix = val.matrix;
+      if (val.matrix3D) {
+        transform.matrix3D = val.matrix3D;
+      } else {
+        transform.matrix = val.matrix;
+      }
     },
     get visible() {
       return this._visible;
@@ -630,7 +633,6 @@ var DisplayObjectDefinition = (function () {
       if (val === this._x) {
         return;
       }
-
       this._invalidate();
 
       if (this._bounds) {
