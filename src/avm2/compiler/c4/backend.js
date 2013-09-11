@@ -661,13 +661,17 @@
   }
 
   function generate(cfg, useRegisterAllocator) {
+    Timer.start("Looper");
     var root = Looper.analyze(cfg);
+    Timer.stop();
 
     var writer = new IndentingWriter();
     // root.trace(writer);
 
     var cx = new Context();
+    Timer.start("Construct AST");
     var code = root.compile(cx);
+    Timer.stop();
 
     var parameters = [];
     for (var i = 0; i < cx.parameters.length; i++) {
@@ -701,7 +705,7 @@
       // body = " { debugger; " + body + " }";
       return {parameters: parameters.map(function (p) { return p.name; }), body: body};
     }
-    Timer.start("CODE GEN");
+    Timer.start("Serialize AST");
     var source = generateSource(code);
     Timer.stop();
     return {parameters: parameters.map(function (p) { return p.name; }), body: source};

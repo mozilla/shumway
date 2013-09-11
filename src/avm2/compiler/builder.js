@@ -1444,12 +1444,13 @@ var createName = function createName(namespaces, name) {
     Counter.count("Compiler: Compiled Methods");
 
     Timer.start("Compiler");
-
+    Timer.start("Mark Loops");
     methodInfo.analysis.markLoops();
+    Timer.stop();
 
     if (enableVerifier.value) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?
-      Timer.start("ver");
+      Timer.start("Verify");
       verifier.verifyMethod(methodInfo, scope);
       Timer.stop();
     }
@@ -1457,22 +1458,22 @@ var createName = function createName(namespaces, name) {
     var traceSource = c4TraceLevel.value > 0;
     var traceIR = c4TraceLevel.value > 1;
 
-    Timer.start("IR Builder");
+    Timer.start("Build IR");
     Node.startNumbering();
     var dfg = new Builder(methodInfo, scope, hasDynamicScope).buildGraph();
     Timer.stop();
 
     traceIR && dfg.trace(writer);
 
-    Timer.start("IR CFG");
+    Timer.start("Build CFG");
     var cfg = dfg.buildCFG();
     Timer.stop();
 
-    Timer.start("IR OPTIMIZE PHIs");
+    Timer.start("Optimize Phis");
     cfg.optimizePhis();
     Timer.stop();
 
-    Timer.start("IR SCHEDULE");
+    Timer.start("Schedule Nodes");
     cfg.scheduleEarly();
     Timer.stop();
 
@@ -1480,13 +1481,17 @@ var createName = function createName(namespaces, name) {
 
     traceIR && cfg.trace(writer);
 
+    Timer.start("Verify IR");
     cfg.verify();
+    Timer.stop();
 
-    Timer.start("IR ALLOCATE VARIABLES");
+    Timer.start("Allocate Variables");
     cfg.allocateVariables();
     Timer.stop();
 
+    Timer.start("Generate Source");
     var result = Backend.generate(cfg, enableRegisterAllocator.value);
+    Timer.stop();
     traceSource && writer.writeLn(result.body);
     Node.stopNumbering();
     Timer.stop();
