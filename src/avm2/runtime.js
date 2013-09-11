@@ -28,6 +28,7 @@ var compileUntil = runtimeOptions.register(new Option("cu", "compileUntil", "num
 var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
 var enableVerifier = runtimeOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
 
+var globalMultinameAnalysis = runtimeOptions.register(new Option("ga", "globalMultinameAnalysis", "boolean", false, "Global multiname analysis."));
 var traceInlineCaching = runtimeOptions.register(new Option("tic", "traceInlineCaching", "boolean", false, "Trace inline caching execution."));
 
 var compilerEnableExceptions = runtimeOptions.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
@@ -331,6 +332,38 @@ function asGetProperty(namespaces, name, flags, isMethod) {
   return this[resolved];
 }
 
+/**
+ * Resolved string accessors.
+ */
+
+function asGetResolvedStringProperty(resolved) {
+  release || assert(isString(resolved));
+  return this[resolved];
+}
+
+function asCallResolvedStringProperty(resolved, isLex, args) {
+  var receiver = isLex ? null : this;
+  var openMethods = this[VM_OPEN_METHODS];
+  // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to work
+  // when using memoizers because the function gets bound to |this|.
+  var method;
+  if (receiver && openMethods && openMethods[resolved]) {
+    method = openMethods[resolved];
+  } else {
+    method = this[resolved];
+  }
+  return method.apply(receiver, args);
+}
+
+function fromResolvedName(resolved) {
+  release || assert(resolved.indexOf(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX) === 0, resolved);
+  return resolved.substring(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
+}
+function asGetResolvedStringPropertyFallback(resolved) {
+  var name = fromResolvedName(resolved);
+  return this.asGetProperty([ShumwayNamespace.PUBLIC], name, 0);
+}
+
 function asSetPublicProperty(name, value) {
   return this.asSetProperty(undefined, name, 0, value);
 }
@@ -577,11 +610,13 @@ function initializeGlobalObject(global) {
   defineNonEnumerableProperty(global.Object.prototype, "resolveMultinameProperty", resolveMultinameProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asGetProperty", asGetProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asGetPublicProperty", asGetPublicProperty);
+  defineNonEnumerableProperty(global.Object.prototype, "asGetResolvedStringProperty", asGetResolvedStringProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asSetProperty", asSetProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asSetPublicProperty", asSetPublicProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDefineProperty", asDefineProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDefinePublicProperty", asDefinePublicProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asCallProperty", asCallProperty);
+  defineNonEnumerableProperty(global.Object.prototype, "asCallResolvedStringProperty", asCallResolvedStringProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asConstructProperty", asConstructProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
@@ -2013,3 +2048,58 @@ function asAdd(l, r) {
   }
   return l + r;
 }
+
+/**
+ * It's not possible to resolve the multiname {a, b, c}::x to {b}::x if no trait exists in any of the currently
+ * loaded abc files that defines the {b}::x name. Of course, this can change if we load an abc file that defines it.
+ */
+var GlobalMultinameResolver = (function () {
+  var hasNonDynamicNamespaces = createEmptyObject();
+  var wasResolved = createEmptyObject();
+  function updateTraits(traits) {
+    for (var i = 0; i < traits.length; i++) {
+      var trait = traits[i];
+      var name = trait.name.name;
+      var namespace = trait.name.getNamespace();
+      if (!namespace.isDynamic()) {
+        hasNonDynamicNamespaces[name] = true;
+        if (wasResolved[name]) {
+          notImplemented("We have to the undo the optimization, " + name + " can now bind to " + namespace);
+        }
+      }
+    }
+  }
+  return {
+    /**
+     * Called after an .abc file is loaded. This invalidates inline caches if they have been created.
+     */
+    loadAbc: function loadAbc(abc) {
+      if (!globalMultinameAnalysis.value) {
+        return;
+      }
+      var scripts = abc.scripts;
+      var classes = abc.classes;
+      var methods = abc.methods;
+      for (var i = 0; i < scripts.length; i++) {
+        updateTraits(scripts[i].traits);
+      }
+      for (var i = 0; i < classes.length; i++) {
+        updateTraits(classes[i].traits);
+        updateTraits(classes[i].instanceInfo.traits);
+      }
+      for (var i = 0; i < methods.length; i++) {
+        if (methods[i].traits) {
+          updateTraits(methods[i].traits);
+        }
+      }
+    },
+    resolveMultiname: function resolveMultiname(multiname) {
+      var name = multiname.name;
+      if (hasNonDynamicNamespaces[name]) {
+        return;
+      }
+      wasResolved[name] = true;
+      return new Multiname([ShumwayNamespace.PUBLIC], multiname.name);
+    }
+  }
+})();

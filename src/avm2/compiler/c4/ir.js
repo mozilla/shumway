@@ -42,6 +42,1499 @@
    *
    */
 
+  /**
+   * We generate the IR node constructors from a specification. Any time you make a change to this you should uncomment
+   * the print statement below, run Shumway (avm) from the command line and then paste back the generated IR below
+   * between <<<< and >>>> markers.
+   */
+
+  var IRDefinition = {
+    Control: {
+      Region: {
+        predecessors: {
+          array: true,
+          expand: "control"
+        },
+        Start: {
+          _constructorText: "this.control = this;",
+          scope: {
+            dynamic: true
+          },
+          domain: {
+            dynamic: true
+          }
+        }
+      },
+      End: {
+        control: {
+          assert: "isControlOrNull"
+        },
+        Stop: {
+          store: {
+            assert: "isStore"
+          },
+          argument: {
+            assert: ""
+          }
+        },
+        If: {
+          predicate: {
+            assert: ""
+          }
+        },
+        Switch: {
+          determinant: {
+            assert: ""
+          }
+        },
+        Jump: {}
+      }
+    },
+    Value: {
+      StoreDependent: {
+        control: {
+          assert: "isControlOrNull",
+          nullable: true
+        },
+        store: {
+          assert: "isStoreOrNull",
+          nullable: true
+        },
+        loads: {
+          dynamic: true,
+          nullable: true,
+          array: true
+        },
+        Call: {
+          callee: {
+            assert: ""
+          },
+          object: {
+            assert: "isValueOrNull",
+            nullable: true
+          },
+          args: {
+            assert: "isArray",
+            array: true
+          },
+          flags: {
+            internal: true,
+            assert: "isNumber"
+          }
+        },
+        CallProperty: {
+          object: {
+            assert: ""
+          },
+          name: {
+            assert: ""
+          },
+          args: {
+            assert: "isArray",
+            array: true
+          },
+          flags: {
+            internal: true,
+            assert: "isNumber"
+          },
+          ASCallProperty: {
+            isLex: {
+              assert: "",
+              internal: true
+            }
+          }
+        },
+        New: {
+          callee: {
+            assert: ""
+          },
+          args: {
+            assert: "",
+            array: true
+          },
+          ASNew: {}
+        },
+        GetProperty: {
+          object: {
+            assert: ""
+          },
+          name: {
+            assert: ""
+          },
+          ASGetProperty: {
+            flags: {
+              internal: true,
+              assert: "isNumber"
+            }
+          },
+          ASGetDescendants: {},
+          ASHasProperty: {},
+          ASGetSlot: {}
+        },
+        SetProperty: {
+          object: {
+            assert: ""
+          },
+          name: {
+            assert: ""
+          },
+          value: {
+            assert: ""
+          },
+          ASSetProperty: {
+            flags: {
+              internal: true
+            }
+          },
+          ASSetSlot: {}
+        },
+        DeleteProperty: {
+          object: {
+            assert: ""
+          },
+          name: {
+            assert: ""
+          },
+          ASDeleteProperty: {}
+        },
+        ASFindProperty: {
+          scope: {
+            assert: ""
+          },
+          name: {
+            assert: ""
+          },
+          domain: {
+            assert: ""
+          },
+          strict: {
+            internal: true
+          }
+        }
+      },
+      Store: {},
+      Phi: {
+        control: {
+          assert: "isControl",
+          nullable: true
+        },
+        args: {
+          array: true,
+          expand: "value"
+        }
+      },
+      Variable: {
+        name: {
+          internal: true
+        }
+      },
+      Copy: {
+        argument: {}
+      },
+      Move: {
+        to: {},
+        from: {}
+      },
+      Projection: {
+        argument: {},
+        type: {
+          internal: true
+        },
+        selector: {
+          internal: true,
+          optional: true
+        }
+      },
+      Latch: {
+        control: {
+          assert: "isControlOrNull",
+          nullable: true
+        },
+        condition: {},
+        left: {},
+        right: {}
+      },
+      Binary: {
+        operator: {
+          internal: true
+        },
+        left: {},
+        right: {}
+      },
+      Unary: {
+        operator: {
+          internal: true
+        },
+        argument: {}
+      },
+      Constant: {
+        value: {
+          internal: true
+        }
+      },
+      GlobalProperty: {
+        name: {
+          internal: true
+        }
+      },
+      This: {
+        control: {
+          assert: "isControl"
+        }
+      },
+      Throw: {
+        control: {
+          assert: "isControl"
+        },
+        argument: {}
+      },
+      Arguments: {
+        control: {
+          assert: "isControl"
+        }
+      },
+      Parameter: {
+        control: {
+          assert: "isControl"
+        },
+        index: {
+          internal: true
+        },
+        name: {
+          internal: true
+        }
+      },
+      NewArray: {
+        control: {
+          assert: "isControl"
+        },
+        elements: {
+          array: true
+        }
+      },
+      NewObject: {
+        control: {
+          assert: "isControl"
+        },
+        properties: {
+          array: true
+        }
+      },
+      KeyValuePair: {
+        key: {},
+        value: {}
+      },
+      ASScope: {
+        parent: {},
+        object: {},
+        isWith: {
+          internal: true
+        }
+      },
+      ASGlobal: {
+        control: {
+          assert: "isControlOrNull",
+          nullable: true
+        },
+        scope: {
+          assert: "isScope"
+        }
+      },
+      ASNewActivation: {
+        methodInfo: {
+          internal: true
+        }
+      },
+      ASMultiname: {
+        namespaces: {},
+        name: {},
+        flags: {
+          internal: true
+        }
+      }
+    }
+  };
+
+  function IRGenerator(root) {
+    var str = "";
+    function out(s) {
+      str += s + "\n";
+    }
+    var writer = new IndentingWriter(false, out);
+    function makeProperties(node) {
+      var result = [];
+      for (var k in node) {
+        if (isProperty(k)) {
+          node[k].name = k;
+          result.push(node[k]);
+        }
+      }
+      return result;
+    }
+    function isProperty(v) {
+      if (v[0] === "_") {
+        return false;
+      }
+      return v[0].toLowerCase() === v[0];
+    }
+    function generate(node, path) {
+      path = path.concat([node]);
+      // print(path.map(function (node) { return node._name; }).join(" -> "));
+      writer.enter("var " + node._name + " = (function () {")
+      var constructorName = node._name[0].toLowerCase() + node._name.slice(1) + "Node";
+      if (constructorName.substring(0, 2) === "aS") {
+        constructorName = "as" + constructorName.substring(2);
+      }
+      // var constructorName = "constructor";
+      var prototypeName = constructorName + ".prototype";
+      var properties = path.reduce(function (a, v) {
+        return a.concat(makeProperties(v));
+      }, []);
+      var parameters = properties.filter(function (property) {
+        return !property.dynamic;
+      });
+      var optionalParameters = parameters.filter(function (property) {
+        return property.optional;
+      });
+      var parameterString = parameters.map(function (property) {
+        if (property.expand) {
+          return property.expand;
+        }
+        return property.name;
+      }).join(", ");
+      writer.enter("function " + constructorName + "(" + parameterString + ") {");
+      if (true) {
+        properties.forEach(function (property) {
+          if (property.assert === "") {
+            writer.writeLn("release || assert (!(" + property.name + " == undefined), \"" + property.name + "\");");
+          } else if (property.assert) {
+            writer.writeLn("release || assert (" + property.assert + "(" + property.name + "), \"" + property.name + "\");");
+          }
+        });
+        writer.writeLn("release || assert (arguments.length >= " + (parameters.length - optionalParameters.length) + ", \"" + node._name + " not enough args.\");");
+      }
+      if (node._constructorText) {
+        writer.writeLn(node._constructorText);
+      }
+      properties.forEach(function (property) {
+        if (property.expand) {
+          writer.writeLn("this." + property.name + " = " + property.expand + " ? [" + property.expand + "] : [];");
+        } else if (property.dynamic) {
+          writer.writeLn("this." + property.name + " = undefined;");
+        } else {
+          writer.writeLn("this." + property.name + " = " + property.name + ";");
+        }
+      });
+      writer.writeLn("this.id = nextID[nextID.length - 1] += 1;");
+      writer.leave("}");
+      if (path.length > 1) {
+        writer.writeLn(prototypeName + " = " + "extend(" + path[path.length - 2]._name + ", \"" + node._name + "\")");
+      }
+
+      writer.writeLn(prototypeName + ".nodeName = \"" + node._name + "\";");
+      // writer.writeLn(prototypeName + ".is" + node.name + " = true;");
+
+      writer.enter(prototypeName + ".visitInputs = function (visitor) {");
+      properties.forEach(function (property) {
+        if (property.internal) {
+          return;
+        }
+        var str = "";
+        if (property.nullable) {
+          str += "this." + property.name + " && ";
+        }
+        if (property.array) {
+          str += "visitArrayInputs(this." + property.name + ", visitor);";
+        } else {
+          str += "visitor(this." + property.name + ");";
+        }
+        writer.writeLn(str);
+      });
+      writer.leave("};");
+
+      writer.writeLn("return " + constructorName + ";");
+      writer.leave("})();");
+      writer.writeLn("");
+      for (var name in node) {
+        if (name[0] === "_" || isProperty(name)) {
+          continue;
+        }
+        var child = node[name];
+        child._name = name;
+        generate(child, path);
+      }
+    }
+    IRDefinition._name = "Node";
+    generate(IRDefinition, []);
+    return str;
+  }
+
+  var nextID = [];
+
+  // print(IRGenerator(IR));
+  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+  var Node = (function () {
+    function nodeNode() {
+      release || assert (arguments.length >= 0, "Node not enough args.");
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    nodeNode.prototype.nodeName = "Node";
+    nodeNode.prototype.visitInputs = function (visitor) {
+    };
+    return nodeNode;
+  })();
+
+  var Control = (function () {
+    function controlNode() {
+      release || assert (arguments.length >= 0, "Control not enough args.");
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    controlNode.prototype = extend(Node, "Control")
+    controlNode.prototype.nodeName = "Control";
+    controlNode.prototype.visitInputs = function (visitor) {
+    };
+    return controlNode;
+  })();
+
+  var Region = (function () {
+    function regionNode(control) {
+      release || assert (arguments.length >= 1, "Region not enough args.");
+      this.predecessors = control ? [control] : [];
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    regionNode.prototype = extend(Control, "Region")
+    regionNode.prototype.nodeName = "Region";
+    regionNode.prototype.visitInputs = function (visitor) {
+      visitArrayInputs(this.predecessors, visitor);
+    };
+    return regionNode;
+  })();
+
+  var Start = (function () {
+    function startNode(control) {
+      release || assert (arguments.length >= 1, "Start not enough args.");
+      this.control = this;
+      this.predecessors = control ? [control] : [];
+      this.scope = undefined;
+      this.domain = undefined;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    startNode.prototype = extend(Region, "Start")
+    startNode.prototype.nodeName = "Start";
+    startNode.prototype.visitInputs = function (visitor) {
+      visitArrayInputs(this.predecessors, visitor);
+      visitor(this.scope);
+      visitor(this.domain);
+    };
+    return startNode;
+  })();
+
+  var End = (function () {
+    function endNode(control) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (arguments.length >= 1, "End not enough args.");
+      this.control = control;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    endNode.prototype = extend(Control, "End")
+    endNode.prototype.nodeName = "End";
+    endNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+    };
+    return endNode;
+  })();
+
+  var Stop = (function () {
+    function stopNode(control, store, argument) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStore(store), "store");
+      release || assert (!(argument == undefined), "argument");
+      release || assert (arguments.length >= 3, "Stop not enough args.");
+      this.control = control;
+      this.store = store;
+      this.argument = argument;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    stopNode.prototype = extend(End, "Stop")
+    stopNode.prototype.nodeName = "Stop";
+    stopNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+      visitor(this.store);
+      visitor(this.argument);
+    };
+    return stopNode;
+  })();
+
+  var If = (function () {
+    function ifNode(control, predicate) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (!(predicate == undefined), "predicate");
+      release || assert (arguments.length >= 2, "If not enough args.");
+      this.control = control;
+      this.predicate = predicate;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    ifNode.prototype = extend(End, "If")
+    ifNode.prototype.nodeName = "If";
+    ifNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+      visitor(this.predicate);
+    };
+    return ifNode;
+  })();
+
+  var Switch = (function () {
+    function switchNode(control, determinant) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (!(determinant == undefined), "determinant");
+      release || assert (arguments.length >= 2, "Switch not enough args.");
+      this.control = control;
+      this.determinant = determinant;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    switchNode.prototype = extend(End, "Switch")
+    switchNode.prototype.nodeName = "Switch";
+    switchNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+      visitor(this.determinant);
+    };
+    return switchNode;
+  })();
+
+  var Jump = (function () {
+    function jumpNode(control) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (arguments.length >= 1, "Jump not enough args.");
+      this.control = control;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    jumpNode.prototype = extend(End, "Jump")
+    jumpNode.prototype.nodeName = "Jump";
+    jumpNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+    };
+    return jumpNode;
+  })();
+
+  var Value = (function () {
+    function valueNode() {
+      release || assert (arguments.length >= 0, "Value not enough args.");
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    valueNode.prototype = extend(Node, "Value")
+    valueNode.prototype.nodeName = "Value";
+    valueNode.prototype.visitInputs = function (visitor) {
+    };
+    return valueNode;
+  })();
+
+  var StoreDependent = (function () {
+    function storeDependentNode(control, store) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (arguments.length >= 2, "StoreDependent not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    storeDependentNode.prototype = extend(Value, "StoreDependent")
+    storeDependentNode.prototype.nodeName = "StoreDependent";
+    storeDependentNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+    };
+    return storeDependentNode;
+  })();
+
+  var Call = (function () {
+    function callNode(control, store, callee, object, args, flags) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(callee == undefined), "callee");
+      release || assert (isValueOrNull(object), "object");
+      release || assert (isArray(args), "args");
+      release || assert (isNumber(flags), "flags");
+      release || assert (arguments.length >= 6, "Call not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.callee = callee;
+      this.object = object;
+      this.args = args;
+      this.flags = flags;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    callNode.prototype = extend(StoreDependent, "Call")
+    callNode.prototype.nodeName = "Call";
+    callNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.callee);
+      this.object && visitor(this.object);
+      visitArrayInputs(this.args, visitor);
+    };
+    return callNode;
+  })();
+
+  var CallProperty = (function () {
+    function callPropertyNode(control, store, object, name, args, flags) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (isArray(args), "args");
+      release || assert (isNumber(flags), "flags");
+      release || assert (arguments.length >= 6, "CallProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.args = args;
+      this.flags = flags;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    callPropertyNode.prototype = extend(StoreDependent, "CallProperty")
+    callPropertyNode.prototype.nodeName = "CallProperty";
+    callPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitArrayInputs(this.args, visitor);
+    };
+    return callPropertyNode;
+  })();
+
+  var ASCallProperty = (function () {
+    function asCallPropertyNode(control, store, object, name, args, flags, isLex) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (isArray(args), "args");
+      release || assert (isNumber(flags), "flags");
+      release || assert (!(isLex == undefined), "isLex");
+      release || assert (arguments.length >= 7, "ASCallProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.args = args;
+      this.flags = flags;
+      this.isLex = isLex;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asCallPropertyNode.prototype = extend(CallProperty, "ASCallProperty")
+    asCallPropertyNode.prototype.nodeName = "ASCallProperty";
+    asCallPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitArrayInputs(this.args, visitor);
+    };
+    return asCallPropertyNode;
+  })();
+
+  var New = (function () {
+    function newNode(control, store, callee, args) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(callee == undefined), "callee");
+      release || assert (!(args == undefined), "args");
+      release || assert (arguments.length >= 4, "New not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.callee = callee;
+      this.args = args;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    newNode.prototype = extend(StoreDependent, "New")
+    newNode.prototype.nodeName = "New";
+    newNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.callee);
+      visitArrayInputs(this.args, visitor);
+    };
+    return newNode;
+  })();
+
+  var ASNew = (function () {
+    function asNewNode(control, store, callee, args) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(callee == undefined), "callee");
+      release || assert (!(args == undefined), "args");
+      release || assert (arguments.length >= 4, "ASNew not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.callee = callee;
+      this.args = args;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asNewNode.prototype = extend(New, "ASNew")
+    asNewNode.prototype.nodeName = "ASNew";
+    asNewNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.callee);
+      visitArrayInputs(this.args, visitor);
+    };
+    return asNewNode;
+  })();
+
+  var GetProperty = (function () {
+    function getPropertyNode(control, store, object, name) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (arguments.length >= 4, "GetProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    getPropertyNode.prototype = extend(StoreDependent, "GetProperty")
+    getPropertyNode.prototype.nodeName = "GetProperty";
+    getPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return getPropertyNode;
+  })();
+
+  var ASGetProperty = (function () {
+    function asGetPropertyNode(control, store, object, name, flags) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (isNumber(flags), "flags");
+      release || assert (arguments.length >= 5, "ASGetProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.flags = flags;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asGetPropertyNode.prototype = extend(GetProperty, "ASGetProperty")
+    asGetPropertyNode.prototype.nodeName = "ASGetProperty";
+    asGetPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return asGetPropertyNode;
+  })();
+
+  var ASGetDescendants = (function () {
+    function asGetDescendantsNode(control, store, object, name) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (arguments.length >= 4, "ASGetDescendants not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asGetDescendantsNode.prototype = extend(GetProperty, "ASGetDescendants")
+    asGetDescendantsNode.prototype.nodeName = "ASGetDescendants";
+    asGetDescendantsNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return asGetDescendantsNode;
+  })();
+
+  var ASHasProperty = (function () {
+    function asHasPropertyNode(control, store, object, name) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (arguments.length >= 4, "ASHasProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asHasPropertyNode.prototype = extend(GetProperty, "ASHasProperty")
+    asHasPropertyNode.prototype.nodeName = "ASHasProperty";
+    asHasPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return asHasPropertyNode;
+  })();
+
+  var ASGetSlot = (function () {
+    function asGetSlotNode(control, store, object, name) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (arguments.length >= 4, "ASGetSlot not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asGetSlotNode.prototype = extend(GetProperty, "ASGetSlot")
+    asGetSlotNode.prototype.nodeName = "ASGetSlot";
+    asGetSlotNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return asGetSlotNode;
+  })();
+
+  var SetProperty = (function () {
+    function setPropertyNode(control, store, object, name, value) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (!(value == undefined), "value");
+      release || assert (arguments.length >= 5, "SetProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.value = value;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    setPropertyNode.prototype = extend(StoreDependent, "SetProperty")
+    setPropertyNode.prototype.nodeName = "SetProperty";
+    setPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitor(this.value);
+    };
+    return setPropertyNode;
+  })();
+
+  var ASSetProperty = (function () {
+    function asSetPropertyNode(control, store, object, name, value, flags) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (!(value == undefined), "value");
+      release || assert (arguments.length >= 6, "ASSetProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.value = value;
+      this.flags = flags;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asSetPropertyNode.prototype = extend(SetProperty, "ASSetProperty")
+    asSetPropertyNode.prototype.nodeName = "ASSetProperty";
+    asSetPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitor(this.value);
+    };
+    return asSetPropertyNode;
+  })();
+
+  var ASSetSlot = (function () {
+    function asSetSlotNode(control, store, object, name, value) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (!(value == undefined), "value");
+      release || assert (arguments.length >= 5, "ASSetSlot not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.value = value;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asSetSlotNode.prototype = extend(SetProperty, "ASSetSlot")
+    asSetSlotNode.prototype.nodeName = "ASSetSlot";
+    asSetSlotNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitor(this.value);
+    };
+    return asSetSlotNode;
+  })();
+
+  var DeleteProperty = (function () {
+    function deletePropertyNode(control, store, object, name) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (arguments.length >= 4, "DeleteProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    deletePropertyNode.prototype = extend(StoreDependent, "DeleteProperty")
+    deletePropertyNode.prototype.nodeName = "DeleteProperty";
+    deletePropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return deletePropertyNode;
+  })();
+
+  var ASDeleteProperty = (function () {
+    function asDeletePropertyNode(control, store, object, name) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (arguments.length >= 4, "ASDeleteProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asDeletePropertyNode.prototype = extend(DeleteProperty, "ASDeleteProperty")
+    asDeletePropertyNode.prototype.nodeName = "ASDeleteProperty";
+    asDeletePropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+    };
+    return asDeletePropertyNode;
+  })();
+
+  var ASFindProperty = (function () {
+    function asFindPropertyNode(control, store, scope, name, domain, strict) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(scope == undefined), "scope");
+      release || assert (!(name == undefined), "name");
+      release || assert (!(domain == undefined), "domain");
+      release || assert (arguments.length >= 6, "ASFindProperty not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.scope = scope;
+      this.name = name;
+      this.domain = domain;
+      this.strict = strict;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asFindPropertyNode.prototype = extend(StoreDependent, "ASFindProperty")
+    asFindPropertyNode.prototype.nodeName = "ASFindProperty";
+    asFindPropertyNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.scope);
+      visitor(this.name);
+      visitor(this.domain);
+    };
+    return asFindPropertyNode;
+  })();
+
+  var Store = (function () {
+    function storeNode() {
+      release || assert (arguments.length >= 0, "Store not enough args.");
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    storeNode.prototype = extend(Value, "Store")
+    storeNode.prototype.nodeName = "Store";
+    storeNode.prototype.visitInputs = function (visitor) {
+    };
+    return storeNode;
+  })();
+
+  var Phi = (function () {
+    function phiNode(control, value) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 2, "Phi not enough args.");
+      this.control = control;
+      this.args = value ? [value] : [];
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    phiNode.prototype = extend(Value, "Phi")
+    phiNode.prototype.nodeName = "Phi";
+    phiNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      visitArrayInputs(this.args, visitor);
+    };
+    return phiNode;
+  })();
+
+  var Variable = (function () {
+    function variableNode(name) {
+      release || assert (arguments.length >= 1, "Variable not enough args.");
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    variableNode.prototype = extend(Value, "Variable")
+    variableNode.prototype.nodeName = "Variable";
+    variableNode.prototype.visitInputs = function (visitor) {
+    };
+    return variableNode;
+  })();
+
+  var Copy = (function () {
+    function copyNode(argument) {
+      release || assert (arguments.length >= 1, "Copy not enough args.");
+      this.argument = argument;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    copyNode.prototype = extend(Value, "Copy")
+    copyNode.prototype.nodeName = "Copy";
+    copyNode.prototype.visitInputs = function (visitor) {
+      visitor(this.argument);
+    };
+    return copyNode;
+  })();
+
+  var Move = (function () {
+    function moveNode(to, from) {
+      release || assert (arguments.length >= 2, "Move not enough args.");
+      this.to = to;
+      this.from = from;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    moveNode.prototype = extend(Value, "Move")
+    moveNode.prototype.nodeName = "Move";
+    moveNode.prototype.visitInputs = function (visitor) {
+      visitor(this.to);
+      visitor(this.from);
+    };
+    return moveNode;
+  })();
+
+  var Projection = (function () {
+    function projectionNode(argument, type, selector) {
+      release || assert (arguments.length >= 2, "Projection not enough args.");
+      this.argument = argument;
+      this.type = type;
+      this.selector = selector;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    projectionNode.prototype = extend(Value, "Projection")
+    projectionNode.prototype.nodeName = "Projection";
+    projectionNode.prototype.visitInputs = function (visitor) {
+      visitor(this.argument);
+    };
+    return projectionNode;
+  })();
+
+  var Latch = (function () {
+    function latchNode(control, condition, left, right) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (arguments.length >= 4, "Latch not enough args.");
+      this.control = control;
+      this.condition = condition;
+      this.left = left;
+      this.right = right;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    latchNode.prototype = extend(Value, "Latch")
+    latchNode.prototype.nodeName = "Latch";
+    latchNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      visitor(this.condition);
+      visitor(this.left);
+      visitor(this.right);
+    };
+    return latchNode;
+  })();
+
+  var Binary = (function () {
+    function binaryNode(operator, left, right) {
+      release || assert (arguments.length >= 3, "Binary not enough args.");
+      this.operator = operator;
+      this.left = left;
+      this.right = right;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    binaryNode.prototype = extend(Value, "Binary")
+    binaryNode.prototype.nodeName = "Binary";
+    binaryNode.prototype.visitInputs = function (visitor) {
+      visitor(this.left);
+      visitor(this.right);
+    };
+    return binaryNode;
+  })();
+
+  var Unary = (function () {
+    function unaryNode(operator, argument) {
+      release || assert (arguments.length >= 2, "Unary not enough args.");
+      this.operator = operator;
+      this.argument = argument;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    unaryNode.prototype = extend(Value, "Unary")
+    unaryNode.prototype.nodeName = "Unary";
+    unaryNode.prototype.visitInputs = function (visitor) {
+      visitor(this.argument);
+    };
+    return unaryNode;
+  })();
+
+  var Constant = (function () {
+    function constantNode(value) {
+      release || assert (arguments.length >= 1, "Constant not enough args.");
+      this.value = value;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    constantNode.prototype = extend(Value, "Constant")
+    constantNode.prototype.nodeName = "Constant";
+    constantNode.prototype.visitInputs = function (visitor) {
+    };
+    return constantNode;
+  })();
+
+  var GlobalProperty = (function () {
+    function globalPropertyNode(name) {
+      release || assert (arguments.length >= 1, "GlobalProperty not enough args.");
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    globalPropertyNode.prototype = extend(Value, "GlobalProperty")
+    globalPropertyNode.prototype.nodeName = "GlobalProperty";
+    globalPropertyNode.prototype.visitInputs = function (visitor) {
+    };
+    return globalPropertyNode;
+  })();
+
+  var This = (function () {
+    function thisNode(control) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 1, "This not enough args.");
+      this.control = control;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    thisNode.prototype = extend(Value, "This")
+    thisNode.prototype.nodeName = "This";
+    thisNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+    };
+    return thisNode;
+  })();
+
+  var Throw = (function () {
+    function throwNode(control, argument) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 2, "Throw not enough args.");
+      this.control = control;
+      this.argument = argument;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    throwNode.prototype = extend(Value, "Throw")
+    throwNode.prototype.nodeName = "Throw";
+    throwNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+      visitor(this.argument);
+    };
+    return throwNode;
+  })();
+
+  var Arguments = (function () {
+    function argumentsNode(control) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 1, "Arguments not enough args.");
+      this.control = control;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    argumentsNode.prototype = extend(Value, "Arguments")
+    argumentsNode.prototype.nodeName = "Arguments";
+    argumentsNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+    };
+    return argumentsNode;
+  })();
+
+  var Parameter = (function () {
+    function parameterNode(control, index, name) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 3, "Parameter not enough args.");
+      this.control = control;
+      this.index = index;
+      this.name = name;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    parameterNode.prototype = extend(Value, "Parameter")
+    parameterNode.prototype.nodeName = "Parameter";
+    parameterNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+    };
+    return parameterNode;
+  })();
+
+  var NewArray = (function () {
+    function newArrayNode(control, elements) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 2, "NewArray not enough args.");
+      this.control = control;
+      this.elements = elements;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    newArrayNode.prototype = extend(Value, "NewArray")
+    newArrayNode.prototype.nodeName = "NewArray";
+    newArrayNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+      visitArrayInputs(this.elements, visitor);
+    };
+    return newArrayNode;
+  })();
+
+  var NewObject = (function () {
+    function newObjectNode(control, properties) {
+      release || assert (isControl(control), "control");
+      release || assert (arguments.length >= 2, "NewObject not enough args.");
+      this.control = control;
+      this.properties = properties;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    newObjectNode.prototype = extend(Value, "NewObject")
+    newObjectNode.prototype.nodeName = "NewObject";
+    newObjectNode.prototype.visitInputs = function (visitor) {
+      visitor(this.control);
+      visitArrayInputs(this.properties, visitor);
+    };
+    return newObjectNode;
+  })();
+
+  var KeyValuePair = (function () {
+    function keyValuePairNode(key, value) {
+      release || assert (arguments.length >= 2, "KeyValuePair not enough args.");
+      this.key = key;
+      this.value = value;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    keyValuePairNode.prototype = extend(Value, "KeyValuePair")
+    keyValuePairNode.prototype.nodeName = "KeyValuePair";
+    keyValuePairNode.prototype.visitInputs = function (visitor) {
+      visitor(this.key);
+      visitor(this.value);
+    };
+    return keyValuePairNode;
+  })();
+
+  var ASScope = (function () {
+    function asScopeNode(parent, object, isWith) {
+      release || assert (arguments.length >= 3, "ASScope not enough args.");
+      this.parent = parent;
+      this.object = object;
+      this.isWith = isWith;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asScopeNode.prototype = extend(Value, "ASScope")
+    asScopeNode.prototype.nodeName = "ASScope";
+    asScopeNode.prototype.visitInputs = function (visitor) {
+      visitor(this.parent);
+      visitor(this.object);
+    };
+    return asScopeNode;
+  })();
+
+  var ASGlobal = (function () {
+    function asGlobalNode(control, scope) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isScope(scope), "scope");
+      release || assert (arguments.length >= 2, "ASGlobal not enough args.");
+      this.control = control;
+      this.scope = scope;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asGlobalNode.prototype = extend(Value, "ASGlobal")
+    asGlobalNode.prototype.nodeName = "ASGlobal";
+    asGlobalNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      visitor(this.scope);
+    };
+    return asGlobalNode;
+  })();
+
+  var ASNewActivation = (function () {
+    function asNewActivationNode(methodInfo) {
+      release || assert (arguments.length >= 1, "ASNewActivation not enough args.");
+      this.methodInfo = methodInfo;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asNewActivationNode.prototype = extend(Value, "ASNewActivation")
+    asNewActivationNode.prototype.nodeName = "ASNewActivation";
+    asNewActivationNode.prototype.visitInputs = function (visitor) {
+    };
+    return asNewActivationNode;
+  })();
+
+  var ASMultiname = (function () {
+    function asMultinameNode(namespaces, name, flags) {
+      release || assert (arguments.length >= 3, "ASMultiname not enough args.");
+      this.namespaces = namespaces;
+      this.name = name;
+      this.flags = flags;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asMultinameNode.prototype = extend(Value, "ASMultiname")
+    asMultinameNode.prototype.nodeName = "ASMultiname";
+    asMultinameNode.prototype.visitInputs = function (visitor) {
+      visitor(this.namespaces);
+      visitor(this.name);
+    };
+    return asMultinameNode;
+  })();
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+  function node() {
+    this.id = nextID[nextID.length - 1] += 1;
+  }
+
+  Node.startNumbering = function () {
+    nextID.push(0);
+  };
+
+  Node.stopNumbering = function () {
+    nextID.pop();
+  };
+
+  Node.prototype.toString = function (brief) {
+    if (brief) {
+      return nameOf(this);
+    }
+    var inputs = [];
+    this.visitInputs(function (input) {
+      inputs.push(nameOf(input));
+    }, true);
+    var str = nameOf(this) + " = " + this.nodeName.toUpperCase();
+    if (this.toStringDetails) {
+      str += " " + this.toStringDetails();
+    }
+    if (inputs.length) {
+      str += " " + inputs.join(", ");
+    }
+    return str;
+  };
+
+  Node.prototype.visitInputsNoConstants = function visitInputs(visitor) {
+    this.visitInputs(function (node) {
+      if (isConstant(node)) {
+        return;
+      }
+      visitor(node);
+    });
+  };
+
+  Node.prototype.replaceInput = function(oldInput, newInput) {
+    var count = 0;
+    for (var k in this) {
+      var v = this[k];
+      if (v instanceof Node) {
+        if (v === oldInput) {
+          this[k] = newInput;
+          count ++;
+        }
+      }
+      if (v instanceof Array) {
+        count += v.replace(oldInput, newInput);
+      }
+    }
+    return count;
+  };
+
+  Projection.Type = {
+    CASE: "case",
+    TRUE: "true",
+    FALSE: "false",
+    STORE: "store",
+    SCOPE: "scope"
+  };
+
+  Projection.prototype.project = function () {
+    return this.argument;
+  };
+
+  Phi.prototype.seal = function seal() {
+    this.sealed = true;
+  };
+
+  Phi.prototype.pushValue = function pushValue(x) {
+    release || assert (isValue(x));
+    release || assert (!this.sealed);
+    this.args.push(x);
+  };
+
+  KeyValuePair.prototype.mustFloat = true;
+  ASMultiname.prototype.mustFloat = true;
+  ASMultiname.prototype.isAttribute = function () {
+    return this.flags & 0x01;
+  };
+
+  var Flags = {
+    INDEXED: 0x01,
+    RESOLVED: 0x02,
+    PRISTINE: 0x04,
+    IS_METHOD: 0x08
+  };
+
   var Operator = (function () {
     var map = {};
 
@@ -112,9 +1605,8 @@
     return operator;
   })();
 
-
   function extend(c, name) {
-    assert (c);
+    release || assert (c);
     return Object.create(c.prototype, {nodeName: { value: name }});
   }
 
@@ -149,325 +1641,15 @@
     return node.id;
   }
 
-  var Node = (function () {
-    var nextID = [];
-    function node() {
-      this.id = nextID[nextID.length - 1] += 1;
+  function visitArrayInputs(array, visitor) {
+    for (var i = 0; i < array.length; i++) {
+      visitor(array[i]);
     }
-    node.startNumbering = function () {
-      nextID.push(0);
-    };
-    node.stopNumbering = function () {
-      nextID.pop();
-    };
-    node.prototype.nodeName = "Node";
-    node.prototype.toString = function (brief) {
-      if (brief) {
-        return nameOf(this);
-      }
-      var inputs = [];
-      this.visitInputs(function (input) {
-        inputs.push(nameOf(input));
-      }, true);
-      var str = nameOf(this) + " = " + this.nodeName.toUpperCase();
-      if (this.toStringDetails) {
-        str += " " + this.toStringDetails();
-      }
-      if (inputs.length) {
-        str += " " + inputs.join(", ");
-      }
-      return str;
-    };
-
-    node.prototype.visitInputs = function (fn, visitConstants) {
-      if (isConstant(this)) {
-        // Don't visit properties of constants.
-        return;
-      }
-      for (var k in this) {
-        var v = this[k];
-        if (v instanceof Constant && !visitConstants) {
-          continue;
-        }
-        if (v instanceof Node) {
-          fn(v);
-        }
-        if (v instanceof Array) {
-          v.forEach(function (x) {
-            if (x instanceof Constant && !visitConstants) {
-              return;
-            }
-            fn(x);
-          });
-        }
-      }
-    };
-
-    node.prototype.replaceInput = function(oldInput, newInput) {
-      var count = 0;
-      for (var k in this) {
-        var v = this[k];
-        if (v instanceof Node) {
-          if (v === oldInput) {
-            this[k] = newInput;
-            count ++;
-          }
-        }
-        if (v instanceof Array) {
-          count += v.replace(oldInput, newInput);
-        }
-      }
-      return count;
-    };
-
-    node.prototype.push = function (value) {
-      if (this.length === undefined) {
-        this.length = 0;
-      }
-      this[this.length ++] = value;
-    };
-    return node;
-  })();
-
-  var Control = (function () {
-    function control() {
-      Node.apply(this);
-    }
-    control.prototype = extend(Node);
-    return control;
-  })();
-
-  var Value = (function () {
-    function value() {
-      Node.apply(this);
-    }
-    value.prototype = extend(Node);
-    value.prototype.mustFloat = false;
-    return value;
-  })();
-
-  var Region = (function () {
-    function region(predecessor) {
-      Control.call(this);
-      this.predecessors = predecessor ? [predecessor] : [];
-      this.phis = [];
-    }
-    region.prototype = extend(Control, "Region");
-
-    region.prototype.verify = function () {
-      var predecessors = this.predecessors;
-      predecessors.forEach(function (x) {
-        assert (x);
-        // assert (x instanceof Control, x);
-      });
-      if (predecessors.length > 1) {
-        this.phis.forEach(function (x) {
-          assert (x instanceof Phi);
-          assert (x.args.length === predecessors.length);
-        });
-      }
-    };
-    return region;
-  })();
-
-  var Start = (function () {
-    function start() {
-      Region.call(this);
-      this.control = this;
-    }
-    start.prototype = extend(Region, "Start");
-    return start;
-  })();
-
-  var Phi = (function () {
-    function phi(control, value) {
-      Node.call(this);
-      assert (control instanceof Region);
-      this.control = control;
-      this.args = value ? [value] : [];
-      this.sealed = false;
-    }
-    phi.prototype = extend(Value, "Phi");
-    phi.prototype.seal = function seal() {
-      this.sealed = true;
-    };
-    phi.prototype.pushValue = function pushValue(x) {
-      assert (isValue(x));
-      assert (!this.sealed);
-      this.args.push(x);
-    };
-    return phi;
-  })();
-
-  var Variable = (function () {
-    function variable(name) {
-      assert (isString(name));
-      this.name = name;
-    }
-    variable.prototype = extend(Value, "Variable");
-    return variable;
-  })();
-
-  var Copy = (function () {
-    function copy(argument) {
-      Node.call(this);
-      assert (argument);
-      this.argument = argument;
-    }
-    copy.prototype = extend(Value, "Copy");
-    return copy;
-  })();
-
-  var Move = (function () {
-    function move(to, from) {
-      assert (to instanceof Variable);
-      assert (from instanceof Variable || from instanceof Constant, from);
-      assert (to !== from);
-      this.to = to;
-      this.from = from;
-    }
-    move.prototype = extend(Value, "Move");
-    move.prototype.toString = function () {
-      return this.to.name + " <= " + this.from;
-    };
-    return move;
-  })();
-
-  var End = (function () {
-    function end(control) {
-      Control.call(this, control);
-    }
-    end.prototype = extend(Control, "End");
-    return end;
-  })();
-
-  var If = (function () {
-    function ifNode(control, predicate) {
-      Control.call(this);
-      assert (predicate);
-      this.control = control;
-      this.predicate = predicate;
-    }
-    ifNode.prototype = extend(End, "If");
-    return ifNode;
-  })();
-
-  var Switch = (function () {
-    function switchNode(control, determinant) {
-      Control.call(this);
-      this.control = control;
-      this.determinant = determinant;
-    }
-    switchNode.prototype = extend(End, "Switch");
-    return switchNode;
-  })();
-
-  var Jump = (function () {
-    function jump(control) {
-      Control.call(this);
-      this.control = control;
-    }
-    jump.prototype = extend(End, "Jump");
-    return jump;
-  })();
-
-  var Stop = (function () {
-    function stop(control, store, argument) {
-      Control.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (argument);
-      this.control = control;
-      this.store = store;
-      this.argument = argument;
-    }
-    stop.prototype = extend(End, "Stop");
-    return stop;
-  })();
-
-  var Projection = (function () {
-    function projection(argument, type, selector) {
-      Value.call(this);
-      assert (type);
-      assert (!(argument instanceof Projection));
-      this.argument = argument;
-      this.type = type;
-      if (selector) {
-        this.selector = selector;
-      }
-    }
-    projection.Type = {
-      CASE: "case",
-      TRUE: "true",
-      FALSE: "false",
-      STORE: "store",
-      SCOPE: "scope"
-    };
-    projection.prototype = extend(Value, "Projection");
-    projection.prototype.project = function () {
-      return this.argument;
-    };
-    projection.prototype.toStringDetails = function () {
-      return String(this.type).toUpperCase();
-    };
-    return projection;
-  })();
-
-  function isProjection(node, type) {
-    return node instanceof Projection && (!type || node.type === type);
   }
 
-  var Latch = (function () {
-    function latch(control, condition, left, right) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      this.control = control;
-      this.condition = condition;
-      this.left = left;
-      this.right = right;
-    }
-    latch.prototype = extend(Value, "Latch");
-    return latch;
-  })();
+  function visitNothing() {
 
-  var Binary = (function () {
-    function binary(operator, left, right) {
-      Node.call(this);
-      this.operator = operator;
-      this.left = left;
-      this.right = right;
-    }
-    binary.prototype = extend(Value, "Binary");
-    binary.prototype.toStringDetails = function () {
-      return String(this.operator.name).toUpperCase();
-    };
-    return binary;
-  })();
-
-  var Unary = (function () {
-    function unary(operator, argument) {
-      Node.call(this);
-      assert (operator instanceof Operator);
-      assert (argument);
-      this.operator = operator;
-      this.argument = argument;
-    }
-    unary.prototype = extend(Value, "Unary");
-    unary.prototype.toStringDetails = function () {
-      return String(this.operator.name).toUpperCase();
-    };
-    return unary;
-  })();
-
-  var Constant = (function () {
-    function constant(value) {
-      Node.call(this);
-      this.value = value;
-    }
-    constant.prototype = extend(Value, "Constant");
-    return constant;
-  })();
-
+  }
 
   function isNotPhi(phi) {
     return !isPhi(phi);
@@ -478,7 +1660,7 @@
   }
 
   function isScope(scope) {
-    return isPhi(scope) || scope instanceof AVM2Scope || isProjection(scope, Projection.Type.SCOPE);
+    return isPhi(scope) || scope instanceof ASScope || isProjection(scope, Projection.Type.SCOPE);
   }
 
   function isMultinameConstant(node) {
@@ -486,7 +1668,7 @@
   }
 
   function isMultiname(name) {
-    return isMultinameConstant(name) || name instanceof AVM2Multiname;
+    return isMultinameConstant(name) || name instanceof ASMultiname;
   }
 
   function isStore(store) {
@@ -509,65 +1691,12 @@
     return array instanceof Array;
   }
 
-  var AVM2Scope = (function () {
-    function constructor(parent, object, isWith) {
-      Node.call(this);
-      assert (isScope(parent));
-      assert (object);
-      assert (isBoolean(isWith));
-      this.parent = parent;
-      this.object = object;
-      this.isWith = isWith;
-    }
-    constructor.prototype = extend(Value, "AVM2_Scope");
-    return constructor;
-  })();
-
-  var This = (function () {
-    function thisNode(control) {
-      Node.call(this);
-      assert (control);
-      this.control = control;
-    }
-    thisNode.prototype = extend(Value, "This");
-    return thisNode;
-  })();
-
-  var Throw = (function () {
-    function throwNode(control, argument) {
-      Node.call(this);
-      assert (control);
-      this.control = control;
-      this.argument = argument;
-    }
-    throwNode.prototype = extend(Value, "Throw");
-    return throwNode;
-  })();
-
-  var Arguments = (function () {
-    function argumentsNode(control) {
-      Node.call(this);
-      assert (control);
-      this.control = control;
-    }
-    argumentsNode.prototype = extend(Value, "Arguments");
-    return argumentsNode;
-  })();
-
-  var AVM2Global = (function () {
-    function constructor(control, scope) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isScope(scope));
-      this.control = control;
-      this.scope = scope;
-    }
-    constructor.prototype = extend(Value, "AVM2_Global");
-    return constructor;
-  })();
-
   function isControlOrNull(control) {
     return isControl(control) || control === null;
+  }
+
+  function isStoreOrNull(store) {
+    return isStore(store) || store === null;
   }
 
   function isControl(control) {
@@ -582,316 +1711,9 @@
     return value instanceof Value;
   }
 
-  var GlobalProperty = (function () {
-    function globalProperty(name) {
-      Node.call(this);
-      assert (isString(name));
-      this.name = name;
-    }
-    globalProperty.prototype = extend(Value, "GlobalProperty");
-    return globalProperty;
-  })();
-
-  var GetProperty = (function () {
-    function getProperty(control, store, object, name) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (store === null || isStore(store));
-      assert (object);
-      assert (name);
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.name = name;
-    }
-    getProperty.prototype = extend(Value, "GetProperty");
-    return getProperty;
-  })();
-
-  var AVM2GetProperty = (function () {
-    function avm2GetProperty(control, store, object, name, isIndexed, isMethod, ic) {
-      GetProperty.call(this, control, store, object, name);
-      assert (isBoolean(isIndexed));
-      assert (isBoolean(isMethod));
-      assert (isNullOrUndefined(ic) || isConstant(ic));
-      assert (isMultiname(name));
-      this.isIndexed = isIndexed;
-      this.isMethod = isMethod;
-      this.ic = ic;
-    }
-    avm2GetProperty.prototype = extend(GetProperty, "AVM2_GetProperty");
-    return avm2GetProperty;
-  })();
-
-  var AVM2DeleteProperty = (function () {
-    function avm2DeleteProperty(control, store, object, name) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (object);
-      assert (name);
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.name = name;
-    }
-    avm2DeleteProperty.prototype = extend(Value, "AVM2_DeleteProperty");
-    return avm2DeleteProperty;
-  })();
-
-  var AVM2HasProperty = (function () {
-    function avm2HasProperty(control, store, object, name) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (object);
-      assert (name);
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.name = name;
-    }
-    avm2HasProperty.prototype = extend(Value, "AVM2_HasProperty");
-    return avm2HasProperty;
-  })();
-
-  // Override GetProperty to take advantage of its common structure
-  var AVM2GetDescendants = (function () {
-    function avm2GetDescendants(control, store, object, name) {
-      GetProperty.call(this, control, store, object, name, false);
-    }
-    avm2GetDescendants.prototype = extend(GetProperty, "AVM2_GetDescendants");
-    return avm2GetDescendants;
-  })();
-
-  var SetProperty = (function () {
-    function setProperty(control, store, object, name, value) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (object);
-      assert (name);
-      assert (value);
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.name = name;
-      this.value = value;
-    }
-    setProperty.prototype = extend(Value, "SetProperty");
-    return setProperty;
-  })();
-
-  var AVM2SetProperty = (function () {
-    function avm2SetProperty(control, store, object, name, value, isIndexed, ic) {
-      SetProperty.call(this, control, store, object, name, value);
-      assert (isBoolean(isIndexed));
-      assert (isNullOrUndefined(ic) || isConstant(ic));
-      assert (isMultiname(name));
-      this.isIndexed = isIndexed;
-      this.ic = ic;
-    }
-    avm2SetProperty.prototype = extend(SetProperty, "AVM2_SetProperty");
-    return avm2SetProperty;
-  })();
-
-  var AVM2GetSlot = (function () {
-    function avm2GetSlot(control, store, object, index) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (object);
-      assert (isValue(index));
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.index = index;
-    }
-    avm2GetSlot.prototype = extend(Value, "AVM2_GetSlot");
-    return avm2GetSlot;
-   })();
-
-  var AVM2SetSlot = (function () {
-    function avm2SetSlot(control, store, object, index, value) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (object);
-      assert (isValue(index));
-      assert (value);
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.index = index;
-      this.value = value;
-     }
-     avm2SetSlot.prototype = extend(Value, "AVM2_SetSlot");
-     return avm2SetSlot;
-  })();
-
-  var AVM2FindProperty = (function () {
-    function avm2FindProperty(control, store, scope, name, domain, strict) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isStore(store));
-      assert (isScope(scope));
-      assert (isMultiname(name), name);
-      assert (isConstant(domain));
-      assert (isBoolean(strict));
-      this.control = control;
-      this.store = store;
-      this.scope = scope;
-      this.name = name;
-      this.domain = domain;
-      this.strict = strict;
-    }
-    avm2FindProperty.prototype = extend(Value, "AVM2_FindProperty");
-    return avm2FindProperty;
-  })();
-
-  var NewArray = (function () {
-    function newArray(control, elements) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isArray(elements));
-      this.control = control;
-      this.elements = elements;
-    }
-    newArray.prototype = extend(Value, "NewArray");
-    return newArray;
-  })();
-
-  var KeyValuePair = (function () {
-    function keyValuePair(key, value) {
-      Node.call(this);
-      assert (key);
-      assert (value);
-      this.key = key;
-      this.value = value;
-    }
-    keyValuePair.prototype = extend(Value, "KeyValuePair");
-    keyValuePair.prototype.mustFloat = true;
-    return keyValuePair;
-  })();
-
-  var NewObject = (function () {
-    function newObject(control, properties) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isArray(properties));
-      this.control = control;
-      this.properties = properties;
-    }
-    newObject.prototype = extend(Value, "NewObject");
-    return newObject;
-  })();
-
-  var AVM2NewActivation = (function () {
-    function avm2NewActivation(methodInfo) {
-      Node.call(this);
-      assert (isConstant(methodInfo));
-      this.methodInfo = methodInfo;
-    }
-    avm2NewActivation.prototype = extend(Value, "AVM2_NewActivation");
-    return avm2NewActivation;
-  })();
-
-  var AVM2Multiname = (function () {
-    function avm2Multiname(namespaces, name, flags) {
-      Node.call(this);
-      assert (namespaces);
-      assert (name);
-      this.namespaces = namespaces;
-      this.name = name;
-      this.flags = flags;
-    }
-    avm2Multiname.prototype = extend(Value, "AVM2_Multiname");
-    avm2Multiname.prototype.mustFloat = true;
-    return avm2Multiname;
-  })();
-
-  var Call = (function () {
-    function call(control, store, callee, object, args, pristine) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (callee);
-      assert (isValueOrNull(object));
-      assert (store === null || isStore(store));
-      assert (isArray(args));
-      this.control = control;
-      this.callee = callee;
-      this.object = object;
-      this.store = store;
-      this.args = args;
-      this.pristine = pristine;
-    }
-    call.prototype = extend(Value, "Call");
-    return call;
-  })();
-
-  var CallProperty = (function () {
-    function callProperty(control, store, object, name, args, pristine) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (isValueOrNull(object));
-      assert (name);
-      assert (store === null || isStore(store));
-      assert (isArray(args));
-      this.control = control;
-      this.store = store;
-      this.object = object;
-      this.name = name;
-      this.args = args;
-      this.pristine = pristine;
-    }
-    callProperty.prototype = extend(Value, "CallProperty");
-    return callProperty;
-  })();
-
-  var AVM2CallProperty = (function () {
-    function avm2CallProperty(control, store, object, name, isLex, args, pristine, ic) {
-      CallProperty.call(this, control, store, object, name, args, pristine);
-      assert (isBoolean(isLex));
-      assert (isNullOrUndefined(ic) || isConstant(ic));
-      assert (isMultiname(name));
-      this.isLex = isLex;
-      this.ic = ic;
-    }
-    avm2CallProperty.prototype = extend(GetProperty, "AVM2_CallProperty");
-    return avm2CallProperty;
-  })();
-
-  var New = (function () {
-    function newNode(control, store, callee, args) {
-      Node.call(this);
-      assert (isControlOrNull(control));
-      assert (callee);
-      assert (isStore(store));
-      assert (isArray(args));
-      this.control = control;
-      this.callee = callee;
-      this.store = store;
-      this.args = args;
-    }
-    newNode.prototype = extend(Value, "New");
-    return newNode;
-  })();
-
-  var AVM2New = (function () {
-    function avm2New(control, store, object, name) {
-      New.call(this, control, store, object, name);
-    }
-    avm2New.prototype = extend(New, "AVM2_New");
-    return avm2New;
-  })();
-
-  var Store = (function () {
-    function store() {
-      Node.call(this);
-    }
-    store.prototype = extend(Value, "Store");
-    return store;
-  })();
+  function isProjection(node, type) {
+    return node instanceof Projection && (!type || node.type === type);
+  }
 
   var Null = new Constant(null);
   var Undefined = new Constant(undefined);
@@ -900,24 +1722,10 @@
     return "_";
   };
 
-  var Parameter = (function () {
-    function parameter(control, index, name) {
-      Node.call(this);
-      assert (control);
-      assert (isInteger(index));
-      assert (isString(name));
-      this.control = control;
-      this.index = index;
-      this.name = name;
-    }
-    parameter.prototype = extend(Value, "Parameter");
-    return parameter;
-  })();
-
   var Block = (function () {
     function block(id, start, end) {
       if (start) {
-        assert (start instanceof Region);
+        release || assert (start instanceof Region);
       }
       this.region = start;
       this.id = id;
@@ -926,38 +1734,47 @@
       this.nodes = [start, end];
     }
     block.prototype.pushSuccessorAt = function pushSuccessor(successor, index, pushPredecessor) {
-      assert (successor);
-      assert (!this.successors[index]);
+      release || assert (successor);
+      release || assert (!this.successors[index]);
       this.successors[index] = successor;
       if (pushPredecessor) {
         successor.pushPredecessor(this);
       }
     };
     block.prototype.pushSuccessor = function pushSuccessor(successor, pushPredecessor) {
-      assert (successor);
+      release || assert (successor);
       this.successors.push(successor);
       if (pushPredecessor) {
         successor.pushPredecessor(this);
       }
     };
     block.prototype.pushPredecessor = function pushPredecessor(predecessor) {
-      assert (predecessor);
+      release || assert (predecessor);
       this.predecessors.push(predecessor);
     };
     block.prototype.visitNodes = function (fn) {
-      this.nodes.forEach(fn);
+      var nodes = this.nodes;
+      for (var i = 0, j = nodes.length; i < j; i++) {
+        fn(nodes[i]);
+      }
     };
     block.prototype.visitSuccessors = function (fn) {
-      this.successors.forEach(fn);
+      var successors = this.successors;
+      for (var i = 0, j = successors.length; i < j; i++) {
+        fn(successors[i]);
+      }
     };
     block.prototype.visitPredecessors = function (fn) {
-      this.predecessors.forEach(fn);
+      var predecessors = this.predecessors;
+      for (var i = 0, j = predecessors.length; i < j; i++) {
+        fn(predecessors[i]);
+      }
     };
     block.prototype.append = function (node) {
-      assert (this.nodes.length >= 2);
-      assert (isValue(node), node);
-      assert (isNotPhi(node));
-      assert (this.nodes.indexOf(node) < 0);
+      release || assert (this.nodes.length >= 2);
+      release || assert (isValue(node), node);
+      release || assert (isNotPhi(node));
+      release || assert (this.nodes.indexOf(node) < 0);
       if (node.mustFloat) {
         return;
       }
@@ -985,11 +1802,12 @@
       var visited = [];
       var worklist = [root];
       var push = worklist.push.bind(worklist);
+      var node;
       while ((node = worklist.pop())) {
-        if (visited[node.id]) {
+        if (visited[node.id] === 1) {
           continue;
         }
-        visited[node.id] = true;
+        visited[node.id] = 1;
         pre(node);
         worklist.push(node);
         visitChildren(node, push);
@@ -1020,17 +1838,39 @@
       }
     }
 
-    constructor.prototype.forEach = function visitAll(visitor, postOrder) {
+    constructor.prototype.forEachInPreOrderDepthFirstSearch = function forEachInPreOrderDepthFirstSearch(visitor) {
+      var visited = new Array(1024);
+      var worklist = [this.exit];
+      function push(node) {
+        if (isConstant(node)) {
+          return;
+        }
+        release || assert (node instanceof Node);
+        worklist.push(node);
+      }
+      var node;
+      while ((node = worklist.pop())) {
+        if (visited[node.id]) {
+          continue;
+        }
+        visited[node.id] = 1;
+        visitor && visitor(node);
+        worklist.push(node);
+        node.visitInputs(push);
+      }
+    };
+
+    constructor.prototype.forEach = function forEach(visitor, postOrder) {
       var search = postOrder ? postOrderDepthFirstSearch : preOrderDepthFirstSearch;
       search(this.exit, function (node, v) {
-        node.visitInputs(v);
+        node.visitInputsNoConstants(v);
       }, visitor);
     };
 
     constructor.prototype.traceMetrics = function (writer) {
       var counter = new metrics.Counter(true);
       preOrderDepthFirstSearch(this.exit, function (node, visitor) {
-        node.visitInputs(visitor);
+        node.visitInputsNoConstants(visitor);
       }, function (node) {
         counter.count(node.nodeName);
       });
@@ -1066,7 +1906,7 @@
             blocks.push(node.block);
           }
           nodes.push(node);
-          node.visitInputs(next);
+          node.visitInputsNoConstants(next);
         }
       }
 
@@ -1099,7 +1939,7 @@
       nodes.forEach(writeNode);
 
       nodes.forEach(function (node) {
-        node.visitInputs(function (input) {
+        node.visitInputsNoConstants(function (input) {
           input = followProjection(input);
           writer.writeLn("N" + node.id + " -> " + "N" + input.id + " [color=" + colorOf(input) + "];");
         });
@@ -1123,7 +1963,7 @@
     constructor.fromDFG = function fromDFG(dfg) {
       var cfg = new CFG();
 
-      assert (dfg && dfg instanceof DFG);
+      release || assert (dfg && dfg instanceof DFG);
       cfg.dfg = dfg;
 
       var visited = [];
@@ -1132,7 +1972,7 @@
         if (end instanceof Projection) {
           end = end.project();
         }
-        assert (end instanceof End || end instanceof Start, end);
+        release || assert (end instanceof End || end instanceof Start, end);
         if (visited[end.id]) {
           return;
         }
@@ -1165,7 +2005,7 @@
           buildEnd(d);
           var controlBlock = d.control.block;
           if (d instanceof Switch) {
-            assert (isProjection(c, Projection.Type.CASE));
+            release || assert (isProjection(c, Projection.Type.CASE));
             controlBlock.pushSuccessorAt(block, c.selector.value, true);
           } else if (trueProjection && controlBlock.successors.length > 0) {
             controlBlock.pushSuccessor(block, true);
@@ -1188,7 +2028,7 @@
      * exit node.
      */
     constructor.prototype.buildRootAndExit = function buildRootAndExit() {
-      assert (!this.root && !this.exit);
+      release || assert (!this.root && !this.exit);
 
       // Create new root node if the root node has predecessors.
       if (this.blocks[0].predecessors.length > 0) {
@@ -1221,8 +2061,8 @@
         }
       }
 
-      assert (this.root && this.exit);
-      assert (this.root !== this.exit);
+      release || assert (this.root && this.exit);
+      release || assert (this.root !== this.exit);
     };
 
     constructor.prototype.fromString = function (list, rootName) {
@@ -1260,7 +2100,7 @@
         buildBlock(from).pushSuccessor(buildBlock(to), true);
       }
 
-      assert (rootName && names[rootName]);
+      release || assert (rootName && names[rootName]);
       this.root = names[rootName];
     };
 
@@ -1308,7 +2148,7 @@
     };
 
     constructor.prototype.computeDominators = function (apply) {
-      assert (this.root.predecessors.length === 0, "Root node ", this.root, " must not have predecessors.");
+      release || assert (this.root.predecessors.length === 0, "Root node ", this.root, " must not have predecessors.");
 
       var dom = new Int32Array(this.blocks.length);
       for (var i = 0; i < dom.length; i++) {
@@ -1435,7 +2275,7 @@
         entry.uses.forEach(function (use) {
           count += use.replaceInput(def, value);
         });
-        assert (count >= entry.uses.length);
+        release || assert (count >= entry.uses.length);
         entry.uses = [];
         return true;
       };
@@ -1450,7 +2290,7 @@
         entry.uses.forEach(function (use) {
           count += use.replaceInput(def, value);
         });
-        assert (count >= entry.uses.length);
+        release || assert (count >= entry.uses.length);
         entry.uses = [];
         return true;
       }
@@ -1463,6 +2303,7 @@
      * () -> Map[id -> {def:Node, uses:Array[Node]}]
      */
     constructor.prototype.computeUses = function computeUses() {
+      Timer.start("computeUses");
       var writer = debug && new IndentingWriter();
 
       debug && writer.enter("> Compute Uses");
@@ -1470,7 +2311,7 @@
 
       var uses = new Uses();
 
-      dfg.forEach(function (use) {
+      dfg.forEachInPreOrderDepthFirstSearch(function (use) {
         use.visitInputs(function (def) {
           uses.addUse(def, use);
         });
@@ -1484,6 +2325,7 @@
         writer.leave("<");
         writer.leave("<");
       }
+      Timer.stop();
       return uses;
     };
 
@@ -1496,8 +2338,8 @@
       order.forEach(function (block) {
         if (block.phis) {
           block.phis.forEach(function (phi) {
-            assert (phi.control === block.region);
-            assert (phi.args.length === block.predecessors.length);
+            release || assert (phi.control === block.region);
+            release || assert (phi.args.length === block.predecessors.length);
           });
         }
       });
@@ -1537,10 +2379,11 @@
         }
         debug && writer.writeLn("Replacing: " + def.id + " in [" + entry.uses.map(toID).join(", ") + "] with " + value.id);
         var count = 0;
-        entry.uses.forEach(function (use) {
-          count += use.replaceInput(def, value);
-        });
-        assert (count >= entry.uses.length);
+        var entryUses = entry.uses;
+        for (var i = 0, j = entryUses.length; i < j; i++) {
+          count += entryUses[i].replaceInput(def, value);
+        }
+        release || assert (count >= entry.uses.length);
         entry.uses = [];
         return true;
       }
@@ -1618,7 +2461,7 @@
       while ((edge = criticalEdges.pop())) {
         var fromIndex = edge.from.successors.indexOf(edge.to);
         var toIndex = edge.to.predecessors.indexOf(edge.from);
-        assert (fromIndex >= 0 && toIndex >= 0);
+        release || assert (fromIndex >= 0 && toIndex >= 0);
         debug && writer.writeLn("Splitting critical edge: " + edge.from + " -> " + edge.to);
         var toBlock = edge.to;
         var toRegion = toBlock.region;
@@ -1640,7 +2483,7 @@
       }
 
       if (criticalEdgeCount && !release) {
-        assert (this.splitCriticalEdges() === 0);
+        release || assert (this.splitCriticalEdges() === 0);
       }
 
       debug && writer.leave("<");
@@ -1695,7 +2538,7 @@
             var phi = phis[j];
             debug && writer.writeLn("Emitting moves for: " + phi);
             var arguments = phi.args;
-            assert (predecessors.length === arguments.length);
+            release || assert (predecessors.length === arguments.length);
             for (var k = 0; k < predecessors.length; k++) {
               var predecessor = predecessors[k];
               var argument = arguments[k];
@@ -1783,7 +2626,7 @@
 
       var roots = [];
 
-      dfg.forEach(function (node) {
+      dfg.forEachInPreOrderDepthFirstSearch(function (node) {
         if (node instanceof Region || node instanceof Jump) {
           return;
         }
@@ -1814,15 +2657,16 @@
         });
       }
 
-      roots.forEach(function (node) {
-        if (node instanceof Phi) {
-          var block = node.control.block;
-          (block.phis || (block.phis = [])).push(node);
+      for (var i = 0; i < roots.length; i++) {
+        var root = roots[i];
+        if (root instanceof Phi) {
+          var block = root.control.block;
+          (block.phis || (block.phis = [])).push(root);
         }
-        if (node.control) {
-          schedule(node);
+        if (root.control) {
+          schedule(root);
         }
-      });
+      }
 
       function isScheduled(node) {
         return scheduled[node.id];
@@ -1839,13 +2683,12 @@
           return true;
         }
         return node instanceof Binary || node instanceof Unary || node instanceof Parameter;
-        // return false;
       }
 
       function append(node) {
-        assert (!isScheduled(node), "Already scheduled " + node);
+        release || assert (!isScheduled(node), "Already scheduled " + node);
         scheduled[node.id] = true;
-        assert (node.control, node);
+        release || assert (node.control, node);
         if (shouldFloat(node)) {
 
         } else {
@@ -1854,9 +2697,9 @@
       }
 
       function scheduleIn(node, region) {
-        assert (!node.control, node);
-        assert (!isScheduled(node));
-        assert (region);
+        release || assert (!node.control, node);
+        release || assert (!isScheduled(node));
+        release || assert (region);
         debugScheduler && writer.writeLn("Scheduled: " + node + " in " + region);
         node.control = region;
         append(node);
@@ -1866,7 +2709,11 @@
         debugScheduler && writer.enter("> Schedule: " + node);
 
         var inputs = [];
+        // node.checkInputVisitors();
         node.visitInputs(function (input) {
+          if (isConstant(input)) {{
+            return;
+          }}
           if (isValue(input)) {
             inputs.push(followProjection(input));
           }
@@ -1912,7 +2759,7 @@
         if (node === dfg.start || node instanceof Region) {
           return;
         }
-        assert (node.control, "Node is not scheduled: " + node);
+        release || assert (node.control, "Node is not scheduled: " + node);
       });
     };
 
@@ -1942,7 +2789,7 @@
       }
 
       function shapeOf(block) {
-        assert (block);
+        release || assert (block);
         if (block === root) {
           return "house";
         } else if (block === exit) {
@@ -2006,7 +2853,7 @@
 
     }
     function foldUnary(node, truthy) {
-      assert (node instanceof Unary);
+      release || assert (node instanceof Unary);
       if (isConstant(node.argument)) {
         return new Constant(node.operator.evaluate(node.argument.value));
       }
@@ -2026,7 +2873,7 @@
       return node;
     }
     function foldBinary(node, truthy) {
-      assert (node instanceof Binary);
+      release || assert (node instanceof Binary);
       if (isConstant(node.left) && isConstant(node.right)) {
         return new Constant(node.operator.evaluate(node.left.value, node.right.value));
       }
@@ -2054,35 +2901,35 @@
   exports.This = This;
   exports.Throw = Throw;
   exports.Arguments = Arguments;
-  exports.AVM2Global = AVM2Global;
+  exports.ASGlobal = ASGlobal;
   exports.Projection = Projection;
   exports.Region = Region;
   exports.Latch = Latch;
   exports.Binary = Binary;
   exports.Unary = Unary;
   exports.Constant = Constant;
-  exports.AVM2FindProperty = AVM2FindProperty;
+  exports.ASFindProperty = ASFindProperty;
   exports.GlobalProperty = GlobalProperty;
   exports.GetProperty = GetProperty;
   exports.SetProperty = SetProperty;
   exports.CallProperty = CallProperty;
-  exports.AVM2CallProperty = AVM2CallProperty;
-  exports.AVM2GetProperty = AVM2GetProperty;
-  exports.AVM2HasProperty = AVM2HasProperty;
-  exports.AVM2DeleteProperty = AVM2DeleteProperty;
-  exports.AVM2GetDescendants = AVM2GetDescendants;
-  exports.AVM2SetProperty = AVM2SetProperty;
-  exports.AVM2GetSlot = AVM2GetSlot;
-  exports.AVM2SetSlot = AVM2SetSlot;
+  exports.ASCallProperty = ASCallProperty;
+  exports.ASGetProperty = ASGetProperty;
+  exports.ASHasProperty = ASHasProperty;
+  exports.ASDeleteProperty = ASDeleteProperty;
+  exports.ASGetDescendants = ASGetDescendants;
+  exports.ASSetProperty = ASSetProperty;
+  exports.ASGetSlot = ASGetSlot;
+  exports.ASSetSlot = ASSetSlot;
   exports.Call = Call;
-  exports.AVM2New = AVM2New;
+  exports.ASNew = ASNew;
   exports.Phi = Phi;
   exports.Stop = Stop;
   exports.If = If;
   exports.Switch = Switch;
   exports.End = End;
   exports.Jump = Jump;
-  exports.AVM2Scope = AVM2Scope;
+  exports.ASScope = ASScope;
   exports.Operator = Operator;
   exports.Variable = Variable;
   exports.Move = Move;
@@ -2090,12 +2937,13 @@
   exports.Parameter = Parameter;
   exports.NewArray = NewArray;
   exports.NewObject = NewObject;
-  exports.AVM2NewActivation = AVM2NewActivation;
+  exports.ASNewActivation = ASNewActivation;
   exports.KeyValuePair = KeyValuePair;
-  exports.AVM2Multiname = AVM2Multiname;
+  exports.ASMultiname = ASMultiname;
 
   exports.DFG = DFG;
   exports.CFG = CFG;
+  exports.Flags = Flags;
 
   exports.PeepholeOptimizer = PeepholeOptimizer;
 

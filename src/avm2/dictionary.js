@@ -51,6 +51,8 @@ function DictionaryClass(domain, scope, instanceConstructor, baseClass) {
     return this.map.get(Object(name));
   });
 
+  defineNonEnumerableProperty(prototype, "asGetResolvedStringProperty", asGetResolvedStringPropertyFallback);
+
   defineNonEnumerableProperty(prototype, "asSetProperty", function asSetProperty(namespaces, name, flags, value) {
     var key = makePrimitiveKey(name);
     if (key !== undefined) {

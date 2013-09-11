@@ -313,6 +313,7 @@ for (var key in process.env) {
 
 constants["$DEBUG"] = new Literal(debug.value);
 constants["$RELEASE"] = new Literal(!debug.value);
+constants["release"] = new Literal(!debug.value);
 
 node = node.transform({constants: constants, scopePath: [0]});
 
