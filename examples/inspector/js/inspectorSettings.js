@@ -27,6 +27,7 @@ var DEFAULT_SETTINGS = {
   pre: true,
   render: true,
   mouse: true,
+  qtree: false,
   redraw: false,
   wireframe: false,
   release: true,
@@ -64,6 +65,7 @@ function updateAVM2State() {
   disablePreVisitor.value = state.pre ? false : true;
   disableRenderVisitor.value = state.render ? false : true;
   disableMouseVisitor.value = state.mouse ? false : true;
+  showQuadTree.value = state.qtree ? true : false;
   showRedrawRegions.value = state.redraw ? true : false;
   renderAsWireframe.value = state.wireframe ? true : false;
   traceCallExecution.value = state.traceCalls ? 1 : 0;
