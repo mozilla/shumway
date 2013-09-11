@@ -22,42 +22,25 @@ var DisplayListTree = (function() {
   var propertiesElement;
   var hoveredElement;
   var selectedElement;
+  var selectedItem;
   var boundClickListener;
   var boundMouseOverListener;
+  var boundFocusListener;
+  var boundBlurListener;
+  var boundKeyDownListener;
   var displayObjectStore;
 
   var displayObjectProps = [
+    "_name",
     "alpha",
     "blendMode",
     "cacheAsBitmap",
     "height",
-    "name",
     "scaleX",
     "scaleY",
     "visible",
     "width"
   ];
-
-  function processChildren(parent) {
-    var children = parent.displayObject._children;
-    for (var i = 0, n = children.length; i < n; i++) {
-      var child = children[i];
-      if (child) {
-        var item = {
-          displayObject: child,
-          children: [],
-          parent: parent,
-          index: displayObjectStore.length,
-          hasTimeline: flash.display.MovieClip.class.isInstanceOf(child)
-        };
-        parent.children.push(item);
-        displayObjectStore.push(item);
-        if (flash.display.DisplayObjectContainer.class.isInstanceOf(child) || flash.display.SimpleButton.class.isInstanceOf(child)) {
-          processChildren(item);
-        }
-      }
-    }
-  }
 
   function findItemElement(el) {
     while (el && el !== rootElement) {
@@ -69,94 +52,149 @@ var DisplayListTree = (function() {
     return null;
   }
 
-  function updateProperties(item) {
-    if (typeof item === "undefined") {
+  function updateProperties(displayObject) {
+    if (isNullOrUndefined(displayObject)) {
       containerElement.classList.remove("hasProperties");
       propertiesElement.innerHTML = "";
     } else {
       containerElement.classList.add("hasProperties");
       var innerHTML = "";
       for (var i = 0, n = displayObjectProps.length; i < n; i++) {
-        innerHTML += '<div>' + displayObjectProps[i] + ': ' + item.displayObject[displayObjectProps[i]] + '</div>';
+        innerHTML += '<div>' + displayObjectProps[i] + ': ' + displayObject[displayObjectProps[i]] + '</div>';
       }
       propertiesElement.innerHTML = innerHTML;
     }
   }
 
-  var ctor = function(root) {
-    this.root = { displayObject: root, children: [], parent: null, index: 0 };
-    displayObjectStore = [ this.root ];
-    processChildren(this.root);
+  function createLabel(displayObject) {
+    var div = document.createElement("div");
+    div.className = "item";
+    var spanOutline = document.createElement("span");
+    spanOutline.className = "doOutline";
+    if (!isNullOrUndefined(displayObject._wireframeStrokeStyle)) {
+      spanOutline.innerHTML = "&#xf0c8;";
+      spanOutline.setAttribute("style", "color:" + displayObject._wireframeStrokeStyle);
+    } else {
+      spanOutline.innerHTML = "&#xf096;";
+    }
+    div.appendChild(spanOutline);
+    var spanClass = document.createElement("span");
+    spanClass.textContent = displayObject.class.className;
+    spanClass.className = "doClass";
+    div.appendChild(spanClass);
+    if (!isNullOrUndefined(displayObject._name)) {
+      var spanName = document.createElement("span");
+      spanName.textContent = "'" + displayObject._name + "'";
+      spanName.className = "doName";
+      div.appendChild(spanName);
+    }
+    if (flash.display.MovieClip.class.isInstanceOf(displayObject)) {
+      var spanFrameInfo = document.createElement("span");
+      spanFrameInfo.textContent = displayObject._currentFrame + "/" + displayObject._totalFrames;
+      spanFrameInfo.className = "mcFrameInfo";
+      div.appendChild(spanFrameInfo);
+    }
+    return div;
   }
 
-  ctor.prototype = {
+  function updateChildren(item, elItemContainer) {
+    var li = document.createElement("li");
 
-    updateDom: function updateDom(elContainer) {
-      var that = this;
-      function updateChildren(elItemContainer, item) {
-        var li = document.createElement("li");
-        var div = document.createElement("div");
-        div.textContent = item.displayObject.class.className + " ";
-        if (item.hasTimeline) {
-          if (item.displayObject._name) {
-            var spanName = document.createElement("span");
-            spanName.textContent = "'" + item.displayObject._name + "'";
-            spanName.className = "dobName";
-            div.appendChild(spanName);
-          }
-          var spanFrameInfo = document.createElement("span");
-          spanFrameInfo.textContent = item.displayObject._currentFrame + "/" + item.displayObject._totalFrames;
-          spanFrameInfo.className = "mcFrameInfo";
-          div.appendChild(spanFrameInfo);
-        }
-        div.className = "item";
-        div.dataset.dosidx = item.index;
-        li.appendChild(div);
-        elItemContainer.appendChild(li);
-        if (item.children.length > 0) {
-          var ul = document.createElement("ul");
-          for (var i = 0, n = item.children.length; i < n; i++) {
-            updateChildren(ul, item.children[i]);
-          }
-          li.appendChild(ul);
+    var label = createLabel(item);
+    label.dataset.dosidx = displayObjectStore.length;
+    li.appendChild(label);
+
+    displayObjectStore.push(item);
+
+    // If item is container, iterate over its children and recurse
+    if ((flash.display.DisplayObjectContainer.class.isInstanceOf(item) ||
+         flash.display.SimpleButton.class.isInstanceOf(item)) &&
+        item._children &&
+        item._children.length > 0)
+    {
+      var ul = document.createElement("ul");
+      var children = item._children;
+      for (var i = 0, n = children.length; i < n; i++) {
+        if (children[i]) {
+          updateChildren(children[i], ul);
         }
       }
-      if (boundClickListener) {
-        rootElement.removeEventListener("click", boundClickListener);
+      li.appendChild(ul);
+    }
+
+    elItemContainer.appendChild(li);
+  }
+
+  var DisplayListTree = function() {}
+
+  DisplayListTree.prototype = {
+
+    update: function updateDom(stage, container) {
+      displayObjectStore = [];
+
+      var scrollTopOld = 0;
+      if (rootElement) {
+        scrollTopOld = rootElement.scrollTop;
       }
-      if (boundMouseOverListener) {
-        rootElement.removeEventListener("mouseover", boundMouseOverListener);
+
+      containerElement = container;
+      containerElement.innerHTML = "";
+
+      var displayListRoot = document.createElement("div");
+      displayListRoot.setAttribute("id", "displayListRoot");
+
+      this._removeEventListeners(rootElement);
+
+      rootElement = document.createElement("div");
+      rootElement.setAttribute("id", "displayList");
+      rootElement.setAttribute("tabindex", "6");
+      rootElement.appendChild(displayListRoot);
+
+      this._addEventListeners(rootElement);
+
+      propertiesElement = document.createElement("div");
+      propertiesElement.setAttribute("id", "displayObjectProperties");
+
+      updateChildren(stage, displayListRoot);
+
+      containerElement.appendChild(rootElement);
+      containerElement.appendChild(propertiesElement);
+
+      if (selectedItem) {
+        var dosidx = displayObjectStore.indexOf(selectedItem);
+        if (dosidx > -1) {
+          selectedElement = document.querySelector("#displayListRoot .item[data-dosidx=\"" + dosidx + "\"]");
+          selectedElement.classList.add("selected");
+        } else {
+          selectedItem = null;
+          selectedElement = null;
+        }
       }
-      boundClickListener = this._onClick.bind(this);
-      boundMouseOverListener = this._onMouseOver.bind(this);
-      elContainer.innerHTML = '<div id="displayList"><ul id="displayListRoot"></ul></div><div id="displayObjectProperties"></div>';
-      containerElement = elContainer;
-      propertiesElement = document.getElementById("displayObjectProperties");
-      rootElement = document.getElementById("displayList");
-      rootElement.addEventListener("click", boundClickListener);
-      rootElement.addEventListener("mouseover", boundMouseOverListener);
-      updateChildren(document.getElementById("displayListRoot"), this.root);
-      updateProperties();
+
+      updateProperties(selectedItem);
+
+      if (scrollTopOld !== 0) {
+        rootElement.scrollTop = scrollTopOld;
+      }
     },
 
     _onClick: function _onClick(event) {
-      function clearSelectedState() {
-        if (selectedElement) {
-          selectedElement.classList.remove("selected");
-        }
-      }
       var el = findItemElement(event.target);
       if (el) {
         // CLICK
-        clearSelectedState();
+        if (selectedElement) {
+          selectedElement.classList.remove("selected");
+        }
         if (el !== selectedElement || (selectedElement && !event.metaKey && !event.altKey)) {
           // SELECT
           selectedElement = el;
           selectedElement.classList.add("selected");
-          updateProperties(displayObjectStore[el.dataset.dosidx]);
+          selectedItem = displayObjectStore[parseInt(el.dataset.dosidx)];
+          updateProperties(selectedItem);
         } else if (selectedElement) {
           // UNSELECT
           selectedElement = null;
+          selectedItem = null;
           updateProperties();
         }
       }
@@ -173,10 +211,78 @@ var DisplayListTree = (function() {
         // OUT
         hoveredElement = null;
       }
+    },
+
+    _onFocus: function _onFocus(event) {
+      boundKeyDownListener = this._onKeyDown.bind(this);
+      event.target.addEventListener('keydown', boundKeyDownListener, false);
+    },
+
+    _onBlur: function _onBlur(event) {
+      if (boundKeyDownListener) {
+        event.target.removeEventListener("keydown", boundKeyDownListener);
+      }
+    },
+
+    _onKeyDown: function _onBlur(event) {
+      var dir = 0;
+      switch (event.keyCode) {
+        case 40:
+          dir = 1;
+          break;
+        case 38:
+          dir = -1;
+          break;
+      }
+      if (dir != 0) {
+        var dosidx = clamp(selectedElement ? +selectedElement.dataset.dosidx + dir : 0, 0, displayObjectStore.length - 1);
+        var newSelectedItem = displayObjectStore[dosidx];
+        if (selectedItem !== newSelectedItem) {
+          if (selectedElement) {
+            selectedElement.classList.remove("selected");
+          }
+          selectedItem = newSelectedItem;
+          selectedElement = document.querySelector("#displayListRoot .item[data-dosidx=\"" + dosidx + "\"]");
+          selectedElement.classList.add("selected");
+          updateProperties(selectedItem);
+        }
+        event.preventDefault();
+      }
+    },
+
+    _addEventListeners: function _addEventListeners(el) {
+        boundClickListener = this._onClick.bind(this);
+        boundMouseOverListener = this._onMouseOver.bind(this);
+        boundFocusListener = this._onFocus.bind(this);
+        boundBlurListener = this._onBlur.bind(this);
+        el.addEventListener("click", boundClickListener);
+        el.addEventListener("mouseover", boundMouseOverListener);
+        el.addEventListener("focus", boundFocusListener);
+        el.addEventListener("blur", boundBlurListener);
+    },
+
+    _removeEventListeners: function _removeEventListeners(el) {
+      if (el) {
+        if (boundClickListener) {
+          el.removeEventListener("click", boundClickListener);
+        }
+        if (boundMouseOverListener) {
+          el.removeEventListener("mouseover", boundMouseOverListener);
+        }
+        if (boundFocusListener) {
+          el.removeEventListener("focus", boundFocusListener);
+        }
+        if (boundBlurListener) {
+          el.removeEventListener("blur", boundBlurListener);
+        }
+        if (boundKeyDownListener) {
+          el.removeEventListener("keydown", boundKeyDownListener);
+        }
+      }
     }
 
   };
 
-  return ctor;
+  return DisplayListTree;
 
 })();

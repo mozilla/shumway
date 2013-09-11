@@ -23,6 +23,7 @@ var disablePreVisitor = rendererOptions.register(new Option("dpv", "disablePreVi
 var disableRenderVisitor = rendererOptions.register(new Option("drv", "disableRenderVisitor", "boolean", false, "disable render visitor"));
 var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMouseVisitor", "boolean", false, "disable mouse visitor"));
 var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
+var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
 
 var CanvasCache = {
   cache: [],
@@ -116,7 +117,7 @@ RenderVisitor.prototype = {
 
       ctx.save();
 
-      if (!this.refreshStage) {
+      if (!this.refreshStage && !renderAsWireframe.value) {
         ctx.clip();
       }
 
@@ -413,31 +414,54 @@ function renderDisplayObject(child, ctx, transform, context) {
     }
   }
 
-  if (child._alpha !== 1) {
-    ctx.globalAlpha *= child._alpha;
-  }
+  child._wireframeStrokeStyle = null;
 
-  if (!context.refreshStage && !child._invalid) {
-    return;
-  }
+  if (!renderAsWireframe.value) {
 
-  // TODO: move into Graphics class
-  if (child._graphics) {
-    var graphics = child._graphics;
-
-    if (graphics._bitmap) {
-      ctx.save();
-      ctx.translate(child._bbox.xMin, child._bbox.yMin);
-      context.colorTransform.setAlpha(ctx, true);
-      ctx.drawImage(graphics._bitmap, 0, 0);
-      ctx.restore();
-    } else {
-      graphics.draw(ctx, context.isClippingMask, child.ratio, context.colorTransform);
+    if (child._alpha !== 1) {
+      ctx.globalAlpha *= child._alpha;
     }
-  }
 
-  if (child.draw) {
-    child.draw(ctx, child.ratio, context.colorTransform);
+    if (!context.refreshStage && !child._invalid) {
+      return;
+    }
+
+    // TODO: move into Graphics class
+    if (child._graphics) {
+      var graphics = child._graphics;
+
+      if (graphics._bitmap) {
+        ctx.save();
+        ctx.translate(child._bbox.xMin, child._bbox.yMin);
+        context.colorTransform.setAlpha(ctx, true);
+        ctx.drawImage(graphics._bitmap, 0, 0);
+        ctx.restore();
+      } else {
+        graphics.draw(ctx, context.isClippingMask, child.ratio, context.colorTransform);
+      }
+    }
+
+    if (child.draw) {
+      child.draw(ctx, child.ratio, context.colorTransform);
+    }
+
+  } else {
+
+    if (!context.refreshStage && !child._invalid) {
+      return;
+    }
+
+    if (child.getBounds) {
+      var b = child.getBounds(child);
+      if (b && b.width && b.height) {
+        child._wireframeStrokeStyle = '#'+('00000'+(Math.random()*(1<<24)|0).toString(16)).slice(-6);
+        ctx.save();
+        ctx.strokeStyle = child._wireframeStrokeStyle;
+        ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.width - 1, b.height - 1);
+        ctx.restore();
+      }
+    }
+
   }
 
   child._invalid = false;
