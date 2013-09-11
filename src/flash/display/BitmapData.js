@@ -93,7 +93,11 @@ var BitmapDataDefinition = (function () {
       if (matrix) {
         this._ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
       }
-      (new RenderVisitor(source, this._ctx, true)).startFragment();
+      if (flash.display.BitmapData.class.isInstanceOf(source)) {
+        this._ctx.drawImage(source._drawable, 0, 0);
+      } else {
+        (new RenderVisitor(source, this._ctx, true)).startFragment();
+      }
       this._ctx.restore();
       this._invalidate();
     },
