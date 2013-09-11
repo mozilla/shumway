@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global renderDisplayObject, RenderVisitor, argbUintToStr */
+/*global renderDisplayObject, RenderVisitor, argbUintToStr, getBlendModeName */
 
 var BitmapDataDefinition = (function () {
   function replaceRect(ctx, x, y, w, h, alpha) {
@@ -93,6 +93,7 @@ var BitmapDataDefinition = (function () {
       if (matrix) {
         this._ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
       }
+      this._ctx.globalCompositeOperation = getBlendModeName(blendMode);
       if (flash.display.BitmapData.class.isInstanceOf(source)) {
         this._ctx.drawImage(source._drawable, 0, 0);
       } else {
