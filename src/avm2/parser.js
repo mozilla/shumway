@@ -917,7 +917,10 @@ var Multiname = (function () {
   };
 
   multiname.prototype.isAnyNamespace = function isAnyNamespace() {
-    return !this.isRuntimeNamespace() && this.namespaces.length === 0;
+    // x.* has the same meaning as x.*::*, so look for the former case and give
+    // it the same meaning of the latter.
+    return !this.isRuntimeNamespace() &&
+           (this.namespaces.length === 0 || (this.isAnyName() && this.namespaces.length !== 1));
   };
 
   multiname.prototype.isRuntimeName = function isRuntimeName() {

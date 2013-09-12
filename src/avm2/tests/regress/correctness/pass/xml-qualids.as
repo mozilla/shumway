@@ -119,16 +119,17 @@ trace("x1.ns::*", new XMLList("<ns:a xmlns:ns=\"foo\">10</ns:a><ns:c xmlns:ns=\"
 
 trace("x1.ns::a", "10" === x1.ns::a.toString());
 
-//trace("x1.*::a", "10" === x1.*::a.toString());
-
 trace("x1.ns::a", "20" === (x1.ns::a = 20, x1.ns::a.toString()));
 
 trace("x1.@ns::['v']", "55" === x1.@ns::['v'].toString());
-
-//trace("x1.@ns::['v']", "555" === (x1.@ns::['v'] = '555', x1.@ns::['v'].toString()));
 
 var y1 = <y xmlns:ns="foo" a="10" b="20" ns:c="30" ns:d="40"/>
 trace("y1.@ns::*.length()", 2 === y1.@ns::*.length());
 
 var z = new XMLList("<b xmlns:ns=\"foo\"/><ns:c xmlns:ns=\"foo\"/>");
+
+
+//trace("x1.*::a", "10" === x1.*::a.toString());
+//trace("x1.@ns::['v']", "555" === (x1.@ns::['v'] = '555', x1.@ns::['v'].toString()));
 //trace("x1.*", z.toString() === (delete x1.ns::a, x1.*.toString()));
+
