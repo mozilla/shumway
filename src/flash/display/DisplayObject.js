@@ -223,61 +223,63 @@ var DisplayObjectDefinition = (function () {
         var pt = { x: x, y: y };
         this._applyCurrentInverseTransform(pt);
 
-        if (useShape) {
-          if (this._graphics) {
-            var scale = this._graphics._scale;
-            if (scale !== 1) {
-              pt.x /= scale;
-              pt.y /= scale;
-            }
-            var bbox = this._bbox;
-            if (bbox) {
-              pt.x += bbox.xMin;
-              pt.y += bbox.yMin;
+        if (!useShape) {
+          var b = this.getBounds();
+          return pt.x >= b.xMin && pt.x < b.xMax &&
+                 pt.y >= b.yMin && pt.y < b.yMax;
+        }
+        if (this._graphics) {
+          var scale = this._graphics._scale;
+          if (scale !== 1) {
+            pt.x /= scale;
+            pt.y /= scale;
+          }
+          var bbox = this._bbox;
+          if (bbox) {
+            pt.x += bbox.xMin;
+            pt.y += bbox.yMin;
+          }
+
+          var subpaths = this._graphics._paths;
+          for (var i = 0, n = subpaths.length; i < n; i++) {
+            var path = subpaths[i];
+
+            if (path.isPointInPath(pt.x, pt.y)) {
+              return true;
             }
 
-            var subpaths = this._graphics._paths;
-            for (var i = 0, n = subpaths.length; i < n; i++) {
-              var path = subpaths[i];
-
-              if (path.isPointInPath(pt.x, pt.y))
+            if (path.strokeStyle) {
+              var strokePath = path._strokePath;
+              if (!strokePath) {
+                strokePath = path.strokePath(path.drawingStyles);
+                path._strokePath = strokePath;
+              }
+              if (strokePath.isPointInPath(pt.x, pt.y)) {
                 return true;
-
-              if (path.strokeStyle) {
-                var strokePath = path._strokePath;
-                if (!strokePath) {
-                  strokePath = path.strokePath(path.drawingStyles);
-                  path._strokePath = strokePath;
-                }
-                if (strokePath.isPointInPath(pt.x, pt.y))
-                  return true;
               }
             }
           }
-
-          var children = this._children;
-          for (var i = 0, n = children.length; i < n; i++) {
-            var child = children[i];
-            // FIXME first condition avoids crash in second expression. This
-            // issue does not occur in Chrome or FF22, but does in FF23.0.1.
-            if (child._hitTest && child._hitTest(true, x, y, true))
-              return true;
-          }
-
-          return false;
-        } else {
-          var b = this.getBounds();
-          return pt.x >= b.x && pt.x < b.x + b.width &&
-                 pt.y >= b.y && pt.y < b.y + b.height;
         }
+
+        var children = this._children;
+        for (var i = 0, n = children.length; i < n; i++) {
+          var child = children[i];
+          // FIXME first condition avoids crash in second expression. This
+          // issue does not occur in Chrome or FF22, but does in FF23.0.1.
+          if (child._hitTest && child._hitTest(true, x, y, true)) {
+            return true;
+          }
+        }
+
+        return false;
       }
 
       var b1 = this.getBounds();
       var b2 = hitTestObject.getBounds();
-      var x = Math.max(b1.x, b2.x);
-      var y = Math.max(b1.y, b2.y);
-      var width = Math.min(b1.x + b1.width, b2.x + b2.width) - x;
-      var height = Math.min(b1.y + b1.height, b2.y + b2.height) - y;
+      var x = Math.max(b1.xMin, b2.xMin);
+      var y = Math.max(b1.yMin, b2.yMin);
+      var width = Math.min(b1.xMax, b2.xMax) - x;
+      var height = Math.min(b1.yMax, b2.yMax) - y;
       return width > 0 && height > 0;
     },
     _invalidate: function () {
@@ -688,10 +690,10 @@ var DisplayObjectDefinition = (function () {
 
             var b = child.getBounds(this);
 
-            var x1 = b.x;
-            var y1 = b.y;
-            var x2 = b.x + b.width;
-            var y2 = b.y + b.height;
+            var x1 = b.xMin;
+            var y1 = b.yMin;
+            var x2 = b.xMax;
+            var y2 = b.yMax;
 
             xMin = Math.min(xMin, x1, x2);
             xMax = Math.max(xMax, x1, x2);
@@ -708,10 +710,10 @@ var DisplayObjectDefinition = (function () {
         if (this._graphics) {
           var b = this._graphics._getBounds(true);
           if (b) {
-            var x1 = b.x;
-            var y1 = b.y;
-            var x2 = b.x + b.width;
-            var y2 = b.y + b.height;
+            var x1 = b.xMin;
+            var y1 = b.yMin;
+            var x2 = b.xMax;
+            var y2 = b.yMax;
 
             xMin = Math.min(xMin, x1, x2);
             xMax = Math.max(xMax, x1, x2);
@@ -735,22 +737,27 @@ var DisplayObjectDefinition = (function () {
     _getRegion: function getRegion() {
       if (!this._graphics /*|| renderAsWireframe.value*/) {
         var b = this.getBounds();
-        return { x: b.x, y: b.y, width: b.width, height: b.height };
+        return {
+          x: b.xMin,
+          y: b.yMin,
+          width: b.xMax - b.xMin,
+          height: b.yMax - b.yMin
+        };
       }
 
       var b = this._graphics._getBounds(true);
 
-      if (!b || (!b.width && !b.height)) {
+      if (!b || (b.xMax - b.xMin === 0 && b.yMax - b.yMin === 0)) {
         return { x: 0, y: 0, width: 0, height: 0 };
       }
 
-      var p1 = { x: b.x, y: b.y };
+      var p1 = { x: b.xMin, y: b.yMin };
       this._applyCurrentTransform(p1);
-      var p2 = { x: b.x + b.width, y: b.y };
+      var p2 = { x: b.xMax, y: b.yMin };
       this._applyCurrentTransform(p2);
-      var p3 = { x: b.x + b.width, y: b.y + b.height };
+      var p3 = { x: b.xMax, y: b.yMax };
       this._applyCurrentTransform(p3);
-      var p4 = { x: b.x, y: b.y + b.height };
+      var p4 = { x: b.xMin, y: b.yMax };
       this._applyCurrentTransform(p4);
 
       var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
@@ -777,16 +784,7 @@ var DisplayObjectDefinition = (function () {
       var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
       var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
 
-      return new flash.geom.Rectangle(
-        xMin,
-        yMin,
-        (xMax - xMin),
-        (yMax - yMin)
-      );
-    },
-    getRect: function (targetCoordSpace) {
-      somewhatImplemented('DisplayObject.getRect');
-      return this.getBounds(targetCoordSpace);
+      return {xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax};
     },
     globalToLocal: function (pt) {
       var result = new flash.geom.Point(pt.x, pt.y);
@@ -871,8 +869,25 @@ var DisplayObjectDefinition = (function () {
         accessibilityProperties: desc(def, "accessibilityProperties"),
         globalToLocal: def.globalToLocal,
         localToGlobal: def.localToGlobal,
-        getBounds: def.getBounds,
-        getRect: def.getRect
+        getBounds: function(targetCoordSpace) {
+          var bounds = this.getBounds(targetCoordSpace);
+          return new flash.geom.Rectangle(
+              bounds.xMin,
+              bounds.yMin,
+              bounds.xMax - bounds.xMin,
+              bounds.yMax - bounds.yMin
+          );
+        },
+        getRect: function(targetCoordSpace) {
+          somewhatImplemented('DisplayObject.getRect');
+          var bounds = this.getBounds(targetCoordSpace);
+          return new flash.geom.Rectangle(
+              bounds.xMin,
+              bounds.yMin,
+              bounds.xMax - bounds.xMin,
+              bounds.yMax - bounds.yMin
+          );
+        },
       }
     }
   };

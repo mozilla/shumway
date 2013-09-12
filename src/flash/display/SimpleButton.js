@@ -122,17 +122,17 @@ var SimpleButtonDefinition = (function () {
 
       var b = this._hitTestState.getBounds();
 
-      if (!b || (!b.width && !b.height)) {
+      if (!b || (b.xMax - b.xMin === 0 && b.yMax - b.yMin === 0)) {
         return b;
       }
 
-      var p1 = { x: b.x, y: b.y };
+      var p1 = { x: b.xMin, y: b.yMin };
       this._applyCurrentTransform(p1);
-      var p2 = { x: b.x + b.width, y: b.y };
+      var p2 = { x: b.xMax, y: b.yMin };
       this._applyCurrentTransform(p2);
-      var p3 = { x: b.x + b.width, y: b.y + b.height };
+      var p3 = { x: b.xMax, y: b.yMax };
       this._applyCurrentTransform(p3);
-      var p4 = { x: b.x, y: b.y + b.height };
+      var p4 = { x: b.xMin, y: b.yMax };
       this._applyCurrentTransform(p4);
 
       var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);

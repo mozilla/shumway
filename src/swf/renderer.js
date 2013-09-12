@@ -458,11 +458,12 @@ function renderDisplayObject(child, ctx, transform, context) {
 
     if (child.getBounds) {
       var b = child.getBounds(child);
-      if (b && b.width && b.height) {
+      if (b && b.xMax - b.xMin > 0 && b.yMax - b.yMin > 0) {
         child._wireframeStrokeStyle = randomStyle();
         ctx.save();
         ctx.strokeStyle = child._wireframeStrokeStyle;
-        ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.width - 1, b.height - 1);
+        ctx.strokeRect(b.xMin + 0.5, b.yMin + 0.5, b.xMax - b.xMin - 1,
+                       b.yMax - b.yMin - 1);
         ctx.restore();
       }
     }
@@ -634,10 +635,12 @@ function renderStage(stage, ctx, events) {
   var firstRun = true;
   var frameCount = 0;
   var frameFPSAverage = new metrics.Average(120);
+
   (function draw() {
+
     var now = Date.now();
-    var renderFrame;
     var renderFrame = now >= nextRenderAt;
+
     if (renderFrame && events.onBeforeFrame) {
       var e = { cancel: false };
       events.onBeforeFrame(e);
@@ -678,9 +681,10 @@ function renderStage(stage, ctx, events) {
 
       if (renderFrame) {
         frameTime = now;
-        nextRenderAt = frameTime + (1000 / stage._frameRate);
-        nextRenderAt = frameTime + (1000 / 120);
-
+        maxDelay = 1000 / stage._frameRate;
+        while (nextRenderAt < now) {
+          nextRenderAt += maxDelay;
+        }
         fps && fps.enter("EVENTS");
         if (firstRun) {
           // Initial display list is already constructed, skip frame construction phase.
