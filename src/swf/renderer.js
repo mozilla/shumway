@@ -459,7 +459,7 @@ function renderDisplayObject(child, ctx, transform, context) {
     if (child.getBounds) {
       var b = child.getBounds(child);
       if (b && b.width && b.height) {
-        child._wireframeStrokeStyle = '#'+('00000'+(Math.random()*(1<<24)|0).toString(16)).slice(-6);
+        child._wireframeStrokeStyle = randomStyle();
         ctx.save();
         ctx.strokeStyle = child._wireframeStrokeStyle;
         ctx.strokeRect(b.x + 0.5, b.y + 0.5, b.width - 1, b.height - 1);
@@ -471,6 +471,8 @@ function renderDisplayObject(child, ctx, transform, context) {
 
   child._invalid = false;
 }
+
+var fps;
 
 var renderingTerminated = false;
 
@@ -677,19 +679,24 @@ function renderStage(stage, ctx, events) {
       if (renderFrame) {
         frameTime = now;
         nextRenderAt = frameTime + (1000 / stage._frameRate);
+        nextRenderAt = frameTime + (1000 / 120);
 
+        fps && fps.enter("EVENTS");
         if (firstRun) {
           // Initial display list is already constructed, skip frame construction phase.
           firstRun = false;
         } else {
+
           domain.broadcastMessage("advanceFrame");
           domain.broadcastMessage("enterFrame");
           domain.broadcastMessage("constructChildren");
+
         }
 
         domain.broadcastMessage("frameConstructed");
         domain.broadcastMessage("executeFrame");
         domain.broadcastMessage("exitFrame");
+        fps && fps.leave("EVENTS");
       }
 
       if (stage._deferRenderEvent) {
@@ -701,15 +708,21 @@ function renderStage(stage, ctx, events) {
         if (!disablePreVisitor.value) {
           ctx.beginPath();
           stage._showRedrawRegions(showRedrawRegions.value);
+
           traceRenderer.value && frameWriter.enter("> Pre Visitor");
+          fps && fps.enter("PRE");
           stage._processInvalidRegions(ctx);
+          fps && fps.leave("PRE");
           traceRenderer.value && frameWriter.leave("< Pre Visitor");
         }
 
+
         if (!disableRenderVisitor.value) {
+          fps && fps.enter("RENDER");
           traceRenderer.value && frameWriter.enter("> Render Visitor");
           (new RenderVisitor(stage, ctx, refreshStage)).start();
           traceRenderer.value && frameWriter.leave("< Render Visitor");
+          fps && fps.leave("RENDER");
         }
 
         if (showQuadTree.value) {
@@ -722,14 +735,16 @@ function renderStage(stage, ctx, events) {
               renderQuadTree(nodes[i]);
             }
           })(stage._qtree);
-          ctx.restore;
+          ctx.restore();
         }
       }
 
       if (mouseMoved && !disableMouseVisitor.value) {
+        fps && fps.enter("MOUSE");
         traceRenderer.value && frameWriter.enter("> Mouse Visitor");
         stage._handleMouse();
         traceRenderer.value && frameWriter.leave("< Mouse Visitor");
+        fps && fps.leave("MOUSE");
 
         stage._syncCursor();
       }

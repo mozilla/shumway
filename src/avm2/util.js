@@ -1448,3 +1448,41 @@ function addProfileMarker(marker) {
     FirefoxCom.requestSync('addProfilerMarker', marker );
   }
 }
+
+var CircularBuffer = (function () {
+  var mask = 0xFFF, size = 4096;
+  function circularBuffer(Type) {
+    this.index = 0;
+    this.start = 0;
+    this.array = new Type(size);
+  }
+  circularBuffer.prototype.get = function (i) {
+    return this.array[i];
+  };
+  circularBuffer.prototype.forEachInReverse = function (visitor) {
+    if (this.isEmpty()) {
+      return;
+    }
+    var i = this.index === 0 ? size - 1 : this.index - 1;
+    while (i !== this.start) {
+      if (visitor(this.array[i], i)) {
+        break;
+      }
+      i = i === 0 ? size - 1 : i - 1;
+    }
+  };
+  circularBuffer.prototype.write = function (value) {
+    this.array[this.index] = value;
+    this.index = (this.index + 1) & mask;
+    if (this.index === this.start) {
+      this.start = (this.start + 1) & mask;
+    }
+  };
+  circularBuffer.prototype.isFull = function () {
+    return (this.index + 1) & mask === this.start;
+  };
+  circularBuffer.prototype.isEmpty = function () {
+    return this.index === this.start;
+  };
+  return circularBuffer;
+})();
