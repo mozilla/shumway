@@ -22,7 +22,7 @@ var pauseExecution = getQueryVariable("paused") === "true";
 var remoteFile = getQueryVariable("rfile");
 var yt = getQueryVariable('yt');
 
-var swfController = new SWFController(stats, pauseExecution);
+var swfController = new SWFController(fps, pauseExecution);
 
 var libraryAbcs;
 function grabAbc(abcName) {

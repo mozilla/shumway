@@ -80,3 +80,14 @@ function argbUintToStr(argb) {
     enumerable: false
   });
 })();
+
+var randomStyleCache;
+function randomStyle() {
+  if (!randomStyleCache) {
+    randomStyleCache = [];
+    for (var i = 0; i < 50; i++) {
+      randomStyleCache.push('#' + ('00000' + (Math.random() * (1 << 24) | 0).toString(16)).slice(-6));
+    }
+  }
+  return randomStyleCache[(Math.random() * randomStyleCache.length) | 0];
+}
