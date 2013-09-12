@@ -38,6 +38,20 @@
   CallMethod attempts to delegate the method lookup to the string value
   contained in the leaf node. This treatment allows users to perform operations
   directly on the value of a leaf node without having to explicitly select it."
+
+  NOTE ON E4X ANY NAME AND NAMESPACE
+
+  E4X allows the names of the form x.*, x.ns::*, x.*::id and x.*::* and their
+  attribute name counterparts x.@*, x.@ns::*, etc. These forms result in
+  Multiname values with the name part equal to undefined in the case of an ANY
+  name, and the namespace set being empty in the case of an ANY namespace.
+
+  Note also,
+     x.*
+  is shorthand for
+     x.*::*
+  .
+
 */
 
 // The XML parser is designed only for parsing of simple XML documents
@@ -607,21 +621,23 @@ var isXMLType, isXMLName, XMLParser;
   }
 
   var ATTR_NAME = 1;
-  var ANY_ATTR_NAME = 2;
-  var ANY_NAME = 3;
-  var ELEM_NAME = 4;
+  var ELEM_NAME = 2;
+  var ANY_NAME = 4;
+  var ANY_NAMESPACE = 8;
   function nameKind(mn) {
-    if (mn.isAnyName()) {
-      if (mn.isAttribute()) {
-        return ANY_ATTR_NAME;
-      } else {
-        return ANY_NAME;
-      }
-    } else if (mn.isAttribute()) {
-      return ATTR_NAME;
+    var flags = 0;
+    if (mn.isAttribute()) {
+      flags |= ATTR_NAME;
     } else {
-      return ELEM_NAME;
+      flags |= ELEM_NAME;
     }
+    if (mn.isAnyName()) {
+      flags |= ANY_NAME;
+    }
+    if (mn.isAnyNamespace()) {
+      flags |= ANY_NAMESPACE;
+    }
+    return flags;
   }
 
   /**
@@ -908,31 +924,27 @@ var isXMLType, isXMLName, XMLParser;
       var x = this;
       var name = toXMLName(mn);
       var xl = new XMLList(x, name);
-      switch (nameKind(name.mn)) {
-      case ANY_ATTR_NAME:
-        var any = true;
-        // fall through
-      case ATTR_NAME:
+      var flags = nameKind(name.mn);
+
+      var anyName = flags & ANY_NAME;
+      var anyNamespace = flags & ANY_NAMESPACE;
+
+      if (flags & ATTR_NAME) {
         if (x.attributes) {
           x.attributes.forEach(function (v, i) {
-            if ((any || (v.name.localName === name.localName)) &&
-                ((name.uri === null || v.name.uri === name.uri))) {
+            if ((anyName || (v.name.localName === name.localName)) &&
+                ((anyNamespace || v.name.uri === name.uri))) {
               xl.append(v);
             }
           });
         }
-        break;
-      case ANY_NAME:
-        var any = true;
-        // fall through
-      default:
+      } else {
         x.children.forEach(function (v, i) {
-          if ((any || v.kind === "element" && v.name.localName === name.localName) &&
-              ((name.uri == null || v.kind === "element" && v.name.uri === name.uri))) {
+          if ((anyName || v.kind === "element" && v.name.localName === name.localName) &&
+              ((anyNamespace || v.kind === "element" && v.name.uri === name.uri))) {
             xl.append(v);
           }
         });
-        break;
       }
       return xl;
     };
@@ -951,28 +963,32 @@ var isXMLType, isXMLName, XMLParser;
         return false;
       }
       var name = toXMLName(mn);
-      switch (nameKind(name.mn)) {
-        case ANY_ATTR_NAME:
-          var any = true;
-        // fall through
-        case ATTR_NAME:
-          return this.attributes.some(function (v, i) {
-            if ((any || (v.name.localName === name.localName)) &&
-                ((name.uri === null || v.name.uri === name.uri))) {
-              return true;
+      var flags = nameKind(name.mn);
+      var anyName = flags & ANY_NAME;
+      var anyNamespace = flags & ANY_NAMESPACE;
+      if (flags & ATTR_NAME) {
+        return this.attributes.some(function (v, i) {
+          if ((anyName || (v.name.localName === name.localName)) &&
+              ((anyNamespace || v.name.uri === name.uri))) {
+            return true;
+          }
+        });
+
+        if (x.attributes) {
+          x.attributes.forEach(function (v, i) {
+            if ((anyName || (v.name.localName === name.localName)) &&
+                ((anyNamespace || v.name.uri === name.uri))) {
+              xl.append(v);
             }
           });
-          break;
-        case ANY_NAME:
-          var any = true;
-        // fall through
-        default:
-          return this.children.some(function (v, i) {
-            if ((any || v.kind === "element" && v.name.localName === name.localName) &&
-                ((name.uri === null || v.kind === "element" && v.name.uri === name.uri))) {
-              return true;
-            }
-          });
+        }
+      } else {
+        return this.children.some(function (v, i) {
+          if ((anyName || v.kind === "element" && v.name.localName === name.localName) &&
+              ((anyNamespace || v.kind === "element" && v.name.uri === name.uri))) {
+            return true;
+          }
+        });
       }
     };
 
@@ -1962,7 +1978,7 @@ var isXMLType, isXMLName, XMLParser;
         }
       } else if (name instanceof Multiname) {
         if (ns === undefined) {
-          if (name.isQName() || name.isAnyName()) {
+          if (name.isQName() || name.isAnyName() || name.isAnyNamespace()) {
             mn = name;
           } else {
             mn = new Multiname([getDefaultNamespace(scope)], name.getName(), name.flags);
@@ -1986,6 +2002,7 @@ var isXMLType, isXMLName, XMLParser;
       }
       this.mn = mn;
       this.isAny = mn.isAnyName();
+      this.isAnyNamespace = mn.isAnyNamespace();
       this.isAttr = mn.isAttribute();
     }
 
@@ -1999,9 +2016,9 @@ var isXMLType, isXMLName, XMLParser;
       return this._localName;
     });
     defineNonEnumerableGetter(QNp, "uri", function () {
-      if (this._uri === undefined) {
+      if (!this._uri) {
         var ns = this.mn.namespaces[0]
-        this._uri = ns && ns.originalURI ? ns.originalURI : this.isAny ? null : "";
+        this._uri = ns && ns.originalURI ? ns.originalURI : this.isAny || this.isAnyNamespace ? null : "";
       }
       return this._uri;
     });
