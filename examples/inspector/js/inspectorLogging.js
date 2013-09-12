@@ -48,4 +48,5 @@ var frameWriter = new IndentingWriter(false, function (str){
 });
 
 
-var fps = new FPS(document.getElementById("FPS")); fps.refreshEvery(1000 / 60);
+var fps = new FPS(document.getElementById("fpsCanvas"));
+fps.refreshEvery(1000 / 60);

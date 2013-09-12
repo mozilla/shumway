@@ -20,8 +20,9 @@ var FPS = (function () {
     this.kindCount = 0;
     this.canvas = canvas;
     this.context = canvas.getContext('2d');
-    this.context.font = 12 + 'px Consolas, "Liberation Mono", Courier, monospace';
     this.fillStyles = ["rgb(85, 152, 213)", "#bfd8a7", "#d906d7"];
+    window.addEventListener('resize', this.resizeHandler.bind(this), false);
+    this.resizeHandler();
   }
 
   fps.prototype.refreshEvery = function (ms) {
@@ -98,20 +99,45 @@ var FPS = (function () {
     return frames;
   };
 
+  fps.prototype.resizeHandler = function (event) {
+    var parent = this.canvas.parentElement;
+    this.cw = parent.offsetWidth;
+    this.ch = parent.offsetHeight - 1;
+
+    var devicePixelRatio = window.devicePixelRatio || 1;
+    var backingStoreRatio = this.context.webkitBackingStorePixelRatio ||
+                            this.context.mozBackingStorePixelRatio ||
+                            this.context.msBackingStorePixelRatio ||
+                            this.context.oBackingStorePixelRatio ||
+                            this.context.backingStorePixelRatio || 1;
+
+    if (devicePixelRatio !== backingStoreRatio) {
+      var ratio = devicePixelRatio / backingStoreRatio;
+      this.canvas.width = this.cw * ratio;
+      this.canvas.height = this.ch * ratio;
+      this.canvas.style.width = this.cw + 'px';
+      this.canvas.style.height = this.ch + 'px';
+      this.context.scale(ratio, ratio);
+    } else {
+      this.canvas.width = this.cw;
+      this.canvas.height = this.ch;
+    }
+
+    this.context.font = 11 + 'px Consolas, "Liberation Mono", Courier, monospace';
+  };
+
   fps.prototype.paint = function () {
-    var cw = this.canvas.width;
-    var ch = this.canvas.height;
-    var h = ch;
+    var h = this.ch;
     var w = 10;
     var gap = 1;
-    var maxFrames = (cw / (w + gap)) | 0;
+    var maxFrames = (this.cw / (w + gap)) | 0;
     var frames = this.gatherFrames(maxFrames);
 
     var context = this.context;
     var maxFrameTime = this.maxFrameTime;
-    context.fillStyle = backgroundColor;
-    context.fillRect(0, 0, cw, ch);
     var fillStyles = this.fillStyles;
+
+    context.clearRect(0, 0, this.cw, h);
 
     var totalFrameRate = 0;
     var offsetW;
@@ -125,29 +151,27 @@ var FPS = (function () {
 
     function drawNode(node) {
       var nodeTime = node.endTime - node.startTime;
-      var h = nodeTime / maxFrameTime;
+      var nh = nodeTime / maxFrameTime;
       var offsetH = (node.startTime - frame.startTime) / maxFrameTime;
       context.fillStyle = fillStyles[node.kind];
-      context.fillRect(offsetW, ch - (h + offsetH) * ch, w, h * ch);
+      context.fillRect(offsetW, h - (nh + offsetH) * h, w, nh * h);
       if (node.children) {
         node.children.forEach(drawNode);
       }
     }
 
-
     /**
      * Draw Frame Lines
      */
-
     var lineFrames = [60, 30];
     var lineColors = [sixtyColor, thirtyColor];
 
     for (var i = 0; i < lineFrames.length; i++) {
-      var lineH = ch - ((1000 / lineFrames[i]) / this.maxFrameTime) * ch;
+      var lineH = h - ((1000 / lineFrames[i]) / this.maxFrameTime) * h;
       context.beginPath();
       context.lineWidth = 1;
       context.moveTo(0, lineH);
-      context.lineTo(cw, lineH);
+      context.lineTo(this.cw, lineH);
       context.strokeStyle = lineColors[i];
       context.stroke();
     }
@@ -156,8 +180,7 @@ var FPS = (function () {
      * Draw Info
      */
     var textOffset;
-    context.fillStyle = infoColor;
-    context.fillRect(0, 0, 200, 30);
+    context.clearRect(0, 0, 200, 30); // TODO
     context.fillStyle = textColor;
     var averageFrameRate = (totalFrameRate / frames.length) | 0;
 
