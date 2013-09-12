@@ -26,11 +26,10 @@ limitations under the License.
 
     <div id="stageContainer" tabindex='1'>
       <div id="stageInnerContainer" tabindex='1'>
+        <canvas id="FPS" width="600" height="100"></canvas><br>
         <div id="stage"></div>
       </div>
     </div>
-
-    <div id="xstats"></div>
 
     <div id="topToolbar" class="toolbarBox withEmphasis">
       <div class="toolbarLabel">Shumway Inspector <span id="message"></span></div>
@@ -314,14 +313,15 @@ limitations under the License.
     <input type="file" id="files" name="files[]" multiple style="visibility: hidden;" accept="application/x-shockwave-flash">
 
     <script>
-        var stats = new Stats();
-        document.getElementById('xstats').appendChild(stats.domElement);
+        var stats; // = new Stats();
+        // document.getElementById('xstats').appendChild(stats.domElement);
     </script>
 
     <script src="js/classes/BinaryFileReader.js"></script>
     <script src="js/classes/DisplayListTree.js"></script>
     <script src="js/classes/SWFController.js"></script>
     <script src="js/classes/Terminal.js"></script>
+    <script src="js/classes/FPS.js"></script>
     <script src="js/inspectorSettings.js"></script>
     <script src="js/inspectorLoader.js"></script>
     <script src="js/inspectorLogging.js"></script>

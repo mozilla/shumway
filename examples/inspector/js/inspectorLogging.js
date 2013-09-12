@@ -46,3 +46,6 @@ function appendToFrameTerminal(str, color) {
 var frameWriter = new IndentingWriter(false, function (str){
   appendToFrameTerminal(str);
 });
+
+
+var fps = new FPS(document.getElementById("FPS")); fps.refreshEvery(1000 / 60);
