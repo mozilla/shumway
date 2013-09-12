@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global QuadTree, sortByDepth */
+/*global QuadTree, ShapePath, sortByDepth */
 
 var StageDefinition = (function () {
   return {
@@ -40,8 +40,9 @@ var StageDefinition = (function () {
       this._wmodeGPU = false;
       this._root = null;
       this._qtree = null;
+      this._numVisibleObjects = 0;
       this._invalidObjects = [];
-      this._redrawRegionColor = null;
+      this._invalidPath = null;
       this._mouseMoved = false;
       this._clickTarget = this;
     },
@@ -98,6 +99,10 @@ var StageDefinition = (function () {
 
     _processInvalidRegions: function processInvalidRegions(ctx) {
       var objects = this._invalidObjects;
+      var regions = [];
+
+      var numVisibleObjects = this._numVisibleObjects;
+      var numInvalidObjects = 0;
 
       while (objects.length) {
         var displayObject = objects.shift();
@@ -118,82 +123,86 @@ var StageDefinition = (function () {
                          currentRegion.height !== invalidRegion.height;
 
         if (invalidRegion && syncQtree) {
-          var qtree = invalidRegion._qtree;
-
-          // TODO: move this into the QuadTree class
-          var index = qtree.objects.indexOf(invalidRegion);
-          qtree.objects.splice(index, 1);
+          invalidRegion._qtree.delete(invalidRegion);
           displayObject._region = null;
 
-          this._addRedrawRegion(ctx, invalidRegion);
+          regions.push(invalidRegion);
+
+          numInvalidObjects++;
         }
 
         if (isVisible) {
-          this._addRedrawRegion(ctx, currentRegion);
-
           if (syncQtree) {
             this._qtree.insert(currentRegion);
 
             currentRegion.obj = displayObject;
             displayObject._region = currentRegion;
           }
+
+          regions.push(currentRegion);
+
+          if (!invalidRegion) {
+            numVisibleObjects++;
+          }
         } else {
           displayObject._invalid = false;
+
+          if (invalidRegion) {
+            numVisibleObjects--;
+          }
         }
       }
-    },
-    _addRedrawRegion: function clipRegion(ctx, region) {
+
+      this._numVisibleObjects = numVisibleObjects;
+
       var scaleX = this._canvasState.scaleX;
       var scaleY = this._canvasState.scaleY;
       var offsetX = this._canvasState.offsetX;
       var offsetY = this._canvasState.offsetY;
 
-      var left = (~~(region.x * scaleX + offsetX) - offsetX) / scaleX - 2;
-      var top = (~~(region.y * scaleY + offsetY) - offsetY) / scaleY - 2;
-      var right = (~~((region.x + region.width) * scaleX + offsetX + 0.5) - offsetX) / scaleX + 2;
-      var bottom = (~~((region.y + region.height) * scaleY + offsetY + 0.5) - offsetY) / scaleY + 2;
+      var invalidPath = new ShapePath();
 
-      var x = left;
-      var y = top;
-      var width = right - left;
-      var height = bottom - top;
-
-      var candidates = this._qtree.retrieve({ x: x, y: y, width: width, height: height });
-
-      for (var i = 0; i < candidates.length; i++) {
-        var item = candidates[i];
-        var displayObject = item.obj;
-        var currentRegion = displayObject._region;
-
-        if (displayObject._invalid ||
-            (left > currentRegion.x + currentRegion.width) ||
-            (right < currentRegion.x) ||
-            (top > currentRegion.y + currentRegion.height) ||
-            (bottom < currentRegion.y)) {
-          continue;
+      for (var i = 0; i < regions.length; i++) {
+        if (numInvalidObjects / numVisibleObjects > 0.75) {
+          return;
         }
 
-        displayObject._invalid = true;
+        var region = regions[i];
+        var left = (~~(region.x * scaleX + offsetX) - offsetX) / scaleX - 2;
+        var top = (~~(region.y * scaleY + offsetY) - offsetY) / scaleY - 2;
+        var right = (~~((region.x + region.width) * scaleX + offsetX + 0.5) - offsetX) / scaleX + 2;
+        var bottom = (~~((region.y + region.height) * scaleY + offsetY + 0.5) - offsetY) / scaleY + 2;
+        var width = right - left;
+        var height = bottom - top;
+
+        var neighbours = this._qtree.retrieve(left, top, width, height);
+        for (var j = 0; j < neighbours.length; j++) {
+          var item = neighbours[j];
+          var displayObject = item.obj;
+
+          if (displayObject._invalid || (left > item.x + item.width) ||
+                                        (right < item.x) ||
+                                        (top > item.y + item.height) ||
+                                        (bottom < item.y)) {
+            continue;
+          }
+
+          displayObject._invalid = true;
+
+          numInvalidObjects++;
+        }
+
+        invalidPath.rect(left, top, width, height);
       }
 
-      ctx.rect(x, y, width, height);
-
-      if (this._redrawRegionColor) {
-        ctx.strokeStyle = this._redrawRegionColor;
-        ctx.strokeRect(x, y, width, height);
-      }
+      this._invalidPath = invalidPath;
     },
 
     _handleMouse: function handleMouse() {
       var mouseX = this._mouseX;
       var mouseY = this._mouseY;
 
-      var candidates = this._qtree.retrieve({
-        x: mouseX,
-        y: mouseY,
-        width: 1,
-        height: 1
-      });
+      var candidates = this._qtree.retrieve(mouseX, mouseY, 1, 1);
       var interactiveObject;
 
       var objectsUnderMouse = [];
@@ -258,17 +267,6 @@ var StageDefinition = (function () {
         interactiveObject._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
 
         this._clickTarget = interactiveObject;
-      }
-    },
-
-    _showRedrawRegions: function showRedrawRegions(enable) {
-      if (enable) {
-        this._redrawRegionColor = 'red';
-      } else {
-        if (this._redrawRegionColor) {
-          this._invalid = true;
-        }
-        this._redrawRegionColor = null;
       }
     },
 
