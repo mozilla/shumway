@@ -589,7 +589,7 @@ var isXMLType, isXMLName, XMLParser;
       ? toNumber(name) 
       : name instanceof QName 
         ? name.mn
-        : new Multiname(namespaces, name, flags);
+        : new Multiname(namespaces ? namespaces : [ShumwayNamespace.PUBLIC], name, flags);
     return this.getProperty(mn, isMethod);
   }
 
@@ -598,7 +598,7 @@ var isXMLType, isXMLName, XMLParser;
       ? toNumber(name) 
       : name instanceof QName 
         ? name.mn
-        : new Multiname(namespaces, name, flags);
+        : new Multiname(namespaces ? namespaces : [ShumwayNamespace.PUBLIC], name, flags);
     this.setProperty(mn, value);
   }
 
@@ -607,7 +607,7 @@ var isXMLType, isXMLName, XMLParser;
       ? toNumber(name) 
       : name instanceof QName 
         ? name.mn
-        : new Multiname(namespaces, name, flags);
+        : new Multiname(namespaces ? namespaces : [ShumwayNamespace.PUBLIC], name, flags);
     return this.hasProperty(mn);
   }
 
@@ -615,7 +615,7 @@ var isXMLType, isXMLName, XMLParser;
     var receiver = isLex ? null : this;
     var property = this.asGetProperty(namespaces, name, flags, true);
     if (!property) {
-      return this.toString().asCallProperty(namespaces, name, flags, isLex, args);
+      return this.toString().asCallProperty(namespaces ? namespaces : [ShumwayNamespace.PUBLIC], name, flags, isLex, args);
     }
     return property.apply(receiver, args);
   }
@@ -1988,10 +1988,10 @@ var isXMLType, isXMLName, XMLParser;
         }
       } else if (name === "*") {
         // Any name has a null name and is not a runtime name
-        mn = new Multiname([ns], null, isAttr ? Multiname.ATTRIBUTE : 0);
+        mn = new Multiname([], null, isAttr ? Multiname.ATTRIBUTE : 0);
       } else if (name === "@*") {
         // Any name has a null name and is not a runtime name
-        mn = new Multiname([ns], null, Multiname.ATTRIBUTE);
+        mn = new Multiname([], null, Multiname.ATTRIBUTE);
       } else {
         ns = ns === undefined ? getDefaultNamespace(scope) : ns;
         if (name === undefined) {
