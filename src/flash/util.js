@@ -220,23 +220,24 @@ var QuadTree = function (x, y, width, height, level) {
   this.width = width || 0;
   this.height = height || 0;
   this.level = level || 0;
+  this.stuckObjects = [];
   this.objects = [];
   this.nodes = [];
 };
-QuadTree.prototype._findIndex = function (obj) {
+QuadTree.prototype._findIndex = function (x, y, width, height) {
   var midX = this.x + (this.width / 2);
   var midY = this.y + (this.height / 2);
 
-  var top = obj.y < midY && obj.y + obj.height < midY;
-  var bottom = obj.y > midY;
+  var top = y < midY && y + height < midY;
+  var bottom = y > midY;
 
-  if (obj.x < midX && obj.x + obj.width < midX) {
+  if (x < midX && x + width < midX) {
     if (top) {
       return 1;
     } else if(bottom) {
       return 2;
     }
-  } else if (obj.x > midX) {
+  } else if (x > midX) {
     if (top) {
       return 0;
     } else if(bottom) {
@@ -247,33 +248,30 @@ QuadTree.prototype._findIndex = function (obj) {
   return -1;
 };
 QuadTree.prototype.insert = function (obj) {
-  var objects = this.objects;
   var nodes = this.nodes;
 
   if (nodes.length) {
-    var index = this._findIndex(obj);
+    var index = this._findIndex(obj.x, obj.y, obj.width, obj.height);
 
     if (index > -1) {
       nodes[index].insert(obj);
-      return;
+    } else {
+      this.stuckObjects.push(obj);
+      obj._qtree = this;
     }
+
+    return;
   }
+
+  var objects = this.objects;
 
   objects.push(obj);
 
   if (objects.length > 4 && this.level < 10) {
-    if (!nodes.length) {
-      this._subdivide();
-    }
+    this._subdivide();
 
-    for (var i = 0; i < objects.length;) {
-      var index = this._findIndex(objects[i]);
-      if (index > -1) {
-        nodes[index].insert(objects.splice(i, 1)[0]);
-      } else {
-        objects[i]._qtree = this;
-        i++;
-      }
+    while (objects.length) {
+      this.insert(objects.shift());
     }
 
     return;
@@ -281,21 +279,45 @@ QuadTree.prototype.insert = function (obj) {
 
   obj._qtree = this;
 };
-QuadTree.prototype.retrieve = function (obj) {
-  var out = this.objects;
+QuadTree.prototype.delete = function (obj) {
+  if (obj._qtree !== this) {
+    return;
+  }
 
-  var nodes = this.nodes;
-  if (nodes.length) {
-    var index = this._findIndex(obj);
+  var index = this.objects.indexOf(obj);
+  if (index > -1) {
+    this.objects.splice(index, 1);
+  } else {
+    index = this.stuckObjects.indexOf(obj);
+    this.stuckObjects.splice(index, 1);
+  }
 
-    if (index > -1) {
-      out = out.concat(nodes[index].retrieve(obj));
-    } else {
-      for (var i = 0; i < nodes.length; i++) {
-        out = out.concat(nodes[i].retrieve(obj));
+  obj._qtree = null;
+};
+QuadTree.prototype._stack = [];
+QuadTree.prototype._out = [];
+QuadTree.prototype.retrieve = function (x, y, width, height) {
+  var stack = this._stack;
+  var out = this._out;
+  out.length = 0;
+
+  var node = this;
+  do {
+    if (node.nodes.length) {
+      var index = node._findIndex(x, y, width, height);
+
+      if (index > -1) {
+        stack.push(node.nodes[index]);
+        } else {
+        stack.push.apply(stack, node.nodes);
       }
     }
-  }
+
+    out.push.apply(out, node.stuckObjects);
+    out.push.apply(out, node.objects);
+
+    node = stack.pop();
+  } while (node);
 
   return out;
 };
