@@ -271,12 +271,7 @@ var GraphicsDefinition = (function () {
         bbox = this.bbox;
       }
       if (bbox) {
-        return {
-          x: bbox.xMin,
-          y: bbox.yMin,
-          width: bbox.xMax - bbox.xMin,
-          height: bbox.yMax - bbox.yMin
-        };
+        return bbox;
       }
       // TODO: support cached includeStroke bbox without strokeBox from shape.js
       if (this.bbox) {
@@ -305,7 +300,7 @@ var GraphicsDefinition = (function () {
       var yMin = Math.min.apply(Math, yMins) * scale;
       var xMax = Math.max.apply(Math, xMaxs) * scale;
       var yMax = Math.max.apply(Math, yMaxs) * scale;
-      return { x: xMin, y: yMin, width: xMax - xMin, height: yMax - yMin};
+      return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax};
     }
   };
 
