@@ -125,7 +125,7 @@ function RenderVisitor(root, ctx, refreshStage) {
 RenderVisitor.prototype = {
   ignoreVisibleAttribute: false,
   start: function () {
-    visitContainer(this.root, this, new RenderingContext(this.refreshStage));
+    visitContainer(this.root, this, new RenderingContext(this.refreshStage, this.root._invalidPath));
   },
   startFragment: function() {
     var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(this.root) ||
@@ -152,7 +152,8 @@ RenderVisitor.prototype = {
 
       ctx.save();
 
-      if (!this.refreshStage && !renderAsWireframe.value) {
+      if (this.root._invalidPath && !this.refreshStage && !renderAsWireframe.value) {
+        this.root._invalidPath.draw(ctx);
         ctx.clip();
       }
 
@@ -163,10 +164,10 @@ RenderVisitor.prototype = {
         }
         if (bgcolor.alpha > 0) {
           ctx.fillStyle = rgbaObjToStr(bgcolor);
-          if (this.refreshStage) {
-            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-          } else {
+          if (this.root._invalidPath) {
             ctx.fill();
+          } else {
+            ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
           }
         }
       }
@@ -203,6 +204,7 @@ RenderVisitor.prototype = {
     this.depth--;
     if (this.depth === 0) {
       this.ctx.restore();
+      this.root._invalidPath = null;
     }
   },
   visit: function (child, isContainer, visitContainer, context) {
@@ -400,8 +402,9 @@ RenderingColorTransform.prototype = {
   }
 };
 
-function RenderingContext(refreshStage) {
+function RenderingContext(refreshStage, invalidPath) {
   this.refreshStage = refreshStage === true;
+  this.invalidPath = invalidPath;
   this.isClippingMask = false;
   this.colorTransform = new RenderingColorTransform();
 }
@@ -427,7 +430,7 @@ function renderDisplayObject(child, ctx, transform, context) {
       ctx.globalAlpha *= child._alpha;
     }
 
-    if (!context.refreshStage && !child._invalid) {
+    if (context.invalidPath && !context.refreshStage && !child._invalid) {
       return;
     }
 
@@ -717,17 +720,17 @@ function renderStage(stage, ctx, events) {
       }
 
       if (isCanvasVisible(ctx.canvas) && (refreshStage || renderFrame)) {
-        if (!disablePreVisitor.value) {
-          ctx.beginPath();
-          stage._showRedrawRegions(showRedrawRegions.value);
 
+        var invalidPath = null;
+
+        if (!disablePreVisitor.value) {
           traceRenderer.value && frameWriter.enter("> Pre Visitor");
           fps && fps.enter("PRE");
           stage._processInvalidRegions(ctx);
+          invalidPath = stage._invalidPath;
           fps && fps.leave("PRE");
           traceRenderer.value && frameWriter.leave("< Pre Visitor");
         }
-
 
         if (!disableRenderVisitor.value) {
           fps && fps.enter("RENDER");
@@ -740,6 +743,12 @@ function renderStage(stage, ctx, events) {
         if (showQuadTree.value) {
           ctx.strokeStyle = 'green';
           renderQuadTree(ctx, stage._qtree);
+        }
+
+        if (invalidPath && !refreshStage && showRedrawRegions.value) {
+          ctx.strokeStyle = 'red';
+          invalidPath.draw(ctx);
+          ctx.stroke();
         }
       }
 

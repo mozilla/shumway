@@ -279,16 +279,21 @@ QuadTree.prototype.insert = function (obj) {
 
   obj._qtree = this;
 };
+QuadTree.prototype.delete = function (obj) {
+  if (obj._qtree !== this) {
+    return;
+  }
 
-  var nodes = this.nodes;
-  if (nodes.length) {
-    var index = this._findIndex(obj);
+  var index = this.objects.indexOf(obj);
+  if (index > -1) {
+    this.objects.splice(index, 1);
+  } else {
+    index = this.stuckObjects.indexOf(obj);
+    this.stuckObjects.splice(index, 1);
+  }
 
-    if (index > -1) {
-      out = out.concat(nodes[index].retrieve(obj));
-    } else {
-      for (var i = 0; i < nodes.length; i++) {
-        out = out.concat(nodes[i].retrieve(obj));
+  obj._qtree = null;
+};
 QuadTree.prototype._stack = [];
 QuadTree.prototype._out = [];
 QuadTree.prototype.retrieve = function (x, y, width, height) {
