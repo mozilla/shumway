@@ -43,10 +43,10 @@ var RECT = {
   $$xMax: SB('bits'),
   $$yMin: SB('bits'),
   $$yMax: SB('bits'),
-  xMin: 'xMin/20',
-  xMax: 'xMax/20',
-  yMin: 'yMin/20',
-  yMax: 'yMax/20',
+  xMin: 'xMin',
+  xMax: 'xMax',
+  yMin: 'yMin',
+  yMax: 'yMax',
   $$1: ALIGN
 };
 var MATRIX = {
@@ -78,8 +78,8 @@ var MATRIX = {
   $$bits: UB(5),
   $$e: SB('bits'),
   $$f: SB('bits'),
-  tx: 'e/20',
-  ty: 'f/20',
+  tx: 'e',
+  ty: 'f',
   $$1: ALIGN
 };
 var CXFORM = {

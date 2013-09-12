@@ -32,8 +32,8 @@ var BitmapDefinition = (function () {
       this._bbox = {
         xMin: 0,
         yMin: 0,
-        xMax: canvas.width,
-        yMax: canvas.height
+        xMax: canvas.width * 20,
+        yMax: canvas.height * 20
       };
     } else {
       this._bbox = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
@@ -56,7 +56,7 @@ var BitmapDefinition = (function () {
             Math.abs(Math.abs(transform.d) - 1) <= EPSILON &&
             Math.abs(transform.b) <= EPSILON && Math.abs(transform.c) <= EPSILON) {
           ctx.setTransform(transform.a < 0 ? -1 : 1, 0, 0, transform.d < 0 ? -1 : 1,
-                           Math.floor(transform.e), Math.floor(transform.f));
+                           transform.e|0, transform.f|0);
         }
         // TODO this._pixelSnapping === 'always'; does it even make sense in other cases?
       }
