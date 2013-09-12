@@ -473,6 +473,14 @@ function renderDisplayObject(child, ctx, transform, context) {
   child._invalid = false;
 }
 
+function renderQuadTree(ctx, qtree) {
+  ctx.strokeRect(qtree.x, qtree.y, qtree.width, qtree.height);
+  var nodes = qtree.nodes;
+  for (var i = 0; i < nodes.length; i++) {
+    renderQuadTree(ctx, nodes[i]);
+  }
+}
+
 var fps;
 
 var renderingTerminated = false;
@@ -730,16 +738,8 @@ function renderStage(stage, ctx, events) {
         }
 
         if (showQuadTree.value) {
-          ctx.save();
           ctx.strokeStyle = 'green';
-          (function renderQuadTree(tree) {
-            ctx.strokeRect(tree.x, tree.y, tree.width, tree.height);
-            var nodes = tree.nodes;
-            for (var i = 0; i < nodes.length; i++) {
-              renderQuadTree(nodes[i]);
-            }
-          })(stage._qtree);
-          ctx.restore();
+          renderQuadTree(ctx, stage._qtree);
         }
       }
 
