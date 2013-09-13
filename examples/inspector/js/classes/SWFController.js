@@ -99,6 +99,8 @@ var SWFController = (function() {
 
     stageInitializedCallback: function stageInitializedCallback(stage) {
       this.stage = stage;
+      fps.setFrameRate(stage._frameRate);
+      fps.refreshEvery(10);
     },
     completeCallback: function completeCallback() {
     },

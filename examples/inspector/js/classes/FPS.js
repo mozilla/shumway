@@ -2,11 +2,11 @@
  * Frame Rate Monitor
  */
 var FPS = (function () {
-  var infoColor = "rgba(61, 61, 61, 0.9)";
+  var barColor = "rgba(255,255,255, 0.075)";
   var backgroundColor = "rgb(61, 61, 61)";
-  var sixtyColor = "#FF3900";
-  var thirtyColor = "orange";
-  var textColor = "white";
+  var backgroundColorInfo = "rgba(0,0,0, 0.35)";
+  var fpsLineColor = "rgb(255,64,0)";
+  var textColor = "#ccc";
 
   function fps(canvas) {
     this.depth = 0;
@@ -14,7 +14,10 @@ var FPS = (function () {
     this.index = 0;
     this.marks = new CircularBuffer(Int32Array);
     this.times = new CircularBuffer(Float64Array);
-    this.maxFrameTime = 1000 / 20;
+    this.frameRate = 12;
+    this.maxFrameTime = 1000 * 2 / this.frameRate;
+    this.refreshFrequency = 10;
+    this.refreshCounter = 0;
     this.count = 0;
     this.kinds = createEmptyObject();
     this.kindCount = 0;
@@ -25,25 +28,29 @@ var FPS = (function () {
     this.resizeHandler();
   }
 
-  fps.prototype.refreshEvery = function (ms) {
-    var that = this;
-    this.refreshFrequency = ms;
-    var lastRefresh = 0;
-    function refresh() {
-      var current = performance.now();
-      if (current - lastRefresh > that.refreshFrequency) {
-        lastRefresh = current;
-        that.paint();
-      }
-      requestAnimationFrame(refresh);
-    }
-    requestAnimationFrame(refresh);
+  fps.prototype.setFrameRate = function setFrameRate(frameRate) {
+    this.frameRate = frameRate;
+    this.maxFrameTime = 1000 * 2 / frameRate;
+  };
+
+  fps.prototype.refreshEvery = function refreshEvery(freq) {
+    this.refreshFrequency = freq;
+    this.refreshCounter = 0;
   };
 
   var ENTER = 0xBEEF0000 | 0;
   var LEAVE = 0xDEAD0000 | 0;
 
-  fps.prototype.getKind = function (name) {
+  fps.prototype.registerKind = function getKind(name, fillStyle) {
+    if (this.kinds[name] === undefined) {
+      this.fillStyles[this.kindCount] = fillStyle;
+      this.kinds[name] = this.kindCount++;
+    } else {
+      this.fillStyles[this.kinds[name]] = fillStyle;
+    }
+  };
+
+  fps.prototype.getKind = function getKind(name) {
     if (this.kinds[name] === undefined) {
       this.kinds[name] = this.kindCount ++;
       if (this.kindCount > this.fillStyles.length) {
@@ -54,52 +61,58 @@ var FPS = (function () {
   };
 
   fps.prototype.enter = function enter(name) {
-    this.depth ++;
+    this.depth++;
     this.marks.write(ENTER | this.getKind(name));
     this.times.write(performance.now());
   };
 
   fps.prototype.leave = function leave(name) {
-    this.depth --;
-    if (this.depth === 0) {
-      this.count ++;
-    }
     this.marks.write(LEAVE | this.getKind(name));
     this.times.write(performance.now());
+    this.depth--;
+    if (this.depth === 0) {
+      this.count++;
+      if (++this.refreshCounter == this.refreshFrequency) {
+        this.refreshCounter = 0;
+        this.paint();
+      }
+    }
   };
 
-  fps.prototype.gatherFrames = function (maxFrames) {
+  fps.prototype.gatherFrames = function gatherFrames(maxFrames) {
     var stack = [];
-    var times = this.times;
     var frames = [];
+    var times = this.times;
+    maxFrames++;
     this.marks.forEachInReverse(function (mark, i) {
       var time = times.get(i);
       if ((mark & 0xFFFF0000) === ENTER) {
-        var kind = mark & 0xFFFF;
         var node = stack.pop();
         node.startTime = time;
         if (!stack.length) {
+          if (frames.length && !frames[0].total) {
+            frames[0].total = frames[0].startTime - time;
+          }
           frames.unshift(node);
         } else {
           var top = stack.top();
           if (!top.children) {
-            top.children = [];
+            top.children = [node];
+          } else {
+            top.children.push(node);
           }
-          top.children.push(node);
         }
       } else if ((mark & 0xFFFF0000) === LEAVE) {
         if (frames.length > maxFrames) {
           return true;
         }
-        var kind = mark & 0xFFFF;
-        var node = { kind: kind, endTime: time };
-        stack.push(node);
+        stack.push({ kind: mark & 0xFFFF, endTime: time });
       }
     });
     return frames;
   };
 
-  fps.prototype.resizeHandler = function (event) {
+  fps.prototype.resizeHandler = function resizeHandler(event) {
     var parent = this.canvas.parentElement;
     this.cw = parent.offsetWidth;
     this.ch = parent.offsetHeight - 1;
@@ -126,75 +139,101 @@ var FPS = (function () {
     this.context.font = 11 + 'px Consolas, "Liberation Mono", Courier, monospace';
   };
 
-  fps.prototype.paint = function () {
-    var h = this.ch;
+  fps.prototype.paint = function paint() {
+    //var t = performance.now();
     var w = 10;
     var gap = 1;
     var maxFrames = (this.cw / (w + gap)) | 0;
     var frames = this.gatherFrames(maxFrames);
+    //var t1 = performance.now() - t;
 
     var context = this.context;
     var maxFrameTime = this.maxFrameTime;
     var fillStyles = this.fillStyles;
 
-    context.clearRect(0, 0, this.cw, h);
+    context.clearRect(0, 0, this.cw, this.ch);
 
-    var totalFrameRate = 0;
+    var maxFrameRate = 0;
+    var maxFrameRateCount = 0;
+    var avgFrameRate = 0;
+    var avgFrameRateCount = 0;
     var offsetW;
-    for (var i = 0; i < frames.length; i++) {
+
+    context.save();
+    context.translate(0, this.ch);
+    context.scale(1, -this.ch / maxFrameTime);
+
+    for (var i = 0; i < frames.length - 1; i++) {
       var frame = frames[i];
-      var frameTime = frame.endTime - frame.startTime;
-      totalFrameRate += 1000 / frameTime;
+      maxFrameRate += frame.endTime - frame.startTime;
+      maxFrameRateCount++;
+      if (frame.total) {
+        avgFrameRate += frame.total;
+        avgFrameRateCount++;
+      }
       offsetW = i * (w + gap);
+      context.fillStyle = barColor;
+      context.fillRect(offsetW, 0, w, frames[i + 1].startTime - frame.startTime);
       drawNode(frame);
     }
 
     function drawNode(node) {
+      var offsetH = 0;
       var nodeTime = node.endTime - node.startTime;
-      var nh = nodeTime / maxFrameTime;
-      var offsetH = (node.startTime - frame.startTime) / maxFrameTime;
       context.fillStyle = fillStyles[node.kind];
-      context.fillRect(offsetW, h - (nh + offsetH) * h, w, nh * h);
+      context.fillRect(offsetW, offsetH, w, nodeTime);
       if (node.children) {
-        node.children.forEach(drawNode);
+        var children = node.children;
+        for (var i = 0, n = children.length; i < n; i++) {
+          node = children[i];
+          nodeTime = node.endTime - node.startTime;
+          context.fillStyle = fillStyles[node.kind];
+          context.fillRect(offsetW, offsetH, w, nodeTime);
+          offsetH += nodeTime;
+        }
       }
     }
 
     /**
-     * Draw Frame Lines
+     * Draw FPS line
      */
-    var lineFrames = [60, 30];
-    var lineColors = [sixtyColor, thirtyColor];
+    var lineH = 1000 / this.frameRate;
+    context.beginPath();
+    context.lineWidth = 1;
+    context.moveTo(0, lineH);
+    context.lineTo(this.cw, lineH);
+    context.strokeStyle = fpsLineColor;
+    context.stroke();
 
-    for (var i = 0; i < lineFrames.length; i++) {
-      var lineH = h - ((1000 / lineFrames[i]) / this.maxFrameTime) * h;
-      context.beginPath();
-      context.lineWidth = 1;
-      context.moveTo(0, lineH);
-      context.lineTo(this.cw, lineH);
-      context.strokeStyle = lineColors[i];
-      context.stroke();
-    }
+    context.restore();
 
     /**
      * Draw Info
      */
+    context.fillStyle = backgroundColorInfo;
+    context.fillRect(0, 0, this.cw, 20);
+
     var textOffset;
-    context.clearRect(0, 0, 200, 30); // TODO
-    context.fillStyle = textColor;
-    var averageFrameRate = (totalFrameRate / frames.length) | 0;
+    var sFrameCount = "FRAMES:" + this.count;
+    var sMaxFrameRate = "TFPS:" + Math.round(1000 * maxFrameRateCount / maxFrameRate);
+    var sAvgFrameRate = "FPS:" + Math.round(1000 * avgFrameRateCount / avgFrameRate);
 
     textOffset = 5;
-    context.fillText(String(this.count), textOffset, 18);
-    textOffset += context.measureText(String(this.count)).width + 10;
-    context.fillText("TFPS " + averageFrameRate, textOffset, 18);
-    textOffset += context.measureText("TFPS " + averageFrameRate).width + 10;
+    context.fillStyle = textColor;
+    context.fillText(sFrameCount, textOffset, 13);
+    textOffset += context.measureText(sFrameCount).width + 10;
+    context.fillText(sMaxFrameRate, textOffset, 13);
+    textOffset += context.measureText(sMaxFrameRate).width + 10;
+    context.fillText(sAvgFrameRate, textOffset, 13);
 
+    textOffset = this.cw;
     for (var k in this.kinds) {
       context.fillStyle = this.fillStyles[this.getKind(k)];
-      this.context.fillText(k, textOffset, 18);
-      textOffset += context.measureText(k).width + 10;
+      textOffset -= context.measureText(k).width + 10;
+      this.context.fillText(k, textOffset, 13);
     }
+    //var tt = performance.now() - t;
+    //console.log(tt + " ms", t1, tt-t1);
   };
 
   return fps;
