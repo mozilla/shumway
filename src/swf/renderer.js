@@ -573,7 +573,7 @@ function renderStage(stage, ctx, events) {
 
   var frameTime = 0;
   var maxDelay = 1000 / stage._frameRate;
-  var nextRenderAt = Date.now();
+  var nextRenderAt = performance.now();
 
   var requestAnimationFrame = window.requestAnimationFrame ||
                               window.mozRequestAnimationFrame ||
@@ -638,7 +638,7 @@ function renderStage(stage, ctx, events) {
 
   (function draw() {
 
-    var now = Date.now();
+    var now = performance.now();
     var renderFrame = now >= nextRenderAt;
 
     if (renderFrame && events.onBeforeFrame) {
