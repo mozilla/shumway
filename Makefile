@@ -100,7 +100,7 @@ hello-world:
 IRC_ROOM = shumway-build-bot
 
 server:
-	python -m SimpleHTTPServer
+	python utils/webserver.py
 
 push-test:
 	git pull origin master
