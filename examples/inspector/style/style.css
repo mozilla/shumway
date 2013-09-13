@@ -87,6 +87,16 @@ body.simple #xstats {
   font-size: 12px;
 }
 
+#fpsPanelContainer {
+  position: absolute;
+  top: 32px;
+  right: 500px;
+  left: 0;
+  height: 100px;
+  background-color: rgba(0, 0, 0, 0.2);
+  border-bottom: 1px solid #666;
+}
+
 #debugInfoToolbar > .toolbarButtonBar {
   display: none;
   font-size: 0;
@@ -206,10 +216,10 @@ body.simple #xstats {
 
 #stageContainer {
   position: absolute;
-  top: 36px;
-  bottom: 36px;
-  left: 4px;
-  right: 504px;
+  top: 133px;
+  bottom: 32px;
+  left: 0;
+  right: 500px;
   overflow: auto;
   display: -webkit-box;
   display: -moz-box;
@@ -235,7 +245,7 @@ body.simple #xstats {
 
 #xstats {
   position: absolute;
-  top: 32px;
+  top: 133px;
   right: 500px;
   z-index: 1;
 }
@@ -258,11 +268,11 @@ body.simple #xstats {
 
 @media only screen and (max-width: 1024px) {
   #stageContainer { right: 354px; }
-  #topToolbar, #xstats { right: 350px; }
+  #topToolbar, #xstats, #fpsPanelContainer { right: 350px; }
   #debugInfoToolbar, #debugInfoContainer, #displayListContainer { width: 350px; }
 }
 
 @media only screen and (max-width: 768px) {
-  #stageContainer, #topToolbar, #xstats { right: 0; }
+  #stageContainer, #topToolbar, #xstats, #fpsPanelContainer { right: 0; }
   #debugInfoToolbar, #debugInfoContainer, #displayListContainer { display: none !important; }
 }

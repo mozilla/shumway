@@ -584,7 +584,7 @@ function renderStage(stage, ctx, events) {
 
   var frameTime = 0;
   var maxDelay = 1000 / stage._frameRate;
-  var nextRenderAt = Date.now();
+  var nextRenderAt = performance.now();
 
   var requestAnimationFrame = window.requestAnimationFrame ||
                               window.mozRequestAnimationFrame ||
@@ -649,7 +649,7 @@ function renderStage(stage, ctx, events) {
 
   (function draw() {
 
-    var now = Date.now();
+    var now = performance.now();
     var renderFrame = now >= nextRenderAt;
 
     if (renderFrame && events.onBeforeFrame) {
@@ -753,11 +753,11 @@ function renderStage(stage, ctx, events) {
       }
 
       if (mouseMoved && !disableMouseVisitor.value) {
-        fps && fps.enter("MOUSE");
+        fps && renderFrame && fps.enter("MOUSE");
         traceRenderer.value && frameWriter.enter("> Mouse Visitor");
         stage._handleMouse();
         traceRenderer.value && frameWriter.leave("< Mouse Visitor");
-        fps && fps.leave("MOUSE");
+        fps && renderFrame && fps.leave("MOUSE");
 
         stage._syncCursor();
       }
