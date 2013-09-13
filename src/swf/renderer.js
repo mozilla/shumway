@@ -744,11 +744,11 @@ function renderStage(stage, ctx, events) {
       }
 
       if (mouseMoved && !disableMouseVisitor.value) {
-        fps && fps.enter("MOUSE");
+        fps && renderFrame && fps.enter("MOUSE");
         traceRenderer.value && frameWriter.enter("> Mouse Visitor");
         stage._handleMouse();
         traceRenderer.value && frameWriter.leave("< Mouse Visitor");
-        fps && fps.leave("MOUSE");
+        fps && renderFrame && fps.leave("MOUSE");
 
         stage._syncCursor();
       }
