@@ -181,7 +181,7 @@ function as2ToInteger(value) {
   if (!isFinite(result) || result === 0) {
     return result;
   }
-  return (result < 0 ? -1 : 1) * Math.floor(Math.abs(result));
+  return (result < 0 ? -1 : 1) * Math.abs(result)|0;
 }
 
 function as2ToInt32(value) {
