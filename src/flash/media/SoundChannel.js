@@ -230,7 +230,7 @@ AudioResampler.prototype = {
       var source = sourceData[channel];
       for (var j = 0; j < count; j++) {
         var i = j * k + offset;
-        var i1 = Math.floor(i), i2 = Math.ceil(i);
+        var i1 = i|0, i2 = Math.ceil(i)|0;
         var source_i1 = i1 < 0 ? this.tail[channel] : source[i1];
         if (i1 === i2) {
           data[j] = source_i1;
