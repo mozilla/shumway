@@ -378,7 +378,7 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     }
   }
   var color;
-  if (style.type === undefined) {
+  if (style.type === undefined || style.type === GRAPHICS_FILL_SOLID) {
     color = style.color;
     style.style = 'rgba(' + color.red + ',' + color.green + ',' +
                   color.blue + ',' + color.alpha / 255 + ')';
@@ -387,16 +387,10 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
   }
   var scale;
   switch (style.type) {
-    case GRAPHICS_FILL_SOLID:
-      color = style.color;
-      style.style = 'rgba(' + color.red + ',' + color.green + ',' +
-                    color.blue + ',' + color.alpha / 255 + ')';
-      style.color = null; // No need to keep data around we won't use anymore.
-      break;
     case GRAPHICS_FILL_LINEAR_GRADIENT:
     case GRAPHICS_FILL_RADIAL_GRADIENT:
     case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
-      scale = 20 * 819.2;
+      scale = 819.2;
       break;
     case GRAPHICS_FILL_REPEATING_BITMAP:
     case GRAPHICS_FILL_CLIPPED_BITMAP:
@@ -404,7 +398,7 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
       if (dictionary[style.bitmapId]) {
         dependencies.push(dictionary[style.bitmapId].id);
-        scale = 1;
+        scale = 0.05;
       }
       break;
     default:
@@ -419,8 +413,8 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     b: (matrix.b * scale),
     c: (matrix.c * scale),
     d: (matrix.d * scale),
-    e: (matrix.tx * 20),
-    f: (matrix.ty * 20)
+    e: matrix.tx,
+    f: matrix.ty
   };
   // null data that's unused from here on out
   style.matrix = null;
@@ -598,7 +592,7 @@ ShapePath.prototype = {
     this.commands.push(SHAPE_ELLIPSE);
     this.data.push(x, y, radiusX, radiusY);
   },
-  draw: function(ctx, scale, clip, ratio, colorTransform) {
+  draw: function(ctx, clip, ratio, colorTransform) {
     if (clip && !this.fillStyle) {
       return;
     }
@@ -614,40 +608,42 @@ ShapePath.prototype = {
         switch (commands[j]) {
           case SHAPE_MOVE_TO:
             formOpen = true;
-            formOpenX = data[k++];
-            formOpenY = data[k++];
+            formOpenX = data[k++]/20;
+            formOpenY = data[k++]/20;
             ctx.moveTo(formOpenX, formOpenY);
             break;
           case SHAPE_WIDE_MOVE_TO:
-            ctx.moveTo(data[k++], data[k++]);
+            ctx.moveTo(data[k++]/20, data[k++]/20);
             k += 2;
             break;
           case SHAPE_LINE_TO:
-            ctx.lineTo(data[k++], data[k++]);
+            ctx.lineTo(data[k++]/20, data[k++]/20);
             break;
           case SHAPE_WIDE_LINE_TO:
-            ctx.lineTo(data[k++], data[k++]);
+            ctx.lineTo(data[k++]/20, data[k++]/20);
             k += 2;
             break;
           case SHAPE_CURVE_TO:
-            ctx.quadraticCurveTo(data[k++], data[k++],
-                                 data[k++], data[k++]);
+            ctx.quadraticCurveTo(data[k++]/20, data[k++]/20,
+                                 data[k++]/20, data[k++]/20);
             break;
           case SHAPE_CUBIC_CURVE_TO:
-            ctx.bezierCurveTo(data[k++], data[k++], data[k++], data[k++],
-                              data[k++], data[k++]);
+            ctx.bezierCurveTo(data[k++]/20, data[k++]/20,
+                              data[k++]/20, data[k++]/20,
+                              data[k++]/20, data[k++]/20);
             break;
           case SHAPE_ROUND_CORNER:
-            ctx.arcTo(data[k++], data[k++], data[k++], data[k++],
-                      data[k++], data[k++]);
+            ctx.arcTo(data[k++]/20, data[k++]/20, data[k++]/20, data[k++]/20,
+                      data[k++]/20, data[k++]/20);
             break;
           case SHAPE_CIRCLE:
             if (formOpen) {
               ctx.lineTo(formOpenX, formOpenY);
               formOpen = false;
             }
-            ctx.moveTo(data[k] + data[k+2], data[k+1]);
-            ctx.arc(data[k++], data[k++], data[k++], 0, Math.PI * 2, false);
+            ctx.moveTo((data[k] + data[k+2])/20, data[k+1]/20);
+            ctx.arc(data[k++]/20, data[k++]/20, data[k++]/20, 0, Math.PI * 2,
+                    false);
             break;
           case SHAPE_ELLIPSE:
             if (formOpen) {
@@ -674,8 +670,8 @@ ShapePath.prototype = {
                 ctx.scale(1, ellipseScale);
               }
             }
-            ctx.moveTo(x + radius, y);
-            ctx.arc(x, y, radius, 0, Math.PI * 2, false);
+            ctx.moveTo((x + radius)/20, y/20);
+            ctx.arc(x/20, y/20, radius/20, 0, Math.PI * 2, false);
             if (rX !== rY) {
               ctx.restore();
             }
@@ -687,18 +683,18 @@ ShapePath.prototype = {
       } else {
         switch (commands[j]) {
           case SHAPE_MOVE_TO:
-            ctx.moveTo(morph(data[k], morphData[k++], ratio),
-                       morph(data[k], morphData[k++], ratio));
+            ctx.moveTo(morph(data[k]/20, morphData[k++]/20, ratio),
+                       morph(data[k]/20, morphData[k++]/20, ratio));
             break;
           case SHAPE_LINE_TO:
-            ctx.lineTo(morph(data[k], morphData[k++], ratio),
-                       morph(data[k], morphData[k++], ratio));
+            ctx.lineTo(morph(data[k]/20, morphData[k++]/20, ratio),
+                       morph(data[k]/20, morphData[k++]/20, ratio));
             break;
           case SHAPE_CURVE_TO:
-            ctx.quadraticCurveTo(morph(data[k], morphData[k++], ratio),
-                                 morph(data[k], morphData[k++], ratio),
-                                 morph(data[k], morphData[k++], ratio),
-                                 morph(data[k], morphData[k++], ratio));
+            ctx.quadraticCurveTo(morph(data[k]/20, morphData[k++]/20, ratio),
+                                 morph(data[k]/20, morphData[k++]/20, ratio),
+                                 morph(data[k]/20, morphData[k++]/20, ratio),
+                                 morph(data[k]/20, morphData[k++]/20, ratio));
             break;
           default:
             console.warn("Drawing command not supported for morph " +
@@ -718,7 +714,7 @@ ShapePath.prototype = {
         ctx.save();
         colorTransform.setAlpha(ctx);
         if (m) {
-          ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+          ctx.transform(m.a, m.b, m.c, m.d, m.e/20, m.f/20);
         }
         ctx.fill();
         ctx.restore();
@@ -729,8 +725,8 @@ ShapePath.prototype = {
         colorTransform.setStrokeStyle(ctx, lineStyle.style);
         ctx.save();
         colorTransform.setAlpha(ctx);
-        // Flash's lines are always at least 1px
-        ctx.lineWidth = Math.max(lineStyle.width, 1);
+        // Flash's lines are always at least 1px/20twips
+        ctx.lineWidth = Math.max(lineStyle.width/20, 1);
         ctx.lineCap = lineStyle.lineCap;
         ctx.lineJoin = lineStyle.lineJoin;
         ctx.miterLimit = lineStyle.miterLimit;
@@ -1662,7 +1658,7 @@ function initStyle(style, dictionary) {
       if (isLinear) {
         gradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
       } else {
-        gradient = factoryCtx.createRadialGradient(style.focalPoint || 0,
+        gradient = factoryCtx.createRadialGradient((style.focalPoint|0)/20,
                                                    0, 0, 0, 0, 1);
       }
       var records = style.records;

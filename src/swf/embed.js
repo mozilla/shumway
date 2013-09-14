@@ -89,11 +89,11 @@ SWF.embed = function(file, doc, container, options) {
       });
     } else {
       if (canvasHolder) {
-        canvasHolder.style.width = stage._stageWidth + 'px';
-        canvasHolder.style.height = stage._stageHeight + 'px';
+        canvasHolder.style.width = (stage._stageWidth / 20) + 'px';
+        canvasHolder.style.height = (stage._stageHeight / 20) + 'px';
       }
-      canvas.width = stage._stageWidth * pixelRatio;
-      canvas.height = stage._stageHeight * pixelRatio;
+      canvas.width = stage._stageWidth * pixelRatio / 20;
+      canvas.height = stage._stageHeight * pixelRatio / 20;
     }
 
     container.setAttribute("style", "position: relative");

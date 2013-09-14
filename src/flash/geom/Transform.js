@@ -69,7 +69,7 @@ var TransformDefinition = (function () {
         return null;
       }
       var m = this._target._currentTransform;
-      return new flash.geom.Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
+      return new flash.geom.Matrix(m.a, m.b, m.c, m.d, m.tx/20, m.ty/20);
     },
     set matrix(val) {
       var MatrixClass = avm2.systemDomain.getClass("flash.geom.Matrix");
@@ -90,8 +90,8 @@ var TransformDefinition = (function () {
       target._scaleX = a > 0 ? sx : -sx;
       var sy = Math.sqrt(d * d + c * c);
       target._scaleY = d > 0 ? sy : -sy;
-      target._x = val.tx;
-      target._y = val.ty;
+      target._x = val.tx*20|0;
+      target._y = val.ty*20|0;
 
       target._currentTransform = {
         a: a,

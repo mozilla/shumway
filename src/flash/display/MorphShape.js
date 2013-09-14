@@ -32,7 +32,6 @@ var MorphShapeDefinition = (function () {
         graphics.bbox = s.bbox;
         graphics.strokeBbox = s.strokeBbox;
         graphics.dictionary = s.dictionary;
-        graphics._scale = 0.05;
         if (this._stage && this._stage._quality === 'low' && !graphics._bitmap)
           graphics._cacheAsBitmap(this._bbox);
       }

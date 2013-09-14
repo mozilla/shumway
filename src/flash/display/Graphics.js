@@ -31,7 +31,6 @@ var GraphicsDefinition = (function () {
       this._paths = [];
       this.beginPath();
       this._bitmap = null;
-      this._scale = 1;
       this._parent = 0;
     },
 
@@ -67,14 +66,9 @@ var GraphicsDefinition = (function () {
     },
 
     draw: function(ctx, clip, ratio, colorTransform) {
-      var scale = this._scale;
-      if (scale !== 1) {
-        ctx.scale(scale, scale);
-      }
-
       var paths = this._paths;
       for (var i = 0; i < paths.length; i++) {
-        paths[i].draw(ctx, scale, clip, ratio, colorTransform);
+        paths[i].draw(ctx, clip, ratio, colorTransform);
       }
     },
     beginFill: function (color, alpha) {
@@ -112,27 +106,32 @@ var GraphicsDefinition = (function () {
     },
     cubicCurveTo: function (cp1x, cp1y, cp2x, cp2y, x, y) {
       this._invalidate();
-      this._currentPath.cubicCurveTo(cp1x, cp1y, cp2x, cp2y, x, y);
+      this._currentPath.cubicCurveTo((cp1x * 20)|0, (cp1y * 20)|0,
+                                     (cp2x * 20)|0, (cp2y * 20)|0,
+                                     (x * 20)|0, (y * 20)|0);
     },
     curveTo: function (cpx, cpy, x, y) {
       this._invalidate();
-      this._currentPath.curveTo(cpx, cpy, x, y);
+      this._currentPath.curveTo((cpx * 20)|0, (cpy * 20)|0,
+                                (x * 20)|0, (y * 20)|0);
     },
     drawCircle: function (x, y, radius) {
       this._invalidate();
-      this._currentPath.circle(x, y, radius);
+      this._currentPath.circle((x * 20)|0, (y * 20)|0, (radius * 20)|0);
     },
     drawEllipse: function (x, y, width, height) {
       this._invalidate();
-      var radiusX = width / 2;
-      var radiusY = height / 2;
-      this._currentPath.ellipse(x + radiusX, y + radiusY, radiusX, radiusY);
+      var radiusX = (width / 2 * 20)|0;
+      var radiusY = (height / 2 * 20)|0;
+      this._currentPath.ellipse((x * 20)|0 + radiusX, (y * 20)|0 + radiusY,
+                                radiusX, radiusY);
     },
     drawPath: function (commands, data, winding) {
       this._invalidate();
       this.beginPath();
       this._currentPath.fillRule = winding || GRAPHICS_PATH_WINDING_EVEN_ODD;
       this._currentPath.commands = commands;
+      // TODO: convert to twips
       this._currentPath.data = data;
     },
     drawRect: function (x, y, w, h) {
@@ -140,7 +139,7 @@ var GraphicsDefinition = (function () {
         throw ArgumentError();
 
       this._invalidate();
-      this._currentPath.rect(x, y, w, h);
+      this._currentPath.rect((x * 20)|0, (y * 20)|0, (w * 20)|0, (h * 20)|0);
     },
     drawRoundRect: function (x, y, w, h, ellipseWidth, ellipseHeight) {
       if (isNaN(w + h + ellipseWidth) ||
@@ -150,8 +149,12 @@ var GraphicsDefinition = (function () {
       }
       this._invalidate();
 
-      var radiusX = ellipseWidth / 2;
-      var radiusY = ellipseHeight / 2;
+      var x2 = ((x + w) * 20)|0;
+      var y2 = ((y + h) * 20)|0;
+      x = (x * 20)|0;
+      y = (y * 20)|0;
+      var radiusX = (ellipseWidth / 2 * 20)|0;
+      var radiusY = (ellipseHeight / 2 * 20)|0;
 
 
       if (w === ellipseWidth && h === ellipseHeight) {
@@ -171,8 +174,6 @@ var GraphicsDefinition = (function () {
       // Through some testing, it has been discovered
       // tha the Flash player starts and stops the pen
       // at 'D', so we will, too.
-      var x2 = x + w;
-      var y2 = y + h;
       this._currentPath.moveTo(x2, y2 - radiusY);
 
       this._currentPath.drawRoundCorner(x2, y2, x2-radiusX, y2,
@@ -195,8 +196,15 @@ var GraphicsDefinition = (function () {
       }
       this._invalidate();
 
-      var x2 = x + w;
-      var y2 = y + h;
+      var x2 = ((x + w) * 20)|0;
+      var y2 = ((y + h) * 20)|0;
+      x = (x * 20)|0;
+      y = (y * 20)|0;
+      topLeftRadius = (topLeftRadius * 20)|0;
+      topRightRadius = (topRightRadius * 20)|0;
+      bottomLeftRadius = (bottomLeftRadius * 20)|0;
+      bottomRightRadius = (bottomRightRadius * 20)|0;
+
       this._currentPath.moveTo(x2, y2-bottomRightRadius);
       this._currentPath.drawRoundCorner(x2, y2, x2-bottomRightRadius, y2,
                                         bottomRightRadius);
@@ -249,7 +257,7 @@ var GraphicsDefinition = (function () {
           style: rgbIntAlphaToStr(color, alpha),
           lineCap: cap || 'round',
           lineJoin: cap || 'round',
-          width: width,
+          width: (width * 20)|0,
           miterLimit: mlimit * 2
         };
       } else {
@@ -258,10 +266,10 @@ var GraphicsDefinition = (function () {
     },
     lineTo: function (x, y) {
       this._invalidate();
-      this._currentPath.lineTo(x, y);
+      this._currentPath.lineTo((x * 20)|0, (y * 20)|0);
     },
     moveTo: function (x, y) {
-      this._currentPath.moveTo(x, y);
+      this._currentPath.moveTo((x * 20)|0, (y * 20)|0);
     },
     _getBounds: function (includeStroke) {
       var bbox;
@@ -295,11 +303,10 @@ var GraphicsDefinition = (function () {
       }
 
       // TODO: cache bbox
-      var scale = this._scale;
-      var xMin = Math.min.apply(Math, xMins) * scale;
-      var yMin = Math.min.apply(Math, yMins) * scale;
-      var xMax = Math.max.apply(Math, xMaxs) * scale;
-      var yMax = Math.max.apply(Math, yMaxs) * scale;
+      var xMin = Math.min.apply(Math, xMins);
+      var yMin = Math.min.apply(Math, yMins);
+      var xMax = Math.max.apply(Math, xMaxs);
+      var yMax = Math.max.apply(Math, yMaxs);
       return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax};
     }
   };

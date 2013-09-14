@@ -140,9 +140,10 @@ RenderVisitor.prototype = {
       inverse = new flash.geom.Matrix();
     }
     this.ctx.save();
-    this.ctx.transform(inverse.a, inverse.b, inverse.c, inverse.d, inverse.tx, inverse.ty);
+    this.ctx.transform(inverse.a, inverse.b, inverse.c, inverse.d,
+                       inverse.tx/20, inverse.ty/20);
 
-    this.visit(this.root, isContainer, visitContainer, new RenderingContext(this.refreshStage));
+    this.visit(this.root, isContainer, visitContainer, new RenderingContext(this.refreshStage, this.root._invalidPath));
 
     this.ctx.restore();
   },
@@ -164,7 +165,7 @@ RenderVisitor.prototype = {
         }
         if (bgcolor.alpha > 0) {
           ctx.fillStyle = rgbaObjToStr(bgcolor);
-          if (this.root._invalidPath) {
+          if (this.root._invalidPath && !this.refreshStage && !renderAsWireframe.value) {
             ctx.fill();
           } else {
             ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -418,11 +419,9 @@ function renderDisplayObject(child, ctx, transform, context) {
       ctx.rect(0, 0, 0, 0);
       ctx.clip();
     } else {
-      ctx.transform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+      ctx.transform(m.a, m.b, m.c, m.d, m.tx/20, m.ty/20);
     }
   }
-
-  child._wireframeStrokeStyle = null;
 
   if (!renderAsWireframe.value) {
 
@@ -430,7 +429,7 @@ function renderDisplayObject(child, ctx, transform, context) {
       ctx.globalAlpha *= child._alpha;
     }
 
-    if (context.invalidPath && !context.refreshStage && !child._invalid) {
+    if (context.invalidPath && !child._invalid && !context.refreshStage) {
       return;
     }
 
@@ -440,12 +439,13 @@ function renderDisplayObject(child, ctx, transform, context) {
 
       if (graphics._bitmap) {
         ctx.save();
-        ctx.translate(child._bbox.xMin, child._bbox.yMin);
+        ctx.translate(child._bbox.xMin/20, child._bbox.yMin/20);
         context.colorTransform.setAlpha(ctx, true);
         ctx.drawImage(graphics._bitmap, 0, 0);
         ctx.restore();
       } else {
-        graphics.draw(ctx, context.isClippingMask, child.ratio, context.colorTransform);
+        graphics.draw(ctx, context.isClippingMask, child.ratio,
+                      context.colorTransform);
       }
     }
 
@@ -455,18 +455,21 @@ function renderDisplayObject(child, ctx, transform, context) {
 
   } else {
 
-    if (!context.refreshStage && !child._invalid) {
+    if (!child._invalid && !context.refreshStage) {
       return;
     }
 
     if (child.getBounds) {
       var b = child.getBounds(child);
       if (b && b.xMax - b.xMin > 0 && b.yMax - b.yMin > 0) {
-        child._wireframeStrokeStyle = randomStyle();
+        if (!child._wireframeStrokeStyle) {
+          child._wireframeStrokeStyle = randomStyle();
+        }
         ctx.save();
         ctx.strokeStyle = child._wireframeStrokeStyle;
-        ctx.strokeRect(b.xMin + 0.5, b.yMin + 0.5, b.xMax - b.xMin - 1,
-                       b.yMax - b.yMin - 1);
+        var x = b.xMin / 20;
+        var y = b.yMin / 20;
+        ctx.strokeRect(x + 0.5, y + 0.5, b.xMax/20 - x - 1, b.yMax/20 - y - 1);
         ctx.restore();
       }
     }
@@ -477,7 +480,7 @@ function renderDisplayObject(child, ctx, transform, context) {
 }
 
 function renderQuadTree(ctx, qtree) {
-  ctx.strokeRect(qtree.x, qtree.y, qtree.width, qtree.height);
+  ctx.strokeRect(qtree.x/20, qtree.y/20, qtree.width/20, qtree.height/20);
   var nodes = qtree.nodes;
   for (var i = 0; i < nodes.length; i++) {
     renderQuadTree(ctx, nodes[i]);
@@ -525,8 +528,8 @@ function renderStage(stage, ctx, events) {
     frameWidth = ctx.canvas.width;
     frameHeight = ctx.canvas.height;
 
-    var scaleX = frameWidth / stage._stageWidth;
-    var scaleY = frameHeight / stage._stageHeight;
+    var scaleX = frameWidth / stage._stageWidth * 20;
+    var scaleY = frameHeight / stage._stageHeight * 20;
 
     switch (stage._scaleMode) {
     case 'exactFit':
@@ -557,16 +560,16 @@ function renderStage(stage, ctx, events) {
     if (align.indexOf('L') >= 0) {
       offsetX = 0;
     } else if (align.indexOf('R') >= 0) {
-      offsetX = frameWidth - scaleX * stage._stageWidth;
+      offsetX = frameWidth - scaleX * stage._stageWidth / 20;
     } else {
-      offsetX = (frameWidth - scaleX * stage._stageWidth) / 2;
+      offsetX = (frameWidth - scaleX * stage._stageWidth / 20) / 2;
     }
     if (align.indexOf('T') >= 0) {
       offsetY = 0;
     } else if (align.indexOf('B') >= 0) {
-      offsetY = frameHeight - scaleY * stage._stageHeight;
+      offsetY = frameHeight - scaleY * stage._stageHeight / 20;
     } else {
-      offsetY = (frameHeight - scaleY * stage._stageHeight) / 2;
+      offsetY = (frameHeight - scaleY * stage._stageHeight / 20) / 2;
     }
 
     ctx.setTransform(scaleX, 0, 0, scaleY, offsetX, offsetY);

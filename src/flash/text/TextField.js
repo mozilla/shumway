@@ -326,7 +326,8 @@ var TextFieldDefinition = (function () {
           format.letterspacing = parseFloat(attributes.LETTERSPACING);
         }
         if ('KERNING' in attributes) {
-          format.kerning = parseFloat(attributes.KERNING);
+          // TODO: properly parse this in extractAttributes
+          format.kerning = attributes.KERNING && true;
         }
         if ('LEADING' in attributes) {
           format.leading = parseFloat(attributes.LEADING);
@@ -415,7 +416,7 @@ var TextFieldDefinition = (function () {
 
       var s = this.symbol;
       if (!s) {
-        this._bounds = {xMin: -2, yMin: -2, xMax: 102, yMax: 22};
+        this._bounds = {xMin: -40, yMin: -40, xMax: 2040, yMax: 440};
         this.text = '';
         return;
       }
@@ -470,10 +471,10 @@ var TextFieldDefinition = (function () {
     draw: function (ctx, ratio, colorTransform) {
       this.ensureDimensions();
       var bounds = this._bounds;
-      var x = bounds.xMin;
-      var y = bounds.yMin;
-      var width = bounds.xMax - x;
-      var height = bounds.yMax - y;
+      var x = bounds.xMin / 20;
+      var y = bounds.yMin / 20;
+      var width = bounds.xMax / 20 - x;
+      var height = bounds.yMax / 20 - y;
       if (width <= 0 || height <= 0) {
         return;
       }
@@ -524,7 +525,7 @@ var TextFieldDefinition = (function () {
       var bounds = this._bounds;
       var initialFormat = this._defaultTextFormat;
       var firstRun = {type: 'f', format: initialFormat};
-      var width = Math.max(bounds.xMax - bounds.xMin - 4, 1);
+      var width = Math.max((bounds.xMax - bounds.xMin) / 20 - 4, 1);
       var state = {ctx: measureCtx, y: 0, x: 0, w: width, line: [],
                    lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
                    currentFormat: initialFormat, runs: [firstRun],
@@ -546,11 +547,13 @@ var TextFieldDefinition = (function () {
           case 'center': diffX = (targetWidth - width) / 2; break;
           case 'right': diffX = targetWidth - width;
         }
+        this._drawingOffsetH = -diffX; // this is not in Twips!
+        diffX = (diffX * 20)|0;
+        targetWidth = (targetWidth * 20)|0;
         bounds.xMin -= diffX;
         this._x -= diffX;
-        this._drawingOffsetH = -diffX;
-        bounds.xMax = bounds.xMin + targetWidth + 4;
-        bounds.yMax = bounds.yMin + this._textHeight + 4;
+        bounds.xMax = bounds.xMin + targetWidth + 80;
+        bounds.yMax = bounds.yMin + (this._textHeight * 20|0) + 80;
       }
       this._dimensionsValid = true;
     },
