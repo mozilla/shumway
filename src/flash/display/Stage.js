@@ -48,7 +48,7 @@ var StageDefinition = (function () {
     },
 
     _setup: function setup(ctx, options) {
-      this._qtree = new QuadTree(0, 0, this._stageWidth, this._stageHeight);
+      this._qtree = new QuadTree(0, 0, this._stageWidth, this._stageHeight, 0);
       this._invalid = true;
     },
 
@@ -97,7 +97,7 @@ var StageDefinition = (function () {
       this._invalidObjects.push(displayObject);
     },
 
-    _processInvalidRegions: function processInvalidRegions(ctx) {
+    _processInvalidRegions: function() {
       var objects = this._invalidObjects;
       var regions = [];
 
@@ -155,23 +155,14 @@ var StageDefinition = (function () {
 
       this._numVisibleObjects = numVisibleObjects;
 
-      var scaleX = this._canvasState.scaleX;
-      var scaleY = this._canvasState.scaleY;
-      var offsetX = this._canvasState.offsetX;
-      var offsetY = this._canvasState.offsetY;
-
       var invalidPath = new ShapePath();
 
       for (var i = 0; i < regions.length; i++) {
-        if (numInvalidObjects / numVisibleObjects > 0.75) {
-          return;
-        }
-
         var region = regions[i];
-        var left = (~~(region.x * scaleX + offsetX) - offsetX) / scaleX - 2;
-        var top = (~~(region.y * scaleY + offsetY) - offsetY) / scaleY - 2;
-        var right = (~~((region.x + region.width) * scaleX + offsetX + 0.5) - offsetX) / scaleX + 2;
-        var bottom = (~~((region.y + region.height) * scaleY + offsetY + 0.5) - offsetY) / scaleY + 2;
+        var left = (region.x/20 - 2 |0) * 20;
+        var top = (region.y/20 - 2 |0) * 20;
+        var right = left + (region.width/20 + 4 |0) * 20;
+        var bottom = top + (region.height/20 + 4 |0) * 20;
         var width = right - left;
         var height = bottom - top;
 
@@ -199,8 +190,8 @@ var StageDefinition = (function () {
     },
 
     _handleMouse: function handleMouse() {
-      var mouseX = this._mouseX;
-      var mouseY = this._mouseY;
+      var mouseX = this._mouseX * 20;
+      var mouseY = this._mouseY * 20;
 
       var candidates = this._qtree.retrieve(mouseX, mouseY, 1, 1);
       var interactiveObject;
@@ -330,20 +321,20 @@ var StageDefinition = (function () {
           },
           stageWidth: {
             get: function stageWidth() { // (void) -> int
-              return this._stageWidth;
+              return this._stageWidth / 20;
             },
             set: function stageWidth(value) { // (value:int) -> void
               notImplemented("Stage.stageWidth");
-              this._stageWidth = value;
+              this._stageWidth = value * 20|0;
             }
           },
           stageHeight: {
             get: function stageHeight() { // (void) -> int
-              return this._stageHeight;
+              return this._stageHeight / 20;
             },
             set: function stageHeight(value) { // (value:int) -> void
               notImplemented("Stage.stageHeight");
-              this._stageHeight = value;
+              this._stageHeight = value * 20|0;
             }
           },
           showDefaultContextMenu: {
