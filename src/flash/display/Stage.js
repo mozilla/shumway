@@ -42,7 +42,6 @@ var StageDefinition = (function () {
       this._qtree = null;
       this._numVisibleObjects = 0;
       this._invalidObjects = [];
-      this._invalidPath = null;
       this._mouseMoved = false;
       this._clickTarget = this;
     },
@@ -169,16 +168,17 @@ var StageDefinition = (function () {
         var neighbours = this._qtree.retrieve(left, top, width, height);
         for (var j = 0; j < neighbours.length; j++) {
           var item = neighbours[j];
-          var displayObject = item.obj;
+          var neighbour = item.obj;
 
-          if (displayObject._invalid || (left > item.x + item.width) ||
+          if (neighbour._invalid || (left > item.x + item.width) ||
                                         (right < item.x) ||
                                         (top > item.y + item.height) ||
-                                        (bottom < item.y)) {
+                                        (bottom < item.y))
+          {
             continue;
           }
 
-          displayObject._invalid = true;
+          neighbour._invalid = true;
 
           numInvalidObjects++;
         }
@@ -186,7 +186,7 @@ var StageDefinition = (function () {
         invalidPath.rect(left, top, width, height);
       }
 
-      this._invalidPath = invalidPath;
+      return invalidPath;
     },
 
     _handleMouse: function handleMouse() {
