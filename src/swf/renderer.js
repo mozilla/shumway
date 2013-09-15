@@ -113,10 +113,11 @@ function getBlendModeName(blendMode) {
   return (blendModeCanvas !== undefined) ? blendModeCanvas : "normal";
 }
 
-function RenderVisitor(root, ctx, refreshStage) {
+function RenderVisitor(root, ctx, invalidPath, refreshStage) {
   this.root = root;
   this.ctx = ctx;
   this.depth = 0;
+  this.invalidPath = invalidPath;
   this.refreshStage = refreshStage;
 
   this.clipDepth = null;
@@ -125,7 +126,8 @@ function RenderVisitor(root, ctx, refreshStage) {
 RenderVisitor.prototype = {
   ignoreVisibleAttribute: false,
   start: function () {
-    visitContainer(this.root, this, new RenderingContext(this.refreshStage, this.root._invalidPath));
+    visitContainer(this.root, this,
+                   new RenderingContext(this.refreshStage, this.invalidPath));
   },
   startFragment: function() {
     var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(this.root) ||
@@ -143,7 +145,8 @@ RenderVisitor.prototype = {
     this.ctx.transform(inverse.a, inverse.b, inverse.c, inverse.d,
                        inverse.tx/20, inverse.ty/20);
 
-    this.visit(this.root, isContainer, visitContainer, new RenderingContext(this.refreshStage, this.root._invalidPath));
+    this.visit(this.root, isContainer, visitContainer,
+               new RenderingContext(this.refreshStage, this.invalidPath));
 
     this.ctx.restore();
   },
@@ -153,8 +156,8 @@ RenderVisitor.prototype = {
 
       ctx.save();
 
-      if (this.root._invalidPath && !this.refreshStage && !renderAsWireframe.value) {
-        this.root._invalidPath.draw(ctx);
+      if (this.invalidPath && !this.refreshStage && !renderAsWireframe.value) {
+        this.invalidPath.draw(ctx);
         ctx.clip();
       }
 
@@ -165,7 +168,7 @@ RenderVisitor.prototype = {
         }
         if (bgcolor.alpha > 0) {
           ctx.fillStyle = rgbaObjToStr(bgcolor);
-          if (this.root._invalidPath && !this.refreshStage && !renderAsWireframe.value) {
+          if (this.invalidPath && !this.refreshStage && !renderAsWireframe.value) {
             ctx.fill();
           } else {
             ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
@@ -205,7 +208,7 @@ RenderVisitor.prototype = {
     this.depth--;
     if (this.depth === 0) {
       this.ctx.restore();
-      this.root._invalidPath = null;
+      this.invalidPath = null;
     }
   },
   visit: function (child, isContainer, visitContainer, context) {
@@ -729,8 +732,7 @@ function renderStage(stage, ctx, events) {
         if (!disablePreVisitor.value) {
           traceRenderer.value && frameWriter.enter("> Pre Visitor");
           fps && fps.enter("PRE");
-          stage._processInvalidRegions(ctx);
-          invalidPath = stage._invalidPath;
+          invalidPath = stage._processInvalidRegions();
           fps && fps.leave("PRE");
           traceRenderer.value && frameWriter.leave("< Pre Visitor");
         }
@@ -738,7 +740,7 @@ function renderStage(stage, ctx, events) {
         if (!disableRenderVisitor.value) {
           fps && fps.enter("RENDER");
           traceRenderer.value && frameWriter.enter("> Render Visitor");
-          (new RenderVisitor(stage, ctx, refreshStage)).start();
+          (new RenderVisitor(stage, ctx, invalidPath, refreshStage)).start();
           traceRenderer.value && frameWriter.leave("< Render Visitor");
           fps && fps.leave("RENDER");
         }

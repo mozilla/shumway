@@ -97,7 +97,7 @@ var BitmapDataDefinition = (function () {
       if (flash.display.BitmapData.class.isInstanceOf(source)) {
         this._ctx.drawImage(source._drawable, 0, 0);
       } else {
-        (new RenderVisitor(source, this._ctx, true)).startFragment();
+        (new RenderVisitor(source, this._ctx, null, true)).startFragment();
       }
       this._ctx.restore();
       this._invalidate();
