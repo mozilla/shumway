@@ -341,14 +341,11 @@ var DisplayObjectDefinition = (function () {
       return this._alpha;
     },
     set alpha(val) {
-      this._slave = false;
-
       if (val === this._alpha) {
         return;
       }
 
       this._alpha = val;
-
       this._invalidate();
     },
     get blendMode() {
@@ -518,31 +515,24 @@ var DisplayObjectDefinition = (function () {
       return this._scaleX;
     },
     set scaleX(val) {
-
       if (val === this._scaleX)
         return;
 
       this._invalidate();
       this._bounds = null;
-
       this._scaleX = val;
-
       this._updateCurrentTransform();
     },
     get scaleY() {
       return this._scaleY;
     },
     set scaleY(val) {
-      this._slave = false;
-
       if (val === this._scaleY)
         return;
 
       this._invalidate();
       this._bounds = null;
-
       this._scaleY = val;
-
       this._updateCurrentTransform();
     },
     get scaleZ() {
@@ -586,13 +576,10 @@ var DisplayObjectDefinition = (function () {
       return this._visible;
     },
     set visible(val) {
-      this._slave = false;
-
       if (val === this._visible)
         return;
 
       this._visible = val;
-
       this._invalidate();
     },
     get width() {
