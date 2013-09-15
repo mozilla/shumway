@@ -445,8 +445,8 @@ var DisplayObjectDefinition = (function () {
         return 0;
       }
 
-      var pt = this.globalToLocal({x: this._stage._mouseX,
-                                   y: this._stage._mouseY});
+      var pt = {x: this._stage._mouseX, y: this._stage._mouseY};
+      this._applyCurrentInverseTransform(pt);
       return pt.x;
     },
     get mouseY() {
@@ -455,8 +455,8 @@ var DisplayObjectDefinition = (function () {
         return 0;
       }
 
-      var pt = this.globalToLocal({x: this._stage._mouseX,
-                                   y: this._stage._mouseY});
+      var pt = {x: this._stage._mouseX, y: this._stage._mouseY};
+      this._applyCurrentInverseTransform(pt);
       return pt.y;
     },
     get opaqueBackground() {
@@ -731,17 +731,9 @@ var DisplayObjectDefinition = (function () {
       return this._bounds;
     },
     _getRegion: function getRegion() {
-      if (!this._graphics /*|| renderAsWireframe.value*/) {
-        var b = this.getBounds();
-        return {
-          xMin: b.xMin,
-          yMin: b.yMin,
-          xMax: b.xMax,
-          yMax: b.yMax
-        };
-      }
-
-      var b = this._graphics._getBounds(true);
+      var b = this._graphics ?
+              this._graphics._getBounds(true) :
+              this._getContentBounds();
 
       if (b.xMax - b.xMin === 0 || b.yMax - b.yMin === 0) {
         return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
