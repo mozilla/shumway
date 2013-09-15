@@ -381,6 +381,9 @@ if (closure.value) {
   cc.stdout.on('data', function (data) {
     process.stdout.write(data);
   });
+  cc.stderr.on('data', function (data) {
+    process.stderr.write(data);
+  });
   cc.stdin.write(code);
   cc.stdin.end();
 } else {

@@ -110,16 +110,16 @@ var StageDefinition = (function () {
         var currentRegion = displayObject._getRegion();
 
         var isVisible = displayObject._stage && displayObject._visible &&
-                        currentRegion.x + currentRegion.width > 0 &&
-                        currentRegion.x < this._stageWidth &&
-                        currentRegion.y + currentRegion.height > 0 &&
-                        currentRegion.y < this._stageHeight;
+                        currentRegion.xMax > 0 &&
+                        currentRegion.xMin < this._stageWidth &&
+                        currentRegion.yMax > 0 &&
+                        currentRegion.yMin < this._stageHeight;
 
         var syncQtree = !invalidRegion || !isVisible ||
-                         currentRegion.x !== invalidRegion.x ||
-                         currentRegion.y !== invalidRegion.y ||
-                         currentRegion.width !== invalidRegion.width ||
-                         currentRegion.height !== invalidRegion.height;
+                         currentRegion.xMin !== invalidRegion.xMin ||
+                         currentRegion.yMin !== invalidRegion.yMin ||
+                         currentRegion.xMax !== invalidRegion.xMax ||
+                         currentRegion.yMax !== invalidRegion.yMax;
 
         if (invalidRegion && syncQtree) {
           invalidRegion._qtree.delete(invalidRegion);
@@ -158,22 +158,17 @@ var StageDefinition = (function () {
 
       for (var i = 0; i < regions.length; i++) {
         var region = regions[i];
-        var left = (region.x/20 - 2 |0) * 20;
-        var top = (region.y/20 - 2 |0) * 20;
-        var right = left + (region.width/20 + 4 |0) * 20;
-        var bottom = top + (region.height/20 + 4 |0) * 20;
-        var width = right - left;
-        var height = bottom - top;
-
-        var neighbours = this._qtree.retrieve(left, top, width, height);
+        var xMin = region.xMin - region.xMin % 20 - 40;
+        var yMin = region.yMin - region.yMin % 20 - 40;
+        var xMax = region.xMax - region.xMax % 20 + 80;
+        var yMax = region.yMax - region.yMax % 20 + 80;
+        var neighbours = this._qtree.retrieve(xMin, yMin, xMax, yMax);
         for (var j = 0; j < neighbours.length; j++) {
           var item = neighbours[j];
           var neighbour = item.obj;
 
-          if (neighbour._invalid || (left > item.x + item.width) ||
-                                        (right < item.x) ||
-                                        (top > item.y + item.height) ||
-                                        (bottom < item.y))
+          if (neighbour._invalid || (xMin > item.xMax) || (xMax < item.xMin) ||
+                                    (yMin > item.yMax) || (yMax < item.yMin))
           {
             continue;
           }
@@ -183,15 +178,15 @@ var StageDefinition = (function () {
           numInvalidObjects++;
         }
 
-        invalidPath.rect(left, top, width, height);
+        invalidPath.rect(xMin, yMin, xMax - xMin, yMax - yMin);
       }
 
       return invalidPath;
     },
 
     _handleMouse: function handleMouse() {
-      var mouseX = this._mouseX * 20;
-      var mouseY = this._mouseY * 20;
+      var mouseX = this._mouseX;
+      var mouseY = this._mouseY;
 
       var candidates = this._qtree.retrieve(mouseX, mouseY, 1, 1);
       var interactiveObject;
@@ -201,10 +196,9 @@ var StageDefinition = (function () {
         var item = candidates[i];
         var displayObject = item.obj;
         if (displayObject._visible &&
-            mouseX >= item.x &&
-            mouseX <= item.x + item.width &&
-            mouseY >= item.y &&
-            mouseY <= item.y + item.height) {
+            mouseX >= item.xMin && mouseX <= item.xMax &&
+            mouseY >= item.yMin && mouseY <= item.yMax)
+        {
           if (flash.display.SimpleButton.class.isInstanceOf(displayObject)) {
             // TODO: move this into the SimpleButton class
             displayObject._hitTestState._parent = displayObject;
