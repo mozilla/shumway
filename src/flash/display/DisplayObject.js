@@ -212,6 +212,10 @@ var DisplayObjectDefinition = (function () {
       point.x = m.a * x + m.c * y + m.tx + 0.5|0;
       point.y = m.d * y + m.b * x + m.ty + 0.5|0;
 
+      if (targetCoordSpace && targetCoordSpace === this._parent) {
+        return;
+      }
+
       if (this._parent && this._parent !== this._stage)
         this._parent._applyCurrentTransform(point);
 
