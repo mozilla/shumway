@@ -734,37 +734,24 @@ var DisplayObjectDefinition = (function () {
       var b = this._graphics ?
               this._graphics._getBounds(true) :
               this._getContentBounds();
-
-      if (b.xMax - b.xMin === 0 || b.yMax - b.yMin === 0) {
-        return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
-      }
-
-      var p1 = { x: b.xMin, y: b.yMin };
-      this._applyCurrentTransform(p1);
-      var p2 = { x: b.xMax, y: b.yMin };
-      this._applyCurrentTransform(p2);
-      var p3 = { x: b.xMax, y: b.yMax };
-      this._applyCurrentTransform(p3);
-      var p4 = { x: b.xMin, y: b.yMax };
-      this._applyCurrentTransform(p4);
-
-      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
-      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
-      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
-      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
-
-      return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax };
+      return this._getTransformedRect(b, null);
     },
 
     getBounds: function (targetCoordSpace) {
-      var b = this._getContentBounds();
-      var p1 = { x: b.xMin, y: b.yMin };
+      return this._getTransformedRect(this._getContentBounds(),
+                                      targetCoordSpace);
+    },
+    _getTransformedRect: function (rect, targetCoordSpace) {
+      if (rect.xMax - rect.xMin === 0 || rect.yMax - rect.yMin === 0) {
+        return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
+      }
+      var p1 = { x: rect.xMin, y: rect.yMin };
       this._applyCurrentTransform(p1, targetCoordSpace);
-      var p2 = { x: b.xMax, y: b.yMin };
+      var p2 = { x: rect.xMax, y: rect.yMin };
       this._applyCurrentTransform(p2, targetCoordSpace);
-      var p3 = { x: b.xMax, y: b.yMax };
+      var p3 = { x: rect.xMax, y: rect.yMax };
       this._applyCurrentTransform(p3, targetCoordSpace);
-      var p4 = { x: b.xMin, y: b.yMax };
+      var p4 = { x: rect.xMin, y: rect.yMax };
       this._applyCurrentTransform(p4, targetCoordSpace);
 
       var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
