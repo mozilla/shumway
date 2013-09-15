@@ -185,8 +185,8 @@ var StageDefinition = (function () {
     },
 
     _handleMouse: function handleMouse() {
-      var mouseX = this._mouseX * 20;
-      var mouseY = this._mouseY * 20;
+      var mouseX = this._mouseX;
+      var mouseY = this._mouseY;
 
       var candidates = this._qtree.retrieve(mouseX, mouseY, 1, 1);
       var interactiveObject;
