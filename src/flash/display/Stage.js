@@ -158,11 +158,10 @@ var StageDefinition = (function () {
 
       for (var i = 0; i < regions.length; i++) {
         var region = regions[i];
-        // TODO: remove all the rounding stuff. Coordinates are ints now.
-        var xMin = (region.xMin/20 - 2 |0) * 20;
-        var yMin = (region.yMin/20 - 2 |0) * 20;
-        var xMax = (region.xMax/20 + 4 |0) * 20;
-        var yMax = (region.yMax/20 + 4 |0) * 20;
+        var xMin = region.xMin - region.xMin % 20 - 40;
+        var yMin = region.yMin - region.yMin % 20 - 40;
+        var xMax = region.xMax - region.xMax % 20 + 80;
+        var yMax = region.yMax - region.yMax % 20 + 80;
         var neighbours = this._qtree.retrieve(xMin, yMin, xMax, yMax);
         for (var j = 0; j < neighbours.length; j++) {
           var item = neighbours[j];
