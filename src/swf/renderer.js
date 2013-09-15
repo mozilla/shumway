@@ -80,37 +80,36 @@ function visitContainer(container, visitor, context) {
 }
 
 function getBlendModeName(blendMode) {
-  var blendModeCanvas;
   var blendModeClass = flash.display.BlendMode.class;
-  if (blendMode !== blendModeClass.NORMAL) {
-
-    // TODO:
-
-    // These Flash blend modes have no canvas equivalent:
-    // - blendModeClass.SUBTRACT
-    // - blendModeClass.INVERT
-    // - blendModeClass.SHADER
-    // - blendModeClass.ADD
-
-    // These blend modes are actually Porter-Duff compositing operators.
-    // The backdrop is the nearest parent with blendMode set to LAYER.
-    // When there is no LAYER parent, they are ignored (treated as NORMAL).
-    // - blendModeClass.ALPHA (destination-in)
-    // - blendModeClass.ERASE (destination-out)
-    // - blendModeClass.LAYER [defines backdrop]
-
-    var blendModeCanvas;
-    switch (blendMode) {
-      case blendModeClass.MULTIPLY:   blendModeCanvas = "multiply";        break;
-      case blendModeClass.SCREEN:     blendModeCanvas = "screen";          break;
-      case blendModeClass.LIGHTEN:    blendModeCanvas = "lighten";         break;
-      case blendModeClass.DARKEN:     blendModeCanvas = "darken";          break;
-      case blendModeClass.DIFFERENCE: blendModeCanvas = "difference";      break;
-      case blendModeClass.OVERLAY:    blendModeCanvas = "overlay";         break;
-      case blendModeClass.HARDLIGHT:  blendModeCanvas = "hard-light";      break;
-    }
+  if (blendMode === blendModeClass.NORMAL) {
+    return 'normal';
   }
-  return (blendModeCanvas !== undefined) ? blendModeCanvas : "normal";
+
+  // TODO:
+
+  // These Flash blend modes have no canvas equivalent:
+  // - blendModeClass.SUBTRACT
+  // - blendModeClass.INVERT
+  // - blendModeClass.SHADER
+  // - blendModeClass.ADD
+
+  // These blend modes are actually Porter-Duff compositing operators.
+  // The backdrop is the nearest parent with blendMode set to LAYER.
+  // When there is no LAYER parent, they are ignored (treated as NORMAL).
+  // - blendModeClass.ALPHA (destination-in)
+  // - blendModeClass.ERASE (destination-out)
+  // - blendModeClass.LAYER [defines backdrop]
+
+  switch (blendMode) {
+    case blendModeClass.MULTIPLY:   return  "multiply";
+    case blendModeClass.SCREEN:     return  "screen";
+    case blendModeClass.LIGHTEN:    return  "lighten";
+    case blendModeClass.DARKEN:     return  "darken";
+    case blendModeClass.DIFFERENCE: return  "difference";
+    case blendModeClass.OVERLAY:    return  "overlay";
+    case blendModeClass.HARDLIGHT:  return  "hard-light";
+  }
+  return "normal";
 }
 
 function RenderVisitor(root, ctx, invalidPath, refreshStage) {
@@ -134,7 +133,8 @@ RenderVisitor.prototype = {
                       flash.display.SimpleButton.class.isInstanceOf(this.root);
 
     // HACK compensate for visit()/renderDisplayObject() transform
-    var t = this.root._currentTransform, inverse;
+    var t = this.root._currentTransform;
+    var inverse;
     if (t) {
       inverse = new flash.geom.Matrix(t.a, t.b, t.c, t.d, t.tx, t.ty);
       inverse.invert();
