@@ -117,7 +117,7 @@ var SimpleButtonDefinition = (function () {
 
     _getRegion: function getRegion() {
       if (!this._hitTestState) {
-        return { x: 0, y: 0, width: 0, height: 0 };
+        return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
       }
 
       var b = this._hitTestState.getBounds();
@@ -140,7 +140,7 @@ var SimpleButtonDefinition = (function () {
       var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
       var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
 
-      return { x: xMin, y: yMin, width: xMax - xMin, height: yMax - yMin };
+      return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax };
     },
 
     _getAS2Object: function () {

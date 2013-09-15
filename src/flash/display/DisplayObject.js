@@ -734,17 +734,17 @@ var DisplayObjectDefinition = (function () {
       if (!this._graphics /*|| renderAsWireframe.value*/) {
         var b = this.getBounds();
         return {
-          x: b.xMin,
-          y: b.yMin,
-          width: b.xMax - b.xMin,
-          height: b.yMax - b.yMin
+          xMin: b.xMin,
+          yMin: b.yMin,
+          xMax: b.xMax,
+          yMax: b.yMax
         };
       }
 
       var b = this._graphics._getBounds(true);
 
       if (b.xMax - b.xMin === 0 || b.yMax - b.yMin === 0) {
-        return { x: 0, y: 0, width: 0, height: 0 };
+        return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
       }
 
       var p1 = { x: b.xMin, y: b.yMin };
@@ -761,7 +761,7 @@ var DisplayObjectDefinition = (function () {
       var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
       var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
 
-      return { x: xMin, y: yMin, width: xMax - xMin, height: yMax - yMin };
+      return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax };
     },
 
     getBounds: function (targetCoordSpace) {
