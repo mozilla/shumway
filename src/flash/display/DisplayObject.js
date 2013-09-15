@@ -151,7 +151,7 @@ var DisplayObjectDefinition = (function () {
       }
 
       if (!this._currentTransform) {
-        this._updateCurrentTransform();
+        this._currentTransform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
       }
 
       this._accessibilityProperties = null;
@@ -322,14 +322,13 @@ var DisplayObjectDefinition = (function () {
         break;
       }
 
-      this._currentTransform = {
-        a: u * scaleX,
-        b: v * scaleX,
-        c: -v * scaleY,
-        d: u * scaleY,
-        tx: this._x|0,
-        ty: this._y|0
-      };
+      var transform = this._currentTransform;
+      transform.a = u * scaleX;
+      transform.b = v * scaleX;
+      transform.c = -v * scaleY;
+      transform.d = u * scaleY;
+      transform.tx = this._x|0;
+      transform.ty = this._y|0;
     },
 
     get accessibilityProperties() {
