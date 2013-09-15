@@ -224,23 +224,23 @@ var QuadTree = function (x, y, width, height, level) {
   this.objects = [];
   this.nodes = [];
 };
-QuadTree.prototype._findIndex = function (x, y, width, height) {
+QuadTree.prototype._findIndex = function (xMin, yMin, xMax, yMax) {
   var midX = this.x + (this.width / 2);
   var midY = this.y + (this.height / 2);
 
-  var top = y < midY && y + height < midY;
-  var bottom = y > midY;
+  var top = yMin < midY && yMax < midY;
+  var bottom = yMin > midY;
 
-  if (x < midX && x + width < midX) {
+  if (xMin < midX && xMax < midX) {
     if (top) {
       return 1;
     } else if(bottom) {
       return 2;
     }
-  } else if (x > midX) {
+  } else if (xMin > midX) {
     if (top) {
       return 0;
-    } else if(bottom) {
+    } else if (bottom) {
       return 3;
     }
   }
@@ -251,7 +251,7 @@ QuadTree.prototype.insert = function (obj) {
   var nodes = this.nodes;
 
   if (nodes.length) {
-    var index = this._findIndex(obj.x, obj.y, obj.width, obj.height);
+    var index = this._findIndex(obj.xMin, obj.yMin, obj.xMax, obj.yMax);
 
     if (index > -1) {
       nodes[index].insert(obj);
@@ -296,7 +296,7 @@ QuadTree.prototype.delete = function (obj) {
 };
 QuadTree.prototype._stack = [];
 QuadTree.prototype._out = [];
-QuadTree.prototype.retrieve = function (x, y, width, height) {
+QuadTree.prototype.retrieve = function (xMin, yMin, xMax, yMax) {
   var stack = this._stack;
   var out = this._out;
   out.length = 0;
@@ -304,7 +304,7 @@ QuadTree.prototype.retrieve = function (x, y, width, height) {
   var node = this;
   do {
     if (node.nodes.length) {
-      var index = node._findIndex(x, y, width, height);
+      var index = node._findIndex(xMin, yMin, xMax, yMax);
 
       if (index > -1) {
         stack.push(node.nodes[index]);
@@ -322,9 +322,9 @@ QuadTree.prototype.retrieve = function (x, y, width, height) {
   return out;
 };
 QuadTree.prototype._subdivide = function () {
-  var widthLeft = this.width /2;
+  var widthLeft = this.width / 2;
   var widthRight = this.width - widthLeft;
-  var heightTop = this.height /2;
+  var heightTop = this.height / 2;
   var heightBottom = this.height - heightTop;
   var midX = this.x + widthLeft;
   var midY = this.y + heightTop;

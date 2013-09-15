@@ -134,8 +134,8 @@ SWF.embed = function(file, doc, container, options) {
 
       if (mouseX !== stage._mouseX || mouseY !== stage._mouseY) {
         stage._mouseMoved = true;
-        stage._mouseX = mouseX;
-        stage._mouseY = mouseY;
+        stage._mouseX = mouseX * 20;
+        stage._mouseY = mouseY * 20;
       }
     });
     canvas.addEventListener('mouseup', function () {

@@ -151,7 +151,7 @@ var DisplayObjectDefinition = (function () {
       }
 
       if (!this._currentTransform) {
-        this._updateCurrentTransform();
+        this._currentTransform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
       }
 
       this._accessibilityProperties = null;
@@ -201,16 +201,20 @@ var DisplayObjectDefinition = (function () {
       var x = point.x - m.tx;
       var y = point.y - m.ty;
       var d = 1 / (m.a * m.d - m.b * m.c);
-      point.x = (m.d * x - m.c * y) * d + 0.5|0;
-      point.y = (m.a * y - m.b * x) * d + 0.5|0;
+      point.x = Math.round((m.d * x - m.c * y) * d);
+      point.y = Math.round((m.a * y - m.b * x) * d);
     },
     _applyCurrentTransform: function (point, targetCoordSpace) {
       var m = this._currentTransform;
       var x = point.x;
       var y = point.y;
 
-      point.x = m.a * x + m.c * y + m.tx + 0.5|0;
-      point.y = m.d * y + m.b * x + m.ty + 0.5|0;
+      point.x = Math.round(m.a * x + m.c * y + m.tx);
+      point.y = Math.round(m.d * y + m.b * x + m.ty);
+
+      if (targetCoordSpace && targetCoordSpace === this._parent) {
+        return;
+      }
 
       if (this._parent && this._parent !== this._stage)
         this._parent._applyCurrentTransform(point);
@@ -318,14 +322,13 @@ var DisplayObjectDefinition = (function () {
         break;
       }
 
-      this._currentTransform = {
-        a: u * scaleX,
-        b: v * scaleX,
-        c: -v * scaleY,
-        d: u * scaleY,
-        tx: this._x|0,
-        ty: this._y|0
-      };
+      var transform = this._currentTransform;
+      transform.a = u * scaleX;
+      transform.b = v * scaleX;
+      transform.c = -v * scaleY;
+      transform.d = u * scaleY;
+      transform.tx = this._x|0;
+      transform.ty = this._y|0;
     },
 
     get accessibilityProperties() {
@@ -338,14 +341,11 @@ var DisplayObjectDefinition = (function () {
       return this._alpha;
     },
     set alpha(val) {
-      this._slave = false;
-
       if (val === this._alpha) {
         return;
       }
 
       this._alpha = val;
-
       this._invalidate();
     },
     get blendMode() {
@@ -445,8 +445,8 @@ var DisplayObjectDefinition = (function () {
         return 0;
       }
 
-      var pt = this.globalToLocal({x: this._stage._mouseX,
-                                   y: this._stage._mouseY});
+      var pt = {x: this._stage._mouseX, y: this._stage._mouseY};
+      this._applyCurrentInverseTransform(pt);
       return pt.x;
     },
     get mouseY() {
@@ -455,8 +455,8 @@ var DisplayObjectDefinition = (function () {
         return 0;
       }
 
-      var pt = this.globalToLocal({x: this._stage._mouseX,
-                                   y: this._stage._mouseY});
+      var pt = {x: this._stage._mouseX, y: this._stage._mouseY};
+      this._applyCurrentInverseTransform(pt);
       return pt.y;
     },
     get opaqueBackground() {
@@ -515,31 +515,24 @@ var DisplayObjectDefinition = (function () {
       return this._scaleX;
     },
     set scaleX(val) {
-
       if (val === this._scaleX)
         return;
 
       this._invalidate();
       this._bounds = null;
-
       this._scaleX = val;
-
       this._updateCurrentTransform();
     },
     get scaleY() {
       return this._scaleY;
     },
     set scaleY(val) {
-      this._slave = false;
-
       if (val === this._scaleY)
         return;
 
       this._invalidate();
       this._bounds = null;
-
       this._scaleY = val;
-
       this._updateCurrentTransform();
     },
     get scaleZ() {
@@ -583,13 +576,10 @@ var DisplayObjectDefinition = (function () {
       return this._visible;
     },
     set visible(val) {
-      this._slave = false;
-
       if (val === this._visible)
         return;
 
       this._visible = val;
-
       this._invalidate();
     },
     get width() {
@@ -731,48 +721,27 @@ var DisplayObjectDefinition = (function () {
       return this._bounds;
     },
     _getRegion: function getRegion() {
-      if (!this._graphics /*|| renderAsWireframe.value*/) {
-        var b = this.getBounds();
-        return {
-          x: b.xMin,
-          y: b.yMin,
-          width: b.xMax - b.xMin,
-          height: b.yMax - b.yMin
-        };
-      }
-
-      var b = this._graphics._getBounds(true);
-
-      if (b.xMax - b.xMin === 0 || b.yMax - b.yMin === 0) {
-        return { x: 0, y: 0, width: 0, height: 0 };
-      }
-
-      var p1 = { x: b.xMin, y: b.yMin };
-      this._applyCurrentTransform(p1);
-      var p2 = { x: b.xMax, y: b.yMin };
-      this._applyCurrentTransform(p2);
-      var p3 = { x: b.xMax, y: b.yMax };
-      this._applyCurrentTransform(p3);
-      var p4 = { x: b.xMin, y: b.yMax };
-      this._applyCurrentTransform(p4);
-
-      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
-      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
-      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
-      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
-
-      return { x: xMin, y: yMin, width: xMax - xMin, height: yMax - yMin };
+      var b = this._graphics ?
+              this._graphics._getBounds(true) :
+              this._getContentBounds();
+      return this._getTransformedRect(b, null);
     },
 
     getBounds: function (targetCoordSpace) {
-      var b = this._getContentBounds();
-      var p1 = { x: b.xMin, y: b.yMin };
+      return this._getTransformedRect(this._getContentBounds(),
+                                      targetCoordSpace);
+    },
+    _getTransformedRect: function (rect, targetCoordSpace) {
+      if (rect.xMax - rect.xMin === 0 || rect.yMax - rect.yMin === 0) {
+        return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
+      }
+      var p1 = { x: rect.xMin, y: rect.yMin };
       this._applyCurrentTransform(p1, targetCoordSpace);
-      var p2 = { x: b.xMax, y: b.yMin };
+      var p2 = { x: rect.xMax, y: rect.yMin };
       this._applyCurrentTransform(p2, targetCoordSpace);
-      var p3 = { x: b.xMax, y: b.yMax };
+      var p3 = { x: rect.xMax, y: rect.yMax };
       this._applyCurrentTransform(p3, targetCoordSpace);
-      var p4 = { x: b.xMin, y: b.yMax };
+      var p4 = { x: rect.xMin, y: rect.yMax };
       this._applyCurrentTransform(p4, targetCoordSpace);
 
       var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
