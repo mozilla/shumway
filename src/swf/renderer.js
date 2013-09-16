@@ -136,19 +136,19 @@ RenderVisitor.prototype = {
     var t = this.root._currentTransform;
     var inverse;
     if (t) {
-      inverse = new flash.geom.Matrix(t.a, t.b, t.c, t.d, t.tx, t.ty);
+      inverse = new flash.geom.Matrix(t.a, t.b, t.c, t.d, t.tx/20, t.ty/20);
       inverse.invert();
-    } else {
-      inverse = new flash.geom.Matrix();
+      this.ctx.save();
+      this.ctx.transform(inverse.a, inverse.b, inverse.c, inverse.d,
+                         inverse.tx, inverse.ty);
     }
-    this.ctx.save();
-    this.ctx.transform(inverse.a, inverse.b, inverse.c, inverse.d,
-                       inverse.tx/20, inverse.ty/20);
 
     this.visit(this.root, isContainer, visitContainer,
                new RenderingContext(this.refreshStage, this.invalidPath));
 
-    this.ctx.restore();
+    if (t) {
+      this.ctx.restore();
+    }
   },
   childrenStart: function(parent) {
     if (this.depth === 0) {
