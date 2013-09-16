@@ -27,25 +27,27 @@ var MouseEventDefinition = (function () {
             //notImplemented("MouseEvent.updateAfterEvent");
           },
           getStageX: function getStageX() { // (void) -> Number
-            return this._target.stage._mouseX;
+            return this._target.stage._mouseX/20;
           },
           getStageY: function getStageY() { // (void) -> Number
-            return this._target.stage._mouseY;
+            return this._target.stage._mouseY/20;
           },
           localX: {
             get: function localX() { // (void) -> Number
-              return isNaN(this._localX) ? this._target.mouseX : this._localX;
+              var x = isNaN(this._localX) ? this._target.mouseX : this._localX;
+              return x/20;
             },
             set: function localX(value) { // (value:Number) -> void
-              this._localX = value;
+              this._localX = value*20|0;
             }
           },
           localY: {
             get: function localY() { // (void) -> Number
-              return isNaN(this._localY) ? this._target.mouseY : this._localY;
+              var y = isNaN(this._localY) ? this._target.mouseY : this._localY;
+              return y/20;
             },
             set: function localY(value) { // (value:Number) -> void
-              this._localY = value;
+              this._localY = value*20/0;
             }
           }
         }
