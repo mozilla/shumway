@@ -178,6 +178,7 @@ var TextFieldDefinition = (function () {
         if (state.multiline) {
           finishLine(state);
         }
+        pushFormat(state, node);
         blockNode = true; break;
 
       case 'B': /* falls through */
@@ -293,14 +294,28 @@ var TextFieldDefinition = (function () {
     if (state.lineHeight === 0) {
       return;
     }
-    state.maxLineWidth = Math.max(state.maxLineWidth, state.x);
-    state.x = 0;
     state.y += state.lineHeight;
     var y = state.y;
-    while (state.line.length) {
-      var run = state.line.pop();
+    var runs = state.line;
+    for (var i = runs.length; i--;) {
+      var run = runs[i];
       run.y = y;
     }
+    // TODO: maybe support justfied text somehow
+    var align = (state.currentFormat.align || '').toLowerCase();
+    if (align === 'center' || align === 'right') {
+      var offset = state.w - state.x;
+      if (align === 'center') {
+        offset >>= 1;
+      }
+      for (i = runs.length; i--;) {
+        run = runs[i];
+        run.x += offset;
+      }
+    }
+    runs.length = 0;
+    state.maxLineWidth = Math.max(state.maxLineWidth, state.x);
+    state.x = 0;
     // TODO: it seems like Flash makes lines 2px higher than just the font-size.
     // Verify this.
     state.y += state.currentFormat.leading + 2;
@@ -310,6 +325,12 @@ var TextFieldDefinition = (function () {
     var attributes = node.format;
     var format = Object.create(state.formats[state.formats.length - 1]);
     switch (node.type) {
+      case 'P':
+        if (attributes.ALIGN === format.align) {
+          return;
+        }
+        format.align = attributes.ALIGN;
+        break;
       case 'B': format.bold = true; break;
       case 'I': format.italic = true; break;
       case 'FONT':
@@ -437,6 +458,13 @@ var TextFieldDefinition = (function () {
         initialFormat.font = convertFontFamily(tag.font);
       }
       initialFormat.str = makeFormatString(initialFormat);
+
+      switch (tag.align) {
+        case 1: initialFormat.align = 'right'; break;
+        case 2: initialFormat.align = 'center'; break;
+        case 3: initialFormat.align = 'justified'; break;
+        default: // 'left' is pre-set
+      }
 
       this._selectable = !tag.noSelect;
       this._multiline = !!tag.multiline;
