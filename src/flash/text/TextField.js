@@ -298,8 +298,7 @@ var TextFieldDefinition = (function () {
     var y = state.y;
     var runs = state.line;
     for (var i = runs.length; i--;) {
-      var run = runs[i];
-      run.y = y;
+      runs[i].y = y;
     }
     var align = (state.currentFormat.align || '').toLowerCase();
     if (state.combinedAlign === null) {
@@ -314,8 +313,7 @@ var TextFieldDefinition = (function () {
         offset >>= 1;
       }
       for (i = runs.length; i--;) {
-        run = runs[i];
-        run.x += offset;
+        runs[i].x += offset;
       }
     }
     runs.length = 0;
@@ -580,7 +578,6 @@ var TextFieldDefinition = (function () {
         if (align !== 'mixed') {
           switch (autoSize) {
             case 'left':
-            default:
               break;
             case 'center':
               diffX = (targetWidth - width) / 2;
