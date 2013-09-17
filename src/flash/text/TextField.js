@@ -301,8 +301,13 @@ var TextFieldDefinition = (function () {
       var run = runs[i];
       run.y = y;
     }
-    // TODO: maybe support justfied text somehow
     var align = (state.currentFormat.align || '').toLowerCase();
+    if (state.combinedAlign === null) {
+      state.combinedAlign = align;
+    } else if (state.combinedAlign !== align) {
+      state.combinedAlign = 'mixed';
+    }
+    // TODO: maybe support justfied text somehow
     if (align === 'center' || align === 'right') {
       var offset = state.w - state.x;
       if (align === 'center') {
@@ -558,7 +563,7 @@ var TextFieldDefinition = (function () {
                    lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
                    currentFormat: initialFormat, runs: [firstRun],
                    multiline: this._multiline, wordWrap: this._wordWrap,
-                   textColor: this._textColor};
+                   combinedAlign: null, textColor: this._textColor};
       collectRuns(this._content.tree, state);
       if (!state.multiline) {
         finishLine(state);
@@ -567,21 +572,48 @@ var TextFieldDefinition = (function () {
       this._textHeight = state.y;
       this._content.textruns = state.runs;
       this._drawingOffsetH = 0;
-      if (this._autoSize !== 'none') {
+      var autoSize = this._autoSize;
+      if (autoSize !== 'none') {
         var targetWidth = this._textWidth;
+        var align = state.combinedAlign;
         var diffX = 0;
-        switch (this._autoSize) {
-          case 'left': break;
-          case 'center': diffX = (targetWidth - width) / 2; break;
-          case 'right': diffX = targetWidth - width;
+        if (align !== 'mixed') {
+          switch (autoSize) {
+            case 'left':
+            default:
+              break;
+            case 'center':
+              diffX = (targetWidth - width) / 2;
+              break;
+            case 'right':
+              diffX = targetWidth - width;
+          }
+          // Note: the drawing offset is not in Twips!
+          if (align === 'left') {
+            this._drawingOffsetH = -diffX;
+          }
+          else if (align === 'center') {
+            if (autoSize === 'left') {
+              this._drawingOffsetH = (targetWidth - width) / 2;
+            }
+            else if (autoSize === 'right') {
+              this._drawingOffsetH = -diffX/2;
+            }
+          }
+          else {
+            if (autoSize === 'left') {
+              this._drawingOffsetH = targetWidth - width;
+            }
+            else if (autoSize === 'center') {
+              this._drawingOffsetH = diffX;
+            }
+          }
+          diffX = (diffX * 20)|0;
+          bounds.xMin -= diffX;
+          this._x -= diffX;
+          bounds.xMax = bounds.xMin + (targetWidth*20|0) + 80;
         }
-        this._drawingOffsetH = -diffX; // this is not in Twips!
-        diffX = (diffX * 20)|0;
-        targetWidth = (targetWidth * 20)|0;
-        bounds.xMin -= diffX;
-        this._x -= diffX;
-        bounds.xMax = bounds.xMin + targetWidth + 80;
-        bounds.yMax = bounds.yMin + (this._textHeight * 20|0) + 80;
+        bounds.yMax = bounds.yMin + (this._textHeight * 20|0) + 120;
       }
       this._dimensionsValid = true;
     },
