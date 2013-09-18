@@ -520,6 +520,7 @@ var DisplayObjectDefinition = (function () {
 
       this._invalidate();
       this._bounds = null;
+
       this._scaleX = val;
       this._updateCurrentTransform();
     },
@@ -532,6 +533,7 @@ var DisplayObjectDefinition = (function () {
 
       this._invalidate();
       this._bounds = null;
+
       this._scaleY = val;
       this._updateCurrentTransform();
     },

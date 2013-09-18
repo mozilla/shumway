@@ -96,7 +96,7 @@ var StageDefinition = (function () {
       this._invalidObjects.push(displayObject);
     },
 
-    _processInvalidRegions: function() {
+    _processInvalidRegions: function processInvalidRegions() {
       var objects = this._invalidObjects;
       var regions = [];
 
@@ -165,15 +165,16 @@ var StageDefinition = (function () {
         var neighbours = this._qtree.retrieve(xMin, yMin, xMax, yMax);
         for (var j = 0; j < neighbours.length; j++) {
           var item = neighbours[j];
-          var neighbour = item.obj;
 
-          if (neighbour._invalid || (xMin > item.xMax) || (xMax < item.xMin) ||
-                                    (yMin > item.yMax) || (yMax < item.yMin))
+          if (item.obj._invalid || (xMin > item.x + item.width) ||
+                                   (xMax < item.x) ||
+                                   (yMin > item.y + item.height) ||
+                                   (yMax < item.y))
           {
             continue;
           }
 
-          neighbour._invalid = true;
+          item.obj._invalid = true;
 
           numInvalidObjects++;
         }
@@ -222,6 +223,7 @@ var StageDefinition = (function () {
       } else {
         interactiveObject = this;
       }
+
       while (ancestor) {
         if (flash.display.InteractiveObject.class.isInstanceOf(ancestor) &&
             !flash.display.SimpleButton.class.isInstanceOf(ancestor) &&
