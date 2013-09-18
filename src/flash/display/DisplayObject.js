@@ -621,13 +621,9 @@ var DisplayObjectDefinition = (function () {
       if (val === this._x) {
         return;
       }
-      this._invalidate();
 
-      if (this._bounds) {
-        var dx = val - this._bounds.xMin;
-        this._bounds.xMin += dx;
-        this._bounds.xMax += dx;
-      }
+      this._invalidate();
+      this._bounds = null;
 
       this._x = this._currentTransform.tx = val;
     },
@@ -640,12 +636,7 @@ var DisplayObjectDefinition = (function () {
       }
 
       this._invalidate();
-
-      if (this._bounds) {
-        var dy = val - this._bounds.yMin;
-        this._bounds.yMin += dy;
-        this._bounds.yMax += dy;
-      }
+      this._bounds = null;
 
       this._y = this._currentTransform.ty = val;
     },
