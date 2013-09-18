@@ -233,7 +233,7 @@ var DisplayObjectDefinition = (function () {
         {
           return false;
         }
-        if (!useShape) {
+        if (!useShape || !this._graphics) {
           return true;
         }
         // TODO: move into Graphics
