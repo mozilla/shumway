@@ -317,8 +317,7 @@ var TextFieldDefinition = (function () {
         offset >>= 1;
       }
       for (i = runs.length; i--;) {
-        run = runs[i];
-        run.x += offset;
+        runs[i].x += offset;
       }
     }
     runs.length = 0;
@@ -613,7 +612,6 @@ var TextFieldDefinition = (function () {
         var diffX = 0;
         if (align !== 'mixed') {
           switch (autoSize) {
-            default:
             case 'left':
               break;
             case 'center':
