@@ -79,8 +79,9 @@ function defineFont(tag, dictionary) {
     ranges.push([UAC_OFFSET, UAC_OFFSET + glyphCount - 1, indices]);
   }
 
-  var ascent = tag.ascent || 1024;
-  var descent = tag.descent || 1024;
+  var ascent = Math.ceil(tag.ascent / 20) || 1024;
+  var descent = -Math.ceil(tag.descent / 20) || 0;
+  var leading = Math.floor(tag.leading / 20) || 0;
   tables['OS/2'] =
     '\x00\x01' + // version
     '\x00\x00' + // xAvgCharWidth
@@ -109,9 +110,9 @@ function defineFont(tag, dictionary) {
     toString16(codes[codes.length - 1]) + // usLastCharIndex
     toString16(ascent) + // sTypoAscender
     toString16(descent) + // sTypoDescender
-    '\x00\x00' + // sTypoLineGap
+    toString16(leading) + // sTypoLineGap
     toString16(ascent) + // usWinAscent
-    toString16(descent) + // usWinDescent
+    toString16(-descent) + // usWinDescent
     '\x00\x00\x00\x00' + // ulCodePageRange1
     '\x00\x00\x00\x00' // ulCodePageRange2
   ;
@@ -327,7 +328,7 @@ function defineFont(tag, dictionary) {
     '\x00\x01\x00\x00' + // version
     toString16(ascent) + // ascender
     toString16(descent) + // descender
-    '\x00\x00' + // lineGap
+    toString16(leading) + // lineGap
     toString16(advance ? max.apply(null, advance) : 1024) + // advanceWidthMax
     '\x00\x00' + // minLeftSidebearing
     '\x00\x00' + // minRightSidebearing
@@ -474,12 +475,20 @@ function defineFont(tag, dictionary) {
     offset += length;
   }
   var otf = header + data;
+  var unitPerEm = 1024;
+  var metrics = {
+    ascent: ascent / unitPerEm,
+    descent: descent / unitPerEm,
+    leading: leading / unitPerEm
+  };
 
   return {
     type: 'font',
     id: tag.id,
-    name: psName + uniqueId,
+    name: fontName,
+    uniqueName: psName + uniqueId,
     codes: codes,
+    metrics: metrics,
     data: otf
   };
 }
