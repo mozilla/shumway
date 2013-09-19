@@ -21,7 +21,7 @@ function defineText(tag, dictionary) {
   if (tag.hasFont) {
     var font = dictionary[tag.fontId];
     assert(font, 'undefined font', 'label');
-    tag.font = font.name;
+    tag.font = font.uniqueName;
     dependencies.push(font.id);
   }
 

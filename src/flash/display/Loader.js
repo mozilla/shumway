@@ -910,7 +910,7 @@ var LoaderDefinition = (function () {
         if (charset) {
           style.insertRule(
             '@font-face{' +
-              'font-family:"' + symbol.name + '";' +
+              'font-family:"' + symbol.uniqueName + '";' +
               'src:url(data:font/opentype;base64,' + btoa(symbol.data) + ')' +
               '}',
             style.cssRules.length
@@ -921,7 +921,7 @@ var LoaderDefinition = (function () {
             var testDiv = document.createElement('div');
             testDiv.setAttribute('style', 'position: absolute; top: 0; right: 0;' +
                                           'visibility: hidden; z-index: -500;' +
-                                          'font-family:"' + symbol.name + '";');
+                                          'font-family:"' + symbol.uniqueName + '";');
             testDiv.textContent = 'font test';
             document.body.appendChild(testDiv);
 
@@ -932,9 +932,13 @@ var LoaderDefinition = (function () {
             }, 200);
             promiseQueue.push(fontPromise);
           }
-
-          className = 'flash.text.Font';
         }
+        className = 'flash.text.Font';
+        props.name = symbol.name;
+        props.uniqueName = symbol.uniqueName;
+        props.charset = symbol.charset;
+        props.metrics = symbol.metrics;
+        this._registerFont(className, props);
         break;
       case 'image':
         var img = new Image();
@@ -1082,6 +1086,13 @@ var LoaderDefinition = (function () {
           className: className,
           props: props
         });
+      });
+    },
+    _registerFont: function (className, props) {
+      this._vmPromise.then(function () {
+        var fontClass = avm2.applicationDomain.getClass(className);
+        var font = fontClass.createAsSymbol(props);
+        fontClass.instanceConstructor.call(font);
       });
     },
     _init: function (info) {

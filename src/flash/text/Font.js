@@ -17,6 +17,8 @@
  */
 
 var FontDefinition = (function () {
+  var fonts = [];
+
   var def = {
     __class__: 'flash.text.Font',
 
@@ -24,6 +26,9 @@ var FontDefinition = (function () {
       var s = this.symbol;
       if (s) {
         this._fontName = s.name || null;
+        this._uniqueName = s.uniqueName;
+        this._metrics = s.metrics;
+        fonts.push(this);
       }
     },
 
@@ -41,12 +46,20 @@ var FontDefinition = (function () {
     },
   };
 
-  function enumerateFonts() {
-    return []; // TODO
+  function enumerateFonts(device) {
+    return fonts.slice();
   }
 
   function registerFont(font) {
     throw 'Not implemented: registerFont';
+  }
+
+  function findFont(fn) {
+    var font;
+    fonts.some(function (f) {
+      return fn(f) && (font = f, true);
+    });
+    return font;
   }
 
   var desc = Object.getOwnPropertyDescriptor;
@@ -61,7 +74,8 @@ var FontDefinition = (function () {
       },
       static: {
         enumerateFonts: enumerateFonts,
-        registerFont: registerFont
+        registerFont: registerFont,
+        _findFont: findFont
       }
     }
   };
