@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 /*global Kanvas, describeProperty, ShapePath, factoryCtx, rgbIntAlphaToStr,
+  buildLinearGradientFactory, buildRadialGradientFactory,
   SHAPE_MOVE_TO, SHAPE_LINE_TO, SHAPE_CURVE_TO, SHAPE_WIDE_MOVE_TO,
   SHAPE_WIDE_LINE_TO, SHAPE_CUBIC_CURVE_TO, SHAPE_CIRCLE, SHAPE_ELLIPSE,
   SHAPE_ROUND_CORNER */
@@ -361,18 +362,21 @@ function createPatternStyle(bitmap, matrix, repeat, smooth) {
 function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
                              interpolationMethod, focalPos)
 {
-  var gradient;
-  if (type === 'linear') {
-    gradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
-  } else if (type == 'radial') {
-    gradient = factoryCtx.createRadialGradient((focalPos || 0), 0, 0, 0, 0, 1);
-  } else {
-    throw ArgumentError();
+  var colorStops = [];
+  for (var i = 0, n = colors.length; i < n; i++) {
+    colorStops.push({
+      ratio: ratios[i] / 255,
+      color: rgbIntAlphaToStr(colors[i], alphas[i])
+    });
   }
 
-  for (var i = 0, n = colors.length; i < n; i++) {
-    gradient.addColorStop(ratios[i] / 255,
-                          rgbIntAlphaToStr(colors[i], alphas[i]));
+  var gradientConstructor;
+  if (type === 'linear') {
+    gradientConstructor = buildLinearGradientFactory(colorStops);
+  } else if (type == 'radial') {
+    gradientConstructor = buildRadialGradientFactory((focalPos || 0), colorStops);
+  } else {
+    throw ArgumentError();
   }
 
   // NOTE firefox is really sensitive to very small scale when painting gradients
@@ -384,6 +388,6 @@ function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
                   } :
                   {a: scale, b: 0, c: 0, d: scale, e: 0, f: 0};
 
-  return {style: gradient, transform: transform};
+  return {style: gradientConstructor, transform: transform};
 }
 
