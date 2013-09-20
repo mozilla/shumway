@@ -114,7 +114,7 @@ package avm1lib {
     {
       var text: TextField = new TextField();
       text.name = name;
-      text.x = +x; this.y = +y; this.width = +width; this.height = +height;
+      text.x = +x; text.y = +y; text.width = +width; text.height = +height;
       _insertChildAtDepth(text, +depth);
       return AS2Utils.getAS2Object(text);
     }

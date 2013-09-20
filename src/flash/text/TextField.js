@@ -451,7 +451,7 @@ var TextFieldDefinition = (function () {
     initialize: function () {
       var initialFormat = this._defaultTextFormat = {
         align: 'LEFT', face: 'serif', size: 12,
-        letterspacing: 0, kerning: 0, color: "black", leading: 0
+        letterspacing: 0, kerning: 0, color: 0, leading: 0
       };
       this._type = 'dynamic';
       this._selectable = true;
