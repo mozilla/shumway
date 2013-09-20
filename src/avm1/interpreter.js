@@ -254,7 +254,7 @@ function as2ResolveProperty(obj, name) {
 }
 
 function isAvm2Class(obj) {
-  typeof obj === 'object' && obj !== null && 'instanceConstructor' in obj;
+  return typeof obj === 'object' && obj !== null && 'instanceConstructor' in obj;
 }
 
 function as2CreatePrototypeProxy(obj) {
