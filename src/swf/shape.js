@@ -1642,6 +1642,51 @@ var factoryCtx = !inWorker ?
                  document.createElement('canvas').getContext('kanvas-2d') :
                  null;
 
+/**
+ * @param {Array} colorStops
+ * @returns {Function}
+ */
+function buildLinearGradientFactory(colorStops) {
+  var defaultGradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
+  for (var i = 0; i < colorStops.length; i++) {
+    defaultGradient.addColorStop(colorStops[i].ratio, colorStops[i].color);
+  }
+
+  var fn = function createLinearGradient(ctx, colorTransform) {
+    var gradient = ctx.createLinearGradient(-1, 0, 1, 0);
+    for (var i = 0; i < colorStops.length; i++) {
+      colorTransform.addGradientColorStop(gradient, colorStops[i].ratio, colorStops[i].color);
+    }
+    return gradient;
+  };
+  fn.defaultGradient = defaultGradient;
+
+  return fn;
+}
+
+/**
+ * @param {number} focalPoint
+ * @param {Array} colorStops
+ * @returns {Function}
+ */
+function buildRadialGradientFactory(focalPoint, colorStops) {
+  var defaultGradient = factoryCtx.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
+  for (var i = 0; i < colorStops.length; i++) {
+    defaultGradient.addColorStop(colorStops[i].ratio, colorStops[i].color);
+  }
+
+  var fn = function createRadialGradient(ctx, colorTransform) {
+    var gradient = ctx.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
+    for (var i = 0; i < colorStops.length; i++) {
+      colorTransform.addGradientColorStop(gradient, colorStops[i].ratio, colorStops[i].color);
+    }
+    return gradient;
+  };
+  fn.defaultGradient = defaultGradient;
+
+  return fn;
+}
+
 function initStyle(style, dictionary) {
   if (style.type === undefined) {
     return;
@@ -1653,21 +1698,21 @@ function initStyle(style, dictionary) {
     case GRAPHICS_FILL_LINEAR_GRADIENT:
     case GRAPHICS_FILL_RADIAL_GRADIENT:
     case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
-      var isLinear = style.type === GRAPHICS_FILL_LINEAR_GRADIENT;
-      var gradient;
-      if (isLinear) {
-        gradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
-      } else {
-        gradient = factoryCtx.createRadialGradient((style.focalPoint|0)/20,
-                                                   0, 0, 0, 0, 1);
-      }
-      var records = style.records;
+      var records = style.records, colorStops = [];
       for (var j = 0, n = records.length; j < n; j++) {
         var record = records[j];
         var colorStr = rgbaObjToStr(record.color);
-        gradient.addColorStop(record.ratio / 255, colorStr);
+        colorStops.push({ratio: record.ratio / 255, color: colorStr});
       }
-      style.style = gradient;
+
+      var gradientConstructor;
+      var isLinear = style.type === GRAPHICS_FILL_LINEAR_GRADIENT;
+      if (isLinear) {
+        gradientConstructor = buildLinearGradientFactory(colorStops);
+      } else {
+        gradientConstructor = buildRadialGradientFactory((style.focalPoint|0)/20, colorStops);
+      }
+      style.style = gradientConstructor;
       break;
     case GRAPHICS_FILL_REPEATING_BITMAP:
     case GRAPHICS_FILL_CLIPPED_BITMAP:
