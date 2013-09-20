@@ -76,7 +76,7 @@ var DisplayObjectContainerDefinition = (function () {
       child._stage = this._stage;
       child._index = index;
 
-      this._bounds = null;
+      this._invalidateBounds();
 
       child._dispatchEvent("added");
       if (this._stage) {
@@ -158,7 +158,7 @@ var DisplayObjectContainerDefinition = (function () {
       child._parent = null;
       child._index = -1;
 
-      this._bounds = null;
+      this._invalidateBounds();
 
       return child;
     },

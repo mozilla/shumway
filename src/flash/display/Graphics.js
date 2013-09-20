@@ -38,7 +38,7 @@ var GraphicsDefinition = (function () {
       if (this._parent._stage) {
         this._parent._stage._invalidateOnStage(this._parent);
       }
-      this._parent._bounds = null;
+      this._parent._invalidateBounds();
     },
 
     beginPath: function() {
