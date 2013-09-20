@@ -106,7 +106,7 @@ var SimpleButtonDefinition = (function () {
       }
     },
     _gotoButtonState: function gotoButtonState(buttonState) {
-      this._bounds = null;
+      this._invalidateBounds();
       this._currentButtonState = buttonState;
       this._updateButton();
 
