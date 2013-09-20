@@ -173,6 +173,7 @@ var SpriteDefinition = (function () {
           if (!loader._isAvm2Enabled) {
             this._initAvm1Bindings(instance, name, symbolInfo.events);
             instance._dispatchEvent("init");
+            instance._dispatchEvent("construct");
           }
 
           instance._dispatchEvent("load");
@@ -215,6 +216,7 @@ var SpriteDefinition = (function () {
       if (!loader._isAvm2Enabled) {
         parent._initAvm1Bindings(instance, name, symbolInfo && symbolInfo.events);
         instance._dispatchEvent("init");
+        instance._dispatchEvent("construct");
       }
 
       instance._dispatchEvent("load");
