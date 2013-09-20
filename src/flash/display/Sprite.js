@@ -230,6 +230,10 @@ var SpriteDefinition = (function () {
     _insertChildAtDepth: function (child, depth) {
       // TODO insert with specific depth
       this.addChild(child);
+      var name = child._name;
+      if (name && !this._loader._isAvm2Enabled) {
+        this._getAS2Object().asSetPublicProperty(name, child._getAS2Object());
+      }
     },
     _initAvm1Bindings: function (instance, name, events) {
       var loader = this._loader;
@@ -302,8 +306,7 @@ var SpriteDefinition = (function () {
       }
 
       if (name) {
-        this._getAS2Object().asSetProperty(undefined, name, 0,
-          instance._getAS2Object());
+        this._getAS2Object().asSetPublicProperty(name, instance._getAS2Object());
       }
     },
 
