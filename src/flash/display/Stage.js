@@ -40,7 +40,6 @@ var StageDefinition = (function () {
       this._wmodeGPU = false;
       this._root = null;
       this._qtree = null;
-      this._numVisibleObjects = 0;
       this._invalidObjects = [];
       this._mouseMoved = false;
       this._clickTarget = this;
@@ -100,37 +99,48 @@ var StageDefinition = (function () {
       var objects = this._invalidObjects;
       var regions = [];
 
-      var numVisibleObjects = this._numVisibleObjects;
-      var numInvalidObjects = 0;
-
       while (objects.length) {
         var displayObject = objects.shift();
 
         var invalidRegion = displayObject._region;
         var currentRegion = displayObject._getRegion();
 
-        var isVisible = displayObject._stage && displayObject._visible &&
-                        currentRegion.xMax > 0 &&
-                        currentRegion.xMin < this._stageWidth &&
-                        currentRegion.yMax > 0 &&
-                        currentRegion.yMin < this._stageHeight;
+        var withinView = displayObject._stage &&
+                         displayObject._visible &&
+                         currentRegion.xMax > 0 &&
+                         currentRegion.xMin < this._stageWidth &&
+                         currentRegion.yMax > 0 &&
+                         currentRegion.yMin < this._stageHeight;
 
-        var syncQtree = !invalidRegion || !isVisible ||
-                         currentRegion.xMin !== invalidRegion.xMin ||
-                         currentRegion.yMin !== invalidRegion.yMin ||
-                         currentRegion.xMax !== invalidRegion.xMax ||
-                         currentRegion.yMax !== invalidRegion.yMax;
+        if (withinView) {
+          var ancestor = displayObject._parent;
+          while (ancestor) {
+            if (!ancestor._visible || ancestor._hidden) {
+              withinView = false;
+              break;
+            }
+            ancestor = ancestor._parent;
+          }
+
+          displayObject._hidden = !withinView;
+        } else {
+          displayObject._hidden = false;
+        }
+
+        var syncQtree = !invalidRegion || !withinView ||
+                        currentRegion.xMin !== invalidRegion.xMin ||
+                        currentRegion.yMin !== invalidRegion.yMin ||
+                        currentRegion.xMax !== invalidRegion.xMax ||
+                        currentRegion.yMax !== invalidRegion.yMax;
 
         if (invalidRegion && syncQtree) {
           invalidRegion._qtree.delete(invalidRegion);
           displayObject._region = null;
 
           regions.push(invalidRegion);
-
-          numInvalidObjects++;
         }
 
-        if (isVisible) {
+        if (withinView) {
           if (syncQtree) {
             this._qtree.insert(currentRegion);
 
@@ -139,20 +149,10 @@ var StageDefinition = (function () {
           }
 
           regions.push(currentRegion);
-
-          if (!invalidRegion) {
-            numVisibleObjects++;
-          }
         } else {
           displayObject._invalid = false;
-
-          if (invalidRegion) {
-            numVisibleObjects--;
-          }
         }
       }
-
-      this._numVisibleObjects = numVisibleObjects;
 
       var invalidPath = new ShapePath();
 
@@ -175,8 +175,6 @@ var StageDefinition = (function () {
           }
 
           item.obj._invalid = true;
-
-          numInvalidObjects++;
         }
 
         invalidPath.rect(xMin, yMin, xMax - xMin, yMax - yMin);
@@ -190,9 +188,8 @@ var StageDefinition = (function () {
       var mouseY = this._mouseY;
 
       var candidates = this._qtree.retrieve(mouseX, mouseY, 1, 1);
-      var interactiveObject;
-
       var objectsUnderMouse = [];
+
       for (var i = 0; i < candidates.length; i++) {
         var item = candidates[i];
         var displayObject = item.obj;
@@ -203,10 +200,8 @@ var StageDefinition = (function () {
           if (flash.display.SimpleButton.class.isInstanceOf(displayObject)) {
             // TODO: move this into the SimpleButton class
             displayObject._hitTestState._parent = displayObject;
-            if (displayObject._hitTestState._hitTest(true, mouseX, mouseY, true)) {
-              interactiveObject = displayObject;
-              break;
-            }
+
+            displayObject = displayObject._hitTestState;
           }
           if (displayObject._hitTest(true, mouseX, mouseY, true)) {
             objectsUnderMouse.push(displayObject);
@@ -214,28 +209,28 @@ var StageDefinition = (function () {
         }
       }
 
-      var ancestor;
-      if (interactiveObject) {
-        ancestor = interactiveObject._parent;
-      } else if (objectsUnderMouse.length) {
+      var interactiveObject = null;
+
+      if (objectsUnderMouse.length) {
         objectsUnderMouse.sort(sortByDepth);
-        ancestor = objectsUnderMouse.pop();
+
+        while (objectsUnderMouse.length) {
+          var currentTarget = objectsUnderMouse.pop();
+          do {
+            if (flash.display.InteractiveObject.class.isInstanceOf(currentTarget) &&
+                !currentTarget._hitArea &&
+                (!interactiveObject || !currentTarget._mouseChildren)) {
+              interactiveObject = currentTarget;
+            }
+            currentTarget = currentTarget._parent;
+          } while (currentTarget);
+        }
+
+        if (interactiveObject._hitTarget) {
+          interactiveObject = interactiveObject._hitTarget;
+        }
       } else {
         interactiveObject = this;
-      }
-
-      while (ancestor) {
-        if (flash.display.InteractiveObject.class.isInstanceOf(ancestor) &&
-            !flash.display.SimpleButton.class.isInstanceOf(ancestor) &&
-            !ancestor._hitArea &&
-            (!interactiveObject || !ancestor._mouseChildren)) {
-          interactiveObject = ancestor;
-        }
-        ancestor = ancestor._parent;
-      }
-
-      if (interactiveObject._hitTarget) {
-        interactiveObject = interactiveObject._hitTarget;
       }
 
       if (interactiveObject === this._clickTarget) {
