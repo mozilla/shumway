@@ -129,7 +129,7 @@ package avm1lib {
     }
 
     public function gotoLabel(label) {
-      var nativeObject = AS2Utils.resolveTarget().$nativeObject;
+      var nativeObject = AS2Utils.resolveTarget()._as3Object;
       _addToPendingScripts(nativeObject, nativeObject.gotoLabel, [label]);
     }
 

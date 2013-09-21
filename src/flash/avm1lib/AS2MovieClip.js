@@ -58,12 +58,12 @@ var AS2MovieClipDefinition = (function () {
   def.__glue__ = {
     native: {
       instance: {
-        $nativeObject: {
+        _as3Object: {
           get: function () {
             return this.$nativeObject;
           }
         },
-        init: def.init,
+        _init: def.init,
         _insertChildAtDepth: def._insertChildAtDepth,
         _duplicate: def._duplicate,
         _constructSymbol: def._constructSymbol,

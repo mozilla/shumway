@@ -53,7 +53,7 @@ function _addEventHandlerProxy(obj: Object, propertyName: String, eventName: Str
       return currentHandler;
     },
     function setter(newHandler: Function) {
-      if (!this.$nativeObject) { // prototype/class ?
+      if (!this._as3Object) { // prototype/class ?
         var defaultListeners = this.$defaultListeners ||
           (this.$defaultListeners = []);
         defaultListeners.push({setter: setter, value: newHandler});
@@ -65,7 +65,7 @@ function _addEventHandlerProxy(obj: Object, propertyName: String, eventName: Str
         return;
       }
       if (currentHandler != null) {
-        this.$nativeObject.removeEventListener(eventName, handlerRunner);
+        this._as3Object.removeEventListener(eventName, handlerRunner);
       }
       currentHandler = newHandler;
       if (currentHandler != null) {
@@ -75,7 +75,7 @@ function _addEventHandlerProxy(obj: Object, propertyName: String, eventName: Str
             return handler.apply(obj, args);
           };
         })(this, currentHandler);
-        this.$nativeObject.addEventListener(eventName, handlerRunner);
+        this._as3Object.addEventListener(eventName, handlerRunner);
       } else {
         handlerRunner = null;
       }

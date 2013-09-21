@@ -29,16 +29,16 @@ package avm1lib {
     public function AS2MovieClipLoader()
     {
       AS2Broadcaster.initialize(this);
-      $nativeObject = new flash.display.Loader();
+      _as3Object = new flash.display.Loader();
     }
 
-    public var $nativeObject: flash.display.Loader;
+    public var _as3Object: flash.display.Loader;
 
     public function loadClip(url: String, target: Object) : Boolean
     {
-      var nativeObject = this.$nativeObject;
+      var nativeObject = this._as3Object;
       var nativeTarget = AS2Utils.resolveTarget(target);
-      nativeTarget.$nativeObject.addChild(nativeObject);
+      nativeTarget._as3Object.addChild(nativeObject);
       nativeObject.load(new flash.net.URLRequest(url));
     }
 
@@ -51,9 +51,9 @@ package avm1lib {
 
     public function unloadClip(target: Object) : Boolean
     {
-      var nativeObject = this.$nativeObject;
+      var nativeObject = this._as3Object;
       var nativeTarget = AS2Utils.resolveTarget(target);
-      nativeTarget.$nativeObject.removeChild(nativeObject);
+      nativeTarget._as3Object.removeChild(nativeObject);
     }
 
     {

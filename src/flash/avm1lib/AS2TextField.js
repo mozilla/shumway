@@ -29,12 +29,12 @@ var AS2TextFieldDefinition = (function () {
   def.__glue__ = {
     native: {
       instance: {
-        $nativeObject: {
+        _as3Object: {
           get: function () {
             return this.$nativeObject;
           }
         },
-        init: function init(nativeTextField) {
+        _init: function init(nativeTextField) {
           Object.defineProperty(this, '$nativeObject', { value: nativeTextField });
           nativeTextField.$as2Object = this;
           initDefaultListeners(this);
