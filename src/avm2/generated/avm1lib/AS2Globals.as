@@ -25,6 +25,7 @@ package avm1lib {
   import avm1lib.AS2Stage;
   import avm1lib.AS2System;
   import avm1lib.AS2TextField;
+  import avm1lib.AS2MovieClipLoader;
   import flash.display.Stage;
   import flash.utils.clearInterval;
   import flash.utils.clearTimeout;
@@ -43,7 +44,7 @@ package avm1lib {
   import flash.geom.ColorTransform;
   import flash.geom.Point;
   import flash.text.TextFormat;
-  import avm1lib.AS2MovieClipLoader;
+  import flash.external.ExternalInterface;
 
   [native(cls="AS2Globals")]
   public dynamic class AS2Globals {
@@ -60,8 +61,11 @@ package avm1lib {
       return {
         _MovieClip: AS2MovieClip,
         display: {},
-        geom: {},
+        external: {
+          ExternalInterface: flash.external.ExternalInterface
+        },
         filters: {},
+        geom: {},
         text: {}
       };
     }
