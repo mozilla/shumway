@@ -38,7 +38,7 @@ var AS2MovieClipDefinition = (function () {
       var mc = new flash.display.MovieClip();
       mc._avm1SymbolClass = theClass;
       this.$nativeObject.addChild(mc);
-      return mc._getAS2Object();
+      return mc;
     },
     _callFrame: function callFrame(frame) {
       this.$nativeObject._callFrame(frame);
