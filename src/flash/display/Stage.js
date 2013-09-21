@@ -40,7 +40,6 @@ var StageDefinition = (function () {
       this._wmodeGPU = false;
       this._root = null;
       this._qtree = null;
-      this._numVisibleObjects = 0;
       this._invalidObjects = [];
       this._mouseMoved = false;
       this._clickTarget = this;
@@ -100,9 +99,6 @@ var StageDefinition = (function () {
       var objects = this._invalidObjects;
       var regions = [];
 
-      var numVisibleObjects = this._numVisibleObjects;
-      var numInvalidObjects = 0;
-
       while (objects.length) {
         var displayObject = objects.shift();
 
@@ -142,8 +138,6 @@ var StageDefinition = (function () {
           displayObject._region = null;
 
           regions.push(invalidRegion);
-
-          numInvalidObjects++;
         }
 
         if (withinView) {
@@ -155,20 +149,10 @@ var StageDefinition = (function () {
           }
 
           regions.push(currentRegion);
-
-          if (!invalidRegion) {
-            numVisibleObjects++;
-          }
         } else {
           displayObject._invalid = false;
-
-          if (invalidRegion) {
-            numVisibleObjects--;
-          }
         }
       }
-
-      this._numVisibleObjects = numVisibleObjects;
 
       var invalidPath = new ShapePath();
 
@@ -191,8 +175,6 @@ var StageDefinition = (function () {
           }
 
           item.obj._invalid = true;
-
-          numInvalidObjects++;
         }
 
         invalidPath.rect(xMin, yMin, xMax - xMin, yMax - yMin);
