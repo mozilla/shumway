@@ -82,7 +82,8 @@ var TextFieldDefinition = (function () {
     var fontAttributes = { FACE: initialFormat.face,
                            LETTERSPACING: initialFormat.letterSpacing,
                            KERNING: initialFormat.kerning,
-                           LEADING: initialFormat.leading
+                           LEADING: initialFormat.leading,
+                           COLOR: initialFormat.color
                          };
     trunk.children[0] = {type: 'FONT', format: fontAttributes, children: []};
     return trunk;
