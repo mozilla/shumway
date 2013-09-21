@@ -70,6 +70,7 @@ var DisplayObjectDefinition = (function () {
       this._stage = null;
       this._transform = null;
       this._visible = true;
+      this._hidden = false;
       this._wasCachedAsBitmap = false;
       this._x = 0;
       this._y = 0;
