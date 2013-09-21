@@ -188,9 +188,8 @@ var StageDefinition = (function () {
       var mouseY = this._mouseY;
 
       var candidates = this._qtree.retrieve(mouseX, mouseY, 1, 1);
-      var interactiveObject;
-
       var objectsUnderMouse = [];
+
       for (var i = 0; i < candidates.length; i++) {
         var item = candidates[i];
         var displayObject = item.obj;
@@ -201,10 +200,8 @@ var StageDefinition = (function () {
           if (flash.display.SimpleButton.class.isInstanceOf(displayObject)) {
             // TODO: move this into the SimpleButton class
             displayObject._hitTestState._parent = displayObject;
-            if (displayObject._hitTestState._hitTest(true, mouseX, mouseY, true)) {
-              interactiveObject = displayObject;
-              break;
-            }
+
+            displayObject = displayObject._hitTestState;
           }
           if (displayObject._hitTest(true, mouseX, mouseY, true)) {
             objectsUnderMouse.push(displayObject);
@@ -212,28 +209,28 @@ var StageDefinition = (function () {
         }
       }
 
-      var ancestor;
-      if (interactiveObject) {
-        ancestor = interactiveObject._parent;
-      } else if (objectsUnderMouse.length) {
+      var interactiveObject = null;
+
+      if (objectsUnderMouse.length) {
         objectsUnderMouse.sort(sortByDepth);
-        ancestor = objectsUnderMouse.pop();
+
+        while (objectsUnderMouse.length) {
+          var currentTarget = objectsUnderMouse.pop();
+          do {
+            if (flash.display.InteractiveObject.class.isInstanceOf(currentTarget) &&
+                !currentTarget._hitArea &&
+                (!interactiveObject || !currentTarget._mouseChildren)) {
+              interactiveObject = currentTarget;
+            }
+            currentTarget = currentTarget._parent;
+          } while (currentTarget);
+        }
+
+        if (interactiveObject._hitTarget) {
+          interactiveObject = interactiveObject._hitTarget;
+        }
       } else {
         interactiveObject = this;
-      }
-
-      while (ancestor) {
-        if (flash.display.InteractiveObject.class.isInstanceOf(ancestor) &&
-            !flash.display.SimpleButton.class.isInstanceOf(ancestor) &&
-            !ancestor._hitArea &&
-            (!interactiveObject || !ancestor._mouseChildren)) {
-          interactiveObject = ancestor;
-        }
-        ancestor = ancestor._parent;
-      }
-
-      if (interactiveObject._hitTarget) {
-        interactiveObject = interactiveObject._hitTarget;
       }
 
       if (interactiveObject === this._clickTarget) {
