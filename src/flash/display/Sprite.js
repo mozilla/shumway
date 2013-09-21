@@ -233,7 +233,10 @@ var SpriteDefinition = (function () {
       // TODO insert with specific depth
       this.addChild(child);
       var name = child._name;
-      if (name && !this._loader._isAvm2Enabled) {
+      var loader = this._loader;
+      // HACK attempting to add movie clip as a variable
+      if (name && loader && !loader._isAvm2Enabled &&
+          !this._getAS2Object().asHasProperty(undefined, name, 0, true)) {
         this._getAS2Object().asSetPublicProperty(name, child._getAS2Object());
       }
     },

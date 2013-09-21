@@ -253,6 +253,10 @@ function as2ResolveProperty(obj, name) {
   return null;
 }
 
+function as2GetPrototype(obj) {
+  return obj && obj.asGetPublicProperty('prototype');
+}
+
 function isAvm2Class(obj) {
   return typeof obj === 'object' && obj !== null && 'instanceConstructor' in obj;
 }
@@ -1012,7 +1016,7 @@ function interpretActions(actionsData, scopeContainer,
           } else if (obj !== AS2_SUPER_STUB) {
             target = Object(obj);
           } else {
-            target = getVariable('__class').__super.prototype;
+            target = as2GetPrototype(getVariable('__class').__super);
             obj = getVariable('this');
           }
           resolvedName = as2ResolveProperty(target, methodName);
@@ -1140,7 +1144,7 @@ function interpretActions(actionsData, scopeContainer,
         if (isAvm2Class(obj)) {
           result = construct(obj, args);
         } else {
-          result = Object.create(method.prototype || Object.prototype);
+          result = Object.create(as2GetPrototype(method) || as2GetPrototype(Object));
           method.apply(result, args);
         }
         result.constructor = method;
@@ -1157,7 +1161,7 @@ function interpretActions(actionsData, scopeContainer,
           if (isAvm2Class(obj)) {
             result = construct(obj, args);
           } else {
-            result = Object.create(obj.prototype || Object.prototype);
+            result = Object.create(as2GetPrototype(obj) || as2GetPrototype(Object));
             obj.apply(result, args);
           }
           result.constructor = obj;
@@ -1347,7 +1351,7 @@ function interpretActions(actionsData, scopeContainer,
       case 0x69: // ActionExtends
         var constrSuper = stack.pop();
         constr = stack.pop();
-        obj = Object.create(constrSuper.asGetPublicProperty('prototype'), {
+        obj = Object.create(constrSuper.traitsPrototype || as2GetPrototype(constrSuper), {
           constructor: { value: constr, enumerable: false }
         });
         constr.__super = constrSuper;
