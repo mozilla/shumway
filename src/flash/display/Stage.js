@@ -109,17 +109,33 @@ var StageDefinition = (function () {
         var invalidRegion = displayObject._region;
         var currentRegion = displayObject._getRegion();
 
-        var isVisible = displayObject._stage && displayObject._visible &&
-                        currentRegion.xMax > 0 &&
-                        currentRegion.xMin < this._stageWidth &&
-                        currentRegion.yMax > 0 &&
-                        currentRegion.yMin < this._stageHeight;
+        var withinView = displayObject._stage &&
+                         displayObject._visible &&
+                         currentRegion.xMax > 0 &&
+                         currentRegion.xMin < this._stageWidth &&
+                         currentRegion.yMax > 0 &&
+                         currentRegion.yMin < this._stageHeight;
 
-        var syncQtree = !invalidRegion || !isVisible ||
-                         currentRegion.xMin !== invalidRegion.xMin ||
-                         currentRegion.yMin !== invalidRegion.yMin ||
-                         currentRegion.xMax !== invalidRegion.xMax ||
-                         currentRegion.yMax !== invalidRegion.yMax;
+        if (withinView) {
+          var ancestor = displayObject._parent;
+          while (ancestor) {
+            if (!ancestor._visible || ancestor._hidden) {
+              withinView = false;
+              break;
+            }
+            ancestor = ancestor._parent;
+          }
+
+          displayObject._hidden = !withinView;
+        } else {
+          displayObject._hidden = false;
+        }
+
+        var syncQtree = !invalidRegion || !withinView ||
+                        currentRegion.xMin !== invalidRegion.xMin ||
+                        currentRegion.yMin !== invalidRegion.yMin ||
+                        currentRegion.xMax !== invalidRegion.xMax ||
+                        currentRegion.yMax !== invalidRegion.yMax;
 
         if (invalidRegion && syncQtree) {
           invalidRegion._qtree.delete(invalidRegion);
@@ -130,7 +146,7 @@ var StageDefinition = (function () {
           numInvalidObjects++;
         }
 
-        if (isVisible) {
+        if (withinView) {
           if (syncQtree) {
             this._qtree.insert(currentRegion);
 
