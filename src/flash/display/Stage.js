@@ -260,6 +260,26 @@ var StageDefinition = (function () {
 
         this._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseOut'));
 
+        var nodeLeft = this._clickTarget;
+        var containerLeft = nodeLeft._parent;
+        var nodeEntered = target;
+        var containerEntered = nodeEntered._parent;
+        while (nodeLeft._level >= 0 && nodeLeft !== containerEntered) {
+          if (nodeLeft._hasEventListener('rollOut')) {
+            nodeLeft._dispatchEvent(new flash.events.MouseEvent('rollOut', false));
+          }
+
+          nodeLeft = nodeLeft._parent;
+        }
+
+        while (nodeEntered._level >= 0 && nodeEntered !== containerLeft) {
+          if (nodeEntered._hasEventListener('rollOver')) {
+            nodeEntered._dispatchEvent(new flash.events.MouseEvent('rollOver', false));
+          }
+
+          nodeEntered = nodeEntered._parent;
+        }
+
         if (target._buttonMode) {
           target._gotoButtonState('over');
         }
