@@ -357,7 +357,7 @@ var SpriteDefinition = (function () {
     set useHandCursor(val) {
       this._useHandCursor = val;
       if (this._stage) {
-        this._stage._syncCursor();
+        this._stage._mouseMoved = true;
       }
     },
 
