@@ -391,6 +391,10 @@ function asDefineProperty(namespaces, name, flags, descriptor) {
   Object.defineProperty(this, resolved, descriptor);
 }
 
+function asCallPublicProperty(name, args) {
+  return this.asCallProperty(undefined, name, 0, false, args);
+}
+
 var callCounter = new metrics.Counter(true);
 
 function asCallProperty(namespaces, name, flags, isLex, args) {
@@ -616,6 +620,7 @@ function initializeGlobalObject(global) {
   defineNonEnumerableProperty(global.Object.prototype, "asDefineProperty", asDefineProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDefinePublicProperty", asDefinePublicProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asCallProperty", asCallProperty);
+  defineNonEnumerableProperty(global.Object.prototype, "asCallPublicProperty", asCallPublicProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asCallResolvedStringProperty", asCallResolvedStringProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asConstructProperty", asConstructProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
