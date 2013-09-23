@@ -43,6 +43,7 @@ var StageDefinition = (function () {
       this._invalidObjects = [];
       this._mouseMoved = false;
       this._clickTarget = this;
+      this._cursor = 'auto';
     },
 
     _setup: function setup(ctx, options) {
@@ -193,48 +194,66 @@ var StageDefinition = (function () {
       for (var i = 0; i < candidates.length; i++) {
         var item = candidates[i];
         var displayObject = item.obj;
-        if (displayObject._visible &&
-            mouseX >= item.xMin && mouseX <= item.xMax &&
+        if (mouseX >= item.xMin && mouseX <= item.xMax &&
             mouseY >= item.yMin && mouseY <= item.yMax)
         {
+          var hitArea;
+
           if (flash.display.SimpleButton.class.isInstanceOf(displayObject)) {
+            if (!displayObject._enabled) {
+              continue;
+            }
+
             // TODO: move this into the SimpleButton class
             displayObject._hitTestState._parent = displayObject;
 
-            displayObject = displayObject._hitTestState;
+            hitArea = displayObject._hitTestState;
+          } else {
+            hitArea = displayObject;
           }
-          if (displayObject._hitTest(true, mouseX, mouseY, true)) {
+
+          if (hitArea._hitTest(true, mouseX, mouseY, true)) {
             objectsUnderMouse.push(displayObject);
           }
         }
       }
 
-      var interactiveObject = null;
+      var target;
 
       if (objectsUnderMouse.length) {
         objectsUnderMouse.sort(sortByDepth);
 
-        while (objectsUnderMouse.length) {
-          var currentTarget = objectsUnderMouse.pop();
+        findTarget: while (objectsUnderMouse.length) {
+          target = null;
+
+          var currentNode = objectsUnderMouse.pop();
           do {
-            if (flash.display.InteractiveObject.class.isInstanceOf(currentTarget) &&
-                !currentTarget._hitArea &&
-                (!interactiveObject || !currentTarget._mouseChildren)) {
-              interactiveObject = currentTarget;
+            if (flash.display.InteractiveObject.class.isInstanceOf(currentNode)) {
+              if (!currentNode._mouseEnabled) {
+                continue findTarget;
+              }
+
+              if ((!target || !currentNode._mouseChildren) && !currentNode._hitArea) {
+                target = currentNode;
+              }
             }
-            currentTarget = currentTarget._parent;
-          } while (currentTarget);
+            currentNode = currentNode._parent;
+          } while (currentNode);
+
+          break;
         }
 
-        if (interactiveObject._hitTarget) {
-          interactiveObject = interactiveObject._hitTarget;
+        if (target._hitTarget) {
+          target = target._hitTarget;
         }
-      } else {
-        interactiveObject = this;
       }
 
-      if (interactiveObject === this._clickTarget) {
-        interactiveObject._dispatchEvent(new flash.events.MouseEvent('mouseMove'));
+      if (!target) {
+        target = this;
+      }
+
+      if (target === this._clickTarget) {
+        target._dispatchEvent(new flash.events.MouseEvent('mouseMove'));
       } else {
         if (this._clickTarget._buttonMode) {
           this._clickTarget._gotoButtonState('up');
@@ -242,13 +261,40 @@ var StageDefinition = (function () {
 
         this._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseOut'));
 
-        if (interactiveObject._buttonMode) {
-          interactiveObject._gotoButtonState('over');
+        var nodeLeft = this._clickTarget;
+        var containerLeft = nodeLeft._parent;
+        var nodeEntered = target;
+        var containerEntered = nodeEntered._parent;
+        var cursor = 'auto';
+
+        while (nodeLeft._level >= 0 && nodeLeft !== containerEntered) {
+          if (nodeLeft._hasEventListener('rollOut')) {
+            nodeLeft._dispatchEvent(new flash.events.MouseEvent('rollOut', false));
+          }
+
+          nodeLeft = nodeLeft._parent;
         }
 
-        interactiveObject._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+        while (nodeEntered._level >= 0 && nodeEntered !== containerLeft) {
+          if (nodeEntered._hasEventListener('rollOver')) {
+            nodeEntered._dispatchEvent(new flash.events.MouseEvent('rollOver', false));
+          }
 
-        this._clickTarget = interactiveObject;
+          if (nodeEntered._buttonMode && nodeEntered._useHandCursor) {
+            cursor = 'pointer';
+          }
+
+          nodeEntered = nodeEntered._parent;
+        }
+
+        if (target._buttonMode) {
+          target._gotoButtonState('over');
+        }
+
+        target._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+
+        this._clickTarget = target;
+        this._cursor = cursor;
       }
     },
 

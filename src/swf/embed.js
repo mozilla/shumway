@@ -50,27 +50,6 @@ SWF.embed = function(file, doc, container, options) {
   loader._parent = stage;
   loader._stage = stage;
 
-  var cursorVisible = true;
-  function syncCursor() {
-    var newCursor;
-    if (!cursorVisible) {
-      newCursor = 'none';
-    } else if (stage._clickTarget._buttonMode &&
-               stage._clickTarget._useHandCursor) {
-      newCursor = 'pointer';
-    } else {
-      newCursor = 'auto';
-    }
-
-    container.style.cursor = newCursor;
-  }
-
-  stage._setCursorVisible = function(val) {
-    cursorVisible = val;
-    syncCursor();
-  };
-  stage._syncCursor = syncCursor;
-
   function fitCanvas(container, canvas) {
     if (canvasHolder) {
       canvasHolder.style.width = container.clientWidth + 'px';
@@ -181,8 +160,6 @@ SWF.embed = function(file, doc, container, options) {
 
     root._dispatchEvent("added");
     root._dispatchEvent("addedToStage");
-
-    syncCursor();
 
     container.appendChild(canvasHolder || canvas);
 
