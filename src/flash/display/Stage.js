@@ -193,8 +193,7 @@ var StageDefinition = (function () {
       for (var i = 0; i < candidates.length; i++) {
         var item = candidates[i];
         var displayObject = item.obj;
-        if (displayObject._visible &&
-            mouseX >= item.xMin && mouseX <= item.xMax &&
+        if (mouseX >= item.xMin && mouseX <= item.xMax &&
             mouseY >= item.yMin && mouseY <= item.yMax)
         {
           var hitArea;
@@ -218,32 +217,42 @@ var StageDefinition = (function () {
         }
       }
 
-      var interactiveObject = null;
+      var target;
 
       if (objectsUnderMouse.length) {
         objectsUnderMouse.sort(sortByDepth);
 
-        while (objectsUnderMouse.length) {
-          var currentTarget = objectsUnderMouse.pop();
+        findTarget: while (objectsUnderMouse.length) {
+          target = null;
+
+          var currentNode = objectsUnderMouse.pop();
           do {
-            if (flash.display.InteractiveObject.class.isInstanceOf(currentTarget) &&
-                !currentTarget._hitArea &&
-                (!interactiveObject || !currentTarget._mouseChildren)) {
-              interactiveObject = currentTarget;
+            if (flash.display.InteractiveObject.class.isInstanceOf(currentNode)) {
+              if (!currentNode._mouseEnabled) {
+                continue findTarget;
+              }
+
+              if ((!target || !currentNode._mouseChildren) && !currentNode._hitArea) {
+                target = currentNode;
+              }
             }
-            currentTarget = currentTarget._parent;
-          } while (currentTarget);
+            currentNode = currentNode._parent;
+          } while (currentNode);
+
+          break;
         }
 
-        if (interactiveObject._hitTarget) {
-          interactiveObject = interactiveObject._hitTarget;
+        if (target._hitTarget) {
+          target = target._hitTarget;
         }
-      } else {
-        interactiveObject = this;
       }
 
-      if (interactiveObject === this._clickTarget) {
-        interactiveObject._dispatchEvent(new flash.events.MouseEvent('mouseMove'));
+      if (!target) {
+        target = this;
+      }
+
+      if (target === this._clickTarget) {
+        target._dispatchEvent(new flash.events.MouseEvent('mouseMove'));
       } else {
         if (this._clickTarget._buttonMode) {
           this._clickTarget._gotoButtonState('up');
@@ -251,13 +260,13 @@ var StageDefinition = (function () {
 
         this._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseOut'));
 
-        if (interactiveObject._buttonMode) {
-          interactiveObject._gotoButtonState('over');
+        if (target._buttonMode) {
+          target._gotoButtonState('over');
         }
 
-        interactiveObject._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+        target._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
 
-        this._clickTarget = interactiveObject;
+        this._clickTarget = target;
       }
     },
 
