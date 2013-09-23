@@ -197,13 +197,22 @@ var StageDefinition = (function () {
             mouseX >= item.xMin && mouseX <= item.xMax &&
             mouseY >= item.yMin && mouseY <= item.yMax)
         {
+          var hitArea;
+
           if (flash.display.SimpleButton.class.isInstanceOf(displayObject)) {
+            if (!displayObject._enabled) {
+              continue;
+            }
+
             // TODO: move this into the SimpleButton class
             displayObject._hitTestState._parent = displayObject;
 
-            displayObject = displayObject._hitTestState;
+            hitArea = displayObject._hitTestState;
+          } else {
+            hitArea = displayObject;
           }
-          if (displayObject._hitTest(true, mouseX, mouseY, true)) {
+
+          if (hitArea._hitTest(true, mouseX, mouseY, true)) {
             objectsUnderMouse.push(displayObject);
           }
         }
