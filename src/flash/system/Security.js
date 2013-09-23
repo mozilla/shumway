@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ /*global FileLoadingService */
 
 var SecurityDefinition = (function () {
   var _exactSettings;
@@ -76,7 +77,10 @@ var SecurityDefinition = (function () {
           pageDomain: {
             get: function pageDomain() {
               // (void) -> String
-              notImplemented("Security.pageDomain");
+              somewhatImplemented("Security.pageDomain");
+              var pageHost = FileLoadingService.resolveUrl('/');
+              var parts = pageHost.split('/'); parts.pop();
+              return parts.pop();
             }
           }
         }

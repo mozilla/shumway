@@ -69,11 +69,6 @@ var StageDefinition = (function () {
       displayObject._dispatchEvent('addedToStage');
     },
     _removeFromStage: function removeFromStage(displayObject) {
-      displayObject._stage = null;
-      displayObject._level = -1;
-
-      this._invalidateOnStage(displayObject);
-
       var children = displayObject._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
@@ -83,6 +78,11 @@ var StageDefinition = (function () {
       }
 
       displayObject._dispatchEvent('removedFromStage');
+
+      displayObject._stage = null;
+      displayObject._level = -1;
+
+      this._invalidateOnStage(displayObject);
     },
 
     _invalidateOnStage: function invalidateOnStage(displayObject) {
