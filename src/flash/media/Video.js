@@ -37,7 +37,7 @@ var VideoDefinition = (function () {
       if (!width || width < 0) width = 320;
       if (!height || height < 0) height = 240;
 
-      this._bbox = {xMin: 0, yMin: 0, xMax: width, yMax: height};
+      this._bbox = {xMin: 0, yMin: 0, xMax: width * 20, yMax: height * 20};
 
       this._initialWidth = this._videoWidth = width;
       this._initialHeight = this._videoHeight = height;
