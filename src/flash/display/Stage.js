@@ -43,6 +43,7 @@ var StageDefinition = (function () {
       this._invalidObjects = [];
       this._mouseMoved = false;
       this._clickTarget = this;
+      this._cursor = 'auto';
     },
 
     _setup: function setup(ctx, options) {
@@ -264,6 +265,8 @@ var StageDefinition = (function () {
         var containerLeft = nodeLeft._parent;
         var nodeEntered = target;
         var containerEntered = nodeEntered._parent;
+        var cursor = 'auto';
+
         while (nodeLeft._level >= 0 && nodeLeft !== containerEntered) {
           if (nodeLeft._hasEventListener('rollOut')) {
             nodeLeft._dispatchEvent(new flash.events.MouseEvent('rollOut', false));
@@ -277,6 +280,10 @@ var StageDefinition = (function () {
             nodeEntered._dispatchEvent(new flash.events.MouseEvent('rollOver', false));
           }
 
+          if (nodeEntered._buttonMode && nodeEntered._useHandCursor) {
+            cursor = 'pointer';
+          }
+
           nodeEntered = nodeEntered._parent;
         }
 
@@ -287,6 +294,7 @@ var StageDefinition = (function () {
         target._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
 
         this._clickTarget = target;
+        this._cursor = cursor;
       }
     },
 
