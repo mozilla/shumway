@@ -828,7 +828,6 @@ var LoaderDefinition = (function () {
         loader._children.push(image);
         Bitmap.instanceConstructor.call(image, bitmapData);
         image._parent = loader;
-        loader._control.appendChild(image._control);
         loader._content = image;
         imgPromise.resolve(imageInfo);
         loader.contentLoaderInfo._dispatchEvent("init");
