@@ -23,12 +23,12 @@ function compileScript(script, writer) {
     if (trait.isClass()) {
       compileClass(trait.classInfo, writer);
     } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-      compileTrait(trait);
+      compileTrait(trait, writer);
     }
   });
 }
 
-function compileTrait(trait) {
+function compileTrait(trait, writer) {
   var traitName = Multiname.getQualifiedName(trait.name);
   if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
     var methodInfo = trait.methodInfo;
@@ -37,7 +37,7 @@ function compileTrait(trait) {
       try {
         var method = createCompiledFunction(methodInfo, new Scope(null, {}), false, false, false);
         if (trait.isMethod()) {
-          writer.writeLn("get_" + traitName + ": function() { return this." + VM_OPEN_METHOD_PREFIX + traitName + ".bind(this); },");
+          writer.writeLn("get " + traitName + "() { return this." + VM_OPEN_METHOD_PREFIX + traitName + ".bind(this); },");
         }
         if (trait.isMethod()) {
           writer.enter(VM_OPEN_METHOD_PREFIX + traitName + ": ");
@@ -46,7 +46,7 @@ function compileTrait(trait) {
         } else if (trait.isSetter()) {
           writer.enter("set_" + traitName + ": ");
         }
-        // writer.writeLns(method.toSource());
+        writer.writeLns(method.toSource());
         writer.leave(",");
       } catch (x) {
 
@@ -57,7 +57,9 @@ function compileTrait(trait) {
 
 function compileClass(classInfo, writer) {
   function compileTraits(traits) {
-    traits.forEach(compileTrait);
+    traits.forEach(function (trait) {
+      compileTrait(trait, writer);
+    });
   }
 
   function compileInitializer(methodInfo) {
