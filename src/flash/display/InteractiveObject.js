@@ -24,6 +24,7 @@ var InteractiveObjectDefinition = (function () {
       this._focusRect = null;
       this._mouseEnabled = true;
       this._tabEnabled = false;
+      this._zindex = 1;
     },
 
     get accessibilityImplementation() {
