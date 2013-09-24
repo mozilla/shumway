@@ -83,6 +83,7 @@ var DisplayObjectDefinition = (function () {
       this._region = null;
       this._level = -1;
       this._index = -1;
+      this._zindex = 0;
 
       blendModes = [
         blendModeClass.NORMAL,     // 0
