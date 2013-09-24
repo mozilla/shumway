@@ -204,10 +204,10 @@ var StageDefinition = (function () {
               continue;
             }
 
-            // TODO: move this into the SimpleButton class
-            displayObject._hitTestState._parent = displayObject;
-
             hitArea = displayObject._hitTestState;
+
+            // TODO: move this into the SimpleButton class
+            hitArea._parent = displayObject;
           } else {
             hitArea = displayObject;
           }
@@ -223,10 +223,24 @@ var StageDefinition = (function () {
       if (objectsUnderMouse.length) {
         objectsUnderMouse.sort(sortByDepth);
 
-        findTarget: while (objectsUnderMouse.length) {
+        var i = objectsUnderMouse.length;
+
+        findTarget: while (i--) {
           target = null;
 
-          var currentNode = objectsUnderMouse.pop();
+          var currentNode = objectsUnderMouse[i];
+
+          if (!flash.display.InteractiveObject.class.isInstanceOf(currentNode)) {
+            var j = i;
+            while (j--) {
+              if (objectsUnderMouse[j]._parent === currentNode._parent &&
+                  flash.display.InteractiveObject.class.isInstanceOf(objectsUnderMouse[j])) {
+                currentNode = objectsUnderMouse[j];
+                i = j;
+              }
+            }
+          }
+
           do {
             if (flash.display.InteractiveObject.class.isInstanceOf(currentNode)) {
               if (!currentNode._mouseEnabled) {
@@ -240,16 +254,20 @@ var StageDefinition = (function () {
             currentNode = currentNode._parent;
           } while (currentNode);
 
-          break;
-        }
+          if (target !== objectsUnderMouse[i] &&
+              flash.display.SimpleButton.class.isInstanceOf(target))
+          {
+            continue findTarget;
+          }
 
-        if (target._hitTarget) {
-          target = target._hitTarget;
+          break;
         }
       }
 
       if (!target) {
         target = this;
+      } else if (target._hitTarget) {
+        target = target._hitTarget;
       }
 
       if (target === this._clickTarget) {
