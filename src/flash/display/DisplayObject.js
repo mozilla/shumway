@@ -83,7 +83,6 @@ var DisplayObjectDefinition = (function () {
       this._region = null;
       this._level = -1;
       this._index = -1;
-      this._zindex = 0;
 
       blendModes = [
         blendModeClass.NORMAL,     // 0
@@ -720,6 +719,7 @@ var DisplayObjectDefinition = (function () {
         bounds.xMax = xMax;
         bounds.yMin = yMin;
         bounds.yMax = yMax;
+        bounds.invalid = false;
       }
 
       return bounds;
