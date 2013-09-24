@@ -43,6 +43,7 @@ package avm1lib {
   import flash.geom.ColorTransform;
   import flash.geom.Point;
   import flash.text.TextFormat;
+  import flash.display.Loader;
   import avm1lib.AS2MovieClipLoader;
 
   [native(cls="AS2Globals")]
@@ -101,6 +102,10 @@ package avm1lib {
       if (method) {
         request.method = method;
       }
+      if (typeof target === 'string' && target.indexOf('_level') === 0) {
+        loadMovieNum(url, +target.substr(6), method);
+        return;
+      }
       flash.net.navigateToURL(request, target);
     }
 
@@ -154,14 +159,23 @@ package avm1lib {
       // flash.display.Loader, flash.net.URLLoader
       notImplemented('AS2Globals.loadMovie');
     }
+
+    private native function _setLevel(level: uint, loader: Loader);
+
     public function loadMovieNum(url, level, method) {
       var nativeTarget = AS2Utils.resolveLevel(level);
       // some swfs are using loadMovieNum to call fscommmand
       if (/^fscommand:/i.test(url)) {
         return this.fscommand(url.substring('fscommand:'.length));
       }
-      // flash.display.Loader, flash.net.URLLoader
-      notImplemented('AS2Globals.loadMovieNum');
+
+      var loader: Loader = new Loader();
+      _setLevel(level, loader);
+      var request = new flash.net.URLRequest(url);
+      if (method) {
+        request.method = method;
+      }
+      loader.load(request);
     }
     public function loadVariables(url, target, method) {
       var nativeTarget = AS2Utils.resolveTarget(target);

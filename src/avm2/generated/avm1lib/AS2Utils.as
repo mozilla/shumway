@@ -27,6 +27,19 @@ package avm1lib {
     public static native function resolveLevel(level: Number) : MovieClip;
     public static native function get currentStage() : Stage;
 
+    public static function getTarget(mc: Object) {
+      var nativeObject = mc.$nativeObject;
+      if (nativeObject === nativeObject.root) {
+        return '/';
+      }
+      var path = '';
+      do {
+        path = '/' + nativeObject.name + path;
+        nativeObject = nativeObject.parent;
+      } while (nativeObject !== nativeObject.root);
+      return path;
+    }
+
     public static function addEventHandlerProxy(obj: Object, propertyName: String, eventName: String, argsConverter: Function = null)
     {
       _addEventHandlerProxy(obj, propertyName, eventName, argsConverter);

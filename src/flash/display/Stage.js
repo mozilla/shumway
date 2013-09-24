@@ -316,6 +316,11 @@ var StageDefinition = (function () {
       }
     },
 
+    _as2SetLevel: function (level, loader) {
+      somewhatImplemented('Stage._as2SetLevel');
+      this.addChild(loader);
+    },
+
     __glue__: {
       native: {
         instance: {

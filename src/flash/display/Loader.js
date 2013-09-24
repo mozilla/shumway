@@ -668,7 +668,8 @@ var LoaderDefinition = (function () {
             stage: loader._stage
           });
 
-          if (parent && parent == loader._stage) {
+          var isRootMovie = parent && parent == loader._stage && loader._stage._children.length === 0;
+          if (isRootMovie) {
             parent._frameRate = loaderInfo._frameRate;
             parent._stageHeight = loaderInfo._height;
             parent._stageWidth = loaderInfo._width;
