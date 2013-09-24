@@ -270,6 +270,7 @@ $.playbackSize;
 $.playbackType;
 $.pos44;
 $.preserveAlpha;
+$.props;
 $.ratio;
 $.ratioMorph;
 $.ratios;
