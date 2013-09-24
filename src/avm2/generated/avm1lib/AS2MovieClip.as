@@ -25,6 +25,7 @@ package avm1lib {
   import flash.geom.Point;
   import flash.display.Graphics;
   import flash.display.MovieClip;
+  import flash.display.Loader;
 
 
   [native(cls="AS2MovieClip")]
@@ -246,7 +247,13 @@ package avm1lib {
     }
     public function loadMovie(url, method)
     {
-      throw 'Not implemented: loadMovie';
+      var loader: Loader = new Loader();
+      this.$nativeObject.addChild(loader);
+      var request = new flash.net.URLRequest(url);
+      if (method) {
+        request.method = method;
+      }
+      loader.load(request);
     }
     public function loadVariables(url, method)
     {
@@ -320,19 +327,9 @@ package avm1lib {
     public function set tabEnabled(value) { this.$nativeObject.tabEnabled = value;  }
     public function get tabIndex() { return this.$nativeObject.tabIndex;  }
     public function set tabIndex(value) { this.$nativeObject.tabIndex = value;  }
-    public function get _target()
-    {
-      var nativeObject = this.$nativeObject;
-      if (nativeObject === nativeObject.root) {
-        return '/';
-      }
-      var path = '';
-      do {
-        path = '/' + nativeObject.name + path;
-        nativeObject = nativeObject.parent;
-      } while (nativeObject !== nativeObject.root);
-      return path;
-    }
+
+    public function get _target() { return AS2Utils.getTarget(this); }
+
     public function get _totalframes() { return this.$nativeObject.totalFrames;  }
     public function get trackAsMenu() { throw 'Not implemented: get$trackAsMenu';  }
     public function set trackAsMenu(value) { throw 'Not implemented: set$trackAsMenu';  }
@@ -343,6 +340,10 @@ package avm1lib {
     {
       var nativeObject = this.$nativeObject;
       // TODO remove movie clip content
+      var loader = nativeObject.loaderInfo.loader;
+      if (loader.parent) {
+        loader.parent.removeChild(loader);
+      }
       nativeObject.stop();
     }
     public function get _url() { return this.$nativeObject.loaderInfo.url; }
