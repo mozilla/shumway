@@ -62,7 +62,7 @@ function sortByDepth(a, b) {
     return levelA - levelB;
   }
 
-  return a._index - b._index;
+  return a._zindex - b._zindex || a._index - b._index;
 }
 function sortNumeric(a, b) {
   return a - b;
