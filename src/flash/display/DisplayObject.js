@@ -72,13 +72,9 @@ var DisplayObjectDefinition = (function () {
       this._visible = true;
       this._hidden = false;
       this._wasCachedAsBitmap = false;
-      this._x = 0;
-      this._y = 0;
       this._destroyed = false;
       this._maskedObject = null;
       this._scrollRect = null;
-      this._width = null;
-      this._height = null;
       this._invalid = false;
       this._region = null;
       this._level = -1;
@@ -144,8 +140,6 @@ var DisplayObjectDefinition = (function () {
           this._scaleX = a > 0 ? sx : -sx;
           var sy = Math.sqrt(d * d + c * c);
           this._scaleY = d > 0 ? sy : -sy;
-          this._x = matrix.tx|0;
-          this._y = matrix.ty|0;
 
           this._currentTransform = matrix;
         }
@@ -335,8 +329,6 @@ var DisplayObjectDefinition = (function () {
       transform.b = v * scaleX;
       transform.c = -v * scaleY;
       transform.d = u * scaleY;
-      transform.tx = this._x|0;
-      transform.ty = this._y|0;
     },
 
     get accessibilityProperties() {
@@ -395,11 +387,6 @@ var DisplayObjectDefinition = (function () {
     },
     set height(val) {
       if (val < 0) {
-        return;
-      }
-
-      if (this._height !== null) {
-        this._height = val;
         return;
       }
 
@@ -603,11 +590,6 @@ var DisplayObjectDefinition = (function () {
         return;
       }
 
-      if (this._width !== null) {
-        this._width = val;
-        return;
-      }
-
       var rotation = this._rotation / 180 * Math.PI;
       var u = Math.abs(Math.cos(rotation));
       var v = Math.abs(Math.sin(rotation));
@@ -625,30 +607,30 @@ var DisplayObjectDefinition = (function () {
       this.scaleX = val / baseWidth;
     },
     get x() {
-      return this._x;
+      return this._currentTransform.tx;
     },
     set x(val) {
-      if (val === this._x) {
+      if (val === this._currentTransform.tx) {
         return;
       }
 
       this._invalidate();
       this._invalidateBounds();
 
-      this._x = this._currentTransform.tx = val;
+      this._currentTransform.tx = val;
     },
     get y() {
-      return this._y;
+      return this._currentTransform.ty;
     },
     set y(val) {
-      if (val === this._y) {
+      if (val === this._currentTransform.ty) {
         return;
       }
 
       this._invalidate();
       this._invalidateBounds();
 
-      this._y = this._currentTransform.ty = val;
+      this._currentTransform.ty = val;
     },
     get z() {
       return 0;

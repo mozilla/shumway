@@ -176,8 +176,6 @@ var MovieClipDefinition = (function () {
             currentChild._scaleX = a > 0 ? sx : -sx;
             var sy = Math.sqrt(d * d + c * c);
             currentChild._scaleY = d > 0 ? sy : -sy;
-            var x = currentChild._x = m.tx;
-            var y = currentChild._y = m.ty;
 
             currentChild._currentTransform = m;
           }
