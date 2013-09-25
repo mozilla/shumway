@@ -72,12 +72,12 @@ var SoundDefinition = (function () {
     },
 
     close: function close() {
-      throw 'Not implemented: close';
+      somewhatImplemented('Sound.close');
     },
 
     extract: function extract(target, length, startPosition) {
       //extract(target:ByteArray, length:Number, startPosition:Number = -1):Number
-      throw 'Not implemented: extract';
+      notImplemented('Sound.extract');
     },
 
     _load: function _load(request, checkPolicyFile, bufferTime) {
