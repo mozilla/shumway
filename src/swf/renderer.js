@@ -242,7 +242,7 @@ RenderVisitor.prototype = {
 
     if (clippingMask && isContainer) {
       ctx.save();
-      renderDisplayObject(child, ctx, child._currentTransform, context);
+      renderDisplayObject(child, ctx, context);
       for (var i = 0, n = child._children.length; i < n; i++) {
         var child1 = child._children[i];
         if (!child1) {
@@ -281,7 +281,7 @@ RenderVisitor.prototype = {
       tempCanvas = CanvasCache.getCanvas(ctx.canvas);
       tempCtx = tempCanvas.ctx;
       tempCtx.currentTransform = ctx.currentTransform;
-      renderDisplayObject(child, tempCtx, child._currentTransform, context);
+      renderDisplayObject(child, tempCtx, context);
 
       if (isContainer) {
         this.ctx = tempCtx;
@@ -301,7 +301,7 @@ RenderVisitor.prototype = {
       CanvasCache.releaseCanvas(tempCanvas);
       CanvasCache.releaseCanvas(maskCanvas);
     } else {
-      renderDisplayObject(child, ctx, child._currentTransform, context);
+      renderDisplayObject(child, ctx, context);
 
       if (isContainer) {
         visitContainer(child, this, context);
@@ -424,9 +424,9 @@ function RenderingContext(refreshStage, invalidPath) {
   this.colorTransform = new RenderingColorTransform();
 }
 
-function renderDisplayObject(child, ctx, transform, context) {
-  if (transform) {
-    var m = transform;
+function renderDisplayObject(child, ctx, context) {
+  var m = child._currentTransform;
+  if (m) {
     if (m.a * m.d == m.b * m.c) {
       // Workaround for bug 844184 -- the object is invisible
       ctx.closePath();
