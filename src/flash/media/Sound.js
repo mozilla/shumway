@@ -15,23 +15,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Multiname, MP3DecoderSession, base64ArrayBuffer, isNullOrUndefined */
+/*global Multiname, MP3DecoderSession, isNullOrUndefined, URL, Blob */
 
 var PLAY_USING_AUDIO_TAG = true;
 
 var SoundDefinition = (function () {
 
-  var audioElement = null;
-
   function getAudioDescription(soundData, onComplete) {
-    audioElement = audioElement || document.createElement('audio');
+    var audioElement = document.createElement('audio');
     if (!audioElement.canPlayType(soundData.mimeType)) {
       onComplete({
         duration: 0
       });
       return;
     }
-    audioElement.src = "data:" + soundData.mimeType + ";base64," + base64ArrayBuffer(soundData.data);
+    audioElement.preload = 'metadata'; // for mobile devices
+    var blob = new Blob([soundData.data], {type: soundData.mimeType});
+    audioElement.src = URL.createObjectURL(blob);
     audioElement.load();
     audioElement.addEventListener("loadedmetadata", function () {
       onComplete({
