@@ -89,8 +89,6 @@ var TransformDefinition = (function () {
       target._scaleX = a > 0 ? sx : -sx;
       var sy = Math.sqrt(d * d + c * c);
       target._scaleY = d > 0 ? sy : -sy;
-      target._x = tx;
-      target._y = ty;
 
       target._currentTransform = {
         a: a,
