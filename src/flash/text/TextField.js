@@ -313,7 +313,7 @@ var TextFieldDefinition = (function () {
     }
     // TODO: maybe support justfied text somehow
     if (align === 'center' || align === 'right') {
-      var offset = state.w - state.x;
+      var offset = Math.max(state.w - state.x, 0);
       if (align === 'center') {
         offset >>= 1;
       }
@@ -456,8 +456,8 @@ var TextFieldDefinition = (function () {
       };
       this._type = 'dynamic';
       this._selectable = true;
-      this._textHeight = 0;
       this._textWidth = 0;
+      this._textHeight = 0;
       this._embedFonts = false;
       this._autoSize = 'none';
       this._wordWrap = false;
@@ -471,16 +471,23 @@ var TextFieldDefinition = (function () {
       this._borderColorStr = "#000000";
       this._textColor = null;
       this._drawingOffsetH = 0;
+      this._bbox = {xMin: 0, yMin: 0, xMax: 2000, yMax: 2000};
 
       var s = this.symbol;
       if (!s) {
-        this._bounds = {xMin: -40, yMin: -40, xMax: 2040, yMax: 440};
+        this._currentTransform.tx -= 40;
+        this._currentTransform.ty -= 40;
         this.text = '';
         return;
       }
 
       var tag = s.tag;
-      this._bounds = tag.bbox;
+
+      var bbox = tag.bbox;
+      this._currentTransform.tx += bbox.xMin;
+      this._currentTransform.ty += bbox.yMin;
+      this._bbox.xMax = bbox.xMax - bbox.xMin;
+      this._bbox.yMax = bbox.yMax - bbox.yMin;
 
       if (tag.hasLayout) {
         initialFormat.size = tag.fontHeight / 20;
@@ -537,17 +544,16 @@ var TextFieldDefinition = (function () {
 
     draw: function (ctx, ratio, colorTransform) {
       this.ensureDimensions();
-      var bounds = this._bounds;
-      var x = bounds.xMin / 20;
-      var y = bounds.yMin / 20;
-      var width = bounds.xMax / 20 - x;
-      var height = bounds.yMax / 20 - y;
+      var bounds = this._bbox;
+      var width = bounds.xMax / 20;
+      var height = bounds.yMax / 20;
       if (width <= 0 || height <= 0) {
         return;
       }
       ctx.save();
+
       ctx.beginPath();
-      ctx.rect(x, y, width, height);
+      ctx.rect(0, 0, width, height);
       ctx.clip();
       if (this._background) {
         colorTransform.setFillStyle(ctx, this._backgroundColorStr);
@@ -557,12 +563,14 @@ var TextFieldDefinition = (function () {
         colorTransform.setStrokeStyle(ctx, this._borderColorStr);
         ctx.lineCap = "square";
         ctx.lineWidth = 1;
-        ctx.strokeRect(x + 0.5, y + 0.5, (width - 1)|0, (height - 1)|0);
+        ctx.strokeRect(0.5, 0.5, (width - 1)|0, (height - 1)|0);
       }
       ctx.closePath();
-      var runs = this._content.textruns;
+
+      ctx.translate(2, 2);
       ctx.save();
       colorTransform.setAlpha(ctx);
+      var runs = this._content.textruns;
       for (var i = 0; i < runs.length; i++) {
         var run = runs[i];
         if (run.type === 'f') {
@@ -573,7 +581,7 @@ var TextFieldDefinition = (function () {
           colorTransform.setAlpha(ctx);
         } else {
           assert(run.type === 't', 'Invalid run type: ' + run.type);
-          ctx.fillText(run.text, run.x + this._drawingOffsetH, run.y);
+          ctx.fillText(run.text, run.x - this._drawingOffsetH, run.y);
         }
       }
       ctx.restore();
@@ -582,17 +590,23 @@ var TextFieldDefinition = (function () {
 
     invalidateDimensions: function() {
       this._invalidate();
+      this._invalidateBounds();
       this._dimensionsValid = false;
+    },
+
+    _getRegion: function getRegion() {
+      this.ensureDimensions();
+      return this._getTransformedRect(this._getContentBounds(), null);
     },
 
     ensureDimensions: function() {
       if (this._dimensionsValid) {
         return;
       }
-      var bounds = this._bounds;
+      var bounds = this._bbox;
       var initialFormat = this._defaultTextFormat;
       var firstRun = {type: 'f', format: initialFormat};
-      var width = Math.max((bounds.xMax - bounds.xMin) / 20 - 4, 1);
+      var width = Math.max(bounds.xMax / 20 - 4, 1);
       var state = {ctx: measureCtx, y: 0, x: 0, w: width, line: [],
                    lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
                    currentFormat: initialFormat, runs: [firstRun],
@@ -605,7 +619,6 @@ var TextFieldDefinition = (function () {
       this._textWidth = state.maxLineWidth;
       this._textHeight = state.y;
       this._content.textruns = state.runs;
-      this._drawingOffsetH = 0;
       var autoSize = this._autoSize;
       if (autoSize !== 'none') {
         var targetWidth = this._textWidth;
@@ -616,37 +629,31 @@ var TextFieldDefinition = (function () {
             case 'left':
               break;
             case 'center':
-              diffX = (targetWidth - width) / 2;
+              diffX = (width - targetWidth) >> 1;
               break;
             case 'right':
-              diffX = targetWidth - width;
+              diffX = width - targetWidth;
           }
           // Note: the drawing offset is not in Twips!
           if (align === 'left') {
-            this._drawingOffsetH = -diffX;
+            this._drawingOffsetH = 0;
+          } else {
+            var offset;
+            switch (autoSize) {
+              case 'left': offset = width - targetWidth; break;
+              case 'center': offset = diffX << 1; break;
+              case 'right': offset = diffX; break;
+            }
+            if (align === 'center') {
+              offset >>= 1;
+            }
+            this._drawingOffsetH = offset;
           }
-          else if (align === 'center') {
-            if (autoSize === 'left') {
-              this._drawingOffsetH = (targetWidth - width) / 2;
-            }
-            else if (autoSize === 'right') {
-              this._drawingOffsetH = -diffX/2;
-            }
-          }
-          else {
-            if (autoSize === 'left') {
-              this._drawingOffsetH = targetWidth - width;
-            }
-            else if (autoSize === 'center') {
-              this._drawingOffsetH = diffX;
-            }
-          }
-          diffX = (diffX * 20)|0;
-          bounds.xMin -= diffX;
-          this._x -= diffX;
-          bounds.xMax = bounds.xMin + (targetWidth*20|0) + 80;
+          this._currentTransform.tx += diffX*20|0;
+          bounds.xMax = (targetWidth*20|0) + 80;
         }
-        bounds.yMax = bounds.yMin + (this._textHeight * 20|0) + 120;
+        bounds.yMax = (this._textHeight*20|0) + 120;
+        this._invalidateBounds();
       }
       this._dimensionsValid = true;
     },
@@ -692,31 +699,44 @@ var TextFieldDefinition = (function () {
       this.invalidateDimensions();
     },
 
+    get x() {
+      this.ensureDimensions();
+      return this._currentTransform.tx;
+    },
+    set x(val) {
+      if (val === this._currentTransform.tx) {
+        return;
+      }
+
+      this._currentTransform.tx = val;
+
+      this._invalidate();
+      this._invalidateBounds();
+    },
+
     get width() { // (void) -> Number
       this.ensureDimensions();
-      return this._bounds.xMax - this._bounds.xMin;
+      return this._bbox.xMax;
     },
     set width(value) { // (Number) -> Number
       if (value < 0) {
         return;
       }
-      this._bounds.xMax = this._bounds.xMin + value;
+      this._bbox.xMax = value;
       // TODO: optimization potential: don't invalidate if !wordWrap and no \n
-      if (this._multiline || this._wordWrap) {
-        this.invalidateDimensions();
-      }
+      this.invalidateDimensions();
     },
 
     get height() { // (void) -> Number
       this.ensureDimensions();
-      return this._bounds.yMax - this._bounds.yMin;
+      return this._bbox.yMax;
     },
     set height(value) { // (Number) -> Number
       if (value < 0) {
         return;
       }
-      this._bounds.yMax = this._bounds.yMin + value;
-      this.invalidateDimensions();
+      this._bbox.yMax = value;
+      this._invalidate();
     }
   };
 
@@ -737,7 +757,9 @@ var TextFieldDefinition = (function () {
             return this._autoSize;
           },
           set: function autoSize(value) { // (value:String) -> void
-            somewhatImplemented("TextField.autoSize");
+            if (this._autoSize === value) {
+              return;
+            }
             this._autoSize = value;
             this.invalidateDimensions();
           }
@@ -747,8 +769,11 @@ var TextFieldDefinition = (function () {
             return this._multiline;
           },
           set: function multiline(value) { // (value:Boolean) -> void
-            somewhatImplemented("TextField.multiline");
+            if (this._multiline === value) {
+              return;
+            }
             this._multiline = value;
+            this.invalidateDimensions();
           }
         },
         textColor: {
@@ -756,6 +781,9 @@ var TextFieldDefinition = (function () {
             return this._textColor;
           },
           set: function textColor(value) { // (value:uint) -> void
+            if (this._textColor === value) {
+              return;
+            }
             this._textColor = value;
             this._invalidate();
           }
@@ -774,7 +802,9 @@ var TextFieldDefinition = (function () {
             return this._wordWrap;
           },
           set: function wordWrap(value) { // (value:Boolean) -> void
-            somewhatImplemented("TextField.wordWrap");
+            if (this._wordWrap === value) {
+              return;
+            }
             this._wordWrap = value;
             this.invalidateDimensions();
           }
@@ -796,7 +826,9 @@ var TextFieldDefinition = (function () {
             return this._background;
           },
           set: function background(value) { // (value:Boolean) -> void
-            somewhatImplemented("TextField.background");
+            if (this._background === value) {
+              return;
+            }
             this._background = value;
             this._invalidate();
           }
@@ -806,6 +838,9 @@ var TextFieldDefinition = (function () {
             return this._backgroundColor;
           },
           set: function backgroundColor(value) { // (value:uint) -> void
+            if (this._backgroundColor === value) {
+              return;
+            }
             this._backgroundColor = value;
             this._backgroundColorStr = rgbIntAlphaToStr(value, 1);
             if (this._background) {
@@ -818,6 +853,9 @@ var TextFieldDefinition = (function () {
             return this._border;
           },
           set: function border(value) { // (value:Boolean) -> void
+            if (this._border === value) {
+              return;
+            }
             this._border = value;
             this._invalidate();
           }
@@ -827,6 +865,9 @@ var TextFieldDefinition = (function () {
             return this._borderColor;
           },
           set: function borderColor(value) { // (value:uint) -> void
+            if (this._borderColor === value) {
+              return;
+            }
             this._borderColor = value;
             this._borderColorStr = rgbIntAlphaToStr(value, 1);
             if (this._border) {
