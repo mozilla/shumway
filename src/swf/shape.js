@@ -124,18 +124,13 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
 
   //TODO: remove the `- 1` once we stop even parsing the EOS record
   var numRecords = records.length - 1;
-  var morphsOffset = 0;
   var x = 0;
   var y = 0;
   var morphX = 0;
   var morphY = 0;
   var path;
-  for (var i = 0; i < numRecords; i++) {
+  for (var i = 0, j = 0; i < numRecords; i++) {
     var record = records[i];
-    var morphRecord;
-    if (isMorph) {
-      morphRecord = recordsMorph[i - morphsOffset];
-    }
     // type 0 is a StyleChange record
     if (record.type === 0) {
       //TODO: make the `has*` fields bitflags
@@ -173,12 +168,8 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       if (record.move) {
         x = record.moveX|0;
         y = record.moveY|0;
-        if (isMorph) {
-          morphX = morphRecord.moveX|0;
-          morphY = morphRecord.moveY|0;
-        }
-      } else if (isMorph) {
-        morphsOffset++;
+        // When morphed, StyleChangeRecords/MoveTo might not have a corresponding record in the start or end shape --
+        // processing morphRecord below before converting type 1 records.
       }
 
       // Very first record can be just fill/line-style definition record.
@@ -196,34 +187,58 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
     else {
       assert(record.type === 1);
       assert(segment);
-      if (record.isStraight) {
+      var morphRecord;
+      if (isMorph) {
+        morphRecord = recordsMorph[j++];
+        // Processing MoveTo end shape records. Notice morphRecord shall not have style changes.
+        while (morphRecord.type === 0) {
+          morphX = morphRecord.moveX|0;
+          morphY = morphRecord.moveY|0;
+          morphRecord = recordsMorph[j++];
+        }
+      }
+
+      if (record.isStraight && (!isMorph || morphRecord.isStraight)) {
         x += record.deltaX|0;
         y += record.deltaY|0;
 
         segment.commands.push(SHAPE_LINE_TO);
         segment.data.push(x, y);
         if (isMorph) {
-          morphX = (morphX + morphRecord.deltaX)|0;
-          morphY = (morphY + morphRecord.deltaY)|0;
+          morphX += morphRecord.deltaX|0;
+          morphY += morphRecord.deltaY|0;
           segment.morphData.push(morphX, morphY);
         }
       } else {
+        var cx, cy;
+        if (!record.isStraight) {
+          x += record.controlDeltaX|0;
+          y += record.controlDeltaY|0;
+          cx = x; cy = y;
+          x += record.anchorDeltaX|0;
+          y += record.anchorDeltaY|0;
+        } else {
+          cx = x + (record.deltaX >> 1);
+          cy = y + (record.deltaY >> 1);
+          x += record.deltaX|0;
+          y += record.deltaY|0;
+        }
         segment.commands.push(SHAPE_CURVE_TO);
-        x += record.controlDeltaX|0;
-        y += record.controlDeltaY|0;
-
-        segment.data.push(x, y);
-        x += record.anchorDeltaX|0;
-        y += record.anchorDeltaY|0;
-
-        segment.data.push(x, y);
+        segment.data.push(cx, cy, x, y);
         if (isMorph) {
-          morphX = (morphX + morphRecord.controlDeltaX)|0;
-          morphY = (morphY + morphRecord.controlDeltaY)|0;
-          segment.morphData.push(morphX, morphY);
-          morphX = (morphX + morphRecord.anchorDeltaX)|0;
-          morphY = (morphY + morphRecord.anchorDeltaY)|0;
-          segment.morphData.push(morphX, morphY);
+          if (!morphRecord.isStraight) {
+            morphX += morphRecord.controlDeltaX|0;
+            morphY += morphRecord.controlDeltaY|0;
+            cx = morphX; cy = morphY;
+            morphX += morphRecord.anchorDeltaX|0;
+            morphY += morphRecord.anchorDeltaY|0;
+          } else {
+            cx = morphX + (morphRecord.deltaX >> 1);
+            cy = morphY + (morphRecord.deltaY >> 1);
+            morphX += morphRecord.deltaX|0;
+            morphY += morphRecord.deltaY|0;
+          }
+          segment.morphData.push(cx, cy, morphX, morphY);
         }
       }
     }

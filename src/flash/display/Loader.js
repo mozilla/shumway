@@ -660,7 +660,7 @@ var LoaderDefinition = (function () {
           root = rootClass.createAsSymbol({
             framesLoaded: timeline.length,
             loader: loader,
-            parent: parent,
+            parent: parent || loader,
             index: parent ? 0 : -1,
             level: parent ? 0 : -1,
             timeline: timeline,
