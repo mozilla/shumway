@@ -15,8 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global base64ArrayBuffer, AudioContext, webkitAudioContext, Audio,
-  isNullOrUndefined, clamp */
+/*global AudioContext, webkitAudioContext, Audio, URL, Blob, isNullOrUndefined, clamp */
 
 var SoundChannelDefinition = (function () {
   return {
@@ -115,7 +114,8 @@ var SoundChannelDefinition = (function () {
       }
       element.preload = 'metadata'; // for mobile devices
       element.loop = loops > 0; // starts loop played if at least one is specified
-      element.src = "data:" + soundData.mimeType + ";base64," + base64ArrayBuffer(soundData.data);
+      var blob = new Blob([soundData.data], {type: soundData.mimeType});
+      element.src = URL.createObjectURL(blob);
       element.addEventListener("loadeddata", function loaded() {
         element.currentTime = startTime / 1000;
         element.play();
@@ -134,6 +134,7 @@ var SoundChannelDefinition = (function () {
       element.addEventListener("ended", function ended() {
         self._unregisterWithSoundMixer();
         self._dispatchEvent(new flash.events.Event("soundComplete", false, false));
+        self._element = null;
       });
       this._element = element;
       this._applySoundTransform();
