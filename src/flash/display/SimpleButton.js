@@ -120,8 +120,8 @@ var SimpleButtonDefinition = (function () {
         return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
       }
 
-      var b = this._hitTestState._getContentBounds(null);
-      return this._parent._getTransformedRect(b, null);
+      var b = this._hitTestState.getBounds(null);
+      return this._getTransformedRect(b, null);
     },
 
     _getAS2Object: function () {
