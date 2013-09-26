@@ -462,10 +462,21 @@ function defineShape(tag, dictionary) {
                                           dictionary, dependencies,
                                           tag.recordsMorph || null);
 
+  if (tag.bboxMorph) {
+    var mbox = tag.bboxMorph;
+    extendBoundsByPoint(tag.bbox, mbox.xMin, mbox.yMin);
+    extendBoundsByPoint(tag.bbox, mbox.xMax, mbox.yMax);
+    if (mbox = tag.strokeBboxMorph) {
+      extendBoundsByPoint(tag.strokeBbox, mbox.xMin, mbox.yMin);
+      extendBoundsByPoint(tag.strokeBbox, mbox.xMax, mbox.yMax);
+    }
+  }
+  console.log(tag.bbox, tag.strokeBbox);
   return {
     type: 'shape',
     id: tag.id,
-    strokeBox: tag.strokeBox,
+    strokeBbox: tag.strokeBbox,
+    strokeBboxMorph: tag.strokeBboxMorph,
     bbox: tag.bbox,
     bboxMorph: tag.bboxMorph,
     isMorph: tag.isMorph,
