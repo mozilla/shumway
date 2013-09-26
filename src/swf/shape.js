@@ -45,6 +45,9 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
   var commands = segment.commands;
   var data = segment.data;
   var morphData = segment.morphData;
+  if (morphData) {
+    assert(morphData.length === data.length);
+  }
   assert(commands);
   assert(data);
   assert(isMorph === (morphData !== null));
@@ -194,8 +197,16 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         while (morphRecord.type === 0) {
           morphX = morphRecord.moveX|0;
           morphY = morphRecord.moveY|0;
+          segment.morphData.push(morphX, morphY);
           morphRecord = recordsMorph[j++];
         }
+        if (segment.morphData.length < segment.data.length) {
+          // For non-move style changes, we still insert moveTos. Add them here.
+          assert(segment.data[segment.data.length - 2] === x);
+          assert(segment.data[segment.data.length - 1] === y);
+          segment.morphData.push(x, y);
+        }
+        assert(segment.morphData.length === segment.data.length);
       }
 
       if (record.isStraight && (!isMorph || morphRecord.isStraight)) {
