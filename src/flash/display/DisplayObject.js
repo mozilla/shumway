@@ -141,7 +141,9 @@ var DisplayObjectDefinition = (function () {
           var sy = Math.sqrt(d * d + c * c);
           this._scaleY = d > 0 ? sy : -sy;
 
-          this._currentTransform = matrix;
+          this._currentTransform = {
+            a: a, b: b, c: c, d: d, tx: matrix.tx, ty: matrix.ty
+          };
         }
       }
 
