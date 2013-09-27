@@ -103,7 +103,7 @@ var DisplayObjectDefinition = (function () {
       if (s) {
         this._animated = s.animated || false;
         this._bbox = s.bbox || null;
-        this._blendMode = blendModes[s.blendMode] || blendModeClass.NORMAL;
+        this._blendMode = this._resolveBlendMode(s.blendMode);
         this._children = s.children || [];
         this._clipDepth = s.clipDepth || null;
         this._cxform = s.cxform || null;
@@ -188,6 +188,10 @@ var DisplayObjectDefinition = (function () {
       if (type in broadcastedEvents && !this._listeners[type]) {
         avm2.systemDomain.onMessage.unregister(type, this._onBroadcastMessage);
       }
+    },
+
+    _resolveBlendMode: function (blendModeNumeric) {
+      return blendModes[blendModeNumeric] || flash.display.BlendMode.class.NORMAL;
     },
 
     _applyCurrentInverseTransform: function (point, immediate) {
