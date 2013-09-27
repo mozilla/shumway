@@ -53,7 +53,7 @@
 var $RELEASE = false;
 
 var LoaderDefinition = (function () {
-  var WORKERS_ENABLED = false;
+  var WORKERS_ENABLED = true;
   var LOADER_PATH;
 
   var workerScripts;
