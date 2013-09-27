@@ -119,7 +119,7 @@ var CXFORM = {
 };
 var MOVIE_HEADER = {
   bbox: RECT,
-  $$reserved: UI8,
+  frameRateFraction: UI8,
   frameRate: UI8,
   frameCount: UI16
 };

@@ -488,7 +488,8 @@ function defineShape(tag, dictionary) {
     var mbox = tag.bboxMorph;
     extendBoundsByPoint(tag.bbox, mbox.xMin, mbox.yMin);
     extendBoundsByPoint(tag.bbox, mbox.xMax, mbox.yMax);
-    if (mbox = tag.strokeBboxMorph) {
+    mbox = tag.strokeBboxMorph;
+    if (mbox) {
       extendBoundsByPoint(tag.strokeBbox, mbox.xMin, mbox.yMin);
       extendBoundsByPoint(tag.strokeBbox, mbox.xMax, mbox.yMax);
     }
