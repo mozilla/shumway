@@ -1616,8 +1616,8 @@ var readHeader = function readHeader($bytes, $stream, $, swfVersion, tagCode) {
   $0.yMin = yMin;
   $0.yMax = yMax;
   align($bytes, $stream);
-  var reserved = readUi8($bytes, $stream);
-  $.frameRate = readUi8($bytes, $stream);
+  var frameRateFraction = readUi8($bytes, $stream);
+  $.frameRate = readUi8($bytes, $stream) + frameRateFraction/256;
   $.frameCount = readUi16($bytes, $stream);
   return $;
 };
