@@ -183,6 +183,7 @@ var MovieClipDefinition = (function () {
           if (nextCmd.hasCxform) {
             currentChild._cxform = nextCmd.cxform;
           }
+
           if (nextCmd.clip) {
             currentChild._clipDepth = nextCmd.clipDepth;
           }
@@ -190,9 +191,10 @@ var MovieClipDefinition = (function () {
           if (nextCmd.hasName) {
             currentChild.name = nextCmd.name;
           }
-          //if (nextCmd.blend) {
-          //  currentChild.blendMode = nextCmd.blendMode;
-          //}
+
+          if (nextCmd.blend) {
+            currentChild.blendMode = this._resolveBlendMode(nextCmd.blendMode);
+          }
 
           continue;
         }
