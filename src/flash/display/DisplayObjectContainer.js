@@ -75,6 +75,7 @@ var DisplayObjectContainerDefinition = (function () {
       child._parent = this;
       child._stage = this._stage;
       child._index = index;
+      child._invalidateTransform();
 
       this._invalidateBounds();
 
@@ -157,6 +158,7 @@ var DisplayObjectContainerDefinition = (function () {
       child._owned = false;
       child._parent = null;
       child._index = -1;
+      child._invalidateTransform();
 
       this._invalidateBounds();
 

@@ -60,9 +60,11 @@ var TransformDefinition = (function () {
       return cxform;
     },
     get concatenatedMatrix() {
-      var m = this.matrix;
-      m.concat(this._target.parent.transform.concatenatedMatrix);
-      return m;
+      if (this._target._current3DTransform) {
+        return null;
+      }
+      var m = this._target._getConcatenatedTransform();
+      return new flash.geom.Matrix(m.a, m.b, m.c, m.d, m.tx/20, m.ty/20);
     },
     get matrix() {
       if (this._target._current3DTransform) {
@@ -75,6 +77,10 @@ var TransformDefinition = (function () {
       if (!flash.geom.Matrix.class.isInstanceOf(val))
         throw TypeError();
 
+      var target = this._target;
+
+      target._invalidate();
+
       var a = val.a;
       var b = val.b;
       var c = val.c;
@@ -82,13 +88,14 @@ var TransformDefinition = (function () {
       var tx = val.tx*20|0;
       var ty = val.ty*20|0;
 
-      var target = this._target;
       target._rotation = a !== 0 ? Math.atan(b / a) * 180 / Math.PI :
                                    (b > 0 ? 90 : -90);
       var sx = Math.sqrt(a * a + b * b);
       target._scaleX = a > 0 ? sx : -sx;
       var sy = Math.sqrt(d * d + c * c);
       target._scaleY = d > 0 ? sy : -sy;
+
+      target._invalidateTransform();
 
       target._currentTransform = {
         a: a,
@@ -99,7 +106,6 @@ var TransformDefinition = (function () {
         ty: ty
       };
       target._current3DTransform = null;
-      target._invalidate();
     },
 
     get matrix3D() {

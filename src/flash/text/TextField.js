@@ -594,9 +594,9 @@ var TextFieldDefinition = (function () {
       this._dimensionsValid = false;
     },
 
-    _getRegion: function getRegion() {
+    _getRegion: function getRegion(targetCoordSpace) {
       this.ensureDimensions();
-      return this._getTransformedRect(this._getContentBounds(), null);
+      return this._getTransformedRect(this._getContentBounds(), targetCoordSpace);
     },
 
     ensureDimensions: function() {
@@ -649,6 +649,7 @@ var TextFieldDefinition = (function () {
             }
             this._drawingOffsetH = offset;
           }
+          this._invalidateTransform();
           this._currentTransform.tx += diffX*20|0;
           bounds.xMax = (targetWidth*20|0) + 80;
         }
@@ -708,10 +709,11 @@ var TextFieldDefinition = (function () {
         return;
       }
 
-      this._currentTransform.tx = val;
-
       this._invalidate();
       this._invalidateBounds();
+      this._invalidateTransform();
+
+      this._currentTransform.tx = val;
     },
 
     get width() { // (void) -> Number

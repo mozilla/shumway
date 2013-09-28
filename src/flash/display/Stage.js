@@ -44,6 +44,8 @@ var StageDefinition = (function () {
       this._mouseMoved = false;
       this._clickTarget = this;
       this._cursor = 'auto';
+
+      this._concatenatedTransform.invalid = false;
     },
 
     _setup: function setup(ctx, options) {
@@ -103,8 +105,19 @@ var StageDefinition = (function () {
       while (objects.length) {
         var displayObject = objects.shift();
 
+        if (displayObject._children.length) {
+          var children = displayObject._children;
+          for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (child._invalid === false) {
+              child._invalid = true;
+              objects.push(child);
+            }
+          }
+        }
+
         var invalidRegion = displayObject._region;
-        var currentRegion = displayObject._getRegion();
+        var currentRegion = displayObject._getRegion(this);
 
         var withinView = displayObject._stage &&
                          displayObject._visible &&
