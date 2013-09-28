@@ -240,30 +240,37 @@ var DisplayObjectDefinition = (function () {
 
       return m;
     },
-    _applyCurrentTransform: function (point, targetCoordSpace) {
-      var x = point.x;
-      var y = point.y;
+    _applyCurrentTransform: function (targetCoordSpace, point1, pointN) {
       var m;
-
       if (targetCoordSpace && targetCoordSpace !== this._parent) {
         m = this._getConcatenatedTransform();
-        point.x = Math.round(m.a * x + m.c * y + m.tx);
-        point.y = Math.round(m.d * y + m.b * x + m.ty);
-        targetCoordSpace._applyCurrentInverseTransform(point);
-        return;
+      } else {
+        m = this._currentTransform;
       }
 
-      m = this._currentTransform;
-      point.x = Math.round(m.a * x + m.c * y + m.tx);
-      point.y = Math.round(m.d * y + m.b * x + m.ty);
+      for (var i = 1; i < arguments.length; i++) {
+        var point = arguments[i];
+        var x = point.x;
+        var y = point.y;
+        point.x = Math.round(m.a * x + m.c * y + m.tx);
+        point.y = Math.round(m.d * y + m.b * x + m.ty);
+      }
+
+      if (m === this._concatenatedTransform) {
+        var fn = targetCoordSpace._applyCurrentInverseTransform;
+        fn.call.apply(fn, arguments);
+      }
     },
-    _applyCurrentInverseTransform: function (point) {
+    _applyCurrentInverseTransform: function (point1, pointN) {
       var m = this._getConcatenatedTransform();
-      var x = point.x - m.tx;
-      var y = point.y - m.ty;
       var d = 1 / (m.a * m.d - m.b * m.c);
-      point.x = Math.round((m.d * x - m.c * y) * d);
-      point.y = Math.round((m.a * y - m.b * x) * d);
+      for (var i = 0; i < arguments.length; i++) {
+        var point = arguments[i];
+        var x = point.x - m.tx;
+        var y = point.y - m.ty;
+        point.x = Math.round((m.d * x - m.c * y) * d);
+        point.y = Math.round((m.a * y - m.b * x) * d);
+      }
     },
 
     _hitTest: function(use_xy, x, y, useShape, hitTestObject) {
@@ -780,13 +787,10 @@ var DisplayObjectDefinition = (function () {
         return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
       }
       var p1 = { x: rect.xMin, y: rect.yMin };
-      this._applyCurrentTransform(p1, targetCoordSpace);
       var p2 = { x: rect.xMax, y: rect.yMin };
-      this._applyCurrentTransform(p2, targetCoordSpace);
       var p3 = { x: rect.xMax, y: rect.yMax };
-      this._applyCurrentTransform(p3, targetCoordSpace);
       var p4 = { x: rect.xMin, y: rect.yMax };
-      this._applyCurrentTransform(p4, targetCoordSpace);
+      this._applyCurrentTransform(targetCoordSpace, p1, p2, p3, p4);
 
       var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
       var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
@@ -808,7 +812,7 @@ var DisplayObjectDefinition = (function () {
     },
     localToGlobal: function (pt) {
       var result = {x: pt.x, y: pt.y};
-      this._applyCurrentTransform(result);
+      this._applyCurrentTransform(this._stage, result);
       return result;
     },
     destroy: function () {
@@ -922,7 +926,7 @@ var DisplayObjectDefinition = (function () {
         },
         localToGlobal: function(pt) {
           var twipPt = {x: (pt.x * 20)|0, y: (pt.y * 20)|0};
-          this._applyCurrentTransform(twipPt);
+          this._applyCurrentTransform(this._stage, twipPt);
           return new flash.geom.Point(twipPt.x / 20, twipPt.y / 20);
         },
         getBounds: function(targetCoordSpace) {
