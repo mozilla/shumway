@@ -109,7 +109,7 @@ var StageDefinition = (function () {
           var children = displayObject._children;
           for (var i = 0; i < children.length; i++) {
             var child = children[i];
-            if (!child._invalid) {
+            if (child._invalid === false) {
               child._invalid = true;
               objects.push(child);
             }
