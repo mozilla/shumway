@@ -177,7 +177,15 @@ var MovieClipDefinition = (function () {
             var sy = Math.sqrt(d * d + c * c);
             currentChild._scaleY = d > 0 ? sy : -sy;
 
-            currentChild._currentTransform = m;
+            var t = currentChild._currentTransform;
+            t.a = a;
+            t.b = b;
+            t.c = c;
+            t.d = d;
+            t.tx = m.tx;
+            t.ty = m.ty;
+
+            currentChild._invalidateTransform();
           }
 
           if (nextCmd.hasCxform) {
