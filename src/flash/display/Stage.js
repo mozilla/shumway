@@ -44,6 +44,8 @@ var StageDefinition = (function () {
       this._mouseMoved = false;
       this._clickTarget = this;
       this._cursor = 'auto';
+
+      this._concatenatedTransform.invalid = false;
     },
 
     _setup: function setup(ctx, options) {
@@ -115,7 +117,7 @@ var StageDefinition = (function () {
         }
 
         var invalidRegion = displayObject._region;
-        var currentRegion = displayObject._getRegion();
+        var currentRegion = displayObject._getRegion(this);
 
         var withinView = displayObject._stage &&
                          displayObject._visible &&

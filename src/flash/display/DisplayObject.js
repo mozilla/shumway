@@ -49,6 +49,7 @@ var DisplayObjectDefinition = (function () {
       this._children = [];
       this._clipDepth = null;
       this._currentTransform = null;
+      this._concatenatedTransform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0, invalid: true };
       this._current3DTransform = null;
       this._cxform = null;
       this._depth = null;
@@ -194,35 +195,77 @@ var DisplayObjectDefinition = (function () {
       return blendModes[blendModeNumeric] || flash.display.BlendMode.class.NORMAL;
     },
 
-    _applyCurrentInverseTransform: function (point, immediate) {
-      if (this._parent && this._parent !== this._stage && !immediate)
-        this._parent._applyCurrentInverseTransform(point);
+    _getConcatenatedTransform: function () {
+      if (!this._concatenatedTransform.invalid) {
+        return this._concatenatedTransform;
+      }
 
-      var m = this._currentTransform;
+      var stack = [this];
+      var m;
+
+      var currentNode = this._parent;
+      while (currentNode) {
+        if (currentNode._concatenatedTransform.invalid) {
+          stack.push(currentNode);
+        }
+        currentNode = currentNode._parent;
+      }
+
+      while (stack.length) {
+        var node = stack.pop();
+
+        m = node._concatenatedTransform;
+
+        var m2 = node._currentTransform;
+
+        if (node._parent) {
+          var m3 = node._parent._concatenatedTransform;
+          m.a = m2.a * m3.a + m2.b * m3.c;
+          m.b = m2.a * m3.b + m2.b * m3.d;
+          m.c = m2.c * m3.a + m2.d * m3.c;
+          m.d = m2.d * m3.d + m2.c * m3.b;
+          m.tx = m2.tx * m3.a + m3.tx + m2.ty * m3.c;
+          m.ty = m2.ty * m3.d + m3.ty + m2.tx * m3.b;
+        } else {
+          m.a = m2.a;
+          m.b = m2.b;
+          m.c = m2.c;
+          m.d = m2.d;
+          m.tx = m2.tx;
+          m.ty = m2.ty;
+        }
+
+        m.invalid = false;
+      }
+
+      return m;
+    },
+    _applyCurrentTransform: function (point, targetCoordSpace) {
+      var x = point.x;
+      var y = point.y;
+      var m;
+
+      if (targetCoordSpace && targetCoordSpace !== this._parent) {
+        m = this._getConcatenatedTransform();
+        point.x = Math.round(m.a * x + m.c * y + m.tx);
+        point.y = Math.round(m.d * y + m.b * x + m.ty);
+        targetCoordSpace._applyCurrentInverseTransform(point);
+        return;
+      }
+
+      m = this._currentTransform;
+      point.x = Math.round(m.a * x + m.c * y + m.tx);
+      point.y = Math.round(m.d * y + m.b * x + m.ty);
+    },
+    _applyCurrentInverseTransform: function (point) {
+      var m = this._getConcatenatedTransform();
       var x = point.x - m.tx;
       var y = point.y - m.ty;
       var d = 1 / (m.a * m.d - m.b * m.c);
       point.x = Math.round((m.d * x - m.c * y) * d);
       point.y = Math.round((m.a * y - m.b * x) * d);
     },
-    _applyCurrentTransform: function (point, targetCoordSpace) {
-      var m = this._currentTransform;
-      var x = point.x;
-      var y = point.y;
 
-      point.x = Math.round(m.a * x + m.c * y + m.tx);
-      point.y = Math.round(m.d * y + m.b * x + m.ty);
-
-      if (targetCoordSpace && targetCoordSpace === this._parent) {
-        return;
-      }
-
-      if (this._parent && this._parent !== this._stage)
-        this._parent._applyCurrentTransform(point);
-
-      if (targetCoordSpace)
-        targetCoordSpace._applyCurrentInverseTransform(point);
-    },
     _hitTest: function(use_xy, x, y, useShape, hitTestObject) {
       if (use_xy) {
         var pt = { x: x, y: y };
@@ -293,6 +336,19 @@ var DisplayObjectDefinition = (function () {
         currentNode = currentNode._parent;
       }
     },
+    _invalidateTransform: function () {
+      var stack = [this];
+      while (stack.length) {
+        var node = stack.pop();
+        if (node._concatenatedTransform && !node._concatenatedTransform.invalid) {
+          node._concatenatedTransform.invalid = true;
+          var children = node._children;
+          for (var i = 0; i < children.length; i++) {
+            stack.push(children[i]);
+          }
+        }
+      }
+    },
     _updateCurrentTransform: function () {
       var scaleX = this._scaleX;
       var scaleY = this._scaleY;
@@ -321,6 +377,8 @@ var DisplayObjectDefinition = (function () {
         v = Math.sin(rotation);
         break;
       }
+
+      this._invalidateTransform();
 
       var transform = this._currentTransform;
       transform.a = u * scaleX;
@@ -614,6 +672,7 @@ var DisplayObjectDefinition = (function () {
 
       this._invalidate();
       this._invalidateBounds();
+      this._invalidateTransform();
 
       this._currentTransform.tx = val;
     },
@@ -627,6 +686,7 @@ var DisplayObjectDefinition = (function () {
 
       this._invalidate();
       this._invalidateBounds();
+      this._invalidateTransform();
 
       this._currentTransform.ty = val;
     },
@@ -662,7 +722,7 @@ var DisplayObjectDefinition = (function () {
               continue;
             }
 
-            var b = child.getBounds(this);
+            var b = child.getBounds(null);
 
             var x1 = b.xMin;
             var y1 = b.yMin;
@@ -704,11 +764,11 @@ var DisplayObjectDefinition = (function () {
 
       return bounds;
     },
-    _getRegion: function getRegion() {
+    _getRegion: function getRegion(targetCoordSpace) {
       var b = this._graphics ?
               this._graphics._getBounds(true) :
               this._getContentBounds();
-      return this._getTransformedRect(b, null);
+      return this._getTransformedRect(b, targetCoordSpace);
     },
 
     getBounds: function (targetCoordSpace) {

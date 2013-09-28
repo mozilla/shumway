@@ -474,7 +474,7 @@ function renderDisplayObject(child, ctx, context) {
     }
 
     if (child.getBounds) {
-      var b = child.getBounds(child);
+      var b = child.getBounds(null);
       if (b && b.xMax - b.xMin > 0 && b.yMax - b.yMin > 0) {
         if (!child._wireframeStrokeStyle) {
           child._wireframeStrokeStyle = randomStyle();
