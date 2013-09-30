@@ -27,6 +27,10 @@ var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWire
 var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
 var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
 
+if (typeof FirefoxCom !== 'undefined') {
+  turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
+}
+
 var CanvasCache = {
   cache: [],
   getCanvas: function getCanvas(protoCanvas) {
