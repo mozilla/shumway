@@ -25,6 +25,7 @@ var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMou
 var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
 var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
 var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
+var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
 
 var CanvasCache = {
   cache: [],
@@ -710,8 +711,10 @@ function renderStage(stage, ctx, events) {
       if (renderFrame) {
         frameTime = now;
         maxDelay = 1000 / stage._frameRate;
-        while (nextRenderAt < now) {
-          nextRenderAt += maxDelay;
+        if (!turboMode.value) {
+          while (nextRenderAt < now) {
+            nextRenderAt += maxDelay;
+          }
         }
         fps && fps.enter("EVENTS");
         if (firstRun) {
