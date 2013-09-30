@@ -748,20 +748,20 @@ var DisplayObjectDefinition = (function () {
             yMin = Math.min(yMin, y1, y2);
             yMax = Math.max(yMax, y1, y2);
           }
-        }
 
-        if (this._graphics) {
-          var b = this._graphics._getBounds(true);
-          if (b.xMin !== b.xMax && b.yMin !== b.yMax) {
-            var x1 = b.xMin;
-            var y1 = b.yMin;
-            var x2 = b.xMax;
-            var y2 = b.yMax;
+          if (this._graphics) {
+            var b = this._graphics._getBounds(true);
+            if (b.xMin !== b.xMax && b.yMin !== b.yMax) {
+              var x1 = b.xMin;
+              var y1 = b.yMin;
+              var x2 = b.xMax;
+              var y2 = b.yMax;
 
-            xMin = Math.min(xMin, x1, x2);
-            xMax = Math.max(xMax, x1, x2);
-            yMin = Math.min(yMin, y1, y2);
-            yMax = Math.max(yMax, y1, y2);
+              xMin = Math.min(xMin, x1, x2);
+              xMax = Math.max(xMax, x1, x2);
+              yMin = Math.min(yMin, y1, y2);
+              yMax = Math.max(yMax, y1, y2);
+            }
           }
         }
 
