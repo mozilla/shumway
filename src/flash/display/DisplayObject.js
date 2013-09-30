@@ -33,6 +33,11 @@ var DisplayObjectDefinition = (function () {
                             executeFrame: false, exitFrame: true,
                             render: true };
 
+  var p1 = { x: 0, y: 0 };
+  var p2 = { x: 0, y: 0 };
+  var p3 = { x: 0, y: 0 };
+  var p4 = { x: 0, y: 0 };
+
   var def = {
     __class__: 'flash.display.DisplayObject',
 
@@ -503,8 +508,9 @@ var DisplayObjectDefinition = (function () {
         return 0;
       }
 
-      var pt = {x: this._stage._mouseX, y: this._stage._mouseY};
-      this._applyCurrentInverseTransform(pt);
+      p1.x = this._stage._mouseX;
+      p1.y = this._stage._mouseY;
+      this._applyCurrentInverseTransform(p1);
       return pt.x;
     },
     get mouseY() {
@@ -513,9 +519,10 @@ var DisplayObjectDefinition = (function () {
         return 0;
       }
 
-      var pt = {x: this._stage._mouseX, y: this._stage._mouseY};
-      this._applyCurrentInverseTransform(pt);
-      return pt.y;
+      p1.x = this._stage._mouseX;
+      p1.y = this._stage._mouseY;
+      this._applyCurrentInverseTransform(p1);
+      return p1.y;
     },
     get opaqueBackground() {
       return this._opaqueBackground;
@@ -786,10 +793,19 @@ var DisplayObjectDefinition = (function () {
       if (rect.xMax - rect.xMin === 0 || rect.yMax - rect.yMin === 0) {
         return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
       }
-      var p1 = { x: rect.xMin, y: rect.yMin };
-      var p2 = { x: rect.xMax, y: rect.yMin };
-      var p3 = { x: rect.xMax, y: rect.yMax };
-      var p4 = { x: rect.xMin, y: rect.yMax };
+
+      p1.x = rect.xMin;
+      p1.y = rect.yMin;
+
+      p2.x = rect.xMax;
+      p2.y = rect.yMin;
+
+      p3.x = rect.xMax;
+      p3.y = rect.yMax;
+
+      p4.x = rect.xMin;
+      p4.y = rect.yMax;
+
       this._applyCurrentTransform(targetCoordSpace, p1, p2, p3, p4);
 
       var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
@@ -797,7 +813,7 @@ var DisplayObjectDefinition = (function () {
       var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
       var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
 
-      return {xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax};
+      return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax };
     },
     globalToLocal: function (pt) {
       var result = {x: pt.x, y: pt.y};
