@@ -664,6 +664,9 @@ FlashStreamConverterBase.prototype = {
         tagName = element.nodeName;
       }
 
+      // TODO: remove hack once bug 920927 is fixed
+      element.style.visibility = 'visible';
+
       pageUrl = element.ownerDocument.location.href; // proper page url?
 
       if (tagName == 'EMBED') {
