@@ -506,7 +506,7 @@ var DisplayObjectDefinition = (function () {
       p1.x = this._stage._mouseX;
       p1.y = this._stage._mouseY;
       this._applyCurrentInverseTransform(p1);
-      return pt.x;
+      return p1.x;
     },
     get mouseY() {
       p1.x = this._stage._mouseX;
