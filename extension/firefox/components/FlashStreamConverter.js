@@ -39,6 +39,8 @@ Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
 Cu.import('resource://gre/modules/NetUtil.jsm');
 
+XPCOMUtils.defineLazyModuleGetter(this, 'PrivateBrowsingUtils',
+  'resource://gre/modules/PrivateBrowsingUtils.jsm');
 
 let appInfo = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
 let Svc = {};
@@ -158,6 +160,28 @@ function fetchPolicyFile(url, cache, callback) {
     }
   };
   xhr.send(null);
+}
+
+function isShumwayEnabledFor(actions) {
+  // disabled for PrivateBrowsing windows
+  if (PrivateBrowsingUtils.isWindowPrivate(actions.window)) {
+    return false;
+  }
+  // disabled if embed tag specifies shumwaymode (for testing purpose)
+  if (actions.objectParams['shumwaymode'] === 'off') {
+    return false;
+  }
+
+  var url = actions.url;
+  var baseUrl = actions.baseUrl;
+
+  // blacklisting well known sites with issues
+  if (/\.ytimg\.com\//i.test(url) /* youtube movies */ ||
+    /\/vui.swf\b/i.test(url) /* vidyo manager */ ) {
+    return false;
+  }
+
+  return true;
 }
 
 // All the priviledged actions.
@@ -790,7 +814,7 @@ FlashStreamConverterBase.prototype = {
           let actions = converter.createChromeActions(domWindow,
                                                       domWindow.document,
                                                       converter.getUrlHint(originalURI));
-          if (actions.objectParams['shumwaymode'] === 'off') {
+          if (!isShumwayEnabledFor(actions)) {
             actions.fallback();
             return;
           }
