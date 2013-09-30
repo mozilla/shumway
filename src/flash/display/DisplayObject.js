@@ -503,22 +503,12 @@ var DisplayObjectDefinition = (function () {
       this._name = val;
     },
     get mouseX() {
-      if (!this._stage) {
-        // TODO: calc local point for display objects that are not on the stage
-        return 0;
-      }
-
       p1.x = this._stage._mouseX;
       p1.y = this._stage._mouseY;
       this._applyCurrentInverseTransform(p1);
       return pt.x;
     },
     get mouseY() {
-      if (!this._stage) {
-        // TODO: calc local point for display objects that are not on the stage
-        return 0;
-      }
-
       p1.x = this._stage._mouseX;
       p1.y = this._stage._mouseY;
       this._applyCurrentInverseTransform(p1);
@@ -815,21 +805,11 @@ var DisplayObjectDefinition = (function () {
 
       return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax };
     },
-    globalToLocal: function (pt) {
-      var result = {x: pt.x, y: pt.y};
-      this._applyCurrentInverseTransform(result);
-      return result;
-    },
     hitTestObject: function (obj) {
       return this._hitTest(false, 0, 0, false, obj);
     },
     hitTestPoint: function (x, y, shapeFlag) {
       return this._hitTest(true, x, y, shapeFlag, null);
-    },
-    localToGlobal: function (pt) {
-      var result = {x: pt.x, y: pt.y};
-      this._applyCurrentTransform(this._stage, result);
-      return result;
     },
     destroy: function () {
       if (this._destroyed) {
