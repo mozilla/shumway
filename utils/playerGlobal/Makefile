@@ -14,7 +14,8 @@
 
 UNAME = $(shell uname)
 
-PLAYERGLOBAL_URL = http://download.macromedia.com/get/flashplayer/updaters/11/playerglobal11_4.swc
+PLAYERGLOBAL_URL ?= http://download.macromedia.com/get/flashplayer/updaters/11/playerglobal11_4.swc
+PLAYERGLOBAL_PATH ?= $(BUILD_DIR)/playerglobal.swc
 BUILD_DIR = ./bin
 
 UTILS_HOME = ..
@@ -46,8 +47,8 @@ else
 	cmd //c runreducer.bat -i $(BUILD_DIR)/library.swf -o $(BUILD_DIR)/library.min.swf -m
 endif
 
-$(BUILD_DIR)/library.swf: $(BUILD_DIR)/playerglobal.swc
-	unzip -n $(BUILD_DIR)/playerglobal.swc library.swf catalog.xml -d $(BUILD_DIR)
+$(BUILD_DIR)/library.swf: $(PLAYERGLOBAL_PATH)
+	unzip -n $(PLAYERGLOBAL_PATH) library.swf catalog.xml -d $(BUILD_DIR)
 
 $(BUILD_DIR)/playerglobal.swc:
 	mkdir -p $(BUILD_DIR)
