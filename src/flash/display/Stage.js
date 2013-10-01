@@ -98,7 +98,7 @@ var StageDefinition = (function () {
       this._invalidObjects.push(displayObject);
     },
 
-    _processInvalidRegions: function processInvalidRegions() {
+    _processInvalidRegions: function processInvalidRegions(createInvalidPath) {
       var objects = this._invalidObjects;
       var regions = [];
 
@@ -166,6 +166,10 @@ var StageDefinition = (function () {
         } else {
           displayObject._invalid = false;
         }
+      }
+
+      if (!createInvalidPath) {
+        return;
       }
 
       var invalidPath = new ShapePath();
