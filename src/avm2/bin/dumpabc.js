@@ -18,8 +18,9 @@
 
 load("../../../lib/DataView.js/DataView.js");
 
-var SWF = {};
+var SWF = {}, self = this, release = true;
 load("../../swf/util.js");
+load("../../swf/swf.js");
 load("../../swf/types.js");
 load("../../swf/structs.js");
 load("../../swf/tags.js");
@@ -41,28 +42,10 @@ load("../util.js");
 load("../options.js");
 load("../metrics.js");
 
-var Timer = metrics.Timer;
 var stdout = new IndentingWriter();
 var ArgumentParser = options.ArgumentParser;
-var Option = options.Option;
-var OptionSet = options.OptionSet;
 
 var argumentParser = new ArgumentParser();
-var systemOptions = new OptionSet("System Options");
-
-load("../constants.js");
-load("../domain.js");
-load("../class.js");
-load("../opcodes.js");
-load("../parser.js");
-load("../disassembler.js");
-load("../analyze.js");
-load("../compiler/lljs/src/estransform.js");
-load("../compiler/lljs/src/escodegen.js");
-load("../compiler/compiler.js");
-load("../runtime.js");
-load("../native.js");
-load("../interpreter.js");
 
 function printUsage() {
   stdout.writeLn("dumpabc.js " + argumentParser.getUsage());
@@ -86,7 +69,7 @@ SWF.parse(snarf(swfFile.value, "binary"), {
     var abcCount = 0;
     for (var i = 0, n = tags.length; i < n; i++) {
       var tag = tags[i];
-      if (tag.type === "abc") {
+      if (tag.code === 82) {
         stdout.writeLn("<<< BASE64 " + prefix.value + "-" + abcCount++ + ".abc");
         print (base64ArrayBuffer(tag.data));
         stdout.writeLn(">>>");
