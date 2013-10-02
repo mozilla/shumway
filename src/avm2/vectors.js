@@ -663,3 +663,68 @@ var GenericVector = (function () {
   };
   return vector;
 })();
+
+/*
+ * Why all the ugly code duplication you may wonder? Well, it's to avoid polymorphic
+ * access sites. This can make quite a big difference in micro-benchmarks.
+ */
+
+Int32Vector.prototype.asGetProperty = function (namespaces, name, flags) {
+  if (typeof name === "number") {
+    return this.asGetNumericProperty(name);
+  }
+  return asGetProperty.call(this, namespaces, name, flags);
+};
+
+Int32Vector.prototype.asSetProperty = function (namespaces, name, flags, value) {
+  if (typeof name === "number") {
+    this.asSetNumericProperty(name, value);
+    return;
+  }
+  return asSetProperty.call(this, namespaces, name, flags, value);
+};
+
+Uint32Vector.prototype.asGetProperty = function (namespaces, name, flags) {
+  if (typeof name === "number") {
+    return this.asGetNumericProperty(name);
+  }
+  return asGetProperty.call(this, namespaces, name, flags);
+};
+
+Uint32Vector.prototype.asSetProperty = function (namespaces, name, flags, value) {
+  if (typeof name === "number") {
+    this.asSetNumericProperty(name, value);
+    return;
+  }
+  return asSetProperty.call(this, namespaces, name, flags, value);
+};
+
+Float64Vector.prototype.asGetProperty = function (namespaces, name, flags) {
+  if (typeof name === "number") {
+    return this.asGetNumericProperty(name);
+  }
+  return asGetProperty.call(this, namespaces, name, flags);
+};
+
+Float64Vector.prototype.asSetProperty = function (namespaces, name, flags, value) {
+  if (typeof name === "number") {
+    this.asSetNumericProperty(name, value);
+    return;
+  }
+  return asSetProperty.call(this, namespaces, name, flags, value);
+};
+
+GenericVector.prototype.asGetProperty = function (namespaces, name, flags) {
+  if (typeof name === "number") {
+    return this.asGetNumericProperty(name);
+  }
+  return asGetProperty.call(this, namespaces, name, flags);
+};
+
+GenericVector.prototype.asSetProperty = function (namespaces, name, flags, value) {
+  if (typeof name === "number") {
+    this.asSetNumericProperty(name, value);
+    return;
+  }
+  return asSetProperty.call(this, namespaces, name, flags, value);
+};

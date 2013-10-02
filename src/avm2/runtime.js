@@ -235,7 +235,7 @@ var LazyInitializer = (function () {
  * Property Accessors:
  *
  * Every AS3 object has the following "virtual" accessors methods:
- * - asGetProperty(namespaces, name, flags, isMethod)
+ * - asGetProperty(namespaces, name, flags)
  * - asSetProperty(namespaces, name, flags, value)
  * - asHasProperty(namespaces, name, flags)
  * - asCallProperty(namespaces, name, flags, isLex, args)
@@ -324,12 +324,19 @@ function asGetPublicProperty(name) {
   return this.asGetProperty(undefined, name, 0);
 }
 
-function asGetProperty(namespaces, name, flags, isMethod) {
+function asGetProperty(namespaces, name, flags) {
   var resolved = this.resolveMultinameProperty(namespaces, name, flags);
   if (this.asGetNumericProperty && Multiname.isNumeric(resolved)) {
     return this.asGetNumericProperty(resolved);
   }
   return this[resolved];
+}
+
+function asGetPropertyLikelyNumeric(namespaces, name, flags) {
+  if (typeof name === "number") {
+    return this.asGetNumericProperty(name);
+  }
+  return asGetProperty.call(this, namespaces, name, flags);
 }
 
 /**
@@ -377,6 +384,14 @@ function asSetProperty(namespaces, name, flags, value) {
     return this.asSetNumericProperty(resolved, value);
   }
   this[resolved] = value;
+}
+
+function asSetPropertyLikelyNumeric(namespaces, name, flags, value) {
+  if (typeof name === "number") {
+    this.asSetNumericProperty(name, value);
+    return;
+  }
+  return asSetProperty.call(this, namespaces, name, flags, value);
 }
 
 function asDefinePublicProperty(name, descriptor) {
@@ -639,14 +654,31 @@ function initializeGlobalObject(global) {
     "Float64Array"
   ].forEach(function (name) {
     if (!(name in global)) {
-      console.error(name + ' was not found in globals');
+      print(name + ' was not found in globals');
       return;
     }
     defineNonEnumerableProperty(global[name].prototype, "asGetNumericProperty", asGetNumericProperty);
     defineNonEnumerableProperty(global[name].prototype, "asSetNumericProperty", asSetNumericProperty);
-  });
-}
 
+    defineNonEnumerableProperty(global[name].prototype, "asGetProperty", asGetPropertyLikelyNumeric);
+    defineNonEnumerableProperty(global[name].prototype, "asSetProperty", asSetPropertyLikelyNumeric);
+  });
+
+  Array.prototype.asGetProperty = function (namespaces, name, flags) {
+    if (typeof name === "number") {
+      return this[name];
+    }
+    return asGetProperty.call(this, namespaces, name, flags);
+  };
+
+  Array.prototype.asSetProperty = function (namespaces, name, flags, value) {
+    if (typeof name === "number") {
+      this[name] = value;
+      return;
+    }
+    return asSetProperty.call(this, namespaces, name, flags, value);
+  };
+}
 initializeGlobalObject(jsGlobal);
 
 /**
