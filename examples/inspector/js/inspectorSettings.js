@@ -33,7 +33,7 @@ var DEFAULT_SETTINGS = {
   release: true,
   logToConsole: false,
   mute: false,
-  turbo: false
+  turbo: true
 };
 
 function loadState() {
