@@ -39,7 +39,7 @@ var CanvasCache = {
       tempCanvas = {
         canvas: document.createElement('canvas')
       };
-      tempCanvas.ctx = tempCanvas.canvas.getContext('kanvas-2d');
+      tempCanvas.ctx = tempCanvas.canvas.getContext('2d');
     }
     tempCanvas.canvas.width = protoCanvas.width;
     tempCanvas.canvas.height = protoCanvas.height;
@@ -271,12 +271,22 @@ RenderVisitor.prototype = {
     ctx.globalCompositeOperation = getBlendModeName(child._blendMode);
 
     if (child._mask) {
+      var m = child._parent._getConcatenatedTransform();
+      if (this.root._canvasState) {
+        var state = this.root._canvasState;
+        m.a = state.scaleX * m.a;
+        m.b = state.scaleY * m.b;
+        m.c = state.scaleX * m.c;
+        m.d = state.scaleY * m.d;
+        m.tx = state.scaleX * m.tx + state.offsetX;
+        m.ty = state.scaleY * m.ty + state.offsetY;
+      }
       // TODO create canvas small enough to fit the object and
       // TODO cache the results when cacheAsBitmap is set
       var tempCanvas, tempCtx, maskCanvas, maskCtx;
       maskCanvas = CanvasCache.getCanvas(ctx.canvas);
       maskCtx = maskCanvas.ctx;
-      maskCtx.currentTransform = ctx.currentTransform;
+      maskCtx.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
       var isMaskContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child._mask) ||
                             flash.display.SimpleButton.class.isInstanceOf(child._mask);
       this.ctx = maskCtx;
@@ -285,7 +295,7 @@ RenderVisitor.prototype = {
 
       tempCanvas = CanvasCache.getCanvas(ctx.canvas);
       tempCtx = tempCanvas.ctx;
-      tempCtx.currentTransform = ctx.currentTransform;
+      tempCtx.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
       renderDisplayObject(child, tempCtx, context);
 
       if (isContainer) {

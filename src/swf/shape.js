@@ -681,8 +681,51 @@ ShapePath.prototype = {
                               data[k++]/20, data[k++]/20);
             break;
           case SHAPE_ROUND_CORNER:
-            ctx.arcTo(data[k++]/20, data[k++]/20, data[k++]/20, data[k++]/20,
-                      data[k++]/20, data[k++]/20);
+            var x1 = data[k++];
+            var y1 = data[k++];
+            var x = data[k++];
+            var y = data[k++];
+            var rX = data[k++];
+            var rY = data[k++];
+            var x, y, radius, startAngle, endAngle;
+            if (x === x1) {
+              if (y > y1) {
+                x -= rX;
+                startAngle = 1.5 * Math.PI;
+                endAngle = 2 * Math.PI;
+              } else {
+                x += rX;
+                startAngle = 0.5 * Math.PI;
+                endAngle = Math.PI;
+              }
+            } else if (x > x1) {
+              y += rY;
+              startAngle = Math.PI;
+              endAngle = 1.5 * Math.PI;
+            } else {
+              y -= rY;
+              startAngle = 0;
+              endAngle = 0.5 * Math.PI;
+            }
+            if (rX !== rY) {
+              ctx.save();
+              var ellipseScale;
+              if (rX > rY) {
+                ellipseScale = rX / rY;
+                radius = rY;
+                x /= ellipseScale;
+                ctx.scale(ellipseScale, 1);
+              } else {
+                ellipseScale = rY / rX;
+                radius = rX;
+                y /= ellipseScale;
+                ctx.scale(1, ellipseScale);
+              }
+            }
+            ctx.arc(x/20, y/20, radius/20, startAngle, endAngle, false);
+            if (rX !== rY) {
+              ctx.restore();
+            }
             break;
           case SHAPE_CIRCLE:
             if (formOpen) {
@@ -1687,7 +1730,7 @@ function finishShapePaths(paths, dictionary) {
 var inWorker = (typeof window) === 'undefined';
 // Used for creating gradients and patterns
 var factoryCtx = !inWorker ?
-                 document.createElement('canvas').getContext('kanvas-2d') :
+                 document.createElement('canvas').getContext('2d') :
                  null;
 
 /**

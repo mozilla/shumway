@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Kanvas, describeProperty, ShapePath, factoryCtx, rgbIntAlphaToStr,
+/*global describeProperty, ShapePath, factoryCtx, rgbIntAlphaToStr,
   buildLinearGradientFactory, buildRadialGradientFactory,
   SHAPE_MOVE_TO, SHAPE_LINE_TO, SHAPE_CURVE_TO, SHAPE_WIDE_MOVE_TO,
   SHAPE_WIDE_LINE_TO, SHAPE_CUBIC_CURVE_TO, SHAPE_CIRCLE, SHAPE_ELLIPSE,
@@ -162,8 +162,7 @@ var GraphicsDefinition = (function () {
         if (ellipseWidth === ellipseHeight)
           this._currentPath.circle(x+radiusX, y+radiusY, radiusX);
         else
-          this._currentPath.ellipse(x+radiusX, y+radiusY, radiusX, radiusY,
-                                    0, Math.PI * 2);
+          this._currentPath.ellipse(x+radiusX, y+radiusY, radiusX, radiusY);
         return;
       }
 
