@@ -22,7 +22,7 @@ var TextFieldDefinition = (function () {
   var htmlParser = document.createElement('p');
 
   // Used for measuring text runs, not for rendering
-  var measureCtx = document.createElement('canvas').getContext('kanvas-2d');
+  var measureCtx = document.createElement('canvas').getContext('2d');
 
   /*
    * Parsing, in this context, actually means using the browser's html parser

@@ -39,7 +39,7 @@ var CanvasCache = {
       tempCanvas = {
         canvas: document.createElement('canvas')
       };
-      tempCanvas.ctx = tempCanvas.canvas.getContext('kanvas-2d');
+      tempCanvas.ctx = tempCanvas.canvas.getContext('2d');
     }
     tempCanvas.canvas.width = protoCanvas.width;
     tempCanvas.canvas.height = protoCanvas.height;
@@ -271,12 +271,13 @@ RenderVisitor.prototype = {
     ctx.globalCompositeOperation = getBlendModeName(child._blendMode);
 
     if (child._mask) {
+      var m = child._parent._getConcatenatedTransform(true);
       // TODO create canvas small enough to fit the object and
       // TODO cache the results when cacheAsBitmap is set
       var tempCanvas, tempCtx, maskCanvas, maskCtx;
       maskCanvas = CanvasCache.getCanvas(ctx.canvas);
       maskCtx = maskCanvas.ctx;
-      maskCtx.currentTransform = ctx.currentTransform;
+      maskCtx.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
       var isMaskContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child._mask) ||
                             flash.display.SimpleButton.class.isInstanceOf(child._mask);
       this.ctx = maskCtx;
@@ -285,7 +286,7 @@ RenderVisitor.prototype = {
 
       tempCanvas = CanvasCache.getCanvas(ctx.canvas);
       tempCtx = tempCanvas.ctx;
-      tempCtx.currentTransform = ctx.currentTransform;
+      tempCtx.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
       renderDisplayObject(child, tempCtx, context);
 
       if (isContainer) {
@@ -593,13 +594,11 @@ function renderStage(stage, ctx, events) {
 
     ctx.setTransform(scaleX, 0, 0, scaleY, offsetX, offsetY);
 
-    stage._canvasState = {
-      canvas: ctx.canvas,
-      scaleX: scaleX,
-      scaleY: scaleY,
-      offsetX: offsetX,
-      offsetY: offsetY
-    };
+    var m = stage._currentTransform;
+    m.a = scaleX;
+    m.d = scaleY;
+    m.tx = offsetX;
+    m.ty = offsetY;
   }
 
   updateRenderTransform();
@@ -622,8 +621,8 @@ function renderStage(stage, ctx, events) {
     FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false})) {
     var radius = 10;
     var speed = 1;
-    var canvasState = stage._canvasState;
-    var scaleX = canvasState.scaleX, scaleY = canvasState.scaleY;
+    var m = stage._concatenatedTransform;
+    var scaleX = m.a, scaleY = m.d;
     dummyBalls = [];
     for (var i = 0; i < 10; i++) {
       dummyBalls.push({
