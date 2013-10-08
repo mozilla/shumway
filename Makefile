@@ -59,6 +59,10 @@ run-tamarin-tests:
 build-playerglobal:
 	make -C utils/ build-playerglobal
 
+build-playerglobal-min:
+	make -C utils/ install-apparat
+	make -C utils/playerglobal build-min
+
 build-bundle:
 	make -C utils/builder build
 

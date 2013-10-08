@@ -34,11 +34,15 @@ default:
 	@echo "run: make [build|clean]"
 
 build: $(BUILD_DIR)/library.swf
-#	python catalog2json.py > catalog.json
 	$(JSSHELL_HOME)/js playerglobal-gen.js > playerglobal.js
 	$(JSSHELL_HOME)/js playerglobal-pack.js | $(BASE64DEC) playerglobal.abc
 	mv playerglobal.js ../../src/flash
 	mv playerglobal.abc ../../src/flash
+
+build-min: $(BUILD_DIR)/library.min.swf
+	$(JSSHELL_HOME)/js playerglobal-dumpabc.js | $(BASE64DEC) $(BUILD_DIR)/playerGlobal.min.abc
+	mkdir -p ../../src/avm2/generated/playerGlobal
+	mv $(BUILD_DIR)/playerGlobal.min.abc ../../src/avm2/generated/playerGlobal/playerGlobal.abc
 
 $(BUILD_DIR)/library.min.swf: $(BUILD_DIR)/library.swf
 ifeq ($(findstring MINGW32, $(UNAME)),)
