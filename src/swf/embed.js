@@ -104,12 +104,9 @@ SWF.embed = function(file, doc, container, options) {
         } while ((node = node.offsetParent));
       }
 
-      var canvasState = stage._canvasState;
-
-      var mouseX = ((domEvt.pageX - left) * pixelRatio - canvasState.offsetX) /
-        canvasState.scaleX;
-      var mouseY = ((domEvt.pageY - top) * pixelRatio - canvasState.offsetY) /
-        canvasState.scaleY;
+      var m = stage._currentTransform;
+      var mouseX = ((domEvt.pageX - left) * pixelRatio - m.tx) / m.a;
+      var mouseY = ((domEvt.pageY - top) * pixelRatio - m.ty) / m.d;
 
       if (mouseX !== stage._mouseX || mouseY !== stage._mouseY) {
         stage._mouseMoved = true;

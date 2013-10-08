@@ -50,7 +50,7 @@ var BitmapDefinition = (function () {
       }
       ctx.save();
       if (this._pixelSnapping === 'auto' || this._pixelSnapping === 'always') {
-        var transform = ctx.currentTransform;
+        var transform = this._getConcatenatedTransform(true);
         var EPSILON = 0.001;
         if (Math.abs(Math.abs(transform.a) - 1) <= EPSILON &&
             Math.abs(Math.abs(transform.d) - 1) <= EPSILON &&

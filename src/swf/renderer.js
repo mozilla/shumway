@@ -271,16 +271,7 @@ RenderVisitor.prototype = {
     ctx.globalCompositeOperation = getBlendModeName(child._blendMode);
 
     if (child._mask) {
-      var m = child._parent._getConcatenatedTransform();
-      if (this.root._canvasState) {
-        var state = this.root._canvasState;
-        m.a = state.scaleX * m.a;
-        m.b = state.scaleY * m.b;
-        m.c = state.scaleX * m.c;
-        m.d = state.scaleY * m.d;
-        m.tx = state.scaleX * m.tx + state.offsetX;
-        m.ty = state.scaleY * m.ty + state.offsetY;
-      }
+      var m = child._parent._getConcatenatedTransform(true);
       // TODO create canvas small enough to fit the object and
       // TODO cache the results when cacheAsBitmap is set
       var tempCanvas, tempCtx, maskCanvas, maskCtx;
@@ -603,13 +594,11 @@ function renderStage(stage, ctx, events) {
 
     ctx.setTransform(scaleX, 0, 0, scaleY, offsetX, offsetY);
 
-    stage._canvasState = {
-      canvas: ctx.canvas,
-      scaleX: scaleX,
-      scaleY: scaleY,
-      offsetX: offsetX,
-      offsetY: offsetY
-    };
+    var m = stage._currentTransform;
+    m.a = scaleX;
+    m.d = scaleY;
+    m.tx = offsetX;
+    m.ty = offsetY;
   }
 
   updateRenderTransform();
@@ -632,8 +621,8 @@ function renderStage(stage, ctx, events) {
     FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false})) {
     var radius = 10;
     var speed = 1;
-    var canvasState = stage._canvasState;
-    var scaleX = canvasState.scaleX, scaleY = canvasState.scaleY;
+    var m = stage._concatenatedTransform;
+    var scaleX = m.a, scaleY = m.d;
     dummyBalls = [];
     for (var i = 0; i < 10; i++) {
       dummyBalls.push({

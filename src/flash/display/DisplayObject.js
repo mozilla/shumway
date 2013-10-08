@@ -200,47 +200,58 @@ var DisplayObjectDefinition = (function () {
       return blendModes[blendModeNumeric] || flash.display.BlendMode.class.NORMAL;
     },
 
-    _getConcatenatedTransform: function () {
-      if (!this._concatenatedTransform.invalid) {
-        return this._concatenatedTransform;
-      }
+    _getConcatenatedTransform: function (toDeviceSpace) {
+      var m, m2;
 
-      var stack = [this];
-      var m;
+      if (this._concatenatedTransform.invalid) {
+        var stack = [this];
 
-      var currentNode = this._parent;
-      while (currentNode) {
-        if (currentNode._concatenatedTransform.invalid) {
-          stack.push(currentNode);
-        }
-        currentNode = currentNode._parent;
-      }
-
-      while (stack.length) {
-        var node = stack.pop();
-
-        m = node._concatenatedTransform;
-
-        var m2 = node._currentTransform;
-
-        if (node._parent) {
-          var m3 = node._parent._concatenatedTransform;
-          m.a = m2.a * m3.a + m2.b * m3.c;
-          m.b = m2.a * m3.b + m2.b * m3.d;
-          m.c = m2.c * m3.a + m2.d * m3.c;
-          m.d = m2.d * m3.d + m2.c * m3.b;
-          m.tx = m2.tx * m3.a + m3.tx + m2.ty * m3.c;
-          m.ty = m2.ty * m3.d + m3.ty + m2.tx * m3.b;
-        } else {
-          m.a = m2.a;
-          m.b = m2.b;
-          m.c = m2.c;
-          m.d = m2.d;
-          m.tx = m2.tx;
-          m.ty = m2.ty;
+        var currentNode = this._parent;
+        while (currentNode !== this._stage) {
+          if (currentNode._concatenatedTransform.invalid) {
+            stack.push(currentNode);
+          }
+          currentNode = currentNode._parent;
         }
 
-        m.invalid = false;
+        while (stack.length) {
+          var node = stack.pop();
+
+          m = node._concatenatedTransform;
+
+          m2 = node._currentTransform;
+
+          if (node._parent) {
+            var m3 = node._parent._concatenatedTransform;
+            m.a = m2.a * m3.a + m2.b * m3.c;
+            m.b = m2.a * m3.b + m2.b * m3.d;
+            m.c = m2.c * m3.a + m2.d * m3.c;
+            m.d = m2.d * m3.d + m2.c * m3.b;
+            m.tx = m2.tx * m3.a + m3.tx + m2.ty * m3.c;
+            m.ty = m2.ty * m3.d + m3.ty + m2.tx * m3.b;
+          } else {
+            m.a = m2.a;
+            m.b = m2.b;
+            m.c = m2.c;
+            m.d = m2.d;
+            m.tx = m2.tx;
+            m.ty = m2.ty;
+          }
+
+          m.invalid = false;
+        }
+      } else {
+        m = this._concatenatedTransform;
+      }
+
+      if (toDeviceSpace && this._stage) {
+        m2 = this._stage._currentTransform;
+        m.a *= m2.a;
+        m.b *= m2.d;
+        m.c *= m2.a;
+        m.d *= m2.d;
+        m.tx = m.tx * m2.a + m2.tx;
+        m.ty = m.ty * m2.d + m2.ty;
       }
 
       return m;
