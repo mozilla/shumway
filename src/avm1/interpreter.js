@@ -697,7 +697,9 @@ function interpretActions(actionsData, scopeContainer,
       // SWF 3 actions
       case 0x81: // ActionGotoFrame
         frame = stream.readUI16();
-        methodName = stream.readUI8() === 0x06 ? 'gotoAndPlay' : 'gotoAndStop';
+        var nextActionCode = stream.readUI8();
+        nextPosition++;
+        methodName = nextActionCode === 0x06 ? 'gotoAndPlay' : 'gotoAndStop';
         _global[methodName](frame + 1);
         break;
       case 0x83: // ActionGetURL
