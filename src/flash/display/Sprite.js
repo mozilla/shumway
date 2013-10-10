@@ -33,6 +33,7 @@ var SpriteDefinition = (function () {
         this._graphics = s.graphics || new flash.display.Graphics();
 
         if (s.timeline) {
+          var currentDisplayListItem = null;
           var displayList = s.timeline[0];
           if (displayList) {
             var depths = displayList.depths;
@@ -40,9 +41,15 @@ var SpriteDefinition = (function () {
               var cmd = displayList[depths[i]];
               if (cmd) {
                 this._addTimelineChild(cmd);
+                currentDisplayListItem = {
+                  depth: +depths[i],
+                  cmd: cmd,
+                  next: currentDisplayListItem
+                };
               }
             }
           }
+          this._currentDisplayList = currentDisplayListItem;
         }
       } else {
         this._graphics = new flash.display.Graphics();
