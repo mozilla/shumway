@@ -503,6 +503,8 @@ var TextFieldDefinition = (function () {
       }
       initialFormat.str = makeFormatString(initialFormat);
 
+      this._embedFonts = !!tag.useOutlines;
+
       switch (tag.align) {
         case 1: initialFormat.align = 'right'; break;
         case 2: initialFormat.align = 'center'; break;
