@@ -136,23 +136,23 @@ var MovieClipDefinition = (function () {
 
       var children = this._children;
       var depths = nextDisplayList.depths;
-
-      var depthMap = this._depthMap;
-
       var index = children.length;
 
       var i = depths.length;
       while (i--) {
-        var depth = depths[i], depthInt = +depth;
+        var depth = depths[i], depthInt = depth | 0;
         while (currentDisplayListItem && currentDisplayListItem.depth > depthInt) {
           // skipping non-changed items
           prevDisplayListItem = currentDisplayListItem;
           currentDisplayListItem = currentDisplayListItem.next;
         }
 
-        var currentChild = depthMap[depth];
-        if (currentChild && currentChild._owned) {
-          index = this.getChildIndex(currentChild);
+        var currentChild = null;
+        if (currentDisplayListItem && currentDisplayListItem.depth === depthInt) {
+          currentChild = currentDisplayListItem.obj;
+          if (currentChild && currentChild._owned) {
+            index = this.getChildIndex(currentChild);
+          }
         }
 
         var currentCmd = currentDisplayListItem && currentDisplayListItem.depth === depthInt ?
@@ -212,19 +212,14 @@ var MovieClipDefinition = (function () {
           continue;
         }
 
-        var newDisplayListItem = {
-          depth: depthInt,
-          cmd: nextCmd,
-          next: currentDisplayListItem
-        };
+        var newDisplayListItem = this._addTimelineChild(nextCmd, index);
+        newDisplayListItem.next = currentDisplayListItem;
         if (prevDisplayListItem) {
           prevDisplayListItem.next = newDisplayListItem;
         } else {
           this._currentDisplayList = newDisplayListItem;
         }
         prevDisplayListItem = newDisplayListItem;
-
-        this._addTimelineChild(nextCmd, index);
       }
     },
     _destructChildren: function destructChildren(nextFrameNum) {
@@ -248,9 +243,8 @@ var MovieClipDefinition = (function () {
         var currentCmd = currentDisplayListItem.cmd;
         var nextCmd = nextDisplayList[depth];
         if (!nextCmd ||
-          nextCmd.symbolId !== currentCmd.symbolId ||
-          nextCmd.ratio !== currentCmd.ratio) {
-
+            nextCmd.symbolId !== currentCmd.symbolId ||
+            nextCmd.ratio !== currentCmd.ratio) {
           var nextDisplayListItem = currentDisplayListItem.next;
           if (prevDisplayListItem) {
             prevDisplayListItem.next = nextDisplayListItem;
@@ -266,7 +260,16 @@ var MovieClipDefinition = (function () {
         }
       }
       while (toRemove) {
-        this._removeTimelineChild(toRemove.cmd);
+        var child = toRemove.obj;
+        if (child) {
+          this._sparse = true;
+          this.removeChild(child);
+
+          child.destroy();
+          if (child._isPlaying) {
+            child.stop();
+          }
+        }
         toRemove = toRemove.next;
       }
     },
@@ -720,10 +723,7 @@ var MovieClipDefinition = (function () {
         gotoAndStop: def.gotoAndStop,
         addFrameScript: def.addFrameScript,
         prevScene: def.prevScene,
-        nextScene: def.nextScene,
-        _depth: {
-          get: function () { return this._depth; }
-        }
+        nextScene: def.nextScene
       }
     }
   };
