@@ -244,12 +244,12 @@ var DisplayObjectDefinition = (function () {
 
       if (toDeviceSpace && this._stage) {
         m2 = this._stage._currentTransform;
-        m.a *= m2.a;
-        m.b *= m2.d;
-        m.c *= m2.a;
-        m.d *= m2.d;
-        m.tx = m.tx * m2.a + m2.tx;
-        m.ty = m.ty * m2.d + m2.ty;
+        return { a: m.a * m2.a,
+                 b: m.b * m2.d,
+                 c: m.c * m2.a,
+                 d: m.d * m2.d,
+                 tx: m.tx * m2.a + m2.tx,
+                 ty: m.ty * m2.d + m2.ty };
       }
 
       return m;
