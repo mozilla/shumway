@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Multiname, MP3DecoderSession, isNullOrUndefined, URL, Blob */
+/*global Multiname, MP3DecoderSession, isNullOrUndefined, URL, Blob,
+  notImplemented */
 
 var PLAY_USING_AUDIO_TAG = true;
 
@@ -150,11 +151,11 @@ var SoundDefinition = (function () {
       stream.load(request);
     },
     loadCompressedDataFromByteArray: function loadCompressedDataFromByteArray(bytes, bytesLength) {
-      throw 'Not implemented: loadCompressedDataFromByteArray';
+      notImplemented('Sound#loadCompressedDataFromByteArray');
     },
     loadPCMFromByteArray: function loadPCMFromByteArray(bytes, samples, format, stereo, sampleRate) {
       //loadPCMFromByteArray(bytes:ByteArray, samples:uint, format:String = "float", stereo:Boolean = true, sampleRate:Number = 44100.0):void
-      throw 'Not implemented: loadPCMFromByteArray';
+      notImplemented('Sound#loadPCMFromByteArray');
     },
     play: function play(startTime, loops, soundTransform) {
       // (startTime:Number = 0, loops:int = 0, soundTransform:SoundTransform = null) -> SoundChannel
@@ -188,10 +189,10 @@ var SoundDefinition = (function () {
       return this._id3;
     },
     get isBuffering() {
-      throw 'Not implemented: isBuffering';
+      notImplemented('Sound#isBuffering');
     },
     get isURLInaccessible() {
-      throw 'Not implemented: isURLInaccessible';
+      notImplemented('Sound#isURLInaccessible');
     },
     get length() {
       return this._length;

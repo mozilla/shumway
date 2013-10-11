@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global renderDisplayObject, RenderVisitor, argbUintToStr, getBlendModeName */
+/* global renderDisplayObject, RenderVisitor, argbUintToStr, getBlendModeName,
+   Errors, throwError */
 
 var BitmapDataDefinition = (function () {
   function replaceRect(ctx, x, y, w, h, alpha) {
@@ -51,7 +52,7 @@ var BitmapDataDefinition = (function () {
         width = this._img.naturalWidth || this._img.width;
         height = this._img.naturalHeight || this._img.height;
       } else if (isNaN(width + height) || width <= 0 || height <= 0) {
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.ArgumentError);
       }
 
       this._transparent = transparent === undefined ? true : !!transparent;

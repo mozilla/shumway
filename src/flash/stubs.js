@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+/* global Errors, throwError */
+
 /**
  * Stubs Overview
  *
@@ -322,8 +324,14 @@ natives['FlashUtilScript::unescapeMultiByte'] = function UnescapeMultiByteMethod
 
 natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runtime, scope, instanceConstructor, baseClass) {
   return function navigateToURL(request, window_) {
-    if (!request || !request.url)
-      throw new Error('Invalid request object');
+    if (request === null || request === undefined) {
+      throwError('TypeError', Errors.NullPointerError, 'request');
+    }
+    var RequestClass = avm2.systemDomain.getClass("flash.net.URLRequest");
+    if (!RequestClass.isInstanceOf(request)) {
+      throwError('TypeError', Errors.CheckTypeFailedError, request,
+                 'flash.net.URLRequest');
+    }
     var url = request.url;
     if (/^fscommand:/i.test(url)) {
       var fscommand = avm2.applicationDomain.getProperty(
@@ -338,8 +346,14 @@ natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runti
 
 natives['FlashNetScript::sendToURL'] = function GetSendToURLMethod(runtime, scope, instanceConstructor, baseClass) {
   return function sendToURL(request) {
-    if (!request || !request.url)
-      throw new Error('Invalid request object');
+    if (request === null || request === undefined) {
+      throwError('TypeError', Errors.NullPointerError, 'request');
+    }
+    var RequestClass = avm2.systemDomain.getClass("flash.net.URLRequest");
+    if (!RequestClass.isInstanceOf(request)) {
+      throwError('TypeError', Errors.CheckTypeFailedError, request,
+                 'flash.net.URLRequest');
+    }
     var session = FileLoadingService.createSession();
     session.onprogress = function () {};
     session.open(request);
@@ -349,10 +363,10 @@ natives['FlashNetScript::sendToURL'] = function GetSendToURLMethod(runtime, scop
 natives['Toplevel::registerClassAlias'] = function GetRegisterClassAliasMethod(runtime, scope, instance, baseClass) {
   return function registerClassAlias(aliasName, classObject) {
     if (!aliasName) {
-      throw new TypeError(formatErrorMessage(Errors.NullPointerError, 'aliasName'));
+      throwError('TypeError', Errors.NullPointerError, 'aliasName');
     }
     if (!classObject) {
-      throw new TypeError(formatErrorMessage(Errors.NullPointerError, 'classObject'));
+      throwError('TypeError', Errors.NullPointerError, 'classObject');
     }
 
     AMFUtils.aliasesCache.classes.set(classObject, aliasName);
@@ -363,12 +377,12 @@ natives['Toplevel::registerClassAlias'] = function GetRegisterClassAliasMethod(r
 natives['Toplevel::getClassByAlias'] = function GetGetClassByAliasMethod(runtime, scope, instance, baseClass) {
   return function getClassByAlias(aliasName) {
     if (!aliasName) {
-      throw new TypeError(formatErrorMessage(Errors.NullPointerError, 'aliasName'));
+      throwError('TypeError', Errors.NullPointerError, 'aliasName');
     }
 
     var classObject = AMFUtils.aliasesCache.names[aliasName];
     if (!classObject) {
-      throw ReferenceError();
+      throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
     }
     return classObject;
   };

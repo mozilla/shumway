@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global FileLoadingService, Stream, utf8encode */
+/*global FileLoadingService, Stream, utf8encode, notImplemented */
 
 var URLStreamDefinition = (function () {
   var def = {
@@ -96,7 +96,7 @@ var URLStreamDefinition = (function () {
       this._session = session;
     },
     readBoolean: function readBoolean() {
-      throw 'Not implemented: URLStream.readBoolean';
+      notImplemented('URLStream.readBoolean');
     },
     readByte: function readByte() {
       var stream = this._stream;
@@ -116,22 +116,22 @@ var URLStreamDefinition = (function () {
       stream.pos += length;
     },
     readDouble: function readDouble() {
-      throw 'Not implemented: URLStream.readDouble';
+      notImplemented('URLStream.readDouble');
     },
     readFloat: function readFloat() {
-      throw 'Not implemented: URLStream.readFloat';
+      notImplemented('URLStream.readFloat');
     },
     readInt: function readInt() {
-      throw 'Not implemented: URLStream.readInt';
+      notImplemented('URLStream.readInt');
     },
     readMultiByte: function readMultiByte(length, charSet) {
-      throw 'Not implemented: URLStream.readMultiByte';
+      notImplemented('URLStream.readMultiByte');
     },
     readObject: function readObject() {
-      throw 'Not implemented: URLStream.readObject';
+      notImplemented('URLStream.readObject');
     },
     readShort: function readShort() {
-      throw 'Not implemented: URLStream.readShort';
+      notImplemented('URLStream.readShort');
     },
     readUTF: function readUTF() {
       return this.readUTFBytes(this.readUnsignedShort());
@@ -148,10 +148,10 @@ var URLStreamDefinition = (function () {
       return str;
     },
     readUnsignedByte: function readUnsignedByte() {
-      throw 'Not implemented: URLStream.readUnsignedByte';
+      notImplemented('URLStream.readUnsignedByte');
     },
     readUnsignedInt: function readUnsignedInt() {
-      throw 'Not implemented: URLStream.readUnsignedInt';
+      notImplemented('URLStream.readUnsignedInt');
     },
     readUnsignedShort: function readUnsignedShort() {
       var stream = this._stream;
@@ -174,10 +174,10 @@ var URLStreamDefinition = (function () {
       this._littleEndian = (val == 'littleEndian');
     },
     get objectEncoding() {
-      throw 'Not implemented: URLStream.objectEncoding$get';
+      notImplemented('URLStream.objectEncoding');
     },
     set objectEncoding(val) {
-      throw 'Not implemented: URLStream.objectEncoding$set';
+      notImplemented('URLStream.objectEncoding');
     }
   };
 

@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+/* global somewhatImplemented */
+
 var FontDefinition = (function () {
   var fonts = [];
 
@@ -51,7 +53,7 @@ var FontDefinition = (function () {
   }
 
   function registerFont(font) {
-    throw 'Not implemented: registerFont';
+    somewhatImplemented('Font.registerFont');
   }
 
   function findFont(fn) {

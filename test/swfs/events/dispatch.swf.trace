@@ -8,3 +8,5 @@ event is cancelable
 prevent default behaviour
 listener removed from root
 still triggers on stage
+TypeError: Error #1034: Type Coercion failed: cannot convert string to Function.
+TypeError: Error #1034: Type Coercion failed: cannot convert string to Function.
