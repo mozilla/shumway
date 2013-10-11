@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+/* global Errors, throwError */
+
 var TransformDefinition = (function () {
   var def = {
     __class__: 'flash.geom.Transform',

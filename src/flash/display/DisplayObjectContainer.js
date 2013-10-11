@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+/* global Errors, throwError */
+
 var DisplayObjectContainerDefinition = (function () {
   var def = {
     get mouseChildren() {

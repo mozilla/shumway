@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global renderDisplayObject, RenderVisitor, argbUintToStr, getBlendModeName */
+/* global renderDisplayObject, RenderVisitor, argbUintToStr, getBlendModeName,
+   Errors, throwError */
 
 var BitmapDataDefinition = (function () {
   function replaceRect(ctx, x, y, w, h, alpha) {

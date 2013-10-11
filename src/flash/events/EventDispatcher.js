@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+/* global Errors, throwError */
+
 var EventDispatcherDefinition = (function () {
   function doDispatchEvent(dispatcher, event, eventClass) {
     var target = dispatcher._target;

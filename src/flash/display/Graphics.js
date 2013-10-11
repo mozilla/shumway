@@ -19,7 +19,7 @@
   buildLinearGradientFactory, buildRadialGradientFactory,
   SHAPE_MOVE_TO, SHAPE_LINE_TO, SHAPE_CURVE_TO, SHAPE_WIDE_MOVE_TO,
   SHAPE_WIDE_LINE_TO, SHAPE_CUBIC_CURVE_TO, SHAPE_CIRCLE, SHAPE_ELLIPSE,
-  SHAPE_ROUND_CORNER */
+  SHAPE_ROUND_CORNER, Errors, throwError */
 
 var GraphicsDefinition = (function () {
   var GRAPHICS_PATH_WINDING_EVEN_ODD       = 'evenOdd';
@@ -359,8 +359,10 @@ function createPatternStyle(bitmap, matrix, repeat, smooth) {
 function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
                              interpolationMethod, focalPos)
 {
-  type == null && throwError('TypeError', Errors.NullPointerError, 'type');
-  colors == null && throwError('TypeError', Errors.NullPointerError, 'colors');
+  type === null || type === undefined &&
+                   throwError('TypeError', Errors.NullPointerError, 'type');
+  colors === null || type === undefined &&
+                     throwError('TypeError', Errors.NullPointerError, 'colors');
   if (!(type === 'linear' || type === 'radial')) {
     throwError('ArgumentError', Errors.InvalidEnumError, 'type');
   }
