@@ -84,12 +84,11 @@ var GraphicsDefinition = (function () {
     beginGradientFill: function(type, colors, alphas, ratios, matrix,
                                 spreadMethod, interpolationMethod, focalPos)
     {
+      var style = createGradientStyle(type, colors, alphas, ratios, matrix,
+                                      spreadMethod, interpolationMethod,
+                                      focalPos);
       this.beginPath();
-      this._currentPath.fillStyle = createGradientStyle(type, colors, alphas,
-                                                        ratios, matrix,
-                                                        spreadMethod,
-                                                        interpolationMethod,
-                                                        focalPos);
+      this._currentPath.fillStyle = style;
     },
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
       this.beginPath();
@@ -137,7 +136,7 @@ var GraphicsDefinition = (function () {
     },
     drawRect: function (x, y, w, h) {
       if (isNaN(w + h))
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.InvalidParamError);
 
       this._invalidate();
       this._currentPath.rect((x * 20)|0, (y * 20)|0, (w * 20)|0, (h * 20)|0);
@@ -146,7 +145,7 @@ var GraphicsDefinition = (function () {
       if (isNaN(w + h + ellipseWidth) ||
           (ellipseHeight !== undefined && isNaN(ellipseHeight)))
       {
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.InvalidParamError);
       }
       this._invalidate();
 
@@ -192,7 +191,7 @@ var GraphicsDefinition = (function () {
       if (isNaN(w + h + topLeftRadius + topRightRadius + bottomLeftRadius +
                 bottomRightRadius))
       {
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.InvalidParamError);
       }
       this._invalidate();
 
@@ -234,12 +233,11 @@ var GraphicsDefinition = (function () {
     lineGradientStyle: function(type, colors, alphas, ratios, matrix,
                                 spreadMethod, interpolationMethod, focalPos)
     {
+      var style = createGradientStyle(type, colors, alphas, ratios, matrix,
+                                      spreadMethod, interpolationMethod,
+                                      focalPos);
       this.beginPath();
-      this._currentPath.lineStyle = createGradientStyle(type, colors, alphas,
-                                                        ratios, matrix,
-                                                        spreadMethod,
-                                                        interpolationMethod,
-                                                        focalPos);
+      this._currentPath.lineStyle = style;
     },
 
     lineStyle: function (width, color, alpha, pxHinting, scale, cap, joint,
@@ -361,6 +359,12 @@ function createPatternStyle(bitmap, matrix, repeat, smooth) {
 function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
                              interpolationMethod, focalPos)
 {
+  type == null && throwError('TypeError', Errors.NullPointerError, 'type');
+  colors == null && throwError('TypeError', Errors.NullPointerError, 'colors');
+  if (!(type === 'linear' || type === 'radial')) {
+    throwError('ArgumentError', Errors.InvalidEnumError, 'type');
+  }
+  // TODO: add coercion checks for all args
   var colorStops = [];
   for (var i = 0, n = colors.length; i < n; i++) {
     colorStops.push({
@@ -372,10 +376,8 @@ function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
   var gradientConstructor;
   if (type === 'linear') {
     gradientConstructor = buildLinearGradientFactory(colorStops);
-  } else if (type == 'radial') {
-    gradientConstructor = buildRadialGradientFactory((focalPos || 0), colorStops);
   } else {
-    throw ArgumentError();
+    gradientConstructor = buildRadialGradientFactory((focalPos || 0), colorStops);
   }
 
   // NOTE firefox is really sensitive to very small scale when painting gradients
