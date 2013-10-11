@@ -150,41 +150,57 @@ var GraphicsDefinition = (function () {
       }
       this._invalidate();
 
-      var x2 = ((x + w) * 20)|0;
-      var y2 = ((y + h) * 20)|0;
+      if (ellipseHeight === undefined) {
+        ellipseHeight = ellipseWidth;
+      }
+
       x = (x * 20)|0;
       y = (y * 20)|0;
+      w = (w * 20)|0;
+      h = (h * 20)|0;
+
+      if (!ellipseHeight || !ellipseWidth) {
+        this._currentPath.rect(x, y, w, h);
+        return;
+      }
+
       var radiusX = (ellipseWidth / 2 * 20)|0;
       var radiusY = (ellipseHeight / 2 * 20)|0;
 
+      var hw = (w / 2)|0;
+      var hh = (h / 2)|0;
+      if (radiusX > hw) {
+        radiusX = hw;
+      }
+      if (radiusY > hh) {
+        radiusY = hh;
+      }
 
-      if (w === ellipseWidth && h === ellipseHeight) {
-        if (ellipseWidth === ellipseHeight)
+      if (hw === radiusX && hh === radiusY) {
+        if (radiusX === radiusY)
           this._currentPath.circle(x+radiusX, y+radiusY, radiusX);
         else
           this._currentPath.ellipse(x+radiusX, y+radiusY, radiusX, radiusY);
         return;
       }
 
-      //    A-----B
-      //  H         C
-      //  G         D
-      //    F-----E
-      //
-      // Through some testing, it has been discovered
-      // tha the Flash player starts and stops the pen
-      // at 'D', so we will, too.
-      this._currentPath.moveTo(x2, y2 - radiusY);
+      var right = x + w;
+      var bottom = y + h;
 
-      this._currentPath.drawRoundCorner(x2, y2, x2-radiusX, y2,
-                                        radiusX, radiusY);
-      this._currentPath.lineTo(x + radiusX, y2);
-      this._currentPath.drawRoundCorner(x, y2, x, y2-radiusY, radiusX, radiusY);
-      this._currentPath.lineTo(x, y + radiusY);
-      this._currentPath.drawRoundCorner(x, y, x+radiusX, y, radiusX, radiusY);
-      this._currentPath.lineTo(x2 - radiusX, y);
-      this._currentPath.drawRoundCorner(x2, y, x2, y+radiusY, radiusX, radiusY);
-      this._currentPath.lineTo(x2, y2-radiusY);
+      var xlw = x + radiusX;
+      var xrw = right - radiusX;
+      var ytw = y + radiusY;
+      var ybw = bottom - radiusY;
+
+      this._currentPath.moveTo(xlw, y);
+      this._currentPath.lineTo(xrw, y);
+      this._currentPath.curveTo(right, y, right, ytw);
+      this._currentPath.lineTo(right, ybw);
+      this._currentPath.curveTo(right, bottom, xrw, bottom);
+      this._currentPath.lineTo(xlw, bottom);
+      this._currentPath.curveTo(x, bottom, x, ybw);
+      this._currentPath.lineTo(x, ytw);
+      this._currentPath.curveTo(x, y, xlw, y);
     },
     drawRoundRectComplex: function (x, y, w, h, topLeftRadius, topRightRadius,
                                     bottomLeftRadius, bottomRightRadius)
@@ -196,28 +212,34 @@ var GraphicsDefinition = (function () {
       }
       this._invalidate();
 
-      var x2 = ((x + w) * 20)|0;
-      var y2 = ((y + h) * 20)|0;
       x = (x * 20)|0;
       y = (y * 20)|0;
+      w = (w * 20)|0;
+      h = (h * 20)|0;
+
+      if (!topLeftRadius && !topRightRadius && !bottomLeftRadius && !bottomRightRadius) {
+        this._currentPath.rect(x, y, w, h);
+        return;
+      }
+
       topLeftRadius = (topLeftRadius * 20)|0;
       topRightRadius = (topRightRadius * 20)|0;
       bottomLeftRadius = (bottomLeftRadius * 20)|0;
       bottomRightRadius = (bottomRightRadius * 20)|0;
 
-      this._currentPath.moveTo(x2, y2-bottomRightRadius);
-      this._currentPath.drawRoundCorner(x2, y2, x2-bottomRightRadius, y2,
-                                        bottomRightRadius);
-      this._currentPath.lineTo(x + bottomLeftRadius, y2);
-      this._currentPath.drawRoundCorner(x, y2, x, y2-bottomLeftRadius,
-                                        bottomLeftRadius);
+      var right = x + w;
+      var bottom = y + h;
+      var xtl = x + topLeftRadius;
+
+      this._currentPath.moveTo(xtl, y);
+      this._currentPath.lineTo(right - topRightRadius, y);
+      this._currentPath.curveTo(right, y, right, y + topRightRadius);
+      this._currentPath.lineTo(right, bottom - bottomRightRadius);
+      this._currentPath.curveTo(right, bottom, right - bottomRightRadius, bottom);
+      this._currentPath.lineTo(x + bottomLeftRadius, bottom);
+      this._currentPath.curveTo(x, bottom, x, bottom - bottomLeftRadius);
       this._currentPath.lineTo(x, y + topLeftRadius);
-      this._currentPath.drawRoundCorner(x, y, x+topLeftRadius, y,
-                                        topLeftRadius);
-      this._currentPath.lineTo(x2 - topRightRadius, y);
-      this._currentPath.drawRoundCorner(x2, y, x2, y+topRightRadius,
-                                        topRightRadius);
-      this._currentPath.lineTo(x2, y2-bottomRightRadius);
+      this._currentPath.curveTo(x, y, xtl, y);
     },
     drawTriangles: function(vertices, indices, uvtData, culling) {
       notImplemented("Graphics#drawTriangles");
