@@ -356,13 +356,13 @@ package avm1lib {
     public function get _x() { return this.$nativeObject.x;  }
     public function set _x(value) { this.$nativeObject.x = value;  }
     public function get _xmouse() { return this.$nativeObject.mouseX;  }
-    public function get _xscale() { return this.$nativeObject.scaleX;  }
-    public function set _xscale(value) { this.$nativeObject.scaleX = value;  }
+    public function get _xscale() { return this.$nativeObject.scaleX * 100;  }
+    public function set _xscale(value) { this.$nativeObject.scaleX = value / 100;  }
     public function get _y() { return this.$nativeObject.y;  }
     public function set _y(value) { this.$nativeObject.y = value;  }
     public function get _ymouse() { return this.$nativeObject.mouseY;  }
-    public function get _yscale() { return this.$nativeObject.scaleY;  }
-    public function set _yscale(value) { this.$nativeObject.scaleY = value;  }
+    public function get _yscale() { return this.$nativeObject.scaleY * 100;  }
+    public function set _yscale(value) { this.$nativeObject.scaleY = value / 100;  }
 
     {
       AS2Utils.addEventHandlerProxy(prototype, 'onData', 'data');
