@@ -117,7 +117,9 @@ var EventDispatcherDefinition = (function () {
     // We need to be able to cheaply override these in DisplayObject
     _addEventListenerImpl: function addEventListenerImpl(type, listener, useCapture, priority) {
       if (typeof listener !== 'function') {
-        throw new ArgumentError();
+        // TODO: The Player unevals the `listener`. To some extend, we could, too
+        throwError("TypeError", Errors.CheckTypeFailedError, listener,
+                   "Function");
       }
 
       var listeners = useCapture ? this._captureListeners : this._listeners;
@@ -152,7 +154,9 @@ var EventDispatcherDefinition = (function () {
     },
     _removeEventListenerImpl: function removeEventListenerImpl(type, listener, useCapture) {
       if (typeof listener !== 'function') {
-        return;
+        // TODO: The Player unevals the `listener`. To some extend, we could, too
+        throwError("TypeError", Errors.CheckTypeFailedError, listener,
+                   "Function");
       }
 
       var listeners = useCapture ? this._captureListeners : this._listeners;
