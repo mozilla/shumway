@@ -192,15 +192,23 @@ var GraphicsDefinition = (function () {
       var ytw = y + radiusY;
       var ybw = bottom - radiusY;
 
-      this._currentPath.moveTo(xlw, y);
-      this._currentPath.lineTo(xrw, y);
-      this._currentPath.curveTo(right, y, right, ytw);
-      this._currentPath.lineTo(right, ybw);
+      //    A-----B
+      //  H         C
+      //  G         D
+      //    F-----E
+      //
+      // Through some testing, it has been discovered
+      // tha the Flash player starts and stops the pen
+      // at 'D', so we will, too.
+      this._currentPath.moveTo(right, ybw);
       this._currentPath.curveTo(right, bottom, xrw, bottom);
       this._currentPath.lineTo(xlw, bottom);
       this._currentPath.curveTo(x, bottom, x, ybw);
       this._currentPath.lineTo(x, ytw);
       this._currentPath.curveTo(x, y, xlw, y);
+      this._currentPath.lineTo(xrw, y);
+      this._currentPath.curveTo(right, y, right, ytw);
+      this._currentPath.lineTo(right, ybw);
     },
     drawRoundRectComplex: function (x, y, w, h, topLeftRadius, topRightRadius,
                                     bottomLeftRadius, bottomRightRadius)
@@ -231,15 +239,15 @@ var GraphicsDefinition = (function () {
       var bottom = y + h;
       var xtl = x + topLeftRadius;
 
-      this._currentPath.moveTo(xtl, y);
-      this._currentPath.lineTo(right - topRightRadius, y);
-      this._currentPath.curveTo(right, y, right, y + topRightRadius);
-      this._currentPath.lineTo(right, bottom - bottomRightRadius);
+      this._currentPath.moveTo(right, bottom - bottomRightRadius);
       this._currentPath.curveTo(right, bottom, right - bottomRightRadius, bottom);
       this._currentPath.lineTo(x + bottomLeftRadius, bottom);
       this._currentPath.curveTo(x, bottom, x, bottom - bottomLeftRadius);
       this._currentPath.lineTo(x, y + topLeftRadius);
       this._currentPath.curveTo(x, y, xtl, y);
+      this._currentPath.lineTo(right - topRightRadius, y);
+      this._currentPath.curveTo(right, y, right, y + topRightRadius);
+      this._currentPath.lineTo(right, bottom - bottomRightRadius);
     },
     drawTriangles: function(vertices, indices, uvtData, culling) {
       notImplemented("Graphics#drawTriangles");
