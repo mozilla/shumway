@@ -94,9 +94,7 @@ var LoaderInfoDefinition = (function () {
           },
           swfVersion: {
             get: function swfVersion() { // (void) -> uint
-              if (!this._swfVersion) {
-                throw Error();
-              }
+              assert(this._swfVersion);
               return this._swfVersion;
             }
           },

@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+/* global Errors, throwError */
+
 var TransformDefinition = (function () {
   var def = {
     __class__: 'flash.geom.Transform',
@@ -39,8 +41,10 @@ var TransformDefinition = (function () {
     },
     set colorTransform(val) {
       var CTClass = avm2.systemDomain.getClass("flash.geom.ColorTransform");
-      if (!CTClass.isInstanceOf(val))
-        throw TypeError();
+      if (!CTClass.isInstanceOf(val)) {
+        throwError('TypeError', Errors.CheckTypeFailedError, val,
+                   'flash.geom.ColorTransform');
+      }
 
       this._target._cxform = {
         redMultiplier: val.redMultiplier * 256,
@@ -74,8 +78,10 @@ var TransformDefinition = (function () {
       return new flash.geom.Matrix(m.a, m.b, m.c, m.d, m.tx/20, m.ty/20);
     },
     set matrix(val) {
-      if (!flash.geom.Matrix.class.isInstanceOf(val))
-        throw TypeError();
+      if (!flash.geom.Matrix.class.isInstanceOf(val)){
+        throwError('TypeError', Errors.CheckTypeFailedError, val,
+                   'flash.geom.Matrix');
+      }
 
       var target = this._target;
 
@@ -114,8 +120,10 @@ var TransformDefinition = (function () {
     },
     set matrix3D(val) {
       var Matrix3DClass = avm2.systemDomain.getClass("flash.geom.Matrix3D");
-      if (!Matrix3DClass.isInstanceOf(val))
-        throw TypeError();
+      if (!Matrix3DClass.isInstanceOf(val)){
+        throwError('TypeError', Errors.CheckTypeFailedError, val,
+                   'flash.geom.Matrix3D');
+      }
 
       var raw = val.rawData;
       this.matrix = new flash.geom.Matrix(raw.asGetPublicProperty(0),
