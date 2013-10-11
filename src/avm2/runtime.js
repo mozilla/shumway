@@ -2019,7 +2019,7 @@ function asCoerceString(x) {
   } else if (x == undefined) {
     return null;
   }
-  return String(x);
+  return x + '';
 }
 
 function asCoerceInt(x) {
@@ -2027,7 +2027,7 @@ function asCoerceInt(x) {
 }
 
 function asCoerceUint(x) {
-  return toUint(x);
+  return x >>> 0;
 }
 
 function asCoerceNumber(x) {

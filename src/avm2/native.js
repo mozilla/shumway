@@ -701,11 +701,11 @@ var natives = (function () {
   }
 
   function Int(x) {
-    return toNumber(x) | 0;
+    return x|0;
   }
 
   function boxedInt(x) {
-    return Object(Int(x));
+    return Object(x|0);
   }
 
   function intClass(runtime, scope, instanceConstructor, baseClass) {
@@ -726,11 +726,11 @@ var natives = (function () {
   }
 
   function Uint(x) {
-    return toNumber(x) >>> 0;
+    return x >>> 0;
   }
 
   function boxedUint(x) {
-    return Object(Uint(x));
+    return Object(x >>> 0);
   }
 
   function uintClass(runtime, scope, instanceConstructor, baseClass) {
@@ -921,7 +921,7 @@ var natives = (function () {
             uri = uriValue.uri;
           }
         } else {
-          uri = toString(uriValue);
+          uri = uriValue + '';
           if (uri === "") {
             prefix = "";
           } else {
@@ -934,10 +934,10 @@ var natives = (function () {
             uriValue.uri !== null) {
           uri = uriValue.uri;
         } else {
-          uri = toString(uriValue);
+          uri = uriValue + '';
         }
         if (uri === "") {
-          if (prefixValue === undefined || toString(prefixValue) === "") {
+          if (prefixValue === undefined || prefixValue + '' === "") {
             prefix = "";
           } else {
             throw "type error";
@@ -947,11 +947,10 @@ var natives = (function () {
         } else if (false && !isXMLName(prefixValue)) { // FIXME need impl
           prefix = undefined;
         } else {
-          prefix = toString(prefixValue);
+          prefix = prefixValue + '';
         }
       }
-      var ns = ShumwayNamespace.createNamespace(uri, prefix);
-      return ns;
+      return ShumwayNamespace.createNamespace(uri, prefix);
     }
 
     var c = new Class("Namespace", ASNamespace, C(ASNamespace));

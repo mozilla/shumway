@@ -321,33 +321,8 @@ function isNumber(value) {
   return typeof value === "number";
 }
 
-function toDouble(x) {
-  return toNumber(x);
-}
-
-/**
- * Avoids a call to |Number()| if the type of |x| is already a number. We're hoping that this
- * function gets inlined.
- */
 function toNumber(x) {
-  return typeof x === "number" ? x : Number(x);
-}
-
-function toBoolean(x) {
-  return !!x;
-}
-
-function toUint(x) {
-  x = x | 0;
-  return x < 0 ? (x + 4294967296) : x;
-}
-
-function toInt(x) {
-  return x | 0;
-}
-
-function toString(x) {
-  return String(x);
+  return +x;
 }
 
 function setBitFlags(flags, flag, value) {
