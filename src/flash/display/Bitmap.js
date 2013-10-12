@@ -78,6 +78,13 @@ var BitmapDefinition = (function () {
             this._pixelSnapping = pixelSnapping;
             this._smoothing = smoothing;
 
+            if (!bitmapData && this.symbol) {
+              var symbol = this.symbol;
+              bitmapData = new flash.display.BitmapData(symbol.width,
+                                                        symbol.height);
+              bitmapData._ctx.drawImage(symbol.img, 0, 0);
+            }
+
             setBitmapData.call(this, bitmapData || null);
           },
           pixelSnapping: {
