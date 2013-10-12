@@ -95,6 +95,9 @@ var Promise = (function PromiseClosure() {
     subject.subpromisesReason = reason;
     var subpromises = subject.subpromises;
     if (!subpromises) {
+      if (!$RELEASE) {
+        console.warn(reason);
+      }
       return;
     }
     for (var i = 0; i < subpromises.length; i++) {
