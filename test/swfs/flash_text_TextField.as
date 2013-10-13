@@ -13,7 +13,7 @@ public class TextFieldTest extends Sprite {
     stage.frameRate = 20;
     child = new TextFieldObject();
     child.width = 200;
-    child.height = 100;
+    child.height = 20;
     addChild(child);
     child.runSyncTests();
     child.runAsyncTests();
@@ -127,6 +127,28 @@ class TextFieldObject extends TextField {
     printEquals(multiline, true, "flash.text::TextField/{get|set} multiline()");
     multiline = false;
     printEquals(multiline, false, "flash.text::TextField/{get|set} multiline()");
+
+    multiline = true;
+
+    text = 'line1';
+    printEquals(numLines, 1, "flash.text::TextField/get numLines()");
+    printEquals(scrollV, 1, "flash.text::TextField/get scrollV()");
+    printEquals(maxScrollV, 1, "flash.text::TextField/get maxScrollV()");
+    printEquals(bottomScrollV, 1, "flash.text::TextField/get bottomScrollV()");
+    text = 'line1\nline2';
+    printEquals(numLines, 2, "flash.text::TextField/get numLines()");
+    printEquals(scrollV, 1, "flash.text::TextField/get scrollV()");
+//    printEquals(maxScrollV, 2, "flash.text::TextField/get maxScrollV()");
+    printEquals(bottomScrollV, 1, "flash.text::TextField/get bottomScrollV()");
+    scrollV = 2;
+    printEquals(scrollV, 2, "flash.text::TextField/get scrollV()");
+//    printEquals(maxScrollV, 2, "flash.text::TextField/get maxScrollV()");
+//    printEquals(bottomScrollV, 2, "flash.text::TextField/get bottomScrollV()");
+    height = 300;
+    scrollV = 1;
+//    trace(scrollV, maxScrollV, bottomScrollV);
+    text = 'line1\nline2';
+//    trace(scrollV, maxScrollV, bottomScrollV);
   }
 
   public function runAsyncTests() {

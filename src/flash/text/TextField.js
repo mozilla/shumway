@@ -329,7 +329,8 @@ var TextFieldDefinition = (function () {
         runs[i].x += offset;
       }
     }
-    runs.length = 0;
+    state.lines.push(runs);
+    state.line = [];
     state.maxLineWidth = Math.max(state.maxLineWidth, state.x);
     state.x = 0;
     // TODO: it seems like Flash makes lines 2px higher than just the font-size.
@@ -465,6 +466,10 @@ var TextFieldDefinition = (function () {
       this._selectable = true;
       this._textWidth = 0;
       this._textHeight = 0;
+      this._scrollV = 1;
+      this._maxScrollV = 1;
+      this._bottomScrollV = 1;
+      this._numLines = 1;
       this._embedFonts = false;
       this._autoSize = 'none';
       this._wordWrap = false;
@@ -616,7 +621,7 @@ var TextFieldDefinition = (function () {
       var initialFormat = this._defaultTextFormat;
       var firstRun = {type: 'f', format: initialFormat};
       var width = Math.max(bounds.xMax / 20 - 4, 1);
-      var state = {ctx: measureCtx, y: 0, x: 0, w: width, line: [],
+      var state = {ctx: measureCtx, y: 0, x: 0, w: width, line: [], lines: [],
                    lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
                    currentFormat: initialFormat, runs: [firstRun],
                    wordWrap: this._wordWrap,
@@ -624,6 +629,7 @@ var TextFieldDefinition = (function () {
       collectRuns(this._content.tree, state);
       this._textWidth = state.maxLineWidth;
       this._textHeight = state.y;
+      this._numLines = state.lines.length;
       this._content.textruns = state.runs;
       var autoSize = this._autoSize;
       if (autoSize !== 'none') {
@@ -834,6 +840,36 @@ var TextFieldDefinition = (function () {
             return this._textWidth;
           }
         },
+        scrollV: {
+          get: function scrollV() {
+            somewhatImplemented('TextField#scrollV');
+            return this._scrollV;
+          },
+          set: function scrollV(value) {
+            somewhatImplemented('TextField#scrollV');
+            this._scrollV = value;
+          }
+        },
+        bottomScrollV: {
+          get: function scrollV() {
+            somewhatImplemented('TextField#scrollV');
+            return this._bottomScrollV;
+          }
+        },
+        maxScrollV: {
+          get: function maxScrollV() { // (void) -> Number
+            somewhatImplemented('TextField#maxScrollV');
+            this.ensureDimensions();
+            return this._maxScrollV;
+          }
+        },
+        maxScrollH: {
+          get: function maxScrollH() { // (void) -> Number
+            this.ensureDimensions();
+            // For whatever reason, maxScrollH is always 8px more than expected.
+            return Math.max(this._textWidth - this._bbox.xMax/20 + 4, 0);
+          }
+        },
         background: {
           get: function background() { // (void) -> Boolean
             return this._background;
@@ -917,8 +953,8 @@ var TextFieldDefinition = (function () {
         },
         numLines: {
           get: function numLines() { // (void) -> uint
-            somewhatImplemented("TextField.numLines");
-            return 1;
+            this.ensureDimensions();
+            return this._numLines;
           }
         },
         length: {
