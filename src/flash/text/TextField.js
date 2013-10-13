@@ -291,7 +291,7 @@ var TextFieldDefinition = (function () {
     if (size > state.lineHeight) {
       state.lineHeight = size;
     }
-}
+  }
   function finishLine(state) {
     if (state.lineHeight === 0) {
       return;
@@ -916,6 +916,19 @@ var TextFieldDefinition = (function () {
           get: function length() { // (void) -> uint
             return this._content.text.length;
           }
+        },
+        sharpness: {
+          get: function sharpness() { // (void) -> Number
+            return this._sharpness;
+          },
+          set: function sharpness(value) { // (value:Number) -> void
+            somewhatImplemented("TextField.sharpness");
+            this._sharpness = value;
+          }
+        },
+        getLineMetrics: function (lineIndex) { // (lineIndex:int) -> TextLineMetrics
+          somewhatImplemented("TextField.getLineMetrics, ");
+          return new flash.text.TextLineMetrics(0, 8, 8);
         }
       }
     }

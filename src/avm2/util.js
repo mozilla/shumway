@@ -287,13 +287,25 @@ function toKeyValueArray(o) {
 }
 
 /**
- * Checks for numeric values of the form: 1, "0123", "1.4", "+13", "+0x5".
+ * Checks for key names that don't need to be prefixed.
+ * TODO: Rename this and clean up the code that deals with prefixed vs. non-prefixed key names.
  */
 function isNumeric(x) {
   if (typeof x === "number") {
-    return true;
-  } else if (typeof x === "string") {
-    return !isNaN(parseInt(x, 10));
+    return x === (x | 0);
+  }
+  if (typeof x === "string" && x.length) {
+    if (x === "0") {
+      return true;
+    }
+    if ((x[0] >= '1') && (x[0] <= '9')) {
+      for (var i = 1; i < x.length; i++) {
+        if (!((x[i] >= '1') && (x[i] <= '9'))) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
   return false;
 }
