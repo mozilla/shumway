@@ -31,7 +31,7 @@ var TextFieldDefinition = (function () {
    * After that, two things are generated: a plain-text version of the content,
    * and a tree of objects with types and attributes, representing all nodes.
    */
-  function parseHtml(val, initialFormat) {
+  function parseHtml(val, initialFormat, multiline) {
     htmlParser.innerHTML = val;
     var rootElement = htmlParser.childNodes.length !== 1 ?
                       htmlParser :
@@ -40,7 +40,8 @@ var TextFieldDefinition = (function () {
     var content = {text : '', htmlText: val, tree : createTrunk(initialFormat)};
 
     if (rootElement.nodeType === 3) {
-      convertNode(rootElement, content.tree.children[0].children, content);
+      convertNode(rootElement, content.tree.children[0].children, content,
+                  multiline);
       return content;
     }
 
@@ -71,7 +72,8 @@ var TextFieldDefinition = (function () {
       }
       initialNodeList = rootElement.childNodes;
     }
-    convertNodeList(initialNodeList, content.tree.children[0].children, content);
+    convertNodeList(initialNodeList, content.tree.children[0].children, content,
+                    multiline);
     return content;
   }
 
@@ -103,7 +105,7 @@ var TextFieldDefinition = (function () {
     'SPAN': true
   };
 
-  function convertNode(input, destinationList, content) {
+  function convertNode(input, destinationList, content, multiline) {
     // Ignore all comments, processing instructions and namespaced nodes.
     if (!(input.nodeType === 1 || input.nodeType === 3) || input.prefix) {
       return;
@@ -119,26 +121,30 @@ var TextFieldDefinition = (function () {
       return;
     }
     // For unknown node types, skip the node itself, but convert its children
-    // and add them to the parent's child list
+    // and add them to the parent's child list.
+    // If |multiline| is false, skip line-breaking nodes, too.
     var nodeType = input.localName.toUpperCase();
-    if (!knownNodeTypes[nodeType]) {
-      convertNodeList(input.childNodes, destinationList, content);
+    if (!knownNodeTypes[nodeType] ||
+        multiline === false && (nodeType === 'P' || nodeType === 'BR'))
+    {
+      convertNodeList(input.childNodes, destinationList, content, multiline);
       return;
     }
-    node = { type: nodeType,
-                 text: null,
-                 format: extractAttributes(input),
-                 children: []
-               };
+    node = {
+      type: nodeType,
+      text: null,
+      format: extractAttributes(input),
+      children: []
+    };
 
-    convertNodeList(input.childNodes, node.children, content);
+    convertNodeList(input.childNodes, node.children, content, multiline);
     destinationList.push(node);
   }
 
-  function convertNodeList(from, to, content) {
+  function convertNodeList(from, to, content, multiline) {
     var childCount = from.length;
     for (var i = 0; i < childCount; i++) {
-      convertNode(from[i], to, content);
+      convertNode(from[i], to, content, multiline);
     }
   }
 
@@ -167,20 +173,22 @@ var TextFieldDefinition = (function () {
     // for blockNodes, the current line is finished after child processing
     var blockNode = false;
     switch (node.type) {
-      case 'text': addRunsForText(state, node.text); return;
-      case 'BR':
-        if (state.multiline) {
+      case 'plain-text':
+        for (var i = 0; i < node.lines.length; i++) {
+          addRunsForText(state, node.lines[i]);
           finishLine(state);
         }
         return;
-
+      case 'text': addRunsForText(state, node.text); return;
+      case 'BR':
+        finishLine(state);
+        return;
       case 'LI': /* TODO: draw bullet points. */ /* falls through */
       case 'P':
-        if (state.multiline) {
-          finishLine(state);
-        }
+        finishLine(state);
         pushFormat(state, node);
-        blockNode = true; break;
+        blockNode = true;
+        break;
 
       case 'B': /* falls through */
       case 'I': /* falls through */
@@ -205,7 +213,7 @@ var TextFieldDefinition = (function () {
     if (formatNode) {
       popFormat(state);
     }
-    if (blockNode && state.multiline) {
+    if (blockNode) {
       finishLine(state);
     }
   }
@@ -219,7 +227,7 @@ var TextFieldDefinition = (function () {
     if (!text) {
       return;
     }
-    if (!(state.wordWrap && state.multiline)) {
+    if (!state.wordWrap) {
       addTextRun(state, text, state.ctx.measureText(text).width);
       return;
     }
@@ -311,7 +319,7 @@ var TextFieldDefinition = (function () {
     } else if (state.combinedAlign !== align) {
       state.combinedAlign = 'mixed';
     }
-    // TODO: maybe support justfied text somehow
+    // TODO: maybe support justified text somehow
     if (align === 'center' || align === 'right') {
       var offset = Math.max(state.w - state.x, 0);
       if (align === 'center') {
@@ -395,8 +403,7 @@ var TextFieldDefinition = (function () {
     state.ctx.font = state.str;
   }
   function makeFormatString(format) {
-    //TODO: verify that px is the right unit
-    // order of the font arguments: <style> <weight> <size> <family>
+    // Order of the font arguments: <style> <weight> <size> <family>
     var boldItalic = '';
     if (format.italic) {
       boldItalic += 'italic';
@@ -612,12 +619,9 @@ var TextFieldDefinition = (function () {
       var state = {ctx: measureCtx, y: 0, x: 0, w: width, line: [],
                    lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
                    currentFormat: initialFormat, runs: [firstRun],
-                   multiline: this._multiline, wordWrap: this._wordWrap,
+                   wordWrap: this._wordWrap,
                    combinedAlign: null, textColor: this._textColor};
       collectRuns(this._content.tree, state);
-      if (!state.multiline) {
-        finishLine(state);
-      }
       this._textWidth = state.maxLineWidth;
       this._textHeight = state.y;
       this._content.textruns = state.runs;
@@ -668,10 +672,15 @@ var TextFieldDefinition = (function () {
       if (this._content && this._content.text === val) {
         return;
       }
-      this._content = { text: val, tree: createTrunk(this._defaultTextFormat),
-                        htmlText: val
+      //TODO: properly parse the text instead of creating heaps of garbage
+      var lines = val.split('\r\n').join('\n').split('\r').join('\n').
+                      split('\n');
+      this._content = { tree: createTrunk(this._defaultTextFormat),
+                        text: val, htmlText: val
                       };
-      this._content.tree.children[0].children[0] = {type: 'text', text: val };
+      this._content.tree.children[0].children[0] = {
+        type: 'plain-text', lines: lines
+      };
       this.invalidateDimensions();
     },
 
@@ -682,7 +691,7 @@ var TextFieldDefinition = (function () {
       if (this._htmlText === val) {
         return;
       }
-      this._content = parseHtml(val, this._defaultTextFormat);
+      this._content = parseHtml(val, this._defaultTextFormat, this._multiline);
       this.invalidateDimensions();
     },
 
