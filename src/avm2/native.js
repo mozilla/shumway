@@ -974,16 +974,52 @@ var natives = (function () {
    * JSON.as
    */
   function JSONClass(runtime, scope, instanceConstructor, baseClass) {
+
+    /**
+     * Transforms a JS value into an AS value.
+     */
+    function transformJSValueToAS(value) {
+      if (typeof value !== "object") {
+        return value;
+      }
+      var keys = Object.keys(value);
+      var result = value instanceof Array ? [] : {};
+      for (var i = 0; i < keys.length; i++) {
+        result.asSetPublicProperty(keys[i], transformJSValueToAS(value[keys[i]]));
+      }
+      return result;
+    }
+
+    /**
+     * Transforms an AS value into a JS value.
+     */
+    function transformASValueToJS(value) {
+      if (typeof value !== "object") {
+        return value;
+      }
+      var keys = Object.keys(value);
+      var result = value instanceof Array ? [] : {};
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        var jsKey = key;
+        if (!isNumeric(key)) {
+          jsKey = fromResolvedName(key);
+        }
+        result[jsKey] = transformASValueToJS(value[key]);
+      }
+      return result;
+    }
+
     function ASJSON() {}
     var c = new Class("JSON", ASJSON, C(ASJSON));
     c.extend(baseClass);
     c.native = {
       static: {
         parseCore: function parseCore(text) { // (text:String) -> Object
-          return JSON.parse(text);
+          return transformJSValueToAS(JSON.parse(text));
         },
         stringifySpecializedToString: function stringifySpecializedToString(value, replacerArray, replacerFunction, gap) { // (value:Object, replacerArray:Array, replacerFunction:Function, gap:String) -> String
-          return JSON.stringify(value, replacerFunction, gap);
+          return JSON.stringify(transformASValueToJS(value), replacerFunction, gap);
         }
       }
     };
