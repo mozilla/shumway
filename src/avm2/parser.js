@@ -813,7 +813,7 @@ var Multiname = (function () {
     } else if (name !== null && isObject(name)) {
       return name;
     }
-    release || assert (isString(name) || isNullOrUndefined(name));
+    // release || assert (isString(name) || isNullOrUndefined(name));
     return PUBLIC_QUALIFIED_NAME_PREFIX + name;
   };
 
