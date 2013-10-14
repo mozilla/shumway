@@ -1128,6 +1128,9 @@ var LoaderDefinition = (function () {
     _load: function (request, checkPolicyFile, applicationDomain,
                      securityDomain, deblockingFilter)
     {
+      if (!isWorker && flash.net.URLRequest.class.isInstanceOf(request)) {
+        this._contentLoaderInfo._url = request._url;
+      }
       if (!isWorker && WORKERS_ENABLED) {
         var loader = this;
         var worker = loader._worker = new Worker(SHUMWAY_ROOT + LOADER_PATH);
@@ -1217,7 +1220,7 @@ var LoaderDefinition = (function () {
           def._load(bytes.a);
         },
         _unload: function _unload(halt, gc) { // (halt:Boolean, gc:Boolean) -> void
-          notImplemented("Loader._unload");
+          somewhatImplemented("Loader._unload, do we even need to do anything here?");
         },
         _close: function _close() { // (void) -> void
           somewhatImplemented("Loader._close");
