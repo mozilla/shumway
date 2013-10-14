@@ -95,11 +95,14 @@ var BitmapDataDefinition = (function () {
         this._ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
       }
       this._ctx.globalCompositeOperation = getBlendModeName(blendMode);
+      this._ctx.imageSmoothingEnabled = this._ctx.mozImageSmoothingEnabled =
+                                        !!smoothing;
       if (flash.display.BitmapData.class.isInstanceOf(source)) {
         this._ctx.drawImage(source._drawable, 0, 0);
       } else {
         (new RenderVisitor(source, this._ctx, null, true)).startFragment();
       }
+      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = false;
       this._ctx.restore();
       this._invalidate();
     },

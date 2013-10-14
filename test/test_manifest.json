@@ -63,6 +63,11 @@
       "swf": "/examples/bitmap/flex-bitmap/flexbitmap.swf",
       "type": "eq"
     },
+    {  "id": "non-smoothed-bitmap-ref",
+      "frames": [0],
+      "swf": "/examples/bitmap/non-smoothed-bitmap/nonsmoothedbitmap.swf",
+      "type": "eq"
+    },
     {  "id": "pac-ref",
        "frames": [10, 25, 50],
        "swf": "/examples/pac/pac.swf",
