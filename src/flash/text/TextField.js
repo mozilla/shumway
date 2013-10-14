@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global avm1lib, rgbaObjToStr, rgbIntAlphaToStr, warning */
+/*global avm1lib, rgbaObjToStr, rgbIntAlphaToStr, warning, FontDefinition */
 
 var TextFieldDefinition = (function () {
 
@@ -298,14 +298,16 @@ var TextFieldDefinition = (function () {
     state.x += width;
     if (size > state.lineHeight) {
       state.lineHeight = size;
+      state.metrics = state.currentFormat.font._metrics;
     }
   }
   function finishLine(state) {
-    if (state.lineHeight === 0) {
+    var size = state.lineHeight;
+    if (size === 0) {
       return;
     }
-    var fontLeading = state.currentFormat.metrics ? state.currentFormat.metrics.leading : 0;
-    state.y += state.lineHeight - fontLeading;
+    var metrics = state.metrics;
+    state.y += metrics.ascent * size|0;
     var y = state.y;
     var runs = state.line;
     var run, i;
@@ -333,15 +335,18 @@ var TextFieldDefinition = (function () {
     state.line = [];
     state.maxLineWidth = Math.max(state.maxLineWidth, state.x);
     state.x = 0;
-    // TODO: it seems like Flash makes lines 2px higher than just the font-size.
-    // Verify this.
-    state.y += state.currentFormat.leading + 2;
+    if (y <= state.h) {
+      state.visibleLines++;
+    }
+    state.y += (metrics.descent + metrics.leading) * size +
+               state.currentFormat.leading|0;
     state.lineHeight = 0;
+    state.metrics = null;
   }
   function pushFormat(state, node) {
     var attributes = node.format;
     var format = Object.create(state.formats[state.formats.length - 1]);
-    var metricsChanged = false;
+    var fontChanged = false;
     switch (node.type) {
       case 'P':
         if (attributes.ALIGN === format.align) {
@@ -349,19 +354,24 @@ var TextFieldDefinition = (function () {
         }
         format.align = attributes.ALIGN;
         break;
-      case 'B': format.bold = true; break;
-      case 'I': format.italic = true; break;
+      case 'B':
+        format.bold = true;
+        fontChanged = true;
+        break;
+      case 'I':
+        format.italic = true;
+        fontChanged = true;
+        break;
       case 'FONT':
         if (attributes.COLOR !== undefined) {
           format.color = attributes.COLOR;
         }
         if (attributes.FACE !== undefined) {
-          format.face = convertFontFamily(attributes.FACE, true);
-          metricsChanged = true;
+          format.face = attributes.FACE;
+          fontChanged = true;
         }
         if (attributes.SIZE !== undefined) {
           format.size = parseFloat(attributes.SIZE);
-          metricsChanged = true;
         }
         if (attributes.LETTERSPACING !== undefined) {
           format.letterspacing = parseFloat(attributes.LETTERSPACING);
@@ -380,7 +390,7 @@ var TextFieldDefinition = (function () {
           state.x += attributes.INDENT;
         }
         // TODO: support leftMargin, rightMargin & blockIndent
-        // TODO: support tabStops, if possible
+        // TODO: support tabStops
         break;
       default:
         warning('Unknown format node encountered: ' + node.type); return;
@@ -388,10 +398,10 @@ var TextFieldDefinition = (function () {
     if (state.textColor !== null) {
       format.color = rgbIntAlphaToStr(state.textColor, 1);
     }
-    format.str = makeFormatString(format);
-    if (metricsChanged) {
-      updateFontMetrics(format);
+    if (fontChanged) {
+      resolveFont(format, state.embedFonts);
     }
+    format.str = makeFormatString(format);
     state.formats.push(format);
     state.runs.push({type: 'f', format: format});
     state.currentFormat = format;
@@ -412,46 +422,35 @@ var TextFieldDefinition = (function () {
     if (format.bold) {
       boldItalic += ' bold';
     }
-    return boldItalic + format.size + 'px ' + format.face;
+    // We don't use format.face because format.font contains the resolved name.
+    return boldItalic + ' ' + format.size + 'px ' +
+           (format.font._uniqueName || format.font._fontName);
   }
 
-  function convertFontFamily(face, translateToUnique) {
-    //TODO: adapt to embedded font names
-    var family;
-    if (face.indexOf('_') === 0) {
-      // reserved fonts
-      if (face.indexOf('_sans') === 0) {
-        family = 'sans-serif';
-      } else if (face.indexOf('_serif') === 0) {
-        family = 'serif';
-      } else if (face.indexOf('_typewriter') === 0) {
-        family = 'monospace';
-      }
-    } else if (translateToUnique) {
-      var font = flash.text.Font.class.native.static._findFont(function (f) {
-        return f._fontName === face;
-      });
-      if (font) {
-        family = font._uniqueName;
-      }
+  function resolveFont(format, embedded) {
+    var face = format.face.toLowerCase();
+    if (face === '_sans') {
+      face = 'sans-serif';
+    } else if (face === '_serif') {
+      face = 'serif';
+    } else if (face === '_typewriter') {
+      face = 'monospace';
     }
-    return family || face;
-  }
-
-  function updateFontMetrics(format) {
-    var font = flash.text.Font.class.native.static._findFont(function (f) {
-      return f._uniqueName === format.face;
-    });
-    var metrics = font && font._metrics;
-    if (!metrics) {
-      format.metrics = null;
-      return;
+    var style;
+    if (format.bold) {
+      if (format.italic) {
+        style = 'boldItalic';
+      } else {
+        style = 'bold';
+      }
+    } else if (format.italic) {
+      style = 'italic';
+    } else {
+      style = 'regular';
     }
-    format.metrics = {
-      leading: format.size * metrics.leading,
-      ascent: format.size * metrics.ascent,
-      descent: format.size * metrics.descent
-    };
+    var font = FontDefinition.getFont(face, style, embedded);
+    assert(font);
+    format.font = font;
   }
 
   var def = {
@@ -511,9 +510,13 @@ var TextFieldDefinition = (function () {
         initialFormat.color = rgbaObjToStr(tag.color);
       }
       if (tag.hasFont) {
-        initialFormat.face = convertFontFamily(tag.font);
+        var font = FontDefinition.getFontByUniqueName(tag.font);
+        initialFormat.font = font;
+        initialFormat.face = font._fontName;
+        initialFormat.bold = font.symbol.bold;
+        initialFormat.italic = font.symbol.italic;
+        initialFormat.str = makeFormatString(initialFormat);
       }
-      initialFormat.str = makeFormatString(initialFormat);
 
       this._embedFonts = !!tag.useOutlines;
 
@@ -529,8 +532,6 @@ var TextFieldDefinition = (function () {
       this._wordWrap = !!tag.wordWrap;
       this._border = !!tag.border;
       // TODO: Find out how the IDE causes textfields to have a background
-
-      updateFontMetrics(initialFormat);
 
       if (tag.initialText) {
         if (tag.html) {
@@ -567,7 +568,7 @@ var TextFieldDefinition = (function () {
       ctx.save();
 
       ctx.beginPath();
-      ctx.rect(0, 0, width, height);
+      ctx.rect(0, 0, width + 1, height + 1);
       ctx.clip();
       if (this._background) {
         colorTransform.setFillStyle(ctx, this._backgroundColorStr);
@@ -577,7 +578,7 @@ var TextFieldDefinition = (function () {
         colorTransform.setStrokeStyle(ctx, this._borderColorStr);
         ctx.lineCap = "square";
         ctx.lineWidth = 1;
-        ctx.strokeRect(0.5, 0.5, (width - 1)|0, (height - 1)|0);
+        ctx.strokeRect(0.5, 0.5, width|0, height|0);
       }
       ctx.closePath();
 
@@ -621,14 +622,16 @@ var TextFieldDefinition = (function () {
       var initialFormat = this._defaultTextFormat;
       var firstRun = {type: 'f', format: initialFormat};
       var width = Math.max(bounds.xMax / 20 - 4, 1);
-      var state = {ctx: measureCtx, y: 0, x: 0, w: width, line: [], lines: [],
-                   lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
-                   currentFormat: initialFormat, runs: [firstRun],
-                   wordWrap: this._wordWrap,
-                   combinedAlign: null, textColor: this._textColor};
+      var height = Math.max(bounds.yMax / 20 - 4, 1);
+      var state = {ctx: measureCtx, y: 0, x: 0, w: width, h: height,
+                   lineHeight: 0, maxLineWidth: 0,
+                   formats: [initialFormat], currentFormat: initialFormat,
+                   line: [], lines: [], runs: [firstRun],
+                   wordWrap: this._wordWrap, combinedAlign: null,
+                   textColor: this._textColor, embedFonts: this._embedFonts};
       collectRuns(this._content.tree, state);
-      this._textWidth = state.maxLineWidth;
-      this._textHeight = state.y;
+      this._textWidth = state.maxLineWidth|0;
+      this._textHeight = state.y|0;
       this._numLines = state.lines.length;
       this._content.textruns = state.runs;
       var autoSize = this._autoSize;
@@ -665,7 +668,7 @@ var TextFieldDefinition = (function () {
           this._currentTransform.tx += diffX*20|0;
           bounds.xMax = (targetWidth*20|0) + 80;
         }
-        bounds.yMax = (this._textHeight*20|0) + 120;
+        bounds.yMax = (this._textHeight*20|0) + 80;
         this._invalidateBounds();
       }
       this._dimensionsValid = true;
@@ -706,6 +709,7 @@ var TextFieldDefinition = (function () {
     },
     set defaultTextFormat(val) {
       this._defaultTextFormat = val.toObject();
+      this._defaultTextFormat.face = val._font;
       this.invalidateDimensions();
     },
 
