@@ -79,9 +79,10 @@ function defineFont(tag, dictionary) {
     ranges.push([UAC_OFFSET, UAC_OFFSET + glyphCount - 1, indices]);
   }
 
-  var ascent = Math.ceil(tag.ascent / 20) || 1024;
-  var descent = -Math.ceil(tag.descent / 20) || 0;
-  var leading = Math.floor(tag.leading / 20) || 0;
+  var resolution = tag.resolution || 1;
+  var ascent = Math.ceil(tag.ascent / resolution) || 1024;
+  var descent = -Math.ceil(tag.descent / resolution) | 0;
+  var leading = (tag.leading / resolution) | 0;
   tables['OS/2'] =
     '\x00\x01' + // version
     '\x00\x00' + // xAvgCharWidth
@@ -164,7 +165,6 @@ function defineFont(tag, dictionary) {
 
   var glyf = '\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x31\x00';
   var loca = '\x00\x00';
-  var resolution = tag.resolution || 1;
   var offset = 16;
   var maxPoints = 0;
   var xMins = [];
@@ -323,7 +323,6 @@ function defineFont(tag, dictionary) {
   ;
 
   var advance = tag.advance;
-  var resolution = tag.resolution || 1;
   tables['hhea'] =
     '\x00\x01\x00\x00' + // version
     toString16(ascent) + // ascender
@@ -478,7 +477,7 @@ function defineFont(tag, dictionary) {
   var unitPerEm = 1024;
   var metrics = {
     ascent: ascent / unitPerEm,
-    descent: descent / unitPerEm,
+    descent: -descent / unitPerEm,
     leading: leading / unitPerEm
   };
 
@@ -489,6 +488,8 @@ function defineFont(tag, dictionary) {
     uniqueName: psName + uniqueId,
     codes: codes,
     metrics: metrics,
+    bold: tag.bold === 1,
+    italic: tag.italic === 1,
     data: otf
   };
 }

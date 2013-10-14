@@ -937,6 +937,8 @@ var LoaderDefinition = (function () {
         props.name = symbol.name;
         props.uniqueName = symbol.uniqueName;
         props.charset = symbol.charset;
+        props.bold = symbol.bold;
+        props.italic = symbol.italic;
         props.metrics = symbol.metrics;
         this._registerFont(className, props);
         break;
