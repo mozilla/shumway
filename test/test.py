@@ -577,7 +577,7 @@ def maybeUpdateRefImages(options, browser):
     if options.masterMode and (0 < State.numEqFailures or 0 < State.numEqNoSnapshot): 
         print "Some eq tests failed or didn't have snapshots."
         print 'Checking to see if master references can be updated...'
-        numFatalFailures = (State.numErrors + State.numStasFailures)
+        numFatalFailures = State.numErrors
         if 0 < numFatalFailures:
             print '  No.  Some non-eq tests failed.'
         else:
