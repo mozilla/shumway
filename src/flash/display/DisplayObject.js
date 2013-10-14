@@ -199,13 +199,31 @@ var DisplayObjectDefinition = (function () {
     },
 
     _getConcatenatedTransform: function (toDeviceSpace) {
+      var stage = this._stage;
+
+      if (this === this._stage) {
+        return toDeviceSpace ? this._concatenatedTransform : this._currentTransform;
+      }
+
       var m, m2;
+
+      if (this._parent === stage) {
+        m = this._concatenatedTransform;
+        m2 = this._currentTransform;
+        m.a = m2.a;
+        m.b = m2.b;
+        m.c = m2.c;
+        m.d = m2.d;
+        m.tx = m2.tx;
+        m.ty = m2.ty;
+        return m;
+      }
 
       if (this._concatenatedTransform.invalid) {
         var stack = [this];
 
         var currentNode = this._parent;
-        while (currentNode !== this._stage) {
+        while (currentNode !== stage) {
           if (currentNode._concatenatedTransform.invalid) {
             stack.push(currentNode);
           }
@@ -219,7 +237,7 @@ var DisplayObjectDefinition = (function () {
 
           m2 = node._currentTransform;
 
-          if (node._parent) {
+          if (node._parent !== stage) {
             var m3 = node._parent._concatenatedTransform;
             m.a = m2.a * m3.a + m2.b * m3.c;
             m.b = m2.a * m3.b + m2.b * m3.d;
@@ -227,13 +245,6 @@ var DisplayObjectDefinition = (function () {
             m.d = m2.d * m3.d + m2.c * m3.b;
             m.tx = m2.tx * m3.a + m3.tx + m2.ty * m3.c;
             m.ty = m2.ty * m3.d + m3.ty + m2.tx * m3.b;
-          } else {
-            m.a = m2.a;
-            m.b = m2.b;
-            m.c = m2.c;
-            m.d = m2.d;
-            m.tx = m2.tx;
-            m.ty = m2.ty;
           }
 
           m.invalid = false;
@@ -242,8 +253,8 @@ var DisplayObjectDefinition = (function () {
         m = this._concatenatedTransform;
       }
 
-      if (toDeviceSpace && this._stage) {
-        m2 = this._stage._currentTransform;
+      if (toDeviceSpace && stage) {
+        m2 = stage._concatenatedTransform;
         return { a: m.a * m2.a,
                  b: m.b * m2.d,
                  c: m.c * m2.a,

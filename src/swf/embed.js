@@ -104,7 +104,7 @@ SWF.embed = function(file, doc, container, options) {
         } while ((node = node.offsetParent));
       }
 
-      var m = stage._currentTransform;
+      var m = stage._concatenatedTransform;
       var mouseX = ((domEvt.pageX - left) * pixelRatio - m.tx) / m.a;
       var mouseY = ((domEvt.pageY - top) * pixelRatio - m.ty) / m.d;
 
