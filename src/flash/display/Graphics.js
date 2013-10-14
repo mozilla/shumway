@@ -317,14 +317,15 @@ var GraphicsDefinition = (function () {
       var xMins = [], yMins = [], xMaxs = [], yMaxs = [];
       for (var i = 0, n = subpaths.length; i < n; i++) {
         var path = subpaths[i];
-        var b = path.getBounds(true);
-        if (b) {
-          xMins.push(b.xMin);
-          yMins.push(b.yMin);
-          xMaxs.push(b.xMax);
-          yMaxs.push(b.yMax);
+        if (path.commands.length) {
+          var b = path.getBounds(true);
+          if (b) {
+            xMins.push(b.xMin);
+            yMins.push(b.yMin);
+            xMaxs.push(b.xMax);
+            yMaxs.push(b.yMax);
+          }
         }
-
       }
       if (xMins.length === 0) {
         return 0;
