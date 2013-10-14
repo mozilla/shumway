@@ -594,7 +594,7 @@ function renderStage(stage, ctx, events) {
 
     ctx.setTransform(scaleX, 0, 0, scaleY, offsetX, offsetY);
 
-    var m = stage._currentTransform;
+    var m = stage._concatenatedTransform;
     m.a = scaleX;
     m.d = scaleY;
     m.tx = offsetX;
