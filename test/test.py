@@ -532,9 +532,9 @@ def checkStas(task, results, browser):
 
           traceLog.write('REFTEST TEST-UNEXPECTED-FAIL | ' + browser +'-'+ taskId +'-item'+ str(p + 1) + ' | trace\n')
           traceLog.write('<<<<\n')
-          traceLog.write(snapshot['data1'])
+          traceLog.write(snapshot['data1'].encode('utf-8'))
           traceLog.write('====\n')
-          traceLog.write(snapshot['data2'])
+          traceLog.write(snapshot['data2'].encode('utf-8'))
           traceLog.write('>>>>\n')
 
           passed = False

@@ -571,17 +571,28 @@ function utf8encode(bytes) {
       } while (validBits >= 0);
 
       if (validBits <= 0) {
-        throw "Invalid UTF8 character";
+        // Invalid UTF8 character -- copying as is
+        str += String.fromCharCode(b1);
+        continue;
       }
       var code = (b1 & ((1 << validBits) - 1));
+      var invalid = false;
       for (var i = 5; i >= validBits; --i) {
         var bi = bytes[j++];
         if ((bi & 0xC0) != 0x80) {
-          throw "Invalid UTF8 character sequence";
+          // Invalid UTF8 character sequence
+          invalid = true;
+          break;
         }
         code = (code << 6) | (bi & 0x3F);
       }
-
+      if (invalid) {
+        // Copying invalid sequence as is
+        for (var k = j - (7 - i); k < j; ++k) {
+          str += String.fromCharCode(bytes[k] & 255);
+        }
+        continue;
+      }
       if (code >= 0x10000) {
         str += String.fromCharCode((((code - 0x10000) >> 10) & 0x3FF) |
           0xD800, (code & 0x3FF) | 0xDC00);
