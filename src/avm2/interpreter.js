@@ -417,13 +417,12 @@ var Interpreter = new ((function () {
                                                        tmpMultiname.flags);
             break;
           case 0x6C: // OP_getslot
-            stack[stack.length - 1] = getSlot(stack[stack.length - 1],
-                                              bc.index);
+            stack[stack.length - 1] = asGetSlot(stack[stack.length - 1], bc.index);
             break;
           case 0x6D: // OP_setslot
             value = stack.pop();
             obj = stack.pop();
-            setSlot(obj, bc.index, value);
+            asSetSlot(obj, bc.index, value);
             break;
           case 0x70: // OP_convert_s
             stack[stack.length - 1] = stack[stack.length - 1] + '';

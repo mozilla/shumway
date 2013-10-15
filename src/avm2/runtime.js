@@ -721,11 +721,11 @@ function publicizeProperties(object) {
   }
 }
 
-function getSlot(object, index) {
+function asGetSlot(object, index) {
   return object[object[VM_SLOTS][index].name];
 }
 
-function setSlot(object, index, value) {
+function asSetSlot(object, index, value) {
   var binding = object[VM_SLOTS][index];
   if (binding.const) {
     return;

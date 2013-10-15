@@ -615,13 +615,13 @@
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
     var value = compileValue(this.value, cx);
-    return(call(id("setSlot"), [object, name, value]));
+    return(call(id("asSetSlot"), [object, name, value]));
   };
 
   IR.ASGetSlot.prototype.compile = function (cx) {
     var object = compileValue(this.object, cx);
     var name = compileValue(this.name, cx);
-    return(call(id("getSlot"), [object, name]));
+    return(call(id("asGetSlot"), [object, name]));
   };
 
   IR.Projection.prototype.compile = function (cx) {
