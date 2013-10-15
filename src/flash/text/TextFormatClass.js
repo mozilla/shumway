@@ -27,36 +27,42 @@ var TextFormatDefinition = (function () {
     },
     // TODO: make this a static function and call the ctor with the right args
     fromObject: function(obj) {
-      this._font = obj.font;
-      this._size = obj.size;
-      this._color = obj.color;
-      this._bold = obj.bold;
-      this._italic = obj.italic;
-      this._underline = obj.underline;
-      this._url = obj.url;
-      this._target = obj.target;
-      this._align = obj.align;
-      this._leftMargin = obj.leftMargin;
-      this._rightMargin = obj.rightMargin;
-      this._indent = obj.indent;
-      this._leading = obj.leading;
+      this._font = obj.font || null;
+      this._size = typeof obj.size === 'number' ? obj.size : null;
+      this._color = typeof obj.color === 'number' ? obj.color : null;
+      this._bold = typeof obj.bold === 'boolean' ? obj.bold : null;
+      this._italic = typeof obj.italic === 'boolean' ? obj.italic : null;
+      this._underline = typeof obj.underline === 'boolean'
+                        ? obj.underline
+                        : null;
+      this._url = obj.url || null;
+      this._target = obj.target || null;
+      this._align = obj.align || null;
+      this._leftMargin = typeof obj.leftMargin === 'number'
+                         ? obj.leftMargin
+                         : null;
+      this._rightMargin = typeof obj.rightMargin === 'number'
+                          ? obj.rightMargin
+                          : null;
+      this._indent = typeof obj.indent === 'number' ? obj.indent : null;
+      this._leading = typeof obj.leading === 'number' ? obj.leading : null;
       return this;
     },
     toObject: function() {
       return {
-        font: this._font,
-        size: this._size,
-        color: this._color,
-        bold: this._bold,
-        italic: this._italic,
-        underline: this._underline,
+        font: this._font || 'serif',
+        size: this._size || 12,
+        color: this._color || 0x0,
+        bold: this._bold || false,
+        italic: this._italic || false,
+        underline: this._underline || false,
         url: this._url,
         target: this._target,
-        align: this._align,
-        leftMargin: this._leftMargin,
-        rightMargin: this._rightMargin,
-        indent: this._indent,
-        leading: this._leading
+        align: this._align || 'left',
+        leftMargin: this._leftMargin || 0,
+        rightMargin: this._rightMargin || 0,
+        indent: this._indent || 0,
+        leading: this._leading || 0
       };
     },
     __glue__: {
