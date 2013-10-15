@@ -19,12 +19,22 @@
 /* global Errors, throwError */
 
 var EventDispatcherDefinition = (function () {
+  // Dictionary of all mouse events with the event type as key and a
+  // value specifying if bubbling is enabled.
+  var mouseEvents = { click: true, contextMenu: true, doubleClick: true,
+                      middleClick: true, middleMouseDown: true,
+                      middleMouseUp: true, mouseDown: true, mouseMove: true,
+                      mouseOut: true, mouseOver: true, mouseUp: true,
+                      mouseWheel: true, releaseOutside: true, rightClick: true,
+                      rightMouseDown: true, rightMouseUp: true, rollOut: false,
+                      rollOver: false };
+
   function doDispatchEvent(dispatcher, event, eventClass) {
     var target = dispatcher._target;
     var type = event._type || event;
     var listeners = dispatcher._listeners[type];
 
-    if (event._bubbles) {
+    if ((typeof event === 'string' && mouseEvents[event]) || event._bubbles) {
       var ancestors = [];
       var currentNode = target._parent;
       while (currentNode) {
@@ -85,8 +95,19 @@ var EventDispatcherDefinition = (function () {
 
         if (needsInit) {
           if (typeof event === 'string') {
-            event = eventClass ? new eventClass(event) :
-                                 new flash.events.Event(event);
+            if (eventClass) {
+              event = new eventClass(event);
+            } else {
+              if (event in mouseEvents) {
+                event = new flash.events.MouseEvent(event, mouseEvents[event]);
+                if (target._stage) {
+                  event._localX = target.mouseX;
+                  event._localY = target.mouseY;
+                }
+              } else {
+                event = new flash.events.Event(event);
+              }
+            }
           } else if (event._target) {
             event = event.clone();
           }

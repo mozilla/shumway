@@ -42,7 +42,7 @@ var StageDefinition = (function () {
       this._qtree = null;
       this._invalidObjects = [];
       this._mouseMoved = false;
-      this._clickTarget = this;
+      this._mouseTarget = this;
       this._cursor = 'auto';
 
       this._concatenatedTransform.invalid = false;
@@ -284,16 +284,16 @@ var StageDefinition = (function () {
         target = target._hitTarget;
       }
 
-      if (target === this._clickTarget) {
-        target._dispatchEvent(new flash.events.MouseEvent('mouseMove'));
+      if (target === this._mouseTarget) {
+        target._dispatchEvent('mouseMove');
       } else {
-        if (this._clickTarget._buttonMode) {
-          this._clickTarget._gotoButtonState('up');
+        if (this._mouseTarget._buttonMode) {
+          this._mouseTarget._gotoButtonState('up');
         }
 
-        this._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseOut'));
+        this._mouseTarget._dispatchEvent('mouseOut');
 
-        var nodeLeft = this._clickTarget;
+        var nodeLeft = this._mouseTarget;
         var containerLeft = nodeLeft._parent;
         var nodeEntered = target;
         var containerEntered = nodeEntered._parent;
@@ -301,7 +301,7 @@ var StageDefinition = (function () {
 
         while (nodeLeft._level >= 0 && nodeLeft !== containerEntered) {
           if (nodeLeft._hasEventListener('rollOut')) {
-            nodeLeft._dispatchEvent(new flash.events.MouseEvent('rollOut', false));
+            nodeLeft._dispatchEvent('rollOut');
           }
 
           nodeLeft = nodeLeft._parent;
@@ -309,7 +309,7 @@ var StageDefinition = (function () {
 
         while (nodeEntered._level >= 0 && nodeEntered !== containerLeft) {
           if (nodeEntered._hasEventListener('rollOver')) {
-            nodeEntered._dispatchEvent(new flash.events.MouseEvent('rollOver', false));
+            nodeEntered._dispatchEvent('rollOver');
           }
 
           if (nodeEntered._buttonMode && nodeEntered._useHandCursor) {
@@ -323,9 +323,9 @@ var StageDefinition = (function () {
           target._gotoButtonState('over');
         }
 
-        target._dispatchEvent(new flash.events.MouseEvent('mouseOver'));
+        target._dispatchEvent('mouseOver');
 
-        this._clickTarget = target;
+        this._mouseTarget = target;
         this._cursor = cursor;
       }
     },

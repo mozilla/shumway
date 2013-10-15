@@ -235,14 +235,23 @@ var DisplayObjectDefinition = (function () {
             m = node._concatenatedTransform;
             m2 = node._currentTransform;
 
-            if (node._parent !== stage) {
-              var m3 = node._parent._concatenatedTransform;
-              m.a = m2.a * m3.a + m2.b * m3.c;
-              m.b = m2.a * m3.b + m2.b * m3.d;
-              m.c = m2.c * m3.a + m2.d * m3.c;
-              m.d = m2.d * m3.d + m2.c * m3.b;
-              m.tx = m2.tx * m3.a + m3.tx + m2.ty * m3.c;
-              m.ty = m2.ty * m3.d + m3.ty + m2.tx * m3.b;
+            if (node._parent) {
+              if (node._parent !== this._stage) {
+                var m3 = node._parent._concatenatedTransform;
+                m.a = m2.a * m3.a + m2.b * m3.c;
+                m.b = m2.a * m3.b + m2.b * m3.d;
+                m.c = m2.c * m3.a + m2.d * m3.c;
+                m.d = m2.d * m3.d + m2.c * m3.b;
+                m.tx = m2.tx * m3.a + m3.tx + m2.ty * m3.c;
+                m.ty = m2.ty * m3.d + m3.ty + m2.tx * m3.b;
+              }
+            } else {
+              m.a = m2.a;
+              m.b = m2.b;
+              m.c = m2.c;
+              m.d = m2.d;
+              m.tx = m2.tx;
+              m.ty = m2.ty;
             }
 
             m.invalid = false;
