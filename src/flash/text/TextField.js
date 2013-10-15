@@ -474,7 +474,7 @@ var TextFieldDefinition = (function () {
       this._scrollV = 1;
       this._maxScrollV = 1;
       this._bottomScrollV = 1;
-      this._numLines = 1;
+      this._lines = [];
       this._embedFonts = false;
       this._autoSize = 'none';
       this._wordWrap = false;
@@ -637,7 +637,7 @@ var TextFieldDefinition = (function () {
       collectRuns(this._content.tree, state);
       this._textWidth = state.maxLineWidth|0;
       this._textHeight = state.line.y|0;
-      this._numLines = state.lines.length;
+      this._lines = state.lines;
       this._content.textruns = state.runs;
       var autoSize = this._autoSize;
       if (autoSize !== 'none') {
@@ -963,7 +963,7 @@ var TextFieldDefinition = (function () {
         numLines: {
           get: function numLines() { // (void) -> uint
             this.ensureDimensions();
-            return this._numLines;
+            return this._lines.length;
           }
         },
         length: {
@@ -981,8 +981,21 @@ var TextFieldDefinition = (function () {
           }
         },
         getLineMetrics: function (lineIndex) { // (lineIndex:int) -> TextLineMetrics
+          this.ensureDimensions();
+          if (lineIndex < 0 || lineIndex >= this._lines.length) {
+            throwError('RangeError', Errors.ParamRangeError);
+          }
           somewhatImplemented("TextField.getLineMetrics, ");
-          return new flash.text.TextLineMetrics(0, 8, 8);
+          var line = this._lines[lineIndex];
+          var format = line.largestFormat;
+          var fontMetrics = format.font._metrics;
+          var size = format.size;
+          return new flash.text.TextLineMetrics(line.x + 2, line.width|0,
+                                                line.height,
+                                                fontMetrics.ascent * size,
+                                                fontMetrics.descent * size,
+                                                fontMetrics.leading * size +
+                                                format.leading);
         }
       }
     }
