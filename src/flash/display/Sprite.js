@@ -58,6 +58,7 @@ var SpriteDefinition = (function () {
       var props = Object.create(symbolInfo.props);
 
       props.symbolId = cmd.symbolId;
+      props.depth = cmd.depth;
 
       if (cmd.clip) {
         props.clipDepth = cmd.clipDepth;
@@ -189,6 +190,7 @@ var SpriteDefinition = (function () {
       var props = Object.create(symbolInfo);
       props.name = name;
       props.parent = parent;
+      props.depth = depth;
 
       var instance = symbolClass.createAsSymbol(props);
       if (name)
