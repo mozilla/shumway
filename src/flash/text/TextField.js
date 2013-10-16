@@ -29,6 +29,7 @@ var TextFieldDefinition = (function () {
     this.width = 0;
     this.y = y;
     this.height = 0;
+    this.leading = 0;
     this.runs = [];
     this.largestFormat = null;
   }
@@ -309,7 +310,15 @@ var TextFieldDefinition = (function () {
     var run = {type: 't', text: text, x: line.width};
     state.runs.push(run);
     state.line.runs.push(run);
-    line.width += width;
+    line.width += width|0;
+    // TODO: Implement Flash's absurd behavior for leading
+    // Specifically, leading is only used if it is set by a <div> tag, or by
+    // a <textformat> tag that is the first node in a new line. Whether that
+    // line is caused by a <div> tag, <br> or \n is immaterial. I didn't check
+    // what happens with word wrapping or setTextFormat, but you should.
+    if (line.leading === 0 && format.leading > line.leading) {
+      line.leading = format.leading;
+    }
     if (!line.largestFormat || size > line.largestFormat.size) {
       line.largestFormat = format;
     }
@@ -341,7 +350,7 @@ var TextFieldDefinition = (function () {
         runs[i].x += offset;
       }
     }
-    line.height = format.font._metrics.height * format.size + format.leading;
+    line.height = format.font._metrics.height * format.size + line.leading|0;
     state.maxLineWidth = Math.max(state.maxLineWidth, line.width);
     state.lines.push(line);
     state.line = new TextLine(line.y + line.height);
@@ -383,17 +392,17 @@ var TextFieldDefinition = (function () {
           // TODO: properly parse this in extractAttributes
           format.kerning = attributes.KERNING && true;
         }
-        if (attributes.LEADING !== undefined) {
-          format.leading = parseFloat(attributes.LEADING);
-        }
       /* falls through */
       case 'TEXTFORMAT':
         // `textFormat` has, among others, the same attributes as `font`
+        if (attributes.LEADING !== undefined) {
+          format.leading = parseFloat(attributes.LEADING);
+        }
         if (attributes.INDENT !== undefined) {
           // TODO: figure out if indents accumulate and how they apply to text
           // already in the line
           state.line.x = attributes.INDENT;
-          state.line.width += attributes.INDENT;
+          state.line.width += attributes.INDENT|0;
         }
         // TODO: support leftMargin, rightMargin & blockIndent
         // TODO: support tabStops
@@ -987,14 +996,18 @@ var TextFieldDefinition = (function () {
           somewhatImplemented("TextField.getLineMetrics, ");
           var line = this._lines[lineIndex];
           var format = line.largestFormat;
-          var fontMetrics = format.font._metrics;
+          var metrics = format.font._metrics;
           var size = format.size;
-          return new flash.text.TextLineMetrics(line.x + 2, line.width|0,
+          // Rounding for metrics seems to be screwy. A descent of 3.5 gets
+          // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
+          // For now, round up for things slightly above .5.
+          var ascent = metrics.ascent * size + 0.49999 | 0;
+          var descent = metrics.descent * size + 0.49999 | 0;
+          var leading = metrics.leading * size + 0.49999 + line.leading | 0;
+          // TODO: check if metrics values can be floats for embedded fonts
+          return new flash.text.TextLineMetrics(line.x + 2, line.width,
                                                 line.height,
-                                                fontMetrics.ascent * size,
-                                                fontMetrics.descent * size,
-                                                fontMetrics.leading * size +
-                                                format.leading);
+                                                ascent, descent, leading);
         }
       }
     }
