@@ -505,7 +505,7 @@ var BUTTON = {
       filterCount: UI8,
       filters: {
         $: ANY_FILTER,
-        count: 'filterCound'
+        count: 'filterCount'
       }
     }]],
     blendMode: ['blend', [UI8]]
