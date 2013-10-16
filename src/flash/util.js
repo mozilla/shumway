@@ -335,3 +335,10 @@ QuadTree.prototype._subdivide = function () {
   this.nodes[2] = new QuadTree(this.x, midY, halfWidth, halfHeight, level);
   this.nodes[3] = new QuadTree(midX, midY, halfWidth, halfHeight, level);
 };
+
+var EXTERNAL_INTERFACE_FEATURE = 1;
+var CLIPBOARD_FEATURE = 2;
+var SHAREDOBJECT_FEATURE = 3;
+var VIDEO_FEATURE = 4;
+var SOUND_FEATURE = 5;
+var NETCONNECTION_FEATURE = 6;
