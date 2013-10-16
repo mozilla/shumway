@@ -84,6 +84,7 @@ var DisplayObjectDefinition = (function () {
       this._region = null;
       this._level = -1;
       this._index = -1;
+      this._depth = -1;
 
       blendModes = [
         blendModeClass.NORMAL,     // 0
@@ -118,6 +119,7 @@ var DisplayObjectDefinition = (function () {
         this._parent = s.parent || null;
         this._level = isNaN(s.level) ? -1 : s.level;
         this._index = isNaN(s.index) ? -1 : s.index;
+        this._depth = isNaN(s.depth) ? -1 : s.depth;
         this._root = s.root || null;
         this._stage = s.stage || null;
 
