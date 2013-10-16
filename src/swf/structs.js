@@ -503,7 +503,10 @@ var BUTTON = {
     cxform: ['tagCode===34', [CXFORM]],
     $2: ['hasFilters', [{
       filterCount: UI8,
-      filters: ANY_FILTER
+      filters: {
+        $: ANY_FILTER,
+        count: 'filterCound'
+      }
     }]],
     blendMode: ['blend', [UI8]]
   }]]
