@@ -27,7 +27,7 @@ var TextFormatDefinition = (function () {
     },
     // TODO: make this a static function and call the ctor with the right args
     fromObject: function(obj) {
-      this._font = obj.font || null;
+      this._font = obj.face || null;
       this._size = typeof obj.size === 'number' ? obj.size : null;
       this._color = typeof obj.color === 'number' ? obj.color : null;
       this._bold = typeof obj.bold === 'boolean' ? obj.bold : null;
@@ -50,7 +50,7 @@ var TextFormatDefinition = (function () {
     },
     toObject: function() {
       return {
-        font: this._font || 'serif',
+        face: this._font || 'serif',
         size: this._size || 12,
         color: this._color || 0x0,
         bold: this._bold || false,

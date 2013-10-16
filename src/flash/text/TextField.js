@@ -714,7 +714,6 @@ var TextFieldDefinition = (function () {
     },
     set defaultTextFormat(val) {
       this._defaultTextFormat = val.toObject();
-      this._defaultTextFormat.face = val._font;
       this.invalidateDimensions();
     },
 
