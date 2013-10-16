@@ -344,12 +344,14 @@ ChromeActions.prototype = {
       }
     });
   },
-  fallback: function() {
+  fallback: function(automatic) {
     var obj = this.window.frameElement;
     var doc = obj.ownerDocument;
     var e = doc.createEvent("CustomEvent");
     e.initCustomEvent("MozPlayPlugin", true, true, null);
     obj.dispatchEvent(e);
+
+    ShumwayTelemetry.onFallback(!automatic);
   },
   setClipboard: function (data) {
     if (typeof data !== 'string' ||
@@ -871,7 +873,7 @@ FlashStreamConverterBase.prototype = {
                                                       domWindow.document,
                                                       converter.getUrlHint(originalURI));
           if (!isShumwayEnabledFor(actions)) {
-            actions.fallback();
+            actions.fallback(true);
             return;
           }
 
