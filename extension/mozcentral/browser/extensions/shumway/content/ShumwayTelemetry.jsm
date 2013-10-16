@@ -65,5 +65,9 @@ this.ShumwayTelemetry = {
   onFeature: function (featureType) {
     var histogram = Services.telemetry.getHistogramById("SHUMWAY_FEATURE_USED");
     histogram.add(featureType);
+  },
+  onFallback: function (userAction) {
+    var histogram = Services.telemetry.getHistogramById("SHUMWAY_FALLBACK");
+    histogram.add(userAction);
   }
 };
