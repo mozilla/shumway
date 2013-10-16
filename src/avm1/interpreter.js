@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global avm1lib, Proxy, Multiname, ActionsDataStream,
+/*global avm1lib, Proxy, Multiname, ActionsDataStream, TelemetryService,
          isNumeric, forEachPublicProperty, construct */
 
 var AVM1_TRACE_ENABLED = false;
@@ -1418,6 +1418,10 @@ function interpretActions(actionsData, scopeContainer,
       if (e instanceof AS2Error) {
         throw e;
       }
+
+      var AVM1_ERROR_TYPE = 1;
+      TelemetryService.reportTelemetry({topic: 'error', error: AVM1_ERROR_TYPE});
+
       stream.position = nextPosition;
       if (stackItemsExpected > 0) {
         while (stackItemsExpected--) {

@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global FirefoxCom */
+/*global FirefoxCom, TelemetryService, CLIPBOARD_FEATURE */
 
 var SystemDefinition = (function () {
   return {
@@ -27,6 +27,8 @@ var SystemDefinition = (function () {
         static: {
           setClipboard: function setClipboard(string) { // (string:String) -> void
             FirefoxCom.request('setClipboard', string);
+
+            TelemetryService.reportTelemetry({topic: 'feature', feature: CLIPBOARD_FEATURE});
           },
           pause: function pause() { // (void) -> void
             notImplemented("System.pause");
