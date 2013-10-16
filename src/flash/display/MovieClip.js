@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global MP3DecoderSession, avm1lib, construct, URL, Blob, PLAY_USING_AUDIO_TAG, $DEBUG */
+/*global MP3DecoderSession, avm1lib, construct, URL, Blob, PLAY_USING_AUDIO_TAG, $DEBUG,
+         TelemetryService */
 
 var MovieClipDefinition = (function () {
   var def = {
@@ -357,6 +358,9 @@ var MovieClipDefinition = (function () {
             scripts[i].call(this);
           }
         } catch (e) {
+          var AVM2_ERROR_TYPE = 2;
+          TelemetryService.reportTelemetry({topic: 'error', error: AVM2_ERROR_TYPE});
+
           if ($DEBUG) {
             console.error('error ' + e + ', stack: \n' + e.stack);
           }

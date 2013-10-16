@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 /*global Multiname, MP3DecoderSession, isNullOrUndefined, URL, Blob,
-  notImplemented */
+         notImplemented, TelemetryService, SOUND_FEATURE */
 
 var PLAY_USING_AUDIO_TAG = true;
 
@@ -70,6 +70,8 @@ var SoundDefinition = (function () {
         });
         this._soundData = soundData;
       }
+
+      TelemetryService.reportTelemetry({topic: 'feature', feature: SOUND_FEATURE});
     },
 
     close: function close() {

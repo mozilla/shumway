@@ -3,6 +3,7 @@ var swf;
 swf.tags;
 swf.fileAttributes;
 swf.swfVersion;
+swf.parseTime;
 swf.bytesLoaded;
 swf.bytesTotal;
 var options;

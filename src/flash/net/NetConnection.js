@@ -15,13 +15,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global wrapJSObject */
+/*global wrapJSObject, TelemetryService, NETCONNECTION_FEATURE */
 
 var NetConnectionDefinition = (function () {
   return {
     // ()
     __class__: "flash.net.NetConnection",
     initialize: function () {
+      TelemetryService.reportTelemetry({topic: 'feature', feature: NETCONNECTION_FEATURE});
     },
     _invoke: function (index, args) {
       var simulated = false, result;

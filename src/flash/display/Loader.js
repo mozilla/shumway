@@ -18,7 +18,7 @@
 /*global self, importScripts, FileReader, FileReaderSync, Image, Worker, btoa,
          URL, FileLoadingService, Promise, AbcFile, SHUMWAY_ROOT, SWF,
          defineBitmap, defineImage, defineFont, defineShape, defineSound,
-         defineLabel, defineButton, defineText,
+         defineLabel, defineButton, defineText, TelemetryService,
          avm1lib, AS2Context, executeActions,
          createSoundStream, MP3DecoderSession, PLAY_USING_AUDIO_TAG,
          cloneObject, createEmptyObject, fromCharCode,
@@ -368,7 +368,24 @@ var LoaderDefinition = (function () {
         },
         oncomplete: function(result) {
           commitData(result);
-          commitData({command: 'complete'});
+
+          var stats;
+          if (typeof result.swfVersion === 'number') {
+            // Extracting stats from the context object
+            var bbox = result.bbox;
+            stats = {
+              topic: 'parseInfo', // HACK additional field for telemetry
+              parseTime: result.parseTime,
+              bytesTotal: result.bytesTotal,
+              swfVersion: result.swfVersion,
+              frameRate: result.frameRate,
+              width: (bbox.xMax - bbox.xMin) / 20,
+              height: (bbox.yMax - bbox.yMin) / 20,
+              isAvm2: !!result.fileAttributes.doAbc
+            };
+          }
+
+          commitData({command: 'complete', stats: stats});
         }
       };
     }
@@ -488,6 +505,12 @@ var LoaderDefinition = (function () {
         Promise.when(frameConstructed, this._lastPromise).then(function () {
           this.contentLoaderInfo._dispatchEvent("complete");
         }.bind(this));
+
+        var stats = data.stats;
+        if (stats) {
+          TelemetryService.reportTelemetry(stats);
+        }
+
         this._worker && this._worker.terminate();
         break;
       case 'empty':

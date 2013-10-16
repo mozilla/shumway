@@ -250,6 +250,10 @@ function executeFile(file, buffer, movieParams) {
   }
 })();
 
+var TelemetryService = {
+  reportTelemetry: function (data) { }
+};
+
 var FileLoadingService = {
   createSession: function () {
     return {

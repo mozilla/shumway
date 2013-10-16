@@ -178,7 +178,10 @@ CompressedPipe.prototype = {
 };
 
 function BodyParser(swfVersion, length, options) {
-  this.swf = { swfVersion: swfVersion };
+  this.swf = {
+    swfVersion: swfVersion,
+    parseTime: 0
+  };
   this.buffer = new HeadTailBuffer(32768);
   this.initialize = true;
   this.totalRead = 0;
@@ -237,14 +240,16 @@ BodyParser.prototype = {
       swf.bytesTotal = progressInfo.bytesTotal;
     }
 
+    var readStartTime = Date.now();
     readTags(swf, stream, swfVersion, options.onprogress);
+    swf.parseTime += Date.now() - readStartTime;
 
     var read = stream.pos;
     buffer.removeHead(read);
     this.totalRead += read;
 
     if (this.totalRead >= this.length && options.oncomplete) {
-     options.oncomplete(swf);
+      options.oncomplete(swf);
     }
   }
 };

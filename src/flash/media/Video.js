@@ -15,10 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global TelemetryService, VIDEO_FEATURE */
 
 var VideoDefinition = (function () {
   var def = {
     initialize: function initialize() {
+      TelemetryService.reportTelemetry({topic: 'feature', feature: VIDEO_FEATURE});
     },
     attachNetStream: function (netStream) {
       this._netStream = netStream;
