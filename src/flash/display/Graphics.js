@@ -92,8 +92,9 @@ var GraphicsDefinition = (function () {
     },
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
       this.beginPath();
+      repeat = repeat !== false;
       this._currentPath.fillStyle = createPatternStyle(bitmap, matrix, repeat,
-                                                       smooth);
+                                                       !!smooth);
     },
     clear: function () {
       this._invalidate();
@@ -384,7 +385,7 @@ function createPatternStyle(bitmap, matrix, repeat, smooth) {
                   } :
                   { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
 
-  return {style: pattern, transform: transform};
+  return {style: pattern, transform: transform, smooth: smooth};
 }
 
 function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,

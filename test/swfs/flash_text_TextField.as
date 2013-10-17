@@ -128,7 +128,19 @@ class TextFieldObject extends TextField {
     multiline = false;
     printEquals(multiline, false, "flash.text::TextField/{get|set} multiline()");
 
+    var format = new TextFormat('Arial');
+    defaultTextFormat = format;
     multiline = true;
+
+    htmlText = '<textformat leading="2">line1</textformat> <font size="14">bigger</font> ' +
+               '<textformat leading="4">ignored leading</textformat>';
+    var metrics = getLineMetrics(0);
+    printEquals(metrics.x, 2, 'flash.text::TextField/getTextLineMetrics().x');
+//    printEquals(metrics.width, 151, 'flash.text::TextField/getTextLineMetrics().width');
+    printEquals(metrics.height, 18, 'flash.text::TextField/getTextLineMetrics().height');
+    printEquals(metrics.ascent, 13, 'flash.text::TextField/getTextLineMetrics().ascent');
+    printEquals(metrics.descent, 3, 'flash.text::TextField/getTextLineMetrics().descent');
+    printEquals(metrics.leading, 2, 'flash.text::TextField/getTextLineMetrics().leading');
 
     text = 'line1';
     printEquals(numLines, 1, "flash.text::TextField/get numLines()");

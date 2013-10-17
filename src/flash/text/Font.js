@@ -44,7 +44,9 @@ var FontDefinition = (function () {
         } else {
           this._fontStyle = 'regular';
         }
-        this._metrics = s.metrics;
+        var metrics = s.metrics;
+        metrics.height = metrics.ascent + metrics.descent + metrics.leading;
+        this._metrics = metrics;
         this._fontType = 'embedded';
         fonts.push(this);
         fontsByUniqueName[this._uniqueName] = this;
@@ -89,6 +91,7 @@ var FontDefinition = (function () {
         descent: metrics[1],
         leading: metrics[2]
       };
+      font._metrics.height = metrics[0] + metrics[1] + metrics[2];
       fontsByNameStyleType[ident] = font;
       return font;
     },
