@@ -25,7 +25,7 @@ VERSION=0.7.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
 build: ensureoutputdir ../src/flash/playerglobal.abc
 	# Coping extension files
 	echo "Creating extension verions: $(VERSION)"
-	cp -R ../../LICENSE components content bootstrap.js $(BUILD_DIR)/
+	cp -R ../../LICENSE content bootstrap.js $(BUILD_DIR)/
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ install.rdf > $(BUILD_DIR)/install.rdf
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ update.rdf > $(BUILD_DIR)/update.rdf
 	# Coping JavaScript content files

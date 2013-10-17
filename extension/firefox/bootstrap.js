@@ -44,46 +44,31 @@ function log(str) {
   dump(str + '\n');
 }
 
-// Register/unregister a constructor as a component.
+// Register/unregister a constructor as a factory.
 function Factory() {}
-
 Factory.prototype = {
-  QueryInterface: XPCOMUtils.generateQI([Ci.nsIFactory]),
-  _targetConstructor: null,
-
   register: function register(targetConstructor) {
-    this._targetConstructor = targetConstructor;
     var proto = targetConstructor.prototype;
+    this._classID = proto.classID;
+
+    var factory = XPCOMUtils._getFactory(targetConstructor);
+    this._factory = factory;
+
     var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
     registrar.registerFactory(proto.classID, proto.classDescription,
-                              proto.contractID, this);
+                              proto.contractID, factory);
   },
 
   unregister: function unregister() {
-    var proto = this._targetConstructor.prototype;
     var registrar = Cm.QueryInterface(Ci.nsIComponentRegistrar);
-    registrar.unregisterFactory(proto.classID, this);
-    this._targetConstructor = null;
-  },
-
-  // nsIFactory
-  createInstance: function createInstance(aOuter, iid) {
-    if (aOuter !== null)
-      throw Cr.NS_ERROR_NO_AGGREGATION;
-    return (new (this._targetConstructor)).QueryInterface(iid);
-  },
-
-  // nsIFactory
-  lockFactory: function lockFactory(lock) {
-    // No longer used as of gecko 1.7.
-    throw Cr.NS_ERROR_NOT_IMPLEMENTED;
+    registrar.unregisterFactory(this._classID, this._factory);
   }
 };
 
-let factory1 = new Factory();
-let factory2 = new Factory();
+let converterFactory = new Factory();
+let overlayConverterFactory = new Factory();
 
-let FlashStreamConverterUrl = null;
+let ShumwayStreamConverterUrl = null;
 
 // As of Firefox 13 bootstrapped add-ons don't support automatic registering and
 // unregistering of resource urls and components/contracts. Until then we do
@@ -98,11 +83,10 @@ function startup(aData, aReason) {
   resProt.setSubstitution(RESOURCE_NAME, aliasURI);
 
   // Load the component and register it.
-  FlashStreamConverterUrl = aData.resourceURI.spec +
-    'components/FlashStreamConverter.js';
-  Cu.import(FlashStreamConverterUrl);
-  factory1.register(FlashStreamConverter1);
-  factory2.register(FlashStreamConverter2);
+  ShumwayStreamConverterUrl = aliasURI.spec + 'ShumwayStreamConverter.jsm';
+  Cu.import(ShumwayStreamConverterUrl);
+  converterFactory.register(ShumwayStreamConverter);
+  overlayConverterFactory.register(ShumwayStreamOverlayConverter);
 
   if (registerOverlayPreview) {
     var ignoreCTP = getBoolPref('shumway.ignoreCTP', false);
@@ -119,15 +103,15 @@ function shutdown(aData, aReason) {
   // Remove the resource url.
   resProt.setSubstitution(RESOURCE_NAME, null);
   // Remove the contract/component.
-  factory1.unregister();
-  factory2.unregister();
+  converterFactory.unregister();
+  overlayConverterFactory.unregister();
 
   if (registerOverlayPreview)
     Ph.unregisterPlayPreviewMimeType('application/x-shockwave-flash');
 
   // Unload the converter
-  Cu.unload(FlashStreamConverterUrl);
-  FlashStreamConverterUrl = null;
+  Cu.unload(ShumwayStreamConverterUrl);
+  ShumwayStreamConverterUrl = null;
 }
 
 function install(aData, aReason) {
