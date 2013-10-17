@@ -208,14 +208,14 @@ var Interpreter = new ((function () {
             break;
           case 0x1E: // OP_nextname
             index = stack.pop();
-            stack[stack.length - 1] = nextName(stack[stack.length - 1], index);
+            stack[stack.length - 1] = boxValue(stack[stack.length - 1]).asNextName(index);
             break;
           case 0x23: // OP_nextvalue
             index = stack.pop();
-            stack[stack.length - 1] = nextValue(stack[stack.length - 1], index);
+            stack[stack.length - 1] = boxValue(stack[stack.length - 1]).asNextValue(index);
             break;
           case 0x32: // OP_hasnext2
-            res = hasNext2(locals[bc.object], locals[bc.index]);
+            res = asHasNext2(locals[bc.object], locals[bc.index]);
             locals[bc.object] = res.object;
             locals[bc.index] = res.index;
             stack.push(!!res.index);

@@ -500,7 +500,7 @@
     var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
-    if (this.pristine) {
+    if (this.flags & IR.Flags.PRISTINE) {
       return call(callee, args);
     } else {
       return callCall(callee, object, args);
