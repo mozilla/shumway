@@ -858,6 +858,37 @@ var TextFieldDefinition = (function () {
             return this._textWidth;
           }
         },
+        length: {
+          get: function length() { // (void) -> uint
+            return this._content.text.length;
+          }
+        },
+        numLines: {
+          get: function numLines() { // (void) -> uint
+            this.ensureDimensions();
+            return this._lines.length;
+          }
+        },
+        getLineMetrics: function (lineIndex) { // (lineIndex:int) -> TextLineMetrics
+          this.ensureDimensions();
+          if (lineIndex < 0 || lineIndex >= this._lines.length) {
+            throwError('RangeError', Errors.ParamRangeError);
+          }
+          var line = this._lines[lineIndex];
+          var format = line.largestFormat;
+          var metrics = format.font._metrics;
+          var size = format.size;
+          // Rounding for metrics seems to be screwy. A descent of 3.5 gets
+          // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
+          // For now, round up for things slightly above .5.
+          var ascent = metrics.ascent * size + 0.49999 | 0;
+          var descent = metrics.descent * size + 0.49999 | 0;
+          var leading = metrics.leading * size + 0.49999 + line.leading | 0;
+          // TODO: check if metrics values can be floats for embedded fonts
+          return new flash.text.TextLineMetrics(line.x + 2, line.width,
+                                                line.height,
+                                                ascent, descent, leading);
+        },
         scrollV: {
           get: function scrollV() {
             somewhatImplemented('TextField#scrollV');
@@ -969,17 +1000,6 @@ var TextFieldDefinition = (function () {
             this._condenseWhite = value;
           }
         },
-        numLines: {
-          get: function numLines() { // (void) -> uint
-            this.ensureDimensions();
-            return this._lines.length;
-          }
-        },
-        length: {
-          get: function length() { // (void) -> uint
-            return this._content.text.length;
-          }
-        },
         sharpness: {
           get: function sharpness() { // (void) -> Number
             return this._sharpness;
@@ -988,27 +1008,6 @@ var TextFieldDefinition = (function () {
             somewhatImplemented("TextField.sharpness");
             this._sharpness = value;
           }
-        },
-        getLineMetrics: function (lineIndex) { // (lineIndex:int) -> TextLineMetrics
-          this.ensureDimensions();
-          if (lineIndex < 0 || lineIndex >= this._lines.length) {
-            throwError('RangeError', Errors.ParamRangeError);
-          }
-          somewhatImplemented("TextField.getLineMetrics, ");
-          var line = this._lines[lineIndex];
-          var format = line.largestFormat;
-          var metrics = format.font._metrics;
-          var size = format.size;
-          // Rounding for metrics seems to be screwy. A descent of 3.5 gets
-          // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
-          // For now, round up for things slightly above .5.
-          var ascent = metrics.ascent * size + 0.49999 | 0;
-          var descent = metrics.descent * size + 0.49999 | 0;
-          var leading = metrics.leading * size + 0.49999 + line.leading | 0;
-          // TODO: check if metrics values can be floats for embedded fonts
-          return new flash.text.TextLineMetrics(line.x + 2, line.width,
-                                                line.height,
-                                                ascent, descent, leading);
         }
       }
     }
