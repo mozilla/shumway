@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global avm1lib, rgbaObjToStr, rgbIntAlphaToStr, warning, FontDefinition */
+/*global avm1lib, rgbaObjToStr, rgbIntAlphaToStr, warning, FontDefinition,
+  Errors, throwError */
 
 var TextFieldDefinition = (function () {
 
