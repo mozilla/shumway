@@ -28,7 +28,7 @@ build: ensureoutputdir build-bundle ../src/flash/playerglobal.abc
 	# Coping extension files
 	echo "Creating mozcentral package verions: $(VERSION)"
 	mkdir -p $(BUILD_EXTENSION_DIR)
-	cp -R ../../LICENSE $(EXTENSION_SRC)/components $(EXTENSION_SRC)/content $(BUILD_EXTENSION_DIR)/
+	cp -R ../../LICENSE $(EXTENSION_SRC)/content $(BUILD_EXTENSION_DIR)/
 	cp -R browser $(BUILD_DIR)/
 	# Coping JavaScript content files
 	mkdir -p $(BUILD_EXTENSION_DIR)/content/flash
