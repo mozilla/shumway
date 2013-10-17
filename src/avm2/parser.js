@@ -776,6 +776,14 @@ var Multiname = (function () {
     return qualifyNameInternal(namespace.qualifiedName, name)
   };
 
+  multiname.stripPublicQualifier = function stripPublicQualifier(qn) {
+    var index = qn.indexOf(PUBLIC_QUALIFIED_NAME_PREFIX);
+    if (index !== 0) {
+      return undefined;
+    }
+    return qn.substring(PUBLIC_QUALIFIED_NAME_PREFIX.length);
+  };
+
   /**
    * Creates a Multiname from a mangled qualified name. The format should be of
    * the form kindName$mangledURI$name.

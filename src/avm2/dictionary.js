@@ -90,7 +90,10 @@ function DictionaryClass(domain, scope, instanceConstructor, baseClass) {
     return true;
   });
 
-  defineNonEnumerableProperty(prototype, "getEnumerationKeys", function () {
+  defineNonEnumerableProperty(prototype, "asGetEnumerableKeys", function () {
+    if (prototype === this) {
+      return Object.prototype.asGetEnumerableKeys.call(this);
+    }
     var primitiveMapKeys = [];
     for (var k in this.primitiveMap) {
       primitiveMapKeys.push(k);

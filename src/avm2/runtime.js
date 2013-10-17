@@ -38,14 +38,9 @@ var jsGlobal = (function() { return this || (1, eval)('this'); })();
 
 var VM_SLOTS = "vm slots";
 var VM_LENGTH = "vm length";
-var VM_TRAITS = "vm traits";
 var VM_BINDINGS = "vm bindings";
 var VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
-var VM_ENUMERATION_KEYS = "vm enumeration keys";
-var VM_TOMBSTONE = createEmptyObject();
 var VM_OPEN_METHODS = "vm open methods";
-var VM_NEXT_NAME = "vm next name";
-var VM_NEXT_NAME_INDEX = "vm next name index";
 var VM_IS_CLASS = "vm is class";
 var VM_OPEN_METHOD_PREFIX = "open_";
 
@@ -252,6 +247,7 @@ var LazyInitializer = (function () {
  * - asNextName(index)
  * - asNextNameIndex(index)
  * - asNextValue(index)
+ * - asGetEnumerableKeys()
  *
  * Multiname resolution methods:
  * - getNamespaceResolutionMap(namespaces)
@@ -481,24 +477,7 @@ function asHasProperty(namespaces, name, flags, nonProxy) {
 }
 
 function asDeleteProperty(namespaces, name, flags) {
-  if (this.deleteProperty) {
-    return this.deleteProperty(namespaces, name, flags);
-  }
-  if (this.indexDelete && Multiname.isNumeric(name)) {
-    return this.indexDelete(name);
-  }
   var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-  /**
-   * If we're in the middle of an enumeration, we need to remove the property name
-   * from the enumeration keys as well. Setting it to |VM_TOMBSTONE| will cause it
-   * to be skipped by the enumeration code.
-   */
-  if (this[VM_ENUMERATION_KEYS]) {
-    var index = this[VM_ENUMERATION_KEYS].indexOf(resolved);
-    if (index >= 0) {
-      this[VM_ENUMERATION_KEYS][index] = VM_TOMBSTONE;
-    }
-  }
   return delete this[resolved];
 }
 
@@ -514,86 +493,62 @@ function asGetDescendants(namespaces, name, flags) {
   notImplemented("asGetDescendants");
 }
 
-function asNextName(index) {
-  notImplemented("asNextName");
+/**
+ * Gets the next name index of an object. Index |zero| is actually not an
+ * index, but rather an indicator to start the iteration.
+ */
+function asNextNameIndex(index) {
+  if (index === 0) {
+    // Gather all enumerable keys since we're starting a new iteration.
+    defineNonEnumerableProperty(this, "enumerableKeys", this.asGetEnumerableKeys());
+  }
+  var enumerableKeys = this.enumerableKeys;
+  while (index < enumerableKeys.length) {
+    if (this.asHasProperty(undefined, enumerableKeys[index], 0)) {
+      return index + 1;
+    }
+    index ++;
+  }
+  return 0;
 }
 
-function asNextNameIndex(index) {
-  notImplemented("asNextNameIndex");
+/**
+ * Gets the nextName after the specified |index|, which you would expect to
+ * be index + 1, but it's actually index - 1;
+ */
+function asNextName(index) {
+  var enumerableKeys = this.enumerableKeys;
+  release || assert(enumerableKeys && index > 0 && index < enumerableKeys.length + 1);
+  return enumerableKeys[index - 1];
 }
 
 function asNextValue(index) {
-  notImplemented("asNextValue");
+  return this.asGetPublicProperty(this.asNextName(index));
+}
+
+function asGetEnumerableKeys() {
+  var boxedValue = this.valueOf();
+  // TODO: This is probably broken if the object has overwritten |valueOf|.
+  if (typeof boxedValue === "string" || typeof boxedValue === "number") {
+    return [];
+  }
+  var keys = Object.keys(this);
+  var result = [];
+  for (var i = 0; i < keys.length; i++) {
+    var key = keys[i];
+    if (isNumeric(key)) {
+      result.push(key);
+    } else {
+      var name = Multiname.stripPublicQualifier(key);
+      if (name !== undefined) {
+        result.push(name);
+      }
+    }
+  }
+  return result;
 }
 
 function initializeGlobalObject(global) {
-  function getEnumerationKeys(object) {
-    if (object.node && object.node.childNodes) {
-      object = object.node.childNodes;
-    }
-    var keys = [];
-
-    var boxedValue = object.valueOf();
-
-    // TODO: This is probably broken if the object has overwritten |valueOf|.
-    if (typeof boxedValue === "string" || typeof boxedValue === "number") {
-      return [];
-    }
-
-    if (object.getEnumerationKeys) {
-      return object.getEnumerationKeys();
-    }
-
-    // TODO: Implement fast path for Array objects.
-    for (var key in object) {
-      if (isNumeric(key)) {
-        keys.push(Number(key));
-      } else if (Multiname.isPublicQualifiedName(key)) {
-        if (object[VM_BINDINGS] && object[VM_BINDINGS].indexOf(key) >= 0) {
-          continue;
-        }
-        keys.push(key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length));
-      }
-    }
-    return keys;
-  }
-
-  /**
-   * Gets the next name index of an object. Index |zero| is actually not an
-   * index, but rather an indicator to start the iteration.
-   */
-  defineReadOnlyProperty(global.Object.prototype, VM_NEXT_NAME_INDEX, function (index) {
-    if (index === 0) {
-      /**
-       * We're starting a new iteration. Hope that VM_ENUMERATION_KEYS haven't been
-       * defined already.
-       */
-      this[VM_ENUMERATION_KEYS] = getEnumerationKeys(this);
-    }
-
-    var keys = this[VM_ENUMERATION_KEYS];
-
-    while (index < keys.length) {
-      if (keys[index] !== VM_TOMBSTONE) {
-        return index + 1;
-      }
-      index ++;
-    }
-
-    delete this[VM_ENUMERATION_KEYS];
-    return 0;
-  });
-
-  /**
-   * Gets the nextName after the specified |index|, which you would expect to
-   * be index + 1, but it's actually index - 1;
-   */
-  defineReadOnlyProperty(global.Object.prototype, VM_NEXT_NAME, function (index) {
-    var keys = this[VM_ENUMERATION_KEYS];
-    release || assert(keys && index > 0 && index < keys.length + 1);
-    return keys[index - 1];
-  });
-
   /**
    * Surrogates are used to make |toString| and |valueOf| work transparently. For instance, the expression
    * |a + b| should implicitly expand to |a.public$valueOf() + b.public$valueOf()|. Since, we don't want
@@ -640,6 +595,11 @@ function initializeGlobalObject(global) {
   defineNonEnumerableProperty(global.Object.prototype, "asConstructProperty", asConstructProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
+
+  defineNonEnumerableProperty(global.Object.prototype, "asNextName", asNextName);
+  defineNonEnumerableProperty(global.Object.prototype, "asNextValue", asNextValue);
+  defineNonEnumerableProperty(global.Object.prototype, "asNextNameIndex", asNextNameIndex);
+  defineNonEnumerableProperty(global.Object.prototype, "asGetEnumerableKeys", asGetEnumerableKeys);
 
   [
     "Array",
@@ -721,11 +681,11 @@ function publicizeProperties(object) {
   }
 }
 
-function getSlot(object, index) {
+function asGetSlot(object, index) {
   return object[object[VM_SLOTS][index].name];
 }
 
-function setSlot(object, index, value) {
+function asSetSlot(object, index, value) {
   var binding = object[VM_SLOTS][index];
   if (binding.const) {
     return;
@@ -739,19 +699,10 @@ function setSlot(object, index, value) {
   }
 }
 
-function nextName(object, index) {
-  return object[VM_NEXT_NAME](index);
-}
-
-function nextValue(object, index) {
-  return object.asGetProperty(undefined, object[VM_NEXT_NAME](index));
-}
-
 /**
- * Determine if the given object has any more properties after the specified |index| in the given |obj|
- * and if so, return the next index or |zero| otherwise. If the |obj| has no more properties then continue
- * the search in |obj.__proto__|. This function returns an updated index and object to be used during
- * iteration.
+ * Determine if the given object has any more properties after the specified |index| and if so, return
+ * the next index or |zero| otherwise. If the |obj| has no more properties then continue the search in
+ * |obj.__proto__|. This function returns an updated index and object to be used during iteration.
  *
  * the |for (x in obj) { ... }| statement is compiled into the following pseudo bytecode:
  *
@@ -771,23 +722,27 @@ function nextValue(object, index) {
  *
  * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers don't rely on it.
  */
-function hasNext2(object, index) {
-  if (object === null || object === undefined) {
+function asHasNext2(object, index) {
+  if (isNullOrUndefined(object)) {
     return {index: 0, object: null};
   }
   object = boxValue(object);
-  release || assert(object);
-  release || assert(index >= 0);
-
-  /**
-   * Because I don't think hasnext/hasnext2/nextname opcodes are used outside
-   * of loops in "normal" ABC code, we can deviate a little for semantics here
-   * and leave the prototype-chaining to the |for..in| operator in JavaScript
-   * itself, in |obj[VM_NEXT_NAME_INDEX]|. That is, the object pushed onto the
-   * stack, if the original object has any more properties left, will _always_
-   * be the original object.
-   */
-  return {index: object[VM_NEXT_NAME_INDEX](index), object: object};
+  var nextIndex = object.asNextNameIndex(index);
+  if (nextIndex > 0) {
+    return {index: nextIndex, object: object};
+  }
+  // If there are no more properties in the object then follow the prototype chain.
+  while (true) {
+    var object = Object.getPrototypeOf(object);
+    if (!object) {
+      return {index: 0, object: null};
+    }
+    nextIndex = object.asNextNameIndex(0);
+    if (nextIndex > 0) {
+      return {index: nextIndex, object: object};
+    }
+  }
+  return {index: 0, object: null};
 }
 
 function getDescendants(object, mn) {
