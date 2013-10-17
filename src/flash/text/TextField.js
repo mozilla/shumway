@@ -649,8 +649,23 @@ var TextFieldDefinition = (function () {
       this._textHeight = state.line.y|0;
       this._lines = state.lines;
       this._content.textruns = state.runs;
+      this._scrollV = 1;
+      this._maxScrollV = 1;
+      this._bottomScrollV = 1;
       var autoSize = this._autoSize;
-      if (autoSize !== 'none') {
+      if (autoSize === 'none') {
+        var maxVisibleY = (bounds.yMax - 80) / 20;
+        if (this._textHeight > maxVisibleY) {
+          for (var i = 0; i < state.lines.length; i++) {
+            var line = state.lines[i];
+            if (line.y + line.height > maxVisibleY) {
+              this._maxScrollV = i + 1;
+              this._bottomScrollV = i === 0 ? 1 : i;
+              break;
+            }
+          }
+        }
+      } else {
         var targetWidth = this._textWidth;
         var align = state.combinedAlign;
         var diffX = 0;
@@ -900,14 +915,23 @@ var TextFieldDefinition = (function () {
           }
         },
         bottomScrollV: {
-          get: function scrollV() {
-            somewhatImplemented('TextField#scrollV');
-            return this._bottomScrollV;
+          get: function bottomScrollV() {
+            this.ensureDimensions();
+            if (this._scrollV === 1) {
+              return this._bottomScrollV;
+            }
+            var maxVisibleY = (this._bbox.yMax - 80) / 20;
+            var offsetY = this._lines[this._scrollV - 1].y;
+            for (var i = this._bottomScrollV; i < this._lines.length; i++) {
+              var line = this._lines[i];
+              if (line.y + line.height + offsetY > maxVisibleY) {
+                return i + 1;
+              }
+            }
           }
         },
         maxScrollV: {
           get: function maxScrollV() { // (void) -> Number
-            somewhatImplemented('TextField#maxScrollV');
             this.ensureDimensions();
             return this._maxScrollV;
           }
