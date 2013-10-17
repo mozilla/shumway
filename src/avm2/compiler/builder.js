@@ -1113,10 +1113,14 @@ var createName = function createName(namespaces, name) {
             case 0x23: // OP_nextvalue
               index = pop();
               object = pop();
-              push(call(globalProperty(op === OP_nextname ? "nextName" : "nextValue"), null, [object, index]));
+              push(new IR.CallProperty(
+                region, state.store, object,
+                constant(op === OP_nextname ? "asNextName" : "asNextValue"),
+                [index], IR.Flags.PRISTINE)
+              );
               break;
             case 0x32: // OP_hasnext2
-              var temp = call(globalProperty("hasNext2"), null, [local[bc.object], local[bc.index]]);
+              var temp = call(globalProperty("asHasNext2"), null, [local[bc.object], local[bc.index]]);
               local[bc.object] = getJSProperty(temp, "object");
               push(local[bc.index] = getJSProperty(temp, "index"));
               break;

@@ -208,14 +208,14 @@ var Interpreter = new ((function () {
             break;
           case 0x1E: // OP_nextname
             index = stack.pop();
-            stack[stack.length - 1] = nextName(stack[stack.length - 1], index);
+            stack[stack.length - 1] = boxValue(stack[stack.length - 1]).asNextName(index);
             break;
           case 0x23: // OP_nextvalue
             index = stack.pop();
-            stack[stack.length - 1] = nextValue(stack[stack.length - 1], index);
+            stack[stack.length - 1] = boxValue(stack[stack.length - 1]).asNextValue(index);
             break;
           case 0x32: // OP_hasnext2
-            res = hasNext2(locals[bc.object], locals[bc.index]);
+            res = asHasNext2(locals[bc.object], locals[bc.index]);
             locals[bc.object] = res.object;
             locals[bc.index] = res.index;
             stack.push(!!res.index);
@@ -417,13 +417,12 @@ var Interpreter = new ((function () {
                                                        tmpMultiname.flags);
             break;
           case 0x6C: // OP_getslot
-            stack[stack.length - 1] = getSlot(stack[stack.length - 1],
-                                              bc.index);
+            stack[stack.length - 1] = asGetSlot(stack[stack.length - 1], bc.index);
             break;
           case 0x6D: // OP_setslot
             value = stack.pop();
             obj = stack.pop();
-            setSlot(obj, bc.index, value);
+            asSetSlot(obj, bc.index, value);
             break;
           case 0x70: // OP_convert_s
             stack[stack.length - 1] = stack[stack.length - 1] + '';
