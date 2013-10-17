@@ -40,7 +40,6 @@ var VM_SLOTS = "vm slots";
 var VM_LENGTH = "vm length";
 var VM_BINDINGS = "vm bindings";
 var VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
-var VM_TOMBSTONE = createEmptyObject();
 var VM_OPEN_METHODS = "vm open methods";
 var VM_IS_CLASS = "vm is class";
 var VM_OPEN_METHOD_PREFIX = "open_";
@@ -478,24 +477,7 @@ function asHasProperty(namespaces, name, flags, nonProxy) {
 }
 
 function asDeleteProperty(namespaces, name, flags) {
-  if (this.deleteProperty) {
-    return this.deleteProperty(namespaces, name, flags);
-  }
-  if (this.indexDelete && Multiname.isNumeric(name)) {
-    return this.indexDelete(name);
-  }
   var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-  /**
-   * If we're in the middle of an enumeration, we need to remove the property name
-   * from the enumeration keys as well. Setting it to |VM_TOMBSTONE| will cause it
-   * to be skipped by the enumeration code.
-   */
-  if (this.enumerableKeys) {
-    var index = this.enumerableKeys.indexOf(String(resolved));
-    if (index >= 0) {
-      this.enumerableKeys[index] = VM_TOMBSTONE;
-    }
-  }
   return delete this[resolved];
 }
 
@@ -522,7 +504,7 @@ function asNextNameIndex(index) {
   }
   var enumerableKeys = this.enumerableKeys;
   while (index < enumerableKeys.length) {
-    if (enumerableKeys[index] !== VM_TOMBSTONE) {
+    if (this.asHasProperty(undefined, enumerableKeys[index], 0)) {
       return index + 1;
     }
     index ++;
@@ -541,9 +523,7 @@ function asNextName(index) {
 }
 
 function asNextValue(index) {
-  var enumerableKeys = this.enumerableKeys;
-  release || assert(enumerableKeys && index > 0 && index < enumerableKeys.length + 1);
-  return this.asGetPublicProperty(enumerableKeys[index - 1]);
+  return this.asGetPublicProperty(this.asNextName(index));
 }
 
 function asGetEnumerableKeys() {
@@ -558,10 +538,11 @@ function asGetEnumerableKeys() {
     var key = keys[i];
     if (isNumeric(key)) {
       result.push(key);
-    }
-    var asKey = Multiname.stripPublicQualifier(key);
-    if (asKey !== undefined) {
-      result.push(asKey);
+    } else {
+      var name = Multiname.stripPublicQualifier(key);
+      if (name !== undefined) {
+        result.push(name);
+      }
     }
   }
   return result;
