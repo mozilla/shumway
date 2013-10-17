@@ -56,7 +56,7 @@ var BitmapDefinition = (function () {
             Math.abs(Math.abs(transform.d) - 1) <= EPSILON &&
             Math.abs(transform.b) <= EPSILON && Math.abs(transform.c) <= EPSILON) {
           ctx.setTransform(transform.a < 0 ? -1 : 1, 0, 0, transform.d < 0 ? -1 : 1,
-                           transform.e|0, transform.f|0);
+                           transform.tx/20|0, transform.ty/20|0);
         }
         // TODO this._pixelSnapping === 'always'; does it even make sense in other cases?
       }
