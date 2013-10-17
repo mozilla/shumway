@@ -499,8 +499,8 @@ function asGetDescendants(namespaces, name, flags) {
  */
 function asNextNameIndex(index) {
   if (index === 0) {
-    // We're starting a new iteration so we gather all enumerable keys.
-    this.enumerableKeys = this.asGetEnumerableKeys();
+    // Gather all enumerable keys since we're starting a new iteration.
+    defineNonEnumerableProperty(this, "enumerableKeys", this.asGetEnumerableKeys());
   }
   var enumerableKeys = this.enumerableKeys;
   while (index < enumerableKeys.length) {

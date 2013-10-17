@@ -158,5 +158,18 @@ import flash.utils.ByteArray;
     for each (var k in a) { trace(k); }
   })();
 
+  (function () {
+    trace("--- Leftover Properties ---");
+    var a = [1, 2, 3];
+    for (var k in a) { trace (k); }
+    for (var k in a) { trace (k); }
+    trace(a.map(function (x) {
+      return String(x);
+    }).join(", "));
+    trace(a.map(function (x) {
+      return String(x);
+    }).join(", "));
+  })();
+
   trace("-- DONE --");
 }
