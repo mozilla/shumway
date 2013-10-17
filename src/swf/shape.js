@@ -743,6 +743,8 @@ ShapePath.prototype = {
       var fillStyle = this.fillStyle;
       if (fillStyle) {
         colorTransform.setFillStyle(ctx, fillStyle.style);
+        ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
+                                    fillStyle.smooth;
         var m = fillStyle.transform;
         ctx.save();
         colorTransform.setAlpha(ctx);

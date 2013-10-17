@@ -24,6 +24,16 @@ var TextFieldDefinition = (function () {
   // Used for measuring text runs, not for rendering
   var measureCtx = document.createElement('canvas').getContext('2d');
 
+  function TextLine(y) {
+    this.x = 0;
+    this.width = 0;
+    this.y = y;
+    this.height = 0;
+    this.leading = 0;
+    this.runs = [];
+    this.largestFormat = null;
+  }
+
   /*
    * Parsing, in this context, actually means using the browser's html parser
    * and then removing any tags and attributes that mustn't be supported.
@@ -233,10 +243,10 @@ var TextFieldDefinition = (function () {
     }
     while (text.length) {
       var width = state.ctx.measureText(text).width;
-      var availableWidth = state.w - state.x;
+      var availableWidth = state.w - state.line.width;
       if (availableWidth <= 0) {
         finishLine(state);
-        availableWidth = state.w - state.x;
+        availableWidth = state.w - state.line.width;
       }
       assert(availableWidth > 0);
       if (width <= availableWidth) {
@@ -262,7 +272,7 @@ var TextFieldDefinition = (function () {
           wrapOffset--;
         }
         if (wrapOffset === -1) {
-          if (state.x > 0) {
+          if (state.line.width > 0) {
             finishLine(state);
             continue;
           }
@@ -290,30 +300,39 @@ var TextFieldDefinition = (function () {
     }
   }
   function addTextRun(state, text, width) {
+    if (text.length === 0) {
+      return;
+    }
     // `y` is set by `finishLine`
-    var size = state.currentFormat.size;
-    var run = {type: 't', text: text, x: state.x, y: 0, size: size};
+    var line = state.line;
+    var format = state.currentFormat;
+    var size = format.size;
+    var run = {type: 't', text: text, x: line.width};
     state.runs.push(run);
-    state.line.push(run);
-    state.x += width;
-    if (size > state.lineHeight) {
-      state.lineHeight = size;
-      state.metrics = state.currentFormat.font._metrics;
+    state.line.runs.push(run);
+    line.width += width|0;
+    // TODO: Implement Flash's absurd behavior for leading
+    // Specifically, leading is only used if it is set by a <div> tag, or by
+    // a <textformat> tag that is the first node in a new line. Whether that
+    // line is caused by a <div> tag, <br> or \n is immaterial. I didn't check
+    // what happens with word wrapping or setTextFormat, but you should.
+    if (line.leading === 0 && format.leading > line.leading) {
+      line.leading = format.leading;
+    }
+    if (!line.largestFormat || size > line.largestFormat.size) {
+      line.largestFormat = format;
     }
   }
   function finishLine(state) {
-    var size = state.lineHeight;
-    if (size === 0) {
+    var line = state.line;
+    if (line.runs.length === 0) {
       return;
     }
-    var metrics = state.metrics;
-    state.y += metrics.ascent * size|0;
-    var y = state.y;
-    var runs = state.line;
-    var run, i;
-    for (i = runs.length; i--;) {
-      run = runs[i];
-      run.y = y;
+    var runs = line.runs;
+    var format = line.largestFormat;
+    var baselinePos = line.y + format.font._metrics.ascent * format.size;
+    for (var i = runs.length; i--;) {
+      runs[i].y = baselinePos;
     }
     var align = (state.currentFormat.align || '').toLowerCase();
     if (state.combinedAlign === null) {
@@ -323,7 +342,7 @@ var TextFieldDefinition = (function () {
     }
     // TODO: maybe support justified text somehow
     if (align === 'center' || align === 'right') {
-      var offset = Math.max(state.w - state.x, 0);
+      var offset = Math.max(state.w - line.width, 0);
       if (align === 'center') {
         offset >>= 1;
       }
@@ -331,17 +350,10 @@ var TextFieldDefinition = (function () {
         runs[i].x += offset;
       }
     }
-    state.lines.push(runs);
-    state.line = [];
-    state.maxLineWidth = Math.max(state.maxLineWidth, state.x);
-    state.x = 0;
-    if (y <= state.h) {
-      state.visibleLines++;
-    }
-    state.y += (metrics.descent + metrics.leading) * size +
-               state.currentFormat.leading|0;
-    state.lineHeight = 0;
-    state.metrics = null;
+    line.height = format.font._metrics.height * format.size + line.leading|0;
+    state.maxLineWidth = Math.max(state.maxLineWidth, line.width);
+    state.lines.push(line);
+    state.line = new TextLine(line.y + line.height);
   }
   function pushFormat(state, node) {
     var attributes = node.format;
@@ -380,14 +392,17 @@ var TextFieldDefinition = (function () {
           // TODO: properly parse this in extractAttributes
           format.kerning = attributes.KERNING && true;
         }
-        if (attributes.LEADING !== undefined) {
-          format.leading = parseFloat(attributes.LEADING);
-        }
       /* falls through */
       case 'TEXTFORMAT':
         // `textFormat` has, among others, the same attributes as `font`
+        if (attributes.LEADING !== undefined) {
+          format.leading = parseFloat(attributes.LEADING);
+        }
         if (attributes.INDENT !== undefined) {
-          state.x += attributes.INDENT;
+          // TODO: figure out if indents accumulate and how they apply to text
+          // already in the line
+          state.line.x = attributes.INDENT;
+          state.line.width += attributes.INDENT|0;
         }
         // TODO: support leftMargin, rightMargin & blockIndent
         // TODO: support tabStops
@@ -468,7 +483,7 @@ var TextFieldDefinition = (function () {
       this._scrollV = 1;
       this._maxScrollV = 1;
       this._bottomScrollV = 1;
-      this._numLines = 1;
+      this._lines = [];
       this._embedFonts = false;
       this._autoSize = 'none';
       this._wordWrap = false;
@@ -623,16 +638,15 @@ var TextFieldDefinition = (function () {
       var firstRun = {type: 'f', format: initialFormat};
       var width = Math.max(bounds.xMax / 20 - 4, 1);
       var height = Math.max(bounds.yMax / 20 - 4, 1);
-      var state = {ctx: measureCtx, y: 0, x: 0, w: width, h: height,
-                   lineHeight: 0, maxLineWidth: 0,
+      var state = {ctx: measureCtx, w: width, h: height, maxLineWidth: 0,
                    formats: [initialFormat], currentFormat: initialFormat,
-                   line: [], lines: [], runs: [firstRun],
+                   line: new TextLine(0), lines: [], runs: [firstRun],
                    wordWrap: this._wordWrap, combinedAlign: null,
                    textColor: this._textColor, embedFonts: this._embedFonts};
       collectRuns(this._content.tree, state);
       this._textWidth = state.maxLineWidth|0;
-      this._textHeight = state.y|0;
-      this._numLines = state.lines.length;
+      this._textHeight = state.line.y|0;
+      this._lines = state.lines;
       this._content.textruns = state.runs;
       var autoSize = this._autoSize;
       if (autoSize !== 'none') {
@@ -709,7 +723,6 @@ var TextFieldDefinition = (function () {
     },
     set defaultTextFormat(val) {
       this._defaultTextFormat = val.toObject();
-      this._defaultTextFormat.face = val._font;
       this.invalidateDimensions();
     },
 
@@ -958,7 +971,7 @@ var TextFieldDefinition = (function () {
         numLines: {
           get: function numLines() { // (void) -> uint
             this.ensureDimensions();
-            return this._numLines;
+            return this._lines.length;
           }
         },
         length: {
@@ -976,8 +989,25 @@ var TextFieldDefinition = (function () {
           }
         },
         getLineMetrics: function (lineIndex) { // (lineIndex:int) -> TextLineMetrics
+          this.ensureDimensions();
+          if (lineIndex < 0 || lineIndex >= this._lines.length) {
+            throwError('RangeError', Errors.ParamRangeError);
+          }
           somewhatImplemented("TextField.getLineMetrics, ");
-          return new flash.text.TextLineMetrics(0, 8, 8);
+          var line = this._lines[lineIndex];
+          var format = line.largestFormat;
+          var metrics = format.font._metrics;
+          var size = format.size;
+          // Rounding for metrics seems to be screwy. A descent of 3.5 gets
+          // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
+          // For now, round up for things slightly above .5.
+          var ascent = metrics.ascent * size + 0.49999 | 0;
+          var descent = metrics.descent * size + 0.49999 | 0;
+          var leading = metrics.leading * size + 0.49999 + line.leading | 0;
+          // TODO: check if metrics values can be floats for embedded fonts
+          return new flash.text.TextLineMetrics(line.x + 2, line.width,
+                                                line.height,
+                                                ascent, descent, leading);
         }
       }
     }
