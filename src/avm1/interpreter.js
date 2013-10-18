@@ -583,6 +583,12 @@ function interpretActions(actionsData, scopeContainer,
       target.obj.asSetPublicProperty(target.name, value);
       return;
     }
+    for (var p = scopeContainer; p; p = p.next) {
+      var resolvedName = as2ResolveProperty(p.scope, variableName);
+      if (resolvedName !== null) {
+        return p.scope.asSetPublicProperty(variableName, value);
+      }
+    }
     var _this = scope.asGetPublicProperty('this') || getVariable('this');
     _this.asSetPublicProperty(variableName, value);
   }
