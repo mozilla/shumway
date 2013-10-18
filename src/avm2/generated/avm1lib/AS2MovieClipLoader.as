@@ -37,6 +37,8 @@ package avm1lib {
     public function loadClip(url: String, target: Object) : Boolean
     {
       var nativeObject = this._as3Object;
+      var nativeTarget = typeof target === 'number' ?
+        AS2Utils.resolveLevel(target) : AS2Utils.resolveTarget(target);
       var nativeTarget = AS2Utils.resolveTarget(target);
       nativeTarget._as3Object.addChild(nativeObject);
       nativeObject.load(new flash.net.URLRequest(url));
@@ -52,7 +54,8 @@ package avm1lib {
     public function unloadClip(target: Object) : Boolean
     {
       var nativeObject = this._as3Object;
-      var nativeTarget = AS2Utils.resolveTarget(target);
+      var nativeTarget = typeof target === 'number' ?
+        AS2Utils.resolveLevel(target) : AS2Utils.resolveTarget(target);
       nativeTarget._as3Object.removeChild(nativeObject);
     }
 
