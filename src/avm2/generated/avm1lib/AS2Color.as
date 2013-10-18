@@ -34,7 +34,7 @@ package avm1lib {
     }
     public function getTransform()
     {
-      return this.$target.$nativeObject.transform.colorTransform;
+      return this.$target._as3Object.transform.colorTransform;
     }
     public function setRGB(offset)
     {
@@ -43,7 +43,7 @@ package avm1lib {
       this.setTransform(transform);
     }
     public function setTransform(transform) {
-      this.$target.$nativeObject.transform.colorTransform = transform;
+      this.$target._as3Object.transform.colorTransform = transform;
     }
   }
 }

@@ -21,162 +21,162 @@ package avm1lib {
 
   [native(cls="AS2TextField")]
   public dynamic class AS2TextField extends Object {
-    private native function init(nativeTextField: flash.text.TextField);
+    private native function _init(nativeTextField: flash.text.TextField);
 
     function AS2TextField(nativeTextField: flash.text.TextField) {
-      init(nativeTextField);
+      _init(nativeTextField);
     }
 
-    public native function get $nativeObject(): flash.text.TextField;
+    public native function get _as3Object(): flash.text.TextField;
 
-    public function get _alpha() { return this.$nativeObject.alpha; }
-    public function set _alpha(value) { this.$nativeObject.alpha = value; }
+    public function get _alpha() { return this._as3Object.alpha; }
+    public function set _alpha(value) { this._as3Object.alpha = value; }
 
-    public function get antiAliasType() { return this.$nativeObject.antiAliasType; }
-    public function set antiAliasType(value) { this.$nativeObject.antiAliasType = value; }
+    public function get antiAliasType() { return this._as3Object.antiAliasType; }
+    public function set antiAliasType(value) { this._as3Object.antiAliasType = value; }
 
-    public function get autoSize() { return this.$nativeObject.autoSize; }
-    public function set autoSize(value) { this.$nativeObject.autoSize = value; }
+    public function get autoSize() { return this._as3Object.autoSize; }
+    public function set autoSize(value) { this._as3Object.autoSize = value; }
 
-    public function get background() { return this.$nativeObject.background; }
-    public function set background(value) { this.$nativeObject.background = value; }
+    public function get background() { return this._as3Object.background; }
+    public function set background(value) { this._as3Object.background = value; }
 
-    public function get backgroundColor() { return this.$nativeObject.backgroundColor; }
-    public function set backgroundColor(value) { this.$nativeObject.backgroundColor = value; }
+    public function get backgroundColor() { return this._as3Object.backgroundColor; }
+    public function set backgroundColor(value) { this._as3Object.backgroundColor = value; }
 
-    public function get border() { return this.$nativeObject.border; }
-    public function set border(value) { this.$nativeObject.border = value; }
+    public function get border() { return this._as3Object.border; }
+    public function set border(value) { this._as3Object.border = value; }
 
-    public function get borderColor() { return this.$nativeObject.borderColor; }
-    public function set borderColor(value) { this.$nativeObject.borderColor = value; }
+    public function get borderColor() { return this._as3Object.borderColor; }
+    public function set borderColor(value) { this._as3Object.borderColor = value; }
 
-    public function get bottomScroll() { return this.$nativeObject.bottomScrollV; }
+    public function get bottomScroll() { return this._as3Object.bottomScrollV; }
 
-    public function get condenseWhite() { return this.$nativeObject.condenseWhite; }
-    public function set condenseWhite(value) { this.$nativeObject.condenseWhite = value; }
+    public function get condenseWhite() { return this._as3Object.condenseWhite; }
+    public function set condenseWhite(value) { this._as3Object.condenseWhite = value; }
 
-    public function get embedFonts() { return this.$nativeObject.embedFonts; }
-    public function set embedFonts(value) { this.$nativeObject.embedFonts = value; }
+    public function get embedFonts() { return this._as3Object.embedFonts; }
+    public function set embedFonts(value) { this._as3Object.embedFonts = value; }
 
     public function getNewTextFormat()
     {
-      return this.$nativeObject.defaultTextFormat;
+      return this._as3Object.defaultTextFormat;
     }
 
-    public function getTextFormat() { return this.$nativeObject.getTextFormat; }
+    public function getTextFormat() { return this._as3Object.getTextFormat; }
 
-    public function get _height() { return this.$nativeObject.height; }
-    public function set _height(value) { this.$nativeObject.height = value; }
+    public function get _height() { return this._as3Object.height; }
+    public function set _height(value) { this._as3Object.height = value; }
 
     public function get _highquality() { return 1; }
     public function set _highquality(value) { }
 
-    public function get hscroll() { return this.$nativeObject.scrollH; }
-    public function set hscroll(value) { this.$nativeObject.scrollH = value; }
+    public function get hscroll() { return this._as3Object.scrollH; }
+    public function set hscroll(value) { this._as3Object.scrollH = value; }
 
     public function get html() { throw 'Not implemented: get$_html'; }
     public function set html(value) { throw 'Not implemented: set$_html'; }
 
-    public function get htmlText() { return this.$nativeObject.htmlText; }
-    public function set htmlText(value) { this.$nativeObject.htmlText = value; }
+    public function get htmlText() { return this._as3Object.htmlText; }
+    public function set htmlText(value) { this._as3Object.htmlText = value; }
 
     // [Compiler] Error #1024: Overriding a function that is not marked for override.
-    //  public function get length() { return this.$nativeObject.length; }
+    //  public function get length() { return this._as3Object.length; }
 
-    public function get maxChars() { return this.$nativeObject.maxChars; }
-    public function set maxChars(value) { this.$nativeObject.maxChars = value; }
+    public function get maxChars() { return this._as3Object.maxChars; }
+    public function set maxChars(value) { this._as3Object.maxChars = value; }
 
-    public function get maxhscroll() { return this.$nativeObject.maxScrollH; }
+    public function get maxhscroll() { return this._as3Object.maxScrollH; }
 
-    public function get maxscroll() { return this.$nativeObject.maxScrollV; }
+    public function get maxscroll() { return this._as3Object.maxScrollV; }
 
-    public function get multiline() { return this.$nativeObject.multiline; }
-    public function set multiline(value) { this.$nativeObject.multiline = value; }
+    public function get multiline() { return this._as3Object.multiline; }
+    public function set multiline(value) { this._as3Object.multiline = value; }
 
-    public function get _name() { return this.$nativeObject._name; }
-    public function set _name(value) { this.$nativeObject._name = value; }
+    public function get _name() { return this._as3Object._name; }
+    public function set _name(value) { this._as3Object._name = value; }
 
-    public function get _parent() { return this.$nativeObject.parent; }
+    public function get _parent() { return this._as3Object.parent; }
     public function set _parent(value) { throw 'Not implemented: set$_parent'; }
 
-    public function get password() { return this.$nativeObject.displayAsPassword; }
-    public function set password(value) { this.$nativeObject.displayAsPassword = value; }
+    public function get password() { return this._as3Object.displayAsPassword; }
+    public function set password(value) { this._as3Object.displayAsPassword = value; }
 
     public function get _quality() { return 'HIGH'; }
     public function set _quality(value) { }
 
-    public function get _rotation() { return this.$nativeObject.rotation; }
-    public function set _rotation(value) { this.$nativeObject.rotation = value; }
+    public function get _rotation() { return this._as3Object.rotation; }
+    public function set _rotation(value) { this._as3Object.rotation = value; }
 
-    public function get scroll() { return this.$nativeObject.scrollV; }
-    public function set scroll(value) { this.$nativeObject.scrollV = value; }
+    public function get scroll() { return this._as3Object.scrollV; }
+    public function set scroll(value) { this._as3Object.scrollV = value; }
 
-    public function get selectable() { return this.$nativeObject.selectable; }
-    public function set selectable(value) { this.$nativeObject.selectable = value; }
+    public function get selectable() { return this._as3Object.selectable; }
+    public function set selectable(value) { this._as3Object.selectable = value; }
 
-    public function setNewTextFormat(value) { this.$nativeObject.defaultTextFormat = value; }
+    public function setNewTextFormat(value) { this._as3Object.defaultTextFormat = value; }
 
-    public function setTextFormat() { this.$nativeObject.setTextFormat.apply(this.$nativeObject, arguments); }
+    public function setTextFormat() { this._as3Object.setTextFormat.apply(this._as3Object, arguments); }
 
     public function get _soundbuftime() { throw 'Not implemented: get$_soundbuftime'; }
     public function set _soundbuftime(value) { throw 'Not implemented: set$_soundbuftime'; }
 
-    public function get tabEnabled() { return this.$nativeObject.tabEnabled; }
-    public function set tabEnabled(value) { this.$nativeObject.tabEnabled = value; }
+    public function get tabEnabled() { return this._as3Object.tabEnabled; }
+    public function set tabEnabled(value) { this._as3Object.tabEnabled = value; }
 
-    public function get tabIndex() { return this.$nativeObject.tabIndex; }
-    public function set tabIndex(value) { this.$nativeObject.tabIndex = value; }
+    public function get tabIndex() { return this._as3Object.tabIndex; }
+    public function set tabIndex(value) { this._as3Object.tabIndex = value; }
 
     public function get _target() { return AS2Utils.getTarget(this); }
 
-    public function get text() { return this.$nativeObject.text; }
-    public function set text(value) { this.$nativeObject.text = value; }
+    public function get text() { return this._as3Object.text; }
+    public function set text(value) { this._as3Object.text = value; }
 
-    public function get textColor() { return this.$nativeObject.textColor; }
-    public function set textColor(value) { this.$nativeObject.textColor = value; }
+    public function get textColor() { return this._as3Object.textColor; }
+    public function set textColor(value) { this._as3Object.textColor = value; }
 
-    public function get textHeight() { return this.$nativeObject.textHeight; }
-    public function set textHeight(value) { this.$nativeObject.textHeight = value; }
+    public function get textHeight() { return this._as3Object.textHeight; }
+    public function set textHeight(value) { this._as3Object.textHeight = value; }
 
-    public function get textWidth() { return this.$nativeObject.textWidth; }
-    public function set textWidth(value) { this.$nativeObject.textWidth = value; }
+    public function get textWidth() { return this._as3Object.textWidth; }
+    public function set textWidth(value) { this._as3Object.textWidth = value; }
 
-    public function get type() { return this.$nativeObject.type; }
-    public function set type(value) { this.$nativeObject.type = value; }
+    public function get type() { return this._as3Object.type; }
+    public function set type(value) { this._as3Object.type = value; }
 
-    public function get _url() { return this.$nativeObject.loaderInfo.url; }
+    public function get _url() { return this._as3Object.loaderInfo.url; }
 
     public function get variable() { throw 'Not implemented: get$variable'; }
     public function set variable(value) { throw 'Not implemented: set$variable'; }
 
-    public function get _visible() { return this.$nativeObject.visible; }
-    public function set _visible(value) { this.$nativeObject.visible = +value !== 0; }
+    public function get _visible() { return this._as3Object.visible; }
+    public function set _visible(value) { this._as3Object.visible = +value !== 0; }
 
-    public function get _width() { return this.$nativeObject.width; }
-    public function set _width(value) { this.$nativeObject.width= value; }
+    public function get _width() { return this._as3Object.width; }
+    public function set _width(value) { this._as3Object.width= value; }
 
-    public function get wordWrap() { return this.$nativeObject.wordWrap;  }
-    public function set wordWrap(value) { this.$nativeObject.wordWrap = value;  }
+    public function get wordWrap() { return this._as3Object.wordWrap;  }
+    public function set wordWrap(value) { this._as3Object.wordWrap = value;  }
 
-    public function get _x() { return this.$nativeObject.x;  }
-    public function set _x(value) { this.$nativeObject.x = value;  }
+    public function get _x() { return this._as3Object.x;  }
+    public function set _x(value) { this._as3Object.x = value;  }
 
-    public function get _xmouse() { return this.$nativeObject.mouseX;  }
+    public function get _xmouse() { return this._as3Object.mouseX;  }
 
-    public function get _xscale() { return this.$nativeObject.scaleX;  }
-    public function set _xscale(value) { this.$nativeObject.scaleX = value;  }
+    public function get _xscale() { return this._as3Object.scaleX;  }
+    public function set _xscale(value) { this._as3Object.scaleX = value;  }
 
-    public function get _y() { return this.$nativeObject.y;  }
-    public function set _y(value) { this.$nativeObject.y = value;  }
+    public function get _y() { return this._as3Object.y;  }
+    public function set _y(value) { this._as3Object.y = value;  }
 
-    public function get _ymouse() { return this.$nativeObject.mouseY;  }
+    public function get _ymouse() { return this._as3Object.mouseY;  }
 
-    public function get _yscale() { return this.$nativeObject.scaleY;  }
-    public function set _yscale(value) { this.$nativeObject.scaleY = value;  }
+    public function get _yscale() { return this._as3Object.scaleY;  }
+    public function set _yscale(value) { this._as3Object.scaleY = value;  }
 
 
     {
-      AS2Utils.addProperty(prototype, 'length', function () { return this.$nativeObject.length; }, null);
+      AS2Utils.addProperty(prototype, 'length', function () { return this._as3Object.length; }, null);
 
       AS2Utils.addEventHandlerProxy(prototype, 'onDragOut', 'dragOut');
       AS2Utils.addEventHandlerProxy(prototype, 'onDragOver', 'dragOver');
