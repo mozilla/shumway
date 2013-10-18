@@ -581,8 +581,8 @@ var TextFieldDefinition = (function () {
       if (width <= 0 || height <= 0) {
         return;
       }
-      ctx.save();
 
+      ctx.save();
       ctx.beginPath();
       ctx.rect(0, 0, width + 1, height + 1);
       ctx.clip();
@@ -602,17 +602,22 @@ var TextFieldDefinition = (function () {
       ctx.save();
       colorTransform.setAlpha(ctx);
       var runs = this._content.textruns;
+      var offsetY = this._lines[this._scrollV - 1].y;
       for (var i = 0; i < runs.length; i++) {
         var run = runs[i];
         if (run.type === 'f') {
           ctx.restore();
           ctx.font = run.format.str;
+          // TODO: only apply color and alpha if it actually changed
           colorTransform.setFillStyle(ctx, run.format.color);
           ctx.save();
           colorTransform.setAlpha(ctx);
         } else {
           assert(run.type === 't', 'Invalid run type: ' + run.type);
-          ctx.fillText(run.text, run.x - this._drawingOffsetH, run.y);
+          if (run.y < offsetY) {
+            continue;
+          }
+          ctx.fillText(run.text, run.x - this._drawingOffsetH, run.y - offsetY);
         }
       }
       ctx.restore();
@@ -906,11 +911,11 @@ var TextFieldDefinition = (function () {
         },
         scrollV: {
           get: function scrollV() {
-            somewhatImplemented('TextField#scrollV');
             return this._scrollV;
           },
           set: function scrollV(value) {
-            somewhatImplemented('TextField#scrollV');
+            this.ensureDimensions();
+            value = Math.max(1, Math.min(this._maxScrollV, value));
             this._scrollV = value;
           }
         },
