@@ -57,7 +57,6 @@ var DisplayObjectDefinition = (function () {
       this._concatenatedTransform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0, invalid: true };
       this._current3DTransform = null;
       this._cxform = null;
-      this._depth = null;
       this._graphics = null;
       this._filters = [];
       this._loader = null;
@@ -85,6 +84,7 @@ var DisplayObjectDefinition = (function () {
       this._region = null;
       this._level = -1;
       this._index = -1;
+      this._depth = -1;
 
       blendModes = [
         blendModeClass.NORMAL,     // 0
@@ -113,13 +113,13 @@ var DisplayObjectDefinition = (function () {
         this._children = s.children || [];
         this._clipDepth = s.clipDepth || null;
         this._cxform = s.cxform || null;
-        this._depth = s.depth || null;
         this._loader = s.loader || null;
         this._name = s.name || null;
         this._owned = s.owned || false;
         this._parent = s.parent || null;
         this._level = isNaN(s.level) ? -1 : s.level;
         this._index = isNaN(s.index) ? -1 : s.index;
+        this._depth = isNaN(s.depth) ? -1 : s.depth;
         this._root = s.root || null;
         this._stage = s.stage || null;
 
@@ -200,47 +200,77 @@ var DisplayObjectDefinition = (function () {
       return blendModes[blendModeNumeric] || flash.display.BlendMode.class.NORMAL;
     },
 
-    _getConcatenatedTransform: function () {
-      if (!this._concatenatedTransform.invalid) {
-        return this._concatenatedTransform;
+    _getConcatenatedTransform: function (toDeviceSpace) {
+      var stage = this._stage;
+
+      if (this === this._stage) {
+        return toDeviceSpace ? this._concatenatedTransform :
+                               this._currentTransform;
       }
 
-      var stack = [this];
-      var m;
+      var m, m2;
 
-      var currentNode = this._parent;
-      while (currentNode) {
-        if (currentNode._concatenatedTransform.invalid) {
-          stack.push(currentNode);
-        }
-        currentNode = currentNode._parent;
-      }
-
-      while (stack.length) {
-        var node = stack.pop();
-
-        m = node._concatenatedTransform;
-
-        var m2 = node._currentTransform;
-
-        if (node._parent) {
-          var m3 = node._parent._concatenatedTransform;
-          m.a = m2.a * m3.a + m2.b * m3.c;
-          m.b = m2.a * m3.b + m2.b * m3.d;
-          m.c = m2.c * m3.a + m2.d * m3.c;
-          m.d = m2.d * m3.d + m2.c * m3.b;
-          m.tx = m2.tx * m3.a + m3.tx + m2.ty * m3.c;
-          m.ty = m2.ty * m3.d + m3.ty + m2.tx * m3.b;
-        } else {
+      if (this._concatenatedTransform.invalid) {
+        if (this._parent === stage) {
+          m = this._concatenatedTransform;
+          m2 = this._currentTransform;
           m.a = m2.a;
           m.b = m2.b;
           m.c = m2.c;
           m.d = m2.d;
           m.tx = m2.tx;
           m.ty = m2.ty;
-        }
+        } else {
+          var stack = [this];
 
-        m.invalid = false;
+          var currentNode = this._parent;
+          while (currentNode !== stage) {
+            if (currentNode._concatenatedTransform.invalid) {
+              stack.push(currentNode);
+            }
+            currentNode = currentNode._parent;
+          }
+
+          while (stack.length) {
+            var node = stack.pop();
+
+            m = node._concatenatedTransform;
+            m2 = node._currentTransform;
+
+            if (node._parent) {
+              if (node._parent !== this._stage) {
+                var m3 = node._parent._concatenatedTransform;
+                m.a = m2.a * m3.a + m2.b * m3.c;
+                m.b = m2.a * m3.b + m2.b * m3.d;
+                m.c = m2.c * m3.a + m2.d * m3.c;
+                m.d = m2.d * m3.d + m2.c * m3.b;
+                m.tx = m2.tx * m3.a + m3.tx + m2.ty * m3.c;
+                m.ty = m2.ty * m3.d + m3.ty + m2.tx * m3.b;
+              }
+            } else {
+              m.a = m2.a;
+              m.b = m2.b;
+              m.c = m2.c;
+              m.d = m2.d;
+              m.tx = m2.tx;
+              m.ty = m2.ty;
+            }
+
+            m.invalid = false;
+          }
+        }
+      } else {
+        m = this._concatenatedTransform;
+      }
+
+      if (toDeviceSpace && stage) {
+        m2 = stage._concatenatedTransform;
+        return { a: m.a * m2.a,
+                 b: m.b * m2.d,
+                 c: m.c * m2.a,
+                 d: m.d * m2.d,
+                 tx: m.tx * m2.a + m2.tx,
+                 ty: m.ty * m2.d + m2.ty };
       }
 
       return m;

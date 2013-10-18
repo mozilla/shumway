@@ -15,11 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Kanvas, describeProperty, ShapePath, factoryCtx, rgbIntAlphaToStr,
+/*global describeProperty, ShapePath, factoryCtx, rgbIntAlphaToStr,
   buildLinearGradientFactory, buildRadialGradientFactory,
   SHAPE_MOVE_TO, SHAPE_LINE_TO, SHAPE_CURVE_TO, SHAPE_WIDE_MOVE_TO,
   SHAPE_WIDE_LINE_TO, SHAPE_CUBIC_CURVE_TO, SHAPE_CIRCLE, SHAPE_ELLIPSE,
-  SHAPE_ROUND_CORNER */
+  SHAPE_ROUND_CORNER, Errors, throwError */
 
 var GraphicsDefinition = (function () {
   var GRAPHICS_PATH_WINDING_EVEN_ODD       = 'evenOdd';
@@ -84,17 +84,17 @@ var GraphicsDefinition = (function () {
     beginGradientFill: function(type, colors, alphas, ratios, matrix,
                                 spreadMethod, interpolationMethod, focalPos)
     {
+      var style = createGradientStyle(type, colors, alphas, ratios, matrix,
+                                      spreadMethod, interpolationMethod,
+                                      focalPos);
       this.beginPath();
-      this._currentPath.fillStyle = createGradientStyle(type, colors, alphas,
-                                                        ratios, matrix,
-                                                        spreadMethod,
-                                                        interpolationMethod,
-                                                        focalPos);
+      this._currentPath.fillStyle = style;
     },
     beginBitmapFill: function (bitmap, matrix, repeat, smooth) {
       this.beginPath();
+      repeat = repeat !== false;
       this._currentPath.fillStyle = createPatternStyle(bitmap, matrix, repeat,
-                                                       smooth);
+                                                       !!smooth);
     },
     clear: function () {
       this._invalidate();
@@ -137,7 +137,7 @@ var GraphicsDefinition = (function () {
     },
     drawRect: function (x, y, w, h) {
       if (isNaN(w + h))
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.InvalidParamError);
 
       this._invalidate();
       this._currentPath.rect((x * 20)|0, (y * 20)|0, (w * 20)|0, (h * 20)|0);
@@ -146,26 +146,51 @@ var GraphicsDefinition = (function () {
       if (isNaN(w + h + ellipseWidth) ||
           (ellipseHeight !== undefined && isNaN(ellipseHeight)))
       {
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.InvalidParamError);
       }
       this._invalidate();
 
-      var x2 = ((x + w) * 20)|0;
-      var y2 = ((y + h) * 20)|0;
+      if (ellipseHeight === undefined) {
+        ellipseHeight = ellipseWidth;
+      }
+
       x = (x * 20)|0;
       y = (y * 20)|0;
+      w = (w * 20)|0;
+      h = (h * 20)|0;
+
+      if (!ellipseHeight || !ellipseWidth) {
+        this._currentPath.rect(x, y, w, h);
+        return;
+      }
+
       var radiusX = (ellipseWidth / 2 * 20)|0;
       var radiusY = (ellipseHeight / 2 * 20)|0;
 
+      var hw = (w / 2)|0;
+      var hh = (h / 2)|0;
+      if (radiusX > hw) {
+        radiusX = hw;
+      }
+      if (radiusY > hh) {
+        radiusY = hh;
+      }
 
-      if (w === ellipseWidth && h === ellipseHeight) {
-        if (ellipseWidth === ellipseHeight)
+      if (hw === radiusX && hh === radiusY) {
+        if (radiusX === radiusY)
           this._currentPath.circle(x+radiusX, y+radiusY, radiusX);
         else
-          this._currentPath.ellipse(x+radiusX, y+radiusY, radiusX, radiusY,
-                                    0, Math.PI * 2);
+          this._currentPath.ellipse(x+radiusX, y+radiusY, radiusX, radiusY);
         return;
       }
+
+      var right = x + w;
+      var bottom = y + h;
+
+      var xlw = x + radiusX;
+      var xrw = right - radiusX;
+      var ytw = y + radiusY;
+      var ybw = bottom - radiusY;
 
       //    A-----B
       //  H         C
@@ -175,17 +200,15 @@ var GraphicsDefinition = (function () {
       // Through some testing, it has been discovered
       // tha the Flash player starts and stops the pen
       // at 'D', so we will, too.
-      this._currentPath.moveTo(x2, y2 - radiusY);
-
-      this._currentPath.drawRoundCorner(x2, y2, x2-radiusX, y2,
-                                        radiusX, radiusY);
-      this._currentPath.lineTo(x + radiusX, y2);
-      this._currentPath.drawRoundCorner(x, y2, x, y2-radiusY, radiusX, radiusY);
-      this._currentPath.lineTo(x, y + radiusY);
-      this._currentPath.drawRoundCorner(x, y, x+radiusX, y, radiusX, radiusY);
-      this._currentPath.lineTo(x2 - radiusX, y);
-      this._currentPath.drawRoundCorner(x2, y, x2, y+radiusY, radiusX, radiusY);
-      this._currentPath.lineTo(x2, y2-radiusY);
+      this._currentPath.moveTo(right, ybw);
+      this._currentPath.curveTo(right, bottom, xrw, bottom);
+      this._currentPath.lineTo(xlw, bottom);
+      this._currentPath.curveTo(x, bottom, x, ybw);
+      this._currentPath.lineTo(x, ytw);
+      this._currentPath.curveTo(x, y, xlw, y);
+      this._currentPath.lineTo(xrw, y);
+      this._currentPath.curveTo(right, y, right, ytw);
+      this._currentPath.lineTo(right, ybw);
     },
     drawRoundRectComplex: function (x, y, w, h, topLeftRadius, topRightRadius,
                                     bottomLeftRadius, bottomRightRadius)
@@ -193,32 +216,38 @@ var GraphicsDefinition = (function () {
       if (isNaN(w + h + topLeftRadius + topRightRadius + bottomLeftRadius +
                 bottomRightRadius))
       {
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.InvalidParamError);
       }
       this._invalidate();
 
-      var x2 = ((x + w) * 20)|0;
-      var y2 = ((y + h) * 20)|0;
       x = (x * 20)|0;
       y = (y * 20)|0;
+      w = (w * 20)|0;
+      h = (h * 20)|0;
+
+      if (!topLeftRadius && !topRightRadius && !bottomLeftRadius && !bottomRightRadius) {
+        this._currentPath.rect(x, y, w, h);
+        return;
+      }
+
       topLeftRadius = (topLeftRadius * 20)|0;
       topRightRadius = (topRightRadius * 20)|0;
       bottomLeftRadius = (bottomLeftRadius * 20)|0;
       bottomRightRadius = (bottomRightRadius * 20)|0;
 
-      this._currentPath.moveTo(x2, y2-bottomRightRadius);
-      this._currentPath.drawRoundCorner(x2, y2, x2-bottomRightRadius, y2,
-                                        bottomRightRadius);
-      this._currentPath.lineTo(x + bottomLeftRadius, y2);
-      this._currentPath.drawRoundCorner(x, y2, x, y2-bottomLeftRadius,
-                                        bottomLeftRadius);
+      var right = x + w;
+      var bottom = y + h;
+      var xtl = x + topLeftRadius;
+
+      this._currentPath.moveTo(right, bottom - bottomRightRadius);
+      this._currentPath.curveTo(right, bottom, right - bottomRightRadius, bottom);
+      this._currentPath.lineTo(x + bottomLeftRadius, bottom);
+      this._currentPath.curveTo(x, bottom, x, bottom - bottomLeftRadius);
       this._currentPath.lineTo(x, y + topLeftRadius);
-      this._currentPath.drawRoundCorner(x, y, x+topLeftRadius, y,
-                                        topLeftRadius);
-      this._currentPath.lineTo(x2 - topRightRadius, y);
-      this._currentPath.drawRoundCorner(x2, y, x2, y+topRightRadius,
-                                        topRightRadius);
-      this._currentPath.lineTo(x2, y2-bottomRightRadius);
+      this._currentPath.curveTo(x, y, xtl, y);
+      this._currentPath.lineTo(right - topRightRadius, y);
+      this._currentPath.curveTo(right, y, right, y + topRightRadius);
+      this._currentPath.lineTo(right, bottom - bottomRightRadius);
     },
     drawTriangles: function(vertices, indices, uvtData, culling) {
       notImplemented("Graphics#drawTriangles");
@@ -235,12 +264,11 @@ var GraphicsDefinition = (function () {
     lineGradientStyle: function(type, colors, alphas, ratios, matrix,
                                 spreadMethod, interpolationMethod, focalPos)
     {
+      var style = createGradientStyle(type, colors, alphas, ratios, matrix,
+                                      spreadMethod, interpolationMethod,
+                                      focalPos);
       this.beginPath();
-      this._currentPath.lineStyle = createGradientStyle(type, colors, alphas,
-                                                        ratios, matrix,
-                                                        spreadMethod,
-                                                        interpolationMethod,
-                                                        focalPos);
+      this._currentPath.lineStyle = style;
     },
 
     lineStyle: function (width, color, alpha, pxHinting, scale, cap, joint,
@@ -290,14 +318,15 @@ var GraphicsDefinition = (function () {
       var xMins = [], yMins = [], xMaxs = [], yMaxs = [];
       for (var i = 0, n = subpaths.length; i < n; i++) {
         var path = subpaths[i];
-        var b = path.getBounds(true);
-        if (b) {
-          xMins.push(b.xMin);
-          yMins.push(b.yMin);
-          xMaxs.push(b.xMax);
-          yMaxs.push(b.yMax);
+        if (path.commands.length) {
+          var b = path.getBounds(true);
+          if (b) {
+            xMins.push(b.xMin);
+            yMins.push(b.yMin);
+            xMaxs.push(b.xMax);
+            yMaxs.push(b.yMax);
+          }
         }
-
       }
       if (xMins.length === 0) {
         return 0;
@@ -356,12 +385,20 @@ function createPatternStyle(bitmap, matrix, repeat, smooth) {
                   } :
                   { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
 
-  return {style: pattern, transform: transform};
+  return {style: pattern, transform: transform, smooth: smooth};
 }
 
 function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
                              interpolationMethod, focalPos)
 {
+  type === null || type === undefined &&
+                   throwError('TypeError', Errors.NullPointerError, 'type');
+  colors === null || type === undefined &&
+                     throwError('TypeError', Errors.NullPointerError, 'colors');
+  if (!(type === 'linear' || type === 'radial')) {
+    throwError('ArgumentError', Errors.InvalidEnumError, 'type');
+  }
+  // TODO: add coercion checks for all args
   var colorStops = [];
   for (var i = 0, n = colors.length; i < n; i++) {
     colorStops.push({
@@ -373,10 +410,8 @@ function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
   var gradientConstructor;
   if (type === 'linear') {
     gradientConstructor = buildLinearGradientFactory(colorStops);
-  } else if (type == 'radial') {
-    gradientConstructor = buildRadialGradientFactory((focalPos || 0), colorStops);
   } else {
-    throw ArgumentError();
+    gradientConstructor = buildRadialGradientFactory((focalPos || 0), colorStops);
   }
 
   // NOTE firefox is really sensitive to very small scale when painting gradients

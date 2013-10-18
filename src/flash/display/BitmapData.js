@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global renderDisplayObject, RenderVisitor, argbUintToStr, getBlendModeName */
+/* global renderDisplayObject, RenderVisitor, argbUintToStr, getBlendModeName,
+   Errors, throwError */
 
 var BitmapDataDefinition = (function () {
   function replaceRect(ctx, x, y, w, h, alpha) {
@@ -51,7 +52,7 @@ var BitmapDataDefinition = (function () {
         width = this._img.naturalWidth || this._img.width;
         height = this._img.naturalHeight || this._img.height;
       } else if (isNaN(width + height) || width <= 0 || height <= 0) {
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.ArgumentError);
       }
 
       this._transparent = transparent === undefined ? true : !!transparent;
@@ -64,7 +65,7 @@ var BitmapDataDefinition = (function () {
         this._drawable = this._img;
       } else {
         var canvas = document.createElement('canvas');
-        this._ctx = canvas.getContext('kanvas-2d');
+        this._ctx = canvas.getContext('2d');
         canvas.width = width | 0;
         canvas.height = height | 0;
         this._drawable = canvas;
@@ -82,24 +83,30 @@ var BitmapDataDefinition = (function () {
       this._drawable.height = 0;
       this._drawable = null;
     },
-    draw: function(source, matrix, colorTransform, blendMode, clipRect, smoothing) {
+    draw: function(source, matrix, colorTransform, blendMode, clipRect,
+                   smoothing)
+    {
       this._checkCanvas();
-      this._ctx.save();
-      this._ctx.beginPath();
+      var ctx = this._ctx;
+      ctx.save();
+      ctx.beginPath();
       if (clipRect && clipRect.width > 0 && clipRect.height > 0) {
-        this._ctx.rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
-        this._ctx.clip();
+        ctx.rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
+        ctx.clip();
       }
       if (matrix) {
-        this._ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+        ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx,
+                      matrix.ty);
       }
-      this._ctx.globalCompositeOperation = getBlendModeName(blendMode);
+      ctx.globalCompositeOperation = getBlendModeName(blendMode);
+      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = !!smoothing;
       if (flash.display.BitmapData.class.isInstanceOf(source)) {
-        this._ctx.drawImage(source._drawable, 0, 0);
+        ctx.drawImage(source._drawable, 0, 0);
       } else {
-        (new RenderVisitor(source, this._ctx, null, true)).startFragment();
+        (new RenderVisitor(source, ctx, null, true)).startFragment();
       }
-      this._ctx.restore();
+      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = false;
+      ctx.restore();
       this._invalidate();
     },
     fillRect: function(rect, color) {

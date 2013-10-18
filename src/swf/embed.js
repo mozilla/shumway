@@ -19,7 +19,7 @@
 
 SWF.embed = function(file, doc, container, options) {
   var canvas = doc.createElement('canvas');
-  var ctx = canvas.getContext('kanvas-2d');
+  var ctx = canvas.getContext('2d');
   var loader = new flash.display.Loader();
   var loaderInfo = loader.contentLoaderInfo;
   var stage = new flash.display.Stage();
@@ -80,18 +80,18 @@ SWF.embed = function(file, doc, container, options) {
     canvas.addEventListener('click', function () {
       ShumwayKeyboardListener.focus = stage;
 
-      stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('click'));
+      stage._mouseTarget._dispatchEvent('click');
     });
     canvas.addEventListener('dblclick', function () {
-      if (stage._clickTarget._doubleClickEnabled) {
-        stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('doubleClick'));
+      if (stage._mouseTarget._doubleClickEnabled) {
+        stage._mouseTarget._dispatchEvent('doubleClick');
       }
     });
     canvas.addEventListener('mousedown', function () {
-      if (stage._clickTarget._buttonMode) {
-        stage._clickTarget._gotoButtonState('down');
+      if (stage._mouseTarget._buttonMode) {
+        stage._mouseTarget._gotoButtonState('down');
       }
-      stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseDown'));
+      stage._mouseTarget._dispatchEvent('mouseDown');
     });
     canvas.addEventListener('mousemove', function (domEvt) {
       var node = this;
@@ -104,12 +104,9 @@ SWF.embed = function(file, doc, container, options) {
         } while ((node = node.offsetParent));
       }
 
-      var canvasState = stage._canvasState;
-
-      var mouseX = ((domEvt.pageX - left) * pixelRatio - canvasState.offsetX) /
-        canvasState.scaleX;
-      var mouseY = ((domEvt.pageY - top) * pixelRatio - canvasState.offsetY) /
-        canvasState.scaleY;
+      var m = stage._concatenatedTransform;
+      var mouseX = ((domEvt.pageX - left) * pixelRatio - m.tx) / m.a;
+      var mouseY = ((domEvt.pageY - top) * pixelRatio - m.ty) / m.d;
 
       if (mouseX !== stage._mouseX || mouseY !== stage._mouseY) {
         stage._mouseMoved = true;
@@ -118,10 +115,10 @@ SWF.embed = function(file, doc, container, options) {
       }
     });
     canvas.addEventListener('mouseup', function () {
-      if (stage._clickTarget._buttonMode) {
-        stage._clickTarget._gotoButtonState('over');
+      if (stage._mouseTarget._buttonMode) {
+        stage._mouseTarget._gotoButtonState('over');
       }
-      stage._clickTarget._dispatchEvent(new flash.events.MouseEvent('mouseUp'));
+      stage._mouseTarget._dispatchEvent('mouseUp');
     });
     canvas.addEventListener('mouseover', function () {
       stage._mouseMoved = true;

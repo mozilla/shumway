@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global $EXTENSION, FirefoxCom, forEachPublicProperty */
+/*global $EXTENSION, FirefoxCom, forEachPublicProperty, TelemetryService,
+         EXTERNAL_INTERFACE_FEATURE */
 
 var ExternalInterfaceDefinition = (function () {
   function getAvailable() {
@@ -41,6 +42,8 @@ var ExternalInterfaceDefinition = (function () {
           _initJS: function _initJS() { // (void) -> void
             if (initialized)
               return;
+
+            TelemetryService.reportTelemetry({topic: 'feature', feature: EXTERNAL_INTERFACE_FEATURE});
 
             initialized = true;
             FirefoxCom.initJS(callIn);

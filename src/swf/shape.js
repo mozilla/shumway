@@ -561,15 +561,10 @@ var SHAPE_CURVE_TO       = 3;
 var SHAPE_WIDE_MOVE_TO   = 4;
 var SHAPE_WIDE_LINE_TO   = 5;
 var SHAPE_CUBIC_CURVE_TO = 6;
-// Round corners can be drawn using arcTo, but hit-testing those is a bit of a
-// pain. By creating a command with much narrower scope, we make both drawing
-// and hit-testing easy and fast.
-// Data: cornerX, cornerY, curveEndX, curveEndY, radiusX, radiusY.
-var SHAPE_ROUND_CORNER   = 7;
 // The following commands aren't available in the Flash Player. We use them as
 // shortcuts for complex operations that exist natively on Canvas.
-var SHAPE_CIRCLE         = 8;
-var SHAPE_ELLIPSE        = 9;
+var SHAPE_CIRCLE         = 7;
+var SHAPE_ELLIPSE        = 8;
 
 function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph)
 {
@@ -630,12 +625,6 @@ ShapePath.prototype = {
     this.commands.push(SHAPE_CIRCLE);
     this.data.push(x, y, radius);
   },
-  drawRoundCorner: function(cornerX, cornerY, curveEndX, curveEndY,
-                            radiusX, radiusY)
-  {
-    this.commands.push(SHAPE_ROUND_CORNER);
-    this.data.push(cornerX, cornerY, curveEndX, curveEndY, radiusX, radiusY);
-  },
   ellipse: function(x, y, radiusX, radiusY) {
     this.commands.push(SHAPE_ELLIPSE);
     this.data.push(x, y, radiusX, radiusY);
@@ -679,10 +668,6 @@ ShapePath.prototype = {
             ctx.bezierCurveTo(data[k++]/20, data[k++]/20,
                               data[k++]/20, data[k++]/20,
                               data[k++]/20, data[k++]/20);
-            break;
-          case SHAPE_ROUND_CORNER:
-            ctx.arcTo(data[k++]/20, data[k++]/20, data[k++]/20, data[k++]/20,
-                      data[k++]/20, data[k++]/20);
             break;
           case SHAPE_CIRCLE:
             if (formOpen) {
@@ -758,6 +743,8 @@ ShapePath.prototype = {
       var fillStyle = this.fillStyle;
       if (fillStyle) {
         colorTransform.setFillStyle(ctx, fillStyle.style);
+        ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
+                                    fillStyle.smooth;
         var m = fillStyle.transform;
         ctx.save();
         colorTransform.setAlpha(ctx);
@@ -920,43 +907,6 @@ ShapePath.prototype = {
             if (roots[i] >= x) {
               inside = !inside;
             }
-          }
-          break;
-        case SHAPE_ROUND_CORNER:
-          cpX = data[dataIndex++];
-          cpY = data[dataIndex++];
-          toX = data[dataIndex++];
-          toY = data[dataIndex++];
-          rX = data[dataIndex++];
-          rY = data[dataIndex++];
-          // The round corner being fully to the left, top or bottom of x,y
-          // means it's irrelevant.
-          if ((toY > y) === (fromY > y) || fromX < x && toX < x) {
-            break;
-          }
-          // The round corner crossing y and being fully to the right means
-          // it crosses the ray.
-          if (fromX >= x && toX >= x) {
-            inside = !inside;
-            break;
-          }
-          // we want the ellipse's center
-          if ((toX > fromX) === (toY > fromY)) {
-            cp2X = fromX;
-            cp2Y = toY;
-          } else {
-            cp2X = toX;
-            cp2Y = fromY;
-          }
-          localX = x - cp2X;
-          localY = y - cp2Y;
-          // We already established that x,y lies somewhere in the ellipse's
-          // right quadrant. Hence, a simple "is in the ellipse XOR has negative
-          // localX" test suffices.
-          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) <= 1 !==
-              localX <= 0)
-          {
-              inside = !inside;
           }
           break;
         case SHAPE_CIRCLE:
@@ -1167,40 +1117,6 @@ ShapePath.prototype = {
             }
           }
           break;
-        case SHAPE_ROUND_CORNER:
-          cpX = data[dataIndex++];
-          cpY = data[dataIndex++];
-          toX = data[dataIndex++];
-          toY = data[dataIndex++];
-          rX = data[dataIndex++];
-          rY = data[dataIndex++];
-          // Eliminate based on bounds
-          if (maxX < fromX && maxX < toX || minX > fromX && minX > toX ||
-              maxY < fromY && maxY < toY || minY > fromY && minY > toY)
-          {
-            break;
-          }
-          // we want the ellipse's center
-          if ((toX > fromX) === (toY > fromY)) {
-            cp2X = fromX;
-            cp2Y = toY;
-          } else {
-            cp2X = toX;
-            cp2Y = fromY;
-          }
-          localX = Math.abs(x - cp2X);
-          localY = Math.abs(y - cp2Y);
-          localX -= halfWidth;
-          localY -= halfWidth;
-          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) > 1) {
-            break;
-          }
-          localX += width;
-          localY += width;
-          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) > 1) {
-            return true;
-          }
-          break;
         case SHAPE_CIRCLE:
           cpX = data[dataIndex++];
           cpY = data[dataIndex++];
@@ -1266,7 +1182,7 @@ ShapePath.prototype = {
     var data = this.data;
     var length = commands.length;
     var bounds;
-    if (commands[0] === SHAPE_MOVE_TO || commands[0] > SHAPE_ROUND_CORNER) {
+    if (commands[0] === SHAPE_MOVE_TO || commands[0] > SHAPE_CUBIC_CURVE_TO) {
       bounds = {xMin: data[0], yMin: data[1]};
     } else {
       // only the various single-line-drawing commands start out at zero
@@ -1339,11 +1255,6 @@ ShapePath.prototype = {
               extendBoundsByY(bounds, extremes[i]);
             }
           }
-          break;
-        case SHAPE_ROUND_CORNER:
-          // Relying on the fact that round corners never lie outside their
-          // rectangle, we ignore them.
-          dataIndex += 6;
           break;
         case SHAPE_CIRCLE:
           toX = data[dataIndex++];
@@ -1687,7 +1598,7 @@ function finishShapePaths(paths, dictionary) {
 var inWorker = (typeof window) === 'undefined';
 // Used for creating gradients and patterns
 var factoryCtx = !inWorker ?
-                 document.createElement('canvas').getContext('kanvas-2d') :
+                 document.createElement('canvas').getContext('2d') :
                  null;
 
 /**

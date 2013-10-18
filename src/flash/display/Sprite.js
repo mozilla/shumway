@@ -26,7 +26,7 @@ var SpriteDefinition = (function () {
       this._hitArea = null;
       this._useHandCursor = true;
       this._hitTarget = null;
-      this._depthMap = { };
+      this._currentDisplayList = null;
 
       var s = this.symbol;
       if (s) {
@@ -39,7 +39,9 @@ var SpriteDefinition = (function () {
             for (var i = 0; i < depths.length; i++) {
               var cmd = displayList[depths[i]];
               if (cmd) {
-                this._addTimelineChild(cmd);
+                var displayListItem = this._addTimelineChild(cmd);
+                displayListItem.next = this._currentDisplayList;
+                this._currentDisplayList = displayListItem;
               }
             }
           }
@@ -55,8 +57,8 @@ var SpriteDefinition = (function () {
       var symbolInfo = symbolPromise.value;
       var props = Object.create(symbolInfo.props);
 
-      props.depth = cmd.depth;
       props.symbolId = cmd.symbolId;
+      props.depth = cmd.depth;
 
       if (cmd.clip) {
         props.clipDepth = cmd.clipDepth;
@@ -77,41 +79,24 @@ var SpriteDefinition = (function () {
         props.blendMode = cmd.blendMode;
       }
 
-      var child = {
+      var displayListItem = {
+        cmd: cmd,
+        depth: cmd.depth,
         className: symbolInfo.className,
+        props: props,
         events: cmd.events,
-        props: props
+        obj: null
       };
 
       if (index !== undefined) {
-        this._children.splice(index, 0, child);
+        this._children.splice(index, 0, displayListItem);
       } else {
-        this._children.push(child);
+        this._children.push(displayListItem);
       }
 
       this._sparse = true;
-    },
-    _removeTimelineChild: function removeTimelineChild(cmd) {
-      var child = this._depthMap[cmd.depth];
 
-      if (!child) {
-        return;
-      }
-
-      this._depthMap[child._depth] = null;
-      child._depth = null;
-
-      if (!child._owned) {
-        return;
-      }
-
-      this._sparse = true;
-      this.removeChild(child);
-
-      child.destroy();
-      if (child._isPlaying) {
-        child.stop();
-      }
+      return displayListItem;
     },
     _constructChildren: function () {
       if (!this._sparse) {
@@ -122,18 +107,18 @@ var SpriteDefinition = (function () {
 
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
-        var symbolInfo = children[i];
+        var displayListItem = children[i];
 
-        if (flash.display.DisplayObject.class.isInstanceOf(symbolInfo)) {
-          symbolInfo._index = i;
+        if (flash.display.DisplayObject.class.isInstanceOf(displayListItem)) {
+          displayListItem._index = i;
         } else {
           // HACK application domain may have the symbol class --
           // checking which domain has a symbol class
-          var symbolClass = avm2.systemDomain.findClass(symbolInfo.className) ?
-            avm2.systemDomain.getClass(symbolInfo.className) :
-            avm2.applicationDomain.getClass(symbolInfo.className);
+          var symbolClass = avm2.systemDomain.findClass(displayListItem.className) ?
+            avm2.systemDomain.getClass(displayListItem.className) :
+            avm2.applicationDomain.getClass(displayListItem.className);
 
-          var props = Object.create(symbolInfo.props);
+          var props = Object.create(displayListItem.props);
           var name = props.name;
 
           props.animated = true;
@@ -171,7 +156,7 @@ var SpriteDefinition = (function () {
           }
 
           if (!loader._isAvm2Enabled) {
-            this._initAvm1Bindings(instance, name, symbolInfo.events);
+            this._initAvm1Bindings(instance, name, displayListItem.events);
             instance._dispatchEvent("init");
             instance._dispatchEvent("construct");
           }
@@ -184,7 +169,7 @@ var SpriteDefinition = (function () {
 
           children[i] = instance;
 
-          this._depthMap[instance._depth] = instance;
+          displayListItem.obj = instance;
         }
       }
 
@@ -204,8 +189,8 @@ var SpriteDefinition = (function () {
 
       var props = Object.create(symbolInfo);
       props.name = name;
-      props.depth = depth;
       props.parent = parent;
+      props.depth = depth;
 
       var instance = symbolClass.createAsSymbol(props);
       if (name)

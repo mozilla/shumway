@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global slice, formatErrorMessage, throwErrorFromVM, AVM2 */
+/*global slice, formatErrorMessage, throwErrorFromVM, AVM2, $RELEASE */
 
 function scriptProperties(namespace, props) {
   return props.reduce(function (o, p) {
@@ -95,6 +95,9 @@ var Promise = (function PromiseClosure() {
     subject.subpromisesReason = reason;
     var subpromises = subject.subpromises;
     if (!subpromises) {
+      if (!$RELEASE) {
+        console.warn(reason);
+      }
       return;
     }
     for (var i = 0; i < subpromises.length; i++) {
@@ -332,3 +335,10 @@ QuadTree.prototype._subdivide = function () {
   this.nodes[2] = new QuadTree(this.x, midY, halfWidth, halfHeight, level);
   this.nodes[3] = new QuadTree(midX, midY, halfWidth, halfHeight, level);
 };
+
+var EXTERNAL_INTERFACE_FEATURE = 1;
+var CLIPBOARD_FEATURE = 2;
+var SHAREDOBJECT_FEATURE = 3;
+var VIDEO_FEATURE = 4;
+var SOUND_FEATURE = 5;
+var NETCONNECTION_FEATURE = 6;
