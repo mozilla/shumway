@@ -12,8 +12,17 @@
             <em:targetApplication>
               <RDF:Description>
                 <em:id>{ec8030f7-c20a-464f-9b0e-13a3a9e97384}</em:id>
-                <em:minVersion>17.0</em:minVersion>
-                <em:maxVersion>19.0a1</em:maxVersion>
+                <em:minVersion>24.0</em:minVersion>
+                <em:maxVersion>28.0a1</em:maxVersion>
+                <!-- Use the raw link for updates so we we can use SSL. -->
+                <em:updateLink>https://github.com/mozilla/shumway/raw/gh-pages/extension/firefox/shumway.xpi</em:updateLink>
+              </RDF:Description>
+            </em:targetApplication>
+            <em:targetApplication>
+              <RDF:Description>
+                <em:id>{aa3c5121-dab2-40e2-81ca-7ea25febc110}</em:id>
+                <em:minVersion>24.0</em:minVersion>
+                <em:maxVersion>28.0a1</em:maxVersion>
                 <!-- Use the raw link for updates so we we can use SSL. -->
                 <em:updateLink>https://github.com/mozilla/shumway/raw/gh-pages/extension/firefox/shumway.xpi</em:updateLink>
               </RDF:Description>
