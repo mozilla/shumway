@@ -581,8 +581,8 @@ var TextFieldDefinition = (function () {
       if (width <= 0 || height <= 0) {
         return;
       }
-      ctx.save();
 
+      ctx.save();
       ctx.beginPath();
       ctx.rect(0, 0, width + 1, height + 1);
       ctx.clip();
@@ -602,17 +602,22 @@ var TextFieldDefinition = (function () {
       ctx.save();
       colorTransform.setAlpha(ctx);
       var runs = this._content.textruns;
+      var offsetY = this._lines[this._scrollV - 1].y;
       for (var i = 0; i < runs.length; i++) {
         var run = runs[i];
         if (run.type === 'f') {
           ctx.restore();
           ctx.font = run.format.str;
+          // TODO: only apply color and alpha if it actually changed
           colorTransform.setFillStyle(ctx, run.format.color);
           ctx.save();
           colorTransform.setAlpha(ctx);
         } else {
           assert(run.type === 't', 'Invalid run type: ' + run.type);
-          ctx.fillText(run.text, run.x - this._drawingOffsetH, run.y);
+          if (run.y < offsetY) {
+            continue;
+          }
+          ctx.fillText(run.text, run.x - this._drawingOffsetH, run.y - offsetY);
         }
       }
       ctx.restore();
@@ -649,8 +654,23 @@ var TextFieldDefinition = (function () {
       this._textHeight = state.line.y|0;
       this._lines = state.lines;
       this._content.textruns = state.runs;
+      this._scrollV = 1;
+      this._maxScrollV = 1;
+      this._bottomScrollV = 1;
       var autoSize = this._autoSize;
-      if (autoSize !== 'none') {
+      if (autoSize === 'none') {
+        var maxVisibleY = (bounds.yMax - 80) / 20;
+        if (this._textHeight > maxVisibleY) {
+          for (var i = 0; i < state.lines.length; i++) {
+            var line = state.lines[i];
+            if (line.y + line.height > maxVisibleY) {
+              this._maxScrollV = i + 1;
+              this._bottomScrollV = i === 0 ? 1 : i;
+              break;
+            }
+          }
+        }
+      } else {
         var targetWidth = this._textWidth;
         var align = state.combinedAlign;
         var diffX = 0;
@@ -858,25 +878,65 @@ var TextFieldDefinition = (function () {
             return this._textWidth;
           }
         },
+        length: {
+          get: function length() { // (void) -> uint
+            return this._content.text.length;
+          }
+        },
+        numLines: {
+          get: function numLines() { // (void) -> uint
+            this.ensureDimensions();
+            return this._lines.length;
+          }
+        },
+        getLineMetrics: function (lineIndex) { // (lineIndex:int) -> TextLineMetrics
+          this.ensureDimensions();
+          if (lineIndex < 0 || lineIndex >= this._lines.length) {
+            throwError('RangeError', Errors.ParamRangeError);
+          }
+          var line = this._lines[lineIndex];
+          var format = line.largestFormat;
+          var metrics = format.font._metrics;
+          var size = format.size;
+          // Rounding for metrics seems to be screwy. A descent of 3.5 gets
+          // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
+          // For now, round up for things slightly above .5.
+          var ascent = metrics.ascent * size + 0.49999 | 0;
+          var descent = metrics.descent * size + 0.49999 | 0;
+          var leading = metrics.leading * size + 0.49999 + line.leading | 0;
+          // TODO: check if metrics values can be floats for embedded fonts
+          return new flash.text.TextLineMetrics(line.x + 2, line.width,
+                                                line.height,
+                                                ascent, descent, leading);
+        },
         scrollV: {
           get: function scrollV() {
-            somewhatImplemented('TextField#scrollV');
             return this._scrollV;
           },
           set: function scrollV(value) {
-            somewhatImplemented('TextField#scrollV');
+            this.ensureDimensions();
+            value = Math.max(1, Math.min(this._maxScrollV, value));
             this._scrollV = value;
           }
         },
         bottomScrollV: {
-          get: function scrollV() {
-            somewhatImplemented('TextField#scrollV');
-            return this._bottomScrollV;
+          get: function bottomScrollV() {
+            this.ensureDimensions();
+            if (this._scrollV === 1) {
+              return this._bottomScrollV;
+            }
+            var maxVisibleY = (this._bbox.yMax - 80) / 20;
+            var offsetY = this._lines[this._scrollV - 1].y;
+            for (var i = this._bottomScrollV; i < this._lines.length; i++) {
+              var line = this._lines[i];
+              if (line.y + line.height + offsetY > maxVisibleY) {
+                return i + 1;
+              }
+            }
           }
         },
         maxScrollV: {
           get: function maxScrollV() { // (void) -> Number
-            somewhatImplemented('TextField#maxScrollV');
             this.ensureDimensions();
             return this._maxScrollV;
           }
@@ -969,17 +1029,6 @@ var TextFieldDefinition = (function () {
             this._condenseWhite = value;
           }
         },
-        numLines: {
-          get: function numLines() { // (void) -> uint
-            this.ensureDimensions();
-            return this._lines.length;
-          }
-        },
-        length: {
-          get: function length() { // (void) -> uint
-            return this._content.text.length;
-          }
-        },
         sharpness: {
           get: function sharpness() { // (void) -> Number
             return this._sharpness;
@@ -988,27 +1037,6 @@ var TextFieldDefinition = (function () {
             somewhatImplemented("TextField.sharpness");
             this._sharpness = value;
           }
-        },
-        getLineMetrics: function (lineIndex) { // (lineIndex:int) -> TextLineMetrics
-          this.ensureDimensions();
-          if (lineIndex < 0 || lineIndex >= this._lines.length) {
-            throwError('RangeError', Errors.ParamRangeError);
-          }
-          somewhatImplemented("TextField.getLineMetrics, ");
-          var line = this._lines[lineIndex];
-          var format = line.largestFormat;
-          var metrics = format.font._metrics;
-          var size = format.size;
-          // Rounding for metrics seems to be screwy. A descent of 3.5 gets
-          // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
-          // For now, round up for things slightly above .5.
-          var ascent = metrics.ascent * size + 0.49999 | 0;
-          var descent = metrics.descent * size + 0.49999 | 0;
-          var leading = metrics.leading * size + 0.49999 + line.leading | 0;
-          // TODO: check if metrics values can be floats for embedded fonts
-          return new flash.text.TextLineMetrics(line.x + 2, line.width,
-                                                line.height,
-                                                ascent, descent, leading);
         }
       }
     }

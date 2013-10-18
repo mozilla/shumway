@@ -150,12 +150,12 @@ class TextFieldObject extends TextField {
     text = 'line1\nline2';
     printEquals(numLines, 2, "flash.text::TextField/get numLines()");
     printEquals(scrollV, 1, "flash.text::TextField/get scrollV()");
-//    printEquals(maxScrollV, 2, "flash.text::TextField/get maxScrollV()");
+    printEquals(maxScrollV, 2, "flash.text::TextField/get maxScrollV()");
     printEquals(bottomScrollV, 1, "flash.text::TextField/get bottomScrollV()");
     scrollV = 2;
     printEquals(scrollV, 2, "flash.text::TextField/get scrollV()");
-//    printEquals(maxScrollV, 2, "flash.text::TextField/get maxScrollV()");
-//    printEquals(bottomScrollV, 2, "flash.text::TextField/get bottomScrollV()");
+    printEquals(maxScrollV, 2, "flash.text::TextField/get maxScrollV()");
+    printEquals(bottomScrollV, 2, "flash.text::TextField/get bottomScrollV()");
     height = 300;
     scrollV = 1;
 //    trace(scrollV, maxScrollV, bottomScrollV);
