@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global MP3DecoderSession, avm1lib, construct, URL, Blob, PLAY_USING_AUDIO_TAG, $DEBUG */
+/*global MP3DecoderSession, avm1lib, construct, URL, Blob, PLAY_USING_AUDIO_TAG, $DEBUG,
+         TelemetryService */
 
 var MovieClipDefinition = (function () {
   var def = {
@@ -126,33 +127,38 @@ var MovieClipDefinition = (function () {
       }
 
       var timeline = this._timeline;
-      var currentDisplayList = timeline[currentFrame - 1];
       var nextDisplayList = timeline[nextFrameNum - 1];
-
-      if (nextDisplayList === currentDisplayList) {
+      if (nextDisplayList === timeline[currentFrame - 1]) {
         return;
       }
 
+      var prevDisplayListItem = null;
+      var currentDisplayListItem = this._currentDisplayList;
+
       var children = this._children;
-      var depths = nextFrameNum > currentFrame ? nextDisplayList.depths :
-                                                 currentDisplayList.depths;
-
-      var depthMap = this._depthMap;
-
+      var depths = nextDisplayList.depths;
       var index = children.length;
 
       var i = depths.length;
       while (i--) {
-        var depth = depths[i];
-        var currentCmd = currentDisplayList[depth];
-        var nextCmd = nextDisplayList[depth];
-
-        var currentChild = depthMap[depth];
-
-        if (currentChild && currentChild._owned) {
-          index = this.getChildIndex(currentChild);
+        var depth = depths[i], depthInt = depth | 0;
+        while (currentDisplayListItem && currentDisplayListItem.depth > depthInt) {
+          // skipping non-changed items
+          prevDisplayListItem = currentDisplayListItem;
+          currentDisplayListItem = currentDisplayListItem.next;
         }
 
+        var currentChild = null;
+        if (currentDisplayListItem && currentDisplayListItem.depth === depthInt) {
+          currentChild = currentDisplayListItem.obj;
+          if (currentChild && currentChild._owned) {
+            index = this.getChildIndex(currentChild);
+          }
+        }
+
+        var currentCmd = currentDisplayListItem && currentDisplayListItem.depth === depthInt ?
+          currentDisplayListItem.cmd : null;
+        var nextCmd = nextDisplayList[depth];
         if (!nextCmd || nextCmd === currentCmd) {
           continue;
         }
@@ -176,15 +182,22 @@ var MovieClipDefinition = (function () {
             currentChild._scaleX = a > 0 ? sx : -sx;
             var sy = Math.sqrt(d * d + c * c);
             currentChild._scaleY = d > 0 ? sy : -sy;
-            var x = currentChild._x = m.tx;
-            var y = currentChild._y = m.ty;
 
-            currentChild._currentTransform = m;
+            var t = currentChild._currentTransform;
+            t.a = a;
+            t.b = b;
+            t.c = c;
+            t.d = d;
+            t.tx = m.tx;
+            t.ty = m.ty;
+
+            currentChild._invalidateTransform();
           }
 
           if (nextCmd.hasCxform) {
             currentChild._cxform = nextCmd.cxform;
           }
+
           if (nextCmd.clip) {
             currentChild._clipDepth = nextCmd.clipDepth;
           }
@@ -192,14 +205,22 @@ var MovieClipDefinition = (function () {
           if (nextCmd.hasName) {
             currentChild.name = nextCmd.name;
           }
-          //if (nextCmd.blend) {
-          //  currentChild.blendMode = nextCmd.blendMode;
-          //}
+
+          if (nextCmd.blend) {
+            currentChild.blendMode = this._resolveBlendMode(nextCmd.blendMode);
+          }
 
           continue;
         }
 
-        this._addTimelineChild(nextCmd, index);
+        var newDisplayListItem = this._addTimelineChild(nextCmd, index);
+        newDisplayListItem.next = currentDisplayListItem;
+        if (prevDisplayListItem) {
+          prevDisplayListItem.next = newDisplayListItem;
+        } else {
+          this._currentDisplayList = newDisplayListItem;
+        }
+        prevDisplayListItem = newDisplayListItem;
       }
     },
     _destructChildren: function destructChildren(nextFrameNum) {
@@ -210,26 +231,47 @@ var MovieClipDefinition = (function () {
       }
 
       var timeline = this._timeline;
-      var currentDisplayList = timeline[currentFrame - 1];
       var nextDisplayList = timeline[nextFrameNum - 1];
-
-      if (nextDisplayList === currentDisplayList) {
+      if (nextDisplayList === timeline[currentFrame - 1]) {
         return;
       }
 
-      var depths = nextFrameNum > currentFrame ? currentDisplayList.depths:
-                                                 nextDisplayList.depths;
-
-      for (var i = 0; i < depths.length; i++) {
-        var depth = depths[i];
-        var currentCmd = currentDisplayList[depth];
+      var prevDisplayListItem = null;
+      var currentDisplayListItem = this._currentDisplayList;
+      var toRemove = null;
+      while (currentDisplayListItem) {
+        var depth = currentDisplayListItem.depth;
+        var currentCmd = currentDisplayListItem.cmd;
         var nextCmd = nextDisplayList[depth];
-
-        if (currentCmd && (!nextCmd ||
-                           nextCmd.symbolId !== currentCmd.symbolId ||
-                           nextCmd.ratio !== currentCmd.ratio)) {
-          this._removeTimelineChild(currentCmd);
+        if (!nextCmd ||
+            nextCmd.symbolId !== currentCmd.symbolId ||
+            nextCmd.ratio !== currentCmd.ratio) {
+          var nextDisplayListItem = currentDisplayListItem.next;
+          if (prevDisplayListItem) {
+            prevDisplayListItem.next = nextDisplayListItem;
+          } else {
+            this._currentDisplayList = nextDisplayListItem;
+          }
+          currentDisplayListItem.next = toRemove;
+          toRemove = currentDisplayListItem;
+          currentDisplayListItem = nextDisplayListItem;
+        } else {
+          prevDisplayListItem = currentDisplayListItem;
+          currentDisplayListItem = currentDisplayListItem.next;
         }
+      }
+      while (toRemove) {
+        var child = toRemove.obj;
+        if (child) {
+          this._sparse = true;
+          this.removeChild(child);
+
+          child.destroy();
+          if (child._isPlaying) {
+            child.stop();
+          }
+        }
+        toRemove = toRemove.next;
       }
     },
 
@@ -316,6 +358,9 @@ var MovieClipDefinition = (function () {
             scripts[i].call(this);
           }
         } catch (e) {
+          var AVM2_ERROR_TYPE = 2;
+          TelemetryService.reportTelemetry({topic: 'error', error: AVM2_ERROR_TYPE});
+
           if ($DEBUG) {
             console.error('error ' + e + ', stack: \n' + e.stack);
           }
@@ -682,10 +727,7 @@ var MovieClipDefinition = (function () {
         gotoAndStop: def.gotoAndStop,
         addFrameScript: def.addFrameScript,
         prevScene: def.prevScene,
-        nextScene: def.nextScene,
-        _depth: {
-          get: function () { return this._depth; }
-        }
+        nextScene: def.nextScene
       }
     }
   };

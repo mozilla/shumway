@@ -119,7 +119,7 @@ var CXFORM = {
 };
 var MOVIE_HEADER = {
   bbox: RECT,
-  $$reserved: UI8,
+  frameRateFraction: UI8,
   frameRate: UI8,
   frameCount: UI16
 };
@@ -503,7 +503,10 @@ var BUTTON = {
     cxform: ['tagCode===34', [CXFORM]],
     $2: ['hasFilters', [{
       filterCount: UI8,
-      filters: ANY_FILTER
+      filters: {
+        $: ANY_FILTER,
+        count: 'filterCount'
+      }
     }]],
     blendMode: ['blend', [UI8]]
   }]]

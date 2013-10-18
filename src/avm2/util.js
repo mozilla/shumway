@@ -287,13 +287,25 @@ function toKeyValueArray(o) {
 }
 
 /**
- * Checks for numeric values of the form: 1, "0123", "1.4", "+13", "+0x5".
+ * Checks for key names that don't need to be prefixed.
+ * TODO: Rename this and clean up the code that deals with prefixed vs. non-prefixed key names.
  */
 function isNumeric(x) {
   if (typeof x === "number") {
-    return true;
-  } else if (typeof x === "string") {
-    return !isNaN(parseInt(x, 10));
+    return x === (x | 0);
+  }
+  if (typeof x === "string" && x.length) {
+    if (x === "0") {
+      return true;
+    }
+    if ((x[0] >= '1') && (x[0] <= '9')) {
+      for (var i = 1; i < x.length; i++) {
+        if (!((x[i] >= '1') && (x[i] <= '9'))) {
+          return false;
+        }
+      }
+      return true;
+    }
   }
   return false;
 }
@@ -321,33 +333,8 @@ function isNumber(value) {
   return typeof value === "number";
 }
 
-function toDouble(x) {
-  return toNumber(x);
-}
-
-/**
- * Avoids a call to |Number()| if the type of |x| is already a number. We're hoping that this
- * function gets inlined.
- */
 function toNumber(x) {
-  return typeof x === "number" ? x : Number(x);
-}
-
-function toBoolean(x) {
-  return !!x;
-}
-
-function toUint(x) {
-  x = x | 0;
-  return x < 0 ? (x + 4294967296) : x;
-}
-
-function toInt(x) {
-  return x | 0;
-}
-
-function toString(x) {
-  return String(x);
+  return +x;
 }
 
 function setBitFlags(flags, flag, value) {
@@ -584,17 +571,28 @@ function utf8encode(bytes) {
       } while (validBits >= 0);
 
       if (validBits <= 0) {
-        throw "Invalid UTF8 character";
+        // Invalid UTF8 character -- copying as is
+        str += String.fromCharCode(b1);
+        continue;
       }
       var code = (b1 & ((1 << validBits) - 1));
+      var invalid = false;
       for (var i = 5; i >= validBits; --i) {
         var bi = bytes[j++];
         if ((bi & 0xC0) != 0x80) {
-          throw "Invalid UTF8 character sequence";
+          // Invalid UTF8 character sequence
+          invalid = true;
+          break;
         }
         code = (code << 6) | (bi & 0x3F);
       }
-
+      if (invalid) {
+        // Copying invalid sequence as is
+        for (var k = j - (7 - i); k < j; ++k) {
+          str += String.fromCharCode(bytes[k] & 255);
+        }
+        continue;
+      }
       if (code >= 0x10000) {
         str += String.fromCharCode((((code - 0x10000) >> 10) & 0x3FF) |
           0xD800, (code & 0x3FF) | 0xDC00);

@@ -20,6 +20,10 @@ var MouseEventDefinition = (function () {
   return {
     // (type:String, bubbles:Boolean = true, cancelable:Boolean = false, localX:Number, localY:Number, relatedObject:InteractiveObject = null, ctrlKey:Boolean = false, altKey:Boolean = false, shiftKey:Boolean = false, buttonDown:Boolean = false, delta:int = 0)
     __class__: "flash.events.MouseEvent",
+    initialize: function () {
+      this._localX = NaN;
+      this._localY = NaN;
+    },
     __glue__: {
       native: {
         instance: {
@@ -27,15 +31,26 @@ var MouseEventDefinition = (function () {
             //notImplemented("MouseEvent.updateAfterEvent");
           },
           getStageX: function getStageX() { // (void) -> Number
-            return this._target.stage._mouseX/20;
+            if (this._target) {
+              var m = this._target._getConcatenatedTransform();
+              var x = m.a * this._localX + m.c * this._localY + m.tx;
+              return x/20;
+            }
+
+            return this._localX/20;
           },
           getStageY: function getStageY() { // (void) -> Number
-            return this._target.stage._mouseY/20;
+            if (this._target) {
+              var m = this._target._getConcatenatedTransform();
+              var y = m.d * this._localY + m.b * this._localX + m.ty;
+              return y/20;
+            }
+
+            return this._localY/20;
           },
           localX: {
             get: function localX() { // (void) -> Number
-              var x = isNaN(this._localX) ? this._target.mouseX : this._localX;
-              return x/20;
+              return this._localX/20;
             },
             set: function localX(value) { // (value:Number) -> void
               this._localX = value*20|0;
@@ -43,11 +58,10 @@ var MouseEventDefinition = (function () {
           },
           localY: {
             get: function localY() { // (void) -> Number
-              var y = isNaN(this._localY) ? this._target.mouseY : this._localY;
-              return y/20;
+              return this._localY/20;
             },
             set: function localY(value) { // (value:Number) -> void
-              this._localY = value*20/0;
+              this._localY = value*20|0;
             }
           }
         }

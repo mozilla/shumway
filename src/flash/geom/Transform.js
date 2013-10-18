@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+/* global Errors, throwError */
+
 var TransformDefinition = (function () {
   var def = {
     __class__: 'flash.geom.Transform',
@@ -39,8 +41,10 @@ var TransformDefinition = (function () {
     },
     set colorTransform(val) {
       var CTClass = avm2.systemDomain.getClass("flash.geom.ColorTransform");
-      if (!CTClass.isInstanceOf(val))
-        throw TypeError();
+      if (!CTClass.isInstanceOf(val)) {
+        throwError('TypeError', Errors.CheckTypeFailedError, val,
+                   'flash.geom.ColorTransform');
+      }
 
       this._target._cxform = {
         redMultiplier: val.redMultiplier * 256,
@@ -60,9 +64,11 @@ var TransformDefinition = (function () {
       return cxform;
     },
     get concatenatedMatrix() {
-      var m = this.matrix;
-      m.concat(this._target.parent.transform.concatenatedMatrix);
-      return m;
+      if (this._target._current3DTransform) {
+        return null;
+      }
+      var m = this._target._getConcatenatedTransform();
+      return new flash.geom.Matrix(m.a, m.b, m.c, m.d, m.tx/20, m.ty/20);
     },
     get matrix() {
       if (this._target._current3DTransform) {
@@ -72,8 +78,14 @@ var TransformDefinition = (function () {
       return new flash.geom.Matrix(m.a, m.b, m.c, m.d, m.tx/20, m.ty/20);
     },
     set matrix(val) {
-      if (!flash.geom.Matrix.class.isInstanceOf(val))
-        throw TypeError();
+      if (!flash.geom.Matrix.class.isInstanceOf(val)){
+        throwError('TypeError', Errors.CheckTypeFailedError, val,
+                   'flash.geom.Matrix');
+      }
+
+      var target = this._target;
+
+      target._invalidate();
 
       var a = val.a;
       var b = val.b;
@@ -82,15 +94,14 @@ var TransformDefinition = (function () {
       var tx = val.tx*20|0;
       var ty = val.ty*20|0;
 
-      var target = this._target;
       target._rotation = a !== 0 ? Math.atan(b / a) * 180 / Math.PI :
                                    (b > 0 ? 90 : -90);
       var sx = Math.sqrt(a * a + b * b);
       target._scaleX = a > 0 ? sx : -sx;
       var sy = Math.sqrt(d * d + c * c);
       target._scaleY = d > 0 ? sy : -sy;
-      target._x = tx;
-      target._y = ty;
+
+      target._invalidateTransform();
 
       target._currentTransform = {
         a: a,
@@ -101,7 +112,6 @@ var TransformDefinition = (function () {
         ty: ty
       };
       target._current3DTransform = null;
-      target._invalidate();
     },
 
     get matrix3D() {
@@ -110,8 +120,10 @@ var TransformDefinition = (function () {
     },
     set matrix3D(val) {
       var Matrix3DClass = avm2.systemDomain.getClass("flash.geom.Matrix3D");
-      if (!Matrix3DClass.isInstanceOf(val))
-        throw TypeError();
+      if (!Matrix3DClass.isInstanceOf(val)){
+        throwError('TypeError', Errors.CheckTypeFailedError, val,
+                   'flash.geom.Matrix3D');
+      }
 
       var raw = val.rawData;
       this.matrix = new flash.geom.Matrix(raw.asGetPublicProperty(0),

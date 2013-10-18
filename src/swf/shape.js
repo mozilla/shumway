@@ -45,6 +45,9 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
   var commands = segment.commands;
   var data = segment.data;
   var morphData = segment.morphData;
+  if (morphData) {
+    assert(morphData.length === data.length);
+  }
   assert(commands);
   assert(data);
   assert(isMorph === (morphData !== null));
@@ -77,6 +80,9 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
     targetCommands.push(SHAPE_MOVE_TO);
     var j = data.length - 2;
     targetData.push(data[j], data[j + 1]);
+    if (isMorph) {
+      targetMorphData.push(morphData[j], morphData[j + 1]);
+    }
     for (i = commands.length; i-- > 1; j -= 2) {
       command = commands[i];
       targetCommands.push(command);
@@ -93,6 +99,9 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
       }
     }
     assert(j === 0);
+    if (isMorph) {
+      assert(targetMorphData.length === targetData.length);
+    }
   }
   if (styles.line && styles.fill1)
   {
@@ -124,17 +133,16 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
 
   //TODO: remove the `- 1` once we stop even parsing the EOS record
   var numRecords = records.length - 1;
-  var morphsOffset = 0;
   var x = 0;
   var y = 0;
   var morphX = 0;
   var morphY = 0;
   var path;
-  for (var i = 0; i < numRecords; i++) {
+  for (var i = 0, j = 0; i < numRecords; i++) {
     var record = records[i];
     var morphRecord;
     if (isMorph) {
-      morphRecord = recordsMorph[i - morphsOffset];
+      morphRecord = recordsMorph[j++];
     }
     // type 0 is a StyleChange record
     if (record.type === 0) {
@@ -173,12 +181,8 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       if (record.move) {
         x = record.moveX|0;
         y = record.moveY|0;
-        if (isMorph) {
-          morphX = morphRecord.moveX|0;
-          morphY = morphRecord.moveY|0;
-        }
-      } else if (isMorph) {
-        morphsOffset++;
+        // When morphed, StyleChangeRecords/MoveTo might not have a corresponding record in the start or end shape --
+        // processing morphRecord below before converting type 1 records.
       }
 
       // Very first record can be just fill/line-style definition record.
@@ -190,40 +194,73 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
         // "Huh," you say? Yup.
         segment.commands.push(SHAPE_MOVE_TO);
         segment.data.push(x, y);
+        if (isMorph) {
+          if (morphRecord.type === 0) {
+            morphX = morphRecord.moveX|0;
+            morphY = morphRecord.moveY|0;
+          } else {
+            morphX = x;
+            morphY = y;
+            // Not all moveTos are reflected in morph data.
+            // In that case, decrease morph data index.
+            j--;
+          }
+          segment.morphData.push(morphX, morphY);
+        }
       }
     }
     // type 1 is a StraightEdge or CurvedEdge record
     else {
       assert(record.type === 1);
       assert(segment);
-      if (record.isStraight) {
+      if (isMorph) {
+        assert(morphRecord.type === 1);
+      }
+
+      if (record.isStraight && (!isMorph || morphRecord.isStraight)) {
         x += record.deltaX|0;
         y += record.deltaY|0;
-
         segment.commands.push(SHAPE_LINE_TO);
         segment.data.push(x, y);
+
         if (isMorph) {
-          morphX = (morphX + morphRecord.deltaX)|0;
-          morphY = (morphY + morphRecord.deltaY)|0;
+          morphX += morphRecord.deltaX|0;
+          morphY += morphRecord.deltaY|0;
           segment.morphData.push(morphX, morphY);
         }
       } else {
+        var cx, cy;
+        var deltaX, deltaY;
+        if (!record.isStraight) {
+          cx = x + record.controlDeltaX|0;
+          cy = y + record.controlDeltaY|0;
+          x = cx + record.anchorDeltaX|0;
+          y = cy + record.anchorDeltaY|0;
+        } else {
+          deltaX = record.deltaX|0;
+          deltaY = record.deltaY|0;
+          cx = x + (deltaX >> 1);
+          cy = y + (deltaY >> 1);
+          x += deltaX;
+          y += deltaY;
+        }
         segment.commands.push(SHAPE_CURVE_TO);
-        x += record.controlDeltaX|0;
-        y += record.controlDeltaY|0;
-
-        segment.data.push(x, y);
-        x += record.anchorDeltaX|0;
-        y += record.anchorDeltaY|0;
-
-        segment.data.push(x, y);
+        segment.data.push(cx, cy, x, y);
         if (isMorph) {
-          morphX = (morphX + morphRecord.controlDeltaX)|0;
-          morphY = (morphY + morphRecord.controlDeltaY)|0;
-          segment.morphData.push(morphX, morphY);
-          morphX = (morphX + morphRecord.anchorDeltaX)|0;
-          morphY = (morphY + morphRecord.anchorDeltaY)|0;
-          segment.morphData.push(morphX, morphY);
+          if (!morphRecord.isStraight) {
+            cx = morphX + morphRecord.controlDeltaX|0;
+            cy = morphY + morphRecord.controlDeltaY|0;
+            morphX = cx + morphRecord.anchorDeltaX|0;
+            morphY = cy + morphRecord.anchorDeltaY|0;
+          } else {
+            deltaX = morphRecord.deltaX|0;
+            deltaY = morphRecord.deltaY|0;
+            cx = morphX + (deltaX >> 1);
+            cy = morphY + (deltaY >> 1);
+            morphX += deltaX;
+            morphY += deltaY;
+          }
+          segment.morphData.push(cx, cy, morphX, morphY);
         }
       }
     }
@@ -447,10 +484,21 @@ function defineShape(tag, dictionary) {
                                           dictionary, dependencies,
                                           tag.recordsMorph || null);
 
+  if (tag.bboxMorph) {
+    var mbox = tag.bboxMorph;
+    extendBoundsByPoint(tag.bbox, mbox.xMin, mbox.yMin);
+    extendBoundsByPoint(tag.bbox, mbox.xMax, mbox.yMax);
+    mbox = tag.strokeBboxMorph;
+    if (mbox) {
+      extendBoundsByPoint(tag.strokeBbox, mbox.xMin, mbox.yMin);
+      extendBoundsByPoint(tag.strokeBbox, mbox.xMax, mbox.yMax);
+    }
+  }
   return {
     type: 'shape',
     id: tag.id,
-    strokeBox: tag.strokeBox,
+    strokeBbox: tag.strokeBbox,
+    strokeBboxMorph: tag.strokeBboxMorph,
     bbox: tag.bbox,
     bboxMorph: tag.bboxMorph,
     isMorph: tag.isMorph,
@@ -513,15 +561,10 @@ var SHAPE_CURVE_TO       = 3;
 var SHAPE_WIDE_MOVE_TO   = 4;
 var SHAPE_WIDE_LINE_TO   = 5;
 var SHAPE_CUBIC_CURVE_TO = 6;
-// Round corners can be drawn using arcTo, but hit-testing those is a bit of a
-// pain. By creating a command with much narrower scope, we make both drawing
-// and hit-testing easy and fast.
-// Data: cornerX, cornerY, curveEndX, curveEndY, radiusX, radiusY.
-var SHAPE_ROUND_CORNER   = 7;
 // The following commands aren't available in the Flash Player. We use them as
 // shortcuts for complex operations that exist natively on Canvas.
-var SHAPE_CIRCLE         = 8;
-var SHAPE_ELLIPSE        = 9;
+var SHAPE_CIRCLE         = 7;
+var SHAPE_ELLIPSE        = 8;
 
 function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph)
 {
@@ -582,12 +625,6 @@ ShapePath.prototype = {
     this.commands.push(SHAPE_CIRCLE);
     this.data.push(x, y, radius);
   },
-  drawRoundCorner: function(cornerX, cornerY, curveEndX, curveEndY,
-                            radiusX, radiusY)
-  {
-    this.commands.push(SHAPE_ROUND_CORNER);
-    this.data.push(cornerX, cornerY, curveEndX, curveEndY, radiusX, radiusY);
-  },
   ellipse: function(x, y, radiusX, radiusY) {
     this.commands.push(SHAPE_ELLIPSE);
     this.data.push(x, y, radiusX, radiusY);
@@ -631,10 +668,6 @@ ShapePath.prototype = {
             ctx.bezierCurveTo(data[k++]/20, data[k++]/20,
                               data[k++]/20, data[k++]/20,
                               data[k++]/20, data[k++]/20);
-            break;
-          case SHAPE_ROUND_CORNER:
-            ctx.arcTo(data[k++]/20, data[k++]/20, data[k++]/20, data[k++]/20,
-                      data[k++]/20, data[k++]/20);
             break;
           case SHAPE_CIRCLE:
             if (formOpen) {
@@ -710,6 +743,8 @@ ShapePath.prototype = {
       var fillStyle = this.fillStyle;
       if (fillStyle) {
         colorTransform.setFillStyle(ctx, fillStyle.style);
+        ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
+                                    fillStyle.smooth;
         var m = fillStyle.transform;
         ctx.save();
         colorTransform.setAlpha(ctx);
@@ -872,43 +907,6 @@ ShapePath.prototype = {
             if (roots[i] >= x) {
               inside = !inside;
             }
-          }
-          break;
-        case SHAPE_ROUND_CORNER:
-          cpX = data[dataIndex++];
-          cpY = data[dataIndex++];
-          toX = data[dataIndex++];
-          toY = data[dataIndex++];
-          rX = data[dataIndex++];
-          rY = data[dataIndex++];
-          // The round corner being fully to the left, top or bottom of x,y
-          // means it's irrelevant.
-          if ((toY > y) === (fromY > y) || fromX < x && toX < x) {
-            break;
-          }
-          // The round corner crossing y and being fully to the right means
-          // it crosses the ray.
-          if (fromX >= x && toX >= x) {
-            inside = !inside;
-            break;
-          }
-          // we want the ellipse's center
-          if ((toX > fromX) === (toY > fromY)) {
-            cp2X = fromX;
-            cp2Y = toY;
-          } else {
-            cp2X = toX;
-            cp2Y = fromY;
-          }
-          localX = x - cp2X;
-          localY = y - cp2Y;
-          // We already established that x,y lies somewhere in the ellipse's
-          // right quadrant. Hence, a simple "is in the ellipse XOR has negative
-          // localX" test suffices.
-          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) <= 1 !==
-              localX <= 0)
-          {
-              inside = !inside;
           }
           break;
         case SHAPE_CIRCLE:
@@ -1119,40 +1117,6 @@ ShapePath.prototype = {
             }
           }
           break;
-        case SHAPE_ROUND_CORNER:
-          cpX = data[dataIndex++];
-          cpY = data[dataIndex++];
-          toX = data[dataIndex++];
-          toY = data[dataIndex++];
-          rX = data[dataIndex++];
-          rY = data[dataIndex++];
-          // Eliminate based on bounds
-          if (maxX < fromX && maxX < toX || minX > fromX && minX > toX ||
-              maxY < fromY && maxY < toY || minY > fromY && minY > toY)
-          {
-            break;
-          }
-          // we want the ellipse's center
-          if ((toX > fromX) === (toY > fromY)) {
-            cp2X = fromX;
-            cp2Y = toY;
-          } else {
-            cp2X = toX;
-            cp2Y = fromY;
-          }
-          localX = Math.abs(x - cp2X);
-          localY = Math.abs(y - cp2Y);
-          localX -= halfWidth;
-          localY -= halfWidth;
-          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) > 1) {
-            break;
-          }
-          localX += width;
-          localY += width;
-          if (localX * localX / (rX * rX) + localY * localY / (rY * rY) > 1) {
-            return true;
-          }
-          break;
         case SHAPE_CIRCLE:
           cpX = data[dataIndex++];
           cpY = data[dataIndex++];
@@ -1218,7 +1182,7 @@ ShapePath.prototype = {
     var data = this.data;
     var length = commands.length;
     var bounds;
-    if (commands[0] === SHAPE_MOVE_TO || commands[0] > SHAPE_ROUND_CORNER) {
+    if (commands[0] === SHAPE_MOVE_TO || commands[0] > SHAPE_CUBIC_CURVE_TO) {
       bounds = {xMin: data[0], yMin: data[1]};
     } else {
       // only the various single-line-drawing commands start out at zero
@@ -1291,11 +1255,6 @@ ShapePath.prototype = {
               extendBoundsByY(bounds, extremes[i]);
             }
           }
-          break;
-        case SHAPE_ROUND_CORNER:
-          // Relying on the fact that round corners never lie outside their
-          // rectangle, we ignore them.
-          dataIndex += 6;
           break;
         case SHAPE_CIRCLE:
           toX = data[dataIndex++];
@@ -1639,7 +1598,7 @@ function finishShapePaths(paths, dictionary) {
 var inWorker = (typeof window) === 'undefined';
 // Used for creating gradients and patterns
 var factoryCtx = !inWorker ?
-                 document.createElement('canvas').getContext('kanvas-2d') :
+                 document.createElement('canvas').getContext('2d') :
                  null;
 
 /**

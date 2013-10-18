@@ -701,11 +701,11 @@ var natives = (function () {
   }
 
   function Int(x) {
-    return toNumber(x) | 0;
+    return x|0;
   }
 
   function boxedInt(x) {
-    return Object(Int(x));
+    return Object(x|0);
   }
 
   function intClass(runtime, scope, instanceConstructor, baseClass) {
@@ -726,11 +726,11 @@ var natives = (function () {
   }
 
   function Uint(x) {
-    return toNumber(x) >>> 0;
+    return x >>> 0;
   }
 
   function boxedUint(x) {
-    return Object(Uint(x));
+    return Object(x >>> 0);
   }
 
   function uintClass(runtime, scope, instanceConstructor, baseClass) {
@@ -921,7 +921,7 @@ var natives = (function () {
             uri = uriValue.uri;
           }
         } else {
-          uri = toString(uriValue);
+          uri = uriValue + '';
           if (uri === "") {
             prefix = "";
           } else {
@@ -934,10 +934,10 @@ var natives = (function () {
             uriValue.uri !== null) {
           uri = uriValue.uri;
         } else {
-          uri = toString(uriValue);
+          uri = uriValue + '';
         }
         if (uri === "") {
-          if (prefixValue === undefined || toString(prefixValue) === "") {
+          if (prefixValue === undefined || prefixValue + '' === "") {
             prefix = "";
           } else {
             throw "type error";
@@ -947,11 +947,10 @@ var natives = (function () {
         } else if (false && !isXMLName(prefixValue)) { // FIXME need impl
           prefix = undefined;
         } else {
-          prefix = toString(prefixValue);
+          prefix = prefixValue + '';
         }
       }
-      var ns = ShumwayNamespace.createNamespace(uri, prefix);
-      return ns;
+      return ShumwayNamespace.createNamespace(uri, prefix);
     }
 
     var c = new Class("Namespace", ASNamespace, C(ASNamespace));
@@ -975,16 +974,52 @@ var natives = (function () {
    * JSON.as
    */
   function JSONClass(runtime, scope, instanceConstructor, baseClass) {
+
+    /**
+     * Transforms a JS value into an AS value.
+     */
+    function transformJSValueToAS(value) {
+      if (typeof value !== "object") {
+        return value;
+      }
+      var keys = Object.keys(value);
+      var result = value instanceof Array ? [] : {};
+      for (var i = 0; i < keys.length; i++) {
+        result.asSetPublicProperty(keys[i], transformJSValueToAS(value[keys[i]]));
+      }
+      return result;
+    }
+
+    /**
+     * Transforms an AS value into a JS value.
+     */
+    function transformASValueToJS(value) {
+      if (typeof value !== "object") {
+        return value;
+      }
+      var keys = Object.keys(value);
+      var result = value instanceof Array ? [] : {};
+      for (var i = 0; i < keys.length; i++) {
+        var key = keys[i];
+        var jsKey = key;
+        if (!isNumeric(key)) {
+          jsKey = fromResolvedName(key);
+        }
+        result[jsKey] = transformASValueToJS(value[key]);
+      }
+      return result;
+    }
+
     function ASJSON() {}
     var c = new Class("JSON", ASJSON, C(ASJSON));
     c.extend(baseClass);
     c.native = {
       static: {
         parseCore: function parseCore(text) { // (text:String) -> Object
-          return JSON.parse(text);
+          return transformJSValueToAS(JSON.parse(text));
         },
         stringifySpecializedToString: function stringifySpecializedToString(value, replacerArray, replacerFunction, gap) { // (value:Object, replacerArray:Array, replacerFunction:Function, gap:String) -> String
-          return JSON.stringify(value, replacerFunction, gap);
+          return JSON.stringify(transformASValueToJS(value), replacerFunction, gap);
         }
       }
     };

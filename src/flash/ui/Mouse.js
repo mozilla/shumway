@@ -23,11 +23,11 @@ var MouseDefinition = (function() {
   };
 
   function hide() {
-    // this._stage._setCursorVisible(false);
+    // TODO
   }
 
   function show() {
-    // this._stage._setCursorVisible(true);
+    // TODO
   }
 
   function registerCursor() {

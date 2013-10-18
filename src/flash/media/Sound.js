@@ -15,23 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Multiname, MP3DecoderSession, base64ArrayBuffer, isNullOrUndefined */
+/*global Multiname, MP3DecoderSession, isNullOrUndefined, URL, Blob,
+         notImplemented, TelemetryService, SOUND_FEATURE */
 
 var PLAY_USING_AUDIO_TAG = true;
 
 var SoundDefinition = (function () {
 
-  var audioElement = null;
-
   function getAudioDescription(soundData, onComplete) {
-    audioElement = audioElement || document.createElement('audio');
+    var audioElement = document.createElement('audio');
     if (!audioElement.canPlayType(soundData.mimeType)) {
       onComplete({
         duration: 0
       });
       return;
     }
-    audioElement.src = "data:" + soundData.mimeType + ";base64," + base64ArrayBuffer(soundData.data);
+    audioElement.preload = 'metadata'; // for mobile devices
+    var blob = new Blob([soundData.data], {type: soundData.mimeType});
+    audioElement.src = URL.createObjectURL(blob);
     audioElement.load();
     audioElement.addEventListener("loadedmetadata", function () {
       onComplete({
@@ -69,15 +70,17 @@ var SoundDefinition = (function () {
         });
         this._soundData = soundData;
       }
+
+      TelemetryService.reportTelemetry({topic: 'feature', feature: SOUND_FEATURE});
     },
 
     close: function close() {
-      throw 'Not implemented: close';
+      somewhatImplemented('Sound.close');
     },
 
     extract: function extract(target, length, startPosition) {
       //extract(target:ByteArray, length:Number, startPosition:Number = -1):Number
-      throw 'Not implemented: extract';
+      notImplemented('Sound.extract');
     },
 
     _load: function _load(request, checkPolicyFile, bufferTime) {
@@ -150,11 +153,11 @@ var SoundDefinition = (function () {
       stream.load(request);
     },
     loadCompressedDataFromByteArray: function loadCompressedDataFromByteArray(bytes, bytesLength) {
-      throw 'Not implemented: loadCompressedDataFromByteArray';
+      notImplemented('Sound#loadCompressedDataFromByteArray');
     },
     loadPCMFromByteArray: function loadPCMFromByteArray(bytes, samples, format, stereo, sampleRate) {
       //loadPCMFromByteArray(bytes:ByteArray, samples:uint, format:String = "float", stereo:Boolean = true, sampleRate:Number = 44100.0):void
-      throw 'Not implemented: loadPCMFromByteArray';
+      notImplemented('Sound#loadPCMFromByteArray');
     },
     play: function play(startTime, loops, soundTransform) {
       // (startTime:Number = 0, loops:int = 0, soundTransform:SoundTransform = null) -> SoundChannel
@@ -188,10 +191,10 @@ var SoundDefinition = (function () {
       return this._id3;
     },
     get isBuffering() {
-      throw 'Not implemented: isBuffering';
+      notImplemented('Sound#isBuffering');
     },
     get isURLInaccessible() {
-      throw 'Not implemented: isURLInaccessible';
+      notImplemented('Sound#isURLInaccessible');
     },
     get length() {
       return this._length;

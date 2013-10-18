@@ -4,6 +4,7 @@
   "onecase": true,
   "shadow" : true,
   "expr": true,
+  "laxbreak": true,
   "maxerr": 1000,
   "predef": [
     "DataView", "ArrayBuffer", "Int8Array", "Uint8Array", "Int32Array", "Int16Array",

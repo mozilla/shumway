@@ -127,7 +127,7 @@ package avm1lib {
     public function get tabIndex() { return this._as3Object.tabIndex; }
     public function set tabIndex(value) { this._as3Object.tabIndex = value; }
 
-    public function get _target() { throw 'Not implemented: get$_target'; }
+    public function get _target() { return AS2Utils.getTarget(this); }
 
     public function get text() { return this._as3Object.text; }
     public function set text(value) { this._as3Object.text = value; }

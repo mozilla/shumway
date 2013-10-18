@@ -14,7 +14,9 @@
 
 UTILS_HOME = ..
 CLOSURE ?= $(UTILS_HOME)/cc.jar
-BUILD_DIR = ../../build/bundle
+BUILD_DIR ?= ../../build/bundle
+CLOSURE_BASIC_OPT ?= -fc -c s
+CLOSURE_ADV_OPT ?= -fc -c a
 
 build: ensureoutputdir
 	# Coping JavaScript content files
@@ -62,8 +64,6 @@ build: ensureoutputdir
 	cp ../../src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_DIR)/avm2/generated/avm1lib/
 	# Extract UTF Strings
 	mkdir $(BUILD_DIR)/lib
-	mkdir $(BUILD_DIR)/lib/Kanvas
-	cp ../../lib/Kanvas/* $(BUILD_DIR)/lib/Kanvas/
 	mkdir $(BUILD_DIR)/lib/DataView.js
 	cp ../../lib/DataView.js/* $(BUILD_DIR)/lib/DataView.js/
 	mkdir $(BUILD_DIR)/lib/mp3
@@ -72,13 +72,13 @@ build: ensureoutputdir
 	$(UTILS_HOME)/jsshell/js generate-tag-handlers.js > $(BUILD_DIR)/swf/handlers.js
 	# Package all the source files into two files.
 	cp templates/LICENSE.js $(BUILD_DIR)/shumway.js
-	CLOSURE=$(CLOSURE) node build.js templates/scripts.js -fc -c s >> $(BUILD_DIR)/shumway.js
+	CLOSURE=$(CLOSURE) node build.js templates/scripts.js $(CLOSURE_BASIC_OPT) >> $(BUILD_DIR)/shumway.js
 	# Optionally Instrument File (Nicer without Closure)
 	# CLOSURE=$(CLOSURE) node build.js templates/scripts.js -fc >> $(BUILD_DIR)/shumway.js
 	# cp $(BUILD_DIR)/shumway.js $(BUILD_DIR)/shumway.js.original && node instrument.js $(BUILD_DIR)/shumway.js > $(BUILD_DIR)/shumway.js.instrumented && mv $(BUILD_DIR)/shumway.js.instrumented $(BUILD_DIR)/shumway.js
 	cp templates/LICENSE.js $(BUILD_DIR)/shumway-worker.js
-	CLOSURE=$(CLOSURE) node build.js templates/scripts-worker.js >> $(BUILD_DIR)/shumway-worker.js
-	CLOSURE=$(CLOSURE) node build.js templates/scripts-worker-compiled.js -fc -c a >> $(BUILD_DIR)/shumway-worker.js
+	CLOSURE=$(CLOSURE) node build.js templates/scripts-worker.js $(CLOSURE_BASIC_OPT) >> $(BUILD_DIR)/shumway-worker.js
+	CLOSURE=$(CLOSURE) node build.js templates/scripts-worker-compiled.js $(CLOSURE_ADV_OPT) >> $(BUILD_DIR)/shumway-worker.js
 	# Removing hidden files
 	-find $(BUILD_DIR) -name ".DS_Store" -exec rm {} \;
 

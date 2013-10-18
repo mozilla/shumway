@@ -18,7 +18,7 @@
 /*global self, importScripts, FileReader, FileReaderSync, Image, Worker, btoa,
          URL, FileLoadingService, Promise, AbcFile, SHUMWAY_ROOT, SWF,
          defineBitmap, defineImage, defineFont, defineShape, defineSound,
-         defineLabel, defineButton, defineText,
+         defineLabel, defineButton, defineText, TelemetryService,
          avm1lib, AS2Context, executeActions,
          createSoundStream, MP3DecoderSession, PLAY_USING_AUDIO_TAG,
          cloneObject, createEmptyObject, fromCharCode,
@@ -368,7 +368,24 @@ var LoaderDefinition = (function () {
         },
         oncomplete: function(result) {
           commitData(result);
-          commitData({command: 'complete'});
+
+          var stats;
+          if (typeof result.swfVersion === 'number') {
+            // Extracting stats from the context object
+            var bbox = result.bbox;
+            stats = {
+              topic: 'parseInfo', // HACK additional field for telemetry
+              parseTime: result.parseTime,
+              bytesTotal: result.bytesTotal,
+              swfVersion: result.swfVersion,
+              frameRate: result.frameRate,
+              width: (bbox.xMax - bbox.xMin) / 20,
+              height: (bbox.yMax - bbox.yMin) / 20,
+              isAvm2: !!result.fileAttributes.doAbc
+            };
+          }
+
+          commitData({command: 'complete', stats: stats});
         }
       };
     }
@@ -488,6 +505,12 @@ var LoaderDefinition = (function () {
         Promise.when(frameConstructed, this._lastPromise).then(function () {
           this.contentLoaderInfo._dispatchEvent("complete");
         }.bind(this));
+
+        var stats = data.stats;
+        if (stats) {
+          TelemetryService.reportTelemetry(stats);
+        }
+
         this._worker && this._worker.terminate();
         break;
       case 'empty':
@@ -660,7 +683,7 @@ var LoaderDefinition = (function () {
           root = rootClass.createAsSymbol({
             framesLoaded: timeline.length,
             loader: loader,
-            parent: parent,
+            parent: parent || loader,
             index: parent ? 0 : -1,
             level: parent ? 0 : -1,
             timeline: timeline,
@@ -668,7 +691,8 @@ var LoaderDefinition = (function () {
             stage: loader._stage
           });
 
-          if (parent && parent == loader._stage) {
+          var isRootMovie = parent && parent == loader._stage && loader._stage._children.length === 0;
+          if (isRootMovie) {
             parent._frameRate = loaderInfo._frameRate;
             parent._stageHeight = loaderInfo._height;
             parent._stageWidth = loaderInfo._width;
@@ -828,7 +852,6 @@ var LoaderDefinition = (function () {
         loader._children.push(image);
         Bitmap.instanceConstructor.call(image, bitmapData);
         image._parent = loader;
-        loader._control.appendChild(image._control);
         loader._content = image;
         imgPromise.resolve(imageInfo);
         loader.contentLoaderInfo._dispatchEvent("init");
@@ -937,6 +960,8 @@ var LoaderDefinition = (function () {
         props.name = symbol.name;
         props.uniqueName = symbol.uniqueName;
         props.charset = symbol.charset;
+        props.bold = symbol.bold;
+        props.italic = symbol.italic;
         props.metrics = symbol.metrics;
         this._registerFont(className, props);
         break;
@@ -1126,6 +1151,9 @@ var LoaderDefinition = (function () {
     _load: function (request, checkPolicyFile, applicationDomain,
                      securityDomain, deblockingFilter)
     {
+      if (!isWorker && flash.net.URLRequest.class.isInstanceOf(request)) {
+        this._contentLoaderInfo._url = request._url;
+      }
       if (!isWorker && WORKERS_ENABLED) {
         var loader = this;
         var worker = loader._worker = new Worker(SHUMWAY_ROOT + LOADER_PATH);
@@ -1215,7 +1243,7 @@ var LoaderDefinition = (function () {
           def._load(bytes.a);
         },
         _unload: function _unload(halt, gc) { // (halt:Boolean, gc:Boolean) -> void
-          notImplemented("Loader._unload");
+          somewhatImplemented("Loader._unload, do we even need to do anything here?");
         },
         _close: function _close() { // (void) -> void
           somewhatImplemented("Loader._close");

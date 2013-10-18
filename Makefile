@@ -16,11 +16,10 @@ default:
 	@echo "run: make [check-system|install-utils|install-libs|build-tamarin-tests|"
 	@echo "           build-playerglobal|build-extension|build-bundle|build-web|"
 	@echo "           run-tamarin-tests|run-tamarin-sanity-tests|check-extension|"
-	@echo "           test|push-test|build-bot|start-build-bot|update-flash-refs]"
+	@echo "           test|push-test|build-bot|start-build-bot|update-flash-refs|"
+	@echo "           install-tamarin|bootstrap]"
 
 check-system:
-	echo "Checking the presence of mercurial..."
-	hg --version
 	echo "Checking the presence of wget..."
 	wget --version
 	echo "Checking the presence of java..."
@@ -32,12 +31,19 @@ check-system:
 	fi
 	echo "The environment is good"
 
+bootstrap: check-system install-libs install-utils build-playerglobal
+
 install-libs:
 	git submodule init
 	git submodule update
 
 install-utils: check-system
-	make -C utils/ install-asc install-closure install-tamarin install-js install-node-modules install-flex-sdk
+	make -C utils/ install-asc install-closure install-js install-node-modules install-flex-sdk
+
+install-tamarin: check-system
+	echo "Checking the presence of mercurial..."
+	hg --version
+	make -C utils/ install-tamarin install-tamarin-tests
 
 BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with installed utils)
 
@@ -52,6 +58,10 @@ run-tamarin-tests:
 
 build-playerglobal:
 	make -C utils/ build-playerglobal
+
+build-playerglobal-min:
+	make -C utils/ install-apparat
+	make -C utils/playerglobal build-min
 
 build-bundle:
 	make -C utils/builder build

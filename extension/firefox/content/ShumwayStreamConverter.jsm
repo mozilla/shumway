@@ -18,14 +18,13 @@
 
 'use strict';
 
-var EXPORTED_SYMBOLS = ['FlashStreamConverter1', 'FlashStreamConverter2'];
+var EXPORTED_SYMBOLS = ['ShumwayStreamConverter', 'ShumwayStreamOverlayConverter'];
 
 const Cc = Components.classes;
 const Ci = Components.interfaces;
 const Cr = Components.results;
 const Cu = Components.utils;
 
-// True only if this is the version of pdf.js that is included with firefox.
 const SHUMWAY_CONTENT_TYPE = 'application/x-shockwave-flash';
 const EXPECTED_PLAYPREVIEW_URI_PREFIX = 'data:application/x-moz-playpreview;,' +
                                         SHUMWAY_CONTENT_TYPE;
@@ -39,6 +38,11 @@ Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
 Cu.import('resource://gre/modules/NetUtil.jsm');
 
+XPCOMUtils.defineLazyModuleGetter(this, 'PrivateBrowsingUtils',
+  'resource://gre/modules/PrivateBrowsingUtils.jsm');
+
+XPCOMUtils.defineLazyModuleGetter(this, 'ShumwayTelemetry',
+  'resource://shumway/ShumwayTelemetry.jsm');
 
 let appInfo = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
 let Svc = {};
@@ -64,7 +68,7 @@ function getStringPref(pref, def) {
 }
 
 function log(aMsg) {
-  let msg = 'FlashStreamConverter.js: ' + (aMsg.join ? aMsg.join('') : aMsg);
+  let msg = 'ShumwayStreamConverter.js: ' + (aMsg.join ? aMsg.join('') : aMsg);
   Services.console.logStringMessage(msg);
   dump(msg + '\n');
 }
@@ -160,6 +164,28 @@ function fetchPolicyFile(url, cache, callback) {
   xhr.send(null);
 }
 
+function isShumwayEnabledFor(actions) {
+  // disabled for PrivateBrowsing windows
+  if (PrivateBrowsingUtils.isWindowPrivate(actions.window)) {
+    return false;
+  }
+  // disabled if embed tag specifies shumwaymode (for testing purpose)
+  if (actions.objectParams['shumwaymode'] === 'off') {
+    return false;
+  }
+
+  var url = actions.url;
+  var baseUrl = actions.baseUrl;
+
+  // blacklisting well known sites with issues
+  if (/\.ytimg\.com\//i.test(url) /* youtube movies */ ||
+    /\/vui.swf\b/i.test(url) /* vidyo manager */ ) {
+    return false;
+  }
+
+  return true;
+}
+
 // All the priviledged actions.
 function ChromeActions(url, window, document) {
   this.url = url;
@@ -173,6 +199,12 @@ function ChromeActions(url, window, document) {
   this.externalComInitialized = false;
   this.allowScriptAccess = false;
   this.crossdomainRequestsCache = Object.create(null);
+  this.telemetry = {
+    startTime: Date.now(),
+    features: [],
+    errors: [],
+    pageIndex: 0
+  };
 }
 
 ChromeActions.prototype = {
@@ -212,29 +244,36 @@ ChromeActions.prototype = {
     }
 
     // allows downloading from the same origin
-    var urlPrefix = /^(https?):\/\/([A-Za-z0-9\-_\.\[\]]+)/i.exec(url);
-    var basePrefix = /^(https?):\/\/([A-Za-z0-9\-_\.\[\]]+)/i.exec(this.url);
-    if (basePrefix && urlPrefix && basePrefix[0] === urlPrefix[0]) {
+    var parsedUrl, parsedBaseUrl;
+    try {
+      parsedUrl = NetUtil.newURI(url);
+    } catch (ex) { /* skipping invalid urls */ }
+    try {
+      parsedBaseUrl = NetUtil.newURI(this.url);
+    } catch (ex) { /* skipping invalid urls */ }
+
+    if (parsedUrl && parsedBaseUrl &&
+        parsedUrl.prePath === parsedBaseUrl.prePath) {
       return callback({success: true});
     }
 
     // additionally using internal whitelist
     var whitelist = getStringPref('shumway.whitelist', '');
-    if (whitelist && urlPrefix) {
+    if (whitelist && parsedUrl) {
       var whitelisted = whitelist.split(',').some(function (i) {
-        return domainMatches(urlPrefix[2], i);
+        return domainMatches(parsedUrl.host, i);
       });
       if (whitelisted) {
         return callback({success: true});
       }
     }
 
-    if (!checkPolicyFile || !urlPrefix || !basePrefix) {
+    if (!checkPolicyFile || !parsedUrl || !parsedBaseUrl) {
       return callback({success: false});
     }
 
     // we can request crossdomain.xml
-    fetchPolicyFile(urlPrefix[0] + '/crossdomain.xml', this.crossdomainRequestsCache,
+    fetchPolicyFile(parsedUrl.prePath + '/crossdomain.xml', this.crossdomainRequestsCache,
       function (policy, error) {
 
       if (!policy || policy.siteControl === 'none') {
@@ -243,8 +282,8 @@ ChromeActions.prototype = {
       // TODO assuming master-only, there are also 'by-content-type', 'all', etc.
 
       var allowed = policy.allowAccessFrom.some(function (i) {
-        return domainMatches(basePrefix[2], i.domain) &&
-          (!i.secure || basePrefix[1].toLowerCase() === 'https');
+        return domainMatches(parsedBaseUrl.host, i.domain) &&
+          (!i.secure || parsedBaseUrl.scheme.toLowerCase() === 'https');
       });
       return callback({success: allowed});
     }.bind(this));
@@ -311,12 +350,14 @@ ChromeActions.prototype = {
       }
     });
   },
-  fallback: function() {
+  fallback: function(automatic) {
     var obj = this.window.frameElement;
     var doc = obj.ownerDocument;
     var e = doc.createEvent("CustomEvent");
     e.initCustomEvent("MozPlayPlugin", true, true, null);
     obj.dispatchEvent(e);
+
+    ShumwayTelemetry.onFallback(!automatic);
   },
   setClipboard: function (data) {
     if (typeof data !== 'string' ||
@@ -340,6 +381,45 @@ ChromeActions.prototype = {
   endActivation: function () {
     if (ActivationQueue.currentNonActive === this) {
       ActivationQueue.activateNext();
+    }
+  },
+  reportTelemetry: function (data) {
+    var topic = data.topic;
+    switch (topic) {
+    case 'firstFrame':
+      var time = Date.now() - this.telemetry.startTime;
+      ShumwayTelemetry.onFirstFrame(time);
+      break;
+    case 'parseInfo':
+      ShumwayTelemetry.onParseInfo({
+        parseTime: +data.parseTime,
+        size: +data.bytesTotal,
+        swfVersion: data.swfVersion|0,
+        frameRate: +data.frameRate,
+        width: data.width|0,
+        height: data.height|0,
+        bannerType: data.bannerType|0,
+        isAvm2: !!data.isAvm2
+      });
+      break;
+    case 'feature':
+      var featureType = data.feature|0;
+      var MIN_FEATURE_TYPE = 0, MAX_FEATURE_TYPE = 999;
+      if (featureType >= MIN_FEATURE_TYPE && featureType <= MAX_FEATURE_TYPE &&
+          !this.telemetry.features[featureType]) {
+        this.telemetry.features[featureType] = true; // record only one feature per SWF
+        ShumwayTelemetry.onFeature(featureType);
+      }
+      break;
+    case 'error':
+      var errorType = data.error|0;
+      var MIN_ERROR_TYPE = 0, MAX_ERROR_TYPE = 2;
+      if (errorType >= MIN_ERROR_TYPE && errorType <= MAX_ERROR_TYPE &&
+          !this.telemetry.errors[errorType]) {
+        this.telemetry.errors[errorType] = true; // record only one report per SWF
+        ShumwayTelemetry.onError(errorType);
+      }
+      break;
     }
   },
   externalCom: function (data) {
@@ -428,6 +508,14 @@ var ActivationQueue = {
     if (this.nonActive.length === 1) {
       this.activateNext();
     }
+  },
+  findLastOnPage: function ActivationQueue_findLastOnPage(baseUrl) {
+    for (var i = this.nonActive.length - 1; i >= 0; i--) {
+      if (this.nonActive[i].baseUrl === baseUrl) {
+        return this.nonActive[i];
+      }
+    }
+    return null;
   },
   activateNext: function ActivationQueue_activateNext() {
     function weightInstance(actions) {
@@ -612,10 +700,10 @@ function initExternalCom(wrappedWindow, wrappedObject, targetDocument) {
   };
 }
 
-function FlashStreamConverterBase() {
+function ShumwayStreamConverterBase() {
 }
 
-FlashStreamConverterBase.prototype = {
+ShumwayStreamConverterBase.prototype = {
   QueryInterface: XPCOMUtils.generateQI([
       Ci.nsISupports,
       Ci.nsIStreamConverter,
@@ -663,6 +751,9 @@ FlashStreamConverterBase.prototype = {
           throw 'Plugin element is not found';
         tagName = element.nodeName;
       }
+
+      // TODO: remove hack once bug 920927 is fixed
+      element.style.visibility = 'visible';
 
       pageUrl = element.ownerDocument.location.href; // proper page url?
 
@@ -787,9 +878,20 @@ FlashStreamConverterBase.prototype = {
           let actions = converter.createChromeActions(domWindow,
                                                       domWindow.document,
                                                       converter.getUrlHint(originalURI));
-          if (actions.objectParams['shumwaymode'] === 'off') {
-            actions.fallback();
+          if (!isShumwayEnabledFor(actions)) {
+            actions.fallback(true);
             return;
+          }
+
+          // Report telemetry on amount of swfs on the page
+          if (actions.isOverlay) {
+            // Looking for last actions with same baseUrl
+            var prevPageActions = ActivationQueue.findLastOnPage(actions.baseUrl);
+            var pageIndex = !prevPageActions ? 1 : (prevPageActions.telemetry.pageIndex + 1);
+            actions.telemetry.pageIndex = pageIndex;
+            ShumwayTelemetry.onPageIndex(pageIndex);
+          } else {
+            ShumwayTelemetry.onPageIndex(0);
           }
 
           actions.activationCallback = function(domWindow, isSimpleMode) {
@@ -825,22 +927,22 @@ function copyProperties(obj, template) {
   }
 }
 
-function FlashStreamConverter1() {}
-FlashStreamConverter1.prototype = new FlashStreamConverterBase();
-copyProperties(FlashStreamConverter1.prototype, {
+function ShumwayStreamConverter() {}
+ShumwayStreamConverter.prototype = new ShumwayStreamConverterBase();
+copyProperties(ShumwayStreamConverter.prototype, {
   classID: Components.ID('{4c6030f7-e20a-264f-5b0e-ada3a9e97384}'),
   classDescription: 'Shumway Content Converter Component',
   contractID: '@mozilla.org/streamconv;1?from=application/x-shockwave-flash&to=*/*'
 });
 
-function FlashStreamConverter2() {}
-FlashStreamConverter2.prototype = new FlashStreamConverterBase();
-copyProperties(FlashStreamConverter2.prototype, {
+function ShumwayStreamOverlayConverter() {}
+ShumwayStreamOverlayConverter.prototype = new ShumwayStreamConverterBase();
+copyProperties(ShumwayStreamOverlayConverter.prototype, {
   classID: Components.ID('{4c6030f7-e20a-264f-5f9b-ada3a9e97384}'),
   classDescription: 'Shumway PlayPreview Component',
   contractID: '@mozilla.org/streamconv;1?from=application/x-moz-playpreview&to=*/*'
 });
-FlashStreamConverter2.prototype.isValidRequest =
+ShumwayStreamOverlayConverter.prototype.isValidRequest =
   (function(aCtxt) {
     try {
       var request = aCtxt;
@@ -851,9 +953,6 @@ FlashStreamConverter2.prototype.isValidRequest =
       return false;
     }
   });
-FlashStreamConverter2.prototype.getUrlHint = function (requestUrl) {
+ShumwayStreamOverlayConverter.prototype.getUrlHint = function (requestUrl) {
   return '';
 };
-
-var NSGetFactory1 = XPCOMUtils.generateNSGetFactory([FlashStreamConverter1]);
-var NSGetFactory2 = XPCOMUtils.generateNSGetFactory([FlashStreamConverter2]);

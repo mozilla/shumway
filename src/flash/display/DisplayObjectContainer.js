@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+/* global Errors, throwError */
+
 var DisplayObjectContainerDefinition = (function () {
   var def = {
     get mouseChildren() {
@@ -42,7 +44,7 @@ var DisplayObjectContainerDefinition = (function () {
     },
     addChildAt: function (child, index) {
       if (child === this) {
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.CantAddSelfError);
       }
 
       if (child._parent === this) {
@@ -52,7 +54,7 @@ var DisplayObjectContainerDefinition = (function () {
       var children = this._children;
 
       if (index < 0 || index > children.length) {
-        throw RangeError();
+        throwError('RangeError', Errors.ParamRangeError);
       }
 
       if (child._index > -1) {
@@ -75,6 +77,7 @@ var DisplayObjectContainerDefinition = (function () {
       child._parent = this;
       child._stage = this._stage;
       child._index = index;
+      child._invalidateTransform();
 
       this._invalidateBounds();
 
@@ -95,7 +98,7 @@ var DisplayObjectContainerDefinition = (function () {
       var children = this._children;
 
       if (index < 0 || index > children.length) {
-        throw RangeError();
+        throwError('RangeError', Errors.ParamRangeError);
       }
 
       var child = children[index];
@@ -118,7 +121,7 @@ var DisplayObjectContainerDefinition = (function () {
     },
     getChildIndex: function (child) {
       if (child._parent !== this) {
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.NotAChildError);
       }
 
       return this._sparse ? this._children.indexOf(child) : child._index;
@@ -128,7 +131,7 @@ var DisplayObjectContainerDefinition = (function () {
     },
     removeChild: function (child) {
       if (child._parent !== this) {
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.NotAChildError);
       }
 
       return this.removeChildAt(this.getChildIndex(child));
@@ -137,7 +140,7 @@ var DisplayObjectContainerDefinition = (function () {
       var children = this._children;
 
       if (index < 0 || index >= children.length) {
-        throw RangeError();
+        throwError('RangeError', Errors.ParamRangeError);
       }
 
       var child = children[index];
@@ -157,6 +160,7 @@ var DisplayObjectContainerDefinition = (function () {
       child._owned = false;
       child._parent = null;
       child._index = -1;
+      child._invalidateTransform();
 
       this._invalidateBounds();
 
@@ -164,7 +168,7 @@ var DisplayObjectContainerDefinition = (function () {
     },
     setChildIndex: function (child, index) {
       if (child._parent !== this) {
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.NotAChildError);
       }
 
       var currentIndex = this.getChildIndex(child);
@@ -176,7 +180,7 @@ var DisplayObjectContainerDefinition = (function () {
       var children = this._children;
 
       if (index < 0 || index > children.length) {
-        throw RangeError();
+        throwError('RangeError', Errors.ParamRangeError);
       }
 
       children.splice(currentIndex, 1);
@@ -201,7 +205,7 @@ var DisplayObjectContainerDefinition = (function () {
 
       if (begin < 0 || begin > numChildren ||
           end < 0 || end < begin || end > numChildren) {
-        throw RangeError();
+        throwError('RangeError', Errors.ParamRangeError);
       }
 
       for (var i = begin; i < end; i++) {
@@ -210,7 +214,7 @@ var DisplayObjectContainerDefinition = (function () {
     },
     swapChildren: function (child1, child2) {
       if (child1._parent !== this || child2._parent !== this) {
-        throw ArgumentError();
+        throwError('ArgumentError', Errors.NotAChildError);
       }
 
       this.swapChildrenAt(this.getChildIndex(child1),
@@ -221,8 +225,9 @@ var DisplayObjectContainerDefinition = (function () {
       var numChildren = children.length;
 
       if (index1 < 0 || index1 > numChildren ||
-          index2 < 0 || index2 > numChildren) {
-        throw RangeError();
+          index2 < 0 || index2 > numChildren)
+      {
+        throwError('RangeError', Errors.ParamRangeError);
       }
 
       var child1 = children[index1];

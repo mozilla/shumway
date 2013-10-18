@@ -25,6 +25,11 @@ var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMou
 var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
 var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
 var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
+var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
+
+if (typeof FirefoxCom !== 'undefined') {
+  turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
+}
 
 var CanvasCache = {
   cache: [],
@@ -34,7 +39,7 @@ var CanvasCache = {
       tempCanvas = {
         canvas: document.createElement('canvas')
       };
-      tempCanvas.ctx = tempCanvas.canvas.getContext('kanvas-2d');
+      tempCanvas.ctx = tempCanvas.canvas.getContext('2d');
     }
     tempCanvas.canvas.width = protoCanvas.width;
     tempCanvas.canvas.height = protoCanvas.height;
@@ -242,7 +247,7 @@ RenderVisitor.prototype = {
 
     if (clippingMask && isContainer) {
       ctx.save();
-      renderDisplayObject(child, ctx, child._currentTransform, context);
+      renderDisplayObject(child, ctx, context);
       for (var i = 0, n = child._children.length; i < n; i++) {
         var child1 = child._children[i];
         if (!child1) {
@@ -266,12 +271,13 @@ RenderVisitor.prototype = {
     ctx.globalCompositeOperation = getBlendModeName(child._blendMode);
 
     if (child._mask) {
+      var m = child._parent._getConcatenatedTransform(true);
       // TODO create canvas small enough to fit the object and
       // TODO cache the results when cacheAsBitmap is set
       var tempCanvas, tempCtx, maskCanvas, maskCtx;
       maskCanvas = CanvasCache.getCanvas(ctx.canvas);
       maskCtx = maskCanvas.ctx;
-      maskCtx.currentTransform = ctx.currentTransform;
+      maskCtx.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
       var isMaskContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child._mask) ||
                             flash.display.SimpleButton.class.isInstanceOf(child._mask);
       this.ctx = maskCtx;
@@ -280,8 +286,8 @@ RenderVisitor.prototype = {
 
       tempCanvas = CanvasCache.getCanvas(ctx.canvas);
       tempCtx = tempCanvas.ctx;
-      tempCtx.currentTransform = ctx.currentTransform;
-      renderDisplayObject(child, tempCtx, child._currentTransform, context);
+      tempCtx.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+      renderDisplayObject(child, tempCtx, context);
 
       if (isContainer) {
         this.ctx = tempCtx;
@@ -301,7 +307,7 @@ RenderVisitor.prototype = {
       CanvasCache.releaseCanvas(tempCanvas);
       CanvasCache.releaseCanvas(maskCanvas);
     } else {
-      renderDisplayObject(child, ctx, child._currentTransform, context);
+      renderDisplayObject(child, ctx, context);
 
       if (isContainer) {
         visitContainer(child, this, context);
@@ -424,9 +430,9 @@ function RenderingContext(refreshStage, invalidPath) {
   this.colorTransform = new RenderingColorTransform();
 }
 
-function renderDisplayObject(child, ctx, transform, context) {
-  if (transform) {
-    var m = transform;
+function renderDisplayObject(child, ctx, context) {
+  var m = child._currentTransform;
+  if (m) {
     if (m.a * m.d == m.b * m.c) {
       // Workaround for bug 844184 -- the object is invisible
       ctx.closePath();
@@ -474,7 +480,7 @@ function renderDisplayObject(child, ctx, transform, context) {
     }
 
     if (child.getBounds) {
-      var b = child.getBounds(child);
+      var b = child.getBounds(null);
       if (b && b.xMax - b.xMin > 0 && b.yMax - b.yMin > 0) {
         if (!child._wireframeStrokeStyle) {
           child._wireframeStrokeStyle = randomStyle();
@@ -588,13 +594,11 @@ function renderStage(stage, ctx, events) {
 
     ctx.setTransform(scaleX, 0, 0, scaleY, offsetX, offsetY);
 
-    stage._canvasState = {
-      canvas: ctx.canvas,
-      scaleX: scaleX,
-      scaleY: scaleY,
-      offsetX: offsetX,
-      offsetY: offsetY
-    };
+    var m = stage._concatenatedTransform;
+    m.a = scaleX;
+    m.d = scaleY;
+    m.tx = offsetX;
+    m.ty = offsetY;
   }
 
   updateRenderTransform();
@@ -617,8 +621,8 @@ function renderStage(stage, ctx, events) {
     FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false})) {
     var radius = 10;
     var speed = 1;
-    var canvasState = stage._canvasState;
-    var scaleX = canvasState.scaleX, scaleY = canvasState.scaleY;
+    var m = stage._concatenatedTransform;
+    var scaleX = m.a, scaleY = m.d;
     dummyBalls = [];
     for (var i = 0; i < 10; i++) {
       dummyBalls.push({
@@ -710,8 +714,10 @@ function renderStage(stage, ctx, events) {
       if (renderFrame) {
         frameTime = now;
         maxDelay = 1000 / stage._frameRate;
-        while (nextRenderAt < now) {
-          nextRenderAt += maxDelay;
+        if (!turboMode.value) {
+          while (nextRenderAt < now) {
+            nextRenderAt += maxDelay;
+          }
         }
         fps && fps.enter("EVENTS");
         if (firstRun) {
@@ -743,9 +749,11 @@ function renderStage(stage, ctx, events) {
         if (!disablePreVisitor.value) {
           traceRenderer.value && frameWriter.enter("> Pre Visitor");
           fps && fps.enter("PRE");
-          invalidPath = stage._processInvalidRegions();
+          invalidPath = stage._processInvalidRegions(true);
           fps && fps.leave("PRE");
           traceRenderer.value && frameWriter.leave("< Pre Visitor");
+        } else {
+          stage._processInvalidRegions(false);
         }
 
         if (!disableRenderVisitor.value) {
@@ -775,7 +783,7 @@ function renderStage(stage, ctx, events) {
         traceRenderer.value && frameWriter.leave("< Mouse Visitor");
         fps && renderFrame && fps.leave("MOUSE");
 
-        stage._syncCursor();
+        ctx.canvas.style.cursor = stage._cursor;
       }
 
       if (renderFrame && events.onAfterFrame) {

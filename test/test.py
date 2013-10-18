@@ -532,9 +532,9 @@ def checkStas(task, results, browser):
 
           traceLog.write('REFTEST TEST-UNEXPECTED-FAIL | ' + browser +'-'+ taskId +'-item'+ str(p + 1) + ' | trace\n')
           traceLog.write('<<<<\n')
-          traceLog.write(snapshot['data1'])
+          traceLog.write(snapshot['data1'].encode('utf-8'))
           traceLog.write('====\n')
-          traceLog.write(snapshot['data2'])
+          traceLog.write(snapshot['data2'].encode('utf-8'))
           traceLog.write('>>>>\n')
 
           passed = False
@@ -577,7 +577,7 @@ def maybeUpdateRefImages(options, browser):
     if options.masterMode and (0 < State.numEqFailures or 0 < State.numEqNoSnapshot): 
         print "Some eq tests failed or didn't have snapshots."
         print 'Checking to see if master references can be updated...'
-        numFatalFailures = (State.numErrors + State.numStasFailures)
+        numFatalFailures = State.numErrors
         if 0 < numFatalFailures:
             print '  No.  Some non-eq tests failed.'
         else:

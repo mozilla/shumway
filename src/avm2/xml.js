@@ -802,7 +802,10 @@ var isXMLType, isXMLName, XMLParser;
       return result;
     }
 
-    Xp.getEnumerationKeys = function getEnumerationKeys() {
+    Xp.asGetEnumerableKeys = function asGetEnumerableKeys() {
+      if (Xp === this) {
+        return Object.prototype.asGetEnumerableKeys.call(this);
+      }
       var keys = [];
       this.children.forEach(function (v, i) {
         keys.push(v.name);
@@ -1762,7 +1765,10 @@ var isXMLType, isXMLName, XMLParser;
       return target;
     }
 
-    XLp.getEnumerationKeys = function getEnumerationKeys() {
+    XLp.asGetEnumerableKeys = function asGetEnumerableKeys() {
+      if (XLp === this) {
+        return Object.prototype.asGetEnumerableKeys.call(this);
+      }
       var keys = [];
       this.children.forEach(function (v, i) {
         keys.push(i);

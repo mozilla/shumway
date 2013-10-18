@@ -11,7 +11,7 @@ bindNativeClassDefinition('GameClass', {
     native: {
       instance: {
         ctor: function () {
-          play(this, this.width, this.height - 40);
+          play(this, this.asGetPublicProperty('width'), this.asGetPublicProperty('height') - 40);
         }
       }
     }
@@ -30,11 +30,11 @@ function Scene(game_mc, width, height) {
 
 Scene.prototype.register = function(actor) {
     this.actors.push(actor);
-    this.game_mc.addChild(actor.mc);
+    this.game_mc.asCallPublicProperty('addChild', [actor.mc]);
 };
 
 Scene.prototype.unregister = function(actor) {
-    this.game_mc.removeChild(actor.mc);
+    this.game_mc.asCallPublicProperty('removeChild', [actor.mc]);
     var i = this.actors.indexOf(actor);
     if (i >= 0) {
         this.actors.splice(i, 1);
@@ -50,24 +50,24 @@ function Actor(scene, mc, x, y) {
     this.x = x;
     this.y = y;
     this.mc = mc;
-    this.mc.x = x;
-    this.mc.y = y;
+    this.mc.asSetPublicProperty('x', x);
+    this.mc.asSetPublicProperty('y', y);
     scene.register(this);
 }
 
 Actor.prototype.moveTo = function(x, y) {
     this.x = x;
     this.y = y;
-    this.mc.x = x;
-    this.mc.y = y;
+    this.mc.asSetPublicProperty('x', x);
+    this.mc.asSetPublicProperty('y', y);
 }
 
 Actor.prototype.width = function() {
-    return this.mc.width;
+    return this.mc.asGetPublicProperty('width');
 };
 
 Actor.prototype.height = function() {
-    return this.mc.height;
+    return this.mc.asGetPublicProperty('height');
 };
 
 Actor.prototype.exit = function() {
@@ -94,7 +94,7 @@ Alien.prototype.type = "alien";
 
 Alien.prototype.hit = function() {
     this.damage++;
-    this.mc.alpha = 1 - (this.damage / this.strength);
+    this.mc.asSetPublicProperty('alpha', 1 - (this.damage / this.strength));
 };
 
 Alien.prototype.dead = function() {
@@ -211,8 +211,8 @@ function play(game_mc, width, height) {
 
     function score() {
         spaceShip.score();
-        game_mc.getChildByName("score").asSetPublicProperty('text',
-            String(spaceShip.points * 1000));
+        game_mc.asCallPublicProperty('getChildByName', ["score"]).
+                asSetPublicProperty('text', String(spaceShip.points * 1000));
     }
 
     var holdingLeft, holdingRight;

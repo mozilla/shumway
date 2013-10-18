@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-// Extension communication object... as it used in pdf.js
+// Extension communication object
 var FirefoxCom = (function FirefoxComClosure() {
   return {
     /**
@@ -159,6 +159,12 @@ window.addEventListener("message", function handlerMessage(e) {
   }
 }, true);
 
+var TelemetryService = {
+  reportTelemetry: function (data) {
+    FirefoxCom.request('reportTelemetry', data, null);
+  }
+};
+
 var FileLoadingService = {
   get baseUrl() { return movieUrl; },
   nextSessionId: 1, // 0 - is reserved
@@ -182,10 +188,12 @@ var FileLoadingService = {
             delete FileLoadingService.sessions[sessionId];
             console.log('Session #' + sessionId +': closed');
             break;
-          case "error": this.onerror(args.error); break;
+          case "error":
+            this.onerror && this.onerror(args.error);
+            break;
           case "progress":
             console.log('Session #' + sessionId + ': loaded ' + args.loaded + '/' + args.total);
-            this.onprogress(args.array, {bytesLoaded: args.loaded, bytesTotal: args.total});
+            this.onprogress && this.onprogress(args.array, {bytesLoaded: args.loaded, bytesTotal: args.total});
             break;
         }
       }
@@ -244,6 +252,8 @@ function frame(e) {
   if (initializeFrameControl) {
     // marking that movie is started
     document.body.classList.add("started");
+
+    TelemetryService.reportTelemetry({topic: "firstFrame"});
 
     // skipping frame 0
     initializeFrameControl = false;

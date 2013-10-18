@@ -16,12 +16,6 @@
  * limitations under the License.
  */
 
-var interpreterOptions = systemOptions.register(new OptionSet("Interpreter Options"));
-
-var traceInterpreter = interpreterOptions.register(new Option("ti", "traceInterpreter", "number", 0, "trace interpreter execution"));
-
-var interpretedBytecode = 0;
-
 var Interpreter = new ((function () {
   function Interpreter() {
 
@@ -72,7 +66,6 @@ var Interpreter = new ((function () {
       var strings = abc.constantPool.strings;
       var methods = abc.methods;
       var multinames = abc.constantPool.multinames;
-      var runtime = abc.runtime;
       var domain = abc.domain;
       var exceptions = method.exceptions;
 
@@ -105,12 +98,12 @@ var Interpreter = new ((function () {
         locals.push(sliceArguments(methodArgs, 0));
       }
 
-      var obj, type, index, multiname, res, a, b, args = [], name, tmpMultiname = Multiname.TEMPORARY, property;
+      var obj, index, multiname, res, a, b, args = [], name;
+      var tmpMultiname = Multiname.TEMPORARY;
       var bytecodes = method.analysis.bytecodes;
 
       interpret:
       for (var pc = 0, end = bytecodes.length; pc < end; ) {
-        interpretedBytecode ++;
         try {
           var bc = bytecodes[pc];
           var op = bc.op;
@@ -119,7 +112,8 @@ var Interpreter = new ((function () {
             throw stack.pop();
           case 0x04: // OP_getsuper
             name = popName(stack, multinames[bc.index]);
-            stack.push(getSuper(savedScope, stack.pop(), name));
+            stack[stack.length - 1] = getSuper(savedScope,
+                                               stack[stack.length - 1], name);
             break;
           case 0x05: // OP_setsuper
             value = stack.pop();
@@ -214,16 +208,14 @@ var Interpreter = new ((function () {
             break;
           case 0x1E: // OP_nextname
             index = stack.pop();
-            obj = stack.pop();
-            stack.push(nextName(obj, index));
+            stack[stack.length - 1] = boxValue(stack[stack.length - 1]).asNextName(index);
             break;
           case 0x23: // OP_nextvalue
             index = stack.pop();
-            obj = stack.pop();
-            stack.push(nextValue(obj, index));
+            stack[stack.length - 1] = boxValue(stack[stack.length - 1]).asNextValue(index);
             break;
           case 0x32: // OP_hasnext2
-            res = hasNext2(locals[bc.object], locals[bc.index]);
+            res = asHasNext2(locals[bc.object], locals[bc.index]);
             locals[bc.object] = res.object;
             locals[bc.index] = res.index;
             stack.push(!!res.index);
@@ -263,10 +255,12 @@ var Interpreter = new ((function () {
             stack.pop();
             break;
           case 0x2A: // OP_dup
-            stack.push(stack.top());
+            stack.push(stack[stack.length-1]);
             break;
           case 0x2B: // OP_swap
-            stack.push(stack.pop(), stack.pop());
+            obj = stack[stack.length - 1];
+            stack[stack.length - 1] = stack[stack.length - 2];
+            stack[stack.length - 2] = obj;
             break;
           case 0x30: // OP_pushscope
             scopeStack.push(boxValue(stack.pop()));
@@ -277,17 +271,18 @@ var Interpreter = new ((function () {
           case 0x41: // OP_call
             popManyInto(stack, bc.argCount, args);
             obj = stack.pop();
-            stack.push(stack.pop().apply(obj, args));
+            stack[stack.length - 1] = stack[stack.length - 1].apply(obj, args);
             break;
           case 0x42: // OP_construct
             popManyInto(stack, bc.argCount, args);
-            stack.push(construct(stack.pop(), args));
+            stack[stack.length - 1] = construct(stack[stack.length - 1], args);
             break;
           case 0x45: // OP_callsuper
             popManyInto(stack, bc.argCount, args);
             name = popName(stack, multinames[bc.index]);
-            obj = stack.pop();
-            stack.push(getSuper(savedScope, obj, name).apply(obj, args));
+            obj = stack[stack.length - 1];
+            stack[stack.length - 1] = getSuper(savedScope, obj, name).
+                                          apply(obj, args);
             break;
           case 0x47: // OP_returnvoid
             // AVM2.callStack.pop();
@@ -306,7 +301,11 @@ var Interpreter = new ((function () {
           case 0x4A: // OP_constructprop
             popManyInto(stack, bc.argCount, args);
             popNameInto(stack, multinames[bc.index], tmpMultiname);
-            stack.push(boxValue(stack.pop()).asConstructProperty(tmpMultiname.namespaces, tmpMultiname.name, tmpMultiname.flags, args));
+            obj = boxValue(stack[stack.length - 1]);
+            obj = obj.asConstructProperty(tmpMultiname.namespaces,
+                                          tmpMultiname.name, tmpMultiname.flags,
+                                          args);
+            stack[stack.length - 1] = obj;
             break;
           case 0x4B: // OP_callsuperid
             notImplemented();
@@ -316,7 +315,11 @@ var Interpreter = new ((function () {
           case 0x4F: // OP_callpropvoid
             popManyInto(stack, bc.argCount, args);
             popNameInto(stack, multinames[bc.index], tmpMultiname);
-            res = boxValue(stack.pop()).asCallProperty(tmpMultiname.namespaces, tmpMultiname.name, tmpMultiname.flags, op === OP_callproplex, args);
+            res = boxValue(stack.pop()).asCallProperty(tmpMultiname.namespaces,
+                                                       tmpMultiname.name,
+                                                       tmpMultiname.flags,
+                                                       op === OP_callproplex,
+                                                       args);
             if (op !== OP_callpropvoid) {
               stack.push(res);
             }
@@ -329,7 +332,8 @@ var Interpreter = new ((function () {
             break;
           case 0x53: // OP_applytype
             popManyInto(stack, bc.argCount, args);
-            stack.push(applyType(domain, stack.pop(), args));
+            stack[stack.length - 1] = applyType(domain, stack[stack.length - 1],
+                                                args);
             break;
           case 0x55: // OP_newobject
             obj = {};
@@ -350,7 +354,9 @@ var Interpreter = new ((function () {
             stack.push(createActivation(method));
             break;
           case 0x58: // OP_newclass
-            stack.push(createClass(abc.classes[bc.index], stack.pop(), scopeStack.topScope()));
+            stack[stack.length - 1] = createClass(abc.classes[bc.index],
+                                                  stack[stack.length - 1],
+                                                  scopeStack.topScope());
             break;
           case 0x59: // OP_getdescendants
             name = popName(stack, multinames[bc.index]);
@@ -363,17 +369,26 @@ var Interpreter = new ((function () {
           case 0x5E: // OP_findproperty
           case 0x5D: // OP_findpropstrict
             popNameInto(stack, multinames[bc.index], tmpMultiname);
-            stack.push(scopeStack.topScope().findScopeProperty(tmpMultiname.namespaces, tmpMultiname.name, tmpMultiname.flags, domain, op === OP_findpropstrict));
+            stack.push(scopeStack.topScope().
+                       findScopeProperty(tmpMultiname.namespaces,
+                                         tmpMultiname.name, tmpMultiname.flags,
+                                         domain, op === OP_findpropstrict));
             break;
           case 0x60: // OP_getlex
             multiname = multinames[bc.index];
-            stack.push(scopeStack.topScope().findScopeProperty(multiname.namespaces, multiname.name, multiname.flags, domain, true).asGetProperty(multiname.namespaces, multiname.name, multiname.flags));
+            stack.push(scopeStack.topScope().
+                       findScopeProperty(multiname.namespaces, multiname.name,
+                                         multiname.flags, domain, true).
+                       asGetProperty(multiname.namespaces, multiname.name,
+                                     multiname.flags));
             break;
           case 0x68: // OP_initproperty
           case 0x61: // OP_setproperty
             value = stack.pop();
             popNameInto(stack, multinames[bc.index], tmpMultiname);
-            boxValue(stack.pop()).asSetProperty(tmpMultiname.namespaces, tmpMultiname.name, tmpMultiname.flags, value);
+            boxValue(stack.pop()).asSetProperty(tmpMultiname.namespaces,
+                                                tmpMultiname.name,
+                                                tmpMultiname.flags, value);
             break;
           case 0x62: // OP_getlocal
             stack.push(locals[bc.index]);
@@ -389,195 +404,165 @@ var Interpreter = new ((function () {
             break;
           case 0x66: // OP_getproperty
             popNameInto(stack, multinames[bc.index], tmpMultiname);
-            stack.push(boxValue(stack.pop()).asGetProperty(tmpMultiname.namespaces, tmpMultiname.name, tmpMultiname.flags));
+            stack[stack.length - 1] = boxValue(stack[stack.length - 1]).
+                                      asGetProperty(tmpMultiname.namespaces,
+                                                    tmpMultiname.name,
+                                                    tmpMultiname.flags);
             break;
           case 0x6A: // OP_deleteproperty
             popNameInto(stack, multinames[bc.index], tmpMultiname);
-            stack.push(boxValue(stack.pop()).asDeleteProperty(tmpMultiname.namespaces, tmpMultiname.name, tmpMultiname.flags));
+            stack[stack.length - 1] = boxValue(stack[stack.length - 1]).
+                                      asDeleteProperty(tmpMultiname.namespaces,
+                                                       tmpMultiname.name,
+                                                       tmpMultiname.flags);
             break;
           case 0x6C: // OP_getslot
-            stack.push(getSlot(stack.pop(), bc.index));
+            stack[stack.length - 1] = asGetSlot(stack[stack.length - 1], bc.index);
             break;
           case 0x6D: // OP_setslot
             value = stack.pop();
             obj = stack.pop();
-            setSlot(obj, bc.index, value);
+            asSetSlot(obj, bc.index, value);
             break;
           case 0x70: // OP_convert_s
-            stack.push(String(stack.pop()));
+            stack[stack.length - 1] = stack[stack.length - 1] + '';
             break;
           case 0x83: // OP_coerce_i
           case 0x73: // OP_convert_i
-            stack.push(asCoerceInt(stack.pop()));
+            stack[stack.length - 1] |= 0;
             break;
           case 0x88: // OP_coerce_u
           case 0x74: // OP_convert_u
-            stack.push(asCoerceUint(stack.pop()));
+            stack[stack.length - 1] >>>= 0;
             break;
           case 0x84: // OP_coerce_d
           case 0x75: // OP_convert_d
-            stack.push(asCoerceNumber(stack.pop()));
+            stack[stack.length - 1] = +stack[stack.length - 1];
             break;
           case 0x81: // OP_coerce_b
           case 0x76: // OP_convert_b
-            stack.push(asCoerceBoolean(stack.pop()));
+            stack[stack.length - 1] = !!stack[stack.length - 1];
             break;
           case 0x78: // OP_checkfilter
-            stack.push(checkFilter(stack.pop()));
+            stack[stack.length - 1] = checkFilter(stack[stack.length - 1]);
             break;
           case 0x80: // OP_coerce
-            stack.push(asCoerce(domain.getType(multinames[bc.index]), stack.pop()));
+            stack[stack.length - 1] =
+                asCoerce(domain.getType(multinames[bc.index]),
+                         stack[stack.length - 1]);
             break;
           case 0x82: // OP_coerce_a
             /* NOP */ break;
           case 0x85: // OP_coerce_s
-            stack.push(asCoerceString(stack.pop()));
+            stack[stack.length - 1] = asCoerceString(stack[stack.length - 1]);
             break;
           case 0x87: // OP_astypelate
-            stack.push(asAsType(stack.pop(), stack.pop()));
+            stack[stack.length - 2] = asAsType(stack.pop(),
+                                               stack[stack.length - 1]);
             break;
           case 0x89: // OP_coerce_o
-            obj = stack.pop();
-            stack.push(obj == undefined ? null : obj);
+            obj = stack[stack.length - 1];
+            stack[stack.length - 1] = obj == undefined ? null : obj;
             break;
           case 0x90: // OP_negate
-            stack.push(-stack.pop());
+            stack[stack.length - 1] = -stack[stack.length - 1];
             break;
           case 0x91: // OP_increment
-            a = stack.pop();
-            stack.push(a + 1);
+            ++stack[stack.length - 1];
             break;
           case 0x92: // OP_inclocal
             ++locals[bc.index];
             break;
           case 0x93: // OP_decrement
-            stack.push(1);
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a - b);
+            --stack[stack.length - 1];
             break;
           case 0x94: // OP_declocal
             --locals[bc.index];
             break;
           case 0x95: // OP_typeof
-            stack.push(asTypeOf(stack.pop()));
+            stack[stack.length - 1] = asTypeOf(stack[stack.length - 1]);
             break;
           case 0x96: // OP_not
-            stack.push(!stack.pop());
+            stack[stack.length - 1] = !stack[stack.length - 1];
             break;
           case 0x97: // OP_bitnot
-            stack.push(~stack.pop());
+            stack[stack.length - 1] = ~stack[stack.length - 1];
             break;
           case 0xA0: // OP_add
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(asAdd(a, b));
+            stack[stack.length - 2] = asAdd(stack[stack.length - 2],
+                                            stack.pop());
             break;
           case 0xA1: // OP_subtract
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a - b);
+            stack[stack.length - 2] -= stack.pop();
             break;
           case 0xA2: // OP_multiply
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a * b);
+            stack[stack.length - 2] *= stack.pop();
             break;
           case 0xA3: // OP_divide
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a / b);
+            stack[stack.length - 2] /= stack.pop();
             break;
           case 0xA4: // OP_modulo
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a % b);
+            stack[stack.length - 2] %= stack.pop();
             break;
           case 0xA5: // OP_lshift
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a << b);
+            stack[stack.length - 2] <<= stack.pop();
             break;
           case 0xA6: // OP_rshift
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a >> b);
+            stack[stack.length - 2] >>= stack.pop();
             break;
           case 0xA7: // OP_urshift
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a >>> b);
+            stack[stack.length - 2] >>>= stack.pop();
             break;
           case 0xA8: // OP_bitand
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a & b);
+            stack[stack.length - 2] &= stack.pop();
             break;
           case 0xA9: // OP_bitor
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a | b);
+            stack[stack.length - 2] |= stack.pop();
             break;
           case 0xAA: // OP_bitxor
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a ^ b);
+            stack[stack.length - 2] ^= stack.pop();
             break;
           case 0xAB: // OP_equals
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a == b);
+            stack[stack.length - 2] = stack[stack.length - 2] == stack.pop();
             break;
           case 0xAC: // OP_strictequals
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a === b);
+            stack[stack.length - 2] = stack[stack.length - 2] === stack.pop();
             break;
           case 0xAD: // OP_lessthan
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a < b);
+            stack[stack.length - 2] = stack[stack.length - 2] < stack.pop();
             break;
           case 0xAE: // OP_lessequals
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a <= b);
+            stack[stack.length - 2] = stack[stack.length - 2] <= stack.pop();
             break;
           case 0xAF: // OP_greaterthan
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a > b);
+            stack[stack.length - 2] = stack[stack.length - 2] > stack.pop();
             break;
           case 0xB0: // OP_greaterequals
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a >= b);
+            stack[stack.length - 2] = stack[stack.length - 2] >= stack.pop();
             break;
           case 0xB1: // OP_instanceof
-            stack.push(asIsInstanceOf(stack.pop(), stack.pop()));
+            stack[stack.length - 2] = asIsInstanceOf(stack.pop(),
+                                                     stack[stack.length - 1]);
             break;
           case 0xB2: // OP_istype
-            stack.push(asIsType(domain.getType(multinames[bc.index]), stack.pop()));
+            stack[stack.length - 1] =
+                asIsType(domain.getType(multinames[bc.index]),
+                         stack[stack.length - 1]);
             break;
           case 0xB3: // OP_istypelate
-            stack.push(asIsType(stack.pop(), stack.pop()));
+            stack[stack.length - 2] = asIsType(stack.pop(),
+                                               stack[stack.length - 1]);
             break;
           case 0xB4: // OP_in
-            stack.push(boxValue(stack.pop()).asHasProperty(null, stack.pop()));
+            stack[stack.length - 2] = boxValue(stack.pop()).
+                                        asHasProperty(null,
+                                                      stack[stack.length - 1]);
             break;
           case 0xC0: // OP_increment_i
-            stack.push(stack.pop() | 0);
-            stack.push(1);
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a + b);
+            stack[stack.length - 1] = (stack[stack.length - 1] | 0) + 1;
             break;
           case 0xC1: // OP_decrement_i
-            stack.push(stack.pop() | 0);
-            stack.push(1);
-            b = stack.pop();
-            a = stack.pop();
-            stack.push(a - b);
+            stack[stack.length - 1] = (stack[stack.length - 1] | 0) - 1;
             break;
           case 0xC2: // OP_inclocal_i
             locals[bc.index] = (locals[bc.index] | 0) + 1;
@@ -586,22 +571,17 @@ var Interpreter = new ((function () {
             locals[bc.index] = (locals[bc.index] | 0) - 1;
             break;
           case 0xC4: // OP_negate_i
-            stack.push(~(stack.pop() | 0));
+            // Negation entails casting to int
+            stack[stack.length - 1] = ~stack[stack.length - 1];
             break;
           case 0xC5: // OP_add_i
-            b = stack.pop();
-            a = stack.pop();
-            stack.push((a + b) | 0);
+            stack[stack.length - 2] = stack[stack.length - 2] + stack.pop() | 0;
             break;
           case 0xC6: // OP_subtract_i
-            b = stack.pop();
-            a = stack.pop();
-            stack.push((a - b) | 0);
+            stack[stack.length - 2] = stack[stack.length - 2] - stack.pop() | 0;
             break;
           case 0xC7: // OP_multiply_i
-            b = stack.pop();
-            a = stack.pop();
-            stack.push((a * b) | 0);
+            stack[stack.length - 2] = stack[stack.length - 2] * stack.pop() | 0;
             break;
           case 0xD0: // OP_getlocal0
           case 0xD1: // OP_getlocal1

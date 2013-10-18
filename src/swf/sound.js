@@ -266,7 +266,7 @@ function SwfSoundStream_decode_MP3(data) {
   return {
     streamId: this.streamId,
     samplesCount: samplesCount,
-    data: data.subarray(4),
+    data: new Uint8Array(data.subarray(4)),
     seek: seek
   };
 }

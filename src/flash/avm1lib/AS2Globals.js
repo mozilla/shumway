@@ -40,6 +40,9 @@ var AS2GlobalsDefinition = (function () {
             fn.apply(subject, args);
           });
         },
+        _setLevel: function _setLevel(level, loader) {
+          AS2Context.instance.stage._as2SetLevel(level, loader);
+        },
         trace: function (expression) {
           var trace = avm2.applicationDomain.getProperty(
             Multiname.fromSimpleName('trace'), true, true);

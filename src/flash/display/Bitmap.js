@@ -50,18 +50,21 @@ var BitmapDefinition = (function () {
       }
       ctx.save();
       if (this._pixelSnapping === 'auto' || this._pixelSnapping === 'always') {
-        var transform = ctx.currentTransform;
+        var transform = this._getConcatenatedTransform(true);
         var EPSILON = 0.001;
         if (Math.abs(Math.abs(transform.a) - 1) <= EPSILON &&
             Math.abs(Math.abs(transform.d) - 1) <= EPSILON &&
             Math.abs(transform.b) <= EPSILON && Math.abs(transform.c) <= EPSILON) {
           ctx.setTransform(transform.a < 0 ? -1 : 1, 0, 0, transform.d < 0 ? -1 : 1,
-                           transform.e|0, transform.f|0);
+                           (transform.tx/20)|0, (transform.ty/20)|0);
         }
         // TODO this._pixelSnapping === 'always'; does it even make sense in other cases?
       }
       colorTransform.setAlpha(ctx, true);
+      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
+                                  this._smoothing;
       ctx.drawImage(this._bitmapData._drawable, 0, 0);
+      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = false;
       ctx.restore();
       traceRenderer.value && frameWriter.writeLn("Bitmap.draw() snapping: " + this._pixelSnapping +
         ", dimensions: " + this._bitmapData._drawable.width + " x " + this._bitmapData._drawable.height);
@@ -75,8 +78,23 @@ var BitmapDefinition = (function () {
         },
         instance: {
           ctor : function(bitmapData, pixelSnapping, smoothing) {
-            this._pixelSnapping = pixelSnapping;
-            this._smoothing = smoothing;
+            if (pixelSnapping === 'never' || pixelSnapping === 'always') {
+              this._pixelSnapping = pixelSnapping;
+            } else {
+              this._pixelSnapping = 'auto';
+            }
+            this._smoothing = !!smoothing;
+
+            if (!bitmapData && this.symbol) {
+              var symbol = this.symbol;
+              bitmapData = new flash.display.BitmapData(symbol.width,
+                                                        symbol.height);
+              bitmapData._ctx.imageSmoothingEnabled = this._smoothing;
+              bitmapData._ctx.mozImageSmoothingEnabled = this._smoothing;
+              bitmapData._ctx.drawImage(symbol.img, 0, 0);
+              bitmapData._ctx.imageSmoothingEnabled = false;
+              bitmapData._ctx.mozImageSmoothingEnabled = false;
+            }
 
             setBitmapData.call(this, bitmapData || null);
           },

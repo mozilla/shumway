@@ -25,6 +25,7 @@ package avm1lib {
   import flash.geom.Point;
   import flash.display.Graphics;
   import flash.display.MovieClip;
+  import flash.display.Loader;
 
 
   [native(cls="AS2MovieClip")]
@@ -246,7 +247,13 @@ package avm1lib {
     }
     public function loadMovie(url, method)
     {
-      throw 'Not implemented: loadMovie';
+      var loader: Loader = new Loader();
+      this._as3Object.addChild(loader);
+      var request = new flash.net.URLRequest(url);
+      if (method) {
+        request.method = method;
+      }
+      loader.load(request);
     }
     public function loadVariables(url, method)
     {
@@ -343,6 +350,10 @@ package avm1lib {
     {
       var nativeObject = this._as3Object;
       // TODO remove movie clip content
+      var loader = nativeObject.loaderInfo.loader;
+      if (loader.parent) {
+        loader.parent.removeChild(loader);
+      }
       nativeObject.stop();
     }
     public function get _url() { return this._as3Object.loaderInfo.url; }
@@ -355,13 +366,13 @@ package avm1lib {
     public function get _x() { return this._as3Object.x;  }
     public function set _x(value) { this._as3Object.x = value;  }
     public function get _xmouse() { return this._as3Object.mouseX;  }
-    public function get _xscale() { return this._as3Object.scaleX;  }
-    public function set _xscale(value) { this._as3Object.scaleX = value;  }
+    public function get _xscale() { return this._as3Object.scaleX * 100;  }
+    public function set _xscale(value) { this._as3Object.scaleX = value / 100;  }
     public function get _y() { return this._as3Object.y;  }
     public function set _y(value) { this._as3Object.y = value;  }
     public function get _ymouse() { return this._as3Object.mouseY;  }
-    public function get _yscale() { return this._as3Object.scaleY;  }
-    public function set _yscale(value) { this._as3Object.scaleY = value;  }
+    public function get _yscale() { return this._as3Object.scaleY * 100;  }
+    public function set _yscale(value) { this._as3Object.scaleY = value * 100;  }
 
     {
       AS2Utils.addEventHandlerProxy(prototype, 'onData', 'data');

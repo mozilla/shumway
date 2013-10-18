@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global slice, formatErrorMessage, throwErrorFromVM, AVM2 */
+/*global slice, formatErrorMessage, throwErrorFromVM, AVM2, $RELEASE */
 
 function scriptProperties(namespace, props) {
   return props.reduce(function (o, p) {
@@ -95,6 +95,9 @@ var Promise = (function PromiseClosure() {
     subject.subpromisesReason = reason;
     var subpromises = subject.subpromises;
     if (!subpromises) {
+      if (!$RELEASE) {
+        console.warn(reason);
+      }
       return;
     }
     for (var i = 0; i < subpromises.length; i++) {
@@ -225,8 +228,8 @@ var QuadTree = function (x, y, width, height, level) {
   this.nodes = [];
 };
 QuadTree.prototype._findIndex = function (xMin, yMin, xMax, yMax) {
-  var midX = this.x + (this.width / 2);
-  var midY = this.y + (this.height / 2);
+  var midX = this.x + ((this.width / 2) | 0);
+  var midY = this.y + ((this.height / 2) | 0);
 
   var top = yMin < midY && yMax < midY;
   var bottom = yMin > midY;
@@ -322,15 +325,20 @@ QuadTree.prototype.retrieve = function (xMin, yMin, xMax, yMax) {
   return out;
 };
 QuadTree.prototype._subdivide = function () {
-  var widthLeft = this.width / 2;
-  var widthRight = this.width - widthLeft;
-  var heightTop = this.height / 2;
-  var heightBottom = this.height - heightTop;
-  var midX = this.x + widthLeft;
-  var midY = this.y + heightTop;
+  var halfWidth = (this.width / 2) | 0;
+  var halfHeight = (this.height / 2) | 0;
+  var midX = this.x + halfWidth;
+  var midY = this.y + halfHeight;
   var level = this.level + 1;
-  this.nodes[0] = new QuadTree(this.x, this.y, widthLeft, heightTop, level);
-  this.nodes[1] = new QuadTree(midX, this.y, widthRight, heightTop, level);
-  this.nodes[2] = new QuadTree(this.x, midY, widthLeft, heightBottom, level);
-  this.nodes[3] = new QuadTree(midX, midY, widthRight, heightBottom, level);
+  this.nodes[0] = new QuadTree(midX, this.y, halfWidth, halfHeight, level);
+  this.nodes[1] = new QuadTree(this.x, this.y, halfWidth, halfHeight, level);
+  this.nodes[2] = new QuadTree(this.x, midY, halfWidth, halfHeight, level);
+  this.nodes[3] = new QuadTree(midX, midY, halfWidth, halfHeight, level);
 };
+
+var EXTERNAL_INTERFACE_FEATURE = 1;
+var CLIPBOARD_FEATURE = 2;
+var SHAREDOBJECT_FEATURE = 3;
+var VIDEO_FEATURE = 4;
+var SOUND_FEATURE = 5;
+var NETCONNECTION_FEATURE = 6;

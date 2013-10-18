@@ -15,14 +15,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global avm1lib, rgbaObjToStr, rgbIntAlphaToStr, warning */
+/*global avm1lib, rgbaObjToStr, rgbIntAlphaToStr, warning, FontDefinition,
+  Errors, throwError */
 
 var TextFieldDefinition = (function () {
 
   var htmlParser = document.createElement('p');
 
   // Used for measuring text runs, not for rendering
-  var measureCtx = document.createElement('canvas').getContext('kanvas-2d');
+  var measureCtx = document.createElement('canvas').getContext('2d');
+
+  function TextLine(y) {
+    this.x = 0;
+    this.width = 0;
+    this.y = y;
+    this.height = 0;
+    this.leading = 0;
+    this.runs = [];
+    this.largestFormat = null;
+  }
 
   /*
    * Parsing, in this context, actually means using the browser's html parser
@@ -31,7 +42,7 @@ var TextFieldDefinition = (function () {
    * After that, two things are generated: a plain-text version of the content,
    * and a tree of objects with types and attributes, representing all nodes.
    */
-  function parseHtml(val, initialFormat) {
+  function parseHtml(val, initialFormat, multiline) {
     htmlParser.innerHTML = val;
     var rootElement = htmlParser.childNodes.length !== 1 ?
                       htmlParser :
@@ -40,7 +51,8 @@ var TextFieldDefinition = (function () {
     var content = {text : '', htmlText: val, tree : createTrunk(initialFormat)};
 
     if (rootElement.nodeType === 3) {
-      convertNode(rootElement, content.tree.children[0].children, content);
+      convertNode(rootElement, content.tree.children[0].children, content,
+                  multiline);
       return content;
     }
 
@@ -71,7 +83,8 @@ var TextFieldDefinition = (function () {
       }
       initialNodeList = rootElement.childNodes;
     }
-    convertNodeList(initialNodeList, content.tree.children[0].children, content);
+    convertNodeList(initialNodeList, content.tree.children[0].children, content,
+                    multiline);
     return content;
   }
 
@@ -103,7 +116,7 @@ var TextFieldDefinition = (function () {
     'SPAN': true
   };
 
-  function convertNode(input, destinationList, content) {
+  function convertNode(input, destinationList, content, multiline) {
     // Ignore all comments, processing instructions and namespaced nodes.
     if (!(input.nodeType === 1 || input.nodeType === 3) || input.prefix) {
       return;
@@ -119,26 +132,30 @@ var TextFieldDefinition = (function () {
       return;
     }
     // For unknown node types, skip the node itself, but convert its children
-    // and add them to the parent's child list
+    // and add them to the parent's child list.
+    // If |multiline| is false, skip line-breaking nodes, too.
     var nodeType = input.localName.toUpperCase();
-    if (!knownNodeTypes[nodeType]) {
-      convertNodeList(input.childNodes, destinationList, content);
+    if (!knownNodeTypes[nodeType] ||
+        multiline === false && (nodeType === 'P' || nodeType === 'BR'))
+    {
+      convertNodeList(input.childNodes, destinationList, content, multiline);
       return;
     }
-    node = { type: nodeType,
-                 text: null,
-                 format: extractAttributes(input),
-                 children: []
-               };
+    node = {
+      type: nodeType,
+      text: null,
+      format: extractAttributes(input),
+      children: []
+    };
 
-    convertNodeList(input.childNodes, node.children, content);
+    convertNodeList(input.childNodes, node.children, content, multiline);
     destinationList.push(node);
   }
 
-  function convertNodeList(from, to, content) {
+  function convertNodeList(from, to, content, multiline) {
     var childCount = from.length;
     for (var i = 0; i < childCount; i++) {
-      convertNode(from[i], to, content);
+      convertNode(from[i], to, content, multiline);
     }
   }
 
@@ -167,20 +184,22 @@ var TextFieldDefinition = (function () {
     // for blockNodes, the current line is finished after child processing
     var blockNode = false;
     switch (node.type) {
-      case 'text': addRunsForText(state, node.text); return;
-      case 'BR':
-        if (state.multiline) {
+      case 'plain-text':
+        for (var i = 0; i < node.lines.length; i++) {
+          addRunsForText(state, node.lines[i]);
           finishLine(state);
         }
         return;
-
+      case 'text': addRunsForText(state, node.text); return;
+      case 'BR':
+        finishLine(state);
+        return;
       case 'LI': /* TODO: draw bullet points. */ /* falls through */
       case 'P':
-        if (state.multiline) {
-          finishLine(state);
-        }
+        finishLine(state);
         pushFormat(state, node);
-        blockNode = true; break;
+        blockNode = true;
+        break;
 
       case 'B': /* falls through */
       case 'I': /* falls through */
@@ -205,7 +224,7 @@ var TextFieldDefinition = (function () {
     if (formatNode) {
       popFormat(state);
     }
-    if (blockNode && state.multiline) {
+    if (blockNode) {
       finishLine(state);
     }
   }
@@ -219,16 +238,16 @@ var TextFieldDefinition = (function () {
     if (!text) {
       return;
     }
-    if (!(state.wordWrap && state.multiline)) {
+    if (!state.wordWrap) {
       addTextRun(state, text, state.ctx.measureText(text).width);
       return;
     }
     while (text.length) {
       var width = state.ctx.measureText(text).width;
-      var availableWidth = state.w - state.x;
+      var availableWidth = state.w - state.line.width;
       if (availableWidth <= 0) {
         finishLine(state);
-        availableWidth = state.w - state.x;
+        availableWidth = state.w - state.line.width;
       }
       assert(availableWidth > 0);
       if (width <= availableWidth) {
@@ -254,7 +273,7 @@ var TextFieldDefinition = (function () {
           wrapOffset--;
         }
         if (wrapOffset === -1) {
-          if (state.x > 0) {
+          if (state.line.width > 0) {
             finishLine(state);
             continue;
           }
@@ -282,28 +301,39 @@ var TextFieldDefinition = (function () {
     }
   }
   function addTextRun(state, text, width) {
-    // `y` is set by `finishLine`
-    var size = state.currentFormat.size;
-    var run = {type: 't', text: text, x: state.x, y: 0, size: size};
-    state.runs.push(run);
-    state.line.push(run);
-    state.x += width;
-    if (size > state.lineHeight) {
-      state.lineHeight = size;
-    }
-}
-  function finishLine(state) {
-    if (state.lineHeight === 0) {
+    if (text.length === 0) {
       return;
     }
-    var fontLeading = state.currentFormat.metrics ? state.currentFormat.metrics.leading : 0;
-    state.y += state.lineHeight - fontLeading;
-    var y = state.y;
-    var runs = state.line;
-    var run, i;
-    for (i = runs.length; i--;) {
-      run = runs[i];
-      run.y = y;
+    // `y` is set by `finishLine`
+    var line = state.line;
+    var format = state.currentFormat;
+    var size = format.size;
+    var run = {type: 't', text: text, x: line.width};
+    state.runs.push(run);
+    state.line.runs.push(run);
+    line.width += width|0;
+    // TODO: Implement Flash's absurd behavior for leading
+    // Specifically, leading is only used if it is set by a <div> tag, or by
+    // a <textformat> tag that is the first node in a new line. Whether that
+    // line is caused by a <div> tag, <br> or \n is immaterial. I didn't check
+    // what happens with word wrapping or setTextFormat, but you should.
+    if (line.leading === 0 && format.leading > line.leading) {
+      line.leading = format.leading;
+    }
+    if (!line.largestFormat || size > line.largestFormat.size) {
+      line.largestFormat = format;
+    }
+  }
+  function finishLine(state) {
+    var line = state.line;
+    if (line.runs.length === 0) {
+      return;
+    }
+    var runs = line.runs;
+    var format = line.largestFormat;
+    var baselinePos = line.y + format.font._metrics.ascent * format.size;
+    for (var i = runs.length; i--;) {
+      runs[i].y = baselinePos;
     }
     var align = (state.currentFormat.align || '').toLowerCase();
     if (state.combinedAlign === null) {
@@ -311,9 +341,9 @@ var TextFieldDefinition = (function () {
     } else if (state.combinedAlign !== align) {
       state.combinedAlign = 'mixed';
     }
-    // TODO: maybe support justfied text somehow
+    // TODO: maybe support justified text somehow
     if (align === 'center' || align === 'right') {
-      var offset = state.w - state.x;
+      var offset = Math.max(state.w - line.width, 0);
       if (align === 'center') {
         offset >>= 1;
       }
@@ -321,18 +351,15 @@ var TextFieldDefinition = (function () {
         runs[i].x += offset;
       }
     }
-    runs.length = 0;
-    state.maxLineWidth = Math.max(state.maxLineWidth, state.x);
-    state.x = 0;
-    // TODO: it seems like Flash makes lines 2px higher than just the font-size.
-    // Verify this.
-    state.y += state.currentFormat.leading + 2;
-    state.lineHeight = 0;
+    line.height = format.font._metrics.height * format.size + line.leading|0;
+    state.maxLineWidth = Math.max(state.maxLineWidth, line.width);
+    state.lines.push(line);
+    state.line = new TextLine(line.y + line.height);
   }
   function pushFormat(state, node) {
     var attributes = node.format;
     var format = Object.create(state.formats[state.formats.length - 1]);
-    var metricsChanged = false;
+    var fontChanged = false;
     switch (node.type) {
       case 'P':
         if (attributes.ALIGN === format.align) {
@@ -340,19 +367,24 @@ var TextFieldDefinition = (function () {
         }
         format.align = attributes.ALIGN;
         break;
-      case 'B': format.bold = true; break;
-      case 'I': format.italic = true; break;
+      case 'B':
+        format.bold = true;
+        fontChanged = true;
+        break;
+      case 'I':
+        format.italic = true;
+        fontChanged = true;
+        break;
       case 'FONT':
         if (attributes.COLOR !== undefined) {
           format.color = attributes.COLOR;
         }
         if (attributes.FACE !== undefined) {
-          format.face = convertFontFamily(attributes.FACE, true);
-          metricsChanged = true;
+          format.face = attributes.FACE;
+          fontChanged = true;
         }
         if (attributes.SIZE !== undefined) {
           format.size = parseFloat(attributes.SIZE);
-          metricsChanged = true;
         }
         if (attributes.LETTERSPACING !== undefined) {
           format.letterspacing = parseFloat(attributes.LETTERSPACING);
@@ -361,17 +393,20 @@ var TextFieldDefinition = (function () {
           // TODO: properly parse this in extractAttributes
           format.kerning = attributes.KERNING && true;
         }
-        if (attributes.LEADING !== undefined) {
-          format.leading = parseFloat(attributes.LEADING);
-        }
       /* falls through */
       case 'TEXTFORMAT':
         // `textFormat` has, among others, the same attributes as `font`
+        if (attributes.LEADING !== undefined) {
+          format.leading = parseFloat(attributes.LEADING);
+        }
         if (attributes.INDENT !== undefined) {
-          state.x += attributes.INDENT;
+          // TODO: figure out if indents accumulate and how they apply to text
+          // already in the line
+          state.line.x = attributes.INDENT;
+          state.line.width += attributes.INDENT|0;
         }
         // TODO: support leftMargin, rightMargin & blockIndent
-        // TODO: support tabStops, if possible
+        // TODO: support tabStops
         break;
       default:
         warning('Unknown format node encountered: ' + node.type); return;
@@ -379,10 +414,10 @@ var TextFieldDefinition = (function () {
     if (state.textColor !== null) {
       format.color = rgbIntAlphaToStr(state.textColor, 1);
     }
-    format.str = makeFormatString(format);
-    if (metricsChanged) {
-      updateFontMetrics(format);
+    if (fontChanged) {
+      resolveFont(format, state.embedFonts);
     }
+    format.str = makeFormatString(format);
     state.formats.push(format);
     state.runs.push({type: 'f', format: format});
     state.currentFormat = format;
@@ -395,8 +430,7 @@ var TextFieldDefinition = (function () {
     state.ctx.font = state.str;
   }
   function makeFormatString(format) {
-    //TODO: verify that px is the right unit
-    // order of the font arguments: <style> <weight> <size> <family>
+    // Order of the font arguments: <style> <weight> <size> <family>
     var boldItalic = '';
     if (format.italic) {
       boldItalic += 'italic';
@@ -404,46 +438,35 @@ var TextFieldDefinition = (function () {
     if (format.bold) {
       boldItalic += ' bold';
     }
-    return boldItalic + format.size + 'px ' + format.face;
+    // We don't use format.face because format.font contains the resolved name.
+    return boldItalic + ' ' + format.size + 'px ' +
+           (format.font._uniqueName || format.font._fontName);
   }
 
-  function convertFontFamily(face, translateToUnique) {
-    //TODO: adapt to embedded font names
-    var family;
-    if (face.indexOf('_') === 0) {
-      // reserved fonts
-      if (face.indexOf('_sans') === 0) {
-        family = 'sans-serif';
-      } else if (face.indexOf('_serif') === 0) {
-        family = 'serif';
-      } else if (face.indexOf('_typewriter') === 0) {
-        family = 'monospace';
-      }
-    } else if (translateToUnique) {
-      var font = flash.text.Font.class.native.static._findFont(function (f) {
-        return f._fontName === face;
-      });
-      if (font) {
-        family = font._uniqueName;
-      }
+  function resolveFont(format, embedded) {
+    var face = format.face.toLowerCase();
+    if (face === '_sans') {
+      face = 'sans-serif';
+    } else if (face === '_serif') {
+      face = 'serif';
+    } else if (face === '_typewriter') {
+      face = 'monospace';
     }
-    return family || face;
-  }
-
-  function updateFontMetrics(format) {
-    var font = flash.text.Font.class.native.static._findFont(function (f) {
-      return f._uniqueName === format.face;
-    });
-    var metrics = font && font._metrics;
-    if (!metrics) {
-      format.metrics = null;
-      return;
+    var style;
+    if (format.bold) {
+      if (format.italic) {
+        style = 'boldItalic';
+      } else {
+        style = 'bold';
+      }
+    } else if (format.italic) {
+      style = 'italic';
+    } else {
+      style = 'regular';
     }
-    format.metrics = {
-      leading: format.size * metrics.leading,
-      ascent: format.size * metrics.ascent,
-      descent: format.size * metrics.descent
-    };
+    var font = FontDefinition.getFont(face, style, embedded);
+    assert(font);
+    format.font = font;
   }
 
   var def = {
@@ -456,8 +479,12 @@ var TextFieldDefinition = (function () {
       };
       this._type = 'dynamic';
       this._selectable = true;
-      this._textHeight = 0;
       this._textWidth = 0;
+      this._textHeight = 0;
+      this._scrollV = 1;
+      this._maxScrollV = 1;
+      this._bottomScrollV = 1;
+      this._lines = [];
       this._embedFonts = false;
       this._autoSize = 'none';
       this._wordWrap = false;
@@ -471,16 +498,23 @@ var TextFieldDefinition = (function () {
       this._borderColorStr = "#000000";
       this._textColor = null;
       this._drawingOffsetH = 0;
+      this._bbox = {xMin: 0, yMin: 0, xMax: 2000, yMax: 2000};
 
       var s = this.symbol;
       if (!s) {
-        this._bounds = {xMin: -40, yMin: -40, xMax: 2040, yMax: 440};
+        this._currentTransform.tx -= 40;
+        this._currentTransform.ty -= 40;
         this.text = '';
         return;
       }
 
       var tag = s.tag;
-      this._bounds = tag.bbox;
+
+      var bbox = tag.bbox;
+      this._currentTransform.tx += bbox.xMin;
+      this._currentTransform.ty += bbox.yMin;
+      this._bbox.xMax = bbox.xMax - bbox.xMin;
+      this._bbox.yMax = bbox.yMax - bbox.yMin;
 
       if (tag.hasLayout) {
         initialFormat.size = tag.fontHeight / 20;
@@ -492,9 +526,15 @@ var TextFieldDefinition = (function () {
         initialFormat.color = rgbaObjToStr(tag.color);
       }
       if (tag.hasFont) {
-        initialFormat.face = convertFontFamily(tag.font);
+        var font = FontDefinition.getFontByUniqueName(tag.font);
+        initialFormat.font = font;
+        initialFormat.face = font._fontName;
+        initialFormat.bold = font.symbol.bold;
+        initialFormat.italic = font.symbol.italic;
+        initialFormat.str = makeFormatString(initialFormat);
       }
-      initialFormat.str = makeFormatString(initialFormat);
+
+      this._embedFonts = !!tag.useOutlines;
 
       switch (tag.align) {
         case 1: initialFormat.align = 'right'; break;
@@ -508,8 +548,6 @@ var TextFieldDefinition = (function () {
       this._wordWrap = !!tag.wordWrap;
       this._border = !!tag.border;
       // TODO: Find out how the IDE causes textfields to have a background
-
-      updateFontMetrics(initialFormat);
 
       if (tag.initialText) {
         if (tag.html) {
@@ -537,17 +575,16 @@ var TextFieldDefinition = (function () {
 
     draw: function (ctx, ratio, colorTransform) {
       this.ensureDimensions();
-      var bounds = this._bounds;
-      var x = bounds.xMin / 20;
-      var y = bounds.yMin / 20;
-      var width = bounds.xMax / 20 - x;
-      var height = bounds.yMax / 20 - y;
+      var bounds = this._bbox;
+      var width = bounds.xMax / 20;
+      var height = bounds.yMax / 20;
       if (width <= 0 || height <= 0) {
         return;
       }
+
       ctx.save();
       ctx.beginPath();
-      ctx.rect(x, y, width, height);
+      ctx.rect(0, 0, width + 1, height + 1);
       ctx.clip();
       if (this._background) {
         colorTransform.setFillStyle(ctx, this._backgroundColorStr);
@@ -557,23 +594,30 @@ var TextFieldDefinition = (function () {
         colorTransform.setStrokeStyle(ctx, this._borderColorStr);
         ctx.lineCap = "square";
         ctx.lineWidth = 1;
-        ctx.strokeRect(x + 0.5, y + 0.5, (width - 1)|0, (height - 1)|0);
+        ctx.strokeRect(0.5, 0.5, width|0, height|0);
       }
       ctx.closePath();
-      var runs = this._content.textruns;
+
+      ctx.translate(2, 2);
       ctx.save();
       colorTransform.setAlpha(ctx);
+      var runs = this._content.textruns;
+      var offsetY = this._lines[this._scrollV - 1].y;
       for (var i = 0; i < runs.length; i++) {
         var run = runs[i];
         if (run.type === 'f') {
           ctx.restore();
           ctx.font = run.format.str;
+          // TODO: only apply color and alpha if it actually changed
           colorTransform.setFillStyle(ctx, run.format.color);
           ctx.save();
           colorTransform.setAlpha(ctx);
         } else {
           assert(run.type === 't', 'Invalid run type: ' + run.type);
-          ctx.fillText(run.text, run.x + this._drawingOffsetH, run.y);
+          if (run.y < offsetY) {
+            continue;
+          }
+          ctx.fillText(run.text, run.x - this._drawingOffsetH, run.y - offsetY);
         }
       }
       ctx.restore();
@@ -582,32 +626,51 @@ var TextFieldDefinition = (function () {
 
     invalidateDimensions: function() {
       this._invalidate();
+      this._invalidateBounds();
       this._dimensionsValid = false;
+    },
+
+    _getRegion: function getRegion(targetCoordSpace) {
+      this.ensureDimensions();
+      return this._getTransformedRect(this._getContentBounds(), targetCoordSpace);
     },
 
     ensureDimensions: function() {
       if (this._dimensionsValid) {
         return;
       }
-      var bounds = this._bounds;
+      var bounds = this._bbox;
       var initialFormat = this._defaultTextFormat;
       var firstRun = {type: 'f', format: initialFormat};
-      var width = Math.max((bounds.xMax - bounds.xMin) / 20 - 4, 1);
-      var state = {ctx: measureCtx, y: 0, x: 0, w: width, line: [],
-                   lineHeight: 0, maxLineWidth: 0, formats: [initialFormat],
-                   currentFormat: initialFormat, runs: [firstRun],
-                   multiline: this._multiline, wordWrap: this._wordWrap,
-                   combinedAlign: null, textColor: this._textColor};
+      var width = Math.max(bounds.xMax / 20 - 4, 1);
+      var height = Math.max(bounds.yMax / 20 - 4, 1);
+      var state = {ctx: measureCtx, w: width, h: height, maxLineWidth: 0,
+                   formats: [initialFormat], currentFormat: initialFormat,
+                   line: new TextLine(0), lines: [], runs: [firstRun],
+                   wordWrap: this._wordWrap, combinedAlign: null,
+                   textColor: this._textColor, embedFonts: this._embedFonts};
       collectRuns(this._content.tree, state);
-      if (!state.multiline) {
-        finishLine(state);
-      }
-      this._textWidth = state.maxLineWidth;
-      this._textHeight = state.y;
+      this._textWidth = state.maxLineWidth|0;
+      this._textHeight = state.line.y|0;
+      this._lines = state.lines;
       this._content.textruns = state.runs;
-      this._drawingOffsetH = 0;
+      this._scrollV = 1;
+      this._maxScrollV = 1;
+      this._bottomScrollV = 1;
       var autoSize = this._autoSize;
-      if (autoSize !== 'none') {
+      if (autoSize === 'none') {
+        var maxVisibleY = (bounds.yMax - 80) / 20;
+        if (this._textHeight > maxVisibleY) {
+          for (var i = 0; i < state.lines.length; i++) {
+            var line = state.lines[i];
+            if (line.y + line.height > maxVisibleY) {
+              this._maxScrollV = i + 1;
+              this._bottomScrollV = i === 0 ? 1 : i;
+              break;
+            }
+          }
+        }
+      } else {
         var targetWidth = this._textWidth;
         var align = state.combinedAlign;
         var diffX = 0;
@@ -616,37 +679,32 @@ var TextFieldDefinition = (function () {
             case 'left':
               break;
             case 'center':
-              diffX = (targetWidth - width) / 2;
+              diffX = (width - targetWidth) >> 1;
               break;
             case 'right':
-              diffX = targetWidth - width;
+              diffX = width - targetWidth;
           }
           // Note: the drawing offset is not in Twips!
           if (align === 'left') {
-            this._drawingOffsetH = -diffX;
+            this._drawingOffsetH = 0;
+          } else {
+            var offset;
+            switch (autoSize) {
+              case 'left': offset = width - targetWidth; break;
+              case 'center': offset = diffX << 1; break;
+              case 'right': offset = diffX; break;
+            }
+            if (align === 'center') {
+              offset >>= 1;
+            }
+            this._drawingOffsetH = offset;
           }
-          else if (align === 'center') {
-            if (autoSize === 'left') {
-              this._drawingOffsetH = (targetWidth - width) / 2;
-            }
-            else if (autoSize === 'right') {
-              this._drawingOffsetH = -diffX/2;
-            }
-          }
-          else {
-            if (autoSize === 'left') {
-              this._drawingOffsetH = targetWidth - width;
-            }
-            else if (autoSize === 'center') {
-              this._drawingOffsetH = diffX;
-            }
-          }
-          diffX = (diffX * 20)|0;
-          bounds.xMin -= diffX;
-          this._x -= diffX;
-          bounds.xMax = bounds.xMin + (targetWidth*20|0) + 80;
+          this._invalidateTransform();
+          this._currentTransform.tx += diffX*20|0;
+          bounds.xMax = (targetWidth*20|0) + 80;
         }
-        bounds.yMax = bounds.yMin + (this._textHeight * 20|0) + 120;
+        bounds.yMax = (this._textHeight*20|0) + 80;
+        this._invalidateBounds();
       }
       this._dimensionsValid = true;
     },
@@ -658,10 +716,15 @@ var TextFieldDefinition = (function () {
       if (this._content && this._content.text === val) {
         return;
       }
-      this._content = { text: val, tree: createTrunk(this._defaultTextFormat),
-                        htmlText: val
+      //TODO: properly parse the text instead of creating heaps of garbage
+      var lines = val.split('\r\n').join('\n').split('\r').join('\n').
+                      split('\n');
+      this._content = { tree: createTrunk(this._defaultTextFormat),
+                        text: val, htmlText: val
                       };
-      this._content.tree.children[0].children[0] = {type: 'text', text: val };
+      this._content.tree.children[0].children[0] = {
+        type: 'plain-text', lines: lines
+      };
       this.invalidateDimensions();
     },
 
@@ -672,7 +735,7 @@ var TextFieldDefinition = (function () {
       if (this._htmlText === val) {
         return;
       }
-      this._content = parseHtml(val, this._defaultTextFormat);
+      this._content = parseHtml(val, this._defaultTextFormat, this._multiline);
       this.invalidateDimensions();
     },
 
@@ -692,31 +755,45 @@ var TextFieldDefinition = (function () {
       this.invalidateDimensions();
     },
 
+    get x() {
+      this.ensureDimensions();
+      return this._currentTransform.tx;
+    },
+    set x(val) {
+      if (val === this._currentTransform.tx) {
+        return;
+      }
+
+      this._invalidate();
+      this._invalidateBounds();
+      this._invalidateTransform();
+
+      this._currentTransform.tx = val;
+    },
+
     get width() { // (void) -> Number
       this.ensureDimensions();
-      return this._bounds.xMax - this._bounds.xMin;
+      return this._bbox.xMax;
     },
     set width(value) { // (Number) -> Number
       if (value < 0) {
         return;
       }
-      this._bounds.xMax = this._bounds.xMin + value;
+      this._bbox.xMax = value;
       // TODO: optimization potential: don't invalidate if !wordWrap and no \n
-      if (this._multiline || this._wordWrap) {
-        this.invalidateDimensions();
-      }
+      this.invalidateDimensions();
     },
 
     get height() { // (void) -> Number
       this.ensureDimensions();
-      return this._bounds.yMax - this._bounds.yMin;
+      return this._bbox.yMax;
     },
     set height(value) { // (Number) -> Number
       if (value < 0) {
         return;
       }
-      this._bounds.yMax = this._bounds.yMin + value;
-      this.invalidateDimensions();
+      this._bbox.yMax = value;
+      this._invalidate();
     }
   };
 
@@ -737,7 +814,9 @@ var TextFieldDefinition = (function () {
             return this._autoSize;
           },
           set: function autoSize(value) { // (value:String) -> void
-            somewhatImplemented("TextField.autoSize");
+            if (this._autoSize === value) {
+              return;
+            }
             this._autoSize = value;
             this.invalidateDimensions();
           }
@@ -747,8 +826,11 @@ var TextFieldDefinition = (function () {
             return this._multiline;
           },
           set: function multiline(value) { // (value:Boolean) -> void
-            somewhatImplemented("TextField.multiline");
+            if (this._multiline === value) {
+              return;
+            }
             this._multiline = value;
+            this.invalidateDimensions();
           }
         },
         textColor: {
@@ -756,6 +838,9 @@ var TextFieldDefinition = (function () {
             return this._textColor;
           },
           set: function textColor(value) { // (value:uint) -> void
+            if (this._textColor === value) {
+              return;
+            }
             this._textColor = value;
             this._invalidate();
           }
@@ -774,7 +859,9 @@ var TextFieldDefinition = (function () {
             return this._wordWrap;
           },
           set: function wordWrap(value) { // (value:Boolean) -> void
-            somewhatImplemented("TextField.wordWrap");
+            if (this._wordWrap === value) {
+              return;
+            }
             this._wordWrap = value;
             this.invalidateDimensions();
           }
@@ -791,12 +878,84 @@ var TextFieldDefinition = (function () {
             return this._textWidth;
           }
         },
+        length: {
+          get: function length() { // (void) -> uint
+            return this._content.text.length;
+          }
+        },
+        numLines: {
+          get: function numLines() { // (void) -> uint
+            this.ensureDimensions();
+            return this._lines.length;
+          }
+        },
+        getLineMetrics: function (lineIndex) { // (lineIndex:int) -> TextLineMetrics
+          this.ensureDimensions();
+          if (lineIndex < 0 || lineIndex >= this._lines.length) {
+            throwError('RangeError', Errors.ParamRangeError);
+          }
+          var line = this._lines[lineIndex];
+          var format = line.largestFormat;
+          var metrics = format.font._metrics;
+          var size = format.size;
+          // Rounding for metrics seems to be screwy. A descent of 3.5 gets
+          // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
+          // For now, round up for things slightly above .5.
+          var ascent = metrics.ascent * size + 0.49999 | 0;
+          var descent = metrics.descent * size + 0.49999 | 0;
+          var leading = metrics.leading * size + 0.49999 + line.leading | 0;
+          // TODO: check if metrics values can be floats for embedded fonts
+          return new flash.text.TextLineMetrics(line.x + 2, line.width,
+                                                line.height,
+                                                ascent, descent, leading);
+        },
+        scrollV: {
+          get: function scrollV() {
+            return this._scrollV;
+          },
+          set: function scrollV(value) {
+            this.ensureDimensions();
+            value = Math.max(1, Math.min(this._maxScrollV, value));
+            this._scrollV = value;
+          }
+        },
+        bottomScrollV: {
+          get: function bottomScrollV() {
+            this.ensureDimensions();
+            if (this._scrollV === 1) {
+              return this._bottomScrollV;
+            }
+            var maxVisibleY = (this._bbox.yMax - 80) / 20;
+            var offsetY = this._lines[this._scrollV - 1].y;
+            for (var i = this._bottomScrollV; i < this._lines.length; i++) {
+              var line = this._lines[i];
+              if (line.y + line.height + offsetY > maxVisibleY) {
+                return i + 1;
+              }
+            }
+          }
+        },
+        maxScrollV: {
+          get: function maxScrollV() { // (void) -> Number
+            this.ensureDimensions();
+            return this._maxScrollV;
+          }
+        },
+        maxScrollH: {
+          get: function maxScrollH() { // (void) -> Number
+            this.ensureDimensions();
+            // For whatever reason, maxScrollH is always 8px more than expected.
+            return Math.max(this._textWidth - this._bbox.xMax/20 + 4, 0);
+          }
+        },
         background: {
           get: function background() { // (void) -> Boolean
             return this._background;
           },
           set: function background(value) { // (value:Boolean) -> void
-            somewhatImplemented("TextField.background");
+            if (this._background === value) {
+              return;
+            }
             this._background = value;
             this._invalidate();
           }
@@ -806,6 +965,9 @@ var TextFieldDefinition = (function () {
             return this._backgroundColor;
           },
           set: function backgroundColor(value) { // (value:uint) -> void
+            if (this._backgroundColor === value) {
+              return;
+            }
             this._backgroundColor = value;
             this._backgroundColorStr = rgbIntAlphaToStr(value, 1);
             if (this._background) {
@@ -818,6 +980,9 @@ var TextFieldDefinition = (function () {
             return this._border;
           },
           set: function border(value) { // (value:Boolean) -> void
+            if (this._border === value) {
+              return;
+            }
             this._border = value;
             this._invalidate();
           }
@@ -827,6 +992,9 @@ var TextFieldDefinition = (function () {
             return this._borderColor;
           },
           set: function borderColor(value) { // (value:uint) -> void
+            if (this._borderColor === value) {
+              return;
+            }
             this._borderColor = value;
             this._borderColorStr = rgbIntAlphaToStr(value, 1);
             if (this._border) {
@@ -861,15 +1029,13 @@ var TextFieldDefinition = (function () {
             this._condenseWhite = value;
           }
         },
-        numLines: {
-          get: function numLines() { // (void) -> uint
-            somewhatImplemented("TextField.numLines");
-            return 1;
-          }
-        },
-        length: {
-          get: function length() { // (void) -> uint
-            return this._content.text.length;
+        sharpness: {
+          get: function sharpness() { // (void) -> Number
+            return this._sharpness;
+          },
+          set: function sharpness(value) { // (value:Number) -> void
+            somewhatImplemented("TextField.sharpness");
+            this._sharpness = value;
           }
         }
       }

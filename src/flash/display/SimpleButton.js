@@ -87,19 +87,23 @@ var SimpleButtonDefinition = (function () {
         case 'down': state = this._downState; break;
       }
 
-      if (this._children[0]) {
-        if (this._children[0] === state) {
+      var currentChild = this._children[0];
+      if (currentChild) {
+        if (currentChild === state) {
           return;
         }
 
         if (this._stage) {
-          this._stage._removeFromStage(this._children[0]);
+          this._stage._removeFromStage(currentChild);
         }
+
+        currentChild._invalidateTransform();
       }
 
       this._children[0] = state;
 
       state._parent = this;
+      state._invalidateTransform();
 
       if (this._stage) {
         this._stage._addToStage(state);
@@ -115,32 +119,13 @@ var SimpleButtonDefinition = (function () {
       }
     },
 
-    _getRegion: function getRegion() {
+    _getRegion: function getRegion(targetCoordSpace) {
       if (!this._hitTestState) {
         return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
       }
 
-      var b = this._hitTestState.getBounds();
-
-      if (!b || (b.xMax - b.xMin === 0 && b.yMax - b.yMin === 0)) {
-        return b;
-      }
-
-      var p1 = { x: b.xMin, y: b.yMin };
-      this._applyCurrentTransform(p1);
-      var p2 = { x: b.xMax, y: b.yMin };
-      this._applyCurrentTransform(p2);
-      var p3 = { x: b.xMax, y: b.yMax };
-      this._applyCurrentTransform(p3);
-      var p4 = { x: b.xMin, y: b.yMax };
-      this._applyCurrentTransform(p4);
-
-      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
-      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
-      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
-      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
-
-      return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax };
+      var b = this._hitTestState.getBounds(null);
+      return this._getTransformedRect(b, targetCoordSpace);
     },
 
     _getAS2Object: function () {
