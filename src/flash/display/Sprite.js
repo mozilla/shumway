@@ -159,9 +159,11 @@ var SpriteDefinition = (function () {
             this._initAvm1Bindings(instance, name, displayListItem.events);
             instance._dispatchEvent("init");
             instance._dispatchEvent("construct");
+            instance._needLoadEvent = true;
+          } else {
+            instance._dispatchEvent("load");
           }
 
-          instance._dispatchEvent("load");
           instance._dispatchEvent("added");
           if (this._stage) {
             this._stage._addToStage(instance);
@@ -174,6 +176,21 @@ var SpriteDefinition = (function () {
       }
 
       this._sparse = false;
+    },
+    _postConstructChildren: function () {
+      var loader = this._loader;
+      if (!loader || loader._isAvm2Enabled) {
+        return;
+      }
+
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        var instance = children[i];
+        if (instance._needLoadEvent) {
+          delete instance._needLoadEvent;
+          instance._dispatchEvent("load");
+        }
+      }
     },
 
     _duplicate: function (name, depth, initObject) {
@@ -193,10 +210,17 @@ var SpriteDefinition = (function () {
       props.depth = depth;
 
       var instance = symbolClass.createAsSymbol(props);
-      if (name)
-        parent[Multiname.getPublicQualifiedName(name)] = instance;
+      if (name && loader && !loader._isAvm2Enabled &&
+          !parent.asHasProperty(undefined, name, 0, false)) {
+        parent.asSetPublicProperty(name, instance);
+      }
 
       symbolClass.instanceConstructor.call(instance);
+
+      // TODO Insert child at specified depth
+      instance._index = children.length;
+      children.push(instance);
+
 
       if (!loader._isAvm2Enabled) {
         parent._initAvm1Bindings(instance, name, symbolInfo && symbolInfo.events);
@@ -209,8 +233,6 @@ var SpriteDefinition = (function () {
       if (this._stage) {
         instance._invalidate();
       }
-
-      children.push(instance);
 
       return instance;
     },
@@ -245,7 +267,7 @@ var SpriteDefinition = (function () {
               targetPath.shift();
             }
           } else {
-            clip = instance._getAS2Object();
+            clip = this._getAS2Object();
           }
           while (targetPath.length > 0) {
             var childName = targetPath.shift();
@@ -254,13 +276,14 @@ var SpriteDefinition = (function () {
               throw new Error('Cannot find ' + childName + ' variable');
             }
           }
-        } else
-          clip = instance._getAS2Object();
+        } else {
+          clip = this._getAS2Object();
+        }
         if (!clip.asHasProperty(undefined, variableName, 0)) {
           clip.asSetPublicProperty(variableName, instance.text);
         }
         instance._addEventListener('advanceFrame', function() {
-          instance.text = clip.asGetPublicProperty(variableName);
+          instance.text = '' + clip.asGetPublicProperty(variableName);
         });
       }
 
@@ -282,14 +305,18 @@ var SpriteDefinition = (function () {
             if (avm2EventName === 'enterFrame') {
               avm2EventName = 'frameConstructed';
             }
-            instance._addEventListener(avm2EventName, fn, false);
-            eventsBound.push({name: avm2EventName, fn: fn});
+            var avm2EventTarget = instance;
+            if (avm2EventName === 'mouseDown' || avm2EventName === 'mouseUp' || avm2EventName === 'mouseMove') {
+              avm2EventTarget = this._stage;
+            }
+            avm2EventTarget._addEventListener(avm2EventName, fn, false);
+            eventsBound.push({name: avm2EventName, fn: fn, target: avm2EventTarget});
           }
         }
         if (eventsBound.length > 0) {
           instance._addEventListener('removed', function (eventsBound) {
             for (var i = 0; i < eventsBound.length; i++) {
-              instance._removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
+              eventsBound[i].target._removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
             }
           }.bind(instance, eventsBound), false);
         }
