@@ -599,6 +599,11 @@ var TextFieldDefinition = (function () {
       }
       ctx.closePath();
 
+      if (this._lines.length === 0) {
+        ctx.restore();
+        return;
+      }
+
       ctx.translate(2, 2);
       ctx.save();
       colorTransform.setAlpha(ctx);
