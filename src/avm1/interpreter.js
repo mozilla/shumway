@@ -146,6 +146,7 @@ function as2ToBoolean(value) {
     return value !== 0 && !isNaN(value);
   case 'string':
     return value.length !== 0;
+  case 'movieclip':
   case 'object':
     return true;
   }
@@ -547,6 +548,18 @@ function interpretActions(actionsData, scopeContainer,
 
     return null;
   }
+  function getThis() {
+    var _this = scope.asGetPublicProperty('this');
+    if (_this) {
+      return _this;
+    }
+    for (var p = scopeContainer; p; p = p.next) {
+      resolvedName = as2ResolveProperty(p.scope, 'this');
+      if (resolvedName !== null) {
+        return p.scope.asGetPublicProperty(resolvedName);
+      }
+    }
+  }
   function getVariable(variableName) {
     // fast check if variable in the current scope
     if (scope.asHasProperty(undefined, variableName, 0)) {
@@ -557,11 +570,15 @@ function interpretActions(actionsData, scopeContainer,
     if (target) {
       return target.obj.asGetPublicProperty(target.name);
     }
+    var resolvedName, _this = getThis();
     for (var p = scopeContainer; p; p = p.next) {
-      var resolvedName = as2ResolveProperty(p.scope, variableName);
+      resolvedName = as2ResolveProperty(p.scope, variableName);
       if (resolvedName !== null) {
         return p.scope.asGetPublicProperty(resolvedName);
       }
+    }
+    if(_this && (resolvedName = as2ResolveProperty(_this, variableName))) {
+      return _this.asGetPublicProperty(resolvedName);
     }
     // trying movie clip children (if object is a MovieClip)
     var mc = isAS2MovieClip(defaultTarget) &&
@@ -583,14 +600,18 @@ function interpretActions(actionsData, scopeContainer,
       target.obj.asSetPublicProperty(target.name, value);
       return;
     }
+    var resolvedName, _this = getThis();
+    if(_this && (resolvedName = as2ResolveProperty(_this, variableName))) {
+      return _this.asSetPublicProperty(resolvedName, value);
+    }
+
     for (var p = scopeContainer; p; p = p.next) {
-      var resolvedName = as2ResolveProperty(p.scope, variableName);
+      resolvedName = as2ResolveProperty(p.scope, variableName);
       if (resolvedName !== null) {
-        return p.scope.asSetPublicProperty(variableName, value);
+        return p.scope.asSetPublicProperty(resolvedName, value);
       }
     }
-    var _this = scope.asGetPublicProperty('this') || getVariable('this');
-    _this.asSetPublicProperty(variableName, value);
+    (_this || scope).asSetPublicProperty(variableName, value);
   }
   function getFunction(functionName) {
     var fn = getVariable(functionName);
@@ -964,7 +985,7 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x25: // ActionRemoveSprite
         target = stack.pop();
-        _global.unloadMovie(target);
+        _global.removeMovieClip(target);
         break;
       case 0x27: // ActionStartDrag
         target = stack.pop();
