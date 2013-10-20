@@ -426,9 +426,8 @@ function interpretActions(actionsData, scopeContainer,
       newScope.asSetPublicProperty('__class', ownerClass);
       var newScopeContainer = scopeContainer.create(newScope);
       var i;
-
       for (i = 0; i < arguments.length || i < parametersNames.length; i++) {
-        newScope[parametersNames[i]] = arguments[i];
+        newScope.asSetPublicProperty(parametersNames[i], arguments[i]);
       }
       var registers = [];
       if (registersAllocation) {
