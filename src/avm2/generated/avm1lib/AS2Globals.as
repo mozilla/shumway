@@ -247,9 +247,8 @@ package avm1lib {
       return 0 | (Math.random() * (0 | value));
     }
     public function removeMovieClip(target) {
-      var nativeTarget = AS2Utils.resolveTarget();
-      var nativeTarget2 = AS2Utils.resolveTarget(target);
-      nativeTarget.removeChild(nativeTarget2);
+      var nativeTarget = AS2Utils.resolveTarget(target);
+      nativeTarget.removeMovieClip();
     }
     public function setInterval() {
       var setInterval = flash.utils.setInterval;
