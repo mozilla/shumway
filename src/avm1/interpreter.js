@@ -605,7 +605,7 @@ function interpretActions(actionsData, scopeContainer,
       return _this.asSetPublicProperty(resolvedName, value);
     }
 
-    for (var p = scopeContainer; p; p = p.next) {
+    for (var p = scopeContainer; p.next; p = p.next) { // excluding globals
       resolvedName = as2ResolveProperty(p.scope, variableName);
       if (resolvedName !== null) {
         return p.scope.asSetPublicProperty(resolvedName, value);
