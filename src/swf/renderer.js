@@ -217,12 +217,14 @@ RenderVisitor.prototype = {
   _enterClip: function(child) {
     console.log("clip enter:", child._clipDepth)
     var m = child._parent._getConcatenatedTransform(true);
+    var tx = m.tx / 20;
+    var ty = m.ty / 20;
 
     var mask = CanvasCache.getCanvas(this.ctx.canvas);
-    mask.ctx.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+    mask.ctx.setTransform(m.a, m.b, m.c, m.d, tx, ty);
 
     var maskee = CanvasCache.getCanvas(this.ctx.canvas);
-    maskee.ctx.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+    maskee.ctx.setTransform(m.a, m.b, m.c, m.d, tx, ty);
 
     var clipDepthInfo = {
       ctx: this.ctx,
