@@ -197,7 +197,7 @@ RenderVisitor.prototype = {
       // removing existing clippings
       while (this.clipDepth.length > 0) {
         var clipDepthInfo = this.clipDepth.pop();
-        this._exitClip(clipDepthInfo);
+        this.clipEnd(clipDepthInfo);
         this.ctx = clipDepthInfo.ctx;
       }
       this.clipDepth = null;
@@ -213,43 +213,6 @@ RenderVisitor.prototype = {
       this.ctx.restore();
       this.invalidPath = null;
     }
-  },
-  _enterClip: function(child) {
-    var m = child._parent._getConcatenatedTransform(true);
-    var tx = m.tx / 20;
-    var ty = m.ty / 20;
-
-    var mask = CanvasCache.getCanvas(this.ctx.canvas);
-    mask.ctx.setTransform(m.a, m.b, m.c, m.d, tx, ty);
-
-    var maskee = CanvasCache.getCanvas(this.ctx.canvas);
-    maskee.ctx.setTransform(m.a, m.b, m.c, m.d, tx, ty);
-
-    var clipDepthInfo = {
-      ctx: this.ctx,
-      mask: mask,
-      maskee: maskee,
-      clipDepth: child._clipDepth
-    };
-
-    return clipDepthInfo;
-  },
-  _exitClip: function(clipDepthInfo) {
-    var ctx = clipDepthInfo.ctx;
-    var mask = clipDepthInfo.mask;
-    var maskee = clipDepthInfo.maskee;
-
-    maskee.ctx.globalCompositeOperation = 'destination-in';
-    maskee.ctx.setTransform(1, 0, 0, 1, 0, 0);
-    maskee.ctx.drawImage(mask.canvas, 0, 0);
-
-    ctx.save();
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.drawImage(maskee.canvas, 0, 0);
-    ctx.restore();
-
-    CanvasCache.releaseCanvas(mask);
-    CanvasCache.releaseCanvas(maskee);
   },
   visit: function (child, isContainer, visitContainer, context) {
     var ctx = this.ctx;
@@ -269,13 +232,13 @@ RenderVisitor.prototype = {
           child._depth > this.clipDepth[0].clipDepth)
       {
         var clipDepthInfo = this.clipDepth.shift();
-        this._exitClip(clipDepthInfo);
+        this.clipEnd(clipDepthInfo);
         ctx = this.ctx = clipDepthInfo.ctx;
       }
       if (child._clipDepth) {
         context.isClippingMask = clippingMask = true;
         // saving clipping until certain character depth
-        var clipDepthInfo = this._enterClip(child);
+        var clipDepthInfo = this.clipStart(child);
         if (!this.clipDepth) {
           this.clipDepth = [clipDepthInfo];
         } else {
@@ -367,6 +330,44 @@ RenderVisitor.prototype = {
     }
     context.isClippingMask = parentHasClippingMask;
     context.colorTransform = parentColorTransform;
+  },
+
+  clipStart: function(child) {
+    var m = child._parent._getConcatenatedTransform(true);
+    var tx = m.tx / 20;
+    var ty = m.ty / 20;
+
+    var mask = CanvasCache.getCanvas(this.ctx.canvas);
+    mask.ctx.setTransform(m.a, m.b, m.c, m.d, tx, ty);
+
+    var maskee = CanvasCache.getCanvas(this.ctx.canvas);
+    maskee.ctx.setTransform(m.a, m.b, m.c, m.d, tx, ty);
+
+    var clipDepthInfo = {
+      ctx: this.ctx,
+      mask: mask,
+      maskee: maskee,
+      clipDepth: child._clipDepth
+    };
+
+    return clipDepthInfo;
+  },
+  clipEnd: function(clipDepthInfo) {
+    var ctx = clipDepthInfo.ctx;
+    var mask = clipDepthInfo.mask;
+    var maskee = clipDepthInfo.maskee;
+
+    maskee.ctx.globalCompositeOperation = 'destination-in';
+    maskee.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    maskee.ctx.drawImage(mask.canvas, 0, 0);
+
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(maskee.canvas, 0, 0);
+    ctx.restore();
+
+    CanvasCache.releaseCanvas(mask);
+    CanvasCache.releaseCanvas(maskee);
   }
 };
 
