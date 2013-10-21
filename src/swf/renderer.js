@@ -197,7 +197,9 @@ RenderVisitor.prototype = {
       // removing existing clippings
       while (this.clipDepth.length > 0) {
         var clipDepthInfo = this.clipDepth.pop();
+        // blend mask/maskee canvases and draw result into original
         this.clipEnd(clipDepthInfo);
+        // restore original context
         this.ctx = clipDepthInfo.ctx;
       }
       this.clipDepth = null;
@@ -227,28 +229,35 @@ RenderVisitor.prototype = {
     }
 
     if (!clippingMask) {
-      // removing clipping if the required character depth is achieved
+      // remove clipping if the required character depth is achieved
       while (this.clipDepth && this.clipDepth.length > 0 &&
           child._depth > this.clipDepth[0].clipDepth)
       {
         var clipDepthInfo = this.clipDepth.shift();
+        // blend mask/maskee canvases and draw result into original
         this.clipEnd(clipDepthInfo);
+        // restore original context
         ctx = this.ctx = clipDepthInfo.ctx;
       }
       if (child._clipDepth) {
+        // child is a clipping mask
         context.isClippingMask = clippingMask = true;
-        // saving clipping until certain character depth
+        // create temporary mask/maskee canvases
         var clipDepthInfo = this.clipStart(child);
+        // save clipping until certain character depth
         if (!this.clipDepth) {
           this.clipDepth = [clipDepthInfo];
         } else {
           this.clipDepth.unshift(clipDepthInfo);
         }
+        // use mask canvas
         ctx = this.ctx = clipDepthInfo.mask.ctx;
       } else {
+        // child is not a clipping mask. check if it is masked by one
         if (this.clipDepth && this.clipDepth.length > 0 &&
             child._depth <= this.clipDepth[0].clipDepth)
         {
+          // use maskee canvas
           ctx = this.ctx = this.clipDepth[0].maskee.ctx;
         }
       }
