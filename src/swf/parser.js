@@ -240,9 +240,9 @@ BodyParser.prototype = {
       swf.bytesTotal = progressInfo.bytesTotal;
     }
 
-    var readStartTime = Date.now();
+    var readStartTime = performance.now();
     readTags(swf, stream, swfVersion, options.onprogress);
-    swf.parseTime += Date.now() - readStartTime;
+    swf.parseTime += performance.now() - readStartTime;
 
     var read = stream.pos;
     buffer.removeHead(read);

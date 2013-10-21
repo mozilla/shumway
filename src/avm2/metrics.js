@@ -17,6 +17,9 @@
  */
 
 (function (exports) {
+  if (!performance) {
+    performance = {now: Date.now};
+  }
   var Timer = (function () {
     var base = new timer(null, "Total"), top = base;
     var flat = new timer(null, "Flat"), flatStack = [];
@@ -31,7 +34,7 @@
     }
     timer.flat = flat;
     function getTicks() {
-      return new Date().getTime();
+      return performance.now();
     }
     timer.prototype.start = function() {
       this.begin = getTicks();

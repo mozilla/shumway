@@ -29,6 +29,13 @@ if (!inBrowser) {
   };
 }
 
+if (!this.performance) {
+  this.performance = {};
+}
+if (!this.performance.now) {
+  this.performance.now = Date.now;
+}
+
 function backtrace() {
   try {
     throw new Error();
@@ -238,12 +245,12 @@ function isPowerOfTwo(x) {
 }
 
 function time(fn, count) {
-  var start = new Date();
+  var start = performance.now();
   for (var i = 0; i < count; i++) {
     fn();
   }
-  var time = (new Date() - start) / count;
-  console.info("Took: " + time + "ms.");
+  var time = (performance.now() - start) / count;
+  console.info("Took: " + time.toFixed(2) + "ms.");
   return time;
 }
 

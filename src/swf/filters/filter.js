@@ -356,12 +356,12 @@ var WebGLFilters = (function () {
     gl.useProgram(this.blurVProgram);
     gl.setUniform2f(this.blurVProgram, "u_textureSize", width, height);
 
-    this.startTime = new Date();
+    this.startTime = performance.now();
   }
 
   constructor.prototype = {
     getElapsedTime: function getElapsedTime() {
-      return new Date() - this.startTime;
+      return performance.now() - this.startTime;
     },
     blurFilter: function blurFilterGL(buffer, w, h, blurX, blurY) {
       var gl = this.gl;
