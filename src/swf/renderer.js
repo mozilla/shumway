@@ -267,8 +267,10 @@ RenderVisitor.prototype = {
     }
 
     if (!clippingMask) {
-      // removing clipping if the required character depth is achived
-      while (this.clipDepth && this.clipDepth.length > 0 && child._depth > this.clipDepth[0].clipDepth) {
+      // removing clipping if the required character depth is achieved
+      while (this.clipDepth && this.clipDepth.length > 0 &&
+          child._depth > this.clipDepth[0].clipDepth)
+      {
         var clipDepthInfo = this.clipDepth.shift();
         this._exitClip(clipDepthInfo);
         ctx = this.ctx;
@@ -278,13 +280,15 @@ RenderVisitor.prototype = {
         // saving clipping until certain character depth
         var clipDepthInfo = this._enterClip(child);
         if (!this.clipDepth) {
-          this.clipDepth = [ clipDepthInfo ];
+          this.clipDepth = [clipDepthInfo];
         } else {
           this.clipDepth.unshift(clipDepthInfo);
         }
         ctx = this.ctx;
       } else {
-        if (this.clipDepth && this.clipDepth.length > 0 && child._depth <= this.clipDepth[0].clipDepth) {
+        if (this.clipDepth && this.clipDepth.length > 0 &&
+            child._depth <= this.clipDepth[0].clipDepth)
+        {
           ctx = this.ctx = this.clipDepth[0].maskee.ctx;
         }
       }
