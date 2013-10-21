@@ -215,7 +215,6 @@ RenderVisitor.prototype = {
     }
   },
   _enterClip: function(child) {
-    console.log("clip enter:", child._clipDepth)
     var m = child._parent._getConcatenatedTransform(true);
     var tx = m.tx / 20;
     var ty = m.ty / 20;
@@ -236,7 +235,6 @@ RenderVisitor.prototype = {
     return clipDepthInfo;
   },
   _exitClip: function(clipDepthInfo) {
-    console.log("clip exit:", clipDepthInfo.clipDepth)
     var ctx = clipDepthInfo.ctx;
     var mask = clipDepthInfo.mask;
     var maskee = clipDepthInfo.maskee;
