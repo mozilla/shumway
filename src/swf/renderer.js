@@ -196,8 +196,9 @@ RenderVisitor.prototype = {
     if (this.clipDepth) {
       // removing existing clippings
       while (this.clipDepth.length > 0) {
-        this._exitClip(this.clipDepth.pop());
-        this.ctx.restore();
+        var clipDepthInfo = this.clipDepth.pop();
+        this._exitClip(clipDepthInfo);
+        this.ctx = clipDepthInfo.ctx;
       }
       this.clipDepth = null;
     }
@@ -230,8 +231,6 @@ RenderVisitor.prototype = {
       clipDepth: child._clipDepth
     };
 
-    this.ctx = mask.ctx;
-
     return clipDepthInfo;
   },
   _exitClip: function(clipDepthInfo) {
@@ -251,8 +250,6 @@ RenderVisitor.prototype = {
 
     CanvasCache.releaseCanvas(mask);
     CanvasCache.releaseCanvas(maskee);
-
-    this.ctx = ctx;
   },
   visit: function (child, isContainer, visitContainer, context) {
     var ctx = this.ctx;
@@ -273,7 +270,7 @@ RenderVisitor.prototype = {
       {
         var clipDepthInfo = this.clipDepth.shift();
         this._exitClip(clipDepthInfo);
-        ctx = this.ctx;
+        ctx = this.ctx = clipDepthInfo.ctx;
       }
       if (child._clipDepth) {
         context.isClippingMask = clippingMask = true;
@@ -284,7 +281,7 @@ RenderVisitor.prototype = {
         } else {
           this.clipDepth.unshift(clipDepthInfo);
         }
-        ctx = this.ctx;
+        ctx = this.ctx = clipDepthInfo.mask.ctx;
       } else {
         if (this.clipDepth && this.clipDepth.length > 0 &&
             child._depth <= this.clipDepth[0].clipDepth)
