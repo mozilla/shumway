@@ -196,7 +196,7 @@ RenderVisitor.prototype = {
     if (this.clipDepth) {
       // removing existing clippings
       while (this.clipDepth.length > 0) {
-        this.clipDepth.pop();
+        this._exitClip(this.clipDepth.pop());
         this.ctx.restore();
       }
       this.clipDepth = null;
@@ -213,32 +213,80 @@ RenderVisitor.prototype = {
       this.invalidPath = null;
     }
   },
+  _enterClip: function(child) {
+    console.log("clip enter:", child._clipDepth)
+    var m = child._parent._getConcatenatedTransform(true);
+
+    var mask = CanvasCache.getCanvas(this.ctx.canvas);
+    mask.ctx.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+
+    var maskee = CanvasCache.getCanvas(this.ctx.canvas);
+    maskee.ctx.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+
+    var clipDepthInfo = {
+      ctx: this.ctx,
+      mask: mask,
+      maskee: maskee,
+      clipDepth: child._clipDepth
+    };
+
+    this.ctx = mask.ctx;
+
+    return clipDepthInfo;
+  },
+  _exitClip: function(clipDepthInfo) {
+    console.log("clip exit:", clipDepthInfo.clipDepth)
+    var ctx = clipDepthInfo.ctx;
+    var mask = clipDepthInfo.mask;
+    var maskee = clipDepthInfo.maskee;
+
+    maskee.ctx.globalCompositeOperation = 'destination-in';
+    maskee.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    maskee.ctx.drawImage(mask.canvas, 0, 0);
+
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.drawImage(maskee.canvas, 0, 0);
+    ctx.restore();
+
+    CanvasCache.releaseCanvas(mask);
+    CanvasCache.releaseCanvas(maskee);
+
+    this.ctx = ctx;
+  },
   visit: function (child, isContainer, visitContainer, context) {
     var ctx = this.ctx;
 
     var parentHasClippingMask = context.isClippingMask;
     var parentColorTransform = context.colorTransform;
 
-    var clippingMask = parentHasClippingMask === true;
+    var clippingMask = (parentHasClippingMask === true);
+
     if (child._cxform) {
       context.colorTransform = parentColorTransform.applyCXForm(child._cxform);
     }
 
     if (!clippingMask) {
       // removing clipping if the required character depth is achived
-      while (this.clipDepth && this.clipDepth.length > 0 &&
-          child._depth > this.clipDepth[0]) {
-        this.clipDepth.shift();
-        ctx.restore();
+      while (this.clipDepth && this.clipDepth.length > 0 && child._depth > this.clipDepth[0].clipDepth) {
+        var clipDepthInfo = this.clipDepth.shift();
+        this._exitClip(clipDepthInfo);
+        ctx = this.ctx;
       }
       if (child._clipDepth) {
-        if (!this.clipDepth) {
-          this.clipDepth = [];
-        }
         context.isClippingMask = clippingMask = true;
         // saving clipping until certain character depth
-        this.clipDepth.unshift(child._clipDepth);
-        ctx.save();
+        var clipDepthInfo = this._enterClip(child);
+        if (!this.clipDepth) {
+          this.clipDepth = [ clipDepthInfo ];
+        } else {
+          this.clipDepth.unshift(clipDepthInfo);
+        }
+        ctx = this.ctx;
+      } else {
+        if (this.clipDepth && this.clipDepth.length > 0 && child._depth <= this.clipDepth[0].clipDepth) {
+          ctx = this.ctx = this.clipDepth[0].maskee.ctx;
+        }
       }
     }
 
@@ -257,7 +305,7 @@ RenderVisitor.prototype = {
         }
       }
       ctx.restore();
-      ctx.clip();
+      ctx.fill();
       context.isClippingMask = parentHasClippingMask;
       context.colorTransform = parentColorTransform;
       return;
@@ -314,7 +362,7 @@ RenderVisitor.prototype = {
     ctx.restore();
 
     if (clippingMask) {
-      ctx.clip();
+      ctx.fill();
     }
     context.isClippingMask = parentHasClippingMask;
     context.colorTransform = parentColorTransform;
