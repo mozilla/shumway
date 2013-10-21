@@ -280,41 +280,25 @@ RenderVisitor.prototype = {
     ctx.globalCompositeOperation = getBlendModeName(child._blendMode);
 
     if (child._mask) {
-      var m = child._parent._getConcatenatedTransform(true);
-      // TODO create canvas small enough to fit the object and
-      // TODO cache the results when cacheAsBitmap is set
-      var tempCanvas, tempCtx, maskCanvas, maskCtx;
-      maskCanvas = CanvasCache.getCanvas(ctx.canvas);
-      maskCtx = maskCanvas.ctx;
-      maskCtx.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
+      var clipInfo = this.clipStart(child);
+      var mask = clipInfo.mask;
+      var maskee = clipInfo.maskee;
       var isMaskContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child._mask) ||
                             flash.display.SimpleButton.class.isInstanceOf(child._mask);
-      this.ctx = maskCtx;
+
+      this.ctx = mask.ctx;
       this.visit(child._mask, isMaskContainer, visitContainer, new RenderingContext(this.refreshStage));
       this.ctx = ctx;
 
-      tempCanvas = CanvasCache.getCanvas(ctx.canvas);
-      tempCtx = tempCanvas.ctx;
-      tempCtx.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
-      renderDisplayObject(child, tempCtx, context);
+      renderDisplayObject(child, maskee.ctx, context);
 
       if (isContainer) {
-        this.ctx = tempCtx;
+        this.ctx = maskee.ctx;
         visitContainer(child, this, context);
         this.ctx = ctx;
       }
 
-      tempCtx.globalCompositeOperation = 'destination-in';
-      tempCtx.setTransform(1, 0, 0, 1, 0, 0);
-      tempCtx.drawImage(maskCanvas.canvas, 0, 0);
-
-      ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.drawImage(tempCanvas.canvas, 0, 0);
-      ctx.restore();
-
-      CanvasCache.releaseCanvas(tempCanvas);
-      CanvasCache.releaseCanvas(maskCanvas);
+      this.clipEnd(clipInfo);
     } else {
       renderDisplayObject(child, ctx, context);
 
@@ -337,25 +321,28 @@ RenderVisitor.prototype = {
     var tx = m.tx / 20;
     var ty = m.ty / 20;
 
+    // TODO create canvas small enough to fit the object and
+    // TODO cache the results when cacheAsBitmap is set
+
     var mask = CanvasCache.getCanvas(this.ctx.canvas);
     mask.ctx.setTransform(m.a, m.b, m.c, m.d, tx, ty);
 
     var maskee = CanvasCache.getCanvas(this.ctx.canvas);
     maskee.ctx.setTransform(m.a, m.b, m.c, m.d, tx, ty);
 
-    var clipDepthInfo = {
+    var clipInfo = {
       ctx: this.ctx,
       mask: mask,
       maskee: maskee,
       clipDepth: child._clipDepth
     };
 
-    return clipDepthInfo;
+    return clipInfo;
   },
-  clipEnd: function(clipDepthInfo) {
-    var ctx = clipDepthInfo.ctx;
-    var mask = clipDepthInfo.mask;
-    var maskee = clipDepthInfo.maskee;
+  clipEnd: function(clipInfo) {
+    var ctx = clipInfo.ctx;
+    var mask = clipInfo.mask;
+    var maskee = clipInfo.maskee;
 
     maskee.ctx.globalCompositeOperation = 'destination-in';
     maskee.ctx.setTransform(1, 0, 0, 1, 0, 0);
