@@ -47,10 +47,10 @@
       timer.stop();
     };
     timer.start = function (name) {
-      top = name in top.timers ? top.timers[name] : top.timers[name] = new timer(top, name);
+      top = top.timers[name] || (top.timers[name] = new timer(top, name));
       top.start();
 
-      var tmp = name in flat.timers ? flat.timers[name] : flat.timers[name] = new timer(flat, name);
+      var tmp = flat.timers[name] || (flat.timers[name] = new timer(flat, name));
       tmp.start();
       flatStack.push(tmp);
     };
