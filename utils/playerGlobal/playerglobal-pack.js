@@ -21,7 +21,7 @@ load("../../lib/DataView.js/DataView.js");
 
 this.self = this;
 load("../../src/swf/swf.js");
-load("../../src/swf/util.js");
+load("../../src/flash/util.js");
 load("../../src/swf/types.js");
 load("../../src/swf/structs.js");
 load("../../src/swf/tags.js");

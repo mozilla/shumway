@@ -19,7 +19,7 @@
 load("../../../lib/DataView.js/DataView.js");
 
 var SWF = {}, self = this, release = true;
-load("../../swf/util.js");
+load("../util.js");
 load("../../swf/swf.js");
 load("../../swf/types.js");
 load("../../swf/structs.js");
@@ -38,7 +38,6 @@ load("../../swf/label.js");
 load("../../swf/shape.js");
 load("../../swf/text.js");
 
-load("../util.js");
 load("../options.js");
 load("../metrics.js");
 

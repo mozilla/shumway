@@ -15,7 +15,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global slice, formatErrorMessage, throwErrorFromVM, AVM2, $RELEASE */
+/*global formatErrorMessage, throwErrorFromVM, AVM2, $RELEASE */
+
+var create = Object.create;
+var defineProperty = Object.defineProperty;
+var keys = Object.keys;
+var isArray = Array.isArray;
+var fromCharCode = String.fromCharCode;
+var logE = Math.log;
+var max = Math.max;
+var min = Math.min;
+var pow = Math.pow;
+var push = Array.prototype.push;
+var slice = Array.prototype.slice;
+var splice = Array.prototype.splice;
+
+function fail(msg, context) {
+  throw new Error((context ? context + ': ' : '') + msg);
+}
+function assert(cond, msg, context) {
+  if (!cond)
+    fail(msg, context);
+}
+
+// e.g. throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
+// "ArgumentError: Error #2008: Parameter blendMode must be one of the accepted values."
+function throwError(name, error) {
+  var message = formatErrorMessage.apply(null, slice.call(arguments, 1));
+  throwErrorFromVM(AVM2.currentDomain(), name, message, error.code);
+}
 
 function scriptProperties(namespace, props) {
   return props.reduce(function (o, p) {
@@ -29,13 +57,6 @@ function cloneObject(obj) {
   for (var prop in obj)
     clone[prop] = obj[prop];
   return clone;
-}
-
-// e.g. throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
-// "ArgumentError: Error #2008: Parameter blendMode must be one of the accepted values."
-function throwError(name, error) {
-  var message = formatErrorMessage.apply(null, slice.call(arguments, 1));
-  throwErrorFromVM(AVM2.currentDomain(), name, message, error.code);
 }
 
 function sortByDepth(a, b) {
@@ -66,6 +87,60 @@ function sortByDepth(a, b) {
 }
 function sortNumeric(a, b) {
   return a - b;
+}
+function rgbaObjToStr(color) {
+  return 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' +
+         color.alpha / 255 + ')';
+}
+function rgbIntAlphaToStr(color, alpha) {
+  color |= 0;
+  if (alpha >= 1) {
+    var colorStr = color.toString(16);
+    while (colorStr.length < 6) {
+      colorStr = '0' + colorStr;
+    }
+    return "#" + colorStr;
+  }
+  var red = color >> 16 & 0xFF;
+  var green = color >> 8 & 0xFF;
+  var blue = color & 0xFF;
+  return 'rgba(' + red + ',' + green + ',' + blue + ',' + alpha + ')';
+}
+function argbUintToStr(argb) {
+  return 'rgba(' + (argb >>> 16 & 0xff) + ',' + (argb >>> 8 & 0xff) + ',' +
+         (argb & 0xff) + ',' + (argb >>> 24 & 0xff) / 0xff + ')';
+}
+
+// Some browser feature testing
+(function functionNameSupport() {
+  /*jshint -W061 */
+  if (eval("function t() {} t.name === 't'")) {
+    return; // function name feature is supported
+  }
+  Object.defineProperty(Function.prototype, 'name', {
+    get: function () {
+      if (this.__name) {
+        return this.__name;
+      }
+      var m = /function\s([^\(]+)/.exec(this.toString());
+      var name = m && m[1] !== 'anonymous' ? m[1] : null;
+      this.__name = name;
+      return name;
+    },
+    configurable: true,
+    enumerable: false
+  });
+})();
+
+var randomStyleCache;
+function randomStyle() {
+  if (!randomStyleCache) {
+    randomStyleCache = [];
+    for (var i = 0; i < 50; i++) {
+      randomStyleCache.push('#' + ('00000' + (Math.random() * (1 << 24) | 0).toString(16)).slice(-6));
+    }
+  }
+  return randomStyleCache[(Math.random() * randomStyleCache.length) | 0];
 }
 
 var Promise = (function PromiseClosure() {

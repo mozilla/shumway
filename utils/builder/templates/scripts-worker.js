@@ -22,7 +22,6 @@
 
 load($SHUMWAY_ROOT + "lib/DataView.js/DataView.js");
 load($SHUMWAY_ROOT + "src/flash/util.js");
-load($SHUMWAY_ROOT + "src/swf/util.js");
 load($SHUMWAY_ROOT + "src/swf/swf.js");
 load($SHUMWAY_ROOT + "src/swf/bitmap.js");
 load($SHUMWAY_ROOT + "src/swf/button.js");
