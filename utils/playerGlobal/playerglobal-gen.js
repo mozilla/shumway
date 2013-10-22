@@ -23,7 +23,7 @@ load("../../lib/DataView.js/DataView.js");
 
 this.self = this;
 load("../../src/swf/swf.js");
-load("../../src/swf/util.js");
+load("../../src/flash/util.js");
 load("../../src/swf/types.js");
 load("../../src/swf/structs.js");
 load("../../src/swf/tags.js");
@@ -41,7 +41,7 @@ load("../../src/swf/label.js");
 load("../../src/swf/shape.js");
 load("../../src/swf/text.js");
 
-load("../../src/avm2/util.js");
+load("../../src/avm2/avm2Util.js");
 
 var str = snarf("catalog.json");
 var obj = JSON.parse(str);

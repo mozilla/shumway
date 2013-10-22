@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-load("../util.js");
+load("../avm2Util.js");
 
 var options = new OptionSet("option(s)");
 var disassemble = options.register(new Option("disassemble", "d", false, "disassemble"));

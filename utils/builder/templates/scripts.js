@@ -32,7 +32,7 @@ var Option = options.Option;
 var OptionSet = options.OptionSet;
 var coreOptions = new OptionSet("Core Options");
 
-load($SHUMWAY_ROOT + "src/swf/util.js");
+load($SHUMWAY_ROOT + "src/flash/util.js");
 load($SHUMWAY_ROOT + "src/swf/swf.js");
 load($SHUMWAY_ROOT + "src/swf/inflate.js");
 load($SHUMWAY_ROOT + "src/swf/stream.js");
@@ -55,7 +55,7 @@ load($SHUMWAY_ROOT + "src/avm1/stream.js");
 load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
 
 load($SHUMWAY_ROOT + "src/avm2/config.js");
-load($SHUMWAY_ROOT + "src/avm2/util.js");
+load($SHUMWAY_ROOT + "src/avm2/avm2Util.js");
 load($SHUMWAY_ROOT + "src/avm2/metrics.js");
 
 var Counter = new metrics.Counter(true);
@@ -100,7 +100,6 @@ load($SHUMWAY_ROOT + "src/avm2/vm.js");
 
 load($SHUMWAY_ROOT + "src/flash/playerglobal.js");  // this needs to come before avm2utils.js
 load($SHUMWAY_ROOT + "utils/builder/templates/avm2utils.js");
-load($SHUMWAY_ROOT + "src/flash/util.js");
 
 // Manually add directories here, this doesn't get automatically updated by
 // make update-flash-refs.
