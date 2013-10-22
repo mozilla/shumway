@@ -32,7 +32,7 @@ load(homePath + "lib/DataView.js/DataView.js");
  */
 
 load(homePath + "src/avm2/config.js");
-load(homePath + "src/avm2/util.js");
+load(homePath + "src/avm2/avm2Util.js");
 
 var options; load(homePath + "src/avm2/options.js");
 var stdout = new IndentingWriter();

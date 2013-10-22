@@ -41,7 +41,7 @@ load("../../src/swf/label.js");
 load("../../src/swf/shape.js");
 load("../../src/swf/text.js");
 
-load("../../src/avm2/util.js");
+load("../../src/avm2/avm2Util.js");
 
 var str = snarf("catalog.json");
 var obj = JSON.parse(str);

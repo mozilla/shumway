@@ -19,7 +19,7 @@
 load("../../../lib/DataView.js/DataView.js");
 
 var SWF = {}, self = this, release = true;
-load("../util.js");
+load("../avm2Util.js");
 load("../../swf/swf.js");
 load("../../swf/types.js");
 load("../../swf/structs.js");

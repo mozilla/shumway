@@ -55,7 +55,7 @@ load($SHUMWAY_ROOT + "src/avm1/stream.js");
 load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
 
 load($SHUMWAY_ROOT + "src/avm2/config.js");
-load($SHUMWAY_ROOT + "src/avm2/util.js");
+load($SHUMWAY_ROOT + "src/avm2/avm2Util.js");
 load($SHUMWAY_ROOT + "src/avm2/metrics.js");
 
 var Counter = new metrics.Counter(true);
