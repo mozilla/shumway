@@ -65,7 +65,6 @@ var LoaderDefinition = (function () {
       '../../../lib/DataView.js/DataView.js',
       '../util.js',
       '../../swf/config.js',
-      '../../swf/util.js',
       '../../swf/swf.js',
       '../../swf/types.js',
       '../../swf/structs.js',

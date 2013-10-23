@@ -504,6 +504,7 @@ var TextFieldDefinition = (function () {
       if (!s) {
         this._currentTransform.tx -= 40;
         this._currentTransform.ty -= 40;
+        resolveFont(initialFormat, false);
         this.text = '';
         return;
       }
@@ -598,6 +599,11 @@ var TextFieldDefinition = (function () {
       }
       ctx.closePath();
 
+      if (this._lines.length === 0) {
+        ctx.restore();
+        return;
+      }
+
       ctx.translate(2, 2);
       ctx.save();
       colorTransform.setAlpha(ctx);
@@ -641,6 +647,7 @@ var TextFieldDefinition = (function () {
       }
       var bounds = this._bbox;
       var initialFormat = this._defaultTextFormat;
+      resolveFont(initialFormat, this._embedFonts);
       var firstRun = {type: 'f', format: initialFormat};
       var width = Math.max(bounds.xMax / 20 - 4, 1);
       var height = Math.max(bounds.yMax / 20 - 4, 1);
@@ -1016,7 +1023,7 @@ var TextFieldDefinition = (function () {
             return this._embedFonts;
           },
           set: function embedFonts(value) { // (value:Boolean) -> void
-            somewhatImplemented("TextField.embedFonts");
+            this.invalidateDimensions();
             this._embedFonts = value;
           }
         },

@@ -84,12 +84,18 @@ function visitContainer(container, visitor, context) {
   visitor.childrenEnd(container);
 }
 
-function getBlendModeName(blendMode) {
-  var blendModeClass = flash.display.BlendMode.class;
-  if (blendMode === blendModeClass.NORMAL) {
-    return 'normal';
-  }
+var BlendModeNameMap = {
+  "normal": 'normal',
+  "multiply": 'multiply',
+  "screen": 'screen',
+  "lighten": 'lighten',
+  "darken": 'darken',
+  "difference": 'difference',
+  "overlay": 'overlay',
+  "hardlight": 'hard-light'
+};
 
+function getBlendModeName(blendMode) {
   // TODO:
 
   // These Flash blend modes have no canvas equivalent:
@@ -105,16 +111,7 @@ function getBlendModeName(blendMode) {
   // - blendModeClass.ERASE (destination-out)
   // - blendModeClass.LAYER [defines backdrop]
 
-  switch (blendMode) {
-    case blendModeClass.MULTIPLY:   return  "multiply";
-    case blendModeClass.SCREEN:     return  "screen";
-    case blendModeClass.LIGHTEN:    return  "lighten";
-    case blendModeClass.DARKEN:     return  "darken";
-    case blendModeClass.DIFFERENCE: return  "difference";
-    case blendModeClass.OVERLAY:    return  "overlay";
-    case blendModeClass.HARDLIGHT:  return  "hard-light";
-  }
-  return "normal";
+  return BlendModeNameMap[blendMode] || 'normal';
 }
 
 function RenderVisitor(root, ctx, invalidPath, refreshStage) {

@@ -395,9 +395,19 @@ var natives = (function () {
         concat: Sp.concat,
         localeCompare: Sp.localeCompare,
         match: function (re) {
-          if (re === void 0) {
+          if (re === (void 0) || re === null) {
             return null;
           } else {
+            if (re instanceof RegExp && re.global) {
+              var matches = [], m;
+              while ((m = re.exec(this))) {
+                matches.push(m[0]);
+              }
+              return matches;
+            }
+            if (!(re instanceof RegExp) && !(typeof re === 'string')) {
+              re = String(re);
+            }
             return this.match(re);
           }
         },
@@ -1623,7 +1633,7 @@ var natives = (function () {
     }),
 
     getDefinitionByName: constant(function (name) {
-      var simpleName = name.replace("::", ".");
+      var simpleName = String(name).replace("::", ".");
       return AVM2.currentDomain().getClass(simpleName);
     }),
 

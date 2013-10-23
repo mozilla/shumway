@@ -32,7 +32,7 @@ load(homePath + "lib/DataView.js/DataView.js");
  */
 
 load(homePath + "src/avm2/config.js");
-load(homePath + "src/avm2/util.js");
+load(homePath + "src/avm2/avm2Util.js");
 
 var options; load(homePath + "src/avm2/options.js");
 var stdout = new IndentingWriter();
@@ -190,7 +190,7 @@ for (var f = 0; f < files.length; f++) {
        */
       SWF = {};
       load(homePath + "src/swf/swf.js");
-      load(homePath + "src/swf/util.js");
+      load(homePath + "src/flash/util.js");
       load(homePath + "src/swf/types.js");
       load(homePath + "src/swf/structs.js");
       load(homePath + "src/swf/tags.js");

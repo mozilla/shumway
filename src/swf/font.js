@@ -309,8 +309,8 @@ function defineFont(tag, dictionary) {
     '\x5f\x0f\x3c\xf5' + // magicNumber
     '\x00\x0b' + // flags
     '\x04\x00' + // unitsPerEm
-    '\x00\x00\x00\x00' + toString32(+new Date()) + // created
-    '\x00\x00\x00\x00' + toString32(+new Date()) + // modified
+    '\x00\x00\x00\x00' + toString32(Date.now()) + // created
+    '\x00\x00\x00\x00' + toString32(Date.now()) + // modified
     toString16(min.apply(null, xMins)) + // xMin
     toString16(min.apply(null, yMins)) + // yMin
     toString16(max.apply(null, xMaxs)) + // xMax

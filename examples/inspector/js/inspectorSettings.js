@@ -120,10 +120,10 @@ setTimeout(function displayInfo() {
   output = "";
   for (var name in Timer.flat.timers) {
     var timer = Timer.flat.timers[name];
-    var str = timer.name + ": " + timer.total + " ms" +
+    var str = timer.name + ": " + timer.total.toFixed(2) + " ms" +
       ", count: " + timer.count +
       ", avg: " + (timer.total / timer.count).toFixed(2) + " ms" +
-      ", last: " + timer.last + " ms";
+      ", last: " + timer.last.toFixed(2) + " ms";
     output += str + "<br>";
   }
   document.getElementById("timerInfo").innerHTML = output;

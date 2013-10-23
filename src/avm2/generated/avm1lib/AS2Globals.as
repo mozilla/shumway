@@ -25,6 +25,7 @@ package avm1lib {
   import avm1lib.AS2Stage;
   import avm1lib.AS2System;
   import avm1lib.AS2TextField;
+  import avm1lib.AS2MovieClipLoader;
   import flash.display.Stage;
   import flash.utils.clearInterval;
   import flash.utils.clearTimeout;
@@ -43,8 +44,8 @@ package avm1lib {
   import flash.geom.ColorTransform;
   import flash.geom.Point;
   import flash.text.TextFormat;
+  import flash.external.ExternalInterface;
   import flash.display.Loader;
-  import avm1lib.AS2MovieClipLoader;
 
   [native(cls="AS2Globals")]
   public dynamic class AS2Globals {
@@ -61,8 +62,11 @@ package avm1lib {
       return {
         _MovieClip: AS2MovieClip,
         display: {},
-        geom: {},
+        external: {
+          ExternalInterface: flash.external.ExternalInterface
+        },
         filters: {},
+        geom: {},
         text: {}
       };
     }
@@ -134,7 +138,7 @@ package avm1lib {
     }
 
     public function gotoLabel(label) {
-      var nativeObject = AS2Utils.resolveTarget().$nativeObject;
+      var nativeObject = AS2Utils.resolveTarget()._as3Object;
       _addToPendingScripts(nativeObject, nativeObject.gotoLabel, [label]);
     }
 
@@ -243,9 +247,8 @@ package avm1lib {
       return 0 | (Math.random() * (0 | value));
     }
     public function removeMovieClip(target) {
-      var nativeTarget = AS2Utils.resolveTarget();
-      var nativeTarget2 = AS2Utils.resolveTarget(target);
-      nativeTarget.removeChild(nativeTarget2);
+      var nativeTarget = AS2Utils.resolveTarget(target);
+      nativeTarget.removeMovieClip();
     }
     public function setInterval() {
       var setInterval = flash.utils.setInterval;

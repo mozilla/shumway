@@ -17,6 +17,9 @@
  */
 
 (function (exports) {
+  if (!performance) {
+    performance = {now: Date.now};
+  }
   var Timer = (function () {
     var base = new timer(null, "Total"), top = base;
     var flat = new timer(null, "Flat"), flatStack = [];
@@ -31,7 +34,7 @@
     }
     timer.flat = flat;
     function getTicks() {
-      return new Date().getTime();
+      return performance.now();
     }
     timer.prototype.start = function() {
       this.begin = getTicks();
@@ -47,10 +50,10 @@
       timer.stop();
     };
     timer.start = function (name) {
-      top = name in top.timers ? top.timers[name] : top.timers[name] = new timer(top, name);
+      top = top.timers[name] || (top.timers[name] = new timer(top, name));
       top.start();
 
-      var tmp = name in flat.timers ? flat.timers[name] : flat.timers[name] = new timer(flat, name);
+      var tmp = flat.timers[name] || (flat.timers[name] = new timer(flat, name));
       tmp.start();
       flatStack.push(tmp);
     };
