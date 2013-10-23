@@ -78,7 +78,8 @@ var SystemDefinition = (function () {
           },
           useCodePage: {
             get: function useCodePage() { // (void) -> Boolean
-              notImplemented("System.useCodePage");
+              somewhatImplemented("System.useCodePage");
+              return false;
             },
             set: function useCodePage(value) { // (value:Boolean) -> void
               notImplemented("System.useCodePage");
@@ -86,7 +87,8 @@ var SystemDefinition = (function () {
           },
           vmVersion: {
             get: function vmVersion() { // (void) -> String
-              notImplemented("System.vmVersion");
+              somewhatImplemented("System.vmVersion");
+              return "1.0 shumway";
             }
           }
         },
