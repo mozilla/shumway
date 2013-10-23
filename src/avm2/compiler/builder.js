@@ -936,7 +936,7 @@ var createName = function createName(namespaces, name) {
               scope.pop();
               break;
             case 0x64: // OP_getglobalscope
-              push(new IR.ASGlobal(null, topScope()));
+              push(new IR.ASGlobal(null, savedScope()));
               break;
             case 0x65: // OP_getscopeobject
               push(getScopeObject(state.scope[bc.index]));
