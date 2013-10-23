@@ -40,7 +40,7 @@ var SecurityDefinition = (function () {
           },
           loadPolicyFile: function loadPolicyFile(url) {
             // (url:String) -> void
-            notImplemented("Security.loadPolicyFile");
+            somewhatImplemented("Security.loadPolicyFile");
           },
           duplicateSandboxBridgeInputArguments: function duplicateSandboxBridgeInputArguments(toplevel, args) {
             // (toplevel:Object, args:Array) -> Array
