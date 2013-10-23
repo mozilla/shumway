@@ -103,7 +103,7 @@ var BitmapDataDefinition = (function () {
       if (flash.display.BitmapData.class.isInstanceOf(source)) {
         ctx.drawImage(source._drawable, 0, 0);
       } else {
-        (new RenderVisitor(source, ctx, null, true)).startFragment();
+        (new RenderVisitor(source, ctx, null, true)).startFragment(matrix);
       }
       ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = false;
       ctx.restore();

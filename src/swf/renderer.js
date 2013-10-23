@@ -127,22 +127,43 @@ RenderVisitor.prototype = {
     visitContainer(this.root, this,
                    new RenderingContext(this.refreshStage, this.invalidPath));
   },
-  startFragment: function() {
+  startFragment: function(matrix) {
+    var root = this.root;
+    // HACK: temporarily set the root DisplayObject's currentTransform
+    //       to the matrix passed in via BitmapData.draw(), to make masks
+    //       work properly which rely on _getConcatenatedTransform to set
+    //       the initial transformation on the temporary canvases.
+    var currentTransform = root._currentTransform;
+    var t = currentTransform;
+    if (matrix) {
+      t = root._currentTransform = {
+        a: matrix.a,
+        b: matrix.b,
+        c: matrix.c,
+        d: matrix.d,
+        tx: matrix.tx * 20,
+        ty: matrix.ty * 20
+      };
+      root._invalidateTransform();
+    }
     // HACK compensate for visit()/renderDisplayObject() transform
-    var t = this.root._currentTransform;
     var inverse;
     if (t) {
-      inverse = new flash.geom.Matrix(t.a, t.b, t.c, t.d, t.tx/20, t.ty/20);
+      inverse = new flash.geom.Matrix(t.a, t.b, t.c, t.d, t.tx / 20, t.ty / 20);
       inverse.invert();
       this.ctx.save();
       this.ctx.transform(inverse.a, inverse.b, inverse.c, inverse.d,
                          inverse.tx, inverse.ty);
     }
 
-    this.visit(this.root, visitContainer, new RenderingContext(this.refreshStage, this.invalidPath));
+    this.visit(root, visitContainer, new RenderingContext(this.refreshStage, this.invalidPath));
 
     if (t) {
       this.ctx.restore();
+    }
+    if (matrix) {
+      root._currentTransform = currentTransform;
+      root._invalidateTransform();
     }
   },
   childrenStart: function(parent) {
