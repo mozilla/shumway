@@ -755,6 +755,7 @@ var createName = function createName(namespaces, name) {
               return store(new IR.GetProperty(region, state.store, object, constant(slotQn)));
             }
           }
+          warn("Can't optimize getSlot " + index);
           return store(new IR.ASGetSlot(null, state.store, object, index));
         }
 
@@ -767,6 +768,7 @@ var createName = function createName(namespaces, name) {
               return;
             }
           }
+          warn("Can't optimize setSlot " + index);
           store(new IR.ASSetSlot(region, state.store, object, index, value));
         }
 
