@@ -1633,7 +1633,7 @@ var natives = (function () {
     }),
 
     getDefinitionByName: constant(function (name) {
-      var simpleName = name.replace("::", ".");
+      var simpleName = String(name).replace("::", ".");
       return AVM2.currentDomain().getClass(simpleName);
     }),
 
