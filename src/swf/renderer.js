@@ -74,10 +74,7 @@ function visitContainer(container, visitor, context) {
     }
 
     if (visitor.ignoreVisibleAttribute || (child._visible && !child._maskedObject)) {
-      var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child) ||
-                        flash.display.SimpleButton.class.isInstanceOf(child);
-
-      visitor.visit(child, isContainer, visitContainer, context);
+      visitor.visit(child, visitContainer, context);
     }
   }
 
@@ -131,9 +128,6 @@ RenderVisitor.prototype = {
                    new RenderingContext(this.refreshStage, this.invalidPath));
   },
   startFragment: function() {
-    var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(this.root) ||
-                      flash.display.SimpleButton.class.isInstanceOf(this.root);
-
     // HACK compensate for visit()/renderDisplayObject() transform
     var t = this.root._currentTransform;
     var inverse;
@@ -145,8 +139,7 @@ RenderVisitor.prototype = {
                          inverse.tx, inverse.ty);
     }
 
-    this.visit(this.root, isContainer, visitContainer,
-               new RenderingContext(this.refreshStage, this.invalidPath));
+    this.visit(this.root, visitContainer, new RenderingContext(this.refreshStage, this.invalidPath));
 
     if (t) {
       this.ctx.restore();
@@ -216,7 +209,7 @@ RenderVisitor.prototype = {
       this.invalidPath = null;
     }
   },
-  visit: function (child, isContainer, visitContainer, context) {
+  visit: function (child, visitContainer, context) {
     var ctx = this.ctx;
 
     var parentHasClippingMask = context.isClippingMask;
@@ -263,7 +256,7 @@ RenderVisitor.prototype = {
       }
     }
 
-    if (clippingMask && isContainer) {
+    if (clippingMask && child._isContainer) {
       ctx.save();
       renderDisplayObject(child, ctx, context);
       for (var i = 0, n = child._children.length; i < n; i++) {
@@ -272,9 +265,7 @@ RenderVisitor.prototype = {
           continue;
         }
         if (this.ignoreVisibleAttribute || (child1._visible && !child1._maskedObject)) {
-          var isContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child1) ||
-                            flash.display.SimpleButton.class.isInstanceOf(child1);
-          this.visit(child1, isContainer, visitContainer, context);
+          this.visit(child1, visitContainer, context);
         }
       }
       ctx.restore();
@@ -292,16 +283,14 @@ RenderVisitor.prototype = {
       var clipInfo = this.clipStart(child);
       var mask = clipInfo.mask;
       var maskee = clipInfo.maskee;
-      var isMaskContainer = flash.display.DisplayObjectContainer.class.isInstanceOf(child._mask) ||
-                            flash.display.SimpleButton.class.isInstanceOf(child._mask);
 
       this.ctx = mask.ctx;
-      this.visit(child._mask, isMaskContainer, visitContainer, new RenderingContext(this.refreshStage));
+      this.visit(child._mask, visitContainer, new RenderingContext(this.refreshStage));
       this.ctx = ctx;
 
       renderDisplayObject(child, maskee.ctx, context);
 
-      if (isContainer) {
+      if (child._isContainer) {
         this.ctx = maskee.ctx;
         visitContainer(child, this, context);
         this.ctx = ctx;
@@ -311,7 +300,7 @@ RenderVisitor.prototype = {
     } else {
       renderDisplayObject(child, ctx, context);
 
-      if (isContainer) {
+      if (child._isContainer) {
         visitContainer(child, this, context);
       }
     }
