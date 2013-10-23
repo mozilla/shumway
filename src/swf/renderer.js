@@ -360,7 +360,7 @@ RenderingColorTransform.prototype = {
     } else if (typeof style === 'number') {
       style = this.convertNumericColor(style);
     } else if (typeof style === 'function') {
-      style = style.defaultGradient;
+      style = style.defaultFillStyle;
     }
     ctx.fillStyle = style;
   },
@@ -370,7 +370,7 @@ RenderingColorTransform.prototype = {
     } else if (typeof style === 'number') {
       style = this.convertNumericColor(style);
     } else if (typeof style === 'function') {
-      style = style.defaultGradient;
+      style = style.defaultFillStyle;
     }
     ctx.strokeStyle = style;
   },
@@ -417,6 +417,9 @@ RenderingColorTransform.prototype = {
     var b = Math.min(255, Math.max(0, m[3] * t[2] + t[6])) | 0;
     var a = Math.min(1, Math.max(0, m[4] * t[3] + (t[7] / 256)));
     return "rgba(" + r + ',' + g + ',' + b + ',' + a + ')';
+  },
+  getTransformFingerprint: function () {
+    return this.transform.join('|');
   }
 };
 

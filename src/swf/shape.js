@@ -1618,7 +1618,7 @@ function buildLinearGradientFactory(colorStops) {
     }
     return gradient;
   };
-  fn.defaultGradient = defaultGradient;
+  fn.defaultFillStyle = defaultGradient;
 
   return fn;
 }
@@ -1641,7 +1641,38 @@ function buildRadialGradientFactory(focalPoint, colorStops) {
     }
     return gradient;
   };
-  fn.defaultGradient = defaultGradient;
+  fn.defaultFillStyle = defaultGradient;
+
+  return fn;
+}
+
+/**
+ * @param {Object} img
+ * @param {String} repeat
+ */
+function buildBitmapPatternFactory(img, repeat) {
+  var defaultPattern = factoryCtx.createPattern(img, repeat);
+
+  var cachedTransform, cachedTransformKey;
+  var fn = function createBitmapPattern(ctx, colorTransform) {
+    if (!colorTransform.mode) {
+      return defaultPattern;
+    }
+    var key = colorTransform.getTransformFingerprint();
+    if (key === cachedTransformKey) {
+      return cachedTransform;
+    }
+    var canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    var ctx = canvas.getContext('2d');
+    colorTransform.setAlpha(ctx, true);
+    ctx.drawImage(img, 0, 0);
+    cachedTransform = ctx.createPattern(canvas, repeat);
+    cachedTransformKey = key;
+    return cachedTransform;
+  };
+  fn.defaultFillStyle = defaultPattern;
 
   return fn;
 }
@@ -1680,8 +1711,8 @@ function initStyle(style, dictionary) {
       var bitmap = dictionary[style.bitmapId];
       var repeat = (style.type === GRAPHICS_FILL_REPEATING_BITMAP) ||
                    (style.type === GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP);
-      style.style = factoryCtx.createPattern(bitmap.value.props.img,
-                                             repeat ? "repeat" : "no-repeat");
+      style.style = buildBitmapPatternFactory(bitmap.value.props.img,
+                                              repeat ? "repeat" : "no-repeat");
       break;
     default:
       fail('invalid fill style', 'shape');
