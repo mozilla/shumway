@@ -1125,6 +1125,10 @@ var natives = (function () {
     var defaultObjectEncoding = 3;
 
     function ByteArray(bytes) {
+      if (bytes instanceof ByteArray) {
+        // HACK coercion to ByteArray (constructor is called as function from byte code)
+        return bytes;
+      }
       var initData = bytes || (this.symbol && this.symbol.data);
       if (initData) {
         this.a = new ArrayBuffer(initData.length);
