@@ -264,6 +264,7 @@ var DisplayObjectContainerDefinition = (function () {
     this._mouseChildren = true;
     this._tabChildren = true;
     this._sparse = false;
+    this._isContainer = true;
   };
 
   def.__glue__ = {

@@ -38,6 +38,7 @@ var SimpleButtonDefinition = (function () {
       this._prevAvm1StateCode = 0;
       this._avm1StateCode = 0;
       this._avm1MouseEvents = null;
+      this._isContainer = true;
 
       var s = this.symbol;
       if (s) {
