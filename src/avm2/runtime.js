@@ -1336,29 +1336,8 @@ function debugName(value) {
   return value;
 }
 
-function createCompiledFunctionTrampoline(methodInfo, scope, hasDynamicScope, breakpoint) {
-  var mi = methodInfo;
-  // Return a trampoline that compiles the instance initializer when called for the first time.
-  return function trampolineContext() {
-    var fn;
-    return function () {
-      if (!fn) {
-        // Compile function and patch callers.
-        // FIXME Many call sites have already been compiled (e.g. from derived class constructors). Might need
-        // a better patching strategy.
-        fn = mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint);
-        mi.freeMethod.methodInfo = mi;
-      }
-      return fn.apply(this, arguments);
-    }
-  }();
-}
-
 function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
   var mi = methodInfo;
-  if (false && deferCompilation) {
-    return createCompiledFunctionTrampoline(methodInfo, scope, hasDynamicScope, breakpoint);
-  }
   $M.push(mi);
   var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
   var parameters = result.parameters;

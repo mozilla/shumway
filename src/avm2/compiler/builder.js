@@ -755,6 +755,7 @@ var createName = function createName(namespaces, name) {
               return store(new IR.GetProperty(region, state.store, object, constant(slotQn)));
             }
           }
+          warn("Can't optimize getSlot " + index);
           return store(new IR.ASGetSlot(null, state.store, object, index));
         }
 
@@ -767,6 +768,7 @@ var createName = function createName(namespaces, name) {
               return;
             }
           }
+          warn("Can't optimize setSlot " + index);
           store(new IR.ASSetSlot(region, state.store, object, index, value));
         }
 
@@ -936,7 +938,7 @@ var createName = function createName(namespaces, name) {
               scope.pop();
               break;
             case 0x64: // OP_getglobalscope
-              push(new IR.ASGlobal(null, topScope()));
+              push(new IR.ASGlobal(null, savedScope()));
               break;
             case 0x65: // OP_getscopeobject
               push(getScopeObject(state.scope[bc.index]));

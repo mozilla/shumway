@@ -1209,11 +1209,7 @@ var Verifier = (function() {
             local[bc.index] = pop();
             break;
           case 0x64: // OP_getglobalscope
-            if (savedScope.object) {
-              push(Type.from(savedScope.global.object));
-            } else {
-              push(Type.Any);
-            }
+            push(Type.from(savedScope.global.object));
             break;
           case 0x65: // OP_getscopeobject
             push(scope[bc.index]);
