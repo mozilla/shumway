@@ -633,6 +633,9 @@ function bitCount(i) {
 function escapeString(str) {
   if (str !== undefined) {
     str = str.replace(/[^\w$]/gi,"$"); /* No dots, colons, dashes and /s */
+    if (/^\d/.test(str)) { /* No digits at the beginning */
+      str = '$' + str;
+    }
   }
   return str;
 }

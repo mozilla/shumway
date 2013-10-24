@@ -720,6 +720,7 @@ var TextFieldDefinition = (function () {
       return this._content.text;
     },
     set text(val) {
+      val = String(val);
       if (this._content && this._content.text === val) {
         return;
       }
