@@ -214,7 +214,17 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       assert(record.type === 1);
       assert(segment);
       if (isMorph) {
-        assert(morphRecord.type === 1);
+        // An invalid SWF might contain a move in the EndEdges list where the
+        // StartEdges list contains an edge. The Flash Player seems to skip it,
+        // so we do, too.
+        while (morphRecord && morphRecord.type === 0) {
+          morphRecord = recordsMorph[j++];
+        }
+        // The EndEdges list might be shorter than the StartEdges list. Reuse
+        // start edges as end edges in that case.
+        if (!morphRecord) {
+          morphRecord = record;
+        }
       }
 
       if (record.isStraight && (!isMorph || morphRecord.isStraight)) {
