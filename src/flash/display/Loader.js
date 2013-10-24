@@ -1239,7 +1239,7 @@ var LoaderDefinition = (function () {
         },
         _load: def._load,
         _loadBytes: function _loadBytes(bytes, checkPolicyFile, applicationDomain, securityDomain, requestedContentParent, parameters, deblockingFilter, allowLoadBytesCodeExecution, imageDecodingPolicy) { // (bytes:ByteArray, checkPolicyFile:Boolean, applicationDomain:ApplicationDomain, securityDomain:SecurityDomain, requestedContentParent:DisplayObjectContainer, parameters:Object, deblockingFilter:Number, allowLoadBytesCodeExecution:Boolean, imageDecodingPolicy:String) -> void
-          def._load(bytes.a);
+          def._load.call(this, bytes.a, checkPolicyFile, applicationDomain, securityDomain);
         },
         _unload: function _unload(halt, gc) { // (halt:Boolean, gc:Boolean) -> void
           somewhatImplemented("Loader._unload, do we even need to do anything here?");
