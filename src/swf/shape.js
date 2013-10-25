@@ -655,8 +655,8 @@ ShapePath.prototype = {
     var formOpen = false;
     var formOpenX = 0;
     var formOpenY = 0;
-    for (var j = 0, k = 0; j < commands.length; j++) {
-      if (!this.isMorph) {
+    if (!this.isMorph) {
+      for (var j = 0, k = 0; j < commands.length; j++) {
         switch (commands[j]) {
           case SHAPE_MOVE_TO:
             formOpen = true;
@@ -732,7 +732,9 @@ ShapePath.prototype = {
             console.warn("Unknown drawing command encountered: " +
                          commands[j]);
         }
-      } else {
+      }
+    } else {
+      for (var j = 0, k = 0; j < commands.length; j++) {
         switch (commands[j]) {
           case SHAPE_MOVE_TO:
             ctx.moveTo(morph(data[k]/20, morphData[k++]/20, ratio),
