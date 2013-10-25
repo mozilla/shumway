@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-/* global finishShapePaths */
+/* global finishShapePath */
 
 var ShapeDefinition = (function () {
   var def = {
@@ -30,7 +30,9 @@ var ShapeDefinition = (function () {
         graphics._paths = s.paths;
         // TODO: this really should be done only once, but I don't know how I
         // can know when all the required data has been loaded.
-        finishShapePaths(s.paths, s.dictionary);
+        for (var i = 0; i < s.paths.length; i++) {
+          s.paths[i] = finishShapePath(s.paths[i], s.dictionary);
+        }
         graphics.bbox = s.bbox;
         graphics.strokeBbox = s.strokeBbox;
         graphics.dictionary = s.dictionary;

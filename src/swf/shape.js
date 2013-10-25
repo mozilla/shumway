@@ -214,7 +214,17 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       assert(record.type === 1);
       assert(segment);
       if (isMorph) {
-        assert(morphRecord.type === 1);
+        // An invalid SWF might contain a move in the EndEdges list where the
+        // StartEdges list contains an edge. The Flash Player seems to skip it,
+        // so we do, too.
+        while (morphRecord && morphRecord.type === 0) {
+          morphRecord = recordsMorph[j++];
+        }
+        // The EndEdges list might be shorter than the StartEdges list. Reuse
+        // start edges as end edges in that case.
+        if (!morphRecord) {
+          morphRecord = record;
+        }
       }
 
       if (record.isStraight && (!isMorph || morphRecord.isStraight)) {
@@ -507,6 +517,14 @@ function defineShape(tag, dictionary) {
   };
 }
 
+function logShape(paths, bbox) {
+  var output = '{"bounds":' + JSON.stringify(bbox) + ',"paths":[' +
+               paths.map(function(path) {
+                 return path.serialize();
+               }).join() + ']}';
+  console.log(output);
+}
+
 function SegmentedPath(fillStyle, lineStyle) {
   this.fillStyle = fillStyle;
   this.lineStyle = lineStyle;
@@ -585,7 +603,7 @@ function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph)
   this.bounds = null;
   this.strokeBounds = null;
 
-  this.isMorph = isMorph;
+  this.isMorph = !!isMorph;
   this.fullyInitialized = false;
 }
 
@@ -1296,7 +1314,31 @@ ShapePath.prototype = {
       this.strokeBounds = bounds;
     }
     return bounds;
+  },
+  serialize: function() {
+    var output = '{';
+    if (this.fillStyle) {
+      output += '"fill":' + JSON.stringify(this.fillStyle) + ',';
+    }
+    if (this.lineStyle) {
+      output += '"stroke":' + JSON.stringify(this.lineStyle) + ',';
+    }
+
+    output += '"commands":[' + Array.apply([], this.commands).join() + '],';
+    output += '"data":[' + Array.apply([], this.data).join() + ']';
+
+    return output + '}';
   }
+};
+
+ShapePath.fromPlainObject = function(obj) {
+  var path = new ShapePath(obj.fill || null, obj.stroke || null);
+  path.commands = new Uint8Array(obj.commands);
+  path.data = new Int32Array(obj.data);
+  if (!inWorker) {
+    finishShapePath(path);
+  }
+  return path;
 };
 
 function distanceSq(x1, y1, x2, y2) {
@@ -1569,30 +1611,27 @@ function morph(start, end, ratio) {
 
 /**
  * For shapes parsed in a worker thread, we have to finish their
- * initialization after receiving the data in the main thread.
+ * paths after receiving the data in the main thread.
  *
  * This entails creating proper instances for all the contained data types.
  */
-function finishShapePaths(paths, dictionary) {
-  assert(window);
+function finishShapePath(path, dictionary) {
+  assert(!inWorker);
 
-  for (var i = 0; i < paths.length; i++) {
-    var path = paths[i];
-    if (path.fullyInitialized) {
-      continue;
-    }
-    if (!(path instanceof ShapePath)) {
-      var untypedPath = path;
-      path = paths[i] = new ShapePath(path.fillStyle, path.lineStyle, 0, 0,
-                                      path.isMorph);
-      path.commands = untypedPath.commands;
-      path.data = untypedPath.data;
-      path.morphData = untypedPath.morphData;
-    }
-    path.fillStyle && initStyle(path.fillStyle, dictionary);
-    path.lineStyle && initStyle(path.lineStyle, dictionary);
-    path.fullyInitialized = true;
+  if (path.fullyInitialized) {
+    return path;
   }
+  if (!(path instanceof ShapePath)) {
+    var untypedPath = path;
+    path = new ShapePath(path.fillStyle, path.lineStyle, 0, 0, path.isMorph);
+    path.commands = untypedPath.commands;
+    path.data = untypedPath.data;
+    path.morphData = untypedPath.morphData;
+  }
+  path.fillStyle && initStyle(path.fillStyle, dictionary);
+  path.lineStyle && initStyle(path.lineStyle, dictionary);
+  path.fullyInitialized = true;
+  return path;
 }
 
 var inWorker = (typeof window) === 'undefined';
