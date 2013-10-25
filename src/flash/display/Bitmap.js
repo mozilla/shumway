@@ -90,7 +90,7 @@ var BitmapDefinition = (function () {
             if (!bitmapData && this.symbol) {
               var symbol = this.symbol;
               bitmapData = new flash.display.BitmapData(symbol.width,
-                                                        symbol.height);
+                                                        symbol.height, true, 0);
               bitmapData._ctx.imageSmoothingEnabled = this._smoothing;
               bitmapData._ctx.mozImageSmoothingEnabled = this._smoothing;
               bitmapData._ctx.drawImage(symbol.img, 0, 0);
