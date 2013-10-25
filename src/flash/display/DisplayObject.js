@@ -534,12 +534,18 @@ var DisplayObjectDefinition = (function () {
       this._name = val;
     },
     get mouseX() {
+      if (!this._stage) {
+        return 0;
+      }
       p1.x = this._stage._mouseX;
       p1.y = this._stage._mouseY;
       this._applyCurrentInverseTransform(p1);
       return p1.x;
     },
     get mouseY() {
+      if (!this._stage) {
+        return 0;
+      }
       p1.x = this._stage._mouseX;
       p1.y = this._stage._mouseY;
       this._applyCurrentInverseTransform(p1);
