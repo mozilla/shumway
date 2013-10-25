@@ -248,6 +248,7 @@ var Stubs = new (function () {
     M("flash.media.Video", "VideoClass", VideoDefinition),
     M("flash.media.ID3Info", "ID3InfoClass", ID3InfoDefinition),
 
+    M("flash.net.FileFilter", "FileFilterClass", FileFilterDefinition),
     M("flash.net.NetConnection", "NetConnectionClass", NetConnectionDefinition),
     M("flash.net.NetStream", "NetStreamClass", NetStreamDefinition),
     M("flash.net.Responder", "ResponderClass", ResponderDefinition),
