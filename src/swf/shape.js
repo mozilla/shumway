@@ -375,7 +375,6 @@ function segmentedPathToShapePath(path, isMorph) {
 
   current = finalRoot;
   while (current) {
-    var offset = 0;
     var commands = current.commands;
     var data = current.data;
     var morphData = current.morphData;
@@ -383,11 +382,9 @@ function segmentedPathToShapePath(path, isMorph) {
     // If the segment's first moveTo goes to the current coordinates,
     // we have to skip it. Removing those in the previous loop would be too
     // costly, and we might share the arrays with another style's path.
-    if (data[0] === allData[dataIndex - 2] &&
-        data[1] === allData[dataIndex - 1])
-    {
-      offset = 1;
-    }
+    var offset = +(data[0] === allData[dataIndex - 2] &&
+                   data[1] === allData[dataIndex - 1]);
+
     for (var i = offset; i < commands.length; i++, commandsIndex++) {
       allCommands[commandsIndex] = commands[i];
     }
@@ -658,8 +655,8 @@ ShapePath.prototype = {
     var formOpen = false;
     var formOpenX = 0;
     var formOpenY = 0;
-    for (var j = 0, k = 0; j < commands.length; j++) {
-      if (!this.isMorph) {
+    if (!this.isMorph) {
+      for (var j = 0, k = 0; j < commands.length; j++) {
         switch (commands[j]) {
           case SHAPE_MOVE_TO:
             formOpen = true;
@@ -728,10 +725,16 @@ ShapePath.prototype = {
             }
             break;
           default:
+            // Sometimes, the very last command isn't properly set. Ignore it.
+            if (commands[j] === 0 && j === commands.length -1) {
+              break;
+            }
             console.warn("Unknown drawing command encountered: " +
                          commands[j]);
         }
-      } else {
+      }
+    } else {
+      for (var j = 0, k = 0; j < commands.length; j++) {
         switch (commands[j]) {
           case SHAPE_MOVE_TO:
             ctx.moveTo(morph(data[k]/20, morphData[k++]/20, ratio),
