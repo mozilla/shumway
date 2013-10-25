@@ -19,6 +19,7 @@
 var ShumwayKeyboardListener = {
   _lastKeyCode: 0,
   _captureKeyPress: false,
+  _charCodeMap: [],
   focus: null,
   handleEvent: function (domEvt) {
     var keyCode = domEvt.keyCode;
@@ -31,9 +32,11 @@ var ShumwayKeyboardListener = {
       if (this._captureKeyPress) {
         return; // skipping keydown, waiting for keypress
       }
+      this._charCodeMap[keyCode] = 0;
     } else if (domEvt.type === 'keypress') {
       if (this._captureKeyPress) {
         keyCode = this._lastKeyCode;
+        this._charCodeMap[keyCode] = domEvt.charCode;
       } else {
         return;
       }
@@ -44,7 +47,7 @@ var ShumwayKeyboardListener = {
         domEvt.type === 'keyup' ? 'keyUp' : 'keyDown',
         true,
         false,
-        domEvt.charCode,
+        domEvt.type === 'keyup' ? this._charCodeMap[keyCode] : domEvt.charCode,
         domEvt.type === 'keyup' ? domEvt.keyCode : this._lastKeyCode,
         domEvt.keyLocation,
         domEvt.ctrlKey,
