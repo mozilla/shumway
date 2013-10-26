@@ -780,7 +780,9 @@ var Verifier = (function() {
           }
           var trait = classType.getTrait(mn, false, true);
           if (trait) {
-            ti().object = LazyInitializer.create(classType.object);
+            if (!mi.isInstanceInitializer) {
+              ti().object = LazyInitializer.create(classType.object);
+            }
             return classType;
           }
         }
