@@ -1430,7 +1430,7 @@ var ScriptInfo = (function scriptInfo() {
 
 var AbcFile = (function () {
   function abcFile(bytes, name) {
-    console.time("Parse ABC: " + name);
+    var parseStart = performance.now();
     this.name = name;
 
     var n, i;
@@ -1478,7 +1478,7 @@ var AbcFile = (function () {
       MethodInfo.parseBody(this, stream);
     }
 
-    console.timeEnd("Parse ABC: " + name);
+    console.info("Parse ABC: " + name + ":" + (performance.now() - parseStart));
   }
 
   function checkMagic(stream) {

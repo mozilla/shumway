@@ -226,8 +226,10 @@ var createName = function createName(namespaces, name) {
     return node;
   }
 
-  function warn(message) {
-    console.warn(message);
+  function info(message) {
+    if (!$RELEASE) {
+      console.info(message);
+    }
   }
 
   function unary(operator, argument) {
@@ -581,7 +583,7 @@ var createName = function createName(namespaces, name) {
               if (ti.object instanceof Global && !ti.object.isExecuting()) {
                 // If we find the property in a global whose script hasn't been executed yet
                 // we have to emit the slow path so it gets executed.
-                warn("Can't optimize findProperty " + multiname + ", global object is not yet executed or executing.");
+                info("Can't optimize findProperty " + multiname + ", global object is not yet executed or executing.");
                 return slowPath;
               }
               return constant(ti.object);
@@ -589,7 +591,7 @@ var createName = function createName(namespaces, name) {
               return getScopeObject(topScope(ti.scopeDepth));
             }
           }
-          warn("Can't optimize findProperty " + multiname);
+          info("Can't optimize findProperty " + multiname);
           return slowPath;
         }
 
@@ -707,7 +709,7 @@ var createName = function createName(namespaces, name) {
               return store(new IR.ASGetProperty(region, state.store, object, multiname, IR.Flags.INDEXED | (getOpenMethod ? IR.Flagas.IS_METHOD : 0)));
             }
           }
-          warn("Can't optimize getProperty " + multiname);
+          info("Can't optimize getProperty " + multiname);
           var qn = resolveMultinameGlobally(multiname);
           if (qn) {
             return store(new IR.ASGetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), IR.Flags.RESOLVED | (getOpenMethod ? IR.Flagas.IS_METHOD : 0)));
@@ -731,7 +733,7 @@ var createName = function createName(namespaces, name) {
               return store(new IR.ASSetProperty(region, state.store, object, multiname, value, IR.Flags.INDEXED));
             }
           }
-          warn("Can't optimize setProperty " + multiname);
+          info("Can't optimize setProperty " + multiname);
           var qn = resolveMultinameGlobally(multiname);
           if (qn) {
             // TODO: return store(new IR.SetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), value));
@@ -755,7 +757,7 @@ var createName = function createName(namespaces, name) {
               return store(new IR.GetProperty(region, state.store, object, constant(slotQn)));
             }
           }
-          warn("Can't optimize getSlot " + index);
+          info("Can't optimize getSlot " + index);
           return store(new IR.ASGetSlot(null, state.store, object, index));
         }
 
@@ -768,7 +770,7 @@ var createName = function createName(namespaces, name) {
               return;
             }
           }
-          warn("Can't optimize setSlot " + index);
+          info("Can't optimize setSlot " + index);
           store(new IR.ASSetSlot(region, state.store, object, index, value));
         }
 
