@@ -48,12 +48,8 @@ function AS2Context(swfVersion) {
 }
 AS2Context.instance = null;
 AS2Context.prototype = {
-  addAssets: function(assets) {
-    for (var i = 0; i < assets.length; i++) {
-      if (assets[i].className) {
-        this.assets[assets[i].className] = assets[i];
-      }
-    }
+  addAsset: function(className, symbolProps) {
+    this.assets[className] = symbolProps;
   },
   resolveTarget: function(target) {
     if (!target) {
@@ -314,7 +310,7 @@ function as2CreatePrototypeProxy(obj) {
   });
 }
 
-function executeActions(actionsData, context, scope, assets) {
+function executeActions(actionsData, context, scope) {
   var actionTracer = ActionTracerFactory.get();
 
   var scopeContainer = context.initialScope.create(scope);
@@ -323,9 +319,6 @@ function executeActions(actionsData, context, scope, assets) {
     AS2Context.instance = context;
     context.defaultTarget = scope;
     context.globals.asSetPublicProperty('this', scope);
-    if (assets) {
-      context.addAssets(assets);
-    }
     actionTracer.message('ActionScript Execution Starts');
     actionTracer.indent();
     interpretActions(actionsData, scopeContainer, null, []);
