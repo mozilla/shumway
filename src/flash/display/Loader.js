@@ -95,12 +95,12 @@ var LoaderDefinition = (function () {
 
     var commitData;
     if (loader) {
-      commitData = function (data) {
+      commitData = function (data, transferables) {
         return loader._commitData(data);
       };
     } else {
-      commitData = function (data) {
-        self.postMessage(data);
+      commitData = function (data, transferables) {
+        self.postMessage(data, transferables);
       };
     }
 
@@ -117,7 +117,7 @@ var LoaderDefinition = (function () {
         break;
       case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS:
       case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2:
-        symbol = defineBitmap(swfTag, symbols);
+        symbol = defineBitmap(swfTag);
         break;
       case SWF_TAG_CODE_DEFINE_BUTTON:
       case SWF_TAG_CODE_DEFINE_BUTTON2:
@@ -147,6 +147,7 @@ var LoaderDefinition = (function () {
         symbol = {
           type: 'binary',
           id: swfTag.id,
+          // TODO: make transferable
           data: swfTag.data
         };
         break;
@@ -174,6 +175,7 @@ var LoaderDefinition = (function () {
             break;
           case SWF_TAG_CODE_SOUND_STREAM_HEAD:
             try {
+              // TODO: make transferable
               soundStream = createSoundStream(tag);
               frame.soundStream = soundStream.info;
             } catch (e) {
@@ -240,7 +242,7 @@ var LoaderDefinition = (function () {
 
       symbol.isSymbol = true;
       symbols[swfTag.id] = symbol;
-      commitData(symbol);
+      commitData(symbol, symbol.transferables);
     }
     function createParsingContext() {
       var depths = { };
@@ -313,6 +315,7 @@ var LoaderDefinition = (function () {
               break;
             case SWF_TAG_CODE_SOUND_STREAM_HEAD:
               try {
+                // TODO: make transferable
                 soundStream = createSoundStream(tag);
                 frame.soundStream = soundStream.info;
               } catch (e) {
