@@ -227,11 +227,8 @@ var createName = function createName(namespaces, name) {
   }
 
   function info(message) {
-    if (!$RELEASE) {
-      console.info(message);
-    }
+    console.info(message);
   }
-
   function unary(operator, argument) {
     var node = new Unary(operator, argument);
     if (peepholeOptimizer) {
