@@ -30,14 +30,15 @@ var AS2MovieClipDefinition = (function () {
       return this.$nativeObject._duplicate(name, depth, initObject);
     },
     _constructSymbol: function constructSymbol(symbolId, name) {
-      var theClass = AS2Context.instance.classes && AS2Context.instance.classes[name];
-      if (!theClass) {
-        return;
-      }
+      var theClass = AS2Context.instance.classes && AS2Context.instance.classes[symbolId];
+      var symbolProps = AS2Context.instance.assets[symbolId];
 
-      var mc = new flash.display.MovieClip();
+      var symbolClass = flash.display.MovieClip.class;
+      var mc = symbolClass.createAsSymbol(symbolProps);
       mc._avm1SymbolClass = theClass;
+      symbolClass.instanceConstructor.call(mc);
       this.$nativeObject.addChild(mc);
+
       return mc;
     },
     _gotoLabel: function (label) {

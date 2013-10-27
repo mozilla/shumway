@@ -44,7 +44,7 @@
           SWF_TAG_CODE_SET_BACKGROUND_COLOR, SWF_TAG_CODE_SHOW_FRAME,
           SWF_TAG_CODE_SOUND_STREAM_BLOCK, SWF_TAG_CODE_SOUND_STREAM_HEAD,
           SWF_TAG_CODE_START_SOUND, SWF_TAG_CODE_SYMBOL_CLASS,
-          SWF_TAG_CODE_DEFINE_BINARY_DATA */
+          SWF_TAG_CODE_DEFINE_BINARY_DATA, SWF_TAG_CODE_EXPORT_ASSETS */
 // Ignoring "The Function constructor is a form of eval."
 /*jshint -W054 */
 // TODO: Investigate "Don't make functions within a loop."
@@ -325,12 +325,19 @@ var LoaderDefinition = (function () {
                 frame.soundStreamBlock = soundStream.decode(tag.data);
               }
               break;
-            case SWF_TAG_CODE_SYMBOL_CLASS:
+            case SWF_TAG_CODE_EXPORT_ASSETS:
               var exports = frame.exports;
               if (exports)
                 frame.exports = exports.concat(tag.exports);
               else
                 frame.exports = tag.exports.slice(0);
+              break;
+            case SWF_TAG_CODE_SYMBOL_CLASS:
+              var symbolClasses = frame.symbolClasses;
+              if (symbolClasses)
+                frame.symbolClasses = symbolClasses.concat(tag.exports);
+              else
+                frame.symbolClasses = tag.exports.slice(0);
               break;
             case SWF_TAG_CODE_FRAME_LABEL:
               frame.labelName = tag.name;
@@ -615,6 +622,7 @@ var LoaderDefinition = (function () {
       var actionBlocks = frame.actionBlocks;
       var initActionBlocks = frame.initActionBlocks;
       var exports = frame.exports;
+      var symbolClasses = frame.symbolClasses;
       var sceneData = frame.sceneData;
       var loader = this;
       var dictionary = loader._dictionary;
@@ -649,7 +657,27 @@ var LoaderDefinition = (function () {
           }
         }
 
-        if (exports && loader._isAvm2Enabled) {
+        if (symbolClasses && loader._isAvm2Enabled) {
+          var symbolClassesPromises = [];
+          for (var i = 0, n = symbolClasses.length; i < n; i++) {
+            var asset = symbolClasses[i];
+            var symbolPromise = dictionary[asset.symbolId];
+            if (!symbolPromise)
+              continue;
+            symbolPromise.then(
+              (function(symbolPromise, className) {
+                return function symbolPromiseResolved() {
+                  var symbolInfo = symbolPromise.value;
+                  symbolInfo.className = className;
+                  avm2.applicationDomain.getClass(className).setSymbol(symbolInfo.props);
+                };
+              })(symbolPromise, asset.className)
+            );
+            symbolClassesPromises.push(symbolPromise);
+          }
+          return Promise.when.apply(Promise, symbolClassesPromises);
+        }
+        if (exports && !loader._isAvm2Enabled) {
           var exportPromises = [];
           for (var i = 0, n = exports.length; i < n; i++) {
             var asset = exports[i];
@@ -660,8 +688,7 @@ var LoaderDefinition = (function () {
               (function(symbolPromise, className) {
                 return function symbolPromiseResolved() {
                   var symbolInfo = symbolPromise.value;
-                  symbolInfo.className = className;
-                  avm2.applicationDomain.getClass(className).setSymbol(symbolInfo.props);
+                  loader._avm1Context.addAsset(className, symbolInfo.props);
                 };
               })(symbolPromise, asset.className)
             );
@@ -809,7 +836,7 @@ var LoaderDefinition = (function () {
               root.addFrameScript(frameNum - 1, function(actionsData, spriteId, state) {
                 if (state.executed) return;
                 state.executed = true;
-                return executeActions(actionsData, avm1Context, this._getAS2Object(), exports);
+                return executeActions(actionsData, avm1Context, this._getAS2Object());
               }.bind(root, actionsData, spriteId, {executed: false}));
             }
           }
@@ -819,7 +846,7 @@ var LoaderDefinition = (function () {
               var block = actionBlocks[i];
               root.addFrameScript(frameNum - 1, (function(block) {
                 return function () {
-                  return executeActions(block, avm1Context, this._getAS2Object(), exports);
+                  return executeActions(block, avm1Context, this._getAS2Object());
                 };
               })(block));
             }
