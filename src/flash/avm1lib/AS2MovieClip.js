@@ -40,6 +40,9 @@ var AS2MovieClipDefinition = (function () {
       this.$nativeObject.addChild(mc);
       return mc;
     },
+    _gotoLabel: function (label) {
+      this.$nativeObject.gotoLabel(label);
+    },
     _callFrame: function callFrame(frame) {
       this.$nativeObject._callFrame(frame);
     },
@@ -68,6 +71,7 @@ var AS2MovieClipDefinition = (function () {
         _duplicate: def._duplicate,
         _constructSymbol: def._constructSymbol,
         _callFrame: def._callFrame,
+        _gotoLabel: def._gotoLabel,
       }
     },
     script: {

@@ -138,8 +138,10 @@ package avm1lib {
     }
 
     public function gotoLabel(label) {
-      var nativeObject = AS2Utils.resolveTarget()._as3Object;
-      _addToPendingScripts(nativeObject, nativeObject.gotoLabel, [label]);
+      var nativeTarget = AS2Utils.resolveTarget();
+      _addToPendingScripts(nativeTarget, function (subject, label) {
+        subject._gotoLabel(label);
+      }, [nativeTarget, label]);
     }
 
     public function ifFrameLoaded(scene, frame) {
