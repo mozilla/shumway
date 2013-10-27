@@ -117,8 +117,8 @@ function applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph)
  * See http://blogs.msdn.com/b/mswanson/archive/2006/02/27/539749.aspx and
  * http://wahlers.com.br/claus/blog/hacking-swf-1-shapes-in-flash/ for details.
  */
-function convertRecordsToStyledPaths(records, fillPaths, linePaths,
-                                     dictionary, dependencies, recordsMorph)
+function convertRecordsToStyledPaths(records, fillPaths, linePaths, dictionary,
+                                     dependencies, recordsMorph, transferables)
 {
   var isMorph = recordsMorph !== null;
   var styles = {fill0: 0, fill1: 0, line: 0};
@@ -181,7 +181,8 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       if (record.move) {
         x = record.moveX|0;
         y = record.moveY|0;
-        // When morphed, StyleChangeRecords/MoveTo might not have a corresponding record in the start or end shape --
+        // When morphed, StyleChangeRecords/MoveTo might not have a
+        // corresponding record in the start or end shape --
         // processing morphRecord below before converting type 1 records.
       }
 
@@ -288,13 +289,14 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths,
       removeCount++;
       continue;
     }
-    allFillPaths[i - removeCount] = segmentedPathToShapePath(path, isMorph);
+    allFillPaths[i - removeCount] = segmentedPathToShapePath(path, isMorph,
+                                                             transferables);
   }
   allFillPaths.length -= removeCount;
   return allFillPaths;
 }
 
-function segmentedPathToShapePath(path, isMorph) {
+function segmentedPathToShapePath(path, isMorph, transferables) {
   var start = path.head();
   var end = start;
 
@@ -364,7 +366,7 @@ function segmentedPathToShapePath(path, isMorph) {
   }
 
   var shape = new ShapePath(path.fillStyle, path.lineStyle, totalCommandsLength,
-                            totalDataLength, isMorph);
+                            totalDataLength, isMorph, transferables);
   var allCommands = shape.commands;
   var allData = shape.data;
   var allMorphData = shape.morphData;
@@ -483,13 +485,15 @@ function createPathsList(styles, isLineStyle, dictionary, dependencies) {
 }
 function defineShape(tag, dictionary) {
   var dependencies = [];
+  var transferables = [];
   var fillPaths = createPathsList(tag.fillStyles, false,
                                   dictionary, dependencies);
   var linePaths = createPathsList(tag.lineStyles, true,
                                   dictionary, dependencies);
   var paths = convertRecordsToStyledPaths(tag.records, fillPaths, linePaths,
                                           dictionary, dependencies,
-                                          tag.recordsMorph || null);
+                                          tag.recordsMorph || null,
+                                          transferables);
 
   if (tag.bboxMorph) {
     var mbox = tag.bboxMorph;
@@ -510,7 +514,8 @@ function defineShape(tag, dictionary) {
     bboxMorph: tag.bboxMorph,
     isMorph: tag.isMorph,
     paths: paths,
-    require: dependencies.length ? dependencies : null
+    require: dependencies.length ? dependencies : null,
+    transferables: transferables
   };
 }
 
@@ -581,7 +586,8 @@ var SHAPE_CUBIC_CURVE_TO = 6;
 var SHAPE_CIRCLE         = 7;
 var SHAPE_ELLIPSE        = 8;
 
-function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph)
+function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph,
+                   transferables)
 {
   this.fillStyle = fillStyle;
   this.lineStyle = lineStyle;
@@ -602,6 +608,22 @@ function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph)
 
   this.isMorph = !!isMorph;
   this.fullyInitialized = false;
+  // SpiderMonkey bug 841904 causes typed arrays to lose their buffers during
+  // worker#postMessage under some conditions. To work around this while still
+  // being able to move buffers instead of copying them, we have to store the
+  // buffers themselves, too, and restore the typed arrays after postMessage.
+  if (inWorker) {
+    assert(transferables);
+    this.buffers = [this.commands.buffer, this.data.buffer];
+    transferables.push(this.commands.buffer, this.data.buffer);
+    if (isMorph) {
+      this.buffers.push(this.morphData.buffer);
+      transferables.push(this.morphData.buffer);
+    }
+  }
+  else {
+    this.buffers = null;
+  }
 }
 
 ShapePath.prototype = {
@@ -1627,9 +1649,14 @@ function finishShapePath(path, dictionary) {
   if (!(path instanceof ShapePath)) {
     var untypedPath = path;
     path = new ShapePath(path.fillStyle, path.lineStyle, 0, 0, path.isMorph);
-    path.commands = untypedPath.commands;
-    path.data = untypedPath.data;
-    path.morphData = untypedPath.morphData;
+    // See the comment in the ShapePath ctor for why we're recreating the
+    // typed arrays here.
+    path.commands = new Uint8Array(untypedPath.buffers[0]);
+    path.data = new Int32Array(untypedPath.buffers[1]);
+    if (untypedPath.isMorph) {
+      path.morphData = new Int32Array(untypedPath.buffers[2]);
+    }
+    path.buffers = null;
   }
   path.fillStyle && initStyle(path.fillStyle, dictionary);
   path.lineStyle && initStyle(path.lineStyle, dictionary);
