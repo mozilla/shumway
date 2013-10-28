@@ -88,10 +88,7 @@ SWF.embed = function(file, doc, container, options) {
       }
     });
     canvas.addEventListener('mousedown', function () {
-      if (stage._mouseTarget._buttonMode) {
-        stage._mouseTarget._gotoButtonState('down');
-      }
-      stage._mouseTarget._dispatchEvent('mouseDown');
+      stage._mouseEvents.push('mousedown');
     });
     canvas.addEventListener('mousemove', function (domEvt) {
       var node = this;
@@ -115,10 +112,7 @@ SWF.embed = function(file, doc, container, options) {
       }
     });
     canvas.addEventListener('mouseup', function () {
-      if (stage._mouseTarget._buttonMode) {
-        stage._mouseTarget._gotoButtonState('over');
-      }
-      stage._mouseTarget._dispatchEvent('mouseUp');
+      stage._mouseEvents.push('mouseup');
     });
     canvas.addEventListener('mouseover', function () {
       stage._mouseMoved = true;
