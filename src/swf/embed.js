@@ -102,8 +102,8 @@ SWF.embed = function(file, doc, container, options) {
       }
 
       var m = stage._concatenatedTransform;
-      var mouseX = ((domEvt.pageX - left) * pixelRatio - m.tx) / m.a;
-      var mouseY = ((domEvt.pageY - top) * pixelRatio - m.ty) / m.d;
+      var mouseX = ((domEvt.pageX - left) * pixelRatio - m.tx / 20) / m.a;
+      var mouseY = ((domEvt.pageY - top) * pixelRatio - m.ty / 20) / m.d;
 
       if (mouseX !== stage._mouseX || mouseY !== stage._mouseY) {
         stage._mouseMoved = true;
