@@ -33,7 +33,7 @@ if (!this.performance) {
   this.performance = {};
 }
 if (!this.performance.now) {
-  this.performance.now = Date.now;
+  this.performance.now = dateNow;
 }
 
 function backtrace() {
