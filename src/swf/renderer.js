@@ -758,6 +758,8 @@ function renderStage(stage, ctx, events) {
     if (stage._mouseMoved) {
       stage._mouseMoved = false;
       mouseMoved = stage._mouseOver;
+    } else {
+      stage._handleMouseButtons();
     }
 
     if (renderFrame || refreshStage || mouseMoved) {
