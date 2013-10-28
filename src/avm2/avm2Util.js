@@ -1471,3 +1471,20 @@ var CircularBuffer = (function () {
   };
   return circularBuffer;
 })();
+
+function lazyClass(holder, name, initialize) {
+  Object.defineProperty(holder, name, {
+    get: function () {
+      var start = performance.now();
+      var value = initialize();
+      print("Initialized Class: " + name + " " + (performance.now() - start).toFixed(4));
+      assert (value);
+      Object.defineProperty(holder, name, { value: value, writable: true });
+      return value;
+    }, configurable: true
+  });
+}
+
+function createNewCompartment() {
+  return newGlobal('new-compartment');
+}
