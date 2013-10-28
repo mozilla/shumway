@@ -16,10 +16,8 @@
  * limitations under the License.
  */
 
-var debug = true;
 var $DEBUG;
 var release = false;
-var compatibility = true;
 
 /**
  * Allow overwriting of the native toString / valueOf with AS3 versions.
