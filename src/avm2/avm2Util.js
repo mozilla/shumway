@@ -62,12 +62,6 @@ function assert(condition) {
   }
 }
 
-function assertFalse(condition, message) {
-  if (condition) {
-    error(message);
-  }
-}
-
 function assertNotImplemented(condition, message) {
   if (!condition) {
     error("NotImplemented: " + message);
@@ -1439,26 +1433,6 @@ var Callback = (function () {
   };
   return callback;
 })();
-
-// Dump the bytes of an ArrayBuffer.
-function dumpBytes(buffer, start, length) {
-  var s = "";
-  bytes = new Uint8Array(buffer, start, length);
-  var end = length;
-  for (var i = 0; i < end; i++) {
-    if (((i) % 16) === 0) {
-      s += "\n" + (start + i) + ": ";
-    }
-    s += bytes[i] + " ";
-  }
-  return s;
-}
-
-function addProfileMarker(marker) {
-  if (typeof FirefoxCom !== "undefined") {
-    FirefoxCom.requestSync('addProfilerMarker', marker );
-  }
-}
 
 var CircularBuffer = (function () {
   var mask = 0xFFF, size = 4096;
