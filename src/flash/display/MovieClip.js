@@ -211,6 +211,8 @@ var MovieClipDefinition = (function () {
             currentChild.blendMode = this._resolveBlendMode(nextCmd.blendMode);
           }
 
+          currentDisplayListItem.cmd = nextCmd;
+
           continue;
         }
 
