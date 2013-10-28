@@ -760,6 +760,12 @@ var TextFieldDefinition = (function () {
     },
     setTextFormat: function (format, beginIndex /*:int = -1*/, endIndex /*:int = -1*/) {
       this.defaultTextFormat = format;// TODO
+      if (this._content && this._content.text === this._content.htmlText) {
+        // HACK replacing format for non-html text
+        var text = this.text;
+        this._content = null;
+        this.text = text;
+      }
       this.invalidateDimensions();
     },
 

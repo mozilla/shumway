@@ -219,6 +219,7 @@ package avm1lib {
     }
     public function gotoAndPlay(frame) { return this._as3Object.gotoAndPlay(frame); }
     public function gotoAndStop(frame) { return this._as3Object.gotoAndStop(frame); }
+    public native function _gotoLabel(label);
     public function get _height() { return this._as3Object.height; }
     public function set _height(value) { this._as3Object.height = value; }
     public function get _highquality() { return 1; }

@@ -88,10 +88,7 @@ SWF.embed = function(file, doc, container, options) {
       }
     });
     canvas.addEventListener('mousedown', function () {
-      if (stage._mouseTarget._buttonMode) {
-        stage._mouseTarget._gotoButtonState('down');
-      }
-      stage._mouseTarget._dispatchEvent('mouseDown');
+      stage._mouseEvents.push('mousedown');
     });
     canvas.addEventListener('mousemove', function (domEvt) {
       var node = this;
@@ -105,8 +102,8 @@ SWF.embed = function(file, doc, container, options) {
       }
 
       var m = stage._concatenatedTransform;
-      var mouseX = ((domEvt.pageX - left) * pixelRatio - m.tx) / m.a;
-      var mouseY = ((domEvt.pageY - top) * pixelRatio - m.ty) / m.d;
+      var mouseX = ((domEvt.pageX - left) * pixelRatio - m.tx / 20) / m.a;
+      var mouseY = ((domEvt.pageY - top) * pixelRatio - m.ty / 20) / m.d;
 
       if (mouseX !== stage._mouseX || mouseY !== stage._mouseY) {
         stage._mouseMoved = true;
@@ -115,10 +112,7 @@ SWF.embed = function(file, doc, container, options) {
       }
     });
     canvas.addEventListener('mouseup', function () {
-      if (stage._mouseTarget._buttonMode) {
-        stage._mouseTarget._gotoButtonState('over');
-      }
-      stage._mouseTarget._dispatchEvent('mouseUp');
+      stage._mouseEvents.push('mouseup');
     });
     canvas.addEventListener('mouseover', function () {
       stage._mouseMoved = true;
@@ -174,7 +168,7 @@ SWF.embed = function(file, doc, container, options) {
   }
 
 
-  loader.load(typeof file === 'string' ? new flash.net.URLRequest(file) : file);
+  loader._load(typeof file === 'string' ? new flash.net.URLRequest(file) : file);
 
   return loader;
 };

@@ -43,6 +43,7 @@ var StageDefinition = (function () {
       this._invalidObjects = [];
       this._mouseMoved = false;
       this._mouseTarget = this;
+      this._mouseEvents = [];
       this._cursor = 'auto';
 
       this._concatenatedTransform.invalid = false;
@@ -199,6 +200,27 @@ var StageDefinition = (function () {
       }
 
       return invalidPath;
+    },
+
+    _handleMouseButtons: function () {
+      if (this._mouseEvents.length === 0) {
+        return;
+      }
+      var eventType = this._mouseEvents.shift();
+      switch (eventType) {
+      case 'mousedown':
+        if (this._mouseTarget._buttonMode) {
+          this._mouseTarget._gotoButtonState('down');
+        }
+        this._mouseTarget._dispatchEvent('mouseDown');
+        break;
+      case 'mouseup':
+        if (this._mouseTarget._buttonMode) {
+          this._mouseTarget._gotoButtonState('over');
+        }
+        this._mouseTarget._dispatchEvent('mouseUp');
+        break;
+      }
     },
 
     _handleMouse: function handleMouse() {

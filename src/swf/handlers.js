@@ -579,6 +579,19 @@ var tagHandler=(function (global) {
     $.data = readBinary($bytes, $stream, 0);
     return $;
   }
+  function exportAssets($bytes, $stream, $, swfVersion, tagCode) {
+    $ || ($ = {});
+    var exportsCount = readUi16($bytes, $stream);
+    var $0 = $.exports = [];
+    var $1 = exportsCount;
+    while ($1--) {
+      var $2 = {};
+      $2.symbolId = readUi16($bytes, $stream);
+      $2.className = readString($bytes, $stream, 0);
+      $0.push($2);
+    }
+    return $;
+  }
   function symbolClass($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     var symbolCount = readUi16($bytes, $stream);
@@ -1406,7 +1419,7 @@ var tagHandler=(function (global) {
     /* SoundStreamHead2 */              45: soundStreamHead,
     /* DefineMorphShape */              46: defineShape,
     /* DefineFont2 */                   48: defineFont2,
-    /* ExportAssets */                  56: undefined,
+    /* ExportAssets */                  56: exportAssets,
     /* ImportAssets */                  57: undefined,
     /* EnableDebugger */                58: undefined,
     /* DoInitAction */                  59: doAction,

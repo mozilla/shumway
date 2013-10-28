@@ -653,8 +653,8 @@ function renderStage(stage, ctx, events) {
     var m = stage._concatenatedTransform;
     m.a = scaleX;
     m.d = scaleY;
-    m.tx = offsetX;
-    m.ty = offsetY;
+    m.tx = offsetX * 20;
+    m.ty = offsetY * 20;
   }
 
   updateRenderTransform();
@@ -758,6 +758,8 @@ function renderStage(stage, ctx, events) {
     if (stage._mouseMoved) {
       stage._mouseMoved = false;
       mouseMoved = stage._mouseOver;
+    } else {
+      stage._handleMouseButtons();
     }
 
     if (renderFrame || refreshStage || mouseMoved) {
