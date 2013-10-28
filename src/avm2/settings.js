@@ -17,7 +17,7 @@
  */
 
 var $DEBUG;
-var release = false;
+var release = true;
 
 /**
  * Allow overwriting of the native toString / valueOf with AS3 versions.

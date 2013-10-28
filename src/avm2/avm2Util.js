@@ -315,7 +315,7 @@ function isNumeric(x) {
 }
 
 function boxValue(value) {
-  if (isNullOrUndefined(value)) {
+  if (isNullOrUndefined(value) || isObject(value)) {
     return value;
   }
   return Object(value);

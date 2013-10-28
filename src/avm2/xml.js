@@ -732,7 +732,7 @@ var isXMLType, isXMLName, XMLParser;
       this.init(kind, uri, name, prefix);
     }
 
-    var c = new Class("XML", ASXML, Domain.passthroughCallable(ASXML));
+    var c = new Class("XML", ASXML, ApplicationDomain.passthroughCallable(ASXML));
     c.flags = FLAG_IGNORE_COMMENTS |
       FLAG_IGNORE_PROCESSING_INSTRUCTIONS |
       FLAG_IGNORE_WHITESPACE |
@@ -1466,7 +1466,7 @@ var isXMLType, isXMLName, XMLParser;
       this.children = [];
     }
 
-    var c = new Class("XMLList", ASXMLList, Domain.passthroughCallable(ASXMLList));
+    var c = new Class("XMLList", ASXMLList, ApplicationDomain.passthroughCallable(ASXMLList));
     c.extend(baseClass);
 
     var XLp = XMLList.prototype = ASXMLList.prototype;
@@ -2012,7 +2012,7 @@ var isXMLType, isXMLName, XMLParser;
       this.isAttr = mn.isAttribute();
     }
 
-    var c = new Class("QName", QName, Domain.passthroughCallable(QName));
+    var c = new Class("QName", QName, ApplicationDomain.passthroughCallable(QName));
     c.extend(baseClass);
     QNp = QName.prototype;
     defineNonEnumerableGetter(QNp, "localName", function () {

@@ -23,7 +23,7 @@ function ProxyClass(runtime, scope, instanceConstructor, baseClass) {
   function ProxyConstructor() {
     somewhatImplemented("Proxy");
   }
-  var c = new Class("Proxy", ProxyConstructor, Domain.coerceCallable(ProxyConstructor));
+  var c = new Class("Proxy", ProxyConstructor, ApplicationDomain.coerceCallable(ProxyConstructor));
   c.extendBuiltin(baseClass);
   return c;
 }

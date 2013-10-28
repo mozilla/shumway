@@ -44,8 +44,6 @@ var VM_OPEN_METHODS = "vm open methods";
 var VM_IS_CLASS = "vm is class";
 var VM_OPEN_METHOD_PREFIX = "open_";
 
-var VM_NATIVE_BUILTINS = [Object, Number, Boolean, String, Array, Date, RegExp];
-
 var VM_NATIVE_BUILTIN_SURROGATES = [
   { object: Object, methods: ["toString", "valueOf"] },
   { object: Function, methods: ["toString", "valueOf"] }
@@ -206,7 +204,7 @@ var LazyInitializer = (function () {
     } else if (this.target instanceof ClassInfo) {
       this.name = Multiname.getQualifiedName(target.instanceInfo.name);
       initialize = function () {
-        return target.abc.domain.getProperty(target.instanceInfo.name);
+        return target.abc.applicationDomain.getProperty(target.instanceInfo.name);
       };
     } else {
       notImplemented(target);
@@ -576,8 +574,8 @@ function initializeGlobalObject(global) {
     });
   });
 
-  VM_NATIVE_BUILTINS.forEach(function (o) {
-    defineReadOnlyProperty(o.prototype, VM_NATIVE_PROTOTYPE_FLAG, true);
+  ["Object", "Number", "Boolean", "String", "Array", "Date", "RegExp"].forEach(function (name) {
+    defineReadOnlyProperty(global[name].prototype, VM_NATIVE_PROTOTYPE_FLAG, true);
   });
 
   defineNonEnumerableProperty(global.Object.prototype, "getNamespaceResolutionMap", getNamespaceResolutionMap);
@@ -624,14 +622,14 @@ function initializeGlobalObject(global) {
     defineNonEnumerableProperty(global[name].prototype, "asSetProperty", asSetPropertyLikelyNumeric);
   });
 
-  Array.prototype.asGetProperty = function (namespaces, name, flags) {
+  global.Array.prototype.asGetProperty = function (namespaces, name, flags) {
     if (typeof name === "number") {
       return this[name];
     }
     return asGetProperty.call(this, namespaces, name, flags);
   };
 
-  Array.prototype.asSetProperty = function (namespaces, name, flags, value) {
+  global.Array.prototype.asSetProperty = function (namespaces, name, flags, value) {
     if (typeof name === "number") {
       this[name] = value;
       return;
@@ -639,7 +637,10 @@ function initializeGlobalObject(global) {
     return asSetProperty.call(this, namespaces, name, flags, value);
   };
 }
+
 initializeGlobalObject(jsGlobal);
+
+// initializeGlobalObject(jsGlobal);
 
 /**
  * Checks if the specified |object| is the prototype of a native JavaScript object.
@@ -846,9 +847,9 @@ var ScopeStack = (function () {
 
 var Scope = (function () {
   function scope(parent, object, isWith) {
-    release || assert (isObject(object));
     this.parent = parent;
-    this.object = object;
+    this.object = boxValue(object);
+    release || assert (isObject(this.object));
     this.global = parent ? parent.global : this;
     this.isWith = isWith;
     this.cache = createEmptyObject();
@@ -1211,30 +1212,29 @@ function CatchScopeObject(domain, trait) {
  * Global object for a script.
  */
 var Global = (function () {
-  function Global(script) {
+  function global(script) {
     this.scriptInfo = script;
     script.global = this;
     script.scriptBindings = new ScriptBindings(script, new Scope(null, this));
-    script.scriptBindings.applyTo(script.abc.domain, this);
-    // applyScriptTraits(script.abc.domain, this, new Scope(null, this), script.traits);
+    script.scriptBindings.applyTo(script.abc.applicationDomain, this);
     script.loaded = true;
   }
-  Global.prototype.toString = function () {
+  global.prototype.toString = function () {
     return "[object global]";
   };
-  Global.prototype.isExecuted = function () {
+  global.prototype.isExecuted = function () {
     return this.scriptInfo.executed;
   };
-  Global.prototype.isExecuting = function () {
+  global.prototype.isExecuting = function () {
     return this.scriptInfo.executing;
   };
-  Global.prototype.ensureExecuted = function () {
+  global.prototype.ensureExecuted = function () {
     ensureScriptIsExecuted(this.scriptInfo);
   };
-  defineNonEnumerableProperty(Global.prototype, Multiname.getPublicQualifiedName("toString"), function () {
+  defineNonEnumerableProperty(global.prototype, Multiname.getPublicQualifiedName("toString"), function () {
     return this.toString();
   });
-  return Global;
+  return global;
 })();
 
 function canCompile(mi) {
@@ -1620,7 +1620,7 @@ function createFunction(mi, scope, hasDynamicScope, breakpoint) {
   totalFunctionCount ++;
 
   var useInterpreter = false;
-  if ((mi.abc.domain.mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi)) && !forceCompile(mi)) {
+  if ((mi.abc.applicationDomain.mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi)) && !forceCompile(mi)) {
     useInterpreter = true;
   }
 
@@ -1670,7 +1670,7 @@ function ensureFunctionIsInitialized(methodInfo) {
 
     if (mi.needsActivation()) {
       mi.activationPrototype = new Activation(mi);
-      new ActivationBindings(mi).applyTo(mi.abc.domain, mi.activationPrototype);
+      new ActivationBindings(mi).applyTo(mi.abc.applicationDomain, mi.activationPrototype);
     }
 
     // If we have exceptions, make the catch scopes now.
@@ -1683,7 +1683,7 @@ function ensureFunctionIsInitialized(methodInfo) {
         varTrait.name = handler.varName;
         varTrait.typeName = handler.typeName;
         varTrait.holder = mi;
-        handler.scopeObject = new CatchScopeObject(mi.abc.domain, varTrait);
+        handler.scopeObject = new CatchScopeObject(mi.abc.applicationDomain, varTrait);
       } else {
         handler.scopeObject = new CatchScopeObject();
       }
@@ -1776,7 +1776,7 @@ function createClass(classInfo, baseClass, scope) {
 
   var ci = classInfo;
   var ii = ci.instanceInfo;
-  var domain = ci.abc.domain;
+  var domain = ci.abc.applicationDomain;
 
   var className = Multiname.getName(ii.name);
   if (traceExecution.value) {

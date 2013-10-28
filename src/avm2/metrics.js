@@ -17,9 +17,6 @@
  */
 
 (function (exports) {
-  if (!performance) {
-    performance = {now: Date.now};
-  }
   var Timer = (function () {
     var base = new timer(null, "Total"), top = base;
     var flat = new timer(null, "Flat"), flatStack = [];
@@ -75,7 +72,7 @@
         writer.writeLn("SHUMWAY$JSON " + JSON.stringify({timer: this}));
         return;
       }
-      writer.enter(this.name + ": " + this.total + " ms" +
+      writer.enter(this.name + ": " + this.total.toFixed(2) + " ms" +
                    ", count: " + this.count +
                    ", average: " + (this.total / this.count).toFixed(2) + " ms");
       for (var name in this.timers) {

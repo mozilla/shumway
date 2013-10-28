@@ -30,7 +30,7 @@ function DictionaryClass(domain, scope, instanceConstructor, baseClass) {
     this.primitiveMap = createEmptyObject();
   }
 
-  var c = new Class("Dictionary", ASDictionary, Domain.passthroughCallable(ASDictionary));
+  var c = new Class("Dictionary", ASDictionary, ApplicationDomain.passthroughCallable(ASDictionary));
   c.extendNative(baseClass, ASDictionary);
 
   function makePrimitiveKey(key) {

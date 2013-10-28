@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-var traitsWriter = null;  // new IndentingWriter();
+var traitsWriter = null; // new IndentingWriter();
 
 var Binding = (function () {
   function binding(trait) {
@@ -205,9 +205,9 @@ var Bindings = (function () {
    *
    */
   bindings.prototype.applyTo = function applyTo(domain, object) {
-    release || assert (!hasOwnProperty(object, VM_SLOTS));
-    release || assert (!hasOwnProperty(object, VM_BINDINGS));
-    release || assert (!hasOwnProperty(object, VM_OPEN_METHODS));
+    release || assert (!hasOwnProperty(object, VM_SLOTS), "Already has VM_SLOTS.");
+    release || assert (!hasOwnProperty(object, VM_BINDINGS), "Already has VM_BINDINGS.");
+    release || assert (!hasOwnProperty(object, VM_OPEN_METHODS), "Already has VM_OPEN_METHODS.");
 
     defineNonEnumerableProperty(object, VM_SLOTS, []);
     defineNonEnumerableProperty(object, VM_BINDINGS, []);
@@ -220,6 +220,7 @@ var Bindings = (function () {
 
     for (var key in this.map) {
       var binding = this.map[key];
+      assert (bindings);
       var trait = binding.trait;
       var qn = Multiname.getQualifiedName(trait.name);
       if (trait.isSlot() || trait.isConst() || trait.isClass()) {
@@ -519,7 +520,7 @@ var InstanceBindings = (function () {
     /**
      * Add interface traits.
      */
-    var domain = ii.abc.domain;
+    var domain = ii.abc.applicationDomain;
     var interfaces = ii.interfaces;
 
     // Collect all implemented interfaces.
@@ -663,9 +664,9 @@ var Class = (function () {
     }
 
     if (!callable) {
-      callable = Domain.coerceCallable(this);
-    } else if (callable === Domain.coerceCallable) {
-      callable = Domain.coerceCallable(this);
+      callable = ApplicationDomain.coerceCallable(this);
+    } else if (callable === ApplicationDomain.coerceCallable) {
+      callable = ApplicationDomain.coerceCallable(this);
     }
     defineNonEnumerableProperty(this, "call", callable.call);
     defineNonEnumerableProperty(this, "apply", callable.apply);
@@ -674,12 +675,12 @@ var Class = (function () {
   Class.createClass = function createClass(classInfo, baseClass, scope) {
     var ci = classInfo;
     var ii = ci.instanceInfo;
-    var domain = ci.abc.domain;
+    var domain = ci.abc.applicationDomain;
     var className = Multiname.getName(ii.name);
     var isNativeClass = ci.native;
     if (isNativeClass) {
-      var classBuilder = getNative(ci.native.cls);
-      if (!classBuilder) {
+      var buildClass = getNative(ci.native.cls);
+      if (!buildClass) {
         unexpected("No native for " + ci.native.cls);
       }
       // Special case Object, which has no base class but needs the Class class on the scope.
@@ -691,7 +692,7 @@ var Class = (function () {
     var instanceConstructor = createFunction(ii.init, classScope);
     var cls;
     if (isNativeClass) {
-      cls = classBuilder(domain, classScope, instanceConstructor, baseClass);
+      cls = buildClass(domain, classScope, instanceConstructor, baseClass);
     } else {
       cls = new Class(className, instanceConstructor);
     }
@@ -1027,7 +1028,7 @@ var Class = (function () {
     }
   };
 
-  var callable = Domain.coerceCallable(Class);
+  var callable = ApplicationDomain.coerceCallable(Class);
   defineNonEnumerableProperty(Class, "call", callable.call);
   defineNonEnumerableProperty(Class, "apply", callable.apply);
 

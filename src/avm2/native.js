@@ -214,13 +214,13 @@ var ASNamespace;
 
 var natives = (function () {
 
-  var C = Domain.passthroughCallable;
-  var CC = Domain.constructingCallable;
+  var C = ApplicationDomain.passthroughCallable;
+  var CC = ApplicationDomain.constructingCallable;
 
   /**
    * Object.as
    */
-  function ObjectClass(runtime, scope, instanceConstructor, baseClass) {
+  function ObjectClass(applicationDomain, scope, instanceConstructor, baseClass) {
     var c = new Class("Object", Object, C(Object));
 
     c.native = {
@@ -259,6 +259,7 @@ var natives = (function () {
         }
       }
     };
+
 
     c.dynamicPrototype = c.traitsPrototype = Object.prototype;
     c.setDefaultProperties();
@@ -1442,7 +1443,7 @@ var natives = (function () {
   }
 
   /**
-   * Domain.as
+   * ApplicationDomain.as
    */
   function DomainClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("File", instanceConstructor, C(instanceConstructor));
@@ -1451,7 +1452,7 @@ var natives = (function () {
       instance: {
         init: function (base) {
           this.base = base;
-          this.nativeObject = new Domain(avm2, base ? base.nativeObject : null);
+          this.nativeObject = new ApplicationDomain(avm2, base ? base.nativeObject : null);
         },
         loadBytes: function (byteArray, swfVersion) { // (byteArray:ByteArray, swfVersion:uint = 0);
           this.nativeObject.executeAbc(new AbcFile(byteArray.readRawBytes()));

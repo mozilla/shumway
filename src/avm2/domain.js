@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-var domainOptions = systemOptions.register(new OptionSet("Domain Options"));
+var domainOptions = systemOptions.register(new OptionSet("ApplicationDomain Options"));
 var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
 var traceDomain = domainOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
 
@@ -27,15 +27,15 @@ var EXECUTION_MODE = {
 
 function executeScript(script) {
   var abc = script.abc;
-  if (disassemble.value) {
-    abc.trace(new IndentingWriter());
-  }
-  if (traceExecution.value) {
-    print("Executing: " + abc.name + " " + script);
-  }
+//  if (disassemble.value) {
+//    abc.trace(new IndentingWriter());
+//  }
+//  if (traceExecution.value) {
+//    print("Executing: " + abc.name + " " + script);
+//  }
   release || assert(!script.executing && !script.executed);
   var global = new Global(script);
-  if (abc.domain.allowNatives) {
+  if (abc.applicationDomain.allowNatives) {
     global[Multiname.getPublicQualifiedName("unsafeJSNative")] = getNative;
   }
   script.executing = true;
@@ -60,11 +60,10 @@ Glue.PUBLIC_PROPERTIES = 0x1;
 Glue.PUBLIC_METHODS    = 0x2;
 Glue.ALL               = Glue.PUBLIC_PROPERTIES | Glue.PUBLIC_METHODS;
 
-var Domain = (function () {
-
-  function Domain(vm, base, mode, allowNatives) {
-    assert (vm instanceof AVM2, vm);
-    assert (isNullOrUndefined(base) || base instanceof Domain);
+var ApplicationDomain = (function () {
+  function applicationDomain(vm, base, mode, allowNatives) {
+    release || assert (vm instanceof AVM2);
+    release || assert (isNullOrUndefined(base) || base instanceof ApplicationDomain);
 
     this.vm = vm;
 
@@ -106,7 +105,7 @@ var Domain = (function () {
     }
   }
 
-  Domain.passthroughCallable = function passthroughCallable(f) {
+  applicationDomain.passthroughCallable = function passthroughCallable(f) {
     return {
       call: function ($this) {
         Array.prototype.shift.call(arguments);
@@ -118,7 +117,7 @@ var Domain = (function () {
     };
   };
 
-  Domain.coerceCallable = function coerceCallable(type) {
+  applicationDomain.coerceCallable = function coerceCallable(type) {
     return {
       call: function ($this, value) {
         return asCoerce(type, value);
@@ -129,7 +128,7 @@ var Domain = (function () {
     };
   };
 
-  Domain.constructingCallable = function constructingCallable(instanceConstructor) {
+  applicationDomain.constructingCallable = function constructingCallable(instanceConstructor) {
     return {
       call: function ($this) {
         return new Function.bind.apply(instanceConstructor, arguments);
@@ -140,7 +139,7 @@ var Domain = (function () {
     };
   };
 
-  Domain.prototype = {
+  applicationDomain.prototype = {
     getType: function getType(multiname) {
       return this.getProperty(multiname, true, true);
     },
@@ -179,7 +178,7 @@ var Domain = (function () {
 
     findDomainProperty: function findDomainProperty(multiname, strict, execute) {
       if (traceDomain.value) {
-        print("Domain.findDomainProperty: " + multiname);
+        print("ApplicationDomain.findDomainProperty: " + multiname);
       }
       var resolved = this.findDefiningScript(multiname, execute);
       if (resolved) {
@@ -281,7 +280,7 @@ var Domain = (function () {
         }
       }
 
-      Counter.count("Domain: findDefiningScript");
+      Counter.count("ApplicationDomain: findDefiningScript");
 
       var abcs = this.abcs;
       for (var i = 0; i < abcs.length; i++) {
@@ -320,7 +319,7 @@ var Domain = (function () {
     },
 
     compileAbc: function compileAbc(abc) {
-      console.time("Compile ABC: " + abc.name);
+      // console.time("Compile ABC: " + abc.name);
       this.loadAbc(abc);
       var writer = new IndentingWriter();
       writer.enter("var classes = {");
@@ -328,21 +327,21 @@ var Domain = (function () {
         compileScript(abc.scripts[i], writer);
       }
       writer.leave("}");
-      console.timeEnd("Compile ABC: " + abc.name);
+      //console.timeEnd("Compile ABC: " + abc.name);
     },
 
     executeAbc: function executeAbc(abc) {
-      console.time("Execute ABC: " + abc.name);
+      // console.time("Execute ABC: " + abc.name);
       this.loadAbc(abc);
       executeScript(abc.lastScript);
-      console.timeEnd("Execute ABC: " + abc.name);
+      // console.timeEnd("Execute ABC: " + abc.name);
     },
 
     loadAbc: function loadAbc(abc) {
       if (traceExecution.value) {
         print("Loading: " + abc.name);
       }
-      abc.domain = this;
+      abc.applicationDomain = this;
       GlobalMultinameResolver.loadAbc(abc);
       this.abcs.push(abc);
       if (!this.base) {
@@ -377,6 +376,28 @@ var Domain = (function () {
     }
   };
 
-  return Domain;
+  return applicationDomain;
 
+})();
+
+var SecurityDomain = (function () {
+  function securityDomain() {
+    this.compartment = createNewCompartment();
+    this.compartment.environment = environment;
+    this.compartment.homePath = homePath;
+    this.compartment.eval(snarf("compartment.js"));
+  }
+  securityDomain.prototype.initializeShell = function (sysMode, appMode) {
+    var compartment = this.compartment;
+    compartment.avm2 = new compartment.AVM2(sysMode, appMode);
+    compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/builtin/builtin.abc"));
+    compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/shell/shell.abc"));
+    compartment.avm2.systemDomain.installNative("getArgv", function() {
+      return [];
+    });
+    compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/avmplus/avmplus.abc"));
+    this.systemDomain = compartment.avm2.systemDomain;
+    this.applicationDomain = compartment.avm2.applicationDomain;
+  };
+  return securityDomain;
 })();

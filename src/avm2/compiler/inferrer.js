@@ -87,7 +87,7 @@ var Type = (function () {
       if (qn === Multiname.getPublicQualifiedName("void")) {
         return Type.Void;
       }
-      release || assert(domain, "Domain is needed.");
+      release || assert(domain, "ApplicationDomain is needed.");
       ty = domain.findClassInfo(mn);
       ty = ty ? type.from(ty, domain) : Type.Any;
       if (mn.hasTypeParameter()) {
@@ -567,7 +567,7 @@ var Verifier = (function() {
     function verification(methodInfo, scope) {
       this.scope = scope;
       this.methodInfo = methodInfo;
-      this.domain = methodInfo.abc.domain;
+      this.domain = methodInfo.abc.applicationDomain;
       this.writer = new IndentingWriter();
       this.returnType = Type.Undefined;
     }
@@ -704,7 +704,7 @@ var Verifier = (function() {
       var writer = verifierTraceLevel.value ? this.writer : null;
       var bytecodes = this.methodInfo.analysis.bytecodes;
 
-      var domain = this.methodInfo.abc.domain;
+      var domain = this.methodInfo.abc.applicationDomain;
       var multinames = this.methodInfo.abc.constantPool.multinames;
       var mi = this.methodInfo;
 
