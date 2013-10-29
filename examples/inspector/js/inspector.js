@@ -159,7 +159,13 @@ function executeFile(file, buffer, movieParams) {
   }
   var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  if (file.endsWith(".abc")) {
+
+  var url = document.createElement('a');
+  url.href = file;
+  url.search = '';
+  url.hash = '';
+  var filename = url.href;
+  if (filename.endsWith(".abc")) {
     libraryScripts = {};
     createAVM2(builtinPath, shellAbcPath, null, sysMode, appMode, function (avm2) {
       function runAbc(file, buffer) {
@@ -174,7 +180,7 @@ function executeFile(file, buffer, movieParams) {
         runAbc(file, buffer);
       }
     });
-  } else if (file.endsWith(".swf")) {
+  } else if (filename.endsWith(".swf")) {
     libraryScripts = playerGlobalScripts;
     createAVM2(builtinPath, playerGlobalAbcPath, avm1Path, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
@@ -205,7 +211,7 @@ function executeFile(file, buffer, movieParams) {
         runSWF(file, buffer);
       }
     });
-  } else if (file.endsWith(".js") || file.endsWith("/")) {
+  } else if (filename.endsWith(".js") || filename.endsWith("/")) {
     libraryScripts = playerGlobalScripts;
     createAVM2(builtinPath, playerGlobalAbcPath, null, sysMode, appMode, function (avm2) {
       if (file.endsWith("/")) {
