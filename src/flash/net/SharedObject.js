@@ -85,7 +85,7 @@ var SharedObjectDefinition = (function () {
         },
         instance: {
           setDirty: function setDirty(propertyName) { // (propertyName:String) -> void
-            notImplemented("SharedObject.setDirty");
+            somewhatImplemented("SharedObject.setDirty");
           },
           invoke: function invoke(index) { // (index:uint) -> any
             return invokeWithArgsArray.call(this, index,
