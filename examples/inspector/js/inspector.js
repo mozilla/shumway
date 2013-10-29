@@ -164,7 +164,7 @@ function executeFile(file, buffer, movieParams) {
   url.href = file;
   url.search = '';
   url.hash = '';
-  var filename = url.href;
+  var filename = url.href.replace(/\?#$/, ""); // ??? Chrome adds ?# at the end
   if (filename.endsWith(".abc")) {
     libraryScripts = {};
     createAVM2(builtinPath, shellAbcPath, null, sysMode, appMode, function (avm2) {
