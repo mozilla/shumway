@@ -373,7 +373,7 @@ package avm1lib {
     public function set _y(value) { this._as3Object.y = value;  }
     public function get _ymouse() { return this._as3Object.mouseY;  }
     public function get _yscale() { return this._as3Object.scaleY * 100;  }
-    public function set _yscale(value) { this._as3Object.scaleY = value * 100;  }
+    public function set _yscale(value) { this._as3Object.scaleY = value / 100;  }
 
     {
       AS2Utils.addEventHandlerProxy(prototype, 'onData', 'data');
