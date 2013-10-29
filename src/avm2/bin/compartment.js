@@ -20,7 +20,6 @@
 load(homePath + "src/avm2/settings.js");
 load(homePath + "src/avm2/avm2Util.js");
 
-
 if (false) {
   var oldLoad = load;
   load = function measureLoad(path) {

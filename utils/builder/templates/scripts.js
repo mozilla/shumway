@@ -54,7 +54,7 @@ load($SHUMWAY_ROOT + "src/swf/parser.js");
 load($SHUMWAY_ROOT + "src/avm1/stream.js");
 load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
 
-load($SHUMWAY_ROOT + "src/avm2/config.js");
+load($SHUMWAY_ROOT + "src/avm2/settings.js");
 load($SHUMWAY_ROOT + "src/avm2/avm2Util.js");
 load($SHUMWAY_ROOT + "src/avm2/metrics.js");
 
