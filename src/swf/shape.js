@@ -124,12 +124,14 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths, dictionary,
   var styles = {fill0: 0, fill1: 0, line: 0};
   var segment = null;
 
-  // fill- and lineStyles can be added by style change records in the middle of
+  // Fill- and line styles can be added by style change records in the middle of
   // a shape records list. All records refer to those new styles with a starting
   // offset of 1 again, so we just replace the current lists, but append all new
   // list entries to the original list which are stored in the generated symbol.
   var allFillPaths = fillPaths;
   var allLinePaths = linePaths;
+  // If no style is set for a segment of a path, a 1px black line is used.
+  var defaultPath;
 
   //TODO: remove the `- 1` once we stop even parsing the EOS record
   var numRecords = records.length - 1;
@@ -213,7 +215,18 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths, dictionary,
     // type 1 is a StraightEdge or CurvedEdge record
     else {
       assert(record.type === 1);
-      assert(segment);
+      if (!segment) {
+        if (!defaultPath) {
+          var style = {color:{red:0, green: 0, blue: 0, alpha: 255}, width: 20};
+          defaultPath = new SegmentedPath(null, processStyle(style, true));
+        }
+        segment = defaultPath.addSegment([], [], isMorph ? [] : null);
+        segment.commands.push(SHAPE_MOVE_TO);
+        segment.data.push(x, y);
+        if (isMorph) {
+          segment.morphData.push(morphX, morphY);
+        }
+      }
       if (isMorph) {
         // An invalid SWF might contain a move in the EndEdges list where the
         // StartEdges list contains an edge. The Flash Player seems to skip it,
@@ -281,6 +294,9 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths, dictionary,
   // After records processing completed, we can treat line paths just as we do
   // fill paths. The important thing is for them to come last.
   push.apply(allFillPaths, allLinePaths);
+  if (defaultPath) {
+    allFillPaths.push(defaultPath);
+  }
 
   var removeCount = 0;
   for (i = 0; i < allFillPaths.length; i++) {
@@ -408,7 +424,7 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     // TODO: Figure out how to handle startCapStyle
     style.lineCap = CAPS_STYLE_TYPES[style.endCapStyle|0];
     style.lineJoin = JOIN_STYLE_TYPES[style.joinStyle|0];
-    style.miterLimit = style.miterLimitFactor * 2;
+    style.miterLimit = (style.miterLimitFactor || 1.5) * 2;
     if (!style.color && style.hasFill) {
       var fillStyle = processStyle(style.fillStyle, false, dictionary,
                                    dependencies);
