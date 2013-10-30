@@ -56,13 +56,13 @@ var AS2UtilsDefinition = (function () {
     });
   }
 
-  var desc = Object.getOwnPropertyDescriptor;
-
   def.__glue__ = {
     native: {
       static: {
         getAS2Object: function (nativeObject) {
-          return nativeObject ? nativeObject._getAS2Object() : null;
+          return nativeObject && nativeObject._getAS2Object
+              ? nativeObject._getAS2Object()
+              : null;
         },
         addProperty: function (obj, propertyName, getter, setter) {
           obj.asDefinePublicProperty(propertyName, {
@@ -98,6 +98,6 @@ function initDefaultListeners(thisArg) {
   }
   for (var i = 0; i < defaultListeners.length; i++) {
     var p = defaultListeners[i];
-    p.setter.call(thisArg, p.value);
+    p.asGetPublicProperty('setter').call(thisArg, p.value);
   }
 }
