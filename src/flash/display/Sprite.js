@@ -322,7 +322,9 @@ var SpriteDefinition = (function () {
         }
       }
 
-      if (name) {
+      // Only set the name property for display objects that have AS2
+      // reflections. Some SWFs contain AS2 names for things like Shapes.
+      if (name && this._getAS2Object && instance._getAS2Object) {
         this._getAS2Object().asSetPublicProperty(name, instance._getAS2Object());
       }
     },
