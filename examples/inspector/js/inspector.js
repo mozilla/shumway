@@ -160,11 +160,7 @@ function executeFile(file, buffer, movieParams) {
   var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
 
-  var url = document.createElement('a');
-  url.href = file;
-  url.search = '';
-  url.hash = '';
-  var filename = url.href.replace(/\?#$/, ""); // ??? Chrome adds ?# at the end
+  var filename = file.split('?')[0].split('#')[0];
   if (filename.endsWith(".abc")) {
     libraryScripts = {};
     createAVM2(builtinPath, shellAbcPath, null, sysMode, appMode, function (avm2) {
