@@ -926,6 +926,9 @@ var TextFieldDefinition = (function () {
         getLineMetrics: function (lineIndex) { // (lineIndex:int) -> TextLineMetrics
           return this.getLineMetrics(lineIndex);
         },
+        setSelection: function (beginIndex, endIndex) {
+          somewhatImplemented("TextField.setSelection");
+        },
         scrollV: {
           get: function scrollV() {
             return this._scrollV;
