@@ -52,6 +52,12 @@ var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boole
 var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", false, "run in release mode (!release is the default)"));
 
 load(homePath + "src/avm2/metrics.js");
+load(homePath + "src/avm2/domain.js")
+load(homePath + "src/avm2/constants.js");
+load(homePath + "src/avm2/opcodes.js");
+load(homePath + "src/avm2/parser.js");
+load(homePath + "src/avm2/disassembler.js");
+
 
 var Timer = metrics.Timer;
 var Counter = new metrics.Counter();
@@ -66,8 +72,6 @@ var console = {
   warn: function (s) { print(s); },
   info: function (s) { print(s); }
 };
-
-load(homePath + "src/avm2/domain.js")
 
 argumentParser.addBoundOptionSet(systemOptions);
 
@@ -198,11 +202,6 @@ if (execute.value) {
   }
 
 } else if (disassemble.value) {
-  load(homePath + "src/avm2/constants.js");
-  load(homePath + "src/avm2/opcodes.js");
-  load(homePath + "src/avm2/parser.js");
-  load(homePath + "src/avm2/disassembler.js");
-
   abcFiles.map(function (abcFile) {
     return grabAbc(abcFile);
   }).forEach(function (abc) {

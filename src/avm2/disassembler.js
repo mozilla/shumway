@@ -341,7 +341,7 @@ var SourceTracer = (function () {
             }
             var getSet = trait.isGetter() ? "get " : (trait.isSetter() ? "set " : "");
             if (!mi.isNative()) {
-              print("XXX: " + prefix + getSet + trait.name.getName() + " ()");
+              // print("XXX: " + prefix + getSet + trait.name.getName() + " ()");
             }
           }
 
@@ -554,14 +554,7 @@ var SourceTracer = (function () {
         writer.leave("}");
       writer.leave("},");
       writer.enter("script: {");
-        writer.enter("static: {");
-        writer.writeLn("// ...");
-        // writeTraits(ci.traits, false, true);
-        writer.leave("},");
-        writer.enter("instance: {");
-        writeTraits(ii.traits, false);
-        // writer.writeLn("// ...");
-        writer.leave("}");
+        writer.writeLn("instance: Glue.ALL");
       writer.leave("}");
       writer.leave("}");
       writer.leave("};");
