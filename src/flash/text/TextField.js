@@ -923,6 +923,9 @@ var TextFieldDefinition = (function () {
                                                 line.height,
                                                 ascent, descent, leading);
         },
+        setSelection: function (beginIndex, endIndex) {
+          somewhatImplemented("TextField.setSelection");
+        },
         scrollV: {
           get: function scrollV() {
             return this._scrollV;

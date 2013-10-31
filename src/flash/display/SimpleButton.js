@@ -88,6 +88,11 @@ var SimpleButtonDefinition = (function () {
         case 'down': state = this._downState; break;
       }
 
+      if (!state) {
+        // XXX: no state found for the button, are we doing the right thing here?
+        return;
+      }
+
       var currentChild = this._children[0];
       if (currentChild) {
         if (currentChild === state) {
