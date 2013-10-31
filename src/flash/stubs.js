@@ -194,6 +194,8 @@ var Stubs = new (function () {
     M("flash.display.FrameLabel", "FrameLabelClass", FrameLabelDefinition),
     M("flash.display.Scene"),
     M("flash.display.BlendMode"),
+    M("flash.display.Shader", "ShaderClass", ShaderDefinition),
+    M("flash.display.ShaderData", "ShaderDataClass", ShaderDataDefinition),
 
     M("flash.filters.BevelFilter", "BevelFilterClass", BevelFilterDefinition),
     M("flash.filters.BitmapFilter", "BitmapFilterClass", BitmapFilterDefinition),
@@ -255,6 +257,7 @@ var Stubs = new (function () {
     M("flash.media.SoundTransform", "SoundTransformClass", SoundTransformDefinition),
     M("flash.media.Video", "VideoClass", VideoDefinition),
     M("flash.media.ID3Info", "ID3InfoClass", ID3InfoDefinition),
+    M("flash.media.Microphone", "MicrophoneClass", MicrophoneDefinition),
 
     M("flash.net.FileFilter", "FileFilterClass", FileFilterDefinition),
     M("flash.net.NetConnection", "NetConnectionClass", NetConnectionDefinition),
@@ -266,6 +269,7 @@ var Stubs = new (function () {
     M("flash.net.SharedObject", "SharedObjectClass", SharedObjectDefinition),
     M("flash.net.ObjectEncoding", "ObjectEncodingClass", ObjectEncodingDefinition),
     M("flash.net.LocalConnection", "LocalConnectionClass", LocalConnectionDefinition),
+    M("flash.net.Socket", "SocketClass", SocketDefinition),
     M("flash.net.URLVariables"),
 
     M("packageInternal flash.system.FSCommand", "FSCommandClass", FSCommandDefinition),
