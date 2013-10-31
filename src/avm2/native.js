@@ -463,6 +463,28 @@ var natives = (function () {
   }
 
   /**
+   * Format: args: [compareFunction], [sortOptions]
+   */
+  function arraySort(o, args) {
+    if (args.length === 0) {
+      return o.sort();
+    }
+    var compareFunction, options = 0;
+    if (args[0] instanceof Function) {
+      compareFunction = args[0];
+    } else if (isNumber(args[0])) {
+      options = args[0];
+    }
+    if (isNumber(args[1])) {
+      options = args[1];
+    }
+    o.sort(function (a, b) {
+      return asCompare(a, b, options, compareFunction);
+    });
+    return o;
+  }
+
+  /**
    * Array.as
    */
   function ArrayClass(runtime, scope, instanceConstructor, baseClass) {
@@ -531,27 +553,7 @@ var natives = (function () {
           }
           return o;
         },
-        /**
-         * Format: args: [compareFunction], [sortOptions]
-         */
-        _sort: function (o, args) {
-          if (args.length === 0) {
-            return o.sort();
-          }
-          var compareFunction, options = 0;
-          if (args[0] instanceof Function) {
-            compareFunction = args[0];
-          } else if (isNumber(args[0])) {
-            options = args[0];
-          }
-          if (isNumber(args[1])) {
-            options = args[1];
-          }
-          o.sort(function (a, b) {
-            return asCompare(a, b, options, compareFunction);
-          });
-          return o;
-        }
+        _sort: arraySort
       }
     };
     c.coerce = function (value) {
@@ -635,8 +637,8 @@ var natives = (function () {
     cls.native = {
       instance: {
         fixed: {
-          get: function () { return this.fixed; },
-          set: function (v) { this.fixed = v; }
+          get: function () { return this._fixed; },
+          set: function (v) { this._fixed = v; }
         },
         length: {
           get: function () { return this.length; },
@@ -647,12 +649,12 @@ var natives = (function () {
         shift: Vp.shift,
         unshift: Vp.unshift,
         _reverse: Vp.reverse,
-        _every: Vp.every,
+        // _every: Vp.every,
         _filter: Vp.filter,
-        _forEach: Vp.forEach,
+        // _forEach: Vp.forEach,
         _map: Vp.map,
-        _some: Vp.some,
-        _sort: Vp.sort,
+        // _some: Vp.some,
+        // _sort: Vp.sort,
         newThisType: function newThisType() {
           return new cls.instanceConstructor();
         },
@@ -661,12 +663,16 @@ var natives = (function () {
         }
       },
       static: {
+        _some: function (o, callback, thisObject) {
+          return o.some(callback, thisObject);
+        },
         _every: function (o, callback, thisObject) {
           return o.every(callback, thisObject);
         },
         _forEach: function (o, callback, thisObject) {
           return o.forEach(callback, thisObject);
-        }
+        },
+        _sort: arraySort
       }
     };
     cls.vectorType = type;

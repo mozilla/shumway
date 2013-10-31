@@ -1875,8 +1875,24 @@ function applyType(domain, factory, types) {
   }
 }
 
+function checkArgumentCount(name, expected, got) {
+  if (got !== expected) {
+    throwError("ArgumentError", Errors.WrongArgumentCountError, name, expected, got);
+  }
+}
+
+function throwError(name, error) {
+  if (true) {
+    var message = formatErrorMessage.apply(null, Array.prototype.slice.call(arguments, 1));
+    throwErrorFromVM(AVM2.currentDomain(), name, message, error.code);
+  } else {
+    throwErrorFromVM(AVM2.currentDomain(), name, getErrorMessage(error.code), error.code);
+  }
+}
+
 function throwErrorFromVM(domain, errorClass, message, id) {
-  throw new (domain.getClass(errorClass)).instanceConstructor(message, id);
+  var error = new (domain.getClass(errorClass)).instanceConstructor(message, id);
+  throw error;
 }
 
 function translateError(domain, error) {

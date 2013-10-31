@@ -40,10 +40,6 @@ function assert(cond, msg, context) {
 
 // e.g. throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
 // "ArgumentError: Error #2008: Parameter blendMode must be one of the accepted values."
-function throwError(name, error) {
-  var message = formatErrorMessage.apply(null, slice.call(arguments, 1));
-  throwErrorFromVM(AVM2.currentDomain(), name, message, error.code);
-}
 
 function scriptProperties(namespace, props) {
   return props.reduce(function (o, p) {
