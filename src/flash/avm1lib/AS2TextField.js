@@ -21,21 +21,62 @@ var AS2TextFieldDefinition = (function () {
     __class__: 'avm1lib.AS2TextField',
 
     initialize: function () {
+      this._variable = '';
     },
   };
-
-  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {
       instance: {
+        variable: {
+          get: function() {
+            return this._variable;
+          },
+          set: function(name) {
+            if (name === this._variable) {
+              return;
+            }
+            this._variable = name;
+            var instance = this.$nativeObject;
+            var hasPath = name.indexOf('.') >= 0 || name.indexOf(':') >= 0;
+            var clip;
+            if (hasPath) {
+              var targetPath = name.split(/[.:\/]/g);
+              name = targetPath.pop();
+              if (targetPath[0] == '_root' || targetPath[0] === '') {
+                clip = instance.root._getAS2Object();
+                targetPath.shift();
+                if (targetPath[0] === '') {
+                  targetPath.shift();
+                }
+              } else {
+                clip = instance._parent._getAS2Object();
+              }
+              while (targetPath.length > 0) {
+                var childName = targetPath.shift();
+                clip = clip.asGetPublicProperty(childName) || clip[childName];
+                if (!clip) {
+                  throw new Error('Cannot find ' + childName + ' variable');
+                }
+              }
+            } else {
+              clip = instance._parent._getAS2Object();
+            }
+            if (!clip.asHasProperty(undefined, name, 0)) {
+              clip.asSetPublicProperty(name, instance.text);
+            }
+            instance._addEventListener('advanceFrame', function() {
+              instance.text = '' + clip.asGetPublicProperty(name);
+            });
+          }
+        },
         _as3Object: {
           get: function () {
             return this.$nativeObject;
           }
         },
         _init: function init(nativeTextField) {
-          Object.defineProperty(this, '$nativeObject', { value: nativeTextField });
+          Object.defineProperty(this, '$nativeObject', {value: nativeTextField});
           nativeTextField.$as2Object = this;
           initDefaultListeners(this);
         },
