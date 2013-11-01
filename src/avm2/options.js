@@ -127,7 +127,7 @@
           break;
         } else if (argString.slice(0, 1) == '-' || argString.slice(0, 2) == '--') {
           argument = nonPositionalArgumentMap[argString];
-          release || assert(argument, "Argument " + argString + " is unknown.");
+          true || assert(argument, "Argument " + argString + " is unknown.");
           if (!argument) {
             continue;
           }

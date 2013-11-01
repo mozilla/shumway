@@ -29,7 +29,7 @@ var console = {
     }
   },
   info: function (s) {
-    print(s);
+    // print(s);
   }
 };
 
