@@ -25,6 +25,24 @@ if (environment.SHUMWAY_HOME) {
   }
 }
 
+console = {
+  time: function (name) {
+    Timer.start(name)
+  },
+  timeEnd: function (name) {
+    Timer.stop(name)
+  },
+  warn: function (s) {
+    if (traceWarnings.value) {
+      print(s);
+    }
+  },
+  info: function (s) {
+    print(s);
+  }
+};
+
+
 /**
  * Load Bare AVM2 Dependencies
  */
@@ -45,6 +63,7 @@ var systemOptions = new OptionSet("System Options");
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var disassemble = shellOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
 var traceLevel = shellOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 var execute = shellOptions.register(new Option("x", "execute", "boolean", false, "execute"));
 var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "boolean", false, "always interpret"));
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
@@ -62,16 +81,6 @@ load(homePath + "src/avm2/disassembler.js");
 var Timer = metrics.Timer;
 var Counter = new metrics.Counter();
 
-var console = {
-  time: function (name) {
-    Timer.start(name);
-  },
-  timeEnd: function (name) {
-    Timer.stop(name);
-  },
-  warn: function (s) { print(s); },
-  info: function (s) { print(s); }
-};
 
 argumentParser.addBoundOptionSet(systemOptions);
 

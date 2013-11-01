@@ -18,17 +18,6 @@
 
 var inBrowser = typeof console != "undefined";
 
-if (!inBrowser) {
-  console = {
-    info: print,
-    warn: function (x) {
-      if (traceWarnings.value) {
-        print(x);
-      }
-    }
-  };
-}
-
 if (!this.performance) {
   this.performance = {};
 }
@@ -46,7 +35,7 @@ function backtrace() {
 
 function error(message) {
   if (!inBrowser) {
-    console.info(backtrace());
+    console.warn(backtrace());
   }
   throw new Error(message);
 }
@@ -70,6 +59,10 @@ function assertNotImplemented(condition, message) {
 
 function warning(message) {
   release || console.warn(message);
+}
+
+function notUsed(message) {
+  release || assert(false, "Not Used " + message);
 }
 
 function notImplemented(message) {

@@ -2003,12 +2003,15 @@ function asDefaultCompareFunction(a, b) {
 }
 
 function asCompare(a, b, options, compareFunction) {
-  release || assertNotImplemented (!(options & SORT_CASEINSENSITIVE), "CASEINSENSITIVE");
   release || assertNotImplemented (!(options & SORT_UNIQUESORT), "UNIQUESORT");
   release || assertNotImplemented (!(options & SORT_RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
   var result = 0;
   if (!compareFunction) {
     compareFunction = asDefaultCompareFunction;
+  }
+  if (options & SORT_CASEINSENSITIVE) {
+    a = String(a).toLowerCase();
+    b = String(b).toLowerCase();
   }
   if (options & SORT_NUMERIC) {
     a = toNumber(a);

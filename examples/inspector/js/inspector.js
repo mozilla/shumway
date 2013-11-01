@@ -163,7 +163,6 @@ function executeFile(file, buffer, movieParams) {
     createAVM2(builtinPath, shellAbcPath, null, sysMode, appMode, function (avm2) {
       function runAbc(file, buffer) {
         avm2.applicationDomain.executeAbc(new AbcFile(new Uint8Array(buffer), file));
-        terminate();
       }
       if (!buffer) {
         new BinaryFileReader(file).readAll(null, function(buffer) {

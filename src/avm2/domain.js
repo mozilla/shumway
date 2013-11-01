@@ -386,6 +386,7 @@ var SecurityDomain = (function () {
     this.compartment.environment = environment;
     this.compartment.homePath = homePath;
     this.compartment.eval(snarf("compartment.js"));
+    this.compartment.release = release;
   }
   securityDomain.prototype.initializeShell = function (sysMode, appMode) {
     var compartment = this.compartment;

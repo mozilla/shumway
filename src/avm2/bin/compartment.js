@@ -16,6 +16,22 @@
  * limitations under the License.
  */
 
+var console = {
+  time: function (name) {
+    Timer.start(name)
+  },
+  timeEnd: function (name) {
+    Timer.stop(name)
+  },
+  warn: function (s) {
+    if (traceWarnings.value) {
+      print(s);
+    }
+  },
+  info: function (s) {
+    print(s);
+  }
+};
 
 load(homePath + "src/avm2/settings.js");
 load(homePath + "src/avm2/avm2Util.js");
@@ -41,17 +57,6 @@ var Counter = new metrics.Counter();
 var systemOptions = new OptionSet("System Options");
 var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 var traceWarnings = systemOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
-
-var console = {
-  time: function (name) {
-    Timer.start(name)
-  },
-  timeEnd: function (name) {
-    Timer.stop(name)
-  },
-  warn: function (s) { },
-  info: function (s) { }
-};
 
 Timer.start("Loading VM");
 load(homePath + "src/avm2/constants.js");
@@ -82,6 +87,7 @@ load(homePath + "src/avm2/interpreter.js");
 load(homePath + "src/avm2/xml.js");
 load(homePath + "src/avm2/vectors-numeric.js");
 load(homePath + "src/avm2/vectors-generic.js");
+load(homePath + "src/avm2/array.js");
 load(homePath + "src/avm2/proxy.js");
 load(homePath + "src/avm2/json2.js");
 load(homePath + "src/avm2/dictionary.js");
