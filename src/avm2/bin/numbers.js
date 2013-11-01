@@ -348,9 +348,15 @@ function runNextTest () {
             match = baseline.output.text.match(/PASSED/g);
             var nTotal = match ? match.length : 0;
             nPassedPercentage = (nPassed / nTotal) * 100 | 0;
-            process.stdout.write(FAIL + " FAIL " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
-            failedTests.push(test);
-            count(configuration.name + ":fail");
+            if (nPassedPercentage < 75) {
+              process.stdout.write(FAIL + " FAIL " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
+              failedTests.push(test);
+              count(configuration.name + ":fail");
+            } else {
+              process.stdout.write(WARN + " OKAY " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
+              // failedTests.push(test);
+              count(configuration.name + ":okay");
+            }
           }
           process.stdout.write(" " + (result.elapsed / 1000).toFixed(2));
           process.stdout.write(" " + (baseline.elapsed / result.elapsed).toFixed(2) + "x");
