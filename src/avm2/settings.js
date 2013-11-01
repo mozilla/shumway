@@ -18,6 +18,10 @@
 
 var $DEBUG;
 var release = true;
+/**
+ * Check arguments and throw the appropriate errors.
+ */
+var checkArguments = true;
 
 /**
  * Allow overwriting of the native toString / valueOf with AS3 versions.

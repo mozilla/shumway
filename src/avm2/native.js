@@ -1381,6 +1381,43 @@ var natives = (function () {
     return c;
   }
 
+  /**
+   * System Class
+   */
+  function SystemClass(runtime, scope, instanceConstructor, baseClass) {
+    var c = new Class("System", instanceConstructor, C(instanceConstructor));
+    c.extend(baseClass);
+    c.native = {
+      static: {
+        swfVersion: {
+          get: function () {
+            return 19;
+          }
+        },
+        apiVersion: {
+          get: function () {
+            return 26;
+          }
+        },
+        getArgv: function () {
+          return [];
+        },
+        getRunmode: function () {
+          return "mixed";
+        }
+      }
+    };
+    return c;
+  }
+
+  function bugzilla(n) {
+    switch (n) {
+      case 574600: // AS3 Vector::map Bug
+        return true;
+    }
+    return false;
+  }
+
   return {
     /**
      * Shell toplevel.
@@ -1392,6 +1429,7 @@ var natives = (function () {
     /**
      * actionscript.lang.as
      */
+    bugzilla: constant(bugzilla),
     decodeURI: constant(decodeURI),
     decodeURIComponent: constant(decodeURIComponent),
     encodeURI: constant(encodeURI),
@@ -1468,6 +1506,7 @@ var natives = (function () {
     CapabilitiesClass: CapabilitiesClass,
     FileClass: FileClass,
     DomainClass: DomainClass,
+    SystemClass: SystemClass,
 
     /**
      * DescribeType.as

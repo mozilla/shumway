@@ -103,6 +103,8 @@ var GenericVector = (function () {
   vector.prototype.some = function (callback, thisObject) {
     if (arguments.length !== 2) {
       throwError("ArgumentError", Errors.WrongArgumentCountError);
+    } else if (!isFunction(callback)) {
+      throwError("ArgumentError", Errors.CheckTypeFailedError);
     }
     for (var i = 0; i < this._buffer.length; i++) {
       if (callback.call(thisObject, this.asGetNumericProperty(i), i, this)) {
@@ -113,10 +115,26 @@ var GenericVector = (function () {
   };
 
   vector.prototype.forEach = function (callback, thisObject) {
+    if (!isFunction(callback)) {
+      throwError("ArgumentError", Errors.CheckTypeFailedError);
+    }
     for (var i = 0; i < this._buffer.length; i++) {
       callback.call(thisObject, this.asGetNumericProperty(i), i, this);
     }
   };
+
+
+  vector.prototype.map = function (callback, thisObject) {
+    if (!isFunction(callback)) {
+      throwError("ArgumentError", Errors.CheckTypeFailedError);
+    }
+    var v = new vector();
+    for (var i = 0; i < this._buffer.length; i++) {
+      v.push(callback.call(thisObject, this.asGetNumericProperty(i), i, this));
+    }
+    return v;
+  };
+
 
   vector.prototype.push = function () {
     this._checkFixed();
@@ -173,6 +191,7 @@ var GenericVector = (function () {
   };
 
   vector.prototype.asGetNumericProperty = function (i) {
+    checkArguments && asCheckVectorGetNumericProperty(i, this._buffer.length);
     return this._buffer[i];
   };
 
@@ -186,11 +205,7 @@ var GenericVector = (function () {
   };
 
   vector.prototype.asSetNumericProperty = function (i, v) {
-    var length = this._buffer.length;
-    if (i < 0 || i > length ||
-      i === length && this._fixed) {
-      throwError("RangeError", Errors.OutOfRangeError, i, length);
-    }
+    checkArguments && asCheckVectorSetNumericProperty(i, this._buffer.length, this._fixed);
     this._buffer[i] = this._coerce(v);
   };
 

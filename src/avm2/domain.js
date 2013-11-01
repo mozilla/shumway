@@ -393,10 +393,7 @@ var SecurityDomain = (function () {
     compartment.avm2 = new compartment.AVM2(sysMode, appMode);
     compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/builtin/builtin.abc"));
     compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/shell/shell.abc"));
-    compartment.avm2.systemDomain.installNative("getArgv", function() {
-      return [];
-    });
-    compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/avmplus/avmplus.abc"));
+    // compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/avmplus/avmplus.abc"));
     this.systemDomain = compartment.avm2.systemDomain;
     this.applicationDomain = compartment.avm2.applicationDomain;
   };
