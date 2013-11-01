@@ -293,7 +293,9 @@ function count(name) {
 var pathLength = 140;
 var testNumber = 0;
 
+var passedTests = [];
 var failedTests = [];
+
 function runNextTest () {
   var test = tests.pop();
   var configs = configurations.slice(0);
@@ -338,6 +340,7 @@ function runNextTest () {
             if (i > 0) {
               delete result.output.text;
               process.stdout.write(PASS + " PASS 100 %" + ENDC);
+              passedTests.push(test);
               count(configuration.name + ":pass");
             }
           } else {
@@ -354,7 +357,7 @@ function runNextTest () {
               count(configuration.name + ":fail");
             } else {
               process.stdout.write(WARN + " OKAY " + padLeft(nPassedPercentage.toString(), ' ', 3) + " %" + ENDC);
-              // failedTests.push(test);
+              passedTests.push(test);
               count(configuration.name + ":okay");
             }
           }
@@ -408,6 +411,7 @@ function runNextTest () {
         console.log("Executed in: " + totalTime + ", wrote: " + fileName);
         console.log(counts);
         console.log(padRight("=== DONE ", "=", 120));
+        console.log("SCORE: " + ((passedTests.length / (passedTests.length + failedTests.length)) * 100).toFixed(2) + " %");
         var exitCode = 0;
         if (failedTests.length) {
           console.log(padRight("=== FAILED TESTS ", "=", 120));
