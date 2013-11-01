@@ -178,7 +178,8 @@ function isShumwayEnabledFor(actions) {
   // blacklisting well known sites with issues
   if (/\.ytimg\.com\//i.test(url) /* youtube movies */ ||
     /\/vui.swf\b/i.test(url) /* vidyo manager */  ||
-    /soundcloud\.com\/player\/assets\/swf/i.test(url)) {
+    /soundcloud\.com\/player\/assets\/swf/i.test(url) /* soundcloud */ ||
+    /sndcdn\.com\/assets\/swf/.test(url) /* soundcloud */) {
     return false;
   }
 
