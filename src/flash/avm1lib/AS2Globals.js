@@ -15,17 +15,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2Context, Multiname, Stubs */
+/*global AS2Context, Multiname, Stubs, TextFormatDefinition */
 var AS2GlobalsDefinition = (function () {
   var def = {
     __class__: 'avm1lib.AS2Globals',
 
     initialize: function () {
+      // The AS2 version of TextFormat has an additional method "getTextExtent".
+      // We install that here so we don't need to have a full AS2 version of
+      // TextFormat and take care to return that everywhere when in AS2 mode.
+      flash.text.TextFormat.prototype.asDefinePublicProperty('getTextExtent', {
+        value: TextFormatDefinition.as2GetTextExtent,
+        writable: false,
+        enumerable: false,
+        configurable: false
+      });
     },
 
   };
-
-  var desc = Object.getOwnPropertyDescriptor;
 
   def.__glue__ = {
     native: {

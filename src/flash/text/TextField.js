@@ -808,6 +808,26 @@ var TextFieldDefinition = (function () {
       }
       this._bbox.yMax = value;
       this._invalidate();
+    },
+    getLineMetrics: function(lineIndex) {
+      this.ensureDimensions();
+      if (lineIndex < 0 || lineIndex >= this._lines.length) {
+        throwError('RangeError', Errors.ParamRangeError);
+      }
+      var line = this._lines[lineIndex];
+      var format = line.largestFormat;
+      var metrics = format.font._metrics;
+      var size = format.size;
+      // Rounding for metrics seems to be screwy. A descent of 3.5 gets
+      // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
+      // For now, round up for things slightly above .5.
+      var ascent = metrics.ascent * size + 0.49999 | 0;
+      var descent = metrics.descent * size + 0.49999 | 0;
+      var leading = metrics.leading * size + 0.49999 + line.leading | 0;
+      // TODO: check if metrics values can be floats for embedded fonts
+      return new flash.text.TextLineMetrics(line.x + 2, line.width,
+                                            line.height,
+                                            ascent, descent, leading);
     }
   };
 
@@ -904,24 +924,10 @@ var TextFieldDefinition = (function () {
           }
         },
         getLineMetrics: function (lineIndex) { // (lineIndex:int) -> TextLineMetrics
-          this.ensureDimensions();
-          if (lineIndex < 0 || lineIndex >= this._lines.length) {
-            throwError('RangeError', Errors.ParamRangeError);
-          }
-          var line = this._lines[lineIndex];
-          var format = line.largestFormat;
-          var metrics = format.font._metrics;
-          var size = format.size;
-          // Rounding for metrics seems to be screwy. A descent of 3.5 gets
-          // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
-          // For now, round up for things slightly above .5.
-          var ascent = metrics.ascent * size + 0.49999 | 0;
-          var descent = metrics.descent * size + 0.49999 | 0;
-          var leading = metrics.leading * size + 0.49999 + line.leading | 0;
-          // TODO: check if metrics values can be floats for embedded fonts
-          return new flash.text.TextLineMetrics(line.x + 2, line.width,
-                                                line.height,
-                                                ascent, descent, leading);
+          return this.getLineMetrics(lineIndex);
+        },
+        setSelection: function (beginIndex, endIndex) {
+          somewhatImplemented("TextField.setSelection");
         },
         scrollV: {
           get: function scrollV() {

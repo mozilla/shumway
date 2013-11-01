@@ -39,61 +39,55 @@ var FontDescriptionDefinition = (function () {
         instance: {
           renderingMode: {
             get: function renderingMode() { // (void) -> String
-              notImplemented("FontDescription.renderingMode");
               return this._renderingMode;
             },
             set: function renderingMode(value) { // (value:String) -> void
-              notImplemented("FontDescription.renderingMode");
+              somewhatImplemented("FontDescription.renderingMode");
               this._renderingMode = value;
             }
           },
           fontLookup: {
             get: function fontLookup() { // (void) -> String
-              notImplemented("FontDescription.fontLookup");
               return this._fontLookup;
             },
             set: function fontLookup(value) { // (value:String) -> void
-              notImplemented("FontDescription.fontLookup");
+              somewhatImplemented("FontDescription.fontLookup");
               this._fontLookup = value;
             }
           },
           fontName: {
             get: function fontName() { // (void) -> String
-              notImplemented("FontDescription.fontName");
               return this._fontName;
             },
             set: function fontName(value) { // (value:String) -> void
-              notImplemented("FontDescription.fontName");
+              somewhatImplemented("FontDescription.fontName");
               this._fontName = value;
             }
           },
           fontPosture: {
             get: function fontPosture() { // (void) -> String
-              notImplemented("FontDescription.fontPosture");
               return this._fontPosture;
             },
             set: function fontPosture(value) { // (value:String) -> void
-              notImplemented("FontDescription.fontPosture");
+              somewhatImplemented("FontDescription.fontPosture");
               this._fontPosture = value;
             }
           },
           fontWeight: {
             get: function fontWeight() { // (void) -> String
-              notImplemented("FontDescription.fontWeight");
               return this._fontWeight;
             },
             set: function fontWeight(value) { // (value:String) -> void
-              notImplemented("FontDescription.fontWeight");
+              somewhatImplemented("FontDescription.fontWeight");
               this._fontWeight = value;
             }
           },
           cffHinting: {
             get: function cffHinting() { // (void) -> String
-              notImplemented("FontDescription.cffHinting");
               return this._cffHinting;
             },
             set: function cffHinting(value) { // (value:String) -> void
-              notImplemented("FontDescription.cffHinting");
+              somewhatImplemented("FontDescription.cffHinting");
               this._cffHinting = value;
             }
           },

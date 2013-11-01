@@ -253,38 +253,8 @@ var SpriteDefinition = (function () {
       var symbolProps = instance.symbol;
 
       if (symbolProps && symbolProps.variableName) {
-        var variableName = symbolProps.variableName;
-        var hasPath = variableName.lastIndexOf('.') >= 0 ||
-                      variableName.lastIndexOf(':') >= 0;
-        var clip;
-        if (hasPath) {
-          var targetPath = variableName.split(/[.:\/]/g);
-          variableName = targetPath.pop();
-          if (targetPath[0] == '_root' || targetPath[0] === '') {
-            clip = this.root._getAS2Object();
-            targetPath.shift();
-            if (targetPath[0] === '') {
-              targetPath.shift();
-            }
-          } else {
-            clip = this._getAS2Object();
-          }
-          while (targetPath.length > 0) {
-            var childName = targetPath.shift();
-            clip = clip.asGetPublicProperty(childName) || clip[childName];
-            if (!clip) {
-              throw new Error('Cannot find ' + childName + ' variable');
-            }
-          }
-        } else {
-          clip = this._getAS2Object();
-        }
-        if (!clip.asHasProperty(undefined, variableName, 0)) {
-          clip.asSetPublicProperty(variableName, instance.text);
-        }
-        instance._addEventListener('advanceFrame', function() {
-          instance.text = '' + clip.asGetPublicProperty(variableName);
-        });
+        instance._getAS2Object().asSetPublicProperty('variable',
+                                                     symbolProps.variableName);
       }
 
       if (events) {
@@ -322,7 +292,9 @@ var SpriteDefinition = (function () {
         }
       }
 
-      if (name) {
+      // Only set the name property for display objects that have AS2
+      // reflections. Some SWFs contain AS2 names for things like Shapes.
+      if (name && this._getAS2Object && instance._getAS2Object) {
         this._getAS2Object().asSetPublicProperty(name, instance._getAS2Object());
       }
     },

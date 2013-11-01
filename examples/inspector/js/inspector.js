@@ -25,6 +25,7 @@ var yt = getQueryVariable('yt');
 var swfController = new SWFController(fps, pauseExecution);
 
 var libraryAbcs;
+var libraryScripts;
 function grabAbc(abcName) {
   var entry = libraryScripts[abcName];
   if (entry) {
@@ -158,7 +159,9 @@ function executeFile(file, buffer, movieParams) {
   }
   var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
   var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  if (file.endsWith(".abc")) {
+
+  var filename = file.split('?')[0].split('#')[0];
+  if (filename.endsWith(".abc")) {
     libraryScripts = {};
     createAVM2(builtinPath, shellAbcPath, null, sysMode, appMode, function (avm2) {
       function runAbc(file, buffer) {
@@ -172,7 +175,7 @@ function executeFile(file, buffer, movieParams) {
         runAbc(file, buffer);
       }
     });
-  } else if (file.endsWith(".swf")) {
+  } else if (filename.endsWith(".swf")) {
     libraryScripts = playerGlobalScripts;
     createAVM2(builtinPath, playerGlobalAbcPath, avm1Path, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
@@ -203,10 +206,8 @@ function executeFile(file, buffer, movieParams) {
         runSWF(file, buffer);
       }
     });
-  } else if (file.endsWith(".js") || file.endsWith("/")) {
+  } else if (filename.endsWith(".js") || filename.endsWith("/")) {
     libraryScripts = playerGlobalScripts;
-    var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-    var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
     createAVM2(builtinPath, playerGlobalAbcPath, null, sysMode, appMode, function (avm2) {
       if (file.endsWith("/")) {
         readDirectoryListing(file, function (files) {

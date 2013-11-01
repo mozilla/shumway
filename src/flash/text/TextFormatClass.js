@@ -17,6 +17,7 @@
  */
 
 var TextFormatDefinition = (function () {
+  var measureTextField;
   return {
     // (font:String = null, size:Object = null, color:Object = null, bold:Object = null,
     // italic:Object = null, underline:Object = null, url:String = null, target:String = null,
@@ -65,6 +66,35 @@ var TextFormatDefinition = (function () {
         leading: this._leading || 0
       };
     },
+    as2GetTextExtent: function(text, width /* optional */) {
+      if (!measureTextField) {
+        measureTextField = new flash.text.TextField();
+        measureTextField._multiline = true;
+      }
+      if (!isNaN(width) && width > 0) {
+        measureTextField.width = width + 4;
+        measureTextField._wordWrap = true;
+      } else {
+        measureTextField._wordWrap = false;
+      }
+      measureTextField.defaultTextFormat = this;
+      measureTextField.text = text;
+      measureTextField.ensureDimensions();
+      var result = {};
+      var textWidth = measureTextField._textWidth;
+      var textHeight = measureTextField._textHeight;
+      result.asSetPublicProperty('width', textWidth);
+      result.asSetPublicProperty('height', textHeight);
+      result.asSetPublicProperty('textFieldWidth', textWidth + 4);
+      result.asSetPublicProperty('textFieldHeight', textHeight + 4);
+      var metrics = measureTextField.getLineMetrics(0);
+      result.asSetPublicProperty('ascent',
+                                 metrics.asGetPublicProperty('ascent'));
+      result.asSetPublicProperty('descent',
+                                 metrics.asGetPublicProperty('descent'));
+      return result;
+    },
+
     __glue__: {
       native: {
         static: {

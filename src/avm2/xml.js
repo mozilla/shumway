@@ -130,7 +130,6 @@ var isXMLType, isXMLName, XMLParser;
           if (n.children.length) {
             s += ">";
             for (var i = 0; i < n.children.length; i++) {
-              s += "\n";
               s += visit(n.children[i], this);
             }
             s += "</" + prefix + n.name.mn.name + ">";
@@ -986,12 +985,18 @@ var isXMLType, isXMLName, XMLParser;
           });
         }
       } else {
-        return this.children.some(function (v, i) {
+        if (this.children.some(function (v, i) {
           if ((anyName || v.kind === "element" && v.name.localName === name.localName) &&
               ((anyNamespace || v.kind === "element" && v.name.uri === name.uri))) {
             return true;
           }
-        });
+        })) {
+          return true;
+        }
+        // HACK if child with specific name is not present, check object's attributes.
+        // The presence of the attribute/method can be checked during with(), see #850.
+        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+        return !!this[Multiname.getQualifiedName(resolved)];
       }
     };
 
@@ -1254,7 +1259,8 @@ var isXMLType, isXMLName, XMLParser;
           return toString(this);
         },
         hasOwnProperty: function hasOwnProperty(P) { // (P) -> Boolean
-          notImplemented("XML.hasOwnProperty");
+          somewhatImplemented("XML.hasOwnProperty");
+          return this.hasProperty(P);
         },
         propertyIsEnumerable: function propertyIsEnumerable(P) { // (P) -> Boolean
           notImplemented("XML.propertyIsEnumerable");
@@ -1794,7 +1800,8 @@ var isXMLType, isXMLName, XMLParser;
           return toString(this); //.bind(null, this);
         },
         hasOwnProperty: function hasOwnProperty(P) { // (P) -> Boolean
-          notImplemented("XMLList.hasOwnProperty");
+          somewhatImplemented("XMLList.hasOwnProperty");
+          return this.hasProperty(P);
         },
         propertyIsEnumerable: function propertyIsEnumerable(P) { // (P) -> Boolean
           notImplemented("XMLList.propertyIsEnumerable");

@@ -146,8 +146,8 @@ package avm1lib {
 
     public function get _url() { return this._as3Object.loaderInfo.url; }
 
-    public function get variable() { throw 'Not implemented: get$variable'; }
-    public function set variable(value) { throw 'Not implemented: set$variable'; }
+    public native function get variable();
+    public native function set variable(value);
 
     public function get _visible() { return this._as3Object.visible; }
     public function set _visible(value) { this._as3Object.visible = +value !== 0; }

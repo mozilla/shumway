@@ -86,6 +86,12 @@ var CapabilitiesDefinition = (function () {
             return "en";
           }
         },
+        playerType: {
+          get: function playerType() {
+            somewhatImplemented("Capabilities.playerType");
+            return "PlugIn";
+          }
+        }
       }
     },
     script: {

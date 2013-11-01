@@ -124,12 +124,14 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths, dictionary,
   var styles = {fill0: 0, fill1: 0, line: 0};
   var segment = null;
 
-  // fill- and lineStyles can be added by style change records in the middle of
-  // a shape records list. All records refer to those new styles with a starting
-  // offset of 1 again, so we just replace the current lists, but append all new
-  // list entries to the original list which are stored in the generated symbol.
-  var allFillPaths = fillPaths;
-  var allLinePaths = linePaths;
+  // Fill- and line styles can be added by style change records in the middle of
+  // a shape records list. This also causes the previous paths to be treated as
+  // a group, so the lines don't get moved on top of any following fills.
+  // To support this, we just append all current fill and line paths to a list
+  // when new styles are introduced.
+  var allPaths;
+  // If no style is set for a segment of a path, a 1px black line is used.
+  var defaultPath;
 
   //TODO: remove the `- 1` once we stop even parsing the EOS record
   var numRecords = records.length - 1;
@@ -152,12 +154,19 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths, dictionary,
       }
 
       if (record.hasNewStyles) {
+        if (!allPaths) {
+          allPaths = [];
+        }
+        push.apply(allPaths, fillPaths);
         fillPaths = createPathsList(record.fillStyles, false,
                                     dictionary, dependencies);
-        push.apply(allFillPaths, fillPaths);
+        push.apply(allPaths, linePaths);
         linePaths = createPathsList(record.lineStyles, true,
                                     dictionary, dependencies);
-        push.apply(allLinePaths, linePaths);
+        if (defaultPath) {
+          allPaths.push(defaultPath);
+          defaultPath = null;
+        }
         styles = {fill0: 0, fill1: 0, line: 0};
       }
 
@@ -213,7 +222,18 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths, dictionary,
     // type 1 is a StraightEdge or CurvedEdge record
     else {
       assert(record.type === 1);
-      assert(segment);
+      if (!segment) {
+        if (!defaultPath) {
+          var style = {color:{red:0, green: 0, blue: 0, alpha: 255}, width: 20};
+          defaultPath = new SegmentedPath(null, processStyle(style, true));
+        }
+        segment = defaultPath.addSegment([], [], isMorph ? [] : null);
+        segment.commands.push(SHAPE_MOVE_TO);
+        segment.data.push(x, y);
+        if (isMorph) {
+          segment.morphData.push(morphX, morphY);
+        }
+      }
       if (isMorph) {
         // An invalid SWF might contain a move in the EndEdges list where the
         // StartEdges list contains an edge. The Flash Player seems to skip it,
@@ -278,22 +298,30 @@ function convertRecordsToStyledPaths(records, fillPaths, linePaths, dictionary,
   }
   applySegmentToStyles(segment, styles, linePaths, fillPaths, isMorph);
 
-  // After records processing completed, we can treat line paths just as we do
-  // fill paths. The important thing is for them to come last.
-  push.apply(allFillPaths, allLinePaths);
+  // All current paths get appended to the allPaths list at the end. First fill,
+  // then line paths.
+  if (allPaths) {
+    push.apply(allPaths, fillPaths);
+  } else {
+    allPaths = fillPaths;
+  }
+  push.apply(allPaths, linePaths);
+  if (defaultPath) {
+    allPaths.push(defaultPath);
+  }
 
   var removeCount = 0;
-  for (i = 0; i < allFillPaths.length; i++) {
-    path = allFillPaths[i];
+  for (i = 0; i < allPaths.length; i++) {
+    path = allPaths[i];
     if (!path.head()) {
       removeCount++;
       continue;
     }
-    allFillPaths[i - removeCount] = segmentedPathToShapePath(path, isMorph,
-                                                             transferables);
+    allPaths[i - removeCount] = segmentedPathToShapePath(path, isMorph,
+                                                         transferables);
   }
-  allFillPaths.length -= removeCount;
-  return allFillPaths;
+  allPaths.length -= removeCount;
+  return allPaths;
 }
 
 function segmentedPathToShapePath(path, isMorph, transferables) {
@@ -408,7 +436,7 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     // TODO: Figure out how to handle startCapStyle
     style.lineCap = CAPS_STYLE_TYPES[style.endCapStyle|0];
     style.lineJoin = JOIN_STYLE_TYPES[style.joinStyle|0];
-    style.miterLimit = style.miterLimitFactor * 2;
+    style.miterLimit = (style.miterLimitFactor || 1.5) * 2;
     if (!style.color && style.hasFill) {
       var fillStyle = processStyle(style.fillStyle, false, dictionary,
                                    dependencies);
