@@ -1370,11 +1370,9 @@ function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, 
   if (traceLevel.value > 1) {
     mi.trace(new IndentingWriter(), mi.abc);
   }
-  mi.debugTrace = (function (abc) {
-    return function () {
-      mi.trace(new IndentingWriter(), abc);
-    }
-  })(this.abc);
+  mi.debugTrace = function () {
+    mi.trace(new IndentingWriter(), mi.abc);
+  };
   if (traceLevel.value > 0) {
     print (fnSource);
   }
