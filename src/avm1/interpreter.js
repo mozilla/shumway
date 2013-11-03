@@ -154,10 +154,6 @@ function as2ToNumber(value) {
   case 'undefined':
   case 'null':
     return AS2Context.instance.swfVersion >= 7 ? NaN : 0;
-  default:
-    return AS2Context.instance.swfVersion >= 5 ? NaN : 0;
-  case 'null':
-    return NaN;
   case 'boolean':
     return value ? 1 : +0;
   case 'number':
@@ -167,6 +163,8 @@ function as2ToNumber(value) {
       return 0;
     }
     return +value;
+  default:
+    return AS2Context.instance.swfVersion >= 5 ? NaN : 0;
   }
 }
 
@@ -187,6 +185,8 @@ function as2ToInt32(value) {
     (result | 0);
 }
 
+// TODO: We should just override Function.prototype.toString and change this to
+// only have a special case for 'undefined'.
 function as2ToString(value) {
   switch (as2GetType(value)) {
   case 'undefined':
@@ -199,8 +199,6 @@ function as2ToString(value) {
     return value.toString();
   case 'string':
     return value;
-  case 'undefined':
-    return 'undefined';
   case 'movieclip':
     return value.$targetPath;
   case 'object':
