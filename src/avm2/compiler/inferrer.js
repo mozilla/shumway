@@ -311,6 +311,9 @@ var TraitsType = (function () {
     if (mn instanceof MultinameType) {
       return null;
     }
+    if (mn.isAttribute()) {
+      return null;
+    }
     if (followSuperType && (this.isInstanceInfo() || this.isClassInfo())) {
       var that = this;
       do {
@@ -870,7 +873,7 @@ var Verifier = (function() {
             if (obj.isIndexedReadable()) {
               ti().isIndexedReadable = true;
               if (obj.isVector()) {
-                return obj.parameter
+                return obj.parameter;
               }
             } else if (obj.isDirectlyReadable()) {
               ti().isDirectlyReadable = true;
