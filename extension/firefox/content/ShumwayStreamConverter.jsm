@@ -38,9 +38,6 @@ Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
 Cu.import('resource://gre/modules/NetUtil.jsm');
 
-XPCOMUtils.defineLazyModuleGetter(this, 'PrivateBrowsingUtils',
-  'resource://gre/modules/PrivateBrowsingUtils.jsm');
-
 XPCOMUtils.defineLazyModuleGetter(this, 'ShumwayTelemetry',
   'resource://shumway/ShumwayTelemetry.jsm');
 
@@ -163,10 +160,6 @@ function fetchPolicyFile(url, cache, callback) {
 }
 
 function isShumwayEnabledFor(actions) {
-  // disabled for PrivateBrowsing windows
-  if (PrivateBrowsingUtils.isWindowPrivate(actions.window)) {
-    return false;
-  }
   // disabled if embed tag specifies shumwaymode (for testing purpose)
   if (actions.objectParams['shumwaymode'] === 'off') {
     return false;
