@@ -127,7 +127,10 @@
           break;
         } else if (argString.slice(0, 1) == '-' || argString.slice(0, 2) == '--') {
           argument = nonPositionalArgumentMap[argString];
-          release || assert(argument, "Argument " + argString + " is unknown.");
+          true || assert(argument, "Argument " + argString + " is unknown.");
+          if (!argument) {
+            continue;
+          }
           if (argument.type !== "boolean") {
             value = args.shift();
             release || assert(value !== "-" && value !== "--", "Argument " + argString + " must have a value.");

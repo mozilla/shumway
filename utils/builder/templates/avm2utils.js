@@ -161,7 +161,6 @@ function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) 
     avm2.builtinsLoaded = true;
     console.info(JSON.stringify(Counter.toJSON()));
     console.timeEnd("Load AVM2");
-    addProfileMarker("End Load AVM2");
     next(avm2);
   }
 }

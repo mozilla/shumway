@@ -66,7 +66,7 @@ var Interpreter = new ((function () {
       var strings = abc.constantPool.strings;
       var methods = abc.methods;
       var multinames = abc.constantPool.multinames;
-      var domain = abc.domain;
+      var domain = abc.applicationDomain;
       var exceptions = method.exceptions;
 
       var locals = [$this];

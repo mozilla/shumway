@@ -54,7 +54,7 @@ load($SHUMWAY_ROOT + "src/swf/parser.js");
 load($SHUMWAY_ROOT + "src/avm1/stream.js");
 load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
 
-load($SHUMWAY_ROOT + "src/avm2/config.js");
+load($SHUMWAY_ROOT + "src/avm2/settings.js");
 load($SHUMWAY_ROOT + "src/avm2/avm2Util.js");
 load($SHUMWAY_ROOT + "src/avm2/metrics.js");
 
@@ -87,7 +87,9 @@ load($SHUMWAY_ROOT + "src/avm2/class.js");
 load($SHUMWAY_ROOT + "src/avm2/xregexp.js");
 load($SHUMWAY_ROOT + "src/avm2/runtime.js");
 load($SHUMWAY_ROOT + "src/avm2/hacks.js");
-load($SHUMWAY_ROOT + "src/avm2/vectors.js");
+load($SHUMWAY_ROOT + "src/avm2/vectors-numeric.js");
+load($SHUMWAY_ROOT + "src/avm2/vectors-generic.js");
+load($SHUMWAY_ROOT + "src/avm2/array.js");
 load($SHUMWAY_ROOT + "src/avm2/xml.js");
 load($SHUMWAY_ROOT + "src/avm2/json2.js");
 load($SHUMWAY_ROOT + "src/avm2/amf.js");

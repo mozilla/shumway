@@ -42,9 +42,8 @@ package
 
   // Query whether a particular bugfix is in effect for this object.
   // information. Note that we use VM_INTERNAL to hide it from non-builtin code.
-  public function bugzilla(n:int):Boolean {
-    return false;
-  }
+  [native("bugzilla")]
+  public native function bugzilla(n:int):Boolean;
 
   /**
    * @name Toplevel Function Properties

@@ -621,7 +621,7 @@ var Multiname = (function () {
   multiname.parse = function parse(constantPool, stream, multinames, patchFactoryTypes) {
     var index = 0;
     var kind = stream.readU8();
-    var name, namespaces = [], flags = 0, typeParameter;
+    var name, namespaces = [], flags = 0;
     switch (kind) {
       case CONSTANT_QName: case CONSTANT_QNameA:
         index = stream.readU30();
@@ -684,7 +684,6 @@ var Multiname = (function () {
           patchFactoryTypes.push({multiname: mn, index: factoryTypeIndex});
         }
         return mn;
-        break;
       default:
         unexpected();
         break;
@@ -698,6 +697,7 @@ var Multiname = (function () {
         flags |= ATTRIBUTE;
         break;
     }
+
     return new Multiname(namespaces, name, flags);
   };
 
@@ -1050,6 +1050,7 @@ var ConstantPool = (function constantPool() {
       doubles.push(stream.readDouble());
     }
 
+    Timer.start("Parse Strings");
     // strings
     var strings = [""];
     n = stream.readU30();
@@ -1057,12 +1058,14 @@ var ConstantPool = (function constantPool() {
       strings.push(stream.readUTFString(stream.readU30()));
     }
     this.positionAfterUTFStrings = stream.pos;
+    Timer.stop();
 
     this.ints = ints;
     this.uints = uints;
     this.doubles = doubles;
     this.strings = strings;
 
+    Timer.start("Parse Namespaces");
     // namespaces
     var namespaces = [undefined];
     n = stream.readU30();
@@ -1071,7 +1074,9 @@ var ConstantPool = (function constantPool() {
       namespace.parse(this, stream);
       namespaces.push(namespace);
     }
+    Timer.stop();
 
+    Timer.start("Parse Namespace Sets");
     // namespace sets
     var namespaceSets = [undefined];
     n = stream.readU30();
@@ -1084,10 +1089,12 @@ var ConstantPool = (function constantPool() {
       }
       namespaceSets.push(set);
     }
+    Timer.stop();
 
     this.namespaces = namespaces;
     this.namespaceSets = namespaceSets;
 
+    Timer.start("Parse Multinames");
     // multinames
     var multinames = [undefined];
     var patchFactoryTypes = [];
@@ -1095,12 +1102,13 @@ var ConstantPool = (function constantPool() {
     for (i = 1; i < n; ++i) {
       multinames.push(Multiname.parse(this, stream, multinames, patchFactoryTypes));
     }
-    patchFactoryTypes.forEach(function (patch) {
-      var multiname = multinames[patch.index];
-      release || assert (multiname);
-      patch.multiname.name = multiname.name;
-      patch.multiname.namespaces = multiname.namespaces;
-    });
+//    patchFactoryTypes.forEach(function (patch) {
+//      var multiname = multinames[patch.index];
+//      release || assert (multiname);
+//      patch.multiname.name = multiname.name;
+//      patch.multiname.namespaces = multiname.namespaces;
+//    });
+    Timer.stop();
 
     this.multinames = multinames;
   }
@@ -1430,55 +1438,69 @@ var ScriptInfo = (function scriptInfo() {
 
 var AbcFile = (function () {
   function abcFile(bytes, name) {
-    var parseStart = performance.now();
+    Timer.start("Parse ABC");
     this.name = name;
 
     var n, i;
     var stream = new AbcStream(bytes);
     checkMagic(stream);
+    Timer.start("Parse constantPool");
     this.constantPool = new ConstantPool(stream, name);
+    Timer.stop();
 
     // Method Infos
+    Timer.start("Parse Method Infos");
     this.methods = [];
     n = stream.readU30();
     for (i = 0; i < n; ++i) {
       this.methods.push(new MethodInfo(this, stream));
     }
+    Timer.stop();
 
+    Timer.start("Parse MetaData Infos");
     // MetaData Infos
     this.metadata = [];
     n = stream.readU30();
     for (i = 0; i < n; ++i) {
       this.metadata.push(new MetaDataInfo(this, stream));
     }
+    Timer.stop();
 
+    Timer.start("Parse Instance Infos");
     // Instance Infos
     this.instances = [];
     n = stream.readU30();
     for (i = 0; i < n; ++i) {
       this.instances.push(new InstanceInfo(this, stream));
     }
+    Timer.stop();
 
+    Timer.start("Parse Class Infos");
     // Class Infos
     this.classes = [];
     for (i = 0; i < n; ++i) {
       this.classes.push(new ClassInfo(this, this.instances[i], stream));
     }
+    Timer.stop();
 
+    Timer.start("Parse Script Infos");
     // Script Infos
     this.scripts = [];
     n = stream.readU30();
     for (i = 0; i < n; ++i) {
       this.scripts.push(new ScriptInfo(this, i, stream));
     }
+    Timer.stop();
 
+    Timer.start("Parse Method Body Info");
     // Method body info just live inside methods
     n = stream.readU30();
     for (i = 0; i < n; ++i) {
       MethodInfo.parseBody(this, stream);
     }
+    Timer.stop();
 
-    console.info("Parse ABC: " + name + ":" + (performance.now() - parseStart));
+    Timer.stop();
   }
 
   function checkMagic(stream) {

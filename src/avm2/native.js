@@ -214,13 +214,13 @@ var ASNamespace;
 
 var natives = (function () {
 
-  var C = Domain.passthroughCallable;
-  var CC = Domain.constructingCallable;
+  var C = ApplicationDomain.passthroughCallable;
+  var CC = ApplicationDomain.constructingCallable;
 
   /**
    * Object.as
    */
-  function ObjectClass(runtime, scope, instanceConstructor, baseClass) {
+  function ObjectClass(applicationDomain, scope, instanceConstructor, baseClass) {
     var c = new Class("Object", Object, C(Object));
 
     c.native = {
@@ -259,6 +259,7 @@ var natives = (function () {
         }
       }
     };
+
 
     c.dynamicPrototype = c.traitsPrototype = Object.prototype;
     c.setDefaultProperties();
@@ -461,106 +462,9 @@ var natives = (function () {
     return c;
   }
 
-  /**
-   * Array.as
-   */
-  function ArrayClass(runtime, scope, instanceConstructor, baseClass) {
-    var c = new Class("Array", Array, C(Array));
-    c.extendBuiltin(baseClass);
 
-    var Ap = Array.prototype;
 
-    var CACHE_NUMERIC_COMPARATORS = true;
 
-    var numericComparatorCache = createEmptyObject();
-
-    c.native = {
-      instance: {
-        length: {
-          get: function() { return this.length; },
-          set: function(l) { this.length = l; }
-        },
-        join: Ap.join,
-        pop: Ap.pop,
-        push: Ap.push,
-        reverse: Ap.reverse,
-        concat: Ap.concat,
-        shift: Ap.shift,
-        slice: Ap.slice,
-        unshift: Ap.unshift,
-        splice: Ap.splice,
-        indexOf: Ap.indexOf,
-        lastIndexOf: Ap.lastIndexOf,
-        every: Ap.every,
-        filter: Ap.filter,
-        forEach: Ap.forEach,
-        map: Ap.map,
-        some: Ap.some
-      },
-      static: {
-        /**
-         * Sorts an array of objects on one (or more) properties.
-         */
-        _sortOn: function (o, names, options) {
-          if (isString(names)) {
-            names = [names];
-          }
-          if (isNumber(options)) {
-            options = [options];
-          }
-          for (var i = names.length - 1; i >= 0; i--) {
-            var key = Multiname.getPublicQualifiedName(names[i]);
-            if (CACHE_NUMERIC_COMPARATORS && options[i] & SORT_NUMERIC) {
-              var str = "var x = toNumber(a." + key + "), y = toNumber(b." + key + ");";
-              if (options[i] & SORT_DESCENDING) {
-                str += "return x < y ? 1 : (x > y ? -1 : 0);";
-              } else {
-                str += "return x < y ? -1 : (x > y ? 1 : 0);";
-              }
-              var numericComparator = numericComparatorCache[str];
-              if (!numericComparator) {
-                numericComparator = numericComparatorCache[str] = new Function("a", "b", str);
-              }
-              o.sort(numericComparator);
-            } else {
-              o.sort(function (a, b) {
-                return asCompare(a[key], b[key], options[i] | 0);
-              });
-            }
-          }
-          return o;
-        },
-        /**
-         * Format: args: [compareFunction], [sortOptions]
-         */
-        _sort: function (o, args) {
-          if (args.length === 0) {
-            return o.sort();
-          }
-          var compareFunction, options = 0;
-          if (args[0] instanceof Function) {
-            compareFunction = args[0];
-          } else if (isNumber(args[0])) {
-            options = args[0];
-          }
-          if (isNumber(args[1])) {
-            options = args[1];
-          }
-          o.sort(function (a, b) {
-            return asCompare(a, b, options, compareFunction);
-          });
-          return o;
-        }
-      }
-    };
-    c.coerce = function (value) {
-      return value; // TODO: Fix me.
-    };
-    c.isInstanceOf = function (value) {
-      return true; // TODO: Fix me.
-    };
-    return c;
-  }
 
   /**
    * Vector.as
@@ -634,8 +538,8 @@ var natives = (function () {
     cls.native = {
       instance: {
         fixed: {
-          get: function () { return this.fixed; },
-          set: function (v) { this.fixed = v; }
+          get: function () { return this._fixed; },
+          set: function (v) { this._fixed = v; }
         },
         length: {
           get: function () { return this.length; },
@@ -646,12 +550,12 @@ var natives = (function () {
         shift: Vp.shift,
         unshift: Vp.unshift,
         _reverse: Vp.reverse,
-        _every: Vp.every,
+        // _every: Vp.every,
         _filter: Vp.filter,
-        _forEach: Vp.forEach,
+        // _forEach: Vp.forEach,
         _map: Vp.map,
-        _some: Vp.some,
-        _sort: Vp.sort,
+        // _some: Vp.some,
+        // _sort: Vp.sort,
         newThisType: function newThisType() {
           return new cls.instanceConstructor();
         },
@@ -660,12 +564,16 @@ var natives = (function () {
         }
       },
       static: {
+        _some: function (o, callback, thisObject) {
+          return o.some(callback, thisObject);
+        },
         _every: function (o, callback, thisObject) {
           return o.every(callback, thisObject);
         },
         _forEach: function (o, callback, thisObject) {
           return o.forEach(callback, thisObject);
-        }
+        },
+        _sort: arraySort
       }
     };
     cls.vectorType = type;
@@ -1442,7 +1350,7 @@ var natives = (function () {
   }
 
   /**
-   * Domain.as
+   * ApplicationDomain.as
    */
   function DomainClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("File", instanceConstructor, C(instanceConstructor));
@@ -1451,7 +1359,7 @@ var natives = (function () {
       instance: {
         init: function (base) {
           this.base = base;
-          this.nativeObject = new Domain(avm2, base ? base.nativeObject : null);
+          this.nativeObject = new ApplicationDomain(avm2, base ? base.nativeObject : null);
         },
         loadBytes: function (byteArray, swfVersion) { // (byteArray:ByteArray, swfVersion:uint = 0);
           this.nativeObject.executeAbc(new AbcFile(byteArray.readRawBytes()));
@@ -1473,6 +1381,43 @@ var natives = (function () {
     return c;
   }
 
+  /**
+   * System Class
+   */
+  function SystemClass(runtime, scope, instanceConstructor, baseClass) {
+    var c = new Class("System", instanceConstructor, C(instanceConstructor));
+    c.extend(baseClass);
+    c.native = {
+      static: {
+        swfVersion: {
+          get: function () {
+            return 19;
+          }
+        },
+        apiVersion: {
+          get: function () {
+            return 26;
+          }
+        },
+        getArgv: function () {
+          return [];
+        },
+        getRunmode: function () {
+          return "mixed";
+        }
+      }
+    };
+    return c;
+  }
+
+  function bugzilla(n) {
+    switch (n) {
+      case 574600: // AS3 Vector::map Bug
+        return true;
+    }
+    return false;
+  }
+
   return {
     /**
      * Shell toplevel.
@@ -1484,6 +1429,7 @@ var natives = (function () {
     /**
      * actionscript.lang.as
      */
+    bugzilla: constant(bugzilla),
     decodeURI: constant(decodeURI),
     decodeURIComponent: constant(decodeURIComponent),
     encodeURI: constant(encodeURI),
@@ -1560,6 +1506,7 @@ var natives = (function () {
     CapabilitiesClass: CapabilitiesClass,
     FileClass: FileClass,
     DomainClass: DomainClass,
+    SystemClass: SystemClass,
 
     /**
      * DescribeType.as

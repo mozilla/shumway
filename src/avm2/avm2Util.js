@@ -18,22 +18,11 @@
 
 var inBrowser = typeof console != "undefined";
 
-if (!inBrowser) {
-  console = {
-    info: print,
-    warn: function (x) {
-      if (traceWarnings.value) {
-        print(x);
-      }
-    }
-  };
-}
-
 if (!this.performance) {
   this.performance = {};
 }
 if (!this.performance.now) {
-  this.performance.now = Date.now;
+  this.performance.now = dateNow;
 }
 
 function backtrace() {
@@ -46,7 +35,7 @@ function backtrace() {
 
 function error(message) {
   if (!inBrowser) {
-    console.info(backtrace());
+    console.warn(backtrace());
   }
   throw new Error(message);
 }
@@ -62,12 +51,6 @@ function assert(condition) {
   }
 }
 
-function assertFalse(condition, message) {
-  if (condition) {
-    error(message);
-  }
-}
-
 function assertNotImplemented(condition, message) {
   if (!condition) {
     error("NotImplemented: " + message);
@@ -76,6 +59,10 @@ function assertNotImplemented(condition, message) {
 
 function warning(message) {
   release || console.warn(message);
+}
+
+function notUsed(message) {
+  release || assert(false, "Not Used " + message);
 }
 
 function notImplemented(message) {
@@ -321,7 +308,7 @@ function isNumeric(x) {
 }
 
 function boxValue(value) {
-  if (isNullOrUndefined(value)) {
+  if (isNullOrUndefined(value) || isObject(value)) {
     return value;
   }
   return Object(value);
@@ -1440,26 +1427,6 @@ var Callback = (function () {
   return callback;
 })();
 
-// Dump the bytes of an ArrayBuffer.
-function dumpBytes(buffer, start, length) {
-  var s = "";
-  bytes = new Uint8Array(buffer, start, length);
-  var end = length;
-  for (var i = 0; i < end; i++) {
-    if (((i) % 16) === 0) {
-      s += "\n" + (start + i) + ": ";
-    }
-    s += bytes[i] + " ";
-  }
-  return s;
-}
-
-function addProfileMarker(marker) {
-  if (typeof FirefoxCom !== "undefined") {
-    FirefoxCom.requestSync('addProfilerMarker', marker );
-  }
-}
-
 var CircularBuffer = (function () {
   var mask = 0xFFF, size = 4096;
   function circularBuffer(Type) {
@@ -1497,3 +1464,20 @@ var CircularBuffer = (function () {
   };
   return circularBuffer;
 })();
+
+function lazyClass(holder, name, initialize) {
+  Object.defineProperty(holder, name, {
+    get: function () {
+      var start = performance.now();
+      var value = initialize();
+      print("Initialized Class: " + name + " " + (performance.now() - start).toFixed(4));
+      assert (value);
+      Object.defineProperty(holder, name, { value: value, writable: true });
+      return value;
+    }, configurable: true
+  });
+}
+
+function createNewCompartment() {
+  return newGlobal('new-compartment');
+}

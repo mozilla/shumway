@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AVM2, Domain, Multiname */
+/*global AVM2, ApplicationDomain, Multiname */
 /**
  * Application domains don't have 1-1 object reference relationship with the real domain objects, not sure
  * why, but for instance ApplicationDomain.currentDomain !== ApplicationDomain.currentDomain. The getter
@@ -44,14 +44,14 @@ var ApplicationDomainDefinition = (function () {
         },
         instance: {
           ctor: function ctor(parentDomainOrNativeObject) { // (parentDomain:ApplicationDomain) -> void
-            if (parentDomainOrNativeObject instanceof Domain) {
+            if (parentDomainOrNativeObject instanceof ApplicationDomain) {
               this.nativeObject = parentDomainOrNativeObject;
               return;
             }
             // If no parent domain is passed in, use the current system domain.
             var parentNativeObject = parentDomainOrNativeObject ?
               parentDomainOrNativeObject.nativeObject : AVM2.currentDomain().system;
-            this.nativeObject = new Domain(parentNativeObject.vm, parentNativeObject);
+            this.nativeObject = new ApplicationDomain(parentNativeObject.vm, parentNativeObject);
           },
           getDefinition: function getDefinition(name) { // (name:String) -> Object
             var simpleName = name.replace("::", ".");

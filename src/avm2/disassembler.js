@@ -341,7 +341,7 @@ var SourceTracer = (function () {
             }
             var getSet = trait.isGetter() ? "get " : (trait.isSetter() ? "set " : "");
             if (!mi.isNative()) {
-              print("XXX: " + prefix + getSet + trait.name.getName() + " ()");
+              // print("XXX: " + prefix + getSet + trait.name.getName() + " ()");
             }
           }
 
@@ -381,7 +381,7 @@ var SourceTracer = (function () {
       writer.writeLn("Cut and paste the following into `native.js' and edit accordingly");
       writer.writeLn("8< --------------------------------------------------------------");
       writer.enter("natives." + native.cls + " = function " + native.cls + "(runtime, scope, instanceConstructor, baseClass) {");
-      writer.writeLn("var c = new Class(\"" + name + "\", instanceConstructor, Domain.passthroughCallable(instanceConstructor));");
+      writer.writeLn("var c = new Class(\"" + name + "\", instanceConstructor, ApplicationDomain.passthroughCallable(instanceConstructor));");
       writer.writeLn("c.extend(baseClass);\n");
 
       function traceTraits(traits, isStatic) {
@@ -554,14 +554,7 @@ var SourceTracer = (function () {
         writer.leave("}");
       writer.leave("},");
       writer.enter("script: {");
-        writer.enter("static: {");
-        writer.writeLn("// ...");
-        // writeTraits(ci.traits, false, true);
-        writer.leave("},");
-        writer.enter("instance: {");
-        writeTraits(ii.traits, false);
-        // writer.writeLn("// ...");
-        writer.leave("}");
+        writer.writeLn("instance: Glue.ALL");
       writer.leave("}");
       writer.leave("}");
       writer.leave("};");

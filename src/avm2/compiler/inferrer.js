@@ -87,7 +87,7 @@ var Type = (function () {
       if (qn === Multiname.getPublicQualifiedName("void")) {
         return Type.Void;
       }
-      release || assert(domain, "Domain is needed.");
+      release || assert(domain, "ApplicationDomain is needed.");
       ty = domain.findClassInfo(mn);
       ty = ty ? type.from(ty, domain) : Type.Any;
       if (mn.hasTypeParameter()) {
@@ -309,6 +309,9 @@ var TraitsType = (function () {
   traitsType.prototype.getTrait = function (mn, isSetter, followSuperType) {
     assert (arguments.length === 3);
     if (mn instanceof MultinameType) {
+      return null;
+    }
+    if (mn.isAttribute()) {
       return null;
     }
     if (followSuperType && (this.isInstanceInfo() || this.isClassInfo())) {
@@ -567,7 +570,7 @@ var Verifier = (function() {
     function verification(methodInfo, scope) {
       this.scope = scope;
       this.methodInfo = methodInfo;
-      this.domain = methodInfo.abc.domain;
+      this.domain = methodInfo.abc.applicationDomain;
       this.writer = new IndentingWriter();
       this.returnType = Type.Undefined;
     }
@@ -704,7 +707,7 @@ var Verifier = (function() {
       var writer = verifierTraceLevel.value ? this.writer : null;
       var bytecodes = this.methodInfo.analysis.bytecodes;
 
-      var domain = this.methodInfo.abc.domain;
+      var domain = this.methodInfo.abc.applicationDomain;
       var multinames = this.methodInfo.abc.constantPool.multinames;
       var mi = this.methodInfo;
 
@@ -780,7 +783,9 @@ var Verifier = (function() {
           }
           var trait = classType.getTrait(mn, false, true);
           if (trait) {
-            ti().object = LazyInitializer.create(classType.object);
+            if (!mi.isInstanceInitializer) {
+              ti().object = LazyInitializer.create(classType.object);
+            }
             return classType;
           }
         }
@@ -868,7 +873,7 @@ var Verifier = (function() {
             if (obj.isIndexedReadable()) {
               ti().isIndexedReadable = true;
               if (obj.isVector()) {
-                return obj.parameter
+                return obj.parameter;
               }
             } else if (obj.isDirectlyReadable()) {
               ti().isDirectlyReadable = true;

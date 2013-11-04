@@ -396,7 +396,7 @@ var createName = function createName(namespaces, name) {
           if (coercer) {
             local = coercer(local);
           } else if (c4CoerceNonPrimitiveParameters) {
-            local = new Call(start, state.store, globalProperty("asCoerceByMultiname"), null, [constant(this.abc.domain), constant(parameter.type), local], true);
+            local = new Call(start, state.store, globalProperty("asCoerceByMultiname"), null, [constant(this.abc.applicationDomain), constant(parameter.type), local], true);
           }
         }
         state.local[index] = local;
@@ -418,7 +418,7 @@ var createName = function createName(namespaces, name) {
       var methods = this.abc.methods;
       var classes = this.abc.classes;
       var multinames = this.abc.constantPool.multinames;
-      var domain = new Constant(this.abc.domain);
+      var domain = new Constant(this.abc.applicationDomain);
 
       var traceBuilder = c4TraceLevel.value > 2;
 

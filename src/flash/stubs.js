@@ -76,8 +76,8 @@
 
 function bindNativeClassDefinition(nativeName, definition) {
   // Hook up the native.
-  natives[nativeName] = function (runtime, scope, instanceConstructor, baseClass) {
-    var c = new Class(undefined, instanceConstructor, Domain.coerceCallable);
+  natives[nativeName] = function (domain, scope, instanceConstructor, baseClass) {
+    var c = new Class(undefined, instanceConstructor, ApplicationDomain.coerceCallable);
     c.extend(baseClass);
     c.linkNatives(definition);
     return c;
@@ -312,7 +312,7 @@ var Stubs = new (function () {
   });
 })();
 
-natives["FlashUtilScript::getAliasName"] = function (runtime, scope, instanceConstructor, baseClass) {
+natives["FlashUtilScript::getAliasName"] = function (domain, scope, instanceConstructor, baseClass) {
 //  notImplemented("FlashUtilScript::getAliasName");
   return function getAliasName(value) {
     // FIXME don't know what is expected here
@@ -322,22 +322,22 @@ natives["FlashUtilScript::getAliasName"] = function (runtime, scope, instanceCon
 
 natives['FlashUtilScript::getDefinitionByName'] = natives.getDefinitionByName;
 
-natives['FlashUtilScript::getTimer'] = function GetTimerMethod(runtime, scope, instanceConstructor, baseClass) {
+natives['FlashUtilScript::getTimer'] = function GetTimerMethod(domain, scope, instanceConstructor, baseClass) {
   var start = Date.now();
   return function getTimer() {
     return Date.now() - start;
   };
 };
 
-natives['FlashUtilScript::escapeMultiByte'] = function EscapeMultiByteMethod(runtime, scope, instanceConstructor, baseClass) {
+natives['FlashUtilScript::escapeMultiByte'] = function EscapeMultiByteMethod(domain, scope, instanceConstructor, baseClass) {
   return escape;
 };
 
-natives['FlashUtilScript::unescapeMultiByte'] = function UnescapeMultiByteMethod(runtime, scope, instanceConstructor, baseClass) {
+natives['FlashUtilScript::unescapeMultiByte'] = function UnescapeMultiByteMethod(domain, scope, instanceConstructor, baseClass) {
   return unescape;
 };
 
-natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runtime, scope, instanceConstructor, baseClass) {
+natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(domain, scope, instanceConstructor, baseClass) {
   return function navigateToURL(request, window_) {
     if (request === null || request === undefined) {
       throwError('TypeError', Errors.NullPointerError, 'request');
@@ -359,7 +359,7 @@ natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(runti
   };
 };
 
-natives['FlashNetScript::sendToURL'] = function GetSendToURLMethod(runtime, scope, instanceConstructor, baseClass) {
+natives['FlashNetScript::sendToURL'] = function GetSendToURLMethod(domain, scope, instanceConstructor, baseClass) {
   return function sendToURL(request) {
     if (request === null || request === undefined) {
       throwError('TypeError', Errors.NullPointerError, 'request');
@@ -375,7 +375,7 @@ natives['FlashNetScript::sendToURL'] = function GetSendToURLMethod(runtime, scop
   };
 };
 
-natives['Toplevel::registerClassAlias'] = function GetRegisterClassAliasMethod(runtime, scope, instance, baseClass) {
+natives['Toplevel::registerClassAlias'] = function GetRegisterClassAliasMethod(domain, scope, instance, baseClass) {
   return function registerClassAlias(aliasName, classObject) {
     if (!aliasName) {
       throwError('TypeError', Errors.NullPointerError, 'aliasName');
@@ -389,7 +389,7 @@ natives['Toplevel::registerClassAlias'] = function GetRegisterClassAliasMethod(r
   };
 };
 
-natives['Toplevel::getClassByAlias'] = function GetGetClassByAliasMethod(runtime, scope, instance, baseClass) {
+natives['Toplevel::getClassByAlias'] = function GetGetClassByAliasMethod(domain, scope, instance, baseClass) {
   return function getClassByAlias(aliasName) {
     if (!aliasName) {
       throwError('TypeError', Errors.NullPointerError, 'aliasName');

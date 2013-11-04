@@ -19,10 +19,9 @@
 var AVM2 = (function () {
 
   function avm2(sysMode, appMode, findDefiningAbc, loadAVM1) {
-    // console.log("ION is " + (Math.toSource() ? " ENABLED" : " DISABLED"));
     // TODO: this will change when we implement security domains.
-    this.systemDomain = new Domain(this, null, sysMode, true);
-    this.applicationDomain = new Domain(this, this.systemDomain, appMode, false);
+    this.systemDomain = new ApplicationDomain(this, null, sysMode, true);
+    this.applicationDomain = new ApplicationDomain(this, this.systemDomain, appMode, false);
     this.findDefiningAbc = findDefiningAbc;
     this.loadAVM1 = loadAVM1;
     this.isAVM1Loaded = false;
@@ -44,7 +43,7 @@ var AVM2 = (function () {
     for (var i = 0; i < maxDepth && caller; i++) {
       var mi = caller.methodInfo;
       if (mi) {
-        domain = mi.abc.domain;
+        domain = mi.abc.applicationDomain;
         break;
       }
       caller = caller.caller;

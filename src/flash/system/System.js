@@ -90,6 +90,22 @@ var SystemDefinition = (function () {
               somewhatImplemented("System.vmVersion");
               return "1.0 shumway";
             }
+          },
+          swfVersion: {
+            get: function () {
+              return 19;
+            }
+          },
+          apiVersion: {
+            get: function () {
+              return 26;
+            }
+          },
+          getArgv: function () {
+            return [];
+          },
+          getRunmode: function () {
+            return "mixed";
           }
         },
         instance: {

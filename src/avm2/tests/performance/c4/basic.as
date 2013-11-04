@@ -80,7 +80,7 @@ package {
 
   (function () {
     var s = 0;
-    var COUNT = 1 * K_SMALLER;
+    var COUNT = 1 * K_SMALLER / 10;
     for (var i = 0; i < COUNT; i++) {
       var a = [];
       for (var j = 0; j < K; j++) {
@@ -244,7 +244,7 @@ package {
 
   (function (e) {
     var s = 0;
-    for (var i = 0; i < 100000; i++) {
+    for (var i = 0; i < 10000; i++) {
       e.e += e.bar();
     }
     clockUnder(THRESHOLD, "ICs.");
@@ -253,7 +253,7 @@ package {
 
   (function () {
     var a = [];
-    for (var i = 0; i < 1000000; i++) {
+    for (var i = 0; i < 100000; i++) {
       a[i] = i;
       a[i] += a[i];
     }

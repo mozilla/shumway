@@ -39,6 +39,21 @@ load("../../src/swf/label.js");
 load("../../src/swf/shape.js");
 load("../../src/swf/text.js");
 
+var console = {
+  time: function (name) {
+    
+  },
+  timeEnd: function (name) {
+    
+  },
+  warn: function (s) {
+      print(s);
+  },
+  info: function (s) {
+    print(s);
+  }
+};
+
 load("../../src/avm2/avm2Util.js");
 
 SWF.parse(snarf("bin/library.swf", "binary"), {
