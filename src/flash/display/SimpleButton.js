@@ -106,6 +106,11 @@ var SimpleButtonDefinition = (function () {
         currentChild._invalidateTransform();
       }
 
+      if (!state) {
+        this._children.shift();
+        return;
+      }
+
       this._children[0] = state;
 
       state._parent = this;
