@@ -179,7 +179,8 @@ function isShumwayEnabledFor(actions) {
   if (/\.ytimg\.com\//i.test(url) /* youtube movies */ ||
     /\/vui.swf\b/i.test(url) /* vidyo manager */  ||
     /soundcloud\.com\/player\/assets\/swf/i.test(url) /* soundcloud */ ||
-    /sndcdn\.com\/assets\/swf/.test(url) /* soundcloud */) {
+    /sndcdn\.com\/assets\/swf/.test(url) /* soundcloud */ ||
+    /vimeocdn\.com/.test(url) /* vimeo */) {
     return false;
   }
 
