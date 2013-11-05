@@ -305,9 +305,12 @@ RenderVisitor.prototype = {
       var mask = clipInfo.mask;
       var maskee = clipInfo.maskee;
 
+      var savedClipDepth = this.clipDepth;
+      this.clipDepth = null;
       this.ctx = mask.ctx;
       this.visit(child._mask, visitContainer, new RenderingContext(this.refreshStage));
       this.ctx = ctx;
+      this.clipDepth = savedClipDepth;
 
       renderDisplayObject(child, maskee.ctx, context);
 
