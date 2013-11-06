@@ -123,6 +123,43 @@ SWF.embed = function(file, doc, container, options) {
       stage._mouseOver = false;
     });
 
+    // Also accepting postMessages from the parent windows to control
+    // mouse and keyboard (e.g. when embedded in iframe).
+    window.addEventListener('message', function (evt) {
+      var data = evt.data;
+      if (typeof data !== 'object' || data === null) {
+        return;
+      }
+
+      var type = data.type;
+      switch (type) {
+      case 'mousemove':
+      case 'mouseup':
+      case 'mousedown':
+        var isMouseMove = type === 'mousemove';
+        stage._mouseMoved = true;
+        stage._mouseOver = true;
+        stage._mouseX = data.x * 20;
+        stage._mouseY = data.y * 20;
+        if (!isMouseMove) {
+          stage._mouseEvents.push(type);
+        }
+        break;
+      case 'mouseover':
+      case 'mouseout':
+        stage._mouseMoved = true;
+        stage._mouseOver = type === 'mouseover';
+        break;
+      case 'keyup':
+      case 'keydown':
+        stage._dispatchEvent(new flash.events.KeyboardEvent(
+          type === 'keyup' ? 'keyUp' : 'keyDown', true, false,
+          data.charCode, data.keyCode, data.keyLocation,
+          data.ctrlKey || false, data.altKey || false, data.shiftKey || false));
+        break;
+      }
+    }, false);
+
     var bgcolor = loaderInfo._backgroundColor;
     if (options.objectParams) {
       var m;
