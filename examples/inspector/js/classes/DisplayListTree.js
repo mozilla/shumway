@@ -53,8 +53,8 @@ var DisplayListTree = (function() {
       table += '<tr>' + makePropCell('x', printCoord(pos.x)) +
                makePropCell('y', printCoord(pos.y)) + '</tr>';
       displayObject._applyCurrentTransform(displayObject._stage, pos);
-      table += '<tr>' + makePropCell('x', printCoord(pos.x)) +
-               makePropCell('y', printCoord(pos.y)) + '</tr>';
+      table += '<tr>' + makePropCell('left', printCoord(pos.x)) +
+               makePropCell('top', printCoord(pos.y)) + '</tr>';
       table += '<tr>' + makePropCell('width', printCoord(displayObject.width)) +
                makePropCell('height', printCoord(displayObject.height)) + '</tr>';
       table += '<tr>' + makePropCell('scaleX', round(displayObject.scaleX)) +
