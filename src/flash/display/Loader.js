@@ -100,7 +100,18 @@ var LoaderDefinition = (function () {
       };
     } else {
       commitData = function (data, transferables) {
-        self.postMessage(data, transferables);
+        try {
+          self.postMessage(data, transferables);
+        } catch (ex) {
+          // Attempting to fix IE10/IE11 transferables
+          if (ex != 'DataCloneError') {
+            throw ex;
+          }
+          commitData = function (data) {
+            self.postMessage(data);
+          };
+          return commitData(data);
+        }
       };
     }
 
