@@ -65,7 +65,7 @@ var BitmapDefinition = (function () {
       colorTransform.setAlpha(ctx, true);
       ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
                                   this._smoothing;
-      ctx.drawImage(this._bitmapData._drawable, 0, 0);
+      ctx.drawImage(this._bitmapData._getDrawable(), 0, 0);
       ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = false;
       ctx.restore();
       traceRenderer.value && frameWriter.writeLn("Bitmap.draw() snapping: " + this._pixelSnapping +
