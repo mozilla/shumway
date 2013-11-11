@@ -165,50 +165,52 @@ var MovieClipDefinition = (function () {
         }
 
         if (currentCmd &&
-            currentChild && currentChild._animated &&
+            currentChild &&
             nextCmd.symbolId === currentCmd.symbolId &&
             nextCmd.ratio === currentCmd.ratio) {
-          currentChild._invalidate();
-          currentChild._invalidateBounds();
+          if (!currentChild._animated) {
+            currentChild._invalidate();
+            currentChild._invalidateBounds();
 
-          if (nextCmd.hasMatrix) {
-            var m = nextCmd.matrix;
-            var a = m.a;
-            var b = m.b;
-            var c = m.c;
-            var d = m.d;
+            if (nextCmd.hasMatrix) {
+              var m = nextCmd.matrix;
+              var a = m.a;
+              var b = m.b;
+              var c = m.c;
+              var d = m.d;
 
-            currentChild._rotation = Math.atan2(b, a) * 180 / Math.PI;
-            var sx = Math.sqrt(a * a + b * b);
-            currentChild._scaleX = a > 0 ? sx : -sx;
-            var sy = Math.sqrt(d * d + c * c);
-            currentChild._scaleY = d > 0 ? sy : -sy;
+              currentChild._rotation = Math.atan2(b, a) * 180 / Math.PI;
+              var sx = Math.sqrt(a * a + b * b);
+              currentChild._scaleX = a > 0 ? sx : -sx;
+              var sy = Math.sqrt(d * d + c * c);
+              currentChild._scaleY = d > 0 ? sy : -sy;
 
-            var t = currentChild._currentTransform;
-            t.a = a;
-            t.b = b;
-            t.c = c;
-            t.d = d;
-            t.tx = m.tx;
-            t.ty = m.ty;
+              var t = currentChild._currentTransform;
+              t.a = a;
+              t.b = b;
+              t.c = c;
+              t.d = d;
+              t.tx = m.tx;
+              t.ty = m.ty;
 
-            currentChild._invalidateTransform();
-          }
+              currentChild._invalidateTransform();
+            }
 
-          if (nextCmd.hasCxform) {
-            currentChild._cxform = nextCmd.cxform;
-          }
+            if (nextCmd.hasCxform) {
+              currentChild._cxform = nextCmd.cxform;
+            }
 
-          if (nextCmd.clip) {
-            currentChild._clipDepth = nextCmd.clipDepth;
-          }
+            if (nextCmd.clip) {
+              currentChild._clipDepth = nextCmd.clipDepth;
+            }
 
-          if (nextCmd.hasName) {
-            currentChild.name = nextCmd.name;
-          }
+            if (nextCmd.hasName) {
+              currentChild.name = nextCmd.name;
+            }
 
-          if (nextCmd.blend) {
-            currentChild.blendMode = this._resolveBlendMode(nextCmd.blendMode);
+            if (nextCmd.blend) {
+              currentChild.blendMode = this._resolveBlendMode(nextCmd.blendMode);
+            }
           }
 
           currentDisplayListItem.cmd = nextCmd;
