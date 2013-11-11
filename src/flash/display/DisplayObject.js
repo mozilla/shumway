@@ -277,13 +277,11 @@ var DisplayObjectDefinition = (function () {
       return m;
     },
     _applyCurrentTransform: function (targetCoordSpace, point1, pointN) {
-      var m;
-      if (targetCoordSpace && targetCoordSpace !== this._parent) {
-        m = this._getConcatenatedTransform();
-      } else {
-        m = this._currentTransform;
+      if (!targetCoordSpace) {
+        return;
       }
 
+      var m = this._getConcatenatedTransform();
       for (var i = 1; i < arguments.length; i++) {
         var point = arguments[i];
         var x = point.x;
@@ -292,10 +290,8 @@ var DisplayObjectDefinition = (function () {
         point.y = Math.round(m.d * y + m.b * x + m.ty);
       }
 
-      if (m === this._concatenatedTransform) {
-        var fn = targetCoordSpace._applyCurrentInverseTransform;
-        fn.call.apply(fn, arguments);
-      }
+      var fn = targetCoordSpace._applyCurrentInverseTransform;
+      fn.call.apply(fn, arguments);
     },
     _applyCurrentInverseTransform: function (point1, pointN) {
       var m = this._getConcatenatedTransform();
