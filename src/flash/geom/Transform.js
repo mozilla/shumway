@@ -136,8 +136,6 @@ var TransformDefinition = (function () {
 
     ctor: function (target) {
       this._target = target;
-
-      target._transform = this;
     }
   };
 

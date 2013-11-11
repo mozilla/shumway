@@ -647,14 +647,14 @@ var DisplayObjectDefinition = (function () {
     },
     get transform() {
       // TODO: Twips-ify
-      return this._transform || new flash.geom.Transform(this);
+      return new flash.geom.Transform(this);
     },
     set transform(val) {
       this._animated = false;
 
       this._invalidateBounds();
 
-      var transform = this._transform;
+      var transform = this.transform;
       transform.colorTransform = val.colorTransform;
       if (val.matrix3D) {
         transform.matrix3D = val.matrix3D;
