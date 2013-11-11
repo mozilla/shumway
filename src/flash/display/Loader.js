@@ -808,6 +808,8 @@ var LoaderDefinition = (function () {
             }
           }
 
+          loader._stage._children[0] = root;
+
           rootClass.instanceConstructor.call(root);
 
           loader._content = root;

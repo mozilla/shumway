@@ -184,8 +184,6 @@ SWF.embed = function(file, doc, container, options) {
 
     var root = loader._content;
 
-    stage._children[0] = root;
-
     root._dispatchEvent("added");
     root._dispatchEvent("addedToStage");
 
