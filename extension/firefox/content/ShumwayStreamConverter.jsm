@@ -37,6 +37,16 @@ const MAX_CLIPBOARD_DATA_SIZE = 8000;
 Cu.import('resource://gre/modules/XPCOMUtils.jsm');
 Cu.import('resource://gre/modules/Services.jsm');
 Cu.import('resource://gre/modules/NetUtil.jsm');
+Cu.import("resource://gre/modules/AddonManager.jsm");
+
+var shumwayVersion;
+try {
+  AddonManager.getAddonByID("shumway@research.mozilla.org", function(addon) {
+    shumwayVersion = addon.version;
+  });
+} catch (ignored) {
+
+}
 
 XPCOMUtils.defineLazyModuleGetter(this, 'PrivateBrowsingUtils',
   'resource://gre/modules/PrivateBrowsingUtils.jsm');
@@ -44,7 +54,6 @@ XPCOMUtils.defineLazyModuleGetter(this, 'PrivateBrowsingUtils',
 XPCOMUtils.defineLazyModuleGetter(this, 'ShumwayTelemetry',
   'resource://shumway/ShumwayTelemetry.jsm');
 
-let appInfo = Cc['@mozilla.org/xre/app-info;1'].getService(Ci.nsIXULAppInfo);
 let Svc = {};
 XPCOMUtils.defineLazyServiceGetter(Svc, 'mime',
                                    '@mozilla.org/mime;1', 'nsIMIMEService');
@@ -459,6 +468,25 @@ ChromeActions.prototype = {
     case 'unregister':
       return embedTag.__flash__unregisterCallback(data.functionName);
     }
+  },
+  getWindowUrl: function() {
+    return this.window.parent.wrappedJSObject.location + '';
+  },
+  getVersionInfo: function() {
+    var versionInfo = {
+      geckoMstone : 'unknown',
+      geckoBuildID: 'unknown',
+      shumwayVersion: 'unknown'
+    };
+    try {
+      versionInfo.geckoMstone = Services.prefs.getCharPref('gecko.mstone');
+      versionInfo.geckoBuildID = Services.prefs.getCharPref('gecko.buildID');
+      versionInfo.shumwayVersion = shumwayVersion;
+    } catch (e) {
+      console.warn('Error encountered while getting platform and shumway ' +
+                   'version info:', e);
+    }
+    return JSON.stringify(versionInfo);
   }
 };
 

@@ -122,13 +122,14 @@ function runViewer() {
   showURLMenu.addEventListener('click', showURL);
   var inspectorMenu = document.getElementById('inspectorMenu');
   inspectorMenu.addEventListener('click', showInInspector);
+  var reportMenu = document.getElementById('reportMenu');
+  reportMenu.addEventListener('click', reportIssue);
 
   document.getElementById('copyProfileMenu').addEventListener('click', copyProfile);
 }
 
 function showURL() {
-  var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
-  window.prompt("Copy to clipboard", flashParams.url);
+  window.prompt("Copy to clipboard", movieUrl);
 }
 
 function showInInspector() {
@@ -138,6 +139,18 @@ function showInInspector() {
     params += '&' + k + '=' + encodeURIComponent(movieParams[k]);
   }
   window.open(base + encodeURIComponent(movieUrl) + params);
+}
+
+function reportIssue() {
+  var base = "http://shumway-issues.tillschneidereit.net/input?";
+  var windowUrl = FirefoxCom.requestSync('getWindowUrl', null);
+  var versions = JSON.parse(FirefoxCom.requestSync('getVersionInfo', null));
+  var params = 'url=' + encodeURIComponent(windowUrl);
+  params += '&swf=' + encodeURIComponent(movieUrl);
+  params += '&ffbuild=' + encodeURIComponent(versions.geckoMstone + ' (' +
+                                             versions.geckoBuildID + ')');
+  params += '&shubuild=' + encodeURIComponent(versions.shumwayVersion);
+  window.open(base + params);
 }
 
 function copyProfile() {
