@@ -94,12 +94,10 @@ var TransformDefinition = (function () {
       var tx = val.tx*20|0;
       var ty = val.ty*20|0;
 
-      target._rotation = a !== 0 ? Math.atan(b / a) * 180 / Math.PI :
+      target._rotation = a !== 0 ? Math.atan2(b, a) * 180 / Math.PI :
                                    (b > 0 ? 90 : -90);
-      var sx = Math.sqrt(a * a + b * b);
-      target._scaleX = a > 0 ? sx : -sx;
-      var sy = Math.sqrt(d * d + c * c);
-      target._scaleY = d > 0 ? sy : -sy;
+      target._scaleX = Math.sqrt(a * a + b * b);
+      target._scaleY = Math.sqrt(c * c + d * d);
 
       target._invalidateTransform();
 
