@@ -442,6 +442,7 @@ var DisplayObjectDefinition = (function () {
 
       this._alpha = val;
       this._invalidate();
+      this._animated = false;
     },
     get blendMode() {
       return this._blendMode;
@@ -452,12 +453,14 @@ var DisplayObjectDefinition = (function () {
       } else {
         throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
       }
+      this._animated = false;
     },
     get cacheAsBitmap() {
       return this._cacheAsBitmap;
     },
     set cacheAsBitmap(val) {
       this._cacheAsBitmap = this._filters.length ? true : val;
+      this._animated = false;
     },
     get filters() {
       return this._filters;
@@ -473,6 +476,7 @@ var DisplayObjectDefinition = (function () {
       }
 
       this._filters = val;
+      this._animated = false;
     },
     get height() {
       var bounds = this._getContentBounds();
@@ -522,6 +526,7 @@ var DisplayObjectDefinition = (function () {
       }
 
       this._invalidate();
+      this._animated = false;
     },
     get name() {
       return this._name || (this._name = generateName());
@@ -552,6 +557,7 @@ var DisplayObjectDefinition = (function () {
     },
     set opaqueBackground(val) {
       this._opaqueBackground = val;
+      this._animated = false;
     },
     get parent() {
       return this._index > -1 ? this._parent : null;
@@ -576,6 +582,7 @@ var DisplayObjectDefinition = (function () {
       this._rotation = val;
 
       this._updateCurrentTransform();
+      this._animated = false;
     },
     get rotationX() {
       return 0;
@@ -611,6 +618,7 @@ var DisplayObjectDefinition = (function () {
 
       this._scaleX = val;
       this._updateCurrentTransform();
+      this._animated = false;
     },
     get scaleY() {
       return this._scaleY;
@@ -624,6 +632,7 @@ var DisplayObjectDefinition = (function () {
 
       this._scaleY = val;
       this._updateCurrentTransform();
+      this._animated = false;
     },
     get scaleZ() {
       return 1;
@@ -637,6 +646,7 @@ var DisplayObjectDefinition = (function () {
     set scale9Grid(val) {
       somewhatImplemented('DisplayObject.scale9Grid');
       this._scale9Grid = val;
+      this._animated = false;
     },
     get scrollRect() {
       return this._scrollRect;
@@ -650,8 +660,6 @@ var DisplayObjectDefinition = (function () {
       return new flash.geom.Transform(this);
     },
     set transform(val) {
-      this._animated = false;
-
       this._invalidateBounds();
 
       var transform = this.transform;
@@ -671,6 +679,7 @@ var DisplayObjectDefinition = (function () {
 
       this._visible = val;
       this._invalidate();
+      this._animated = false;
     },
     get width() {
       var bounds = this._getContentBounds();
@@ -712,6 +721,7 @@ var DisplayObjectDefinition = (function () {
       this._invalidateTransform();
 
       this._currentTransform.tx = val;
+      this._animated = false;
     },
     get y() {
       return this._currentTransform.ty;
@@ -726,6 +736,7 @@ var DisplayObjectDefinition = (function () {
       this._invalidateTransform();
 
       this._currentTransform.ty = val;
+      this._animated = false;
     },
     get z() {
       return 0;

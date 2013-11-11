@@ -110,6 +110,8 @@ var TransformDefinition = (function () {
         ty: ty
       };
       target._current3DTransform = null;
+
+      target._animated = false;
     },
 
     get matrix3D() {
