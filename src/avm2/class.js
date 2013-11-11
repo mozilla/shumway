@@ -755,7 +755,7 @@ var Class = (function () {
       while ((s = initializes.pop())) {
         s.call(obj);
       }
-      Counter.count("Initialize Instance");
+      Counter.count("Initialize Instance " + obj.class);
     },
 
     createInstance: function createInstance(args) {
