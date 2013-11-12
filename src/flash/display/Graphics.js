@@ -314,6 +314,7 @@ var GraphicsDefinition = (function () {
       if (this.bbox) {
         return this.bbox;
       }
+      Counter.count("CACHE ME: Graphics._getBounds");
       var subpaths = this._paths;
       var xMins = [], yMins = [], xMaxs = [], yMaxs = [];
       for (var i = 0, n = subpaths.length; i < n; i++) {
