@@ -19,7 +19,7 @@
   buildLinearGradientFactory, buildRadialGradientFactory,
   SHAPE_MOVE_TO, SHAPE_LINE_TO, SHAPE_CURVE_TO, SHAPE_WIDE_MOVE_TO,
   SHAPE_WIDE_LINE_TO, SHAPE_CUBIC_CURVE_TO, SHAPE_CIRCLE, SHAPE_ELLIPSE,
-  SHAPE_ROUND_CORNER, Errors, throwError */
+  SHAPE_ROUND_CORNER, Errors, throwError, Counter */
 
 var GraphicsDefinition = (function () {
   var GRAPHICS_PATH_WINDING_EVEN_ODD       = 'evenOdd';
@@ -314,6 +314,7 @@ var GraphicsDefinition = (function () {
       if (this.bbox) {
         return this.bbox;
       }
+      Counter.count("CACHE ME: Graphics._getBounds");
       var subpaths = this._paths;
       var xMins = [], yMins = [], xMaxs = [], yMaxs = [];
       for (var i = 0, n = subpaths.length; i < n; i++) {
