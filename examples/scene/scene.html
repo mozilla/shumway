@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+</head>
+<body style="background-color: #333333;">
+  <script src="../../src/avm2/options.js"></script>
+  <script>
+    var Option = options.Option;
+    var OptionSet = options.OptionSet;
+    var coreOptions = new OptionSet("Core Options");
+  </script>
+  <script src="../../src/avm2/avm2Util.js"></script>
+  <script src="../../src/swf/util.js"></script>
+  <script src="../../src/flash/util.js"></script>
+  <!--<script src="../../src/swf/gl/lib/tessellate.asm.js"></script>-->
+  <!--<script src="../../src/swf/gl/lib/tessellate.js"></script>-->
+  <script src="../../src/swf/gl/geom.js"></script>
+  <script src="../../src/swf/gl/gl.js"></script>
+  <script src="../../src/swf/gl/canvas-gl.js"></script>
+  <script src="../inspector/js/classes/Timeline.js"></script>
+  <script src="../inspector/js/classes/Terminal.js"></script>
+  <script src="../inspector/js/classes/dat.gui.min.js"></script>
+  <script>
+    var Point = GL.Point;
+    var Rectangle = GL.Rectangle;
+    var Matrix = GL.Matrix;
+  </script>
+  <script src="scene.js"></script>
+  <script src="storm.js"></script>
+  <style>
+    #debugInfoContainer {
+      position: absolute;
+      top: 300px;
+      bottom: 0px;
+      right: 0;
+      width: 512px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background-color: rgba(0, 0, 0, 0.2);
+
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+  </style>
+
+
+  <div>
+    <div style="float: left; width: 512px;">
+      <canvas id="frameTimeline" height="100" style="background-]color: #333333;"></canvas>
+    </div>
+    <div style="margin-left: 10px; float: left; width: 512px;">
+
+    </div>
+  </div>
+
+  <div style="clear: both;">
+    <canvas id="stageCanvas" width="2048" height="1024" style="background-color: white;"></canvas>
+    <!--<canvas id="stageCanvas" width="1024" height="1024" style="background-color: white;"></canvas>-->
+  </div>
+  <div id="debugInfoContainer">
+    <canvas id="traceTerminal" width="600" height="800" tabindex='2'></canvas>
+  </div>
+
+  <script>
+
+    var seed = 20;
+    Math.random = function () {
+      var x = Math.sin(seed++) * 10000;
+      return x - Math.floor(x);
+    };
+
+    var traceTerminal = new Terminal(document.getElementById("traceTerminal")); traceTerminal.refreshEvery(100);
+    function appendToTraceTerminal(str, color) {
+      var scroll = traceTerminal.isScrolledToBottom();
+      traceTerminal.buffer.append(str, color);
+      if (scroll) {
+        traceTerminal.gotoLine(traceTerminal.buffer.length - 1);
+        traceTerminal.scrollIntoView();
+      }
+    }
+    var logToConsole = false;
+    var console_log = console.log;
+    var console_info = console.info;
+    var console_warn = console.warn;
+    console.log = function (str) {
+      if (logToConsole) {
+        console_log.apply(console, arguments);
+      }
+      appendToTraceTerminal([].join.call(arguments, " "));
+    };
+    console.info = function (str) {
+      if (logToConsole) {
+        console_info.apply(console, arguments);
+      }
+      appendToTraceTerminal([].join.call(arguments, " "), "#666600");
+    };
+    console.warn = function (str) {
+      if (logToConsole) {
+        console_warn.apply(console, arguments);
+      }
+      appendToTraceTerminal([].join.call(arguments, " "), "#FF6700");
+    };
+
+    var timeline = new Timeline(document.getElementById("frameTimeline"));
+    timeline.setFrameRate(60);
+    timeline.refreshEvery(10);
+
+    var canvas = document.getElementById("stageCanvas");
+    var context = canvas.getContext("2d");
+
+    context.font = 12 + 'px Consolas, "Liberation Mono", Courier, monospace';
+
+    var gui = new dat.GUI();
+    var options = {scale: 1, select: 0, render: true};
+    gui.add(options, "scale").step(0.01).min(0).max(20);
+    gui.add(options, "select");
+    gui.add(options, "render");
+
+    var obj = {
+      add: function() {
+        console.log("clicked")
+      }
+    };
+
+    gui.add(obj,'add');
+
+    // var path = new GL.SimplePath();
+    // var pathGeometry = new GL.Geometry(context);
+
+    function getColor(fill) {
+      var rgb = fill.color;
+      return [
+        ((rgb >> 16) & 0xff) / 255,
+        ((rgb >> 8) & 0xff) / 255,
+        (rgb & 0xff) / 255,
+        fill.alpha / 1
+      ];
+    }
+
+    var KEY_R = 82;
+    var KEY_M = 77;
+    var KEY_Z = 90;
+
+    var scene = Scene.create(canvas.width, canvas.height);
+    var mousePosition;
+
+    var animators = [];
+
+    var frames = 0;
+    (function tick() {
+      timeline.enter("FRAME");
+      var now = performance.now();
+      if (mousePosition) {
+        timeline.enter("SELECT");
+        for (var i = 0; i < options.select; i++) {
+          scene.select(mousePosition.x, mousePosition.y);
+        }
+        timeline.leave("SELECT");
+      }
+
+      animators.forEach(function (animator) {
+        animator.step(now);
+      });
+
+      scene.animators.forEach(function (animator) {
+        animator.step(now);
+      });
+
+      if (options.render) {
+        timeline.enter("RENDER");
+        scene.render(context);
+        timeline.leave("RENDER");
+      }
+      timeline.leave("FRAME");
+      if (frames ++ < 5000) {
+        requestAnimationFrame(tick);
+      }
+
+    })();
+
+    function getMousePosition(canvas, evt) {
+      var rect = canvas.getBoundingClientRect();
+      return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+      };
+    }
+
+    var originalPosition;
+
+    canvas.addEventListener('mousemove', function(evt) {
+      mousePosition = getMousePosition(canvas, evt);
+      if (!mouseDown) {
+        return;
+      }
+      if (selected) {
+        var point = new Point(mousePosition.x, mousePosition.y);
+        if (selected.parent) {
+          selected.parent.transformPoint(point);
+          if (!originalPosition) {
+            originalPosition = new Point(mousePosition.x, mousePosition.y);
+            selected.transformPoint(originalPosition);
+          }
+          selected.x = point.x - originalPosition.x;
+          selected.y = point.y - originalPosition.y;
+        }
+      }
+
+    }, false);
+
+    var mouseDown = false;
+    canvas.addEventListener('mousedown', function(evt) {
+      mouseDown = true;
+    }, false);
+
+    canvas.addEventListener('mouseup', function(evt) {
+      mouseDown = false;
+      originalPosition = null;
+    }, false);
+
+    canvas.addEventListener('click', function(evt) {
+      if (mousePosition) {
+        selected = scene.select(mousePosition.x, mousePosition.y);
+      }
+    }, false);
+
+    document.addEventListener('keypress', function(evt) {
+
+    }, false);
+
+    var keys = [];
+    document.addEventListener('keydown', function(evt) {
+      console.info("keydown: " + evt.keyCode);
+      keys[evt.keyCode] = true;
+      if (!selected) {
+        return;
+      }
+      var now = performance.now();
+      var until = now + 10000;
+      switch (evt.keyCode) {
+        case KEY_R:
+          animators.push(new Animator.Rotate(selected, until));
+          break;
+        case KEY_M:
+          animators.push(new Animator.Slide(selected, until));
+          break;
+        case KEY_Z:
+          animators.push(new Animator.Scale(selected, until));
+          break;
+      }
+
+    }, false);
+
+    document.addEventListener('keyup', function(evt) {
+      keys[evt.keyCode] = false;
+    }, false);
+
+
+    function timeIt(fn, message, count) {
+      count = count || 0;
+      var start = performance.now();
+      for (var i = 0; i < count; i++) {
+        fn();
+      }
+      var elapsed = (performance.now() - start);
+      // console.info("Measure: " + message + " Count: " + count + " Elapsed: " + elapsed.toFixed(4) + " (" + (elapsed / count).toFixed(4) + ")");
+      console.info(message + ": " + elapsed.toFixed(4));
+    }
+
+    function microBenchmarks() {
+      timeIt(function () {
+        var rectangle = Rectangle.createEmpty();
+        var transform = new Matrix();
+        transform.rotate(0.123);
+        transform.translate(10, 10);
+        for (var i = 0; i < 10000; i++) {
+          rectangle.set(0, 0, 100, 100);
+          transform.transformRectangleAABB(rectangle);
+        }
+      }, "Compute AABBs", 1024);
+
+      timeIt(function () {
+        var x0 = 4, x1 = 1, x2 = 14, x3 = 9, s = 0;
+        for (var i = 0; i < 50000; i++) {
+          s += Math.min(x0, x1, x2, x3);
+        }
+        return s;
+      }, "Min 4", 1024);
+
+      timeIt(function () {
+        var x0 = 4, x1 = 1, x2 = 14, x3 = 9, s = 0;
+        for (var i = 0; i < 50000; i++) {
+          var tmp = 0;
+          if (x0 > x1) { tmp = x0; x0 = x1; x1 = tmp; }
+          if (x2 > x3) { tmp = x2; x2 = x3; x3 = tmp; }
+          s += x0 < x2 ? x0 : x2;
+        }
+        return s;
+      }, "Min 4 Fast", 1024);
+    }
+
+    gui.add({
+      microBenchmarks: microBenchmarks
+    }, 'microBenchmarks').name("Benchmark");
+
+    gui.add({
+      select: function () {
+        timeIt(function () {
+          for (var x = 0; x < scene.w; x += 4) {
+            for (var y = 0; y < scene.h; y += 4) {
+              scene.select(x, y);
+            }
+          }
+        }, "Select Every Pixel", 1);
+      }
+    }, 'select').name("Select");
+
+  </script>
+</body>
+</html>

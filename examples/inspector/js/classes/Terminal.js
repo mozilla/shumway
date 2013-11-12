@@ -27,6 +27,14 @@ var Terminal = (function () {
       this.length = 0;
     }
     buffer.prototype.append = function append(line, color) {
+      if (this.length > 500000) {
+        this.lines.length = 0;
+        this.format.length = 0;
+        this.time.length = 0;
+        this.repeat.length = 0;
+        this.length = 0;
+      }
+
       var lines = this.lines;
       if (lines.length > 0 && lines[lines.length - 1] === line) {
         this.repeat[lines.length - 1] ++;

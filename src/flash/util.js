@@ -139,6 +139,31 @@ function randomStyle() {
   return randomStyleCache[(Math.random() * randomStyleCache.length) | 0];
 }
 
+var colorCache;
+function parseColor(color) {
+  if (!colorCache) {
+    colorCache = Object.create(null);
+  }
+  if (colorCache[color]) {
+    return colorCache[color];
+  }
+  // TODO: Obviously slow, but it will do for now.
+  var span = document.createElement('span');
+  document.body.appendChild(span);
+  span.style.backgroundColor = color;
+  var rgb = window.getComputedStyle(span).backgroundColor;
+  document.body.removeChild(span);
+  var m = /^rgb\((\d+), (\d+), (\d+)\)$/.exec(rgb);
+  if (!m) m = /^rgba\((\d+), (\d+), (\d+), ([\d.]+)\)$/.exec(rgb);
+  var result = new Float32Array(4);
+  result[0] = parseFloat(m[1]) / 255;
+  result[1] = parseFloat(m[2]) / 255;
+  result[2] = parseFloat(m[3]) / 255;
+  result[3] = m[4] ? parseFloat(m[4]) : 1;
+  colorCache[color] = result;
+  return result;
+}
+
 var Promise = (function PromiseClosure() {
   function isPromise(obj) {
     return typeof obj === 'object' && obj !== null &&
@@ -406,6 +431,92 @@ QuadTree.prototype._subdivide = function () {
   this.nodes[2] = new QuadTree(this.x, midY, halfWidth, halfHeight, level);
   this.nodes[3] = new QuadTree(midX, midY, halfWidth, halfHeight, level);
 };
+
+/**
+ * Simple 2D bin-packing algorithm that recursively partitions space along the x and y axis. The binary tree
+ * can get quite deep so watch out of deep recursive calls.   This algorithm works best when inserting items
+ * that are sorted by width and height, from largest to smallest.
+ */
+var Packer = (function () {
+  /**
+   * Try out randomizing the orientation of each subdivision, sometimes this can lead to better results.
+   * @const
+   * @type {boolean}
+   */
+  var RANDOM_ORIENTATION = true;
+
+  function Node(x, y, w, h, horizontal) {
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+    this.children = null;
+    this.horizontal = horizontal;
+    this.empty = true;
+  }
+
+  Node.prototype.insert = function insert(w, h) {
+    if (!this.empty) {
+      return;
+    }
+    if (this.w < w || this.h < h) {
+      return;
+    }
+    if (!this.children) {
+      var orientation = !this.horizontal;
+      if (RANDOM_ORIENTATION) {
+        orientation = Math.random() >= 0.5;
+      }
+      if (this.horizontal) {
+        this.children = [
+          new Node(this.x, this.y, this.w, h, false),
+          new Node(this.x, this.y + h, this.w, this.h - h, orientation),
+        ];
+      } else {
+        this.children = [
+          new Node(this.x, this.y, w, this.h, true),
+          new Node(this.x + w, this.y, this.w - w, this.h, orientation),
+        ];
+      }
+      var first = this.children[0];
+      if (first.w === w && first.h === h) {
+        first.empty = false;
+        return {x: first.x, y: first.y};
+      }
+      return this.insert(w, h);
+    } else {
+      var result;
+      result = this.children[0].insert(w, h);
+      if (result) {
+        return result;
+      }
+      result = this.children[1].insert(w, h);
+      if (result) {
+        return result;
+      }
+    }
+  };
+
+  /**
+   * @param {number} width
+   * @param {number} height
+   * @constructor
+   */
+  function packer(width, height) {
+    this.root = new Node(0, 0, width, height, false);
+  }
+
+  /**
+   * Tries to pack an item compactly and returns its placement.
+   * @param {number} width
+   * @param {number} height
+   * @returns {?{x: number, y: number}}
+   */
+  packer.prototype.insert = function insert(width, height) {
+    return this.root.insert(width, height);
+  };
+  return packer;
+})();
 
 var EXTERNAL_INTERFACE_FEATURE = 1;
 var CLIPBOARD_FEATURE = 2;

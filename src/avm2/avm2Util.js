@@ -147,6 +147,9 @@ function toSafeString(value) {
   if (typeof value === "string") {
     return "\"" + value + "\"";
   }
+  if ((typeof value === "number") && (value !== (value | 0))) {
+    return value.toFixed(4);
+  }
   if (typeof value === "number" || typeof value === "boolean") {
     return String(value);
   }
@@ -229,6 +232,16 @@ function isNullOrUndefined(value) {
 
 function isPowerOfTwo(x) {
   return x && ((x & (x - 1)) === 0);
+}
+
+function ceil(v) {
+  if ((v | 0) === v) {
+    return v;
+  }
+  if (v >= 0) {
+    return (v + 1) | 0;
+  }
+  return v | 0;
 }
 
 function time(fn, count) {
@@ -1464,6 +1477,21 @@ var CircularBuffer = (function () {
   };
   return circularBuffer;
 })();
+
+/**
+ * @param array {ArrayBufferView}
+ * @param index {number}
+ * @param length {number}
+ * @returns {number}
+ */
+function hashArray(array, index, length) {
+  var buffer = new Uint8Array(array.buffer, array.byteOffset + index * array.BYTES_PER_ELEMENT);
+  var hash = 0;
+  for (var i = 0, j = length * array.BYTES_PER_ELEMENT; i < j; i++) {
+    hash = (((31 * hash) | 0) + buffer[i]) | 0;
+  }
+  return hash;
+}
 
 function lazyClass(holder, name, initialize) {
   Object.defineProperty(holder, name, {

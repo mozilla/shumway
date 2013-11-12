@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+</head>
+<body style="background-color: #333333;">
+  <script src="../../src/avm2/options.js"></script>
+  <script>
+    var Option = options.Option;
+    var OptionSet = options.OptionSet;
+    var coreOptions = new OptionSet("Core Options");
+    var release = false;
+    var debug = !release;
+  </script>
+  <script src="../../src/avm2/util.js"></script>
+  <script src="../../src/swf/util.js"></script>
+  <script src="../../src/flash/util.js"></script>
+  <script src="../../src/swf/gl/lib/tessellate.asm.js"></script>
+  <script src="../../src/swf/gl/lib/tessellate.js"></script>
+  <script src="../../src/swf/gl/geom.js"></script>
+  <script src="../../src/swf/gl/gl.js"></script>
+  <script src="../../src/swf/gl/canvas-gl.js"></script>
+
+  <script src="../inspector/js/classes/Timeline.js"></script>
+  <script src="../inspector/js/classes/Terminal.js"></script>
+  <style>
+    #debugInfoContainer {
+      position: absolute;
+      top: 114px;
+      bottom: 32px;
+      right: 0;
+      width: 500px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background-color: rgba(0, 0, 0, 0.2);
+
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+  </style>
+  <div>
+    <canvas id="fpsCanvas" height="100" style="background-color: #333333;"></canvas>
+  </div>
+  <div>
+    <canvas id="canvas" width="512" height="512" style="padding: 10px"></canvas>
+    <canvas id="canvas-gl" width="512" height="512" style="padding: 10px"></canvas>
+  </div>
+  <div id="debugInfoContainer">
+    <canvas id="traceTerminal" width="600" height="800" tabindex='2'></canvas>
+  </div>
+
+  <script>
+
+    var canvas = document.getElementById("canvas");
+    var canvasWebGL = document.getElementById("canvas-gl");
+
+    var Multiple = (function () {
+      function constructor(contexts) {
+        this.contexts = contexts;
+      }
+      function defineFunctionProxy(obj, name) {
+        Object.defineProperty(obj, name, {
+          value: function () {
+            var args = arguments;
+            this.contexts.forEach(function (c) {
+              c[name] && c[name].apply(c, args);
+            })
+          }
+        });
+      }
+      function definePropertyProxy(obj, name) {
+        Object.defineProperty(obj, name, {
+          get: function () {
+            return this.contexts[0][name];
+          },
+          set: function (v) {
+            this.contexts.forEach(function (c) {
+              c[name] = v;
+            });
+          }
+        });
+      }
+      definePropertyProxy(constructor.prototype, 'strokeStyle');
+      definePropertyProxy(constructor.prototype, 'fillStyle');
+      definePropertyProxy(constructor.prototype, 'lineWidth');
+      defineFunctionProxy(constructor.prototype, 'clearRect');
+      defineFunctionProxy(constructor.prototype, 'fillRect');
+      defineFunctionProxy(constructor.prototype, 'beginPath');
+      defineFunctionProxy(constructor.prototype, 'moveTo');
+      defineFunctionProxy(constructor.prototype, 'lineTo');
+      defineFunctionProxy(constructor.prototype, 'quadraticCurveTo');
+      defineFunctionProxy(constructor.prototype, 'arc');
+      defineFunctionProxy(constructor.prototype, 'rect');
+      defineFunctionProxy(constructor.prototype, 'stroke');
+      defineFunctionProxy(constructor.prototype, 'scale');
+      defineFunctionProxy(constructor.prototype, 'save');
+      defineFunctionProxy(constructor.prototype, 'restore');
+      defineFunctionProxy(constructor.prototype, 'translate');
+      defineFunctionProxy(constructor.prototype, 'rotate');
+
+      defineFunctionProxy(constructor.prototype, 'initialize');
+      defineFunctionProxy(constructor.prototype, 'flush');
+      defineFunctionProxy(constructor.prototype, 'fill');
+
+      defineFunctionProxy(constructor.prototype, 'setTransform');
+      defineFunctionProxy(constructor.prototype, 'transform');
+      return constructor;
+    })();
+
+    var canvasContext = canvas.getContext("2d");
+    var canvasWebGLContext = canvasWebGL.getContext("2d.gl");
+
+    var ctx = new Multiple([canvasContext, canvasWebGLContext]);
+
+    var traceTerminal = new Terminal(document.getElementById("traceTerminal")); traceTerminal.refreshEvery(100);
+    function appendToTraceTerminal(str, color) {
+      var scroll = traceTerminal.isScrolledToBottom();
+      traceTerminal.buffer.append(str, color);
+      if (scroll) {
+        traceTerminal.gotoLine(traceTerminal.buffer.length - 1);
+        traceTerminal.scrollIntoView();
+      }
+    }
+    var logToConsole = false;
+    var console_log = console.log;
+    var console_info = console.info;
+    var console_warn = console.warn;
+    console.log = function (str) {
+      if (logToConsole) {
+        console_log.apply(console, arguments);
+      }
+      appendToTraceTerminal([].join.call(arguments, " "));
+    };
+    console.info = function (str) {
+      if (logToConsole) {
+        console_info.apply(console, arguments);
+      }
+      appendToTraceTerminal([].join.call(arguments, " "), "#666600");
+    };
+    console.warn = function (str) {
+      if (logToConsole) {
+        console_warn.apply(console, arguments);
+      }
+      appendToTraceTerminal([].join.call(arguments, " "), "#FF6700");
+    };
+
+    var fps = new Timeline(document.getElementById("fpsCanvas"));
+    fps.setFrameRate(60);
+    fps.refreshEvery(10);
+    ctx.font = 14 + 'px Consolas, "Liberation Mono", Courier, monospace';
+
+    var w = 32;
+    var h = 32;
+
+    var world;
+    var root = new QuadTree(0, 0, canvas.width, canvas.height, 0);
+
+    function addActors(count) {
+      for (var i = 0; i < count; i++) {
+        world.push({
+          x: Math.random() * 0.2 * (canvas.width - w),
+          y: 30 + Math.random() * 0.2 * (canvas.height - h - 30),
+          r: 0,
+          sx: 1,
+          sy: 1,
+          dx: (0.5 - Math.random()) * 1,
+          dy: (0.5 - Math.random()) * 1,
+          dr: Math.random() * 0.01
+        });
+      }
+    }
+
+    canvas.onclick = function () {
+      addActors(1000);
+      console.info("Actors: " + world.length);
+    }
+
+    function initializeWorld() {
+      if (!world) {
+        world = [];
+        addActors(1);
+      }
+    }
+
+    function insertAll() {
+      for (var i = 0; i < world.length; i++) {
+        root.insert(world[i]);
+      }
+    }
+
+    function deleteAll() {
+      for (var i = 0; i < world.length; i++) {
+        root.delete(world[i]);
+      }
+    }
+
+    function renderWorld() {
+      initializeWorld();
+      ctx.fillStyle = "black";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = "white";
+      ctx.initialize  ();
+      world.forEach(function (actor) {
+        ctx.save();
+        if (actor.x + actor.dx + w > canvas.width || actor.x + actor.dx < 0) {
+          actor.dx *= -1;
+        }
+        if (actor.y + actor.dy + h > canvas.height || actor.y + actor.dy < 30) {
+          actor.dy *= -1;
+        }
+        actor.x += actor.dx;
+        actor.y += actor.dy;
+        actor.r += actor.dr / 10;
+        actor.sx = 0.5;
+        actor.sy = 0.5;
+        ctx.translate(actor.x, actor.y);
+        ctx.rotate(actor.r);
+        ctx.scale(actor.sx, actor.sy);
+        ctx.translate(-w / 4, -h / 4);
+        ctx.fillStyle = "orange";
+
+        ctx.beginPath();
+        ctx.moveTo(100, 100);
+        ctx.lineTo(200, 100);
+        ctx.lineTo(200, 200);
+
+        ctx.fillStyle = "green";
+        ctx.moveTo(300, 300);
+        ctx.lineTo(400, 300);
+        ctx.lineTo(400, 400);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.fillStyle = "red";
+        ctx.moveTo(300, 300);
+        ctx.lineTo(400, 300);
+        ctx.lineTo(400, 400);
+        ctx.fill();
+
+        ctx.fillStyle = "blue";
+        ctx.beginPath();
+        ctx.rect(100, 100, 50, 50);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo(100, 400, 100, 0);
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.fillStyle = "white";
+        ctx.translate(600, 100);
+        drawCurvyShape(ctx);
+        ctx.fill();
+
+        ctx.beginPath();
+        // ctx.transform(200, 100);
+        drawShape(ctx);
+        ctx.fill();
+
+        ctx.restore();
+
+        ctx.contexts[1].flush();
+      });
+      // context.fillText("Actors: " + world.length, 10, 20);
+    }
+
+    (function render() {
+      fps.enter("FRAME");
+      // renderWorld();
+      canvasContext.strokeStyle = "red";
+      renderWorld();
+      fps.leave("FRAME");
+      // requestAnimationFrame(render);
+      setTimeout(function () {
+        render();
+      }, 60);
+    })();
+  </script>
+</body>
+</html>

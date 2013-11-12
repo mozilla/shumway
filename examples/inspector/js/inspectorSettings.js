@@ -33,6 +33,8 @@ var DEFAULT_SETTINGS = {
   release: true,
   logToConsole: false,
   mute: false,
+  kanvas: true,
+  webgl: false,
   turbo: true
 };
 
@@ -182,4 +184,26 @@ document.getElementById("sample").addEventListener("click", function () {
     saveState(state);
   });
   setElementState();
+})();
+
+(function () {
+  var gui = new dat.GUI({ autoPlace: false });
+
+  function addOptionSet(parent, set) {
+    var folder = parent.addFolder(set.name);
+    set.options.forEach(function (option) {
+      if (option instanceof OptionSet) {
+        addOptionSet(folder, option);
+      } else {
+        folder.add(option, "value", option.details).name(option.longName);
+      }
+    });
+    folder.open();
+  }
+
+  addOptionSet(gui, webGLOptions);
+  addOptionSet(gui, rendererOptions);
+  // addOptionSet(gui, systemOptions);
+
+  document.getElementById("settingsContainer").appendChild(gui.domElement);
 })();

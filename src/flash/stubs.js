@@ -234,6 +234,7 @@ var Stubs = new (function () {
     M("flash.ui.ContextMenuItem", "ContextMenuItemClass", ContextMenuItemDefinition),
     M("flash.ui.Keyboard", "KeyboardClass", KeyboardDefinition),
     M("flash.ui.Mouse", "MouseClass", MouseDefinition),
+    M("flash.ui.MouseCursorData", "MouseCursorDataClass", MouseCursorDataDefinition),
 
     M("flash.text.Font", "FontClass", FontDefinition),
     M("flash.text.TextField", "TextFieldClass", TextFieldDefinition),

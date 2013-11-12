@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global rgbaObjToStr, FirefoxCom, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle*/
+/*global rgbaObjToStr, FirefoxCom, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, CanvasWebGLContext*/
 
 var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
@@ -26,6 +26,7 @@ var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawReg
 var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
 var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
 var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
+var framesPerTick = rendererOptions.register(new Option("", "framesPerTick", "number", 1, "number of frames to draw every tick"));
 
 if (typeof FirefoxCom !== 'undefined') {
   turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
@@ -568,6 +569,14 @@ function renderQuadTree(ctx, qtree) {
 
 var fps;
 
+function timelineEnter(event) {
+  fps && fps.enter(event);
+}
+
+function timelineLeave(event) {
+  fps && fps.leave(event);
+}
+
 var renderingTerminated = false;
 
 var samplesLeftPlusOne = 0;
@@ -727,8 +736,7 @@ function renderStage(stage, ctx, events) {
   var frameCount = 0;
   var frameFPSAverage = new metrics.Average(120);
 
-  (function draw() {
-
+  (function draw(framesLeft) {
     var now = performance.now();
     var renderFrame = now >= nextRenderAt;
 
@@ -780,22 +788,34 @@ function renderStage(stage, ctx, events) {
             nextRenderAt += maxDelay;
           }
         }
-        fps && fps.enter("EVENTS");
         if (firstRun) {
           // Initial display list is already constructed, skip frame construction phase.
           firstRun = false;
         } else {
-
+          timelineEnter("advanceFrame");
           domain.broadcastMessage("advanceFrame");
-          domain.broadcastMessage("enterFrame");
-          domain.broadcastMessage("constructChildren");
+          timelineLeave("advanceFrame");
 
+          timelineEnter("enterFrame");
+          domain.broadcastMessage("enterFrame");
+          timelineLeave("enterFrame");
+
+          timelineEnter("constructChildren");
+          domain.broadcastMessage("constructChildren");
+          timelineLeave("constructChildren");
         }
 
+        timelineEnter("frameConstructed");
         domain.broadcastMessage("frameConstructed");
+        timelineLeave("frameConstructed");
+
+        timelineEnter("executeFrame");
         domain.broadcastMessage("executeFrame");
+        timelineLeave("executeFrame");
+
+        timelineEnter("exitFrame");
         domain.broadcastMessage("exitFrame");
-        fps && fps.leave("EVENTS");
+        timelineLeave("exitFrame");
       }
 
       if (stage._deferRenderEvent) {
@@ -818,11 +838,12 @@ function renderStage(stage, ctx, events) {
         }
 
         if (!disableRenderVisitor.value) {
-          fps && fps.enter("RENDER");
+          timelineEnter("RENDER");
           traceRenderer.value && frameWriter.enter("> Render Visitor");
           (new RenderVisitor(stage, ctx, invalidPath, refreshStage)).start();
           traceRenderer.value && frameWriter.leave("< Render Visitor");
-          fps && fps.leave("RENDER");
+          ctx.isGlContext && ctx.flush();
+          timelineLeave("RENDER");
         }
 
         if (showQuadTree.value) {
@@ -838,11 +859,11 @@ function renderStage(stage, ctx, events) {
       }
 
       if (mouseMoved && !disableMouseVisitor.value) {
-        fps && renderFrame && fps.enter("MOUSE");
+        renderFrame && timelineEnter("MOUSE");
         traceRenderer.value && frameWriter.enter("> Mouse Visitor");
         stage._handleMouse();
         traceRenderer.value && frameWriter.leave("< Mouse Visitor");
-        fps && renderFrame && fps.leave("MOUSE");
+        renderFrame && timelineLeave("MOUSE");
 
         ctx.canvas.style.cursor = stage._cursor;
       }
@@ -874,6 +895,13 @@ function renderStage(stage, ctx, events) {
       return;
     }
 
-    requestAnimationFrame(draw);
+    framesLeft --;
+    if (framesLeft > 0) {
+      draw(framesLeft - 1);
+    } else {
+      requestAnimationFrame(function () {
+        draw(framesPerTick.value);
+      });
+    }
   })();
 }

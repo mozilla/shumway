@@ -67,6 +67,36 @@ var GraphicsDefinition = (function () {
     },
 
     draw: function(ctx, clip, ratio, colorTransform) {
+      if (true || !ctx.isGlContext) {
+        this._drawPaths(ctx, clip, ratio, colorTransform);
+        return;
+      }
+      if (!ctx.isGlContext) {
+        this._drawPaths(ctx, clip, ratio, colorTransform);
+        return;
+      }
+      // Stuff below doesn't seem to work with normal Kanvas either.
+      if (!this._canvas) {
+        this._canvas = window.document.createElement("canvas");
+        this._context = this._canvas.getContext('kanvas-2d');
+      }
+      var drawingContext = this._context;
+      var bounds = this._getBounds(true);
+      var width = (bounds.xMax - bounds.xMin)/20;
+      var height = (bounds.yMax - bounds.yMin)/20;
+      if (width !== this._canvas.width || height !== this._canvas.height) {
+        this._canvas.width = width;
+        this._canvas.height = height;
+      } else {
+        drawingContext.clearRect(0, 0, width, height);
+      }
+      drawingContext.fillStyle = "orange";
+      drawingContext.fillRect(10, 10, 100, 100);
+      drawingContext.translate(-bounds.xMin/20, -bounds.yMin/20);
+      this._drawPaths(drawingContext, clip, ratio, colorTransform);
+      ctx.drawImage(this._canvas, bounds.xMin/20, bounds.yMin/20, width, height);
+    },
+    _drawPaths: function(ctx, clip, ratio, colorTransform) {
       var paths = this._paths;
       for (var i = 0; i < paths.length; i++) {
         paths[i].draw(ctx, clip, ratio, colorTransform);

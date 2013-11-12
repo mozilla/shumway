@@ -47,7 +47,7 @@ var frameWriter = new IndentingWriter(false, function (str){
   appendToFrameTerminal(str);
 });
 
-var fps = new FPS(document.getElementById("fpsCanvas"));
+var fps = new Timeline(document.getElementById("fpsCanvas"));
 fps.registerKind("FRAME", "rgba(255,255,255, 0.5)");
 fps.registerKind("EVENTS", "#82a965");
 fps.registerKind("PRE", "#d7b36c");

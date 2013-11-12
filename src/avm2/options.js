@@ -172,13 +172,14 @@
   })();
 
   var Option = (function () {
-    function option(shortName, longName, type, defaultValue, description) {
+    function option(shortName, longName, type, defaultValue, description, details) {
       this.longName = longName;
       this.shortName = shortName;
       this.type = type;
       this.defaultValue = defaultValue;
       this.value = defaultValue;
       this.description = description;
+      this.details = details;
     }
     option.prototype.parse = function parse(value) {
       this.value = value;

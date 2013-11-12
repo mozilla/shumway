@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+</head>
+<body style="background-color: darkslategray;">
+  <script src="../../src/avm2/util.js"></script>
+  <script src="../../src/flash/util.js"></script>
+  <script src="../inspector/js/classes/Timeline.js"></script>
+  <div>
+    <canvas id="fpsCanvas" height="100"></canvas>
+  </div>
+  <div>
+    <canvas id="stageCanvas" width="768" height="768"></canvas>
+  </div>
+  <script>
+    var fps = new Timeline(document.getElementById("fpsCanvas"));
+    fps.setFrameRate(60);
+    fps.refreshEvery(10);
+
+    var canvas = document.getElementById("stageCanvas");
+    var context = canvas.getContext("2d");
+    context.font = 14 + 'px Consolas, "Liberation Mono", Courier, monospace';
+
+    var w = 32;
+    var h = 32;
+
+    (function render() {
+      fps.enter("FRAME");
+      renderWorld();
+      fps.leave("FRAME");
+      requestAnimationFrame(render);
+    })();
+
+    var world;
+
+    function addActors(count) {
+      for (var i = 0; i < count; i++) {
+        world.push({
+          x: Math.random() * canvas.width,
+          y: 30 + Math.random() * canvas.height,
+          dx: 0.5 - Math.random(),
+          dy: 0.5 - Math.random()
+        });
+      }
+    }
+
+    canvas.onclick = function () {
+      addActors(1000);
+    }
+
+
+    function initializeWorld() {
+      if (!world) {
+        world = [];
+        addActors(10);
+      }
+    }
+
+    function renderWorld() {
+      initializeWorld();
+      // insertAll();
+      // deleteAll();
+      context.fillStyle = "black";
+      context.fillRect(0, 0, canvas.width, canvas.height);
+      context.fillStyle = "white";
+      world.forEach(function (actor) {
+        context.save();
+        if (actor.x + actor.dx + w > canvas.width || actor.x + actor.dx < 0) {
+          actor.dx *= -1;
+        }
+        if (actor.y + actor.dy + h > canvas.height || actor.y + actor.dy < 30) {
+          actor.dy *= -1;
+        }
+        actor.x += actor.dx;
+        actor.y += actor.dy;
+        actor.r += actor.dr;
+        context.translate(actor.x, actor.y);
+        context.rotate(actor.r);
+        context.translate(-w / 2, -h / 2);
+        context.fillRect(0, 0, w, h);
+
+        context.scale(0.25, 0.25);
+        context.lineWidth = 2;
+        context.beginPath();
+        context.arc(75,75,50,0,Math.PI*2,true); // Outer circle
+        context.moveTo(110,75);
+        context.arc(75,75,35,0,Math.PI,false);  // Mouth (clockwise)
+        context.moveTo(65,65);
+        context.arc(60,65,5,0,Math.PI*2,true);  // Left eye
+        context.moveTo(95,65);
+        context.arc(90,65,5,0,Math.PI*2,true);  // Right eye
+        context.stroke();
+
+
+        context.restore();
+      });
+    }
+
+  </script>
+</body>
+</html>
