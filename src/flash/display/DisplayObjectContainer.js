@@ -199,17 +199,23 @@ var DisplayObjectContainerDefinition = (function () {
 
       return child;
     },
-    removeChildren: function (begin, end) {
-      var children = this._children;
-      var numChildren = children.length;
-
-      if (begin < 0 || begin > numChildren ||
-          end < 0 || end < begin || end > numChildren) {
+    removeChildren: function (beginIndex, endIndex) { // (beginIndex:int = 0, endIndex:int = 2147483647) -> void
+      beginIndex = arguments.length < 1 ? 0 : beginIndex | 0;
+      endIndex   = arguments.length < 2 ? 2147483647 : endIndex | 0;
+      var numChildren = this._children.length;
+      if (beginIndex < 0 || endIndex < 0 || endIndex < beginIndex) {
         throwError('RangeError', Errors.ParamRangeError);
       }
-
-      for (var i = begin; i < end; i++) {
-        this.removeChildAt(i);
+      if (numChildren === 0) {
+        return;
+      }
+      if (endIndex > numChildren - 1) {
+        endIndex = numChildren - 1;
+      }
+      var count = endIndex - beginIndex + 1;
+      assert (count > 0);
+      while (count --) {
+        this.removeChildAt(beginIndex);
       }
     },
     swapChildren: function (child1, child2) {
