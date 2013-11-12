@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Blur</title>
+  </head>
+  <body>
+    <canvas id="canvas" width="400" height="400"></canvas>
+    <script src="filters.js"></script>
+    <script>
+
+      var canvas = document.getElementById("canvas");
+      var ctx = canvas.getContext("2d");
+      var w = canvas.width;
+      var h = canvas.height;
+
+      ctx.fillStyle = "#0a0";
+      ctx.fillRect(175, 175, 50, 50);
+
+      var img = ctx.getImageData(0, 0, w, h);
+      var imgData = img.data;
+
+      var t = performance.now();
+      blur(imgData, w, h, 16, 16, 2);
+      console.log(performance.now() - t);
+
+      ctx.putImageData(img, 0, 0);
+
+    </script>
+  </body>
+</html>
