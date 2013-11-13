@@ -7,6 +7,7 @@
 void blur(unsigned char *img, int width, int height, int distX, int distY, int quality)
 {
 	preMultiplyAlpha(img, width, height);
+
 	for (int i = 0; i < quality; ++i) {
 		blurX(img, width, height, distX);
 		blurY(img, width, height, distY);
@@ -28,7 +29,8 @@ void blurX(unsigned char *img, int width, int height, int distance)
 	int lineSize = width << 2;
 	int windowLength = dist2 + 1;
 	int windowSize = windowLength << 2;
-	unsigned char lineBuffer[lineSize];
+
+	unsigned char *lineBuffer = malloc(lineSize);
 
 	for (int y = 0; y < height; ++y)
 	{
@@ -73,6 +75,8 @@ void blurX(unsigned char *img, int width, int height, int distance)
 
 		src += lineSize;
 	}
+
+	free(lineBuffer);
 }
 
 void blurY(unsigned char *img, int width, int height, int distance)
@@ -86,7 +90,7 @@ void blurY(unsigned char *img, int width, int height, int distance)
 	int stride = width << 2;
 	int windowLength = (distance << 1) + 1;
 
-	unsigned char columnBuffer[height << 2];
+	unsigned char *columnBuffer = malloc(height << 2);
 
 	for (int x = 0; x < width; ++x)
 	{
@@ -138,4 +142,6 @@ void blurY(unsigned char *img, int width, int height, int distance)
 
 		src += 4;
 	}
+
+	free(columnBuffer);
 }
