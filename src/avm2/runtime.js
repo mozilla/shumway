@@ -1384,16 +1384,21 @@ function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, 
   return fn;
 }
 
+function getMethodOverrideKey(methodInfo) {
+  var key;
+  if (methodInfo.holder instanceof ClassInfo) {
+    key = "static " + methodInfo.holder.instanceInfo.name.getOriginalName() + "::" + methodInfo.name.getOriginalName()
+  } else if (methodInfo.holder instanceof InstanceInfo) {
+    key = methodInfo.holder.name.getOriginalName() + "::" + methodInfo.name.getOriginalName();
+  } else {
+    key = methodInfo.name.getOriginalName();
+  }
+  return key;
+}
+
 function checkMethodOverrides(methodInfo) {
   if (methodInfo.name) {
-    var key;
-    if (methodInfo.holder instanceof ClassInfo) {
-      key = "static " + methodInfo.holder.instanceInfo.name.getOriginalName() + "::" + methodInfo.name.getOriginalName()
-    } else if (methodInfo.holder instanceof InstanceInfo) {
-      key = methodInfo.holder.name.getOriginalName() + "::" + methodInfo.name.getOriginalName();
-    } else {
-      key = methodInfo.name.getOriginalName();
-    }
+    var key = getMethodOverrideKey(methodInfo);
     if (key in VM_METHOD_OVERRIDES) {
       warning("Overriding Method: " + key);
       return VM_METHOD_OVERRIDES[key];
