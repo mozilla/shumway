@@ -51,6 +51,8 @@ load($SHUMWAY_ROOT + "src/swf/embed.js");
 load($SHUMWAY_ROOT + "src/swf/renderer.js");
 load($SHUMWAY_ROOT + "src/swf/handlers.js");
 load($SHUMWAY_ROOT + "src/swf/parser.js");
+load($SHUMWAY_ROOT + "src/swf/resourceloader.js");
+
 load($SHUMWAY_ROOT + "src/avm1/stream.js");
 load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
 
