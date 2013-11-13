@@ -719,6 +719,10 @@ var createName = function createName(namespaces, name) {
           release || assert (multiname instanceof IR.ASMultiname);
           if (ti) {
             if (ti.trait) {
+              var coercer = ti.trait.typeName ? getCoercerForType(ti.trait.typeName) : null;
+              if (coercer) {
+                value = coercer(value);
+              }
               store(new IR.SetProperty(region, state.store, object, qualifiedNameConstant(ti.trait.name), value));
               return;
             }
