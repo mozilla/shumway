@@ -92,6 +92,11 @@ var Bindings = (function () {
     this.trait = trait;
   }
 
+  function SlotInfoMap() {
+    this.byID = [];
+    this.byQN = createEmptyObject();
+  }
+
   function patch(patchTargets, value) {
     release || assert (isFunction(value));
     for (var i = 0; i < patchTargets.length; i++) {
@@ -201,7 +206,10 @@ var Bindings = (function () {
    * Applies traits to a traitsPrototype object. Every traitsPrototype object must have the following layout:
    *
    * VM_BINDINGS = [ Array of Binding QNames ]
-   * VM_SLOTS = [ Array of Slot Names ]
+   * VM_SLOTS = {
+   *   byID: [],
+   *   byQN: {},
+   * }
    *
    */
   bindings.prototype.applyTo = function applyTo(domain, object) {
@@ -209,7 +217,7 @@ var Bindings = (function () {
     release || assert (!hasOwnProperty(object, VM_BINDINGS), "Already has VM_BINDINGS.");
     release || assert (!hasOwnProperty(object, VM_OPEN_METHODS), "Already has VM_OPEN_METHODS.");
 
-    defineNonEnumerableProperty(object, VM_SLOTS, []);
+    defineNonEnumerableProperty(object, VM_SLOTS, new SlotInfoMap());
     defineNonEnumerableProperty(object, VM_BINDINGS, []);
     defineNonEnumerableProperty(object, VM_OPEN_METHODS, createEmptyObject());
 
@@ -240,12 +248,14 @@ var Bindings = (function () {
           traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
           defineNonEnumerableProperty(object, qn, defaultValue);
           object[VM_BINDINGS].pushUnique(qn);
-          object[VM_SLOTS][trait.slotId] = new SlotInfo(
+          var slotInfo = new SlotInfo(
             qn,
             trait.isConst(),
             trait.typeName ? domain.getProperty(trait.typeName, false, false) : null,
             trait
           );
+          object[VM_SLOTS].byID[trait.slotId] = slotInfo;
+          object[VM_SLOTS].byQN[qn] = slotInfo;
         }
       } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
         if (trait.isGetter() || trait.isSetter()) {
@@ -978,7 +988,7 @@ var Class = (function () {
       writer.enter("traitsPrototype: ");
       if (traitsPrototype) {
         writer.enter("VM_SLOTS: ");
-        writer.writeArray(traitsPrototype[VM_SLOTS].map(function (slot) {
+        writer.writeArray(traitsPrototype[VM_SLOTS].byID.map(function (slot) {
           return slot.trait;
         }));
         writer.outdent();

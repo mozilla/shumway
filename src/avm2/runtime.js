@@ -377,6 +377,16 @@ function asSetProperty(namespaces, name, flags, value) {
   if (this.asSetNumericProperty && Multiname.isNumeric(resolved)) {
     return this.asSetNumericProperty(resolved, value);
   }
+  var slotInfo = this[VM_SLOTS].byQN[resolved];
+  if (slotInfo) {
+    if (slotInfo.const) {
+      return;
+    }
+    var type = slotInfo.type;
+    if (type && type.coerce) {
+      value = type.coerce(value);
+    }
+  }
   this[resolved] = value;
 }
 
@@ -683,16 +693,16 @@ function publicizeProperties(object) {
 }
 
 function asGetSlot(object, index) {
-  return object[object[VM_SLOTS][index].name];
+  return object[object[VM_SLOTS].byID[index].name];
 }
 
 function asSetSlot(object, index, value) {
-  var binding = object[VM_SLOTS][index];
-  if (binding.const) {
+  var slotInfo = object[VM_SLOTS].byID[index];
+  if (slotInfo.const) {
     return;
   }
-  var name = binding.name;
-  var type = binding.type;
+  var name = slotInfo.name;
+  var type = slotInfo.type;
   if (type && type.coerce) {
     object[name] = type.coerce(value);
   } else {
