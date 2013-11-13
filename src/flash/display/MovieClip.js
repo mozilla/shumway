@@ -168,7 +168,7 @@ var MovieClipDefinition = (function () {
             currentChild &&
             nextCmd.symbolId === currentCmd.symbolId &&
             nextCmd.ratio === currentCmd.ratio) {
-          if (!currentChild._animated) {
+          if (currentChild._animated) {
             currentChild._invalidate();
             currentChild._invalidateBounds();
 
@@ -267,7 +267,7 @@ var MovieClipDefinition = (function () {
       }
       while (toRemove) {
         var child = toRemove.obj;
-        if (child) {
+        if (child && child._owned) {
           this._sparse = true;
           this.removeChild(child);
 
