@@ -1,4 +1,4 @@
-emcc -O2 src/alpha.c src/blur.c -o filters.raw.js --closure 1 -s EXPORTED_FUNCTIONS="['_preMultiplyAlpha','_preMultiplyAlphaUndo','_blur']"
+emcc -O2 src/alpha.c src/blur.c -o filters.raw.js --closure 0 -s EXPORTED_FUNCTIONS="['_preMultiplyAlpha','_preMultiplyAlphaUndo','_blur']"
 cat filters.pre.js > filters.js
 cat filters.raw.js >> filters.js
 cat filters.post.js >> filters.js
