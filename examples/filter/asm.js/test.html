@@ -47,7 +47,7 @@
         var img = ctxShape.getImageData(0, 0, w, h);
         var imgData = img.data;
 
-        blur(imgData, w, h, 16, 16, 2);
+        FILTERS.blur(imgData, w, h, 16, 16, 2);
 
         //blurFilter(imgData, w, h, 16, 16);
 
