@@ -57,10 +57,7 @@ void blurX(unsigned char *img, int width, int height, int distance)
 		while (ptr < ptrEnd) {
 			alpha = as / windowLength;
 			if (alpha != 0) {
-				*pLine = rs / windowLength;
-				*(pLine + 1) = gs / windowLength;
-				*(pLine + 2) = bs / windowLength;
-				*(pLine + 3) = alpha;
+				*(unsigned int *)pLine = (rs / windowLength) | (gs / windowLength) << 8 | (bs / windowLength) << 16 | alpha << 24;
 			} else {
 				*(unsigned int *)pLine = 0;
 			}
@@ -123,10 +120,7 @@ void blurY(unsigned char *img, int width, int height, int distance)
 		while (ptr < ptrEnd) {
 			alpha = as / windowLength;
 			if (alpha != 0) {
-				*pColumn = rs / windowLength;
-				*(pColumn + 1) = gs / windowLength;
-				*(pColumn + 2) = bs / windowLength;
-				*(pColumn + 3) = alpha;
+				*(unsigned int *)pColumn = (rs / windowLength) | (gs / windowLength) << 8 | (bs / windowLength) << 16 | alpha << 24;
 			} else {
 				*(unsigned int *)pColumn = 0;
 			}
