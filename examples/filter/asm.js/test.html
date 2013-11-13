@@ -2,29 +2,59 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Blur</title>
+    <title>Filters Benchmark</title>
   </head>
   <body>
     <canvas id="canvas" width="400" height="400"></canvas>
+    <script src="libs/stats.min.js"></script>
+    <script> SHUMWAY_ROOT = "../../../src/"; </script>
+    <script src="../../../src/swf/filters/filter.js"></script>
     <script src="filters.js"></script>
     <script>
+
+      var stats = new Stats();
+      stats.domElement.style.position = 'absolute';
+      stats.domElement.style.left = '0px';
+      stats.domElement.style.top = '0px';
+      document.body.appendChild(stats.domElement);
 
       var canvas = document.getElementById("canvas");
       var ctx = canvas.getContext("2d");
       var w = canvas.width;
       var h = canvas.height;
 
-      ctx.fillStyle = "#0a0";
-      ctx.fillRect(175, 175, 50, 50);
+      var canvasShape = document.createElement("canvas");
+      var ctxShape = canvasShape.getContext("2d");
+      canvasShape.width = canvas.width;
+      canvasShape.height = canvas.height;
 
-      var img = ctx.getImageData(0, 0, w, h);
-      var imgData = img.data;
+      ctxShape.fillStyle = "#0a0";
+      ctxShape.fillRect(175, 175, 50, 50);
 
-      var t = performance.now();
-      blur(imgData, w, h, 16, 16, 2);
-      console.log(performance.now() - t);
+      window.requestAnimFrame = (function() {
+        return  window.requestAnimationFrame ||
+                window.webkitRequestAnimationFrame ||
+                window.mozRequestAnimationFrame ||
+                function(callback) {
+                  window.setTimeout(callback, 1000 / 60);
+                };
+      })();
 
-      ctx.putImageData(img, 0, 0);
+      (function animate() {
+        requestAnimFrame(animate);
+        stats.begin();
+
+        var img = ctxShape.getImageData(0, 0, w, h);
+        var imgData = img.data;
+
+        blur(imgData, w, h, 16, 16, 2);
+
+        //blurFilter(imgData, w, h, 16, 16);
+
+        ctx.putImageData(img, 0, 0);
+
+        stats.end();
+      })();
 
     </script>
   </body>
