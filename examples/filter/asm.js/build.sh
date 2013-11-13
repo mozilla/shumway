@@ -3,3 +3,4 @@ cat filters.pre.js > filters.js
 cat filters.raw.js >> filters.js
 cat filters.post.js >> filters.js
 rm filters.raw.js
+rm filters.raw.js.map
