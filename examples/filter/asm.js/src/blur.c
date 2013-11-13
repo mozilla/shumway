@@ -6,6 +6,7 @@
 
 void blur(unsigned char *img, int width, int height, int distX, int distY, int quality)
 {
+	preMultiplyAlpha(img, width, height);
 	for (int i = 0; i < quality; ++i) {
 		blurX(img, width, height, distX);
 		blurY(img, width, height, distY);
