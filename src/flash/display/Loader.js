@@ -15,36 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global self, importScripts, FileReader, FileReaderSync, Image, Worker, btoa,
-         URL, FileLoadingService, Promise, AbcFile, SHUMWAY_ROOT, SWF,
-         defineBitmap, defineImage, defineFont, defineShape, defineSound,
-         defineLabel, defineButton, defineText, TelemetryService,
+/*global self, ResourceLoader, Image, Worker, btoa, URL, FileLoadingService,
+         Promise, AbcFile, SHUMWAY_ROOT, TelemetryService,
          avm1lib, AS2Context, executeActions,
-         createSoundStream, MP3DecoderSession, PLAY_USING_AUDIO_TAG,
+         MP3DecoderSession, PLAY_USING_AUDIO_TAG,
          cloneObject, createEmptyObject, fromCharCode,
          isNullOrUndefined, sortNumeric */
-/*global SWF_TAG_CODE_DEFINE_BITS, SWF_TAG_CODE_DEFINE_BITS_JPEG2,
-          SWF_TAG_CODE_DEFINE_BITS_JPEG3, SWF_TAG_CODE_DEFINE_BITS_JPEG4,
-          SWF_TAG_CODE_DEFINE_BITS_LOSSLESS, SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2,
-          SWF_TAG_CODE_DEFINE_BUTTON, SWF_TAG_CODE_DEFINE_BUTTON2,
-          SWF_TAG_CODE_DEFINE_EDIT_TEXT, SWF_TAG_CODE_DEFINE_FONT,
-          SWF_TAG_CODE_DEFINE_FONT2, SWF_TAG_CODE_DEFINE_FONT3,
-          SWF_TAG_CODE_DEFINE_FONT4, SWF_TAG_CODE_DEFINE_MORPH_SHAPE,
-          SWF_TAG_CODE_DEFINE_MORPH_SHAPE2, SWF_TAG_CODE_DEFINE_SCALING_GRID,
-          SWF_TAG_CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA, SWF_TAG_CODE_DEFINE_SHAPE,
-          SWF_TAG_CODE_DEFINE_SHAPE2, SWF_TAG_CODE_DEFINE_SHAPE3,
-          SWF_TAG_CODE_DEFINE_SHAPE4, SWF_TAG_CODE_DEFINE_SOUND,
-          SWF_TAG_CODE_DEFINE_SPRITE, SWF_TAG_CODE_DEFINE_TEXT,
-          SWF_TAG_CODE_DEFINE_TEXT2, SWF_TAG_CODE_DO_ABC,
-          SWF_TAG_CODE_DO_ABC_, SWF_TAG_CODE_DO_ACTION,
-          SWF_TAG_CODE_DO_INIT_ACTION, SWF_TAG_CODE_FRAME_LABEL,
-          SWF_TAG_CODE_JPEG_TABLES, SWF_TAG_CODE_PLACE_OBJECT,
-          SWF_TAG_CODE_PLACE_OBJECT2, SWF_TAG_CODE_PLACE_OBJECT3,
-          SWF_TAG_CODE_REMOVE_OBJECT, SWF_TAG_CODE_REMOVE_OBJECT2,
-          SWF_TAG_CODE_SET_BACKGROUND_COLOR, SWF_TAG_CODE_SHOW_FRAME,
-          SWF_TAG_CODE_SOUND_STREAM_BLOCK, SWF_TAG_CODE_SOUND_STREAM_HEAD,
-          SWF_TAG_CODE_START_SOUND, SWF_TAG_CODE_SYMBOL_CLASS,
-          SWF_TAG_CODE_DEFINE_BINARY_DATA, SWF_TAG_CODE_EXPORT_ASSETS */
 // Ignoring "The Function constructor is a form of eval."
 /*jshint -W054 */
 // TODO: Investigate "Don't make functions within a loop."
@@ -54,440 +30,7 @@ var $RELEASE = false;
 
 var LoaderDefinition = (function () {
   var WORKERS_ENABLED = true;
-  var LOADER_PATH;
-
-  var workerScripts;
-  if ($RELEASE) {
-    LOADER_PATH = 'shumway-worker.js';
-  } else {
-    LOADER_PATH = 'flash/display/Loader.js';
-    workerScripts = [
-      '../../../lib/DataView.js/DataView.js',
-      '../util.js',
-      '../../swf/config.js',
-      '../../swf/swf.js',
-      '../../swf/types.js',
-      '../../swf/structs.js',
-      '../../swf/tags.js',
-      '../../swf/inflate.js',
-      '../../swf/stream.js',
-      '../../swf/templates.js',
-      '../../swf/generator.js',
-      '../../swf/handlers.js',
-      '../../swf/parser.js',
-      '../../swf/bitmap.js',
-      '../../swf/button.js',
-      '../../swf/font.js',
-      '../../swf/image.js',
-      '../../swf/label.js',
-      '../../swf/shape.js',
-      '../../swf/sound.js',
-      '../../swf/text.js'
-    ];
-  }
-
-  var isWorker = typeof window === 'undefined';
-
-  // Note that loader is null when calling from inside the worker, as AVM2 is
-  // only initialized on the main thread.
-  function loadFromWorker(loader, request, context) {
-    var symbols = { };
-
-    var commitData;
-    if (loader) {
-      commitData = function (data, transferables) {
-        return loader._commitData(data);
-      };
-    } else {
-      commitData = function (data, transferables) {
-        try {
-          self.postMessage(data, transferables);
-        } catch (ex) {
-          // Attempting to fix IE10/IE11 transferables
-          if (ex != 'DataCloneError') {
-            throw ex;
-          }
-          commitData = function (data) {
-            self.postMessage(data);
-          };
-          return commitData(data);
-        }
-      };
-    }
-
-    function defineSymbol(swfTag) {
-      var symbol;
-
-      switch (swfTag.code) {
-      case SWF_TAG_CODE_DEFINE_BITS:
-      case SWF_TAG_CODE_DEFINE_BITS_JPEG2:
-      case SWF_TAG_CODE_DEFINE_BITS_JPEG3:
-      case SWF_TAG_CODE_DEFINE_BITS_JPEG4:
-      case SWF_TAG_CODE_JPEG_TABLES:
-        symbol = defineImage(swfTag, symbols);
-        break;
-      case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS:
-      case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2:
-        symbol = defineBitmap(swfTag);
-        break;
-      case SWF_TAG_CODE_DEFINE_BUTTON:
-      case SWF_TAG_CODE_DEFINE_BUTTON2:
-        symbol = defineButton(swfTag, symbols);
-        break;
-      case SWF_TAG_CODE_DEFINE_EDIT_TEXT:
-        symbol = defineText(swfTag, symbols);
-        break;
-      case SWF_TAG_CODE_DEFINE_FONT:
-      case SWF_TAG_CODE_DEFINE_FONT2:
-      case SWF_TAG_CODE_DEFINE_FONT3:
-      case SWF_TAG_CODE_DEFINE_FONT4:
-        symbol = defineFont(swfTag, symbols);
-        break;
-      case SWF_TAG_CODE_DEFINE_MORPH_SHAPE:
-      case SWF_TAG_CODE_DEFINE_MORPH_SHAPE2:
-      case SWF_TAG_CODE_DEFINE_SHAPE:
-      case SWF_TAG_CODE_DEFINE_SHAPE2:
-      case SWF_TAG_CODE_DEFINE_SHAPE3:
-      case SWF_TAG_CODE_DEFINE_SHAPE4:
-        symbol = defineShape(swfTag, symbols);
-        break;
-      case SWF_TAG_CODE_DEFINE_SOUND:
-        symbol = defineSound(swfTag, symbols);
-        break;
-      case SWF_TAG_CODE_DEFINE_BINARY_DATA:
-        symbol = {
-          type: 'binary',
-          id: swfTag.id,
-          // TODO: make transferable
-          data: swfTag.data
-        };
-        break;
-      case SWF_TAG_CODE_DEFINE_SPRITE:
-        var depths = { };
-        var frame = { type: 'frame' };
-        var frames = [];
-        var tags = swfTag.tags;
-        var frameScripts = null;
-        var frameIndex = 0;
-        var soundStream = null;
-        for (var i = 0, n = tags.length; i < n; i++) {
-          var tag = tags[i];
-          switch (tag.code) {
-          case SWF_TAG_CODE_DO_ACTION:
-            if (!frameScripts)
-              frameScripts = [];
-            frameScripts.push(frameIndex);
-            frameScripts.push(tag.actionsData);
-            break;
-          // case SWF_TAG_CODE_DO_INIT_ACTION: ??
-          case SWF_TAG_CODE_START_SOUND:
-            var startSounds = frame.startSounds || (frame.startSounds = []);
-            startSounds.push(tag);
-            break;
-          case SWF_TAG_CODE_SOUND_STREAM_HEAD:
-            try {
-              // TODO: make transferable
-              soundStream = createSoundStream(tag);
-              frame.soundStream = soundStream.info;
-            } catch (e) {
-              // ignoring if sound stream codec is not supported
-              // console.error('ERROR: ' + e.message);
-            }
-            break;
-          case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
-            if (soundStream) {
-              frame.soundStreamBlock = soundStream.decode(tag.data);
-            }
-            break;
-          case SWF_TAG_CODE_FRAME_LABEL:
-            frame.labelName = tag.name;
-            break;
-          case SWF_TAG_CODE_PLACE_OBJECT:
-          case SWF_TAG_CODE_PLACE_OBJECT2:
-          case SWF_TAG_CODE_PLACE_OBJECT3:
-            depths[tag.depth] = tag;
-            break;
-          case SWF_TAG_CODE_REMOVE_OBJECT:
-          case SWF_TAG_CODE_REMOVE_OBJECT2:
-            depths[tag.depth] = null;
-            break;
-          case SWF_TAG_CODE_SHOW_FRAME:
-            var repeat = 1;
-            while (i < n - 1) {
-              var nextTag = tags[i + 1];
-              if (nextTag.code !== SWF_TAG_CODE_SHOW_FRAME)
-                break;
-              i++;
-              repeat++;
-            }
-            frameIndex += repeat;
-            frame.repeat = repeat;
-            frame.depths = depths;
-            frames.push(frame);
-            depths = { };
-            frame = { type: 'frame' };
-            break;
-          }
-        }
-        symbol = {
-          type: 'sprite',
-          id: swfTag.id,
-          frameCount: swfTag.frameCount,
-          frames: frames,
-          frameScripts: frameScripts
-        };
-        break;
-      case SWF_TAG_CODE_DEFINE_TEXT:
-      case SWF_TAG_CODE_DEFINE_TEXT2:
-        symbol = defineLabel(swfTag, symbols);
-        break;
-      }
-
-      if (!symbol) {
-        commitData({
-          command: 'error',
-          message: 'unknown symbol type: ' + swfTag.code
-        });
-        return;
-      }
-
-      symbol.isSymbol = true;
-      symbols[swfTag.id] = symbol;
-      commitData(symbol, symbol.transferables);
-    }
-    function createParsingContext() {
-      var depths = { };
-      var frame = { type: 'frame' };
-      var tagsProcessed = 0;
-      var soundStream = null;
-      var lastProgressSent = 0;
-
-      return {
-        onstart: function(result) {
-          commitData({command: 'init', result: result});
-        },
-        onprogress: function(result) {
-          if (Date.now() - lastProgressSent > 1000 / 24 ||
-              result.bytesLoaded === result.bytesTotal) {
-            commitData({command: 'progress', result: {
-              bytesLoaded: result.bytesLoaded,
-              bytesTotal: result.bytesTotal
-            }});
-            lastProgressSent = Date.now();
-          }
-
-          var tags = result.tags;
-          for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
-            var tag = tags[tagsProcessed];
-            if ('id' in tag) {
-              defineSymbol(tag);
-              continue;
-            }
-
-            switch (tag.code) {
-            case SWF_TAG_CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA:
-              frame.sceneData = tag;
-              break;
-            case SWF_TAG_CODE_DEFINE_SCALING_GRID:
-              var symbolUpdate = {
-                isSymbol: true,
-                id: tag.symbolId,
-                updates: {
-                  scale9Grid: tag.splitter
-                }
-              };
-              commitData(symbolUpdate);
-              break;
-            case SWF_TAG_CODE_DO_ABC:
-            case SWF_TAG_CODE_DO_ABC_:
-              var abcBlocks = frame.abcBlocks;
-              if (abcBlocks)
-                abcBlocks.push({data: tag.data, flags: tag.flags});
-              else
-                frame.abcBlocks = [{data: tag.data, flags: tag.flags}];
-              break;
-            case SWF_TAG_CODE_DO_ACTION:
-              var actionBlocks = frame.actionBlocks;
-              if (actionBlocks)
-                actionBlocks.push(tag.actionsData);
-              else
-                frame.actionBlocks = [tag.actionsData];
-              break;
-            case SWF_TAG_CODE_DO_INIT_ACTION:
-              var initActionBlocks = frame.initActionBlocks ||
-                (frame.initActionBlocks = []);
-              initActionBlocks.push({spriteId: tag.spriteId, actionsData: tag.actionsData});
-              break;
-            case SWF_TAG_CODE_START_SOUND:
-              var startSounds = frame.startSounds;
-              if (!startSounds)
-                frame.startSounds = startSounds = [];
-              startSounds.push(tag);
-              break;
-            case SWF_TAG_CODE_SOUND_STREAM_HEAD:
-              try {
-                // TODO: make transferable
-                soundStream = createSoundStream(tag);
-                frame.soundStream = soundStream.info;
-              } catch (e) {
-                // ignoring if sound stream codec is not supported
-                // console.error('ERROR: ' + e.message);
-              }
-              break;
-            case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
-              if (soundStream) {
-                frame.soundStreamBlock = soundStream.decode(tag.data);
-              }
-              break;
-            case SWF_TAG_CODE_EXPORT_ASSETS:
-              var exports = frame.exports;
-              if (exports)
-                frame.exports = exports.concat(tag.exports);
-              else
-                frame.exports = tag.exports.slice(0);
-              break;
-            case SWF_TAG_CODE_SYMBOL_CLASS:
-              var symbolClasses = frame.symbolClasses;
-              if (symbolClasses)
-                frame.symbolClasses = symbolClasses.concat(tag.exports);
-              else
-                frame.symbolClasses = tag.exports.slice(0);
-              break;
-            case SWF_TAG_CODE_FRAME_LABEL:
-              frame.labelName = tag.name;
-              break;
-            case SWF_TAG_CODE_PLACE_OBJECT:
-            case SWF_TAG_CODE_PLACE_OBJECT2:
-            case SWF_TAG_CODE_PLACE_OBJECT3:
-              depths[tag.depth] = tag;
-              break;
-            case SWF_TAG_CODE_REMOVE_OBJECT:
-            case SWF_TAG_CODE_REMOVE_OBJECT2:
-              depths[tag.depth] = null;
-              break;
-            case SWF_TAG_CODE_SET_BACKGROUND_COLOR:
-              frame.bgcolor = tag.color;
-              break;
-            case SWF_TAG_CODE_SHOW_FRAME:
-              var repeat = 1;
-              while (tagsProcessed < n) {
-                var nextTag = tags[tagsProcessed + 1];
-                if (!nextTag || nextTag.code !== SWF_TAG_CODE_SHOW_FRAME)
-                  break;
-                tagsProcessed++;
-                repeat++;
-              }
-              frame.repeat = repeat;
-              frame.depths = depths;
-              commitData(frame);
-              depths = { };
-              frame = { type: 'frame' };
-              break;
-            }
-          }
-        },
-        oncomplete: function(result) {
-          commitData(result);
-
-          var stats;
-          if (typeof result.swfVersion === 'number') {
-            // Extracting stats from the context object
-            var bbox = result.bbox;
-            stats = {
-              topic: 'parseInfo', // HACK additional field for telemetry
-              parseTime: result.parseTime,
-              bytesTotal: result.bytesTotal,
-              swfVersion: result.swfVersion,
-              frameRate: result.frameRate,
-              width: (bbox.xMax - bbox.xMin) / 20,
-              height: (bbox.yMax - bbox.yMin) / 20,
-              isAvm2: !!result.fileAttributes.doAbc
-            };
-          }
-
-          commitData({command: 'complete', stats: stats});
-        }
-      };
-    }
-    function parseBytes(bytes) {
-      SWF.parse(bytes, createParsingContext());
-    }
-
-    if (isWorker || !flash.net.URLRequest.class.isInstanceOf(request)) {
-      var input = request;
-      if (input instanceof ArrayBuffer) {
-        parseBytes(input);
-      } else if ('subscribe' in input) {
-        var pipe = SWF.parseAsync(createParsingContext());
-        input.subscribe(function (data, progress) {
-          if (data) {
-            pipe.push(data, progress);
-          } else {
-            pipe.close();
-          }
-        });
-      } else if (typeof FileReaderSync !== 'undefined') {
-        var reader = new FileReaderSync();
-        var buffer = reader.readAsArrayBuffer(input);
-        parseBytes(buffer);
-      } else {
-        var reader = new FileReader();
-        reader.onload = function () {
-          parseBytes(this.result);
-        };
-        reader.readAsArrayBuffer(input);
-      }
-    } else {
-      var session = FileLoadingService.createSession();
-      var pipe = SWF.parseAsync(createParsingContext());
-      session.onprogress = function (data, progressState) {
-        pipe.push(data, progressState);
-
-        var data = {
-          command : 'progress',
-          result : {bytesLoaded : progressState.bytesLoaded, bytesTotal : progressState.bytesTotal}
-        };
-        loader._commitData(data);
-      };
-      session.onerror = function (error) {
-        loader._commitData({command: 'error', error: error});
-      };
-      session.onopen = function () {
-      };
-      session.onclose = function () {
-        pipe.close();
-      };
-      session.open(request._toFileRequest());
-    }
-  }
-
-  // If we're inside a worker, do the parsing work and return undefined, since
-  // communication is done by posting messages to the main thread.
-  if (isWorker) {
-    if (workerScripts) {
-      importScripts.apply(null, workerScripts);
-    }
-
-    var subscription = null;
-    self.onmessage = function (evt) {
-      if (subscription) {
-        subscription.callback(evt.data.data, evt.data.progress);
-      } else if (evt.data === 'pipe:') {
-        // progressive data loading is requested, replacing onmessage handler
-        // for the following messages
-        subscription = {
-          subscribe: function (callback) {
-            this.callback = callback;
-          }
-        };
-        loadFromWorker(null, subscription);
-      } else {
-        loadFromWorker(null, evt.data);
-      }
-    };
-
-    return;
-  }
+  var LOADER_PATH = $RELEASE ? 'shumway-worker.js' : 'swf/resourceloader.js';
 
   var head = document.head;
   head.insertBefore(document.createElement('style'), head.firstChild);
@@ -1193,36 +736,39 @@ var LoaderDefinition = (function () {
     _load: function (request, checkPolicyFile, applicationDomain,
                      securityDomain, deblockingFilter)
     {
-      if (!isWorker && flash.net.URLRequest.class.isInstanceOf(request)) {
+      if (flash.net.URLRequest.class.isInstanceOf(request)) {
         this._contentLoaderInfo._url = request._url;
       }
-      if (!isWorker && WORKERS_ENABLED) {
-        var loader = this;
-        var worker = loader._worker = new Worker(SHUMWAY_ROOT + LOADER_PATH);
-        worker.onmessage = function (evt) {
-          loader._commitData(evt.data);
-        };
-        if (flash.net.URLRequest.class.isInstanceOf(request)) {
-          var session = FileLoadingService.createSession();
-          session.onprogress = function (data, progress) {
-            worker.postMessage({data: data, progress: progress});
-          };
-          session.onerror = function (error) {
-            loader._commitData({command: 'error', error: error});
-          };
-          session.onopen = function () {
-            worker.postMessage('pipe:');
-          };
-          session.onclose = function () {
-            worker.postMessage({data: null});
-          };
-          session.open(request._toFileRequest());
-        } else {
-          worker.postMessage(request);
-        }
+      var worker;
+      if (WORKERS_ENABLED) {
+        worker = new Worker(SHUMWAY_ROOT + LOADER_PATH);
       } else {
-        loadFromWorker(this, request);
+        worker = new ResourceLoader(window);
       }
+      var loader = this;
+      loader._worker = worker;
+      worker.onmessage = function (evt) {
+        loader._commitData(evt.data);
+      };
+      if (flash.net.URLRequest.class.isInstanceOf(request)) {
+        var session = FileLoadingService.createSession();
+        session.onprogress = function (data, progress) {
+          worker.postMessage({data: data, progress: progress});
+        };
+        session.onerror = function (error) {
+          loader._commitData({command: 'error', error: error});
+        };
+        session.onopen = function () {
+          worker.postMessage('pipe:');
+        };
+        session.onclose = function () {
+          worker.postMessage({data: null});
+        };
+        session.open(request._toFileRequest());
+      } else {
+        worker.postMessage(request);
+      }
+//      loadFromWorker(this, request);
     },
     _setup: function () {
       var loader = this;
