@@ -53,11 +53,17 @@ void blurX(unsigned char *img, int width, int height, int distance)
 		unsigned char *pLine = lineBuffer + dist4;
 		unsigned char *pLast = src;
 		unsigned char *pNext = ptr + ((distance + 1) << 2);
+		unsigned char alpha;
 		while (ptr < ptrEnd) {
-			*pLine = (rs / windowLength) & 0xff;
-			*(pLine + 1) = (gs / windowLength) & 0xff;
-			*(pLine + 2) = (bs / windowLength) & 0xff;
-			*(pLine + 3) = (as / windowLength) & 0xff;
+			alpha = as / windowLength;
+			if (alpha != 0) {
+				*pLine = rs / windowLength;
+				*(pLine + 1) = gs / windowLength;
+				*(pLine + 2) = bs / windowLength;
+				*(pLine + 3) = alpha;
+			} else {
+				*(unsigned int *)pLine = 0;
+			}
 
 			rs += *pNext - *pLast;
 			gs += *(pNext + 1) - *(pLast + 1);
@@ -113,11 +119,17 @@ void blurY(unsigned char *img, int width, int height, int distance)
 		unsigned char *pColumn = columnBuffer + (distance << 2);
 		unsigned char *pLast = src;
 		unsigned char *pNext = ptr + (distance + 1) * stride;
+		unsigned char alpha;
 		while (ptr < ptrEnd) {
-			*pColumn = (rs / windowLength) & 0xff;
-			*(pColumn + 1) = (gs / windowLength) & 0xff;
-			*(pColumn + 2) = (bs / windowLength) & 0xff;
-			*(pColumn + 3) = (as / windowLength) & 0xff;
+			alpha = as / windowLength;
+			if (alpha != 0) {
+				*pColumn = rs / windowLength;
+				*(pColumn + 1) = gs / windowLength;
+				*(pColumn + 2) = bs / windowLength;
+				*(pColumn + 3) = alpha;
+			} else {
+				*(unsigned int *)pColumn = 0;
+			}
 
 			rs += *pNext - *pLast;
 			gs += *(pNext + 1) - *(pLast + 1);

@@ -10,9 +10,15 @@ void preMultiplyAlpha(unsigned char *img, int width, int height)
 	float alpha;
 	while (ptr < ptrEnd) {
 		alpha = *(ptr + 3) / 255.0;
-		*ptr *= alpha;
-		*(ptr + 1) *= alpha;
-		*(ptr + 2) *= alpha;
+		if (alpha != 0) {
+			*ptr *= alpha;
+			*(ptr + 1) *= alpha;
+			*(ptr + 2) *= alpha;
+		} else {
+			*ptr = 0;
+			*(ptr + 1) = 0;
+			*(ptr + 2) = 0;
+		}
 		ptr += 4;
 	}
 }
@@ -24,9 +30,15 @@ void preMultiplyAlphaUndo(unsigned char *img, int width, int height)
 	float alpha;
 	while (ptr < ptrEnd) {
 		alpha = *(ptr + 3) / 255.0;
-		*ptr /= alpha;
-		*(ptr + 1) /= alpha;
-		*(ptr + 2) /= alpha;
+		if (alpha != 0) {
+			*ptr /= alpha;
+			*(ptr + 1) /= alpha;
+			*(ptr + 2) /= alpha;
+		} else {
+			*ptr = 0;
+			*(ptr + 1) = 0;
+			*(ptr + 2) = 0;
+		}
 		ptr += 4;
 	}
 }
