@@ -16,7 +16,9 @@
  * limitations under the License.
  */
 /* global renderDisplayObject, RenderVisitor, argbUintToStr, getBlendModeName,
-   Errors, throwError */
+   Errors, throwError, URL */
+
+var CACHE_DRAWABLE_AFTER = 10;
 
 var BitmapDataDefinition = (function () {
   function replaceRect(ctx, x, y, w, h, alpha) {
@@ -34,6 +36,8 @@ var BitmapDataDefinition = (function () {
     initialize: function () {
       this._changeNotificationTarget = null;
       this._locked = false;
+      this._requested = 0;
+      this._cache = null;
 
       if (this.symbol) {
         this._img = this.symbol.img;
@@ -139,6 +143,34 @@ var BitmapDataDefinition = (function () {
       if (this._changeNotificationTarget) {
         this._changeNotificationTarget._invalidate();
       }
+      this._requested = 0;
+      this._cache = null;
+    },
+    _getDrawable: function () {
+      if (this._img === this._drawable) {
+        return this._drawable;
+      }
+      this._requested++;
+      if (this._requested >= CACHE_DRAWABLE_AFTER) {
+        if (!this._cache) {
+          var img = document.createElement('image');
+          if ('toBlob' in this._drawable) {
+            this._drawable.toBlob(function (blob) {
+              img.src = URL.createObjectURL(blob);
+              img.onload = function () {
+                URL.revokeObjectURL(blob);
+              };
+            });
+          } else {
+            img.src = this._drawable.toDataURL();
+          }
+          this._cache = img;
+        }
+        if (this._cache.width > 0) { // is image ready
+          return this._cache;
+        }
+      }
+      return this._drawable;
     },
     setPixel: function(x, y, color) {
       this.fillRect({ x: x, y: y, width: 1, height: 1 }, color | 0xFF000000);
