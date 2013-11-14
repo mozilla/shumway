@@ -71,390 +71,386 @@ if (isWorker && !$RELEASE) {
   ]);
 }
 
-function loadFromWorker(loader, request, context) {
-  var symbols = { };
 
-  var commitData = function (data, transferables) {
-    try {
-      loader.postMessage(data, transferables);
-    } catch (ex) {
-      // Attempting to fix IE10/IE11 transferables
-      if (ex != 'DataCloneError') {
-        throw ex;
-      }
-      commitData = function (data) {
-        loader.postMessage(data);
+function defineSymbol(swfTag, symbols) {
+  var symbol;
+
+  switch (swfTag.code) {
+    case SWF_TAG_CODE_DEFINE_BITS:
+    case SWF_TAG_CODE_DEFINE_BITS_JPEG2:
+    case SWF_TAG_CODE_DEFINE_BITS_JPEG3:
+    case SWF_TAG_CODE_DEFINE_BITS_JPEG4:
+    case SWF_TAG_CODE_JPEG_TABLES:
+      symbol = defineImage(swfTag, symbols);
+      break;
+    case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS:
+    case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2:
+      symbol = defineBitmap(swfTag);
+      break;
+    case SWF_TAG_CODE_DEFINE_BUTTON:
+    case SWF_TAG_CODE_DEFINE_BUTTON2:
+      symbol = defineButton(swfTag, symbols);
+      break;
+    case SWF_TAG_CODE_DEFINE_EDIT_TEXT:
+      symbol = defineText(swfTag, symbols);
+      break;
+    case SWF_TAG_CODE_DEFINE_FONT:
+    case SWF_TAG_CODE_DEFINE_FONT2:
+    case SWF_TAG_CODE_DEFINE_FONT3:
+    case SWF_TAG_CODE_DEFINE_FONT4:
+      symbol = defineFont(swfTag, symbols);
+      break;
+    case SWF_TAG_CODE_DEFINE_MORPH_SHAPE:
+    case SWF_TAG_CODE_DEFINE_MORPH_SHAPE2:
+    case SWF_TAG_CODE_DEFINE_SHAPE:
+    case SWF_TAG_CODE_DEFINE_SHAPE2:
+    case SWF_TAG_CODE_DEFINE_SHAPE3:
+    case SWF_TAG_CODE_DEFINE_SHAPE4:
+      symbol = defineShape(swfTag, symbols);
+      break;
+    case SWF_TAG_CODE_DEFINE_SOUND:
+      symbol = defineSound(swfTag, symbols);
+      break;
+    case SWF_TAG_CODE_DEFINE_BINARY_DATA:
+      symbol = {
+        type: 'binary',
+        id: swfTag.id,
+        // TODO: make transferable
+        data: swfTag.data
       };
-      commitData(data);
-    }
-  };
-
-  function defineSymbol(swfTag) {
-    var symbol;
-
-    switch (swfTag.code) {
-      case SWF_TAG_CODE_DEFINE_BITS:
-      case SWF_TAG_CODE_DEFINE_BITS_JPEG2:
-      case SWF_TAG_CODE_DEFINE_BITS_JPEG3:
-      case SWF_TAG_CODE_DEFINE_BITS_JPEG4:
-      case SWF_TAG_CODE_JPEG_TABLES:
-        symbol = defineImage(swfTag, symbols);
-        break;
-      case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS:
-      case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2:
-        symbol = defineBitmap(swfTag);
-        break;
-      case SWF_TAG_CODE_DEFINE_BUTTON:
-      case SWF_TAG_CODE_DEFINE_BUTTON2:
-        symbol = defineButton(swfTag, symbols);
-        break;
-      case SWF_TAG_CODE_DEFINE_EDIT_TEXT:
-        symbol = defineText(swfTag, symbols);
-        break;
-      case SWF_TAG_CODE_DEFINE_FONT:
-      case SWF_TAG_CODE_DEFINE_FONT2:
-      case SWF_TAG_CODE_DEFINE_FONT3:
-      case SWF_TAG_CODE_DEFINE_FONT4:
-        symbol = defineFont(swfTag, symbols);
-        break;
-      case SWF_TAG_CODE_DEFINE_MORPH_SHAPE:
-      case SWF_TAG_CODE_DEFINE_MORPH_SHAPE2:
-      case SWF_TAG_CODE_DEFINE_SHAPE:
-      case SWF_TAG_CODE_DEFINE_SHAPE2:
-      case SWF_TAG_CODE_DEFINE_SHAPE3:
-      case SWF_TAG_CODE_DEFINE_SHAPE4:
-        symbol = defineShape(swfTag, symbols);
-        break;
-      case SWF_TAG_CODE_DEFINE_SOUND:
-        symbol = defineSound(swfTag, symbols);
-        break;
-      case SWF_TAG_CODE_DEFINE_BINARY_DATA:
-        symbol = {
-          type: 'binary',
-          id: swfTag.id,
-          // TODO: make transferable
-          data: swfTag.data
-        };
-        break;
-      case SWF_TAG_CODE_DEFINE_SPRITE:
-        var depths = { };
-        var frame = { type: 'frame' };
-        var frames = [];
-        var tags = swfTag.tags;
-        var frameScripts = null;
-        var frameIndex = 0;
-        var soundStream = null;
-        for (var i = 0, n = tags.length; i < n; i++) {
-          var tag = tags[i];
-          switch (tag.code) {
-            case SWF_TAG_CODE_DO_ACTION:
-              if (!frameScripts)
-                frameScripts = [];
-              frameScripts.push(frameIndex);
-              frameScripts.push(tag.actionsData);
-              break;
-            // case SWF_TAG_CODE_DO_INIT_ACTION: ??
-            case SWF_TAG_CODE_START_SOUND:
-              var startSounds = frame.startSounds || (frame.startSounds = []);
-              startSounds.push(tag);
-              break;
-            case SWF_TAG_CODE_SOUND_STREAM_HEAD:
-              try {
-                // TODO: make transferable
-                soundStream = createSoundStream(tag);
-                frame.soundStream = soundStream.info;
-              } catch (e) {
-                // ignoring if sound stream codec is not supported
-                // console.error('ERROR: ' + e.message);
-              }
-              break;
-            case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
-              if (soundStream) {
-                frame.soundStreamBlock = soundStream.decode(tag.data);
-              }
-              break;
-            case SWF_TAG_CODE_FRAME_LABEL:
-              frame.labelName = tag.name;
-              break;
-            case SWF_TAG_CODE_PLACE_OBJECT:
-            case SWF_TAG_CODE_PLACE_OBJECT2:
-            case SWF_TAG_CODE_PLACE_OBJECT3:
-              depths[tag.depth] = tag;
-              break;
-            case SWF_TAG_CODE_REMOVE_OBJECT:
-            case SWF_TAG_CODE_REMOVE_OBJECT2:
-              depths[tag.depth] = null;
-              break;
-            case SWF_TAG_CODE_SHOW_FRAME:
-              var repeat = 1;
-              while (i < n - 1) {
-                var nextTag = tags[i + 1];
-                if (nextTag.code !== SWF_TAG_CODE_SHOW_FRAME)
-                  break;
-                i++;
-                repeat++;
-              }
-              frameIndex += repeat;
-              frame.repeat = repeat;
-              frame.depths = depths;
-              frames.push(frame);
-              depths = { };
-              frame = { type: 'frame' };
-              break;
-          }
+      break;
+    case SWF_TAG_CODE_DEFINE_SPRITE:
+      var depths = { };
+      var frame = { type: 'frame' };
+      var frames = [];
+      var tags = swfTag.tags;
+      var frameScripts = null;
+      var frameIndex = 0;
+      var soundStream = null;
+      for (var i = 0, n = tags.length; i < n; i++) {
+        var tag = tags[i];
+        switch (tag.code) {
+          case SWF_TAG_CODE_DO_ACTION:
+            if (!frameScripts)
+              frameScripts = [];
+            frameScripts.push(frameIndex);
+            frameScripts.push(tag.actionsData);
+            break;
+          // case SWF_TAG_CODE_DO_INIT_ACTION: ??
+          case SWF_TAG_CODE_START_SOUND:
+            var startSounds = frame.startSounds || (frame.startSounds = []);
+            startSounds.push(tag);
+            break;
+          case SWF_TAG_CODE_SOUND_STREAM_HEAD:
+            try {
+              // TODO: make transferable
+              soundStream = createSoundStream(tag);
+              frame.soundStream = soundStream.info;
+            } catch (e) {
+              // ignoring if sound stream codec is not supported
+              // console.error('ERROR: ' + e.message);
+            }
+            break;
+          case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
+            if (soundStream) {
+              frame.soundStreamBlock = soundStream.decode(tag.data);
+            }
+            break;
+          case SWF_TAG_CODE_FRAME_LABEL:
+            frame.labelName = tag.name;
+            break;
+          case SWF_TAG_CODE_PLACE_OBJECT:
+          case SWF_TAG_CODE_PLACE_OBJECT2:
+          case SWF_TAG_CODE_PLACE_OBJECT3:
+            depths[tag.depth] = tag;
+            break;
+          case SWF_TAG_CODE_REMOVE_OBJECT:
+          case SWF_TAG_CODE_REMOVE_OBJECT2:
+            depths[tag.depth] = null;
+            break;
+          case SWF_TAG_CODE_SHOW_FRAME:
+            var repeat = 1;
+            while (i < n - 1) {
+              var nextTag = tags[i + 1];
+              if (nextTag.code !== SWF_TAG_CODE_SHOW_FRAME)
+                break;
+              i++;
+              repeat++;
+            }
+            frameIndex += repeat;
+            frame.repeat = repeat;
+            frame.depths = depths;
+            frames.push(frame);
+            depths = { };
+            frame = { type: 'frame' };
+            break;
         }
-        symbol = {
-          type: 'sprite',
-          id: swfTag.id,
-          frameCount: swfTag.frameCount,
-          frames: frames,
-          frameScripts: frameScripts
-        };
-        break;
-      case SWF_TAG_CODE_DEFINE_TEXT:
-      case SWF_TAG_CODE_DEFINE_TEXT2:
-        symbol = defineLabel(swfTag, symbols);
-        break;
-    }
-
-    if (!symbol) {
-      commitData({
-                   command: 'error',
-                   message: 'unknown symbol type: ' + swfTag.code
-                 });
-      return;
-    }
-
-    symbol.isSymbol = true;
-    symbols[swfTag.id] = symbol;
-    commitData(symbol, symbol.transferables);
-  }
-  function createParsingContext() {
-    var depths = { };
-    var frame = { type: 'frame' };
-    var tagsProcessed = 0;
-    var soundStream = null;
-    var lastProgressSent = 0;
-
-    return {
-      onstart: function(result) {
-        commitData({command: 'init', result: result});
-      },
-      onprogress: function(result) {
-        if (Date.now() - lastProgressSent > 1000 / 24 ||
-            result.bytesLoaded === result.bytesTotal) {
-          commitData({command: 'progress', result: {
-            bytesLoaded: result.bytesLoaded,
-            bytesTotal: result.bytesTotal
-          }});
-          lastProgressSent = Date.now();
-        }
-
-        var tags = result.tags;
-        for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
-          var tag = tags[tagsProcessed];
-          if ('id' in tag) {
-            defineSymbol(tag);
-            continue;
-          }
-
-          switch (tag.code) {
-            case SWF_TAG_CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA:
-              frame.sceneData = tag;
-              break;
-            case SWF_TAG_CODE_DEFINE_SCALING_GRID:
-              var symbolUpdate = {
-                isSymbol: true,
-                id: tag.symbolId,
-                updates: {
-                  scale9Grid: tag.splitter
-                }
-              };
-              commitData(symbolUpdate);
-              break;
-            case SWF_TAG_CODE_DO_ABC:
-            case SWF_TAG_CODE_DO_ABC_:
-              var abcBlocks = frame.abcBlocks;
-              if (abcBlocks)
-                abcBlocks.push({data: tag.data, flags: tag.flags});
-              else
-                frame.abcBlocks = [{data: tag.data, flags: tag.flags}];
-              break;
-            case SWF_TAG_CODE_DO_ACTION:
-              var actionBlocks = frame.actionBlocks;
-              if (actionBlocks)
-                actionBlocks.push(tag.actionsData);
-              else
-                frame.actionBlocks = [tag.actionsData];
-              break;
-            case SWF_TAG_CODE_DO_INIT_ACTION:
-              var initActionBlocks = frame.initActionBlocks ||
-                                     (frame.initActionBlocks = []);
-              initActionBlocks.push({spriteId: tag.spriteId, actionsData: tag.actionsData});
-              break;
-            case SWF_TAG_CODE_START_SOUND:
-              var startSounds = frame.startSounds;
-              if (!startSounds)
-                frame.startSounds = startSounds = [];
-              startSounds.push(tag);
-              break;
-            case SWF_TAG_CODE_SOUND_STREAM_HEAD:
-              try {
-                // TODO: make transferable
-                soundStream = createSoundStream(tag);
-                frame.soundStream = soundStream.info;
-              } catch (e) {
-                // ignoring if sound stream codec is not supported
-                // console.error('ERROR: ' + e.message);
-              }
-              break;
-            case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
-              if (soundStream) {
-                frame.soundStreamBlock = soundStream.decode(tag.data);
-              }
-              break;
-            case SWF_TAG_CODE_EXPORT_ASSETS:
-              var exports = frame.exports;
-              if (exports)
-                frame.exports = exports.concat(tag.exports);
-              else
-                frame.exports = tag.exports.slice(0);
-              break;
-            case SWF_TAG_CODE_SYMBOL_CLASS:
-              var symbolClasses = frame.symbolClasses;
-              if (symbolClasses)
-                frame.symbolClasses = symbolClasses.concat(tag.exports);
-              else
-                frame.symbolClasses = tag.exports.slice(0);
-              break;
-            case SWF_TAG_CODE_FRAME_LABEL:
-              frame.labelName = tag.name;
-              break;
-            case SWF_TAG_CODE_PLACE_OBJECT:
-            case SWF_TAG_CODE_PLACE_OBJECT2:
-            case SWF_TAG_CODE_PLACE_OBJECT3:
-              depths[tag.depth] = tag;
-              break;
-            case SWF_TAG_CODE_REMOVE_OBJECT:
-            case SWF_TAG_CODE_REMOVE_OBJECT2:
-              depths[tag.depth] = null;
-              break;
-            case SWF_TAG_CODE_SET_BACKGROUND_COLOR:
-              frame.bgcolor = tag.color;
-              break;
-            case SWF_TAG_CODE_SHOW_FRAME:
-              var repeat = 1;
-              while (tagsProcessed < n) {
-                var nextTag = tags[tagsProcessed + 1];
-                if (!nextTag || nextTag.code !== SWF_TAG_CODE_SHOW_FRAME)
-                  break;
-                tagsProcessed++;
-                repeat++;
-              }
-              frame.repeat = repeat;
-              frame.depths = depths;
-              commitData(frame);
-              depths = { };
-              frame = { type: 'frame' };
-              break;
-          }
-        }
-      },
-      oncomplete: function(result) {
-        commitData(result);
-
-        var stats;
-        if (typeof result.swfVersion === 'number') {
-          // Extracting stats from the context object
-          var bbox = result.bbox;
-          stats = {
-            topic: 'parseInfo', // HACK additional field for telemetry
-            parseTime: result.parseTime,
-            bytesTotal: result.bytesTotal,
-            swfVersion: result.swfVersion,
-            frameRate: result.frameRate,
-            width: (bbox.xMax - bbox.xMin) / 20,
-            height: (bbox.yMax - bbox.yMin) / 20,
-            isAvm2: !!result.fileAttributes.doAbc
-          };
-        }
-
-        commitData({command: 'complete', stats: stats});
       }
-    };
-  }
-  function parseBytes(bytes) {
-    SWF.parse(bytes, createParsingContext());
+      symbol = {
+        type: 'sprite',
+        id: swfTag.id,
+        frameCount: swfTag.frameCount,
+        frames: frames,
+        frameScripts: frameScripts
+      };
+      break;
+    case SWF_TAG_CODE_DEFINE_TEXT:
+    case SWF_TAG_CODE_DEFINE_TEXT2:
+      symbol = defineLabel(swfTag, symbols);
+      break;
   }
 
-  if (request instanceof ArrayBuffer) {
-    parseBytes(request);
-  } else if ('subscribe' in request) {
-    var pipe = SWF.parseAsync(createParsingContext());
-    request.subscribe(function (data, progress) {
-      if (data) {
-        pipe.push(data, progress);
-      } else {
-        pipe.close();
-      }
-    });
-  } else if (typeof FileReaderSync !== 'undefined') {
-    var reader = new FileReaderSync();
-    var buffer = reader.readAsArrayBuffer(request);
-    parseBytes(buffer);
-  } else {
-    var reader = new FileReader();
-    reader.onload = function () {
-      parseBytes(this.result);
-    };
-    reader.readAsArrayBuffer(request);
+  if (!symbol) {
+    return {command: 'error', message: 'unknown symbol type: ' + swfTag.code};
   }
+
+  symbol.isSymbol = true;
+  symbols[swfTag.id] = symbol;
+  return symbol;
 }
+function createParsingContext(commitData) {
+  var depths = {};
+  var symbols = {};
+  var frame = { type: 'frame' };
+  var tagsProcessed = 0;
+  var soundStream = null;
+  var lastProgressSent = 0;
 
-function createResourceDataListener(loader) {
-  var subscription = null;
-  return function (data) {
-    if (subscription) {
-      subscription.callback(data.data, data.progress);
-    } else if (data === 'pipe:') {
-      // progressive data loading is requested, replacing onmessage handler
-      // for the following messages
-      subscription = {
-        subscribe: function(callback) {
-          this.callback = callback;
+  return {
+    onstart: function(result) {
+      commitData({command: 'init', result: result});
+    },
+    onprogress: function(result) {
+      if (Date.now() - lastProgressSent > 1000 / 24 ||
+          result.bytesLoaded === result.bytesTotal) {
+        commitData({command: 'progress', result: {
+          bytesLoaded: result.bytesLoaded,
+          bytesTotal: result.bytesTotal
+        }});
+        lastProgressSent = Date.now();
+      }
+
+      var tags = result.tags;
+      for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
+        var tag = tags[tagsProcessed];
+        if ('id' in tag) {
+          var symbol = defineSymbol(tag, symbols);
+          commitData(symbol, symbol.transferables);
+          continue;
         }
-      };
-      loadFromWorker(loader, subscription);
-    } else {
-      loadFromWorker(loader, data);
+
+        switch (tag.code) {
+          case SWF_TAG_CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA:
+            frame.sceneData = tag;
+            break;
+          case SWF_TAG_CODE_DEFINE_SCALING_GRID:
+            var symbolUpdate = {
+              isSymbol: true,
+              id: tag.symbolId,
+              updates: {
+                scale9Grid: tag.splitter
+              }
+            };
+            commitData(symbolUpdate);
+            break;
+          case SWF_TAG_CODE_DO_ABC:
+          case SWF_TAG_CODE_DO_ABC_:
+            var abcBlocks = frame.abcBlocks;
+            if (abcBlocks)
+              abcBlocks.push({data: tag.data, flags: tag.flags});
+            else
+              frame.abcBlocks = [{data: tag.data, flags: tag.flags}];
+            break;
+          case SWF_TAG_CODE_DO_ACTION:
+            var actionBlocks = frame.actionBlocks;
+            if (actionBlocks)
+              actionBlocks.push(tag.actionsData);
+            else
+              frame.actionBlocks = [tag.actionsData];
+            break;
+          case SWF_TAG_CODE_DO_INIT_ACTION:
+            var initActionBlocks = frame.initActionBlocks ||
+                                   (frame.initActionBlocks = []);
+            initActionBlocks.push({spriteId: tag.spriteId, actionsData: tag.actionsData});
+            break;
+          case SWF_TAG_CODE_START_SOUND:
+            var startSounds = frame.startSounds;
+            if (!startSounds)
+              frame.startSounds = startSounds = [];
+            startSounds.push(tag);
+            break;
+          case SWF_TAG_CODE_SOUND_STREAM_HEAD:
+            try {
+              // TODO: make transferable
+              soundStream = createSoundStream(tag);
+              frame.soundStream = soundStream.info;
+            } catch (e) {
+              // ignoring if sound stream codec is not supported
+              // console.error('ERROR: ' + e.message);
+            }
+            break;
+          case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
+            if (soundStream) {
+              frame.soundStreamBlock = soundStream.decode(tag.data);
+            }
+            break;
+          case SWF_TAG_CODE_EXPORT_ASSETS:
+            var exports = frame.exports;
+            if (exports)
+              frame.exports = exports.concat(tag.exports);
+            else
+              frame.exports = tag.exports.slice(0);
+            break;
+          case SWF_TAG_CODE_SYMBOL_CLASS:
+            var symbolClasses = frame.symbolClasses;
+            if (symbolClasses)
+              frame.symbolClasses = symbolClasses.concat(tag.exports);
+            else
+              frame.symbolClasses = tag.exports.slice(0);
+            break;
+          case SWF_TAG_CODE_FRAME_LABEL:
+            frame.labelName = tag.name;
+            break;
+          case SWF_TAG_CODE_PLACE_OBJECT:
+          case SWF_TAG_CODE_PLACE_OBJECT2:
+          case SWF_TAG_CODE_PLACE_OBJECT3:
+            depths[tag.depth] = tag;
+            break;
+          case SWF_TAG_CODE_REMOVE_OBJECT:
+          case SWF_TAG_CODE_REMOVE_OBJECT2:
+            depths[tag.depth] = null;
+            break;
+          case SWF_TAG_CODE_SET_BACKGROUND_COLOR:
+            frame.bgcolor = tag.color;
+            break;
+          case SWF_TAG_CODE_SHOW_FRAME:
+            var repeat = 1;
+            while (tagsProcessed < n) {
+              var nextTag = tags[tagsProcessed + 1];
+              if (!nextTag || nextTag.code !== SWF_TAG_CODE_SHOW_FRAME)
+                break;
+              tagsProcessed++;
+              repeat++;
+            }
+            frame.repeat = repeat;
+            frame.depths = depths;
+            commitData(frame);
+            depths = { };
+            frame = { type: 'frame' };
+            break;
+        }
+      }
+    },
+    oncomplete: function(result) {
+      commitData(result);
+
+      var stats;
+      if (typeof result.swfVersion === 'number') {
+        // Extracting stats from the context object
+        var bbox = result.bbox;
+        stats = {
+          topic: 'parseInfo', // HACK additional field for telemetry
+          parseTime: result.parseTime,
+          bytesTotal: result.bytesTotal,
+          swfVersion: result.swfVersion,
+          frameRate: result.frameRate,
+          width: (bbox.xMax - bbox.xMin) / 20,
+          height: (bbox.yMax - bbox.yMin) / 20,
+          isAvm2: !!result.fileAttributes.doAbc
+        };
+      }
+
+      commitData({command: 'complete', stats: stats});
     }
   };
 }
+function parseBytes(bytes, commitData) {
+  SWF.parse(bytes, createParsingContext(commitData));
+}
+
 function ResourceLoader(scope) {
-  var loader;
+  this.subscription = null;
 
+  var self = this;
   if (!isWorker) {
-    var self = this;
-    loader = {
+    this.messenger = {
       postMessage : function(data) {
         self.onmessage({data:data});
       }
     };
-    this.postMessage = function(data) {
-      listener && listener(data);
-    };
-    this.terminate = function() {
-      listener = null;
-      loader = null;
-      scope = null;
-    };
   } else {
-    loader = scope;
+    this.messenger = scope;
     scope.onmessage = function(event) {
-      listener(event.data);
+      self.listener(event.data);
     };
   }
-  var listener = createResourceDataListener(loader);
+}
+
+ResourceLoader.prototype = {
+  terminate: function() {
+    this.messenger = null;
+    this.listener = null;
+  },
+  onmessage: function(event) {
+    this.listener(event.data);
+  },
+  postMessage: function(data) {
+    this.listener && this.listener(data);
+  },
+  listener: function(data) {
+    if (this.subscription) {
+      this.subscription.callback(data.data, data.progress);
+    } else if (data === 'pipe:') {
+      // progressive data loading is requested, replacing onmessage handler
+      // for the following messages
+      this.subscription = {
+        subscribe: function(callback) {
+          this.callback = callback;
+        }
+      };
+      this.parseLoadedData(this.messenger, this.subscription);
+    } else {
+      this.parseLoadedData(this.messenger, data);
+    }
+  },
+
+  parseLoadedData: function(loader, request, context) {
+    function commitData(data, transferables) {
+      try {
+        loader.postMessage(data, transferables);
+      } catch (ex) {
+        // Attempting to fix IE10/IE11 transferables by retrying without
+        // Transerables.
+        if (ex != 'DataCloneError') {
+          throw ex;
+        }
+        loader.postMessage(data);
+      }
+    };
+
+    if (request instanceof ArrayBuffer) {
+      parseBytes(request, commitData);
+    } else if ('subscribe' in request) {
+      var pipe = SWF.parseAsync(createParsingContext(commitData));
+      request.subscribe(function (data, progress) {
+        if (data) {
+          pipe.push(data, progress);
+        } else {
+          pipe.close();
+        }
+      });
+    } else if (typeof FileReaderSync !== 'undefined') {
+      var reader = new FileReaderSync();
+      var buffer = reader.readAsArrayBuffer(request);
+      parseBytes(buffer, commitData);
+    } else {
+      var reader = new FileReader();
+      reader.onload = function () {
+        parseBytes(this.result, commitData);
+      };
+      reader.readAsArrayBuffer(request);
+    }
+  }
 }
 
 if (isWorker) {
