@@ -566,8 +566,6 @@ function renderQuadTree(ctx, qtree) {
   }
 }
 
-var fps;
-
 var renderingTerminated = false;
 
 var samplesLeftPlusOne = 0;
@@ -599,6 +597,8 @@ function sampleEnd() {
     console.profileEnd("Sample");
   }
 }
+
+var timeline;
 
 function timelineEnter(name) {
   timeline && timeline.enter(name);
@@ -846,11 +846,11 @@ function renderStage(stage, ctx, events) {
       }
 
       if (mouseMoved && !disableMouseVisitor.value) {
-        fps && renderFrame && fps.enter("MOUSE");
+        renderFrame && timelineEnter("MOUSE");
         traceRenderer.value && frameWriter.enter("> Mouse Visitor");
         stage._handleMouse();
         traceRenderer.value && frameWriter.leave("< Mouse Visitor");
-        fps && renderFrame && fps.leave("MOUSE");
+        renderFrame && timelineLeave("MOUSE");
 
         ctx.canvas.style.cursor = stage._cursor;
       }
@@ -860,9 +860,11 @@ function renderStage(stage, ctx, events) {
       }
 
       if (traceRenderer.value) {
+        frameWriter.enter("> Frame Counters");
         for (var name in FrameCounter.counts) {
-          appendToFrameTerminal(name + ": " + FrameCounter.counts[name], "gray");
+          frameWriter.writeLn(name + ": " + FrameCounter.counts[name]);
         }
+        frameWriter.leave("< Frame Counters");
         var frameElapsedTime = performance.now() - frameStartTime;
         var frameFPS = 1000 / frameElapsedTime;
         frameFPSAverage.push(frameFPS);

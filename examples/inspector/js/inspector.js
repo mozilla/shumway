@@ -393,3 +393,16 @@ function updateDisplayListTree() {
   var displayList = new DisplayListTree();
   displayList.update(swfController.stage, document.getElementById("displayListContainer"));
 }
+
+var nativeGetContext = HTMLCanvasElement.prototype.getContext;
+var INJECT_DEBUG_CANVAS = true;
+HTMLCanvasElement.prototype.getContext = function getContext(contextId, args) {
+  if (INJECT_DEBUG_CANVAS && contextId === "2d") {
+    if (args && args.original) {
+      return nativeGetContext.call(this, contextId, args);
+    }
+    var target = nativeGetContext.call(this, contextId, args);
+    return new DebugCanvasRenderingContext2D(target, FrameCounter, DebugCanvasRenderingContext2D.Options);
+  }
+  return nativeGetContext.call(this, contextId, args);
+};

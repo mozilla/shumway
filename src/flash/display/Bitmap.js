@@ -70,7 +70,6 @@ var BitmapDefinition = (function () {
       ctx.restore();
       traceRenderer.value && frameWriter.writeLn("Bitmap.draw() snapping: " + this._pixelSnapping +
         ", dimensions: " + this._bitmapData._drawable.width + " x " + this._bitmapData._drawable.height);
-      FrameCounter.count("Bitmap.draw()");
     },
     initialize: function () {
     },

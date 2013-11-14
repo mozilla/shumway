@@ -56,7 +56,7 @@ var Terminal = (function () {
   function terminal(canvas) {
     this.canvas = canvas;
     this.canvas.focus();
-    this.context = canvas.getContext('2d');
+    this.context = canvas.getContext('2d', { original: true });
     this.context.fillStyle = "#FFFFFF";
     this.fontSize = 10;
     this.lineIndex = 0;

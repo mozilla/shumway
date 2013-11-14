@@ -22,7 +22,7 @@ var Timeline = (function () {
     this.kinds = createEmptyObject();
     this.kindCount = 0;
     this.canvas = canvas;
-    this.context = canvas.getContext('2d');
+    this.context = canvas.getContext('2d', { original: true });
     this.fillStyles = ["rgb(85, 152, 213)", "#bfd8a7", "#d906d7"];
     window.addEventListener('resize', this.resizeHandler.bind(this), false);
     this.resizeHandler();
