@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global createEmptyObject, Multiname, TelemetryService, SHAREDOBJECT_FEATURE */
+/*global createEmptyObject, Multiname, TelemetryService, SHAREDOBJECT_FEATURE, sessionStorage */
 
 var SharedObjectDefinition = (function () {
 
