@@ -566,8 +566,6 @@ function renderQuadTree(ctx, qtree) {
   }
 }
 
-var fps;
-
 var renderingTerminated = false;
 
 var samplesLeftPlusOne = 0;
@@ -598,6 +596,16 @@ function sampleEnd() {
   if (samplesLeftPlusOne === 1) {
     console.profileEnd("Sample");
   }
+}
+
+var timeline;
+
+function timelineEnter(name) {
+  timeline && timeline.enter(name);
+}
+
+function timelineLeave(name) {
+  timeline && timeline.leave(name);
 }
 
 function renderStage(stage, ctx, events) {
@@ -780,7 +788,7 @@ function renderStage(stage, ctx, events) {
             nextRenderAt += maxDelay;
           }
         }
-        fps && fps.enter("EVENTS");
+        timelineEnter("EVENTS");
         if (firstRun) {
           // Initial display list is already constructed, skip frame construction phase.
           firstRun = false;
@@ -795,7 +803,7 @@ function renderStage(stage, ctx, events) {
         domain.broadcastMessage("frameConstructed");
         domain.broadcastMessage("executeFrame");
         domain.broadcastMessage("exitFrame");
-        fps && fps.leave("EVENTS");
+        timelineLeave("EVENTS");
       }
 
       if (stage._deferRenderEvent) {
@@ -809,20 +817,20 @@ function renderStage(stage, ctx, events) {
 
         if (!disablePreVisitor.value) {
           traceRenderer.value && frameWriter.enter("> Pre Visitor");
-          fps && fps.enter("PRE");
+          timelineEnter("PRE");
           invalidPath = stage._processInvalidRegions(true);
-          fps && fps.leave("PRE");
+          timelineLeave("PRE");
           traceRenderer.value && frameWriter.leave("< Pre Visitor");
         } else {
           stage._processInvalidRegions(false);
         }
 
         if (!disableRenderVisitor.value) {
-          fps && fps.enter("RENDER");
+          timelineEnter("RENDER");
           traceRenderer.value && frameWriter.enter("> Render Visitor");
           (new RenderVisitor(stage, ctx, invalidPath, refreshStage)).start();
           traceRenderer.value && frameWriter.leave("< Render Visitor");
-          fps && fps.leave("RENDER");
+          timelineLeave("RENDER");
         }
 
         if (showQuadTree.value) {
@@ -838,11 +846,11 @@ function renderStage(stage, ctx, events) {
       }
 
       if (mouseMoved && !disableMouseVisitor.value) {
-        fps && renderFrame && fps.enter("MOUSE");
+        renderFrame && timelineEnter("MOUSE");
         traceRenderer.value && frameWriter.enter("> Mouse Visitor");
         stage._handleMouse();
         traceRenderer.value && frameWriter.leave("< Mouse Visitor");
-        fps && renderFrame && fps.leave("MOUSE");
+        renderFrame && timelineLeave("MOUSE");
 
         ctx.canvas.style.cursor = stage._cursor;
       }
@@ -852,9 +860,11 @@ function renderStage(stage, ctx, events) {
       }
 
       if (traceRenderer.value) {
+        frameWriter.enter("> Frame Counters");
         for (var name in FrameCounter.counts) {
-          appendToFrameTerminal(name + ": " + FrameCounter.counts[name], "gray");
+          frameWriter.writeLn(name + ": " + FrameCounter.counts[name]);
         }
+        frameWriter.leave("< Frame Counters");
         var frameElapsedTime = performance.now() - frameStartTime;
         var frameFPS = 1000 / frameElapsedTime;
         frameFPSAverage.push(frameFPS);

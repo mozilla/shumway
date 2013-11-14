@@ -116,10 +116,10 @@ body.simple #xstats {
   display: inline-block;
 }
 
-#debugInfoContainer.active, #displayListContainer.active {
+#debugInfoContainer.active, #displayListContainer.active, #settingsContainer.active {
   display: block;
 }
-#debugInfoContainer, #displayListContainer {
+#debugInfoContainer, #displayListContainer, #settingsContainer {
   display: none;
   position: absolute;
   top: 32px;

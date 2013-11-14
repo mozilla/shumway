@@ -183,3 +183,31 @@ document.getElementById("sample").addEventListener("click", function () {
   });
   setElementState();
 })();
+
+(function () {
+  var gui = new dat.GUI({ autoPlace: false });
+
+  function addOptionSet(parent, set) {
+    var folder = parent.addFolder(set.name);
+    set.options.forEach(function (option) {
+      if (option instanceof OptionSet) {
+        addOptionSet(folder, option);
+      } else {
+        folder.add(option, "value", option.details).name(option.longName);
+      }
+    });
+    // folder.open();
+  }
+
+  // addOptionSet(gui, webGLOptions);
+  addOptionSet(gui, rendererOptions);
+  addOptionSet(gui, systemOptions);
+
+  var folder = gui.addFolder("Debug Canvas");
+  for (var k in DebugCanvasRenderingContext2D.Options) {
+    folder.add(DebugCanvasRenderingContext2D.Options, k);
+  }
+  folder.open();
+
+  document.getElementById("settingsContainer").appendChild(gui.domElement);
+})();
