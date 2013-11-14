@@ -71,45 +71,6 @@ if (isWorker && !$RELEASE) {
   ]);
 }
 
-function loadFromWorker(loader, request, context) {
-
-  function commitData(data, transferables) {
-    try {
-      loader.postMessage(data, transferables);
-    } catch (ex) {
-      // Attempting to fix IE10/IE11 transferables by retrying without
-      // Transerables.
-      if (ex != 'DataCloneError') {
-        throw ex;
-      }
-      loader.postMessage(data);
-    }
-  };
-
-  if (request instanceof ArrayBuffer) {
-    parseBytes(request, commitData);
-  } else if ('subscribe' in request) {
-    var pipe = SWF.parseAsync(createParsingContext(commitData));
-    request.subscribe(function (data, progress) {
-      if (data) {
-        pipe.push(data, progress);
-      } else {
-        pipe.close();
-      }
-    });
-  } else if (typeof FileReaderSync !== 'undefined') {
-    var reader = new FileReaderSync();
-    var buffer = reader.readAsArrayBuffer(request);
-    parseBytes(buffer, commitData);
-  } else {
-    var reader = new FileReader();
-    reader.onload = function () {
-      parseBytes(this.result, commitData);
-    };
-    reader.readAsArrayBuffer(request);
-  }
-}
-
 
 function defineSymbol(swfTag, symbols) {
   var symbol;
@@ -407,50 +368,89 @@ function parseBytes(bytes, commitData) {
   SWF.parse(bytes, createParsingContext(commitData));
 }
 
-function createResourceDataListener(loader) {
-  var subscription = null;
-  return function (data) {
-    if (subscription) {
-      subscription.callback(data.data, data.progress);
-    } else if (data === 'pipe:') {
-      // progressive data loading is requested, replacing onmessage handler
-      // for the following messages
-      subscription = {
-        subscribe: function(callback) {
-          this.callback = callback;
-        }
-      };
-      loadFromWorker(loader, subscription);
-    } else {
-      loadFromWorker(loader, data);
-    }
-  };
-}
 function ResourceLoader(scope) {
-  var loader;
+  this.subscription = null;
 
+  var self = this;
   if (!isWorker) {
-    var self = this;
-    loader = {
+    this.messenger = {
       postMessage : function(data) {
         self.onmessage({data:data});
       }
     };
-    this.postMessage = function(data) {
-      listener && listener(data);
-    };
-    this.terminate = function() {
-      listener = null;
-      loader = null;
-      scope = null;
-    };
   } else {
-    loader = scope;
+    this.messenger = scope;
     scope.onmessage = function(event) {
-      listener(event.data);
+      self.listener(event.data);
     };
   }
-  var listener = createResourceDataListener(loader);
+}
+
+ResourceLoader.prototype = {
+  terminate: function() {
+    this.messenger = null;
+    this.listener = null;
+  },
+  onmessage: function(event) {
+    this.listener(event.data);
+  },
+  postMessage: function(data) {
+    this.listener && this.listener(data);
+  },
+  listener: function(data) {
+    if (this.subscription) {
+      this.subscription.callback(data.data, data.progress);
+    } else if (data === 'pipe:') {
+      // progressive data loading is requested, replacing onmessage handler
+      // for the following messages
+      this.subscription = {
+        subscribe: function(callback) {
+          this.callback = callback;
+        }
+      };
+      this.parseLoadedData(this.messenger, this.subscription);
+    } else {
+      this.parseLoadedData(this.messenger, data);
+    }
+  },
+
+  parseLoadedData: function(loader, request, context) {
+    function commitData(data, transferables) {
+      try {
+        loader.postMessage(data, transferables);
+      } catch (ex) {
+        // Attempting to fix IE10/IE11 transferables by retrying without
+        // Transerables.
+        if (ex != 'DataCloneError') {
+          throw ex;
+        }
+        loader.postMessage(data);
+      }
+    };
+
+    if (request instanceof ArrayBuffer) {
+      parseBytes(request, commitData);
+    } else if ('subscribe' in request) {
+      var pipe = SWF.parseAsync(createParsingContext(commitData));
+      request.subscribe(function (data, progress) {
+        if (data) {
+          pipe.push(data, progress);
+        } else {
+          pipe.close();
+        }
+      });
+    } else if (typeof FileReaderSync !== 'undefined') {
+      var reader = new FileReaderSync();
+      var buffer = reader.readAsArrayBuffer(request);
+      parseBytes(buffer, commitData);
+    } else {
+      var reader = new FileReader();
+      reader.onload = function () {
+        parseBytes(this.result, commitData);
+      };
+      reader.readAsArrayBuffer(request);
+    }
+  }
 }
 
 if (isWorker) {

@@ -768,7 +768,6 @@ var LoaderDefinition = (function () {
       } else {
         worker.postMessage(request);
       }
-//      loadFromWorker(this, request);
     },
     _setup: function () {
       var loader = this;
