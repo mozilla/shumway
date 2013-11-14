@@ -355,8 +355,8 @@ var DisplayObjectDefinition = (function () {
         return false;
       }
 
-      var b1 = this.getBounds();
-      var b2 = hitTestObject.getBounds();
+      var b1 = this.getBounds(this._stage);
+      var b2 = hitTestObject.getBounds(hitTestObject._stage);
       x = Math.max(b1.xMin, b2.xMin);
       y = Math.max(b1.yMin, b2.yMin);
       var width = Math.min(b1.xMax, b2.xMax) - x;
