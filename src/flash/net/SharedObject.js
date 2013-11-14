@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global createEmptyObject, Multiname, TelemetryService, SHAREDOBJECT_FEATURE */
+/*global createEmptyObject, Multiname, TelemetryService, SHAREDOBJECT_FEATURE, sessionStorage */
 
 var SharedObjectDefinition = (function () {
 
@@ -27,14 +27,16 @@ var SharedObjectDefinition = (function () {
     var simulated = false, result;
     switch (index) {
     case 4: // get size()
-      result = JSON.stringify(this._data).length;
+      result = JSON.stringify(this._data).length - 2;
       simulated = true;
       break;
     case 6: // clear
       this._data = {};
+      sessionStorage.removeItem(this._path);
       simulated = true;
       break;
     case 2: // flush
+      sessionStorage.setItem(this._path, JSON.stringify(this._data));
       simulated = true;
       result = true;
       break;
@@ -51,10 +53,9 @@ var SharedObjectDefinition = (function () {
     // ()
     __class__: "flash.net.SharedObject",
     initialize: function () {
-      this._data = {};
+      this._path = null;
+      this._data = null;
       this._objectEncoding = _defaultObjectEncoding;
-      this._data[Multiname.getPublicQualifiedName("levelCompleted")] = 32;
-      this._data[Multiname.getPublicQualifiedName("completeLevels")] = 32;
 
       TelemetryService.reportTelemetry({topic: 'feature', feature: SHAREDOBJECT_FEATURE});
     },
@@ -68,8 +69,15 @@ var SharedObjectDefinition = (function () {
             notImplemented("SharedObject.getDiskUsage");
           },
           getLocal: function getLocal(name, localPath, secure) { // (name:String, localPath:String = null, secure:Boolean = false) -> SharedObject
-            var path = localPath + "/" + name;
-            return sharedObjects[path] || (sharedObjects[path] = new flash.net.SharedObject());
+            var path = (localPath || '') + '/' + name;
+            if (sharedObjects[path]) {
+              return sharedObjects[path];
+            }
+            var so = new flash.net.SharedObject();
+            so._path = path;
+            var data = sessionStorage.getItem(path);
+            so._data = data ? JSON.parse(data) : {};
+            return so;
           },
           getRemote: function getRemote(name, remotePath, persistence, secure) { // (name:String, remotePath:String = null, persistence:Object = false, secure:Boolean = false) -> SharedObject
             notImplemented("SharedObject.getRemote");

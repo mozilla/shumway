@@ -330,9 +330,14 @@ var LoaderDefinition = (function () {
             // Finding movie top root
             var _root = root;
             if (parent && parent !== loader._stage) {
-              var parentLoader = parent._loader;
+              var parentLoader = parent.loaderInfo._loader;
               while (parentLoader._parent && parentLoader._parent !== loader._stage) {
-                parentLoader = parentLoader._parent._loader;
+                parentLoader = parentLoader._parent.loaderInfo._loader;
+              }
+              if (parentLoader._isAvm2Enabled) {
+                somewhatImplemented('AVM1Movie');
+                this._worker && this._worker.terminate();
+                return;
               }
               _root = parentLoader._content;
             }
@@ -351,7 +356,9 @@ var LoaderDefinition = (function () {
             }
           }
 
-          loader._stage._children[0] = root;
+          if (loader._stage) {
+            loader._stage._children[0] = root;
+          }
 
           rootClass.instanceConstructor.call(root);
 
