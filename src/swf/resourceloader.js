@@ -426,7 +426,7 @@ ResourceLoader.prototype = {
         }
         loader.postMessage(data);
       }
-    };
+    }
 
     if (request instanceof ArrayBuffer) {
       parseBytes(request, commitData);
@@ -451,7 +451,7 @@ ResourceLoader.prototype = {
       reader.readAsArrayBuffer(request);
     }
   }
-}
+};
 
 if (isWorker) {
   var loader = new ResourceLoader(this);
