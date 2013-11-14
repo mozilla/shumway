@@ -766,10 +766,6 @@ var DisplayObjectDefinition = (function () {
           for (var i = 0; i < numChildren; i++) {
             var child = children[i];
 
-            if (!child._visible) {
-              continue;
-            }
-
             var b = child.getBounds(null);
 
             var x1 = b.xMin;
