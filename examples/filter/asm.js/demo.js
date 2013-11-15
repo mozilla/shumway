@@ -18,7 +18,10 @@ var Demo = (function() {
     this.canvasShapeTmp = document.createElement("canvas");
     this.ctxShapeTmp = this.canvasShapeTmp.getContext("2d");
 
-    this.drawShape();
+    this.dirty = true;
+    this.bounds = null;
+    this.filterBounds = null;
+
     this.animate();
   };
 
@@ -27,12 +30,15 @@ var Demo = (function() {
     animate: function animate() {
       requestAnimFrame(this.animate.bind(this));
 
-      if (this.hasShapeChanged()) {
+      if (this.dirty) {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
         this.drawShape();
+        this.dirty = false;
       }
 
-      var w = 400;
-      var h = 400;
+      var w = this.canvasShape.width;
+      var h = this.canvasShape.height;
 
       this.stats.begin();
 
@@ -45,7 +51,7 @@ var Demo = (function() {
 
         FILTERS._preMultiplyAlpha(pimg, w, h);
         if (this.blurEnabled) {
-          FILTERS._blur(pimg, w, h, this.blurX, this.blurY, this.blurQuality);
+          FILTERS._blur(pimg, w, h, this.blurX, this.blurY, +this.blurQuality);
         }
         FILTERS._unpreMultiplyAlpha(pimg, w, h);
 
@@ -55,8 +61,8 @@ var Demo = (function() {
 
       this.ctxShapeTmp.putImageData(img, 0, 0);
 
-      this.ctx.clearRect(0, 0, w, h);
-      this.ctx.drawImage(this.canvasShapeTmp, 0, 0);
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.ctx.drawImage(this.canvasShapeTmp, (this.canvas.width - this.filterBounds.w) / 2, (this.canvas.height - this.filterBounds.h) / 2);
 
       this.stats.end();
     },
@@ -64,20 +70,42 @@ var Demo = (function() {
     drawShape: function drawShape() {
       switch (this.shape) {
         case "square":
-          this.canvasShape.width = this.canvasShapeTmp.width = 400;
-          this.canvasShape.height = this.canvasShapeTmp.height = 400;
+          this.bounds = { x: 175, y: 175, w: 50, h: 50 };
+          this.calcFilterBounds();
+          this.canvasShape.width = this.canvasShapeTmp.width = this.filterBounds.w;
+          this.canvasShape.height = this.canvasShapeTmp.height = this.filterBounds.h;
+          this.ctxShape.save();
+          this.ctxShape.translate(-this.filterBounds.x, -this.filterBounds.y);
           this.ctxShape.fillStyle = "rgba(255, 0, 0, 1)";
           this.ctxShape.fillRect(175, 175, 50, 50);
+          this.ctxShape.restore();
           break;
+      }
+      this.currentShape = this.shape;
+    },
+
+    calcFilterBounds: function calcFilterBounds() {
+      var fb = this.filterBounds = {
+        x: this.bounds.x,
+        y: this.bounds.y,
+        w: this.bounds.w,
+        h: this.bounds.h
+      };
+      if (this.hasActiveFilters()) {
+        if (this.blurEnabled) {
+          var bq = +this.blurQuality;
+          var bx = this.blurX * (bq + 1);
+          var by = this.blurY * (bq + 1);
+          fb.x -= bx;
+          fb.y -= by;
+          fb.w += (bx << 1);
+          fb.h += (by << 1);
+        }
       }
     },
 
     hasActiveFilters: function hasActiveFilters() {
       return this.blurEnabled;
-    },
-
-    hasShapeChanged: function hasShapeChanged() {
-      return this.shape !== this.currentShape;
     }
 
   };

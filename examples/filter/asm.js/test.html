@@ -10,7 +10,7 @@
   <body>
 
     <div id="canvasContainer">
-      <canvas id="canvas" width="400" height="400"></canvas>
+      <canvas id="canvas"></canvas>
     </div>
 
     <script src="libs/stats.min.js"></script>
@@ -44,11 +44,16 @@
 
         initGui(demo);
 
+        window.addEventListener('resize', function() { demo.dirty = true; }, false);
+
       })();
 
       function initGui(demo) {
+        var controllers = [];
+
         var gui = new dat.GUI();
         gui.add(demo, 'shape', ['square']);
+        controllers.push(gui);
 
         var blur = gui.addFolder('blur');
         blur.add(demo, 'blurEnabled');
@@ -56,6 +61,16 @@
         blur.add(demo, 'blurX', 0, 64).step(1);
         blur.add(demo, 'blurY', 0, 64).step(1);
         blur.open();
+        controllers.push(blur);
+
+        for (var i in controllers) {
+          var ctrl = controllers[i];
+          for (var j in ctrl.__controllers) {
+            ctrl.__controllers[j].onChange(function(value) {
+              demo.dirty = true;
+            });
+          }
+        }
       }
 
     </script>
