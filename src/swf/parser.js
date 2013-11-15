@@ -25,11 +25,11 @@ function readTags(context, stream, swfVersion, onprogress) {
   var tags = context.tags;
   var bytes = stream.bytes;
   var lastSuccessfulPosition;
+  var tagCodeAndLength = readUi16(bytes, stream);
+
   try {
-    do {
+    while(tagCodeAndLength) {
       lastSuccessfulPosition = stream.pos;
-      stream.ensure(2);
-      var tagCodeAndLength = readUi16(bytes, stream);
       var tagCode = tagCodeAndLength >> 6;
       var length = tagCodeAndLength & 0x3f;
       if (length === 0x3f) {
@@ -37,10 +37,6 @@ function readTags(context, stream, swfVersion, onprogress) {
         length = readUi32(bytes, stream);
       }
       stream.ensure(length);
-
-      if (tagCode === 0) {
-        break;
-      }
 
       var substream = stream.substream(stream.pos, stream.pos += length);
       var subbytes = substream.bytes;
@@ -58,23 +54,36 @@ function readTags(context, stream, swfVersion, onprogress) {
           handler(subbytes, substream, tag, swfVersion, tagCode);
         }
       }
-      tags.push(tag);
+
+      if (stream.pos < stream.end) {
+        stream.ensure(2);
+        tagCodeAndLength = readUi16(bytes, stream);
+      } else {
+        tagCodeAndLength = 0;
+      }
+      tag.eot = !tagCodeAndLength;
 
       if (tagCode === 1) {
-        while (stream.pos + 2 <= stream.end &&
-               stream.getUint16(stream.pos, true) >> 6 === 1)
-        {
-          tags.push(tag);
-          stream.pos += 2;
+        var repeat = 1;
+        while (tagCodeAndLength >> 6 === 1 && stream.pos < stream.end) {
+          tagCodeAndLength = readUi16(bytes, stream);
+          tag.eot = !tagCodeAndLength;
+          repeat++;
         }
-        if (onprogress)
+        tag.repeat = repeat;
+        tags.push(tag);
+        if (onprogress) {
           onprogress(context);
-      } else if (onprogress && tag.id !== undefined) {
-        onprogress(context);
+        }
+      } else {
+        tags.push(tag);
+        if (onprogress && tag.id !== undefined) {
+          onprogress(context);
+        }
       }
-    } while (stream.pos < stream.end);
+    }
   } catch (e) {
-    
+
     if (e !== StreamNoDataError) throw e;
     stream.pos = lastSuccessfulPosition;
   }

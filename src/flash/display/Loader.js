@@ -66,6 +66,7 @@ var LoaderDefinition = (function () {
           }
         });
         Promise.when(frameConstructed, this._lastPromise).then(function () {
+          this.contentLoaderInfo._complete = true;
           this.contentLoaderInfo._dispatchEvent("complete");
         }.bind(this));
 
@@ -271,7 +272,8 @@ var LoaderDefinition = (function () {
             level: parent ? 0 : -1,
             timeline: timeline,
             totalFrames: rootInfo.props.totalFrames,
-            stage: loader._stage
+            stage: loader._stage,
+            complete: frame.complete
           });
 
           var isRootMovie = parent && parent == loader._stage && loader._stage._children.length === 0;
@@ -320,6 +322,7 @@ var LoaderDefinition = (function () {
               labels.push(new flash.display.FrameLabel(labelName, frameNum));
             }
             var scene = new flash.display.Scene("Scene 1", labels, root.symbol.totalFrames);
+            scene._startFrame = 1;
             scene._endFrame = root.symbol.totalFrames;
             root.symbol.scenes = [scene];
           }
@@ -364,7 +367,7 @@ var LoaderDefinition = (function () {
 
           loader._content = root;
         } else {
-          root._framesLoaded += frame.repeat;
+          root._framesLoaded = timeline.length;
 
           if (labelName && root._labelMap) {
             if (root._labelMap[labelName] === undefined) {
