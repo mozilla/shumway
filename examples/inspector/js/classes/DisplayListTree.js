@@ -47,22 +47,22 @@ var DisplayListTree = (function() {
     } else {
       containerElement.classList.add("hasProperties");
       var table = "<table>";
-      table += '<tr>' + makePropCell('name', displayObject._name) +
-               makePropCell('visible', displayObject.visible) + '</tr>';
+      table += '<tr>' + makePropCell('symbolId', displayObject.symbol && displayObject.symbol.symbolId) +
+                makePropCell('name', displayObject._name) + '</tr>';
       var pos = {x: displayObject.x, y: displayObject.y};
       table += '<tr>' + makePropCell('x', printCoord(pos.x)) +
                makePropCell('y', printCoord(pos.y)) + '</tr>';
       displayObject._applyCurrentTransform(displayObject._stage, pos);
-      table += '<tr>' + makePropCell('x', printCoord(pos.x)) +
-               makePropCell('y', printCoord(pos.y)) + '</tr>';
+      table += '<tr>' + makePropCell('left', printCoord(pos.x)) +
+               makePropCell('top', printCoord(pos.y)) + '</tr>';
       table += '<tr>' + makePropCell('width', printCoord(displayObject.width)) +
                makePropCell('height', printCoord(displayObject.height)) + '</tr>';
       table += '<tr>' + makePropCell('scaleX', round(displayObject.scaleX)) +
                makePropCell('scaleY', round(displayObject.scaleY)) + '</tr>';
-      table += '<tr>' + makePropCell('alpha', displayObject.alpha) +
-               makePropCell('blendMode', displayObject.blendMode) + '</tr>';
-      table += '<tr>' + makePropCell('cacheAsBitmap', displayObject.cacheAsBitmap) +
-               '</tr>';
+      table += '<tr>' + makePropCell('visible', displayObject.visible) +
+               makePropCell('alpha', displayObject.alpha) + '</tr>';
+      table += '<tr>' + makePropCell('blendMode', displayObject.blendMode) +
+                makePropCell('cacheAsBitmap', displayObject.cacheAsBitmap) + '</tr>';
       table += "</table>";
       propertiesElement.innerHTML = table;
     }
