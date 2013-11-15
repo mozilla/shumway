@@ -73,7 +73,7 @@ function readTags(context, stream, swfVersion, onprogress) {
       } else if (onprogress && tag.id !== undefined) {
         onprogress(context);
       }
-    };
+    }
   } catch (e) {
 
     if (e !== StreamNoDataError) throw e;
