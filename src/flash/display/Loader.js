@@ -320,6 +320,7 @@ var LoaderDefinition = (function () {
               labels.push(new flash.display.FrameLabel(labelName, frameNum));
             }
             var scene = new flash.display.Scene("Scene 1", labels, root.symbol.totalFrames);
+            scene._startFrame = 1;
             scene._endFrame = root.symbol.totalFrames;
             root.symbol.scenes = [scene];
           }
