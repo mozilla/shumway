@@ -85,7 +85,7 @@ void blurX(unsigned char *img, int width, int height, int distance)
 
 		// Slide window
 		ptr = src + dist4;
-		ptrEnd = ptr + ((width - dist2) << 2);
+		ptrEnd = src + ((width - distance) << 2);
 		unsigned char *pLine = lineBuffer + dist4;
 		unsigned char *pLast = src;
 		unsigned char *pNext = ptr + ((distance + 1) << 2);
@@ -150,7 +150,7 @@ void blurY(unsigned char *img, int width, int height, int distance)
 
 		// Slide window
 		ptr = src + distance * stride;
-		ptrEnd = ptr + (height - distance) * stride;
+		ptrEnd = src + (height - distance) * stride;
 		unsigned char *pColumn = columnBuffer + (distance << 2);
 		unsigned char *pLast = src;
 		unsigned char *pNext = ptr + (distance + 1) * stride;
