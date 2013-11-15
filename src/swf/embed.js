@@ -184,7 +184,7 @@ SWF.embed = function(file, doc, container, options) {
 
     var root = loader._content;
 
-    root._dispatchEvent("added");
+    root._dispatchEvent("added", undefined, true);
     root._dispatchEvent("addedToStage");
 
     container.appendChild(canvasHolder || canvas);

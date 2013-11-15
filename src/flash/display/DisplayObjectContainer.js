@@ -81,7 +81,7 @@ var DisplayObjectContainerDefinition = (function () {
 
       this._invalidateBounds();
 
-      child._dispatchEvent("added");
+      child._dispatchEvent("added", undefined, true);
       if (this._stage) {
         this._stage._addToStage(child);
       }
@@ -145,7 +145,7 @@ var DisplayObjectContainerDefinition = (function () {
 
       var child = children[index];
 
-      child._dispatchEvent("removed");
+      child._dispatchEvent("removed", undefined, true);
       if (this._stage) {
         this._stage._removeFromStage(child);
       }

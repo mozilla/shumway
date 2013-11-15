@@ -164,7 +164,7 @@ var SpriteDefinition = (function () {
             instance._dispatchEvent("load");
           }
 
-          instance._dispatchEvent("added");
+          instance._dispatchEvent("added", undefined, true);
           if (this._stage) {
             this._stage._addToStage(instance);
           }
