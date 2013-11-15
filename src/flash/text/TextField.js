@@ -809,6 +809,10 @@ var TextFieldDefinition = (function () {
       this._bbox.yMax = value;
       this._invalidate();
     },
+    _getContentBounds: function() {
+      this.ensureDimensions();
+      return this._bbox;
+    },
     getLineMetrics: function(lineIndex) {
       this.ensureDimensions();
       if (lineIndex < 0 || lineIndex >= this._lines.length) {
