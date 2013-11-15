@@ -4,7 +4,7 @@
 var Timeline = (function () {
   var barColor = "rgba(255,255,255, 0.075)";
   var backgroundColor = "rgb(61, 61, 61)";
-  var backgroundColorInfo = "rgba(0,0,0, 0.35)";
+  var backgroundColorInfo = "rgba(0,0,0, 0.85)";
   var fpsLineColor = "rgb(255,64,0)";
   var textColor = "#ccc";
 
@@ -174,22 +174,18 @@ var Timeline = (function () {
       offsetW = i * (w + gap);
       context.fillStyle = barColor;
       context.fillRect(offsetW, 0, w, frames[i + 1].startTime - frame.startTime);
-      drawNode(frame);
+      drawNode(frame, frame.startTime);
     }
 
-    function drawNode(node) {
-      var offsetH = 0;
+    function drawNode(node, frameStartTime) {
       var nodeTime = node.endTime - node.startTime;
+      var offsetH = node.startTime - frameStartTime;
       context.fillStyle = fillStyles[node.kind];
       context.fillRect(offsetW, offsetH, w, nodeTime);
       if (node.children) {
         var children = node.children;
         for (var i = 0, n = children.length; i < n; i++) {
-          node = children[i];
-          nodeTime = node.endTime - node.startTime;
-          context.fillStyle = fillStyles[node.kind];
-          context.fillRect(offsetW, offsetH, w, nodeTime);
-          offsetH += nodeTime;
+          drawNode(children[i], frameStartTime);
         }
       }
     }
@@ -199,7 +195,7 @@ var Timeline = (function () {
      */
     var lineH = 1000 / this.frameRate;
     context.beginPath();
-    context.lineWidth = 1;
+    context.lineWidth = 0.5;
     context.moveTo(0, lineH);
     context.lineTo(this.cw, lineH);
     context.strokeStyle = fpsLineColor;

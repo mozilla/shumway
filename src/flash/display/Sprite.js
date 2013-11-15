@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Multiname, executeActions */
+/*global Multiname, executeActions, Counter */
 
 var SpriteDefinition = (function () {
   var def = {
@@ -108,7 +108,7 @@ var SpriteDefinition = (function () {
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var displayListItem = children[i];
-
+        Counter.count("constructChild");
         if (flash.display.DisplayObject.class.isInstanceOf(displayListItem)) {
           displayListItem._index = i;
         } else {

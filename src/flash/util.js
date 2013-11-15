@@ -129,14 +129,50 @@ function argbUintToStr(argb) {
 })();
 
 var randomStyleCache;
+
+var nextStyle = 0;
 function randomStyle() {
   if (!randomStyleCache) {
-    randomStyleCache = [];
-    for (var i = 0; i < 50; i++) {
-      randomStyleCache.push('#' + ('00000' + (Math.random() * (1 << 24) | 0).toString(16)).slice(-6));
-    }
+    randomStyleCache = [
+      "#ff5e3a",
+      "#ff9500",
+      "#ffdb4c",
+      "#87fc70",
+      "#52edc7",
+      "#1ad6fd",
+      "#c644fc",
+      "#ef4db6",
+      "#4a4a4a",
+      "#dbddde",
+      "#ff3b30",
+      "#ff9500",
+      "#ffcc00",
+      "#4cd964",
+      "#34aadc",
+      "#007aff",
+      "#5856d6",
+      "#ff2d55",
+      "#8e8e93",
+      "#c7c7cc",
+      "#5ad427",
+      "#c86edf",
+      "#d1eefc",
+      "#e0f8d8",
+      "#fb2b69",
+      "#f7f7f7",
+      "#1d77ef",
+      "#d6cec3",
+      "#55efcb",
+      "#ff4981",
+      "#ffd3e0",
+      "#f7f7f7",
+      "#ff1300",
+      "#1f1f21",
+      "#bdbec2",
+      "#ff3a2d"
+    ];
   }
-  return randomStyleCache[(Math.random() * randomStyleCache.length) | 0];
+  return randomStyleCache[(nextStyle ++) % randomStyleCache.length];
 }
 
 var Promise = (function PromiseClosure() {

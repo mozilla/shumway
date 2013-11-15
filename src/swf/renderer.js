@@ -608,6 +608,12 @@ function timelineLeave(name) {
   timeline && timeline.leave(name);
 }
 
+function timelineWrapBroadcastMessage(domain, message) {
+  timelineEnter(message);
+  domain.broadcastMessage(message);
+  timelineLeave(message);
+}
+
 function renderStage(stage, ctx, events) {
   var frameWidth, frameHeight;
 
@@ -794,15 +800,14 @@ function renderStage(stage, ctx, events) {
           firstRun = false;
         } else {
 
-          domain.broadcastMessage("advanceFrame");
-          domain.broadcastMessage("enterFrame");
-          domain.broadcastMessage("constructChildren");
-
+          timelineWrapBroadcastMessage(domain, "advanceFrame");
+          timelineWrapBroadcastMessage(domain, "enterFrame");
+          timelineWrapBroadcastMessage(domain, "constructChildren");
         }
 
-        domain.broadcastMessage("frameConstructed");
-        domain.broadcastMessage("executeFrame");
-        domain.broadcastMessage("exitFrame");
+        timelineWrapBroadcastMessage(domain, "frameConstructed");
+        timelineWrapBroadcastMessage(domain, "executeFrame");
+        timelineWrapBroadcastMessage(domain, "exitFrame");
         timelineLeave("EVENTS");
       }
 
