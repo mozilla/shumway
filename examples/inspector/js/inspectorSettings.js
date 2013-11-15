@@ -187,7 +187,7 @@ document.getElementById("sample").addEventListener("click", function () {
 (function () {
   var gui = new dat.GUI({ autoPlace: false });
 
-  function addOptionSet(parent, set) {
+  function addOptionSet(parent, set, open) {
     var folder = parent.addFolder(set.name);
     set.options.forEach(function (option) {
       if (option instanceof OptionSet) {
@@ -196,11 +196,11 @@ document.getElementById("sample").addEventListener("click", function () {
         folder.add(option, "value", option.details).name(option.longName);
       }
     });
-    // folder.open();
+    open && folder.open();
   }
 
   // addOptionSet(gui, webGLOptions);
-  addOptionSet(gui, rendererOptions);
+  addOptionSet(gui, rendererOptions, true);
   addOptionSet(gui, systemOptions);
 
   var folder = gui.addFolder("Debug Canvas");

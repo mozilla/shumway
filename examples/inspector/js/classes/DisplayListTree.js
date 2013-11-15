@@ -92,7 +92,7 @@ var DisplayListTree = (function() {
     }
     div.appendChild(spanOutline);
     var spanClass = document.createElement("span");
-    var numChildren = displayObject._children.length;
+    var numChildren = displayObject._children ? displayObject._children.length : 0;
     spanClass.textContent = displayObject.class.className + (numChildren ? " (" + displayObject._children.length + ")" : "");
     spanClass.className = "doClass";
     div.appendChild(spanClass);
