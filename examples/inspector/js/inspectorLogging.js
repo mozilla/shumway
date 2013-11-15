@@ -48,8 +48,3 @@ var frameWriter = new IndentingWriter(false, function (str){
 });
 
 var timeline = new Timeline(document.getElementById("fpsCanvas"));
-timeline.registerKind("FRAME", "rgba(255,255,255, 0.5)");
-timeline.registerKind("EVENTS", "#82a965");
-timeline.registerKind("PRE", "#d7b36c");
-timeline.registerKind("RENDER", "#d1765a");
-timeline.registerKind("MOUSE", "#1f96d0");
