@@ -29,12 +29,15 @@ var EventDispatcherDefinition = (function () {
                       rightMouseDown: true, rightMouseUp: true, rollOut: false,
                       rollOver: false };
 
-  function doDispatchEvent(dispatcher, event, eventClass) {
+  function doDispatchEvent(dispatcher, event, eventClass, bubbles) {
     var target = dispatcher._target;
     var type = event._type || event;
     var listeners = dispatcher._listeners[type];
 
-    if ((typeof event === 'string' && mouseEvents[event]) || event._bubbles) {
+    if (bubbles ||
+        (typeof event === 'string' && mouseEvents[event]) ||
+        event._bubbles)
+    {
       var ancestors = [];
       var currentNode = target._parent;
       while (currentNode) {
@@ -54,27 +57,34 @@ var EventDispatcherDefinition = (function () {
       while (i-- && keepPropagating) {
         var currentTarget = ancestors[i];
         var queue = currentTarget._captureListeners[type];
-        keepPropagating =
-          processListeners(queue, event, null, target, currentTarget, 1);
+        keepPropagating = processListeners(queue,
+                                           event, eventClass, bubbles,
+                                           target, currentTarget, 1);
       }
 
       if (listeners && keepPropagating) {
-        keepPropagating = processListeners(listeners, event, null, target);
+        keepPropagating = processListeners(listeners,
+                                           event, eventClass, bubbles,
+                                           target);
       }
 
       for (var i = 0; i < ancestors.length && keepPropagating; i++) {
         var currentTarget = ancestors[i];
         var queue = currentTarget._listeners[type];
-        keepPropagating =
-          processListeners(queue, event, null, target, currentTarget, 3);
+        keepPropagating = processListeners(queue,
+                                           event, eventClass, bubbles,
+                                           target, currentTarget, 3);
       }
     } else if (listeners) {
-      processListeners(listeners, event, null, target);
+      processListeners(listeners, event, eventClass, bubbles, target);
     }
 
     return !event._isDefaultPrevented;
   }
-  function processListeners(queue, event, eventClass, target, currentTarget, eventPhase) {
+  function processListeners(queue,
+                            event, eventClass, bubbles,
+                            target, currentTarget, eventPhase)
+  {
     if (queue) {
       queue = queue.slice();
 
@@ -203,8 +213,8 @@ var EventDispatcherDefinition = (function () {
     _hasEventListener: function hasEventListener(type) { // (type:String) -> Boolean
       return type in this._listeners || type in this._captureListeners;
     },
-    _dispatchEvent: function dispatchEvent(event, eventClass) {
-      doDispatchEvent(this, event, eventClass);
+    _dispatchEvent: function dispatchEvent(event, eventClass, bubbles) {
+      doDispatchEvent(this, event, eventClass, bubbles);
     },
 
     __glue__: {
