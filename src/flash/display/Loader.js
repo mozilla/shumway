@@ -365,7 +365,7 @@ var LoaderDefinition = (function () {
 
           loader._content = root;
         } else {
-          root._framesLoaded += frame.repeat;
+          root._framesLoaded = timeline.length;
 
           if (labelName && root._labelMap) {
             if (root._labelMap[labelName] === undefined) {
