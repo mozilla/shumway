@@ -66,6 +66,7 @@ var LoaderDefinition = (function () {
           }
         });
         Promise.when(frameConstructed, this._lastPromise).then(function () {
+          this.contentLoaderInfo._complete = true;
           this.contentLoaderInfo._dispatchEvent("complete");
         }.bind(this));
 
@@ -271,7 +272,8 @@ var LoaderDefinition = (function () {
             level: parent ? 0 : -1,
             timeline: timeline,
             totalFrames: rootInfo.props.totalFrames,
-            stage: loader._stage
+            stage: loader._stage,
+            complete: frame.complete
           });
 
           var isRootMovie = parent && parent == loader._stage && loader._stage._children.length === 0;

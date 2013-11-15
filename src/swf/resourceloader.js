@@ -325,15 +325,20 @@ function createParsingContext(commitData) {
             break;
           case SWF_TAG_CODE_SHOW_FRAME:
             var repeat = 1;
+            var complete = tag.eot;
             while (tagsProcessed < n) {
               var nextTag = tags[tagsProcessed + 1];
               if (!nextTag || nextTag.code !== SWF_TAG_CODE_SHOW_FRAME)
                 break;
               tagsProcessed++;
               repeat++;
+              if (nextTag.eot) {
+                complete = true;
+              }
             }
             frame.repeat = repeat;
             frame.depths = depths;
+            frame.complete = complete;
             commitData(frame);
             depths = { };
             frame = { type: 'frame' };

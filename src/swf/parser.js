@@ -25,11 +25,11 @@ function readTags(context, stream, swfVersion, onprogress) {
   var tags = context.tags;
   var bytes = stream.bytes;
   var lastSuccessfulPosition;
+  var tagCodeAndLength = readUi16(bytes, stream);
   try {
-    do {
+    while(tagCodeAndLength && stream.pos < stream.end) {
       lastSuccessfulPosition = stream.pos;
       stream.ensure(2);
-      var tagCodeAndLength = readUi16(bytes, stream);
       var tagCode = tagCodeAndLength >> 6;
       var length = tagCodeAndLength & 0x3f;
       if (length === 0x3f) {
@@ -37,10 +37,6 @@ function readTags(context, stream, swfVersion, onprogress) {
         length = readUi32(bytes, stream);
       }
       stream.ensure(length);
-
-      if (tagCode === 0) {
-        break;
-      }
 
       var substream = stream.substream(stream.pos, stream.pos += length);
       var subbytes = substream.bytes;
@@ -58,6 +54,11 @@ function readTags(context, stream, swfVersion, onprogress) {
           handler(subbytes, substream, tag, swfVersion, tagCode);
         }
       }
+
+      tagCodeAndLength = readUi16(bytes, stream);
+
+      tag.eot = !tagCodeAndLength;
+
       tags.push(tag);
 
       if (tagCode === 1) {
@@ -72,9 +73,9 @@ function readTags(context, stream, swfVersion, onprogress) {
       } else if (onprogress && tag.id !== undefined) {
         onprogress(context);
       }
-    } while (stream.pos < stream.end);
+    };
   } catch (e) {
-    
+
     if (e !== StreamNoDataError) throw e;
     stream.pos = lastSuccessfulPosition;
   }

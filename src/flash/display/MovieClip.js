@@ -39,6 +39,7 @@ var MovieClipDefinition = (function () {
       this._totalFrames = 1;
       this._startSoundRegistrations = [];
       this._allowFrameNavigation = true;
+      this._complete = true;
 
       var s = this.symbol;
       if (s) {
@@ -49,6 +50,7 @@ var MovieClipDefinition = (function () {
         this._totalFrames = s.totalFrames || 1;
         this._startSoundRegistrations = s.startSoundRegistrations || [];
         this._scenes = s.scenes || null;
+        this._complete = s.complete === false ? false : true;
 
         var map = this._labelMap;
         for (var name in map) {
@@ -79,14 +81,14 @@ var MovieClipDefinition = (function () {
       };
       this._addEventListener('executeFrame', this._onExecuteFrame);
 
-      if (this._totalFrames <= 1) {
+      if (this._complete && this._totalFrames <= 1) {
         return this;
       }
 
       this._onAdvanceFrame = function onAdvanceFrame() {
         var frameNum = self._playHead + 1;
 
-        if (frameNum > self._totalFrames) {
+        if (self._complete && frameNum > self._totalFrames) {
           frameNum = 1;
         } else if (frameNum > self._framesLoaded) {
           return;
@@ -405,10 +407,6 @@ var MovieClipDefinition = (function () {
         }
       }
 
-      if (frameNum > this._totalFrames) {
-        return 1;
-      }
-
       if (frameNum > this._framesLoaded) {
         return this._framesLoaded;
       }
@@ -515,7 +513,7 @@ var MovieClipDefinition = (function () {
         if (element) {
           var soundStreamData = soundStream.data;
           var time = soundStream.seekIndex[frameNum] / soundStreamData.sampleRate / soundStreamData.channels;
-          if (this._framesLoaded >= this._totalFrames && !soundStream.channel) {
+          if (this._complete && !soundStream.channel) {
             var blob = new Blob(soundStream.rawFrames);
             element.preload = 'metadata'; // for mobile devices
             element.loop = false;
@@ -602,7 +600,7 @@ var MovieClipDefinition = (function () {
       // if the MovieClip instance does not use scenes.
       return this._scenes ?
               this._scenes[this._currentScene] :
-              new flash.display.Scene("", this.currentLabels, this._totalFrames);
+              new flash.display.Scene("", this.currentLabels, this._framesLoaded);
     },
     get enabled() {
       return this._enabled;
@@ -617,7 +615,7 @@ var MovieClipDefinition = (function () {
       return this._totalFrames;
     },
     get scenes() {
-      return this._scenes || [new flash.display.Scene("", this.currentLabels, this._totalFrames)];
+      return this._scenes || [new flash.display.Scene("", this.currentLabels, this._framesLoaded)];
     },
     get trackAsMenu() {
       return false;
@@ -681,7 +679,7 @@ var MovieClipDefinition = (function () {
       }
     },
     play: function () {
-      if (this._isPlaying || this._totalFrames <= 1) {
+      if (this._isPlaying || (this._complete && this._totalFrames <= 1)) {
         return;
       }
 
@@ -701,7 +699,7 @@ var MovieClipDefinition = (function () {
       }
     },
     stop: function () {
-      if (!this._isPlaying || this._totalFrames <= 1) {
+      if (!this._isPlaying || (this._complete && this._totalFrames <= 1)) {
         return;
       }
 
