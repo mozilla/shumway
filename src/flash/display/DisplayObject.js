@@ -766,10 +766,6 @@ var DisplayObjectDefinition = (function () {
           for (var i = 0; i < numChildren; i++) {
             var child = children[i];
 
-            if (!child._visible) {
-              continue;
-            }
-
             var b = child.getBounds(null);
 
             var x1 = b.xMin;
@@ -826,6 +822,10 @@ var DisplayObjectDefinition = (function () {
     _getTransformedRect: function (rect, targetCoordSpace) {
       if (rect.xMax - rect.xMin === 0 || rect.yMax - rect.yMin === 0) {
         return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
+      }
+
+      if (!targetCoordSpace) {
+        return rect;
       }
 
       p1.x = rect.xMin;
