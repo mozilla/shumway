@@ -636,11 +636,6 @@ var TextFieldDefinition = (function () {
       this._dimensionsValid = false;
     },
 
-    _getRegion: function getRegion(targetCoordSpace) {
-      this.ensureDimensions();
-      return this._getTransformedRect(this._getContentBounds(), targetCoordSpace);
-    },
-
     ensureDimensions: function() {
       if (this._dimensionsValid) {
         return;
@@ -812,6 +807,10 @@ var TextFieldDefinition = (function () {
     _getContentBounds: function() {
       this.ensureDimensions();
       return this._bbox;
+    },
+    _getRegion: function getRegion(targetCoordSpace) {
+      return this._getTransformedRect(this._getContentBounds(),
+                                      targetCoordSpace);
     },
     getLineMetrics: function(lineIndex) {
       this.ensureDimensions();
