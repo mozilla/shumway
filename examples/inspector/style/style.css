@@ -92,7 +92,7 @@ body.simple #xstats {
   top: 32px;
   right: 500px;
   left: 0;
-  height: 100px;
+  height: 150px;
   background-color: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid #666;
 }

@@ -174,22 +174,18 @@ var Timeline = (function () {
       offsetW = i * (w + gap);
       context.fillStyle = barColor;
       context.fillRect(offsetW, 0, w, frames[i + 1].startTime - frame.startTime);
-      drawNode(frame);
+      drawNode(frame, frame.startTime);
     }
 
-    function drawNode(node) {
-      var offsetH = 0;
+    function drawNode(node, frameStartTime) {
       var nodeTime = node.endTime - node.startTime;
+      var offsetH = node.startTime - frameStartTime;
       context.fillStyle = fillStyles[node.kind];
       context.fillRect(offsetW, offsetH, w, nodeTime);
       if (node.children) {
         var children = node.children;
         for (var i = 0, n = children.length; i < n; i++) {
-          node = children[i];
-          nodeTime = node.endTime - node.startTime;
-          context.fillStyle = fillStyles[node.kind];
-          context.fillRect(offsetW, offsetH, w, nodeTime);
-          offsetH += nodeTime;
+          drawNode(children[i], frameStartTime);
         }
       }
     }
