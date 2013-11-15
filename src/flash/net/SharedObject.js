@@ -77,6 +77,10 @@ var SharedObjectDefinition = (function () {
             so._path = path;
             var data = sessionStorage.getItem(path);
             so._data = data ? JSON.parse(data) : {};
+            so._data[Multiname.getPublicQualifiedName("cookie")] = {};
+            so._data[Multiname.getPublicQualifiedName("cookie")][Multiname.getPublicQualifiedName("lc")] = 32;
+            so._data[Multiname.getPublicQualifiedName("levelCompleted")] = 32;
+            so._data[Multiname.getPublicQualifiedName("completeLevels")] = 32;
             return so;
           },
           getRemote: function getRemote(name, remotePath, persistence, secure) { // (name:String, remotePath:String = null, persistence:Object = false, secure:Boolean = false) -> SharedObject
