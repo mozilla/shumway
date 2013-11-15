@@ -2,34 +2,23 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Filters Benchmark</title>
+    <title>Filters Demo</title>
+    <style type="text/css">
+      html, body { margin: 0; padding: 0; }
+    </style>
   </head>
   <body>
-    <canvas id="canvas" width="400" height="400"></canvas>
+
+    <div id="canvasContainer">
+      <canvas id="canvas" width="400" height="400"></canvas>
+    </div>
+
     <script src="libs/stats.min.js"></script>
-    <script> SHUMWAY_ROOT = "../../../src/"; </script>
-    <script src="../../../src/swf/filters/filter.js"></script>
+    <script src="libs/dat.gui.min.js"></script>
+    <script src="libs/dat.color.min.js"></script>
     <script src="filters.js"></script>
+    <script src="demo.js"></script>
     <script>
-
-      var stats = new Stats();
-      stats.domElement.style.position = 'absolute';
-      stats.domElement.style.left = '0px';
-      stats.domElement.style.top = '0px';
-      document.body.appendChild(stats.domElement);
-
-      var canvas = document.getElementById("canvas");
-      var ctx = canvas.getContext("2d");
-      var w = canvas.width;
-      var h = canvas.height;
-
-      var canvasShape = document.createElement("canvas");
-      var ctxShape = canvasShape.getContext("2d");
-      canvasShape.width = canvas.width;
-      canvasShape.height = canvas.height;
-
-      ctxShape.fillStyle = "#0a0";
-      ctxShape.fillRect(175, 175, 50, 50);
 
       window.requestAnimFrame = (function() {
         return  window.requestAnimationFrame ||
@@ -40,21 +29,34 @@
                 };
       })();
 
-      (function animate() {
-        requestAnimFrame(animate);
-        stats.begin();
+      (function() {
 
-        var img = ctxShape.getImageData(0, 0, w, h);
-        var imgData = img.data;
+        var canvas = document.getElementById("canvas");
+        var ctx = canvas.getContext("2d");
 
-        FILTERS.blur(imgData, w, h, 16, 16, 2);
+        var stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+        document.body.appendChild(stats.domElement);
 
-        //blurFilter(imgData, w, h, 16, 16);
+        var demo = new Demo(ctx, stats);
 
-        ctx.putImageData(img, 0, 0);
+        initGui(demo);
 
-        stats.end();
       })();
+
+      function initGui(demo) {
+        var gui = new dat.GUI();
+        gui.add(demo, 'shape', ['square']);
+
+        var blur = gui.addFolder('blur');
+        blur.add(demo, 'blurEnabled');
+        blur.add(demo, 'blurQuality', { low: 1, medium: 2, high: 3 });
+        blur.add(demo, 'blurX', 0, 64).step(1);
+        blur.add(demo, 'blurY', 0, 64).step(1);
+        blur.open();
+      }
 
     </script>
   </body>
