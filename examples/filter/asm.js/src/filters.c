@@ -66,6 +66,7 @@ void blurX(unsigned char *img, int width, int height, int distance)
 	int windowSize = windowLength << 2;
 
 	unsigned char *lineBuffer = malloc(lineSize);
+	memset(lineBuffer, 0, lineSize);
 
 	for (int y = 0; y < height; ++y)
 	{
@@ -127,8 +128,10 @@ void blurY(unsigned char *img, int width, int height, int distance)
 
 	int stride = width << 2;
 	int windowLength = (distance << 1) + 1;
+	int h4 = height << 2;
 
-	unsigned char *columnBuffer = malloc(height << 2);
+	unsigned char *columnBuffer = malloc(h4);
+	memset(columnBuffer, 0, h4);
 
 	for (int x = 0; x < width; ++x)
 	{
