@@ -5,10 +5,10 @@ var Demo = (function() {
     this.canvas = ctx.canvas;
     this.stats = stats;
 
-    this.shape = "square";
+    this.shape = "logo";
 
     this.blurEnabled = true;
-    this.blurQuality = 1;
+    this.blurQuality = 2;
     this.blurX = 16;
     this.blurY = 16;
 
@@ -35,6 +35,10 @@ var Demo = (function() {
         this.canvas.height = window.innerHeight;
         this.drawShape();
         this.dirty = false;
+      }
+
+      if (this.filterBounds === null) {
+        return;
       }
 
       var w = this.canvasShape.width;
@@ -79,6 +83,21 @@ var Demo = (function() {
           this.ctxShape.fillStyle = "rgba(255, 0, 0, 1)";
           this.ctxShape.fillRect(175, 175, 50, 50);
           this.ctxShape.restore();
+          break;
+        case "logo":
+          var img = new Image();
+          var that = this;
+          img.onload = function() {
+            that.bounds = { x: 0, y: 0, w: 200, h: 195 };
+            that.calcFilterBounds();
+            that.canvasShape.width = that.canvasShapeTmp.width = that.filterBounds.w;
+            that.canvasShape.height = that.canvasShapeTmp.height = that.filterBounds.h;
+            that.ctxShape.save();
+            that.ctxShape.translate(-that.filterBounds.x, -that.filterBounds.y);
+            that.ctxShape.drawImage(img, 0, 0);
+            that.ctxShape.restore();
+          };
+          img.src = "assets/firefox_logo.png";
           break;
       }
       this.currentShape = this.shape;
