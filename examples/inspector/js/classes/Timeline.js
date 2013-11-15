@@ -195,7 +195,7 @@ var Timeline = (function () {
      */
     var lineH = 1000 / this.frameRate;
     context.beginPath();
-    context.lineWidth = 1;
+    context.lineWidth = 0.5;
     context.moveTo(0, lineH);
     context.lineTo(this.cw, lineH);
     context.strokeStyle = fpsLineColor;
