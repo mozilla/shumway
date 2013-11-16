@@ -37,10 +37,6 @@ var Demo = (function() {
         this.dirty = false;
       }
 
-      if (this.filterBounds === null) {
-        return;
-      }
-
       var w = this.canvasShape.width;
       var h = this.canvasShape.height;
 
@@ -85,19 +81,25 @@ var Demo = (function() {
           this.ctxShape.restore();
           break;
         case "logo":
-          var img = new Image();
           var that = this;
-          img.onload = function() {
-            that.bounds = { x: 0, y: 0, w: 200, h: 195 };
-            that.calcFilterBounds();
-            that.canvasShape.width = that.canvasShapeTmp.width = that.filterBounds.w;
-            that.canvasShape.height = that.canvasShapeTmp.height = that.filterBounds.h;
+          var logo = this._logoImg;
+          that.bounds = { x: 0, y: 0, w: 200, h: 195 };
+          that.calcFilterBounds();
+          that.canvasShape.width = that.canvasShapeTmp.width = that.filterBounds.w;
+          that.canvasShape.height = that.canvasShapeTmp.height = that.filterBounds.h;
+          function drawLogo() {
             that.ctxShape.save();
             that.ctxShape.translate(-that.filterBounds.x, -that.filterBounds.y);
-            that.ctxShape.drawImage(img, 0, 0);
+            that.ctxShape.drawImage(logo, 0, 0);
             that.ctxShape.restore();
-          };
-          img.src = "assets/firefox_logo.png";
+          }
+          if (typeof logo == "undefined") {
+            logo = this._logoImg = new Image();
+            logo.onload = drawLogo;
+            logo.src = "assets/firefox_logo.png";
+          } else {
+            drawLogo();
+          }
           break;
       }
       this.currentShape = this.shape;
