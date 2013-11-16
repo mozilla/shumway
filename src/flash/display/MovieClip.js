@@ -94,11 +94,7 @@ var MovieClipDefinition = (function () {
           return;
         }
 
-        // Destroy current timeline objects that are not on next frame.
-        self._destructChildren(frameNum);
-
-        // Declare current timeline objects that were not on last frame.
-        self._declareChildren(frameNum);
+        self._updateDisplayList(frameNum);
 
         if (self._sparse) {
           self._addEventListener('constructChildren', self._onConstructChildren);
@@ -120,6 +116,10 @@ var MovieClipDefinition = (function () {
       };
 
       this.play();
+    },
+    _updateDisplayList: function(nextFrameNum) {
+      this._destructChildren(nextFrameNum);
+      this._declareChildren(nextFrameNum);
     },
 
     _declareChildren: function declareChildren(nextFrameNum) {
@@ -287,8 +287,7 @@ var MovieClipDefinition = (function () {
 
       if (this._allowFrameNavigation || !this._loader._isAvm2Enabled) {
         if (enterFrame) {
-          this._destructChildren(frameNum);
-          this._declareChildren(frameNum);
+          this._updateDisplayList(frameNum);
           this._enterFrame(frameNum);
         }
 
