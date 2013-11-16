@@ -9,8 +9,8 @@ var Demo = (function() {
 
     this.blurEnabled = true;
     this.blurQuality = 2;
-    this.blurX = 16;
-    this.blurY = 16;
+    this.blurX = 8;
+    this.blurY = 8;
 
     this.currentShape = null;
     this.canvasShape = document.createElement("canvas");

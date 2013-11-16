@@ -58,8 +58,8 @@
         var blur = gui.addFolder('blur');
         blur.add(demo, 'blurEnabled');
         blur.add(demo, 'blurQuality', { low: 1, medium: 2, high: 3 });
-        blur.add(demo, 'blurX', 0, 64).step(1);
-        blur.add(demo, 'blurY', 0, 64).step(1);
+        blur.add(demo, 'blurX', 0, 32).step(1);
+        blur.add(demo, 'blurY', 0, 32).step(1);
         blur.open();
         controllers.push(blur);
 
