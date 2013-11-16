@@ -243,28 +243,29 @@ var MovieClipDefinition = (function () {
         return;
       }
 
-      var prevDisplayListItem = null;
-      var currentDisplayListItem = this._currentDisplayList;
+      var prevEntry = null;
+      var currentEntry = this._currentDisplayList;
       var toRemove = null;
-      while (currentDisplayListItem) {
-        var depth = currentDisplayListItem.depth;
-        var currentCmd = currentDisplayListItem.cmd;
+      while (currentEntry) {
+        var depth = currentEntry.depth;
+        var currentCmd = currentEntry.cmd;
         var nextCmd = nextDisplayList[depth];
         if (!nextCmd ||
             nextCmd.symbolId !== currentCmd.symbolId ||
-            nextCmd.ratio !== currentCmd.ratio) {
-          var nextDisplayListItem = currentDisplayListItem.next;
-          if (prevDisplayListItem) {
-            prevDisplayListItem.next = nextDisplayListItem;
+            nextCmd.ratio !== currentCmd.ratio)
+        {
+          var nextDisplayListItem = currentEntry.next;
+          if (prevEntry) {
+            prevEntry.next = nextDisplayListItem;
           } else {
             this._currentDisplayList = nextDisplayListItem;
           }
-          currentDisplayListItem.next = toRemove;
-          toRemove = currentDisplayListItem;
-          currentDisplayListItem = nextDisplayListItem;
+          currentEntry.next = toRemove;
+          toRemove = currentEntry;
+          currentEntry = nextDisplayListItem;
         } else {
-          prevDisplayListItem = currentDisplayListItem;
-          currentDisplayListItem = currentDisplayListItem.next;
+          prevEntry = currentEntry;
+          currentEntry = currentEntry.next;
         }
       }
       while (toRemove) {
