@@ -86,29 +86,7 @@ var TransformDefinition = (function () {
       var target = this._target;
 
       target._invalidate();
-
-      var a = val.a;
-      var b = val.b;
-      var c = val.c;
-      var d = val.d;
-      var tx = val.tx*20|0;
-      var ty = val.ty*20|0;
-
-      target._rotation = a !== 0 ? Math.atan2(b, a) * 180 / Math.PI :
-                                   (b > 0 ? 90 : -90);
-      target._scaleX = Math.sqrt(a * a + b * b);
-      target._scaleY = Math.sqrt(c * c + d * d);
-
-      target._invalidateTransform();
-
-      target._currentTransform = {
-        a: a,
-        b: b,
-        c: c,
-        d: d,
-        tx: tx,
-        ty: ty
-      };
+      target._setTransformMatrix(val, true);
       target._current3DTransform = null;
 
       target._animated = false;

@@ -175,27 +175,7 @@ var MovieClipDefinition = (function () {
             currentChild._invalidateBounds();
 
             if (nextCmd.hasMatrix) {
-              var m = nextCmd.matrix;
-              var a = m.a;
-              var b = m.b;
-              var c = m.c;
-              var d = m.d;
-
-              currentChild._rotation = Math.atan2(b, a) * 180 / Math.PI;
-              var sx = Math.sqrt(a * a + b * b);
-              currentChild._scaleX = a > 0 ? sx : -sx;
-              var sy = Math.sqrt(d * d + c * c);
-              currentChild._scaleY = d > 0 ? sy : -sy;
-
-              var t = currentChild._currentTransform;
-              t.a = a;
-              t.b = b;
-              t.c = c;
-              t.d = d;
-              t.tx = m.tx;
-              t.ty = m.ty;
-
-              currentChild._invalidateTransform();
+              currentChild._setTransformMatrix(nextCmd.matrix, false);
             }
 
             if (nextCmd.hasCxform) {
