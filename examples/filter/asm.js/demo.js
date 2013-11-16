@@ -7,10 +7,26 @@ var Demo = (function() {
 
     this.shape = "logo";
 
-    this.blurEnabled = true;
-    this.blurQuality = 2;
-    this.blurX = 8;
-    this.blurY = 8;
+    this.blur = {
+      enabled: true,
+      quality: 1,
+      blurX: 4,
+      blurY: 4
+    };
+    this.dropshadow = {
+      enabled: false,
+      distance: 4,
+      angle: 45,
+      color: "#000000",
+      alpha: 1.0,
+      blurX: 4.0,
+      blurY: 4.0,
+      strength: 1.0,
+      quality: 1,
+      inner: false,
+      knockout: false,
+      hideObject: false
+    };
 
     this.currentShape = null;
     this.canvasShape = document.createElement("canvas");
@@ -50,8 +66,8 @@ var Demo = (function() {
         Module.HEAPU8.set(imgData, pimg);
 
         FILTERS._preMultiplyAlpha(pimg, w, h);
-        if (this.blurEnabled) {
-          FILTERS._blur(pimg, w, h, this.blurX, this.blurY, +this.blurQuality);
+        if (this.blur.enabled) {
+          FILTERS._blur(pimg, w, h, this.blur.blurX, this.blur.blurY, +this.blur.quality);
         }
         FILTERS._unpreMultiplyAlpha(pimg, w, h);
 
@@ -83,10 +99,10 @@ var Demo = (function() {
         case "logo":
           var that = this;
           var logo = this._logoImg;
-          that.bounds = { x: 0, y: 0, w: 200, h: 195 };
-          that.calcFilterBounds();
-          that.canvasShape.width = that.canvasShapeTmp.width = that.filterBounds.w;
-          that.canvasShape.height = that.canvasShapeTmp.height = that.filterBounds.h;
+          this.bounds = { x: 0, y: 0, w: 200, h: 195 };
+          this.calcFilterBounds();
+          this.canvasShape.width = this.canvasShapeTmp.width = this.filterBounds.w;
+          this.canvasShape.height = this.canvasShapeTmp.height = this.filterBounds.h;
           function drawLogo() {
             that.ctxShape.save();
             that.ctxShape.translate(-that.filterBounds.x, -that.filterBounds.y);
@@ -113,20 +129,20 @@ var Demo = (function() {
         h: this.bounds.h
       };
       if (this.hasActiveFilters()) {
-        if (this.blurEnabled) {
-          var bq = +this.blurQuality;
-          var bx = this.blurX * (bq + 1);
-          var by = this.blurY * (bq + 1);
+        if (this.blur.enabled) {
+          var bq = +this.blur.quality;
+          var bx = this.blur.blurX * (bq + 1);
+          var by = this.blur.blurY * (bq + 1);
           fb.x -= bx;
           fb.y -= by;
-          fb.w += (bx << 1);
-          fb.h += (by << 1);
+          fb.w += bx * 2;
+          fb.h += by * 2;
         }
       }
     },
 
     hasActiveFilters: function hasActiveFilters() {
-      return this.blurEnabled;
+      return this.blur.enabled;
     }
 
   };
