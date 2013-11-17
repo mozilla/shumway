@@ -67,7 +67,7 @@ var Demo = (function() {
 
         FILTERS._preMultiplyAlpha(pimg, w, h);
         if (this.blur.enabled) {
-          FILTERS._blur(pimg, w, h, this.blur.blurX, this.blur.blurY, +this.blur.quality);
+          FILTERS._blur(pimg, w, h, Math.round(this.blur.blurX / 2), Math.round(this.blur.blurY / 2), +this.blur.quality);
         }
         FILTERS._unpreMultiplyAlpha(pimg, w, h);
 
@@ -130,9 +130,9 @@ var Demo = (function() {
       };
       if (this.hasActiveFilters()) {
         if (this.blur.enabled) {
-          var bq = +this.blur.quality;
-          var bx = this.blur.blurX * (bq + 1);
-          var by = this.blur.blurY * (bq + 1);
+          var bq = this.blur.quality;
+          var bx = this.blur.blurX * bq;
+          var by = this.blur.blurY * bq;
           fb.x -= bx;
           fb.y -= by;
           fb.w += bx * 2;
