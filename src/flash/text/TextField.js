@@ -747,6 +747,9 @@ var TextFieldDefinition = (function () {
       if (this._htmlText === val) {
         return;
       }
+      // Flash resets the bold and italic flags when an html value is set.
+      this._defaultTextFormat.bold = false;
+      this._defaultTextFormat.italic = false;
       this._content = parseHtml(val, this._defaultTextFormat, this._multiline);
       this.invalidateDimensions();
     },
