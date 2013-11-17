@@ -138,6 +138,15 @@ var TextFieldDefinition = (function () {
     if (!knownNodeTypes[nodeType] ||
         multiline === false && (nodeType === 'P' || nodeType === 'BR'))
     {
+      // <sbr /> is a tag the Flash TextField supports for unknown reasons. It
+      // apparently acts just like <br>. Unfortunately, the html parser doesn't
+      // treat it as a self-closing tag, so the siblings following it are nested
+      // after parsing. Hence, we un-nest them manually, and convert the tag to
+      // <br>.
+      if (nodeType === 'SBR') {
+        destinationList.push({type: 'BR', text: null,
+                              format: null, children: null});
+      }
       convertNodeList(input.childNodes, destinationList, content, multiline);
       return;
     }
