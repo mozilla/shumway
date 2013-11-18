@@ -90,7 +90,7 @@ var TextFieldDefinition = (function () {
 
   function createTrunk(initialFormat) {
     // The outermost node is always a <P>, with an ALIGN attribute
-    var trunk = {type: 'P', format: {ALIGN: initialFormat.align}, children: []};
+    var trunk = {type: 'SPAN', format: {ALIGN: initialFormat.align}, children: []};
     // The first child is then a <FONT>, with FACE, LETTERSPACING and KERNING
     var fontAttributes = { FACE: initialFormat.face,
                            LETTERSPACING: initialFormat.letterSpacing,
@@ -138,6 +138,15 @@ var TextFieldDefinition = (function () {
     if (!knownNodeTypes[nodeType] ||
         multiline === false && (nodeType === 'P' || nodeType === 'BR'))
     {
+      // <sbr /> is a tag the Flash TextField supports for unknown reasons. It
+      // apparently acts just like <br>. Unfortunately, the html parser doesn't
+      // treat it as a self-closing tag, so the siblings following it are nested
+      // after parsing. Hence, we un-nest them manually, and convert the tag to
+      // <br>.
+      if (nodeType === 'SBR') {
+        destinationList.push({type: 'BR', text: null,
+                              format: null, children: null});
+      }
       convertNodeList(input.childNodes, destinationList, content, multiline);
       return;
     }
@@ -185,18 +194,22 @@ var TextFieldDefinition = (function () {
     var blockNode = false;
     switch (node.type) {
       case 'plain-text':
-        for (var i = 0; i < node.lines.length; i++) {
-          addRunsForText(state, node.lines[i]);
-          finishLine(state);
+        var lines = node.lines;
+        for (var i = 0; i < lines.length; i++) {
+          addRunsForText(state, lines[i]);
+          // The last line is finished by the enclosing block
+          if (i < lines.length - 1) {
+            finishLine(state, true);
+          }
         }
         return;
       case 'text': addRunsForText(state, node.text); return;
       case 'BR':
-        finishLine(state);
+        finishLine(state, true);
         return;
       case 'LI': /* TODO: draw bullet points. */ /* falls through */
       case 'P':
-        finishLine(state);
+        finishLine(state, false);
         pushFormat(state, node);
         blockNode = true;
         break;
@@ -225,7 +238,7 @@ var TextFieldDefinition = (function () {
       popFormat(state);
     }
     if (blockNode) {
-      finishLine(state);
+      finishLine(state, true);
     }
   }
   var WRAP_OPPORTUNITIES = {
@@ -246,7 +259,7 @@ var TextFieldDefinition = (function () {
       var width = state.ctx.measureText(text).width;
       var availableWidth = state.w - state.line.width;
       if (availableWidth <= 0) {
-        finishLine(state);
+        finishLine(state, false);
         availableWidth = state.w - state.line.width;
       }
       assert(availableWidth > 0);
@@ -274,7 +287,7 @@ var TextFieldDefinition = (function () {
         }
         if (wrapOffset === -1) {
           if (state.line.width > 0) {
-            finishLine(state);
+            finishLine(state, false);
             continue;
           }
           // No wrapping opportunity found, wrap mid-word
@@ -293,7 +306,7 @@ var TextFieldDefinition = (function () {
         addTextRun(state, runText, width);
 
         if (state.wordWrap) {
-          finishLine(state);
+          finishLine(state, false);
         }
 
         text = text.substr(wrapOffset);
@@ -324,9 +337,18 @@ var TextFieldDefinition = (function () {
       line.largestFormat = format;
     }
   }
-  function finishLine(state) {
+
+  // When ending a block or processing a <br> tag, we always want to insert
+  // vertical space, even if the current line is empty. `forceNewline` does that
+  // by advancing the next line's vertical position.
+  function finishLine(state, forceNewline) {
     var line = state.line;
     if (line.runs.length === 0) {
+      if (forceNewline) {
+        var format = state.currentFormat;
+        state.line.y += format.font._metrics.height * format.size +
+                        format.leading|0;
+      }
       return;
     }
     var runs = line.runs;
@@ -652,6 +674,7 @@ var TextFieldDefinition = (function () {
                    wordWrap: this._wordWrap, combinedAlign: null,
                    textColor: this._textColor, embedFonts: this._embedFonts};
       collectRuns(this._content.tree, state);
+      finishLine(state, false);
       this._textWidth = state.maxLineWidth|0;
       this._textHeight = state.line.y|0;
       this._lines = state.lines;
@@ -738,6 +761,9 @@ var TextFieldDefinition = (function () {
       if (this._htmlText === val) {
         return;
       }
+      // Flash resets the bold and italic flags when an html value is set.
+      this._defaultTextFormat.bold = false;
+      this._defaultTextFormat.italic = false;
       this._content = parseHtml(val, this._defaultTextFormat, this._multiline);
       this.invalidateDimensions();
     },
