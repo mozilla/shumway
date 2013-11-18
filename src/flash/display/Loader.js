@@ -66,7 +66,8 @@ var LoaderDefinition = (function () {
           }
         });
         Promise.when(frameConstructed, this._lastPromise).then(function () {
-          this.contentLoaderInfo._dispatchEvent("complete");
+          this._content._complete = true;
+          this._contentLoaderInfo._dispatchEvent("complete");
         }.bind(this));
 
         var stats = data.stats;
@@ -81,7 +82,7 @@ var LoaderDefinition = (function () {
         this._lastPromise.resolve();
         break;
       case 'error':
-        this.contentLoaderInfo._dispatchEvent("ioError", flash.events.IOErrorEvent);
+        this._contentLoaderInfo._dispatchEvent("ioError", flash.events.IOErrorEvent);
         break;
       default:
         //TODO: fix special-casing. Might have to move document class out of dictionary[0]
@@ -97,7 +98,7 @@ var LoaderDefinition = (function () {
       }
     },
     _updateProgress: function (state) {
-      var loaderInfo = this.contentLoaderInfo;
+      var loaderInfo = this._contentLoaderInfo;
       loaderInfo._bytesLoaded = state.bytesLoaded || 0;
       loaderInfo._bytesTotal = state.bytesTotal || 0;
       var event = new flash.events.ProgressEvent("progress", false, false,
@@ -183,7 +184,7 @@ var LoaderDefinition = (function () {
       var sceneData = frame.sceneData;
       var loader = this;
       var dictionary = loader._dictionary;
-      var loaderInfo = loader.contentLoaderInfo;
+      var loaderInfo = loader._contentLoaderInfo;
       var timeline = loader._timeline;
       var frameNum = timeline.length + 1;
       var framePromise = new Promise();
@@ -271,7 +272,8 @@ var LoaderDefinition = (function () {
             level: parent ? 0 : -1,
             timeline: timeline,
             totalFrames: rootInfo.props.totalFrames,
-            stage: loader._stage
+            stage: loader._stage,
+            complete: frame.complete
           });
 
           var isRootMovie = parent && parent == loader._stage && loader._stage._children.length === 0;
@@ -320,6 +322,7 @@ var LoaderDefinition = (function () {
               labels.push(new flash.display.FrameLabel(labelName, frameNum));
             }
             var scene = new flash.display.Scene("Scene 1", labels, root.symbol.totalFrames);
+            scene._startFrame = 1;
             scene._endFrame = root.symbol.totalFrames;
             root.symbol.scenes = [scene];
           }
@@ -364,7 +367,7 @@ var LoaderDefinition = (function () {
 
           loader._content = root;
         } else {
-          root._framesLoaded += frame.repeat;
+          root._framesLoaded = timeline.length;
 
           if (labelName && root._labelMap) {
             if (root._labelMap[labelName] === undefined) {
@@ -446,7 +449,7 @@ var LoaderDefinition = (function () {
         image._parent = loader;
         loader._content = image;
         imgPromise.resolve(imageInfo);
-        loader.contentLoaderInfo._dispatchEvent("init");
+        loader._contentLoaderInfo._dispatchEvent("init");
       };
       img.src = URL.createObjectURL(imageInfo.data);
       delete imageInfo.data;
@@ -714,7 +717,7 @@ var LoaderDefinition = (function () {
     },
     _init: function (info) {
       var loader = this;
-      var loaderInfo = loader.contentLoaderInfo;
+      var loaderInfo = loader._contentLoaderInfo;
 
       loaderInfo._swfVersion = info.swfVersion;
 
@@ -794,7 +797,7 @@ var LoaderDefinition = (function () {
       }
       var loaded = function () {
         // avm1 initialization
-        var loaderInfo = loader.contentLoaderInfo;
+        var loaderInfo = loader._contentLoaderInfo;
         var avm1Context = new AS2Context(loaderInfo._swfVersion);
         avm1Context.stage = stage;
         loader._avm1Context = avm1Context;

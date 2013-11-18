@@ -146,8 +146,8 @@ RenderVisitor.prototype = {
         b: matrix.b,
         c: matrix.c,
         d: matrix.d,
-        tx: matrix.tx * 20,
-        ty: matrix.ty * 20
+        tx: matrix.tx * 20|0,
+        ty: matrix.ty * 20|0
       };
       root._invalidateTransform();
     }

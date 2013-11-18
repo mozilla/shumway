@@ -169,16 +169,8 @@ function defineSymbol(swfTag, symbols) {
             depths[tag.depth] = null;
             break;
           case SWF_TAG_CODE_SHOW_FRAME:
-            var repeat = 1;
-            while (i < n - 1) {
-              var nextTag = tags[i + 1];
-              if (nextTag.code !== SWF_TAG_CODE_SHOW_FRAME)
-                break;
-              i++;
-              repeat++;
-            }
-            frameIndex += repeat;
-            frame.repeat = repeat;
+            frameIndex += tag.repeat;
+            frame.repeat = tag.repeat;
             frame.depths = depths;
             frames.push(frame);
             depths = { };
@@ -324,16 +316,9 @@ function createParsingContext(commitData) {
             frame.bgcolor = tag.color;
             break;
           case SWF_TAG_CODE_SHOW_FRAME:
-            var repeat = 1;
-            while (tagsProcessed < n) {
-              var nextTag = tags[tagsProcessed + 1];
-              if (!nextTag || nextTag.code !== SWF_TAG_CODE_SHOW_FRAME)
-                break;
-              tagsProcessed++;
-              repeat++;
-            }
-            frame.repeat = repeat;
+            frame.repeat = tag.repeat;
             frame.depths = depths;
+            frame.complete = tag.eot;
             commitData(frame);
             depths = { };
             frame = { type: 'frame' };

@@ -53,7 +53,7 @@ var DisplayObjectDefinition = (function () {
       this._cacheAsBitmap = false;
       this._children = [];
       this._clipDepth = null;
-      this._currentTransform = null;
+      this._currentTransform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
       this._concatenatedTransform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0, invalid: true };
       this._current3DTransform = null;
       this._cxform = null;
@@ -73,7 +73,6 @@ var DisplayObjectDefinition = (function () {
       this._scaleX = 1;
       this._scaleY = 1;
       this._stage = null;
-      this._transform = null;
       this._visible = true;
       this._hidden = false;
       this._wasCachedAsBitmap = false;
@@ -136,26 +135,8 @@ var DisplayObjectDefinition = (function () {
 
         var matrix = s.currentTransform;
         if (matrix) {
-          var a = matrix.a;
-          var b = matrix.b;
-          var c = matrix.c;
-          var d = matrix.d;
-
-          this._rotation = a !== 0 ? Math.atan(b / a) * 180 / Math.PI :
-                                     (b > 0 ? 90 : -90);
-          var sx = Math.sqrt(a * a + b * b);
-          this._scaleX = a > 0 ? sx : -sx;
-          var sy = Math.sqrt(d * d + c * c);
-          this._scaleY = d > 0 ? sy : -sy;
-
-          this._currentTransform = {
-            a: a, b: b, c: c, d: d, tx: matrix.tx, ty: matrix.ty
-          };
+          this._setTransformMatrix(matrix, false);
         }
-      }
-
-      if (!this._currentTransform) {
-        this._currentTransform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
       }
 
       this._accessibilityProperties = null;
@@ -417,13 +398,44 @@ var DisplayObjectDefinition = (function () {
         break;
       }
 
-      this._invalidateTransform();
-
       var transform = this._currentTransform;
       transform.a = u * scaleX;
       transform.b = v * scaleX;
       transform.c = -v * scaleY;
       transform.d = u * scaleY;
+
+      this._invalidateTransform();
+    },
+    _setTransformMatrix: function(matrix, convertToTwips) {
+      var a = matrix.a;
+      var b = matrix.b;
+      var c = matrix.c;
+      var d = matrix.d;
+      var tx, ty;
+      if (convertToTwips) {
+        tx = matrix.tx*20|0;
+        ty = matrix.ty*20|0;
+      } else {
+        tx = matrix.tx;
+        ty = matrix.ty;
+      }
+
+      this._rotation = a !== 0 ? Math.atan(b / a) * 180 / Math.PI :
+                       (b > 0 ? 90 : -90);
+      var sx = Math.sqrt(a * a + b * b);
+      this._scaleX = a > 0 ? sx : -sx;
+      var sy = Math.sqrt(d * d + c * c);
+      this._scaleY = d > 0 ? sy : -sy;
+
+      var transform = this._currentTransform;
+      transform.a = a;
+      transform.b = b;
+      transform.c = c;
+      transform.d = d;
+      transform.tx = tx;
+      transform.ty = ty;
+
+      this._invalidateTransform();
     },
 
     get accessibilityProperties() {

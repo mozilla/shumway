@@ -39,6 +39,7 @@ var MovieClipDefinition = (function () {
       this._totalFrames = 1;
       this._startSoundRegistrations = [];
       this._allowFrameNavigation = true;
+      this._complete = true;
 
       var s = this.symbol;
       if (s) {
@@ -49,6 +50,7 @@ var MovieClipDefinition = (function () {
         this._totalFrames = s.totalFrames || 1;
         this._startSoundRegistrations = s.startSoundRegistrations || [];
         this._scenes = s.scenes || null;
+        this._complete = s.complete === false ? false : true;
 
         var map = this._labelMap;
         for (var name in map) {
@@ -79,24 +81,20 @@ var MovieClipDefinition = (function () {
       };
       this._addEventListener('executeFrame', this._onExecuteFrame);
 
-      if (this._totalFrames <= 1) {
+      if (this._complete && this._totalFrames <= 1) {
         return this;
       }
 
       this._onAdvanceFrame = function onAdvanceFrame() {
         var frameNum = self._playHead + 1;
 
-        if (frameNum > self._totalFrames) {
+        if (self._complete && frameNum > self._totalFrames) {
           frameNum = 1;
         } else if (frameNum > self._framesLoaded) {
           return;
         }
 
-        // Destroy current timeline objects that are not on next frame.
-        self._destructChildren(frameNum);
-
-        // Declare current timeline objects that were not on last frame.
-        self._declareChildren(frameNum);
+        self._updateDisplayList(frameNum);
 
         if (self._sparse) {
           self._addEventListener('constructChildren', self._onConstructChildren);
@@ -118,6 +116,10 @@ var MovieClipDefinition = (function () {
       };
 
       this.play();
+    },
+    _updateDisplayList: function(nextFrameNum) {
+      this._destructChildren(nextFrameNum);
+      this._declareChildren(nextFrameNum);
     },
 
     _declareChildren: function declareChildren(nextFrameNum) {
@@ -173,27 +175,7 @@ var MovieClipDefinition = (function () {
             currentChild._invalidateBounds();
 
             if (nextCmd.hasMatrix) {
-              var m = nextCmd.matrix;
-              var a = m.a;
-              var b = m.b;
-              var c = m.c;
-              var d = m.d;
-
-              currentChild._rotation = Math.atan2(b, a) * 180 / Math.PI;
-              var sx = Math.sqrt(a * a + b * b);
-              currentChild._scaleX = a > 0 ? sx : -sx;
-              var sy = Math.sqrt(d * d + c * c);
-              currentChild._scaleY = d > 0 ? sy : -sy;
-
-              var t = currentChild._currentTransform;
-              t.a = a;
-              t.b = b;
-              t.c = c;
-              t.d = d;
-              t.tx = m.tx;
-              t.ty = m.ty;
-
-              currentChild._invalidateTransform();
+              currentChild._setTransformMatrix(nextCmd.matrix, false);
             }
 
             if (nextCmd.hasCxform) {
@@ -241,28 +223,29 @@ var MovieClipDefinition = (function () {
         return;
       }
 
-      var prevDisplayListItem = null;
-      var currentDisplayListItem = this._currentDisplayList;
+      var prevEntry = null;
+      var currentEntry = this._currentDisplayList;
       var toRemove = null;
-      while (currentDisplayListItem) {
-        var depth = currentDisplayListItem.depth;
-        var currentCmd = currentDisplayListItem.cmd;
+      while (currentEntry) {
+        var depth = currentEntry.depth;
+        var currentCmd = currentEntry.cmd;
         var nextCmd = nextDisplayList[depth];
         if (!nextCmd ||
             nextCmd.symbolId !== currentCmd.symbolId ||
-            nextCmd.ratio !== currentCmd.ratio) {
-          var nextDisplayListItem = currentDisplayListItem.next;
-          if (prevDisplayListItem) {
-            prevDisplayListItem.next = nextDisplayListItem;
+            nextCmd.ratio !== currentCmd.ratio)
+        {
+          var nextDisplayListItem = currentEntry.next;
+          if (prevEntry) {
+            prevEntry.next = nextDisplayListItem;
           } else {
             this._currentDisplayList = nextDisplayListItem;
           }
-          currentDisplayListItem.next = toRemove;
-          toRemove = currentDisplayListItem;
-          currentDisplayListItem = nextDisplayListItem;
+          currentEntry.next = toRemove;
+          toRemove = currentEntry;
+          currentEntry = nextDisplayListItem;
         } else {
-          prevDisplayListItem = currentDisplayListItem;
-          currentDisplayListItem = currentDisplayListItem.next;
+          prevEntry = currentEntry;
+          currentEntry = currentEntry.next;
         }
       }
       while (toRemove) {
@@ -285,8 +268,7 @@ var MovieClipDefinition = (function () {
 
       if (this._allowFrameNavigation || !this._loader._isAvm2Enabled) {
         if (enterFrame) {
-          this._destructChildren(frameNum);
-          this._declareChildren(frameNum);
+          this._updateDisplayList(frameNum);
           this._enterFrame(frameNum);
         }
 
@@ -405,10 +387,6 @@ var MovieClipDefinition = (function () {
         }
       }
 
-      if (frameNum > this._totalFrames) {
-        return 1;
-      }
-
       if (frameNum > this._framesLoaded) {
         return this._framesLoaded;
       }
@@ -515,7 +493,7 @@ var MovieClipDefinition = (function () {
         if (element) {
           var soundStreamData = soundStream.data;
           var time = soundStream.seekIndex[frameNum] / soundStreamData.sampleRate / soundStreamData.channels;
-          if (this._framesLoaded >= this._totalFrames && !soundStream.channel) {
+          if (this._complete && !soundStream.channel) {
             var blob = new Blob(soundStream.rawFrames);
             element.preload = 'metadata'; // for mobile devices
             element.loop = false;
@@ -602,7 +580,7 @@ var MovieClipDefinition = (function () {
       // if the MovieClip instance does not use scenes.
       return this._scenes ?
               this._scenes[this._currentScene] :
-              new flash.display.Scene("", this.currentLabels, this._totalFrames);
+              new flash.display.Scene("", this.currentLabels, this._framesLoaded);
     },
     get enabled() {
       return this._enabled;
@@ -617,7 +595,7 @@ var MovieClipDefinition = (function () {
       return this._totalFrames;
     },
     get scenes() {
-      return this._scenes || [new flash.display.Scene("", this.currentLabels, this._totalFrames)];
+      return this._scenes || [new flash.display.Scene("", this.currentLabels, this._framesLoaded)];
     },
     get trackAsMenu() {
       return false;
@@ -681,7 +659,7 @@ var MovieClipDefinition = (function () {
       }
     },
     play: function () {
-      if (this._isPlaying || this._totalFrames <= 1) {
+      if (this._isPlaying || (this._complete && this._totalFrames <= 1)) {
         return;
       }
 
@@ -701,7 +679,7 @@ var MovieClipDefinition = (function () {
       }
     },
     stop: function () {
-      if (!this._isPlaying || this._totalFrames <= 1) {
+      if (!this._isPlaying || (this._complete && this._totalFrames <= 1)) {
         return;
       }
 

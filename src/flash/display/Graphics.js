@@ -33,9 +33,13 @@ var GraphicsDefinition = (function () {
       this.beginPath();
       this._bitmap = null;
       this._parent = 0;
+      this.bbox = null;
+      this.strokeBbox = null;
     },
 
     _invalidate: function () {
+      this.bbox = null;
+      this.strokeBbox = null;
       if (this._parent._stage) {
         this._parent._stage._invalidateOnStage(this._parent);
       }
@@ -300,7 +304,7 @@ var GraphicsDefinition = (function () {
     moveTo: function (x, y) {
       this._currentPath.moveTo((x * 20)|0, (y * 20)|0);
     },
-    _getBounds: function (includeStroke) {
+    _getBounds: function(includeStroke) {
       var bbox;
       if (includeStroke && this.strokeBbox) {
         bbox = this.strokeBox;
@@ -320,7 +324,7 @@ var GraphicsDefinition = (function () {
       for (var i = 0, n = subpaths.length; i < n; i++) {
         var path = subpaths[i];
         if (path.commands.length) {
-          var b = path.getBounds(true);
+          var b = path.getBounds(includeStroke);
           if (b) {
             xMins.push(b.xMin);
             yMins.push(b.yMin);
@@ -333,12 +337,18 @@ var GraphicsDefinition = (function () {
         return 0;
       }
 
-      // TODO: cache bbox
-      var xMin = Math.min.apply(Math, xMins);
-      var yMin = Math.min.apply(Math, yMins);
-      var xMax = Math.max.apply(Math, xMaxs);
-      var yMax = Math.max.apply(Math, yMaxs);
-      return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax};
+      bbox = {
+        xMin : Math.min.apply(Math, xMins),
+        yMin : Math.min.apply(Math, yMins),
+        xMax : Math.max.apply(Math, xMaxs),
+        yMax : Math.max.apply(Math, yMaxs)
+      };
+      if (includeStroke) {
+        this.strokeBbox = bbox;
+      } else {
+        this.bbox = bbox;
+      }
+      return bbox;
     }
   };
 
