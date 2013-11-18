@@ -41,6 +41,12 @@ var Demo = (function() {
     this.animate();
   };
 
+  function doBlur(pimg, w, h, blurParams) {
+    var bx = Math.round(blurParams.blurX / 2);
+    var by = Math.round(blurParams.blurY / 2);
+    FILTERS.blur(pimg, w, h, bx, by, blurParams.quality);
+  }
+
   demo.prototype = {
 
     animate: function animate() {
@@ -65,11 +71,12 @@ var Demo = (function() {
         var pimg = Module._malloc(imgData.length);
         Module.HEAPU8.set(imgData, pimg);
 
-        FILTERS._preMultiplyAlpha(pimg, w, h);
+        FILTERS.preMultiplyAlpha(pimg, w, h);
         if (this.blur.enabled) {
-          FILTERS._blur(pimg, w, h, Math.round(this.blur.blurX / 2), Math.round(this.blur.blurY / 2), +this.blur.quality);
+          doBlur(pimg, w, h, this.blur);
         }
-        FILTERS._unpreMultiplyAlpha(pimg, w, h);
+        }
+        FILTERS.unpreMultiplyAlpha(pimg, w, h);
 
         imgData.set(Module.HEAPU8.subarray(pimg, pimg + imgData.length));
         Module._free(pimg);
