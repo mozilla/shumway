@@ -69,6 +69,8 @@ var DisplayObjectDefinition = (function () {
       this._owned = false;
       this._parent = null;
       this._rotation = 0;
+      this._rotationCos = 1;
+      this._rotationSin = 0;
       this._scale9Grid = null;
       this._scaleX = 1;
       this._scaleY = 1;
@@ -369,43 +371,6 @@ var DisplayObjectDefinition = (function () {
         }
       }
     },
-    _updateCurrentTransform: function () {
-      var scaleX = this._scaleX;
-      var scaleY = this._scaleY;
-      var rotation, u, v;
-      // there is no need for cos/sin when the rotation is parallel to axes
-      switch (this._rotation) {
-      case 0:
-      case 360:
-        u = 1; v = 0;
-        break;
-      case 90:
-      case -270:
-        u = 0; v = 1;
-        break;
-      case 180:
-      case -180:
-        u = -1; v = 0;
-        break;
-      case 270:
-      case -90:
-        u = 0; v = -1;
-        break;
-      default:
-        rotation = this._rotation / 180 * Math.PI;
-        u = Math.cos(rotation);
-        v = Math.sin(rotation);
-        break;
-      }
-
-      var transform = this._currentTransform;
-      transform.a = u * scaleX;
-      transform.b = v * scaleX;
-      transform.c = -v * scaleY;
-      transform.d = u * scaleY;
-
-      this._invalidateTransform();
-    },
     _setTransformMatrix: function(matrix, convertToTwips) {
       var a = matrix.a;
       var b = matrix.b;
@@ -420,8 +385,12 @@ var DisplayObjectDefinition = (function () {
         ty = matrix.ty;
       }
 
-      this._rotation = a !== 0 ? Math.atan(b / a) * 180 / Math.PI :
-                       (b > 0 ? 90 : -90);
+      var angle = a !== 0 ? Math.atan(b / a) :
+                  (b > 0 ? Math.PI / 2 : -Math.PI / 2);
+      this._rotation = angle * 180 / Math.PI;
+      this._rotationCos = Math.cos(angle);
+      this._rotationSin = Math.sin(angle);
+
       var sx = Math.sqrt(a * a + b * b);
       this._scaleX = a > 0 ? sx : -sx;
       var sy = Math.sqrt(d * d + c * c);
@@ -501,13 +470,12 @@ var DisplayObjectDefinition = (function () {
         return;
       }
 
-      var rotation = this._rotation / 180 * Math.PI;
-      var u = Math.abs(Math.cos(rotation));
-      var v = Math.abs(Math.sin(rotation));
+      var u = Math.abs(this._rotationCos);
+      var v = Math.abs(this._rotationSin);
       var bounds = this._getContentBounds();
       var baseHeight = v * (bounds.xMax - bounds.xMin) +
                        u * (bounds.yMax - bounds.yMin);
-      if (baseHeight === 0) {
+      if (!baseHeight) {
         return;
       }
 
@@ -590,10 +558,38 @@ var DisplayObjectDefinition = (function () {
 
       this._invalidate();
       this._invalidateBounds();
+      this._invalidateTransform();
 
       this._rotation = val;
 
-      this._updateCurrentTransform();
+      switch (val) {
+      case 0:
+      case 360:
+        this._rotationCos = 1;
+        this._rotationSin = 0;
+        break;
+      case 90:
+      case -270:
+        this._rotationCos = 0;
+        this._rotationSin = 1;
+        break;
+      case 180:
+      case -180:
+        this._rotationCos = -1;
+        this._rotationSin = 0;
+        break;
+      case 270:
+      case -90:
+        this._rotationCos = 0;
+        this._rotationSin = -1;
+        break;
+      default:
+        var angle = this._rotation / 180 * Math.PI;
+        this._rotationCos = Math.cos(angle);
+        this._rotationSin = Math.sin(angle);
+        break;
+      }
+
       this._animated = false;
     },
     get rotationX() {
@@ -627,9 +623,14 @@ var DisplayObjectDefinition = (function () {
 
       this._invalidate();
       this._invalidateBounds();
+      this._invalidateTransform();
 
       this._scaleX = val;
-      this._updateCurrentTransform();
+
+      var m = this._currentTransform;
+      m.a = this._rotationCos * val;
+      m.b = this._rotationSin * val;
+
       this._animated = false;
     },
     get scaleY() {
@@ -641,9 +642,14 @@ var DisplayObjectDefinition = (function () {
 
       this._invalidate();
       this._invalidateBounds();
+      this._invalidateTransform();
 
       this._scaleY = val;
-      this._updateCurrentTransform();
+
+      var m = this._currentTransform;
+      m.c = -this._rotationSin * val;
+      m.d = this._rotationCos * val;
+
       this._animated = false;
     },
     get scaleZ() {
@@ -704,13 +710,12 @@ var DisplayObjectDefinition = (function () {
         return;
       }
 
-      var rotation = this._rotation / 180 * Math.PI;
-      var u = Math.abs(Math.cos(rotation));
-      var v = Math.abs(Math.sin(rotation));
+      var u = Math.abs(this._rotationCos);
+      var v = Math.abs(this._rotationSin);
       var bounds = this._getContentBounds();
       var baseWidth = u * (bounds.xMax - bounds.xMin) +
                       v * (bounds.yMax - bounds.yMin);
-      if (baseWidth === 0) {
+      if (!baseWidth) {
         return;
       }
 
