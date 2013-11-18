@@ -162,7 +162,7 @@ var Demo = (function() {
     },
 
     hasActiveFilters: function hasActiveFilters() {
-      return this.blur.enabled;
+      return this.blur.enabled || this.dropshadow.enabled;
     }
 
   };

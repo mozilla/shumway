@@ -192,5 +192,64 @@ void blurY(unsigned char *img, int width, int height, int distance)
 
 void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsigned int color, int alpha, int bx, int by, int strength, int quality, unsigned int flags)
 {
-	printf("dropshadow %d %d %d %d %06x %d %d %d %d %d %d\n", width, height, dx, dy, color, alpha, bx, by, strength, quality, flags);
+	int inner = flags & 1;
+	int knockout = (flags >> 1) & 1;
+	int hideObject = (flags >> 2) & 1;
+	int len = width * height;
+
+	unsigned char *tmp = malloc(len << 2);
+	memset(tmp, 0, len << 2);
+
+	tint(tmp, img, width, height, color, inner);
+
+	memcpy(img, tmp, len << 2);
+
+	free(tmp);
+}
+
+void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigned int color, int invertAlpha)
+{
+	unsigned char r = (color >> 16) & 0xff;
+	unsigned char g = (color >> 8) & 0xff;
+	unsigned char b = color & 0xff;
+
+	float af;
+	unsigned char ac;
+	int i = 0;
+	int len = width * height;
+	if (invertAlpha) {
+		while (i++ < len) {
+			ac = *(src + 3);
+			if (ac != 0) {
+				ac = 255 - ac;
+				af = ac / 255.0;
+				*dst = r * af;
+				*(dst + 1) = g * af;
+				*(dst + 2) = b * af;
+				*(dst + 3) = ac;
+			} else {
+				*dst = r;
+				*(dst + 1) = g;
+				*(dst + 2) = b;
+				*(dst + 3) = 0xff;
+			}
+			dst += 4;
+			src += 4;
+		}
+	} else {
+		while (i++ < len) {
+			ac = *(src + 3);
+			if (ac != 0) {
+				af = ac / 255.0;
+				*dst = r * af;
+				*(dst + 1) = g * af;
+				*(dst + 2) = b * af;
+				*(dst + 3) = ac;
+			}
+			dst += 4;
+			src += 4;
+		}
+	}
+}
+
 }
