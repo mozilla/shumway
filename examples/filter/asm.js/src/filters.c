@@ -43,11 +43,11 @@ void unpreMultiplyAlpha(unsigned char *img, int width, int height)
 	}
 }
 
-void blur(unsigned char *img, int width, int height, int distX, int distY, int quality)
+void blur(unsigned char *img, int width, int height, int bx, int by, int quality)
 {
 	for (int i = 0; i < quality; ++i) {
-		blurX(img, width, height, distX);
-		blurY(img, width, height, distY);
+		blurX(img, width, height, bx);
+		blurY(img, width, height, by);
 	}
 }
 
