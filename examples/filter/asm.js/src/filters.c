@@ -200,11 +200,49 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 	unsigned char *tmp = malloc(len << 2);
 	memset(tmp, 0, len << 2);
 
-	tint(tmp, img, width, height, color, inner);
+	pan(tmp, img, width, height, dx, dy);
+	tint(tmp, tmp, width, height, color, inner);
 
 	memcpy(img, tmp, len << 2);
 
 	free(tmp);
+}
+
+void pan(unsigned char *dst, unsigned char *src, int width, int height, int dx, int dy)
+{
+	if (dx == 0 && dy == 0) {
+		return;
+	}
+
+	unsigned int *psrc = (unsigned int *)src;
+	unsigned int *pdst = (unsigned int *)dst;
+	int w = width - abs(dx);
+	int h = height - abs(dy);
+	if (dx > 0) { pdst += dx; }
+	if (dy > 0) { pdst += dy * width; }
+	if (dx < 0) { psrc -= dx; }
+	if (dy < 0) { psrc -= dy * width; }
+	if (pdst <= psrc) {
+		for (int y = 0; y < h; ++y) {
+			for (int x = 0; x < w; ++x) {
+				*(pdst + x) = *(psrc + x);
+			}
+			pdst += width;
+			psrc += width;
+		}
+	} else {
+		int end = width * (h - 1);
+		psrc += end;
+		pdst += end;
+		w--; h--;
+		for (int y = h; y >= 0; --y) {
+			for (int x = w; x >= 0; --x) {
+				*(pdst + x) = *(psrc + x);
+			}
+			pdst -= width;
+			psrc -= width;
+		}
+	}
 }
 
 void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigned int color, int invertAlpha)
@@ -230,6 +268,8 @@ void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigne
 				ac = 255 - ac;
 				af = ac / 255.0;
 				*dst32 = (int)(r * af) | (int)(g * af) << 8 | (int)(b * af) << 16 | ac << 24;
+			} else {
+				*dst32 = 0;
 			}
 			dst32++;
 			src += 4;
@@ -242,11 +282,11 @@ void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigne
 			} else if (ac > 0) {
 				af = ac / 255.0;
 				*dst32 = (int)(r * af) | (int)(g * af) << 8 | (int)(b * af) << 16 | ac << 24;
+			} else {
+				*dst32 = 0;
 			}
 			dst32++;
 			src += 4;
 		}
 	}
-}
-
 }
