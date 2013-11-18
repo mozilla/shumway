@@ -421,8 +421,9 @@ var DisplayObjectDefinition = (function () {
         return;
       }
 
-      this._alpha = val;
       this._invalidate();
+
+      this._alpha = val;
       this._animated = false;
     },
     get blendMode() {
@@ -496,6 +497,8 @@ var DisplayObjectDefinition = (function () {
         return;
       }
 
+      this._invalidate();
+
       if (val && val._maskedObject) {
         val._maskedObject.mask = null;
       }
@@ -505,7 +508,6 @@ var DisplayObjectDefinition = (function () {
         val._maskedObject = this;
       }
 
-      this._invalidate();
       this._animated = false;
     },
     get name() {
@@ -695,8 +697,9 @@ var DisplayObjectDefinition = (function () {
       if (val === this._visible)
         return;
 
-      this._visible = val;
       this._invalidate();
+
+      this._visible = val;
       this._animated = false;
     },
     get width() {
