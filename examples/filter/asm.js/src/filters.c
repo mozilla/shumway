@@ -209,9 +209,12 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 
 void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigned int color, int invertAlpha)
 {
+	unsigned int *dst32 = (unsigned int *)dst;
+
 	unsigned char r = (color >> 16) & 0xff;
 	unsigned char g = (color >> 8) & 0xff;
 	unsigned char b = color & 0xff;
+	unsigned int bgr = r | g << 8 | b << 16 | 0xff000000;
 
 	float af;
 	unsigned char ac;
@@ -223,17 +226,11 @@ void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigne
 			if (ac != 0) {
 				ac = 255 - ac;
 				af = ac / 255.0;
-				*dst = r * af;
-				*(dst + 1) = g * af;
-				*(dst + 2) = b * af;
-				*(dst + 3) = ac;
+				*dst32 = (int)(r * af) | (int)(g * af) << 8 | (int)(b * af) << 16 | ac << 24;
 			} else {
-				*dst = r;
-				*(dst + 1) = g;
-				*(dst + 2) = b;
-				*(dst + 3) = 0xff;
+				*dst32 = bgr;
 			}
-			dst += 4;
+			dst32++;
 			src += 4;
 		}
 	} else {
@@ -241,12 +238,9 @@ void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigne
 			ac = *(src + 3);
 			if (ac != 0) {
 				af = ac / 255.0;
-				*dst = r * af;
-				*(dst + 1) = g * af;
-				*(dst + 2) = b * af;
-				*(dst + 3) = ac;
+				*dst32 = (int)(r * af) | (int)(g * af) << 8 | (int)(b * af) << 16 | ac << 24;
 			}
-			dst += 4;
+			dst32++;
 			src += 4;
 		}
 	}
