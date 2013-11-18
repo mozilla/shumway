@@ -220,9 +220,10 @@ void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigne
 	unsigned char ac;
 	int i = 0;
 	int len = width * height;
+	src += 3;
 	if (invertAlpha) {
 		while (i++ < len) {
-			ac = *(src + 3);
+			ac = *src;
 			if (ac != 0) {
 				ac = 255 - ac;
 				af = ac / 255.0;
@@ -235,7 +236,7 @@ void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigne
 		}
 	} else {
 		while (i++ < len) {
-			ac = *(src + 3);
+			ac = *src;
 			if (ac != 0) {
 				af = ac / 255.0;
 				*dst32 = (int)(r * af) | (int)(g * af) << 8 | (int)(b * af) << 16 | ac << 24;
