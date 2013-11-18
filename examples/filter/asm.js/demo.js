@@ -47,6 +47,17 @@ var Demo = (function() {
     FILTERS.blur(pimg, w, h, bx, by, blurParams.quality);
   }
 
+  function doDropshadow(pimg, w, h, dsParams) {
+    var a = dsParams.angle * Math.PI / 180;
+    var dy = Math.round(Math.sin(a) * dsParams.distance);
+    var dx = Math.round(Math.cos(a) * dsParams.distance);
+    var bx = Math.round(dsParams.blurX / 2);
+    var by = Math.round(dsParams.blurY / 2);
+    var color = parseInt(dsParams.color.substr(1), 16);
+    var flags = (dsParams.inner ? 1 : 0) | (dsParams.knockout ? 2 : 0) | (dsParams.hideObject ? 4 : 0);
+    FILTERS.dropshadow(pimg, w, h, dx, dy, color, dsParams.alpha, bx, by, dsParams.strength, dsParams.quality, flags);
+  }
+
   demo.prototype = {
 
     animate: function animate() {
@@ -75,6 +86,8 @@ var Demo = (function() {
         if (this.blur.enabled) {
           doBlur(pimg, w, h, this.blur);
         }
+        if (this.dropshadow.enabled) {
+          doDropshadow(pimg, w, h, this.dropshadow);
         }
         FILTERS.unpreMultiplyAlpha(pimg, w, h);
 

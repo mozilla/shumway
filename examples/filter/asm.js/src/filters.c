@@ -189,3 +189,8 @@ void blurY(unsigned char *img, int width, int height, int distance)
 
 	free(columnBuffer);
 }
+
+void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsigned int color, int alpha, int bx, int by, int strength, int quality, unsigned int flags)
+{
+	printf("dropshadow %d %d %d %d %06x %d %d %d %d %d %d\n", width, height, dx, dy, color, alpha, bx, by, strength, quality, flags);
+}
