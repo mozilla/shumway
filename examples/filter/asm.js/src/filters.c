@@ -224,12 +224,12 @@ void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigne
 	if (invertAlpha) {
 		while (i++ < len) {
 			ac = *src;
-			if (ac != 0) {
+			if (ac == 0) {
+				*dst32 = bgr;
+			} else if (ac < 255) {
 				ac = 255 - ac;
 				af = ac / 255.0;
 				*dst32 = (int)(r * af) | (int)(g * af) << 8 | (int)(b * af) << 16 | ac << 24;
-			} else {
-				*dst32 = bgr;
 			}
 			dst32++;
 			src += 4;
@@ -237,7 +237,9 @@ void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigne
 	} else {
 		while (i++ < len) {
 			ac = *src;
-			if (ac != 0) {
+			if (ac == 255) {
+				*dst32 = bgr;
+			} else if (ac > 0) {
 				af = ac / 255.0;
 				*dst32 = (int)(r * af) | (int)(g * af) << 8 | (int)(b * af) << 16 | ac << 24;
 			}
