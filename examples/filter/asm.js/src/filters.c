@@ -210,6 +210,7 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigned int color, int invertAlpha)
 {
 	unsigned int *dst32 = (unsigned int *)dst;
+	unsigned int *end32 = dst32 + (width * height);
 
 	unsigned char r = (color >> 16) & 0xff;
 	unsigned char g = (color >> 8) & 0xff;
@@ -218,11 +219,10 @@ void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigne
 
 	float af;
 	unsigned char ac;
-	int i = 0;
-	int len = width * height;
+
 	src += 3;
 	if (invertAlpha) {
-		while (i++ < len) {
+		while (dst32 < end32) {
 			ac = *src;
 			if (ac == 0) {
 				*dst32 = bgr;
@@ -235,7 +235,7 @@ void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigne
 			src += 4;
 		}
 	} else {
-		while (i++ < len) {
+		while (dst32 < end32) {
 			ac = *src;
 			if (ac == 255) {
 				*dst32 = bgr;
