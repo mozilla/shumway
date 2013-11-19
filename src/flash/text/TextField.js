@@ -742,9 +742,20 @@ var TextFieldDefinition = (function () {
       if (this._content && this._content.text === val) {
         return;
       }
-      //TODO: properly parse the text instead of creating heaps of garbage
-      var lines = val.split('\r\n').join('\n').split('\r').join('\n').
-                      split('\n');
+      var lines = [];
+      var lineOffset = 0;
+      for (var index = 0; index < val.length;) {
+        var char = val[index];
+        if (char === '\r' || char === '\n') {
+          lines.push(val.substring(lineOffset, index));
+          lineOffset = index;
+          if (char === '\r' && val[index + 1] === '\n') {
+            index++;
+          }
+        }
+        index++;
+      }
+      lines.push(val.substring(lineOffset, index));
       this._content = { tree: createTrunk(this._defaultTextFormat),
                         text: val, htmlText: val
                       };
