@@ -27,6 +27,11 @@ var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWire
 var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
 var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
 
+
+var enableConstructChildren = rendererOptions.register(new Option("", "constructChildren", "boolean", true, "Construct Children"));
+var enableEnterFrame = rendererOptions.register(new Option("", "enterFrame", "boolean", true, "Enter Frame"));
+var enableAdvanceFrame = rendererOptions.register(new Option("", "advanceFrame", "boolean", true, "Advance Frame"));
+
 if (typeof FirefoxCom !== 'undefined') {
   turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
 }
@@ -799,10 +804,9 @@ function renderStage(stage, ctx, events) {
           // Initial display list is already constructed, skip frame construction phase.
           firstRun = false;
         } else {
-
-          timelineWrapBroadcastMessage(domain, "advanceFrame");
-          timelineWrapBroadcastMessage(domain, "enterFrame");
-          timelineWrapBroadcastMessage(domain, "constructChildren");
+          enableAdvanceFrame.value && timelineWrapBroadcastMessage(domain, "advanceFrame");
+          enableEnterFrame.value && timelineWrapBroadcastMessage(domain, "enterFrame");
+          enableConstructChildren.value && timelineWrapBroadcastMessage(domain, "constructChildren");
         }
 
         timelineWrapBroadcastMessage(domain, "frameConstructed");

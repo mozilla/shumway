@@ -395,7 +395,7 @@ function updateDisplayListTree() {
 }
 
 var nativeGetContext = HTMLCanvasElement.prototype.getContext;
-var INJECT_DEBUG_CANVAS = true;
+var INJECT_DEBUG_CANVAS = false;
 HTMLCanvasElement.prototype.getContext = function getContext(contextId, args) {
   if (INJECT_DEBUG_CANVAS && contextId === "2d") {
     if (args && args.original) {
