@@ -259,39 +259,83 @@ var DisplayObjectDefinition = (function () {
 
       return m;
     },
-    _applyCurrentTransform: function (targetCoordSpace, point1, pointN) {
-      if (!targetCoordSpace) {
+    _applyCurrentTransform: function (targetCoordSpace, pt1, ptN) {
+      if (!targetCoordSpace || targetCoordSpace === this) {
         return;
       }
 
-      var m = this._getConcatenatedTransform();
-      for (var i = 1; i < arguments.length; i++) {
-        var point = arguments[i];
-        var x = point.x;
-        var y = point.y;
-        point.x = Math.round(m.a * x + m.c * y + m.tx);
-        point.y = Math.round(m.d * y + m.b * x + m.ty);
+      var m, a, b, c, d, tx, ty;
+
+      if (targetCoordSpace === this._parent) {
+        m = this._currentTransform;
+        a = m.a;
+        b = m.b;
+        c = m.c;
+        d = m.d;
+        tx = m.tx;
+        ty = m.ty;
+      } else {
+        m = this._getConcatenatedTransform();
+        if (targetCoordSpace === this._stage) {
+          a = m.a;
+          b = m.b;
+          c = m.c;
+          d = m.d;
+          tx = m.tx;
+          ty = m.ty;
+        } else {
+          var m2 = targetCoordSpace._getConcatenatedTransform();
+          var a2, b2, c2, d2, tx2, ty2;
+          if (m2.b || m2.c) {
+            var det = 1 / (m2.a * m2.d - m2.b * m2.c);
+
+            a2 = m2.d * det;
+            b2 = -m2.b * det;
+            c2 = -m2.c * det;
+            d2 = m2.a * det;
+
+            tx2 = -(a2 * m2.tx + c2 * m2.ty);
+            ty2 = -(b2 * m2.tx + d2 * m2.ty);
+          } else {
+            a2 = 1 / m2.a;
+            b2 = 0;
+            c2 = 0;
+            d2 = 1 / m2.d;
+
+            tx2 = m2.tx * -a2;
+            ty2 = m2.ty * -d2;
+          }
+
+          a = a2 * m.a + c2 * m.b;
+          b = b2 * m.a + d2 * m.b;
+          c = a2 * m.c + c2 * m.d;
+          d = b2 * m.c + d2 * m.d;
+          tx = a2 * m.tx + c2 * m.ty + tx2;
+          ty = b2 * m.tx + d2 * m.ty + ty2;
+        }
       }
 
-      var fn = targetCoordSpace._applyCurrentInverseTransform;
-      fn.call.apply(fn, arguments);
-    },
-    _applyCurrentInverseTransform: function (point1, pointN) {
-      var m = this._getConcatenatedTransform();
-      var d = 1 / (m.a * m.d - m.b * m.c);
-      for (var i = 0; i < arguments.length; i++) {
-        var point = arguments[i];
-        var x = point.x - m.tx;
-        var y = point.y - m.ty;
-        point.x = Math.round((m.d * x - m.c * y) * d);
-        point.y = Math.round((m.a * y - m.b * x) * d);
+      for (var i = 1; i < arguments.length; i++) {
+        var pt = arguments[i];
+        var x = pt.x;
+        var y = pt.y;
+        pt.x = (a * x + c * y + tx)|0;
+        pt.y = (d * y + b * x + ty)|0;
       }
+    },
+    _applyConcatenatedInverseTransform: function (pt) {
+      var m = this._getConcatenatedTransform();
+      var det = 1 / (m.a * m.d - m.b * m.c);
+      var x = pt.x - m.tx;
+      var y = pt.y - m.ty;
+      pt.x = ((m.d * x - m.c * y) * det)|0;
+      pt.y = ((m.a * y - m.b * x) * det)|0;
     },
 
     _hitTest: function(use_xy, x, y, useShape, hitTestObject) {
       if (use_xy) {
         var pt = { x: x, y: y };
-        this._applyCurrentInverseTransform(pt);
+        this._applyConcatenatedInverseTransform(pt);
 
         var b = this._getContentBounds();
         if (!(pt.x >= b.xMin && pt.x < b.xMax &&
@@ -522,7 +566,7 @@ var DisplayObjectDefinition = (function () {
       }
       p1.x = this._stage._mouseX;
       p1.y = this._stage._mouseY;
-      this._applyCurrentInverseTransform(p1);
+      this._applyConcatenatedInverseTransform(p1);
       return p1.x;
     },
     get mouseY() {
@@ -531,7 +575,7 @@ var DisplayObjectDefinition = (function () {
       }
       p1.x = this._stage._mouseX;
       p1.y = this._stage._mouseY;
-      this._applyCurrentInverseTransform(p1);
+      this._applyConcatenatedInverseTransform(p1);
       return p1.y;
     },
     get opaqueBackground() {
@@ -987,7 +1031,7 @@ var DisplayObjectDefinition = (function () {
         accessibilityProperties: desc(def, "accessibilityProperties"),
         globalToLocal: function(pt) {
           var twipPt = {x: (pt.x * 20)|0, y: (pt.y * 20)|0};
-          this._applyCurrentInverseTransform(twipPt);
+          this._applyConcatenatedInverseTransform(twipPt);
           return new flash.geom.Point(twipPt.x / 20, twipPt.y / 20);
         },
         localToGlobal: function(pt) {
