@@ -564,33 +564,39 @@ var DisplayObjectDefinition = (function () {
 
       this._rotation = val;
 
+      var u, v;
       switch (val) {
       case 0:
       case 360:
-        this._rotationCos = 1;
-        this._rotationSin = 0;
+        u = 1, v = 0;
         break;
       case 90:
       case -270:
-        this._rotationCos = 0;
-        this._rotationSin = 1;
+        u = 0, v = 1;
         break;
       case 180:
       case -180:
-        this._rotationCos = -1;
-        this._rotationSin = 0;
+        u = -1, v = 0;
         break;
       case 270:
       case -90:
-        this._rotationCos = 0;
-        this._rotationSin = -1;
+        u = 0, v = -1;
         break;
       default:
         var angle = this._rotation / 180 * Math.PI;
-        this._rotationCos = Math.cos(angle);
-        this._rotationSin = Math.sin(angle);
+        u = Math.cos(angle);
+        v = Math.sin(angle);
         break;
       }
+
+      this._rotationCos = u;
+      this._rotationSin = v;
+
+      var m = this._currentTransform;
+      m.a = u * this._scaleX;
+      m.b = v * this._scaleX;
+      m.c = -v * this._scaleY;
+      m.d = u * this._scaleY;
 
       this._animated = false;
     },
