@@ -44,7 +44,7 @@ var Demo = (function() {
   function doBlur(pimg, w, h, blurParams) {
     var bx = blurParams.blurX;
     var by = blurParams.blurY;
-    FILTERS.blur(pimg, w, h, bx, by, blurParams.quality);
+    FILTERS.blur(pimg, w, h, bx, by, blurParams.quality, 0);
   }
 
   function doDropshadow(pimg, w, h, dsParams) {
@@ -85,11 +85,11 @@ var Demo = (function() {
         Module.HEAPU8.set(imgData, pimg);
 
         FILTERS.preMultiplyAlpha(pimg, w, h);
-        if (this.blur.enabled) {
-          doBlur(pimg, w, h, this.blur);
-        }
         if (this.dropshadow.enabled) {
           doDropshadow(pimg, w, h, this.dropshadow);
+        }
+        if (this.blur.enabled) {
+          doBlur(pimg, w, h, this.blur);
         }
         FILTERS.unpreMultiplyAlpha(pimg, w, h);
 
@@ -98,9 +98,15 @@ var Demo = (function() {
       }
 
       this.ctxShapeTmp.putImageData(img, 0, 0);
+      this.ctxShapeTmp.strokeStyle = "rgba(0, 0, 0, 0.2)";
+      this.ctxShapeTmp.strokeRect(0, 0, this.canvasShapeTmp.width, this.canvasShapeTmp.height);
 
       this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      this.ctx.drawImage(this.canvasShapeTmp, (this.canvas.width - this.filterBounds.w) / 2, (this.canvas.height - this.filterBounds.h) / 2);
+      this.ctx.drawImage(
+        this.canvasShapeTmp,
+        (this.canvas.width - this.bounds.w) / 2 + this.filterBounds.x,
+        (this.canvas.height - this.bounds.h) / 2 + this.filterBounds.y
+      );
 
       this.stats.end();
     },
@@ -108,14 +114,14 @@ var Demo = (function() {
     drawShape: function drawShape() {
       switch (this.shape) {
         case "square":
-          this.bounds = { x: 175, y: 175, w: 50, h: 50 };
+          this.bounds = { x: 0, y: 0, w: 50, h: 50 };
           this.calcFilterBounds();
           this.canvasShape.width = this.canvasShapeTmp.width = this.filterBounds.w;
           this.canvasShape.height = this.canvasShapeTmp.height = this.filterBounds.h;
           this.ctxShape.save();
           this.ctxShape.translate(-this.filterBounds.x, -this.filterBounds.y);
           this.ctxShape.fillStyle = "rgba(255, 0, 0, 1)";
-          this.ctxShape.fillRect(175, 175, 50, 50);
+          this.ctxShape.fillRect(0, 0, 50, 50);
           this.ctxShape.restore();
           break;
         case "logo":
@@ -151,10 +157,25 @@ var Demo = (function() {
         h: this.bounds.h
       };
       if (this.hasActiveFilters()) {
-        if (this.blur.enabled) {
-          var bq = this.blur.quality;
-          var bx = this.blur.blurX * bq;
-          var by = this.blur.blurY * bq;
+        var bq, bx, by;
+        var dsParams = this.dropshadow;
+        var blurParams = this.blur;
+        if (dsParams.enabled) {
+          var a = dsParams.angle * Math.PI / 180;
+          var dy = Math.round(Math.sin(a) * dsParams.distance);
+          var dx = Math.round(Math.cos(a) * dsParams.distance);
+          bq = dsParams.quality;
+          bx = dsParams.blurX * bq;
+          by = dsParams.blurY * bq;
+          fb.x -= bx - Math.min(dx, 0);
+          fb.y -= by - Math.min(dy, 0);
+          fb.w += bx * 2 + Math.abs(dx);
+          fb.h += by * 2 + Math.abs(dy);
+        }
+        if (blurParams.enabled) {
+          bq = blurParams.quality;
+          bx = blurParams.blurX * bq;
+          by = blurParams.blurY * bq;
           fb.x -= bx;
           fb.y -= by;
           fb.w += bx * 2;

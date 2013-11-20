@@ -43,15 +43,22 @@ void unpreMultiplyAlpha(unsigned char *img, int width, int height)
 	}
 }
 
-void blur(unsigned char *img, int width, int height, int bx, int by, int quality)
+void blur(unsigned char *img, int width, int height, int bx, int by, int quality, unsigned int borderColor)
 {
+	unsigned int abgrBorderColor = 0;
+	if (borderColor != 0) {
+		unsigned char r = (borderColor >> 16) & 0xff;
+		unsigned char g = (borderColor >> 8) & 0xff;
+		unsigned char b = borderColor & 0xff;
+		abgrBorderColor = r | g << 8 | b << 16 | 0xff000000;
+	}
 	for (int i = 0; i < quality; ++i) {
-		blurX(img, width, height, bx);
-		blurY(img, width, height, by);
+		blurX(img, width, height, bx, abgrBorderColor);
+		blurY(img, width, height, by, abgrBorderColor);
 	}
 }
 
-void blurX(unsigned char *img, int width, int height, int distance)
+void blurX(unsigned char *img, int width, int height, int distance, unsigned int borderColor)
 {
 	if (distance < 1) {
 		return;
@@ -59,14 +66,22 @@ void blurX(unsigned char *img, int width, int height, int distance)
 
 	unsigned char *src = img;
 
+	int dist2 = distance << 1;
 	int dist4 = distance << 2;
 	int dist8 = distance << 3;
 	int lineOutSize = width << 2;
 	int lineInSize = lineOutSize + dist8; // (distance * 2) + width
-	int windowLength = (distance << 1) + 1; // (distance * 2) + 1
+	int windowLength = dist2 + 1; // (distance * 2) + 1
 
 	unsigned char *lineBufferIn = malloc(lineInSize);
-	memset(lineBufferIn, 0, lineInSize);
+	unsigned int *pBorderLeft = (unsigned int *)lineBufferIn;
+	unsigned int *pBorderRight = (unsigned int *)(lineBufferIn + lineInSize - 4);
+	for (int i = 0; i < dist2; ++i) {
+		*pBorderLeft = borderColor;
+		*pBorderRight = borderColor;
+		pBorderLeft++;
+		pBorderRight--;
+	}
 
 	for (int y = 0; y < height; ++y) {
 		memcpy(lineBufferIn + dist8, src + dist4, lineOutSize - dist8);
@@ -77,7 +92,7 @@ void blurX(unsigned char *img, int width, int height, int distance)
 	free(lineBufferIn);
 }
 
-void blurY(unsigned char *img, int width, int height, int distance)
+void blurY(unsigned char *img, int width, int height, int distance, unsigned int borderColor)
 {
 	if (distance < 1) {
 		return;
@@ -91,7 +106,14 @@ void blurY(unsigned char *img, int width, int height, int distance)
 	int windowLength = dist2 + 1; // (distance * 2) + 1
 
 	unsigned char *lineBufferIn = malloc(lineInSize);
-	memset(lineBufferIn, 0, lineInSize);
+	unsigned int *pBorderTop = (unsigned int *)lineBufferIn;
+	unsigned int *pBorderBottom = (unsigned int *)(lineBufferIn + lineInSize - 4);
+	for (int i = 0; i < dist2; ++i) {
+		*pBorderTop++ = borderColor;
+		*pBorderBottom = borderColor;
+		pBorderTop++;
+		pBorderBottom--;
+	}
 
 	unsigned char *lineBufferOut = malloc(lineOutSize);
 	memset(lineBufferOut, 0, lineOutSize);
@@ -128,13 +150,18 @@ void blurY(unsigned char *img, int width, int height, int distance)
 void boxBlur(unsigned int *lineBufferOut, unsigned char *lineBufferIn, int width, int windowLength)
 {
 	int windowSize = windowLength << 2;
+	long rs = 0, gs = 0, bs = 0, as = 0;
 
 	// Init window
-	unsigned char *ptr = lineBufferIn + windowSize - 4;
-	long rs = *ptr;
-	long gs = *(ptr + 1);
-	long bs = *(ptr + 2);
-	long as = *(ptr + 3);
+	unsigned char *ptr = lineBufferIn;
+	unsigned char *ptrEnd = lineBufferIn + windowSize;
+	while (ptr < ptrEnd) {
+		rs += *ptr;
+		gs += *(ptr + 1);
+		bs += *(ptr + 2);
+		as += *(ptr + 3);
+		ptr += 4;
+	}
 
 	// Slide window
 	unsigned char *pLast = lineBufferIn;
@@ -171,6 +198,18 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 
 	pan(tmp, img, width, height, dx, dy);
 	tint(tmp, tmp, width, height, color, inner);
+	blur(tmp, width, height, bx, by, quality, (inner == 1) ? color : 0);
+
+	if (inner == 1) {
+		unsigned char *src = img;
+		unsigned char *dst = tmp;
+		unsigned char *ptrEnd = img + ((width * height) << 2);
+		while (src < ptrEnd) {
+			*(dst + 3) = *(src + 3);
+			dst += 4;
+			src += 4;
+		}
+	}
 
 	memcpy(img, tmp, len << 2);
 
