@@ -33,10 +33,12 @@ var DisplayObjectDefinition = (function () {
                             executeFrame: false, exitFrame: true,
                             render: true };
 
-  var p1 = { x: 0, y: 0 };
-  var p2 = { x: 0, y: 0 };
-  var p3 = { x: 0, y: 0 };
-  var p4 = { x: 0, y: 0 };
+  var topLeft = { x: 0, y: 0 };
+  var topRight = { x: 0, y: 0 };
+  var bottomRight = { x: 0, y: 0 };
+  var bottomLeft = { x: 0, y: 0 };
+
+  var point = { x: 0, y: 0 };
 
   var def = {
     __class__: 'flash.display.DisplayObject',
@@ -357,12 +359,13 @@ var DisplayObjectDefinition = (function () {
 
     _hitTest: function(use_xy, x, y, useShape, hitTestObject) {
       if (use_xy) {
-        var pt = { x: x, y: y };
-        this._applyConcatenatedInverseTransform(pt);
+        point.x = x;
+        point.y = y;
+        this._applyConcatenatedInverseTransform(point);
 
         var b = this._getContentBounds();
-        if (!(pt.x >= b.xMin && pt.x < b.xMax &&
-              pt.y >= b.yMin && pt.y < b.yMax))
+        if (!(point.x >= b.xMin && point.x < b.xMax &&
+              point.y >= b.yMin && point.y < b.yMax))
         {
           return false;
         }
@@ -375,7 +378,7 @@ var DisplayObjectDefinition = (function () {
           for (var i = 0, n = subpaths.length; i < n; i++) {
             var path = subpaths[i];
 
-            if (path.isPointInPath(pt.x, pt.y)) {
+            if (path.isPointInPath(point.x, point.y)) {
               return true;
             }
 
@@ -385,7 +388,7 @@ var DisplayObjectDefinition = (function () {
                 strokePath = path.strokePath(path.drawingStyles);
                 path._strokePath = strokePath;
               }
-              if (strokePath.isPointInPath(pt.x, pt.y)) {
+              if (strokePath.isPointInPath(point.x, point.y)) {
                 return true;
               }
             }
@@ -577,19 +580,19 @@ var DisplayObjectDefinition = (function () {
       if (!this._stage) {
         return 0;
       }
-      p1.x = this._stage._mouseX;
-      p1.y = this._stage._mouseY;
-      this._applyConcatenatedInverseTransform(p1);
-      return p1.x;
+      point.x = this._stage._mouseX;
+      point.y = this._stage._mouseY;
+      this._applyConcatenatedInverseTransform(point);
+      return point.x;
     },
     get mouseY() {
       if (!this._stage) {
         return 0;
       }
-      p1.x = this._stage._mouseX;
-      p1.y = this._stage._mouseY;
-      this._applyConcatenatedInverseTransform(p1);
-      return p1.y;
+      point.x = this._stage._mouseX;
+      point.y = this._stage._mouseY;
+      this._applyConcatenatedInverseTransform(point);
+      return point.y;
     },
     get opaqueBackground() {
       return this._opaqueBackground;
@@ -911,24 +914,27 @@ var DisplayObjectDefinition = (function () {
         return rect;
       }
 
-      p1.x = rect.xMin;
-      p1.y = rect.yMin;
+      topLeft.x = rect.xMin;
+      topLeft.y = rect.yMin;
 
-      p2.x = rect.xMax;
-      p2.y = rect.yMin;
+      topRight.x = rect.xMax;
+      topRight.y = rect.yMin;
 
-      p3.x = rect.xMax;
-      p3.y = rect.yMax;
+      bottomRight.x = rect.xMax;
+      bottomRight.y = rect.yMax;
 
-      p4.x = rect.xMin;
-      p4.y = rect.yMax;
+      bottomLeft.x = rect.xMin;
+      bottomLeft.y = rect.yMax;
 
-      this._applyCurrentTransform(targetCoordSpace, p1, p2, p3, p4);
+      this._applyCurrentTransform(targetCoordSpace, topLeft,
+                                                    topRight,
+                                                    bottomRight,
+                                                    bottomLeft);
 
-      var xMin = Math.min(p1.x, p2.x, p3.x, p4.x);
-      var xMax = Math.max(p1.x, p2.x, p3.x, p4.x);
-      var yMin = Math.min(p1.y, p2.y, p3.y, p4.y);
-      var yMax = Math.max(p1.y, p2.y, p3.y, p4.y);
+      var xMin = Math.min(topLeft.x, topRight.x, bottomRight.x, bottomLeft.x);
+      var xMax = Math.max(topLeft.x, topRight.x, bottomRight.x, bottomLeft.x);
+      var yMin = Math.min(topLeft.y, topRight.y, bottomRight.y, bottomLeft.y);
+      var yMax = Math.max(topLeft.y, topRight.y, bottomRight.y, bottomLeft.y);
 
       return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax };
     },
@@ -1043,14 +1049,16 @@ var DisplayObjectDefinition = (function () {
         loaderInfo: desc(def, "loaderInfo"),
         accessibilityProperties: desc(def, "accessibilityProperties"),
         globalToLocal: function(pt) {
-          var twipPt = {x: (pt.x * 20)|0, y: (pt.y * 20)|0};
-          this._applyConcatenatedInverseTransform(twipPt);
-          return new flash.geom.Point(twipPt.x / 20, twipPt.y / 20);
+          point.x = (pt.x * 20)|0;
+          point.y = (pt.y * 20)|0;
+          this._applyConcatenatedInverseTransform(point);
+          return new flash.geom.Point(point.x / 20, point.y / 20);
         },
         localToGlobal: function(pt) {
-          var twipPt = {x: (pt.x * 20)|0, y: (pt.y * 20)|0};
-          this._applyCurrentTransform(this._stage, twipPt);
-          return new flash.geom.Point(twipPt.x / 20, twipPt.y / 20);
+          point.x = (pt.x * 20)|0;
+          point.y = (pt.y * 20)|0;
+          this._applyCurrentTransform(this._stage, point);
+          return new flash.geom.Point(point.x / 20, point.y / 20);
         },
         getBounds: function(targetCoordSpace) {
           var bounds = this.getBounds(targetCoordSpace);
