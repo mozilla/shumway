@@ -906,12 +906,12 @@ var DisplayObjectDefinition = (function () {
                                       targetCoordSpace);
     },
     _getTransformedRect: function (rect, targetCoordSpace) {
-      if (rect.xMax - rect.xMin === 0 || rect.yMax - rect.yMin === 0) {
-        return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
+      if (!targetCoordSpace || targetCoordSpace === this) {
+        return rect;
       }
 
-      if (!targetCoordSpace) {
-        return rect;
+      if (rect.xMax - rect.xMin === 0 || rect.yMax - rect.yMin === 0) {
+        return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
       }
 
       topLeft.x = rect.xMin;
