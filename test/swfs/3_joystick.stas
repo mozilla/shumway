@@ -1,7 +1,7 @@
 // 3_joystick.swf test script
 
 run_test = function (t, file) {
-  var initx = 115.1, inity = 116, delta = 70;
+  var initx = 115.1, inity = 116, delta = 20;
   print ("Testing " + file);
   t.reset (file);
   var expected = Buffer.load (file + ".trace");

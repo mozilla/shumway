@@ -264,6 +264,13 @@
        ],
        "type": "stas"
     },
+    {  "id": "3_joystick",
+       "stas": "swfs/3_joystick.stas",
+       "filenames": [
+         "swfs/3_joystick.swf"
+       ],
+       "type": "stas"
+    },
     {  "id": "MaskTest",
        "frames": [1],
        "swf": "swfs/MaskTest.swf",
