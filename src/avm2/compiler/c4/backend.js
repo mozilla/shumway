@@ -585,7 +585,7 @@
     var scope = compileValue(this.scope, cx);
     var object = compileValue(this.object, cx);
     var name = compileMultiname(this.name, cx);
-    var value = compileMultiname(this.value, cx);
+    var value = compileValue(this.value, cx);
     return call(property(object, "asSetSuper"), [scope].concat(name).concat([value]));
   };
 
