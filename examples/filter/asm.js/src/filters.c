@@ -186,7 +186,7 @@ void boxBlur(unsigned int *lineBufferOut, unsigned char *lineBufferIn, int width
 	}
 }
 
-void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsigned int color, int alpha, int bx, int by, int strength, int quality, unsigned int flags)
+void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsigned int color, int alpha, int bx, int by, double strength, int quality, unsigned int flags)
 {
 	int inner = flags & 1;
 	int knockout = (flags >> 1) & 1;
@@ -200,10 +200,15 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 	tint(tmp, tmp, width, height, color, inner);
 	blur(tmp, width, height, bx, by, quality, (inner == 1) ? color : 0);
 
+	unsigned char *src;
+	unsigned char *dst;
+	unsigned char *ptrEnd;
+
+	// TODO:
 	if (inner == 1) {
-		unsigned char *src = img;
-		unsigned char *dst = tmp;
-		unsigned char *ptrEnd = img + ((width * height) << 2);
+		src = img;
+		dst = tmp;
+		ptrEnd = img + ((width * height) << 2);
 		while (src < ptrEnd) {
 			*(dst + 3) = *(src + 3);
 			dst += 4;
@@ -211,7 +216,13 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 		}
 	}
 
-	memcpy(img, tmp, len << 2);
+	scaleAlpha(tmp, width, height, strength);
+
+	if (hideObject == 0) {
+		compositeDestinationOver(img, tmp, width, height);
+	} else {
+		memcpy(img, tmp, len << 2);
+	}
 
 	free(tmp);
 }
@@ -299,5 +310,94 @@ void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigne
 			dst32++;
 			src += 4;
 		}
+	}
+}
+
+void scaleAlpha(unsigned char *img, int width, int height, double strength)
+{
+	if (strength == 1.0) {
+		return;
+	}
+
+	unsigned char *imgEnd = img + ((width * height) << 2);
+
+	unsigned int *img32 = (unsigned int *)img;
+
+	int r, g, b, a;
+
+	if (strength < 1.0) {
+		while (img < imgEnd) {
+			r = *img * strength;
+			g = *(img + 1) * strength;
+			b = *(img + 2) * strength;
+			a = *(img + 3) * strength;
+			*img32++ = r | g << 8 | b << 16 | a << 24;
+			img += 4;
+		}
+	} else {
+		while (img < imgEnd) {
+			r = min(*img * strength, 0xff);
+			g = min(*(img + 1) * strength, 0xff);
+			b = min(*(img + 2) * strength, 0xff);
+			a = min(*(img + 3) * strength, 0xff);
+			*img32++ = r | g << 8 | b << 16 | a << 24;
+			img += 4;
+		}
+	}
+}
+
+void compositeSourceOver(unsigned char *dst, unsigned char *src, int width, int height)
+{
+	unsigned char *end = src + ((width * height) << 2);
+
+	unsigned int *dst32 = (unsigned int *)dst;
+
+	int dr, dg, db;
+	int sr, sg, sb;
+	double da;
+	double sa;
+	double sa_inv;
+
+	while (src < end) {
+		sr = *src;
+		sg = *(src + 1);
+		sb = *(src + 2);
+		sa = *(src + 3) / 255.0;
+		sa_inv = 1.0 - sa;
+		dr = *dst;
+		dg = *(dst + 1);
+		db = *(dst + 2);
+		da = *(dst + 3) / 255.0;
+		*dst32++ = (int)(sr + dr * sa_inv) | (int)(sg + dg * sa_inv) << 8 | (int)(sb + db * sa_inv) << 16 | (int)((sa + da * sa_inv) * 255.0) << 24;
+		src += 4;
+		dst += 4;
+	}
+}
+
+void compositeDestinationOver(unsigned char *dst, unsigned char *src, int width, int height)
+{
+	unsigned char *end = src + ((width * height) << 2);
+
+	unsigned int *dst32 = (unsigned int *)dst;
+
+	int dr, dg, db;
+	int sr, sg, sb;
+	double sa;
+	double da;
+	double da_inv;
+
+	while (src < end) {
+		sr = *src;
+		sg = *(src + 1);
+		sb = *(src + 2);
+		sa = *(src + 3) / 255.0;
+		dr = *dst;
+		dg = *(dst + 1);
+		db = *(dst + 2);
+		da = *(dst + 3) / 255.0;
+		da_inv = 1.0 - da;
+		*dst32++ = (int)(dr + sr * da_inv) | (int)(dg + sg * da_inv) << 8 | (int)(db + sb * da_inv) << 16 | (int)((da + sa * da_inv) * 255.0) << 24;
+		src += 4;
+		dst += 4;
 	}
 }
