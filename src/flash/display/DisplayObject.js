@@ -192,9 +192,18 @@ var DisplayObjectDefinition = (function () {
                                this._currentTransform;
       }
 
+      var invalidNode = null;
       var m, m2;
 
-      if (this._concatenatedTransform.invalid) {
+      var currentNode = this;
+      while (currentNode !== stage) {
+        if (currentNode._concatenatedTransform.invalid) {
+          invalidNode = currentNode;
+        }
+        currentNode = currentNode._parent;
+      }
+
+      if (invalidNode) {
         if (this._parent === stage) {
           m = this._concatenatedTransform;
           m2 = this._currentTransform;
@@ -205,25 +214,23 @@ var DisplayObjectDefinition = (function () {
           m.tx = m2.tx;
           m.ty = m2.ty;
         } else {
-          var stack = [this];
-
-          var currentNode = this._parent;
-          while (currentNode !== stage) {
-            if (currentNode._concatenatedTransform.invalid) {
-              stack.push(currentNode);
-            }
+          var stack = [];
+          var currentNode = this;
+          while (currentNode !== invalidNode) {
+            stack.push(currentNode);
             currentNode = currentNode._parent;
           }
 
-          while (stack.length) {
-            var node = stack.pop();
+          var node = invalidNode;
+          do {
+            var parent = node._parent;
 
             m = node._concatenatedTransform;
             m2 = node._currentTransform;
 
-            if (node._parent) {
-              if (node._parent !== this._stage) {
-                var m3 = node._parent._concatenatedTransform;
+            if (parent) {
+              if (parent !== stage) {
+                var m3 = parent._concatenatedTransform;
                 m.a = m2.a * m3.a + m2.b * m3.c;
                 m.b = m2.a * m3.b + m2.b * m3.d;
                 m.c = m2.c * m3.a + m2.d * m3.c;
@@ -241,7 +248,19 @@ var DisplayObjectDefinition = (function () {
             }
 
             m.invalid = false;
-          }
+
+            var nextNode = stack.pop();
+
+            var children = node._children;
+            for (var i = 0; i < children.length; i++) {
+              var child = children[i];
+              if (child !== nextNode) {
+                child._concatenatedTransform.invalid = true;
+              }
+            }
+
+            node = nextNode;
+          } while (node);
         }
       } else {
         m = this._concatenatedTransform;
@@ -403,17 +422,7 @@ var DisplayObjectDefinition = (function () {
       }
     },
     _invalidateTransform: function () {
-      var stack = [this];
-      while (stack.length) {
-        var node = stack.pop();
-        if (node._concatenatedTransform && !node._concatenatedTransform.invalid) {
-          node._concatenatedTransform.invalid = true;
-          var children = node._children;
-          for (var i = 0; i < children.length; i++) {
-            stack.push(children[i]);
-          }
-        }
-      }
+      this._concatenatedTransform.invalid = true;
     },
     _setTransformMatrix: function(matrix, convertToTwips) {
       var a = matrix.a;
