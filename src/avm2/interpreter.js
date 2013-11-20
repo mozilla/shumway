@@ -111,14 +111,17 @@ var Interpreter = new ((function () {
           case 0x03: // OP_throw
             throw stack.pop();
           case 0x04: // OP_getsuper
-            name = popName(stack, multinames[bc.index]);
-            stack[stack.length - 1] = getSuper(savedScope,
-                                               stack[stack.length - 1], name);
+            popNameInto(stack, multinames[bc.index], tmpMultiname);
+            stack.push(stack.pop().asGetSuper (
+              savedScope, tmpMultiname.namespaces, tmpMultiname.name, tmpMultiname.flags
+            ));
             break;
           case 0x05: // OP_setsuper
             value = stack.pop();
-            name = popName(stack, multinames[bc.index]);
-            setSuper(savedScope, stack.pop(), name, value);
+            popNameInto(stack, multinames[bc.index], tmpMultiname);
+            stack.pop().asSetSuper (
+              savedScope, tmpMultiname.namespaces, tmpMultiname.name, tmpMultiname.flags, value
+            );
             break;
           case 0x08: // OP_kill
             locals[bc.index] = undefined;
@@ -277,18 +280,9 @@ var Interpreter = new ((function () {
             popManyInto(stack, bc.argCount, args);
             stack[stack.length - 1] = construct(stack[stack.length - 1], args);
             break;
-          case 0x45: // OP_callsuper
-            popManyInto(stack, bc.argCount, args);
-            name = popName(stack, multinames[bc.index]);
-            obj = stack[stack.length - 1];
-            stack[stack.length - 1] = getSuper(savedScope, obj, name).
-                                          apply(obj, args);
-            break;
           case 0x47: // OP_returnvoid
-            // AVM2.callStack.pop();
             return;
           case 0x48: // OP_returnvalue
-            // AVM2.callStack.pop();
             if (method.returnType) {
               return asCoerceByMultiname(domain, method.returnType, stack.pop());
             }
@@ -324,11 +318,16 @@ var Interpreter = new ((function () {
               stack.push(res);
             }
             break;
+          case 0x45: // OP_callsuper
           case 0x4E: // OP_callsupervoid
             popManyInto(stack, bc.argCount, args);
-            name = popName(stack, multinames[bc.index]);
-            obj = stack.pop();
-            getSuper(savedScope, obj, name).apply(obj, args);
+            popNameInto(stack, multinames[bc.index], tmpMultiname);
+            res = stack.pop().asCallSuper (
+              savedScope, tmpMultiname.namespaces, tmpMultiname.name, tmpMultiname.flags, args
+            );
+            if (op !== OP_callsupervoid) {
+              stack.push(res);
+            }
             break;
           case 0x53: // OP_applytype
             popManyInto(stack, bc.argCount, args);

@@ -42,7 +42,10 @@ var VM_BINDINGS = "vm bindings";
 var VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
 var VM_OPEN_METHODS = "vm open methods";
 var VM_IS_CLASS = "vm is class";
-var VM_OPEN_METHOD_PREFIX = "open_";
+
+var VM_OPEN_METHOD_PREFIX = "method_";
+var VM_OPEN_SET_METHOD_PREFIX = "set_";
+var VM_OPEN_GET_METHOD_PREFIX = "get_";
 
 var VM_NATIVE_BUILTIN_SURROGATES = [
   { object: Object, methods: ["toString", "valueOf"] },
@@ -360,6 +363,7 @@ function fromResolvedName(resolved) {
   release || assert(resolved.indexOf(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX) === 0, resolved);
   return resolved.substring(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
 }
+
 function asGetResolvedStringPropertyFallback(resolved) {
   var name = fromResolvedName(resolved);
   return this.asGetProperty([ShumwayNamespace.PUBLIC], name, 0);
@@ -442,6 +446,44 @@ function asCallProperty(namespaces, name, flags, isLex, args) {
     }
     result = method.apply(receiver, args);
   }
+  traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
+  return result;
+}
+
+function asCallSuper(scope, namespaces, name, flags, args) {
+  if (traceCallExecution.value) {
+    var receiver = this.class ? this.class.className + " ": "";
+    callWriter.enter("call super " + receiver + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
+  }
+  var baseClass = scope.object.baseClass;
+  var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
+  var openMethods = baseClass.traitsPrototype[VM_OPEN_METHODS];
+  assert (openMethods && openMethods[resolved]);
+  var method = openMethods[resolved];
+  var result = method.apply(this, args);
+  traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
+  return result;
+}
+
+function asSetSuper(scope, namespaces, name, flags, value) {
+  if (traceCallExecution.value) {
+    var receiver = this.class ? this.class.className + " ": "";
+    callWriter.enter("set super " + receiver + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
+  }
+  var baseClass = scope.object.baseClass;
+  var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
+  baseClass.traitsPrototype[VM_OPEN_SET_METHOD_PREFIX + resolved].call(this, value);
+  traceCallExecution.value > 0 && callWriter.leave("");
+}
+
+function asGetSuper(scope, namespaces, name, flags) {
+  if (traceCallExecution.value) {
+    var receiver = this.class ? this.class.className + " ": "";
+    callWriter.enter("get super " + receiver + name + " #" + callCounter.count(name));
+  }
+  var baseClass = scope.object.baseClass;
+  var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
+  var result = baseClass.traitsPrototype[VM_OPEN_GET_METHOD_PREFIX + resolved].call(this);
   traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
   return result;
 }
@@ -598,6 +640,9 @@ function initializeGlobalObject(global) {
   defineNonEnumerableProperty(global.Object.prototype, "asDefineProperty", asDefineProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asDefinePublicProperty", asDefinePublicProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asCallProperty", asCallProperty);
+  defineNonEnumerableProperty(global.Object.prototype, "asCallSuper", asCallSuper);
+  defineNonEnumerableProperty(global.Object.prototype, "asGetSuper", asGetSuper);
+  defineNonEnumerableProperty(global.Object.prototype, "asSetSuper", asSetSuper);
   defineNonEnumerableProperty(global.Object.prototype, "asCallPublicProperty", asCallPublicProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asCallResolvedStringProperty", asCallResolvedStringProperty);
   defineNonEnumerableProperty(global.Object.prototype, "asConstructProperty", asConstructProperty);
@@ -1045,6 +1090,7 @@ function resolveMultinameUnguarded(object, mn, traitsOnly) {
   return undefined;
 }
 
+// TODO: Remove this and its uses.
 function resolveMultiname(object, mn, traitsOnly) {
   enter(JS);
   var result = resolveMultinameUnguarded(object, mn, traitsOnly);
@@ -1056,106 +1102,11 @@ function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
 
-function hasProperty(object, name) {
-  object = boxValue(object);
-  if (object.hasProperty) {
-    return object.hasProperty(name);
-  }
-  return resolveName(object, name) in object;
-}
-
 /**
  * Proxy traps ignore operations passing through nonProxying functions.
  */
 function nonProxyingHasProperty(object, name) {
   return name in object;
-}
-
-function getSuper(scope, object, mn) {
-  release || assert(scope instanceof Scope);
-  release || assert(object !== undefined, "getSuper(", mn, ") on undefined");
-  release || assert(Multiname.isMultiname(mn));
-  var superClass = scope.object.baseClass;
-  release || assert(superClass);
-  var superTraitsPrototype = superClass.instanceConstructor.prototype;
-
-  var resolved = mn.isQName() ? mn : resolveMultiname(superTraitsPrototype, mn);
-  var value = undefined;
-  if (resolved) {
-    if (Multiname.isNumeric(resolved) && superTraitsPrototype.asGetNumericProperty) {
-      value = superTraitsPrototype.asGetNumericProperty(Multiname.getQualifiedName(resolved), value);
-    } else {
-      // Which class is it really on?
-      var qn = Multiname.getQualifiedName(resolved);
-      var openMethod = superTraitsPrototype[VM_OPEN_METHODS][qn];
-      var superName = superClass.classInfo.instanceInfo.name;
-
-      // If we're getting a method closure on the super class, close the open
-      // method now and save it to a mangled name. We can't go through the
-      // normal memoizer here because we could be overriding our own method or
-      // getting into an infinite loop (getters that access the property
-      // they're set to on the same object is bad news).
-      if (openMethod) {
-        value = object[superName + " " + qn];
-        if (!value) {
-          value = object[superName + " " + qn] = bindSafely(openMethod, object);
-        }
-      } else {
-        var descriptor = Object.getOwnPropertyDescriptor(superTraitsPrototype, qn);
-        release || assert(descriptor);
-        value = descriptor.get ? descriptor.get.call(object) : object[qn];
-      }
-    }
-  }
-  return value;
-}
-
-function resolveName(object, name) {
-  if (name instanceof Multiname) {
-    if (name.namespaces.length > 1) {
-      var resolved = resolveMultiname(object, name);
-      if (resolved !== undefined) {
-        return Multiname.getQualifiedName(resolved);
-      } else {
-        return Multiname.getPublicQualifiedName(name.name);
-      }
-    } else {
-      return Multiname.getQualifiedName(name);
-    }
-  } else if (typeof name === "object") {
-    // Call toString() on |mn| object.
-    return Multiname.getPublicQualifiedName(String(name));
-  } else {
-    return name;
-  }
-}
-
-function setSuper(scope, object, mn, value) {
-  release || assert(object);
-  release || assert(Multiname.isMultiname(mn));
-  var superClass = scope.object.baseClass;
-  release || assert(superClass);
-
-  var superTraitsPrototype = superClass.instanceConstructor.prototype;
-  var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(superTraitsPrototype, mn);
-
-  if (resolved !== undefined) {
-    if (Multiname.isNumeric(resolved) && superTraitsPrototype.asSetNumericProperty) {
-      superTraitsPrototype.asSetNumericProperty(Multiname.getQualifiedName(resolved), value);
-    } else {
-      var qn = Multiname.getQualifiedName(resolved);
-      var descriptor = Object.getOwnPropertyDescriptor(superTraitsPrototype, qn);
-      release || assert(descriptor);
-      if (descriptor.set) {
-        descriptor.set.call(object, value);
-      } else {
-        object[qn] = value;
-      }
-    }
-  } else {
-    throw new ReferenceError("Cannot create property " + mn.name +
-                             " on " + superClass.debugName);
-  }
 }
 
 function forEachPublicProperty(object, fn, self) {

@@ -229,6 +229,7 @@ var createName = function createName(namespaces, name) {
   function info(message) {
     console.info(message);
   }
+
   function unary(operator, argument) {
     var node = new Unary(operator, argument);
     if (peepholeOptimizer) {
@@ -656,14 +657,40 @@ var createName = function createName(namespaces, name) {
           return GlobalMultinameResolver.resolveMultiname(new Multiname(namespaces.value, name.value, multiname.flags));
         }
 
+        function callSuper(scope, object, multiname, args, ti) {
+          if (ti && ti.trait && ti.trait.isMethod() && ti.baseClass) {
+            var qn = VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+            var callee = getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
+            return call(callee, object, args);
+          }
+          return store(new IR.ASCallSuper(region, state.store, object, multiname, args, IR.Flags.PRISTINE, scope));
+        }
+
+        function getSuper(scope, object, multiname, ti) {
+          if (ti && ti.trait && ti.trait.isGetter() && ti.baseClass) {
+            var qn = VM_OPEN_GET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+            var callee = getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
+            return call(callee, object, []);
+          }
+          return store(new IR.ASGetSuper(region, state.store, object, multiname, scope));
+        }
+
+        function setSuper(scope, object, multiname, value, ti) {
+          if (ti && ti.trait && ti.trait.isSetter() && ti.baseClass) {
+            var qn = VM_OPEN_SET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+            var callee = getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
+            return call(callee, object, [value]);
+          }
+          return store(new IR.ASSetSuper(region, state.store, object, multiname, value, scope));
+        }
+
         function callProperty(object, multiname, args, isLex, ti) {
-          // name = simplifyName(name);
           if (ti && ti.trait) {
             if (ti.trait.isMethod()) {
               var openQn;
               if (ti.trait.holder instanceof InstanceInfo &&
                   ti.trait.holder.isInterface()) {
-                openQn = Multiname.getPublicQualifiedName(Multiname.getName(ti.trait.name))
+                openQn = Multiname.getPublicQualifiedName(Multiname.getName(ti.trait.name));
               } else {
                 openQn = Multiname.getQualifiedName(ti.trait.name);
               }
@@ -990,13 +1017,13 @@ var createName = function createName(namespaces, name) {
             case 0x04: // OP_getsuper
               multiname = buildMultiname(bc.index);
               object = pop();
-              push(call(globalProperty("getSuper"), null, [savedScope(), object, multiname]));
+              push(getSuper(savedScope(), object, multiname, bc.ti));
               break;
             case 0x05: // OP_setsuper
               value = pop();
               multiname = buildMultiname(bc.index);
               object = pop();
-              store(call(globalProperty("setSuper"), null, [savedScope(), object, multiname, value]));
+              push(setSuper(savedScope(), object, multiname, value, bc.ti));
               break;
             case 0xF1: // OP_debugfile
             case 0xF0: // OP_debugline
@@ -1026,8 +1053,7 @@ var createName = function createName(namespaces, name) {
               multiname = buildMultiname(bc.index);
               args = popMany(bc.argCount);
               object = pop();
-              callee = call(globalProperty("getSuper"), null, [savedScope(), object, multiname]);
-              value = call(callee, object, args);
+              value = callSuper(savedScope(), object, multiname, args, bc.ti);
               if (op !== OP_callsupervoid) {
                 push(value);
               }

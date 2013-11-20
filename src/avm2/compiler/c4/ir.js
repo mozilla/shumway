@@ -142,6 +142,11 @@
               assert: "",
               internal: true
             }
+          },
+          ASCallSuper: {
+            scope: {
+              assert: ""
+            }
           }
         },
         New: {
@@ -169,7 +174,12 @@
           },
           ASGetDescendants: {},
           ASHasProperty: {},
-          ASGetSlot: {}
+          ASGetSlot: {},
+          ASGetSuper: {
+            scope: {
+              assert: ""
+            }
+          }
         },
         SetProperty: {
           object: {
@@ -186,7 +196,12 @@
               internal: true
             }
           },
-          ASSetSlot: {}
+          ASSetSlot: {},
+          ASSetSuper: {
+            scope: {
+              assert: ""
+            }
+          }
         },
         DeleteProperty: {
           object: {
@@ -428,7 +443,7 @@
       writer.writeLn("this.id = nextID[nextID.length - 1] += 1;");
       writer.leave("}");
       if (path.length > 1) {
-        writer.writeLn(prototypeName + " = " + "extend(" + path[path.length - 2]._name + ", \"" + node._name + "\")");
+        writer.writeLn(prototypeName + " = " + "extend(" + path[path.length - 2]._name + ", \"" + node._name + "\");");
       }
 
       writer.writeLn(prototypeName + ".nodeName = \"" + node._name + "\";");
@@ -489,7 +504,7 @@
       release || assert (arguments.length >= 0, "Control not enough args.");
       this.id = nextID[nextID.length - 1] += 1;
     }
-    controlNode.prototype = extend(Node, "Control")
+    controlNode.prototype = extend(Node, "Control");
     controlNode.prototype.nodeName = "Control";
     controlNode.prototype.visitInputs = function (visitor) {
     };
@@ -502,7 +517,7 @@
       this.predecessors = control ? [control] : [];
       this.id = nextID[nextID.length - 1] += 1;
     }
-    regionNode.prototype = extend(Control, "Region")
+    regionNode.prototype = extend(Control, "Region");
     regionNode.prototype.nodeName = "Region";
     regionNode.prototype.visitInputs = function (visitor) {
       visitArrayInputs(this.predecessors, visitor);
@@ -519,7 +534,7 @@
       this.domain = undefined;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    startNode.prototype = extend(Region, "Start")
+    startNode.prototype = extend(Region, "Start");
     startNode.prototype.nodeName = "Start";
     startNode.prototype.visitInputs = function (visitor) {
       visitArrayInputs(this.predecessors, visitor);
@@ -536,7 +551,7 @@
       this.control = control;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    endNode.prototype = extend(Control, "End")
+    endNode.prototype = extend(Control, "End");
     endNode.prototype.nodeName = "End";
     endNode.prototype.visitInputs = function (visitor) {
       visitor(this.control);
@@ -555,7 +570,7 @@
       this.argument = argument;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    stopNode.prototype = extend(End, "Stop")
+    stopNode.prototype = extend(End, "Stop");
     stopNode.prototype.nodeName = "Stop";
     stopNode.prototype.visitInputs = function (visitor) {
       visitor(this.control);
@@ -574,7 +589,7 @@
       this.predicate = predicate;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    ifNode.prototype = extend(End, "If")
+    ifNode.prototype = extend(End, "If");
     ifNode.prototype.nodeName = "If";
     ifNode.prototype.visitInputs = function (visitor) {
       visitor(this.control);
@@ -592,7 +607,7 @@
       this.determinant = determinant;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    switchNode.prototype = extend(End, "Switch")
+    switchNode.prototype = extend(End, "Switch");
     switchNode.prototype.nodeName = "Switch";
     switchNode.prototype.visitInputs = function (visitor) {
       visitor(this.control);
@@ -608,7 +623,7 @@
       this.control = control;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    jumpNode.prototype = extend(End, "Jump")
+    jumpNode.prototype = extend(End, "Jump");
     jumpNode.prototype.nodeName = "Jump";
     jumpNode.prototype.visitInputs = function (visitor) {
       visitor(this.control);
@@ -621,7 +636,7 @@
       release || assert (arguments.length >= 0, "Value not enough args.");
       this.id = nextID[nextID.length - 1] += 1;
     }
-    valueNode.prototype = extend(Node, "Value")
+    valueNode.prototype = extend(Node, "Value");
     valueNode.prototype.nodeName = "Value";
     valueNode.prototype.visitInputs = function (visitor) {
     };
@@ -638,7 +653,7 @@
       this.loads = undefined;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    storeDependentNode.prototype = extend(Value, "StoreDependent")
+    storeDependentNode.prototype = extend(Value, "StoreDependent");
     storeDependentNode.prototype.nodeName = "StoreDependent";
     storeDependentNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -666,7 +681,7 @@
       this.flags = flags;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    callNode.prototype = extend(StoreDependent, "Call")
+    callNode.prototype = extend(StoreDependent, "Call");
     callNode.prototype.nodeName = "Call";
     callNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -697,7 +712,7 @@
       this.flags = flags;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    callPropertyNode.prototype = extend(StoreDependent, "CallProperty")
+    callPropertyNode.prototype = extend(StoreDependent, "CallProperty");
     callPropertyNode.prototype.nodeName = "CallProperty";
     callPropertyNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -730,7 +745,7 @@
       this.isLex = isLex;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asCallPropertyNode.prototype = extend(CallProperty, "ASCallProperty")
+    asCallPropertyNode.prototype = extend(CallProperty, "ASCallProperty");
     asCallPropertyNode.prototype.nodeName = "ASCallProperty";
     asCallPropertyNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -741,6 +756,40 @@
       visitArrayInputs(this.args, visitor);
     };
     return asCallPropertyNode;
+  })();
+
+  var ASCallSuper = (function () {
+    function asCallSuperNode(control, store, object, name, args, flags, scope) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (isArray(args), "args");
+      release || assert (isNumber(flags), "flags");
+      release || assert (!(scope == undefined), "scope");
+      release || assert (arguments.length >= 7, "ASCallSuper not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.args = args;
+      this.flags = flags;
+      this.scope = scope;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asCallSuperNode.prototype = extend(CallProperty, "ASCallSuper");
+    asCallSuperNode.prototype.nodeName = "ASCallSuper";
+    asCallSuperNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitArrayInputs(this.args, visitor);
+      visitor(this.scope);
+    };
+    return asCallSuperNode;
   })();
 
   var New = (function () {
@@ -757,7 +806,7 @@
       this.args = args;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    newNode.prototype = extend(StoreDependent, "New")
+    newNode.prototype = extend(StoreDependent, "New");
     newNode.prototype.nodeName = "New";
     newNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -783,7 +832,7 @@
       this.args = args;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asNewNode.prototype = extend(New, "ASNew")
+    asNewNode.prototype = extend(New, "ASNew");
     asNewNode.prototype.nodeName = "ASNew";
     asNewNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -809,7 +858,7 @@
       this.name = name;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    getPropertyNode.prototype = extend(StoreDependent, "GetProperty")
+    getPropertyNode.prototype = extend(StoreDependent, "GetProperty");
     getPropertyNode.prototype.nodeName = "GetProperty";
     getPropertyNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -837,7 +886,7 @@
       this.flags = flags;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asGetPropertyNode.prototype = extend(GetProperty, "ASGetProperty")
+    asGetPropertyNode.prototype = extend(GetProperty, "ASGetProperty");
     asGetPropertyNode.prototype.nodeName = "ASGetProperty";
     asGetPropertyNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -863,7 +912,7 @@
       this.name = name;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asGetDescendantsNode.prototype = extend(GetProperty, "ASGetDescendants")
+    asGetDescendantsNode.prototype = extend(GetProperty, "ASGetDescendants");
     asGetDescendantsNode.prototype.nodeName = "ASGetDescendants";
     asGetDescendantsNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -889,7 +938,7 @@
       this.name = name;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asHasPropertyNode.prototype = extend(GetProperty, "ASHasProperty")
+    asHasPropertyNode.prototype = extend(GetProperty, "ASHasProperty");
     asHasPropertyNode.prototype.nodeName = "ASHasProperty";
     asHasPropertyNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -915,7 +964,7 @@
       this.name = name;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asGetSlotNode.prototype = extend(GetProperty, "ASGetSlot")
+    asGetSlotNode.prototype = extend(GetProperty, "ASGetSlot");
     asGetSlotNode.prototype.nodeName = "ASGetSlot";
     asGetSlotNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -925,6 +974,35 @@
       visitor(this.name);
     };
     return asGetSlotNode;
+  })();
+
+  var ASGetSuper = (function () {
+    function asGetSuperNode(control, store, object, name, scope) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (!(scope == undefined), "scope");
+      release || assert (arguments.length >= 5, "ASGetSuper not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.scope = scope;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asGetSuperNode.prototype = extend(GetProperty, "ASGetSuper");
+    asGetSuperNode.prototype.nodeName = "ASGetSuper";
+    asGetSuperNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitor(this.scope);
+    };
+    return asGetSuperNode;
   })();
 
   var SetProperty = (function () {
@@ -943,7 +1021,7 @@
       this.value = value;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    setPropertyNode.prototype = extend(StoreDependent, "SetProperty")
+    setPropertyNode.prototype = extend(StoreDependent, "SetProperty");
     setPropertyNode.prototype.nodeName = "SetProperty";
     setPropertyNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -973,7 +1051,7 @@
       this.flags = flags;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asSetPropertyNode.prototype = extend(SetProperty, "ASSetProperty")
+    asSetPropertyNode.prototype = extend(SetProperty, "ASSetProperty");
     asSetPropertyNode.prototype.nodeName = "ASSetProperty";
     asSetPropertyNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -1002,7 +1080,7 @@
       this.value = value;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asSetSlotNode.prototype = extend(SetProperty, "ASSetSlot")
+    asSetSlotNode.prototype = extend(SetProperty, "ASSetSlot");
     asSetSlotNode.prototype.nodeName = "ASSetSlot";
     asSetSlotNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -1013,6 +1091,38 @@
       visitor(this.value);
     };
     return asSetSlotNode;
+  })();
+
+  var ASSetSuper = (function () {
+    function asSetSuperNode(control, store, object, name, value, scope) {
+      release || assert (isControlOrNull(control), "control");
+      release || assert (isStoreOrNull(store), "store");
+      release || assert (!(object == undefined), "object");
+      release || assert (!(name == undefined), "name");
+      release || assert (!(value == undefined), "value");
+      release || assert (!(scope == undefined), "scope");
+      release || assert (arguments.length >= 6, "ASSetSuper not enough args.");
+      this.control = control;
+      this.store = store;
+      this.loads = undefined;
+      this.object = object;
+      this.name = name;
+      this.value = value;
+      this.scope = scope;
+      this.id = nextID[nextID.length - 1] += 1;
+    }
+    asSetSuperNode.prototype = extend(SetProperty, "ASSetSuper");
+    asSetSuperNode.prototype.nodeName = "ASSetSuper";
+    asSetSuperNode.prototype.visitInputs = function (visitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitor(this.value);
+      visitor(this.scope);
+    };
+    return asSetSuperNode;
   })();
 
   var DeleteProperty = (function () {
@@ -1029,7 +1139,7 @@
       this.name = name;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    deletePropertyNode.prototype = extend(StoreDependent, "DeleteProperty")
+    deletePropertyNode.prototype = extend(StoreDependent, "DeleteProperty");
     deletePropertyNode.prototype.nodeName = "DeleteProperty";
     deletePropertyNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -1055,7 +1165,7 @@
       this.name = name;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asDeletePropertyNode.prototype = extend(DeleteProperty, "ASDeleteProperty")
+    asDeletePropertyNode.prototype = extend(DeleteProperty, "ASDeleteProperty");
     asDeletePropertyNode.prototype.nodeName = "ASDeleteProperty";
     asDeletePropertyNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -1084,7 +1194,7 @@
       this.strict = strict;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asFindPropertyNode.prototype = extend(StoreDependent, "ASFindProperty")
+    asFindPropertyNode.prototype = extend(StoreDependent, "ASFindProperty");
     asFindPropertyNode.prototype.nodeName = "ASFindProperty";
     asFindPropertyNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -1102,7 +1212,7 @@
       release || assert (arguments.length >= 0, "Store not enough args.");
       this.id = nextID[nextID.length - 1] += 1;
     }
-    storeNode.prototype = extend(Value, "Store")
+    storeNode.prototype = extend(Value, "Store");
     storeNode.prototype.nodeName = "Store";
     storeNode.prototype.visitInputs = function (visitor) {
     };
@@ -1117,7 +1227,7 @@
       this.args = value ? [value] : [];
       this.id = nextID[nextID.length - 1] += 1;
     }
-    phiNode.prototype = extend(Value, "Phi")
+    phiNode.prototype = extend(Value, "Phi");
     phiNode.prototype.nodeName = "Phi";
     phiNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -1132,7 +1242,7 @@
       this.name = name;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    variableNode.prototype = extend(Value, "Variable")
+    variableNode.prototype = extend(Value, "Variable");
     variableNode.prototype.nodeName = "Variable";
     variableNode.prototype.visitInputs = function (visitor) {
     };
@@ -1145,7 +1255,7 @@
       this.argument = argument;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    copyNode.prototype = extend(Value, "Copy")
+    copyNode.prototype = extend(Value, "Copy");
     copyNode.prototype.nodeName = "Copy";
     copyNode.prototype.visitInputs = function (visitor) {
       visitor(this.argument);
@@ -1160,7 +1270,7 @@
       this.from = from;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    moveNode.prototype = extend(Value, "Move")
+    moveNode.prototype = extend(Value, "Move");
     moveNode.prototype.nodeName = "Move";
     moveNode.prototype.visitInputs = function (visitor) {
       visitor(this.to);
@@ -1177,7 +1287,7 @@
       this.selector = selector;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    projectionNode.prototype = extend(Value, "Projection")
+    projectionNode.prototype = extend(Value, "Projection");
     projectionNode.prototype.nodeName = "Projection";
     projectionNode.prototype.visitInputs = function (visitor) {
       visitor(this.argument);
@@ -1195,7 +1305,7 @@
       this.right = right;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    latchNode.prototype = extend(Value, "Latch")
+    latchNode.prototype = extend(Value, "Latch");
     latchNode.prototype.nodeName = "Latch";
     latchNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -1214,7 +1324,7 @@
       this.right = right;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    binaryNode.prototype = extend(Value, "Binary")
+    binaryNode.prototype = extend(Value, "Binary");
     binaryNode.prototype.nodeName = "Binary";
     binaryNode.prototype.visitInputs = function (visitor) {
       visitor(this.left);
@@ -1230,7 +1340,7 @@
       this.argument = argument;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    unaryNode.prototype = extend(Value, "Unary")
+    unaryNode.prototype = extend(Value, "Unary");
     unaryNode.prototype.nodeName = "Unary";
     unaryNode.prototype.visitInputs = function (visitor) {
       visitor(this.argument);
@@ -1244,7 +1354,7 @@
       this.value = value;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    constantNode.prototype = extend(Value, "Constant")
+    constantNode.prototype = extend(Value, "Constant");
     constantNode.prototype.nodeName = "Constant";
     constantNode.prototype.visitInputs = function (visitor) {
     };
@@ -1257,7 +1367,7 @@
       this.name = name;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    globalPropertyNode.prototype = extend(Value, "GlobalProperty")
+    globalPropertyNode.prototype = extend(Value, "GlobalProperty");
     globalPropertyNode.prototype.nodeName = "GlobalProperty";
     globalPropertyNode.prototype.visitInputs = function (visitor) {
     };
@@ -1271,7 +1381,7 @@
       this.control = control;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    thisNode.prototype = extend(Value, "This")
+    thisNode.prototype = extend(Value, "This");
     thisNode.prototype.nodeName = "This";
     thisNode.prototype.visitInputs = function (visitor) {
       visitor(this.control);
@@ -1287,7 +1397,7 @@
       this.argument = argument;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    throwNode.prototype = extend(Value, "Throw")
+    throwNode.prototype = extend(Value, "Throw");
     throwNode.prototype.nodeName = "Throw";
     throwNode.prototype.visitInputs = function (visitor) {
       visitor(this.control);
@@ -1303,7 +1413,7 @@
       this.control = control;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    argumentsNode.prototype = extend(Value, "Arguments")
+    argumentsNode.prototype = extend(Value, "Arguments");
     argumentsNode.prototype.nodeName = "Arguments";
     argumentsNode.prototype.visitInputs = function (visitor) {
       visitor(this.control);
@@ -1320,7 +1430,7 @@
       this.name = name;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    parameterNode.prototype = extend(Value, "Parameter")
+    parameterNode.prototype = extend(Value, "Parameter");
     parameterNode.prototype.nodeName = "Parameter";
     parameterNode.prototype.visitInputs = function (visitor) {
       visitor(this.control);
@@ -1336,7 +1446,7 @@
       this.elements = elements;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    newArrayNode.prototype = extend(Value, "NewArray")
+    newArrayNode.prototype = extend(Value, "NewArray");
     newArrayNode.prototype.nodeName = "NewArray";
     newArrayNode.prototype.visitInputs = function (visitor) {
       visitor(this.control);
@@ -1353,7 +1463,7 @@
       this.properties = properties;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    newObjectNode.prototype = extend(Value, "NewObject")
+    newObjectNode.prototype = extend(Value, "NewObject");
     newObjectNode.prototype.nodeName = "NewObject";
     newObjectNode.prototype.visitInputs = function (visitor) {
       visitor(this.control);
@@ -1369,7 +1479,7 @@
       this.value = value;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    keyValuePairNode.prototype = extend(Value, "KeyValuePair")
+    keyValuePairNode.prototype = extend(Value, "KeyValuePair");
     keyValuePairNode.prototype.nodeName = "KeyValuePair";
     keyValuePairNode.prototype.visitInputs = function (visitor) {
       visitor(this.key);
@@ -1386,7 +1496,7 @@
       this.isWith = isWith;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asScopeNode.prototype = extend(Value, "ASScope")
+    asScopeNode.prototype = extend(Value, "ASScope");
     asScopeNode.prototype.nodeName = "ASScope";
     asScopeNode.prototype.visitInputs = function (visitor) {
       visitor(this.parent);
@@ -1404,7 +1514,7 @@
       this.scope = scope;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asGlobalNode.prototype = extend(Value, "ASGlobal")
+    asGlobalNode.prototype = extend(Value, "ASGlobal");
     asGlobalNode.prototype.nodeName = "ASGlobal";
     asGlobalNode.prototype.visitInputs = function (visitor) {
       this.control && visitor(this.control);
@@ -1419,7 +1529,7 @@
       this.methodInfo = methodInfo;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asNewActivationNode.prototype = extend(Value, "ASNewActivation")
+    asNewActivationNode.prototype = extend(Value, "ASNewActivation");
     asNewActivationNode.prototype.nodeName = "ASNewActivation";
     asNewActivationNode.prototype.visitInputs = function (visitor) {
     };
@@ -1434,7 +1544,7 @@
       this.flags = flags;
       this.id = nextID[nextID.length - 1] += 1;
     }
-    asMultinameNode.prototype = extend(Value, "ASMultiname")
+    asMultinameNode.prototype = extend(Value, "ASMultiname");
     asMultinameNode.prototype.nodeName = "ASMultiname";
     asMultinameNode.prototype.visitInputs = function (visitor) {
       visitor(this.namespaces);
@@ -2914,11 +3024,14 @@
   exports.SetProperty = SetProperty;
   exports.CallProperty = CallProperty;
   exports.ASCallProperty = ASCallProperty;
+  exports.ASCallSuper = ASCallSuper;
   exports.ASGetProperty = ASGetProperty;
+  exports.ASGetSuper = ASGetSuper;
   exports.ASHasProperty = ASHasProperty;
   exports.ASDeleteProperty = ASDeleteProperty;
   exports.ASGetDescendants = ASGetDescendants;
   exports.ASSetProperty = ASSetProperty;
+  exports.ASSetSuper = ASSetSuper;
   exports.ASGetSlot = ASGetSlot;
   exports.ASSetSlot = ASSetSlot;
   exports.Call = Call;
