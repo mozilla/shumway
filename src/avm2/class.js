@@ -161,6 +161,7 @@ var Bindings = (function () {
 
   function applyMemoizedMethodTrait(qn, trait, object, scope, natives) {
     release || assert (scope, trait);
+
     if (trait.isMethod()) {
       // Patch the target of the memoizer using a temporary |target| object that is visible to both the trampoline
       // and the memoizer. The trampoline closes over it and patches the target value while the memoizer uses the
@@ -176,7 +177,6 @@ var Bindings = (function () {
       var openMethods = object[VM_OPEN_METHODS];
       openMethods[qn] = trampoline;
       defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, trampoline);
-
       // TODO: We make the |memoizeMethodClosure| configurable since it may be
       // overridden by a derived class. Only do this non final classes.
 
@@ -194,9 +194,17 @@ var Bindings = (function () {
         return fn;
       }, 0, String(trait.name));
       if (trait.isGetter()) {
-        trampoline.patchTargets = [{ object: object, get: qn }];
+        defineNonEnumerableProperty(object, VM_OPEN_GET_METHOD_PREFIX + qn, trampoline);
+        trampoline.patchTargets = [
+          { object: object, get: qn },
+          { object: object, name: VM_OPEN_GET_METHOD_PREFIX + qn }
+        ];
       } else {
-        trampoline.patchTargets = [{ object: object, set: qn }];
+        defineNonEnumerableProperty(object, VM_OPEN_SET_METHOD_PREFIX + qn, trampoline);
+        trampoline.patchTargets = [
+          { object: object, set: qn },
+          { object: object, name: VM_OPEN_SET_METHOD_PREFIX + qn }
+        ];
       }
       defineNonEnumerableGetterOrSetter(object, qn, trampoline, trait.isGetter());
     }
@@ -536,6 +544,8 @@ var InstanceBindings = (function () {
     // Collect all implemented interfaces.
     for (var i = 0; i < interfaces.length; i++) {
       var interface = domain.getProperty(interfaces[i], true, true);
+      // This can be undefined if the interface is defined after a class that implements it is defined.
+      release || assert(interface);
       copyProperties(this.implementedInterfaces, interface.interfaceBindings.implementedInterfaces);
       this.implementedInterfaces[Multiname.getQualifiedName(interface.name)] = interface;
     }

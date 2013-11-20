@@ -921,6 +921,7 @@ var Verifier = (function() {
             mn = popMultiname();
             obj = pop();
             release || assert(obj.super());
+            ti().baseClass = LazyInitializer.create(this.thisType.super().classType().object);
             push(getProperty(obj.super(), mn));
             break;
           case 0x05: // OP_setsuper
@@ -928,6 +929,7 @@ var Verifier = (function() {
             mn = popMultiname();
             obj = pop();
             release || assert(obj.super());
+            ti().baseClass = LazyInitializer.create(this.thisType.super().classType().object);
             setProperty(obj.super(), mn, val);
             break;
           case 0x06: // OP_dxns
@@ -1082,20 +1084,19 @@ var Verifier = (function() {
             notImplemented(bc);
             break;
           case 0x45: // OP_callsuper
-            stack.popMany(bc.argCount);
-            mn = popMultiname();
-            obj = pop();
-            getProperty(obj, mn);
-            push(Type.Any);
-            break;
+          case 0x4E: // OP_callsupervoid
           case 0x4F: // OP_callpropvoid
           case 0x46: // OP_callproperty
           case 0x4C: // OP_callproplex
             stack.popMany(bc.argCount);
             mn = popMultiname();
             obj = pop();
+            if (op === OP_callsuper || op === OP_callsupervoid) {
+              obj = this.thisType.super();
+              ti().baseClass = LazyInitializer.create(this.thisType.super().classType().object);
+            }
             type = getProperty(obj, mn);
-            if (op === OP_callpropvoid) {
+            if (op === OP_callpropvoid || op === OP_callsupervoid) {
               break;
             }
             if (type instanceof MethodType) {
@@ -1140,11 +1141,6 @@ var Verifier = (function() {
             break;
           case 0x4D: // OP_callinterface
             notImplemented(bc);
-            break;
-          case 0x4E: // OP_callsupervoid
-            stack.popMany(bc.argCount);
-            popMultiname();
-            pop();
             break;
           case 0x50: // OP_sxi1
           case 0x51: // OP_sxi8

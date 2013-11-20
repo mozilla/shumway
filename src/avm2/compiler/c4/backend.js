@@ -453,6 +453,13 @@
     return call(property(object, "asGetProperty"), name.concat(isMethod));
   };
 
+  IR.ASGetSuper.prototype.compile = function (cx) {
+    var scope = compileValue(this.scope, cx);
+    var object = compileValue(this.object, cx);
+    var name = compileMultiname(this.name, cx);
+    return call(property(object, "asGetSuper"), [scope].concat(name));
+  };
+
   IR.Latch.prototype.compile = function (cx) {
     return new ConditionalExpression (
       compileValue(this.condition, cx),
@@ -505,6 +512,16 @@
     }
     var name = compileMultiname(this.name, cx);
     return call(property(object, "asCallProperty"), name.concat([new Literal(this.isLex), new ArrayExpression(args)]));
+  };
+
+  IR.ASCallSuper.prototype.compile = function (cx) {
+    var scope = compileValue(this.scope, cx);
+    var object = compileValue(this.object, cx);
+    var args = this.args.map(function (arg) {
+      return compileValue(arg, cx);
+    });
+    var name = compileMultiname(this.name, cx);
+    return call(property(object, "asCallSuper"), [scope].concat(name).concat(new ArrayExpression(args)));
   };
 
   IR.Call.prototype.compile = function (cx) {
@@ -562,6 +579,14 @@
     }
     var name = compileMultiname(this.name, cx);
     return call(property(object, "asSetProperty"), name.concat(value));
+  };
+
+  IR.ASSetSuper.prototype.compile = function (cx) {
+    var scope = compileValue(this.scope, cx);
+    var object = compileValue(this.object, cx);
+    var name = compileMultiname(this.name, cx);
+    var value = compileValue(this.value, cx);
+    return call(property(object, "asSetSuper"), [scope].concat(name).concat([value]));
   };
 
   IR.ASDeleteProperty.prototype.compile = function (cx) {
