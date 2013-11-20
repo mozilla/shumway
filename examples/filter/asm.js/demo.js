@@ -42,8 +42,8 @@ var Demo = (function() {
   };
 
   function doBlur(pimg, w, h, blurParams) {
-    var bx = Math.round(blurParams.blurX / 2);
-    var by = Math.round(blurParams.blurY / 2);
+    var bx = blurParams.blurX;
+    var by = blurParams.blurY;
     FILTERS.blur(pimg, w, h, bx, by, blurParams.quality);
   }
 
@@ -51,8 +51,8 @@ var Demo = (function() {
     var a = dsParams.angle * Math.PI / 180;
     var dy = Math.round(Math.sin(a) * dsParams.distance);
     var dx = Math.round(Math.cos(a) * dsParams.distance);
-    var bx = Math.round(dsParams.blurX / 2);
-    var by = Math.round(dsParams.blurY / 2);
+    var bx = dsParams.blurX;
+    var by = dsParams.blurY;
     var color = parseInt(dsParams.color.substr(1), 16);
     var flags = (dsParams.inner ? 1 : 0) | (dsParams.knockout ? 2 : 0) | (dsParams.hideObject ? 4 : 0);
     FILTERS.dropshadow(pimg, w, h, dx, dy, color, dsParams.alpha, bx, by, dsParams.strength, dsParams.quality, flags);
@@ -64,6 +64,8 @@ var Demo = (function() {
       requestAnimFrame(this.animate.bind(this));
 
       if (this.dirty) {
+        this.blur.quality = +this.blur.quality;
+        this.dropshadow.quality = +this.dropshadow.quality;
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
         this.drawShape();

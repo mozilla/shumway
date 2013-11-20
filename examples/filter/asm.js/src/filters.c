@@ -59,63 +59,22 @@ void blurX(unsigned char *img, int width, int height, int distance)
 
 	unsigned char *src = img;
 
-	int dist2 = distance << 1;
-	int dist4 = dist2 << 1;
-	int lineSize = width << 2;
-	int windowLength = dist2 + 1;
-	int windowSize = windowLength << 2;
+	int dist4 = distance << 2;
+	int dist8 = distance << 3;
+	int lineOutSize = width << 2;
+	int lineInSize = lineOutSize + dist8; // (distance * 2) + width
+	int windowLength = (distance << 1) + 1; // (distance * 2) + 1
 
-	unsigned char *lineBuffer = malloc(lineSize);
-	memset(lineBuffer, 0, lineSize);
+	unsigned char *lineBufferIn = malloc(lineInSize);
+	memset(lineBufferIn, 0, lineInSize);
 
-	for (int y = 0; y < height; ++y)
-	{
-		long rs = 0, gs = 0, bs = 0, as = 0;
-
-		// Fill window
-		unsigned char *ptr = src;
-		unsigned char *ptrEnd = src + windowSize;
-		while (ptr < ptrEnd) {
-			rs += *ptr;
-			gs += *(ptr + 1);
-			bs += *(ptr + 2);
-			as += *(ptr + 3);
-			ptr += 4;
-		}
-
-		// Slide window
-		ptr = src + dist4;
-		ptrEnd = src + ((width - distance) << 2);
-		unsigned char *pLine = lineBuffer + dist4;
-		unsigned char *pLast = src;
-		unsigned char *pNext = ptr + ((distance + 1) << 2);
-		unsigned char alpha;
-		while (ptr < ptrEnd) {
-			alpha = as / windowLength;
-			if (alpha != 0) {
-				*(unsigned int *)pLine = (rs / windowLength) | (gs / windowLength) << 8 | (bs / windowLength) << 16 | alpha << 24;
-			} else {
-				*(unsigned int *)pLine = 0;
-			}
-
-			rs += *pNext - *pLast;
-			gs += *(pNext + 1) - *(pLast + 1);
-			bs += *(pNext + 2) - *(pLast + 2);
-			as += *(pNext + 3) - *(pLast + 3);
-
-			ptr += 4;
-			pLine += 4;
-			pNext += 4;
-			pLast += 4;
-		}
-
-		// Copy line
-		memcpy(src, lineBuffer, lineSize);
-
-		src += lineSize;
+	for (int y = 0; y < height; ++y) {
+		memcpy(lineBufferIn + dist8, src + dist4, lineOutSize - dist8);
+		boxBlur((unsigned int *)src, lineBufferIn, width, windowLength);
+		src += lineOutSize;
 	}
 
-	free(lineBuffer);
+	free(lineBufferIn);
 }
 
 void blurY(unsigned char *img, int width, int height, int distance)
@@ -126,68 +85,78 @@ void blurY(unsigned char *img, int width, int height, int distance)
 
 	unsigned char *src = img;
 
-	int stride = width << 2;
-	int windowLength = (distance << 1) + 1;
-	int h4 = height << 2;
+	int dist2 = distance << 1;
+	int lineOutSize = height << 2;
+	int lineInSize = lineOutSize + (distance << 3); // (height + (distance * 2)) * 4
+	int windowLength = dist2 + 1; // (distance * 2) + 1
 
-	unsigned char *columnBuffer = malloc(h4);
-	memset(columnBuffer, 0, h4);
+	unsigned char *lineBufferIn = malloc(lineInSize);
+	memset(lineBufferIn, 0, lineInSize);
 
-	for (int x = 0; x < width; ++x)
-	{
-		long rs = 0, gs = 0, bs = 0, as = 0;
+	unsigned char *lineBufferOut = malloc(lineOutSize);
+	memset(lineBufferOut, 0, lineOutSize);
 
-		// Fill window
-		unsigned char *ptr = src;
-		unsigned char *ptrEnd = src + windowLength * stride;
-		while (ptr < ptrEnd) {
-			rs += *ptr;
-			gs += *(ptr + 1);
-			bs += *(ptr + 2);
-			as += *(ptr + 3);
-			ptr += stride;
+	unsigned int *src32;
+	unsigned int *line32;
+	int srcOffs = distance * width;
+	int x, y;
+
+	for (x = 0; x < width; ++x) {
+		src32 = (unsigned int *)src + srcOffs;
+		line32 = (unsigned int *)lineBufferIn + dist2;
+		for (y = 0; y < height - dist2; ++y) {
+			*line32++ = *src32;
+			src32 += width;
 		}
 
-		// Slide window
-		ptr = src + distance * stride;
-		ptrEnd = src + (height - distance) * stride;
-		unsigned char *pColumn = columnBuffer + (distance << 2);
-		unsigned char *pLast = src;
-		unsigned char *pNext = ptr + (distance + 1) * stride;
-		unsigned char alpha;
-		while (ptr < ptrEnd) {
-			alpha = as / windowLength;
-			if (alpha != 0) {
-				*(unsigned int *)pColumn = (rs / windowLength) | (gs / windowLength) << 8 | (bs / windowLength) << 16 | alpha << 24;
-			} else {
-				*(unsigned int *)pColumn = 0;
-			}
+		boxBlur((unsigned int *)lineBufferOut, lineBufferIn, height, windowLength);
 
-			rs += *pNext - *pLast;
-			gs += *(pNext + 1) - *(pLast + 1);
-			bs += *(pNext + 2) - *(pLast + 2);
-			as += *(pNext + 3) - *(pLast + 3);
-
-			ptr += stride;
-			pColumn += 4;
-			pNext += stride;
-			pLast += stride;
-		}
-
-		// Copy column
-		unsigned int *ptr32 = (unsigned int *)src;
-		unsigned int *ptr32End = ptr32 + height * width;
-		unsigned int *columnBuffer32 = (unsigned int *)columnBuffer;
-		while (ptr32 < ptr32End) {
-			*ptr32 = *columnBuffer32;
-			ptr32 += width;
-			columnBuffer32++;
+		src32 = (unsigned int *)src;
+		line32 = (unsigned int *)lineBufferOut;
+		for (y = 0; y < height; ++y) {
+			*src32 = *line32++;
+			src32 += width;
 		}
 
 		src += 4;
 	}
 
-	free(columnBuffer);
+	free(lineBufferOut);
+	free(lineBufferIn);
+}
+
+void boxBlur(unsigned int *lineBufferOut, unsigned char *lineBufferIn, int width, int windowLength)
+{
+	int windowSize = windowLength << 2;
+
+	// Init window
+	unsigned char *ptr = lineBufferIn + windowSize - 4;
+	long rs = *ptr;
+	long gs = *(ptr + 1);
+	long bs = *(ptr + 2);
+	long as = *(ptr + 3);
+
+	// Slide window
+	unsigned char *pLast = lineBufferIn;
+	unsigned char *pNext = lineBufferIn + windowSize;
+	unsigned char alpha;
+	for (int x = 0; x < width; ++x) {
+		alpha = as / windowLength;
+		if (alpha != 0) {
+			*lineBufferOut = (rs / windowLength) | (gs / windowLength) << 8 | (bs / windowLength) << 16 | alpha << 24;
+		} else {
+			*lineBufferOut = 0;
+		}
+
+		rs += *pNext - *pLast;
+		gs += *(pNext + 1) - *(pLast + 1);
+		bs += *(pNext + 2) - *(pLast + 2);
+		as += *(pNext + 3) - *(pLast + 3);
+
+		pNext += 4;
+		pLast += 4;
+		lineBufferOut++;
+	}
 }
 
 void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsigned int color, int alpha, int bx, int by, int strength, int quality, unsigned int flags)
@@ -211,6 +180,9 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 void pan(unsigned char *dst, unsigned char *src, int width, int height, int dx, int dy)
 {
 	if (dx == 0 && dy == 0) {
+		if (dst != src) {
+			memcpy(dst, src, width * height * 4);
+		}
 		return;
 	}
 
