@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+turboMode.value = true;
+
 function loadMovie(path, reportFrames) {
   var movieReady = new Promise;
   movieReady.then(function() { sendResponse(); });
