@@ -852,7 +852,7 @@ var DisplayObjectDefinition = (function () {
           for (var i = 0; i < numChildren; i++) {
             var child = children[i];
 
-            var b = child.getBounds(null);
+            var b = child.getBounds(this);
 
             var x1 = b.xMin;
             var y1 = b.yMin;
