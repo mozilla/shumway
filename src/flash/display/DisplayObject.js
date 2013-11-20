@@ -334,6 +334,10 @@ var DisplayObjectDefinition = (function () {
         }
       }
 
+      if (a === 1 && !b && !c && d === 1 && !tx && !ty) {
+        return;
+      }
+
       for (var i = 1; i < arguments.length; i++) {
         var pt = arguments[i];
         var x = pt.x;
