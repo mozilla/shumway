@@ -62,12 +62,11 @@
         dropshadow.addColor(demo.dropshadow, 'color');
         dropshadow.add(demo.dropshadow, 'distance', -32, 32).step(1);
         dropshadow.add(demo.dropshadow, 'angle', 0, 359).step(1);
-        //dropshadow.add(demo.dropshadow, 'alpha', 0, 1).step(0.05); // TODO
         dropshadow.add(demo.dropshadow, 'blurX', 0, 64).step(1);
         dropshadow.add(demo.dropshadow, 'blurY', 0, 64).step(1);
         dropshadow.add(demo.dropshadow, 'strength', 0, 8).step(0.1);
-        //dropshadow.add(demo.dropshadow, 'inner'); // TODO
-        //dropshadow.add(demo.dropshadow, 'knockout'); // TODO
+        dropshadow.add(demo.dropshadow, 'inner');
+        dropshadow.add(demo.dropshadow, 'knockout');
         dropshadow.add(demo.dropshadow, 'hideObject');
         dropshadow.open();
         controllers.push(dropshadow);
@@ -76,12 +75,11 @@
         glow.add(demo.glow, 'enabled');
         glow.add(demo.glow, 'quality', { low: 1, medium: 2, high: 3 });
         glow.addColor(demo.glow, 'color');
-        //glow.add(demo.glow, 'alpha', 0, 1).step(0.05); // TODO
         glow.add(demo.glow, 'blurX', 0, 64).step(1);
         glow.add(demo.glow, 'blurY', 0, 64).step(1);
         glow.add(demo.glow, 'strength', 0, 8).step(0.1);
-        //glow.add(demo.glow, 'inner'); // TODO
-        //glow.add(demo.glow, 'knockout'); // TODO
+        glow.add(demo.glow, 'inner');
+        glow.add(demo.glow, 'knockout');
         glow.add(demo.glow, 'hideObject');
         controllers.push(glow);
 

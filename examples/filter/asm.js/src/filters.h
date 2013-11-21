@@ -20,3 +20,8 @@ void colormatrix(unsigned char *img, int width, int height, float *m);
 
 void compositeSourceOver(unsigned char *dst, unsigned char *src, int width, int height);
 void compositeDestinationOver(unsigned char *dst, unsigned char *src, int width, int height);
+void compositeSourceIn(unsigned char *dst, unsigned char *src, int width, int height);
+void compositeDestinationIn(unsigned char *dst, unsigned char *src, int width, int height);
+void compositeSourceOut(unsigned char *dst, unsigned char *src, int width, int height);
+void compositeDestinationOut(unsigned char *dst, unsigned char *src, int width, int height);
+void compositeDestinationAtop(unsigned char *dst, unsigned char *src, int width, int height);

@@ -198,30 +198,24 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 
 	pan(tmp, img, width, height, dx, dy);
 	tint(tmp, tmp, width, height, color, inner);
-	blur(tmp, width, height, bx, by, quality, (inner == 1) ? color : 0);
-
-	unsigned char *src;
-	unsigned char *dst;
-	unsigned char *ptrEnd;
-
-	// TODO:
-	if (inner == 1) {
-		src = img;
-		dst = tmp;
-		ptrEnd = img + ((width * height) << 2);
-		while (src < ptrEnd) {
-			*(dst + 3) = *(src + 3);
-			dst += 4;
-			src += 4;
-		}
-	}
-
+	blur(tmp, width, height, bx, by, quality, (inner == 1) ? (color | 0xff000000) : 0);
 	scaleAlpha(tmp, width, height, strength);
 
-	if (hideObject == 0) {
-		compositeDestinationOver(img, tmp, width, height);
-	} else {
+	if (inner == 1) {
+		if (knockout == 0 && hideObject == 0) {
+			compositeDestinationAtop(tmp, img, width, height);
+		} else {
+			compositeDestinationIn(tmp, img, width, height);
+		}
 		memcpy(img, tmp, len << 2);
+	} else {
+		if (knockout == 1) {
+			compositeSourceOut(img, tmp, width, height);
+		} else if (hideObject == 1) {
+			memcpy(img, tmp, len << 2);
+		} else {
+			compositeDestinationOver(img, tmp, width, height);
+		}
 	}
 
 	free(tmp);
@@ -348,6 +342,7 @@ void scaleAlpha(unsigned char *img, int width, int height, double strength)
 	}
 }
 
+// TODO: REVIST
 void compositeSourceOver(unsigned char *dst, unsigned char *src, int width, int height)
 {
 	unsigned char *end = src + ((width * height) << 2);
@@ -380,6 +375,7 @@ void compositeSourceOver(unsigned char *dst, unsigned char *src, int width, int 
 	}
 }
 
+// TODO: REVIST
 void compositeDestinationOver(unsigned char *dst, unsigned char *src, int width, int height)
 {
 	unsigned char *end = src + ((width * height) << 2);
@@ -412,6 +408,166 @@ void compositeDestinationOver(unsigned char *dst, unsigned char *src, int width,
 	}
 }
 
+// TODO: REVIST
+void compositeSourceIn(unsigned char *dst, unsigned char *src, int width, int height)
+{
+	unsigned char *end = src + ((width * height) << 2);
+
+	unsigned int *dst32 = (unsigned int *)dst;
+
+	int dr, dg, db;
+	int sr, sg, sb;
+	double sa;
+	double da;
+	double da_inv;
+
+	while (src < end) {
+		sr = *src;
+		sg = *(src + 1);
+		sb = *(src + 2);
+		sa = *(src + 3) / 255.0;
+		da = *(dst + 3) / 255.0;
+		da_inv = 1.0 - da;
+		*dst32++ =
+			(int)(sa * sr * da) |
+			(int)(sa * sg * da) << 8 |
+			(int)(sa * sb * da) << 16 |
+			(int)((sa * da) * 255.0) << 24;
+		src += 4;
+		dst += 4;
+	}
+}
+
+void compositeDestinationIn(unsigned char *dst, unsigned char *src, int width, int height)
+{
+	unsigned char *end = src + ((width * height) << 2);
+
+	unsigned int *dst32 = (unsigned int *)dst;
+
+	int d, s;
+	float rr, rg, rb, ra;
+	float da;
+	float sa;
+
+	while (src < end) {
+		d = *(dst + 3);
+		if (d == 0) {
+			*dst32++ = 0;
+		} else {
+			s = *(src + 3);
+			if (s == 0) {
+				*dst32++ = 0;
+			} else {
+				da = d / 255.0;
+				sa = s / 255.0;
+				rr = *dst       * sa;
+				rg = *(dst + 1) * sa;
+				rb = *(dst + 2) * sa;
+				ra = (da * sa) * 255.0;
+				*dst32++ = clamp(rr) | clamp(rg) << 8 | clamp(rb) << 16 | clamp(ra) << 24;
+			}
+		}
+		src += 4;
+		dst += 4;
+	}
+}
+
+void compositeSourceOut(unsigned char *dst, unsigned char *src, int width, int height)
+{
+	unsigned char *end = src + ((width * height) << 2);
+
+	unsigned int *dst32 = (unsigned int *)dst;
+
+	int d, s;
+	float da_inv;
+
+	while (src < end) {
+		d = *(dst + 3);
+		if (d == 0) {
+			*dst32++ = *(unsigned int *)src;
+		} else {
+			s = *(src + 3);
+			if (s == 0) {
+				*dst32++ = 0;
+			} else {
+				da_inv = 1 - d / 255.0;
+				*dst32++ =
+					(int)(*src * da_inv) |
+					(int)(*(src + 1) * da_inv) << 8 |
+					(int)(*(src + 2) * da_inv) << 16 |
+					(int)(s * da_inv) << 24;
+			}
+		}
+		src += 4;
+		dst += 4;
+	}
+}
+
+// TODO: REVIST
+void compositeDestinationOut(unsigned char *dst, unsigned char *src, int width, int height)
+{
+	unsigned char *end = src + ((width * height) << 2);
+
+	unsigned int *dst32 = (unsigned int *)dst;
+
+	int dr, dg, db;
+	int sr, sg, sb;
+	double da;
+	double sa;
+	double sa_inv;
+
+	while (src < end) {
+		dr = *dst;
+		dg = *(dst + 1);
+		db = *(dst + 2);
+		da = *(dst + 3) / 255.0;
+		sa = *(src + 3) / 255.0;
+		sa_inv = 1.0 - sa;
+		*dst32++ =
+			(int)(da * dr * sa_inv) |
+			(int)(da * dg * sa_inv) << 8 |
+			(int)(da * db * sa_inv) << 16 |
+			(int)((da * sa_inv) * 255.0) << 24;
+		src += 4;
+		dst += 4;
+	}
+}
+
+void compositeDestinationAtop(unsigned char *dst, unsigned char *src, int width, int height)
+{
+	unsigned char *end = src + ((width * height) << 2);
+
+	unsigned int *dst32 = (unsigned int *)dst;
+
+	int d, s;
+	float rr, rg, rb, ra;
+	float da, da_inv;
+	float sa;
+
+	while (src < end) {
+		d = *(dst + 3);
+		if (d == 0) {
+			*dst32++ = *(unsigned int *)src;
+		} else {
+			s = *(src + 3);
+			if (s == 0) {
+				*dst32++ = 0;
+			} else {
+				sa = s / 255.0;
+				da = d / 255.0;
+				da_inv = (1.0 - da);
+				rr = *src       * da_inv + *dst       * sa;
+				rg = *(src + 1) * da_inv + *(dst + 1) * sa;
+				rb = *(src + 2) * da_inv + *(dst + 2) * sa;
+				ra = (sa * da_inv + da * sa) * 255.0;
+				*dst32++ = clamp(rr) | clamp(rg) << 8 | clamp(rb) << 16 | clamp(ra) << 24;
+			}
+		}
+		src += 4;
+		dst += 4;
+	}
+}
+
 void colormatrix(unsigned char *img, int width, int height, float *m)
 {
 	unsigned char *imgEnd = img + ((width * height) << 2);
@@ -430,11 +586,7 @@ void colormatrix(unsigned char *img, int width, int height, float *m)
 		rg = r * m[ 5] + g * m[ 6] + b * m[ 7] + a * m[ 8] + m[ 9];
 		rb = r * m[10] + g * m[11] + b * m[12] + a * m[13] + m[14];
 		ra = r * m[15] + g * m[16] + b * m[17] + a * m[18] + m[19];
-		*img32++ =
-			clamp(rr) |
-			clamp(rg) << 8 |
-			clamp(rb) << 16 |
-			clamp(ra) << 24;
+		*img32++ = clamp(rr) | clamp(rg) << 8 | clamp(rb) << 16 | clamp(ra) << 24;
 		img += 4;
 	}
 }
