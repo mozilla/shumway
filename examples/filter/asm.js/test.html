@@ -72,6 +72,19 @@
         dropshadow.open();
         controllers.push(dropshadow);
 
+        var glow = gui.addFolder('glow');
+        glow.add(demo.glow, 'enabled');
+        glow.add(demo.glow, 'quality', { low: 1, medium: 2, high: 3 });
+        glow.addColor(demo.glow, 'color');
+        //glow.add(demo.glow, 'alpha', 0, 1).step(0.05); // TODO
+        glow.add(demo.glow, 'blurX', 0, 64).step(1);
+        glow.add(demo.glow, 'blurY', 0, 64).step(1);
+        glow.add(demo.glow, 'strength', 0, 8).step(0.1);
+        //glow.add(demo.glow, 'inner'); // TODO
+        //glow.add(demo.glow, 'knockout'); // TODO
+        glow.add(demo.glow, 'hideObject');
+        controllers.push(glow);
+
         var blur = gui.addFolder('blur');
         blur.add(demo.blur, 'enabled');
         blur.add(demo.blur, 'quality', { low: 1, medium: 2, high: 3 });

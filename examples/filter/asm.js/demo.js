@@ -21,6 +21,18 @@ var Demo = (function() {
       knockout: false,
       hideObject: false
     };
+    this.glow = {
+      enabled: false,
+      color: "#000000",
+      alpha: 1.0,
+      blurX: 8.0,
+      blurY: 8.0,
+      strength: 1.5,
+      quality: 1,
+      inner: false,
+      knockout: false,
+      hideObject: false
+    };
     this.blur = {
       enabled: false,
       quality: 1,
@@ -65,6 +77,14 @@ var Demo = (function() {
     FILTERS.dropshadow(pimg, w, h, dx, dy, color, dsParams.alpha, bx, by, dsParams.strength, dsParams.quality, flags);
   }
 
+  function doGlow(pimg, w, h, glowParams) {
+    var bx = glowParams.blurX;
+    var by = glowParams.blurY;
+    var color = parseInt(glowParams.color.substr(1), 16);
+    var flags = (glowParams.inner ? 1 : 0) | (glowParams.knockout ? 2 : 0) | (glowParams.hideObject ? 4 : 0);
+    FILTERS.dropshadow(pimg, w, h, 0, 0, color, glowParams.alpha, bx, by, glowParams.strength, glowParams.quality, flags);
+  }
+
   function doColorMatrix(pimg, w, h, cmParams) {
     var cm = new Float32Array([
         cmParams.r0, cmParams.r1, cmParams.r2, cmParams.r3, cmParams.r4,
@@ -107,6 +127,9 @@ var Demo = (function() {
         FILTERS.preMultiplyAlpha(pimg, w, h);
         if (this.dropshadow.enabled) {
           doDropshadow(pimg, w, h, this.dropshadow);
+        }
+        if (this.glow.enabled) {
+          doGlow(pimg, w, h, this.glow);
         }
         if (this.blur.enabled) {
           doBlur(pimg, w, h, this.blur);
@@ -183,6 +206,7 @@ var Demo = (function() {
       if (this.hasActiveFilters()) {
         var bq, bx, by;
         var dsParams = this.dropshadow;
+        var glowParams = this.glow;
         var blurParams = this.blur;
         if (dsParams.enabled) {
           var a = dsParams.angle * Math.PI / 180;
@@ -195,6 +219,15 @@ var Demo = (function() {
           fb.y -= by - Math.min(dy, 0);
           fb.w += bx * 2 + Math.abs(dx);
           fb.h += by * 2 + Math.abs(dy);
+        }
+        if (glowParams.enabled) {
+          bq = glowParams.quality;
+          bx = glowParams.blurX * bq;
+          by = glowParams.blurY * bq;
+          fb.x -= bx;
+          fb.y -= by;
+          fb.w += bx * 2;
+          fb.h += by * 2;
         }
         if (blurParams.enabled) {
           bq = blurParams.quality;
@@ -209,7 +242,7 @@ var Demo = (function() {
     },
 
     hasActiveFilters: function hasActiveFilters() {
-      return this.blur.enabled || this.dropshadow.enabled || this.colormatrix.enabled;
+      return this.blur.enabled || this.dropshadow.enabled || this.glow.enabled || this.colormatrix.enabled;
     }
 
   };
