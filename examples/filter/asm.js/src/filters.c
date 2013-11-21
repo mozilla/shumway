@@ -324,25 +324,27 @@ void scaleAlpha(unsigned char *img, int width, int height, double strength)
 	unsigned int *img32 = (unsigned int *)img;
 
 	int r, g, b, a;
+	float rr, rg, rb, ra;
+	float mult;
 
-	if (strength < 1.0) {
-		while (img < imgEnd) {
-			r = *img * strength;
-			g = *(img + 1) * strength;
-			b = *(img + 2) * strength;
-			a = *(img + 3) * strength;
-			*img32++ = r | g << 8 | b << 16 | a << 24;
-			img += 4;
+	while (img < imgEnd) {
+		ra = *(img + 3);
+		if (ra == 0) {
+			*img32++ = 0;
+		} else {
+			a = ra * strength;
+			a = clamp(a);
+			if (a == ra) {
+				*img32++ = *img | *(img + 1) << 8 | *(img + 2) << 16 | a << 24;
+			} else {
+				mult = a / ra;
+				rr = *img * mult;
+				rg = *(img + 1) * mult;
+				rb = *(img + 2) * mult;
+				*img32++ = clamp(rr) | clamp(rg) << 8 | clamp(rb) << 16 | a << 24;
+			}
 		}
-	} else {
-		while (img < imgEnd) {
-			r = min(*img * strength, 0xff);
-			g = min(*(img + 1) * strength, 0xff);
-			b = min(*(img + 2) * strength, 0xff);
-			a = min(*(img + 3) * strength, 0xff);
-			*img32++ = r | g << 8 | b << 16 | a << 24;
-			img += 4;
-		}
+		img += 4;
 	}
 }
 
@@ -368,7 +370,11 @@ void compositeSourceOver(unsigned char *dst, unsigned char *src, int width, int 
 		dg = *(dst + 1);
 		db = *(dst + 2);
 		da = *(dst + 3) / 255.0;
-		*dst32++ = (int)(sr + dr * sa_inv) | (int)(sg + dg * sa_inv) << 8 | (int)(sb + db * sa_inv) << 16 | (int)((sa + da * sa_inv) * 255.0) << 24;
+		*dst32++ =
+			(int)(sr + dr * sa_inv) |
+			(int)(sg + dg * sa_inv) << 8 |
+			(int)(sb + db * sa_inv) << 16 |
+			(int)((sa + da * sa_inv) * 255.0) << 24;
 		src += 4;
 		dst += 4;
 	}
@@ -396,7 +402,11 @@ void compositeDestinationOver(unsigned char *dst, unsigned char *src, int width,
 		db = *(dst + 2);
 		da = *(dst + 3) / 255.0;
 		da_inv = 1.0 - da;
-		*dst32++ = (int)(dr + sr * da_inv) | (int)(dg + sg * da_inv) << 8 | (int)(db + sb * da_inv) << 16 | (int)((da + sa * da_inv) * 255.0) << 24;
+		*dst32++ =
+			(int)(dr + sr * da_inv) |
+			(int)(dg + sg * da_inv) << 8 |
+			(int)(db + sb * da_inv) << 16 |
+			(int)((da + sa * da_inv) * 255.0) << 24;
 		src += 4;
 		dst += 4;
 	}

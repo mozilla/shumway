@@ -1,6 +1,8 @@
 
 #define min(a,b) ((a) <= (b) ? (a) : (b))
 
+#define clamp(n) (int)((n) > 0xff ? 0xff : ((n) < 0 ? 0 : (n)))
+
 void preMultiplyAlpha(unsigned char *img, int width, int height);
 void unpreMultiplyAlpha(unsigned char *img, int width, int height);
 
