@@ -77,8 +77,31 @@
         blur.add(demo.blur, 'quality', { low: 1, medium: 2, high: 3 });
         blur.add(demo.blur, 'blurX', 0, 64).step(1);
         blur.add(demo.blur, 'blurY', 0, 64).step(1);
-        blur.open();
         controllers.push(blur);
+
+        var colormatrix = gui.addFolder('colormatrix');
+        colormatrix.add(demo.colormatrix, 'enabled');
+        colormatrix.add(demo.colormatrix, 'r0', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'r1', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'r2', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'r3', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'r4', -255, 255).step(1);
+        colormatrix.add(demo.colormatrix, 'g0', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'g1', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'g2', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'g3', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'g4', -255, 255).step(1);
+        colormatrix.add(demo.colormatrix, 'b0', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'b1', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'b2', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'b3', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'b4', -255, 255).step(1);
+        colormatrix.add(demo.colormatrix, 'a0', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'a1', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'a2', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'a3', 0, 1).step(0.05);
+        colormatrix.add(demo.colormatrix, 'a4', -255, 255).step(1);
+        controllers.push(colormatrix);
 
         for (var i in controllers) {
           var ctrl = controllers[i];

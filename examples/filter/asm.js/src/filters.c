@@ -412,7 +412,7 @@ void compositeDestinationOver(unsigned char *dst, unsigned char *src, int width,
 	}
 }
 
-void colorMatrix(unsigned char *img, int width, int height, float *m)
+void colormatrix(unsigned char *img, int width, int height, float *m)
 {
 	unsigned char *imgEnd = img + ((width * height) << 2);
 

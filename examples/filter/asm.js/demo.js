@@ -7,12 +7,6 @@ var Demo = (function() {
 
     this.shape = "logo";
 
-    this.blur = {
-      enabled: false,
-      quality: 1,
-      blurX: 4,
-      blurY: 4
-    };
     this.dropshadow = {
       enabled: true,
       distance: 4,
@@ -26,6 +20,19 @@ var Demo = (function() {
       inner: false,
       knockout: false,
       hideObject: false
+    };
+    this.blur = {
+      enabled: false,
+      quality: 1,
+      blurX: 4,
+      blurY: 4
+    };
+    this.colormatrix = {
+      enabled: false,
+      r0: 1, r1: 0, r2: 0, r3: 0, r4: 0,
+      g0: 0, g1: 1, g2: 0, g3: 0, g4: 0,
+      b0: 0, b1: 0, b2: 1, b3: 0, b4: 0,
+      a0: 0, a1: 0, a2: 0, a3: 1, a4: 0
     };
 
     this.currentShape = null;
@@ -56,6 +63,19 @@ var Demo = (function() {
     var color = parseInt(dsParams.color.substr(1), 16);
     var flags = (dsParams.inner ? 1 : 0) | (dsParams.knockout ? 2 : 0) | (dsParams.hideObject ? 4 : 0);
     FILTERS.dropshadow(pimg, w, h, dx, dy, color, dsParams.alpha, bx, by, dsParams.strength, dsParams.quality, flags);
+  }
+
+  function doColorMatrix(pimg, w, h, cmParams) {
+    var cm = new Float32Array([
+        cmParams.r0, cmParams.r1, cmParams.r2, cmParams.r3, cmParams.r4,
+        cmParams.g0, cmParams.g1, cmParams.g2, cmParams.g3, cmParams.g4,
+        cmParams.b0, cmParams.b1, cmParams.b2, cmParams.b3, cmParams.b4,
+        cmParams.a0, cmParams.a1, cmParams.a2, cmParams.a3, cmParams.a4
+      ]);
+    var pcm = Module._malloc(20 << 2);
+    Module.HEAPF32.set(cm, pcm >> 2);
+    FILTERS.colormatrix(pimg, w, h, pcm);
+    Module._free(pcm);
   }
 
   demo.prototype = {
@@ -92,6 +112,10 @@ var Demo = (function() {
           doBlur(pimg, w, h, this.blur);
         }
         FILTERS.unpreMultiplyAlpha(pimg, w, h);
+
+        if (this.colormatrix.enabled) {
+          doColorMatrix(pimg, w, h, this.colormatrix);
+        }
 
         imgData.set(Module.HEAPU8.subarray(pimg, pimg + imgData.length));
         Module._free(pimg);
@@ -185,7 +209,7 @@ var Demo = (function() {
     },
 
     hasActiveFilters: function hasActiveFilters() {
-      return this.blur.enabled || this.dropshadow.enabled;
+      return this.blur.enabled || this.dropshadow.enabled || this.colormatrix.enabled;
     }
 
   };
