@@ -8,13 +8,13 @@ var Demo = (function() {
     this.shape = "logo";
 
     this.blur = {
-      enabled: true,
+      enabled: false,
       quality: 1,
       blurX: 4,
       blurY: 4
     };
     this.dropshadow = {
-      enabled: false,
+      enabled: true,
       distance: 4,
       angle: 45,
       color: "#000000",

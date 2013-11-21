@@ -14,5 +14,7 @@ void pan(unsigned char *dst, unsigned char *src, int width, int height, int dx, 
 void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigned int color, int invertAlpha);
 void scaleAlpha(unsigned char *img, int width, int height, double strength);
 
+void colorMatrix(unsigned char *img, int width, int height, float *m);
+
 void compositeSourceOver(unsigned char *dst, unsigned char *src, int width, int height);
 void compositeDestinationOver(unsigned char *dst, unsigned char *src, int width, int height);

@@ -401,3 +401,30 @@ void compositeDestinationOver(unsigned char *dst, unsigned char *src, int width,
 		dst += 4;
 	}
 }
+
+void colorMatrix(unsigned char *img, int width, int height, float *m)
+{
+	unsigned char *imgEnd = img + ((width * height) << 2);
+
+	unsigned int *img32 = (unsigned int *)img;
+
+	int r, g, b, a;
+	float rr, rg, rb, ra;
+
+	while (img < imgEnd) {
+		r = *img;
+		g = *(img + 1);
+		b = *(img + 2);
+		a = *(img + 3);
+		rr = r * m[ 0] + g * m[ 1] + b * m[ 2] + a * m[ 3] + m[ 4];
+		rg = r * m[ 5] + g * m[ 6] + b * m[ 7] + a * m[ 8] + m[ 9];
+		rb = r * m[10] + g * m[11] + b * m[12] + a * m[13] + m[14];
+		ra = r * m[15] + g * m[16] + b * m[17] + a * m[18] + m[19];
+		*img32++ =
+			clamp(rr) |
+			clamp(rg) << 8 |
+			clamp(rb) << 16 |
+			clamp(ra) << 24;
+		img += 4;
+	}
+}

@@ -63,8 +63,8 @@
         dropshadow.add(demo.dropshadow, 'distance', -32, 32).step(1);
         dropshadow.add(demo.dropshadow, 'angle', 0, 359).step(1);
         //dropshadow.add(demo.dropshadow, 'alpha', 0, 1).step(0.05); // TODO
-        dropshadow.add(demo.dropshadow, 'blurX', 0, 32).step(1);
-        dropshadow.add(demo.dropshadow, 'blurY', 0, 32).step(1);
+        dropshadow.add(demo.dropshadow, 'blurX', 0, 64).step(1);
+        dropshadow.add(demo.dropshadow, 'blurY', 0, 64).step(1);
         dropshadow.add(demo.dropshadow, 'strength', 0, 8).step(0.1);
         //dropshadow.add(demo.dropshadow, 'inner'); // TODO
         //dropshadow.add(demo.dropshadow, 'knockout'); // TODO
@@ -75,8 +75,8 @@
         var blur = gui.addFolder('blur');
         blur.add(demo.blur, 'enabled');
         blur.add(demo.blur, 'quality', { low: 1, medium: 2, high: 3 });
-        blur.add(demo.blur, 'blurX', 0, 32).step(1);
-        blur.add(demo.blur, 'blurY', 0, 32).step(1);
+        blur.add(demo.blur, 'blurX', 0, 64).step(1);
+        blur.add(demo.blur, 'blurY', 0, 64).step(1);
         blur.open();
         controllers.push(blur);
 
