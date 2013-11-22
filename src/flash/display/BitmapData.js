@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 /* global renderDisplayObject, RenderVisitor, argbUintToStr, getBlendModeName,
-   Errors, throwError, URL */
+   Errors, throwError, URL, Counter */
 
 var CACHE_DRAWABLE_AFTER = 10;
 
@@ -141,7 +141,7 @@ var BitmapDataDefinition = (function () {
         return;
       }
       if (this._changeNotificationTarget) {
-        this._changeNotificationTarget._invalidate();
+        this._changeNotificationTarget._drawableChanged();
       }
       this._requested = 0;
       this._cache = null;
@@ -153,7 +153,8 @@ var BitmapDataDefinition = (function () {
       this._requested++;
       if (this._requested >= CACHE_DRAWABLE_AFTER) {
         if (!this._cache) {
-          var img = document.createElement('image');
+          Counter.count('Cache drawable');
+          var img = document.createElement('img');
           if ('toBlob' in this._drawable) {
             this._drawable.toBlob(function (blob) {
               img.src = URL.createObjectURL(blob);
