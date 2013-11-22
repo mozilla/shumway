@@ -31,7 +31,7 @@ TAMARIN_HOME = ./tamarin-redux
 TAMARIN_URL = http://hg.mozilla.org/tamarin-redux
 
 CLOSURE_JAR = ./cc.jar
-CLOSURE_URL = http://closure-compiler.googlecode.com/files/compiler-latest.zip
+CLOSURE_URL = http://dl.google.com/closure-compiler/compiler-latest.zip
 
 ASC_JAR = ./asc.jar
 ASC_URL = ftp://ftp.mozilla.org/pub/js/tamarin/builds/asc/latest/asc.jar
