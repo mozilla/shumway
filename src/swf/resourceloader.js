@@ -318,7 +318,7 @@ function createParsingContext(commitData) {
           case SWF_TAG_CODE_SHOW_FRAME:
             frame.repeat = tag.repeat;
             frame.depths = depths;
-            frame.complete = tag.eot;
+            frame.complete = !!tag.finalTag;
             commitData(frame);
             depths = { };
             frame = { type: 'frame' };
