@@ -21,71 +21,90 @@
          readHeader */
 /*jshint -W069 */
 
-function readTags(context, stream, swfVersion, onprogress) {
+function readTags(context, stream, swfVersion, final, onprogress) {
   var tags = context.tags;
   var bytes = stream.bytes;
   var lastSuccessfulPosition;
-  var tagCodeAndLength = readUi16(bytes, stream);
+
+  var tag = null;
+  if (context._readTag) {
+    tag = context._readTag;
+    delete context._readTag;
+  }
 
   try {
-    while(tagCodeAndLength) {
+    while (stream.pos < stream.end) {
+      // this loop can be interrupted at any moment by StreamNoDataError
+      // exception, trying to recover data/position below when thrown
       lastSuccessfulPosition = stream.pos;
+
+      stream.ensure(2);
+      var tagCodeAndLength = readUi16(bytes, stream);
+      if (!tagCodeAndLength) {
+        // end of tags
+        final = true;
+        break;
+      }
+
       var tagCode = tagCodeAndLength >> 6;
       var length = tagCodeAndLength & 0x3f;
       if (length === 0x3f) {
         stream.ensure(4);
         length = readUi32(bytes, stream);
       }
-      stream.ensure(length);
 
-      var substream = stream.substream(stream.pos, stream.pos += length);
-      var subbytes = substream.bytes;
-      var tag = { code: tagCode };
-
-      if (tagCode === 39) {
-        tag.type = 'sprite';
-        tag.id = readUi16(subbytes, substream);
-        tag.frameCount = readUi16(subbytes, substream);
-        tag.tags = [];
-        readTags(tag, substream, swfVersion);
-      } else {
-        var handler = tagHandler[tagCode];
-        if (handler) {
-          handler(subbytes, substream, tag, swfVersion, tagCode);
+      if (tag) {
+        if (tagCode === 1 && tag.code === 1) {
+          // counting ShowFrame
+          tag.repeat++;
+          stream.pos += length;
+          continue;
         }
-      }
-
-      if (stream.pos < stream.end) {
-        stream.ensure(2);
-        tagCodeAndLength = readUi16(bytes, stream);
-      } else {
-        tagCodeAndLength = 0;
-      }
-      tag.eot = !tagCodeAndLength;
-
-      if (tagCode === 1) {
-        var repeat = 1;
-        while (tagCodeAndLength >> 6 === 1 && stream.pos < stream.end) {
-          tagCodeAndLength = readUi16(bytes, stream);
-          tag.eot = !tagCodeAndLength;
-          repeat++;
-        }
-        tag.repeat = repeat;
-        tags.push(tag);
-        if (onprogress) {
-          onprogress(context);
-        }
-      } else {
         tags.push(tag);
         if (onprogress && tag.id !== undefined) {
           onprogress(context);
         }
+        tag = null;
       }
+
+      stream.ensure(length);
+      var substream = stream.substream(stream.pos, stream.pos += length);
+      var subbytes = substream.bytes;
+      var nextTag = { code: tagCode };
+
+      if (tagCode === 39) {
+        nextTag.type = 'sprite';
+        nextTag.id = readUi16(subbytes, substream);
+        nextTag.frameCount = readUi16(subbytes, substream);
+        nextTag.tags = [];
+        readTags(nextTag, substream, swfVersion, true);
+      } else if (tagCode === 1) {
+        nextTag.repeat = 1;
+      } else {
+        var handler = tagHandler[tagCode];
+        if (handler) {
+          handler(subbytes, substream, nextTag, swfVersion, tagCode);
+        }
+      }
+
+      tag = nextTag;
+    }
+    if (tag && final) {
+      tag.finalTag = true; // note: 'eot' is reserved by handlers
+      tags.push(tag);
+      if (onprogress) {
+        onprogress(context);
+      }
+    } else {
+      context._readTag = tag;
     }
   } catch (e) {
-
-    if (e !== StreamNoDataError) throw e;
+    if (e !== StreamNoDataError) {
+      throw e;
+    }
+    // recovering the stream state
     stream.pos = lastSuccessfulPosition;
+    context._readTag = tag;
   }
 }
 
@@ -244,13 +263,15 @@ BodyParser.prototype = {
       stream = buffer.createStream();
     }
 
+    var finalBlock = false;
     if (progressInfo) {
       swf.bytesLoaded = progressInfo.bytesLoaded;
       swf.bytesTotal = progressInfo.bytesTotal;
+      finalBlock = progressInfo.bytesLoaded >= progressInfo.bytesTotal;
     }
 
     var readStartTime = performance.now();
-    readTags(swf, stream, swfVersion, options.onprogress);
+    readTags(swf, stream, swfVersion, finalBlock, options.onprogress);
     swf.parseTime += performance.now() - readStartTime;
 
     var read = stream.pos;

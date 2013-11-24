@@ -134,6 +134,7 @@ $.fillStyles;
 $.fillWinding;
 $.filterCount;
 $.filters;
+$.finalTag;
 $.flags;
 $.focalPoint;
 $.focalPointMorph;
