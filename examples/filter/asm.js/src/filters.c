@@ -182,20 +182,200 @@ void boxBlur(unsigned int *lineBufferOut, unsigned char *lineBufferIn, int width
 	}
 }
 
+void blurAlpha(unsigned char *img, int width, int height, int bx, int by, int quality, unsigned char borderAlpha)
+{
+	for (int i = 0; i < quality; ++i) {
+		blurXAlpha(img, width, height, bx, borderAlpha);
+		blurYAlpha(img, width, height, by, borderAlpha);
+	}
+}
+
+void blurXAlpha(unsigned char *img, int width, int height, int distance, unsigned char borderAlpha)
+{
+	if (distance < 1) {
+		return;
+	}
+
+	unsigned char *src = img;
+
+	int dist2 = distance << 1;
+	int lineInSize = width + dist2; // (distance * 2) + width
+	int windowLength = dist2 + 1; // (distance * 2) + 1
+
+	unsigned char *lineBufferIn = malloc(lineInSize);
+	unsigned char *pBorderLeft = lineBufferIn;
+	unsigned char *pBorderRight = lineBufferIn + lineInSize - 1;
+	for (int i = 0; i < dist2; ++i) {
+		*pBorderLeft++ = borderAlpha;
+		*pBorderRight-- = borderAlpha;
+	}
+
+	for (int y = 0; y < height; ++y) {
+		memcpy(lineBufferIn + dist2, src + distance, width - dist2);
+		boxBlurAlpha(src, lineBufferIn, width, windowLength);
+		src += width;
+	}
+
+	free(lineBufferIn);
+}
+
+void blurYAlpha(unsigned char *img, int width, int height, int distance, unsigned char borderAlpha)
+{
+	if (distance < 1) {
+		return;
+	}
+
+	unsigned char *src = img;
+
+	int dist2 = distance << 1;
+	int lineInSize = height + dist2; // height + (distance * 2)
+	int windowLength = dist2 + 1; // (distance * 2) + 1
+
+	unsigned char *lineBufferIn = malloc(lineInSize);
+	unsigned char *pBorderTop = lineBufferIn;
+	unsigned char *pBorderBottom = lineBufferIn + lineInSize - 1;
+	for (int i = 0; i < dist2; ++i) {
+		*pBorderTop++ = borderAlpha;
+		*pBorderBottom-- = borderAlpha;
+	}
+
+	unsigned char *lineBufferOut = malloc(height);
+	memset(lineBufferOut, 0, height);
+
+	unsigned char *psrc;
+	unsigned char *pline;
+	int srcOffs = distance * width;
+	int x, y;
+
+	for (x = 0; x < width; ++x) {
+		psrc = src + srcOffs;
+		pline = lineBufferIn + dist2;
+		for (y = 0; y < height - dist2; ++y) {
+			*pline++ = *psrc;
+			psrc += width;
+		}
+
+		boxBlurAlpha(lineBufferOut, lineBufferIn, height, windowLength);
+
+		psrc = src;
+		pline = lineBufferOut;
+		for (y = 0; y < height; ++y) {
+			*psrc = *pline++;
+			psrc += width;
+		}
+
+		src++;
+	}
+
+	free(lineBufferOut);
+	free(lineBufferIn);
+}
+
+void boxBlurAlpha(unsigned char *lineBufferOut, unsigned char *lineBufferIn, int width, int windowLength)
+{
+	unsigned long as = 0;
+
+	// Init window
+	unsigned char *ptr = lineBufferIn;
+	unsigned char *ptrEnd = lineBufferIn + windowLength;
+	while (ptr < ptrEnd) {
+		as += *ptr++;
+	}
+
+	// Slide window
+	unsigned char *pLast = lineBufferIn;
+	unsigned char *pNext = lineBufferIn + windowLength;
+	for (int x = 0; x < width; ++x) {
+		*lineBufferOut++ = as / windowLength;
+		as += *pNext++ - *pLast++;
+	}
+}
+
 void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsigned int color, int alpha, int bx, int by, double strength, int quality, unsigned int flags)
 {
 	int inner = flags & 1;
 	int knockout = (flags >> 1) & 1;
 	int hideObject = (flags >> 2) & 1;
-	int len = width * height;
+	int size = width * height;
+	int size4 = size << 2;
+	int i;
 
-	unsigned char *tmp = malloc(len << 2);
-	memset(tmp, 0, len << 2);
+	unsigned char defaultalpha = (inner == 1) ? 0xff : 0;
 
-	pan(tmp, img, width, height, dx, dy);
-	tint(tmp, tmp, width, height, color, inner);
-	blur(tmp, width, height, bx, by, quality, (inner == 1) ? (color | 0xff000000) : 0);
-	scaleAlpha(tmp, width, height, strength);
+	unsigned char *tmp = malloc(size4);
+	memset(tmp, defaultalpha, size);
+
+	// Copy alpha channel to tmp, offset by dx/dy
+	unsigned char *ptmp = tmp;
+	unsigned char *pimg = img + 3;
+	if (dx == 0 && dy == 0) {
+		if (inner == 1) {
+			for (i = 0; i < size; ++i) {
+				*ptmp++ = 255 - *pimg;
+				pimg += 4;
+			}
+		} else {
+			for (i = 0; i < size; ++i) {
+				*ptmp++ = *pimg;
+				pimg += 4;
+			}
+		}
+	} else {
+		int w = width - abs(dx);
+		int h = height - abs(dy);
+		int width4 = width << 2;
+		int x, x4, y;
+		if (dx > 0) {
+			ptmp += dx;
+		} else {
+			pimg -= dx * 4;
+		}
+		if (dy > 0) {
+			ptmp += dy * width;
+		} else {
+			pimg -= dy * width * 4;
+		}
+		if (inner == 1) {
+			for (y = 0; y < h; ++y) {
+				for (x = 0, x4 = 0; x < w; ++x, x4 += 4) {
+					*(ptmp + x) = 255 - *(pimg + x4);
+				}
+				ptmp += width;
+				pimg += width4;
+			}
+		} else {
+			for (y = 0; y < h; ++y) {
+				for (x = 0, x4 = 0; x < w; ++x, x4 += 4) {
+					*(ptmp + x) = *(pimg + x4);
+				}
+				ptmp += width;
+				pimg += width4;
+			}
+		}
+	}
+
+	blurAlpha(tmp, width, height, bx, by, quality, defaultalpha);
+
+	// Tint and multiply strength
+	unsigned char r = (color >> 16) & 0xff;
+	unsigned char g = (color >> 8) & 0xff;
+	unsigned char b = color & 0xff;
+	unsigned int bgr = r | g << 8 | b << 16 | 0xff000000;
+	float af;
+	unsigned long ac;
+	unsigned int *ptmp32 = (unsigned int *)tmp + size - 1;
+	ptmp = tmp + size;
+	while (--ptmp >= tmp) {
+		ac = *ptmp * strength;
+		if (ac >= 255) {
+			*ptmp32-- = bgr;
+		} else if (ac > 0) {
+			af = ac / 255.0;
+			*ptmp32-- = (int)(r * af) | (int)(g * af) << 8 | (int)(b * af) << 16 | ac << 24;
+		} else {
+			*ptmp32-- = 0;
+		}
+	}
 
 	if (inner == 1) {
 		if (knockout == 0 && hideObject == 0) {
@@ -203,139 +383,18 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 		} else {
 			compositeDestinationIn(tmp, img, width, height);
 		}
-		memcpy(img, tmp, len << 2);
+		memcpy(img, tmp, size4);
 	} else {
 		if (knockout == 1) {
 			compositeSourceOut(img, tmp, width, height);
 		} else if (hideObject == 1) {
-			memcpy(img, tmp, len << 2);
+			memcpy(img, tmp, size4);
 		} else {
 			compositeDestinationOver(img, tmp, width, height);
 		}
 	}
 
 	free(tmp);
-}
-
-void pan(unsigned char *dst, unsigned char *src, int width, int height, int dx, int dy)
-{
-	if (dx == 0 && dy == 0) {
-		if (dst != src) {
-			memcpy(dst, src, width * height * 4);
-		}
-		return;
-	}
-
-	unsigned int *psrc = (unsigned int *)src;
-	unsigned int *pdst = (unsigned int *)dst;
-	int w = width - abs(dx);
-	int h = height - abs(dy);
-	if (dx > 0) { pdst += dx; }
-	if (dy > 0) { pdst += dy * width; }
-	if (dx < 0) { psrc -= dx; }
-	if (dy < 0) { psrc -= dy * width; }
-	if (pdst <= psrc) {
-		for (int y = 0; y < h; ++y) {
-			for (int x = 0; x < w; ++x) {
-				*(pdst + x) = *(psrc + x);
-			}
-			pdst += width;
-			psrc += width;
-		}
-	} else {
-		int end = width * (h - 1);
-		psrc += end;
-		pdst += end;
-		w--; h--;
-		for (int y = h; y >= 0; --y) {
-			for (int x = w; x >= 0; --x) {
-				*(pdst + x) = *(psrc + x);
-			}
-			pdst -= width;
-			psrc -= width;
-		}
-	}
-}
-
-void tint(unsigned char *dst, unsigned char *src, int width, int height, unsigned int color, int invertAlpha)
-{
-	unsigned int *dst32 = (unsigned int *)dst;
-	unsigned int *end32 = dst32 + (width * height);
-
-	unsigned char r = (color >> 16) & 0xff;
-	unsigned char g = (color >> 8) & 0xff;
-	unsigned char b = color & 0xff;
-	unsigned int bgr = r | g << 8 | b << 16 | 0xff000000;
-
-	float af;
-	unsigned char ac;
-
-	src += 3;
-	if (invertAlpha) {
-		while (dst32 < end32) {
-			ac = *src;
-			if (ac == 0) {
-				*dst32 = bgr;
-			} else if (ac < 255) {
-				ac = 255 - ac;
-				af = ac / 255.0;
-				*dst32 = (int)(r * af) | (int)(g * af) << 8 | (int)(b * af) << 16 | ac << 24;
-			} else {
-				*dst32 = 0;
-			}
-			dst32++;
-			src += 4;
-		}
-	} else {
-		while (dst32 < end32) {
-			ac = *src;
-			if (ac == 255) {
-				*dst32 = bgr;
-			} else if (ac > 0) {
-				af = ac / 255.0;
-				*dst32 = (int)(r * af) | (int)(g * af) << 8 | (int)(b * af) << 16 | ac << 24;
-			} else {
-				*dst32 = 0;
-			}
-			dst32++;
-			src += 4;
-		}
-	}
-}
-
-void scaleAlpha(unsigned char *img, int width, int height, double strength)
-{
-	if (strength == 1.0) {
-		return;
-	}
-
-	unsigned char *imgEnd = img + ((width * height) << 2);
-
-	unsigned int *img32 = (unsigned int *)img;
-
-	int r, g, b, a;
-	float rr, rg, rb, ra;
-	float mult;
-
-	while (img < imgEnd) {
-		ra = *(img + 3);
-		if (ra == 0) {
-			*img32++ = 0;
-		} else {
-			a = ra * strength;
-			a = clamp(a);
-			if (a == ra) {
-				*img32++ = *img | *(img + 1) << 8 | *(img + 2) << 16 | a << 24;
-			} else {
-				mult = a / ra;
-				rr = *img * mult;
-				rg = *(img + 1) * mult;
-				rb = *(img + 2) * mult;
-				*img32++ = clamp(rr) | clamp(rg) << 8 | clamp(rb) << 16 | a << 24;
-			}
-		}
-		img += 4;
-	}
 }
 
 // TODO: REVIST
