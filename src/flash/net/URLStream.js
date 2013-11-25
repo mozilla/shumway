@@ -69,7 +69,7 @@ var URLStreamDefinition = (function () {
         var httpStatusEvent = HTTPStatusEventClass.createInstance([
           'httpStatus', false, false, httpStatus]);
         var headers = [];
-        httpHeaders.split(/\r\n/g).forEach(function (h) {
+        httpHeaders.split(/(?:\n|\r?\n)/g).forEach(function (h) {
           var m = /^([^:]+): (.*)$/.exec(h);
           if (m) {
             headers.push(URLRequestHeaderClass.createInstance([m[1], m[2]]));
@@ -78,9 +78,8 @@ var URLStreamDefinition = (function () {
             }
           }
         });
-
-        httpStatusEvent.public$responseHeaders = headers;
-        httpStatusEvent.public$responseURL = location;
+        httpStatusEvent.asSetPublicProperty('responseHeaders', headers);
+        httpStatusEvent.asSetPublicProperty('responseURL', location);
         self._dispatchEvent(httpStatusEvent);
       };
       session.onclose = function () {

@@ -160,14 +160,14 @@ var NetStreamDefinition = (function () {
             request._checkPolicyFile = this._checkPolicyFile;
             var stream = new flash.net.URLStream();
             stream._addEventListener('httpStatus', function (e) {
-              var responseHeaders = e[Multiname.getPublicQualifiedName('responseHeaders')];
+              var responseHeaders = e.asGetPublicProperty('responseHeaders');
               var contentTypeHeader = responseHeaders.filter(function (h) {
-                return h[Multiname.getPublicQualifiedName('name')] === 'Content-Type';
+                return h.asGetPublicProperty('name') === 'Content-Type';
               })[0];
               if (contentTypeHeader &&
-                  contentTypeHeader[Multiname.getPublicQualifiedName('value')] !==
+                  contentTypeHeader.asGetPublicProperty('value') !==
                     'application/octet-stream') {
-                this._contentTypeHint = contentTypeHeader[Multiname.getPublicQualifiedName('value')];
+                this._contentTypeHint = contentTypeHeader.asGetPublicProperty('value');
               }
             }.bind(this));
             stream._addEventListener('progress', function (e) {
