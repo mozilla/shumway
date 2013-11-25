@@ -185,10 +185,10 @@ var StageDefinition = (function () {
         for (var j = 0; j < neighbours.length; j++) {
           var item = neighbours[j];
 
-          if (item.obj._invalid || (xMin > item.x + item.width) ||
-                                   (xMax < item.x) ||
-                                   (yMin > item.y + item.height) ||
-                                   (yMax < item.y))
+          if (item.obj._invalid || (xMin > item.xMax) ||
+                                   (xMax < item.xMin) ||
+                                   (yMin > item.yMax) ||
+                                   (yMax < item.yMin))
           {
             continue;
           }
