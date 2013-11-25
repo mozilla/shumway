@@ -26,6 +26,7 @@ var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawReg
 var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
 var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
 var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
+var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", false, "force hidpi"));
 
 
 var enableConstructChildren = rendererOptions.register(new Option("", "constructChildren", "boolean", true, "Construct Children"));
@@ -34,6 +35,7 @@ var enableAdvanceFrame = rendererOptions.register(new Option("", "advanceFrame",
 
 if (typeof FirefoxCom !== 'undefined') {
   turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
+  forceHidpi.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.force_hidpi', def: false});
 }
 
 var CanvasCache = {

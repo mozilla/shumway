@@ -15,9 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global SWF, renderStage, rgbaObjToStr, ShumwayKeyboardListener */
-
-var FORCE_HIDPI = false;
+/*global SWF, renderStage, rgbaObjToStr, ShumwayKeyboardListener, forceHidpi */
 
 SWF.embed = function(file, doc, container, options) {
   var canvas = doc.createElement('canvas');
@@ -27,6 +25,7 @@ SWF.embed = function(file, doc, container, options) {
   var stage = new flash.display.Stage();
 
   var pixelRatio = 1;
+  var forceHidpiSetting = forceHidpi.value;
 
   stage._loader = loader;
   loaderInfo._parameters = options.movieParams;
@@ -36,16 +35,28 @@ SWF.embed = function(file, doc, container, options) {
   loader._parent = stage;
   loader._stage = stage;
 
-  function fitCanvas(container, canvas) {
-    canvas.style.width = container.clientWidth + 'px';
-    canvas.style.height = container.clientHeight + 'px';
-    canvas.width = container.clientWidth * pixelRatio;
-    canvas.height = container.clientHeight * pixelRatio;
+  function setCanvasSize(width, height) {
+    if (pixelRatio === 1.0) {
+      canvas.width = width | 0;
+      canvas.height = height | 0;
+      return;
+    }
+    var canvasWidth = Math.floor(width * pixelRatio);
+    var canvasHeight = Math.floor(height * pixelRatio);
+    // trying fit into fractional amount of pixels if pixelRatio is not int
+    canvas.style.width = (canvasWidth / pixelRatio) + 'px';
+    canvas.style.height = (canvasHeight / pixelRatio) + 'px';
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+  }
+
+  function fitCanvas(container) {
+    setCanvasSize(container.clientWidth, container.clientHeight);
     stage._invalid = true;
   }
 
   loaderInfo._addEventListener('init', function () {
-    if (loaderInfo._swfVersion >= 18 || FORCE_HIDPI) {
+    if (forceHidpiSetting || loaderInfo._swfVersion >= 18) {
       // Support of HiDPI displays  (for SWF version 18 and above only)
       pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
     }
@@ -53,15 +64,12 @@ SWF.embed = function(file, doc, container, options) {
     stage._contentsScaleFactor = pixelRatio;
 
     if (container.clientHeight) {
-      fitCanvas(container, canvas);
+      fitCanvas(container);
       window.addEventListener('resize', function () {
-        fitCanvas(container, canvas);
+        fitCanvas(container);
       });
     } else {
-      canvas.style.width = (stage._stageWidth / 20) + 'px';
-      canvas.style.height = (stage._stageHeight / 20) + 'px';
-      canvas.width = stage._stageWidth * pixelRatio / 20;
-      canvas.height = stage._stageHeight * pixelRatio / 20;
+      setCanvasSize(stage._stageWidth / 20, stage._stageHeight / 20);
     }
 
     container.setAttribute("style", "position: relative");
