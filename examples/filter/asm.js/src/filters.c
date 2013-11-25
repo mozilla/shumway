@@ -77,10 +77,8 @@ void blurX(unsigned char *img, int width, int height, int distance, unsigned int
 	unsigned int *pBorderLeft = (unsigned int *)lineBufferIn;
 	unsigned int *pBorderRight = (unsigned int *)(lineBufferIn + lineInSize - 4);
 	for (int i = 0; i < dist2; ++i) {
-		*pBorderLeft = borderColor;
-		*pBorderRight = borderColor;
-		pBorderLeft++;
-		pBorderRight--;
+		*pBorderLeft++ = borderColor;
+		*pBorderRight-- = borderColor;
 	}
 
 	for (int y = 0; y < height; ++y) {
@@ -110,9 +108,7 @@ void blurY(unsigned char *img, int width, int height, int distance, unsigned int
 	unsigned int *pBorderBottom = (unsigned int *)(lineBufferIn + lineInSize - 4);
 	for (int i = 0; i < dist2; ++i) {
 		*pBorderTop++ = borderColor;
-		*pBorderBottom = borderColor;
-		pBorderTop++;
-		pBorderBottom--;
+		*pBorderBottom-- = borderColor;
 	}
 
 	unsigned char *lineBufferOut = malloc(lineOutSize);
