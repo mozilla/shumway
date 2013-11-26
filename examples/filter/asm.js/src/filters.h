@@ -10,9 +10,9 @@ void blurX(unsigned char *img, int width, int height, int distance, unsigned int
 void blurY(unsigned char *img, int width, int height, int distance, unsigned int borderColor);
 void boxBlur(unsigned int *lineBufferOut, unsigned char *lineBufferIn, int width, int windowLength);
 
-void blurAlpha(unsigned char *img, int width, int height, int bx, int by, int quality, unsigned char borderAlpha);
-void blurXAlpha(unsigned char *img, int width, int height, int distance, unsigned char borderAlpha);
-void blurYAlpha(unsigned char *img, int width, int height, int distance, unsigned char borderAlpha);
+void blurAlpha(unsigned char *img, int width, int height, int bx, int by, int quality, unsigned char borderAlpha, int rx, int ry, int rw, int rh);
+void blurXAlpha(unsigned char *img, int width, int height, int distance, unsigned char borderAlpha, int rx, int ry, int rw, int rh);
+void blurYAlpha(unsigned char *img, int width, int height, int distance, unsigned char borderAlpha, int rx, int ry, int rw, int rh);
 void boxBlurAlpha(unsigned char *lineBufferOut, unsigned char *lineBufferIn, int width, int windowLength);
 
 void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsigned int color, int alpha, int bx, int by, double strength, int quality, unsigned int flags);

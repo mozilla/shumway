@@ -186,74 +186,84 @@ void boxBlur(unsigned int *lineBufferOut, unsigned char *lineBufferIn, int width
 	}
 }
 
-void blurAlpha(unsigned char *img, int width, int height, int bx, int by, int quality, unsigned char borderAlpha)
+void blurAlpha(unsigned char *img, int width, int height, int bx, int by, int quality, unsigned char borderAlpha, int rx, int ry, int rw, int rh)
 {
+	int bxTotal = bx * (quality - 1);
+	int byTotal = by * (quality - 1);
+	rx += bxTotal;
+	ry += byTotal;
+	rw -= bxTotal << 1;
+	rh -= byTotal << 1;
 	for (int i = 0; i < quality; ++i) {
-		blurXAlpha(img, width, height, bx, borderAlpha);
-		blurYAlpha(img, width, height, by, borderAlpha);
+		blurXAlpha(img, width, height, bx, borderAlpha, rx, ry, rw, rh);
+		blurYAlpha(img, width, height, by, borderAlpha, rx, ry, rw, rh);
+		rx -= bx;
+		ry -= by;
+		rw += bx << 1;
+		rh += by << 1;
 	}
 }
 
-void blurXAlpha(unsigned char *img, int width, int height, int distance, unsigned char borderAlpha)
+void blurXAlpha(unsigned char *img, int width, int height, int distance, unsigned char borderAlpha, int rx, int ry, int rw, int rh)
 {
 	if (distance < 1) {
 		return;
 	}
 
-	unsigned char *src = img;
+	unsigned char *src = img + (ry * width) + rx;
 
 	int dist2 = distance << 1;
 	int windowLength = dist2 + 1;
 
-	unsigned char *lineBufferIn = malloc(width + dist2);
+	unsigned char *lineBufferIn = malloc(rw + dist2);
 	memset(lineBufferIn, borderAlpha, dist2);
-	memset(lineBufferIn + width, borderAlpha, dist2);
+	memset(lineBufferIn + rw, borderAlpha, dist2);
 
-	for (int y = 0; y < height; ++y) {
-		memcpy(lineBufferIn + dist2, src + distance, width - dist2);
-		boxBlurAlpha(src, lineBufferIn, width, windowLength);
+	for (int y = 0; y < rh; ++y) {
+		memcpy(lineBufferIn + dist2, src + distance, rw - dist2);
+		boxBlurAlpha(src, lineBufferIn, rw, windowLength);
 		src += width;
 	}
 
 	free(lineBufferIn);
 }
 
-void blurYAlpha(unsigned char *img, int width, int height, int distance, unsigned char borderAlpha)
+void blurYAlpha(unsigned char *img, int width, int height, int distance, unsigned char borderAlpha, int rx, int ry, int rw, int rh)
 {
 	if (distance < 1) {
 		return;
 	}
 
-	unsigned char *src = img;
+	unsigned char *src = img + (ry * width) + rx;
 
 	int dist2 = distance << 1;
 	int windowLength = dist2 + 1;
 
-	unsigned char *lineBufferIn = malloc(height + dist2);
+	unsigned char *lineBufferIn = malloc(rh + dist2);
 	memset(lineBufferIn, borderAlpha, dist2);
-	memset(lineBufferIn + height, borderAlpha, dist2);
+	memset(lineBufferIn + rh, borderAlpha, dist2);
 
-	unsigned char *lineBufferOut = malloc(height);
-	memset(lineBufferOut, 0, height);
+	unsigned char *lineBufferOut = malloc(rh);
+	memset(lineBufferOut, 0, rh);
 
 	unsigned char *psrc;
 	unsigned char *pline;
 	int srcOffs = distance * width;
 	int x, y;
 
-	for (x = 0; x < width; ++x) {
+	for (x = 0; x < rw; ++x) {
 		psrc = src + srcOffs;
 		pline = lineBufferIn + dist2;
-		for (y = 0; y < height - dist2; ++y) {
+		for (y = 0; y < rh - dist2; ++y) {
 			*pline++ = *psrc;
 			psrc += width;
 		}
 
-		boxBlurAlpha(lineBufferOut, lineBufferIn, height, windowLength);
+		boxBlurAlpha(lineBufferOut, lineBufferIn, rh, windowLength);
 
 		psrc = src;
 		pline = lineBufferOut;
-		for (y = 0; y < height; ++y) {
+		for (y = 0; y < rh; ++y) {
 			*psrc = *pline++;
 			psrc += width;
 		}
@@ -350,7 +360,7 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 	}
 
 	// Blur the alpha channel
-	blurAlpha(tmp, width, height, bx, by, quality, defaultalpha);
+	blurAlpha(tmp, width, height, bx, by, quality, defaultalpha, 0, 0, width, height);
 
 	// Tint and multiply strength
 	unsigned char r = (color >> 16) & 0xff;
