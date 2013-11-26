@@ -200,8 +200,6 @@ var SoundChannelDefinition = (function () {
 function createAudioChannel(sampleRate, channels) {
   if (WebAudioChannel.isSupported)
     return new WebAudioChannel(sampleRate, channels);
-  else if (AudioDataChannel.isSupported)
-    return new AudioDataChannel(sampleRate, channels);
   else
     error('PCM data playback is not supported by the browser');
 }
@@ -307,70 +305,4 @@ WebAudioChannel.prototype = {
 WebAudioChannel.isSupported = (function() {
   return typeof AudioContext !== 'undefined' ||
          typeof webkitAudioContext != 'undefined';
-})();
-
-// from https://wiki.mozilla.org/Audio_Data_API
-function AudioDataChannel(sampleRate, channels) {
-  this.sampleRate = sampleRate;
-  this.channels = channels;
-}
-AudioDataChannel.prototype = {
-  start: function () {
-    var sampleRate = this.sampleRate;
-    var channels = this.channels;
-    var self = this;
-
-    // Initialize the audio output.
-    var audio = new Audio();
-    audio.mozSetup(channels, sampleRate);
-
-    var currentWritePosition = 0;
-    var prebufferSize = sampleRate * channels / 2; // buffer 500ms
-    var tail = null, tailPosition;
-
-    // The function called with regular interval to populate
-    // the audio output buffer.
-    this.interval = setInterval(function() {
-      var written;
-      // Check if some data was not written in previous attempts.
-      if(tail) {
-        written = audio.mozWriteAudio(tail.subarray(tailPosition));
-        currentWritePosition += written;
-        tailPosition += written;
-        if(tailPosition < tail.length) {
-          // Not all the data was written, saving the tail...
-          return; // ... and exit the function.
-        }
-        tail = null;
-      }
-
-      // Check if we need add some data to the audio output.
-      var currentPosition = audio.mozCurrentSampleOffset();
-      var available = currentPosition + prebufferSize - currentWritePosition;
-      available -= available % channels; // align to channels count
-      if(available > 0) {
-        // Request some sound data from the callback function.
-        var soundData = new Float32Array(available);
-        self.requestData(soundData, available);
-
-        // Writting the data.
-        written = audio.mozWriteAudio(soundData);
-        if(written < soundData.length) {
-          // Not all the data was written, saving the tail.
-          tail = soundData;
-          tailPosition = written;
-        }
-        currentWritePosition += written;
-      }
-    }, 100);
-  },
-  stop: function () {
-    clearInterval(this.interval);
-  },
-  requestData: function (data, count) {
-    this.ondatarequested({data: data, count: count});
-  }
-};
-AudioDataChannel.isSupported = (function () {
-  return 'mozSetup' in (new Audio());
 })();
