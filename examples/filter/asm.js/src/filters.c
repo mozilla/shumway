@@ -203,16 +203,11 @@ void blurXAlpha(unsigned char *img, int width, int height, int distance, unsigne
 	unsigned char *src = img;
 
 	int dist2 = distance << 1;
-	int lineInSize = width + dist2; // (distance * 2) + width
-	int windowLength = dist2 + 1; // (distance * 2) + 1
+	int windowLength = dist2 + 1;
 
-	unsigned char *lineBufferIn = malloc(lineInSize);
-	unsigned char *pBorderLeft = lineBufferIn;
-	unsigned char *pBorderRight = lineBufferIn + lineInSize - 1;
-	for (int i = 0; i < dist2; ++i) {
-		*pBorderLeft++ = borderAlpha;
-		*pBorderRight-- = borderAlpha;
-	}
+	unsigned char *lineBufferIn = malloc(width + dist2);
+	memset(lineBufferIn, borderAlpha, dist2);
+	memset(lineBufferIn + width, borderAlpha, dist2);
 
 	for (int y = 0; y < height; ++y) {
 		memcpy(lineBufferIn + dist2, src + distance, width - dist2);
@@ -232,16 +227,11 @@ void blurYAlpha(unsigned char *img, int width, int height, int distance, unsigne
 	unsigned char *src = img;
 
 	int dist2 = distance << 1;
-	int lineInSize = height + dist2; // height + (distance * 2)
-	int windowLength = dist2 + 1; // (distance * 2) + 1
+	int windowLength = dist2 + 1;
 
-	unsigned char *lineBufferIn = malloc(lineInSize);
-	unsigned char *pBorderTop = lineBufferIn;
-	unsigned char *pBorderBottom = lineBufferIn + lineInSize - 1;
-	for (int i = 0; i < dist2; ++i) {
-		*pBorderTop++ = borderAlpha;
-		*pBorderBottom-- = borderAlpha;
-	}
+	unsigned char *lineBufferIn = malloc(height + dist2);
+	memset(lineBufferIn, borderAlpha, dist2);
+	memset(lineBufferIn + height, borderAlpha, dist2);
 
 	unsigned char *lineBufferOut = malloc(height);
 	memset(lineBufferOut, 0, height);
