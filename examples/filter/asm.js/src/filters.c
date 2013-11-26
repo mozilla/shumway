@@ -7,13 +7,15 @@ void preMultiplyAlpha(unsigned char *img, int width, int height)
 {
 	unsigned char *ptr = img;
 	unsigned char *ptrEnd = img + ((width * height) << 2);
-	float alpha;
+	unsigned char ac;
+	float a;
 	while (ptr < ptrEnd) {
-		alpha = *(ptr + 3) / 255.0;
-		if (alpha != 0) {
-			*ptr *= alpha;
-			*(ptr + 1) *= alpha;
-			*(ptr + 2) *= alpha;
+		ac = *(ptr + 3);
+		if (ac != 0) {
+			a = ac / 255.0;
+			*ptr *= a;
+			*(ptr + 1) *= a;
+			*(ptr + 2) *= a;
 		} else {
 			*ptr = 0;
 			*(ptr + 1) = 0;
@@ -27,13 +29,15 @@ void unpreMultiplyAlpha(unsigned char *img, int width, int height)
 {
 	unsigned char *ptr = img;
 	unsigned char *ptrEnd = img + ((width * height) << 2);
-	float alpha;
+	unsigned char ac;
+	float a;
 	while (ptr < ptrEnd) {
-		alpha = *(ptr + 3) / 255.0;
-		if (alpha != 0) {
-			*ptr /= alpha;
-			*(ptr + 1) /= alpha;
-			*(ptr + 2) /= alpha;
+		ac = *(ptr + 3);
+		if (ac != 0) {
+			a = ac / 255.0;
+			*ptr /= a;
+			*(ptr + 1) /= a;
+			*(ptr + 2) /= a;
 		} else {
 			*ptr = 0;
 			*(ptr + 1) = 0;
