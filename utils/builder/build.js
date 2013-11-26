@@ -367,6 +367,7 @@ if (closure.value) {
   closureOptions.push("ECMASCRIPT5");
   closureOptions.push("--jscomp_off=suspiciousCode");
   closureOptions.push("--jscomp_off=uselessCode");
+  closureOptions.push("--jscomp_off=globalThis");
   closureOptions.push("--compilation_level");
   var optimizations = {a: "ADVANCED_OPTIMIZATIONS", s: "SIMPLE_OPTIMIZATIONS", w: "WHITESPACE_ONLY"};
   if (!(closure.value in optimizations)) {
