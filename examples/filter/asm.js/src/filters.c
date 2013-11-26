@@ -299,10 +299,11 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 	unsigned char *tmp = malloc(size4);
 	memset(tmp, defaultalpha, size);
 
-	// Copy alpha channel to tmp, offset by dx/dy
+	// Copy img's alpha channel to tmp, offset by dx/dy
 	unsigned char *ptmp = tmp;
 	unsigned char *pimg = img + 3;
 	if (dx == 0 && dy == 0) {
+		// No offset: just copy
 		if (inner == 1) {
 			for (i = 0; i < size; ++i) {
 				*ptmp++ = 255 - *pimg;
@@ -348,6 +349,7 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 		}
 	}
 
+	// Blur the alpha channel
 	blurAlpha(tmp, width, height, bx, by, quality, defaultalpha);
 
 	// Tint and multiply strength
@@ -371,13 +373,13 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 		}
 	}
 
+	// Composite shadow with image
 	if (inner == 1) {
 		if (knockout == 0 && hideObject == 0) {
-			compositeDestinationAtop(tmp, img, width, height);
+			compositeSourceAtop(img, tmp, width, height);
 		} else {
-			compositeDestinationIn(tmp, img, width, height);
+			compositeSourceIn(img, tmp, width, height);
 		}
-		memcpy(img, tmp, size4);
 	} else {
 		if (knockout == 1) {
 			compositeSourceOut(img, tmp, width, height);
@@ -391,7 +393,6 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 	free(tmp);
 }
 
-// TODO: REVIST
 void compositeSourceOver(unsigned char *dst, unsigned char *src, int width, int height)
 {
 	unsigned char *end = src + ((width * height) << 2);
@@ -424,70 +425,7 @@ void compositeSourceOver(unsigned char *dst, unsigned char *src, int width, int 
 	}
 }
 
-// TODO: REVIST
-void compositeDestinationOver(unsigned char *dst, unsigned char *src, int width, int height)
-{
-	unsigned char *end = src + ((width * height) << 2);
-
-	unsigned int *dst32 = (unsigned int *)dst;
-
-	int dr, dg, db;
-	int sr, sg, sb;
-	double sa;
-	double da;
-	double da_inv;
-
-	while (src < end) {
-		sr = *src;
-		sg = *(src + 1);
-		sb = *(src + 2);
-		sa = *(src + 3) / 255.0;
-		dr = *dst;
-		dg = *(dst + 1);
-		db = *(dst + 2);
-		da = *(dst + 3) / 255.0;
-		da_inv = 1.0 - da;
-		*dst32++ =
-			(int)(dr + sr * da_inv) |
-			(int)(dg + sg * da_inv) << 8 |
-			(int)(db + sb * da_inv) << 16 |
-			(int)((da + sa * da_inv) * 255.0) << 24;
-		src += 4;
-		dst += 4;
-	}
-}
-
-// TODO: REVIST
 void compositeSourceIn(unsigned char *dst, unsigned char *src, int width, int height)
-{
-	unsigned char *end = src + ((width * height) << 2);
-
-	unsigned int *dst32 = (unsigned int *)dst;
-
-	int dr, dg, db;
-	int sr, sg, sb;
-	double sa;
-	double da;
-	double da_inv;
-
-	while (src < end) {
-		sr = *src;
-		sg = *(src + 1);
-		sb = *(src + 2);
-		sa = *(src + 3) / 255.0;
-		da = *(dst + 3) / 255.0;
-		da_inv = 1.0 - da;
-		*dst32++ =
-			(int)(sa * sr * da) |
-			(int)(sa * sg * da) << 8 |
-			(int)(sa * sb * da) << 16 |
-			(int)((sa * da) * 255.0) << 24;
-		src += 4;
-		dst += 4;
-	}
-}
-
-void compositeDestinationIn(unsigned char *dst, unsigned char *src, int width, int height)
 {
 	unsigned char *end = src + ((width * height) << 2);
 
@@ -496,7 +434,6 @@ void compositeDestinationIn(unsigned char *dst, unsigned char *src, int width, i
 	int d, s;
 	float rr, rg, rb, ra;
 	float da;
-	float sa;
 
 	while (src < end) {
 		d = *(dst + 3);
@@ -508,11 +445,10 @@ void compositeDestinationIn(unsigned char *dst, unsigned char *src, int width, i
 				*dst32++ = 0;
 			} else {
 				da = d / 255.0;
-				sa = s / 255.0;
-				rr = *dst       * sa;
-				rg = *(dst + 1) * sa;
-				rb = *(dst + 2) * sa;
-				ra = (da * sa) * 255.0;
+				rr = *src       * da;
+				rg = *(src + 1) * da;
+				rb = *(src + 2) * da;
+				ra = da * s;
 				*dst32++ = clamp(rr) | clamp(rg) << 8 | clamp(rb) << 16 | clamp(ra) << 24;
 			}
 		}
@@ -552,8 +488,42 @@ void compositeSourceOut(unsigned char *dst, unsigned char *src, int width, int h
 	}
 }
 
-// TODO: REVIST
-void compositeDestinationOut(unsigned char *dst, unsigned char *src, int width, int height)
+void compositeSourceAtop(unsigned char *dst, unsigned char *src, int width, int height)
+{
+	unsigned char *end = src + ((width * height) << 2);
+
+	unsigned int *dst32 = (unsigned int *)dst;
+
+	int d, s;
+	float rr, rg, rb, ra;
+	float sa, sa_inv;
+	float da;
+
+	while (src < end) {
+		d = *(dst + 3);
+		if (d == 0) {
+			*dst32++ = 0;
+		} else {
+			s = *(src + 3);
+			if (s == 0) {
+				dst32++;
+			} else {
+				da = d / 255.0;
+				sa = s / 255.0;
+				sa_inv = (1.0 - sa);
+				rr = *src       * da + *dst       * sa_inv;
+				rg = *(src + 1) * da + *(dst + 1) * sa_inv;
+				rb = *(src + 2) * da + *(dst + 2) * sa_inv;
+				ra = (sa * da + da * sa_inv) * 255.0;
+				*dst32++ = clamp(rr) | clamp(rg) << 8 | clamp(rb) << 16 | clamp(ra) << 24;
+			}
+		}
+		src += 4;
+		dst += 4;
+	}
+}
+
+void compositeDestinationOver(unsigned char *dst, unsigned char *src, int width, int height)
 {
 	unsigned char *end = src + ((width * height) << 2);
 
@@ -561,22 +531,57 @@ void compositeDestinationOut(unsigned char *dst, unsigned char *src, int width, 
 
 	int dr, dg, db;
 	int sr, sg, sb;
-	double da;
 	double sa;
-	double sa_inv;
+	double da;
+	double da_inv;
 
 	while (src < end) {
+		sr = *src;
+		sg = *(src + 1);
+		sb = *(src + 2);
+		sa = *(src + 3) / 255.0;
 		dr = *dst;
 		dg = *(dst + 1);
 		db = *(dst + 2);
 		da = *(dst + 3) / 255.0;
-		sa = *(src + 3) / 255.0;
-		sa_inv = 1.0 - sa;
+		da_inv = 1.0 - da;
 		*dst32++ =
-			(int)(da * dr * sa_inv) |
-			(int)(da * dg * sa_inv) << 8 |
-			(int)(da * db * sa_inv) << 16 |
-			(int)((da * sa_inv) * 255.0) << 24;
+			(int)(dr + sr * da_inv) |
+			(int)(dg + sg * da_inv) << 8 |
+			(int)(db + sb * da_inv) << 16 |
+			(int)((da + sa * da_inv) * 255.0) << 24;
+		src += 4;
+		dst += 4;
+	}
+}
+
+void compositeDestinationIn(unsigned char *dst, unsigned char *src, int width, int height)
+{
+	unsigned char *end = src + ((width * height) << 2);
+
+	unsigned int *dst32 = (unsigned int *)dst;
+
+	int d, s;
+	float rr, rg, rb, ra;
+	float sa;
+
+	while (src < end) {
+		d = *(dst + 3);
+		if (d == 0) {
+			*dst32++ = 0;
+		} else {
+			s = *(src + 3);
+			if (s == 0) {
+				*dst32++ = 0;
+			} else {
+				sa = s / 255.0;
+				rr = *dst       * sa;
+				rg = *(dst + 1) * sa;
+				rb = *(dst + 2) * sa;
+				ra = d * sa;
+				*dst32++ = clamp(rr) | clamp(rg) << 8 | clamp(rb) << 16 | clamp(ra) << 24;
+			}
+		}
 		src += 4;
 		dst += 4;
 	}
@@ -596,7 +601,7 @@ void compositeDestinationAtop(unsigned char *dst, unsigned char *src, int width,
 	while (src < end) {
 		d = *(dst + 3);
 		if (d == 0) {
-			*dst32++ = *(unsigned int *)src;
+			*dst32++ = 0;
 		} else {
 			s = *(src + 3);
 			if (s == 0) {
