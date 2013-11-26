@@ -72,8 +72,7 @@ function log(aMsg) {
 }
 
 function getDOMWindow(aChannel) {
-  var requestor = aChannel.notificationCallbacks ?
-                  aChannel.notificationCallbacks :
+  var requestor = aChannel.notificationCallbacks ||
                   aChannel.loadGroup.notificationCallbacks;
   var win = requestor.getInterface(Components.interfaces.nsIDOMWindow);
   return win;
@@ -792,7 +791,7 @@ ShumwayStreamConverterBase.prototype = {
       }
     }
 
-    if (!url) {
+    if (!url) { // at this point url shall be known -- asserting
       throw new Error('Movie url is not specified');
     }
 
@@ -898,10 +897,10 @@ ShumwayStreamConverterBase.prototype = {
         aRequest.cancel(Cr.NS_BINDING_ABORTED);
 
         var domWindow = getDOMWindow(channel);
-        // Double check the url is still the correct one.
         let actions = converter.createChromeActions(domWindow,
                                                     domWindow.document,
                                                     converter.getUrlHint(originalURI));
+
         if (!isShumwayEnabledFor(actions)) {
           actions.fallback(true);
           return;
