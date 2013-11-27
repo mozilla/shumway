@@ -346,7 +346,7 @@ RenderVisitor.prototype = {
   },
 
   clipStart: function(child) {
-    var m = child._parent._getConcatenatedTransform(true);
+    var m = child._parent._getConcatenatedTransform(null, true);
     var tx = m.tx / 20;
     var ty = m.ty / 20;
 

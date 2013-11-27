@@ -33,11 +33,6 @@ var DisplayObjectDefinition = (function () {
                             executeFrame: false, exitFrame: true,
                             render: true };
 
-  var topLeft = { x: 0, y: 0 };
-  var topRight = { x: 0, y: 0 };
-  var bottomRight = { x: 0, y: 0 };
-  var bottomLeft = { x: 0, y: 0 };
-
   var point = { x: 0, y: 0 };
 
   var def = {
@@ -56,7 +51,8 @@ var DisplayObjectDefinition = (function () {
       this._children = [];
       this._clipDepth = null;
       this._currentTransform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
-      this._concatenatedTransform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0, invalid: true };
+      this._concatenatedTransform = { a: 1, b: 0, c: 0, d: 1,
+                                      tx: 0, ty: 0, invalid: true };
       this._current3DTransform = null;
       this._cxform = null;
       this._graphics = null;
@@ -183,10 +179,11 @@ var DisplayObjectDefinition = (function () {
     },
 
     _resolveBlendMode: function (blendModeNumeric) {
-      return blendModes[blendModeNumeric] || flash.display.BlendMode.class.NORMAL;
+      return blendModes[blendModeNumeric] ||
+             flash.display.BlendMode.class.NORMAL;
     },
 
-    _getConcatenatedTransform: function (toDeviceSpace) {
+    _getConcatenatedTransform: function (targetCoordSpace, toDeviceSpace) {
       var stage = this._stage;
 
       if (this === this._stage) {
@@ -194,13 +191,20 @@ var DisplayObjectDefinition = (function () {
                                this._currentTransform;
       }
 
+      if (targetCoordSpace === this._parent) {
+        return this._currentTransform;
+      }
+
       var invalidNode = null;
-      var m, m2;
+      var m, m2, targetCoordMatrix;
 
       var currentNode = this;
       while (currentNode !== stage) {
         if (currentNode._concatenatedTransform.invalid) {
           invalidNode = currentNode;
+        }
+        if (currentNode === targetCoordSpace) {
+          targetCoordMatrix = currentNode._concatenatedTransform;
         }
         currentNode = currentNode._parent;
       }
@@ -268,6 +272,36 @@ var DisplayObjectDefinition = (function () {
         m = this._concatenatedTransform;
       }
 
+      if (targetCoordSpace && targetCoordSpace !== this._stage) {
+        m2 = targetCoordMatrix || targetCoordSpace._getConcatenatedTransform();
+
+        var a = 1, b = 0, c = 0, d = 1, tx = 0, ty = 0;
+        if (m2.b || m2.c) {
+          var det = 1 / (m2.a * m2.d - m2.b * m2.c);
+
+          a = m2.d * det;
+          b = -m2.b * det;
+          c = -m2.c * det;
+          d = m2.a * det;
+
+          tx = -(a * m2.tx + c * m2.ty);
+          ty = -(b * m2.tx + d * m2.ty);
+        } else {
+          a = 1 / m2.a;
+          d = 1 / m2.d;
+
+          tx = m2.tx * -a;
+          ty = m2.ty * -d;
+        }
+
+        return { a: a * m.a + c * m.b,
+                 b: b * m.a + d * m.b,
+                 c: a * m.c + c * m.d,
+                 d: b * m.c + d * m.d,
+                 tx: a * m.tx + c * m.ty + tx,
+                 ty: b * m.tx + d * m.ty + ty };
+      }
+
       if (toDeviceSpace && stage) {
         m2 = stage._concatenatedTransform;
         return { a: m.a * m2.a,
@@ -280,73 +314,12 @@ var DisplayObjectDefinition = (function () {
 
       return m;
     },
-    _applyCurrentTransform: function (targetCoordSpace, pt1, ptN) {
-      if (!targetCoordSpace || targetCoordSpace === this) {
-        return;
-      }
-
-      var m, a, b, c, d, tx, ty;
-
-      if (targetCoordSpace === this._parent) {
-        m = this._currentTransform;
-        a = m.a;
-        b = m.b;
-        c = m.c;
-        d = m.d;
-        tx = m.tx;
-        ty = m.ty;
-      } else {
-        m = this._getConcatenatedTransform();
-        if (targetCoordSpace === this._stage) {
-          a = m.a;
-          b = m.b;
-          c = m.c;
-          d = m.d;
-          tx = m.tx;
-          ty = m.ty;
-        } else {
-          var m2 = targetCoordSpace._getConcatenatedTransform();
-          var a2, b2, c2, d2, tx2, ty2;
-          if (m2.b || m2.c) {
-            var det = 1 / (m2.a * m2.d - m2.b * m2.c);
-
-            a2 = m2.d * det;
-            b2 = -m2.b * det;
-            c2 = -m2.c * det;
-            d2 = m2.a * det;
-
-            tx2 = -(a2 * m2.tx + c2 * m2.ty);
-            ty2 = -(b2 * m2.tx + d2 * m2.ty);
-          } else {
-            a2 = 1 / m2.a;
-            b2 = 0;
-            c2 = 0;
-            d2 = 1 / m2.d;
-
-            tx2 = m2.tx * -a2;
-            ty2 = m2.ty * -d2;
-          }
-
-          a = a2 * m.a + c2 * m.b;
-          b = b2 * m.a + d2 * m.b;
-          c = a2 * m.c + c2 * m.d;
-          d = b2 * m.c + d2 * m.d;
-          tx = a2 * m.tx + c2 * m.ty + tx2;
-          ty = b2 * m.tx + d2 * m.ty + ty2;
-        }
-      }
-
-      if (a === 1 && !b && !c && d === 1 && !tx && !ty) {
-        return;
-      }
-
-      for (var i = 1; i < arguments.length; i++) {
-        var pt = arguments[i];
-        var x = pt.x;
-        var y = pt.y;
-        pt.x = (a * x + c * y + tx)|0;
-        pt.y = (d * y + b * x + ty)|0;
-      }
+    _applyCurrentTransform: function (pt) {
+      var m = this._getConcatenatedTransform();
+      var x = pt.x;
+      var y = pt.y;
+      pt.x = (m.a * x + m.c * y + m.tx)|0;
+      pt.y = (m.d * y + m.b * x + m.ty)|0;
     },
     _applyConcatenatedInverseTransform: function (pt) {
       var m = this._getConcatenatedTransform();
@@ -430,6 +403,9 @@ var DisplayObjectDefinition = (function () {
     },
     _invalidateTransform: function () {
       this._concatenatedTransform.invalid = true;
+      if (this._parent) {
+        this._parent._invalidateBounds();
+      }
     },
     _setTransformMatrix: function(matrix, convertToTwips) {
       var a = matrix.a;
@@ -547,7 +523,8 @@ var DisplayObjectDefinition = (function () {
       this.scaleY = val / baseHeight;
     },
     get loaderInfo() {
-      return (this._loader && this._loader._contentLoaderInfo) || this._parent.loaderInfo;
+      return (this._loader && this._loader._contentLoaderInfo) ||
+             this._parent.loaderInfo;
     },
     get mask() {
       return this._mask;
@@ -619,7 +596,6 @@ var DisplayObjectDefinition = (function () {
         return;
 
       this._invalidate();
-      this._invalidateBounds();
       this._invalidateTransform();
 
       this._rotation = val;
@@ -690,7 +666,6 @@ var DisplayObjectDefinition = (function () {
         return;
 
       this._invalidate();
-      this._invalidateBounds();
       this._invalidateTransform();
 
       this._scaleX = val;
@@ -709,7 +684,6 @@ var DisplayObjectDefinition = (function () {
         return;
 
       this._invalidate();
-      this._invalidateBounds();
       this._invalidateTransform();
 
       this._scaleY = val;
@@ -746,8 +720,6 @@ var DisplayObjectDefinition = (function () {
       return new flash.geom.Transform(this);
     },
     set transform(val) {
-      this._invalidateBounds();
-
       var transform = this.transform;
       transform.colorTransform = val.colorTransform;
       if (val.matrix3D) {
@@ -803,7 +775,6 @@ var DisplayObjectDefinition = (function () {
       }
 
       this._invalidate();
-      this._invalidateBounds();
       this._invalidateTransform();
 
       this._currentTransform.tx = val;
@@ -818,7 +789,6 @@ var DisplayObjectDefinition = (function () {
       }
 
       this._invalidate();
-      this._invalidateBounds();
       this._invalidateTransform();
 
       this._currentTransform.ty = val;
@@ -910,31 +880,58 @@ var DisplayObjectDefinition = (function () {
         return rect;
       }
 
-      if (rect.xMax - rect.xMin === 0 || rect.yMax - rect.yMin === 0) {
+      var xMin = rect.xMin;
+      var xMax = rect.xMax;
+      var yMin = rect.yMin;
+      var yMax = rect.yMax;
+
+      if (xMax - xMin === 0 || yMax - yMin === 0) {
         return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
       }
 
-      topLeft.x = rect.xMin;
-      topLeft.y = rect.yMin;
+      var m = this._getConcatenatedTransform(targetCoordSpace);
 
-      topRight.x = rect.xMax;
-      topRight.y = rect.yMin;
+      var x0 = (m.a * xMin + m.c * yMin + m.tx)|0;
+      var y0 = (m.b * xMin + m.d * yMin + m.ty)|0;
+      var x1 = (m.a * xMax + m.c * yMin + m.tx)|0;
+      var y1 = (m.b * xMax + m.d * yMin + m.ty)|0;
+      var x2 = (m.a * xMax + m.c * yMax + m.tx)|0;
+      var y2 = (m.b * xMax + m.d * yMax + m.ty)|0;
+      var x3 = (m.a * xMin + m.c * yMax + m.tx)|0;
+      var y3 = (m.b * xMin + m.d * yMax + m.ty)|0;
 
-      bottomRight.x = rect.xMax;
-      bottomRight.y = rect.yMax;
+      var tmp = 0;
 
-      bottomLeft.x = rect.xMin;
-      bottomLeft.y = rect.yMax;
+      // Manual Min/Max is a lot faster than calling Math.min/max
+      // X Min-Max
+      if (x0 > x1) {
+        tmp = x0;
+        x0 = x1;
+        x1 = tmp;
+      }
+      if (x2 > x3) {
+        tmp = x2;
+        x2 = x3;
+        x3 = tmp;
+      }
 
-      this._applyCurrentTransform(targetCoordSpace, topLeft,
-                                                    topRight,
-                                                    bottomRight,
-                                                    bottomLeft);
+      xMin = x0 < x2 ? x0 : x2;
+      xMax = x1 > x3 ? x1 : x3;
 
-      var xMin = Math.min(topLeft.x, topRight.x, bottomRight.x, bottomLeft.x);
-      var xMax = Math.max(topLeft.x, topRight.x, bottomRight.x, bottomLeft.x);
-      var yMin = Math.min(topLeft.y, topRight.y, bottomRight.y, bottomLeft.y);
-      var yMax = Math.max(topLeft.y, topRight.y, bottomRight.y, bottomLeft.y);
+      // Y Min-Max
+      if (y0 > y1) {
+        tmp = y0;
+        y0 = y1;
+        y1 = tmp;
+      }
+      if (y2 > y3) {
+        tmp = y2;
+        y2 = y3;
+        y3 = tmp;
+      }
+
+      yMin = y0 < y2 ? y0 : y2;
+      yMax = y1 > y3 ? y1 : y3;
 
       return { xMin: xMin, yMin: yMin, xMax: xMax, yMax: yMax };
     },
@@ -1057,7 +1054,7 @@ var DisplayObjectDefinition = (function () {
         localToGlobal: function(pt) {
           point.x = (pt.x * 20)|0;
           point.y = (pt.y * 20)|0;
-          this._applyCurrentTransform(this._stage, point);
+          this._applyCurrentTransform(point);
           return new flash.geom.Point(point.x / 20, point.y / 20);
         },
         getBounds: function(targetCoordSpace) {
