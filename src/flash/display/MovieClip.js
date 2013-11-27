@@ -172,7 +172,6 @@ var MovieClipDefinition = (function () {
             nextCmd.ratio === currentCmd.ratio) {
           if (currentChild._animated) {
             currentChild._invalidate();
-            currentChild._invalidateBounds();
 
             if (nextCmd.hasMatrix) {
               currentChild._setTransformMatrix(nextCmd.matrix, false);
