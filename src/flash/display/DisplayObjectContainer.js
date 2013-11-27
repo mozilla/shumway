@@ -73,13 +73,11 @@ var DisplayObjectContainerDefinition = (function () {
       }
       children.splice(index, 0, child);
 
+      child._invalidateTransform();
       child._owned = false;
       child._parent = this;
       child._stage = this._stage;
       child._index = index;
-      child._invalidateTransform();
-
-      this._invalidateBounds();
 
       child._dispatchEvent("added", undefined, true);
       if (this._stage) {
@@ -157,12 +155,10 @@ var DisplayObjectContainerDefinition = (function () {
       }
       children.splice(index, 1);
 
+      child._invalidateTransform();
       child._owned = false;
       child._parent = null;
       child._index = -1;
-      child._invalidateTransform();
-
-      this._invalidateBounds();
 
       return child;
     },

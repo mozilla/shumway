@@ -430,6 +430,9 @@ var DisplayObjectDefinition = (function () {
     },
     _invalidateTransform: function () {
       this._concatenatedTransform.invalid = true;
+      if (this._parent) {
+        this._parent._invalidateBounds();
+      }
     },
     _setTransformMatrix: function(matrix, convertToTwips) {
       var a = matrix.a;
@@ -619,7 +622,6 @@ var DisplayObjectDefinition = (function () {
         return;
 
       this._invalidate();
-      this._invalidateBounds();
       this._invalidateTransform();
 
       this._rotation = val;
@@ -690,7 +692,6 @@ var DisplayObjectDefinition = (function () {
         return;
 
       this._invalidate();
-      this._invalidateBounds();
       this._invalidateTransform();
 
       this._scaleX = val;
@@ -709,7 +710,6 @@ var DisplayObjectDefinition = (function () {
         return;
 
       this._invalidate();
-      this._invalidateBounds();
       this._invalidateTransform();
 
       this._scaleY = val;
@@ -746,8 +746,6 @@ var DisplayObjectDefinition = (function () {
       return new flash.geom.Transform(this);
     },
     set transform(val) {
-      this._invalidateBounds();
-
       var transform = this.transform;
       transform.colorTransform = val.colorTransform;
       if (val.matrix3D) {
@@ -803,7 +801,6 @@ var DisplayObjectDefinition = (function () {
       }
 
       this._invalidate();
-      this._invalidateBounds();
       this._invalidateTransform();
 
       this._currentTransform.tx = val;
@@ -818,7 +815,6 @@ var DisplayObjectDefinition = (function () {
       }
 
       this._invalidate();
-      this._invalidateBounds();
       this._invalidateTransform();
 
       this._currentTransform.ty = val;
