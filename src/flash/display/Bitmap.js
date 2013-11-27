@@ -56,7 +56,7 @@ var BitmapDefinition = (function () {
       var scaledImage;
       ctx.save();
       if (this._pixelSnapping === 'auto' || this._pixelSnapping === 'always') {
-        var transform = this._getConcatenatedTransform(true);
+        var transform = this._getConcatenatedTransform(null, true);
         var EPSILON = 0.001;
         var aInt = Math.abs(Math.round(transform.a));
         var dInt = Math.abs(Math.round(transform.d));
