@@ -20,6 +20,8 @@ default:
 	@echo "           install-tamarin|bootstrap]"
 
 check-system:
+	echo "Checking the presence of grunt-cli..."
+	grunt --version
 	echo "Checking the presence of wget..."
 	wget --version
 	echo "Checking the presence of java..."
@@ -38,6 +40,7 @@ install-libs:
 	git submodule update
 
 install-utils: check-system
+	npm install
 	make -C utils/ install-asc install-closure install-js install-node-modules install-flex-sdk
 
 install-tamarin: check-system
@@ -48,6 +51,7 @@ install-tamarin: check-system
 BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with installed utils)
 
 link-utils:
+	ln -s $(BASE)/node_modules .
 	ln -s $(BASE)/utils/asc.jar $(BASE)/utils/cc.jar $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell $(BASE)/utils/node_modules utils/
 
 run-tamarin-sanity-tests:
@@ -92,16 +96,16 @@ test-avm2:
 	make -C src/avm2/bin/ test-regress
 
 reftest:
-	make -C test/ reftest
+	grunt reftest
 
 makeref:
-	make -C test/ makeref
+	grunt makeref
 
 reftest-swfdec:
 	make -C test/ reftest-swfdec
 
 lint:
-	make -C test/ lint
+	grunt lint
 
 hello-world:
 	make -C src/avm2/bin/ hello-world
@@ -109,7 +113,7 @@ hello-world:
 IRC_ROOM = shumway-build-bot
 
 server:
-	python utils/webserver.py
+	grunt server
 
 push-test:
 	git pull origin master

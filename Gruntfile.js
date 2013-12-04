@@ -45,6 +45,9 @@ module.exports = function(grunt) {
       generate_abcs: {
         cmd: 'python generate.py',
         cwd: 'src/avm2/generated'
+      },
+      lint_success: {
+        cmd: 'echo "SUCCESS: no lint errors"'
       }
     },
     watch: {
@@ -67,7 +70,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-exec');
 
-  grunt.registerTask('lint', ['jshint:all']);
+  grunt.registerTask('lint', ['jshint:all', 'exec:lint_success']);
 
   grunt.registerTask('update-flash-refs', function  () {
     var updateFlashRefs = require('./utils/update-flash-refs.js');
