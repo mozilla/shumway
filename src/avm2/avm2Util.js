@@ -1093,7 +1093,7 @@ var RED = '\033[91m';
 var ENDC = '\033[0m';
 
 var IndentingWriter = (function () {
-  var consoleOutFn = console.info.bind(console);
+  var consoleOutFn = inBrowser ? console.info.bind(console) : print;
   function indentingWriter(suppressOutput, outFn) {
     this.tab = "  ";
     this.padding = "";

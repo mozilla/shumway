@@ -19,4 +19,6 @@ src/avm2/utils/js
 src/flash/playerglobal.js
 src/flash/playerglobal.abc
 
+node_modules/
+
 build/
