@@ -69,6 +69,12 @@ module.exports = function(grunt) {
 
   grunt.registerTask('lint', ['jshint:all']);
 
+  grunt.registerTask('update-flash-refs', function  () {
+    var updateFlashRefs = require('./utils/update-flash-refs.js');
+    updateFlashRefs('examples/inspector/inspector.html', 'src/flash');
+    updateFlashRefs('test/harness/slave.html', 'src/flash');
+  });
+
   // temporary make/python calls based on grunt-exec
   grunt.registerTask('reftest', ['exec:reftest']);
   grunt.registerTask('makeref', ['exec:makeref']);

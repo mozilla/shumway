@@ -83,8 +83,7 @@ MXMLC = ./utils/flex_sdk/bin/mxmlc $(MXMLC_FLAGS)
 	$(MXMLC) $<
 
 update-flash-refs:
-	node utils/update-flash-refs.js examples/inspector/inspector.html src/flash
-	node utils/update-flash-refs.js test/harness/slave.html src/flash
+	grint update-flash-refs
 
 test-avm1:
 	make -C src/avm1/tests/ test
