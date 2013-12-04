@@ -839,6 +839,8 @@ ShapePath.prototype = {
         ctx.stroke();
         ctx.restore();
       }
+    } else {
+      ctx.fill();
     }
     ctx.closePath();
   },
