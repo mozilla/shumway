@@ -1023,7 +1023,7 @@ var createName = function createName(namespaces, name) {
               value = pop();
               multiname = buildMultiname(bc.index);
               object = pop();
-              push(setSuper(savedScope(), object, multiname, value, bc.ti));
+              setSuper(savedScope(), object, multiname, value, bc.ti);
               break;
             case 0xF1: // OP_debugfile
             case 0xF0: // OP_debugline
