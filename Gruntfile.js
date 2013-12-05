@@ -42,6 +42,9 @@ module.exports = function(grunt) {
       build_extension: {
         cmd: 'make -C extension/firefox/ build'
       },
+      build_bundle: {
+        cmd: 'make -C utils/builder build'
+      },
       generate_abcs: {
         cmd: 'python generate.py',
         cwd: 'src/avm2/generated'
@@ -57,7 +60,7 @@ module.exports = function(grunt) {
       },
       extension: {
         files: 'extension/firefox/**/*',
-        tasks: ['build-extension', 'build-web']
+        tasks: ['build-extension']
       },
       abcs: {
         files: 'src/avm2/generated/**/*.as',
@@ -82,6 +85,6 @@ module.exports = function(grunt) {
   grunt.registerTask('reftest', ['exec:reftest']);
   grunt.registerTask('makeref', ['exec:makeref']);
   grunt.registerTask('server', ['exec:webserver']);
-  grunt.registerTask('build-web', ['exec:build_web']);
-  grunt.registerTask('build-extension', ['exec:build_extension']);
+  grunt.registerTask('build-web', ['exec:build_bundle', 'exec:build_extension', 'exec:build_web']);
+  grunt.registerTask('build-extension', ['exec:build_bundle', 'exec:build_extension']);
 };
