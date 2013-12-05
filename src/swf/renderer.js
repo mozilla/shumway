@@ -829,11 +829,11 @@ function renderStage(stage, ctx, events) {
         if (!disablePreVisitor.value) {
           traceRenderer.value && frameWriter.enter("> Pre Visitor");
           timelineEnter("PRE");
-          invalidPath = stage._processInvalidRegions(true);
+          invalidPath = stage._processInvalidations(true);
           timelineLeave("PRE");
           traceRenderer.value && frameWriter.leave("< Pre Visitor");
         } else {
-          stage._processInvalidRegions(false);
+          stage._processInvalidations(false);
         }
 
         if (!disableRenderVisitor.value) {
