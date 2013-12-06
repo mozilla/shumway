@@ -93,7 +93,7 @@ var StageDefinition = (function () {
       }
     },
 
-    _processInvalidations: function processInvalidations(createInvalidPath) {
+    _processInvalidations: function processInvalidations() {
       var qtree = this._qtree;
       var invalidRegions = this._invalidRegions;
       var stack = this._children.slice();
@@ -114,8 +114,11 @@ var StageDefinition = (function () {
         var i = children.length;
         while (i--) {
           var child = children[i];
-          if (!flash.display.DisplayObject.class.isInstanceOf(child))
+
+          if (!flash.display.DisplayObject.class.isInstanceOf(child)) {
             continue;
+          }
+
           if (node._invalid) {
             child._invalid = true;
           }
@@ -188,10 +191,6 @@ var StageDefinition = (function () {
         node._zindex = zindex++;
       }
 
-      if (!createInvalidPath) {
-        return;
-      }
-
       var invalidPath = new ShapePath();
       var redrawRegions = invalidRegions.retrieve();
 
@@ -202,9 +201,9 @@ var StageDefinition = (function () {
         var xMax = region.xMax - region.xMax % 20 + 80;
         var yMax = region.yMax - region.yMax % 20 + 80;
 
-        var neighbours = qtree.retrieve(xMin, xMax, yMin, yMax);
-        for (var j = 0; j < neighbours.length; j++) {
-          var item = neighbours[j];
+        var intersectees = qtree.retrieve(xMin, xMax, yMin, yMax);
+        for (var j = 0; j < intersectees.length; j++) {
+          var item = intersectees[j];
           item.obj._invalid = true;
         }
 

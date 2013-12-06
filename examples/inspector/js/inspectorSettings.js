@@ -24,7 +24,6 @@ var DEFAULT_SETTINGS = {
   traceCalls: false,
   traceRuntime: false,
   allocator: false,
-  pre: true,
   render: true,
   mouse: true,
   qtree: false,
@@ -63,7 +62,6 @@ function updateAVM2State() {
   enableRegisterAllocator.value = state.allocator;
   traceExecution.value = state.trace ? 2 : 0;
   traceRenderer.value = state.trace ? 2 : 0;
-  disablePreVisitor.value = state.pre ? false : true;
   disableRenderVisitor.value = state.render ? false : true;
   disableMouseVisitor.value = state.mouse ? false : true;
   showQuadTree.value = state.qtree ? true : false;
