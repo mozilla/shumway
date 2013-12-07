@@ -123,7 +123,13 @@ package flash.utils
       _compress(algorithm);
     }
 
-    [API(CONFIG::FP_10_0)]
+    //[API(CONFIG::FP_10_0)]
+    public function inflate():void
+    {
+      _uncompress("deflate");
+    }
+
+    private native function _uncompress(algorithm:String):void;
     public function uncompress(algorithm:String = CompressionAlgorithm.ZLIB):void
     {
       _uncompress(algorithm);

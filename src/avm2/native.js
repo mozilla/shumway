@@ -1062,6 +1062,11 @@ var natives = (function () {
       runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
     }
 
+    function throwCompressedDataError() {
+      var error = Errors.CompressedDataError;
+      runtime.throwErrorFromVM("CompressedDataError", getErrorMessage(error.code), error.code);
+    }
+
     function checkRange(x, min, max) {
       if (x !== clamp(x, min, max)) {
         throwRangeError();
@@ -1164,6 +1169,12 @@ var natives = (function () {
 
     BAp.readBytes = function readBytes(bytes, offset, length) {
       var pos = this.position;
+      if (!offset) {
+        offset = 0;
+      }
+      if (!length) {
+        length = this.length - pos;
+      }
       if (pos + length > this.length) {
         throwEOFError();
       }
@@ -1275,6 +1286,47 @@ var natives = (function () {
       return utf8encode(new Int8Array(this.a, 0, this.length));
     };
 
+    BAp.compress = function (algorithm) {
+      var data = [];
+      switch (algorithm) {
+        case 'zlib':
+          data.push(0x78, 0x9C);
+        case 'deflate':
+          data = data.concat(zip_deflate(new Uint8Array(this.a, 0, this.length)));
+          break;
+        default:
+          return;
+      }
+      this.ensureCapacity(data.length);
+      this.uint8v.set(data);
+      this.length = data.length;
+      this.position = 0;
+    };
+    BAp.uncompress = function (algorithm) {
+      var data, p = 0;
+      switch (algorithm) {
+        case 'zlib':
+          var header = (this.uint8v[0] << 8) | this.uint8v[1];
+          assert((header & 0x0f00) === 0x0800, 'unknown compression method', 'inflate');
+          assert((header % 31) === 0, 'bad FCHECK', 'inflate');
+          assert(!(header & 0x20), 'FDICT bit set', 'inflate');
+          p += 2;
+        case 'deflate':
+          try {
+            data = zip_inflate(new Uint8Array(this.a, p, this.length - p));
+          } catch (e) {
+            throwCompressedDataError();
+          }
+          break;
+        default:
+          return;
+      }
+      this.ensureCapacity(data.length);
+      this.uint8v.set(data);
+      this.length = data.length;
+      this.position = 0;
+    };
+
     c.native = {
       instance: {
         length: {
@@ -1336,7 +1388,9 @@ var natives = (function () {
         readUTFBytes: BAp.readUTFBytes,
         readObject: BAp.readObject,
         toString: BAp.toString,
-        clear: BAp.clear
+        clear: BAp.clear,
+        _compress: BAp.compress,
+        _uncompress: BAp.uncompress
       },
       static: {
         defaultObjectEncoding: {
@@ -1670,7 +1724,7 @@ var natives = (function () {
       });
       return result;
     }
-    
+
     function addTraits(cls, flags) {
       var includedMembers = [flags & Flags.INCLUDE_VARIABLES,
                                flags & Flags.INCLUDE_METHODS,

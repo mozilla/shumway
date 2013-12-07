@@ -78,7 +78,10 @@ load(homePath + "src/avm2/compiler/aot.js");
 load(homePath + "src/avm2/compiler/builder.js");
 Timer.stop();
 
-load(homePath + "src/avm2/domain.js")
+load(homePath + "lib/deflate.js");
+load(homePath + "lib/inflate.js");
+
+load(homePath + "src/avm2/domain.js");
 load(homePath + "src/avm2/class.js");
 load(homePath + "src/avm2/xregexp.js");
 load(homePath + "src/avm2/runtime.js");
