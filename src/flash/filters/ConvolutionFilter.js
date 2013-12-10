@@ -20,7 +20,12 @@ var ConvolutionFilterDefinition = (function () {
   var def = {
     __class__: 'flash.filters.ConvolutionFilter',
 
-    initialize: function () { }
+    initialize: function () {
+
+    },
+    _updateFilterBounds: function (bounds) {
+
+    }
   };
 
   def.__glue__ = { };

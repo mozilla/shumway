@@ -20,7 +20,12 @@ var ShaderFilterDefinition = (function () {
   var def = {
     __class__: 'flash.filters.ShaderFilter',
 
-    initialize: function () { }
+    initialize: function () {
+
+    },
+    _updateFilterBounds: function (bounds) {
+
+    }
   };
 
   def.__glue__ = { };

@@ -20,7 +20,12 @@ var DisplacementMapFilterDefinition = (function () {
   var def = {
     __class__: 'flash.filters.DisplacementMapFilter',
 
-    initialize: function () { }
+    initialize: function () {
+
+    },
+    _updateFilterBounds: function (bounds) {
+
+    }
   };
 
   def.__glue__ = { };

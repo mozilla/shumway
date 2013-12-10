@@ -21,19 +21,15 @@ var GlowFilterDefinition = (function () {
   return {
     __class__: "flash.filters.GlowFilter",
     initialize: function () {
+
     },
-    applyFilter: function (buffer, width, height) {
-      var color = [
-        this._color >> 24 & 0xFF,
-        this._color >> 16 & 0xFF,
-        this._color >> 8  & 0xFF,
-        this._color       & 0xFF
-      ];
-      glowFilter(buffer, width, height, color, this._blurX, this._blurY, this._strength);
-    },
-    updateFilterBounds: function (bounds) {
-      assert (bounds instanceof flash.geom.Rectangle);
-      bounds.inflate(this._blurX, this._blurY);
+    _updateFilterBounds: function (bounds) {
+      var bx = this._blurX * this._quality * 20;
+      var by = this._blurY * this._quality * 20;
+      bounds.xMin -= bx;
+      bounds.xMax += bx;
+      bounds.yMin -= by;
+      bounds.yMax += by;
     },
     __glue__: {
       native: {

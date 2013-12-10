@@ -20,7 +20,12 @@ var GradientBevelFilterDefinition = (function () {
   var def = {
     __class__: 'flash.filters.GradientBevelFilter',
 
-    initialize: function () { }
+    initialize: function () {
+
+    },
+    _updateFilterBounds: function (bounds) {
+
+    },
   };
 
   def.__glue__ = { };
