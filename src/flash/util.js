@@ -362,6 +362,9 @@ var Promise = (function PromiseClosure() {
   }
 
   function Promise(resolver) {
+    if (typeof resolver !== 'function') {
+      throw new TypeError('resolver is not a function');
+    }
     var promise = this;
     if (typeof promise !== 'object') {
       throw new TypeError('Promise to initialize is not an object');
@@ -373,13 +376,6 @@ var Promise = (function PromiseClosure() {
 
     var resolve = createResolvePromiseFunction(promise);
     var reject = createRejectPromiseFunction(promise);
-
-    if (!resolver) {
-      resolver = function () {};
-      promise.fulfill = resolve;
-      promise.reject = reject;
-      promise.resolve = resolve;
-    }
 
     try {
       var result = resolver(resolve, reject);

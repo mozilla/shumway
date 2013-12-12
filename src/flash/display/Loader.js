@@ -59,12 +59,13 @@ var LoaderDefinition = (function () {
         this._updateProgress(data.result);
         break;
       case 'complete':
-        var frameConstructed = new Promise();
-        avm2.systemDomain.onMessage.register('frameConstructed', function waitForFrame(type) {
-          if (type === 'frameConstructed') {
-            frameConstructed.resolve();
-            avm2.systemDomain.onMessage.unregister('frameConstructed', waitForFrame);
-          }
+        var frameConstructed = new Promise(function (resolve) {
+          avm2.systemDomain.onMessage.register('frameConstructed', function waitForFrame(type) {
+            if (type === 'frameConstructed') {
+              resolve();
+              avm2.systemDomain.onMessage.unregister('frameConstructed', waitForFrame);
+            }
+          });
         });
         Promise.all([frameConstructed, this._lastPromise]).then(function () {
           this._content._complete = true;
@@ -79,8 +80,7 @@ var LoaderDefinition = (function () {
         this._worker && this._worker.terminate();
         break;
       case 'empty':
-        this._lastPromise = new Promise();
-        this._lastPromise.resolve();
+        this._lastPromise = Promise.resolve();
         break;
       case 'error':
         this._contentLoaderInfo._dispatchEvent("ioError", flash.events.IOErrorEvent);
@@ -195,7 +195,10 @@ var LoaderDefinition = (function () {
       var loaderInfo = loader._contentLoaderInfo;
       var timeline = loader._timeline;
       var frameNum = timeline.length + 1;
-      var framePromise = new Promise();
+      var framePromiseResolve;
+      var framePromise = new Promise(function (resolve) {
+        framePromiseResolve = resolve;
+      });
       var labelName = frame.labelName;
       var prevPromise = this._lastPromise;
       this._lastPromise = framePromise;
@@ -431,12 +434,15 @@ var LoaderDefinition = (function () {
         if (frameNum === 1)
           loaderInfo._dispatchEvent(new flash.events.Event('init', false, false));
 
-        framePromise.resolve(frame);
+        framePromiseResolve(frame);
       });
     },
     _commitImage : function (imageInfo) {
       var loader = this;
-      var imgPromise = this._lastPromise = new Promise();
+      var imgPromiseResolve;
+      var imgPromise = this._lastPromise = new Promise(function (resolve) {
+        imgPromiseResolve = resolve;
+      });
       var img = new Image();
       imageInfo.props.img = img;
       img.onload = function() {
@@ -454,7 +460,7 @@ var LoaderDefinition = (function () {
         Bitmap.instanceConstructor.call(image, bitmapData);
         image._parent = loader;
         loader._content = image;
-        imgPromise.resolve(imageInfo);
+        imgPromiseResolve(imageInfo);
         loader._contentLoaderInfo._dispatchEvent("init");
       };
       img.src = URL.createObjectURL(imageInfo.data);
@@ -476,7 +482,10 @@ var LoaderDefinition = (function () {
       var dependencies = symbol.require;
       var promiseQueue = [];
       var props = { symbolId: symbol.id, loader: this };
-      var symbolPromise = new Promise();
+      var symbolPromiseResolve;
+      var symbolPromise = new Promise(function (resolve) {
+        symbolPromiseResolve = resolve;
+      });
 
       if (dependencies && dependencies.length) {
         for (var i = 0, n = dependencies.length; i < n; i++) {
@@ -554,11 +563,12 @@ var LoaderDefinition = (function () {
             testDiv.textContent = 'font test';
             document.body.appendChild(testDiv);
 
-            var fontPromise = new Promise();
-            setTimeout(function () {
-              fontPromise.resolve();
-              document.body.removeChild(testDiv);
-            }, 200);
+            var fontPromise = new Promise(function (resolve) {
+              setTimeout(function () {
+                resolve();
+                document.body.removeChild(testDiv);
+              }, 200);
+            });
             promiseQueue.push(fontPromise);
           }
         }
@@ -573,7 +583,10 @@ var LoaderDefinition = (function () {
         break;
       case 'image':
         var img = new Image();
-        var imgPromise = new Promise();
+        var imgPromiseResolve;
+        var imgPromise = new Promise(function (resolve) {
+          imgPromiseResolve = resolve;
+        });
         img.onload = function () {
           if (symbol.mask) {
             // Write the symbol image into new canvas and apply
@@ -594,7 +607,7 @@ var LoaderDefinition = (function () {
             // Use the result canvas as symbol image
             props.img = maskCanvas;
           }
-          imgPromise.resolve();
+          imgPromiseResolve();
         };
         img.src = URL.createObjectURL(symbol.data);
         promiseQueue.push(imgPromise);
@@ -632,11 +645,14 @@ var LoaderDefinition = (function () {
         if (!symbol.pcm && !PLAY_USING_AUDIO_TAG) {
           assert(symbol.packaged.mimeType === 'audio/mpeg');
 
-          var decodePromise = new Promise();
+          var decodePromiseResolve;
+          var decodePromise = new Promise(function (resolve) {
+            decodePromiseResolve = resolve;
+          });
           MP3DecoderSession.processAll(symbol.packaged.data,
             function (props, pcm, id3tags, error) {
               props.pcm = pcm || new Uint8Array(0);
-              decodePromise.resolve();
+              decodePromiseResolve();
               if (error) {
                 console.error('ERROR: ' + error);
               }
@@ -720,7 +736,7 @@ var LoaderDefinition = (function () {
           props: props
         };
         dictionaryResolved[symbol.id] = symbolInfo;
-        symbolPromise.resolve(symbolInfo);
+        symbolPromiseResolve(symbolInfo);
       });
     },
     _registerFont: function (className, props) {
@@ -741,16 +757,24 @@ var LoaderDefinition = (function () {
       loaderInfo._height = bbox.yMax - bbox.yMin;
       loaderInfo._frameRate = info.frameRate;
 
-      var documentPromise = new Promise();
+      var vmPromiseResolve, vmPromiseReject;
+      var vmPromise = new Promise(function (resolve, reject) {
+        vmPromiseResolve = resolve;
+        vmPromiseReject = reject;
+      });
+      // HACK making resolve and reject public
+      vmPromise.resolve = vmPromiseResolve;
+      vmPromise.reject = vmPromiseReject;
 
-      var vmPromise = new Promise();
-      vmPromise.then(function() {
-        var rootInfo = {
-          className: 'flash.display.MovieClip',
-          props: { totalFrames: info.frameCount }
-        };
-        loader._dictionaryResolved[0] = rootInfo;
-        documentPromise.resolve(rootInfo);
+      var documentPromise = new Promise(function (resolve) {
+        vmPromise.then(function() {
+          var rootInfo = {
+            className: 'flash.display.MovieClip',
+            props: { totalFrames: info.frameCount }
+          };
+          loader._dictionaryResolved[0] = rootInfo;
+          resolve(rootInfo);
+        });
       });
 
       loader._dictionary[0] = documentPromise;
