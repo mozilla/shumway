@@ -53,8 +53,7 @@ var SpriteDefinition = (function () {
     },
 
     _addTimelineChild: function addTimelineChild(cmd, index) {
-      var symbolPromise = cmd.promise;
-      var symbolInfo = symbolPromise.value;
+      var symbolInfo = cmd.symbolInfo;
       var props = Object.create(symbolInfo.props);
 
       props.symbolId = cmd.symbolId;

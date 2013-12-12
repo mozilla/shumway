@@ -1670,7 +1670,7 @@ function morph(start, end, ratio) {
  *
  * This entails creating proper instances for all the contained data types.
  */
-function finishShapePath(path, dictionary) {
+function finishShapePath(path, dictionaryResolved) {
   assert(!inWorker);
 
   if (path.fullyInitialized) {
@@ -1688,8 +1688,8 @@ function finishShapePath(path, dictionary) {
     }
     path.buffers = null;
   }
-  path.fillStyle && initStyle(path.fillStyle, dictionary);
-  path.lineStyle && initStyle(path.lineStyle, dictionary);
+  path.fillStyle && initStyle(path.fillStyle, dictionaryResolved);
+  path.lineStyle && initStyle(path.lineStyle, dictionaryResolved);
   path.fullyInitialized = true;
   return path;
 }
@@ -1776,7 +1776,7 @@ function buildBitmapPatternFactory(img, repeat) {
   return fn;
 }
 
-function initStyle(style, dictionary) {
+function initStyle(style, dictionaryResolved) {
   if (style.type === undefined) {
     return;
   }
@@ -1807,10 +1807,10 @@ function initStyle(style, dictionary) {
     case GRAPHICS_FILL_CLIPPED_BITMAP:
     case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
     case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
-      var bitmap = dictionary[style.bitmapId];
+      var bitmap = dictionaryResolved[style.bitmapId];
       var repeat = (style.type === GRAPHICS_FILL_REPEATING_BITMAP) ||
                    (style.type === GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP);
-      style.style = buildBitmapPatternFactory(bitmap.value.props.img,
+      style.style = buildBitmapPatternFactory(bitmap.props.img,
                                               repeat ? "repeat" : "no-repeat");
       break;
     default:

@@ -19,7 +19,10 @@
 turboMode.value = true;
 
 function loadMovie(path, reportFrames) {
-  var movieReady = new Promise;
+  var movieReadyResolve;
+  var movieReady = new Promise(function (resolve) {
+    movieReadyResolve = resolve;
+  });
   movieReady.then(function() { sendResponse(); });
 
   var onFrameCallback = null;
@@ -40,12 +43,12 @@ function loadMovie(path, reportFrames) {
   }
 
   createAVM2(builtinPath, playerGlobalPath, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
-    function loaded() { movieReady.resolve(); }
+    function loaded() { movieReadyResolve(); }
     function terminate() {
       ignoreAdanvances = true;
       // cleaning up
       if (!movieReady.resolved) { // movieReady needs to be resolved
-        movieReady.resolve();
+        movieReadyResolve();
       }
       if (advanceTimeout) { // invoke current timeout
         clearTimeout(advanceTimeout);
