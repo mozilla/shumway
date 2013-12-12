@@ -44,16 +44,16 @@ var SimpleButtonDefinition = (function () {
       if (s) {
         var states = s.states;
         if (states.down) {
-          this._downState = this._constructState(states.down.value, this);
+          this._downState = this._constructState(states.down, this);
         }
         if (states.hitTest) {
-          this._hitTestState = this._constructState(states.hitTest.value, this);
+          this._hitTestState = this._constructState(states.hitTest, this);
         }
         if (states.over) {
-          this._overState = this._constructState(states.over.value, this);
+          this._overState = this._constructState(states.over, this);
         }
         if (states.up) {
-          this._upState = this._constructState(states.up.value, this);
+          this._upState = this._constructState(states.up, this);
         }
       }
 

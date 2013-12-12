@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-/* global initPathStyles */
-
 // TODO: share initialize method with ShapeDefinition
 var MorphShapeDefinition = (function () {
   var def = {
@@ -27,11 +25,10 @@ var MorphShapeDefinition = (function () {
       var graphics = this._graphics = new flash.display.Graphics();
       var s = this.symbol;
       if (s && s.paths) {
-        initPathStyles(s.paths, s.dictionary);
+        // TODO ??? initPathStyles(s.paths, s.dictionaryResolved);
         graphics._paths = s.paths;
         graphics.bbox = s.bbox;
         graphics.strokeBbox = s.strokeBbox;
-        graphics.dictionary = s.dictionary;
         if (this._stage && this._stage._quality === 'low' && !graphics._bitmap)
           graphics._cacheAsBitmap(this._bbox);
       }

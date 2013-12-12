@@ -376,7 +376,9 @@ var Promise = (function PromiseClosure() {
 
     if (!resolver) {
       resolver = function () {};
-      injectCompat(promise, resolve, reject);
+      promise.fulfill = resolve;
+      promise.reject = reject;
+      promise.resolve = resolve;
     }
 
     try {
@@ -463,22 +465,6 @@ var Promise = (function PromiseClosure() {
       }
       return deferred.promise;
     }
-  };
-
-  function injectCompat(promise, fulfill, reject) {
-    promise.fulfill = fulfill;
-    promise.reject = reject;
-    promise.resolve = fulfill;
-    Object.defineProperty(promise, 'resolved', {
-      get: function () { return this.promiseStatus === 'has-resolution'; }
-    });
-    Object.defineProperty(promise, 'value', {
-      get: function () { return this.result; }
-    });
-  }
-  Promise.when = function () {
-    var promises = Array.prototype.slice.call(arguments, 0);
-    return Promise.all(promises);
   };
 
   return Promise;
