@@ -194,6 +194,7 @@ var LoaderDefinition = (function () {
       var promiseQueue = [prevPromise];
 
       this._displayList = this._buildFrame(this._displayList, timeline, promiseQueue, frame, frameNum);
+      var framesLoaded = timeline.length;
 
       if (frame.bgcolor)
         loaderInfo._backgroundColor = frame.bgcolor;
@@ -265,7 +266,7 @@ var LoaderDefinition = (function () {
           var rootInfo = dictionary[0].value;
           var rootClass = avm2.applicationDomain.getClass(rootInfo.className);
           root = rootClass.createAsSymbol({
-            framesLoaded: timeline.length,
+            framesLoaded: framesLoaded,
             loader: loader,
             parent: parent || loader,
             index: parent ? 0 : -1,
@@ -367,7 +368,7 @@ var LoaderDefinition = (function () {
 
           loader._content = root;
         } else {
-          root._framesLoaded = timeline.length;
+          root._framesLoaded = framesLoaded;
 
           if (labelName && root._labelMap) {
             if (root._labelMap[labelName] === undefined) {
