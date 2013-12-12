@@ -278,7 +278,7 @@ BodyParser.prototype = {
     buffer.removeHead(read);
     this.totalRead += read;
 
-    if (swf.tags[swf.tags.length - 1].finalTag) {
+    if (options.oncomplete && swf.tags[swf.tags.length - 1].finalTag) {
       options.oncomplete(swf);
     }
   }
