@@ -68,7 +68,7 @@ var VideoDefinition = (function () {
         ctx.restore();
       }
 
-      var matrix = this._getConcatenatedTransform(true);
+      var matrix = this._getConcatenatedTransform(null, true);
       var sx = width / this._videoWidth;
       var sy = height / this._videoHeight;
 
