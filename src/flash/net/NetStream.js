@@ -119,8 +119,20 @@ var NetStreamDefinition = (function () {
             this._mediaSource = null;
             this._checkPolicyFile = true;
             this._videoElement = null;
-            this._videoReady = new Promise();
-            this._videoMetadataReady = new Promise();
+            var videoReadyResolve, videoReadyReject;
+            this._videoReady = new Promise(function (resolve, reject) {
+              videoReadyResolve = resolve;
+              videoReadyReject = reject;
+            });
+            this._videoReady.resolve = videoReadyResolve;
+            this._videoReady.reject = videoReadyReject;
+            var videoMetadataReadyResolve, videoMetadataReadyReject;
+            this._videoMetadataReady = new Promise(function (resolve, reject) {
+              videoMetadataReadyResolve = resolve;
+              videoMetadataReadyReject = reject;
+            });
+            this._videoMetadataReady.resolve = videoMetadataReadyResolve;
+            this._videoMetadataReady.reject = videoMetadataReadyReject;
           },
           onResult: function onResult(streamId) {
             // (streamId:int) -> void
