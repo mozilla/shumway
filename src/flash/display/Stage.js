@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global QuadTree, ShapePath, sortByZindex */
+/*global QuadTree, RegionCluster, ShapePath, sortByZindex */
 
 var StageDefinition = (function () {
   return {
@@ -148,8 +148,8 @@ var StageDefinition = (function () {
 
         var hidden = node._invisible ||
                      !currentRegion ||
-                     !(currentRegion.xMax - currentRegion.xMin) ||
-                     !(currentRegion.yMax - currentRegion.yMin) ||
+                     currentRegion.xMax - currentRegion.xMin === 0 ||
+                     currentRegion.yMax - currentRegion.yMin === 0 ||
                      currentRegion.xMax <= 0 ||
                      currentRegion.xMin >= this._stageWidth ||
                      currentRegion.yMax <= 0 ||

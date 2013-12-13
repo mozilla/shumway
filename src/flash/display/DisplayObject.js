@@ -903,7 +903,7 @@ var DisplayObjectDefinition = (function () {
         }
 
         if (xMin === Number.MAX_VALUE) {
-          return { xMin: 0, xMax: 0, yMin: 0, xMax: 0 };
+          return { xMin: 0, xMax: 0, yMin: 0, yMax: 0 };
         }
 
         b = { xMin: xMin, xMax: xMax, yMin: yMin, yMax: yMax };
