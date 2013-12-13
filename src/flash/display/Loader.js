@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 /*global self, ResourceLoader, Image, Worker, btoa, URL, FileLoadingService,
-         Promise, AbcFile, SHUMWAY_ROOT, TelemetryService,
+         Promise, AVM2, AbcFile, SHUMWAY_ROOT, TelemetryService,
          avm1lib, AS2Context, executeActions,
          MP3DecoderSession, PLAY_USING_AUDIO_TAG,
          cloneObject, createEmptyObject, fromCharCode,
