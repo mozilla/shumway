@@ -66,6 +66,7 @@ function loadMovie(path, reportFrames) {
         throw "Unable to open the file " + SWF_PATH + ": " + error;
       }
       SWF.embed(buffer, document, document.getElementById("stage"), {
+        url: path,
         onComplete: loaded,
         onAfterFrame: onFrameCallback,
         onTerminated: terminate

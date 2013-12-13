@@ -49,6 +49,11 @@ var LoaderDefinition = (function () {
       this._lastPromise = null;
       this._uncaughtErrorEvents = null;
       this._worker = null;
+
+      var abc = AVM2.currentAbc();
+      if (abc) {
+        this._contentLoaderInfo._loaderURL = abc.env.loader._contentLoaderInfo._url;
+      }
     },
     _commitData: function (data) {
       switch (data.command) {
@@ -217,6 +222,7 @@ var LoaderDefinition = (function () {
           var appDomain = avm2.applicationDomain;
           for (var i = 0, n = abcBlocks.length; i < n; i++) {
             var abc = new AbcFile(abcBlocks[i].data, "abc_block_" + i);
+            abc.env.loader = loader;
             if (abcBlocks[i].flags) {
               // kDoAbcLazyInitializeFlag = 1 Indicates that the ABC block should not be executed
               // immediately.
@@ -879,7 +885,7 @@ var LoaderDefinition = (function () {
         },
         _load: def._load,
         _loadBytes: function _loadBytes(bytes, checkPolicyFile, applicationDomain, securityDomain, requestedContentParent, parameters, deblockingFilter, allowLoadBytesCodeExecution, imageDecodingPolicy) { // (bytes:ByteArray, checkPolicyFile:Boolean, applicationDomain:ApplicationDomain, securityDomain:SecurityDomain, requestedContentParent:DisplayObjectContainer, parameters:Object, deblockingFilter:Number, allowLoadBytesCodeExecution:Boolean, imageDecodingPolicy:String) -> void
-          def._load.call(this, bytes.a, checkPolicyFile, applicationDomain, securityDomain);
+          this._load(bytes.a, checkPolicyFile, applicationDomain, securityDomain);
         },
         _unload: function _unload(halt, gc) { // (halt:Boolean, gc:Boolean) -> void
           somewhatImplemented("Loader._unload, do we even need to do anything here?");

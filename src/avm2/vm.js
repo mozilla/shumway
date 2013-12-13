@@ -36,54 +36,27 @@ var AVM2 = (function () {
   // We sometimes need to know where we came from, such as in
   // |ApplicationDomain.currentDomain|.
 
-  avm2.currentDomain = function () {
+  avm2.currentAbc = function () {
     var caller = arguments.callee;
     var maxDepth = 20;
-    var domain;
+    var abc = null;
     for (var i = 0; i < maxDepth && caller; i++) {
       var mi = caller.methodInfo;
       if (mi) {
-        domain = mi.abc.applicationDomain;
+        abc = mi.abc;
         break;
       }
       caller = caller.caller;
     }
-    assert (domain, "No domain environment was found on the stack, increase STACK_DEPTH or " +
-                    "make sure that a compiled / interpreted function is on the call stack.");
-    return domain;
+    return abc;
   };
 
-  avm2.callStack = [];
-
-  /**
-   * This only works for interpreter frames.
-   */
-  avm2.getStackTrace = function getStackTrace () {
-    return avm2.callStack.slice().reverse().map(function (frame) {
-      var str = "";
-      if (frame.method) {
-        if (frame.method.holder) {
-          str += frame.method.holder + " ";
-        }
-        str += frame.method + ":";
-      }
-      return str + frame.bc.originalPosition;
-    }).join("\n");
-  };
-
-  /**
-   * Returns the current VM context. This can be used to find out the VM execution context
-   * when running in native code.
-   */
-  avm2.currentVM = function () {
-    return avm2.stack.top().domain.system.vm;
-  };
-
-  /**
-   * Returns true if AVM2 code is running, otherwise false.
-   */
-  avm2.isRunning = function () {
-    return avm2.stack.length !== 0;
+  avm2.currentDomain = function () {
+    var abc = this.currentAbc();
+    assert (abc && abc.applicationDomain,
+            "No domain environment was found on the stack, increase STACK_DEPTH or " +
+            "make sure that a compiled / interpreted function is on the call stack.");
+    return abc.applicationDomain;
   };
 
   avm2.prototype = {

@@ -1440,6 +1440,7 @@ var AbcFile = (function () {
   function abcFile(bytes, name) {
     Timer.start("Parse ABC");
     this.name = name;
+    this.env = {};
 
     var n, i;
     var stream = new AbcStream(bytes);
