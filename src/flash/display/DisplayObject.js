@@ -85,6 +85,8 @@ var DisplayObjectDefinition = (function () {
       this._index = -1;
       this._depth = -1;
       this._isContainer = false;
+      this._invisible = false;
+      this._zindex = 0;
 
       blendModes = [
         blendModeClass.NORMAL,     // 0
@@ -390,9 +392,7 @@ var DisplayObjectDefinition = (function () {
       return width > 0 && height > 0;
     },
     _invalidate: function () {
-      if (!this._invalid && this._stage) {
-        this._stage._invalidateOnStage(this);
-      }
+      this._invalid = true;
     },
     _invalidateBounds: function () {
       var currentNode = this;
@@ -865,9 +865,58 @@ var DisplayObjectDefinition = (function () {
       return bounds;
     },
     _getRegion: function getRegion(targetCoordSpace) {
-      var b = this._graphics ?
+      var b;
+
+      var filters = this._filters;
+      if (filters.length) {
+        var xMin = Number.MAX_VALUE;
+        var xMax = Number.MIN_VALUE;
+        var yMin = Number.MAX_VALUE;
+        var yMax = Number.MIN_VALUE;
+
+        if (this._graphics) {
+          b = this._graphics._getBounds(true);
+          if (b) {
+            xMin = b.xMin;
+            xMax = b.xMax;
+            yMin = b.yMin;
+            yMax = b.yMax;
+          }
+        }
+
+        var children = this._children;
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          b = children[i]._getRegion(this);
+          if (b.xMin < xMin) {
+            xMin = b.xMin;
+          }
+          if (b.xMax > xMax) {
+            xMax = b.xMax;
+          }
+          if (b.yMin < yMin) {
+            yMin = b.yMin;
+          }
+          if (b.yMax > yMax) {
+            yMax = b.yMax;
+          }
+        }
+
+        if (xMin === Number.MAX_VALUE) {
+          return { xMin: 0, xMax: 0, yMin: 0, yMax: 0 };
+        }
+
+        b = { xMin: xMin, xMax: xMax, yMin: yMin, yMax: yMax };
+
+        for (var i = 0; i < filters.length; i++) {
+          filters[i]._updateFilterBounds(b);
+        }
+      } else {
+        b = this._graphics ?
               this._graphics._getBounds(true) :
               this._getContentBounds();
+      }
+
       return this._getTransformedRect(b, targetCoordSpace);
     },
 
@@ -889,7 +938,10 @@ var DisplayObjectDefinition = (function () {
         return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
       }
 
-      var m = this._getConcatenatedTransform(targetCoordSpace);
+      var m = targetCoordSpace &&
+              !flash.display.DisplayObject.class.isInstanceOf(targetCoordSpace) ?
+                targetCoordSpace :
+                this._getConcatenatedTransform(targetCoordSpace);
 
       var x0 = (m.a * xMin + m.c * yMin + m.tx)|0;
       var y0 = (m.b * xMin + m.d * yMin + m.ty)|0;

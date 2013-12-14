@@ -20,7 +20,12 @@ var BitmapFilterDefinition = (function () {
   var def = {
     __class__: 'flash.filters.BitmapFilter',
 
-    initialize: function () { }
+    initialize: function () {
+
+    },
+    _updateFilterBounds: function (bounds) {
+
+    }
   };
 
   def.__glue__ = { };

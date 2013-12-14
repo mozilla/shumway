@@ -20,7 +20,12 @@ var GradientGlowFilterDefinition = (function () {
   var def = {
     __class__: 'flash.filters.GradientGlowFilter',
 
-    initialize: function () { }
+    initialize: function () {
+
+    },
+    _updateFilterBounds: function (bounds) {
+
+    }
   };
 
   def.__glue__ = { };

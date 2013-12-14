@@ -21,27 +21,18 @@ var DropShadowFilterDefinition = (function () {
   return {
     __class__: "flash.filters.DropShadowFilter",
     initialize: function () {
+
     },
-    applyFilter: function (buffer, width, height) {
-      var color = [
-        this._color >> 24 & 0xFF,
-        this._color >> 16 & 0xFF,
-        this._color >> 8  & 0xFF,
-        this._color       & 0xFF
-      ];
-      dropShadowFilter(buffer, width, height, color, this._blurX, this._blurY, this._angle, this._distance, this._strength);
-    },
-    updateFilterBounds: function (bounds) {
-      assert (bounds instanceof flash.geom.Rectangle);
-      // Offset shadow bounds.
-      var shadowBounds = bounds.clone();
-      var dy = (Math.sin(this._angle) * this._distance) | 0;
-      var dx = (Math.cos(this._angle) * this._distance) | 0;
-      shadowBounds.offset(dx, dy);
-      // Blur shadow bounds.
-      shadowBounds.inflate(this._blurX, this._blurY);
-      var boundsUnion = bounds.union(shadowBounds);
-      bounds.setTo(boundsUnion.x, boundsUnion.y, boundsUnion.width, boundsUnion.height);
+    _updateFilterBounds: function (bounds) {
+      var a = this._angle * Math.PI / 180;
+      var dy = (Math.sin(a) * this._distance);
+      var dx = (Math.cos(a) * this._distance);
+      var bx = this._blurX * this._quality * 20;
+      var by = this._blurY * this._quality * 20;
+      bounds.xMin -= bx - (dx > 0 ? 0 : dx);
+      bounds.xMax += bx + Math.abs(dx);
+      bounds.yMin -= by - (dy > 0 ? 0 : dy);
+      bounds.yMax += by + Math.abs(dy);
     },
     __glue__: {
       native: {

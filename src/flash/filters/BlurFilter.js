@@ -23,14 +23,13 @@ var BlurFilterDefinition = (function () {
     initialize: function () {
 
     },
-    applyFilter: function (buffer, width, height) {
-      assert (buffer instanceof Uint8ClampedArray);
-      assert (buffer.length === width * height * 4);
-      blurFilter(buffer, width, height, this._blurX, this._blurY);
-    },
-    updateFilterBounds: function (bounds) {
-      assert (bounds instanceof flash.geom.Rectangle);
-      bounds.inflate(this._blurX, this._blurY);
+    _updateFilterBounds: function (bounds) {
+      var bx = this._blurX * this._quality * 20;
+      var by = this._blurY * this._quality * 20;
+      bounds.xMin -= bx;
+      bounds.xMax += bx;
+      bounds.yMin -= by;
+      bounds.yMax += by;
     },
     __glue__: {
       native: {

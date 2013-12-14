@@ -55,35 +55,13 @@ function cloneObject(obj) {
   return clone;
 }
 
-function sortByDepth(a, b) {
-  var levelA = a._level;
-  var levelB = b._level;
-
-  if (a._parent !== b._parent && a._index > -1 && b._index > -1) {
-    while (a._level > levelB) {
-      a = a._parent;
-    }
-    while (b._level > levelA) {
-      b = b._parent;
-    }
-    while (a._level > 1) {
-      if (a._parent === b._parent) {
-        break;
-      }
-      a = a._parent;
-      b = b._parent;
-    }
-  }
-
-  if (a === b) {
-    return levelA - levelB;
-  }
-
-  return a._index - b._index;
-}
 function sortNumeric(a, b) {
   return a - b;
 }
+function sortByZindex(a, b) {
+  return a._zindex - b._zindex;
+}
+
 function rgbaObjToStr(color) {
   return 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' +
          color.alpha / 255 + ')';
@@ -466,17 +444,30 @@ var Promise = (function PromiseClosure() {
   return Promise;
 })();
 
-var QuadTree = function (x, y, width, height, level) {
+var QuadTree = function (x, y, width, height, parent) {
   this.x = x | 0;
   this.y = y | 0;
   this.width = width | 0;
   this.height = height | 0;
-  this.level = level | 0;
-  this.stuckObjects = [];
-  this.objects = [];
+
+  if (parent) {
+    this.root = parent.root;
+    this.parent = parent;
+    this.level = parent.level + 1;
+  } else {
+    this.root = this;
+    this.parent = null;
+    this.level = 0;
+  }
+
+  this.reset();
+};
+QuadTree.prototype.reset = function () {
+  this.stuckObjects = null;
+  this.objects = null;
   this.nodes = [];
 };
-QuadTree.prototype._findIndex = function (xMin, yMin, xMax, yMax) {
+QuadTree.prototype._findIndex = function (xMin, xMax, yMin, yMax) {
   var midX = this.x + ((this.width / 2) | 0);
   var midY = this.y + ((this.height / 2) | 0);
 
@@ -503,70 +494,138 @@ QuadTree.prototype.insert = function (obj) {
   var nodes = this.nodes;
 
   if (nodes.length) {
-    var index = this._findIndex(obj.xMin, obj.yMin, obj.xMax, obj.yMax);
+    var index = this._findIndex(obj.xMin, obj.xMax, obj.yMin, obj.yMax);
 
     if (index > -1) {
       nodes[index].insert(obj);
     } else {
-      this.stuckObjects.push(obj);
-      obj._qtree = this;
+      obj.prev = null;
+      if (this.stuckObjects) {
+        obj.next = this.stuckObjects;
+        this.stuckObjects.prev = obj;
+      } else {
+        obj.next = null;
+      }
+      this.stuckObjects = obj;
+      obj.parent = this;
     }
 
     return;
   }
 
-  var objects = this.objects;
+  var numChildren = 1;
 
-  objects.push(obj);
+  var item = this.objects;
 
-  if (objects.length > 4 && this.level < 10) {
+  if (!item) {
+    obj.prev = null;
+    obj.next = null;
+    this.objects = obj;
+  } else {
+    while (item.next) {
+      numChildren++;
+      item = item.next;
+    }
+    obj.prev = item;
+    obj.next = null;
+    item.next = obj;
+  }
+
+  if (numChildren > 4 && this.level < 10) {
     this._subdivide();
 
-    while (objects.length) {
-      this.insert(objects.shift());
+    item = this.objects;
+    while (item) {
+      var next = item.next;
+      this.insert(item);
+      item = next;
     }
 
+    this.objects = null;
+
     return;
   }
 
-  obj._qtree = this;
+  obj.parent = this;
 };
-QuadTree.prototype.delete = function (obj) {
-  if (obj._qtree !== this) {
-    return;
+QuadTree.prototype.update = function (obj) {
+  var node = obj.parent;
+
+  if (node) {
+    if (obj.xMin >= node.x && obj.xMax <= node.x + node.width &&
+        obj.yMin >= node.y && obj.yMax <= node.y + node.height)
+    {
+      if (node.nodes.length) {
+        var index = this._findIndex(obj.xMin, obj.xMax, obj.yMin, obj.yMax);
+
+        if (index > -1) {
+          node.remove(obj);
+          node = this.nodes[index];
+          node.insert(obj);
+        }
+      } else {
+        node.remove(obj);
+        node.insert(obj);
+      }
+
+      return;
+    }
+
+    node.remove(obj);
   }
 
-  var index = this.objects.indexOf(obj);
-  if (index > -1) {
-    this.objects.splice(index, 1);
+  this.root.insert(obj);
+};
+QuadTree.prototype.remove = function (obj) {
+  var prev = obj.prev;
+  var next = obj.next;
+  if (prev) {
+    prev.next = next;
+    obj.prev = null;
   } else {
-    index = this.stuckObjects.indexOf(obj);
-    this.stuckObjects.splice(index, 1);
+    var node = obj.parent;
+    if (node.objects === obj) {
+      node.objects = next;
+    } else if (node.stuckObjects === obj) {
+      node.stuckObjects = next;
+    }
   }
-
-  obj._qtree = null;
+  if (next) {
+    next.prev = prev;
+    obj.next = null;
+  }
+  obj.parent = null;
 };
-QuadTree.prototype._stack = [];
-QuadTree.prototype._out = [];
-QuadTree.prototype.retrieve = function (xMin, yMin, xMax, yMax) {
-  var stack = this._stack;
-  var out = this._out;
-  out.length = 0;
+QuadTree.prototype.retrieve = function (xMin, xMax, yMin, yMax) {
+  var stack = [];
+  var out = [];
 
   var node = this;
   do {
     if (node.nodes.length) {
-      var index = node._findIndex(xMin, yMin, xMax, yMax);
+      var index = node._findIndex(xMin, xMax, yMin, yMax);
 
       if (index > -1) {
         stack.push(node.nodes[index]);
-        } else {
+      } else {
         stack.push.apply(stack, node.nodes);
       }
     }
 
-    out.push.apply(out, node.stuckObjects);
-    out.push.apply(out, node.objects);
+    var item = node.objects;
+    for (var i = 0; i < 2; i++) {
+      while (item) {
+        if (!(item.xMin > xMax ||
+              item.xMax < xMin ||
+              item.yMin > yMax ||
+              item.yMax < yMin))
+        {
+          out.push(item);
+        }
+        item = item.next;
+      }
+      item = node.stuckObjects;
+    }
 
     node = stack.pop();
   } while (node);
@@ -578,11 +637,108 @@ QuadTree.prototype._subdivide = function () {
   var halfHeight = (this.height / 2) | 0;
   var midX = this.x + halfWidth;
   var midY = this.y + halfHeight;
-  var level = this.level + 1;
-  this.nodes[0] = new QuadTree(midX, this.y, halfWidth, halfHeight, level);
-  this.nodes[1] = new QuadTree(this.x, this.y, halfWidth, halfHeight, level);
-  this.nodes[2] = new QuadTree(this.x, midY, halfWidth, halfHeight, level);
-  this.nodes[3] = new QuadTree(midX, midY, halfWidth, halfHeight, level);
+  this.nodes[0] = new QuadTree(midX, this.y, halfWidth, halfHeight, this);
+  this.nodes[1] = new QuadTree(this.x, this.y, halfWidth, halfHeight, this);
+  this.nodes[2] = new QuadTree(this.x, midY, halfWidth, halfHeight, this);
+  this.nodes[3] = new QuadTree(midX, midY, halfWidth, halfHeight, this);
+};
+
+var RegionCluster = function () {
+  this.regions = [];
+};
+RegionCluster.prototype.reset = function () {
+  this.regions.length = 0;
+};
+RegionCluster.prototype.insert = function (region) {
+  var regions = this.regions;
+
+  if (regions.length < 3) {
+    regions.push({ xMin: region.xMin,
+                   xMax: region.xMax,
+                   yMin: region.yMin,
+                   yMax: region.yMax });
+    return;
+  }
+
+  var a = region;
+  var b = regions[0];
+  var c = regions[1];
+  var d = regions[2];
+
+  var ab = (max(a.xMax, b.xMax) - min(a.xMin, b.xMin)) *
+           (max(a.yMax, b.yMax) - min(a.yMin, b.yMin));
+  var rb = regions[0];
+
+  var ac = (max(a.xMax, c.xMax) - min(a.xMin, c.xMin)) *
+           (max(a.yMax, c.yMax) - min(a.yMin, c.yMin));
+  var ad = (max(a.xMax, d.xMax) - min(a.xMin, d.xMin)) *
+           (max(a.yMax, d.yMax) - min(a.yMin, d.yMin));
+
+  if (ac < ab) {
+    ab = ac;
+    rb = c;
+  }
+  if (ad < ab) {
+    ab = ad;
+    rb = d;
+  }
+
+  var bc = (max(b.xMax, c.xMax) - min(b.xMin, c.xMin)) *
+           (max(b.yMax, c.yMax) - min(b.yMin, c.yMin));
+  var bd = (max(b.xMax, d.xMax) - min(b.xMin, d.xMin)) *
+           (max(b.yMax, d.yMax) - min(b.yMin, d.yMin));
+  var cd = (max(c.xMax, d.xMax) - min(c.xMin, d.xMin)) *
+           (max(c.yMax, d.yMax) - min(c.yMin, d.yMin));
+
+  if (ab < bc && ab < bd && ab < cd) {
+    if (a.xMin < rb.xMin) {
+      rb.xMin = a.xMin;
+    }
+    if (a.xMax > rb.xMax) {
+      rb.xMax = a.xMax;
+    }
+    if (a.yMin < rb.yMin) {
+      rb.yMin = a.yMin;
+    }
+    if (a.yMax > rb.yMax) {
+      rb.yMax = a.yMax;
+    }
+    return;
+  }
+
+  rb = regions[0];
+
+  var rc = regions[1];
+
+  if (bd < bc) {
+    bc = bd;
+    rc = regions[2];
+  }
+  if (cd < bc) {
+    rb = regions[1];
+    rc = regions[2];
+  }
+
+  if (rc.xMin < rb.xMin) {
+    rb.xMin = rc.xMin;
+  }
+  if (rc.xMax > rb.xMax) {
+    rb.xMax = rc.xMax;
+  }
+  if (rc.yMin < rb.yMin) {
+    rb.yMin = rc.yMin;
+  }
+  if (rc.yMax > rb.yMax) {
+    rb.yMax = rc.yMax;
+  }
+
+  rc.xMin = a.xMin;
+  rc.xMax = a.xMax;
+  rc.yMin = a.yMin;
+  rc.yMax = a.yMax;
+};
+RegionCluster.prototype.retrieve = function () {
+  return this.regions;
 };
 
 var EXTERNAL_INTERFACE_FEATURE = 1;

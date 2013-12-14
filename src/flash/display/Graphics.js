@@ -40,9 +40,7 @@ var GraphicsDefinition = (function () {
     _invalidate: function () {
       this.bbox = null;
       this.strokeBbox = null;
-      if (this._parent._stage) {
-        this._parent._stage._invalidateOnStage(this._parent);
-      }
+      this._parent._invalidate();
       this._parent._invalidateBounds();
     },
 

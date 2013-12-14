@@ -292,6 +292,38 @@ var LoaderDefinition = (function () {
             complete: frame.complete
           });
 
+          if (!loader._isAvm2Enabled) {
+            var avm1Context = loader._avm1Context;
+
+            // Finding movie top root
+            var _root = root;
+            if (parent && parent !== loader._stage) {
+              var parentLoader = parent.loaderInfo._loader;
+              while (parentLoader._parent && parentLoader._parent !== loader._stage) {
+                parentLoader = parentLoader._parent.loaderInfo._loader;
+              }
+              if (parentLoader._isAvm2Enabled) {
+                somewhatImplemented('AVM1Movie');
+                this._worker && this._worker.terminate();
+                return;
+              }
+              _root = parentLoader._content;
+            }
+
+            var as2Object = _root._getAS2Object();
+            avm1Context.globals.asSetPublicProperty('_root', as2Object);
+            avm1Context.globals.asSetPublicProperty('_level0', as2Object);
+            avm1Context.globals.asSetPublicProperty('_level1', as2Object);
+
+            // transfer parameters
+            var parameters = loader.loaderInfo._parameters;
+            for (var paramName in parameters) {
+              if (!(paramName in as2Object)) { // not present yet
+                as2Object[paramName] = parameters[paramName];
+              }
+            }
+          }
+
           var isRootMovie = parent && parent == loader._stage && loader._stage._children.length === 0;
           if (isRootMovie) {
             parent._frameRate = loaderInfo._frameRate;
@@ -341,38 +373,6 @@ var LoaderDefinition = (function () {
             scene._startFrame = 1;
             scene._endFrame = root.symbol.totalFrames;
             root.symbol.scenes = [scene];
-          }
-
-          if (!loader._isAvm2Enabled) {
-            var avm1Context = loader._avm1Context;
-
-            // Finding movie top root
-            var _root = root;
-            if (parent && parent !== loader._stage) {
-              var parentLoader = parent.loaderInfo._loader;
-              while (parentLoader._parent && parentLoader._parent !== loader._stage) {
-                parentLoader = parentLoader._parent.loaderInfo._loader;
-              }
-              if (parentLoader._isAvm2Enabled) {
-                somewhatImplemented('AVM1Movie');
-                this._worker && this._worker.terminate();
-                return;
-              }
-              _root = parentLoader._content;
-            }
-
-            var as2Object = _root._getAS2Object();
-            avm1Context.globals.asSetPublicProperty('_root', as2Object);
-            avm1Context.globals.asSetPublicProperty('_level0', as2Object);
-            avm1Context.globals.asSetPublicProperty('_level1', as2Object);
-
-            // transfer parameters
-            var parameters = loader.loaderInfo._parameters;
-            for (var paramName in parameters) {
-              if (!(paramName in as2Object)) { // not present yet
-                as2Object[paramName] = parameters[paramName];
-              }
-            }
           }
 
           if (loader._stage) {

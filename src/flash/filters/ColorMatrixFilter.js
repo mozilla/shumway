@@ -23,16 +23,8 @@ var ColorMatrixFilterDefinition = (function () {
     initialize: function () {
 
     },
-    applyFilter: function (buffer, width, height) {
-      if (this._matrix) {
-        assert (buffer instanceof Uint8ClampedArray);
-        assert (buffer.length === width * height * 4);
-        colorFilter(buffer, width, height, this._matrix);
-      }
-    },
-    updateFilterBounds: function (bounds) {
-      assert (bounds instanceof flash.geom.Rectangle);
-      return bounds;
+    _updateFilterBounds: function (bounds) {
+
     },
     __glue__: {
       native: {

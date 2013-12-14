@@ -19,7 +19,6 @@
 
 var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
-var disablePreVisitor = rendererOptions.register(new Option("dpv", "disablePreVisitor", "boolean", false, "disable pre visitor"));
 var disableRenderVisitor = rendererOptions.register(new Option("drv", "disableRenderVisitor", "boolean", false, "disable render visitor"));
 var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMouseVisitor", "boolean", false, "disable mouse visitor"));
 var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
@@ -826,21 +825,17 @@ function renderStage(stage, ctx, events) {
 
         var invalidPath = null;
 
-        if (!disablePreVisitor.value) {
-          traceRenderer.value && frameWriter.enter("> Pre Visitor");
-          timelineEnter("PRE");
-          invalidPath = stage._processInvalidRegions(true);
-          timelineLeave("PRE");
-          traceRenderer.value && frameWriter.leave("< Pre Visitor");
-        } else {
-          stage._processInvalidRegions(false);
-        }
+        traceRenderer.value && frameWriter.enter("> Invalidation");
+        timelineEnter("INVALIDATE");
+        invalidPath = stage._processInvalidations(true);
+        timelineLeave("INVALIDATE");
+        traceRenderer.value && frameWriter.leave("< Invalidation");
 
         if (!disableRenderVisitor.value) {
           timelineEnter("RENDER");
-          traceRenderer.value && frameWriter.enter("> Render Visitor");
+          traceRenderer.value && frameWriter.enter("> Rendering");
           (new RenderVisitor(stage, ctx, invalidPath, refreshStage)).start();
-          traceRenderer.value && frameWriter.leave("< Render Visitor");
+          traceRenderer.value && frameWriter.leave("< Rendering");
           timelineLeave("RENDER");
         }
 
@@ -858,9 +853,9 @@ function renderStage(stage, ctx, events) {
 
       if (mouseMoved && !disableMouseVisitor.value) {
         renderFrame && timelineEnter("MOUSE");
-        traceRenderer.value && frameWriter.enter("> Mouse Visitor");
+        traceRenderer.value && frameWriter.enter("> Mouse Handling");
         stage._handleMouse();
-        traceRenderer.value && frameWriter.leave("< Mouse Visitor");
+        traceRenderer.value && frameWriter.leave("< Mouse Handling");
         renderFrame && timelineLeave("MOUSE");
 
         ctx.canvas.style.cursor = stage._cursor;
