@@ -125,9 +125,7 @@ var StageDefinition = (function () {
           if (m.invalid) {
             child._concatenatedTransform.invalid = true;
           }
-          if (node._invisible) {
-            child._invisible = true;
-          }
+          child._invisible = node._invisible;
           stack.push(child);
         }
 
