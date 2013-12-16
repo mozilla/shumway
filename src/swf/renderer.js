@@ -886,14 +886,18 @@ function renderStage(stage, ctx, events) {
     maxDelay = 1000 / stage._frameRate;
     if (!turboMode.value) {
       nextRenderAt += maxDelay;
-      skipNextFrameDraw = false;
+      var wasLate = false;
       while (nextRenderAt < now) {
-        // skips painting of the very next frame if we are now keeping up
-        skipNextFrameDraw = true;
+        wasLate = true;
         nextRenderAt += maxDelay;
       }
-      if (skipNextFrameDraw) {
+      if (wasLate && !skipNextFrameDraw) {
+        // skips painting of the very next frame if we are not keeping up
+        skipNextFrameDraw = true;
         traceRenderer.value && appendToFrameTerminal("Skip Frame Draw", "red");
+      } else {
+        // .. but giving it a chance to draw sometime
+        skipNextFrameDraw = false;
       }
     } else {
       nextRenderAt = now;
