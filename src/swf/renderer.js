@@ -27,6 +27,7 @@ var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWire
 var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
 var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
 var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", false, "force hidpi"));
+var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", true, "skip frame when not on time"));
 
 
 var enableConstructChildren = rendererOptions.register(new Option("", "constructChildren", "boolean", true, "Construct Children"));
@@ -749,6 +750,10 @@ function renderStage(stage, ctx, events) {
   var frameFPSAverage = new metrics.Average(120);
 
   function drawFrame(renderFrame, frameRequested) {
+    if (!skipFrameDraw.value) {
+      frameRequested = true; // e.g. for testing we need to draw all frames
+    }
+
     sampleStart();
 
     var refreshStage = false;

@@ -17,6 +17,7 @@
  */
 
 turboMode.value = true;
+skipFrameDraw.value = false;
 
 function loadMovie(path, reportFrames) {
   var movieReadyResolve;

@@ -11,7 +11,7 @@ run_test = function (t, file) {
   t.mouse_press (initx, inity);
   t.advance (100);
   t.mouse_move (initx + delta, inity);
-  t.advance (1600);
+  t.advance (1400);
   t.mouse_release (initx + delta, inity);
   t.advance (100);
   var diff = t.trace.diff (expected);
