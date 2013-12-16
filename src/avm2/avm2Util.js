@@ -456,13 +456,29 @@ function popManyInto(src, count, dst) {
     this.push(v);
   });
 
-  extendBuiltin(Ap, "unique", function() {
-    var unique = [];
-    for (var i = 0; i < this.length; i++) {
-      unique.pushUnique(this[i]);
-    }
-    return unique;
-  });
+  var uniquesMap;
+  if (typeof Map !== 'undefined' && (uniquesMap = new Map()).clear) {
+    extendBuiltin(Ap, "unique", function() {
+      var unique = [];
+      for (var i = 0; i < this.length; i++) {
+        if (uniquesMap.has(this[i])) {
+          continue;
+        }
+        unique.push(this[i]);
+        uniquesMap.set(this[i], true);
+      }
+      uniquesMap.clear();
+      return unique;
+    });
+  } else {
+    extendBuiltin(Ap, "unique", function() {
+      var unique = [];
+      for (var i = 0; i < this.length; i++) {
+        unique.pushUnique(this[i]);
+      }
+      return unique;
+    });
+  }
 
   extendBuiltin(Ap, "replace", function(x, y) {
     if (x === y) {
