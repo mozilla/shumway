@@ -51,7 +51,8 @@ var StageDefinition = (function () {
     },
 
     _setup: function setup(ctx, options) {
-      this._qtree = new QuadTree(0, 0, this._stageWidth, this._stageHeight, 0);
+      this._qtree = new QuadTree(0, 0, this._stageWidth, this._stageHeight,
+                                 null);
       this._invalid = true;
     },
 
