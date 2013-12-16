@@ -303,20 +303,11 @@ var GraphicsDefinition = (function () {
       this._currentPath.moveTo((x * 20)|0, (y * 20)|0);
     },
     _getBounds: function(includeStroke) {
-      var bbox;
-      if (includeStroke && this.strokeBbox) {
-        bbox = this.strokeBox;
-      } else if (this.bbox) {
-        bbox = this.bbox;
-      }
+      var bbox = includeStroke ? this.strokeBbox : this.bbox;
       if (bbox) {
         return bbox;
       }
-      // TODO: support cached includeStroke bbox without strokeBox from shape.js
-      if (this.bbox) {
-        return this.bbox;
-      }
-      Counter.count("CACHE ME: Graphics._getBounds");
+
       var subpaths = this._paths;
       var xMins = [], yMins = [], xMaxs = [], yMaxs = [];
       for (var i = 0, n = subpaths.length; i < n; i++) {
@@ -332,15 +323,15 @@ var GraphicsDefinition = (function () {
         }
       }
       if (xMins.length === 0) {
-        return 0;
+        bbox = {xMin: 0, yMin: 0, xMax: 0, yMax: 0};
+      } else {
+        bbox = {
+          xMin : Math.min.apply(Math, xMins),
+          yMin : Math.min.apply(Math, yMins),
+          xMax : Math.max.apply(Math, xMaxs),
+          yMax : Math.max.apply(Math, yMaxs)
+        };
       }
-
-      bbox = {
-        xMin : Math.min.apply(Math, xMins),
-        yMin : Math.min.apply(Math, yMins),
-        xMax : Math.max.apply(Math, xMaxs),
-        yMax : Math.max.apply(Math, yMaxs)
-      };
       if (includeStroke) {
         this.strokeBbox = bbox;
       } else {
