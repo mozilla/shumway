@@ -42,7 +42,7 @@ function executeScript(script) {
   var scope = new Scope(null, script.global);
   // XXX interpreted methods populate stack with every call, compiled don't
   // pushing current runtime to the stack, so Runtime.currentDomain is successful
-  createFunction(script.init, scope).call(script.global);
+  createFunction(script.init, scope).call(script.global, false);
   script.executed = true;
 }
 

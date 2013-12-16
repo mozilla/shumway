@@ -179,7 +179,7 @@ RenderVisitor.prototype = {
       ctx.save();
 
       if (this.invalidPath && !this.refreshStage && !renderAsWireframe.value) {
-        this.invalidPath.draw(ctx);
+        this.invalidPath.draw(ctx, false, 0, null);
         ctx.clip();
       }
 
@@ -529,7 +529,11 @@ function renderDisplayObject(child, ctx, context) {
         ctx.drawImage(graphics._bitmap, 0, 0);
         ctx.restore();
       } else {
-        graphics.draw(ctx, context.isClippingMask, child.ratio,
+        var ratio = child.ratio;
+        if (ratio === undefined) {
+          ratio = 0;
+        }
+        graphics.draw(ctx, context.isClippingMask, ratio,
                       context.colorTransform);
       }
     }

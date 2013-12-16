@@ -1573,7 +1573,7 @@
     var inputs = [];
     this.visitInputs(function (input) {
       inputs.push(nameOf(input));
-    }, true);
+    });
     var str = nameOf(this) + " = " + this.nodeName.toUpperCase();
     if (this.toStringDetails) {
       str += " " + this.toStringDetails();
