@@ -709,7 +709,7 @@ var Class = (function () {
       }
     }
     var classScope = new Scope(scope, null);
-    var instanceConstructor = createFunction(ii.init, classScope);
+    var instanceConstructor = createFunction(ii.init, classScope, false);
     var cls;
     if (isNativeClass) {
       cls = buildClass(domain, classScope, instanceConstructor, baseClass);

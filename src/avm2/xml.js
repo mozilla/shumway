@@ -396,7 +396,7 @@ var isXMLType, isXMLName, XMLParser;
     // end of parser
 
     this.parseFromString = function(s, mimeType) {
-      var currentElement = new XML("element");  // placeholder
+      var currentElement = new XML("element", '', '', '');  // placeholder
       var elementsStack = [];
       parseXml(s, {
         beginElement: function(name, attrs, scope, isEmpty) {

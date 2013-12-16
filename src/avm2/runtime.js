@@ -1700,7 +1700,7 @@ function getTraitFunction(trait, scope, natives) {
     if (traceExecution.value >= 2) {
       print("Creating Function For Trait: " + trait.holder + " " + trait);
     }
-    fn = createFunction(mi, scope);
+    fn = createFunction(mi, scope, false);
     release || assert (fn);
   }
   if (traceExecution.value >= 3) {
@@ -1782,7 +1782,7 @@ function createClass(classInfo, baseClass, scope) {
   }
 
   // Run the static initializer.
-  createFunction(classInfo.init, scope).call(cls);
+  createFunction(classInfo.init, scope, false).call(cls);
 
   // Seal constant traits in the class object.
   if (sealConstTraits) {
