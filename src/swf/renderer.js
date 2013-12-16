@@ -814,7 +814,7 @@ function renderStage(stage, ctx, events) {
         timelineLeave("INVALIDATE");
         traceRenderer.value && frameWriter.leave("< Invalidation");
 
-        if (!disableRenderVisitor.value) {
+        if (!disableRenderVisitor.value && !invalidPath.isEmpty) {
           timelineEnter("RENDER");
           traceRenderer.value && frameWriter.enter("> Rendering");
           (new RenderVisitor(stage, ctx, invalidPath, refreshStage)).start();

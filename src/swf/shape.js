@@ -655,6 +655,9 @@ function ShapePath(fillStyle, lineStyle, commandsCount, dataLength, isMorph,
 }
 
 ShapePath.prototype = {
+  get isEmpty() {
+    return this.commands.length === 0;
+  },
   moveTo: function(x, y) {
     if (this.commands[this.commands.length -1] === SHAPE_MOVE_TO) {
       this.data[this.data.length - 2] = x;
