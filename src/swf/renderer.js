@@ -26,6 +26,7 @@ var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWire
 var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
 var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
 var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", false, "force hidpi"));
+var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", true, "skip frame when not on time"));
 
 
 var enableConstructChildren = rendererOptions.register(new Option("", "constructChildren", "boolean", true, "Construct Children"));
@@ -751,25 +752,9 @@ function renderStage(stage, ctx, events) {
   var frameCount = 0;
   var frameFPSAverage = new metrics.Average(120);
 
-  (function draw() {
-
-    var now = performance.now();
-    var renderFrame = now >= nextRenderAt;
-
-    if (renderFrame && events.onBeforeFrame) {
-      var e = { cancel: false };
-      events.onBeforeFrame(e);
-      renderFrame = !e.cancel;
-    }
-
-    if (renderFrame && renderDummyBalls) {
-      frameTime = now;
-      nextRenderAt = frameTime + maxDelay;
-
-      renderDummyBalls();
-
-      requestAnimationFrame(draw);
-      return;
+  function drawFrame(renderFrame, frameRequested) {
+    if (!skipFrameDraw.value) {
+      frameRequested = true; // e.g. for testing we need to draw all frames
     }
 
     sampleStart();
@@ -797,13 +782,6 @@ function renderStage(stage, ctx, events) {
       var domain = avm2.systemDomain;
 
       if (renderFrame) {
-        frameTime = now;
-        maxDelay = 1000 / stage._frameRate;
-        if (!turboMode.value) {
-          while (nextRenderAt < now) {
-            nextRenderAt += maxDelay;
-          }
-        }
         timelineEnter("EVENTS");
         if (firstRun) {
           // Initial display list is already constructed, skip frame construction phase.
@@ -825,7 +803,8 @@ function renderStage(stage, ctx, events) {
         domain.broadcastMessage("render", "render");
       }
 
-      if (isCanvasVisible(ctx.canvas) && (refreshStage || renderFrame)) {
+      if (isCanvasVisible(ctx.canvas) && (refreshStage || renderFrame) &&
+          frameRequested) {
 
         var invalidPath = null;
 
@@ -865,10 +844,6 @@ function renderStage(stage, ctx, events) {
         ctx.canvas.style.cursor = stage._cursor;
       }
 
-      if (renderFrame && events.onAfterFrame) {
-        events.onAfterFrame();
-      }
-
       if (traceRenderer.value) {
         frameWriter.enter("> Frame Counters");
         for (var name in FrameCounter.counts) {
@@ -886,6 +861,47 @@ function renderStage(stage, ctx, events) {
     }
 
     sampleEnd();
+  }
+
+  var frameRequested = true;
+  var skipNextFrameDraw = false;
+  (function draw() {
+    var now = performance.now();
+    var renderFrame = true;
+    if (events.onBeforeFrame) {
+      var e = { cancel: false };
+      events.onBeforeFrame(e);
+      renderFrame = !e.cancel;
+    }
+
+    frameTime = now;
+    if (renderFrame && renderDummyBalls) {
+      renderDummyBalls();
+      return;
+    }
+
+    drawFrame(renderFrame, frameRequested && !skipNextFrameDraw);
+    frameRequested = false;
+
+    maxDelay = 1000 / stage._frameRate;
+    if (!turboMode.value) {
+      nextRenderAt += maxDelay;
+      skipNextFrameDraw = false;
+      while (nextRenderAt < now) {
+        // skips painting of the very next frame if we are now keeping up
+        skipNextFrameDraw = true;
+        nextRenderAt += maxDelay;
+      }
+      if (skipNextFrameDraw) {
+        traceRenderer.value && appendToFrameTerminal("Skip Frame Draw", "red");
+      }
+    } else {
+      nextRenderAt = now;
+    }
+
+    if (renderFrame && events.onAfterFrame) {
+      events.onAfterFrame();
+    }
 
     if (renderingTerminated) {
       if (events.onTerminated) {
@@ -894,6 +910,19 @@ function renderStage(stage, ctx, events) {
       return;
     }
 
-    requestAnimationFrame(draw);
+    setTimeout(draw, Math.max(0, nextRenderAt - performance.now()));
+  })();
+
+  (function frame() {
+    if (renderingTerminated) {
+      return;
+    }
+
+    if (stage._invalid || stage._mouseMoved) {
+      drawFrame(false, !skipNextFrameDraw);
+    }
+
+    frameRequested = true;
+    requestAnimationFrame(frame);
   })();
 }
