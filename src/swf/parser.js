@@ -393,4 +393,5 @@ SWF.parse = function(buffer, options) {
   var bytes = new Uint8Array(buffer);
   var progressInfo = { bytesLoaded: bytes.length, bytesTotal: bytes.length };
   pipe.push(bytes, progressInfo);
+  pipe.close();
 };
