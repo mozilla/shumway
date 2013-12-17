@@ -355,7 +355,8 @@ natives['FlashNetScript::navigateToURL'] = function GetNavigateToURLMethod(domai
       return;
     }
     // TODO handle other methods than GET
-    window.open(FileLoadingService.resolveUrl(url), window_);
+    var targetWindow = window_ || '_parent'; // using parent as default target
+    window.open(FileLoadingService.resolveUrl(url), targetWindow);
   };
 };
 
