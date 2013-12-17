@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global rgbaObjToStr, FirefoxCom, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle*/
+/*global rgbaObjToStr, FirefoxCom, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
 
 var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
@@ -27,7 +27,7 @@ var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "bo
 var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
 var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", false, "force hidpi"));
 var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", true, "skip frame when not on time"));
-
+var hud = rendererOptions.register(new Option("", "hud", "boolean", false, "show hud mode"));
 
 var enableConstructChildren = rendererOptions.register(new Option("", "constructChildren", "boolean", true, "Construct Children"));
 var enableEnterFrame = rendererOptions.register(new Option("", "enterFrame", "boolean", true, "Enter Frame"));
@@ -35,6 +35,7 @@ var enableAdvanceFrame = rendererOptions.register(new Option("", "advanceFrame",
 
 if (typeof FirefoxCom !== 'undefined') {
   turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
+  hud.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.hud', def: false});
   forceHidpi.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.force_hidpi', def: false});
 }
 
@@ -611,13 +612,16 @@ function sampleEnd() {
 }
 
 var timeline;
+var hudTimeline;
 
 function timelineEnter(name) {
   timeline && timeline.enter(name);
+  hudTimeline && hudTimeline.enter(name);
 }
 
 function timelineLeave(name) {
   timeline && timeline.leave(name);
+  hudTimeline && hudTimeline.leave(name);
 }
 
 function timelineWrapBroadcastMessage(domain, message) {
@@ -626,8 +630,29 @@ function timelineWrapBroadcastMessage(domain, message) {
   timelineLeave(message);
 }
 
+function initializeHUD(stage, parentCanvas) {
+  var canvas = document.createElement('canvas');
+  var canvasContainer = document.createElement('div');
+  canvasContainer.appendChild(canvas);
+  canvasContainer.style.position = "absolute";
+  canvasContainer.style.top = "0px";
+  canvasContainer.style.left = "0px";
+  canvasContainer.style.width = "100%";
+  canvasContainer.style.height = "150px";
+  canvasContainer.style.backgroundColor = "rgba(0, 0, 0, 0.4)";
+  // canvasContainer.style.pointerEvents = canvas.style.pointerEvents = "none";
+  parentCanvas.parentElement.appendChild(canvasContainer);
+  hudTimeline = new Timeline(canvas);
+  hudTimeline.setFrameRate(stage._frameRate);
+  hudTimeline.refreshEvery(10);
+}
+
 function renderStage(stage, ctx, events) {
   var frameWidth, frameHeight;
+
+  if (!timeline && hud.value) {
+    initializeHUD(stage, ctx.canvas);
+  }
 
   function updateRenderTransform() {
     frameWidth = ctx.canvas.width;
@@ -778,12 +803,13 @@ function renderStage(stage, ctx, events) {
     if (renderFrame || refreshStage || mouseMoved) {
       FrameCounter.clear();
       var frameStartTime = performance.now();
+      timelineEnter("frame");
       traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
 
       var domain = avm2.systemDomain;
 
       if (renderFrame) {
-        timelineEnter("EVENTS");
+        timelineEnter("events");
         if (firstRun) {
           // Initial display list is already constructed, skip frame construction phase.
           firstRun = false;
@@ -796,7 +822,7 @@ function renderStage(stage, ctx, events) {
         timelineWrapBroadcastMessage(domain, "frameConstructed");
         timelineWrapBroadcastMessage(domain, "executeFrame");
         timelineWrapBroadcastMessage(domain, "exitFrame");
-        timelineLeave("EVENTS");
+        timelineLeave("events");
       }
 
       if (stage._deferRenderEvent) {
@@ -810,17 +836,17 @@ function renderStage(stage, ctx, events) {
         var invalidPath = null;
 
         traceRenderer.value && frameWriter.enter("> Invalidation");
-        timelineEnter("INVALIDATE");
+        timelineEnter("invalidate");
         invalidPath = stage._processInvalidations(true);
-        timelineLeave("INVALIDATE");
+        timelineLeave("invalidate");
         traceRenderer.value && frameWriter.leave("< Invalidation");
 
         if (!disableRenderVisitor.value && !invalidPath.isEmpty) {
-          timelineEnter("RENDER");
+          timelineEnter("render");
           traceRenderer.value && frameWriter.enter("> Rendering");
           (new RenderVisitor(stage, ctx, invalidPath, refreshStage)).start();
           traceRenderer.value && frameWriter.leave("< Rendering");
-          timelineLeave("RENDER");
+          timelineLeave("render");
         }
 
         if (showQuadTree.value) {
@@ -836,11 +862,11 @@ function renderStage(stage, ctx, events) {
       }
 
       if (mouseMoved && !disableMouseVisitor.value) {
-        renderFrame && timelineEnter("MOUSE");
+        renderFrame && timelineEnter("mouse");
         traceRenderer.value && frameWriter.enter("> Mouse Handling");
         stage._handleMouse();
         traceRenderer.value && frameWriter.leave("< Mouse Handling");
-        renderFrame && timelineLeave("MOUSE");
+        renderFrame && timelineLeave("mouse");
 
         ctx.canvas.style.cursor = stage._cursor;
       }
@@ -857,6 +883,7 @@ function renderStage(stage, ctx, events) {
         traceRenderer.value && appendToFrameTerminal("End Frame Time: " + frameElapsedTime.toFixed(2) + " (" + frameFPS.toFixed(2) + " fps, " + frameFPSAverage.average().toFixed(2) + " average fps)", "purple");
 
       }
+      timelineLeave("frame");
     } else {
       traceRenderer.value && appendToFrameTerminal("Skip Frame", "black");
     }

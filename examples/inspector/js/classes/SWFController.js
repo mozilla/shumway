@@ -123,12 +123,11 @@ var SWFController = (function() {
         stateChange.call(this, STATE_PLAYING);
       }
       if (state === STATE_PLAYING) {
-        stats && stats.enter("FRAME");
+
       }
     },
     afterFrameCallback: function afterFrameCallback() {
       if (state === STATE_PLAYING) {
-        stats && stats.leave("FRAME");
         // if play() is called with numFrames != 0
         if (frames > 0) {
           // count down number of executed frame since

@@ -1,3 +1,20 @@
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+/*global CircularBuffer, randomStyle, createEmptyObject*/
+
 /**
  * Frame Rate Monitor
  */
@@ -136,7 +153,7 @@ var Timeline = (function () {
       this.canvas.height = this.ch;
     }
 
-    this.context.font = 11 + 'px Consolas, "Liberation Mono", Courier, monospace';
+    this.context.font = 10 + 'px Consolas, "Liberation Mono", Courier, monospace';
   };
 
   timeline.prototype.paint = function paint() {
@@ -210,26 +227,28 @@ var Timeline = (function () {
     context.fillRect(0, 0, this.cw, 20);
 
     var textOffset;
-    var sFrameCount = "FRAMES:" + this.count;
-    var sMaxFrameRate = "TFPS:" + Math.round(1000 * maxFrameRateCount / maxFrameRate);
-    var sAvgFrameRate = "FPS:" + Math.round(1000 * avgFrameRateCount / avgFrameRate);
+    var sFrameCount = this.count;
+    var sMaxFrameRate = Math.round(1000 * maxFrameRateCount / maxFrameRate);
+    var sAvgFrameRate = Math.round(1000 * avgFrameRateCount / avgFrameRate);
 
+    var space = 5;
     textOffset = 5;
     context.fillStyle = textColor;
     context.fillText(sFrameCount, textOffset, 13);
-    textOffset += context.measureText(sFrameCount).width + 10;
+    textOffset += context.measureText(sFrameCount).width + space;
     context.fillText(sMaxFrameRate, textOffset, 13);
-    textOffset += context.measureText(sMaxFrameRate).width + 10;
+    textOffset += context.measureText(sMaxFrameRate).width + space;
     context.fillText(sAvgFrameRate, textOffset, 13);
+    var basicOffset = textOffset + context.measureText(sAvgFrameRate).width + space;
 
     textOffset = this.cw;
     for (var k in this.kinds) {
       context.fillStyle = this.fillStyles[this.getKind(k)];
-      textOffset -= context.measureText(k).width + 10;
-      this.context.fillText(k, textOffset, 13);
+      textOffset -= context.measureText(k).width + space;
+      if (textOffset > basicOffset) {
+        this.context.fillText(k, textOffset, 13);
+      }
     }
-    //var tt = performance.now() - t;
-    //console.log(tt + " ms", t1, tt-t1);
   };
 
   return timeline;

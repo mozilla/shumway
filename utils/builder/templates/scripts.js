@@ -32,6 +32,7 @@ var Option = options.Option;
 var OptionSet = options.OptionSet;
 var coreOptions = new OptionSet("Core Options");
 
+load($SHUMWAY_ROOT + "src/swf/Timeline.js");
 load($SHUMWAY_ROOT + "src/flash/util.js");
 load($SHUMWAY_ROOT + "src/swf/swf.js");
 load($SHUMWAY_ROOT + "src/swf/inflate.js");
