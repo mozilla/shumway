@@ -260,6 +260,15 @@ RenderVisitor.prototype = {
         // restore original context
         ctx = this.ctx = clipDepthInfo.ctx;
       }
+
+      // checks if child is masked by clipping
+      if (this.clipDepth && this.clipDepth.length > 0 &&
+        child._depth <= this.clipDepth[0].clipDepth)
+      {
+        // use maskee canvas
+        ctx = this.ctx = this.clipDepth[0].maskee.ctx;
+      }
+
       if (child._clipDepth) {
         // child is a clipping mask
         context.isClippingMask = clippingMask = true;
@@ -273,14 +282,6 @@ RenderVisitor.prototype = {
         }
         // use mask canvas
         ctx = this.ctx = clipDepthInfo.mask.ctx;
-      } else {
-        // child is not a clipping mask. check if it is masked by one
-        if (this.clipDepth && this.clipDepth.length > 0 &&
-            child._depth <= this.clipDepth[0].clipDepth)
-        {
-          // use maskee canvas
-          ctx = this.ctx = this.clipDepth[0].maskee.ctx;
-        }
       }
     }
 
