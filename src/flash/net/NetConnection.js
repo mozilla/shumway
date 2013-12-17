@@ -18,6 +18,8 @@
 /*global wrapJSObject, TelemetryService, NETCONNECTION_FEATURE */
 
 var NetConnectionDefinition = (function () {
+  var defaultObjectEncoding = 3;
+
   return {
     // ()
     __class__: "flash.net.NetConnection",
@@ -40,14 +42,22 @@ var NetConnectionDefinition = (function () {
         static: {
           defaultObjectEncoding: {
             get: function defaultObjectEncoding() { // (void) -> uint
-              notImplemented("NetConnection.defaultObjectEncoding");
+              return defaultObjectEncoding;
             },
             set: function defaultObjectEncoding(version) { // (version:uint) -> void
-              notImplemented("NetConnection.defaultObjectEncoding");
+              somewhatImplemented("NetConnection.defaultObjectEncoding");
+              return defaultObjectEncoding;
             }
           }
         },
         instance: {
+          ctor: function ctor() {
+            this._uri = null;
+            this._connected = false;
+            this._client = null;
+            this._proxyType = 'none';
+            this._objectEncoding = defaultObjectEncoding;
+          },
           connect: function connect(command) { // (command:String, ...arguments) -> void
             var NetStatusEvent = flash.events.NetStatusEvent;
 
@@ -87,17 +97,15 @@ var NetConnectionDefinition = (function () {
           },
           objectEncoding: {
             get: function objectEncoding() { // (void) -> uint
-              notImplemented("NetConnection.objectEncoding");
               return this._objectEncoding;
             },
             set: function objectEncoding(version) { // (version:uint) -> void
-              notImplemented("NetConnection.objectEncoding");
+              somewhatImplemented("NetConnection.objectEncoding");
               this._objectEncoding = version;
             }
           },
           proxyType: {
             get: function proxyType() { // (void) -> String
-              notImplemented("NetConnection.proxyType");
               return this._proxyType;
             },
             set: function proxyType(ptype) { // (ptype:String) -> void

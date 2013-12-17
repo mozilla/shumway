@@ -1339,7 +1339,7 @@ var isXMLType, isXMLName, XMLParser;
           notImplemented("XML.insertChildBefore");
         },
         localName: function localName() { // (void) -> Object
-          notImplemented("XML.localName");
+          return this.name.localName;
         },
         name: function name() { // (void) -> Object
           return this.name;
