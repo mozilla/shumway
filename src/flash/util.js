@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global formatErrorMessage, throwErrorFromVM, AVM2, $RELEASE */
+/*global formatErrorMessage, throwErrorFromVM, AVM2, $RELEASE, self */
 
 var create = Object.create;
 var defineProperty = Object.defineProperty;
@@ -153,7 +153,42 @@ function randomStyle() {
   return randomStyleCache[(nextStyle ++) % randomStyleCache.length];
 }
 
-var Promise = (function PromiseClosure() {
+// Polyfill for Promises
+(function PromiseClosure() {
+  /*jshint -W061 */
+  var global = Function("return this")();
+  if (global.Promise) {
+    // Promises existing in the DOM/Worker, checking presence of all/resolve
+    if (typeof global.Promise.all !== 'function') {
+      global.Promise.all = function (iterable) {
+        var count = 0, results = [], resolve, reject;
+        var promise = new global.Promise(function (resolve_, reject_) {
+          resolve = resolve_;
+          reject = reject_;
+        });
+        iterable.forEach(function (p, i) {
+          count++;
+          p.then(function (result) {
+            results[i] = result;
+            count--;
+            if (count === 0) {
+              resolve(results);
+            }
+          }, reject);
+        });
+        if (count === 0) {
+          resolve(results);
+        }
+        return promise;
+      };
+    }
+    if (typeof global.Promise.resolve !== 'function') {
+      global.Promise.resolve = function (x) {
+        return new global.Promise(function (resolve) { resolve(x); });
+      };
+    }
+    return;
+  }
 
   function getDeferred(C) {
     if (typeof C !== 'function') {
@@ -441,7 +476,7 @@ var Promise = (function PromiseClosure() {
     }
   };
 
-  return Promise;
+  global.Promise = Promise;
 })();
 
 var QuadTree = function (x, y, width, height, parent) {
