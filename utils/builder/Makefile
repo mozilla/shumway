@@ -64,8 +64,7 @@ build: ensureoutputdir
 	cp ../../src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_DIR)/avm2/generated/avm1lib/
 	# Extract UTF Strings
 	mkdir $(BUILD_DIR)/lib
-	cp ../../lib/deflate.js $(BUILD_DIR)/lib/
-	cp ../../lib/inflate.js $(BUILD_DIR)/lib/
+	cp ../../lib/ByteArray.js $(BUILD_DIR)/lib/
 	mkdir $(BUILD_DIR)/lib/DataView.js
 	cp ../../lib/DataView.js/* $(BUILD_DIR)/lib/DataView.js/
 	mkdir $(BUILD_DIR)/lib/mp3
