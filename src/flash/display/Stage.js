@@ -93,13 +93,16 @@ var StageDefinition = (function () {
       }
     },
 
-    _processInvalidations: function processInvalidations() {
+    _processInvalidations: function processInvalidations(refreshStage) {
       var qtree = this._qtree;
       var invalidRegions = this._invalidRegions;
       var stack = this._children.slice();
       var zindex = 0;
 
       stack.reverse();
+      if (refreshStage) {
+        stack.forEach(function (node) { node._invalid = true; });
+      }
 
       while (stack.length) {
         var node = stack.pop();
@@ -190,6 +193,12 @@ var StageDefinition = (function () {
       }
 
       var invalidPath = new ShapePath();
+      if (refreshStage) {
+        invalidPath.rect(0, 0, this._stageWidth, this._stageHeight);
+        invalidRegions.reset();
+        return invalidPath;
+      }
+
       var redrawRegions = invalidRegions.retrieve();
 
       for (var i = 0; i < redrawRegions.length; i++) {

@@ -837,7 +837,7 @@ function renderStage(stage, ctx, events) {
 
         traceRenderer.value && frameWriter.enter("> Invalidation");
         timelineEnter("invalidate");
-        invalidPath = stage._processInvalidations(true);
+        invalidPath = stage._processInvalidations(refreshStage);
         timelineLeave("invalidate");
         traceRenderer.value && frameWriter.leave("< Invalidation");
 
@@ -951,7 +951,7 @@ function renderStage(stage, ctx, events) {
     }
 
     if (stage._invalid || stage._mouseMoved) {
-      drawFrame(false, !skipNextFrameDraw);
+      drawFrame(false, true);
     }
 
     frameRequested = true;
