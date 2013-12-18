@@ -163,7 +163,7 @@ var Errors = {
 //  CantInstantiateError                 : {code: 2012, message: "%1 class cannot be instantiated."},
   ArgumentError                        : {code: 2015, message: "Invalid BitmapData."},
 //  EOFError                             : {code: 2030, message: "End of file was encountered."},
-//  CompressedDataError                  : {code: 2058, message: "There was an error decompressing the data."},
+  CompressedDataError                  : {code: 2058, message: "There was an error decompressing the data."},
 //  EmptyStringError                     : {code: 2085, message: "Parameter %1 must be non-empty string."},
 //  ProxyGetPropertyError                : {code: 2088, message: "The Proxy class does not implement getProperty. It must be overridden by a subclass."},
 //  ProxySetPropertyError                : {code: 2089, message: "The Proxy class does not implement setProperty. It must be overridden by a subclass."},

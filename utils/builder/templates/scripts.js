@@ -27,6 +27,7 @@
  */
 
 load($SHUMWAY_ROOT + "lib/DataView.js/DataView.js");
+load($SHUMWAY_ROOT + "lib/ByteArray.js");
 load($SHUMWAY_ROOT + "src/avm2/options.js");
 var Option = options.Option;
 var OptionSet = options.OptionSet;
