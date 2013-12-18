@@ -8,7 +8,7 @@ package {
   	trace(data.length);
 
   	data.deflate();
-  	trace(data.length);
+  	trace(data.length !== 150);
 
   	data.inflate();
   	trace(data.length);
