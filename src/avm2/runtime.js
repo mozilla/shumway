@@ -468,7 +468,7 @@ function asCallSuper(scope, namespaces, name, flags, args) {
 function asSetSuper(scope, namespaces, name, flags, value) {
   if (traceCallExecution.value) {
     var receiver = this.class ? this.class.className + " ": "";
-    callWriter.enter("set super " + receiver + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
+    callWriter.enter("set super " + receiver + name + "(" + toSafeString(value) + ") #" + callCounter.count(name));
   }
   var baseClass = scope.object.baseClass;
   var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
