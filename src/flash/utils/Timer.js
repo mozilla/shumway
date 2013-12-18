@@ -20,8 +20,7 @@ var TimerDefinition = (function () {
   var def = {
     __class__: 'flash.utils.Timer',
     initialize: function () {
-      this.running = false;
-      this.private$flash$utils$Timer$m_iteration = 0;
+      this._running = false;
     }
   };
 
@@ -30,18 +29,21 @@ var TimerDefinition = (function () {
       instance: {
         running: {
           get: function () {
-            return this.running;
+            return this._running;
           }
         },
         _start: function (delay, closure) {
-          this.running = true;
+          this._running = true;
           this.interval = setInterval(closure, delay);
         },
         stop: function () {
-          this.running = false;
+          this._running = false;
           clearInterval(this.interval);
         },
         _timerDispatch: function () {
+          if (!this._running) {
+            return;
+          }
           this._dispatchEvent(new flash.events.TimerEvent("timer", true, false));
         }
       }
