@@ -1027,305 +1027,10 @@ var natives = (function () {
    * ByteArray.as
    */
   function ByteArrayClass(runtime, scope, instanceConstructor, baseClass) {
-    /* The initial size of the backing, in bytes. Doubled every OOM. */
-    var INITIAL_SIZE = 128;
-
-    var defaultObjectEncoding = 3;
-
-    function ByteArray(bytes) {
-      if (bytes instanceof ByteArray) {
-        // HACK coercion to ByteArray (constructor is called as function from byte code)
-        return bytes;
-      }
-      var initData = bytes || (this.symbol && this.symbol.data);
-      if (initData) {
-        this.a = new ArrayBuffer(initData.length);
-        this.length = initData.length;
-        new Uint8Array(this.a).set(initData);
-      } else {
-        this.a = new ArrayBuffer(INITIAL_SIZE);
-        this.length = 0;
-      }
-      this.position = 0;
-      this.cacheViews();
-      this.nativele = new Int8Array(new Int32Array([]).buffer)[0] === 1;
-      this.le = this.nativele;
-      this.objectEncoding = defaultObjectEncoding;
-    }
-
-    function throwEOFError() {
-      runtime.throwErrorFromVM("flash.errors.EOFError", "End of file was encountered.");
-    }
-
-    function throwRangeError() {
-      var error = Errors.ParamRangeError;
-      runtime.throwErrorFromVM("RangeError", getErrorMessage(error.code), error.code);
-    }
-
-    function throwCompressedDataError() {
-      var error = Errors.CompressedDataError;
-      runtime.throwErrorFromVM("CompressedDataError", getErrorMessage(error.code), error.code);
-    }
-
-    function checkRange(x, min, max) {
-      if (x !== clamp(x, min, max)) {
-        throwRangeError();
-      }
-    }
-
-    function get(b, m, size) {
-      if (b.position + size > b.length) {
-        throwEOFError();
-      }
-      var v = b.view[m](b.position, b.le);
-      b.position += size;
-      return v;
-    }
-
-    function set(b, m, size, v) {
-      var len = b.position + size;
-      b.ensureCapacity(len);
-      b.view[m](b.position, v, b.le);
-      b.position = len;
-      if (len > b.length) {
-        b.length = len;
-      }
-    }
-
     var c = new Class("ByteArray", ByteArray, C(ByteArray));
     c.extendBuiltin(baseClass);
 
     var BAp = ByteArray.prototype;
-    BAp.asGetNumericProperty = function (i) {
-      if (i >= this.length) {
-        return undefined;
-      }
-      return this.uint8v[i];
-    };
-    BAp.asSetNumericProperty = function (i, v) {
-      var len = i + 1;
-      this.ensureCapacity(len);
-      this.uint8v[i] = v;
-      if (len > this.length) {
-        this.length = len;
-      }
-    };
-
-    BAp.cacheViews = function cacheViews() {
-      var a = this.a;
-      this.int8v  = new Int8Array(a);
-      this.uint8v = new Uint8Array(a);
-      this.view   = new DataView(a);
-    };
-
-    BAp.getBytes = function getBytes() {
-      return new Uint8Array(this.a, 0, this.length);
-    };
-
-    BAp.ensureCapacity = function ensureCapacity(size) {
-      var origa = this.a;
-      if (origa.byteLength < size) {
-        var newSize = origa.byteLength;
-        while (newSize < size) {
-          newSize *= 2;
-        }
-        var copya = new ArrayBuffer(newSize);
-        var origv = this.int8v;
-        this.a = copya;
-        this.cacheViews();
-        this.int8v.set(origv);
-      }
-    };
-
-    BAp.clear = function clear() {
-      this.length = 0;
-      this.position = 0;
-    };
-
-    /**
-     * For byte-sized reads and writes we can just go through the |Uint8Array| and not
-     * the slower DataView.
-     */
-    BAp.readBoolean = function readBoolean() {
-      if (this.position + 1 > this.length) {
-        throwEOFError();
-      }
-      return this.int8v[this.position++] !== 0;
-    };
-
-    BAp.readByte = function readByte() {
-      if (this.position + 1 > this.length) {
-        throwEOFError();
-      }
-      return this.int8v[this.position++];
-    };
-
-    BAp.readUnsignedByte = function readUnsignedByte() {
-      if (this.position + 1 > this.length) {
-        throwEOFError();
-      }
-      return this.uint8v[this.position++];
-    };
-
-    BAp.readBytes = function readBytes(bytes, offset, length) {
-      var pos = this.position;
-      if (!offset) {
-        offset = 0;
-      }
-      if (!length) {
-        length = this.length - pos;
-      }
-      if (pos + length > this.length) {
-        throwEOFError();
-      }
-      if (bytes.length < offset + length) {
-        bytes.ensureCapacity(offset + length);
-        bytes.length = offset + length;
-      }
-      bytes.int8v.set(new Int8Array(this.a, pos, length), offset);
-      this.position += length;
-    };
-
-    BAp.writeBoolean = function writeBoolean(v) {
-      var len = this.position + 1;
-      this.ensureCapacity(len);
-      this.int8v[this.position++] = v ? 1 : 0;
-      if (len > this.length) {
-        this.length = len;
-      }
-    };
-
-    BAp.writeByte = function writeByte(v) {
-      var len = this.position + 1;
-      this.ensureCapacity(len);
-      this.int8v[this.position++] = v;
-      if (len > this.length) {
-        this.length = len;
-      }
-    };
-
-    BAp.writeUnsignedByte = function writeUnsignedByte(v) {
-      var len = this.position + 1;
-      this.ensureCapacity(len);
-      this.uint8v[this.position++] = v;
-      if (len > this.length) {
-        this.length = len;
-      }
-    };
-
-    BAp.writeRawBytes = function writeRawBytes(bytes) {
-      var len = this.position + bytes.length;
-      this.ensureCapacity(len);
-      this.int8v.set(bytes, this.position);
-      this.position = len;
-      if (len > this.length) {
-        this.length = len;
-      }
-    };
-
-    BAp.readRawBytes = function readRawBytes() {
-      return new Int8Array(this.a, 0, this.length);
-    };
-
-    BAp.writeBytes = function writeBytes(bytes, offset, length) {
-      if (arguments.length < 2) {
-        offset = 0;
-      }
-      if (arguments.length < 3) {
-        length = 0;
-      }
-      checkRange(offset, 0, bytes.length);
-      checkRange(offset + length, 0, bytes.length);
-      if (length === 0) {
-        length = bytes.length - offset;
-      }
-      this.writeRawBytes(new Int8Array(bytes.a, offset, length));
-    };
-
-    BAp.readDouble = function readDouble() { return get(this, 'getFloat64', 8); };
-    BAp.readFloat = function readFloat() { return get(this, 'getFloat32', 4); };
-    BAp.readInt = function readInt() { return get(this, 'getInt32', 4); };
-    BAp.readShort = function readShort() { return get(this, 'getInt16', 2); };
-    BAp.readUnsignedInt = function readUnsignedInt() { return get(this, 'getUint32', 4); };
-    BAp.readUnsignedShort = function readUnsignedShort() { return get(this, 'getUint16', 2); };
-    BAp.readObject = function readObject() { return AMFUtils.encodings[this.objectEncoding].read(this); };
-
-    BAp.writeDouble = function writeDouble(v) { set(this, 'setFloat64', 8, v); };
-    BAp.writeFloat = function writeFloat(v) { set(this, 'setFloat32', 4, v); };
-    BAp.writeInt = function writeInt(v) { set(this, 'setInt32', 4, v); };
-    BAp.writeShort = function writeShort(v) { set(this, 'setInt16', 2, v); };
-    BAp.writeUnsignedInt = function writeUnsignedInt(v) { set(this, 'setUint32', 4, v); };
-    BAp.writeUnsignedShort = function writeUnsignedShort(v) { set(this, 'setUint16', 2, v); };
-    BAp.writeObject = function readObject(v) { return AMFUtils.encodings[this.objectEncoding].write(this, v); };
-
-    BAp.readUTF = function readUTF() {
-      return this.readUTFBytes(this.readShort());
-    };
-
-    BAp.readUTFBytes = function readUTFBytes(length) {
-      var pos = this.position;
-      if (pos + length > this.length) {
-        throwEOFError();
-      }
-      this.position += length;
-      return utf8encode(new Int8Array(this.a, pos, length));
-    };
-
-    BAp.writeUTF = function writeUTF(str) {
-      var bytes = utf8decode(str);
-      this.writeShort(bytes.length);
-      this.writeRawBytes(bytes);
-    };
-
-    BAp.writeUTFBytes = function writeUTFBytes(str) {
-      var bytes = utf8decode(str);
-      this.writeRawBytes(bytes);
-    };
-
-    BAp.toString = function toString() {
-      return utf8encode(new Int8Array(this.a, 0, this.length));
-    };
-
-    BAp.compress = function (algorithm) {
-      var data = [];
-      switch (algorithm) {
-        case 'zlib':
-          data.push(0x78, 0x9C);
-        case 'deflate':
-          data = data.concat(zip_deflate(new Uint8Array(this.a, 0, this.length)));
-          break;
-        default:
-          return;
-      }
-      this.ensureCapacity(data.length);
-      this.uint8v.set(data);
-      this.length = data.length;
-      this.position = 0;
-    };
-    BAp.uncompress = function (algorithm) {
-      var data, p = 0;
-      switch (algorithm) {
-        case 'zlib':
-          var header = (this.uint8v[0] << 8) | this.uint8v[1];
-          assert((header & 0x0f00) === 0x0800, 'unknown compression method', 'inflate');
-          assert((header % 31) === 0, 'bad FCHECK', 'inflate');
-          assert(!(header & 0x20), 'FDICT bit set', 'inflate');
-          p += 2;
-        case 'deflate':
-          try {
-            data = zip_inflate(new Uint8Array(this.a, p, this.length - p));
-          } catch (e) {
-            throwCompressedDataError();
-          }
-          break;
-        default:
-          return;
-      }
-      this.ensureCapacity(data.length);
-      this.uint8v.set(data);
-      this.length = data.length;
-      this.position = 0;
-    };
 
     c.native = {
       instance: {
@@ -1361,6 +1066,45 @@ var natives = (function () {
           set: function (v) { this.objectEncoding = v; }
         },
 
+        asGetNumericProperty: function (i) {
+          if (i >= this.length) {
+            return undefined;
+          }
+          return this.uint8v[i];
+        },
+        asSetNumericProperty: function (i, v) {
+          var len = i + 1;
+          this.ensureCapacity(len);
+          this.uint8v[i] = v;
+          if (len > this.length) {
+            this.length = len;
+          }
+        },
+
+        readUTF: function readUTF() {
+          return this.readUTFBytes(this.readShort());
+        },
+        readUTFBytes: function readUTFBytes(length) {
+          var pos = this.position;
+          if (pos + length > this.length) {
+            throwEOFError();
+          }
+          this.position += length;
+          return utf8encode(new Int8Array(this.a, pos, length));
+        },
+        writeUTF: function writeUTF(str) {
+          var bytes = utf8decode(str);
+          this.writeShort(bytes.length);
+          this.writeRawBytes(bytes);
+        },
+        writeUTFBytes: function writeUTFBytes(str) {
+          var bytes = utf8decode(str);
+          this.writeRawBytes(bytes);
+        },
+        toString: function toString() {
+          return utf8encode(new Int8Array(this.a, 0, this.length));
+        },
+
         readBytes: BAp.readBytes,
         writeBytes: BAp.writeBytes,
         writeBoolean: BAp.writeBoolean,
@@ -1371,9 +1115,7 @@ var natives = (function () {
         writeFloat: BAp.writeFloat,
         writeDouble: BAp.writeDouble,
         writeMultiByte: BAp.writeMultiByte,
-        writeUTF: BAp.writeUTF,
-        writeUTFBytes: BAp.writeUTFBytes,
-        writeObject: BAp.writeObject,
+        writeObject: function writeObject(v) { return AMFUtils.encodings[this.objectEncoding].write(this, v); },
         readBoolean: BAp.readBoolean,
         readByte: BAp.readByte,
         readUnsignedByte: BAp.readUnsignedByte,
@@ -1384,18 +1126,15 @@ var natives = (function () {
         readFloat: BAp.readFloat,
         readDouble: BAp.readDouble,
         readMultiByte: BAp.readMultiByte,
-        readUTF: BAp.readUTF,
-        readUTFBytes: BAp.readUTFBytes,
-        readObject: BAp.readObject,
-        toString: BAp.toString,
+        readObject: function readObject() { return AMFUtils.encodings[this.objectEncoding].read(this); },
         clear: BAp.clear,
         _compress: BAp.compress,
         _uncompress: BAp.uncompress
       },
       static: {
         defaultObjectEncoding: {
-          get: function () { return defaultObjectEncoding; },
-          set: function (e) { defaultObjectEncoding = e; }
+          get: function () { return ByteArray.DEFAULT_OBJECT_ENCODING; },
+          set: function (e) { ByteArray.DEFAULT_OBJECT_ENCODING = e; }
         }
       }
     };
