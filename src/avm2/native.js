@@ -1032,6 +1032,21 @@ var natives = (function () {
 
     var BAp = ByteArray.prototype;
 
+    BAp.asGetNumericProperty = function (i) {
+      if (i >= this.length) {
+        return undefined;
+      }
+      return this.uint8v[i];
+    };
+    BAp.asSetNumericProperty = function (i, v) {
+      var len = i + 1;
+      this.ensureCapacity(len);
+      this.uint8v[i] = v;
+      if (len > this.length) {
+        this.length = len;
+      }
+    };
+
     c.native = {
       instance: {
         length: {
@@ -1064,21 +1079,6 @@ var natives = (function () {
         objectEncoding: {
           get: function () { return this.objectEncoding; },
           set: function (v) { this.objectEncoding = v; }
-        },
-
-        asGetNumericProperty: function (i) {
-          if (i >= this.length) {
-            return undefined;
-          }
-          return this.uint8v[i];
-        },
-        asSetNumericProperty: function (i, v) {
-          var len = i + 1;
-          this.ensureCapacity(len);
-          this.uint8v[i] = v;
-          if (len > this.length) {
-            this.length = len;
-          }
         },
 
         readUTF: function readUTF() {
