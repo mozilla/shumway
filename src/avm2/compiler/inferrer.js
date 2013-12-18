@@ -866,8 +866,6 @@ var Verifier = (function() {
             }
           } else if (obj.isDirectlyReadable() && mn instanceof Multiname) {
             ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
-          } else if (obj === Type.Object && mn instanceof Multiname) {
-            ti().propertyQName = Multiname.getPublicQualifiedName(mn.name);
           }
           if (isNumericMultiname(mn)) {
             if (obj.isIndexedReadable()) {
