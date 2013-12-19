@@ -185,6 +185,7 @@ SWF.embed = function(file, doc, container, options) {
     root._dispatchEvent("addedToStage");
 
     container.appendChild(canvas);
+    stage._domContainer = container;
 
     if (options.onStageInitialized) {
       options.onStageInitialized(stage);

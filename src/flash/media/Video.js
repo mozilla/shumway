@@ -18,6 +18,15 @@
 /*global TelemetryService, VIDEO_FEATURE */
 
 var VideoDefinition = (function () {
+  function burnHole(ctx, x, y, width, height) {
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(0, 0, width, height);
+    ctx.clip();
+    ctx.clearRect(0, 0, width, height);
+    ctx.restore();
+  }
+
   var def = {
     initialize: function initialize() {
       TelemetryService.reportTelemetry({topic: 'feature', feature: VIDEO_FEATURE});
@@ -60,41 +69,42 @@ var VideoDefinition = (function () {
       this._element = null;
       this._added = false;
     },
-    draw: function (ctx) {
+    draw: function (ctx, ratio, ct, parentCtxs) {
       if (!this._element) {
         return;
       }
-      if (!this._added) {
-        ctx.canvas.parentNode.appendChild(this._element);
+      if (!this._added && this._stage) {
+        this._stage._domContainer.appendChild(this._element);
         this._added = true;
       }
 
       var width = this._initialWidth;
       var height = this._initialHeight;
 
-      if (width > 0 && height > 0) {
-        ctx.save();
-        ctx.beginPath();
-        ctx.rect(0, 0, width, height);
-        ctx.clip();
-        ctx.clearRect(0, 0, width, height);
-        ctx.restore();
-      }
-
       var matrix = this._getConcatenatedTransform(null, true);
-      var sx = width / this._videoWidth;
-      var sy = height / this._videoHeight;
-
       var scaleFactor = (this.stage && this.stage._contentsScaleFactor) || 1;
-      var a = sx * matrix.a / scaleFactor;
-      var b = sx * matrix.b / scaleFactor;
-      var c = sy * matrix.c / scaleFactor;
-      var d = sy * matrix.d / scaleFactor;
+      var a = matrix.a / scaleFactor;
+      var b = matrix.b / scaleFactor;
+      var c = matrix.c / scaleFactor;
+      var d = matrix.d / scaleFactor;
       var e = matrix.tx / 20 / scaleFactor;
       var f = matrix.ty / 20 / scaleFactor;
 
-      var cssTransform = "transform: matrix(" + a + "," + b + "," + c + "," +
-         d + "," + e + "," + f + ");";
+      if (width > 0 && height > 0) {
+        burnHole(ctx, 0, 0, width, height);
+        parentCtxs.forEach(function (ctx) {
+          ctx.save();
+          ctx.setTransform(a, b, c, d, e, f);
+          burnHole(ctx, 0, 0, width, height);
+          ctx.restore();
+        });
+      }
+
+      var sx = width / this._videoWidth;
+      var sy = height / this._videoHeight;
+
+      var cssTransform = "transform: matrix(" + (sx * a) + "," + (sx * b) +
+        "," + (sy * c) + "," + (sy * d) + "," + e + "," + f + ");";
 
       if (this._currentCssTransform !== cssTransform) {
         this._currentCssTransform = cssTransform;
