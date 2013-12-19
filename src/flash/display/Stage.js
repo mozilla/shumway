@@ -97,14 +97,19 @@ var StageDefinition = (function () {
     _processInvalidations: function processInvalidations(refreshStage) {
       var qtree = this._qtree;
       var invalidRegions = this._invalidRegions;
-      var stack = this._children.slice();
+      var stack = [];
       var zindex = 0;
 
-      stack.reverse();
-      if (refreshStage) {
-        stack.forEach(function (node) { node._invalid = true; });
+      var children = this._children;
+      var i = children.length;
+      while (i--) {
+        var child = children[i];
+        if (refreshStage) {
+          child._invalid = true;
+        }
+        child._invisible = !child._visible;
+        stack.push(child);
       }
-      stack.forEach(function (node) { node._invisible = !node._visible; });
 
       while (stack.length) {
         var node = stack.pop();
@@ -160,10 +165,10 @@ var StageDefinition = (function () {
           }
 
           if (!hidden && (!invalidRegion ||
-                             currentRegion.xMin !== invalidRegion.xMin ||
-                             currentRegion.yMin !== invalidRegion.yMin ||
-                             currentRegion.xMax !== invalidRegion.xMax ||
-                             currentRegion.yMax !== invalidRegion.yMax))
+                          currentRegion.xMin !== invalidRegion.xMin ||
+                          currentRegion.yMin !== invalidRegion.yMin ||
+                          currentRegion.xMax !== invalidRegion.xMax ||
+                          currentRegion.yMax !== invalidRegion.yMax))
           {
             invalidRegions.insert(currentRegion);
           }
