@@ -45,6 +45,7 @@ var StageDefinition = (function () {
       this._mouseTarget = this;
       this._mouseEvents = [];
       this._cursor = 'auto';
+      this._stageVideos = [];
 
       this._concatenatedTransform.invalid = false;
     },
@@ -529,7 +530,7 @@ var StageDefinition = (function () {
           },
           stageVideos: {
             get: function stageVideos() { // (void) -> Vector
-              notImplemented("Stage.stageVideos");
+              somewhatImplemented("Stage.stageVideos");
               return this._stageVideos;
             }
           },
