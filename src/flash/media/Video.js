@@ -23,7 +23,19 @@ var VideoDefinition = (function () {
       TelemetryService.reportTelemetry({topic: 'feature', feature: VIDEO_FEATURE});
     },
     attachNetStream: function (netStream) {
+      if (this._netStream) {
+        this._netStream._videoReady.then(function (element) {
+          this._element = null;
+          if (this._added) {
+            element.remove();
+            this._added = false;
+          }
+        }.bind(this));
+      }
       this._netStream = netStream;
+      if (!netStream) {
+        return;
+      }
       netStream._videoReady.then(function (element) {
         this._element = element;
         netStream._videoMetadataReady.then(function (url) {
@@ -44,6 +56,7 @@ var VideoDefinition = (function () {
       this._initialWidth = this._videoWidth = width;
       this._initialHeight = this._videoHeight = height;
 
+      this._netStream = null;
       this._element = null;
       this._added = false;
     },

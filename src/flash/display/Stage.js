@@ -45,6 +45,7 @@ var StageDefinition = (function () {
       this._mouseTarget = this;
       this._mouseEvents = [];
       this._cursor = 'auto';
+      this._stageVideos = [];
 
       this._concatenatedTransform.invalid = false;
     },
@@ -103,15 +104,12 @@ var StageDefinition = (function () {
       if (refreshStage) {
         stack.forEach(function (node) { node._invalid = true; });
       }
+      stack.forEach(function (node) { node._invisible = !node._visible; });
 
       while (stack.length) {
         var node = stack.pop();
 
         var m = node._concatenatedTransform;
-
-        if (!node._visible) {
-          node._invisible = true;
-        }
 
         var children = node._children;
         var i = children.length;
@@ -128,7 +126,7 @@ var StageDefinition = (function () {
           if (m.invalid) {
             child._concatenatedTransform.invalid = true;
           }
-          child._invisible = node._invisible;
+          child._invisible = node._invisible || !child._visible;
           stack.push(child);
         }
 
@@ -532,7 +530,7 @@ var StageDefinition = (function () {
           },
           stageVideos: {
             get: function stageVideos() { // (void) -> Vector
-              notImplemented("Stage.stageVideos");
+              somewhatImplemented("Stage.stageVideos");
               return this._stageVideos;
             }
           },
