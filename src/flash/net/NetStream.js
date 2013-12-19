@@ -107,6 +107,12 @@ var NetStreamDefinition = (function () {
       var NetStatusEvent = flash.events.NetStatusEvent;
       var netStream = this;
 
+      // HACK Firefox/Mac does not support mp4 yet, using something playable
+      if (/\.mp4$/i.test(url) &&
+        /Intel Mac OS X.*?Firefox\/\d+/.test(window.navigator.userAgent)) {
+        url = 'http://videos-cdn.mozilla.net/brand/Mozilla_2011_Story.webm';
+      }
+
       var element = document.createElement('video');
       element.src = url;
       element.addEventListener("play", notifyPlayStart);
