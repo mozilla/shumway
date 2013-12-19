@@ -64,6 +64,11 @@ var CapabilitiesDefinition = (function () {
             return false;
           }
         },
+        isDebugger: {
+          get: function isDebugger() { // (void) -> Boolean
+            return false;
+          }
+        },
         screenResolutionX: {
           get: function screenResolutionX() { // (void) -> Number
             return window.screen.width;
