@@ -868,6 +868,10 @@ var TextFieldDefinition = (function () {
       return new flash.text.TextLineMetrics(line.x + 2, line.width,
                                             line.height,
                                             ascent, descent, leading);
+    },
+    getCharBoundaries: function getCharBoundaries(index) {
+      somewhatImplemented("TextField.getCharBoundaries");
+      return new flash.geom.Rectangle(0, 0, 0, 0);
     }
   };
 
@@ -883,6 +887,7 @@ var TextFieldDefinition = (function () {
         replaceText: def.replaceText,
         getTextFormat: def.getTextFormat,
         setTextFormat: def.setTextFormat,
+        getCharBoundaries: def.getCharBoundaries,
         autoSize: {
           get: function autoSize() { // (void) -> String
             return this._autoSize;
