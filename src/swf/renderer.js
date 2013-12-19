@@ -258,6 +258,7 @@ RenderVisitor.prototype = {
         var clipDepthInfo = this.clipDepth.shift();
         // blend mask/maskee canvases and draw result into original
         this.clipEnd(clipDepthInfo);
+        context.parentCtxs.shift();
         // restore original context
         ctx = this.ctx = clipDepthInfo.ctx;
       }
@@ -281,6 +282,7 @@ RenderVisitor.prototype = {
         } else {
           this.clipDepth.unshift(clipDepthInfo);
         }
+        context.parentCtxs.unshift(ctx);
         // use mask canvas
         ctx = this.ctx = clipDepthInfo.mask.ctx;
       }
@@ -313,6 +315,7 @@ RenderVisitor.prototype = {
       var clipInfo = this.clipStart(child);
       var mask = clipInfo.mask;
       var maskee = clipInfo.maskee;
+      context.parentCtxs.push(ctx);
 
       var savedClipDepth = this.clipDepth;
       this.clipDepth = null;
@@ -329,6 +332,7 @@ RenderVisitor.prototype = {
         this.ctx = ctx;
       }
 
+      context.parentCtxs.pop();
       this.clipEnd(clipInfo);
     } else {
       renderDisplayObject(child, ctx, context);
@@ -496,6 +500,7 @@ function RenderingContext(refreshStage, invalidPath) {
   this.invalidPath = invalidPath;
   this.isClippingMask = false;
   this.colorTransform = new RenderingColorTransform();
+  this.parentCtxs = [];
 }
 
 function renderDisplayObject(child, ctx, context) {
@@ -542,7 +547,7 @@ function renderDisplayObject(child, ctx, context) {
     }
 
     if (child.draw) {
-      child.draw(ctx, child.ratio, context.colorTransform);
+      child.draw(ctx, child.ratio, context.colorTransform, context.parentCtxs);
     }
 
   } else {
