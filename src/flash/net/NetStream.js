@@ -33,24 +33,41 @@ var NetStreamDefinition = (function () {
         simulated = true;
         break;
       case 202: // call, e.g. ('pause', null, paused, time)
-        simulated = true;
+        switch (args[1]) {
+        case 'pause':
+          simulated = true;
+          if (videoElement) {
+            if (args[3] && !videoElement.paused) {
+              videoElement.pause();
+            }
+            if (!args[3] && videoElement.paused) {
+              videoElement.play();
+            }
+            videoElement.currentTime = args[4] / 1000;
+          }
+          break;
+        }
         break;
       case 300: // time
         result = videoElement ? videoElement.currentTime : 0;
         simulated = true;
-        return 0;
+        break;
       case 302: // get bufferTime
+        result = 0.1;
+        simulated = true;
+        break;
+      case 303: // get bufferLength
         result = videoElement.duration;
         simulated = true;
-        return 0;
+        break;
       case 305: // get bytesLoaded
         result = 1000000;
         simulated = true;
-        return 0;
+        break;
       case 306: // get bytesTotal
         result = 1000005;
         simulated = true;
-        return 0;
+        break;
       }
       // (index:uint) -> any
       (simulated ? somewhatImplemented : notImplemented)(
