@@ -1176,6 +1176,8 @@ var Verifier = (function() {
             push(Type.Any);
             break;
           case 0x59: // OP_getdescendants
+            popMultiname();
+            pop();
             push(Type.XMLList);
             break;
           case 0x5A: // OP_newcatch
