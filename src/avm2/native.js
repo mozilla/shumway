@@ -1027,10 +1027,11 @@ var natives = (function () {
    * ByteArray.as
    */
   function ByteArrayClass(runtime, scope, instanceConstructor, baseClass) {
-    var c = new Class("ByteArray", ByteArray, C(ByteArray));
-    c.extendBuiltin(baseClass);
+    var BA = function () { ByteArray.call(this); };
+    var BAp = BA.prototype = Object.create(ByteArray.prototype);
 
-    var BAp = ByteArray.prototype;
+    var c = new Class("ByteArray", BA, C(BA));
+    c.extendBuiltin(baseClass);
 
     BAp.asGetNumericProperty = function (i) {
       if (i >= this.length) {
@@ -1045,6 +1046,30 @@ var natives = (function () {
       if (len > this.length) {
         this.length = len;
       }
+    };
+
+    BAp.readUTF = function readUTF() {
+      return this.readUTFBytes(this.readShort());
+    };
+    BAp.readUTFBytes = function readUTFBytes(length) {
+      var pos = this.position;
+      if (pos + length > this.length) {
+        throwEOFError();
+      }
+      this.position += length;
+      return utf8encode(new Int8Array(this.a, pos, length));
+    };
+    BAp.writeUTF = function writeUTF(str) {
+      var bytes = utf8decode(str);
+      this.writeShort(bytes.length);
+      this.writeRawBytes(bytes);
+    };
+    BAp.writeUTFBytes = function writeUTFBytes(str) {
+      var bytes = utf8decode(str);
+      this.writeRawBytes(bytes);
+    };
+    BAp.toString = function toString() {
+      return utf8encode(new Int8Array(this.a, 0, this.length));
     };
 
     c.native = {
@@ -1081,31 +1106,6 @@ var natives = (function () {
           set: function (v) { this.objectEncoding = v; }
         },
 
-        readUTF: function readUTF() {
-          return this.readUTFBytes(this.readShort());
-        },
-        readUTFBytes: function readUTFBytes(length) {
-          var pos = this.position;
-          if (pos + length > this.length) {
-            throwEOFError();
-          }
-          this.position += length;
-          return utf8encode(new Int8Array(this.a, pos, length));
-        },
-        writeUTF: function writeUTF(str) {
-          var bytes = utf8decode(str);
-          this.writeShort(bytes.length);
-          this.writeRawBytes(bytes);
-        },
-        writeUTFBytes: function writeUTFBytes(str) {
-          var bytes = utf8decode(str);
-          this.writeRawBytes(bytes);
-        },
-        toString: function toString() {
-          return utf8encode(new Int8Array(this.a, 0, this.length));
-        },
-
-        readBytes: BAp.readBytes,
         writeBytes: BAp.writeBytes,
         writeBoolean: BAp.writeBoolean,
         writeByte: BAp.writeByte,
@@ -1116,8 +1116,11 @@ var natives = (function () {
         writeDouble: BAp.writeDouble,
         writeMultiByte: BAp.writeMultiByte,
         writeObject: function writeObject(v) { return AMFUtils.encodings[this.objectEncoding].write(this, v); },
+        writeUTF: BAp.writeUTF,
+        writeUTFBytes: BAp.writeUTFBytes,
         readBoolean: BAp.readBoolean,
         readByte: BAp.readByte,
+        readBytes: BAp.readBytes,
         readUnsignedByte: BAp.readUnsignedByte,
         readShort: BAp.readShort,
         readUnsignedShort: BAp.readUnsignedShort,
@@ -1127,6 +1130,9 @@ var natives = (function () {
         readDouble: BAp.readDouble,
         readMultiByte: BAp.readMultiByte,
         readObject: function readObject() { return AMFUtils.encodings[this.objectEncoding].read(this); },
+        readUTF: BAp.readUTF,
+        readUTFBytes: BAp.readUTFBytes,
+        toString: BAp.toString,
         clear: BAp.clear,
         _compress: BAp.compress,
         _uncompress: BAp.uncompress
