@@ -815,7 +815,12 @@ var LoaderDefinition = (function () {
       var loader = this;
       loader._worker = worker;
       worker.onmessage = function (evt) {
-        loader._commitData(evt.data);
+        if (evt.data.type === 'exception') {
+          avm2.exceptions.push({source: 'parser', message: evt.data.message,
+                                stack: evt.data.stack});
+        } else {
+          loader._commitData(evt.data);
+        }
       };
       if (flash.net.URLRequest.class.isInstanceOf(request)) {
         var session = FileLoadingService.createSession();

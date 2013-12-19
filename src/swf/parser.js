@@ -21,7 +21,7 @@
          readHeader */
 /*jshint -W069 */
 
-function readTags(context, stream, swfVersion, final, onprogress) {
+function readTags(context, stream, swfVersion, final, onprogress, onexception) {
   var tags = context.tags;
   var bytes = stream.bytes;
   var lastSuccessfulPosition;
@@ -100,6 +100,7 @@ function readTags(context, stream, swfVersion, final, onprogress) {
     }
   } catch (e) {
     if (e !== StreamNoDataError) {
+      onexception && onexception(e);
       throw e;
     }
     // recovering the stream state
@@ -271,7 +272,8 @@ BodyParser.prototype = {
     }
 
     var readStartTime = performance.now();
-    readTags(swf, stream, swfVersion, finalBlock, options.onprogress);
+    readTags(swf, stream, swfVersion, finalBlock, options.onprogress,
+             options.onexception);
     swf.parseTime += performance.now() - readStartTime;
 
     var read = stream.pos;
