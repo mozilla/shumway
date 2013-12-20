@@ -32,6 +32,9 @@ var VideoDefinition = (function () {
       TelemetryService.reportTelemetry({topic: 'feature', feature: VIDEO_FEATURE});
     },
     attachNetStream: function (netStream) {
+      if (this._netStream === netStream) {
+        return;
+      }
       if (this._netStream) {
         this._netStream._videoReady.then(function (element) {
           this._element = null;
