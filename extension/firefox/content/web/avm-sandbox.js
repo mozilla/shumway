@@ -142,15 +142,7 @@ function showInInspector() {
 }
 
 function reportIssue() {
-  var base = "http://shumway-issues.tillschneidereit.net/input?";
-  var windowUrl = FirefoxCom.requestSync('getWindowUrl', null);
-  var versions = JSON.parse(FirefoxCom.requestSync('getVersionInfo', null));
-  var params = 'url=' + encodeURIComponent(windowUrl);
-  params += '&swf=' + encodeURIComponent(movieUrl);
-  params += '&ffbuild=' + encodeURIComponent(versions.geckoMstone + ' (' +
-                                             versions.geckoBuildID + ')');
-  params += '&shubuild=' + encodeURIComponent(versions.shumwayVersion);
-  window.open(base + params);
+  FirefoxCom.requestSync('reportIssue', JSON.stringify(avm2.exceptions));
 }
 
 function copyProfile() {
