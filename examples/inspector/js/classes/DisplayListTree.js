@@ -52,7 +52,7 @@ var DisplayListTree = (function() {
       var pos = {x: displayObject.x, y: displayObject.y};
       table += '<tr>' + makePropCell('x', printCoord(pos.x)) +
                makePropCell('y', printCoord(pos.y)) + '</tr>';
-      displayObject._applyCurrentTransform(displayObject._stage, pos);
+      displayObject._applyCurrentTransform(pos);
       table += '<tr>' + makePropCell('left', printCoord(pos.x)) +
                makePropCell('top', printCoord(pos.y)) + '</tr>';
       table += '<tr>' + makePropCell('width', printCoord(displayObject.width)) +

@@ -45,6 +45,7 @@ var StageDefinition = (function () {
       this._mouseTarget = this;
       this._mouseEvents = [];
       this._cursor = 'auto';
+      this._stageVideos = [];
 
       this._concatenatedTransform.invalid = false;
     },
@@ -96,22 +97,24 @@ var StageDefinition = (function () {
     _processInvalidations: function processInvalidations(refreshStage) {
       var qtree = this._qtree;
       var invalidRegions = this._invalidRegions;
-      var stack = this._children.slice();
+      var stack = [];
       var zindex = 0;
 
-      stack.reverse();
-      if (refreshStage) {
-        stack.forEach(function (node) { node._invalid = true; });
+      var children = this._children;
+      var i = children.length;
+      while (i--) {
+        var child = children[i];
+        if (refreshStage) {
+          child._invalid = true;
+        }
+        child._invisible = !child._visible;
+        stack.push(child);
       }
 
       while (stack.length) {
         var node = stack.pop();
 
         var m = node._concatenatedTransform;
-
-        if (!node._visible) {
-          node._invisible = true;
-        }
 
         var children = node._children;
         var i = children.length;
@@ -128,7 +131,7 @@ var StageDefinition = (function () {
           if (m.invalid) {
             child._concatenatedTransform.invalid = true;
           }
-          child._invisible = node._invisible;
+          child._invisible = node._invisible || !child._visible;
           stack.push(child);
         }
 
@@ -162,10 +165,10 @@ var StageDefinition = (function () {
           }
 
           if (!hidden && (!invalidRegion ||
-                             currentRegion.xMin !== invalidRegion.xMin ||
-                             currentRegion.yMin !== invalidRegion.yMin ||
-                             currentRegion.xMax !== invalidRegion.xMax ||
-                             currentRegion.yMax !== invalidRegion.yMax))
+                          currentRegion.xMin !== invalidRegion.xMin ||
+                          currentRegion.yMin !== invalidRegion.yMin ||
+                          currentRegion.xMax !== invalidRegion.xMax ||
+                          currentRegion.yMax !== invalidRegion.yMax))
           {
             invalidRegions.insert(currentRegion);
           }
@@ -532,7 +535,7 @@ var StageDefinition = (function () {
           },
           stageVideos: {
             get: function stageVideos() { // (void) -> Vector
-              notImplemented("Stage.stageVideos");
+              somewhatImplemented("Stage.stageVideos");
               return this._stageVideos;
             }
           },
