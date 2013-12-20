@@ -113,6 +113,13 @@ var NetStreamDefinition = (function () {
           videoWidth: element.videoWidth,
           videoHeight: element.videoHeight
         });
+        if (netStream._client) {
+          var data = {};
+          data.asSetPublicProperty('width', element.videoWidth);
+          data.asSetPublicProperty('height', element.videoHeight);
+          data.asSetPublicProperty('duration', element.duration);
+          netStream._client.asCallPublicProperty('onMetaData', [data]);
+        }
       }
 
       var NetStatusEvent = flash.events.NetStatusEvent;
