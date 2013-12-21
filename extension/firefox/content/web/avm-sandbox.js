@@ -108,10 +108,15 @@ function runViewer() {
   parseSwf(movieUrl, movieParams, objectParams);
 
   if (isOverlay) {
+    document.getElementById('overlay').className = 'enabled';
     var fallbackDiv = document.getElementById('fallback');
-    fallbackDiv.className = 'enabled';
     fallbackDiv.addEventListener('click', function(e) {
       fallback();
+      e.preventDefault();
+    });
+    var reportDiv = document.getElementById('report');
+    reportDiv.addEventListener('click', function(e) {
+      reportIssue();
       e.preventDefault();
     });
     var fallbackMenu = document.getElementById('fallbackMenu');
