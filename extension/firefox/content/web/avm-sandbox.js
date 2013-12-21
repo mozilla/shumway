@@ -142,7 +142,23 @@ function showInInspector() {
 }
 
 function reportIssue() {
-  FirefoxCom.requestSync('reportIssue', JSON.stringify(avm2.exceptions));
+  var duplicatesMap = Object.create(null);
+  var prunedExceptions = [];
+  avm2.exceptions.forEach(function(e) {
+    var ident = e.source + e.message + e.stack;
+    var entry = duplicatesMap[ident];
+    if (!entry) {
+      entry = duplicatesMap[ident] = {
+        source: e.source,
+        message: e.message,
+        stack: e.stack,
+        count: 0
+      };
+      prunedExceptions.push(entry);
+    }
+    entry.count++;
+  });
+  FirefoxCom.requestSync('reportIssue', JSON.stringify(prunedExceptions));
 }
 
 function copyProfile() {
