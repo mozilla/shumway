@@ -453,22 +453,31 @@ var LoaderDefinition = (function () {
       var img = new Image();
       imageInfo.props.img = img;
       img.onload = function() {
+        var Bitmap = avm2.systemDomain.getClass("flash.display.Bitmap");
+        var BitmapData = avm2.systemDomain.getClass("flash.display.BitmapData");
+
         var props = imageInfo.props;
         props.parent = loader._parent;
         props.stage = loader._stage;
         props.skipCopyToCanvas = true;
 
-        var Bitmap = avm2.systemDomain.getClass("flash.display.Bitmap");
-        var BitmapData = avm2.systemDomain.getClass("flash.display.BitmapData");
         var bitmapData = BitmapData.createAsSymbol(props);
         BitmapData.instanceConstructor.call(bitmapData, 0, 0, true, 0xffffffff);
+
         var image = Bitmap.createAsSymbol(bitmapData);
-        loader._children.push(image);
         Bitmap.instanceConstructor.call(image, bitmapData);
         image._parent = loader;
+
+        loader._children.push(image);
+        loader._invalidateBounds();
         loader._content = image;
+
         imgPromiseResolve(imageInfo);
-        loader._contentLoaderInfo._dispatchEvent("init");
+
+        var loaderInfo = loader._contentLoaderInfo;
+        loaderInfo._width = image.width;
+        loaderInfo._height = image.height;
+        loaderInfo._dispatchEvent("init");
       };
       img.src = URL.createObjectURL(imageInfo.data);
       delete imageInfo.data;
