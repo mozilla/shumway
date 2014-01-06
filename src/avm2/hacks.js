@@ -44,3 +44,12 @@ VM_METHOD_OVERRIDES["com.antkarlov.Preloader::com.antkarlov:Preloader.isUrl"] = 
 VM_METHOD_OVERRIDES["static com.demonsters.debugger.MonsterDebugger::initialize"] = function () {
   // Socket is not supported anyway
 };
+
+VM_METHOD_OVERRIDES["com.spilgames.api.core.tracking.TrackConfig::getTrackers"] = function () {
+  return []; // ServicesConnection's SETTracker fails
+};
+
+VM_METHOD_OVERRIDES["com.spilgames.api.components.TextFields.AutoFitTextFieldEx::com.spilgames.api.components.TextFields:AutoFitTextFieldEx.updateProperties"] =
+VM_METHOD_OVERRIDES["com.spilgames.api.components.TextFields.AutoFitTextFieldEx::com.spilgames.api.components.TextFields:AutoFitTextFieldEx.updateTextSize"] = function () {
+  // flash.text.engine stuff
+};
