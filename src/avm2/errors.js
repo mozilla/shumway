@@ -187,7 +187,7 @@ var Errors = {
 //  ParamTypeError                                            : { code: 2005, message: "Parameter %1 is of the incorrect type. Should be type %2."},
 //  HasStyleSheetError                                        : { code: 2009, message: "This method cannot be used on a text field with a style sheet."},
 //  SocketLocalFileSecurityError                              : { code: 2010, message: "Local-with-filesystem SWF files are not permitted to use sockets."},
-//  SocketConnectError                                        : { code: 2011, message: "Socket connection failed to %1:%2."},
+  SocketConnectError                                        : { code: 2011, message: "Socket connection failed to %1:%2."},
 //  AuthoringOnlyFeatureError                                 : { code: 2013, message: "Feature can only be used in Flash Authoring."},
 //  FeatureNotAvailableError                                  : { code: 2014, message: "Feature is not available at this time."},
 //  InvalidBitmapDataError                                    : { code: 2015, message: "Invalid BitmapData."},

@@ -15,12 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ /*global throwError, Errors */
 var SocketDefinition = (function () {
   return {
     // (host:String = null, port:int = 0)
     __class__: "flash.net.Socket",
     initialize: function () {
+      this._connected = false;
     },
     __glue__: {
       native: {
@@ -28,13 +29,16 @@ var SocketDefinition = (function () {
         },
         instance: {
           internalGetSecurityErrorMessage: function internalGetSecurityErrorMessage(host, port) { // (host:String, port:int) -> String
-            notImplemented("Socket.internalGetSecurityErrorMessage");
+            somewhatImplemented("Socket.internalGetSecurityErrorMessage");
+            return 'SecurityErrorEvent';
           },
           internalConnect: function internalConnect(host, port) { // (host:String, port:int) -> void
-            notImplemented("Socket.internalConnect");
+            somewhatImplemented("Socket.internalConnect");
+            throwError('SecurityError', Errors.SocketConnectError, host, port);
           },
           didFailureOccur: function didFailureOccur() { // (void) -> Boolean
-            notImplemented("Socket.didFailureOccur");
+            somewhatImplemented("Socket.didFailureOccur");
+            return true;
           },
           readBytes: function readBytes(bytes, offset, length) { // (bytes:ByteArray, offset:uint = 0, length:uint = 0) -> void
             notImplemented("Socket.readBytes");
@@ -128,7 +132,7 @@ var SocketDefinition = (function () {
           },
           connected: {
             get: function connected() { // (void) -> Boolean
-              notImplemented("Socket.connected");
+              somewhatImplemented("Socket.connected");
               return this._connected;
             }
           },

@@ -40,3 +40,7 @@ VM_METHOD_OVERRIDES["com.midasplayer.engine.comm.DebugGameComm::getGameData"] =
 VM_METHOD_OVERRIDES["com.antkarlov.Preloader::com.antkarlov:Preloader.isUrl"] = function () {
   return true;
 };
+
+VM_METHOD_OVERRIDES["static com.demonsters.debugger.MonsterDebugger::initialize"] = function () {
+  // Socket is not supported anyway
+};
