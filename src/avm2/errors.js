@@ -234,7 +234,7 @@ var Errors = {
 //  IMEError                                                  : { code: 2063, message: "Error attempting to execute IME command."},
 //  FocusNotSetError                                          : { code: 2065, message: "The focus cannot be set for this target."},
 //  DelayRangeError                                           : { code: 2066, message: "The Timer delay specified is out of range."},
-//  ExternalInterfaceNotAvailableError                        : { code: 2067, message: "The ExternalInterface is not available in this container. ExternalInterface requires Internet Explorer ActiveX, Firefox, Mozilla 1.7.5 and greater, or other browsers that support NPRuntime."},
+  ExternalInterfaceNotAvailableError                        : { code: 2067, message: "The ExternalInterface is not available in this container. ExternalInterface requires Internet Explorer ActiveX, Firefox, Mozilla 1.7.5 and greater, or other browsers that support NPRuntime."},
 //  InvalidSoundError                                         : { code: 2068, message: "Invalid sound."},
 //  InvalidLoaderMethodError                                  : { code: 2069, message: "The Loader class does not implement this method."},
 //  StageOwnerSecurityError                                   : { code: 2070, message: "Security sandbox violation: caller %1 cannot access Stage owned by %2."},
@@ -629,6 +629,7 @@ function getErrorMessage(index) {
       return "Error #" + index + ": " + Errors[k].message;
     }
   }
+  return "Error #" + index + ": (unknown)";
 }
 
 function formatErrorMessage(error) {
