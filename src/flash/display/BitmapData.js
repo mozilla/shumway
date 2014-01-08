@@ -194,10 +194,23 @@ var BitmapDataDefinition = (function () {
       var sy = sourceRect.y;
       var dx = destPoint.x;
       var dy = destPoint.y;
+
+      // avoiding out-of-bounds exceptions
+      var offsetx = -Math.min(0, sx, dx);
+      var offsety = -Math.min(0, sy, dy);
+      var correctionw = Math.min(0, this._ctx.canvas.width - dx - w,
+        sourceBitmapData._drawable.width - sx - w) - offsetx;
+      var correctionh = Math.min(0, this._ctx.canvas.height - dy - h,
+        sourceBitmapData._drawable.height - sy - h) - offsety;
+
       if (!mergeAlpha) {
         this._ctx.clearRect(dx, dy, w, h);
       }
-      this._ctx.drawImage(sourceBitmapData._drawable, sx, sy, w, h, dx, dy, w, h);
+      if (w + correctionw > 0 && h + correctionh > 0) {
+        this._ctx.drawImage(sourceBitmapData._drawable,
+          sx + offsetx, sy + offsety, w + correctionw, h + correctionh,
+          dx + offsetx, dy + offsety, w + correctionw, h + correctionh);
+      }
       this._invalidate();
     },
     /**
