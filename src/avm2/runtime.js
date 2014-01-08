@@ -472,7 +472,11 @@ function asSetSuper(scope, namespaces, name, flags, value) {
   }
   var baseClass = scope.object.baseClass;
   var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
-  baseClass.traitsPrototype[VM_OPEN_SET_METHOD_PREFIX + resolved].call(this, value);
+  if (this[VM_SLOTS].byQN[resolved]) {
+    this.asSetProperty(namespaces, name, flags, value);
+  } else {
+    baseClass.traitsPrototype[VM_OPEN_SET_METHOD_PREFIX + resolved].call(this, value);
+  }
   traceCallExecution.value > 0 && callWriter.leave("");
 }
 
@@ -483,7 +487,12 @@ function asGetSuper(scope, namespaces, name, flags) {
   }
   var baseClass = scope.object.baseClass;
   var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
-  var result = baseClass.traitsPrototype[VM_OPEN_GET_METHOD_PREFIX + resolved].call(this);
+  var result;
+  if (this[VM_SLOTS].byQN[resolved]) {
+    result = this.asGetProperty(namespaces, name, flags);
+  } else {
+    result = baseClass.traitsPrototype[VM_OPEN_GET_METHOD_PREFIX + resolved].call(this);
+  }
   traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
   return result;
 }
