@@ -187,7 +187,7 @@ var Errors = {
 //  ParamTypeError                                            : { code: 2005, message: "Parameter %1 is of the incorrect type. Should be type %2."},
 //  HasStyleSheetError                                        : { code: 2009, message: "This method cannot be used on a text field with a style sheet."},
 //  SocketLocalFileSecurityError                              : { code: 2010, message: "Local-with-filesystem SWF files are not permitted to use sockets."},
-//  SocketConnectError                                        : { code: 2011, message: "Socket connection failed to %1:%2."},
+  SocketConnectError                                        : { code: 2011, message: "Socket connection failed to %1:%2."},
 //  AuthoringOnlyFeatureError                                 : { code: 2013, message: "Feature can only be used in Flash Authoring."},
 //  FeatureNotAvailableError                                  : { code: 2014, message: "Feature is not available at this time."},
 //  InvalidBitmapDataError                                    : { code: 2015, message: "Invalid BitmapData."},
@@ -234,7 +234,7 @@ var Errors = {
 //  IMEError                                                  : { code: 2063, message: "Error attempting to execute IME command."},
 //  FocusNotSetError                                          : { code: 2065, message: "The focus cannot be set for this target."},
 //  DelayRangeError                                           : { code: 2066, message: "The Timer delay specified is out of range."},
-//  ExternalInterfaceNotAvailableError                        : { code: 2067, message: "The ExternalInterface is not available in this container. ExternalInterface requires Internet Explorer ActiveX, Firefox, Mozilla 1.7.5 and greater, or other browsers that support NPRuntime."},
+  ExternalInterfaceNotAvailableError                        : { code: 2067, message: "The ExternalInterface is not available in this container. ExternalInterface requires Internet Explorer ActiveX, Firefox, Mozilla 1.7.5 and greater, or other browsers that support NPRuntime."},
 //  InvalidSoundError                                         : { code: 2068, message: "Invalid sound."},
 //  InvalidLoaderMethodError                                  : { code: 2069, message: "The Loader class does not implement this method."},
 //  StageOwnerSecurityError                                   : { code: 2070, message: "Security sandbox violation: caller %1 cannot access Stage owned by %2."},
@@ -629,6 +629,7 @@ function getErrorMessage(index) {
       return "Error #" + index + ": " + Errors[k].message;
     }
   }
+  return "Error #" + index + ": (unknown)";
 }
 
 function formatErrorMessage(error) {

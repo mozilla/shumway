@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global FirefoxCom, TelemetryService, CLIPBOARD_FEATURE */
+/*global FirefoxCom, TelemetryService, CLIPBOARD_FEATURE,
+         renderingTerminated: true */
 
 var SystemDefinition = (function () {
   return {
@@ -31,16 +32,17 @@ var SystemDefinition = (function () {
             TelemetryService.reportTelemetry({topic: 'feature', feature: CLIPBOARD_FEATURE});
           },
           pause: function pause() { // (void) -> void
-            notImplemented("System.pause");
+            somewhatImplemented("System.pause");
           },
           resume: function resume() { // (void) -> void
-            notImplemented("System.resume");
+            somewhatImplemented("System.resume");
           },
           exit: function exit(code) { // (code:uint) -> void
-            notImplemented("System.exit");
+            somewhatImplemented("System.exit");
+            renderingTerminated = true;
           },
           gc: function gc() { // (void) -> void
-            notImplemented("System.gc");
+            somewhatImplemented("System.gc");
           },
           pauseForGCIfCollectionImminent: function pauseForGCIfCollectionImminent(imminence) { // (imminence:Number = 0.75) -> void
             notImplemented("System.pauseForGCIfCollectionImminent");

@@ -609,6 +609,9 @@ var MovieClipDefinition = (function () {
       for (var i = 0, n = arguments.length; i < n; i += 2) {
         var frameNum = arguments[i] + 1;
         var fn = arguments[i + 1];
+        if (!fn) {
+          continue; // TODO shall we do something different
+        }
         var scripts = frameScripts[frameNum];
         if (scripts) {
           scripts.push(fn);

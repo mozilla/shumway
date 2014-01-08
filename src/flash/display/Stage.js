@@ -256,6 +256,7 @@ var StageDefinition = (function () {
       for (var i = 0; i < candidates.length; i++) {
         var item = candidates[i];
         var displayObject = item.obj;
+        var isUnderMouse = false;
         if (flash.display.SimpleButton.class.isInstanceOf(displayObject)) {
           if (!displayObject._enabled) {
             continue;
@@ -264,12 +265,28 @@ var StageDefinition = (function () {
           var hitArea = displayObject._hitTestState;
 
           hitArea._parent = displayObject;
-          if (hitArea._hitTest(true, mouseX, mouseY, true)) {
-            objectsUnderMouse.push(displayObject);
-          }
+          isUnderMouse = hitArea._hitTest(true, mouseX, mouseY, true);
           hitArea._parent = null;
-        } else if (displayObject._hitTest(true, mouseX, mouseY, true)) {
-          objectsUnderMouse.push(displayObject);
+        } else {
+          isUnderMouse = displayObject._hitTest(true, mouseX, mouseY, true);
+        }
+        if (isUnderMouse) {
+          // skipping mouse disabled objects
+          var currentNode = displayObject;
+          var lastEnabled = null;
+          if (!flash.display.InteractiveObject.class.isInstanceOf(currentNode)) {
+            lastEnabled = currentNode;
+            currentNode = currentNode._parent;
+          }
+          do {
+            if (!currentNode._mouseEnabled) {
+              lastEnabled = null;
+            } else if (lastEnabled === null) {
+              lastEnabled = currentNode;
+            }
+            currentNode = currentNode._parent;
+          } while (currentNode);
+          objectsUnderMouse.push(lastEnabled);
         }
       }
 
@@ -279,8 +296,7 @@ var StageDefinition = (function () {
         objectsUnderMouse.sort(sortByZindex);
 
         var i = objectsUnderMouse.length;
-
-        findTarget: while (i--) {
+        while (i--) {
           target = null;
 
           var currentNode = objectsUnderMouse[i];
@@ -298,10 +314,6 @@ var StageDefinition = (function () {
 
           do {
             if (flash.display.InteractiveObject.class.isInstanceOf(currentNode)) {
-              if (!currentNode._mouseEnabled) {
-                continue findTarget;
-              }
-
               if ((!target || !currentNode._mouseChildren) && !currentNode._hitArea) {
                 target = currentNode;
               }
@@ -312,7 +324,7 @@ var StageDefinition = (function () {
           if (target !== objectsUnderMouse[i] &&
               flash.display.SimpleButton.class.isInstanceOf(target))
           {
-            continue findTarget;
+            continue;
           }
 
           break;
