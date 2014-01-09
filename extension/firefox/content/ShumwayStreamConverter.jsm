@@ -366,7 +366,7 @@ ChromeActions.prototype = {
     });
   },
   fallback: function(automatic) {
-    automatic = !!automatic; // cast to boolean
+    automatic = !!automatic;
     fallbackToNativePlugin(this.window, !automatic, automatic);
   },
   setClipboard: function (data) {
