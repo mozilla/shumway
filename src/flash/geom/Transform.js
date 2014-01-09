@@ -67,7 +67,7 @@ var TransformDefinition = (function () {
       if (this._target._current3DTransform) {
         return null;
       }
-      var m = this._target._getConcatenatedTransform();
+      var m = this._target._getConcatenatedTransform(null, false);
       return new flash.geom.Matrix(m.a, m.b, m.c, m.d, m.tx/20, m.ty/20);
     },
     get matrix() {
