@@ -462,7 +462,7 @@ ChromeActions.prototype = {
     }
   },
   reportIssue: function(exceptions) {
-    var base = "http://shumway-issues.tillschneidereit.net/input?";
+    var base = "http://shumway-issue-reporter.paas.allizom.org/input?";
     var windowUrl = this.window.parent.wrappedJSObject.location + '';
     var params = 'url=' + encodeURIComponent(windowUrl);
     params += '&swf=' + encodeURIComponent(this.url);
