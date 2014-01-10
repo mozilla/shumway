@@ -90,49 +90,55 @@ var EventDispatcherDefinition = (function () {
 
       var needsInit = true;
 
-      for (var i = 0; i < queue.length; i++) {
-        var item = queue[i];
+      try {
+        for (var i = 0; i < queue.length; i++) {
+          var item = queue[i];
 
-        var methodInfo = item.handleEvent.methodInfo;
-        if (methodInfo) {
-          if (methodInfo.parameters.length) {
-            if (!methodInfo.parameters[0].isUsed) {
-              item.handleEvent();
-              continue;
-            }
-          }
-        }
-
-        if (needsInit) {
-          if (typeof event === 'string') {
-            if (eventClass) {
-              event = new eventClass(event);
-            } else {
-              if (event in mouseEvents) {
-                event = new flash.events.MouseEvent(event, mouseEvents[event]);
-                if (target._stage) {
-                  event._localX = target.mouseX;
-                  event._localY = target.mouseY;
-                }
-              } else {
-                event = new flash.events.Event(event);
+          var methodInfo = item.handleEvent.methodInfo;
+          if (methodInfo) {
+            if (methodInfo.parameters.length) {
+              if (!methodInfo.parameters[0].isUsed) {
+                item.handleEvent();
+                continue;
               }
             }
-          } else if (event._target) {
-            event = event.clone();
           }
 
-          event._target = target;
-          event._currentTarget = currentTarget || target;
-          event._eventPhase = eventPhase || 2;
+          if (needsInit) {
+            if (typeof event === 'string') {
+              if (eventClass) {
+                event = new eventClass(event);
+              } else {
+                if (event in mouseEvents) {
+                  event = new flash.events.MouseEvent(event, mouseEvents[event]);
+                  if (target._stage) {
+                    event._localX = target.mouseX;
+                    event._localY = target.mouseY;
+                  }
+                } else {
+                  event = new flash.events.Event(event);
+                }
+              }
+            } else if (event._target) {
+              event = event.clone();
+            }
 
-          needsInit = false;
-        }
+            event._target = target;
+            event._currentTarget = currentTarget || target;
+            event._eventPhase = eventPhase || 2;
 
-        item.handleEvent(event);
-        if (event._stopImmediatePropagation) {
-          break;
+            needsInit = false;
+          }
+
+          item.handleEvent(event);
+          if (event._stopImmediatePropagation) {
+            break;
+          }
         }
+      } catch (e) {
+        avm2.exceptions.push({source: 'avm2', message: e.message,
+                              stack: e.stack});
+        throw e;
       }
     }
 

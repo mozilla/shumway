@@ -1450,6 +1450,8 @@ function interpretActions(actionsData, scopeContainer,
           throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
         }
         console.error('AVM1 error: ' + e);
+        avm2.exceptions.push({source: 'avm1', message: e.message,
+                              stack: e.stack});
         recoveringFromError = true;
       }
     }

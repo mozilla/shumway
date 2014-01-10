@@ -31,6 +31,7 @@ var AVM2 = (function () {
      * originated from within the VM.
      */
     this.exception = { value: undefined };
+    this.exceptions = [];
   }
 
   // We sometimes need to know where we came from, such as in

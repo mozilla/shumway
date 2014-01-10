@@ -353,11 +353,17 @@ var ApplicationDomain = (function () {
       if ($DEBUG) {
         Timer.start("broadcast: " + type);
       }
-      this.onMessage.notify1(type, {
-        data: message,
-        origin: origin,
-        source: this
-      });
+      try {
+        this.onMessage.notify1(type, {
+          data: message,
+          origin: origin,
+          source: this
+        });
+      } catch (e) {
+        avm2.exceptions.push({source: type, message: e.message,
+                              stack: e.stack});
+        throw e;
+      }
       if ($DEBUG) {
         Timer.stop();
       }
