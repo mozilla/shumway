@@ -506,14 +506,7 @@ function RenderingContext(refreshStage, invalidPath) {
 function renderDisplayObject(child, ctx, context) {
   var m = child._currentTransform;
   if (m) {
-    if (m.a * m.d == m.b * m.c) {
-      // Workaround for bug 844184 -- the object is invisible
-      ctx.closePath();
-      ctx.rect(0, 0, 0, 0);
-      ctx.clip();
-    } else {
-      ctx.transform(m.a, m.b, m.c, m.d, m.tx/20, m.ty/20);
-    }
+    ctx.transform(m.a, m.b, m.c, m.d, m.tx/20, m.ty/20);
   }
 
   if (!renderAsWireframe.value) {
