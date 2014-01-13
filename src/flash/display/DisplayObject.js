@@ -823,6 +823,10 @@ var DisplayObjectDefinition = (function () {
           for (var i = 0; i < numChildren; i++) {
             var child = children[i];
 
+            if (!flash.display.DisplayObject.class.isInstanceOf(child)) {
+              continue;
+            }
+
             var b = child.getBounds(this);
 
             var x1 = b.xMin;
