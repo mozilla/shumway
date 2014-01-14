@@ -233,10 +233,6 @@ module Shumway.Layers {
       context.fillRect(0, 0, stage.w, stage.h);
 
 
-      var points = Point.createEmptyPoints(4);
-      var corners = Point.createEmptyPoints(4);
-
-      var size = 64;
       var that = this;
       stage.visit(function visitFrame(frame: Frame, transform?: Matrix) {
         context.save();
@@ -244,30 +240,7 @@ module Shumway.Layers {
         // context.globalAlpha = 1 - frame.alpha;
         if (frame instanceof Shape) {
           var shape = <Shape>frame;
-          var shapeProperties = shape.source.properties;
           shape.source.render(context);
-          debugContext.save();
-          var m = Matrix.createIdentity();
-          transform.inverse(m);
-          if (false) {
-            debugContext.setTransform(m.a, m.b, m.c, m.d, m.tx, m.ty);
-            debugContext.fillStyle = "red";
-            debugContext.fillRect(0, 0, stage.w, stage.h);
-          } else {
-
-            var viewport = new Rectangle(0, 0, stage.w, stage.h);
-            var rectangle = new Rectangle(0, 0, shape.w, shape.h);
-
-            transform.transformRectangleAABB(rectangle);
-            viewport.intersect(rectangle);
-
-//            var tileCache: RenderableTileCache = shapeProperties["tileCache"];
-//            if (!tileCache) {
-//              tileCache = shapeProperties["tileCache"] = new RenderableTileCache(shape.source, size);
-//            }
-            // var tiles = tileCache.fetchTiles(viewport, m, debugContext, that.texture);
-          }
-          debugContext.restore();
         }
         context.globalAlpha = 1;
         context.restore();
