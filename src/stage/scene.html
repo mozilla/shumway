@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+</head>
+<body style="background-color: #333333;">
+  <script src="tween.js"></script>
+
+  <script src="../avm2/options.js"></script>
+  <script>
+    var Option = options.Option;
+    var OptionSet = options.OptionSet;
+    var coreOptions = new OptionSet("Core Options");
+  </script>
+  <script src="../avm2/avm2Util.js"></script>
+  <script src="../avm2/metrics.js"></script>
+  <script src="../swf/util.js"></script>
+  <script src="../flash/util.js"></script>
+  <script src="../swf/Timeline.js"></script>
+  <script src="../../examples/inspector/js/classes/Terminal.js"></script>
+  <script src="../../examples/inspector/js/classes/dat.gui.min.js"></script>
+  <script src="util.js"></script>
+  <script src="geometry.js"></script>
+  <script src="stage.js"></script>
+  <script src="elements.js"></script>
+  <script src="filters.js"></script>
+  <script src="gl.js"></script>
+  <script src="gl/core.js"></script>
+  <script src="glTests.js"></script>
+  <script src="shapes.js"></script>
+  <script>
+    var Point = Shumway.Geometry.Point;
+    var Rectangle = Shumway.Geometry.Rectangle;
+    var Matrix = Shumway.Geometry.Matrix;
+    var Stage = Shumway.Layers.Stage;
+    var Snow = Shumway.Layers.Elements.Snow;
+    var Flake = Shumway.Layers.Elements.Flake;
+    var Bitmap = Shumway.Layers.Bitmap;
+    var Video = Shumway.Layers.Video;
+    var Text = Shumway.Layers.Text;
+    var Shape = Shumway.Layers.Shape;
+
+    var BlurFilter = Shumway.Layers.BlurFilter;
+    var WebGLContext = Shumway.GL.WebGLContext;
+    var WebGLStageRenderer = Shumway.GL.WebGLStageRenderer;
+    var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
+    var FontAtlas = Shumway.Layers.Elements.FontAtlas;
+
+    var Counter = new metrics.Counter(true);
+    var FrameCounter = new metrics.Counter(true);
+  </script>
+  <style>
+    #debugInfoContainer {
+      position: absolute;
+      top: 500px;
+      bottom: 0px;
+      right: 0;
+      width: 300px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background-color: rgba(0, 0, 0, 0.2);
+
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+  </style>
+
+
+  <div>
+    <div style="float: left; width: 512px;">
+      <canvas id="frameTimeline" height="100" style="background-]color: #333333;"  tabindex='0'></canvas>
+    </div>
+    <div style="margin-left: 10px; float: left; width: 512px;">
+      <canvas id="traceTerminal" height="100" width="512" style="background-]color: #333333;" tabindex='1'></canvas>
+    </div>
+  </div>
+
+  <div style="clear: both;">
+    <!--<video id="video" src="http://upload.wikimedia.org/wikipedia/commons/4/41/Big_Buck_Bunny_medium.ogv" controls="true"></video>-->
+    <!--<video id="video" src="http://upload.wikimedia.org/wikipedia/commons/7/79/Big_Buck_Bunny_small.ogv" controls="true"></video>-->
+    <!--<canvas id="stageCanvas" width="512" height="256" style="background-color: #1F1F21;"></canvas>-->
+    <canvas id="webGLCanvas" style="background-color: black;"></canvas>
+    <canvas id="canvas2DCanvas" style="background-color: black;"></canvas>
+    <canvas id="canvas2DDebugCanvas" style="background-color: black; display: none;"></canvas>
+    <canvas id="canvas2DDebugCanvas2" style="background-color: black; display: none;"></canvas>
+    <!--<canvas id="stageCanvas" style="background-color: #1F1F21;"></canvas>-->
+  </div>
+
+  <div id="container" style="clear: both;">
+  </div>
+  <script>
+    var writer = new IndentingWriter();
+
+    var traceTerminal = new Terminal(document.getElementById("traceTerminal"));
+    traceTerminal.refreshEvery(100);
+
+    function appendToTraceTerminal(str, color) {
+      var scroll = traceTerminal.isScrolledToBottom();
+      traceTerminal.buffer.append(str, color);
+      if (scroll) {
+        traceTerminal.gotoLine(traceTerminal.buffer.length - 1);
+        traceTerminal.scrollIntoView();
+      }
+    }
+
+    Shumway.GL.writer = new IndentingWriter(false, function (str){
+      appendToTraceTerminal(str);
+    });
+
+
+
+    function shuffle2(target, easing) {
+      var tween = new TWEEN.Tween(target);
+      tween.easing(easing);
+      function next() {
+        var w = 128, h = 128;
+        // var x = Math.max(0, Math.random() * Math.max(1000, target.w));
+        var x = Math.max(0, Math.random() * stage.w);
+        var y = Math.max(0, Math.random() * stage.h);
+
+        var s = 1;
+        x = target.x + 1;
+        y = target.y;
+        // var s = 0.5;
+        var s = 0.1 + Math.random() * 2;
+        var s = 0.1 + Math.random();
+//        var s = 1;
+//        var s = (Math.random() - 0.5) * 2;
+        tween.easing(easing);
+        tween.delay(Math.random() * (500000 / sceneOptions.movement));
+        // tween.delay(1000);
+        tween.to({
+          x: x,
+          y: y,
+          scaleX: s,
+          scaleY: s,
+          rotation: (Math.random() - 0.5) * 180 * 1,
+          // alpha: Math.random()
+          alpha: 1
+        }, 100000 / sceneOptions.speed).start();
+      }
+      next();
+      tween.onComplete(next);
+      tween.start();
+    }
+
+    function shuffle(target, easing) {
+      var tween = new TWEEN.Tween(target);
+      tween.easing(easing);
+      function next() {
+        var w = 128, h = 128;
+//        var s = 0.25 + Math.random() * 0.75;
+        var s = 1;
+        // var x = Math.max(0, (Math.random() - 0.5) * 10 * target.w);
+        // var y = Math.max(0, (Math.random() - 0.5) * 10 * target.h);
+        var x = 0;
+        var x = Math.random() < 0.5 ? -target.w + stage.w / 2 : stage.w / 2;
+        var y = Math.random() < 0.5 ? -target.h + stage.h / 2 : stage.h / 2;
+        // y *= s;
+
+        // var s = 0.5;
+
+        // var x = target.x + 50;
+        // var s = 1;
+        tween.easing(easing);
+        tween.delay(Math.random() * (500000 / sceneOptions.movement));
+        // tween.delay(1000);
+        tween.to({
+          x: x,
+          y: y,
+          scaleX: s,
+          scaleY: s,
+          rotation: (Math.random() - 0.5) * 180 * 1,
+          // alpha: Math.random()
+          // alpha: s
+        }, 100000 / sceneOptions.speed).start();
+      }
+      next();
+      tween.onComplete(next);
+      tween.start();
+    }
+
+    var timeline;
+
+    if (true) {
+      timeline = new Timeline(document.getElementById("frameTimeline"));
+      timeline.setFrameRate(60);
+      timeline.refreshEvery(60);
+      Shumway.GL.timeline = timeline;
+    }
+
+
+    function timelineEnter(name) {
+      timeline && timeline.enter(name);
+    }
+
+    function timelineLeave(name) {
+      timeline && timeline.leave(name);
+    }
+
+    var webGLCanvas = document.getElementById("webGLCanvas");
+    var canvas2DCanvas = document.getElementById("canvas2DCanvas");
+    var canvas2DDebugCanvas = document.getElementById("canvas2DDebugCanvas");
+    var canvas2DDebugCanvas2 = document.getElementById("canvas2DDebugCanvas2");
+
+    var pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
+    // var pixelRatio = 1;
+
+    var width = (window.innerWidth * 0.8) | 0;
+    var height = (window.innerHeight * 0.8) | 0;
+
+    var gui = new dat.GUI();
+
+    // var width = gui.domElement.offsetLeft - 10;
+
+    [webGLCanvas, canvas2DCanvas, canvas2DDebugCanvas, canvas2DDebugCanvas2].forEach(function (canvas) {
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      canvas.width = width * pixelRatio;
+      canvas.height = height * pixelRatio;
+    });
+
+    var sceneOptions = {
+      flakes: 1,
+      shapes: 0,
+      sprites: 0,
+      bitmaps: 2,
+      videos: 2,
+      text: 1,
+      webGL: false,
+      canvas2D: false,
+
+      movement: 20,
+      speed: 20,
+      redraw: 1,
+      maxTextures: 1,
+      maxTextureSize: 1024 * 4,
+      useStencil: true,
+      render: true,
+      animate: true,
+      drawElements: true,
+      drawTiles: true,
+      drawTextures: true,
+      drawDirtyRegions: false,
+      drawLayers: false,
+      clear: true,
+      imageSmoothing: true,
+      snap: false,
+      alpha: false,
+      frameRate: 5,
+      frameCount: 100,
+
+      stop: function () {
+        frames = Number.MAX_VALUE;
+      },
+
+      test: function () {
+        Shumway.GL.Tests.runTests(Shumway.GL.writer);
+      }
+    };
+
+    gui.remember(sceneOptions);
+
+    (function addButtons() {
+      var f = gui.addFolder("Commands");
+      var c = [];
+      c.push(f.add(sceneOptions, "stop"));
+      c.push(f.add(sceneOptions, "test"));
+      f.open();
+    })();
+
+    (function addSceneOptions() {
+      var f = gui.addFolder("Scene Options");
+      var c = [];
+      c.push(f.add(sceneOptions, "flakes", 0, 50000).step(1));
+      c.push(f.add(sceneOptions, "shapes", 0, 1000).step(1));
+      c.push(f.add(sceneOptions, "sprites", 0, 1000).step(1));
+      c.push(f.add(sceneOptions, "bitmaps", 0, 10000).step(2));
+      c.push(f.add(sceneOptions, "videos", 0, 1000).step(1));
+      c.push(f.add(sceneOptions, "text", 0, 1000).step(1));
+      c.forEach(function (x) {
+        x.onFinishChange(updateScene);
+      })
+      f.open();
+      c.push(f.add(sceneOptions, "webGL"));
+      c.push(f.add(sceneOptions, "canvas2D"));
+    })();
+
+    (function addOptions() {
+      var f = gui.addFolder("Options");
+      var c = [];
+      c.push(f.add(sceneOptions, "movement", 1, 1000).step(1));
+      c.push(f.add(sceneOptions, "speed", 0.1, 200).step(0.1));
+      c.push(f.add(sceneOptions, "redraw", 0, 200).step(1));
+      c.push(f.add(sceneOptions, "maxTextures", 1, 8).step(1));
+      c.push(f.add(sceneOptions, "maxTextureSize", 128, 1024 * 16).step(1));
+      c.push(f.add(sceneOptions, "useStencil"));
+      c.push(f.add(sceneOptions, "frameRate", 1, 60).step(1));
+      c.push(f.add(sceneOptions, "frameCount", 1, 10000).step(1));
+      c.push(f.add(sceneOptions, "render"));
+      c.push(f.add(sceneOptions, "drawElements"));
+      c.push(f.add(sceneOptions, "drawTiles"));
+      c.push(f.add(sceneOptions, "drawTextures"));
+      c.push(f.add(sceneOptions, "animate"));
+      c.push(f.add(sceneOptions, "drawDirtyRegions"));
+      c.push(f.add(sceneOptions, "drawLayers"));
+      c.push(f.add(sceneOptions, "clear"));
+      c.push(f.add(sceneOptions, "imageSmoothing"));
+      c.push(f.add(sceneOptions, "snap"));
+      c.push(f.add(sceneOptions, "alpha"));
+      f.open();
+      c.forEach(function (x) {
+        x.onFinishChange(updateOptions);
+      })
+    })();
+
+    var webGLContext, canvas2DContext, webGLStageRenderer, canvas2DStageRenderer;
+    webGLContext = new WebGLContext(webGLCanvas, sceneOptions);
+    webGLStageRenderer = new WebGLStageRenderer(webGLContext);
+    canvas2DContext = canvas2DCanvas.getContext("2d");
+    var canvas2DDebugContexts = [canvas2DDebugCanvas.getContext("2d"), canvas2DDebugCanvas2.getContext("2d")];
+    canvas2DStageRenderer = new Canvas2DStageRenderer(canvas2DContext, canvas2DDebugContexts);
+
+    var stage, animators;
+
+    var videoElements = [];
+
+    function ensureLoadedVideos() {
+      if (videoElements.length > 0) {
+        return;
+      }
+      var urls = [
+        "assets/oceans.webm",
+        // "assets/elephants-dream.webm"
+        // "http://upload.wikimedia.org/wikipedia/commons/7/79/Big_Buck_Bunny_small.ogv",
+        // "http://video.webmfiles.org/elephants-dream.webm",
+        // "http://video.webmfiles.org/big-buck-bunny_trailer.webm"
+      ];
+
+      urls.forEach(function (url) {
+        var videoElement = document.createElement("video");
+        videoElement.src = url;
+        videoElement.loop = true;
+        // videoElement.muted = true;
+        videoElements.push(videoElement);
+        videoElement.play();
+        videoElement.textureRegion = webGLContext.allocateTextureRegion(1024, 1024);
+
+      });
+    }
+
+    function updateScene() {
+      var canvas = webGLCanvas;
+      stage = new Stage(canvas.width, canvas.height);
+      animators = [];
+
+      var snow = new Snow(sceneOptions.flakes, 16, canvas.width, canvas.height);
+      animators.push(snow);
+      stage.addChild(snow);
+
+      // var fontAtlas = new FontAtlas("12px Georgia, serif");
+      // document.addChild(fontAtlas.canvas);
+      // document.getElementById("container").appendChild(fontAtlas.canvas);
+
+      for (var i = 0; i < sceneOptions.text; i++) {
+        var frame = new Shape(new Shumway.TextShape(Shumway.randomText(1000)));
+        frame.x = (Math.random()) * canvas.width;
+        frame.y = (Math.random()) * canvas.height;
+        // frame.alpha = Math.random();
+        stage.addChild(frame);
+        shuffle(frame, TWEEN.Easing.Exponential.Out);
+      }
+
+      for (var i = 0; i < sceneOptions.shapes; i++) {
+        var shape = Shumway.getRandomShape();
+        var frame = new Shape(shape);
+        frame.origin = new Point(frame.w / 2, frame.h / 2);
+        // frame.origin.x = 0;
+        // frame.origin.y = 0;
+        frame.x = (Math.random()) * canvas.width;
+        frame.y = (Math.random()) * canvas.height;
+        // frame.alpha = Math.random();
+        stage.addChild(frame);
+        shuffle(frame, TWEEN.Easing.Exponential.Out);
+      }
+
+      for (var i = 0; i < sceneOptions.sprites; i++) {
+        var shape = Shumway.getSpriteShape(i);
+        var frame = new Shape(shape);
+        frame.origin = new Point(frame.w / 2, frame.h / 2);
+        frame.x = (Math.random()) * canvas.width;
+        frame.y = (Math.random()) * canvas.height;
+        // frame.alpha = Math.random();
+        stage.addChild(frame);
+        shuffle(frame, TWEEN.Easing.Exponential.Out);
+      }
+
+      var image = document.createElement("img");
+      image.src = "assets/firefox_logo_small.png";
+      image.addEventListener("load", function () {
+        for (var i = 0; i < sceneOptions.bitmaps; i++) {
+          var frame = new Shape(Shumway.getImageShape(image));
+          frame.x = (Math.random()) * canvas.width;
+          frame.y = (Math.random()) * canvas.height;
+          // frame.alpha = Math.random();
+          if (false || Math.random() < 0.5) {
+            frame.filters = [new BlurFilter(10, 10)];
+          }
+          if (Math.random() < 0.1) {
+            frame.mask = new Flake(20, 20);
+            frame.mask.x = 10;
+            frame.mask.y = 10;
+          }
+          stage.addChild(frame);
+          shuffle(frame, TWEEN.Easing.Exponential.Out);
+        }
+      });
+
+      for (var i = 0; i < sceneOptions.videos; i++) {
+        ensureLoadedVideos();
+        var videoElement = videoElements[Math.random() * videoElements.length | 0];
+        var frame = new Video(videoElement.textureRegion);
+        frame.x = (Math.random()) * canvas.width;
+        frame.y = (Math.random()) * canvas.height;
+        stage.addChild(frame);
+        shuffle(frame, TWEEN.Easing.Exponential.Out);
+      }
+
+      stage.shuffleChildren();
+    }
+
+    function updateOptions() {
+      canvas2DContext.imageSmoothingEnabled = canvas2DContext.mozImageSmoothingEnabled = sceneOptions.imageSmoothing;
+    }
+
+    updateScene();
+
+    var mousePosition;
+
+//    window.requestAnimationFrame = (function(){
+//      return function(callback) {
+//        window.setTimeout(callback, 1000 / sceneOptions.frameRate);
+//      };
+//    })();
+
+    var frames = 0;
+
+    (function tick() {
+      FrameCounter.clear();
+      timelineEnter("FRAME");
+      for (var i = 0; i < videoElements.length; i++) {
+        var videoElement = videoElements[i];
+        var location = videoElement.textureRegion;
+        if (location) {
+          if (videoElement.lastCurrentTime !== videoElement.currentTime) {
+            webGLContext.updateTextureRegion(videoElement, location);
+          }
+          videoElement.lastCurrentTime = videoElement.currentTime;
+        }
+      }
+      var now = performance.now();
+      if (sceneOptions.animate) {
+        TWEEN.update();
+        timelineEnter("ANIMATE");
+        animators.forEach(function (animator) {
+          animator.onEnterFrame(now);
+        });
+        timelineLeave("ANIMATE");
+      }
+      if (sceneOptions.render) {
+        if (sceneOptions.webGL) {
+          timelineEnter("WebGL");
+          webGLStageRenderer.render(stage, sceneOptions);
+          timelineLeave("WebGL");
+        }
+        if (sceneOptions.canvas2D) {
+          timelineEnter("Canvas2D");
+          canvas2DStageRenderer.render(stage, sceneOptions);
+          timelineLeave("Canvas2D");
+        }
+        /*
+        if (sceneOptions.webGL) {
+          renderer.render(stage, sceneOptions);
+        } else {
+          if (sceneOptions.clear) {
+            context.fillStyle = "#1F1F21";
+            if (!sceneOptions.webGL) {
+              context.fillRect(0, 0, stage.w, stage.h);
+            }
+          }
+          stage.render(context, {
+            drawLayers: sceneOptions.drawLayers,
+            snap: sceneOptions.snap,
+            alpha: sceneOptions.alpha
+          });
+          if (sceneOptions.drawDirtyRegions) {
+            stage.dirtyRegion.render(context, {
+              drawGrid: false
+            });
+          }
+        }
+        */
+      }
+
+      timelineLeave("FRAME");
+
+      // writer.writeLn("Counter");
+      // console.info(Counter.counts);
+
+      // writer.writeLn("Frame Counter");
+      // FrameCounter.trace(writer);
+
+      stage.dirtyRegion.clear();
+      if (frames ++ < sceneOptions.frameCount) {
+        requestAnimationFrame(tick);
+      }
+    })();
+
+    function getMousePosition(canvas, evt) {
+      var rect = canvas.getBoundingClientRect();
+      return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+      };
+    }
+
+    var originalPosition;
+
+//    canvas.addEventListener('mousemove', function(evt) {
+//      mousePosition = getMousePosition(canvas, evt);
+//    }, false);
+
+  </script>
+</body>
+</html>
