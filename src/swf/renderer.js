@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global rgbaObjToStr, FirefoxCom, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
+/*global rgbaObjToStr, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
 
 var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
@@ -28,16 +28,11 @@ var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", fals
 var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", false, "force hidpi"));
 var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", true, "skip frame when not on time"));
 var hud = rendererOptions.register(new Option("", "hud", "boolean", false, "show hud mode"));
+var dummyAnimation = rendererOptions.register(new Option("", "dummy", "boolean", false, "show test balls animation"));
 
 var enableConstructChildren = rendererOptions.register(new Option("", "constructChildren", "boolean", true, "Construct Children"));
 var enableEnterFrame = rendererOptions.register(new Option("", "enterFrame", "boolean", true, "Enter Frame"));
 var enableAdvanceFrame = rendererOptions.register(new Option("", "advanceFrame", "boolean", true, "Advance Frame"));
-
-if (typeof FirefoxCom !== 'undefined') {
-  turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
-  hud.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.hud', def: false});
-  forceHidpi.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.force_hidpi', def: false});
-}
 
 var CanvasCache = {
   cache: [],
@@ -645,6 +640,50 @@ function initializeHUD(stage, parentCanvas) {
   hudTimeline.refreshEvery(10);
 }
 
+function createRenderDummyBalls(ctx, stage) {
+  var dummyBalls;
+  var radius = 10;
+  var speed = 1;
+  var m = stage._concatenatedTransform;
+  var scaleX = m.a, scaleY = m.d;
+  dummyBalls = [];
+  for (var i = 0; i < 10; i++) {
+    dummyBalls.push({
+      position: {
+        x: radius + Math.random() * ((ctx.canvas.width - 2 * radius) / scaleX),
+        y: radius + Math.random() * ((ctx.canvas.height - 2 * radius) / scaleY)
+      },
+      velocity: {x: speed * (Math.random() - 0.5), y: speed * (Math.random() - 0.5)}
+    });
+  }
+  ctx.fillStyle = "black";
+  ctx.lineWidth = 2;
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+  return function renderDummyBalls() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.strokeStyle = "green";
+    dummyBalls.forEach(function (ball) {
+      var position = ball.position;
+      var velocity = ball.velocity;
+      ctx.beginPath();
+      ctx.arc(position.x, position.y, radius, 0, Math.PI * 2, true);
+      ctx.stroke();
+      var x = (position.x + velocity.x);
+      var y = (position.y + velocity.y);
+      if (x < radius || x > ctx.canvas.width / scaleX - radius) {
+        velocity.x *= -1;
+      }
+      if (y < radius || y > ctx.canvas.height / scaleY - radius) {
+        velocity.y *= -1;
+      }
+      position.x += velocity.x;
+      position.y += velocity.y;
+    });
+  };
+}
+
 function renderStage(stage, ctx, events) {
   var frameWidth, frameHeight;
 
@@ -722,52 +761,7 @@ function renderStage(stage, ctx, events) {
                               window.msRequestAnimationFrame ||
                               window.setTimeout;
 
-  var renderDummyBalls;
-
-  var dummyBalls;
-  if (typeof FirefoxCom !== 'undefined' &&
-    FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false})) {
-    var radius = 10;
-    var speed = 1;
-    var m = stage._concatenatedTransform;
-    var scaleX = m.a, scaleY = m.d;
-    dummyBalls = [];
-    for (var i = 0; i < 10; i++) {
-      dummyBalls.push({
-        position: {
-          x: radius + Math.random() * ((ctx.canvas.width - 2 * radius) / scaleX),
-          y: radius + Math.random() * ((ctx.canvas.height - 2 * radius) / scaleY)
-        },
-        velocity: {x: speed * (Math.random() - 0.5), y: speed * (Math.random() - 0.5)}
-      });
-    }
-    ctx.fillStyle = "black";
-    ctx.lineWidth = 2;
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-    renderDummyBalls = function () {
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.strokeStyle = "green";
-      dummyBalls.forEach(function (ball) {
-        var position = ball.position;
-        var velocity = ball.velocity;
-        ctx.beginPath();
-        ctx.arc(position.x, position.y, radius, 0, Math.PI * 2, true);
-        ctx.stroke();
-        var x = (position.x + velocity.x);
-        var y = (position.y + velocity.y);
-        if (x < radius || x > ctx.canvas.width / scaleX - radius) {
-          velocity.x *= -1;
-        }
-        if (y < radius || y > ctx.canvas.height / scaleY - radius) {
-          velocity.y *= -1;
-        }
-        position.x += velocity.x;
-        position.y += velocity.y;
-      });
-    };
-  }
+  var renderDummyBalls = dummyAnimation.value && createRenderDummyBalls(ctx, stage);
 
   console.timeEnd("Initialize Renderer");
   console.timeEnd("Total");
@@ -901,8 +895,12 @@ function renderStage(stage, ctx, events) {
     }
 
     frameTime = now;
-    if (renderFrame && renderDummyBalls) {
-      renderDummyBalls();
+    if (renderDummyBalls) {
+      if (renderFrame) {
+        renderDummyBalls();
+        events.onAfterFrame && events.onAfterFrame();
+      }
+      setTimeout(draw);
       return;
     }
 
@@ -948,7 +946,7 @@ function renderStage(stage, ctx, events) {
       return;
     }
 
-    if (stage._invalid || stage._mouseMoved) {
+    if ((stage._invalid || stage._mouseMoved) && !renderDummyBalls) {
       drawFrame(false, true);
     }
 

@@ -262,6 +262,12 @@ function parseSwf(url, movieParams, objectParams) {
     FirefoxCom.requestSync('getCompilerSettings', null));
   enableVerifier.value = compilerSettings.verifier;
 
+  // init misc preferences
+  turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
+  hud.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.hud', def: false});
+  forceHidpi.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.force_hidpi', def: false});
+  dummyAnimation.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false});
+
   console.log("Compiler settings: " + JSON.stringify(compilerSettings));
   console.log("Parsing " + url + "...");
   function loaded() {
