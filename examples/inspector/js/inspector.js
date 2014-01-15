@@ -36,24 +36,6 @@ function grabAbc(abcName) {
   return null
 }
 
-function findDefiningAbc(mn) {
-  if (!avm2.builtinsLoaded) {
-    return null;
-  }
-  var name;
-  for (var i = 0; i < mn.namespaces.length; i++) {
-    var name = mn.namespaces[i].originalURI + ":" + mn.name;
-    var abcName = playerGlobalNames[name];
-    if (abcName) {
-      break;
-    }
-  }
-  if (abcName) {
-    return grabAbc(abcName);
-  }
-  return null;
-}
-
 /** Global sanityTests array, sanity tests add themselves to this */
 var sanityTests = [];
 
@@ -69,7 +51,7 @@ function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) 
 
   assert (builtinPath);
   new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
-    avm2 = new AVM2(sysMode, appMode, findDefiningAbc, avm1Path && loadAVM1);
+    avm2 = new AVM2(sysMode, appMode, avm1Path && loadAVM1);
     console.time("Execute builtin.abc");
     avm2.loadedAbcs = {};
     // Avoid loading more Abcs while the builtins are loaded

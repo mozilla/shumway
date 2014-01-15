@@ -109,24 +109,6 @@ function grabAbc(abcName) {
   return null;
 }
 
-function findDefiningAbc(mn) {
-  if (!avm2.builtinsLoaded) {
-    return null;
-  }
-  var name;
-  for (var i = 0; i < mn.namespaces.length; i++) {
-    var name = mn.namespaces[i].originalURI + ":" + mn.name;
-    var abcName = playerGlobalNames[name];
-    if (abcName) {
-      break;
-    }
-  }
-  if (abcName) {
-    return grabAbc(abcName);
-  }
-  return null;
-}
-
 // avm2 must be global.
 var avm2;
 var libraryScripts = playerGlobalScripts;    // defined in playerglobal.js
@@ -134,7 +116,7 @@ var libraryNames = playerGlobalNames;        // ditto
 
 function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
   assert (builtinPath);
-  avm2 = new AVM2(sysMode, appMode, findDefiningAbc, loadAVM1);
+  avm2 = new AVM2(sysMode, appMode, loadAVM1);
   var builtinAbc, libraryAbc, avm1Abc;
 
   // Batch I/O requests.
