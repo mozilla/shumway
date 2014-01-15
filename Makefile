@@ -87,7 +87,7 @@ MXMLC = ./utils/flex_sdk/bin/mxmlc $(MXMLC_FLAGS)
 	$(MXMLC) $<
 
 update-flash-refs:
-	grint update-flash-refs
+	grunt update-flash-refs
 
 test-avm1:
 	make -C src/avm1/tests/ test
