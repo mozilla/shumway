@@ -750,9 +750,7 @@ function renderStage(stage, ctx, events) {
 
   updateRenderTransform();
 
-  var frameTime = 0;
-  var maxDelay = 1000 / stage._frameRate;
-  var nextRenderAt = performance.now();
+  var frameScheduler = new FrameScheduler();
 
   var requestAnimationFrame = window.requestAnimationFrame ||
                               window.mozRequestAnimationFrame ||
@@ -770,11 +768,9 @@ function renderStage(stage, ctx, events) {
   var frameCount = 0;
   var frameFPSAverage = new metrics.Average(120);
 
-  function drawFrame(renderFrame, frameRequested) {
-    if (!skipFrameDraw.value) {
-      frameRequested = true; // e.g. for testing we need to draw all frames
-    }
+  var frameRequested = true;
 
+  function drawFrame(renderFrame, repaint) {
     sampleStart();
 
     var refreshStage = false;
@@ -822,9 +818,20 @@ function renderStage(stage, ctx, events) {
         domain.broadcastMessage("render", "render");
       }
 
-      if (isCanvasVisible(ctx.canvas) && (refreshStage || renderFrame) &&
-          frameRequested) {
+      var drawEnabled = isCanvasVisible(ctx.canvas) &&
+                        (refreshStage || renderFrame) &&
+                        (frameRequested || repaint || !skipFrameDraw.value);
+      // checking if we need to skip painting, however not doing it in repaint
+      // mode or during testing
+      if (drawEnabled && !repaint && skipFrameDraw.value &&
+          frameScheduler.shallSkipDraw) {
+        drawEnabled = false;
+        frameScheduler.skipDraw();
+        traceRenderer.value && appendToFrameTerminal("Skip Frame Draw", "red");
+      }
+      if (drawEnabled) {
 
+        frameScheduler.startDraw();
         var invalidPath = null;
 
         traceRenderer.value && frameWriter.enter("> Invalidation");
@@ -851,6 +858,7 @@ function renderStage(stage, ctx, events) {
           invalidPath.draw(ctx);
           ctx.stroke();
         }
+        frameScheduler.endDraw();
       }
 
       if (mouseMoved && !disableMouseVisitor.value) {
@@ -883,10 +891,7 @@ function renderStage(stage, ctx, events) {
     sampleEnd();
   }
 
-  var frameRequested = true;
-  var skipNextFrameDraw = false;
   (function draw() {
-    var now = performance.now();
     var renderFrame = true;
     if (events.onBeforeFrame) {
       var e = { cancel: false };
@@ -894,7 +899,6 @@ function renderStage(stage, ctx, events) {
       renderFrame = !e.cancel;
     }
 
-    frameTime = now;
     if (renderDummyBalls) {
       if (renderFrame) {
         renderDummyBalls();
@@ -904,28 +908,15 @@ function renderStage(stage, ctx, events) {
       return;
     }
 
-    drawFrame(renderFrame, frameRequested && !skipNextFrameDraw);
+    frameScheduler.startFrame(stage._frameRate);
+    drawFrame(renderFrame, false);
+    frameScheduler.endFrame();
     frameRequested = false;
 
-    maxDelay = 1000 / stage._frameRate;
-    if (!turboMode.value) {
-      nextRenderAt += maxDelay;
-      var wasLate = false;
-      while (nextRenderAt < now) {
-        wasLate = true;
-        nextRenderAt += maxDelay;
-      }
-      if (wasLate && !skipNextFrameDraw) {
-        // skips painting of the very next frame if we are not keeping up
-        skipNextFrameDraw = true;
-        traceRenderer.value && appendToFrameTerminal("Skip Frame Draw", "red");
-      } else {
-        // .. but giving it a chance to draw sometime
-        skipNextFrameDraw = false;
-      }
-    } else {
-      nextRenderAt = now;
+    if (!frameScheduler.isOnTime) {
+      traceRenderer.value && appendToFrameTerminal("Frame Is Late", "red");
     }
+
 
     if (renderFrame && events.onAfterFrame) {
       events.onAfterFrame();
@@ -938,7 +929,7 @@ function renderStage(stage, ctx, events) {
       return;
     }
 
-    setTimeout(draw, Math.max(0, nextRenderAt - performance.now()));
+    setTimeout(draw, turboMode.value ? 0 : frameScheduler.nextFrameIn);
   })();
 
   (function frame() {
@@ -946,11 +937,74 @@ function renderStage(stage, ctx, events) {
       return;
     }
 
+    frameRequested = true;
     if ((stage._invalid || stage._mouseMoved) && !renderDummyBalls) {
       drawFrame(false, true);
     }
 
-    frameRequested = true;
     requestAnimationFrame(frame);
   })();
 }
+
+var FrameScheduler = (function () {
+  var STATS_TO_REMEMBER = 50;
+  var MAX_DRAWS_TO_SKIP = 2;
+  var INTERVAL_PADDING_MS = 4;
+  function FrameScheduler() {
+    this._drawStats = [];
+    this._drawStatsSum = 0;
+    this._drawStarted = 0;
+    this._drawsSkipped = 0;
+    this._expectedNextFrameAt = performance.now();
+    this._onTime = true;
+  }
+  FrameScheduler.prototype = {
+    get shallSkipDraw() {
+      if (this._drawsSkipped >= MAX_DRAWS_TO_SKIP) {
+        return false;
+      }
+      var averageDraw = this._drawStats.length < STATS_TO_REMEMBER ? 0 :
+        this._drawStatsSum / this._drawStats.length;
+      var estimatedDrawEnd = performance.now() + averageDraw;
+      return estimatedDrawEnd + INTERVAL_PADDING_MS > this._expectedNextFrameAt;
+    },
+    get nextFrameIn() {
+      return Math.max(0, this._expectedNextFrameAt - performance.now());
+    },
+    get isOnTime() {
+      return this._onTime;
+    },
+    startFrame: function (frameRate) {
+      var interval = 1000 / frameRate;
+      this._expectedNextFrameAt += interval;
+    },
+    endFrame: function () {
+      var estimatedNextFrameStart = performance.now() + INTERVAL_PADDING_MS;
+      this._onTime = true;
+      if (estimatedNextFrameStart > this._expectedNextFrameAt) {
+        this._expectedNextFrameAt = estimatedNextFrameStart;
+        this._onTime = false;
+      }
+    },
+    startDraw: function () {
+      this._drawsSkipped = 0;
+      this._drawStarted = performance.now();
+    },
+    endDraw: function () {
+      var drawTime = performance.now() - this._drawStarted;
+      this._drawStats.push(drawTime);
+      this._drawStatsSum += drawTime;
+      while (this._drawStats.length > STATS_TO_REMEMBER) {
+        this._drawStatsSum -= this._drawStats.shift();
+      }
+    },
+    skipDraw: function () {
+      this._drawsSkipped++;
+      this._drawStats.push(0);
+      while (this._drawStats.length > STATS_TO_REMEMBER) {
+        this._drawStatsSum -= this._drawStats.shift();
+      }
+    }
+  };
+  return FrameScheduler;
+})();
