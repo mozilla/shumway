@@ -751,6 +751,7 @@ function renderStage(stage, ctx, events) {
   updateRenderTransform();
 
   var frameScheduler = new FrameScheduler();
+  stage._frameScheduler = frameScheduler;
 
   var requestAnimationFrame = window.requestAnimationFrame ||
                               window.mozRequestAnimationFrame ||
@@ -950,6 +951,7 @@ var FrameScheduler = (function () {
   var STATS_TO_REMEMBER = 50;
   var MAX_DRAWS_TO_SKIP = 2;
   var INTERVAL_PADDING_MS = 4;
+  var SPEED_ADJUST_RATE = 0.9;
   function FrameScheduler() {
     this._drawStats = [];
     this._drawStatsSum = 0;
@@ -957,6 +959,9 @@ var FrameScheduler = (function () {
     this._drawsSkipped = 0;
     this._expectedNextFrameAt = performance.now();
     this._onTime = true;
+    this._trackDelta = false;
+    this._delta = 0;
+    this._onTimeDelta = 0;
   }
   FrameScheduler.prototype = {
     get shallSkipDraw() {
@@ -976,12 +981,28 @@ var FrameScheduler = (function () {
     },
     startFrame: function (frameRate) {
       var interval = 1000 / frameRate;
-      this._expectedNextFrameAt += interval;
+
+      var adjustedInterval = interval;
+      var delta = this._onTimeDelta + this._delta;
+      if (delta !== 0) {
+        if (delta < 0) {
+          adjustedInterval *= SPEED_ADJUST_RATE;
+        } else if (delta > 0) {
+          adjustedInterval /= SPEED_ADJUST_RATE;
+        }
+        this._onTimeDelta += (interval - adjustedInterval);
+      }
+
+      this._expectedNextFrameAt += adjustedInterval;
+      this._onTime = true;
     },
     endFrame: function () {
       var estimatedNextFrameStart = performance.now() + INTERVAL_PADDING_MS;
-      this._onTime = true;
       if (estimatedNextFrameStart > this._expectedNextFrameAt) {
+        if (this._trackDelta) {
+          this._onTimeDelta += (this._expectedNextFrameAt - estimatedNextFrameStart);
+          console.log(this._onTimeDelta);
+        }
         this._expectedNextFrameAt = estimatedNextFrameStart;
         this._onTime = false;
       }
@@ -1000,10 +1021,23 @@ var FrameScheduler = (function () {
     },
     skipDraw: function () {
       this._drawsSkipped++;
-      this._drawStats.push(0);
-      while (this._drawStats.length > STATS_TO_REMEMBER) {
-        this._drawStatsSum -= this._drawStats.shift();
+    },
+    setDelta: function (value) {
+      if (!this._trackDelta) {
+        return;
       }
+      this._delta = value;
+    },
+    startTrackDelta: function () {
+      this._trackDelta = true;
+    },
+    endTrackDelta: function () {
+      if (!this._trackDelta) {
+        return;
+      }
+      this._trackDelta = false;
+      this._delta = 0;
+      this._onTimeDelta = 0;
     }
   };
   return FrameScheduler;

@@ -656,6 +656,31 @@ var MovieClipSoundStream = (function () {
     }
   }
 
+  function syncTime(element, movieClip) {
+    var initialized = false;
+    var startMediaTime, startRealTime;
+    element.addEventListener('timeupdate', function (e) {
+      if (!initialized) {
+        startMediaTime = element.currentTime;
+        startRealTime = performance.now();
+        initialized = true;
+        movieClip._stage._frameScheduler.startTrackDelta();
+        return;
+      }
+      var mediaDelta = element.currentTime - startMediaTime;
+      var realDelta = performance.now() - startRealTime;
+      movieClip._stage._frameScheduler.setDelta(realDelta - mediaDelta * 1000);
+    });
+    element.addEventListener('pause', function (e) {
+      movieClip._stage._frameScheduler.endTrackDelta();
+      initialized = false;
+    });
+    element.addEventListener('seeking', function (e) {
+      movieClip._stage._frameScheduler.endTrackDelta();
+      initialized = false;
+    });
+  }
+
   function MovieClipSoundStream(streamInfo, movieClip) {
     this.movieClip = movieClip;
     this.data = {
@@ -669,6 +694,7 @@ var MovieClipSoundStream = (function () {
       var element = document.createElement('audio');
       element.preload = 'metadata'; // for mobile devices
       element.loop = false;
+      syncTime(element, movieClip);
       if (element.canPlayType(MP3_MIME_TYPE)) {
         this.element = element;
         if (typeof MediaSource !== 'undefined') {
@@ -729,7 +755,7 @@ var MovieClipSoundStream = (function () {
         return;
       }
       var PAUSE_WHEN_OF_SYNC_GREATER = 1.0;
-      var PLAYBACK_ADJUSTMENT = 0.5;
+      var PLAYBACK_ADJUSTMENT = 0.25;
       var element = this.element;
       if (element) {
         var soundStreamData = this.data;
@@ -764,7 +790,7 @@ var MovieClipSoundStream = (function () {
               element.currentTime = time;
             }
           } else if (this.waitFor > 0) {
-            if (this.waitFor < time) {
+            if (this.waitFor <= time) {
               if (element.paused) {
                 element.play();
               }
@@ -772,7 +798,7 @@ var MovieClipSoundStream = (function () {
             }
           } else if (elementTime - time > PAUSE_WHEN_OF_SYNC_GREATER) {
             console.warn('Sound is faster than frames by ' + (elementTime - time));
-            this.waitFor = elementTime + PLAYBACK_ADJUSTMENT;
+            this.waitFor = elementTime - PLAYBACK_ADJUSTMENT;
             element.pause();
           } else if (time - elementTime > PAUSE_WHEN_OF_SYNC_GREATER) {
             console.warn('Sound is slower than frames by ' + (time - elementTime));
