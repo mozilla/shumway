@@ -125,10 +125,11 @@ module Shumway.GL {
 
   export class WebGLTextureRegion implements ILinkedListNode<WebGLTextureRegion> {
     texture: WebGLTexture;
-    region: Rectangle;
+    region: RegionAllocator.Region;
+    uses: number = 0;
     next: WebGLTextureRegion;
     previous: WebGLTextureRegion;
-    constructor(texture: WebGLTexture, region: Rectangle) {
+    constructor(texture: WebGLTexture, region: RegionAllocator.Region) {
       this.texture = texture;
       this.region = region;
       this.texture.regions.push(this);
@@ -162,9 +163,9 @@ module Shumway.GL {
       this.reset();
     }
 
-    insert(image: any, w: number, h: number): Rectangle {
+    add(image: any, w: number, h: number): RegionAllocator.Region {
       var gl = this._context.gl;
-      var region = this._regionAllocator.insert(w, h);
+      var region = this._regionAllocator.allocate(w, h);
       if (!region) {
         return;
       }
@@ -178,8 +179,12 @@ module Shumway.GL {
       return region;
     }
 
+    remove(region: RegionAllocator.Region) {
+      this._regionAllocator.free(region);
+    }
+
     reset() {
-      this._regionAllocator = new RegionAllocator.Compact(this._w, this._h, this._solitary ? 0 : 0);
+      this._regionAllocator = new RegionAllocator.Grid(this._w, this._h, 128, this._solitary ? 0 : 0);
     }
   }
 
@@ -195,51 +200,80 @@ module Shumway.GL {
     private _head: T;
     private _tail: T;
     private _count: number = 0;
+
+    public get count() {
+      return this._count;
+    }
+
     get head(): T {
       return this._head;
     }
+
     constructor() {
       this._head = this._tail = null;
     }
-    put(node: T) {
+
+    private _unshift(node: T) {
       assert (!node.next && !node.previous);
-      node.next = this._head;
-      if (this._count > 0) {
-        this._head.previous = node;
+      if (this._count === 0) {
+        this._head = this._tail = node;
       } else {
-        this._tail = node;
+        node.next = this._head;
+        node.next.previous = node;
+        this._head = node;
       }
-      this._head = node;
       this._count ++;
     }
-    use(node: T) {
-      if (this._head === node) {
-        return;
-      }
-      node.previous.next = node.next;
-      if (node.next) {
-        node.next.previous = node.previous;
-      } else {
-        this._tail = node.previous;
-      }
-      node.next = this._head;
-      this._head.previous = node;
-      this._head = node;
-    }
-    pop(): T {
-      if (this._count === 0) {
-        return null;
-      }
-      var node = this._tail;
-      if (this._count === 1) {
+
+    private _remove(node: T) {
+      assert (this._count > 0);
+      if (node === this._head && node === this._tail) {
         this._head = this._tail = null;
-      } else {
-        node.previous.next = null;
+      } else if (node === this._head) {
+        this._head = node.next;
+        this._head.previous = null;
+      } else if (node == this._tail) {
         this._tail = node.previous;
+        this._tail.next = null;
+      } else {
+        node.previous.next = node.next;
+        node.next.previous = node.previous;
       }
       node.previous = node.next = null;
       this._count --;
+    }
+
+    put(node: T) {
+      if (this._head === node) {
+        return;
+      }
+      if (node.next || node.previous || this._tail === node) {
+        this._remove(node);
+      }
+      this._unshift(node);
+    }
+
+    pop(): T {
+      if (!this._tail) {
+        return null;
+      }
+      var node = this._tail;
+      this._remove(node);
       return node;
+    }
+
+    /**
+     * Visits each node in the list in the forward or reverse direction as long as
+     * the callback returns |true|;
+     */
+    visit(callback: (T) => boolean, forward: boolean = true) {
+      var node: T = forward ? this._head : this._tail;
+      while (node) {
+        if (!callback(node)) {
+          break;
+        }
+        node = forward ? node.next : node.previous;
+      }
     }
   }
 
@@ -261,7 +295,7 @@ module Shumway.GL {
     private _fillColor: Color = Color.Red;
 
     private _textures: WebGLTexture [];
-    private _textureRegionCache: any; // LRUList<WebGLTextureRegion>;
+    textureRegionCache: any = new LRUList<WebGLTextureRegion>();
 
     private _isTextureMemoryAvailable:boolean = true;
 
@@ -320,7 +354,6 @@ module Shumway.GL {
       this._tmpVertices = Vertex.createEmptyVertices(Vertex, 64);
 
       this._textures = [];
-      this._textureRegionCache = new LRUList<WebGLTextureRegion>();
       this._maxTextures = options ? options.maxTextures : 8;
       this._maxTextureSize = options ? options.maxTextureSize : 1024;
 
@@ -335,18 +368,25 @@ module Shumway.GL {
       this.gl.enable(this.gl.BLEND);
     }
 
-    private cacheRegion(textureRegion: WebGLTextureRegion) {
-      this._textureRegionCache.put(textureRegion);
+    private discardCachedImages() {
+      traceLevel >= TraceLevel.Verbose && writer.writeLn("Discard Cache");
+      // var count = this.textureRegionCache.count / 2 | 0;
+      var count = this.textureRegionCache.count;
+      for (var i = 0; i < this.textureRegionCache.count; i++) {
+        var textureRegion = this.textureRegionCache.pop();
+        traceLevel >= TraceLevel.Verbose && writer.writeLn("Discard: " + textureRegion);
+        textureRegion.texture.atlas.remove(textureRegion.region);
+        textureRegion.texture = null;
+      }
     }
-
-    public cacheImage(image: any, solitary: boolean): WebGLTextureRegion {
+    public cacheImage(image: any, solitary: boolean, discardCache: boolean = true): WebGLTextureRegion {
       var w = image.width;
       var h = image.height;
-      var region: Rectangle, texture: WebGLTexture;
+      var region: RegionAllocator.Region, texture: WebGLTexture;
       if (!solitary) {
         for (var i = 0; i < this._textures.length; i++) {
           texture = this._textures[i];
-          region = texture.atlas.insert(image, w, h);
+          region = texture.atlas.add(image, w, h);
           if (region) {
             break;
           }
@@ -356,25 +396,27 @@ module Shumway.GL {
         var aw = solitary ? w : this._maxTextureSize;
         var ah = solitary ? h : this._maxTextureSize;
         if (this._textures.length === this._maxTextures) {
-          this._isTextureMemoryAvailable = false;
+          if (discardCache) {
+            this.discardCachedImages();
+            return this.cacheImage(image, solitary, false);
+          }
           return null;
-          texture = this.recycleTexture();
         } else {
           texture = this.createTexture(aw, ah, solitary);
         }
         this._textures.push(texture);
-        region = texture.atlas.insert(image, w, h);
+        region = texture.atlas.add(image, w, h);
         assert (region);
       }
       traceLevel >= TraceLevel.Verbose && writer.writeLn("Uploading Image: @ " + region);
       var textureRegion = new WebGLTextureRegion(texture, region);
-      this.cacheRegion(textureRegion);
       return textureRegion;
     }
 
-    public allocateTextureRegion(w: number, h: number):WebGLTextureRegion {
+
+    public allocateTextureRegion(w: number, h: number): WebGLTextureRegion {
       var texture = this.createTexture(w, h, true);
-      var region = texture.atlas.insert(null, w, h);
+      var region = texture.atlas.add(null, w, h);
       this._textures.push(texture);
       return new WebGLTextureRegion(texture, region);
     }
@@ -391,6 +433,9 @@ module Shumway.GL {
 //      timeline.leave("texImage2D");
     }
 
+    /**
+     * Find a texture with available space.
+     */
     private recycleTexture(): WebGLTexture {
       traceLevel >= TraceLevel.Verbose && writer.writeLn("Recycling Texture");
       // var texture: WebGLTexture = this._textures.shift();
@@ -723,7 +768,7 @@ module Shumway.GL {
       var image;
       var inverseTransform = Matrix.createIdentity();
 
-      function cacheImage(src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {
+      function cacheImageCallback(src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {
         return context.cacheImage(src.getImageData(srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h), false);
       }
 
@@ -751,14 +796,17 @@ module Shumway.GL {
               tileCache = source.properties["tileCache"] = new RenderableTileCache(source, tileSize);
             }
             transform.inverse(inverseTransform);
-            var tiles = tileCache.fetchTiles(viewport, inverseTransform, that._scratchCanvasContext, that.context.isTextureMemoryAvailable() ? cacheImage : null);
+            var tiles = tileCache.fetchTiles(viewport, inverseTransform, that._scratchCanvasContext, cacheImageCallback);
             for (var i = 0; i < tiles.length; i++) {
               var tile = tiles[i];
               var tileTransform = Matrix.createIdentity();
               tileTransform.translate(tile.bounds.x, tile.bounds.y);
               tileTransform.concat(transform);
               var src = <WebGLTextureRegion>(tile.cachedTextureRegion);
-              // context._textureRegionCache.use(src);
+              if (src && src.texture) {
+                context.textureRegionCache.put(src);
+              }
+
               if (!brush.drawImage(src, undefined, new Color(1, 1, 1, frame.alpha), tileTransform)) {
                 brush.draw(options.drawElements);
                 brush.reset();
@@ -815,7 +863,7 @@ module Shumway.GL {
         for (var i = 0; i < textures.length; i++) {
           var texture = textures[i];
           var textureWindow = new Rectangle(viewport.w - textureWindowSize, i * textureWindowSize, textureWindowSize, textureWindowSize);
-          brush.drawImage(new WebGLTextureRegion(texture, new Rectangle(0, 0, texture.w, texture.h)), textureWindow, Color.White, transform);
+          brush.drawImage(new WebGLTextureRegion(texture, <RegionAllocator.Region>new Rectangle(0, 0, texture.w, texture.h)), textureWindow, Color.White, transform);
         }
         brush.draw();
       }
@@ -833,7 +881,7 @@ module Shumway.GL {
     fetchTiles(query: Rectangle,
                transform: Matrix,
                scratchContext: CanvasRenderingContext2D,
-               cacheImage: (src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion): Tile [] {
+               cacheImageCallback: (src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion): Tile [] {
       var tiles = this.cache.getTiles(query, transform);
       var uncachedTilesBounds = null;
       var uncachedTiles: Tile [] = [];
@@ -848,9 +896,7 @@ module Shumway.GL {
         }
       }
       if (uncachedTilesBounds) {
-        if (cacheImage) {
-          this.cacheTiles(scratchContext, uncachedTilesBounds, uncachedTiles, cacheImage);
-        }
+        this.cacheTiles(scratchContext, uncachedTilesBounds, uncachedTiles, cacheImageCallback);
 
         var points = Point.createEmptyPoints(4);
         transform.transformRectangle(query, points);
@@ -869,7 +915,7 @@ module Shumway.GL {
     private cacheTiles(scratchContext: CanvasRenderingContext2D,
                        uncachedTileBounds: Rectangle,
                        uncachedTiles: Tile [],
-                       cacheImage: (src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion) {
+                       cacheImageCallback: (src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion) {
       var scratchBounds = new Rectangle(0, 0, scratchContext.canvas.width, scratchContext.canvas.height);
       while (true) {
         scratchContext.setTransform(1, 0, 0, 1, 0, 0);
@@ -893,7 +939,7 @@ module Shumway.GL {
             remainingUncachedTiles.push(tile);
             remainingUncachedTilesBounds.union(tile.bounds);
           }
-          tile.cachedTextureRegion = cacheImage(scratchContext, region);
+          tile.cachedTextureRegion = cacheImageCallback(scratchContext, region);
   //        context.fillStyle = "rgba(255, 0, 0, 0.5)";
   //        context.fillRect(tile.bounds.x, tile.bounds.y, tile.bounds.w, tile.bounds.h);
   //        context.strokeStyle = "rgba(255, 255, 255, 0.5)";

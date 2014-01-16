@@ -126,6 +126,10 @@ module Shumway.Geometry {
         (b1 <= b2);
     }
 
+    isSmallerThan (other: Rectangle): boolean {
+      return this.w < other.w && this.h < other.h;
+    }
+
     union (other: Rectangle) {
       if (this.isEmpty()) {
         this.set(other);
@@ -768,13 +772,13 @@ module Shumway.Geometry {
   }
 
   export module RegionAllocator {
-    export interface IRegionAllocator {
-      insert(w: number, h: number): Region;
-      remove(region: Region);
-    }
-
     export class Region extends Rectangle {
       allocator: IRegionAllocator;
+    }
+
+    export interface IRegionAllocator {
+      allocate(w: number, h: number): Region;
+      free(region: Region);
     }
 
     /**
@@ -787,83 +791,148 @@ module Shumway.Geometry {
        * Try out randomizing the orientation of each subdivision, sometimes this can lead to better results.
        */
       static RANDOM_ORIENTATION: boolean = true;
+      static MAX_DEPTH: number = 256;
       private _root: Compact.Cell;
       private _padding: number;
+      private _allocations: Compact.Cell [] = [];
       constructor(w: number, h: number, padding: number) {
         this._root = new Compact.Cell(padding, padding, w - 2 * padding, h - 2 * padding, false);
         this._padding = padding;
       }
 
-      insert(w: number, h: number): Region {
+      allocate(w: number, h: number): Region {
         var result = this._root.insert(w + this._padding, h + this._padding);
         if (result) {
           result.resize(-this._padding, -this._padding);
+          result.allocator = this;
         }
-        // result.allocator = this;
         return result;
       }
 
-      remove(region: Region) {
-        // assert (region.allocator === this);
-        (<Compact.Cell>region).clear();
+      free(region: Region) {
+        var cell = <Compact.Cell>region;
+        assert (cell.allocator === this);
+        cell.clear();
       }
     }
 
     module Compact {
       export class Cell extends RegionAllocator.Region {
-        children: Cell [];
-        horizontal: boolean;
-        empty: boolean;
+        private _children: Cell [];
+        private _horizontal: boolean;
+        private _empty: boolean;
         constructor(x: number, y: number, w: number, h: number, horizontal: boolean) {
           super(x, y, w, h);
-          this.children = null;
-          this.horizontal = horizontal;
-          this.empty = true;
+          this._children = null;
+          this._horizontal = horizontal;
+          this._empty = true;
         }
         clear() {
-          this.children = null;
-          this.empty = true;
+          this._children = null;
+          this._empty = true;
         }
         insert(w: number, h: number): Cell {
-          if (!this.empty) {
+          return this._insert(w, h, 0);
+        }
+        private _insert(w: number, h: number, depth: number): Cell {
+          if (depth > Compact.MAX_DEPTH) {
+            return;
+          }
+          if (!this._empty) {
             return;
           }
           if (this.w < w || this.h < h) {
             return;
           }
-          if (!this.children) {
-            var orientation = !this.horizontal;
+          if (!this._children) {
+            var orientation = !this._horizontal;
             if (Compact.RANDOM_ORIENTATION) {
               orientation = Math.random() >= 0.5;
             }
-            if (this.horizontal) {
-              this.children = [
+            if (this._horizontal) {
+              this._children = [
                 new Cell(this.x, this.y, this.w, h, false),
                 new Cell(this.x, this.y + h, this.w, this.h - h, orientation),
               ];
             } else {
-              this.children = [
+              this._children = [
                 new Cell(this.x, this.y, w, this.h, true),
                 new Cell(this.x + w, this.y, this.w - w, this.h, orientation),
               ];
             }
-            var first = this.children[0];
+            var first = this._children[0];
             if (first.w === w && first.h === h) {
-              first.empty = false;
+              first._empty = false;
               return first;
             }
-            return this.insert(w, h);
+            return this._insert(w, h, depth + 1);
           } else {
             var result;
-            result = this.children[0].insert(w, h);
+            result = this._children[0]._insert(w, h, depth + 1);
             if (result) {
               return result;
             }
-            result = this.children[1].insert(w, h);
+            result = this._children[1]._insert(w, h, depth + 1);
             if (result) {
               return result;
             }
           }
+        }
+      }
+    }
+
+    export class Grid implements IRegionAllocator {
+      private _size: number;
+      private _padding: number;
+      private _rows: number;
+      private _columns: number;
+      private _cells: Grid.Cell [];
+      constructor(w: number, h: number, size: number, padding: number) {
+        var sizeWithPadding = size - 2 * padding;
+        this._columns = w / sizeWithPadding | 0;
+        this._rows = h / sizeWithPadding | 0;
+        this._size = size;
+        this._padding = padding;
+        this._cells = [];
+        for (var y = 0; y < this._rows; y++) {
+          for (var x = 0; x < this._columns; x++) {
+            this._cells.push(null);
+          }
+        }
+      }
+
+      allocate(w: number, h: number): Region {
+        var sizeWithPadding = this._size - 2 * this._padding;
+        if (w > sizeWithPadding || h > sizeWithPadding) {
+          return null;
+        }
+        for (var y = 0; y < this._rows; y++) {
+          for (var x = 0; x < this._columns; x++) {
+            var index = y * this._columns + x;
+            if (!this._cells[index]) {
+              var cell = new Grid.Cell(x * sizeWithPadding + this._padding, y * sizeWithPadding + this._padding, w, h);
+              cell.index = index;
+              cell.allocator = this;
+              this._cells[index] = cell;
+              return cell;
+            }
+          }
+        }
+        return null;
+      }
+
+      free(region: Region) {
+        var cell = <Grid.Cell>region;
+        assert (cell.allocator === this);
+        this._cells[cell.index] = null;
+      }
+    }
+
+    module Grid {
+      export class Cell extends RegionAllocator.Region {
+        index: number = -1;
+        constructor(x: number, y: number, w: number, h: number) {
+          super(x, y, w, h);
         }
       }
     }
@@ -1122,6 +1191,35 @@ module Shumway.Geometry {
         }
       }
     }
+
+    getTiles2(query: Rectangle, transform: Matrix): Tile [] {
+      transform.transformRectangle(query, TileCache.points);
+      var queryOBB = new OBB(TileCache.points);
+      var queryBounds = new Rectangle(0, 0, this.w, this.h);
+      queryBounds.intersect(queryOBB.getBounds());
+
+      var minX = queryBounds.x / this.size | 0;
+      var minY = queryBounds.y / this.size | 0;
+      var maxX = Math.ceil((queryBounds.x + queryBounds.w) / this.size) | 0;
+      var maxY = Math.ceil((queryBounds.y + queryBounds.h) / this.size) | 0;
+
+      minX = clamp(minX, 0, this.columns);
+      maxX = clamp(maxX, 0, this.columns);
+      minY = clamp(minY, 0, this.rows);
+      maxY = clamp(maxY, 0, this.rows);
+
+      var tiles = [];
+      for (var x = minX; x < maxX; x++) {
+        for (var y = minY; y < maxY; y++) {
+          var tile = this.tiles[y * this.columns + x];
+          if (tile.bounds.intersects(queryBounds) && tile.getOBB().intersects(queryOBB)) {
+            tiles.push(tile);
+          }
+        }
+      }
+      return tiles;
+    }
+
     getTiles(query: Rectangle, transform: Matrix): Tile [] {
       transform.transformRectangle(query, TileCache.points);
       var queryOBB = new OBB(TileCache.points);

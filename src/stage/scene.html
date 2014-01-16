@@ -110,7 +110,7 @@
 
 
 
-    function shuffle2(target, easing) {
+    function shuffle(target, easing) {
       var tween = new TWEEN.Tween(target);
       tween.easing(easing);
       function next() {
@@ -124,7 +124,7 @@
         y = target.y;
         // var s = 0.5;
         var s = 0.1 + Math.random() * 2;
-        var s = 0.1 + Math.random();
+        var s = 0.5 + Math.random();
 //        var s = 1;
 //        var s = (Math.random() - 0.5) * 2;
         tween.easing(easing);
@@ -145,7 +145,7 @@
       tween.start();
     }
 
-    function shuffle(target, easing) {
+    function shuffle2(target, easing) {
       var tween = new TWEEN.Tween(target);
       tween.easing(easing);
       function next() {
@@ -154,9 +154,11 @@
         var s = 1;
         // var x = Math.max(0, (Math.random() - 0.5) * 10 * target.w);
         // var y = Math.max(0, (Math.random() - 0.5) * 10 * target.h);
-        var x = 0;
+        // var x = 0;
         var x = Math.random() < 0.5 ? -target.w + stage.w / 2 : stage.w / 2;
         var y = Math.random() < 0.5 ? -target.h + stage.h / 2 : stage.h / 2;
+        // var x = -target.w;
+        /// var x = target.x === 0 ? -target.w : 0;
         // y *= s;
 
         // var s = 0.5;
@@ -274,7 +276,7 @@
       var f = gui.addFolder("Scene Options");
       var c = [];
       c.push(f.add(sceneOptions, "flakes", 0, 50000).step(1));
-      c.push(f.add(sceneOptions, "shapes", 0, 1000).step(1));
+      c.push(f.add(sceneOptions, "shapes", 0, 5000).step(1));
       c.push(f.add(sceneOptions, "sprites", 0, 1000).step(1));
       c.push(f.add(sceneOptions, "bitmaps", 0, 10000).step(2));
       c.push(f.add(sceneOptions, "videos", 0, 1000).step(1));
@@ -297,7 +299,7 @@
       c.push(f.add(sceneOptions, "maxTextureSize", 128, 1024 * 16).step(1));
       c.push(f.add(sceneOptions, "useStencil"));
       c.push(f.add(sceneOptions, "frameRate", 1, 60).step(1));
-      c.push(f.add(sceneOptions, "frameCount", 1, 10000).step(1));
+      c.push(f.add(sceneOptions, "frameCount", 1, 100000).step(1));
       c.push(f.add(sceneOptions, "render"));
       c.push(f.add(sceneOptions, "drawElements"));
       c.push(f.add(sceneOptions, "drawTiles"));
@@ -379,7 +381,9 @@
         // frame.origin.x = 0;
         // frame.origin.y = 0;
         frame.x = (Math.random()) * canvas.width;
+//        frame.x = 0;
         frame.y = (Math.random()) * canvas.height;
+//        frame.y = (Math.random()) * (canvas.height - frame.h);
         // frame.alpha = Math.random();
         stage.addChild(frame);
         shuffle(frame, TWEEN.Easing.Exponential.Out);
