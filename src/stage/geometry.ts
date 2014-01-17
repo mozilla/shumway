@@ -1221,6 +1221,121 @@ module Shumway.Geometry {
     }
 
     getTiles(query: Rectangle, transform: Matrix): Tile [] {
+      function intersectX(x: number, p1: Point, p2: Point): number {
+        // (x - x1) * (y2 - y1) = (y - y1) * (x2 - x1)
+        return (x - p1.x) * (p2.y - p1.y) / (p2.x - p1.x) + p1.y;
+      }
+      function appendTiles(tiles: Tile[], cache: TileCache,
+                           column: number, startRow: number, endRow: number) {
+        if (column < 0 || column >= cache.columns) {
+          return;
+        }
+        var j1 = clamp(startRow, 0, cache.rows);
+        var j2 = clamp(endRow + 1, 0, cache.rows);
+        for (var j = j1; j < j2; j++) {
+          tiles.push(cache.tiles[j * cache.columns + column]);
+        }
+      }
+
+      var rectPoints: Point[] = TileCache.points;
+      transform.transformRectangle(query, rectPoints);
+
+      // finding minimal-x point, placing at first (and last)
+      var i1 = rectPoints[0].x < rectPoints[1].x ? 0 : 1;
+      var i2 = rectPoints[2].x < rectPoints[3].x ? 2 : 3;
+      var i0 = rectPoints[i1].x < rectPoints[i2].x ? i1 : i2;
+      var lines: Point[] = [];
+      for (var j = 0; j < 5; j++, i0++) {
+        lines.push(rectPoints[i0 % 4]);
+      }
+      // and keeping points ordered counterclockwise
+      if ((lines[1].x - lines[0].x) * (lines[3].y - lines[0].y) <
+          (lines[1].y - lines[0].y) * (lines[3].x - lines[0].x)) {
+        var tmp: Point = lines[1]; lines[1] = lines[3]; lines[3] = tmp;
+      }
+
+      var tiles = [];
+
+      var lastY1, lastY2;
+      var i = Math.floor(lines[0].x / this.size);
+      var nextX = (i + 1) * this.size;
+      if (lines[2].x < nextX) {
+        // edge case: all fits into one column
+        lastY1 = Math.min(lines[0].y, lines[1].y, lines[2].y, lines[3].y);
+        lastY2 = Math.max(lines[0].y, lines[1].y, lines[2].y, lines[3].y);
+        var j1 = Math.floor(lastY1 / this.size);
+        var j2 = Math.floor(lastY2 / this.size);
+        appendTiles(tiles, this, i, j1, j2);
+        return tiles;
+      }
+
+      var line1 = 0, line2 = 4;
+      var lastSegment1 = false, lastSegment2 = false;
+      if (lines[0].x === lines[1].x || lines[0].x === lines[3].x) {
+        // edge case: first rectangle side parallel to columns
+        if (lines[0].x === lines[1].x) {
+          lastSegment1 = true;
+          line1++;
+        } else {
+          lastSegment2 = true;
+          line2--;
+        }
+
+        lastY1 = intersectX(nextX, lines[line1], lines[line1 + 1]);
+        lastY2 = intersectX(nextX, lines[line2], lines[line2 - 1]);
+
+        var j1 = Math.floor(lines[line1].y / this.size);
+        var j2 = Math.floor(lines[line2].y / this.size);
+        appendTiles(tiles, this, i, j1, j2);
+        i++;
+      }
+
+      do {
+        var nextY1, nextY2;
+        var nextSegment1, nextSegment2;
+        if (lines[line1 + 1].x < nextX) {
+          nextY1 = lines[line1 + 1].y;
+          nextSegment1 = true;
+        } else {
+          nextY1 = intersectX(nextX, lines[line1], lines[line1 + 1]);
+          nextSegment1 = false;
+        }
+        if (lines[line2 - 1].x < nextX) {
+          nextY2 = lines[line2 - 1].y;
+          nextSegment2 = true;
+        } else {
+          nextY2 = intersectX(nextX, lines[line2], lines[line2 - 1]);
+          nextSegment2 = false;
+        }
+
+        var j1 = Math.floor((lines[line1].y < lines[line1 + 1].y ? lastY1 : nextY1) / this.size);
+        var j2 = Math.floor((lines[line2].y > lines[line2 - 1].y ? lastY2 : nextY2) / this.size);
+        appendTiles(tiles, this, i, j1, j2);
+
+        if (nextSegment1 && lastSegment1) {
+          break;
+        }
+
+        if (nextSegment1) {
+          lastSegment1 = true;
+          line1++;
+          lastY1 = intersectX(nextX, lines[line1], lines[line1 + 1]);
+        } else {
+          lastY1 = nextY1;
+        }
+        if (nextSegment2) {
+          lastSegment2 = true;
+          line2--;
+          lastY2 = intersectX(nextX, lines[line2], lines[line2 - 1]);
+        } else {
+          lastY2 = nextY2;
+        }
+        i++;
+        nextX = (i + 1) * this.size;
+      } while (line1 < line2);
+      return tiles;
+    }
+    getTilesSlow(query: Rectangle, transform: Matrix): Tile [] {
       transform.transformRectangle(query, TileCache.points);
       var queryOBB = new OBB(TileCache.points);
       var queryBounds = new Rectangle(0, 0, this.w, this.h);
