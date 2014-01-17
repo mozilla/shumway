@@ -91,12 +91,16 @@ module Shumway.Layers {
     }
 
     set transform(value: Matrix) {
-      this._transform = value;
-      this._x = value.getTranslateX();
-      this._y = value.getTranslateY();
-      this._scaleX = value.getScaleX();
-      this._scaleY = value.getScaleY();
-      this._rotation = value.getRotation();
+      var t = Matrix.createIdentity();
+      t.translate(this._origin.x, this._origin.y);
+      t.concat(value);
+
+      this._transform = t;
+      this._x = t.getTranslateX();
+      this._y = t.getTranslateY();
+      this._scaleX = t.getScaleX();
+      this._scaleY = t.getScaleY();
+      this._rotation = t.getRotation();
       this._isTransformInvalid = false;
       this.invalidate();
     }
