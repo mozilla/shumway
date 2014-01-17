@@ -254,7 +254,7 @@ var StageDefinition = (function () {
       timeline.refreshEvery(60);
       Shumway.GL.timeline = timeline;
 
-      SHADER_ROOT = "../../src/stage/shaders/";
+      Shumway.GL.SHADER_ROOT = "../../src/stage/shaders/";
 
       if (bgcolor) {
         canvas.style.backgroundColor = rgbaObjToStr(bgcolor);
