@@ -87,6 +87,7 @@ var DisplayObjectDefinition = (function () {
       this._isContainer = false;
       this._invisible = false;
       this._zindex = 0;
+      this._layer = null;
 
       blendModes = [
         blendModeClass.NORMAL,     // 0
