@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+var StaticTextCache = { };
+
 var StaticTextDefinition = (function () {
   var def = {
     __class__: 'flash.text.StaticText',
@@ -24,6 +26,35 @@ var StaticTextDefinition = (function () {
       var s = this.symbol;
       if (s) {
         this.draw = s.draw;
+
+        var renderable = StaticTextCache[s.symbolId];
+
+        var bounds = this.getBounds(null);
+        var rect = new Shumway.Geometry.Rectangle(bounds.xMin / 20,
+                                                  bounds.yMin / 20,
+                                                  (bounds.xMax - bounds.xMin) / 20,
+                                                  (bounds.yMax - bounds.yMin) / 20);
+
+        if (!renderable) {
+          renderable = {
+            source: this,
+            getBounds: function () {
+              return rect;
+            },
+            properties: { },
+            render: function (ctx) {
+              ctx.save();
+              ctx.translate(-rect.x, -rect.y);
+              this.source.draw(ctx, 0, new RenderingColorTransform());
+              ctx.restore();
+            }
+          };
+
+          StaticTextCache[s.symbolId] = renderable;
+        }
+
+        this._layer = new Shumway.Layers.Shape(renderable);
+        this._layer.origin = new Shumway.Geometry.Point(rect.x, rect.y);
       }
     },
 

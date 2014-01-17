@@ -18,6 +18,8 @@
 /*global avm1lib, rgbaObjToStr, rgbIntAlphaToStr, warning, FontDefinition,
   Errors, throwError */
 
+var TextFieldCache = { };
+
 var TextFieldDefinition = (function () {
 
   var htmlParser = document.createElement('p');
@@ -581,6 +583,35 @@ var TextFieldDefinition = (function () {
       } else {
         this.text = '';
       }
+
+      var renderable = TextFieldCache[s.symbolId];
+
+      var bounds = this.getBounds(null);
+      var rect = new Shumway.Geometry.Rectangle(bounds.xMin / 20,
+                                                bounds.yMin / 20,
+                                                (bounds.xMax - bounds.xMin) / 20,
+                                                (bounds.yMax - bounds.yMin) / 20);
+
+      if (!renderable) {
+        renderable = {
+          source: this,
+          getBounds: function () {
+            return rect;
+          },
+          properties: { },
+          render: function (ctx) {
+            ctx.save();
+            ctx.translate(-rect.x, -rect.y);
+            this.source.draw(ctx, 0, new RenderingColorTransform());
+            ctx.restore();
+          }
+        };
+
+        TextFieldCache[s.symbolId] = renderable;
+      }
+
+      this._layer = new Shumway.Layers.Shape(renderable);
+      this._layer.origin = new Shumway.Geometry.Point(rect.x, rect.y);
     },
 
     _getAS2Object: function () {
