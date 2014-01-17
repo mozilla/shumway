@@ -17,6 +17,8 @@
  */
 /*global QuadTree, RegionCluster, ShapePath, sortByZindex */
 
+var shape = null;
+
 var StageDefinition = (function () {
   return {
     // ()
@@ -91,6 +93,10 @@ var StageDefinition = (function () {
         this._qtree.remove(displayObject._region);
         this._invalidRegions.insert(displayObject._region);
         displayObject._region = null;
+
+        if (displayObject._layer) {
+          this._layer.removeChild(displayObject._layer);
+        }
       }
     },
 
@@ -172,12 +178,25 @@ var StageDefinition = (function () {
           {
             invalidRegions.insert(currentRegion);
           }
+
+          if (node._layer) {
+            node._layer.transform = new Shumway.Geometry.Matrix(m.a,
+                                                                m.b,
+                                                                m.c,
+                                                                m.d,
+                                                                m.tx / 20,
+                                                                m.ty / 20);
+          }
         }
 
         if (hidden) {
           if (invalidRegion) {
             qtree.remove(invalidRegion);
             node._region = null;
+
+            if (node._layer) {
+              this._layer.removeChild(node._layer);
+            }
           }
         } else if (invalidRegion) {
           invalidRegion.xMin = currentRegion.xMin;
@@ -190,39 +209,154 @@ var StageDefinition = (function () {
           qtree.insert(currentRegion);
 
           node._region = currentRegion;
+
+          if (node._layer) {
+            this._layer.addChild(node._layer);
+          }
         }
 
         node._zindex = zindex++;
       }
 
       var invalidPath = new ShapePath();
-      if (refreshStage) {
+      //if (refreshStage) {
         invalidPath.rect(0, 0, this._stageWidth, this._stageHeight);
         invalidRegions.reset();
         return invalidPath;
+      //}
+
+      //var redrawRegions = invalidRegions.retrieve();
+
+      //for (var i = 0; i < redrawRegions.length; i++) {
+      //  var region = redrawRegions[i];
+      //  var xMin = region.xMin - region.xMin % 20 - 40;
+      //  var yMin = region.yMin - region.yMin % 20 - 40;
+      //  var xMax = region.xMax - region.xMax % 20 + 80;
+      //  var yMax = region.yMax - region.yMax % 20 + 80;
+
+      //  var intersectees = qtree.retrieve(xMin, xMax, yMin, yMax);
+      //  for (var j = 0; j < intersectees.length; j++) {
+      //    var item = intersectees[j];
+      //    item.obj._invalid = true;
+      //  }
+
+      //  invalidPath.rect(xMin, yMin, xMax - xMin, yMax - yMin);
+      //}
+
+      //invalidRegions.reset();
+
+      //return invalidPath;
+    },
+
+    _render: function render(canvas, bgcolor) {
+      var timeline = new Timeline(document.getElementById("frameTimeline"));
+      timeline.setFrameRate(60);
+      timeline.refreshEvery(60);
+      Shumway.GL.timeline = timeline;
+
+      SHADER_ROOT = "../../src/stage/shaders/";
+
+      if (bgcolor) {
+        canvas.style.backgroundColor = rgbaObjToStr(bgcolor);
       }
 
-      var redrawRegions = invalidRegions.retrieve();
+      var WebGLContext = Shumway.GL.WebGLContext;
+      var WebGLStageRenderer = Shumway.GL.WebGLStageRenderer;
+      //var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
 
-      for (var i = 0; i < redrawRegions.length; i++) {
-        var region = redrawRegions[i];
-        var xMin = region.xMin - region.xMin % 20 - 40;
-        var yMin = region.yMin - region.yMin % 20 - 40;
-        var xMax = region.xMax - region.xMax % 20 + 80;
-        var yMax = region.yMax - region.yMax % 20 + 80;
+      var sceneOptions = {
+        webGL: true,
+        canvas2D: false,
 
-        var intersectees = qtree.retrieve(xMin, xMax, yMin, yMax);
-        for (var j = 0; j < intersectees.length; j++) {
-          var item = intersectees[j];
-          item.obj._invalid = true;
+        redraw: 1,
+        maxTextures: 1,
+        maxTextureSize: 1024 * 4,
+        useStencil: false,
+        render: true,
+        drawElements: true,
+        drawTiles: false,
+        drawTextures: false,
+        drawDirtyRegions: false,
+        drawLayers: false,
+        clear: true,
+        imageSmoothing: true,
+        snap: false,
+        alpha: false
+      };
+
+      webGLContext = new WebGLContext(canvas, sceneOptions);
+      webGLStageRenderer = new WebGLStageRenderer(webGLContext);
+      //canvas2DStageRenderer = new Canvas2DStageRenderer(ctx);
+
+      var stage = this._layer = new Shumway.Layers.Stage(this._stageWidth / 20, this._stageHeight / 20);
+      var domain = avm2.systemDomain;
+      var firstRun = true;
+
+      var that = this;
+
+      (function tick() {
+        FrameCounter.clear();
+        timelineEnter("FRAME");
+
+        timelineEnter("EVENTS");
+
+        if (firstRun) {
+          // Initial display list is already constructed, skip frame construction phase.
+          firstRun = false;
+        } else {
+          timelineWrapBroadcastMessage(domain, "advanceFrame");
+          timelineWrapBroadcastMessage(domain, "enterFrame");
+          timelineWrapBroadcastMessage(domain, "constructChildren");
         }
 
-        invalidPath.rect(xMin, yMin, xMax - xMin, yMax - yMin);
-      }
+        timelineWrapBroadcastMessage(domain, "frameConstructed");
+        timelineWrapBroadcastMessage(domain, "executeFrame");
+        timelineWrapBroadcastMessage(domain, "exitFrame");
 
-      invalidRegions.reset();
+        if (that._deferRenderEvent) {
+          timelineWrapBroadcastMessage(domain, "render");
+          that._deferRenderEvent = false;
+        }
 
-      return invalidPath;
+        timelineLeave("EVENTS");
+
+        if (sceneOptions.render) {
+          timelineEnter("INVALIDATE");
+          that._processInvalidations();
+          timelineLeave("INVALIDATE");
+
+          if (sceneOptions.webGL) {
+            timelineEnter("WebGL");
+            webGLStageRenderer.render(stage, sceneOptions);
+            timelineLeave("WebGL");
+          }
+          if (sceneOptions.canvas2D) {
+            timelineEnter("Canvas2D");
+            canvas2DStageRenderer.render(stage, sceneOptions);
+            timelineLeave("Canvas2D");
+          }
+        }
+
+        if (that._mouseMoved) {
+          that._mouseMoved = false;
+
+          if (that._mouseOver) {
+            timelineEnter("MOUSE");
+            that._handleMouse();
+            timelineLeave("MOUSE");
+
+            canvas.style.cursor = that._cursor;
+          }
+        } else {
+          that._handleMouseButtons();
+        }
+
+        timelineLeave("FRAME");
+
+        stage.dirtyRegion.clear();
+
+        requestAnimationFrame(tick);
+      })();
     },
 
     _handleMouseButtons: function () {

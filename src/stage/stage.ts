@@ -194,6 +194,14 @@ module Shumway.Layers {
       this.children.push(child);
     }
 
+    public removeChild(child: Frame) {
+      if (child.parent === this) {
+        var index = this.children.indexOf(child);
+        this.children.splice(index, 1);
+        child.parent = undefined;
+      }
+    }
+
     public clearChildren() {
       this.children.length = 0;
     }

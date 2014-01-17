@@ -19,7 +19,6 @@
 
 SWF.embed = function(file, doc, container, options) {
   var canvas = doc.createElement('canvas');
-  var ctx = canvas.getContext('2d');
   var loader = new flash.display.Loader();
   var loaderInfo = loader._contentLoaderInfo;
   var stage = new flash.display.Stage();
@@ -176,9 +175,6 @@ SWF.embed = function(file, doc, container, options) {
     }
     stage._color = bgcolor;
 
-    ctx.fillStyle = rgbaObjToStr(bgcolor);
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
     var root = loader._content;
 
     root._dispatchEvent("added", undefined, true);
@@ -191,7 +187,7 @@ SWF.embed = function(file, doc, container, options) {
       options.onStageInitialized(stage);
     }
 
-    renderStage(stage, ctx, options);
+    stage._render(canvas, bgcolor);
   });
 
   if (options.onComplete) {
