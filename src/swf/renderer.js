@@ -633,7 +633,7 @@ function initializeHUD(stage, parentCanvas) {
   canvasContainer.style.width = "100%";
   canvasContainer.style.height = "150px";
   canvasContainer.style.backgroundColor = "rgba(0, 0, 0, 0.4)";
-  // canvasContainer.style.pointerEvents = canvas.style.pointerEvents = "none";
+  canvasContainer.style.pointerEvents = "none";
   parentCanvas.parentElement.appendChild(canvasContainer);
   hudTimeline = new Timeline(canvas);
   hudTimeline.setFrameRate(stage._frameRate);
