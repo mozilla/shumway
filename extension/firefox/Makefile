@@ -19,8 +19,9 @@ GENERIC_DIR = ../../build/bundle
 
 # Just builds a ff extension
 
-VERSION_BASELINE=53e176ef900a83e379
-VERSION=0.7.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
+VERSION_BASELINE=9c77cb929464c1bca343f4
+VERSION=0.8.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
+VERSION_SHA=`git show --format=format:%H`
 
 build: ensureoutputdir ../src/flash/playerglobal.abc
 	# Coping extension files
@@ -37,6 +38,9 @@ build: ensureoutputdir ../src/flash/playerglobal.abc
 	cp ../../src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_DIR)/content/avm2/generated/avm1lib/
 	# Coping shumway.js files
 	cp $(GENERIC_DIR)/shumway*.js $(BUILD_DIR)/content/
+	echo $(VERSION) > $(BUILD_DIR)/content/version.txt
+	echo $(VERSION_SHA) >> $(BUILD_DIR)/content/version.txt
+	echo "extension" >> $(BUILD_DIR)/content/version.txt
 	# Packaging XPI file
 	cd $(BUILD_DIR); zip -r shumway.xpi *
 

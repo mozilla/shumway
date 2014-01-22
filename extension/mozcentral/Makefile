@@ -21,8 +21,9 @@ EXTENSION_SRC = ../firefox
 
 # Just builds a ff extension
 
-VERSION_BASELINE=53e176ef900a83e379
-VERSION=0.7.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
+VERSION_BASELINE=9c77cb929464c1bca343f4
+VERSION=0.8.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
+VERSION_SHA=`git show --format=format:%H`
 
 build: ensureoutputdir build-bundle ../src/flash/playerglobal.abc
 	# Coping extension files
@@ -40,6 +41,7 @@ build: ensureoutputdir build-bundle ../src/flash/playerglobal.abc
 	# Coping shumway.js files
 	cp $(GENERIC_DIR)/shumway*.js $(BUILD_EXTENSION_DIR)/content/
 	echo $(VERSION) > $(BUILD_EXTENSION_DIR)/content/version.txt
+	echo $(VERSION_SHA) >> $(BUILD_EXTENSION_DIR)/content/version.txt
 
 ../src/flash/playerglobal.abc:
 	$(MAKE) -C ../../utils build-playerglobal
