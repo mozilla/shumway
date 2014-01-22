@@ -23,7 +23,7 @@ EXTENSION_SRC = ../firefox
 
 VERSION_BASELINE=9c77cb929464c1bca343f4
 VERSION=0.8.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
-VERSION_SHA=`git show --format=format:%H`
+VERSION_SHA=`git log --format="%h" -n 1`
 
 build: ensureoutputdir build-bundle ../src/flash/playerglobal.abc
 	# Coping extension files
