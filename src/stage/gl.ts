@@ -2,8 +2,9 @@
 /// <reference path="WebGL.d.ts" />
 
 module Shumway.GL {
-  var traceLevel = 2;
-  var SCRATCH_CANVAS_SIZE = 1024 * 2;
+  var traceLevel = 0;
+  var SCRATCH_CANVAS_SIZE = 1024;
+  var TILE_SIZE = 128;
 
   enum TraceLevel {
     None,
@@ -184,7 +185,7 @@ module Shumway.GL {
     }
 
     reset() {
-      this._regionAllocator = new RegionAllocator.Grid(this._w, this._h, 128, this._solitary ? 0 : 0);
+      this._regionAllocator = new RegionAllocator.Grid(this._w, this._h, TILE_SIZE, this._solitary ? 0 : 0);
     }
   }
 
@@ -339,12 +340,13 @@ module Shumway.GL {
           preserveDrawingBuffer: true,
           antialias: true,
           stencil: true,
-          // premultipliedAlpha: false
+          premultipliedAlpha: false
         })
       );
       assert (this.gl, "Cannot create WebGL context.");
       this._programCache = Object.create(null);
       this.gl.viewport(0, 0, this._w, this._h);
+      this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.gl.ONE);
       this._w = canvas.width;
       this._h = canvas.height;
       this.updateViewport();
@@ -362,9 +364,8 @@ module Shumway.GL {
         this.createTexture(512, 512)
       ];
 
-      this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
-      // this.gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
-
+      // this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
+      this.gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
       this.gl.enable(this.gl.BLEND);
     }
 
@@ -772,6 +773,8 @@ module Shumway.GL {
         return context.cacheImage(src.getImageData(srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h), false);
       }
 
+      var gl = context.gl;
+
       stage.visit(function (frame: Frame, transform?: Matrix) {
         that.context.setTransform(transform);
         if (frame instanceof Flake) {
@@ -787,7 +790,7 @@ module Shumway.GL {
           var bounds = shape.source.getBounds();
           if (!bounds.isEmpty()) {
             var source = shape.source;
-            var tileSize = 128;
+            var tileSize = TILE_SIZE;
             if (bounds.w < 64 || bounds.h < 64) {
               tileSize = 64;
             }
@@ -824,7 +827,7 @@ module Shumway.GL {
         }
       }, stage.transform);
 
-      var gl = context.gl;
+
       for (var i = 0; i < options.redraw; i++) {
         if (options.useStencil) {
           gl.stencilMask(0xFF);
@@ -860,6 +863,8 @@ module Shumway.GL {
           textureWindowSize = viewport.h / textures.length;
         }
         brush.fillRectangle(new Rectangle(viewport.w - textureWindowSize, 0, textureWindowSize, 1024 * 16), new Color(0, 0, 0, 0.5), transform);
+        brush.draw();
+        brush.reset();
         for (var i = 0; i < textures.length; i++) {
           var texture = textures[i];
           var textureWindow = new Rectangle(viewport.w - textureWindowSize, i * textureWindowSize, textureWindowSize, textureWindowSize);
@@ -918,11 +923,13 @@ module Shumway.GL {
                        cacheImageCallback: (src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion) {
       var scratchBounds = new Rectangle(0, 0, scratchContext.canvas.width, scratchContext.canvas.height);
       while (true) {
+        scratchContext.save();
         scratchContext.setTransform(1, 0, 0, 1, 0, 0);
         scratchContext.clearRect(0, 0, scratchBounds.w, scratchBounds.h);
         scratchContext.translate(-uncachedTileBounds.x, -uncachedTileBounds.y);
         timeline.enter("renderTiles");
         this.source.render(scratchContext);
+        scratchContext.restore();
         timeline.leave("renderTiles");
 
         var remainingUncachedTiles = null, remainingUncachedTilesBounds = null;
