@@ -55,6 +55,9 @@ var StageDefinition = (function () {
     _setup: function setup(ctx, options) {
       this._qtree = new QuadTree(0, 0, this._stageWidth, this._stageHeight, 0);
       this._invalid = true;
+
+      this._layer = new Shumway.Layers.Stage(this._stageWidth / 20,
+                                             this._stageHeight / 20);
     },
 
     _addToStage: function addToStage(displayObject) {
@@ -74,6 +77,10 @@ var StageDefinition = (function () {
       }
 
       displayObject._dispatchEvent('addedToStage');
+
+      if (displayObject._layer) {
+        displayObject._parent._layer.addChild(displayObject._layer);
+      }
     },
     _removeFromStage: function removeFromStage(displayObject) {
       var children = displayObject._children;
@@ -95,7 +102,7 @@ var StageDefinition = (function () {
         //displayObject._region = null;
 
         if (displayObject._layer) {
-          this._layer.removeChild(displayObject._layer);
+          displayObject._parent._layer.removeChild(displayObject._layer);
         }
       //}
     },
@@ -180,6 +187,7 @@ var StageDefinition = (function () {
         //  }
         //
           if (node._layer) {
+            m = node._currentTransform;
             node._layer.transform = new Shumway.Geometry.Matrix(m.a,
                                                                 m.b,
                                                                 m.c,
@@ -288,7 +296,7 @@ var StageDefinition = (function () {
       webGLStageRenderer = new WebGLStageRenderer(webGLContext);
       //canvas2DStageRenderer = new Canvas2DStageRenderer(ctx);
 
-      var stage = this._layer = new Shumway.Layers.Stage(this._stageWidth / 20, this._stageHeight / 20);
+      var stage = this._layer;
       var domain = avm2.systemDomain;
       var firstRun = true;
 
