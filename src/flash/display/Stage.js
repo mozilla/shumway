@@ -41,7 +41,7 @@ var StageDefinition = (function () {
       this._fullScreenSourceRect = null;
       this._wmodeGPU = false;
       this._root = null;
-      this._qtree = null;
+      //this._qtree = null;
       this._invalidRegions = new RegionCluster();
       this._mouseMoved = false;
       this._mouseTarget = this;
@@ -89,20 +89,20 @@ var StageDefinition = (function () {
       displayObject._stage = null;
       displayObject._level = -1;
 
-      if (displayObject._region) {
-        this._qtree.remove(displayObject._region);
-        this._invalidRegions.insert(displayObject._region);
-        displayObject._region = null;
+      //if (displayObject._region) {
+        //this._qtree.remove(displayObject._region);
+        //this._invalidRegions.insert(displayObject._region);
+        //displayObject._region = null;
 
         if (displayObject._layer) {
           this._layer.removeChild(displayObject._layer);
         }
-      }
+      //}
     },
 
     _processInvalidations: function processInvalidations(refreshStage) {
-      var qtree = this._qtree;
-      var invalidRegions = this._invalidRegions;
+      //var qtree = this._qtree;
+      //var invalidRegions = this._invalidRegions;
       var stack = [];
       var zindex = 0;
 
@@ -113,7 +113,7 @@ var StageDefinition = (function () {
         if (refreshStage) {
           child._invalid = true;
         }
-        child._invisible = !child._visible;
+        //child._invisible = !child._visible;
         stack.push(child);
       }
 
@@ -127,17 +127,17 @@ var StageDefinition = (function () {
         while (i--) {
           var child = children[i];
 
-          if (!flash.display.DisplayObject.class.isInstanceOf(child)) {
-            continue;
-          }
+          //if (!flash.display.DisplayObject.class.isInstanceOf(child)) {
+          //  continue;
+          //}
 
-          if (node._invalid) {
-            child._invalid = true;
-          }
+          //if (node._invalid) {
+          //  child._invalid = true;
+          //}
           if (m.invalid) {
             child._concatenatedTransform.invalid = true;
           }
-          child._invisible = node._invisible || !child._visible;
+          //child._invisible = node._invisible || !child._visible;
           stack.push(child);
         }
 
@@ -153,32 +153,32 @@ var StageDefinition = (function () {
           m.invalid = false;
         }
 
-        var invalidRegion = node._region;
-        var currentRegion = node._getRegion(m);
+        //var invalidRegion = node._region;
+        //var currentRegion = node._getRegion(m);
 
-        var hidden = node._invisible ||
-                     !currentRegion ||
-                     currentRegion.xMax - currentRegion.xMin === 0 ||
-                     currentRegion.yMax - currentRegion.yMin === 0 ||
-                     currentRegion.xMax <= 0 ||
-                     currentRegion.xMin >= this._stageWidth ||
-                     currentRegion.yMax <= 0 ||
-                     currentRegion.yMin >= this._stageHeight;
-
+        //var hidden = node._invisible ||
+        //             !currentRegion ||
+        //             currentRegion.xMax - currentRegion.xMin === 0 ||
+        //             currentRegion.yMax - currentRegion.yMin === 0 ||
+        //             currentRegion.xMax <= 0 ||
+        //             currentRegion.xMin >= this._stageWidth ||
+        //             currentRegion.yMax <= 0 ||
+        //             currentRegion.yMin >= this._stageHeight;
+        //
         if (node._invalid) {
-          if (invalidRegion) {
-            invalidRegions.insert(invalidRegion);
-          }
-
-          if (!hidden && (!invalidRegion ||
-                          currentRegion.xMin !== invalidRegion.xMin ||
-                          currentRegion.yMin !== invalidRegion.yMin ||
-                          currentRegion.xMax !== invalidRegion.xMax ||
-                          currentRegion.yMax !== invalidRegion.yMax))
-          {
-            invalidRegions.insert(currentRegion);
-          }
-
+        //  if (invalidRegion) {
+        //    invalidRegions.insert(invalidRegion);
+        //  }
+        //
+        //  if (!hidden && (!invalidRegion ||
+        //                  currentRegion.xMin !== invalidRegion.xMin ||
+        //                  currentRegion.yMin !== invalidRegion.yMin ||
+        //                  currentRegion.xMax !== invalidRegion.xMax ||
+        //                  currentRegion.yMax !== invalidRegion.yMax))
+        //  {
+        //    invalidRegions.insert(currentRegion);
+        //  }
+        //
           if (node._layer) {
             node._layer.transform = new Shumway.Geometry.Matrix(m.a,
                                                                 m.b,
@@ -189,40 +189,40 @@ var StageDefinition = (function () {
           }
         }
 
-        if (hidden) {
-          if (invalidRegion) {
-            qtree.remove(invalidRegion);
-            node._region = null;
-
-            if (node._layer) {
-              this._layer.removeChild(node._layer);
-            }
-          }
-        } else if (invalidRegion) {
-          invalidRegion.xMin = currentRegion.xMin;
-          invalidRegion.xMax = currentRegion.xMax;
-          invalidRegion.yMin = currentRegion.yMin;
-          invalidRegion.yMax = currentRegion.yMax;
-          qtree.update(invalidRegion);
-        } else {
-          currentRegion.obj = node;
-          qtree.insert(currentRegion);
-
-          node._region = currentRegion;
-
-          if (node._layer) {
-            this._layer.addChild(node._layer);
-          }
-        }
+        //if (hidden) {
+        //  if (invalidRegion) {
+        //    qtree.remove(invalidRegion);
+        //    node._region = null;
+        //
+        //    if (node._layer) {
+        //      this._layer.removeChild(node._layer);
+        //    }
+        //  }
+        //} else if (invalidRegion) {
+        //  invalidRegion.xMin = currentRegion.xMin;
+        //  invalidRegion.xMax = currentRegion.xMax;
+        //  invalidRegion.yMin = currentRegion.yMin;
+        //  invalidRegion.yMax = currentRegion.yMax;
+        //  qtree.update(invalidRegion);
+        //} else {
+        //  currentRegion.obj = node;
+        //  qtree.insert(currentRegion);
+        //
+        //  node._region = currentRegion;
+        //
+        //  if (node._layer) {
+        //    this._layer.addChild(node._layer);
+        //  }
+        //}
 
         node._zindex = zindex++;
       }
 
-      var invalidPath = new ShapePath();
+      //var invalidPath = new ShapePath();
       //if (refreshStage) {
-        invalidPath.rect(0, 0, this._stageWidth, this._stageHeight);
-        invalidRegions.reset();
-        return invalidPath;
+      //  invalidPath.rect(0, 0, this._stageWidth, this._stageHeight);
+      //  invalidRegions.reset();
+      //  return invalidPath;
       //}
 
       //var redrawRegions = invalidRegions.retrieve();
@@ -337,19 +337,19 @@ var StageDefinition = (function () {
           }
         }
 
-        if (that._mouseMoved) {
-          that._mouseMoved = false;
-
-          if (that._mouseOver) {
-            timelineEnter("MOUSE");
-            that._handleMouse();
-            timelineLeave("MOUSE");
-
-            canvas.style.cursor = that._cursor;
-          }
-        } else {
-          that._handleMouseButtons();
-        }
+        //if (that._mouseMoved) {
+        //  that._mouseMoved = false;
+        //
+        //  if (that._mouseOver) {
+        //    timelineEnter("MOUSE");
+        //    that._handleMouse();
+        //    timelineLeave("MOUSE");
+        //
+        //    canvas.style.cursor = that._cursor;
+        //  }
+        //} else {
+        //  that._handleMouseButtons();
+        //}
 
         timelineLeave("FRAME");
 

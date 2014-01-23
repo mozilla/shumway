@@ -85,7 +85,7 @@ var DisplayObjectDefinition = (function () {
       this._index = -1;
       this._depth = -1;
       this._isContainer = false;
-      this._invisible = false;
+      //this._invisible = false;
       this._zindex = 0;
       this._layer = null;
 
