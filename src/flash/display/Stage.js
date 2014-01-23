@@ -240,19 +240,19 @@ var StageDefinition = (function () {
           }
         }
 
-        //if (that._mouseMoved) {
-        //  that._mouseMoved = false;
-        //
-        //  if (that._mouseOver) {
-        //    timelineEnter("MOUSE");
-        //    that._handleMouse();
-        //    timelineLeave("MOUSE");
-        //
-        //    canvas.style.cursor = that._cursor;
-        //  }
-        //} else {
-        //  that._handleMouseButtons();
-        //}
+        if (that._mouseMoved) {
+          that._mouseMoved = false;
+
+          if (that._mouseOver) {
+            timelineEnter("MOUSE");
+            that._handleMouse();
+            timelineLeave("MOUSE");
+
+            canvas.style.cursor = that._cursor;
+          }
+        } else {
+          that._handleMouseButtons();
+        }
 
         timelineLeave("FRAME");
 
@@ -287,29 +287,43 @@ var StageDefinition = (function () {
       var mouseX = this._mouseX;
       var mouseY = this._mouseY;
 
-      var candidates = this._qtree.retrieve(mouseX, mouseX, mouseY, mouseY);
+      var stack = [];
       var objectsUnderMouse = [];
 
-      for (var i = 0; i < candidates.length; i++) {
-        var item = candidates[i];
-        var displayObject = item.obj;
+      var children = this._children;
+      var i = children.length;
+      while (i--) {
+        var child = children[i];
+        stack.push(child);
+      }
+
+      while (stack.length) {
+        var node = stack.pop();
+
+        var children = node._children;
+        var i = children.length;
+        while (i--) {
+          var child = children[i];
+          stack.push(child);
+        }
+
         var isUnderMouse = false;
-        if (flash.display.SimpleButton.class.isInstanceOf(displayObject)) {
-          if (!displayObject._enabled) {
+        if (flash.display.SimpleButton.class.isInstanceOf(node)) {
+          if (!node._enabled) {
             continue;
           }
 
-          var hitArea = displayObject._hitTestState;
+          var hitArea = node._hitTestState;
 
-          hitArea._parent = displayObject;
+          hitArea._parent = node;
           isUnderMouse = hitArea._hitTest(true, mouseX, mouseY, true);
           hitArea._parent = null;
         } else {
-          isUnderMouse = displayObject._hitTest(true, mouseX, mouseY, true);
+          isUnderMouse = node._hitTest(true, mouseX, mouseY, true);
         }
         if (isUnderMouse) {
           // skipping mouse disabled objects
-          var currentNode = displayObject;
+          var currentNode = node;
           var lastEnabled = null;
           if (!flash.display.InteractiveObject.class.isInstanceOf(currentNode)) {
             lastEnabled = currentNode;
@@ -330,8 +344,6 @@ var StageDefinition = (function () {
       var target;
 
       if (objectsUnderMouse.length) {
-        objectsUnderMouse.sort(sortByZindex);
-
         var i = objectsUnderMouse.length;
         while (i--) {
           target = null;
