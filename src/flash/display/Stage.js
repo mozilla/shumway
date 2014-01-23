@@ -17,8 +17,6 @@
  */
 /*global QuadTree, RegionCluster, ShapePath, sortByZindex */
 
-var shape = null;
-
 var StageDefinition = (function () {
   return {
     // ()
@@ -41,8 +39,6 @@ var StageDefinition = (function () {
       this._fullScreenSourceRect = null;
       this._wmodeGPU = false;
       this._root = null;
-      //this._qtree = null;
-      this._invalidRegions = new RegionCluster();
       this._mouseMoved = false;
       this._mouseTarget = this;
       this._mouseEvents = [];
@@ -53,9 +49,7 @@ var StageDefinition = (function () {
     },
 
     _setup: function setup(ctx, options) {
-      this._qtree = new QuadTree(0, 0, this._stageWidth, this._stageHeight, 0);
       this._invalid = true;
-
       this._layer = new Shumway.Layers.Stage(this._stageWidth / 20,
                                              this._stageHeight / 20);
     },
@@ -96,22 +90,13 @@ var StageDefinition = (function () {
       displayObject._stage = null;
       displayObject._level = -1;
 
-      //if (displayObject._region) {
-        //this._qtree.remove(displayObject._region);
-        //this._invalidRegions.insert(displayObject._region);
-        //displayObject._region = null;
-
-        if (displayObject._layer) {
-          displayObject._parent._layer.removeChild(displayObject._layer);
-        }
-      //}
+      if (displayObject._layer) {
+        displayObject._parent._layer.removeChild(displayObject._layer);
+      }
     },
 
     _processInvalidations: function processInvalidations(refreshStage) {
-      //var qtree = this._qtree;
-      //var invalidRegions = this._invalidRegions;
       var stack = [];
-      var zindex = 0;
 
       var children = this._children;
       var i = children.length;
@@ -120,7 +105,6 @@ var StageDefinition = (function () {
         if (refreshStage) {
           child._invalid = true;
         }
-        //child._invisible = !child._visible;
         stack.push(child);
       }
 
@@ -134,17 +118,10 @@ var StageDefinition = (function () {
         while (i--) {
           var child = children[i];
 
-          //if (!flash.display.DisplayObject.class.isInstanceOf(child)) {
-          //  continue;
-          //}
-
-          //if (node._invalid) {
-          //  child._invalid = true;
-          //}
           if (m.invalid) {
             child._concatenatedTransform.invalid = true;
           }
-          //child._invisible = node._invisible || !child._visible;
+
           stack.push(child);
         }
 
@@ -160,32 +137,7 @@ var StageDefinition = (function () {
           m.invalid = false;
         }
 
-        //var invalidRegion = node._region;
-        //var currentRegion = node._getRegion(m);
-
-        //var hidden = node._invisible ||
-        //             !currentRegion ||
-        //             currentRegion.xMax - currentRegion.xMin === 0 ||
-        //             currentRegion.yMax - currentRegion.yMin === 0 ||
-        //             currentRegion.xMax <= 0 ||
-        //             currentRegion.xMin >= this._stageWidth ||
-        //             currentRegion.yMax <= 0 ||
-        //             currentRegion.yMin >= this._stageHeight;
-        //
         if (node._invalid) {
-        //  if (invalidRegion) {
-        //    invalidRegions.insert(invalidRegion);
-        //  }
-        //
-        //  if (!hidden && (!invalidRegion ||
-        //                  currentRegion.xMin !== invalidRegion.xMin ||
-        //                  currentRegion.yMin !== invalidRegion.yMin ||
-        //                  currentRegion.xMax !== invalidRegion.xMax ||
-        //                  currentRegion.yMax !== invalidRegion.yMax))
-        //  {
-        //    invalidRegions.insert(currentRegion);
-        //  }
-        //
           if (node._layer) {
             m = node._currentTransform;
             node._layer.transform = new Shumway.Geometry.Matrix(m.a,
@@ -196,64 +148,7 @@ var StageDefinition = (function () {
                                                                 m.ty / 20);
           }
         }
-
-        //if (hidden) {
-        //  if (invalidRegion) {
-        //    qtree.remove(invalidRegion);
-        //    node._region = null;
-        //
-        //    if (node._layer) {
-        //      this._layer.removeChild(node._layer);
-        //    }
-        //  }
-        //} else if (invalidRegion) {
-        //  invalidRegion.xMin = currentRegion.xMin;
-        //  invalidRegion.xMax = currentRegion.xMax;
-        //  invalidRegion.yMin = currentRegion.yMin;
-        //  invalidRegion.yMax = currentRegion.yMax;
-        //  qtree.update(invalidRegion);
-        //} else {
-        //  currentRegion.obj = node;
-        //  qtree.insert(currentRegion);
-        //
-        //  node._region = currentRegion;
-        //
-        //  if (node._layer) {
-        //    this._layer.addChild(node._layer);
-        //  }
-        //}
-
-        node._zindex = zindex++;
       }
-
-      //var invalidPath = new ShapePath();
-      //if (refreshStage) {
-      //  invalidPath.rect(0, 0, this._stageWidth, this._stageHeight);
-      //  invalidRegions.reset();
-      //  return invalidPath;
-      //}
-
-      //var redrawRegions = invalidRegions.retrieve();
-
-      //for (var i = 0; i < redrawRegions.length; i++) {
-      //  var region = redrawRegions[i];
-      //  var xMin = region.xMin - region.xMin % 20 - 40;
-      //  var yMin = region.yMin - region.yMin % 20 - 40;
-      //  var xMax = region.xMax - region.xMax % 20 + 80;
-      //  var yMax = region.yMax - region.yMax % 20 + 80;
-
-      //  var intersectees = qtree.retrieve(xMin, xMax, yMin, yMax);
-      //  for (var j = 0; j < intersectees.length; j++) {
-      //    var item = intersectees[j];
-      //    item.obj._invalid = true;
-      //  }
-
-      //  invalidPath.rect(xMin, yMin, xMax - xMin, yMax - yMin);
-      //}
-
-      //invalidRegions.reset();
-
-      //return invalidPath;
     },
 
     _render: function render(canvas, bgcolor) {
