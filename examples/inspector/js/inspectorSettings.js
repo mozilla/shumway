@@ -26,9 +26,8 @@ var DEFAULT_SETTINGS = {
   allocator: false,
   render: true,
   mouse: true,
-  qtree: false,
-  redraw: false,
-  wireframe: false,
+  //redraw: false,
+  //wireframe: false,
   release: true,
   logToConsole: false,
   mute: false,
@@ -66,8 +65,8 @@ function updateAVM2State() {
   disableMouseVisitor.value = state.mouse ? false : true;
   showQuadTree.value = state.qtree ? true : false;
   turboMode.value = state.turbo ? true : false;
-  showRedrawRegions.value = state.redraw ? true : false;
-  renderAsWireframe.value = state.wireframe ? true : false;
+  //showRedrawRegions.value = state.redraw ? true : false;
+  //renderAsWireframe.value = state.wireframe ? true : false;
   traceCallExecution.value = state.traceCalls ? 1 : 0;
   traceCallExecution.value = state.traceRuntime ? 2 : traceCallExecution.value;
   debuggerMode.value = true;
@@ -142,9 +141,9 @@ Array.prototype.forEach.call(document.querySelectorAll(".avm2Option"), function(
     setElementState(state[id] = !state[id]);
     updateAVM2State();
     saveState(state);
-    if (id === "wireframe" && swfController.stage) {
-      swfController.stage._invalid = true;
-    }
+    //if (id === "wireframe" && swfController.stage) {
+    //  swfController.stage._invalid = true;
+    //}
   });
   setElementState(state[id]);
 });
