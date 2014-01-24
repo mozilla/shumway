@@ -17,6 +17,8 @@
  */
 /*global QuadTree, RegionCluster, ShapePath, sortByZindex */
 
+var renderingTerminated = false;
+
 var StageDefinition = (function () {
   return {
     // ()
@@ -151,7 +153,7 @@ var StageDefinition = (function () {
       }
     },
 
-    _render: function render(canvas, bgcolor) {
+    _render: function render(canvas, bgcolor, options) {
       var timeline = new Timeline(document.getElementById("frameTimeline"));
       timeline.setFrameRate(60);
       timeline.refreshEvery(60);
@@ -198,6 +200,15 @@ var StageDefinition = (function () {
       var that = this;
 
       (function tick() {
+        if (options.onBeforeFrame) {
+          var e = { cancel: false };
+          options.onBeforeFrame(e);
+          if (e.cancel) {
+            requestAnimationFrame(tick);
+            return;
+          }
+        }
+
         FrameCounter.clear();
         timelineEnter("FRAME");
 
@@ -257,6 +268,17 @@ var StageDefinition = (function () {
         timelineLeave("FRAME");
 
         stage.dirtyRegion.clear();
+
+        if (options.onAfterFrame) {
+          options.onAfterFrame();
+        }
+
+        if (renderingTerminated) {
+          if (options.onTerminated) {
+            options.onTerminated();
+          }
+          return;
+        }
 
         requestAnimationFrame(tick);
       })();
