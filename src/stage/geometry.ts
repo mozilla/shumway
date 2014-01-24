@@ -293,10 +293,13 @@ module Shumway.Geometry {
       }
     }
     getBounds(): Rectangle {
+      return OBB.getBounds(this.corners);
+    }
+    public static getBounds(points) {
       var min = new Point(Number.MAX_VALUE, Number.MAX_VALUE);
       var max = new Point(Number.MIN_VALUE, Number.MIN_VALUE);
       for (var i = 0; i < 4; i++) {
-        var x = this.corners[i].x, y = this.corners[i].y;
+        var x = points[i].x, y = points[i].y;
         min.x = Math.min(min.x, x);
         min.y = Math.min(min.y, y);
         max.x = Math.max(max.x, x);
@@ -1192,11 +1195,30 @@ module Shumway.Geometry {
       }
     }
 
-    getTiles2(query: Rectangle, transform: Matrix): Tile [] {
+    getTiles(query: Rectangle, transform: Matrix): Tile [] {
+      var tileCount = this.columns * this.rows;
+      if (tileCount < 40) {
+        // If we have only a few tiles we're better off using the dumber algorithm.
+        // TODO: Fine-tune these heuristics.
+        return this.getFewTiles(query, transform, tileCount > 10);
+      } else {
+        return this.getManyTiles(query, transform);
+      }
+    }
+
+    private getFewTiles(query: Rectangle, transform: Matrix, precise: boolean = true): Tile [] {
       transform.transformRectangle(query, TileCache.points);
-      var queryOBB = new OBB(TileCache.points);
+      var queryOBB;
       var queryBounds = new Rectangle(0, 0, this.w, this.h);
-      queryBounds.intersect(queryOBB.getBounds());
+      if (precise) {
+        // Precise indicates that we want to do an exact OBB intersection.
+        queryOBB = new OBB(TileCache.points);
+      }
+      queryBounds.intersect(OBB.getBounds(TileCache.points));
+
+      if (queryBounds.isEmpty()) {
+        return [];
+      }
 
       var minX = queryBounds.x / this.size | 0;
       var minY = queryBounds.y / this.size | 0;
@@ -1212,7 +1234,7 @@ module Shumway.Geometry {
       for (var x = minX; x < maxX; x++) {
         for (var y = minY; y < maxY; y++) {
           var tile = this.tiles[y * this.columns + x];
-          if (tile.bounds.intersects(queryBounds) && tile.getOBB().intersects(queryOBB)) {
+          if (tile.bounds.intersects(queryBounds) && (precise ? tile.getOBB().intersects(queryOBB) : true)) {
             tiles.push(tile);
           }
         }
@@ -1220,7 +1242,7 @@ module Shumway.Geometry {
       return tiles;
     }
 
-    getTiles(query: Rectangle, transform: Matrix): Tile [] {
+    private getManyTiles(query: Rectangle, transform: Matrix): Tile [] {
       function intersectX(x: number, p1: Point, p2: Point): number {
         // (x - x1) * (y2 - y1) = (y - y1) * (x2 - x1)
         return (x - p1.x) * (p2.y - p1.y) / (p2.x - p1.x) + p1.y;
@@ -1333,33 +1355,6 @@ module Shumway.Geometry {
         i++;
         nextX = (i + 1) * this.size;
       } while (line1 < line2);
-      return tiles;
-    }
-    getTilesSlow(query: Rectangle, transform: Matrix): Tile [] {
-      transform.transformRectangle(query, TileCache.points);
-      var queryOBB = new OBB(TileCache.points);
-      var queryBounds = new Rectangle(0, 0, this.w, this.h);
-      queryBounds.intersect(queryOBB.getBounds());
-
-      var minX = queryBounds.x / this.size | 0;
-      var minY = queryBounds.y / this.size | 0;
-      var maxX = Math.ceil((queryBounds.x + queryBounds.w) / this.size) | 0;
-      var maxY = Math.ceil((queryBounds.y + queryBounds.h) / this.size) | 0;
-
-      minX = clamp(minX, 0, this.columns);
-      maxX = clamp(maxX, 0, this.columns);
-      minY = clamp(minY, 0, this.rows);
-      maxY = clamp(maxY, 0, this.rows);
-
-      var tiles = [];
-      for (var x = minX; x < maxX; x++) {
-        for (var y = minY; y < maxY; y++) {
-          var tile = this.tiles[y * this.columns + x];
-          if (tile.bounds.intersects(queryBounds) && tile.getOBB().intersects(queryOBB)) {
-            tiles.push(tile);
-          }
-        }
-      }
       return tiles;
     }
   }
