@@ -174,8 +174,8 @@ var StageDefinition = (function () {
         canvas2D: false,
 
         redraw: 1,
-        maxTextures: 1,
-        maxTextureSize: 1024 * 4,
+        maxTextures: 4,
+        maxTextureSize: 1024 * 2,
         useStencil: false,
         render: true,
         drawElements: true,
@@ -186,7 +186,7 @@ var StageDefinition = (function () {
         clear: true,
         imageSmoothing: true,
         snap: false,
-        alpha: false
+        alpha: false,
       };
 
       webGLContext = new WebGLContext(canvas, sceneOptions);
@@ -200,6 +200,20 @@ var StageDefinition = (function () {
       var that = this;
 
       (function tick() {
+        sceneOptions.perspectiveCamera = perspectiveCamera.value;
+        sceneOptions.perspectiveCameraFOV = perspectiveCameraFOV.value;
+        sceneOptions.perspectiveCameraDistance = perspectiveCameraDistance.value;
+        if (perspectiveCameraAngleRotate.value) {
+          sceneOptions.perspectiveCameraAngle = Math.sin(Date.now() / 1000) * 100;
+        } else {
+          sceneOptions.perspectiveCameraAngle = perspectiveCameraAngle.value;
+        }
+        if (perspectiveCameraSpacingInflate.value) {
+          sceneOptions.frameSpacing = (1.01 + Math.sin(Date.now() / 1000));
+        } else {
+          sceneOptions.frameSpacing = sceneOptions.perspectiveCamera ? Math.max(0.01, perspectiveCameraSpacing.value) : 0.1;
+        }
+
         if (options.onBeforeFrame) {
           var e = { cancel: false };
           options.onBeforeFrame(e);

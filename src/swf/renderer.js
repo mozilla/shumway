@@ -33,6 +33,17 @@ var enableConstructChildren = rendererOptions.register(new Option("", "construct
 var enableEnterFrame = rendererOptions.register(new Option("", "enterFrame", "boolean", true, "Enter Frame"));
 var enableAdvanceFrame = rendererOptions.register(new Option("", "advanceFrame", "boolean", true, "Advance Frame"));
 
+
+var stageOptions = coreOptions.register(new OptionSet("Stage Renderer Options"));
+var perspectiveCamera = stageOptions.register(new Option("", "pc", "boolean", false, "Use perspective camera."));
+
+var perspectiveCameraFOV = stageOptions.register(new Option("", "pcFOV", "number", 60, "Perspective Camera FOV."));
+var perspectiveCameraDistance = stageOptions.register(new Option("", "pcDistance", "number", 1, "Perspective Camera Distance."));
+var perspectiveCameraAngle = stageOptions.register(new Option("", "pcAngle", "number", 0, "Perspective Camera Angle."));
+var perspectiveCameraAngleRotate = stageOptions.register(new Option("", "pcRotate", "boolean", false, "Rotate Use perspective camera."));
+var perspectiveCameraSpacing = stageOptions.register(new Option("", "pcSpacing", "number", 0.1, "Element Spacing."));
+var perspectiveCameraSpacingInflate = stageOptions.register(new Option("", "pcInflate", "boolean", false, "Rotate Use perspective camera."));
+
 if (typeof FirefoxCom !== 'undefined') {
   turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
   hud.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.hud', def: false});

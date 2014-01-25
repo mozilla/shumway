@@ -2,7 +2,7 @@
 /// <reference path="../WebGL.d.ts" />
 
 module Shumway.GL {
-  var release = true;
+  var release = false;
   
   export class ArrayWriter {
     u8: Uint8Array;
@@ -96,6 +96,20 @@ module Shumway.GL {
       this.f32[index] = x;
       this.f32[index + 1] = y;
       this.offset += 8;
+    }
+
+    writeVertex3D(x: number, y: number, z: number) {
+      release || assert ((this.offset & 0x3) === 0);
+      this.ensureCapacity(this.offset + 12);
+      this.writeVertex3DUnsafe(x, y, z);
+    }
+
+    writeVertex3DUnsafe(x: number, y: number, z: number) {
+      var index = this.offset >> 2;
+      this.f32[index] = x;
+      this.f32[index + 1] = y;
+      this.f32[index + 2] = z;
+      this.offset += 12;
     }
 
     writeTriangleElements(a: number, b: number, c: number) {

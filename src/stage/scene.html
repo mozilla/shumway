@@ -80,8 +80,8 @@
     <!--<video id="video" src="http://upload.wikimedia.org/wikipedia/commons/4/41/Big_Buck_Bunny_medium.ogv" controls="true"></video>-->
     <!--<video id="video" src="http://upload.wikimedia.org/wikipedia/commons/7/79/Big_Buck_Bunny_small.ogv" controls="true"></video>-->
     <!--<canvas id="stageCanvas" width="512" height="256" style="background-color: #1F1F21;"></canvas>-->
-    <canvas id="webGLCanvas" style="background-color: black;"></canvas>
-    <canvas id="canvas2DCanvas" style="background-color: black;"></canvas>
+    <canvas id="webGLCanvas"></canvas>
+    <canvas id="canvas2DCanvas"></canvas>
     <canvas id="canvas2DDebugCanvas" style="background-color: black; display: none;"></canvas>
     <canvas id="canvas2DDebugCanvas2" style="background-color: black; display: none;"></canvas>
     <!--<canvas id="stageCanvas" style="background-color: #1F1F21;"></canvas>-->
@@ -250,6 +250,12 @@
       imageSmoothing: true,
       snap: false,
       alpha: false,
+
+      perspectiveCamera: false,
+      perspectiveCameraFOV: 30,
+      perspectiveCameraDistance: 1,
+      perspectiveCameraAngle: 0,
+      frameSpacing: 0.1,
       frameRate: 5,
       frameCount: 100,
 
@@ -311,6 +317,11 @@
       c.push(f.add(sceneOptions, "imageSmoothing"));
       c.push(f.add(sceneOptions, "snap"));
       c.push(f.add(sceneOptions, "alpha"));
+      c.push(f.add(sceneOptions, "perspectiveCamera"));
+      c.push(f.add(sceneOptions, "perspectiveCameraFOV", 1, 160).step(0.1).name("fov"));
+      c.push(f.add(sceneOptions, "perspectiveCameraAngle", 0, 10).step(0.1).name("angle"));
+      c.push(f.add(sceneOptions, "perspectiveCameraDistance", 1, 100).step(0.1).name("distance"));
+      c.push(f.add(sceneOptions, "frameSpacing", 0.1, 100).step(0.1).name("spacing"));
       f.open();
       c.forEach(function (x) {
         x.onFinishChange(updateOptions);
@@ -450,6 +461,8 @@
 
     var frames = 0;
 
+    var last = Date.now();
+
     (function tick() {
       FrameCounter.clear();
       timelineEnter("FRAME");
@@ -475,7 +488,9 @@
       if (sceneOptions.render) {
         if (sceneOptions.webGL) {
           timelineEnter("WebGL");
-          webGLStageRenderer.render(stage, sceneOptions);
+          var now = Date.now();
+          webGLStageRenderer.render(stage, sceneOptions, now - last);
+          last = now;
           timelineLeave("WebGL");
         }
         if (sceneOptions.canvas2D) {

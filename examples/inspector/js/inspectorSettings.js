@@ -197,7 +197,7 @@ document.getElementById("sample").addEventListener("click", function () {
     open && folder.open();
   }
 
-  // addOptionSet(gui, webGLOptions);
+  addOptionSet(gui, stageOptions, true);
   addOptionSet(gui, rendererOptions, true);
   addOptionSet(gui, systemOptions);
 

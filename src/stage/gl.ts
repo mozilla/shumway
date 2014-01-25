@@ -16,7 +16,9 @@ module Shumway.GL {
   export var timeline: Timeline = null;
 
   import Point = Shumway.Geometry.Point;
+  import Point3D = Shumway.Geometry.Point3D;
   import Matrix = Shumway.Geometry.Matrix;
+  import Matrix3D = Shumway.Geometry.Matrix3D;
   import Rectangle = Shumway.Geometry.Rectangle;
   import RegionAllocator = Shumway.Geometry.RegionAllocator;
 
@@ -32,6 +34,9 @@ module Shumway.GL {
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
+
+  import radianToDegrees = Shumway.Geometry.radianToDegrees;
+  import degreesToRadian = Shumway.Geometry.degreesToRadian;
 
   function count(name) {
     Counter.count(name);
@@ -111,11 +116,11 @@ module Shumway.GL {
     }
   }
 
-  export class Vertex extends Shumway.Geometry.Point {
-    constructor (x: number, y: number) {
-      super(x, y);
+  export class Vertex extends Shumway.Geometry.Point3D {
+    constructor (x: number, y: number, z: number) {
+      super(x, y, z);
     }
-    static createEmptyVertices<T extends Vertex>(type: new (x: number, y: number) => T, count: number): T [] {
+    static createEmptyVertices<T extends Vertex>(type: new (x: number, y: number, z: number) => T, count: number): T [] {
       var result = [];
       for (var i = 0; i < count; i++) {
         result.push(new type(0, 0));
@@ -174,6 +179,7 @@ module Shumway.GL {
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
         timeline.enter("texSubImage2D");
         gl.texSubImage2D(gl.TEXTURE_2D, 0, region.x, region.y, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        console.info("WRITE: " + region);
         timeline.leave("texSubImage2D");
         count("texSubImage2D");
       }
@@ -300,6 +306,8 @@ module Shumway.GL {
 
     private _isTextureMemoryAvailable:boolean = true;
 
+    public modelViewProjectionMatrix: Matrix3D = Matrix3D.createIdentity();
+
     public isTextureMemoryAvailable() {
       return this._isTextureMemoryAvailable;
     }
@@ -367,6 +375,33 @@ module Shumway.GL {
       // this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
       this.gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
       this.gl.enable(this.gl.BLEND);
+      this.gl.enable(this.gl.DEPTH_TEST);
+      this.modelViewProjectionMatrix = Matrix3D.create2DProjection(this._w, this._h, 2000);
+    }
+
+    public create2DProjectionMatrix(): Matrix3D {
+      return Matrix3D.create2DProjection(this._w, this._h, -this._w);
+    }
+
+    public createPerspectiveMatrix(cameraDistance: number, fov: number, angle: number): Matrix3D {
+      var cameraAngleRadians = degreesToRadian(angle);
+
+      // Compute the projection matrix
+      var projectionMatrix = Matrix3D.createPerspective(degreesToRadian(fov), 1, 0.1, 5000);
+
+      var up = new Point3D(0, 1, 0);
+      var target = new Point3D(0, 0, 0);
+      var camera = new Point3D(0, 0, cameraDistance);
+      var cameraMatrix = Matrix3D.createCameraLookAt(camera, target, up);
+      var viewMatrix = Matrix3D.createInverse(cameraMatrix);
+
+      var matrix = Matrix3D.createIdentity();
+      matrix = Matrix3D.createMultiply(matrix, Matrix3D.createTranslation(-this.width / 2, -this.height / 2, 0));
+      matrix = Matrix3D.createMultiply(matrix, Matrix3D.createScale(1 / this.width, -1 / this.height, 1 / 100));
+      matrix = Matrix3D.createMultiply(matrix, Matrix3D.createYRotation(cameraAngleRadians));
+      matrix = Matrix3D.createMultiply(matrix, viewMatrix);
+      matrix = Matrix3D.createMultiply(matrix, projectionMatrix);
+      return matrix;
     }
 
     private discardCachedImages() {
@@ -414,7 +449,6 @@ module Shumway.GL {
       return textureRegion;
     }
 
-
     public allocateTextureRegion(w: number, h: number): WebGLTextureRegion {
       var texture = this.createTexture(w, h, true);
       var region = texture.atlas.add(null, w, h);
@@ -428,10 +462,6 @@ module Shumway.GL {
       timeline.enter("texSubImage2D");
       gl.texSubImage2D(gl.TEXTURE_2D, 0, textureRegion.region.x, textureRegion.region.y, gl.RGBA, gl.UNSIGNED_BYTE, image);
       timeline.leave("texSubImage2D");
-
-//      timeline.enter("texImage2D");
-//      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-//      timeline.leave("texImage2D");
     }
 
     /**
@@ -462,7 +492,7 @@ module Shumway.GL {
     private initializeProgram(program: WebGLProgram) {
       var gl = this.gl;
       gl.useProgram(program);
-      gl.uniform2f(program.uniforms.uResolution.location, this._w, this._h);
+      // gl.uniform2f(program.uniforms.uResolution.location, this._w, this._h);
     }
 
     private createShaderFromFile(file: string) {
@@ -534,6 +564,7 @@ module Shumway.GL {
       gl.bindTexture(gl.TEXTURE_2D, texture);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
@@ -599,7 +630,7 @@ module Shumway.GL {
 
     public clear(color: Color = Color.None) {
       var gl = this.gl;
-      gl.clearColor(color.r, color.g, color.b, color.a);
+      gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
     }
 
@@ -618,76 +649,6 @@ module Shumway.GL {
       }
     }
 
-//    public fillRectangle(rectangle: Rectangle, fillColor: Color) {
-//      var gl = this.gl;
-//      var g = this._geometry;
-//      var p = this._solidFillProgram;
-//
-//      g.clear();
-//      this._state.transform.transformRectangle(rectangle, this._tmpVertices);
-//      for (var i = 0; i < 4; i++) {
-//        this._tmpVertices[i].color.set(fillColor);
-//      }
-//      this._geometry.addVertices(this._tmpVertices, 4);
-//      this._geometry.addQuad();
-//      g.uploadBuffers();
-//
-//      gl.useProgram(p);
-//      gl.uniform1f(p.uniforms.uZ.location, 1);
-//      gl.uniformMatrix3fv(p.uniforms.uTransformMatrix.location, false, Matrix.createIdentity().toWebGLMatrix());
-//      gl.bindBuffer(gl.ARRAY_BUFFER, g.attributes["position"].buffer);
-//      var position = p.attributes.aPosition.location;
-//      gl.enableVertexAttribArray(position);
-//      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
-//      gl.bindBuffer(gl.ARRAY_BUFFER, g.attributes["color"].buffer);
-//      var color = p.attributes.aColor.location;
-//      gl.enableVertexAttribArray(color);
-//      gl.vertexAttribPointer(color, 4, gl.FLOAT, false, 0, 0);
-//      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.attributes["element"].buffer);
-//      var triangles = 2;
-//      gl.drawElements(gl.TRIANGLES, triangles * 3, gl.UNSIGNED_SHORT, 0);
-//    }
-
-//    public IImage(src: WebGLTextureRegion, dstRectangle?: Rectangle) {
-//      if (!dstRectangle) {
-//        dstRectangle = new Rectangle(0, 0, src.region.w, src.region.h);
-//      } else {
-//        dstRectangle = dstRectangle.clone();
-//      }
-//
-//      var srcRectangle = src.region.clone();
-//      srcRectangle.scale(1 / src.texture.w, 1 / src.texture.h);
-//      this._state.transform.transformRectangle(dstRectangle, this._tmpVertices);
-//      this._tmpVertices[0].coordinate.x = srcRectangle.x;
-//      this._tmpVertices[0].coordinate.y = srcRectangle.y;
-//      this._tmpVertices[1].coordinate.x = srcRectangle.x + srcRectangle.w;
-//      this._tmpVertices[1].coordinate.y = srcRectangle.y;
-//      this._tmpVertices[2].coordinate.x = srcRectangle.x + srcRectangle.w;
-//      this._tmpVertices[2].coordinate.y = srcRectangle.y + srcRectangle.h;
-//      this._tmpVertices[3].coordinate.x = srcRectangle.x;
-//      this._tmpVertices[3].coordinate.y = srcRectangle.y + srcRectangle.h;
-//      this._geometry.addVertices(this._tmpVertices, 4);
-//      this._geometry.addQuad();
-//    }
-//
-//    public applyFilter(src: WebGLTextureRegion, filter: Shumway.Layers.Filter) {
-//      var dstRectangle = new Rectangle(0, 0, src.region.w, src.region.h);
-//
-//      var srcRectangle = src.region.clone();
-//      srcRectangle.scale(1 / src.texture.w, 1 / src.texture.h);
-//      this._state.transform.transformRectangle(dstRectangle, this._tmpVertices);
-//      this._tmpVertices[0].coordinate.x = srcRectangle.x;
-//      this._tmpVertices[0].coordinate.y = srcRectangle.y;
-//      this._tmpVertices[1].coordinate.x = srcRectangle.x + srcRectangle.w;
-//      this._tmpVertices[1].coordinate.y = srcRectangle.y;
-//      this._tmpVertices[2].coordinate.x = srcRectangle.x + srcRectangle.w;
-//      this._tmpVertices[2].coordinate.y = srcRectangle.y + srcRectangle.h;
-//      this._tmpVertices[3].coordinate.x = srcRectangle.x;
-//      this._tmpVertices[3].coordinate.y = srcRectangle.y + srcRectangle.h;
-//      this._geometry.addVertices(this._tmpVertices, 4);
-//      this._geometry.addQuad();
-//    }
-
     public beginPath() {
 
     }
@@ -702,15 +663,6 @@ module Shumway.GL {
 
     public rect() {
 
-    }
-
-    private clearRect(rectangle: Rectangle, color: Color) {
-      var gl = this.gl;
-      gl.enable(gl.SCISSOR_TEST);
-      gl.scissor(rectangle.x, this._h - rectangle.y - rectangle.h, rectangle.w, rectangle.h);
-      gl.clearColor(color.r, color.g, color.b, color.a);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-      gl.disable(gl.SCISSOR_TEST);
     }
   }
 
@@ -746,6 +698,16 @@ module Shumway.GL {
 
     public render(stage: Stage, options: any) {
 
+      if (options.perspectiveCamera) {
+        this.context.modelViewProjectionMatrix = this.context.createPerspectiveMatrix (
+          options.perspectiveCameraDistance,
+          options.perspectiveCameraFOV,
+          options.perspectiveCameraAngle
+        );
+      } else {
+        this.context.modelViewProjectionMatrix = this.context.create2DProjectionMatrix();
+      }
+
       var that = this;
       var context = this.context;
 
@@ -753,18 +715,6 @@ module Shumway.GL {
       brush.reset();
 
       var stencilBrush = this._stencilBrush;
-      stencilBrush.reset();
-
-      var rectangles: Rectangle [] = [];
-      stage.gatherDirtyRegions(rectangles);
-
-      var identity = Matrix.createIdentity();
-      for (var i = 0; i < rectangles.length; i++) {
-        var rectangle = rectangles[i];
-        // stencilBrush.fillRectangle(rectangle, Color.Red, identity);
-        stencilBrush.fillRectangle(rectangle, Color.Black, identity);
-      }
-
       var viewport = new Rectangle(0, 0, stage.w, stage.h);
       var image;
       var inverseTransform = Matrix.createIdentity();
@@ -775,16 +725,27 @@ module Shumway.GL {
 
       var gl = context.gl;
 
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      var depth = 0;
+
+      brush.reset();
+      brush.fillRectangle(viewport, new Color(0.2, 0, 0, 1), Matrix.createIdentity(), depth);
+      brush.flush(options.drawElements);
+      brush.reset();
+
       stage.visit(function (frame: Frame, transform?: Matrix) {
+        depth += options.frameSpacing;
         that.context.setTransform(transform);
         if (frame instanceof Flake) {
-          brush.fillRectangle(new Rectangle(0, 0, frame.w, frame.h), Color.parseColor((<Flake>frame).fillStyle), transform);
+          brush.fillRectangle(new Rectangle(0, 0, frame.w, frame.h), Color.parseColor((<Flake>frame).fillStyle), transform, depth);
         } else if (frame instanceof SolidRectangle) {
-          brush.fillRectangle(new Rectangle(0, 0, frame.w, frame.h), Color.parseColor((<SolidRectangle>frame).fillStyle), transform);
+          brush.fillRectangle(new Rectangle(0, 0, frame.w, frame.h), Color.parseColor((<SolidRectangle>frame).fillStyle), transform, depth);
         } else if (frame instanceof Video) {
           var video = <Video>frame;
           var src = <WebGLTextureRegion>(video.source);
-          brush.drawImage(src, undefined, new Color(1, 1, 1, frame.alpha), transform)
+          brush.drawImage(src, undefined, new Color(1, 1, 1, frame.alpha), transform, depth)
         } else if (frame instanceof Shape) {
           var shape = <Shape>frame;
           var bounds = shape.source.getBounds();
@@ -810,49 +771,24 @@ module Shumway.GL {
                 context.textureRegionCache.put(src);
               }
 
-              if (!brush.drawImage(src, undefined, new Color(1, 1, 1, frame.alpha), tileTransform)) {
-                brush.draw(options.drawElements);
+              if (!brush.drawImage(src, undefined, new Color(1, 1, 1, frame.alpha), tileTransform, depth)) {
+                brush.flush(options.drawElements);
                 brush.reset();
-                brush.drawImage(src, undefined, new Color(1, 1, 1, frame.alpha), tileTransform);
+                brush.drawImage(src, undefined, new Color(1, 1, 1, frame.alpha), tileTransform, depth);
               }
               if (options.drawTiles) {
                 var srcBounds = tile.bounds.clone();
                 if (!tile.color) {
                   tile.color = Color.randomColor(0.2);
                 }
-                brush.fillRectangle(new Rectangle(0, 0, srcBounds.w, srcBounds.h), tile.color, tileTransform);
+                brush.fillRectangle(new Rectangle(0, 0, srcBounds.w, srcBounds.h), tile.color, tileTransform, depth);
               }
             }
           }
         }
       }, stage.transform);
 
-
-      for (var i = 0; i < options.redraw; i++) {
-        if (options.useStencil) {
-          gl.stencilMask(0xFF);
-          gl.clear(gl.STENCIL_BUFFER_BIT);
-          gl.enable(gl.STENCIL_TEST);
-          gl.stencilFunc(gl.ALWAYS, 1, 0xFF);
-          gl.stencilOp(gl.KEEP, gl.KEEP, gl.REPLACE);
-          gl.stencilMask(0xFF);
-          gl.colorMask(false, false, false, false);
-          gl.depthMask(false);
-          stencilBrush.draw();
-          gl.colorMask(true, true, true, true);
-          gl.depthMask(false);
-          gl.stencilFunc(gl.EQUAL, 1, 0xFF);
-          gl.stencilMask(0x00);
-          stencilBrush.draw();
-        } else {
-          gl.clearColor(0, 0, 0, 0);
-          gl.clear(gl.COLOR_BUFFER_BIT);
-        }
-        brush.draw(options.drawElements);
-        if (options.useStencil) {
-          gl.disable(gl.STENCIL_TEST);
-        }
-      }
+      brush.flush(options.drawElements);
 
       if (options.drawTextures) {
         brush.reset();
@@ -863,14 +799,14 @@ module Shumway.GL {
           textureWindowSize = viewport.h / textures.length;
         }
         brush.fillRectangle(new Rectangle(viewport.w - textureWindowSize, 0, textureWindowSize, 1024 * 16), new Color(0, 0, 0, 0.5), transform);
-        brush.draw();
+        brush.flush(options.drawElements);
         brush.reset();
         for (var i = 0; i < textures.length; i++) {
           var texture = textures[i];
           var textureWindow = new Rectangle(viewport.w - textureWindowSize, i * textureWindowSize, textureWindowSize, textureWindowSize);
           brush.drawImage(new WebGLTextureRegion(texture, <RegionAllocator.Region>new Rectangle(0, 0, texture.w, texture.h)), textureWindow, Color.White, transform);
         }
-        brush.draw();
+        brush.flush(options.drawElements);
       }
     }
   }
@@ -987,7 +923,7 @@ module Shumway.GL {
         return;
       }
       WebGLCombinedBrushVertex.attributeList = new WebGLAttributeList([
-        new WebGLAttribute("aPosition", 2, gl.FLOAT),
+        new WebGLAttribute("aPosition", 3, gl.FLOAT),
         new WebGLAttribute("aCoordinate", 2, gl.FLOAT),
         new WebGLAttribute("aColor", 4, gl.UNSIGNED_BYTE, true),
         new WebGLAttribute("aKind", 1, gl.FLOAT),
@@ -999,13 +935,13 @@ module Shumway.GL {
     color: Color = new Color(0, 0, 0, 0);
     sampler: number = 0;
     coordinate: Point = new Point(0, 0);
-    constructor (x: number, y: number) {
-      super(x, y);
+    constructor (x: number, y: number, z: number) {
+      super(x, y, z);
     }
     public writeTo(geometry: WebGLGeometry) {
       var array = geometry.array;
-      array.ensureAdditionalCapacity(64);
-      array.writeVertexUnsafe(this.x, this.y);
+      array.ensureAdditionalCapacity(68);
+      array.writeVertex3DUnsafe(this.x, this.y, this.z);
       array.writeVertexUnsafe(this.coordinate.x, this.coordinate.y);
       array.writeColorUnsafe(this.color.r * 255, this.color.g * 255, this.color.b * 255, this.color.a * 255);
       array.writeFloatUnsafe(this.kind);
@@ -1013,10 +949,12 @@ module Shumway.GL {
     }
   }
 
+
   export class WebGLCombinedBrush extends WebGLBrush {
     static tmpVertices: WebGLCombinedBrushVertex [] = Vertex.createEmptyVertices(WebGLCombinedBrushVertex, 4);
     program: WebGLProgram;
     textures: WebGLTexture [];
+    static depth: number = 1;
     constructor(context: WebGLContext, geometry: WebGLGeometry) {
       super(context, geometry);
       this.program = context.createProgramFromFiles("combined.vert", "combined.frag");
@@ -1029,7 +967,7 @@ module Shumway.GL {
       this.geometry.reset();
     }
 
-    public drawImage(src: WebGLTextureRegion, dstRectangle: Rectangle, color: Color, transform: Matrix): boolean {
+    public drawImage(src: WebGLTextureRegion, dstRectangle: Rectangle, color: Color, transform: Matrix, depth: number = 0): boolean {
       if (!src || !src.texture) {
         return true;
       }
@@ -1051,7 +989,10 @@ module Shumway.GL {
       var srcRectangle = src.region.clone();
       srcRectangle.offset(0.5, 0.5).resize(-1, -1);
       srcRectangle.scale(1 / src.texture.w, 1 / src.texture.h);
-      transform.transformRectangle(dstRectangle, tmpVertices);
+      transform.transformRectangle(dstRectangle, <Point[]>tmpVertices);
+      for (var i = 0; i < 4; i++) {
+        tmpVertices[i].z = depth;
+      }
       tmpVertices[0].coordinate.x = srcRectangle.x;
       tmpVertices[0].coordinate.y = srcRectangle.y;
       tmpVertices[1].coordinate.x = srcRectangle.x + srcRectangle.w;
@@ -1070,32 +1011,35 @@ module Shumway.GL {
         vertex.kind = WebGLCombinedBrushKind.FillTexture;
         vertex.color.set(color);
         vertex.sampler = sampler;
+        var v = this.context.modelViewProjectionMatrix.mul(vertex);
         vertex.writeTo(this.geometry);
       }
       this.geometry.addQuad();
       return true;
     }
 
-    public fillRectangle(rectangle: Rectangle, color: Color, transform: Matrix) {
-      transform.transformRectangle(rectangle, WebGLCombinedBrush.tmpVertices);
+    public fillRectangle(rectangle: Rectangle, color: Color, transform: Matrix, depth: number = 0) {
+      transform.transformRectangle(rectangle, <Point[]>WebGLCombinedBrush.tmpVertices);
       for (var i = 0; i < 4; i++) {
         var vertex = WebGLCombinedBrush.tmpVertices[i];
         vertex.kind = WebGLCombinedBrushKind.FillColor;
         vertex.color.set(color);
+        vertex.z = depth;
         vertex.writeTo(this.geometry);
       }
       this.geometry.addQuad();
     }
 
-    public draw(drawElements: boolean = true) {
+    public flush(drawElements: boolean = true) {
       var g = this.geometry;
       var p = this.program;
       var gl = this.context.gl;
 
       g.uploadBuffers();
       gl.useProgram(p);
-      gl.uniform1f(p.uniforms.uZ.location, 1);
-      gl.uniformMatrix3fv(p.uniforms.uTransformMatrix.location, false, Matrix.createIdentity().toWebGLMatrix());
+      // gl.uniformMatrix3fv(p.uniforms.uTransformMatrix.location, false, Matrix.createIdentity().toWebGLMatrix());
+      gl.uniformMatrix4fv(p.uniforms.uTransformMatrix3D.location, false, this.context.modelViewProjectionMatrix.toWebGLMatrix());
+
 
       // Bind textures.
       for (var i = 0; i < this.textures.length; i++) {
