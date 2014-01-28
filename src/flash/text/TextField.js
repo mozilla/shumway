@@ -18,8 +18,6 @@
 /*global avm1lib, rgbaObjToStr, rgbIntAlphaToStr, warning, FontDefinition,
   Errors, throwError */
 
-var TextFieldCache = { };
-
 var TextFieldDefinition = (function () {
 
   var htmlParser = document.createElement('p');
@@ -583,35 +581,6 @@ var TextFieldDefinition = (function () {
       } else {
         this.text = '';
       }
-
-      var renderable = TextFieldCache[s.symbolId];
-
-      var bounds = this.getBounds(null);
-      var rect = new Shumway.Geometry.Rectangle(bounds.xMin / 20,
-                                                bounds.yMin / 20,
-                                                (bounds.xMax - bounds.xMin) / 20,
-                                                (bounds.yMax - bounds.yMin) / 20);
-
-      if (!renderable) {
-        renderable = {
-          source: this,
-          getBounds: function () {
-            return rect;
-          },
-          properties: { },
-          render: function (ctx) {
-            ctx.save();
-            ctx.translate(-rect.x, -rect.y);
-            this.source.draw(ctx, 0, new RenderingColorTransform());
-            ctx.restore();
-          }
-        };
-
-        TextFieldCache[s.symbolId] = renderable;
-      }
-
-      this._layer = new Shumway.Layers.Shape(renderable);
-      this._layer.origin = new Shumway.Geometry.Point(rect.x, rect.y);
     },
 
     _getAS2Object: function () {
@@ -625,62 +594,6 @@ var TextFieldDefinition = (function () {
       // TODO: preserve formatting
       var text = this._content.text;
       this.text = text.substring(0, begin) + str + text.substring(end);
-    },
-
-    draw: function (ctx, ratio, colorTransform) {
-      this.ensureDimensions();
-      var bounds = this._bbox;
-      var width = bounds.xMax / 20;
-      var height = bounds.yMax / 20;
-      if (width <= 0 || height <= 0) {
-        return;
-      }
-
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(0, 0, width + 1, height + 1);
-      ctx.clip();
-      if (this._background) {
-        colorTransform.setFillStyle(ctx, this._backgroundColorStr);
-        ctx.fill();
-      }
-      if (this._border) {
-        colorTransform.setStrokeStyle(ctx, this._borderColorStr);
-        ctx.lineCap = "square";
-        ctx.lineWidth = 1;
-        ctx.strokeRect(0.5, 0.5, width|0, height|0);
-      }
-      ctx.closePath();
-
-      if (this._lines.length === 0) {
-        ctx.restore();
-        return;
-      }
-
-      ctx.translate(2, 2);
-      ctx.save();
-      colorTransform.setAlpha(ctx);
-      var runs = this._content.textruns;
-      var offsetY = this._lines[this._scrollV - 1].y;
-      for (var i = 0; i < runs.length; i++) {
-        var run = runs[i];
-        if (run.type === 'f') {
-          ctx.restore();
-          ctx.font = run.format.str;
-          // TODO: only apply color and alpha if it actually changed
-          colorTransform.setFillStyle(ctx, run.format.color);
-          ctx.save();
-          colorTransform.setAlpha(ctx);
-        } else {
-          assert(run.type === 't', 'Invalid run type: ' + run.type);
-          if (run.y < offsetY) {
-            continue;
-          }
-          ctx.fillText(run.text, run.x - this._drawingOffsetH, run.y - offsetY);
-        }
-      }
-      ctx.restore();
-      ctx.restore();
     },
 
     invalidateDimensions: function() {

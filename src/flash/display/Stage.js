@@ -48,6 +48,8 @@ var StageDefinition = (function () {
       this._stageVideos = [];
 
       this._concatenatedTransform.invalid = false;
+
+      this._renderer = new Renderer();
     },
 
     _setup: function setup(ctx, options) {
@@ -74,7 +76,15 @@ var StageDefinition = (function () {
 
       displayObject._dispatchEvent('addedToStage');
 
-      if (displayObject._layer) {
+      if (displayObject.symbol) {
+        if (!displayObject._layer) {
+          var renderable = this._renderer.getRenderable(displayObject.symbol.symbolId);
+          var layer = new Shumway.Layers.Shape(renderable);
+          layer.origin = new Shumway.Geometry.Point(renderable.rect.x,
+                                                    renderable.rect.y);
+          displayObject._layer = layer;
+        }
+
         displayObject._parent._layer.addChild(displayObject._layer);
       }
     },

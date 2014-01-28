@@ -49,58 +49,6 @@ var BitmapDefinition = (function () {
   return {
     // (bitmapData:BitmapData = null, pixelSnapping:String = "auto", smoothing:Boolean = false)
     __class__: "flash.display.Bitmap",
-    draw: function(ctx, ratio, colorTransform) {
-      if (!this._bitmapData) {
-        return;
-      }
-      var scaledImage;
-      ctx.save();
-      if (this._pixelSnapping === 'auto' || this._pixelSnapping === 'always') {
-        var transform = this._getConcatenatedTransform(null, true);
-        var EPSILON = 0.001;
-        var aInt = Math.abs(Math.round(transform.a));
-        var dInt = Math.abs(Math.round(transform.d));
-        var snapPixels;
-        if (aInt >= 1 && aInt <= MAX_SNAP_DRAW_SCALE_TO_CACHE &&
-            dInt >= 1 && dInt <= MAX_SNAP_DRAW_SCALE_TO_CACHE &&
-            Math.abs(Math.abs(transform.a) / aInt - 1) <= EPSILON &&
-            Math.abs(Math.abs(transform.d) / dInt - 1) <= EPSILON &&
-            Math.abs(transform.b) <= EPSILON && Math.abs(transform.c) <= EPSILON) {
-          if (aInt === 1 && dInt === 1) {
-            snapPixels = true;
-          } else {
-            var sizeKey = aInt + 'x' + dInt;
-            if (this._snapImageCache.size !== sizeKey) {
-              this._snapImageCache.size = sizeKey;
-              this._snapImageCache.hits = 0;
-              this._snapImageCache.image = null;
-            }
-            if (++this._snapImageCache.hits === CACHE_SNAP_DRAW_AFTER) {
-              this._cacheSnapImage(sizeKey, aInt, dInt);
-            }
-            scaledImage = this._snapImageCache.image;
-            snapPixels = !!scaledImage;
-          }
-        } else {
-          snapPixels = false;
-        }
-        if (snapPixels) {
-          ctx.setTransform(transform.a < 0 ? -1 : 1, 0,
-                           0, transform.d < 0 ? -1 : 1,
-                           (transform.tx/20)|0, (transform.ty/20)|0);
-        }
-        // TODO this._pixelSnapping === 'always'; does it even make sense in other cases?
-      }
-
-      colorTransform.setAlpha(ctx, true);
-      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
-                                  this._smoothing;
-      ctx.drawImage(scaledImage || this._bitmapData._getDrawable(), 0, 0);
-      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = false;
-      ctx.restore();
-      traceRenderer.value && frameWriter.writeLn("Bitmap.draw() snapping: " + this._pixelSnapping +
-        ", dimensions: " + this._bitmapData._drawable.width + " x " + this._bitmapData._drawable.height);
-    },
     _drawableChanged: function () {
       this._invalidate();
       this._snapImageCache.image = null;
