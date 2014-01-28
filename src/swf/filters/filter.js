@@ -174,7 +174,6 @@ function alphaFilter(buffer, color) {
 }
 
 function scaleAlphaChannel(buffer, value) {
-  assert (isNumeric(value));
   for (var ptr = 0, end = buffer.length; ptr < end; ptr += 4) {
     buffer[ptr + 3] *= value;
   }
