@@ -81,10 +81,16 @@ module.exports = function(grunt) {
     updateFlashRefs('test/harness/slave.html', 'src/flash');
   });
 
+  grunt.registerTask('server', function () {
+    var done = this.async();
+    grunt.util.spawn({cmd: 'python', args: ['utils/webserver.py']}, function () {
+      done();
+    });
+  });
+
   // temporary make/python calls based on grunt-exec
   grunt.registerTask('reftest', ['exec:reftest']);
   grunt.registerTask('makeref', ['exec:makeref']);
-  grunt.registerTask('server', ['exec:webserver']);
   grunt.registerTask('build-web', ['exec:build_bundle', 'exec:build_extension', 'exec:build_web']);
   grunt.registerTask('build-extension', ['exec:build_bundle', 'exec:build_extension']);
 };
