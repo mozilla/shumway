@@ -14,32 +14,6 @@
  * limitations under the License.
  */
 
-var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
-var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
-var disableRendering = rendererOptions.register(new Option("drv", "disableRendering", "boolean", false, "disable rendering"));
-var disableMouse = rendererOptions.register(new Option("dmv", "disableMouse", "boolean", false, "disable mouse handling"));
-//var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
-//var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
-var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
-var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", false, "force hidpi"));
-var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", true, "skip frame when not on time"));
-var hud = rendererOptions.register(new Option("", "hud", "boolean", false, "show hud mode"));
-var dummyAnimation = rendererOptions.register(new Option("", "dummy", "boolean", false, "show test balls animation"));
-
-var enableConstructChildren = rendererOptions.register(new Option("", "constructChildren", "boolean", true, "Construct Children"));
-var enableEnterFrame = rendererOptions.register(new Option("", "enterFrame", "boolean", true, "Enter Frame"));
-var enableAdvanceFrame = rendererOptions.register(new Option("", "advanceFrame", "boolean", true, "Advance Frame"));
-
-var stageOptions = coreOptions.register(new OptionSet("Stage Renderer Options"));
-var perspectiveCamera = stageOptions.register(new Option("", "pc", "boolean", false, "Use perspective camera."));
-
-var perspectiveCameraFOV = stageOptions.register(new Option("", "pcFOV", "number", 60, "Perspective Camera FOV."));
-var perspectiveCameraDistance = stageOptions.register(new Option("", "pcDistance", "number", 1, "Perspective Camera Distance."));
-var perspectiveCameraAngle = stageOptions.register(new Option("", "pcAngle", "number", 0, "Perspective Camera Angle."));
-var perspectiveCameraAngleRotate = stageOptions.register(new Option("", "pcRotate", "boolean", false, "Rotate Use perspective camera."));
-var perspectiveCameraSpacing = stageOptions.register(new Option("", "pcSpacing", "number", 0.1, "Element Spacing."));
-var perspectiveCameraSpacingInflate = stageOptions.register(new Option("", "pcInflate", "boolean", false, "Rotate Use perspective camera."));
-
 var timeline;
 var hudTimeline;
 
