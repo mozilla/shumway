@@ -253,10 +253,12 @@ var StageDefinition = (function () {
           that._processInvalidations();
           timelineLeave("INVALIDATE");
 
-          if (sceneOptions.webGL) {
-            timelineEnter("WebGL");
-            webGLStageRenderer.render(stage, sceneOptions);
-            timelineLeave("WebGL");
+          if (!disableRendering.value) {
+            if (sceneOptions.webGL) {
+              timelineEnter("WebGL");
+              webGLStageRenderer.render(stage, sceneOptions);
+              timelineLeave("WebGL");
+            }
           }
           if (sceneOptions.canvas2D) {
             timelineEnter("Canvas2D");
@@ -265,18 +267,20 @@ var StageDefinition = (function () {
           }
         }
 
-        if (that._mouseMoved) {
-          that._mouseMoved = false;
+        if (!disableMouse.value) {
+          if (that._mouseMoved) {
+            that._mouseMoved = false;
 
-          if (that._mouseOver) {
-            timelineEnter("MOUSE");
-            that._handleMouse();
-            timelineLeave("MOUSE");
+            if (that._mouseOver) {
+              timelineEnter("MOUSE");
+              that._handleMouse();
+              timelineLeave("MOUSE");
 
-            canvas.style.cursor = that._cursor;
+              canvas.style.cursor = that._cursor;
+            }
+          } else {
+            that._handleMouseButtons();
           }
-        } else {
-          that._handleMouseButtons();
         }
 
         timelineLeave("FRAME");
