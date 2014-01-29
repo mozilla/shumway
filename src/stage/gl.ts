@@ -830,10 +830,15 @@ module Shumway.GL {
       this.source = source;
     }
 
+    /**
+     * Gets the tiles covered by the specified |query| rectangle and transformed by the given |transform| matrix.
+     */
     getTiles(query: Rectangle, transform: Matrix): Tile [] {
-      var level = Math.round(Math.log(1 / transform.getScaleX()) / Math.LN2);
+      // Figure out the scale of the transform by averaging out the X and Y scale factors.
+      var transformScale = (transform.getScaleX() + transform.getScaleY()) / 2;
+      // Use log2(1 / transformScale) to figure out the tile level.
+      var level = Math.round(Math.log(1 / transformScale) / Math.LN2);
       var scale = 1 << level;
-      // var scale = (1 / transform.getScaleX()) | 0;
       var cache = this.cacheLevels[level];
       if (!cache) {
         var bounds = this.source.getBounds();
@@ -874,6 +879,16 @@ module Shumway.GL {
       return bounds;
     }
 
+    /**
+     * This caches raster versions of the specified |uncachedTiles| in GPU textures. The tiles are generated
+     * using a scratch canvas2D context (|scratchContext|) and then uploaded to the GPU via |cacheImageCallback|.
+     * Ideally, we want to render all tiles in one go, but they may not fit in the |scratchContext| in which case
+     * we need to render the source shape several times.
+     *
+     * TODO: Find a good algorithm to do this since it's quite important that we don't repaint too many times.
+     * Spending some time trying to figure out the *optimal* solution may pay-off since painting is soo expensive.
+     */
+
     private cacheTiles (
       scratchContext: CanvasRenderingContext2D,
       uncachedTiles: Tile [],
@@ -907,6 +922,7 @@ module Shumway.GL {
         tile.cachedTextureRegion = cacheImageCallback(scratchContext, region);
       }
       if (remainingUncachedTiles) {
+        // This is really dumb at the moment; if we have some tiles left over, partition the tile set in half and recurse.
         if (remainingUncachedTiles.length >= 2) {
           var a = remainingUncachedTiles.slice(0, remainingUncachedTiles.length / 2 | 0);
           var b = remainingUncachedTiles.slice(a.length);
