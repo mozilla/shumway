@@ -184,6 +184,16 @@ module Shumway.Layers {
         notImplemented();
       }
     }
+
+    public getDepth(): number {
+      var depth = 0;
+      var frame = this;
+      while (frame.parent) {
+        depth ++;
+        frame = frame.parent;
+      }
+      return depth;
+    }
   }
 
   export class FrameContainer extends Frame {

@@ -1283,6 +1283,7 @@ module Shumway.Geometry {
       free(region: Region) {
         var cell = <Grid.Cell>region;
         assert (cell.allocator === this);
+        assert (this._cells[cell.index] === region);
         this._cells[cell.index] = null;
       }
     }
@@ -1508,6 +1509,7 @@ module Shumway.Geometry {
     x: number;
     y: number;
     index: number;
+    scale: number;
     bounds: Rectangle;
     cachedTextureRegion: Shumway.Layers.ITextureRegion;
     color: Shumway.GL.Color;
@@ -1520,10 +1522,11 @@ module Shumway.Geometry {
       this.bounds.getCorners(Tile.corners);
       return this._obb = new OBB(Tile.corners);
     }
-    constructor(index: number, x: number, y: number, size: number) {
+    constructor(index: number, x: number, y: number, size: number, scale: number) {
       this.index = index;
       this.x = x;
       this.y = y;
+      this.scale = scale;
       this.bounds = new Rectangle(x * size, y * size, size, size);
     }
   }
@@ -1533,11 +1536,13 @@ module Shumway.Geometry {
     h: number;
     size: number;
     rows: number;
+    scale: number;
     columns: number;
     tiles: Tile [];
     private static points = Point.createEmptyPoints(4);
-    constructor(w: number, h: number, size: number) {
+    constructor(w: number, h: number, size: number, scale: number) {
       this.size = size;
+      this.scale = scale;
       this.w = w;
       this.h = h;
       this.rows = Math.ceil(h / size);
@@ -1546,14 +1551,14 @@ module Shumway.Geometry {
       var index = 0;
       for (var y = 0; y < this.rows; y++) {
         for (var x = 0; x < this.columns; x++) {
-          this.tiles.push(new Tile(index++, x, y, size));
+          this.tiles.push(new Tile(index++, x, y, size, scale));
         }
       }
     }
 
     getTiles(query: Rectangle, transform: Matrix): Tile [] {
       var tileCount = this.columns * this.rows;
-      if (tileCount < 40) {
+      if (true || tileCount < 40) {
         // If we have only a few tiles we're better off using the dumber algorithm.
         // TODO: Fine-tune these heuristics.
         return this.getFewTiles(query, transform, tileCount > 10);

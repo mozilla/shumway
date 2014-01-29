@@ -110,7 +110,7 @@
 
 
 
-    function shuffle(target, easing) {
+    function shuffle2(target, easing) {
       var tween = new TWEEN.Tween(target);
       tween.easing(easing);
       function next() {
@@ -120,11 +120,13 @@
         var y = Math.max(0, Math.random() * stage.h);
 
         var s = 1;
-        x = target.x + 1;
+        // x = target.x + 1;
         y = target.y;
+        x = sceneOptions.move;
         // var s = 0.5;
         var s = 0.1 + Math.random() * 2;
-        var s = 0.5 + Math.random();
+        var s = 0.5 + Math.random() * 10;
+        // s = 3.1 * 100;
 //        var s = 1;
 //        var s = (Math.random() - 0.5) * 2;
         tween.easing(easing);
@@ -135,7 +137,8 @@
           y: y,
           scaleX: s,
           scaleY: s,
-          rotation: (Math.random() - 0.5) * 180 * 1,
+          // rotation: (Math.random() - 0.5) * 180 * 1,
+          rotation: 1,
           // alpha: Math.random()
           alpha: 1
         }, 100000 / sceneOptions.speed).start();
@@ -145,7 +148,7 @@
       tween.start();
     }
 
-    function shuffle2(target, easing) {
+    function shuffle(target, easing) {
       var tween = new TWEEN.Tween(target);
       tween.easing(easing);
       function next() {
@@ -165,6 +168,7 @@
 
         // var x = target.x + 50;
         // var s = 1;
+        var s = 10;
         tween.easing(easing);
         tween.delay(Math.random() * (500000 / sceneOptions.movement));
         // tween.delay(1000);
@@ -251,6 +255,8 @@
       snap: false,
       alpha: false,
 
+      move: 0.1,
+
       perspectiveCamera: false,
       perspectiveCameraFOV: 30,
       perspectiveCameraDistance: 1,
@@ -317,9 +323,10 @@
       c.push(f.add(sceneOptions, "imageSmoothing"));
       c.push(f.add(sceneOptions, "snap"));
       c.push(f.add(sceneOptions, "alpha"));
+      c.push(f.add(sceneOptions, "move"));
       c.push(f.add(sceneOptions, "perspectiveCamera"));
       c.push(f.add(sceneOptions, "perspectiveCameraFOV", 1, 160).step(0.1).name("fov"));
-      c.push(f.add(sceneOptions, "perspectiveCameraAngle", 0, 10).step(0.1).name("angle"));
+      c.push(f.add(sceneOptions, "perspectiveCameraAngle", 0, 360).step(0.1).name("angle"));
       c.push(f.add(sceneOptions, "perspectiveCameraDistance", 1, 100).step(0.1).name("distance"));
       c.push(f.add(sceneOptions, "frameSpacing", 0.1, 100).step(0.1).name("spacing"));
       f.open();
@@ -377,9 +384,11 @@
       // document.getElementById("container").appendChild(fontAtlas.canvas);
 
       for (var i = 0; i < sceneOptions.text; i++) {
-        var frame = new Shape(new Shumway.TextShape(Shumway.randomText(1000)));
+        var frame = new Shape(new Shumway.TextShape(Shumway.randomText(1)));
         frame.x = (Math.random()) * canvas.width;
         frame.y = (Math.random()) * canvas.height;
+        frame.x = 0;
+        frame.y = 0;
         // frame.alpha = Math.random();
         stage.addChild(frame);
         shuffle(frame, TWEEN.Easing.Exponential.Out);

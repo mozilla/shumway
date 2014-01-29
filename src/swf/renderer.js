@@ -44,6 +44,9 @@ var perspectiveCameraAngleRotate = stageOptions.register(new Option("", "pcRotat
 var perspectiveCameraSpacing = stageOptions.register(new Option("", "pcSpacing", "number", 0.1, "Element Spacing."));
 var perspectiveCameraSpacingInflate = stageOptions.register(new Option("", "pcInflate", "boolean", false, "Rotate Use perspective camera."));
 
+var drawTiles = stageOptions.register(new Option("", "drawTiles", "boolean", false, "Draw tiles."));
+var drawTextures = stageOptions.register(new Option("", "drawTextures", "boolean", false, "Draw textures."));
+
 if (typeof FirefoxCom !== 'undefined') {
   turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
   hud.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.hud', def: false});

@@ -203,13 +203,15 @@ var StageDefinition = (function () {
         sceneOptions.perspectiveCamera = perspectiveCamera.value;
         sceneOptions.perspectiveCameraFOV = perspectiveCameraFOV.value;
         sceneOptions.perspectiveCameraDistance = perspectiveCameraDistance.value;
+        sceneOptions.drawTiles = drawTiles.value;
+        sceneOptions.drawTextures = drawTextures.value;
         if (perspectiveCameraAngleRotate.value) {
           sceneOptions.perspectiveCameraAngle = Math.sin(Date.now() / 1000) * 100;
         } else {
           sceneOptions.perspectiveCameraAngle = perspectiveCameraAngle.value;
         }
         if (perspectiveCameraSpacingInflate.value) {
-          sceneOptions.frameSpacing = (1.01 + Math.sin(Date.now() / 1000));
+          sceneOptions.frameSpacing = (1.01 + Math.sin(Date.now() / 1000)) * 5;
         } else {
           sceneOptions.frameSpacing = sceneOptions.perspectiveCamera ? Math.max(0.01, perspectiveCameraSpacing.value) : 0.1;
         }

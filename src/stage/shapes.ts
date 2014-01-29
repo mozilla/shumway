@@ -99,17 +99,19 @@ module Shumway {
   }
 
   export var Shapes: IRenderable [] = [
-    new VectorShape(loadShape("sword.json")),
+//    new VectorShape(loadShape("sword.json")),
 //    new VectorShape(loadShape("decorate.json")),
+//    new VectorShape(loadShape("guy.json")),
 //    new VectorShape(loadShape("background.json")),
 //    new VectorShape(loadShape("fire.json")),
 //    new VectorShape(loadShape("large.json")),
 //    new VectorShape(loadShape("wide.json"))
+    new VectorShape(loadShape("flower.json"))
   ];
 
-//  loadShape("assets.json").forEach(function (shape) {
-//    Shapes.push(new VectorShape(shape));
-//  });
+  loadShape("assets.json").forEach(function (shape) {
+    Shapes.push(new VectorShape(shape));
+  });
 
 //  Shapes = [];
 //  Shapes.push (
