@@ -1082,7 +1082,7 @@ var tagHandler=(function (global) {
       $5.push($7);
     }
     if (type === 3) {
-      var $8 = $.higlightColor = {};
+      var $8 = $.highlightColor = {};
       rgba($bytes, $stream, $8, swfVersion, tagCode);
     }
     if (type === 4 || type === 7) {
