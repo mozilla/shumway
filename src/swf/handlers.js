@@ -1102,17 +1102,11 @@ var tagHandler=(function (global) {
     $.innerShadow = readUb($bytes, $stream, 1);
     $.knockout = readUb($bytes, $stream, 1);
     $.compositeSource = readUb($bytes, $stream, 1);
-    if (type === 3) {
+    if (type === 3 || type === 4 || type === 7) {
       $.onTop = readUb($bytes, $stream, 1);
-    }
-    else {
-      var reserved = readUb($bytes, $stream, 1);
-    }
-    if (type === 4 || type === 7) {
       $.passes = readUb($bytes, $stream, 4);
-    }
-    else {
-      var reserved = readUb($bytes, $stream, 4);
+    } else {
+      $.passes = readUb($bytes, $stream, 5);
     }
   }
   function filterBlur($bytes, $stream, $, swfVersion, tagCode) {
