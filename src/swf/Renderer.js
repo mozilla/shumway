@@ -342,6 +342,11 @@ RenderableGradient.prototype.render = function render(ctx) {
 function RenderablePattern(symbol, renderer) {
   var bitmap = renderer.getRenderable(style.bitmapId);
 
+  if (!bitmap) {
+    this.fillStyle = 'green';
+    return;
+  }
+
   var rect = bitmap.rect;
   this.rect = new Shumway.Geometry.Rectangle(rect.x,
                                              rect.y,
