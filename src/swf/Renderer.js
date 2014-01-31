@@ -131,7 +131,7 @@ Renderer.prototype.undefineRenderable = function undefineRenderable(id) {
 function RenderableShape(symbol, renderer) {
   this.commands = symbol.commands;
   this.data = symbol.data;
-  this.properties = { };
+  this.properties = { renderer: renderer };
 
   var bbox = symbol.strokeBbox || symbol.bbox;
 
@@ -275,36 +275,36 @@ RenderableShape.prototype.render = function render(ctx) {
     if (formOpen) {
       ctx.lineTo(formOpenX, formOpenY);
     }
-    //if (!clip) {
-      var fillStyle = path.fillStyle;
-      if (fillStyle) {
+    var fillStyle = path.fillStyle;
+    if (fillStyle) {
+      if (isNaN(fillStyle.style)) {
         ctx.fillStyle = fillStyle.style;
-        ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
-                                    fillStyle.smooth;
-        var m = fillStyle.transform;
-        ctx.save();
-        if (m) {
-          ctx.transform(m.a, m.b, m.c, m.d, m.e/20, m.f/20);
-        }
-        ctx.fill();
-        ctx.restore();
+      } else {
+        ctx.fillStyle = this.properties.renderer.getRenderable(fillStyle.style).fillStyle;
       }
-      var lineStyle = path.lineStyle;
-      // TODO: All widths except for `undefined` and `NaN` draw something
-      if (lineStyle) {
-        ctx.strokeStyle = lineStyle.style;
-        ctx.save();
-        // Flash's lines are always at least 1px/20twips
-        ctx.lineWidth = Math.max(lineStyle.width/20, 1);
-        ctx.lineCap = lineStyle.lineCap;
-        ctx.lineJoin = lineStyle.lineJoin;
-        ctx.miterLimit = lineStyle.miterLimit;
-        ctx.stroke();
-        ctx.restore();
+      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
+                                  fillStyle.smooth;
+      var m = fillStyle.transform;
+      ctx.save();
+      if (m) {
+        ctx.transform(m.a, m.b, m.c, m.d, m.e/20, m.f/20);
       }
-    //} else {
-    //  ctx.fill();
-    //}
+      ctx.fill();
+      ctx.restore();
+    }
+    var lineStyle = path.lineStyle;
+    // TODO: All widths except for `undefined` and `NaN` draw something
+    if (lineStyle) {
+      ctx.strokeStyle = lineStyle.style;
+      ctx.save();
+      // Flash's lines are always at least 1px/20twips
+      ctx.lineWidth = Math.max(lineStyle.width/20, 1);
+      ctx.lineCap = lineStyle.lineCap;
+      ctx.lineJoin = lineStyle.lineJoin;
+      ctx.miterLimit = lineStyle.miterLimit;
+      ctx.stroke();
+      ctx.restore();
+    }
     ctx.closePath();
   }
 
@@ -312,11 +312,11 @@ RenderableShape.prototype.render = function render(ctx) {
 };
 
 function RenderableGradient(symbol, renderer) {
-  this.rect = new Shumway.Geometry.Rectangle;
+  this.rect = new Shumway.Geometry.Rectangle(0, 0, 0, 0);
   this.properties = { };
 
   var gradient;
-  if (style.type === GRAPHICS_FILL_LINEAR_GRADIENT) {
+  if (symbol.type === GRAPHICS_FILL_LINEAR_GRADIENT) {
     gradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
   } else {
     gradient = factoryCtx.createRadialGradient((symbol.focalPoint | 0) / 20,
@@ -325,34 +325,17 @@ function RenderableGradient(symbol, renderer) {
 
   var records = symbol.records;
   for (var i = 0; i < records.length; i++) {
-    var record = records[j];
+    var record = records[i];
     var colorStr = rgbaObjToStr(record.color);
     gradient.addColorStop(record.ratio / 255, colorStr);
   }
 
-  this.gradient = gradient;
+  this.fillStyle = gradient;
 }
 RenderableGradient.prototype.getBounds = function getBounds() {
   return this.rect;
 };
 RenderableGradient.prototype.render = function render(ctx) {
-  // TODO
-};
-
-function RenderableRadialGradient(focalPoint, colorStops) {
-  this.rect = new Shumway.Geometry.Rectangle();
-  this.properties = { };
-
-  var gradient = factoryCtx.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
-  for (var i = 0; i < colorStops.length; i++) {
-    gradient.addColorStop(colorStops[i].ratio, colorStops[i].color);
-  }
-  this.gradient = gradient;
-}
-RenderableRadialGradient.prototype.getBounds = function getBounds() {
-  return this.rect;
-};
-RenderableRadialGradient.prototype.render = function render(ctx) {
   // TODO
 };
 
@@ -602,7 +585,7 @@ function initStyle(style, renderer) {
       fail('invalid fill style', 'shape');
   }
 
-  style.style = renderer.getRenderable(id).gradient;
+  style.style = id;
 }
 
 /**
