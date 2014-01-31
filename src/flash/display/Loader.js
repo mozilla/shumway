@@ -477,6 +477,10 @@ var LoaderDefinition = (function () {
       //};
       //img.src = URL.createObjectURL(imageInfo.data);
       //delete imageInfo.data;
+
+      loader._stage._renderer.defineRenderable(loader._stage._renderer.nextId++,
+                                               symbol.type,
+                                               symbol);
     },
     _commitSymbol: function (symbol) {
       var dictionary = this._dictionary;

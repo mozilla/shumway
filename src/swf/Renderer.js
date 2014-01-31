@@ -348,16 +348,13 @@ function RenderablePattern(symbol, renderer) {
   }
 
   var rect = bitmap.rect;
-  this.rect = new Shumway.Geometry.Rectangle(rect.x,
-                                             rect.y,
-                                             rect.width,
-                                             rect.height);
+  this.rect = new Shumway.Geometry.Rectangle(rect.x, rect.y, rect.w, rect.h);
 
   var repeat = (symbol.type === GRAPHICS_FILL_REPEATING_BITMAP) ||
                (symbol.type === GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP);
 
-  this.pattern = factoryCtx.createPattern(bitmap.img,
-                                          repeat ? 'repeat' : 'no-repeat');
+  this.fillStyle = factoryCtx.createPattern(bitmap.img,
+                                            repeat ? 'repeat' : 'no-repeat');
 }
 RenderablePattern.prototype.getBounds = function getBounds() {
   return this.rect;
@@ -498,7 +495,7 @@ RenderableFont.prototype.render = function render(ctx) {
 
 function RenderableText(symbol, renderer) {
   this.properties = { };
-  this.rect = new Shumway.Geometry.Rectangle();
+  this.rect = new Shumway.Geometry.Rectangle(0, 0, 0, 0);
 
   if (symbol.data) {
     this.render = new Function('c', symbol.data);
