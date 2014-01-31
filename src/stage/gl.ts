@@ -6,6 +6,9 @@ module Shumway.GL {
   var SCRATCH_CANVAS_SIZE = 1024;
   var TILE_SIZE = 128;
 
+  var MIN_CACHE_LEVELS = 4;
+  var MAX_CACHE_LEVELS = 4;
+
   enum TraceLevel {
     None,
     Brief,
@@ -37,6 +40,8 @@ module Shumway.GL {
 
   import radianToDegrees = Shumway.Geometry.radianToDegrees;
   import degreesToRadian = Shumway.Geometry.degreesToRadian;
+
+  import clamp = Shumway.Util.clamp;
 
   function count(name) {
     Counter.count(name);
@@ -838,11 +843,13 @@ module Shumway.GL {
       var transformScale = (transform.getScaleX() + transform.getScaleY()) / 2;
       // Use log2(1 / transformScale) to figure out the tile level.
       var level = Math.round(Math.log(1 / transformScale) / Math.LN2);
-      var scale = 1 << level;
-      var cache = this.cacheLevels[level];
+      level = clamp(level, -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
+      var scale = Math.pow(2, level);
+      var levelIndex = MIN_CACHE_LEVELS + level;
+      var cache = this.cacheLevels[levelIndex];
       if (!cache) {
         var bounds = this.source.getBounds();
-        cache = this.cacheLevels[level] = new TileCache(bounds.w * scale, bounds.h * scale, TILE_SIZE, scale);
+        cache = this.cacheLevels[levelIndex] = new TileCache(bounds.w * scale, bounds.h * scale, TILE_SIZE, scale);
       }
       var t = transform.clone();
       t.scale(scale, scale);

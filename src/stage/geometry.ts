@@ -1,14 +1,7 @@
 /// <reference path='all.ts'/>
 module Shumway.Geometry {
 
-  function clamp(x: number, min: number, max: number): number {
-    if (x < min) {
-      return min;
-    } else if (x > max) {
-      return max;
-    }
-    return x;
-  }
+  import clamp = Shumway.Util.clamp;
 
   export function radianToDegrees(r) {
     return r * 180 / Math.PI;
