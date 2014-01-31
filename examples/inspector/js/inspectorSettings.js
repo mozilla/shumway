@@ -61,9 +61,8 @@ function updateAVM2State() {
   enableRegisterAllocator.value = state.allocator;
   traceExecution.value = state.trace ? 2 : 0;
   traceRenderer.value = state.trace ? 2 : 0;
-  disableRenderVisitor.value = state.render ? false : true;
-  disableMouseVisitor.value = state.mouse ? false : true;
-  showQuadTree.value = state.qtree ? true : false;
+  disableRendering.value = state.render ? false : true;
+  disableMouse.value = state.mouse ? false : true;
   turboMode.value = state.turbo ? true : false;
   //showRedrawRegions.value = state.redraw ? true : false;
   //renderAsWireframe.value = state.wireframe ? true : false;

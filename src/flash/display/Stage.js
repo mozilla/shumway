@@ -48,6 +48,8 @@ var StageDefinition = (function () {
       this._stageVideos = [];
 
       this._concatenatedTransform.invalid = false;
+
+      this._renderer = new Renderer();
     },
 
     _setup: function setup(ctx, options) {
@@ -74,7 +76,15 @@ var StageDefinition = (function () {
 
       displayObject._dispatchEvent('addedToStage');
 
-      if (displayObject._layer) {
+      if (displayObject.symbol) {
+        if (!displayObject._layer) {
+          var renderable = this._renderer.getRenderable(displayObject.symbol.symbolId);
+          var layer = new Shumway.Layers.Shape(renderable);
+          layer.origin = new Shumway.Geometry.Point(renderable.rect.x,
+                                                    renderable.rect.y);
+          displayObject._layer = layer;
+        }
+
         displayObject._parent._layer.addChild(displayObject._layer);
       }
     },
@@ -148,6 +158,7 @@ var StageDefinition = (function () {
                                                                 m.d,
                                                                 m.tx / 20,
                                                                 m.ty / 20);
+            node._layer.alpha = node._alpha;
           }
         }
       }
@@ -186,7 +197,7 @@ var StageDefinition = (function () {
         clear: true,
         imageSmoothing: true,
         snap: false,
-        alpha: false,
+        alpha: true
       };
 
       webGLContext = new WebGLContext(canvas, sceneOptions);
@@ -255,10 +266,12 @@ var StageDefinition = (function () {
           that._processInvalidations();
           timelineLeave("INVALIDATE");
 
-          if (sceneOptions.webGL) {
-            timelineEnter("WebGL");
-            webGLStageRenderer.render(stage, sceneOptions);
-            timelineLeave("WebGL");
+          if (!disableRendering.value) {
+            if (sceneOptions.webGL) {
+              timelineEnter("WebGL");
+              webGLStageRenderer.render(stage, sceneOptions);
+              timelineLeave("WebGL");
+            }
           }
           if (sceneOptions.canvas2D) {
             timelineEnter("Canvas2D");
@@ -267,18 +280,20 @@ var StageDefinition = (function () {
           }
         }
 
-        if (that._mouseMoved) {
-          that._mouseMoved = false;
+        if (!disableMouse.value) {
+          if (that._mouseMoved) {
+            that._mouseMoved = false;
 
-          if (that._mouseOver) {
-            timelineEnter("MOUSE");
-            that._handleMouse();
-            timelineLeave("MOUSE");
+            if (that._mouseOver) {
+              timelineEnter("MOUSE");
+              that._handleMouse();
+              timelineLeave("MOUSE");
 
-            canvas.style.cursor = that._cursor;
+              canvas.style.cursor = that._cursor;
+            }
+          } else {
+            that._handleMouseButtons();
           }
-        } else {
-          that._handleMouseButtons();
         }
 
         timelineLeave("FRAME");

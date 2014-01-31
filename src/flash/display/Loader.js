@@ -32,10 +32,6 @@ var LoaderDefinition = (function () {
   var WORKERS_ENABLED = true;
   var LOADER_PATH = $RELEASE ? 'shumway-worker.js' : 'swf/resourceloader.js';
 
-  var head = document.head;
-  head.insertBefore(document.createElement('style'), head.firstChild);
-  var style = document.styleSheets[0];
-
   var def = {
     __class__: 'flash.display.Loader',
 
@@ -446,13 +442,13 @@ var LoaderDefinition = (function () {
     },
     _commitImage : function (imageInfo) {
       var loader = this;
-      var imgPromiseResolve;
-      var imgPromise = this._lastPromise = new Promise(function (resolve) {
-        imgPromiseResolve = resolve;
-      });
-      var img = new Image();
-      imageInfo.props.img = img;
-      img.onload = function() {
+      //var imgPromiseResolve;
+      //var imgPromise = this._lastPromise = new Promise(function (resolve) {
+      //  imgPromiseResolve = resolve;
+      //});
+      //var img = new Image();
+      //imageInfo.props.img = img;
+      //img.onload = function() {
         var Bitmap = avm2.systemDomain.getClass("flash.display.Bitmap");
         var BitmapData = avm2.systemDomain.getClass("flash.display.BitmapData");
 
@@ -472,15 +468,19 @@ var LoaderDefinition = (function () {
         loader._invalidateBounds();
         loader._content = image;
 
-        imgPromiseResolve(imageInfo);
+      //  imgPromiseResolve(imageInfo);
 
         var loaderInfo = loader._contentLoaderInfo;
         loaderInfo._width = image.width;
         loaderInfo._height = image.height;
         loaderInfo._dispatchEvent("init");
-      };
-      img.src = URL.createObjectURL(imageInfo.data);
-      delete imageInfo.data;
+      //};
+      //img.src = URL.createObjectURL(imageInfo.data);
+      //delete imageInfo.data;
+
+      loader._stage._renderer.defineRenderable(loader._stage._renderer.nextId++,
+                                               symbol.type,
+                                               symbol);
     },
     _commitSymbol: function (symbol) {
       var dictionary = this._dictionary;
@@ -560,34 +560,6 @@ var LoaderDefinition = (function () {
         props.buttonActions = symbol.buttonActions;
         break;
       case 'font':
-        var charset = fromCharCode.apply(null, symbol.codes);
-        if (charset) {
-          style.insertRule(
-            '@font-face{' +
-              'font-family:"' + symbol.uniqueName + '";' +
-              'src:url(data:font/opentype;base64,' + btoa(symbol.data) + ')' +
-              '}',
-            style.cssRules.length
-          );
-
-          // HACK non-Gecko browsers need time to load fonts
-          if (!/Mozilla\/5.0.*?rv:(\d+).*? Gecko/.test(window.navigator.userAgent)) {
-            var testDiv = document.createElement('div');
-            testDiv.setAttribute('style', 'position: absolute; top: 0; right: 0;' +
-                                          'visibility: hidden; z-index: -500;' +
-                                          'font-family:"' + symbol.uniqueName + '";');
-            testDiv.textContent = 'font test';
-            document.body.appendChild(testDiv);
-
-            var fontPromise = new Promise(function (resolve) {
-              setTimeout(function () {
-                resolve();
-                document.body.removeChild(testDiv);
-              }, 200);
-            });
-            promiseQueue.push(fontPromise);
-          }
-        }
         className = 'flash.text.Font';
         props.name = symbol.name;
         props.uniqueName = symbol.uniqueName;
@@ -598,45 +570,13 @@ var LoaderDefinition = (function () {
         this._registerFont(className, props);
         break;
       case 'image':
-        var img = new Image();
-        var imgPromiseResolve;
-        var imgPromise = new Promise(function (resolve) {
-          imgPromiseResolve = resolve;
-        });
-        img.onload = function () {
-          if (symbol.mask) {
-            // Write the symbol image into new canvas and apply
-            // the symbol mask.
-            var maskCanvas = document.createElement('canvas');
-            maskCanvas.width = symbol.width;
-            maskCanvas.height = symbol.height;
-            var maskContext = maskCanvas.getContext('2d');
-            maskContext.drawImage(img, 0, 0);
-            var maskImageData = maskContext.getImageData(0, 0, symbol.width, symbol.height);
-            var maskImageDataBytes = maskImageData.data;
-            var symbolMaskBytes = symbol.mask;
-            var length = maskImageData.width * maskImageData.height;
-            for (var i = 0, j = 3; i < length; i++, j += 4) {
-              maskImageDataBytes[j] = symbolMaskBytes[i];
-            }
-            maskContext.putImageData(maskImageData, 0, 0);
-            // Use the result canvas as symbol image
-            props.img = maskCanvas;
-          }
-          imgPromiseResolve();
-        };
-        img.src = URL.createObjectURL(symbol.data);
-        promiseQueue.push(imgPromise);
         className = 'flash.display.Bitmap';
-        props.img = img;
         props.width = symbol.width;
         props.height = symbol.height;
         break;
       case 'label':
-        var drawFn = new Function('c,r,ct', symbol.data);
         className = 'flash.text.StaticText';
         props.bbox = symbol.bbox;
-        props.draw = drawFn;
         break;
       case 'text':
         props.bbox = symbol.bbox;
@@ -753,6 +693,10 @@ var LoaderDefinition = (function () {
         };
         dictionaryResolved[symbol.id] = symbolInfo;
         symbolPromiseResolve(symbolInfo);
+
+        props.loader._stage._renderer.defineRenderable(symbol.id,
+                                                       symbol.type,
+                                                       symbol);
       });
     },
     _registerFont: function (className, props) {

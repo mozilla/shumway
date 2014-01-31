@@ -16,10 +16,6 @@
  * limitations under the License.
  */
 
-/* global finishShapePath */
-
-var ShapeCache = { };
-
 var ShapeDefinition = (function () {
   var def = {
     __class__: 'flash.display.Shape',
@@ -30,44 +26,9 @@ var ShapeDefinition = (function () {
       var s = this.symbol;
       if (s && s.paths) {
         graphics._paths = s.paths;
-        // TODO: this really should be done only once, but I don't know how I
-        // can know when all the required data has been loaded.
-        for (var i = 0; i < s.paths.length; i++) {
-          s.paths[i] = finishShapePath(s.paths[i], s.dictionaryResolved);
-        }
         graphics.bbox = s.bbox;
         graphics.strokeBbox = s.strokeBbox;
-        if (this._stage && this._stage._quality === 'low' && !graphics._bitmap)
-          graphics._cacheAsBitmap(this._bbox);
         this.ratio = s.ratio || 0;
-
-        var renderable = ShapeCache[s.symbolId];
-
-        var bounds = graphics._getBounds(true);
-        var rect = new Shumway.Geometry.Rectangle(bounds.xMin / 20,
-                                                  bounds.yMin / 20,
-                                                  (bounds.xMax - bounds.xMin) / 20,
-                                                  (bounds.yMax - bounds.yMin) / 20);
-
-        if (!renderable) {
-          renderable = {
-            getBounds: function () {
-              return rect;
-            },
-            properties: { },
-            render: function (ctx) {
-              ctx.save();
-              ctx.translate(-rect.x, -rect.y);
-              graphics.draw(ctx, false, 0, new RenderingColorTransform());
-              ctx.restore();
-            }
-          };
-
-          ShapeCache[s.symbolId] = renderable;
-        }
-
-        this._layer = new Shumway.Layers.Shape(renderable);
-        this._layer.origin = new Shumway.Geometry.Point(rect.x, rect.y);
       }
     }
   };
