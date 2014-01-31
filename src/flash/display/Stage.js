@@ -158,6 +158,7 @@ var StageDefinition = (function () {
                                                                 m.d,
                                                                 m.tx / 20,
                                                                 m.ty / 20);
+            node._layer.alpha = node._alpha;
           }
         }
       }
@@ -196,7 +197,7 @@ var StageDefinition = (function () {
         clear: true,
         imageSmoothing: true,
         snap: false,
-        alpha: false,
+        alpha: true
       };
 
       webGLContext = new WebGLContext(canvas, sceneOptions);
