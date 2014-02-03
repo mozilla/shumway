@@ -6,8 +6,8 @@ module Shumway.GL {
   var SCRATCH_CANVAS_SIZE = 1024;
   var TILE_SIZE = 128;
 
-  var MIN_CACHE_LEVELS = 4;
-  var MAX_CACHE_LEVELS = 4;
+  var MIN_CACHE_LEVELS = 8;
+  var MAX_CACHE_LEVELS = 8;
 
   enum TraceLevel {
     None,
@@ -33,10 +33,12 @@ module Shumway.GL {
   import Video = Shumway.Layers.Video;
   import Filter = Shumway.Layers.Filter;
   import BlurFilter = Shumway.Layers.BlurFilter;
+  import ColorTransform = Shumway.Layers.ColorTransform;
 
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
+
 
   import radianToDegrees = Shumway.Geometry.radianToDegrees;
   import degreesToRadian = Shumway.Geometry.degreesToRadian;
@@ -707,6 +709,7 @@ module Shumway.GL {
 
     public render(stage: Stage, options: any) {
 
+      // TODO: Only set the camera once, not every frame.
       if (options.perspectiveCamera) {
         this.context.modelViewProjectionMatrix = this.context.createPerspectiveMatrix (
           options.perspectiveCameraDistance,
@@ -721,11 +724,8 @@ module Shumway.GL {
       var context = this.context;
 
       var brush = this._brush;
-      brush.reset();
 
-      var stencilBrush = this._stencilBrush;
       var viewport = new Rectangle(0, 0, stage.w, stage.h);
-      var image;
       var inverseTransform = Matrix.createIdentity();
 
       function cacheImageCallback(src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {
@@ -741,8 +741,6 @@ module Shumway.GL {
 
       brush.reset();
       brush.fillRectangle(viewport, new Color(0.2, 0, 0, 1), Matrix.createIdentity(), depth);
-      brush.flush(options.drawElements);
-      brush.reset();
 
       var parent = null;
       var tileTransform = Matrix.createIdentity();
@@ -752,6 +750,9 @@ module Shumway.GL {
           depth += options.frameSpacing;
         }
 
+        var alpha = frame.getConcatenatedAlpha();
+        var colorTransform = frame.getConcatenatedColorTransform();
+        colorTransform = new ColorTransform([0.748939, 1.044984, -0.793923, 0.000000, 0.000000, -0.008795, 0.713845, 0.294950, 0.000000, 0.000000, 0.827417, -0.240804, 0.413387, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000]);
         that.context.setTransform(transform);
         if (frame instanceof Flake) {
           brush.fillRectangle(new Rectangle(0, 0, frame.w, frame.h), Color.parseColor((<Flake>frame).fillStyle), transform, depth);
@@ -760,7 +761,7 @@ module Shumway.GL {
         } else if (frame instanceof Video) {
           var video = <Video>frame;
           var src = <WebGLTextureRegion>(video.source);
-          brush.drawImage(src, undefined, new Color(1, 1, 1, frame.alpha), transform, depth)
+          brush.drawImage(src, undefined, new Color(1, 1, 1, alpha), null, transform, depth)
         } else if (frame instanceof Shape) {
           var shape = <Shape>frame;
           var bounds = shape.source.getBounds();
@@ -787,10 +788,8 @@ module Shumway.GL {
                 context.textureRegionCache.put(src);
               }
 
-              if (!brush.drawImage(src, undefined, new Color(1, 1, 1, frame.alpha), tileTransform, depth)) {
-                brush.flush(options.drawElements);
-                brush.reset();
-                brush.drawImage(src, undefined, new Color(1, 1, 1, frame.alpha), tileTransform, depth);
+              if (!brush.drawImage(src, undefined, new Color(1, 1, 1, alpha), colorTransform, tileTransform, depth)) {
+                unexpected();
               }
               if (options.drawTiles) {
                 var srcBounds = tile.bounds.clone();
@@ -807,7 +806,6 @@ module Shumway.GL {
       brush.flush(options.drawElements);
 
       if (options.drawTextures) {
-        brush.reset();
         var textures = context.getTextures();
         var textureWindowSize = viewport.w / 5;
         var transform = Matrix.createIdentity();
@@ -815,12 +813,10 @@ module Shumway.GL {
           textureWindowSize = viewport.h / textures.length;
         }
         brush.fillRectangle(new Rectangle(viewport.w - textureWindowSize, 0, textureWindowSize, viewport.h), new Color(0, 0, 0, 0.5), transform, 0.1);
-        brush.flush(options.drawElements);
-        brush.reset();
         for (var i = 0; i < textures.length; i++) {
           var texture = textures[i];
           var textureWindow = new Rectangle(viewport.w - textureWindowSize, i * textureWindowSize, textureWindowSize, textureWindowSize);
-          brush.drawImage(new WebGLTextureRegion(texture, <RegionAllocator.Region>new Rectangle(0, 0, texture.w, texture.h)), textureWindow, Color.White, transform, 0.2);
+          brush.drawImage(new WebGLTextureRegion(texture, <RegionAllocator.Region>new Rectangle(0, 0, texture.w, texture.h)), textureWindow, Color.White, null, transform, 0.2);
         }
         brush.flush(options.drawElements);
       }
@@ -844,6 +840,7 @@ module Shumway.GL {
       // Use log2(1 / transformScale) to figure out the tile level.
       var level = Math.round(Math.log(1 / transformScale) / Math.LN2);
       level = clamp(level, -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
+      // level = 1;
       var scale = Math.pow(2, level);
       var levelIndex = MIN_CACHE_LEVELS + level;
       var cache = this.cacheLevels[levelIndex];
@@ -953,7 +950,8 @@ module Shumway.GL {
 
   export enum WebGLCombinedBrushKind {
     FillColor,
-    FillTexture
+    FillTexture,
+    FillTextureWithColorMatrix
   }
 
   export class WebGLCombinedBrushVertex extends Vertex {
@@ -992,23 +990,24 @@ module Shumway.GL {
 
 
   export class WebGLCombinedBrush extends WebGLBrush {
-    static tmpVertices: WebGLCombinedBrushVertex [] = Vertex.createEmptyVertices(WebGLCombinedBrushVertex, 4);
-    program: WebGLProgram;
-    textures: WebGLTexture [];
-    static depth: number = 1;
+    private static _tmpVertices: WebGLCombinedBrushVertex [] = Vertex.createEmptyVertices(WebGLCombinedBrushVertex, 4);
+    private _program: WebGLProgram;
+    private _textures: WebGLTexture [];
+    private _colorTransform: ColorTransform;
+    private static _depth: number = 1;
     constructor(context: WebGLContext, geometry: WebGLGeometry) {
       super(context, geometry);
-      this.program = context.createProgramFromFiles("combined.vert", "combined.frag");
-      this.textures = [];
+      this._program = context.createProgramFromFiles("combined.vert", "combined.frag");
+      this._textures = [];
       WebGLCombinedBrushVertex.initializeAttributeList(this.context);
     }
 
     public reset() {
-      this.textures = [];
+      this._textures = [];
       this.geometry.reset();
     }
 
-    public drawImage(src: WebGLTextureRegion, dstRectangle: Rectangle, color: Color, transform: Matrix, depth: number = 0): boolean {
+    public drawImage(src: WebGLTextureRegion, dstRectangle: Rectangle, color: Color, colorTransform: ColorTransform, transform: Matrix, depth: number = 0): boolean {
       if (!src || !src.texture) {
         return true;
       }
@@ -1017,16 +1016,20 @@ module Shumway.GL {
       } else {
         dstRectangle = dstRectangle.clone();
       }
-      var sampler = this.textures.indexOf(src.texture);
+      if (this._colorTransform && colorTransform && !this._colorTransform.equals(colorTransform)) {
+        this.flush();
+      }
+      this._colorTransform = colorTransform;
+      var sampler = this._textures.indexOf(src.texture);
       if (sampler < 0) {
-        this.textures.push(src.texture);
-        if (this.textures.length > 8) {
+        this._textures.push(src.texture);
+        if (this._textures.length > 8) {
           return false;
           notImplemented("Cannot handle more than 8 texture samplers.");
         }
-        sampler = this.textures.length - 1;
+        sampler = this._textures.length - 1;
       }
-      var tmpVertices = WebGLCombinedBrush.tmpVertices;
+      var tmpVertices = WebGLCombinedBrush._tmpVertices;
       var srcRectangle = src.region.clone();
       srcRectangle.offset(0.5, 0.5).resize(-1, -1);
       srcRectangle.scale(1 / src.texture.w, 1 / src.texture.h);
@@ -1049,11 +1052,13 @@ module Shumway.GL {
 //      }
 
       for (var i = 0; i < 4; i++) {
-        var vertex = WebGLCombinedBrush.tmpVertices[i];
+        var vertex = WebGLCombinedBrush._tmpVertices[i];
+        vertex.kind = colorTransform ?
+          WebGLCombinedBrushKind.FillTextureWithColorMatrix :
+        WebGLCombinedBrushKind.FillTexture;
         vertex.kind = WebGLCombinedBrushKind.FillTexture;
         vertex.color.set(color);
         vertex.sampler = sampler;
-        var v = this.context.modelViewProjectionMatrix.mul(vertex);
         vertex.writeTo(this.geometry);
       }
       this.geometry.addQuad();
@@ -1061,9 +1066,9 @@ module Shumway.GL {
     }
 
     public fillRectangle(rectangle: Rectangle, color: Color, transform: Matrix, depth: number = 0) {
-      transform.transformRectangle(rectangle, <Point[]>WebGLCombinedBrush.tmpVertices);
+      transform.transformRectangle(rectangle, <Point[]>WebGLCombinedBrush._tmpVertices);
       for (var i = 0; i < 4; i++) {
-        var vertex = WebGLCombinedBrush.tmpVertices[i];
+        var vertex = WebGLCombinedBrush._tmpVertices[i];
         vertex.kind = WebGLCombinedBrushKind.FillColor;
         vertex.color.set(color);
         vertex.z = depth;
@@ -1074,19 +1079,20 @@ module Shumway.GL {
 
     public flush(drawElements: boolean = true) {
       var g = this.geometry;
-      var p = this.program;
+      var p = this._program;
       var gl = this.context.gl;
 
       g.uploadBuffers();
       gl.useProgram(p);
-      // gl.uniformMatrix3fv(p.uniforms.uTransformMatrix.location, false, Matrix.createIdentity().toWebGLMatrix());
-      gl.uniformMatrix4fv(p.uniforms.uTransformMatrix3D.location, false, this.context.modelViewProjectionMatrix.toWebGLMatrix());
-
-
+      gl.uniformMatrix4fv(p.uniforms.uTransformMatrix3D.location, false, this.context.modelViewProjectionMatrix.asWebGLMatrix());
+      if (this._colorTransform) {
+        gl.uniformMatrix4fv(p.uniforms.uColorMatrix.location, false, this._colorTransform.asWebGLMatrix());
+        gl.uniform4fv(p.uniforms.uColorVector.location, this._colorTransform.asWebGLVector());
+      }
       // Bind textures.
-      for (var i = 0; i < this.textures.length; i++) {
+      for (var i = 0; i < this._textures.length; i++) {
         gl.activeTexture(gl.TEXTURE0 + i);
-        gl.bindTexture(gl.TEXTURE_2D, this.textures[i]);
+        gl.bindTexture(gl.TEXTURE_2D, this._textures[i]);
       }
       gl.uniform1iv(p.uniforms["uSampler[0]"].location, [0, 1, 2, 3, 4, 5, 6, 7]);
       // Bind vertex buffer.
@@ -1105,6 +1111,8 @@ module Shumway.GL {
       if (drawElements) {
         gl.drawElements(gl.TRIANGLES, g.triangleCount * 3, gl.UNSIGNED_SHORT, 0);
       }
+
+      this.reset();
     }
   }
 }

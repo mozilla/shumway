@@ -1,6 +1,8 @@
 precision mediump float;
 
 varying vec4 vColor;
+uniform mat4 uColorMatrix;
+uniform vec4 uColorVector;
 uniform sampler2D uSampler[8];
 varying vec2 vCoordinate;
 varying float vKind;
@@ -15,7 +17,7 @@ void main() {
   int kind = int(floor(vKind + 0.5));
   if (kind == 0) {
     gl_FragColor = vColor;
-  } else if (kind == 1) {
+  } else if (kind == 1 || kind == 2) {
     int sampler = int(floor(vSampler + 0.5));
     if (sampler == 0) {
       gl_FragColor = vColor * texture2D(uSampler[0], vCoordinate);
@@ -33,6 +35,9 @@ void main() {
       gl_FragColor = vColor * texture2D(uSampler[6], vCoordinate);
     } else if (sampler == 7) {
       gl_FragColor = vColor * texture2D(uSampler[7], vCoordinate);
+    }
+    if (kind == 2) {
+      gl_FragColor = uColorMatrix * gl_FragColor + uColorVector * gl_FragColor[3];
     }
   } else {
     gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0);

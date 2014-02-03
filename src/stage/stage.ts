@@ -17,6 +17,7 @@ module Shumway.Layers {
     private _scaleY: number;
     private _rotation: number;
     private _transform: Matrix;
+    private _colorTransform: ColorTransform;
     private _isTransformInvalid: boolean = true;
     private _origin: Point = new Point(0, 0);
 
@@ -67,6 +68,29 @@ module Shumway.Layers {
 
     get alpha(): number {
       return this._alpha;
+    }
+
+    set colorTransform(value: ColorTransform) {
+      this._colorTransform = value;
+      this.invalidateTransform();
+    }
+
+    get colorTransform(): ColorTransform {
+      return this._colorTransform;
+    }
+
+    getConcatenatedColorTransform(): ColorTransform {
+      return this._colorTransform;
+    }
+
+    getConcatenatedAlpha(): number {
+      var frame = this;
+      var alpha = frame._alpha;
+      while (frame.parent) {
+        frame = frame.parent;
+        alpha *= frame._alpha;
+      }
+      return alpha;
     }
 
     set alpha(value: number) {

@@ -716,8 +716,8 @@ module Shumway.Geometry {
       this._m = new Float32Array(m);
     }
 
-    public toWebGLMatrix(): Float32Array {
-      return new Float32Array(this._m);
+    public asWebGLMatrix(): Float32Array {
+      return this._m;
     }
 
     public static createCameraLookAt(cameraPosition: Point3D, target: Point3D, up: Point3D): Matrix3D {
