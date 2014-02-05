@@ -72,15 +72,35 @@ module Shumway.Layers {
 
     set colorTransform(value: ColorTransform) {
       this._colorTransform = value;
-      this.invalidateTransform();
+      this.invalidate();
     }
 
     get colorTransform(): ColorTransform {
       return this._colorTransform;
     }
 
+    getPath(): Frame [] {
+      var stack = [this];
+      var frame = this;
+      while (frame.parent) {
+        frame = frame.parent;
+        stack.push(frame);
+      }
+      return stack;
+    }
+
     getConcatenatedColorTransform(): ColorTransform {
-      return this._colorTransform;
+      var path = this.getPath();
+      var colorTransform = null;
+      for (var i = path.length - 1; i >= 0; i--) {
+        if (path[i]._colorTransform) {
+          if (!colorTransform) {
+            colorTransform = ColorTransform.createIdentity();
+          }
+          colorTransform.multiply(path[i]._colorTransform);
+        }
+      }
+      return colorTransform;
     }
 
     getConcatenatedAlpha(): number {

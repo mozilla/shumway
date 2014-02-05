@@ -752,7 +752,6 @@ module Shumway.GL {
 
         var alpha = frame.getConcatenatedAlpha();
         var colorTransform = frame.getConcatenatedColorTransform();
-        colorTransform = new ColorTransform([0.748939, 1.044984, -0.793923, 0.000000, 0.000000, -0.008795, 0.713845, 0.294950, 0.000000, 0.000000, 0.827417, -0.240804, 0.413387, 0.000000, 0.000000, 0.000000, 0.000000, 0.000000, 1.000000, 0.000000]);
         that.context.setTransform(transform);
         if (frame instanceof Flake) {
           brush.fillRectangle(new Rectangle(0, 0, frame.w, frame.h), Color.parseColor((<Flake>frame).fillStyle), transform, depth);
@@ -1016,8 +1015,10 @@ module Shumway.GL {
       } else {
         dstRectangle = dstRectangle.clone();
       }
-      if (this._colorTransform && colorTransform && !this._colorTransform.equals(colorTransform)) {
-        this.flush();
+      if (this._colorTransform) {
+        if (!colorTransform || !this._colorTransform.equals(colorTransform)) {
+          this.flush();
+        }
       }
       this._colorTransform = colorTransform;
       var sampler = this._textures.indexOf(src.texture);
@@ -1056,7 +1057,6 @@ module Shumway.GL {
         vertex.kind = colorTransform ?
           WebGLCombinedBrushKind.FillTextureWithColorMatrix :
         WebGLCombinedBrushKind.FillTexture;
-        vertex.kind = WebGLCombinedBrushKind.FillTexture;
         vertex.color.set(color);
         vertex.sampler = sampler;
         vertex.writeTo(this.geometry);

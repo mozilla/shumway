@@ -159,6 +159,18 @@ var StageDefinition = (function () {
                                                                 m.tx / 20,
                                                                 m.ty / 20);
             node._layer.alpha = node._alpha;
+            if (node._cxform) {
+              node._layer.colorTransform = Shumway.Layers.ColorTransform.fromMultipliersAndOffsets (
+                node._cxform.redMultiplier / 256,
+                node._cxform.greenMultiplier / 256,
+                node._cxform.blueMultiplier / 256,
+                node._cxform.alphaMultiplier / 256,
+                node._cxform.redOffset / 255,
+                node._cxform.greenOffset / 255,
+                node._cxform.blueOffset / 255,
+                node._cxform.alphaOffset / 255
+              );
+            }
           }
         }
       }

@@ -21,7 +21,7 @@ var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "
 var disableRendering = rendererOptions.register(new Option("drv", "disableRendering", "boolean", false, "disable rendering"));
 var disableMouse = rendererOptions.register(new Option("dmv", "disableMouse", "boolean", false, "disable mouse handling"));
 //var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
-//var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
+var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
 var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
 var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", false, "force hidpi"));
 var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", true, "skip frame when not on time"));
@@ -41,3 +41,6 @@ var perspectiveCameraAngle = stageOptions.register(new Option("", "pcAngle", "nu
 var perspectiveCameraAngleRotate = stageOptions.register(new Option("", "pcRotate", "boolean", false, "Rotate Use perspective camera."));
 var perspectiveCameraSpacing = stageOptions.register(new Option("", "pcSpacing", "number", 0.1, "Element Spacing."));
 var perspectiveCameraSpacingInflate = stageOptions.register(new Option("", "pcInflate", "boolean", false, "Rotate Use perspective camera."));
+
+var drawTiles = stageOptions.register(new Option("", "drawTiles", "boolean", false, "Draw Tiles."));
+var drawTextures = stageOptions.register(new Option("", "drawTextures", "boolean", false, "Draw Textures."));
