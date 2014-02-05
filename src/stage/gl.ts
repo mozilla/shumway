@@ -835,11 +835,10 @@ module Shumway.GL {
      */
     getTiles(query: Rectangle, transform: Matrix): Tile [] {
       // Figure out the scale of the transform by averaging out the X and Y scale factors.
-      var transformScale = (transform.getScaleX() + transform.getScaleY()) / 2;
+      var transformScale = Math.max(transform.getAbsoluteScaleX(), transform.getAbsoluteScaleY());
       // Use log2(1 / transformScale) to figure out the tile level.
       var level = Math.round(Math.log(1 / transformScale) / Math.LN2);
       level = clamp(level, -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
-      // level = 1;
       var scale = Math.pow(2, level);
       var levelIndex = MIN_CACHE_LEVELS + level;
       var cache = this.cacheLevels[levelIndex];

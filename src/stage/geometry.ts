@@ -678,6 +678,14 @@ module Shumway.Geometry {
       return this.d > 0 ? result : -result;
     }
 
+    getAbsoluteScaleX(): number {
+      return Math.abs(this.getScaleX());
+    }
+
+    getAbsoluteScaleY(): number {
+      return Math.abs(this.getScaleY());
+    }
+
     getRotation(): number {
       return Math.atan(this.b / this.a) * 180 / Math.PI;
     }
