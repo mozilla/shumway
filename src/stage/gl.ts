@@ -198,7 +198,7 @@ module Shumway.GL {
     }
 
     reset() {
-      this._regionAllocator = new RegionAllocator.Grid(this._w, this._h, TILE_SIZE, this._solitary ? 0 : 0);
+      this._regionAllocator = new RegionAllocator.Grid(this._w, this._h, TILE_SIZE, this._solitary ? 0 : 2);
     }
   }
 

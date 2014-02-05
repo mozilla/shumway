@@ -1248,7 +1248,7 @@ module Shumway.Geometry {
       private _columns: number;
       private _cells: Grid.Cell [];
       constructor(w: number, h: number, size: number, padding: number) {
-        var sizeWithPadding = size - 2 * padding;
+        var sizeWithPadding = size + 2 * padding;
         this._columns = w / sizeWithPadding | 0;
         this._rows = h / sizeWithPadding | 0;
         this._size = size;
@@ -1262,7 +1262,7 @@ module Shumway.Geometry {
       }
 
       allocate(w: number, h: number): Region {
-        var sizeWithPadding = this._size - 2 * this._padding;
+        var sizeWithPadding = this._size + 2 * this._padding;
         if (w > sizeWithPadding || h > sizeWithPadding) {
           return null;
         }
