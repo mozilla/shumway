@@ -6,8 +6,15 @@ module Shumway.GL {
   var SCRATCH_CANVAS_SIZE = 1024;
   var TILE_SIZE = 128;
 
-  var MIN_CACHE_LEVELS = 8;
-  var MAX_CACHE_LEVELS = 8;
+  function getTileSize(bounds: Rectangle): number {
+    if (bounds.w < TILE_SIZE || bounds.h < TILE_SIZE) {
+      return Math.min(bounds.w, bounds.h);
+    }
+    return TILE_SIZE;
+  }
+
+  var MIN_CACHE_LEVELS = 4;
+  var MAX_CACHE_LEVELS = 4;
 
   enum TraceLevel {
     None,
@@ -766,10 +773,7 @@ module Shumway.GL {
           var bounds = shape.source.getBounds();
           if (!bounds.isEmpty()) {
             var source = shape.source;
-            var tileSize = TILE_SIZE;
-            if (bounds.w < 64 || bounds.h < 64) {
-              tileSize = 64;
-            }
+            var tileSize = getTileSize(bounds);
             var tileCache: RenderableTileCache = source.properties["tileCache"];
             if (!tileCache) {
               tileCache = source.properties["tileCache"] = new RenderableTileCache(source, tileSize);
@@ -844,7 +848,8 @@ module Shumway.GL {
       var cache = this.cacheLevels[levelIndex];
       if (!cache) {
         var bounds = this.source.getBounds();
-        cache = this.cacheLevels[levelIndex] = new TileCache(bounds.w * scale, bounds.h * scale, TILE_SIZE, scale);
+        var scaledBounds = bounds.clone().scale(scale, scale);
+        cache = this.cacheLevels[levelIndex] = new TileCache(scaledBounds.w, scaledBounds.h, getTileSize(scaledBounds), scale);
       }
       var t = transform.clone();
       t.scale(scale, scale);
