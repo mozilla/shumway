@@ -225,10 +225,6 @@ var natives = (function () {
 
     c.native = {
       instance: {
-        length: {
-          get: function() { return this.length; },
-          set: function(l) { this.length = l; }
-        },
         isPrototypeOf: Object.prototype.isPrototypeOf,
         hasOwnProperty: function (name) {
           if (name === undefined) {
