@@ -91,33 +91,53 @@ var factoryCtx = !inWorker ?
 
 function Renderer() {
   this._renderables = { };
+  this._promises = { };
 }
 Renderer.prototype.nextId = 0xffff;
 
 Renderer.prototype.defineRenderable = function defineRenderable(id, type, symbol) {
-  var renderable;
-  switch (type) {
-  case 'shape':
-    renderable = new RenderableShape(symbol, this);
-    break;
-  case 'gradient':
-    renderable = new RenderableGradient(symbol, this);
-    break;
-  case 'pattern':
-    renderable = new RenderablePattern(symbol, this);
-    break;
-  case 'bitmap':
-    renderable = new RenderableBitmap(symbol, this);
-    break;
-  case 'font':
-    renderable = new RenderableFont(symbol, this);
-    break;
-  case 'text':
-  case 'label':
-    renderable = new RenderableText(symbol, this);
-    break;
+  var renderer = this;
+  var rendererable = null;
+  var promise = new Promise(function (resolve) {
+    switch (type) {
+    case 'shape':
+      rendererable = new RenderableShape(symbol, renderer, resolve);
+      break;
+    case 'gradient':
+      rendererable = new RenderableGradient(symbol, renderer, resolve);
+      break;
+    case 'pattern':
+      rendererable = new RenderablePattern(symbol, renderer, resolve);
+      break;
+    case 'image':
+      rendererable = new RenderableBitmap(symbol, renderer, resolve);
+      break;
+    case 'font':
+      rendererable = new RenderableFont(symbol, renderer, resolve);
+      break;
+    case 'text':
+    case 'label':
+      rendererable = new RenderableText(symbol, renderer, resolve);
+      break;
+    default:
+      resolve(null);
+    }
+  });
+
+  var dependencies = symbol.require;
+
+  if (dependencies && dependencies.length) {
+    var promiseQueue = [promise];
+    for (var i = 0; i < dependencies.length; i++) {
+      var promise = this._promises[dependencies[i]];
+      promiseQueue.push(promise);
+    }
+    promise = Promise.all(promiseQueue);
   }
-  this._renderables[id] = renderable;
+
+  this._promises[id] = promise.then(function () {
+    renderer._renderables[id] = rendererable;
+  });
 };
 Renderer.prototype.getRenderable = function getRenderable(id) {
   return this._renderables[id];
@@ -127,12 +147,15 @@ Renderer.prototype.undefineRenderable = function undefineRenderable(id) {
   delete this._renderables[id];
   return renderable;
 };
+Renderer.prototype.requireRenderables = function requireRenderables(ids, callback) {
+  var promiseQueue = [];
+  for (var i = 0; i < ids.length; i++) {
+    promiseQueue.push(this._promises[ids[i]]);
+  }
+  Promise.all(promiseQueue).then(callback);
+};
 
-function RenderableShape(symbol, renderer) {
-  this.commands = symbol.commands;
-  this.data = symbol.data;
-  this.properties = { renderer: renderer };
-
+function RenderableShape(symbol, renderer, resolve) {
   var bbox = symbol.strokeBbox || symbol.bbox;
 
   this.rect = new Shumway.Geometry.Rectangle(bbox.xMin / 20,
@@ -146,7 +169,10 @@ function RenderableShape(symbol, renderer) {
     paths[i] = finishShapePath(paths[i], renderer);
   }
 
-  this.paths = paths;
+  this.commands = symbol.commands;
+  this.properties = { renderer: renderer, paths: paths };
+
+  resolve(this);
 }
 RenderableShape.prototype.getBounds = function getBounds() {
   return this.rect;
@@ -155,7 +181,7 @@ RenderableShape.prototype.render = function render(ctx) {
   ctx.save();
   ctx.translate(-this.rect.x, -this.rect.y);
 
-  var paths = this.paths;
+  var paths = this.properties.paths;
   for (var i = 0; i < paths.length; i++) {
     var path = paths[i];
 
@@ -280,7 +306,8 @@ RenderableShape.prototype.render = function render(ctx) {
       if (isNaN(fillStyle.style)) {
         ctx.fillStyle = fillStyle.style;
       } else {
-        ctx.fillStyle = this.properties.renderer.getRenderable(fillStyle.style).fillStyle;
+        var renderable = this.properties.renderer.getRenderable(fillStyle.style);
+        ctx.fillStyle = renderable.properties.fillStyle;
       }
       ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
                                   fillStyle.smooth;
@@ -311,9 +338,8 @@ RenderableShape.prototype.render = function render(ctx) {
   ctx.restore();
 };
 
-function RenderableGradient(symbol, renderer) {
+function RenderableGradient(symbol, renderer, resolve) {
   this.rect = new Shumway.Geometry.Rectangle(0, 0, 0, 0);
-  this.properties = { };
 
   var gradient;
   if (symbol.type === GRAPHICS_FILL_LINEAR_GRADIENT) {
@@ -330,7 +356,9 @@ function RenderableGradient(symbol, renderer) {
     gradient.addColorStop(record.ratio / 255, colorStr);
   }
 
-  this.fillStyle = gradient;
+  this.properties = { renderer: renderer, fillStyle: gradient };
+
+  resolve(this);
 }
 RenderableGradient.prototype.getBounds = function getBounds() {
   return this.rect;
@@ -339,22 +367,25 @@ RenderableGradient.prototype.render = function render(ctx) {
   // TODO
 };
 
-function RenderablePattern(symbol, renderer) {
-  var bitmap = renderer.getRenderable(style.bitmapId);
+function RenderablePattern(symbol, renderer, resolve) {
+  var that = this;
+  renderer.requireRenderables([symbol.bitmapId], function () {
+    var bitmap = renderer.getRenderable(symbol.bitmapId);
+    var rect = bitmap.rect;
+    this.rect = new Shumway.Geometry.Rectangle(rect.x, rect.y, rect.w, rect.h);
 
-  if (!bitmap) {
-    this.fillStyle = 'green';
-    return;
-  }
+    var repeat = (symbol.type === GRAPHICS_FILL_REPEATING_BITMAP) ||
+                 (symbol.type === GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP);
+    var pattern = factoryCtx.createPattern(bitmap.properties.img,
+                                           repeat ? 'repeat' : 'no-repeat');
 
-  var rect = bitmap.rect;
-  this.rect = new Shumway.Geometry.Rectangle(rect.x, rect.y, rect.w, rect.h);
 
-  var repeat = (symbol.type === GRAPHICS_FILL_REPEATING_BITMAP) ||
-               (symbol.type === GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP);
+    that.properties.fillStyle = pattern;
 
-  this.fillStyle = factoryCtx.createPattern(bitmap.img,
-                                            repeat ? 'repeat' : 'no-repeat');
+    resolve(that);
+  });
+
+  this.properties = { renderer: renderer };
 }
 RenderablePattern.prototype.getBounds = function getBounds() {
   return this.rect;
@@ -363,16 +394,12 @@ RenderablePattern.prototype.render = function render(ctx) {
   // TODO
 };
 
-function RenderableBitmap(symbol, renderer) {
-  this.properties = { };
+function RenderableBitmap(symbol, renderer, resolve) {
   this.rect = new Shumway.Geometry.Rectangle(symbol.width / 20,
                                              symbol.height / 20);
 
   var img = new Image();
-  //var imgPromiseResolve;
-  //var imgPromise = new Promise(function (resolve) {
-  //  imgPromiseResolve = resolve;
-  //});
+  var that = this;
   img.onload = function () {
     if (symbol.mask) {
       // Write the image into new canvas and apply the mask.
@@ -390,14 +417,14 @@ function RenderableBitmap(symbol, renderer) {
       }
       maskContext.putImageData(maskImageData, 0, 0);
       // Use the result canvas as renderable image
-      props.img = maskCanvas;
+      that.properties.img = maskCanvas;
     }
-    //imgPromiseResolve();
+
+    resolve(that);
   };
   img.src = URL.createObjectURL(symbol.data);
-  //promiseQueue.push(imgPromise);
 
-  this.img = img;
+  this.properties = { renderer: renderer, img: img };
 }
 RenderableBitmap.prototype.getBounds = function getBounds() {
   return this.rect;
@@ -456,7 +483,7 @@ RenderableBitmap.prototype.render = function render(ctx) {
   ctx.drawImage(this.img, 0, 0);
 };
 
-function RenderableFont(symbol, renderer) {
+function RenderableFont(symbol, renderer, resolve) {
   var charset = fromCharCode.apply(null, symbol.codes);
   if (charset) {
     style.insertRule(
@@ -484,6 +511,8 @@ function RenderableFont(symbol, renderer) {
     //  });
     //  promiseQueue.push(fontPromise);
     //}
+
+    resolve(this);
   }
 }
 RenderableFont.prototype.getBounds = function getBounds() {
@@ -493,13 +522,16 @@ RenderableFont.prototype.render = function render(ctx) {
   // TODO
 };
 
-function RenderableText(symbol, renderer) {
-  this.properties = { };
+function RenderableText(symbol, renderer, resolve) {
   this.rect = new Shumway.Geometry.Rectangle(0, 0, 0, 0);
 
   if (symbol.data) {
     this.render = new Function('c', symbol.data);
   }
+
+  this.properties = { renderer: renderer };
+
+  resolve(this);
 }
 RenderableText.prototype.getBounds = function getBounds() {
   return this.rect;

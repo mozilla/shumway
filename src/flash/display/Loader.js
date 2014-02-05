@@ -39,9 +39,10 @@ var LoaderDefinition = (function () {
       this._contentLoaderInfo = new flash.display.LoaderInfo();
       this._contentLoaderInfo._loader = this;
       this._dictionary = { };
-      this._dictionaryResolved = {};
       this._displayList = null;
+      this._dependencies = [];
       this._timeline = [];
+      this._vmPromise = null;
       this._lastPromise = null;
       this._uncaughtErrorEvents = null;
       this._worker = null;
@@ -108,13 +109,13 @@ var LoaderDefinition = (function () {
                                                  loaderInfo._bytesTotal);
       loaderInfo._dispatchEvent(event);
     },
-    _buildFrame: function (currentDisplayList, timeline, promiseQueue, frame, frameNum) {
+    _buildFrame: function (currentDisplayList, timeline, frame, resolve) {
       var loader = this;
       var dictionary = loader._dictionary;
-      var dictionaryResolved = loader._dictionaryResolved;
 
       var displayList = { };
       var depths = [];
+      var dependencies = this._dependencies;
 
       var cmds = frame.depths;
 
@@ -151,19 +152,9 @@ var LoaderDefinition = (function () {
         }
 
         if (cmd.symbolId) {
-          var itemPromise = dictionary[cmd.symbolId];
-          if (itemPromise && !dictionaryResolved[cmd.symbolId]) {
-            promiseQueue.push(itemPromise);
-          }
-
           cmd = cloneObject(cmd);
-          Object.defineProperty(cmd, 'symbolInfo', {
-            get: (function (dictionaryResolved, symbolId) {
-              return function () {
-                return dictionaryResolved[symbolId];
-              };
-            })(dictionaryResolved, cmd.symbolId)
-          });
+          cmd.symbolInfo = dictionary[cmd.symbolId];
+          dependencies.push(cmd.symbolId);
         }
 
         if (!displayList[depth]) {
@@ -180,6 +171,11 @@ var LoaderDefinition = (function () {
       var i = frame.repeat;
       while (i--) {
         timeline.push(displayList);
+      }
+
+      if (resolve) {
+        loader._stage._renderer.requireRenderables(dependencies, resolve);
+        this._dependencies = [];
       }
 
       return displayList;
@@ -203,9 +199,11 @@ var LoaderDefinition = (function () {
       var labelName = frame.labelName;
       var prevPromise = this._lastPromise;
       this._lastPromise = framePromise;
-      var promiseQueue = [prevPromise];
 
-      this._displayList = this._buildFrame(this._displayList, timeline, promiseQueue, frame, frameNum);
+      this._displayList = this._buildFrame(this._displayList,
+                                           timeline,
+                                           frame,
+                                           framePromiseResolve);
       var framesLoaded = timeline.length;
 
       if (frame.bgcolor)
@@ -213,7 +211,7 @@ var LoaderDefinition = (function () {
       else if (isNullOrUndefined(loaderInfo._backgroundColor))
         loaderInfo._backgroundColor = { red: 255, green: 255, blue: 255, alpha: 255 };
 
-      Promise.all(promiseQueue).then(function () {
+      Promise.all([this._vmPromise, prevPromise, framePromise]).then(function () {
         if (abcBlocks && loader._isAvm2Enabled) {
           var appDomain = avm2.applicationDomain;
           for (var i = 0, n = abcBlocks.length; i < n; i++) {
@@ -230,51 +228,34 @@ var LoaderDefinition = (function () {
         }
 
         if (symbolClasses && loader._isAvm2Enabled) {
-          var symbolClassesPromises = [];
           for (var i = 0, n = symbolClasses.length; i < n; i++) {
             var asset = symbolClasses[i];
-            var symbolPromise = dictionary[asset.symbolId];
-            if (!symbolPromise)
+            var symbolInfo = dictionary[asset.symbolId];
+            if (!symbolInfo)
               continue;
-            symbolPromise.then(
-              (function(className) {
-                return function symbolPromiseResolved(symbolInfo) {
-                  symbolInfo.className = className;
-                  avm2.applicationDomain.getClass(className).setSymbol(symbolInfo.props);
-                };
-              })(asset.className)
-            );
-            symbolClassesPromises.push(symbolPromise);
+            symbolInfo.className = asset.className;
+            avm2.applicationDomain.getClass(asset.className).setSymbol(symbolInfo.props);
           }
-          return Promise.all(symbolClassesPromises);
         }
         if (exports && !loader._isAvm2Enabled) {
           var exportPromises = [];
           for (var i = 0, n = exports.length; i < n; i++) {
             var asset = exports[i];
-            var symbolPromise = dictionary[asset.symbolId];
-            if (!symbolPromise)
+            var symbolInfo = dictionary[asset.symbolId];
+            if (!symbolInfo)
               continue;
-            symbolPromise.then(
-              (function(className) {
-                return function symbolPromiseResolved(symbolInfo) {
-                  loader._avm1Context.addAsset(className, symbolInfo.props);
-                };
-              })(asset.className)
-            );
-            exportPromises.push(symbolPromise);
+            loader._avm1Context.addAsset(asset.className, symbolInfo.props);
           }
-          return Promise.all(exportPromises);
         }
-     }).then(function () {
+
         var root = loader._content;
         var labelMap;
 
         if (!root) {
           var parent = loader._parent;
 
-          release || assert(loader._dictionaryResolved[0]);
-          var rootInfo = loader._dictionaryResolved[0];
+          release || assert(loader._dictionary[0]);
+          var rootInfo = loader._dictionary[0];
           var rootClass = avm2.applicationDomain.getClass(rootInfo.className);
           root = rootClass.createAsSymbol({
             framesLoaded: framesLoaded,
@@ -436,81 +417,50 @@ var LoaderDefinition = (function () {
 
         if (frameNum === 1)
           loaderInfo._dispatchEvent(new flash.events.Event('init', false, false));
-
-        framePromiseResolve(frame);
       });
     },
     _commitImage : function (imageInfo) {
-      var loader = this;
-      //var imgPromiseResolve;
-      //var imgPromise = this._lastPromise = new Promise(function (resolve) {
-      //  imgPromiseResolve = resolve;
-      //});
-      //var img = new Image();
-      //imageInfo.props.img = img;
-      //img.onload = function() {
-        var Bitmap = avm2.systemDomain.getClass("flash.display.Bitmap");
-        var BitmapData = avm2.systemDomain.getClass("flash.display.BitmapData");
+      var Bitmap = avm2.systemDomain.getClass("flash.display.Bitmap");
+      var BitmapData = avm2.systemDomain.getClass("flash.display.BitmapData");
 
-        var props = imageInfo.props;
-        props.parent = loader._parent;
-        props.stage = loader._stage;
-        props.skipCopyToCanvas = true;
+      var props = imageInfo.props;
+      props.parent = this._parent;
+      props.stage = this._stage;
+      props.skipCopyToCanvas = true;
 
-        var bitmapData = BitmapData.createAsSymbol(props);
-        BitmapData.instanceConstructor.call(bitmapData, 0, 0, true, 0xffffffff);
+      var bitmapData = BitmapData.createAsSymbol(props);
+      BitmapData.instanceConstructor.call(bitmapData, 0, 0, true, 0xffffffff);
 
-        var image = Bitmap.createAsSymbol(bitmapData);
-        Bitmap.instanceConstructor.call(image, bitmapData);
-        image._parent = loader;
+      var image = Bitmap.createAsSymbol(bitmapData);
+      Bitmap.instanceConstructor.call(image, bitmapData);
+      image._parent = this;
 
-        loader._children.push(image);
-        loader._invalidateBounds();
-        loader._content = image;
+      this._children.push(image);
+      this._invalidateBounds();
+      this._content = image;
 
-      //  imgPromiseResolve(imageInfo);
+      var loaderInfo = this._contentLoaderInfo;
+      loaderInfo._width = image.width;
+      loaderInfo._height = image.height;
+      loaderInfo._dispatchEvent("init");
 
-        var loaderInfo = loader._contentLoaderInfo;
-        loaderInfo._width = image.width;
-        loaderInfo._height = image.height;
-        loaderInfo._dispatchEvent("init");
-      //};
-      //img.src = URL.createObjectURL(imageInfo.data);
-      //delete imageInfo.data;
-
-      loader._stage._renderer.defineRenderable(loader._stage._renderer.nextId++,
-                                               symbol.type,
-                                               symbol);
+      this._stage._renderer.defineRenderable(this._stage._renderer.nextId++,
+                                             symbol.type,
+                                             symbol);
     },
     _commitSymbol: function (symbol) {
       var dictionary = this._dictionary;
-      var dictionaryResolved = this._dictionaryResolved;
+
       if ('updates' in symbol) {
-        dictionary[symbol.id].then(function (s) {
-          for (var i in symbol.updates) {
-            s.props[i] = symbol.updates[i];
-          }
-        });
+        var s = dictionary[symbol.id];
+        for (var i in symbol.updates) {
+          s.props[i] = symbol.updates[i];
+        }
         return;
       }
 
       var className = 'flash.display.DisplayObject';
-      var dependencies = symbol.require;
-      var promiseQueue = [];
       var props = { symbolId: symbol.id, loader: this };
-      var symbolPromiseResolve;
-      var symbolPromise = new Promise(function (resolve) {
-        symbolPromiseResolve = resolve;
-      });
-
-      if (dependencies && dependencies.length) {
-        for (var i = 0, n = dependencies.length; i < n; i++) {
-          var dependencyId = dependencies[i];
-          var dependencyPromise = dictionary[dependencyId];
-          if (dependencyPromise && !dictionaryResolved[dependencyId])
-            promiseQueue.push(dependencyPromise);
-        }
-      }
 
       switch (symbol.type) {
       case 'button':
@@ -518,28 +468,17 @@ var LoaderDefinition = (function () {
         for (var stateName in symbol.states) {
           var characters = [];
           var displayList = { };
+          var dependencies = this._dependencies;
 
           var state = symbol.states[stateName];
           var depths = Object.keys(state);
 
           for (var i = 0; i < depths.length; i++) {
             var depth = depths[i];
-            var cmd = state[depth];
-            var characterPromise = dictionary[cmd.symbolId];
-            if (characterPromise && !dictionaryResolved[cmd.symbolId]) {
-              promiseQueue.push(characterPromise);
-            }
-
-            characters.push(characterPromise);
-            displayList[depth] = Object.create(cmd, {
-              symbolInfo: {
-                get: (function (dictionaryResolved, symbolId) {
-                  return function () {
-                    return dictionaryResolved[symbolId];
-                  };
-                })(dictionaryResolved, cmd.symbolId)
-              }
-            });
+            var cmd = cloneObject(state[depth]);
+            cmd.symbolInfo = dictionary[cmd.symbolId];
+            displayList[depth] = cmd;
+            dependencies.push(cmd.symbolId);
           }
 
           depths.sort(sortNumeric);
@@ -595,25 +534,18 @@ var LoaderDefinition = (function () {
         props.bbox = symbol.bbox;
         props.strokeBbox = symbol.strokeBbox;
         props.paths = symbol.paths;
-        props.dictionaryResolved = dictionaryResolved;
         break;
       case 'sound':
         if (!symbol.pcm && !PLAY_USING_AUDIO_TAG) {
           assert(symbol.packaged.mimeType === 'audio/mpeg');
 
-          var decodePromiseResolve;
-          var decodePromise = new Promise(function (resolve) {
-            decodePromiseResolve = resolve;
-          });
           MP3DecoderSession.processAll(symbol.packaged.data,
             function (props, pcm, id3tags, error) {
               props.pcm = pcm || new Uint8Array(0);
-              decodePromiseResolve();
               if (error) {
                 console.error('ERROR: ' + error);
               }
             }.bind(null, props));
-          promiseQueue.push(decodePromise);
         }
 
         className = 'flash.media.Sound';
@@ -642,16 +574,9 @@ var LoaderDefinition = (function () {
 
           if (frame.startSounds) {
             startSoundRegistrations[frameNum] = frame.startSounds;
-            for (var j = 0; j < frame.startSounds.length; j++) {
-              var soundId = frame.startSounds[j].soundId;
-              var itemPromise = dictionary[soundId];
-              if (itemPromise && !dictionaryResolved[soundId]) {
-                promiseQueue.push(itemPromise);
-              }
-            }
           }
 
-          displayList = this._buildFrame(displayList, timeline, promiseQueue, frame, frameNum);
+          displayList = this._buildFrame(displayList, timeline, frame);
         }
 
         var frameScripts = { };
@@ -685,19 +610,12 @@ var LoaderDefinition = (function () {
         break;
       }
 
-      dictionary[symbol.id] = symbolPromise;
-      Promise.all(promiseQueue).then(function () {
-        var symbolInfo = {
-          className: className,
-          props: props
-        };
-        dictionaryResolved[symbol.id] = symbolInfo;
-        symbolPromiseResolve(symbolInfo);
+      dictionary[symbol.id] = {
+        className: className,
+        props: props
+      };
 
-        props.loader._stage._renderer.defineRenderable(symbol.id,
-                                                       symbol.type,
-                                                       symbol);
-      });
+      this._stage._renderer.defineRenderable(symbol.id, symbol.type, symbol);
     },
     _registerFont: function (className, props) {
       this._vmPromise.then(function () {
@@ -726,19 +644,12 @@ var LoaderDefinition = (function () {
       vmPromise.resolve = vmPromiseResolve;
       vmPromise.reject = vmPromiseReject;
 
-      var documentPromise = new Promise(function (resolve) {
-        vmPromise.then(function() {
-          var rootInfo = {
-            className: 'flash.display.MovieClip',
-            props: { totalFrames: info.frameCount }
-          };
-          loader._dictionaryResolved[0] = rootInfo;
-          resolve(rootInfo);
-        });
-      });
+      var rootInfo = {
+        className: 'flash.display.MovieClip',
+        props: { totalFrames: info.frameCount }
+      };
+      loader._dictionary[0] = rootInfo;
 
-      loader._dictionary[0] = documentPromise;
-      loader._lastPromise = documentPromise;
       loader._vmPromise = vmPromise;
 
       loader._isAvm2Enabled = info.fileAttributes.doAbc;
