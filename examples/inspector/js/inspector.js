@@ -78,7 +78,7 @@ var avm2Root = "../../src/avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var shellAbcPath = avm2Root + "generated/shell/shell.abc";
 var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
-var playerGlobalAbcPath = "../../src/flash/playerglobal.abc";
+var playerGlobalAbcPath = "../../src/flash/playerglobal-new.abc";
 
 function parseQueryString(qs) {
   if (!qs)
