@@ -249,7 +249,7 @@ var EventDispatcherDefinition = (function () {
             return false;
           },
           dispatchEventFunction: function dispatchEventFunction(event) {
-            doDispatchEvent(this, event);
+            return doDispatchEvent(this, event);
           }
         }
       }
