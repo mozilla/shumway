@@ -1,6 +1,25 @@
 var fs = require('fs');
 var spawn = require('child_process').spawn;
 
+// simple args parsing
+var rebuild = false, buildThreadsCount = 1;
+for (var i = 2; i < process.argv.length;) {
+  var cmd = process.argv[i++];
+  switch (cmd) {
+    case '--threads':
+    case '-t':
+      buildThreadsCount = Math.max(1, process.argv[i++] | 0);
+      break;
+    case '--rebuild':
+    case '-r':
+      rebuild = true;
+      break;
+    default:
+      throw new Error('Bad argument: ' + cmd);
+  }
+}
+
+
 var build_dir = '../build/playerglobal';
 
 var manifest = JSON.parse(fs.readFileSync('manifest.json'));
@@ -18,7 +37,7 @@ if (!fs.existsSync(build_dir)) {
 }
 var dependencies = {files: {}, abcs: {}}, dependenciesUpdated = 0;
 var dependenciesPath = build_dir + '/dependencies.json';
-if (fs.existsSync(dependenciesPath)) {
+if (fs.existsSync(dependenciesPath) && !rebuild) {
   dependenciesUpdated = fs.statSync(dependenciesPath).mtime.valueOf();
   // discarding previous build if manifest was updated
   if (manifestUpdated <= dependenciesUpdated) {
@@ -152,7 +171,6 @@ function buildNext(threadId) {
 }
 
 var updateDependencies = false;
-var buildThreadsCount = 1;
 if (buildQueue.length > 0) {
   updateDependencies = true;
   for (var i = 0; i < buildThreadsCount && buildQueue.length > 0; i++) {

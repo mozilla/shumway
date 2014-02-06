@@ -49,6 +49,10 @@ module.exports = function(grunt) {
         cmd: 'python generate.py',
         cwd: 'src/avm2/generated'
       },
+      generate_playerglobal: {
+        cmd: 'node build -t 9',
+        cwd: 'utils/playerGlobal-new'
+      },
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
       }
@@ -65,6 +69,10 @@ module.exports = function(grunt) {
       abcs: {
         files: 'src/avm2/generated/**/*.as',
         tasks: ['exec:generate_abcs']
+      },
+      playerglobal: {
+        files: ['src/flash/**/*.as'],
+        tasks: ['exec:generate_playerglobal']
       }
     }
   });
@@ -87,6 +95,8 @@ module.exports = function(grunt) {
       done();
     });
   });
+
+  grunt.registerTask('playerglobal-new', ['exec:generate_playerglobal', 'watch:playerglobal']);
 
   // temporary make/python calls based on grunt-exec
   grunt.registerTask('reftest', ['exec:reftest']);
