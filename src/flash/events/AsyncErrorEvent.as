@@ -28,8 +28,8 @@ public class AsyncErrorEvent extends ErrorEvent {
     return new AsyncErrorEvent(type, bubbles, cancelable, text, error);
   }
   public override function toString():String {
-    return formatToString('AsyncErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase', 'text',
-                          'error');
+    return formatToString('AsyncErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+                          'text', 'error');
   }
 }
 }

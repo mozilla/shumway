@@ -130,7 +130,7 @@ public class MouseEvent extends Event {
                           altKey, shiftKey, buttonDown, delta);
   }
   public override function toString():String {
-    return formatToString('AsyncErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+    return formatToString('MouseEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
                           'localX', "localY", 'relatedObject', 'ctrlKey', 'altKey', 'shiftKey',
                           'buttonDown', 'delta');
   }
