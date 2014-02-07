@@ -61,7 +61,10 @@ public class FocusEvent extends Event {
 
   }
   public override function clone():Event {
-    return new FocusEvent(type, bubbles, cancelable, _relatedObject, _shiftKey, _keyCode);
+    var event:FocusEvent = new FocusEvent(type, bubbles, cancelable, _relatedObject, _shiftKey,
+                                          _keyCode);
+    event.isRelatedObjectInaccessible = isRelatedObjectInaccessible;
+    return event;
   }
   public override function toString():String {
     return formatToString('FullScreenEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
