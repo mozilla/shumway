@@ -15,6 +15,7 @@
  */
 
 package flash.events {
+[native(cls='TextEvent')]
 public class TextEvent extends Event {
   public static const LINK:String = "link";
   public static const TEXT_INPUT:String = "textInput";
@@ -33,15 +34,19 @@ public class TextEvent extends Event {
   }
 
   public function set text(value:String):void {
-
+    _text = value;
   }
 
   public override function clone():Event {
-    return new TextEvent(type, bubbles, cancelable, text);
+    var textEvent:TextEvent = new TextEvent(type, bubbles, cancelable, text);
+    copyNativeData(textEvent);
+    return textEvent;
   }
 
   public override function toString():String {
-    return formatToString('ErrorEvent', 'type', 'bubbles', 'cancelable', 'text');
+    return formatToString('TextEvent', 'type', 'bubbles', 'cancelable', 'text');
   }
+
+  private native function copyNativeData(event: TextEvent) : void;
 }
 }

@@ -73,7 +73,7 @@ public class GestureEvent extends Event {
                             shiftKey);
   }
   public override function toString():String {
-    return formatToString('AsyncErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+    return formatToString('GestureEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
                           'localX', 'localY', 'ctrlKey', 'altKey', 'shiftKey');
   }
   public native function updateAfterEvent():void;
