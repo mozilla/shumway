@@ -1,6 +1,5 @@
 package flash.media {
-  import Object;
-  public final class SoundCodec {
+public final class SoundCodec {
     public function SoundCodec() {}
     public static const NELLYMOSER:String = "NellyMoser";
     public static const SPEEX:String = "Speex";

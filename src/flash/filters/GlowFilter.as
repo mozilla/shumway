@@ -1,10 +1,5 @@
 package flash.filters {
-  import flash.filters.BitmapFilter;
-  import Boolean;
-  import uint;
-  import Number;
-  import int;
-  public final class GlowFilter extends BitmapFilter {
+public final class GlowFilter extends BitmapFilter {
     public function GlowFilter(color:uint = 16711680, alpha:Number = 1, blurX:Number = 6, blurY:Number = 6, strength:Number = 2, quality:int = 1, inner:Boolean = false, knockout:Boolean = false) {}
     public native function get color():uint;
     public native function set color(value:uint):void;
@@ -22,6 +17,6 @@ package flash.filters {
     public native function set quality(value:int):void;
     public native function get strength():Number;
     public native function set strength(value:Number):void;
-    public override function clone():BitmapFilter { notImplemented("clone"); }
+    public override function clone():BitmapFilter { notImplemented("clone"); return null; }
   }
 }

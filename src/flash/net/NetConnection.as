@@ -1,17 +1,7 @@
 package flash.net {
-  import flash.events.EventDispatcher;
-  import flash.net.Responder;
-  import String;
-  import Array;
-  import Boolean;
-  import uint;
-  import Object;
-  import flash.events.SecurityErrorEvent;
-  import Array;
-  import flash.events.AsyncErrorEvent;
-  import flash.events.NetStatusEvent;
-  import flash.events.IOErrorEvent;
-  public class NetConnection extends EventDispatcher {
+import flash.events.EventDispatcher;
+
+public class NetConnection extends EventDispatcher {
     public function NetConnection() {}
     public static native function get defaultObjectEncoding():uint;
     public static native function set defaultObjectEncoding(version:uint):void;

@@ -1,6 +1,5 @@
 package flash.text {
-  import Object;
-  public final class TextRenderer {
+public final class TextRenderer {
     public function TextRenderer() {}
     public static native function get antiAliasType():String;
     public static native function set antiAliasType(value:String):void;

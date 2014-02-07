@@ -1,6 +1,5 @@
 package flash.globalization {
-  import Object;
-  public final class DateTimeStyle {
+public final class DateTimeStyle {
     public function DateTimeStyle() {}
     public static const CUSTOM:String = "custom";
     public static const LONG:String = "long";

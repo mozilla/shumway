@@ -1,8 +1,7 @@
 package flash.automation {
-  import Object;
-  public class AutomationAction {
+public class AutomationAction {
     public function AutomationAction() {}
-    public function get type():String { notImplemented("type"); }
+    public function get type():String { notImplemented("type"); return ""; return ""; }
     public function set type(value:String):void { notImplemented("type"); }
   }
 }

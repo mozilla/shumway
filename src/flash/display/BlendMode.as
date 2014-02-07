@@ -1,6 +1,5 @@
 package flash.display {
-  import Object;
-  public final class BlendMode {
+public final class BlendMode {
     public function BlendMode() {}
     public static const NORMAL:String = "normal";
     public static const LAYER:String = "layer";

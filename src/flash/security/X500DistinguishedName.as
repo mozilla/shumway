@@ -1,6 +1,5 @@
 package flash.security {
-  import Object;
-  public class X500DistinguishedName {
+public class X500DistinguishedName {
     public function X500DistinguishedName() {}
     public native function get commonName():String;
     public native function get organizationName():String;

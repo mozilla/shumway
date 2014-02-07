@@ -1,6 +1,5 @@
 package flash.security {
-  import Object;
-  public final class CertificateStatus {
+public final class CertificateStatus {
     public function CertificateStatus() {}
     public static const TRUSTED:String = "trusted";
     public static const UNKNOWN:String = "unknown";

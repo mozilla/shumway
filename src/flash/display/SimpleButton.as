@@ -1,9 +1,7 @@
 package flash.display {
-  import flash.display.InteractiveObject;
-  import Boolean;
-  import flash.display.DisplayObject;
-  import flash.media.SoundTransform;
-  public class SimpleButton extends InteractiveObject {
+import flash.media.SoundTransform;
+
+public class SimpleButton extends InteractiveObject {
     public function SimpleButton(upState:DisplayObject = null, overState:DisplayObject = null, downState:DisplayObject = null, hitTestState:DisplayObject = null) {}
     public native function get useHandCursor():Boolean;
     public native function set useHandCursor(value:Boolean):void;

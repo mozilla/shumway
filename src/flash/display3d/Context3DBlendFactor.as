@@ -1,6 +1,5 @@
 package flash.display3D {
-  import Object;
-  public final class Context3DBlendFactor {
+public final class Context3DBlendFactor {
     public function Context3DBlendFactor() {}
     public static const ONE:String = "one";
     public static const ZERO:String = "zero";

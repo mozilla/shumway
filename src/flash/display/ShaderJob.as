@@ -1,12 +1,7 @@
 package flash.display {
-  import flash.events.EventDispatcher;
-  import Boolean;
-  import flash.display.Shader;
-  import Number;
-  import int;
-  import Object;
-  import flash.events.ShaderEvent;
-  public class ShaderJob extends EventDispatcher {
+import flash.events.EventDispatcher;
+
+public class ShaderJob extends EventDispatcher {
     public function ShaderJob(shader:Shader = null, target:Object = null, width:int = 0, height:int = 0) {}
     public native function start(waitForCompletion:Boolean = false):void;
     public native function cancel():void;

@@ -1,13 +1,8 @@
 package flash.display {
-  import flash.display.InteractiveObject;
-  import String;
-  import Array;
-  import Boolean;
-  import flash.display.DisplayObject;
-  import flash.geom.Point;
-  import int;
-  import flash.text.TextSnapshot;
-  public class DisplayObjectContainer extends InteractiveObject {
+import flash.geom.Point;
+import flash.text.TextSnapshot;
+
+public class DisplayObjectContainer extends InteractiveObject {
     public function DisplayObjectContainer() {}
     public native function addChild(child:DisplayObject):DisplayObject;
     public native function addChildAt(child:DisplayObject, index:int):DisplayObject;

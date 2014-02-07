@@ -1,6 +1,5 @@
 package flash.display {
-  import Object;
-  public final class BitmapEncodingColorSpace {
+public final class BitmapEncodingColorSpace {
     public function BitmapEncodingColorSpace() {}
     public static const COLORSPACE_AUTO:String = "auto";
     public static const COLORSPACE_4_4_4:String = "4:4:4";

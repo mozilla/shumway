@@ -1,7 +1,5 @@
 package flash.media {
-  import Object;
-  import Math;
-  public final class SoundTransform {
+public final class SoundTransform {
     public function SoundTransform(vol:Number = 1, panning:Number = 0) {}
     public native function get volume():Number;
     public native function set volume(volume:Number):void;
@@ -13,7 +11,7 @@ package flash.media {
     public native function set rightToRight(rightToRight:Number):void;
     public native function get rightToLeft():Number;
     public native function set rightToLeft(rightToLeft:Number):void;
-    public function get pan():Number { notImplemented("pan"); }
+    public function get pan():Number { notImplemented("pan"); return -1; }
     public function set pan(panning:Number):void { notImplemented("pan"); }
   }
 }

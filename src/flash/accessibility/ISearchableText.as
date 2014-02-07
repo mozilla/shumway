@@ -1,6 +1,5 @@
 package flash.accessibility {
-  import Object;
-  public interface ISearchableText {
+public interface ISearchableText {
      function get searchText():String;
   }
 }

@@ -1,6 +1,5 @@
 package flash.globalization {
-  import Object;
-  public final class Collator {
+public final class Collator {
     public function Collator(requestedLocaleIDName:String, initialMode:String = "sorting") {}
     public static native function getAvailableLocaleIDNames():Vector;
     public native function get ignoreCase():Boolean;

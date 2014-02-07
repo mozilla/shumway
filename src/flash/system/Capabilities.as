@@ -1,6 +1,5 @@
 package flash.system {
-  import Object;
-  public final class Capabilities {
+public final class Capabilities {
     public function Capabilities() {}
     public static native function get isEmbeddedInAcrobat():Boolean;
     public static native function get hasEmbeddedVideo():Boolean;

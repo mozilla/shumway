@@ -1,24 +1,13 @@
 package flash.display {
-  import flash.display.DisplayObjectContainer;
-  import Object;
-  import flash.media.StageVideo;
-  import __AS3__.vec.Vector;
-  import flash.display.Stage3D;
-  import flash.geom.Rectangle;
-  import flash.ui.ContextMenu;
-  import flash.accessibility.AccessibilityProperties;
-  import flash.display.DisplayObject;
-  import flash.events.Event;
-  import flash.display.InteractiveObject;
-  import flash.text.TextSnapshot;
-  import flash.accessibility.AccessibilityImplementation;
-  import flash.geom.Transform;
-  import flash.events.FullScreenEvent;
-  import flash.errors.IllegalOperationError;
-  import Error;
-  import flash.events.Event;
-  import flash.events.StageVideoAvailabilityEvent;
-  public class Stage extends DisplayObjectContainer {
+import flash.accessibility.AccessibilityImplementation;
+import flash.accessibility.AccessibilityProperties;
+import flash.events.Event;
+import flash.geom.Rectangle;
+import flash.geom.Transform;
+import flash.text.TextSnapshot;
+import flash.ui.ContextMenu;
+
+public class Stage extends DisplayObjectContainer {
     public function Stage() {}
     public native function get frameRate():Number;
     public native function set frameRate(value:Number):void;
@@ -84,22 +73,22 @@ package flash.display {
     public override function set focusRect(value:Object):void { notImplemented("focusRect"); }
     public override function set mouseEnabled(value:Boolean):void { notImplemented("mouseEnabled"); }
     public override function set accessibilityImplementation(value:AccessibilityImplementation):void { notImplemented("accessibilityImplementation"); }
-    public override function addChild(child:DisplayObject):DisplayObject { notImplemented("addChild"); }
-    public override function addChildAt(child:DisplayObject, index:int):DisplayObject { notImplemented("addChildAt"); }
+    public override function addChild(child:DisplayObject):DisplayObject { notImplemented("addChild"); return null; }
+    public override function addChildAt(child:DisplayObject, index:int):DisplayObject { notImplemented("addChildAt"); return null; }
     public override function setChildIndex(child:DisplayObject, index:int):void { notImplemented("setChildIndex"); }
     public override function addEventListener(type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void { notImplemented("addEventListener"); }
-    public override function dispatchEvent(event:Event):Boolean { notImplemented("dispatchEvent"); }
-    public override function hasEventListener(type:String):Boolean { notImplemented("hasEventListener"); }
-    public override function willTrigger(type:String):Boolean { notImplemented("willTrigger"); }
-    public override function get width():Number { notImplemented("width"); }
+    public override function dispatchEvent(event:Event):Boolean { notImplemented("dispatchEvent"); return false; }
+    public override function hasEventListener(type:String):Boolean { notImplemented("hasEventListener"); return false; }
+    public override function willTrigger(type:String):Boolean { notImplemented("willTrigger"); return false; }
+    public override function get width():Number { notImplemented("width"); return -1; }
     public override function set width(value:Number):void { notImplemented("width"); }
-    public override function get height():Number { notImplemented("height"); }
+    public override function get height():Number { notImplemented("height"); return -1; }
     public override function set height(value:Number):void { notImplemented("height"); }
-    public override function get textSnapshot():TextSnapshot { notImplemented("textSnapshot"); }
-    public override function get mouseChildren():Boolean { notImplemented("mouseChildren"); }
+    public override function get textSnapshot():TextSnapshot { notImplemented("textSnapshot"); return null; }
+    public override function get mouseChildren():Boolean { notImplemented("mouseChildren"); return false; }
     public override function set mouseChildren(value:Boolean):void { notImplemented("mouseChildren"); }
-    public override function get numChildren():int { notImplemented("numChildren"); }
-    public override function get tabChildren():Boolean { notImplemented("tabChildren"); }
+    public override function get numChildren():int { notImplemented("numChildren"); return -1; }
+    public override function get tabChildren():Boolean { notImplemented("tabChildren"); return false; }
     public override function set tabChildren(value:Boolean):void { notImplemented("tabChildren"); }
     public native function get allowsFullScreen():Boolean;
     public native function get allowsFullScreenInteractive():Boolean;

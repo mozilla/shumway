@@ -1,6 +1,5 @@
 package flash.net {
-  import Object;
-  public final class URLRequestMethod {
+public final class URLRequestMethod {
     public function URLRequestMethod() {}
     public static const POST:String = "POST";
     public static const GET:String = "GET";

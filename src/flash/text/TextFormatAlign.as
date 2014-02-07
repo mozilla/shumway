@@ -1,6 +1,5 @@
 package flash.text {
-  import Object;
-  public final class TextFormatAlign {
+public final class TextFormatAlign {
     public function TextFormatAlign() {}
     public static const LEFT:String = "left";
     public static const CENTER:String = "center";

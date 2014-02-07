@@ -1,10 +1,8 @@
 package flash.media {
-  import flash.display.DisplayObject;
-  import Boolean;
-  import flash.net.NetStream;
-  import int;
-  import flash.media.Camera;
-  public class Video extends DisplayObject {
+import flash.display.DisplayObject;
+import flash.net.NetStream;
+
+public class Video extends DisplayObject {
     public function Video(width:int = 320, height:int = 240) {}
     public native function get deblocking():int;
     public native function set deblocking(value:int):void;

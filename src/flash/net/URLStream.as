@@ -1,19 +1,9 @@
 package flash.net {
-  import flash.events.EventDispatcher;
-  import flash.utils.IDataInput;
-  import String;
-  import Boolean;
-  import uint;
-  import Number;
-  import int;
-  import flash.utils.ByteArray;
-  import flash.net.URLRequest;
-  import flash.events.SecurityErrorEvent;
-  import flash.events.ProgressEvent;
-  import flash.events.Event;
-  import flash.events.HTTPStatusEvent;
-  import flash.events.IOErrorEvent;
-  public class URLStream extends EventDispatcher implements IDataInput {
+import flash.events.EventDispatcher;
+import flash.utils.ByteArray;
+import flash.utils.IDataInput;
+
+public class URLStream extends EventDispatcher implements IDataInput {
     public function URLStream() {}
     public native function load(request:URLRequest):void;
     public native function readBytes(bytes:ByteArray, offset:uint = 0, length:uint = 0):void;

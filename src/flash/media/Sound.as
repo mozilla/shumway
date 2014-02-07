@@ -1,22 +1,9 @@
 package flash.media {
-  import flash.events.EventDispatcher;
-  import String;
-  import Boolean;
-  import flash.media.SoundChannel;
-  import flash.media.SoundLoaderContext;
-  import uint;
-  import Number;
-  import int;
-  import flash.utils.ByteArray;
-  import flash.media.ID3Info;
-  import flash.net.URLRequest;
-  import flash.media.SoundTransform;
-  import flash.events.ProgressEvent;
-  import flash.media.SoundLoaderContext;
-  import flash.events.Event;
-  import flash.events.SampleDataEvent;
-  import flash.events.IOErrorEvent;
-  public class Sound extends EventDispatcher {
+import flash.events.EventDispatcher;
+import flash.net.URLRequest;
+import flash.utils.ByteArray;
+
+public class Sound extends EventDispatcher {
     public function Sound(stream:URLRequest = null, context:SoundLoaderContext = null) {}
     public function load(stream:URLRequest, context:SoundLoaderContext = null):void { notImplemented("load"); }
     public native function loadCompressedDataFromByteArray(bytes:ByteArray, bytesLength:uint):void;

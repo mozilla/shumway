@@ -1,6 +1,5 @@
 package flash.display {
-  import Object;
-  public final class SWFVersion {
+public final class SWFVersion {
     public function SWFVersion() {}
     public static const FLASH1:uint = 1;
     public static const FLASH2:uint = 2;

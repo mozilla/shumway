@@ -1,9 +1,5 @@
 package flash.net {
-  import Object;
-  import RegExp;
-  import Error;
-  import ArgumentError;
-  public final class URLRequest {
+public final class URLRequest {
     public function URLRequest(url:String = null) {}
     public native function get url():String;
     public native function set url(value:String):void;

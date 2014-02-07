@@ -1,6 +1,5 @@
 package flash.ui {
-  import Object;
-  public final class MouseCursor {
+public final class MouseCursor {
     public function MouseCursor() {}
     public static const AUTO:String = "auto";
     public static const ARROW:String = "arrow";

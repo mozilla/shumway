@@ -23,8 +23,8 @@ var spawn = require('child_process').spawn;
 var rebuild = false;
 var buildThreadsCount = 1;
 var dependenciesRecursionLevel = 1;
-var optimize = true;
-var debugInfo = false;
+var debugInfo = true;
+var strict = true;
 for (var i = 2; i < process.argv.length;) {
   var cmd = process.argv[i++];
   switch (cmd) {
@@ -35,10 +35,6 @@ for (var i = 2; i < process.argv.length;) {
     case '--rebuild':
     case '-r':
       rebuild = true;
-      break;
-    case '-d':
-      debugInfo = true;
-      optimize = false;
       break;
     default:
       throw new Error('Bad argument: ' + cmd);
@@ -129,8 +125,8 @@ function runAsc(threadId, outputPath, files, callback) {
   if (debugInfo) {
     args.push('-d');
   }
-  if (optimize) {
-    args.push('-optimize');
+  if (strict) {
+    args.push('-strict');
   }
   args = args.concat(['-import', buildasc, '-outdir', outputDir,
                       '-out', outputName]).concat(files);

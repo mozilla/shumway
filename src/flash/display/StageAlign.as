@@ -1,6 +1,5 @@
 package flash.display {
-  import Object;
-  public final class StageAlign {
+public final class StageAlign {
     public function StageAlign() {}
     public static const TOP:String = "T";
     public static const LEFT:String = "L";

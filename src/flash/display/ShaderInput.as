@@ -1,6 +1,5 @@
 package flash.display {
-  import Object;
-  public final dynamic class ShaderInput {
+public final dynamic class ShaderInput {
     public function ShaderInput() {}
     public native function get input():Object;
     public native function set input(input:Object):void;

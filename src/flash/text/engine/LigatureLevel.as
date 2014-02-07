@@ -1,6 +1,5 @@
 package flash.text.engine {
-  import Object;
-  public final class LigatureLevel {
+public final class LigatureLevel {
     public function LigatureLevel() {}
     public static const NONE:String = "none";
     public static const MINIMUM:String = "minimum";

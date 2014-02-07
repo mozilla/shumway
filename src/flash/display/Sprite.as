@@ -1,12 +1,8 @@
 package flash.display {
-  import flash.display.DisplayObjectContainer;
-  import flash.geom.Rectangle;
-  import Boolean;
-  import flash.display.DisplayObject;
-  import int;
-  import flash.display.Graphics;
-  import flash.media.SoundTransform;
-  public class Sprite extends DisplayObjectContainer {
+import flash.geom.Rectangle;
+import flash.media.SoundTransform;
+
+public class Sprite extends DisplayObjectContainer {
     public function Sprite() {}
     public native function get graphics():Graphics;
     public native function get buttonMode():Boolean;

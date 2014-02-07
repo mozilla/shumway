@@ -1,6 +1,5 @@
 package flash.ui {
-  import Object;
-  public final class KeyLocation {
+public final class KeyLocation {
     public function KeyLocation() {}
     public static const STANDARD:uint;
     public static const LEFT:uint = 1;

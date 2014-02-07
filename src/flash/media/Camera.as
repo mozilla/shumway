@@ -1,19 +1,10 @@
 package flash.media {
-  import flash.events.EventDispatcher;
-  import __AS3__.vec.Vector;
-  import String;
-  import flash.geom.Rectangle;
-  import Array;
-  import Boolean;
-  import flash.display.BitmapData;
-  import uint;
-  import Number;
-  import int;
-  import flash.utils.ByteArray;
-  import flash.events.Event;
-  import flash.events.StatusEvent;
-  import flash.events.ActivityEvent;
-  public final class Camera extends EventDispatcher {
+import flash.display.BitmapData;
+import flash.events.EventDispatcher;
+import flash.geom.Rectangle;
+import flash.utils.ByteArray;
+
+public final class Camera extends EventDispatcher {
     public function Camera() {}
     internal static native function _scanHardware():void;
     public static native function get names():Array;

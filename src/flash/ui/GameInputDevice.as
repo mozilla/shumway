@@ -1,12 +1,8 @@
 package flash.ui {
-  import flash.events.EventDispatcher;
-  import __AS3__.vec.Vector;
-  import String;
-  import flash.ui.GameInputControl;
-  import Boolean;
-  import int;
-  import flash.utils.ByteArray;
-  public final class GameInputDevice extends EventDispatcher {
+import flash.events.EventDispatcher;
+import flash.utils.ByteArray;
+
+public final class GameInputDevice extends EventDispatcher {
     public function GameInputDevice() {}
     public static const MAX_BUFFER_SIZE:int = 4800;
     public native function getControlAt(i:int):GameInputControl;

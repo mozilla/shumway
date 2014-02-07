@@ -1,6 +1,5 @@
 package flash.automation {
-  import Object;
-  public class Configuration {
+public class Configuration {
     public function Configuration() {}
     public static native function get testAutomationConfiguration():String;
     public static native function set deviceConfiguration(configData:String):void;

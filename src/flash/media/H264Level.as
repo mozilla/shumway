@@ -1,6 +1,5 @@
 package flash.media {
-  import Object;
-  public final class H264Level {
+public final class H264Level {
     public function H264Level() {}
     public static const LEVEL_1:String = "1";
     public static const LEVEL_1B:String = "1b";

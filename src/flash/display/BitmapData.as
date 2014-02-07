@@ -1,20 +1,18 @@
 package flash.display {
-  import Object;
-  import flash.display.IBitmapDrawable;
-  import flash.geom.Rectangle;
-  import flash.geom.Matrix;
-  import flash.geom.Point;
-  import flash.filters.BitmapFilter;
-  import flash.utils.ByteArray;
-  import flash.geom.ColorTransform;
-  import flash.geom.Rectangle;
-  public class BitmapData implements IBitmapDrawable {
+import flash.filters.BitmapFilter;
+import flash.geom.ColorTransform;
+import flash.geom.Matrix;
+import flash.geom.Point;
+import flash.geom.Rectangle;
+import flash.utils.ByteArray;
+
+public class BitmapData implements IBitmapDrawable {
     public function BitmapData(width:int, height:int, transparent:Boolean = true, fillColor:uint = 4294967295) {}
     public native function clone():BitmapData;
     public native function get width():int;
     public native function get height():int;
     public native function get transparent():Boolean;
-    public function get rect():Rectangle { notImplemented("rect"); }
+    public function get rect():Rectangle { notImplemented("rect"); return null; }
     public native function getPixel(x:int, y:int):uint;
     public native function getPixel32(x:int, y:int):uint;
     public native function setPixel(x:int, y:int, color:uint):void;

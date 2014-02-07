@@ -1,7 +1,5 @@
 package flash.net {
-  import Object;
-  import flash.net.IDynamicPropertyWriter;
-  public final class ObjectEncoding {
+public final class ObjectEncoding {
     public function ObjectEncoding() {}
     public static const AMF0:uint;
     public static const AMF3:uint = 3;

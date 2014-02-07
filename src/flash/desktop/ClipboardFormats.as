@@ -1,14 +1,5 @@
 package flash.desktop {
-  import Object;
-  import flash.utils.Dictionary;
-  import flash.utils.ByteArray;
-  import flash.utils.Dictionary;
-  import SecurityError;
-  import flash.errors.IllegalOperationError;
-  import Error;
-  import TypeError;
-  import flash.utils.ByteArray;
-  public class ClipboardFormats {
+public class ClipboardFormats {
     public function ClipboardFormats() {}
     internal static const FLASH_PREFIX:String = "flash:";
     internal static const AIR_PREFIX:String = "air:";

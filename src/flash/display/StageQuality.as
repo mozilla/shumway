@@ -1,6 +1,5 @@
 package flash.display {
-  import Object;
-  public final class StageQuality {
+public final class StageQuality {
     public function StageQuality() {}
     public static const LOW:String = "low";
     public static const MEDIUM:String = "medium";

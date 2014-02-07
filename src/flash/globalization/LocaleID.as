@@ -1,6 +1,5 @@
 package flash.globalization {
-  import Object;
-  public final class LocaleID {
+public final class LocaleID {
     public function LocaleID(name:String) {}
     public static const DEFAULT:String = "i-default";
     public static native function determinePreferredLocales(want:Vector, have:Vector, keyword:String = "userinterface"):Vector;

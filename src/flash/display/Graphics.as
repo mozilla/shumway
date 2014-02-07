@@ -1,32 +1,7 @@
 package flash.display {
-  import Object;
-  import flash.display.IGraphicsStroke;
-  import flash.display.IGraphicsData;
-  import __AS3__.vec.Vector;
-  import flash.display.GraphicsBitmapFill;
-  import flash.display.GraphicsGradientFill;
-  import flash.geom.Matrix;
-  import flash.display.GraphicsStroke;
-  import flash.display.GraphicsPath;
-  import flash.display.GraphicsSolidFill;
-  import flash.display.IGraphicsFill;
-  import flash.display.Shader;
-  import flash.display.GraphicsShaderFill;
-  import flash.display.BitmapData;
-  import flash.display.GraphicsTrianglePath;
-  import flash.display.IGraphicsPath;
-  import flash.display.IGraphicsStroke;
-  import flash.display.GraphicsBitmapFill;
-  import flash.display.GraphicsGradientFill;
-  import flash.display.GraphicsStroke;
-  import flash.display.GraphicsShaderFill;
-  import flash.display.GraphicsTrianglePath;
-  import flash.display.GraphicsPath;
-  import flash.display.GraphicsSolidFill;
-  import flash.display.IGraphicsPath;
-  import flash.display.GraphicsEndFill;
-  import flash.display.IGraphicsFill;
-  public final class Graphics {
+import flash.geom.Matrix;
+
+public final class Graphics {
     public function Graphics() {}
     public native function clear():void;
     public native function beginFill(color:uint, alpha:Number = 1):void;

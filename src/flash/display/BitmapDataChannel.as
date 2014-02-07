@@ -1,6 +1,5 @@
 package flash.display {
-  import Object;
-  public final class BitmapDataChannel {
+public final class BitmapDataChannel {
     public function BitmapDataChannel() {}
     public static const RED:uint = 1;
     public static const GREEN:uint = 2;

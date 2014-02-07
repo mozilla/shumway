@@ -1,6 +1,5 @@
 package flash.text.engine {
-  import Object;
-  public final class TextBaseline {
+public final class TextBaseline {
     public function TextBaseline() {}
     public static const ROMAN:String = "roman";
     public static const ASCENT:String = "ascent";

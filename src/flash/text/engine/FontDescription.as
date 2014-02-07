@@ -1,6 +1,5 @@
 package flash.text.engine {
-  import Object;
-  public final class FontDescription {
+public final class FontDescription {
     public function FontDescription(fontName:String = "_serif", fontWeight:String = "normal", fontPosture:String = "normal", fontLookup:String = "device", renderingMode:String = "cff", cffHinting:String = "horizontalStem") {}
     public static native function isFontCompatible(fontName:String, fontWeight:String, fontPosture:String):Boolean;
     public static native function isDeviceFontCompatible(fontName:String, fontWeight:String, fontPosture:String):Boolean;
@@ -18,6 +17,6 @@ package flash.text.engine {
     public native function set cffHinting(value:String):void;
     public native function get locked():Boolean;
     public native function set locked(value:Boolean):void;
-    public function clone():FontDescription { notImplemented("clone"); }
+    public function clone():FontDescription { notImplemented("clone"); return null; }
   }
 }

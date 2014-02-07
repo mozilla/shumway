@@ -1,7 +1,5 @@
 package flash.ui {
-  import Object;
-  import flash.ui.MouseCursorData;
-  public final class Mouse {
+public final class Mouse {
     public function Mouse() {}
     public static native function hide():void;
     public static native function show():void;

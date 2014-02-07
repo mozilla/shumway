@@ -1,6 +1,5 @@
 package flash.text {
-  import Object;
-  public class TextFormat {
+public class TextFormat {
     public function TextFormat(font:String = null, size:Object = null, color:Object = null, bold:Object = null, italic:Object = null, underline:Object = null, url:String = null, target:String = null, align:String = null, leftMargin:Object = null, rightMargin:Object = null, indent:Object = null, leading:Object = null) {}
     public native function get align():String;
     public native function set align(value:String):void;

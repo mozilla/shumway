@@ -1,5 +1,4 @@
 package flash.display {
-  import Object;
-  public interface IGraphicsStroke {
+public interface IGraphicsStroke {
   }
 }

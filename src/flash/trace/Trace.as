@@ -1,6 +1,5 @@
 package flash.trace {
-  import Object;
-  public class Trace {
+public class Trace {
     public function Trace() {}
     public static const OFF:int;
     public static const METHODS:int = 1;

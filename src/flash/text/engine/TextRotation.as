@@ -1,6 +1,5 @@
 package flash.text.engine {
-  import Object;
-  public final class TextRotation {
+public final class TextRotation {
     public function TextRotation() {}
     public static const ROTATE_0:String = "rotate0";
     public static const ROTATE_90:String = "rotate90";

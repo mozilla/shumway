@@ -1,5 +1,4 @@
 package flash.display {
-  import Object;
-  public interface IGraphicsData {
+public interface IGraphicsData {
   }
 }

@@ -1,6 +1,5 @@
 package flash.text.engine {
-  import Object;
-  public final class TextLineCreationResult {
+public final class TextLineCreationResult {
     public function TextLineCreationResult() {}
     public static const SUCCESS:String = "success";
     public static const EMERGENCY:String = "emergency";

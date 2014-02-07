@@ -1,8 +1,7 @@
 package flash.net {
-  import flash.events.EventDispatcher;
-  import String;
-  import Number;
-  public dynamic class NetStreamPlayOptions extends EventDispatcher {
+import flash.events.EventDispatcher;
+
+public dynamic class NetStreamPlayOptions extends EventDispatcher {
     public function NetStreamPlayOptions() {}
     public var streamName:String;
     public var oldStreamName:String;

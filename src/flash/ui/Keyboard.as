@@ -1,6 +1,5 @@
 package flash.ui {
-  import Object;
-  public final class Keyboard {
+public final class Keyboard {
     public function Keyboard() {}
     public static const KEYNAME_UPARROW:String = "Up";
     public static const KEYNAME_DOWNARROW:String = "Down";

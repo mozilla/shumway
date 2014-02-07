@@ -1,6 +1,5 @@
 package flash.globalization {
-  import Object;
-  public final class NationalDigitsType {
+public final class NationalDigitsType {
     public function NationalDigitsType() {}
     public static const EUROPEAN:uint = 48;
     public static const ARABIC_INDIC:uint = 1632;

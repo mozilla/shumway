@@ -1,7 +1,5 @@
 package flash.globalization {
-  import Object;
-  import flash.globalization.NumberParseResult;
-  public final class NumberFormatter {
+public final class NumberFormatter {
     public function NumberFormatter(requestedLocaleIDName:String) {}
     public static native function getAvailableLocaleIDNames():Vector;
     public native function get lastOperationStatus():String;

@@ -1,27 +1,8 @@
 package flash.net {
-  import flash.events.EventDispatcher;
-  import String;
-  import Array;
-  import Boolean;
-  import uint;
-  import Date;
-  import Error;
-  import Number;
-  import XML;
-  import flash.utils.ByteArray;
-  import flash.net.URLRequest;
-  import String;
-  import flash.events.SecurityErrorEvent;
-  import flash.events.ProgressEvent;
-  import flash.events.DataEvent;
-  import Error;
-  import flash.events.HTTPStatusEvent;
-  import XML;
-  import flash.events.Event;
-  import ArgumentError;
-  import flash.utils.ByteArray;
-  import flash.events.IOErrorEvent;
-  public class FileReference extends EventDispatcher {
+import flash.events.EventDispatcher;
+import flash.utils.ByteArray;
+
+public class FileReference extends EventDispatcher {
     public function FileReference() {}
     public native function get creationDate():Date;
     public native function get creator():String;

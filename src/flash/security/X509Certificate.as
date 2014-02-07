@@ -1,9 +1,7 @@
 package flash.security {
-  import Object;
-  import Date;
-  import flash.utils.ByteArray;
-  import flash.security.X500DistinguishedName;
-  public class X509Certificate {
+import flash.utils.ByteArray;
+
+public class X509Certificate {
     public function X509Certificate() {}
     public native function get version():uint;
     public native function get serialNumber():String;

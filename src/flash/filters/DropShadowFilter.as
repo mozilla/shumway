@@ -1,10 +1,5 @@
 package flash.filters {
-  import flash.filters.BitmapFilter;
-  import Boolean;
-  import uint;
-  import Number;
-  import int;
-  public final class DropShadowFilter extends BitmapFilter {
+public final class DropShadowFilter extends BitmapFilter {
     public function DropShadowFilter(distance:Number = 4, angle:Number = 45, color:uint = 0, alpha:Number = 1, blurX:Number = 4, blurY:Number = 4, strength:Number = 1, quality:int = 1, inner:Boolean = false, knockout:Boolean = false, hideObject:Boolean = false) {}
     public native function get distance():Number;
     public native function set distance(value:Number):void;
@@ -28,6 +23,6 @@ package flash.filters {
     public native function set quality(value:int):void;
     public native function get strength():Number;
     public native function set strength(value:Number):void;
-    public override function clone():BitmapFilter { notImplemented("clone"); }
+    public override function clone():BitmapFilter { notImplemented("clone"); return null; }
   }
 }

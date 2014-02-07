@@ -1,6 +1,5 @@
 package flash.media {
-  import Object;
-  public final class MicrophoneEnhancedMode {
+public final class MicrophoneEnhancedMode {
     public function MicrophoneEnhancedMode() {}
     public static const FULL_DUPLEX:String = "fullDuplex";
     public static const HALF_DUPLEX:String = "halfDuplex";

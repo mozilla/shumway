@@ -1,8 +1,5 @@
 package flash.geom {
-  import Object;
-  import flash.geom.Vector3D;
-  import flash.geom.Matrix3D;
-  public class Utils3D {
+public class Utils3D {
     public function Utils3D() {}
     public static native function projectVector(m:Matrix3D, v:Vector3D):Vector3D;
     public static native function projectVectors(m:Matrix3D, verts:Vector, projectedVerts:Vector, uvts:Vector):void;

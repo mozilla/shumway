@@ -1,28 +1,9 @@
 package flash.text {
-  import flash.display.InteractiveObject;
-  import String;
-  import flash.text.StyleSheet;
-  import uint;
-  import int;
-  import XMLList;
-  import flash.geom.Rectangle;
-  import Array;
-  import flash.display.DisplayObject;
-  import Boolean;
-  import Error;
-  import Number;
-  import XML;
-  import flash.text.TextFormat;
-  import flash.text.TextLineMetrics;
-  import flash.text.TextRun;
-  import String;
-  import flash.events.TextEvent;
-  import Error;
-  import TypeError;
-  import XML;
-  import flash.events.Event;
-  import flash.text.TextFormat;
-  public class TextField extends InteractiveObject {
+import flash.display.DisplayObject;
+import flash.display.InteractiveObject;
+import flash.geom.Rectangle;
+
+public class TextField extends InteractiveObject {
     public function TextField() {}
     public static native function isFontCompatible(fontName:String, fontStyle:String):Boolean;
     public native function get alwaysShowSelection():Boolean;
@@ -72,7 +53,7 @@ package flash.text {
     public native function set scrollV(value:int):void;
     public native function get selectable():Boolean;
     public native function set selectable(value:Boolean):void;
-    public function get selectedText():String { notImplemented("selectedText"); }
+    public function get selectedText():String { notImplemented("selectedText"); return ""; }
     public native function get selectionBeginIndex():int;
     public native function get selectionEndIndex():int;
     public native function get sharpness():Number;
@@ -92,7 +73,7 @@ package flash.text {
     public native function get wordWrap():Boolean;
     public native function set wordWrap(value:Boolean):void;
     public function appendText(newText:String):void { notImplemented("appendText"); }
-    internal function copyRichText():String { notImplemented("copyRichText"); }
+    internal function copyRichText():String { notImplemented("copyRichText"); return ""; }
     public native function getCharBoundaries(charIndex:int):Rectangle;
     public native function getCharIndexAtPoint(x:Number, y:Number):int;
     public native function getFirstCharInParagraph(charIndex:int):int;
@@ -106,9 +87,9 @@ package flash.text {
     public native function getTextFormat(beginIndex:int = -1, endIndex:int = -1):TextFormat;
     public native function getTextRuns(beginIndex:int = 0, endIndex:int = 2147483647):Array;
     public native function getRawText():String;
-    public function getXMLText(beginIndex:int = 0, endIndex:int = 2147483647):String { notImplemented("getXMLText"); }
+    public function getXMLText(beginIndex:int = 0, endIndex:int = 2147483647):String { notImplemented("getXMLText"); return ""; }
     public function insertXMLText(beginIndex:int, endIndex:int, richText:String, pasting:Boolean = false):void { notImplemented("insertXMLText"); }
-    internal function pasteRichText(richText:String):Boolean { notImplemented("pasteRichText"); }
+    internal function pasteRichText(richText:String):Boolean { notImplemented("pasteRichText"); return false; }
     public native function replaceSelectedText(value:String):void;
     public native function replaceText(beginIndex:int, endIndex:int, newText:String):void;
     public native function setSelection(beginIndex:int, endIndex:int):void;

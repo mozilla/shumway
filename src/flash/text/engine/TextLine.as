@@ -1,20 +1,11 @@
 package flash.text.engine {
-  import flash.display.DisplayObjectContainer;
-  import __AS3__.vec.Vector;
-  import String;
-  import flash.geom.Rectangle;
-  import flash.text.engine.TextLineMirrorRegion;
-  import flash.ui.ContextMenu;
-  import Boolean;
-  import flash.display.DisplayObject;
-  import Number;
-  import int;
-  import flash.text.engine.TextBlock;
-  import flash.events.EventDispatcher;
-  import Object;
-  import flash.errors.IllegalOperationError;
-  import Error;
-  public final class TextLine extends DisplayObjectContainer {
+import flash.display.DisplayObject;
+import flash.display.DisplayObjectContainer;
+import flash.events.EventDispatcher;
+import flash.geom.Rectangle;
+import flash.ui.ContextMenu;
+
+public final class TextLine extends DisplayObjectContainer {
     public function TextLine() {}
     public static const MAX_LINE_WIDTH:int = 1000000;
     public override function set focusRect(focusRect:Object):void { notImplemented("focusRect"); }
@@ -42,7 +33,7 @@ package flash.text.engine {
     public native function set validity(value:String):void;
     public native function get atomCount():int;
     public native function get mirrorRegions():Vector;
-    public function getMirrorRegion(mirror:EventDispatcher):TextLineMirrorRegion { notImplemented("getMirrorRegion"); }
+    public function getMirrorRegion(mirror:EventDispatcher):TextLineMirrorRegion { notImplemented("getMirrorRegion"); return null; }
     public function flushAtomData():void { notImplemented("flushAtomData"); }
     public native function getAtomIndexAtPoint(stageX:Number, stageY:Number):int;
     public native function getAtomIndexAtCharIndex(charIndex:int):int;

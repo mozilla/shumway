@@ -1,6 +1,5 @@
 package flash.ui {
-  import Object;
-  public final class GameInputHand {
+public final class GameInputHand {
     public function GameInputHand() {}
     public static const RIGHT:String = "right";
     public static const LEFT:String = "left";

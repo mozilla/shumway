@@ -1,12 +1,7 @@
 package flash.geom {
-  import Object;
-  import flash.geom.Rectangle;
-  import flash.geom.Matrix;
-  import flash.display.DisplayObject;
-  import flash.geom.Matrix3D;
-  import flash.geom.PerspectiveProjection;
-  import flash.geom.ColorTransform;
-  public class Transform {
+import flash.display.DisplayObject;
+
+public class Transform {
     public function Transform(displayObject:DisplayObject) {}
     public native function get matrix():Matrix;
     public native function set matrix(value:Matrix):void;

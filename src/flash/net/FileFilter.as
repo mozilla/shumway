@@ -1,6 +1,5 @@
 package flash.net {
-  import Object;
-  public final class FileFilter {
+public final class FileFilter {
     public function FileFilter(description:String, extension:String, macType:String = null) {}
     public native function get description():String;
     public native function set description(value:String):void;

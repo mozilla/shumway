@@ -1,25 +1,14 @@
 package flash.display3D {
-  import flash.events.EventDispatcher;
-  import String;
-  import __AS3__.vec.Vector;
-  import flash.display3D.Program3D;
-  import flash.display3D.textures.Texture;
-  import flash.display3D.IndexBuffer3D;
-  import flash.display3D.VertexBuffer3D;
-  import uint;
-  import int;
-  import flash.utils.ByteArray;
-  import flash.geom.Rectangle;
-  import Boolean;
-  import flash.geom.Matrix3D;
-  import flash.display.BitmapData;
-  import Number;
-  import flash.display3D.textures.TextureBase;
-  import flash.display3D.textures.CubeTexture;
-  import flash.display3D.textures.Texture;
-  import ArgumentError;
-  import flash.display3D.textures.CubeTexture;
-  public final class Context3D extends EventDispatcher {
+import flash.display.BitmapData;
+import flash.display3D.textures.CubeTexture;
+import flash.display3D.textures.Texture;
+import flash.display3D.textures.TextureBase;
+import flash.events.EventDispatcher;
+import flash.geom.Matrix3D;
+import flash.geom.Rectangle;
+import flash.utils.ByteArray;
+
+public final class Context3D extends EventDispatcher {
     public function Context3D() {}
     public native function get driverInfo():String;
     public native function dispose():void;

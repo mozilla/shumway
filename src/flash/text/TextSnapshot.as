@@ -1,6 +1,5 @@
 package flash.text {
-  import Object;
-  public class TextSnapshot {
+public class TextSnapshot {
     public function TextSnapshot() {}
     public native function findText(beginIndex:int, textToFind:String, caseSensitive:Boolean):int;
     public native function get charCount():int;

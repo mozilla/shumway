@@ -1,13 +1,7 @@
 package flash.text.engine {
-  import Object;
-  import flash.text.engine.GroupElement;
-  import flash.text.engine.ElementFormat;
-  import flash.text.engine.TextBlock;
-  import flash.events.EventDispatcher;
-  import Error;
-  import ArgumentError;
-  import flash.utils.getQualifiedClassName;
-  public class ContentElement {
+import flash.events.EventDispatcher;
+
+public class ContentElement {
     public function ContentElement(elementFormat:ElementFormat = null, eventMirror:EventDispatcher = null, textRotation:String = "rotate0") {}
     public static const GRAPHIC_ELEMENT:uint = 65007;
     public var userData;

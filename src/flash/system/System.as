@@ -1,12 +1,9 @@
 package flash.system {
-  import Object;
-  import flash.system.IME;
-  import XML;
-  public final class System {
+public final class System {
     public function System() {}
     public static native function get ime():IME;
     public static native function setClipboard(string:String):void;
-    public static function get totalMemory():uint { notImplemented("totalMemory"); }
+    public static function get totalMemory():uint { notImplemented("totalMemory"); return 0; }
     public static native function get totalMemoryNumber():Number;
     public static native function get freeMemory():Number;
     public static native function get privateMemory():Number;

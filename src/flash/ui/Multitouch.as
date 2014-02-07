@@ -1,6 +1,5 @@
 package flash.ui {
-  import Object;
-  public final class Multitouch {
+public final class Multitouch {
     public function Multitouch() {}
     public static native function get inputMode():String;
     public static native function set inputMode(value:String):void;

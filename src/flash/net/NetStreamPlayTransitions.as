@@ -1,6 +1,5 @@
 package flash.net {
-  import Object;
-  public class NetStreamPlayTransitions {
+public class NetStreamPlayTransitions {
     public function NetStreamPlayTransitions() {}
     public static const APPEND:String = "append";
     public static const RESET:String = "reset";

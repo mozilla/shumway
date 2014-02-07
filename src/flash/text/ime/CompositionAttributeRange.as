@@ -1,6 +1,5 @@
 package flash.text.ime {
-  import Object;
-  public final class CompositionAttributeRange {
+public final class CompositionAttributeRange {
     public function CompositionAttributeRange(relativeStart:int, relativeEnd:int, selected:Boolean, converted:Boolean) {}
     public var relativeStart:int;
     public var relativeEnd:int;

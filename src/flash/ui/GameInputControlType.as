@@ -1,6 +1,5 @@
 package flash.ui {
-  import Object;
-  public final class GameInputControlType {
+public final class GameInputControlType {
     public function GameInputControlType() {}
     public static const MOVEMENT:String = "movement";
     public static const ROTATION:String = "rotation";

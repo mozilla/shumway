@@ -1,6 +1,5 @@
 package flash.display {
-  import Object;
-  public final class GraphicsPathCommand {
+public final class GraphicsPathCommand {
     public function GraphicsPathCommand() {}
     public static const NO_OP:int;
     public static const MOVE_TO:int = 1;

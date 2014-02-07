@@ -1,14 +1,9 @@
 package flash.net {
-  import flash.events.EventDispatcher;
-  import String;
-  import Boolean;
-  import Object;
-  import flash.events.SecurityErrorEvent;
-  import flash.events.AsyncErrorEvent;
-  import flash.events.StatusEvent;
-  public class LocalConnection extends EventDispatcher {
+import flash.events.EventDispatcher;
+
+public class LocalConnection extends EventDispatcher {
     public function LocalConnection() {}
-    public static function get isSupported():Boolean { notImplemented("isSupported"); }
+    public static function get isSupported():Boolean { notImplemented("isSupported"); return false; }
     public native function close():void;
     public native function connect(connectionName:String):void;
     public native function get domain():String;

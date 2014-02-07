@@ -1,11 +1,8 @@
 package flash.filters {
-  import flash.filters.BitmapFilter;
-  import String;
-  import flash.display.BitmapData;
-  import flash.geom.Point;
-  import uint;
-  import Number;
-  public final class DisplacementMapFilter extends BitmapFilter {
+import flash.display.BitmapData;
+import flash.geom.Point;
+
+public final class DisplacementMapFilter extends BitmapFilter {
     public function DisplacementMapFilter(mapBitmap:BitmapData = null, mapPoint:Point = null, componentX:uint = 0, componentY:uint = 0, scaleX:Number = 0, scaleY:Number = 0, mode:String = "wrap", color:uint = 0, alpha:Number = 0) {}
     public native function get mapBitmap():BitmapData;
     public native function set mapBitmap(value:BitmapData):void;
@@ -25,6 +22,6 @@ package flash.filters {
     public native function set color(value:uint):void;
     public native function get alpha():Number;
     public native function set alpha(value:Number):void;
-    public override function clone():BitmapFilter { notImplemented("clone"); }
+    public override function clone():BitmapFilter { notImplemented("clone"); return null; }
   }
 }

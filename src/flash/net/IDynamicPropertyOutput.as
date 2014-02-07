@@ -1,6 +1,5 @@
 package flash.net {
-  import Object;
-  public interface IDynamicPropertyOutput {
+public interface IDynamicPropertyOutput {
      function writeDynamicProperty(name:String, value):void;
   }
 }

@@ -1,6 +1,5 @@
 package flash.system {
-  import Object;
-  public final class Security {
+public final class Security {
     public function Security() {}
     public static native function allowDomain():void;
     public static native function allowInsecureDomain():void;

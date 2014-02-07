@@ -1,13 +1,7 @@
 package flash.media {
-  import flash.events.EventDispatcher;
-  import String;
-  import Array;
-  import Boolean;
-  import Number;
-  import int;
-  import flash.media.SoundTransform;
-  import flash.media.MicrophoneEnhancedOptions;
-  public final class Microphone extends EventDispatcher {
+import flash.events.EventDispatcher;
+
+public final class Microphone extends EventDispatcher {
     public function Microphone() {}
     public static native function getMicrophone(index:int = -1):Microphone;
     public static native function get names():Array;

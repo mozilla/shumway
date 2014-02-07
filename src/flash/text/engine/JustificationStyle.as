@@ -1,6 +1,5 @@
 package flash.text.engine {
-  import Object;
-  public final class JustificationStyle {
+public final class JustificationStyle {
     public function JustificationStyle() {}
     public static const PUSH_IN_KINSOKU:String = "pushInKinsoku";
     public static const PUSH_OUT_ONLY:String = "pushOutOnly";

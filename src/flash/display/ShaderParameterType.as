@@ -1,6 +1,5 @@
 package flash.display {
-  import Object;
-  public final class ShaderParameterType {
+public final class ShaderParameterType {
     public function ShaderParameterType() {}
     public static const FLOAT:String = "float";
     public static const FLOAT2:String = "float2";

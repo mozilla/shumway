@@ -1,6 +1,5 @@
 package flash.system {
-  import Object;
-  public final class IMEConversionMode {
+public final class IMEConversionMode {
     public function IMEConversionMode() {}
     public static const ALPHANUMERIC_FULL:String = "ALPHANUMERIC_FULL";
     public static const ALPHANUMERIC_HALF:String = "ALPHANUMERIC_HALF";

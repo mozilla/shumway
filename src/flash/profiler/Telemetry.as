@@ -1,6 +1,5 @@
 package flash.profiler {
-  import Object;
-  public final class Telemetry {
+public final class Telemetry {
     public function Telemetry() {}
     public static native function get spanMarker():Number;
     public static native function get connected():Boolean;

@@ -1,6 +1,5 @@
 package flash.display3D {
-  import Object;
-  public final class Context3DStencilAction {
+public final class Context3DStencilAction {
     public function Context3DStencilAction() {}
     public static const KEEP:String = "keep";
     public static const ZERO:String = "zero";

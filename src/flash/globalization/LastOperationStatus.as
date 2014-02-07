@@ -1,6 +1,5 @@
 package flash.globalization {
-  import Object;
-  public final class LastOperationStatus {
+public final class LastOperationStatus {
     public function LastOperationStatus() {}
     public static const NO_ERROR:String = "noError";
     public static const USING_FALLBACK_WARNING:String = "usingFallbackWarning";

@@ -1,6 +1,5 @@
 package flash.text {
-  import Object;
-  public class Font {
+public class Font {
     public function Font() {}
     public static native function enumerateFonts(enumerateDeviceFonts:Boolean = false):Array;
     public static native function registerFont(font:Class):void;

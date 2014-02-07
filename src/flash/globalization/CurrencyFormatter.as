@@ -1,13 +1,11 @@
 package flash.globalization {
-  import Object;
-  import flash.globalization.CurrencyParseResult;
-  public final class CurrencyFormatter {
+public final class CurrencyFormatter {
     public function CurrencyFormatter(requestedLocaleIDName:String) {}
     public static native function getAvailableLocaleIDNames():Vector;
     public native function get currencyISOCode():String;
     public native function get currencySymbol():String;
     public native function setCurrency(currencyISOCode:String, currencySymbol:String):void;
-    public function format(value:Number, withCurrencySymbol:Boolean = false):String { notImplemented("format"); }
+    public function format(value:Number, withCurrencySymbol:Boolean = false):String { notImplemented("format"); return ""; }
     public native function formattingWithCurrencySymbolIsSafe(requestedISOCode:String):Boolean;
     public native function parse(inputString:String):CurrencyParseResult;
     public native function get lastOperationStatus():String;

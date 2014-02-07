@@ -1,14 +1,10 @@
 package flash.media {
-  import flash.events.EventDispatcher;
-  import __AS3__.vec.Vector;
-  import String;
-  import flash.geom.Rectangle;
-  import flash.geom.Point;
-  import flash.net.NetStream;
-  import int;
-  import flash.media.Camera;
-  import flash.events.StageVideoEvent;
-  public class StageVideo extends EventDispatcher {
+import flash.events.EventDispatcher;
+import flash.geom.Point;
+import flash.geom.Rectangle;
+import flash.net.NetStream;
+
+public class StageVideo extends EventDispatcher {
     public function StageVideo() {}
     public native function attachNetStream(netStream:NetStream):void;
     public native function attachCamera(theCamera:Camera):void;

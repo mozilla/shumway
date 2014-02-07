@@ -16,9 +16,7 @@
 
 package flash.geom
 {
-  import flash.geom.Point;
-
-  public class Rectangle
+public class Rectangle
   {
     public var x:Number;
     public var y:Number;

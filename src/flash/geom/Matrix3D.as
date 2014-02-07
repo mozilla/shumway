@@ -1,8 +1,5 @@
 package flash.geom {
-  import Object;
-  import __AS3__.vec.Vector;
-  import flash.geom.Vector3D;
-  public class Matrix3D {
+public class Matrix3D {
     public function Matrix3D(v:Vector = null) {}
     public static native function interpolate(thisMat:Matrix3D, toMat:Matrix3D, percent:Number):Matrix3D;
     public native function clone():Matrix3D;

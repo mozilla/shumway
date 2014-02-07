@@ -1,6 +1,5 @@
 package flash.ui {
-  import Object;
-  public final class GameInputFinger {
+public final class GameInputFinger {
     public function GameInputFinger() {}
     public static const THUMB:String = "thumb";
     public static const INDEX:String = "index";

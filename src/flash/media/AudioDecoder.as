@@ -1,6 +1,5 @@
 package flash.media {
-  import Object;
-  public final class AudioDecoder {
+public final class AudioDecoder {
     public function AudioDecoder() {}
     public static const DOLBY_DIGITAL:String = "DolbyDigital";
     public static const DOLBY_DIGITAL_PLUS:String = "DolbyDigitalPlus";

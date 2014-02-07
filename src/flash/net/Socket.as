@@ -1,27 +1,13 @@
 package flash.net {
-  import flash.utils.IDataOutput;
-  import flash.events.EventDispatcher;
-  import flash.utils.IDataInput;
-  import String;
-  import flash.events.SecurityErrorEvent;
-  import flash.events.TimerEvent;
-  import Boolean;
-  import uint;
-  import Number;
-  import flash.utils.Timer;
-  import int;
-  import flash.utils.ByteArray;
-  import flash.events.SecurityErrorEvent;
-  import flash.events.TimerEvent;
-  import flash.events.ProgressEvent;
-  import flash.events.OutputProgressEvent;
-  import flash.utils.Timer;
-  import flash.events.Event;
-  import flash.events.IOErrorEvent;
-  public class Socket extends EventDispatcher implements IDataInput, IDataOutput {
+import flash.events.EventDispatcher;
+import flash.utils.ByteArray;
+import flash.utils.IDataInput;
+import flash.utils.IDataOutput;
+
+public class Socket extends EventDispatcher implements IDataInput, IDataOutput {
     public function Socket(host:String = null, port:int = 0) {}
     public function connect(host:String, port:int):void { notImplemented("connect"); }
-    public function get timeout():uint { notImplemented("timeout"); }
+    public function get timeout():uint { notImplemented("timeout"); return 0; }
     public function set timeout(value:uint):void { notImplemented("timeout"); }
     public native function readBytes(bytes:ByteArray, offset:uint = 0, length:uint = 0):void;
     public native function writeBytes(bytes:ByteArray, offset:uint = 0, length:uint = 0):void;

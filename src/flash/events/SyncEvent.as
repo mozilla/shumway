@@ -1,14 +1,13 @@
 package flash.events {
-  import flash.events.Event;
-  import String;
-  import Array;
-  import Boolean;
-  public class SyncEvent extends Event {
-    public function SyncEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false, changeList:Array = null) {}
+public class SyncEvent extends Event {
+    public function SyncEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false, changeList:Array = null) {
+      super(type, bubbles, cancelable);
+      notImplemented("SyncEvent");
+    }
     public static const SYNC:String = "sync";
-    public override function clone():Event { notImplemented("clone"); }
-    public override function toString():String { notImplemented("toString"); }
-    public function get changeList():Array { notImplemented("changeList"); }
+    public override function clone():Event { notImplemented("clone"); return null; }
+    public override function toString():String { notImplemented("toString"); return ""; }
+    public function get changeList():Array { notImplemented("changeList"); return null; }
     public function set changeList(value:Array):void { notImplemented("changeList"); }
   }
 }

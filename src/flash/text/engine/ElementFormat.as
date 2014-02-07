@@ -1,9 +1,5 @@
 package flash.text.engine {
-  import Object;
-  import flash.text.engine.FontDescription;
-  import flash.text.engine.FontMetrics;
-  import flash.text.engine.FontDescription;
-  public final class ElementFormat {
+public final class ElementFormat {
     public function ElementFormat(fontDescription:FontDescription = null, fontSize:Number = 12, color:uint = 0, alpha:Number = 1, textRotation:String = "auto", dominantBaseline:String = "roman", alignmentBaseline:String = "useDominantBaseline", baselineShift:Number = 0, kerning:String = "on", trackingRight:Number = 0, trackingLeft:Number = 0, locale:String = "en", breakOpportunity:String = "auto", digitCase:String = "default", digitWidth:String = "default", ligatureLevel:String = "common", typographicCase:String = "default") {}
     public native function get alignmentBaseline():String;
     public native function set alignmentBaseline(alignmentBaseline:String):void;
@@ -42,6 +38,6 @@ package flash.text.engine {
     public native function get locked():Boolean;
     public native function set locked(value:Boolean):void;
     public native function getFontMetrics():FontMetrics;
-    public function clone():ElementFormat { notImplemented("clone"); }
+    public function clone():ElementFormat { notImplemented("clone"); return null; }
   }
 }

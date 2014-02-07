@@ -1,7 +1,7 @@
 package flash.system {
-  import Object;
-  import flash.utils.ByteArray;
-  public final class ApplicationDomain {
+import flash.utils.ByteArray;
+
+public final class ApplicationDomain {
     public function ApplicationDomain(parentDomain:ApplicationDomain = null) {}
     public static native function get currentDomain():ApplicationDomain;
     public static native function get MIN_DOMAIN_MEMORY_LENGTH():uint;

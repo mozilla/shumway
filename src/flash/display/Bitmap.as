@@ -1,9 +1,5 @@
 package flash.display {
-  import flash.display.DisplayObject;
-  import String;
-  import Boolean;
-  import flash.display.BitmapData;
-  public class Bitmap extends DisplayObject {
+public class Bitmap extends DisplayObject {
     public function Bitmap(bitmapData:BitmapData = null, pixelSnapping:String = "auto", smoothing:Boolean = false) {}
     public native function get pixelSnapping():String;
     public native function set pixelSnapping(value:String):void;

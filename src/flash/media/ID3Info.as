@@ -1,6 +1,5 @@
 package flash.media {
-  import Object;
-  public final dynamic class ID3Info {
+public final dynamic class ID3Info {
     public function ID3Info() {}
     public var songName:String;
     public var artist:String;

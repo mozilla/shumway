@@ -1,13 +1,5 @@
 package flash.external {
-  import Object;
-  import Error;
-  import XML;
-  import Error;
-  import Date;
-  import flash.system.Capabilities;
-  import XML;
-  import flash.utils.getDefinitionByName;
-  public final class ExternalInterface {
+public final class ExternalInterface {
     public function ExternalInterface() {}
     public static native function get available():Boolean;
     public static var marshallExceptions:Boolean;

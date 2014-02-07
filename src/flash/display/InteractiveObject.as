@@ -1,23 +1,9 @@
 package flash.display {
-  import flash.display.DisplayObject;
-  import flash.geom.Rectangle;
-  import flash.ui.ContextMenu;
-  import Boolean;
-  import int;
-  import Object;
-  import flash.accessibility.AccessibilityImplementation;
-  import flash.events.MouseEvent;
-  import flash.events.IMEEvent;
-  import flash.events.FocusEvent;
-  import flash.events.TransformGestureEvent;
-  import flash.events.SoftKeyboardEvent;
-  import flash.events.PressAndTapGestureEvent;
-  import flash.events.TextEvent;
-  import flash.events.KeyboardEvent;
-  import flash.events.TouchEvent;
-  import flash.events.GestureEvent;
-  import flash.events.Event;
-  public class InteractiveObject extends DisplayObject {
+import flash.accessibility.AccessibilityImplementation;
+import flash.geom.Rectangle;
+import flash.ui.ContextMenu;
+
+public class InteractiveObject extends DisplayObject {
     public function InteractiveObject() {}
     public native function get tabEnabled():Boolean;
     public native function set tabEnabled(enabled:Boolean):void;

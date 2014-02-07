@@ -1,6 +1,5 @@
 package flash.system {
-  import Object;
-  public final class SecurityPanel {
+public final class SecurityPanel {
     public function SecurityPanel() {}
     public static const DEFAULT:String = "default";
     public static const PRIVACY:String = "privacy";

@@ -1,9 +1,9 @@
 package flash.automation {
-  import flash.events.EventDispatcher;
-  import String;
-  import flash.geom.Rectangle;
-  import flash.display.BitmapData;
-  public class StageCapture extends EventDispatcher {
+import flash.display.BitmapData;
+import flash.events.EventDispatcher;
+import flash.geom.Rectangle;
+
+public class StageCapture extends EventDispatcher {
     public function StageCapture() {}
     public static const CURRENT:String = "current";
     public static const NEXT:String = "next";

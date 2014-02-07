@@ -1,6 +1,5 @@
 package flash.text {
-  import Object;
-  public class TextLineMetrics {
+public class TextLineMetrics {
     public function TextLineMetrics(x:Number, width:Number, height:Number, ascent:Number, descent:Number, leading:Number) {}
     public var x:Number;
     public var width:Number;

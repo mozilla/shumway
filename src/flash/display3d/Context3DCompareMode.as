@@ -1,6 +1,5 @@
 package flash.display3D {
-  import Object;
-  public final class Context3DCompareMode {
+public final class Context3DCompareMode {
     public function Context3DCompareMode() {}
     public static const ALWAYS:String = "always";
     public static const NEVER:String = "never";

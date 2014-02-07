@@ -1,10 +1,5 @@
 package flash.filters {
-  import flash.filters.BitmapFilter;
-  import Array;
-  import Boolean;
-  import uint;
-  import Number;
-  public class ConvolutionFilter extends BitmapFilter {
+public class ConvolutionFilter extends BitmapFilter {
     public function ConvolutionFilter(matrixX:Number = 0, matrixY:Number = 0, matrix:Array = null, divisor:Number = 1, bias:Number = 0, preserveAlpha:Boolean = true, clamp:Boolean = true, color:uint = 0, alpha:Number = 0) {}
     public native function get matrix():Array;
     public native function set matrix(value:Array):void;
@@ -24,6 +19,6 @@ package flash.filters {
     public native function set color(value:uint):void;
     public native function get alpha():Number;
     public native function set alpha(value:Number):void;
-    public override function clone():BitmapFilter { notImplemented("clone"); }
+    public override function clone():BitmapFilter { notImplemented("clone"); return null; }
   }
 }
