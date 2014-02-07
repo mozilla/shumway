@@ -1,3 +1,19 @@
+/*
+ * Copyright 2014 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *totalMemory
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package flash.display {
   import Object;
   import flash.display.IBitmapDrawable;
@@ -8,13 +24,15 @@ package flash.display {
   import flash.utils.ByteArray;
   import flash.geom.ColorTransform;
   import flash.geom.Rectangle;
+
+  [native(cls='BitmapData')]
   public class BitmapData implements IBitmapDrawable {
     public function BitmapData(width:int, height:int, transparent:Boolean = true, fillColor:uint = 4294967295) {}
     public native function clone():BitmapData;
     public native function get width():int;
     public native function get height():int;
     public native function get transparent():Boolean;
-    public function get rect():Rectangle { notImplemented("rect"); }
+    public function get rect():Rectangle { return new Rectangle (0, 0, width(), height()); }
     public native function getPixel(x:int, y:int):uint;
     public native function getPixel32(x:int, y:int):uint;
     public native function setPixel(x:int, y:int, color:uint):void;
