@@ -20,7 +20,11 @@ var fs = require('fs');
 var spawn = require('child_process').spawn;
 
 // simple args parsing
-var rebuild = false, buildThreadsCount = 1;
+var rebuild = false;
+var buildThreadsCount = 1;
+var dependenciesRecursionLevel = 1;
+var optimize = true;
+var debugInfo = false;
 for (var i = 2; i < process.argv.length;) {
   var cmd = process.argv[i++];
   switch (cmd) {
@@ -31,6 +35,10 @@ for (var i = 2; i < process.argv.length;) {
     case '--rebuild':
     case '-r':
       rebuild = true;
+      break;
+    case '-d':
+      debugInfo = true;
+      optimize = false;
       break;
     default:
       throw new Error('Bad argument: ' + cmd);
@@ -117,9 +125,15 @@ function runAsc(threadId, outputPath, files, callback) {
   }
 
   var args = ['-ea', '-DAS3', '-DAVMPLUS', '-classpath', ascjar,
-              'macromedia.asc.embedding.ScriptCompiler', '-builtin',
-              '-import', buildasc, '-outdir', outputDir,
-              '-out', outputName].concat(files);
+              'macromedia.asc.embedding.ScriptCompiler', '-builtin'];
+  if (debugInfo) {
+    args.push('-d');
+  }
+  if (optimize) {
+    args.push('-optimize');
+  }
+  args = args.concat(['-import', buildasc, '-outdir', outputDir,
+                      '-out', outputName]).concat(files);
   var proc = spawn('java', args, {stdio: 'inherit'} );
   proc.on('close', function (code) {
     if (!fs.existsSync(outputPath)) {
@@ -129,6 +143,15 @@ function runAsc(threadId, outputPath, files, callback) {
     callback(code, outputPath);
   });
 }
+
+var ignoreDependenciesErrors = {
+  'flash.utils.Dictionary': true,
+  'flash.utils.ByteArray': true,
+  'flash.utils.escapeMultiByte': true,
+  'flash.utils.unescapeMultiByte': true,
+  'flash.utils.IDataInput': true,
+  // add more ..
+};
 
 function getDependencies(files) {
   var tmp = {}, tmpErr = {}, queue = [];
@@ -146,10 +169,11 @@ function getDependencies(files) {
         if (fs.existsSync(path)) {
           if (!tmp[path]) {
             tmp[path] = true;
-            // uncomment to do recursive search of dependencies
-            // queue.push(path);
+            if (dependenciesRecursionLevel >= 2) {
+              queue.push(path);
+            }
           }
-        } else if (!tmpErr[m[0]]) {
+        } else if (!tmpErr[m[0]] && !ignoreDependenciesErrors[m[1]]) {
           console.log('Dependency file for \"' + m[0] + '\" was not found');
           tmpErr[m[0]] = true;
         }
@@ -162,8 +186,9 @@ function getDependencies(files) {
           var path = file.substring(0, file.lastIndexOf('/') + 1) + m[1] + '.as';
           if (fs.existsSync(path)) {
             tmp[path] = true;
-            // uncomment to do recursive search of dependencies
-            // queue.push(path);
+            if (dependenciesRecursionLevel >= 2) {
+              queue.push(path);
+            }
           }
         }
       }
@@ -187,7 +212,8 @@ function buildNext(threadId) {
       throw new Error('Build returned error code: ' + code);
     }
 
-    item.dependencies = getDependencies(item.files);
+    item.dependencies = dependenciesRecursionLevel < 1 ? items.files :
+      getDependencies(item.files);
 
     pending--;
     if (buildQueue.length === 0) {
