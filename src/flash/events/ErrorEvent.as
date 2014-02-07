@@ -32,11 +32,11 @@ public class ErrorEvent extends TextEvent {
   }
 
   public override function clone():Event {
-    return new ErrorEvent(type, bubbles, cancelable, text, _id);
+    return new ErrorEvent(type, bubbles, cancelable, text, errorID);
   }
 
   public override function toString():String {
-    return super.toString();
+    return formatToString('ErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase', 'text');
   }
 }
 }

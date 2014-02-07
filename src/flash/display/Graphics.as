@@ -1,7 +1,24 @@
-package flash.display {
-import flash.geom.Matrix;
+/*
+ * Copyright 2014 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *totalMemory
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-public final class Graphics {
+package flash.display {
+  import flash.geom.Matrix;
+
+  [native(cls='Graphics')]
+  public final class Graphics {
     public function Graphics() {}
     public native function clear():void;
     public native function beginFill(color:uint, alpha:Number = 1):void;
@@ -13,8 +30,8 @@ public final class Graphics {
     public native function drawRect(x:Number, y:Number, width:Number, height:Number):void;
     public native function drawRoundRect(x:Number, y:Number, width:Number, height:Number, ellipseWidth:Number, ellipseHeight:Number):void;
     public native function drawRoundRectComplex(x:Number, y:Number, width:Number, height:Number, topLeftRadius:Number, topRightRadius:Number, bottomLeftRadius:Number, bottomRightRadius:Number):void;
-    public function drawCircle(x:Number, y:Number, radius:Number):void { notImplemented("drawCircle"); }
-    public function drawEllipse(x:Number, y:Number, width:Number, height:Number):void { notImplemented("drawEllipse"); }
+    public native function drawCircle(x:Number, y:Number, radius:Number):void;
+    public native function drawEllipse(x:Number, y:Number, width:Number, height:Number):void;
     public native function moveTo(x:Number, y:Number):void;
     public native function lineTo(x:Number, y:Number):void;
     public native function curveTo(controlX:Number, controlY:Number, anchorX:Number, anchorY:Number):void;
@@ -25,6 +42,6 @@ public final class Graphics {
     public native function lineShaderStyle(shader:Shader, matrix:Matrix = null):void;
     public native function drawPath(commands:Vector, data:Vector, winding:String = "evenOdd"):void;
     public native function drawTriangles(vertices:Vector, indices:Vector = null, uvtData:Vector = null, culling:String = "none"):void;
-    public function drawGraphicsData(graphicsData:Vector):void { notImplemented("drawGraphicsData"); }
+    public native function drawGraphicsData(graphicsData:Vector):void;
   }
 }

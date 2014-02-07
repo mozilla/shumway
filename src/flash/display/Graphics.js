@@ -251,6 +251,13 @@ var GraphicsDefinition = (function () {
       this._currentPath.curveTo(right, y, right, y + topRightRadius);
       this._currentPath.lineTo(right, bottom - bottomRightRadius);
     },
+    drawCircle: function(x, y, radius) {
+      var diam = radius*2;
+      drawRoundRect(x-radius, y-radius, diam, diam, diam, diam);
+    },
+    drawEllipse: function(x, y, width, height) {
+      drawRoundRect(x, y, width, height, width, height);
+    },
     drawTriangles: function(vertices, indices, uvtData, culling) {
       notImplemented("Graphics#drawTriangles");
     },
@@ -426,3 +433,7 @@ function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
   return {style: gradientConstructor, transform: transform};
 }
 
+function drawGraphicsData(graphicsData)
+{
+  notImplemented("drawGraphicsData"); 
+}
