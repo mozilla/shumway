@@ -49,7 +49,7 @@ public class HTTPStatusEvent extends Event {
     return event;
   }
   public override function toString():String {
-    return formatToString('AsyncErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+    return formatToString('HTTPStatusEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
                           'status', 'responseURL', 'responseHeaders');
   }
 }

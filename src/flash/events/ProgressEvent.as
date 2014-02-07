@@ -47,11 +47,11 @@ public class ProgressEvent extends Event {
   }
 
   public override function clone():Event {
-    return new ProgressEvent(type, bubbles, cancelable, _bytesLoaded, _bytesTotal);
+    return new ProgressEvent(type, bubbles, cancelable, bytesLoaded, bytesTotal);
   }
 
   public override function toString():String {
-    return formatToString('Event', 'bubbles', 'cancelable', 'eventPhase',
+    return formatToString('ProgressEvent', 'bubbles', 'cancelable', 'eventPhase',
                           'bytesLoaded', 'bytesTotal');
   }
 }

@@ -90,12 +90,13 @@ public class GeolocationEvent extends Event {
     _timestamp = value;
   }
   public override function clone():Event {
-    return new GeolocationEvent(type, bubbles, cancelable, _latitude, _longitude, _altitude,
-                                _hAccuracy, _vAccuracy, _speed, _heading, _timestamp);
+    return new GeolocationEvent(type, bubbles, cancelable, latitude, longitude, altitude,
+                                hAccuracy, vAccuracy, speed, heading, timestamp);
   }
   public override function toString():String {
-    return formatToString('GeolocationEvent', 'latitude', 'longitude', 'altitude',
-                          'hAccuracy', 'vAccuracy', 'speed', 'heading', 'timestamp');
+    return formatToString('GeolocationEvent', 'type', 'bubbles', 'eventPhase',
+                          'latitude', 'longitude', 'altitude', 'hAccuracy', 'vAccuracy',
+                          'speed', 'heading', 'timestamp');
   }
 }
 }

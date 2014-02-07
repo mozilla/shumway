@@ -79,7 +79,7 @@ public class KeyboardEvent extends Event {
                                altKey, shiftKey);
   }
   public override function toString():String {
-    return formatToString('AsyncErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+    return formatToString('KeyboardEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
                           'charCode', 'keyCode', 'keyLocation', 'ctrlKey', 'altKey', 'shiftKey');
   }
   public native function updateAfterEvent():void;
