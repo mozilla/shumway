@@ -433,7 +433,23 @@ function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
   return {style: gradientConstructor, transform: transform};
 }
 
-function drawGraphicsData(graphicsData)
+function drawGraphicsData(data)
 {
-  notImplemented("drawGraphicsData"); 
+  if ( data === null ) {
+    return;
+  }
+
+  for( var i = 0; i<data.length; i++ ) {
+    var item = data[i];
+
+    if(flash.display.IGraphicsPath.class.isInstanceOf(item)){
+      this._drawPathObject(item);
+    }
+    else if (flash.display.IGraphicsStroke.class.isInstanceOf(item)) {
+      this.beginStrokeObject(item);
+    }
+    else if (flash.display.IGraphicsFill.class.isInstanceOf(item)) {
+      this.beginFillObject(item);
+    }
+  }
 }
