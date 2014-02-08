@@ -258,8 +258,56 @@ var GraphicsDefinition = (function () {
     drawEllipse: function(x, y, width, height) {
       drawRoundRect(x, y, width, height, width, height);
     },
-    drawTriangles: function(vertices, indices, uvtData, culling) {
+    drawTriangles: function(vertices, indices, uvtData, cullingStr) {
+      if ( vertices === null || vertices.length == 0 ) {
+        return;
+      }
+
+      var numVertices = vertices.length/2;
+      var numTriangles = 0;
+
+      // check for valid triangles
+      if ( indices != null ) {
+        if(indices.length % 3 ) {
+          throwError('ArgumentError', Errors.InvalidParamError);
+        } else {
+          numTriangles = indices.length / 3;
+        }
+      } else {  
+        if ( vertices.length % 6 ) {
+          throwError('ArgumentError', Errors.InvalidParamError);
+        } else {
+          numTriangles = vertices.length / 6;
+        }
+      }
+
+      // check for valid uv data count
+      var numStrides = 0;
+      if ( uvtData != null ) {
+        if ( uvtData.length == numVertices * 2 ) {
+          numStrides = 2;
+        }
+        else if ( uvtData.length == numVertices * 3 ) {
+          numStrides = 3;
+        }
+        else {
+          throwError('ArgumentError', Errors.InvalidParamError);
+        }
+      }
+
+      var culling = 0;
+      if ( cullingStr ===  'none' ) {
+        culling = 0;
+      } else if ( cullingStr === 'negative' ) {
+        culling = -1;
+      } else if ( cullingStr === 'positive' ) {
+        culling = 1;
+      } else {
+        throwError('ArgumentError', Errors.InvalidEnumError, 'culling');
+      }
+
       notImplemented("Graphics#drawTriangles");
+
     },
     endFill: function () {
       this.beginPath();
