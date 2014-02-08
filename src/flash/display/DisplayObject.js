@@ -84,7 +84,10 @@ var DisplayObjectDefinition = (function () {
       this._index = -1;
       this._depth = -1;
       this._isContainer = false;
-      this._layer = null;
+
+      this._renderableType = null;
+      this._renderableId = 0;
+      this._layerId = 0;
 
       blendModes = [
         blendModeClass.NORMAL,     // 0
@@ -122,6 +125,7 @@ var DisplayObjectDefinition = (function () {
         this._depth = isNaN(s.depth) ? -1 : s.depth;
         this._root = s.root || null;
         this._stage = s.stage || null;
+        this._renderableId = s.symbolId || 0;
 
         var scale9Grid = s.scale9Grid;
         if (scale9Grid) {
@@ -439,6 +443,40 @@ var DisplayObjectDefinition = (function () {
       transform.ty = ty;
 
       this._invalidateTransform();
+    },
+
+    _serializeToBuffer: function (buffer, index) {
+      var p = index;
+
+      buffer[p++] = this._layerId;
+      buffer[p++] = this._renderableId;
+
+      var m = this._currentTransform;
+      buffer[p++] = m.a;
+      buffer[p++] = m.b;
+      buffer[p++] = m.c;
+      buffer[p++] = m.d;
+      buffer[p++] = m.tx / 20;
+      buffer[p++] = m.ty / 20;
+
+      buffer[p++] = this._alpha;
+
+      var cxform = this._cxform;
+      if (cxform) {
+        buffer[p++] = 1;
+        buffer[p++] = cxform.redMultiplier / 256;
+        buffer[p++] = cxform.greenMultiplier / 256;
+        buffer[p++] = cxform.blueMultiplier / 256;
+        buffer[p++] = cxform.alphaMultiplier / 256;
+        buffer[p++] = cxform.redOffset / 255;
+        buffer[p++] = cxform.greenOffset / 255;
+        buffer[p++] = cxform.blueOffset / 255;
+        buffer[p++] = cxform.alphaOffset / 255;
+      } else {
+        buffer[p++] = 0;
+      }
+
+      return p - index;
     },
 
     get accessibilityProperties() {

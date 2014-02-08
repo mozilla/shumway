@@ -54,6 +54,8 @@ SWF.embed = function(file, doc, container, options) {
     stage._invalid = true;
   }
 
+  var renderer = new Renderer(stage);
+
   loaderInfo._addEventListener('init', function () {
     if (forceHidpiSetting || loaderInfo._swfVersion >= 18) {
       // Support of HiDPI displays  (for SWF version 18 and above only)
@@ -180,7 +182,8 @@ SWF.embed = function(file, doc, container, options) {
     root._dispatchEvent("added", undefined, true);
     root._dispatchEvent("addedToStage");
 
-    stage._layer.addChild(root._layer);
+    root._layerId = nextLayerId++;
+    stage._renderer.addLayer(root);
 
     container.appendChild(canvas);
     stage._domContainer = container;
@@ -189,7 +192,7 @@ SWF.embed = function(file, doc, container, options) {
       options.onStageInitialized(stage);
     }
 
-    stage._render(canvas, bgcolor, options);
+    stage._render(renderer, canvas, bgcolor, options);
   });
 
   if (options.onComplete) {
@@ -197,7 +200,6 @@ SWF.embed = function(file, doc, container, options) {
       options.onComplete();
     });
   }
-
 
   loader._load(typeof file === 'string' ? new flash.net.URLRequest(file) : file);
 

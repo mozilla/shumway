@@ -19,6 +19,9 @@
 
 var renderingTerminated = false;
 
+var nextRenderableId = 0xffff;
+var nextLayerId = 1;
+
 var StageDefinition = (function () {
   return {
     // ()
@@ -49,13 +52,66 @@ var StageDefinition = (function () {
 
       this._concatenatedTransform.invalid = false;
 
-      this._renderer = new Renderer();
+      this._renderer = {
+        buffer: [],
+        p: 0,
+        callbacks: { },
+        nextCallbackId: 0,
+        defineRenderable: function (symbol) {
+          postMessage({
+            command: 'render',
+            data: symbol
+          }, '*');
+        },
+        requireRenderables: function (dependencies, callback) {
+          this.buffer[this.p++] = 2;
+          this.buffer[this.p++] = dependencies.length;
+
+          var callbackId = this.nextCallbackId++;
+          this.callbacks[callbackId] = callback;
+          this.buffer[this.p++] = callbackId;
+
+          for (var i = 0; i < dependencies.length; i++) {
+            this.buffer[this.p++] = dependencies[i];
+          }
+
+          this.commit();
+        },
+        updateStage: function (stage) {
+          this.buffer[this.p++] = 3;
+          this.buffer[this.p++] = stage._stageWidth / 20;
+          this.buffer[this.p++] = stage._stageHeight / 20;
+        },
+        addLayer: function (node) {
+          this.buffer[this.p++] = 4;
+          this.buffer[this.p++] = node._parent._layerId;
+          this.buffer[this.p++] = +node._isContainer;
+          var len = node._serializeToBuffer(this.buffer, this.p + 1);
+          this.buffer[this.p++] = len;
+          this.p += len;
+        },
+        removeLayer: function (node) {
+          this.buffer[this.p++] = 5;
+          this.buffer[this.p++] = node._layerId;
+        },
+        commit: function () {
+          postMessage({
+            command: 'render',
+            data: this.buffer
+          }, '*');
+          this.buffer = [];
+          this.p = 0;
+        },
+        callback: function (id) {
+          this.callbacks[id]();
+          delete this.callbacks[id];
+        }
+      };
     },
 
     _setup: function setup(ctx, options) {
       this._invalid = true;
-      this._layer = new Shumway.Layers.Stage(this._stageWidth / 20,
-                                             this._stageHeight / 20);
+      this._renderer.updateStage(this);
     },
 
     _addToStage: function addToStage(displayObject) {
@@ -75,18 +131,6 @@ var StageDefinition = (function () {
       }
 
       displayObject._dispatchEvent('addedToStage');
-
-      if (displayObject.symbol) {
-        if (!displayObject._layer) {
-          var renderable = this._renderer.getRenderable(displayObject.symbol.symbolId);
-          var layer = new Shumway.Layers.Shape(renderable);
-          layer.origin = new Shumway.Geometry.Point(renderable.rect.x,
-                                                    renderable.rect.y);
-          displayObject._layer = layer;
-        }
-
-        displayObject._parent._layer.addChild(displayObject._layer);
-      }
     },
     _removeFromStage: function removeFromStage(displayObject) {
       var children = displayObject._children;
@@ -102,9 +146,7 @@ var StageDefinition = (function () {
       displayObject._stage = null;
       displayObject._level = -1;
 
-      if (displayObject._layer) {
-        displayObject._parent._layer.removeChild(displayObject._layer);
-      }
+      this._renderer.removeLayer(displayObject);
     },
 
     _processInvalidations: function processInvalidations(refreshStage) {
@@ -150,33 +192,29 @@ var StageDefinition = (function () {
         }
 
         if (node._invalid) {
-          if (node._layer) {
-            m = node._currentTransform;
-            node._layer.transform = new Shumway.Geometry.Matrix(m.a,
-                                                                m.b,
-                                                                m.c,
-                                                                m.d,
-                                                                m.tx / 20,
-                                                                m.ty / 20);
-            node._layer.alpha = node._alpha;
-            if (node._cxform) {
-              node._layer.colorTransform = Shumway.Layers.ColorTransform.fromMultipliersAndOffsets (
-                node._cxform.redMultiplier / 256,
-                node._cxform.greenMultiplier / 256,
-                node._cxform.blueMultiplier / 256,
-                node._cxform.alphaMultiplier / 256,
-                node._cxform.redOffset / 255,
-                node._cxform.greenOffset / 255,
-                node._cxform.blueOffset / 255,
-                node._cxform.alphaOffset / 255
-              );
+          var layerId = node._layerId;
+          if (!layerId) {
+            var layerId = nextLayerId++;
+            var renderableId = node._renderableId;
+
+            if (!renderableId) {
+              renderableId = nextRenderableId++;
+              node._renderableId = renderableId;
+              this._renderer.defineRenderable(node);
             }
+
+            node._layerId = layerId;
           }
+          this._renderer.addLayer(node);
+
+          node._invalid = false;
         }
       }
+
+      this._renderer.commit();
     },
 
-    _render: function render(canvas, bgcolor, options) {
+    _render: function render(renderer, canvas, bgcolor, options) {
       var timeline = new Timeline(document.getElementById("frameTimeline"));
       timeline.setFrameRate(60);
       timeline.refreshEvery(60);
@@ -216,7 +254,6 @@ var StageDefinition = (function () {
       webGLStageRenderer = new WebGLStageRenderer(webGLContext);
       //canvas2DStageRenderer = new Canvas2DStageRenderer(ctx);
 
-      var stage = this._layer;
       var domain = avm2.systemDomain;
       var firstRun = true;
 
@@ -281,13 +318,17 @@ var StageDefinition = (function () {
           if (!disableRendering.value) {
             if (sceneOptions.webGL) {
               timelineEnter("WebGL");
-              webGLStageRenderer.render(stage, sceneOptions);
+              if (renderer._stage) {
+                webGLStageRenderer.render(renderer._stage, sceneOptions);
+              }
               timelineLeave("WebGL");
             }
           }
           if (sceneOptions.canvas2D) {
             timelineEnter("Canvas2D");
-            canvas2DStageRenderer.render(stage, sceneOptions);
+            if (renderer._stage) {
+              canvas2DStageRenderer.render(renderer._stage, sceneOptions);
+            }
             timelineLeave("Canvas2D");
           }
         }
@@ -310,7 +351,9 @@ var StageDefinition = (function () {
 
         timelineLeave("FRAME");
 
-        stage.dirtyRegion.clear();
+        if (renderer._stage) {
+          renderer._stage.dirtyRegion.clear();
+        }
 
         if (options.onAfterFrame) {
           options.onAfterFrame();
