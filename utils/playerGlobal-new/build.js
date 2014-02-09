@@ -191,8 +191,8 @@ function runAsc(threadId, outputPath, files, dependencies, callback) {
     fs.unlink(outputPath);
   }
 
-  var args = ['-ea', '-DAS3', '-DAVMPLUS', '-classpath', ascjar,
-              'macromedia.asc.embedding.ScriptCompiler', '-builtin'];
+  var args = ['-ea', '-DAVMPLUS', '-classpath', ascjar,
+              'macromedia.asc.embedding.ScriptCompiler', '-AS3', '-builtin'];
   if (debugInfo) {
     args.push('-d');
   }
