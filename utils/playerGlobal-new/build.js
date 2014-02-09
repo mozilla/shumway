@@ -84,15 +84,86 @@ Object.keys(dependencies.files).forEach(function (file) {
   }
 });
 
-var buildQueue = [];
+// analyze dependencies
+var classToAbcMap = {}, buildTreeLookup = {};
 manifest.forEach(function (item) {
   var outputPath = build_dir + '/' + item.name + '.abc';
-  item.outputPath = outputPath;
+  buildTreeLookup[item.name] = {
+    manifest: item,
+    outputPath: outputPath,
+    dependents: [],
+    requires: [],
+    built: false,
+    scheduled: false
+  };
+  item.defs.forEach(function (def) {
+    if (def in classToAbcMap) {
+      throw new Error('Dependency \"' + def + '\" is defined in \"' + item.name + '\" and \"' + classToAbcMap[def] + '\"');
+    }
+    classToAbcMap[def] = item.name;
+  });
+});
+manifest.forEach(function (item) {
+  if (!item.refs) {
+    return;
+  }
+  item.refs.forEach(function (ref) {
+    var pReq = buildTreeLookup[ref];
+    if (!pReq) { // trying a class name as well
+      var refAbc = classToAbcMap[ref];
+      if (!refAbc) {
+        throw new Error('Reference \"' + ref + '\" in \"' + item.name + '\" is not defined');
+      }
+      pReq = buildTreeLookup[refAbc];
+    }
+    // checking circular references
+    var pDep = buildTreeLookup[item.name];
+    var queue = [pDep];
+    while (queue.length > 0) {
+      var p = queue.shift();
+      if (p === pReq) {
+        throw new Error('Circular reference between \"' + p.manifest.name +
+                        '\" and \"' + pReq.manifest.name + '\"');
+      }
+      if (p.dependents.length > 0) {
+        queue.push.apply(queue, p.dependents);
+      }
+    }
+    pReq.dependents.push(pDep);
+    pDep.requires.push(pReq);
+  });
+});
+
+// build queue
+var buildQueue = [];
+manifest.forEach(function (item) {
+  var buildItem = buildTreeLookup[item.name];
+  if (buildItem.scheduled) {
+    return;
+  }
   // rebuilding if abc does not exist or removed from dependencies
-  if (!fs.existsSync(outputPath) || !(item.name in dependencies.abcs)) {
-    buildQueue.push(item);
-  } else {
-    item.dependencies = dependencies.abcs[item.name];
+  if (!fs.existsSync(buildItem.outputPath) ||
+      !(item.name in dependencies.abcs)) {
+    buildQueue.push(buildItem);
+    var queue = [buildItem];
+    buildItem.scheduled = true;
+    while (queue.length > 0) {
+      var buildItem = queue.shift();
+      buildItem.dependents.forEach(function (dep) {
+        if (!dep.scheduled) {
+          buildQueue.push(dep);
+          queue.push(dep);
+          dep.scheduled = true;
+        }
+      });
+    }
+  }
+});
+manifest.forEach(function (item) {
+  var buildItem = buildTreeLookup[item.name];
+  if (!buildItem.scheduled) {
+    buildItem.built = true;
+    buildItem.dependencies = dependencies.abcs[item.name];
   }
 });
 
@@ -110,7 +181,7 @@ function ensureDir(dir) {
   }
 }
 
-function runAsc(threadId, outputPath, files, callback) {
+function runAsc(threadId, outputPath, files, dependencies, callback) {
   console.info('Building ' + outputPath + ' [' + threadId + '] ...');
   var outputDir = outputPath.substring(0, outputPath.lastIndexOf('/'));
   ensureDir(outputDir);
@@ -128,8 +199,15 @@ function runAsc(threadId, outputPath, files, callback) {
   if (strict) {
     args.push('-strict');
   }
-  args = args.concat(['-import', buildasc, '-outdir', outputDir,
-                      '-out', outputName]).concat(files);
+  args.push('-import', buildasc);
+  if (dependencies) {
+    dependencies.forEach(function (dep) {
+      args.push('-import', dep);
+    })
+  }
+  args.push('-outdir', outputDir, '-out', outputName);
+  args = args.concat(files);
+
   var proc = spawn('java', args, {stdio: 'inherit'} );
   proc.on('close', function (code) {
     if (!fs.existsSync(outputPath)) {
@@ -195,11 +273,23 @@ function getDependencies(files) {
   return Object.keys(tmp);
 }
 
-var buildError = false, pending = 0;
-function buildNext(threadId) {
+var buildError = false, pending = 0, availableThreadIds = [];
+function getNextBuildItem() {
+  for (var i = 0; i < buildQueue.length; i++) {
+    var buildItem = buildQueue[i];
+    if (buildItem.requires.every(function (item) { return item.built; })) {
+      return buildQueue.splice(i, 1)[0];
+    }
+  }
+}
+function buildNext(item) {
+  var threadId = availableThreadIds.shift();
   pending++;
-  var item = buildQueue.shift();
-  runAsc(threadId, item.outputPath, item.files, function (code, output) {
+  var files = item.manifest.files;
+  var requires = item.requires && item.requires.map(function (item) {
+    return item.outputPath;
+  });
+  runAsc(threadId, item.outputPath, files, requires, function (code, output) {
     if (buildError) {
       return; // ignoring parallel builds if error happend
     }
@@ -208,26 +298,39 @@ function buildNext(threadId) {
       throw new Error('Build returned error code: ' + code);
     }
 
-    item.dependencies = dependenciesRecursionLevel < 1 ? items.files :
-      getDependencies(item.files);
+    item.built = true;
+    item.dependencies = dependenciesRecursionLevel < 1 ? files :
+      getDependencies(files);
 
     pending--;
-    if (buildQueue.length === 0) {
-      if (pending === 0) {
-        completeBuild();
-      }
-      return;
-    }
+    availableThreadIds.push(threadId);
 
-    buildNext(threadId);
+    var buildItem = getNextBuildItem();
+    if (buildItem) {
+      buildNext(buildItem);
+      // can we run more threads
+      while (availableThreadIds.length > 0 &&
+             (buildItem = getNextBuildItem())) {
+        buildNext(buildItem);
+      }
+    } else if (pending === 0) {
+      completeBuild();
+    }
   });
 }
 
 var updateDependencies = false;
 if (buildQueue.length > 0) {
+  for (var i = 0; i < buildThreadsCount; i++) {
+    availableThreadIds.push(String(i + 1));
+  }
   updateDependencies = true;
   for (var i = 0; i < buildThreadsCount && buildQueue.length > 0; i++) {
-    buildNext(i + 1);
+    var buildItem = getNextBuildItem();
+    if (!buildItem) {
+      break;
+    }
+    buildNext(buildItem);
   }
 } else {
   completeBuild();
@@ -237,18 +340,23 @@ function updatePlayerglobal() {
   console.info('Updating playerglobal.js');
 
   var hex = '', lastPos = 0;
+  var index = [];
   manifest.forEach(function (item) {
-    var file = item.outputPath;
-    var ascData = fs.readFileSync(item.outputPath);
-    delete item.outputPath;
+    var outputPath = buildTreeLookup[item.name].outputPath;
+    var ascData = fs.readFileSync(outputPath);
     var ascHex = ascData.toString('hex');
-    item.offset = lastPos;
-    item.length = ascHex.length >> 1;
-    lastPos += item.length;
+    var ascLength = ascHex.length >> 1;
+    index.push({
+      name: item.name,
+      defs: item.defs,
+      offset: lastPos,
+      length: ascLength
+    });
+    lastPos += ascLength;
     hex += ascHex;
   });
   fs.writeFileSync('flash/playerglobal-new.js',
-    jstemplate.replace('[/*index*/]', JSON.stringify(manifest, null, 2)));
+    jstemplate.replace('[/*index*/]', JSON.stringify(index, null, 2)));
   fs.writeFileSync('flash/playerglobal-new.abc', new Buffer(hex, 'hex'));
 }
 
@@ -259,7 +367,7 @@ function completeBuild() {
     dependencies.files = {};
     dependencies.abcs = {};
     manifest.forEach(function (item) {
-      var files = item.dependencies, name = item.name;
+      var name = item.name, files = buildTreeLookup[name].dependencies;
       files.forEach(function (file) {
         var abcs = dependencies.files[file];
         if (!abcs) {
@@ -269,8 +377,6 @@ function completeBuild() {
         }
       });
       dependencies.abcs[name] = files;
-      delete item.dependencies;
-      delete item.files;
     });
 
     fs.writeFileSync(dependenciesPath, JSON.stringify(dependencies, null, 2));
