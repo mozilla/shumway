@@ -181,7 +181,7 @@ function ensureDir(dir) {
   }
 }
 
-function runAsc(threadId, outputPath, files, dependencies, callback) {
+function runAsc(threadId, name, outputPath, files, dependencies, callback) {
   console.info('Building ' + outputPath + ' [' + threadId + '] ...');
   var outputDir = outputPath.substring(0, outputPath.lastIndexOf('/'));
   ensureDir(outputDir);
@@ -191,8 +191,8 @@ function runAsc(threadId, outputPath, files, dependencies, callback) {
     fs.unlink(outputPath);
   }
 
-  var args = ['-ea', '-DAS3', '-DAVMPLUS', '-classpath', ascjar,
-              'macromedia.asc.embedding.ScriptCompiler', '-builtin'];
+  var args = ['-ea', '-DAVMPLUS', '-classpath', ascjar,
+              'macromedia.asc.embedding.ScriptCompiler', '-AS3', '-builtin'];
   if (debugInfo) {
     args.push('-d');
   }
@@ -214,7 +214,7 @@ function runAsc(threadId, outputPath, files, dependencies, callback) {
       code = -1;
     }
 
-    callback(code, outputPath);
+    callback(code, name, outputPath);
   });
 }
 
@@ -289,13 +289,13 @@ function buildNext(item) {
   var requires = item.requires && item.requires.map(function (item) {
     return item.outputPath;
   });
-  runAsc(threadId, item.outputPath, files, requires, function (code, output) {
+  runAsc(threadId, item.manifest.name, item.outputPath, files, requires, function (code, name, output) {
     if (buildError) {
       return; // ignoring parallel builds if error happend
     }
     if (code) {
       buildError = true;
-      throw new Error('Build returned error code: ' + code);
+      throw new Error('Error while building "' + name + '". Error code: ' + code);
     }
 
     item.built = true;
