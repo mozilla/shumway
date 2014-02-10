@@ -19,9 +19,6 @@
 
 var renderingTerminated = false;
 
-var nextRenderableId = 0xffff;
-var nextLayerId = 1;
-
 var StageDefinition = (function () {
   return {
     // ()
@@ -49,69 +46,75 @@ var StageDefinition = (function () {
       this._mouseEvents = [];
       this._cursor = 'auto';
       this._stageVideos = [];
+      this._nextRenderableId = 0xffff;
+      this._nextLayerId = 1;
+      this._message = new Shumway.Util.ArrayWriter(1024);
+      this._callbacks = { };
+      this._nextCallbackId = 0;
 
       this._concatenatedTransform.invalid = false;
-
-      this._renderer = {
-        buffer: [],
-        p: 0,
-        callbacks: { },
-        nextCallbackId: 0,
-        defineRenderable: function (symbol) {
-          postMessage({
-            command: 'render',
-            data: symbol
-          }, '*');
-        },
-        requireRenderables: function (dependencies, callback) {
-          this.buffer[this.p++] = 2;
-          this.buffer[this.p++] = dependencies.length;
-
-          var callbackId = this.nextCallbackId++;
-          this.callbacks[callbackId] = callback;
-          this.buffer[this.p++] = callbackId;
-
-          for (var i = 0; i < dependencies.length; i++) {
-            this.buffer[this.p++] = dependencies[i];
-          }
-
-          this.commit();
-        },
-        updateStage: function (stage) {
-          this.buffer[this.p++] = 3;
-          this.buffer[this.p++] = stage._stageWidth / 20;
-          this.buffer[this.p++] = stage._stageHeight / 20;
-        },
-        addLayer: function (node) {
-          this.buffer[this.p++] = 4;
-          this.buffer[this.p++] = node._parent._layerId;
-          this.buffer[this.p++] = +node._isContainer;
-          var len = node._serializeToBuffer(this.buffer, this.p + 1);
-          this.buffer[this.p++] = len;
-          this.p += len;
-        },
-        removeLayer: function (node) {
-          this.buffer[this.p++] = 5;
-          this.buffer[this.p++] = node._layerId;
-        },
-        commit: function () {
-          postMessage({
-            command: 'render',
-            data: this.buffer
-          }, '*');
-          this.buffer = [];
-          this.p = 0;
-        },
-        callback: function (id) {
-          this.callbacks[id]();
-          delete this.callbacks[id];
-        }
-      };
     },
 
     _setup: function setup(ctx, options) {
       this._invalid = true;
-      this._renderer.updateStage(this);
+
+      var message = this._message;
+      message.ensureCapacity(12);
+      message.writeIntUnsafe(3);
+      message.writeIntUnsafe(this._stageWidth / 20);
+      message.writeIntUnsafe(this._stageHeight / 20);
+    },
+    _defineRenderable: function defineRenderable(symbol) {
+      postMessage({
+        command: 'render',
+        data: symbol
+      }, '*');
+    },
+    _requireRenderables: function requireRenderables(dependencies, callback) {
+      var n = dependencies.length;
+
+      var message = this._message;
+      message.ensureCapacity(12 + (n * 4));
+
+      message.writeIntUnsafe(2);
+      message.writeIntUnsafe(n);
+
+      var callbackId = this._nextCallbackId++;
+      this._callbacks[callbackId] = callback;
+      message.writeIntUnsafe(callbackId);
+
+      for (var i = 0; i < n; i++) {
+        message.writeIntUnsafe(dependencies[i]);
+      }
+
+      this._commit();
+    },
+    _addLayer: function addLayer(node) {
+      var message = this._message;
+      message.ensureCapacity(16);
+      message.writeIntUnsafe(4);
+      message.writeIntUnsafe(+node._isContainer);
+      message.writeIntUnsafe(node._parent._layerId);
+      message.writeIntUnsafe(node._index);
+      node._serialize(message);
+    },
+    _removeLayer: function removeLayer(node) {
+      var message = this._message;
+      message.ensureCapacity(8);
+      message.writeIntUnsafe(5);
+      message.writeIntUnsafe(node._layerId);
+    },
+    _commit: function commit() {
+      var message = this._message;
+      postMessage({
+        command: 'render',
+        data: message.u8.buffer
+      }, '*');
+      this._message = new Shumway.Util.ArrayWriter(1024);
+    },
+    _callback: function callback(id) {
+      this._callbacks[id]();
+      delete this._callbacks[id];
     },
 
     _addToStage: function addToStage(displayObject) {
@@ -146,7 +149,7 @@ var StageDefinition = (function () {
       displayObject._stage = null;
       displayObject._level = -1;
 
-      this._renderer.removeLayer(displayObject);
+      this._removeLayer(displayObject);
     },
 
     _processInvalidations: function processInvalidations(refreshStage) {
@@ -194,24 +197,24 @@ var StageDefinition = (function () {
         if (node._invalid) {
           var layerId = node._layerId;
           if (!layerId) {
-            var layerId = nextLayerId++;
+            var layerId = this._nextLayerId++;
             var renderableId = node._renderableId;
 
             if (!renderableId) {
-              renderableId = nextRenderableId++;
+              renderableId = this._nextRenderableId++;
               node._renderableId = renderableId;
-              this._renderer.defineRenderable(node);
+              this._defineRenderable(node);
             }
 
             node._layerId = layerId;
           }
-          this._renderer.addLayer(node);
+          this._addLayer(node);
 
           node._invalid = false;
         }
       }
 
-      this._renderer.commit();
+      this._commit();
     },
 
     _render: function render(renderer, canvas, bgcolor, options) {

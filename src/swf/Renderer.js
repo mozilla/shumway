@@ -102,16 +102,20 @@ function Renderer(target) {
     var data = e.data;
     if (data.command === 'render') {
       data = data.data;
-      if (!Array.isArray(data)) {
-        renderer.defineRenderable(data.id, data.type, data);
-      } else {
+
+      if (data instanceof ArrayBuffer) {
+        var i32 = new Int32Array(data);
+        var f32 = new Float32Array(data);
         var p = 0;
-        while (p < data.length) {
-          switch (data[p++]) {
+        var len = data.byteLength / 4;
+        while (p < len) {
+          switch (i32[p++]) {
+          case 0:
+            return;
           case 2:
-            var n = data[p++];
-            var callbackId = data[p++];
-            var dependencies = data.slice(p, p += n);
+            var n = i32[p++];
+            var callbackId = i32[p++];
+            var dependencies = i32.subarray(p, p += n);
             renderer.requireRenderables(dependencies, function () {
               postMessage({
                 command: 'callback',
@@ -120,23 +124,16 @@ function Renderer(target) {
             });
             break;
           case 3:
-            var width = data[p++];
-            var height = data[p++];
+            var width = i32[p++];
+            var height = i32[p++];
             renderer._stage = new Shumway.Layers.Stage(width, height);
             break;
           case 4:
-            var parentId = data[p++];
-            var isContainer = data[p++];
-            var len = data[p++];
-            var layerId = data[p++];
-            var renderableId = data[p++];
-            var a = data[p++];
-            var b = data[p++];
-            var c = data[p++];
-            var d = data[p++];
-            var tx = data[p++];
-            var ty = data[p++];
-            var alpha = data[p++];
+            var isContainer = i32[p++];
+            var parentId = i32[p++];
+            var index = i32[p++];
+            var layerId = i32[p++];
+            var renderableId = i32[p++];
 
             var layer = renderer._layers[layerId];
             if (!layer) {
@@ -154,18 +151,42 @@ function Renderer(target) {
               parent.addChild(layer);
             }
 
+            var a = f32[p++];
+            var b = f32[p++];
+            var c = f32[p++];
+            var d = f32[p++];
+            var tx = i32[p++];
+            var ty = i32[p++];
+
             layer.transform = new Shumway.Geometry.Matrix(a, b, c, d, tx, ty);
+
+            layer.alpha = f32[p++];
+
+            var hasColorTransform = i32[p++];
+            if (hasColorTransform) {
+              layer.colorTransform =
+                Shumway.Layers.ColorTransform.fromMultipliersAndOffsets(f32[p++],
+                                                                        f32[p++],
+                                                                        f32[p++],
+                                                                        f32[p++],
+                                                                        i32[p++],
+                                                                        i32[p++],
+                                                                        i32[p++],
+                                                                        i32[p++]);
+            }
             break;
           case 5:
-            var layerId = data[p++];
+            var layerId = i32[p++];
             var layer = renderer._layers[layerId];
             layer.parent.removeChild(layer);
             break;
           }
         }
+      } else {
+        renderer.defineRenderable(data.id, data.type, data);
       }
     } else if (data.command === 'callback') {
-      renderer._target._renderer.callback(data.data);
+      renderer._target._callback(data.data);
     }
   };
 }
