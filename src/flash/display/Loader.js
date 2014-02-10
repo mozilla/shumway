@@ -800,8 +800,9 @@ var LoaderDefinition = (function () {
       loader._isAvm2Enabled = info.fileAttributes.doAbc;
       this._setup();
     },
-    _load: function (request, checkPolicyFile, applicationDomain,
-                     securityDomain, deblockingFilter)
+    _load: function (request, checkPolicyFile, applicationDomain, securityDomain,
+                     requestedContentParent, parameters, deblockingFilter, allowCodeImport,
+                     imageDecodingPolicy)
     {
       if (flash.net.URLRequest.class.isInstanceOf(request)) {
         this._contentLoaderInfo._url = request._url;
@@ -898,8 +899,13 @@ var LoaderDefinition = (function () {
           return 0; //TODO: implement
         },
         _load: def._load,
-        _loadBytes: function _loadBytes(bytes, checkPolicyFile, applicationDomain, securityDomain, requestedContentParent, parameters, deblockingFilter, allowLoadBytesCodeExecution, imageDecodingPolicy) { // (bytes:ByteArray, checkPolicyFile:Boolean, applicationDomain:ApplicationDomain, securityDomain:SecurityDomain, requestedContentParent:DisplayObjectContainer, parameters:Object, deblockingFilter:Number, allowLoadBytesCodeExecution:Boolean, imageDecodingPolicy:String) -> void
-          this._load(bytes.a, checkPolicyFile, applicationDomain, securityDomain);
+        _loadBytes: function _loadBytes(bytes, checkPolicyFile, applicationDomain, securityDomain,
+                                        requestedContentParent, parameters, deblockingFilter,
+                                        allowLoadBytesCodeExecution, imageDecodingPolicy)
+        {
+          this._load(bytes.a, checkPolicyFile, applicationDomain, securityDomain,
+                     requestedContentParent, parameters, deblockingFilter,
+                     allowLoadBytesCodeExecution, imageDecodingPolicy);
         },
         _unload: function _unload(halt, gc) { // (halt:Boolean, gc:Boolean) -> void
           somewhatImplemented("Loader._unload, do we even need to do anything here?");

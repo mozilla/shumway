@@ -400,6 +400,10 @@
     "defs": [
       "flash.display:GraphicsPath"
     ],
+    "refs": [
+      "flash/display/GraphicsPathCommand",
+      "flash/display/GraphicsPathWinding"
+    ],
     "files": [
       "flash/display/GraphicsPath.as"
     ]
@@ -445,6 +449,11 @@
     "defs": [
       "flash.display:GraphicsStroke"
     ],
+    "refs": [
+      "flash/display/LineScaleMode",
+      "flash/display/CapsStyle",
+      "flash/display/JointStyle"
+    ],
     "files": [
       "flash/display/GraphicsStroke.as"
     ]
@@ -453,6 +462,9 @@
     "name": "flash/display/GraphicsTrianglePath",
     "defs": [
       "flash.display:GraphicsTrianglePath"
+    ],
+    "refs": [
+      "flash/display/TriangleCulling"
     ],
     "files": [
       "flash/display/GraphicsTrianglePath.as"
@@ -570,6 +582,14 @@
     "name": "flash/display/Loader",
     "defs": [
       "flash.display:Loader"
+    ],
+    "refs": [
+      "flash/errors/IllegalOperationError",
+      "flash/events/UncaughtErrorEvents",
+      "flash/net/URLRequest",
+      "flash/system/ApplicationDomain",
+      "flash/system/SecurityDomain",
+      "flash/system/LoaderContext"
     ],
     "files": [
       "flash/display/Loader.as"
@@ -2056,6 +2076,9 @@
     "name": "flash/system/LoaderContext",
     "defs": [
       "flash.system:LoaderContext"
+    ],
+    "refs": [
+      "flash/system/ImageDecodingPolicy"
     ],
     "files": [
       "flash/system/LoaderContext.as"
