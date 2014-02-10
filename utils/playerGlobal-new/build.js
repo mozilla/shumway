@@ -214,7 +214,7 @@ function runAsc(threadId, name, outputPath, files, dependencies, callback) {
       code = -1;
     }
 
-    callback(code, name, outputPath);
+    callback(code, name, outputPath, 'java ' + args.join(' '));
   });
 }
 
@@ -289,13 +289,13 @@ function buildNext(item) {
   var requires = item.requires && item.requires.map(function (item) {
     return item.outputPath;
   });
-  runAsc(threadId, item.manifest.name, item.outputPath, files, requires, function (code, name, output) {
+  runAsc(threadId, item.manifest.name, item.outputPath, files, requires, function (code, name, output, cmd) {
     if (buildError) {
       return; // ignoring parallel builds if error happend
     }
     if (code) {
       buildError = true;
-      throw new Error('Error while building "' + name + '". Error code: ' + code);
+      throw new Error('Error while building "' + name + '". Error code: ' + code + ', command:\n' + cmd);
     }
 
     item.built = true;
