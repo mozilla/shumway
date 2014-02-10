@@ -6,6 +6,9 @@
     ],
     "files": [
       "flash/accessibility/Accessibility.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObject"
     ]
   },
   {
@@ -240,6 +243,9 @@
     ],
     "files": [
       "flash/display/AVM1Movie.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObject"
     ]
   },
   {
@@ -249,6 +255,9 @@
     ],
     "files": [
       "flash/display/Bitmap.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObject"
     ]
   },
   {
@@ -321,6 +330,11 @@
     ],
     "files": [
       "flash/display/DisplayObject.as"
+    ],
+    "refs": [
+      "flash.events:EventDispatcher",
+      "flash.display:IBitmapDrawable",
+      "flash.display:LoaderInfo"
     ]
   },
   {
@@ -330,6 +344,9 @@
     ],
     "files": [
       "flash/display/DisplayObjectContainer.as"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject"
     ]
   },
   {
@@ -531,6 +548,9 @@
     ],
     "files": [
       "flash/display/InteractiveObject.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObject"
     ]
   },
   {
@@ -602,6 +622,10 @@
     ],
     "files": [
       "flash/display/LoaderInfo.as"
+    ],
+    "refs": [
+      "flash.display:Loader",
+      "flash.events:EventDispatcher"
     ]
   },
   {
@@ -611,6 +635,9 @@
     ],
     "files": [
       "flash/display/MorphShape.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObject"
     ]
   },
   {
@@ -620,6 +647,9 @@
     ],
     "files": [
       "flash/display/MovieClip.as"
+    ],
+    "refs": [
+      "flash.display:Sprite"
     ]
   },
   {
@@ -737,6 +767,9 @@
     ],
     "files": [
       "flash/display/Shape.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObject"
     ]
   },
   {
@@ -746,6 +779,9 @@
     ],
     "files": [
       "flash/display/SimpleButton.as"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject"
     ]
   },
   {
@@ -764,6 +800,9 @@
     ],
     "files": [
       "flash/display/Sprite.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObjectContainer"
     ]
   },
   {
@@ -773,6 +812,9 @@
     ],
     "files": [
       "flash/display/Stage.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObjectContainer"
     ]
   },
   {
@@ -881,6 +923,10 @@
     ],
     "files": [
       "flash/events/ContextMenuEvent.as"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject",
+      "flash.events:Event"
     ]
   },
   {
@@ -989,6 +1035,9 @@
     ],
     "files": [
       "flash/events/EventDispatcher.as"
+    ],
+    "refs": [
+      "flash.events:IEventDispatcher"
     ]
   },
   {
@@ -1007,6 +1056,10 @@
     ],
     "files": [
       "flash/events/FocusEvent.as"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject",
+      "flash.events:Event"
     ]
   },
   {
@@ -1106,6 +1159,10 @@
     ],
     "files": [
       "flash/events/MouseEvent.as"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject",
+      "flash.events:Event"
     ]
   },
   {
@@ -1205,6 +1262,10 @@
     ],
     "files": [
       "flash/events/SoftKeyboardEvent.as"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject",
+      "flash.events:Event"
     ]
   },
   {
@@ -1295,6 +1356,10 @@
     ],
     "files": [
       "flash/events/TouchEvent.as"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject",
+      "flash.events:Event"
     ]
   },
   {
@@ -1403,6 +1468,9 @@
     ],
     "files": [
       "flash/geom/Transform.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObject"
     ]
   },
   {
@@ -1835,6 +1903,9 @@
     ],
     "files": [
       "flash/media/Video.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObject"
     ]
   },
   {
@@ -1880,6 +1951,10 @@
     ],
     "files": [
       "flash/printing/PrintJob.as"
+    ],
+    "refs": [
+      "flash.display:Sprite",
+      "flash.events:EventDispatcher"
     ]
   },
   {
@@ -2070,6 +2145,9 @@
     ],
     "files": [
       "flash/system/JPEGLoaderContext.as"
+    ],
+    "refs": [
+      "flash.system:LoaderContext"
     ]
   },
   {
@@ -3054,6 +3132,9 @@
     ],
     "files": [
       "flash/text/StaticText.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObject"
     ]
   },
   {
@@ -3099,6 +3180,9 @@
     ],
     "files": [
       "flash/text/TextField.as"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject"
     ]
   },
   {
@@ -3216,6 +3300,11 @@
     ],
     "files": [
       "flash/text/engine/ContentElement.as"
+    ],
+    "refs": [
+      "flash.text.engine:ElementFormat",
+      "flash.text.engine:TextBlock",
+      "flash.events:EventDispatcher"
     ]
   },
   {
@@ -3306,6 +3395,9 @@
     ],
     "files": [
       "flash/text/engine/GraphicElement.as"
+    ],
+    "refs": [
+      "flash.text.engine:ContentElement"
     ]
   },
   {
@@ -3315,6 +3407,9 @@
     ],
     "files": [
       "flash/text/engine/GroupElement.as"
+    ],
+    "refs": [
+      "flash.text.engine:ContentElement"
     ]
   },
   {
@@ -3405,6 +3500,11 @@
     ],
     "files": [
       "flash/text/engine/TextBlock.as"
+    ],
+    "refs": [
+      "flash.text.engine:FontDescription",
+      "flash.text.engine:TextLine",
+      "flash.text.engine:TextJustifier"
     ]
   },
   {
@@ -3414,6 +3514,9 @@
     ],
     "files": [
       "flash/text/engine/TextElement.as"
+    ],
+    "refs": [
+      "flash.text.engine:ContentElement"
     ]
   },
   {
@@ -3432,6 +3535,9 @@
     ],
     "files": [
       "flash/text/engine/TextLine.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObjectContainer"
     ]
   },
   {
@@ -3450,6 +3556,11 @@
     ],
     "files": [
       "flash/text/engine/TextLineMirrorRegion.as"
+    ],
+    "refs": [
+      "flash.text.engine:TextLine",
+      "flash.text.engine:ContentElement",
+      "flash.events:EventDispatcher"
     ]
   },
   {

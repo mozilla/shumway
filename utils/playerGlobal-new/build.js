@@ -123,7 +123,7 @@ manifest.forEach(function (item) {
       var p = queue.shift();
       if (p === pReq) {
         throw new Error('Circular reference between \"' + p.manifest.name +
-                        '\" and \"' + pReq.manifest.name + '\"');
+                        '\" and \"' + pReq.manifest.name + '\" at \"' + item.name + '\"');
       }
       if (p.dependents.length > 0) {
         queue.push.apply(queue, p.dependents);
@@ -286,9 +286,23 @@ function buildNext(item) {
   var threadId = availableThreadIds.shift();
   pending++;
   var files = item.manifest.files;
-  var requires = item.requires && item.requires.map(function (item) {
-    return item.outputPath;
-  });
+  var requires = null;
+  if (item.requires) {
+    var imported = {}, queue = item.requires.slice(), stack = [];
+    while (queue.length > 0) {
+      var current = queue.shift();
+      stack.push(current);
+      Array.prototype.push.apply(queue, current.requires);
+    }
+    requires = [];
+    while (stack.length > 0) {
+      var current = stack.pop().outputPath;
+      if (!imported[current]) {
+        imported[current] = true;
+        requires.push(current);
+      }
+    }
+  }
   runAsc(threadId, item.manifest.name, item.outputPath, files, requires, function (code, name, output, cmd) {
     if (buildError) {
       return; // ignoring parallel builds if error happend

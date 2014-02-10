@@ -25,7 +25,7 @@ public class LoaderContext {
     this.checkPolicyFile = checkPolicyFile;
     this.applicationDomain = applicationDomain;
     this.securityDomain = securityDomain;
-//    this.imageDecodingPolicy = ImageDecodingPolicy.ON_DEMAND;
+    this.imageDecodingPolicy = ImageDecodingPolicy.ON_DEMAND;
   }
   public var checkPolicyFile:Boolean;
   public var applicationDomain:ApplicationDomain;
