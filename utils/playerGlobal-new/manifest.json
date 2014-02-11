@@ -3654,6 +3654,9 @@
     ],
     "files": [
       "flash/utils/SetIntervalTimer.as"
+    ],
+    "refs": [
+      "flash.events:TimerEvent"
     ]
   }
 ]
