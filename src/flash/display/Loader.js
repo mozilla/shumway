@@ -174,7 +174,7 @@ var LoaderDefinition = (function () {
       }
 
       if (resolve) {
-        loader._stage._renderer.requireRenderables(dependencies, resolve);
+        loader._stage._requireRenderables(dependencies, resolve);
         this._dependencies = [];
       }
 
@@ -444,9 +444,7 @@ var LoaderDefinition = (function () {
       loaderInfo._height = image.height;
       loaderInfo._dispatchEvent("init");
 
-      this._stage._renderer.defineRenderable(this._stage._renderer.nextId++,
-                                             symbol.type,
-                                             symbol);
+      this._stage._defineRenderable(imageInfo);
     },
     _commitSymbol: function (symbol) {
       var dictionary = this._dictionary;
@@ -615,7 +613,7 @@ var LoaderDefinition = (function () {
         props: props
       };
 
-      this._stage._renderer.defineRenderable(symbol.id, symbol.type, symbol);
+      this._stage._defineRenderable(symbol);
     },
     _registerFont: function (className, props) {
       this._vmPromise.then(function () {

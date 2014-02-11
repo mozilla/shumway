@@ -84,7 +84,10 @@ var DisplayObjectDefinition = (function () {
       this._index = -1;
       this._depth = -1;
       this._isContainer = false;
-      this._layer = null;
+
+      this._renderableType = null;
+      this._renderableId = 0;
+      this._layerId = 0;
 
       blendModes = [
         blendModeClass.NORMAL,     // 0
@@ -122,6 +125,7 @@ var DisplayObjectDefinition = (function () {
         this._depth = isNaN(s.depth) ? -1 : s.depth;
         this._root = s.root || null;
         this._stage = s.stage || null;
+        this._renderableId = s.symbolId || 0;
 
         var scale9Grid = s.scale9Grid;
         if (scale9Grid) {
@@ -439,6 +443,39 @@ var DisplayObjectDefinition = (function () {
       transform.ty = ty;
 
       this._invalidateTransform();
+    },
+
+    _serialize: function (message) {
+      message.ensureCapacity(40);
+
+      message.writeIntUnsafe(this._layerId);
+      message.writeIntUnsafe(this._renderableId);
+
+      var m = this._currentTransform;
+      message.writeFloatUnsafe(m.a);
+      message.writeFloatUnsafe(m.b);
+      message.writeFloatUnsafe(m.c);
+      message.writeFloatUnsafe(m.d);
+      message.writeIntUnsafe(m.tx / 20);
+      message.writeIntUnsafe(m.ty / 20);
+
+      message.writeFloatUnsafe(this._alpha);
+
+      var cxform = this._cxform;
+      if (cxform) {
+        message.writeIntUnsafe(1);
+        message.ensureCapacity(32);
+        message.writeFloatUnsafe(cxform.redMultiplier / 256);
+        message.writeFloatUnsafe(cxform.greenMultiplier / 256);
+        message.writeFloatUnsafe(cxform.blueMultiplier / 256);
+        message.writeFloatUnsafe(cxform.alphaMultiplier / 256);
+        message.writeIntUnsafe(cxform.redOffset / 255);
+        message.writeIntUnsafe(cxform.greenOffset / 255);
+        message.writeIntUnsafe(cxform.blueOffset / 255);
+        message.writeIntUnsafe(cxform.alphaOffset / 255);
+      } else {
+        message.writeIntUnsafe(0);
+      }
     },
 
     get accessibilityProperties() {

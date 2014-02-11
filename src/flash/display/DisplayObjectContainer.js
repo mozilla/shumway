@@ -267,8 +267,6 @@ var DisplayObjectContainerDefinition = (function () {
     this._tabChildren = true;
     this._sparse = false;
     this._isContainer = true;
-
-    this._layer = new Shumway.Layers.FrameContainer();
   };
 
   def.__glue__ = {
