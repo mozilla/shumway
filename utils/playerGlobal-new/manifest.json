@@ -3641,6 +3641,9 @@
     ],
     "files": [
       "flash/utils/Timer.as"
+    ],
+    "refs": [
+      "flash.events:TimerEvent"
     ]
   },
   {

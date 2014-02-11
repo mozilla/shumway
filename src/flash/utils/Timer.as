@@ -16,17 +16,77 @@
 
 package flash.utils {
 import flash.events.EventDispatcher;
+import flash.events.TimerEvent;
 
-public class Timer extends EventDispatcher {
-    public function Timer(delay:Number, repeatCount:int = 0) {}
-    public function get delay():Number { notImplemented("delay"); return -1; }
-    public function get repeatCount():int { notImplemented("repeatCount"); return -1; }
-    public function set repeatCount(value:int):void { notImplemented("repeatCount"); }
-    public function get currentCount():int { notImplemented("currentCount"); return -1; }
+  public class Timer extends EventDispatcher {
+    public function Timer(delay:Number, repeatCount:int = 0) {
+      _delay = delay;
+      _repeatCount = repeatCount;
+    }
+
     public native function get running():Boolean;
-    public function set delay(value:Number):void { notImplemented("delay"); }
-    public function start():void { notImplemented("start"); }
-    public function reset():void { notImplemented("reset"); }
+
+    public function get delay():Number { 
+      return _delay; 
+    }
+
+    public function get repeatCount():int { 
+      return _repeatCount; 
+    }
+
+    public function set repeatCount(value:int):void { 
+      _repeatCount = value;
+      if (_repeatCount && running){ 
+        if(_iteration >= _repeatCount) {
+          stop();
+        }
+      }
+    }
+
+    public function get currentCount():int { 
+      return _iteration; 
+    }
+
+    public function set delay(value:Number):void {
+      _delay = value;
+
+      if (running){
+        stop();
+        start();
+      }
+    }
+
+    public function reset():void { 
+      if (running){
+        stop();
+      }
+      _iteration = 0;
+    }
+
     public native function stop():void;
+
+    public function start():void {
+      if (!running){
+        _start(_delay, tick);
+      }
+    }
+
+    private native function _start(delay:Number,
+                                   closure:Function):void;
+    private function tick():void { 
+      _iteration++;
+      _tick();
+      if (_repeatCount != 0 ){
+        if(_iteration >= _repeatCount) {
+          stop();
+          dispatchEvent(new TimerEvent(TimerEvent.TIMER_COMPLETE, false, false));
+        }
+      }
+    }
+    private native function _tick():void;
+
+    private var _delay:Number;
+    private var _repeatCount:int;
+    private var _iteration:int;
   }
 }

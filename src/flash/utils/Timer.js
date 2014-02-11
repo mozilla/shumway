@@ -40,7 +40,7 @@ var TimerDefinition = (function () {
           this._running = false;
           clearInterval(this.interval);
         },
-        _timerDispatch: function () {
+        _tick: function () {
           if (!this._running) {
             return;
           }
