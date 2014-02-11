@@ -93,6 +93,7 @@ manifest.forEach(function (item) {
     outputPath: outputPath,
     dependents: [],
     requires: [],
+    refFiles: null,
     built: false,
     scheduled: false
   };
@@ -103,18 +104,24 @@ manifest.forEach(function (item) {
     classToAbcMap[def] = item.name;
   });
 });
+
+function resolveRefToBuildItem(ref) {
+  var refItem = buildTreeLookup[ref];
+  if (!refItem) { // trying a class name as well
+    var refAbc = classToAbcMap[ref];
+    refItem = refAbc && buildTreeLookup[refAbc];
+  }
+  return refItem;
+}
+
 manifest.forEach(function (item) {
-  if (!item.refs) {
+  if (!item.inherits) {
     return;
   }
-  item.refs.forEach(function (ref) {
-    var pReq = buildTreeLookup[ref];
-    if (!pReq) { // trying a class name as well
-      var refAbc = classToAbcMap[ref];
-      if (!refAbc) {
-        throw new Error('Reference \"' + ref + '\" in \"' + item.name + '\" is not defined');
-      }
-      pReq = buildTreeLookup[refAbc];
+  item.inherits.forEach(function (ref) {
+    var pReq = resolveRefToBuildItem(ref);
+    if (!pReq) {
+      throw new Error('Import \"' + ref + '\" in \"' + item.name + '\" is not defined');
     }
     // checking circular references
     var pDep = buildTreeLookup[item.name];
@@ -122,7 +129,7 @@ manifest.forEach(function (item) {
     while (queue.length > 0) {
       var p = queue.shift();
       if (p === pReq) {
-        throw new Error('Circular reference between \"' + p.manifest.name +
+        throw new Error('Circular dependency between \"' + p.manifest.name +
                         '\" and \"' + pReq.manifest.name + '\" at \"' + item.name + '\"');
       }
       if (p.dependents.length > 0) {
@@ -130,8 +137,69 @@ manifest.forEach(function (item) {
       }
     }
     pReq.dependents.push(pDep);
-    pDep.requires.push(pReq);
   });
+});
+manifest.forEach(function (item) {
+  if (!item.refs && !item.inherits) {
+    return;
+  }
+  var buildItem = buildTreeLookup[item.name];
+  var used = {}, queue = [];
+  var refs = [];
+  if (item.inherits) Array.prototype.push.apply(refs, item.inherits);
+  if (item.refs) Array.prototype.push.apply(refs, item.refs);
+  refs.forEach(function (ref) {
+    if (used[ref]) return;
+
+    var refItem = resolveRefToBuildItem(ref);
+    if (!refItem) {
+      throw new Error('Reference \"' + ref + '\" in \"' + item.name + '\" is not defined');
+    }
+    used[ref] = refItem;
+    queue.push(refItem.manifest);
+  });
+  var files = {};
+  while (queue.length > 0) {
+    var refItem = queue.shift();
+    refItem.files.forEach(function (file) { files[file] = true; });
+    if (refItem.refs || refItem.inherits) {
+      refs = [];
+      if (refItem.inherits) Array.prototype.push.apply(refs, refItem.inherits);
+      if (refItem.refs) Array.prototype.push.apply(refs, refItem.refs);
+      refs.forEach(function (ref2) {
+        if (used[ref2]) return;
+
+        var refItem2 = resolveRefToBuildItem(ref2);
+        if (!refItem2) {
+          throw new Error('Reference \"' + ref2 + '\" in \"' + refItem.name + '\" is not defined (2)');
+        }
+        used[ref2] = refItem2;
+        queue.push(refItem2.manifest);
+      })
+    }
+  }
+  item.files.forEach(function (file) {
+    delete files[file];
+  });
+  var imports = {};
+  queue = buildItem.dependents.slice();
+  while (queue.length > 0) {
+    var depItem = queue.shift();
+    depItem.manifest.files.forEach(function (file) {
+      if (file in files) {
+        imports[depItem.manifest.name] = depItem;
+        delete files[file];
+      }
+    });
+    if (depItem.dependents.length > 0) {
+      Array.prototype.push.apply(queue, depItem.dependents);
+    }
+  }
+  Object.keys(imports).forEach(function (key) {
+    buildItem.requires.push(imports[key]);
+  });
+  buildItem.refFiles = Object.keys(files);
+	buildItem.refFiles.reverse();
 });
 
 // build queue
@@ -181,7 +249,7 @@ function ensureDir(dir) {
   }
 }
 
-function runAsc(threadId, name, outputPath, files, dependencies, callback) {
+function runAsc(threadId, name, outputPath, files, dependencies, refs, callback) {
   console.info('Building ' + outputPath + ' [' + threadId + '] ...');
   var outputDir = outputPath.substring(0, outputPath.lastIndexOf('/'));
   ensureDir(outputDir);
@@ -190,9 +258,10 @@ function runAsc(threadId, name, outputPath, files, dependencies, callback) {
   if (fs.existsSync(outputPath)) {
     fs.unlink(outputPath);
   }
+  var outputAs = outputDir + '/' + outputName + '.as';
+  fs.writeFileSync(outputAs, '');
 
-  var args = ['-ea', '-DAVMPLUS', '-classpath', ascjar,
-              'macromedia.asc.embedding.ScriptCompiler', '-AS3', '-builtin'];
+  var args = ['-jar', ascjar, '-AS3'];
   if (debugInfo) {
     args.push('-d');
   }
@@ -205,8 +274,15 @@ function runAsc(threadId, name, outputPath, files, dependencies, callback) {
       args.push('-import', dep);
     })
   }
-  args.push('-outdir', outputDir, '-out', outputName);
-  args = args.concat(files);
+  if (refs) {
+    refs.forEach(function (ref) {
+      args.push('-import', ref);
+    })
+  }
+  files.forEach(function (file) {
+    args.push('-in', file);
+  })
+  args.push(outputAs);
 
   var proc = spawn('java', args, {stdio: 'inherit'} );
   proc.on('close', function (code) {
@@ -286,24 +362,11 @@ function buildNext(item) {
   var threadId = availableThreadIds.shift();
   pending++;
   var files = item.manifest.files;
-  var requires = null;
-  if (item.requires) {
-    var imported = {}, queue = item.requires.slice(), stack = [];
-    while (queue.length > 0) {
-      var current = queue.shift();
-      stack.push(current);
-      Array.prototype.push.apply(queue, current.requires);
-    }
-    requires = [];
-    while (stack.length > 0) {
-      var current = stack.pop().outputPath;
-      if (!imported[current]) {
-        imported[current] = true;
-        requires.push(current);
-      }
-    }
-  }
-  runAsc(threadId, item.manifest.name, item.outputPath, files, requires, function (code, name, output, cmd) {
+  var requires = item.requires && item.requires.map(function (req) {
+    return req.outputPath;
+  });
+	var refFiles = item.refFiles;
+  runAsc(threadId, item.manifest.name, item.outputPath, files, requires, refFiles, function (code, name, output, cmd) {
     if (buildError) {
       return; // ignoring parallel builds if error happend
     }

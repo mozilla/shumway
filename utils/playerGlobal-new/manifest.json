@@ -18,6 +18,9 @@
     ],
     "files": [
       "flash/accessibility/AccessibilityImplementation.as"
+    ],
+    "refs": [
+      "flash.geom:Rectangle"
     ]
   },
   {
@@ -54,6 +57,9 @@
     ],
     "files": [
       "flash/automation/ActionGenerator.as"
+    ],
+    "refs": [
+      "flash.automation:AutomationAction"
     ]
   },
   {
@@ -81,6 +87,9 @@
     ],
     "files": [
       "flash/automation/KeyboardAutomationAction.as"
+    ],
+    "inherits": [
+      "flash.automation:AutomationAction"
     ]
   },
   {
@@ -90,6 +99,9 @@
     ],
     "files": [
       "flash/automation/MouseAutomationAction.as"
+    ],
+    "inherits": [
+      "flash.automation:AutomationAction"
     ]
   },
   {
@@ -99,6 +111,13 @@
     ],
     "files": [
       "flash/automation/StageCapture.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.geom:Rectangle",
+      "flash.display:BitmapData"
     ]
   },
   {
@@ -108,6 +127,9 @@
     ],
     "files": [
       "flash/automation/StageCaptureEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -144,6 +166,9 @@
     ],
     "files": [
       "flash/concurrent/Condition.as"
+    ],
+    "refs": [
+      "flash.concurrent:Mutex"
     ]
   },
   {
@@ -165,48 +190,12 @@
     ]
   },
   {
-    "name": "flash/errors/EOFError",
-    "defs": [
-      "flash.errors:EOFError"
-    ],
-    "files": [
-      "flash/errors/EOFError.as"
-    ]
-  },
-  {
-    "name": "flash/errors/IllegalOperationError",
-    "defs": [
-      "flash.errors:IllegalOperationError"
-    ],
-    "files": [
-      "flash/errors/IllegalOperationError.as"
-    ]
-  },
-  {
     "name": "flash/errors/InvalidSWFError",
     "defs": [
       "flash.errors:InvalidSWFError"
     ],
     "files": [
       "flash/errors/InvalidSWFError.as"
-    ]
-  },
-  {
-    "name": "flash/errors/IOError",
-    "defs": [
-      "flash.errors:IOError"
-    ],
-    "files": [
-      "flash/errors/IOError.as"
-    ]
-  },
-  {
-    "name": "flash/errors/MemoryError",
-    "defs": [
-      "flash.errors:MemoryError"
-    ],
-    "files": [
-      "flash/errors/MemoryError.as"
     ]
   },
   {
@@ -244,8 +233,11 @@
     "files": [
       "flash/display/AVM1Movie.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:DisplayObject"
+    ],
+    "refs": [
+      "flash.net:ObjectEncoding"
     ]
   },
   {
@@ -256,8 +248,11 @@
     "files": [
       "flash/display/Bitmap.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:DisplayObject"
+    ],
+    "refs": [
+      "flash.display:BitmapData"
     ]
   },
   {
@@ -267,6 +262,14 @@
     ],
     "files": [
       "flash/display/BitmapData.as"
+    ],
+    "refs": [
+      "flash.display:IBitmapDrawable",
+      "flash.geom:Rectangle",
+      "flash.geom:Matrix",
+      "flash.geom:Point",
+      "flash.filters:BitmapFilter",
+      "flash.geom:ColorTransform"
     ]
   },
   {
@@ -331,10 +334,21 @@
     "files": [
       "flash/display/DisplayObject.as"
     ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
     "refs": [
-      "flash.events:EventDispatcher",
       "flash.display:IBitmapDrawable",
-      "flash.display:LoaderInfo"
+      "flash.accessibility:AccessibilityProperties",
+      "flash.geom:Point",
+      "flash.display:LoaderInfo",
+      "flash.geom:Rectangle",
+      "flash.display:Shader",
+      "flash.geom:Vector3D",
+      "flash.display:DisplayObjectContainer",
+      "flash.display:Stage",
+      "flash.geom:Transform",
+      "flash.events:Event"
     ]
   },
   {
@@ -345,8 +359,13 @@
     "files": [
       "flash/display/DisplayObjectContainer.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:InteractiveObject"
+    ],
+    "refs": [
+      "flash.display:DisplayObject",
+      "flash.geom:Point",
+      "flash.text:TextSnapshot"
     ]
   },
   {
@@ -356,6 +375,22 @@
     ],
     "files": [
       "flash/display/FocusDirection.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObjectContainer",
+      "flash.media:StageVideo",
+      "flash.display:Stage3D",
+      "flash.geom:Rectangle",
+      "flash.ui:ContextMenu",
+      "flash.accessibility:AccessibilityProperties",
+      "flash.display:DisplayObject",
+      "flash.events:Event",
+      "flash.display:InteractiveObject",
+      "flash.text:TextSnapshot",
+      "flash.accessibility:AccessibilityImplementation",
+      "flash.geom:Transform",
+      "flash.events:FullScreenEvent",
+      "flash.events:StageVideoAvailabilityEvent"
     ]
   },
   {
@@ -365,6 +400,12 @@
     ],
     "files": [
       "flash/display/FrameLabel.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -374,6 +415,23 @@
     ],
     "files": [
       "flash/display/Graphics.as"
+    ],
+    "refs": [
+      "flash.display:IGraphicsStroke",
+      "flash.display:IGraphicsData",
+      "flash.display:GraphicsBitmapFill",
+      "flash.display:GraphicsGradientFill",
+      "flash.geom:Matrix",
+      "flash.display:GraphicsStroke",
+      "flash.display:GraphicsPath",
+      "flash.display:GraphicsSolidFill",
+      "flash.display:IGraphicsFill",
+      "flash.display:Shader",
+      "flash.display:GraphicsShaderFill",
+      "flash.display:BitmapData",
+      "flash.display:GraphicsTrianglePath",
+      "flash.display:IGraphicsPath",
+      "flash.display:GraphicsEndFill"
     ]
   },
   {
@@ -392,6 +450,12 @@
     ],
     "files": [
       "flash/display/GraphicsBitmapFill.as"
+    ],
+    "refs": [
+      "flash.display:IGraphicsData",
+      "flash.display:IGraphicsFill",
+      "flash.geom:Matrix",
+      "flash.display:BitmapData"
     ]
   },
   {
@@ -401,6 +465,10 @@
     ],
     "files": [
       "flash/display/GraphicsEndFill.as"
+    ],
+    "refs": [
+      "flash.display:IGraphicsData",
+      "flash.display:IGraphicsFill"
     ]
   },
   {
@@ -410,6 +478,14 @@
     ],
     "files": [
       "flash/display/GraphicsGradientFill.as"
+    ],
+    "refs": [
+      "flash.display:IGraphicsData",
+      "flash.display:IGraphicsFill",
+      "flash.geom:Matrix",
+      "flash.display:SpreadMethod",
+      "flash.display:InterpolationMethod",
+      "flash.display:GradientType"
     ]
   },
   {
@@ -417,12 +493,14 @@
     "defs": [
       "flash.display:GraphicsPath"
     ],
-    "refs": [
-      "flash/display/GraphicsPathCommand",
-      "flash/display/GraphicsPathWinding"
-    ],
     "files": [
       "flash/display/GraphicsPath.as"
+    ],
+    "refs": [
+      "flash.display:IGraphicsData",
+      "flash.display:IGraphicsPath",
+      "flash.display:GraphicsPathWinding",
+      "flash.display:GraphicsPathCommand"
     ]
   },
   {
@@ -450,6 +528,12 @@
     ],
     "files": [
       "flash/display/GraphicsShaderFill.as"
+    ],
+    "refs": [
+      "flash.display:IGraphicsData",
+      "flash.display:IGraphicsFill",
+      "flash.geom:Matrix",
+      "flash.display:Shader"
     ]
   },
   {
@@ -459,6 +543,10 @@
     ],
     "files": [
       "flash/display/GraphicsSolidFill.as"
+    ],
+    "refs": [
+      "flash.display:IGraphicsData",
+      "flash.display:IGraphicsFill"
     ]
   },
   {
@@ -466,13 +554,16 @@
     "defs": [
       "flash.display:GraphicsStroke"
     ],
-    "refs": [
-      "flash/display/LineScaleMode",
-      "flash/display/CapsStyle",
-      "flash/display/JointStyle"
-    ],
     "files": [
       "flash/display/GraphicsStroke.as"
+    ],
+    "refs": [
+      "flash.display:IGraphicsStroke",
+      "flash.display:IGraphicsData",
+      "flash.display:IGraphicsFill",
+      "flash.display:CapsStyle",
+      "flash.display:LineScaleMode",
+      "flash.display:JointStyle"
     ]
   },
   {
@@ -480,11 +571,13 @@
     "defs": [
       "flash.display:GraphicsTrianglePath"
     ],
-    "refs": [
-      "flash/display/TriangleCulling"
-    ],
     "files": [
       "flash/display/GraphicsTrianglePath.as"
+    ],
+    "refs": [
+      "flash.display:IGraphicsData",
+      "flash.display:IGraphicsPath",
+      "flash.display:TriangleCulling"
     ]
   },
   {
@@ -549,8 +642,24 @@
     "files": [
       "flash/display/InteractiveObject.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:DisplayObject"
+    ],
+    "refs": [
+      "flash.geom:Rectangle",
+      "flash.ui:ContextMenu",
+      "flash.accessibility:AccessibilityImplementation",
+      "flash.events:MouseEvent",
+      "flash.events:IMEEvent",
+      "flash.events:FocusEvent",
+      "flash.events:TransformGestureEvent",
+      "flash.events:SoftKeyboardEvent",
+      "flash.events:PressAndTapGestureEvent",
+      "flash.events:TextEvent",
+      "flash.events:KeyboardEvent",
+      "flash.events:TouchEvent",
+      "flash.events:GestureEvent",
+      "flash.events:Event"
     ]
   },
   {
@@ -603,16 +712,20 @@
     "defs": [
       "flash.display:Loader"
     ],
-    "refs": [
-      "flash/errors/IllegalOperationError",
-      "flash/events/UncaughtErrorEvents",
-      "flash/net/URLRequest",
-      "flash/system/ApplicationDomain",
-      "flash/system/SecurityDomain",
-      "flash/system/LoaderContext"
-    ],
     "files": [
       "flash/display/Loader.as"
+    ],
+    "inherits": [
+      "flash.display:DisplayObjectContainer"
+    ],
+    "refs": [
+      "flash.system:LoaderContext",
+      "flash.net:URLRequest",
+      "flash.display:LoaderInfo",
+      "flash.display:DisplayObject",
+      "flash.system:ApplicationDomain",
+      "flash.events:UncaughtErrorEvents",
+      "flash.system:SecurityDomain"
     ]
   },
   {
@@ -623,9 +736,18 @@
     "files": [
       "flash/display/LoaderInfo.as"
     ],
-    "refs": [
-      "flash.display:Loader",
+    "inherits": [
       "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.display:DisplayObject",
+      "flash.system:ApplicationDomain",
+      "flash.events:UncaughtErrorEvents",
+      "flash.events:Event",
+      "flash.display:Loader",
+      "flash.events:ProgressEvent",
+      "flash.events:HTTPStatusEvent",
+      "flash.events:IOErrorEvent"
     ]
   },
   {
@@ -636,7 +758,7 @@
     "files": [
       "flash/display/MorphShape.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:DisplayObject"
     ]
   },
@@ -648,8 +770,11 @@
     "files": [
       "flash/display/MovieClip.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:Sprite"
+    ],
+    "refs": [
+      "flash.display:Scene"
     ]
   },
   {
@@ -659,6 +784,12 @@
     ],
     "files": [
       "flash/display/NativeMenu.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -668,6 +799,12 @@
     ],
     "files": [
       "flash/display/NativeMenuItem.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -704,6 +841,9 @@
     ],
     "files": [
       "flash/display/Shader.as"
+    ],
+    "refs": [
+      "flash.display:ShaderData"
     ]
   },
   {
@@ -731,6 +871,13 @@
     ],
     "files": [
       "flash/display/ShaderJob.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.display:Shader",
+      "flash.events:ShaderEvent"
     ]
   },
   {
@@ -768,8 +915,11 @@
     "files": [
       "flash/display/Shape.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:DisplayObject"
+    ],
+    "refs": [
+      "flash.display:Graphics"
     ]
   },
   {
@@ -780,8 +930,12 @@
     "files": [
       "flash/display/SimpleButton.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:InteractiveObject"
+    ],
+    "refs": [
+      "flash.display:DisplayObject",
+      "flash.media:SoundTransform"
     ]
   },
   {
@@ -801,8 +955,14 @@
     "files": [
       "flash/display/Sprite.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:DisplayObjectContainer"
+    ],
+    "refs": [
+      "flash.geom:Rectangle",
+      "flash.display:DisplayObject",
+      "flash.display:Graphics",
+      "flash.media:SoundTransform"
     ]
   },
   {
@@ -813,8 +973,23 @@
     "files": [
       "flash/display/Stage.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:DisplayObjectContainer"
+    ],
+    "refs": [
+      "flash.media:StageVideo",
+      "flash.display:Stage3D",
+      "flash.geom:Rectangle",
+      "flash.ui:ContextMenu",
+      "flash.accessibility:AccessibilityProperties",
+      "flash.display:DisplayObject",
+      "flash.events:Event",
+      "flash.display:InteractiveObject",
+      "flash.text:TextSnapshot",
+      "flash.accessibility:AccessibilityImplementation",
+      "flash.geom:Transform",
+      "flash.events:FullScreenEvent",
+      "flash.events:StageVideoAvailabilityEvent"
     ]
   },
   {
@@ -824,6 +999,14 @@
     ],
     "files": [
       "flash/display/Stage3D.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.display3D:Context3D",
+      "flash.events:Event",
+      "flash.events:ErrorEvent"
     ]
   },
   {
@@ -887,6 +1070,10 @@
     ],
     "files": [
       "flash/external/ExternalInterface.as"
+    ],
+    "refs": [
+      "flash.system:Capabilities",
+      "flash.utils:getDefinitionByName"
     ]
   },
   {
@@ -896,6 +1083,9 @@
     ],
     "files": [
       "flash/events/AccelerometerEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -905,6 +1095,9 @@
     ],
     "files": [
       "flash/events/ActivityEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -914,6 +1107,12 @@
     ],
     "files": [
       "flash/events/AsyncErrorEvent.as"
+    ],
+    "inherits": [
+      "flash.events:ErrorEvent"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -924,9 +1123,11 @@
     "files": [
       "flash/events/ContextMenuEvent.as"
     ],
-    "refs": [
-      "flash.display:InteractiveObject",
+    "inherits": [
       "flash.events:Event"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject"
     ]
   },
   {
@@ -936,6 +1137,12 @@
     ],
     "files": [
       "flash/events/DataEvent.as"
+    ],
+    "inherits": [
+      "flash.events:TextEvent"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -945,6 +1152,12 @@
     ],
     "files": [
       "flash/events/DRMAuthenticateEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
+    ],
+    "refs": [
+      "flash.net:NetStream"
     ]
   },
   {
@@ -954,6 +1167,9 @@
     ],
     "files": [
       "flash/events/DRMAuthenticationCompleteEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -963,6 +1179,12 @@
     ],
     "files": [
       "flash/events/DRMAuthenticationErrorEvent.as"
+    ],
+    "inherits": [
+      "flash.events:ErrorEvent"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -981,6 +1203,13 @@
     ],
     "files": [
       "flash/events/DRMDeviceGroupErrorEvent.as"
+    ],
+    "inherits": [
+      "flash.events:ErrorEvent"
+    ],
+    "refs": [
+      "flash.net.drm:DRMDeviceGroup",
+      "flash.events:Event"
     ]
   },
   {
@@ -990,6 +1219,12 @@
     ],
     "files": [
       "flash/events/DRMDeviceGroupEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
+    ],
+    "refs": [
+      "flash.net.drm:DRMDeviceGroup"
     ]
   },
   {
@@ -999,6 +1234,13 @@
     ],
     "files": [
       "flash/events/DRMErrorEvent.as"
+    ],
+    "inherits": [
+      "flash.events:ErrorEvent"
+    ],
+    "refs": [
+      "flash.net.drm:DRMContentData",
+      "flash.events:Event"
     ]
   },
   {
@@ -1008,6 +1250,13 @@
     ],
     "files": [
       "flash/events/DRMStatusEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
+    ],
+    "refs": [
+      "flash.net.drm:DRMVoucher",
+      "flash.net.drm:DRMContentData"
     ]
   },
   {
@@ -1017,6 +1266,12 @@
     ],
     "files": [
       "flash/events/ErrorEvent.as"
+    ],
+    "inherits": [
+      "flash.events:TextEvent"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1037,7 +1292,10 @@
       "flash/events/EventDispatcher.as"
     ],
     "refs": [
-      "flash.events:IEventDispatcher"
+      "flash.events:IEventDispatcher",
+      "flash.events:Event",
+      "flash.events:HTTPStatusEvent",
+      "flash.net:URLRequestHeader"
     ]
   },
   {
@@ -1057,9 +1315,11 @@
     "files": [
       "flash/events/FocusEvent.as"
     ],
-    "refs": [
-      "flash.display:InteractiveObject",
+    "inherits": [
       "flash.events:Event"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject"
     ]
   },
   {
@@ -1069,6 +1329,12 @@
     ],
     "files": [
       "flash/events/FullScreenEvent.as"
+    ],
+    "inherits": [
+      "flash.events:ActivityEvent"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1078,6 +1344,12 @@
     ],
     "files": [
       "flash/events/GameInputEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
+    ],
+    "refs": [
+      "flash.ui:GameInputDevice"
     ]
   },
   {
@@ -1087,6 +1359,9 @@
     ],
     "files": [
       "flash/events/GeolocationEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1096,6 +1371,9 @@
     ],
     "files": [
       "flash/events/GestureEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1114,6 +1392,9 @@
     ],
     "files": [
       "flash/events/HTTPStatusEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1123,6 +1404,9 @@
     ],
     "files": [
       "flash/events/IEventDispatcher.as"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1132,6 +1416,13 @@
     ],
     "files": [
       "flash/events/IMEEvent.as"
+    ],
+    "inherits": [
+      "flash.events:TextEvent"
+    ],
+    "refs": [
+      "flash.text.ime:IIMEClient",
+      "flash.events:Event"
     ]
   },
   {
@@ -1141,6 +1432,12 @@
     ],
     "files": [
       "flash/events/IOErrorEvent.as"
+    ],
+    "inherits": [
+      "flash.events:ErrorEvent"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1150,6 +1447,9 @@
     ],
     "files": [
       "flash/events/KeyboardEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1160,9 +1460,11 @@
     "files": [
       "flash/events/MouseEvent.as"
     ],
-    "refs": [
-      "flash.display:InteractiveObject",
+    "inherits": [
       "flash.events:Event"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject"
     ]
   },
   {
@@ -1172,6 +1474,9 @@
     ],
     "files": [
       "flash/events/NetDataEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1181,6 +1486,9 @@
     ],
     "files": [
       "flash/events/NetFilterEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1190,6 +1498,12 @@
     ],
     "files": [
       "flash/events/NetMonitorEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
+    ],
+    "refs": [
+      "flash.net:NetStream"
     ]
   },
   {
@@ -1199,6 +1513,9 @@
     ],
     "files": [
       "flash/events/NetStatusEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1208,6 +1525,9 @@
     ],
     "files": [
       "flash/events/OutputProgressEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1217,6 +1537,12 @@
     ],
     "files": [
       "flash/events/PressAndTapGestureEvent.as"
+    ],
+    "inherits": [
+      "flash.events:GestureEvent"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1226,6 +1552,9 @@
     ],
     "files": [
       "flash/events/ProgressEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1235,6 +1564,9 @@
     ],
     "files": [
       "flash/events/SampleDataEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1244,6 +1576,12 @@
     ],
     "files": [
       "flash/events/SecurityErrorEvent.as"
+    ],
+    "inherits": [
+      "flash.events:ErrorEvent"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1253,6 +1591,12 @@
     ],
     "files": [
       "flash/events/ShaderEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
+    ],
+    "refs": [
+      "flash.display:BitmapData"
     ]
   },
   {
@@ -1263,9 +1607,11 @@
     "files": [
       "flash/events/SoftKeyboardEvent.as"
     ],
-    "refs": [
-      "flash.display:InteractiveObject",
+    "inherits": [
       "flash.events:Event"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject"
     ]
   },
   {
@@ -1284,6 +1630,9 @@
     ],
     "files": [
       "flash/events/StageVideoAvailabilityEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1293,6 +1642,9 @@
     ],
     "files": [
       "flash/events/StageVideoEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1302,6 +1654,9 @@
     ],
     "files": [
       "flash/events/StatusEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1311,6 +1666,9 @@
     ],
     "files": [
       "flash/events/SyncEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1320,6 +1678,9 @@
     ],
     "files": [
       "flash/events/TextEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1329,6 +1690,9 @@
     ],
     "files": [
       "flash/events/ThrottleEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1347,6 +1711,9 @@
     ],
     "files": [
       "flash/events/TimerEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1357,9 +1724,11 @@
     "files": [
       "flash/events/TouchEvent.as"
     ],
-    "refs": [
-      "flash.display:InteractiveObject",
+    "inherits": [
       "flash.events:Event"
+    ],
+    "refs": [
+      "flash.display:InteractiveObject"
     ]
   },
   {
@@ -1369,6 +1738,12 @@
     ],
     "files": [
       "flash/events/TransformGestureEvent.as"
+    ],
+    "inherits": [
+      "flash.events:GestureEvent"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1378,6 +1753,12 @@
     ],
     "files": [
       "flash/events/UncaughtErrorEvent.as"
+    ],
+    "inherits": [
+      "flash.events:ErrorEvent"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1387,6 +1768,12 @@
     ],
     "files": [
       "flash/events/UncaughtErrorEvents.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:UncaughtErrorEvent"
     ]
   },
   {
@@ -1396,6 +1783,9 @@
     ],
     "files": [
       "flash/events/VideoEvent.as"
+    ],
+    "inherits": [
+      "flash.events:Event"
     ]
   },
   {
@@ -1414,6 +1804,10 @@
     ],
     "files": [
       "flash/geom/Matrix.as"
+    ],
+    "refs": [
+      "flash.geom:Vector3D",
+      "flash.geom:Point"
     ]
   },
   {
@@ -1423,6 +1817,9 @@
     ],
     "files": [
       "flash/geom/Matrix3D.as"
+    ],
+    "refs": [
+      "flash.geom:Vector3D"
     ]
   },
   {
@@ -1441,6 +1838,10 @@
     ],
     "files": [
       "flash/geom/PerspectiveProjection.as"
+    ],
+    "refs": [
+      "flash.geom:Matrix3D",
+      "flash.geom:Point"
     ]
   },
   {
@@ -1459,6 +1860,9 @@
     ],
     "files": [
       "flash/geom/Rectangle.as"
+    ],
+    "refs": [
+      "flash.geom:Point"
     ]
   },
   {
@@ -1470,7 +1874,12 @@
       "flash/geom/Transform.as"
     ],
     "refs": [
-      "flash.display:DisplayObject"
+      "flash.geom:Rectangle",
+      "flash.geom:Matrix",
+      "flash.display:DisplayObject",
+      "flash.geom:Matrix3D",
+      "flash.geom:PerspectiveProjection",
+      "flash.geom:ColorTransform"
     ]
   },
   {
@@ -1480,6 +1889,10 @@
     ],
     "files": [
       "flash/geom/Utils3D.as"
+    ],
+    "refs": [
+      "flash.geom:Vector3D",
+      "flash.geom:Matrix3D"
     ]
   },
   {
@@ -1498,6 +1911,9 @@
     ],
     "files": [
       "flash/filters/BevelFilter.as"
+    ],
+    "inherits": [
+      "flash.filters:BitmapFilter"
     ]
   },
   {
@@ -1534,6 +1950,9 @@
     ],
     "files": [
       "flash/filters/BlurFilter.as"
+    ],
+    "inherits": [
+      "flash.filters:BitmapFilter"
     ]
   },
   {
@@ -1543,6 +1962,9 @@
     ],
     "files": [
       "flash/filters/ColorMatrixFilter.as"
+    ],
+    "inherits": [
+      "flash.filters:BitmapFilter"
     ]
   },
   {
@@ -1552,6 +1974,9 @@
     ],
     "files": [
       "flash/filters/ConvolutionFilter.as"
+    ],
+    "inherits": [
+      "flash.filters:BitmapFilter"
     ]
   },
   {
@@ -1561,6 +1986,13 @@
     ],
     "files": [
       "flash/filters/DisplacementMapFilter.as"
+    ],
+    "inherits": [
+      "flash.filters:BitmapFilter"
+    ],
+    "refs": [
+      "flash.display:BitmapData",
+      "flash.geom:Point"
     ]
   },
   {
@@ -1579,6 +2011,9 @@
     ],
     "files": [
       "flash/filters/DropShadowFilter.as"
+    ],
+    "inherits": [
+      "flash.filters:BitmapFilter"
     ]
   },
   {
@@ -1588,6 +2023,9 @@
     ],
     "files": [
       "flash/filters/GlowFilter.as"
+    ],
+    "inherits": [
+      "flash.filters:BitmapFilter"
     ]
   },
   {
@@ -1597,6 +2035,9 @@
     ],
     "files": [
       "flash/filters/GradientBevelFilter.as"
+    ],
+    "inherits": [
+      "flash.filters:BitmapFilter"
     ]
   },
   {
@@ -1606,6 +2047,9 @@
     ],
     "files": [
       "flash/filters/GradientGlowFilter.as"
+    ],
+    "inherits": [
+      "flash.filters:BitmapFilter"
     ]
   },
   {
@@ -1615,6 +2059,13 @@
     ],
     "files": [
       "flash/filters/ShaderFilter.as"
+    ],
+    "inherits": [
+      "flash.filters:BitmapFilter"
+    ],
+    "refs": [
+      "flash.geom:Rectangle",
+      "flash.display:Shader"
     ]
   },
   {
@@ -1642,6 +2093,9 @@
     ],
     "files": [
       "flash/globalization/CurrencyFormatter.as"
+    ],
+    "refs": [
+      "flash.globalization:CurrencyParseResult"
     ]
   },
   {
@@ -1723,6 +2177,9 @@
     ],
     "files": [
       "flash/globalization/NumberFormatter.as"
+    ],
+    "refs": [
+      "flash.globalization:NumberParseResult"
     ]
   },
   {
@@ -1759,6 +2216,16 @@
     ],
     "files": [
       "flash/media/Camera.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.geom:Rectangle",
+      "flash.display:BitmapData",
+      "flash.events:Event",
+      "flash.events:StatusEvent",
+      "flash.events:ActivityEvent"
     ]
   },
   {
@@ -1786,6 +2253,14 @@
     ],
     "files": [
       "flash/media/H264VideoStreamSettings.as"
+    ],
+    "inherits": [
+      "flash.media:VideoStreamSettings"
+    ],
+    "refs": [
+      "flash.media:H264Level",
+      "flash.media:VideoCodec",
+      "flash.media:H264Profile"
     ]
   },
   {
@@ -1804,6 +2279,13 @@
     ],
     "files": [
       "flash/media/Microphone.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.media:SoundTransform",
+      "flash.media:MicrophoneEnhancedOptions"
     ]
   },
   {
@@ -1822,6 +2304,9 @@
     ],
     "files": [
       "flash/media/MicrophoneEnhancedOptions.as"
+    ],
+    "refs": [
+      "flash.media:MicrophoneEnhancedMode"
     ]
   },
   {
@@ -1831,6 +2316,20 @@
     ],
     "files": [
       "flash/media/Sound.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.media:SoundChannel",
+      "flash.media:SoundLoaderContext",
+      "flash.media:ID3Info",
+      "flash.net:URLRequest",
+      "flash.media:SoundTransform",
+      "flash.events:ProgressEvent",
+      "flash.events:Event",
+      "flash.events:SampleDataEvent",
+      "flash.events:IOErrorEvent"
     ]
   },
   {
@@ -1840,6 +2339,13 @@
     ],
     "files": [
       "flash/media/SoundChannel.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.media:SoundTransform",
+      "flash.events:Event"
     ]
   },
   {
@@ -1867,6 +2373,9 @@
     ],
     "files": [
       "flash/media/SoundMixer.as"
+    ],
+    "refs": [
+      "flash.media:SoundTransform"
     ]
   },
   {
@@ -1885,6 +2394,16 @@
     ],
     "files": [
       "flash/media/StageVideo.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.geom:Rectangle",
+      "flash.geom:Point",
+      "flash.net:NetStream",
+      "flash.media:Camera",
+      "flash.events:StageVideoEvent"
     ]
   },
   {
@@ -1904,8 +2423,12 @@
     "files": [
       "flash/media/Video.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:DisplayObject"
+    ],
+    "refs": [
+      "flash.net:NetStream",
+      "flash.media:Camera"
     ]
   },
   {
@@ -1933,6 +2456,9 @@
     ],
     "files": [
       "flash/media/VideoStreamSettings.as"
+    ],
+    "refs": [
+      "flash.media:VideoCodec"
     ]
   },
   {
@@ -1952,9 +2478,13 @@
     "files": [
       "flash/printing/PrintJob.as"
     ],
-    "refs": [
-      "flash.display:Sprite",
+    "inherits": [
       "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.geom:Rectangle",
+      "flash.display:Sprite",
+      "flash.printing:PrintJobOptions"
     ]
   },
   {
@@ -2000,6 +2530,9 @@
     ],
     "files": [
       "flash/security/X509Certificate.as"
+    ],
+    "refs": [
+      "flash.security:X500DistinguishedName"
     ]
   },
   {
@@ -2018,6 +2551,9 @@
     ],
     "files": [
       "flash/sampler/DeleteObjectSample.as"
+    ],
+    "inherits": [
+      "flash.sampler:Sample"
     ]
   },
   {
@@ -2027,6 +2563,9 @@
     ],
     "files": [
       "flash/sampler/NewObjectSample.as"
+    ],
+    "inherits": [
+      "flash.sampler:Sample"
     ]
   },
   {
@@ -2063,6 +2602,9 @@
     ],
     "files": [
       "flash/system/ApplicationInstaller.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
     ]
   },
   {
@@ -2072,6 +2614,10 @@
     ],
     "files": [
       "flash/system/AuthorizedFeatures.as"
+    ],
+    "refs": [
+      "flash.system:ApplicationInstaller",
+      "flash.net:URLStream"
     ]
   },
   {
@@ -2081,6 +2627,12 @@
     ],
     "files": [
       "flash/system/AuthorizedFeaturesLoader.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.system:AuthorizedFeatures"
     ]
   },
   {
@@ -2099,6 +2651,10 @@
     ],
     "files": [
       "flash/system/DomainMemoryWithStage3D.as"
+    ],
+    "refs": [
+      "flash.events:Event",
+      "flash.system:AuthorizedFeaturesLoader"
     ]
   },
   {
@@ -2127,6 +2683,12 @@
     ],
     "files": [
       "flash/system/IME.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:IMEEvent"
     ]
   },
   {
@@ -2146,8 +2708,12 @@
     "files": [
       "flash/system/JPEGLoaderContext.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.system:LoaderContext"
+    ],
+    "refs": [
+      "flash.system:ApplicationDomain",
+      "flash.system:SecurityDomain"
     ]
   },
   {
@@ -2155,11 +2721,15 @@
     "defs": [
       "flash.system:LoaderContext"
     ],
-    "refs": [
-      "flash/system/ImageDecodingPolicy"
-    ],
     "files": [
       "flash/system/LoaderContext.as"
+    ],
+    "refs": [
+      "flash.display:DisplayObjectContainer",
+      "flash.system:ApplicationDomain",
+      "flash.system:SecurityDomain",
+      "flash.system:Security",
+      "flash.system:ImageDecodingPolicy"
     ]
   },
   {
@@ -2169,6 +2739,12 @@
     ],
     "files": [
       "flash/system/MessageChannel.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -2178,6 +2754,10 @@
     ],
     "files": [
       "flash/system/MessageChannelState.as"
+    ],
+    "refs": [
+      "flash.events:EventDispatcher",
+      "flash.events:Event"
     ]
   },
   {
@@ -2214,6 +2794,9 @@
     ],
     "files": [
       "flash/system/System.as"
+    ],
+    "refs": [
+      "flash.system:IME"
     ]
   },
   {
@@ -2223,6 +2806,17 @@
     ],
     "files": [
       "flash/system/SystemUpdater.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:Event",
+      "flash.events:SecurityErrorEvent",
+      "flash.events:ProgressEvent",
+      "flash.system:Capabilities",
+      "flash.events:StatusEvent",
+      "flash.events:IOErrorEvent"
     ]
   },
   {
@@ -2232,6 +2826,15 @@
     ],
     "files": [
       "flash/system/SystemUpdaterType.as"
+    ],
+    "refs": [
+      "flash.events:EventDispatcher",
+      "flash.events:Event",
+      "flash.events:SecurityErrorEvent",
+      "flash.events:ProgressEvent",
+      "flash.system:Capabilities",
+      "flash.events:StatusEvent",
+      "flash.events:IOErrorEvent"
     ]
   },
   {
@@ -2250,6 +2853,13 @@
     ],
     "files": [
       "flash/system/Worker.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.system:MessageChannel",
+      "flash.events:Event"
     ]
   },
   {
@@ -2259,6 +2869,9 @@
     ],
     "files": [
       "flash/system/WorkerDomain.as"
+    ],
+    "refs": [
+      "flash.system:Worker"
     ]
   },
   {
@@ -2268,6 +2881,11 @@
     ],
     "files": [
       "flash/system/WorkerState.as"
+    ],
+    "refs": [
+      "flash.events:EventDispatcher",
+      "flash.system:MessageChannel",
+      "flash.events:Event"
     ]
   },
   {
@@ -2286,6 +2904,15 @@
     ],
     "files": [
       "flash/ui/ContextMenu.as"
+    ],
+    "inherits": [
+      "flash.display:NativeMenu"
+    ],
+    "refs": [
+      "flash.ui:ContextMenuBuiltInItems",
+      "flash.net:URLRequest",
+      "flash.ui:ContextMenuClipboardItems",
+      "flash.events:ContextMenuEvent"
     ]
   },
   {
@@ -2313,6 +2940,12 @@
     ],
     "files": [
       "flash/ui/ContextMenuItem.as"
+    ],
+    "inherits": [
+      "flash.display:NativeMenuItem"
+    ],
+    "refs": [
+      "flash.events:ContextMenuEvent"
     ]
   },
   {
@@ -2322,6 +2955,13 @@
     ],
     "files": [
       "flash/ui/GameInput.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.ui:GameInputDevice",
+      "flash.events:GameInputEvent"
     ]
   },
   {
@@ -2331,6 +2971,13 @@
     ],
     "files": [
       "flash/ui/GameInputControl.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.ui:GameInputDevice",
+      "flash.events:Event"
     ]
   },
   {
@@ -2349,6 +2996,12 @@
     ],
     "files": [
       "flash/ui/GameInputDevice.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.ui:GameInputControl"
     ]
   },
   {
@@ -2403,6 +3056,9 @@
     ],
     "files": [
       "flash/ui/Mouse.as"
+    ],
+    "refs": [
+      "flash.ui:MouseCursorData"
     ]
   },
   {
@@ -2421,6 +3077,10 @@
     ],
     "files": [
       "flash/ui/MouseCursorData.as"
+    ],
+    "refs": [
+      "flash.display:BitmapData",
+      "flash.geom:Point"
     ]
   },
   {
@@ -2448,6 +3108,13 @@
     ],
     "files": [
       "flash/sensors/Accelerometer.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:AccelerometerEvent",
+      "flash.events:StatusEvent"
     ]
   },
   {
@@ -2457,21 +3124,42 @@
     ],
     "files": [
       "flash/sensors/Geolocation.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:GeolocationEvent",
+      "flash.events:StatusEvent"
     ]
   },
   {
     "name": "flash/display3d/Context3D",
     "defs": [
-      "flash.display3d:Context3D"
+      "flash.display3D:Context3D"
     ],
     "files": [
       "flash/display3d/Context3D.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.display3D:Program3D",
+      "flash.display3D.textures:Texture",
+      "flash.display3D:IndexBuffer3D",
+      "flash.display3D:VertexBuffer3D",
+      "flash.geom:Rectangle",
+      "flash.geom:Matrix3D",
+      "flash.display:BitmapData",
+      "flash.display3D.textures:TextureBase",
+      "flash.display3D.textures:CubeTexture"
     ]
   },
   {
     "name": "flash/display3d/Context3DBlendFactor",
     "defs": [
-      "flash.display3d:Context3DBlendFactor"
+      "flash.display3D:Context3DBlendFactor"
     ],
     "files": [
       "flash/display3d/Context3DBlendFactor.as"
@@ -2480,7 +3168,7 @@
   {
     "name": "flash/display3d/Context3DClearMask",
     "defs": [
-      "flash.display3d:Context3DClearMask"
+      "flash.display3D:Context3DClearMask"
     ],
     "files": [
       "flash/display3d/Context3DClearMask.as"
@@ -2489,7 +3177,7 @@
   {
     "name": "flash/display3d/Context3DProfile",
     "defs": [
-      "flash.display3d:Context3DProfile"
+      "flash.display3D:Context3DProfile"
     ],
     "files": [
       "flash/display3d/Context3DProfile.as"
@@ -2498,7 +3186,7 @@
   {
     "name": "flash/display3d/Context3DProgramType",
     "defs": [
-      "flash.display3d:Context3DProgramType"
+      "flash.display3D:Context3DProgramType"
     ],
     "files": [
       "flash/display3d/Context3DProgramType.as"
@@ -2507,7 +3195,7 @@
   {
     "name": "flash/display3d/Context3DRenderMode",
     "defs": [
-      "flash.display3d:Context3DRenderMode"
+      "flash.display3D:Context3DRenderMode"
     ],
     "files": [
       "flash/display3d/Context3DRenderMode.as"
@@ -2516,7 +3204,7 @@
   {
     "name": "flash/display3d/Context3DCompareMode",
     "defs": [
-      "flash.display3d:Context3DCompareMode"
+      "flash.display3D:Context3DCompareMode"
     ],
     "files": [
       "flash/display3d/Context3DCompareMode.as"
@@ -2525,7 +3213,7 @@
   {
     "name": "flash/display3d/Context3DStencilAction",
     "defs": [
-      "flash.display3d:Context3DStencilAction"
+      "flash.display3D:Context3DStencilAction"
     ],
     "files": [
       "flash/display3d/Context3DStencilAction.as"
@@ -2534,7 +3222,7 @@
   {
     "name": "flash/display3d/Context3DTextureFormat",
     "defs": [
-      "flash.display3d:Context3DTextureFormat"
+      "flash.display3D:Context3DTextureFormat"
     ],
     "files": [
       "flash/display3d/Context3DTextureFormat.as"
@@ -2543,7 +3231,7 @@
   {
     "name": "flash/display3d/Context3DTriangleFace",
     "defs": [
-      "flash.display3d:Context3DTriangleFace"
+      "flash.display3D:Context3DTriangleFace"
     ],
     "files": [
       "flash/display3d/Context3DTriangleFace.as"
@@ -2552,7 +3240,7 @@
   {
     "name": "flash/display3d/Context3DVertexBufferFormat",
     "defs": [
-      "flash.display3d:Context3DVertexBufferFormat"
+      "flash.display3D:Context3DVertexBufferFormat"
     ],
     "files": [
       "flash/display3d/Context3DVertexBufferFormat.as"
@@ -2561,7 +3249,7 @@
   {
     "name": "flash/display3d/IndexBuffer3D",
     "defs": [
-      "flash.display3d:IndexBuffer3D"
+      "flash.display3D:IndexBuffer3D"
     ],
     "files": [
       "flash/display3d/IndexBuffer3D.as"
@@ -2570,7 +3258,7 @@
   {
     "name": "flash/display3d/Program3D",
     "defs": [
-      "flash.display3d:Program3D"
+      "flash.display3D:Program3D"
     ],
     "files": [
       "flash/display3d/Program3D.as"
@@ -2579,7 +3267,7 @@
   {
     "name": "flash/display3d/VertexBuffer3D",
     "defs": [
-      "flash.display3d:VertexBuffer3D"
+      "flash.display3D:VertexBuffer3D"
     ],
     "files": [
       "flash/display3d/VertexBuffer3D.as"
@@ -2588,28 +3276,43 @@
   {
     "name": "flash/display3d/textures/CubeTexture",
     "defs": [
-      "flash.display3d.textures:CubeTexture"
+      "flash.display3D.textures:CubeTexture"
     ],
     "files": [
       "flash/display3d/textures/CubeTexture.as"
+    ],
+    "inherits": [
+      "flash.display3D.textures:TextureBase"
+    ],
+    "refs": [
+      "flash.display:BitmapData"
     ]
   },
   {
     "name": "flash/display3d/textures/Texture",
     "defs": [
-      "flash.display3d.textures:Texture"
+      "flash.display3D.textures:Texture"
     ],
     "files": [
       "flash/display3d/textures/Texture.as"
+    ],
+    "inherits": [
+      "flash.display3D.textures:TextureBase"
+    ],
+    "refs": [
+      "flash.display:BitmapData"
     ]
   },
   {
     "name": "flash/display3d/textures/TextureBase",
     "defs": [
-      "flash.display3d.textures:TextureBase"
+      "flash.display3D.textures:TextureBase"
     ],
     "files": [
       "flash/display3d/textures/TextureBase.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
     ]
   },
   {
@@ -2619,6 +3322,9 @@
     ],
     "files": [
       "flash/net/DynamicPropertyOutput.as"
+    ],
+    "inherits": [
+      "flash.net:IDynamicPropertyOutput"
     ]
   },
   {
@@ -2637,6 +3343,18 @@
     ],
     "files": [
       "flash/net/FileReference.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.net:URLRequest",
+      "flash.events:SecurityErrorEvent",
+      "flash.events:ProgressEvent",
+      "flash.events:DataEvent",
+      "flash.events:HTTPStatusEvent",
+      "flash.events:Event",
+      "flash.events:IOErrorEvent"
     ]
   },
   {
@@ -2646,6 +3364,12 @@
     ],
     "files": [
       "flash/net/FileReferenceList.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:Event"
     ]
   },
   {
@@ -2673,6 +3397,9 @@
     ],
     "files": [
       "flash/net/IDynamicPropertyWriter.as"
+    ],
+    "refs": [
+      "flash.net:IDynamicPropertyOutput"
     ]
   },
   {
@@ -2682,6 +3409,14 @@
     ],
     "files": [
       "flash/net/LocalConnection.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:SecurityErrorEvent",
+      "flash.events:AsyncErrorEvent",
+      "flash.events:StatusEvent"
     ]
   },
   {
@@ -2691,6 +3426,16 @@
     ],
     "files": [
       "flash/net/NetConnection.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.net:Responder",
+      "flash.events:SecurityErrorEvent",
+      "flash.events:AsyncErrorEvent",
+      "flash.events:NetStatusEvent",
+      "flash.events:IOErrorEvent"
     ]
   },
   {
@@ -2700,6 +3445,14 @@
     ],
     "files": [
       "flash/net/NetGroup.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.net:NetConnection",
+      "flash.net:NetGroupInfo",
+      "flash.events:NetStatusEvent"
     ]
   },
   {
@@ -2754,6 +3507,13 @@
     ],
     "files": [
       "flash/net/NetMonitor.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.net:NetStream",
+      "flash.events:NetMonitorEvent"
     ]
   },
   {
@@ -2763,6 +3523,28 @@
     ],
     "files": [
       "flash/net/NetStream.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.net:NetConnection",
+      "flash.net:NetStreamInfo",
+      "flash.net:NetStreamPlayOptions",
+      "flash.media:Camera",
+      "flash.net:Responder",
+      "flash.net:NetStreamMulticastInfo",
+      "flash.media:VideoStreamSettings",
+      "flash.media:Microphone",
+      "flash.media:SoundTransform",
+      "flash.events:NetDataEvent",
+      "flash.events:AsyncErrorEvent",
+      "flash.events:DRMStatusEvent",
+      "flash.events:StatusEvent",
+      "flash.events:DRMAuthenticateEvent",
+      "flash.events:NetStatusEvent",
+      "flash.events:DRMErrorEvent",
+      "flash.events:IOErrorEvent"
     ]
   },
   {
@@ -2799,6 +3581,9 @@
     ],
     "files": [
       "flash/net/NetStreamPlayOptions.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
     ]
   },
   {
@@ -2817,6 +3602,9 @@
     ],
     "files": [
       "flash/net/ObjectEncoding.as"
+    ],
+    "refs": [
+      "flash.net:IDynamicPropertyWriter"
     ]
   },
   {
@@ -2835,6 +3623,17 @@
     ],
     "files": [
       "flash/net/SecureSocket.as"
+    ],
+    "inherits": [
+      "flash.net:Socket"
+    ],
+    "refs": [
+      "flash.security:X509Certificate",
+      "flash.events:SecurityErrorEvent",
+      "flash.security:CertificateStatus",
+      "flash.events:ProgressEvent",
+      "flash.events:Event",
+      "flash.events:IOErrorEvent"
     ]
   },
   {
@@ -2844,6 +3643,16 @@
     ],
     "files": [
       "flash/net/SharedObject.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.net:NetConnection",
+      "flash.net:SharedObjectFlushStatus",
+      "flash.events:AsyncErrorEvent",
+      "flash.events:SyncEvent",
+      "flash.events:NetStatusEvent"
     ]
   },
   {
@@ -2862,6 +3671,19 @@
     ],
     "files": [
       "flash/net/URLLoader.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:ProgressEvent",
+      "flash.net:URLStream",
+      "flash.events:Event",
+      "flash.net:URLRequest",
+      "flash.events:SecurityErrorEvent",
+      "flash.events:HTTPStatusEvent",
+      "flash.net:URLVariables",
+      "flash.events:IOErrorEvent"
     ]
   },
   {
@@ -2871,6 +3693,18 @@
     ],
     "files": [
       "flash/net/Socket.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:SecurityErrorEvent",
+      "flash.events:TimerEvent",
+      "flash.utils:Timer",
+      "flash.events:ProgressEvent",
+      "flash.events:OutputProgressEvent",
+      "flash.events:Event",
+      "flash.events:IOErrorEvent"
     ]
   },
   {
@@ -2907,6 +3741,17 @@
     ],
     "files": [
       "flash/net/URLStream.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.net:URLRequest",
+      "flash.events:SecurityErrorEvent",
+      "flash.events:ProgressEvent",
+      "flash.events:Event",
+      "flash.events:HTTPStatusEvent",
+      "flash.events:IOErrorEvent"
     ]
   },
   {
@@ -2925,6 +3770,10 @@
     ],
     "files": [
       "flash/net/URLVariables.as"
+    ],
+    "refs": [
+      "flash.utils:unescapeMultiByte",
+      "flash.utils:escapeMultiByte"
     ]
   },
   {
@@ -2934,6 +3783,17 @@
     ],
     "files": [
       "flash/net/XMLSocket.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:ProgressEvent",
+      "flash.events:Event",
+      "flash.net:Socket",
+      "flash.events:SecurityErrorEvent",
+      "flash.events:DataEvent",
+      "flash.events:IOErrorEvent"
     ]
   },
   {
@@ -2961,6 +3821,9 @@
     ],
     "files": [
       "flash/net/drm/DRMAuthenticationContext.as"
+    ],
+    "inherits": [
+      "flash.net.drm:DRMManagerSession"
     ]
   },
   {
@@ -2970,6 +3833,9 @@
     ],
     "files": [
       "flash/net/drm/DRMContentData.as"
+    ],
+    "refs": [
+      "flash.net.drm:VoucherAccessInfo"
     ]
   },
   {
@@ -2988,6 +3854,28 @@
     ],
     "files": [
       "flash/net/drm/DRMManager.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.events:TimerEvent",
+      "flash.events:DRMAuthenticationErrorEvent",
+      "flash.utils:Timer",
+      "flash.events:Event",
+      "flash.events:HTTPStatusEvent",
+      "flash.net:URLRequest",
+      "flash.events:DRMErrorEvent",
+      "flash.events:IOErrorEvent",
+      "flash.events:DRMAuthenticationCompleteEvent",
+      "flash.events:SecurityErrorEvent",
+      "flash.net:URLLoader",
+      "flash.net.drm:DRMContentData",
+      "flash.events:DRMStatusEvent",
+      "flash.net.drm:LoadVoucherSetting",
+      "flash.net:URLRequestHeader",
+      "flash.net:URLRequestMethod",
+      "flash.net:URLLoaderDataFormat"
     ]
   },
   {
@@ -2997,6 +3885,13 @@
     ],
     "files": [
       "flash/net/drm/DRMManagerSession.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.net.drm:DRMContentData",
+      "flash.net.drm:DRMVoucher"
     ]
   },
   {
@@ -3015,6 +3910,26 @@
     ],
     "files": [
       "flash/net/drm/DRMPlaybackTimeWindow.as"
+    ],
+    "refs": [
+      "flash.events:EventDispatcher",
+      "flash.events:TimerEvent",
+      "flash.events:DRMAuthenticationErrorEvent",
+      "flash.utils:Timer",
+      "flash.events:Event",
+      "flash.events:HTTPStatusEvent",
+      "flash.net:URLRequest",
+      "flash.events:DRMErrorEvent",
+      "flash.events:IOErrorEvent",
+      "flash.events:DRMAuthenticationCompleteEvent",
+      "flash.events:SecurityErrorEvent",
+      "flash.net:URLLoader",
+      "flash.net.drm:DRMContentData",
+      "flash.events:DRMStatusEvent",
+      "flash.net.drm:LoadVoucherSetting",
+      "flash.net:URLRequestHeader",
+      "flash.net:URLRequestMethod",
+      "flash.net:URLLoaderDataFormat"
     ]
   },
   {
@@ -3024,6 +3939,9 @@
     ],
     "files": [
       "flash/net/drm/DRMURLDownloadContext.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
     ]
   },
   {
@@ -3033,6 +3951,27 @@
     ],
     "files": [
       "flash/net/drm/DRMVoucher.as"
+    ],
+    "refs": [
+      "flash.events:EventDispatcher",
+      "flash.events:TimerEvent",
+      "flash.events:DRMAuthenticationErrorEvent",
+      "flash.utils:Timer",
+      "flash.events:Event",
+      "flash.events:HTTPStatusEvent",
+      "flash.net:URLRequest",
+      "flash.events:DRMErrorEvent",
+      "flash.events:IOErrorEvent",
+      "flash.events:DRMAuthenticationCompleteEvent",
+      "flash.events:SecurityErrorEvent",
+      "flash.net:URLLoader",
+      "flash.net.drm:DRMContentData",
+      "flash.events:DRMStatusEvent",
+      "flash.net.drm:LoadVoucherSetting",
+      "flash.net:URLRequestHeader",
+      "flash.net:URLRequestMethod",
+      "flash.net:URLLoaderDataFormat",
+      "flash.net.drm:DRMPlaybackTimeWindow"
     ]
   },
   {
@@ -3042,6 +3981,9 @@
     ],
     "files": [
       "flash/net/drm/DRMVoucherDownloadContext.as"
+    ],
+    "inherits": [
+      "flash.net.drm:DRMManagerSession"
     ]
   },
   {
@@ -3051,6 +3993,9 @@
     ],
     "files": [
       "flash/net/drm/DRMVoucherStoreContext.as"
+    ],
+    "inherits": [
+      "flash.net.drm:DRMManagerSession"
     ]
   },
   {
@@ -3133,7 +4078,7 @@
     "files": [
       "flash/text/StaticText.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:DisplayObject"
     ]
   },
@@ -3144,6 +4089,12 @@
     ],
     "files": [
       "flash/text/StyleSheet.as"
+    ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
+    "refs": [
+      "flash.text:TextFormat"
     ]
   },
   {
@@ -3181,8 +4132,18 @@
     "files": [
       "flash/text/TextField.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:InteractiveObject"
+    ],
+    "refs": [
+      "flash.text:StyleSheet",
+      "flash.geom:Rectangle",
+      "flash.display:DisplayObject",
+      "flash.text:TextFormat",
+      "flash.text:TextLineMetrics",
+      "flash.text:TextRun",
+      "flash.events:TextEvent",
+      "flash.events:Event"
     ]
   },
   {
@@ -3264,6 +4225,9 @@
     ],
     "files": [
       "flash/text/TextRun.as"
+    ],
+    "refs": [
+      "flash.text:TextFormat"
     ]
   },
   {
@@ -3302,9 +4266,11 @@
       "flash/text/engine/ContentElement.as"
     ],
     "refs": [
+      "flash.text.engine:GroupElement",
       "flash.text.engine:ElementFormat",
       "flash.text.engine:TextBlock",
-      "flash.events:EventDispatcher"
+      "flash.events:EventDispatcher",
+      "flash.utils:getQualifiedClassName"
     ]
   },
   {
@@ -3332,6 +4298,9 @@
     ],
     "files": [
       "flash/text/engine/EastAsianJustifier.as"
+    ],
+    "inherits": [
+      "flash.text.engine:TextJustifier"
     ]
   },
   {
@@ -3341,6 +4310,10 @@
     ],
     "files": [
       "flash/text/engine/ElementFormat.as"
+    ],
+    "refs": [
+      "flash.text.engine:FontDescription",
+      "flash.text.engine:FontMetrics"
     ]
   },
   {
@@ -3368,6 +4341,9 @@
     ],
     "files": [
       "flash/text/engine/FontMetrics.as"
+    ],
+    "refs": [
+      "flash.geom:Rectangle"
     ]
   },
   {
@@ -3396,8 +4372,13 @@
     "files": [
       "flash/text/engine/GraphicElement.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.text.engine:ContentElement"
+    ],
+    "refs": [
+      "flash.display:DisplayObject",
+      "flash.text.engine:ElementFormat",
+      "flash.events:EventDispatcher"
     ]
   },
   {
@@ -3408,8 +4389,13 @@
     "files": [
       "flash/text/engine/GroupElement.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.text.engine:ContentElement"
+    ],
+    "refs": [
+      "flash.text.engine:TextElement",
+      "flash.text.engine:ElementFormat",
+      "flash.events:EventDispatcher"
     ]
   },
   {
@@ -3464,6 +4450,9 @@
     ],
     "files": [
       "flash/text/engine/SpaceJustifier.as"
+    ],
+    "inherits": [
+      "flash.text.engine:TextJustifier"
     ]
   },
   {
@@ -3503,8 +4492,11 @@
     ],
     "refs": [
       "flash.text.engine:FontDescription",
+      "flash.text.engine:TabStop",
+      "flash.text.engine:TextJustifier",
       "flash.text.engine:TextLine",
-      "flash.text.engine:TextJustifier"
+      "flash.text.engine:ContentElement",
+      "flash.text.engine:TextLineValidity"
     ]
   },
   {
@@ -3515,8 +4507,12 @@
     "files": [
       "flash/text/engine/TextElement.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.text.engine:ContentElement"
+    ],
+    "refs": [
+      "flash.text.engine:ElementFormat",
+      "flash.events:EventDispatcher"
     ]
   },
   {
@@ -3526,6 +4522,11 @@
     ],
     "files": [
       "flash/text/engine/TextJustifier.as"
+    ],
+    "refs": [
+      "flash.text.engine:SpaceJustifier",
+      "flash.text.engine:EastAsianJustifier",
+      "flash.utils:getQualifiedClassName"
     ]
   },
   {
@@ -3536,8 +4537,16 @@
     "files": [
       "flash/text/engine/TextLine.as"
     ],
-    "refs": [
+    "inherits": [
       "flash.display:DisplayObjectContainer"
+    ],
+    "refs": [
+      "flash.geom:Rectangle",
+      "flash.text.engine:TextLineMirrorRegion",
+      "flash.ui:ContextMenu",
+      "flash.display:DisplayObject",
+      "flash.text.engine:TextBlock",
+      "flash.events:EventDispatcher"
     ]
   },
   {
@@ -3558,9 +4567,10 @@
       "flash/text/engine/TextLineMirrorRegion.as"
     ],
     "refs": [
+      "flash.geom:Rectangle",
       "flash.text.engine:TextLine",
-      "flash.text.engine:ContentElement",
-      "flash.events:EventDispatcher"
+      "flash.events:EventDispatcher",
+      "flash.text.engine:ContentElement"
     ]
   },
   {
@@ -3606,6 +4616,12 @@
     ],
     "files": [
       "flash/text/ime/IIMEClient.as"
+    ],
+    "refs": [
+      "flash.geom:Rectangle",
+      "flash.text.ime:CompositionAttributeRange",
+      "flash.events:IMEEvent",
+      "flash.events:TextEvent"
     ]
   },
   {
@@ -3616,6 +4632,9 @@
     ],
     "files": [
       "flash/net/FlashNetScript.as"
+    ],
+    "refs": [
+      "flash.net:URLRequest"
     ]
   },
   {
@@ -3642,6 +4661,9 @@
     "files": [
       "flash/utils/Timer.as"
     ],
+    "inherits": [
+      "flash.events:EventDispatcher"
+    ],
     "refs": [
       "flash.events:TimerEvent"
     ]
@@ -3658,7 +4680,11 @@
     "files": [
       "flash/utils/SetIntervalTimer.as"
     ],
+    "inherits": [
+      "flash.utils:Timer"
+    ],
     "refs": [
+      "flash.events:Event",
       "flash.events:TimerEvent"
     ]
   }
