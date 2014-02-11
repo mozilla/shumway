@@ -1072,7 +1072,6 @@
       "flash/external/ExternalInterface.as"
     ],
     "refs": [
-      "flash.system:Capabilities",
       "flash.utils:getDefinitionByName"
     ]
   },
