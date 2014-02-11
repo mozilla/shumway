@@ -26,6 +26,7 @@
   <script src="filters.js"></script>
   <script src="gl.js"></script>
   <script src="gl/core.js"></script>
+  <script src="dom.js"></script>
   <script src="glTests.js"></script>
   <script src="shapes.js"></script>
   <script>
@@ -44,6 +45,7 @@
     var WebGLContext = Shumway.GL.WebGLContext;
     var WebGLStageRenderer = Shumway.GL.WebGLStageRenderer;
     var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
+    var DOMStageRenderer = Shumway.Layers.DOMStageRenderer;
     var FontAtlas = Shumway.Layers.Elements.FontAtlas;
 
     var Counter = new metrics.Counter(true);
@@ -80,10 +82,10 @@
     <!--<video id="video" src="http://upload.wikimedia.org/wikipedia/commons/4/41/Big_Buck_Bunny_medium.ogv" controls="true"></video>-->
     <!--<video id="video" src="http://upload.wikimedia.org/wikipedia/commons/7/79/Big_Buck_Bunny_small.ogv" controls="true"></video>-->
     <!--<canvas id="stageCanvas" width="512" height="256" style="background-color: #1F1F21;"></canvas>-->
-    <canvas id="webGLCanvas"></canvas>
-    <canvas id="canvas2DCanvas"></canvas>
-    <canvas id="canvas2DDebugCanvas" style="background-color: black; display: none;"></canvas>
-    <canvas id="canvas2DDebugCanvas2" style="background-color: black; display: none;"></canvas>
+    <canvas id="webGLCanvas" style="background-color: #000000; margin: 10px;"></canvas>
+    <div id="DOMDiv" style="position: relative; background-color: #000000; margin: 10px; overflow: hidden;">
+    </div>
+    <canvas id="canvas2DCanvas" style="background-color: #000000; margin: 10px;"></canvas>
     <!--<canvas id="stageCanvas" style="background-color: #1F1F21;"></canvas>-->
   </div>
 
@@ -108,79 +110,52 @@
       appendToTraceTerminal(str);
     });
 
-
-
-    function shuffle2(target, easing) {
-      var tween = new TWEEN.Tween(target);
-      tween.easing(easing);
-      function next() {
-        var w = 128, h = 128;
-        // var x = Math.max(0, Math.random() * Math.max(1000, target.w));
-        var x = Math.max(0, Math.random() * stage.w);
-        var y = Math.max(0, Math.random() * stage.h);
-
-        var s = 1;
-        // x = target.x + 1;
-        y = target.y;
-        x = sceneOptions.move;
-        // var s = 0.5;
-        var s = 0.1 + Math.random() * 2;
-        var s = 0.5 + Math.random() * 10;
-        // s = 3.1 * 100;
-//        var s = 1;
-//        var s = (Math.random() - 0.5) * 2;
-        tween.easing(easing);
-        tween.delay(Math.random() * (500000 / sceneOptions.movement));
-        // tween.delay(1000);
-        tween.to({
-          x: x,
-          y: y,
-          scaleX: s,
-          scaleY: s,
-          // rotation: (Math.random() - 0.5) * 180 * 1,
-          rotation: 1,
-          // alpha: Math.random()
-          alpha: 1
-        }, 100000 / sceneOptions.speed).start();
-      }
-      next();
-      tween.onComplete(next);
-      tween.start();
-    }
-
     function shuffle(target, easing) {
       var tween = new TWEEN.Tween(target);
       tween.easing(easing);
+      var motion = [
+        function () {
+          var x = Math.random() * (stage.w - target.w) + target.w / 2;
+          var y = Math.random() * (stage.h - target.h) + target.h / 2;
+          var s = 1 + Math.random() * 0.5;
+          tween.easing(easing);
+          tween.delay(Math.random() * (500000 / sceneOptions.movement));
+          tween.to({
+            x: x,
+            y: y,
+            scaleX: s,
+            scaleY: s,
+            rotation: (Math.random() - 0.5) * 180 * 1
+          }, 100000 / sceneOptions.speed).start();
+        },
+        function () {
+          var s = 0.1 + Math.random() * 10;
+          tween.easing(easing);
+          tween.delay(Math.random() * (500000 / sceneOptions.movement));
+          tween.to({
+            scaleX: 1 + Math.sin(s) / 4,
+            scaleY: 1 + Math.cos(s) / 4,
+          }, 100000 / sceneOptions.speed).start();
+        },
+        function () {
+          tween.easing(easing);
+          tween.delay(Math.random() * (50000 / sceneOptions.movement));
+          tween.to({
+            rotation: (Math.random() - 0.5) * 180 * 10
+          }, 100000 / sceneOptions.speed).start();
+        },
+        function () {
+          tween.easing(easing);
+          tween.delay(Math.random() * (50000 / sceneOptions.movement));
+          var s = 1 + Math.random() * 2;
+          tween.to({
+            scaleX: s,
+            scaleY: s,
+          }, 100000 / sceneOptions.speed).start();
+        }
+      ];
       function next() {
-        var w = 128, h = 128;
-//        var s = 0.25 + Math.random() * 0.75;
-        var s = 1;
-        // var x = Math.max(0, (Math.random() - 0.5) * 10 * target.w);
-        // var y = Math.max(0, (Math.random() - 0.5) * 10 * target.h);
-        // var x = 0;
-        var x = Math.random() < 0.5 ? -target.w + stage.w / 2 : stage.w / 2;
-        var y = Math.random() < 0.5 ? -target.h + stage.h / 2 : stage.h / 2;
-        // var x = -target.w;
-        /// var x = target.x === 0 ? -target.w : 0;
-        // y *= s;
-
-        // var s = 0.5;
-
-        // var x = target.x + 50;
-        // var s = 1;
-        var s = 10;
-        tween.easing(easing);
-        tween.delay(Math.random() * (500000 / sceneOptions.movement));
-        // tween.delay(1000);
-        tween.to({
-          x: x,
-          y: y,
-          scaleX: s,
-          scaleY: s,
-          // rotation: (Math.random() - 0.5) * 180 * 1,
-          // alpha: Math.random()
-          // alpha: s
-        }, 100000 / sceneOptions.speed).start();
+        motion[Math.random() * motion.length | 0]();
       }
       next();
       tween.onComplete(next);
@@ -207,24 +182,28 @@
 
     var webGLCanvas = document.getElementById("webGLCanvas");
     var canvas2DCanvas = document.getElementById("canvas2DCanvas");
-    var canvas2DDebugCanvas = document.getElementById("canvas2DDebugCanvas");
-    var canvas2DDebugCanvas2 = document.getElementById("canvas2DDebugCanvas2");
+    var DOMDiv = document.getElementById("DOMDiv");
+
 
     var pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
-    // var pixelRatio = 1;
 
-    var width = (window.innerWidth * 0.8) | 0;
-    var height = (window.innerHeight * 0.8) | 0;
+    var width = (window.innerWidth * 0.7) | 0;
+    var height = (window.innerHeight * 0.7) | 0;
 
     var gui = new dat.GUI();
 
     // var width = gui.domElement.offsetLeft - 10;
 
-    [webGLCanvas, canvas2DCanvas, canvas2DDebugCanvas, canvas2DDebugCanvas2].forEach(function (canvas) {
+    [webGLCanvas, canvas2DCanvas].forEach(function (canvas) {
       canvas.style.width = width + 'px';
       canvas.style.height = height + 'px';
       canvas.width = width * pixelRatio;
       canvas.height = height * pixelRatio;
+    });
+
+    [DOMDiv].forEach(function (canvas) {
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
     });
 
     var sceneOptions = {
@@ -234,8 +213,10 @@
       bitmaps: 2,
       videos: 2,
       text: 1,
+      textLength: 1,
       webGL: false,
       canvas2D: false,
+      dom: false,
 
       movement: 20,
       speed: 20,
@@ -293,12 +274,15 @@
       c.push(f.add(sceneOptions, "bitmaps", 0, 10000).step(2));
       c.push(f.add(sceneOptions, "videos", 0, 1000).step(1));
       c.push(f.add(sceneOptions, "text", 0, 1000).step(1));
+      c.push(f.add(sceneOptions, "textLength", 0, 1000).step(1));
       c.forEach(function (x) {
         x.onFinishChange(updateScene);
       })
       f.open();
       c.push(f.add(sceneOptions, "webGL"));
+      c.push(f.add(sceneOptions, "dom"));
       c.push(f.add(sceneOptions, "canvas2D"));
+
     })();
 
     (function addOptions() {
@@ -335,12 +319,12 @@
       })
     })();
 
-    var webGLContext, canvas2DContext, webGLStageRenderer, canvas2DStageRenderer;
+    var webGLContext, webGLStageRenderer, canvas2DStageRenderer, domStageRenderer;
     webGLContext = new WebGLContext(webGLCanvas, sceneOptions);
     webGLStageRenderer = new WebGLStageRenderer(webGLContext);
-    canvas2DContext = canvas2DCanvas.getContext("2d");
-    var canvas2DDebugContexts = [canvas2DDebugCanvas.getContext("2d"), canvas2DDebugCanvas2.getContext("2d")];
-    canvas2DStageRenderer = new Canvas2DStageRenderer(canvas2DContext, canvas2DDebugContexts);
+
+    canvas2DStageRenderer = new Canvas2DStageRenderer(canvas2DCanvas.getContext("2d"));
+    domStageRenderer = new DOMStageRenderer(DOMDiv, pixelRatio);
 
     var stage, animators;
 
@@ -384,7 +368,8 @@
       // document.getElementById("container").appendChild(fontAtlas.canvas);
 
       for (var i = 0; i < sceneOptions.text; i++) {
-        var frame = new Shape(new Shumway.TextShape(Shumway.randomText(1)));
+        var frame = new Shape(new Shumway.TextShape(Shumway.randomText(sceneOptions.textLength)));
+        frame.origin = new Point(frame.w / 2, frame.h / 2);
         frame.x = (Math.random()) * canvas.width;
         frame.y = (Math.random()) * canvas.height;
         frame.x = 0;
@@ -403,10 +388,12 @@
         frame.x = (Math.random()) * canvas.width;
 //        frame.x = 0;
         frame.y = (Math.random()) * canvas.height;
+//        frame.x = frame.y = 0;
 //        frame.y = (Math.random()) * (canvas.height - frame.h);
         // frame.alpha = Math.random();
         stage.addChild(frame);
-        shuffle(frame, TWEEN.Easing.Exponential.Out);
+        // shuffle(frame, TWEEN.Easing.Exponential.Out);
+        shuffle(frame, TWEEN.Easing.Linear.None);
       }
 
       for (var i = 0; i < sceneOptions.sprites; i++) {
@@ -455,7 +442,7 @@
     }
 
     function updateOptions() {
-      canvas2DContext.imageSmoothingEnabled = canvas2DContext.mozImageSmoothingEnabled = sceneOptions.imageSmoothing;
+//      canvas2DContext.imageSmoothingEnabled = canvas2DContext.mozImageSmoothingEnabled = sceneOptions.imageSmoothing;
     }
 
     updateScene();
@@ -506,6 +493,11 @@
           timelineEnter("Canvas2D");
           canvas2DStageRenderer.render(stage, sceneOptions);
           timelineLeave("Canvas2D");
+        }
+        if (sceneOptions.dom) {
+          timelineEnter("DOM");
+          domStageRenderer.render(stage, sceneOptions);
+          timelineLeave("DOM");
         }
         /*
         if (sceneOptions.webGL) {

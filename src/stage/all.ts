@@ -6,6 +6,7 @@
 /// <reference path='util.ts'/>
 /// <reference path='gl.ts'/>
 /// <reference path='gl/core.ts'/>
+/// <reference path='dom.ts'/>
 
 declare function randomStyle(): string;
 declare function assert(...args : any[]);

@@ -706,6 +706,10 @@ module Shumway.Geometry {
       ]);
     }
 
+    public toCSSTransform(): String {
+      return "matrix(" + this.a + ", " + this.b + ", " + this.c + ", " + this.d + ", " + this.tx + ", " + this.ty + ")";
+    }
+
     public static createIdentity() {
       return new Matrix(1, 0, 0, 1, 0, 0);
     }
@@ -1523,36 +1527,39 @@ module Shumway.Geometry {
       this.bounds.getCorners(Tile.corners);
       return this._obb = new OBB(Tile.corners);
     }
-    constructor(index: number, x: number, y: number, size: number, scale: number) {
+    constructor(index: number, x: number, y: number, w: number, h: number, scale: number) {
       this.index = index;
       this.x = x;
       this.y = y;
       this.scale = scale;
-      this.bounds = new Rectangle(x * size, y * size, size, size);
+      this.bounds = new Rectangle(x * w, y * h, w, h);
     }
   }
 
   export class TileCache {
     w: number;
     h: number;
-    size: number;
+    tileW: number;
+    tileH: number;
     rows: number;
     scale: number;
     columns: number;
     tiles: Tile [];
     private static points = Point.createEmptyPoints(4);
-    constructor(w: number, h: number, size: number, scale: number) {
-      this.size = size;
+    constructor(w: number, h: number, tileW: number, tileH: number, scale: number) {
+      this.tileW = tileW;
+      this.tileH = tileH;
       this.scale = scale;
       this.w = w;
       this.h = h;
-      this.rows = Math.ceil(h / size);
-      this.columns = Math.ceil(w / size);
+      this.rows = Math.ceil(h / tileH);
+      this.columns = Math.ceil(w / tileW);
+      assert (this.rows < 2048 && this.columns < 2048);
       this.tiles = [];
       var index = 0;
       for (var y = 0; y < this.rows; y++) {
         for (var x = 0; x < this.columns; x++) {
-          this.tiles.push(new Tile(index++, x, y, size, scale));
+          this.tiles.push(new Tile(index++, x, y, tileW, tileH, scale));
         }
       }
     }
@@ -1564,7 +1571,7 @@ module Shumway.Geometry {
         // TODO: Fine-tune these heuristics.
         return this.getFewTiles(query, transform, tileCount > 10);
       } else {
-        return this.getManyTiles(query, transform);
+        // return this.getManyTiles(query, transform);
       }
     }
 
@@ -1582,10 +1589,10 @@ module Shumway.Geometry {
         return [];
       }
 
-      var minX = queryBounds.x / this.size | 0;
-      var minY = queryBounds.y / this.size | 0;
-      var maxX = Math.ceil((queryBounds.x + queryBounds.w) / this.size) | 0;
-      var maxY = Math.ceil((queryBounds.y + queryBounds.h) / this.size) | 0;
+      var minX = queryBounds.x / this.tileW | 0;
+      var minY = queryBounds.y / this.tileH | 0;
+      var maxX = Math.ceil((queryBounds.x + queryBounds.w) / this.tileW) | 0;
+      var maxY = Math.ceil((queryBounds.y + queryBounds.h) / this.tileH) | 0;
 
       minX = clamp(minX, 0, this.columns);
       maxX = clamp(maxX, 0, this.columns);
@@ -1604,6 +1611,7 @@ module Shumway.Geometry {
       return tiles;
     }
 
+    /*
     private getManyTiles(query: Rectangle, transform: Matrix): Tile [] {
       function intersectX(x: number, p1: Point, p2: Point): number {
         // (x - x1) * (y2 - y1) = (y - y1) * (x2 - x1)
@@ -1719,5 +1727,6 @@ module Shumway.Geometry {
       } while (line1 < line2);
       return tiles;
     }
+    */
   }
 }

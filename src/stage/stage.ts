@@ -20,6 +20,11 @@ module Shumway.Layers {
     private _colorTransform: ColorTransform;
     private _isTransformInvalid: boolean = true;
     private _origin: Point = new Point(0, 0);
+    private _properties: {[name: string]: any};
+
+    get properties(): {[name: string]: any} {
+      return this._properties || (this._properties = Object.create(null));
+    }
 
     get x(): number {
       return this._x;
@@ -283,17 +288,13 @@ module Shumway.Layers {
 
   export class Canvas2DStageRenderer {
     context: CanvasRenderingContext2D;
-    debugContexts: CanvasRenderingContext2D [];
     count = 0;
-    constructor(context: CanvasRenderingContext2D, debugContexts: CanvasRenderingContext2D []) {
+    constructor(context: CanvasRenderingContext2D) {
       this.context = context;
-      this.debugContexts = debugContexts;
     }
 
     public render(stage: Stage, options: any) {
       var context = this.context;
-      var debugContext = this.debugContexts[0];
-      var cacheContext = this.debugContexts[1];
       context.globalAlpha = 1;
       context.fillStyle = "black";
       context.fillRect(0, 0, stage.w, stage.h);
@@ -317,12 +318,6 @@ module Shumway.Layers {
           context.rect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
         }
         context.strokeStyle = "#FF4981";
-//        for (var i = 0; i < layers.length; i++) {
-//          context.beginPath();
-//          drawRectangle(layers[i]);
-//          context.closePath();
-//          context.stroke();
-//        }
       }
     }
   }
