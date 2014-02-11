@@ -410,14 +410,4 @@ module Shumway.Layers {
       this.h = bounds.h;
     }
   }
-
-  export class Video extends Frame {
-    source: ITextureRegion;
-    constructor(source: ITextureRegion) {
-      super();
-      this.source = source;
-      this.w = source.region.w;
-      this.h = source.region.h;
-    }
-  }
 }

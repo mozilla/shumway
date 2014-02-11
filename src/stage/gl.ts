@@ -38,7 +38,6 @@ module Shumway.GL {
   import Shape = Shumway.Layers.Shape;
   import Flake = Shumway.Layers.Elements.Flake;
   import SolidRectangle = Shumway.Layers.SolidRectangle;
-  import Video = Shumway.Layers.Video;
   import Filter = Shumway.Layers.Filter;
   import BlurFilter = Shumway.Layers.BlurFilter;
   import ColorTransform = Shumway.Layers.ColorTransform;
@@ -165,7 +164,7 @@ module Shumway.GL {
     private _regionAllocator: RegionAllocator.IRegionAllocator;
     private _w: number;
     private _h: number;
-    private _solitary: boolean;
+    private _padding: number;
     private _compact: boolean;
 
     get compact(): boolean {
@@ -180,12 +179,12 @@ module Shumway.GL {
       return this._h;
     }
 
-    constructor(context: WebGLContext, texture: WebGLTexture, w: number, h: number, solitary: boolean = false, compact: boolean = false) {
+    constructor(context: WebGLContext, texture: WebGLTexture, w: number, h: number, compact: boolean = false) {
       this._context = context;
       this.texture = texture;
       this._w = w;
       this._h = h;
-      this._solitary = solitary;
+      this._padding = 2;
       this._compact = compact;
       this.reset();
     }
@@ -213,9 +212,9 @@ module Shumway.GL {
 
     reset() {
       if (this._compact) {
-        this._regionAllocator = new RegionAllocator.Compact(this._w, this._h, this._solitary ? 0 : 2);
+        this._regionAllocator = new RegionAllocator.Compact(this._w, this._h, this._padding);
       } else {
-        this._regionAllocator = new RegionAllocator.Grid(this._w, this._h, TILE_SIZE, this._solitary ? 0 : 2);
+        this._regionAllocator = new RegionAllocator.Grid(this._w, this._h, this._padding, TILE_SIZE);
       }
     }
   }
@@ -441,49 +440,45 @@ module Shumway.GL {
       }
     }
 
-    public cacheImage(image: any, solitary: boolean, discardCache: boolean = true): WebGLTextureRegion {
+    public cacheImage(image: any, solitary: boolean): WebGLTextureRegion {
       var w = image.width;
       var h = image.height;
-      var imageIsTileSized = (w === h) && (w === TILE_SIZE);
-      var region: RegionAllocator.Region, texture: WebGLTexture;
-      if (!solitary) {
-        for (var i = 0; i < this._textures.length; i++) {
-          texture = this._textures[i];
-          if (imageIsTileSized && texture.atlas.compact) {
-            continue;
-          }
-          region = texture.atlas.add(image, w, h);
-          if (region) {
-            break;
-          }
-        }
-      }
-      if (!region) {
-        var aw = solitary ? w : this._maxTextureSize;
-        var ah = solitary ? h : this._maxTextureSize;
-        if (this._textures.length === this._maxTextures) {
-          if (discardCache) {
-            this.discardCachedImages();
-            return this.cacheImage(image, solitary, false);
-          }
-          return null;
-        } else {
-          texture = this.createTexture(aw, ah, solitary, !imageIsTileSized);
-        }
-        this._textures.push(texture);
-        region = texture.atlas.add(image, w, h);
-        assert (region);
-      }
-      traceLevel >= TraceLevel.Verbose && writer.writeLn("Uploading Image: @ " + region);
-      var textureRegion = new WebGLTextureRegion(texture, region);
+      var textureRegion = this.allocateTextureRegion(w, h);
+      traceLevel >= TraceLevel.Verbose && writer.writeLn("Uploading Image: @ " + textureRegion.region);
       this.textureRegionCache.put(textureRegion);
+      this.updateTextureRegion(image, textureRegion);
       return textureRegion;
     }
 
-    public allocateTextureRegion(w: number, h: number): WebGLTextureRegion {
-      var texture = this.createTexture(w, h, true);
-      var region = texture.atlas.add(null, w, h);
-      this._textures.push(texture);
+    public allocateTextureRegion(w: number, h: number, discardCache: boolean = true): WebGLTextureRegion {
+      var imageIsTileSized = (w === h) && (w === TILE_SIZE);
+      var texture, region;
+      for (var i = 0; i < this._textures.length; i++) {
+        texture = this._textures[i];
+        if (imageIsTileSized && texture.atlas.compact) {
+          continue;
+        }
+        region = texture.atlas.add(null, w, h);
+        if (region) {
+          break;
+        }
+      }
+      if (!region) {
+        var rw = this._maxTextureSize;
+        var rh =  this._maxTextureSize;
+        if (this._textures.length === this._maxTextures) {
+          if (discardCache) {
+            this.discardCachedImages();
+            return this.allocateTextureRegion(w, h, false);
+          }
+          return null;
+        } else {
+          texture = this.createTexture(rw, rh, !imageIsTileSized);
+        }
+        this._textures.push(texture);
+        region = texture.atlas.add(null, w, h);
+        assert (region);
+      }
       return new WebGLTextureRegion(texture, region);
     }
 
@@ -589,7 +584,7 @@ module Shumway.GL {
       return shader;
     }
 
-    createTexture(w: number, h: number, solitary: boolean = false, compact: boolean = false): WebGLTexture {
+    createTexture(w: number, h: number, compact: boolean = false): WebGLTexture {
       var gl = this.gl;
       var texture = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -602,7 +597,7 @@ module Shumway.GL {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
       texture.w = w;
       texture.h = h;
-      texture.atlas = new WebGLTextureAtlas(this, texture, w, h, solitary, compact);
+      texture.atlas = new WebGLTextureAtlas(this, texture, w, h, compact);
       texture.framebuffer = this.createFramebuffer(texture);
       texture.regions = [];
       return texture;
@@ -710,6 +705,8 @@ module Shumway.GL {
 
     private _scratchCanvas: HTMLCanvasElement;
     private _scratchCanvasContext: CanvasRenderingContext2D;
+    private _dynamicScratchCanvas: HTMLCanvasElement;
+    private _dynamicScratchCanvasContext: CanvasRenderingContext2D;
 
     constructor(context: WebGLContext) {
       this.context = context;
@@ -723,6 +720,12 @@ module Shumway.GL {
       this._scratchCanvas = document.createElement("canvas");
       this._scratchCanvas.width = this._scratchCanvas.height = SCRATCH_CANVAS_SIZE;
       this._scratchCanvasContext = this._scratchCanvas.getContext("2d", {
+        willReadFrequently: true
+      });
+
+      this._dynamicScratchCanvas = document.createElement("canvas");
+      this._dynamicScratchCanvas.width = this._dynamicScratchCanvas.height = 0;
+      this._dynamicScratchCanvasContext = this._dynamicScratchCanvas.getContext("2d", {
         willReadFrequently: true
       });
     }
@@ -778,10 +781,6 @@ module Shumway.GL {
           brush.fillRectangle(new Rectangle(0, 0, frame.w, frame.h), Color.parseColor((<Flake>frame).fillStyle), transform, depth);
         } else if (frame instanceof SolidRectangle) {
           brush.fillRectangle(new Rectangle(0, 0, frame.w, frame.h), Color.parseColor((<SolidRectangle>frame).fillStyle), transform, depth);
-        } else if (frame instanceof Video) {
-          var video = <Video>frame;
-          var src = <WebGLTextureRegion>(video.source);
-          brush.drawImage(src, undefined, new Color(1, 1, 1, alpha), null, transform, depth)
         } else if (frame instanceof Shape) {
           var shape = <Shape>frame;
           var bounds = shape.source.getBounds();
@@ -802,6 +801,25 @@ module Shumway.GL {
               var src = <WebGLTextureRegion>(tile.cachedTextureRegion);
               if (src && src.texture) {
                 context.textureRegionCache.put(src);
+              }
+              if (source.dynamic) {
+                var scratchCanvas = that._dynamicScratchCanvas;
+                scratchCanvas.width = tile.bounds.w;
+                scratchCanvas.height = tile.bounds.h;
+                var scratchContext = that._dynamicScratchCanvasContext;
+                scratchContext.save();
+                scratchContext.setTransform(1, 0, 0, 1, 0, 0);
+                scratchContext.clearRect(0, 0, scratchCanvas.width, scratchCanvas.height);
+                if (options.toggle2) {
+                  source.render(scratchContext);
+                }
+                scratchContext.restore();
+                if (options.toggle) {
+                  var imageData = scratchContext.getImageData(0, 0, tile.bounds.w, tile.bounds.h);
+                  that.context.updateTextureRegion(imageData, src);
+                } else {
+                  that.context.updateTextureRegion(scratchCanvas, src);
+                }
               }
               if (!brush.drawImage(src, undefined, new Color(1, 1, 1, alpha), colorTransform, tileTransform, depth)) {
                 unexpected();
@@ -850,11 +868,12 @@ module Shumway.GL {
      * Gets the tiles covered by the specified |query| rectangle and transformed by the given |transform| matrix.
      */
     private getTiles(query: Rectangle, transform: Matrix): Tile [] {
-      // Figure out the scale of the transform by averaging out the X and Y scale factors.
       var transformScale = Math.max(transform.getAbsoluteScaleX(), transform.getAbsoluteScaleY());
       // Use log2(1 / transformScale) to figure out the tile level.
-      var level = Math.round(Math.log(1 / transformScale) / Math.LN2);
-      level = clamp(level, -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
+      var level = 1;
+      if (!this.source.dynamic) {
+        level = clamp(Math.round(Math.log(1 / transformScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
+      }
       var scale = Math.pow(2, level);
       var levelIndex = MIN_CACHE_LEVELS + level;
       var cache = this.cacheLevels[levelIndex];
@@ -862,11 +881,11 @@ module Shumway.GL {
         var bounds = this.source.getBounds();
         var scaledBounds = bounds.clone().scale(scale, scale);
         var tileW, tileH;
-        if (Math.max(scaledBounds.w, scaledBounds.h) > MIN_UNTILED_SIZE) {
-          tileW = tileH = TILE_SIZE;
-        } else {
+        if (this.source.dynamic || Math.max(scaledBounds.w, scaledBounds.h) <= MIN_UNTILED_SIZE) {
           tileW = scaledBounds.w;
           tileH = scaledBounds.h;
+        } else {
+          tileW = tileH = TILE_SIZE;
         }
         cache = this.cacheLevels[levelIndex] = new TileCache(scaledBounds.w, scaledBounds.h, tileW, tileH, scale);
       }

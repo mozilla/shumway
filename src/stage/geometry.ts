@@ -1251,7 +1251,7 @@ module Shumway.Geometry {
       private _rows: number;
       private _columns: number;
       private _cells: Grid.Cell [];
-      constructor(w: number, h: number, size: number, padding: number) {
+      constructor(w: number, h: number, padding: number, size: number) {
         var sizeWithPadding = size + 2 * padding;
         this._columns = w / sizeWithPadding | 0;
         this._rows = h / sizeWithPadding | 0;

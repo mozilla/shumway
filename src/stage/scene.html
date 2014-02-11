@@ -28,6 +28,7 @@
   <script src="gl/core.js"></script>
   <script src="dom.js"></script>
   <script src="glTests.js"></script>
+  <script src="bench.js"></script>
   <script src="shapes.js"></script>
   <script>
     var Point = Shumway.Geometry.Point;
@@ -37,7 +38,7 @@
     var Snow = Shumway.Layers.Elements.Snow;
     var Flake = Shumway.Layers.Elements.Flake;
     var Bitmap = Shumway.Layers.Bitmap;
-    var Video = Shumway.Layers.Video;
+    var DynamicShape = Shumway.Layers.DynamicShape;
     var Text = Shumway.Layers.Text;
     var Shape = Shumway.Layers.Shape;
 
@@ -71,10 +72,10 @@
 
   <div>
     <div style="float: left; width: 512px;">
-      <canvas id="frameTimeline" height="100" style="background-]color: #333333;"  tabindex='0'></canvas>
+      <canvas id="frameTimeline" height="200" style="background-]color: #333333;"  tabindex='0'></canvas>
     </div>
     <div style="margin-left: 10px; float: left; width: 512px;">
-      <canvas id="traceTerminal" height="100" width="512" style="background-]color: #333333;" tabindex='1'></canvas>
+      <canvas id="traceTerminal" height="200" width="512" style="background-]color: #333333;" tabindex='1'></canvas>
     </div>
   </div>
 
@@ -92,7 +93,7 @@
   <div id="container" style="clear: both;">
   </div>
   <script>
-    var writer = new IndentingWriter();
+
 
     var traceTerminal = new Terminal(document.getElementById("traceTerminal"));
     traceTerminal.refreshEvery(100);
@@ -106,7 +107,7 @@
       }
     }
 
-    Shumway.GL.writer = new IndentingWriter(false, function (str){
+    var writer = Shumway.GL.writer = new IndentingWriter(false, function (str){
       appendToTraceTerminal(str);
     });
 
@@ -207,8 +208,12 @@
     });
 
     var sceneOptions = {
+      toggle: false,
+      toggle2: false,
+
       flakes: 1,
       shapes: 0,
+      dynamicShapes: 0,
       sprites: 0,
       bitmaps: 2,
       videos: 2,
@@ -252,6 +257,10 @@
 
       test: function () {
         Shumway.GL.Tests.runTests(Shumway.GL.writer);
+      },
+
+      bench: function () {
+        new Shumway.Bench.TextureUpload(Shumway.GL.writer).run();
       }
     };
 
@@ -262,14 +271,17 @@
       var c = [];
       c.push(f.add(sceneOptions, "stop"));
       c.push(f.add(sceneOptions, "test"));
+      c.push(f.add(sceneOptions, "bench"));
       f.open();
     })();
 
     (function addSceneOptions() {
       var f = gui.addFolder("Scene Options");
       var c = [];
+
       c.push(f.add(sceneOptions, "flakes", 0, 50000).step(1));
       c.push(f.add(sceneOptions, "shapes", 0, 5000).step(1));
+      c.push(f.add(sceneOptions, "dynamicShapes", 0, 5000).step(1));
       c.push(f.add(sceneOptions, "sprites", 0, 1000).step(1));
       c.push(f.add(sceneOptions, "bitmaps", 0, 10000).step(2));
       c.push(f.add(sceneOptions, "videos", 0, 1000).step(1));
@@ -277,12 +289,13 @@
       c.push(f.add(sceneOptions, "textLength", 0, 1000).step(1));
       c.forEach(function (x) {
         x.onFinishChange(updateScene);
-      })
+      });
       f.open();
       c.push(f.add(sceneOptions, "webGL"));
       c.push(f.add(sceneOptions, "dom"));
       c.push(f.add(sceneOptions, "canvas2D"));
-
+      c.push(f.add(sceneOptions, "toggle"));
+      c.push(f.add(sceneOptions, "toggle2"));
     })();
 
     (function addOptions() {
@@ -363,9 +376,6 @@
       animators.push(snow);
       stage.addChild(snow);
 
-      // var fontAtlas = new FontAtlas("12px Georgia, serif");
-      // document.addChild(fontAtlas.canvas);
-      // document.getElementById("container").appendChild(fontAtlas.canvas);
 
       for (var i = 0; i < sceneOptions.text; i++) {
         var frame = new Shape(new Shumway.TextShape(Shumway.randomText(sceneOptions.textLength)));
@@ -394,6 +404,15 @@
         stage.addChild(frame);
         // shuffle(frame, TWEEN.Easing.Exponential.Out);
         shuffle(frame, TWEEN.Easing.Linear.None);
+      }
+
+      for (var i = 0; i < sceneOptions.dynamicShapes; i++) {
+        var frame = new Shape(new Shumway.TimeShape());
+        frame.x = frame.width / 2 + Math.random() * (canvas.width - frame.width / 2);
+        frame.y = frame.height / 2 + Math.random() * (canvas.height - frame.height / 2);
+        frame.origin = new Point(frame.w / 2, frame.h / 2);
+        stage.addChild(frame);
+        shuffle(frame, TWEEN.Easing.Exponential.Out);
       }
 
       for (var i = 0; i < sceneOptions.sprites; i++) {
@@ -431,7 +450,7 @@
       for (var i = 0; i < sceneOptions.videos; i++) {
         ensureLoadedVideos();
         var videoElement = videoElements[Math.random() * videoElements.length | 0];
-        var frame = new Video(videoElement.textureRegion);
+        var frame = new DynamicShape(videoElement.textureRegion);
         frame.x = (Math.random()) * canvas.width;
         frame.y = (Math.random()) * canvas.height;
         stage.addChild(frame);
@@ -449,11 +468,11 @@
 
     var mousePosition;
 
-//    window.requestAnimationFrame = (function(){
-//      return function(callback) {
-//        window.setTimeout(callback, 1000 / sceneOptions.frameRate);
-//      };
-//    })();
+    window.requestAnimationFrame = (function(){
+      return function(callback) {
+        window.setTimeout(callback, 1000 / sceneOptions.frameRate);
+      };
+    })();
 
     var frames = 0;
 

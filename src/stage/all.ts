@@ -7,6 +7,7 @@
 /// <reference path='gl.ts'/>
 /// <reference path='gl/core.ts'/>
 /// <reference path='dom.ts'/>
+/// <reference path='bench.ts'/>
 
 declare function randomStyle(): string;
 declare function assert(...args : any[]);
@@ -47,5 +48,6 @@ module Shumway {
     getBounds(): Shumway.Geometry.Rectangle;
     properties: {[name: string]: any};
     render (context: CanvasRenderingContext2D, options? : any);
+    dynamic: boolean;
   }
 }
