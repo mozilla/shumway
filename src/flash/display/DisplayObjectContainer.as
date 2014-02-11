@@ -18,7 +18,7 @@ package flash.display {
 import flash.geom.Point;
 import flash.text.TextSnapshot;
 
-[native(cls='DisplayObjectContainerClass')]
+[native(cls='ContainerClass')]
 public class DisplayObjectContainer extends InteractiveObject {
   public function DisplayObjectContainer() {}
   public native function get numChildren():int;
