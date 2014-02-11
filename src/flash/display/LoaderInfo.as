@@ -15,12 +15,14 @@
  */
 
 package flash.display {
+import flash.errors.IllegalOperationError;
 import flash.events.Event;
 import flash.events.EventDispatcher;
 import flash.events.UncaughtErrorEvents;
 import flash.system.ApplicationDomain;
 import flash.utils.ByteArray;
 
+[native(cls='LoaderInfoClass')]
 public class LoaderInfo extends EventDispatcher {
   public static native function getLoaderInfoByDefinition(object:Object):LoaderInfo;
   public function LoaderInfo() {}
@@ -34,10 +36,10 @@ public class LoaderInfo extends EventDispatcher {
   public native function get actionScriptVersion():uint;
   public native function get frameRate():Number;
   public function get parameters():Object {
-    notImplemented("parameters");
-    return null;
+    // Parameters have to be cloned, but our native implementation of _getArgs does that.
+    return _getArgs();
   }
-  public native function get width():int;
+  public native function get width():int;;
   public native function get height():int;
   public native function get contentType():String;
   public native function get sharedEvents():EventDispatcher;
@@ -52,11 +54,18 @@ public class LoaderInfo extends EventDispatcher {
   public native function get content():DisplayObject;
   public native function get bytes():ByteArray;
   public function get uncaughtErrorEvents():UncaughtErrorEvents {
-    notImplemented("uncaughtErrorEvents");
-    return null;
+    var events:UncaughtErrorEvents = _getUncaughtErrorEvents();
+    if (!events) {
+      events = new UncaughtErrorEvents();
+      _setUncaughtErrorEvents(events);
+    }
+    return events;
   }
+  private native function _getArgs():Object;
+  private native function _getUncaughtErrorEvents():UncaughtErrorEvents;
+  private native function _setUncaughtErrorEvents(value:UncaughtErrorEvents):void;
   public override function dispatchEvent(event:Event):Boolean {
-    notImplemented("dispatchEvent");
+    Error.throwError(IllegalOperationError, 2118);
     return false;
   }
 }

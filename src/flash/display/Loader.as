@@ -83,7 +83,7 @@ public class Loader extends DisplayObjectContainer {
     for (var key:String in obj) {
       clone[key] = obj[key];
     }
-    return obj;
+    return clone;
   }
   private native function _close():void;
   private native function _unload(stopExecution:Boolean, gc:Boolean):void;
