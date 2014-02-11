@@ -18,75 +18,64 @@ package flash.utils {
 import flash.events.EventDispatcher;
 import flash.events.TimerEvent;
 
-  public class Timer extends EventDispatcher {
-    public function Timer(delay:Number, repeatCount:int = 0) {
-      _delay = delay;
-      _repeatCount = repeatCount;
-    }
-
-    public native function get running():Boolean;
-
-    public function get delay():Number { 
-      return _delay; 
-    }
-
-    public function get repeatCount():int { 
-      return _repeatCount; 
-    }
-
-    public function set repeatCount(value:int):void { 
-      _repeatCount = value;
-      if (_repeatCount && running){ 
-        if(_iteration >= _repeatCount) {
-          stop();
-        }
-      }
-    }
-
-    public function get currentCount():int { 
-      return _iteration; 
-    }
-
-    public function set delay(value:Number):void {
-      _delay = value;
-
-      if (running){
-        stop();
-        start();
-      }
-    }
-
-    public function reset():void { 
-      if (running){
-        stop();
-      }
-      _iteration = 0;
-    }
-
-    public native function stop():void;
-
-    public function start():void {
-      if (!running){
-        _start(_delay, tick);
-      }
-    }
-
-    private native function _start(delay:Number,
-                                   closure:Function):void;
-    private function tick():void { 
-      _iteration++;
-      _tick();
-      if (_repeatCount != 0 ){
-        if(_iteration >= _repeatCount) {
-          stop();
-          dispatchEvent(new TimerEvent(TimerEvent.TIMER_COMPLETE, false, false));
-        }
-      }
-    }
-    private native function _tick():void;
-
-    private var _delay:Number;
-    private var _repeatCount:int;
-    private var _iteration:int;
+[native(cls='TimerClass')]
+public class Timer extends EventDispatcher {
+  public function Timer(delay:Number, repeatCount:int = 0) {
+    _delay = delay;
+    _repeatCount = repeatCount;
   }
+  private var _delay:Number;
+  private var _repeatCount:int;
+  private var _iteration:int;
+  public native function get running():Boolean;
+  public function get delay():Number {
+    return _delay;
+  }
+  public function set delay(value:Number):void {
+    _delay = value;
+
+    if (running) {
+      stop();
+      start();
+    }
+  }
+  public function get repeatCount():int {
+    return _repeatCount;
+  }
+  public function set repeatCount(value:int):void {
+    _repeatCount = value;
+    if (_repeatCount && running) {
+      if (_iteration >= _repeatCount) {
+        stop();
+      }
+    }
+  }
+  public function get currentCount():int {
+    return _iteration;
+  }
+  public function reset():void {
+    if (running) {
+      stop();
+    }
+    _iteration = 0;
+  }
+  public native function stop():void;
+  public function start():void {
+    if (!running) {
+      _start(_delay, tick);
+    }
+  }
+  private native function _start(delay:Number, closure:Function):void;
+  private function tick():void {
+    _iteration++;
+    _tick();
+    if (_repeatCount != 0) {
+      if (_iteration >= _repeatCount) {
+        stop();
+        dispatchEvent(new TimerEvent(TimerEvent.TIMER_COMPLETE, false, false));
+      }
+    }
+  }
+  private native function _tick():void;
+}
 }
