@@ -261,7 +261,7 @@ function runAsc(threadId, name, outputPath, files, dependencies, refs, callback)
   var outputAs = outputDir + '/' + outputName + '.as';
   fs.writeFileSync(outputAs, '');
 
-  var args = ['-jar', ascjar, '-AS3'];
+  var args = ['-jar', ascjar, '-AS3', '-md'];
   if (debugInfo) {
     args.push('-d');
   }
