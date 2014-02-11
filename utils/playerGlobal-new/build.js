@@ -294,59 +294,25 @@ function runAsc(threadId, name, outputPath, files, dependencies, refs, callback)
   });
 }
 
-var ignoreDependenciesErrors = {
-  'flash.utils.Dictionary': true,
-  'flash.utils.ByteArray': true,
-  'flash.utils.escapeMultiByte': true,
-  'flash.utils.unescapeMultiByte': true,
-  'flash.utils.IDataInput': true,
-  // add more ..
-};
-
-function getDependencies(files) {
-  var tmp = {}, tmpErr = {}, queue = [];
-  files.forEach(function (file) {
-    tmp[file] = true;
-    queue.push(file);
-  });
-  while (queue.length > 0) {
-    var file = queue.pop();
-    try {
-      var content = '' + fs.readFileSync(file);
-      var m, re = /\bimport\s+(flash[\w\.]+)\s*;/g;
-      while ((m = re.exec(content))) {
-        var path = m[1].replace(/\./g, '/') + '.as';
-        if (fs.existsSync(path)) {
-          if (!tmp[path]) {
-            tmp[path] = true;
-            if (dependenciesRecursionLevel >= 2) {
-              queue.push(path);
-            }
-          }
-        } else if (!tmpErr[m[0]] && !ignoreDependenciesErrors[m[1]]) {
-          console.log('Dependency file for \"' + m[0] + '\" was not found');
-          tmpErr[m[0]] = true;
-        }
-      }
-      m = /\bclass\s+\w+([^{]+)/.exec(content);
-      if (m) {
-        var baseClasses = m[1].replace(/\b(extends|implements)\b/g, '');
-        re = /(\w+)/g;
-        while ((m = re.exec(baseClasses))) {
-          var path = file.substring(0, file.lastIndexOf('/') + 1) + m[1] + '.as';
-          if (fs.existsSync(path)) {
-            tmp[path] = true;
-            if (dependenciesRecursionLevel >= 2) {
-              queue.push(path);
-            }
-          }
-        }
-      }
-    } catch (e) {
-      console.log('Unable to get dependencies from ' + file + ': ' + e);
-    }
+function getDependencies(item) {
+  var files = item.manifest.files;
+  if (dependenciesRecursionLevel < 1) {
+    return files;
   }
-  return Object.keys(tmp);
+
+  var used = {}, useFile = function (file) { used[file] = true; };
+  files.forEach(useFile);
+  if (dependenciesRecursionLevel < 2) {
+    item.dependents.forEach(function (dep) {
+      dep.manifest.files.forEach(useFile);
+    });
+  } else {
+    item.refFiles && item.refFiles.forEach(useFile);
+    item.requires.forEach(function (req) {
+      req.manifest.files.forEach(useFile);
+    });
+  }
+  return Object.keys(used);
 }
 
 var buildError = false, pending = 0, availableThreadIds = [];
@@ -376,8 +342,7 @@ function buildNext(item) {
     }
 
     item.built = true;
-    item.dependencies = dependenciesRecursionLevel < 1 ? files :
-      getDependencies(files);
+    item.dependencies = getDependencies(item);
 
     pending--;
     availableThreadIds.push(threadId);
