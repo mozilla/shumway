@@ -20,7 +20,9 @@ import flash.media.SoundTransform;
 
 [native(cls='SpriteClass')]
 public class Sprite extends DisplayObjectContainer {
-  public function Sprite() {}
+  public function Sprite() {
+    constructChildren();
+  }
   public native function get graphics():Graphics;
   public native function get buttonMode():Boolean;
   public native function set buttonMode(value:Boolean):void;
@@ -36,5 +38,6 @@ public class Sprite extends DisplayObjectContainer {
   public native function startTouchDrag(touchPointID:int, lockCenter:Boolean = false,
                                         bounds:Rectangle = null):void;
   public native function stopTouchDrag(touchPointID:int):void;
+  private native function constructChildren(): void;
 }
 }
