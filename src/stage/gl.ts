@@ -694,6 +694,7 @@ module Shumway.GL {
 
   export class WebGLStageRenderer {
     context: WebGLContext;
+    private _viewport: Rectangle;
 
     private _brush: WebGLCombinedBrush;
     private _brushGeometry: WebGLGeometry;
@@ -708,9 +709,9 @@ module Shumway.GL {
     private _dynamicScratchCanvas: HTMLCanvasElement;
     private _dynamicScratchCanvasContext: CanvasRenderingContext2D;
 
-    constructor(context: WebGLContext) {
+    constructor(context: WebGLContext, w: number, h: number) {
       this.context = context;
-
+      this._viewport = new Rectangle(0, 0, w, h);
       this._brushGeometry = new WebGLGeometry(context);
       this._brush = new WebGLCombinedBrush(context, this._brushGeometry);
 
@@ -750,7 +751,7 @@ module Shumway.GL {
 
       var brush = this._brush;
 
-      var viewport = new Rectangle(0, 0, stage.w, stage.h);
+      var viewport = this._viewport;
       var inverseTransform = Matrix.createIdentity();
 
       function cacheImageCallback(src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {
@@ -810,16 +811,10 @@ module Shumway.GL {
                 scratchContext.save();
                 scratchContext.setTransform(1, 0, 0, 1, 0, 0);
                 scratchContext.clearRect(0, 0, scratchCanvas.width, scratchCanvas.height);
-                if (options.toggle2) {
-                  source.render(scratchContext);
-                }
+                source.render(scratchContext);
                 scratchContext.restore();
-                if (options.toggle) {
-                  var imageData = scratchContext.getImageData(0, 0, tile.bounds.w, tile.bounds.h);
-                  that.context.updateTextureRegion(imageData, src);
-                } else {
-                  that.context.updateTextureRegion(scratchCanvas, src);
-                }
+                var imageData = scratchContext.getImageData(0, 0, tile.bounds.w, tile.bounds.h);
+                that.context.updateTextureRegion(imageData, src);
               }
               if (!brush.drawImage(src, undefined, new Color(1, 1, 1, alpha), colorTransform, tileTransform, depth)) {
                 unexpected();

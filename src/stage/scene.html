@@ -334,7 +334,7 @@
 
     var webGLContext, webGLStageRenderer, canvas2DStageRenderer, domStageRenderer;
     webGLContext = new WebGLContext(webGLCanvas, sceneOptions);
-    webGLStageRenderer = new WebGLStageRenderer(webGLContext);
+    webGLStageRenderer = new WebGLStageRenderer(webGLContext, webGLCanvas.width, webGLCanvas.height);
 
     canvas2DStageRenderer = new Canvas2DStageRenderer(canvas2DCanvas.getContext("2d"));
     domStageRenderer = new DOMStageRenderer(DOMDiv, pixelRatio);

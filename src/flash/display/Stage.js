@@ -254,7 +254,7 @@ var StageDefinition = (function () {
       };
 
       webGLContext = new WebGLContext(canvas, sceneOptions);
-      webGLStageRenderer = new WebGLStageRenderer(webGLContext);
+      webGLStageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
       //canvas2DStageRenderer = new Canvas2DStageRenderer(ctx);
 
       var domain = avm2.systemDomain;
