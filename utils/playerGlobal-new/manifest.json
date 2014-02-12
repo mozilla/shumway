@@ -4115,15 +4115,6 @@
     ]
   },
   {
-    "name": "flash/text/TextExtent",
-    "defs": [
-      "flash.text:TextExtent"
-    ],
-    "files": [
-      "flash/text/TextExtent.as"
-    ]
-  },
-  {
     "name": "flash/text/TextField",
     "defs": [
       "flash.text:TextField"
