@@ -17,7 +17,7 @@
 package flash.events {
 import flash.display.InteractiveObject;
 
-[native(cls='TouchEvent')]
+[native(cls='TouchEventClass')]
 public class TouchEvent extends Event {
   public static const TOUCH_BEGIN:String = "touchBegin";
   public static const TOUCH_END:String = "touchEnd";

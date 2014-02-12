@@ -15,7 +15,7 @@
  */
 
 package flash.events {
-[native(cls='TextEvent')]
+[native(cls='TextEventClass')]
 public class TextEvent extends Event {
   public static const LINK:String = "link";
   public static const TEXT_INPUT:String = "textInput";

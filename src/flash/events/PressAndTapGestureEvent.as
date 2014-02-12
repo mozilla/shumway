@@ -15,7 +15,7 @@
  */
 
 package flash.events {
-[native(cls='PressAndTapGestureEvent')]
+[native(cls='PressAndTapGestureEventClass')]
 public class PressAndTapGestureEvent extends GestureEvent {
   public static const GESTURE_PRESS_AND_TAP:String = "gesturePressAndTap";
   private var _tapLocalX:Number;
