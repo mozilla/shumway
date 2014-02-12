@@ -21,7 +21,7 @@ public class EventDispatcher implements IEventDispatcher {
     ctor(target);
   }
   public function toString():String {
-    return '[object EventDispatcher]';
+    return Object.prototype.toString.call(this);
   }
   public native function addEventListener(type:String, listener:Function,
                                           useCapture:Boolean = false, priority:int = 0,
