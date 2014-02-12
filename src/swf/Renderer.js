@@ -126,7 +126,9 @@ function Renderer(target) {
           case 3:
             var width = i32[p++];
             var height = i32[p++];
-            renderer._stage = new Shumway.Layers.Stage(width, height);
+            var pixelRatio = renderer._target._contentsScaleFactor;
+            renderer._stage = new Shumway.Layers.Stage(width, height, width * pixelRatio, height * pixelRatio);
+            renderer._stage.transform = new Shumway.Geometry.Matrix.createIdentity().scale(2, 2);
             break;
           case 4:
             var isContainer = i32[p++];
