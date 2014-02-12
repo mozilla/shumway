@@ -160,27 +160,6 @@
     ]
   },
   {
-    "name": "flash/concurrent/Condition",
-    "defs": [
-      "flash.concurrent:Condition"
-    ],
-    "files": [
-      "flash/concurrent/Condition.as"
-    ],
-    "refs": [
-      "flash.concurrent:Mutex"
-    ]
-  },
-  {
-    "name": "flash/concurrent/Mutex",
-    "defs": [
-      "flash.concurrent:Mutex"
-    ],
-    "files": [
-      "flash/concurrent/Mutex.as"
-    ]
-  },
-  {
     "name": "flash/errors/InvalidSWFError",
     "defs": [
       "flash.errors:InvalidSWFError"
@@ -2720,48 +2699,6 @@
     ],
     "files": [
       "flash/system/TouchscreenType.as"
-    ]
-  },
-  {
-    "name": "flash/system/Worker",
-    "defs": [
-      "flash.system:Worker"
-    ],
-    "files": [
-      "flash/system/Worker.as"
-    ],
-    "inherits": [
-      "flash.events:EventDispatcher"
-    ],
-    "refs": [
-      "flash.system:MessageChannel",
-      "flash.events:Event"
-    ]
-  },
-  {
-    "name": "flash/system/WorkerDomain",
-    "defs": [
-      "flash.system:WorkerDomain"
-    ],
-    "files": [
-      "flash/system/WorkerDomain.as"
-    ],
-    "refs": [
-      "flash.system:Worker"
-    ]
-  },
-  {
-    "name": "flash/system/WorkerState",
-    "defs": [
-      "flash.system:WorkerState"
-    ],
-    "files": [
-      "flash/system/WorkerState.as"
-    ],
-    "refs": [
-      "flash.events:EventDispatcher",
-      "flash.system:MessageChannel",
-      "flash.events:Event"
     ]
   },
   {
