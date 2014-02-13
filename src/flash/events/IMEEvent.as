@@ -38,7 +38,8 @@ public class IMEEvent extends TextEvent {
   }
 
   public override function toString():String {
-    return formatToString('IMEEvent', 'type', 'bubbles', 'eventPhase', 'text', 'imeClient');
+    return formatToString('IMEEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+                          'text', 'imeClient');
   }
 }
 }

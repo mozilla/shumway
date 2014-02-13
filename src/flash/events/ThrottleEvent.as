@@ -36,7 +36,7 @@ public class ThrottleEvent extends Event {
     return new ThrottleEvent(type, bubbles, cancelable, state, targetFrameRate);
   }
   public override function toString():String {
-    return formatToString('ThrottleEvent', 'type', 'bubbles', 'eventPhase',
+    return formatToString('ThrottleEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
                           'state', 'targetFrameRate');
   }
 }

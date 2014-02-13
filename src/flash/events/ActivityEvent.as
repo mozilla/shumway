@@ -34,7 +34,8 @@ public class ActivityEvent extends Event {
     return new ActivityEvent(type, bubbles, cancelable, activating);
   }
   public override function toString():String {
-    return formatToString('ActivityEvent', 'type', 'bubbles', 'eventPhase', 'activating');
+    return formatToString('ActivityEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+                          'activating');
   }
 }
 }

@@ -93,7 +93,7 @@ public class GeolocationEvent extends Event {
                                 hAccuracy, vAccuracy, speed, heading, timestamp);
   }
   public override function toString():String {
-    return formatToString('GeolocationEvent', 'type', 'bubbles', 'eventPhase',
+    return formatToString('GeolocationEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
                           'latitude', 'longitude', 'altitude', 'hAccuracy', 'vAccuracy',
                           'speed', 'heading', 'timestamp');
   }

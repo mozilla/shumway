@@ -145,9 +145,9 @@ public class TouchEvent extends Event {
                           localY, sizeX, sizeY, pressure, relatedObject, ctrlKey, altKey, shiftKey);
   }
   public override function toString():String {
-    return formatToString('TouchEvent', 'type', 'bubbles', 'eventPhase', 'touchPointID',
-                          'isPrimaryTouchPoint', 'localX', 'localY', 'sizeX', 'sizeY', 'pressure',
-                          'relatedObject', 'ctrlKey', 'altKey', 'shiftKey');
+    return formatToString('TouchEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+                          'touchPointID', 'isPrimaryTouchPoint', 'localX', 'localY', 'sizeX',
+                          'sizeY', 'pressure', 'relatedObject', 'ctrlKey', 'altKey', 'shiftKey');
   }
   public native function updateAfterEvent():void;
 }

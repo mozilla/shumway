@@ -61,7 +61,7 @@ public class AccelerometerEvent extends Event {
                                   accelerationX, accelerationY, accelerationZ);
   }
   public override function toString():String {
-    return formatToString('AccelerometerEvent', 'type', 'bubbles', 'eventPhase',
+    return formatToString('AccelerometerEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
                           'timestamp', 'accelerationX', 'accelerationY', 'accelerationZ');
   }
 }
