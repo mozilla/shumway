@@ -45,7 +45,13 @@ public dynamic class URLVariables {
   public function toString():String {
     var pairs:Array = [];
     for (var name: String in this) {
-      pairs.push(escapeMultiByte(name) + '=' + escapeMultiByte(this[name]));
+      if (this[name] is Array) {
+        for each (var value:String in this[name]) {
+          pairs.push(escapeMultiByte(name) + '=' + escapeMultiByte(value));
+        }
+      } else {
+        pairs.push(escapeMultiByte(name) + '=' + escapeMultiByte(this[name]));
+      }
     }
     return pairs.join('&');
   }
