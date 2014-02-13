@@ -35,7 +35,7 @@ public class Sound extends EventDispatcher {
     if (!context) {
       context = new SoundLoaderContext();
     }
-    _load( stream, context.checkPolicyFile, context.bufferTime );
+    _load(stream, context.checkPolicyFile, context.bufferTime);
   }
   public native function loadCompressedDataFromByteArray(bytes: ByteArray, bytesLength: uint): void;
   public native function loadPCMFromByteArray(bytes: ByteArray, samples: uint,
@@ -46,6 +46,7 @@ public class Sound extends EventDispatcher {
   public native function close(): void;
   public native function extract(target: ByteArray, length: Number,
                                  startPosition: Number = -1): Number;
-  private native function _load(stream: URLRequest, checkPolicyFile: Boolean, bufferTime: Number)
+  private native function _load(stream: URLRequest, checkPolicyFile: Boolean,
+                                bufferTime: Number): void;
 }
 }
