@@ -62,8 +62,13 @@ module Shumway {
      */
     isDynamic: boolean;
     /**
-     * Whether source's dynamic content has changed. This is only defined if |isDynamic| is true.
+     * Whether the source's dynamic content has changed. This is only defined if |isDynamic| is true.
      */
     isInvalid: boolean;
+
+    /**
+     * Whether the source's content can be scaled and drawn at a higher resolution.
+     */
+    isScaleable: boolean;
   }
 }

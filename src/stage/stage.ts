@@ -404,6 +404,7 @@ module Shumway.Layers {
     source: IRenderable;
     constructor(source: IRenderable) {
       super();
+      assert(source);
       this.source = source;
       var bounds = source.getBounds();
       this.w = bounds.w;

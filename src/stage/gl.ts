@@ -860,6 +860,7 @@ module Shumway.GL {
       var level = clamp(Math.round(Math.log(1 / transformScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
       var scale = Math.pow(2, level);
       // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our texture caches ...
+
       if (this.source.isDynamic) {
         // .. so try a lower scale level until it fits.
         while (true) {
@@ -868,8 +869,11 @@ module Shumway.GL {
             break;
           }
           level --;
-          assert (level >= 0);
+          assert (level >= -MIN_CACHE_LEVELS);
         }
+      }
+      if (!this.source.isScaleable) {
+        level = clamp(level, -MIN_CACHE_LEVELS, 1);
       }
       var scale = Math.pow(2, level);
       var levelIndex = MIN_CACHE_LEVELS + level;
