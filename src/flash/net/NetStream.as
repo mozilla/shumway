@@ -96,16 +96,16 @@ public class NetStream extends EventDispatcher {
     notImplemented("receiveVideoFPS");
   }
   public function pause():void {
-    call(this, "pause", null, true, time * 1000);
+    call(this, 'pause', null, true, time * 1000);
   }
   public function resume():void {
-    call(this, "resume", null, false, time * 1000);
+    call(this, 'pause', null, false, time * 1000);
   }
   public function togglePause():void {
-    call(this, "pause", null, undefined, time * 1000);
+    call(this, 'pause', null, undefined, time * 1000);
   }
   public function seek(offset:Number):void {
-    notImplemented("seek");
+    call(this, 'seek', null, offset * 1000);
   }
   public native function play():void;
   public native function play2(param:NetStreamPlayOptions):void;
