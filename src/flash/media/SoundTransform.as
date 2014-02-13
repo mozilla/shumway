@@ -18,7 +18,10 @@ package flash.media {
 
 [native(cls='SoundTransformClass')]
 public final class SoundTransform {
-  public function SoundTransform(vol: Number = 1, panning: Number = 0) {}
+  public function SoundTransform(vol: Number = 1, panning: Number = 0) {
+    this.volume = vol;
+    this.pan = panning;
+  }
   public native function get volume(): Number;
   public native function set volume(volume: Number): void;
   public native function get leftToLeft(): Number;
