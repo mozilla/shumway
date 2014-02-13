@@ -397,9 +397,9 @@ function updatePlayerglobal() {
     lastPos += ascLength;
     hex += ascHex;
   });
-  fs.writeFileSync('flash/playerglobal-new.js',
+  fs.writeFileSync('flash/playerglobal.js',
     jstemplate.replace('[/*index*/]', JSON.stringify(index, null, 2)));
-  fs.writeFileSync('flash/playerglobal-new.abc', new Buffer(hex, 'hex'));
+  fs.writeFileSync('flash/playerglobal.abc', new Buffer(hex, 'hex'));
 }
 
 function completeBuild() {
@@ -425,7 +425,7 @@ function completeBuild() {
   } else {
     console.info('Checking playerglobal.js');
     try {
-      var playerglobalUpdated = fs.statSync('flash/playerglobal-new.js').mtime.valueOf();
+      var playerglobalUpdated = fs.statSync('flash/playerglobal.js').mtime.valueOf();
       needsNewPlayerglobal = dependenciesUpdated > playerglobalUpdated;
     } catch (e) {}
   }
