@@ -251,15 +251,8 @@ var GraphicsDefinition = (function () {
       this._currentPath.curveTo(right, y, right, y + topRightRadius);
       this._currentPath.lineTo(right, bottom - bottomRightRadius);
     },
-    drawCircle: function(x, y, radius) {
-      var diam = radius*2;
-      this.drawRoundRect(x-radius, y-radius, diam, diam, diam, diam);
-    },
-    drawEllipse: function(x, y, width, height) {
-      this.drawRoundRect(x, y, width, height, width, height);
-    },
     drawTriangles: function(vertices, indices, uvtData, cullingStr) {
-      if (vertices === null || vertices.length == 0) {
+      if (vertices === null || vertices.length === 0) {
         return;
       }
 
@@ -267,14 +260,14 @@ var GraphicsDefinition = (function () {
       var numTriangles = 0;
 
       // check for valid triangles
-      if ( indices != null ) {
+      if (indices) {
         if(indices.length % 3 ) {
           throwError('ArgumentError', Errors.InvalidParamError);
         } else {
           numTriangles = indices.length / 3;
         }
       } else {  
-        if ( vertices.length % 6 ) {
+        if (vertices.length % 6) {
           throwError('ArgumentError', Errors.InvalidParamError);
         } else {
           numTriangles = vertices.length / 6;
@@ -283,7 +276,7 @@ var GraphicsDefinition = (function () {
 
       // check for valid uv data count
       var numStrides = 0;
-      if ( uvtData != null ) {
+      if (uvtData) {
         if ( uvtData.length == numVertices * 2 ) {
           numStrides = 2;
         }
