@@ -253,13 +253,13 @@ var GraphicsDefinition = (function () {
     },
     drawCircle: function(x, y, radius) {
       var diam = radius*2;
-      drawRoundRect(x-radius, y-radius, diam, diam, diam, diam);
+      this.drawRoundRect(x-radius, y-radius, diam, diam, diam, diam);
     },
     drawEllipse: function(x, y, width, height) {
-      drawRoundRect(x, y, width, height, width, height);
+      this.drawRoundRect(x, y, width, height, width, height);
     },
     drawTriangles: function(vertices, indices, uvtData, cullingStr) {
-      if ( vertices === null || vertices.length == 0 ) {
+      if (vertices === null || vertices.length == 0) {
         return;
       }
 

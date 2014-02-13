@@ -17,7 +17,7 @@
 package flash.events {
 import flash.display.InteractiveObject;
 
-[native(cls='TouchEvent')]
+[native(cls='TouchEventClass')]
 public class TouchEvent extends Event {
   public static const TOUCH_BEGIN:String = "touchBegin";
   public static const TOUCH_END:String = "touchEnd";
@@ -145,9 +145,9 @@ public class TouchEvent extends Event {
                           localY, sizeX, sizeY, pressure, relatedObject, ctrlKey, altKey, shiftKey);
   }
   public override function toString():String {
-    return formatToString('TouchEvent', 'type', 'bubbles', 'eventPhase', 'touchPointID',
-                          'isPrimaryTouchPoint', 'localX', 'localY', 'sizeX', 'sizeY', 'pressure',
-                          'relatedObject', 'ctrlKey', 'altKey', 'shiftKey');
+    return formatToString('TouchEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+                          'touchPointID', 'isPrimaryTouchPoint', 'localX', 'localY', 'sizeX',
+                          'sizeY', 'pressure', 'relatedObject', 'ctrlKey', 'altKey', 'shiftKey');
   }
   public native function updateAfterEvent():void;
 }

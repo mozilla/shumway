@@ -4209,7 +4209,9 @@
     "name": "flash/net/FlashNetScript",
     "defs": [
       "flash.net:navigateToURL",
-      "flash.net:sendToURL"
+      "flash.net:sendToURL",
+      "flash.net:registerClassAlias",
+      "flash.net:getClassByAlias"
     ],
     "files": [
       "flash/net/FlashNetScript.as"
@@ -4232,6 +4234,42 @@
     ],
     "files": [
       "flash/utils/FlashUtilScript.as"
+    ]
+  },
+  {
+    "name": "flash/utils/Endian",
+    "defs": [
+      "flash.utils:Endian"
+    ],
+    "files": [
+      "flash/utils/Endian.as"
+    ]
+  },
+  {
+    "name": "flash/utils/IExternalizable",
+    "defs": [
+      "flash.utils:IExternalizable"
+    ],
+    "files": [
+      "flash/utils/IExternalizable.as"
+    ]
+  },
+  {
+    "name": "flash/utils/ObjectInput",
+    "defs": [
+      "flash.utils:ObjectInput"
+    ],
+    "files": [
+      "flash/utils/ObjectInput.as"
+    ]
+  },
+  {
+    "name": "flash/utils/ObjectOutput",
+    "defs": [
+      "flash.utils:ObjectOutput"
+    ],
+    "files": [
+      "flash/utils/ObjectOutput.as"
     ]
   },
   {

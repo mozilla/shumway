@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-package flash.net {
-
-[native("FlashNetScript::navigateToURL")]
-public native function navigateToURL(request: URLRequest, window: String = null): void;
-
-[native("FlashNetScript::sendToURL")]
-public native function sendToURL(request: URLRequest): void;
-
-[native("Toplevel::registerClassAlias")]
-public native function registerClassAlias(aliasName: String, classObject: Class): void;
-
-[native("Toplevel::getClassByAlias")]
-public native function getClassByAlias(aliasName: String): Class;
+package flash.utils {
+public interface IExternalizable {
+  function writeExternal(output: IDataOutput): void;
+  function readExternal(input: IDataInput): void;
+}
 }

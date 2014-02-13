@@ -74,9 +74,9 @@ public class TransformGestureEvent extends GestureEvent {
                                      scaleY, rotation, offsetX, offsetY, ctrlKey, altKey, shiftKey);
   }
   public override function toString():String {
-    return formatToString('TransformGestureEvent', 'type', 'bubbles', 'eventPhase', 'phase',
-                          'localX', 'localY', 'scaleX', 'scaleY', 'rotation', 'offsetX', 'offsetY',
-                          'ctrlKey', 'altKey', 'shiftKey');
+    return formatToString('TransformGestureEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+                          'phase', 'localX', 'localY', 'scaleX', 'scaleY', 'rotation', 'offsetX',
+                          'offsetY', 'ctrlKey', 'altKey', 'shiftKey');
   }
 }
 }

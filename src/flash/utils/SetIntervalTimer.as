@@ -28,7 +28,7 @@ package flash.utils {
 
     public function SetIntervalTimer(closure:Function, delay:Number, repeats:Boolean, rest:Array) {
 
-      super(delay, repeats ? 1 : 0);
+      super(delay, repeats ? 0 : 1);
 
       this.closure = closure;
       this.rest = rest;

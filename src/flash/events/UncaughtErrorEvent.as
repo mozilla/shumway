@@ -31,7 +31,8 @@ public class UncaughtErrorEvent extends ErrorEvent {
     return new UncaughtErrorEvent(type, bubbles, cancelable, error);
   }
   public override function toString():String {
-    return formatToString('UncaughtErrorEvent', 'type', 'bubbles', 'eventPhase', 'error');
+    return formatToString('UncaughtErrorEvent', 'type', 'bubbles', 'cancelable', 'eventPhase',
+                          'error');
   }
 }
 }

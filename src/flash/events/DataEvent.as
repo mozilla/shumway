@@ -36,7 +36,7 @@ public class DataEvent extends TextEvent {
   }
 
   public override function toString():String {
-    return formatToString('DataEvent', 'type', 'bubbles', 'eventPhase', 'data');
+    return formatToString('DataEvent', 'type', 'bubbles', 'cancelable', 'eventPhase', 'data');
   }
 }
 }

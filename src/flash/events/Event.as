@@ -81,7 +81,10 @@ public class Event {
     for (var i:uint = 0; i < args.length; i++) {
       var field:String = args[i];
       var value:Object = this[field];
-      str += ' ' + field + '=' + value is String ? '"' + value + '"' : value;
+      if (value is String) {
+        value = '"' + value + '"';
+      }
+      str += ' ' + field + '=' + value;
     }
     return str + ']';
   }

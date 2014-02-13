@@ -26,7 +26,7 @@ public class TimerEvent extends Event {
     return new TimerEvent(type, bubbles, cancelable);
   }
   public override function toString():String {
-    return formatToString('TimerEvent', 'type', 'bubbles', 'eventPhase');
+    return formatToString('TimerEvent', 'type', 'bubbles', 'cancelable', 'eventPhase');
   }
   public native function updateAfterEvent():void;
 }

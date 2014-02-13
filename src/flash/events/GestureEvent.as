@@ -15,7 +15,7 @@
  */
 
 package flash.events {
-[native(cls='GestureEvent')]
+[native(cls='GestureEventClass')]
 public class GestureEvent extends Event {
   public static const GESTURE_TWO_FINGER_TAP:String = "gestureTwoFingerTap";
   private var _phase:String;
