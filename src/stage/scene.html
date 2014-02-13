@@ -115,40 +115,40 @@
       var tween = new TWEEN.Tween(target);
       tween.easing(easing);
       var motion = [
-        function () {
-          var x = Math.random() * (stage.w - target.w) + target.w / 2;
-          var y = Math.random() * (stage.h - target.h) + target.h / 2;
-          var s = 1 + Math.random() * 0.5;
-          tween.easing(easing);
-          tween.delay(Math.random() * (500000 / sceneOptions.movement));
-          tween.to({
-            x: x,
-            y: y,
-            scaleX: s,
-            scaleY: s,
-            rotation: (Math.random() - 0.5) * 180 * 1
-          }, 100000 / sceneOptions.speed).start();
-        },
-        function () {
-          var s = 0.1 + Math.random() * 10;
-          tween.easing(easing);
-          tween.delay(Math.random() * (500000 / sceneOptions.movement));
-          tween.to({
-            scaleX: 1 + Math.sin(s) / 4,
-            scaleY: 1 + Math.cos(s) / 4,
-          }, 100000 / sceneOptions.speed).start();
-        },
+//        function () {
+//          var x = Math.random() * (stage.w - target.w) + target.w / 2;
+//          var y = Math.random() * (stage.h - target.h) + target.h / 2;
+//          var s = 1 + Math.random() * 0.5;
+//          tween.easing(easing);
+//          tween.delay(Math.random() * (500000 / sceneOptions.movement));
+//          tween.to({
+//            x: x,
+//            y: y,
+//            scaleX: s,
+//            scaleY: s,
+//            rotation: (Math.random() - 0.5) * 180 * 1
+//          }, 100000 / sceneOptions.speed).start();
+//        },
+//        function () {
+//          var s = 0.1 + Math.random() * 10;
+//          tween.easing(easing);
+//          tween.delay(Math.random() * (500000 / sceneOptions.movement));
+//          tween.to({
+//            scaleX: 1 + Math.sin(s) / 2,
+//            scaleY: 1 + Math.cos(s) / 2,
+//          }, 100000 / sceneOptions.speed).start();
+//        },
+//        function () {
+//          tween.easing(easing);
+//          tween.delay(Math.random() * (50000 / sceneOptions.movement));
+//          tween.to({
+//            rotation: (Math.random() - 0.5) * 180 * 10
+//          }, 100000 / sceneOptions.speed).start();
+//        },
         function () {
           tween.easing(easing);
           tween.delay(Math.random() * (50000 / sceneOptions.movement));
-          tween.to({
-            rotation: (Math.random() - 0.5) * 180 * 10
-          }, 100000 / sceneOptions.speed).start();
-        },
-        function () {
-          tween.easing(easing);
-          tween.delay(Math.random() * (50000 / sceneOptions.movement));
-          var s = 1 + Math.random() * 2;
+          var s = 0.01 + Math.random() * 4;
           tween.to({
             scaleX: s,
             scaleY: s,
@@ -304,7 +304,7 @@
       c.push(f.add(sceneOptions, "movement", 1, 1000).step(1));
       c.push(f.add(sceneOptions, "speed", 0.1, 200).step(0.1));
       c.push(f.add(sceneOptions, "redraw", 0, 200).step(1));
-      c.push(f.add(sceneOptions, "maxTextures", 1, 8).step(1));
+      c.push(f.add(sceneOptions, "maxTextures", 1, 32).step(1));
       c.push(f.add(sceneOptions, "maxTextureSize", 128, 1024 * 16).step(1));
       c.push(f.add(sceneOptions, "useStencil"));
       c.push(f.add(sceneOptions, "frameRate", 1, 60).step(1));
@@ -408,8 +408,8 @@
 
       for (var i = 0; i < sceneOptions.dynamicShapes; i++) {
         var frame = new Shape(new Shumway.TimeShape());
-        frame.x = frame.width / 2 + Math.random() * (canvas.width - frame.width / 2);
-        frame.y = frame.height / 2 + Math.random() * (canvas.height - frame.height / 2);
+        frame.x = Math.random() * canvas.width;
+        frame.y = Math.random() * canvas.height;
         frame.origin = new Point(frame.w / 2, frame.h / 2);
         stage.addChild(frame);
         shuffle(frame, TWEEN.Easing.Exponential.Out);
@@ -427,12 +427,15 @@
       }
 
       var image = document.createElement("img");
-      image.src = "assets/firefox_logo_small.png";
+      // image.src = "assets/firefox_logo_small.png";
+      image.src = "assets/bridge.jpg";
+      // image.src = "assets/big.jpg";
       image.addEventListener("load", function () {
         for (var i = 0; i < sceneOptions.bitmaps; i++) {
           var frame = new Shape(Shumway.getImageShape(image));
           frame.x = (Math.random()) * canvas.width;
           frame.y = (Math.random()) * canvas.height;
+          frame.origin = new Point(frame.w / 2, frame.h / 2);
           // frame.alpha = Math.random();
           if (false || Math.random() < 0.5) {
             frame.filters = [new BlurFilter(10, 10)];

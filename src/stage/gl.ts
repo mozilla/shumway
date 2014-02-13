@@ -179,12 +179,12 @@ module Shumway.GL {
       return this._h;
     }
 
-    constructor(context: WebGLContext, texture: WebGLTexture, w: number, h: number, compact: boolean = false) {
+    constructor(context: WebGLContext, texture: WebGLTexture, w: number, h: number, compact: boolean, padding: number) {
       this._context = context;
       this.texture = texture;
       this._w = w;
       this._h = h;
-      this._padding = 2;
+      this._padding = padding;
       this._compact = compact;
       this.reset();
     }
@@ -392,11 +392,6 @@ module Shumway.GL {
       this._maxTextures = options ? options.maxTextures : 8;
       this._maxTextureSize = options ? options.maxTextureSize : 1024;
 
-      this.scratch = [
-        this.createTexture(512, 512),
-        this.createTexture(512, 512)
-      ];
-
       // this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
       this.gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
       this.gl.enable(this.gl.BLEND);
@@ -464,16 +459,17 @@ module Shumway.GL {
         }
       }
       if (!region) {
-        var rw = this._maxTextureSize;
-        var rh =  this._maxTextureSize;
-        if (this._textures.length === this._maxTextures) {
+        if (w >= this._maxTextureSize || h >= this._maxTextureSize) {
+          // Region cannot possibly fit in the standard texture atlas.
+          texture = this.createTexture(w, h, !imageIsTileSized, 0);
+        } else if (this._textures.length === this._maxTextures) {
           if (discardCache) {
             this.discardCachedImages();
             return this.allocateTextureRegion(w, h, false);
           }
           return null;
         } else {
-          texture = this.createTexture(rw, rh, !imageIsTileSized);
+          texture = this.createTexture(this._maxTextureSize, this._maxTextureSize, !imageIsTileSized, 2);
         }
         this._textures.push(texture);
         region = texture.atlas.add(null, w, h);
@@ -584,7 +580,7 @@ module Shumway.GL {
       return shader;
     }
 
-    createTexture(w: number, h: number, compact: boolean = false): WebGLTexture {
+    createTexture(w: number, h: number, compact: boolean, padding: number): WebGLTexture {
       var gl = this.gl;
       var texture = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -597,7 +593,7 @@ module Shumway.GL {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
       texture.w = w;
       texture.h = h;
-      texture.atlas = new WebGLTextureAtlas(this, texture, w, h, compact);
+      texture.atlas = new WebGLTextureAtlas(this, texture, w, h, compact, padding);
       texture.framebuffer = this.createFramebuffer(texture);
       texture.regions = [];
       return texture;
@@ -872,8 +868,10 @@ module Shumway.GL {
           assert (level >= -MIN_CACHE_LEVELS);
         }
       }
-      if (!this.source.isScaleable) {
-        level = clamp(level, -MIN_CACHE_LEVELS, 1);
+      // If the source is not scalable don't cache any tiles at a higher scale factor. However, it may still make
+      // sense to cache at a lower scale factor in case we need to evict larger cached images.
+      if (!this.source.isScalable) {
+        level = clamp(level, -MIN_CACHE_LEVELS, 0);
       }
       var scale = Math.pow(2, level);
       var levelIndex = MIN_CACHE_LEVELS + level;
@@ -882,7 +880,7 @@ module Shumway.GL {
         var bounds = this.source.getBounds();
         var scaledBounds = bounds.clone().scale(scale, scale);
         var tileW, tileH;
-        if (this.source.isDynamic || Math.max(scaledBounds.w, scaledBounds.h) <= MIN_UNTILED_SIZE) {
+        if (this.source.isDynamic || !this.source.isTileable || Math.max(scaledBounds.w, scaledBounds.h) <= MIN_UNTILED_SIZE) {
           tileW = scaledBounds.w;
           tileH = scaledBounds.h;
         } else {
@@ -1067,11 +1065,14 @@ module Shumway.GL {
       this._colorTransform = colorTransform;
       var sampler = this._textures.indexOf(src.texture);
       if (sampler < 0) {
-        this._textures.push(src.texture);
-        if (this._textures.length > 8) {
-          return false;
-          notImplemented("Cannot handle more than 8 texture samplers.");
+        if (this._textures.length === 8) {
+          this.flush();
         }
+        this._textures.push(src.texture);
+//        if (this._textures.length > 8) {
+//          return false;
+//          notImplemented("Cannot handle more than 8 texture samplers.");
+//        }
         sampler = this._textures.length - 1;
       }
       var tmpVertices = WebGLCombinedBrush._tmpVertices;
@@ -1155,7 +1156,6 @@ module Shumway.GL {
       if (drawElements) {
         gl.drawElements(gl.TRIANGLES, g.triangleCount * 3, gl.UNSIGNED_SHORT, 0);
       }
-
       this.reset();
     }
   }

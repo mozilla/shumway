@@ -29,7 +29,8 @@ module Shumway {
     properties: {[name: string]: any} = {};
     isDynamic: boolean = false;
     isInvalid: boolean = true;
-    isScaleable: boolean = true;
+    isScalable: boolean = true;
+    isTileable: boolean = true;
     getBounds (): Rectangle {
       var b = this._data.shapeBounds;
       return new Rectangle(b.xmin, b.ymin, b.xmax - b.xmin, b.ymax - b.ymin);
@@ -76,7 +77,8 @@ module Shumway {
     properties: {[name: string]: any} = {};
     isDynamic: boolean = false;
     isInvalid: boolean = true;
-    isScaleable: boolean = true;
+    isScalable: boolean = true;
+    isTileable: boolean = true;
     constructor(w: number, h: number, size: number) {
       this.w = w;
       this.h = h;
@@ -136,7 +138,8 @@ module Shumway {
     private _image: HTMLImageElement;
     isDynamic: boolean = false;
     isInvalid: boolean = false;
-    isScaleable: boolean = false;
+    isScalable: boolean = false;
+    isTileable: boolean = false;
     constructor(image) {
       this._image = image;
     }
@@ -164,7 +167,8 @@ module Shumway {
     properties: {[name: string]: any} = Object.create(null);
     isDynamic: boolean = true;
     isInvalid: boolean = true;
-    isScaleable: boolean = true;
+    isScalable: boolean = true;
+    isTileable: boolean = true;
     constructor () {
       this._bounds = new Rectangle(0, 0, 300, 80);
       var that = this;
@@ -194,7 +198,8 @@ module Shumway {
     _lineMaxWidth: number = 1024;
     isDynamic: boolean = false;
     isInvalid: boolean = true;
-    isScaleable: boolean = true;
+    isScalable: boolean = true;
+    isTileable: boolean = true;
     constructor(text: string) {
       this._text = text;
 
@@ -246,7 +251,8 @@ module Shumway {
     properties: {[name: string]: any} = {};
     isDynamic: boolean = false;
     isInvalid: boolean = true;
-    isScaleable: boolean = true;
+    isScalable: boolean = true;
+    isTileable: boolean = true;
     getBounds (): Rectangle {
       return this._bounds;
     }
