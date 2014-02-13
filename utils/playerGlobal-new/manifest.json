@@ -4209,7 +4209,9 @@
     "name": "flash/net/FlashNetScript",
     "defs": [
       "flash.net:navigateToURL",
-      "flash.net:sendToURL"
+      "flash.net:sendToURL",
+      "flash.net:registerClassAlias",
+      "flash.net:getClassByAlias"
     ],
     "files": [
       "flash/net/FlashNetScript.as"
