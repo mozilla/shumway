@@ -17,49 +17,73 @@
 package flash.ui {
 public final class ContextMenuBuiltInItems {
   public function ContextMenuBuiltInItems() {}
+  private var _save: Boolean = true;
+  private var _zoom: Boolean = true;
+  private var _quality: Boolean = true;
+  private var _play: Boolean = true;
+  private var _loop: Boolean = true;
+  private var _rewind: Boolean = true;
+  private var _forwardAndBack: Boolean = true;
+  private var _print: Boolean = true;
   public function get save(): Boolean {
-    notImplemented("save");
-    return false;
+    return _save;
   }
-  public function set save(val: Boolean): void { notImplemented("save"); }
+  public function set save(val: Boolean): void {
+    _save = val;
+  }
   public function get zoom(): Boolean {
-    notImplemented("zoom");
-    return false;
+    return _zoom;
   }
-  public function set zoom(val: Boolean): void { notImplemented("zoom"); }
+  public function set zoom(val: Boolean): void {
+    _zoom = val;
+  }
   public function get quality(): Boolean {
-    notImplemented("quality");
-    return false;
+    return _quality;
   }
-  public function set quality(val: Boolean): void { notImplemented("quality"); }
+  public function set quality(val: Boolean): void {
+    _quality = val;
+  }
   public function get play(): Boolean {
-    notImplemented("play");
-    return false;
+    return _play;
   }
-  public function set play(val: Boolean): void { notImplemented("play"); }
+  public function set play(val: Boolean): void {
+    _play = val;
+  }
   public function get loop(): Boolean {
-    notImplemented("loop");
-    return false;
+    return _loop;
   }
-  public function set loop(val: Boolean): void { notImplemented("loop"); }
+  public function set loop(val: Boolean): void {
+    _loop = val;
+  }
   public function get rewind(): Boolean {
-    notImplemented("rewind");
-    return false;
+    return _rewind;
   }
-  public function set rewind(val: Boolean): void { notImplemented("rewind"); }
+  public function set rewind(val: Boolean): void {
+    _rewind = val;
+  }
   public function get forwardAndBack(): Boolean {
-    notImplemented("forwardAndBack");
-    return false;
+    return _forwardAndBack;
   }
-  public function set forwardAndBack(val: Boolean): void { notImplemented("forwardAndBack"); }
+  public function set forwardAndBack(val: Boolean): void {
+    _forwardAndBack = val;
+  }
   public function get print(): Boolean {
-    notImplemented("print");
-    return false;
+    return _print;
   }
-  public function set print(val: Boolean): void { notImplemented("print"); }
+  public function set print(val: Boolean): void {
+    _print = val;
+  }
   public function clone(): ContextMenuBuiltInItems {
-    notImplemented("clone");
-    return null;
+    var items: ContextMenuBuiltInItems = new ContextMenuBuiltInItems();
+    items.save = save;
+    items.zoom = zoom;
+    items.quality = quality;
+    items.play = play;
+    items.loop = loop;
+    items.rewind = rewind;
+    items.forwardAndBack = forwardAndBack;
+    items.print = print;
+    return items;
   }
 }
 }
