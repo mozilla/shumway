@@ -119,15 +119,11 @@ var GraphicsDefinition = (function () {
                                 (x * 20)|0, (y * 20)|0);
     },
     drawCircle: function (x, y, radius) {
-      this._invalidate();
-      this._currentPath.circle((x * 20)|0, (y * 20)|0, (radius * 20)|0);
+      var radius2 = radius * 2;
+      this.drawRoundRect(x - radius, y - radius, radius2, radius2, radius2, radius2);
     },
     drawEllipse: function (x, y, width, height) {
-      this._invalidate();
-      var radiusX = (width / 2 * 20)|0;
-      var radiusY = (height / 2 * 20)|0;
-      this._currentPath.ellipse((x * 20)|0 + radiusX, (y * 20)|0 + radiusY,
-                                radiusX, radiusY);
+      this.drawRoundRect(x, y, width, height, width, height);
     },
     drawPath: function (commands, data, winding) {
       this._invalidate();
