@@ -165,7 +165,7 @@ module Shumway {
     }
     render (context: CanvasRenderingContext2D) {
       context.save();
-      context.font = "80px Open Sans";
+      context.font = "40px Open Sans";
       context.fillStyle = "white";
       context.fillText(String(Date.now()), 0, 80);
       context.restore();

@@ -3,7 +3,7 @@
 
 module Shumway.GL {
   var traceLevel = 2;
-  var SCRATCH_CANVAS_SIZE = 1024;
+  var SCRATCH_CANVAS_SIZE = 1024 * 2;
   var TILE_SIZE = 256;
   var MIN_UNTILED_SIZE = 512;
 
@@ -440,7 +440,7 @@ module Shumway.GL {
       }
     }
 
-    public cacheImage(image: any, solitary: boolean): WebGLTextureRegion {
+    public cacheImage(image: any): WebGLTextureRegion {
       var w = image.width;
       var h = image.height;
       var textureRegion = this.allocateTextureRegion(w, h);
@@ -754,8 +754,13 @@ module Shumway.GL {
       var viewport = this._viewport;
       var inverseTransform = Matrix.createIdentity();
 
-      function cacheImageCallback(src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {
-        return context.cacheImage(src.getImageData(srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h), false);
+      function cacheImageCallback(oldTextureRegion: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {
+        if (!oldTextureRegion) {
+          return context.cacheImage(src.getImageData(srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h));
+        } else {
+          context.updateTextureRegion(src.getImageData(srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h), oldTextureRegion);
+          return oldTextureRegion;
+        }
       }
 
       var gl = context.gl;
@@ -803,19 +808,6 @@ module Shumway.GL {
               if (src && src.texture) {
                 context.textureRegionCache.put(src);
               }
-              if (source.dynamic) {
-                var scratchCanvas = that._dynamicScratchCanvas;
-                scratchCanvas.width = tile.bounds.w;
-                scratchCanvas.height = tile.bounds.h;
-                var scratchContext = that._dynamicScratchCanvasContext;
-                scratchContext.save();
-                scratchContext.setTransform(1, 0, 0, 1, 0, 0);
-                scratchContext.clearRect(0, 0, scratchCanvas.width, scratchCanvas.height);
-                source.render(scratchContext);
-                scratchContext.restore();
-                var imageData = scratchContext.getImageData(0, 0, tile.bounds.w, tile.bounds.h);
-                that.context.updateTextureRegion(imageData, src);
-              }
               if (!brush.drawImage(src, undefined, new Color(1, 1, 1, alpha), colorTransform, tileTransform, depth)) {
                 unexpected();
               }
@@ -862,12 +854,20 @@ module Shumway.GL {
     /**
      * Gets the tiles covered by the specified |query| rectangle and transformed by the given |transform| matrix.
      */
-    private getTiles(query: Rectangle, transform: Matrix): Tile [] {
+    private getTiles(query: Rectangle, transform: Matrix, scratchBounds: Rectangle): Tile [] {
       var transformScale = Math.max(transform.getAbsoluteScaleX(), transform.getAbsoluteScaleY());
       // Use log2(1 / transformScale) to figure out the tile level.
-      var level = 1;
-      if (!this.source.dynamic) {
-        level = clamp(Math.round(Math.log(1 / transformScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
+      var level = clamp(Math.round(Math.log(1 / transformScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
+      var scale = Math.pow(2, level);
+      if (this.source.dynamic) {
+        while (true) {
+          scale = Math.pow(2, level);
+          if (scratchBounds.contains(this.source.getBounds().clone().scale(scale, scale))) {
+            break;
+          }
+          level --;
+          assert (level >= 0);
+        }
       }
       var scale = Math.pow(2, level);
       var levelIndex = MIN_CACHE_LEVELS + level;
@@ -882,23 +882,22 @@ module Shumway.GL {
         } else {
           tileW = tileH = TILE_SIZE;
         }
-        cache = this.cacheLevels[levelIndex] = new TileCache(scaledBounds.w, scaledBounds.h, tileW, tileH, scale);
+        cache = this.cacheLevels[levelIndex] = new TileCache(scaledBounds.w, scaledBounds.h, tileW, tileH, scale, this.source.dynamic);
       }
-      var t = transform.clone();
-      t.scale(scale, scale);
-      return cache.getTiles(query, t);
+      return cache.getTiles(query, transform.clone().scale(scale, scale));
     }
 
     fetchTiles (
       query: Rectangle,
       transform: Matrix,
       scratchContext: CanvasRenderingContext2D,
-      cacheImageCallback: (src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion): Tile []  {
-      var tiles = this.getTiles(query, transform);
+      cacheImageCallback: (old: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion): Tile []  {
+      var scratchBounds = new Rectangle(0, 0, scratchContext.canvas.width, scratchContext.canvas.height);
+      var tiles = this.getTiles(query, transform, scratchBounds);
       var uncachedTiles: Tile [];
       for (var i = 0; i < tiles.length; i++) {
         var tile = tiles[i];
-        if (!tile.cachedTextureRegion || !tile.cachedTextureRegion.texture) {
+        if (!tile.cachedTextureRegion || !tile.cachedTextureRegion.texture || tile.dynamic) {
           if (!uncachedTiles) {
             uncachedTiles = [];
           }
@@ -906,7 +905,7 @@ module Shumway.GL {
         }
       }
       if (uncachedTiles) {
-        this.cacheTiles(scratchContext, uncachedTiles, cacheImageCallback);
+        this.cacheTiles(scratchContext, uncachedTiles, cacheImageCallback, scratchBounds);
       }
       return tiles;
     }
@@ -932,10 +931,11 @@ module Shumway.GL {
     private cacheTiles (
       scratchContext: CanvasRenderingContext2D,
       uncachedTiles: Tile [],
-      cacheImageCallback: (src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion) {
+      cacheImageCallback: (old: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion,
+      scratchBounds: Rectangle,
+      maxRecursionDepth: number = 4) {
+      assert (maxRecursionDepth > 0);
       var uncachedTileBounds = this.getTileBounds(uncachedTiles);
-      var scratchBounds = new Rectangle(0, 0, scratchContext.canvas.width, scratchContext.canvas.height);
-
       scratchContext.save();
       scratchContext.setTransform(1, 0, 0, 1, 0, 0);
       scratchContext.clearRect(0, 0, scratchBounds.w, scratchBounds.h);
@@ -959,17 +959,17 @@ module Shumway.GL {
           }
           remainingUncachedTiles.push(tile);
         }
-        tile.cachedTextureRegion = cacheImageCallback(scratchContext, region);
+        tile.cachedTextureRegion = cacheImageCallback(<WebGLTextureRegion>tile.cachedTextureRegion, scratchContext, region);
       }
       if (remainingUncachedTiles) {
         // This is really dumb at the moment; if we have some tiles left over, partition the tile set in half and recurse.
         if (remainingUncachedTiles.length >= 2) {
           var a = remainingUncachedTiles.slice(0, remainingUncachedTiles.length / 2 | 0);
           var b = remainingUncachedTiles.slice(a.length);
-          this.cacheTiles(scratchContext, a, cacheImageCallback);
-          this.cacheTiles(scratchContext, b, cacheImageCallback);
+          this.cacheTiles(scratchContext, a, cacheImageCallback, scratchBounds, maxRecursionDepth - 1);
+          this.cacheTiles(scratchContext, b, cacheImageCallback, scratchBounds, maxRecursionDepth - 1);
         } else {
-          this.cacheTiles(scratchContext, remainingUncachedTiles, cacheImageCallback);
+          this.cacheTiles(scratchContext, remainingUncachedTiles, cacheImageCallback, scratchBounds, maxRecursionDepth - 1);
         }
       }
     }

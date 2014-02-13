@@ -1515,6 +1515,7 @@ module Shumway.Geometry {
     y: number;
     index: number;
     scale: number;
+    dynamic: boolean;
     bounds: Rectangle;
     cachedTextureRegion: Shumway.Layers.ITextureRegion;
     color: Shumway.GL.Color;
@@ -1527,12 +1528,13 @@ module Shumway.Geometry {
       this.bounds.getCorners(Tile.corners);
       return this._obb = new OBB(Tile.corners);
     }
-    constructor(index: number, x: number, y: number, w: number, h: number, scale: number) {
+    constructor(index: number, x: number, y: number, w: number, h: number, scale: number, dynamic: boolean = false) {
       this.index = index;
       this.x = x;
       this.y = y;
       this.scale = scale;
       this.bounds = new Rectangle(x * w, y * h, w, h);
+      this.dynamic = dynamic;
     }
   }
 
@@ -1546,7 +1548,7 @@ module Shumway.Geometry {
     columns: number;
     tiles: Tile [];
     private static points = Point.createEmptyPoints(4);
-    constructor(w: number, h: number, tileW: number, tileH: number, scale: number) {
+    constructor(w: number, h: number, tileW: number, tileH: number, scale: number, dynamic: boolean = false) {
       this.tileW = tileW;
       this.tileH = tileH;
       this.scale = scale;
@@ -1559,7 +1561,7 @@ module Shumway.Geometry {
       var index = 0;
       for (var y = 0; y < this.rows; y++) {
         for (var x = 0; x < this.columns; x++) {
-          this.tiles.push(new Tile(index++, x, y, tileW, tileH, scale));
+          this.tiles.push(new Tile(index++, x, y, tileW, tileH, scale, dynamic));
         }
       }
     }
