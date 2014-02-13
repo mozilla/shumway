@@ -15,10 +15,9 @@
  */
 
 package flash.text.engine {
-import __AS3__.vec.Vector;
 
 public final class TextBlock {
-  public function TextBlock(content: ContentElement = null, tabStops: Vector = null,
+  public function TextBlock(content: ContentElement = null, tabStops: Vector.<TabStop> = null,
                             textJustifier: TextJustifier = null, lineRotation: String = "rotate0",
                             baselineZero: String = "roman", bidiLevel: int = 0,
                             applyNonLinearFontScaling: Boolean = true,
@@ -75,7 +74,7 @@ public final class TextBlock {
   public native function get textLineCreationResult(): String;
   public native function get lineRotation(): String;
   public native function set lineRotation(value: String): void;
-  public function get tabStops(): Vector {
+  public function get tabStops(): Vector.<TabStop> {
     var myTabs: Vector.<TabStop> = getTabStops();
 
     if (!myTabs) {
@@ -87,7 +86,7 @@ public final class TextBlock {
     }
     return retTabs;
   }
-  public function set tabStops(value: Vector): void {
+  public function set tabStops(value: Vector.<TabStop>): void {
     if (!value) {
       setTabStops(null);
       return;

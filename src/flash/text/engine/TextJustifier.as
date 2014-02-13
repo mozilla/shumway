@@ -23,13 +23,18 @@ public class TextJustifier {
     if (!locale || locale.length < 2) {
       Error.throwError(ArgumentError, 2004, "previousLine");
     }
-    var base: String = locale.substr(0, 2);
 
+    var base: String = locale.substr(0, 2);
+    // So, weird things are going on here: in this class, and only in this class, the compiler
+    // is of the opinion that the EastAsianJustifier and SpaceJustifier ctors must only be called
+    // without any arguments. It's quite adamant about this, so we have to trick it into behaving.
+    var justifierClass: Class;
     if (base == 'ja' || base == 'ko' || base === 'zh') {
-      return new EastAsianJustifier(locale);
+      justifierClass = EastAsianJustifier;
     } else {
-      return new SpaceJustifier(locale);
+      justifierClass = SpaceJustifier;
     }
+    return new justifierClass(locale);
   }
   public function TextJustifier(locale: String, lineJustification: String) {
     if (getQualifiedClassName(this) === 'flash.text.engine::TextJustifier') {

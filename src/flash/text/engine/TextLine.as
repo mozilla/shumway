@@ -61,7 +61,7 @@ public final class TextLine extends DisplayObjectContainer {
   public native function get validity(): String;
   public native function set validity(value: String): void;
   public native function get atomCount(): int;
-  public native function get mirrorRegions(): Vector;
+  public native function get mirrorRegions(): Vector.<TextLineMirrorRegion>;
   public function getMirrorRegion(mirror: EventDispatcher): TextLineMirrorRegion {
     var regions: Vector.<TextLineMirrorRegion> = this.mirrorRegions;
     for (var i: int = 0; i < regions.length; i++) {
