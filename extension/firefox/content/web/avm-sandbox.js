@@ -80,6 +80,11 @@ function fallback() {
   FirefoxCom.requestSync('fallback', null)
 }
 
+var playerglobalInfo = {
+  abcs: SHUMWAY_ROOT + "playerglobal/playerglobal.abcs",
+  catalog: SHUMWAY_ROOT + "playerglobal/playerglobal.json"
+};
+
 function runViewer() {
   var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
   FileLoadingService.setBaseUrl(flashParams.baseUrl);
@@ -274,7 +279,7 @@ function parseSwf(url, movieParams, objectParams) {
     FirefoxCom.request('endActivation', null);
   }
 
-  createAVM2(builtinPath, playerGlobalPath, avm1Path,
+  createAVM2(builtinPath, playerglobalInfo, avm1Path,
     compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     function (avm2) {

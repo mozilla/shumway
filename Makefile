@@ -63,6 +63,9 @@ run-tamarin-tests:
 build-playerglobal:
 	make -C utils/ build-playerglobal
 
+build-playerglobal-new:
+	cd utils/playerGlobal-new; node build -t 9
+
 build-playerglobal-min:
 	make -C utils/ install-apparat
 	make -C utils/playerglobal build-min

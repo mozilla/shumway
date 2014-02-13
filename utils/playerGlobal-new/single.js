@@ -26,7 +26,6 @@ var build_dir = '../build/playerglobal';
 
 var manifest = JSON.parse(fs.readFileSync('manifest.json'));
 var manifestUpdated = fs.statSync('manifest.json').mtime.valueOf();
-var jstemplate = '' + fs.readFileSync('playerglobal.js.template');
 var ascjar = '../utils/asc.jar';
 var buildasc = './avm2/generated/builtin/builtin.abc';
 
@@ -108,7 +107,7 @@ runAsc(build_dir + '/playerglobal-single.abc', files, function (code, outputPath
 });
 
 function updatePlayerglobal(outputPath) {
-  console.info('Updating playerglobal.js');
+  console.info('Updating playerglobal-single.json');
 
   var length = fs.statSync(outputPath).size;
   var index = [];
@@ -118,6 +117,7 @@ function updatePlayerglobal(outputPath) {
     offset: 0,
     length: length
   });
-  fs.writeFileSync(build_dir + '/playerglobal-single.js',
-    jstemplate.replace('[/*index*/]', JSON.stringify(index, null, 2)));
+  fs.writeFileSync(build_dir + '/playerglobal-single.json',JSON.stringify(index, null, 2));
+  fs.writeFileSync(build_dir + '/playerglobal-single.abcs',
+    fs.readFileSync(outputPath));
 }

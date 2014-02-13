@@ -46,7 +46,6 @@ var build_dir = '../build/playerglobal';
 
 var manifest = JSON.parse(fs.readFileSync('manifest.json'));
 var manifestUpdated = fs.statSync('manifest.json').mtime.valueOf();
-var jstemplate = '' + fs.readFileSync('playerglobal.js.template');
 var ascjar = '../utils/asc.jar';
 var buildasc = './avm2/generated/builtin/builtin.abc';
 
@@ -379,7 +378,7 @@ if (buildQueue.length > 0) {
 }
 
 function updatePlayerglobal() {
-  console.info('Updating playerglobal.js');
+  console.info('Updating playerglobal.json');
 
   var hex = '', lastPos = 0;
   var index = [];
@@ -397,9 +396,8 @@ function updatePlayerglobal() {
     lastPos += ascLength;
     hex += ascHex;
   });
-  fs.writeFileSync('flash/playerglobal.js',
-    jstemplate.replace('[/*index*/]', JSON.stringify(index, null, 2)));
-  fs.writeFileSync('flash/playerglobal.abc', new Buffer(hex, 'hex'));
+  fs.writeFileSync(build_dir + '/playerglobal.json', JSON.stringify(index, null, 2));
+  fs.writeFileSync(build_dir + '/playerglobal.abcs', new Buffer(hex, 'hex'));
 }
 
 function completeBuild() {
@@ -423,9 +421,9 @@ function completeBuild() {
 
     fs.writeFileSync(dependenciesPath, JSON.stringify(dependencies, null, 2));
   } else {
-    console.info('Checking playerglobal.js');
+    console.info('Checking playerglobal.json');
     try {
-      var playerglobalUpdated = fs.statSync('flash/playerglobal.js').mtime.valueOf();
+      var playerglobalUpdated = fs.statSync(build_dir + '/playerglobal.json').mtime.valueOf();
       needsNewPlayerglobal = dependenciesUpdated > playerglobalUpdated;
     } catch (e) {}
   }

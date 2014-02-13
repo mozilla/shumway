@@ -101,25 +101,6 @@ SWF.parse(snarf("bin/library.swf", "binary"), {
       delete file.data;
     }
 
-    var out =
-      "var playerGlobalNames = {};\n" +
-      "var playerGlobalScripts = {};\n" +
-      "(function () {\n" +
-      "  var index = " + JSON.stringify(index, null, 2) + ";\n" +
-      "  for (var i = 0; i < index.length; i++) {\n" +
-      "    var abc = index[i];\n" +
-      "    playerGlobalScripts[abc.name] = abc;\n" +
-      "    if (typeof abc.defs === 'string') {\n" +
-      "      playerGlobalNames[abc.defs] = abc.name;\n" +
-      "    } else {\n" +
-      "      for (var j = 0; j < abc.defs.length; j++) {\n" +
-      "        var def = abc.defs[j];\n" +
-      "        playerGlobalNames[def] = abc.name;\n" +
-      "      }\n" +
-      "    }\n" +
-      "  }\n" +
-      "})();";
-
-    print(out);
+    print(JSON.stringify(index, null, 2));
   }
 });

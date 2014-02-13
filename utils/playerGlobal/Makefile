@@ -34,10 +34,11 @@ default:
 	@echo "run: make [build|clean]"
 
 build: $(BUILD_DIR)/library.swf
-	$(JSSHELL_HOME)/js playerglobal-gen.js > playerglobal.js
-	$(JSSHELL_HOME)/js playerglobal-pack.js | $(BASE64DEC) playerglobal.abc
-	mv playerglobal.js ../../src/flash
-	mv playerglobal.abc ../../src/flash
+	$(JSSHELL_HOME)/js playerglobal-gen.js > playerglobal-fp.json
+	$(JSSHELL_HOME)/js playerglobal-pack.js | $(BASE64DEC) playerglobal-fp.abcs
+	mkdir -p ../../build/playerglobal
+	mv playerglobal-fp.json ../../build/playerglobal
+	mv playerglobal-fp.abcs ../../build/playerglobal
 
 build-min: $(BUILD_DIR)/library.min.swf
 	$(JSSHELL_HOME)/js playerglobal-dumpabc.js | $(BASE64DEC) $(BUILD_DIR)/playerGlobal.min.abc
