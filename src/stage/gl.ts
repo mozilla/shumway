@@ -859,7 +859,9 @@ module Shumway.GL {
       // Use log2(1 / transformScale) to figure out the tile level.
       var level = clamp(Math.round(Math.log(1 / transformScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
       var scale = Math.pow(2, level);
-      if (this.source.dynamic) {
+      // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our texture caches ...
+      if (this.source.isDynamic) {
+        // .. so try a lower scale level until it fits.
         while (true) {
           scale = Math.pow(2, level);
           if (scratchBounds.contains(this.source.getBounds().clone().scale(scale, scale))) {
@@ -876,13 +878,13 @@ module Shumway.GL {
         var bounds = this.source.getBounds();
         var scaledBounds = bounds.clone().scale(scale, scale);
         var tileW, tileH;
-        if (this.source.dynamic || Math.max(scaledBounds.w, scaledBounds.h) <= MIN_UNTILED_SIZE) {
+        if (this.source.isDynamic || Math.max(scaledBounds.w, scaledBounds.h) <= MIN_UNTILED_SIZE) {
           tileW = scaledBounds.w;
           tileH = scaledBounds.h;
         } else {
           tileW = tileH = TILE_SIZE;
         }
-        cache = this.cacheLevels[levelIndex] = new TileCache(scaledBounds.w, scaledBounds.h, tileW, tileH, scale, this.source.dynamic);
+        cache = this.cacheLevels[levelIndex] = new TileCache(scaledBounds.w, scaledBounds.h, tileW, tileH, scale);
       }
       return cache.getTiles(query, transform.clone().scale(scale, scale));
     }
@@ -895,9 +897,10 @@ module Shumway.GL {
       var scratchBounds = new Rectangle(0, 0, scratchContext.canvas.width, scratchContext.canvas.height);
       var tiles = this.getTiles(query, transform, scratchBounds);
       var uncachedTiles: Tile [];
+      var source = this.source;
       for (var i = 0; i < tiles.length; i++) {
         var tile = tiles[i];
-        if (!tile.cachedTextureRegion || !tile.cachedTextureRegion.texture || tile.dynamic) {
+        if (!tile.cachedTextureRegion || !tile.cachedTextureRegion.texture || (source.isDynamic && source.isInvalid)) {
           if (!uncachedTiles) {
             uncachedTiles = [];
           }
@@ -934,7 +937,7 @@ module Shumway.GL {
       cacheImageCallback: (old: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion,
       scratchBounds: Rectangle,
       maxRecursionDepth: number = 4) {
-      assert (maxRecursionDepth > 0);
+      assert (maxRecursionDepth > 0, "Infinite recursion is likely.");
       var uncachedTileBounds = this.getTileBounds(uncachedTiles);
       scratchContext.save();
       scratchContext.setTransform(1, 0, 0, 1, 0, 0);

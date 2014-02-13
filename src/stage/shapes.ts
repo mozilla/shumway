@@ -27,7 +27,8 @@ module Shumway {
       this._data = data;
     }
     properties: {[name: string]: any} = {};
-    dynamic: boolean = false;
+    isDynamic: boolean = false;
+    isInvalid: boolean = true;
     getBounds (): Rectangle {
       var b = this._data.shapeBounds;
       return new Rectangle(b.xmin, b.ymin, b.xmax - b.xmin, b.ymax - b.ymin);
@@ -72,7 +73,8 @@ module Shumway {
     h: number;
     size: number;
     properties: {[name: string]: any} = {};
-    dynamic: boolean = false;
+    isDynamic: boolean = false;
+    isInvalid: boolean = true;
     constructor(w: number, h: number, size: number) {
       this.w = w;
       this.h = h;
@@ -130,7 +132,8 @@ module Shumway {
 
   export class ImageShape implements IRenderable {
     private _image: HTMLImageElement;
-    dynamic: boolean = false;
+    isDynamic: boolean = false;
+    isInvalid: boolean = true;
     constructor(image) {
       this._image = image;
     }
@@ -156,9 +159,14 @@ module Shumway {
   export class TimeShape implements IRenderable {
     private _bounds: Rectangle;
     properties: {[name: string]: any} = Object.create(null);
-    dynamic: boolean = true;
+    isDynamic: boolean = true;
+    isInvalid: boolean = true;
     constructor () {
       this._bounds = new Rectangle(0, 0, 300, 80);
+      var that = this;
+      setInterval(function () {
+        that.isInvalid = true;
+      }, 100 + Math.random() * 500);
     }
     getBounds (): Rectangle {
       return this._bounds;
@@ -169,6 +177,7 @@ module Shumway {
       context.fillStyle = "white";
       context.fillText(String(Date.now()), 0, 80);
       context.restore();
+      this.isInvalid = false;
     }
   }
 
@@ -179,7 +188,8 @@ module Shumway {
     _fontSize: number = 14;
     _lineHeight: number = 16;
     _lineMaxWidth: number = 1024;
-    dynamic: boolean = false;
+    isDynamic: boolean = false;
+    isInvalid: boolean = true;
     constructor(text: string) {
       this._text = text;
 
@@ -229,7 +239,8 @@ module Shumway {
       this._bounds = new Rectangle(0, 0, 32 + extend, 32 + extend);
     }
     properties: {[name: string]: any} = {};
-    dynamic: boolean = false;
+    isDynamic: boolean = false;
+    isInvalid: boolean = true;
     getBounds (): Rectangle {
       return this._bounds;
     }

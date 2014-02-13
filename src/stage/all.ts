@@ -45,9 +45,25 @@ interface WebGLTexture {
 
 module Shumway {
   export interface IRenderable {
+    /**
+     * Bounds of the source content. This should never change.
+     */
     getBounds(): Shumway.Geometry.Rectangle;
+    /**
+     * Property bag used to attach dynamic properties to this object.
+     */
     properties: {[name: string]: any};
+    /**
+     * Render source content.
+     */
     render (context: CanvasRenderingContext2D, options? : any);
-    dynamic: boolean;
+    /**
+     * Whether source has dynamic content.
+     */
+    isDynamic: boolean;
+    /**
+     * Whether source's dynamic content has changed. This is only defined if |isDynamic| is true.
+     */
+    isInvalid: boolean;
   }
 }
