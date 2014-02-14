@@ -46,7 +46,7 @@ build: ensureoutputdir ../../build/playerglobal/playerglobal.abcs
 	cd $(BUILD_DIR); zip -r shumway.xpi *
 
 ../../build/playerglobal/playerglobal.abcs:
-	make -C ../.. build-playerglobal-new
+	make -C $(UTILS_HOME) build-playerglobal
 
 ensureoutputdir: clean
 	-mkdir -p $(BUILD_DIR)

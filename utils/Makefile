@@ -159,13 +159,16 @@ ifeq ($(UNAME), Darwin)
 endif
 
 build-playerglobal:
-	make -C playerGlobal/ build
+	cd playerglobal-builder; node build -t 9
+
+build-playerglobal-fp:
+	make -C playerglobal-fp/ build
 
 clean:
 	-rm -rf $(ASC_JAR)
 	-rm -rf $(TAMARIN_HOME)
 	-rm -rf $(JSSHELL_HOME)
-	make -C playerGlobal/ clean
+	make -C playerglobal-fp/ clean
 
 .PHONY: install-tamarin install-js install-swfdec install-flex-sdk \
         install-node-modules build-tamarin-tests build-playerglobal \

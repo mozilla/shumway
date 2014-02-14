@@ -45,7 +45,7 @@ build: ensureoutputdir build-bundle ../../build/playerglobal/playerglobal.abcs
 	echo $(VERSION_SHA) >> $(BUILD_EXTENSION_DIR)/content/version.txt
 
 ../../build/playerglobal/playerglobal.abcs:
-	make -C ../.. build-playerglobal-new
+	make -C $(UTILS_HOME) build-playerglobal
 
 build-bundle:
 	$(MAKE) -C $(UTILS_HOME)/builder/ CLOSURE_BASIC_OPT= CLOSURE_ADV_OPT= BUILD_DIR=$(GENERIC_DIR)

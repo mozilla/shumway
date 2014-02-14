@@ -106,7 +106,7 @@ build: ensureoutputdir \
 	echo "  cd build/web; git push -f git@github.com:mozilla/shumway.git gh-pages"
 
 $(SHUMWAY_ROOT)/build/playerglobal/playerglobal.abcs:
-	make -C $(SHUMWAY_ROOT) build-playerglobal-new
+	make -C $(SHUMWAY_ROOT)/utils build-playerglobal
 
 ensureoutputdir: clean
 	-mkdir -p $(BUILD_DIR)
