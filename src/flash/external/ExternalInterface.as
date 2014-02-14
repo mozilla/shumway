@@ -111,7 +111,7 @@ package flash.external {
     }
 
     private static function convertFromXML(xml: XML): Object {
-      switch (xml.name()) {
+      switch (String(xml.name())) {
         case 'true':
           return true;
         case 'false':
