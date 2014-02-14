@@ -303,7 +303,13 @@ var createName = function createName(namespaces, name) {
     return callPure(globalProperty("String"), null, [value]);
   }
 
-  var coerceString = callGlobalProperty.bind(null, "asCoerceString");
+  function coerceString(value) {
+    if (isStringConstant(value)) {
+      return value;
+    }
+    return callPure(globalProperty("asCoerceString"), null, [value]);
+  }
+
   var coerceObject = callGlobalProperty.bind(null, "asCoerceObject");
 
   var coercers = createEmptyObject();
