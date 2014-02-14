@@ -19,6 +19,20 @@
 var fs = require('fs');
 var spawn = require('child_process').spawn;
 
+function ensureDir(dir) {
+  if (fs.existsSync(dir)) return;
+  var parts = dir.split('/'), i = parts.length;
+  while (!fs.existsSync(parts.slice(0, i - 1).join('/'))) {
+    i--;
+    if (i <= 0) throw new Error();
+  }
+
+  while (i <= parts.length) {
+    fs.mkdirSync(parts.slice(0, i).join('/'));
+    i++;
+  }
+}
+
 // simple args parsing
 var rebuild = false;
 var buildThreadsCount = 1;
@@ -53,9 +67,8 @@ var buildasc = './avm2/generated/builtin/builtin.abc';
 process.chdir('../../src');
 
 // prepare build folder
-if (!fs.existsSync(build_dir)) {
-  fs.mkdirSync(build_dir);
-}
+ensureDir(build_dir);
+
 var dependencies = {files: {}, abcs: {}}, dependenciesUpdated = 0;
 var dependenciesPath = build_dir + '/dependencies.json';
 if (fs.existsSync(dependenciesPath) && !rebuild) {
@@ -233,20 +246,6 @@ manifest.forEach(function (item) {
     buildItem.dependencies = dependencies.abcs[item.name];
   }
 });
-
-function ensureDir(dir) {
-  if (fs.existsSync(dir)) return;
-  var parts = dir.split('/'), i = parts.length;
-  while (!fs.existsSync(parts.slice(0, i - 1).join('/'))) {
-    i--;
-    if (i <= 0) throw new Error();
-  }
-
-  while (i <= parts.length) {
-    fs.mkdirSync(parts.slice(0, i).join('/'));
-    i++;
-  }
-}
 
 function runAsc(threadId, name, outputPath, files, dependencies, refs, callback) {
   console.info('Building ' + outputPath + ' [' + threadId + '] ...');
