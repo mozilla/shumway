@@ -13,7 +13,7 @@
 # limitations under the License.
 
 UNAME = $(shell uname)
-THREADS = 4
+THREADS ?= 9
 
 JSSHELL_HOME = ./jsshell
 JSSHELL_URL_BASE = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2013/06/2013-06-12-03-11-38-mozilla-central
@@ -159,7 +159,7 @@ ifeq ($(UNAME), Darwin)
 endif
 
 build-playerglobal:
-	cd playerglobal-builder; node build -t 9
+	cd playerglobal-builder; node build -t $(THREADS)
 
 build-playerglobal-fp:
 	make -C playerglobal-fp/ build

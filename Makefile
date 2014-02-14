@@ -64,7 +64,7 @@ build-playerglobal:
 	make -C utils/ build-playerglobal
 
 build-playerglobal-fp:
-	make -C utils/ build-playerglobal
+	make -C utils/ build-playerglobal-fp
 
 build-playerglobal-min:
 	make -C utils/ install-apparat
