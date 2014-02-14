@@ -1677,6 +1677,7 @@
     operator.BITWISE_NOT = new operator("~", function (a) { return ~a; }, false);
     operator.PLUS = new operator("+", function (a) { return +a; }, false);
     operator.NEG = new operator("-", function (a) { return -a; }, false);
+    operator.TYPE_OF = new operator("typeof", function (a) { return typeof a; }, false);
     operator.TRUE = new operator("!!", function (a) { return !!a; }, false);
     operator.FALSE = new operator("!", function (a) { return !a; }, false);
 

@@ -382,14 +382,12 @@ var createName = function createName(namespaces, name) {
           new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset], IR.Flags.PRISTINE);
       }
 
-      var argumentsLength = getJSPropertyWithState(state, args, "length");
-
       for (var i = 0; i < parameterCount; i++) {
         var parameter = mi.parameters[i];
         var index = i + 1;
         var local = state.local[index];
         if (parameter.value !== undefined) {
-          var condition = new IR.Binary(Operator.LT, argumentsLength, constant(parameterIndexOffset + i + 1));
+          var condition = new IR.Binary(Operator.SEQ, new IR.Unary(Operator.TYPE_OF, local), constant("undefined"));
           local = new IR.Latch(null, condition, constant(parameter.value), local);
         }
         if (parameter.type && !parameter.type.isAnyName()) {
