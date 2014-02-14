@@ -65,6 +65,7 @@ var disassemble = shellOptions.register(new Option("d", "disassemble", "boolean"
 var traceLevel = shellOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 var execute = shellOptions.register(new Option("x", "execute", "boolean", false, "execute"));
+var compile = shellOptions.register(new Option("c", "compile", "boolean", false, "compile"));
 var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "boolean", false, "always interpret"));
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
@@ -201,7 +202,7 @@ function grabAbc(fileOrBuffer) {
   }
 }
 
-if (execute.value) {
+if (execute.value || compile.value) {
   if (false) {
     timeIt(function () {
       runVM();
@@ -209,13 +210,12 @@ if (execute.value) {
   } else {
     runVM();
   }
-
 } else if (disassemble.value) {
   abcFiles.map(function (abcFile) {
     return grabAbc(abcFile);
   }).forEach(function (abc) {
-      abc.trace(stdout);
-    });
+    abc.trace(stdout);
+  });
 }
 
 var securityDomains = [];
@@ -236,10 +236,14 @@ function runVM() {
 
 function runAbcs(securityDomain, abcs) {
   for (var i = 0; i < abcs.length; i++) {
-    if (i < files.lenth - 1) {
+    if (i < files.length - 1) {
       securityDomain.applicationDomain.loadAbc(abcs[i]);
     } else {
-      securityDomain.applicationDomain.executeAbc(abcs[i]);
+      if (compile.value) {
+        securityDomain.applicationDomain.compileAbc(abcs[i]);
+      } else {
+        securityDomain.applicationDomain.executeAbc(abcs[i]);
+      }
     }
   }
 }

@@ -66,7 +66,7 @@ function compileClass(classInfo, writer) {
     if (canCompile(methodInfo)) {
       ensureFunctionIsInitialized(methodInfo);
       var method = createCompiledFunction(methodInfo, new Scope(null, {}), false, false, false);
-      writer.enter("constructor:");
+      writer.enter("c:");
       writer.writeLns(method.toSource());
       writer.leave(", ");
     }
@@ -74,11 +74,11 @@ function compileClass(classInfo, writer) {
 
   writer.enter(Multiname.getQualifiedName(classInfo.instanceInfo.name) + ": {");
 
-  writer.enter("static: {");
+  writer.enter("s: {");
   compileInitializer(classInfo.init);
   compileTraits(classInfo.traits);
   writer.leave("}, ");
-  writer.enter("instance: {");
+  writer.enter("i: {");
   compileInitializer(classInfo.instanceInfo.init);
   compileTraits(classInfo.instanceInfo.traits);
   writer.leave("}");
