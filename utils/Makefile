@@ -13,7 +13,7 @@
 # limitations under the License.
 
 UNAME = $(shell uname)
-THREADS = 4
+THREADS ?= 9
 
 JSSHELL_HOME = ./jsshell
 JSSHELL_URL_BASE = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2013/06/2013-06-12-03-11-38-mozilla-central
@@ -159,13 +159,16 @@ ifeq ($(UNAME), Darwin)
 endif
 
 build-playerglobal:
-	make -C playerGlobal/ build
+	cd playerglobal-builder; node build -t $(THREADS)
+
+build-playerglobal-fp:
+	make -C playerglobal-fp/ build
 
 clean:
 	-rm -rf $(ASC_JAR)
 	-rm -rf $(TAMARIN_HOME)
 	-rm -rf $(JSSHELL_HOME)
-	make -C playerGlobal/ clean
+	make -C playerglobal-fp/ clean
 
 .PHONY: install-tamarin install-js install-swfdec install-flex-sdk \
         install-node-modules build-tamarin-tests build-playerglobal \

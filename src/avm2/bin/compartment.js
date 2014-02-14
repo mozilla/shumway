@@ -25,11 +25,11 @@ var console = {
   },
   warn: function (s) {
     if (traceWarnings.value) {
-      print(s);
+      print(RED + s + ENDC);
     }
   },
   info: function (s) {
-    // print(s);
+    print(s);
   }
 };
 
