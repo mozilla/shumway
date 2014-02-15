@@ -19,23 +19,25 @@
  */
 
 function compileScript(script, writer) {
+  // TODO: Create correct scope chains.
+  var scope = new Scope(null, new Global(script));
   script.traits.forEach(function (trait) {
     if (trait.isClass()) {
-      compileClass(trait.classInfo, writer);
+      compileClass(trait.classInfo, writer, scope);
     } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-      compileTrait(trait, writer);
+      compileTrait(trait, writer, scope);
     }
   });
 }
 
-function compileTrait(trait, writer) {
+function compileTrait(trait, writer, scope) {
   var traitName = Multiname.getQualifiedName(trait.name);
   if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
     var methodInfo = trait.methodInfo;
     if (shouldCompile(methodInfo)) {
       ensureFunctionIsInitialized(methodInfo);
       try {
-        var method = createCompiledFunction(methodInfo, new Scope(null, {}), false, false, false);
+        var method = createCompiledFunction(methodInfo, scope, false, false, false);
         if (trait.isMethod()) {
           writer.writeLn("get " + traitName + "() { return this." + VM_OPEN_METHOD_PREFIX + traitName + ".bind(this); },");
         }
@@ -55,17 +57,18 @@ function compileTrait(trait, writer) {
   }
 }
 
-function compileClass(classInfo, writer) {
-  function compileTraits(traits) {
+function compileClass(classInfo, writer, scope) {
+
+  function compileTraits(traits, scope) {
     traits.forEach(function (trait) {
-      compileTrait(trait, writer);
+      compileTrait(trait, writer, scope);
     });
   }
 
-  function compileInitializer(methodInfo) {
+  function compileInitializer(methodInfo, scope) {
     if (canCompile(methodInfo)) {
       ensureFunctionIsInitialized(methodInfo);
-      var method = createCompiledFunction(methodInfo, new Scope(null, {}), false, false, false);
+      var method = createCompiledFunction(methodInfo, scope, false, false, false);
       writer.enter("c:");
       writer.writeLns(method.toSource());
       writer.leave(", ");
@@ -75,12 +78,12 @@ function compileClass(classInfo, writer) {
   writer.enter(Multiname.getQualifiedName(classInfo.instanceInfo.name) + ": {");
 
   writer.enter("s: {");
-  compileInitializer(classInfo.init);
-  compileTraits(classInfo.traits);
+  compileInitializer(classInfo.init, scope);
+  compileTraits(classInfo.traits, scope);
   writer.leave("}, ");
   writer.enter("i: {");
-  compileInitializer(classInfo.instanceInfo.init);
-  compileTraits(classInfo.instanceInfo.traits);
+  compileInitializer(classInfo.instanceInfo.init, scope);
+  compileTraits(classInfo.instanceInfo.traits, scope);
   writer.leave("}");
   writer.leave("},");
 }
