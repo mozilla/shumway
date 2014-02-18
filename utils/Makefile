@@ -159,7 +159,7 @@ ifeq ($(UNAME), Darwin)
 endif
 
 build-playerglobal:
-	cd playerglobal-builder; node build -t $(THREADS)
+	cd playerglobal-builder; node build -t $(THREADS) $(PLAYERGLOBAL_FLAGS)
 
 build-playerglobal-fp:
 	make -C playerglobal-fp/ build
