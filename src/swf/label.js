@@ -38,7 +38,7 @@ function defineLabel(tag, dictionary) {
       var font = dictionary[record.fontId];
       assert(font, 'undefined font', 'label');
       codes = font.codes;
-      cmds.push('c.font="' + record.fontHeight + 'px \'' + font.uniqueName + '\'"');
+      cmds.push('c.font="' + record.fontHeight + 'px \'swf-font-' + font.id + '\'"');
       dependencies.push(font.id);
     }
 

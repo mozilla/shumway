@@ -22,15 +22,12 @@ var MorphShapeDefinition = (function () {
     __class__: 'flash.display.MorphShape',
 
     initialize: function () {
-      var graphics = this._graphics = new flash.display.Graphics();
       var s = this.symbol;
-      if (s && s.paths) {
-        // TODO ??? initPathStyles(s.paths, s.dictionaryResolved);
-        graphics._paths = s.paths;
-        graphics.bbox = s.bbox;
-        graphics.strokeBbox = s.strokeBbox;
-        if (this._stage && this._stage._quality === 'low' && !graphics._bitmap)
-          graphics._cacheAsBitmap(this._bbox);
+      if (s) {
+        this._graphics = s.graphics;
+      } else {
+        this._graphics = new flash.display.Graphics();
+        this._graphics._parent = this;
       }
     }
   };

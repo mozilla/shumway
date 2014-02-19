@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global QuadTree, RegionCluster, ShapePath, sortByZindex */
+/*global ShapePath */
 
 var renderingTerminated = false;
 
@@ -59,31 +59,97 @@ var StageDefinition = (function () {
       this._invalid = true;
 
       var message = this._message;
-      message.ensureCapacity(12);
-      message.writeIntUnsafe(3);
+      message.ensureAdditionalCapacity(12);
+      message.writeIntUnsafe(Renderer.MESSAGE_SETUP_STAGE);
+      message.writeIntUnsafe(8);
       message.writeIntUnsafe(this._stageWidth / 20);
       message.writeIntUnsafe(this._stageHeight / 20);
     },
     _defineRenderable: function defineRenderable(symbol) {
-      postMessage({
-        command: 'render',
-        data: symbol
-      }, '*');
+      var message = this._message;
+
+      message.ensureAdditionalCapacity(16);
+      message.writeIntUnsafe(Renderer.MESSAGE_DEFINE_RENDERABLE);
+
+      var p = message.getIndex(4);
+      message.reserve(4);
+
+      message.writeIntUnsafe(symbol.id);
+
+      var dependencies = symbol.require;
+      var n = dependencies ? dependencies.length : 0;
+      message.ensureAdditionalCapacity((1 + n) * 4);
+      message.writeIntUnsafe(n);
+      for (var i = 0; i < n; i++) {
+        message.writeIntUnsafe(dependencies[i]);
+      }
+
+      switch (symbol.type) {
+      case 'shape':
+        message.writeIntUnsafe(Renderer.RENDERABLE_TYPE_SHAPE);
+
+        var paths = symbol.paths;
+        for (var i = 0; i < paths.length; i++) {
+          paths[i] = finishShapePath(symbol.paths[i]);
+        }
+
+        var graphics = symbol.graphics = new flash.display.Graphics();
+        graphics._paths = symbol.paths;
+        graphics.bbox = symbol.bbox;
+        graphics.strokeBbox = symbol.strokeBbox;
+
+        graphics._serialize(message);
+        break;
+      case 'image':
+        var type = Renderer.RENDERABLE_TYPE_BITMAP;
+      case 'font':
+        message.writeIntUnsafe(type || Renderer.RENDERABLE_TYPE_FONT);
+
+        var len = symbol.data.length;
+        message.ensureAdditionalCapacity(4 + len);
+        message.writeIntUnsafe(len);
+        var offset = message.getIndex(1);
+        message.reserve(len);
+        message.subU8View().set(symbol.data, offset);
+        break;
+      case 'label':
+        message.writeIntUnsafe(Renderer.RENDERABLE_TYPE_LABEL);
+
+        var bbox = symbol.bbox;
+        message.ensureAdditionalCapacity(16);
+        message.writeIntUnsafe(bbox.xMin);
+        message.writeIntUnsafe(bbox.xMax);
+        message.writeIntUnsafe(bbox.yMin);
+        message.writeIntUnsafe(bbox.yMax);
+
+        var labelData = symbol.data;
+        n = labelData.length;
+        message.ensureAdditionalCapacity((1 + n) * 4);
+        message.writeIntUnsafe(n);
+        for (var i = 0; i < n; i++) {
+          message.writeIntUnsafe(labelData.charCodeAt(i));
+        }
+        break;
+      case 'text':
+        message.writeIntUnsafe(Renderer.RENDERABLE_TYPE_TEXT);
+        // TODO
+      }
+
+      message.subI32View()[p] = message.getIndex(1) - (p + 4);
     },
     _requireRenderables: function requireRenderables(dependencies, callback) {
-      var n = dependencies.length;
-
       var message = this._message;
-      message.ensureCapacity(12 + (n * 4));
+      var len = (1 + dependencies.length) * 4;
+      message.ensureAdditionalCapacity(4 + len);
 
-      message.writeIntUnsafe(2);
-      message.writeIntUnsafe(n);
+      message.writeIntUnsafe(Renderer.MESSAGE_REQUIRE_RENDERABLES);
+      message.writeIntUnsafe(len);
 
       var callbackId = this._nextCallbackId++;
       this._callbacks[callbackId] = callback;
       message.writeIntUnsafe(callbackId);
 
-      for (var i = 0; i < n; i++) {
+      for (var i = 0; i < dependencies.length; i++) {
         message.writeIntUnsafe(dependencies[i]);
       }
 
@@ -91,17 +157,24 @@ var StageDefinition = (function () {
     },
     _addLayer: function addLayer(node) {
       var message = this._message;
-      message.ensureCapacity(16);
-      message.writeIntUnsafe(4);
+      message.ensureAdditionalCapacity(20);
+      message.writeIntUnsafe(Renderer.MESSAGE_ADD_LAYER);
+
+      var p = message.getIndex(4);
+      message.reserve(4);
+
       message.writeIntUnsafe(+node._isContainer);
       message.writeIntUnsafe(node._parent._layerId);
       message.writeIntUnsafe(node._index);
       node._serialize(message);
+
+      message.subI32View()[p] = message.getIndex(1) - (p + 4);
     },
     _removeLayer: function removeLayer(node) {
       var message = this._message;
-      message.ensureCapacity(8);
-      message.writeIntUnsafe(5);
+      message.ensureAdditionalCapacity(12);
+      message.writeIntUnsafe(Renderer.MESSAGE_REMOVE_LAYER);
+      message.writeIntUnsafe(4);
       message.writeIntUnsafe(node._layerId);
     },
     _commit: function commit() {

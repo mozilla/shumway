@@ -17,6 +17,72 @@
  */
 /*global rgbaObjToStr, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
 
+var timeline;
+var hudTimeline;
+
+function timelineEnter(name) {
+  timeline && timeline.enter(name);
+  hudTimeline && hudTimeline.enter(name);
+}
+
+function timelineLeave(name) {
+  timeline && timeline.leave(name);
+  hudTimeline && hudTimeline.leave(name);
+}
+
+function timelineWrapBroadcastMessage(domain, message) {
+  timelineEnter(message);
+  domain.broadcastMessage(message);
+  timelineLeave(message);
+}
+
+function initializeHUD(stage, parentCanvas) {
+  var canvas = document.createElement('canvas');
+  var canvasContainer = document.createElement('div');
+  canvasContainer.appendChild(canvas);
+  canvasContainer.style.position = "absolute";
+  canvasContainer.style.top = "0px";
+  canvasContainer.style.left = "0px";
+  canvasContainer.style.width = "100%";
+  canvasContainer.style.height = "150px";
+  canvasContainer.style.backgroundColor = "rgba(0, 0, 0, 0.4)";
+  canvasContainer.style.pointerEvents = "none";
+  parentCanvas.parentElement.appendChild(canvasContainer);
+  hudTimeline = new Timeline(canvas);
+  hudTimeline.setFrameRate(stage._frameRate);
+  hudTimeline.refreshEvery(10);
+}
+
+var BlendModeNameMap = {
+  "normal": 'normal',
+  "multiply": 'multiply',
+  "screen": 'screen',
+  "lighten": 'lighten',
+  "darken": 'darken',
+  "difference": 'difference',
+  "overlay": 'overlay',
+  "hardlight": 'hard-light'
+};
+
+function getBlendModeName(blendMode) {
+  // TODO:
+
+  // These Flash blend modes have no canvas equivalent:
+  // - blendModeClass.SUBTRACT
+  // - blendModeClass.INVERT
+  // - blendModeClass.SHADER
+  // - blendModeClass.ADD
+
+  // These blend modes are actually Porter-Duff compositing operators.
+  // The backdrop is the nearest parent with blendMode set to LAYER.
+  // When there is no LAYER parent, they are ignored (treated as NORMAL).
+  // - blendModeClass.ALPHA (destination-in)
+  // - blendModeClass.ERASE (destination-out)
+  // - blendModeClass.LAYER [defines backdrop]
+
+  return BlendModeNameMap[blendMode] || 'normal';
+}
+
 var CanvasCache = {
   cache: [],
   getCanvas: function getCanvas(protoCanvas) {

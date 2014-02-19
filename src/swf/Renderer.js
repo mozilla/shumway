@@ -14,88 +14,34 @@
  * limitations under the License.
  */
 
-var timeline;
-var hudTimeline;
-
-function timelineEnter(name) {
-  timeline && timeline.enter(name);
-  hudTimeline && hudTimeline.enter(name);
-}
-
-function timelineLeave(name) {
-  timeline && timeline.leave(name);
-  hudTimeline && hudTimeline.leave(name);
-}
-
-function timelineWrapBroadcastMessage(domain, message) {
-  timelineEnter(message);
-  domain.broadcastMessage(message);
-  timelineLeave(message);
-}
-
-function initializeHUD(stage, parentCanvas) {
-  var canvas = document.createElement('canvas');
-  var canvasContainer = document.createElement('div');
-  canvasContainer.appendChild(canvas);
-  canvasContainer.style.position = "absolute";
-  canvasContainer.style.top = "0px";
-  canvasContainer.style.left = "0px";
-  canvasContainer.style.width = "100%";
-  canvasContainer.style.height = "150px";
-  canvasContainer.style.backgroundColor = "rgba(0, 0, 0, 0.4)";
-  canvasContainer.style.pointerEvents = "none";
-  parentCanvas.parentElement.appendChild(canvasContainer);
-  hudTimeline = new Timeline(canvas);
-  hudTimeline.setFrameRate(stage._frameRate);
-  hudTimeline.refreshEvery(10);
-}
-
-var BlendModeNameMap = {
-  "normal": 'normal',
-  "multiply": 'multiply',
-  "screen": 'screen',
-  "lighten": 'lighten',
-  "darken": 'darken',
-  "difference": 'difference',
-  "overlay": 'overlay',
-  "hardlight": 'hard-light'
-};
-
-function getBlendModeName(blendMode) {
-  // TODO:
-
-  // These Flash blend modes have no canvas equivalent:
-  // - blendModeClass.SUBTRACT
-  // - blendModeClass.INVERT
-  // - blendModeClass.SHADER
-  // - blendModeClass.ADD
-
-  // These blend modes are actually Porter-Duff compositing operators.
-  // The backdrop is the nearest parent with blendMode set to LAYER.
-  // When there is no LAYER parent, they are ignored (treated as NORMAL).
-  // - blendModeClass.ALPHA (destination-in)
-  // - blendModeClass.ERASE (destination-out)
-  // - blendModeClass.LAYER [defines backdrop]
-
-  return BlendModeNameMap[blendMode] || 'normal';
-}
-
 var head = document.head;
 head.insertBefore(document.createElement('style'), head.firstChild);
 var style = document.styleSheets[0];
 
-// Used for creating gradients and patterns
-var factoryCtx = !inWorker ?
-                 document.createElement('canvas').getContext('2d') :
-                 null;
+Renderer.MESSAGE_DEFINE_RENDERABLE = 1;
+Renderer.MESSAGE_REQUIRE_RENDERABLES = 2;
+Renderer.MESSAGE_SETUP_STAGE = 3;
+Renderer.MESSAGE_ADD_LAYER = 4;
+Renderer.MESSAGE_REMOVE_LAYER = 5;
+
+Renderer.RENDERABLE_TYPE_SHAPE = 1;
+Renderer.RENDERABLE_TYPE_BITMAP = 2;
+Renderer.RENDERABLE_TYPE_FONT = 3;
+Renderer.RENDERABLE_TYPE_LABEL = 4;
+Renderer.RENDERABLE_TYPE_TEXT = 5;
+
+function rgbaUintToStr(rgba) {
+  return 'rgba(' + (rgba >>> 24 & 0xff) + ',' + (rgba >>> 16 & 0xff) + ',' +
+         (rgba >>> 8 & 0xff) + ',' + (rgba & 0xff) / 0xff + ')';
+}
 
 function Renderer(target) {
-  this._renderables = { };
-  this._layers = { };
-  this._promises = { };
-
   this._target = target;
   this._stage = null;
+
+  this._promises = { };
+  this._renderables = { };
+  this._layers = { };
 
   var renderer = this;
   window.onmessage = function (e) {
@@ -152,86 +98,91 @@ function Renderer(target) {
               var parent = renderer._layers[parentId] || renderer._stage;
               parent.addChild(layer);
             }
+            renderer._layers[layerId] = layer;
 
-            var a = f32[p++];
-            var b = f32[p++];
-            var c = f32[p++];
-            var d = f32[p++];
-            var tx = i32[p++];
-            var ty = i32[p++];
-
-            layer.transform = new Shumway.Geometry.Matrix(a, b, c, d, tx, ty);
-
-            layer.alpha = f32[p++];
-
-            var hasColorTransform = i32[p++];
-            if (hasColorTransform) {
-              layer.colorTransform =
-                Shumway.Layers.ColorTransform.fromMultipliersAndOffsets(f32[p++],
-                                                                        f32[p++],
-                                                                        f32[p++],
-                                                                        f32[p++],
-                                                                        i32[p++],
-                                                                        i32[p++],
-                                                                        i32[p++],
-                                                                        i32[p++]);
-            }
-            break;
-          case 5:
-            var layerId = i32[p++];
-            var layer = renderer._layers[layerId];
-            layer.parent.removeChild(layer);
-            break;
+            var parent = renderer._layers[parentId] || renderer._stage;
+            parent.addChild(layer);
           }
+
+          layer.transform = new Shumway.Geometry.Matrix(
+            f32[p++], f32[p++], f32[p++], f32[p++], i32[p++], i32[p++]
+          );
+          layer.alpha = f32[p++];
+
+          var hasColorTransform = i32[p++];
+          if (hasColorTransform) {
+            layer.colorTransform =
+              Shumway.Layers.ColorTransform.fromMultipliersAndOffsets(
+                f32[p++], f32[p++], f32[p++], f32[p++],
+                i32[p++], i32[p++], i32[p++], i32[p++]
+              );
+          }
+          break;
+        case Renderer.MESSAGE_REMOVE_LAYER:
+          var layerId = i32[p++];
+          var layer = renderer._layers[layerId];
+          layer.parent.removeChild(layer);
+          break;
         }
-      } else {
-        renderer.defineRenderable(data.id, data.type, data);
       }
     } else if (data.command === 'callback') {
       renderer._target._callback(data.data);
     }
   };
 }
-Renderer.prototype.nextId = 0xffff;
 
-Renderer.SHAPE = 1;
-Renderer.GRADIENT = 2;
-Renderer.PATTERN = 3;
-Renderer.IMAGE = 4;
-Renderer.FONT = 5;
-Renderer.TEXT = 6;
-Renderer.LABEL = 7;
-
-Renderer.prototype.defineRenderable = function defineRenderable(id, type, symbol) {
+Renderer.prototype.defineRenderable = function defineRenderable(id, type,
+                                                                dependencies,
+                                                                data) {
   var renderer = this;
   var rendererable = null;
   var promise = new Promise(function (resolve) {
     switch (type) {
-    case 'shape':
-      rendererable = new RenderableShape(symbol, renderer, resolve);
+    case Renderer.RENDERABLE_TYPE_SHAPE:
+      rendererable = new RenderableShape(data, renderer, resolve);
       break;
-    case 'gradient':
-      rendererable = new RenderableGradient(symbol, renderer, resolve);
+    case Renderer.RENDERABLE_TYPE_BITMAP:
+      rendererable = new RenderableBitmap(data, renderer, resolve);
       break;
-    case 'pattern':
-      rendererable = new RenderablePattern(symbol, renderer, resolve);
+    case Renderer.RENDERABLE_TYPE_FONT:
+      var uniqueName = 'swf-font-' + id;
+      var len = data[0];
+      var fontData = new Uint8Array(data.buffer, data.byteOffset + 4, len);
+      var blob = new Blob([fontData]);
+
+      style.insertRule(
+        '@font-face{' +
+          'font-family:"' + uniqueName + '";' +
+          'src:url(' + URL.createObjectURL(blob) + ')' +
+        '}',
+        style.cssRules.length
+      );
+
+      // HACK non-Gecko browsers need time to load fonts
+      if (!/Mozilla\/5.0.*?rv:(\d+).*? Gecko/.test(window.navigator.userAgent)) {
+        var testDiv = document.createElement('div');
+        testDiv.setAttribute('style', 'position: absolute; top: 0; right: 0;' +
+                                      'visibility: hidden; z-index: -500;' +
+                                      'font-family:"' + uniqueName + '";');
+        testDiv.textContent = 'font test';
+        document.body.appendChild(testDiv);
+
+        setTimeout(function () {
+          resolve();
+          document.body.removeChild(testDiv);
+        }, 200);
+      } else {
+        resolve();
+      }
       break;
-    case 'image':
-      rendererable = new RenderableBitmap(symbol, renderer, resolve);
-      break;
-    case 'font':
-      rendererable = new RenderableFont(symbol, renderer, resolve);
-      break;
-    case 'text':
-    case 'label':
-      rendererable = new RenderableText(symbol, renderer, resolve);
+    case Renderer.RENDERABLE_TYPE_LABEL:
+    case Renderer.RENDERABLE_TYPE_TEXT:
+      rendererable = new RenderableText(data, renderer, resolve);
       break;
     default:
       resolve();
     }
   });
-
-  var dependencies = symbol.require;
 
   if (dependencies && dependencies.length) {
     var promiseQueue = [promise];
@@ -244,6 +195,8 @@ Renderer.prototype.defineRenderable = function defineRenderable(id, type, symbol
 
   this._promises[id] = promise.then(function () {
     renderer._renderables[id] = rendererable;
+    if (rendererable)
+      rendererable.id = id;
   });
 };
 Renderer.prototype.getRenderable = function getRenderable(id) {
@@ -262,22 +215,14 @@ Renderer.prototype.requireRenderables = function requireRenderables(ids, callbac
   Promise.all(promiseQueue).then(callback);
 };
 
-function RenderableShape(symbol, renderer, resolve) {
-  var bbox = symbol.strokeBbox || symbol.bbox;
+function RenderableShape(data, renderer, resolve) {
+  var xMin = (data[0] / 20) | 0;
+  var xMax = (data[1] / 20) | 0;
+  var yMin = (data[2] / 20) | 0;
+  var yMax = (data[3] / 20) | 0;
+  this.rect = new Shumway.Geometry.Rectangle(xMin, yMin, xMax - xMin, yMax - yMin);
 
-  this.rect = new Shumway.Geometry.Rectangle(bbox.xMin / 20,
-                                             bbox.yMin / 20,
-                                             (bbox.xMax - bbox.xMin) / 20,
-                                             (bbox.yMax - bbox.yMin) / 20);
-
-  var paths = symbol.paths;
-
-  for (var i = 0; i < paths.length; i++) {
-    paths[i] = finishShapePath(paths[i], renderer);
-  }
-
-  this.commands = symbol.commands;
-  this.properties = { renderer: renderer, paths: paths };
+  this.properties = { renderer: renderer, data: data.subarray(4) };
 
   resolve();
 }
@@ -288,22 +233,85 @@ RenderableShape.prototype.render = function render(ctx) {
   ctx.save();
   ctx.translate(-this.rect.x, -this.rect.y);
 
-  var paths = this.properties.paths;
-  for (var i = 0; i < paths.length; i++) {
-    var path = paths[i];
+  var i32 = this.properties.data;
+  var f32 = new Float32Array(i32.buffer, i32.byteOffset);
+  var p = 0;
+  while (p < i32.length) {
+    var styles = [];
+    for (var i = 0; i < 2; i++) {
+      var style = null;
+      var fillStyleType = i32[p++];
+      switch (fillStyleType) {
+      case GRAPHICS_FILL_SOLID:
+        style = i32[p++];
+        break;
+      case GRAPHICS_FILL_LINEAR_GRADIENT:
+        style = ctx.createLinearGradient(-1, 0, 1, 0);
+      case GRAPHICS_FILL_RADIAL_GRADIENT:
+      case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
+        var n = i32[p++];
+        for (var j = 0; j < n; j++) {
+          var ratio = f32[p++];
+          var color = rgbaUintToStr(i32[p++]);
+          style.addColorStop(ratio, color);
+        }
 
-    if (!path.fillStyle) {
-      continue;
+        var focalPoint = (i32[p++] / 20) | 0;
+
+        if (!style) {
+          style = ctx.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
+        }
+        break;
+      case GRAPHICS_FILL_REPEATING_BITMAP:
+      case GRAPHICS_FILL_CLIPPED_BITMAP:
+      case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
+      case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
+        var bitmapId = i32[p++];
+        var repeat = !!i32[p++];
+        var smooth = !!i32[p++];
+
+        var bitmap = renderer.getRenderable(bitmapId);
+        style = ctx.createPattern(
+          bitmap.properties.img, repeat ? 'repeat' : 'no-repeat'
+        );
+        style.smooth = smooth;
+        break;
+      }
+      if (isNaN(style)) {
+        style.transform = { a: f32[p++],
+                            b: f32[p++],
+                            c: f32[p++],
+                            d: f32[p++],
+                            e: (i32[p++] / 20) | 0,
+                            f: (i32[p++] / 20) | 0 };
+      }
+      styles.push(style);
+    }
+
+    var fillStyle = styles[0];
+    var strokeStyle = styles[1];
+
+    if (strokeStyle) {
+      // Flash's lines are always at least 1px/20twips
+      ctx.lineWidth = Math.max(i32[p++] / 20, 1);
+      ctx.lineCap = CAPS_STYLE_TYPES[i32[p++]];
+      ctx.lineJoin = JOIN_STYLE_TYPES[i32[p++]];
+      ctx.miterLimit = i32[p++];
     }
 
     ctx.beginPath();
-    var commands = path.commands;
-    var data = path.data;
-    var morphData = path.morphData;
+
+    var n = i32[p++];
+    var commands = new Uint8Array(i32.buffer, i32.byteOffset + (p * 4), n);
+    p += (n + (4 - (n % 4)) % 4) / 4;
+    n = i32[p++];
+    var data = i32.subarray(p, p + n);
+    p += n;
+
     var formOpen = false;
     var formOpenX = 0;
     var formOpenY = 0;
-    if (!path.isMorph) {
+    //if (!path.isMorph) {
       for (var j = 0, k = 0; j < commands.length; j++) {
         switch (commands[j]) {
           case SHAPE_MOVE_TO:
@@ -381,63 +389,58 @@ RenderableShape.prototype.render = function render(ctx) {
                          commands[j]);
         }
       }
-    } else {
-      for (var j = 0, k = 0; j < commands.length; j++) {
-        switch (commands[j]) {
-          case SHAPE_MOVE_TO:
-            ctx.moveTo(morph(data[k]/20, morphData[k++]/20, ratio),
-                       morph(data[k]/20, morphData[k++]/20, ratio));
-            break;
-          case SHAPE_LINE_TO:
-            ctx.lineTo(morph(data[k]/20, morphData[k++]/20, ratio),
-                       morph(data[k]/20, morphData[k++]/20, ratio));
-            break;
-          case SHAPE_CURVE_TO:
-            ctx.quadraticCurveTo(morph(data[k]/20, morphData[k++]/20, ratio),
-                                 morph(data[k]/20, morphData[k++]/20, ratio),
-                                 morph(data[k]/20, morphData[k++]/20, ratio),
-                                 morph(data[k]/20, morphData[k++]/20, ratio));
-            break;
-          default:
-            console.warn("Drawing command not supported for morph " +
-                         "shapes: " + commands[j]);
-        }
-      }
-    }
+
+    // TODO: support mophing shapes
+
+    //} else {
+    //  for (var j = 0, k = 0; j < commands.length; j++) {
+    //    switch (commands[j]) {
+    //      case SHAPE_MOVE_TO:
+    //        ctx.moveTo(morph(data[k]/20, morphData[k++]/20, ratio),
+    //                   morph(data[k]/20, morphData[k++]/20, ratio));
+    //        break;
+    //      case SHAPE_LINE_TO:
+    //        ctx.lineTo(morph(data[k]/20, morphData[k++]/20, ratio),
+    //                   morph(data[k]/20, morphData[k++]/20, ratio));
+    //        break;
+    //      case SHAPE_CURVE_TO:
+    //        ctx.quadraticCurveTo(morph(data[k]/20, morphData[k++]/20, ratio),
+    //                             morph(data[k]/20, morphData[k++]/20, ratio),
+    //                             morph(data[k]/20, morphData[k++]/20, ratio),
+    //                             morph(data[k]/20, morphData[k++]/20, ratio));
+    //        break;
+    //      default:
+    //        console.warn("Drawing command not supported for morph " +
+    //                     "shapes: " + commands[j]);
+    //    }
+    //  }
+    //}
+
     // TODO: enable in-path line-style changes
     if (formOpen) {
       ctx.lineTo(formOpenX, formOpenY);
     }
-    var fillStyle = path.fillStyle;
     if (fillStyle) {
-      if (isNaN(fillStyle.style)) {
-        ctx.fillStyle = fillStyle.style;
-      } else {
-        var renderable = this.properties.renderer.getRenderable(fillStyle.style);
-        ctx.fillStyle = renderable.properties.fillStyle;
-      }
-      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
-                                  fillStyle.smooth;
-      var m = fillStyle.transform;
       ctx.save();
-      if (m) {
-        ctx.transform(m.a, m.b, m.c, m.d, m.e/20, m.f/20);
+      if (isNaN(fillStyle)) {
+        ctx.fillStyle = fillStyle;
+        ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = fillStyle.smooth;
+        var m = fillStyle.transform;
+        ctx.transform(m.a, m.b, m.c, m.d, m.e, m.f);
+      } else {
+        ctx.fillStyle = rgbaUintToStr(fillStyle);
       }
       ctx.fill();
       ctx.restore();
     }
-    var lineStyle = path.lineStyle;
     // TODO: All widths except for `undefined` and `NaN` draw something
-    if (lineStyle) {
-      ctx.strokeStyle = lineStyle.style;
-      ctx.save();
-      // Flash's lines are always at least 1px/20twips
-      ctx.lineWidth = Math.max(lineStyle.width/20, 1);
-      ctx.lineCap = lineStyle.lineCap;
-      ctx.lineJoin = lineStyle.lineJoin;
-      ctx.miterLimit = lineStyle.miterLimit;
-      ctx.stroke();
-      ctx.restore();
+    if (strokeStyle) {
+      if (isNaN(strokeStyle)) {
+        // TODO: support extended lines
+      } else {
+        ctx.strokeStyle = rgbaUintToStr(strokeStyle);
+        ctx.stroke();
+      }
     }
     ctx.closePath();
   }
@@ -445,207 +448,43 @@ RenderableShape.prototype.render = function render(ctx) {
   ctx.restore();
 };
 
-function RenderableGradient(symbol, renderer, resolve) {
-  this.rect = new Shumway.Geometry.Rectangle(0, 0, 0, 0);
+function RenderableBitmap(data, renderer, resolve) {
+  var rect = this.rect = new Shumway.Geometry.Rectangle(0, 0);
 
-  var gradient;
-  if (symbol.type === GRAPHICS_FILL_LINEAR_GRADIENT) {
-    gradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
-  } else {
-    gradient = factoryCtx.createRadialGradient((symbol.focalPoint | 0) / 20,
-                                               0, 0, 0, 0, 1);
-  }
-
-  var records = symbol.records;
-  for (var i = 0; i < records.length; i++) {
-    var record = records[i];
-    var colorStr = rgbaObjToStr(record.color);
-    gradient.addColorStop(record.ratio / 255, colorStr);
-  }
-
-  this.properties = { renderer: renderer, fillStyle: gradient };
-
-  resolve();
-}
-RenderableGradient.prototype.getBounds = function getBounds() {
-  return this.rect;
-};
-RenderableGradient.prototype.render = function render(ctx) {
-  // TODO
-};
-
-function RenderablePattern(symbol, renderer, resolve) {
-  var properties = { renderer: renderer, fillStyle: 'green' };
-
-  renderer.requireRenderables([symbol.bitmapId], function () {
-    var bitmap = renderer.getRenderable(symbol.bitmapId);
-    var rect = bitmap.rect;
-    this.rect = new Shumway.Geometry.Rectangle(rect.x, rect.y, rect.w, rect.h);
-
-    var repeat = (symbol.type === GRAPHICS_FILL_REPEATING_BITMAP) ||
-                 (symbol.type === GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP);
-    var pattern = factoryCtx.createPattern(bitmap.properties.img,
-                                           repeat ? 'repeat' : 'no-repeat');
-
-    properties.fillStyle = pattern;
-
-    resolve();
-  });
-
-  this.properties = properties;
-}
-RenderablePattern.prototype.getBounds = function getBounds() {
-  return this.rect;
-};
-RenderablePattern.prototype.render = function render(ctx) {
-  // TODO
-};
-
-function RenderableBitmap(symbol, renderer, resolve) {
-  this.rect = new Shumway.Geometry.Rectangle(symbol.width / 20,
-                                             symbol.height / 20);
+  var len = data[0];
+  var imgData = new Uint8Array(data.buffer, data.byteOffset + 4, len);
+  var blob = new Blob([imgData]);
 
   var img = new Image();
-  var properties = { renderer: renderer, img: img };
-
-  if (symbol.data) {
-    img.onload = function () {
-      if (symbol.mask) {
-        // Write the image into new canvas and apply the mask.
-        var maskCanvas = document.createElement('canvas');
-        maskCanvas.width = symbol.width;
-        maskCanvas.height = symbol.height;
-        var maskContext = maskCanvas.getContext('2d');
-        maskContext.drawImage(img, 0, 0);
-        var maskImageData = maskContext.getImageData(0, 0, symbol.width, symbol.height);
-        var maskImageDataBytes = maskImageData.data;
-        var symbolMaskBytes = symbol.mask;
-        var length = maskImageData.width * maskImageData.height;
-        for (var i = 0, j = 3; i < length; i++, j += 4) {
-          maskImageDataBytes[j] = symbolMaskBytes[i];
-        }
-        maskContext.putImageData(maskImageData, 0, 0);
-        // Use the result canvas as renderable image
-        properties.img = maskCanvas;
-      }
-
-      resolve();
-    };
-    img.src = URL.createObjectURL(symbol.data);
-  } else {
+  var renderable = this;
+  img.onload = function () {
+    rect.width = img.width;
+    rect.height = img.height;
     resolve();
-  }
+  };
+  img.src = URL.createObjectURL(symbol.data);
 
-  this.properties = properties;
+  this.properties = { renderer: renderer, drawable: img };
 }
 RenderableBitmap.prototype.getBounds = function getBounds() {
   return this.rect;
 };
 RenderableBitmap.prototype.render = function render(ctx) {
-  //  if (!this._bitmapData) {
-  //    return;
-  //  }
-  //  var scaledImage;
-  //  ctx.save();
-  //  if (this._pixelSnapping === 'auto' || this._pixelSnapping === 'always') {
-  //    var transform = this._getConcatenatedTransform(null, true);
-  //    var EPSILON = 0.001;
-  //    var aInt = Math.abs(Math.round(transform.a));
-  //    var dInt = Math.abs(Math.round(transform.d));
-  //    var snapPixels;
-  //    if (aInt >= 1 && aInt <= MAX_SNAP_DRAW_SCALE_TO_CACHE &&
-  //        dInt >= 1 && dInt <= MAX_SNAP_DRAW_SCALE_TO_CACHE &&
-  //        Math.abs(Math.abs(transform.a) / aInt - 1) <= EPSILON &&
-  //        Math.abs(Math.abs(transform.d) / dInt - 1) <= EPSILON &&
-  //        Math.abs(transform.b) <= EPSILON && Math.abs(transform.c) <= EPSILON) {
-  //      if (aInt === 1 && dInt === 1) {
-  //        snapPixels = true;
-  //      } else {
-  //        var sizeKey = aInt + 'x' + dInt;
-  //        if (this._snapImageCache.size !== sizeKey) {
-  //          this._snapImageCache.size = sizeKey;
-  //          this._snapImageCache.hits = 0;
-  //          this._snapImageCache.image = null;
-  //        }
-  //        if (++this._snapImageCache.hits === CACHE_SNAP_DRAW_AFTER) {
-  //          this._cacheSnapImage(sizeKey, aInt, dInt);
-  //        }
-  //        scaledImage = this._snapImageCache.image;
-  //        snapPixels = !!scaledImage;
-  //      }
-  //    } else {
-  //      snapPixels = false;
-  //    }
-  //    if (snapPixels) {
-  //      ctx.setTransform(transform.a < 0 ? -1 : 1, 0,
-  //                       0, transform.d < 0 ? -1 : 1,
-  //                       (transform.tx/20)|0, (transform.ty/20)|0);
-  //    }
-  //    // TODO this._pixelSnapping === 'always'; does it even make sense in other cases?
-  //  }
-  //
-  //  colorTransform.setAlpha(ctx, true);
-  //  ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
-  //                              this._smoothing;
-  //  ctx.drawImage(scaledImage || this._bitmapData._getDrawable(), 0, 0);
-  //  ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = false;
-  //  ctx.restore();
-  //  traceRenderer.value && frameWriter.writeLn("Bitmap.draw() snapping: " + this._pixelSnapping +
-  //    ", dimensions: " + this._bitmapData._drawable.width + " x " + this._bitmapData._drawable.height);
-  ctx.drawImage(this.img, 0, 0);
+  ctx.drawImage(this.drawable, 0, 0);
 };
 
-function RenderableFont(symbol, renderer, resolve) {
-  var charset = fromCharCode.apply(null, symbol.codes);
-  if (charset) {
-    style.insertRule(
-      '@font-face{' +
-        'font-family:"' + symbol.uniqueName + '";' +
-        'src:url(data:font/opentype;base64,' + btoa(symbol.data) + ')' +
-        '}',
-      style.cssRules.length
-    );
+function RenderableText(data, renderer, resolve) {
+  var xMin = (data[0] / 20) | 0;
+  var xMax = (data[1] / 20) | 0;
+  var yMin = (data[2] / 20) | 0;
+  var yMax = (data[3] / 20) | 0;
+  this.rect = new Shumway.Geometry.Rectangle(xMin, yMin, xMax - xMin, yMax - yMin);
 
-    // HACK non-Gecko browsers need time to load fonts
-    if (!/Mozilla\/5.0.*?rv:(\d+).*? Gecko/.test(window.navigator.userAgent)) {
-      var testDiv = document.createElement('div');
-      testDiv.setAttribute('style', 'position: absolute; top: 0; right: 0;' +
-                                    'visibility: hidden; z-index: -500;' +
-                                    'font-family:"' + symbol.uniqueName + '";');
-      testDiv.textContent = 'font test';
-      document.body.appendChild(testDiv);
+  var n = data[4];
+  var code = String.fromCharCode.apply(null, data.subarray(5, 5 + n));
+  this.render = new Function('c', code);
 
-      setTimeout(function () {
-        resolve();
-        document.body.removeChild(testDiv);
-      }, 200);
-    } else {
-      resolve();
-    }
-  }
-}
-RenderableFont.prototype.getBounds = function getBounds() {
-  // TODO
-};
-RenderableFont.prototype.render = function render(ctx) {
-  // TODO
-};
-
-function RenderableText(symbol, renderer, resolve) {
-  var bbox = symbol.bbox || symbol.tag.bbox;
-
-  this.rect = new Shumway.Geometry.Rectangle(bbox.xMin / 20,
-                                             bbox.yMin / 20,
-                                             (bbox.xMax - bbox.xMin) / 20,
-                                             (bbox.yMax - bbox.yMin) / 20);
-
-  var properties = { renderer: renderer };
-
-  if (symbol.type === 'label') {
-    this.render = new Function('c', symbol.data);
-  }
-
-  this.properties = properties;
+  this.properties = { renderer: renderer };
 
   resolve();
 }
@@ -707,67 +546,6 @@ RenderableText.prototype.render = function render(ctx) {
   //ctx.restore();
   //ctx.restore();
 };
-
-function initStyle(style, renderer) {
-  if (style.type === undefined) {
-    return;
-  }
-
-  if (style.type === GRAPHICS_FILL_SOLID) {
-    // Solid fill styles are fully processed in shape.js's processStyle
-    return;
-  }
-
-  var id = renderer.nextId++;
-
-  switch (style.type) {
-    case GRAPHICS_FILL_LINEAR_GRADIENT:
-    case GRAPHICS_FILL_RADIAL_GRADIENT:
-    case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
-      renderer.defineRenderable(id, 'gradient', style);
-      break;
-    case GRAPHICS_FILL_REPEATING_BITMAP:
-    case GRAPHICS_FILL_CLIPPED_BITMAP:
-    case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
-    case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
-      renderer.defineRenderable(id, 'pattern', style);
-      break;
-    default:
-      fail('invalid fill style', 'shape');
-  }
-
-  style.style = id;
-}
-
-/**
- * For shapes parsed in a worker thread, we have to finish their
- * paths after receiving the data in the main thread.
- *
- * This entails creating proper instances for all the contained data types.
- */
-function finishShapePath(path, renderer) {
-  assert(!inWorker);
-
-  if (path.fullyInitialized) {
-    return path;
-  }
-  if (!(path instanceof ShapePath)) {
-    var untypedPath = path;
-    path = new ShapePath(path.fillStyle, path.lineStyle, 0, 0, path.isMorph);
-    // See the comment in the ShapePath ctor for why we're recreating the
-    // typed arrays here.
-    path.commands = new Uint8Array(untypedPath.buffers[0]);
-    path.data = new Int32Array(untypedPath.buffers[1]);
-    if (untypedPath.isMorph) {
-      path.morphData = new Int32Array(untypedPath.buffers[2]);
-    }
-    path.buffers = null;
-  }
-  path.fillStyle && initStyle(path.fillStyle, renderer);
-  path.lineStyle && initStyle(path.lineStyle, renderer);
-  path.fullyInitialized = true;
-  return path;
-}
 
 function TextFieldContent(initialFormat) {
   this.defaultTextFormat = initialFormat;

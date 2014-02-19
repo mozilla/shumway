@@ -440,7 +440,6 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     if (!style.color && style.hasFill) {
       var fillStyle = processStyle(style.fillStyle, false, dictionary,
                                    dependencies);
-      style.style = fillStyle.style;
       style.type = fillStyle.type;
       style.transform = fillStyle.transform;
       style.records = fillStyle.records;
@@ -449,14 +448,17 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
       style.repeat = fillStyle.repeat;
       style.fillStyle = null;
       return style;
+    } else {
+      style.type = GRAPHICS_FILL_SOLID;
     }
   }
   var color;
   if (style.type === undefined || style.type === GRAPHICS_FILL_SOLID) {
     color = style.color;
-    style.style = 'rgba(' + color.red + ',' + color.green + ',' +
-                  color.blue + ',' + color.alpha / 255 + ')';
-    style.color = null; // No need to keep data around we won't use anymore.
+    style.color = (color.red << 24) |
+                  (color.green << 16) |
+                  (color.blue << 8) |
+                  color.alpha;
     return style;
   }
   var scale;
@@ -464,12 +466,23 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     case GRAPHICS_FILL_LINEAR_GRADIENT:
     case GRAPHICS_FILL_RADIAL_GRADIENT:
     case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
+      var records = style.records;
+      for (var i = 0; i < records.length; i++) {
+        var record = records[i];
+        color = record.color;
+        record.color = (color.red << 24) |
+                       (color.green << 16) |
+                       (color.blue << 8) |
+                       color.alpha;
+      }
       scale = 819.2;
       break;
     case GRAPHICS_FILL_REPEATING_BITMAP:
     case GRAPHICS_FILL_CLIPPED_BITMAP:
+      style.smooth = true;
     case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
     case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
+      style.smooth = style.smooth || false;
       if (dictionary[style.bitmapId]) {
         dependencies.push(dictionary[style.bitmapId].id);
         scale = 0.05;
@@ -487,8 +500,8 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     b: (matrix.b * scale),
     c: (matrix.c * scale),
     d: (matrix.d * scale),
-    e: matrix.tx,
-    f: matrix.ty
+    tx: matrix.tx,
+    ty: matrix.ty
   };
   // null data that's unused from here on out
   style.matrix = null;
@@ -1248,6 +1261,34 @@ ShapePath.fromPlainObject = function(obj) {
   }
   return path;
 };
+
+/**
+ * For shapes parsed in a worker thread, we have to finish their
+ * paths after receiving the data in the main thread.
+ *
+ * This entails creating proper instances for all the contained data types.
+ */
+function finishShapePath(path) {
+  assert(!inWorker);
+
+  if (path.fullyInitialized) {
+    return path;
+  }
+  if (!(path instanceof ShapePath)) {
+    var untypedPath = path;
+    path = new ShapePath(path.fillStyle, path.lineStyle, 0, 0, path.isMorph);
+    // See the comment in the ShapePath ctor for why we're recreating the
+    // typed arrays here.
+    path.commands = new Uint8Array(untypedPath.buffers[0]);
+    path.data = new Int32Array(untypedPath.buffers[1]);
+    if (untypedPath.isMorph) {
+      path.morphData = new Int32Array(untypedPath.buffers[2]);
+    }
+    path.buffers = null;
+  }
+  path.fullyInitialized = true;
+  return path;
+}
 
 function distanceSq(x1, y1, x2, y2) {
   var dX = x2 - x1;

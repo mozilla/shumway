@@ -395,14 +395,14 @@ function defineFont(tag, dictionary) {
     '\x00\x00' // maxComponentDepth
   ;
 
-  var uniqueId = 'swf-font-' + nextFontId++;
-  var fontName = tag.name || uniqueId;
+  var uniqueName = 'swf-font-' + tag.id;
+  var fontName = tag.name || uniqueName;
   var psName = fontName.replace(/ /g, '');
   var strings = [
     tag.copyright || 'Original licence', // 0. Copyright
     fontName, // 1. Font family
     'Unknown', // 2. Font subfamily
-    uniqueId, // 3. Unique ID
+    uniqueName, // 3. Unique ID
     fontName, // 4. Full font name
     '1.0', // 5. Version
     psName, // 6. Postscript name
@@ -481,15 +481,20 @@ function defineFont(tag, dictionary) {
     leading: leading / unitPerEm
   };
 
+  // TODO: use a buffer to generate font data
+  var data = new Uint8Array(otf.length);
+  for (var i = 0; i < otf.length; i++) {
+    data[i] = otf.charCodeAt(i) & 0xff;
+  }
+
   return {
     type: 'font',
     id: tag.id,
     name: fontName,
-    uniqueName: psName + uniqueId,
     codes: codes,
     metrics: metrics,
     bold: tag.bold === 1,
     italic: tag.italic === 1,
-    data: otf
+    data: data
   };
 }

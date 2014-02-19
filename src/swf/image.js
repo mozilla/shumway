@@ -62,6 +62,7 @@ function defineImage(tag, dictionary) {
 
   if (tag.mimeType === 'image/jpeg') {
     chunks = parseJpegChunks(img, imgData);
+    // TODO: decode the jpeg and apply alpha data right here instead of masking it on main-thread
     var alphaData = tag.alphaData;
     if (alphaData) {
       img.mask = createInflatedStream(alphaData, img.width * img.height).bytes;
@@ -75,9 +76,18 @@ function defineImage(tag, dictionary) {
         chunks.unshift(header.slice(0, header.size - 2));
       }
     }
-  } else {
-    chunks = [imgData];
+    var len = 0;
+    for (var i = 0; i < chunks.length; i++) {
+      len += chunks[i].length;
+    }
+    var imgData = new Uint8Array(len);
+    var offset = 0;
+    for (var i = 0; i < chunks.length; i++) {
+      var chunk = chunks[i];
+      bmp.set(chunk, offset);
+      offset += chunk.length;
+    }
   }
-  img.data = new Blob(chunks, { type: tag.mimeType });
+  img.data = imgData;
   return img;
 }

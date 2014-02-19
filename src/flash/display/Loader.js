@@ -445,6 +445,7 @@ var LoaderDefinition = (function () {
       loaderInfo._dispatchEvent("init");
 
       this._stage._defineRenderable(imageInfo);
+      this._stage._commit();
     },
     _commitSymbol: function (symbol) {
       var dictionary = this._dictionary;
@@ -458,7 +459,8 @@ var LoaderDefinition = (function () {
       }
 
       var className = 'flash.display.DisplayObject';
-      var props = { symbolId: symbol.id, loader: this };
+
+      symbol.loader = this;
 
       switch (symbol.type) {
       case 'button':
@@ -493,45 +495,28 @@ var LoaderDefinition = (function () {
         }
 
         className = 'flash.display.SimpleButton';
-        props.states = states;
-        props.buttonActions = symbol.buttonActions;
+        symbol.states = states;
         break;
       case 'font':
         className = 'flash.text.Font';
-        props.name = symbol.name;
-        props.uniqueName = symbol.uniqueName;
-        props.charset = symbol.charset;
-        props.bold = symbol.bold;
-        props.italic = symbol.italic;
-        props.metrics = symbol.metrics;
-        this._registerFont(className, props);
+        this._registerFont(className, symbol);
         break;
       case 'image':
         className = 'flash.display.Bitmap';
-        props.width = symbol.width;
-        props.height = symbol.height;
         break;
       case 'label':
         className = 'flash.text.StaticText';
-        props.bbox = symbol.bbox;
         break;
       case 'text':
-        props.bbox = symbol.bbox;
-        props.html = symbol.html;
         if (symbol.type === 'label') {
           className = 'flash.text.StaticText';
         } else {
           className = 'flash.text.TextField';
-          props.tag = symbol.tag;
-          props.variableName = symbol.variableName;
         }
         break;
       case 'shape':
         className = symbol.morph ?
                     'flash.display.MorphShape' : 'flash.display.Shape';
-        props.bbox = symbol.bbox;
-        props.strokeBbox = symbol.strokeBbox;
-        props.paths = symbol.paths;
         break;
       case 'sound':
         if (!symbol.pcm && !PLAY_USING_AUDIO_TAG) {
@@ -547,13 +532,8 @@ var LoaderDefinition = (function () {
         }
 
         className = 'flash.media.Sound';
-        props.sampleRate = symbol.sampleRate;
-        props.channels = symbol.channels;
-        props.pcm = symbol.pcm;
-        props.packaged = symbol.packaged;
         break;
       case 'binary':
-        props.data = symbol.data;
         break;
       case 'sprite':
         var displayList = null;
@@ -599,21 +579,22 @@ var LoaderDefinition = (function () {
         }
 
         className = 'flash.display.MovieClip';
-        props.timeline = timeline;
-        props.framesLoaded = frameCount;
-        props.labelMap = labelMap;
-        props.frameScripts = frameScripts;
-        props.totalFrames = frameCount;
-        props.startSoundRegistrations = startSoundRegistrations;
+        symbol.timeline = timeline;
+        symbol.framesLoaded = frameCount;
+        symbol.labelMap = labelMap;
+        symbol.frameScripts = frameScripts;
+        symbol.totalFrames = frameCount;
+        symbol.startSoundRegistrations = startSoundRegistrations;
         break;
       }
 
       dictionary[symbol.id] = {
         className: className,
-        props: props
+        props: symbol
       };
 
       this._stage._defineRenderable(symbol);
+      this._stage._commit();
     },
     _registerFont: function (className, props) {
       this._vmPromise.then(function () {

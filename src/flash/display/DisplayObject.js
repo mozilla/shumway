@@ -446,7 +446,7 @@ var DisplayObjectDefinition = (function () {
     },
 
     _serialize: function (message) {
-      message.ensureCapacity(40);
+      message.ensureAdditionalCapacity(40);
 
       message.writeIntUnsafe(this._layerId);
       message.writeIntUnsafe(this._renderableId);
@@ -464,7 +464,7 @@ var DisplayObjectDefinition = (function () {
       var cxform = this._cxform;
       if (cxform) {
         message.writeIntUnsafe(1);
-        message.ensureCapacity(32);
+        message.ensureAdditionalCapacity(32);
         message.writeFloatUnsafe(cxform.redMultiplier / 256);
         message.writeFloatUnsafe(cxform.greenMultiplier / 256);
         message.writeFloatUnsafe(cxform.blueMultiplier / 256);

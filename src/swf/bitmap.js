@@ -262,6 +262,7 @@ function defineBitmap(tag) {
   idat[pi++] = adler >> 8 & 0xff;
   idat[pi++] = adler & 0xff;
 
+  // TODO: use a buffer to generate image data
   var chunks = [
     new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
     createPngChunk('IHDR', ihdr),
@@ -270,6 +271,13 @@ function defineBitmap(tag) {
     createPngChunk('IDAT', idat),
     createPngChunk('IEND', '')
   ];
+  var bmp = new Uint8Array(44 + ihdr.length + plte.length + trns.length + idat);
+  var offset = 0;
+  for (var i = 0; i < chunks.length; i++) {
+    var chunk = chunks[i];
+    bmp.set(chunk, offset);
+    offset += chunk.length;
+  }
 
   return {
     type: 'image',
@@ -277,6 +285,6 @@ function defineBitmap(tag) {
     width: width,
     height: height,
     mimeType: 'image/png',
-    data: new Blob(chunks, { type: 'image/png' })
+    data: data
   };
 }

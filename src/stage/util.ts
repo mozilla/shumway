@@ -122,6 +122,10 @@ module Shumway.Util {
       return this.f32.subarray(0, this.offset >> 2);
     }
 
+    subI32View(): Int32Array {
+      return this.i32.subarray(0, this.offset >> 2);
+    }
+
     subU16View(): Uint16Array {
       return this.u16.subarray(0, this.offset >> 1);
     }
@@ -136,6 +140,12 @@ module Shumway.Util {
         hash = (((31 * hash) | 0) + i32[i]) | 0;
       }
       return hash;
+    }
+
+    reserve(size) {
+      size += (4 - (size % 4)) % 4;
+      this.ensureCapacity(this.offset + size);
+      this.offset += size;
     }
   }
 }
