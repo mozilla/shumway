@@ -145,7 +145,8 @@ function timeIt(fn, message, count) {
   print("Measure: " + message + " Count: " + count + " Elapsed: " + elapsed.toFixed(4) + " (" + (elapsed / count).toFixed(4) + ") (" + Math.pow(product, (1 / count)).toFixed(4) + ")");
 }
 
-var abcFiles = [];
+var abcBuffers = [];
+
 var self = {};
 var SWF;
 for (var f = 0; f < files.length; f++) {
@@ -178,27 +179,25 @@ for (var f = 0; f < files.length; f++) {
     SWF.parse(snarf(file, "binary"), {
       oncomplete: function(result) {
         var tags = result.tags;
+        var abcs = []; // Group SWF ABCs in their own array.
         for (var i = 0, n = tags.length; i < n; i++) {
           var tag = tags[i];
           if (tag.code === SWF_TAG_CODE_DO_ABC) {
-            abcFiles.push(tag.data);
+            abcs.push(tag.data);
           }
         }
+        abcBuffers.push(abcs);
       }
     });
   } else {
     release || assert(file.endsWith(".abc"));
-    abcFiles.push(file);
+    abcBuffers.push([snarf(file, "binary")]);
   }
 }
 
-function grabAbc(fileOrBuffer) {
-  if (isString(fileOrBuffer)) {
-    return new AbcFile(snarf(fileOrBuffer, "binary"), fileOrBuffer);
-  } else {
-    var buffer = new Uint8Array(fileOrBuffer); // Copy into local compartment.
-    return new AbcFile(buffer);
-  }
+function grabAbc(buffer) {
+  var localBuffer = new Uint8Array(buffer); // Copy into local compartment.
+  return new AbcFile(localBuffer);
 }
 
 if (execute.value || compile.value) {
@@ -210,10 +209,26 @@ if (execute.value || compile.value) {
     runVM();
   }
 } else if (disassemble.value) {
-  abcFiles.map(function (abcFile) {
-    return grabAbc(abcFile);
-  }).forEach(function (abc) {
-    abc.trace(stdout);
+  grabAbcs(abcBuffers).forEach(function (abcArray) {
+    abcArray.forEach(function (abc) {
+      abc.trace(stdout);
+    });
+  });
+}
+
+function grabAbcs(abcBuffers) {
+  return abcBuffers.map(function (abcBuffer) {
+    return abcBuffer.map(function (abcBuffer) {
+      return grabAbc(abcBuffer);
+    });
+  });
+}
+
+function grabAbcsInCompartment(compartment, abcBuffers) {
+  return abcBuffers.map(function (abcBuffer) {
+    return abcBuffer.map(function (abcBuffer) {
+      return compartment.grabAbc(abcBuffer);
+    });
   });
 }
 
@@ -228,39 +243,24 @@ function runVM() {
   var sysMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
   var appMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
   securityDomain.initializeShell(sysMode, appMode);
-  runAbcs(securityDomain, abcFiles.map(function (abcFile) {
-    return securityDomain.compartment.grabAbc(abcFile);
-  }));
+  runAbcs(securityDomain, grabAbcsInCompartment(securityDomain.compartment, abcBuffers));
 }
 
-function runAbcs2(securityDomain, abcs) {
-  for (var i = 0; i < abcs.length; i++) {
-    if (i < abcs.length - 1) {
-      securityDomain.applicationDomain.loadAbc(abcs[i]);
-    } else {
-      if (compile.value) {
-        securityDomain.applicationDomain.compileAbc(abcs[i]);
+function runAbcs(securityDomain, abcArrays) {
+  var writer = new IndentingWriter();
+  for (var i = 0; i < abcArrays.length; i++) {
+    var abcArray = abcArrays[i];
+    for (var j = 0; j < abcArray.length; j++) {
+      var abc = abcArray[j];
+      if (i < abcArrays.length - 1) {
+        securityDomain.applicationDomain.loadAbc(abc);
+      } else if (compile.value) {
+        writer.writeLn("// " + abc.name);
+        writer.enter("CC[" + abc.hash + "] = ");
+        securityDomain.applicationDomain.compileAbc(abc, writer);
+        writer.leave(";");
       } else {
-        securityDomain.applicationDomain.executeAbc(abcs[i]);
-      }
-    }
-  }
-}
-
-function runAbcs(securityDomain, abcs) {
-  if (compile.value) {
-    var writer = new IndentingWriter();
-    for (var i = 0; i < abcs.length; i++) {
-      writer.enter("CC[" + abcs[i].hash + "] = ");
-      securityDomain.applicationDomain.compileAbc(abcs[i], writer);
-      writer.enter(";");
-    }
-  } else {
-    for (var i = 0; i < abcs.length; i++) {
-      if (i < abcs.length - 1) {
-        securityDomain.applicationDomain.loadAbc(abcs[i]);
-      } else {
-        securityDomain.applicationDomain.executeAbc(abcs[i]);
+        securityDomain.applicationDomain.executeAbc(abc);
       }
     }
   }
