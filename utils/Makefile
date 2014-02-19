@@ -34,13 +34,15 @@ CLOSURE_JAR = ./cc.jar
 CLOSURE_URL = http://dl.google.com/closure-compiler/compiler-latest.zip
 
 ASC_JAR = ./asc.jar
-ASC_URL = ftp://ftp.mozilla.org/pub/js/tamarin/builds/asc/latest/asc.jar
 
 FLEX_HOME = ./flex_sdk
 FLEX_URL = http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip
 
 ifeq ($(UNAME), Darwin)
 DARWING_VER = $(shell uname -a)
+ifneq ("$(filter 13.%, $(DARWING_VER))", "")
+TAMARIN_CONFIG_PARAMS = --mac-sdk=109 --target=x86_64-darwin
+else
 ifneq ("$(filter 12.%, $(DARWING_VER))", "")
 TAMARIN_CONFIG_PARAMS = --mac-sdk=108 --target=x86_64-darwin
 else
@@ -48,6 +50,7 @@ ifneq ("$(filter 11.%, $(DARWING_VER))", "")
 TAMARIN_CONFIG_PARAMS = --mac-sdk=107 --target=x86_64-darwin
 else
 TAMARIN_CONFIG_PARAMS = --mac-sdk=106 --target=x86_64-darwin
+endif
 endif
 endif
 else
@@ -67,14 +70,9 @@ AVM2_HOME = ../src/avm2
 AVMSHELL = avmshell
 
 default:
-	@echo "run: make [install-asc|install-closure|install-tamarin|install-js|"
+	@echo "run: make [install-closure|install-tamarin|install-js|"
 	@echo "           install-swfdec|install-node-modules|"
 	@echo "           build-tamarin-tests|run-tamarin-tests|build-playerglobal|clean]"
-
-install-asc: $(ASC_JAR)
-
-$(ASC_JAR):
-	wget $(ASC_URL) -O $(ASC_JAR)
 
 install-closure: $(CLOSURE_JAR)
 
@@ -84,13 +82,13 @@ $(CLOSURE_JAR):
 	rm closure.zip
 	mv compiler.jar cc.jar
 
-install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
+install-tamarin: $(TAMARIN_HOME)/configure.py
 	rm -rf $(TAMARIN_HOME)/bin
 	mkdir $(TAMARIN_HOME)/bin
 	cd $(TAMARIN_HOME)/bin; python ../configure.py $(TAMARIN_CONFIG_PARAMS) --enable-debugger
 	ASC=../../$(ASC_JAR) make -C $(TAMARIN_HOME)/bin
 
-install-tamarin-tests: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
+install-tamarin-tests: $(TAMARIN_HOME)/configure.py
 
 $(TAMARIN_HOME)/configure.py:
 	hg clone $(TAMARIN_URL) $(TAMARIN_HOME)
@@ -165,7 +163,6 @@ build-playerglobal-fp:
 	make -C playerglobal-fp/ build
 
 clean:
-	-rm -rf $(ASC_JAR)
 	-rm -rf $(TAMARIN_HOME)
 	-rm -rf $(JSSHELL_HOME)
 	make -C playerglobal-fp/ clean

@@ -41,7 +41,7 @@ install-libs:
 
 install-utils: check-system
 	npm install
-	make -C utils/ install-asc install-closure install-js install-node-modules install-flex-sdk
+	make -C utils/ install-closure install-js install-node-modules install-flex-sdk
 
 install-tamarin: check-system
 	echo "Checking the presence of mercurial..."
@@ -52,7 +52,7 @@ BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with insta
 
 link-utils:
 	ln -s $(BASE)/node_modules .
-	ln -s $(BASE)/utils/asc.jar $(BASE)/utils/cc.jar $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell $(BASE)/utils/node_modules utils/
+	ln -s $(BASE)/utils/cc.jar $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell $(BASE)/utils/node_modules utils/
 
 run-tamarin-sanity-tests:
 	make -C utils/ run-tamarin-sanity-tests
