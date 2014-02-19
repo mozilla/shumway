@@ -22,8 +22,6 @@ default:
 check-system:
 	echo "Checking the presence of grunt-cli..."
 	grunt --version
-	echo "Checking the presence of wget..."
-	wget --version
 	echo "Checking the presence of java..."
 	java -version
 	echo "Checking the presence of node..."

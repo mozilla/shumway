@@ -19,11 +19,14 @@ JSSHELL_HOME = ./jsshell
 JSSHELL_URL_BASE = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2013/06/2013-06-12-03-11-38-mozilla-central
 ifneq ("$(findstring MINGW32, $(UNAME))", "")
 JSSHELL_URL = $(JSSHELL_URL_BASE)/jsshell-win32.zip
+JSSHELL_CACHED = ./jsshell-cached/jsshell-win32.zip
 else
 ifeq ($(UNAME), Darwin)
 JSSHELL_URL = $(JSSHELL_URL_BASE)/jsshell-mac.zip
+JSSHELL_CACHED = ./jsshell-cached/jsshell-mac.zip
 else
 JSSHELL_URL = $(JSSHELL_URL_BASE)/jsshell-linux-i686.zip
+JSSHELL_CACHED = ./jsshell-cached/jsshell-linux.zip
 endif
 endif
 
@@ -132,6 +135,11 @@ run-tamarin-performance: install-tamarin-tests
 	cd $(TAMARIN_HOME)/test/performance;  SHUMWAY_HOME=$(SHUMWAY_HOME) ASC=../../../$(ASC_JAR) BUILTINABC=../../generated/builtin.abc SHELLABC=../../generated/shell_toplevel.abc python runtests.py --shumway --avm2 ../../bin/shell/$(AVMSHELL)
 
 install-js:
+	-rm -rf $(JSSHELL_HOME)
+	mkdir -p $(JSSHELL_HOME)
+	unzip $(JSSHELL_CACHED) -d $(JSSHELL_HOME)
+
+download-js:
 	-rm -rf $(JSSHELL_HOME)
 	mkdir -p $(JSSHELL_HOME)
 	wget $(JSSHELL_URL) -O $(JSSHELL_HOME)/jsshell.zip
