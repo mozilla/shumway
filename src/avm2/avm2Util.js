@@ -1499,7 +1499,18 @@ function createNewCompartment() {
   return newGlobal('new-compartment');
 }
 
-var hash32BitsMD5 = (function calculateMD5Closure() {
+function hashBytesTo32BitsAdler(data, offset, length) {
+  var a = 1;
+  var b = 0;
+  var end = offset + length;
+  for (var i = offset; i < end; ++i) {
+    a = (a + (data[i] & 0xff)) % 65521;
+    b = (b + a) % 65521;
+  }
+  return (b << 16) | a;
+}
+
+var hashBytesTo32BitsMD5 = (function calculateMD5Closure() {
   var r = new Uint8Array([
     7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
     5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,

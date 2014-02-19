@@ -450,7 +450,7 @@ var ASNamespace = (function () {
     for (var i = 0; i < prefix.length; i++) {
       data[j++] = prefix.charCodeAt(i);
     }
-    return hash32BitsMD5(data, 0, j);
+    return hashBytesTo32BitsMD5(data, 0, j);
   }
 
   var mangledNamespaceCache = createEmptyObject();
@@ -1335,7 +1335,9 @@ var MethodInfo = (function () {
     var constantPool = abc.constantPool;
     var methods = abc.methods;
 
-    var info = methods[stream.readU30()];
+    var index = stream.readU30();
+    var info = methods[index];
+    info.index = index;
     info.hasBody = true;
     release || assert(!info.isNative());
     info.maxStack = stream.readU30();
@@ -1510,10 +1512,25 @@ var ScriptInfo = (function scriptInfo() {
 })();
 
 var AbcFile = (function () {
-  function abcFile(bytes, name) {
+  function abcFile(bytes, name, hash) {
     Timer.start("Parse ABC");
     this.name = name;
     this.env = {};
+
+    var computedHash;
+    if (!hash || !release) {
+      // Compute hash if one was not supplied or if we're in debug mode so we can do a sanity check.
+      Timer.start("Adler");
+      computedHash = hashBytesTo32BitsAdler(bytes, 0, bytes.length);
+      Timer.stop();
+    }
+    if (hash) {
+      this.hash = hash;
+      // Sanity check.
+      release || assert(hash === computedHash);
+    } else {
+      this.hash = computedHash;
+    }
 
     var n, i;
     var stream = new AbcStream(bytes);

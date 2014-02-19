@@ -250,11 +250,11 @@ function runAbcs2(securityDomain, abcs) {
 function runAbcs(securityDomain, abcs) {
   if (compile.value) {
     var writer = new IndentingWriter();
-    writer.enter("window[\"abcs\"] = [");
     for (var i = 0; i < abcs.length; i++) {
+      writer.enter("CC[" + abcs[i].hash + "] = ");
       securityDomain.applicationDomain.compileAbc(abcs[i], writer);
+      writer.enter(";");
     }
-    writer.enter("]");
   } else {
     for (var i = 0; i < abcs.length; i++) {
       if (i < abcs.length - 1) {

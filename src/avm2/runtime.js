@@ -56,6 +56,7 @@ var VM_NATIVE_BUILTIN_SURROGATES = [
 var VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
 
 var SAVED_SCOPE_NAME = "$SS";
+var CC = createEmptyObject();
 
 /**
  * ActionScript uses a slightly different syntax for regular expressions. Many of these features
@@ -1234,51 +1235,21 @@ function debugName(value) {
   return value;
 }
 
-function searchForCompiledFunction(methodInfo) {
-  if (typeof candyAOT === "undefined") {
+function searchCodeCache(methodInfo) {
+  var abcCache = CC[methodInfo.abc.hash];
+  if (!abcCache) {
     return;
   }
-  var abcs = candyAOT;
-  function findClass(mn) {
-    for (var a = 0; a < abcs.length; a++) {
-      var abc = abcs[a];
-      for (var s = 0; s < abc.scripts.length; s++) {
-        var script = abc.scripts[s];
-        var c = script["class_" + Multiname.getQualifiedName(mn)];
-        if (c) {
-          return c;
-        }
-      }
-    }
+  var method = abcCache.methods[methodInfo.index];
+  if (method) {
+    Counter.count("Linked Cached Method");
   }
-
-  var mi = methodInfo;
-  var prefix = "m";
-  if (mi.holder instanceof InstanceInfo) {
-    var cls = findClass(mi.holder.name);
-    if (cls) {
-      var method = cls.i["m" + Multiname.getQualifiedName(mi.name)];
-      if (method) {
-        Counter.count("Linked Method");
-        return method;
-      }
-    }
-  } else if (mi.holder instanceof ClassInfo) {
-    var cls = findClass(mi.holder.instanceInfo.name);
-    if (cls) {
-      var method = cls.s[prefix + Multiname.getQualifiedName(mi.name)];
-      if (method) {
-        Counter.count("Linked Method");
-        return method;
-      }
-    }
-  }
-  console.info("Can't Find: " + mi);
+  return method;
 }
 
 function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
   var mi = methodInfo;
-  var cached = searchForCompiledFunction(mi);
+  var cached = searchCodeCache(mi);
   if (!cached) {
     var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
     var parameters = result.parameters;

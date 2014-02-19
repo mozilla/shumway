@@ -322,13 +322,12 @@ var ApplicationDomain = (function () {
       // console.time("Compile ABC: " + abc.name);
       this.loadAbc(abc);
       writer.enter("{");
-      writer.writeLn("name: \"" + abc.name + "\",");
-      writer.enter("scripts: [");
+      writer.enter("methods: {");
       for (var i = 0; i < abc.scripts.length; i++) {
         compileScript(abc.scripts[i], writer);
       }
-      writer.leave("]");
-      writer.leave("},");
+      writer.leave("}");
+      writer.leave("}");
       //console.timeEnd("Compile ABC: " + abc.name);
     },
 
