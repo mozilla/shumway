@@ -36,7 +36,7 @@ var proxyTrapQns = {
 };
 
 for (var name in proxyTrapQns) {
-  proxyTrapQns[name] = VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(new Multiname([ShumwayNamespace.PROXY], name));
+  proxyTrapQns[name] = VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(new Multiname([ASNamespace.PROXY], name));
 }
 
 var VM_IS_PROXY = "vm is proxy";
@@ -99,7 +99,8 @@ function installProxyClassWrapper(cls) {
             if (TRACE_PROXY) {
               print("proxy call, class: " + target.class + ", mn: " + mn + "hasNonProxyingCallerr: " + hasNonProxyingCaller());
             }
-            var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(target, mn);
+            var resolved = Multiname.isQName(mn) ? mn :
+              target.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
             var qn = resolved ? Multiname.getQualifiedName(resolved) :
                       Multiname.getPublicQualifiedName(mn.name);
             if (!nameInTraits(target, qn)) {

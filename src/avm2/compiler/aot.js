@@ -18,35 +18,76 @@
  * Throw away code, just used to debug the compiler for now.
  */
 
-function compileScript(script, writer) {
-  script.traits.forEach(function (trait) {
-    if (trait.isClass()) {
-      compileClass(trait.classInfo, writer);
-    } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-      compileTrait(trait, writer);
-    }
-  });
+var hasUsedConstants = false;
+function objectConstantName2(object) {
+  hasUsedConstants = true;
+  release || assert(object);
+  if (object.hasOwnProperty(OBJECT_NAME)) {
+    return object[OBJECT_NAME];
+  }
+  if (object instanceof LazyInitializer) {
+    // console.warn("LazyInitializer: " + object.getName() + " : " + object.target);
+    return object.getName();
+  }
+  // console.warn("Object: " + object);
+  var name, id = objectIDs++;
+  if (object instanceof Scope) {
+    name = "$X" + id;
+  } else if (object instanceof Global) {
+    name = "$G" + id;
+  } else if (object instanceof Multiname) {
+    name = "$M" + id;
+  } else if (isClass(object)) {
+    name = "$C" + id;
+  } else {
+    name = "$O" + id;
+  }
+  Object.defineProperty(object, OBJECT_NAME, {value: name, writable: false, enumerable: false});
+  jsGlobal[name] = object;
+  return name;
 }
 
-function compileTrait(trait, writer) {
+function compileScript(script, writer) {
+  writer.enter("{");
+  objectConstantName = objectConstantName2;
+  // TODO: Create correct scope chains.
+  var scope = new Scope(null, new Global(script));
+  script.traits.forEach(function (trait) {
+    if (trait.isClass()) {
+      compileClass(trait.classInfo, writer, scope);
+    } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+      compileTrait(trait, writer, scope);
+    }
+  });
+  writer.leave("},");
+}
+
+function compileTrait(trait, writer, scope) {
   var traitName = Multiname.getQualifiedName(trait.name);
   if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
     var methodInfo = trait.methodInfo;
     if (shouldCompile(methodInfo)) {
       ensureFunctionIsInitialized(methodInfo);
       try {
-        var method = createCompiledFunction(methodInfo, new Scope(null, {}), false, false, false);
+        hasUsedConstants = false;
+        var method = createCompiledFunction(methodInfo, scope, false, false, false);
         if (trait.isMethod()) {
-          writer.writeLn("get " + traitName + "() { return this." + VM_OPEN_METHOD_PREFIX + traitName + ".bind(this); },");
+          writer.writeLn(VM_MEMOIZER_PREFIX + traitName + ": " + "function () { return this." + VM_OPEN_METHOD_PREFIX + traitName + ".bind(this); },");
         }
         if (trait.isMethod()) {
           writer.enter(VM_OPEN_METHOD_PREFIX + traitName + ": ");
         } else if (trait.isGetter()) {
-          writer.enter("get_" + traitName + ": ");
+          writer.enter(VM_OPEN_GET_METHOD_PREFIX + traitName + ": ");
         } else if (trait.isSetter()) {
-          writer.enter("set_" + traitName + ": ");
+          writer.enter(VM_OPEN_SET_METHOD_PREFIX + traitName + ": ");
+        } else {
+          writer.enter(traitName + ": ");
         }
-        writer.writeLns(method.toSource());
+        if (!hasUsedConstants) {
+          writer.writeLns(method.toSource());
+        } else {
+          writer.writeLns("undefined");
+        }
         writer.leave(",");
       } catch (x) {
 
@@ -55,32 +96,31 @@ function compileTrait(trait, writer) {
   }
 }
 
-function compileClass(classInfo, writer) {
-  function compileTraits(traits) {
+function compileClass(classInfo, writer, scope) {
+  function compileTraits(traits, scope) {
     traits.forEach(function (trait) {
-      compileTrait(trait, writer);
+      compileTrait(trait, writer, scope);
     });
   }
 
-  function compileInitializer(methodInfo) {
+  function compileInitializer(methodInfo, scope) {
     if (canCompile(methodInfo)) {
       ensureFunctionIsInitialized(methodInfo);
-      var method = createCompiledFunction(methodInfo, new Scope(null, {}), false, false, false);
-      writer.enter("c:");
+      var method = createCompiledFunction(methodInfo, scope, false, false, false);
+      writer.enter("ctor:");
       writer.writeLns(method.toSource());
       writer.leave(", ");
     }
   }
 
-  writer.enter(Multiname.getQualifiedName(classInfo.instanceInfo.name) + ": {");
-
+  writer.enter("class_" + Multiname.getQualifiedName(classInfo.instanceInfo.name) + ": {");
   writer.enter("s: {");
-  compileInitializer(classInfo.init);
-  compileTraits(classInfo.traits);
+  compileInitializer(classInfo.init, scope);
+  compileTraits(classInfo.traits, scope);
   writer.leave("}, ");
   writer.enter("i: {");
-  compileInitializer(classInfo.instanceInfo.init);
-  compileTraits(classInfo.instanceInfo.traits);
+  compileInitializer(classInfo.instanceInfo.init, scope);
+  compileTraits(classInfo.instanceInfo.traits, scope);
   writer.leave("}");
   writer.leave("},");
 }

@@ -43,9 +43,10 @@ var VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
 var VM_OPEN_METHODS = "vm open methods";
 var VM_IS_CLASS = "vm is class";
 
-var VM_OPEN_METHOD_PREFIX = "method_";
-var VM_OPEN_SET_METHOD_PREFIX = "set_";
-var VM_OPEN_GET_METHOD_PREFIX = "get_";
+var VM_OPEN_METHOD_PREFIX = "m";
+var VM_MEMOIZER_PREFIX = "z";
+var VM_OPEN_SET_METHOD_PREFIX = "s";
+var VM_OPEN_GET_METHOD_PREFIX = "g";
 
 var VM_NATIVE_BUILTIN_SURROGATES = [
   { object: Object, methods: ["toString", "valueOf"] },
@@ -55,9 +56,6 @@ var VM_NATIVE_BUILTIN_SURROGATES = [
 var VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
 
 var SAVED_SCOPE_NAME = "$SS";
-var PARAMETER_PREFIX = "p";
-
-var $M = [];
 
 /**
  * ActionScript uses a slightly different syntax for regular expressions. Many of these features
@@ -116,31 +114,9 @@ function ic(object) {
   return object.ic || (object.ic = new InlineCache());
 }
 
-
 /* This is used to keep track if we're in a runtime context. For instance, proxies need to
  * know if a proxied operation is triggered by AS3 code or VM code.
 */
-
-var AS = 1, JS = 2;
-
-var RUNTIME_ENTER_LEAVE_STACK = [AS];
-
-function enter(mode) {
-  RUNTIME_ENTER_LEAVE_STACK.push(mode);
-}
-
-function leave(mode) {
-  var top = RUNTIME_ENTER_LEAVE_STACK.pop();
-  release || assert (top === mode);
-}
-
-function inJS() {
-  return RUNTIME_ENTER_LEAVE_STACK.top() === JS;
-}
-
-function inAS() {
-  return RUNTIME_ENTER_LEAVE_STACK.top() === AS;
-}
 
 var callWriter = new IndentingWriter(false, function (str){
   print(str);
@@ -313,7 +289,7 @@ function resolveMultinameProperty(namespaces, name, flags) {
     if (resolved) return resolved;
     return Multiname.getPublicQualifiedName(name);
   } else {
-    return namespaces[0].qualifiedName + "$" + name;
+    return Multiname.qualifyName(namespaces[0], name);
   }
 }
 
@@ -359,14 +335,9 @@ function asCallResolvedStringProperty(resolved, isLex, args) {
   return method.apply(receiver, args);
 }
 
-function fromResolvedName(resolved) {
-  release || assert(resolved.indexOf(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX) === 0, resolved);
-  return resolved.substring(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
-}
-
 function asGetResolvedStringPropertyFallback(resolved) {
-  var name = fromResolvedName(resolved);
-  return this.asGetProperty([ShumwayNamespace.PUBLIC], name, 0);
+  var name = Multiname.getNameFromPublicQualifiedName(resolved);
+  return this.asGetProperty([ASNamespace.PUBLIC], name, 0);
 }
 
 function asSetPublicProperty(name, value) {
@@ -1058,53 +1029,9 @@ function nameInTraits(object, qn) {
   return proto.hasOwnProperty(VM_BINDINGS) && proto.hasOwnProperty(qn);
 }
 
-/**
- * Resolving a multiname on an object using linear search.
- */
-function resolveMultinameUnguarded(object, mn, traitsOnly) {
-  release || assert(Multiname.needsResolution(mn), "Multiname ", mn, " is already resolved.");
-  release || assert(!Multiname.isNumeric(mn), "Should not resolve numeric multinames.");
-  object = boxValue(object);
-  var publicQn;
-
-  // Check if the object that we are resolving the multiname on is a JavaScript native prototype
-  // and if so only look for public (dynamic) properties. The reason for this is because we cannot
-  // overwrite the native prototypes to fit into our trait/dynamic prototype scheme, so we need to
-  // work around it here during name resolution.
-
-  var isNative = isNativePrototype(object);
-  for (var i = 0, j = mn.namespaces.length; i < j; i++) {
-    var qn = mn.getQName(i);
-    if (traitsOnly) {
-      if (nameInTraits(object, Multiname.getQualifiedName(qn))) {
-        return qn;
-      }
-      continue;
-    }
-
-    if (mn.namespaces[i].isDynamic()) {
-      publicQn = qn;
-      if (isNative) {
-        break;
-      }
-    } else if (!isNative) {
-      if (Multiname.getQualifiedName(qn) in object) {
-        return qn;
-      }
-    }
-  }
-  if (publicQn && !traitsOnly && (Multiname.getQualifiedName(publicQn) in object)) {
-    return publicQn;
-  }
-  return undefined;
-}
-
 // TODO: Remove this and its uses.
 function resolveMultiname(object, mn, traitsOnly) {
-  enter(JS);
-  var result = resolveMultinameUnguarded(object, mn, traitsOnly);
-  leave(JS);
-  return result;
+  return object.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
 }
 
 function sliceArguments(args, offset) {
@@ -1130,8 +1057,9 @@ function forEachPublicProperty(object, fn, self) {
     if (isNumeric(key)) {
       fn.call(self, key, object[key]);
     } else if (Multiname.isPublicQualifiedName(key) && object[VM_BINDINGS].indexOf(key) < 0) {
-      var name = key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
-      fn.call(self, name, object[key]);
+      notImplemented("??");
+      // var name = key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
+      // fn.call(self, name, object[key]);
     }
   }
 }
@@ -1306,12 +1234,56 @@ function debugName(value) {
   return value;
 }
 
+function searchForCompiledFunction(methodInfo) {
+  if (typeof candyAOT === "undefined") {
+    return;
+  }
+  var abcs = candyAOT;
+  function findClass(mn) {
+    for (var a = 0; a < abcs.length; a++) {
+      var abc = abcs[a];
+      for (var s = 0; s < abc.scripts.length; s++) {
+        var script = abc.scripts[s];
+        var c = script["class_" + Multiname.getQualifiedName(mn)];
+        if (c) {
+          return c;
+        }
+      }
+    }
+  }
+
+  var mi = methodInfo;
+  var prefix = "m";
+  if (mi.holder instanceof InstanceInfo) {
+    var cls = findClass(mi.holder.name);
+    if (cls) {
+      var method = cls.i["m" + Multiname.getQualifiedName(mi.name)];
+      if (method) {
+        Counter.count("Linked Method");
+        return method;
+      }
+    }
+  } else if (mi.holder instanceof ClassInfo) {
+    var cls = findClass(mi.holder.instanceInfo.name);
+    if (cls) {
+      var method = cls.s[prefix + Multiname.getQualifiedName(mi.name)];
+      if (method) {
+        Counter.count("Linked Method");
+        return method;
+      }
+    }
+  }
+  console.info("Can't Find: " + mi);
+}
+
 function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
   var mi = methodInfo;
-  $M.push(mi);
-  var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
-  var parameters = result.parameters;
-  var body = result.body;
+  var cached = searchForCompiledFunction(mi);
+  if (!cached) {
+    var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
+    var parameters = result.parameters;
+    var body = result.body;
+  }
 
   var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
   if (mi.holder) {
@@ -1336,7 +1308,11 @@ function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, 
 //      body = '{ try {\n' + body + '\n} catch (e) {window.console.log("error in function ' +
 //              fnName + ':" + e + ", stack:\\n" + e.stack); throw e} }';
 //    }
-  var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
+
+  if (!cached) {
+    var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
+  }
+
   if (traceLevel.value > 1) {
     mi.trace(new IndentingWriter(), mi.abc);
   }
@@ -1349,7 +1325,7 @@ function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, 
   // mi.freeMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
   // mi.freeMethod = new Function(parameters, body);
 
-  var fn = new Function("return " + fnSource)();
+  var fn = cached || new Function("return " + fnSource)();
   fn.debugName = "Compiled Function #" + vmNextCompiledFunctionId++;
   return fn;
 }
@@ -2062,7 +2038,7 @@ var GlobalMultinameResolver = (function () {
         return;
       }
       wasResolved[name] = true;
-      return new Multiname([ShumwayNamespace.PUBLIC], multiname.name);
+      return new Multiname([ASNamespace.PUBLIC], multiname.name);
     }
   }
 })();

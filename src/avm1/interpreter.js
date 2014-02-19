@@ -242,7 +242,8 @@ function as2ResolveProperty(obj, name) {
   var lowerCaseName = avm2PublicName.toLowerCase();
   for (var i in obj) {
     if (i.toLowerCase() === lowerCaseName) {
-      return i.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
+      notImplemented("FIX THIS");
+      // return i.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
     }
   }
   return null;

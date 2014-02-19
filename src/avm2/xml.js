@@ -410,7 +410,7 @@ var isXMLType, isXMLName, XMLParser;
           }
           var namespaces = scope.namespaces;
           for (var i = 0; i < namespaces.length; ++i) {
-            var ns = ShumwayNamespace.createNamespace(namespaces[i].uri, namespaces[i].prefix);
+            var ns = ASNamespace.createNamespace(namespaces[i].uri, namespaces[i].prefix);
             currentElement.inScopeNamespaces.push(ns);
           }
           parent.insert(parent.length(), currentElement);
@@ -566,7 +566,7 @@ var isXMLType, isXMLName, XMLParser;
       }
       scope = scope.parent;
     }
-    var ns = ShumwayNamespace.createNamespace("", "");
+    var ns = ASNamespace.createNamespace("", "");
     return ns;
   }
 
@@ -588,7 +588,7 @@ var isXMLType, isXMLName, XMLParser;
       ? toNumber(name) 
       : name instanceof QName 
         ? name.mn
-        : new Multiname(namespaces ? namespaces : [ShumwayNamespace.PUBLIC], name, flags);
+        : new Multiname(namespaces ? namespaces : [ASNamespace.PUBLIC], name, flags);
     return this.getProperty(mn, isMethod);
   }
 
@@ -597,7 +597,7 @@ var isXMLType, isXMLName, XMLParser;
       ? toNumber(name) 
       : name instanceof QName 
         ? name.mn
-        : new Multiname(namespaces ? namespaces : [ShumwayNamespace.PUBLIC], name, flags);
+        : new Multiname(namespaces ? namespaces : [ASNamespace.PUBLIC], name, flags);
     this.setProperty(mn, value);
   }
 
@@ -606,7 +606,7 @@ var isXMLType, isXMLName, XMLParser;
       ? toNumber(name) 
       : name instanceof QName 
         ? name.mn
-        : new Multiname(namespaces ? namespaces : [ShumwayNamespace.PUBLIC], name, flags);
+        : new Multiname(namespaces ? namespaces : [ASNamespace.PUBLIC], name, flags);
     return this.hasProperty(mn);
   }
 
@@ -614,7 +614,7 @@ var isXMLType, isXMLName, XMLParser;
     var receiver = isLex ? null : this;
     var property = this.asGetProperty(namespaces, name, flags, true);
     if (!property) {
-      return this.toString().asCallProperty(namespaces ? namespaces : [ShumwayNamespace.PUBLIC], name, flags, isLex, args);
+      return this.toString().asCallProperty(namespaces ? namespaces : [ASNamespace.PUBLIC], name, flags, isLex, args);
     }
     return property.apply(receiver, args);
   }
@@ -912,7 +912,8 @@ var isXMLType, isXMLName, XMLParser;
     // 9.1.1.1 XML.[[Get]] (P)
     Xp.getProperty = function (mn, isMethod) {
       if (isMethod) {
-        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+        var resolved = Multiname.isQName(mn) ? mn :
+          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return this[Multiname.getQualifiedName(resolved)];
       }
       if (isNumeric(mn)) {
@@ -953,7 +954,8 @@ var isXMLType, isXMLName, XMLParser;
 
     Xp.hasProperty = function (mn, isMethod) {
       if (isMethod) {
-        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+        var resolved = Multiname.isQName(mn) ? mn :
+          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return !!this[Multiname.getQualifiedName(resolved)];
       }
       if (isNumeric(mn)) {
@@ -995,7 +997,8 @@ var isXMLType, isXMLName, XMLParser;
         }
         // HACK if child with specific name is not present, check object's attributes.
         // The presence of the attribute/method can be checked during with(), see #850.
-        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+        var resolved = Multiname.isQName(mn) ? mn :
+          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return !!this[Multiname.getQualifiedName(resolved)];
       }
     };
@@ -1642,7 +1645,8 @@ var isXMLType, isXMLName, XMLParser;
 
     XLp.getProperty = function (mn, isMethod) {
       if (isMethod) {
-        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+        var resolved = Multiname.isQName(mn) ? mn :
+          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return this[Multiname.getQualifiedName(resolved)];
       }
       var x = this;
@@ -1667,7 +1671,8 @@ var isXMLType, isXMLName, XMLParser;
 
     XLp.hasProperty = function (mn, isMethod) {
       if (isMethod) {
-        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+        var resolved = Multiname.isQName(mn) ? mn :
+          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return !!this[Multiname.getQualifiedName(resolved)];
       }
       var x = this;
@@ -2057,7 +2062,7 @@ var isXMLType, isXMLName, XMLParser;
         }
       }
       if (!ns) {
-        ns = ShumwayNamespace.createNamespace(this.uri);  // FIXME what about the prefix
+        ns = ASNamespace.createNamespace(this.uri);  // FIXME what about the prefix
       }
       return ns;
     };

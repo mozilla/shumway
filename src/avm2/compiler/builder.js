@@ -60,6 +60,12 @@ var createName = function createName(namespaces, name) {
   var writer = new IndentingWriter();
   var peepholeOptimizer = new IR.PeepholeOptimizer();
 
+  /**
+   * Use the 'typeof argument === "undefined" ? defaultValue : argument' pattern to
+   * check for undefined arguments instead of the more correct arguments.length version.
+   */
+  var USE_TYPE_OF_DEFAULT_ARGUMENT_CHECKING = false;
+
   var State = (function() {
     var nextID = 0;
     function constructor(index) {
@@ -303,7 +309,13 @@ var createName = function createName(namespaces, name) {
     return callPure(globalProperty("String"), null, [value]);
   }
 
-  var coerceString = callGlobalProperty.bind(null, "asCoerceString");
+  function coerceString(value) {
+    if (isStringConstant(value)) {
+      return value;
+    }
+    return callPure(globalProperty("asCoerceString"), null, [value]);
+  }
+
   var coerceObject = callGlobalProperty.bind(null, "asCoerceObject");
 
   var coercers = createEmptyObject();
@@ -357,7 +369,7 @@ var createName = function createName(namespaces, name) {
 
       /* Create the method's parameters. */
       for (var i = 0; i < parameterCount; i++) {
-        state.local.push(new Parameter(start, parameterIndexOffset + i, PARAMETER_PREFIX + mi.parameters[i].name));
+        state.local.push(new Parameter(start, parameterIndexOffset + i, mi.parameters[i].name));
       }
 
       /* Wipe out the method's remaining locals. */
@@ -389,7 +401,12 @@ var createName = function createName(namespaces, name) {
         var index = i + 1;
         var local = state.local[index];
         if (parameter.value !== undefined) {
-          var condition = new IR.Binary(Operator.LT, argumentsLength, constant(parameterIndexOffset + i + 1));
+          var condition;
+          if (USE_TYPE_OF_DEFAULT_ARGUMENT_CHECKING) {
+            condition = new IR.Binary(Operator.SEQ, new IR.Unary(Operator.TYPE_OF, local), constant("undefined"));
+          } else {
+            condition = new IR.Binary(Operator.LT, argumentsLength, constant(parameterIndexOffset + i + 1));
+          }
           local = new IR.Latch(null, condition, constant(parameter.value), local);
         }
         if (parameter.type && !parameter.type.isAnyName()) {
@@ -682,6 +699,21 @@ var createName = function createName(namespaces, name) {
             return call(callee, object, [value]);
           }
           return store(new IR.ASSetSuper(region, state.store, object, multiname, value, scope));
+        }
+
+        function constructSuper(scope, object, args, ti) {
+          if (ti) {
+            if (ti.noCallSuperNeeded) {
+              return;
+            } else if (ti.baseClass) {
+              var callee = getJSProperty(constant(ti.baseClass), "instanceConstructorNoInitialize");
+              call(callee, object, args);
+              return;
+            }
+          }
+          callee = getJSProperty(scope, "object.baseClass.instanceConstructorNoInitialize");
+          call(callee, object, args);
+          return;
         }
 
         function callProperty(object, multiname, args, isLex, ti) {
@@ -1066,10 +1098,7 @@ var createName = function createName(namespaces, name) {
             case 0x49: // OP_constructsuper
               args = popMany(bc.argCount);
               object = pop();
-              if (!(bc.ti && bc.ti.noCallSuperNeeded)) {
-                callee = getJSProperty(savedScope(), "object.baseClass.instanceConstructorNoInitialize");
-                call(callee, object, args);
-              }
+              constructSuper(savedScope(), object, args, bc.ti);
               break;
             case 0x4A: // OP_constructprop
               args = popMany(bc.argCount);
