@@ -15,10 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global FrameCounter, traceRenderer, frameWriter, URL, Counter */
-
-var MAX_SNAP_DRAW_SCALE_TO_CACHE = 8;
-var CACHE_SNAP_DRAW_AFTER = 3;
 
 var BitmapDefinition = (function () {
   function setBitmapData(value) {
@@ -31,12 +27,11 @@ var BitmapDefinition = (function () {
     }
 
     if (value) {
-      var canvas = value._drawable;
       this._bbox = {
         xMin: 0,
         yMin: 0,
-        xMax: canvas.width * 20,
-        yMax: canvas.height * 20
+        xMax: value._width * 20,
+        yMax: value._height * 20
       };
     } else {
       this._bbox = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
@@ -51,48 +46,8 @@ var BitmapDefinition = (function () {
     __class__: "flash.display.Bitmap",
     _drawableChanged: function () {
       this._invalidate();
-      this._snapImageCache.image = null;
-      this._snapImageCache.hints = 0;
     },
-    _cacheSnapImage: function (sizeKey, xScale, yScale) {
-      Counter.count('Cache scaled image');
-      var original = this._bitmapData._getDrawable();
-      var canvas = document.createElement('canvas');
-      canvas.width = xScale * original.width;
-      canvas.height = yScale * original.height;
-      var ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
-        this._smoothing;
-      ctx.drawImage(original, 0, 0, original.width, original.height,
-                              0, 0, canvas.width, canvas.height);
-
-      var cache = this._snapImageCache;
-      var image = document.createElement('img');
-      cache._tmp = [canvas, image];
-      if ('toBlob' in canvas) {
-        canvas.toBlob(function (blob) {
-          if (cache.size !== sizeKey) {
-            return;
-          }
-          image.onload = function () {
-            URL.revokeObjectURL(blob);
-            if (cache.size === sizeKey) {
-              cache.image = image;
-            }
-          };
-          image.src = URL.createObjectURL(blob);
-        });
-      } else {
-        image.onload = function () {
-          if (cache.size === sizeKey) {
-            cache.image = image;
-          }
-        };
-        image.src = canvas.toDataURL();
-      }
-    },
-    initialize: function () {
-    },
+    initialize: function () { },
     __glue__: {
       native: {
         static: {
@@ -105,21 +60,11 @@ var BitmapDefinition = (function () {
               this._pixelSnapping = 'auto';
             }
             this._smoothing = !!smoothing;
-            this._snapImageCache = {
-              hits: 0,
-              size: '',
-              image: null
-            };
 
             if (!bitmapData && this.symbol) {
               var symbol = this.symbol;
               bitmapData = new flash.display.BitmapData(symbol.width,
                                                         symbol.height, true, 0);
-              bitmapData._ctx.imageSmoothingEnabled = this._smoothing;
-              bitmapData._ctx.mozImageSmoothingEnabled = this._smoothing;
-              bitmapData._ctx.drawImage(symbol.img, 0, 0);
-              bitmapData._ctx.imageSmoothingEnabled = false;
-              bitmapData._ctx.mozImageSmoothingEnabled = false;
             }
 
             setBitmapData.call(this, bitmapData || null);

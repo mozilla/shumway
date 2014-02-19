@@ -20,7 +20,7 @@
 
 var FontDefinition = (function () {
   var fonts = [];
-  var fontsByUniqueName = Object.create(null);
+  var fontsById = Object.create(null);
   var fontsByNameStyleType = Object.create(null);
 
   var _deviceFontMetrics;
@@ -31,8 +31,8 @@ var FontDefinition = (function () {
     initialize: function () {
       var s = this.symbol;
       if (s) {
+        this._fontId = s.id;
         this._fontName = s.name || null;
-        this._uniqueName = s.uniqueName;
         if (s.bold) {
           if (s.italic) {
             this._fontStyle = 'boldItalic';
@@ -49,7 +49,7 @@ var FontDefinition = (function () {
         this._metrics = metrics;
         this._fontType = 'embedded';
         fonts.push(this);
-        fontsByUniqueName[this._uniqueName] = this;
+        fontsById[s.id] = this;
         var ident = this._fontName.toLowerCase() + '_' + this._fontStyle +
                     '_embedded';
         fontsByNameStyleType[ident] = this;
@@ -77,14 +77,14 @@ var FontDefinition = (function () {
         return font;
       }
       font = new flash.text.Font();
-      font._fontName = font._uniqueName = name;
+      font._fontName = name;
       font._fontStyle = style;
       font._fontType = 'device';
       var metrics = deviceFontMetrics()[name];
       if (!metrics) {
         metrics = deviceFontMetrics().serif;
         assert(metrics);
-        font._fontName = font._uniqueName = 'serif';
+        font._fontName = 'serif';
       }
       font._metrics = {
         ascent: metrics[0],
@@ -95,8 +95,45 @@ var FontDefinition = (function () {
       fontsByNameStyleType[ident] = font;
       return font;
     },
-    getFontByUniqueName: function(name) {
-      return fontsByUniqueName[name];
+    getFontById: function(id) {
+      return fontsById[id];
+    },
+    makeFormatString: function (format) {
+      // Order of the font arguments: <style> <weight> <size> <family>
+      var boldItalic = '';
+      if (format.italic) {
+        boldItalic += 'italic';
+      if (format.bold) {
+        boldItalic += ' bold';
+      }
+      // We don't use format.face because format.font contains the resolved name.
+      return boldItalic + ' ' + format.size + 'px ' +
+              (format.font._uniqueName || format.font._fontName);
+    },
+    resolveFont: function(format, embedded) {
+      var face = format.face.toLowerCase();
+      if (face === '_sans') {
+        face = 'sans-serif';
+      } else if (face === '_serif') {
+        face = 'serif';
+      } else if (face === '_typewriter') {
+        face = 'monospace';
+      }
+      var style;
+      if (format.bold) {
+        if (format.italic) {
+          style = 'boldItalic';
+        } else {
+          style = 'bold';
+        }
+      } else if (format.italic) {
+        style = 'italic';
+      } else {
+        style = 'regular';
+      }
+      var font = this.getFont(face, style, embedded);
+      assert(font);
+      format.font = font;
     }
   };
 
