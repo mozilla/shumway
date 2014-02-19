@@ -210,7 +210,7 @@ function debugBreak(message) {
   print("\033[91mdebugBreak: " + message + "\033[0m");
 }
 
-var ASNamespace;
+var NativeASNamespace;
 
 var natives = (function () {
 
@@ -817,7 +817,7 @@ var natives = (function () {
    * Namespace.as
    */
   function NamespaceClass(runtime, scope, instanceConstructor, baseClass) {
-    ASNamespace = function ASNamespace(prefixValue, uriValue) {
+    NativeASNamespace = function NativeASNamespace(prefixValue, uriValue) {
       if (uriValue === undefined) {
         uriValue = prefixValue;
         prefixValue = undefined;
@@ -829,7 +829,7 @@ var natives = (function () {
           uri = "";
         } else if (typeof uriValue === "object") {
           prefix = uriValue.prefix;
-          if (uriValue instanceof ShumwayNamespace) {
+          if (uriValue instanceof ASNamespace) {
             uri = uriValue.originalURI;
           } else if (uriValue instanceof QName) {
             uri = uriValue.uri;
@@ -864,13 +864,13 @@ var natives = (function () {
           prefix = prefixValue + '';
         }
       }
-      return ShumwayNamespace.createNamespace(uri, prefix);
+      return ASNamespace.createNamespace(uri, prefix);
     }
 
-    var c = new Class("Namespace", ASNamespace, C(ASNamespace));
-    c.extendNative(baseClass, ShumwayNamespace);
+    var c = new Class("Namespace", NativeASNamespace, C(NativeASNamespace));
+    c.extendNative(baseClass, ASNamespace);
 
-    var Np = ShumwayNamespace.prototype;
+    var Np = ASNamespace.prototype;
     c.native = {
       instance: {
         prefix: {

@@ -18,7 +18,35 @@
  * Throw away code, just used to debug the compiler for now.
  */
 
+function objectConstantName2(object) {
+  release || assert(object);
+  if (object.hasOwnProperty(OBJECT_NAME)) {
+    return object[OBJECT_NAME];
+  }
+  if (object instanceof LazyInitializer) {
+    // console.warn("LazyInitializer: " + object.getName() + " : " + object.target);
+    return object.getName();
+  }
+  // console.warn("Object: " + object);
+  var name, id = objectIDs++;
+  if (object instanceof Scope) {
+    name = "$X" + id;
+  } else if (object instanceof Global) {
+    name = "$G" + id;
+  } else if (object instanceof Multiname) {
+    name = "$M" + id;
+  } else if (isClass(object)) {
+    name = "$C" + id;
+  } else {
+    name = "$O" + id;
+  }
+  Object.defineProperty(object, OBJECT_NAME, {value: name, writable: false, enumerable: false});
+  jsGlobal[name] = object;
+  return name;
+}
+
 function compileScript(script, writer) {
+  objectConstantName = objectConstantName2;
   // TODO: Create correct scope chains.
   var scope = new Scope(null, new Global(script));
   script.traits.forEach(function (trait) {

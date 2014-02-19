@@ -55,9 +55,6 @@ var VM_NATIVE_BUILTIN_SURROGATES = [
 var VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
 
 var SAVED_SCOPE_NAME = "$SS";
-var PARAMETER_PREFIX = "p";
-
-var $M = [];
 
 /**
  * ActionScript uses a slightly different syntax for regular expressions. Many of these features
@@ -313,7 +310,7 @@ function resolveMultinameProperty(namespaces, name, flags) {
     if (resolved) return resolved;
     return Multiname.getPublicQualifiedName(name);
   } else {
-    return namespaces[0].qualifiedName + "$" + name;
+    return Multiname.qualifyName(namespaces[0], name);
   }
 }
 
@@ -360,13 +357,14 @@ function asCallResolvedStringProperty(resolved, isLex, args) {
 }
 
 function fromResolvedName(resolved) {
-  release || assert(resolved.indexOf(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX) === 0, resolved);
-  return resolved.substring(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
+  notImplemented("fromResolvedName");
+  // release || assert(resolved.indexOf(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX) === 0, resolved);
+  // return resolved.substring(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
 }
 
 function asGetResolvedStringPropertyFallback(resolved) {
   var name = fromResolvedName(resolved);
-  return this.asGetProperty([ShumwayNamespace.PUBLIC], name, 0);
+  return this.asGetProperty([ASNamespace.PUBLIC], name, 0);
 }
 
 function asSetPublicProperty(name, value) {
@@ -1130,8 +1128,9 @@ function forEachPublicProperty(object, fn, self) {
     if (isNumeric(key)) {
       fn.call(self, key, object[key]);
     } else if (Multiname.isPublicQualifiedName(key) && object[VM_BINDINGS].indexOf(key) < 0) {
-      var name = key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
-      fn.call(self, name, object[key]);
+      notImplemented("??");
+      // var name = key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
+      // fn.call(self, name, object[key]);
     }
   }
 }
@@ -1308,7 +1307,6 @@ function debugName(value) {
 
 function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
   var mi = methodInfo;
-  $M.push(mi);
   var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
   var parameters = result.parameters;
   var body = result.body;
@@ -2062,7 +2060,7 @@ var GlobalMultinameResolver = (function () {
         return;
       }
       wasResolved[name] = true;
-      return new Multiname([ShumwayNamespace.PUBLIC], multiname.name);
+      return new Multiname([ASNamespace.PUBLIC], multiname.name);
     }
   }
 })();

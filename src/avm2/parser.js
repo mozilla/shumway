@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+var PUBLIC_PREFIX = "public";
+
 var AbcStream = (function () {
   function abcStream(bytes) {
     this.bytes = bytes;
@@ -320,20 +322,16 @@ var Trait = (function () {
   return trait;
 })();
 
-var ShumwayNamespace = (function () {
+var ASNamespace = (function () {
 
   var kinds = {};
-  kinds[CONSTANT_Namespace] = "public";
-  kinds[CONSTANT_PackageNamespace] = "public";
+  kinds[CONSTANT_Namespace] = PUBLIC_PREFIX;
+  // kinds[CONSTANT_PackageNamespace] = PUBLIC_PREFIX;
   kinds[CONSTANT_PackageInternalNs] = "packageInternal";
   kinds[CONSTANT_PrivateNs] = "private";
   kinds[CONSTANT_ProtectedNamespace] = "protected";
   kinds[CONSTANT_ExplicitNamespace] = "explicit";
   kinds[CONSTANT_StaticProtectedNs] = "staticProtected";
-  var prefixes = {};
-  for (var k in kinds) {
-    prefixes[kinds[k]] = true;
-  }
 
   /**
    * According to Tamarin, this is 0xe000 + 660, with 660 being an "odd legacy
@@ -342,7 +340,7 @@ var ShumwayNamespace = (function () {
   var MIN_API_MARK              = 0xe294;
   var MAX_API_MARK              = 0xf8ff;
 
-  function namespace(kind, uri, prefix, dontMangle) {
+  function namespace(kind, uri, prefix) {
     if (kind !== undefined) {
       if (uri === undefined) {
         uri = "";
@@ -351,78 +349,142 @@ var ShumwayNamespace = (function () {
         this.prefix = prefix;
       }
       this.kind = kind;
-      this.originalURI = this.uri = uri;
-      buildNamespace.call(this, dontMangle);
+      this.originalURI = uri;
+      buildNamespace.call(this);
     }
     // Otherwise, we are creating an empty namespace to be build
     // by the parse method.
   }
 
-  namespace.PREFIXES = prefixes;
-
-  var uniqueNamespaceCounter = 0;
-  function buildNamespace(dontMangle) {
-    if (this.isPublic() && this.uri) {
+  function buildNamespace() {
+    if (this.kind === CONSTANT_PackageNamespace) {
+      this.kind = CONSTANT_Namespace;
+    }
+    if (this.isPublic() && this.originalURI) {
       /* Strip the api version mark for now. */
-      var n = this.uri.length - 1;
-      var mark = this.uri.charCodeAt(n);
+      var n = this.originalURI.length - 1;
+      var mark = this.originalURI.charCodeAt(n);
       if (mark > MIN_API_MARK) {
-        this.uri = this.uri.substring(0, n - 1);
+        assert(false, "What's this code for?");
+        this.originalURI = this.originalURI.substring(0, n - 1);
       }
     } else if (this.isUnique()) {
-      this.uri = String(this.uri + uniqueNamespaceCounter++);
+      // Generate a globally random URI for private namespaces.
+      this.originalURI = Math.round(Math.random() * Number.MAX_SAFE_INTEGER);
     }
-    this.uri = dontMangle ? this.uri : mangleNamespaceURI(this.uri);
-    release || assert(kinds[this.kind]);
-    this.qualifiedName = kinds[this.kind] + "$" + this.uri;
+    this.qualifiedName = qualifyNamespaceInternal(this.kind, this.originalURI, this.prefix ? this.prefix : "");
   }
 
-  function escapeUri(uri) {
-    if (uri !== undefined) {
-      uri = uri.replace(/[^\w]/g, "_"); /* No fancy characters. */
-    }
-    return uri;
+  function toEncoding(n) {
+    return 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$_'[n];
   }
 
-  var uriToMangledNameMap = createEmptyObject();
-  var mangledNameToURIMap = createEmptyObject();
-  var mangledNameList = [];
-  var MANGLE_NAMESPACES = true;
+  function encodeInt32(n) {
+    var a = (n >> 30) & 0x3;
+    var b = (n & 0x7000000) >> 24; // 0x7000000 = (2^6 - 1) << 24
+    var c = (n & 0x1C0000) >> 18; // 0x1C0000 = (2^6 - 1) << 18
+    var d = (n & 0x3F000) >> 12; // 0x3F000 = (2^6 - 1) << 12
+    var e = (n & 0xFC0) >> 6; // 0xFC0 = (2^6 - 1) << 6
+    var f = (n & 0x3F); // 0x3F = 2^6 - 1
+    return toEncoding(a) + toEncoding(b) + toEncoding(c) +
+           toEncoding(d) + toEncoding(e) + toEncoding(f);
+  }
+
+  function variableLengthEncodeInt32(n) {
+    var bitCount = (32 - leadingZeros(n));
+    assert (bitCount <= 32, bitCount);
+    var l = Math.ceil(bitCount / 6);
+    // Encode length followed by six bit chunks.
+    var s = toEncoding(l);
+    for (var i = l - 1; i >= 0; i--) {
+      var offset = (i * 6);
+      s += toEncoding((n >> offset) & 0x3F);
+    }
+    assert (variableLengthDecodeIdentifier(s) === n, n + " : " + s + " - " + l + " bits: " + bitCount);
+    return s;
+  }
+
+  function fromEncoding(s) {
+    var c = s.charCodeAt(0);
+    var e = 0;
+    if (c >= 65 && c <= 90) {
+      return c - 65;
+    } else if (c >= 97 && c <= 122) {
+      return c - 71;
+    } else if (c >= 48 && c <= 57) {
+      return c + 4;
+    } else if (c === 36) {
+      return 62;
+    } else if (c === 95) {
+      return 63;
+    }
+    assert (false, "Invalid Encoding");
+  }
+
+  function variableLengthDecodeIdentifier(s) {
+    var l = fromEncoding(s[0]);
+    var n = 0;
+    for (var i = 0; i < l; i++) {
+      var offset = ((l - i - 1) * 6);
+      n |= fromEncoding(s[1 + i]) << offset;
+    }
+    return n;
+  }
+
+  var knownURIs = [
+    ""
+  ];
+
+  function hashNamespace(kind, uri, prefix) {
+    var data = new Int32Array(1 + uri.length + prefix.length);
+    var j = 0;
+    data[j++] = kind;
+    var index = knownURIs.indexOf(uri);
+    if (index >= 0) {
+      return kind << 2 | uri;
+    } else {
+      for (var i = 0; i < uri.length; i++) {
+        data[j++] = uri.charCodeAt(i);
+      }
+    }
+    for (var i = 0; i < prefix.length; i++) {
+      data[j++] = prefix.charCodeAt(i);
+    }
+    return hash32BitsMD5(data, 0, j);
+  }
+
+  var mangledNamespaceCache = createEmptyObject();
+  var mangledNamespaceMap = createEmptyObject();
+
+  var knownURIs = [
+    ""
+  ];
+
 
   /**
-   * Mangles a namespace uri to a more sensible name. The process can be reversed.
-   * In release mode we mangle the name a numeric string otherwise we mangle to an
-   * escaped string, which can cause collisions.
+   * Mangles a namespace URI to a more sensible name. The process is reversible
+   * using lookup tables.
    */
-  function mangleNamespaceURI(uri) {
-    if (uri === "") {
-      return "";
+  function qualifyNamespaceInternal(kind, uri, prefix) {
+    var key = kind + uri;
+    var mangledNamespace = mangledNamespaceCache[key];
+    if (mangledNamespace) {
+      return mangledNamespace;
     }
-    var name = uriToMangledNameMap[uri];
-    if (name) {
-      return name;
-    }
-    if (!MANGLE_NAMESPACES) {
-      name = escapeUri(uri);
-      mangledNameToURIMap[name] = uri;
-    } else {
-      name = String(mangledNameList.length);
-      mangledNameList.push(name);
-    }
-    uriToMangledNameMap[uri] = name;
-    return name;
+    mangledNamespace = variableLengthEncodeInt32(hashNamespace(kind, uri, prefix));
+    mangledNamespaceMap[mangledNamespace] = {
+      kind: kind, uri: uri, prefix: prefix
+    };
+    mangledNamespaceCache[key] = mangledNamespace;
+    // print("Kind: " + kind + ", URI: \"" + uri + "\": Prefix: \"" + prefix + "\" name: \"" + mangledNamespace + "\"");
+    return mangledNamespace;
   }
 
   namespace.fromQualifiedName = function fromQualifiedName(qn) {
-    var a = qn.indexOf("$");
-    var b = qn.indexOf("$", a + 1);
-    var str = qn.substring(0, a);
-    var kind = namespace.kindFromString(str);
-    str = qn.substring(a + 1, b);
-    var uri = str === "" ? str : (MANGLE_NAMESPACES ? mangledNameList[Number(str)] : mangledNameToURIMap[str]);
-    release || assert (uri || uri === "", "uri is " + uri);
-    release || assert (qn.indexOf(new namespace(kind, uri, undefined, true).getQualifiedName()) >= 0);
-    return new namespace(kind, uri, undefined, true);
+    var length = fromEncoding(qn[0]);
+    var mangledNamespace = qn.substring(0, length + 1);
+    var ns = mangledNamespaceMap[mangledNamespace];
+    return new namespace(ns.kind, ns.uri, ns.prefix);
   };
 
   namespace.kindFromString = function kindFromString(str) {
@@ -441,7 +503,7 @@ var ShumwayNamespace = (function () {
   namespace.prototype = Object.create({
     parse: function parse(constantPool, stream) {
       this.kind = stream.readU8();
-      this.originalURI = this.uri = constantPool.strings[stream.readU30()];
+      this.originalURI = constantPool.strings[stream.readU30()];
       buildNamespace.call(this);
     },
 
@@ -539,7 +601,7 @@ var ShumwayNamespace = (function () {
           kindName = name;
           uri = "";
         } else {
-          kindName = "public";
+          kindName = PUBLIC_PREFIX;
           uri = name;
         }
       }
@@ -595,12 +657,24 @@ var ShumwayNamespace = (function () {
  * |mn.isRuntimeMultiname()| since the latter will fail if |mn| is not a Multiname object.
  */
 
+/**
+ * Name Mangling
+ *
+ * All Shumway QNames are mangled using the following format:
+ *
+ * "$" (Variable Length Mangled Namespace) Name
+ *
+ * Namespaces are hashed to 32 bit integers and are converted to a base64 variable length string
+ * encoding that can still be parsed as a valid JS identifier. We can encode 32 bits hashes with
+ * six sets of 6 bits. This leaves us with 4 unused bits that can be used to encode the length
+ * of the string.
+ *
+ */
 var Multiname = (function () {
   var ATTRIBUTE         = 0x01;
   var RUNTIME_NAMESPACE = 0x02;
   var RUNTIME_NAME      = 0x04;
   var nextID = 0;
-  var PUBLIC_QUALIFIED_NAME_PREFIX = "public$$";
 
   function multiname(namespaces, name, flags) {
     if (name !== undefined) {
@@ -746,15 +820,11 @@ var Multiname = (function () {
     return mn instanceof Multiname && mn.isRuntimeName() || mn.isRuntimeNamespace();
   };
 
+
   /**
    * Gets the qualified name for this multiname, this is either the identity or
    * a mangled Multiname object.
    */
-
-  function qualifyNameInternal(qualifier, name) {
-    release || assert (typeof name !== "object");
-    return qualifier ? qualifier + "$" + name : name;
-  }
 
   multiname.getQualifiedName = function getQualifiedName(mn) {
     release || assert (Multiname.isQName(mn));
@@ -767,39 +837,35 @@ var Multiname = (function () {
         release || assert (mn.namespaces[0].isPublic());
         return mn.qualifiedName = name;
       }
-      mn = mn.qualifiedName = qualifyNameInternal(mn.namespaces[0].qualifiedName, name);
+      mn = mn.qualifiedName = multiname.qualifyName(mn.namespaces[0], name);
     }
     return mn;
   };
 
   multiname.qualifyName = function qualifyName(namespace, name) {
-    return qualifyNameInternal(namespace.qualifiedName, name)
+    return "$" + namespace.qualifiedName + name;
   };
 
   multiname.stripPublicQualifier = function stripPublicQualifier(qn) {
-    var index = qn.indexOf(PUBLIC_QUALIFIED_NAME_PREFIX);
+    var publicQualifier = "$" + ASNamespace.PUBLIC.qualifiedName;
+    var index = qn.indexOf(publicQualifier);
     if (index !== 0) {
       return undefined;
     }
-    return qn.substring(PUBLIC_QUALIFIED_NAME_PREFIX.length);
+    return qn.substring(publicQualifier.length);
   };
 
   /**
    * Creates a Multiname from a mangled qualified name. The format should be of
-   * the form kindName$mangledURI$name.
+   * the form "$"(mangledNamespace)(name).
    */
   multiname.fromQualifiedName = function fromQualifiedName(qn) {
     if (qn instanceof Multiname) {
       return qn;
     }
-    release || assert (typeof qn === "string" && !isNumeric(qn));
-    var a = qn.indexOf("$");
-    if (a < 0 || !(ShumwayNamespace.PREFIXES[qn.substring(0, a)])) {
-      return undefined;
-    }
-    var ns = ShumwayNamespace.fromQualifiedName(qn);
-    var b = qn.indexOf("$", a + 1);
-    return new Multiname([ns], qn.substring(b + 1));
+    release || assert (isString(qn) && qn[0] === "$", qn);
+    var ns = ASNamespace.fromQualifiedName(qn.substring(1));
+    return new Multiname([ns], qn.substring(1 + ns.qualifiedName.length));
   };
 
   /**
@@ -814,7 +880,6 @@ var Multiname = (function () {
     return qn;
   };
 
-  multiname.PUBLIC_QUALIFIED_NAME_PREFIX = PUBLIC_QUALIFIED_NAME_PREFIX;
   multiname.getPublicQualifiedName = function getPublicQualifiedName(name) {
     if (isNumeric(name)) {
       return toNumber(name);
@@ -822,11 +887,11 @@ var Multiname = (function () {
       return name;
     }
     // release || assert (isString(name) || isNullOrUndefined(name));
-    return PUBLIC_QUALIFIED_NAME_PREFIX + name;
+    return multiname.qualifyName(ASNamespace.PUBLIC, name);
   };
 
   multiname.isPublicQualifiedName = function isPublicQualifiedName(qn) {
-    return typeof qn === "number" || isNumeric(qn) || qn.indexOf(PUBLIC_QUALIFIED_NAME_PREFIX) === 0;
+    return typeof qn === "number" || isNumeric(qn) || qn.indexOf(ASNamespace.PUBLIC.qualifiedName.qualifiedName) === 1;
   };
 
   multiname.getAccessModifier = function getAccessModifier(mn) {
@@ -886,7 +951,7 @@ var Multiname = (function () {
       namespace = "";
     }
     return simpleNameCache[simpleName] =
-        new Multiname(ShumwayNamespace.fromSimpleName(namespace), name);
+        new Multiname(ASNamespace.fromSimpleName(namespace), name);
   };
 
   multiname.prototype.getQName = function getQName(index) {
@@ -1070,7 +1135,7 @@ var ConstantPool = (function constantPool() {
     var namespaces = [undefined];
     n = stream.readU30();
     for (i = 1; i < n; ++i) {
-      var namespace = new ShumwayNamespace();
+      var namespace = new ASNamespace();
       namespace.parse(this, stream);
       namespaces.push(namespace);
     }
@@ -1088,6 +1153,9 @@ var ConstantPool = (function constantPool() {
         set.push(namespaces[stream.readU30()]);
       }
       namespaceSets.push(set);
+      print(set.map(function(n) {
+        return n.uri;
+      }).join(""));
     }
     Timer.stop();
 
@@ -1158,7 +1226,7 @@ var MethodInfo = (function () {
 
   function getParameterName(i) {
     release || assert(i < 26);
-    return "p" + String.fromCharCode("A".charCodeAt(0) + i);
+    return String.fromCharCode("A".charCodeAt(0) + i);
   }
 
   function methodInfo(abc, stream) {

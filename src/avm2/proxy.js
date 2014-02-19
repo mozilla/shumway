@@ -36,7 +36,7 @@ var proxyTrapQns = {
 };
 
 for (var name in proxyTrapQns) {
-  proxyTrapQns[name] = VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(new Multiname([ShumwayNamespace.PROXY], name));
+  proxyTrapQns[name] = VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(new Multiname([ASNamespace.PROXY], name));
 }
 
 var VM_IS_PROXY = "vm is proxy";

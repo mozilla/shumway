@@ -410,7 +410,7 @@ var isXMLType, isXMLName, XMLParser;
           }
           var namespaces = scope.namespaces;
           for (var i = 0; i < namespaces.length; ++i) {
-            var ns = ShumwayNamespace.createNamespace(namespaces[i].uri, namespaces[i].prefix);
+            var ns = ASNamespace.createNamespace(namespaces[i].uri, namespaces[i].prefix);
             currentElement.inScopeNamespaces.push(ns);
           }
           parent.insert(parent.length(), currentElement);
@@ -566,7 +566,7 @@ var isXMLType, isXMLName, XMLParser;
       }
       scope = scope.parent;
     }
-    var ns = ShumwayNamespace.createNamespace("", "");
+    var ns = ASNamespace.createNamespace("", "");
     return ns;
   }
 
@@ -588,7 +588,7 @@ var isXMLType, isXMLName, XMLParser;
       ? toNumber(name) 
       : name instanceof QName 
         ? name.mn
-        : new Multiname(namespaces ? namespaces : [ShumwayNamespace.PUBLIC], name, flags);
+        : new Multiname(namespaces ? namespaces : [ASNamespace.PUBLIC], name, flags);
     return this.getProperty(mn, isMethod);
   }
 
@@ -597,7 +597,7 @@ var isXMLType, isXMLName, XMLParser;
       ? toNumber(name) 
       : name instanceof QName 
         ? name.mn
-        : new Multiname(namespaces ? namespaces : [ShumwayNamespace.PUBLIC], name, flags);
+        : new Multiname(namespaces ? namespaces : [ASNamespace.PUBLIC], name, flags);
     this.setProperty(mn, value);
   }
 
@@ -606,7 +606,7 @@ var isXMLType, isXMLName, XMLParser;
       ? toNumber(name) 
       : name instanceof QName 
         ? name.mn
-        : new Multiname(namespaces ? namespaces : [ShumwayNamespace.PUBLIC], name, flags);
+        : new Multiname(namespaces ? namespaces : [ASNamespace.PUBLIC], name, flags);
     return this.hasProperty(mn);
   }
 
@@ -614,7 +614,7 @@ var isXMLType, isXMLName, XMLParser;
     var receiver = isLex ? null : this;
     var property = this.asGetProperty(namespaces, name, flags, true);
     if (!property) {
-      return this.toString().asCallProperty(namespaces ? namespaces : [ShumwayNamespace.PUBLIC], name, flags, isLex, args);
+      return this.toString().asCallProperty(namespaces ? namespaces : [ASNamespace.PUBLIC], name, flags, isLex, args);
     }
     return property.apply(receiver, args);
   }
@@ -2057,7 +2057,7 @@ var isXMLType, isXMLName, XMLParser;
         }
       }
       if (!ns) {
-        ns = ShumwayNamespace.createNamespace(this.uri);  // FIXME what about the prefix
+        ns = ASNamespace.createNamespace(this.uri);  // FIXME what about the prefix
       }
       return ns;
     };
