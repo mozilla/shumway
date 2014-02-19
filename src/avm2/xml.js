@@ -912,7 +912,8 @@ var isXMLType, isXMLName, XMLParser;
     // 9.1.1.1 XML.[[Get]] (P)
     Xp.getProperty = function (mn, isMethod) {
       if (isMethod) {
-        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+        var resolved = Multiname.isQName(mn) ? mn :
+          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return this[Multiname.getQualifiedName(resolved)];
       }
       if (isNumeric(mn)) {
@@ -953,7 +954,8 @@ var isXMLType, isXMLName, XMLParser;
 
     Xp.hasProperty = function (mn, isMethod) {
       if (isMethod) {
-        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+        var resolved = Multiname.isQName(mn) ? mn :
+          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return !!this[Multiname.getQualifiedName(resolved)];
       }
       if (isNumeric(mn)) {
@@ -995,7 +997,8 @@ var isXMLType, isXMLName, XMLParser;
         }
         // HACK if child with specific name is not present, check object's attributes.
         // The presence of the attribute/method can be checked during with(), see #850.
-        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+        var resolved = Multiname.isQName(mn) ? mn :
+          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return !!this[Multiname.getQualifiedName(resolved)];
       }
     };
@@ -1642,7 +1645,8 @@ var isXMLType, isXMLName, XMLParser;
 
     XLp.getProperty = function (mn, isMethod) {
       if (isMethod) {
-        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+        var resolved = Multiname.isQName(mn) ? mn :
+          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return this[Multiname.getQualifiedName(resolved)];
       }
       var x = this;
@@ -1667,7 +1671,8 @@ var isXMLType, isXMLName, XMLParser;
 
     XLp.hasProperty = function (mn, isMethod) {
       if (isMethod) {
-        var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(this, mn);
+        var resolved = Multiname.isQName(mn) ? mn :
+          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return !!this[Multiname.getQualifiedName(resolved)];
       }
       var x = this;

@@ -175,7 +175,6 @@ for (var f = 0; f < files.length; f++) {
       load(homePath + "src/swf/shape.js");
       load(homePath + "src/swf/text.js");
     }
-    print("Processing; " + file);
     SWF.parse(snarf(file, "binary"), {
       oncomplete: function(result) {
         var tags = result.tags;

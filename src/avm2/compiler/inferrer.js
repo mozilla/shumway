@@ -366,7 +366,7 @@ var TraitsType = (function () {
     release || assert(this.object instanceof InstanceInfo);
     if (this.object.superName) {
       var result = Type.fromName(this.object.superName, this.domain).instanceType();
-      release || assert(result instanceof TraitsType && result.object instanceof InstanceInfo);
+      release || assert(result instanceof TraitsType && result.object instanceof InstanceInfo, result + " " + this.object.superName);
       return result;
     }
     return null;
@@ -441,7 +441,7 @@ var ParameterizedType = (function () {
     return this.type + "<" + this.parameter + ">";
   };
   parameterizedType.prototype.instanceType = function () {
-    release || assert(this.type instanceof TraitsType);
+    release || assert(this.type instanceof TraitsType, this.type);
     return new ParameterizedType(this.type.instanceType(), this.parameter.instanceType());
   };
   parameterizedType.prototype.equals = function (other) {
@@ -1151,7 +1151,11 @@ var Verifier = (function() {
             release || assert(bc.argCount === 1);
             val = pop();
             obj = pop();
-            push(obj.applyType(val));
+            if (obj === Type.Any) {
+              push(Type.Any);
+            } else {
+              push(obj.applyType(val));
+            }
             break;
           case 0x54: // OP_pushfloat4
             notImplemented(bc);

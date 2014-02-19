@@ -99,7 +99,8 @@ function installProxyClassWrapper(cls) {
             if (TRACE_PROXY) {
               print("proxy call, class: " + target.class + ", mn: " + mn + "hasNonProxyingCallerr: " + hasNonProxyingCaller());
             }
-            var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(target, mn);
+            var resolved = Multiname.isQName(mn) ? mn :
+              target.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
             var qn = resolved ? Multiname.getQualifiedName(resolved) :
                       Multiname.getPublicQualifiedName(mn.name);
             if (!nameInTraits(target, qn)) {

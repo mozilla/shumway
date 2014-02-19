@@ -370,7 +370,7 @@ var ASNamespace = (function () {
       }
     } else if (this.isUnique()) {
       // Generate a globally random URI for private namespaces.
-      this.originalURI = Math.round(Math.random() * Number.MAX_SAFE_INTEGER);
+      this.originalURI = String(Math.random() * 0xFFFFFFFF >>> 0);
     }
     this.qualifiedName = qualifyNamespaceInternal(this.kind, this.originalURI, this.prefix ? this.prefix : "");
   }
@@ -863,9 +863,17 @@ var Multiname = (function () {
     if (qn instanceof Multiname) {
       return qn;
     }
-    release || assert (isString(qn) && qn[0] === "$", qn);
+    if (qn[0] !== "$") {
+      return;
+    }
     var ns = ASNamespace.fromQualifiedName(qn.substring(1));
     return new Multiname([ns], qn.substring(1 + ns.qualifiedName.length));
+  };
+
+  multiname.getNameFromPublicQualifiedName = function getNameFromPublicQualifiedName(qn) {
+    var mn = Multiname.fromQualifiedName(qn);
+    release || assert (mn.getNamespace().isPublic());
+    return mn.name;
   };
 
   /**
@@ -1153,9 +1161,6 @@ var ConstantPool = (function constantPool() {
         set.push(namespaces[stream.readU30()]);
       }
       namespaceSets.push(set);
-      print(set.map(function(n) {
-        return n.uri;
-      }).join(""));
     }
     Timer.stop();
 

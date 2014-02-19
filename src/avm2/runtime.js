@@ -113,31 +113,9 @@ function ic(object) {
   return object.ic || (object.ic = new InlineCache());
 }
 
-
 /* This is used to keep track if we're in a runtime context. For instance, proxies need to
  * know if a proxied operation is triggered by AS3 code or VM code.
 */
-
-var AS = 1, JS = 2;
-
-var RUNTIME_ENTER_LEAVE_STACK = [AS];
-
-function enter(mode) {
-  RUNTIME_ENTER_LEAVE_STACK.push(mode);
-}
-
-function leave(mode) {
-  var top = RUNTIME_ENTER_LEAVE_STACK.pop();
-  release || assert (top === mode);
-}
-
-function inJS() {
-  return RUNTIME_ENTER_LEAVE_STACK.top() === JS;
-}
-
-function inAS() {
-  return RUNTIME_ENTER_LEAVE_STACK.top() === AS;
-}
 
 var callWriter = new IndentingWriter(false, function (str){
   print(str);
@@ -356,14 +334,8 @@ function asCallResolvedStringProperty(resolved, isLex, args) {
   return method.apply(receiver, args);
 }
 
-function fromResolvedName(resolved) {
-  notImplemented("fromResolvedName");
-  // release || assert(resolved.indexOf(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX) === 0, resolved);
-  // return resolved.substring(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
-}
-
 function asGetResolvedStringPropertyFallback(resolved) {
-  var name = fromResolvedName(resolved);
+  var name = Multiname.getNameFromPublicQualifiedName(resolved);
   return this.asGetProperty([ASNamespace.PUBLIC], name, 0);
 }
 
@@ -1056,53 +1028,9 @@ function nameInTraits(object, qn) {
   return proto.hasOwnProperty(VM_BINDINGS) && proto.hasOwnProperty(qn);
 }
 
-/**
- * Resolving a multiname on an object using linear search.
- */
-function resolveMultinameUnguarded(object, mn, traitsOnly) {
-  release || assert(Multiname.needsResolution(mn), "Multiname ", mn, " is already resolved.");
-  release || assert(!Multiname.isNumeric(mn), "Should not resolve numeric multinames.");
-  object = boxValue(object);
-  var publicQn;
-
-  // Check if the object that we are resolving the multiname on is a JavaScript native prototype
-  // and if so only look for public (dynamic) properties. The reason for this is because we cannot
-  // overwrite the native prototypes to fit into our trait/dynamic prototype scheme, so we need to
-  // work around it here during name resolution.
-
-  var isNative = isNativePrototype(object);
-  for (var i = 0, j = mn.namespaces.length; i < j; i++) {
-    var qn = mn.getQName(i);
-    if (traitsOnly) {
-      if (nameInTraits(object, Multiname.getQualifiedName(qn))) {
-        return qn;
-      }
-      continue;
-    }
-
-    if (mn.namespaces[i].isDynamic()) {
-      publicQn = qn;
-      if (isNative) {
-        break;
-      }
-    } else if (!isNative) {
-      if (Multiname.getQualifiedName(qn) in object) {
-        return qn;
-      }
-    }
-  }
-  if (publicQn && !traitsOnly && (Multiname.getQualifiedName(publicQn) in object)) {
-    return publicQn;
-  }
-  return undefined;
-}
-
 // TODO: Remove this and its uses.
 function resolveMultiname(object, mn, traitsOnly) {
-  enter(JS);
-  var result = resolveMultinameUnguarded(object, mn, traitsOnly);
-  leave(JS);
-  return result;
+  return object.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
 }
 
 function sliceArguments(args, offset) {

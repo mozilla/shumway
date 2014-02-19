@@ -917,7 +917,7 @@ var natives = (function () {
         var key = keys[i];
         var jsKey = key;
         if (!isNumeric(key)) {
-          jsKey = fromResolvedName(key);
+          jsKey = Multiname.getNameFromPublicQualifiedName(key);
         }
         result[jsKey] = transformASValueToJS(value[key]);
       }
