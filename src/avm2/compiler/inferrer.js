@@ -1123,6 +1123,8 @@ var Verifier = (function() {
             stack.pop();
             if (this.thisType.isInstanceInfo() && this.thisType.super() === Type.Object) {
               ti().noCallSuperNeeded = true;
+            } else {
+              ti().baseClass = LazyInitializer.create(this.thisType.super().classType().object);
             }
             break;
           case 0x42: // OP_construct
