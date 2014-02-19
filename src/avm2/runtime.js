@@ -1242,12 +1242,18 @@ function searchCodeCache(methodInfo) {
   }
   var abcCache = CC[methodInfo.abc.hash];
   if (!abcCache) {
+    console.warn("Cannot Find Code Cache For ABC, name: " + methodInfo.abc.name + ", hash: " + methodInfo.abc.hash);
+    Counter.count("Code Cache Miss");
     return;
   }
   var method = abcCache.methods[methodInfo.index];
-  if (method) {
-    Counter.count("Linked Cached Method");
+  if (!method) {
+    console.warn("Cannot Find Code Cache For Method, name: " + methodInfo);
+    Counter.count("Code Cache Miss");
+    return;
   }
+  print("Linking CC: " + methodInfo);
+  Counter.count("Code Cache Hit");
   return method;
 }
 
