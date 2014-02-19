@@ -80,17 +80,19 @@ AVM2_HOME = ../src/avm2
 AVMSHELL = avmshell
 
 default:
-	@echo "run: make [install-closure|install-avmshell|install-js|"
+	@echo "run: make [install-avmshell|install-js|download-closure|"
 	@echo "           install-swfdec|install-node-modules|install-tamarin-src|"
 	@echo "           build-tamarin-tests|run-tamarin-tests|build-playerglobal|clean]"
 
-install-closure: $(CLOSURE_JAR)
+download-closure: $(CLOSURE_JAR)
 
 $(CLOSURE_JAR):
-	wget $(CLOSURE_URL) -O closure.zip
-	unzip -o closure.zip compiler.jar
-	rm closure.zip
-	mv compiler.jar cc.jar
+	mkdir -p ./closure
+	wget $(CLOSURE_URL) -O ./closure/compiler.zip
+	cd ./closure; unzip -o compiler.zip
+	mv closure/compiler.jar cc.jar
+	mv closure/COPYING cc.jar-COPYING
+	rm -rf ./closure
 
 install-avmshell:
 	mkdir -p $(TAMARIN_HOME)/bin/shell
