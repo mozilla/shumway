@@ -47,56 +47,65 @@ function Renderer(target) {
   window.onmessage = function (e) {
     var data = e.data;
     if (data.command === 'render') {
-      data = data.data;
+      var i32 = new Int32Array(data.data);
+      var f32 = new Float32Array(data.data);
+      var p = 0;
+      var len = i32.length;
+      while (p < len) {
+        var type = i32[p++];
+        var n = i32[p++] >> 2;
+        switch (type) {
+        case 0:
+          return;
+        case Renderer.MESSAGE_DEFINE_RENDERABLE:
+          var id = i32[p++];
+          var numDependencies = i32[p++];
+          var dependencies = i32.subarray(p, p + numDependencies);
+          p += numDependencies;
+          var renderableType = i32[p++];
+          var renderableData = i32.subarray(p, p += n - 1);
+          renderer.defineRenderable(
+            id, renderableType, dependencies, renderableData
+          );
+          break;
+        case Renderer.MESSAGE_REQUIRE_RENDERABLES:
+          var callbackId = i32[p++];
+          var dependencies = i32.subarray(p, p += n - 1);
+          renderer.requireRenderables(dependencies, function () {
+            postMessage({
+              command: 'callback',
+              data: callbackId
+            }, '*');
+          });
+          break;
+        case Renderer.MESSAGE_SETUP_STAGE:
+          var width = i32[p++];
+          var height = i32[p++];
+          var pixelRatio = renderer._target._contentsScaleFactor;
+          renderer._stage = new Shumway.Layers.Stage(
+            width, height, width * pixelRatio, height * pixelRatio
+          );
+          renderer._stage.transform =
+            new Shumway.Geometry.Matrix.createIdentity()
+                                       .scale(pixelRatio, pixelRatio);
+          break;
+        case Renderer.MESSAGE_ADD_LAYER:
+          var isContainer = i32[p++];
+          var parentId = i32[p++];
+          var index = i32[p++];
+          var layerId = i32[p++];
+          var renderableId = i32[p++];
 
-      if (data instanceof ArrayBuffer) {
-        var i32 = new Int32Array(data);
-        var f32 = new Float32Array(data);
-        var p = 0;
-        var len = data.byteLength / 4;
-        while (p < len) {
-          switch (i32[p++]) {
-          case 0:
-            return;
-          case 2:
-            var n = i32[p++];
-            var callbackId = i32[p++];
-            var dependencies = i32.subarray(p, p += n);
-            renderer.requireRenderables(dependencies, function () {
-              postMessage({
-                command: 'callback',
-                data: callbackId
-              }, '*');
-            });
-            break;
-          case 3:
-            var width = i32[p++];
-            var height = i32[p++];
-            var pixelRatio = renderer._target._contentsScaleFactor;
-            renderer._stage = new Shumway.Layers.Stage(width, height, width * pixelRatio, height * pixelRatio);
-            renderer._stage.transform = new Shumway.Geometry.Matrix.createIdentity().scale(pixelRatio, pixelRatio);
-            break;
-          case 4:
-            var isContainer = i32[p++];
-            var parentId = i32[p++];
-            var index = i32[p++];
-            var layerId = i32[p++];
-            var renderableId = i32[p++];
-
-            var layer = renderer._layers[layerId];
-            if (!layer) {
-              if (isContainer) {
-                layer = new Shumway.Layers.FrameContainer();
-              } else {
-                var renderable = renderer._renderables[renderableId];
-                layer = new Shumway.Layers.Shape(renderable);
-                layer.origin = new Shumway.Geometry.Point(renderable.rect.x,
-                                                          renderable.rect.y);
-              }
-              renderer._layers[layerId] = layer;
-
-              var parent = renderer._layers[parentId] || renderer._stage;
-              parent.addChild(layer);
+          var layer = renderer._layers[layerId];
+          if (!layer) {
+            if (isContainer) {
+              layer = new Shumway.Layers.FrameContainer();
+            } else {
+              var renderable = renderer._renderables[renderableId];
+              layer = new Shumway.Layers.Shape(renderable);
+              layer.origin = new Shumway.Geometry.Point(
+                renderable.rect.x, renderable.rect.y
+              );
             }
             renderer._layers[layerId] = layer;
 

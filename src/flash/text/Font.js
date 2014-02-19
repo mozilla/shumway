@@ -103,6 +103,7 @@ var FontDefinition = (function () {
       var boldItalic = '';
       if (format.italic) {
         boldItalic += 'italic';
+      }
       if (format.bold) {
         boldItalic += ' bold';
       }
