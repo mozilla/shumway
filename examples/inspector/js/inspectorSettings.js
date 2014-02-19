@@ -32,7 +32,8 @@ var DEFAULT_SETTINGS = {
   release: true,
   logToConsole: false,
   mute: false,
-  turbo: true
+  turbo: true,
+  caching: true
 };
 
 function loadState() {
@@ -66,6 +67,7 @@ function updateAVM2State() {
   disableMouseVisitor.value = state.mouse ? false : true;
   showQuadTree.value = state.qtree ? true : false;
   turboMode.value = state.turbo ? true : false;
+  codeCaching.value = state.caching ? true : false;
   showRedrawRegions.value = state.redraw ? true : false;
   renderAsWireframe.value = state.wireframe ? true : false;
   traceCallExecution.value = state.traceCalls ? 1 : 0;

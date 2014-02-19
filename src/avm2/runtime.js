@@ -30,6 +30,7 @@ var enableVerifier = runtimeOptions.register(new Option("verify", "verify", "boo
 
 var globalMultinameAnalysis = runtimeOptions.register(new Option("ga", "globalMultinameAnalysis", "boolean", false, "Global multiname analysis."));
 var traceInlineCaching = runtimeOptions.register(new Option("tic", "traceInlineCaching", "boolean", false, "Trace inline caching execution."));
+var codeCaching = runtimeOptions.register(new Option("cc", "codeCaching", "boolean", false, "Enable code caching."));
 
 var compilerEnableExceptions = runtimeOptions.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
 var compilerMaximumMethodSize = runtimeOptions.register(new Option("cmms", "maximumMethodSize", "number", 4 * 1024, "Compiler maximum method size."));
@@ -1236,6 +1237,9 @@ function debugName(value) {
 }
 
 function searchCodeCache(methodInfo) {
+  if (!codeCaching.value) {
+    return;
+  }
   var abcCache = CC[methodInfo.abc.hash];
   if (!abcCache) {
     return;
