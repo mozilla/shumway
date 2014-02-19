@@ -43,9 +43,10 @@ var VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
 var VM_OPEN_METHODS = "vm open methods";
 var VM_IS_CLASS = "vm is class";
 
-var VM_OPEN_METHOD_PREFIX = "method_";
-var VM_OPEN_SET_METHOD_PREFIX = "set_";
-var VM_OPEN_GET_METHOD_PREFIX = "get_";
+var VM_OPEN_METHOD_PREFIX = "m";
+var VM_MEMOIZER_PREFIX = "z";
+var VM_OPEN_SET_METHOD_PREFIX = "s";
+var VM_OPEN_GET_METHOD_PREFIX = "g";
 
 var VM_NATIVE_BUILTIN_SURROGATES = [
   { object: Object, methods: ["toString", "valueOf"] },
@@ -1233,11 +1234,56 @@ function debugName(value) {
   return value;
 }
 
+function searchForCompiledFunction(methodInfo) {
+  if (typeof candyAOT === "undefined") {
+    return;
+  }
+  var abcs = candyAOT;
+  function findClass(mn) {
+    for (var a = 0; a < abcs.length; a++) {
+      var abc = abcs[a];
+      for (var s = 0; s < abc.scripts.length; s++) {
+        var script = abc.scripts[s];
+        var c = script["class_" + Multiname.getQualifiedName(mn)];
+        if (c) {
+          return c;
+        }
+      }
+    }
+  }
+
+  var mi = methodInfo;
+  var prefix = "m";
+  if (mi.holder instanceof InstanceInfo) {
+    var cls = findClass(mi.holder.name);
+    if (cls) {
+      var method = cls.i["m" + Multiname.getQualifiedName(mi.name)];
+      if (method) {
+        Counter.count("Linked Method");
+        return method;
+      }
+    }
+  } else if (mi.holder instanceof ClassInfo) {
+    var cls = findClass(mi.holder.instanceInfo.name);
+    if (cls) {
+      var method = cls.s[prefix + Multiname.getQualifiedName(mi.name)];
+      if (method) {
+        Counter.count("Linked Method");
+        return method;
+      }
+    }
+  }
+  console.info("Can't Find: " + mi);
+}
+
 function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
   var mi = methodInfo;
-  var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
-  var parameters = result.parameters;
-  var body = result.body;
+  var cached = searchForCompiledFunction(mi);
+  if (!cached) {
+    var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
+    var parameters = result.parameters;
+    var body = result.body;
+  }
 
   var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
   if (mi.holder) {
@@ -1262,7 +1308,11 @@ function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, 
 //      body = '{ try {\n' + body + '\n} catch (e) {window.console.log("error in function ' +
 //              fnName + ':" + e + ", stack:\\n" + e.stack); throw e} }';
 //    }
-  var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
+
+  if (!cached) {
+    var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
+  }
+
   if (traceLevel.value > 1) {
     mi.trace(new IndentingWriter(), mi.abc);
   }
@@ -1275,7 +1325,7 @@ function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, 
   // mi.freeMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
   // mi.freeMethod = new Function(parameters, body);
 
-  var fn = new Function("return " + fnSource)();
+  var fn = cached || new Function("return " + fnSource)();
   fn.debugName = "Compiled Function #" + vmNextCompiledFunctionId++;
   return fn;
 }

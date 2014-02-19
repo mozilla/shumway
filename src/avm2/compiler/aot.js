@@ -18,7 +18,9 @@
  * Throw away code, just used to debug the compiler for now.
  */
 
+var hasUsedConstants = false;
 function objectConstantName2(object) {
+  hasUsedConstants = true;
   release || assert(object);
   if (object.hasOwnProperty(OBJECT_NAME)) {
     return object[OBJECT_NAME];
@@ -46,6 +48,7 @@ function objectConstantName2(object) {
 }
 
 function compileScript(script, writer) {
+  writer.enter("{");
   objectConstantName = objectConstantName2;
   // TODO: Create correct scope chains.
   var scope = new Scope(null, new Global(script));
@@ -56,6 +59,7 @@ function compileScript(script, writer) {
       compileTrait(trait, writer, scope);
     }
   });
+  writer.leave("},");
 }
 
 function compileTrait(trait, writer, scope) {
@@ -65,18 +69,25 @@ function compileTrait(trait, writer, scope) {
     if (shouldCompile(methodInfo)) {
       ensureFunctionIsInitialized(methodInfo);
       try {
+        hasUsedConstants = false;
         var method = createCompiledFunction(methodInfo, scope, false, false, false);
         if (trait.isMethod()) {
-          writer.writeLn("get " + traitName + "() { return this." + VM_OPEN_METHOD_PREFIX + traitName + ".bind(this); },");
+          writer.writeLn(VM_MEMOIZER_PREFIX + traitName + ": " + "function () { return this." + VM_OPEN_METHOD_PREFIX + traitName + ".bind(this); },");
         }
         if (trait.isMethod()) {
           writer.enter(VM_OPEN_METHOD_PREFIX + traitName + ": ");
         } else if (trait.isGetter()) {
-          writer.enter("get_" + traitName + ": ");
+          writer.enter(VM_OPEN_GET_METHOD_PREFIX + traitName + ": ");
         } else if (trait.isSetter()) {
-          writer.enter("set_" + traitName + ": ");
+          writer.enter(VM_OPEN_SET_METHOD_PREFIX + traitName + ": ");
+        } else {
+          writer.enter(traitName + ": ");
         }
-        writer.writeLns(method.toSource());
+        if (!hasUsedConstants) {
+          writer.writeLns(method.toSource());
+        } else {
+          writer.writeLns("undefined");
+        }
         writer.leave(",");
       } catch (x) {
 
@@ -86,7 +97,6 @@ function compileTrait(trait, writer, scope) {
 }
 
 function compileClass(classInfo, writer, scope) {
-
   function compileTraits(traits, scope) {
     traits.forEach(function (trait) {
       compileTrait(trait, writer, scope);
@@ -97,14 +107,13 @@ function compileClass(classInfo, writer, scope) {
     if (canCompile(methodInfo)) {
       ensureFunctionIsInitialized(methodInfo);
       var method = createCompiledFunction(methodInfo, scope, false, false, false);
-      writer.enter("c:");
+      writer.enter("ctor:");
       writer.writeLns(method.toSource());
       writer.leave(", ");
     }
   }
 
-  writer.enter(Multiname.getQualifiedName(classInfo.instanceInfo.name) + ": {");
-
+  writer.enter("class_" + Multiname.getQualifiedName(classInfo.instanceInfo.name) + ": {");
   writer.enter("s: {");
   compileInitializer(classInfo.init, scope);
   compileTraits(classInfo.traits, scope);

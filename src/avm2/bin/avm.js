@@ -197,7 +197,7 @@ function grabAbc(fileOrBuffer) {
     return new AbcFile(snarf(fileOrBuffer, "binary"), fileOrBuffer);
   } else {
     var buffer = new Uint8Array(fileOrBuffer); // Copy into local compartment.
-    return new AbcFile(buffer, fileOrBuffer);
+    return new AbcFile(buffer);
   }
 }
 
@@ -233,13 +233,32 @@ function runVM() {
   }));
 }
 
-function runAbcs(securityDomain, abcs) {
+function runAbcs2(securityDomain, abcs) {
   for (var i = 0; i < abcs.length; i++) {
-    if (i < files.length - 1) {
+    if (i < abcs.length - 1) {
       securityDomain.applicationDomain.loadAbc(abcs[i]);
     } else {
       if (compile.value) {
         securityDomain.applicationDomain.compileAbc(abcs[i]);
+      } else {
+        securityDomain.applicationDomain.executeAbc(abcs[i]);
+      }
+    }
+  }
+}
+
+function runAbcs(securityDomain, abcs) {
+  if (compile.value) {
+    var writer = new IndentingWriter();
+    writer.enter("window[\"abcs\"] = [");
+    for (var i = 0; i < abcs.length; i++) {
+      securityDomain.applicationDomain.compileAbc(abcs[i], writer);
+    }
+    writer.enter("]");
+  } else {
+    for (var i = 0; i < abcs.length; i++) {
+      if (i < abcs.length - 1) {
+        securityDomain.applicationDomain.loadAbc(abcs[i]);
       } else {
         securityDomain.applicationDomain.executeAbc(abcs[i]);
       }

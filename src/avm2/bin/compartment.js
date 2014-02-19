@@ -108,6 +108,6 @@ function grabAbc(fileOrBuffer) {
     return new AbcFile(snarf(fileOrBuffer, "binary"), fileOrBuffer);
   } else {
     var buffer = new Uint8Array(fileOrBuffer); // Copy into local compartment.
-    return new AbcFile(buffer, fileOrBuffer);
+    return new AbcFile(buffer);
   }
 }

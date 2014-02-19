@@ -318,15 +318,17 @@ var ApplicationDomain = (function () {
       return undefined;
     },
 
-    compileAbc: function compileAbc(abc) {
+    compileAbc: function compileAbc(abc, writer) {
       // console.time("Compile ABC: " + abc.name);
       this.loadAbc(abc);
-      var writer = new IndentingWriter();
-      writer.enter("window[\"classes\"] = {");
+      writer.enter("{");
+      writer.writeLn("name: \"" + abc.name + "\",");
+      writer.enter("scripts: [");
       for (var i = 0; i < abc.scripts.length; i++) {
         compileScript(abc.scripts[i], writer);
       }
-      writer.leave("}");
+      writer.leave("]");
+      writer.leave("},");
       //console.timeEnd("Compile ABC: " + abc.name);
     },
 

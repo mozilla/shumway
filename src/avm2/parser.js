@@ -369,8 +369,8 @@ var ASNamespace = (function () {
         this.originalURI = this.originalURI.substring(0, n - 1);
       }
     } else if (this.isUnique()) {
-      // Generate a globally random URI for private namespaces.
-      this.originalURI = String(Math.random() * 0xFFFFFFFF >>> 0);
+      // String(Math.random() * 0xFFFFFFFF >>> 0);
+      this.originalURI = "private";
     }
     this.qualifiedName = qualifyNamespaceInternal(this.kind, this.originalURI, this.prefix ? this.prefix : "");
   }
