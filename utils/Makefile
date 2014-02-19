@@ -59,6 +59,16 @@ TAMARIN_CONFIG_PARAMS = --target=i686-linux
 endif
 endif
 
+ifeq ($(UNAME), Darwin)
+AVMSHELL_PREBUILD=./avmshell/mac/avmshell
+else
+ifeq ($(UNAME), Linux)
+AVMSHELL_PREBUILD=./avmshell/linux/avmshell
+else
+AVMSHELL_PREBUILD=./avmshell/windows/avmshell.exe
+endif
+endif
+
 APPARAT_URL = http://apparat.googlecode.com/files/apparat-1.0-RC9-bin.tar.gz
 APPARAT_HOME = ./apparat
 SCALA_URL = http://www.scala-lang.org/files/archive/scala-2.8.0.final.tgz
@@ -70,8 +80,8 @@ AVM2_HOME = ../src/avm2
 AVMSHELL = avmshell
 
 default:
-	@echo "run: make [install-closure|install-tamarin|install-js|"
-	@echo "           install-swfdec|install-node-modules|"
+	@echo "run: make [install-closure|install-avmshell|install-js|"
+	@echo "           install-swfdec|install-node-modules|install-tamarin-src|"
 	@echo "           build-tamarin-tests|run-tamarin-tests|build-playerglobal|clean]"
 
 install-closure: $(CLOSURE_JAR)
@@ -82,7 +92,11 @@ $(CLOSURE_JAR):
 	rm closure.zip
 	mv compiler.jar cc.jar
 
-install-tamarin: $(TAMARIN_HOME)/configure.py
+install-avmshell:
+	mkdir -p $(TAMARIN_HOME)/bin/shell
+	cp $(AVMSHELL_PREBUILD) $(TAMARIN_HOME)/bin/shell
+
+install-tamarin-src: $(TAMARIN_HOME)/configure.py
 	rm -rf $(TAMARIN_HOME)/bin
 	mkdir $(TAMARIN_HOME)/bin
 	cd $(TAMARIN_HOME)/bin; python ../configure.py $(TAMARIN_CONFIG_PARAMS) --enable-debugger

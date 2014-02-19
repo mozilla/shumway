@@ -17,7 +17,7 @@ default:
 	@echo "           build-playerglobal|build-extension|build-bundle|build-web|"
 	@echo "           run-tamarin-tests|run-tamarin-sanity-tests|check-extension|"
 	@echo "           test|push-test|build-bot|start-build-bot|update-flash-refs|"
-	@echo "           install-tamarin|bootstrap]"
+	@echo "           install-avmshell|install-tamarin-src|bootstrap]"
 
 check-system:
 	echo "Checking the presence of grunt-cli..."
@@ -41,12 +41,15 @@ install-libs:
 
 install-utils: check-system
 	npm install
-	make -C utils/ install-closure install-js install-node-modules install-flex-sdk
+	make -C utils/ install-closure install-avmshell install-js install-node-modules install-flex-sdk
 
-install-tamarin: check-system
+install-avmshell:
+	make -C utils/ install-avmshell
+
+install-tamarin-src: check-system
 	echo "Checking the presence of mercurial..."
 	hg --version
-	make -C utils/ install-tamarin install-tamarin-tests
+	make -C utils/ install-tamarin-src install-tamarin-tests
 
 BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with installed utils)
 
