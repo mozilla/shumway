@@ -24,7 +24,7 @@ var AS2MovieClipLoaderDefinition = (function () {
     },
 
     get _bytesLoaded() {
-      return this.$nativeObject._bytesLoaded;
+      return this.$nativeObject._contentLoaderInfo._bytesLoaded;
     }
   };
 
