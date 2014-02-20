@@ -16,55 +16,63 @@
  * limitations under the License.
  */
 package avm1lib {
-  import avm1lib.AS2Broadcaster;
-  import avm1lib.AS2Utils;
-  import flash.display.Loader;
-  import flash.net.URLRequest;
+import flash.display.Loader;
+import flash.net.URLRequest;
 
-  [native(cls="AS2MovieClipLoader")]
-  public dynamic class AS2MovieClipLoader extends Object {
-    public var _broadcastEventsRegistrationNeeded: Boolean = true;
-    public var _broadcastEvents : Array = ['onLoadComplete', 'onLoadError', 'onLoadError', 'onLoadInit', 'onLoadProgress', 'onLoadStart'];
+[native(cls="AS2MovieClipLoader")]
+public dynamic class AS2MovieClipLoader extends Object {
+  public var _broadcastEventsRegistrationNeeded:Boolean = true;
+  public var _broadcastEvents:Array = ['onLoadComplete', 'onLoadError', 'onLoadError', 'onLoadInit', 'onLoadProgress', 'onLoadStart'];
 
-    public function AS2MovieClipLoader()
-    {
-      AS2Broadcaster.initialize(this);
-      _as3Object = new flash.display.Loader();
-    }
-
-    public var _as3Object: flash.display.Loader;
-
-    public function loadClip(url: String, target: Object) : Boolean
-    {
-      var nativeObject = this._as3Object;
-      var nativeTarget = typeof target === 'number' ?
-        AS2Utils.resolveLevel(target) : AS2Utils.resolveTarget(target);
-      var nativeTarget = AS2Utils.resolveTarget(target);
-      nativeTarget._as3Object.addChild(nativeObject);
-      nativeObject.load(new flash.net.URLRequest(url));
-    }
-
-    private native function get _bytesLoaded() : Number;
-
-    public function getProgress(target: Object) : Object
-    {
-      return _bytesLoaded;
-    }
-
-    public function unloadClip(target: Object) : Boolean
-    {
-      var nativeObject = this._as3Object;
-      var nativeTarget = typeof target === 'number' ?
-        AS2Utils.resolveLevel(target) : AS2Utils.resolveTarget(target);
-      nativeTarget._as3Object.removeChild(nativeObject);
-    }
-
-    {
-      AS2Utils.addEventHandlerProxy(prototype, 'onLoadComplete', 'complete', function (e) { return [e.target, 200]; }); // HTTP code ?
-      AS2Utils.addEventHandlerProxy(prototype, 'onLoadError', 'ioError', function (e) { return [e.target, 1, 501]; }); // Error and HTTP code ?
-      AS2Utils.addEventHandlerProxy(prototype, 'onLoadInit', 'init', function (e) { return [e.target]; });
-      AS2Utils.addEventHandlerProxy(prototype, 'onLoadProgress', 'progress', function (e) { return [e.target, e.bytesLoaded, e.bytesTotal]; });
-      AS2Utils.addEventHandlerProxy(prototype, 'onLoadStart', 'open', function (e) { return [e.target]; });
-    }
+  public function AS2MovieClipLoader() {
+    AS2Broadcaster.initialize(this);
+    _as3Object = new Loader();
   }
+
+  public var _as3Object:Loader;
+
+  public function loadClip(url:String, target:Object):Boolean {
+    var nativeObject = this._as3Object;
+    var nativeTarget = typeof target === 'number' ?
+      AS2Utils.resolveLevel(Number(target)) :
+      AS2Utils.resolveTarget(target);
+    var nativeTarget = AS2Utils.resolveTarget(target);
+    nativeTarget._as3Object.addChild(nativeObject);
+    nativeObject.load(new URLRequest(url));
+    return true;
+  }
+
+  private native function get _bytesLoaded():Number;
+
+  public function getProgress(target:Object):Object {
+    return _bytesLoaded;
+  }
+
+  public function unloadClip(target:Object):Boolean {
+    var nativeObject = this._as3Object;
+    var nativeTarget = typeof target === 'number' ?
+      AS2Utils.resolveLevel(Number(target)) :
+      AS2Utils.resolveTarget(target);
+    nativeTarget._as3Object.removeChild(nativeObject);
+    return true;
+  }
+
+  {
+    AS2Utils.addEventHandlerProxy(prototype, 'onLoadComplete', 'complete', function (e) {
+      return [e.target, 200];
+    }); // HTTP code ?
+    AS2Utils.addEventHandlerProxy(prototype, 'onLoadError', 'ioError', function (e) {
+      return [e.target, 1, 501];
+    }); // Error and HTTP code ?
+    AS2Utils.addEventHandlerProxy(prototype, 'onLoadInit', 'init', function (e) {
+      return [e.target];
+    });
+    AS2Utils.addEventHandlerProxy(prototype, 'onLoadProgress', 'progress', function (e) {
+      return [e.target, e.bytesLoaded, e.bytesTotal];
+    });
+    AS2Utils.addEventHandlerProxy(prototype, 'onLoadStart', 'open', function (e) {
+      return [e.target];
+    });
+  }
+}
 }
