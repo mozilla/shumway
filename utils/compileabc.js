@@ -30,7 +30,7 @@ var swfParams = null;
 var needsPlayerglobal = null;
 var outputPath = null;
 var debugInfo = true;
-var strict = !true;
+var strict = true;
 for (var i = 2; i < process.argv.length;) {
   var cmd = process.argv[i++];
   switch (cmd) {
@@ -89,7 +89,7 @@ if (files.length === 0) {
 
 function ensureDir(dir) {
   if (fs.existsSync(dir)) return;
-  var parts = dir.split('/'), i = parts.length;
+  var parts = dir.split(/[\/\\]/g), i = parts.length;
   while (!fs.existsSync(parts.slice(0, i - 1).join('/'))) {
     i--;
     if (i <= 0) throw new Error();
@@ -143,6 +143,7 @@ function createResult(resultPath) {
 }
 
 function compile() {
+  console.log('Compiling ' + outputPath + ' ...');
   var outputAs = path.join(build_dir, 'output.as');
   fs.writeFileSync(outputAs, '');
   var resultPath = path.join(build_dir, swfParams ? 'output.swf' : 'output.abc');
