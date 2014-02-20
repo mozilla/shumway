@@ -32,7 +32,7 @@ var MouseEventDefinition = (function () {
           },
           getStageX: function getStageX() { // (void) -> Number
             if (this._target) {
-              var m = this._target._getConcatenatedTransform();
+              var m = this._target._getConcatenatedTransform(null, false);
               var x = m.a * this._localX + m.c * this._localY + m.tx;
               return x/20;
             }
@@ -41,7 +41,7 @@ var MouseEventDefinition = (function () {
           },
           getStageY: function getStageY() { // (void) -> Number
             if (this._target) {
-              var m = this._target._getConcatenatedTransform();
+              var m = this._target._getConcatenatedTransform(null, false);
               var y = m.d * this._localY + m.b * this._localX + m.ty;
               return y/20;
             }

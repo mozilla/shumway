@@ -322,7 +322,7 @@ var ApplicationDomain = (function () {
       // console.time("Compile ABC: " + abc.name);
       this.loadAbc(abc);
       var writer = new IndentingWriter();
-      writer.enter("var classes = {");
+      writer.enter("window[\"classes\"] = {");
       for (var i = 0; i < abc.scripts.length; i++) {
         compileScript(abc.scripts[i], writer);
       }
@@ -353,11 +353,17 @@ var ApplicationDomain = (function () {
       if ($DEBUG) {
         Timer.start("broadcast: " + type);
       }
-      this.onMessage.notify1(type, {
-        data: message,
-        origin: origin,
-        source: this
-      });
+      try {
+        this.onMessage.notify1(type, {
+          data: message,
+          origin: origin,
+          source: this
+        });
+      } catch (e) {
+        avm2.exceptions.push({source: type, message: e.message,
+                              stack: e.stack});
+        throw e;
+      }
       if ($DEBUG) {
         Timer.stop();
       }

@@ -51,7 +51,8 @@ var StageDefinition = (function () {
     },
 
     _setup: function setup(ctx, options) {
-      this._qtree = new QuadTree(0, 0, this._stageWidth, this._stageHeight, 0);
+      this._qtree = new QuadTree(0, 0, this._stageWidth, this._stageHeight,
+                                 null);
       this._invalid = true;
     },
 
@@ -514,6 +515,9 @@ var StageDefinition = (function () {
           displayState: {
             get: function displayState() { // (void) -> String
               return this._displayState;
+            },
+            set: function displayState(value) { // (value:String) -> void
+              this._displayState = value;
             }
           },
           simulatedDisplayState: {

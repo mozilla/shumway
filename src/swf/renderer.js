@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global rgbaObjToStr, FirefoxCom, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
+/*global rgbaObjToStr, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
 
 var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
@@ -28,16 +28,11 @@ var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", fals
 var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", false, "force hidpi"));
 var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", true, "skip frame when not on time"));
 var hud = rendererOptions.register(new Option("", "hud", "boolean", false, "show hud mode"));
+var dummyAnimation = rendererOptions.register(new Option("", "dummy", "boolean", false, "show test balls animation"));
 
 var enableConstructChildren = rendererOptions.register(new Option("", "constructChildren", "boolean", true, "Construct Children"));
 var enableEnterFrame = rendererOptions.register(new Option("", "enterFrame", "boolean", true, "Enter Frame"));
 var enableAdvanceFrame = rendererOptions.register(new Option("", "advanceFrame", "boolean", true, "Advance Frame"));
-
-if (typeof FirefoxCom !== 'undefined') {
-  turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
-  hud.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.hud', def: false});
-  forceHidpi.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.force_hidpi', def: false});
-}
 
 var CanvasCache = {
   cache: [],
@@ -506,14 +501,7 @@ function RenderingContext(refreshStage, invalidPath) {
 function renderDisplayObject(child, ctx, context) {
   var m = child._currentTransform;
   if (m) {
-    if (m.a * m.d == m.b * m.c) {
-      // Workaround for bug 844184 -- the object is invisible
-      ctx.closePath();
-      ctx.rect(0, 0, 0, 0);
-      ctx.clip();
-    } else {
-      ctx.transform(m.a, m.b, m.c, m.d, m.tx/20, m.ty/20);
-    }
+    ctx.transform(m.a, m.b, m.c, m.d, m.tx/20, m.ty/20);
   }
 
   if (!renderAsWireframe.value) {
@@ -645,11 +633,55 @@ function initializeHUD(stage, parentCanvas) {
   canvasContainer.style.width = "100%";
   canvasContainer.style.height = "150px";
   canvasContainer.style.backgroundColor = "rgba(0, 0, 0, 0.4)";
-  // canvasContainer.style.pointerEvents = canvas.style.pointerEvents = "none";
+  canvasContainer.style.pointerEvents = "none";
   parentCanvas.parentElement.appendChild(canvasContainer);
   hudTimeline = new Timeline(canvas);
   hudTimeline.setFrameRate(stage._frameRate);
   hudTimeline.refreshEvery(10);
+}
+
+function createRenderDummyBalls(ctx, stage) {
+  var dummyBalls;
+  var radius = 10;
+  var speed = 1;
+  var m = stage._concatenatedTransform;
+  var scaleX = m.a, scaleY = m.d;
+  dummyBalls = [];
+  for (var i = 0; i < 10; i++) {
+    dummyBalls.push({
+      position: {
+        x: radius + Math.random() * ((ctx.canvas.width - 2 * radius) / scaleX),
+        y: radius + Math.random() * ((ctx.canvas.height - 2 * radius) / scaleY)
+      },
+      velocity: {x: speed * (Math.random() - 0.5), y: speed * (Math.random() - 0.5)}
+    });
+  }
+  ctx.fillStyle = "black";
+  ctx.lineWidth = 2;
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+  return function renderDummyBalls() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.strokeStyle = "green";
+    dummyBalls.forEach(function (ball) {
+      var position = ball.position;
+      var velocity = ball.velocity;
+      ctx.beginPath();
+      ctx.arc(position.x, position.y, radius, 0, Math.PI * 2, true);
+      ctx.stroke();
+      var x = (position.x + velocity.x);
+      var y = (position.y + velocity.y);
+      if (x < radius || x > ctx.canvas.width / scaleX - radius) {
+        velocity.x *= -1;
+      }
+      if (y < radius || y > ctx.canvas.height / scaleY - radius) {
+        velocity.y *= -1;
+      }
+      position.x += velocity.x;
+      position.y += velocity.y;
+    });
+  };
 }
 
 function renderStage(stage, ctx, events) {
@@ -718,9 +750,8 @@ function renderStage(stage, ctx, events) {
 
   updateRenderTransform();
 
-  var frameTime = 0;
-  var maxDelay = 1000 / stage._frameRate;
-  var nextRenderAt = performance.now();
+  var frameScheduler = new FrameScheduler();
+  stage._frameScheduler = frameScheduler;
 
   var requestAnimationFrame = window.requestAnimationFrame ||
                               window.mozRequestAnimationFrame ||
@@ -729,52 +760,7 @@ function renderStage(stage, ctx, events) {
                               window.msRequestAnimationFrame ||
                               window.setTimeout;
 
-  var renderDummyBalls;
-
-  var dummyBalls;
-  if (typeof FirefoxCom !== 'undefined' &&
-    FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false})) {
-    var radius = 10;
-    var speed = 1;
-    var m = stage._concatenatedTransform;
-    var scaleX = m.a, scaleY = m.d;
-    dummyBalls = [];
-    for (var i = 0; i < 10; i++) {
-      dummyBalls.push({
-        position: {
-          x: radius + Math.random() * ((ctx.canvas.width - 2 * radius) / scaleX),
-          y: radius + Math.random() * ((ctx.canvas.height - 2 * radius) / scaleY)
-        },
-        velocity: {x: speed * (Math.random() - 0.5), y: speed * (Math.random() - 0.5)}
-      });
-    }
-    ctx.fillStyle = "black";
-    ctx.lineWidth = 2;
-    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-
-    renderDummyBalls = function () {
-      ctx.fillStyle = "black";
-      ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-      ctx.strokeStyle = "green";
-      dummyBalls.forEach(function (ball) {
-        var position = ball.position;
-        var velocity = ball.velocity;
-        ctx.beginPath();
-        ctx.arc(position.x, position.y, radius, 0, Math.PI * 2, true);
-        ctx.stroke();
-        var x = (position.x + velocity.x);
-        var y = (position.y + velocity.y);
-        if (x < radius || x > ctx.canvas.width / scaleX - radius) {
-          velocity.x *= -1;
-        }
-        if (y < radius || y > ctx.canvas.height / scaleY - radius) {
-          velocity.y *= -1;
-        }
-        position.x += velocity.x;
-        position.y += velocity.y;
-      });
-    };
-  }
+  var renderDummyBalls = dummyAnimation.value && createRenderDummyBalls(ctx, stage);
 
   console.timeEnd("Initialize Renderer");
   console.timeEnd("Total");
@@ -783,11 +769,9 @@ function renderStage(stage, ctx, events) {
   var frameCount = 0;
   var frameFPSAverage = new metrics.Average(120);
 
-  function drawFrame(renderFrame, frameRequested) {
-    if (!skipFrameDraw.value) {
-      frameRequested = true; // e.g. for testing we need to draw all frames
-    }
+  var frameRequested = true;
 
+  function drawFrame(renderFrame, repaint) {
     sampleStart();
 
     var refreshStage = false;
@@ -835,9 +819,20 @@ function renderStage(stage, ctx, events) {
         domain.broadcastMessage("render", "render");
       }
 
-      if (isCanvasVisible(ctx.canvas) && (refreshStage || renderFrame) &&
-          frameRequested) {
+      var drawEnabled = isCanvasVisible(ctx.canvas) &&
+                        (refreshStage || renderFrame) &&
+                        (frameRequested || repaint || !skipFrameDraw.value);
+      // checking if we need to skip painting, however not doing it in repaint
+      // mode or during testing
+      if (drawEnabled && !repaint && skipFrameDraw.value &&
+          frameScheduler.shallSkipDraw) {
+        drawEnabled = false;
+        frameScheduler.skipDraw();
+        traceRenderer.value && appendToFrameTerminal("Skip Frame Draw", "red");
+      }
+      if (drawEnabled) {
 
+        frameScheduler.startDraw();
         var invalidPath = null;
 
         traceRenderer.value && frameWriter.enter("> Invalidation");
@@ -864,6 +859,7 @@ function renderStage(stage, ctx, events) {
           invalidPath.draw(ctx);
           ctx.stroke();
         }
+        frameScheduler.endDraw();
       }
 
       if (mouseMoved && !disableMouseVisitor.value) {
@@ -896,10 +892,7 @@ function renderStage(stage, ctx, events) {
     sampleEnd();
   }
 
-  var frameRequested = true;
-  var skipNextFrameDraw = false;
   (function draw() {
-    var now = performance.now();
     var renderFrame = true;
     if (events.onBeforeFrame) {
       var e = { cancel: false };
@@ -907,34 +900,24 @@ function renderStage(stage, ctx, events) {
       renderFrame = !e.cancel;
     }
 
-    frameTime = now;
-    if (renderFrame && renderDummyBalls) {
-      renderDummyBalls();
+    if (renderDummyBalls) {
+      if (renderFrame) {
+        renderDummyBalls();
+        events.onAfterFrame && events.onAfterFrame();
+      }
+      setTimeout(draw);
       return;
     }
 
-    drawFrame(renderFrame, frameRequested && !skipNextFrameDraw);
+    frameScheduler.startFrame(stage._frameRate);
+    drawFrame(renderFrame, false);
+    frameScheduler.endFrame();
     frameRequested = false;
 
-    maxDelay = 1000 / stage._frameRate;
-    if (!turboMode.value) {
-      nextRenderAt += maxDelay;
-      var wasLate = false;
-      while (nextRenderAt < now) {
-        wasLate = true;
-        nextRenderAt += maxDelay;
-      }
-      if (wasLate && !skipNextFrameDraw) {
-        // skips painting of the very next frame if we are not keeping up
-        skipNextFrameDraw = true;
-        traceRenderer.value && appendToFrameTerminal("Skip Frame Draw", "red");
-      } else {
-        // .. but giving it a chance to draw sometime
-        skipNextFrameDraw = false;
-      }
-    } else {
-      nextRenderAt = now;
+    if (!frameScheduler.isOnTime) {
+      traceRenderer.value && appendToFrameTerminal("Frame Is Late", "red");
     }
+
 
     if (renderFrame && events.onAfterFrame) {
       events.onAfterFrame();
@@ -947,7 +930,7 @@ function renderStage(stage, ctx, events) {
       return;
     }
 
-    setTimeout(draw, Math.max(0, nextRenderAt - performance.now()));
+    setTimeout(draw, turboMode.value ? 0 : frameScheduler.nextFrameIn);
   })();
 
   (function frame() {
@@ -955,11 +938,107 @@ function renderStage(stage, ctx, events) {
       return;
     }
 
-    if (stage._invalid || stage._mouseMoved) {
+    frameRequested = true;
+    if ((stage._invalid || stage._mouseMoved) && !renderDummyBalls) {
       drawFrame(false, true);
     }
 
-    frameRequested = true;
     requestAnimationFrame(frame);
   })();
 }
+
+var FrameScheduler = (function () {
+  var STATS_TO_REMEMBER = 50;
+  var MAX_DRAWS_TO_SKIP = 2;
+  var INTERVAL_PADDING_MS = 4;
+  var SPEED_ADJUST_RATE = 0.9;
+  function FrameScheduler() {
+    this._drawStats = [];
+    this._drawStatsSum = 0;
+    this._drawStarted = 0;
+    this._drawsSkipped = 0;
+    this._expectedNextFrameAt = performance.now();
+    this._onTime = true;
+    this._trackDelta = false;
+    this._delta = 0;
+    this._onTimeDelta = 0;
+  }
+  FrameScheduler.prototype = {
+    get shallSkipDraw() {
+      if (this._drawsSkipped >= MAX_DRAWS_TO_SKIP) {
+        return false;
+      }
+      var averageDraw = this._drawStats.length < STATS_TO_REMEMBER ? 0 :
+        this._drawStatsSum / this._drawStats.length;
+      var estimatedDrawEnd = performance.now() + averageDraw;
+      return estimatedDrawEnd + INTERVAL_PADDING_MS > this._expectedNextFrameAt;
+    },
+    get nextFrameIn() {
+      return Math.max(0, this._expectedNextFrameAt - performance.now());
+    },
+    get isOnTime() {
+      return this._onTime;
+    },
+    startFrame: function (frameRate) {
+      var interval = 1000 / frameRate;
+
+      var adjustedInterval = interval;
+      var delta = this._onTimeDelta + this._delta;
+      if (delta !== 0) {
+        if (delta < 0) {
+          adjustedInterval *= SPEED_ADJUST_RATE;
+        } else if (delta > 0) {
+          adjustedInterval /= SPEED_ADJUST_RATE;
+        }
+        this._onTimeDelta += (interval - adjustedInterval);
+      }
+
+      this._expectedNextFrameAt += adjustedInterval;
+      this._onTime = true;
+    },
+    endFrame: function () {
+      var estimatedNextFrameStart = performance.now() + INTERVAL_PADDING_MS;
+      if (estimatedNextFrameStart > this._expectedNextFrameAt) {
+        if (this._trackDelta) {
+          this._onTimeDelta += (this._expectedNextFrameAt - estimatedNextFrameStart);
+          console.log(this._onTimeDelta);
+        }
+        this._expectedNextFrameAt = estimatedNextFrameStart;
+        this._onTime = false;
+      }
+    },
+    startDraw: function () {
+      this._drawsSkipped = 0;
+      this._drawStarted = performance.now();
+    },
+    endDraw: function () {
+      var drawTime = performance.now() - this._drawStarted;
+      this._drawStats.push(drawTime);
+      this._drawStatsSum += drawTime;
+      while (this._drawStats.length > STATS_TO_REMEMBER) {
+        this._drawStatsSum -= this._drawStats.shift();
+      }
+    },
+    skipDraw: function () {
+      this._drawsSkipped++;
+    },
+    setDelta: function (value) {
+      if (!this._trackDelta) {
+        return;
+      }
+      this._delta = value;
+    },
+    startTrackDelta: function () {
+      this._trackDelta = true;
+    },
+    endTrackDelta: function () {
+      if (!this._trackDelta) {
+        return;
+      }
+      this._trackDelta = false;
+      this._delta = 0;
+      this._onTimeDelta = 0;
+    }
+  };
+  return FrameScheduler;
+})();
