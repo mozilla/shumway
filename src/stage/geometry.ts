@@ -270,7 +270,7 @@ module Shumway.Geometry {
       this.set(result);
     }
 
-    intersects (other): boolean {
+    intersects (other: Rectangle): boolean {
       if (this.isEmpty() || other.isEmpty()) {
         return false;
       }
@@ -278,10 +278,18 @@ module Shumway.Geometry {
       var y = Math.max(this.y, other.y);
       var w = Math.min(this.x + this.w, other.x + other.w) - x;
       var h = Math.min(this.y + this.h, other.y + other.h) - y;
-      if (w <= 0 || h <= 0) {
+      return !(w <= 0 || h <= 0);
+    }
+
+    intersectsTranslated (other: Rectangle, tx: number, ty: number): boolean {
+      if (this.isEmpty() || other.isEmpty()) {
         return false;
       }
-      return true;
+      var x = Math.max(this.x, other.x + tx);
+      var y = Math.max(this.y, other.y + ty);
+      var w = Math.min(this.x + this.w, other.x + tx + other.w) - x;
+      var h = Math.min(this.y + this.h, other.y + ty + other.h) - y;
+      return !(w <= 0 || h <= 0);
     }
 
     area (): number {
@@ -501,6 +509,10 @@ module Shumway.Geometry {
       points[3].y = b * x + d * (y + h) + ty;
     }
 
+    isTranslationOnly(): boolean {
+      return this.a === 1 && this.b === 0 && this.c === 0 && this.d === 1;
+    }
+
     transformRectangleAABB (rectangle: Rectangle) {
       var a = this.a;
       var b = this.b;
@@ -549,6 +561,13 @@ module Shumway.Geometry {
       this.tx *= x;
       this.ty *= y;
       return this;
+    }
+
+    scaleClone (x: number, y: number): Matrix {
+      if (x === 1 && y === 1) {
+        return this;
+      }
+      return this.clone().scale(x, y);
     }
 
     rotate (angle: number): Matrix {
@@ -669,11 +688,17 @@ module Shumway.Geometry {
     }
 
     getScaleX(): number {
+      if (this.a === 1 && this.b === 0) {
+        return 1;
+      }
       var result = Math.sqrt(this.a * this.a + this.b * this.b);
       return this.a > 0 ? result : -result;
     }
 
     getScaleY(): number {
+      if (this.c === 0 && this.d === 1) {
+        return 1;
+      }
       var result = Math.sqrt(this.c * this.c + this.d * this.d);
       return this.d > 0 ? result : -result;
     }
@@ -1576,6 +1601,12 @@ module Shumway.Geometry {
     }
 
     private getFewTiles(query: Rectangle, transform: Matrix, precise: boolean = true): Tile [] {
+      if (transform.isTranslationOnly() && this.tiles.length === 1) {
+        if (this.tiles[0].bounds.intersectsTranslated(query, transform.tx, transform.ty)) {
+          return [this.tiles[0]];
+        }
+        return [];
+      }
       transform.transformRectangle(query, TileCache.points);
       var queryOBB;
       var queryBounds = new Rectangle(0, 0, this.w, this.h);

@@ -21,7 +21,7 @@ module Shumway.Layers {
     private _isTransformInvalid: boolean = true;
     private _origin: Point = new Point(0, 0);
     private _properties: {[name: string]: any};
-
+    private static _path: Frame[] = [];
     get properties(): {[name: string]: any} {
       return this._properties || (this._properties = Object.create(null));
     }
@@ -84,18 +84,19 @@ module Shumway.Layers {
       return this._colorTransform;
     }
 
-    getPath(): Frame [] {
-      var stack = [this];
+    getPathInto(stack: Frame[]) {
+      stack.length = 0;
+      stack.push(this);
       var frame = this;
       while (frame.parent) {
         frame = frame.parent;
         stack.push(frame);
       }
-      return stack;
     }
 
     getConcatenatedColorTransform(): ColorTransform {
-      var path = this.getPath();
+      var path = Frame._path;
+      this.getPathInto(path);
       var colorTransform = null;
       for (var i = path.length - 1; i >= 0; i--) {
         if (path[i]._colorTransform) {

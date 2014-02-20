@@ -51,6 +51,7 @@ module Shumway.GL {
   import degreesToRadian = Shumway.Geometry.degreesToRadian;
 
   import clamp = Shumway.Util.clamp;
+  import pow2 = Shumway.Util.pow2;
 
   function count(name) {
     Counter.count(name);
@@ -853,14 +854,17 @@ module Shumway.GL {
     private getTiles(query: Rectangle, transform: Matrix, scratchBounds: Rectangle): Tile [] {
       var transformScale = Math.max(transform.getAbsoluteScaleX(), transform.getAbsoluteScaleY());
       // Use log2(1 / transformScale) to figure out the tile level.
-      var level = clamp(Math.round(Math.log(1 / transformScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
-      var scale = Math.pow(2, level);
+      var level = 0;
+      if (transformScale !== 1) {
+        level = clamp(Math.round(Math.log(1 / transformScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
+      }
+      var scale = pow2(level);
       // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our texture caches ...
 
       if (this.source.isDynamic) {
         // .. so try a lower scale level until it fits.
         while (true) {
-          scale = Math.pow(2, level);
+          scale = pow2(level);
           if (scratchBounds.contains(this.source.getBounds().clone().scale(scale, scale))) {
             break;
           }
@@ -873,7 +877,7 @@ module Shumway.GL {
       if (!this.source.isScalable) {
         level = clamp(level, -MIN_CACHE_LEVELS, 0);
       }
-      var scale = Math.pow(2, level);
+      var scale = pow2(level);
       var levelIndex = MIN_CACHE_LEVELS + level;
       var cache = this.cacheLevels[levelIndex];
       if (!cache) {
@@ -888,7 +892,7 @@ module Shumway.GL {
         }
         cache = this.cacheLevels[levelIndex] = new TileCache(scaledBounds.w, scaledBounds.h, tileW, tileH, scale);
       }
-      return cache.getTiles(query, transform.clone().scale(scale, scale));
+      return cache.getTiles(query, transform.scaleClone(scale, scale));
     }
 
     fetchTiles (

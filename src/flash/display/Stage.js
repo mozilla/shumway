@@ -341,6 +341,7 @@ var StageDefinition = (function () {
         sceneOptions.perspectiveCameraDistance = perspectiveCameraDistance.value;
         sceneOptions.drawTiles = drawTiles.value;
         sceneOptions.drawTextures = drawTextures.value;
+        sceneOptions.drawElements = drawElements.value;
         if (perspectiveCameraAngleRotate.value) {
           sceneOptions.perspectiveCameraAngle = Math.sin(Date.now() / 1000) * 100;
         } else {

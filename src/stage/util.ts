@@ -42,6 +42,16 @@ module Shumway.Util {
     return x;
   }
 
+  export function pow2(exponent: number): number {
+    if (exponent === (exponent | 0)) {
+      if (exponent < 0) {
+        return 1 / (1 << -exponent);
+      }
+      return 1 << exponent;
+    }
+    return Math.pow(2, exponent);
+  }
+
   export class ArrayWriter {
     u8: Uint8Array;
     u16: Uint16Array;
@@ -143,7 +153,7 @@ module Shumway.Util {
     }
 
     reserve(size) {
-      size += (4 - (size % 4)) % 4;
+      size = (size + 3) & ~0x3; // Round up to multiple of 4.
       this.ensureCapacity(this.offset + size);
       this.offset += size;
     }

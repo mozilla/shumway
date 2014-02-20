@@ -44,3 +44,4 @@ var perspectiveCameraSpacingInflate = stageOptions.register(new Option("", "pcIn
 
 var drawTiles = stageOptions.register(new Option("", "drawTiles", "boolean", false, "Draw Tiles."));
 var drawTextures = stageOptions.register(new Option("", "drawTextures", "boolean", false, "Draw Textures."));
+var drawElements = stageOptions.register(new Option("", "drawElements", "boolean", true, "Draw Elements."));
