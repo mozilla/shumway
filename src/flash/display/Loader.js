@@ -51,7 +51,7 @@ var LoaderDefinition = (function () {
       this._worker = null;
 
       var abc = AVM2.currentAbc();
-      if (abc) {
+      if (abc && abc.env.loader) {
         this._contentLoaderInfo._loaderURL = abc.env.loader._contentLoaderInfo._url;
       }
     },
