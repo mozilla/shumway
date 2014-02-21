@@ -1590,3 +1590,60 @@ var hashBytesTo32BitsMD5 = (function calculateMD5Closure() {
   }
   return hash;
 })();
+
+
+function toEncoding(n) {
+  return 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$_'[n];
+}
+
+function encodeInt32(n) {
+  var a = (n >> 30) & 0x3;
+  var b = (n & 0x7000000) >> 24; // 0x7000000 = (2^6 - 1) << 24
+  var c = (n & 0x1C0000) >> 18; // 0x1C0000 = (2^6 - 1) << 18
+  var d = (n & 0x3F000) >> 12; // 0x3F000 = (2^6 - 1) << 12
+  var e = (n & 0xFC0) >> 6; // 0xFC0 = (2^6 - 1) << 6
+  var f = (n & 0x3F); // 0x3F = 2^6 - 1
+  return toEncoding(a) + toEncoding(b) + toEncoding(c) +
+    toEncoding(d) + toEncoding(e) + toEncoding(f);
+}
+
+function variableLengthEncodeInt32(n) {
+  var bitCount = (32 - leadingZeros(n));
+  assert (bitCount <= 32, bitCount);
+  var l = Math.ceil(bitCount / 6);
+  // Encode length followed by six bit chunks.
+  var s = toEncoding(l);
+  for (var i = l - 1; i >= 0; i--) {
+    var offset = (i * 6);
+    s += toEncoding((n >> offset) & 0x3F);
+  }
+  release || assert (variableLengthDecodeIdentifier(s) === n, n + " : " + s + " - " + l + " bits: " + bitCount);
+  return s;
+}
+
+function fromEncoding(s) {
+  var c = s.charCodeAt(0);
+  var e = 0;
+  if (c >= 65 && c <= 90) {
+    return c - 65;
+  } else if (c >= 97 && c <= 122) {
+    return c - 71;
+  } else if (c >= 48 && c <= 57) {
+    return c + 4;
+  } else if (c === 36) {
+    return 62;
+  } else if (c === 95) {
+    return 63;
+  }
+  assert (false, "Invalid Encoding");
+}
+
+function variableLengthDecodeIdentifier(s) {
+  var l = fromEncoding(s[0]);
+  var n = 0;
+  for (var i = 0; i < l; i++) {
+    var offset = ((l - i - 1) * 6);
+    n |= fromEncoding(s[1 + i]) << offset;
+  }
+  return n;
+}
