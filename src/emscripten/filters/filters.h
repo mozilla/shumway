@@ -1,6 +1,14 @@
 
 #define min(a,b) ((a) <= (b) ? (a) : (b))
 #define clamp(n) (int)((n) > 0xff ? 0xff : ((n) < 0 ? 0 : (n)))
+#define abs(n) ((n) < 0 ? -(n) : (n))
+
+#define MAX_HEAP_SIZE 10000000
+
+unsigned char *allocMemory(unsigned int size);
+void freeMemory(unsigned char *to);
+void clearMemory(unsigned char *mem, unsigned char val, unsigned int size);
+void copyMemory(unsigned char *dst, unsigned char *src, unsigned int size);
 
 void preMultiplyAlpha(unsigned char *img, int width, int height);
 void unpreMultiplyAlpha(unsigned char *img, int width, int height);

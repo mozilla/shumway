@@ -1,7 +1,31 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "filters.h"
+
+unsigned char memory[MAX_HEAP_SIZE];
+unsigned char *current_free_memory = memory;
+
+unsigned char *allocMemory(unsigned int size) {
+  unsigned char *tmp = current_free_memory;
+  current_free_memory += size;
+  return tmp;
+}
+
+void freeMemory(unsigned char *to) {
+  current_free_memory = to;
+}
+
+void clearMemory(unsigned char *mem, unsigned char val, unsigned int size) {
+  while (size > 0) {
+    size--;
+    *(mem++) = val;
+  }
+}
+
+void copyMemory(unsigned char *dst, unsigned char *src, unsigned int size) {
+  while (size > 0) {
+    size--;
+    *(dst++) = *(src++);
+  }
+}
 
 void preMultiplyAlpha(unsigned char *img, int width, int height)
 {
@@ -77,7 +101,7 @@ void blurX(unsigned char *img, int width, int height, int distance, unsigned int
 	int lineInSize = lineOutSize + dist8; // (distance * 2) + width
 	int windowLength = dist2 + 1; // (distance * 2) + 1
 
-	unsigned char *lineBufferIn = malloc(lineInSize);
+	unsigned char *lineBufferIn = allocMemory(lineInSize);
 	unsigned int *pBorderLeft = (unsigned int *)lineBufferIn;
 	unsigned int *pBorderRight = (unsigned int *)(lineBufferIn + lineInSize - 4);
 	for (int i = 0; i < dist2; ++i) {
@@ -86,12 +110,12 @@ void blurX(unsigned char *img, int width, int height, int distance, unsigned int
 	}
 
 	for (int y = 0; y < height; ++y) {
-		memcpy(lineBufferIn + dist8, src + dist4, lineOutSize - dist8);
+		copyMemory(lineBufferIn + dist8, src + dist4, lineOutSize - dist8);
 		boxBlur((unsigned int *)src, lineBufferIn, width, windowLength);
 		src += lineOutSize;
 	}
 
-	free(lineBufferIn);
+	freeMemory(lineBufferIn);
 }
 
 void blurY(unsigned char *img, int width, int height, int distance, unsigned int borderColor)
@@ -107,7 +131,7 @@ void blurY(unsigned char *img, int width, int height, int distance, unsigned int
 	int lineInSize = lineOutSize + (distance << 3); // (height + (distance * 2)) * 4
 	int windowLength = dist2 + 1; // (distance * 2) + 1
 
-	unsigned char *lineBufferIn = malloc(lineInSize);
+	unsigned char *lineBufferIn = allocMemory(lineInSize);
 	unsigned int *pBorderTop = (unsigned int *)lineBufferIn;
 	unsigned int *pBorderBottom = (unsigned int *)(lineBufferIn + lineInSize - 4);
 	for (int i = 0; i < dist2; ++i) {
@@ -115,8 +139,8 @@ void blurY(unsigned char *img, int width, int height, int distance, unsigned int
 		*pBorderBottom-- = borderColor;
 	}
 
-	unsigned char *lineBufferOut = malloc(lineOutSize);
-	memset(lineBufferOut, 0, lineOutSize);
+	unsigned char *lineBufferOut = allocMemory(lineOutSize);
+	clearMemory(lineBufferOut, 0, lineOutSize);
 
 	unsigned int *src32;
 	unsigned int *line32;
@@ -143,8 +167,7 @@ void blurY(unsigned char *img, int width, int height, int distance, unsigned int
 		src += 4;
 	}
 
-	free(lineBufferOut);
-	free(lineBufferIn);
+	freeMemory(lineBufferIn);
 }
 
 void boxBlur(unsigned int *lineBufferOut, unsigned char *lineBufferIn, int width, int windowLength)
@@ -215,17 +238,17 @@ void blurXAlpha(unsigned char *img, int width, int height, int distance, unsigne
 	int dist2 = distance << 1;
 	int windowLength = dist2 + 1;
 
-	unsigned char *lineBufferIn = malloc(rw + dist2);
-	memset(lineBufferIn, borderAlpha, dist2);
-	memset(lineBufferIn + rw, borderAlpha, dist2);
+	unsigned char *lineBufferIn = allocMemory(rw + dist2);
+	clearMemory(lineBufferIn, borderAlpha, dist2);
+	clearMemory(lineBufferIn + rw, borderAlpha, dist2);
 
 	for (int y = 0; y < rh; ++y) {
-		memcpy(lineBufferIn + dist2, src + distance, rw - dist2);
+		copyMemory(lineBufferIn + dist2, src + distance, rw - dist2);
 		boxBlurAlpha(src, lineBufferIn, rw, windowLength);
 		src += width;
 	}
 
-	free(lineBufferIn);
+	freeMemory(lineBufferIn);
 }
 
 void blurYAlpha(unsigned char *img, int width, int height, int distance, unsigned char borderAlpha, int rx, int ry, int rw, int rh)
@@ -239,12 +262,12 @@ void blurYAlpha(unsigned char *img, int width, int height, int distance, unsigne
 	int dist2 = distance << 1;
 	int windowLength = dist2 + 1;
 
-	unsigned char *lineBufferIn = malloc(rh + dist2);
-	memset(lineBufferIn, borderAlpha, dist2);
-	memset(lineBufferIn + rh, borderAlpha, dist2);
+	unsigned char *lineBufferIn = allocMemory(rh + dist2);
+	clearMemory(lineBufferIn, borderAlpha, dist2);
+	clearMemory(lineBufferIn + rh, borderAlpha, dist2);
 
-	unsigned char *lineBufferOut = malloc(rh);
-	memset(lineBufferOut, 0, rh);
+	unsigned char *lineBufferOut = allocMemory(rh);
+	clearMemory(lineBufferOut, 0, rh);
 
 	unsigned char *psrc;
 	unsigned char *pline;
@@ -271,8 +294,7 @@ void blurYAlpha(unsigned char *img, int width, int height, int distance, unsigne
 		src++;
 	}
 
-	free(lineBufferOut);
-	free(lineBufferIn);
+	freeMemory(lineBufferIn);
 }
 
 void boxBlurAlpha(unsigned char *lineBufferOut, unsigned char *lineBufferIn, int width, int windowLength)
@@ -306,8 +328,8 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 
 	unsigned char defaultalpha = (inner == 1) ? 0xff : 0;
 
-	unsigned char *tmp = malloc(size4);
-	memset(tmp, defaultalpha, size);
+	unsigned char *tmp = allocMemory(size4);
+	clearMemory(tmp, defaultalpha, size);
 
 	// Copy img's alpha channel to tmp, offset by dx/dy
 	unsigned char *ptmp = tmp;
@@ -394,13 +416,13 @@ void dropshadow(unsigned char *img, int width, int height, int dx, int dy, unsig
 		if (knockout == 1) {
 			compositeSourceOut(img, tmp, width, height);
 		} else if (hideObject == 1) {
-			memcpy(img, tmp, size4);
+			copyMemory(img, tmp, size4);
 		} else {
 			compositeDestinationOver(img, tmp, width, height);
 		}
 	}
 
-	free(tmp);
+	freeMemory(tmp);
 }
 
 void compositeSourceOver(unsigned char *dst, unsigned char *src, int width, int height)
