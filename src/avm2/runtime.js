@@ -49,11 +49,6 @@ var VM_MEMOIZER_PREFIX = "z";
 var VM_OPEN_SET_METHOD_PREFIX = "s";
 var VM_OPEN_GET_METHOD_PREFIX = "g";
 
-var VM_NATIVE_BUILTIN_SURROGATES = [
-  { object: Object, methods: ["toString", "valueOf"] },
-  { object: Function, methods: ["toString", "valueOf"] }
-];
-
 var VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
 
 var SAVED_SCOPE_NAME = "$SS";
@@ -155,6 +150,9 @@ function objectConstantName(object) {
   return name;
 }
 
+
+var XXX = [];
+
 /**
  * Self patching global property stub that lazily initializes objects like scripts and
  * classes.
@@ -177,21 +175,25 @@ var LazyInitializer = (function () {
     }
     var target = this.target, initialize;
     if (this.target instanceof ScriptInfo) {
-      this.name = "$S" + objectIDs++;
+      this.name = "$" + variableLengthEncodeInt32(this.target.hash);
       initialize = function () {
         ensureScriptIsExecuted(target, "Lazy Initializer");
         return target.global;
       };
     } else if (this.target instanceof ClassInfo) {
-      this.name = Multiname.getQualifiedName(target.instanceInfo.name);
+      this.name = "$" + variableLengthEncodeInt32(this.target.hash);
+      // this.name += "_" + target.instanceInfo.name.name + "_";
       initialize = function () {
+        if (target.classObject) {
+          return target.classObject;
+        }
         return target.abc.applicationDomain.getProperty(target.instanceInfo.name);
       };
     } else {
       notImplemented(target);
     }
     var name = this.name;
-    assert (!holder[name]);
+    assert (!holder[name], "Holder already has " + name);
     Object.defineProperty(holder, name, {
       get: function () {
         var value = initialize();
@@ -581,24 +583,34 @@ function asGetEnumerableKeys() {
 }
 
 function initializeGlobalObject(global) {
+  var VM_NATIVE_BUILTIN_SURROGATES = [
+    { name: "Object", methods: ["toString", "valueOf"] },
+    { name: "Function", methods: ["toString", "valueOf"] }
+  ];
   /**
    * Surrogates are used to make |toString| and |valueOf| work transparently. For instance, the expression
-   * |a + b| should implicitly expand to |a.public$valueOf() + b.public$valueOf()|. Since, we don't want
-   * to call |public$valueOf| explicitly we instead patch the |valueOf| property in the prototypes of native
-   * builtins to call the |public$valueOf| instead.
+   * |a + b| should implicitly expand to |a.$valueOf() + b.$valueOf()|. Since, we don't want to call
+   * |$valueOf| explicitly we instead patch the |valueOf| property in the prototypes of native builtins
+   * to call the |$valueOf| instead.
    */
   var originals = global[VM_NATIVE_BUILTIN_ORIGINALS] = createEmptyObject();
   VM_NATIVE_BUILTIN_SURROGATES.forEach(function (surrogate) {
-    var object = surrogate.object;
-    originals[object.name] = createEmptyObject();
+    var object = global[surrogate.name];
+    assert (object);
+    originals[surrogate.name] = createEmptyObject();
     surrogate.methods.forEach(function (originalFunctionName) {
-      var originalFunction = object.prototype[originalFunctionName];
+      var originalFunction;
+      if (object.prototype.hasOwnProperty(originalFunctionName)) {
+        originalFunction = object.prototype[originalFunctionName];
+      } else {
+        originalFunction = originals["Object"][originalFunctionName];
+      }
       // Save the original method in case |getNative| needs it.
-      originals[object.name][originalFunctionName] = originalFunction;
+      originals[surrogate.name][originalFunctionName] = originalFunction;
       var overrideFunctionName = Multiname.getPublicQualifiedName(originalFunctionName);
       if (useSurrogates) {
         // Patch the native builtin with a surrogate.
-        global[object.name].prototype[originalFunctionName] = function surrogate() {
+        global[surrogate.name].prototype[originalFunctionName] = function surrogate() {
           if (this[overrideFunctionName]) {
             return this[overrideFunctionName]();
           }
@@ -905,6 +917,16 @@ var Scope = (function () {
     return -1;
   };
 
+  scope.prototype.getScopeObjects = function getScopeObjects() {
+    var objects = [];
+    var current = this;
+    while (current) {
+      objects.unshift(current.object);
+      current = current.parent;
+    }
+    return objects;
+  };
+
   function makeCacheKey(namespaces, name, flags) {
     if (!namespaces) {
       return name;
@@ -923,6 +945,7 @@ var Scope = (function () {
    * Property lookups are cached in scopes but are not used when only looking at |scopesOnly|.
    */
   scope.prototype.findScopeProperty = function findScopeProperty(namespaces, name, flags, domain, strict, scopeOnly) {
+    Counter.count("findScopeProperty");
     var object;
     var key = makeCacheKey(namespaces, name, flags);
     if (!scopeOnly && (object = this.cache[key])) {
@@ -1175,7 +1198,7 @@ function forceCompile(mi) {
     holder = holder.instanceInfo;
   }
   if (holder instanceof InstanceInfo) {
-    var packageName = holder.name.namespaces[0].originalURI;
+    var packageName = holder.name.namespaces[0].uri;
     switch (packageName) {
       case "flash.geom":
       case "flash.events":
@@ -1240,15 +1263,30 @@ function searchCodeCache(methodInfo) {
   if (!codeCaching.value) {
     return;
   }
-  var abcCache = CC[methodInfo.abc.hash];
-  if (!abcCache) {
+  var cacheInfo = CC[methodInfo.abc.hash];
+  if (!cacheInfo) {
     console.warn("Cannot Find Code Cache For ABC, name: " + methodInfo.abc.name + ", hash: " + methodInfo.abc.hash);
-    Counter.count("Code Cache Miss");
+    Counter.count("Code Cache ABC Miss");
     return;
   }
-  var method = abcCache.methods[methodInfo.index];
+  if (!cacheInfo.isInitialized) {
+    methodInfo.abc.scripts.forEach(function (scriptInfo) {
+      LazyInitializer.create(scriptInfo).getName();
+    });
+    methodInfo.abc.classes.forEach(function (classInfo) {
+      LazyInitializer.create(classInfo).getName();
+    });
+    cacheInfo.isInitialized = true;
+  }
+  var method = cacheInfo.methods[methodInfo.index];
   if (!method) {
-    console.warn("Cannot Find Code Cache For Method, name: " + methodInfo);
+    if (methodInfo.isInstanceInitializer || methodInfo.isClassInitializer) {
+      Counter.count("Code Cache Query On Initializer");
+    } else {
+      Counter.count("Code Cache MISS ON OTHER");
+      console.warn("Shouldn't MISS: " + methodInfo + " " + methodInfo.debugName);
+    }
+    // console.warn("Cannot Find Code Cache For Method, name: " + methodInfo);
     Counter.count("Code Cache Miss");
     return;
   }
@@ -1285,10 +1323,6 @@ function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, 
   if (compiledFunctionCount == functionBreak.value || breakpoint) {
     body = "{ debugger; \n" + body + "}";
   }
-//    if ($DEBUG) {
-//      body = '{ try {\n' + body + '\n} catch (e) {window.console.log("error in function ' +
-//              fnName + ':" + e + ", stack:\\n" + e.stack); throw e} }';
-//    }
 
   if (!cached) {
     var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
@@ -1746,6 +1780,8 @@ function createClass(classInfo, baseClass, scope) {
     installProxyClassWrapper(cls);
     cls.isProxy = true;
   }
+
+  classInfo.classObject = cls;
 
   // Run the static initializer.
   createFunction(classInfo.init, scope, false).call(cls);

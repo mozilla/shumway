@@ -233,7 +233,7 @@ var createName = function createName(namespaces, name) {
   }
 
   function warn(message) {
-    console.warn(message);
+    // console.warn(message);
   }
 
   function unary(operator, argument) {
@@ -589,6 +589,13 @@ var createName = function createName(namespaces, name) {
             return constant(Multiname.getQualifiedName(name.value));
           }
           return name;
+        }
+
+        function getGlobalScope(ti) {
+          if (ti && ti.object) {
+            return constant(ti.object);
+          }
+          return new IR.ASGlobal(null, savedScope());
         }
 
         function findProperty(multiname, strict, ti) {
@@ -1000,7 +1007,7 @@ var createName = function createName(namespaces, name) {
               scope.pop();
               break;
             case 0x64: // OP_getglobalscope
-              push(new IR.ASGlobal(null, savedScope()));
+              push(getGlobalScope(bc.ti));
               break;
             case 0x65: // OP_getscopeobject
               push(getScopeObject(state.scope[bc.index]));

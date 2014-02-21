@@ -176,6 +176,12 @@ function parseTraits(abc, stream, holder) {
   return traits;
 }
 
+function traceTraits(traits) {
+  traits.forEach(function (trait) {
+    console.log(trait.name.name + " " + Multiname.getQualifiedName(trait.name));
+  });
+}
+
 var Trait = (function () {
   function trait(abc, stream, holder) {
     var constantPool = abc.constantPool;
@@ -349,7 +355,7 @@ var ASNamespace = (function () {
         this.prefix = prefix;
       }
       this.kind = kind;
-      this.originalURI = uri;
+      this.uri = uri;
       buildNamespace.call(this);
     }
     // Otherwise, we are creating an empty namespace to be build
@@ -360,75 +366,19 @@ var ASNamespace = (function () {
     if (this.kind === CONSTANT_PackageNamespace) {
       this.kind = CONSTANT_Namespace;
     }
-    if (this.isPublic() && this.originalURI) {
+    if (this.isPublic() && this.uri) {
       /* Strip the api version mark for now. */
-      var n = this.originalURI.length - 1;
-      var mark = this.originalURI.charCodeAt(n);
+      var n = this.uri.length - 1;
+      var mark = this.uri.charCodeAt(n);
       if (mark > MIN_API_MARK) {
         assert(false, "What's this code for?");
-        this.originalURI = this.originalURI.substring(0, n - 1);
+        this.uri = this.uri.substring(0, n - 1);
       }
     } else if (this.isUnique()) {
       // String(Math.random() * 0xFFFFFFFF >>> 0);
-      this.originalURI = "private";
+      this.uri = "private";
     }
-    this.qualifiedName = qualifyNamespaceInternal(this.kind, this.originalURI, this.prefix ? this.prefix : "");
-  }
-
-  function toEncoding(n) {
-    return 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$_'[n];
-  }
-
-  function encodeInt32(n) {
-    var a = (n >> 30) & 0x3;
-    var b = (n & 0x7000000) >> 24; // 0x7000000 = (2^6 - 1) << 24
-    var c = (n & 0x1C0000) >> 18; // 0x1C0000 = (2^6 - 1) << 18
-    var d = (n & 0x3F000) >> 12; // 0x3F000 = (2^6 - 1) << 12
-    var e = (n & 0xFC0) >> 6; // 0xFC0 = (2^6 - 1) << 6
-    var f = (n & 0x3F); // 0x3F = 2^6 - 1
-    return toEncoding(a) + toEncoding(b) + toEncoding(c) +
-           toEncoding(d) + toEncoding(e) + toEncoding(f);
-  }
-
-  function variableLengthEncodeInt32(n) {
-    var bitCount = (32 - leadingZeros(n));
-    assert (bitCount <= 32, bitCount);
-    var l = Math.ceil(bitCount / 6);
-    // Encode length followed by six bit chunks.
-    var s = toEncoding(l);
-    for (var i = l - 1; i >= 0; i--) {
-      var offset = (i * 6);
-      s += toEncoding((n >> offset) & 0x3F);
-    }
-    assert (variableLengthDecodeIdentifier(s) === n, n + " : " + s + " - " + l + " bits: " + bitCount);
-    return s;
-  }
-
-  function fromEncoding(s) {
-    var c = s.charCodeAt(0);
-    var e = 0;
-    if (c >= 65 && c <= 90) {
-      return c - 65;
-    } else if (c >= 97 && c <= 122) {
-      return c - 71;
-    } else if (c >= 48 && c <= 57) {
-      return c + 4;
-    } else if (c === 36) {
-      return 62;
-    } else if (c === 95) {
-      return 63;
-    }
-    assert (false, "Invalid Encoding");
-  }
-
-  function variableLengthDecodeIdentifier(s) {
-    var l = fromEncoding(s[0]);
-    var n = 0;
-    for (var i = 0; i < l; i++) {
-      var offset = ((l - i - 1) * 6);
-      n |= fromEncoding(s[1 + i]) << offset;
-    }
-    return n;
+    this.qualifiedName = qualifyNamespaceInternal(this.kind, this.uri, this.prefix ? this.prefix : "");
   }
 
   var knownURIs = [
@@ -503,7 +453,7 @@ var ASNamespace = (function () {
   namespace.prototype = Object.create({
     parse: function parse(constantPool, stream) {
       this.kind = stream.readU8();
-      this.originalURI = constantPool.strings[stream.readU30()];
+      this.uri = constantPool.strings[stream.readU30()];
       buildNamespace.call(this);
     },
 
@@ -516,7 +466,7 @@ var ASNamespace = (function () {
     },
 
     isUnique: function isUnique() {
-      return this.kind === CONSTANT_PrivateNs && !this.originalURI;
+      return this.kind === CONSTANT_PrivateNs && !this.uri;
     },
 
     isDynamic: function isDynamic() {
@@ -528,14 +478,13 @@ var ASNamespace = (function () {
     },
 
     toString: function toString() {
-      return kinds[this.kind] + (this.originalURI ? " " + this.originalURI : "");
+      return kinds[this.kind] + (this.uri ? " " + this.uri : "");
     },
 
     clone: function clone() {
       var c = new namespace();
       c.kind = this.kind;
       c.uri = this.uri;
-      c.originalURI = this.originalURI;
       c.qualifiedName = this.qualifiedName;
       return c;
     },
@@ -1030,7 +979,7 @@ var Multiname = (function () {
 
   multiname.prototype.getOriginalName = function getOriginalName() {
     release || assert(this.isQName());
-    var name = this.namespaces[0].originalURI;
+    var name = this.namespaces[0].uri;
     if (name) {
       name += ".";
     }
@@ -1451,9 +1400,11 @@ var InstanceInfo = (function () {
 
 var ClassInfo = (function () {
   var nextID = 1;
-  function classInfo(abc, instanceInfo, stream) {
+  function classInfo(abc, instanceInfo, index, stream) {
     this.id = nextID ++;
     this.abc = abc;
+    this.hash = abc.hash + 0x010000 + index;
+    this.index = index;
     this.init = abc.methods[stream.readU30()];
     this.init.isClassInitializer = true;
     attachHolder(this.init, this);
@@ -1492,6 +1443,7 @@ var ScriptInfo = (function scriptInfo() {
   function scriptInfo(abc, index, stream) {
     this.id = nextID ++;
     this.abc = abc;
+    this.hash = abc.hash + 0x020000 + index;
     this.name = abc.name + "$script" + index;
     this.init = abc.methods[stream.readU30()];
     this.init.isScriptInitializer = true;
@@ -1570,7 +1522,7 @@ var AbcFile = (function () {
     // Class Infos
     this.classes = [];
     for (i = 0; i < n; ++i) {
-      this.classes.push(new ClassInfo(this, this.instances[i], stream));
+      this.classes.push(new ClassInfo(this, this.instances[i], i, stream));
     }
     Timer.stop();
 

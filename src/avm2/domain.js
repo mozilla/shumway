@@ -318,17 +318,8 @@ var ApplicationDomain = (function () {
       return undefined;
     },
 
-    compileAbc: function compileAbc(abc, writer) {
-      // console.time("Compile ABC: " + abc.name);
-      this.loadAbc(abc);
-      writer.enter("{");
-      writer.enter("methods: {");
-      for (var i = 0; i < abc.scripts.length; i++) {
-        compileScript(abc.scripts[i], writer);
-      }
-      writer.leave("}");
-      writer.leave("}");
-      //console.timeEnd("Compile ABC: " + abc.name);
+    compileAbc: function (abc, writer) {
+      compileAbc(abc, writer);
     },
 
     executeAbc: function executeAbc(abc) {
@@ -398,8 +389,8 @@ var SecurityDomain = (function () {
   securityDomain.prototype.initializeShell = function (sysMode, appMode) {
     var compartment = this.compartment;
     compartment.avm2 = new compartment.AVM2(sysMode, appMode);
-    compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/builtin/builtin.abc"));
-    compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/shell/shell.abc"));
+    compartment.avm2.systemDomain.loadAbc(compartment.grabAbc(homePath + "src/avm2/generated/builtin/builtin.abc"));
+    compartment.avm2.systemDomain.loadAbc(compartment.grabAbc(homePath + "src/avm2/generated/shell/shell.abc"));
     // compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/avmplus/avmplus.abc"));
     this.systemDomain = compartment.avm2.systemDomain;
     this.applicationDomain = compartment.avm2.applicationDomain;

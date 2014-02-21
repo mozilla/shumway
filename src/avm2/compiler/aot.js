@@ -15,12 +15,15 @@
  */
 
 /**
- * Throw away code, just used to debug the compiler for now.
+ * Examples:
+ *
+ * Compiling individual player globals abcs.
+ *
+ * find ~/Workspaces/Shumway/build/playerglobal/flash -name "*.abc" | xargs js avm.js -a -verify {} >> player.as.js
  */
 
 var hasUsedConstants = false;
 function objectConstantName2(object) {
-  // hasUsedConstants = true;
   release || assert(object);
   if (object.hasOwnProperty(OBJECT_NAME)) {
     return object[OBJECT_NAME];
@@ -29,11 +32,22 @@ function objectConstantName2(object) {
     // console.warn("LazyInitializer: " + object.getName() + " : " + object.target);
     return object.getName();
   }
-  // console.warn("Object: " + object);
-  var name, id = objectIDs++;
+  var name;
   if (object instanceof Scope) {
-    name = "$X" + id;
-  } else if (object instanceof Global) {
+    var scope = object;
+    if (scope.object instanceof ScriptInfo) {
+      name = LazyInitializer.create(scope.object).getName();
+    } else if (scope.object instanceof ClassInfo) {
+      name = LazyInitializer.create(scope.object).getName();
+    }
+    name = "$SCOPE_" + name;
+    return name;
+  }
+  hasUsedConstants = true;
+  return "X";
+
+  id = objectIDs++;
+  if (object instanceof Global) {
     name = "$G" + id;
   } else if (object instanceof Multiname) {
     name = "$M" + id;
@@ -41,23 +55,79 @@ function objectConstantName2(object) {
     name = "$C" + id;
   } else {
     name = "$O" + id;
+    print("XXX");
   }
+  console.warn("Object: " + object + " " + name);
   Object.defineProperty(object, OBJECT_NAME, {value: name, writable: false, enumerable: false});
   jsGlobal[name] = object;
   return name;
 }
 
+function compileAbc(abc, writer) {
+  // console.time("Compile ABC: " + abc.name);
+  writer.enter("{");
+  writer.enter("methods: {");
+  for (var i = 0; i < abc.scripts.length; i++) {
+    compileScript(abc.scripts[i], writer);
+  }
+//  abc.methods.forEach(function (methodInfo) {
+//    if (!methodInfo.isAOTCompiled && methodInfo.hasBody) {
+//      // print("Closure: " + methodInfo);
+//    }
+////    print(">> LEFTOVER: " + methodInfo);
+//    compileClosure(methodInfo, writer, new Scope(null, null));
+////    print("<< LEFTOVER: " + methodInfo);
+//  });
+  writer.leave("}");
+  writer.leave("}");
+  //console.timeEnd("Compile ABC: " + abc.name);
+}
+
 function compileScript(script, writer) {
   objectConstantName = objectConstantName2;
-  // TODO: Create correct scope chains.
-  var scope = new Scope(null, new Global(script));
+  var globalScope = new Scope(null, script);
+  var domain = script.abc.applicationDomain;
   script.traits.forEach(function (trait) {
     if (trait.isClass()) {
-      compileClass(trait.classInfo, writer, scope);
+      var inheritance = [];
+      var current = trait.classInfo;
+      while (current) {
+        inheritance.unshift(current);
+        if (current.instanceInfo.superName) {
+          current = domain.findClassInfo(current.instanceInfo.superName);
+        } else {
+          break;
+        }
+      }
+      var classScope = globalScope;
+      inheritance.forEach(function (classInfo) {
+        classScope = new Scope(classScope, classInfo);
+      });
+      compileClass(trait.classInfo, writer, classScope);
     } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-      compileTrait(trait, writer, scope);
+      compileTrait(trait, writer, globalScope);
     }
   });
+}
+
+function compileClosure(methodInfo, writer, scope) {
+  if (shouldCompile(methodInfo)) {
+    ensureFunctionIsInitialized(methodInfo);
+    try {
+      hasUsedConstants = false;
+      var method = createCompiledFunction(methodInfo, scope, false, false, false);
+      methodInfo.isAOTCompiled = true;
+      writer.enter(methodInfo.index + ": ");
+      if (!hasUsedConstants) {
+        writer.writeLns(method.toSource());
+      } else {
+        writer.writeLn("undefined");
+      }
+      writer.leave(",");
+    } catch (x) {
+
+    }
+  }
 }
 
 function compileTrait(trait, writer, scope) {
@@ -69,11 +139,12 @@ function compileTrait(trait, writer, scope) {
       try {
         hasUsedConstants = false;
         var method = createCompiledFunction(methodInfo, scope, false, false, false);
+        methodInfo.isAOTCompiled = true;
         writer.enter(methodInfo.index + ": ");
         if (!hasUsedConstants) {
           writer.writeLns(method.toSource());
         } else {
-          writer.writeLns("undefined");
+          writer.writeLn("undefined");
         }
         writer.leave(",");
       } catch (x) {
@@ -93,26 +164,25 @@ function compileClass(classInfo, writer, scope) {
   function compileInitializer(methodInfo, scope) {
     if (canCompile(methodInfo)) {
       ensureFunctionIsInitialized(methodInfo);
-      hasUsedConstants = false;
-      var method = createCompiledFunction(methodInfo, scope, false, false, false);
-      writer.enter(methodInfo.index + ": ");
-      if (!hasUsedConstants) {
-        writer.writeLns(method.toSource());
-      } else {
-        writer.writeLns("undefined");
+      try {
+        hasUsedConstants = false;
+        var method = createCompiledFunction(methodInfo, scope, false, false, false);
+        methodInfo.isAOTCompiled = true;
+        writer.enter(methodInfo.index + ": ");
+        if (!hasUsedConstants) {
+          writer.writeLns(method.toSource());
+        } else {
+          writer.writeLn("undefined");
+        }
+        writer.leave(", ");
+      } catch (x) {
+
       }
-      writer.leave(", ");
     }
   }
 
-//  writer.enter("class_" + Multiname.getQualifiedName(classInfo.instanceInfo.name) + ": {");
-//  writer.enter("s: {");
-  compileInitializer(classInfo.init, scope);
+  // compileInitializer(classInfo.init, scope);
   compileTraits(classInfo.traits, scope);
-//  writer.leave("}, ");
-//  writer.enter("i: {");
-  compileInitializer(classInfo.instanceInfo.init, scope);
+  // compileInitializer(classInfo.instanceInfo.init, scope);
   compileTraits(classInfo.instanceInfo.traits, scope);
-//  writer.leave("}");
-//  writer.leave("},");
 }

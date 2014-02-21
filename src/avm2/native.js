@@ -830,7 +830,7 @@ var natives = (function () {
         } else if (typeof uriValue === "object") {
           prefix = uriValue.prefix;
           if (uriValue instanceof ASNamespace) {
-            uri = uriValue.originalURI;
+            uri = uriValue.uri;
           } else if (uriValue instanceof QName) {
             uri = uriValue.uri;
           }
@@ -1336,9 +1336,9 @@ var natives = (function () {
           }
           if (cls) {
             var name = cls.classInfo.instanceInfo.name;
-            var originalURI = name.namespaces[0].originalURI;
-            if (originalURI) {
-              return originalURI + "::" + name.name;
+            var uri = name.namespaces[0].uri;
+            if (uri) {
+              return uri + "::" + name.name;
             }
             return name.name;
           }
@@ -1367,9 +1367,9 @@ var natives = (function () {
           }
           if (cls && cls.baseClass) {
             var name = cls.baseClass.classInfo.instanceInfo.name;
-            var originalURI = name.namespaces[0].originalURI;
-            if (originalURI) {
-              return originalURI + "::" + name.name;
+            var uri = name.namespaces[0].uri;
+            if (uri) {
+              return uri + "::" + name.name;
             }
             return name.name;
           }
@@ -1448,8 +1448,8 @@ var natives = (function () {
     function unmangledQualifiedName(mn) {
       var name = mn.name;
       var namespace = mn.namespaces[0];
-      if (namespace && namespace.originalURI) {
-        return namespace.originalURI + '::' + name;
+      if (namespace && namespace.uri) {
+        return namespace.uri + '::' + name;
       }
       return name;
     }

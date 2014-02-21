@@ -18,6 +18,7 @@
 
 var $DEBUG;
 var release = true;
+
 /**
  * Check arguments and throw the appropriate errors.
  */
@@ -26,12 +27,12 @@ var checkArguments = true;
 /**
  * Allow overwriting of the native toString / valueOf with AS3 versions.
  */
-var useSurrogates = true;
+var useSurrogates = false;
 
 /**
  * Match AS3 add semantics related to toString/valueOf when adding values.
  */
-var useAsAdd = true;
+var useAsAdd = false;
 
 /**
  * Seals const traits. Technically we need to throw an exception if they are ever modified after

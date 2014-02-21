@@ -26,7 +26,7 @@ var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWire
 var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
 var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
 var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", false, "force hidpi"));
-var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", true, "skip frame when not on time"));
+var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", false, "skip frame when not on time"));
 var hud = rendererOptions.register(new Option("", "hud", "boolean", false, "show hud mode"));
 var dummyAnimation = rendererOptions.register(new Option("", "dummy", "boolean", false, "show test balls animation"));
 

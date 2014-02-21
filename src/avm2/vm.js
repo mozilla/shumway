@@ -35,7 +35,7 @@ var AVM2 = (function () {
       return null;
     }
     for (var i = 0; i < mn.namespaces.length; i++) {
-      var name = mn.namespaces[i].originalURI + ":" + mn.name;
+      var name = mn.namespaces[i].uri + ":" + mn.name;
       var abcName = playerglobal.map[name];
       if (abcName) {
         break;

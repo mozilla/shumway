@@ -93,7 +93,7 @@ var isXMLType, isXMLName, XMLParser;
           s = "<" + prefix + n.name.localName;
           // Enumerate namespace declarations
           var namespaceDeclarations = [];
-          if (ns.prefix || ns.originalURI) {
+          if (ns.prefix || ns.uri) {
             // If either is a non-empty string then create a namespace
             // declaration for it
             namespaceDeclarations.push(ns)
@@ -115,9 +115,9 @@ var isXMLType, isXMLName, XMLParser;
           for (var i = 0; i < namespaceDeclarations.length; i++) {
             a = namespaceDeclarations[i];
             if (a.prefix) {
-              s += " xmlns:" + a.prefix + "=\"" + a.originalURI + "\"";
+              s += " xmlns:" + a.prefix + "=\"" + a.uri + "\"";
             } else {
-              s += " xmlns=\"" + a.originalURI + "\"";
+              s += " xmlns=\"" + a.uri + "\"";
             }
           }
           for (var i = 0; i < n.attributes.length; i++) {
@@ -2036,7 +2036,7 @@ var isXMLType, isXMLName, XMLParser;
     defineNonEnumerableGetter(QNp, "uri", function () {
       if (!this._uri) {
         var ns = this.mn.namespaces[0]
-        this._uri = ns && ns.originalURI ? ns.originalURI : this.isAny || this.isAnyNamespace ? null : "";
+        this._uri = ns && ns.uri ? ns.uri : this.isAny || this.isAnyNamespace ? null : "";
       }
       return this._uri;
     });
