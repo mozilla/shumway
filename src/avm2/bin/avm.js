@@ -66,7 +66,8 @@ var traceLevel = shellOptions.register(new Option("t", "traceLevel", "number", 0
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 var execute = shellOptions.register(new Option("x", "execute", "boolean", false, "execute"));
 var compile = shellOptions.register(new Option("c", "compile", "boolean", false, "compile"));
-var compileAll = shellOptions.register(new Option("a", "compileAll", "boolean", false, "compile"));
+var compileAll = shellOptions.register(new Option("ca", "compileAll", "boolean", false, "compile"));
+var compileBuiltins = shellOptions.register(new Option("cb", "compileBuiltins", "boolean", false, "compile"));
 var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "boolean", false, "always interpret"));
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
@@ -201,7 +202,7 @@ function grabAbc(buffer) {
   return new AbcFile(localBuffer);
 }
 
-if (execute.value || compile.value || compileAll.value) {
+if (execute.value || compile.value || compileAll.value || compileBuiltins.value) {
   if (false) {
     timeIt(function () {
       runVM();
@@ -266,6 +267,15 @@ function runAbcs(securityDomain, abcArrays) {
       }
     }
   }
+  if (compileBuiltins.value) {
+    securityDomain.systemDomain.abcs.forEach(function (abc) {
+      writer.writeLn("// " + abc.name);
+      writer.enter("CC[" + abc.hash + "] = ");
+      securityDomain.systemDomain.compileAbc(abc, writer);
+      writer.leave(";");
+    });
+  }
+
   compileQueue.forEach(function (abc) {
     writer.writeLn("// " + abc.name);
     writer.enter("CC[" + abc.hash + "] = ");
