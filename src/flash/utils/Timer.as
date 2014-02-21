@@ -21,6 +21,9 @@ import flash.events.TimerEvent;
 [native(cls='TimerClass')]
 public class Timer extends EventDispatcher {
   public function Timer(delay:Number, repeatCount:int = 0) {
+    if (delay < 0 || !isFinite(delay)) {
+      Error.throwError(RangeError, 2066);
+    }
     _delay = delay;
     _repeatCount = repeatCount;
   }
@@ -32,6 +35,9 @@ public class Timer extends EventDispatcher {
     return _delay;
   }
   public function set delay(value:Number):void {
+    if (value < 0 || !isFinite(value)) {
+      Error.throwError(RangeError, 2066);
+    }
     _delay = value;
 
     if (running) {
