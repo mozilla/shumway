@@ -121,6 +121,6 @@ load($SHUMWAY_ROOT + "src/flash/text");
 load($SHUMWAY_ROOT + "src/flash/ui");
 load($SHUMWAY_ROOT + "src/flash/utils");
 load($SHUMWAY_ROOT + "src/flash/accessibility");
-load($SHUMWAY_ROOT + "src/flash/avm1lib");
+load($SHUMWAY_ROOT + "src/avm1lib");
 
 load($SHUMWAY_ROOT + "src/flash/stubs.js");

@@ -54,7 +54,7 @@ module.exports = function(grunt) {
         cwd: 'utils/playerglobal-builder'
       },
       build_avm1lib: {
-        cmd: 'node compileabc -m ../src/avm2/generated/avm1lib/avm1lib.manifest',
+        cmd: 'node compileabc -m ../src/avm1lib/avm1lib.manifest',
         cwd: 'utils/'
       },
       lint_success: {
@@ -71,8 +71,8 @@ module.exports = function(grunt) {
         tasks: ['build-extension']
       },
       avm1lib: {
-        files: ['src/avm2/generated/avm1lib/*.as',
-                'src/avm2/generated/avm1lib/avm1lib.manifest'],
+        files: ['src/avm1lib/*.as',
+                'src/avm1lib/avm1lib.manifest'],
         tasks: ['exec:build_avm1lib']
       },
       playerglobal: {
@@ -111,4 +111,7 @@ module.exports = function(grunt) {
   grunt.registerTask('build-web', ['exec:build_bundle', 'exec:build_extension', 'exec:build_web']);
   grunt.registerTask('build-extension', ['exec:build_bundle', 'exec:build_extension']);
   grunt.registerTask('build-playerglobal', ['exec:build_playerglobal']);
+
+  grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
+  grunt.registerTask('avm1lib', ['exec:build_avm1lib']);
 };
