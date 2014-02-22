@@ -39,13 +39,27 @@ function defineFont(tag, dictionary) {
   // Ignoring "['glyf'] is better written in dot notation"
   /*jshint -W069 */
 
+  var fontName = tag.name || uniqueName;
+
+  var font = {
+    type: 'font',
+    id: tag.id,
+    name: fontName,
+    bold: tag.bold === 1,
+    italic: tag.italic === 1
+  };
+
+  var glyphs = tag.glyphs;
+  var glyphCount = glyphs.length;
+
+  if (!glyphCount) {
+    return font;
+  }
+
   var tables = { };
   var codes = [];
   var glyphIndex = { };
   var ranges = [];
-
-  var glyphs = tag.glyphs;
-  var glyphCount = glyphs.length;
 
   if (tag.codes) {
     codes = codes.concat(tag.codes);
@@ -396,7 +410,6 @@ function defineFont(tag, dictionary) {
   ;
 
   var uniqueName = 'swf-font-' + tag.id;
-  var fontName = tag.name || uniqueName;
   var psName = fontName.replace(/ /g, '');
   var strings = [
     tag.copyright || 'Original licence', // 0. Copyright
@@ -487,14 +500,9 @@ function defineFont(tag, dictionary) {
     data[i] = otf.charCodeAt(i) & 0xff;
   }
 
-  return {
-    type: 'font',
-    id: tag.id,
-    name: fontName,
-    codes: codes,
-    metrics: metrics,
-    bold: tag.bold === 1,
-    italic: tag.italic === 1,
-    data: data
-  };
+  font.codes = codes;
+  font.metrics = metrics;
+  font.data = data;
+
+  return font;
 }

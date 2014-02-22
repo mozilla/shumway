@@ -103,6 +103,10 @@ var StageDefinition = (function () {
       case 'image':
         var type = Renderer.RENDERABLE_TYPE_BITMAP;
       case 'font':
+        if (!symbol.data) {
+          break;
+        }
+
         message.writeIntUnsafe(type || Renderer.RENDERABLE_TYPE_FONT);
 
         var len = symbol.data.length;
@@ -132,7 +136,51 @@ var StageDefinition = (function () {
         break;
       case 'text':
         message.writeIntUnsafe(Renderer.RENDERABLE_TYPE_TEXT);
-        // TODO
+
+        var tag = symbol.tag;
+
+        message.ensureAdditionalCapacity(48);
+
+        var bbox = tag.bbox;
+        message.writeIntUnsafe(bbox.xMin);
+        message.writeIntUnsafe(bbox.xMax);
+        message.writeIntUnsafe(bbox.yMin);
+        message.writeIntUnsafe(bbox.yMax);
+
+        message.writeIntUnsafe(tag.hasFont ? tag.fontId : 0);
+        message.writeIntUnsafe(symbol.bold);
+        message.writeIntUnsafe(symbol.italic);
+        message.writeIntUnsafe(tag.fontHeight / 20);
+
+        var color = 0;
+        if (tag.hasColor) {
+          var colorObj = tag.color;
+          color = (colorObj.red << 24) |
+                  (colorObj.green << 16) |
+                  (colorObj.blue << 8) |
+                  colorObj.alpha;
+        }
+        message.writeIntUnsafe(color);
+
+        //message.writeIntUnsafe("BACKGROUND_COLOR");
+        //message.writeIntUnsafe("BORDER_COLOR");
+        message.writeIntUnsafe(tag.autoSize);
+        message.writeIntUnsafe(tag.align);
+        message.writeIntUnsafe(tag.wordWrap);
+        message.writeIntUnsafe(tag.multiline);
+        message.writeIntUnsafe(tag.leading / 20);
+        //message.writeIntUnsafe("LETTERSPACING");
+        //message.writeIntUnsafe("KERNING");
+        message.writeIntUnsafe(tag.html);
+        //message.writeIntUnsafe("CONDENSE_WHITE");
+
+        var text = tag.initialText;
+        var n = text.length;
+        message.ensureAdditionalCapacity((1 + n) * 4);
+        message.writeIntUnsafe(n);
+        for (var i = 0; i < n; i++) {
+          message.writeIntUnsafe(text.charCodeAt(i));
+        }
       }
 
       message.subI32View()[p] = message.getIndex(1) - (p + 4);

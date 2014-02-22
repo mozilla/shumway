@@ -29,10 +29,6 @@ var TextFieldDefinition = (function () {
         letterspacing: 0, kerning: 0, color: 0, leading: 0
       };
 
-      // this._lines
-      // this._textWidth
-      // this._textHeight
-
       this._type = 'dynamic';
       this._embedFonts = false;
       this._selectable = true;
@@ -40,7 +36,6 @@ var TextFieldDefinition = (function () {
       this._scrollV = 1;
       this._maxScrollV = 1;
       this._bottomScrollV = 1;
-      this._drawingOffsetH = 0;
       this._background = false;
       this._border = false;
       this._backgroundColor = 0xffffff;
@@ -53,7 +48,6 @@ var TextFieldDefinition = (function () {
       if (!s) {
         this._currentTransform.tx -= 40;
         this._currentTransform.ty -= 40;
-        FontDefinition.resolveFont(initialFormat, false);
         this.text = '';
         return;
       }
@@ -132,14 +126,13 @@ var TextFieldDefinition = (function () {
       }
 
       ////////////// SYNC WITH MAIN THREAD //////////////
-      // UPDATE this._bbox
       // UPDATE this._lines
       // UPDATE this._textWidth
       // UPDATE this._textHeight
+      // GET diffX
 
       var bounds = this._bbox;
-      //var combinedAlign = this._content.calculateMetrics(bounds,
-      //                                                   this._embedFonts);
+
       this._scrollV = 1;
       this._maxScrollV = 1;
       this._bottomScrollV = 1;
@@ -158,43 +151,15 @@ var TextFieldDefinition = (function () {
           }
         }
       } else {
-        var width = Math.max(bounds.xMax / 20 - 4, 1);
-        var targetWidth = this._textWidth;
-        var align = combinedAlign;
-        var diffX = 0;
-        if (align !== 'mixed') {
-          switch (autoSize) {
-            case 'left':
-              break;
-            case 'center':
-              diffX = (width - targetWidth) >> 1;
-              break;
-            case 'right':
-              diffX = width - targetWidth;
-          }
-          // Note: the drawing offset is not in Twips!
-          if (align === 'left') {
-            this._drawingOffsetH = 0;
-          } else {
-            var offset;
-            switch (autoSize) {
-              case 'left': offset = width - targetWidth; break;
-              case 'center': offset = diffX << 1; break;
-              case 'right': offset = diffX; break;
-            }
-            if (align === 'center') {
-              offset >>= 1;
-            }
-            this._drawingOffsetH = offset;
-          }
+        if (diffX) {
           this._invalidateTransform();
           this._currentTransform.tx += diffX*20|0;
           bounds.xMax = (targetWidth*20|0) + 80;
         }
         bounds.yMax = (this._textHeight*20|0) + 80;
-        console.log(bounds.yMax);
         this._invalidateBounds();
       }
+
       this._dimensionsValid = true;
     },
 
@@ -286,20 +251,20 @@ var TextFieldDefinition = (function () {
       if (lineIndex < 0 || lineIndex >= this._lines.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
-      var line = this._lines[lineIndex];
-      var format = line.largestFormat;
-      var metrics = format.font._metrics;
-      var size = format.size;
-      // Rounding for metrics seems to be screwy. A descent of 3.5 gets
-      // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
-      // For now, round up for things slightly above .5.
-      var ascent = metrics.ascent * size + 0.49999 | 0;
-      var descent = metrics.descent * size + 0.49999 | 0;
-      //var leading = metrics.leading * size + 0.49999 + line.leading | 0;
-      // TODO: check if metrics values can be floats for embedded fonts
-      return new flash.text.TextLineMetrics(line.x + 2, line.width,
-                                            line.height,
-                                            ascent, descent, leading);
+      //var line = this._lines[lineIndex];
+      //var format = line.largestFormat;
+      //var metrics = format.font._metrics;
+      //var size = format.size;
+      //// Rounding for metrics seems to be screwy. A descent of 3.5 gets
+      //// rounded to 3, but an ascent of 12.8338 gets rounded to 13.
+      //// For now, round up for things slightly above .5.
+      //var ascent = metrics.ascent * size + 0.49999 | 0;
+      //var descent = metrics.descent * size + 0.49999 | 0;
+      ////var leading = metrics.leading * size + 0.49999 + line.leading | 0;
+      //// TODO: check if metrics values can be floats for embedded fonts
+      //return new flash.text.TextLineMetrics(line.x + 2, line.width,
+      //                                      line.height,
+      //                                      ascent, descent, leading);
     },
     getCharBoundaries: function getCharBoundaries(index) {
       somewhatImplemented("TextField.getCharBoundaries");
