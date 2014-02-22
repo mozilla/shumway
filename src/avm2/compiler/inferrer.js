@@ -55,7 +55,7 @@ var Type = (function () {
     if (traitsTypeCache) {
       return traitsTypeCache[x.id] || (traitsTypeCache[x.id] = new TraitsType(x, domain));
     }
-    if (x instanceof Activation) {
+    if (x instanceof ActivationInfo) {
       return new TraitsType(x.methodInfo);
     } else if (x instanceof Global) {
       return new TraitsType(x.scriptInfo);
@@ -255,7 +255,7 @@ var TraitsType = (function () {
       return "II:" + x.name.name;
     } else if (x instanceof MethodInfo) {
       return "MI";
-    } else if (x instanceof Activation) {
+    } else if (x instanceof ActivationInfo) {
       return "AC";
     }
     release || assert(false);
@@ -1180,8 +1180,8 @@ var Verifier = (function() {
             push(Type.Array);
             break;
           case 0x57: // OP_newactivation
-            // push(Type.fromReference(new Activation(this.methodInfo)));
-            push(Type.from(new Activation(this.methodInfo)));
+            // push(Type.fromReference(new ActivationInfo(this.methodInfo)));
+            push(Type.from(new ActivationInfo(this.methodInfo)));
             break;
           case 0x58: // OP_newclass
             // The newclass bytecode is not supported because it needs
@@ -1500,6 +1500,9 @@ var Verifier = (function() {
       }
       var savedScope = scopeObjects.map(function (object) {
         assert (object);
+        if (object instanceof MethodInfo) {
+          return Type.from(new ActivationInfo(object));
+        }
         return Type.from(object, domain);
       });
       new Verification(methodInfo, methodInfo.abc.applicationDomain, savedScope).verify();

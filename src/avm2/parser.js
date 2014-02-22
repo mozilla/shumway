@@ -1288,6 +1288,7 @@ var MethodInfo = (function () {
     var info = methods[index];
     info.index = index;
     info.hasBody = true;
+    info.hash = abc.hash + 0x030000 + index;
     release || assert(!info.isNative());
     info.maxStack = stream.readU30();
     info.localCount = stream.readU30();

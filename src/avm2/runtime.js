@@ -182,7 +182,6 @@ var LazyInitializer = (function () {
       };
     } else if (this.target instanceof ClassInfo) {
       this.name = "$" + variableLengthEncodeInt32(this.target.hash);
-      // this.name += "_" + target.instanceInfo.name.name + "_";
       initialize = function () {
         if (target.classObject) {
           return target.classObject;
@@ -809,7 +808,7 @@ function checkFilter(value) {
   return value;
 }
 
-function Activation(methodInfo) {
+function ActivationInfo(methodInfo) {
   this.methodInfo = methodInfo;
 }
 
@@ -1251,6 +1250,7 @@ function createInterpretedFunction(methodInfo, scope, hasDynamicScope) {
 
 var totalFunctionCount = 0;
 var compiledFunctionCount = 0;
+var compilationCount = 0;
 
 function debugName(value) {
   if (isFunction(value)) {
@@ -1299,6 +1299,7 @@ function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, 
   var mi = methodInfo;
   var cached = searchCodeCache(mi);
   if (!cached) {
+    console.warn("Compiling: " + compilationCount++ + ": " + methodInfo + " " + methodInfo.isInstanceInitializer + " " + methodInfo.isClassInitializer);
     var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
     var parameters = result.parameters;
     var body = result.body;
@@ -1633,7 +1634,7 @@ function ensureFunctionIsInitialized(methodInfo) {
     mi.analysis = new Analysis(mi);
 
     if (mi.needsActivation()) {
-      mi.activationPrototype = new Activation(mi);
+      mi.activationPrototype = new ActivationInfo(mi);
       new ActivationBindings(mi).applyTo(mi.abc.applicationDomain, mi.activationPrototype);
     }
 
