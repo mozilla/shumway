@@ -91,8 +91,9 @@ module.exports = function(grunt) {
 
   grunt.registerTask('update-flash-refs', function  () {
     var updateFlashRefs = require('./utils/update-flash-refs.js');
-    updateFlashRefs('examples/inspector/inspector.html', 'src/flash');
-    updateFlashRefs('test/harness/slave.html', 'src/flash');
+    updateFlashRefs('examples/inspector/inspector.html', 'src');
+    updateFlashRefs('test/harness/slave.html', 'src');
+    updateFlashRefs('examples/xlsimport/index.html', 'src');
   });
 
   grunt.registerTask('server', function () {
