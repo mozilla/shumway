@@ -14,5 +14,5 @@
     "AS2Globals.as",
     "AS2MovieClipLoader.as"
   ],
-  "output": "avm1lib.abc"
+  "output": "../avm2/generated/avm1lib/avm1lib.abc"
 }
