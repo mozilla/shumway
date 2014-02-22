@@ -29,38 +29,12 @@ function objectConstantName2(object) {
     return object[OBJECT_NAME];
   }
   if (object instanceof LazyInitializer) {
-    // console.warn("LazyInitializer: " + object.getName() + " : " + object.target);
     return object.getName();
-  }
-  var name;
-  if (object instanceof Scope) {
-    var scope = object;
-    if (scope.object instanceof ScriptInfo) {
-      name = LazyInitializer.create(scope.object).getName();
-    } else if (scope.object instanceof ClassInfo) {
-      name = LazyInitializer.create(scope.object).getName();
-    }
-    name = "$SCOPE_" + name;
-    return name;
+  } else if (object instanceof MethodInfo) {
+    return "$" + variableLengthEncodeInt32(object.abc.hash) + ".methods[" + object.index + "]";
   }
   hasUsedConstants = true;
   return "X";
-
-  id = objectIDs++;
-  if (object instanceof Global) {
-    name = "$G" + id;
-  } else if (object instanceof Multiname) {
-    name = "$M" + id;
-  } else if (isClass(object)) {
-    name = "$C" + id;
-  } else {
-    name = "$O" + id;
-    print("XXX");
-  }
-  console.warn("Object: " + object + " " + name);
-  Object.defineProperty(object, OBJECT_NAME, {value: name, writable: false, enumerable: false});
-  jsGlobal[name] = object;
-  return name;
 }
 
 function compileAbc(abc, writer) {
@@ -70,14 +44,6 @@ function compileAbc(abc, writer) {
   for (var i = 0; i < abc.scripts.length; i++) {
     compileScript(abc.scripts[i], writer);
   }
-//  abc.methods.forEach(function (methodInfo) {
-//    if (!methodInfo.isAOTCompiled && methodInfo.hasBody) {
-//      // print("Closure: " + methodInfo);
-//    }
-////    print(">> LEFTOVER: " + methodInfo);
-//    compileClosure(methodInfo, writer, new Scope(null, null));
-////    print("<< LEFTOVER: " + methodInfo);
-//  });
   writer.leave("}");
   writer.leave("}");
   //console.timeEnd("Compile ABC: " + abc.name);
@@ -87,6 +53,8 @@ function compileScript(script, writer) {
   objectConstantName = objectConstantName2;
   var globalScope = new Scope(null, script);
   var domain = script.abc.applicationDomain;
+  var closures = [];
+  compileMethod(script.init, writer, globalScope, closures);
   script.traits.forEach(function (trait) {
     if (trait.isClass()) {
       var inheritance = [];
@@ -103,86 +71,75 @@ function compileScript(script, writer) {
       inheritance.forEach(function (classInfo) {
         classScope = new Scope(classScope, classInfo);
       });
-      compileClass(trait.classInfo, writer, classScope);
+      compileClass(trait.classInfo, writer, classScope, closures);
     } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-      compileTrait(trait, writer, globalScope);
+      compileTrait(trait, writer, globalScope, closures);
     }
+    closures.forEach(function(closure) {
+      compileMethod(closure.methodInfo, writer, closure.scope, null, true);
+    });
   });
 }
 
-function compileClosure(methodInfo, writer, scope) {
-  if (shouldCompile(methodInfo)) {
+function compileMethod(methodInfo, writer, scope, closures, hasDynamicScope) {
+  if (canCompile(methodInfo)) {
     ensureFunctionIsInitialized(methodInfo);
     try {
       hasUsedConstants = false;
-      var method = createCompiledFunction(methodInfo, scope, false, false, false);
-      methodInfo.isAOTCompiled = true;
+      var method = createCompiledFunction(methodInfo, scope, hasDynamicScope, false, false);
       writer.enter(methodInfo.index + ": ");
       if (!hasUsedConstants) {
         writer.writeLns(method.toSource());
       } else {
+        writer.writeLns(method.toSource());
+        quit();
         writer.writeLn("undefined");
       }
       writer.leave(",");
+      if (closures) {
+        scanMethod(methodInfo, writer, scope, closures);
+      }
     } catch (x) {
 
     }
   }
 }
-
-function compileTrait(trait, writer, scope) {
-  var traitName = Multiname.getQualifiedName(trait.name);
-  if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
-    var methodInfo = trait.methodInfo;
-    if (shouldCompile(methodInfo)) {
-      ensureFunctionIsInitialized(methodInfo);
-      try {
-        hasUsedConstants = false;
-        var method = createCompiledFunction(methodInfo, scope, false, false, false);
-        methodInfo.isAOTCompiled = true;
-        writer.enter(methodInfo.index + ": ");
-        if (!hasUsedConstants) {
-          writer.writeLns(method.toSource());
-        } else {
-          writer.writeLn("undefined");
-        }
-        writer.leave(",");
-      } catch (x) {
-
-      }
+function scanMethod(methodInfo, writer, scope, innerMethods) {
+  // writer.enter("Scanning: " + methodInfo + " {");
+  var bytecodes = methodInfo.analysis.bytecodes;
+  var methods = methodInfo.abc.methods;
+  for (var i = 0; i < bytecodes.length; i++) {
+    var bc = bytecodes[i];
+    // writer.writeLn(bc);
+    if (bc.op === OP_newfunction) {
+      var innerMethodInfo = methods[bc.index];
+      ensureFunctionIsInitialized(innerMethodInfo);
+      var innerScope = new Scope(scope, methodInfo);
+      innerMethods.push({
+        scope: innerScope,
+        methodInfo: innerMethodInfo
+      });
+      scanMethod(innerMethodInfo, writer, innerScope, innerMethods);
     }
+  }
+  // writer.leave("}");
+}
+
+function compileTrait(trait, writer, scope, closures) {
+  if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
+    compileMethod(trait.methodInfo, writer, scope, closures);
   }
 }
 
-function compileClass(classInfo, writer, scope) {
-  function compileTraits(traits, scope) {
-    traits.forEach(function (trait) {
-      compileTrait(trait, writer, scope);
-    });
-  }
+function compileTraits(traits, writer, scope, closures) {
+  traits.forEach(function (trait) {
+    compileTrait(trait, writer, scope, closures);
+  });
+}
 
-  function compileInitializer(methodInfo, scope) {
-    if (canCompile(methodInfo)) {
-      ensureFunctionIsInitialized(methodInfo);
-      try {
-        hasUsedConstants = false;
-        var method = createCompiledFunction(methodInfo, scope, false, false, false);
-        methodInfo.isAOTCompiled = true;
-        writer.enter(methodInfo.index + ": ");
-        if (!hasUsedConstants) {
-          writer.writeLns(method.toSource());
-        } else {
-          writer.writeLn("undefined");
-        }
-        writer.leave(", ");
-      } catch (x) {
-
-      }
-    }
-  }
-
-  // compileInitializer(classInfo.init, scope);
-  compileTraits(classInfo.traits, scope);
-  // compileInitializer(classInfo.instanceInfo.init, scope);
-  compileTraits(classInfo.instanceInfo.traits, scope);
+function compileClass(classInfo, writer, scope, closures) {
+  compileMethod(classInfo.init, writer, scope, closures);
+  compileTraits(classInfo.traits, writer, scope, closures);
+  compileMethod(classInfo.instanceInfo.init, writer, scope, closures);
+  compileTraits(classInfo.instanceInfo.traits, writer, scope, closures);
 }
