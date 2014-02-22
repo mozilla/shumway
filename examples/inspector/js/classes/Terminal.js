@@ -227,7 +227,7 @@ var Terminal = (function () {
 
     var charSize = 5;
     var lineNumberMargin = this.textMarginLeft;
-    var lineTimeMargin = lineNumberMargin + (this.showLineNumbers ? String(this.buffer.length).length * charSize : 0);
+    var lineTimeMargin = lineNumberMargin + (this.showLineNumbers ? (String(this.buffer.length).length + 2) * charSize: 0);
     var lineRepeatMargin = lineTimeMargin + (this.showLineTime ? charSize * 8 : 2 * charSize);
     var lineMargin = lineRepeatMargin + charSize * 5;
 
