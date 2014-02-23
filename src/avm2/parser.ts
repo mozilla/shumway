@@ -498,7 +498,7 @@ module Shumway.AVM2.ABC {
   }
 
   export class InstanceInfo extends Info {
-    id: number;
+    runtimeID: number;
     name: Multiname;
     superName: Multiname;
     protectedNs: Multiname;
@@ -510,7 +510,7 @@ module Shumway.AVM2.ABC {
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
       super(abc, index);
-      this.id = InstanceInfo.nextID ++;
+      this.runtimeID = InstanceInfo.nextID ++;
       var constantPool = abc.constantPool;
       var methods = abc.methods;
 
@@ -549,14 +549,14 @@ module Shumway.AVM2.ABC {
 
   export class ClassInfo extends Info {
     metadata: any;
-    id: number;
+    runtimeID: number;
     init: MethodInfo;
     instanceInfo: InstanceInfo;
     defaultValue: any;
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
       super(abc, index);
-      this.id = ClassInfo.nextID ++;
+      this.runtimeID = ClassInfo.nextID ++;
       this.abc = abc;
       this.hash = abc.hash + 0x010000 + index;
       this.index = index;
@@ -588,7 +588,7 @@ module Shumway.AVM2.ABC {
   }
 
   export class ScriptInfo extends Info {
-    id: number;
+    runtimeID: number;
     hash: number;
     init: MethodInfo;
     name: string;
@@ -596,7 +596,7 @@ module Shumway.AVM2.ABC {
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
       super(abc, index);
-      this.id = ClassInfo.nextID ++;
+      this.runtimeID = ClassInfo.nextID ++;
       this.hash = abc.hash + 0x020000 + index;
       this.name = abc.name + "$script" + index;
       this.init = abc.methods[stream.readU30()];
@@ -1030,7 +1030,7 @@ module Shumway.AVM2.ABC {
     public namespaces: Namespace[];
     public name: string;
     public flags: number;
-    public id: number;
+    public runtimeID: number;
     public typeParameter: Multiname;
     private _qualifiedNameCache: Map<Multiname>;
 
@@ -1039,7 +1039,7 @@ module Shumway.AVM2.ABC {
         release || assert (name === null || isString(name), "Multiname name must be a string. " + name);
         // assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
       }
-      this.id = Multiname._nextID ++;
+      this.runtimeID = Multiname._nextID ++;
       this.namespaces = namespaces;
       this.name = name;
       this.flags = flags;
@@ -1607,7 +1607,7 @@ module Shumway.AVM2.ABC {
       for (var i = 1; i < n; ++i) {
         var count = stream.readU30();
         var set = [];
-        set.id = ConstantPool._nextNamespaceSetID ++;
+        set.runtimeID = ConstantPool._nextNamespaceSetID ++;
         for (var j = 0; j < count; ++j) {
           set.push(namespaces[stream.readU30()]);
         }

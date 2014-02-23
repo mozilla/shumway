@@ -37,7 +37,6 @@ load(homePath + "src/avm2/settings.js");
 load(homePath + "src/avm2/utilities.js");
 load(homePath + "src/avm2/avm2Util.js");
 
-
 var IndentingWriter = Shumway.IndentingWriter;
 
 if (false) {
@@ -79,7 +78,6 @@ var Trait = Shumway.AVM2.ABC.Trait;
 var MethodInfo = Shumway.AVM2.ABC.MethodInfo;
 var Multiname = Shumway.AVM2.ABC.Multiname;
 var ASNamespace = Shumway.AVM2.ABC.Namespace;
-var Namespace = Shumway.AVM2.ABC.Namespace;
 
 load(homePath + "src/avm2/disassembler.js");
 load(homePath + "src/avm2/analyze.js");

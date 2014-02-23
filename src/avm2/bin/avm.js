@@ -92,7 +92,7 @@ var ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
 var Trait = Shumway.AVM2.ABC.Trait;
 var MethodInfo = Shumway.AVM2.ABC.MethodInfo;
 var Multiname = Shumway.AVM2.ABC.Multiname;
-var Namespace = Shumway.AVM2.ABC.Namespace;
+var ASNamespace = Shumway.AVM2.ABC.Namespace;
 
 load(homePath + "src/avm2/disassembler.js");
 

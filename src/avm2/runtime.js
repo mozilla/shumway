@@ -257,9 +257,9 @@ var LazyInitializer = (function () {
  */
 
 function getNamespaceResolutionMap(namespaces) {
-  var map = this.resolutionMap[namespaces.id];
+  var map = this.resolutionMap[namespaces.runtimeID];
   if (map) return map;
-  map = this.resolutionMap[namespaces.id] = createEmptyObject();
+  map = this.resolutionMap[namespaces.runtimeID] = createEmptyObject();
   var bindings = this.bindings;
 
   for (var key in bindings.map) {
@@ -930,7 +930,7 @@ var Scope = (function () {
     if (!namespaces) {
       return name;
     } else if (namespaces.length > 1) {
-      return namespaces.id + "$" + name;
+      return namespaces.runtimeID + "$" + name;
     } else {
       return namespaces[0].qualifiedName + "$" + name;
     }

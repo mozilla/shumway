@@ -202,7 +202,7 @@ var ApplicationDomain = (function () {
           return ci;
         }
       } else {
-        var ci = this.classInfoCache[mn.id];
+        var ci = this.classInfoCache[mn.runtimeID];
         if (ci) {
           return ci;
         }
@@ -268,7 +268,7 @@ var ApplicationDomain = (function () {
      * definition of conflicting name will never be resolved.
      */
     findDefiningScript: function findDefiningScript(mn, execute) {
-      var resolved = this.scriptCache[mn.id];
+      var resolved = this.scriptCache[mn.runtimeID];
       if (resolved && (resolved.script.executed || !execute)) {
         return resolved;
       }
@@ -296,7 +296,7 @@ var ApplicationDomain = (function () {
                 if (execute) {
                   ensureScriptIsExecuted(script, trait.name);
                 }
-                return (this.scriptCache[mn.id] = { script: script, trait: trait });
+                return (this.scriptCache[mn.runtimeID] = { script: script, trait: trait });
               }
             }
           } else {
@@ -389,8 +389,8 @@ var SecurityDomain = (function () {
   securityDomain.prototype.initializeShell = function (sysMode, appMode) {
     var compartment = this.compartment;
     compartment.avm2 = new compartment.AVM2(sysMode, appMode);
-    compartment.avm2.systemDomain.loadAbc(compartment.grabAbc(homePath + "src/avm2/generated/builtin/builtin.abc"));
-    compartment.avm2.systemDomain.loadAbc(compartment.grabAbc(homePath + "src/avm2/generated/shell/shell.abc"));
+    compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/builtin/builtin.abc"));
+    compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/shell/shell.abc"));
     // compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/avmplus/avmplus.abc"));
     this.systemDomain = compartment.avm2.systemDomain;
     this.applicationDomain = compartment.avm2.applicationDomain;

@@ -37,7 +37,7 @@ interface Function {
 }
 
 interface Array {
-  id: number;
+  runtimeID: number;
 }
 
 module Shumway {
