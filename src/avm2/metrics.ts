@@ -37,7 +37,7 @@ module Shumway.Metrics {
       this._total = 0;
       this._count = 0;
     }
-    public static time(name, fn) {
+    public static time(name, fn: Function) {
       Timer.start(name);
       fn();
       Timer.stop();

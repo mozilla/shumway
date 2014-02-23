@@ -67,6 +67,20 @@ load(homePath + "src/avm2/constants.js");
 load(homePath + "src/avm2/errors.js");
 load(homePath + "src/avm2/opcodes.js");
 load(homePath + "src/avm2/parser.js");
+
+var AbcFile = Shumway.AVM2.ABC.AbcFile;
+var AbcStream = Shumway.AVM2.ABC.AbcStream;
+var ConstantPool = Shumway.AVM2.ABC.ConstantPool;
+var ClassInfo = Shumway.AVM2.ABC.ClassInfo;
+var MetaDataInfo = Shumway.AVM2.ABC.MetaDataInfo;
+var InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
+var ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+var Trait = Shumway.AVM2.ABC.Trait;
+var MethodInfo = Shumway.AVM2.ABC.MethodInfo;
+var Multiname = Shumway.AVM2.ABC.Multiname;
+var ASNamespace = Shumway.AVM2.ABC.Namespace;
+var Namespace = Shumway.AVM2.ABC.Namespace;
+
 load(homePath + "src/avm2/disassembler.js");
 load(homePath + "src/avm2/analyze.js");
 

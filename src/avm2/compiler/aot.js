@@ -91,8 +91,8 @@ function compileMethod(methodInfo, writer, scope, closures, hasDynamicScope) {
       if (!hasUsedConstants) {
         writer.writeLns(method.toSource());
       } else {
-        writer.writeLns(method.toSource());
-        quit();
+        // writer.writeLns(method.toSource());
+        // quit();
         writer.writeLn("undefined");
       }
       writer.leave(",");

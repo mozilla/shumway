@@ -767,7 +767,7 @@ function renderStage(stage, ctx, events) {
 
   var firstRun = true;
   var frameCount = 0;
-  var frameFPSAverage = new metrics.Average(120);
+  var frameFPSAverage = new Shumway.Metrics.Average(120);
 
   var frameRequested = true;
 

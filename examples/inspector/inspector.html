@@ -172,14 +172,16 @@ limitations under the License.
     <script> console.time("Load AVM2 Dependencies"); </script>
 
     <script src="../../src/avm2/settings.js"></script>
+    <script src="../../src/avm2/utilities.js"></script>
     <script src="../../src/avm2/avm2Util.js"></script>
     <script src="../../src/avm2/metrics.js"></script>
 
     <script>
-      var Counter = new metrics.Counter(true);
-      var FrameCounter = new metrics.Counter(true);
-      var CanvasCounter = new metrics.Counter(true);
-      var Timer = metrics.Timer;
+      var IndentingWriter = Shumway.IndentingWriter;
+      var Counter = new Shumway.Metrics.Counter(true);
+      var FrameCounter = new Shumway.Metrics.Counter(true);
+      var CanvasCounter = new Shumway.Metrics.Counter(true);
+      var Timer = Shumway.Metrics.Timer;
       var systemOptions = new OptionSet("System Options");
       var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
       var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));

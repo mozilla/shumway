@@ -635,10 +635,10 @@ function traceStatistics(writer, abc) {
    * appear in this ABC file are assumed to be in the library.
    */
 
-  var libraryClassCounter = new metrics.Counter(true);
-  var librarySuperClassCounter = new metrics.Counter(true);
-  var libraryMethodCounter = new metrics.Counter(true);
-  var libraryProperties = new metrics.Counter(true);
+  var libraryClassCounter = new Shumway.Metrics.Counter(true);
+  var librarySuperClassCounter = new Shumway.Metrics.Counter(true);
+  var libraryMethodCounter = new Shumway.Metrics.Counter(true);
+  var libraryProperties = new Shumway.Metrics.Counter(true);
 
   var definedClasses = {};
   var definedMethods = {};
@@ -674,7 +674,7 @@ function traceStatistics(writer, abc) {
     });
   });
 
-  var opCounter = new metrics.Counter(true);
+  var opCounter = new Shumway.Metrics.Counter(true);
 
   abc.methods.forEach(function (m) {
     if (!m.code) {

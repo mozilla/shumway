@@ -118,12 +118,12 @@ setTimeout(function displayInfo() {
   copyProperties(lastCounts, Counter.counts);
 
   output = "";
-  for (var name in Timer.flat.timers) {
-    var timer = Timer.flat.timers[name];
-    var str = timer.name + ": " + timer.total.toFixed(2) + " ms" +
-      ", count: " + timer.count +
-      ", avg: " + (timer.total / timer.count).toFixed(2) + " ms" +
-      ", last: " + timer.last.toFixed(2) + " ms";
+  for (var name in Timer._flat._timers) {
+    var timer = Timer._flat._timers[name];
+    var str = timer._name + ": " + timer._total.toFixed(2) + " ms" +
+      ", count: " + timer._count +
+      ", avg: " + (timer._total / timer._count).toFixed(2) + " ms" +
+      ", last: " + timer._last.toFixed(2) + " ms";
     output += str + "<br>";
   }
   document.getElementById("timerInfo").innerHTML = output;

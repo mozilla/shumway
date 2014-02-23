@@ -15,3 +15,12 @@
  */
 ///<reference path='utilities.ts' />
 ///<reference path='metrics.ts' />
+///<reference path='parser.ts' />
+
+declare function log(s: any);
+declare function print(s: string);
+declare var debug: boolean;
+declare var release: boolean;
+declare function assert(condition: any, ...args);
+declare function warning(message: string);
+declare function unexpected(message?: string);

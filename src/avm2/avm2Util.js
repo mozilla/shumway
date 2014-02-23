@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+var log = print;
+
 var error = Shumway.Debug.error;
 var assert = Shumway.Debug.assert;
 var assertNotImplemented = Shumway.Debug.assertNotImplemented;
@@ -65,13 +67,10 @@ var defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerablePro
 var defineNonEnumerableForwardingProperty = Shumway.ObjectUtilities.defineNonEnumerableForwardingProperty;
 var defineNewNonEnumerableProperty = Shumway.ObjectUtilities.defineNewNonEnumerableProperty;
 
-function isNullOrUndefined(value) {
-  return value == undefined;
-}
+var isNumeric = Shumway.isNumeric;
+var isNullOrUndefined = Shumway.isNullOrUndefined;
+var isPowerOfTwo = Shumway.IntegerUtilities.isPowerOfTwo;
 
-function isPowerOfTwo(x) {
-  return x && ((x & (x - 1)) === 0);
-}
 
 function time(fn, count) {
   var start = performance.now();
@@ -92,17 +91,8 @@ function clamp(x, min, max) {
   return x;
 }
 
-/**
- * Workaround for max stack size limit.
- */
-function fromCharCodeArray(buffer) {
-  var str = "", SLICE = 1024 * 16;
-  for (var i = 0; i < buffer.length; i += SLICE) {
-    var chunk = Math.min(buffer.length - i, SLICE);
-    str += String.fromCharCode.apply(null, buffer.subarray(i, i + chunk));
-  }
-  return str;
-}
+var fromCharCodeArray = Shumway.StringUtilities.fromCharCodeArray;
+
 
 function hasOwnProperty(object, name) {
   return Object.prototype.hasOwnProperty.call(object, name);
@@ -126,28 +116,6 @@ function toKeyValueArray(o) {
  * Checks for key names that don't need to be prefixed.
  * TODO: Rename this and clean up the code that deals with prefixed vs. non-prefixed key names.
  */
-function isNumeric(x) {
-  if (typeof x === "number") {
-    return x === (x | 0);
-  }
-  if (typeof x !== "string" || x.length === 0) {
-    return false;
-  }
-  if (x === "0") {
-    return true;
-  }
-  var c = x.charCodeAt(0);
-  if ((c >= 49) && (c <= 57)) {
-    for (var i = 1, j = x.length; i < j; i++) {
-      c = x.charCodeAt(i);
-      if (!((c >= 48) && (c <= 57))) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return false;
-}
 
 function boxValue(value) {
   if (isNullOrUndefined(value) || isObject(value)) {
@@ -985,102 +953,9 @@ function createNewCompartment() {
   return newGlobal('new-compartment');
 }
 
-function hashBytesTo32BitsAdler(data, offset, length) {
-  var a = 1;
-  var b = 0;
-  var end = offset + length;
-  for (var i = offset; i < end; ++i) {
-    a = (a + (data[i] & 0xff)) % 65521;
-    b = (b + a) % 65521;
-  }
-  return (b << 16) | a;
-}
+var hashBytesTo32BitsAdler = Shumway.HashUtilities.hashBytesTo32BitsAdler;
+var hashBytesTo32BitsMD5 = Shumway.HashUtilities.hashBytesTo32BitsMD5;
 
-var hashBytesTo32BitsMD5 = (function calculateMD5Closure() {
-  var r = new Uint8Array([
-    7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
-    5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
-    4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
-    6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21]);
-
-  var k = new Int32Array([
-    -680876936, -389564586, 606105819, -1044525330, -176418897, 1200080426,
-    -1473231341, -45705983, 1770035416, -1958414417, -42063, -1990404162,
-    1804603682, -40341101, -1502002290, 1236535329, -165796510, -1069501632,
-    643717713, -373897302, -701558691, 38016083, -660478335, -405537848,
-    568446438, -1019803690, -187363961, 1163531501, -1444681467, -51403784,
-    1735328473, -1926607734, -378558, -2022574463, 1839030562, -35309556,
-    -1530992060, 1272893353, -155497632, -1094730640, 681279174, -358537222,
-    -722521979, 76029189, -640364487, -421815835, 530742520, -995338651,
-    -198630844, 1126891415, -1416354905, -57434055, 1700485571, -1894986606,
-    -1051523, -2054922799, 1873313359, -30611744, -1560198380, 1309151649,
-    -145523070, -1120210379, 718787259, -343485551]);
-
-  function hash(data, offset, length) {
-    var h0 = 1732584193, h1 = -271733879, h2 = -1732584194, h3 = 271733878;
-    // pre-processing
-    var paddedLength = (length + 72) & ~63; // data + 9 extra bytes
-    var padded = new Uint8Array(paddedLength);
-    var i, j, n;
-    for (i = 0; i < length; ++i) {
-      padded[i] = data[offset++];
-    }
-    padded[i++] = 0x80;
-    n = paddedLength - 8;
-    while (i < n) {
-      padded[i++] = 0;
-    }
-    padded[i++] = (length << 3) & 0xFF;
-    padded[i++] = (length >> 5) & 0xFF;
-    padded[i++] = (length >> 13) & 0xFF;
-    padded[i++] = (length >> 21) & 0xFF;
-    padded[i++] = (length >>> 29) & 0xFF;
-    padded[i++] = 0;
-    padded[i++] = 0;
-    padded[i++] = 0;
-    // chunking
-    // TODO ArrayBuffer ?
-    var w = new Int32Array(16);
-    for (i = 0; i < paddedLength;) {
-      for (j = 0; j < 16; ++j, i += 4) {
-        w[j] = (padded[i] | (padded[i + 1] << 8) |
-          (padded[i + 2] << 16) | (padded[i + 3] << 24));
-      }
-      var a = h0, b = h1, c = h2, d = h3, f, g;
-      for (j = 0; j < 64; ++j) {
-        if (j < 16) {
-          f = (b & c) | ((~b) & d);
-          g = j;
-        } else if (j < 32) {
-          f = (d & b) | ((~d) & c);
-          g = (5 * j + 1) & 15;
-        } else if (j < 48) {
-          f = b ^ c ^ d;
-          g = (3 * j + 5) & 15;
-        } else {
-          f = c ^ (b | (~d));
-          g = (7 * j) & 15;
-        }
-        var tmp = d, rotateArg = (a + f + k[j] + w[g]) | 0, rotate = r[j];
-        d = c;
-        c = b;
-        b = (b + ((rotateArg << rotate) | (rotateArg >>> (32 - rotate)))) | 0;
-        a = tmp;
-      }
-      h0 = (h0 + a) | 0;
-      h1 = (h1 + b) | 0;
-      h2 = (h2 + c) | 0;
-      h3 = (h3 + d) | 0;
-    }
-    return h0;
-  }
-  return hash;
-})();
-
-
-function toEncoding(n) {
-  return 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$_'[n];
-}
 
 function encodeInt32(n) {
   var a = (n >> 30) & 0x3;
@@ -1093,43 +968,7 @@ function encodeInt32(n) {
     toEncoding(d) + toEncoding(e) + toEncoding(f);
 }
 
-function variableLengthEncodeInt32(n) {
-  var bitCount = (32 - leadingZeros(n));
-  assert (bitCount <= 32, bitCount);
-  var l = Math.ceil(bitCount / 6);
-  // Encode length followed by six bit chunks.
-  var s = toEncoding(l);
-  for (var i = l - 1; i >= 0; i--) {
-    var offset = (i * 6);
-    s += toEncoding((n >> offset) & 0x3F);
-  }
-  release || assert (variableLengthDecodeIdentifier(s) === n, n + " : " + s + " - " + l + " bits: " + bitCount);
-  return s;
-}
-
-function fromEncoding(s) {
-  var c = s.charCodeAt(0);
-  var e = 0;
-  if (c >= 65 && c <= 90) {
-    return c - 65;
-  } else if (c >= 97 && c <= 122) {
-    return c - 71;
-  } else if (c >= 48 && c <= 57) {
-    return c + 4;
-  } else if (c === 36) {
-    return 62;
-  } else if (c === 95) {
-    return 63;
-  }
-  assert (false, "Invalid Encoding");
-}
-
-function variableLengthDecodeIdentifier(s) {
-  var l = fromEncoding(s[0]);
-  var n = 0;
-  for (var i = 0; i < l; i++) {
-    var offset = ((l - i - 1) * 6);
-    n |= fromEncoding(s[1 + i]) << offset;
-  }
-  return n;
-}
+var variableLengthEncodeInt32 = Shumway.StringUtilities.variableLengthEncodeInt32;
+var fromEncoding = Shumway.StringUtilities.fromEncoding;
+var variableLengthDecodeIdentifier = Shumway.StringUtilities.variableLengthDecodeInt32;
+var toEncoding = Shumway.StringUtilities.toEncoding;

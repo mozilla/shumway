@@ -36,11 +36,58 @@ interface Function {
   boundTo: boolean;
 }
 
+interface Array {
+  id: number;
+}
+
 module Shumway {
-  declare function print(s:string)
-  declare var debug: boolean;
-  declare var release: boolean;
-  declare function assert(condition: any, ...args);
+
+  export function isString(value) {
+    return typeof value === "string";
+  }
+
+  export function isFunction(value) {
+    return typeof value === "function";
+  }
+
+  export function isNumber(value) {
+    return typeof value === "number";
+  }
+
+  export function isObject(value) {
+    return typeof value === "object" || typeof value === 'function';
+  }
+
+  export function toNumber(x) {
+    return +x;
+  }
+
+  export function isNumeric(x: any): boolean {
+    if (typeof x === "number") {
+      return x === (x | 0);
+    }
+    if (typeof x !== "string" || x.length === 0) {
+      return false;
+    }
+    if (x === "0") {
+      return true;
+    }
+    var c = x.charCodeAt(0);
+    if ((c >= 49) && (c <= 57)) {
+      for (var i = 1, j = x.length; i < j; i++) {
+        c = x.charCodeAt(i);
+        if (!((c >= 48) && (c <= 57))) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
+
+  export function isNullOrUndefined(value) {
+    return value == undefined;
+  }
 
   export class Debug {
     public static backtrace() {
@@ -96,7 +143,7 @@ module Shumway {
     }
   }
 
-  export function getTicks():number {
+  export function getTicks(): number {
     return performance.now();
   }
 
@@ -111,6 +158,10 @@ module Shumway {
 
     public static createMap<T>():Map<T> {
       return Object.create(null);
+    }
+
+    public static createArrayMap<T>():Map<T> {
+      return <Map<T>><any>[];
     }
 
     public static defineReadOnlyProperty(object: Object, name: string, value: any) {
@@ -335,6 +386,158 @@ module Shumway {
       }
       return str;
     }
+
+    /**
+     * Workaround for max stack size limit.
+     */
+    public static fromCharCodeArray(buffer: Uint8Array): string {
+      var str = "", SLICE = 1024 * 16;
+      for (var i = 0; i < buffer.length; i += SLICE) {
+        var chunk = Math.min(buffer.length - i, SLICE);
+        str += String.fromCharCode.apply(null, buffer.subarray(i, i + chunk));
+      }
+      return str;
+    }
+
+    private static _encoding = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$_';
+    public static variableLengthEncodeInt32(n) {
+      var e = StringUtilities._encoding;
+      var bitCount = (32 - IntegerUtilities.leadingZeros(n));
+      assert (bitCount <= 32, bitCount);
+      var l = Math.ceil(bitCount / 6);
+      // Encode length followed by six bit chunks.
+      var s = e[l];
+      for (var i = l - 1; i >= 0; i--) {
+        var offset = (i * 6);
+        s += e[(n >> offset) & 0x3F];
+      }
+      release || assert (StringUtilities.variableLengthDecodeInt32(s) === n, n + " : " + s + " - " + l + " bits: " + bitCount);
+      return s;
+    }
+
+    public static toEncoding(n) {
+      return StringUtilities._encoding[n];
+    }
+
+    public static fromEncoding(s) {
+      var c = s.charCodeAt(0);
+      var e = 0;
+      if (c >= 65 && c <= 90) {
+        return c - 65;
+      } else if (c >= 97 && c <= 122) {
+        return c - 71;
+      } else if (c >= 48 && c <= 57) {
+        return c + 4;
+      } else if (c === 36) {
+        return 62;
+      } else if (c === 95) {
+        return 63;
+      }
+      assert (false, "Invalid Encoding");
+    }
+
+    public static variableLengthDecodeInt32(s) {
+      var l = StringUtilities.fromEncoding(s[0]);
+      var n = 0;
+      for (var i = 0; i < l; i++) {
+        var offset = ((l - i - 1) * 6);
+        n |= StringUtilities.fromEncoding(s[1 + i]) << offset;
+      }
+      return n;
+    }
+  }
+
+  export class HashUtilities {
+    private static _md5R = new Uint8Array([
+      7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
+      5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
+      4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
+      6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21]);
+
+    private static _md5K = new Int32Array([
+      -680876936, -389564586, 606105819, -1044525330, -176418897, 1200080426,
+      -1473231341, -45705983, 1770035416, -1958414417, -42063, -1990404162,
+      1804603682, -40341101, -1502002290, 1236535329, -165796510, -1069501632,
+      643717713, -373897302, -701558691, 38016083, -660478335, -405537848,
+      568446438, -1019803690, -187363961, 1163531501, -1444681467, -51403784,
+      1735328473, -1926607734, -378558, -2022574463, 1839030562, -35309556,
+      -1530992060, 1272893353, -155497632, -1094730640, 681279174, -358537222,
+      -722521979, 76029189, -640364487, -421815835, 530742520, -995338651,
+      -198630844, 1126891415, -1416354905, -57434055, 1700485571, -1894986606,
+      -1051523, -2054922799, 1873313359, -30611744, -1560198380, 1309151649,
+      -145523070, -1120210379, 718787259, -343485551]);
+
+    public static hashBytesTo32BitsMD5(data: Uint8Array, offset: number, length: number): number {
+      var r = HashUtilities._md5R;
+      var k = HashUtilities._md5K;
+      var h0 = 1732584193, h1 = -271733879, h2 = -1732584194, h3 = 271733878;
+      // pre-processing
+      var paddedLength = (length + 72) & ~63; // data + 9 extra bytes
+      var padded = new Uint8Array(paddedLength);
+      var i, j, n;
+      for (i = 0; i < length; ++i) {
+        padded[i] = data[offset++];
+      }
+      padded[i++] = 0x80;
+      n = paddedLength - 8;
+      while (i < n) {
+        padded[i++] = 0;
+      }
+      padded[i++] = (length << 3) & 0xFF;
+      padded[i++] = (length >> 5) & 0xFF;
+      padded[i++] = (length >> 13) & 0xFF;
+      padded[i++] = (length >> 21) & 0xFF;
+      padded[i++] = (length >>> 29) & 0xFF;
+      padded[i++] = 0;
+      padded[i++] = 0;
+      padded[i++] = 0;
+      // chunking
+      // TODO ArrayBuffer ?
+      var w = new Int32Array(16);
+      for (i = 0; i < paddedLength;) {
+        for (j = 0; j < 16; ++j, i += 4) {
+          w[j] = (padded[i] | (padded[i + 1] << 8) |
+            (padded[i + 2] << 16) | (padded[i + 3] << 24));
+        }
+        var a = h0, b = h1, c = h2, d = h3, f, g;
+        for (j = 0; j < 64; ++j) {
+          if (j < 16) {
+            f = (b & c) | ((~b) & d);
+            g = j;
+          } else if (j < 32) {
+            f = (d & b) | ((~d) & c);
+            g = (5 * j + 1) & 15;
+          } else if (j < 48) {
+            f = b ^ c ^ d;
+            g = (3 * j + 5) & 15;
+          } else {
+            f = c ^ (b | (~d));
+            g = (7 * j) & 15;
+          }
+          var tmp = d, rotateArg = (a + f + k[j] + w[g]) | 0, rotate = r[j];
+          d = c;
+          c = b;
+          b = (b + ((rotateArg << rotate) | (rotateArg >>> (32 - rotate)))) | 0;
+          a = tmp;
+        }
+        h0 = (h0 + a) | 0;
+        h1 = (h1 + b) | 0;
+        h2 = (h2 + c) | 0;
+        h3 = (h3 + d) | 0;
+      }
+      return h0;
+    }
+
+    public static hashBytesTo32BitsAdler(data: Uint8Array, offset: number, length: number): number {
+      var a = 1;
+      var b = 0;
+      var end = offset + length;
+      for (var i = offset; i < end; ++i) {
+        a = (a + (data[i] & 0xff)) % 65521;
+        b = (b + a) % 65521;
+      }
+      return (b << 16) | a;
+    }
   }
 
   export class IntegerUtilities {
@@ -374,6 +577,10 @@ module Shumway {
         return "";
       }
       return str.trim();
+    }
+
+    public static isPowerOfTwo(x) {
+      return x && ((x & (x - 1)) === 0);
     }
   }
 
