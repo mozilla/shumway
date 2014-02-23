@@ -810,7 +810,7 @@ var Class = (function () {
       release || assert(this.instanceConstructor === wrapper);
       this.baseClass = baseClass;
       this.dynamicPrototype = Object.create(baseClass.dynamicPrototype);
-      var traitsPrototype = Object.create(this.dynamicPrototype, getOwnPropertyDescriptors(wrapper.prototype));
+      var traitsPrototype = Object.create(this.dynamicPrototype, Shumway.ObjectUtilities.getOwnPropertyDescriptors(wrapper.prototype));
       this.instanceConstructor.prototype = this.traitsPrototype = traitsPrototype;
       setDefaultProperties(this);
     },

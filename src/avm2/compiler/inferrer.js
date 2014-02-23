@@ -650,7 +650,7 @@ var Verifier = (function() {
       blocks[0].entryState = entryState;
       worklist.push(blocks[0]);
 
-      while (worklist.peek()) {
+      while (!worklist.isEmpty()) {
 
         var block = worklist.pop();
         var exitState = block.exitState = block.entryState.clone();

@@ -48,8 +48,11 @@ console = {
  */
 
 load(homePath + "src/avm2/settings.js");
+load(homePath + "src/avm2/utilities.js");
 load(homePath + "src/avm2/avm2Util.js");
 load(homePath + "src/avm2/options.js");
+
+var IndentingWriter = Shumway.IndentingWriter;
 
 var stdout = new IndentingWriter();
 
@@ -81,9 +84,8 @@ load(homePath + "src/avm2/parser.js");
 load(homePath + "src/avm2/disassembler.js");
 
 
-var Timer = metrics.Timer;
-var Counter = new metrics.Counter();
-
+var Timer = Shumway.Metrics.Timer;
+var Counter = new Shumway.Metrics.Counter();
 
 argumentParser.addBoundOptionSet(systemOptions);
 

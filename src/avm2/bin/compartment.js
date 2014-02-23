@@ -34,7 +34,11 @@ var console = {
 };
 
 load(homePath + "src/avm2/settings.js");
+load(homePath + "src/avm2/utilities.js");
 load(homePath + "src/avm2/avm2Util.js");
+
+
+var IndentingWriter = Shumway.IndentingWriter;
 
 if (false) {
   var oldLoad = load;
@@ -51,8 +55,8 @@ var Option = options.Option;
 var OptionSet = options.OptionSet;
 
 load(homePath + "src/avm2/metrics.js");
-var Timer = metrics.Timer;
-var Counter = new metrics.Counter();
+var Timer = Shumway.Metrics.Timer;
+var Counter = new Shumway.Metrics.Counter();
 
 var systemOptions = new OptionSet("System Options");
 var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));

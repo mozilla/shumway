@@ -392,7 +392,7 @@ function asCallPublicProperty(name, args) {
   return this.asCallProperty(undefined, name, 0, false, args);
 }
 
-var callCounter = new metrics.Counter(true);
+var callCounter = new Shumway.Metrics.Counter(true);
 
 function asCallProperty(namespaces, name, flags, isLex, args) {
   if (traceCallExecution.value) {
@@ -1598,7 +1598,7 @@ function createFunction(mi, scope, hasDynamicScope, breakpoint) {
 
   if (compileUntil.value >= 0) {
     if (totalFunctionCount > 1000) {
-      print(backtrace());
+      print(Shumway.Debug.backtrace());
       print(AVM2.getStackTrace());
     }
     if (totalFunctionCount > compileUntil.value) {

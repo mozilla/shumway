@@ -16,129 +16,24 @@
  * limitations under the License.
  */
 
-var inBrowser = typeof console != "undefined";
+var error = Shumway.Debug.error;
+var assert = Shumway.Debug.assert;
+var assertNotImplemented = Shumway.Debug.assertNotImplemented;
+var warning = Shumway.Debug.warning;
+var notImplemented = Shumway.Debug.notImplemented;
+var somewhatImplemented = Shumway.Debug.somewhatImplemented;
+var unexpected = Shumway.Debug.unexpected;
 
-if (!this.performance) {
-  this.performance = {};
-}
-if (!this.performance.now) {
-  this.performance.now = dateNow;
-}
+var defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
+var createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
 
-function backtrace() {
-  try {
-    throw new Error();
-  } catch (e) {
-    return e.stack ? e.stack.split('\n').slice(2).join('\n') : '';
-  }
-}
+var makeForwardingGetter = Shumway.FunctionUtilities.makeForwardingGetter;
+var makeForwardingSetter = Shumway.FunctionUtilities.makeForwardingSetter;
+var bindSafely = Shumway.FunctionUtilities.bindSafely;
+var cloneObject = Shumway.ObjectUtilities.cloneObject;
+var copyProperties = Shumway.ObjectUtilities.copyProperties;
 
-function error(message) {
-  if (!inBrowser) {
-    console.warn(backtrace());
-  }
-  print(backtrace());
-  throw new Error(message);
-}
-
-function assert(condition) {
-  if (condition === "") {     // avoid inadvertent false positive
-    condition = true;
-  }
-  if (!condition) {
-    var message = Array.prototype.slice.call(arguments);
-    message.shift();
-    error(message.join(""));
-  }
-}
-
-function assertNotImplemented(condition, message) {
-  if (!condition) {
-    error("NotImplemented: " + message);
-  }
-}
-
-function warning(message) {
-  release || console.warn(message);
-}
-
-function notUsed(message) {
-  release || assert(false, "Not Used " + message);
-}
-
-function notImplemented(message) {
-  release || assert(false, "Not Implemented " + message);
-}
-
-function somewhatImplemented(message) {
-  warning("somewhatImplemented: " + message);
-}
-
-function unexpected(message) {
-  assert(false, "Unexpected: " + message);
-}
-
-function makeForwardingGetter(target) {
-  return new Function("return this[\"" + target + "\"]");
-}
-
-function makeForwardingSetter(target) {
-  return new Function("value", "this[\"" + target + "\"] = value;");
-}
-
-function defineReadOnlyProperty(obj, name, value) {
-  Object.defineProperty(obj, name, { value: value,
-                                     writable: false,
-                                     configurable: true,  // XXX: make it non-configurable?
-                                     enumerable: false });
-}
-
-/**
- * Makes sure you never re-bind a method.
- */
-function bindSafely(fn, obj) {
-  release || assert (!fn.boundTo && obj);
-  var f = fn.bind(obj);
-  f.boundTo = obj;
-  return f;
-}
-
-function createEmptyObject() {
-  return Object.create(null);
-}
-
-function getOwnPropertyDescriptors(object) {
-  var o = createEmptyObject();
-  var properties = Object.getOwnPropertyNames(object);
-  for (var i = 0; i < properties.length; i++) {
-    o[properties[i]] = Object.getOwnPropertyDescriptor(object, properties[i]);
-  }
-  return o;
-}
-
-function cloneObject(object) {
-  var clone = Object.create(null);
-  for (var property in object) {
-    clone[property] = object[property];
-  }
-  return clone;
-}
-
-function extendObject(object, properties) {
-  var extended = Object.create(object);
-  if (properties) {
-    for (var key in properties) {
-      extended[key] = properties[key];
-    }
-  }
-  return extended;
-}
-
-function copyProperties(object, template) {
-  for (var property in template) {
-    object[property] = template[property];
-  }
-}
+var SortedList = Shumway.SortedList;
 
 /*
  * Stringify functions that try not to call |toString| inadvertently.
@@ -162,67 +57,13 @@ function toSafeArrayString(array) {
   return str.join(", ");
 }
 
-function getLatestGetterOrSetterPropertyDescriptor(obj, name) {
-  var descriptor = {};
-  while (obj) {
-    var tmp = Object.getOwnPropertyDescriptor(obj, name);
-    if (tmp) {
-      descriptor.get = descriptor.get || tmp.get;
-      descriptor.set = descriptor.set || tmp.set;
-    }
-    if (descriptor.get && descriptor.set) {
-      break;
-    }
-    obj = Object.getPrototypeOf(obj);
-  }
-  return descriptor;
-}
-
-function defineNonEnumerableGetterOrSetter(obj, name, value, isGetter) {
-  var descriptor = getLatestGetterOrSetterPropertyDescriptor(obj, name);
-  descriptor.configurable = true;
-  descriptor.enumerable = false;
-  if (isGetter) {
-    descriptor.get = value;
-  } else {
-    descriptor.set = value;
-  }
-  Object.defineProperty(obj, name, descriptor);
-}
-
-function defineNonEnumerableGetter(obj, name, getter) {
-  Object.defineProperty(obj, name, { get: getter,
-                                     configurable: true,
-                                     enumerable: false });
-}
-
-function defineNonEnumerableSetter(obj, name, setter) {
-  Object.defineProperty(obj, name, { set: setter,
-                                     configurable: true,
-                                     enumerable: false });
-}
-
-function defineNonEnumerableProperty(obj, name, value) {
-  Object.defineProperty(obj, name, { value: value,
-                                     writable: true,
-                                     configurable: true,
-                                     enumerable: false });
-}
-
-function defineNonEnumerableForwardingProperty(obj, name, otherName) {
-  Object.defineProperty(obj, name, {
-    get: makeForwardingGetter(otherName),
-    set: makeForwardingSetter(otherName),
-    writable: true,
-    configurable: true,
-    enumerable: false
-  });
-}
-
-function defineNewNonEnumerableProperty(obj, name, value) {
-  release || assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
-  defineNonEnumerableProperty(obj, name, value);
-}
+var getLatestGetterOrSetterPropertyDescriptor = Shumway.ObjectUtilities.getLatestGetterOrSetterPropertyDescriptor;
+var defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
+var defineNonEnumerableGetter = Shumway.ObjectUtilities.defineNonEnumerableGetter;
+var defineNonEnumerableSetter = Shumway.ObjectUtilities.defineNonEnumerableSetter;
+var defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
+var defineNonEnumerableForwardingProperty = Shumway.ObjectUtilities.defineNonEnumerableForwardingProperty;
+var defineNewNonEnumerableProperty = Shumway.ObjectUtilities.defineNewNonEnumerableProperty;
 
 function isNullOrUndefined(value) {
   return value == undefined;
@@ -526,145 +367,15 @@ function popManyInto(src, count, dst) {
   });
 })();
 
-function utf8decode(str) {
-  var bytes = new Uint8Array(str.length * 4);
-  var b = 0;
-  for (var i = 0, j = str.length; i < j; i++) {
-    var code = str.charCodeAt(i);
-    if (code <= 0x7f) {
-      bytes[b++] = code;
-      continue;
-    }
+var utf8decode = Shumway.StringUtilities.utf8decode;
+var utf8encode = Shumway.StringUtilities.utf8encode;
+var escapeString = Shumway.StringUtilities.escapeString;
 
-    if (0xD800 <= code && code <= 0xDBFF) {
-      var codeLow = str.charCodeAt(i + 1);
-      if (0xDC00 <= codeLow && codeLow <= 0xDFFF) {
-        // convert only when both high and low surrogates are present
-        code = ((code & 0x3FF) << 10) + (codeLow & 0x3FF) + 0x10000;
-        ++i;
-      }
-    }
-
-    if ((code & 0xFFE00000) !== 0) {
-      bytes[b++] = 0xF8 | ((code >>> 24) & 0x03);
-      bytes[b++] = 0x80 | ((code >>> 18) & 0x3F);
-      bytes[b++] = 0x80 | ((code >>> 12) & 0x3F);
-      bytes[b++] = 0x80 | ((code >>> 6) & 0x3F);
-      bytes[b++] = 0x80 | (code & 0x3F);
-    } else if ((code & 0xFFFF0000) !== 0) {
-      bytes[b++] = 0xF0 | ((code >>> 18) & 0x07);
-      bytes[b++] = 0x80 | ((code >>> 12) & 0x3F);
-      bytes[b++] = 0x80 | ((code >>> 6) & 0x3F);
-      bytes[b++] = 0x80 | (code & 0x3F);
-    } else if ((code & 0xFFFFF800) !== 0) {
-      bytes[b++] = 0xE0 | ((code >>> 12) & 0x0F);
-      bytes[b++] = 0x80 | ((code >>> 6) & 0x3F);
-      bytes[b++] = 0x80 | (code & 0x3F);
-    } else {
-      bytes[b++] = 0xC0 | ((code >>> 6) & 0x1F);
-      bytes[b++] = 0x80 | (code & 0x3F);
-    }
-  }
-  return bytes.subarray(0, b);
-}
-
-function utf8encode(bytes) {
-  var j = 0, str = "";
-  while (j < bytes.length) {
-    var b1 = bytes[j++] & 0xFF;
-    if (b1 <= 0x7F) {
-      str += String.fromCharCode(b1);
-    } else {
-      var currentPrefix = 0xC0;
-      var validBits = 5;
-      do {
-        var mask = (currentPrefix >> 1) | 0x80;
-        if((b1 & mask) === currentPrefix) break;
-        currentPrefix = (currentPrefix >> 1) | 0x80;
-        --validBits;
-      } while (validBits >= 0);
-
-      if (validBits <= 0) {
-        // Invalid UTF8 character -- copying as is
-        str += String.fromCharCode(b1);
-        continue;
-      }
-      var code = (b1 & ((1 << validBits) - 1));
-      var invalid = false;
-      for (var i = 5; i >= validBits; --i) {
-        var bi = bytes[j++];
-        if ((bi & 0xC0) != 0x80) {
-          // Invalid UTF8 character sequence
-          invalid = true;
-          break;
-        }
-        code = (code << 6) | (bi & 0x3F);
-      }
-      if (invalid) {
-        // Copying invalid sequence as is
-        for (var k = j - (7 - i); k < j; ++k) {
-          str += String.fromCharCode(bytes[k] & 255);
-        }
-        continue;
-      }
-      if (code >= 0x10000) {
-        str += String.fromCharCode((((code - 0x10000) >> 10) & 0x3FF) |
-          0xD800, (code & 0x3FF) | 0xDC00);
-      } else {
-        str += String.fromCharCode(code);
-      }
-    }
-  }
-  return str;
-}
-
-function getFlags(value, flags) {
-  var str = "";
-  for (var i = 0; i < flags.length; i++) {
-    if (value & (1 << i)) {
-      str += flags[i] + " ";
-    }
-  }
-  if (str.length === 0) {
-    return "";
-  }
-  return str.trim();
-}
-
-function bitCount(i) {
-  i = i - ((i >> 1) & 0x55555555);
-  i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
-  return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
-}
-
-function ones(v) {
-  v = v - ((v >> 1) & 0x55555555);
-  v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
-  return ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
-}
-
-function leadingZeros(v) {
-  v |= (v >> 1);
-  v |= (v >> 2);
-  v |= (v >> 4);
-  v |= (v >> 8);
-  v |= (v >> 16);
-  return 32 - ones(v);
-}
-
-function trailingZeros(v) {
-  return ones((v & -v) - 1);
-}
-
-function escapeString(str) {
-  if (str !== undefined) {
-    str = str.replace(/[^\w$]/gi,"$"); /* No dots, colons, dashes and /s */
-    if (/^\d/.test(str)) { /* No digits at the beginning */
-      str = '$' + str;
-    }
-  }
-  return str;
-}
+var bitCount = Shumway.IntegerUtilities.bitCount;
+var ones = Shumway.IntegerUtilities.ones;
+var leadingZeros = Shumway.IntegerUtilities.leadingZeros;
+var trailingZeros = Shumway.IntegerUtilities.trailingZeros;
+var getFlags = Shumway.IntegerUtilities.getFlags;
 
 /**
  * BitSet backed by a typed array. We intentionally leave out assertions for performance reasons. We
@@ -1103,111 +814,6 @@ function base64ArrayBuffer(arrayBuffer) {
   return base64;
 }
 
-var PURPLE = '\033[94m';
-var YELLOW = '\033[93m';
-var GREEN = '\033[92m';
-var RED = '\033[91m';
-var ENDC = '\033[0m';
-
-var IndentingWriter = (function () {
-  var consoleOutFn = inBrowser ? console.info.bind(console) : print;
-  function indentingWriter(suppressOutput, outFn) {
-    this.tab = "  ";
-    this.padding = "";
-    this.suppressOutput = suppressOutput;
-    this.out = outFn || consoleOutFn;
-  }
-
-  indentingWriter.prototype.writeLn = function writeLn(str) {
-    if (!this.suppressOutput) {
-      this.out(this.padding + str);
-    }
-  };
-
-  indentingWriter.prototype.writeLns = function writeLns(str) {
-    var lines = str.split("\n");
-    for (var i = 0; i < lines.length; i++) {
-      this.writeLn(lines[i]);
-    }
-  };
-
-  indentingWriter.prototype.debugLn = function debugLn(str) {
-    this.colorLn(PURPLE, str);
-  };
-
-  indentingWriter.prototype.yellowLn = function yellowLn(str) {
-    this.colorLn(YELLOW, str);
-  };
-
-  indentingWriter.prototype.greenLn = function greenLn(str) {
-    this.colorLn(GREEN, str);
-  };
-
-  indentingWriter.prototype.redLn = function redLn(str) {
-    this.colorLn(RED, str);
-  };
-
-  indentingWriter.prototype.colorLn = function writeLn(color, str) {
-    if (!this.suppressOutput) {
-      if (!inBrowser) {
-        this.out(this.padding + color + str + ENDC);
-      } else {
-        this.out(this.padding + str);
-      }
-    }
-  };
-
-  indentingWriter.prototype.enter = function enter(str) {
-    if (!this.suppressOutput) {
-      this.out(this.padding + str);
-    }
-    this.indent();
-  };
-
-  indentingWriter.prototype.leaveAndEnter = function leaveAndEnter(str) {
-    this.leave(str);
-    this.indent();
-  };
-
-  indentingWriter.prototype.leave = function leave(str) {
-    this.outdent();
-    if (!this.suppressOutput) {
-      this.out(this.padding + str);
-    }
-  };
-
-  indentingWriter.prototype.indent = function indent() {
-    this.padding += this.tab;
-  };
-
-  indentingWriter.prototype.outdent = function outdent() {
-    if (this.padding.length > 0) {
-      this.padding = this.padding.substring(0, this.padding.length - this.tab.length);
-    }
-  };
-
-  indentingWriter.prototype.writeArray = function writeArray(arr, detailed, noNumbers) {
-    detailed = detailed || false;
-    for (var i = 0, j = arr.length; i < j; i++) {
-      var prefix = "";
-      if (detailed) {
-        if (arr[i] === null) {
-          prefix = "null";
-        } else if (arr[i] === undefined) {
-          prefix = "undefined";
-        } else {
-          prefix = arr[i].constructor.name;
-        }
-        prefix += " ";
-      }
-      var number = noNumbers ? "" : ("" + i).padRight(' ', 4);
-      this.writeLn(number + prefix + arr[i]);
-    }
-  };
-
-  return indentingWriter;
-})();
-
 var Map = (function() {
   function map () {
     this.elements = {};
@@ -1232,127 +838,7 @@ var Map = (function() {
   return map;
 })();
 
-/**
- * SortedList backed up by a linked list.
- *  sortedList(compare) - the constructor takes a |compare| function
- *                        that defines the sort order.
- *  push(value) - inserts a new item in the list doing a linear search O(n)
- *                to find the right place.
- *  pop() - returns and removes the head of the list O(1)
- *  peek() - returns the head of the list without removing it O(1)
- *  contains(value) - returns true if the |value| is in the list, false otherwise O(n)
- *
- *  The compare function takes two arguments. If these arguments are a and b then:
- *    compare(a,b) < 0 means that a is less than b
- *    compare(a,b) === 0 means that a is equal to b
- *    compare(a,b) > 0 means that a is greater than b
- */
-var SortedList = (function() {
 
-  function sortedList(compare) {
-    release || assert(compare);
-    this.compare = compare;
-    this.head = null;
-    this.length = 0;
-  }
-
-  sortedList.RETURN = 1;
-  sortedList.DELETE = 2;
-
-  sortedList.prototype.push = function push(value) {
-    release || assert(value !== undefined);
-    this.length ++;
-    if (!this.head) {
-      this.head = {value: value, next: null};
-      return;
-    }
-
-    var curr = this.head;
-    var prev = null;
-    var node = {value: value, next: null};
-    var compare = this.compare;
-    while (curr) {
-      if (compare(curr.value, node.value) > 0) {
-        if (prev) {
-          node.next = curr;
-          prev.next = node;
-        } else {
-          node.next = this.head;
-          this.head = node;
-        }
-        return;
-      }
-      prev = curr;
-      curr = curr.next;
-    }
-    prev.next = node;
-  };
-
-  /**
-   * Visitors can return RETURN if they wish to stop the iteration or DELETE if they need to delete the current node.
-   * NOTE: DELETE most likley doesn't work if there are multiple active iterations going on.
-   */
-  sortedList.prototype.forEach = function forEach(visitor) {
-    var curr = this.head;
-    var last = null;
-    while (curr) {
-      var result = visitor(curr.value);
-      if (result === sortedList.RETURN) {
-        return;
-      } else if (result === sortedList.DELETE) {
-        if (!last) {
-          curr = this.head = this.head.next;
-        } else {
-          curr = last.next = curr.next;
-        }
-      } else {
-        last = curr;
-        curr = curr.next;
-      }
-    }
-  };
-
-  sortedList.prototype.pop = function pop() {
-    if (!this.head) {
-      return undefined;
-    }
-    this.length --;
-    var ret = this.head;
-    this.head = this.head.next;
-    return ret.value;
-  };
-
-  sortedList.prototype.peek = function peek() {
-    return this.head;
-  };
-
-  sortedList.prototype.contains = function contains(value) {
-    var curr = this.head;
-    while (curr) {
-      if (curr.value === value) {
-        return true;
-      }
-      curr = curr.next;
-    }
-    return false;
-  };
-
-  sortedList.prototype.toString = function () {
-    var str = "[";
-    var curr = this.head;
-    while (curr) {
-      str += curr.value.toString();
-      curr = curr.next;
-      if (curr) {
-        str += ",";
-      }
-    }
-    str += "]";
-    return str;
-  };
-
-  return sortedList;
-})();
 
 (function checkWeakMap() {
   if (typeof this.WeakMap === 'function')
