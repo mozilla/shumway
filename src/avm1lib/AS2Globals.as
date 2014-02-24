@@ -241,17 +241,33 @@ public dynamic class AS2Globals {
     var nativeTarget = AS2Utils.resolveTarget(target);
     nativeTarget.removeMovieClip();
   }
-  public function setInterval() {
-    var setInterval = flash.utils.setInterval;
-    var args = Array.prototype.slice.call(arguments);
-    if (typeof args[0] !== 'function') {
-      var obj = args.shift();
-      var name = args.shift();
-      args.unshift(function () {
-        obj[name].apply(obj, arguments);
-      });
+  public function setInterval(): * {
+    // AVM1 setInterval silently swallows everything that vaguely looks like an error.
+    if (arguments.length < 2) {
+      return undefined;
     }
-    return setInterval.apply(null, args);
+    var args: Array = [];
+    if (typeof arguments[0] === 'function') {
+      args = arguments;
+    } else {
+      if (arguments.length < 3) {
+        return undefined;
+      }
+      var obj: Object = arguments[0];
+      var funName: * = arguments[1];
+      if (!(obj && typeof obj === 'object' && typeof funName === 'string')) {
+        return undefined;
+      }
+      args[0] = function (): void {
+        obj[funName].apply(obj, arguments);
+      };
+      for (var i: uint = 2; i < arguments.length; i++) {
+        args.push(arguments[i]);
+      }
+    }
+    // Unconditionally coerce interval to int, as one would do.
+    args[1] |= 0;
+    return flash.utils.setInterval.apply(null, args);
   }
   public function setAS2Property(target, index, value) {
     var nativeTarget = AS2Utils.resolveTarget(target);
