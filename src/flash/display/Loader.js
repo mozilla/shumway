@@ -480,7 +480,7 @@ var LoaderDefinition = (function () {
         loaderInfo._dispatchEvent("init");
       };
       img.src = URL.createObjectURL(imageInfo.data);
-      delete imageInfo.data;
+      imageInfo.data = null;
     },
     _commitSymbol: function (symbol) {
       var dictionary = this._dictionary;

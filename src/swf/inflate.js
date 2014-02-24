@@ -87,8 +87,7 @@ function createInflatedStream(bytes, outputLength) {
 var InflateNoDataError = {};
 
 function inflateBlock(stream, output, state) {
-  var header = state.header !== undefined ? state.header :
-    (state.header = readBits(stream.bytes, stream, 3));
+  var header = state.header || (state.header = readBits(stream.bytes, stream, 3));
   switch (header >> 1) {
   case 0:
     stream.align();
@@ -113,7 +112,7 @@ function inflateBlock(stream, output, state) {
     break;
   case 2:
     var distanceTable, literalTable;
-    if (state.distanceTable !== undefined) {
+    if (state.distanceTable) {
       distanceTable = state.distanceTable;
       literalTable = state.literalTable;
     } else {
@@ -166,13 +165,13 @@ function inflateBlock(stream, output, state) {
       literalTable = state.literalTable = makeHuffmanTable(bitLengths);
     }
     inflate(stream, output, literalTable, distanceTable, state);
-    delete state.distanceTable;
-    delete state.literalTable;
+    state.distanceTable = null;
+    state.literalTable = null;
     break;
   default:
      fail('unknown block type', 'inflate');
   }
-  delete state.header;
+  state.header = null;
   output.completed = !!(header & 1);
 }
 function readBits(bytes, stream, size) {
@@ -201,25 +200,22 @@ function inflate(stream, output, literalTable, distanceTable, state) {
   var pos = output.available;
   var dbytes = output.data;
   var sbytes = stream.bytes;
-  var sym = state.sym !== undefined ? state.sym :
-                             readCode(sbytes, stream, literalTable);
+  var sym = state.sym || readCode(sbytes, stream, literalTable);
   while (sym !== 256) {
     if (sym < 256) {
       dbytes[pos++] = sym;
     } else {
       state.sym = sym;
       sym -= 257;
-      var len = state.len !== undefined ? state.len :
-        (state.len = lengthCodes[sym] + readBits(sbytes, stream, lengthExtraBits[sym]));
-      var sym2 = state.sym2 !== undefined ? state.sym2 :
-        (state.sym2 = readCode(sbytes, stream, distanceTable));
+      var len = state.len || (state.len = lengthCodes[sym] + readBits(sbytes, stream, lengthExtraBits[sym]));
+      var sym2 = state.sym2 || (state.sym2 = readCode(sbytes, stream, distanceTable));
       var distance = distanceCodes[sym2] + readBits(sbytes, stream, distanceExtraBits[sym2]);
       var i = pos - distance;
       while (len--)
         dbytes[pos++] = dbytes[i++];
-      delete state.sym2;
-      delete state.len;
-      delete state.sym;
+      state.sym2 = null;
+      state.len = null;
+      state.sym = null;
     }
     output.available = pos;
     sym = readCode(sbytes, stream, literalTable);
