@@ -274,16 +274,14 @@ public dynamic class AS2Globals {
     nativeTarget[PropertiesIndexMap[index]] = value;
   }
   public function setTimeout() {
-    var setTimeout = flash.utils.setTimeout;
-    var args = Array.prototype.slice.call(arguments);
-    if (typeof args[0] !== 'function') {
-      var obj = args.shift();
-      var name = args.shift();
-      args.unshift(function () {
-        obj[name].apply(obj, arguments);
-      });
+    // AVM1 setTimeout silently swallows most things that vaguely look like errors.
+    if (arguments.length < 2 || typeof arguments[0] !== 'function')
+    {
+      return undefined;
     }
-    return setTimeout.apply(null, args);
+    // Unconditionally coerce interval to int, as one would do.
+    arguments[1] |= 0;
+    return flash.utils.setTimeout.apply(null, arguments);
   }
   public function showRedrawRegions(enable, color) {
     // flash.profiler.showRedrawRegions.apply(null, arguments);
