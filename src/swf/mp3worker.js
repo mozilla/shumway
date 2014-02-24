@@ -37,7 +37,7 @@ if (isWorker) {
         var session = sessions[sessionId];
         if (session) {
           session.close();
-          delete sessions[sessionId];
+          sessions[sessionId] = null;
         }
         break;
       case 'decode':
