@@ -89,8 +89,8 @@ module Shumway {
     return value == undefined;
   }
 
-  export class Debug {
-    public static backtrace() {
+  export module Debug {
+    export function backtrace() {
       try {
         throw new Error();
       } catch (e) {
@@ -98,14 +98,14 @@ module Shumway {
       }
     }
 
-    public static error(message: string) {
+    export function error(message: string) {
       if (!inBrowser) {
         console.warn(Debug.backtrace());
       }
       throw new Error(message);
     }
 
-    public static assert(condition: any, ...args) {
+    export function assert(condition: any, ...args) {
       if (condition === "") {     // avoid inadvertent false positive
         condition = true;
       }
@@ -116,29 +116,29 @@ module Shumway {
       }
     }
 
-    public static assertNotImplemented(condition: boolean, message: string) {
+    export function assertNotImplemented(condition: boolean, message: string) {
       if (!condition) {
         Debug.error("NotImplemented: " + message);
       }
     }
 
-    public static warning(message: string) {
+    export function warning(message: string) {
       release || console.warn(message);
     }
 
-    public static notUsed(message: string) {
+    export function notUsed(message: string) {
       release || Debug.assert(false, "Not Used " + message);
     }
 
-    public notImplemented(message: string) {
+    export function notImplemented(message: string) {
       release || Debug.assert(false, "Not Implemented " + message);
     }
 
-    public somewhatImplemented(message: string) {
+    export function somewhatImplemented(message: string) {
       Debug.warning("somewhatImplemented: " + message);
     }
 
-    public unexpected(message: string) {
+    export function unexpected(message: string) {
       Debug.assert(false, "Unexpected: " + message);
     }
   }
@@ -151,20 +151,20 @@ module Shumway {
     [name: string]: T
   }
 
-  export class ObjectUtilities {
-    public static createEmptyObject() {
+  export module ObjectUtilities {
+    export function createEmptyObject() {
       return Object.create(null);
     }
 
-    public static createMap<T>():Map<T> {
+    export function createMap<T>():Map<T> {
       return Object.create(null);
     }
 
-    public static createArrayMap<T>():Map<T> {
+    export function createArrayMap<T>():Map<T> {
       return <Map<T>><any>[];
     }
 
-    public static defineReadOnlyProperty(object: Object, name: string, value: any) {
+    export function defineReadOnlyProperty(object: Object, name: string, value: any) {
       Object.defineProperty(object, name, {
         value: value,
         writable: false,
@@ -173,7 +173,7 @@ module Shumway {
       });
     }
 
-    public static getOwnPropertyDescriptors(object: Object): Map<PropertyDescriptor> {
+    export function getOwnPropertyDescriptors(object: Object): Map<PropertyDescriptor> {
       var o = ObjectUtilities.createMap<PropertyDescriptor>();
       var properties = Object.getOwnPropertyNames(object);
       for (var i = 0; i < properties.length; i++) {
@@ -182,7 +182,7 @@ module Shumway {
       return o;
     }
 
-    public static cloneObject(object: Object): Object {
+    export function cloneObject(object: Object): Object {
       var clone = ObjectUtilities.createEmptyObject();
       for (var property in object) {
         clone[property] = object[property];
@@ -190,13 +190,13 @@ module Shumway {
       return clone;
     }
 
-    public static copyProperties(object: Object, template: Object) {
+    export function copyProperties(object: Object, template: Object) {
       for (var property in template) {
         object[property] = template[property];
       }
     }
 
-    public static getLatestGetterOrSetterPropertyDescriptor(object, name) {
+    export function getLatestGetterOrSetterPropertyDescriptor(object, name) {
       var descriptor: PropertyDescriptor = {};
       while (object) {
         var tmp = Object.getOwnPropertyDescriptor(object, name);
@@ -212,7 +212,7 @@ module Shumway {
       return descriptor;
     }
 
-    public static defineNonEnumerableGetterOrSetter(obj, name, value, isGetter) {
+    export function defineNonEnumerableGetterOrSetter(obj, name, value, isGetter) {
       var descriptor = ObjectUtilities.getLatestGetterOrSetterPropertyDescriptor(obj, name);
       descriptor.configurable = true;
       descriptor.enumerable = false;
@@ -224,21 +224,21 @@ module Shumway {
       Object.defineProperty(obj, name, descriptor);
   }
 
-    public static defineNonEnumerableGetter(obj, name, getter) {
+    export function defineNonEnumerableGetter(obj, name, getter) {
       Object.defineProperty(obj, name, { get: getter,
         configurable: true,
         enumerable: false
       });
     }
 
-    public static defineNonEnumerableSetter(obj, name, setter) {
+    export function defineNonEnumerableSetter(obj, name, setter) {
       Object.defineProperty(obj, name, { set: setter,
         configurable: true,
         enumerable: false
       });
     }
 
-    public static defineNonEnumerableProperty(obj, name, value) {
+    export function defineNonEnumerableProperty(obj, name, value) {
       Object.defineProperty(obj, name, { value: value,
         writable: true,
         configurable: true,
@@ -246,7 +246,7 @@ module Shumway {
       });
     }
 
-    public static defineNonEnumerableForwardingProperty(obj, name, otherName) {
+    export function defineNonEnumerableForwardingProperty(obj, name, otherName) {
       Object.defineProperty(obj, name, {
         get: FunctionUtilities.makeForwardingGetter(otherName),
         set: FunctionUtilities.makeForwardingSetter(otherName),
@@ -256,19 +256,19 @@ module Shumway {
       });
     }
 
-    public static defineNewNonEnumerableProperty(obj, name, value) {
+    export function defineNewNonEnumerableProperty(obj, name, value) {
       release || assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
       ObjectUtilities.defineNonEnumerableProperty(obj, name, value);
     }
 
   }
 
-  export class FunctionUtilities {
-    public static makeForwardingGetter(target: string): () => any {
+  export module FunctionUtilities {
+    export function makeForwardingGetter(target: string): () => any {
       return <() => any> new Function("return this[\"" + target + "\"]");
     }
 
-    public static makeForwardingSetter(target: string): (any) => void {
+    export function makeForwardingSetter(target: string): (any) => void {
       return <(any) => void> new Function("value", "this[\"" + target + "\"] = value;");
     }
 
@@ -276,7 +276,7 @@ module Shumway {
      * Attaches a property to the bound function so we can detect when if it
      * ever gets rebound.
      */
-    public static bindSafely(fn: Function, object: Object) {
+    export function bindSafely(fn: Function, object: Object) {
       release || Debug.assert (!fn.boundTo && object);
       var f = fn.bind(object);
       f.boundTo = object;
@@ -284,8 +284,8 @@ module Shumway {
     }
   }
 
-  export class StringUtilities {
-    public static utf8decode(str: string): Uint8Array {
+  export module StringUtilities {
+    export function utf8decode(str: string): Uint8Array {
       var bytes = new Uint8Array(str.length * 4);
       var b = 0;
       for (var i = 0, j = str.length; i < j; i++) {
@@ -327,7 +327,7 @@ module Shumway {
       return bytes.subarray(0, b);
     }
 
-    public static utf8encode(bytes: Uint8Array): string {
+    export function utf8encode(bytes: Uint8Array): string {
       var j = 0, str = "";
       while (j < bytes.length) {
         var b1 = bytes[j++] & 0xFF;
@@ -377,7 +377,7 @@ module Shumway {
       return str;
     }
 
-    public static escapeString(str: string) {
+    export function escapeString(str: string) {
       if (str !== undefined) {
         str = str.replace(/[^\w$]/gi,"$"); /* No dots, colons, dashes and /s */
         if (/^\d/.test(str)) { /* No digits at the beginning */
@@ -390,7 +390,7 @@ module Shumway {
     /**
      * Workaround for max stack size limit.
      */
-    public static fromCharCodeArray(buffer: Uint8Array): string {
+    export function fromCharCodeArray(buffer: Uint8Array): string {
       var str = "", SLICE = 1024 * 16;
       for (var i = 0; i < buffer.length; i += SLICE) {
         var chunk = Math.min(buffer.length - i, SLICE);
@@ -399,9 +399,9 @@ module Shumway {
       return str;
     }
 
-    private static _encoding = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$_';
-    public static variableLengthEncodeInt32(n) {
-      var e = StringUtilities._encoding;
+    var _encoding = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$_';
+    export function variableLengthEncodeInt32(n) {
+      var e = _encoding;
       var bitCount = (32 - IntegerUtilities.leadingZeros(n));
       assert (bitCount <= 32, bitCount);
       var l = Math.ceil(bitCount / 6);
@@ -415,11 +415,11 @@ module Shumway {
       return s;
     }
 
-    public static toEncoding(n) {
-      return StringUtilities._encoding[n];
+    export function toEncoding(n) {
+      return _encoding[n];
     }
 
-    public static fromEncoding(s) {
+    export function fromEncoding(s) {
       var c = s.charCodeAt(0);
       var e = 0;
       if (c >= 65 && c <= 90) {
@@ -436,7 +436,7 @@ module Shumway {
       assert (false, "Invalid Encoding");
     }
 
-    public static variableLengthDecodeInt32(s) {
+    export function variableLengthDecodeInt32(s) {
       var l = StringUtilities.fromEncoding(s[0]);
       var n = 0;
       for (var i = 0; i < l; i++) {
@@ -447,14 +447,14 @@ module Shumway {
     }
   }
 
-  export class HashUtilities {
-    private static _md5R = new Uint8Array([
+  export module HashUtilities {
+    var _md5R = new Uint8Array([
       7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22, 7, 12, 17, 22,
       5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20, 5, 9, 14, 20,
       4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23, 4, 11, 16, 23,
       6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21, 6, 10, 15, 21]);
 
-    private static _md5K = new Int32Array([
+    var _md5K = new Int32Array([
       -680876936, -389564586, 606105819, -1044525330, -176418897, 1200080426,
       -1473231341, -45705983, 1770035416, -1958414417, -42063, -1990404162,
       1804603682, -40341101, -1502002290, 1236535329, -165796510, -1069501632,
@@ -467,9 +467,9 @@ module Shumway {
       -1051523, -2054922799, 1873313359, -30611744, -1560198380, 1309151649,
       -145523070, -1120210379, 718787259, -343485551]);
 
-    public static hashBytesTo32BitsMD5(data: Uint8Array, offset: number, length: number): number {
-      var r = HashUtilities._md5R;
-      var k = HashUtilities._md5K;
+    export function hashBytesTo32BitsMD5(data: Uint8Array, offset: number, length: number): number {
+      var r = _md5R;
+      var k = _md5K;
       var h0 = 1732584193, h1 = -271733879, h2 = -1732584194, h3 = 271733878;
       // pre-processing
       var paddedLength = (length + 72) & ~63; // data + 9 extra bytes
@@ -528,7 +528,7 @@ module Shumway {
       return h0;
     }
 
-    public static hashBytesTo32BitsAdler(data: Uint8Array, offset: number, length: number): number {
+    export function hashBytesTo32BitsAdler(data: Uint8Array, offset: number, length: number): number {
       var a = 1;
       var b = 0;
       var end = offset + length;
@@ -540,20 +540,20 @@ module Shumway {
     }
   }
 
-  export class IntegerUtilities {
-    public static bitCount(i: number): number {
+  export module IntegerUtilities {
+    export function bitCount(i: number): number {
       i = i - ((i >> 1) & 0x55555555);
       i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
       return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
     }
 
-    public static ones(i: number): number {
+    export function ones(i: number): number {
       i = i - ((i >> 1) & 0x55555555);
       i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
       return ((i + (i >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
     }
 
-    public static leadingZeros(i: number): number {
+    export function leadingZeros(i: number): number {
       i |= (i >> 1);
       i |= (i >> 2);
       i |= (i >> 4);
@@ -562,11 +562,11 @@ module Shumway {
       return 32 - IntegerUtilities.ones(i);
     }
 
-    public static trailingZeros(i: number): number {
+    export function trailingZeros(i: number): number {
       return IntegerUtilities.ones((i & -i) - 1);
     }
 
-    public static getFlags(i: number, flags: string[]): string {
+    export function getFlags(i: number, flags: string[]): string {
       var str = "";
       for (var i = 0; i < flags.length; i++) {
         if (i & (1 << i)) {
@@ -579,7 +579,7 @@ module Shumway {
       return str.trim();
     }
 
-    public static isPowerOfTwo(x) {
+    export function isPowerOfTwo(x) {
       return x && ((x & (x - 1)) === 0);
     }
   }
@@ -672,7 +672,7 @@ module Shumway {
       }
     }
 
-    writeArray(arr: any[], detailed: boolean, noNumbers: boolean) {
+    writeArray(arr: any[], detailed: boolean = false, noNumbers: boolean = false) {
       detailed = detailed || false;
       for (var i = 0, j = arr.length; i < j; i++) {
         var prefix = "";
