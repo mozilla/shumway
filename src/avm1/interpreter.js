@@ -943,21 +943,21 @@ function interpretActions(actionsData, scopeContainer,
         break;
       case 0x9A: // ActionGetURL2
         flags = stream.readUI8();
-        var httpMethod;
-        switch ((flags >> 6) & 3) {
-          case 1:
-            httpMethod = 'GET';
-            break;
-          case 2:
-            httpMethod  = 'POST';
-            break;
-        }
-        var loadMethod = !!(flags & 2) ?
-          (!!(flags & 1) ? _global.loadVariables : _global.loadMovie) :
-          (!!(flags & 1) ? _global.loadVariablesNum : _global.loadMovieNum);
         target = stack.pop();
         var url = stack.pop();
-        loadMethod.call(_global, url, target, httpMethod);
+        var sendVarsMethod;
+        if (flags & 1) {
+          sendVarsMethod = 'GET';
+        } else if (flags & 2) {
+          sendVarsMethod = 'POST';
+        }
+        var loadTargetFlag = flags & 1 << 6;
+        var loadVariablesFlag = flags & 1 << 7;
+        if (loadVariablesFlag) {
+          _global.loadVariables(url, target, sendVarsMethod);
+        } else {
+          _global.loadMovie(url, target, sendVarsMethod);
+        }
         break;
       case 0x9F: // ActionGotoFrame2
         flags = stream.readUI8();

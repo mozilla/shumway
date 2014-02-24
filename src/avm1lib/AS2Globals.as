@@ -17,12 +17,15 @@
  */
 package avm1lib {
 import flash.display.Loader;
+import flash.events.Event;
 import flash.external.ExternalInterface;
 import flash.geom.ColorTransform;
 import flash.geom.Rectangle;
 import flash.media.Sound;
 import flash.media.SoundMixer;
 import flash.net.SharedObject;
+import flash.net.URLLoader;
+import flash.net.URLLoaderDataFormat;
 import flash.net.URLRequest;
 import flash.net.navigateToURL;
 import flash.system.Capabilities;
@@ -172,15 +175,21 @@ public dynamic class AS2Globals {
     }
     loader.load(request);
   }
-  public function loadVariables(url, target, method) {
+  public function loadVariables(url: String, target: Object, method: String = ''): void {
     var nativeTarget = AS2Utils.resolveTarget(target);
-    // flash.display.Loader, flash.net.URLLoader
-    notImplemented('AS2Globals.loadVariables');
-  }
-  public function loadVariablesNum(url, level, method) {
-    var nativeTarget = AS2Utils.resolveLevel(level);
-    // flash.display.Loader, flash.net.URLLoader
-    notImplemented('AS2Globals.loadVariablesNum');
+    var request = new URLRequest(url);
+    if (method) {
+      request.method = method;
+    }
+    var loader: URLLoader = new URLLoader(request);
+    loader.dataFormat = URLLoaderDataFormat.VARIABLES;
+    function completeHandler(event: Event): void {
+      loader.removeEventListener(Event.COMPLETE, completeHandler);
+      for (var key: String in loader.data) {
+        nativeTarget[key] = loader.data[key];
+      }
+    }
+    loader.addEventListener(Event.COMPLETE, completeHandler);
   }
   public function mbchr(number) {
     return String.fromCharCode(number);
