@@ -20,19 +20,21 @@ import flash.utils.unescapeMultiByte;
 
 public dynamic class URLVariables {
   public function URLVariables(source:String = null) {
-    if (source != null) {
+    if (source) {
       decode(source);
     }
   }
   public function decode(source:String):void {
-    for each (var p:String in source.split('&')) {
+    var variables: Array = source.split('&');
+    for (var i: int = 0; i < variables.length; i++) {
+      var p: String = variables[i];
       var j:int = p.indexOf('=');
       if (j < 0) {
         Error.throwError(Error, 2101); // Errors.DecodeParamError
         return;
       }
-      var name = unescapeMultiByte(p.substring(0, j));
-      var value = unescapeMultiByte(p.substring(j + 1));
+      var name: String = unescapeMultiByte(p.substring(0, j));
+      var value: String = unescapeMultiByte(p.substring(j + 1));
       if (typeof this[name] == 'undefined') {
         this[name] = value;
       } else if (this[name] is Array) {
