@@ -64,11 +64,11 @@ var AS2UtilsDefinition = (function () {
               ? nativeObject._getAS2Object()
               : null;
         },
-        addProperty: function (obj, propertyName, getter, setter) {
+        addProperty: function (obj, propertyName, getter, setter, enumerable) {
           obj.asDefinePublicProperty(propertyName, {
             get: getter,
             set: setter || undefined,
-            enumerable: true,
+            enumerable: enumerable,
             configurable: true
           });
         },
