@@ -22,7 +22,7 @@ package avm1lib {
   [native(cls="AS2Utils")]
   public class AS2Utils {
     public static native function getAS2Object(nativeObject: Object) : Object;
-    public static native function addProperty(obj: Object, name: String, getter: Function, setter: Function);
+    public static native function addProperty(obj: Object, name: String, getter: Function, setter: Function, enumerable: Boolean = true);
     public static native function resolveTarget(target_mc:* = undefined) : MovieClip;
     public static native function resolveLevel(level: Number) : MovieClip;
     public static native function get currentStage() : Stage;
@@ -92,5 +92,6 @@ function _addEventHandlerProxy(obj: Object, propertyName: String, eventName: Str
       } else {
         handlerRunner = null;
       }
-    });
+    },
+    false);
 }
