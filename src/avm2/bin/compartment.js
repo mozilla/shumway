@@ -96,8 +96,24 @@ Timer.stop();
 
 load(homePath + "lib/ByteArray.js");
 
+load(homePath + "src/avm2/trampoline.js");
+load(homePath + "src/avm2/bindings.js");
+load(homePath + "src/avm2/r.js");
 load(homePath + "src/avm2/domain.js");
+load(homePath + "src/avm2/c.js");
 load(homePath + "src/avm2/class.js");
+
+var Binding = Shumway.AVM2.Runtime.Binding;
+var Bindings = Shumway.AVM2.Runtime.Bindings;
+var ActivationBindings = Shumway.AVM2.Runtime.ActivationBindings;
+var CatchBindings = Shumway.AVM2.Runtime.CatchBindings;
+var ScriptBindings = Shumway.AVM2.Runtime.ScriptBindings;
+var ClassBindings = Shumway.AVM2.Runtime.ClassBindings;
+var InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;
+var Interface = Shumway.AVM2.Runtime.Interface;
+var Class = Shumway.AVM2.Runtime.Class;
+
+
 load(homePath + "src/avm2/xregexp.js");
 load(homePath + "src/avm2/runtime.js");
 load(homePath + "src/avm2/viz.js");

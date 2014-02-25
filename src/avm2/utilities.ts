@@ -37,7 +37,7 @@ interface Function {
 }
 
 interface Array {
-  runtimeID: number;
+  runtimeId: number;
 }
 
 module Shumway {
@@ -152,6 +152,22 @@ module Shumway {
   }
 
   export module ObjectUtilities {
+
+    export function toKeyValueArray(object: Object) {
+      var hasOwnProperty = Object.prototype.hasOwnProperty;
+      var array = [];
+      for (var k in object) {
+        if (hasOwnProperty.call(object, k)) {
+          array.push([k, object[k]]);
+        }
+      }
+      return array;
+    }
+
+    export function hasOwnProperty(object: Object, name: string) {
+      return Object.prototype.hasOwnProperty.call(object, name);
+    }
+
     export function createEmptyObject() {
       return Object.create(null);
     }
@@ -285,6 +301,24 @@ module Shumway {
   }
 
   export module StringUtilities {
+    export function toSafeString(value) {
+      if (typeof value === "string") {
+        return "\"" + value + "\"";
+      }
+      if (typeof value === "number" || typeof value === "boolean") {
+        return String(value);
+      }
+      return typeof value;
+    }
+
+    export function toSafeArrayString(array) {
+      var str = [];
+      for (var i = 0; i < array.length; i++) {
+        str.push(toSafeString(array[i]));
+      }
+      return str.join(", ");
+    }
+
     export function utf8decode(str: string): Uint8Array {
       var bytes = new Uint8Array(str.length * 4);
       var b = 0;

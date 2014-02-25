@@ -498,19 +498,19 @@ module Shumway.AVM2.ABC {
   }
 
   export class InstanceInfo extends Info {
-    runtimeID: number;
+    runtimeId: number;
     name: Multiname;
     superName: Multiname;
-    protectedNs: Multiname;
+    protectedNs: Namespace;
     flags: number;
-    interfaces: ClassInfo[];
+    interfaces: Multiname [];
     init: MethodInfo;
     classInfo: ClassInfo;
-    traits: Trait[];
+    traits: Trait [];
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
       super(abc, index);
-      this.runtimeID = InstanceInfo.nextID ++;
+      this.runtimeId = InstanceInfo.nextID ++;
       var constantPool = abc.constantPool;
       var methods = abc.methods;
 
@@ -549,14 +549,14 @@ module Shumway.AVM2.ABC {
 
   export class ClassInfo extends Info {
     metadata: any;
-    runtimeID: number;
+    runtimeId: number;
     init: MethodInfo;
     instanceInfo: InstanceInfo;
     defaultValue: any;
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
       super(abc, index);
-      this.runtimeID = ClassInfo.nextID ++;
+      this.runtimeId = ClassInfo.nextID ++;
       this.abc = abc;
       this.hash = abc.hash + 0x010000 + index;
       this.index = index;
@@ -588,15 +588,15 @@ module Shumway.AVM2.ABC {
   }
 
   export class ScriptInfo extends Info {
-    runtimeID: number;
+    runtimeId: number;
     hash: number;
     init: MethodInfo;
     name: string;
-    traits: Trait[];
+    traits: Trait [];
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
       super(abc, index);
-      this.runtimeID = ClassInfo.nextID ++;
+      this.runtimeId = ClassInfo.nextID ++;
       this.hash = abc.hash + 0x020000 + index;
       this.name = abc.name + "$script" + index;
       this.init = abc.methods[stream.readU30()];
@@ -623,6 +623,7 @@ module Shumway.AVM2.ABC {
     classes: ClassInfo [];
     scripts: ScriptInfo [];
     env: any;
+    applicationDomain: any;
 
     constructor(bytes: Uint8Array, name: string, hash: number) {
       Timer.start("Parse ABC");
@@ -917,7 +918,7 @@ module Shumway.AVM2.ABC {
     public static PROTECTED = new Namespace(CONSTANT.ProtectedNamespace);
     public static PROXY = new Namespace(CONSTANT.Namespace, "http://www.adobe.com/2006/actionscript/flash/proxy");
 
-    private static _simpleNameCache = Shumway.ObjectUtilities.createMap<Namespace[]>();
+    private static _simpleNameCache = Shumway.ObjectUtilities.createMap<Namespace []>();
 
     /**
      * Creates a set of namespaces from one or more comma delimited simple names, for example:
@@ -925,7 +926,7 @@ module Shumway.AVM2.ABC {
      * private flash.display
      * [flash.display, private flash.display]
      */
-    public static fromSimpleName(simpleName): Namespace[] {
+    public static fromSimpleName(simpleName): Namespace [] {
       if (simpleName in Namespace._simpleNameCache) {
         return Namespace._simpleNameCache[simpleName];
       }
@@ -1027,25 +1028,26 @@ module Shumway.AVM2.ABC {
     public static RUNTIME_NAME      = 0x04;
     private static _nextID = 0;
 
-    public namespaces: Namespace[];
+    public namespaces: Namespace [];
     public name: string;
     public flags: number;
-    public runtimeID: number;
+    public runtimeId: number;
     public typeParameter: Multiname;
+    public qualifiedName: any;
     private _qualifiedNameCache: Map<Multiname>;
 
-    constructor(namespaces: Namespace[], name: string, flags: number = 0) {
+    constructor(namespaces: Namespace [], name: string, flags: number = 0) {
       if (name !== undefined) {
         release || assert (name === null || isString(name), "Multiname name must be a string. " + name);
         // assert (!isNumeric(name), "Multiname name must not be numeric: " + name);
       }
-      this.runtimeID = Multiname._nextID ++;
+      this.runtimeId = Multiname._nextID ++;
       this.namespaces = namespaces;
       this.name = name;
       this.flags = flags;
     }
 
-    public static parse(constantPool: ConstantPool, stream: AbcStream, multinames: Multiname[], patchFactoryTypes: any[]) {
+    public static parse(constantPool: ConstantPool, stream: AbcStream, multinames: Multiname [], patchFactoryTypes: any []) {
       var index = 0;
       var kind = stream.readU8();
       var name, namespaces = [], flags = 0;
@@ -1450,12 +1452,12 @@ module Shumway.AVM2.ABC {
 
   export class MetaDataInfo {
     public name: string;
-    public value: {key: string; value: string[]}[];
+    public value: {key: string; value: string []} [];
     constructor(abc: AbcFile, stream: AbcStream) {
       var strings = abc.constantPool.strings;
       var name = this.name = strings[stream.readU30()];
       var itemCount = stream.readU30();
-      var keys: string[] = [];
+      var keys: string [] = [];
       var items = [];
 
       for (var i = 0; i < itemCount; i++) {
@@ -1552,9 +1554,9 @@ module Shumway.AVM2.ABC {
     uints: number[];
     doubles: number[];
     strings: string[];
-    multinames: any[];
-    namespaces: any[];
-    namespaceSets: any[];
+    multinames: Multiname [];
+    namespaces: Namespace [];
+    namespaceSets: Namespace [][];
     positionAfterUTFStrings: number;
     constructor (stream: AbcStream, name: string) {
       var n;
@@ -1607,7 +1609,7 @@ module Shumway.AVM2.ABC {
       for (var i = 1; i < n; ++i) {
         var count = stream.readU30();
         var set = [];
-        set.runtimeID = ConstantPool._nextNamespaceSetID ++;
+        set.runtimeId = ConstantPool._nextNamespaceSetID ++;
         for (var j = 0; j < count; ++j) {
           set.push(namespaces[stream.readU30()]);
         }

@@ -69,47 +69,10 @@ XRegExp.install({ natives: true });
 var VM_METHOD_OVERRIDES = createEmptyObject();
 
 /**
- * We use inline caching to optimize name resolution on objects when we have no type information
- * available. We attach |InlineCache| (IC) objects on bytecode objects. The IC object is a (key,
- * value) tuple where the key usually holds the "shape" of the dynamic object and the value holds
- * the cached resolved qualified name. This is all predicated on assigning sensible "shape" IDs
- * to objects.
- */
-var vmNextShapeId = 1;
-
-function defineObjectShape(object) {
-  // TODO: This assertion seems to fail for proxies, investigate.
-  // assert (!obj.shape, "Shouldn't already have a shape ID. " + obj.shape);
-  defineReadOnlyProperty(object, "shape", vmNextShapeId ++);
-}
-
-/**
  * We use this to give functions unique IDs to help with debugging.
  */
 var vmNextInterpreterFunctionId = 1;
 var vmNextCompiledFunctionId = 1;
-var vmNextTrampolineId = 1;
-var vmNextMemoizerId = 1;
-
-var InlineCache = (function () {
-  function inlineCache () {
-    this.key = undefined;
-    this.value = undefined;
-  }
-  inlineCache.prototype.update = function (key, value) {
-    this.key = key;
-    this.value = value;
-    return value;
-  };
-  return inlineCache;
-})();
-
-/**
- * Attaches InlineCache to an object.
- */
-function ic(object) {
-  return object.ic || (object.ic = new InlineCache());
-}
 
 /* This is used to keep track if we're in a runtime context. For instance, proxies need to
  * know if a proxied operation is triggered by AS3 code or VM code.
@@ -118,7 +81,6 @@ function ic(object) {
 var callWriter = new IndentingWriter(false, function (str){
   print(str);
 });
-
 
 /*
  * We pollute the JS global object with object constants used in compiled code.
@@ -150,6 +112,9 @@ function objectConstantName(object) {
   return name;
 }
 
+var isClass = Shumway.AVM2.Runtime.isClass;
+var isTrampoline = Shumway.AVM2.Runtime.isTrampoline;
+var isMemoizer = Shumway.AVM2.Runtime.isMemoizer;
 
 var XXX = [];
 
@@ -256,330 +221,43 @@ var LazyInitializer = (function () {
  *
  */
 
-function getNamespaceResolutionMap(namespaces) {
-  var map = this.resolutionMap[namespaces.runtimeID];
-  if (map) return map;
-  map = this.resolutionMap[namespaces.runtimeID] = createEmptyObject();
-  var bindings = this.bindings;
-
-  for (var key in bindings.map) {
-    var multiname = key;
-    var trait = bindings.map[key].trait;
-    if (trait.isGetter() || trait.isSetter()) {
-      multiname = multiname.substring(Binding.KEY_PREFIX_LENGTH);
-    }
-    var k = multiname;
-    multiname = Multiname.fromQualifiedName(multiname);
-    if (multiname.getNamespace().inNamespaceSet(namespaces)) {
-      map[multiname.getName()] = Multiname.getQualifiedName(trait.name);
-    }
-  }
-  return map;
-}
-
-function resolveMultinameProperty(namespaces, name, flags) {
-  if (typeof name === "object") {
-    name = String(name);
-  }
-  if (isNumeric(name)) {
-    return toNumber(name);
-  }
-  if (!namespaces) {
-    return Multiname.getPublicQualifiedName(name);
-  }
-  if (namespaces.length > 1) {
-    var resolved = this.getNamespaceResolutionMap(namespaces)[name];
-    if (resolved) return resolved;
-    return Multiname.getPublicQualifiedName(name);
-  } else {
-    return Multiname.qualifyName(namespaces[0], name);
-  }
-}
-
-function asGetPublicProperty(name) {
-  return this.asGetProperty(undefined, name, 0);
-}
-
-function asGetProperty(namespaces, name, flags) {
-  var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-  if (this.asGetNumericProperty && Multiname.isNumeric(resolved)) {
-    return this.asGetNumericProperty(resolved);
-  }
-  return this[resolved];
-}
-
-function asGetPropertyLikelyNumeric(namespaces, name, flags) {
-  if (typeof name === "number") {
-    return this.asGetNumericProperty(name);
-  }
-  return asGetProperty.call(this, namespaces, name, flags);
-}
+var getNamespaceResolutionMap = Shumway.AVM2.Runtime.getNamespaceResolutionMap;
+var resolveMultinameProperty = Shumway.AVM2.Runtime.resolveMultinameProperty;
+var asGetPublicProperty = Shumway.AVM2.Runtime.asGetPublicProperty;
+var asGetProperty = Shumway.AVM2.Runtime.asGetProperty;
+var asGetPropertyLikelyNumeric = Shumway.AVM2.Runtime.asGetPropertyLikelyNumeric;
 
 /**
  * Resolved string accessors.
  */
 
-function asGetResolvedStringProperty(resolved) {
-  release || assert(isString(resolved));
-  return this[resolved];
-}
-
-function asCallResolvedStringProperty(resolved, isLex, args) {
-  var receiver = isLex ? null : this;
-  var openMethods = this[VM_OPEN_METHODS];
-  // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to work
-  // when using memoizers because the function gets bound to |this|.
-  var method;
-  if (receiver && openMethods && openMethods[resolved]) {
-    method = openMethods[resolved];
-  } else {
-    method = this[resolved];
-  }
-  return method.apply(receiver, args);
-}
-
-function asGetResolvedStringPropertyFallback(resolved) {
-  var name = Multiname.getNameFromPublicQualifiedName(resolved);
-  return this.asGetProperty([ASNamespace.PUBLIC], name, 0);
-}
-
-function asSetPublicProperty(name, value) {
-  return this.asSetProperty(undefined, name, 0, value);
-}
-
-function asSetProperty(namespaces, name, flags, value) {
-  if (typeof name === "object") {
-    name = String(name);
-  }
-  var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-  if (this.asSetNumericProperty && Multiname.isNumeric(resolved)) {
-    return this.asSetNumericProperty(resolved, value);
-  }
-  var slotInfo = this[VM_SLOTS].byQN[resolved];
-  if (slotInfo) {
-    if (slotInfo.const) {
-      return;
-    }
-    var type = slotInfo.type;
-    if (type && type.coerce) {
-      value = type.coerce(value);
-    }
-  }
-  this[resolved] = value;
-}
-
-function asSetPropertyLikelyNumeric(namespaces, name, flags, value) {
-  if (typeof name === "number") {
-    this.asSetNumericProperty(name, value);
-    return;
-  }
-  return asSetProperty.call(this, namespaces, name, flags, value);
-}
-
-function asDefinePublicProperty(name, descriptor) {
-  return this.asDefineProperty(undefined, name, 0, descriptor);
-}
-
-function asDefineProperty(namespaces, name, flags, descriptor) {
-  if (typeof name === "object") {
-    name = String(name);
-  }
-  var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-  Object.defineProperty(this, resolved, descriptor);
-}
-
-function asCallPublicProperty(name, args) {
-  return this.asCallProperty(undefined, name, 0, false, args);
-}
+var asGetResolvedStringProperty = Shumway.AVM2.Runtime.asGetResolvedStringProperty;
+var asCallResolvedStringProperty = Shumway.AVM2.Runtime.asCallResolvedStringProperty;
+var asGetResolvedStringPropertyFallback = Shumway.AVM2.Runtime.asGetResolvedStringPropertyFallback;
+var asSetPublicProperty = Shumway.AVM2.Runtime.asSetPublicProperty;
+var asSetProperty = Shumway.AVM2.Runtime.asSetProperty;
+var asSetPropertyLikelyNumeric = Shumway.AVM2.Runtime.asSetPropertyLikelyNumeric;
+var asDefinePublicProperty = Shumway.AVM2.Runtime.asDefinePublicProperty;
+var asDefineProperty = Shumway.AVM2.Runtime.asDefineProperty;
+var asCallPublicProperty = Shumway.AVM2.Runtime.asCallPublicProperty;
 
 var callCounter = new Shumway.Metrics.Counter(true);
 
-function asCallProperty(namespaces, name, flags, isLex, args) {
-  if (traceCallExecution.value) {
-    var receiver = this.class ? this.class.className + " ": "";
-    callWriter.enter("call " + receiver + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
-  }
-  var receiver = isLex ? null : this;
-  var result;
-  if (isProxyObject(this)) {
-    result = this[VM_CALL_PROXY](new Multiname(namespaces, name, flags), receiver, args);
-  } else {
-    var method;
-    var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-    if (this.asGetNumericProperty && Multiname.isNumeric(resolved)) {
-      method = this.asGetNumericProperty(resolved);
-    } else {
-      var openMethods = this[VM_OPEN_METHODS];
-      // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to work
-      // when using memoizers because the function gets bound to |this|.
-      if (receiver && openMethods && openMethods[resolved]) {
-        method = openMethods[resolved];
-      } else {
-        method = this[resolved];
-      }
-    }
-    result = method.apply(receiver, args);
-  }
-  traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
-  return result;
-}
-
-function asCallSuper(scope, namespaces, name, flags, args) {
-  if (traceCallExecution.value) {
-    var receiver = this.class ? this.class.className + " ": "";
-    callWriter.enter("call super " + receiver + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
-  }
-  var baseClass = scope.object.baseClass;
-  var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
-  var openMethods = baseClass.traitsPrototype[VM_OPEN_METHODS];
-  assert (openMethods && openMethods[resolved]);
-  var method = openMethods[resolved];
-  var result = method.apply(this, args);
-  traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
-  return result;
-}
-
-function asSetSuper(scope, namespaces, name, flags, value) {
-  if (traceCallExecution.value) {
-    var receiver = this.class ? this.class.className + " ": "";
-    callWriter.enter("set super " + receiver + name + "(" + toSafeString(value) + ") #" + callCounter.count(name));
-  }
-  var baseClass = scope.object.baseClass;
-  var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
-  if (this[VM_SLOTS].byQN[resolved]) {
-    this.asSetProperty(namespaces, name, flags, value);
-  } else {
-    baseClass.traitsPrototype[VM_OPEN_SET_METHOD_PREFIX + resolved].call(this, value);
-  }
-  traceCallExecution.value > 0 && callWriter.leave("");
-}
-
-function asGetSuper(scope, namespaces, name, flags) {
-  if (traceCallExecution.value) {
-    var receiver = this.class ? this.class.className + " ": "";
-    callWriter.enter("get super " + receiver + name + " #" + callCounter.count(name));
-  }
-  var baseClass = scope.object.baseClass;
-  var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
-  var result;
-  if (this[VM_SLOTS].byQN[resolved]) {
-    result = this.asGetProperty(namespaces, name, flags);
-  } else {
-    result = baseClass.traitsPrototype[VM_OPEN_GET_METHOD_PREFIX + resolved].call(this);
-  }
-  traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
-  return result;
-}
-
-function construct(constructor, args) {
-  if (constructor.classInfo) {
-    // return primitive values for new'd boxes
-    var qn = constructor.classInfo.instanceInfo.name.qualifiedName;
-    if (qn === Multiname.String) {
-      return String.apply(null, args);
-    }
-    if (qn === Multiname.Boolean) {
-      return Boolean.apply(null, args);
-    }
-    if (qn === Multiname.Number) {
-      return Number.apply(null, args);
-    }
-  }
-  return new (Function.bind.apply(constructor.instanceConstructor, [,].concat(args)));
-}
-
-function asConstructProperty(namespaces, name, flags, args) {
-  var constructor = this.asGetProperty(namespaces, name, flags);
-  if (traceCallExecution.value) {
-    callWriter.enter("construct " + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
-  }
-  var result = construct(constructor, args);
-  traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
-  return result;
-}
-
-function asHasProperty(namespaces, name, flags, nonProxy) {
-  if (this.hasProperty) {
-    return this.hasProperty(namespaces, name, flags);
-  }
-  if (nonProxy) {
-    return nonProxyingHasProperty(this, this.resolveMultinameProperty(namespaces, name, flags));
-  } else {
-    return this.resolveMultinameProperty(namespaces, name, flags) in this;
-  }
-}
-
-function asDeleteProperty(namespaces, name, flags) {
-  var resolved = this.resolveMultinameProperty(namespaces, name, flags);
-  return delete this[resolved];
-}
-
-function asGetNumericProperty(i) {
-  return this[i];
-}
-
-function asSetNumericProperty(i, v) {
-  this[i] = v;
-}
-
-function asGetDescendants(namespaces, name, flags) {
-  notImplemented("asGetDescendants");
-}
-
-/**
- * Gets the next name index of an object. Index |zero| is actually not an
- * index, but rather an indicator to start the iteration.
- */
-function asNextNameIndex(index) {
-  if (index === 0) {
-    // Gather all enumerable keys since we're starting a new iteration.
-    defineNonEnumerableProperty(this, "enumerableKeys", this.asGetEnumerableKeys());
-  }
-  var enumerableKeys = this.enumerableKeys;
-  while (index < enumerableKeys.length) {
-    if (this.asHasProperty(undefined, enumerableKeys[index], 0)) {
-      return index + 1;
-    }
-    index ++;
-  }
-  return 0;
-}
-
-/**
- * Gets the nextName after the specified |index|, which you would expect to
- * be index + 1, but it's actually index - 1;
- */
-function asNextName(index) {
-  var enumerableKeys = this.enumerableKeys;
-  release || assert(enumerableKeys && index > 0 && index < enumerableKeys.length + 1);
-  return enumerableKeys[index - 1];
-}
-
-function asNextValue(index) {
-  return this.asGetPublicProperty(this.asNextName(index));
-}
-
-function asGetEnumerableKeys() {
-  var boxedValue = this.valueOf();
-  // TODO: This is probably broken if the object has overwritten |valueOf|.
-  if (typeof boxedValue === "string" || typeof boxedValue === "number") {
-    return [];
-  }
-  var keys = Object.keys(this);
-  var result = [];
-  for (var i = 0; i < keys.length; i++) {
-    var key = keys[i];
-    if (isNumeric(key)) {
-      result.push(key);
-    } else {
-      var name = Multiname.stripPublicQualifier(key);
-      if (name !== undefined) {
-        result.push(name);
-      }
-    }
-  }
-  return result;
-}
+var asCallProperty = Shumway.AVM2.Runtime.asCallProperty;
+var asCallSuper = Shumway.AVM2.Runtime.asCallSuper;
+var asSetSuper = Shumway.AVM2.Runtime.asSetSuper;
+var asGetSuper = Shumway.AVM2.Runtime.asGetSuper;
+var construct = Shumway.AVM2.Runtime.construct;
+var asConstructProperty = Shumway.AVM2.Runtime.asConstructProperty;
+var asHasProperty = Shumway.AVM2.Runtime.asHasProperty;
+var asDeleteProperty = Shumway.AVM2.Runtime.asDeleteProperty;
+var asGetNumericProperty = Shumway.AVM2.Runtime.asGetNumericProperty;
+var asSetNumericProperty = Shumway.AVM2.Runtime.asSetNumericProperty;
+var asGetDescendants = Shumway.AVM2.Runtime.asGetDescendants;
+var asNextNameIndex = Shumway.AVM2.Runtime.asNextNameIndex;
+var asNextName = Shumway.AVM2.Runtime.asNextName;
+var asNextValue = Shumway.AVM2.Runtime.asNextValue;
+var asGetEnumerableKeys = Shumway.AVM2.Runtime.asGetEnumerableKeys;
 
 function initializeGlobalObject(global) {
   var VM_NATIVE_BUILTIN_SURROGATES = [
@@ -930,7 +608,7 @@ var Scope = (function () {
     if (!namespaces) {
       return name;
     } else if (namespaces.length > 1) {
-      return namespaces.runtimeID + "$" + name;
+      return namespaces.runtimeId + "$" + name;
     } else {
       return namespaces[0].qualifiedName + "$" + name;
     }
@@ -1062,12 +740,7 @@ function sliceArguments(args, offset) {
   return Array.prototype.slice.call(args, offset);
 }
 
-/**
- * Proxy traps ignore operations passing through nonProxying functions.
- */
-function nonProxyingHasProperty(object, name) {
-  return name in object;
-}
+var nonProxyingHasProperty = Shumway.AVM2.Runtime.nonProxyingHasProperty;
 
 function forEachPublicProperty(object, fn, self) {
   if (!object[VM_BINDINGS]) {
@@ -1104,21 +777,6 @@ function wrapJSObject(object) {
 
 function createActivation(methodInfo) {
   return Object.create(methodInfo.activationPrototype);
-}
-
-function isClass(object) {
-  release || assert (object);
-  return Object.hasOwnProperty.call(object, VM_IS_CLASS);
-}
-
-function isTrampoline(fn) {
-  release || assert (fn && typeof fn === "function");
-  return fn.isTrampoline;
-}
-
-function isMemoizer(fn) {
-  release || assert (fn && typeof fn === "function");
-  return fn.isMemoizer;
 }
 
 /**
@@ -1368,192 +1026,8 @@ function checkMethodOverrides(methodInfo) {
   }
 }
 
-/*
- * Memoizers and Trampolines:
- * ==========================
- *
- * In ActionScript 3 the following code creates a method closure for function |m|:
- *
- * class A {
- *   function m() { }
- * }
- *
- * var a = new A();
- * var x = a.m;
- *
- * Here |x| is a method closure for |m| whose |this| pointer is bound to |a|. We want method closures to be
- * created transparently whenever the |m| property is read from |a|. To do this, we install a memoizing
- * getter in the instance prototype that sets the |m| property of the instance object to a bound method closure:
- *
- * Ma = A.instance.prototype.m = function memoizer() {
- *   this.m = m.bind(this);
- * }
- *
- * var a = new A();
- * var x = a.m; // |a.m| calls the memoizer which in turn patches |a.m| to |m.bind(this)|
- * x = a.m; // |a.m| is already a method closure
- *
- * However, this design causes problems for method calls. For instance, we don't want the call expression |a.m()|
- * to be interpreted as |(a.m)()| which creates method closures every time a method is called on a new object.
- * Luckily, method call expressions such as |a.m()| are usually compiled as |callProperty(a, m)| by ASC and
- * lets us determine at compile time whenever a method closure needs to be created. In order to prevent the
- * method closure from being created by the memoizer we install the original |m| in the instance prototype
- * as well, but under a different name |m'|. Whenever we want to avoid creating a method closure, we just
- * access the |m'| property on the object. The expression |a.m()| is compiled by Shumway to |a.m'()|.
- *
- * Memoizers are installed whenever traits are applied which happens when a class is created. At this point
- * we don't actually have the function |m| available, it hasn't been compiled yet. We only want to compile the
- * code that is executed and thus we defer compilation until |m| is actually called. To do this, we create a
- * trampoline that compiles |m| before executing it.
- *
- * Tm = function trampoline() {
- *   return compile(m).apply(this, arguments);
- * }
- *
- * Of course we don't want to recompile |m| every time it is called. We can optimize the trampoline a bit
- * so that it keeps track of repeated executions:
- *
- * Tm = function trampolineContext() {
- *   var c;
- *   return function () {
- *     if (!c) {
- *       c = compile(m);
- *     }
- *     return c.apply(this, arguments);
- *   }
- * }();
- *
- * This is not good enough, we want to prevent repeated executions as much as possible. The way to fix this is
- * to patch the instance prototype to point to the compiled version instead, so that the trampoline doesn't get
- * called again.
- *
- * Tm = function trampolineContext() {
- *   var c;
- *   return function () {
- *     if (!c) {
- *       A.instance.prototype.m = c = compile(m);
- *     }
- *     return c.apply(this, arguments);
- *   }
- * }();
- *
- * This doesn't guarantee that the trampoline won't be called again, an unpatched reference to the trampoline
- * could have leaked somewhere.
- *
- * In fact, the memoizer first has to memoize the trampoline. When the trampoline is executed it needs to patch
- * the memoizer so that the next time around it memoizes |Fm| instead of the trampoline. The trampoline also has
- * to patch |m'| with |Fm|, as well as |m| on the instance with a bound |Fm|.
- *
- * Class inheritance further complicates this picture. Suppose we extend class |A| and call the |m| method on an
- * instance of |B|.
- *
- * class B extends A { }
- *
- * var b = new B();
- * b.m();
- *
- * At first class |A| has a memoizer for |m| and a trampoline for |m'|. If we never call |m| on an instance of |A|
- * then the trampoline is not resolved to a function. When we create class |B| we copy over all the traits in the
- * |A.instance.prototype| to |B.instance.prototype| including the memoizers and trampolines. If we call |m| on an
- * instance of |B| then we're going through a memoizer which will be patched to |Fm| by the trampoline and will
- * be reflected in the entire inheritance hierarchy. The problem is when calling |b.m'()| which currently holds
- * the copied trampoline |Ta| which will patch |A.instance.prototype.m'| and not |m'| in |B|s instance prototype.
- *
- * To solve this we keep track of where trampolines are copied and then patching these locations. We store copy
- * locations in the trampoline function object themselves.
- *
- */
-
-/**
- * Creates a trampoline function stub which calls the result of a |forward| callback. The forward
- * callback is only executed the first time the trampoline is executed and its result is cached in
- * the trampoline closure.
- */
-function makeTrampoline(forward, parameterLength, description) {
-  release || assert (forward && typeof forward === "function");
-  return (function trampolineContext() {
-    var target = null;
-    /**
-     * Triggers the trampoline and executes it.
-     */
-    var trampoline = function execute() {
-      if (traceExecution.value >= 3) {
-        print("Trampolining");
-      }
-      Counter.count("Executing Trampoline");
-      traceCallExecution.value > 1 && callWriter.writeLn("Trampoline: " + description);
-      if (!target) {
-        target = forward(trampoline);
-        release || assert (target);
-      }
-      return target.apply(this, arguments);
-    };
-    /**
-     * Just triggers the trampoline without executing it.
-     */
-    trampoline.trigger = function trigger() {
-      Counter.count("Triggering Trampoline");
-      if (!target) {
-        target = forward(trampoline);
-        release || assert (target);
-      }
-    };
-    trampoline.isTrampoline = true;
-    trampoline.debugName = "Trampoline #" + vmNextTrampolineId++;
-    // Make sure that the length property of the trampoline matches the trait's number of
-    // parameters. However, since we can't redefine the |length| property of a function,
-    // we define a new hidden |VM_LENGTH| property to store this value.
-    defineReadOnlyProperty(trampoline, VM_LENGTH, parameterLength);
-    return trampoline;
-  })();
-}
-
-function makeMemoizer(qn, target) {
-  function memoizer() {
-    Counter.count("Runtime: Memoizing");
-    // release || assert (!Object.prototype.hasOwnProperty.call(this, "class"), this);
-    if (traceExecution.value >= 3) {
-      print("Memoizing: " + qn);
-    }
-    traceCallExecution.value > 1 && callWriter.writeLn("Memoizing: " + qn);
-    if (isNativePrototype(this)) {
-      Counter.count("Runtime: Method Closures");
-      return bindSafely(target.value, this);
-    }
-    if (isTrampoline(target.value)) {
-      // If the memoizer target is a trampoline then we need to trigger it before we bind the memoizer
-      // target to |this|. Triggering the trampoline will patch the memoizer target but not actually
-      // call it.
-      target.value.trigger();
-    }
-    release || assert (!isTrampoline(target.value), "We should avoid binding trampolines.");
-    var mc = null;
-    if (isClass(this)) {
-      Counter.count("Runtime: Static Method Closures");
-      mc = bindSafely(target.value, this);
-      defineReadOnlyProperty(this, qn, mc);
-      return mc;
-    }
-    if (Object.prototype.hasOwnProperty.call(this, qn)) {
-      var pd = Object.getOwnPropertyDescriptor(this, qn);
-      if (pd.get) {
-        Counter.count("Runtime: Method Closures");
-        return bindSafely(target.value, this);
-      }
-      Counter.count("Runtime: Unpatched Memoizer");
-      return this[qn];
-    }
-    mc = bindSafely(target.value, this);
-    mc.methodInfo = target.value.methodInfo;
-    defineReadOnlyProperty(mc, Multiname.getPublicQualifiedName("prototype"), null);
-    defineReadOnlyProperty(this, qn, mc);
-    return mc;
-  }
-  Counter.count("Runtime: Memoizers");
-  memoizer.isMemoizer = true;
-  memoizer.debugName = "Memoizer #" + vmNextMemoizerId++;
-  return memoizer;
-}
+var makeTrampoline = Shumway.AVM2.Runtime.makeTrampoline;
+var makeMemoizer = Shumway.AVM2.Runtime.makeMemoizer;
 
 /**
  * Creates a function from the specified |methodInfo| that is bound to the given |scope|. If the

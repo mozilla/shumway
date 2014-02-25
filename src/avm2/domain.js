@@ -202,7 +202,7 @@ var ApplicationDomain = (function () {
           return ci;
         }
       } else {
-        var ci = this.classInfoCache[mn.runtimeID];
+        var ci = this.classInfoCache[mn.runtimeId];
         if (ci) {
           return ci;
         }
@@ -268,7 +268,7 @@ var ApplicationDomain = (function () {
      * definition of conflicting name will never be resolved.
      */
     findDefiningScript: function findDefiningScript(mn, execute) {
-      var resolved = this.scriptCache[mn.runtimeID];
+      var resolved = this.scriptCache[mn.runtimeId];
       if (resolved && (resolved.script.executed || !execute)) {
         return resolved;
       }
@@ -296,7 +296,7 @@ var ApplicationDomain = (function () {
                 if (execute) {
                   ensureScriptIsExecuted(script, trait.name);
                 }
-                return (this.scriptCache[mn.runtimeID] = { script: script, trait: trait });
+                return (this.scriptCache[mn.runtimeId] = { script: script, trait: trait });
               }
             }
           } else {

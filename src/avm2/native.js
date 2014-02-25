@@ -365,6 +365,18 @@ var natives = (function () {
     return c;
   }
 
+  function MethodClosure($this, fn) {
+    var bound = bindSafely(fn, $this);
+    defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
+    defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
+  }
+
+  MethodClosure.prototype = {
+    toString: function () {
+      return "function Function() {}";
+    }
+  };
+
   function MethodClosureClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("MethodClosure", MethodClosure);
     c.extendBuiltin(baseClass);

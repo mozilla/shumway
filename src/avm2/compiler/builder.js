@@ -753,7 +753,7 @@ var createName = function createName(namespaces, name) {
           return store(new IR.ASCallProperty(region, state.store, object, multiname, args, IR.Flags.PRISTINE, isLex));
         }
 
-        function getProperty(object, multiname, ti, getOpenMethod, ic) {
+        function getProperty(object, multiname, ti, getOpenMethod) {
           release || assert (multiname instanceof IR.ASMultiname);
           getOpenMethod = !!getOpenMethod;
           if (ti) {
@@ -781,7 +781,7 @@ var createName = function createName(namespaces, name) {
           return store(new IR.ASGetProperty(region, state.store, object, multiname, (getOpenMethod ? IR.Flagas.IS_METHOD : 0)));
         }
 
-        function setProperty(object, multiname, value, ti, ic) {
+        function setProperty(object, multiname, value, ti) {
           release || assert (multiname instanceof IR.ASMultiname);
           if (ti) {
             if (ti.trait) {
@@ -1021,7 +1021,7 @@ var createName = function createName(namespaces, name) {
             case 0x66: // OP_getproperty
               multiname = buildMultiname(bc.index);
               object = pop();
-              push(getProperty(object, multiname, bc.ti, false, ic(bc)));
+              push(getProperty(object, multiname, bc.ti, false));
               break;
             case 0x59: // OP_getdescendants
               multiname = buildMultiname(bc.index);
@@ -1030,14 +1030,14 @@ var createName = function createName(namespaces, name) {
               break;
             case 0x60: // OP_getlex
               multiname = buildMultiname(bc.index);
-              push(getProperty(findProperty(multiname, true, bc.ti), multiname, bc.ti, false, ic(bc)));
+              push(getProperty(findProperty(multiname, true, bc.ti), multiname, bc.ti, false));
               break;
             case 0x68: // OP_initproperty
             case 0x61: // OP_setproperty
               value = pop();
               multiname = buildMultiname(bc.index);
               object = pop();
-              setProperty(object, multiname, value, bc.ti, ic(bc));
+              setProperty(object, multiname, value, bc.ti);
               break;
             case 0x6A: // OP_deleteproperty
               multiname = buildMultiname(bc.index);
@@ -1111,7 +1111,7 @@ var createName = function createName(namespaces, name) {
               args = popMany(bc.argCount);
               multiname = buildMultiname(bc.index);
               object = pop();
-              callee = getProperty(object, multiname, bc.ti, false, ic(bc));
+              callee = getProperty(object, multiname, bc.ti, false);
               push(store(new IR.ASNew(region, state.store, callee, args)));
               break;
             case 0x80: // OP_coerce
