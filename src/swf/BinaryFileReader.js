@@ -15,6 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*global XMLHttpRequest, unexpected */
+
 var BinaryFileReader = (function binaryFileReader() {
   function constructor(url, method, mimeType, data) {
     this.url = url;
