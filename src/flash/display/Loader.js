@@ -875,7 +875,13 @@ var LoaderDefinition = (function () {
         loader._vmPromise.resolve();
       };
       if (avm2.isAVM1Loaded) {
-        loaded();
+        if (AS2Context.instance) {
+          loader._avm1Context = AS2Context.instance;
+          loader._vmPromise.resolve();
+        } else {
+          assert(stage);
+          loaded();
+        }
       } else {
         avm2.isAVM1Loaded = true;
         avm2.loadAVM1(loaded);

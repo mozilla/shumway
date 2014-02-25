@@ -19,6 +19,7 @@ package avm1lib {
 import flash.display.BitmapData;
 import flash.display.Loader;
 import flash.display.MovieClip;
+import flash.events.Event;
 import flash.geom.Point;
 import flash.geom.Rectangle;
 import flash.net.URLRequest;
@@ -270,14 +271,21 @@ public dynamic class AS2MovieClip extends Object {
   public function lineTo(x, y) {
     this._as3Object.graphics.lineTo(x, y);
   }
-  public function loadMovie(url, method) {
+  public function loadMovie(url: String, method: String) {
     var loader:Loader = new Loader();
-    this._as3Object.addChild(loader);
-    var request = new URLRequest(url);
+    var request: URLRequest = new URLRequest(url);
     if (method) {
       request.method = method;
     }
     loader.load(request);
+    function completeHandler(event: Event): void {
+      loader.removeEventListener(Event.COMPLETE, completeHandler);
+      var parent: MovieClip = this._as3Object.parent;
+      var depth: int = parent.getChildIndex(this._as3Object);
+      parent.removeChild(this._as3Object);
+      parent.addChildAt(loader.content, depth);
+    }
+    loader.addEventListener(Event.COMPLETE, completeHandler);
   }
   public function loadVariables(url, method) {
     throw 'Not implemented: loadVariables';

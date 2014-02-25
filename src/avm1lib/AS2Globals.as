@@ -17,12 +17,16 @@
  */
 package avm1lib {
 import flash.display.Loader;
+import flash.display.MovieClip;
+import flash.events.Event;
 import flash.external.ExternalInterface;
 import flash.geom.ColorTransform;
 import flash.geom.Rectangle;
 import flash.media.Sound;
 import flash.media.SoundMixer;
 import flash.net.SharedObject;
+import flash.net.URLLoader;
+import flash.net.URLLoaderDataFormat;
 import flash.net.URLRequest;
 import flash.net.navigateToURL;
 import flash.system.Capabilities;
@@ -139,21 +143,35 @@ public dynamic class AS2Globals {
     return frameNum < framesLoaded;
   }
 
-  public function int(value) {
-    return 0 | value;
+  public function int(value: *): * {
+    return value | 0;
   }
 
-  public function length(expression) {
+  public function length(expression: Object): Number {
     return ('' + expression).length; // ASCII Only?
   }
 
-  public function loadMovie(url, target, method) {
+  public function loadMovie(url: String, target: Object, method: String): void {
     // some swfs are using loadMovie to call fscommmand
-    if (/^fscommand:/i.test(url)) {
-      return this.fscommand(url.substring('fscommand:'.length), target);
+    if (url.indexOf('fscommand:') === 0) {
+      this.fscommand(url.substring('fscommand:'.length), target);
+      return;
     }
-    var nativeTarget = AS2Utils.resolveTarget(target);
-    nativeTarget.loadMovie(url, method);
+    var levelStr: String;
+    var loadLevel: Boolean = typeof target === 'string' && target.indexOf('_level') === 0 &&
+                             int(levelStr = target.charAt(6)) == levelStr;
+    var loader:Loader = new Loader();
+    if (loadLevel) {
+      _setLevel(int(levelStr), loader);
+      var request: URLRequest = new URLRequest(url);
+      if (method) {
+        request.method = method;
+      }
+      loader.load(request);
+    } else {
+      var nativeTarget: flash.display.MovieClip = AS2Utils.resolveTarget(target);
+      nativeTarget.loadMovie(url, method);
+    }
   }
 
   private native function _setLevel(level:uint, loader:Loader);
@@ -172,15 +190,21 @@ public dynamic class AS2Globals {
     }
     loader.load(request);
   }
-  public function loadVariables(url, target, method) {
+  public function loadVariables(url: String, target: Object, method: String = ''): void {
     var nativeTarget = AS2Utils.resolveTarget(target);
-    // flash.display.Loader, flash.net.URLLoader
-    notImplemented('AS2Globals.loadVariables');
-  }
-  public function loadVariablesNum(url, level, method) {
-    var nativeTarget = AS2Utils.resolveLevel(level);
-    // flash.display.Loader, flash.net.URLLoader
-    notImplemented('AS2Globals.loadVariablesNum');
+    var request = new URLRequest(url);
+    if (method) {
+      request.method = method;
+    }
+    var loader: URLLoader = new URLLoader(request);
+    loader.dataFormat = URLLoaderDataFormat.VARIABLES;
+    function completeHandler(event: Event): void {
+      loader.removeEventListener(Event.COMPLETE, completeHandler);
+      for (var key: String in loader.data) {
+        nativeTarget[key] = loader.data[key];
+      }
+    }
+    loader.addEventListener(Event.COMPLETE, completeHandler);
   }
   public function mbchr(number) {
     return String.fromCharCode(number);

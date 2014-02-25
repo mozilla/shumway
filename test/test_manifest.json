@@ -330,5 +330,12 @@
         "swfs/avm1/settimeout/settimeout.swf"
       ],
       "type": "stas"
+    },
+    {  "id": "avm1 loadVariables trace",
+      "stas": "swfs/trace.stas",
+      "filenames": [
+        "swfs/avm1/loadvariables/loadvariables.swf"
+      ],
+      "type": "stas"
     }
 ]
