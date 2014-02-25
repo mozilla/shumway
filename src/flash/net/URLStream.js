@@ -21,12 +21,17 @@ var URLStreamDefinition = (function () {
   var def = {
     initialize: function () {
       this._stream = null;
+      this._session = null;
       this._connected = false;
       this._littleEndian = false;
     },
 
     close: function close() {
-      this._session.close();
+      if (this._session) {
+        this._session.close();
+        this._session = null;
+        this._connected = false;
+      }
     },
     load: function load(request) {
       var session = FileLoadingService.createSession();
@@ -51,7 +56,7 @@ var URLStreamDefinition = (function () {
            false, false, progressState.bytesLoaded, progressState.bytesTotal]));
       };
       session.onerror = function (error) {
-        self._connected = false;
+        self.close();
         if (!self._stream) {
           // We need to have something to return in data
           self._stream = new Stream(new ArrayBuffer(0), 0, 0, 0);

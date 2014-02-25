@@ -27,6 +27,7 @@ var BinaryFileReader = (function binaryFileReader() {
     readAll: function(progress, complete) {
       var url = this.url;
       var xhr = new XMLHttpRequest({mozSystem:true});
+      this.request = xhr;
       var async = true;
       xhr.open(this.method || "GET", this.url, async);
       xhr.responseType = "arraybuffer";
@@ -52,6 +53,8 @@ var BinaryFileReader = (function binaryFileReader() {
     },
     readAsync: function(ondata, onerror, onopen, oncomplete, onhttpstatus) {
       var xhr = new XMLHttpRequest({mozSystem:true});
+      this.request = xhr;
+      var self = this;
       var url = this.url;
       xhr.open(this.method || "GET", url, true);
       xhr.responseType = 'moz-chunked-arraybuffer';
@@ -70,6 +73,9 @@ var BinaryFileReader = (function binaryFileReader() {
         if (xhr.readyState === 4) {
           if (xhr.status !== 200 && xhr.status !== 0) {
             onerror(xhr.statusText);
+            xhr.abort();
+            self.request = null;
+            return;
           }
           if (isNotProgressive) {
             var buffer = xhr.response;
@@ -78,6 +84,7 @@ var BinaryFileReader = (function binaryFileReader() {
           if (oncomplete) {
             oncomplete();
           }
+          self.request = null;
         }
       };
       if (this.mimeType) {
@@ -86,6 +93,12 @@ var BinaryFileReader = (function binaryFileReader() {
       xhr.send(this.data || null);
       if (onopen)
         onopen();
+    },
+    abort: function() {
+      if (this.request) {
+        this.request.abort();
+        this.request = null;
+      }
     }
   };
   return constructor;

@@ -136,13 +136,20 @@ var FileLoadingService = {
         base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
         var path = base ? base + request.url : request.url;
         console.log('FileLoadingService: loading ' + path);
-        new BinaryFileReader(path).readAsync(
+        this.reader = new BinaryFileReader(path);
+        this.reader.readAsync(
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
           },
           function (e) { self.onerror(e); },
           self.onopen,
           self.onclose);
+      },
+      close: function() {
+        if (this.reader) {
+          this.reader.abort();
+          this.reader = null;
+        }
       }
     };
   }

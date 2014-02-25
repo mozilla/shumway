@@ -241,7 +241,8 @@ var FileLoadingService = {
         var self = this;
         var path = FileLoadingService.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
-        new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
+        this.reader = new BinaryFileReader(path, request.method, request.mimeType, request.data);
+        this.reader.readAsync(
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
           },
@@ -249,6 +250,12 @@ var FileLoadingService = {
           self.onopen,
           self.onclose,
           self.onhttpstatus);
+      },
+      close: function() {
+        if (this.reader) {
+          this.reader.abort();
+          this.reader = null;
+        }
       }
     };
   },

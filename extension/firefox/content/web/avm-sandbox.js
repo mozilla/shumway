@@ -215,7 +215,7 @@ var FileLoadingService = {
     var sessionId = this.nextSessionId++;
     return this.sessions[sessionId] = {
       open: function (request) {
-        var self = this;
+        this.active = true;
         var path = FileLoadingService.resolveUrl(request.url);
         console.log('Session #' + sessionId +': loading ' + path);
         FirefoxCom.requestSync('loadFile', {url: path, method: request.method,
@@ -224,20 +224,35 @@ var FileLoadingService = {
       },
       notify: function (args) {
         switch (args.topic) {
-          case "open": this.onopen(); break;
+          case "open":
+            if (this.active) {
+              this.onopen();
+            }
+            break;
           case "close":
+            if (!this.active) {
+              break;
+            }
+            this.active = false;
             this.onclose();
             FileLoadingService.sessions[sessionId] = null;
             console.log('Session #' + sessionId +': closed');
             break;
           case "error":
-            this.onerror && this.onerror(args.error);
+            this.active && this.onerror && this.onerror(args.error);
             break;
           case "progress":
+            if (!this.active) {
+              break;
+            }
             console.log('Session #' + sessionId + ': loaded ' + args.loaded + '/' + args.total);
             this.onprogress && this.onprogress(args.array, {bytesLoaded: args.loaded, bytesTotal: args.total});
             break;
         }
+      },
+      close: function() {
+        // TODO: properly implement aborting sessions, aborting the download and all.
+        this.active = false;
       }
     };
   },
