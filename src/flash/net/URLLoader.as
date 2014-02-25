@@ -25,7 +25,7 @@ import flash.utils.ByteArray;
 
 [native(cls="URLLoaderClass")]
 public class URLLoader extends EventDispatcher {
-  public function URLLoader(request:URLRequest = null) {
+  public function URLLoader(request: URLRequest = null) {
     _stream = new URLStream();
 
     _stream.addEventListener(Event.OPEN, onStreamOpen);
@@ -40,11 +40,15 @@ public class URLLoader extends EventDispatcher {
       load(request);
     }
   }
-  public var data;
-  public var dataFormat:String = "text";
-  public var bytesLoaded:uint;
-  public var bytesTotal:uint;
-  public override function addEventListener(type:String, listener:Function, useCapture:Boolean = false, priority:int = 0, useWeakReference:Boolean = false):void {
+  public var data: *;
+  public var dataFormat: String = "text";
+  public var bytesLoaded: uint;
+  public var bytesTotal: uint;
+  private var _stream: URLStream;
+  private var _httpResponseEventBound: Boolean;
+  public override function addEventListener(type: String, listener: Function,
+                                            useCapture: Boolean = false, priority: int = 0,
+                                            useWeakReference: Boolean = false): void {
     super.addEventListener(type, listener, useCapture, priority, useWeakReference);
 
     // Looks like there is some bug related to the HTTP_RESPONSE_STATUS
@@ -52,17 +56,14 @@ public class URLLoader extends EventDispatcher {
       _httpResponseEventBound = true;
     }
   }
-  public function load(request:URLRequest):void {
+  public function load(request: URLRequest): void {
     _stream.load(request);
   }
-  public function close():void {
+  public function close(): void {
     _stream.close();
   }
-
-  private var _stream:URLStream;
-  private var _httpResponseEventBound:Boolean;
-  private function complete() {
-    var response:ByteArray = new ByteArray();
+  private function complete(): void {
+    var response: ByteArray = new ByteArray();
     _stream.readBytes(response);
 
     if (dataFormat == 'binary') {
@@ -75,35 +76,35 @@ public class URLLoader extends EventDispatcher {
       data = new URLVariables(String(data));
     }
   }
-  private function onStreamOpen(e:Event) {
+  private function onStreamOpen(e: Event): void {
     dispatchEvent(e);
   }
-  private function onStreamComplete(e:Event) {
+  private function onStreamComplete(e: Event): void {
     complete();
 
     dispatchEvent(e);
   }
-  private function onStreamProgress(e:ProgressEvent) {
+  private function onStreamProgress(e: ProgressEvent): void {
     bytesLoaded = e.bytesLoaded;
     bytesTotal = e.bytesTotal;
 
     dispatchEvent(e);
   }
-  private function onStreamIOError(e:IOErrorEvent) {
+  private function onStreamIOError(e: IOErrorEvent): void {
     complete();
 
     dispatchEvent(e);
   }
-  private function onStreamHTTPStatus(e:HTTPStatusEvent) {
+  private function onStreamHTTPStatus(e: HTTPStatusEvent): void {
     dispatchEvent(e);
   }
-  private function onStreamHTTPResponseStatus(e:HTTPStatusEvent) {
+  private function onStreamHTTPResponseStatus(e: HTTPStatusEvent): void {
     if (!_httpResponseEventBound) {
       return;
     }
     dispatchEvent(e);
   }
-  private function onStreamSecurityError(e:SecurityErrorEvent) {
+  private function onStreamSecurityError(e: SecurityErrorEvent): void {
     dispatchEvent(e);
   }
 }
