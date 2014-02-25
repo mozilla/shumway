@@ -17,6 +17,7 @@
  */
 package avm1lib {
 import flash.display.Loader;
+import flash.display.MovieClip;
 import flash.events.Event;
 import flash.external.ExternalInterface;
 import flash.geom.ColorTransform;
@@ -142,21 +143,35 @@ public dynamic class AS2Globals {
     return frameNum < framesLoaded;
   }
 
-  public function int(value) {
-    return 0 | value;
+  public function int(value: *): * {
+    return value | 0;
   }
 
-  public function length(expression) {
+  public function length(expression: Object): Number {
     return ('' + expression).length; // ASCII Only?
   }
 
-  public function loadMovie(url, target, method) {
+  public function loadMovie(url: String, target: Object, method: String): void {
     // some swfs are using loadMovie to call fscommmand
-    if (/^fscommand:/i.test(url)) {
-      return this.fscommand(url.substring('fscommand:'.length), target);
+    if (url.indexOf('fscommand:') === 0) {
+      this.fscommand(url.substring('fscommand:'.length), target);
+      return;
     }
-    var nativeTarget = AS2Utils.resolveTarget(target);
-    nativeTarget.loadMovie(url, method);
+    var levelStr: String;
+    var loadLevel: Boolean = typeof target === 'string' && target.indexOf('_level') === 0 &&
+                             int(levelStr = target.charAt(6)) == levelStr;
+    var loader:Loader = new Loader();
+    if (loadLevel) {
+      _setLevel(int(levelStr), loader);
+      var request: URLRequest = new URLRequest(url);
+      if (method) {
+        request.method = method;
+      }
+      loader.load(request);
+    } else {
+      var nativeTarget: flash.display.MovieClip = AS2Utils.resolveTarget(target);
+      nativeTarget.loadMovie(url, method);
+    }
   }
 
   private native function _setLevel(level:uint, loader:Loader);
