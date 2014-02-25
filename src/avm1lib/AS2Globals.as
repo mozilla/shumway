@@ -380,6 +380,7 @@ public dynamic class AS2Globals {
   public var Point:Class = flash.geom.Point;
   public var Rectangle:Class = Rectangle;
   public var TextFormat:Class = TextFormat;
+  public var LoadVars:Class = LoadVars;
 
   private static native function _addInternalClasses(proto:Object):void;
 
