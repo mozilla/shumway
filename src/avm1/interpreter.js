@@ -952,6 +952,10 @@ function interpretActions(actionsData, scopeContainer,
           sendVarsMethod = 'POST';
         }
         var loadTargetFlag = flags & 1 << 6;
+        if (!loadTargetFlag) {
+          _global.getURL(url, target, sendVarsMethod);
+          break;
+        }
         var loadVariablesFlag = flags & 1 << 7;
         if (loadVariablesFlag) {
           _global.loadVariables(url, target, sendVarsMethod);
