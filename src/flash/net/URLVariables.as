@@ -47,14 +47,18 @@ public dynamic class URLVariables {
   public function toString():String {
     var pairs:Array = [];
     for (var name: String in this) {
+      var value: String;
       if (this[name] is Array) {
-        for each (var value:String in this[name]) {
-          pairs.push(encodeURIComponent(name.replace(' ', '+')) + '=' +
-                     encodeURIComponent(value.replace(' ', '+')));
+        name = encodeURIComponent(name.replace(' ', '+'));
+        var values: Array = this[name] as Array;
+        for (var i: int = 0; i < values.length; i++) {
+          value = values[i];
+          pairs.push(name + '=' + encodeURIComponent(value.replace(' ', '+')));
         }
       } else {
+        value = this[name];
         pairs.push(encodeURIComponent(name.replace(' ', '+')) + '=' +
-                   encodeURIComponent(this[name].replace(' ', '+')));
+                   encodeURIComponent(value.replace(' ', '+')));
       }
     }
     return pairs.join('&');
