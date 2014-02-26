@@ -1065,50 +1065,50 @@ module Shumway.AVM2.ABC {
       var name, namespaces = [], flags = 0;
       switch (kind) {
         case CONSTANT.QName: case CONSTANT.QNameA:
-        index = stream.readU30();
-        if (index) {
-          namespaces = [constantPool.namespaces[index]];
-        } else {
-          flags &= ~Multiname.RUNTIME_NAME;    // any name
-        }
-        index = stream.readU30();
-        if (index) {
-          name = constantPool.strings[index];
-        }
-        break;
+          index = stream.readU30();
+          if (index) {
+            namespaces = [constantPool.namespaces[index]];
+          } else {
+            flags &= ~Multiname.RUNTIME_NAME;    // any name
+          }
+          index = stream.readU30();
+          if (index) {
+            name = constantPool.strings[index];
+          }
+          break;
         case CONSTANT.RTQName: case CONSTANT.RTQNameA:
-        index = stream.readU30();
-        if (index) {
-          name = constantPool.strings[index];
-        } else {
-          flags &= ~Multiname.RUNTIME_NAME;
-        }
-        flags |= Multiname.RUNTIME_NAMESPACE;
-        break;
+          index = stream.readU30();
+          if (index) {
+            name = constantPool.strings[index];
+          } else {
+            flags &= ~Multiname.RUNTIME_NAME;
+          }
+          flags |= Multiname.RUNTIME_NAMESPACE;
+          break;
         case CONSTANT.RTQNameL: case CONSTANT.RTQNameLA:
-        flags |= Multiname.RUNTIME_NAMESPACE;
-        flags |= Multiname.RUNTIME_NAME;
-        break;
+          flags |= Multiname.RUNTIME_NAMESPACE;
+          flags |= Multiname.RUNTIME_NAME;
+          break;
         case CONSTANT.Multiname: case CONSTANT.MultinameA:
-        index = stream.readU30();
-        if (index) {
-          name = constantPool.strings[index];
-        } else {
-          flags &= ~Multiname.RUNTIME_NAME;
-        }
-        index = stream.readU30();
-        release || assert(index !== 0);
-        namespaces = constantPool.namespaceSets[index];
-        break;
+          index = stream.readU30();
+          if (index) {
+            name = constantPool.strings[index];
+          } else {
+            flags &= ~Multiname.RUNTIME_NAME;
+          }
+          index = stream.readU30();
+          release || assert(index !== 0);
+          namespaces = constantPool.namespaceSets[index];
+          break;
         case CONSTANT.MultinameL: case CONSTANT.MultinameLA:
-        flags |= Multiname.RUNTIME_NAME;
-        index = stream.readU30();
-        release || assert(index !==  0);
-        namespaces = constantPool.namespaceSets[index];
-        break;
-      /**
-       * This is undocumented, looking at Tamarin source for this one.
-       */
+          flags |= Multiname.RUNTIME_NAME;
+          index = stream.readU30();
+          release || assert(index !==  0);
+          namespaces = constantPool.namespaceSets[index];
+          break;
+        /**
+         * This is undocumented, looking at Tamarin source for this one.
+         */
         case CONSTANT.TypeName:
           var factoryTypeIndex = stream.readU32();
           if (multinames[factoryTypeIndex]) {
@@ -1118,7 +1118,7 @@ module Shumway.AVM2.ABC {
           var typeParameterCount = stream.readU32();
           release || assert(typeParameterCount === 1); // This is probably the number of type parameters.
           var typeParameterIndex = stream.readU32();
-          assert (multinames[typeParameterIndex]);
+          release || assert (multinames[typeParameterIndex]);
           var mn = new Multiname(namespaces, name, flags);
           mn.typeParameter = multinames[typeParameterIndex];
           if (!multinames[factoryTypeIndex]) {
