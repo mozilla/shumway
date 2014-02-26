@@ -17,6 +17,8 @@
 
 ///<reference path='utilities.ts' />
 ///<reference path='metrics.ts' />
+///<reference path='errors.ts' />
+///<reference path='opcodes.ts' />
 ///<reference path='parser.ts' />
 ///<reference path='runtime.ts' />
 ///<reference path='domain.ts' />

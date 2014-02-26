@@ -66,7 +66,17 @@ var traceWarnings = systemOptions.register(new Option("tw", "traceWarnings", "bo
 Timer.start("Loading VM");
 load(homePath + "src/avm2/constants.js");
 load(homePath + "src/avm2/errors.js");
+
+var Errors = Shumway.AVM2.Errors;
+var getErrorMessage = Shumway.AVM2.getErrorMessage;
+var formatErrorMessage = Shumway.AVM2.formatErrorMessage;
+var translateErrorMessage = Shumway.AVM2.translateErrorMessage;
+
 load(homePath + "src/avm2/opcodes.js");
+
+var opcodeTable = Shumway.AVM2.opcodeTable;
+var opcodeName = Shumway.AVM2.opcodeName;
+
 load(homePath + "src/avm2/parser.js");
 
 var AbcFile = Shumway.AVM2.ABC.AbcFile;
