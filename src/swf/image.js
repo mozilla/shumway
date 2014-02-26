@@ -84,7 +84,7 @@ function defineImage(tag, dictionary) {
     var offset = 0;
     for (var i = 0; i < chunks.length; i++) {
       var chunk = chunks[i];
-      bmp.set(chunk, offset);
+      imgData.set(chunk, offset);
       offset += chunk.length;
     }
   }

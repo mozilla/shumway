@@ -110,8 +110,7 @@ var StageDefinition = (function () {
         message.writeIntUnsafe(type || Renderer.RENDERABLE_TYPE_FONT);
 
         var len = symbol.data.length;
-        message.ensureAdditionalCapacity(4 + len);
-        message.writeIntUnsafe(len);
+        message.writeInt(len);
         var offset = message.getIndex(1);
         message.reserve(len);
         message.subU8View().set(symbol.data, offset);
@@ -139,7 +138,7 @@ var StageDefinition = (function () {
 
         var tag = symbol.tag;
 
-        message.ensureAdditionalCapacity(48);
+        message.ensureAdditionalCapacity(60);
 
         var bbox = tag.bbox;
         message.writeIntUnsafe(bbox.xMin);
@@ -162,16 +161,18 @@ var StageDefinition = (function () {
         }
         message.writeIntUnsafe(color);
 
-        //message.writeIntUnsafe("BACKGROUND_COLOR");
-        //message.writeIntUnsafe("BORDER_COLOR");
         message.writeIntUnsafe(tag.autoSize);
         message.writeIntUnsafe(tag.align);
         message.writeIntUnsafe(tag.wordWrap);
         message.writeIntUnsafe(tag.multiline);
         message.writeIntUnsafe(tag.leading / 20);
+        message.writeIntUnsafe(tag.html);
+
+        //message.writeIntUnsafe("SCROLL_V");
+        //message.writeIntUnsafe("BACKGROUND_COLOR");
+        //message.writeIntUnsafe("BORDER_COLOR");
         //message.writeIntUnsafe("LETTERSPACING");
         //message.writeIntUnsafe("KERNING");
-        message.writeIntUnsafe(tag.html);
         //message.writeIntUnsafe("CONDENSE_WHITE");
 
         var text = tag.initialText;
@@ -183,7 +184,7 @@ var StageDefinition = (function () {
         }
       }
 
-      message.subI32View()[p] = message.getIndex(1) - (p + 4);
+      message.subI32View()[p] = message.getIndex(4) - (p + 1);
     },
     _requireRenderables: function requireRenderables(dependencies, callback) {
       var message = this._message;
@@ -213,10 +214,11 @@ var StageDefinition = (function () {
 
       message.writeIntUnsafe(+node._isContainer);
       message.writeIntUnsafe(node._parent._layerId);
+
       message.writeIntUnsafe(node._index);
       node._serialize(message);
 
-      message.subI32View()[p] = message.getIndex(1) - (p + 4);
+      message.subI32View()[p] = message.getIndex(4) - (p + 1);
     },
     _removeLayer: function removeLayer(node) {
       var message = this._message;
@@ -374,8 +376,8 @@ var StageDefinition = (function () {
         alpha: true
       };
 
-      webGLContext = new WebGLContext(canvas, sceneOptions);
-      webGLStageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
+      var webGLContext = new WebGLContext(canvas, sceneOptions);
+      var webGLStageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
       //canvas2DStageRenderer = new Canvas2DStageRenderer(ctx);
 
       var domain = avm2.systemDomain;

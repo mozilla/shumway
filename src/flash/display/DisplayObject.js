@@ -85,8 +85,8 @@ var DisplayObjectDefinition = (function () {
       this._depth = -1;
       this._isContainer = false;
 
-      this._renderableType = null;
       this._renderableId = 0;
+      this._updateRenderable = false;
       this._layerId = 0;
 
       blendModes = [
@@ -409,6 +409,9 @@ var DisplayObjectDefinition = (function () {
         this._parent._invalidateBounds();
       }
     },
+    _invalidateRenderable: function () {
+      this._updateRenderable = true;
+    },
     _setTransformMatrix: function(matrix, convertToTwips) {
       var a = matrix.a;
       var b = matrix.b;
@@ -446,7 +449,7 @@ var DisplayObjectDefinition = (function () {
     },
 
     _serialize: function (message) {
-      message.ensureAdditionalCapacity(40);
+      message.ensureAdditionalCapacity(44);
 
       message.writeIntUnsafe(this._layerId);
       message.writeIntUnsafe(this._renderableId);
@@ -475,6 +478,21 @@ var DisplayObjectDefinition = (function () {
         message.writeIntUnsafe(cxform.alphaOffset / 255);
       } else {
         message.writeIntUnsafe(0);
+      }
+
+      if (this._updateRenderable) {
+        message.writeIntUnsafe(1);
+        this._serializeRenderableData(message);
+        this._updateRenderable = false;
+      } else {
+        message.writeIntUnsafe(0);
+      }
+    },
+    _serializeRenderableData: function (message) {
+      message.writeInt(Renderer.RENDERABLE_TYPE_SHAPE);
+
+      if (this._graphics) {
+        this._graphics._serialize(message);
       }
     },
 

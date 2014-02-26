@@ -143,6 +143,7 @@ var GraphicsDefinition = (function () {
       this.strokeBbox = null;
       this._parent._invalidate();
       this._parent._invalidateBounds();
+      this._parent._invalidateRenderable();
     },
 
     beginPath: function() {
@@ -465,8 +466,7 @@ var GraphicsDefinition = (function () {
         }
 
         var n = path.commands.length;
-        message.ensureAdditionalCapacity(4 + n);
-        message.writeIntUnsafe(n);
+        message.writeInt(n);
         var offset = message.getIndex(1);
         message.reserve(n);
         message.subU8View().set(path.commands, offset);

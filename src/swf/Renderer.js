@@ -57,7 +57,8 @@ function Renderer(target) {
       var len = i32.length;
       while (p < len) {
         var type = i32[p++];
-        var n = i32[p++] >> 2;
+        var n = i32[p++];
+        var offset = p;
         switch (type) {
         case 0:
           return;
@@ -67,14 +68,16 @@ function Renderer(target) {
           var dependencies = i32.subarray(p, p + numDependencies);
           p += numDependencies;
           var renderableType = i32[p++];
-          var renderableData = i32.subarray(p, p += n - 1);
+          var renderableData = i32.subarray(p, offset + n);
+          p = offset + n;
           renderer.defineRenderable(
             id, renderableType, dependencies, renderableData
           );
           break;
         case Renderer.MESSAGE_REQUIRE_RENDERABLES:
           var callbackId = i32[p++];
-          var dependencies = i32.subarray(p, p += n - 1);
+          var dependencies = i32.subarray(p, offset + n);
+          p = offset + n;
           renderer.requireRenderables(dependencies, function () {
             postMessage({
               command: 'callback',
@@ -99,13 +102,13 @@ function Renderer(target) {
           var index = i32[p++];
           var layerId = i32[p++];
           var renderableId = i32[p++];
+          var renderable = renderer._renderables[renderableId];
 
           var layer = renderer._layers[layerId];
           if (!layer) {
             if (isContainer) {
               layer = new Shumway.Layers.FrameContainer();
             } else {
-              var renderable = renderer._renderables[renderableId];
               layer = new Shumway.Layers.Shape(renderable);
               layer.origin = new Shumway.Geometry.Point(
                 renderable.rect.x, renderable.rect.y
@@ -129,6 +132,20 @@ function Renderer(target) {
                 f32[p++], f32[p++], f32[p++], f32[p++],
                 i32[p++], i32[p++], i32[p++], i32[p++]
               );
+          }
+
+          var updateRenderable = i32[p++];
+          if (updateRenderable) {
+            var renderableType = i32[p++];
+            var renderableData = i32.subarray(p, offset + n);
+            p = offset + n;
+            if (renderable) {
+              renderable.constructor.call(renderable, renderableData, renderer, function () {
+
+              });
+            } else {
+              // TODO: support dynamic renderables
+            }
           }
           break;
         case Renderer.MESSAGE_REMOVE_LAYER:
@@ -245,9 +262,9 @@ Renderer.prototype.defineRenderable = function defineRenderable(id, type,
 
   this._promises[id] = promise.then(function () {
     renderer._renderables[id] = rendererable;
-    if (rendererable)
-      rendererable.id = id;
   });
+
+  return rendererable;
 };
 Renderer.prototype.getRenderable = function getRenderable(id) {
   return this._renderables[id];
@@ -324,10 +341,18 @@ function RenderableShape(data, renderer, resolve) {
   var yMax = (data[3] / 20) | 0;
   this.rect = new Shumway.Geometry.Rectangle(xMin, yMin, xMax - xMin, yMax - yMin);
 
-  this.properties = { renderer: renderer, data: data.subarray(4) };
+  if (!this.properties) {
+    this.properties = { };
+  }
 
-  resolve();
+  this.renderer = renderer;
+  this.data = data.subarray(4);
+
+  if (resolve) {
+    resolve();
+  }
 }
+RenderableShape.prototype.isScalable = true;
 RenderableShape.prototype.getBounds = function getBounds() {
   return this.rect;
 };
@@ -335,7 +360,7 @@ RenderableShape.prototype.render = function render(ctx) {
   ctx.save();
   ctx.translate(-this.rect.x, -this.rect.y);
 
-  var i32 = this.properties.data;
+  var i32 = this.data;
   var f32 = new Float32Array(i32.buffer, i32.byteOffset);
   var p = 0;
   while (p < i32.length) {
@@ -372,9 +397,9 @@ RenderableShape.prototype.render = function render(ctx) {
         var repeat = !!i32[p++];
         var smooth = !!i32[p++];
 
-        var bitmap = renderer.getRenderable(bitmapId);
+        var bitmap = this.renderer.getRenderable(bitmapId);
         style = ctx.createPattern(
-          bitmap.properties.img, repeat ? 'repeat' : 'no-repeat'
+          bitmap.drawable, repeat ? 'repeat' : 'no-repeat'
         );
         style.smooth = smooth;
         break;
@@ -562,12 +587,20 @@ function RenderableBitmap(data, renderer, resolve) {
   img.onload = function () {
     rect.width = img.width;
     rect.height = img.height;
-    resolve();
+    if (resolve) {
+      resolve();
+    }
   };
-  img.src = URL.createObjectURL(symbol.data);
+  img.src = URL.createObjectURL(blob);
 
-  this.properties = { renderer: renderer, drawable: img };
+  if (!this.properties) {
+    this.properties = { };
+  }
+
+  this.renderer = renderer;
+  this.drawable = img;
 }
+RenderableBitmap.prototype.isScalable = false;
 RenderableBitmap.prototype.getBounds = function getBounds() {
   return this.rect;
 };
@@ -586,10 +619,17 @@ function RenderableLabel(data, renderer, resolve) {
   var code = String.fromCharCode.apply(null, data.subarray(5, 5 + n));
   this.render = new Function('c', code);
 
-  this.properties = { renderer: renderer };
+  if (!this.properties) {
+    this.properties = { };
+  }
 
-  resolve();
+  this.renderable = true;
+
+  if (resolve) {
+    resolve();
+  }
 }
+RenderableLabel.prototype.isScalable = true;
 RenderableLabel.prototype.getBounds = function getBounds() {
   return this.rect;
 };
@@ -677,14 +717,27 @@ function RenderableText(data, renderer, resolve) {
 
   this.rect = new Shumway.Geometry.Rectangle(0, 0, width, height);
 
-  this.properties = { renderer: renderer, content: content };
+  if (this.properties) {
+    this.isInvalid = true;
+  } else  {
+    this.properties = { };
+  }
 
-  resolve();
+  this.renderer = renderer;
+  this.content = content;
+
+  if (resolve) {
+    resolve();
+  }
 }
+RenderableText.prototype.isScalable = true;
+RenderableText.prototype.isDynamic = true;
 RenderableText.prototype.getBounds = function getBounds() {
   return this.rect;
 };
 RenderableText.prototype.render = function render(ctx) {
+  this.isInvalid = false;
+
   var width = this.rect.w;
   var height = this.rect.h;
   if (width <= 0 || height <= 0) {
@@ -693,7 +746,7 @@ RenderableText.prototype.render = function render(ctx) {
 
   ctx.save();
   ctx.beginPath();
-  ctx.rect(0, 0, width + 1, height + 1);
+  ctx.rect(0, 0, width, height);
   ctx.clip();
   //if (this._background) {
   //  colorTransform.setFillStyle(ctx, this._backgroundColorStr);
@@ -707,7 +760,7 @@ RenderableText.prototype.render = function render(ctx) {
   //}
   ctx.closePath();
 
-  var content = this.properties.content;
+  var content = this.content;
 
   if (content.lines.length === 0) {
     ctx.restore();
@@ -735,7 +788,6 @@ RenderableText.prototype.render = function render(ctx) {
       ctx.fillText(run.text, run.x, run.y - offsetY);
     }
   }
-  ctx.restore();
   ctx.restore();
 };
 

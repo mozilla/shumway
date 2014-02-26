@@ -65,7 +65,7 @@ var TextFieldDefinition = (function () {
         initialFormat.leading = (tag.leading|0) / 20;
       }
       if (tag.hasColor) {
-        initialFormat.color = rgbaObjToStr(tag.color);
+        initialFormat.color = tag.color;
       }
       if (tag.hasFont) {
         var font = FontDefinition.getFontById(tag.fontId);
@@ -108,6 +108,56 @@ var TextFieldDefinition = (function () {
       return this.$as2Object;
     },
 
+    _serializeRenderableData: function (message) {
+      message.ensureAdditionalCapacity(64);
+
+      message.writeInt(Renderer.RENDERABLE_TYPE_TEXT);
+
+      var bbox = this._bbox;
+      message.writeIntUnsafe(bbox.xMin);
+      message.writeIntUnsafe(bbox.xMax);
+      message.writeIntUnsafe(bbox.yMin);
+      message.writeIntUnsafe(bbox.yMax);
+
+      var textFormat = this._defaultTextFormat;
+
+      message.writeIntUnsafe(textFormat.font._fontId || 0);
+      message.writeIntUnsafe(textFormat.bold);
+      message.writeIntUnsafe(textFormat.italic);
+      message.writeIntUnsafe(textFormat.size);
+
+      var colorObj = textFormat.color;
+      var color = (colorObj.red << 24) |
+                  (colorObj.green << 16) |
+                  (colorObj.blue << 8) |
+                  colorObj.alpha;
+      message.writeIntUnsafe(color);
+
+      message.writeIntUnsafe(this._autoSize);
+      message.writeIntUnsafe(this._align);
+      message.writeIntUnsafe(this._wordWrap);
+      message.writeIntUnsafe(this._multiline);
+      message.writeIntUnsafe(textFormat.leading);
+
+      var isHtml = !!this._htmlText;
+      message.writeIntUnsafe(isHtml);
+
+      //message.writeIntUnsafe("SCROLL_V");
+      //message.writeIntUnsafe("BACKGROUND_COLOR");
+      //message.writeIntUnsafe("BORDER_COLOR");
+      //message.writeIntUnsafe("LETTERSPACING");
+      //message.writeIntUnsafe("KERNING");
+      //message.writeIntUnsafe("CONDENSE_WHITE");
+
+      var text = isHtml ? this._htmlText : this._text;
+      var n = text.length;
+      message.ensureAdditionalCapacity((1 + n) * 4);
+      message.writeIntUnsafe(n);
+      for (var i = 0; i < n; i++) {
+        message.writeIntUnsafe(text.charCodeAt(i));
+      }
+    },
+
     replaceText: function(begin, end, str) {
       // TODO: preserve formatting
       var text = this._content.text;
@@ -117,6 +167,7 @@ var TextFieldDefinition = (function () {
     invalidateDimensions: function() {
       this._invalidate();
       this._invalidateBounds();
+      this._invalidateRenderable();
       this._dimensionsValid = false;
     },
 
