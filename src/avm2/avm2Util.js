@@ -124,21 +124,6 @@ function getBitFlags(flags, flag) {
   return !!(flags & flag);
 }
 
-/**
- * Pops elements from a source array into a destination array. This avoids
- * allocations and should be faster. The elements in the destination array
- * are pushed in the same order as they appear in the source array:
- *
- * popManyInto([1, 2, 3], 2, dst) => dst = [2, 3]
- */
-function popManyInto(src, count, dst) {
-  release || assert(src.length >= count);
-  for (var i = count - 1; i >= 0; i--) {
-    dst[i] = src.pop();
-  }
-  dst.length = count;
-}
-
 (function () {
   function extendBuiltin(proto, prop, f) {
     if (!proto[prop]) {
@@ -921,24 +906,8 @@ function lazyClass(holder, name, initialize) {
   });
 }
 
-function createNewCompartment() {
-  return newGlobal('new-compartment');
-}
-
 var hashBytesTo32BitsAdler = Shumway.HashUtilities.hashBytesTo32BitsAdler;
 var hashBytesTo32BitsMD5 = Shumway.HashUtilities.hashBytesTo32BitsMD5;
-
-
-function encodeInt32(n) {
-  var a = (n >> 30) & 0x3;
-  var b = (n & 0x7000000) >> 24; // 0x7000000 = (2^6 - 1) << 24
-  var c = (n & 0x1C0000) >> 18; // 0x1C0000 = (2^6 - 1) << 18
-  var d = (n & 0x3F000) >> 12; // 0x3F000 = (2^6 - 1) << 12
-  var e = (n & 0xFC0) >> 6; // 0xFC0 = (2^6 - 1) << 6
-  var f = (n & 0x3F); // 0x3F = 2^6 - 1
-  return toEncoding(a) + toEncoding(b) + toEncoding(c) +
-    toEncoding(d) + toEncoding(e) + toEncoding(f);
-}
 
 var variableLengthEncodeInt32 = Shumway.StringUtilities.variableLengthEncodeInt32;
 var fromEncoding = Shumway.StringUtilities.fromEncoding;

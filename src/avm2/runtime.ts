@@ -84,7 +84,6 @@ module Shumway.AVM2.Runtime {
   declare var useSurrogates;
 
   declare var ensureScriptIsExecuted;
-  declare var Interpreter;
   declare var Counter: Shumway.Metrics.Counter;
   declare var Compiler;
   declare var installProxyClassWrapper;
@@ -119,6 +118,7 @@ module Shumway.AVM2.Runtime {
   import makeForwardingSetter = Shumway.FunctionUtilities.makeForwardingSetter;
   import toSafeString = Shumway.StringUtilities.toSafeString;
   import toSafeArrayString = Shumway.StringUtilities.toSafeArrayString;
+
 
   import TRAIT = Shumway.AVM2.ABC.TRAIT;
 
@@ -1417,7 +1417,7 @@ module Shumway.AVM2.Runtime {
         if (hasDefaults && args.length < defaults.length) {
           args = args.concat(defaults.slice(args.length - defaults.length));
         }
-        return Interpreter.interpretMethod(global, methodInfo, scope, args);
+        return Shumway.AVM2.Interpreter.interpretMethod(global, methodInfo, scope, args);
       };
     } else {
       fn = function () {
@@ -1426,7 +1426,7 @@ module Shumway.AVM2.Runtime {
         if (hasDefaults && args.length < defaults.length) {
           args = args.concat(defaults.slice(arguments.length - defaults.length));
         }
-        return Interpreter.interpretMethod(global, methodInfo, scope, args);
+        return Shumway.AVM2.Interpreter.interpretMethod(global, methodInfo, scope, args);
       };
     }
     fn.instanceConstructor = fn;
@@ -1501,7 +1501,7 @@ module Shumway.AVM2.Runtime {
    * compiler bakes it in as a constant which should be much more efficient. If the interpreter
    * is used, the scope object is passed in every time.
    */
-  export function createFunction(mi, scope, hasDynamicScope, breakpoint) {
+  export function createFunction(mi, scope, hasDynamicScope, breakpoint = false) {
     release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
 
     if (mi.freeMethod) {

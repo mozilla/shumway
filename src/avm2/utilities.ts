@@ -153,8 +153,24 @@ module Shumway {
     [name: string]: T
   }
 
-  export module ObjectUtilities {
+  export module ArrayUtilities {
+    /**
+     * Pops elements from a source array into a destination array. This avoids
+     * allocations and should be faster. The elements in the destination array
+     * are pushed in the same order as they appear in the source array:
+     *
+     * popManyInto([1, 2, 3], 2, dst) => dst = [2, 3]
+     */
+    export function popManyInto(src: any [], count: number, dst: any []) {
+      release || assert(src.length >= count);
+      for (var i = count - 1; i >= 0; i--) {
+        dst[i] = src.pop();
+      }
+      dst.length = count;
+    }
+  }
 
+  export module ObjectUtilities {
     export function boxValue(value) {
       if (isNullOrUndefined(value) || isObject(value)) {
         return value;

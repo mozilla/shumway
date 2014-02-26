@@ -26,6 +26,7 @@
 ///<reference path='class.ts' />
 ///<reference path='bindings.ts' />
 ///<reference path='trampoline.ts' />
+///<reference path='interpreter.ts' />
 
 declare function log(s: any);
 declare function print(s: string);

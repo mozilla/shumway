@@ -1413,7 +1413,7 @@ var natives = (function () {
       INCLUDE_CONSTRUCTOR : 0x0080,
       INCLUDE_TRAITS      : 0x0100,
       USE_ITRAITS         : 0x0200,
-      HIDE_OBJECT         : 0x0400,
+      HIDE_OBJECT         : 0x0400
     };
 
     // public keys used multiple times while creating the description

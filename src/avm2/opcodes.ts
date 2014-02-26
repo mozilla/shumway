@@ -299,7 +299,7 @@ module Shumway.AVM2 {
     null, // 0xFF
   ];
 
-  function opcodeName(op) {
+  export function opcodeName(op) {
     return opcodeTable[op].name;
   }
 }

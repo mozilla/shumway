@@ -34,7 +34,7 @@ module Shumway.AVM2.Runtime {
   declare var getNative;
   declare var createFunction;
   declare var Timer;
-  declare var createNewCompartment;
+
   declare var compileAbc;
   declare var compileAbc;
   declare var Promise;
@@ -46,10 +46,16 @@ module Shumway.AVM2.Runtime {
   declare var avm2;
   declare var homePath;
   declare var snarf;
+  declare var newGlobal;
 
   export enum EXECUTION_MODE {
     INTERPRET   = 0x1,
     COMPILE     = 0x2
+  }
+
+
+  function createNewCompartment() {
+    return newGlobal('new-compartment');
   }
 
   function executeScript(script) {

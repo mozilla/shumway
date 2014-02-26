@@ -139,11 +139,13 @@ var traceDomain = domainOptions.register(new Option("td", "traceDomain", "boolea
 
 
 load(homePath + "src/avm2/xregexp.js");
+
 load(homePath + "src/avm2/runtime.js");
 load(homePath + "src/avm2/runtime-exports.js");
+load(homePath + "src/avm2/interpreter.js");
 
 load(homePath + "src/avm2/viz.js");
-load(homePath + "src/avm2/interpreter.js");
+
 load(homePath + "src/avm2/xml.js");
 load(homePath + "src/avm2/vectors-numeric.js");
 load(homePath + "src/avm2/vectors-generic.js");
