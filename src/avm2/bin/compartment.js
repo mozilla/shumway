@@ -51,9 +51,10 @@ if (false) {
 }
 
 load(homePath + "src/avm2/options.js");
-var ArgumentParser = options.ArgumentParser;
-var Option = options.Option;
-var OptionSet = options.OptionSet;
+
+var ArgumentParser = Shumway.Options.ArgumentParser;
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
 
 load(homePath + "src/avm2/metrics.js");
 var Timer = Shumway.Metrics.Timer;

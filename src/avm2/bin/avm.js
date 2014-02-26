@@ -56,9 +56,9 @@ var IndentingWriter = Shumway.IndentingWriter;
 
 var stdout = new IndentingWriter();
 
-var ArgumentParser = options.ArgumentParser;
-var Option = options.Option;
-var OptionSet = options.OptionSet;
+var ArgumentParser = Shumway.Options.ArgumentParser;
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
 
 var argumentParser = new ArgumentParser();
 
@@ -264,6 +264,7 @@ function runVM() {
   var appMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
   securityDomain.initializeShell(sysMode, appMode);
   runAbcs(securityDomain, grabAbcsInCompartment(securityDomain.compartment, abcBuffers));
+  // compartment.Shumway.Metrics.Timer.trace(new IndentingWriter());
   return securityDomain;
 }
 
