@@ -31,7 +31,6 @@ module Shumway.AVM2.Runtime {
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
 
-  declare var ApplicationDomain;
   declare var Scope;
   declare var Glue;
   declare var createFunction;

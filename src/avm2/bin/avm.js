@@ -77,10 +77,10 @@ var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boole
 var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", false, "run in release mode (!release is the default)"));
 
 load(homePath + "src/avm2/metrics.js");
-load(homePath + "src/avm2/domain.js")
 load(homePath + "src/avm2/constants.js");
 load(homePath + "src/avm2/opcodes.js");
 load(homePath + "src/avm2/parser.js");
+load(homePath + "src/avm2/domain.js");
 
 var AbcFile = Shumway.AVM2.ABC.AbcFile;
 var AbcStream = Shumway.AVM2.ABC.AbcStream;
@@ -93,6 +93,10 @@ var Trait = Shumway.AVM2.ABC.Trait;
 var MethodInfo = Shumway.AVM2.ABC.MethodInfo;
 var Multiname = Shumway.AVM2.ABC.Multiname;
 var ASNamespace = Shumway.AVM2.ABC.Namespace;
+var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
+
+// var ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
+var SecurityDomain = Shumway.AVM2.Runtime.SecurityDomain;
 
 load(homePath + "src/avm2/disassembler.js");
 

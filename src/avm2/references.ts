@@ -13,18 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+
 ///<reference path='utilities.ts' />
 ///<reference path='metrics.ts' />
 ///<reference path='parser.ts' />
 ///<reference path='r.ts' />
+///<reference path='domain.ts' />
+///<reference path='scope.ts' />
 ///<reference path='class.ts' />
 ///<reference path='bindings.ts' />
 ///<reference path='trampoline.ts' />
 
 declare function log(s: any);
 declare function print(s: string);
-declare var debug: boolean;
-declare var release: boolean;
 declare function assert(condition: any, ...args);
 declare function warning(message: string);
 declare function unexpected(message?: any);

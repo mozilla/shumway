@@ -374,6 +374,11 @@ module Shumway.AVM2.ABC {
     isInstanceInitializer: boolean;
     isClassInitializer: boolean;
     isScriptInitializer: boolean;
+    freeMethod: Function;
+    lastBoundMethod: {
+      scope: Shumway.AVM2.Runtime.Scope;
+      boundMethod: Function;
+    };
 
     private static _getParameterName(i) {
       release || assert(i < 26);
@@ -408,7 +413,7 @@ module Shumway.AVM2.ABC {
           // NOTE: We can't get the parameter name as described in the spec because
           // some SWFs have invalid parameter names. Tamarin doesn't parse parameter
           // names correctly, so we must follow that same behaviour.
-          if (false) {
+          if (true) {
             this.parameters[i].name = constantPool.strings[stream.readU30()];
           } else {
             stream.readU30();
@@ -553,6 +558,7 @@ module Shumway.AVM2.ABC {
     init: MethodInfo;
     instanceInfo: InstanceInfo;
     defaultValue: any;
+    native: any;
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
       super(abc, index);
@@ -593,6 +599,10 @@ module Shumway.AVM2.ABC {
     init: MethodInfo;
     name: string;
     traits: Trait [];
+    global: Shumway.AVM2.Runtime.Global;
+    loaded: boolean;
+    executed: boolean;
+    executing: boolean;
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
       super(abc, index);
@@ -625,7 +635,7 @@ module Shumway.AVM2.ABC {
     env: any;
     applicationDomain: any;
 
-    constructor(bytes: Uint8Array, name: string, hash: number) {
+    constructor(bytes: Uint8Array, name: string, hash: number = 0) {
       Timer.start("Parse ABC");
       this.name = name;
       this.env = {};
@@ -1545,7 +1555,15 @@ module Shumway.AVM2.ABC {
   export enum ATTR {
     Final              = 0x01,
     Override           = 0x02,
-    Metadata           = 0x04,
+    Metadata           = 0x04
+  }
+
+  export enum SORT {
+    CASEINSENSITIVE    = 0x01,
+    DESCENDING         = 0x02,
+    UNIQUESORT         = 0x04,
+    RETURNINDEXEDARRAY = 0x08,
+    NUMERIC            = 0x10
   }
 
   export class ConstantPool {

@@ -143,14 +143,14 @@ module Shumway.Metrics {
       this._count = 0;
       this._index = 0;
     }
-    push(sample) {
+    public push(sample: number) {
       if (this._count < this._samples.length) {
         this._count ++;
       }
       this._index ++;
       this._samples[this._index % this._samples.length] = sample;
     }
-    average () {
+    public average(): number {
       var sum = 0;
       for (var i = 0; i < this._count; i++) {
         sum += this._samples[i];

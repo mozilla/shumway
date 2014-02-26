@@ -16,6 +16,8 @@
 ///<reference path='references.ts' />
 
 var inBrowser = typeof console != "undefined";
+/** @const */ var release: boolean = true;
+/** @const */ var debug: boolean = !release;
 
 declare var dateNow: () => number;
 
@@ -152,6 +154,13 @@ module Shumway {
   }
 
   export module ObjectUtilities {
+
+    export function boxValue(value) {
+      if (isNullOrUndefined(value) || isObject(value)) {
+        return value;
+      }
+      return Object(value);
+    }
 
     export function toKeyValueArray(object: Object) {
       var hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -631,7 +640,7 @@ module Shumway {
     private _suppressOutput: boolean;
     private _out: (s: string) => void;
 
-    constructor(suppressOutput, outFn) {
+    constructor(suppressOutput: boolean = false, outFn?) {
       this._tab = "  ";
       this._padding = "";
       this._suppressOutput = suppressOutput;

@@ -41,23 +41,8 @@ var SortedList = Shumway.SortedList;
  * Stringify functions that try not to call |toString| inadvertently.
  */
 
-function toSafeString(value) {
-  if (typeof value === "string") {
-    return "\"" + value + "\"";
-  }
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-  return typeof value;
-}
-
-function toSafeArrayString(array) {
-  var str = [];
-  for (var i = 0; i < array.length; i++) {
-    str.push(toSafeString(array[i]));
-  }
-  return str.join(", ");
-}
+var toSafeString = Shumway.StringUtilities.toSafeString;
+var toSafeArrayString = Shumway.StringUtilities.toSafeArrayString;
 
 var getLatestGetterOrSetterPropertyDescriptor = Shumway.ObjectUtilities.getLatestGetterOrSetterPropertyDescriptor;
 var defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
@@ -101,28 +86,15 @@ function hasOwnProperty(object, name) {
 /**
  * Converts an object to an array of key, value arrays.
  */
-function toKeyValueArray(o) {
-  var hasOwnProperty = Object.prototype.hasOwnProperty;
-  var a = [];
-  for (var k in o) {
-    if (hasOwnProperty.call(o, k)) {
-      a.push([k, o[k]]);
-    }
-  }
-  return a;
-}
+var toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
+
 
 /**
  * Checks for key names that don't need to be prefixed.
  * TODO: Rename this and clean up the code that deals with prefixed vs. non-prefixed key names.
  */
 
-function boxValue(value) {
-  if (isNullOrUndefined(value) || isObject(value)) {
-    return value;
-  }
-  return Object(value);
-}
+var boxValue = Shumway.ObjectUtilities.boxValue;
 
 function isObject(value) {
   return typeof value === "object" || typeof value === 'function';

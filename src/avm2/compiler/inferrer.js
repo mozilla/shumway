@@ -437,9 +437,11 @@ var MultinameType = (function () {
 
 var ParameterizedType = (function () {
   function parameterizedType(type, parameter) {
+    // TraitsType.call(type, type.object);
     this.type = type;
     this.parameter = parameter;
   }
+  // parameterizedType.prototype = Object.create(TraitsType.prototype);
   parameterizedType.prototype = Object.create(Type.prototype);
   parameterizedType.prototype.toString = function () {
     return this.type + "<" + this.parameter + ">";

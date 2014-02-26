@@ -59,7 +59,15 @@ module Shumway.AVM2.Runtime {
   declare var isProxy;
   declare var isProxyObject;
 
+
+  declare var XML;
+  declare var XMLList;
+  declare var isXMLType;
+
+  declare var useSurrogates;
+
   declare var getTraitFunction;
+  declare var ensureScriptIsExecuted;
 
   import Map = Shumway.Map;
   import Multiname = Shumway.AVM2.ABC.Multiname;
@@ -68,6 +76,7 @@ module Shumway.AVM2.Runtime {
   import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
   import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
   import ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+  import SORT = Shumway.AVM2.ABC.SORT;
 
   import Trait = Shumway.AVM2.ABC.Trait;
   import IndentingWriter = Shumway.IndentingWriter;
@@ -76,6 +85,7 @@ module Shumway.AVM2.Runtime {
   import cloneObject = Shumway.ObjectUtilities.cloneObject;
   import copyProperties = Shumway.ObjectUtilities.copyProperties;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
+  import boxValue = Shumway.ObjectUtilities.boxValue;
   import bindSafely = Shumway.FunctionUtilities.bindSafely;
 
   import defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
@@ -112,7 +122,6 @@ module Shumway.AVM2.Runtime {
    * Checks if the specified |object| is the prototype of a native JavaScript object.
    */
   export function isNativePrototype(object) {
-
     return Object.prototype.hasOwnProperty.call(object, VM_NATIVE_PROTOTYPE_FLAG);
   }
 
@@ -238,6 +247,56 @@ module Shumway.AVM2.Runtime {
       defineNonEnumerableGetterOrSetter(object, qn, trampoline, trait.isGetter());
     }
   }
+
+  /**
+   * Property Accessors:
+   *
+   * Every AS3 object has the following "virtual" accessors methods:
+   * - asGetProperty(namespaces, name, flags)
+   * - asSetProperty(namespaces, name, flags, value)
+   * - asHasProperty(namespaces, name, flags)
+   * - asCallProperty(namespaces, name, flags, isLex, args)
+   * - asDeleteProperty(namespaces, name, flags)
+   *
+   * The default implementation of as[Get|Set]Property checks if these properties are defined on the object and
+   * calls them if the name is numeric:
+   *
+   * - asGetNumericProperty(index)
+   * - asSetNumericProperty(index, value)
+   *
+   * Not yet implemented:
+   * - asGetDescendants(namespaces, name, flags)
+   * - asNextName(index)
+   * - asNextNameIndex(index)
+   * - asNextValue(index)
+   * - asGetEnumerableKeys()
+   *
+   * Multiname resolution methods:
+   * - getNamespaceResolutionMap(namespaces)
+   * - resolveMultinameProperty(namespaces, name, flags)
+   *
+   * Special objects like Vector, Dictionary, XML, etc. can override these to provide different behaviour.
+   *
+   * To avoid boxing we represent multinames as a group of 3 parts: |namespaces| undefined or an array of
+   * namespace objects, |name| any value, and |flags| an integer value. To resolve a multiname to a qualified
+   * name we call |resolveMultinameProperty|. The expensive case is when we resolve multinames with multiple
+   * namespaces. This is done with the help of |getNamespaceResolutionMap|.
+   *
+   * Every object that contains traits has a hidden array property called "resolutionMap". This maps between
+   * namespace sets to an object that maps all trait names to their resolved qualified names in each namespace.
+   *
+   * For example, suppose we had the class A { n0 var x; n1 var x; n0 var y; n1 var y; } and two namespace sets:
+   * {n0, n2} and {n2, n1}. The namespace sets are given the unique IDs 0 and 1 respectively. The resolution map
+   * for class A would be:
+   *
+   * resolutionMap[0] = {x: n0$$x, y: n0$$y}
+   * resolutionMap[1] = {x: n1$$x, y: n1$$y}
+   *
+   * Resolving {n2, n1}::x on a = new A() then becomes:
+   *
+   * a[a.resolutionMap[1]["x"]] -> a[{x: n1$$x, y: n1$$y}["x"]] -> a[n1$$x]
+   *
+   */
 
   export function getNamespaceResolutionMap(namespaces: Namespace []) {
     var self: Object = this;
@@ -610,4 +669,406 @@ module Shumway.AVM2.Runtime {
     }
     return result;
   }
+
+  export function asTypeOf(x) {
+    // ABC doesn't box primitives, so typeof returns the primitive type even when
+    // the value is new'd
+    if (x) {
+      if (x.constructor === String) {
+        return "string"
+      } else if (x.constructor === Number) {
+        return "number"
+      } else if (x.constructor === Boolean) {
+        return "boolean"
+      } else if (x instanceof XML || x instanceof XMLList) {
+        return "xml"
+      }
+    }
+    return typeof x;
+  }
+
+  /**
+   * Make an object's properties accessible from AS3. This prefixes all non-numeric
+   * properties with the public prefix.
+   */
+  export function publicizeProperties(object) {
+    var keys = Object.keys(object);
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (!Multiname.isPublicQualifiedName(k)) {
+        var v = object[k];
+        object[Multiname.getPublicQualifiedName(k)] = v;
+        delete object[k];
+      }
+    }
+  }
+
+  export function asGetSlot(object, index) {
+    return object[object[VM_SLOTS].byID[index].name];
+  }
+
+  export function asSetSlot(object, index, value) {
+    var slotInfo = object[VM_SLOTS].byID[index];
+    if (slotInfo.const) {
+      return;
+    }
+    var name = slotInfo.name;
+    var type = slotInfo.type;
+    if (type && type.coerce) {
+      object[name] = type.coerce(value);
+    } else {
+      object[name] = value;
+    }
+  }
+
+  export function asIsInstanceOf(type, value) {
+    return type.isInstanceOf(value);
+  }
+
+  export function asIsType(type, value) {
+    return type.isInstance(value);
+  }
+
+  export function asAsType(type, value) {
+    return asIsType(type, value) ? value : null;
+  }
+
+  export function asCoerceByMultiname(domain, multiname, value) {
+    release || assert(multiname.isQName());
+    switch (Multiname.getQualifiedName(multiname)) {
+      case Multiname.Int:
+        return asCoerceInt(value);
+      case Multiname.Uint:
+        return asCoerceUint(value);
+      case Multiname.String:
+        return asCoerceString(value);
+      case Multiname.Number:
+        return asCoerceNumber(value);
+      case Multiname.Boolean:
+        return asCoerceBoolean(value);
+      case Multiname.Object:
+        return asCoerceObject(value);
+    }
+    return asCoerce(domain.getType(multiname), value);
+  }
+
+  export function asCoerce(type, value) {
+    if (type.coerce) {
+      return type.coerce(value);
+    }
+
+    if (isNullOrUndefined(value)) {
+      return null;
+    }
+
+    if (type.isInstance(value)) {
+      return value;
+    } else {
+      // FIXME throwErrorFromVM needs to be called from within the runtime
+      // because it needs access to the domain or the domain has to be
+      // aquired through some other mechanism.
+      // throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
+
+      // For now just assert false to print the message.
+      release || assert(false, "Cannot coerce " + value + " to type " + type);
+    }
+  }
+
+  /**
+   * Similar to |toString| but returns |null| for |null| or |undefined| instead
+   * of "null" or "undefined".
+   */
+  export function asCoerceString(x) {
+    if (typeof x === "string") {
+      return x;
+    } else if (x == undefined) {
+      return null;
+    }
+    return x + '';
+  }
+
+  export function asCoerceInt(x) {
+    return x | 0;
+  }
+
+  export function asCoerceUint(x) {
+    return x >>> 0;
+  }
+
+  export function asCoerceNumber(x) {
+    return +x;
+  }
+
+  export function asCoerceBoolean(x) {
+    return !!x;
+  }
+
+  export function asCoerceObject(x) {
+    if (x == undefined) {
+      return null;
+    }
+    if (typeof x === 'string' || typeof x === 'number') {
+      return x;
+    }
+    return Object(x);
+  }
+
+  export function asDefaultCompareFunction(a, b) {
+    return String(a).localeCompare(String(b));
+  }
+
+  export function asCompare(a, b, options, compareFunction) {
+    release || Shumway.Debug.assertNotImplemented (!(options & SORT.UNIQUESORT), "UNIQUESORT");
+    release || Shumway.Debug.assertNotImplemented (!(options & SORT.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
+    var result = 0;
+    if (!compareFunction) {
+      compareFunction = asDefaultCompareFunction;
+    }
+    if (options & SORT.CASEINSENSITIVE) {
+      a = String(a).toLowerCase();
+      b = String(b).toLowerCase();
+    }
+    if (options & SORT.NUMERIC) {
+      a = toNumber(a);
+      b = toNumber(b);
+      result = a < b ? -1 : (a > b ? 1 : 0);
+    } else {
+      result = compareFunction(a, b);
+    }
+    if (options & SORT.DESCENDING) {
+      result *= -1;
+    }
+    return result;
+  }
+
+  /**
+   * ActionScript 3 has different behaviour when deciding whether to call toString or valueOf
+   * when one operand is a string. Unlike JavaScript, it calls toString if one operand is a
+   * string and valueOf otherwise. This sucks, but we have to emulate this behaviour because
+   * YouTube depends on it.
+   */
+  export function asAdd(l, r) {
+    if (typeof l === "string" || typeof r === "string") {
+      return String(l) + String(r);
+    }
+    return l + r;
+  }
+
+
+  /**
+   * Determine if the given object has any more properties after the specified |index| and if so, return
+   * the next index or |zero| otherwise. If the |obj| has no more properties then continue the search in
+   * |obj.__proto__|. This function returns an updated index and object to be used during iteration.
+   *
+   * the |for (x in obj) { ... }| statement is compiled into the following pseudo bytecode:
+   *
+   * index = 0;
+   * while (true) {
+   *   (obj, index) = hasNext2(obj, index);
+   *   if (index) { #1
+   *     x = nextName(obj, index); #2
+   *   } else {
+   *     break;
+   *   }
+   * }
+   *
+   * #1 If we return zero, the iteration stops.
+   * #2 The spec says we need to get the nextName at index + 1, but it's actually index - 1, this caused
+   * me two hours of my life that I will probably never get back.
+   *
+   * TODO: We can't match the iteration order semantics of Action Script, hopefully programmers don't rely on it.
+   */
+  export function asHasNext2(object, index) {
+    if (isNullOrUndefined(object)) {
+      return {index: 0, object: null};
+    }
+    object = boxValue(object);
+    var nextIndex = object.asNextNameIndex(index);
+    if (nextIndex > 0) {
+      return {index: nextIndex, object: object};
+    }
+    // If there are no more properties in the object then follow the prototype chain.
+    while (true) {
+      var object = Object.getPrototypeOf(object);
+      if (!object) {
+        return {index: 0, object: null};
+      }
+      nextIndex = object.asNextNameIndex(0);
+      if (nextIndex > 0) {
+        return {index: nextIndex, object: object};
+      }
+    }
+    return {index: 0, object: null};
+  }
+
+  export function getDescendants(object, mn) {
+    if (!isXMLType(object)) {
+      throw "Not XML object in getDescendants";
+    }
+    return object.descendants(mn);
+  }
+
+  export function checkFilter(value) {
+    if (!value.class || !isXMLType(value)) {
+      throw "TypeError operand of childFilter not of XML type";
+    }
+    return value;
+  }
+
+  export function initializeGlobalObject(global) {
+    var VM_NATIVE_BUILTIN_SURROGATES = [
+      { name: "Object", methods: ["toString", "valueOf"] },
+      { name: "Function", methods: ["toString", "valueOf"] }
+    ];
+    /**
+     * Surrogates are used to make |toString| and |valueOf| work transparently. For instance, the expression
+     * |a + b| should implicitly expand to |a.$valueOf() + b.$valueOf()|. Since, we don't want to call
+     * |$valueOf| explicitly we instead patch the |valueOf| property in the prototypes of native builtins
+     * to call the |$valueOf| instead.
+     */
+    var originals = global[VM_NATIVE_BUILTIN_ORIGINALS] = createEmptyObject();
+    VM_NATIVE_BUILTIN_SURROGATES.forEach(function (surrogate) {
+      var object = global[surrogate.name];
+      assert (object);
+      originals[surrogate.name] = createEmptyObject();
+      surrogate.methods.forEach(function (originalFunctionName) {
+        var originalFunction;
+        if (object.prototype.hasOwnProperty(originalFunctionName)) {
+          originalFunction = object.prototype[originalFunctionName];
+        } else {
+          originalFunction = originals["Object"][originalFunctionName];
+        }
+        // Save the original method in case |getNative| needs it.
+        originals[surrogate.name][originalFunctionName] = originalFunction;
+        var overrideFunctionName = Multiname.getPublicQualifiedName(originalFunctionName);
+        if (useSurrogates) {
+          // Patch the native builtin with a surrogate.
+          global[surrogate.name].prototype[originalFunctionName] = function surrogate() {
+            if (this[overrideFunctionName]) {
+              return this[overrideFunctionName]();
+            }
+            return originalFunction.call(this);
+          };
+        }
+      });
+    });
+
+    ["Object", "Number", "Boolean", "String", "Array", "Date", "RegExp"].forEach(function (name) {
+      defineReadOnlyProperty(global[name].prototype, VM_NATIVE_PROTOTYPE_FLAG, true);
+    });
+
+    defineNonEnumerableProperty(global.Object.prototype, "getNamespaceResolutionMap", getNamespaceResolutionMap);
+    defineNonEnumerableProperty(global.Object.prototype, "resolveMultinameProperty", resolveMultinameProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asGetProperty", asGetProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asGetPublicProperty", asGetPublicProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asGetResolvedStringProperty", asGetResolvedStringProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asSetProperty", asSetProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asSetPublicProperty", asSetPublicProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asDefineProperty", asDefineProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asDefinePublicProperty", asDefinePublicProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asCallProperty", asCallProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asCallSuper", asCallSuper);
+    defineNonEnumerableProperty(global.Object.prototype, "asGetSuper", asGetSuper);
+    defineNonEnumerableProperty(global.Object.prototype, "asSetSuper", asSetSuper);
+    defineNonEnumerableProperty(global.Object.prototype, "asCallPublicProperty", asCallPublicProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asCallResolvedStringProperty", asCallResolvedStringProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asConstructProperty", asConstructProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
+
+    defineNonEnumerableProperty(global.Object.prototype, "asNextName", asNextName);
+    defineNonEnumerableProperty(global.Object.prototype, "asNextValue", asNextValue);
+    defineNonEnumerableProperty(global.Object.prototype, "asNextNameIndex", asNextNameIndex);
+    defineNonEnumerableProperty(global.Object.prototype, "asGetEnumerableKeys", asGetEnumerableKeys);
+
+    [
+      "Array",
+      "Int8Array",
+      "Uint8Array",
+      "Uint8ClampedArray",
+      "Int16Array",
+      "Uint16Array",
+      "Int32Array",
+      "Uint32Array",
+      "Float32Array",
+      "Float64Array"
+    ].forEach(function (name) {
+        if (!(name in global)) {
+          log(name + ' was not found in globals');
+          return;
+        }
+        defineNonEnumerableProperty(global[name].prototype, "asGetNumericProperty", asGetNumericProperty);
+        defineNonEnumerableProperty(global[name].prototype, "asSetNumericProperty", asSetNumericProperty);
+
+        defineNonEnumerableProperty(global[name].prototype, "asGetProperty", asGetPropertyLikelyNumeric);
+        defineNonEnumerableProperty(global[name].prototype, "asSetProperty", asSetPropertyLikelyNumeric);
+      });
+
+    global.Array.prototype.asGetProperty = function (namespaces: Namespace [], name: any, flags: number): any {
+      if (typeof name === "number") {
+        return this[name];
+      }
+      return asGetProperty.call(this, namespaces, name, flags);
+    };
+
+    global.Array.prototype.asSetProperty = function (namespaces: Namespace [], name: any, flags: number, value: any) {
+      if (typeof name === "number") {
+        this[name] = value;
+        return;
+      }
+      return asSetProperty.call(this, namespaces, name, flags, value);
+    };
+  }
+
+  /**
+   * Check if a qualified name is in an object's traits.
+   */
+  export function nameInTraits(object, qn) {
+    // If the object itself holds traits, try to resolve it. This is true for
+    // things like global objects and activations, but also for classes, which
+    // both have their own traits and the traits of the Class class.
+    if (object.hasOwnProperty(VM_BINDINGS) && object.hasOwnProperty(qn)) {
+      return true;
+    }
+
+    // Else look on the prototype.
+    var proto = Object.getPrototypeOf(object);
+    return proto.hasOwnProperty(VM_BINDINGS) && proto.hasOwnProperty(qn);
+  }
+
+  /**
+   * Global object for a script.
+   */
+  export class Global {
+    scriptInfo: ScriptInfo;
+    scriptBindings: ScriptBindings;
+    constructor(script: ScriptInfo) {
+      this.scriptInfo = script;
+      script.global = this;
+      this.scriptBindings = new ScriptBindings(script, new Scope(null, this, false));
+      this.scriptBindings.applyTo(script.abc.applicationDomain, this);
+      script.loaded = true;
+    }
+
+    public toString() {
+      return "[object global]";
+    }
+
+    public isExecuted() {
+      return this.scriptInfo.executed;
+    }
+
+    public isExecuting() {
+      return this.scriptInfo.executing;
+    }
+
+    public ensureExecuted() {
+      ensureScriptIsExecuted(this.scriptInfo);
+    }
+  }
+
+  defineNonEnumerableProperty(Global.prototype, Multiname.getPublicQualifiedName("toString"), function () {
+    return this.toString();
+  });
+
 }

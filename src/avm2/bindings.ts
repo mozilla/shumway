@@ -243,7 +243,7 @@ module Shumway.AVM2.Runtime {
   export class ScriptBindings extends Bindings {
     scriptInfo: ScriptInfo;
     scope: any;
-    constructor(scriptInfo, scope) {
+    constructor(scriptInfo: ScriptInfo, scope: Scope) {
       super();
       this.scope = scope;
       this.scriptInfo = scriptInfo;

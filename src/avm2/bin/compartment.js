@@ -99,9 +99,18 @@ load(homePath + "lib/ByteArray.js");
 load(homePath + "src/avm2/trampoline.js");
 load(homePath + "src/avm2/bindings.js");
 load(homePath + "src/avm2/r.js");
+load(homePath + "src/avm2/scope.js");
+
+var playerglobalLoadedPromise;
+var playerglobal;
+
 load(homePath + "src/avm2/domain.js");
-load(homePath + "src/avm2/c.js");
+var ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
+var AVM2 = Shumway.AVM2.Runtime.AVM2;
+var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
+
 load(homePath + "src/avm2/class.js");
+
 
 var Binding = Shumway.AVM2.Runtime.Binding;
 var Bindings = Shumway.AVM2.Runtime.Bindings;
@@ -113,9 +122,14 @@ var InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;
 var Interface = Shumway.AVM2.Runtime.Interface;
 var Class = Shumway.AVM2.Runtime.Class;
 
+var domainOptions = systemOptions.register(new OptionSet("ApplicationDomain Options"));
+var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
+var traceDomain = domainOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
+
 
 load(homePath + "src/avm2/xregexp.js");
 load(homePath + "src/avm2/runtime.js");
+
 load(homePath + "src/avm2/viz.js");
 load(homePath + "src/avm2/interpreter.js");
 load(homePath + "src/avm2/xml.js");
@@ -126,8 +140,8 @@ load(homePath + "src/avm2/proxy.js");
 load(homePath + "src/avm2/json2.js");
 load(homePath + "src/avm2/dictionary.js");
 load(homePath + "src/avm2/native.js");
-load(homePath + "src/avm2/vm.js");
 Timer.stop();
+
 
 function grabAbc(fileOrBuffer) {
   if (isString(fileOrBuffer)) {
