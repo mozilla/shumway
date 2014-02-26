@@ -33,6 +33,8 @@ var console = {
   }
 };
 
+var jsGlobal = (function() { return this || (1, eval)('this'); })();
+
 load(homePath + "src/avm2/settings.js");
 load(homePath + "src/avm2/utilities.js");
 load(homePath + "src/avm2/avm2Util.js");
@@ -98,7 +100,6 @@ load(homePath + "lib/ByteArray.js");
 
 load(homePath + "src/avm2/trampoline.js");
 load(homePath + "src/avm2/bindings.js");
-load(homePath + "src/avm2/r.js");
 load(homePath + "src/avm2/scope.js");
 
 var playerglobalLoadedPromise;
@@ -129,6 +130,7 @@ var traceDomain = domainOptions.register(new Option("td", "traceDomain", "boolea
 
 load(homePath + "src/avm2/xregexp.js");
 load(homePath + "src/avm2/runtime.js");
+load(homePath + "src/avm2/runtime-exports.js");
 
 load(homePath + "src/avm2/viz.js");
 load(homePath + "src/avm2/interpreter.js");

@@ -21,6 +21,8 @@ module Shumway.AVM2.Runtime {
   import Map = Shumway.Map;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import Namespace = Shumway.AVM2.ABC.Namespace;
+  import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
+  import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
   import Trait = Shumway.AVM2.ABC.Trait;
   import IndentingWriter = Shumway.IndentingWriter;
   import createMap = Shumway.ObjectUtilities.createMap;
@@ -37,6 +39,28 @@ module Shumway.AVM2.Runtime {
 
   var vmNextTrampolineId = 1;
   var vmNextMemoizerId = 1;
+
+  export function getMethodOverrideKey(methodInfo) {
+    var key;
+    if (methodInfo.holder instanceof ClassInfo) {
+      key = "static " + methodInfo.holder.instanceInfo.name.getOriginalName() + "::" + methodInfo.name.getOriginalName()
+    } else if (methodInfo.holder instanceof InstanceInfo) {
+      key = methodInfo.holder.name.getOriginalName() + "::" + methodInfo.name.getOriginalName();
+    } else {
+      key = methodInfo.name.getOriginalName();
+    }
+    return key;
+  }
+
+  export function checkMethodOverrides(methodInfo) {
+    if (methodInfo.name) {
+      var key = getMethodOverrideKey(methodInfo);
+      if (key in VM_METHOD_OVERRIDES) {
+        warning("Overriding Method: " + key);
+        return VM_METHOD_OVERRIDES[key];
+      }
+    }
+  }
 
   /*
    * Memoizers and Trampolines:

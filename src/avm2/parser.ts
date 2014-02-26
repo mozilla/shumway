@@ -379,6 +379,7 @@ module Shumway.AVM2.ABC {
       scope: Shumway.AVM2.Runtime.Scope;
       boundMethod: Function;
     };
+    activationPrototype: Object;
 
     private static _getParameterName(i) {
       release || assert(i < 26);
@@ -559,6 +560,7 @@ module Shumway.AVM2.ABC {
     instanceInfo: InstanceInfo;
     defaultValue: any;
     native: any;
+    classObject: Shumway.AVM2.Runtime.Class;
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
       super(abc, index);

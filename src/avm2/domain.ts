@@ -129,15 +129,21 @@ module Shumway.AVM2.Runtime {
   }
 
   export class AVM2 {
-    systemDomain: ApplicationDomain;
-    applicationDomain: ApplicationDomain;
-    findDefiningAbc: (mn: Multiname) => AbcFile;
-    loadAVM1: boolean;
-    isAVM1Loaded: boolean;
-    exception: any;
-    exceptions: any [];
+    public systemDomain: ApplicationDomain;
+    public applicationDomain: ApplicationDomain;
+    public findDefiningAbc: (mn: Multiname) => AbcFile;
+    public loadAVM1: boolean;
+    public isAVM1Loaded: boolean;
+    public exception: any;
+    public exceptions: any [];
 
-    constructor(sysMode, appMode, loadAVM1) {
+    public static instance: AVM2;
+    public static initialize(sysMode: EXECUTION_MODE, appMode: EXECUTION_MODE, loadAVM1: boolean) {
+      assert (!AVM2.instance);
+      AVM2.instance = new AVM2(sysMode, appMode, loadAVM1);
+    }
+
+    constructor(sysMode: EXECUTION_MODE, appMode: EXECUTION_MODE, loadAVM1: boolean) {
       // TODO: this will change when we implement security domains.
       this.systemDomain = new ApplicationDomain(this, null, sysMode, true);
       this.applicationDomain = new ApplicationDomain(this, this.systemDomain, appMode, false);
@@ -216,6 +222,10 @@ module Shumway.AVM2.Runtime {
 
     public notifyConstruct(instanceConstructor, args) {
       // REMOVEME
+    }
+
+    public static getStackTrace() {
+      Shumway.Debug.notImplemented("getStackTrace");
     }
   }
 
@@ -551,7 +561,6 @@ module Shumway.AVM2.Runtime {
     applicationDomain: ApplicationDomain;
     constructor () {
       this.compartment = createNewCompartment();
-      // this.compartment.environment = environment;
       this.compartment.homePath = homePath;
       this.compartment.eval(snarf("compartment.js"));
       this.compartment.release = release;
@@ -559,12 +568,12 @@ module Shumway.AVM2.Runtime {
 
     public initializeShell(sysMode, appMode) {
       var compartment = this.compartment;
-      compartment.avm2 = new compartment.AVM2(sysMode, appMode);
-      compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/builtin/builtin.abc"));
-      compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/shell/shell.abc"));
+      compartment.AVM2.initialize(sysMode, appMode);
+      compartment.AVM2.instance.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/builtin/builtin.abc"));
+      compartment.AVM2.instance.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/shell/shell.abc"));
       // compartment.avm2.systemDomain.executeAbc(compartment.grabAbc(homePath + "src/avm2/generated/avmplus/avmplus.abc"));
-      this.systemDomain = compartment.avm2.systemDomain;
-      this.applicationDomain = compartment.avm2.applicationDomain;
+      this.systemDomain = compartment.AVM2.instance.systemDomain;
+      this.applicationDomain = compartment.AVM2.instance.applicationDomain;
     }
   }
 

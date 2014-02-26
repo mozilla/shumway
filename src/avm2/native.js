@@ -1166,7 +1166,7 @@ var natives = (function () {
       instance: {
         init: function (base) {
           this.base = base;
-          this.nativeObject = new ApplicationDomain(avm2, base ? base.nativeObject : null);
+          this.nativeObject = new ApplicationDomain(AVM2.instance, base ? base.nativeObject : null);
         },
         loadBytes: function (byteArray, swfVersion) { // (byteArray:ByteArray, swfVersion:uint = 0);
           this.nativeObject.executeAbc(new AbcFile(byteArray.readRawBytes()));

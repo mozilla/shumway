@@ -224,7 +224,7 @@ if (execute.value || compile.value || compileAll.value || compileBuiltins.value)
   if (false) {
     timeIt(function () {
       runVM();
-    }, "Create Compartment", 5);
+    }, "Create Compartment", 10);
   } else {
     runVM();
   }
@@ -264,6 +264,7 @@ function runVM() {
   var appMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
   securityDomain.initializeShell(sysMode, appMode);
   runAbcs(securityDomain, grabAbcsInCompartment(securityDomain.compartment, abcBuffers));
+  return securityDomain;
 }
 
 function runAbcs(securityDomain, abcArrays) {

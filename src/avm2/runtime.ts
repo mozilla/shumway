@@ -22,6 +22,7 @@ interface Object {
   resolutionMap: Shumway.Map<Shumway.Map<string>>;
   bindings: Shumway.AVM2.Runtime.Bindings;
 
+
   getNamespaceResolutionMap: any;
   resolveMultinameProperty: (namespaces: Namespace [], name: any, flags: number) => any;
   asGetProperty: (namespaces: Namespace [], name: any, flags: number) => any;
@@ -49,16 +50,32 @@ interface Object {
   class: any;
   hasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean; // TODO: What's this?
   enumerableKeys: any [];
+
+
+  lazyInitializer: Shumway.AVM2.Runtime.LazyInitializer;
 }
 
 module Shumway.AVM2.Runtime {
 
   declare var traceExecution;
   declare var traceCallExecution;
+  declare var globalMultinameAnalysis;
+  declare var compilerEnableExceptions;
+  declare var compilerMaximumMethodSize;
+  declare var codeCaching;
+  declare var compileOnly;
+  declare var compileUntil;
+  declare var functionBreak;
+  declare var Analysis;
+  declare var traceLevel;
+  declare var getNative;
+  declare var traceClasses;
+  declare var sealConstTraits;
+
   declare var callCounter;
   declare var isProxy;
   declare var isProxyObject;
-
+  declare var jsGlobal;
 
   declare var XML;
   declare var XMLList;
@@ -66,8 +83,14 @@ module Shumway.AVM2.Runtime {
 
   declare var useSurrogates;
 
-  declare var getTraitFunction;
   declare var ensureScriptIsExecuted;
+  declare var Interpreter;
+  declare var Counter: Shumway.Metrics.Counter;
+  declare var Compiler;
+  declare var installProxyClassWrapper;
+  declare var formatErrorMessage;
+  declare var translateErrorMessage;
+  declare var getErrorMessage;
 
   import Map = Shumway.Map;
   import Multiname = Shumway.AVM2.ABC.Multiname;
@@ -97,6 +120,8 @@ module Shumway.AVM2.Runtime {
   import toSafeString = Shumway.StringUtilities.toSafeString;
   import toSafeArrayString = Shumway.StringUtilities.toSafeArrayString;
 
+  import TRAIT = Shumway.AVM2.ABC.TRAIT;
+
   export var VM_SLOTS = "vm slots";
   export var VM_LENGTH = "vm length";
   export var VM_BINDINGS = "vm bindings";
@@ -112,6 +137,22 @@ module Shumway.AVM2.Runtime {
   export var VM_OPEN_GET_METHOD_PREFIX = "g";
 
   export var VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
+
+  /**
+   * Overriden AS3 methods (see hacks.js). This allows you to provide your own JS implementation
+   * for AS3 methods.
+   */
+  export var VM_METHOD_OVERRIDES = createEmptyObject();
+
+  /**
+   * We use this to give functions unique IDs to help with debugging.
+   */
+  var vmNextInterpreterFunctionId = 1;
+  var vmNextCompiledFunctionId = 1;
+
+  var totalFunctionCount = 0;
+  var compiledFunctionCount = 0;
+  var compilationCount = 0;
 
   export function isClass(object) {
     release || assert (object);
@@ -721,6 +762,32 @@ module Shumway.AVM2.Runtime {
     }
   }
 
+
+  export function throwError(name, error) {
+    if (true) {
+      var message = formatErrorMessage.apply(null, Array.prototype.slice.call(arguments, 1));
+      throwErrorFromVM(AVM2.currentDomain(), name, message, error.code);
+    } else {
+      throwErrorFromVM(AVM2.currentDomain(), name, getErrorMessage(error.code), error.code);
+    }
+  }
+
+  export function throwErrorFromVM(domain, errorClass, message, id) {
+    var error = new (domain.getClass(errorClass)).instanceConstructor(message, id);
+    throw error;
+  }
+
+  export function translateError(domain, error) {
+    if (error instanceof Error) {
+      var type = domain.getClass(error.name);
+      if (type) {
+        return new type.instanceConstructor(translateErrorMessage(error));
+      }
+      unexpected("Can't translate error: " + error);
+    }
+    return error;
+  }
+
   export function asIsInstanceOf(type, value) {
     return type.isInstanceOf(value);
   }
@@ -1037,6 +1104,15 @@ module Shumway.AVM2.Runtime {
   }
 
   /**
+   * Scope object backing for catch blocks.
+   */
+  export function CatchScopeObject(domain, trait) {
+    if (trait) {
+      new CatchBindings(new Scope(null, this), trait).applyTo(domain, this);
+    }
+  }
+
+  /**
    * Global object for a script.
    */
   export class Global {
@@ -1071,4 +1147,628 @@ module Shumway.AVM2.Runtime {
     return this.toString();
   });
 
+  /**
+   * Self patching global property stub that lazily initializes objects like scripts and
+   * classes.
+   */
+  export class LazyInitializer {
+    target: Object;
+    name: string;
+    private static _holder = jsGlobal;
+    static create(target): LazyInitializer {
+      if (target.lazyInitializer) {
+        return target.lazyInitializer;
+      }
+      return target.lazyInitializer = new LazyInitializer(target);
+    }
+    constructor (target: Object) {
+      assert (!target.lazyInitializer);
+      this.target = target;
+    }
+    public getName() {
+      if (this.name) {
+        return this.name;
+      }
+      var target = this.target, initialize;
+      if (this.target instanceof ScriptInfo) {
+        var scriptInfo: ScriptInfo = <ScriptInfo>target;
+        this.name = "$" + Shumway.StringUtilities.variableLengthEncodeInt32(scriptInfo.hash);
+        initialize = function () {
+          ensureScriptIsExecuted(target, "Lazy Initializer");
+          return scriptInfo.global;
+        };
+      } else if (this.target instanceof ClassInfo) {
+        var classInfo: ClassInfo = <ClassInfo>target;
+        this.name = "$" + Shumway.StringUtilities.variableLengthEncodeInt32(classInfo.hash);
+        initialize = function () {
+          if (classInfo.classObject) {
+            return classInfo.classObject;
+          }
+          return classInfo.abc.applicationDomain.getProperty(classInfo.instanceInfo.name);
+        };
+      } else {
+        Shumway.Debug.notImplemented(String(target));
+      }
+      var name = this.name;
+      assert (!LazyInitializer._holder[name], "Holder already has " + name);
+      Object.defineProperty(LazyInitializer._holder, name, {
+        get: function () {
+          var value = initialize();
+          assert (value);
+          Object.defineProperty(LazyInitializer._holder, name, { value: value, writable: true });
+          return value;
+        }, configurable: true
+      });
+      return name;
+    }
+  }
+
+  export function forEachPublicProperty(object, fn, self) {
+    if (!object[VM_BINDINGS]) {
+      for (var key in object) {
+        fn.call(self, key, object[key]);
+      }
+      return;
+    }
+
+    for (var key in object) {
+      if (isNumeric(key)) {
+        fn.call(self, key, object[key]);
+      } else if (Multiname.isPublicQualifiedName(key) && object[VM_BINDINGS].indexOf(key) < 0) {
+        Shumway.Debug.notImplemented("??");
+        // var name = key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
+        // fn.call(self, name, object[key]);
+      }
+    }
+  }
+
+  export function wrapJSObject(object) {
+    var wrapper = Object.create(object);
+    for (var i in object) {
+      Object.defineProperty(wrapper, Multiname.getPublicQualifiedName(i), (function (object, i) {
+        return {
+          get: function () { return object[i] },
+          set: function (value) { object[i] = value; },
+          enumerable: true
+        };
+      })(object, i));
+    }
+    return wrapper;
+  }
+
+  export function asCreateActivation(methodInfo: MethodInfo): Object {
+    return Object.create(methodInfo.activationPrototype);
+  }
+
+  /**
+   * It's not possible to resolve the multiname {a, b, c}::x to {b}::x if no trait exists in any of the currently
+   * loaded abc files that defines the {b}::x name. Of course, this can change if we load an abc file that defines it.
+   */
+  export class GlobalMultinameResolver {
+    private static hasNonDynamicNamespaces = createEmptyObject();
+    private static wasResolved = createEmptyObject();
+
+    private static updateTraits(traits) {
+      for (var i = 0; i < traits.length; i++) {
+        var trait = traits[i];
+        var name = trait.name.name;
+        var namespace = trait.name.getNamespace();
+        if (!namespace.isDynamic()) {
+          GlobalMultinameResolver.hasNonDynamicNamespaces[name] = true;
+          if (GlobalMultinameResolver.wasResolved[name]) {
+            Shumway.Debug.notImplemented("We have to the undo the optimization, " + name + " can now bind to " + namespace);
+          }
+        }
+      }
+    }
+
+    /**
+     * Called after an .abc file is loaded. This invalidates inline caches if they have been created.
+     */
+    public static loadAbc(abc) {
+      if (!globalMultinameAnalysis.value) {
+        return;
+      }
+      var scripts = abc.scripts;
+      var classes = abc.classes;
+      var methods = abc.methods;
+      for (var i = 0; i < scripts.length; i++) {
+        GlobalMultinameResolver.updateTraits(scripts[i].traits);
+      }
+      for (var i = 0; i < classes.length; i++) {
+        GlobalMultinameResolver.updateTraits(classes[i].traits);
+        GlobalMultinameResolver.updateTraits(classes[i].instanceInfo.traits);
+      }
+      for (var i = 0; i < methods.length; i++) {
+        if (methods[i].traits) {
+          GlobalMultinameResolver.updateTraits(methods[i].traits);
+        }
+      }
+    }
+
+    public static resolveMultiname(multiname) {
+      var name = multiname.name;
+      if (GlobalMultinameResolver.hasNonDynamicNamespaces[name]) {
+        return;
+      }
+      GlobalMultinameResolver.wasResolved[name] = true;
+      return new Multiname([Namespace.PUBLIC], multiname.name);
+    }
+  }
+
+  export class ActivationInfo {
+    methodInfo: MethodInfo;
+    constructor(methodInfo: MethodInfo) {
+      this.methodInfo = methodInfo;
+    }
+  }
+
+  export function sliceArguments(args, offset: number = 0) {
+    return Array.prototype.slice.call(args, offset);
+  }
+
+  export function canCompile(mi) {
+    if (!mi.hasBody) {
+      return false;
+    }
+    if (mi.hasExceptions() && !compilerEnableExceptions.value) {
+      return false;
+    } else if (mi.code.length > compilerMaximumMethodSize.value) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Checks if the specified method should be compiled. For now we just ignore very large methods.
+   */
+  export function shouldCompile(mi) {
+    if (!canCompile(mi)) {
+      return false;
+    }
+    // Don't compile class and script initializers since they only run once.
+    if (mi.isClassInitializer || mi.isScriptInitializer) {
+      return false;
+    }
+    return true;
+  }
+
+  /**
+   * Checks if the specified method must be compiled, even if the compiled is not enabled.
+   */
+  export function forceCompile(mi) {
+    if (mi.hasExceptions()) {
+      return false;
+    }
+    var holder = mi.holder;
+    if (holder instanceof ClassInfo) {
+      holder = holder.instanceInfo;
+    }
+    if (holder instanceof InstanceInfo) {
+      var packageName = holder.name.namespaces[0].uri;
+      switch (packageName) {
+        case "flash.geom":
+        case "flash.events":
+          return true;
+        default:
+          break;
+      }
+      var className = holder.name.getOriginalName();
+      switch (className) {
+        case "com.google.youtube.model.VideoData":
+          return true;
+      }
+    }
+    return false;
+  }
+
+  var CC = createEmptyObject();
+
+  export function searchCodeCache(methodInfo) {
+    if (!codeCaching.value) {
+      return;
+    }
+    var cacheInfo = CC[methodInfo.abc.hash];
+    if (!cacheInfo) {
+      console.warn("Cannot Find Code Cache For ABC, name: " + methodInfo.abc.name + ", hash: " + methodInfo.abc.hash);
+      Counter.count("Code Cache ABC Miss");
+      return;
+    }
+    if (!cacheInfo.isInitialized) {
+      methodInfo.abc.scripts.forEach(function (scriptInfo) {
+        LazyInitializer.create(scriptInfo).getName();
+      });
+      methodInfo.abc.classes.forEach(function (classInfo) {
+        LazyInitializer.create(classInfo).getName();
+      });
+      cacheInfo.isInitialized = true;
+    }
+    var method = cacheInfo.methods[methodInfo.index];
+    if (!method) {
+      if (methodInfo.isInstanceInitializer || methodInfo.isClassInitializer) {
+        Counter.count("Code Cache Query On Initializer");
+      } else {
+        Counter.count("Code Cache MISS ON OTHER");
+        console.warn("Shouldn't MISS: " + methodInfo + " " + methodInfo.debugName);
+      }
+      // console.warn("Cannot Find Code Cache For Method, name: " + methodInfo);
+      Counter.count("Code Cache Miss");
+      return;
+    }
+    log("Linking CC: " + methodInfo);
+    Counter.count("Code Cache Hit");
+    return method;
+  }
+
+  export function createInterpretedFunction(methodInfo, scope, hasDynamicScope) {
+    var mi = methodInfo;
+    var hasDefaults = false;
+    var defaults = mi.parameters.map(function (p) {
+      if (p.value !== undefined) {
+        hasDefaults = true;
+      }
+      return p.value;
+    });
+    var fn;
+    if (hasDynamicScope) {
+      fn = function (scope) {
+        var global = (this === jsGlobal ? scope.global.object : this);
+        var args = sliceArguments(arguments, 1);
+        if (hasDefaults && args.length < defaults.length) {
+          args = args.concat(defaults.slice(args.length - defaults.length));
+        }
+        return Interpreter.interpretMethod(global, methodInfo, scope, args);
+      };
+    } else {
+      fn = function () {
+        var global = (this === jsGlobal ? scope.global.object : this);
+        var args = sliceArguments(arguments);
+        if (hasDefaults && args.length < defaults.length) {
+          args = args.concat(defaults.slice(arguments.length - defaults.length));
+        }
+        return Interpreter.interpretMethod(global, methodInfo, scope, args);
+      };
+    }
+    fn.instanceConstructor = fn;
+    fn.debugName = "Interpreter Function #" + vmNextInterpreterFunctionId++;
+    return fn;
+  }
+
+  export function debugName(value) {
+    if (isFunction(value)) {
+      return value.debugName;
+    }
+    return value;
+  }
+
+  export function createCompiledFunction(methodInfo, scope, hasDynamicScope, breakpoint, deferCompilation) {
+    var mi = methodInfo;
+    var cached = searchCodeCache(mi);
+    if (!cached) {
+      console.warn("Compiling: " + compilationCount++ + ": " + methodInfo + " " + methodInfo.isInstanceInitializer + " " + methodInfo.isClassInitializer);
+      var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
+      var parameters = result.parameters;
+      var body = result.body;
+    }
+
+    var fnName = mi.name ? Multiname.getQualifiedName(mi.name) : "fn" + compiledFunctionCount;
+    if (mi.holder) {
+      var fnNamePrefix = "";
+      if (mi.holder instanceof ClassInfo) {
+        fnNamePrefix = "static$" + mi.holder.instanceInfo.name.getName();
+      } else if (mi.holder instanceof InstanceInfo) {
+        fnNamePrefix = mi.holder.name.getName();
+      } else if (mi.holder instanceof ScriptInfo) {
+        fnNamePrefix = "script";
+      }
+      fnName = fnNamePrefix + "$" + fnName;
+    }
+    fnName = Shumway.StringUtilities.escapeString(fnName);
+    if (mi.verified) {
+      fnName += "$V";
+    }
+    if (compiledFunctionCount == functionBreak.value || breakpoint) {
+      body = "{ debugger; \n" + body + "}";
+    }
+
+    if (!cached) {
+      var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
+    }
+
+    if (traceLevel.value > 1) {
+      mi.trace(new IndentingWriter(), mi.abc);
+    }
+    mi.debugTrace = function () {
+      mi.trace(new IndentingWriter(), mi.abc);
+    };
+    if (traceLevel.value > 0) {
+      log(fnSource);
+    }
+    // mi.freeMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');
+    // mi.freeMethod = new Function(parameters, body);
+
+    var fn = cached || new Function("return " + fnSource)();
+    fn.debugName = "Compiled Function #" + vmNextCompiledFunctionId++;
+    return fn;
+  }
+
+
+  /**
+   * Creates a function from the specified |methodInfo| that is bound to the given |scope|. If the
+   * scope is dynamic (as is the case for closures) the compiler generates an additional prefix
+   * parameter for the compiled function named |SAVED_SCOPE_NAME| and then wraps the compiled
+   * function in a closure that is bound to the given |scope|. If the scope is not dynamic, the
+   * compiler bakes it in as a constant which should be much more efficient. If the interpreter
+   * is used, the scope object is passed in every time.
+   */
+  export function createFunction(mi, scope, hasDynamicScope, breakpoint) {
+    release || assert(!mi.isNative(), "Method should have a builtin: ", mi.name);
+
+    if (mi.freeMethod) {
+      if (hasDynamicScope) {
+        return bindFreeMethodScope(mi, scope);
+      }
+      return mi.freeMethod;
+    }
+
+    var fn;
+
+    if ((fn = checkMethodOverrides(mi))) {
+      release || assert (!hasDynamicScope);
+      return fn;
+    }
+
+    ensureFunctionIsInitialized(mi);
+
+    totalFunctionCount ++;
+
+    var useInterpreter = false;
+    if ((mi.abc.applicationDomain.mode === EXECUTION_MODE.INTERPRET || !shouldCompile(mi)) && !forceCompile(mi)) {
+      useInterpreter = true;
+    }
+
+    if (compileOnly.value >= 0) {
+      if (Number(compileOnly.value) !== totalFunctionCount) {
+        log("Compile Only Skipping " + totalFunctionCount);
+        useInterpreter = true;
+      }
+    }
+
+    if (compileUntil.value >= 0) {
+      if (totalFunctionCount > 1000) {
+        log(Shumway.Debug.backtrace());
+        log(AVM2.getStackTrace());
+      }
+      if (totalFunctionCount > compileUntil.value) {
+        log("Compile Until Skipping " + totalFunctionCount);
+        useInterpreter = true;
+      }
+    }
+
+    if (useInterpreter) {
+      mi.freeMethod = createInterpretedFunction(mi, scope, hasDynamicScope);
+    } else {
+      compiledFunctionCount++;
+      // console.info("Compiling: " + mi + " count: " + compiledFunctionCount);
+      if (compileOnly.value >= 0 || compileUntil.value >= 0) {
+        log("Compiling " + totalFunctionCount);
+      }
+      mi.freeMethod = createCompiledFunction(mi, scope, hasDynamicScope, breakpoint, mi.isInstanceInitializer);
+    }
+
+    mi.freeMethod.methodInfo = mi;
+
+    if (hasDynamicScope) {
+      return bindFreeMethodScope(mi, scope);
+    }
+    return mi.freeMethod;
+  }
+
+  export function ensureFunctionIsInitialized(methodInfo) {
+    var mi = methodInfo;
+
+    // We use not having an analysis to mean "not initialized".
+    if (!mi.analysis) {
+      mi.analysis = new Analysis(mi);
+
+      if (mi.needsActivation()) {
+        mi.activationPrototype = new ActivationInfo(mi);
+        new ActivationBindings(mi).applyTo(mi.abc.applicationDomain, mi.activationPrototype);
+      }
+
+      // If we have exceptions, make the catch scopes now.
+      var exceptions = mi.exceptions;
+      for (var i = 0, j = exceptions.length; i < j; i++) {
+        var handler = exceptions[i];
+        if (handler.varName) {
+          var varTrait = Object.create(Trait.prototype);
+          varTrait.kind = TRAIT.Slot;
+          varTrait.name = handler.varName;
+          varTrait.typeName = handler.typeName;
+          varTrait.holder = mi;
+          handler.scopeObject = new CatchScopeObject(mi.abc.applicationDomain, varTrait);
+        } else {
+          handler.scopeObject = new CatchScopeObject(undefined, undefined);
+        }
+      }
+    }
+  }
+
+  /**
+   * Gets the function associated with a given trait.
+   */
+  export function getTraitFunction(trait, scope, natives) {
+    release || assert(scope);
+    release || assert(trait.isMethod() || trait.isGetter() || trait.isSetter());
+
+    var mi = trait.methodInfo;
+    var fn;
+
+    if (mi.isNative()) {
+      var md = trait.metadata;
+      if (md && md.native) {
+        var nativeName = md.native.value[0].value;
+        var makeNativeFunction = getNative(nativeName);
+        fn = makeNativeFunction && makeNativeFunction(null, scope);
+      } else if (md && md.unsafeJSNative) {
+        fn = getNative(md.unsafeJSNative.value[0].value);
+      } else if (natives) {
+        // At this point the native class already had the scope, so we don't
+        // need to close over the method again.
+        var k = Multiname.getName(mi.name);
+        if (trait.isGetter()) {
+          fn = natives[k] ? natives[k].get : undefined;
+        } else if (trait.isSetter()) {
+          fn = natives[k] ? natives[k].set : undefined;
+        } else {
+          fn = natives[k];
+        }
+      }
+      if (!fn) {
+        warning("No native method for: " + trait.kindName() + " " +
+          mi.holder.name + "::" + Multiname.getQualifiedName(mi.name));
+        return (function (mi) {
+          return function () {
+            warning("Calling undefined native method: " + trait.kindName() +
+              " " + mi.holder.name + "::" +
+              Multiname.getQualifiedName(mi.name));
+          };
+        })(mi);
+      }
+    } else {
+      if (traceExecution.value >= 2) {
+        log("Creating Function For Trait: " + trait.holder + " " + trait);
+      }
+      fn = createFunction(mi, scope, false, false);
+      release || assert (fn);
+    }
+    if (traceExecution.value >= 3) {
+      log("Made Function: " + Multiname.getQualifiedName(mi.name));
+    }
+    return fn;
+  }
+
+  /**
+   * ActionScript Classes are modeled as constructor functions (class objects) which hold additional properties:
+   *
+   * [scope]: a scope object holding the current class object
+   *
+   * [baseClass]: a reference to the base class object
+   *
+   * [instanceTraits]: an accumulated set of traits that are to be applied to instances of this class
+   *
+   * [prototype]: the prototype object of this constructor function  is populated with the set of instance traits,
+   *   when instances are of this class are created, their __proto__ is set to this object thus inheriting this
+   *   default set of properties.
+   *
+   * [construct]: a reference to the class object itself, this is used when invoking the constructor with an already
+   *   constructed object (i.e. constructsuper)
+   *
+   * additionally, the class object also has a set of class traits applied to it which are visible via scope lookups.
+   */
+  export function createClass(classInfo, baseClass, scope) {
+    release || assert (!baseClass || baseClass instanceof Class);
+
+    var ci = classInfo;
+    var ii = ci.instanceInfo;
+    var domain = ci.abc.applicationDomain;
+
+    var className = Multiname.getName(ii.name);
+    if (traceExecution.value) {
+      log("Creating " + (ii.isInterface() ? "Interface" : "Class") + ": " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
+    }
+
+    var cls;
+
+    if (ii.isInterface()) {
+      cls = Interface.createInterface(classInfo);
+    } else {
+      cls = Class.createClass(classInfo, baseClass, scope);
+    }
+
+    if (traceClasses.value) {
+      domain.loadedClasses.push(cls);
+      domain.traceLoadedClasses(true);
+    }
+
+    if (ii.isInterface()) {
+      return cls;
+    }
+
+    // Notify domain of class creation.
+    domain.onMessage.notify1('classCreated', cls);
+
+    if (cls.instanceConstructor && cls !== Class) {
+      cls.verify();
+    }
+
+    // TODO: Seal constant traits in the instance object. This should be done after
+    // the instance constructor has executed.
+
+    if (baseClass && (Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy" ||
+      baseClass.isProxy)) {
+      // TODO: This is very hackish.
+      installProxyClassWrapper(cls);
+      cls.isProxy = true;
+    }
+
+    classInfo.classObject = cls;
+
+    // Run the static initializer.
+    createFunction(classInfo.init, scope, false, false).call(cls);
+
+    // Seal constant traits in the class object.
+    if (sealConstTraits) {
+      this.sealConstantTraits(cls, ci.traits);
+    }
+
+    return cls;
+  }
+
+  /**
+   * In ActionScript, assigning to a property defined as "const" outside of a static or instance
+   * initializer throws a |ReferenceError| exception. To emulate this behaviour in JavaScript,
+   * we "seal" constant traits properties by replacing them with setters that throw exceptions.
+   */
+  export function sealConstantTraits(object, traits) {
+    for (var i = 0, j = traits.length; i < j; i++) {
+      var trait = traits[i];
+      if (trait.isConst()) {
+        var qn = Multiname.getQualifiedName(trait.name);
+        var value = object[qn];
+        (function (qn, value) {
+          Object.defineProperty(object, qn, { configurable: false, enumerable: false,
+            get: function () {
+              return value;
+            },
+            set: function () {
+              throwErrorFromVM(AVM2.currentDomain(), "ReferenceError", "Illegal write to read-only property " + qn + ".", 0);
+            }
+          });
+        })(qn, value);
+      }
+    }
+  }
+
+  export function applyType(domain, factory, types) {
+    var factoryClassName = factory.classInfo.instanceInfo.name.name;
+    if (factoryClassName === "Vector") {
+      release || assert(types.length === 1);
+      var type = types[0];
+      var typeClassName;
+      if (!isNullOrUndefined(type)) {
+        typeClassName = type.classInfo.instanceInfo.name.name.toLowerCase();
+        switch (typeClassName) {
+          case "int":
+          case "uint":
+          case "double":
+          case "object":
+            return domain.getClass("packageInternal __AS3__.vec.Vector$" + typeClassName);
+        }
+      }
+      return domain.getClass("packageInternal __AS3__.vec.Vector$object").applyType(type);
+    } else {
+      return Shumway.Debug.notImplemented(factoryClassName);
+    }
+  }
 }

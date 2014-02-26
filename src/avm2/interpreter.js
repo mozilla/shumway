@@ -321,7 +321,7 @@ var Interpreter = new ((function () {
             break;
           case 0x57: // OP_newactivation
             release || assert(method.needsActivation());
-            stack.push(createActivation(method));
+            stack.push(asCreateActivation(method));
             break;
           case 0x58: // OP_newclass
             stack[stack.length - 1] = createClass (

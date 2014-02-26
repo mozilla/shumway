@@ -658,7 +658,7 @@
 
   IR.ASNewActivation.prototype.compile = function (cx) {
     var methodInfo = compileValue(this.methodInfo, cx);
-    return call(id("createActivation"), [methodInfo]);
+    return call(id("asCreateActivation"), [methodInfo]);
   };
 
   IR.ASMultiname.prototype.compile = function (cx) {
