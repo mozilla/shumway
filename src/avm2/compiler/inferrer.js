@@ -53,7 +53,7 @@ var Type = (function () {
       traitsTypeCache = type.cache.scriptInfo;
     }
     if (traitsTypeCache) {
-      return traitsTypeCache[x.id] || (traitsTypeCache[x.id] = new TraitsType(x, domain));
+      return traitsTypeCache[x.runtimeId] || (traitsTypeCache[x.runtimeId] = new TraitsType(x, domain));
     }
     if (x instanceof ActivationInfo) {
       return new TraitsType(x.methodInfo);
@@ -645,7 +645,7 @@ var Verifier = (function() {
        * to find the right insertion position and keep the list sorted.
        * The push operation takes O(n), the pull operations takes O(1).
        */
-      var worklist = new SortedList(function compare(blockA, blockB) {
+      var worklist = new Shumway.SortedList(function compare(blockA, blockB) {
         return blockA.bdo - blockB.bdo;
       });
 

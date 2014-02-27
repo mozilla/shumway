@@ -58,7 +58,7 @@ module Shumway.AVM2.Runtime {
     return newGlobal('new-compartment');
   }
 
-  function executeScript(script) {
+  export function executeScript(script) {
     var abc = script.abc;
     release || assert(!script.executing && !script.executed);
     var global = new Global(script);
@@ -73,7 +73,7 @@ module Shumway.AVM2.Runtime {
     script.executed = true;
   }
 
-  function ensureScriptIsExecuted(script, reason) {
+  export function ensureScriptIsExecuted(script, reason: string = "") {
     if (!script.executed && !script.executing) {
       if (traceExecution.value >= 2) {
         log("Executing Script For: " + reason);
@@ -481,7 +481,7 @@ module Shumway.AVM2.Runtime {
               var trait = traits[k];
               if (mn.hasQName(trait.name)) {
                 if (execute) {
-                  ensureScriptIsExecuted(script, trait.name);
+                  ensureScriptIsExecuted(script, String(trait.name));
                 }
                 return (this.scriptCache[mn.runtimeId] = { script: script, trait: trait });
               }

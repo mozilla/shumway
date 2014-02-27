@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global CircularBuffer, randomStyle, createEmptyObject*/
+/*global Shumway, randomStyle, createEmptyObject*/
 
 /**
  * Frame Rate Monitor
@@ -29,8 +29,8 @@ var Timeline = (function () {
     this.depth = 0;
     this.start = 0;
     this.index = 0;
-    this.marks = new CircularBuffer(Int32Array);
-    this.times = new CircularBuffer(Float64Array);
+    this.marks = new Shumway.CircularBuffer(Int32Array);
+    this.times = new Shumway.CircularBuffer(Float64Array);
     this.frameRate = 12;
     this.maxFrameTime = 1000 * 2 / this.frameRate;
     this.refreshFrequency = 10;

@@ -117,7 +117,6 @@ argumentParser.addArgument("to", "traceOptions", "boolean", {parse: function (x)
   systemOptions.trace(stdout);
 }});
 
-
 var argv = [];
 var files = [];
 
@@ -252,8 +251,6 @@ function grabAbcsInCompartment(compartment, abcBuffers) {
   });
 }
 
-var securityDomains = [];
-
 function runVM() {
   var securityDomain = new SecurityDomain();
   var compartment = securityDomain.compartment;
@@ -264,7 +261,6 @@ function runVM() {
   var appMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
   securityDomain.initializeShell(sysMode, appMode);
   runAbcs(securityDomain, grabAbcsInCompartment(securityDomain.compartment, abcBuffers));
-  // compartment.Shumway.Metrics.Timer.trace(new IndentingWriter());
   return securityDomain;
 }
 

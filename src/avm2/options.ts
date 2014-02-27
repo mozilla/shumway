@@ -203,3 +203,8 @@ module Shumway.Options {
     }
   }
 }
+
+declare var exports;
+if (typeof exports !== "undefined") {
+  exports["Shumway"] = Shumway;
+}

@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -34,8 +32,6 @@ var codeCaching = runtimeOptions.register(new Option("cc", "codeCaching", "boole
 
 var compilerEnableExceptions = runtimeOptions.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
 var compilerMaximumMethodSize = runtimeOptions.register(new Option("cmms", "maximumMethodSize", "number", 4 * 1024, "Compiler maximum method size."));
-
-var jsGlobal = (function() { return this || (1, eval)('this'); })();
 
 var VM_SLOTS = "vm slots";
 var VM_LENGTH = "vm length";
@@ -177,7 +173,6 @@ var wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
 var asCreateActivation = Shumway.AVM2.Runtime.asCreateActivation;
 
 var CatchScopeObject = Shumway.AVM2.Runtime.CatchScopeObject;
-
 
 var Global = Shumway.AVM2.Runtime.Global;
 

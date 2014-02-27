@@ -83,7 +83,6 @@ module Shumway.AVM2.Runtime {
 
   declare var useSurrogates;
 
-  declare var ensureScriptIsExecuted;
   declare var Counter: Shumway.Metrics.Counter;
   declare var Compiler;
   declare var installProxyClassWrapper;
@@ -1139,7 +1138,7 @@ module Shumway.AVM2.Runtime {
     }
 
     public ensureExecuted() {
-      ensureScriptIsExecuted(this.scriptInfo);
+      Shumway.AVM2.Runtime.ensureScriptIsExecuted(this.scriptInfo);
     }
   }
 
@@ -1362,13 +1361,13 @@ module Shumway.AVM2.Runtime {
     return false;
   }
 
-  var CC = createEmptyObject();
+  export var CODE_CACHE = createEmptyObject();
 
   export function searchCodeCache(methodInfo) {
     if (!codeCaching.value) {
       return;
     }
-    var cacheInfo = CC[methodInfo.abc.hash];
+    var cacheInfo = CODE_CACHE[methodInfo.abc.hash];
     if (!cacheInfo) {
       console.warn("Cannot Find Code Cache For ABC, name: " + methodInfo.abc.name + ", hash: " + methodInfo.abc.hash);
       Counter.count("Code Cache ABC Miss");

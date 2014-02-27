@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -15,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+var jsGlobal = (function() { return this || (1, eval)('this'); })();
 
 var console = {
   time: function (name) {
@@ -32,8 +32,6 @@ var console = {
     print(s);
   }
 };
-
-var jsGlobal = (function() { return this || (1, eval)('this'); })();
 
 load(homePath + "src/avm2/settings.js");
 load(homePath + "src/avm2/utilities.js");

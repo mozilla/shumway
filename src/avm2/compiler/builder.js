@@ -446,7 +446,7 @@ var createName = function createName(namespaces, name) {
         blocks[i].blockDominatorOrder = i;
       }
 
-      var worklist = new SortedList(function compare(a, b) {
+      var worklist = new Shumway.SortedList(function compare(a, b) {
         return a.block.blockDominatorOrder - b.block.blockDominatorOrder;
       });
 
