@@ -16,8 +16,7 @@
  * limitations under the License.
  */
 
-enableVerifier.value = true;
-enableC4.value = true;
+Shumway.AVM2.Runtime.enableVerifier.value = true;
 release = true;
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
