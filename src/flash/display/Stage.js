@@ -530,8 +530,8 @@ var StageDefinition = (function () {
     },
 
     _handleMouse: function handleMouse() {
-      var mouseX = this._mouseX;
-      var mouseY = this._mouseY;
+      var mouseX = (this._mouseX / 20) | 0;
+      var mouseY = (this._mouseY / 20) | 0;
 
       var stack = [];
       var objectsUnderMouse = [];
