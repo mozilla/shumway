@@ -227,9 +227,7 @@ var createName = function createName(namespaces, name) {
   }
 
   function warn(message) {
-    // The warnings coming out of the builder are somewhat spammy, so we use console.info to make
-    // hiding them easier.
-    console.info(message);
+    console.warn(message);
   }
 
   function unary(operator, argument) {
