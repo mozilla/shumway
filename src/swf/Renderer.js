@@ -576,29 +576,42 @@ RenderableShape.prototype.render = function render(ctx) {
 };
 
 function RenderableBitmap(data, renderer, resolve) {
-  var rect = this.rect = new Shumway.Geometry.Rectangle(0, 0);
+  var width = data[0];
+  var height = data[1];
 
-  var len = data[0];
-  var imgData = new Uint8Array(data.buffer, data.byteOffset + 4, len);
-  var blob = new Blob([imgData]);
+  this.rect = new Shumway.Geometry.Rectangle(0, 0, width, height);
 
-  var img = new Image();
-  var renderable = this;
-  img.onload = function () {
-    rect.width = img.width;
-    rect.height = img.height;
+  var isRaw = data[2];
+  var len = data[3];
+  var bmpData = new Uint8Array(data.buffer, data.byteOffset + 16, len);
+  var drawable;
+
+  if (isRaw) {
+    drawable = document.createElement('canvas');
+    var ctx = drawable.getContext('2d');
+    drawable.width = width;
+    drawable.height = height;
+    imageData = ctx.createImageData(width, height);
+    imageData.data = bmpData;
+    ctx.putImageData(imageData, 0, 0);
     if (resolve) {
       resolve();
     }
-  };
-  img.src = URL.createObjectURL(blob);
+  } else {
+    drawable = new Image();
+    var blob = new Blob([bmpData]);
+    if (resolve) {
+      drawable.onload = resolve;
+    }
+    drawable.src = URL.createObjectURL(blob);
+  }
 
   if (!this.properties) {
     this.properties = { };
   }
 
   this.renderer = renderer;
-  this.drawable = img;
+  this.drawable = drawable;
 }
 RenderableBitmap.prototype.isScalable = false;
 RenderableBitmap.prototype.getBounds = function getBounds() {

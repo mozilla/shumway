@@ -62,11 +62,7 @@ function defineImage(tag, dictionary) {
 
   if (tag.mimeType === 'image/jpeg') {
     chunks = parseJpegChunks(img, imgData);
-    // TODO: decode the jpeg and apply alpha data right here instead of masking it on main-thread
-    var alphaData = tag.alphaData;
-    if (alphaData) {
-      img.mask = createInflatedStream(alphaData, img.width * img.height).bytes;
-    }
+
     if (tag.incomplete) {
       var tables = dictionary[0];
       assert(tables, 'missing tables', 'jpeg');
@@ -87,7 +83,26 @@ function defineImage(tag, dictionary) {
       imgData.set(chunk, offset);
       offset += chunk.length;
     }
+
+    var alphaData = tag.alphaData;
+    if (alphaData) {
+      var j = new JpegImage();
+      j.parse(imgData);
+
+      var length = img.width * img.height;
+      var symbolMaskBytes = createInflatedStream(alphaData, length).bytes;
+      var data = img.data = new Uint8ClampedArray(length * 4);
+
+      j.copyToImageData(img);
+
+      for (var i = 0, j = 3; i < length; i++, j += 4) {
+        data[j] = symbolMaskBytes[i];
+      }
+
+      img.mimeType = 'application/octet-stream';
+    }
+  } else {
+    img.data = imgData;
   }
-  img.data = imgData;
   return img;
 }

@@ -48,6 +48,7 @@ if (isWorker && !$RELEASE) {
   importScripts.apply(null, [
     // TODO: drop DataView, probably
     '../../lib/DataView.js/DataView.js',
+    '../../lib/jpgjs/jpg.js',
     '../flash/util.js',
     'config.js',
     'swf.js',

@@ -101,13 +101,24 @@ var StageDefinition = (function () {
         graphics._serialize(message);
         break;
       case 'image':
-        var type = Renderer.RENDERABLE_TYPE_BITMAP;
+        message.writeIntUnsafe(Renderer.RENDERABLE_TYPE_BITMAP);
+        message.ensureAdditionalCapacity(16);
+        message.writeIntUnsafe(symbol.width);
+        message.writeIntUnsafe(symbol.height);
+        message.writeIntUnsafe(symbol.mimeType === 'application/octet-stream');
+
+        var len = symbol.data.length;
+        message.writeIntUnsafe(len);
+        var offset = message.getIndex(1);
+        message.reserve(len);
+        message.subU8View().set(symbol.data, offset);
+        break;
       case 'font':
         if (!symbol.data) {
           break;
         }
 
-        message.writeIntUnsafe(type || Renderer.RENDERABLE_TYPE_FONT);
+        message.writeIntUnsafe(Renderer.RENDERABLE_TYPE_FONT);
 
         var len = symbol.data.length;
         message.writeInt(len);
@@ -214,8 +225,8 @@ var StageDefinition = (function () {
 
       message.writeIntUnsafe(+node._isContainer);
       message.writeIntUnsafe(node._parent._layerId);
-
       message.writeIntUnsafe(node._index);
+
       node._serialize(message);
 
       message.subI32View()[p] = message.getIndex(4) - (p + 1);
