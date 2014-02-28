@@ -1883,3 +1883,15 @@ module Shumway.AVM2.ABC {
     }
   }
 }
+
+import AbcFile = Shumway.AVM2.ABC.AbcFile;
+import AbcStream = Shumway.AVM2.ABC.AbcStream;
+import ConstantPool = Shumway.AVM2.ABC.ConstantPool;
+import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
+import MetaDataInfo = Shumway.AVM2.ABC.MetaDataInfo;
+import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
+import ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+import Trait = Shumway.AVM2.ABC.Trait;
+import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
+import Multiname = Shumway.AVM2.ABC.Multiname;
+import ASNamespace = Shumway.AVM2.ABC.Namespace;

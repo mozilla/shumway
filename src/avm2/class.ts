@@ -541,3 +541,6 @@ module Shumway.AVM2.Runtime {
     }
   }
 }
+
+import Interface = Shumway.AVM2.Runtime.Interface;
+import Class = Shumway.AVM2.Runtime.Class;

@@ -955,3 +955,6 @@ module Shumway {
     }
   }
 }
+
+import assert = Shumway.Debug.assert;
+import IndentingWriter = Shumway.IndentingWriter;

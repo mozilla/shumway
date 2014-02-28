@@ -582,3 +582,8 @@ module Shumway.AVM2.Runtime {
   }
 
 }
+
+var Glue = Shumway.AVM2.Runtime.Glue;
+import ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
+import AVM2 = Shumway.AVM2.Runtime.AVM2;
+import EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;

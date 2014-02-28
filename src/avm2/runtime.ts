@@ -1797,3 +1797,5 @@ module Shumway.AVM2.Runtime {
     }
   }
 }
+
+import CC = Shumway.AVM2.Runtime.CODE_CACHE;

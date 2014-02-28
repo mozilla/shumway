@@ -208,3 +208,7 @@ declare var exports;
 if (typeof exports !== "undefined") {
   exports["Shumway"] = Shumway;
 }
+
+import ArgumentParser = Shumway.Options.ArgumentParser;
+import Option = Shumway.Options.Option;
+import OptionSet = Shumway.Options.OptionSet;

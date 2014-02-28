@@ -303,3 +303,6 @@ module Shumway.AVM2 {
     return opcodeTable[op].name;
   }
 }
+
+import opcodeTable = Shumway.AVM2.opcodeTable;
+import opcodeName = Shumway.AVM2.opcodeName;

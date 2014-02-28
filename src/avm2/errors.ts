@@ -658,3 +658,8 @@ module Shumway.AVM2 {
     }
   }
 }
+
+import Errors = Shumway.AVM2.Errors;
+import getErrorMessage = Shumway.AVM2.getErrorMessage;
+import formatErrorMessage = Shumway.AVM2.formatErrorMessage;
+import translateErrorMessage = Shumway.AVM2.translateErrorMessage;

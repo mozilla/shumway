@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-
 load(homePath + "src/avm2/global.js");
 load(homePath + "src/avm2/utilities.js");
-
-var assert = Shumway.Debug.assert;
 
 var homePath;
 var release;
@@ -27,56 +24,21 @@ assert(homePath, "Host compartment needs to initialize homePath.");
 
 load(homePath + "src/avm2/settings.js");
 load(homePath + "src/avm2/avm2Util.js");
-
-var IndentingWriter = Shumway.IndentingWriter;
-
 load(homePath + "src/avm2/options.js");
-
-var ArgumentParser = Shumway.Options.ArgumentParser;
-var Option = Shumway.Options.Option;
-var OptionSet = Shumway.Options.OptionSet;
-
 load(homePath + "src/avm2/metrics.js");
-var Timer = Shumway.Metrics.Timer;
-var Counter = new Shumway.Metrics.Counter();
 
 var systemOptions = new OptionSet("System Options");
 var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 var traceWarnings = systemOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 
 Timer.start("Loading VM");
-Timer.start("Loading PRE");
+
 load(homePath + "src/avm2/constants.js");
 load(homePath + "src/avm2/errors.js");
-
-var Errors = Shumway.AVM2.Errors;
-var getErrorMessage = Shumway.AVM2.getErrorMessage;
-var formatErrorMessage = Shumway.AVM2.formatErrorMessage;
-var translateErrorMessage = Shumway.AVM2.translateErrorMessage;
-
 load(homePath + "src/avm2/opcodes.js");
-
-var opcodeTable = Shumway.AVM2.opcodeTable;
-var opcodeName = Shumway.AVM2.opcodeName;
-
 load(homePath + "src/avm2/parser.js");
-
-var AbcFile = Shumway.AVM2.ABC.AbcFile;
-var AbcStream = Shumway.AVM2.ABC.AbcStream;
-var ConstantPool = Shumway.AVM2.ABC.ConstantPool;
-var ClassInfo = Shumway.AVM2.ABC.ClassInfo;
-var MetaDataInfo = Shumway.AVM2.ABC.MetaDataInfo;
-var InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
-var ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
-var Trait = Shumway.AVM2.ABC.Trait;
-var MethodInfo = Shumway.AVM2.ABC.MethodInfo;
-var Multiname = Shumway.AVM2.ABC.Multiname;
-var ASNamespace = Shumway.AVM2.ABC.Namespace;
-
 load(homePath + "src/avm2/disassembler.js");
 load(homePath + "src/avm2/analyze.js");
-
-Timer.stop();
 
 Timer.start("Loading Compiler");
 load(homePath + "src/avm2/compiler/lljs/src/estransform.js");
@@ -90,9 +52,8 @@ load(homePath + "src/avm2/compiler/aot.js");
 load(homePath + "src/avm2/compiler/builder.js");
 Timer.stop();
 
-Timer.start("Loading Other");
+Timer.start("Loading Runtime");
 load(homePath + "lib/ByteArray.js");
-
 load(homePath + "src/avm2/trampoline.js");
 load(homePath + "src/avm2/bindings.js");
 load(homePath + "src/avm2/scope.js");
@@ -101,29 +62,12 @@ var playerglobalLoadedPromise;
 var playerglobal;
 
 load(homePath + "src/avm2/domain.js");
-var ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
-var AVM2 = Shumway.AVM2.Runtime.AVM2;
-var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
-
 load(homePath + "src/avm2/class.js");
-
-var Binding = Shumway.AVM2.Runtime.Binding;
-var Bindings = Shumway.AVM2.Runtime.Bindings;
-var ActivationBindings = Shumway.AVM2.Runtime.ActivationBindings;
-var CatchBindings = Shumway.AVM2.Runtime.CatchBindings;
-var ScriptBindings = Shumway.AVM2.Runtime.ScriptBindings;
-var ClassBindings = Shumway.AVM2.Runtime.ClassBindings;
-var InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;
-var Interface = Shumway.AVM2.Runtime.Interface;
-var Class = Shumway.AVM2.Runtime.Class;
-
 load(homePath + "src/avm2/xregexp.js");
 load(homePath + "src/avm2/runtime.js");
 load(homePath + "src/avm2/runtime-exports.js");
 load(homePath + "src/avm2/interpreter.js");
-
 load(homePath + "src/avm2/viz.js");
-
 load(homePath + "src/avm2/xml.js");
 load(homePath + "src/avm2/vectors-numeric.js");
 load(homePath + "src/avm2/vectors-generic.js");

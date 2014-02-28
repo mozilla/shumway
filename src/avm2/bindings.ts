@@ -491,3 +491,11 @@ module Shumway.AVM2.Runtime {
   var traitsWriter: IndentingWriter = null; // new IndentingWriter();
 
 }
+
+import Binding = Shumway.AVM2.Runtime.Binding;
+import Bindings = Shumway.AVM2.Runtime.Bindings;
+import ActivationBindings = Shumway.AVM2.Runtime.ActivationBindings;
+import CatchBindings = Shumway.AVM2.Runtime.CatchBindings;
+import ScriptBindings = Shumway.AVM2.Runtime.ScriptBindings;
+import ClassBindings = Shumway.AVM2.Runtime.ClassBindings;
+import InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;

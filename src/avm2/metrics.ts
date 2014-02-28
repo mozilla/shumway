@@ -159,3 +159,6 @@ module Shumway.Metrics {
     }
   }
 }
+
+import Timer = Shumway.Metrics.Timer;
+var Counter = new Shumway.Metrics.Counter(true);
