@@ -16,7 +16,6 @@
 ///<reference path='references.ts' />
 
 module Shumway.AVM2.Runtime {
-  declare var traceExecution;
   declare var getTraitFunction;
 
   import Map = Shumway.Map;

@@ -59,20 +59,20 @@ updateAVM2State();
 
 function updateAVM2State() {
   enableC4.value = true;
-  enableVerifier.value = state.verifier;
+  Shumway.AVM2.Runtime.enableVerifier.value = state.verifier;
   enableRegisterAllocator.value = state.allocator;
-  traceExecution.value = state.trace ? 2 : 0;
+  Shumway.AVM2.Runtime.traceExecution.value = state.trace ? 2 : 0;
   traceRenderer.value = state.trace ? 2 : 0;
   disableRenderVisitor.value = state.render ? false : true;
   disableMouseVisitor.value = state.mouse ? false : true;
   showQuadTree.value = state.qtree ? true : false;
   turboMode.value = state.turbo ? true : false;
-  codeCaching.value = state.caching ? true : false;
+  Shumway.AVM2.Runtime.codeCaching.value = state.caching ? true : false;
   showRedrawRegions.value = state.redraw ? true : false;
   renderAsWireframe.value = state.wireframe ? true : false;
-  traceCallExecution.value = state.traceCalls ? 1 : 0;
-  traceCallExecution.value = state.traceRuntime ? 2 : traceCallExecution.value;
-  debuggerMode.value = true;
+  Shumway.AVM2.Runtime.traceCallExecution.value = state.traceCalls ? 1 : 0;
+  Shumway.AVM2.Runtime.traceCallExecution.value = state.traceRuntime ? 2 : Shumway.AVM2.Runtime.traceCallExecution.value;
+  Shumway.AVM2.Runtime.debuggerMode.value = true;
   release = state.release;
   AVM1_TRACE_ENABLED = state.trace;
 }

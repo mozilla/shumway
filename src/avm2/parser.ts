@@ -21,6 +21,14 @@ module Shumway.AVM2.ABC {
   import isNumber = Shumway.isNumber;
   import isNumeric = Shumway.isNumeric;
   import isObject = Shumway.isObject;
+
+  declare var TextDecoder;
+
+  var textDecoder: any = null;
+  if (typeof TextDecoder !== "undefined") {
+    textDecoder = new TextDecoder();
+  }
+
   export class AbcStream {
     private static _resultBuffer = new Int32Array(256);
     private _bytes: Uint8Array;
@@ -122,6 +130,16 @@ module Shumway.AVM2.ABC {
       return result;
     }
     readUTFString(length): string {
+      /**
+       * Use the TextDecoder API whenever available.
+       * http://encoding.spec.whatwg.org/#concept-encoding-get
+       */
+      if (textDecoder) {
+        var position = this._position;
+        this._position += length;
+        return textDecoder.decode(this._bytes.subarray(position, position + length));
+      }
+
       var pos = this._position;
       var end = pos + length;
       var bytes = this._bytes;
@@ -151,21 +169,6 @@ module Shumway.AVM2.ABC {
       this._position = pos;
       return Shumway.StringUtilities.fromCharCodeArray(result.subarray(0, i));
     }
-  }
-
-  declare var TextDecoder;
-
-  /**
-   * Use the TextDecoder API whenever available.
-   * http://encoding.spec.whatwg.org/#concept-encoding-get
-   */
-  if (typeof TextDecoder !== "undefined") {
-    var decoder = new TextDecoder();
-    AbcStream.prototype.readUTFString = function (length) {
-      var position = this.position;
-      this.position += length;
-      return decoder.decode(this.bytes.subarray(position, position + length));
-    };
   }
 
   export class Parameter {
@@ -304,7 +307,7 @@ module Shumway.AVM2.ABC {
         case TRAIT.Class:     return "Class";
         case TRAIT.Function:  return "Function";
       }
-      unexpected();
+      Shumway.Debug.unexpected();
     }
 
     public isOverride() {
@@ -1126,7 +1129,7 @@ module Shumway.AVM2.ABC {
           }
           return mn;
         default:
-          unexpected();
+          Shumway.Debug.unexpected();
           break;
       }
       switch (kind) {
@@ -1872,7 +1875,7 @@ module Shumway.AVM2.ABC {
         case CONSTANT.NameLA:
           return this.multinames[index];
         case CONSTANT.Float:
-          warning("TODO: CONSTANT.Float may be deprecated?");
+          Shumway.Debug.warning("TODO: CONSTANT.Float may be deprecated?");
           break;
         default:
           release || assert(false, "Not Implemented Kind " + kind);

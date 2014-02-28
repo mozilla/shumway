@@ -180,7 +180,7 @@ module Shumway.AVM2.Runtime {
       if (isNativeClass) {
         var buildClass = getNative(ci.native.cls);
         if (!buildClass) {
-          unexpected("No native for " + ci.native.cls);
+          Shumway.Debug.unexpected("No native for " + ci.native.cls);
         }
         // Special case Object, which has no base class but needs the Class class on the scope.
         if (!baseClass) {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-
+///<reference path='global.ts' />
 ///<reference path='utilities.ts' />
 ///<reference path='options.ts' />
 ///<reference path='metrics.ts' />
@@ -30,8 +30,3 @@
 ///<reference path='interpreter.ts' />
 ///<reference path='hacks.ts' />
 
-declare function log(s: any);
-declare function print(s: string);
-declare function assert(condition: any, ...args);
-declare function warning(message: string);
-declare function unexpected(message?: any);

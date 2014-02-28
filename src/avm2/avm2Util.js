@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-var log = print;
-
 var error = Shumway.Debug.error;
-var assert = Shumway.Debug.assert;
 var assertNotImplemented = Shumway.Debug.assertNotImplemented;
 var warning = Shumway.Debug.warning;
 var notImplemented = Shumway.Debug.notImplemented;

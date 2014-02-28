@@ -18,7 +18,6 @@
 ///<reference path='references.ts' />
 
 module Shumway.AVM2 {
-  declare var debuggerMode;
   export var Errors = {
   /**
    * AVM2 Error Codes
@@ -624,7 +623,7 @@ module Shumway.AVM2 {
   };
 
   export function getErrorMessage(index) {
-    if (!debuggerMode.value) {
+    if (!Shumway.AVM2.Runtime.debuggerMode.value) {
       return "Error #" + index;
     }
     for (var k in Errors) {

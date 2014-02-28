@@ -47,8 +47,14 @@ console = {
  * Load Bare AVM2 Dependencies
  */
 
+
 load(homePath + "src/avm2/settings.js");
+load(homePath + "src/avm2/global.js");
 load(homePath + "src/avm2/utilities.js");
+
+var assert = Shumway.Debug.assert;
+
+
 load(homePath + "src/avm2/avm2Util.js");
 load(homePath + "src/avm2/options.js");
 

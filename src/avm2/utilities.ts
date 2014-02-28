@@ -15,19 +15,6 @@
  */
 ///<reference path='references.ts' />
 
-var inBrowser = typeof console != "undefined";
-/** @const */ var release: boolean = true;
-/** @const */ var debug: boolean = !release;
-
-declare var dateNow: () => number;
-
-if (!this.performance) {
-  this.performance = {};
-}
-if (!this.performance.now) {
-  this.performance.now = dateNow;
-}
-
 interface String {
   padRight(c: string, n: number): string;
   padLeft(c: string, n: number): string;
@@ -102,7 +89,7 @@ module Shumway {
 
     export function error(message: string) {
       if (!inBrowser) {
-        console.warn(Debug.backtrace());
+        warn(Debug.backtrace());
       }
       throw new Error(message);
     }
@@ -125,7 +112,7 @@ module Shumway {
     }
 
     export function warning(message: string) {
-      release || console.warn(message);
+      release || warn(message);
     }
 
     export function notUsed(message: string) {
@@ -140,7 +127,7 @@ module Shumway {
       Debug.warning("somewhatImplemented: " + message);
     }
 
-    export function unexpected(message: string) {
+    export function unexpected(message?: any) {
       Debug.assert(false, "Unexpected: " + message);
     }
   }

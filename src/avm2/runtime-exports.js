@@ -14,24 +14,7 @@
  * limitations under the License.
  */
 
-var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
 
-var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
-var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution"));
-var traceCallExecution = runtimeOptions.register(new Option("txc", "traceCallExecution", "number", 0, "trace call execution"));
-
-var functionBreak = runtimeOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
-var compileOnly = runtimeOptions.register(new Option("co", "compileOnly", "number", -1, "Compiles only function number."));
-var compileUntil = runtimeOptions.register(new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number."));
-var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
-var enableVerifier = runtimeOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
-
-var globalMultinameAnalysis = runtimeOptions.register(new Option("ga", "globalMultinameAnalysis", "boolean", false, "Global multiname analysis."));
-var traceInlineCaching = runtimeOptions.register(new Option("tic", "traceInlineCaching", "boolean", false, "Trace inline caching execution."));
-var codeCaching = runtimeOptions.register(new Option("cc", "codeCaching", "boolean", false, "Enable code caching."));
-
-var compilerEnableExceptions = runtimeOptions.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
-var compilerMaximumMethodSize = runtimeOptions.register(new Option("cmms", "maximumMethodSize", "number", 4 * 1024, "Compiler maximum method size."));
 
 var VM_SLOTS = "vm slots";
 var VM_LENGTH = "vm length";
@@ -55,6 +38,9 @@ var SAVED_SCOPE_NAME = "$SS";
  * those implemented by XRegExp. This also updates some methods on the String.prototype such as:
  * match, replace and split.
  */
+
+var originalStringReplace = String.prototype.replace;
+
 XRegExp.install({ natives: true });
 
 /* This is used to keep track if we're in a runtime context. For instance, proxies need to
@@ -121,8 +107,6 @@ var asSetPropertyLikelyNumeric = Shumway.AVM2.Runtime.asSetPropertyLikelyNumeric
 var asDefinePublicProperty = Shumway.AVM2.Runtime.asDefinePublicProperty;
 var asDefineProperty = Shumway.AVM2.Runtime.asDefineProperty;
 var asCallPublicProperty = Shumway.AVM2.Runtime.asCallPublicProperty;
-
-var callCounter = new Shumway.Metrics.Counter(true);
 
 var asCallProperty = Shumway.AVM2.Runtime.asCallProperty;
 var asCallSuper = Shumway.AVM2.Runtime.asCallSuper;

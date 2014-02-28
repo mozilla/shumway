@@ -149,7 +149,7 @@ module Shumway.AVM2.Runtime {
         return object;
       }
       if (strict) {
-        unexpected("Cannot find property " + name);
+        Shumway.Debug.unexpected("Cannot find property " + name);
       }
       // Can't find it still, return the global object.
       return this.global.object;

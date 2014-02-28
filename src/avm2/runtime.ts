@@ -57,38 +57,65 @@ interface Object {
 
 module Shumway.AVM2.Runtime {
 
-  declare var traceExecution;
-  declare var traceCallExecution;
-  declare var globalMultinameAnalysis;
-  declare var compilerEnableExceptions;
-  declare var compilerMaximumMethodSize;
-  declare var codeCaching;
-  declare var compileOnly;
-  declare var compileUntil;
-  declare var functionBreak;
-  declare var Analysis;
   declare var traceLevel;
-  declare var getNative;
-  declare var traceClasses;
-  declare var sealConstTraits;
+  declare var systemOptions: OptionSet;
 
-  declare var callCounter;
   declare var isProxy;
   declare var isProxyObject;
-  declare var jsGlobal;
 
   declare var XML;
   declare var XMLList;
   declare var isXMLType;
 
-  declare var useSurrogates;
+
+  import Option = Shumway.Options.Option;
+  import OptionSet = Shumway.Options.OptionSet;
+
+  var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
+  var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
+  export var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution"));
+  export var traceCallExecution = runtimeOptions.register(new Option("txc", "traceCallExecution", "number", 0, "trace call execution"));
+
+  var functionBreak = runtimeOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
+  var compileOnly = runtimeOptions.register(new Option("co", "compileOnly", "number", -1, "Compiles only function number."));
+  var compileUntil = runtimeOptions.register(new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number."));
+  export var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
+  export var enableVerifier = runtimeOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
+
+  export var globalMultinameAnalysis = runtimeOptions.register(new Option("ga", "globalMultinameAnalysis", "boolean", false, "Global multiname analysis."));
+  var traceInlineCaching = runtimeOptions.register(new Option("tic", "traceInlineCaching", "boolean", false, "Trace inline caching execution."));
+  export var codeCaching = runtimeOptions.register(new Option("cc", "codeCaching", "boolean", false, "Enable code caching."));
+
+  var compilerEnableExceptions = runtimeOptions.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
+  var compilerMaximumMethodSize = runtimeOptions.register(new Option("cmms", "maximumMethodSize", "number", 4 * 1024, "Compiler maximum method size."));
+
+  export var traceClasses = runtimeOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
+  export var traceDomain = runtimeOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
+
+  declare var Analysis;
+  declare var getNative;
+
+  /**
+   * Seals const traits. Technically we need to throw an exception if they are ever modified after
+   * the static or instance constructor executes, but we can safely ignore this incompatibility.
+   */
+  export var sealConstTraits = false;
+
+  /**
+   * Match AS3 add semantics related to toString/valueOf when adding values.
+   */
+  export var useAsAdd = true;
+
+  /**
+   * Allow overwriting of the native toString / valueOf with AS3 versions.
+   */
+  var useSurrogates = true;
+
+  var callCounter = new Shumway.Metrics.Counter(true);
 
   declare var Counter: Shumway.Metrics.Counter;
   declare var Compiler;
   declare var installProxyClassWrapper;
-  declare var formatErrorMessage;
-  declare var translateErrorMessage;
-  declare var getErrorMessage;
 
   import Map = Shumway.Map;
   import Multiname = Shumway.AVM2.ABC.Multiname;
@@ -117,7 +144,6 @@ module Shumway.AVM2.Runtime {
   import makeForwardingSetter = Shumway.FunctionUtilities.makeForwardingSetter;
   import toSafeString = Shumway.StringUtilities.toSafeString;
   import toSafeArrayString = Shumway.StringUtilities.toSafeArrayString;
-
 
   import TRAIT = Shumway.AVM2.ABC.TRAIT;
 
@@ -233,7 +259,7 @@ module Shumway.AVM2.Runtime {
       }
       defineNonEnumerableGetterOrSetter(object, qn, trampoline, trait.isGetter());
     } else {
-      unexpected(trait);
+      Shumway.Debug.unexpected(trait);
     }
   }
 
@@ -764,10 +790,10 @@ module Shumway.AVM2.Runtime {
 
   export function throwError(name, error) {
     if (true) {
-      var message = formatErrorMessage.apply(null, Array.prototype.slice.call(arguments, 1));
+      var message = Shumway.AVM2.formatErrorMessage.apply(null, Array.prototype.slice.call(arguments, 1));
       throwErrorFromVM(AVM2.currentDomain(), name, message, error.code);
     } else {
-      throwErrorFromVM(AVM2.currentDomain(), name, getErrorMessage(error.code), error.code);
+      throwErrorFromVM(AVM2.currentDomain(), name, Shumway.AVM2.getErrorMessage(error.code), error.code);
     }
   }
 
@@ -780,9 +806,9 @@ module Shumway.AVM2.Runtime {
     if (error instanceof Error) {
       var type = domain.getClass(error.name);
       if (type) {
-        return new type.instanceConstructor(translateErrorMessage(error));
+        return new type.instanceConstructor(Shumway.AVM2.translateErrorMessage(error));
       }
-      unexpected("Can't translate error: " + error);
+      Shumway.Debug.unexpected("Can't translate error: " + error);
     }
     return error;
   }
@@ -1369,7 +1395,7 @@ module Shumway.AVM2.Runtime {
     }
     var cacheInfo = CODE_CACHE[methodInfo.abc.hash];
     if (!cacheInfo) {
-      console.warn("Cannot Find Code Cache For ABC, name: " + methodInfo.abc.name + ", hash: " + methodInfo.abc.hash);
+      warn("Cannot Find Code Cache For ABC, name: " + methodInfo.abc.name + ", hash: " + methodInfo.abc.hash);
       Counter.count("Code Cache ABC Miss");
       return;
     }
@@ -1388,9 +1414,9 @@ module Shumway.AVM2.Runtime {
         Counter.count("Code Cache Query On Initializer");
       } else {
         Counter.count("Code Cache MISS ON OTHER");
-        console.warn("Shouldn't MISS: " + methodInfo + " " + methodInfo.debugName);
+        warn("Shouldn't MISS: " + methodInfo + " " + methodInfo.debugName);
       }
-      // console.warn("Cannot Find Code Cache For Method, name: " + methodInfo);
+      // warn("Cannot Find Code Cache For Method, name: " + methodInfo);
       Counter.count("Code Cache Miss");
       return;
     }
@@ -1444,7 +1470,7 @@ module Shumway.AVM2.Runtime {
     var mi = methodInfo;
     var cached = searchCodeCache(mi);
     if (!cached) {
-      console.warn("Compiling: " + compilationCount++ + ": " + methodInfo + " " + methodInfo.isInstanceInitializer + " " + methodInfo.isClassInitializer);
+      warn("Compiling: " + compilationCount++ + ": " + methodInfo + " " + methodInfo.isInstanceInitializer + " " + methodInfo.isClassInitializer);
       var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
       var parameters = result.parameters;
       var body = result.body;
@@ -1624,11 +1650,11 @@ module Shumway.AVM2.Runtime {
         }
       }
       if (!fn) {
-        warning("No native method for: " + trait.kindName() + " " +
+        Shumway.Debug.warning("No native method for: " + trait.kindName() + " " +
           mi.holder.name + "::" + Multiname.getQualifiedName(mi.name));
         return (function (mi) {
           return function () {
-            warning("Calling undefined native method: " + trait.kindName() +
+            Shumway.Debug.warning("Calling undefined native method: " + trait.kindName() +
               " " + mi.holder.name + "::" +
               Multiname.getQualifiedName(mi.name));
           };

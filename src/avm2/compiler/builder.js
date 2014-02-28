@@ -667,7 +667,7 @@ var createName = function createName(namespaces, name) {
         function resolveMultinameGlobally(multiname) {
           var namespaces = multiname.namespaces;
           var name = multiname.name;
-          if (!globalMultinameAnalysis.value) {
+          if (!Shumway.AVM2.Runtime.globalMultinameAnalysis.value) {
             return;
           }
           if (!isConstant(namespaces) || !isConstant(name) || multiname.isAttribute()) {
@@ -1298,7 +1298,7 @@ var createName = function createName(namespaces, name) {
               left = pop();
               if (typesAreEqual(left, right)) {
                 operator = Operator.ADD;
-              } else if (useAsAdd) {
+              } else if (Shumway.AVM2.Runtime.useAsAdd) {
                 operator = Operator.AS_ADD;
               } else {
                 operator = Operator.ADD;
@@ -1519,7 +1519,7 @@ var createName = function createName(namespaces, name) {
     methodInfo.analysis.markLoops();
     Timer.stop();
 
-    if (enableVerifier.value) {
+    if (Shumway.AVM2.Runtime.enableVerifier.value) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?
       Timer.start("Verify");
       verifier.verifyMethod(methodInfo, scope);

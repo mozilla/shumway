@@ -107,8 +107,8 @@ limitations under the License.
     <script src="../../src/swf/Timeline.js"></script>
 
     <script>
-      var Option = options.Option;
-      var OptionSet = options.OptionSet;
+      var Option = Shumway.Options.Option;
+      var OptionSet = Shumway.Options.OptionSet;
       var coreOptions = new OptionSet("Core Options");
     </script>
 
@@ -171,8 +171,9 @@ limitations under the License.
     <!-- Load AVM2 Dependencies -->
     <script> console.time("Load AVM2 Dependencies"); </script>
 
-    <script src="../../src/avm2/settings.js"></script>
+    <script src="../../src/avm2/global.js"></script>
     <script src="../../src/avm2/utilities.js"></script>
+    <script src="../../src/avm2/settings.js"></script>
     <script src="../../src/avm2/avm2Util.js"></script>
     <script src="../../src/avm2/metrics.js"></script>
 

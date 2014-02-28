@@ -29,8 +29,6 @@ module Shumway.AVM2.Runtime {
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import IndentingWriter = Shumway.IndentingWriter;
 
-  declare var traceClasses;
-  declare var traceDomain;
   declare var getNative;
   declare var createFunction;
   declare var Timer;
@@ -75,7 +73,7 @@ module Shumway.AVM2.Runtime {
 
   export function ensureScriptIsExecuted(script, reason: string = "") {
     if (!script.executed && !script.executing) {
-      if (traceExecution.value >= 2) {
+      if (Shumway.AVM2.Runtime.traceExecution.value >= 2) {
         log("Executing Script For: " + reason);
       }
       executeScript(script);
@@ -340,7 +338,7 @@ module Shumway.AVM2.Runtime {
         return resolved.script.global[Multiname.getQualifiedName(resolved.trait.name)];
       }
       if (strict) {
-        return unexpected("Cannot find property " + multiname);
+        return Shumway.Debug.unexpected("Cannot find property " + multiname);
       }
 
       return undefined;
@@ -364,7 +362,7 @@ module Shumway.AVM2.Runtime {
     }
 
     public findDomainProperty(multiname, strict, execute) {
-      if (traceDomain.value) {
+      if (Shumway.AVM2.Runtime.traceDomain.value) {
         log("ApplicationDomain.findDomainProperty: " + multiname);
       }
       var resolved = this.findDefiningScript(multiname, execute);
@@ -372,7 +370,7 @@ module Shumway.AVM2.Runtime {
         return resolved.script.global;
       }
       if (strict) {
-        return unexpected("Cannot find property " + multiname);
+        return Shumway.Debug.unexpected("Cannot find property " + multiname);
       } else {
         return undefined;
       }
@@ -487,7 +485,7 @@ module Shumway.AVM2.Runtime {
               }
             }
           } else {
-            unexpected();
+            Shumway.Debug.unexpected();
           }
         }
       }
@@ -517,7 +515,7 @@ module Shumway.AVM2.Runtime {
     }
 
     public loadAbc(abc) {
-      if (traceExecution.value) {
+      if (Shumway.AVM2.Runtime.traceExecution.value) {
         log("Loading: " + abc.name);
       }
       abc.applicationDomain = this;
@@ -568,8 +566,8 @@ module Shumway.AVM2.Runtime {
     constructor () {
       this.compartment = createNewCompartment();
       this.compartment.homePath = homePath;
-      this.compartment.eval(snarf("compartment.js"));
       this.compartment.release = release;
+      this.compartment.eval(snarf("compartment.js"));
     }
 
     public initializeShell(sysMode, appMode) {

@@ -15,6 +15,11 @@
  */
 
 /**
+ * Check arguments and throw the appropriate errors.
+ */
+var checkArguments = true;
+
+/**
  * TypedArray Vector Template
  *
  * If you make any changes to this code you'll need to run it through the closure compiler:

@@ -15,8 +15,6 @@
  */
 ///<reference path='references.ts' />
 
-declare var traceExecution;
-
 module Shumway.AVM2.Runtime {
   import Map = Shumway.Map;
   import Multiname = Shumway.AVM2.ABC.Multiname;
@@ -33,7 +31,6 @@ module Shumway.AVM2.Runtime {
 
   import bindSafely = Shumway.FunctionUtilities.bindSafely;
 
-  declare var traceCallExecution;
   declare var callWriter: IndentingWriter;
   declare var Counter: Shumway.Metrics.Counter;
 
@@ -56,7 +53,7 @@ module Shumway.AVM2.Runtime {
     if (methodInfo.name) {
       var key = getMethodOverrideKey(methodInfo);
       if (key in VM_METHOD_OVERRIDES) {
-        warning("Overriding Method: " + key);
+        Shumway.Debug.warning("Overriding Method: " + key);
         return VM_METHOD_OVERRIDES[key];
       }
     }
@@ -183,11 +180,11 @@ module Shumway.AVM2.Runtime {
        * Triggers the trampoline and executes it.
        */
       var trampoline: ITrampoline = function execute() {
-        if (traceExecution.value >= 3) {
+        if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
           log("Trampolining");
         }
         Counter.count("Executing Trampoline");
-        traceCallExecution.value > 1 && callWriter.writeLn("Trampoline: " + description);
+        Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Trampoline: " + description);
         if (!target) {
           target = forward(trampoline);
           release || assert (target);
@@ -218,10 +215,10 @@ module Shumway.AVM2.Runtime {
     function memoizer() {
       Counter.count("Runtime: Memoizing");
       // release || assert (!Object.prototype.hasOwnProperty.call(this, "class"), this);
-      if (traceExecution.value >= 3) {
+      if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
         log("Memoizing: " + qn);
       }
-      traceCallExecution.value > 1 && callWriter.writeLn("Memoizing: " + qn);
+      Shumway.AVM2.Runtime.traceCallExecution.value > 1 && callWriter.writeLn("Memoizing: " + qn);
       if (isNativePrototype(this)) {
         Counter.count("Runtime: Method Closures");
         return bindSafely(target.value, this);

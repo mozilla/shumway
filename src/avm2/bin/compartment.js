@@ -14,39 +14,21 @@
  * limitations under the License.
  */
 
-var jsGlobal = (function() { return this || (1, eval)('this'); })();
 
-var console = {
-  time: function (name) {
-    Timer.start(name)
-  },
-  timeEnd: function (name) {
-    Timer.stop(name)
-  },
-  warn: function (s) {
-    if (traceWarnings.value) {
-      print(RED + s + ENDC);
-    }
-  },
-  info: function (s) {
-    print(s);
-  }
-};
+load(homePath + "src/avm2/global.js");
+load(homePath + "src/avm2/utilities.js");
+
+var assert = Shumway.Debug.assert;
+
+var homePath;
+var release;
+
+assert(homePath, "Host compartment needs to initialize homePath.");
 
 load(homePath + "src/avm2/settings.js");
-load(homePath + "src/avm2/utilities.js");
 load(homePath + "src/avm2/avm2Util.js");
 
 var IndentingWriter = Shumway.IndentingWriter;
-
-if (false) {
-  var oldLoad = load;
-  load = function measureLoad(path) {
-    var start = performance.now();
-    oldLoad(path);
-    print("Loaded: " + path.padRight(' ', 64) + " in " + (performance.now() - start).toFixed(4));
-  }
-}
 
 load(homePath + "src/avm2/options.js");
 
@@ -63,6 +45,7 @@ var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 
 var traceWarnings = systemOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 
 Timer.start("Loading VM");
+Timer.start("Loading PRE");
 load(homePath + "src/avm2/constants.js");
 load(homePath + "src/avm2/errors.js");
 
@@ -93,6 +76,8 @@ var ASNamespace = Shumway.AVM2.ABC.Namespace;
 load(homePath + "src/avm2/disassembler.js");
 load(homePath + "src/avm2/analyze.js");
 
+Timer.stop();
+
 Timer.start("Loading Compiler");
 load(homePath + "src/avm2/compiler/lljs/src/estransform.js");
 load(homePath + "src/avm2/compiler/lljs/src/escodegen.js");
@@ -105,6 +90,7 @@ load(homePath + "src/avm2/compiler/aot.js");
 load(homePath + "src/avm2/compiler/builder.js");
 Timer.stop();
 
+Timer.start("Loading Other");
 load(homePath + "lib/ByteArray.js");
 
 load(homePath + "src/avm2/trampoline.js");
@@ -121,7 +107,6 @@ var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
 
 load(homePath + "src/avm2/class.js");
 
-
 var Binding = Shumway.AVM2.Runtime.Binding;
 var Bindings = Shumway.AVM2.Runtime.Bindings;
 var ActivationBindings = Shumway.AVM2.Runtime.ActivationBindings;
@@ -132,13 +117,7 @@ var InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;
 var Interface = Shumway.AVM2.Runtime.Interface;
 var Class = Shumway.AVM2.Runtime.Class;
 
-var domainOptions = systemOptions.register(new OptionSet("ApplicationDomain Options"));
-var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
-var traceDomain = domainOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
-
-
 load(homePath + "src/avm2/xregexp.js");
-
 load(homePath + "src/avm2/runtime.js");
 load(homePath + "src/avm2/runtime-exports.js");
 load(homePath + "src/avm2/interpreter.js");
@@ -154,7 +133,7 @@ load(homePath + "src/avm2/json2.js");
 load(homePath + "src/avm2/dictionary.js");
 load(homePath + "src/avm2/native.js");
 Timer.stop();
-
+Timer.stop();
 
 function grabAbc(fileOrBuffer) {
   if (isString(fileOrBuffer)) {
