@@ -33,8 +33,8 @@ public dynamic class URLVariables {
         Error.throwError(Error, 2101); // Errors.DecodeParamError
         return;
       }
-      var name: String = decodeURIComponent(p.substring(0, j)).replace('+', ' ');
-      var value: String = decodeURIComponent(p.substring(j + 1)).replace('+', ' ');
+      var name: String = unescapeMultiByte(p.substring(0, j));
+      var value: String = unescapeMultiByte(p.substring(j + 1));
       if (typeof this[name] == 'undefined') {
         this[name] = value;
       } else if (this[name] is Array) {
@@ -49,12 +49,10 @@ public dynamic class URLVariables {
     for (var name: String in this) {
       if (this[name] is Array) {
         for each (var value:String in this[name]) {
-          pairs.push(encodeURIComponent(name.replace(' ', '+')) + '=' +
-                     encodeURIComponent(value.replace(' ', '+')));
+          pairs.push(escapeMultiByte(name) + '=' + escapeMultiByte(value));
         }
       } else {
-        pairs.push(encodeURIComponent(name.replace(' ', '+')) + '=' +
-                   encodeURIComponent(this[name].replace(' ', '+')));
+        pairs.push(escapeMultiByte(name) + '=' + escapeMultiByte(this[name]));
       }
     }
     return pairs.join('&');
