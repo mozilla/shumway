@@ -61,35 +61,14 @@ function defineImage(tag, dictionary) {
   var chunks;
 
   if (tag.mimeType === 'image/jpeg') {
-    chunks = parseJpegChunks(img, imgData);
-
-    if (tag.incomplete) {
-      var tables = dictionary[0];
-      assert(tables, 'missing tables', 'jpeg');
-      var header = tables.data;
-      if (header && header.size) {
-        chunks[0] = chunks[0].subarray(2);
-        chunks.unshift(header.slice(0, header.size - 2));
-      }
-    }
-    var len = 0;
-    for (var i = 0; i < chunks.length; i++) {
-      len += chunks[i].length;
-    }
-    var imgData = new Uint8Array(len);
-    var offset = 0;
-    for (var i = 0; i < chunks.length; i++) {
-      var chunk = chunks[i];
-      imgData.set(chunk, offset);
-      offset += chunk.length;
-    }
-
     var alphaData = tag.alphaData;
     if (alphaData) {
       var j = new JpegImage();
       j.parse(imgData);
 
-      var length = img.width * img.height;
+      var width = img.width = j.width;
+      var height = img.height = j.height;
+      var length = width * height;
       var symbolMaskBytes = createInflatedStream(alphaData, length).bytes;
       var data = img.data = new Uint8ClampedArray(length * 4);
 
@@ -100,6 +79,30 @@ function defineImage(tag, dictionary) {
       }
 
       img.mimeType = 'application/octet-stream';
+    } else {
+      chunks = parseJpegChunks(img, imgData);
+
+      if (tag.incomplete) {
+        var tables = dictionary[0];
+        assert(tables, 'missing tables', 'jpeg');
+        var header = tables.data;
+        if (header && header.size) {
+          chunks[0] = chunks[0].subarray(2);
+          chunks.unshift(header.slice(0, header.size - 2));
+        }
+      }
+      var len = 0;
+      for (var i = 0; i < chunks.length; i++) {
+        len += chunks[i].length;
+      }
+      var data = new Uint8Array(len);
+      var offset = 0;
+      for (var i = 0; i < chunks.length; i++) {
+        var chunk = chunks[i];
+        imgData.set(chunk, offset);
+        offset += chunk.length;
+      }
+      img.data = data;
     }
   } else {
     img.data = imgData;
