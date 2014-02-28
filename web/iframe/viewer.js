@@ -123,6 +123,9 @@ var FileLoadingService = {
 };
 
 function parseSwf(url, movieParams, objectParams, compilerSettings) {
+  var enableVerifier = Shumway.AVM2.Runtime.enableVerifier;
+  var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
+
   enableVerifier.value = compilerSettings.verifier;
 
   console.log("Compiler settings: " + JSON.stringify(compilerSettings));
