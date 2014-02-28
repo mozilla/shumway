@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+///<reference path='lib/lib.d.ts' />
 ///<reference path='global.ts' />
 ///<reference path='utilities.ts' />
 ///<reference path='options.ts' />

@@ -179,7 +179,7 @@ module Shumway.AVM2.Runtime {
       /**
        * Triggers the trampoline and executes it.
        */
-      var trampoline: ITrampoline = function execute() {
+      var trampoline: ITrampoline = <ITrampoline><any>function execute() {
         if (Shumway.AVM2.Runtime.traceExecution.value >= 3) {
           log("Trampolining");
         }
@@ -252,7 +252,7 @@ module Shumway.AVM2.Runtime {
       defineReadOnlyProperty(this, qn, mc);
       return mc;
     }
-    var m: IMemoizer = memoizer;
+    var m: IMemoizer = <IMemoizer><any>memoizer;
     Counter.count("Runtime: Memoizers");
     m.isMemoizer = true;
     m.debugName = "Memoizer #" + vmNextMemoizerId++;

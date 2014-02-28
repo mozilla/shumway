@@ -32,7 +32,7 @@ module Shumway.AVM2.Runtime {
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
 
-  declare var boxValue;
+  import boxValue = Shumway.ObjectUtilities.boxValue
   declare var Counter;
   declare var jsGlobal;
 

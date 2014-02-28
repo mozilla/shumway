@@ -286,7 +286,7 @@ module Shumway.AVM2.Runtime {
 
       defineNonEnumerableGetter(object, qn, makeMemoizer(qn, memoizerTarget));
 
-      trampoline.patchTargets = [
+      trampoline.patchTargets = <IPatchTarget[]>[
         { object: memoizerTarget, name: "value"},
         { object: openMethods,    name: qn },
         { object: object,         name: VM_OPEN_METHOD_PREFIX + qn }

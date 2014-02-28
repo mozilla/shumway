@@ -16,6 +16,11 @@
 
 var jsGlobal = (function() { return this || (1, eval)('this'); })();
 
+declare var print;
+declare var console;
+declare var performance;
+declare var XMLHttpRequest;
+
 /** @const */ var inBrowser = typeof console != "undefined";
 /** @const */ var release: boolean = true;
 /** @const */ var debug: boolean = !release;
