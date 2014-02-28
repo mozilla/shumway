@@ -20,7 +20,7 @@ var fs = require('fs');
 var crypto = require('crypto');
 var spawn = require('child_process').spawn;
 
-var debugInfo = true;
+var debugInfo = false;
 var strict = true;
 
 var build_dir = '../build/playerglobal';
