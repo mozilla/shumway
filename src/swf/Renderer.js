@@ -592,7 +592,7 @@ function RenderableBitmap(data, renderer, resolve) {
     drawable.width = width;
     drawable.height = height;
     imageData = ctx.createImageData(width, height);
-    imageData.data = bmpData;
+    imageData.data.set(bmpData);
     ctx.putImageData(imageData, 0, 0);
     if (resolve) {
       resolve();
