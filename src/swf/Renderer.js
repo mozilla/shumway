@@ -30,6 +30,10 @@ Renderer.RENDERABLE_TYPE_FONT = 3;
 Renderer.RENDERABLE_TYPE_LABEL = 4;
 Renderer.RENDERABLE_TYPE_TEXT = 5;
 
+Renderer.BITMAP_TYPE_RAW = 1;
+Renderer.BITMAP_TYPE_DATA = 2;
+Renderer.BITMAP_TYPE_DRAW = 3;
+
 var ALIGN_TYPES = ['LEFT', 'RIGHT', 'CENTER', 'JUSTIFIED'];
 
 function rgbaUintToStr(rgba) {
@@ -104,30 +108,15 @@ function Renderer(target) {
           var renderableId = i32[p++];
           var renderable = renderer._renderables[renderableId];
 
-          var layer = renderer._layers[layerId];
-          if (!layer) {
-            if (isContainer) {
-              layer = new Shumway.Layers.FrameContainer();
-            } else {
-              layer = new Shumway.Layers.Shape(renderable);
-              layer.origin = new Shumway.Geometry.Point(
-                renderable.rect.x, renderable.rect.y
-              );
-            }
-            renderer._layers[layerId] = layer;
-
-            var parent = renderer._layers[parentId] || renderer._stage;
-            parent.addChild(layer);
-          }
-
-          layer.transform = new Shumway.Geometry.Matrix(
+          var transform = new Shumway.Geometry.Matrix(
             f32[p++], f32[p++], f32[p++], f32[p++], i32[p++], i32[p++]
           );
-          layer.alpha = f32[p++];
+          var alpha = f32[p++];
 
+          var colorTransform = null;
           var hasColorTransform = i32[p++];
           if (hasColorTransform) {
-            layer.colorTransform =
+            colorTransform =
               Shumway.Layers.ColorTransform.fromMultipliersAndOffsets(
                 f32[p++], f32[p++], f32[p++], f32[p++],
                 i32[p++], i32[p++], i32[p++], i32[p++]
@@ -145,13 +134,38 @@ function Renderer(target) {
               });
             } else {
               // TODO: support dynamic renderables
+              if (renderableType === 2) {
+                renderable = new RenderableBitmap(renderableData, renderer);
+              }
             }
           }
+
+          var layer = renderer._layers[layerId];
+          if (!layer) {
+            if (isContainer) {
+              layer = new Shumway.Layers.FrameContainer();
+            } else {
+              layer = new Shumway.Layers.Shape(renderable);
+              layer.origin = new Shumway.Geometry.Point(
+                renderable.rect.x, renderable.rect.y
+              );
+            }
+            renderer._layers[layerId] = layer;
+
+            var parent = renderer._layers[parentId] || renderer._stage;
+            parent.addChild(layer);
+          }
+
+          layer.transform = transform;
+          layer.alpha = alpha;
+          layer.colorTransform = colorTransform;
           break;
         case Renderer.MESSAGE_REMOVE_LAYER:
           var layerId = i32[p++];
           var layer = renderer._layers[layerId];
-          layer.parent.removeChild(layer);
+          if (layer) {
+            layer.parent.removeChild(layer);
+          }
           break;
         }
       }
@@ -581,12 +595,13 @@ function RenderableBitmap(data, renderer, resolve) {
 
   this.rect = new Shumway.Geometry.Rectangle(0, 0, width, height);
 
-  var isRaw = data[2];
+  var type = data[2];
   var len = data[3];
   var bmpData = new Uint8Array(data.buffer, data.byteOffset + 16, len);
   var drawable;
 
-  if (isRaw) {
+  switch (type) {
+  case Renderer.BITMAP_TYPE_RAW:
     drawable = document.createElement('canvas');
     var ctx = drawable.getContext('2d');
     drawable.width = width;
@@ -597,13 +612,134 @@ function RenderableBitmap(data, renderer, resolve) {
     if (resolve) {
       resolve();
     }
-  } else {
+    break;
+  case Renderer.BITMAP_TYPE_DATA:
     drawable = new Image();
     var blob = new Blob([bmpData]);
     if (resolve) {
       drawable.onload = resolve;
     }
     drawable.src = URL.createObjectURL(blob);
+    break;
+  case Renderer.BITMAP_TYPE_DRAW:
+    // TODO: this is duplicated code, move to helper class
+    var canvas = null;
+    var stage = null;
+    var layers = { };
+    var i32 = new Int32Array(bmpData.buffer, bmpData.byteOffset, bmpData.length / 4);
+    var f32 = new Float32Array(bmpData.buffer, bmpData.byteOffset, bmpData.length / 4);
+    var p = 0;
+    var len = i32.length;
+    while (p < len) {
+      var type = i32[p++];
+      var n = i32[p++];
+      var offset = p;
+      switch (type) {
+      case Renderer.MESSAGE_SETUP_STAGE:
+        var width = i32[p++];
+        var height = i32[p++];
+        var canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        stage = new Shumway.Layers.Stage(width, height);
+        break;
+      case Renderer.MESSAGE_ADD_LAYER:
+        var isContainer = i32[p++];
+        var parentId = i32[p++];
+        var index = i32[p++];
+        var layerId = i32[p++];
+        var renderableId = i32[p++];
+        var renderable = renderer._renderables[renderableId];
+
+        var transform = new Shumway.Geometry.Matrix(
+          f32[p++], f32[p++], f32[p++], f32[p++], i32[p++], i32[p++]
+        );
+        var alpha = f32[p++];
+
+        var colorTransform = null;
+        var hasColorTransform = i32[p++];
+        if (hasColorTransform) {
+          colorTransform =
+            Shumway.Layers.ColorTransform.fromMultipliersAndOffsets(
+              f32[p++], f32[p++], f32[p++], f32[p++],
+              i32[p++], i32[p++], i32[p++], i32[p++]
+            );
+        }
+
+        var updateRenderable = i32[p++];
+        if (updateRenderable) {
+          var renderableType = i32[p++];
+          var renderableData = i32.subarray(p, offset + n);
+          p = offset + n;
+          if (renderable) {
+            renderable.constructor.call(renderable, renderableData, renderer, function () {
+
+            });
+          } else {
+            // TODO: support dynamic renderables
+            if (renderableType === 2) {
+              renderable = new RenderableBitmap(renderableData, renderer);
+              renderer._renderables[renderableId] = renderable;
+            }
+          }
+        }
+
+        if (!renderable) {
+          continue;
+        }
+
+        var layer = layers[layerId];
+        if (!layer) {
+          if (isContainer) {
+            layer = new Shumway.Layers.FrameContainer();
+          } else {
+            layer = new Shumway.Layers.Shape(renderable);
+            layer.origin = new Shumway.Geometry.Point(
+              renderable.rect.x, renderable.rect.y
+            );
+          }
+          layers[layerId] = layer;
+
+          var parent = layers[parentId] || stage;
+          if (parent instanceof Shumway.Layers.FrameContainer) {
+            parent.addChild(layer);
+          }
+        }
+
+        layer.transform = transform;
+        layer.alpha = alpha;
+        layer.colorTransform = colorTransform;
+        break;
+      }
+    }
+    var sceneOptions = {
+      webGL: true,
+      canvas2D: false,
+
+      redraw: 1,
+      maxTextures: 4,
+      maxTextureSize: 1024 * 2,
+      useStencil: false,
+      render: true,
+      drawElements: true,
+      drawTiles: false,
+      drawTextures: false,
+      drawDirtyRegions: false,
+      drawLayers: false,
+      clear: true,
+      imageSmoothing: true,
+      snap: false,
+      alpha: true
+    };
+    if (canvas) {
+      var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
+      canvas2DStageRenderer = new Canvas2DStageRenderer(canvas.getContext('2d'));
+      canvas2DStageRenderer.render(stage, sceneOptions);
+      drawable = canvas;
+    } else {
+      drawable = new Image;
+    }
+    break;
   }
 
   if (!this.properties) {

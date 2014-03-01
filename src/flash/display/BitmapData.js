@@ -24,6 +24,7 @@ var BitmapDataDefinition = (function () {
     initialize: function () {
       this._changeNotificationTarget = null;
       this._locked = false;
+      this._data = null;
     },
 
     ctor: function(width, height, transparent, backgroundColor) {
@@ -57,70 +58,66 @@ var BitmapDataDefinition = (function () {
         throwError('ArgumentError', Errors.ArgumentError);
       }
 
-      //this._checkCanvas();
-      //var ctx = this._ctx;
-      //ctx.save();
-      //ctx.beginPath();
-      //if (clipRect && clipRect.width > 0 && clipRect.height > 0) {
-      //  ctx.rect(clipRect.x, clipRect.y, clipRect.width, clipRect.height);
-      //  ctx.clip();
-      //}
-      //if (matrix) {
-      //  ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx,
-      //                matrix.ty);
-      //}
-      //ctx.globalCompositeOperation = getBlendModeName(blendMode);
-      //ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = !!smoothing;
-      //if (flash.display.BitmapData.class.isInstanceOf(source)) {
-      //  ctx.drawImage(source._drawable, 0, 0);
-      //} else {
-      //  (new RenderVisitor(source, ctx, null, true)).startFragment(matrix);
-      //}
-      //ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = false;
-      //ctx.restore();
+      var root = new flash.display.Stage;
+      root._stageWidth = this._width * 20;
+      root._stageHeight = this._height * 20;
+      root._setup();
+      var oldTransform = source._currentTransform;
+      var oldParent = source._parent;
+      var oldIndex = source._index;
+      if (matrix) {
+        source._currentTransform = matrix;
+      }
+      root.addChild(source);
+      root._processInvalidations(true);
+      root.removeChild(source);
+      source._currentTransform = oldTransform;
+      source._parent = oldParent;
+      source._oldIndex = oldIndex;
+
+      this._data = root._message.subU8View();
 
       this._invalidate();
     },
     fillRect: function(rect, color) {
+      //var imgData = this._imgData;
 
-      var imgData = this._imgData;
+      //if (!imgData) {
+      //  throwError('ArgumentError', Errors.ArgumentError);
+      //}
 
-      if (!imgData) {
-        throwError('ArgumentError', Errors.ArgumentError);
-      }
+      //////////////// SYNC WITH MAIN THREAD //////////////
 
-      ////////////// SYNC WITH MAIN THREAD //////////////
+      //if (!this._transparent) {
+      //  color |= 0xff000000;
+      //}
 
-      if (!this._transparent) {
-        color |= 0xff000000;
-      }
+      //this._invalidate();
 
-      this._invalidate();
+      //var xMin = rect.x;
+      //var yMin = rect.y;
+      //var xMax = xMin + rect.width;
+      //var yMax = yMin + rect.height;
 
-      var xMin = rect.x;
-      var yMin = rect.y;
-      var xMax = xMin + rect.width;
-      var yMax = yMin + rect.height;
+      //var a = (color >> 24 & 0xff) / 255;
 
-      var a = (color >> 24 & 0xff) / 255;
+      //var w = this._width;
+      //var h = this._height;
 
-      var w = this._width;
-      var h = this._height;
+      //if (a >= 1) {
+      //  var pixels = this._pixels;
+      //  for (var y = yMin; y < yMax; y++) {
+      //    var p = y * w + x;
+      //    for (var x = xMin; x < xMax; x++) {
+      //      pixels[p++] = (color << 8) & 0xff;
+      //    }
+      //  }
+      //  return;
+      //}
 
-      if (a >= 1) {
-        var pixels = this._pixels;
-        for (var y = yMin; y < yMax; y++) {
-          var p = y * w + x;
-          for (var x = xMin; x < xMax; x++) {
-            pixels[p++] = (color << 8) & 0xff;
-          }
-        }
-        return;
-      }
-
-      var r = (color >> 16) & 0xff;
-      var g = (color >> 8) & 0xff;
-      var b = color & 0xff;
+      //var r = (color >> 16) & 0xff;
+      //var g = (color >> 8) & 0xff;
+      //var b = color & 0xff;
 
       //for (var y = yMin; y < yMax; y++) {
       //  var p = (y * w + x) * 4;
@@ -293,6 +290,7 @@ var BitmapDataDefinition = (function () {
         ctor : def.ctor,
         fillRect : def.fillRect,
         dispose : def.dispose,
+        draw : def.draw,
         getPixel : def.getPixel,
         getPixel32 : def.getPixel32,
         setPixel : def.setPixel,

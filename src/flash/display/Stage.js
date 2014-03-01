@@ -55,7 +55,7 @@ var StageDefinition = (function () {
       this._concatenatedTransform.invalid = false;
     },
 
-    _setup: function setup(ctx, options) {
+    _setup: function setup() {
       this._invalid = true;
 
       var message = this._message;
@@ -105,7 +105,9 @@ var StageDefinition = (function () {
         message.ensureAdditionalCapacity(16);
         message.writeIntUnsafe(symbol.width);
         message.writeIntUnsafe(symbol.height);
-        message.writeIntUnsafe(symbol.mimeType === 'application/octet-stream');
+        message.writeIntUnsafe(symbol.mimeType === 'application/octet-stream' ?
+                                Renderer.BITMAP_TYPE_RAW :
+                                Renderer.BITMAP_TYPE_DATA);
 
         var len = symbol.data.length;
         message.writeIntUnsafe(len);
@@ -337,7 +339,7 @@ var StageDefinition = (function () {
             if (!renderableId) {
               renderableId = this._nextRenderableId++;
               node._renderableId = renderableId;
-              this._defineRenderable(node);
+            //  this._defineRenderable(node);
             }
 
             node._layerId = layerId;
@@ -347,8 +349,6 @@ var StageDefinition = (function () {
           node._invalid = false;
         }
       }
-
-      this._commit();
     },
 
     _render: function render(renderer, canvas, bgcolor, options) {
@@ -451,6 +451,7 @@ var StageDefinition = (function () {
         if (sceneOptions.render) {
           timelineEnter("INVALIDATE");
           that._processInvalidations();
+          that._commit();
           timelineLeave("INVALIDATE");
 
           if (!disableRendering.value) {

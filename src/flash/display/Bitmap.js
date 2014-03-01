@@ -46,8 +46,33 @@ var BitmapDefinition = (function () {
     __class__: "flash.display.Bitmap",
     _drawableChanged: function () {
       this._invalidate();
+      this._invalidateRenderable();
     },
     initialize: function () { },
+
+    _serializeRenderableData: function (message) {
+      message.writeInt(Renderer.RENDERABLE_TYPE_BITMAP);
+
+      message.ensureAdditionalCapacity(16);
+      message.writeIntUnsafe(this._bbox.xMax / 20);
+      message.writeIntUnsafe(this._bbox.yMax / 20);
+      message.writeIntUnsafe(Renderer.BITMAP_TYPE_DRAW);
+
+      if (!this._bitmapData) {
+        message.writeIntUnsafe(0);
+        return;
+      }
+
+      var data = this._bitmapData._data;
+      if (data) {
+        var len = data.length;
+        message.writeIntUnsafe(len);
+        var offset = message.getIndex(1);
+        message.reserve(len);
+        message.subU8View().set(data, offset);
+      }
+    },
+
     __glue__: {
       native: {
         static: {
