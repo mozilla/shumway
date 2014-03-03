@@ -1240,9 +1240,8 @@ module Shumway.AVM2.Runtime {
       if (isNumeric(key)) {
         fn.call(self, key, object[key]);
       } else if (Multiname.isPublicQualifiedName(key) && object[VM_BINDINGS].indexOf(key) < 0) {
-        Shumway.Debug.notImplemented("??");
-        // var name = key.substr(Multiname.PUBLIC_QUALIFIED_NAME_PREFIX.length);
-        // fn.call(self, name, object[key]);
+        var name = Multiname.stripPublicQualifier(key);
+        fn.call(self, name, object[key]);
       }
     }
   }
