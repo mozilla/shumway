@@ -16,7 +16,10 @@
  * limitations under the License.
  */
 
-turboMode.value = true;
+// turbo mode introduces intermittent failures in timeline and timeline_scene
+// tests since frames are not parsed fast enough for gotoAndPlay/gotoAndStop
+// turboMode.value = true;
+
 skipFrameDraw.value = false;
 
 function loadMovie(path, reportFrames) {
