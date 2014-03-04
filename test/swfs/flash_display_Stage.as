@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf StageTest,600,600 test/swfs/flash_display_Stage.as
+   node utils/compileabc.js --swf StageTest,600,600,60 -p test/swfs/flash_display_Stage.as
 */
 
 package {
@@ -12,7 +12,6 @@ package {
     public class StageTest extends Sprite {
         public var loader;
         public function StageTest() {
-            stage.frameRate = 20;
             var child = new TestObject();
             addChild(child);
             child.stage.addEventListener(Event.ENTER_FRAME, child.enterFrameHandler);

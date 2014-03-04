@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf GlowFilterTest,600,600 test/swfs/flash_filters_GlowFilter.as
+   node utils/compileabc.js --swf GlowFilterTest,600,600,60 -p test/swfs/flash_filters_GlowFilter.as
 */
 
 package {
@@ -13,7 +13,6 @@ package {
     public class GlowFilterTest extends Sprite {
         public var loader;
         public function GlowFilterTest() {
-            stage.frameRate = 30;
             var child = new TestObject();
             background(0xFFFFFF);
             addEventListener(Event.ENTER_FRAME, child.enterFrameHandler);

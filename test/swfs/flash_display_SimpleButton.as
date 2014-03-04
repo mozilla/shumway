@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf SimpleButtonTest,400,400,2 test/swfs/flash_display_SimpleButton.as
+   node utils/compileabc.js --swf SimpleButtonTest,400,400,10 -p test/swfs/flash_display_SimpleButton.as
 */
 
 package {
@@ -22,20 +22,23 @@ import flash.events.*;
 
 dynamic class SimpleButtonObject extends SimpleButton {
 
-    var downShape, upShape, hitTestShape, overShape;
+    private var downShape:Shape;
+    private var upShape:Shape;
+    private var hitTestShape:Shape;
+    private var overShape:Shape;
 
     public function SimpleButtonObject() {
-        this.hitTestState = new Shape;
-        this.hitTestState.graphics.drawRect(10, 10, 100, 100);
-        this.downState = new Shape;
-        this.downState.graphics.beginFill(0xFF0000);
-        this.downState.graphics.drawRect(10, 10, 80, 80);
-        this.upState = new Shape;
-        this.upState.graphics.beginFill(0x00FF00);
-        this.upState.graphics.drawRect(10, 10, 80, 80);
-        this.overState = new Shape;
-        this.overState.graphics.beginFill(0x0000FF);
-        this.overState.graphics.drawRect(10, 10, 80, 80);
+        this.hitTestState = hitTestShape = new Shape;
+        hitTestShape.graphics.drawRect(10, 10, 100, 100);
+        this.downState = downShape = new Shape;
+        downShape.graphics.beginFill(0xFF0000);
+        downShape.graphics.drawRect(10, 10, 80, 80);
+        this.upState = upShape = new Shape;
+        upShape.graphics.beginFill(0x00FF00);
+        upShape.graphics.drawRect(10, 10, 80, 80);
+        this.overState = overShape = new Shape;
+        overShape.graphics.beginFill(0x0000FF);
+        overShape.graphics.drawRect(10, 10, 80, 80);
     }
 
     private function set_downState():void {
