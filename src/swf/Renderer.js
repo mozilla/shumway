@@ -724,6 +724,7 @@ function RenderableBitmap(data, renderer, resolve) {
       drawElements: true,
       drawTiles: false,
       drawTextures: false,
+      drawTexture: -1,
       drawDirtyRegions: false,
       drawLayers: false,
       clear: true,

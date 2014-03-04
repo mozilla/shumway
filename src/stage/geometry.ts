@@ -1146,7 +1146,7 @@ module Shumway.Geometry {
     }
   }
 
-  module DirtyRegion {
+  export module DirtyRegion {
     export class Cell {
       region: Rectangle;
       bounds: Rectangle;
@@ -1205,7 +1205,7 @@ module Shumway.Geometry {
       }
     }
 
-    module Compact {
+    export module Compact {
       export class Cell extends RegionAllocator.Region {
         private _children: Cell [];
         private _horizontal: boolean;
@@ -1318,7 +1318,7 @@ module Shumway.Geometry {
       }
     }
 
-    module Grid {
+    export module Grid {
       export class Cell extends RegionAllocator.Region {
         index: number = -1;
         constructor(x: number, y: number, w: number, h: number) {

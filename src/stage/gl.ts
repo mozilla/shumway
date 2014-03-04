@@ -138,7 +138,7 @@ module Shumway.GL {
     static createEmptyVertices<T extends Vertex>(type: new (x: number, y: number, z: number) => T, count: number): T [] {
       var result = [];
       for (var i = 0; i < count; i++) {
-        result.push(new type(0, 0));
+        result.push(new type(0, 0, 0));
       }
       return result;
     }
@@ -299,7 +299,7 @@ module Shumway.GL {
      * the callback returns |true|;
      */
     visit(callback: (T) => boolean, forward: boolean = true) {
-      var node: T = forward ? this._head : this._tail;
+      var node: ILinkedListNode<T> = (forward ? this._head : this._tail);
       while (node) {
         if (!callback(node)) {
           break;
@@ -824,16 +824,21 @@ module Shumway.GL {
 
       if (options.drawTextures) {
         var textures = context.getTextures();
-        var textureWindowSize = viewport.w / 5;
         var transform = Matrix.createIdentity();
-        if (textureWindowSize > viewport.h / textures.length) {
-          textureWindowSize = viewport.h / textures.length;
-        }
-        brush.fillRectangle(new Rectangle(viewport.w - textureWindowSize, 0, textureWindowSize, viewport.h), new Color(0, 0, 0, 0.5), transform, 0.1);
-        for (var i = 0; i < textures.length; i++) {
-          var texture = textures[i];
-          var textureWindow = new Rectangle(viewport.w - textureWindowSize, i * textureWindowSize, textureWindowSize, textureWindowSize);
-          brush.drawImage(new WebGLTextureRegion(texture, <RegionAllocator.Region>new Rectangle(0, 0, texture.w, texture.h)), textureWindow, Color.White, null, transform, 0.2);
+        if (options.drawTexture >= 0 && options.drawTexture < textures.length) {
+          var texture = textures[options.drawTexture | 0];
+          brush.drawImage(new WebGLTextureRegion(texture, <RegionAllocator.Region>new Rectangle(0, 0, texture.w, texture.h)), viewport, Color.White, null, transform, 0.2);
+        } else {
+          var textureWindowSize = viewport.w / 5;
+          if (textureWindowSize > viewport.h / textures.length) {
+            textureWindowSize = viewport.h / textures.length;
+          }
+          brush.fillRectangle(new Rectangle(viewport.w - textureWindowSize, 0, textureWindowSize, viewport.h), new Color(0, 0, 0, 0.5), transform, 0.1);
+          for (var i = 0; i < textures.length; i++) {
+            var texture = textures[i];
+            var textureWindow = new Rectangle(viewport.w - textureWindowSize, i * textureWindowSize, textureWindowSize, textureWindowSize);
+            brush.drawImage(new WebGLTextureRegion(texture, <RegionAllocator.Region>new Rectangle(0, 0, texture.w, texture.h)), textureWindow, Color.White, null, transform, 0.2);
+          }
         }
         brush.flush(options.drawElements);
       }
@@ -1083,7 +1088,7 @@ module Shumway.GL {
       var srcRectangle = src.region.clone();
       srcRectangle.offset(0.5, 0.5).resize(-1, -1);
       srcRectangle.scale(1 / src.texture.w, 1 / src.texture.h);
-      transform.transformRectangle(dstRectangle, <Point[]>tmpVertices);
+      transform.transformRectangle(dstRectangle, <Point[]><any>tmpVertices);
       for (var i = 0; i < 4; i++) {
         tmpVertices[i].z = depth;
       }
@@ -1115,7 +1120,7 @@ module Shumway.GL {
     }
 
     public fillRectangle(rectangle: Rectangle, color: Color, transform: Matrix, depth: number = 0) {
-      transform.transformRectangle(rectangle, <Point[]>WebGLCombinedBrush._tmpVertices);
+      transform.transformRectangle(rectangle, <Point[]><any>WebGLCombinedBrush._tmpVertices);
       for (var i = 0; i < 4; i++) {
         var vertex = WebGLCombinedBrush._tmpVertices[i];
         vertex.kind = WebGLCombinedBrushKind.FillColor;
