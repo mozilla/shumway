@@ -159,6 +159,7 @@ module Shumway.Layers {
     public h: number;
     public parent: Frame;
     public isInvalid: boolean;
+    public isVisible: boolean;
 
     public filters: Filter [];
     public mask: Frame;
@@ -176,6 +177,7 @@ module Shumway.Layers {
       this.parent = null;
       this.transform = Matrix.createIdentity();
       this.filters = null;
+      this.isVisible = true;
     }
 
     get stage(): Stage {
@@ -208,10 +210,13 @@ module Shumway.Layers {
       this.invalidate();
     }
 
-    public visit(visitor: (Frame, Matrix?) => void, transform: Matrix) {
+    public visit(visitor: (Frame, Matrix?) => void, transform: Matrix, visibleOnly: boolean = true) {
       var stack: Frame [];
       var frame: Frame;
       var frameContainer: FrameContainer;
+      if (visibleOnly && !this.isVisible) {
+        return;
+      }
       if (transform) {
         stack = [this];
         var transforms: Matrix [];
@@ -222,9 +227,13 @@ module Shumway.Layers {
           if (frame instanceof FrameContainer) {
             frameContainer = <FrameContainer>frame;
             for (var i = frameContainer.children.length - 1; i >= 0; i--) {
-              stack.push(frameContainer.children[i]);
+              var child = frameContainer.children[i];
+              if (visibleOnly && !child.isVisible) {
+                continue;
+              }
+              stack.push(child);
               var t = transform.clone();
-              Matrix.multiply(t, frameContainer.children[i].transform);
+              Matrix.multiply(t, child.transform);
               transforms.push(t);
             }
           }
