@@ -72,6 +72,10 @@ var LoaderDefinition = (function () {
             }
           });
         });
+
+        // signal when we finish parsing, it's mostly to provide consistent testing results
+        this._contentLoaderInfo._dispatchEvent("parsed");
+
         Promise.all([frameConstructed, this._lastPromise]).then(function () {
           this._content._complete = true;
           this._contentLoaderInfo._dispatchEvent("complete");

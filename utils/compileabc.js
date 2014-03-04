@@ -120,7 +120,7 @@ ensureDir(build_dir);
 
 var playerglobalPath = path.join(shumwayRoot, 'build/playerglobal/playerglobal-single.abc');
 var builtinPath = path.join(shumwayRoot, 'src/avm2/generated/builtin/builtin.abc');
-var ascjar = './asc.jar';
+var ascjar = path.join(shumwayRoot, 'utils/asc.jar');
 
 if (!outputPath) {
   outputPath = files[files.length - 1];
@@ -207,7 +207,7 @@ function checkHashes() {
 
 if (needsPlayerglobal) {
   console.log('Verifing playerglobal-single.abc ...');
-  var proc = spawn(process.argv[0], ['single'], {cwd: 'playerglobal-builder', stdio: 'inherit'} );
+  var proc = spawn(process.argv[0], ['single'], {cwd: path.join(shumwayRoot, 'utils/playerglobal-builder'), stdio: 'inherit'} );
   proc.on('close', function (code) {
     if (code !== 0 || !fs.existsSync(playerglobalPath)) {
       console.log('Error during playerglobal-single.abc build');
