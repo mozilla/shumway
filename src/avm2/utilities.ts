@@ -31,6 +31,27 @@ interface Array {
 
 module Shumway {
 
+  export enum CharacterCodes {
+    _0 = 48,
+    _1 = 49,
+    _2 = 50,
+    _3 = 51,
+    _4 = 52,
+    _5 = 53,
+    _6 = 54,
+    _7 = 55,
+    _8 = 56,
+    _9 = 57
+  }
+
+  /**
+   * The buffer length required to contain any unsigned 32-bit integer.
+   */
+  /* @const */ export var UINT32_CHAR_BUFFER_LENGTH = 10; // "4294967295".length;
+  /* @const */ export var UINT32_MAX = 0xFFFFFFFF;
+  /* @const */ export var UINT32_MAX_DIV_10 = 0x19999999; // UINT32_MAX / 10;
+  /* @const */ export var UINT32_MAX_MOD_10 = 0x5; // UINT32_MAX % 10
+
   export function isString(value) {
     return typeof value === "string";
   }
@@ -43,6 +64,10 @@ module Shumway {
     return typeof value === "number";
   }
 
+  export function isNumberOrString(value) {
+    return typeof value === "number" || typeof value === "string";
+  }
+
   export function isObject(value) {
     return typeof value === "object" || typeof value === 'function';
   }
@@ -51,24 +76,72 @@ module Shumway {
     return +x;
   }
 
-  export function isNumeric(x: any): boolean {
-    if (typeof x === "number") {
-      return x === (x | 0);
+  export function isNumberString(value: string): boolean {
+    return String(Number(value)) === value;
+  }
+
+  /**
+   * Whether the specified |value| is a number or the string representation of a number.
+   */
+  export function isNumeric(value: any): boolean {
+    if (typeof value === "number") {
+      return true;
+    } else if (typeof value === "string") {
+      return isIndex(value) || isNumberString(value);
+    } else {
+      Debug.notImplemented(typeof value);
     }
-    if (typeof x !== "string" || x.length === 0) {
+  }
+
+  /**
+   * Whether the specified |value| is an unsigned 32 bit number expressed as a number
+   * or string.
+   */
+  export function isIndex(value: any): boolean {
+    // js/src/vm/String.cpp JSFlatString::isIndexSlow
+    // http://dxr.mozilla.org/mozilla-central/source/js/src/vm/String.cpp#474
+    var index = 0;
+    if (typeof value === "number") {
+      index = (value | 0);
+      if (value === index && index >= 0) {
+        return true;
+      }
+      return value >>> 0 === value;
+    }
+    if (typeof value !== "string") {
       return false;
     }
-    if (x === "0") {
+    var length = value.length;
+    if (length === 0) {
+      return false;
+    }
+    if (value === "0") {
       return true;
     }
-    var c = x.charCodeAt(0);
-    if ((c >= 49) && (c <= 57)) {
-      for (var i = 1, j = x.length; i < j; i++) {
-        c = x.charCodeAt(i);
-        if (!((c >= 48) && (c <= 57))) {
-          return false;
-        }
+    // Is there any way this will fit?
+    if (length > UINT32_CHAR_BUFFER_LENGTH) {
+      return false;
+    }
+    var i = 0;
+    index = value.charCodeAt(i++) - CharacterCodes._0;
+    if (index < 1 || index > 9) {
+      return false;
+    }
+    var oldIndex = 0;
+    var c = 0;
+    while (i < length) {
+      c = value.charCodeAt(i++) - CharacterCodes._0;
+      if (c < 0 || c > 9) {
+        return false;
       }
+      oldIndex = index;
+      index = 10 * index + c;
+    }
+    /*
+     * Look out for "4294967296" and larger-number strings that fit in UINT32_CHAR_BUFFER_LENGTH.
+     * Only unsigned 32-bit integers shall pass.
+     */
+    if ((oldIndex < UINT32_MAX_DIV_10) || (oldIndex === UINT32_MAX_DIV_10 && c <= UINT32_MAX_MOD_10)) {
       return true;
     }
     return false;
@@ -955,6 +1028,10 @@ module Shumway {
     }
   }
 }
+
+//["000", "4294967296", 4294967290, "4294967290", "4294967290", "1234",12345, "i","", "123.456", "-4", "0x2", "123456789123467", "4294967296"].forEach(function (x) {
+//  log("V: " + x + ": " + Shumway.isIndex(x) + " " + Shumway.isIndex2(x));
+//});
 
 import assert = Shumway.Debug.assert;
 import IndentingWriter = Shumway.IndentingWriter;

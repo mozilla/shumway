@@ -377,7 +377,6 @@ module Shumway.AVM2.Runtime {
       if (trait.isGetter() || trait.isSetter()) {
         multiname = multiname.substring(Binding.KEY_PREFIX_LENGTH);
       }
-      var k = multiname;
       multiname = Multiname.fromQualifiedName(multiname);
       if (multiname.getNamespace().inNamespaceSet(namespaces)) {
         map[multiname.getName()] = Multiname.getQualifiedName(trait.name);

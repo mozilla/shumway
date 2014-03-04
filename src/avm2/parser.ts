@@ -745,7 +745,6 @@ module Shumway.AVM2.ABC {
 
   }
 
-
   export class Namespace {
     private static  _publicPrefix = "public";
 
@@ -1010,7 +1009,7 @@ module Shumway.AVM2.ABC {
    *
    * Please use the following conventions when dealing with multinames:
    *
-   * In the AS3 bytecode specification the word "name" usually refers to multinames. We us the same property name in
+   * In the AS3 bytecode specification the word "name" usually refers to multinames. We use the same property name in
    * Shumway thus leading to code such as |instanceInfo.name.name| which is quite ugly. If possible, avoid using the
    * word "name" to refer to multinames, instead use "mn" or "multiname" and use the word "name" to refer to the
    * name part of a Multiname.
@@ -1190,12 +1189,10 @@ module Shumway.AVM2.ABC {
       return mn instanceof Multiname && mn.isRuntimeName() || mn.isRuntimeNamespace();
     }
 
-
     /**
      * Gets the qualified name for this multiname, this is either the identity or
      * a mangled Multiname object.
      */
-
     public static getQualifiedName(mn): any {
       release || assert (Multiname.isQName(mn));
       if (mn instanceof Multiname) {
@@ -1203,8 +1200,8 @@ module Shumway.AVM2.ABC {
           return mn.qualifiedName;
         }
         var name = String(mn.name);
-        if (isNumeric(name)) {
-          release || assert (mn.namespaces[0].isPublic());
+        if (isNumeric(name) && mn.namespaces[0].isPublic()) {
+          // release || assert (mn.namespaces[0].isPublic());
           return mn.qualifiedName = name;
         }
         mn = mn.qualifiedName = Multiname.qualifyName(mn.namespaces[0], name);
@@ -1232,6 +1229,9 @@ module Shumway.AVM2.ABC {
     public static fromQualifiedName(qn): Multiname {
       if (qn instanceof Multiname) {
         return qn;
+      }
+      if (isNumeric(qn)) {
+        return new Multiname([Namespace.PUBLIC], qn);
       }
       if (qn[0] !== "$") {
         return;
@@ -1287,7 +1287,6 @@ module Shumway.AVM2.ABC {
       } else if (typeof mn === "string") {
         return isNumeric(mn);
       }
-      release || assert(mn instanceof Multiname, typeof mn);
       return !isNaN(parseInt(Multiname.getName(mn), 10));
     }
 
