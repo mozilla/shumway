@@ -76,7 +76,9 @@ module Shumway {
     return +x;
   }
 
-  export function isNumberString(value: string): boolean {
+  export function isNumericString(value: string): boolean {
+    // ECMAScript 5.1 - 9.8.1 Note 1, this expression is true for all
+    // numbers x other than -0.
     return String(Number(value)) === value;
   }
 
@@ -87,7 +89,7 @@ module Shumway {
     if (typeof value === "number") {
       return true;
     } else if (typeof value === "string") {
-      return isIndex(value) || isNumberString(value);
+      return isIndex(value) || isNumericString(value);
     } else {
       Debug.notImplemented(typeof value);
     }

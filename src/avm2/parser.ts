@@ -1287,10 +1287,11 @@ module Shumway.AVM2.ABC {
       } else if (typeof mn === "string") {
         return isNumeric(mn);
       }
+
       return !isNaN(parseInt(Multiname.getName(mn), 10));
     }
 
-    public static getName(mn): string {
+    public static getName(mn: Multiname): string {
       release || assert(mn instanceof Multiname);
       release || assert(!mn.isRuntimeName());
       return mn.getName();

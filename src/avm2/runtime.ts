@@ -1468,7 +1468,6 @@ module Shumway.AVM2.Runtime {
     var mi = methodInfo;
     var cached = searchCodeCache(mi);
     if (!cached) {
-      warn("Compiling: " + compilationCount++ + ": " + methodInfo + " " + methodInfo.isInstanceInitializer + " " + methodInfo.isClassInitializer);
       var result = Compiler.compileMethod(mi, scope, hasDynamicScope);
       var parameters = result.parameters;
       var body = result.body;
