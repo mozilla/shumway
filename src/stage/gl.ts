@@ -749,6 +749,10 @@ module Shumway.GL {
       var brush = this._brush;
 
       var viewport = this._viewport;
+      if (options.ignoreViewport) {
+        viewport = Rectangle.createSquare(1024 * 1024);
+      }
+
       var inverseTransform = Matrix.createIdentity();
 
       function cacheImageCallback(oldTextureRegion: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {

@@ -379,6 +379,7 @@ var StageDefinition = (function () {
         drawElements: true,
         drawTiles: false,
         drawTextures: false,
+        ignoreViewport: false,
         drawTexture: -1,
         drawDirtyRegions: false,
         drawLayers: false,
@@ -405,6 +406,7 @@ var StageDefinition = (function () {
         sceneOptions.drawTextures = drawTextures.value;
         sceneOptions.drawTexture = drawTexture.value;
         sceneOptions.drawElements = drawElements.value;
+        sceneOptions.ignoreViewport = ignoreViewport.value;
         if (perspectiveCameraAngleRotate.value) {
           sceneOptions.perspectiveCameraAngle = Math.sin(Date.now() / 1000) * 100;
         } else {

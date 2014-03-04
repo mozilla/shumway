@@ -36,13 +36,14 @@ var stageOptions = coreOptions.register(new OptionSet("Stage Renderer Options"))
 var perspectiveCamera = stageOptions.register(new Option("", "pc", "boolean", false, "Use perspective camera."));
 
 var perspectiveCameraFOV = stageOptions.register(new Option("", "pcFOV", "number", 60, "Perspective Camera FOV."));
-var perspectiveCameraDistance = stageOptions.register(new Option("", "pcDistance", "number", 1, "Perspective Camera Distance."));
+var perspectiveCameraDistance = stageOptions.register(new Option("", "pcDistance", "number", 2, "Perspective Camera Distance."));
 var perspectiveCameraAngle = stageOptions.register(new Option("", "pcAngle", "number", 0, "Perspective Camera Angle."));
 var perspectiveCameraAngleRotate = stageOptions.register(new Option("", "pcRotate", "boolean", false, "Rotate Use perspective camera."));
-var perspectiveCameraSpacing = stageOptions.register(new Option("", "pcSpacing", "number", 0.1, "Element Spacing."));
+var perspectiveCameraSpacing = stageOptions.register(new Option("", "pcSpacing", "number", 0.01, "Element Spacing."));
 var perspectiveCameraSpacingInflate = stageOptions.register(new Option("", "pcInflate", "boolean", false, "Rotate Use perspective camera."));
 
 var drawTiles = stageOptions.register(new Option("", "drawTiles", "boolean", false, "Draw Tiles."));
 var drawTextures = stageOptions.register(new Option("", "drawTextures", "boolean", false, "Draw Textures."));
 var drawTexture = stageOptions.register(new Option("", "drawTextures", "number", -1, "Draw Texture."));
 var drawElements = stageOptions.register(new Option("", "drawElements", "boolean", true, "Draw Elements."));
+var ignoreViewport = stageOptions.register(new Option("", "ignoreViewport", "boolean", false, "Ignore Viewport."));

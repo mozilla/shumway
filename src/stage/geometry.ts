@@ -356,6 +356,10 @@ module Shumway.Geometry {
       return new Rectangle(0, 0, 0, 0);
     }
 
+    static createSquare(size: number): Rectangle {
+      return new Rectangle(-size / 2, -size / 2, size, size);
+    }
+
     getCorners (points: Point[]) {
       points[0].x = this.x;
       points[0].y = this.y;
