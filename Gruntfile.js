@@ -27,12 +27,6 @@ module.exports = function(grunt) {
       all: ['src/avm1/*.js', 'src/flash/**/*.js', 'src/swf/*.js']
     },
     exec: {
-      reftest: {
-        cmd: 'make -C test/ reftest'
-      },
-      makeref: {
-        cmd: 'make -C test/ makeref'
-      },
       webserver: {
         cmd: 'python utils/webserver.py'
       },
@@ -103,12 +97,24 @@ module.exports = function(grunt) {
     });
   });
 
+  grunt.registerTask('reftest', function () {
+    var done = this.async();
+    grunt.util.spawn({cmd: 'make', args: ['reftest'], opts: { cwd: 'test', stdio: 'inherit'}}, function () {
+      done();
+    });
+  });
+
+  grunt.registerTask('makeref', function () {
+    var done = this.async();
+    grunt.util.spawn({cmd: 'make', args: ['makeref'], opts: { cwd: 'test', stdio: 'inherit'}}, function () {
+      done();
+    });
+  });
+
   grunt.registerTask('watch-playerglobal', ['exec:build_playerglobal', 'watch:playerglobal']);
   grunt.registerTask('watch-avm1lib', ['exec:build_avm1lib', 'watch:avm1lib']);
 
   // temporary make/python calls based on grunt-exec
-  grunt.registerTask('reftest', ['exec:reftest']);
-  grunt.registerTask('makeref', ['exec:makeref']);
   grunt.registerTask('build-web', ['exec:build_bundle', 'exec:build_extension', 'exec:build_web']);
   grunt.registerTask('build-extension', ['exec:build_bundle', 'exec:build_extension']);
   grunt.registerTask('build-playerglobal', ['exec:build_playerglobal']);
