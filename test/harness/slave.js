@@ -71,7 +71,8 @@ function loadMovie(path, reportFrames) {
       }
       SWF.embed(buffer, document, document.getElementById("stage"), {
         url: path,
-        onComplete: loaded,
+        startPromise: movieReady,
+        onParsed: loaded,
         onAfterFrame: onFrameCallback,
         onTerminated: terminate
       });
