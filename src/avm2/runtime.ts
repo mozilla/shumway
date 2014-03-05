@@ -42,6 +42,7 @@ interface Object {
   asCallResolvedStringProperty: (resolved: any, isLex: boolean, args: any []) => any;
   asConstructProperty: (namespaces: Namespace [], name: any, flags: number, args: any []) => any;
   asHasProperty: (namespaces: Namespace [], name: any, flags: number, nonProxy?: boolean) => boolean;
+  asHasTraitProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asDeleteProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asNextName: (index: number) => any;
   asNextValue: (index: number) => any;
@@ -328,6 +329,7 @@ module Shumway.AVM2.Runtime {
    * - asGetProperty(namespaces, name, flags)
    * - asSetProperty(namespaces, name, flags, value)
    * - asHasProperty(namespaces, name, flags)
+   * - asHasTraitProperty(namespaces, name, flags)
    * - asCallProperty(namespaces, name, flags, isLex, args)
    * - asDeleteProperty(namespaces, name, flags)
    *
@@ -668,8 +670,17 @@ module Shumway.AVM2.Runtime {
 
   export function asDeleteProperty(namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
+    if (self.asHasTraitProperty(namespaces, name, flags)) {
+      return false;
+    }
     var resolved = self.resolveMultinameProperty(namespaces, name, flags);
     return delete self[resolved];
+  }
+
+  export function asHasTraitProperty(namespaces: Namespace [], name: any, flags: number) {
+    var self: Object = this;
+    var resolved = self.resolveMultinameProperty(namespaces, name, flags);
+    return self.asBindings.indexOf(resolved) >= 0;
   }
 
   export function asGetNumericProperty(i: number) {
@@ -1072,6 +1083,7 @@ module Shumway.AVM2.Runtime {
     defineNonEnumerableProperty(global.Object.prototype, "asCallResolvedStringProperty", asCallResolvedStringProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asConstructProperty", asConstructProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asHasTraitProperty", asHasTraitProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
 
     defineNonEnumerableProperty(global.Object.prototype, "asNextName", asNextName);
