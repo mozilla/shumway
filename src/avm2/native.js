@@ -344,7 +344,7 @@ var natives = (function () {
           get: function () {
             // Check if we're getting the length of a trampoline.
             if (this.hasOwnProperty(VM_LENGTH)) {
-              return this[VM_LENGTH];
+              return this.asLength;
             }
             return this.length;
           }

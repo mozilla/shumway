@@ -49,10 +49,17 @@ interface Object {
   asGetEnumerableKeys: () => any [];
   class: any;
   hasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean; // TODO: What's this?
-  enumerableKeys: any [];
 
-
-  lazyInitializer: Shumway.AVM2.Runtime.LazyInitializer;
+  asEnumerableKeys: any [];
+  asLazyInitializer: Shumway.AVM2.Runtime.LazyInitializer;
+  asBindings: any [];
+  asLength: number;
+  asSlots: Shumway.AVM2.Runtime.SlotInfoMap;
+  asIsNativePrototype: boolean;
+  asOpenMethods: Shumway.Map<Function>;
+  asIsClass: boolean;
+  asIsProxy: boolean;
+  asCallProxy: any;
 }
 
 module Shumway.AVM2.Runtime {
@@ -147,21 +154,21 @@ module Shumway.AVM2.Runtime {
 
   import TRAIT = Shumway.AVM2.ABC.TRAIT;
 
-  export var VM_SLOTS = "vm slots";
-  export var VM_LENGTH = "vm length";
-  export var VM_BINDINGS = "vm bindings";
-  export var VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
-  export var VM_OPEN_METHODS = "vm open methods";
-  export var VM_IS_CLASS = "vm is class";
-  export var VM_IS_PROXY = "vm is proxy";
-  export var VM_CALL_PROXY = "vm call proxy";
+  export var VM_SLOTS = "asSlots";
+  export var VM_LENGTH = "asLength";
+  export var VM_BINDINGS = "asBindings";
+  export var VM_NATIVE_PROTOTYPE_FLAG = "asIsNative";
+  export var VM_OPEN_METHODS = "asOpenMethods";
+  export var VM_IS_CLASS = "asIsClass";
+  export var VM_IS_PROXY = "asIsProxy";
+  export var VM_CALL_PROXY = "asCallProxy";
 
   export var VM_OPEN_METHOD_PREFIX = "m";
   export var VM_MEMOIZER_PREFIX = "z";
   export var VM_OPEN_SET_METHOD_PREFIX = "s";
   export var VM_OPEN_GET_METHOD_PREFIX = "g";
 
-  export var VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
+  export var VM_NATIVE_BUILTIN_ORIGINALS = "asOriginals";
 
   /**
    * Overriden AS3 methods (see hacks.js). This allows you to provide your own JS implementation
@@ -242,7 +249,7 @@ module Shumway.AVM2.Runtime {
         { object: object, name: VM_OPEN_METHOD_PREFIX + qn }
       ];
       var closure = bindSafely(trampoline, object);
-      defineReadOnlyProperty(closure, VM_LENGTH, trampoline[VM_LENGTH]);
+      defineReadOnlyProperty(closure, VM_LENGTH, trampoline.asLength);
       defineReadOnlyProperty(closure, Multiname.getPublicQualifiedName("prototype"), null);
       defineNonEnumerableProperty(object, qn, closure);
       defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, closure);
@@ -278,7 +285,7 @@ module Shumway.AVM2.Runtime {
       }, trait.methodInfo.parameters.length, String(trait.name));
 
       memoizerTarget.value = trampoline;
-      var openMethods = object[VM_OPEN_METHODS];
+      var openMethods = object.asOpenMethods;
       openMethods[qn] = trampoline;
       defineNonEnumerableProperty(object, VM_OPEN_METHOD_PREFIX + qn, trampoline);
       // TODO: We make the |memoizeMethodClosure| configurable since it may be
@@ -439,7 +446,7 @@ module Shumway.AVM2.Runtime {
   export function asCallResolvedStringProperty(resolved: any, isLex: boolean, args: any []) {
     var self: Object = this;
     var receiver = isLex ? null : this;
-    var openMethods = self[VM_OPEN_METHODS];
+    var openMethods = self.asOpenMethods;
     // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to work
     // when using memoizers because the function gets bound to |this|.
     var method;
@@ -471,10 +478,10 @@ module Shumway.AVM2.Runtime {
     if (self.asSetNumericProperty && Multiname.isNumeric(resolved)) {
       return self.asSetNumericProperty(resolved, value);
     }
-    var slotInfo = self[VM_SLOTS].byQN[resolved];
+    var slotInfo = self.asSlots.byQN[resolved];
     if (slotInfo) {
-      if (slotInfo.const) {
-        return;
+      if (slotInfo.isConst) {
+        // TODO: Seal after first assignment. return;
       }
       var type = slotInfo.type;
       if (type && type.coerce) {
@@ -528,7 +535,7 @@ module Shumway.AVM2.Runtime {
       if (self.asGetNumericProperty && Multiname.isNumeric(resolved)) {
         method = self.asGetNumericProperty(resolved);
       } else {
-        var openMethods = self[VM_OPEN_METHODS];
+        var openMethods = self.asOpenMethods;
         // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to work
         // when using memoizers because the function gets bound to |this|.
         if (receiver && openMethods && openMethods[resolved]) {
@@ -551,7 +558,7 @@ module Shumway.AVM2.Runtime {
     }
     var baseClass = scope.object.baseClass;
     var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
-    var openMethods = baseClass.traitsPrototype[VM_OPEN_METHODS];
+    var openMethods = baseClass.traitsPrototype.asOpenMethods;
     assert (openMethods && openMethods[resolved]);
     var method = openMethods[resolved];
     var result = method.apply(this, args);
@@ -567,7 +574,7 @@ module Shumway.AVM2.Runtime {
     }
     var baseClass = scope.object.baseClass;
     var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
-    if (self[VM_SLOTS].byQN[resolved]) {
+    if (self.asSlots.byQN[resolved]) {
       this.asSetProperty(namespaces, name, flags, value);
     } else {
       baseClass.traitsPrototype[VM_OPEN_SET_METHOD_PREFIX + resolved].call(this, value);
@@ -584,7 +591,7 @@ module Shumway.AVM2.Runtime {
     var baseClass = scope.object.baseClass;
     var resolved = baseClass.traitsPrototype.resolveMultinameProperty(namespaces, name, flags);
     var result;
-    if (self[VM_SLOTS].byQN[resolved]) {
+    if (self.asSlots.byQN[resolved]) {
       result = this.asGetProperty(namespaces, name, flags);
     } else {
       result = baseClass.traitsPrototype[VM_OPEN_GET_METHOD_PREFIX + resolved].call(this);
@@ -685,11 +692,11 @@ module Shumway.AVM2.Runtime {
     var self: Object = this;
     if (index === 0) {
       // Gather all enumerable keys since we're starting a new iteration.
-      defineNonEnumerableProperty(self, "enumerableKeys", self.asGetEnumerableKeys());
+      defineNonEnumerableProperty(self, "asEnumerableKeys", self.asGetEnumerableKeys());
     }
-    var enumerableKeys = self.enumerableKeys;
-    while (index < enumerableKeys.length) {
-      if (self.asHasProperty(undefined, enumerableKeys[index], 0)) {
+    var asEnumerableKeys = self.asEnumerableKeys;
+    while (index < asEnumerableKeys.length) {
+      if (self.asHasProperty(undefined, asEnumerableKeys[index], 0)) {
         return index + 1;
       }
       index ++;
@@ -703,9 +710,9 @@ module Shumway.AVM2.Runtime {
    */
   export function asNextName(index: number) {
     var self: Object = this;
-    var enumerableKeys = self.enumerableKeys;
-    release || assert(enumerableKeys && index > 0 && index < enumerableKeys.length + 1);
-    return enumerableKeys[index - 1];
+    var asEnumerableKeys = self.asEnumerableKeys;
+    release || assert(asEnumerableKeys && index > 0 && index < asEnumerableKeys.length + 1);
+    return asEnumerableKeys[index - 1];
   }
 
   export function asNextValue(index: number) {
@@ -769,11 +776,11 @@ module Shumway.AVM2.Runtime {
   }
 
   export function asGetSlot(object, index) {
-    return object[object[VM_SLOTS].byID[index].name];
+    return object[object.asSlots.byID[index].name];
   }
 
   export function asSetSlot(object, index, value) {
-    var slotInfo = object[VM_SLOTS].byID[index];
+    var slotInfo = object.asSlots.byID[index];
     if (slotInfo.const) {
       return;
     }
@@ -1180,13 +1187,13 @@ module Shumway.AVM2.Runtime {
     name: string;
     private static _holder = jsGlobal;
     static create(target): LazyInitializer {
-      if (target.lazyInitializer) {
-        return target.lazyInitializer;
+      if (target.asLazyInitializer) {
+        return target.asLazyInitializer;
       }
-      return target.lazyInitializer = new LazyInitializer(target);
+      return target.asLazyInitializer = new LazyInitializer(target);
     }
     constructor (target: Object) {
-      assert (!target.lazyInitializer);
+      assert (!target.asLazyInitializer);
       this.target = target;
     }
     public getName() {
@@ -1228,7 +1235,7 @@ module Shumway.AVM2.Runtime {
   }
 
   export function forEachPublicProperty(object, fn, self) {
-    if (!object[VM_BINDINGS]) {
+    if (!object.asBindings) {
       for (var key in object) {
         fn.call(self, key, object[key]);
       }
@@ -1238,7 +1245,7 @@ module Shumway.AVM2.Runtime {
     for (var key in object) {
       if (isNumeric(key)) {
         fn.call(self, key, object[key]);
-      } else if (Multiname.isPublicQualifiedName(key) && object[VM_BINDINGS].indexOf(key) < 0) {
+      } else if (Multiname.isPublicQualifiedName(key) && object.asBindings.indexOf(key) < 0) {
         var name = Multiname.stripPublicQualifier(key);
         fn.call(self, name, object[key]);
       }

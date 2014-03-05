@@ -14,21 +14,14 @@
  * limitations under the License.
  */
 
-
-
-var VM_SLOTS = "vm slots";
-var VM_LENGTH = "vm length";
-var VM_BINDINGS = "vm bindings";
-var VM_NATIVE_PROTOTYPE_FLAG = "vm native prototype";
-var VM_OPEN_METHODS = "vm open methods";
-var VM_IS_CLASS = "vm is class";
+var VM_LENGTH = Shumway.AVM2.Runtime.VM_LENGTH;
+var VM_IS_PROXY = Shumway.AVM2.Runtime.VM_IS_PROXY;
+var VM_CALL_PROXY = Shumway.AVM2.Runtime.VM_CALL_PROXY;
+var VM_NATIVE_BUILTIN_ORIGINALS = Shumway.AVM2.Runtime.VM_NATIVE_BUILTIN_ORIGINALS;
 
 var VM_OPEN_METHOD_PREFIX = "m";
-var VM_MEMOIZER_PREFIX = "z";
 var VM_OPEN_SET_METHOD_PREFIX = "s";
 var VM_OPEN_GET_METHOD_PREFIX = "g";
-
-var VM_NATIVE_BUILTIN_ORIGINALS = "vm originals";
 
 var SAVED_SCOPE_NAME = "$SS";
 

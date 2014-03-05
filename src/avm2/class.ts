@@ -470,13 +470,13 @@ module Shumway.AVM2.Runtime {
       writer.enter("traitsPrototype: ");
       if (traitsPrototype) {
         writer.enter("VM_SLOTS: ");
-        writer.writeArray(traitsPrototype[VM_SLOTS].byID.map(function (slot) {
+        writer.writeArray((<any>traitsPrototype.asSlots.byID).map(function (slot) {
           return slot.trait;
         }));
         writer.outdent();
 
         writer.enter("VM_BINDINGS: ");
-        writer.writeArray(traitsPrototype[VM_BINDINGS].map(function (binding) {
+        writer.writeArray(traitsPrototype.asBindings.map(function (binding) {
           var pd = Object.getOwnPropertyDescriptor(traitsPrototype, binding);
           var str = binding;
           if (pd.get || pd.set) {
@@ -494,7 +494,7 @@ module Shumway.AVM2.Runtime {
         writer.outdent();
 
         writer.enter("VM_OPEN_METHODS: ");
-        writer.writeArray(toKeyValueArray(traitsPrototype[VM_OPEN_METHODS]).map(function (pair) {
+        writer.writeArray(toKeyValueArray(traitsPrototype.asOpenMethods).map(function (pair) {
           return pair[0] + ": " + debugName(pair[1]);
         }));
         writer.outdent();

@@ -169,19 +169,19 @@ module Shumway.AVM2.Runtime {
           if (key !== qn) {
             traitsWriter && traitsWriter.yellowLn("Binding Trait: " + key + " -> " + qn);
             defineNonEnumerableGetter(object, key, makeForwardingGetter(qn));
-            object[VM_BINDINGS].pushUnique(key);
+            object.asBindings.pushUnique(key);
           } else {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
             defineNonEnumerableProperty(object, qn, defaultValue);
-            object[VM_BINDINGS].pushUnique(qn);
+            object.asBindings.pushUnique(qn);
             var slotInfo = new SlotInfo(
               qn,
               trait.isConst(),
               trait.typeName ? domain.getProperty(trait.typeName, false, false) : null,
               trait
             );
-            object[VM_SLOTS].byID[trait.slotId] = slotInfo;
-            object[VM_SLOTS].byQN[qn] = slotInfo;
+            object.asSlots.byID[trait.slotId] = slotInfo;
+            object.asSlots.byQN[qn] = slotInfo;
           }
         } else if (trait.isMethod() || trait.isGetter() || trait.isSetter()) {
           if (trait.isGetter() || trait.isSetter()) {
@@ -192,7 +192,7 @@ module Shumway.AVM2.Runtime {
           } else {
             traitsWriter && traitsWriter.greenLn("Applying Trait " + trait.kindName() + ": " + trait);
           }
-          object[VM_BINDINGS].pushUnique(key);
+          object.asBindings.pushUnique(key);
           if (this instanceof ScriptBindings) {
             applyNonMemoizedMethodTrait(key, trait, object, binding.scope, binding.natives);
           } else {
