@@ -31,6 +31,11 @@ package flash.external {
 
     public static function addCallback(functionName: String, closure: Function): void {
       ensureInitialized();
+      if (!closure) {
+        _addCallback(functionName, null, true);
+        return;
+      }
+
       _addCallback(functionName, function (request: String, args: Array) {
         var returnAsJS: Boolean = true;
         if (args == null) {
@@ -53,12 +58,7 @@ package flash.external {
           }
         }
         return returnAsJS ? convertToJSString(result) : convertToXMLString(result);
-      }, !closure);
-
-      if (objectID) {
-        _evalJS('__flash__addCallback(document.getElementById(\"' + objectID + '\", '+
-                '\"' + functionName + '\");');
-      }
+      }, false);
     }
     private static function convertToXML(s: String): XML {
       var savedIgnoreWhitespace: Boolean = XML.ignoreWhitespace;
@@ -186,7 +186,7 @@ package flash.external {
       }
       var catchExpr = marshallExceptions ? '\"<exception>\" + e + \"</exception>\";' : '\"<undefined/>\";';
       var evalExpr: String = 'try {' +
-        '__flash_toXML(' + functionName + '(' + argsExpr + '));' +
+        '__flash__toXML(' + functionName + '(' + argsExpr + '));' +
         '} catch (e) {' + catchExpr + '}';
       var result: String = _evalJS(evalExpr);
       if (result == null) {

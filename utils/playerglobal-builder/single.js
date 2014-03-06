@@ -17,15 +17,17 @@
  */
 
 var fs = require('fs');
+var crypto = require('crypto');
 var spawn = require('child_process').spawn;
 
-var debugInfo = true;
+var debugInfo = false;
 var strict = true;
 
 var build_dir = '../build/playerglobal';
 
-var manifest = JSON.parse(fs.readFileSync('manifest.json'));
-var manifestUpdated = fs.statSync('manifest.json').mtime.valueOf();
+var manifestData = fs.readFileSync('manifest.json');
+var manifest = JSON.parse(manifestData);
+var manifestHash = crypto.createHash('sha1').update(manifestData).digest('hex');
 var ascjar = '../utils/asc.jar';
 var buildasc = './avm2/generated/builtin/builtin.abc';
 
@@ -99,6 +101,31 @@ while (buildQueue.length > 0)  {
   }
 }
 
+var fileHashesCache = {};
+function calcSha1(file) {
+  if (fileHashesCache[file]) {
+    return fileHashesCache[file];
+  }
+  var fileData = fs.readFileSync(file);
+  var fileHash = crypto.createHash('sha1').update(fileData).digest('hex');
+  return (fileHashesCache[file] = fileHash);
+}
+
+var hashesPath = build_dir + '/playerglobal-single.hashes';
+var manifestHashEntryName = '$(BUILDHOME)/manifest.json';
+var notChanged = false;
+if (fs.existsSync(hashesPath)) {
+  var existingHashes = JSON.parse(fs.readFileSync(hashesPath));
+  notChanged = manifestHash === existingHashes[manifestHashEntryName] &&
+               files.every(function (file) { return calcSha1(file) === existingHashes[file]; });
+}
+
+if (notChanged) {
+  console.log('No need to update playerglobal-single.abc');
+  process.exit(0);
+}
+
+
 runAsc(build_dir + '/playerglobal-single.abc', files, function (code, outputPath, cmd) {
   if (code) {
     throw new Error('Error during playerglobal compilation.');
@@ -117,7 +144,11 @@ function updatePlayerglobal(outputPath) {
     offset: 0,
     length: length
   });
-  fs.writeFileSync(build_dir + '/playerglobal-single.json',JSON.stringify(index, null, 2));
-  fs.writeFileSync(build_dir + '/playerglobal-single.abcs',
-    fs.readFileSync(outputPath));
+  fs.writeFileSync(build_dir + '/playerglobal-single.json', JSON.stringify(index, null, 2));
+  fs.writeFileSync(build_dir + '/playerglobal-single.abcs', fs.readFileSync(outputPath));
+
+  var hashes = {};
+  hashes[manifestHashEntryName] = manifestHash;
+  files.forEach(function (file) { hashes[file] = calcSha1(file); });
+  fs.writeFileSync(hashesPath, JSON.stringify(hashes, null, 2));
 }

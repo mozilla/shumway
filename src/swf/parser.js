@@ -29,7 +29,7 @@ function readTags(context, stream, swfVersion, final, onprogress, onexception) {
   var tag = null;
   if (context._readTag) {
     tag = context._readTag;
-    delete context._readTag;
+    context._readTag = null;
   }
 
   try {

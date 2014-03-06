@@ -156,7 +156,6 @@ load($SHUMWAY_ROOT + "src/avm2/vectors-numeric.js");
 load($SHUMWAY_ROOT + "src/avm2/vectors-generic.js");
 load($SHUMWAY_ROOT + "src/avm2/array.js");
 load($SHUMWAY_ROOT + "src/avm2/xml.js");
-load($SHUMWAY_ROOT + "src/avm2/json2.js");
 load($SHUMWAY_ROOT + "src/avm2/amf.js");
 load($SHUMWAY_ROOT + "src/avm2/proxy.js");
 load($SHUMWAY_ROOT + "src/avm2/dictionary.js");
@@ -181,6 +180,6 @@ load($SHUMWAY_ROOT + "src/flash/text");
 load($SHUMWAY_ROOT + "src/flash/ui");
 load($SHUMWAY_ROOT + "src/flash/utils");
 load($SHUMWAY_ROOT + "src/flash/accessibility");
-load($SHUMWAY_ROOT + "src/flash/avm1lib");
+load($SHUMWAY_ROOT + "src/avm1lib");
 
 load($SHUMWAY_ROOT + "src/flash/stubs.js");
