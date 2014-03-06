@@ -140,9 +140,40 @@ function Renderer(target) {
           }
 
           var layer = renderer._layers[layerId];
-          if (!layer) {
+          if (layer) {
+            if (renderable) {
+              var target = layer;
+
+              if (isContainer) {
+                if (layer.children.length) {
+                  target = layer.children[0];
+                } else {
+                  target = new Shumway.Layers.Shape(renderable);
+                  target.origin = new Shumway.Geometry.Point(
+                    -renderable.rect.x, -renderable.rect.y
+                  );
+                  layer.addChild(target);
+                }
+              }
+
+              if (target.source !== renderable) {
+                target.source = renderable;
+                // TODO: this should be done in a setter
+                var bounds = renderable.getBounds();
+                target.w = bounds.w;
+                target.h = bounds.h;
+              }
+            }
+          } else {
             if (isContainer) {
               layer = new Shumway.Layers.FrameContainer();
+              if (renderable) {
+                var child = new Shumway.Layers.Shape(renderable);
+                child.origin = new Shumway.Geometry.Point(
+                  -renderable.rect.x, -renderable.rect.y
+                );
+                layer.addChild(child);
+              }
             } else {
               layer = new Shumway.Layers.Shape(renderable);
               layer.origin = new Shumway.Geometry.Point(
