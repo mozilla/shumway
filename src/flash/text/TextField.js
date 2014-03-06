@@ -99,6 +99,8 @@ var TextFieldDefinition = (function () {
       } else {
         this.text = '';
       }
+
+      this._renderableId = 0;
     },
 
     _getAS2Object: function () {

@@ -129,7 +129,7 @@ function Renderer(target) {
             var renderableType = i32[p++];
             var renderableData = i32.subarray(p, offset + n);
             p = offset + n;
-            if (renderable && renderableId > 0xffff) {
+            if (renderable) {
               renderable.constructor.call(renderable, renderableData, renderer);
             } else {
               renderable = renderer.defineRenderable(renderableId,
