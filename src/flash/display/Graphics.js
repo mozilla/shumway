@@ -175,7 +175,8 @@ var GraphicsDefinition = (function () {
 
       this.beginPath();
       this._currentPath.fillStyle = alpha ?
-                                    {type: GRAPHICS_FILL_SOLID, color: (color << 8) | alpha} :
+                                    { type: GRAPHICS_FILL_SOLID,
+                                      color: (color << 8) | (alpha * 255) } :
                                     null;
     },
     beginGradientFill: function(type, colors, alphas, ratios, matrix,
@@ -383,7 +384,7 @@ var GraphicsDefinition = (function () {
 
         this._currentPath.lineStyle = {
           type: GRAPHICS_FILL_SOLID,
-          color: (color << 8) | alpha,
+          color: (color << 8) | (alpha * 255),
           lineCap: cap || 'round',
           lineJoin: cap || 'round',
           width: (width * 20)|0,

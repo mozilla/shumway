@@ -58,20 +58,26 @@ var BitmapDataDefinition = (function () {
         throwError('ArgumentError', Errors.ArgumentError);
       }
 
+      // TODO: support smoothing, blendMode and clipRect
+
       var root = new flash.display.Stage;
       root._stageWidth = this._width * 20;
       root._stageHeight = this._height * 20;
       root._setup();
       var oldTransform = source._currentTransform;
+      var oldCxform = source._cxform;
       var oldParent = source._parent;
       var oldIndex = source._index;
       if (matrix) {
         source._currentTransform = matrix;
       }
-      root.addChild(source);
+      source._cxform = colorTransform;
+      source._parent = root;
+      source._index = 0;
+      root._children[0] = source;
       root._processInvalidations(true);
-      root.removeChild(source);
       source._currentTransform = oldTransform;
+      source._cxform = oldCxform;
       source._parent = oldParent;
       source._oldIndex = oldIndex;
 

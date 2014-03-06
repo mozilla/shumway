@@ -685,7 +685,7 @@ function RenderableBitmap(data, renderer, resolve) {
           }
         }
 
-        if (!renderable) {
+        if (!renderable && !isContainer) {
           continue;
         }
 
