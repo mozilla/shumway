@@ -109,7 +109,7 @@ var TextFieldDefinition = (function () {
     },
 
     _serializeRenderableData: function (message) {
-      message.ensureAdditionalCapacity(64);
+      message.ensureAdditionalCapacity(88);
 
       message.writeInt(Renderer.RENDERABLE_TYPE_TEXT);
 
@@ -133,21 +133,23 @@ var TextFieldDefinition = (function () {
                   colorObj.alpha;
       message.writeIntUnsafe(color);
 
+      message.writeIntUnsafe(this._background ?
+                               (this._backgroundColor << 8) & 0xff : 0);
+      message.writeIntUnsafe(this._border ?
+                               (this._borderColor << 8) & 0xff : 0);
       message.writeIntUnsafe(this._autoSize);
       message.writeIntUnsafe(this._align);
       message.writeIntUnsafe(this._wordWrap);
       message.writeIntUnsafe(this._multiline);
       message.writeIntUnsafe(textFormat.leading);
+      message.writeIntUnsafe(textFormat.letterspacing);
+      message.writeIntUnsafe(textFormat.kerning);
 
       var isHtml = !!this._htmlText;
       message.writeIntUnsafe(isHtml);
 
-      //message.writeIntUnsafe("SCROLL_V");
-      //message.writeIntUnsafe("BACKGROUND_COLOR");
-      //message.writeIntUnsafe("BORDER_COLOR");
-      //message.writeIntUnsafe("LETTERSPACING");
-      //message.writeIntUnsafe("KERNING");
-      //message.writeIntUnsafe("CONDENSE_WHITE");
+      message.writeIntUnsafe(this._condenseWhite);
+      message.writeIntUnsafe(this._scrollV);
 
       var text = isHtml ? this._htmlText : this._text;
       var n = text.length;

@@ -151,7 +151,7 @@ var StageDefinition = (function () {
 
         var tag = symbol.tag;
 
-        message.ensureAdditionalCapacity(60);
+        message.ensureAdditionalCapacity(84);
 
         var bbox = tag.bbox;
         message.writeIntUnsafe(bbox.xMin);
@@ -174,19 +174,18 @@ var StageDefinition = (function () {
         }
         message.writeIntUnsafe(color);
 
+        message.writeIntUnsafe(0); // backgroundColor
+        message.writeIntUnsafe(0); // borderColor
         message.writeIntUnsafe(tag.autoSize);
         message.writeIntUnsafe(tag.align);
         message.writeIntUnsafe(tag.wordWrap);
         message.writeIntUnsafe(tag.multiline);
         message.writeIntUnsafe(tag.leading / 20);
+        message.writeIntUnsafe(0); // letterspacing
+        message.writeIntUnsafe(0); // kerning
         message.writeIntUnsafe(tag.html);
-
-        //message.writeIntUnsafe("SCROLL_V");
-        //message.writeIntUnsafe("BACKGROUND_COLOR");
-        //message.writeIntUnsafe("BORDER_COLOR");
-        //message.writeIntUnsafe("LETTERSPACING");
-        //message.writeIntUnsafe("KERNING");
-        //message.writeIntUnsafe("CONDENSE_WHITE");
+        message.writeIntUnsafe(false); // condenseWhite
+        message.writeIntUnsafe(1); // scrollV
 
         var text = tag.initialText;
         var n = text.length;

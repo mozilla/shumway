@@ -801,18 +801,19 @@ function RenderableText(data, renderer, resolve) {
   var size = data[p++];
 
   var color = data[p++];
+  var backgroundColor = data[p++];
+  var borderColor = data[p++];
 
-  //message.writeIntUnsafe("BACKGROUND_COLOR");
-  //message.writeIntUnsafe("BORDER_COLOR");
   var autoSize = data[p++];
   var align = data[p++];
   var wordWrap = !!data[p++];
   var multiline = !!data[p++];
   var leading = data[p++];
-  //message.writeIntUnsafe("LETTERSPACING");
-  //message.writeIntUnsafe("KERNING");
+  var letterspacing = data[p++];
+  var kerning = data[p++];
   var isHtml = data[p++];
-  //message.writeIntUnsafe("CONDENSE_WHITE");
+  var condenseWhite = data[p++];
+  var scrollV = data[p++];
 
   var n = data[p++];
   var text = String.fromCharCode.apply(null, data.subarray(p, p + n));
@@ -824,8 +825,8 @@ function RenderableText(data, renderer, resolve) {
                                                  italic: italic,
                                                  face: fontInfo.name,
                                                  size: size,
-                                                 letterSpacing: 0,
-                                                 kerning: 0,
+                                                 letterSpacing: letterspacing,
+                                                 kerning: kerning,
                                                  color: color >>> 0,
                                                  leading: leading });
 
@@ -874,7 +875,10 @@ function RenderableText(data, renderer, resolve) {
   }
 
   this.renderer = renderer;
+  this.backgroundColor = backgroundColor;
+  this.borderColor = borderColor;
   this.content = content;
+  this.scrollV = scrollV;
 
   if (resolve) {
     resolve();
@@ -898,16 +902,16 @@ RenderableText.prototype.render = function render(ctx) {
   ctx.beginPath();
   ctx.rect(0, 0, width, height);
   ctx.clip();
-  //if (this._background) {
-  //  colorTransform.setFillStyle(ctx, this._backgroundColorStr);
-  //  ctx.fill();
-  //}
-  //if (this._border) {
-  //  colorTransform.setStrokeStyle(ctx, this._borderColorStr);
-  //  ctx.lineCap = "square";
-  //  ctx.lineWidth = 1;
-  //  ctx.strokeRect(0.5, 0.5, width|0, height|0);
-  //}
+  if (this.backgroundColor) {
+    ctx.fillStyle = rgbaUintToStr(this.backgroundColor);
+    ctx.fill();
+  }
+  if (this.borderColor) {
+    ctx.strokeStyle = rgbaUintToStr(this.borderColor);
+    ctx.lineCap = "square";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(0.5, 0.5, width|0, height|0);
+  }
   ctx.closePath();
 
   var content = this.content;
@@ -917,7 +921,7 @@ RenderableText.prototype.render = function render(ctx) {
     return;
   }
 
-  var scrollV = 1;
+  var scrollV = this.scrollV;
 
   ctx.translate(2, 2);
   ctx.save();
