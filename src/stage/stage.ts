@@ -314,12 +314,11 @@ module Shumway.Layers {
       stage.visit(function visitFrame(frame: Frame, transform?: Matrix) {
         context.save();
         context.setTransform(transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty);
-        // context.globalAlpha = 1 - frame.alpha;
+        context.globalAlpha = frame.getConcatenatedAlpha();
         if (frame instanceof Shape) {
           var shape = <Shape>frame;
           shape.source.render(context);
         }
-        context.globalAlpha = 1;
         context.restore();
       }, stage.transform);
 
