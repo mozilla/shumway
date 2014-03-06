@@ -127,6 +127,7 @@ module.exports = function(grunt) {
   grunt.registerTask('build-web', ['exec:build_avm2_ts', 'exec:build_bundle', 'exec:build_extension', 'exec:build_web']);
   grunt.registerTask('build-extension', ['exec:build_avm2_ts', 'exec:build_bundle', 'exec:build_extension']);
   grunt.registerTask('build-playerglobal', ['exec:build_playerglobal']);
+  grunt.registerTask('build-bundle', ['exec:build_avm2_ts', 'exec:build_bundle']);
 
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('avm1lib', ['exec:build_avm1lib']);
