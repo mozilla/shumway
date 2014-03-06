@@ -148,7 +148,7 @@ function Renderer(target) {
 
               if (isContainer) {
                 if (layer.children.length) {
-                  target = layer.children[0];
+                  target = layer.getChildAt(0);
                 } else {
                   target = new Shumway.Layers.Shape(renderable);
                   target.origin = new Shumway.Geometry.Point(
