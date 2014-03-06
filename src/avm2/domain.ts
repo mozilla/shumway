@@ -521,7 +521,9 @@ module Shumway.AVM2.Runtime {
       abc.applicationDomain = this;
       GlobalMultinameResolver.loadAbc(abc);
       this.abcs.push(abc);
+
       if (!this.base) {
+        AS.initialize(this);
         Type.initializeTypes(this);
       }
     }

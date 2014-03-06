@@ -292,6 +292,10 @@ module Shumway.AVM2.ABC {
       return this.kind === TRAIT.Setter;
     }
 
+    public isMethodOrAccessor() {
+      return this.isMethod() || this.isGetter() || this.isSetter();
+    }
+
     public isProtected() {
       release || assert (Multiname.isQName(this.name));
       return this.name.namespaces[0].isProtected();
@@ -931,6 +935,10 @@ module Shumway.AVM2.ABC {
     public static PUBLIC = new Namespace(CONSTANT.Namespace);
     public static PROTECTED = new Namespace(CONSTANT.ProtectedNamespace);
     public static PROXY = new Namespace(CONSTANT.Namespace, "http://www.adobe.com/2006/actionscript/flash/proxy");
+    public static VECTOR = new Namespace(CONSTANT.Namespace, "__AS3__.vec");
+    public static VECTOR_PACKAGE = new Namespace(CONSTANT.PackageInternalNs, "__AS3__.vec");
+    public static BUILTIN = new Namespace(CONSTANT.PrivateNs, "builtin.as$0");
+
 
     private static _simpleNameCache = Shumway.ObjectUtilities.createMap<Namespace []>();
 

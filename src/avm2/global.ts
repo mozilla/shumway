@@ -14,7 +14,19 @@
  * limitations under the License.
  */
 
-var jsGlobal = (function() { return this || (1, eval)('this'); })();
+interface JSGlobal {
+  Object: any;
+  String: String;
+  Number: Number;
+  Boolean: Boolean;
+  Function: Function;
+  Math: Math;
+  Array: any [];
+  performance: any;
+  print: any;
+}
+
+var jsGlobal: JSGlobal = (function() { return this || (1, eval)('this'); })();
 
 declare var print;
 declare var console;
@@ -44,6 +56,6 @@ function warn(message?: any, ...optionalParams: any[]): void {
   if (inBrowser) {
     console.warn(message);
   } else {
-    jsGlobal.print(message);
+    jsGlobal.print(IndentingWriter.RED + message + IndentingWriter.ENDC);
   }
 }

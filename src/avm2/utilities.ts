@@ -164,7 +164,7 @@ module Shumway {
 
     export function error(message: string) {
       if (!inBrowser) {
-        warn(Debug.backtrace());
+        warn(message + "\n\nStack Trace:\n" + Debug.backtrace());
       }
       throw new Error(message);
     }
@@ -251,8 +251,18 @@ module Shumway {
       return array;
     }
 
-    export function hasOwnProperty(object: Object, name: string) {
+    export function hasOwnProperty(object: Object, name: string): boolean {
       return Object.prototype.hasOwnProperty.call(object, name);
+    }
+
+    export function hasOwnGetter(object: Object, name: string): boolean {
+      var d = Object.getOwnPropertyDescriptor(object, name);
+      return !!(d && d.get);
+    }
+
+    export function hasOwnSetter(object: Object, name: string): boolean {
+      var d = Object.getOwnPropertyDescriptor(object, name);
+      return !!(d && !!d.set);
     }
 
     export function createEmptyObject() {
