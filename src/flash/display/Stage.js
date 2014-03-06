@@ -46,7 +46,7 @@ var StageDefinition = (function () {
       this._mouseEvents = [];
       this._cursor = 'auto';
       this._stageVideos = [];
-      this._nextRenderableId = 0xffff;
+      this._nextRenderableId = 0xffff + 1;
       this._nextLayerId = 1;
       this._message = new Shumway.Util.ArrayWriter(1024);
       this._callbacks = { };
@@ -311,6 +311,9 @@ var StageDefinition = (function () {
         while (i--) {
           var child = children[i];
 
+          if (refreshStage) {
+            child._invalid = true;
+          }
           if (m.invalid) {
             child._concatenatedTransform.invalid = true;
           }
@@ -340,7 +343,6 @@ var StageDefinition = (function () {
             if (!renderableId) {
               renderableId = this._nextRenderableId++;
               node._renderableId = renderableId;
-            //  this._defineRenderable(node);
             }
 
             node._layerId = layerId;

@@ -129,15 +129,13 @@ function Renderer(target) {
             var renderableType = i32[p++];
             var renderableData = i32.subarray(p, offset + n);
             p = offset + n;
-            if (renderable) {
-              renderable.constructor.call(renderable, renderableData, renderer, function () {
-
-              });
+            if (renderable && renderableId > 0xffff) {
+              renderable.constructor.call(renderable, renderableData, renderer);
             } else {
-              // TODO: support dynamic renderables
-              if (renderableType === 2) {
-                renderable = new RenderableBitmap(renderableData, renderer);
-              }
+              renderable = renderer.defineRenderable(renderableId,
+                                                     renderableType,
+                                                     null,
+                                                     renderableData);
             }
           }
 
