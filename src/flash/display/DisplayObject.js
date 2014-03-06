@@ -84,6 +84,7 @@ var DisplayObjectDefinition = (function () {
       this._index = -1;
       this._depth = -1;
       this._isContainer = false;
+      this._invisible = false;
 
       this._renderableId = 0;
       this._updateRenderable = false;
@@ -463,6 +464,7 @@ var DisplayObjectDefinition = (function () {
       message.writeIntUnsafe(m.ty / 20);
 
       message.writeFloatUnsafe(this._alpha);
+      message.writeIntUnsafe(!this._invisible);
 
       var cxform = this._cxform;
       if (cxform) {

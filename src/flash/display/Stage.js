@@ -297,6 +297,7 @@ var StageDefinition = (function () {
         if (refreshStage) {
           child._invalid = true;
         }
+        child._invisible = !child._visible;
         stack.push(child);
       }
 
@@ -313,6 +314,7 @@ var StageDefinition = (function () {
           if (m.invalid) {
             child._concatenatedTransform.invalid = true;
           }
+          child._invisible = node._invisible || !child._visible;
 
           stack.push(child);
         }

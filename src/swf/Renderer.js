@@ -112,6 +112,7 @@ function Renderer(target) {
             f32[p++], f32[p++], f32[p++], f32[p++], i32[p++], i32[p++]
           );
           var alpha = f32[p++];
+          var visible = i32[p++];
 
           var colorTransform = null;
           var hasColorTransform = i32[p++];
@@ -158,6 +159,7 @@ function Renderer(target) {
 
           layer.transform = transform;
           layer.alpha = alpha;
+          layer.isVisible = visible;
           layer.colorTransform = colorTransform;
           break;
         case Renderer.MESSAGE_REMOVE_LAYER:
@@ -655,6 +657,7 @@ function RenderableBitmap(data, renderer, resolve) {
           f32[p++], f32[p++], f32[p++], f32[p++], i32[p++], i32[p++]
         );
         var alpha = f32[p++];
+        var visible = i32[p++];
 
         var colorTransform = null;
         var hasColorTransform = i32[p++];
@@ -708,6 +711,7 @@ function RenderableBitmap(data, renderer, resolve) {
 
         layer.transform = transform;
         layer.alpha = alpha;
+        layer.isVisible = visible;
         layer.colorTransform = colorTransform;
         break;
       }
