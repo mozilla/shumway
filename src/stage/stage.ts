@@ -267,12 +267,27 @@ module Shumway.Layers {
       this.children.push(child);
     }
 
+    public addChildAt(child: Frame, index: number) {
+      assert(index > 0);
+      child.parent = this;
+      if (index >= this.children.length) {
+        this.children.push(child);
+      } else {
+        this.children.splice(index, 0, child);
+      }
+    }
+
     public removeChild(child: Frame) {
       if (child.parent === this) {
         var index = this.children.indexOf(child);
         this.children.splice(index, 1);
         child.parent = undefined;
       }
+    }
+
+    public getChildAt(index: number) {
+      assert(index > 0);
+      return this.children[index];
     }
 
     public clearChildren() {

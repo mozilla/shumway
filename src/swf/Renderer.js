@@ -140,6 +140,8 @@ function Renderer(target) {
           }
 
           var layer = renderer._layers[layerId];
+          var parent = renderer._layers[parentId] || renderer._stage;
+
           if (layer) {
             if (renderable) {
               var target = layer;
@@ -181,15 +183,20 @@ function Renderer(target) {
               );
             }
             renderer._layers[layerId] = layer;
+          }
 
-            var parent = renderer._layers[parentId] || renderer._stage;
-            parent.addChild(layer);
+          if (layer.parent !== parent) {
+            parent.addChildAt(layer, index + 1);
+          } else if (layer.index !== index) {
+            parent.removeChild(layer);
+            parent.addChildAt(layer, index + 1);
           }
 
           layer.transform = transform;
           layer.alpha = alpha;
           layer.isVisible = visible;
           layer.colorTransform = colorTransform;
+          layer.index = index;
           break;
         case Renderer.MESSAGE_REMOVE_LAYER:
           var layerId = i32[p++];
