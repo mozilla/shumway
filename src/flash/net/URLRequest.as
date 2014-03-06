@@ -27,13 +27,16 @@ public final class URLRequest {
   public native function set data(value:Object):void;
   public native function get method():String;
   public function set method(value:String):void {
+    if (value !== 'get' && value !== 'GET' && value !== 'post' && value !== 'POST') {
+      Error.throwError(ArgumentError, 2004)
+    }
     setMethod(value);
   }
   public native function get contentType():String;
   public native function set contentType(value:String):void;
   public native function get requestHeaders():Array;
   public function set requestHeaders(value:Array):void {
-    setRequestHeaders(requestHeaders);
+    setRequestHeaders(value);
   }
   public native function get digest():String;
   public native function set digest(value:String):void;

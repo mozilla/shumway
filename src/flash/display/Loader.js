@@ -51,7 +51,7 @@ var LoaderDefinition = (function () {
       this._worker = null;
 
       var abc = AVM2.currentAbc();
-      if (abc) {
+      if (abc && abc.env.loader) {
         this._contentLoaderInfo._loaderURL = abc.env.loader._contentLoaderInfo._url;
       }
     },
@@ -72,6 +72,10 @@ var LoaderDefinition = (function () {
             }
           });
         });
+
+        // signal when we finish parsing, it's mostly to provide consistent testing results
+        this._contentLoaderInfo._dispatchEvent("parsed");
+
         Promise.all([frameConstructed, this._lastPromise]).then(function () {
           this._content._complete = true;
           this._contentLoaderInfo._dispatchEvent("complete");
@@ -480,7 +484,7 @@ var LoaderDefinition = (function () {
         loaderInfo._dispatchEvent("init");
       };
       img.src = URL.createObjectURL(imageInfo.data);
-      delete imageInfo.data;
+      imageInfo.data = null;
     },
     _commitSymbol: function (symbol) {
       var dictionary = this._dictionary;
@@ -875,7 +879,13 @@ var LoaderDefinition = (function () {
         loader._vmPromise.resolve();
       };
       if (avm2.isAVM1Loaded) {
-        loaded();
+        if (AS2Context.instance) {
+          loader._avm1Context = AS2Context.instance;
+          loader._vmPromise.resolve();
+        } else {
+          assert(stage);
+          loaded();
+        }
       } else {
         avm2.isAVM1Loaded = true;
         avm2.loadAVM1(loaded);

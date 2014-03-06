@@ -17,6 +17,7 @@
  */
 
 var fs = require('fs');
+var crypto = require('crypto');
 var spawn = require('child_process').spawn;
 
 function ensureDir(dir) {
@@ -35,9 +36,10 @@ function ensureDir(dir) {
 
 // simple args parsing
 var rebuild = false;
+var useSha1 = false;
 var buildThreadsCount = 1;
 var dependenciesRecursionLevel = 1;
-var debugInfo = true;
+var debugInfo = false;
 var strict = true;
 for (var i = 2; i < process.argv.length;) {
   var cmd = process.argv[i++];
@@ -50,6 +52,10 @@ for (var i = 2; i < process.argv.length;) {
     case '-r':
       rebuild = true;
       break;
+    case '--sha1':
+    case '-s':
+      useSha1 = true;
+      break;
     default:
       throw new Error('Bad argument: ' + cmd);
   }
@@ -58,7 +64,10 @@ for (var i = 2; i < process.argv.length;) {
 
 var build_dir = '../build/playerglobal';
 
-var manifest = JSON.parse(fs.readFileSync('manifest.json'));
+var manifestData = fs.readFileSync('manifest.json');
+var manifest = JSON.parse(manifestData);
+var manifestHash = crypto.createHash('sha1').update(manifestData).digest('hex');
+var manifestHashEntryName = '$(BUILDHOME)/manifest.json';
 var manifestUpdated = fs.statSync('manifest.json').mtime.valueOf();
 var ascjar = '../utils/asc.jar';
 var buildasc = './avm2/generated/builtin/builtin.abc';
@@ -69,24 +78,43 @@ process.chdir('../../src');
 // prepare build folder
 ensureDir(build_dir);
 
-var dependencies = {files: {}, abcs: {}}, dependenciesUpdated = 0;
+var dependencies = {files: {}, abcs: {}, hashes: {}}, dependenciesUpdated = 0;
 var dependenciesPath = build_dir + '/dependencies.json';
 if (fs.existsSync(dependenciesPath) && !rebuild) {
   dependenciesUpdated = fs.statSync(dependenciesPath).mtime.valueOf();
+  var tmpDependencies = JSON.parse(fs.readFileSync(dependenciesPath));
+  if (!tmpDependencies.hashes) tmpDependencies.hashes = {}; // compat with older build
   // discarding previous build if manifest was updated
-  if (manifestUpdated <= dependenciesUpdated) {
-    dependencies = JSON.parse(fs.readFileSync(dependenciesPath));
+  if (!useSha1 && manifestUpdated <= dependenciesUpdated) {
+    dependencies = tmpDependencies;
+  } else if (useSha1 && manifestHash === tmpDependencies.hashes[manifestHashEntryName]) {
+    dependencies = tmpDependencies;
   } else {
     console.info('New manifest was found: refreshing builds');
   }
 }
 
+var fileHashesCache = {};
+function calcSha1(file) {
+  if (fileHashesCache[file]) {
+    return fileHashesCache[file];
+  }
+  var fileData = fs.readFileSync(file);
+  var fileHash = crypto.createHash('sha1').update(fileData).digest('hex');
+  return (fileHashesCache[file] = fileHash);
+}
+
+
 // reset file dependencies
 Object.keys(dependencies.files).forEach(function (file) {
   var isNew = true;
   try {
-    fileUpdated = fs.statSync(file).mtime.valueOf();
-    isNew = fileUpdated > dependenciesUpdated;
+    if (useSha1) {
+      isNew = calcSha1(file) !== dependencies.hashes[file];
+    } else {
+      var fileUpdated = fs.statSync(file).mtime.valueOf();
+      isNew = fileUpdated > dependenciesUpdated;
+    }
   } catch(e) {}
   if (isNew) {
     dependencies.files[file].forEach(function (abc) {
@@ -405,6 +433,8 @@ function completeBuild() {
     console.info('Updating dependencies');
     dependencies.files = {};
     dependencies.abcs = {};
+    dependencies.hashes = {};
+    dependencies.hashes[manifestHashEntryName] = manifestHash;
     manifest.forEach(function (item) {
       var name = item.name, files = buildTreeLookup[name].dependencies;
       files.forEach(function (file) {
@@ -414,6 +444,7 @@ function completeBuild() {
         } else {
           abcs.push(name);
         }
+        dependencies.hashes[file] = calcSha1(file);
       });
       dependencies.abcs[name] = files;
     });

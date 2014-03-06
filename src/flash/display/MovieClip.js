@@ -428,7 +428,7 @@ var MovieClipDefinition = (function () {
 
           if (sound.channel) {
             sound.channel.stop();
-            delete sound.channel;
+            sound.channel = null;
           }
           if (!info.stop) {
             // TODO envelope, in/out point

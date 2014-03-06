@@ -1,7 +1,7 @@
 ﻿/* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf ColorTransformTest,100,100,10 test/swfs/flash_geom_ColorTransform.as
+   node utils/compileabc.js --swf ColorTransformTest,100,100,60 -p test/swfs/flash_geom_ColorTransform.as
 */
 
 ﻿package  {

@@ -30,10 +30,10 @@ build: ensureoutputdir \
 	mkdir $(BUILD_DIR)/src/flash
 	cp $(SHUMWAY_ROOT)/src/flash/stubs.js $(BUILD_DIR)/src/flash/
 	cp $(SHUMWAY_ROOT)/src/flash/util.js $(BUILD_DIR)/src/flash/
+	mkdir $(BUILD_DIR)/src/avm1lib
+	cp $(SHUMWAY_ROOT)/src/avm1lib/*.js $(BUILD_DIR)/src/avm1lib/
 	mkdir $(BUILD_DIR)/src/flash/accessibility
 	cp $(SHUMWAY_ROOT)/src/flash/accessibility/*.js $(BUILD_DIR)/src/flash/accessibility/
-	mkdir $(BUILD_DIR)/src/flash/avm1lib
-	cp $(SHUMWAY_ROOT)/src/flash/avm1lib/*.js $(BUILD_DIR)/src/flash/avm1lib/
 	mkdir $(BUILD_DIR)/src/flash/display
 	cp $(SHUMWAY_ROOT)/src/flash/display/*.js $(BUILD_DIR)/src/flash/display/
 	mkdir $(BUILD_DIR)/src/flash/events

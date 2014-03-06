@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf GraphicsTest,600,600 test/swfs/flash_display_Grahics.as
+   node utils/compileabc.js --swf GraphicsTest,600,600,60 -p test/swfs/flash_display_Graphics.as
 */
 
 package {
@@ -9,7 +9,6 @@ package {
 
     public class GraphicsTest extends Sprite {
         public function GraphicsTest() {
-            stage.frameRate = 20;
             var child:GraphicsObject = new GraphicsObject();
             addChild(child);
         }

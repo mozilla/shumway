@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf Shape,100,100,10 test/swfs/test_ShapeTest.as
+   node utils/compileabc.js --swf ShapeTest,100,100,60 -p test/swfs/flash_display_Shape.as
 */
 
 package {
