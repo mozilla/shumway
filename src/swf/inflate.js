@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global slice, splice, max, fail, Stream */
+/*global fail, Stream */
 
 var codeLengthOrder = [16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15];
 
@@ -43,7 +43,7 @@ for (var i = 0; i < 288; ++i)
 var fixedLiteralTable = makeHuffmanTable(bitLengths);
 
 function makeHuffmanTable(bitLengths) {
-  var maxBits = max.apply(null, bitLengths);
+  var maxBits = Math.max.apply(null, bitLengths);
   var numLengths = bitLengths.length;
   var size = 1 << maxBits;
   var codes = new Uint32Array(size);
@@ -106,7 +106,7 @@ function inflateBlock(stream, output, state) {
     var begin = pos + 4;
     var end = stream.pos = begin + len;
     var sbytes = stream.bytes, dbytes = output.data;
-    splice.apply(dbytes, [output.available, len].concat(slice.call(sbytes, begin, end)));
+    dbytes.set(sbytes.subarray(begin, end), output.available);
     output.available += len;
     break;
   case 1:
