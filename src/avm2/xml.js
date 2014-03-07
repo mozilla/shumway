@@ -919,7 +919,7 @@ var isXMLType, isXMLName, XMLParser;
           this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return this[Multiname.getQualifiedName(resolved)];
       }
-      if (isNumeric(mn)) {
+      if (!Multiname.isQName(mn) && isNumeric(mn)) {
         // this is a shortcut to the E4X logic that wants us to create a new
         // XMLList with of size 1 and access it with the given index.
         if (Number(0) === 0) {
@@ -961,7 +961,7 @@ var isXMLType, isXMLName, XMLParser;
           this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return !!this[Multiname.getQualifiedName(resolved)];
       }
-      if (isNumeric(mn)) {
+      if (!Multiname.isQName(mn) && isNumeric(mn)) {
         // this is a shortcut to the E4X logic that wants us to create a new
         // XMLList with of size 1 and access it with the given index.
         if (Number(0) === 0) {
