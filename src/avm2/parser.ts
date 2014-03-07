@@ -664,7 +664,7 @@ module Shumway.AVM2.ABC {
       var stream = new AbcStream(bytes);
       AbcFile._checkMagic(stream);
       Timer.start("Parse constantPool");
-      this.constantPool = new ConstantPool(stream, name);
+      this.constantPool = new ConstantPool(stream, this);
       Timer.stop();
 
       // Method Infos
@@ -771,7 +771,12 @@ module Shumway.AVM2.ABC {
     public prefix: string;
     public qualifiedName: string;
 
-    constructor(kind: CONSTANT, uri: string = "", prefix?: string) {
+    /**
+     * Private namespaces need unique URIs |uniqueURIHash|, for such cases we compute a hash value
+     * based on the ABC's hash. We could have easily given them a unique runtimeId but this wouldn't
+     * have worked for AOT compilation.
+     */
+    constructor(kind: CONSTANT, uri: string = "", prefix?: string, uniqueURIHash?: number) {
       if (uri === undefined) {
         uri = "";
       }
@@ -780,10 +785,10 @@ module Shumway.AVM2.ABC {
       }
       this.kind = kind;
       this.uri = uri;
-      this._buildNamespace();
+      this._buildNamespace(uniqueURIHash);
     }
 
-    private _buildNamespace() {
+    private _buildNamespace(uniqueURIHash?: number) {
       if (this.kind === CONSTANT.PackageNamespace) {
         this.kind = CONSTANT.Namespace;
       }
@@ -796,8 +801,8 @@ module Shumway.AVM2.ABC {
           this.uri = this.uri.substring(0, n - 1);
         }
       } else if (this.isUnique()) {
-        // String(Math.random() * 0xFFFFFFFF >>> 0);
-        this.uri = "private";
+        assert (uniqueURIHash !== undefined);
+        this.uri = "private " + uniqueURIHash;
       }
       this.qualifiedName = Namespace._qualifyNamespace(this.kind, this.uri, this.prefix ? this.prefix : "");
     }
@@ -867,10 +872,10 @@ module Shumway.AVM2.ABC {
       return new Namespace(CONSTANT.Namespace, uri, prefix);
     }
 
-    public static parse(constantPool: ConstantPool, stream: AbcStream): Namespace {
+    public static parse(constantPool: ConstantPool, stream: AbcStream, hash: number): Namespace {
       var kind = stream.readU8();
       var uri = constantPool.strings[stream.readU30()];
-      return new Namespace(kind, uri);
+      return new Namespace(kind, uri, undefined, hash);
     }
 
     public isPublic(): boolean {
@@ -1763,7 +1768,7 @@ module Shumway.AVM2.ABC {
     namespaces: Namespace [];
     namespaceSets: Namespace [][];
     positionAfterUTFStrings: number;
-    constructor (stream: AbcStream, name: string) {
+    constructor (stream: AbcStream, abc: AbcFile) {
       var n;
       // Parse Integers
       var ints = [0];
@@ -1803,7 +1808,7 @@ module Shumway.AVM2.ABC {
       var namespaces = [undefined];
       n = stream.readU30();
       for (var i = 1; i < n; ++i) {
-        namespaces.push(Namespace.parse(this, stream));
+        namespaces.push(Namespace.parse(this, stream, abc.hash + i));
       }
       Timer.stop();
 
