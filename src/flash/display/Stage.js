@@ -393,7 +393,7 @@ var StageDefinition = (function () {
         alpha: true
       };
 
-      var useWebGL = false;
+      var useWebGL = true;
       if (useWebGL) {
         var webGLContext = new WebGLContext(canvas, sceneOptions);
         stageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
