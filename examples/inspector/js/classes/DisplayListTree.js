@@ -63,6 +63,8 @@ var DisplayListTree = (function() {
                makePropCell('alpha', displayObject.alpha) + '</tr>';
       table += '<tr>' + makePropCell('blendMode', displayObject.blendMode) +
                 makePropCell('cacheAsBitmap', displayObject.cacheAsBitmap) + '</tr>';
+      table += '<tr>' + makePropCell('text', displayObject.text) +
+        makePropCell('htmlText', displayObject.htmlText) + '</tr>';
       table += "</table>";
       propertiesElement.innerHTML = table;
     }

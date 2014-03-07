@@ -156,10 +156,10 @@ module Shumway.Layers {
 
     getConcatenatedAlpha(): number {
       var frame = this;
-      var alpha = frame._alpha;
-      while (frame.parent) {
-        frame = frame.parent;
+      var alpha = 1;
+      while (frame) {
         alpha *= frame._alpha;
+        frame = frame.parent;
       }
       return alpha;
     }
