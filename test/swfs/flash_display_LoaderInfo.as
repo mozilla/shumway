@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf LoaderTest,100,100,2 test/swfs/flash_display_Loader.as
+   node utils/compileabc.js --swf LoaderInfoTest,100,100,10 -p test/swfs/flash_display_LoaderInfo.as
 */
 
 package {
@@ -51,6 +51,7 @@ class CustomLoader extends Loader {
     var openHandlerTicket = 0;
     var progressHandlerTicket = 0;
     var unloadHandlerTicket = 0;
+    var ioErrorHandlerTicket = 0;
 
     private function completeHandler(event:Event):void {
         trace("completeHandler: " + ticket);

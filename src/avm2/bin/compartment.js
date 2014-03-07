@@ -73,7 +73,6 @@ load(homePath + "src/avm2/vectors-numeric.js");
 load(homePath + "src/avm2/vectors-generic.js");
 load(homePath + "src/avm2/array.js");
 load(homePath + "src/avm2/proxy.js");
-load(homePath + "src/avm2/json2.js");
 load(homePath + "src/avm2/dictionary.js");
 load(homePath + "src/avm2/native.js");
 load(homePath + "src/avm2/nat.js");

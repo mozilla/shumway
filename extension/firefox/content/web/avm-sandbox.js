@@ -227,7 +227,7 @@ var FileLoadingService = {
           case "open": this.onopen(); break;
           case "close":
             this.onclose();
-            delete FileLoadingService.sessions[sessionId];
+            FileLoadingService.sessions[sessionId] = null;
             console.log('Session #' + sessionId +': closed');
             break;
           case "error":

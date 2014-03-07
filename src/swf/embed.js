@@ -15,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global SWF, renderStage, rgbaObjToStr, ShumwayKeyboardListener, forceHidpi */
+/*global SWF, renderStage, rgbaObjToStr, ShumwayKeyboardListener, forceHidpi,
+         Promise */
 
 SWF.embed = function(file, doc, container, options) {
   var canvas = doc.createElement('canvas');
@@ -191,8 +192,17 @@ SWF.embed = function(file, doc, container, options) {
       options.onStageInitialized(stage);
     }
 
-    renderStage(stage, ctx, options);
+    var startPromise = options.startPromise || Promise.resolve();
+    startPromise.then(function () {
+      renderStage(stage, ctx, options);
+    });
   });
+
+  if (options.onParsed) {
+    loaderInfo._addEventListener("parsed", function () {
+      options.onParsed();
+    });
+  }
 
   if (options.onComplete) {
     loaderInfo._addEventListener("complete", function () {
