@@ -325,10 +325,8 @@ natives['FlashUtilScript::getDefinitionByName'] = natives.getDefinitionByName;
 
 natives['FlashUtilScript::getTimer'] = function GetTimerMethod(domain, scope, instanceConstructor, baseClass) {
   var start = Date.now();
-  var time = 0;
   return function getTimer() {
-    // return Date.now() - start;
-    return time += 0.01;
+    return Date.now() - start;
   };
 };
 
