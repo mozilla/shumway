@@ -366,7 +366,7 @@ var StageDefinition = (function () {
 
       var WebGLContext = Shumway.GL.WebGLContext;
       var WebGLStageRenderer = Shumway.GL.WebGLStageRenderer;
-      //var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
+      var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
 
       var sceneOptions = {
         webGL: true,
@@ -381,6 +381,7 @@ var StageDefinition = (function () {
         drawTiles: false,
         drawTextures: false,
         ignoreViewport: false,
+        ignoreColorTransform: false,
         drawTexture: -1,
         drawDirtyRegions: false,
         drawLayers: false,
@@ -390,9 +391,13 @@ var StageDefinition = (function () {
         alpha: true
       };
 
-      var webGLContext = new WebGLContext(canvas, sceneOptions);
-      var webGLStageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
-      //canvas2DStageRenderer = new Canvas2DStageRenderer(ctx);
+      var useWebGL = false;
+      if (useWebGL) {
+        var webGLContext = new WebGLContext(canvas, sceneOptions);
+        stageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
+      } else {
+        stageRenderer = new Canvas2DStageRenderer(canvas.getContext("2d"));
+      }
 
       var domain = avm2.systemDomain;
       var firstRun = true;
@@ -408,6 +413,8 @@ var StageDefinition = (function () {
         sceneOptions.drawTexture = drawTexture.value;
         sceneOptions.drawElements = drawElements.value;
         sceneOptions.ignoreViewport = ignoreViewport.value;
+        sceneOptions.ignoreColorTransform = ignoreColorTransform.value;
+
         if (perspectiveCameraAngleRotate.value) {
           sceneOptions.perspectiveCameraAngle = Math.sin(Date.now() / 1000) * 100;
         } else {
@@ -460,20 +467,11 @@ var StageDefinition = (function () {
           timelineLeave("INVALIDATE");
 
           if (!disableRendering.value) {
-            if (sceneOptions.webGL) {
-              timelineEnter("WebGL");
-              if (renderer._stage) {
-                webGLStageRenderer.render(renderer._stage, sceneOptions);
-              }
-              timelineLeave("WebGL");
-            }
-          }
-          if (sceneOptions.canvas2D) {
-            timelineEnter("Canvas2D");
+            timelineEnter("Renderer");
             if (renderer._stage) {
-              canvas2DStageRenderer.render(renderer._stage, sceneOptions);
+              stageRenderer.render(renderer._stage, sceneOptions);
             }
-            timelineLeave("Canvas2D");
+            timelineLeave("Renderer");
           }
         }
 

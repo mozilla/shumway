@@ -990,6 +990,7 @@ RenderableText.prototype.render = function render(ctx) {
     }
   }
   ctx.restore();
+  ctx.restore();
 };
 
 var _deviceFontMetrics;

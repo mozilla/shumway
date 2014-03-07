@@ -775,6 +775,7 @@ module Shumway.GL {
 
       var parent = null;
       var tileTransform = Matrix.createIdentity();
+      var colorTransform = ColorTransform.createIdentity();
       stage.visit(function (frame: Frame, transform?: Matrix) {
         if (frame.parent !== parent) {
           parent = frame.parent;
@@ -782,7 +783,9 @@ module Shumway.GL {
         }
 
         var alpha = frame.getConcatenatedAlpha();
-        var colorTransform = frame.getConcatenatedColorTransform();
+        if (!options.ignoreColorTransform) {
+          colorTransform = frame.getConcatenatedColorTransform();
+        }
         that.context.setTransform(transform);
         if (frame instanceof Flake) {
           brush.fillRectangle(new Rectangle(0, 0, frame.w, frame.h), Color.parseColor((<Flake>frame).fillStyle), transform, depth);
