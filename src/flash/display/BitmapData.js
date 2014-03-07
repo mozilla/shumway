@@ -25,6 +25,7 @@ var BitmapDataDefinition = (function () {
       this._changeNotificationTarget = null;
       this._locked = false;
       this._data = null;
+      this._renderableId = 0;
     },
 
     ctor: function(width, height, transparent, backgroundColor) {
@@ -69,7 +70,14 @@ var BitmapDataDefinition = (function () {
       var oldParent = source._parent;
       var oldIndex = source._index;
       if (matrix) {
-        source._currentTransform = matrix;
+        source._currentTransform = {
+          a: matrix.a,
+          b: matrix.b,
+          c: matrix.c,
+          d: matrix.d,
+          tx: matrix.tx * 20,
+          ty: matrix.ty * 20
+        };
       }
       source._cxform = colorTransform;
       source._parent = root;

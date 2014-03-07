@@ -263,7 +263,6 @@ module Shumway.Layers {
       if (visibleOnly && !this.isVisible) {
         return;
       }
-
       stack = [this];
       var transformStack: Matrix [];
       var calculateTransform = !!transform;
@@ -281,7 +280,7 @@ module Shumway.Layers {
           frameContainer = <FrameContainer>frame;
           for (var i = frameContainer.children.length - 1; i >= 0; i--) {
             var child = frameContainer.children[i];
-            if (visibleOnly && !child.isVisible) {
+            if (!child || (visibleOnly && !child.isVisible)) {
               continue;
             }
             stack.push(child);
@@ -317,35 +316,40 @@ module Shumway.Layers {
     }
 
     public addChild(child: Frame) {
-      child.parent = this;
-      child.invalidate();
+      if (child) {
+        child.parent = this;
+        child.invalidate();
+      }
       this.children.push(child);
     }
 
     public addChildAt(child: Frame, index: number) {
-      assert(index > 0);
-      child.parent = this;
-      child.invalidate();
-      if (index >= this.children.length) {
+      assert(index >= 0 && index <= this.children.length);
+      if (index === this.children.length) {
         this.children.push(child);
       } else {
         this.children.splice(index, 0, child);
+      }
+      if (child) {
+        child.parent = this;
+        child.invalidate();
       }
     }
 
     public removeChild(child: Frame) {
       if (child.parent === this) {
         var index = this.children.indexOf(child);
-        child.gatherPreviousDirtyRegions();
-        this.children.splice(index, 1);
-        child.parent = undefined;
-        child.invalidate();
+        this.removeChildAt(index)
       }
     }
 
-    public getChildAt(index: number) {
-      assert(index > 0);
-      return this.children[index];
+    public removeChildAt(index: number) {
+      assert(index >= 0 && index < this.children.length);
+      var result = this.children.splice(index, 1);
+      var child = result[0];
+      child.gatherPreviousDirtyRegions();
+      child.parent = undefined;
+      child.invalidate();
     }
 
     public clearChildren() {

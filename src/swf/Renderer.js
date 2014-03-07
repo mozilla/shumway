@@ -140,22 +140,31 @@ function Renderer(target) {
             }
           }
 
+          if (!renderable && !isContainer) {
+            break;
+          }
+
           var layer = renderer._layers[layerId];
-          var parent = renderer._layers[parentId] || renderer._stage;
+          var parent = renderer._layers[parentId];
+
+          if (parent) {
+            index + 1;
+          } else {
+            parent = renderer._stage;
+          }
 
           if (layer) {
             if (renderable) {
               var target = layer;
 
               if (isContainer) {
-                if (layer.children.length) {
-                  target = layer.getChildAt(0);
-                } else {
+                target = layer.children[0];
+                if (!target) {
                   target = new Shumway.Layers.Shape(renderable);
                   target.origin = new Shumway.Geometry.Point(
                     -renderable.rect.x, -renderable.rect.y
                   );
-                  layer.addChild(target);
+                  layer.addChildAt(target, 0);
                 }
               }
 
@@ -176,6 +185,8 @@ function Renderer(target) {
                   -renderable.rect.x, -renderable.rect.y
                 );
                 layer.addChild(child);
+              } else {
+                layer.addChild(null);
               }
             } else {
               layer = new Shumway.Layers.Shape(renderable);
@@ -187,10 +198,10 @@ function Renderer(target) {
           }
 
           if (layer.parent !== parent) {
-            parent.addChildAt(layer, index + 1);
+            parent.addChildAt(layer, index);
           } else if (layer.index !== index) {
             parent.removeChild(layer);
-            parent.addChildAt(layer, index + 1);
+            parent.addChildAt(layer, index);
           }
 
           layer.transform = transform;
@@ -597,9 +608,9 @@ RenderableShape.prototype.render = function render(ctx) {
     //}
 
     // TODO: enable in-path line-style changes
-    if (formOpen) {
-      ctx.lineTo(formOpenX, formOpenY);
-    }
+    //if (formOpen) {
+    //  ctx.lineTo(formOpenX, formOpenY);
+    //}
     if (fillStyle) {
       ctx.save();
       if (isNaN(fillStyle)) {

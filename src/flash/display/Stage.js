@@ -336,15 +336,13 @@ var StageDefinition = (function () {
 
         if (node._invalid) {
           var layerId = node._layerId;
+          var renderableId = node._renderableId;
+          if (!renderableId) {
+            renderableId = this._nextRenderableId++;
+            node._renderableId = renderableId;
+          }
           if (!layerId) {
-            var layerId = this._nextLayerId++;
-            var renderableId = node._renderableId;
-
-            if (!renderableId) {
-              renderableId = this._nextRenderableId++;
-              node._renderableId = renderableId;
-            }
-
+            layerId = this._nextLayerId++;
             node._layerId = layerId;
           }
           this._addLayer(node);
@@ -393,7 +391,7 @@ var StageDefinition = (function () {
         alpha: true
       };
 
-      var useWebGL = true;
+      var useWebGL = false;
       if (useWebGL) {
         var webGLContext = new WebGLContext(canvas, sceneOptions);
         stageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
