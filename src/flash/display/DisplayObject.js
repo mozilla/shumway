@@ -450,7 +450,7 @@ var DisplayObjectDefinition = (function () {
     },
 
     _serialize: function (message) {
-      message.ensureAdditionalCapacity(44);
+      message.ensureAdditionalCapacity(48);
 
       message.writeIntUnsafe(this._layerId);
       message.writeIntUnsafe(this._renderableId);
@@ -483,17 +483,20 @@ var DisplayObjectDefinition = (function () {
       }
 
       if (this._updateRenderable) {
-        message.writeIntUnsafe(1);
+        var p = message.getIndex(4);
+        message.reserve(4);
+
         this._serializeRenderableData(message);
         this._updateRenderable = false;
+
+        message.subI32View()[p] = message.getIndex(4) !== p + 1;
       } else {
         message.writeIntUnsafe(0);
       }
     },
     _serializeRenderableData: function (message) {
-      message.writeInt(Renderer.RENDERABLE_TYPE_SHAPE);
-
       if (this._graphics) {
+        message.writeInt(Renderer.RENDERABLE_TYPE_SHAPE);
         this._graphics._serialize(message);
       }
     },

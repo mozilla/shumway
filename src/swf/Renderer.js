@@ -139,6 +139,10 @@ function Renderer(target) {
             }
           }
 
+          if (!renderable && !isContainer) {
+            break;
+          }
+
           var layer = renderer._layers[layerId];
           var parent = renderer._layers[parentId];
 
