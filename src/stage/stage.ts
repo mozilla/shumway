@@ -190,6 +190,10 @@ module Shumway.Layers {
       t.translate(this._origin.x, this._origin.y);
       t.concat(value);
 
+      if (this._transform && this._transform.isEqual(t)) {
+        return;
+      }
+
       this._transform = t;
       this._x = t.getTranslateX();
       this._y = t.getTranslateY();
@@ -392,13 +396,15 @@ module Shumway.Layers {
       var context = this.context;
       context.save();
 
-
-
       if (stage.trackDirtyRegions) {
         stage.gatherMarkedDirtyRegions(stage.transform);
         var lastDirtyRectangles: Rectangle[] = [];
         stage.dirtyRegion.gatherRegions(lastDirtyRectangles);
         if (options.clipDirtyRegions) {
+          if (!lastDirtyRectangles.length) {
+            // Nothing is dirty, so skip rendering.
+            return;
+          }
           for (var i = 0; i < lastDirtyRectangles.length; i++) {
             var rectangle = lastDirtyRectangles[i];
             rectangle.expand(2, 2);

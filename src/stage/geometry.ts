@@ -467,6 +467,15 @@ module Shumway.Geometry {
       this.ty = other.ty;
     }
 
+    isEqual (other: Matrix) {
+      return this.a  === other.a  &&
+             this.b  === other.b  &&
+             this.c  === other.c  &&
+             this.d  === other.d  &&
+             this.tx === other.tx &&
+             this.ty === other.ty;
+    }
+
     clone (): Matrix {
       return new Matrix(this.a, this.b, this.c, this.d, this.tx, this.ty);
     }
