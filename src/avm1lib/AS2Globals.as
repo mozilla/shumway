@@ -355,7 +355,7 @@ public dynamic class AS2Globals {
 
   // built-ins
   public var NaN:Number = NaN;
-  public var Infinity:Number = Infinity;
+  public var Infinity:Number = Number.POSITIVE_INFINITY;
   public var isFinite:Function = isFinite;
   public var isNaN:Function = isNaN;
   public var parseFloat:Function = parseFloat;
