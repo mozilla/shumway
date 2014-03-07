@@ -273,7 +273,7 @@ var SourceTracer = (function () {
       traits.forEach(function (trait) {
         var str;
         var accessModifier = Multiname.getAccessModifier(trait.name);
-        var namespaceName = trait.name.namespaces[0].originalURI;
+        var namespaceName = trait.name.namespaces[0].uri;
         if (namespaceName) {
           if (namespaceName === "http://adobe.com/AS3/2006/builtin") {
             namespaceName = "AS3";
@@ -324,15 +324,15 @@ var SourceTracer = (function () {
             var prefix = "";
             if (trait.holder instanceof ClassInfo) {
               className = trait.holder.instanceInfo.name;
-              if (className.namespaces[0].originalURI) {
-                prefix += className.namespaces[0].originalURI + "::";
+              if (className.namespaces[0].uri) {
+                prefix += className.namespaces[0].uri + "::";
               }
               prefix += className.getName();
               prefix += "$/";
             } else if (trait.holder instanceof InstanceInfo) {
               className = trait.holder.name;
-              if (className.namespaces[0].originalURI) {
-                prefix += className.namespaces[0].originalURI + "::";
+              if (className.namespaces[0].uri) {
+                prefix += className.namespaces[0].uri + "::";
               }
               prefix += className.getName();
               prefix += "/";
@@ -356,7 +356,7 @@ var SourceTracer = (function () {
           }
         } else if (trait.isClass()) {
           var className = trait.classInfo.instanceInfo.name;
-          writer.enter("package " + className.namespaces[0].originalURI + " {\n");
+          writer.enter("package " + className.namespaces[0].uri + " {\n");
           tracer.traceMetadata(trait.metadata);
           tracer.traceClass(trait.classInfo);
           writer.leave("\n}");
@@ -442,7 +442,7 @@ var SourceTracer = (function () {
       writer.writeLn("Class " + ii);
       writer.writeLn("8< --------------------------------------------------------------");
 
-      var originalURI = ii.name.namespaces[0].originalURI;
+      var uri = ii.name.namespaces[0].uri;
 
       writer.enter("var " + className + "Definition = (function () {");
       function maxTraitNameLength(traits) {
@@ -541,7 +541,7 @@ var SourceTracer = (function () {
 
       writer.enter("return {");
       writer.writeLn("// (" + getSignature(ii.init, false) + ")");
-      writer.writeLn("__class__: \"" + originalURI + "." + className + "\",");
+      writer.writeLn("__class__: \"" + uri + "." + className + "\",");
       writer.enter("initialize: function () {");
       writer.leave("},");
       writer.enter("__glue__: {");
@@ -593,7 +593,7 @@ var SourceTracer = (function () {
       }
       var interfaceNamespace;
       if (ii.isInterface()) {
-        interfaceNamespace = name.namespaces[0].originalURI + ":" + name.name;
+        interfaceNamespace = name.namespaces[0].uri + ":" + name.name;
       }
       this.traceTraits(ci.traits, true, interfaceNamespace);
       this.traceTraits(ii.traits, false, interfaceNamespace);
@@ -635,10 +635,10 @@ function traceStatistics(writer, abc) {
    * appear in this ABC file are assumed to be in the library.
    */
 
-  var libraryClassCounter = new metrics.Counter(true);
-  var librarySuperClassCounter = new metrics.Counter(true);
-  var libraryMethodCounter = new metrics.Counter(true);
-  var libraryProperties = new metrics.Counter(true);
+  var libraryClassCounter = new Shumway.Metrics.Counter(true);
+  var librarySuperClassCounter = new Shumway.Metrics.Counter(true);
+  var libraryMethodCounter = new Shumway.Metrics.Counter(true);
+  var libraryProperties = new Shumway.Metrics.Counter(true);
 
   var definedClasses = {};
   var definedMethods = {};
@@ -674,7 +674,7 @@ function traceStatistics(writer, abc) {
     });
   });
 
-  var opCounter = new metrics.Counter(true);
+  var opCounter = new Shumway.Metrics.Counter(true);
 
   abc.methods.forEach(function (m) {
     if (!m.code) {

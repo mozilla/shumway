@@ -658,7 +658,7 @@
 
   IR.ASNewActivation.prototype.compile = function (cx) {
     var methodInfo = compileValue(this.methodInfo, cx);
-    return call(id("createActivation"), [methodInfo]);
+    return call(id("asCreateActivation"), [methodInfo]);
   };
 
   IR.ASMultiname.prototype.compile = function (cx) {
@@ -686,7 +686,9 @@
 
     var parameters = [];
     for (var i = 0; i < cx.parameters.length; i++) {
-      var name = cx.parameters[i] ? cx.parameters[i].name : "_";
+      // Closure Compiler complains if the parameter names are the same
+      // even if they are not used, so we differentiate them here.
+      var name = cx.parameters[i] ? cx.parameters[i].name : "_" + i;
       parameters.push(id(name));
     }
 

@@ -39,6 +39,10 @@ module.exports = function(grunt) {
       build_bundle: {
         cmd: 'make -C utils/builder build'
       },
+      build_avm2_ts: {
+        cmd: '../../node_modules/.bin/tsc --target ES5 references.ts',
+        cwd: 'src/avm2'
+      },
       generate_abcs: {
         cmd: 'python generate.py',
         cwd: 'src/avm2/generated'
@@ -73,6 +77,10 @@ module.exports = function(grunt) {
         files: ['src/flash/**/*.as',
                 'utils/playerglobal-builder/manifest.json'],
         tasks: ['exec:build_playerglobal']
+      },
+      avm2_ts: {
+        files: ['src/avm2/*.ts'],
+        tasks: ['exec:build_avm2_ts']
       }
     }
   });
@@ -113,12 +121,15 @@ module.exports = function(grunt) {
 
   grunt.registerTask('watch-playerglobal', ['exec:build_playerglobal', 'watch:playerglobal']);
   grunt.registerTask('watch-avm1lib', ['exec:build_avm1lib', 'watch:avm1lib']);
+  grunt.registerTask('watch-avm2', ['exec:build_avm2_ts', 'watch:avm2_ts']);
 
   // temporary make/python calls based on grunt-exec
-  grunt.registerTask('build-web', ['exec:build_bundle', 'exec:build_extension', 'exec:build_web']);
-  grunt.registerTask('build-extension', ['exec:build_bundle', 'exec:build_extension']);
+  grunt.registerTask('build-web', ['exec:build_avm2_ts', 'exec:build_bundle', 'exec:build_extension', 'exec:build_web']);
+  grunt.registerTask('build-extension', ['exec:build_avm2_ts', 'exec:build_bundle', 'exec:build_extension']);
   grunt.registerTask('build-playerglobal', ['exec:build_playerglobal']);
+  grunt.registerTask('build-bundle', ['exec:build_avm2_ts', 'exec:build_bundle']);
 
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('avm1lib', ['exec:build_avm1lib']);
+  grunt.registerTask('avm2', ['exec:build_avm2_ts']);
 };

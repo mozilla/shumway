@@ -36,11 +36,9 @@ var proxyTrapQns = {
 };
 
 for (var name in proxyTrapQns) {
-  proxyTrapQns[name] = VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(new Multiname([ShumwayNamespace.PROXY], name));
+  proxyTrapQns[name] = VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(new Multiname([ASNamespace.PROXY], name));
 }
 
-var VM_IS_PROXY = "vm is proxy";
-var VM_CALL_PROXY = "vm call proxy";
 
 function isProxyObject(obj) {
   return obj[VM_IS_PROXY];
@@ -99,7 +97,8 @@ function installProxyClassWrapper(cls) {
             if (TRACE_PROXY) {
               print("proxy call, class: " + target.class + ", mn: " + mn + "hasNonProxyingCallerr: " + hasNonProxyingCaller());
             }
-            var resolved = Multiname.isQName(mn) ? mn : resolveMultiname(target, mn);
+            var resolved = Multiname.isQName(mn) ? mn :
+              target.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
             var qn = resolved ? Multiname.getQualifiedName(resolved) :
                       Multiname.getPublicQualifiedName(mn.name);
             if (!nameInTraits(target, qn)) {
@@ -108,8 +107,8 @@ function installProxyClassWrapper(cls) {
             if (TRACE_PROXY) {
               TRACE_PROXY && print("> proxy pass through " + resolved);
             }
-            if (target[VM_OPEN_METHODS] && target[VM_OPEN_METHODS][qn]) {
-              return target[VM_OPEN_METHODS][qn].apply(o, args);
+            if (target.asOpenMethods && target.asOpenMethods[qn]) {
+              return target.asOpenMethods[qn].apply(o, args);
             }
             // if (target[qn]) {
             //  return target[qn].apply(o, args);
@@ -126,8 +125,8 @@ function installProxyClassWrapper(cls) {
             return target[proxyTrapQns.getProperty](name);
           }
         }
-        if (target[VM_OPEN_METHODS] && target[VM_OPEN_METHODS][qn]) {
-          return bindSafely(target[VM_OPEN_METHODS][qn], o);
+        if (target.asOpenMethods && target.asOpenMethods[qn]) {
+          return bindSafely(target.asOpenMethods[qn], o);
         }
         TRACE_PROXY && print("> proxy pass through " + qn);
         return target[qn];

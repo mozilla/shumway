@@ -72,7 +72,7 @@ build-playerglobal-min:
 	make -C utils/playerglobal build-min
 
 build-bundle:
-	make -C utils/builder build
+	grunt build-bundle
 
 build-extension: build-bundle
 	make -C extension/firefox/ build

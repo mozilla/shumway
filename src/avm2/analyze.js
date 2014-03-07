@@ -23,7 +23,7 @@ var Bytecode = (function () {
     this.op = op;
     this.originalPosition = code.position;
 
-    var opdesc = opcodeTable[op];
+    var opdesc = Shumway.AVM2.opcodeTable[op];
     if (!opdesc) {
       unexpected("Unknown Op " + op);
     }
@@ -99,7 +99,7 @@ var Bytecode = (function () {
     },
 
     toString: function toString(abc) {
-      var opDescription = opcodeTable[this.op];
+      var opDescription = Shumway.AVM2.opcodeTable[this.op];
       var str = opDescription.name.padRight(' ', 20);
       var i, j;
 

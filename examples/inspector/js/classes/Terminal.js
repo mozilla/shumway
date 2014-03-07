@@ -113,7 +113,7 @@ var Terminal = (function () {
     var KEY_T = 84;
 
     this.showLineNumbers = true;
-    this.showLineTime = false;
+    this.showLineTime = true;
     this.showLineCounter = false;
 
     function onFocusIn(event) {
@@ -227,7 +227,7 @@ var Terminal = (function () {
 
     var charSize = 5;
     var lineNumberMargin = this.textMarginLeft;
-    var lineTimeMargin = lineNumberMargin + (this.showLineNumbers ? String(this.buffer.length).length * charSize : 0);
+    var lineTimeMargin = lineNumberMargin + (this.showLineNumbers ? (String(this.buffer.length).length + 2) * charSize: 0);
     var lineRepeatMargin = lineTimeMargin + (this.showLineTime ? charSize * 8 : 2 * charSize);
     var lineMargin = lineRepeatMargin + charSize * 5;
 
@@ -239,7 +239,8 @@ var Terminal = (function () {
       var line = this.buffer.get(lineIndex);
       var lineFormat = this.buffer.getFormat(lineIndex);
       var lineRepeat = this.buffer.getRepeat(lineIndex);
-      var lineTimeDelta = lineIndex > 1 ? this.buffer.getTime(lineIndex) - this.buffer.getTime(lineIndex - 1) : 0;
+      // var lineTimeDelta = lineIndex > 1 ? this.buffer.getTime(lineIndex) - this.buffer.getTime(lineIndex - 1) : 0;
+      var lineTimeDelta = lineIndex > 1 ? this.buffer.getTime(lineIndex) - this.buffer.getTime(0) : 0;
 
       this.context.fillStyle = lineIndex % 2 ? lineColor : alternateLineColor;
       if (lineFormat && lineFormat.backgroundFillStyle) {

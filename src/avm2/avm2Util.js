@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -16,220 +14,41 @@
  * limitations under the License.
  */
 
-var inBrowser = typeof console != "undefined";
+var error = Shumway.Debug.error;
+var assertNotImplemented = Shumway.Debug.assertNotImplemented;
+var warning = Shumway.Debug.warning;
+var notImplemented = Shumway.Debug.notImplemented;
+var somewhatImplemented = Shumway.Debug.somewhatImplemented;
+var unexpected = Shumway.Debug.unexpected;
 
-if (!this.performance) {
-  this.performance = {};
-}
-if (!this.performance.now) {
-  this.performance.now = dateNow;
-}
+var defineReadOnlyProperty = Shumway.ObjectUtilities.defineReadOnlyProperty;
+var createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
 
-function backtrace() {
-  try {
-    throw new Error();
-  } catch (e) {
-    return e.stack ? e.stack.split('\n').slice(2).join('\n') : '';
-  }
-}
-
-function error(message) {
-  if (!inBrowser) {
-    console.warn(backtrace());
-  }
-  throw new Error(message);
-}
-
-function assert(condition) {
-  if (condition === "") {     // avoid inadvertent false positive
-    condition = true;
-  }
-  if (!condition) {
-    var message = Array.prototype.slice.call(arguments);
-    message.shift();
-    error(message.join(""));
-  }
-}
-
-function assertNotImplemented(condition, message) {
-  if (!condition) {
-    error("NotImplemented: " + message);
-  }
-}
-
-function warning(message) {
-  release || console.warn(message);
-}
-
-function notUsed(message) {
-  release || assert(false, "Not Used " + message);
-}
-
-function notImplemented(message) {
-  release || assert(false, "Not Implemented " + message);
-}
-
-function somewhatImplemented(message) {
-  warning("somewhatImplemented: " + message);
-}
-
-function unexpected(message) {
-  assert(false, "Unexpected: " + message);
-}
-
-function makeForwardingGetter(target) {
-  return new Function("return this[\"" + target + "\"]");
-}
-
-function makeForwardingSetter(target) {
-  return new Function("value", "this[\"" + target + "\"] = value;");
-}
-
-function defineReadOnlyProperty(obj, name, value) {
-  Object.defineProperty(obj, name, { value: value,
-                                     writable: false,
-                                     configurable: true,  // XXX: make it non-configurable?
-                                     enumerable: false });
-}
-
-/**
- * Makes sure you never re-bind a method.
- */
-function bindSafely(fn, obj) {
-  release || assert (!fn.boundTo && obj);
-  var f = fn.bind(obj);
-  f.boundTo = obj;
-  return f;
-}
-
-function createEmptyObject() {
-  return Object.create(null);
-}
-
-function getOwnPropertyDescriptors(object) {
-  var o = createEmptyObject();
-  var properties = Object.getOwnPropertyNames(object);
-  for (var i = 0; i < properties.length; i++) {
-    o[properties[i]] = Object.getOwnPropertyDescriptor(object, properties[i]);
-  }
-  return o;
-}
-
-function cloneObject(object) {
-  var clone = Object.create(null);
-  for (var property in object) {
-    clone[property] = object[property];
-  }
-  return clone;
-}
-
-function extendObject(object, properties) {
-  var extended = Object.create(object);
-  if (properties) {
-    for (var key in properties) {
-      extended[key] = properties[key];
-    }
-  }
-  return extended;
-}
-
-function copyProperties(object, template) {
-  for (var property in template) {
-    object[property] = template[property];
-  }
-}
+var makeForwardingGetter = Shumway.FunctionUtilities.makeForwardingGetter;
+var makeForwardingSetter = Shumway.FunctionUtilities.makeForwardingSetter;
+var bindSafely = Shumway.FunctionUtilities.bindSafely;
+var cloneObject = Shumway.ObjectUtilities.cloneObject;
+var copyProperties = Shumway.ObjectUtilities.copyProperties;
 
 /*
  * Stringify functions that try not to call |toString| inadvertently.
  */
 
-function toSafeString(value) {
-  if (typeof value === "string") {
-    return "\"" + value + "\"";
-  }
-  if (typeof value === "number" || typeof value === "boolean") {
-    return String(value);
-  }
-  return typeof value;
-}
+var toSafeString = Shumway.StringUtilities.toSafeString;
+var toSafeArrayString = Shumway.StringUtilities.toSafeArrayString;
 
-function toSafeArrayString(array) {
-  var str = [];
-  for (var i = 0; i < array.length; i++) {
-    str.push(toSafeString(array[i]));
-  }
-  return str.join(", ");
-}
+var getLatestGetterOrSetterPropertyDescriptor = Shumway.ObjectUtilities.getLatestGetterOrSetterPropertyDescriptor;
+var defineNonEnumerableGetterOrSetter = Shumway.ObjectUtilities.defineNonEnumerableGetterOrSetter;
+var defineNonEnumerableGetter = Shumway.ObjectUtilities.defineNonEnumerableGetter;
+var defineNonEnumerableSetter = Shumway.ObjectUtilities.defineNonEnumerableSetter;
+var defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
+var defineNonEnumerableForwardingProperty = Shumway.ObjectUtilities.defineNonEnumerableForwardingProperty;
+var defineNewNonEnumerableProperty = Shumway.ObjectUtilities.defineNewNonEnumerableProperty;
 
-function getLatestGetterOrSetterPropertyDescriptor(obj, name) {
-  var descriptor = {};
-  while (obj) {
-    var tmp = Object.getOwnPropertyDescriptor(obj, name);
-    if (tmp) {
-      descriptor.get = descriptor.get || tmp.get;
-      descriptor.set = descriptor.set || tmp.set;
-    }
-    if (descriptor.get && descriptor.set) {
-      break;
-    }
-    obj = Object.getPrototypeOf(obj);
-  }
-  return descriptor;
-}
+var isNumeric = Shumway.isNumeric;
+var isNullOrUndefined = Shumway.isNullOrUndefined;
+var isPowerOfTwo = Shumway.IntegerUtilities.isPowerOfTwo;
 
-function defineNonEnumerableGetterOrSetter(obj, name, value, isGetter) {
-  var descriptor = getLatestGetterOrSetterPropertyDescriptor(obj, name);
-  descriptor.configurable = true;
-  descriptor.enumerable = false;
-  if (isGetter) {
-    descriptor.get = value;
-  } else {
-    descriptor.set = value;
-  }
-  Object.defineProperty(obj, name, descriptor);
-}
-
-function defineNonEnumerableGetter(obj, name, getter) {
-  Object.defineProperty(obj, name, { get: getter,
-                                     configurable: true,
-                                     enumerable: false });
-}
-
-function defineNonEnumerableSetter(obj, name, setter) {
-  Object.defineProperty(obj, name, { set: setter,
-                                     configurable: true,
-                                     enumerable: false });
-}
-
-function defineNonEnumerableProperty(obj, name, value) {
-  Object.defineProperty(obj, name, { value: value,
-                                     writable: true,
-                                     configurable: true,
-                                     enumerable: false });
-}
-
-function defineNonEnumerableForwardingProperty(obj, name, otherName) {
-  Object.defineProperty(obj, name, {
-    get: makeForwardingGetter(otherName),
-    set: makeForwardingSetter(otherName),
-    writable: true,
-    configurable: true,
-    enumerable: false
-  });
-}
-
-function defineNewNonEnumerableProperty(obj, name, value) {
-  release || assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
-  defineNonEnumerableProperty(obj, name, value);
-}
-
-function isNullOrUndefined(value) {
-  return value == undefined;
-}
-
-function isPowerOfTwo(x) {
-  return x && ((x & (x - 1)) === 0);
-}
 
 function time(fn, count) {
   var start = performance.now();
@@ -250,17 +69,8 @@ function clamp(x, min, max) {
   return x;
 }
 
-/**
- * Workaround for max stack size limit.
- */
-function fromCharCodeArray(buffer) {
-  var str = "", SLICE = 1024 * 16;
-  for (var i = 0; i < buffer.length; i += SLICE) {
-    var chunk = Math.min(buffer.length - i, SLICE);
-    str += String.fromCharCode.apply(null, buffer.subarray(i, i + chunk));
-  }
-  return str;
-}
+var fromCharCodeArray = Shumway.StringUtilities.fromCharCodeArray;
+
 
 function hasOwnProperty(object, name) {
   return Object.prototype.hasOwnProperty.call(object, name);
@@ -269,50 +79,15 @@ function hasOwnProperty(object, name) {
 /**
  * Converts an object to an array of key, value arrays.
  */
-function toKeyValueArray(o) {
-  var hasOwnProperty = Object.prototype.hasOwnProperty;
-  var a = [];
-  for (var k in o) {
-    if (hasOwnProperty.call(o, k)) {
-      a.push([k, o[k]]);
-    }
-  }
-  return a;
-}
+var toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
+
 
 /**
  * Checks for key names that don't need to be prefixed.
  * TODO: Rename this and clean up the code that deals with prefixed vs. non-prefixed key names.
  */
-function isNumeric(x) {
-  if (typeof x === "number") {
-    return x === (x | 0);
-  }
-  if (typeof x !== "string" || x.length === 0) {
-    return false;
-  }
-  if (x === "0") {
-    return true;
-  }
-  var c = x.charCodeAt(0);
-  if ((c >= 49) && (c <= 57)) {
-    for (var i = 1, j = x.length; i < j; i++) {
-      c = x.charCodeAt(i);
-      if (!((c >= 48) && (c <= 57))) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return false;
-}
 
-function boxValue(value) {
-  if (isNullOrUndefined(value) || isObject(value)) {
-    return value;
-  }
-  return Object(value);
-}
+var boxValue = Shumway.ObjectUtilities.boxValue;
 
 function isObject(value) {
   return typeof value === "object" || typeof value === 'function';
@@ -340,21 +115,6 @@ function setBitFlags(flags, flag, value) {
 
 function getBitFlags(flags, flag) {
   return !!(flags & flag);
-}
-
-/**
- * Pops elements from a source array into a destination array. This avoids
- * allocations and should be faster. The elements in the destination array
- * are pushed in the same order as they appear in the source array:
- *
- * popManyInto([1, 2, 3], 2, dst) => dst = [2, 3]
- */
-function popManyInto(src, count, dst) {
-  release || assert(src.length >= count);
-  for (var i = count - 1; i >= 0; i--) {
-    dst[i] = src.pop();
-  }
-  dst.length = count;
 }
 
 (function () {
@@ -525,126 +285,15 @@ function popManyInto(src, count, dst) {
   });
 })();
 
-function utf8decode(str) {
-  var bytes = new Uint8Array(str.length * 4);
-  var b = 0;
-  for (var i = 0, j = str.length; i < j; i++) {
-    var code = str.charCodeAt(i);
-    if (code <= 0x7f) {
-      bytes[b++] = code;
-      continue;
-    }
+var utf8decode = Shumway.StringUtilities.utf8decode;
+var utf8encode = Shumway.StringUtilities.utf8encode;
+var escapeString = Shumway.StringUtilities.escapeString;
 
-    if (0xD800 <= code && code <= 0xDBFF) {
-      var codeLow = str.charCodeAt(i + 1);
-      if (0xDC00 <= codeLow && codeLow <= 0xDFFF) {
-        // convert only when both high and low surrogates are present
-        code = ((code & 0x3FF) << 10) + (codeLow & 0x3FF) + 0x10000;
-        ++i;
-      }
-    }
-
-    if ((code & 0xFFE00000) !== 0) {
-      bytes[b++] = 0xF8 | ((code >>> 24) & 0x03);
-      bytes[b++] = 0x80 | ((code >>> 18) & 0x3F);
-      bytes[b++] = 0x80 | ((code >>> 12) & 0x3F);
-      bytes[b++] = 0x80 | ((code >>> 6) & 0x3F);
-      bytes[b++] = 0x80 | (code & 0x3F);
-    } else if ((code & 0xFFFF0000) !== 0) {
-      bytes[b++] = 0xF0 | ((code >>> 18) & 0x07);
-      bytes[b++] = 0x80 | ((code >>> 12) & 0x3F);
-      bytes[b++] = 0x80 | ((code >>> 6) & 0x3F);
-      bytes[b++] = 0x80 | (code & 0x3F);
-    } else if ((code & 0xFFFFF800) !== 0) {
-      bytes[b++] = 0xE0 | ((code >>> 12) & 0x0F);
-      bytes[b++] = 0x80 | ((code >>> 6) & 0x3F);
-      bytes[b++] = 0x80 | (code & 0x3F);
-    } else {
-      bytes[b++] = 0xC0 | ((code >>> 6) & 0x1F);
-      bytes[b++] = 0x80 | (code & 0x3F);
-    }
-  }
-  return bytes.subarray(0, b);
-}
-
-function utf8encode(bytes) {
-  var j = 0, str = "";
-  while (j < bytes.length) {
-    var b1 = bytes[j++] & 0xFF;
-    if (b1 <= 0x7F) {
-      str += String.fromCharCode(b1);
-    } else {
-      var currentPrefix = 0xC0;
-      var validBits = 5;
-      do {
-        var mask = (currentPrefix >> 1) | 0x80;
-        if((b1 & mask) === currentPrefix) break;
-        currentPrefix = (currentPrefix >> 1) | 0x80;
-        --validBits;
-      } while (validBits >= 0);
-
-      if (validBits <= 0) {
-        // Invalid UTF8 character -- copying as is
-        str += String.fromCharCode(b1);
-        continue;
-      }
-      var code = (b1 & ((1 << validBits) - 1));
-      var invalid = false;
-      for (var i = 5; i >= validBits; --i) {
-        var bi = bytes[j++];
-        if ((bi & 0xC0) != 0x80) {
-          // Invalid UTF8 character sequence
-          invalid = true;
-          break;
-        }
-        code = (code << 6) | (bi & 0x3F);
-      }
-      if (invalid) {
-        // Copying invalid sequence as is
-        for (var k = j - (7 - i); k < j; ++k) {
-          str += String.fromCharCode(bytes[k] & 255);
-        }
-        continue;
-      }
-      if (code >= 0x10000) {
-        str += String.fromCharCode((((code - 0x10000) >> 10) & 0x3FF) |
-          0xD800, (code & 0x3FF) | 0xDC00);
-      } else {
-        str += String.fromCharCode(code);
-      }
-    }
-  }
-  return str;
-}
-
-function getFlags(value, flags) {
-  var str = "";
-  for (var i = 0; i < flags.length; i++) {
-    if (value & (1 << i)) {
-      str += flags[i] + " ";
-    }
-  }
-  if (str.length === 0) {
-    return "";
-  }
-  return str.trim();
-}
-
-function bitCount(i) {
-  i = i - ((i >> 1) & 0x55555555);
-  i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
-  return (((i + (i >> 4)) & 0x0F0F0F0F) * 0x01010101) >> 24;
-}
-
-function escapeString(str) {
-  if (str !== undefined) {
-    str = str.replace(/[^\w$]/gi,"$"); /* No dots, colons, dashes and /s */
-    if (/^\d/.test(str)) { /* No digits at the beginning */
-      str = '$' + str;
-    }
-  }
-  return str;
-}
+var bitCount = Shumway.IntegerUtilities.bitCount;
+var ones = Shumway.IntegerUtilities.ones;
+var leadingZeros = Shumway.IntegerUtilities.leadingZeros;
+var trailingZeros = Shumway.IntegerUtilities.trailingZeros;
+var getFlags = Shumway.IntegerUtilities.getFlags;
 
 /**
  * BitSet backed by a typed array. We intentionally leave out assertions for performance reasons. We
@@ -684,25 +333,6 @@ function BitSetFunctor(length) {
   Ctor.BITS_PER_WORD = BITS_PER_WORD;
   Ctor.BIT_INDEX_MASK = BIT_INDEX_MASK;
   Ctor.singleword = singleword;
-
-  function ones(v) {
-    v = v - ((v >> 1) & 0x55555555);
-    v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
-    return ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
-  }
-
-  function leadingZeros(v) {
-    v |= (v >> 1);
-    v |= (v >> 2);
-    v |= (v >> 4);
-    v |= (v >> 8);
-    v |= (v >> 16);
-    return 32 - ones(v);
-  }
-
-  function trailingZeros(v) {
-    return ones((v & -v) - 1);
-  }
 
   BitSet.prototype = {
     recount: function recount() {
@@ -1050,163 +680,6 @@ function BitSetFunctor(length) {
   return Ctor;
 }
 
-// https://gist.github.com/958841
-function base64ArrayBuffer(arrayBuffer) {
-  var base64 = '';
-  var encodings = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-
-  var bytes = new Uint8Array(arrayBuffer);
-  var byteLength = bytes.byteLength;
-  var byteRemainder = byteLength % 3;
-  var mainLength = byteLength - byteRemainder;
-
-  var a, b, c, d;
-  var chunk;
-
-  // Main loop deals with bytes in chunks of 3
-  for (var i = 0; i < mainLength; i = i + 3) {
-    // Combine the three bytes into a single integer
-    chunk = (bytes[i] << 16) | (bytes[i + 1] << 8) | bytes[i + 2];
-
-    // Use bitmasks to extract 6-bit segments from the triplet
-    a = (chunk & 16515072) >> 18; // 16515072 = (2^6 - 1) << 18
-    b = (chunk & 258048) >> 12; // 258048 = (2^6 - 1) << 12
-    c = (chunk & 4032) >> 6; // 4032 = (2^6 - 1) << 6
-    d = chunk & 63; // 63 = 2^6 - 1
-
-    // Convert the raw binary segments to the appropriate ASCII encoding
-    base64 += encodings[a] + encodings[b] + encodings[c] + encodings[d];
-  }
-
-  // Deal with the remaining bytes and padding
-  if (byteRemainder == 1) {
-    chunk = bytes[mainLength];
-
-    a = (chunk & 252) >> 2; // 252 = (2^6 - 1) << 2
-
-    // Set the 4 least significant bits to zero
-    b = (chunk & 3) << 4; // 3 = 2^2 - 1
-
-    base64 += encodings[a] + encodings[b] + '==';
-  } else if (byteRemainder == 2) {
-    chunk = (bytes[mainLength] << 8) | bytes[mainLength + 1];
-
-    a = (chunk & 64512) >> 10; // 64512 = (2^6 - 1) << 10
-    b = (chunk & 1008) >> 4; // 1008 = (2^6 - 1) << 4
-
-    // Set the 2 least significant bits to zero
-    c = (chunk & 15) << 2; // 15 = 2^4 - 1
-
-    base64 += encodings[a] + encodings[b] + encodings[c] + '=';
-  }
-  return base64;
-}
-
-var PURPLE = '\033[94m';
-var YELLOW = '\033[93m';
-var GREEN = '\033[92m';
-var RED = '\033[91m';
-var ENDC = '\033[0m';
-
-var IndentingWriter = (function () {
-  var consoleOutFn = inBrowser ? console.info.bind(console) : print;
-  function indentingWriter(suppressOutput, outFn) {
-    this.tab = "  ";
-    this.padding = "";
-    this.suppressOutput = suppressOutput;
-    this.out = outFn || consoleOutFn;
-  }
-
-  indentingWriter.prototype.writeLn = function writeLn(str) {
-    if (!this.suppressOutput) {
-      this.out(this.padding + str);
-    }
-  };
-
-  indentingWriter.prototype.writeLns = function writeLns(str) {
-    var lines = str.split("\n");
-    for (var i = 0; i < lines.length; i++) {
-      this.writeLn(lines[i]);
-    }
-  };
-
-  indentingWriter.prototype.debugLn = function debugLn(str) {
-    this.colorLn(PURPLE, str);
-  };
-
-  indentingWriter.prototype.yellowLn = function yellowLn(str) {
-    this.colorLn(YELLOW, str);
-  };
-
-  indentingWriter.prototype.greenLn = function greenLn(str) {
-    this.colorLn(GREEN, str);
-  };
-
-  indentingWriter.prototype.redLn = function redLn(str) {
-    this.colorLn(RED, str);
-  };
-
-  indentingWriter.prototype.colorLn = function writeLn(color, str) {
-    if (!this.suppressOutput) {
-      if (!inBrowser) {
-        this.out(this.padding + color + str + ENDC);
-      } else {
-        this.out(this.padding + str);
-      }
-    }
-  };
-
-  indentingWriter.prototype.enter = function enter(str) {
-    if (!this.suppressOutput) {
-      this.out(this.padding + str);
-    }
-    this.indent();
-  };
-
-  indentingWriter.prototype.leaveAndEnter = function leaveAndEnter(str) {
-    this.leave(str);
-    this.indent();
-  };
-
-  indentingWriter.prototype.leave = function leave(str) {
-    this.outdent();
-    if (!this.suppressOutput) {
-      this.out(this.padding + str);
-    }
-  };
-
-  indentingWriter.prototype.indent = function indent() {
-    this.padding += this.tab;
-  };
-
-  indentingWriter.prototype.outdent = function outdent() {
-    if (this.padding.length > 0) {
-      this.padding = this.padding.substring(0, this.padding.length - this.tab.length);
-    }
-  };
-
-  indentingWriter.prototype.writeArray = function writeArray(arr, detailed, noNumbers) {
-    detailed = detailed || false;
-    for (var i = 0, j = arr.length; i < j; i++) {
-      var prefix = "";
-      if (detailed) {
-        if (arr[i] === null) {
-          prefix = "null";
-        } else if (arr[i] === undefined) {
-          prefix = "undefined";
-        } else {
-          prefix = arr[i].constructor.name;
-        }
-        prefix += " ";
-      }
-      var number = noNumbers ? "" : ("" + i).padRight(' ', 4);
-      this.writeLn(number + prefix + arr[i]);
-    }
-  };
-
-  return indentingWriter;
-})();
-
 var Map = (function() {
   function map () {
     this.elements = {};
@@ -1231,127 +704,7 @@ var Map = (function() {
   return map;
 })();
 
-/**
- * SortedList backed up by a linked list.
- *  sortedList(compare) - the constructor takes a |compare| function
- *                        that defines the sort order.
- *  push(value) - inserts a new item in the list doing a linear search O(n)
- *                to find the right place.
- *  pop() - returns and removes the head of the list O(1)
- *  peek() - returns the head of the list without removing it O(1)
- *  contains(value) - returns true if the |value| is in the list, false otherwise O(n)
- *
- *  The compare function takes two arguments. If these arguments are a and b then:
- *    compare(a,b) < 0 means that a is less than b
- *    compare(a,b) === 0 means that a is equal to b
- *    compare(a,b) > 0 means that a is greater than b
- */
-var SortedList = (function() {
 
-  function sortedList(compare) {
-    release || assert(compare);
-    this.compare = compare;
-    this.head = null;
-    this.length = 0;
-  }
-
-  sortedList.RETURN = 1;
-  sortedList.DELETE = 2;
-
-  sortedList.prototype.push = function push(value) {
-    release || assert(value !== undefined);
-    this.length ++;
-    if (!this.head) {
-      this.head = {value: value, next: null};
-      return;
-    }
-
-    var curr = this.head;
-    var prev = null;
-    var node = {value: value, next: null};
-    var compare = this.compare;
-    while (curr) {
-      if (compare(curr.value, node.value) > 0) {
-        if (prev) {
-          node.next = curr;
-          prev.next = node;
-        } else {
-          node.next = this.head;
-          this.head = node;
-        }
-        return;
-      }
-      prev = curr;
-      curr = curr.next;
-    }
-    prev.next = node;
-  };
-
-  /**
-   * Visitors can return RETURN if they wish to stop the iteration or DELETE if they need to delete the current node.
-   * NOTE: DELETE most likley doesn't work if there are multiple active iterations going on.
-   */
-  sortedList.prototype.forEach = function forEach(visitor) {
-    var curr = this.head;
-    var last = null;
-    while (curr) {
-      var result = visitor(curr.value);
-      if (result === sortedList.RETURN) {
-        return;
-      } else if (result === sortedList.DELETE) {
-        if (!last) {
-          curr = this.head = this.head.next;
-        } else {
-          curr = last.next = curr.next;
-        }
-      } else {
-        last = curr;
-        curr = curr.next;
-      }
-    }
-  };
-
-  sortedList.prototype.pop = function pop() {
-    if (!this.head) {
-      return undefined;
-    }
-    this.length --;
-    var ret = this.head;
-    this.head = this.head.next;
-    return ret.value;
-  };
-
-  sortedList.prototype.peek = function peek() {
-    return this.head;
-  };
-
-  sortedList.prototype.contains = function contains(value) {
-    var curr = this.head;
-    while (curr) {
-      if (curr.value === value) {
-        return true;
-      }
-      curr = curr.next;
-    }
-    return false;
-  };
-
-  sortedList.prototype.toString = function () {
-    var str = "[";
-    var curr = this.head;
-    while (curr) {
-      str += curr.value.toString();
-      curr = curr.next;
-      if (curr) {
-        str += ",";
-      }
-    }
-    str += "]";
-    return str;
-  };
-
-  return sortedList;
-})();
 
 (function checkWeakMap() {
   if (typeof this.WeakMap === 'function')
@@ -1443,44 +796,6 @@ var Callback = (function () {
   return callback;
 })();
 
-var CircularBuffer = (function () {
-  var mask = 0xFFF, size = 4096;
-  function circularBuffer(Type) {
-    this.index = 0;
-    this.start = 0;
-    this.array = new Type(size);
-  }
-  circularBuffer.prototype.get = function (i) {
-    return this.array[i];
-  };
-  circularBuffer.prototype.forEachInReverse = function (visitor) {
-    if (this.isEmpty()) {
-      return;
-    }
-    var i = this.index === 0 ? size - 1 : this.index - 1;
-    while (i !== this.start) {
-      if (visitor(this.array[i], i)) {
-        break;
-      }
-      i = i === 0 ? size - 1 : i - 1;
-    }
-  };
-  circularBuffer.prototype.write = function (value) {
-    this.array[this.index] = value;
-    this.index = (this.index + 1) & mask;
-    if (this.index === this.start) {
-      this.start = (this.start + 1) & mask;
-    }
-  };
-  circularBuffer.prototype.isFull = function () {
-    return (this.index + 1) & mask === this.start;
-  };
-  circularBuffer.prototype.isEmpty = function () {
-    return this.index === this.start;
-  };
-  return circularBuffer;
-})();
-
 function lazyClass(holder, name, initialize) {
   Object.defineProperty(holder, name, {
     get: function () {
@@ -1494,6 +809,10 @@ function lazyClass(holder, name, initialize) {
   });
 }
 
-function createNewCompartment() {
-  return newGlobal('new-compartment');
-}
+var hashBytesTo32BitsAdler = Shumway.HashUtilities.hashBytesTo32BitsAdler;
+var hashBytesTo32BitsMD5 = Shumway.HashUtilities.hashBytesTo32BitsMD5;
+
+var variableLengthEncodeInt32 = Shumway.StringUtilities.variableLengthEncodeInt32;
+var fromEncoding = Shumway.StringUtilities.fromEncoding;
+var variableLengthDecodeIdentifier = Shumway.StringUtilities.variableLengthDecodeInt32;
+var toEncoding = Shumway.StringUtilities.toEncoding;

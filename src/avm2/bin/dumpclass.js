@@ -100,7 +100,7 @@ forEachABC(swfFile.value, function (abc) {
       if (trait.isClass()) {
         var cname = trait.classInfo.instanceInfo.name;
         if (cname.getName() === className.value) {
-          writer.enter("package " + cname.namespaces[0].originalURI + " {\n");
+          writer.enter("package " + cname.namespaces[0].uri + " {\n");
           tracer.traceMetadata(trait.metadata);
           tracer.traceClass(trait.classInfo);
           writer.leave("\n}");

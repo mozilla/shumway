@@ -53,9 +53,9 @@ var Type = (function () {
       traitsTypeCache = type.cache.scriptInfo;
     }
     if (traitsTypeCache) {
-      return traitsTypeCache[x.id] || (traitsTypeCache[x.id] = new TraitsType(x, domain));
+      return traitsTypeCache[x.runtimeId] || (traitsTypeCache[x.runtimeId] = new TraitsType(x, domain));
     }
-    if (x instanceof Activation) {
+    if (x instanceof ActivationInfo) {
       return new TraitsType(x.methodInfo);
     } else if (x instanceof Global) {
       return new TraitsType(x.scriptInfo);
@@ -255,7 +255,7 @@ var TraitsType = (function () {
       return "II:" + x.name.name;
     } else if (x instanceof MethodInfo) {
       return "MI";
-    } else if (x instanceof Activation) {
+    } else if (x instanceof ActivationInfo) {
       return "AC";
     }
     release || assert(false);
@@ -366,10 +366,14 @@ var TraitsType = (function () {
     release || assert(this.object instanceof InstanceInfo);
     if (this.object.superName) {
       var result = Type.fromName(this.object.superName, this.domain).instanceType();
-      release || assert(result instanceof TraitsType && result.object instanceof InstanceInfo);
+      release || assert(result instanceof TraitsType && result.object instanceof InstanceInfo, result + " " + this.object.superName);
       return result;
     }
     return null;
+  };
+
+  traitsType.prototype.isScriptInfo = function () {
+    return this.object instanceof ScriptInfo;
   };
 
   traitsType.prototype.isClassInfo = function () {
@@ -433,15 +437,17 @@ var MultinameType = (function () {
 
 var ParameterizedType = (function () {
   function parameterizedType(type, parameter) {
+    // TraitsType.call(type, type.object);
     this.type = type;
     this.parameter = parameter;
   }
+  // parameterizedType.prototype = Object.create(TraitsType.prototype);
   parameterizedType.prototype = Object.create(Type.prototype);
   parameterizedType.prototype.toString = function () {
     return this.type + "<" + this.parameter + ">";
   };
   parameterizedType.prototype.instanceType = function () {
-    release || assert(this.type instanceof TraitsType);
+    release || assert(this.type instanceof TraitsType, this.type);
     return new ParameterizedType(this.type.instanceType(), this.parameter.instanceType());
   };
   parameterizedType.prototype.equals = function (other) {
@@ -567,10 +573,10 @@ var Verifier = (function() {
   })();
 
   var Verification = (function() {
-    function verification(methodInfo, scope) {
-      this.scope = scope;
+    function verification(methodInfo, domain, savedScope) {
+      this.savedScope = savedScope;
       this.methodInfo = methodInfo;
-      this.domain = methodInfo.abc.applicationDomain;
+      this.domain = domain;
       this.writer = new IndentingWriter();
       this.returnType = Type.Undefined;
     }
@@ -639,14 +645,14 @@ var Verifier = (function() {
        * to find the right insertion position and keep the list sorted.
        * The push operation takes O(n), the pull operations takes O(1).
        */
-      var worklist = new SortedList(function compare(blockA, blockB) {
+      var worklist = new Shumway.SortedList(function compare(blockA, blockB) {
         return blockA.bdo - blockB.bdo;
       });
 
       blocks[0].entryState = entryState;
       worklist.push(blocks[0]);
 
-      while (worklist.peek()) {
+      while (!worklist.isEmpty()) {
 
         var block = worklist.pop();
         var exitState = block.exitState = block.entryState.clone();
@@ -698,7 +704,9 @@ var Verifier = (function() {
     };
 
     verification.prototype.verifyBlock = function verifyBlock(block, state) {
-      var savedScope = this.scope;
+      var savedScope = this.savedScope;
+      var globalScope = savedScope[0];
+      assert (globalScope.isScriptInfo());
 
       var local = state.local;
       var stack = state.stack;
@@ -707,7 +715,7 @@ var Verifier = (function() {
       var writer = verifierTraceLevel.value ? this.writer : null;
       var bytecodes = this.methodInfo.analysis.bytecodes;
 
-      var domain = this.methodInfo.abc.applicationDomain;
+      var domain = this.domain;
       var multinames = this.methodInfo.abc.constantPool.multinames;
       var mi = this.methodInfo;
 
@@ -750,6 +758,7 @@ var Verifier = (function() {
 
       function findProperty(mn, strict) {
         if (mn instanceof MultinameType) {
+          if (mn.name === "Array") { debugger; }
           return Type.Any;
         }
         
@@ -757,15 +766,20 @@ var Verifier = (function() {
          * Try to find the property in the scope stack. For instance methods the scope
          * stack should already have the instance object.
          */
-        for (var i = scope.length - 1; i >= 0; i--) {
-          if (scope[i] instanceof TraitsType) {
+        for (var i = scope.length - 1; i >= -savedScope.length; i--) {
+          var s = i >= 0 ? scope[i] : savedScope[savedScope.length + i];
+          if (s instanceof TraitsType) {
             // TODO: Should we be looking for getter / setter traits?
-            var trait = scope[i].getTrait(mn, false, true);
+            var trait = s.getTrait(mn, false, true);
             if (trait) {
               ti().scopeDepth = scope.length - i - 1;
-              return scope[i];
+              if (s.isClassInfo() || s.isScriptInfo()) {
+                ti().object = LazyInitializer.create(s.object);
+              }
+              return s;
             }
           } else {
+            if (mn.name === "Array") { debugger; }
             return Type.Any;
           }
         }
@@ -774,40 +788,38 @@ var Verifier = (function() {
          * If this is a static or instance method then look for the property in the
          * class object.
          */
-        if (isClassOrInstanceInfo(mi.holder)) {
-          var classType;
-          if (mi.holder instanceof ClassInfo) {
-            classType = Type.from(mi.holder, domain);
-          } else if (mi.holder instanceof InstanceInfo) {
-            classType = Type.from(mi.holder, domain).classType();
-          }
-          var trait = classType.getTrait(mn, false, true);
-          if (trait) {
-            if (!mi.isInstanceInitializer) {
-              ti().object = LazyInitializer.create(classType.object);
-            }
-            return classType;
-          }
-        }
-
-        /**
-         * Try the saved scope.
-         */
-        if (savedScope && savedScope.object && mn instanceof Multiname) {
-          var obj = savedScope.findScopeProperty(mn.namespaces, mn.name, mn.flags, domain, strict, true);
-          if (obj) {
-            var savedScopeDepth = savedScope.findDepth(obj);
-            release || assert(savedScopeDepth >= 0);
-            ti().scopeDepth = savedScopeDepth + scope.length;
-            return Type.from(obj, domain);
-          }
-        }
+//        if (isClassOrInstanceInfo(mi.holder)) {
+//          var classType;
+//          if (mi.holder instanceof ClassInfo) {
+//            classType = Type.from(mi.holder, domain);
+//          } else if (mi.holder instanceof InstanceInfo) {
+//            classType = Type.from(mi.holder, domain).classType();
+//          }
+//          var trait = classType.getTrait(mn, false, true);
+//          if (trait) {
+//            if (!mi.isInstanceInitializer) {
+//              ti().object = LazyInitializer.create(classType.object);
+//            }
+//            return classType;
+//          }
+//        }
+//
+//        if (false && savedScope && savedScope.object && mn instanceof Multiname) {
+//          var obj = savedScope.findScopeProperty(mn.namespaces, mn.name, mn.flags, domain, strict, true);
+//          if (obj) {
+//            var savedScopeDepth = savedScope.findDepth(obj);
+//            release || assert(savedScopeDepth >= 0);
+//            ti().scopeDepth = savedScopeDepth + scope.length;
+//            return Type.from(obj, domain);
+//          }
+//        }
 
         var resolved = domain.findDefiningScript(mn, false);
         if (resolved) {
           ti().object = LazyInitializer.create(resolved.script);
           return Type.from(resolved.script, domain);
         }
+        if (mn.name === "Array") { debugger; }
         return Type.Any;
       }
 
@@ -844,9 +856,8 @@ var Verifier = (function() {
       }
 
       function isNumericMultiname(mn) {
-        return mn instanceof Multiname && isNumeric(mn.name) ||
-               mn instanceof MultinameType && (mn.name instanceof TraitsType &&
-                 mn.name.isNumeric() || isNumeric(mn.name));
+        return mn instanceof Multiname && Multiname.isNumeric(mn) ||
+               mn instanceof MultinameType && (mn.name instanceof TraitsType && mn.name.isNumeric());
       }
 
       function getProperty(obj, mn) {
@@ -905,7 +916,7 @@ var Verifier = (function() {
         var op = bc.op;
 
         if (writer && verifierTraceLevel.value > 1) {
-          writer.writeLn(("stateBefore: " + state.toString()).padRight(' ', 100) + " : " + bci + ", " + bc.toString(mi.abc));
+          writer.writeLn(("stateBefore: " + state.toString() + " $$[" + savedScope.join(", ") + "]").padRight(' ', 100) + " : " + bci + ", " + bc.toString(mi.abc));
         }
 
         switch (op) {
@@ -1123,6 +1134,8 @@ var Verifier = (function() {
             stack.pop();
             if (this.thisType.isInstanceInfo() && this.thisType.super() === Type.Object) {
               ti().noCallSuperNeeded = true;
+            } else {
+              ti().baseClass = LazyInitializer.create(this.thisType.super().classType().object);
             }
             break;
           case 0x42: // OP_construct
@@ -1149,7 +1162,11 @@ var Verifier = (function() {
             release || assert(bc.argCount === 1);
             val = pop();
             obj = pop();
-            push(obj.applyType(val));
+            if (obj === Type.Any) {
+              push(Type.Any);
+            } else {
+              push(obj.applyType(val));
+            }
             break;
           case 0x54: // OP_pushfloat4
             notImplemented(bc);
@@ -1164,8 +1181,8 @@ var Verifier = (function() {
             push(Type.Array);
             break;
           case 0x57: // OP_newactivation
-            // push(Type.fromReference(new Activation(this.methodInfo)));
-            push(Type.from(new Activation(this.methodInfo)));
+            // push(Type.fromReference(new ActivationInfo(this.methodInfo)));
+            push(Type.from(new ActivationInfo(this.methodInfo)));
             break;
           case 0x58: // OP_newclass
             // The newclass bytecode is not supported because it needs
@@ -1210,7 +1227,8 @@ var Verifier = (function() {
             local[bc.index] = pop();
             break;
           case 0x64: // OP_getglobalscope
-            push(Type.from(savedScope.global.object));
+            push(globalScope);
+            ti().object = LazyInitializer.create(globalScope.object);
             break;
           case 0x65: // OP_getscopeobject
             push(scope[bc.index]);
@@ -1471,7 +1489,24 @@ var Verifier = (function() {
   verifier.prototype.verifyMethod = function(methodInfo, scope) {
     // release || assert(scope.object, "Verifier needs a scope object.");
     try {
-      new Verification(methodInfo, scope).verify();
+      var domain = methodInfo.abc.applicationDomain;
+      var scopeObjects = scope.getScopeObjects();
+      if (!scopeObjects[scopeObjects.length - 1]) {
+        assert (methodInfo.isInstanceInitializer || methodInfo.isClassInitializer);
+        if (methodInfo.holder instanceof InstanceInfo) {
+          scopeObjects[scopeObjects.length - 1] = methodInfo.holder.classInfo;
+        } else if (methodInfo.holder instanceof ClassInfo) {
+          scopeObjects[scopeObjects.length - 1] = methodInfo.holder;
+        }
+      }
+      var savedScope = scopeObjects.map(function (object) {
+        assert (object);
+        if (object instanceof MethodInfo) {
+          return Type.from(new ActivationInfo(object));
+        }
+        return Type.from(object, domain);
+      });
+      new Verification(methodInfo, methodInfo.abc.applicationDomain, savedScope).verify();
       methodInfo.verified = true;
       Counter.count("Verifier: Methods");
     } catch (e) {

@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -16,18 +14,20 @@
  * limitations under the License.
  */
 
-var $DEBUG;
-var release = true;
+///<reference path='lib/lib.d.ts' />
+///<reference path='global.ts' />
+///<reference path='utilities.ts' />
+///<reference path='options.ts' />
+///<reference path='metrics.ts' />
+///<reference path='errors.ts' />
+///<reference path='opcodes.ts' />
+///<reference path='parser.ts' />
+///<reference path='runtime.ts' />
+///<reference path='domain.ts' />
+///<reference path='scope.ts' />
+///<reference path='class.ts' />
+///<reference path='bindings.ts' />
+///<reference path='trampoline.ts' />
+///<reference path='interpreter.ts' />
+///<reference path='hacks.ts' />
 
-/**
- * Coerce non-primitive parameters. We can "safely" ignore non-primitive coercions because AS3
- * programs with invalid coercions would throw runtime exceptions.
- */
-var c4CoerceNonPrimitiveParameters = false;
-
-/**
- * Coerce non-primitive values. Same logic as above.
- */
-var c4CoerceNonPrimitive = false;
-
-var c4AsTypeLate = true;

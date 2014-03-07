@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2013 Mozilla Foundation
  *
@@ -15,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+///<reference path='references.ts' />
 
 /**
  * Option and Argument Management
@@ -40,49 +39,57 @@
  * }});
  */
 
-(function (exports) {
-  var ArgumentParser = (function () {
-    var Argument = (function () {
-      function argument(shortName, longName, type, options) {
-        this.shortName = shortName;
-        this.longName = longName;
-        this.type = type;
-        options = options || {};
-        this.positional = options.positional;
-        this.parseFn = options.parse;
-        this.value = options.defaultValue;
+module Shumway.Options {
+  export class Argument {
+    shortName: string;
+    longName: string;
+    type: any;
+    options: any;
+    positional: boolean;
+    parseFn: any;
+    value: any;
+    constructor(shortName, longName, type, options) {
+      this.shortName = shortName;
+      this.longName = longName;
+      this.type = type;
+      options = options || {};
+      this.positional = options.positional;
+      this.parseFn = options.parse;
+      this.value = options.defaultValue;
+    }
+    public parse(value) {
+      if (this.type === "boolean") {
+        release || assert(typeof value === "boolean");
+        this.value = value;
+      } else  if (this.type === "number") {
+        release || assert(!isNaN(value), value + " is not a number");
+        this.value = parseInt(value, 10);
+      } else {
+        this.value = value;
       }
-      argument.prototype.parse = function parse(value) {
-        if (this.type === "boolean") {
-          release || assert(typeof value === "boolean");
-          this.value = value;
-        } else  if (this.type === "number") {
-          release || assert(!isNaN(value), value + " is not a number");
-          this.value = parseInt(value, 10);
-        } else {
-          this.value = value;
-        }
-        if (this.parseFn) {
-          this.parseFn(this.value);
-        }
-      };
-      return argument;
-    })();
-    function argumentParser() {
+      if (this.parseFn) {
+        this.parseFn(this.value);
+      }
+    }
+  }
+
+  export class ArgumentParser {
+    args: any [];
+    constructor() {
       this.args = [];
     }
-    argumentParser.prototype.addArgument = function addArgument(shortName, longName, type, options) {
+    public addArgument(shortName, longName, type, options) {
       var argument = new Argument(shortName, longName, type, options);
       this.args.push(argument);
       return argument;
-    };
-    argumentParser.prototype.addBoundOption = function addBoundOption(option) {
+    }
+    public addBoundOption(option) {
       var options = {parse: function (x) {
         option.value = x;
       }};
       this.args.push(new Argument(option.shortName, option.longName, option.type, options));
-    };
-    argumentParser.prototype.addBoundOptionSet = function addBoundOptionSet(optionSet) {
+    }
+    public addBoundOptionSet(optionSet) {
       var self = this;
       optionSet.options.forEach(function (x) {
         if (x instanceof OptionSet) {
@@ -92,8 +99,8 @@
           self.addBoundOption(x);
         }
       });
-    };
-    argumentParser.prototype.getUsage = function getUsage() {
+    }
+    public getUsage () {
       var str = "";
       this.args.forEach(function (x) {
         if (!x.positional) {
@@ -104,8 +111,8 @@
         str += " ";
       });
       return str;
-    };
-    argumentParser.prototype.parse = function parse(args) {
+    }
+    public parse (args) {
       var nonPositionalArgumentMap = {};
       var positionalArgumentList = [];
       this.args.forEach(function (x) {
@@ -148,31 +155,37 @@
       }
       release || assert(positionalArgumentList.length === 0, "Missing positional arguments.");
       return leftoverArguments;
-    };
-    return argumentParser;
-  })();
+    }
+  }
 
-  var OptionSet = (function () {
-    function optionSet (name) {
+  export class OptionSet {
+    name: any;
+    options: any;
+    constructor(name) {
       this.name = name;
       this.options = [];
     }
-    optionSet.prototype.register = function register(option) {
+    public register(option) {
       this.options.push(option);
       return option;
-    };
-    optionSet.prototype.trace = function trace(writer) {
+    }
+    public trace (writer) {
       writer.enter(this.name + " {");
       this.options.forEach(function (option) {
         option.trace(writer);
       });
       writer.leave("}");
-    };
-    return optionSet;
-  })();
+    }
+  }
 
-  var Option = (function () {
-    function option(shortName, longName, type, defaultValue, description) {
+  export class Option {
+    longName: string;
+    shortName: string;
+    type: string;
+    defaultValue: any;
+    value: any;
+    description: string;
+    constructor(shortName, longName, type, defaultValue, description) {
       this.longName = longName;
       this.shortName = shortName;
       this.type = type;
@@ -180,19 +193,22 @@
       this.value = defaultValue;
       this.description = description;
     }
-    option.prototype.parse = function parse(value) {
+    public parse (value) {
       this.value = value;
-    };
-    option.prototype.trace = function trace(writer) {
+    }
+    public trace (writer) {
       writer.writeLn(("-" + this.shortName + "|--" + this.longName).padRight(" ", 30) +
                       " = " + this.type + " " + this.value + " [" + this.defaultValue + "]" +
                       " (" + this.description + ")");
-    };
-    return option;
-  })();
+    }
+  }
+}
 
-  exports.Option = Option;
-  exports.OptionSet = OptionSet;
-  exports.ArgumentParser = ArgumentParser;
+declare var exports;
+if (typeof exports !== "undefined") {
+  exports["Shumway"] = Shumway;
+}
 
-})(typeof exports === "undefined" ? (options = {}) : exports);
+import ArgumentParser = Shumway.Options.ArgumentParser;
+import Option = Shumway.Options.Option;
+import OptionSet = Shumway.Options.OptionSet;

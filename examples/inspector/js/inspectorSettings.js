@@ -32,7 +32,8 @@ var DEFAULT_SETTINGS = {
   release: true,
   logToConsole: false,
   mute: false,
-  turbo: true
+  turbo: true,
+  caching: true
 };
 
 function loadState() {
@@ -58,19 +59,20 @@ updateAVM2State();
 
 function updateAVM2State() {
   enableC4.value = true;
-  enableVerifier.value = state.verifier;
+  Shumway.AVM2.Runtime.enableVerifier.value = state.verifier;
   enableRegisterAllocator.value = state.allocator;
-  traceExecution.value = state.trace ? 2 : 0;
+  Shumway.AVM2.Runtime.traceExecution.value = state.trace ? 2 : 0;
   traceRenderer.value = state.trace ? 2 : 0;
   disableRenderVisitor.value = state.render ? false : true;
   disableMouseVisitor.value = state.mouse ? false : true;
   showQuadTree.value = state.qtree ? true : false;
   turboMode.value = state.turbo ? true : false;
+  Shumway.AVM2.Runtime.codeCaching.value = state.caching ? true : false;
   showRedrawRegions.value = state.redraw ? true : false;
   renderAsWireframe.value = state.wireframe ? true : false;
-  traceCallExecution.value = state.traceCalls ? 1 : 0;
-  traceCallExecution.value = state.traceRuntime ? 2 : traceCallExecution.value;
-  debuggerMode.value = true;
+  Shumway.AVM2.Runtime.traceCallExecution.value = state.traceCalls ? 1 : 0;
+  Shumway.AVM2.Runtime.traceCallExecution.value = state.traceRuntime ? 2 : Shumway.AVM2.Runtime.traceCallExecution.value;
+  Shumway.AVM2.Runtime.debuggerMode.value = true;
   release = state.release;
   AVM1_TRACE_ENABLED = state.trace;
 }
@@ -116,12 +118,12 @@ setTimeout(function displayInfo() {
   copyProperties(lastCounts, Counter.counts);
 
   output = "";
-  for (var name in Timer.flat.timers) {
-    var timer = Timer.flat.timers[name];
-    var str = timer.name + ": " + timer.total.toFixed(2) + " ms" +
-      ", count: " + timer.count +
-      ", avg: " + (timer.total / timer.count).toFixed(2) + " ms" +
-      ", last: " + timer.last.toFixed(2) + " ms";
+  for (var name in Timer._flat._timers) {
+    var timer = Timer._flat._timers[name];
+    var str = timer._name + ": " + timer._total.toFixed(2) + " ms" +
+      ", count: " + timer._count +
+      ", avg: " + (timer._total / timer._count).toFixed(2) + " ms" +
+      ", last: " + timer._last.toFixed(2) + " ms";
     output += str + "<br>";
   }
   document.getElementById("timerInfo").innerHTML = output;
