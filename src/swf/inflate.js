@@ -77,7 +77,8 @@ function createInflatedStream(bytes, outputLength) {
     available: 0,
     completed: false
   };
-  var state = {};
+  var state = { header: null, distanceTable: null, literalTable: null,
+    sym: null, len: null, sym2: null };
   do {
     inflateBlock(stream, output, state);
   } while (!output.completed && stream.pos < stream.end);
@@ -87,7 +88,8 @@ function createInflatedStream(bytes, outputLength) {
 var InflateNoDataError = {};
 
 function inflateBlock(stream, output, state) {
-  var header = state.header || (state.header = readBits(stream.bytes, stream, 3));
+  var header = state.header !== null ? state.header :
+    (state.header = readBits(stream.bytes, stream, 3));
   switch (header >> 1) {
   case 0:
     stream.align();
@@ -112,7 +114,7 @@ function inflateBlock(stream, output, state) {
     break;
   case 2:
     var distanceTable, literalTable;
-    if (state.distanceTable) {
+    if (state.distanceTable !== null) {
       distanceTable = state.distanceTable;
       literalTable = state.literalTable;
     } else {
@@ -200,15 +202,18 @@ function inflate(stream, output, literalTable, distanceTable, state) {
   var pos = output.available;
   var dbytes = output.data;
   var sbytes = stream.bytes;
-  var sym = state.sym || readCode(sbytes, stream, literalTable);
+  var sym = state.sym !== null ? state.sym :
+    readCode(sbytes, stream, literalTable);
   while (sym !== 256) {
     if (sym < 256) {
       dbytes[pos++] = sym;
     } else {
       state.sym = sym;
       sym -= 257;
-      var len = state.len || (state.len = lengthCodes[sym] + readBits(sbytes, stream, lengthExtraBits[sym]));
-      var sym2 = state.sym2 || (state.sym2 = readCode(sbytes, stream, distanceTable));
+      var len = state.len !== null ? state.len :
+        (state.len = lengthCodes[sym] + readBits(sbytes, stream, lengthExtraBits[sym]));
+      var sym2 = state.sym2 !== null ? state.sym2 :
+        (state.sym2 = readCode(sbytes, stream, distanceTable));
       var distance = distanceCodes[sym2] + readBits(sbytes, stream, distanceExtraBits[sym2]);
       var i = pos - distance;
       while (len--)
