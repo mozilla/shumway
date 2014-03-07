@@ -153,7 +153,7 @@ public dynamic class AS2Globals {
 
   public function loadMovie(url: String, target: Object, method: String): void {
     // some swfs are using loadMovie to call fscommmand
-    if (url.indexOf('fscommand:') === 0) {
+    if (url && url.toLowerCase().indexOf('fscommand:') === 0) {
       this.fscommand(url.substring('fscommand:'.length), target);
       return;
     }
@@ -178,7 +178,7 @@ public dynamic class AS2Globals {
 
   public function loadMovieNum(url, level, method) {
     // some swfs are using loadMovieNum to call fscommmand
-    if (/^fscommand:/i.test(url)) {
+    if (url && url.toLowerCase().indexOf('fscommand:') === 0) {
       return this.fscommand(url.substring('fscommand:'.length));
     }
 
@@ -355,7 +355,7 @@ public dynamic class AS2Globals {
 
   // built-ins
   public var NaN:Number = NaN;
-  public var Infinity:Number = Infinity;
+  public var Infinity:Number = Number.POSITIVE_INFINITY;
   public var isFinite:Function = isFinite;
   public var isNaN:Function = isNaN;
   public var parseFloat:Function = parseFloat;

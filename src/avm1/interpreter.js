@@ -652,7 +652,7 @@ function interpretActions(actionsData, scopeContainer,
         throw e;
       }
       if (typeof catchTarget === 'string') {
-        scope[catchTarget] = e.error;
+        scope.asSetPublicProperty(catchTarget, e.error);
       } else {
         registers[catchTarget] = e.error;
       }
