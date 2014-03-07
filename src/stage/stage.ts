@@ -228,6 +228,9 @@ module Shumway.Layers {
             frameContainer = <FrameContainer>frame;
             for (var i = frameContainer.children.length - 1; i >= 0; i--) {
               var child = frameContainer.children[i];
+              if (!child) {
+                continue;
+              }
               if (visibleOnly && !child.isVisible) {
                 continue;
               }
@@ -263,31 +266,35 @@ module Shumway.Layers {
     }
 
     public addChild(child: Frame) {
-      child.parent = this;
+      if (child) {
+        child.parent = this;
+      }
       this.children.push(child);
     }
 
     public addChildAt(child: Frame, index: number) {
-      assert(index > 0);
-      child.parent = this;
-      if (index >= this.children.length) {
+      assert(index >= 0 && index <= this.children.length);
+      if (index === this.children.length) {
         this.children.push(child);
       } else {
         this.children.splice(index, 0, child);
+      }
+      if (child) {
+        child.parent = this;
       }
     }
 
     public removeChild(child: Frame) {
       if (child.parent === this) {
         var index = this.children.indexOf(child);
-        this.children.splice(index, 1);
-        child.parent = undefined;
+        this.removeChildAt(index);
       }
     }
 
-    public getChildAt(index: number) {
-      assert(index > 0);
-      return this.children[index];
+    public removeChildAt(index: number) {
+      assert(index >= 0 && index < this.children.length);
+      var result = this.children.splice(index, 1);
+      result[0].parent = undefined;
     }
 
     public clearChildren() {
