@@ -603,9 +603,9 @@ RenderableShape.prototype.render = function render(ctx) {
     //}
 
     // TODO: enable in-path line-style changes
-    if (formOpen) {
-      ctx.lineTo(formOpenX, formOpenY);
-    }
+    //if (formOpen) {
+    //  ctx.lineTo(formOpenX, formOpenY);
+    //}
     if (fillStyle) {
       ctx.save();
       if (isNaN(fillStyle)) {
