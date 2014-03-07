@@ -42,13 +42,15 @@ var TextFieldDefinition = (function () {
       this._backgroundColorStr = "#ffffff";
       this._borderColor = 0x0;
       this._borderColorStr = "#000000";
+      this._text = '';
+      this._htmlText = '';
       this._condenseWhite = false;
 
       var s = this.symbol;
       if (!s) {
         this._currentTransform.tx -= 40;
         this._currentTransform.ty -= 40;
-        this.text = '';
+        this._text = '';
         return;
       }
 
@@ -92,15 +94,13 @@ var TextFieldDefinition = (function () {
 
       if (tag.initialText) {
         if (tag.html) {
-          this.htmlText = tag.initialText;
+          this._htmlText = tag.initialText;
         } else {
-          this.text = tag.initialText;
+          this._text = tag.initialText;
         }
       } else {
-        this.text = '';
+        this._text = '';
       }
-
-      this._renderableId = 0;
     },
 
     _getAS2Object: function () {
@@ -171,6 +171,9 @@ var TextFieldDefinition = (function () {
     invalidateDimensions: function() {
       this._invalidate();
       this._invalidateBounds();
+      if (this._renderableId <= 0xffff) {
+        this._renderableId = 0;
+      }
       this._invalidateRenderable();
       this._dimensionsValid = false;
     },
