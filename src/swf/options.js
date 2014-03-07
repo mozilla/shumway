@@ -47,3 +47,4 @@ var drawTextures = stageOptions.register(new Option("", "drawTextures", "boolean
 var drawTexture = stageOptions.register(new Option("", "drawTextures", "number", -1, "Draw Texture."));
 var drawElements = stageOptions.register(new Option("", "drawElements", "boolean", true, "Draw Elements."));
 var ignoreViewport = stageOptions.register(new Option("", "ignoreViewport", "boolean", false, "Ignore Viewport."));
+var ignoreColorTransform = stageOptions.register(new Option("", "ignoreColorTransform", "boolean", false, "Ignore Color Transform."));
