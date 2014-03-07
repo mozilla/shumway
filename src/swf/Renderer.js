@@ -94,7 +94,8 @@ function Renderer(target) {
           var height = i32[p++];
           var pixelRatio = renderer._target._contentsScaleFactor;
           renderer._stage = new Shumway.Layers.Stage(
-            width, height, width * pixelRatio, height * pixelRatio
+            // width, height, width * pixelRatio, height * pixelRatio
+            width * pixelRatio, height * pixelRatio
           );
           renderer._stage.transform =
             new Shumway.Geometry.Matrix.createIdentity()

@@ -48,3 +48,6 @@ var drawTexture = stageOptions.register(new Option("", "drawTextures", "number",
 var drawElements = stageOptions.register(new Option("", "drawElements", "boolean", true, "Draw Elements."));
 var ignoreViewport = stageOptions.register(new Option("", "ignoreViewport", "boolean", false, "Ignore Viewport."));
 var ignoreColorTransform = stageOptions.register(new Option("", "ignoreColorTransform", "boolean", false, "Ignore Color Transform."));
+
+var clipDirtyRegions = stageOptions.register(new Option("", "clipDirtyRegions", "boolean", true, "Clip Dirty Regions."));
+var paintFlashing = stageOptions.register(new Option("", "paintFlashing", "boolean", false, "Paint Flashing."));

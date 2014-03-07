@@ -9,6 +9,15 @@ module Shumway.Layers {
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
 
+  export enum FrameFlags {
+    Empty   = 0,
+    Dirty   = 1
+  }
+
+  function getRandomIntInclusive(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
   export class Frame {
     private _x: number;
     private _y: number;
@@ -22,6 +31,27 @@ module Shumway.Layers {
     private _origin: Point = new Point(0, 0);
     private _properties: {[name: string]: any};
     private static _path: Frame[] = [];
+
+    /**
+     * Stage location where the frame was previously drawn. This is used to compute dirty regions and
+     * is updated every time the frame is rendered.
+     */
+    _previouslyRenderedAABB: Rectangle;
+
+    _flags: FrameFlags = FrameFlags.Empty;
+
+    setFlags(flags: FrameFlags, on: boolean) {
+      if (on) {
+        this._flags |= flags;
+      } else {
+        this._flags &= ~flags;
+      }
+    }
+
+    hasFlags(flags: FrameFlags) {
+      this._flags |= flags;
+    }
+
     get properties(): {[name: string]: any} {
       return this._properties || (this._properties = Object.create(null));
     }
@@ -82,6 +112,21 @@ module Shumway.Layers {
 
     get colorTransform(): ColorTransform {
       return this._colorTransform;
+    }
+
+    gatherPreviousDirtyRegions() {
+      var stage = this.stage;
+      if (!stage.trackDirtyRegions) {
+        return;
+      }
+      this.visit(function (frame: Frame) {
+        if (frame instanceof FrameContainer) {
+          return;
+        }
+        if (frame._previouslyRenderedAABB) {
+          stage.dirtyRegion.addDirtyRectangle(frame._previouslyRenderedAABB);
+        }
+      });
     }
 
     getPathInto(stack: Frame[]) {
@@ -193,16 +238,17 @@ module Shumway.Layers {
 
     public getConcatenatedTransform(): Matrix {
       var frame = this;
-      var m = this.transform.clone();
-      while (frame.parent) {
+      var t = Matrix.createIdentity();
+      while (frame) {
+        t.concat(frame.transform);
         frame = frame.parent;
-        Matrix.multiply(m, frame.transform);
       }
-      return m;
+      return t;
     }
 
-    private invalidate() {
+    invalidate() {
       this.isInvalid = true;
+      this.setFlags(FrameFlags.Dirty, true);
     }
 
     private invalidateTransform() {
@@ -210,37 +256,45 @@ module Shumway.Layers {
       this.invalidate();
     }
 
-    public visit(visitor: (Frame, Matrix?) => void, transform: Matrix, visibleOnly: boolean = true) {
+    public visit(visitor: (Frame, Matrix?, FrameFlags?) => void, transform?: Matrix, flags: FrameFlags = FrameFlags.Empty, visibleOnly: boolean = true) {
       var stack: Frame [];
       var frame: Frame;
       var frameContainer: FrameContainer;
       if (visibleOnly && !this.isVisible) {
         return;
       }
-      if (transform) {
-        stack = [this];
-        var transforms: Matrix [];
-        transforms = [transform];
-        while (stack.length > 0) {
-          frame = stack.pop();
-          transform = transforms.pop();
-          if (frame instanceof FrameContainer) {
-            frameContainer = <FrameContainer>frame;
-            for (var i = frameContainer.children.length - 1; i >= 0; i--) {
-              var child = frameContainer.children[i];
-              if (visibleOnly && !child.isVisible) {
-                continue;
-              }
-              stack.push(child);
-              var t = transform.clone();
-              Matrix.multiply(t, child.transform);
-              transforms.push(t);
-            }
-          }
-          visitor(frame, transform);
+
+      stack = [this];
+      var transformStack: Matrix [];
+      var calculateTransform = !!transform;
+      if (calculateTransform) {
+        transformStack = [transform];
+      }
+      var flagsStack: FrameFlags [] = [flags];
+      while (stack.length > 0) {
+        frame = stack.pop();
+        if (calculateTransform) {
+          transform = transformStack.pop();
         }
-      } else {
-        notImplemented();
+        flags = flagsStack.pop();
+        if (frame instanceof FrameContainer) {
+          frameContainer = <FrameContainer>frame;
+          for (var i = frameContainer.children.length - 1; i >= 0; i--) {
+            var child = frameContainer.children[i];
+            if (visibleOnly && !child.isVisible) {
+              continue;
+            }
+            stack.push(child);
+            if (calculateTransform) {
+              var t = transform.clone();
+              Matrix.multiply(t, child._transform);
+              transformStack.push(t);
+            }
+            var f = flags | child._flags;
+            flagsStack.push(f);
+          }
+        }
+        visitor(frame, transform, flags);
       }
     }
 
@@ -264,12 +318,14 @@ module Shumway.Layers {
 
     public addChild(child: Frame) {
       child.parent = this;
+      child.invalidate();
       this.children.push(child);
     }
 
     public addChildAt(child: Frame, index: number) {
       assert(index > 0);
       child.parent = this;
+      child.invalidate();
       if (index >= this.children.length) {
         this.children.push(child);
       } else {
@@ -280,8 +336,10 @@ module Shumway.Layers {
     public removeChild(child: Frame) {
       if (child.parent === this) {
         var index = this.children.indexOf(child);
+        child.gatherPreviousDirtyRegions();
         this.children.splice(index, 1);
         child.parent = undefined;
+        child.invalidate();
       }
     }
 
@@ -291,17 +349,25 @@ module Shumway.Layers {
     }
 
     public clearChildren() {
+      for (var i = 0; i < this.children.length; i++) {
+        var child = this.children[i];
+        if (child) {
+          child.gatherPreviousDirtyRegions();
+        }
+      }
       this.children.length = 0;
     }
 
     public shuffleChildren() {
       var length = this.children.length;
       for (var i = 0; i < length * 2; i++) {
-        var a = Math.random() * length | 0;
-        var b = Math.random() * length | 0;
+        var a = getRandomIntInclusive(0, length - 1);
+        var b = getRandomIntInclusive(0, length - 1);
         var t = this.children[a];
         this.children[a] = this.children[b];
         this.children[b] = t;
+        this.children[a].invalidate();
+        this.children[b].invalidate();
       }
     }
   }
@@ -320,22 +386,59 @@ module Shumway.Layers {
 
     public render(stage: Stage, options: any) {
       var context = this.context;
-      context.globalAlpha = 1;
-      context.fillStyle = "black";
+      context.save();
+
+
+
+      if (stage.trackDirtyRegions) {
+        stage.gatherMarkedDirtyRegions(stage.transform);
+        var lastDirtyRectangles: Rectangle[] = [];
+        stage.dirtyRegion.gatherRegions(lastDirtyRectangles);
+        if (options.clipDirtyRegions) {
+          for (var i = 0; i < lastDirtyRectangles.length; i++) {
+            var rectangle = lastDirtyRectangles[i];
+            rectangle.expand(2, 2);
+            context.rect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
+          }
+          context.clip();
+        }
+        stage.dirtyRegion.clear();
+      }
+
+      context.fillStyle = "white"; // We need to set this to the background color.
       context.fillRect(0, 0, stage.w, stage.h);
 
+      context.globalAlpha = 1;
 
-      var that = this;
       stage.visit(function visitFrame(frame: Frame, transform?: Matrix) {
         context.save();
         context.setTransform(transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty);
         context.globalAlpha = frame.getConcatenatedAlpha();
         if (frame instanceof Shape) {
+          var rectangle = new Rectangle(0, 0, frame.w, frame.h);
+          transform.transformRectangleAABB(rectangle);
+          if (stage.trackDirtyRegions) {
+            frame._previouslyRenderedAABB = rectangle;
+          }
           var shape = <Shape>frame;
           shape.source.render(context);
+
+          if (options.paintFlashing) {
+            context.fillStyle = randomStyle();
+            context.globalAlpha = 0.5;
+            context.fillRect(0, 0, frame.w, frame.h);
+          }
         }
         context.restore();
       }, stage.transform);
+
+      if (false && lastDirtyRectangles) {
+        context.strokeStyle = "red";
+        for (var i = 0; i < lastDirtyRectangles.length; i++) {
+          var rectangle = lastDirtyRectangles[i];
+          context.strokeRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
+        }
+      }
 
       if (options && options.drawLayers) {
         function drawRectangle(rectangle: Rectangle) {
@@ -343,32 +446,40 @@ module Shumway.Layers {
         }
         context.strokeStyle = "#FF4981";
       }
+
+      context.restore();
     }
   }
 
   export class Stage extends FrameContainer {
+    public trackDirtyRegions: boolean;
     public dirtyRegion: DirtyRegion;
-    constructor(w: number, h: number) {
-      super()
+    constructor(w: number, h: number, trackDirtyRegions: boolean = false) {
+      super();
       this.w = w;
       this.h = h;
+      this.trackDirtyRegions = trackDirtyRegions;
       this.dirtyRegion = new DirtyRegion(w, h);
     }
 
-    gatherDirtyRegions(rectangles?: Rectangle[]) {
-      var that = this;
+    gatherMarkedDirtyRegions(transform: Matrix) {
+      var self = this;
       // Find all invalid frames.
-      this.visit(function (frame: Frame, transform?: Matrix) {
-        if (frame.isInvalid) {
+      this.visit(function (frame: Frame, transform?: Matrix, flags?: FrameFlags) {
+        frame.setFlags(FrameFlags.Dirty, false);
+        if (frame instanceof FrameContainer) {
+          return;
+        }
+        if (flags & FrameFlags.Dirty) {
           var rectangle = new Rectangle(0, 0, frame.w, frame.h);
           transform.transformRectangleAABB(rectangle);
-          that.dirtyRegion.addDirtyRectangle(rectangle);
-          frame.isInvalid = false;
+          self.dirtyRegion.addDirtyRectangle(rectangle);
+          if (frame._previouslyRenderedAABB) {
+            // Add last render position to dirty list.
+            self.dirtyRegion.addDirtyRectangle(frame._previouslyRenderedAABB);
+          }
         }
-      }, this.transform);
-      if (rectangles) {
-        this.dirtyRegion.gatherRegions(rectangles);
-      }
+      }, transform, FrameFlags.Empty);
     }
 
     gatherFrames() {
@@ -390,7 +501,7 @@ module Shumway.Layers {
         }
         var rectangle = new Rectangle(0, 0, frame.w, frame.h);
         transform.transformRectangleAABB(rectangle);
-        if (frame.isInvalid) {
+        if (frame.hasFlags(FrameFlags.Dirty)) {
           if (currentLayer) {
             layers.push(currentLayer);
           }

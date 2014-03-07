@@ -416,6 +416,8 @@ var StageDefinition = (function () {
         sceneOptions.drawElements = drawElements.value;
         sceneOptions.ignoreViewport = ignoreViewport.value;
         sceneOptions.ignoreColorTransform = ignoreColorTransform.value;
+        sceneOptions.clipDirtyRegions = clipDirtyRegions.value;
+        sceneOptions.paintFlashing = paintFlashing.value;
 
         if (perspectiveCameraAngleRotate.value) {
           sceneOptions.perspectiveCameraAngle = Math.sin(Date.now() / 1000) * 100;
@@ -471,6 +473,8 @@ var StageDefinition = (function () {
           if (!disableRendering.value) {
             timelineEnter("Renderer");
             if (renderer._stage) {
+              // HACK: Setting this flag should be nicer.
+              renderer._stage.trackDirtyRegions = stageRenderer instanceof Canvas2DStageRenderer;
               stageRenderer.render(renderer._stage, sceneOptions);
             }
             timelineLeave("Renderer");
@@ -494,10 +498,6 @@ var StageDefinition = (function () {
         }
 
         timelineLeave("FRAME");
-
-        if (renderer._stage) {
-          renderer._stage.dirtyRegion.clear();
-        }
 
         if (options.onAfterFrame) {
           options.onAfterFrame();
