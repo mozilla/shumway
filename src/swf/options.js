@@ -51,3 +51,5 @@ var ignoreColorTransform = stageOptions.register(new Option("", "ignoreColorTran
 
 var clipDirtyRegions = stageOptions.register(new Option("", "clipDirtyRegions", "boolean", true, "Clip Dirty Regions."));
 var paintFlashing = stageOptions.register(new Option("", "paintFlashing", "boolean", false, "Paint Flashing."));
+var useUploadCanvas = stageOptions.register(new Option("", "useUploadCanvas", "boolean", true, "Use temporary canvas.."));
+var disableTextureUploads = stageOptions.register(new Option("", "disableTextureUploads", "boolean", false, "Disable texture uploads."));

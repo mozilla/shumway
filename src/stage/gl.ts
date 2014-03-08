@@ -705,6 +705,8 @@ module Shumway.GL {
     private _scratchCanvasContext: CanvasRenderingContext2D;
     private _dynamicScratchCanvas: HTMLCanvasElement;
     private _dynamicScratchCanvasContext: CanvasRenderingContext2D;
+    private _uploadCanvas: HTMLCanvasElement;
+    private _uploadCanvasContext: CanvasRenderingContext2D;
 
     constructor(context: WebGLContext, w: number, h: number) {
       this.context = context;
@@ -724,6 +726,12 @@ module Shumway.GL {
       this._dynamicScratchCanvas = document.createElement("canvas");
       this._dynamicScratchCanvas.width = this._dynamicScratchCanvas.height = 0;
       this._dynamicScratchCanvasContext = this._dynamicScratchCanvas.getContext("2d", {
+        willReadFrequently: true
+      });
+
+      this._uploadCanvas = document.createElement("canvas");
+      this._uploadCanvas.width = this._uploadCanvas.height = 0;
+      this._uploadCanvasContext = this._uploadCanvas.getContext("2d", {
         willReadFrequently: true
       });
     }
@@ -753,13 +761,31 @@ module Shumway.GL {
         viewport = Rectangle.createSquare(1024 * 1024);
       }
 
+      var self = this;
       var inverseTransform = Matrix.createIdentity();
 
       function cacheImageCallback(oldTextureRegion: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {
+        // getImageData is incredibly slow, we are much better off copying the sub region into a canvas buffer
+        // and uploading that as a texture.
+        if (options.useUploadCanvas) {
+          self._uploadCanvas.width = srcBounds.w;
+          self._uploadCanvas.height = srcBounds.h;
+          self._uploadCanvasContext.drawImage(src.canvas, srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h, 0, 0, srcBounds.w, srcBounds.h);
+        }
         if (!oldTextureRegion) {
-          return context.cacheImage(src.getImageData(srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h));
+          if (options.useUploadCanvas) {
+            return context.cacheImage(self._uploadCanvas);
+          } else {
+            return context.cacheImage(src.getImageData(srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h));
+          }
         } else {
-          context.updateTextureRegion(src.getImageData(srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h), oldTextureRegion);
+          if (!options.disableTextureUploads) {
+            if (options.useUploadCanvas) {
+              context.updateTextureRegion(self._uploadCanvas, oldTextureRegion);
+            } else {
+              context.updateTextureRegion(src.getImageData(srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h), oldTextureRegion);
+            }
+          }
           return oldTextureRegion;
         }
       }

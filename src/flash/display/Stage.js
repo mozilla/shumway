@@ -391,7 +391,7 @@ var StageDefinition = (function () {
         alpha: true
       };
 
-      var useWebGL = false;
+      var useWebGL = true;
       if (useWebGL) {
         var webGLContext = new WebGLContext(canvas, sceneOptions);
         stageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
@@ -416,6 +416,8 @@ var StageDefinition = (function () {
         sceneOptions.ignoreColorTransform = ignoreColorTransform.value;
         sceneOptions.clipDirtyRegions = clipDirtyRegions.value;
         sceneOptions.paintFlashing = paintFlashing.value;
+        sceneOptions.useUploadCanvas = useUploadCanvas.value;
+        sceneOptions.disableTextureUploads = disableTextureUploads.value;
 
         if (perspectiveCameraAngleRotate.value) {
           sceneOptions.perspectiveCameraAngle = Math.sin(Date.now() / 1000) * 100;
