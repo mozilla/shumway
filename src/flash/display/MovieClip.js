@@ -454,7 +454,7 @@ var MovieClipDefinition = (function () {
           constructWrapper.prototype = Object.create(nativeObjectClass.prototype);
           constructWrapper.instanceConstructor = constructWrapper;
           constructWrapper.debugName = 'avm1 <symbol constructor wrapper>';
-          construct(constructWrapper);
+          construct(constructWrapper, []);
         } else {
           new avm1lib.AS2MovieClip(this);
         }
