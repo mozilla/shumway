@@ -366,6 +366,7 @@ function lookupAS2Children(targetPath, defaultTarget, root) {
   return obj;
 }
 
+
 function createBuiltinType(obj, args) {
   if (obj === Array) {
     // special case of array
@@ -401,11 +402,28 @@ function createBuiltinType(obj, args) {
 
 var AS2_SUPER_STUB = {};
 
-function interpretActions(actionsData, scopeContainer,
-                          constantPool, registers) {
-  var currentContext = AS2Context.instance;
+var interpretActions = (function () {
+  function avm1ValidateArgsCount(numArgs, maxAmount) {
+    if (isNaN(numArgs) || numArgs < 0 || numArgs > maxAmount ||
+      numArgs != (0|numArgs)) {
+      throw new Error('Invalid number of arguments: ' + numArgs);
+    }
+  }
+  function avm1ReadFunctionArgs(stack) {
+    var numArgs = +stack.pop();
+    avm1ValidateArgsCount(numArgs, stack.length);
+    var args = [];
+    for (var i = 0; i < numArgs; i++) {
+      args.push(stack.pop());
+    }
+    return args;
+  }
+  function avm1SetTarget(ectx, targetPath) {
+    var currentContext = ectx.context;
+    var _global = ectx.global;
+    var defaultTarget = ectx.defaultTarget;
+    var scope = ectx.scope;
 
-  function setTarget(targetPath) {
     if (!targetPath) {
       currentContext.defaultTarget = scope;
       return;
@@ -419,9 +437,16 @@ function interpretActions(actionsData, scopeContainer,
       throw e;
     }
   }
+  function avm1DefineFunction(ectx, functionName, parametersNames,
+                                          registersAllocation, actionsData) {
+    var currentContext = ectx.context;
+    var _global = ectx.global;
+    var scopeContainer = ectx.scopeContainer;
+    var scope = ectx.scope;
+    var actionTracer = ectx.actionTracer;
+    var defaultTarget = ectx.defaultTarget;
+    var constantPool = ectx.constantPool;
 
-  function defineFunction(functionName, parametersNames,
-                          registersAllocation, actionsData) {
     var ownerClass;
     var fn = (function() {
       var newScope = {};
@@ -508,7 +533,9 @@ function interpretActions(actionsData, scopeContainer,
     }
     return fn;
   }
-  function deleteProperty(propertyName) {
+  function avm1DeleteProperty(ectx, propertyName) {
+    var scopeContainer = ectx.scopeContainer;
+
     for (var p = scopeContainer; p; p = p.next) {
       if (p.scope.asHasProperty(undefined, propertyName, 0)) {
         p.scope.asSetPublicProperty(propertyName, undefined); // in some cases we need to cleanup events binding
@@ -517,7 +544,10 @@ function interpretActions(actionsData, scopeContainer,
     }
     return false;
   }
-  function resolveVariableName(variableName, nonStrict) {
+  function avm1ResolveVariableName(ectx, variableName, nonStrict) {
+    var _global = ectx.global;
+    var defaultTarget = ectx.defaultTarget;
+
     var obj, name, i;
     if (variableName.indexOf(':') >= 0) {
       // "/A/B:FOO references the FOO variable in the movie clip with a target path of /A/B."
@@ -553,29 +583,37 @@ function interpretActions(actionsData, scopeContainer,
 
     return null;
   }
-  function getThis() {
+  function avm1GetThis(ectx) {
+    var scopeContainer = ectx.scopeContainer;
+    var scope = ectx.scope;
+
     var _this = scope.asGetPublicProperty('this');
     if (_this) {
       return _this;
     }
     for (var p = scopeContainer; p; p = p.next) {
-      resolvedName = as2ResolveProperty(p.scope, 'this');
+      var resolvedName = as2ResolveProperty(p.scope, 'this');
       if (resolvedName !== null) {
         return p.scope.asGetPublicProperty(resolvedName);
       }
     }
   }
-  function getVariable(variableName) {
+  function avm1GetVariable(ectx, variableName) {
+    var scopeContainer = ectx.scopeContainer;
+    var scope = ectx.scope;
+    var defaultTarget = ectx.defaultTarget;
+
     // fast check if variable in the current scope
     if (scope.asHasProperty(undefined, variableName, 0)) {
       return scope.asGetPublicProperty(variableName);
     }
 
-    var target = resolveVariableName(variableName);
+    var target = avm1ResolveVariableName(ectx, variableName);
     if (target) {
       return target.obj.asGetPublicProperty(target.name);
     }
-    var resolvedName, _this = getThis();
+    var resolvedName;
+    var _this = avm1GetThis(ectx);
     for (var p = scopeContainer; p; p = p.next) {
       resolvedName = as2ResolveProperty(p.scope, variableName);
       if (resolvedName !== null) {
@@ -592,20 +630,23 @@ function interpretActions(actionsData, scopeContainer,
       return mc;
     }
   }
+  function avm1SetVariable(ectx, variableName, value) {
+    var scopeContainer = ectx.scopeContainer;
+    var scope = ectx.scope;
 
-  function setVariable(variableName, value) {
     // fast check if variable in the current scope
     if (scope.asHasProperty(undefined, variableName, 0)) {
       scope.asSetPublicProperty(variableName, value);
       return;
     }
 
-    var target = resolveVariableName(variableName, true);
+    var target = avm1ResolveVariableName(ectx, variableName, true);
     if (target) {
       target.obj.asSetPublicProperty(target.name, value);
       return;
     }
-    var resolvedName, _this = getThis();
+    var resolvedName;
+    var _this = avm1GetThis(ectx);
     if(_this && (resolvedName = as2ResolveProperty(_this, variableName))) {
       return _this.asSetPublicProperty(resolvedName, value);
     }
@@ -618,26 +659,36 @@ function interpretActions(actionsData, scopeContainer,
     }
     (_this || scope).asSetPublicProperty(variableName, value);
   }
-  function getFunction(functionName) {
-    var fn = getVariable(functionName);
+  function avm1GetFunction(ectx, functionName) {
+    var fn = avm1GetVariable(ectx, functionName);
     if (!(fn instanceof Function)) {
       throw new Error('Function "' + functionName + '" is not found');
     }
     return fn;
   }
-  function getObjectByName(objectName) {
-    var obj = getVariable(objectName);
+  function avm1GetObjectByName(ectx, objectName) {
+    var obj = avm1GetVariable(ectx, objectName);
     if (!(obj instanceof Object)) {
       throw new Error('Object "' + objectName + '" is not found');
     }
     return obj;
   }
-  function processWith(obj, withBlock) {
+  function avm1ProcessWith(ectx, obj, withBlock) {
+    var scopeContainer = ectx.scopeContainer;
+    var constantPool = ectx.constantPool;
+    var registers = ectx.registers;
+
     var newScopeContainer = scopeContainer.create(Object(obj));
     interpretActions(withBlock, newScopeContainer, constantPool, registers);
   }
-  function processTry(catchIsRegisterFlag, finallyBlockFlag, catchBlockFlag, catchTarget,
-                      tryBlock, catchBlock, finallyBlock) {
+  function avm1ProcessTry(ectx, catchIsRegisterFlag, finallyBlockFlag,
+                                  catchBlockFlag, catchTarget,
+                                  tryBlock, catchBlock, finallyBlock) {
+    var currentContext = ectx.context;
+    var scopeContainer = ectx.scopeContainer;
+    var scope = ectx.scope;
+    var constantPool = ectx.constantPool;
+    var registers = ectx.registers;
 
     var savedTryCatchState = currentContext.isTryCatchListening;
     try {
@@ -664,794 +715,1388 @@ function interpretActions(actionsData, scopeContainer,
       }
     }
   }
-  function validateArgsCount(numArgs, maxAmount) {
-    if (isNaN(numArgs) || numArgs < 0 || numArgs > maxAmount ||
-        numArgs != (0|numArgs)) {
-      throw new Error('Invalid number of arguments: ' + numArgs);
-    }
-  }
-  function readArgs(stack) {
-    var numArgs = +stack.pop();
-    validateArgsCount(numArgs, stack.length);
-    var args = [];
-    for (var i = 0; i < numArgs; i++) {
-      args.push(stack.pop());
-    }
-    return args;
-  }
-
-  var stream = new ActionsDataStream(actionsData, currentContext.swfVersion);
-  var _global = currentContext.globals;
-  var defaultTarget = currentContext.defaultTarget;
-  var stack = [];
-  var scope = scopeContainer.scope;
-  var isSwfVersion5 = currentContext.swfVersion >= 5;
-  var actionTracer = ActionTracerFactory.get();
-  var nextPosition;
-
-  if (scope.$nativeObject && scope.$nativeObject._deferScriptExecution) {
-    currentContext.deferScriptExecution = true;
-  }
-
-  function skipActions(count) {
+  function avm1SkipActions(ectx, count) {
+    var stream = ectx.stream;
+  
     while (count > 0 && stream.position < stream.end) {
       var actionCode = stream.readUI8();
       var length = actionCode >= 0x80 ? stream.readUI16() : 0;
       stream.position += length;
       count--;
     }
-    nextPosition = stream.position;
+  
+    ectx.nextPosition = stream.position;
   }
 
-  var recoveringFromError = false;
-  var stackItemsExpected;
-  // will try again if we are skipping errors
-  while (stream.position < stream.end) {
-    try {
+  // SWF 3 actions
+  function avm1_0x81_ActionGotoFrame(ectx) {
+    var stream = ectx.stream;
+    var _global = ectx.global;
+    var nextPosition = ectx.nextPosition;
 
-  var instructionsExecuted = 0;
-  var abortExecutionAt = currentContext.abortExecutionAt;
-  while (stream.position < stream.end) {
-    // let's check timeout every 100 instructions
-    if (instructionsExecuted++ % 100 === 0 && Date.now() >= abortExecutionAt) {
-      throw new AS2CriticalError('long running script -- AVM1 instruction hang timeout');
+    var frame = stream.readUI16();
+    var nextActionCode = stream.readUI8();
+    nextPosition++;
+    var methodName = nextActionCode === 0x06 ? 'gotoAndPlay' : 'gotoAndStop';
+    _global[methodName](frame + 1);
+
+    ectx.nextPosition = nextPosition;
+  }
+  function avm1_0x83_ActionGetURL(ectx) {
+    var stream = ectx.stream;
+    var _global = ectx.global;
+
+    var urlString = stream.readString();
+    var targetString = stream.readString();
+    _global.getURL(urlString, targetString);
+  }
+  function avm1_0x04_ActionNextFrame(ectx) {
+    var _global = ectx.global;
+
+    _global.nextFrame();
+  }
+  function avm1_0x05_ActionPreviousFrame(ectx) {
+    var _global = ectx.global;
+
+    _global.prevFrame();
+  }
+  function avm1_0x06_ActionPlay(ectx) {
+    var _global = ectx.global;
+
+    _global.play();
+  }
+  function avm1_0x07_ActionStop(ectx) {
+    var _global = ectx.global;
+
+    _global.stop();
+  }
+  function avm1_0x08_ActionToggleQuality(ectx) {
+    var _global = ectx.global;
+
+    _global.toggleHighQuality();
+  }
+  function avm1_0x09_ActionStopSounds(ectx) {
+    var _global = ectx.global;
+
+    _global.stopAllSounds();
+  }
+  function avm1_0x8A_ActionWaitForFrame(ectx) {
+    var stream = ectx.stream;
+    var _global = ectx.global;
+
+    var frame = stream.readUI16();
+    var count = stream.readUI8();
+    if (!_global.ifFrameLoaded(frame)) {
+      avm1SkipActions(ectx, count);
     }
+  }
+  function avm1_0x8B_ActionSetTarget(ectx) {
+    var stream = ectx.stream;
+
+    var targetName = stream.readString();
+    avm1SetTarget(ectx, targetName);
+  }
+  function avm1_0x8C_ActionGoToLabel(ectx) {
+    var stream = ectx.stream;
+    var _global = ectx.global;
+
+    var label = stream.readString();
+    _global.gotoLabel(label);
+  }
+  // SWF 4 actions
+  function avm1_0x96_ActionPush(ectx) {
+    var stream = ectx.stream;
+    var registers = ectx.registers;
+    var constantPool = ectx.constantPool;
+    var nextPosition = ectx.nextPosition;
+    var stack = ectx.stack;
+
+    var type, value;
+    while (stream.position < nextPosition) {
+      type = stream.readUI8();
+      switch (type | 0) {
+        case 0: // STRING
+          value = stream.readString();
+          break;
+        case 1: // FLOAT
+          value = stream.readFloat();
+          break;
+        case 2: // null
+          value = null;
+          break;
+        case 3: // undefined
+          value = void(0);
+          break;
+        case 4: // Register number
+          value = registers[stream.readUI8()];
+          break;
+        case 5: // Boolean
+          value = stream.readBoolean();
+          break;
+        case 6: // Double
+          value = stream.readDouble();
+          break;
+        case 7: // Integer
+          value = stream.readInteger();
+          break;
+        case 8: // Constant8
+          value = constantPool[stream.readUI8()];
+          break;
+        case 9: // Constant16
+          value = constantPool[stream.readUI16()];
+          break;
+        default:
+          throw new Error('Unknown value type: ' + type);
+      }
+      stack.push(value);
+    }
+  }
+  function avm1_0x17_ActionPop(ectx) {
+    var stack = ectx.stack;
+
+    stack.pop();
+  }
+  function avm1_0x0A_ActionAdd(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToNumber(stack.pop());
+    var b = as2ToNumber(stack.pop());
+    stack.push(a + b);
+  }
+  function avm1_0x0B_ActionSubtract(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToNumber(stack.pop());
+    var b = as2ToNumber(stack.pop());
+    stack.push(b - a);
+  }
+  function avm1_0x0C_ActionMultiply(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToNumber(stack.pop());
+    var b = as2ToNumber(stack.pop());
+    stack.push(a * b);
+  }
+  function avm1_0x0D_ActionDivide(ectx) {
+    var stack = ectx.stack;
+    var isSwfVersion5 = ectx.isSwfVersion5;
+
+    var a = as2ToNumber(stack.pop());
+    var b = as2ToNumber(stack.pop());
+    var c = b / a;
+    stack.push(isSwfVersion5 ? c : isFinite(c) ? c : '#ERROR#');
+  }
+  function avm1_0x0E_ActionEquals(ectx) {
+    var stack = ectx.stack;
+    var isSwfVersion5 = ectx.isSwfVersion5;
+
+    var a = as2ToNumber(stack.pop());
+    var b = as2ToNumber(stack.pop());
+    var f = a == b;
+    stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+  }
+  function avm1_0x0F_ActionLess(ectx) {
+    var stack = ectx.stack;
+    var isSwfVersion5 = ectx.isSwfVersion5;
+
+    var a = as2ToNumber(stack.pop());
+    var b = as2ToNumber(stack.pop());
+    var f = b < a;
+    stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+  }
+  function avm1_0x10_ActionAnd(ectx) {
+    var stack = ectx.stack;
+    var isSwfVersion5 = ectx.isSwfVersion5;
+
+    var a = as2ToBoolean(stack.pop());
+    var b = as2ToBoolean(stack.pop());
+    var f = a && b;
+    stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+  }
+  function avm1_0x11_ActionOr(ectx) {
+    var stack = ectx.stack;
+    var isSwfVersion5 = ectx.isSwfVersion5;
+
+    var a = as2ToBoolean(stack.pop());
+    var b = as2ToBoolean(stack.pop());
+    var f = a || b;
+    stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+  }
+  function avm1_0x12_ActionNot(ectx) {
+    var stack = ectx.stack;
+    var isSwfVersion5 = ectx.isSwfVersion5;
+
+    var f = !as2ToBoolean(stack.pop());
+    stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+  }
+  function avm1_0x13_ActionStringEquals(ectx) {
+    var stack = ectx.stack;
+    var isSwfVersion5 = ectx.isSwfVersion5;
+
+    var sa = as2ToString(stack.pop());
+    var sb = as2ToString(stack.pop());
+    var f = sa == sb;
+    stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+  }
+  function avm1_0x14_ActionStringLength(ectx) {
+    var stack = ectx.stack;
+    var _global = ectx.global;
+
+    var sa = as2ToString(stack.pop());
+    stack.push(_global.length(sa));
+  }
+  function avm1_0x31_ActionMBStringLength(ectx) {
+    var stack = ectx.stack;
+    var _global = ectx.global;
+
+    var sa = as2ToString(stack.pop());
+    stack.push(_global.length(sa));
+  }
+  function avm1_0x21_ActionStringAdd(ectx) {
+    var stack = ectx.stack;
+
+    var sa = as2ToString(stack.pop());
+    var sb = as2ToString(stack.pop());
+    stack.push(sb + sa);
+  }
+  function avm1_0x15_ActionStringExtract(ectx) {
+    var stack = ectx.stack;
+    var _global = ectx.global;
+
+    var count = stack.pop();
+    var index = stack.pop();
+    var value = as2ToString(stack.pop());
+    stack.push(_global.substring(value, index, count));
+  }
+  function avm1_0x35_ActionMBStringExtract(ectx) {
+    var stack = ectx.stack;
+    var _global = ectx.global;
+
+    var count = stack.pop();
+    var index = stack.pop();
+    var value = as2ToString(stack.pop());
+    stack.push(_global.mbsubstring(value, index, count));
+  }
+  function avm1_0x29_ActionStringLess(ectx) {
+    var stack = ectx.stack;
+    var isSwfVersion5 = ectx.isSwfVersion5;
+
+    var sa = as2ToString(stack.pop());
+    var sb = as2ToString(stack.pop());
+    var f = sb < sa;
+    stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+  }
+  function avm1_0x18_ActionToInteger(ectx) {
+    var stack = ectx.stack;
+    var _global = ectx.global;
+
+    stack.push(_global.int(stack.pop()));
+  }
+  function avm1_0x32_ActionCharToAscii(ectx) {
+    var stack = ectx.stack;
+    var _global = ectx.global;
+
+    stack.push(_global.chr(stack.pop()));
+  }
+  function avm1_0x36_ActionMBCharToAscii(ectx) {
+    var stack = ectx.stack;
+    var _global = ectx.global;
+
+    stack.push(_global.mbchr(stack.pop()));
+  }
+  function avm1_0x33_ActionAsciiToChar(ectx) {
+    var stack = ectx.stack;
+    var _global = ectx.global;
+
+    stack.push(_global.ord(stack.pop()));
+  }
+  function avm1_0x37_ActionMBAsciiToChar(ectx) {
+    var stack = ectx.stack;
+    var _global = ectx.global;
+
+    stack.push(_global.mbord(stack.pop()));
+  }
+  function avm1_0x99_ActionJump(ectx) {
+    var stream = ectx.stream;
+    var nextPosition = ectx.nextPosition;
+
+    var offset = stream.readSI16();
+    nextPosition += offset;
+
+    ectx.nextPosition = nextPosition;
+  }
+  function avm1_0x9D_ActionIf(ectx) {
+    var stream = ectx.stream;
+    var nextPosition = ectx.nextPosition;
+    var stack = ectx.stack;
+
+    var offset = stream.readSI16();
+    var f = !!stack.pop();
+    if (f) {
+      nextPosition += offset;
+    }
+
+    ectx.nextPosition = nextPosition;
+  }
+  function avm1_0x9E_ActionCall(ectx) {
+    var stack = ectx.stack;
+    var _global = ectx.global;
+
+    var label = stack.pop();
+    _global.call(label);
+  }
+  function avm1_0x1C_ActionGetVariable(ectx) {
+    var stack = ectx.stack;
+    var stackItemsExpected = ectx.stackItemsExpected;
+
+    var variableName = '' + stack.pop();
+
+    stackItemsExpected++;
+    ectx.stackItemsExpected = stackItemsExpected;
+
+    stack.push(avm1GetVariable(ectx, variableName));
+  }
+  function avm1_0x1D_ActionSetVariable(ectx) {
+    var stack = ectx.stack;
+
+    var value = stack.pop();
+    var variableName = '' + stack.pop();
+    avm1SetVariable(ectx, variableName, value);
+  }
+  function avm1_0x9A_ActionGetURL2(ectx) {
+    var stream = ectx.stream;
+    var _global = ectx.global;
+    var stack = ectx.stack;
+
+    var flags = stream.readUI8();
+    var target = stack.pop();
+    var url = stack.pop();
+    var sendVarsMethod;
+    if (flags & 1) {
+      sendVarsMethod = 'GET';
+    } else if (flags & 2) {
+      sendVarsMethod = 'POST';
+    }
+    var loadTargetFlag = flags & 1 << 6;
+    if (!loadTargetFlag) {
+      _global.getURL(url, target, sendVarsMethod);
+      return;
+    }
+    var loadVariablesFlag = flags & 1 << 7;
+    if (loadVariablesFlag) {
+      _global.loadVariables(url, target, sendVarsMethod);
+    } else {
+      _global.loadMovie(url, target, sendVarsMethod);
+    }
+  }
+  function avm1_0x9F_ActionGotoFrame2(ectx) {
+    var stream = ectx.stream;
+    var _global = ectx.global;
+    var stack = ectx.stack;
+
+    var flags = stream.readUI8();
+    var gotoParams = [stack.pop()];
+    if (!!(flags & 2)) {
+      gotoParams.push(stream.readUI16());
+    }
+    var gotoMethod = !!(flags & 1) ? _global.gotoAndPlay : _global.gotoAndStop;
+    gotoMethod.apply(_global, gotoParams);
+  }
+  function avm1_0x20_ActionSetTarget2(ectx) {
+    var stack = ectx.stack;
+
+    var target = stack.pop();
+    avm1SetTarget(ectx, target);
+  }
+  function avm1_0x22_ActionGetProperty(ectx) {
+    var _global = ectx.global;
+    var stack = ectx.stack;
+    var stackItemsExpected = ectx.stackItemsExpected;
+
+    var index = stack.pop();
+    var target = stack.pop();
+
+    stackItemsExpected++;
+    ectx.stackItemsExpected = stackItemsExpected;
+
+    stack.push(_global.getAS2Property(target, index));
+  }
+  function avm1_0x23_ActionSetProperty(ectx) {
+    var _global = ectx.global;
+    var stack = ectx.stack;
+
+    var value = stack.pop();
+    var index = stack.pop();
+    var target = stack.pop();
+    _global.setAS2Property(target, index, value);
+  }
+  function avm1_0x24_ActionCloneSprite(ectx) {
+    var _global = ectx.global;
+    var stack = ectx.stack;
+
+    var depth = stack.pop();
+    var target = stack.pop();
+    var source = stack.pop();
+    _global.duplicateMovieClip(source, target, depth);
+  }
+  function avm1_0x25_ActionRemoveSprite(ectx) {
+    var _global = ectx.global;
+    var stack = ectx.stack;
+
+    var target = stack.pop();
+    _global.removeMovieClip(target);
+  }
+  function avm1_0x27_ActionStartDrag(ectx) {
+    var _global = ectx.global;
+    var stack = ectx.stack;
+
+    var target = stack.pop();
+    var lockcenter = stack.pop();
+    var constrain = !stack.pop() ? null : {
+      y2: stack.pop(),
+      x2: stack.pop(),
+      y1: stack.pop(),
+      x1: stack.pop()
+    };
+    var dragParams = [target, lockcenter];
+    if (constrain) {
+      dragParams = dragParams.push(constrain.x1, constrain.y1,
+        constrain.x2, constrain.y2);
+    }
+    _global.startDrag.apply(_global, dragParams);
+  }
+  function avm1_0x28_ActionEndDrag(ectx) {
+    var _global = ectx.global;
+
+    _global.stopDrag();
+  }
+  function avm1_0x8D_ActionWaitForFrame2(ectx) {
+    var stream = ectx.stream;
+    var _global = ectx.global;
+    var stack = ectx.stack;
+
+    var count = stream.readUI8();
+    var frame = stack.pop();
+    if (!_global.ifFrameLoaded(frame)) {
+      avm1SkipActions(ectx, count);
+    }
+  }
+  function avm1_0x26_ActionTrace(ectx) {
+    var _global = ectx.global;
+    var stack = ectx.stack;
+
+    var value = stack.pop();
+    _global.trace(value);
+  }
+  function avm1_0x34_ActionGetTime(ectx) {
+    var _global = ectx.global;
+    var stack = ectx.stack;
+
+    stack.push(_global.getTimer());
+  }
+  function avm1_0x30_ActionRandomNumber(ectx) {
+    var _global = ectx.global;
+    var stack = ectx.stack;
+
+    stack.push(_global.random(stack.pop()));
+  }
+  // SWF 5
+  function avm1_0x3D_ActionCallFunction(ectx) {
+    var stack = ectx.stack;
+    var stackItemsExpected = ectx.stackItemsExpected;
+    var scope = ectx.scope;
+
+    var functionName = stack.pop();
+    var args = avm1ReadFunctionArgs(stack);
+
+    stackItemsExpected++;
+    ectx.stackItemsExpected = stackItemsExpected;
+
+    var fn = avm1GetFunction(ectx, functionName);
+    var result = fn.apply(scope, args);
+    stack.push(result);
+  }
+  function avm1_0x52_ActionCallMethod(ectx) {
+    var stack = ectx.stack;
+    var stackItemsExpected = ectx.stackItemsExpected;
+
+    var methodName = stack.pop();
+    var obj = stack.pop();
+    var args = avm1ReadFunctionArgs(stack);
+    var target, resolvedName, result;
+
+    stackItemsExpected++;
+    ectx.stackItemsExpected = stackItemsExpected;
+
+    // checking "if the method name is blank or undefined"
+    if (methodName !== null && methodName !== undefined &&
+      methodName !== '') {
+      if (obj === null || obj === undefined) {
+        throw new Error('Cannot call method ' + methodName + ' of ' + typeof obj);
+      } else if (obj !== AS2_SUPER_STUB) {
+        target = Object(obj);
+      } else {
+        target = as2GetPrototype(avm1GetVariable(ectx, '__class').__super);
+        obj = avm1GetVariable(ectx, 'this');
+      }
+      resolvedName = as2ResolveProperty(target, methodName);
+      if (resolvedName === null) {
+        throw new Error('Method ' + methodName + ' is not defined.');
+      }
+      result = target.asGetPublicProperty(resolvedName).apply(obj, args);
+    } else if (obj !== AS2_SUPER_STUB) {
+      result = obj.apply(obj, args);
+    } else {
+      result = avm1GetVariable(ectx, '__class').__super.apply(
+        avm1GetVariable(ectx, 'this'), args);
+    }
+    stack.push(result);
+  }
+  function avm1_0x88_ActionConstantPool(ectx) {
+    var stream = ectx.stream;
+
+    var count = stream.readUI16();
+    var constantPool = [];
+    for (var i = 0; i < count; i++) {
+      constantPool.push(stream.readString());
+    }
+    ectx.constantPool = constantPool;
+  }
+  function avm1_0x9B_ActionDefineFunction(ectx) {
+    var stream = ectx.stream;
+    var nextPosition = ectx.nextPosition;
+    var stack = ectx.stack;
+    var scope = ectx.scope;
+
+    var functionName = stream.readString();
+    var count = stream.readUI16();
+    var args = [];
+    for (var i = 0; i < count; i++) {
+      args.push(stream.readString());
+    }
+    var codeSize = stream.readUI16();
+
+    nextPosition += codeSize;
+    ectx.nextPosition = nextPosition;
+
+    var fn = avm1DefineFunction(ectx, functionName, args, null,
+      stream.readBytes(codeSize));
+    if (functionName) {
+      scope.asSetPublicProperty(functionName, fn);
+    } else {
+      stack.push(fn);
+    }
+  }
+  function avm1_0x3C_ActionDefineLocal(ectx) {
+    var stack = ectx.stack;
+    var scope = ectx.scope;
+
+    var value = stack.pop();
+    var name = stack.pop();
+    scope.asSetPublicProperty(name, value);
+  }
+  function avm1_0x41_ActionDefineLocal2(ectx) {
+    var stack = ectx.stack;
+    var scope = ectx.scope;
+
+    var name = stack.pop();
+    scope.asSetPublicProperty(name, undefined);
+  }
+  function avm1_0x3A_ActionDelete(ectx) {
+    var stack = ectx.stack;
+
+    var name = stack.pop();
+    var obj = stack.pop();
+    // in some cases we need to cleanup events binding
+    obj.asSetPublicProperty(name, undefined);
+    stack.push(obj.asDeleteProperty(undefined, name, 0));
+  }
+  function avm1_0x3B_ActionDelete2(ectx) {
+    var stack = ectx.stack;
+
+    var name = stack.pop();
+    var result = avm1DeleteProperty(ectx, name);
+    stack.push(result);
+  }
+  function avm1_0x46_ActionEnumerate(ectx) {
+    var stack = ectx.stack;
+
+    var objectName = stack.pop();
+    stack.push(null);
+    var obj = avm1GetObjectByName(ectx, objectName);
+    forEachPublicProperty(obj, function (name) {
+      stack.push(name);
+    });
+  }
+  function avm1_0x49_ActionEquals2(ectx) {
+    var stack = ectx.stack;
+
+    var a = stack.pop();
+    var b = stack.pop();
+    stack.push(a == b);
+  }
+  function avm1_0x4E_ActionGetMember(ectx) {
+    var stack = ectx.stack;
+
+    var name = stack.pop();
+    var obj = stack.pop();
+    if (name === 'prototype') {
+      // special case to track members
+      stack.push(as2CreatePrototypeProxy(obj));
+    } else {
+      var resolvedName = as2ResolveProperty(Object(obj), name);
+      stack.push(resolvedName === null ? undefined :
+        obj.asGetPublicProperty(resolvedName));
+    }
+  }
+  function avm1_0x42_ActionInitArray(ectx) {
+    var stack = ectx.stack;
+
+    var obj = avm1ReadFunctionArgs(stack);
+    stack.push(obj);
+  }
+  function avm1_0x43_ActionInitObject(ectx) {
+    var stack = ectx.stack;
+
+    var count = +stack.pop();
+    avm1ValidateArgsCount(count, stack.length >> 1);
+    var obj = {};
+    for (var i = 0; i < count; i++) {
+      var value = stack.pop();
+      var name = stack.pop();
+      obj.asSetPublicProperty(name, value);
+    }
+    stack.push(obj);
+  }
+  function avm1_0x53_ActionNewMethod(ectx) {
+    var stack = ectx.stack;
+    var stackItemsExpected = ectx.stackItemsExpected;
+
+    var methodName = stack.pop();
+    var obj = stack.pop();
+    var args = avm1ReadFunctionArgs(stack);
+    var resolvedName, method, result;
+
+    stackItemsExpected++;
+    ectx.stackItemsExpected = stackItemsExpected;
+
+    // checking "if the name of the method is blank"
+    if (methodName !== null && methodName !== undefined &&
+      methodName !== '') {
+      resolvedName = as2ResolveProperty(obj, methodName);
+      if (resolvedName === null) {
+        throw new Error('Method ' + methodName + ' is not defined.');
+      }
+      if (obj === null || obj === undefined) {
+        throw new Error('Cannot call new using method ' + resolvedName + ' of ' + typeof obj);
+      }
+      method = obj.asGetPublicProperty(resolvedName);
+    } else {
+      if (obj === null || obj === undefined) {
+        throw new Error('Cannot call new using ' + typeof obj);
+      }
+      method = obj;
+    }
+    if (isAvm2Class(obj)) {
+      result = construct(obj, args);
+    } else {
+      result = Object.create(as2GetPrototype(method) || as2GetPrototype(Object));
+      method.apply(result, args);
+    }
+    result.constructor = method;
+    stack.push(result);
+  }
+  function avm1_0x40_ActionNewObject(ectx) {
+    var stack = ectx.stack;
+    var stackItemsExpected = ectx.stackItemsExpected;
+
+    var objectName = stack.pop();
+    var obj = avm1GetObjectByName(ectx, objectName);
+    var args = avm1ReadFunctionArgs(stack);
+
+    stackItemsExpected++;
+    ectx.stackItemsExpected = stackItemsExpected;
+
+    var result = createBuiltinType(obj, args);
+    if (typeof result === 'undefined') {
+      // obj in not a built-in type
+      if (isAvm2Class(obj)) {
+        result = construct(obj, args);
+      } else {
+        result = Object.create(as2GetPrototype(obj) || as2GetPrototype(Object));
+        obj.apply(result, args);
+      }
+      result.constructor = obj;
+    }
+    stack.push(result);
+  }
+  function avm1_0x4F_ActionSetMember(ectx) {
+    var stack = ectx.stack;
+
+    var value = stack.pop();
+    var name = stack.pop();
+    var obj = stack.pop();
+    obj.asSetPublicProperty(name, value);
+  }
+  function avm1_0x45_ActionTargetPath(ectx) {
+    var stack = ectx.stack;
+
+    var obj = stack.pop();
+    stack.push(as2GetType(obj) === 'movieclip' ? obj._target : void(0));
+  }
+  function avm1_0x94_ActionWith(ectx) {
+    var stream = ectx.stream;
+    var nextPosition = ectx.nextPosition;
+    var stack = ectx.stack;
+
+    var codeSize = stream.readUI16();
+    var obj = stack.pop();
+
+    nextPosition += codeSize;
+    ectx.nextPosition = nextPosition;
+
+    avm1ProcessWith(ectx, obj, stream.readBytes(codeSize));
+  }
+  function avm1_0x4A_ActionToNumber(ectx) {
+    var stack = ectx.stack;
+
+    stack.push(as2ToNumber(stack.pop()));
+  }
+  function avm1_0x4B_ActionToString(ectx) {
+    var stack = ectx.stack;
+
+    stack.push(as2ToString(stack.pop()));
+  }
+  function avm1_0x44_ActionTypeOf(ectx) {
+    var stack = ectx.stack;
+
+    var obj = stack.pop();
+    var result = as2GetType(obj);
+    stack.push(result);
+  }
+  function avm1_0x47_ActionAdd2(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToAddPrimitive(stack.pop());
+    var b = as2ToAddPrimitive(stack.pop());
+    if (typeof a === 'string' || typeof b === 'string') {
+      stack.push(as2ToString(b) + as2ToString(a));
+    } else {
+      stack.push(as2ToNumber(b) + as2ToNumber(a));
+    }
+  }
+  function avm1_0x48_ActionLess2(ectx) {
+    var stack = ectx.stack;
+
+    var a = stack.pop();
+    var b = stack.pop();
+    stack.push(as2Compare(b, a));
+  }
+  function avm1_0x3F_ActionModulo(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToNumber(stack.pop());
+    var b = as2ToNumber(stack.pop());
+    stack.push(b % a);
+  }
+  function avm1_0x60_ActionBitAnd(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToInt32(stack.pop());
+    var b = as2ToInt32(stack.pop());
+    stack.push(b & a);
+  }
+  function avm1_0x63_ActionBitLShift(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToInt32(stack.pop());
+    var b = as2ToInt32(stack.pop());
+    stack.push(b << a);
+  }
+  function avm1_0x61_ActionBitOr(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToInt32(stack.pop());
+    var b = as2ToInt32(stack.pop());
+    stack.push(b | a);
+  }
+  function avm1_0x64_ActionBitRShift(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToInt32(stack.pop());
+    var b = as2ToInt32(stack.pop());
+    stack.push(b >> a);
+  }
+  function avm1_0x65_ActionBitURShift(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToInt32(stack.pop());
+    var b = as2ToInt32(stack.pop());
+    stack.push(b >>> a);
+  }
+  function avm1_0x62_ActionBitXor(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToInt32(stack.pop());
+    var b = as2ToInt32(stack.pop());
+    stack.push(b ^ a);
+  }
+  function avm1_0x51_ActionDecrement(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToNumber(stack.pop());
+    a--;
+    stack.push(a);
+  }
+  function avm1_0x50_ActionIncrement(ectx) {
+    var stack = ectx.stack;
+
+    var a = as2ToNumber(stack.pop());
+    a++;
+    stack.push(a);
+  }
+  function avm1_0x4C_ActionPushDuplicate(ectx) {
+    var stack = ectx.stack;
+
+    stack.push(stack[stack.length - 1]);
+  }
+  function avm1_0x3E_ActionReturn(ectx) {
+    ectx.isEndOfActions = true;
+  }
+  function avm1_0x4D_ActionStackSwap(ectx) {
+    var stack = ectx.stack;
+
+    stack.push(stack.pop(), stack.pop());
+  }
+  function avm1_0x87_ActionStoreRegister(ectx) {
+    var stream = ectx.stream;
+    var stack = ectx.stack;
+    var registers = ectx.registers;
+
+    var register = stream.readUI8();
+    registers[register] = stack[stack.length - 1];
+  }
+  // SWF 6
+  function avm1_0x54_ActionInstanceOf(ectx) {
+    var stack = ectx.stack;
+
+    var constr = stack.pop();
+    var obj = stack.pop();
+    stack.push(as2InstanceOf(Object(obj), constr));
+  }
+  function avm1_0x55_ActionEnumerate2(ectx) {
+    var stack = ectx.stack;
+
+    var obj = stack.pop();
+    stack.push(null);
+
+    forEachPublicProperty(obj, function (name) {
+      stack.push(name);
+    });
+  }
+  function avm1_0x66_ActionStrictEquals(ectx) {
+    var stack = ectx.stack;
+
+    var a = stack.pop();
+    var b = stack.pop();
+    stack.push(b === a);
+  }
+  function avm1_0x67_ActionGreater(ectx) {
+    var stack = ectx.stack;
+
+    var a = stack.pop();
+    var b = stack.pop();
+    stack.push(as2Compare(a, b));
+  }
+  function avm1_0x68_ActionStringGreater(ectx) {
+    var stack = ectx.stack;
+    var isSwfVersion5 = ectx.isSwfVersion5;
+
+    var sa = as2ToString(stack.pop());
+    var sb = as2ToString(stack.pop());
+    var f = sb > sa;
+    stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+  }
+  // SWF 7
+  function avm1_0x8E_ActionDefineFunction2(ectx) {
+    var stream = ectx.stream;
+    var nextPosition = ectx.nextPosition;
+    var stack = ectx.stack;
+    var scope = ectx.scope;
+
+    var functionName = stream.readString();
+    var count = stream.readUI16();
+    var registerCount = stream.readUI8();
+    var flags = stream.readUI16();
+    var registerAllocation = [];
+    var args = [];
+    for (var i = 0; i < count; i++) {
+      var register = stream.readUI8();
+      var paramName = stream.readString();
+      args.push(paramName);
+      if (register) {
+        registerAllocation[register] = {
+          type: 'param',
+          name: paramName,
+          index: i
+        };
+      }
+    }
+    var codeSize = stream.readUI16();
+
+    nextPosition += codeSize;
+    ectx.nextPosition = nextPosition;
+
+    var j = 1;
+    // order this, arguments, super, _root, _parent, and _global
+    if (flags & 0x0001) { // preloadThis
+      registerAllocation[j++] = { type: 'var', name: 'this' };
+    }
+    if (flags & 0x0004) { // preloadArguments
+      registerAllocation[j++] = { type: 'var', name: 'arguments' };
+    }
+    if (flags & 0x0010) { // preloadSuper
+      registerAllocation[j++] = { type: 'var', name: 'super' };
+    }
+    if (flags & 0x0040) { // preloadRoot
+      registerAllocation[j++] = { type: 'var', name: '_root' };
+    }
+    if (flags & 0x0080) { // preloadParent
+      registerAllocation[j++] = { type: 'var', name: '_parent' };
+    }
+    if (flags & 0x0100) { // preloadGlobal
+      registerAllocation[j++] = { type: 'var', name: '_global' };
+    }
+
+    var fn = avm1DefineFunction(ectx, functionName, args,
+      registerAllocation, stream.readBytes(codeSize));
+    if (functionName) {
+      scope.asSetPublicProperty(functionName, fn);
+    } else {
+      stack.push(fn);
+    }
+  }
+  function avm1_0x69_ActionExtends(ectx) {
+    var stack = ectx.stack;
+
+    var constrSuper = stack.pop();
+    var constr = stack.pop();
+    var obj = Object.create(constrSuper.traitsPrototype || as2GetPrototype(constrSuper), {
+      constructor: { value: constr, enumerable: false }
+    });
+    constr.__super = constrSuper;
+    constr.prototype = obj;
+  }
+  function avm1_0x2B_ActionCastOp(ectx) {
+    var stack = ectx.stack;
+
+    var obj =  stack.pop();
+    var constr = stack.pop();
+    stack.push(as2InstanceOf(obj, constr) ? obj : null);
+  }
+  function avm1_0x2C_ActionImplementsOp(ectx) {
+    var stack = ectx.stack;
+
+    var constr = stack.pop();
+    var count = +stack.pop();
+    avm1ValidateArgsCount(count, stack.length);
+    var interfaces = [];
+    for (var i = 0; i < count; i++) {
+      interfaces.push(stack.pop());
+    }
+    constr.$interfaces = interfaces;
+  }
+  function avm1_0x8F_ActionTry(ectx) {
+    var stream = ectx.stream;
+    var nextPosition = ectx.nextPosition;
+
+    var flags = stream.readUI8();
+    var catchIsRegisterFlag = !!(flags & 4);
+    var finallyBlockFlag = !!(flags & 2);
+    var catchBlockFlag = !!(flags & 1);
+    var trySize = stream.readUI16();
+    var catchSize = stream.readUI16();
+    var finallySize = stream.readUI16();
+    var catchTarget = catchIsRegisterFlag ? stream.readUI8() : stream.readString();
+
+    nextPosition += trySize + catchSize + finallySize;
+    ectx.nextPosition = nextPosition;
+
+    avm1ProcessTry(ectx, catchIsRegisterFlag,
+      finallyBlockFlag, catchBlockFlag, catchTarget,
+      stream.readBytes(trySize), stream.readBytes(catchSize), stream.readBytes(finallySize));
+  }
+  function avm1_0x2A_ActionThrow(ectx) {
+    var stack = ectx.stack;
+
+    var obj = stack.pop();
+    throw new AS2Error(obj);
+  }
+  function avm1_0x2D_ActionFSCommand2(ectx) {
+    var stack = ectx.stack;
+    var stackItemsExpected = ectx.stackItemsExpected;
+    var _global = ectx.global;
+
+    var args = avm1ReadFunctionArgs(stack);
+
+    stackItemsExpected++;
+    ectx.stackItemsExpected = stackItemsExpected;
+
+    var result = _global.fscommand.apply(null, args);
+    stack.push(result);
+  }
+  function avm1_0x89_ActionStrictMode(ectx) {
+    var stream = ectx.stream;
+
+    var mode = stream.readUI8();
+  }
+
+  function interpretAction(executionContext) {
+    var stream = executionContext.stream;
+    var stack = executionContext.stack;
 
     var actionCode = stream.readUI8();
     var length = actionCode >= 0x80 ? stream.readUI16() : 0;
-    nextPosition = stream.position + length;
-    stackItemsExpected = 0;
+    var nextPosition = stream.position + length;
+    executionContext.nextPosition = nextPosition;
 
+    var actionTracer = executionContext.actionTracer;
     actionTracer.print(stream.position, actionCode, stack);
-    var frame, type, count, index, target, method, constr, codeSize, offset;
-    var name, variableName, methodName, functionName, targetName;
-    var paramName, resolvedName, objectName;
-    var value, a, b, c, f, sa, sb, obj, args, fn, result, flags, i;
-    var dragParams, register;
+
     switch (actionCode | 0) {
       // SWF 3 actions
       case 0x81: // ActionGotoFrame
-        frame = stream.readUI16();
-        var nextActionCode = stream.readUI8();
-        nextPosition++;
-        methodName = nextActionCode === 0x06 ? 'gotoAndPlay' : 'gotoAndStop';
-        _global[methodName](frame + 1);
+        avm1_0x81_ActionGotoFrame(executionContext);
         break;
       case 0x83: // ActionGetURL
-        var urlString = stream.readString();
-        var targetString = stream.readString();
-        _global.getURL(urlString, targetString);
+        avm1_0x83_ActionGetURL(executionContext);
         break;
       case 0x04: // ActionNextFrame
-        _global.nextFrame();
+        avm1_0x04_ActionNextFrame(executionContext);
         break;
       case 0x05: // ActionPreviousFrame
-        _global.prevFrame();
+        avm1_0x05_ActionPreviousFrame(executionContext);
         break;
       case 0x06: // ActionPlay
-        _global.play();
+        avm1_0x06_ActionPlay(executionContext);
         break;
       case 0x07: // ActionStop
-        _global.stop();
+        avm1_0x07_ActionStop(executionContext);
         break;
       case 0x08: // ActionToggleQuality
-        _global.toggleHighQuality();
+        avm1_0x08_ActionToggleQuality(executionContext);
         break;
       case 0x09: // ActionStopSounds
-        _global.stopAllSounds();
+        avm1_0x09_ActionStopSounds(executionContext);
         break;
       case 0x8A: // ActionWaitForFrame
-        frame = stream.readUI16();
-        count = stream.readUI8();
-        if (!_global.ifFrameLoaded(frame)) {
-          skipActions(count);
-        }
+        avm1_0x8A_ActionWaitForFrame(executionContext);
         break;
       case 0x8B: // ActionSetTarget
-        targetName = stream.readString();
-        setTarget(targetName);
+        avm1_0x8B_ActionSetTarget(executionContext);
         break;
       case 0x8C: // ActionGoToLabel
-        var label = stream.readString();
-        _global.gotoLabel(label);
+        avm1_0x8C_ActionGoToLabel(executionContext);
         break;
       // SWF 4 actions
       case 0x96: // ActionPush
-        while (stream.position < nextPosition) {
-          type = stream.readUI8();
-          switch (type) {
-            case 0: // STRING
-              value = stream.readString();
-              break;
-            case 1: // FLOAT
-              value = stream.readFloat();
-              break;
-            case 2: // null
-              value = null;
-              break;
-            case 3: // undefined
-              value = void(0);
-              break;
-            case 4: // Register number
-              value = registers[stream.readUI8()];
-              break;
-            case 5: // Boolean
-              value = stream.readBoolean();
-              break;
-            case 6: // Double
-              value = stream.readDouble();
-              break;
-            case 7: // Integer
-              value = stream.readInteger();
-              break;
-            case 8: // Constant8
-              value = constantPool[stream.readUI8()];
-              break;
-            case 9: // Constant16
-              value = constantPool[stream.readUI16()];
-              break;
-            default:
-              throw new Error('Unknown value type: ' + type);
-          }
-          stack.push(value);
-        }
+        avm1_0x96_ActionPush(executionContext);
         break;
       case 0x17: // ActionPop
-        stack.pop();
+        avm1_0x17_ActionPop(executionContext);
         break;
       case 0x0A: // ActionAdd
-        a = as2ToNumber(stack.pop());
-        b = as2ToNumber(stack.pop());
-        stack.push(a + b);
+        avm1_0x0A_ActionAdd(executionContext);
         break;
       case 0x0B: // ActionSubtract
-        a = as2ToNumber(stack.pop());
-        b = as2ToNumber(stack.pop());
-        stack.push(b - a);
+        avm1_0x0B_ActionSubtract(executionContext);
         break;
       case 0x0C: // ActionMultiply
-        a = as2ToNumber(stack.pop());
-        b = as2ToNumber(stack.pop());
-        stack.push(a * b);
+        avm1_0x0C_ActionMultiply(executionContext);
         break;
       case 0x0D: // ActionDivide
-        a = as2ToNumber(stack.pop());
-        b = as2ToNumber(stack.pop());
-        c = b / a;
-        stack.push(isSwfVersion5 ? c : isFinite(c) ? c : '#ERROR#');
+        avm1_0x0D_ActionDivide(executionContext);
         break;
       case 0x0E: // ActionEquals
-        a = as2ToNumber(stack.pop());
-        b = as2ToNumber(stack.pop());
-        f = a == b;
-        stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+        avm1_0x0E_ActionEquals(executionContext);
         break;
       case 0x0F: // ActionLess
-        a = as2ToNumber(stack.pop());
-        b = as2ToNumber(stack.pop());
-        f = b < a;
-        stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+        avm1_0x0F_ActionLess(executionContext);
         break;
       case 0x10: // ActionAnd
-        a = as2ToBoolean(stack.pop());
-        b = as2ToBoolean(stack.pop());
-        f = a && b;
-        stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+        avm1_0x10_ActionAnd(executionContext);
         break;
       case 0x11: // ActionOr
-        a = as2ToBoolean(stack.pop());
-        b = as2ToBoolean(stack.pop());
-        f = a || b;
-        stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+        avm1_0x11_ActionOr(executionContext);
         break;
       case 0x12: // ActionNot
-        f = !as2ToBoolean(stack.pop());
-        stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+        avm1_0x12_ActionNot(executionContext);
         break;
       case 0x13: // ActionStringEquals
-        sa = as2ToString(stack.pop());
-        sb = as2ToString(stack.pop());
-        f = sa == sb;
-        stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+        avm1_0x13_ActionStringEquals(executionContext);
         break;
       case 0x14: // ActionStringLength
+        avm1_0x14_ActionStringLength(executionContext);
+        break;
       case 0x31: // ActionMBStringLength
-        sa = as2ToString(stack.pop());
-        stack.push(_global.length(sa));
+        avm1_0x31_ActionMBStringLength(executionContext);
         break;
       case 0x21: // ActionStringAdd
-        sa = as2ToString(stack.pop());
-        sb = as2ToString(stack.pop());
-        stack.push(sb + sa);
+        avm1_0x21_ActionStringAdd(executionContext);
         break;
       case 0x15: // ActionStringExtract
-        count = stack.pop();
-        index = stack.pop();
-        value = as2ToString(stack.pop());
-        stack.push(_global.substring(value, index, count));
+        avm1_0x15_ActionStringExtract(executionContext);
         break;
       case 0x35: // ActionMBStringExtract
-        count = stack.pop();
-        index = stack.pop();
-        value = as2ToString(stack.pop());
-        stack.push(_global.mbsubstring(value, index, count));
+        avm1_0x35_ActionMBStringExtract(executionContext);
         break;
       case 0x29: // ActionStringLess
-        sa = as2ToString(stack.pop());
-        sb = as2ToString(stack.pop());
-        f = sb < sa;
-        stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+        avm1_0x29_ActionStringLess(executionContext);
         break;
       case 0x18: // ActionToInteger
-        stack.push(_global.int(stack.pop()));
+        avm1_0x18_ActionToInteger(executionContext);
         break;
       case 0x32: // ActionCharToAscii
-        stack.push(_global.chr(stack.pop()));
+        avm1_0x32_ActionCharToAscii(executionContext);
         break;
       case 0x36: // ActionMBCharToAscii
-        stack.push(_global.mbchr(stack.pop()));
+        avm1_0x36_ActionMBCharToAscii(executionContext);
         break;
       case 0x33: // ActionAsciiToChar
-        stack.push(_global.ord(stack.pop()));
+        avm1_0x33_ActionAsciiToChar(executionContext);
         break;
       case 0x37: // ActionMBAsciiToChar
-        stack.push(_global.mbord(stack.pop()));
+        avm1_0x37_ActionMBAsciiToChar(executionContext);
         break;
       case 0x99: // ActionJump
-        offset = stream.readSI16();
-        nextPosition += offset;
+        avm1_0x99_ActionJump(executionContext);
         break;
       case 0x9D: // ActionIf
-        offset = stream.readSI16();
-        f = !!stack.pop();
-        if (f) {
-          nextPosition += offset;
-        }
+        avm1_0x9D_ActionIf(executionContext);
         break;
       case 0x9E: // ActionCall
-        label = stack.pop();
-        _global.call(label);
+        avm1_0x9E_ActionCall(executionContext);
         break;
       case 0x1C: // ActionGetVariable
-        variableName = '' + stack.pop();
-        stackItemsExpected++;
-        stack.push(getVariable(variableName));
+        avm1_0x1C_ActionGetVariable(executionContext);
         break;
       case 0x1D: // ActionSetVariable
-        value = stack.pop();
-        variableName = '' + stack.pop();
-        setVariable(variableName, value);
+        avm1_0x1D_ActionSetVariable(executionContext);
         break;
       case 0x9A: // ActionGetURL2
-        flags = stream.readUI8();
-        target = stack.pop();
-        var url = stack.pop();
-        var sendVarsMethod;
-        if (flags & 1) {
-          sendVarsMethod = 'GET';
-        } else if (flags & 2) {
-          sendVarsMethod = 'POST';
-        }
-        var loadTargetFlag = flags & 1 << 6;
-        if (!loadTargetFlag) {
-          _global.getURL(url, target, sendVarsMethod);
-          break;
-        }
-        var loadVariablesFlag = flags & 1 << 7;
-        if (loadVariablesFlag) {
-          _global.loadVariables(url, target, sendVarsMethod);
-        } else {
-          _global.loadMovie(url, target, sendVarsMethod);
-        }
+        avm1_0x9A_ActionGetURL2(executionContext);
         break;
       case 0x9F: // ActionGotoFrame2
-        flags = stream.readUI8();
-        var gotoParams = [stack.pop()];
-        if (!!(flags & 2)) {
-          gotoParams.push(stream.readUI16());
-        }
-        var gotoMethod = !!(flags & 1) ? _global.gotoAndPlay : _global.gotoAndStop;
-        gotoMethod.apply(_global, gotoParams);
+        avm1_0x9F_ActionGotoFrame2(executionContext);
         break;
       case 0x20: // ActionSetTarget2
-        target = stack.pop();
-        setTarget(target);
+        avm1_0x20_ActionSetTarget2(executionContext);
         break;
       case 0x22: // ActionGetProperty
-        index = stack.pop();
-        target = stack.pop();
-        stackItemsExpected++;
-        stack.push(_global.getAS2Property(target, index));
+        avm1_0x22_ActionGetProperty(executionContext);
         break;
       case 0x23: // ActionSetProperty
-        value = stack.pop();
-        index = stack.pop();
-        target = stack.pop();
-        _global.setAS2Property(target, index, value);
+        avm1_0x23_ActionSetProperty(executionContext);
         break;
       case 0x24: // ActionCloneSprite
-        var depth = stack.pop();
-        target = stack.pop();
-        var source = stack.pop();
-        _global.duplicateMovieClip(source, target, depth);
+        avm1_0x24_ActionCloneSprite(executionContext);
         break;
       case 0x25: // ActionRemoveSprite
-        target = stack.pop();
-        _global.removeMovieClip(target);
+        avm1_0x25_ActionRemoveSprite(executionContext);
         break;
       case 0x27: // ActionStartDrag
-        target = stack.pop();
-        var lockcenter = stack.pop();
-        var constrain = !stack.pop() ? null : {
-          y2: stack.pop(),
-          x2: stack.pop(),
-          y1: stack.pop(),
-          x1: stack.pop()
-        };
-        dragParams = [target, lockcenter];
-        if (constrain) {
-          dragParams = dragParams.push(constrain.x1, constrain.y1,
-            constrain.x2, constrain.y2);
-        }
-        _global.startDrag.apply(_global, dragParams);
+        avm1_0x27_ActionStartDrag(executionContext);
         break;
       case 0x28: // ActionEndDrag
-        _global.stopDrag();
+        avm1_0x28_ActionEndDrag(executionContext);
         break;
       case 0x8D: // ActionWaitForFrame2
-        count = stream.readUI8();
-        frame = stack.pop();
-        if (!_global.ifFrameLoaded(frame)) {
-          skipActions(count);
-        }
+        avm1_0x8D_ActionWaitForFrame2(executionContext);
         break;
       case 0x26: // ActionTrace
-        value = stack.pop();
-        _global.trace(value);
+        avm1_0x26_ActionTrace(executionContext);
         break;
       case 0x34: // ActionGetTime
-        stack.push(_global.getTimer());
+        avm1_0x34_ActionGetTime(executionContext);
         break;
       case 0x30: // ActionRandomNumber
-        stack.push(_global.random(stack.pop()));
+        avm1_0x30_ActionRandomNumber(executionContext);
         break;
       // SWF 5
       case 0x3D: // ActionCallFunction
-        functionName = stack.pop();
-        args = readArgs(stack);
-        stackItemsExpected++;
-        fn = getFunction(functionName);
-        result = fn.apply(scope, args);
-        stack.push(result);
+        avm1_0x3D_ActionCallFunction(executionContext);
         break;
       case 0x52: // ActionCallMethod
-        methodName = stack.pop();
-        obj = stack.pop();
-        args = readArgs(stack);
-        stackItemsExpected++;
-        // checking "if the method name is blank or undefined"
-        if (methodName !== null && methodName !== undefined &&
-            methodName !== '') {
-          if (obj === null || obj === undefined) {
-            throw new Error('Cannot call method ' + methodName + ' of ' + typeof obj);
-          } else if (obj !== AS2_SUPER_STUB) {
-            target = Object(obj);
-          } else {
-            target = as2GetPrototype(getVariable('__class').__super);
-            obj = getVariable('this');
-          }
-          resolvedName = as2ResolveProperty(target, methodName);
-          if (resolvedName === null) {
-            throw new Error('Method ' + methodName + ' is not defined.');
-          }
-          result = target.asGetPublicProperty(resolvedName).apply(obj, args);
-        } else if (obj !== AS2_SUPER_STUB) {
-          result = obj.apply(obj, args);
-        } else {
-          result = getVariable('__class').__super.apply(
-            getVariable('this'), args);
-        }
-        stack.push(result);
+        avm1_0x52_ActionCallMethod(executionContext);
         break;
       case 0x88: // ActionConstantPool
-        count = stream.readUI16();
-        constantPool = [];
-        for (i = 0; i < count; i++) {
-          constantPool.push(stream.readString());
-        }
+        avm1_0x88_ActionConstantPool(executionContext);
         break;
       case 0x9B: // ActionDefineFunction
-        functionName = stream.readString();
-        count = stream.readUI16();
-        args = [];
-        for (i = 0; i < count; i++) {
-          args.push(stream.readString());
-        }
-        codeSize = stream.readUI16();
-        nextPosition += codeSize;
-
-        fn = defineFunction(functionName, args, null,
-                            stream.readBytes(codeSize));
-        if (functionName) {
-          scope.asSetPublicProperty(functionName, fn);
-        } else {
-          stack.push(fn);
-        }
+        avm1_0x9B_ActionDefineFunction(executionContext);
         break;
       case 0x3C: // ActionDefineLocal
-        value = stack.pop();
-        name = stack.pop();
-        scope.asSetPublicProperty(name, value);
+        avm1_0x3C_ActionDefineLocal(executionContext);
         break;
       case 0x41: // ActionDefineLocal2
-        name = stack.pop();
-        scope.asSetPublicProperty(name, undefined);
+        avm1_0x41_ActionDefineLocal2(executionContext);
         break;
       case 0x3A: // ActionDelete
-        name = stack.pop();
-        obj = stack.pop();
-         // in some cases we need to cleanup events binding
-        obj.asSetPublicProperty(name, undefined);
-        stack.push(obj.asDeleteProperty(undefined, name, 0));
+        avm1_0x3A_ActionDelete(executionContext);
         break;
       case 0x3B: // ActionDelete2
-        name = stack.pop();
-        result = deleteProperty(name);
-        stack.push(result);
+        avm1_0x3B_ActionDelete2(executionContext);
         break;
       case 0x46: // ActionEnumerate
-        objectName = stack.pop();
-        stack.push(null);
-        obj = getObjectByName(objectName);
-        /*jshint -W083 */
-        forEachPublicProperty(obj, function (name) {
-          stack.push(name);
-        });
+        avm1_0x46_ActionEnumerate(executionContext);
         break;
       case 0x49: // ActionEquals2
-        a = stack.pop();
-        b = stack.pop();
-        stack.push(a == b);
+        avm1_0x49_ActionEquals2(executionContext);
         break;
       case 0x4E: // ActionGetMember
-        name = stack.pop();
-        obj = stack.pop();
-        if (name === 'prototype') {
-          // special case to track members
-          stack.push(as2CreatePrototypeProxy(obj));
-        } else {
-          resolvedName = as2ResolveProperty(Object(obj), name);
-          stack.push(resolvedName === null ? undefined :
-                     obj.asGetPublicProperty(resolvedName));
-        }
+        avm1_0x4E_ActionGetMember(executionContext);
         break;
       case 0x42: // ActionInitArray
-        obj = readArgs(stack);
-        stack.push(obj);
+        avm1_0x42_ActionInitArray(executionContext);
         break;
       case 0x43: // ActionInitObject
-        count = +stack.pop();
-        validateArgsCount(count, stack.length >> 1);
-        obj = {};
-        for (i = 0; i < count; i++) {
-          value = stack.pop();
-          name = stack.pop();
-          obj.asSetPublicProperty(name, value);
-        }
-        stack.push(obj);
+        avm1_0x43_ActionInitObject(executionContext);
         break;
       case 0x53: // ActionNewMethod
-        methodName = stack.pop();
-        obj = stack.pop();
-        args = readArgs(stack);
-        stackItemsExpected++;
-        // checking "if the name of the method is blank"
-        if (methodName !== null && methodName !== undefined &&
-            methodName !== '') {
-          resolvedName = as2ResolveProperty(obj, methodName);
-          if (resolvedName === null) {
-            throw new Error('Method ' + methodName + ' is not defined.');
-          }
-          if (obj === null || obj === undefined) {
-            throw new Error('Cannot call new using method ' + resolvedName + ' of ' + typeof obj);
-          }
-          method = obj.asGetPublicProperty(resolvedName);
-        } else {
-          if (obj === null || obj === undefined) {
-            throw new Error('Cannot call new using ' + typeof obj);
-          }
-          method = obj;
-        }
-        if (isAvm2Class(obj)) {
-          result = construct(obj, args);
-        } else {
-          result = Object.create(as2GetPrototype(method) || as2GetPrototype(Object));
-          method.apply(result, args);
-        }
-        result.constructor = method;
-        stack.push(result);
+        avm1_0x53_ActionNewMethod(executionContext);
         break;
       case 0x40: // ActionNewObject
-        objectName = stack.pop();
-        obj = getObjectByName(objectName);
-        args = readArgs(stack);
-        stackItemsExpected++;
-        result = createBuiltinType(obj, args);
-        if (typeof result === 'undefined') {
-          // obj in not a built-in type
-          if (isAvm2Class(obj)) {
-            result = construct(obj, args);
-          } else {
-            result = Object.create(as2GetPrototype(obj) || as2GetPrototype(Object));
-            obj.apply(result, args);
-          }
-          result.constructor = obj;
-        }
-        stack.push(result);
+        avm1_0x40_ActionNewObject(executionContext);
         break;
       case 0x4F: // ActionSetMember
-        value = stack.pop();
-        name = stack.pop();
-        obj = stack.pop();
-        obj.asSetPublicProperty(name, value);
+        avm1_0x4F_ActionSetMember(executionContext);
         break;
       case 0x45: // ActionTargetPath
-        obj = stack.pop();
-        stack.push(as2GetType(obj) === 'movieclip' ? obj._target : void(0));
+        avm1_0x45_ActionTargetPath(executionContext);
         break;
       case 0x94: // ActionWith
-        codeSize = stream.readUI16();
-        obj = stack.pop();
-        nextPosition += codeSize;
-        processWith(obj, stream.readBytes(codeSize));
+        avm1_0x94_ActionWith(executionContext);
         break;
       case 0x4A: // ActionToNumber
-        stack.push(as2ToNumber(stack.pop()));
+        avm1_0x4A_ActionToNumber(executionContext);
         break;
       case 0x4B: // ActionToString
-        stack.push(as2ToString(stack.pop()));
+        avm1_0x4B_ActionToString(executionContext);
         break;
       case 0x44: // ActionTypeOf
-        obj = stack.pop();
-        result = as2GetType(obj);
-        stack.push(result);
+        avm1_0x44_ActionTypeOf(executionContext);
         break;
       case 0x47: // ActionAdd2
-        a = as2ToAddPrimitive(stack.pop());
-        b = as2ToAddPrimitive(stack.pop());
-        if (typeof a === 'string' || typeof b === 'string') {
-          stack.push(as2ToString(b) + as2ToString(a));
-        } else {
-          stack.push(as2ToNumber(b) + as2ToNumber(a));
-        }
+        avm1_0x47_ActionAdd2(executionContext);
         break;
       case 0x48: // ActionLess2
-        a = stack.pop();
-        b = stack.pop();
-        stack.push(as2Compare(b, a));
+        avm1_0x48_ActionLess2(executionContext);
         break;
       case 0x3F: // ActionModulo
-        a = as2ToNumber(stack.pop());
-        b = as2ToNumber(stack.pop());
-        stack.push(b % a);
+        avm1_0x3F_ActionModulo(executionContext);
         break;
       case 0x60: // ActionBitAnd
-        a = as2ToInt32(stack.pop());
-        b = as2ToInt32(stack.pop());
-        stack.push(b & a);
+        avm1_0x60_ActionBitAnd(executionContext);
         break;
       case 0x63: // ActionBitLShift
-        a = as2ToInt32(stack.pop());
-        b = as2ToInt32(stack.pop());
-        stack.push(b << a);
+        avm1_0x63_ActionBitLShift(executionContext);
         break;
       case 0x61: // ActionBitOr
-        a = as2ToInt32(stack.pop());
-        b = as2ToInt32(stack.pop());
-        stack.push(b | a);
+        avm1_0x61_ActionBitOr(executionContext);
         break;
       case 0x64: // ActionBitRShift
-        a = as2ToInt32(stack.pop());
-        b = as2ToInt32(stack.pop());
-        stack.push(b >> a);
+        avm1_0x64_ActionBitRShift(executionContext);
         break;
       case 0x65: // ActionBitURShift
-        a = as2ToInt32(stack.pop());
-        b = as2ToInt32(stack.pop());
-        stack.push(b >>> a);
+        avm1_0x65_ActionBitURShift(executionContext);
         break;
       case 0x62: // ActionBitXor
-        a = as2ToInt32(stack.pop());
-        b = as2ToInt32(stack.pop());
-        stack.push(b ^ a);
+        avm1_0x62_ActionBitXor(executionContext);
         break;
       case 0x51: // ActionDecrement
-        a = as2ToNumber(stack.pop());
-        a--;
-        stack.push(a);
+        avm1_0x51_ActionDecrement(executionContext);
         break;
       case 0x50: // ActionIncrement
-        a = as2ToNumber(stack.pop());
-        a++;
-        stack.push(a);
+        avm1_0x50_ActionIncrement(executionContext);
         break;
       case 0x4C: // ActionPushDuplicate
-        stack.push(stack[stack.length - 1]);
+        avm1_0x4C_ActionPushDuplicate(executionContext);
         break;
       case 0x3E: // ActionReturn
-        return stack.pop(); // return
+        avm1_0x3E_ActionReturn(executionContext);
+        break;
       case 0x4D: // ActionStackSwap
-        stack.push(stack.pop(), stack.pop());
+        avm1_0x4D_ActionStackSwap(executionContext);
         break;
       case 0x87: // ActionStoreRegister
-        register = stream.readUI8();
-        registers[register] = stack[stack.length - 1];
+        avm1_0x87_ActionStoreRegister(executionContext);
         break;
       // SWF 6
       case 0x54: // ActionInstanceOf
-        constr = stack.pop();
-        obj = stack.pop();
-        stack.push(as2InstanceOf(Object(obj), constr));
+        avm1_0x54_ActionInstanceOf(executionContext);
         break;
       case 0x55: // ActionEnumerate2
-        obj = stack.pop();
-        stack.push(null);
-        /*jshint -W083 */
-        forEachPublicProperty(obj, function (name) {
-          stack.push(name);
-        });
+        avm1_0x55_ActionEnumerate2(executionContext);
         break;
       case 0x66: // ActionStrictEquals
-        a = stack.pop();
-        b = stack.pop();
-        stack.push(b === a);
+        avm1_0x66_ActionStrictEquals(executionContext);
         break;
       case 0x67: // ActionGreater
-        a = stack.pop();
-        b = stack.pop();
-        stack.push(as2Compare(a, b));
+        avm1_0x67_ActionGreater(executionContext);
         break;
       case 0x68: // ActionStringGreater
-        sa = as2ToString(stack.pop());
-        sb = as2ToString(stack.pop());
-        f = sb > sa;
-        stack.push(isSwfVersion5 ? f : f ? 1 : 0);
+        avm1_0x68_ActionStringGreater(executionContext);
         break;
       // SWF 7
       case 0x8E: // ActionDefineFunction2
-        functionName = stream.readString();
-        count = stream.readUI16();
-        var registerCount = stream.readUI8();
-        flags = stream.readUI16();
-        var registerAllocation = [];
-        args = [];
-        for (i = 0; i < count; i++) {
-          register = stream.readUI8();
-          paramName = stream.readString();
-          args.push(paramName);
-          if (register) {
-            registerAllocation[register] = {
-              type: 'param',
-              name: paramName,
-              index: i
-            };
-          }
-        }
-        codeSize = stream.readUI16();
-        nextPosition += codeSize;
-
-        var j = 1;
-        // order this, arguments, super, _root, _parent, and _global
-        if (flags & 0x0001) { // preloadThis
-          registerAllocation[j++] = { type: 'var', name: 'this' };
-        }
-        if (flags & 0x0004) { // preloadArguments
-          registerAllocation[j++] = { type: 'var', name: 'arguments' };
-        }
-        if (flags & 0x0010) { // preloadSuper
-          registerAllocation[j++] = { type: 'var', name: 'super' };
-        }
-        if (flags & 0x0040) { // preloadRoot
-          registerAllocation[j++] = { type: 'var', name: '_root' };
-        }
-        if (flags & 0x0080) { // preloadParent
-          registerAllocation[j++] = { type: 'var', name: '_parent' };
-        }
-        if (flags & 0x0100) { // preloadGlobal
-          registerAllocation[j++] = { type: 'var', name: '_global' };
-        }
-
-        fn = defineFunction(functionName, args,
-                            registerAllocation, stream.readBytes(codeSize));
-        if (functionName) {
-          scope.asSetPublicProperty(functionName, fn);
-        } else {
-          stack.push(fn);
-        }
+        avm1_0x8E_ActionDefineFunction2(executionContext);
         break;
       case 0x69: // ActionExtends
-        var constrSuper = stack.pop();
-        constr = stack.pop();
-        obj = Object.create(constrSuper.traitsPrototype || as2GetPrototype(constrSuper), {
-          constructor: { value: constr, enumerable: false }
-        });
-        constr.__super = constrSuper;
-        constr.prototype = obj;
+        avm1_0x69_ActionExtends(executionContext);
         break;
       case 0x2B: // ActionCastOp
-        obj =  stack.pop();
-        constr = stack.pop();
-        stack.push(as2InstanceOf(obj, constr) ? obj : null);
+        avm1_0x2B_ActionCastOp(executionContext);
         break;
       case 0x2C: // ActionImplementsOp
-        constr = stack.pop();
-        count = +stack.pop();
-        validateArgsCount(count, stack.length);
-        var interfaces = [];
-        for (i = 0; i < count; i++) {
-          interfaces.push(stack.pop());
-        }
-        constr.$interfaces = interfaces;
+        avm1_0x2C_ActionImplementsOp(executionContext);
         break;
       case 0x8F: // ActionTry
-        flags = stream.readUI8();
-        var catchIsRegisterFlag = !!(flags & 4);
-        var finallyBlockFlag = !!(flags & 2);
-        var catchBlockFlag = !!(flags & 1);
-        var trySize = stream.readUI16();
-        var catchSize = stream.readUI16();
-        var finallySize = stream.readUI16();
-        var catchTarget = catchIsRegisterFlag ? stream.readUI8() : stream.readString();
-        nextPosition += trySize + catchSize + finallySize;
-        processTry(catchIsRegisterFlag, finallyBlockFlag, catchBlockFlag, catchTarget,
-          stream.readBytes(trySize), stream.readBytes(catchSize), stream.readBytes(finallySize));
+        avm1_0x8F_ActionTry(executionContext);
         break;
       case 0x2A: // ActionThrow
-        obj = stack.pop();
-        throw new AS2Error(obj);
+        avm1_0x2A_ActionThrow(executionContext);
+        break;
       // Not documented by the spec
       case 0x2D: // ActionFSCommand2
-        args = readArgs(stack);
-        stackItemsExpected++;
-        result = _global.fscommand.apply(null, args);
-        stack.push(result);
+        avm1_0x2D_ActionFSCommand2(executionContext);
         break;
       case 0x89: // ActionStrictMode
-        var mode = stream.readUI8();
+        avm1_0x89_ActionStrictMode(executionContext);
         break;
       case 0: // End of actions
-        return;
+        executionContext.isEndOfActions = true;
+        break;
       default:
         throw new Error('Unknown action code: ' + actionCode);
     }
+
+    var nextPosition = executionContext.nextPosition;
     stream.position = nextPosition;
-    recoveringFromError = false;
   }
 
-    // handling AVM1 errors
+  function interpretActionWithRecovery(executionContext) {
+    var stackItemsExpected = 0;
+    executionContext.stackItemsExpected = stackItemsExpected;
+
+    try {
+      interpretAction(executionContext);
+
+      executionContext.recoveringFromError = true;
     } catch (e) {
+      // handling AVM1 errors
+      var currentContext = executionContext.context;
       if ((!AVM1_ERRORS_IGNORED && !currentContext.isTryCatchListening) ||
-          e instanceof AS2CriticalError) {
+        e instanceof AS2CriticalError) {
         throw e;
       }
       if (e instanceof AS2Error) {
@@ -1461,24 +2106,76 @@ function interpretActions(actionsData, scopeContainer,
       var AVM1_ERROR_TYPE = 1;
       TelemetryService.reportTelemetry({topic: 'error', error: AVM1_ERROR_TYPE});
 
+      var stream = executionContext.stream;
+      var stack = executionContext.stack;
+
+      var nextPosition = executionContext.nextPosition;
       stream.position = nextPosition;
-      if (stackItemsExpected > 0) {
-        while (stackItemsExpected--) {
-          stack.push(undefined);
-        }
+
+      stackItemsExpected = executionContext.stackItemsExpected;
+      while (stackItemsExpected > 0) {
+        stack.push(undefined);
+        stackItemsExpected--;
       }
-      if (!recoveringFromError) {
+      if (!executionContext.recoveringFromError) {
         if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
           throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
         }
         console.error('AVM1 error: ' + e);
         avm2.exceptions.push({source: 'avm1', message: e.message,
-                              stack: e.stack});
-        recoveringFromError = true;
+          stack: e.stack});
+        executionContext.recoveringFromError = true;
       }
     }
   }
-}
+
+  function interpretActions(actionsData, scopeContainer, constantPool, registers) {
+    var currentContext = AS2Context.instance;
+
+    var stream = new ActionsDataStream(actionsData, currentContext.swfVersion);
+    var stack = [];
+    var isSwfVersion5 = currentContext.swfVersion >= 5;
+    var actionTracer = ActionTracerFactory.get();
+    var scope = scopeContainer.scope;
+
+    var executionContext = {
+      context: currentContext,
+      global: currentContext.globals,
+      scopeContainer: scopeContainer,
+      scope: scope,
+      actionTracer: actionTracer,
+      constantPool: constantPool,
+      registers: registers,
+      stream: stream,
+      nextPosition: 0,
+      stack: stack,
+      stackItemsExpected: 0,
+      isSwfVersion5: isSwfVersion5,
+      recoveringFromError: false,
+      isEndOfActions: false
+    };
+
+    if (scope.$nativeObject && scope.$nativeObject._deferScriptExecution) {
+      currentContext.deferScriptExecution = true;
+    }
+
+    var instructionsExecuted = 0;
+    var abortExecutionAt = currentContext.abortExecutionAt;
+
+    // will try again if we are skipping errors
+    while (stream.position < stream.end && !executionContext.isEndOfActions) {
+      // let's check timeout every 100 instructions
+      if (instructionsExecuted++ % 100 === 0 && Date.now() >= abortExecutionAt) {
+        throw new AS2CriticalError('long running script -- AVM1 instruction hang timeout');
+      }
+
+      interpretActionWithRecovery(executionContext);
+    }
+    return stack.pop();
+  }
+
+  return interpretActions;
+})();
 
 var ActionTracerFactory = (function() {
   var indentation = 0;
