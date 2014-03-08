@@ -71,6 +71,7 @@ var argumentParser = new ArgumentParser();
 var systemOptions = new OptionSet("System Options");
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var disassemble = shellOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
+var stubs = shellOptions.register(new Option("s", "stubs", "boolean", false, "stubs"));
 var traceLevel = shellOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 var execute = shellOptions.register(new Option("x", "execute", "boolean", false, "execute"));
@@ -105,6 +106,7 @@ var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
 var SecurityDomain = Shumway.AVM2.Runtime.SecurityDomain;
 
 load(homePath + "src/avm2/disassembler.js");
+load(homePath + "src/avm2/stubs.js");
 
 var Timer = Shumway.Metrics.Timer;
 var Counter = new Shumway.Metrics.Counter();
@@ -237,6 +239,12 @@ if (execute.value || compile.value || compileAll.value || compileBuiltins.value)
   grabAbcs(abcBuffers).forEach(function (abcArray) {
     abcArray.forEach(function (abc) {
       abc.trace(stdout);
+    });
+  });
+} else if (stubs.value) {
+  grabAbcs(abcBuffers).forEach(function (abcArray) {
+    abcArray.forEach(function (abc) {
+      Shumway.AVM2.generateStub(abc);
     });
   });
 }

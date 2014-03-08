@@ -31,4 +31,5 @@
 ///<reference path='interpreter.ts' />
 ///<reference path='hacks.ts' />
 ///<reference path='nat.ts' />
+///<reference path='stubs.ts' />
 

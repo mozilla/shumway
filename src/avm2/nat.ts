@@ -259,7 +259,7 @@ module Shumway.AVM2.AS {
     public static asConstructor: any = jsGlobal.Array;
   }
 
-  export class Vector extends Object {
+  export class Vector<T> extends Object {
     public static asConstructor: any = jsGlobal.Array;
   }
 
@@ -293,6 +293,13 @@ module Shumway.AVM2.AS {
 
   export class QName extends Object {
     public static asConstructor: any = jsGlobal.Array;
+  }
+
+  export class Error extends Object {
+    public static asConstructor: any = jsGlobal.Array;
+    constructor(message = "", id = 0) {
+      super();
+    }
   }
 
   var nativeClasses: Shumway.Map<Class> = Shumway.ObjectUtilities.createMap<Class>();

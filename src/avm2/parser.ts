@@ -175,10 +175,12 @@ module Shumway.AVM2.ABC {
     name: string;
     type: Multiname;
     value: any;
-    constructor(name: string, type: Multiname, value: any) {
+    optional: boolean;
+    constructor(name: string, type: Multiname, value: any, optional: boolean = false) {
       this.name = name;
       this.type = type;
       this.value = value;
+      this.optional = optional;
     }
   }
 
@@ -413,6 +415,7 @@ module Shumway.AVM2.ABC {
         for (var i = parameterCount - optionalCount; i < parameterCount; i++) {
           var valueIndex = stream.readU30();
           this.parameters[i].value = constantPool.getValue(stream.readU8(), valueIndex);
+          this.parameters[i].optional = true;
         }
       }
 
@@ -888,6 +891,14 @@ module Shumway.AVM2.ABC {
 
     public isProtected(): boolean {
       return this.kind === CONSTANT.ProtectedNamespace;
+    }
+
+    public isPrivate(): boolean {
+      return this.kind === CONSTANT.PrivateNs;
+    }
+
+    public isPackageInternal(): boolean {
+      return this.kind === CONSTANT.PackageInternalNs;
     }
 
     public isUnique(): boolean {

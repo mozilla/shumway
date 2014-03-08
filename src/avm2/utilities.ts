@@ -793,6 +793,19 @@ module Shumway {
       }
     }
 
+    writeComment(str: string) {
+      var lines = str.split("\n");
+      if (lines.length === 1) {
+        this.writeLn("// " + lines[0]);
+      } else {
+        this.writeLn("/**");
+        for (var i = 0; i < lines.length; i++) {
+          this.writeLn(" * " + lines[i]);
+        }
+        this.writeLn(" */");
+      }
+    }
+
     writeLns(str: string) {
       var lines = str.split("\n");
       for (var i = 0; i < lines.length; i++) {
