@@ -512,7 +512,6 @@ module Shumway.AVM1 {
     stream: ActionsDataStream;
     nextPosition: number;
     stack: any[];
-    stackItemsExpected: number;
     isSwfVersion5: boolean;
     recoveringFromError: boolean;
     isEndOfActions: boolean;
@@ -1165,14 +1164,13 @@ module Shumway.AVM1 {
     }
     function avm1_0x1C_ActionGetVariable(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var stackItemsExpected = ectx.stackItemsExpected;
 
       var variableName = '' + stack.pop();
 
-      stackItemsExpected++;
-      ectx.stackItemsExpected = stackItemsExpected;
+      var sp = stack.length;
+      stack.push(undefined);
 
-      stack.push(avm1GetVariable(ectx, variableName));
+      stack[sp] = avm1GetVariable(ectx, variableName);
     }
     function avm1_0x1D_ActionSetVariable(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1229,15 +1227,14 @@ module Shumway.AVM1 {
     function avm1_0x22_ActionGetProperty(ectx: ExecutionContext) {
       var _global = ectx.global;
       var stack = ectx.stack;
-      var stackItemsExpected = ectx.stackItemsExpected;
 
       var index = stack.pop();
       var target = stack.pop();
 
-      stackItemsExpected++;
-      ectx.stackItemsExpected = stackItemsExpected;
+      var sp = stack.length;
+      stack.push(undefined);
 
-      stack.push(_global.getAS2Property(target, index));
+      stack[sp] = _global.getAS2Property(target, index);
     }
     function avm1_0x23_ActionSetProperty(ectx: ExecutionContext) {
       var _global = ectx.global;
@@ -1321,30 +1318,28 @@ module Shumway.AVM1 {
     // SWF 5
     function avm1_0x3D_ActionCallFunction(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var stackItemsExpected = ectx.stackItemsExpected;
       var scope = ectx.scope;
 
       var functionName = stack.pop();
       var args = avm1ReadFunctionArgs(stack);
 
-      stackItemsExpected++;
-      ectx.stackItemsExpected = stackItemsExpected;
+      var sp = stack.length;
+      stack.push(undefined);
 
       var fn = avm1GetFunction(ectx, functionName);
       var result = fn.apply(scope, args);
-      stack.push(result);
+      stack[sp] = result;
     }
     function avm1_0x52_ActionCallMethod(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var stackItemsExpected = ectx.stackItemsExpected;
 
       var methodName = stack.pop();
       var obj = stack.pop();
       var args = avm1ReadFunctionArgs(stack);
       var target, resolvedName, result;
 
-      stackItemsExpected++;
-      ectx.stackItemsExpected = stackItemsExpected;
+      var sp = stack.length;
+      stack.push(undefined);
 
       // checking "if the method name is blank or undefined"
       if (methodName !== null && methodName !== undefined &&
@@ -1368,7 +1363,7 @@ module Shumway.AVM1 {
         result = avm1GetVariable(ectx, '__class').__super.apply(
           avm1GetVariable(ectx, 'this'), args);
       }
-      stack.push(result);
+      stack[sp] = result;
     }
     function avm1_0x88_ActionConstantPool(ectx: ExecutionContext) {
       var stream = ectx.stream;
@@ -1488,15 +1483,14 @@ module Shumway.AVM1 {
     }
     function avm1_0x53_ActionNewMethod(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var stackItemsExpected = ectx.stackItemsExpected;
 
       var methodName = stack.pop();
       var obj = stack.pop();
       var args = avm1ReadFunctionArgs(stack);
       var resolvedName, method, result;
 
-      stackItemsExpected++;
-      ectx.stackItemsExpected = stackItemsExpected;
+      var sp = stack.length;
+      stack.push(undefined);
 
       // checking "if the name of the method is blank"
       if (methodName !== null && methodName !== undefined &&
@@ -1522,18 +1516,17 @@ module Shumway.AVM1 {
         method.apply(result, args);
       }
       result.constructor = method;
-      stack.push(result);
+      stack[sp] = result;
     }
     function avm1_0x40_ActionNewObject(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var stackItemsExpected = ectx.stackItemsExpected;
 
       var objectName = stack.pop();
       var obj = avm1GetObjectByName(ectx, objectName);
       var args = avm1ReadFunctionArgs(stack);
 
-      stackItemsExpected++;
-      ectx.stackItemsExpected = stackItemsExpected;
+      var sp = stack.length;
+      stack.push(undefined);
 
       var result = createBuiltinType(obj, args);
       if (typeof result === 'undefined') {
@@ -1546,7 +1539,7 @@ module Shumway.AVM1 {
         }
         result.constructor = obj;
       }
-      stack.push(result);
+      stack[sp] = result;
     }
     function avm1_0x4F_ActionSetMember(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1852,16 +1845,15 @@ module Shumway.AVM1 {
     }
     function avm1_0x2D_ActionFSCommand2(ectx: ExecutionContext) {
       var stack = ectx.stack;
-      var stackItemsExpected = ectx.stackItemsExpected;
       var _global = ectx.global;
 
       var args = avm1ReadFunctionArgs(stack);
 
-      stackItemsExpected++;
-      ectx.stackItemsExpected = stackItemsExpected;
+      var sp = stack.length;
+      stack.push(undefined);
 
       var result = _global.fscommand.apply(null, args);
-      stack.push(result);
+      stack[sp] = result;
     }
     function avm1_0x89_ActionStrictMode(ectx: ExecutionContext) {
       var stream = ectx.stream;
@@ -2203,9 +2195,6 @@ module Shumway.AVM1 {
     }
 
     function interpretActionWithRecovery(executionContext) {
-      var stackItemsExpected = 0;
-      executionContext.stackItemsExpected = stackItemsExpected;
-
       try {
         interpretAction(executionContext);
 
@@ -2230,11 +2219,6 @@ module Shumway.AVM1 {
         var nextPosition = executionContext.nextPosition;
         stream.position = nextPosition;
 
-        stackItemsExpected = executionContext.stackItemsExpected;
-        while (stackItemsExpected > 0) {
-          stack.push(undefined);
-          stackItemsExpected--;
-        }
         if (!executionContext.recoveringFromError) {
           if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
             throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
@@ -2268,7 +2252,6 @@ module Shumway.AVM1 {
         stream: stream,
         nextPosition: 0,
         stack: stack,
-        stackItemsExpected: 0,
         isSwfVersion5: isSwfVersion5,
         recoveringFromError: false,
         isEndOfActions: false
