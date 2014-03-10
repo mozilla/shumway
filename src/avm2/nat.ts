@@ -28,8 +28,14 @@ module Shumway.AVM2.AS {
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
+  import notImplemented = Shumway.Debug.notImplemented;
+  var writer = null; // new Shumway.IndentingWriter();
 
-  var writer = new Shumway.IndentingWriter();
+  declare var Int32Vector;
+  declare var Uint32Vector;
+  declare var Float64Vector;
+  declare var GenericVector;
+  declare var arraySort;
 
   /**
    * This is all very magical, things are not what they seem, beware!!!
@@ -60,26 +66,26 @@ module Shumway.AVM2.AS {
     public static asConstructor: any = jsGlobal.Object;
 
     static _setPropertyIsEnumerable(o, V: string, enumerable: boolean): void {
-      Debug.notImplemented("_setPropertyIsEnumerable");
+      notImplemented("_setPropertyIsEnumerable");
     }
 
     static _hasOwnProperty(o, V: string): boolean {
-      Debug.notImplemented("_hasOwnProperty");
+      notImplemented("_hasOwnProperty");
       return false;
     }
 
     static _propertyIsEnumerable(o, V: string): boolean {
-      Debug.notImplemented("_propertyIsEnumerable");
+      notImplemented("_propertyIsEnumerable");
       return false;
     }
 
     static _isPrototypeOf(o, V): boolean {
-      Debug.notImplemented("_isPrototypeOf");
+      notImplemented("_isPrototypeOf");
       return false;
     }
 
     static _toString(o): string {
-      Debug.notImplemented("_toString");
+      notImplemented("_toString");
       return "";
     }
 
@@ -87,17 +93,17 @@ module Shumway.AVM2.AS {
     static defineProperty = jsGlobal.Object.defineProperty;
 
     isPrototypeOf(V = undefined): boolean {
-      Debug.notImplemented("isPrototypeOf");
+      notImplemented("isPrototypeOf");
       return false;
     }
 
     hasOwnProperty(V = undefined): boolean {
-      Debug.notImplemented("hasOwnProperty");
+      notImplemented("hasOwnProperty");
       return false;
     }
 
     propertyIsEnumerable(V = undefined): boolean {
-      Debug.notImplemented("propertyIsEnumerable");
+      notImplemented("propertyIsEnumerable");
       return false;
     }
   }
@@ -117,12 +123,13 @@ module Shumway.AVM2.AS {
     instanceDelegates: JSObject [];
     constructor(classInfo: ClassInfo, template: IClassTemplate) {
       super();
+      assert (classInfo);
       this.classInfo = classInfo;
       this.asConstructor = template.asConstructor;
       this.template = template;
     }
     get prototype() {
-      Debug.notImplemented("get prototype");
+      notImplemented("get prototype");
       return {};
     }
     verify() {
@@ -183,21 +190,21 @@ module Shumway.AVM2.AS {
       super();
     }
     get prototype() {
-      Debug.notImplemented("get prototype");
+      notImplemented("get prototype");
       return {};
     }
     set prototype(p) {
-      Debug.notImplemented("set prototype");
+      notImplemented("set prototype");
     }
     get length(): number {
-      Debug.notImplemented("get length");
+      notImplemented("get length");
       return 0;
     }
     call(self = undefined, ...args: any []) {
-      Debug.notImplemented("call");
+      notImplemented("call");
     }
     apply(self = undefined, args: any [] = undefined) {
-      Debug.notImplemented("apply");
+      notImplemented("apply");
     }
   }
 
@@ -209,11 +216,11 @@ module Shumway.AVM2.AS {
     }
 
     toString() {
-      Debug.notImplemented("toString");
+      notImplemented("toString");
     }
 
     valueOf() {
-      Debug.notImplemented("valueOf");
+      notImplemented("valueOf");
     }
   }
 
@@ -233,8 +240,8 @@ module Shumway.AVM2.AS {
 
     }
 
-    get prefix(): any { Debug.notImplemented("get prefix"); return; }
-    get uri(): String { Debug.notImplemented("get uri"); return; }
+    get prefix(): any { notImplemented("get prefix"); return; }
+    get uri(): String { notImplemented("get uri"); return; }
   }
 
   export class Number extends Object {
@@ -242,9 +249,9 @@ module Shumway.AVM2.AS {
     public static staticDelegates: any [] = [jsGlobal.Math];
     public static instanceDelegates: any [] = [jsGlobal.Number.prototype];
 
-    static _numberToString(n: number, radix: number): string { Debug.notImplemented("_numberToString"); return; }
-    static _convert(n: number, precision: number, mode: number): string { Debug.notImplemented("_convert"); return; }
-    static _minValue(): number { Debug.notImplemented("_minValue"); return; }
+    static _numberToString(n: number, radix: number): string { notImplemented("_numberToString"); return; }
+    static _convert(n: number, precision: number, mode: number): string { notImplemented("_convert"); return; }
+    static _minValue(): number { notImplemented("_minValue"); return; }
 
 
   }
@@ -261,30 +268,160 @@ module Shumway.AVM2.AS {
     public static asConstructor: any = jsGlobal.String;
     public static staticDelegates: any [] = [jsGlobal.String];
     public static instanceDelegates: any [] = [jsGlobal.String.prototype];
+
+    get length(): number {
+      notImplemented("get length");
+      return 0;
+    }
   }
 
   export class Array extends Object {
     public static asConstructor: any = jsGlobal.Array;
+
+    private static _pop(o: any): any {
+      notImplemented("public.Array::private static _pop"); return;
+    }
+    private static _reverse(o: any): any {
+      notImplemented("public.Array::private static _reverse"); return;
+    }
+    private static _concat(o: any, args: any []): any [] {
+      args = args;
+      notImplemented("public.Array::private static _concat"); return;
+    }
+    private static _shift(o: any): any {
+      notImplemented("public.Array::private static _shift"); return;
+    }
+    private static _slice(o: any, A: number, B: number): any [] {
+      A = +A; B = +B;
+      notImplemented("public.Array::private static _slice"); return;
+    }
+    private static _unshift(o: any, args: any []): number /*uint*/ {
+      args = args;
+      notImplemented("public.Array::private static _unshift"); return;
+    }
+    private static _splice(o: any, args: any []): any [] {
+      args = args;
+      notImplemented("public.Array::private static _splice"); return;
+    }
+    private static _sort(o: any, args: any []): any {
+      args = args;
+      notImplemented("public.Array::private static _sort"); return;
+    }
+    private static _sortOn(o: any, names: any, options: any): any {
+      notImplemented("public.Array::private static _sortOn"); return;
+    }
+    private static _indexOf(o: any, searchElement: any, fromIndex: number /*int*/): number /*int*/ {
+      fromIndex = fromIndex | 0;
+      notImplemented("public.Array::private static _indexOf"); return;
+    }
+    private static _lastIndexOf(o: any, searchElement: any, fromIndex: number /*int*/ = 0): number /*int*/ {
+      fromIndex = fromIndex | 0;
+      notImplemented("public.Array::private static _lastIndexOf"); return;
+    }
+    private static _every(o: any, callback: Function, thisObject: any): boolean {
+      callback = callback;
+      notImplemented("public.Array::private static _every"); return;
+    }
+    private static _filter(o: any, callback: Function, thisObject: any): any [] {
+      callback = callback;
+      notImplemented("public.Array::private static _filter"); return;
+    }
+    private static _forEach(o: any, callback: Function, thisObject: any): void {
+      callback = callback;
+      notImplemented("public.Array::private static _forEach"); return;
+    }
+    private static _map(o: any, callback: Function, thisObject: any): any [] {
+      callback = callback;
+      notImplemented("public.Array::private static _map"); return;
+    }
+    private static _some(o: any, callback: Function, thisObject: any): boolean {
+      callback = callback;
+      notImplemented("public.Array::private static _some"); return;
+    }
+    get length(): number /*uint*/ {
+      notImplemented("public.Array::get length"); return;
+    }
+    set length(newLength: number /*uint*/) {
+      newLength = newLength >>> 0;
+      notImplemented("public.Array::set length"); return;
+    }
+    pop(): any {
+      notImplemented("public.Array::pop"); return;
+    }
+    push(): number /*uint*/ {
+      notImplemented("public.Array::push"); return;
+    }
+    unshift(): number /*uint*/ {
+      notImplemented("public.Array::unshift"); return;
+    }
   }
 
   export class Vector<T> extends Object {
     public static asConstructor: any = jsGlobal.Array;
   }
 
-  export class ObjectVector extends Object {
-    public static asConstructor: any = jsGlobal.Array;
+  export class ObjectVector extends Vector<Object> {
+    public static asConstructor: any = GenericVector;
+    public static staticDelegates: any [] = [GenericVector];
+    public static instanceDelegates: any [] = [GenericVector.prototype];
+    private static _every(o: any, callback: Function, thisObject: any): boolean {
+      return o.every(callback, thisObject);
+    }
+    private static _forEach(o: any, callback: Function, thisObject: any): void {
+      return o.forEach(callback, thisObject);
+    }
+    private static _some(o: any, callback: Function, thisObject: any): boolean {
+      return o.some(callback, thisObject);
+    }
+    private static _sort: (o: any, args: any []) => any = arraySort;
   }
 
   export class IntVector extends Object {
-    public static asConstructor: any = jsGlobal.Array;
+    public static asConstructor: any = Int32Vector;
+    public static staticDelegates: any [] = [Int32Vector];
+    public static instanceDelegates: any [] = [Int32Vector.prototype];
+    private static _every(o: any, callback: Function, thisObject: any): boolean {
+      return o.every(callback, thisObject);
+    }
+    private static _forEach(o: any, callback: Function, thisObject: any): void {
+      return o.forEach(callback, thisObject);
+    }
+    private static _some(o: any, callback: Function, thisObject: any): boolean {
+      return o.some(callback, thisObject);
+    }
+    private static _sort: (o: any, args: any []) => any = arraySort;
   }
 
   export class UIntVector extends Object {
-    public static asConstructor: any = jsGlobal.Array;
+    public static asConstructor: any = Uint32Vector;
+    public static staticDelegates: any [] = [Uint32Vector];
+    public static instanceDelegates: any [] = [Uint32Vector.prototype];
+    private static _every(o: any, callback: Function, thisObject: any): boolean {
+      return o.every(callback, thisObject);
+    }
+    private static _forEach(o: any, callback: Function, thisObject: any): void {
+      return o.forEach(callback, thisObject);
+    }
+    private static _some(o: any, callback: Function, thisObject: any): boolean {
+      return o.some(callback, thisObject);
+    }
+    private static _sort: (o: any, args: any []) => any = arraySort;
   }
 
   export class DoubleVector extends Object {
-    public static asConstructor: any = jsGlobal.Array;
+    public static asConstructor: any = Float64Vector;
+    public static staticDelegates: any [] = [Float64Vector];
+    public static instanceDelegates: any [] = [Float64Vector.prototype];
+    private static _every(o: any, callback: Function, thisObject: any): boolean {
+      return o.every(callback, thisObject);
+    }
+    private static _forEach(o: any, callback: Function, thisObject: any): void {
+      return o.forEach(callback, thisObject);
+    }
+    private static _some(o: any, callback: Function, thisObject: any): boolean {
+      return o.some(callback, thisObject);
+    }
+    private static _sort: (o: any, args: any []) => any = arraySort;
   }
 
   export class JSON extends Object {

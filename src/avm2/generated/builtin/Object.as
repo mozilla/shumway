@@ -48,15 +48,7 @@ package
     // E262 {ReadOnly, DontDelete, DontEnum }
     public static const length:int = 1;
 
-    [compat]
-    private static native function _hasOwnProperty(o, V:String):Boolean;
-    [compat]
-    private static native function _propertyIsEnumerable(o, V:String):Boolean;
     protected static native function _setPropertyIsEnumerable(o, V:String, enumerable:Boolean):void;
-    [compat]
-    private static native function _isPrototypeOf(o, V):Boolean;
-    [compat]
-    private static native function _toString(o):String;
 
     // We can native these directly to the JS Object counterparts.
     AS3 native function isPrototypeOf(V=void 0):Boolean;

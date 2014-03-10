@@ -535,7 +535,7 @@ module Shumway.AVM2.ABC {
       this.superName = constantPool.multinames[stream.readU30()];
       this.flags = stream.readU8();
       this.protectedNs = undefined;
-      if (this.flags & 8) {
+      if (this.flags & CONSTANT.ClassProtectedNs) {
         this.protectedNs = constantPool.namespaces[stream.readU30()];
       }
       var interfaceCount = stream.readU30();
@@ -811,6 +811,12 @@ module Shumway.AVM2.ABC {
         assert (uniqueURIHash !== undefined);
         this.uri = "private " + uniqueURIHash;
       }
+      if (this.kind === CONSTANT.StaticProtectedNs) {
+        // FIXME: We need to deal with static protected namespaces the same way as
+        // for instance protected namespaces. For now, let's just reset the URI so
+        // that name resolution works out.
+        this.uri = "HACK";
+      }
       this.qualifiedName = Namespace._qualifyNamespace(this.kind, this.uri, this.prefix ? this.prefix : "");
     }
 
@@ -890,7 +896,7 @@ module Shumway.AVM2.ABC {
     }
 
     public isProtected(): boolean {
-      return this.kind === CONSTANT.ProtectedNamespace;
+      return this.kind === CONSTANT.ProtectedNamespace || this.kind === CONSTANT.StaticProtectedNs;
     }
 
     public isPrivate(): boolean {
@@ -983,7 +989,7 @@ module Shumway.AVM2.ABC {
           uri = name.substring(name.indexOf(" ") + 1).trim();
         } else {
           var kinds = Namespace._kinds;
-          if (name === kinds[CONSTANT.Namespace]          ||
+          if (name === kinds[CONSTANT.Namespace]        ||
             name === kinds[CONSTANT.PackageInternalNs]  ||
             name === kinds[CONSTANT.PrivateNs]          ||
             name === kinds[CONSTANT.ProtectedNamespace] ||
@@ -1000,6 +1006,9 @@ module Shumway.AVM2.ABC {
       });
     }
   }
+
+  // TOTAL HACK ALERT !!!
+  Namespace.prototype = Object.create(Namespace.prototype);
 
 
   /**

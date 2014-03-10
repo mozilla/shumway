@@ -51,13 +51,9 @@ package
     // E262 {DontEnum, DontDelete, ReadOnly}
     public native function get length():uint;
 
-    [compat]
-    private native function _indexOf(s:String, i:int=0):int;
     AS3 native function indexOf(s:String="undefined", i:Number=0):int;
     prototype.indexOf = unsafeJSNative("String.prototype.indexOf");
 
-    [compat]
-    private native function _lastIndexOf(s:String, i:int=0x7fffffff):int;
     AS3 native function lastIndexOf(s:String="undefined", i:Number=0x7FFFFFFF):int;
     prototype.lastIndexOf = unsafeJSNative("String.prototype.lastIndexOf");
 
@@ -73,38 +69,24 @@ package
     AS3 native function localeCompare(other:*=void 0):int;
     prototype.localeCompare = unsafeJSNative("String.prototype.localeCompare");
 
-    [compat]
-    private static native function _match(s:String, p):Array;
     AS3 native function match(p=void 0):Array;
     prototype.match = unsafeJSNative("String.prototype.match");
 
-    [compat]
-    private static native function _replace(s:String, p, repl):String;
     AS3 native function replace(p=void 0, repl=void 0):String;
     prototype.replace = unsafeJSNative("String.prototype.replace");
 
-    [compat]
-    private static native function _search(s:String, p):int;
     AS3 native function search(p=void 0):int;
     prototype.search = unsafeJSNative("String.prototype.search");
 
-    [compat]
-    private native function _slice(start:int=0, end:int=0x7fffffff):String;
     AS3 native function slice(start:Number=0, end:Number=0x7fffffff):String;
     prototype.slice = unsafeJSNative("String.prototype.slice");
 
-    [compat]
-    private static native function _split(s:String, delim, limit:uint):Array;
     AS3 native function split(delim=void 0, limit=0xffffffff):Array;
     prototype.split = unsafeJSNative("String.prototype.split");
 
-    [compat]
-    private native function _substring(start:int=0, end:int=0x7fffffff):String;
     AS3 native function substring(start:Number=0, end:Number=0x7fffffff):String;
     prototype.substring = unsafeJSNative("String.prototype.substring");
 
-    [compat]
-    private native function _substr(start:int=0, end:int=0x7fffffff):String;
     AS3 native function substr(start:Number=0, len:Number=0x7fffffff):String;
     prototype.substr = unsafeJSNative("String.prototype.substr");
 
