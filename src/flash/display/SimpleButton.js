@@ -15,9 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global avm1lib, executeActions */
+/*global avm1lib, Shumway */
 
 var SimpleButtonDefinition = (function () {
+  var executeActions = Shumway.AVM1.executeActions;
+
   var AVM1KeyCodeMap = [0, 37, 39, 36, 35, 45, 46, 0, 8, 0, 0, 0, 0, 13, 38, 40, 33, 34, 9, 27];
   var AVM1MouseTransitionEvents = [0, 0, 1, 128, 64, 0, 0, 32, 2, 0, 0, 4, 256, 16, 8, 0];
 

@@ -17,7 +17,7 @@
  */
 /*global self, ResourceLoader, Image, Worker, btoa, URL, FileLoadingService,
          Promise, AVM2, AbcFile, SHUMWAY_ROOT, TelemetryService,
-         avm1lib, AS2Context, executeActions,
+         avm1lib, Shumway,
          MP3DecoderSession, PLAY_USING_AUDIO_TAG,
          cloneObject, createEmptyObject, fromCharCode,
          isNullOrUndefined, sortNumeric */
@@ -29,6 +29,9 @@
 var $RELEASE = false;
 
 var LoaderDefinition = (function () {
+  var AS2Context = Shumway.AVM1.AS2Context;
+  var executeActions = Shumway.AVM1.executeActions;
+
   var WORKERS_ENABLED = true;
   var LOADER_PATH = $RELEASE ? 'shumway-worker.js' : 'swf/resourceloader.js';
 
@@ -865,7 +868,7 @@ var LoaderDefinition = (function () {
       var loaded = function () {
         // avm1 initialization
         var loaderInfo = loader._contentLoaderInfo;
-        var avm1Context = new AS2Context(loaderInfo._swfVersion);
+        var avm1Context = AS2Context.create(loaderInfo._swfVersion);
         avm1Context.stage = stage;
         loader._avm1Context = avm1Context;
 
