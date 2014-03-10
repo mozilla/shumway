@@ -55,10 +55,6 @@ load($SHUMWAY_ROOT + "src/swf/handlers.js");
 load($SHUMWAY_ROOT + "src/swf/parser.js");
 load($SHUMWAY_ROOT + "src/swf/resourceloader.js");
 
-load($SHUMWAY_ROOT + "src/avm1/stream.js");
-load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
-
-
 load($SHUMWAY_ROOT + "src/avm2/global.js");
 load($SHUMWAY_ROOT + "src/avm2/utilities.js");
 
@@ -164,6 +160,9 @@ load($SHUMWAY_ROOT + "src/avm2/disassembler.js");
 load($SHUMWAY_ROOT + "src/avm2/interpreter.js");
 
 load($SHUMWAY_ROOT + "utils/builder/templates/avm2utils.js");
+
+load($SHUMWAY_ROOT + "src/avm1/stream.js");
+load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
 
 // Manually add directories here, this doesn't get automatically updated by
 // make update-flash-refs.

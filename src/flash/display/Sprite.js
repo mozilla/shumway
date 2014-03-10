@@ -15,9 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global Multiname, executeActions, Counter */
+/*global Multiname, Shumway, Counter */
 
 var SpriteDefinition = (function () {
+  var executeActions = Shumway.AVM1.executeActions;
+
   var def = {
     __class__: 'flash.display.Sprite',
 

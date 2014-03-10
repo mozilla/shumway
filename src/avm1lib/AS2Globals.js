@@ -15,8 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2Context, Multiname, Stubs, TextFormatDefinition */
+/*global Shumway, Multiname, Stubs, TextFormatDefinition */
 var AS2GlobalsDefinition = (function () {
+  var AS2Context = Shumway.AVM1.AS2Context;
+
   var def = {
     __class__: 'avm1lib.AS2Globals',
 

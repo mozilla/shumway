@@ -15,8 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global initDefaultListeners, AS2Context */
+/*global initDefaultListeners, Shumway */
 var AS2MovieClipDefinition = (function () {
+  var AS2Context = Shumway.AVM1.AS2Context;
+
   var def = {
     __class__: 'avm1lib.AS2MovieClip',
 
@@ -31,7 +33,7 @@ var AS2MovieClipDefinition = (function () {
     },
     _constructSymbol: function constructSymbol(symbolId, name) {
       var theClass = AS2Context.instance.classes && AS2Context.instance.classes[symbolId];
-      var symbolProps = AS2Context.instance.assets[symbolId];
+      var symbolProps = AS2Context.instance.getAsset(symbolId);
 
       var symbolClass = flash.display.MovieClip.class;
       var mc = symbolClass.createAsSymbol(symbolProps);

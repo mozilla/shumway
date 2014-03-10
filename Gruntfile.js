@@ -24,7 +24,7 @@ module.exports = function(grunt) {
       options: {
         jshintrc: 'test/jshint_config.json'
       },
-      all: ['src/avm1/*.js', 'src/flash/**/*.js', 'src/swf/*.js']
+      all: ['src/flash/**/*.js', 'src/swf/*.js']
     },
     exec: {
       webserver: {
@@ -42,6 +42,10 @@ module.exports = function(grunt) {
       build_avm2_ts: {
         cmd: '../../node_modules/.bin/tsc --target ES5 references.ts',
         cwd: 'src/avm2'
+      },
+      build_avm1_ts: {
+        cmd: '../../node_modules/.bin/tsc --target ES5 references.ts',
+        cwd: 'src/avm1'
       },
       generate_abcs: {
         cmd: 'python generate.py',
@@ -81,6 +85,10 @@ module.exports = function(grunt) {
       avm2_ts: {
         files: ['src/avm2/*.ts'],
         tasks: ['exec:build_avm2_ts']
+      },
+      avm1_ts: {
+        files: ['src/avm1/*.ts'],
+        tasks: ['exec:build_avm1_ts']
       }
     }
   });
@@ -127,9 +135,10 @@ module.exports = function(grunt) {
   grunt.registerTask('build-web', ['exec:build_avm2_ts', 'exec:build_bundle', 'exec:build_extension', 'exec:build_web']);
   grunt.registerTask('build-extension', ['exec:build_avm2_ts', 'exec:build_bundle', 'exec:build_extension']);
   grunt.registerTask('build-playerglobal', ['exec:build_playerglobal']);
-  grunt.registerTask('build-bundle', ['exec:build_avm2_ts', 'exec:build_bundle']);
+  grunt.registerTask('build-bundle', ['exec:build_avm2_ts', 'exec:build_avm1_ts', 'exec:build_bundle']);
 
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('avm1lib', ['exec:build_avm1lib']);
   grunt.registerTask('avm2', ['exec:build_avm2_ts']);
+  grunt.registerTask('avm1', ['exec:build_avm1_ts']);
 };

@@ -144,12 +144,6 @@ limitations under the License.
     <script> console.timeEnd("Load SWF Parser"); </script>
 
 
-    <!-- Load AVM1 Dependencies -->
-    <script> console.time("Load AVM1 Dependencies") </script>
-    <script src="../../src/avm1/stream.js"></script>
-    <script src="../../src/avm1/interpreter.js"></script>
-    <script> console.timeEnd("Load AVM1 Dependencies"); </script>
-
     <script>
       window.print = function (msg) {
         console.log.apply(console, arguments);
@@ -236,6 +230,11 @@ limitations under the License.
     <!--<script src="../../src/avm2/vm.js"></script>-->
     <script> console.timeEnd("Load AVM2 Dependencies"); </script>
 
+    <!-- Load AVM1 Dependencies -->
+    <script> console.time("Load AVM1 Dependencies") </script>
+    <script src="../../src/avm1/stream.js"></script>
+    <script src="../../src/avm1/interpreter.js"></script>
+    <script> console.timeEnd("Load AVM1 Dependencies"); </script>
 
     <script> console.time("Load Compiled Code Cache"); </script>
     <!--<script src="../../src/avm2/bin/out.js"></script>-->
