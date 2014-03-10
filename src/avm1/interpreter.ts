@@ -20,6 +20,8 @@ declare module avm1lib {
     getURL(url: string, target, method?: string);
     nextFrame();
     prevFrame();
+    gotoAndPlay(frame: number);
+    gotoAndStop(frame: number);
     play();
     stop();
     toggleHighQuality();
@@ -65,6 +67,10 @@ module Shumway.AVM1 {
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
 
+  import ActionsDataParser = Shumway.AVM1.ActionsDataParser;
+  import ParsedAction = Shumway.AVM1.ParsedAction;
+  import ParsedPushRegisterAction = Shumway.AVM1.ParsedPushRegisterAction;
+  import ParsedPushConstantAction = Shumway.AVM1.ParsedPushConstantAction;
 
   declare var avm2;
   declare var Proxy;
@@ -509,7 +515,7 @@ module Shumway.AVM1 {
     actionTracer: ActionTracer;
     constantPool: any;
     registers: any[];
-    stream: ActionsDataStream;
+    parser: ActionsDataParser;
     nextPosition: number;
     stack: any[];
     isSwfVersion5: boolean;
@@ -833,38 +839,29 @@ module Shumway.AVM1 {
       }
     }
     function avm1SkipActions(ectx: ExecutionContext, count: number) {
-      var stream = ectx.stream;
+      var parser = ectx.parser;
 
-      while (count > 0 && stream.position < stream.end) {
-        var actionCode = stream.readUI8();
-        var length = actionCode >= 0x80 ? stream.readUI16() : 0;
-        stream.position += length;
-        count--;
-      }
-
-      ectx.nextPosition = stream.position;
+      parser.skip(count);
+      ectx.nextPosition = parser.position;
     }
 
     // SWF 3 actions
-    function avm1_0x81_ActionGotoFrame(ectx: ExecutionContext) {
-      var stream = ectx.stream;
+    function avm1_0x81_ActionGotoFrame(ectx: ExecutionContext, args: any[]) {
       var _global = ectx.global;
-      var nextPosition = ectx.nextPosition;
 
-      var frame = stream.readUI16();
-      var nextActionCode = stream.readUI8();
-      nextPosition++;
-      var methodName = nextActionCode === 0x06 ? 'gotoAndPlay' : 'gotoAndStop';
-      _global[methodName](frame + 1);
-
-      ectx.nextPosition = nextPosition;
+      var frame: number = args[0];
+      var play: boolean = args[1];
+      if (play) {
+        _global.gotoAndPlay(frame + 1);
+      } else {
+        _global.gotoAndStop(frame + 1);
+      }
     }
-    function avm1_0x83_ActionGetURL(ectx: ExecutionContext) {
-      var stream = ectx.stream;
+    function avm1_0x83_ActionGetURL(ectx: ExecutionContext, args: any[]) {
       var _global = ectx.global;
 
-      var urlString = stream.readString();
-      var targetString = stream.readString();
+      var urlString: string = args[0];
+      var targetString: string = args[1];
       _global.getURL(urlString, targetString);
     }
     function avm1_0x04_ActionNextFrame(ectx: ExecutionContext) {
@@ -897,76 +894,40 @@ module Shumway.AVM1 {
 
       _global.stopAllSounds();
     }
-    function avm1_0x8A_ActionWaitForFrame(ectx: ExecutionContext) {
-      var stream = ectx.stream;
+    function avm1_0x8A_ActionWaitForFrame(ectx: ExecutionContext, args: any[]) {
       var _global = ectx.global;
 
-      var frame = stream.readUI16();
-      var count = stream.readUI8();
+      var frame: number = args[0];
+      var count: number = args[1];
       if (!_global.ifFrameLoaded(frame)) {
         avm1SkipActions(ectx, count);
       }
     }
-    function avm1_0x8B_ActionSetTarget(ectx: ExecutionContext) {
-      var stream = ectx.stream;
-
-      var targetName = stream.readString();
+    function avm1_0x8B_ActionSetTarget(ectx: ExecutionContext, args: any[]) {
+      var targetName: string = args[0];
       avm1SetTarget(ectx, targetName);
     }
-    function avm1_0x8C_ActionGoToLabel(ectx: ExecutionContext) {
-      var stream = ectx.stream;
+    function avm1_0x8C_ActionGoToLabel(ectx: ExecutionContext, args: any[]) {
       var _global = ectx.global;
 
-      var label = stream.readString();
+      var label: string = args[0];
       _global.gotoLabel(label);
     }
     // SWF 4 actions
-    function avm1_0x96_ActionPush(ectx: ExecutionContext) {
-      var stream = ectx.stream;
+    function avm1_0x96_ActionPush(ectx: ExecutionContext, args: any[]) {
       var registers = ectx.registers;
       var constantPool = ectx.constantPool;
-      var nextPosition = ectx.nextPosition;
       var stack = ectx.stack;
 
-      var type, value;
-      while (stream.position < nextPosition) {
-        type = stream.readUI8();
-        switch (type | 0) {
-          case 0: // STRING
-            value = stream.readString();
-            break;
-          case 1: // FLOAT
-            value = stream.readFloat();
-            break;
-          case 2: // null
-            value = null;
-            break;
-          case 3: // undefined
-            value = void(0);
-            break;
-          case 4: // Register number
-            value = registers[stream.readUI8()];
-            break;
-          case 5: // Boolean
-            value = stream.readBoolean();
-            break;
-          case 6: // Double
-            value = stream.readDouble();
-            break;
-          case 7: // Integer
-            value = stream.readInteger();
-            break;
-          case 8: // Constant8
-            value = constantPool[stream.readUI8()];
-            break;
-          case 9: // Constant16
-            value = constantPool[stream.readUI16()];
-            break;
-          default:
-            throw new Error('Unknown value type: ' + type);
+      args.forEach(function (value) {
+        if (value instanceof ParsedPushConstantAction) {
+          stack.push(constantPool[(<ParsedPushConstantAction> value).constantIndex]);
+        } else if (value instanceof ParsedPushRegisterAction) {
+          stack.push(registers[(<ParsedPushRegisterAction> value).registerNumber]);
+        } else {
+          stack.push(value);
         }
-        stack.push(value);
-      }
+      });
     }
     function avm1_0x17_ActionPop(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1133,21 +1094,19 @@ module Shumway.AVM1 {
 
       stack.push(_global.mbord(stack.pop()));
     }
-    function avm1_0x99_ActionJump(ectx: ExecutionContext) {
-      var stream = ectx.stream;
+    function avm1_0x99_ActionJump(ectx: ExecutionContext, args: any[]) {
       var nextPosition = ectx.nextPosition;
 
-      var offset = stream.readSI16();
+      var offset: number = args[0];
       nextPosition += offset;
 
       ectx.nextPosition = nextPosition;
     }
-    function avm1_0x9D_ActionIf(ectx: ExecutionContext) {
-      var stream = ectx.stream;
+    function avm1_0x9D_ActionIf(ectx: ExecutionContext, args: any[]) {
       var nextPosition = ectx.nextPosition;
       var stack = ectx.stack;
 
-      var offset = stream.readSI16();
+      var offset: number = args[0];
       var f = !!stack.pop();
       if (f) {
         nextPosition += offset;
@@ -1179,12 +1138,11 @@ module Shumway.AVM1 {
       var variableName = '' + stack.pop();
       avm1SetVariable(ectx, variableName, value);
     }
-    function avm1_0x9A_ActionGetURL2(ectx: ExecutionContext) {
-      var stream = ectx.stream;
+    function avm1_0x9A_ActionGetURL2(ectx: ExecutionContext, args: any[]) {
       var _global = ectx.global;
       var stack = ectx.stack;
 
-      var flags = stream.readUI8();
+      var flags: number = args[0];
       var target = stack.pop();
       var url = stack.pop();
       var sendVarsMethod;
@@ -1205,15 +1163,14 @@ module Shumway.AVM1 {
         _global.loadMovie(url, target, sendVarsMethod);
       }
     }
-    function avm1_0x9F_ActionGotoFrame2(ectx: ExecutionContext) {
-      var stream = ectx.stream;
+    function avm1_0x9F_ActionGotoFrame2(ectx: ExecutionContext, args: any[]) {
       var _global = ectx.global;
       var stack = ectx.stack;
 
-      var flags = stream.readUI8();
+      var flags: number = args[0];
       var gotoParams = [stack.pop()];
       if (!!(flags & 2)) {
-        gotoParams.push(stream.readUI16());
+        gotoParams.push(args[1]);
       }
       var gotoMethod = !!(flags & 1) ? _global.gotoAndPlay : _global.gotoAndStop;
       gotoMethod.apply(_global, gotoParams);
@@ -1285,12 +1242,11 @@ module Shumway.AVM1 {
 
       _global.stopDrag();
     }
-    function avm1_0x8D_ActionWaitForFrame2(ectx: ExecutionContext) {
-      var stream = ectx.stream;
+    function avm1_0x8D_ActionWaitForFrame2(ectx: ExecutionContext, args: any[]) {
       var _global = ectx.global;
       var stack = ectx.stack;
 
-      var count = stream.readUI8();
+      var count: number = args[0];
       var frame = stack.pop();
       if (!_global.ifFrameLoaded(frame)) {
         avm1SkipActions(ectx, count);
@@ -1365,35 +1321,20 @@ module Shumway.AVM1 {
       }
       stack[sp] = result;
     }
-    function avm1_0x88_ActionConstantPool(ectx: ExecutionContext) {
-      var stream = ectx.stream;
-
-      var count = stream.readUI16();
-      var constantPool = [];
-      for (var i = 0; i < count; i++) {
-        constantPool.push(stream.readString());
-      }
+    function avm1_0x88_ActionConstantPool(ectx: ExecutionContext, args: any[]) {
+      var constantPool: any[] = args[0];
       ectx.constantPool = constantPool;
     }
-    function avm1_0x9B_ActionDefineFunction(ectx: ExecutionContext) {
-      var stream = ectx.stream;
-      var nextPosition = ectx.nextPosition;
+    function avm1_0x9B_ActionDefineFunction(ectx: ExecutionContext, args: any[]) {
       var stack = ectx.stack;
       var scope = ectx.scope;
 
-      var functionName = stream.readString();
-      var count = stream.readUI16();
-      var args = [];
-      for (var i = 0; i < count; i++) {
-        args.push(stream.readString());
-      }
-      var codeSize = stream.readUI16();
+      var functionName: string = args[0];
+      var functionParams: string[] = args[1];
+      var functionBody = args[2];
 
-      nextPosition += codeSize;
-      ectx.nextPosition = nextPosition;
-
-      var fn = avm1DefineFunction(ectx, functionName, args, null,
-        stream.readBytes(codeSize));
+      var fn = avm1DefineFunction(ectx, functionName, functionParams, null,
+        functionBody);
       if (functionName) {
         scope.asSetPublicProperty(functionName, fn);
       } else {
@@ -1555,18 +1496,13 @@ module Shumway.AVM1 {
       var obj = stack.pop();
       stack.push(as2GetType(obj) === 'movieclip' ? obj._target : void(0));
     }
-    function avm1_0x94_ActionWith(ectx: ExecutionContext) {
-      var stream = ectx.stream;
-      var nextPosition = ectx.nextPosition;
+    function avm1_0x94_ActionWith(ectx: ExecutionContext, args: any[]) {
       var stack = ectx.stack;
 
-      var codeSize = stream.readUI16();
+      var withBody = args[0];
       var obj = stack.pop();
 
-      nextPosition += codeSize;
-      ectx.nextPosition = nextPosition;
-
-      avm1ProcessWith(ectx, obj, stream.readBytes(codeSize));
+      avm1ProcessWith(ectx, obj, withBody);
     }
     function avm1_0x4A_ActionToNumber(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1679,12 +1615,11 @@ module Shumway.AVM1 {
 
       stack.push(stack.pop(), stack.pop());
     }
-    function avm1_0x87_ActionStoreRegister(ectx: ExecutionContext) {
-      var stream = ectx.stream;
+    function avm1_0x87_ActionStoreRegister(ectx: ExecutionContext, args: any[]) {
       var stack = ectx.stack;
       var registers = ectx.registers;
 
-      var register = stream.readUI8();
+      var register: number = args[0];
       registers[register] = stack[stack.length - 1];
     }
     // SWF 6
@@ -1729,58 +1664,18 @@ module Shumway.AVM1 {
       stack.push(isSwfVersion5 ? <any>f : f ? 1 : 0);
     }
     // SWF 7
-    function avm1_0x8E_ActionDefineFunction2(ectx: ExecutionContext) {
-      var stream = ectx.stream;
-      var nextPosition = ectx.nextPosition;
+    function avm1_0x8E_ActionDefineFunction2(ectx: ExecutionContext, args: any[]) {
       var stack = ectx.stack;
       var scope = ectx.scope;
 
-      var functionName = stream.readString();
-      var count = stream.readUI16();
-      var registerCount = stream.readUI8();
-      var flags = stream.readUI16();
-      var registerAllocation = [];
-      var args = [];
-      for (var i = 0; i < count; i++) {
-        var register = stream.readUI8();
-        var paramName = stream.readString();
-        args.push(paramName);
-        if (register) {
-          registerAllocation[register] = {
-            type: 'param',
-            name: paramName,
-            index: i
-          };
-        }
-      }
-      var codeSize = stream.readUI16();
+      var functionName: string = args[0];
+      var functionParams: string[] = args[1];
+      var registerCount: number = args[2];
+      var registerAllocation = args[3];
+      var functionBody = args[4];
 
-      nextPosition += codeSize;
-      ectx.nextPosition = nextPosition;
-
-      var j = 1;
-      // order this, arguments, super, _root, _parent, and _global
-      if (flags & 0x0001) { // preloadThis
-        registerAllocation[j++] = { type: 'var', name: 'this' };
-      }
-      if (flags & 0x0004) { // preloadArguments
-        registerAllocation[j++] = { type: 'var', name: 'arguments' };
-      }
-      if (flags & 0x0010) { // preloadSuper
-        registerAllocation[j++] = { type: 'var', name: 'super' };
-      }
-      if (flags & 0x0040) { // preloadRoot
-        registerAllocation[j++] = { type: 'var', name: '_root' };
-      }
-      if (flags & 0x0080) { // preloadParent
-        registerAllocation[j++] = { type: 'var', name: '_parent' };
-      }
-      if (flags & 0x0100) { // preloadGlobal
-        registerAllocation[j++] = { type: 'var', name: '_global' };
-      }
-
-      var fn = avm1DefineFunction(ectx, functionName, args,
-        registerAllocation, stream.readBytes(codeSize));
+      var fn = avm1DefineFunction(ectx, functionName, functionParams,
+        registerAllocation, functionBody);
       if (functionName) {
         scope.asSetPublicProperty(functionName, fn);
       } else {
@@ -1817,25 +1712,18 @@ module Shumway.AVM1 {
       }
       constr.$interfaces = interfaces;
     }
-    function avm1_0x8F_ActionTry(ectx: ExecutionContext) {
-      var stream = ectx.stream;
-      var nextPosition = ectx.nextPosition;
-
-      var flags = stream.readUI8();
-      var catchIsRegisterFlag = !!(flags & 4);
-      var finallyBlockFlag = !!(flags & 2);
-      var catchBlockFlag = !!(flags & 1);
-      var trySize = stream.readUI16();
-      var catchSize = stream.readUI16();
-      var finallySize = stream.readUI16();
-      var catchTarget: any = catchIsRegisterFlag ? stream.readUI8() : stream.readString();
-
-      nextPosition += trySize + catchSize + finallySize;
-      ectx.nextPosition = nextPosition;
+    function avm1_0x8F_ActionTry(ectx: ExecutionContext, args: any[]) {
+      var catchIsRegisterFlag: boolean = args[0];
+      var catchTarget = args[1];
+      var tryBody = args[2];
+      var catchBlockFlag: boolean = args[3];
+      var catchBody = args[4];
+      var finallyBlockFlag: boolean = args[5];
+      var finallyBody = args[6];
 
       avm1ProcessTry(ectx, catchIsRegisterFlag,
         finallyBlockFlag, catchBlockFlag, catchTarget,
-        stream.readBytes(trySize), stream.readBytes(catchSize), stream.readBytes(finallySize));
+        tryBody, catchBody, finallyBody);
     }
     function avm1_0x2A_ActionThrow(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1855,31 +1743,29 @@ module Shumway.AVM1 {
       var result = _global.fscommand.apply(null, args);
       stack[sp] = result;
     }
-    function avm1_0x89_ActionStrictMode(ectx: ExecutionContext) {
-      var stream = ectx.stream;
-
-      var mode = stream.readUI8();
+    function avm1_0x89_ActionStrictMode(ectx: ExecutionContext, args: any[]) {
+      var mode: number = args[0];
     }
 
-    function interpretAction(executionContext) {
-      var stream = executionContext.stream;
+    function interpretAction(executionContext: ExecutionContext, parsedAction: ParsedAction) {
       var stack = executionContext.stack;
-
-      var actionCode = stream.readUI8();
-      var length = actionCode >= 0x80 ? stream.readUI16() : 0;
-      var nextPosition = stream.position + length;
+      var parser = executionContext.parser;
+      var nextPosition = parser.position;
       executionContext.nextPosition = nextPosition;
 
+      var actionCode: number = parsedAction.actionCode;
+      var args: any[] = parsedAction.args;
+
       var actionTracer = executionContext.actionTracer;
-      actionTracer.print(stream.position, actionCode, stack);
+      actionTracer.print(parsedAction, stack);
 
       switch (actionCode | 0) {
         // SWF 3 actions
         case 0x81: // ActionGotoFrame
-          avm1_0x81_ActionGotoFrame(executionContext);
+          avm1_0x81_ActionGotoFrame(executionContext, args);
           break;
         case 0x83: // ActionGetURL
-          avm1_0x83_ActionGetURL(executionContext);
+          avm1_0x83_ActionGetURL(executionContext, args);
           break;
         case 0x04: // ActionNextFrame
           avm1_0x04_ActionNextFrame(executionContext);
@@ -1900,17 +1786,17 @@ module Shumway.AVM1 {
           avm1_0x09_ActionStopSounds(executionContext);
           break;
         case 0x8A: // ActionWaitForFrame
-          avm1_0x8A_ActionWaitForFrame(executionContext);
+          avm1_0x8A_ActionWaitForFrame(executionContext, args);
           break;
         case 0x8B: // ActionSetTarget
-          avm1_0x8B_ActionSetTarget(executionContext);
+          avm1_0x8B_ActionSetTarget(executionContext, args);
           break;
         case 0x8C: // ActionGoToLabel
-          avm1_0x8C_ActionGoToLabel(executionContext);
+          avm1_0x8C_ActionGoToLabel(executionContext, args);
           break;
         // SWF 4 actions
         case 0x96: // ActionPush
-          avm1_0x96_ActionPush(executionContext);
+          avm1_0x96_ActionPush(executionContext, args);
           break;
         case 0x17: // ActionPop
           avm1_0x17_ActionPop(executionContext);
@@ -1979,10 +1865,10 @@ module Shumway.AVM1 {
           avm1_0x37_ActionMBAsciiToChar(executionContext);
           break;
         case 0x99: // ActionJump
-          avm1_0x99_ActionJump(executionContext);
+          avm1_0x99_ActionJump(executionContext, args);
           break;
         case 0x9D: // ActionIf
-          avm1_0x9D_ActionIf(executionContext);
+          avm1_0x9D_ActionIf(executionContext, args);
           break;
         case 0x9E: // ActionCall
           avm1_0x9E_ActionCall(executionContext);
@@ -1994,10 +1880,10 @@ module Shumway.AVM1 {
           avm1_0x1D_ActionSetVariable(executionContext);
           break;
         case 0x9A: // ActionGetURL2
-          avm1_0x9A_ActionGetURL2(executionContext);
+          avm1_0x9A_ActionGetURL2(executionContext, args);
           break;
         case 0x9F: // ActionGotoFrame2
-          avm1_0x9F_ActionGotoFrame2(executionContext);
+          avm1_0x9F_ActionGotoFrame2(executionContext, args);
           break;
         case 0x20: // ActionSetTarget2
           avm1_0x20_ActionSetTarget2(executionContext);
@@ -2021,7 +1907,7 @@ module Shumway.AVM1 {
           avm1_0x28_ActionEndDrag(executionContext);
           break;
         case 0x8D: // ActionWaitForFrame2
-          avm1_0x8D_ActionWaitForFrame2(executionContext);
+          avm1_0x8D_ActionWaitForFrame2(executionContext, args);
           break;
         case 0x26: // ActionTrace
           avm1_0x26_ActionTrace(executionContext);
@@ -2040,10 +1926,10 @@ module Shumway.AVM1 {
           avm1_0x52_ActionCallMethod(executionContext);
           break;
         case 0x88: // ActionConstantPool
-          avm1_0x88_ActionConstantPool(executionContext);
+          avm1_0x88_ActionConstantPool(executionContext, args);
           break;
         case 0x9B: // ActionDefineFunction
-          avm1_0x9B_ActionDefineFunction(executionContext);
+          avm1_0x9B_ActionDefineFunction(executionContext, args);
           break;
         case 0x3C: // ActionDefineLocal
           avm1_0x3C_ActionDefineLocal(executionContext);
@@ -2085,7 +1971,7 @@ module Shumway.AVM1 {
           avm1_0x45_ActionTargetPath(executionContext);
           break;
         case 0x94: // ActionWith
-          avm1_0x94_ActionWith(executionContext);
+          avm1_0x94_ActionWith(executionContext, args);
           break;
         case 0x4A: // ActionToNumber
           avm1_0x4A_ActionToNumber(executionContext);
@@ -2139,7 +2025,7 @@ module Shumway.AVM1 {
           avm1_0x4D_ActionStackSwap(executionContext);
           break;
         case 0x87: // ActionStoreRegister
-          avm1_0x87_ActionStoreRegister(executionContext);
+          avm1_0x87_ActionStoreRegister(executionContext, args);
           break;
         // SWF 6
         case 0x54: // ActionInstanceOf
@@ -2159,7 +2045,7 @@ module Shumway.AVM1 {
           break;
         // SWF 7
         case 0x8E: // ActionDefineFunction2
-          avm1_0x8E_ActionDefineFunction2(executionContext);
+          avm1_0x8E_ActionDefineFunction2(executionContext, args);
           break;
         case 0x69: // ActionExtends
           avm1_0x69_ActionExtends(executionContext);
@@ -2171,7 +2057,7 @@ module Shumway.AVM1 {
           avm1_0x2C_ActionImplementsOp(executionContext);
           break;
         case 0x8F: // ActionTry
-          avm1_0x8F_ActionTry(executionContext);
+          avm1_0x8F_ActionTry(executionContext, args);
           break;
         case 0x2A: // ActionThrow
           avm1_0x2A_ActionThrow(executionContext);
@@ -2181,7 +2067,7 @@ module Shumway.AVM1 {
           avm1_0x2D_ActionFSCommand2(executionContext);
           break;
         case 0x89: // ActionStrictMode
-          avm1_0x89_ActionStrictMode(executionContext);
+          avm1_0x89_ActionStrictMode(executionContext, args);
           break;
         case 0: // End of actions
           executionContext.isEndOfActions = true;
@@ -2190,18 +2076,19 @@ module Shumway.AVM1 {
           throw new Error('Unknown action code: ' + actionCode);
       }
 
-      var nextPosition = executionContext.nextPosition;
-      stream.position = nextPosition;
+      nextPosition = executionContext.nextPosition;
+      parser.position = nextPosition;
     }
 
-    function interpretActionWithRecovery(executionContext) {
+    function interpretActionWithRecovery(executionContext: ExecutionContext, parsedAction: ParsedAction) {
+      var currentContext: AS2ContextImpl;
       try {
-        interpretAction(executionContext);
+        interpretAction(executionContext, parsedAction);
 
         executionContext.recoveringFromError = false;
       } catch (e) {
         // handling AVM1 errors
-        var currentContext = executionContext.context;
+        currentContext = executionContext.context;
         if ((avm1ErrorsEnabled.value && !currentContext.isTryCatchListening) ||
           e instanceof AS2CriticalError) {
           throw e;
@@ -2213,11 +2100,9 @@ module Shumway.AVM1 {
         var AVM1_ERROR_TYPE = 1;
         TelemetryService.reportTelemetry({topic: 'error', error: AVM1_ERROR_TYPE});
 
-        var stream = executionContext.stream;
-        var stack = executionContext.stack;
-
+        var parser = executionContext.parser;
         var nextPosition = executionContext.nextPosition;
-        stream.position = nextPosition;
+        parser.position = nextPosition;
 
         if (!executionContext.recoveringFromError) {
           if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
@@ -2235,6 +2120,7 @@ module Shumway.AVM1 {
       var currentContext = <AS2ContextImpl> AS2Context.instance;
 
       var stream = new ActionsDataStream(actionsData, currentContext.swfVersion);
+      var parser = new ActionsDataParser(stream);
       var stack = [];
       var isSwfVersion5 = currentContext.swfVersion >= 5;
       var actionTracer = ActionTracerFactory.get();
@@ -2249,7 +2135,7 @@ module Shumway.AVM1 {
         actionTracer: actionTracer,
         constantPool: constantPool,
         registers: registers,
-        stream: stream,
+        parser: parser,
         nextPosition: 0,
         stack: stack,
         isSwfVersion5: isSwfVersion5,
@@ -2265,19 +2151,20 @@ module Shumway.AVM1 {
       var abortExecutionAt = currentContext.abortExecutionAt;
 
       // will try again if we are skipping errors
-      while (stream.position < stream.end && !executionContext.isEndOfActions) {
+      while (!parser.eof && !executionContext.isEndOfActions) {
         // let's check timeout every 100 instructions
         if (instructionsExecuted++ % 100 === 0 && Date.now() >= abortExecutionAt) {
           throw new AS2CriticalError('long running script -- AVM1 instruction hang timeout');
         }
 
-        interpretActionWithRecovery(executionContext);
+        var parsedAction = parser.readNext();
+        interpretActionWithRecovery(executionContext, parsedAction);
       }
       return stack.pop();
     }
 
   interface ActionTracer {
-    print: (position: number, actionCode: number, stack: any[]) => void;
+    print: (parsedAction: ParsedAction, stack: any[]) => void;
     indent: () => void;
     unindent: () => void;
     message: (msg: string) => void;
@@ -2288,7 +2175,10 @@ module Shumway.AVM1 {
       () => {
         var indentation = 0;
         return {
-          print: function(position: number, actionCode: number, stack: any[]) {
+          print: function(parsedAction: ParsedAction, stack: any[]) {
+            var position: number = parsedAction.position;
+            var actionCode: number = parsedAction.actionCode;
+            var actionName: string = parsedAction.actionName;
             var stackDump = [];
             for(var q = 0; q < stack.length; q++) {
               var item = stack[q];
@@ -2299,7 +2189,7 @@ module Shumway.AVM1 {
             var indent = new Array(indentation + 1).join('..');
 
             console.log('AVM1 trace: ' + indent + position + ': ' +
-              ActionNamesMap[actionCode] + '(' + actionCode.toString(16) + '), ' +
+              actionName + '(' + actionCode.toString(16) + '), ' +
               'stack=' + stackDump);
           },
           indent: function() {
@@ -2316,7 +2206,7 @@ module Shumway.AVM1 {
     )();
 
     private static nullTracer : ActionTracer = {
-      print: function(position: number, actionCode: number, stack: any[]) {},
+      print: function(parsedAction: ParsedAction, stack: any[]) {},
       indent: function() {},
       unindent: function() {},
       message: function(msg: string) {}
@@ -2329,108 +2219,4 @@ module Shumway.AVM1 {
     }
   }
 
-  var ActionNamesMap = {
-    0x00: 'EOA',
-    0x04: 'ActionNextFrame',
-    0x05: 'ActionPreviousFrame',
-    0x06: 'ActionPlay',
-    0x07: 'ActionStop',
-    0x08: 'ActionToggleQuality',
-    0x09: 'ActionStopSounds',
-    0x0A: 'ActionAdd',
-    0x0B: 'ActionSubtract',
-    0x0C: 'ActionMultiply',
-    0x0D: 'ActionDivide',
-    0x0E: 'ActionEquals',
-    0x0F: 'ActionLess',
-    0x10: 'ActionAnd',
-    0x11: 'ActionOr',
-    0x12: 'ActionNot',
-    0x13: 'ActionStringEquals',
-    0x14: 'ActionStringLength',
-    0x15: 'ActionStringExtract',
-    0x17: 'ActionPop',
-    0x18: 'ActionToInteger',
-    0x1C: 'ActionGetVariable',
-    0x1D: 'ActionSetVariable',
-    0x20: 'ActionSetTarget2',
-    0x21: 'ActionStringAdd',
-    0x22: 'ActionGetProperty',
-    0x23: 'ActionSetProperty',
-    0x24: 'ActionCloneSprite',
-    0x25: 'ActionRemoveSprite',
-    0x26: 'ActionTrace',
-    0x27: 'ActionStartDrag',
-    0x28: 'ActionEndDrag',
-    0x29: 'ActionStringLess',
-    0x2A: 'ActionThrow',
-    0x2B: 'ActionCastOp',
-    0x2C: 'ActionImplementsOp',
-    0x2D: 'ActionFSCommand2',
-    0x30: 'ActionRandomNumber',
-    0x31: 'ActionMBStringLength',
-    0x32: 'ActionCharToAscii',
-    0x33: 'ActionAsciiToChar',
-    0x34: 'ActionGetTime',
-    0x35: 'ActionMBStringExtrac',
-    0x36: 'ActionMBCharToAscii',
-    0x37: 'ActionMBAsciiToChar',
-    0x3A: 'ActionDelete',
-    0x3B: 'ActionDelete2',
-    0x3C: 'ActionDefineLocal',
-    0x3D: 'ActionCallFunction',
-    0x3E: 'ActionReturn',
-    0x3F: 'ActionModulo',
-    0x40: 'ActionNewObject',
-    0x41: 'ActionDefineLocal2',
-    0x42: 'ActionInitArray',
-    0x43: 'ActionInitObject',
-    0x44: 'ActionTypeOf',
-    0x45: 'ActionTargetPath',
-    0x46: 'ActionEnumerate',
-    0x47: 'ActionAdd2',
-    0x48: 'ActionLess2',
-    0x49: 'ActionEquals2',
-    0x4A: 'ActionToNumber',
-    0x4B: 'ActionToString',
-    0x4C: 'ActionPushDuplicate',
-    0x4D: 'ActionStackSwap',
-    0x4E: 'ActionGetMember',
-    0x4F: 'ActionSetMember',
-    0x50: 'ActionIncrement',
-    0x51: 'ActionDecrement',
-    0x52: 'ActionCallMethod',
-    0x53: 'ActionNewMethod',
-    0x54: 'ActionInstanceOf',
-    0x55: 'ActionEnumerate2',
-    0x60: 'ActionBitAnd',
-    0x61: 'ActionBitOr',
-    0x62: 'ActionBitXor',
-    0x63: 'ActionBitLShift',
-    0x64: 'ActionBitRShift',
-    0x65: 'ActionBitURShift',
-    0x66: 'ActionStrictEquals',
-    0x67: 'ActionGreater',
-    0x68: 'ActionStringGreater',
-    0x69: 'ActionExtends',
-    0x81: 'ActionGotoFrame',
-    0x83: 'ActionGetURL',
-    0x87: 'ActionStoreRegister',
-    0x88: 'ActionConstantPool',
-    0x89: 'ActionStrictMode',
-    0x8A: 'ActionWaitForFrame',
-    0x8B: 'ActionSetTarget',
-    0x8C: 'ActionGoToLabel',
-    0x8D: 'ActionWaitForFrame2',
-    0x8E: 'ActionDefineFunction',
-    0x8F: 'ActionTry',
-    0x94: 'ActionWith',
-    0x96: 'ActionPush',
-    0x99: 'ActionJump',
-    0x9A: 'ActionGetURL2',
-    0x9B: 'ActionDefineFunction',
-    0x9D: 'ActionIf',
-    0x9E: 'ActionCall',
-    0x9F: 'ActionGotoFrame2'
-  };
 }

@@ -162,6 +162,7 @@ load($SHUMWAY_ROOT + "src/avm2/interpreter.js");
 load($SHUMWAY_ROOT + "utils/builder/templates/avm2utils.js");
 
 load($SHUMWAY_ROOT + "src/avm1/stream.js");
+load($SHUMWAY_ROOT + "src/avm1/parser.js");
 load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
 
 // Manually add directories here, this doesn't get automatically updated by
