@@ -19,6 +19,9 @@ interface Object {
   __proto__: Object;
 }
 
+interface JSObject extends Object {}
+interface JSFunction extends Function {}
+
 module Shumway.AVM2.AS {
   import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
   import Multiname = Shumway.AVM2.ABC.Multiname;
@@ -99,16 +102,24 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class Class extends Object {
+  export interface IClassTemplate {
+    asConstructor: new (...args) => any;
+    staticDelegates?: any [];
+    instanceDelegates?: any [];
+    prototype: any;
+  }
+
+  export class Class extends Object implements IClassTemplate {
     classInfo: ClassInfo;
     asConstructor: new (...args) => any;
-    template: any;
-    constructor(classInfo: ClassInfo, template: any) {
+    template: IClassTemplate;
+    staticDelegates: JSObject [];
+    instanceDelegates: JSObject [];
+    constructor(classInfo: ClassInfo, template: IClassTemplate) {
       super();
       this.classInfo = classInfo;
       this.asConstructor = template.asConstructor;
       this.template = template;
-      log("Created XXX: " + classInfo);
     }
     get prototype() {
       Debug.notImplemented("get prototype");
@@ -118,6 +129,25 @@ module Shumway.AVM2.AS {
       // Verify that we have bindings for all native traits.
       writer && writer.enter("Verify Template: " + this.classInfo + " {");
       var traits = [this.classInfo.traits, this.classInfo.instanceInfo.traits];
+
+      var staticHolders: JSObject [] = [this.template];
+      if (this.template.staticDelegates) {
+        Shumway.ArrayUtilities.pushMany(staticHolders, this.template.staticDelegates);
+      }
+      var instanceHolders: JSObject [] = [this.template.prototype];
+      if (this.template.instanceDelegates) {
+        Shumway.ArrayUtilities.pushMany(instanceHolders, this.template.instanceDelegates);
+      }
+
+      function has(objects: JSObject [], predicate: (object: JSObject, name: string) => boolean, name) {
+        for (var i = 0; i < objects.length; i++) {
+          if (predicate(objects[i], name)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
       for (var j = 0; j < traits.length; j++) {
         var isClassTrait = j === 0;
         for (var i = 0; i < traits[j].length; i++) {
@@ -126,16 +156,19 @@ module Shumway.AVM2.AS {
           if (!(trait.isMethodOrAccessor() && trait.methodInfo.isNative())) {
             continue;
           }
-          var holder = isClassTrait ? this.template : this.template.prototype;
+          var holders = isClassTrait ? staticHolders : instanceHolders;
           var hasDefinition = false;
           if (trait.isMethod()) {
-            hasDefinition = Shumway.ObjectUtilities.hasOwnProperty(holder, name);
+            hasDefinition = has(holders, Shumway.ObjectUtilities.hasOwnProperty, name);
           } else if (trait.isGetter()) {
-            hasDefinition = Shumway.ObjectUtilities.hasOwnGetter(holder, name);
+            hasDefinition = has(holders, Shumway.ObjectUtilities.hasOwnGetter, name);
           } else if (trait.isSetter()) {
-            hasDefinition = Shumway.ObjectUtilities.hasOwnSetter(holder, name);
+            hasDefinition = has(holders, Shumway.ObjectUtilities.hasOwnSetter, name);
           }
-          Debug.assert(hasDefinition, "Template is missing an implementation of the native " + (isClassTrait ? "static" : "instance") + " trait: " + trait + " in class: " + this.classInfo);
+          if (!hasDefinition) {
+            warn("Template is missing an implementation of the native " + (isClassTrait ? "static" : "instance") + " trait: " + trait + " in class: " + this.classInfo);
+          }
+          // Debug.assert(hasDefinition, "Template is missing an implementation of the native " + (isClassTrait ? "static" : "instance") + " trait: " + trait + " in class: " + this.classInfo);
         }
       }
 
@@ -206,42 +239,15 @@ module Shumway.AVM2.AS {
 
   export class Number extends Object {
     public static asConstructor: any = jsGlobal.Number;
-
-    static abs         :(x: number) => number = jsGlobal.Math.abs;
-    static acos        :(x: number) => number = jsGlobal.Math.acos;
-    static asin        :(x: number) => number = jsGlobal.Math.asin;
-    static atan        :(x: number) => number = jsGlobal.Math.atan;
-    static ceil        :(x: number) => number = jsGlobal.Math.ceil;
-    static cos         :(x: number) => number = jsGlobal.Math.cos;
-    static exp         :(x: number) => number = jsGlobal.Math.exp;
-    static floor       :(x: number) => number = jsGlobal.Math.floor;
-    static log         :(x: number) => number = jsGlobal.Math.log;
-    static round       :(x: number) => number = jsGlobal.Math.round;
-    static sin         :(x: number) => number = jsGlobal.Math.sin;
-    static sqrt        :(x: number) => number = jsGlobal.Math.sqrt;
-    static tan         :(x: number) => number = jsGlobal.Math.tan;
-    static atan2       :(y: number, x: number) => number = jsGlobal.Math.atan2;
-    static pow         :(x: number, y: number) => number = jsGlobal.Math.pow;
-    static max         :(x: number = NEGATIVE_INFINITY, y: number = NEGATIVE_INFINITY, ... rest) => number = jsGlobal.Math.max;
-    static min         :(x: number = POSITIVE_INFINITY, y: number = POSITIVE_INFINITY, ... rest) => number = jsGlobal.Math.min;
-    static random      :() => number = jsGlobal.Math.random;
+    public static staticDelegates: any [] = [jsGlobal.Math];
+    public static instanceDelegates: any [] = [jsGlobal.Number.prototype];
 
     static _numberToString(n: number, radix: number): string { Debug.notImplemented("_numberToString"); return; }
     static _convert(n: number, precision: number, mode: number): string { Debug.notImplemented("_convert"); return; }
     static _minValue(): number { Debug.notImplemented("_minValue"); return; }
 
-    toString(radix = 10): string { Debug.notImplemented("toString"); return; }
-    valueOf(): any { Debug.notImplemented("valueOf"); return; }
-    toExponential(p = 0): string { Debug.notImplemented("toExponential"); return; }
-    toPrecision(p = 0): string { Debug.notImplemented("toPrecision"); return; }
-    toFixed(p = 0): string { Debug.notImplemented("toFixed"); return; }
-  }
 
-  Number.prototype.toString = jsGlobal.Number.toString;
-  Number.prototype.valueOf = jsGlobal.Number.valueOf;
-  Number.prototype.toExponential = jsGlobal.Number.toExponential;
-  Number.prototype.toPrecision = jsGlobal.Number.toPrecision;
-  Number.prototype.toFixed = jsGlobal.Number.toFixed;
+  }
 
   export class Int extends Object {
     public static asConstructor: any = jsGlobal.Number;
@@ -253,6 +259,8 @@ module Shumway.AVM2.AS {
 
   export class String extends Object {
     public static asConstructor: any = jsGlobal.String;
+    public static staticDelegates: any [] = [jsGlobal.String];
+    public static instanceDelegates: any [] = [jsGlobal.String.prototype];
   }
 
   export class Array extends Object {

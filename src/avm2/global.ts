@@ -16,12 +16,12 @@
 
 interface JSGlobal {
   Object: any;
-  String: String;
-  Number: Number;
-  Boolean: Boolean;
+  String: Function;
+  Number: Function;
+  Boolean: Function;
   Function: Function;
-  Math: Math;
-  Array: any [];
+  Math: Function;
+  Array: Function;
   performance: any;
   print: any;
 }

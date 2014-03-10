@@ -230,6 +230,12 @@ module Shumway {
       }
       dst.length = count;
     }
+
+    export function pushMany(dst: any [], src: any []) {
+      for (var i = 0; i < src.length; i++) {
+        dst.push(src[i]);
+      }
+    }
   }
 
   export module ObjectUtilities {
