@@ -17,6 +17,111 @@
 module Shumway.AVM1 {
   import ActionsDataStream = Shumway.AVM1.ActionsDataStream;
 
+  export enum ActionCode {
+    None = 0x00,
+    ActionGotoFrame = 0x81,
+    ActionGetURL = 0x83,
+    ActionNextFrame = 0x04,
+    ActionPreviousFrame = 0x05,
+    ActionPlay = 0x06,
+    ActionStop = 0x07,
+    ActionToggleQuality = 0x08,
+    ActionStopSounds = 0x09,
+    ActionWaitForFrame = 0x8A,
+    ActionSetTarget = 0x8B,
+    ActionGoToLabel = 0x8C,
+    ActionPush = 0x96,
+    ActionPop = 0x17,
+    ActionAdd = 0x0A,
+    ActionSubtract = 0x0B,
+    ActionMultiply = 0x0C,
+    ActionDivide = 0x0D,
+    ActionEquals = 0x0E,
+    ActionLess = 0x0F,
+    ActionAnd = 0x10,
+    ActionOr = 0x11,
+    ActionNot = 0x12,
+    ActionStringEquals = 0x13,
+    ActionStringLength = 0x14,
+    ActionMBStringLength = 0x31,
+    ActionStringAdd = 0x21,
+    ActionStringExtract = 0x15,
+    ActionMBStringExtract = 0x35,
+    ActionStringLess = 0x29,
+    ActionToInteger = 0x18,
+    ActionCharToAscii = 0x32,
+    ActionMBCharToAscii = 0x36,
+    ActionAsciiToChar = 0x33,
+    ActionMBAsciiToChar = 0x37,
+    ActionJump = 0x99,
+    ActionIf = 0x9D,
+    ActionCall = 0x9E,
+    ActionGetVariable = 0x1C,
+    ActionSetVariable = 0x1D,
+    ActionGetURL2 = 0x9A,
+    ActionGotoFrame2 = 0x9F,
+    ActionSetTarget2 = 0x20,
+    ActionGetProperty = 0x22,
+    ActionSetProperty = 0x23,
+    ActionCloneSprite = 0x24,
+    ActionRemoveSprite = 0x25,
+    ActionStartDrag = 0x27,
+    ActionEndDrag = 0x28,
+    ActionWaitForFrame2 = 0x8D,
+    ActionTrace = 0x26,
+    ActionGetTime = 0x34,
+    ActionRandomNumber = 0x30,
+    ActionCallFunction = 0x3D,
+    ActionCallMethod = 0x52,
+    ActionConstantPool = 0x88,
+    ActionDefineFunction = 0x9B,
+    ActionDefineLocal = 0x3C,
+    ActionDefineLocal2 = 0x41,
+    ActionDelete = 0x3A,
+    ActionDelete2 = 0x3B,
+    ActionEnumerate = 0x46,
+    ActionEquals2 = 0x49,
+    ActionGetMember = 0x4E,
+    ActionInitArray = 0x42,
+    ActionInitObject = 0x43,
+    ActionNewMethod = 0x53,
+    ActionNewObject = 0x40,
+    ActionSetMember = 0x4F,
+    ActionTargetPath = 0x45,
+    ActionWith = 0x94,
+    ActionToNumber = 0x4A,
+    ActionToString = 0x4B,
+    ActionTypeOf = 0x44,
+    ActionAdd2 = 0x47,
+    ActionLess2 = 0x48,
+    ActionModulo = 0x3F,
+    ActionBitAnd = 0x60,
+    ActionBitLShift = 0x63,
+    ActionBitOr = 0x61,
+    ActionBitRShift = 0x64,
+    ActionBitURShift = 0x65,
+    ActionBitXor = 0x62,
+    ActionDecrement = 0x51,
+    ActionIncrement = 0x50,
+    ActionPushDuplicate = 0x4C,
+    ActionReturn = 0x3E,
+    ActionStackSwap = 0x4D,
+    ActionStoreRegister = 0x87,
+    ActionInstanceOf = 0x54,
+    ActionEnumerate2 = 0x55,
+    ActionStrictEquals = 0x66,
+    ActionGreater = 0x67,
+    ActionStringGreater = 0x68,
+    ActionDefineFunction2 = 0x8E,
+    ActionExtends = 0x69,
+    ActionCastOp = 0x2B,
+    ActionImplementsOp = 0x2C,
+    ActionTry = 0x8F,
+    ActionThrow = 0x2A,
+    ActionFSCommand2 = 0x2D,
+    ActionStrictMode = 0x89
+  }
+
   export class ParsedPushRegisterAction {
     constructor(public registerNumber: number) {}
   }
@@ -52,7 +157,7 @@ module Shumway.AVM1 {
 
       var args: any[] = null;
       switch (actionCode | 0) {
-        case 0x81: // ActionGotoFrame
+        case ActionCode.ActionGotoFrame:
           var frame = stream.readUI16();
           var nextActionCode = stream.readUI8();
           var play = false;
@@ -64,25 +169,25 @@ module Shumway.AVM1 {
           }
           args = [frame, play];
           break;
-        case 0x83: // ActionGetURL
+        case ActionCode.ActionGetURL:
           var urlString = stream.readString();
           var targetString = stream.readString();
           args = [urlString, targetString];
           break;
-        case 0x8A: // ActionWaitForFrame
+        case ActionCode.ActionWaitForFrame:
           var frame = stream.readUI16();
           var count = stream.readUI8();
           args = [frame, count];
           break;
-        case 0x8B: // ActionSetTarget
+        case ActionCode.ActionSetTarget:
           var targetName = stream.readString();
           args = [targetName];
           break;
-        case 0x8C: // ActionGoToLabel
+        case ActionCode.ActionGoToLabel:
           var label = stream.readString();
           args = [label];
           break;
-        case 0x96: // ActionPush
+        case ActionCode.ActionPush:
           var type, value;
           args = [];
           while (stream.position < nextPosition) {
@@ -126,30 +231,30 @@ module Shumway.AVM1 {
             args.push(value);
           }
           break;
-        case 0x99: // ActionJump
+        case ActionCode.ActionJump:
           var offset = stream.readSI16();
           args = [offset];
           break;
-        case 0x9D: // ActionIf
+        case ActionCode.ActionIf:
           var offset = stream.readSI16();
           args = [offset];
           break;
-        case 0x9A: // ActionGetURL2
+        case ActionCode.ActionGetURL2:
           var flags = stream.readUI8();
           args = [flags];
           break;
-        case 0x9F: // ActionGotoFrame2
+        case ActionCode.ActionGotoFrame2:
           var flags = stream.readUI8();
           args = [flags];
           if (!!(flags & 2)) {
             args.push(stream.readUI16());
           }
           break;
-        case 0x8D: // ActionWaitForFrame2
+        case ActionCode.ActionWaitForFrame2:
           var count = stream.readUI8();
           args = [count];
           break;
-        case 0x88: // ActionConstantPool
+        case ActionCode.ActionConstantPool:
           var count = stream.readUI16();
           var constantPool = [];
           for (var i = 0; i < count; i++) {
@@ -157,7 +262,7 @@ module Shumway.AVM1 {
           }
           args = [constantPool];
           break;
-        case 0x9B: // ActionDefineFunction
+        case ActionCode.ActionDefineFunction:
           var functionName = stream.readString();
           var count = stream.readUI16();
           var functionParams = [];
@@ -171,17 +276,17 @@ module Shumway.AVM1 {
 
           args = [functionName, functionParams, functionBody];
           break;
-        case 0x94: // ActionWith
+        case ActionCode.ActionWith:
           var codeSize = stream.readUI16();
           nextPosition += codeSize;
           var withBody = stream.readBytes(codeSize);
           args = [withBody];
           break;
-        case 0x87: // ActionStoreRegister
+        case ActionCode.ActionStoreRegister:
           var register = stream.readUI8();
           args = [register];
           break;
-        case 0x8E: // ActionDefineFunction2
+        case ActionCode.ActionDefineFunction2:
           var functionName = stream.readString();
           var count = stream.readUI16();
           var registerCount = stream.readUI8();
@@ -229,7 +334,7 @@ module Shumway.AVM1 {
           args = [functionName, functionParams, registerCount,
             registerAllocation, functionBody];
           break;
-        case 0x8F: // ActionTry
+        case ActionCode.ActionTry:
           var flags = stream.readUI8();
           var catchIsRegisterFlag = !!(flags & 4);
           var finallyBlockFlag = !!(flags & 2);
@@ -248,7 +353,7 @@ module Shumway.AVM1 {
           args = [catchIsRegisterFlag, catchTarget, tryBody,
             catchBlockFlag, catchBody, finallyBlockFlag, finallyBody];
           break;
-        case 0x89: // ActionStrictMode
+        case ActionCode.ActionStrictMode:
           var mode = stream.readUI8();
           args = [mode];
           break;
