@@ -31,6 +31,7 @@ var $RELEASE = false;
 var LoaderDefinition = (function () {
   var AS2Context = Shumway.AVM1.AS2Context;
   var executeActions = Shumway.AVM1.executeActions;
+  var AS2ActionsData = Shumway.AVM1.AS2ActionsData;
 
   var WORKERS_ENABLED = true;
   var LOADER_PATH = $RELEASE ? 'shumway-worker.js' : 'swf/resourceloader.js';
@@ -424,7 +425,7 @@ var LoaderDefinition = (function () {
             // "DoAction tag is not the same as specifying them in a DoInitAction tag"
             for (var i = 0; i < initActionBlocks.length; i++) {
               var spriteId = initActionBlocks[i].spriteId;
-              var actionsData = initActionBlocks[i].actionsData;
+              var actionsData = new AS2ActionsData(initActionBlocks[i].actionsData);
               root.addFrameScript(frameNum - 1, function(actionsData, spriteId, state) {
                 if (state.executed) return;
                 state.executed = true;
@@ -435,12 +436,12 @@ var LoaderDefinition = (function () {
 
           if (actionBlocks) {
             for (var i = 0; i < actionBlocks.length; i++) {
-              var block = actionBlocks[i];
-              root.addFrameScript(frameNum - 1, (function(block) {
+              var actionsData = new AS2ActionsData(actionBlocks[i]);
+              root.addFrameScript(frameNum - 1, (function(actionsData) {
                 return function () {
-                  return executeActions(block, avm1Context, this._getAS2Object());
+                  return executeActions(actionsData, avm1Context, this._getAS2Object());
                 };
-              })(block));
+              })(actionsData));
             }
           }
         }
@@ -727,13 +728,13 @@ var LoaderDefinition = (function () {
             var data = symbol.frameScripts;
             for (var i = 0; i < data.length; i += 2) {
                 var frameNum = data[i] + 1;
-                var block = data[i + 1];
-                var script = (function(block, loader) {
+                var actionsData = new AS2ActionsData(data[i + 1]);
+                var script = (function(actionsData, loader) {
                   return function () {
                     var avm1Context = loader._avm1Context;
-                    return executeActions(block, avm1Context, this._getAS2Object());
+                    return executeActions(actionsData, avm1Context, this._getAS2Object());
                   };
-                })(block, this);
+                })(actionsData, this);
                 if (!frameScripts[frameNum])
                   frameScripts[frameNum] = [script];
                 else

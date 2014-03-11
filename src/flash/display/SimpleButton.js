@@ -19,6 +19,7 @@
 
 var SimpleButtonDefinition = (function () {
   var executeActions = Shumway.AVM1.executeActions;
+  var AS2ActionsData = Shumway.AVM1.AS2ActionsData;
 
   var AVM1KeyCodeMap = [0, 37, 39, 36, 35, 45, 46, 0, 8, 0, 0, 0, 0, 13, 38, 40, 33, 34, 9, 27];
   var AVM1MouseTransitionEvents = [0, 0, 1, 128, 64, 0, 0, 32, 2, 0, 0, 4, 256, 16, 8, 0];
@@ -154,9 +155,9 @@ var SimpleButtonDefinition = (function () {
       for (var i = 0; i < buttonActions.length; i++) {
         var buttonAction = buttonActions[i];
         /*jshint -W083 */
-        var fn = function (actionBlock) {
-          return executeActions(actionBlock, avm1Context, this._getAS2Object());
-        }.bind(this.parent, buttonAction.actionsData);
+        var fn = function (actionsData) {
+          return executeActions(actionsData, avm1Context, this._getAS2Object());
+        }.bind(this.parent, new AS2ActionsData(buttonAction.actionsData));
         var mouseEventFlags = buttonAction.mouseEventFlags;
         if (mouseEventFlags) {
           var mouseEvents = this._avm1MouseEvents || (this._avm1MouseEvents = []);

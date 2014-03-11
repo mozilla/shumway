@@ -72,6 +72,9 @@ module Shumway.AVM1 {
   import ParsedPushRegisterAction = Shumway.AVM1.ParsedPushRegisterAction;
   import ParsedPushConstantAction = Shumway.AVM1.ParsedPushConstantAction;
   import ActionCode = Shumway.AVM1.ActionCode;
+  import AS2ActionsData = Shumway.AVM1.AS2ActionsData;
+  import ActionsDataAnalyzer = Shumway.AVM1.ActionsDataAnalyzer;
+  import ActionCodeBlockItem = Shumway.AVM1.ActionCodeBlockItem;
 
   declare var avm2;
   declare var Proxy;
@@ -415,7 +418,7 @@ module Shumway.AVM1 {
     });
   }
 
-  export function executeActions(actionsData, as2Context: AS2Context, scope) {
+  export function executeActions(actionsData: AS2ActionsData, as2Context: AS2Context, scope) {
     var context = <AS2ContextImpl> as2Context;
     if (context.executionProhibited) {
       return; // no more avm1 for this context
@@ -516,8 +519,7 @@ module Shumway.AVM1 {
     actionTracer: ActionTracer;
     constantPool: any;
     registers: any[];
-    parser: ActionsDataParser;
-    nextPosition: number;
+    isConditionalJump: boolean;
     stack: any[];
     isSwfVersion5: boolean;
     recoveringFromError: boolean;
@@ -839,12 +841,6 @@ module Shumway.AVM1 {
         }
       }
     }
-    function avm1SkipActions(ectx: ExecutionContext, count: number) {
-      var parser = ectx.parser;
-
-      parser.skip(count);
-      ectx.nextPosition = parser.position;
-    }
 
     // SWF 3 actions
     function avm1_0x81_ActionGotoFrame(ectx: ExecutionContext, args: any[]) {
@@ -901,7 +897,7 @@ module Shumway.AVM1 {
       var frame: number = args[0];
       var count: number = args[1];
       if (!_global.ifFrameLoaded(frame)) {
-        avm1SkipActions(ectx, count);
+        ectx.isConditionalJump = true;
       }
     }
     function avm1_0x8B_ActionSetTarget(ectx: ExecutionContext, args: any[]) {
@@ -1096,24 +1092,16 @@ module Shumway.AVM1 {
       stack.push(_global.mbord(stack.pop()));
     }
     function avm1_0x99_ActionJump(ectx: ExecutionContext, args: any[]) {
-      var nextPosition = ectx.nextPosition;
-
-      var offset: number = args[0];
-      nextPosition += offset;
-
-      ectx.nextPosition = nextPosition;
+      // implemented in the analyzer
     }
     function avm1_0x9D_ActionIf(ectx: ExecutionContext, args: any[]) {
-      var nextPosition = ectx.nextPosition;
       var stack = ectx.stack;
 
       var offset: number = args[0];
       var f = !!stack.pop();
       if (f) {
-        nextPosition += offset;
+        ectx.isConditionalJump = true;
       }
-
-      ectx.nextPosition = nextPosition;
     }
     function avm1_0x9E_ActionCall(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1250,7 +1238,7 @@ module Shumway.AVM1 {
       var count: number = args[0];
       var frame = stack.pop();
       if (!_global.ifFrameLoaded(frame)) {
-        avm1SkipActions(ectx, count);
+        ectx.isConditionalJump = true;
       }
     }
     function avm1_0x26_ActionTrace(ectx: ExecutionContext) {
@@ -1750,9 +1738,6 @@ module Shumway.AVM1 {
 
     function interpretAction(executionContext: ExecutionContext, parsedAction: ParsedAction) {
       var stack = executionContext.stack;
-      var parser = executionContext.parser;
-      var nextPosition = parser.position;
-      executionContext.nextPosition = nextPosition;
 
       var actionCode: number = parsedAction.actionCode;
       var args: any[] = parsedAction.args;
@@ -2076,9 +2061,6 @@ module Shumway.AVM1 {
         default:
           throw new Error('Unknown action code: ' + actionCode);
       }
-
-      nextPosition = executionContext.nextPosition;
-      parser.position = nextPosition;
     }
 
     function interpretActionWithRecovery(executionContext: ExecutionContext, parsedAction: ParsedAction) {
@@ -2101,10 +2083,6 @@ module Shumway.AVM1 {
         var AVM1_ERROR_TYPE = 1;
         TelemetryService.reportTelemetry({topic: 'error', error: AVM1_ERROR_TYPE});
 
-        var parser = executionContext.parser;
-        var nextPosition = executionContext.nextPosition;
-        parser.position = nextPosition;
-
         if (!executionContext.recoveringFromError) {
           if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
             throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
@@ -2117,11 +2095,17 @@ module Shumway.AVM1 {
       }
     }
 
-    function interpretActions(actionsData, scopeContainer, constantPool, registers) {
+    function interpretActions(actionsData: AS2ActionsData, scopeContainer, constantPool, registers) {
       var currentContext = <AS2ContextImpl> AS2Context.instance;
 
-      var stream = new ActionsDataStream(actionsData, currentContext.swfVersion);
-      var parser = new ActionsDataParser(stream);
+      if (!actionsData.ir) {
+        var stream = new ActionsDataStream(actionsData.bytes, currentContext.swfVersion);
+        var parser = new ActionsDataParser(stream);
+        var analyzer = new ActionsDataAnalyzer();
+        actionsData.ir = analyzer.analyze(parser);
+      }
+      var ir = actionsData.ir;
+
       var stack = [];
       var isSwfVersion5 = currentContext.swfVersion >= 5;
       var actionTracer = ActionTracerFactory.get();
@@ -2136,8 +2120,7 @@ module Shumway.AVM1 {
         actionTracer: actionTracer,
         constantPool: constantPool,
         registers: registers,
-        parser: parser,
-        nextPosition: 0,
+        isConditionalJump: false,
         stack: stack,
         isSwfVersion5: isSwfVersion5,
         recoveringFromError: false,
@@ -2151,15 +2134,24 @@ module Shumway.AVM1 {
       var instructionsExecuted = 0;
       var abortExecutionAt = currentContext.abortExecutionAt;
 
+      var position = 0;
+      var nextAction: ActionCodeBlockItem = ir.actions[position];
       // will try again if we are skipping errors
-      while (!parser.eof && !executionContext.isEndOfActions) {
+      while (nextAction && !executionContext.isEndOfActions) {
         // let's check timeout every 100 instructions
         if (instructionsExecuted++ % 100 === 0 && Date.now() >= abortExecutionAt) {
           throw new AS2CriticalError('long running script -- AVM1 instruction hang timeout');
         }
 
-        var parsedAction = parser.readNext();
-        interpretActionWithRecovery(executionContext, parsedAction);
+        interpretActionWithRecovery(executionContext, nextAction.action);
+
+        if (executionContext.isConditionalJump) {
+          position = nextAction.conditionalJumpTo;
+          executionContext.isConditionalJump = false;
+        } else {
+          position = nextAction.next;
+        }
+        nextAction = ir.actions[position];
       }
       return stack.pop();
     }

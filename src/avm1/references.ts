@@ -16,5 +16,6 @@
 
 ///<reference path='stream.ts' />
 ///<reference path='parser.ts' />
+///<reference path='analyze.ts' />
 ///<reference path='interpreter.ts' />
 ///<reference path='../avm2/references.ts' />
