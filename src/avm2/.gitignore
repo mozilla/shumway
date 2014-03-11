@@ -7,7 +7,6 @@ hacks.js
 interpreter.js
 metrics.js
 opcodes.js
-options.js
 parser.js
 references.js
 runtime.js
