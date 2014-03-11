@@ -56,7 +56,7 @@ var assert = Shumway.Debug.assert;
 
 
 load(homePath + "src/avm2/avm2Util.js");
-load(homePath + "src/avm2/options.js");
+load(homePath + "src/options.js");
 
 var IndentingWriter = Shumway.IndentingWriter;
 
