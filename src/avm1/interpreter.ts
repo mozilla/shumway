@@ -71,6 +71,12 @@ module Shumway.AVM1 {
   import ParsedAction = Shumway.AVM1.ParsedAction;
   import ParsedPushRegisterAction = Shumway.AVM1.ParsedPushRegisterAction;
   import ParsedPushConstantAction = Shumway.AVM1.ParsedPushConstantAction;
+  import ActionCode = Shumway.AVM1.ActionCode;
+  import AS2ActionsData = Shumway.AVM1.AS2ActionsData;
+  import ActionsDataAnalyzer = Shumway.AVM1.ActionsDataAnalyzer;
+  import ActionCodeBlockItem = Shumway.AVM1.ActionCodeBlockItem;
+  import ActionCodeBlock = Shumway.AVM1.ActionCodeBlock;
+  import AnalyzerResults = Shumway.AVM1.AnalyzerResults;
 
   declare var avm2;
   declare var Proxy;
@@ -88,8 +94,11 @@ module Shumway.AVM1 {
   var avm1Options = systemOptions.register(new OptionSet("AVM1 Options"));
   export var avm1TraceEnabled = avm1Options.register(new Option("t1", "traceAvm1", "boolean", false, "trace AVM1 execution"));
   export var avm1ErrorsEnabled = avm1Options.register(new Option("e1", "errorsAvm1", "boolean", false, "fail on AVM1 errors"));
+  export var avm1TimeoutDisabled = avm1Options.register(new Option("ha1", "nohangAvm1", "boolean", false, "disable fail on AVM1 hang"));
+  export var avm1CompilerEnabled = avm1Options.register(new Option("ca1", "compileAvm1", "boolean", true, "compiles AVM1 code"));
 
   var MAX_AVM1_HANG_TIMEOUT = 1000;
+  var CHECK_AVM1_HANG_EVERY = 1000;
   var MAX_AVM1_ERRORS_LIMIT = 1000;
   var MAX_AVM1_STACK_LIMIT = 256;
 
@@ -414,7 +423,7 @@ module Shumway.AVM1 {
     });
   }
 
-  export function executeActions(actionsData, as2Context: AS2Context, scope) {
+  export function executeActions(actionsData: AS2ActionsData, as2Context: AS2Context, scope) {
     var context = <AS2ContextImpl> as2Context;
     if (context.executionProhibited) {
       return; // no more avm1 for this context
@@ -427,7 +436,8 @@ module Shumway.AVM1 {
     try {
       AS2Context.instance = context;
       context.isActive = true;
-      context.abortExecutionAt = Date.now() + MAX_AVM1_HANG_TIMEOUT;
+      context.abortExecutionAt = avm1TimeoutDisabled.value ? Number.MAX_VALUE :
+        Date.now() + MAX_AVM1_HANG_TIMEOUT;
       context.errorsIgnored = 0;
       context.defaultTarget = scope;
       context.globals.asSetPublicProperty('this', scope);
@@ -515,8 +525,7 @@ module Shumway.AVM1 {
     actionTracer: ActionTracer;
     constantPool: any;
     registers: any[];
-    parser: ActionsDataParser;
-    nextPosition: number;
+    isConditionalJump: boolean;
     stack: any[];
     isSwfVersion5: boolean;
     recoveringFromError: boolean;
@@ -838,12 +847,6 @@ module Shumway.AVM1 {
         }
       }
     }
-    function avm1SkipActions(ectx: ExecutionContext, count: number) {
-      var parser = ectx.parser;
-
-      parser.skip(count);
-      ectx.nextPosition = parser.position;
-    }
 
     // SWF 3 actions
     function avm1_0x81_ActionGotoFrame(ectx: ExecutionContext, args: any[]) {
@@ -900,7 +903,7 @@ module Shumway.AVM1 {
       var frame: number = args[0];
       var count: number = args[1];
       if (!_global.ifFrameLoaded(frame)) {
-        avm1SkipActions(ectx, count);
+        ectx.isConditionalJump = true;
       }
     }
     function avm1_0x8B_ActionSetTarget(ectx: ExecutionContext, args: any[]) {
@@ -1095,24 +1098,16 @@ module Shumway.AVM1 {
       stack.push(_global.mbord(stack.pop()));
     }
     function avm1_0x99_ActionJump(ectx: ExecutionContext, args: any[]) {
-      var nextPosition = ectx.nextPosition;
-
-      var offset: number = args[0];
-      nextPosition += offset;
-
-      ectx.nextPosition = nextPosition;
+      // implemented in the analyzer
     }
     function avm1_0x9D_ActionIf(ectx: ExecutionContext, args: any[]) {
-      var nextPosition = ectx.nextPosition;
       var stack = ectx.stack;
 
       var offset: number = args[0];
       var f = !!stack.pop();
       if (f) {
-        nextPosition += offset;
+        ectx.isConditionalJump = true;
       }
-
-      ectx.nextPosition = nextPosition;
     }
     function avm1_0x9E_ActionCall(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1249,7 +1244,7 @@ module Shumway.AVM1 {
       var count: number = args[0];
       var frame = stack.pop();
       if (!_global.ifFrameLoaded(frame)) {
-        avm1SkipActions(ectx, count);
+        ectx.isConditionalJump = true;
       }
     }
     function avm1_0x26_ActionTrace(ectx: ExecutionContext) {
@@ -1747,11 +1742,154 @@ module Shumway.AVM1 {
       var mode: number = args[0];
     }
 
+    function wrapAvm1Error(fn: Function): Function {
+      return function avm1ErrorWrapper(executionContext: ExecutionContext, args?: any[]) {
+        var currentContext: AS2ContextImpl;
+        try {
+          fn(executionContext, args);
+
+          executionContext.recoveringFromError = false;
+        } catch (e) {
+          // handling AVM1 errors
+          currentContext = executionContext.context;
+          if ((avm1ErrorsEnabled.value && !currentContext.isTryCatchListening) ||
+            e instanceof AS2CriticalError) {
+            throw e;
+          }
+          if (e instanceof AS2Error) {
+            throw e;
+          }
+
+          var AVM1_ERROR_TYPE = 1;
+          TelemetryService.reportTelemetry({topic: 'error', error: AVM1_ERROR_TYPE});
+
+          if (!executionContext.recoveringFromError) {
+            if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
+              throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
+            }
+            console.error('AVM1 error: ' + e);
+            avm2.exceptions.push({source: 'avm1', message: e.message,
+              stack: e.stack});
+            executionContext.recoveringFromError = true;
+          }
+        }
+      };
+    }
+
+    function generateActionCalls() {
+      var wrap: Function;
+      if (!avm1ErrorsEnabled.value) {
+        wrap = wrapAvm1Error;
+      } else {
+        wrap = function (fn: Function) { return fn; };
+      }
+      return {
+        ActionGotoFrame: wrap(avm1_0x81_ActionGotoFrame),
+        ActionGetURL: wrap(avm1_0x83_ActionGetURL),
+        ActionNextFrame: wrap(avm1_0x04_ActionNextFrame),
+        ActionPreviousFrame: wrap(avm1_0x05_ActionPreviousFrame),
+        ActionPlay: wrap(avm1_0x06_ActionPlay),
+        ActionStop: wrap(avm1_0x07_ActionStop),
+        ActionToggleQuality: wrap(avm1_0x08_ActionToggleQuality),
+        ActionStopSounds: wrap(avm1_0x09_ActionStopSounds),
+        ActionWaitForFrame: wrap(avm1_0x8A_ActionWaitForFrame),
+        ActionSetTarget: wrap(avm1_0x8B_ActionSetTarget),
+        ActionGoToLabel: wrap(avm1_0x8C_ActionGoToLabel),
+        ActionPush: wrap(avm1_0x96_ActionPush),
+        ActionPop: wrap(avm1_0x17_ActionPop),
+        ActionAdd: wrap(avm1_0x0A_ActionAdd),
+        ActionSubtract: wrap(avm1_0x0B_ActionSubtract),
+        ActionMultiply: wrap(avm1_0x0C_ActionMultiply),
+        ActionDivide: wrap(avm1_0x0D_ActionDivide),
+        ActionEquals: wrap(avm1_0x0E_ActionEquals),
+        ActionLess: wrap(avm1_0x0F_ActionLess),
+        ActionAnd: wrap(avm1_0x10_ActionAnd),
+        ActionOr: wrap(avm1_0x11_ActionOr),
+        ActionNot: wrap(avm1_0x12_ActionNot),
+        ActionStringEquals: wrap(avm1_0x13_ActionStringEquals),
+        ActionStringLength: wrap(avm1_0x14_ActionStringLength),
+        ActionMBStringLength: wrap(avm1_0x31_ActionMBStringLength),
+        ActionStringAdd: wrap(avm1_0x21_ActionStringAdd),
+        ActionStringExtract: wrap(avm1_0x15_ActionStringExtract),
+        ActionMBStringExtract: wrap(avm1_0x35_ActionMBStringExtract),
+        ActionStringLess: wrap(avm1_0x29_ActionStringLess),
+        ActionToInteger: wrap(avm1_0x18_ActionToInteger),
+        ActionCharToAscii: wrap(avm1_0x32_ActionCharToAscii),
+        ActionMBCharToAscii: wrap(avm1_0x36_ActionMBCharToAscii),
+        ActionAsciiToChar: wrap(avm1_0x33_ActionAsciiToChar),
+        ActionMBAsciiToChar: wrap(avm1_0x37_ActionMBAsciiToChar),
+        ActionJump: wrap(avm1_0x99_ActionJump),
+        ActionIf: wrap(avm1_0x9D_ActionIf),
+        ActionCall: wrap(avm1_0x9E_ActionCall),
+        ActionGetVariable: wrap(avm1_0x1C_ActionGetVariable),
+        ActionSetVariable: wrap(avm1_0x1D_ActionSetVariable),
+        ActionGetURL2: wrap(avm1_0x9A_ActionGetURL2),
+        ActionGotoFrame2: wrap(avm1_0x9F_ActionGotoFrame2),
+        ActionSetTarget2: wrap(avm1_0x20_ActionSetTarget2),
+        ActionGetProperty: wrap(avm1_0x22_ActionGetProperty),
+        ActionSetProperty: wrap(avm1_0x23_ActionSetProperty),
+        ActionCloneSprite: wrap(avm1_0x24_ActionCloneSprite),
+        ActionRemoveSprite: wrap(avm1_0x25_ActionRemoveSprite),
+        ActionStartDrag: wrap(avm1_0x27_ActionStartDrag),
+        ActionEndDrag: wrap(avm1_0x28_ActionEndDrag),
+        ActionWaitForFrame2: wrap(avm1_0x8D_ActionWaitForFrame2),
+        ActionTrace: wrap(avm1_0x26_ActionTrace),
+        ActionGetTime: wrap(avm1_0x34_ActionGetTime),
+        ActionRandomNumber: wrap(avm1_0x30_ActionRandomNumber),
+        ActionCallFunction: wrap(avm1_0x3D_ActionCallFunction),
+        ActionCallMethod: wrap(avm1_0x52_ActionCallMethod),
+        ActionConstantPool: wrap(avm1_0x88_ActionConstantPool),
+        ActionDefineFunction: wrap(avm1_0x9B_ActionDefineFunction),
+        ActionDefineLocal: wrap(avm1_0x3C_ActionDefineLocal),
+        ActionDefineLocal2: wrap(avm1_0x41_ActionDefineLocal2),
+        ActionDelete: wrap(avm1_0x3A_ActionDelete),
+        ActionDelete2: wrap(avm1_0x3B_ActionDelete2),
+        ActionEnumerate: wrap(avm1_0x46_ActionEnumerate),
+        ActionEquals2: wrap(avm1_0x49_ActionEquals2),
+        ActionGetMember: wrap(avm1_0x4E_ActionGetMember),
+        ActionInitArray: wrap(avm1_0x42_ActionInitArray),
+        ActionInitObject: wrap(avm1_0x43_ActionInitObject),
+        ActionNewMethod: wrap(avm1_0x53_ActionNewMethod),
+        ActionNewObject: wrap(avm1_0x40_ActionNewObject),
+        ActionSetMember: wrap(avm1_0x4F_ActionSetMember),
+        ActionTargetPath: wrap(avm1_0x45_ActionTargetPath),
+        ActionWith: wrap(avm1_0x94_ActionWith),
+        ActionToNumber: wrap(avm1_0x4A_ActionToNumber),
+        ActionToString: wrap(avm1_0x4B_ActionToString),
+        ActionTypeOf: wrap(avm1_0x44_ActionTypeOf),
+        ActionAdd2: wrap(avm1_0x47_ActionAdd2),
+        ActionLess2: wrap(avm1_0x48_ActionLess2),
+        ActionModulo: wrap(avm1_0x3F_ActionModulo),
+        ActionBitAnd: wrap(avm1_0x60_ActionBitAnd),
+        ActionBitLShift: wrap(avm1_0x63_ActionBitLShift),
+        ActionBitOr: wrap(avm1_0x61_ActionBitOr),
+        ActionBitRShift: wrap(avm1_0x64_ActionBitRShift),
+        ActionBitURShift: wrap(avm1_0x65_ActionBitURShift),
+        ActionBitXor: wrap(avm1_0x62_ActionBitXor),
+        ActionDecrement: wrap(avm1_0x51_ActionDecrement),
+        ActionIncrement: wrap(avm1_0x50_ActionIncrement),
+        ActionPushDuplicate: wrap(avm1_0x4C_ActionPushDuplicate),
+        ActionReturn: wrap(avm1_0x3E_ActionReturn),
+        ActionStackSwap: wrap(avm1_0x4D_ActionStackSwap),
+        ActionStoreRegister: wrap(avm1_0x87_ActionStoreRegister),
+        ActionInstanceOf: wrap(avm1_0x54_ActionInstanceOf),
+        ActionEnumerate2: wrap(avm1_0x55_ActionEnumerate2),
+        ActionStrictEquals: wrap(avm1_0x66_ActionStrictEquals),
+        ActionGreater: wrap(avm1_0x67_ActionGreater),
+        ActionStringGreater: wrap(avm1_0x68_ActionStringGreater),
+        ActionDefineFunction2: wrap(avm1_0x8E_ActionDefineFunction2),
+        ActionExtends: wrap(avm1_0x69_ActionExtends),
+        ActionCastOp: wrap(avm1_0x2B_ActionCastOp),
+        ActionImplementsOp: wrap(avm1_0x2C_ActionImplementsOp),
+        ActionTry: wrap(avm1_0x8F_ActionTry),
+        ActionThrow: wrap(avm1_0x2A_ActionThrow),
+        ActionFSCommand2: wrap(avm1_0x2D_ActionFSCommand2),
+        ActionStrictMode: wrap(avm1_0x89_ActionStrictMode)
+      };
+    }
+
     function interpretAction(executionContext: ExecutionContext, parsedAction: ParsedAction) {
       var stack = executionContext.stack;
-      var parser = executionContext.parser;
-      var nextPosition = parser.position;
-      executionContext.nextPosition = nextPosition;
 
       var actionCode: number = parsedAction.actionCode;
       var args: any[] = parsedAction.args;
@@ -1761,323 +1899,320 @@ module Shumway.AVM1 {
 
       switch (actionCode | 0) {
         // SWF 3 actions
-        case 0x81: // ActionGotoFrame
+        case ActionCode.ActionGotoFrame:
           avm1_0x81_ActionGotoFrame(executionContext, args);
           break;
-        case 0x83: // ActionGetURL
+        case ActionCode.ActionGetURL:
           avm1_0x83_ActionGetURL(executionContext, args);
           break;
-        case 0x04: // ActionNextFrame
+        case ActionCode.ActionNextFrame:
           avm1_0x04_ActionNextFrame(executionContext);
           break;
-        case 0x05: // ActionPreviousFrame
+        case ActionCode.ActionPreviousFrame:
           avm1_0x05_ActionPreviousFrame(executionContext);
           break;
-        case 0x06: // ActionPlay
+        case ActionCode.ActionPlay:
           avm1_0x06_ActionPlay(executionContext);
           break;
-        case 0x07: // ActionStop
+        case ActionCode.ActionStop:
           avm1_0x07_ActionStop(executionContext);
           break;
-        case 0x08: // ActionToggleQuality
+        case ActionCode.ActionToggleQuality:
           avm1_0x08_ActionToggleQuality(executionContext);
           break;
-        case 0x09: // ActionStopSounds
+        case ActionCode.ActionStopSounds:
           avm1_0x09_ActionStopSounds(executionContext);
           break;
-        case 0x8A: // ActionWaitForFrame
+        case ActionCode.ActionWaitForFrame:
           avm1_0x8A_ActionWaitForFrame(executionContext, args);
           break;
-        case 0x8B: // ActionSetTarget
+        case ActionCode.ActionSetTarget:
           avm1_0x8B_ActionSetTarget(executionContext, args);
           break;
-        case 0x8C: // ActionGoToLabel
+        case ActionCode.ActionGoToLabel:
           avm1_0x8C_ActionGoToLabel(executionContext, args);
           break;
         // SWF 4 actions
-        case 0x96: // ActionPush
+        case ActionCode.ActionPush:
           avm1_0x96_ActionPush(executionContext, args);
           break;
-        case 0x17: // ActionPop
+        case ActionCode.ActionPop:
           avm1_0x17_ActionPop(executionContext);
           break;
-        case 0x0A: // ActionAdd
+        case ActionCode.ActionAdd:
           avm1_0x0A_ActionAdd(executionContext);
           break;
-        case 0x0B: // ActionSubtract
+        case ActionCode.ActionSubtract:
           avm1_0x0B_ActionSubtract(executionContext);
           break;
-        case 0x0C: // ActionMultiply
+        case ActionCode.ActionMultiply:
           avm1_0x0C_ActionMultiply(executionContext);
           break;
-        case 0x0D: // ActionDivide
+        case ActionCode.ActionDivide:
           avm1_0x0D_ActionDivide(executionContext);
           break;
-        case 0x0E: // ActionEquals
+        case ActionCode.ActionEquals:
           avm1_0x0E_ActionEquals(executionContext);
           break;
-        case 0x0F: // ActionLess
+        case ActionCode.ActionLess:
           avm1_0x0F_ActionLess(executionContext);
           break;
-        case 0x10: // ActionAnd
+        case ActionCode.ActionAnd:
           avm1_0x10_ActionAnd(executionContext);
           break;
-        case 0x11: // ActionOr
+        case ActionCode.ActionOr:
           avm1_0x11_ActionOr(executionContext);
           break;
-        case 0x12: // ActionNot
+        case ActionCode.ActionNot:
           avm1_0x12_ActionNot(executionContext);
           break;
-        case 0x13: // ActionStringEquals
+        case ActionCode.ActionStringEquals:
           avm1_0x13_ActionStringEquals(executionContext);
           break;
-        case 0x14: // ActionStringLength
+        case ActionCode.ActionStringLength:
           avm1_0x14_ActionStringLength(executionContext);
           break;
-        case 0x31: // ActionMBStringLength
+        case ActionCode.ActionMBStringLength:
           avm1_0x31_ActionMBStringLength(executionContext);
           break;
-        case 0x21: // ActionStringAdd
+        case ActionCode.ActionStringAdd:
           avm1_0x21_ActionStringAdd(executionContext);
           break;
-        case 0x15: // ActionStringExtract
+        case ActionCode.ActionStringExtract:
           avm1_0x15_ActionStringExtract(executionContext);
           break;
-        case 0x35: // ActionMBStringExtract
+        case ActionCode.ActionMBStringExtract:
           avm1_0x35_ActionMBStringExtract(executionContext);
           break;
-        case 0x29: // ActionStringLess
+        case ActionCode.ActionStringLess:
           avm1_0x29_ActionStringLess(executionContext);
           break;
-        case 0x18: // ActionToInteger
+        case ActionCode.ActionToInteger:
           avm1_0x18_ActionToInteger(executionContext);
           break;
-        case 0x32: // ActionCharToAscii
+        case ActionCode.ActionCharToAscii:
           avm1_0x32_ActionCharToAscii(executionContext);
           break;
-        case 0x36: // ActionMBCharToAscii
+        case ActionCode.ActionMBCharToAscii:
           avm1_0x36_ActionMBCharToAscii(executionContext);
           break;
-        case 0x33: // ActionAsciiToChar
+        case ActionCode.ActionAsciiToChar:
           avm1_0x33_ActionAsciiToChar(executionContext);
           break;
-        case 0x37: // ActionMBAsciiToChar
+        case ActionCode.ActionMBAsciiToChar:
           avm1_0x37_ActionMBAsciiToChar(executionContext);
           break;
-        case 0x99: // ActionJump
+        case ActionCode.ActionJump:
           avm1_0x99_ActionJump(executionContext, args);
           break;
-        case 0x9D: // ActionIf
+        case ActionCode.ActionIf:
           avm1_0x9D_ActionIf(executionContext, args);
           break;
-        case 0x9E: // ActionCall
+        case ActionCode.ActionCall:
           avm1_0x9E_ActionCall(executionContext);
           break;
-        case 0x1C: // ActionGetVariable
+        case ActionCode.ActionGetVariable:
           avm1_0x1C_ActionGetVariable(executionContext);
           break;
-        case 0x1D: // ActionSetVariable
+        case ActionCode.ActionSetVariable:
           avm1_0x1D_ActionSetVariable(executionContext);
           break;
-        case 0x9A: // ActionGetURL2
+        case ActionCode.ActionGetURL2:
           avm1_0x9A_ActionGetURL2(executionContext, args);
           break;
-        case 0x9F: // ActionGotoFrame2
+        case ActionCode.ActionGotoFrame2:
           avm1_0x9F_ActionGotoFrame2(executionContext, args);
           break;
-        case 0x20: // ActionSetTarget2
+        case ActionCode.ActionSetTarget2:
           avm1_0x20_ActionSetTarget2(executionContext);
           break;
-        case 0x22: // ActionGetProperty
+        case ActionCode.ActionGetProperty:
           avm1_0x22_ActionGetProperty(executionContext);
           break;
-        case 0x23: // ActionSetProperty
+        case ActionCode.ActionSetProperty:
           avm1_0x23_ActionSetProperty(executionContext);
           break;
-        case 0x24: // ActionCloneSprite
+        case ActionCode.ActionCloneSprite:
           avm1_0x24_ActionCloneSprite(executionContext);
           break;
-        case 0x25: // ActionRemoveSprite
+        case ActionCode.ActionRemoveSprite:
           avm1_0x25_ActionRemoveSprite(executionContext);
           break;
-        case 0x27: // ActionStartDrag
+        case ActionCode.ActionStartDrag:
           avm1_0x27_ActionStartDrag(executionContext);
           break;
-        case 0x28: // ActionEndDrag
+        case ActionCode.ActionEndDrag:
           avm1_0x28_ActionEndDrag(executionContext);
           break;
-        case 0x8D: // ActionWaitForFrame2
+        case ActionCode.ActionWaitForFrame2:
           avm1_0x8D_ActionWaitForFrame2(executionContext, args);
           break;
-        case 0x26: // ActionTrace
+        case ActionCode.ActionTrace:
           avm1_0x26_ActionTrace(executionContext);
           break;
-        case 0x34: // ActionGetTime
+        case ActionCode.ActionGetTime:
           avm1_0x34_ActionGetTime(executionContext);
           break;
-        case 0x30: // ActionRandomNumber
+        case ActionCode.ActionRandomNumber:
           avm1_0x30_ActionRandomNumber(executionContext);
           break;
         // SWF 5
-        case 0x3D: // ActionCallFunction
+        case ActionCode.ActionCallFunction:
           avm1_0x3D_ActionCallFunction(executionContext);
           break;
-        case 0x52: // ActionCallMethod
+        case ActionCode.ActionCallMethod:
           avm1_0x52_ActionCallMethod(executionContext);
           break;
-        case 0x88: // ActionConstantPool
+        case ActionCode.ActionConstantPool:
           avm1_0x88_ActionConstantPool(executionContext, args);
           break;
-        case 0x9B: // ActionDefineFunction
+        case ActionCode.ActionDefineFunction:
           avm1_0x9B_ActionDefineFunction(executionContext, args);
           break;
-        case 0x3C: // ActionDefineLocal
+        case ActionCode.ActionDefineLocal:
           avm1_0x3C_ActionDefineLocal(executionContext);
           break;
-        case 0x41: // ActionDefineLocal2
+        case ActionCode.ActionDefineLocal2:
           avm1_0x41_ActionDefineLocal2(executionContext);
           break;
-        case 0x3A: // ActionDelete
+        case ActionCode.ActionDelete:
           avm1_0x3A_ActionDelete(executionContext);
           break;
-        case 0x3B: // ActionDelete2
+        case ActionCode.ActionDelete2:
           avm1_0x3B_ActionDelete2(executionContext);
           break;
-        case 0x46: // ActionEnumerate
+        case ActionCode.ActionEnumerate:
           avm1_0x46_ActionEnumerate(executionContext);
           break;
-        case 0x49: // ActionEquals2
+        case ActionCode.ActionEquals2:
           avm1_0x49_ActionEquals2(executionContext);
           break;
-        case 0x4E: // ActionGetMember
+        case ActionCode.ActionGetMember:
           avm1_0x4E_ActionGetMember(executionContext);
           break;
-        case 0x42: // ActionInitArray
+        case ActionCode.ActionInitArray:
           avm1_0x42_ActionInitArray(executionContext);
           break;
-        case 0x43: // ActionInitObject
+        case ActionCode.ActionInitObject:
           avm1_0x43_ActionInitObject(executionContext);
           break;
-        case 0x53: // ActionNewMethod
+        case ActionCode.ActionNewMethod:
           avm1_0x53_ActionNewMethod(executionContext);
           break;
-        case 0x40: // ActionNewObject
+        case ActionCode.ActionNewObject:
           avm1_0x40_ActionNewObject(executionContext);
           break;
-        case 0x4F: // ActionSetMember
+        case ActionCode.ActionSetMember:
           avm1_0x4F_ActionSetMember(executionContext);
           break;
-        case 0x45: // ActionTargetPath
+        case ActionCode.ActionTargetPath:
           avm1_0x45_ActionTargetPath(executionContext);
           break;
-        case 0x94: // ActionWith
+        case ActionCode.ActionWith:
           avm1_0x94_ActionWith(executionContext, args);
           break;
-        case 0x4A: // ActionToNumber
+        case ActionCode.ActionToNumber:
           avm1_0x4A_ActionToNumber(executionContext);
           break;
-        case 0x4B: // ActionToString
+        case ActionCode.ActionToString:
           avm1_0x4B_ActionToString(executionContext);
           break;
-        case 0x44: // ActionTypeOf
+        case ActionCode.ActionTypeOf:
           avm1_0x44_ActionTypeOf(executionContext);
           break;
-        case 0x47: // ActionAdd2
+        case ActionCode.ActionAdd2:
           avm1_0x47_ActionAdd2(executionContext);
           break;
-        case 0x48: // ActionLess2
+        case ActionCode.ActionLess2:
           avm1_0x48_ActionLess2(executionContext);
           break;
-        case 0x3F: // ActionModulo
+        case ActionCode.ActionModulo:
           avm1_0x3F_ActionModulo(executionContext);
           break;
-        case 0x60: // ActionBitAnd
+        case ActionCode.ActionBitAnd:
           avm1_0x60_ActionBitAnd(executionContext);
           break;
-        case 0x63: // ActionBitLShift
+        case ActionCode.ActionBitLShift:
           avm1_0x63_ActionBitLShift(executionContext);
           break;
-        case 0x61: // ActionBitOr
+        case ActionCode.ActionBitOr:
           avm1_0x61_ActionBitOr(executionContext);
           break;
-        case 0x64: // ActionBitRShift
+        case ActionCode.ActionBitRShift:
           avm1_0x64_ActionBitRShift(executionContext);
           break;
-        case 0x65: // ActionBitURShift
+        case ActionCode.ActionBitURShift:
           avm1_0x65_ActionBitURShift(executionContext);
           break;
-        case 0x62: // ActionBitXor
+        case ActionCode.ActionBitXor:
           avm1_0x62_ActionBitXor(executionContext);
           break;
-        case 0x51: // ActionDecrement
+        case ActionCode.ActionDecrement:
           avm1_0x51_ActionDecrement(executionContext);
           break;
-        case 0x50: // ActionIncrement
+        case ActionCode.ActionIncrement:
           avm1_0x50_ActionIncrement(executionContext);
           break;
-        case 0x4C: // ActionPushDuplicate
+        case ActionCode.ActionPushDuplicate:
           avm1_0x4C_ActionPushDuplicate(executionContext);
           break;
-        case 0x3E: // ActionReturn
+        case ActionCode.ActionReturn:
           avm1_0x3E_ActionReturn(executionContext);
           break;
-        case 0x4D: // ActionStackSwap
+        case ActionCode.ActionStackSwap:
           avm1_0x4D_ActionStackSwap(executionContext);
           break;
-        case 0x87: // ActionStoreRegister
+        case ActionCode.ActionStoreRegister:
           avm1_0x87_ActionStoreRegister(executionContext, args);
           break;
         // SWF 6
-        case 0x54: // ActionInstanceOf
+        case ActionCode.ActionInstanceOf:
           avm1_0x54_ActionInstanceOf(executionContext);
           break;
-        case 0x55: // ActionEnumerate2
+        case ActionCode.ActionEnumerate2:
           avm1_0x55_ActionEnumerate2(executionContext);
           break;
-        case 0x66: // ActionStrictEquals
+        case ActionCode.ActionStrictEquals:
           avm1_0x66_ActionStrictEquals(executionContext);
           break;
-        case 0x67: // ActionGreater
+        case ActionCode.ActionGreater:
           avm1_0x67_ActionGreater(executionContext);
           break;
-        case 0x68: // ActionStringGreater
+        case ActionCode.ActionStringGreater:
           avm1_0x68_ActionStringGreater(executionContext);
           break;
         // SWF 7
-        case 0x8E: // ActionDefineFunction2
+        case ActionCode.ActionDefineFunction2:
           avm1_0x8E_ActionDefineFunction2(executionContext, args);
           break;
-        case 0x69: // ActionExtends
+        case ActionCode.ActionExtends:
           avm1_0x69_ActionExtends(executionContext);
           break;
-        case 0x2B: // ActionCastOp
+        case ActionCode.ActionCastOp:
           avm1_0x2B_ActionCastOp(executionContext);
           break;
-        case 0x2C: // ActionImplementsOp
+        case ActionCode.ActionImplementsOp:
           avm1_0x2C_ActionImplementsOp(executionContext);
           break;
-        case 0x8F: // ActionTry
+        case ActionCode.ActionTry:
           avm1_0x8F_ActionTry(executionContext, args);
           break;
-        case 0x2A: // ActionThrow
+        case ActionCode.ActionThrow:
           avm1_0x2A_ActionThrow(executionContext);
           break;
         // Not documented by the spec
-        case 0x2D: // ActionFSCommand2
+        case ActionCode.ActionFSCommand2:
           avm1_0x2D_ActionFSCommand2(executionContext);
           break;
-        case 0x89: // ActionStrictMode
+        case ActionCode.ActionStrictMode:
           avm1_0x89_ActionStrictMode(executionContext, args);
           break;
-        case 0: // End of actions
+        case ActionCode.None: // End of actions
           executionContext.isEndOfActions = true;
           break;
         default:
           throw new Error('Unknown action code: ' + actionCode);
       }
-
-      nextPosition = executionContext.nextPosition;
-      parser.position = nextPosition;
     }
 
     function interpretActionWithRecovery(executionContext: ExecutionContext, parsedAction: ParsedAction) {
@@ -2100,10 +2235,6 @@ module Shumway.AVM1 {
         var AVM1_ERROR_TYPE = 1;
         TelemetryService.reportTelemetry({topic: 'error', error: AVM1_ERROR_TYPE});
 
-        var parser = executionContext.parser;
-        var nextPosition = executionContext.nextPosition;
-        parser.position = nextPosition;
-
         if (!executionContext.recoveringFromError) {
           if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
             throw new AS2CriticalError('long running script -- AVM1 errors limit is reached');
@@ -2116,11 +2247,27 @@ module Shumway.AVM1 {
       }
     }
 
-    function interpretActions(actionsData, scopeContainer, constantPool, registers) {
+    function interpretActions(actionsData: AS2ActionsData, scopeContainer, constantPool, registers) {
       var currentContext = <AS2ContextImpl> AS2Context.instance;
 
-      var stream = new ActionsDataStream(actionsData, currentContext.swfVersion);
-      var parser = new ActionsDataParser(stream);
+      if (!actionsData.ir) {
+        var stream = new ActionsDataStream(actionsData.bytes, currentContext.swfVersion);
+        var parser = new ActionsDataParser(stream);
+        var analyzer = new ActionsDataAnalyzer();
+        actionsData.ir = analyzer.analyze(parser);
+
+        if (avm1CompilerEnabled.value) {
+          try {
+            var c = new ActionsDataCompiler();
+            (<any> actionsData.ir).compiled = c.generate(actionsData.ir);
+          } catch (e) {
+            console.error('Unable to compile AVM1 function: ' + e);
+          }
+        }
+      }
+      var ir: AnalyzerResults = actionsData.ir;
+      var compiled: Function = (<any> ir).compiled;
+
       var stack = [];
       var isSwfVersion5 = currentContext.swfVersion >= 5;
       var actionTracer = ActionTracerFactory.get();
@@ -2135,8 +2282,7 @@ module Shumway.AVM1 {
         actionTracer: actionTracer,
         constantPool: constantPool,
         registers: registers,
-        parser: parser,
-        nextPosition: 0,
+        isConditionalJump: false,
         stack: stack,
         isSwfVersion5: isSwfVersion5,
         recoveringFromError: false,
@@ -2147,21 +2293,127 @@ module Shumway.AVM1 {
         currentContext.deferScriptExecution = true;
       }
 
+      if (compiled) {
+        return compiled(executionContext);
+      }
+
       var instructionsExecuted = 0;
       var abortExecutionAt = currentContext.abortExecutionAt;
 
+      var position = 0;
+      var nextAction: ActionCodeBlockItem = ir.actions[position];
       // will try again if we are skipping errors
-      while (!parser.eof && !executionContext.isEndOfActions) {
-        // let's check timeout every 100 instructions
-        if (instructionsExecuted++ % 100 === 0 && Date.now() >= abortExecutionAt) {
+      while (nextAction && !executionContext.isEndOfActions) {
+        // let's check timeout/Date.now every some number of instructions
+        if (instructionsExecuted++ % CHECK_AVM1_HANG_EVERY === 0 && Date.now() >= abortExecutionAt) {
           throw new AS2CriticalError('long running script -- AVM1 instruction hang timeout');
         }
 
-        var parsedAction = parser.readNext();
-        interpretActionWithRecovery(executionContext, parsedAction);
+        interpretActionWithRecovery(executionContext, nextAction.action);
+
+        if (executionContext.isConditionalJump) {
+          position = nextAction.conditionalJumpTo;
+          executionContext.isConditionalJump = false;
+        } else {
+          position = nextAction.next;
+        }
+        nextAction = ir.actions[position];
       }
       return stack.pop();
     }
+
+  // Bare-minimum JavaScript code generator to make debugging better.
+  class ActionsDataCompiler {
+    static cachedCalls;
+    constructor() {
+      if (!ActionsDataCompiler.cachedCalls) {
+        ActionsDataCompiler.cachedCalls = generateActionCalls();
+      }
+    }
+    private convertArgs(args: any[], id: number, res): string {
+      var parts: string[] = [];
+      for (var i: number = 0; i < args.length; i++) {
+        var arg = args[i];
+        if (typeof arg === 'object' && arg !== null && !Array.isArray(arg)) {
+          if (arg instanceof ParsedPushConstantAction) {
+            var hint = '';
+            var currentConstantPool = res.constantPool;
+            if (currentConstantPool) {
+              hint = JSON.stringify(currentConstantPool[(<ParsedPushConstantAction> arg).constantIndex]);
+              // preventing code breakage due to bad constant
+              hint = hint.indexOf('*/') >= 0 ? '' : ' /* ' + hint + ' */';
+            }
+            parts.push('constantPool[' + (<ParsedPushConstantAction> arg).constantIndex + ']' + hint);
+          } else if (arg instanceof ParsedPushRegisterAction) {
+            parts.push('registers[' + (<ParsedPushRegisterAction> arg).registerNumber + ']');
+          } else if (arg instanceof AS2ActionsData) {
+            var resName = 'code_' + id + '_' + i;
+            res[resName] = arg;
+            parts.push('res.' + resName);
+          } else {
+            notImplemented('Unknown AVM1 action argument type');
+          }
+        } else if (arg === undefined) {
+          parts.push('undefined'); // special case
+        } else {
+          parts.push(JSON.stringify(arg));
+        }
+      }
+      return '[' + parts.join(',') + ']';
+    }
+    private convertAction(item: ActionCodeBlockItem, id: number, res): string {
+      switch (item.action.actionCode) {
+        case ActionCode.ActionJump:
+        case ActionCode.ActionReturn:
+          return '';
+        case ActionCode.ActionConstantPool:
+          res.constantPool = item.action.args[0];
+          return '  constantPool = ' + this.convertArgs(item.action.args[0], id, res) + ';\n' +
+                 '  ectx.constantPool = constantPool;\n';
+        default:
+          var result = '  calls.' + item.action.actionName + '(ectx' +
+            (item.action.args ? ',' + this.convertArgs(item.action.args, id, res) : '') +
+            ');\n';
+          if (item.conditionalJumpTo >= 0) {
+            result += '  if (ectx.isConditionalJump) { position = ' + item.conditionalJumpTo + ';' +
+              ' ectx.isConditionalJump = false; break; }\n';
+          }
+          return result;
+      }
+    }
+    private checkAvm1Timeout(ectx: ExecutionContext) {
+      if (Date.now() >= ectx.context.abortExecutionAt) {
+        throw new AS2CriticalError('long running script -- AVM1 instruction hang timeout');
+      }
+    }
+    generate(ir: AnalyzerResults): Function {
+      var blocks = ir.blocks;
+      var res = {};
+      var uniqueId = 0;
+      var fn = 'return function avm1Compiled(ectx) {\n' +
+        'var position = 0;\n' +
+        'var checkTimeAfter = 0;\n' +
+        'var constantPool = ectx.constantPool;\n' +
+        'var registers = ectx.registers, stack = ectx.stack;\n' +
+//        'debugger;\n' +
+        'while (!ectx.isEndOfActions) {\n' +
+        'if (checkTimeAfter <= 0) { checkTimeAfter = ' + CHECK_AVM1_HANG_EVERY + '; checkTimeout(ectx); }\n' +
+        'switch(position) {\n';
+        blocks.forEach((b: ActionCodeBlock) => {
+          fn += ' case ' + b.label + ':\n';
+          b.items.forEach((item: ActionCodeBlockItem) => {
+            fn += this.convertAction(item, uniqueId++, res);
+          });
+          fn += '  position = ' + b.jump + ';\n' +
+                '  checkTimeAfter -= ' + b.items.length + ';\n' +
+                '  break;\n'
+        });
+      fn += ' default: ectx.isEndOfActions = true; break;\n}\n}\n' +
+        'return stack.pop();};';
+      return (new Function ('calls', 'res', 'checkTimeout', fn))(
+        ActionsDataCompiler.cachedCalls, res, this.checkAvm1Timeout);
+    }
+  }
 
   interface ActionTracer {
     print: (parsedAction: ParsedAction, stack: any[]) => void;

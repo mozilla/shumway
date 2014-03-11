@@ -19,6 +19,7 @@
 
 var SpriteDefinition = (function () {
   var executeActions = Shumway.AVM1.executeActions;
+  var AS2ActionsData = Shumway.AVM1.AS2ActionsData;
 
   var def = {
     __class__: 'flash.display.Sprite',
@@ -266,9 +267,9 @@ var SpriteDefinition = (function () {
             break;
           }
           /*jshint -W083 */
-          var fn = function(actionBlock) {
-            return executeActions(actionBlock, avm1Context, this._getAS2Object());
-          }.bind(instance, event.actionsData);
+          var fn = function(actionsData) {
+            return executeActions(actionsData, avm1Context, this._getAS2Object());
+          }.bind(instance, new AS2ActionsData(event.actionsData));
           for (var eventName in event) {
             if (eventName.indexOf("on") !== 0 || !event[eventName])
               continue;
