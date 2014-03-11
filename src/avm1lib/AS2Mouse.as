@@ -20,7 +20,7 @@ import flash.display.Stage;
 import flash.events.MouseEvent;
 
 public dynamic class AS2Mouse {
-  public static function $bind(stage:Stage) {
+  public static function __bind(stage:Stage) {
     stage.addEventListener('mousedown', function (e:flash.events.MouseEvent) {
       Object(AS2Mouse).broadcastMessage('onMouseDown');
     }, false);

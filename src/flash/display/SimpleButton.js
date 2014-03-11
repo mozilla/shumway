@@ -143,10 +143,10 @@ var SimpleButtonDefinition = (function () {
     },
 
     _getAS2Object: function () {
-      if (!this.$as2Object) {
+      if (!this._as2Object) {
         new avm1lib.AS2Button(this);
       }
-      return this.$as2Object;
+      return this._as2Object;
     },
     _initAvm1Events: function (buttonActions) {
       var loader = this._loader;

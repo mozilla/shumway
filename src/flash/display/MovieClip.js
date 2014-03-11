@@ -443,7 +443,7 @@ var MovieClipDefinition = (function () {
     },
 
     _getAS2Object: function () {
-      if (!this.$as2Object) {
+      if (!this._as2Object) {
         if (this._avm1SymbolClass) {
           // hacking wrapper to pass/initialize AS2MovieClip with nativeObject before AS2 constructor is run
           var nativeObject = this, nativeObjectClass = this._avm1SymbolClass;
@@ -459,7 +459,7 @@ var MovieClipDefinition = (function () {
           new avm1lib.AS2MovieClip(this);
         }
       }
-      return this.$as2Object;
+      return this._as2Object;
     },
 
     get currentFrame() {

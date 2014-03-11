@@ -37,7 +37,7 @@ var AS2TextFieldDefinition = (function () {
               return;
             }
             this._variable = name;
-            var instance = this.$nativeObject;
+            var instance = this._nativeAS3Object;
             var hasPath = name.indexOf('.') >= 0 || name.indexOf(':') >= 0;
             var clip;
             if (hasPath) {
@@ -72,12 +72,12 @@ var AS2TextFieldDefinition = (function () {
         },
         _as3Object: {
           get: function () {
-            return this.$nativeObject;
+            return this._nativeAS3Object;
           }
         },
         _init: function init(nativeTextField) {
-          Object.defineProperty(this, '$nativeObject', {value: nativeTextField});
-          nativeTextField.$as2Object = this;
+          Object.defineProperty(this, '_nativeAS3Object', {value: nativeTextField});
+          nativeTextField._as2Object = this;
           initDefaultListeners(this);
         },
       }

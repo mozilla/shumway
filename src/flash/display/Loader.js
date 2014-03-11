@@ -873,8 +873,8 @@ var LoaderDefinition = (function () {
         avm1Context.stage = stage;
         loader._avm1Context = avm1Context;
 
-        avm1lib.AS2Key.class.$bind(stage);
-        avm1lib.AS2Mouse.class.$bind(stage);
+        avm1lib.AS2Key.class.__bind(stage);
+        avm1lib.AS2Mouse.class.__bind(stage);
 
         stage._addEventListener('frameConstructed',
                                 avm1Context.flushPendingScripts.bind(avm1Context),

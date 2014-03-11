@@ -25,24 +25,24 @@ public dynamic class AS2Key {
   public const RIGHT:int = 39;
   public const UP:int = 38;
 
-  static var $keyStates:Array = [];
-  static var $lastKeyCode:int = 0;
+  static var __keyStates:Array = [];
+  static var __lastKeyCode:int = 0;
 
-  public static function $bind(stage:Stage) {
+  public static function __bind(stage:Stage) {
     stage.addEventListener('keyDown', function (e:KeyboardEvent) {
-      AS2Key.$lastKeyCode = e.keyCode;
-      AS2Key.$keyStates[e.keyCode] = 1;
+      AS2Key.__lastKeyCode = e.keyCode;
+      AS2Key.__keyStates[e.keyCode] = 1;
       Object(AS2Key).broadcastMessage('onKeyDown');
     }, false);
     stage.addEventListener('keyUp', function (e:KeyboardEvent) {
-      AS2Key.$lastKeyCode = e.keyCode;
-      delete AS2Key.$keyStates[e.keyCode];
+      AS2Key.__lastKeyCode = e.keyCode;
+      delete AS2Key.__keyStates[e.keyCode];
       Object(AS2Key).broadcastMessage('onKeyUp');
     }, false);
   }
 
   public static function isDown(code) {
-    return !!AS2Key.$keyStates[code];
+    return !!AS2Key.__keyStates[code];
   }
 
   {
