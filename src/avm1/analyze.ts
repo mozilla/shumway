@@ -31,9 +31,16 @@ module Shumway.AVM1 {
     conditionalJumpTo: number;
   }
 
+  export interface AnalyzerResults {
+    /** Sparsed array with compiled actions, index is an original location
+     *  in the binary actions data */
+    actions: ActionCodeBlockItem[];
+    blocks: ActionCodeBlock[];
+  }
+
   export class ActionsDataAnalyzer {
     constructor() {}
-    analyze(parser: ActionsDataParser) {
+    analyze(parser: ActionsDataParser): AnalyzerResults {
       var actions: ActionCodeBlockItem[] = [];
       var labels: number[] = [0];
       var processedLabels: boolean[] = [true];
@@ -63,31 +70,38 @@ module Shumway.AVM1 {
             conditionalJumpTo: -1
           };
 
-          var jumpOffset: number = 0;
+          var jumpPosition: number = 0;
+          var branching: boolean = false;
           var nonConditionalBranching: boolean = false;
           switch (action.actionCode) {
             case ActionCode.ActionWaitForFrame:
             case ActionCode.ActionWaitForFrame2:
+              branching = true;
               // skip is specified in amount of actions (instead of bytes)
               var skipCount: number = action.actionCode === ActionCode.ActionWaitForFrame ?
                 action.args[1] : action.args[0];
               parser.skip(skipCount);
-              jumpOffset = parser.position - nextPosition;
+              jumpPosition = parser.position;
               parser.position = nextPosition;
               break;
             case ActionCode.ActionJump:
               nonConditionalBranching = true;
-              jumpOffset = action.args[0];
+              branching = true;
+              jumpPosition = nextPosition + action.args[0];
               break;
             case ActionCode.ActionIf:
-              jumpOffset = action.args[0];
+              branching = true;
+              jumpPosition = nextPosition + action.args[0];
               break;
+            case ActionCode.ActionThrow:
+            case ActionCode.ActionReturn:
             case ActionCode.None:
               nonConditionalBranching = true;
+              branching = true;
+              jumpPosition = parser.length;
               break;
           }
-          if (jumpOffset !== 0) {
-            var jumpPosition = nextPosition + jumpOffset;
+          if (branching) {
             if (jumpPosition < 0 || jumpPosition > parser.length) {
               console.error('jump outside the action block;');
               jumpPosition = parser.length;
@@ -135,7 +149,8 @@ module Shumway.AVM1 {
         });
       });
       return {
-        actions: actions
+        actions: actions,
+        blocks: blocks
       };
     }
   }
