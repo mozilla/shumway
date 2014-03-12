@@ -288,7 +288,10 @@ var SpriteDefinition = (function () {
           }
         }
         if (eventsBound.length > 0) {
-          instance._addEventListener('removed', function (eventsBound) {
+          instance._addEventListener('removed', function (eventsBound, e) {
+            if (e._target !== this) { // 'removed' bubbles
+              return;
+            }
             for (var i = 0; i < eventsBound.length; i++) {
               eventsBound[i].target._removeEventListener(eventsBound[i].name, eventsBound[i].fn, false);
             }
