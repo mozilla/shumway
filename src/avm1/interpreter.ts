@@ -444,7 +444,7 @@ module Shumway.AVM1 {
       context.globals.asSetPublicProperty('this', scope);
       actionTracer.message('ActionScript Execution Starts');
       actionTracer.indent();
-      interpretActions(actionsData, scopeContainer, null, []);
+      interpretActions(actionsData, scopeContainer, [], []);
     } catch (e) {
       if (e instanceof AS2CriticalError) {
         console.error('Disabling AVM1 execution');
@@ -2332,7 +2332,8 @@ module Shumway.AVM1 {
             var hint = '';
             var currentConstantPool = res.constantPool;
             if (currentConstantPool) {
-              hint = JSON.stringify(currentConstantPool[(<ParsedPushConstantAction> arg).constantIndex]);
+              var constant = currentConstantPool[(<ParsedPushConstantAction> arg).constantIndex];
+              hint = constant === undefined ? 'undefined' : JSON.stringify(constant);
               // preventing code breakage due to bad constant
               hint = hint.indexOf('*/') >= 0 ? '' : ' /* ' + hint + ' */';
             }
