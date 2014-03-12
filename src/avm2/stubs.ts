@@ -152,9 +152,9 @@ module Shumway.AVM2 {
     var className = ii.name;
     var namespace = className.namespaces[0];
     var needsModule = !!namespace.uri;
-    if (namespace.uri.indexOf("flash.") !== 0) {
-      return;
-    }
+//    if (namespace.uri.indexOf("flash.") !== 0) {
+//      return;
+//    }
     writer.writeComment("Class: " + ii.name.name);
     needsModule && writer.enter("module " + namespace.uri + " {");
     var superName = ii.superName;

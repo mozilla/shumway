@@ -34,7 +34,7 @@ declare var performance;
 declare var XMLHttpRequest;
 
 /** @const */ var inBrowser = typeof console != "undefined";
-/** @const */ var release: boolean = true;
+/** @const */ var release: boolean = false;
 /** @const */ var debug: boolean = !release;
 
 declare function assert(condition: any, ...args);

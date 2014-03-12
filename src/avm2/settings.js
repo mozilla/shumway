@@ -17,7 +17,6 @@
  */
 
 var $DEBUG;
-var release = true;
 
 /**
  * Coerce non-primitive parameters. We can "safely" ignore non-primitive coercions because AS3

@@ -192,10 +192,10 @@ module Shumway.AVM2.Runtime {
       var cls;
       if (isNativeClass) {
         cls = buildClass(domain, classScope, instanceConstructor, baseClass);
-        cls.asClass = Shumway.AVM2.AS.createNativeClass(ci);
+        // cls.asClass = Shumway.AVM2.AS.createNativeClass(ci);
       } else {
         cls = new Class(className, instanceConstructor);
-        cls.asClass = new Shumway.AVM2.AS.Class(ci, instanceConstructor);
+        // cls.asClass = new Shumway.AVM2.AS.Class(ci, instanceConstructor);
       }
 
       cls.className = className;

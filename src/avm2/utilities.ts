@@ -195,6 +195,7 @@ module Shumway {
     }
 
     export function notImplemented(message: string) {
+      log("release: " + release);
       release || Debug.assert(false, "Not Implemented " + message);
     }
 
@@ -261,6 +262,10 @@ module Shumway {
       return Object.prototype.hasOwnProperty.call(object, name);
     }
 
+    export function getOwnPropertyDescriptor(object: Object, name: string): PropertyDescriptor {
+      return Object.getOwnPropertyDescriptor(object, name);
+    }
+
     export function hasOwnGetter(object: Object, name: string): boolean {
       var d = Object.getOwnPropertyDescriptor(object, name);
       return !!(d && d.get);
@@ -269,6 +274,10 @@ module Shumway {
     export function hasOwnSetter(object: Object, name: string): boolean {
       var d = Object.getOwnPropertyDescriptor(object, name);
       return !!(d && !!d.set);
+    }
+
+    export function createObject(prototype: Object) {
+      return Object.create(prototype);
     }
 
     export function createEmptyObject() {

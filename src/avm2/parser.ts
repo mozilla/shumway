@@ -294,6 +294,10 @@ module Shumway.AVM2.ABC {
       return this.kind === TRAIT.Setter;
     }
 
+    public isAccessor() {
+      return this.isGetter() || this.isSetter();
+    }
+
     public isMethodOrAccessor() {
       return this.isMethod() || this.isGetter() || this.isSetter();
     }
@@ -424,7 +428,7 @@ module Shumway.AVM2.ABC {
           // NOTE: We can't get the parameter name as described in the spec because
           // some SWFs have invalid parameter names. Tamarin doesn't parse parameter
           // names correctly, so we must follow that same behaviour.
-          if (false) {
+          if (true) {
             this.parameters[i].name = constantPool.strings[stream.readU30()];
           } else {
             stream.readU30();
@@ -815,7 +819,7 @@ module Shumway.AVM2.ABC {
         // FIXME: We need to deal with static protected namespaces the same way as
         // for instance protected namespaces. For now, let's just reset the URI so
         // that name resolution works out.
-        this.uri = "HACK";
+        this.uri = "*";
       }
       this.qualifiedName = Namespace._qualifyNamespace(this.kind, this.uri, this.prefix ? this.prefix : "");
     }

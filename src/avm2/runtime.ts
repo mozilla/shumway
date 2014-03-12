@@ -117,7 +117,7 @@ module Shumway.AVM2.Runtime {
   /**
    * Allow overwriting of the native toString / valueOf with AS3 versions.
    */
-  var useSurrogates = true;
+  var useSurrogates = false;
 
   var callCounter = new Shumway.Metrics.Counter(true);
 
@@ -200,7 +200,7 @@ module Shumway.AVM2.Runtime {
   }
 
   var traitsWriter: IndentingWriter = null; // new IndentingWriter();
-  var callWriter: IndentingWriter = null; // new IndentingWriter();
+  var callWriter: IndentingWriter = new IndentingWriter();
 
   export interface IPatchTarget {
     object: Object;
@@ -732,6 +732,7 @@ module Shumway.AVM2.Runtime {
 
   export function asGetEnumerableKeys(): any [] {
     var self: Object = this;
+    log("WTF: " + this + " " + (typeof this));
     var boxedValue = self.valueOf();
     // TODO: This is probably broken if the object has overwritten |valueOf|.
     if (typeof boxedValue === "string" || typeof boxedValue === "number") {
@@ -1041,6 +1042,7 @@ module Shumway.AVM2.Runtime {
       assert (object);
       originals[surrogate.name] = createEmptyObject();
       surrogate.methods.forEach(function (originalFunctionName) {
+        assert (originalFunctionName);
         var originalFunction;
         if (object.prototype.hasOwnProperty(originalFunctionName)) {
           originalFunction = object.prototype[originalFunctionName];
@@ -1654,16 +1656,7 @@ module Shumway.AVM2.Runtime {
       } else if (md && md.unsafeJSNative) {
         fn = getNative(md.unsafeJSNative.value[0].value);
       } else if (natives) {
-        // At this point the native class already had the scope, so we don't
-        // need to close over the method again.
-        var k = Multiname.getName(mi.name);
-        if (trait.isGetter()) {
-          fn = natives[k] ? natives[k].get : undefined;
-        } else if (trait.isSetter()) {
-          fn = natives[k] ? natives[k].set : undefined;
-        } else {
-          fn = natives[k];
-        }
+        fn = Shumway.AVM2.AS.getMethodOrAccessorNative(trait, natives);
       }
       if (!fn) {
         Shumway.Debug.warning("No native method for: " + trait.kindName() + " " +
@@ -1708,7 +1701,7 @@ module Shumway.AVM2.Runtime {
    * additionally, the class object also has a set of class traits applied to it which are visible via scope lookups.
    */
   export function createClass(classInfo, baseClass, scope) {
-    release || assert (!baseClass || baseClass instanceof Class);
+    // release || assert (!baseClass || baseClass instanceof Class);
 
     var ci = classInfo;
     var ii = ci.instanceInfo;
@@ -1724,7 +1717,8 @@ module Shumway.AVM2.Runtime {
     if (ii.isInterface()) {
       cls = Interface.createInterface(classInfo);
     } else {
-      cls = Class.createClass(classInfo, baseClass, scope);
+      // cls = Class.createClass(classInfo, baseClass, scope);
+      cls = Shumway.AVM2.AS.createClass(classInfo, baseClass, scope);
     }
 
     if (traceClasses.value) {
@@ -1756,7 +1750,13 @@ module Shumway.AVM2.Runtime {
     classInfo.classObject = cls;
 
     // Run the static initializer.
+    if (traceExecution.value) {
+      log("Running " + (ii.isInterface() ? "Interface" : "Class") + ": " + className + " Static Constructor");
+    }
     createFunction(classInfo.init, scope, false, false).call(cls);
+    if (traceExecution.value) {
+      log("Done With Static Constructor");
+    }
 
     // Seal constant traits in the class object.
     if (sealConstTraits) {

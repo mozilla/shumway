@@ -143,7 +143,9 @@ module Shumway.AVM2.Runtime {
       if (this.parent) {
         return (this.cache[key] = this.parent.findScopeProperty(namespaces, name, flags, domain, strict, scopeOnly));
       }
-      if (scopeOnly) return null;
+      if (scopeOnly) {
+        return null;
+      }
       // If we can't find the property look in the domain.
       if ((object = domain.findDomainProperty(new Multiname(namespaces, name, flags), strict, true))) {
         return object;

@@ -23,18 +23,27 @@ interface JSObject extends Object {}
 interface JSFunction extends Function {}
 
 module Shumway.AVM2.AS {
+  
+  import Trait = Shumway.AVM2.ABC.Trait;
   import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
+  import Scope = Shumway.AVM2.Runtime.Scope;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
+  import createObject = Shumway.ObjectUtilities.createObject;
+  import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import notImplemented = Shumway.Debug.notImplemented;
+  import createFunction = Shumway.AVM2.Runtime.createFunction;
+  import Runtime = Shumway.AVM2.Runtime;
   var writer = null; // new Shumway.IndentingWriter();
+
+  import ClassBindings = Shumway.AVM2.Runtime.ClassBindings;
+  import InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;
 
   declare var Int32Vector;
   declare var Uint32Vector;
   declare var Float64Vector;
-  declare var GenericVector;
   declare var arraySort;
 
   /**
@@ -62,11 +71,128 @@ module Shumway.AVM2.AS {
    * properties should be made available.
    *
    */
-  export class Object {
-    public static asConstructor: any = jsGlobal.Object;
+  export interface IASClass {
+    classInfo: ClassInfo;
+    instanceConstructor: new (...args) => any;
+    staticNatives?: any []
+    prototype?: JSObject;
+    instanceNatives?: any [];
+    // prototype: any;
+    construct: (baseClass: ASClass, instanceConstructor: any) => void;
+    verify?: () => void;
+    classBindings: ClassBindings;
+    instanceBindings: InstanceBindings;
+
+    isInstance: (any) => boolean;
+    isInstanceOf: (any) => boolean;
+    coerce: (any) => any;
+    name: Multiname;
+
+    traitsPrototype?: Object;
+    dynamicPrototype?: Object;
+    defaultValue: any;
+  }
+
+  /**
+   * In order to avoid shadowing of JS top level Objects we prefix the AS top level
+   * classes with the "AS" prefix.
+   */
+  
+  export class ASObject {
+    public static instanceConstructor: any = Object;
+    public static classBindings: ClassBindings;
+    public static instanceBindings: InstanceBindings;
+    public static classInfo: ClassInfo;
+    public static staticNatives: any [];
+    public static instanceNatives: any [];
+    public static traitsPrototype = Object.prototype;
+    public static dynamicPrototype = Object.prototype;
+    public static name: Multiname;
+    public static defaultValue: any = null;
+    static construct(baseClass: ASClass) {
+      log("Constructing: Object Class");
+      if (this !== ASObject) {
+        log("Are you sure you don't want to override this?");
+        ASClass.extend(this, baseClass);
+      }
+    }
+
+    public static coerce(value: any): any {
+      return Runtime.asCoerceObject(value);
+    }
+
+    public static isInstanceOf(value: any): boolean {
+      if (value === null) {
+        return false;
+      }
+      // In AS3, |true instanceof Object| is true. It seems that is the case for all primitive values
+      // except for |undefined| which should throw an exception (TODO).
+      return true;
+    }
+
+    public static isInstance(value: any): boolean {
+      if (Shumway.isNullOrUndefined(value)) {
+        return false;
+      }
+      return true;
+    }
+
+    public static verify() {
+      // Verify that we have bindings for all native traits.
+      writer && writer.enter("Verify Template: " + this.classInfo + " {");
+      var traits = [this.classInfo.traits, this.classInfo.instanceInfo.traits];
+
+      var staticNatives: JSObject [] = [this];
+      if (this.staticNatives) {
+        Shumway.ArrayUtilities.pushMany(staticNatives, this.staticNatives);
+      }
+      var instanceNatives: JSObject [] = [this.prototype];
+      if (this.instanceNatives) {
+        Shumway.ArrayUtilities.pushMany(instanceNatives, this.instanceNatives);
+      }
+
+      function has(objects: JSObject [], predicate: (object: JSObject, name: string) => boolean, name) {
+        for (var i = 0; i < objects.length; i++) {
+          if (predicate(objects[i], name)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      for (var j = 0; j < traits.length; j++) {
+        var isClassTrait = j === 0;
+        for (var i = 0; i < traits[j].length; i++) {
+          var trait = traits[j][i];
+          var name = trait.name.name;
+          if (!(trait.isMethodOrAccessor() && trait.methodInfo.isNative())) {
+            continue;
+          }
+          var holders = isClassTrait ? staticNatives : instanceNatives;
+          var hasDefinition = false;
+          if (trait.isMethod()) {
+            hasDefinition = has(holders, Shumway.ObjectUtilities.hasOwnProperty, name);
+          } else if (trait.isGetter()) {
+            hasDefinition = has(holders, Shumway.ObjectUtilities.hasOwnGetter, name);
+          } else if (trait.isSetter()) {
+            hasDefinition = has(holders, Shumway.ObjectUtilities.hasOwnSetter, name);
+          }
+          if (!hasDefinition) {
+            warn("Template is missing an implementation of the native " + (isClassTrait ? "static" : "instance") + " trait: " + trait + " in class: " + this.classInfo);
+          }
+          // Debug.assert(hasDefinition, "Template is missing an implementation of the native " + (isClassTrait ? "static" : "instance") + " trait: " + trait + " in class: " + this.classInfo);
+        }
+      }
+
+      writer && writer.leave("}");
+      Debug.assert(this.instanceConstructor, "Must have a constructor function.");
+    }
 
     static _setPropertyIsEnumerable(o, V: string, enumerable: boolean): void {
-      notImplemented("_setPropertyIsEnumerable");
+      var name = Multiname.getPublicQualifiedName(V);
+      var descriptor = getOwnPropertyDescriptor(o, name);
+      descriptor.enumerable = false;
+      Object.defineProperty(o, name, descriptor);
     }
 
     static _hasOwnProperty(o, V: string): boolean {
@@ -90,7 +216,7 @@ module Shumway.AVM2.AS {
     }
 
     // Hack to make the TypeScript compiler find the original Object.defineProperty.
-    static defineProperty = jsGlobal.Object.defineProperty;
+    static defineProperty = Object.defineProperty;
 
     isPrototypeOf(V = undefined): boolean {
       notImplemented("isPrototypeOf");
@@ -108,135 +234,133 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export interface IClassTemplate {
-    asConstructor: new (...args) => any;
-    staticDelegates?: any [];
-    instanceDelegates?: any [];
-    prototype: any;
-  }
+  export class ASClass extends ASObject implements IASClass {
+    public static instanceConstructor: any = ASClass;
+    public static classBindings: ClassBindings;
+    public static instanceBindings: InstanceBindings;
+    public static classInfo: ClassInfo;
+    public static staticNatives: any [];
+    public static instanceNatives: any [];
+    public static dynamicPrototype: Object;
+    public static traitsPrototype: Object;
 
-  export class Class extends Object implements IClassTemplate {
+    static extend(self: IASClass, baseClass: IASClass) {
+      self.dynamicPrototype = createObject(baseClass.dynamicPrototype);
+      self.traitsPrototype = createObject(self.dynamicPrototype);
+    }
+
     classInfo: ClassInfo;
-    asConstructor: new (...args) => any;
-    template: IClassTemplate;
-    staticDelegates: JSObject [];
-    instanceDelegates: JSObject [];
-    constructor(classInfo: ClassInfo, template: IClassTemplate) {
+    instanceConstructor: new (...args) => any;
+    template: IASClass;
+    staticNatives: JSObject [];
+    instanceNatives: JSObject [];
+
+    classBindings: ClassBindings;
+    instanceBindings: InstanceBindings;
+
+    baseClass: ASClass;
+    traitsPrototype: Object;
+    dynamicPrototype: Object;
+
+    isInstance: (any) => boolean;
+    isInstanceOf: (any) => boolean;
+    coerce: (any) => any;
+    name: Multiname;
+    defaultValue: any = null;
+
+    constructor(classInfo: ClassInfo) {
       super();
-      assert (classInfo);
       this.classInfo = classInfo;
-      this.asConstructor = template.asConstructor;
-      this.template = template;
+//      this.instanceConstructor = template.instanceConstructor;
+//      this.template = template;
+//      this.name = classInfo.instanceInfo.name;
     }
+
+    static wrap(classInfo: ClassInfo, template: IASClass): IASClass {
+      template.classInfo = classInfo;
+      template.name = classInfo.instanceInfo.name;
+      return template;
+    }
+
     get prototype() {
-      notImplemented("get prototype");
-      return {};
+      assert (this.dynamicPrototype);
+      return this.dynamicPrototype;
     }
-    verify() {
-      // Verify that we have bindings for all native traits.
-      writer && writer.enter("Verify Template: " + this.classInfo + " {");
-      var traits = [this.classInfo.traits, this.classInfo.instanceInfo.traits];
 
-      var staticHolders: JSObject [] = [this.template];
-      if (this.template.staticDelegates) {
-        Shumway.ArrayUtilities.pushMany(staticHolders, this.template.staticDelegates);
-      }
-      var instanceHolders: JSObject [] = [this.template.prototype];
-      if (this.template.instanceDelegates) {
-        Shumway.ArrayUtilities.pushMany(instanceHolders, this.template.instanceDelegates);
-      }
-
-      function has(objects: JSObject [], predicate: (object: JSObject, name: string) => boolean, name) {
-        for (var i = 0; i < objects.length; i++) {
-          if (predicate(objects[i], name)) {
-            return true;
-          }
-        }
-        return false;
-      }
-
-      for (var j = 0; j < traits.length; j++) {
-        var isClassTrait = j === 0;
-        for (var i = 0; i < traits[j].length; i++) {
-          var trait = traits[j][i];
-          var name = trait.name.name;
-          if (!(trait.isMethodOrAccessor() && trait.methodInfo.isNative())) {
-            continue;
-          }
-          var holders = isClassTrait ? staticHolders : instanceHolders;
-          var hasDefinition = false;
-          if (trait.isMethod()) {
-            hasDefinition = has(holders, Shumway.ObjectUtilities.hasOwnProperty, name);
-          } else if (trait.isGetter()) {
-            hasDefinition = has(holders, Shumway.ObjectUtilities.hasOwnGetter, name);
-          } else if (trait.isSetter()) {
-            hasDefinition = has(holders, Shumway.ObjectUtilities.hasOwnSetter, name);
-          }
-          if (!hasDefinition) {
-            warn("Template is missing an implementation of the native " + (isClassTrait ? "static" : "instance") + " trait: " + trait + " in class: " + this.classInfo);
-          }
-          // Debug.assert(hasDefinition, "Template is missing an implementation of the native " + (isClassTrait ? "static" : "instance") + " trait: " + trait + " in class: " + this.classInfo);
-        }
-      }
-
-      writer && writer.leave("}");
-      Debug.assert(this.asConstructor, "Must have a constructor function.");
+    /**
+     * Called when the class is actually constructed during bytecode execution.
+     */
+    construct(baseClass: ASClass, instanceConstructor: any) {
+      ASClass.extend(this, baseClass);
     }
   }
 
-  export class Function extends Object {
-    public static asConstructor: any = jsGlobal.Function;
+  export class ASFunction extends ASObject {
+    public static instanceConstructor: any = Function;
+    public static classBindings: ClassBindings;
+    public static instanceBindings: InstanceBindings;
+    public static classInfo: ClassInfo;
+    public static staticNatives: any [] = [Function];
+    public static instanceNatives: any [] = [Function.prototype];
+    public static traitsPrototype = Function.prototype;
+    public static dynamicPrototype = Function.prototype;
+
     constructor() {
       super();
     }
+
     get prototype() {
-      notImplemented("get prototype");
-      return {};
+      return this.prototype;
     }
+
     set prototype(p) {
-      notImplemented("set prototype");
+      this.prototype = p;
     }
+
     get length(): number {
-      notImplemented("get length");
-      return 0;
+      // Check if we're getting the length of a trampoline.
+      if (this.hasOwnProperty(Runtime.VM_LENGTH)) {
+        return this.asLength;
+      }
+      return this.length;
     }
-    call(self = undefined, ...args: any []) {
-      notImplemented("call");
-    }
-    apply(self = undefined, args: any [] = undefined) {
-      notImplemented("apply");
-    }
+
+    call: (self = undefined, ...args: any []) => any;
+    apply: (self = undefined, args: any [] = undefined) => any;
   }
 
-  export class Boolean extends Object {
-    public static asConstructor: any = jsGlobal.Boolean;
+  export class ASBoolean extends ASObject {
+    public static instanceConstructor: any = Boolean;
+    public static classBindings: ClassBindings;
+    public static instanceBindings: InstanceBindings;
+    public static classInfo: ClassInfo;
+    public static staticNatives: any [];
+    public static instanceNatives: any [];
+    public static traitsPrototype = Boolean.prototype;
+    public static dynamicPrototype = Boolean.prototype;
 
     constructor(value: any = undefined) {
       super();
     }
-
-    toString() {
-      notImplemented("toString");
-    }
-
-    valueOf() {
-      notImplemented("valueOf");
-    }
   }
 
-  export class MethodClosure extends Function {
-    public static asConstructor: any = function methodClosure(self, fn) {
+  ASBoolean.prototype.toString = Boolean.prototype.toString;
+  ASBoolean.prototype.valueOf = Boolean.prototype.valueOf;
+
+  export class ASMethodClosure extends ASFunction {
+    public static instanceConstructor: any = function methodClosure(self, fn) {
       var bound = Shumway.FunctionUtilities.bindSafely(fn, self);
       Shumway.ObjectUtilities.defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
       Shumway.ObjectUtilities.defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
     };
+
     constructor(value: any = undefined) {
       super();
     }
   }
 
-  export class Namespace extends Object {
-    public static asConstructor: any = function(prefix: string = undefined, uri: string = undefined) {
+  export class ASNamespace extends ASObject {
+    public static instanceConstructor: any = function(prefix: string = undefined, uri: string = undefined) {
 
     }
 
@@ -244,30 +368,55 @@ module Shumway.AVM2.AS {
     get uri(): String { notImplemented("get uri"); return; }
   }
 
-  export class Number extends Object {
-    public static asConstructor: any = jsGlobal.Number;
-    public static staticDelegates: any [] = [jsGlobal.Math];
-    public static instanceDelegates: any [] = [jsGlobal.Number.prototype];
+  export class ASNumber extends ASObject {
+    public static instanceConstructor: any = Number;
+    public static classBindings: ClassBindings;
+    public static instanceBindings: InstanceBindings;
+    public static classInfo: ClassInfo;
+    public static staticNatives: any [] = [Math];
+    public static instanceNatives: any [] = [Number.prototype];
+    public static traitsPrototype = Number.prototype;
+    public static dynamicPrototype = Number.prototype;
+    public static defaultValue: any = Number(0);
 
     static _numberToString(n: number, radix: number): string { notImplemented("_numberToString"); return; }
     static _convert(n: number, precision: number, mode: number): string { notImplemented("_convert"); return; }
     static _minValue(): number { notImplemented("_minValue"); return; }
-
-
   }
 
-  export class Int extends Object {
-    public static asConstructor: any = jsGlobal.Number;
+  export class ASInt extends ASObject {
+    public static instanceConstructor: any = Number;
+    public static classBindings: ClassBindings;
+    public static instanceBindings: InstanceBindings;
+    public static classInfo: ClassInfo;
+    public static staticNatives: any [] = [Math];
+    public static instanceNatives: any [] = [Number.prototype];
+    public static traitsPrototype = Number.prototype;
+    public static dynamicPrototype = Number.prototype;
+    public static defaultValue: any = 0;
   }
 
-  export class Uint extends Object {
-    public static asConstructor: any = jsGlobal.Number;
+  export class ASUint extends ASObject {
+    public static instanceConstructor: any = Number;
+    public static classBindings: ClassBindings;
+    public static instanceBindings: InstanceBindings;
+    public static classInfo: ClassInfo;
+    public static staticNatives: any [] = [Math];
+    public static instanceNatives: any [] = [Number.prototype];
+    public static traitsPrototype = Number.prototype;
+    public static dynamicPrototype = Number.prototype;
+    public static defaultValue: any = 0;
   }
 
-  export class String extends Object {
-    public static asConstructor: any = jsGlobal.String;
-    public static staticDelegates: any [] = [jsGlobal.String];
-    public static instanceDelegates: any [] = [jsGlobal.String.prototype];
+  export class ASString extends ASObject {
+    public static instanceConstructor: any = String;
+    public static classBindings: ClassBindings;
+    public static instanceBindings: InstanceBindings;
+    public static classInfo: ClassInfo;
+    public static staticNatives: any [] = [String];
+    public static instanceNatives: any [] = [String.prototype];
+    public static traitsPrototype = String.prototype;
+    public static dynamicPrototype = String.prototype;
 
     get length(): number {
       notImplemented("get length");
@@ -275,8 +424,8 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class Array extends Object {
-    public static asConstructor: any = jsGlobal.Array;
+  export class ASArray extends ASObject {
+    public static instanceConstructor: any = Array;
 
     private static _pop(o: any): any {
       notImplemented("public.Array::private static _pop"); return;
@@ -356,14 +505,14 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class Vector<T> extends Object {
-    public static asConstructor: any = jsGlobal.Array;
+  export class ASVector<T> extends ASObject {
+    public static instanceConstructor: any = Array;
   }
 
-  export class ObjectVector extends Vector<Object> {
-    public static asConstructor: any = GenericVector;
-    public static staticDelegates: any [] = [GenericVector];
-    public static instanceDelegates: any [] = [GenericVector.prototype];
+  export class ASIntVector extends ASObject {
+    public static instanceConstructor: any = Int32Vector;
+    public static staticNatives: any [] = [Int32Vector];
+    public static instanceNatives: any [] = [Int32Vector.prototype];
     private static _every(o: any, callback: Function, thisObject: any): boolean {
       return o.every(callback, thisObject);
     }
@@ -376,10 +525,10 @@ module Shumway.AVM2.AS {
     private static _sort: (o: any, args: any []) => any = arraySort;
   }
 
-  export class IntVector extends Object {
-    public static asConstructor: any = Int32Vector;
-    public static staticDelegates: any [] = [Int32Vector];
-    public static instanceDelegates: any [] = [Int32Vector.prototype];
+  export class ASUIntVector extends ASObject {
+    public static instanceConstructor: any = Uint32Vector;
+    public static staticNatives: any [] = [Uint32Vector];
+    public static instanceNatives: any [] = [Uint32Vector.prototype];
     private static _every(o: any, callback: Function, thisObject: any): boolean {
       return o.every(callback, thisObject);
     }
@@ -392,10 +541,10 @@ module Shumway.AVM2.AS {
     private static _sort: (o: any, args: any []) => any = arraySort;
   }
 
-  export class UIntVector extends Object {
-    public static asConstructor: any = Uint32Vector;
-    public static staticDelegates: any [] = [Uint32Vector];
-    public static instanceDelegates: any [] = [Uint32Vector.prototype];
+  export class ASDoubleVector extends ASObject {
+    public static instanceConstructor: any = Float64Vector;
+    public static staticNatives: any [] = [Float64Vector];
+    public static instanceNatives: any [] = [Float64Vector.prototype];
     private static _every(o: any, callback: Function, thisObject: any): boolean {
       return o.every(callback, thisObject);
     }
@@ -408,48 +557,37 @@ module Shumway.AVM2.AS {
     private static _sort: (o: any, args: any []) => any = arraySort;
   }
 
-  export class DoubleVector extends Object {
-    public static asConstructor: any = Float64Vector;
-    public static staticDelegates: any [] = [Float64Vector];
-    public static instanceDelegates: any [] = [Float64Vector.prototype];
-    private static _every(o: any, callback: Function, thisObject: any): boolean {
-      return o.every(callback, thisObject);
-    }
-    private static _forEach(o: any, callback: Function, thisObject: any): void {
-      return o.forEach(callback, thisObject);
-    }
-    private static _some(o: any, callback: Function, thisObject: any): boolean {
-      return o.some(callback, thisObject);
-    }
-    private static _sort: (o: any, args: any []) => any = arraySort;
+  export class ASJSON extends ASObject {
+    public static instanceConstructor: any = Array;
   }
 
-  export class JSON extends Object {
-    public static asConstructor: any = jsGlobal.Array;
+  export class ASXML extends ASObject {
+    public static instanceConstructor: any = Array;
   }
 
-  export class XML extends Object {
-    public static asConstructor: any = jsGlobal.Array;
+  export class ASXMLList extends ASObject {
+    public static instanceConstructor: any = Array;
   }
 
-  export class XMLList extends Object {
-    public static asConstructor: any = jsGlobal.Array;
+  export class ASQName extends ASObject {
+    public static instanceConstructor: any = Array;
   }
 
-  export class QName extends Object {
-    public static asConstructor: any = jsGlobal.Array;
-  }
-
-  export class Error extends Object {
-    public static asConstructor: any = jsGlobal.Array;
+  export class ASError extends ASObject {
+    public static instanceConstructor: any = Array;
     constructor(message = "", id = 0) {
       super();
     }
   }
 
-  var nativeClasses: Shumway.Map<Class> = Shumway.ObjectUtilities.createMap<Class>();
+  var nativeClasses: Shumway.Map<IASClass> = Shumway.ObjectUtilities.createMap<IASClass>();
 
   var isInitialized: boolean = false;
+
+  var ObjectClass: IASClass = null;
+  var ClassClass: IASClass = null;
+  var FunctionClass: IASClass = null;
+
   export function initialize(domain: ApplicationDomain) {
     if (isInitialized) {
       return;
@@ -460,26 +598,26 @@ module Shumway.AVM2.AS {
     function findVectorClassInfo(name: string) {
       return domain.findClassInfo(new Multiname([Shumway.AVM2.ABC.Namespace.VECTOR_PACKAGE], name));
     }
-    nativeClasses["ObjectClass"] = new Class(findClassInfo("Object"), Object);
-    nativeClasses["Class"] = new Class(findClassInfo("Class"), Class);
-    nativeClasses["FunctionClass"] = new Class(findClassInfo("Function"), Function);
-    nativeClasses["BooleanClass"] = new Class(findClassInfo("Boolean"), Boolean);
-    nativeClasses["MethodClosureClass"] = new Class(domain.findClassInfo(new Multiname([Shumway.AVM2.ABC.Namespace.BUILTIN], "MethodClosure")), MethodClosure);
-    nativeClasses["NamespaceClass"] = new Class(findClassInfo("Namespace"), Namespace);
-    nativeClasses["NumberClass"] = new Class(findClassInfo("Number"), Number);
-    nativeClasses["intClass"] = new Class(findClassInfo("int"), Int);
-    nativeClasses["uintClass"] = new Class(findClassInfo("uint"), Uint);
-    nativeClasses["StringClass"] = new Class(findClassInfo("String"), String);
-    nativeClasses["ArrayClass"] = new Class(findClassInfo("Array"), Array);
-    nativeClasses["VectorClass"] = new Class(domain.findClassInfo(new Multiname([Shumway.AVM2.ABC.Namespace.VECTOR], "Vector")), Vector);
-    nativeClasses["ObjectVectorClass"] = new Class(findVectorClassInfo("Vector$object"), ObjectVector);
-    nativeClasses["IntVectorClass"] = new Class(findVectorClassInfo("Vector$int"), IntVector);
-    nativeClasses["UIntVectorClass"] = new Class(findVectorClassInfo("Vector$uint"), UIntVector);
-    nativeClasses["DoubleVectorClass"] = new Class(findVectorClassInfo("Vector$double"), DoubleVector);
-    nativeClasses["JSONClass"] = new Class(findClassInfo("JSON"), JSON);
-    nativeClasses["XMLClass"] = new Class(findClassInfo("XML"), XML);
-    nativeClasses["XMLListClass"] = new Class(findClassInfo("XMLList"), XMLList);
-    nativeClasses["QNameClass"] = new Class(findClassInfo("QName"), QName);
+    ObjectClass = nativeClasses["ObjectClass"] = ASClass.wrap(findClassInfo("Object"), ASObject);
+    ClassClass = nativeClasses["Class"] = ASClass.wrap(findClassInfo("Class"), ASClass);
+    FunctionClass = nativeClasses["FunctionClass"] = ASClass.wrap(findClassInfo("Function"), ASFunction);
+    nativeClasses["BooleanClass"] = ASClass.wrap(findClassInfo("Boolean"), ASBoolean);
+    nativeClasses["MethodClosureClass"] = ASClass.wrap(domain.findClassInfo(new Multiname([Shumway.AVM2.ABC.Namespace.BUILTIN], "MethodClosure")), ASMethodClosure);
+    nativeClasses["NamespaceClass"] = ASClass.wrap(findClassInfo("Namespace"), ASNamespace);
+    nativeClasses["NumberClass"] = ASClass.wrap(findClassInfo("Number"), ASNumber);
+    nativeClasses["intClass"] = ASClass.wrap(findClassInfo("int"), ASInt);
+    nativeClasses["uintClass"] = ASClass.wrap(findClassInfo("uint"), ASUint);
+    nativeClasses["StringClass"] = ASClass.wrap(findClassInfo("String"), ASString);
+    nativeClasses["ArrayClass"] = ASClass.wrap(findClassInfo("Array"), ASArray);
+    nativeClasses["VectorClass"] = ASClass.wrap(domain.findClassInfo(new Multiname([Shumway.AVM2.ABC.Namespace.VECTOR], "Vector")), ASVector);
+    nativeClasses["ObjectVectorClass"] = ASClass.wrap(findVectorClassInfo("Vector$object"), GenericVector);
+    nativeClasses["IntVectorClass"] = ASClass.wrap(findVectorClassInfo("Vector$int"), ASIntVector);
+    nativeClasses["UIntVectorClass"] = ASClass.wrap(findVectorClassInfo("Vector$uint"), ASUIntVector);
+    nativeClasses["DoubleVectorClass"] = ASClass.wrap(findVectorClassInfo("Vector$double"), ASDoubleVector);
+    nativeClasses["JSONClass"] = ASClass.wrap(findClassInfo("JSON"), ASJSON);
+    nativeClasses["XMLClass"] = ASClass.wrap(findClassInfo("XML"), ASXML);
+    nativeClasses["XMLListClass"] = ASClass.wrap(findClassInfo("XMLList"), ASXMLList);
+    nativeClasses["QNameClass"] = ASClass.wrap(findClassInfo("QName"), ASQName);
     isInitialized = true;
 
     for (var k in nativeClasses) {
@@ -494,5 +632,80 @@ module Shumway.AVM2.AS {
     Debug.assert(cls, "Class " + nativeName + " not found.");
     cls.verify();
     return cls;
+  }
+
+  export function createClass(classInfo: ClassInfo, baseClass: ASClass, scope: Scope) {
+    var ci = classInfo;
+    var ii = ci.instanceInfo;
+    var domain = ci.abc.applicationDomain;
+    var className = Multiname.getName(ii.name);
+    var isNativeClass = ci.native;
+    var cls: IASClass;
+    if (isNativeClass) {
+      cls = nativeClasses[ci.native.cls];
+      if (!cls) {
+        Shumway.Debug.unexpected("No native class for " + ci.native.cls);
+      }
+    } else {
+      cls = new ASClass(classInfo);
+    }
+
+    var classScope = new Scope(scope, null);
+    classScope.object = cls;
+    var instanceConstructor = createFunction(ii.init, classScope, false);
+    cls.construct(baseClass, instanceConstructor);
+
+    var staticNatives: JSObject [] = [cls];
+    if (cls.staticNatives) {
+      Shumway.ArrayUtilities.pushMany(staticNatives, cls.staticNatives);
+    }
+
+    cls.classBindings = new ClassBindings(classInfo, classScope, staticNatives);
+    cls.classBindings.applyTo(domain, cls);
+
+    var instanceNatives: JSObject [] = [cls.prototype];
+    if (cls.instanceNatives) {
+      Shumway.ArrayUtilities.pushMany(instanceNatives, cls.instanceNatives);
+    }
+
+    cls.instanceBindings = new InstanceBindings(baseClass ? baseClass.instanceBindings : null, ii, classScope, instanceNatives);
+    if (cls.instanceConstructor) {
+      cls.instanceBindings.applyTo(domain, cls.traitsPrototype);
+    }
+
+    if (cls === ClassClass) {
+      cls.instanceBindings.applyTo(domain, ObjectClass, true);
+    }
+
+    return cls;
+    Shumway.Debug.notImplemented("X");
+  }
+
+  /**
+   * Searches for a native property in a list of native holders.
+   */
+  export function getMethodOrAccessorNative(trait: Trait, natives: JSObject []): any {
+    var name = Multiname.getName(trait.name);
+    for (var i = 0; i < natives.length; i++) {
+      var native = natives[i];
+      if (hasOwnProperty(native, name)) {
+        var value;
+        if (trait.isAccessor()) {
+          var pd = getOwnPropertyDescriptor(native, name);
+          if (trait.isGetter()) {
+            value = pd.get;
+          } else {
+            value = pd.set;
+          }
+        } else {
+          assert (trait.isMethod());
+          value = native[name];
+        }
+        assert (value, "Method or Accessor property exists but it's undefined.");
+        return value;
+      }
+    }
+    log("Cannot find " + trait + " in " + natives);
+    return null;
   }
 }

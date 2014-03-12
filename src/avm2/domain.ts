@@ -440,12 +440,6 @@ module Shumway.AVM2.Runtime {
       return undefined;
     }
 
-    public installNative(name, func) {
-      natives[name] = function() {
-        return func;
-      };
-    }
-
     /**
      * Find the first script that defines a multiname.
      *
