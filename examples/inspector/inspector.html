@@ -42,9 +42,9 @@ limitations under the License.
 
     <div id="debugInfoToolbar" class="toolbarBox withEmphasis">
       <div class="toolbarButtonBar">
-        <div id="showDebugInfo" class="toolbarButton pressedState" data-panelid="debugInfoContainer">Debug Info</div>
+        <div id="showDebugInfo" class="toolbarButton" data-panelid="debugInfoContainer">Debug Info</div>
         <div id="showDisplayList" class="toolbarButton" data-panelid="displayListContainer">Display List</div>
-        <div id="showSettings" class="toolbarButton" data-panelid="settingsContainer">Settings</div>
+        <div id="showSettings" class="toolbarButton pressedState" data-panelid="settingsContainer">Settings</div>
       </div>
       <div id="ctrlLogToConsole">
         <label for="chkLogToConsole">Log to Browser Console</label>
@@ -53,7 +53,7 @@ limitations under the License.
       <div id="openFile" class="toolbarButton" title="Select SWF/ABC file (or drag'n'drop the file on the stage).">Open File</div>
     </div>
 
-    <div id="debugInfoContainer" class="active">
+    <div id="debugInfoContainer">
       <canvas id="traceTerminal" width="600" height="210" tabindex='2'></canvas>
       <canvas id="frameTerminal" width="600" height="410" tabindex='3'></canvas>
       <div id="info" class="debugPanel" tabindex='4'></div>
@@ -61,7 +61,7 @@ limitations under the License.
     </div>
     <div id="displayListContainer">
     </div>
-    <div id="settingsContainer">
+    <div id="settingsContainer" class="active">
     </div>
 
     <div id="bottomToolbar" class="toolbarBox">
