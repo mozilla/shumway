@@ -97,6 +97,12 @@ module Shumway.AVM1 {
   export var avm1ErrorsEnabled = avm1Options.register(new Option("e1", "errorsAvm1", "boolean", false, "fail on AVM1 errors"));
   export var avm1TimeoutDisabled = avm1Options.register(new Option("ha1", "nohangAvm1", "boolean", false, "disable fail on AVM1 hang"));
   export var avm1CompilerEnabled = avm1Options.register(new Option("ca1", "compileAvm1", "boolean", true, "compiles AVM1 code"));
+  export var avm1DebuggerEnabled = avm1Options.register(new Option("da1", "debugAvm1", "boolean", false, "allows AVM1 code debugging"));
+
+  export var Debugger = {
+    pause: false,
+    breakpoints: {}
+  };
 
   var MAX_AVM1_HANG_TIMEOUT = 1000;
   var CHECK_AVM1_HANG_EVERY = 1000;
@@ -630,7 +636,8 @@ module Shumway.AVM1 {
           // switching contexts if called outside main thread
           AS2Context.instance = currentContext;
           if (!savedIsActive) {
-            currentContext.abortExecutionAt = Date.now() + MAX_AVM1_HANG_TIMEOUT;
+            currentContext.abortExecutionAt = avm1TimeoutDisabled.value ?
+              Number.MAX_VALUE : Date.now() + MAX_AVM1_HANG_TIMEOUT;
             currentContext.errorsIgnored = 0;
             currentContext.isActive = true;
           }
@@ -2256,6 +2263,7 @@ module Shumway.AVM1 {
       if (!actionsData.ir) {
         var stream = new ActionsDataStream(actionsData.bytes, currentContext.swfVersion);
         var parser = new ActionsDataParser(stream);
+        parser.dataId = actionsData.id;
         var analyzer = new ActionsDataAnalyzer();
         actionsData.ir = analyzer.analyze(parser);
 
@@ -2302,6 +2310,11 @@ module Shumway.AVM1 {
 
       var instructionsExecuted = 0;
       var abortExecutionAt = currentContext.abortExecutionAt;
+
+      if (avm1DebuggerEnabled.value &&
+          (Debugger.pause || Debugger.breakpoints[ir.dataId])) {
+        debugger;
+      }
 
       var position = 0;
       var nextAction: ActionCodeBlockItem = ir.actions[position];
@@ -2396,13 +2409,17 @@ module Shumway.AVM1 {
       var blocks = ir.blocks;
       var res = {};
       var uniqueId = 0;
-      var fn = 'return function avm1Compiled(ectx) {\n' +
+      var debugName = ir.dataId;
+      var fn = 'return function avm1gen_' + debugName + '(ectx) {\n' +
         'var position = 0;\n' +
         'var checkTimeAfter = 0;\n' +
-        'var constantPool = ectx.constantPool;\n' +
-        'var registers = ectx.registers, stack = ectx.stack;\n' +
-//        'debugger;\n' +
-        'while (!ectx.isEndOfActions) {\n' +
+        'var constantPool = ectx.constantPool, registers = ectx.registers, stack = ectx.stack;\n';
+      if (avm1DebuggerEnabled.value) {
+        fn += '/* Running ' + debugName + ' */ ' +
+          'if (Shumway.AVM1.Debugger.pause || Shumway.AVM1.Debugger.breakpoints.' +
+          debugName + ') { debugger; }\n'
+      }
+      fn += 'while (!ectx.isEndOfActions) {\n' +
         'if (checkTimeAfter <= 0) { checkTimeAfter = ' + CHECK_AVM1_HANG_EVERY + '; checkTimeout(ectx); }\n' +
         'switch(position) {\n';
         blocks.forEach((b: ActionCodeBlock) => {

@@ -158,7 +158,8 @@ var SpriteDefinition = (function () {
           }
 
           if (!loader._isAvm2Enabled) {
-            this._initAvm1Bindings(instance, name, displayListItem.events);
+            this._initAvm1Bindings(instance, name, displayListItem.events,
+                                   's' + props.symbolId + 'c');
             instance._dispatchEvent("init");
             instance._dispatchEvent("construct");
             instance._needLoadEvent = true;
@@ -225,7 +226,8 @@ var SpriteDefinition = (function () {
 
 
       if (!loader._isAvm2Enabled) {
-        parent._initAvm1Bindings(instance, name, symbolInfo && symbolInfo.events);
+        parent._initAvm1Bindings(instance, name, symbolInfo && symbolInfo.events,
+                                 's' + symbolInfo.symbolId + 'd');
         instance._dispatchEvent("init");
         instance._dispatchEvent("construct");
       }
@@ -249,7 +251,7 @@ var SpriteDefinition = (function () {
         this._getAS2Object().asSetPublicProperty(name, child._getAS2Object());
       }
     },
-    _initAvm1Bindings: function (instance, name, events) {
+    _initAvm1Bindings: function (instance, name, events, uniquePrefix) {
       var loader = this._loader;
       var avm1Context = loader._avm1Context;
       var symbolProps = instance.symbol;
@@ -269,7 +271,7 @@ var SpriteDefinition = (function () {
           /*jshint -W083 */
           var fn = function(actionsData) {
             return executeActions(actionsData, avm1Context, this._getAS2Object());
-          }.bind(instance, new AS2ActionsData(event.actionsData));
+          }.bind(instance, new AS2ActionsData(event.actionsData, uniquePrefix + i));
           for (var eventName in event) {
             if (eventName.indexOf("on") !== 0 || !event[eventName])
               continue;
