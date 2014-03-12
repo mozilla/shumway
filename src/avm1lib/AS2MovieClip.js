@@ -26,10 +26,10 @@ var AS2MovieClipDefinition = (function () {
     },
 
     _insertChildAtDepth: function _insertChildAtDepth(mc, depth) {
-      return this.$nativeObject._insertChildAtDepth(mc, depth);
+      return this._nativeAS3Object._insertChildAtDepth(mc, depth);
     },
     _duplicate: function _duplicate(name, depth, initObject) {
-      return this.$nativeObject._duplicate(name, depth, initObject);
+      return this._nativeAS3Object._duplicate(name, depth, initObject);
     },
     _constructSymbol: function constructSymbol(symbolId, name) {
       var theClass = AS2Context.instance.classes && AS2Context.instance.classes[symbolId];
@@ -39,22 +39,22 @@ var AS2MovieClipDefinition = (function () {
       var mc = symbolClass.createAsSymbol(symbolProps);
       mc._avm1SymbolClass = theClass;
       symbolClass.instanceConstructor.call(mc);
-      this.$nativeObject.addChild(mc);
+      this._nativeAS3Object.addChild(mc);
 
       return mc;
     },
     _gotoLabel: function (label) {
-      this.$nativeObject.gotoLabel(label);
+      this._nativeAS3Object.gotoLabel(label);
     },
     _callFrame: function callFrame(frame) {
-      this.$nativeObject._callFrame(frame);
+      this._nativeAS3Object._callFrame(frame);
     },
     init: function init(nativeMovieClip) {
       if (!nativeMovieClip) {
         return; // delaying initialization, see also _constructSymbol
       }
-      Object.defineProperty(this, '$nativeObject', { value: nativeMovieClip });
-      nativeMovieClip.$as2Object = this;
+      Object.defineProperty(this, '_nativeAS3Object', { value: nativeMovieClip });
+      nativeMovieClip._as2Object = this;
       initDefaultListeners(this);
     },
   };
@@ -66,7 +66,7 @@ var AS2MovieClipDefinition = (function () {
       instance: {
         _as3Object: {
           get: function () {
-            return this.$nativeObject;
+            return this._nativeAS3Object;
           }
         },
         _init: def.init,

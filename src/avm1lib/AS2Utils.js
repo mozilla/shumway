@@ -94,7 +94,7 @@ var AS2UtilsDefinition = (function () {
 }).call(this);
 
 function initDefaultListeners(thisArg) {
-  var defaultListeners = thisArg.asGetPublicProperty('$defaultListeners');
+  var defaultListeners = thisArg.asGetPublicProperty('_as2DefaultListeners');
   if (!defaultListeners) {
     return;
   }

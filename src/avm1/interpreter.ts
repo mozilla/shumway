@@ -53,7 +53,8 @@ declare module avm1lib {
     fscommand();
   }
   export class AS2MovieClip {
-    $lookupChild(path: string): AS2MovieClip;
+    __lookupChild(path: string): AS2MovieClip;
+    __targetPath: string;
   }
 }
 
@@ -169,7 +170,7 @@ module Shumway.AVM1 {
           this.globals.asGetPublicProperty('_root'));
       }
       if (typeof target !== 'object' || target === null ||
-        !('$nativeObject' in target)) {
+        !('_nativeAS3Object' in target)) {
         throw new Error('Invalid AS2 target object: ' +
           Object.prototype.toString.call(target));
       }
@@ -314,7 +315,7 @@ module Shumway.AVM1 {
       case 'string':
         return value;
       case 'movieclip':
-        return value.$targetPath;
+        return (<avm1lib.AS2MovieClip> value).__targetPath;
       case 'object':
         var result = value.toString !== Function.prototype.toString ?
           value.toString() : value;
@@ -470,7 +471,7 @@ module Shumway.AVM1 {
     }
     while (path.length > 0) {
       var prevObj = obj;
-      obj = obj.$lookupChild(path[0]);
+      obj = obj.__lookupChild(path[0]);
       if (!obj) {
         throw new Error(path[0] + ' (expr ' + targetPath + ') is not found in ' +
           prevObj._target);
@@ -756,7 +757,7 @@ module Shumway.AVM1 {
       }
       // trying movie clip children (if object is a MovieClip)
       var mc = isAS2MovieClip(defaultTarget) &&
-        defaultTarget.$lookupChild(variableName);
+        defaultTarget.__lookupChild(variableName);
       if (mc) {
         return mc;
       }
@@ -1705,7 +1706,7 @@ module Shumway.AVM1 {
       for (var i = 0; i < count; i++) {
         interfaces.push(stack.pop());
       }
-      constr.$interfaces = interfaces;
+      constr._as2Interfaces = interfaces;
     }
     function avm1_0x8F_ActionTry(ectx: ExecutionContext, args: any[]) {
       var catchIsRegisterFlag: boolean = args[0];
@@ -2289,7 +2290,8 @@ module Shumway.AVM1 {
         isEndOfActions: false
       };
 
-      if (scope.$nativeObject && scope.$nativeObject._deferScriptExecution) {
+      if (scope._nativeAS3Object &&
+          scope._nativeAS3Object._deferScriptExecution) {
         currentContext.deferScriptExecution = true;
       }
 
