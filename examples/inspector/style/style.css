@@ -139,6 +139,20 @@ body.simple #xstats {
   border-bottom: 1px solid #666;
 }
 
+#settingsContainer > .dg.main {
+  width: 499px !important;
+}
+#settingsContainer > .dg .property-name {
+  width: 50%;
+  color: #ccc;
+}
+#settingsContainer > .dg .c {
+  width: 50%;
+}
+#settingsContainer > .dg li.title {
+  font-weight: bold;
+}
+
 #displayListContainer {
   color: #ccc;
   font: 10px Consolas, "Liberation Mono", Courier, monospace;
