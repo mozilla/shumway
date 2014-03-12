@@ -526,7 +526,6 @@ module Shumway.AVM1 {
     actionTracer: ActionTracer;
     constantPool: any;
     registers: any[];
-    isConditionalJump: boolean;
     stack: any[];
     isSwfVersion5: boolean;
     recoveringFromError: boolean;
@@ -903,9 +902,7 @@ module Shumway.AVM1 {
 
       var frame: number = args[0];
       var count: number = args[1];
-      if (!_global.ifFrameLoaded(frame)) {
-        ectx.isConditionalJump = true;
-      }
+      return !_global.ifFrameLoaded(frame);
     }
     function avm1_0x8B_ActionSetTarget(ectx: ExecutionContext, args: any[]) {
       var targetName: string = args[0];
@@ -1105,10 +1102,7 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
 
       var offset: number = args[0];
-      var f = !!stack.pop();
-      if (f) {
-        ectx.isConditionalJump = true;
-      }
+      return !!stack.pop();
     }
     function avm1_0x9E_ActionCall(ectx: ExecutionContext) {
       var stack = ectx.stack;
@@ -1244,9 +1238,7 @@ module Shumway.AVM1 {
 
       var count: number = args[0];
       var frame = stack.pop();
-      if (!_global.ifFrameLoaded(frame)) {
-        ectx.isConditionalJump = true;
-      }
+      return !_global.ifFrameLoaded(frame);
     }
     function avm1_0x26_ActionTrace(ectx: ExecutionContext) {
       var _global = ectx.global;
@@ -1889,7 +1881,7 @@ module Shumway.AVM1 {
       };
     }
 
-    function interpretAction(executionContext: ExecutionContext, parsedAction: ParsedAction) {
+    function interpretAction(executionContext: ExecutionContext, parsedAction: ParsedAction): boolean {
       var stack = executionContext.stack;
 
       var actionCode: number = parsedAction.actionCode;
@@ -1898,6 +1890,7 @@ module Shumway.AVM1 {
       var actionTracer = executionContext.actionTracer;
       actionTracer.print(parsedAction, stack);
 
+      var shallBranch = false;
       switch (actionCode | 0) {
         // SWF 3 actions
         case ActionCode.ActionGotoFrame:
@@ -1925,7 +1918,7 @@ module Shumway.AVM1 {
           avm1_0x09_ActionStopSounds(executionContext);
           break;
         case ActionCode.ActionWaitForFrame:
-          avm1_0x8A_ActionWaitForFrame(executionContext, args);
+          shallBranch = avm1_0x8A_ActionWaitForFrame(executionContext, args);
           break;
         case ActionCode.ActionSetTarget:
           avm1_0x8B_ActionSetTarget(executionContext, args);
@@ -2007,7 +2000,7 @@ module Shumway.AVM1 {
           avm1_0x99_ActionJump(executionContext, args);
           break;
         case ActionCode.ActionIf:
-          avm1_0x9D_ActionIf(executionContext, args);
+          shallBranch = avm1_0x9D_ActionIf(executionContext, args);
           break;
         case ActionCode.ActionCall:
           avm1_0x9E_ActionCall(executionContext);
@@ -2046,7 +2039,7 @@ module Shumway.AVM1 {
           avm1_0x28_ActionEndDrag(executionContext);
           break;
         case ActionCode.ActionWaitForFrame2:
-          avm1_0x8D_ActionWaitForFrame2(executionContext, args);
+          shallBranch = avm1_0x8D_ActionWaitForFrame2(executionContext, args);
           break;
         case ActionCode.ActionTrace:
           avm1_0x26_ActionTrace(executionContext);
@@ -2214,12 +2207,13 @@ module Shumway.AVM1 {
         default:
           throw new Error('Unknown action code: ' + actionCode);
       }
+      return shallBranch;
     }
 
-    function interpretActionWithRecovery(executionContext: ExecutionContext, parsedAction: ParsedAction) {
+    function interpretActionWithRecovery(executionContext: ExecutionContext, parsedAction: ParsedAction): boolean {
       var currentContext: AS2ContextImpl;
       try {
-        interpretAction(executionContext, parsedAction);
+        return interpretAction(executionContext, parsedAction);
 
         executionContext.recoveringFromError = false;
       } catch (e) {
@@ -2283,7 +2277,6 @@ module Shumway.AVM1 {
         actionTracer: actionTracer,
         constantPool: constantPool,
         registers: registers,
-        isConditionalJump: false,
         stack: stack,
         isSwfVersion5: isSwfVersion5,
         recoveringFromError: false,
@@ -2311,11 +2304,9 @@ module Shumway.AVM1 {
           throw new AS2CriticalError('long running script -- AVM1 instruction hang timeout');
         }
 
-        interpretActionWithRecovery(executionContext, nextAction.action);
-
-        if (executionContext.isConditionalJump) {
+        var shallBranch: boolean = interpretActionWithRecovery(executionContext, nextAction.action);
+        if (shallBranch) {
           position = nextAction.conditionalJumpTo;
-          executionContext.isConditionalJump = false;
         } else {
           position = nextAction.next;
         }
@@ -2361,7 +2352,7 @@ module Shumway.AVM1 {
           parts.push(JSON.stringify(arg));
         }
       }
-      return '[' + parts.join(',') + ']';
+      return parts.join(',');
     }
     private convertAction(item: ActionCodeBlockItem, id: number, res): string {
       switch (item.action.actionCode) {
@@ -2370,16 +2361,20 @@ module Shumway.AVM1 {
           return '';
         case ActionCode.ActionConstantPool:
           res.constantPool = item.action.args[0];
-          return '  constantPool = ' + this.convertArgs(item.action.args[0], id, res) + ';\n' +
+          return '  constantPool = [' + this.convertArgs(item.action.args[0], id, res) + '];\n' +
                  '  ectx.constantPool = constantPool;\n';
+        case ActionCode.ActionPush:
+          return '  stack.push(' + this.convertArgs(item.action.args, id, res) + ');\n';
+        case ActionCode.ActionWaitForFrame:
+        case ActionCode.ActionWaitForFrame2:
+          return '  if (calls.' + item.action.actionName + '(ectx,[' +
+            this.convertArgs(item.action.args, id, res) + '])) { position = ' + item.conditionalJumpTo + '; break; }\n';
+        case ActionCode.ActionIf:
+          return '  if (!!stack.pop()) { position = ' + item.conditionalJumpTo + '; break; }\n';
         default:
           var result = '  calls.' + item.action.actionName + '(ectx' +
-            (item.action.args ? ',' + this.convertArgs(item.action.args, id, res) : '') +
+            (item.action.args ? ',[' + this.convertArgs(item.action.args, id, res) + ']' : '') +
             ');\n';
-          if (item.conditionalJumpTo >= 0) {
-            result += '  if (ectx.isConditionalJump) { position = ' + item.conditionalJumpTo + ';' +
-              ' ectx.isConditionalJump = false; break; }\n';
-          }
           return result;
       }
     }
