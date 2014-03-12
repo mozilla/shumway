@@ -288,7 +288,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".toolbarButtonBar > .too
   });
 });
 
-// toggle info panels (debug info, display list)
+// toggle info panels (debug info, display list, settings)
 var panelToggleButtonSelector = "#debugInfoToolbar > .toolbarButtonBar > .toolbarButton";
 function panelToggleButtonClickHandler(event) {
   Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
@@ -302,6 +302,7 @@ function panelToggleButtonClickHandler(event) {
   });
   switch (event.target.dataset.panelid) {
     case "displayListContainer":
+    case "settingsContainer":
       if (swfController.isPlaying()) {
         swfController.pause(function() {
           updateDisplayListTree();
@@ -343,7 +344,6 @@ swfController.onStateChange = function onStateChange(newState, oldState) {
 
 function initUI() {
   document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
-  document.getElementById("ctrlLogToConsole").classList.add("active");
   document.getElementById("muteButton").classList.add("active");
   document.getElementById("pauseButton").classList.add("active");
   document.getElementById("stepButton").classList.add("active");
