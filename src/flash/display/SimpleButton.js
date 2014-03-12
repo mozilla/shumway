@@ -62,7 +62,7 @@ var SimpleButtonDefinition = (function () {
 
       if (this._loader && !this._loader._isAvm2Enabled && s && s.buttonActions) {
         this._addEventListener("addedToStage", function (e) {
-          this._initAvm1Events(s.buttonActions);
+          this._initAvm1Events(s.buttonActions, 's' + s.symbolId + 'e');
         }.bind(this), false);
       }
     },
@@ -148,7 +148,7 @@ var SimpleButtonDefinition = (function () {
       }
       return this._as2Object;
     },
-    _initAvm1Events: function (buttonActions) {
+    _initAvm1Events: function (buttonActions, uniquePrefix) {
       var loader = this._loader;
       var avm1Context = loader._avm1Context;
       var keyEvents = null;
@@ -157,7 +157,8 @@ var SimpleButtonDefinition = (function () {
         /*jshint -W083 */
         var fn = function (actionsData) {
           return executeActions(actionsData, avm1Context, this._getAS2Object());
-        }.bind(this.parent, new AS2ActionsData(buttonAction.actionsData));
+        }.bind(this.parent,
+               new AS2ActionsData(buttonAction.actionsData, uniquePrefix + i));
         var mouseEventFlags = buttonAction.mouseEventFlags;
         if (mouseEventFlags) {
           var mouseEvents = this._avm1MouseEvents || (this._avm1MouseEvents = []);

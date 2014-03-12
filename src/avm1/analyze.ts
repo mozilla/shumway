@@ -36,6 +36,7 @@ module Shumway.AVM1 {
      *  in the binary actions data */
     actions: ActionCodeBlockItem[];
     blocks: ActionCodeBlock[];
+    dataId: string;
   }
 
   export class ActionsDataAnalyzer {
@@ -150,7 +151,8 @@ module Shumway.AVM1 {
       });
       return {
         actions: actions,
-        blocks: blocks
+        blocks: blocks,
+        dataId: parser.dataId
       };
     }
   }

@@ -74,7 +74,6 @@ function updateAVM2State() {
   Shumway.AVM2.Runtime.traceCallExecution.value = state.traceRuntime ? 2 : Shumway.AVM2.Runtime.traceCallExecution.value;
   Shumway.AVM2.Runtime.debuggerMode.value = true;
   release = state.release;
-  Shumway.AVM1.avm1TimeoutDisabled.value = true;
 }
 
 var lastCounts = {};

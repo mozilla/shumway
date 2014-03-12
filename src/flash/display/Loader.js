@@ -425,7 +425,8 @@ var LoaderDefinition = (function () {
             // "DoAction tag is not the same as specifying them in a DoInitAction tag"
             for (var i = 0; i < initActionBlocks.length; i++) {
               var spriteId = initActionBlocks[i].spriteId;
-              var actionsData = new AS2ActionsData(initActionBlocks[i].actionsData);
+              var actionsData = new AS2ActionsData(initActionBlocks[i].actionsData,
+                'f' + frameNum + 's' + spriteId + 'i' + i);
               root.addFrameScript(frameNum - 1, function(actionsData, spriteId, state) {
                 if (state.executed) return;
                 state.executed = true;
@@ -436,7 +437,8 @@ var LoaderDefinition = (function () {
 
           if (actionBlocks) {
             for (var i = 0; i < actionBlocks.length; i++) {
-              var actionsData = new AS2ActionsData(actionBlocks[i]);
+              var actionsData = new AS2ActionsData(actionBlocks[i],
+                'f' + frameNum + 'i' + i);
               root.addFrameScript(frameNum - 1, (function(actionsData) {
                 return function () {
                   return executeActions(actionsData, avm1Context, this._getAS2Object());
@@ -728,7 +730,9 @@ var LoaderDefinition = (function () {
             var data = symbol.frameScripts;
             for (var i = 0; i < data.length; i += 2) {
                 var frameNum = data[i] + 1;
-                var actionsData = new AS2ActionsData(data[i + 1]);
+                var actionsData = new AS2ActionsData(data[i + 1],
+                  's' + symbol.id + 'f' + frameNum + 'i' +
+                    (frameScripts[frameNum] ? frameScripts[frameNum].length : 0));
                 var script = (function(actionsData, loader) {
                   return function () {
                     var avm1Context = loader._avm1Context;

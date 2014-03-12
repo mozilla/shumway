@@ -124,7 +124,7 @@ module Shumway.AVM1 {
 
   export class AS2ActionsData {
     public ir; // will cache compiled representation
-    constructor(public bytes: Uint8Array) {}
+    constructor(public bytes: Uint8Array, public id: string) {}
   }
 
   export class ParsedPushRegisterAction {
@@ -143,6 +143,7 @@ module Shumway.AVM1 {
   }
 
   export class ActionsDataParser {
+    public dataId: string;
     constructor(public stream: ActionsDataStream) {}
     get position(): number {
       return this.stream.position;
@@ -280,14 +281,16 @@ module Shumway.AVM1 {
 
           var codeSize = stream.readUI16();
           nextPosition += codeSize;
-          var functionBody = new AS2ActionsData(stream.readBytes(codeSize));
+          var functionBody = new AS2ActionsData(stream.readBytes(codeSize),
+            this.dataId + '_f' + stream.position);
 
           args = [functionName, functionParams, functionBody];
           break;
         case ActionCode.ActionWith:
           var codeSize = stream.readUI16();
           nextPosition += codeSize;
-          var withBody = new AS2ActionsData(stream.readBytes(codeSize));
+          var withBody = new AS2ActionsData(stream.readBytes(codeSize),
+            this.dataId + '_w' + stream.position);
           args = [withBody];
           break;
         case ActionCode.ActionStoreRegister:
@@ -337,7 +340,8 @@ module Shumway.AVM1 {
 
           var codeSize = stream.readUI16();
           nextPosition += codeSize;
-          var functionBody = new AS2ActionsData(stream.readBytes(codeSize));
+          var functionBody = new AS2ActionsData(stream.readBytes(codeSize),
+            this.dataId + '_f' + stream.position);
 
           args = [functionName, functionParams, registerCount,
             registerAllocation, functionBody];
@@ -354,9 +358,12 @@ module Shumway.AVM1 {
 
           nextPosition += trySize + catchSize + finallySize;
 
-          var tryBody = new AS2ActionsData(stream.readBytes(trySize));
-          var catchBody = new AS2ActionsData(stream.readBytes(catchSize));
-          var finallyBody = new AS2ActionsData(stream.readBytes(finallySize));
+          var tryBody = new AS2ActionsData(stream.readBytes(trySize),
+            this.dataId + '_t' + stream.position);
+          var catchBody = new AS2ActionsData(stream.readBytes(catchSize),
+            this.dataId + '_c' + stream.position);
+          var finallyBody = new AS2ActionsData(stream.readBytes(finallySize),
+            this.dataId + '_z' + stream.position);
 
           args = [catchIsRegisterFlag, catchTarget, tryBody,
             catchBlockFlag, catchBody, finallyBlockFlag, finallyBody];
