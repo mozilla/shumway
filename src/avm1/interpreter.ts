@@ -1075,25 +1075,33 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
       var _global = ectx.global;
 
-      stack.push(_global.chr(stack.pop()));
+      var ch = stack.pop();
+      var charCode = _global.ord(ch);
+      stack.push(charCode);
     }
     function avm1_0x36_ActionMBCharToAscii(ectx: ExecutionContext) {
       var stack = ectx.stack;
       var _global = ectx.global;
 
-      stack.push(_global.mbchr(stack.pop()));
+      var ch = stack.pop();
+      var charCode = _global.mbord(ch);
+      stack.push(charCode);
     }
     function avm1_0x33_ActionAsciiToChar(ectx: ExecutionContext) {
       var stack = ectx.stack;
       var _global = ectx.global;
 
-      stack.push(_global.ord(stack.pop()));
+      var charCode = +stack.pop();
+      var ch = _global.chr(charCode);
+      stack.push(ch);
     }
     function avm1_0x37_ActionMBAsciiToChar(ectx: ExecutionContext) {
       var stack = ectx.stack;
       var _global = ectx.global;
 
-      stack.push(_global.mbord(stack.pop()));
+      var charCode = +stack.pop();
+      var ch = _global.mbchr(charCode);
+      stack.push(ch);
     }
     function avm1_0x99_ActionJump(ectx: ExecutionContext, args: any[]) {
       // implemented in the analyzer
