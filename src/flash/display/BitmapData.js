@@ -24,8 +24,9 @@ var BitmapDataDefinition = (function () {
     initialize: function () {
       this._changeNotificationTarget = null;
       this._locked = false;
-      this._data = null;
       this._renderableId = 0;
+
+      this._message = new Shumway.Util.ArrayWriter(1024);
     },
 
     ctor: function(width, height, transparent, backgroundColor) {
@@ -61,35 +62,43 @@ var BitmapDataDefinition = (function () {
 
       // TODO: support smoothing, blendMode and clipRect
 
-      var root = new flash.display.Stage;
-      root._stageWidth = this._width * 20;
-      root._stageHeight = this._height * 20;
-      root._setup();
-      var oldTransform = source._currentTransform;
-      var oldCxform = source._cxform;
-      var oldParent = source._parent;
-      var oldIndex = source._index;
+      var root = new flash.display.DisplayObjectContainer;
+      var transform = root.transform;
       if (matrix) {
-        source._currentTransform = {
-          a: matrix.a,
-          b: matrix.b,
-          c: matrix.c,
-          d: matrix.d,
-          tx: matrix.tx * 20,
-          ty: matrix.ty * 20
-        };
+        transform.matrix = matrix;
       }
-      source._cxform = colorTransform;
-      source._parent = root;
-      source._index = 0;
-      root._children[0] = source;
-      root._processInvalidations(true);
-      source._currentTransform = oldTransform;
-      source._cxform = oldCxform;
-      source._parent = oldParent;
-      source._oldIndex = oldIndex;
+      if (colorTransform) {
+        transform.colorTransform = colorTransform;
+      }
+      if (blendMode) {
+        transform.blendMode = blendMode;
+      }
 
-      this._data = root._message.subU8View();
+      StageDefinition._addLayer.call(this, 0, 0, root);
+
+      var nextLayerId = 1;
+      var stack = [nextLayerId++, source];
+
+      if (!source._visible || !source._alpha) {
+        return;
+      }
+
+      while (stack.length) {
+        var node = stack.pop();
+        var parentId = stack.pop();
+
+        var children = node._children;
+        var i = children.length;
+        while (i--) {
+          var child = children[i];
+
+          if (child._visible && child._alpha) {
+            stack.push(nextLayerId++, child);
+          }
+        }
+
+        StageDefinition._addLayer.call(this, nextLayerId++, parentId, node);
+      }
 
       this._invalidate();
     },

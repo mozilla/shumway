@@ -35,6 +35,8 @@ var BitmapDefinition = (function () {
       };
       if (value._renderableId) {
         this._renderableId = value._renderableId;
+      } else {
+        this._renderableId = 0;
       }
     } else {
       this._bbox = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
@@ -56,7 +58,14 @@ var BitmapDefinition = (function () {
     _serializeRenderableData: function (message) {
       var bitmapData = this._bitmapData;
 
-      if (!bitmapData || !bitmapData._data) {
+      if (!bitmapData || !bitmapData._message) {
+        return;
+      }
+
+      var subview = bitmapData._message.subU8View();
+      var len = subview.length;
+
+      if (!len) {
         return;
       }
 
@@ -67,13 +76,12 @@ var BitmapDefinition = (function () {
       message.writeIntUnsafe(this._bbox.yMax / 20);
       message.writeIntUnsafe(Renderer.BITMAP_TYPE_DRAW);
 
-      var data = bitmapData._data;
-      var len = data.length;
+      var len = subview.length;
       message.writeIntUnsafe(len);
       var offset = message.getIndex(1);
       message.reserve(len);
-      message.subU8View().set(data, offset);
-      bitmapData._data = null;
+      message.subU8View().set(subview, offset);
+      bitmapData._message.reset();
 
       if (!bitmapData._renderableId) {
         bitmapData._renderableId = this._renderableId;
