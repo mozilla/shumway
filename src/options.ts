@@ -159,22 +159,61 @@ module Shumway.Options {
   }
 
   export class OptionSet {
-    name: any;
+    name: string;
+    settings: any;
     options: any;
-    constructor(name) {
+    open: boolean = false;
+    constructor(name: string, settings: any = null) {
       this.name = name;
+      this.settings = settings || {};
       this.options = [];
     }
     public register(option) {
+      if (option instanceof OptionSet) {
+        // check for duplicate option sets (bail if found)
+        for (var i = 0, n = this.options.length; i < n; i++) {
+          var optionSet = this.options[i];
+          if (optionSet instanceof OptionSet && optionSet.name === option.name) {
+            return optionSet;
+          }
+        }
+      }
       this.options.push(option);
+      if (this.settings) {
+        if (option instanceof OptionSet) {
+          var optionSettings = this.settings[option.name];
+          if (typeof optionSettings === "object") {
+            option.settings = optionSettings.settings;
+            option.open = optionSettings.open;
+          }
+        } else {
+          if (typeof this.settings[option.longName] !== "undefined") {
+            option.value = this.settings[option.longName];
+          }
+        }
+      }
       return option;
     }
-    public trace (writer) {
+    public trace(writer) {
       writer.enter(this.name + " {");
       this.options.forEach(function (option) {
         option.trace(writer);
       });
       writer.leave("}");
+    }
+    public getSettings() {
+      var settings = {};
+      this.options.forEach(function(option) {
+        if (option instanceof OptionSet) {
+          settings[option.name] = {
+            settings: option.getSettings(),
+            open: option.open
+          };
+        } else {
+          settings[option.longName] = option.value;
+        }
+      });
+      return settings;
     }
   }
 
