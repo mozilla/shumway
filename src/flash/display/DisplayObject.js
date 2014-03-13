@@ -126,7 +126,7 @@ var DisplayObjectDefinition = (function () {
         this._depth = isNaN(s.depth) ? -1 : s.depth;
         this._root = s.root || null;
         this._stage = s.stage || null;
-        this._renderableId = s.symbolId || 0;
+        this._renderableId = s.renderableId || 0;
         this._isSymbol = true;
 
         var scale9Grid = s.scale9Grid;

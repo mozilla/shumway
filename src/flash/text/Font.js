@@ -20,7 +20,7 @@
 
 var FontDefinition = (function () {
   var fonts = [];
-  var fontsById = Object.create(null);
+  var fontsBySymbolId = Object.create(null);
 
   var def = {
     __class__: 'flash.text.Font',
@@ -28,7 +28,7 @@ var FontDefinition = (function () {
     initialize: function () {
       var s = this.symbol;
       if (s) {
-        this._fontId = s.id;
+        this._fontId = s.renderableId;
         this._fontName = s.name || null;
         if (s.bold) {
           if (s.italic) {
@@ -43,7 +43,7 @@ var FontDefinition = (function () {
         }
         this._fontType = 'embedded';
         fonts.push(this);
-        fontsById[s.id] = this;
+        fontsBySymbolId[s.id] = this;
       }
     },
 
@@ -60,8 +60,8 @@ var FontDefinition = (function () {
       return true; // TODO
     },
 
-    getFontById: function(id) {
-      return fontsById[id];
+    getFontBySymbolId: function(id) {
+      return fontsBySymbolId[id];
     }
   };
 

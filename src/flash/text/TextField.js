@@ -70,7 +70,7 @@ var TextFieldDefinition = (function () {
         initialFormat.color = tag.color;
       }
       if (tag.hasFont) {
-        var font = FontDefinition.getFontById(tag.fontId);
+        var font = FontDefinition.getFontBySymbolId(tag.fontId);
         initialFormat.font = font;
         initialFormat.face = font._fontName;
         initialFormat.bold = font.symbol.bold;

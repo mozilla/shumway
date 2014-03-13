@@ -46,7 +46,7 @@ var StageDefinition = (function () {
       this._mouseEvents = [];
       this._cursor = 'auto';
       this._stageVideos = [];
-      this._nextRenderableId = 0xffff + 1;
+      this._nextRenderableId = 1;
       this._nextLayerId = 1;
       this._message = new Shumway.Util.ArrayWriter(1024);
       this._callbacks = { };
@@ -74,7 +74,10 @@ var StageDefinition = (function () {
       var p = message.getIndex(4);
       message.reserve(4);
 
-      message.writeIntUnsafe(symbol.id);
+      var renderableId = this._nextRenderableId++;
+      symbol.renderableId = renderableId;
+
+      message.writeIntUnsafe(renderableId);
 
       var dependencies = symbol.require;
       var n = dependencies ? dependencies.length : 0;
@@ -90,7 +93,7 @@ var StageDefinition = (function () {
 
         var paths = symbol.paths;
         for (var i = 0; i < paths.length; i++) {
-          paths[i] = finishShapePath(symbol.paths[i]);
+          paths[i] = finishShapePath(symbol.paths[i], this._loader._dictionary);
         }
 
         var graphics = symbol.graphics = new flash.display.Graphics();
@@ -159,7 +162,13 @@ var StageDefinition = (function () {
         message.writeIntUnsafe(bbox.yMin);
         message.writeIntUnsafe(bbox.yMax);
 
-        message.writeIntUnsafe(tag.hasFont ? tag.fontId : 0);
+        if (tag.hasFont) {
+          var font = FontDefinition.getFontBySymbolId(tag.fontId);
+          message.writeIntUnsafe(font._fontId);
+        } else {
+          message.writeIntUnsafe(0);
+        }
+
         message.writeIntUnsafe(symbol.bold);
         message.writeIntUnsafe(symbol.italic);
         message.writeIntUnsafe(tag.fontHeight / 20);

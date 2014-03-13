@@ -1268,7 +1268,7 @@ ShapePath.fromPlainObject = function(obj) {
  *
  * This entails creating proper instances for all the contained data types.
  */
-function finishShapePath(path) {
+function finishShapePath(path, dictionary) {
   assert(!inWorker);
 
   if (path.fullyInitialized) {
@@ -1286,6 +1286,8 @@ function finishShapePath(path) {
     }
     path.buffers = null;
   }
+  path.fillStyle && initStyle(path.fillStyle, dictionary);
+  path.lineStyle && initStyle(path.lineStyle, dictionary);
   path.fullyInitialized = true;
   return path;
 }
@@ -1559,3 +1561,25 @@ function morph(start, end, ratio) {
 }
 
 var inWorker = (typeof window) === 'undefined';
+
+function initStyle(style, dictionary) {
+  if (style.type === undefined) {
+    return;
+  }
+  switch (style.type) {
+    case GRAPHICS_FILL_SOLID:
+    case GRAPHICS_FILL_LINEAR_GRADIENT:
+    case GRAPHICS_FILL_RADIAL_GRADIENT:
+    case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
+      break;
+    case GRAPHICS_FILL_REPEATING_BITMAP:
+    case GRAPHICS_FILL_CLIPPED_BITMAP:
+    case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
+    case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
+      var bitmap = dictionary[style.bitmapId];
+      style.bitmapId = bitmap.props.renderableId;
+      break;
+    default:
+      fail('invalid fill style', 'shape');
+  }
+}
