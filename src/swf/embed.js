@@ -183,7 +183,7 @@ SWF.embed = function(file, doc, container, options) {
     root._dispatchEvent("addedToStage");
 
     root._layerId = stage._nextLayerId++;
-    stage._addLayer(root);
+    stage._addLayer(root._layerId, 0, root);
 
     container.appendChild(canvas);
     stage._domContainer = container;

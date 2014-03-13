@@ -225,16 +225,17 @@ var StageDefinition = (function () {
 
       this._commit();
     },
-    _addLayer: function addLayer(node) {
+    _addLayer: function addLayer(id, parentId, node) {
       var message = this._message;
-      message.ensureAdditionalCapacity(20);
+      message.ensureAdditionalCapacity(24);
       message.writeIntUnsafe(Renderer.MESSAGE_ADD_LAYER);
 
       var p = message.getIndex(4);
       message.reserve(4);
 
-      message.writeIntUnsafe(+node._isContainer);
-      message.writeIntUnsafe(node._parent._layerId);
+      message.writeIntUnsafe(id);
+      message.writeIntUnsafe(node._isContainer);
+      message.writeIntUnsafe(parentId);
       message.writeIntUnsafe(node._index);
 
       node._serialize(message);
@@ -242,6 +243,9 @@ var StageDefinition = (function () {
       message.subI32View()[p] = message.getIndex(4) - (p + 1);
     },
     _removeLayer: function removeLayer(node) {
+      if (!node._layerId) {
+        return;
+      }
       var message = this._message;
       message.ensureAdditionalCapacity(12);
       message.writeIntUnsafe(Renderer.MESSAGE_REMOVE_LAYER);
@@ -346,15 +350,15 @@ var StageDefinition = (function () {
         if (node._invalid) {
           var layerId = node._layerId;
           var renderableId = node._renderableId;
-          if (!renderableId) {
-            renderableId = this._nextRenderableId++;
-            node._renderableId = renderableId;
-          }
           if (!layerId) {
             layerId = this._nextLayerId++;
             node._layerId = layerId;
           }
-          this._addLayer(node);
+          if (!renderableId) {
+            renderableId = this._nextRenderableId++;
+            node._renderableId = renderableId;
+          }
+          this._addLayer(layerId, node._parent._layerId, node);
 
           node._invalid = false;
         }
