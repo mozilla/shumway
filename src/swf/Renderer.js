@@ -440,17 +440,17 @@ RenderableShape.prototype.render = function render(ctx) {
         style = ctx.createLinearGradient(-1, 0, 1, 0);
       case GRAPHICS_FILL_RADIAL_GRADIENT:
       case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
+        var focalPoint = (i32[p++] / 20) | 0;
+
+        if (!style) {
+          style = ctx.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
+        }
+
         var n = i32[p++];
         for (var j = 0; j < n; j++) {
           var ratio = f32[p++];
           var color = rgbaUintToStr(i32[p++]);
           style.addColorStop(ratio, color);
-        }
-
-        var focalPoint = (i32[p++] / 20) | 0;
-
-        if (!style) {
-          style = ctx.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
         }
         break;
       case GRAPHICS_FILL_REPEATING_BITMAP:

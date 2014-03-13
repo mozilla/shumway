@@ -95,13 +95,13 @@ var GraphicsDefinition = (function () {
       var records = style.records;
       var n = records.length;
       message.ensureAdditionalCapacity((2 + n * 2) * 4);
+      message.writeIntUnsafe(style.focalPoint);
       message.writeIntUnsafe(n);
       for (var i = 0; i < n; i++) {
         var record = records[i];
         message.writeFloatUnsafe(record.ratio / 255);
         message.writeIntUnsafe(record.color);
       }
-      message.writeIntUnsafe(style.focalPoint);
       break;
     case GRAPHICS_FILL_REPEATING_BITMAP:
     case GRAPHICS_FILL_CLIPPED_BITMAP:
