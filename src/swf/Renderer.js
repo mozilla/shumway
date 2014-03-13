@@ -242,8 +242,7 @@ Renderer.prototype.defineRenderable = function defineRenderable(id, type,
       var uniqueName = 'swf-font-' + id;
       var len = data[0];
       var fontData = new Uint8Array(data.buffer, data.byteOffset + 4, len);
-      var fontInfo = { uniqueName: uniqueName };
-      var blob = new Blob([fontData]);
+      var fontInfo = { type: 'embeded', uniqueName: uniqueName };
 
       var view = new DataView(fontData.buffer, fontData.byteOffset);
       var p = 8;
@@ -251,12 +250,8 @@ Renderer.prototype.defineRenderable = function defineRenderable(id, type,
         var tableType = view.getUint32(p += 4);
         var offset = view.getUint32(p += 8);
         var length = view.getUint32(p += 4);
-        while (length & 3) {
-          length++;
-        }
-        while (offset & 3) {
-          offset++;
-        }
+        length = (length + 3) & ~0x3;
+        offset = (offset + 3) & ~0x3;
         if (tableType === 0x68686561) {
           fontInfo.ascent = view.getInt16(offset += 4) / 1024;
           fontInfo.descent = view.getInt16(offset += 2) / 1024;
@@ -272,8 +267,6 @@ Renderer.prototype.defineRenderable = function defineRenderable(id, type,
         }
       }
 
-      fontInfo.type = 'embeded';
-
       renderer._fonts[id] = fontInfo;
 
       var ident = fontInfo.name.toLowerCase() + '_embedded';
@@ -282,7 +275,7 @@ Renderer.prototype.defineRenderable = function defineRenderable(id, type,
       style.insertRule(
         '@font-face{' +
           'font-family:"' + uniqueName + '";' +
-          'src:url(' + URL.createObjectURL(blob) + ')' +
+          'src:url(data:font/opentype;base64,' + base64ArrayBuffer(fontData) + ')' +
         '}',
         style.cssRules.length
       );
@@ -374,25 +367,25 @@ Renderer.prototype.getFont = function(name, embedded /* true|false */) {
 
 Renderer.prototype.resolveFont = function(format, embedded) {
   var face = format.face.toLowerCase();
-  //if (face === '_sans') {
-  //  face = 'sans-serif';
-  //} else if (face === '_serif') {
-  //  face = 'serif';
-  //} else if (face === '_typewriter') {
-  //  face = 'monospace';
-  //}
-  //var style;
-  //if (format.bold) {
-  //  if (format.italic) {
-  //    style = 'boldItalic';
-  //  } else {
-  //    style = 'bold';
-  //  }
-  //} else if (format.italic) {
-  //  style = 'italic';
-  //} else {
-  //  style = 'regular';
-  //}
+  if (face === '_sans') {
+    face = 'sans-serif';
+  } else if (face === '_serif') {
+    face = 'serif';
+  } else if (face === '_typewriter') {
+    face = 'monospace';
+  }
+  var style;
+  if (format.bold) {
+    if (format.italic) {
+      style = 'boldItalic';
+    } else {
+      style = 'bold';
+    }
+  } else if (format.italic) {
+    style = 'italic';
+  } else {
+    style = 'regular';
+  }
   var font = this.getFont(face, embedded);
   assert(font);
   format.font = font;
