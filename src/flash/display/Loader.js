@@ -78,7 +78,9 @@ var LoaderDefinition = (function () {
         });
 
         // signal when we finish parsing, it's mostly to provide consistent testing results
-        this._contentLoaderInfo._dispatchEvent("parsed");
+        this._lastPromise.then(function () {
+          this._contentLoaderInfo._dispatchEvent("parsed");
+        }.bind(this));
 
         Promise.all([frameConstructed, this._lastPromise]).then(function () {
           this._content._complete = true;
