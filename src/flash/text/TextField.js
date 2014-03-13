@@ -171,9 +171,6 @@ var TextFieldDefinition = (function () {
     invalidateDimensions: function() {
       this._invalidate();
       this._invalidateBounds();
-      if (this._renderableId <= 0xffff) {
-        this._renderableId = 0;
-      }
       this._invalidateRenderable();
       this._dimensionsValid = false;
     },

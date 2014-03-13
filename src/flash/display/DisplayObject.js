@@ -85,10 +85,10 @@ var DisplayObjectDefinition = (function () {
       this._depth = -1;
       this._isContainer = false;
       this._invisible = false;
-
       this._renderableId = 0;
       this._updateRenderable = false;
       this._layerId = 0;
+      this._isSymbol = false;
 
       blendModes = [
         blendModeClass.NORMAL,     // 0
@@ -127,6 +127,7 @@ var DisplayObjectDefinition = (function () {
         this._root = s.root || null;
         this._stage = s.stage || null;
         this._renderableId = s.symbolId || 0;
+        this._isSymbol = true;
 
         var scale9Grid = s.scale9Grid;
         if (scale9Grid) {
@@ -412,6 +413,10 @@ var DisplayObjectDefinition = (function () {
     },
     _invalidateRenderable: function () {
       this._updateRenderable = true;
+      if (this._isSymbol) {
+        this._renderableId = 0;
+        this._isSymbol = false;
+      }
     },
     _setTransformMatrix: function(matrix, convertToTwips) {
       var a = matrix.a;
