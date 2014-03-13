@@ -351,6 +351,9 @@ module Shumway.Layers {
       assert(index >= 0 && index < this.children.length);
       var result = this.children.splice(index, 1);
       var child = result[0];
+      if (!child) {
+        return;
+      }
       child.gatherPreviousDirtyRegions();
       child.parent = undefined;
       child.invalidate();
