@@ -511,6 +511,12 @@ var DisplayObjectDefinition = (function () {
       return this._alpha;
     },
     set alpha(val) {
+      if (val < 0) {
+        val = 0;
+      } else if (val > 1) {
+        val = 1;
+      }
+
       if (val === this._alpha) {
         return;
       }
