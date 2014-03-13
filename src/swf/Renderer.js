@@ -1638,6 +1638,10 @@ function makeFormatString(format) {
           (format.font.uniqueName || format.font.name);
 }
 
+var htmlParser = document.createElement('p');
+// Used for measuring text runs, not for rendering
+var measureCtx = document.createElement('canvas').getContext('2d');
+
 function TextFieldContent(renderer, initialFormat) {
   this.renderer = renderer;
   this.defaultTextFormat = initialFormat;
@@ -1652,10 +1656,6 @@ function TextFieldContent(renderer, initialFormat) {
   this._htmlText = '';
   this._createTrunk();
   this._textRuns = null;
-  this._htmlParser = document.createElement('p');
-
-  // Used for measuring text runs, not for rendering
-  this._measureCtx = document.createElement('canvas').getContext('2d');
 }
 
 TextFieldContent.knownNodeTypes = {
@@ -1736,7 +1736,7 @@ TextFieldContent.prototype = {
     this._textRuns = [{type: 'f', format: initialFormat}];
     var width = Math.max(width - 4, 1);
     var height = Math.max(height - 4, 1);
-    var state = {ctx: this._measureCtx, w: width, h: height, maxLineWidth: 0,
+    var state = {ctx: measureCtx, w: width, h: height, maxLineWidth: 0,
       formats: [initialFormat], currentFormat: initialFormat,
       line: new TextFieldContent.TextLine(0),
       wordWrap: this.wordWrap, combinedAlign: null,
@@ -1755,10 +1755,10 @@ TextFieldContent.prototype = {
    * and a tree of objects with types and attributes, representing all nodes.
    */
   _parseHtml: function(val) {
-    this._htmlParser.innerHTML = val;
-    var rootElement = this._htmlParser.childNodes.length !== 1 ?
-                      this._htmlParser :
-                      this._htmlParser.childNodes[0];
+    htmlParser.innerHTML = val;
+    var rootElement = htmlParser.childNodes.length !== 1 ?
+                      htmlParser :
+                      htmlParser.childNodes[0];
     // TODO: create the htmlText by serializing the converted tree
     this._text = '';
     this._htmlText = val;
