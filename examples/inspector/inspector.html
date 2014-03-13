@@ -100,18 +100,14 @@ limitations under the License.
     <script>
       console.time("Load");
     </script>
+
     <script src="../../lib/DataView.js/DataView.js"></script>
     <script src="../../lib/ByteArray.js"></script>
 
     <script src="../../src/options.js"></script>
+    <script src="../../src/settings.js"></script>
 
     <script src="../../src/swf/Timeline.js"></script>
-
-    <script>
-      var Option = Shumway.Options.Option;
-      var OptionSet = Shumway.Options.OptionSet;
-      var coreOptions = new OptionSet("Core Options");
-    </script>
 
     <script> console.time("Load SWF Dependencies"); </script>
     <!-- Load SWF Dependencies -->
@@ -175,9 +171,12 @@ limitations under the License.
     <script>
       var FrameCounter = new Shumway.Metrics.Counter(true);
       var CanvasCounter = new Shumway.Metrics.Counter(true);
-      var systemOptions = new OptionSet("System Options");
-      var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
-      var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+
+      var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
+      var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter"));
+      var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter"));
+      var disassemble = avm2Options.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
+      var traceLevel = avm2Options.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 
       var nativeCreateElement = document.createElement;
       document.createElement = function (x) {
@@ -207,12 +206,11 @@ limitations under the License.
 
     <script src="../../src/avm2/class.js"></script>
     <script>
-      var domainOptions = systemOptions.register(new OptionSet("ApplicationDomain Options"));
+      var domainOptions = avm2Options.register(new OptionSet("ApplicationDomain"));
       var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
       var traceDomain = domainOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
       var playerglobal;
       var playerglobalLoadedPromise;
-
     </script>
     <script src="../../src/avm2/xregexp.js"></script>
     <script src="../../src/avm2/runtime.js"></script>
@@ -378,9 +376,6 @@ limitations under the License.
     <script src="js/classes/DebugCanvas.js"></script>
 
     <script src="js/classes/dat.gui.min.js"></script>
-    <script>
-      dat.GUI.DEFAULT_WIDTH = 499;
-    </script>
 
     <script src="js/inspectorSettings.js"></script>
     <script src="js/inspectorLoader.js"></script>

@@ -55,7 +55,7 @@ function saveState(state) {
 
 var state = loadState();
 
-updateAVM2State();
+//updateAVM2State();
 
 function updateAVM2State() {
   enableC4.value = true;
@@ -184,29 +184,56 @@ document.getElementById("sample").addEventListener("click", function () {
 })();
 
 (function () {
-  var gui = new dat.GUI({ autoPlace: false });
 
-  function addOptionSet(parent, set, open) {
-    var folder = parent.addFolder(set.name);
-    set.options.forEach(function (option) {
+  var gui = new dat.GUI({ autoPlace: false, width: 499 });
+
+  gui.domElement.addEventListener("click", function(e) {
+    if (e.target.nodeName.toLowerCase() == "li" && e.target.classList.contains("title")) {
+      var option = findOptionSetByName(e.target.textContent, shumwayOptions);
+      if (option) {
+        option.open = !e.target.parentElement.classList.contains("closed");
+        saveShumwaySettings(shumwayOptions.getSettings());
+      }
+    }
+  });
+
+  function findOptionSetByName(name, optionSet) {
+    for (var i = 0, n = optionSet.options.length; i < n; i++) {
+      var option = optionSet.options[i];
       if (option instanceof OptionSet) {
+        if (option.name === name) {
+          return option;
+        } else {
+          var child = findOptionSetByName(name, option);
+          if (child) {
+            return child;
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  function addOptionSet(parent, optionSet) {
+    optionSet.options.forEach(function(option) {
+      if (option instanceof OptionSet) {
+        var folder = parent.addFolder(option.name);
+        if (option.open) { folder.open(); }
         addOptionSet(folder, option);
       } else {
-        folder.add(option, "value", option.details).name(option.longName);
+        parent
+          .add(option, "value", option.details)
+          .name(option.longName)
+          .onChange(function() {
+            saveShumwaySettings(shumwayOptions.getSettings());
+          });
       }
     });
-    open && folder.open();
   }
 
-  // addOptionSet(gui, webGLOptions);
-  addOptionSet(gui, rendererOptions, true);
-  addOptionSet(gui, systemOptions);
-
-  var folder = gui.addFolder("Debug Canvas");
-  for (var k in DebugCanvasRenderingContext2D.Options) {
-    folder.add(DebugCanvasRenderingContext2D.Options, k);
-  }
-  folder.open();
+  // shumwayOptions.register(webGLOptions);
+  addOptionSet(gui, shumwayOptions);
 
   document.getElementById("settingsContainer").appendChild(gui.domElement);
+
 })();

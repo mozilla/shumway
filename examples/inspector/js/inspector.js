@@ -127,11 +127,11 @@ function showMessage(msg) {
 
 function executeFile(file, buffer, movieParams) {
   // All execution paths must now load AVM2.
-  if (!state.appCompiler) {
+  if (!appCompiler.value) {
     showMessage("Running in the Interpreter");
   }
-  var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var sysMode = sysCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
 
   var filename = file.split('?')[0].split('#')[0];
   if (filename.endsWith(".abc")) {

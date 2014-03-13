@@ -17,7 +17,7 @@
  */
 /*global rgbaObjToStr, Shumway, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
 
-var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
+var rendererOptions = shumwayOptions.register(new OptionSet("Renderer"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
 var disableRenderVisitor = rendererOptions.register(new Option("drv", "disableRenderVisitor", "boolean", false, "disable render visitor"));
 var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMouseVisitor", "boolean", false, "disable mouse visitor"));
