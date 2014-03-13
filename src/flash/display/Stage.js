@@ -17,8 +17,6 @@
  */
 /*global ShapePath */
 
-var renderingTerminated = false;
-
 var StageDefinition = (function () {
   return {
     // ()
@@ -365,165 +363,132 @@ var StageDefinition = (function () {
       }
     },
 
-    _render: function render(renderer, canvas, bgcolor, options) {
-      var timeline = new Timeline(document.getElementById("frameTimeline"));
-      timeline.setFrameRate(60);
-      timeline.refreshEvery(60);
-      Shumway.GL.timeline = timeline;
+    _enterEventLoop: function _enterEventLoop() {
+      var stage = this;
 
-      Shumway.GL.SHADER_ROOT = "../../src/stage/shaders/";
-
-      if (bgcolor) {
-        canvas.style.backgroundColor = rgbaObjToStr(bgcolor);
-      }
-
-      var WebGLContext = Shumway.GL.WebGLContext;
-      var WebGLStageRenderer = Shumway.GL.WebGLStageRenderer;
-      var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
-
-      var sceneOptions = {
-        webGL: true,
-        canvas2D: false,
-
-        redraw: 1,
-        maxTextures: 4,
-        maxTextureSize: 1024 * 2,
-        useStencil: false,
-        render: true,
-        drawElements: true,
-        drawTiles: false,
-        drawTextures: false,
-        ignoreViewport: false,
-        ignoreColorTransform: false,
-        drawTexture: -1,
-        drawDirtyRegions: false,
-        drawLayers: false,
-        clear: true,
-        imageSmoothing: true,
-        snap: false,
-        alpha: true
-      };
-
-      var useWebGL = true;
-      if (useWebGL) {
-        var webGLContext = new WebGLContext(canvas, sceneOptions);
-        stageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
-      } else {
-        stageRenderer = new Canvas2DStageRenderer(canvas.getContext("2d"));
-      }
-
-      var domain = avm2.systemDomain;
       var firstRun = true;
+      var frameCount = 0;
+      var frameFPSAverage = new metrics.Average(120);
 
-      var that = this;
+      var frameRequested = true;
 
-      (function tick() {
-        sceneOptions.perspectiveCamera = perspectiveCamera.value;
-        sceneOptions.perspectiveCameraFOV = perspectiveCameraFOV.value;
-        sceneOptions.perspectiveCameraDistance = perspectiveCameraDistance.value;
-        sceneOptions.drawTiles = drawTiles.value;
-        sceneOptions.drawTextures = drawTextures.value;
-        sceneOptions.drawTexture = drawTexture.value;
-        sceneOptions.drawElements = drawElements.value;
-        sceneOptions.ignoreViewport = ignoreViewport.value;
-        sceneOptions.ignoreColorTransform = ignoreColorTransform.value;
-        sceneOptions.clipDirtyRegions = clipDirtyRegions.value;
-        sceneOptions.paintFlashing = paintFlashing.value;
-        sceneOptions.useUploadCanvas = useUploadCanvas.value;
-        sceneOptions.disableTextureUploads = disableTextureUploads.value;
+      var frameScheduler = new FrameScheduler();
 
-        if (perspectiveCameraAngleRotate.value) {
-          sceneOptions.perspectiveCameraAngle = Math.sin(Date.now() / 1000) * 100;
+      function drawFrame(renderFrame, repaint) {
+        sampleStart();
+
+        var refreshStage = false;
+        if (stage._invalid) {
+          //updateRenderTransform();
+          stage._invalid = false;
+          refreshStage = true;
+        }
+
+        var mouseMoved = false;
+        if (stage._mouseMoved) {
+          stage._mouseMoved = false;
+          mouseMoved = stage._mouseOver;
         } else {
-          sceneOptions.perspectiveCameraAngle = perspectiveCameraAngle.value;
-        }
-        if (perspectiveCameraSpacingInflate.value) {
-          sceneOptions.frameSpacing = (1.01 + Math.sin(Date.now() / 1000)) * 5;
-        } else {
-          sceneOptions.frameSpacing = sceneOptions.perspectiveCamera ? Math.max(0.01, perspectiveCameraSpacing.value) : 0.1;
+          stage._handleMouseButtons();
         }
 
-        if (options.onBeforeFrame) {
-          var e = { cancel: false };
-          options.onBeforeFrame(e);
-          if (e.cancel) {
-            requestAnimationFrame(tick);
-            return;
-          }
-        }
+        if (renderFrame || refreshStage || mouseMoved) {
+          FrameCounter.clear();
+          var frameStartTime = performance.now();
+          timelineEnter("frame");
+          traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
 
-        FrameCounter.clear();
-        timelineEnter("FRAME");
+          var domain = avm2.systemDomain;
 
-        timelineEnter("EVENTS");
-
-        if (firstRun) {
-          // Initial display list is already constructed, skip frame construction phase.
-          firstRun = false;
-        } else {
-          timelineWrapBroadcastMessage(domain, "advanceFrame");
-          timelineWrapBroadcastMessage(domain, "enterFrame");
-          timelineWrapBroadcastMessage(domain, "constructChildren");
-        }
-
-        timelineWrapBroadcastMessage(domain, "frameConstructed");
-        timelineWrapBroadcastMessage(domain, "executeFrame");
-        timelineWrapBroadcastMessage(domain, "exitFrame");
-
-        if (that._deferRenderEvent) {
-          timelineWrapBroadcastMessage(domain, "render");
-          that._deferRenderEvent = false;
-        }
-
-        timelineLeave("EVENTS");
-
-        if (sceneOptions.render) {
-          timelineEnter("INVALIDATE");
-          that._processInvalidations();
-          that._commit();
-          timelineLeave("INVALIDATE");
-
-          if (!disableRendering.value) {
-            timelineEnter("Renderer");
-            if (renderer._stage) {
-              // HACK: Setting this flag should be nicer.
-              renderer._stage.trackDirtyRegions = stageRenderer instanceof Canvas2DStageRenderer;
-              stageRenderer.render(renderer._stage, sceneOptions);
+          if (renderFrame) {
+            timelineEnter("events");
+            if (firstRun) {
+              // Initial display list is already constructed, skip frame construction phase.
+              firstRun = false;
+            } else {
+              enableAdvanceFrame.value && timelineWrapBroadcastMessage(domain, "advanceFrame");
+              enableEnterFrame.value && timelineWrapBroadcastMessage(domain, "enterFrame");
+              enableConstructChildren.value && timelineWrapBroadcastMessage(domain, "constructChildren");
             }
-            timelineLeave("Renderer");
+
+            timelineWrapBroadcastMessage(domain, "frameConstructed");
+            timelineWrapBroadcastMessage(domain, "executeFrame");
+            timelineWrapBroadcastMessage(domain, "exitFrame");
+            timelineLeave("events");
           }
-        }
 
-        if (!disableMouse.value) {
-          if (that._mouseMoved) {
-            that._mouseMoved = false;
+          if (stage._deferRenderEvent) {
+            stage._deferRenderEvent = false;
+            domain.broadcastMessage("render", "render");
+          }
 
-            if (that._mouseOver) {
-              timelineEnter("MOUSE");
-              that._handleMouse();
-              timelineLeave("MOUSE");
+          var drawEnabled = (refreshStage || renderFrame) &&
+                            (frameRequested || repaint || !skipFrameDraw.value);
+          // checking if we need to skip painting, however not doing it in repaint
+          // mode or during testing
+          if (drawEnabled && !repaint && skipFrameDraw.value &&
+              frameScheduler.shallSkipDraw) {
+            drawEnabled = false;
+            frameScheduler.skipDraw();
+            traceRenderer.value && appendToFrameTerminal("Skip Frame Draw", "red");
+          }
+          if (drawEnabled) {
+            frameScheduler.startDraw();
 
-              canvas.style.cursor = that._cursor;
+            traceRenderer.value && frameWriter.enter("> Invalidation");
+            timelineEnter("invalidate");
+            stage._processInvalidations(refreshStage);
+            timelineLeave("invalidate");
+            traceRenderer.value && frameWriter.leave("< Invalidation");
+
+            stage._commit();
+
+            frameScheduler.endDraw();
+          }
+
+          if (mouseMoved && !disableMouse.value) {
+            renderFrame && timelineEnter("mouse");
+            traceRenderer.value && frameWriter.enter("> Mouse Handling");
+            stage._handleMouse();
+            traceRenderer.value && frameWriter.leave("< Mouse Handling");
+            renderFrame && timelineLeave("mouse");
+
+            //ctx.canvas.style.cursor = stage._cursor;
+          }
+
+          if (traceRenderer.value) {
+            frameWriter.enter("> Frame Counters");
+            for (var name in FrameCounter.counts) {
+              frameWriter.writeLn(name + ": " + FrameCounter.counts[name]);
             }
-          } else {
-            that._handleMouseButtons();
+            frameWriter.leave("< Frame Counters");
+            var frameElapsedTime = performance.now() - frameStartTime;
+            var frameFPS = 1000 / frameElapsedTime;
+            frameFPSAverage.push(frameFPS);
+            traceRenderer.value && appendToFrameTerminal("End Frame Time: " + frameElapsedTime.toFixed(2) + " (" + frameFPS.toFixed(2) + " fps, " + frameFPSAverage.average().toFixed(2) + " average fps)", "purple");
+
           }
+          timelineLeave("frame");
+        } else {
+          traceRenderer.value && appendToFrameTerminal("Skip Frame", "black");
         }
 
-        timelineLeave("FRAME");
+        sampleEnd();
+      }
 
-        if (options.onAfterFrame) {
-          options.onAfterFrame();
+      (function draw() {
+        var renderFrame = true;
+
+        frameScheduler.startFrame(stage._frameRate);
+        drawFrame(renderFrame, false);
+        frameScheduler.endFrame();
+        //frameRequested = false;
+
+        if (!frameScheduler.isOnTime) {
+          traceRenderer.value && appendToFrameTerminal("Frame Is Late", "red");
         }
 
-        if (renderingTerminated) {
-          if (options.onTerminated) {
-            options.onTerminated();
-          }
-          return;
-        }
-
-        requestAnimationFrame(tick);
+        setTimeout(draw, turboMode.value ? 0 : frameScheduler.nextFrameIn);
       })();
     },
 

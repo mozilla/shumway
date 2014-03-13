@@ -192,7 +192,8 @@ SWF.embed = function(file, doc, container, options) {
       options.onStageInitialized(stage);
     }
 
-    stage._render(renderer, canvas, bgcolor, options);
+    renderer.enterRenderingLoop(canvas, bgcolor, options);
+    stage._enterEventLoop();
   });
 
   if (options.onComplete) {

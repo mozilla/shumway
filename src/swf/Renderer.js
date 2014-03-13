@@ -43,187 +43,347 @@ function rgbaUintToStr(rgba) {
 
 function Renderer(target) {
   this._target = target;
-  this._stage = null;
 
-  this._promises = { };
-  this._renderables = { };
-  this._layers = { };
-  this._fonts = { };
-  this._fontsByNameStyleType = { };
+  this._promises = Object.create(null);
+  this._renderables = Object.create(null);
+  this._layers = Object.create(null);
+  this._fonts = Object.create(null);
+  this._fontsByNameStyleType = Object.create(null);
 
   var renderer = this;
+  var layers = this._layers;
   window.onmessage = function (e) {
     var data = e.data;
     if (data.command === 'render') {
       var i32 = new Int32Array(data.data);
-      var f32 = new Float32Array(data.data);
-      var p = 0;
-      var len = i32.length;
-      while (p < len) {
-        var type = i32[p++];
-        var n = i32[p++];
-        var offset = p;
-        switch (type) {
-        case 0:
-          return;
-        case Renderer.MESSAGE_DEFINE_RENDERABLE:
-          var id = i32[p++];
-          var numDependencies = i32[p++];
-          var dependencies = i32.subarray(p, p + numDependencies);
-          p += numDependencies;
-          var renderableType = i32[p++];
-          var renderableData = i32.subarray(p, offset + n);
-          p = offset + n;
-          renderer.defineRenderable(
-            id, renderableType, dependencies, renderableData
-          );
-          break;
-        case Renderer.MESSAGE_REQUIRE_RENDERABLES:
-          var callbackId = i32[p++];
-          var dependencies = i32.subarray(p, offset + n);
-          p = offset + n;
-          renderer.requireRenderables(dependencies, function () {
-            postMessage({
-              command: 'callback',
-              data: callbackId
-            }, '*');
-          });
-          break;
-        case Renderer.MESSAGE_SETUP_STAGE:
-          var width = i32[p++];
-          var height = i32[p++];
-          var pixelRatio = renderer._target._contentsScaleFactor;
-          renderer._stage = new Shumway.Layers.Stage(
-            // width, height, width * pixelRatio, height * pixelRatio
-            width * pixelRatio, height * pixelRatio
-          );
-          renderer._stage.transform =
-            new Shumway.Geometry.Matrix.createIdentity()
-                                       .scale(pixelRatio, pixelRatio);
-          break;
-        case Renderer.MESSAGE_ADD_LAYER:
-          var isContainer = i32[p++];
-          var parentId = i32[p++];
-          var index = i32[p++];
-          var layerId = i32[p++];
-          var renderableId = i32[p++];
-          var renderable = renderer._renderables[renderableId];
-
-          var transform = new Shumway.Geometry.Matrix(
-            f32[p++], f32[p++], f32[p++], f32[p++], i32[p++], i32[p++]
-          );
-          var alpha = f32[p++];
-          var visible = i32[p++];
-
-          var colorTransform = null;
-          var hasColorTransform = i32[p++];
-          if (hasColorTransform) {
-            colorTransform =
-              Shumway.Layers.ColorTransform.fromMultipliersAndOffsets(
-                f32[p++], f32[p++], f32[p++], f32[p++],
-                i32[p++], i32[p++], i32[p++], i32[p++]
-              );
-          }
-
-          var updateRenderable = i32[p++];
-          if (updateRenderable) {
-            var renderableType = i32[p++];
-            var renderableData = i32.subarray(p, offset + n);
-            p = offset + n;
-            if (renderable) {
-              renderable.constructor.call(renderable, renderableData, renderer);
-            } else {
-              renderable = renderer.defineRenderable(renderableId,
-                                                     renderableType,
-                                                     null,
-                                                     renderableData);
-            }
-          }
-
-          if (!renderable && !isContainer) {
-            break;
-          }
-
-          var layer = renderer._layers[layerId];
-          var parent = renderer._layers[parentId];
-
-          if (parent) {
-            index + 1;
-          } else {
-            parent = renderer._stage;
-          }
-
-          if (layer) {
-            if (renderable) {
-              var target = layer;
-
-              if (isContainer) {
-                target = layer.children[0];
-                if (!target) {
-                  target = new Shumway.Layers.Shape(renderable);
-                  target.origin = new Shumway.Geometry.Point(
-                    -renderable.rect.x, -renderable.rect.y
-                  );
-                  layer.addChildAt(target, 0);
-                }
-              }
-
-              if (target.source !== renderable) {
-                target.source = renderable;
-                // TODO: this should be done in a setter
-                var bounds = renderable.getBounds();
-                target.w = bounds.w;
-                target.h = bounds.h;
-              }
-            }
-          } else {
-            if (isContainer) {
-              layer = new Shumway.Layers.FrameContainer();
-              if (renderable) {
-                var child = new Shumway.Layers.Shape(renderable);
-                child.origin = new Shumway.Geometry.Point(
-                  -renderable.rect.x, -renderable.rect.y
-                );
-                layer.addChild(child);
-              } else {
-                layer.addChild(null);
-              }
-            } else {
-              layer = new Shumway.Layers.Shape(renderable);
-              layer.origin = new Shumway.Geometry.Point(
-                renderable.rect.x, renderable.rect.y
-              );
-            }
-            renderer._layers[layerId] = layer;
-          }
-
-          if (layer.parent !== parent) {
-            parent.addChildAt(layer, index);
-          } else if (layer.index !== index) {
-            parent.removeChild(layer);
-            parent.addChildAt(layer, index);
-          }
-
-          layer.transform = transform;
-          layer.alpha = alpha;
-          layer.isVisible = visible;
-          layer.colorTransform = colorTransform;
-          layer.index = index;
-          break;
-        case Renderer.MESSAGE_REMOVE_LAYER:
-          var layerId = i32[p++];
-          var layer = renderer._layers[layerId];
-          if (layer) {
-            layer.parent.removeChild(layer);
-          }
-          break;
-        }
-      }
+      handleRenderMessages(renderer, layers, i32);
     } else if (data.command === 'callback') {
       renderer._target._callback(data.data);
     }
   };
 }
+
+function handleRenderMessages(renderer, layers, i32) {
+  var f32 = new Float32Array(i32.buffer, i32.byteOffset);
+  var p = 0;
+  var len = i32.length;
+  while (p < len) {
+    var type = i32[p++];
+    var n = i32[p++];
+    var offset = p;
+    switch (type) {
+    case 0:
+      return;
+    case Renderer.MESSAGE_DEFINE_RENDERABLE:
+      var id = i32[p++];
+      var numDependencies = i32[p++];
+      var dependencies = i32.subarray(p, p + numDependencies);
+      p += numDependencies;
+      var renderableType = i32[p++];
+      var renderableData = i32.subarray(p, offset + n);
+      p = offset + n;
+      renderer.defineRenderable(
+        id, renderableType, dependencies, renderableData
+      );
+      break;
+    case Renderer.MESSAGE_REQUIRE_RENDERABLES:
+      var callbackId = i32[p++];
+      var dependencies = i32.subarray(p, offset + n);
+      p = offset + n;
+      renderer.requireRenderables(dependencies, function () {
+        postMessage({
+          command: 'callback',
+          data: callbackId
+        }, '*');
+      });
+      break;
+    case Renderer.MESSAGE_SETUP_STAGE:
+      var width = i32[p++];
+      var height = i32[p++];
+      var pixelRatio = renderer._target._contentsScaleFactor;
+      var stage = new Shumway.Layers.Stage(
+        // width, height, width * pixelRatio, height * pixelRatio
+        width * pixelRatio, height * pixelRatio
+      );
+      stage.transform =
+        new Shumway.Geometry.Matrix.createIdentity()
+                                   .scale(pixelRatio, pixelRatio);
+      layers[0] = stage;
+      break;
+    case Renderer.MESSAGE_ADD_LAYER:
+      var layerId = i32[p++];
+      var isContainer = i32[p++];
+      var parentId = i32[p++];
+      var index = i32[p++];
+      var renderableId = i32[p++];
+      var renderable = renderer._renderables[renderableId];
+
+      var transform = new Shumway.Geometry.Matrix(
+        f32[p++], f32[p++], f32[p++], f32[p++], i32[p++], i32[p++]
+      );
+      var alpha = f32[p++];
+      var visible = i32[p++];
+
+      var colorTransform = null;
+      var hasColorTransform = i32[p++];
+      if (hasColorTransform) {
+        colorTransform =
+          Shumway.Layers.ColorTransform.fromMultipliersAndOffsets(
+            f32[p++], f32[p++], f32[p++], f32[p++],
+            i32[p++], i32[p++], i32[p++], i32[p++]
+          );
+      }
+
+      var updateRenderable = i32[p++];
+      if (updateRenderable) {
+        var renderableType = i32[p++];
+        var renderableData = i32.subarray(p, offset + n);
+        p = offset + n;
+        if (renderable) {
+          renderable.constructor.call(renderable, renderableData, renderer);
+        } else {
+          renderable = renderer.defineRenderable(renderableId,
+                                                 renderableType,
+                                                 null,
+                                                 renderableData);
+        }
+      }
+
+      if (!renderable) {
+        renderable = RenderableNoop;
+      }
+
+      var layer = layers[layerId];
+      var parent = layers[parentId];
+
+      if (parentId && parent) {
+        index += 1;
+      } else {
+        parent = layers[0];
+      }
+
+      if (layer) {
+        var target = layer;
+
+        if (isContainer) {
+          target = layer.children[0];
+          if (!target) {
+            target = new Shumway.Layers.Shape(renderable);
+            target.origin = new Shumway.Geometry.Point(
+              -renderable.rect.x, -renderable.rect.y
+            );
+            layer.addChild(target);
+          }
+        }
+
+        if (target.source !== renderable) {
+          target.source = renderable;
+          // TODO: this should be done in a setter
+          var bounds = renderable.getBounds();
+          target.w = bounds.w;
+          target.h = bounds.h;
+        }
+      } else {
+        if (isContainer) {
+          layer = new Shumway.Layers.FrameContainer();
+          var child = new Shumway.Layers.Shape(renderable);
+          child.origin = new Shumway.Geometry.Point(
+            -renderable.rect.x, -renderable.rect.y
+          );
+          layer.addChild(child);
+        } else {
+          layer = new Shumway.Layers.Shape(renderable);
+          layer.origin = new Shumway.Geometry.Point(
+            renderable.rect.x, renderable.rect.y
+          );
+        }
+        layers[layerId] = layer;
+      }
+
+      if (index < 0) {
+        index = 0;
+      } else if (index > parent.children.length) {
+        index = parent.children.length;
+      }
+
+      if (layer.parent !== parent) {
+        parent.addChildAt(layer, index);
+      } else if (layer.index !== index) {
+        parent.removeChild(layer);
+        parent.addChildAt(layer, index);
+      }
+
+      layer.transform = transform;
+      layer.alpha = alpha;
+      layer.isVisible = visible;
+      layer.colorTransform = colorTransform;
+      layer.index = index;
+      break;
+    case Renderer.MESSAGE_REMOVE_LAYER:
+      var layerId = i32[p++];
+      var layer = layers[layerId];
+      if (layer) {
+        layer.parent.removeChild(layer);
+      }
+      break;
+    }
+  }
+};
+
+var renderingTerminated = false;
+
+var samplesLeftPlusOne = 0;
+
+function sampleStart() {
+  if (!samplesLeftPlusOne) {
+    return;
+  }
+  if (samplesLeftPlusOne < 0) {
+    console.profile("Sample");
+    samplesLeftPlusOne *= -1;
+  }
+  if (samplesLeftPlusOne > 0) {
+    console.info("Sampling Frame: " + (samplesLeftPlusOne - 1));
+  }
+}
+
+function sampleEnd() {
+  if (!samplesLeftPlusOne) {
+    return;
+  }
+  samplesLeftPlusOne --;
+  if (samplesLeftPlusOne === 1) {
+    console.profileEnd("Sample");
+  }
+}
+
+function timelineEnter(name) {
+  timeline && timeline.enter(name);
+  hudTimeline && hudTimeline.enter(name);
+}
+
+function timelineLeave(name) {
+  timeline && timeline.leave(name);
+  hudTimeline && hudTimeline.leave(name);
+}
+
+Renderer.prototype.enterRenderingLoop = function enterRenderingLoop(canvas, bgcolor, options) {
+  var timeline = new Timeline(document.getElementById("frameTimeline"));
+  timeline.setFrameRate(60);
+  timeline.refreshEvery(60);
+  Shumway.GL.timeline = timeline;
+
+  Shumway.GL.SHADER_ROOT = "../../src/stage/shaders/";
+
+  if (bgcolor) {
+    canvas.style.backgroundColor = rgbaObjToStr(bgcolor);
+  }
+
+  var WebGLContext = Shumway.GL.WebGLContext;
+  var WebGLStageRenderer = Shumway.GL.WebGLStageRenderer;
+  var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
+
+  var sceneOptions = {
+    redraw: 1,
+    maxTextures: 4,
+    maxTextureSize: 1024 * 2,
+    useStencil: false,
+    render: true,
+    drawElements: true,
+    drawTiles: false,
+    drawTextures: false,
+    ignoreViewport: false,
+    ignoreColorTransform: false,
+    drawTexture: -1,
+    drawDirtyRegions: false,
+    drawLayers: false,
+    clear: true,
+    imageSmoothing: true,
+    snap: false,
+    alpha: true
+  };
+
+  var useWebGL = true;
+  if (useWebGL) {
+    var webGLContext = new WebGLContext(canvas, sceneOptions);
+    stageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
+  } else {
+    stageRenderer = new Canvas2DStageRenderer(canvas.getContext("2d"));
+  }
+
+  var domain = avm2.systemDomain;
+  var firstRun = true;
+
+  var renderer = this;
+
+  (function tick() {
+    if (renderingTerminated) {
+      return;
+    }
+
+    sceneOptions.perspectiveCamera = perspectiveCamera.value;
+    sceneOptions.perspectiveCameraFOV = perspectiveCameraFOV.value;
+    sceneOptions.perspectiveCameraDistance = perspectiveCameraDistance.value;
+    sceneOptions.drawTiles = drawTiles.value;
+    sceneOptions.drawTextures = drawTextures.value;
+    sceneOptions.drawTexture = drawTexture.value;
+    sceneOptions.drawElements = drawElements.value;
+    sceneOptions.ignoreViewport = ignoreViewport.value;
+    sceneOptions.ignoreColorTransform = ignoreColorTransform.value;
+    sceneOptions.clipDirtyRegions = clipDirtyRegions.value;
+    sceneOptions.paintFlashing = paintFlashing.value;
+    sceneOptions.useUploadCanvas = useUploadCanvas.value;
+    sceneOptions.disableTextureUploads = disableTextureUploads.value;
+
+    if (perspectiveCameraAngleRotate.value) {
+      sceneOptions.perspectiveCameraAngle = Math.sin(Date.now() / 1000) * 100;
+    } else {
+      sceneOptions.perspectiveCameraAngle = perspectiveCameraAngle.value;
+    }
+    if (perspectiveCameraSpacingInflate.value) {
+      sceneOptions.frameSpacing = (1.01 + Math.sin(Date.now() / 1000)) * 5;
+    } else {
+      sceneOptions.frameSpacing = sceneOptions.perspectiveCamera ? Math.max(0.01, perspectiveCameraSpacing.value) : 0.1;
+    }
+
+    if (options.onBeforeFrame) {
+      var e = { cancel: false };
+      options.onBeforeFrame(e);
+      if (e.cancel) {
+        requestAnimationFrame(tick);
+        return;
+      }
+    }
+
+    FrameCounter.clear();
+    timelineEnter("FRAME");
+
+    if (sceneOptions.render && !disableRendering.value && renderer._layers[0]) {
+      timelineEnter("Renderer");
+      traceRenderer.value && frameWriter.enter("> Rendering");
+      // HACK: Setting this flag should be nicer.
+      renderer._layers[0].trackDirtyRegions = stageRenderer instanceof Canvas2DStageRenderer;
+      stageRenderer.render(renderer._layers[0], sceneOptions);
+      traceRenderer.value && frameWriter.leave("< Rendering");
+      timelineLeave("Renderer");
+    }
+
+    timelineLeave("FRAME");
+
+    if (options.onAfterFrame) {
+      options.onAfterFrame();
+    }
+
+    if (renderingTerminated) {
+      if (options.onTerminated) {
+        options.onTerminated();
+      }
+      return;
+    }
+
+    requestAnimationFrame(tick);
+  })();
+};
 
 Renderer.prototype.defineRenderable = function defineRenderable(id, type,
                                                                 dependencies,
@@ -341,7 +501,6 @@ Renderer.prototype.requireRenderables = function requireRenderables(ids, callbac
   }
   Promise.all(promiseQueue).then(callback);
 };
-
 Renderer.prototype.getFont = function(name, embedded /* true|false */) {
   var ident = name.toLowerCase() + (embedded ? '_embedded' : '_device');
   var font = this._fontsByNameStyleType[ident];
@@ -364,7 +523,6 @@ Renderer.prototype.getFont = function(name, embedded /* true|false */) {
   this._fontsByNameStyleType[ident] = font;
   return font;
 };
-
 Renderer.prototype.resolveFont = function(format, embedded) {
   var face = format.face.toLowerCase();
   if (face === '_sans') {
@@ -390,6 +548,15 @@ Renderer.prototype.resolveFont = function(format, embedded) {
   assert(font);
   format.font = font;
 };
+
+var RenderableNoop = {
+  rect: new Shumway.Geometry.Rectangle(0, 0, 0, 0),
+  getBounds: function () {
+    return this.rect;
+  },
+  properties: { },
+  render: function () { }
+}
 
 function RenderableShape(data, renderer, resolve) {
   var xMin = (data[0] / 20) | 0;
@@ -665,126 +832,16 @@ function RenderableBitmap(data, renderer, resolve) {
     drawable.src = URL.createObjectURL(blob);
     break;
   case Renderer.BITMAP_TYPE_DRAW:
-    // TODO: this is duplicated code, move to helper class
-    var canvas = null;
-    var stage = null;
-    var layers = { };
-    var i32 = new Int32Array(bmpData.buffer, bmpData.byteOffset, bmpData.length / 4);
-    var f32 = new Float32Array(bmpData.buffer, bmpData.byteOffset, bmpData.length / 4);
-    var p = 0;
-    var len = i32.length;
-    while (p < len) {
-      var type = i32[p++];
-      var n = i32[p++];
-      var offset = p;
-      switch (type) {
-      case Renderer.MESSAGE_SETUP_STAGE:
-        var width = i32[p++];
-        var height = i32[p++];
-        var canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        stage = new Shumway.Layers.Stage(width, height);
-        break;
-      case Renderer.MESSAGE_ADD_LAYER:
-        var isContainer = i32[p++];
-        var parentId = i32[p++];
-        var index = i32[p++];
-        var layerId = i32[p++];
-        var renderableId = i32[p++];
-        var renderable = renderer._renderables[renderableId];
+    var layers = Object.create(null);
+    var stage = new Shumway.Layers.Stage(width, height);
+    layers[0] = stage;
 
-        var transform = new Shumway.Geometry.Matrix(
-          f32[p++], f32[p++], f32[p++], f32[p++], i32[p++], i32[p++]
-        );
-        var alpha = f32[p++];
-        var visible = i32[p++];
+    var i32 = new Int32Array(bmpData.buffer, bmpData.byteOffset, len / 4);
+    handleRenderMessages(renderer, layers, i32);
 
-        var colorTransform = null;
-        var hasColorTransform = i32[p++];
-        if (hasColorTransform) {
-          colorTransform =
-            Shumway.Layers.ColorTransform.fromMultipliersAndOffsets(
-              f32[p++], f32[p++], f32[p++], f32[p++],
-              i32[p++], i32[p++], i32[p++], i32[p++]
-            );
-        }
-
-        var updateRenderable = i32[p++];
-        if (updateRenderable) {
-          var renderableType = i32[p++];
-          var renderableData = i32.subarray(p, offset + n);
-          p = offset + n;
-          if (renderable) {
-            renderable.constructor.call(renderable, renderableData, renderer, function () {
-
-            });
-          } else {
-            // TODO: support dynamic renderables
-            if (renderableType === 2) {
-              renderable = new RenderableBitmap(renderableData, renderer);
-              renderer._renderables[renderableId] = renderable;
-            }
-          }
-        }
-
-        if (!renderable && !isContainer) {
-          continue;
-        }
-
-        var layer = layers[layerId];
-        if (!layer) {
-          if (isContainer) {
-            layer = new Shumway.Layers.FrameContainer();
-          } else {
-            layer = new Shumway.Layers.Shape(renderable);
-            layer.origin = new Shumway.Geometry.Point(
-              renderable.rect.x, renderable.rect.y
-            );
-          }
-          layers[layerId] = layer;
-
-          var parent = layers[parentId] || stage;
-          if (parent instanceof Shumway.Layers.FrameContainer) {
-            parent.addChild(layer);
-          }
-        }
-
-        layer.transform = transform;
-        layer.alpha = alpha;
-        layer.isVisible = visible;
-        layer.colorTransform = colorTransform;
-        break;
-      }
-    }
-    var sceneOptions = {
-      webGL: true,
-      canvas2D: false,
-
-      redraw: 1,
-      maxTextures: 4,
-      maxTextureSize: 1024 * 2,
-      useStencil: false,
-      render: true,
-      drawElements: true,
-      drawTiles: false,
-      drawTextures: false,
-      drawTexture: -1,
-      drawDirtyRegions: false,
-      drawLayers: false,
-      clear: true,
-      imageSmoothing: true,
-      snap: false,
-      alpha: true
-    };
-    if (canvas) {
-      var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
-      canvas2DStageRenderer = new Canvas2DStageRenderer(canvas.getContext('2d'));
-      canvas2DStageRenderer.render(stage, sceneOptions);
-      drawable = canvas;
-    } else {
-      drawable = new Image;
-    }
+    drawable = document.createElement('canvas');
+    drawable.width = width;
+    drawable.height = height;
     break;
   }
 
