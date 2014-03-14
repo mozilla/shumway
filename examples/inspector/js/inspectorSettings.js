@@ -214,25 +214,35 @@ document.getElementById("sample").addEventListener("click", function () {
     return null;
   }
 
+  function addTooltip(ctrl, text) {
+    var el = ctrl.domElement;
+    while ((el = el.parentElement)) {
+      if (el.classList.contains("cr")) {
+        el.setAttribute("title", text);
+      }
+    }
+  }
+
   function addOptionSet(parent, optionSet) {
+    var ctrl, folder;
+    var isObject = Shumway.isObject;
+    var isNullOrUndefined = Shumway.isNullOrUndefined;
     optionSet.options.forEach(function(option) {
       if (option instanceof OptionSet) {
-        var folder = parent.addFolder(option.name);
+        folder = parent.addFolder(option.name);
         if (option.open) { folder.open(); }
         addOptionSet(folder, option);
       } else {
-        var ctrl;
-        if (option.config) {
-          if (option.config.list) {
+        if (!isNullOrUndefined(option.config) && isObject(option.config)) {
+          if (isObject(option.config.list)) {
             ctrl = parent.add(option, "value", option.config.list);
-          } else if (option.config.choices) {
+          } else if (isObject(option.config.choices)) {
             ctrl = parent.add(option, "value", option.config.choices);
+          } else if (isObject(option.config.range)) {
+            var range = option.config.range;
+            ctrl = parent.add(option, "value").min(range.min).max(range.max).step(range.step);
           } else {
             ctrl = parent.add(option, "value");
-          }
-          if (option.config.range) {
-            var range = option.config.range;
-            ctrl.min(range.min).max(range.max).step(range.step);
           }
         } else {
           ctrl = parent.add(option, "value");
@@ -241,6 +251,7 @@ document.getElementById("sample").addEventListener("click", function () {
         ctrl.onChange(function() {
           saveShumwaySettings(shumwayOptions.getSettings());
         });
+        addTooltip(ctrl, option.description);
       }
     });
   }
