@@ -221,12 +221,26 @@ document.getElementById("sample").addEventListener("click", function () {
         if (option.open) { folder.open(); }
         addOptionSet(folder, option);
       } else {
-        parent
-          .add(option, "value", option.details)
-          .name(option.longName)
-          .onChange(function() {
-            saveShumwaySettings(shumwayOptions.getSettings());
-          });
+        var ctrl;
+        if (option.config) {
+          if (option.config.list) {
+            ctrl = parent.add(option, "value", option.config.list);
+          } else if (option.config.choices) {
+            ctrl = parent.add(option, "value", option.config.choices);
+          } else {
+            ctrl = parent.add(option, "value");
+          }
+          if (option.config.range) {
+            var range = option.config.range;
+            ctrl.min(range.min).max(range.max).step(range.step);
+          }
+        } else {
+          ctrl = parent.add(option, "value");
+        }
+        ctrl.name(option.longName);
+        ctrl.onChange(function() {
+          saveShumwaySettings(shumwayOptions.getSettings());
+        });
       }
     });
   }
