@@ -40,6 +40,9 @@
  */
 
 module Shumway.Options {
+  import isObject = Shumway.isObject;
+  import isNullOrUndefined = Shumway.isNullOrUndefined;
+
   export class Argument {
     shortName: string;
     longName: string;
@@ -182,12 +185,12 @@ module Shumway.Options {
       if (this.settings) {
         if (option instanceof OptionSet) {
           var optionSettings = this.settings[option.name];
-          if (typeof optionSettings === "object") {
+          if (isObject(optionSettings)) {
             option.settings = optionSettings.settings;
             option.open = optionSettings.open;
           }
         } else {
-          if (typeof this.settings[option.longName] !== "undefined") {
+          if (!isNullOrUndefined(this.settings[option.longName])) {
             option.value = this.settings[option.longName];
           }
         }
