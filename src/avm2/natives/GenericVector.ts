@@ -19,10 +19,12 @@ module Shumway.AVM2.AS {
   declare var arraySort;
   declare var checkArguments;
   declare var clamp;
-  declare var asCheckVectorGetNumericProperty;
-  declare var asCheckVectorSetNumericProperty;
+
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
+  import notImplemented = Shumway.Debug.notImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
+  import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
 
   export class GenericVector extends ASVector<Object> {
 
@@ -257,6 +259,14 @@ module Shumway.AVM2.AS {
       release || assert (this._buffer.length === value);
     }
 
+    set fixed(f: boolean) {
+      this._fixed = !!f;
+    }
+
+    get fixed(): boolean {
+      return this._fixed;
+    }
+
     /**
      * Delete |deleteCount| elements starting at |index| then insert |insertCount| elements
      * from |args| object starting at |offset|.
@@ -290,65 +300,17 @@ module Shumway.AVM2.AS {
       return index >= 0 && index < this._buffer.length;
     }
 
-//    private static _every(o: any, callback: Function, thisObject: any): boolean {
-//      callback = callback;
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::private static _every"); return;
-//    }
-//    private static _forEach(o: any, callback: Function, thisObject: any): void {
-//      callback = callback;
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::private static _forEach"); return;
-//    }
-//    private static _some(o: any, callback: Function, thisObject: any): boolean {
-//      callback = callback;
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::private static _some"); return;
-//    }
-//    private static _sort(o: any, args: any []): any {
-//      args = args;
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::private static _sort"); return;
-//    }
-//    private newThisType(): __AS3__.vec.Vector$object {
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::private newThisType"); return;
-//    }
-//    get length(): number /*uint*/ {
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::get length"); return;
-//    }
-//    set length(value: number /*uint*/) {
-//      value = value >>> 0;
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::set length"); return;
-//    }
-//    set fixed(f: boolean) {
-//      f = !!f;
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::set fixed"); return;
-//    }
-//    get fixed(): boolean {
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::get fixed"); return;
-//    }
-//    push(): number /*uint*/ {
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::push"); return;
-//    }
-//    private _reverse(): void {
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::private _reverse"); return;
-//    }
-//    private _spliceHelper(insertpoint: number /*uint*/, insertcount: number /*uint*/, deleteCount: number /*uint*/, args: Object, offset: number /*uint*/): void {
-//      insertpoint = insertpoint >>> 0; insertcount = insertcount >>> 0; deleteCount = deleteCount >>> 0; args = args; offset = offset >>> 0;
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::private _spliceHelper"); return;
-//    }
-//    unshift(): number /*uint*/ {
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::unshift"); return;
-//    }
-//    private _filter(callback: Function, thisObject: any): any {
-//      callback = callback;
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::private _filter"); return;
-//    }
-//    private _map(callback: Function, thisObject: any): any {
-//      callback = callback;
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::private _map"); return;
-//    }
-//    pop(): any {
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::pop"); return;
-//    }
-//    shift(): any {
-//      notImplemented("packageInternal __AS3__.vec.Vector$object::shift"); return;
-//    }
+    private newThisType(): any {
+      notImplemented("Do we really need this?");
+      return;
+    }
+
+    _reverse: () => void;
+    _filter: (callback: Function, thisObject: any) => any;
+    _map: (callback: Function, thisObject: any) => any;
   }
+
+  GenericVector.prototype._reverse = GenericVector.prototype.reverse;
+  GenericVector.prototype._filter = GenericVector.prototype.filter;
+  GenericVector.prototype._map = GenericVector.prototype.map;
 }

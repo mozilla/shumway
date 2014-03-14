@@ -106,6 +106,7 @@ var Stubs = new (function () {
    * The `eventType` argument is transmitted by the broadcaster, can be ignored.
    */
   this.onClassCreated = function (eventType, cls) {
+    return;
     var classOriginalName = cls.classInfo.instanceInfo.name.getOriginalName();
     if (classOriginalName in definitions) {
       cls.link(definitions[classOriginalName] || DEFAULT_DEFINITION);

@@ -204,7 +204,7 @@ module Shumway.AVM2.Runtime {
       boundMethod = function () {
         Array.prototype.unshift.call(arguments, scope);
         var global = (this === jsGlobal ? scope.global.object : this);
-        return fn.apply(global, arguments);
+        return fn.asApply(global, arguments);
       };
     }
     boundMethod.methodInfo = methodInfo;

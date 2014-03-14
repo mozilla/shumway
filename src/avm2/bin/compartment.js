@@ -69,13 +69,22 @@ load(homePath + "src/avm2/runtime-exports.js");
 load(homePath + "src/avm2/interpreter.js");
 load(homePath + "src/avm2/viz.js");
 load(homePath + "src/avm2/xml.js");
-load(homePath + "src/avm2/vectors-numeric.js");
-load(homePath + "src/avm2/vectors-generic.js");
+//load(homePath + "src/avm2/vectors-numeric.js");
+//load(homePath + "src/avm2/vectors-generic.js");
 load(homePath + "src/avm2/array.js");
 load(homePath + "src/avm2/proxy.js");
 load(homePath + "src/avm2/dictionary.js");
 load(homePath + "src/avm2/native.js");
+
+load(homePath + "src/avm2/natives/int32Vector.js");
+load(homePath + "src/avm2/natives/uint32Vector.js");
+load(homePath + "src/avm2/natives/float64Vector.js");
 load(homePath + "src/avm2/nat.js");
+load(homePath + "src/avm2/natives/genericVector.js");
+
+
+
+
 Timer.stop();
 Timer.stop();
 

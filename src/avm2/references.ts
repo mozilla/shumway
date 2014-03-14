@@ -31,6 +31,10 @@
 ///<reference path='interpreter.ts' />
 ///<reference path='hacks.ts' />
 ///<reference path='nat.ts' />
-///<reference path='as/ObjectVector.ts' />
+///<reference path='natives/genericVector.ts' />
+///<reference path='natives/int32Vector.ts' />
+///<reference path='natives/uint32Vector.ts' />
+///<reference path='natives/float64Vector.ts' />
+
 ///<reference path='stubs.ts' />
 

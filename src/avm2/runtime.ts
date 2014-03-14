@@ -63,6 +63,11 @@ interface Object {
   asCallProxy: any;
 }
 
+interface Function {
+  asCall(thisArg: any, ...argArray: any[]): any;
+  asApply(thisArg: any, argArray?: any): any;
+}
+
 module Shumway.AVM2.Runtime {
 
   declare var traceLevel;
@@ -457,7 +462,7 @@ module Shumway.AVM2.Runtime {
     } else {
       method = self[resolved];
     }
-    return method.apply(receiver, args);
+    return method.asApply(receiver, args);
   }
 
   export function asGetResolvedStringPropertyFallback(resolved: any) {
@@ -546,7 +551,7 @@ module Shumway.AVM2.Runtime {
           method = self[resolved];
         }
       }
-      result = method.apply(receiver, args);
+      result = method.asApply(receiver, args);
     }
     traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
     return result;
@@ -563,7 +568,7 @@ module Shumway.AVM2.Runtime {
     var openMethods = baseClass.traitsPrototype.asOpenMethods;
     assert (openMethods && openMethods[resolved]);
     var method = openMethods[resolved];
-    var result = method.apply(this, args);
+    var result = method.asApply(this, args);
     traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
     return result;
   }
@@ -607,13 +612,13 @@ module Shumway.AVM2.Runtime {
       // return primitive values for new'd boxes
       var qn = Multiname.getQualifiedName(cls.classInfo.instanceInfo.name);
       if (qn === Multiname.String) {
-        return String.apply(null, args);
+        return String.asApply(null, args);
       }
       if (qn === Multiname.Boolean) {
-        return Boolean.apply(null, args);
+        return Boolean.asApply(null, args);
       }
       if (qn === Multiname.Number) {
-        return Number.apply(null, args);
+        return Number.asApply(null, args);
       }
     }
     var c = <any> cls.instanceConstructor;
@@ -635,7 +640,7 @@ module Shumway.AVM2.Runtime {
     for (var i = 0; i < args.length; i++) {
       applyArguments[i + 1] = args[i];
     }
-    return new (Function.bind.apply(c, applyArguments));
+    return new (Function.bind.asApply(c, applyArguments));
   }
 
   export function asConstructProperty(namespaces: Namespace [], name: any, flags: number, args: any []) {
@@ -732,7 +737,6 @@ module Shumway.AVM2.Runtime {
 
   export function asGetEnumerableKeys(): any [] {
     var self: Object = this;
-    log("WTF: " + this + " " + (typeof this));
     var boxedValue = self.valueOf();
     // TODO: This is probably broken if the object has overwritten |valueOf|.
     if (typeof boxedValue === "string" || typeof boxedValue === "number") {
@@ -806,7 +810,19 @@ module Shumway.AVM2.Runtime {
   }
 
 
-  export function throwError(name, error) {
+  export function asCheckVectorSetNumericProperty(i, length, fixed) {
+    if (i < 0 || i > length || (i === length && fixed) || !isNumeric(i)) {
+      throwError("RangeError", Errors.OutOfRangeError, i, length);
+    }
+  }
+
+  export function asCheckVectorGetNumericProperty(i, length) {
+    if (i < 0 || i >= length || !isNumeric(i)) {
+      throwError("RangeError", Errors.OutOfRangeError, i, length);
+    }
+  }
+
+  export function throwError(name, error, ...rest) {
     if (true) {
       var message = Shumway.AVM2.formatErrorMessage.apply(null, Array.prototype.slice.call(arguments, 1));
       throwErrorFromVM(AVM2.currentDomain(), name, message, error.code);
@@ -1092,6 +1108,9 @@ module Shumway.AVM2.Runtime {
     defineNonEnumerableProperty(global.Object.prototype, "asNextValue", asNextValue);
     defineNonEnumerableProperty(global.Object.prototype, "asNextNameIndex", asNextNameIndex);
     defineNonEnumerableProperty(global.Object.prototype, "asGetEnumerableKeys", asGetEnumerableKeys);
+
+    defineNonEnumerableProperty(global.Function.prototype, "asCall", global.Function.prototype.call);
+    defineNonEnumerableProperty(global.Function.prototype, "asApply", global.Function.prototype.apply);
 
     [
       "Array",
@@ -1734,7 +1753,7 @@ module Shumway.AVM2.Runtime {
     domain.onMessage.notify1('classCreated', cls);
 
     if (cls.instanceConstructor && cls !== Class) {
-      cls.verify();
+      // cls.verify();
     }
 
     // TODO: Seal constant traits in the instance object. This should be done after

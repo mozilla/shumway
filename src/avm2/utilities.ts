@@ -258,6 +258,10 @@ module Shumway {
       return array;
     }
 
+    export function isPrototypeWriteable(object: Object) {
+      return Object.getOwnPropertyDescriptor(object, "prototype").writable;
+    }
+
     export function hasOwnProperty(object: Object, name: string): boolean {
       return Object.prototype.hasOwnProperty.call(object, name);
     }
@@ -842,6 +846,10 @@ module Shumway {
 
     redLn(str: string) {
       this.colorLn(IndentingWriter.RED, str);
+    }
+
+    warnLn(str: string) {
+      this.yellowLn(str);
     }
 
     colorLn(color: string, str: string) {

@@ -294,10 +294,10 @@ module Shumway.AVM2.Runtime {
       return {
         call: function ($this) {
           Array.prototype.shift.call(arguments);
-          return f.apply($this, arguments);
+          return f.asApply($this, arguments);
         },
         apply: function ($this, args) {
-          return f.apply($this, args);
+          return f.asApply($this, args);
         }
       };
     }
@@ -309,17 +309,6 @@ module Shumway.AVM2.Runtime {
         },
         apply: function ($this, args) {
           return asCoerce(type, args[0]);
-        }
-      };
-    }
-
-    static constructingCallable(instanceConstructor) {
-      return {
-        call: function (self) {
-          return new (Function.bind.apply(instanceConstructor, arguments));
-        },
-        apply: function (self, args) {
-          return new (Function.bind.apply(instanceConstructor, [self].concat(args)));
         }
       };
     }
@@ -350,7 +339,7 @@ module Shumway.AVM2.Runtime {
       if (!c) {
         c = cache[simpleName] = this.getProperty(Multiname.fromSimpleName(simpleName), true, true);
       }
-      release || assert(c instanceof Class);
+      release || assert(c instanceof Shumway.AVM2.AS.ASClass);
       return c;
     }
 

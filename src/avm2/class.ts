@@ -255,7 +255,7 @@ module Shumway.AVM2.Runtime {
 
     public createInstance(args) {
       var o = Object.create(this.instanceConstructor.prototype);
-      this.instanceConstructor.apply(o, args);
+      this.instanceConstructor.asApply(o, args);
       return o;
     }
 
@@ -309,7 +309,7 @@ module Shumway.AVM2.Runtime {
         var self = this;
         this.instanceConstructor = function () {
           self.initializeInstance(this);
-          instanceConstructorNoInitialize.apply(this, arguments);
+          instanceConstructorNoInitialize.asApply(this, arguments);
         };
         defineReadOnlyProperty(this.instanceConstructor, "class", instanceConstructorNoInitialize.class);
         this.hasInitialize |= Class.SUPER_INITIALIZE;
@@ -332,7 +332,7 @@ module Shumway.AVM2.Runtime {
           var self = this;
           this.instanceConstructor = function () {
             self.initializeInstance(this);
-            instanceConstructorNoInitialize.apply(this, arguments);
+            instanceConstructorNoInitialize.asApply(this, arguments);
           };
           defineReadOnlyProperty(this.instanceConstructor, "class", instanceConstructorNoInitialize.class);
           this.instanceConstructor.prototype = instanceConstructorNoInitialize.prototype;

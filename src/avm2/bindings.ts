@@ -491,7 +491,7 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-  var traitsWriter: IndentingWriter = new IndentingWriter();
+  var traitsWriter: IndentingWriter = null; // new IndentingWriter();
 
 }
 

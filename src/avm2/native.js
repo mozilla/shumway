@@ -215,7 +215,6 @@ var NativeASNamespace;
 var natives = (function () {
 
   var C = ApplicationDomain.passthroughCallable;
-  var CC = ApplicationDomain.constructingCallable;
 
   /**
    * Object.as
@@ -290,7 +289,7 @@ var natives = (function () {
   function ClassClass(runtime, scope, instanceConstructor, baseClass) {
     var c = Class;
     c.debugName = "Class";
-    c.prototype.extendBuiltin.call(c, baseClass);
+    c.prototype.configureBuiltinPrototype.call(c, baseClass);
     c.coerce = function (value) {
       return value;
     };
@@ -308,7 +307,7 @@ var natives = (function () {
    */
   function BooleanClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("Boolean", Boolean, C(Boolean));
-    c.extendBuiltin(baseClass);
+    c.configureBuiltinPrototype(baseClass);
     c.native = {
       instance: {
         toString: Boolean.prototype.toString,
@@ -333,7 +332,7 @@ var natives = (function () {
    */
   function FunctionClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("Function", Function, C(Function));
-    c.extendBuiltin(baseClass);
+    c.configureBuiltinPrototype(baseClass);
     c.native = {
       instance: {
         prototype: {
@@ -379,7 +378,7 @@ var natives = (function () {
 
   function MethodClosureClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("MethodClosure", MethodClosure);
-    c.extendBuiltin(baseClass);
+    c.configureBuiltinPrototype(baseClass);
     return c;
   }
 
@@ -389,7 +388,7 @@ var natives = (function () {
 
   function StringClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("String", String, C(String));
-    c.extendBuiltin(baseClass);
+    c.configureBuiltinPrototype(baseClass);
 
     var Sp = String.prototype;
     c.native = {
@@ -608,7 +607,7 @@ var natives = (function () {
    */
   function NumberClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("Number", Number, C(Number));
-    c.extendBuiltin(baseClass);
+    c.configureBuiltinPrototype(baseClass);
     c.native = {
       instance: Number.prototype
     };
@@ -636,7 +635,7 @@ var natives = (function () {
 
   function intClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("int", boxedInt, C(Int));
-    c.extendBuiltin(baseClass);
+    c.configureBuiltinPrototype(baseClass);
     c.defaultValue = 0;
     c.coerce = Int;
     c.isInstanceOf = function (value) {
@@ -692,7 +691,7 @@ var natives = (function () {
    */
   function DateClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("Date", Date, C(Date));
-    c.extendBuiltin(baseClass);
+    c.configureBuiltinPrototype(baseClass);
     c.native = {
       instance: Date.prototype,
       static: Date
@@ -747,7 +746,7 @@ var natives = (function () {
 
   function RegExpClass(runtime, scope, instanceConstructor, baseClass) {
     var c = new Class("RegExp", XRegExp, C(XRegExp));
-    c.extendBuiltin(baseClass);
+    c.configureBuiltinPrototype(baseClass);
 
     // Make exec and test visible via RegExpClass since we need to link them in, in
     // RegExp.as using unsafeJSNative().
@@ -901,40 +900,7 @@ var natives = (function () {
    */
   function JSONClass(runtime, scope, instanceConstructor, baseClass) {
 
-    /**
-     * Transforms a JS value into an AS value.
-     */
-    function transformJSValueToAS(value) {
-      if (typeof value !== "object") {
-        return value;
-      }
-      var keys = Object.keys(value);
-      var result = value instanceof Array ? [] : {};
-      for (var i = 0; i < keys.length; i++) {
-        result.asSetPublicProperty(keys[i], transformJSValueToAS(value[keys[i]]));
-      }
-      return result;
-    }
 
-    /**
-     * Transforms an AS value into a JS value.
-     */
-    function transformASValueToJS(value) {
-      if (typeof value !== "object") {
-        return value;
-      }
-      var keys = Object.keys(value);
-      var result = value instanceof Array ? [] : {};
-      for (var i = 0; i < keys.length; i++) {
-        var key = keys[i];
-        var jsKey = key;
-        if (!isNumeric(key)) {
-          jsKey = Multiname.getNameFromPublicQualifiedName(key);
-        }
-        result[jsKey] = transformASValueToJS(value[key]);
-      }
-      return result;
-    }
 
     function ASJSON() {}
     var c = new Class("JSON", ASJSON, C(ASJSON));
@@ -1039,7 +1005,7 @@ var natives = (function () {
     var BAp = BA.prototype = Object.create(ByteArray.prototype);
 
     var c = new Class("ByteArray", BA, C(BA));
-    c.extendBuiltin(baseClass);
+    c.configureBuiltinPrototype(baseClass);
 
     BAp.asGetNumericProperty = function (i) {
       if (i >= this.length) {
