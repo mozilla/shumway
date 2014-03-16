@@ -16,7 +16,8 @@
  * limitations under the License.
  */
 
-var disassemblerOptions = systemOptions.register(new OptionSet("Disassembler Options"));
+var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
+var disassemblerOptions = avm2Options.register(new OptionSet("Disassembler"));
 
 var filter = disassemblerOptions.register(new Option("f", "filter", "string", "SpciMsmNtu", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames, S[t]atistics, [u]tf"));
 

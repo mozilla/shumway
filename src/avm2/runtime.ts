@@ -66,7 +66,7 @@ interface Object {
 module Shumway.AVM2.Runtime {
 
   declare var traceLevel;
-  declare var systemOptions: OptionSet;
+  declare var shumwayOptions: OptionSet;
 
   declare var isProxy;
   declare var isProxyObject;
@@ -79,7 +79,8 @@ module Shumway.AVM2.Runtime {
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
 
-  var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
+  var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
+  var runtimeOptions = avm2Options.register(new OptionSet("Runtime"));
   var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
   export var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution"));
   export var traceCallExecution = runtimeOptions.register(new Option("txc", "traceCallExecution", "number", 0, "trace call execution"));
@@ -88,7 +89,7 @@ module Shumway.AVM2.Runtime {
   var compileOnly = runtimeOptions.register(new Option("co", "compileOnly", "number", -1, "Compiles only function number."));
   var compileUntil = runtimeOptions.register(new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number."));
   export var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
-  export var enableVerifier = runtimeOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
+  export var enableVerifier = runtimeOptions.register(new Option("verifier", "verifier", "boolean", false, "Enable verifier."));
 
   export var globalMultinameAnalysis = runtimeOptions.register(new Option("ga", "globalMultinameAnalysis", "boolean", false, "Global multiname analysis."));
   var traceInlineCaching = runtimeOptions.register(new Option("tic", "traceInlineCaching", "boolean", false, "Trace inline caching execution."));

@@ -4,13 +4,22 @@ var DebugCanvasRenderingContext2D = (function () {
     this.counter = counter;
     this.options = options;
   };
-  debugCanvasRenderingContext2D.Options = {
-    disableStroke: false,
-    disableFill: false,
-    disableClip: false,
-    disableFillText: false,
-    disableDrawImage: false
-  };
+  debugCanvasRenderingContext2D.Options = (function() {
+    var options = {
+      disableStroke: new Option("disableStroke", "disableStroke", "boolean", false, "disable stroke"),
+      disableFill: new Option("disableFill", "disableFill", "boolean", false, "disable fill"),
+      disableClip: new Option("disableClip", "disableClip", "boolean", false, "disable clip"),
+      disableFillText: new Option("disableFillText", "disableFillText", "boolean", false, "disable fill text"),
+      disableDrawImage: new Option("disableDrawImage", "disableDrawImage", "boolean", false, "disable draw image")
+    };
+    var optionSet = shumwayOptions.register(new OptionSet("Debug Canvas"));
+    optionSet.register(options.disableStroke);
+    optionSet.register(options.disableFill);
+    optionSet.register(options.disableClip);
+    optionSet.register(options.disableFillText);
+    optionSet.register(options.disableDrawImage);
+    return options;
+  })();
   debugCanvasRenderingContext2D.prototype = {
     onEnter: function (name, args) {
       this.counter.count(name);
@@ -247,21 +256,21 @@ var DebugCanvasRenderingContext2D = (function () {
       return result;
     },
     fill: function() {
-      if (this.options.disableFill) return;
+      if (this.options.disableFill.value) return;
       this.onEnter("fill", arguments);
       var result = this.target.fill.apply(this.target, arguments);
       this.onLeave("fill");
       return result;
     },
     stroke: function() {
-      if (this.options.disableStroke) return;
+      if (this.options.disableStroke.value) return;
       this.onEnter("stroke", arguments);
       var result = this.target.stroke.apply(this.target, arguments);
       this.onLeave("stroke");
       return result;
     },
     clip: function() {
-      if (this.options.disableClip) return;
+      if (this.options.disableClip.value) return;
       this.onEnter("clip", arguments);
       var result = this.target.clip.apply(this.target, arguments);
       this.onLeave("clip");
@@ -280,7 +289,7 @@ var DebugCanvasRenderingContext2D = (function () {
       return result;
     },
     fillText: function(text,x,y,maxWidth) {
-      if (this.options.disableFillText) return;
+      if (this.options.disableFillText.value) return;
       this.onEnter("fillText", arguments);
       var result = this.target.fillText.apply(this.target, arguments);
       this.onLeave("fillText");
@@ -299,7 +308,7 @@ var DebugCanvasRenderingContext2D = (function () {
       return result;
     },
     drawImage: function(img_elem,dx_or_sx,dy_or_sy,dw_or_sw,dh_or_sh,dx,dy,dw,dh) {
-      if (this.options.disableDrawImage) return;
+      if (this.options.disableDrawImage.value) return;
       this.onEnter("drawImage", arguments);
       var result = this.target.drawImage.apply(this.target, arguments);
       this.onLeave("drawImage");

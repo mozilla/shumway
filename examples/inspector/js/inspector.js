@@ -127,11 +127,11 @@ function showMessage(msg) {
 
 function executeFile(file, buffer, movieParams) {
   // All execution paths must now load AVM2.
-  if (!state.appCompiler) {
+  if (!appCompiler.value) {
     showMessage("Running in the Interpreter");
   }
-  var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var sysMode = sysCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
 
   var filename = file.split('?')[0].split('#')[0];
   if (filename.endsWith(".abc")) {
@@ -288,7 +288,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".toolbarButtonBar > .too
   });
 });
 
-// toggle info panels (debug info, display list)
+// toggle info panels (debug info, display list, settings)
 var panelToggleButtonSelector = "#debugInfoToolbar > .toolbarButtonBar > .toolbarButton";
 function panelToggleButtonClickHandler(event) {
   Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
@@ -302,6 +302,7 @@ function panelToggleButtonClickHandler(event) {
   });
   switch (event.target.dataset.panelid) {
     case "displayListContainer":
+    case "settingsContainer":
       if (swfController.isPlaying()) {
         swfController.pause(function() {
           updateDisplayListTree();
@@ -343,7 +344,6 @@ swfController.onStateChange = function onStateChange(newState, oldState) {
 
 function initUI() {
   document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
-  document.getElementById("ctrlLogToConsole").classList.add("active");
   document.getElementById("muteButton").classList.add("active");
   document.getElementById("pauseButton").classList.add("active");
   document.getElementById("stepButton").classList.add("active");
