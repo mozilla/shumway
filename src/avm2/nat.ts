@@ -19,9 +19,6 @@ interface Object {
   __proto__: Object;
 }
 
-interface JSObject extends Object {}
-interface JSFunction extends Function {}
-
 module Shumway.AVM2.AS {
   
   import Trait = Shumway.AVM2.ABC.Trait;
@@ -50,7 +47,6 @@ module Shumway.AVM2.AS {
   import Float64Vector = Shumway.AVM2.AS.Float64Vector;
 
   declare var arraySort;
-  declare var dumpObject;
 
   /**
    * This is all very magical, things are not what they seem, beware!!!
@@ -100,103 +96,12 @@ module Shumway.AVM2.AS {
   }
 
   /**
-   * In AS3 all objects inherit from the Object class. The Object Class instance itself
-   * extends the Class class which in turn extends the Object class. In Shumway, native
-   * class definitions are expressed as TS classes, but there is no way to express that
-   * a TS Class instance inherits from another class. We use the IASClass interface to
-   * model Class instances so that TS native class definitions and instances of the
-   * ASClass type check against the IASClass interface.
-   *
-   * All native TS class definitions and instances of the ASClass implement this interface.
-   */
-  export interface IASClass {
-    classInfo: ClassInfo;
-
-    /**
-     * Base class.
-     */
-    baseClass: IASClass;
-
-    /**
-     * Constructs a class instance.
-     */
-    instanceConstructor: new (...args) => any;
-
-    /**
-     * Constructs a class instance without calling the "native" initializer.
-     */
-    instanceConstructorNoInitialize: new (...args) => any;
-
-    /**
-     * A list of objects to search for methods or accessors when linking static native traits.
-     */
-    staticNatives?: any [];
-
-    /**
-     * A list of objects to search for methods or accessors when linking instance native traits.
-     */
-    instanceNatives?: any [];
-
-    prototype?: JSObject;
-
-    /**
-     * Checks the structural integrity of the class instance.
-     */
-    verify: () => void;
-
-    /**
-     * Class bindings associated with this class.
-     */
-    classBindings: ClassBindings;
-
-    /**
-     * Instance bindings associated with this class.
-     */
-    instanceBindings: InstanceBindings;
-
-    isInstance: (any) => boolean;
-    isInstanceOf: (any) => boolean;
-    coerce: (any) => any;
-
-    /**
-     * Prototype object that holds all class instance traits. This is not usually accessible from AS3 code directly. However,
-     * for some classes (native classes) the |traitsPrototype| === |dynamicPrototype|.
-     */
-    traitsPrototype?: Object;
-
-    /**
-     * Prototype object accessible from AS3 script code. This is the AS3 Class prototype object |class A { ... }, A.prototype|
-     */
-    dynamicPrototype?: Object;
-
-    defaultValue: any;
-
-    /**
-     * Initialization flags that determine how native initializers get called.
-     */
-    initializationFlags: InitializationFlags;
-
-    /**
-     * How the constructor of the class should behave when calling without the "new" keyword.
-     */
-    callableStyle: CallableStyle;
-
-    asCall(self: any, ...argArray: any[]): any;
-
-    asApply(self: any, argArray?: any): any;
-
-    trace(writer: IndentingWriter);
-
-    morphIntoASClass(classInfo: ClassInfo): void;
-  }
-
-  /**
    * In order to avoid shadowing of JS top level Objects we prefix the AS top level
    * classes with the "AS" prefix.
    */
-  
+
   export class ASObject {
-    public static baseClass: IASClass = null;
+    public static baseClass: typeof ASClass = null;
     public static classInfo: ClassInfo;
     public static instanceConstructor: any = Object;
     public static instanceConstructorNoInitialize: any = null;
@@ -209,6 +114,20 @@ module Shumway.AVM2.AS {
     public static defaultValue: any = null;
     public static initializationFlags: InitializationFlags = InitializationFlags.NONE;
     public static callableStyle: CallableStyle = CallableStyle.PASSTHROUGH;
+    public static asPrototype: Object;
+
+    public static call(): any {
+      log("ASObject::call - Ignoring");
+    }
+
+    public static apply(): any {
+      log("ASObject::apply - Ignoring");
+    }
+
+//    static get asPrototype(): Object {
+//      assert (this.dynamicPrototype);
+//      return this.dynamicPrototype;
+//    }
 
     /**
      * Makes native class definitions look like ASClass instances.
@@ -218,7 +137,7 @@ module Shumway.AVM2.AS {
       this.__proto__ = ASClass.prototype;
     }
 
-    static create(self: IASClass, baseClass: IASClass, instanceConstructor: any) {
+    static create(self: ASClass, baseClass: ASClass, instanceConstructor: any) {
       // ! The AS3 instanceConstructor is ignored.
       log("HERE");
       ASClass.create(self, baseClass, this.instanceConstructor);
@@ -294,17 +213,17 @@ module Shumway.AVM2.AS {
     // Hack to make the TypeScript compiler find the original Object.defineProperty.
     static defineProperty = Object.defineProperty;
 
-    isPrototypeOf(V = undefined): boolean {
+    isPrototypeOf(V: Object): boolean {
       notImplemented("isPrototypeOf");
       return false;
     }
 
-    hasOwnProperty(V = undefined): boolean {
+    hasOwnProperty(V: string): boolean {
       notImplemented("hasOwnProperty");
       return false;
     }
 
-    propertyIsEnumerable(V = undefined): boolean {
+    propertyIsEnumerable(V: string): boolean {
       notImplemented("propertyIsEnumerable");
       return false;
     }
@@ -314,7 +233,7 @@ module Shumway.AVM2.AS {
    * Inherit from this if you don't want to inherit the junk from ASObject
    */
   export class ASNative extends ASObject {
-    public static baseClass: IASClass = null;
+    public static baseClass: typeof ASClass = null;
     public static classInfo: ClassInfo = null;
     public static instanceConstructor: any = null;
     public static classBindings: ClassBindings = null;
@@ -328,27 +247,31 @@ module Shumway.AVM2.AS {
     public static callableStyle: CallableStyle = CallableStyle.COERCE;
   }
 
-  export class ASClass extends ASObject implements IASClass {
+  /**
+   * In AS3 all objects inherit from the Object class. Class objects themselves are instances
+   * of the Class class. In Shumway, Class instances can be constructed in two ways: dynamically,
+   * through the |new ASClass()| constructor function, or "statically" by inheriting the static
+   * properties from the ASObject class. Statically constructed functions get morphed into
+   * proper ASClass instances when they get constructed at runtime.
+   *
+   * We need to be really careful not to step on TS's inheritance scheme.
+   */
+  export class ASClass extends ASObject {
     public static instanceConstructor: any = ASClass;
-    public static classBindings: ClassBindings;
-    public static instanceBindings: InstanceBindings;
-    public static classInfo: ClassInfo;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
-    public static dynamicPrototype: Object;
-    public static traitsPrototype: Object;
 
     /**
      * We can't do our traits / dynamic prototype chaining trick when dealing with builtin
      * functions: Object, Array, etc. Here, we take over the builtin function prototype.
      */
-    static configureBuiltinPrototype(self: IASClass, baseClass: IASClass) {
+    static configureBuiltinPrototype(self: ASClass, baseClass: ASClass) {
       assert (self.instanceConstructor);
       self.baseClass = baseClass;
       self.dynamicPrototype = self.traitsPrototype = self.instanceConstructor.prototype;
     }
 
-    static configurePrototype(self: IASClass, baseClass: IASClass) {
+    static configurePrototype(self: ASClass, baseClass: ASClass) {
       self.baseClass = baseClass;
       self.dynamicPrototype = createObject(baseClass.dynamicPrototype);
       if (self.instanceConstructor) {
@@ -362,7 +285,7 @@ module Shumway.AVM2.AS {
     /**
      * Called when the class is actually constructed during bytecode execution.
      */
-    static create(self: IASClass, baseClass: IASClass, instanceConstructor: any) {
+    static create(self: ASClass, baseClass: ASClass, instanceConstructor: any) {
       assert (!self.instanceConstructorNoInitialize, "This should not be set yet.");
       assert (!self.dynamicPrototype && !self.traitsPrototype, "These should not be set yet.");
       if (self.instanceConstructor && !isPrototypeWriteable(self.instanceConstructor)) {
@@ -382,24 +305,65 @@ module Shumway.AVM2.AS {
       self.instanceConstructor.prototype = self.traitsPrototype;
     }
 
+    /**
+     * Class info.
+     */
     classInfo: ClassInfo;
+
+    /**
+     * Base class.
+     */
+    baseClass: ASClass;
+
+    /**
+     * Constructs an instance of this class.
+     */
     instanceConstructor: new (...args) => any;
+
+    /**
+     * Constructs an instance of this class without calling the "native" initializer.
+     */
     instanceConstructorNoInitialize: new (...args) => any;
 
-    definition: IASClass;
-    staticNatives: JSObject [];
-    instanceNatives: JSObject [];
+    /**
+     * A list of objects to search for methods or accessors when linking static native traits.
+     */
+    staticNatives: Object [];
 
+    /**
+     * A list of objects to search for methods or accessors when linking instance native traits.
+     */
+    instanceNatives: Object [];
+
+    /**
+     * Class bindings associated with this class.
+     */
     classBindings: ClassBindings;
+
+    /**
+     * Instance bindings associated with this class.
+     */
     instanceBindings: InstanceBindings;
 
-    baseClass: ASClass;
+    /**
+     * Prototype object that holds all class instance traits. This is not usually accessible from AS3 code directly. However,
+     * for some classes (native classes) the |traitsPrototype| === |dynamicPrototype|.
+     */
     traitsPrototype: Object;
+
+    /**
+     * Prototype object accessible from AS3 script code. This is the AS3 Class prototype object |class A { ... }, A.prototype|
+     */
     dynamicPrototype: Object;
 
     coerce: (any) => any;
     defaultValue: any = null;
+
+    /**
+     * Initialization flags that determine how native initializers get called.
+     */
     initializationFlags: InitializationFlags = InitializationFlags.NONE;
+    prototype: Object;
 
     /**
      * Non-native classes always have coercing callables.
@@ -418,8 +382,7 @@ module Shumway.AVM2.AS {
       assert (this instanceof ASClass);
     }
 
-    get prototype() {
-      // log("GETTING PROTOTYPE IN CLASS ");
+    get asPrototype(): Object {
       assert (this.dynamicPrototype);
       return this.dynamicPrototype;
     }
@@ -442,18 +405,21 @@ module Shumway.AVM2.AS {
       return value instanceof this.instanceConstructor;
     }
 
+    /**
+     * Checks the structural integrity of the class instance.
+     */
     public verify() {
-      var self: IASClass = this;
+      var self: ASClass = this;
       // Verify that we have bindings for all native traits.
       writer && writer.enter("Verifying Class: " + self.classInfo + " {");
       var traits = [self.classInfo.traits, self.classInfo.instanceInfo.traits];
 
-      var staticNatives: JSObject [] = [self];
+      var staticNatives: Object [] = [self];
       if (self.staticNatives) {
         Shumway.ArrayUtilities.pushMany(staticNatives, self.staticNatives);
       }
 
-      var instanceNatives: JSObject [] = [self.prototype];
+      var instanceNatives: Object [] = [self.prototype];
       if (self.instanceNatives) {
         Shumway.ArrayUtilities.pushMany(instanceNatives, self.instanceNatives);
       }
@@ -476,7 +442,7 @@ module Shumway.AVM2.AS {
         }
       }
 
-      function has(objects: JSObject [], predicate: (object: JSObject, name: string) => boolean, name) {
+      function has(objects: Object [], predicate: (object: Object, name: string) => boolean, name) {
         for (var i = 0; i < objects.length; i++) {
           if (predicate(objects[i], name)) {
             return true;
@@ -489,7 +455,7 @@ module Shumway.AVM2.AS {
         var isClassTrait = j === 0;
         for (var i = 0; i < traits[j].length; i++) {
           var trait = traits[j][i];
-          var name = trait.name.name;
+          var name = escapeNativeName(trait.name.name);
           if (!(trait.isMethodOrAccessor() && trait.methodInfo.isNative())) {
             continue;
           }
@@ -526,11 +492,6 @@ module Shumway.AVM2.AS {
       if (o instanceof Function) {
         return "Function [#" + o.labelId + "]";
       }
-//      if (o === ASMethodClosure.prototype) {
-//        return "ASMethodClosure.prototype"  + " [#" + o.labelId + "]";
-//      } else if (o === Function.prototype) {
-//        return "ASMethodClosure.prototype"  + " [#" + o.labelId + "]";
-//      }
       return "Object [#" + o.labelId + "]";
     }
 
@@ -570,7 +531,7 @@ module Shumway.AVM2.AS {
   var ASClassPrototype = ASClass.prototype;
 
   export class ASFunction extends ASObject {
-    public static baseClass: IASClass = null;
+    public static baseClass: typeof ASClass = null;
     public static classInfo: ClassInfo;
     public static instanceConstructor: any = Function;
     public static classBindings: ClassBindings;
@@ -582,13 +543,14 @@ module Shumway.AVM2.AS {
       super();
     }
 
-    get prototype() {
-      // log("GETTING PROTOTYPE IN FUNCTION");
-      return this.prototype;
+    get asPrototype(): Object {
+      var self: Function = <any>this;
+      return self.prototype;
     }
 
-    set prototype(p) {
-      this.prototype = p;
+    set asPrototype(p) {
+      var self: Function = <any>this;
+      self.prototype = p;
     }
 
     get length(): number {
@@ -949,7 +911,7 @@ module Shumway.AVM2.AS {
     }
   }
 
-  var builtinNativeClasses: Shumway.Map<IASClass> = Shumway.ObjectUtilities.createMap<IASClass>();
+  var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
 
   var isInitialized: boolean = false;
 
@@ -980,7 +942,7 @@ module Shumway.AVM2.AS {
     isInitialized = true;
   }
 
-  var nativeClasses: Shumway.Map<IASClass> = Shumway.ObjectUtilities.createMap<IASClass>();
+  var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
 
   nativeClasses["D"] = XYZ.D;
   nativeClasses["E"] = XYZ.E;
@@ -990,7 +952,7 @@ module Shumway.AVM2.AS {
     var ii = ci.instanceInfo;
     var domain = ci.abc.applicationDomain;
     var isNativeClass = ci.native;
-    var cls: IASClass;
+    var cls: ASClass;
     if (isNativeClass) {
       cls = builtinNativeClasses[ci.native.cls];
       if (!cls) {
@@ -1012,8 +974,8 @@ module Shumway.AVM2.AS {
      * Only collect natives for native classes.
      */
 
-    var staticNatives: JSObject [] = null;
-    var instanceNatives: JSObject [] = null;
+    var staticNatives: Object [] = null;
+    var instanceNatives: Object [] = null;
 
     if (isNativeClass) {
       staticNatives = [cls];
@@ -1043,16 +1005,14 @@ module Shumway.AVM2.AS {
       ASClass.instanceBindings.applyTo(domain, cls, true);
     }
 
-
-
     return cls;
   }
 
   /**
    * Searches for a native property in a list of native holders.
    */
-  export function getMethodOrAccessorNative(trait: Trait, natives: JSObject []): any {
-    var name = Multiname.getName(trait.name);
+  export function getMethodOrAccessorNative(trait: Trait, natives: Object []): any {
+    var name = escapeNativeName(Multiname.getName(trait.name));
     for (var i = 0; i < natives.length; i++) {
       var native = natives[i];
       if (hasOwnProperty(native, name)) {
@@ -1074,5 +1034,17 @@ module Shumway.AVM2.AS {
     }
     log("Cannot find " + trait + " in " + natives);
     return null;
+  }
+
+  /**
+   * This is to avoid conflicts with JS properties.
+   */
+  export function escapeNativeName(name: string) {
+    switch (name) {
+      case "prototype":
+        return "asPrototype";
+      default:
+        return name;
+    }
   }
 }
