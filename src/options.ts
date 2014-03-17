@@ -190,7 +190,9 @@ module Shumway.Options {
             option.open = optionSettings.open;
           }
         } else {
-          if (!isNullOrUndefined(this.settings[option.longName])) {
+          // build_bundle chokes on this:
+          // if (!isNullOrUndefined(this.settings[option.longName])) {
+          if (typeof this.settings[option.longName] !== "undefined") {
             switch (option.type) {
               case "boolean":
                 option.value = !!this.settings[option.longName];
