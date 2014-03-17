@@ -161,8 +161,8 @@ var StageDefinition = (function () {
         message.writeIntUnsafe(bbox.yMax);
 
         if (tag.hasFont) {
-          var font = FontDefinition.getFontBySymbolId(tag.fontId);
-          message.writeIntUnsafe(font._fontId);
+          var fontInfo = this._loader._dictionary[tag.fontId];
+          message.writeIntUnsafe(fontInfo.props.id);
         } else {
           message.writeIntUnsafe(0);
         }
