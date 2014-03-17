@@ -79,10 +79,10 @@ module Shumway.AVM2.AS {
 
     private _fixed: boolean;
     private _buffer: any [];
-    private _type: IASClass;
+    private _type: ASClass;
     private _defaultValue: any;
 
-    constructor (length: number /*uint*/, fixed: boolean, type: IASClass) {
+    constructor (length: number /*uint*/, fixed: boolean, type: ASClass) {
       super();
       length = length >>> 0; fixed = !!fixed;
       this._fixed = !!fixed;

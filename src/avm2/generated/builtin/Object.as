@@ -55,6 +55,8 @@ package
     AS3 native function hasOwnProperty(V=void 0):Boolean;
     AS3 native function propertyIsEnumerable(V=void 0):Boolean;
 
+    private static native function _toString(o):String
+
     protected static function _dontEnumPrototype(proto:Object):void
     {
       for (var name:String in proto)
@@ -93,7 +95,9 @@ package
       }
 
       prototype.isPrototypeOf = unsafeJSNative("Object.prototype.isPrototypeOf");
-      prototype.toString = unsafeJSNative("original.Object.toString");
+      prototype.toString = prototype.toLocaleString = function():String {
+        return _toString(this)
+      };
       prototype.valueOf = unsafeJSNative("original.Object.valueOf");
       _dontEnumPrototype(prototype);
     }

@@ -48,7 +48,7 @@ interface Object {
   asNextValue: (index: number) => any;
   asNextNameIndex: (index: number) => number;
   asGetEnumerableKeys: () => any [];
-  class: any;
+  class: Shumway.AVM2.AS.ASClass;
   hasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean; // TODO: What's this?
 
   asEnumerableKeys: any [];
@@ -529,7 +529,7 @@ module Shumway.AVM2.Runtime {
   export function asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
     var self: Object = this;
     if (traceCallExecution.value) {
-      var receiverClassName = self.class ? self.class.className + " ": "";
+      var receiverClassName = self.class ? self.class + " ": "";
       callWriter.enter("call " + receiverClassName + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
     }
     var receiver: Object = isLex ? null : self;
@@ -560,7 +560,7 @@ module Shumway.AVM2.Runtime {
   export function asCallSuper(scope, namespaces: Namespace [], name: any, flags: number, args: any []) {
     var self: Object = this;
     if (traceCallExecution.value) {
-      var receiverClassName = self.class ? self.class.className + " ": "";
+      var receiverClassName = self.class ? self.class + " ": "";
       callWriter.enter("call super " + receiverClassName + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
     }
     var baseClass = scope.object.baseClass;
@@ -576,7 +576,7 @@ module Shumway.AVM2.Runtime {
   export function asSetSuper(scope, namespaces: Namespace [], name: any, flags: number, value: any) {
     var self: Object = this;
     if (traceCallExecution.value) {
-      var receiverClassName = self.class ? self.class.className + " ": "";
+      var receiverClassName = self.class ? self.class + " ": "";
       callWriter.enter("set super " + receiverClassName + name + "(" + toSafeString(value) + ") #" + callCounter.count(name));
     }
     var baseClass = scope.object.baseClass;
@@ -592,7 +592,7 @@ module Shumway.AVM2.Runtime {
   export function asGetSuper(scope, namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
     if (traceCallExecution.value) {
-      var receiver = self.class ? self.class.className + " ": "";
+      var receiver = self.class ? self.class + " ": "";
       callWriter.enter("get super " + receiver + name + " #" + callCounter.count(name));
     }
     var baseClass = scope.object.baseClass;
@@ -768,9 +768,10 @@ module Shumway.AVM2.Runtime {
         return "number"
       } else if (x.constructor === Boolean) {
         return "boolean"
-      } else if (x instanceof XML || x instanceof XMLList) {
-        return "xml"
       }
+// else if (x instanceof XML || x instanceof XMLList) {
+//        return "xml"
+//      }
     }
     return typeof x;
   }

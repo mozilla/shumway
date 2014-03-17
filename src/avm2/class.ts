@@ -159,7 +159,7 @@ module Shumway.AVM2.Runtime {
         this.instanceConstructor = instanceConstructor;
         this.instanceConstructorNoInitialize = instanceConstructor;
         this.hasInitialize = 0;
-        this.instanceConstructor.class = this;
+        this.instanceConstructor.class = <any>this;
       }
 
       if (!callable) {
@@ -436,7 +436,7 @@ module Shumway.AVM2.Runtime {
         // We don't want to put "class" on the Object.prototype.
         // release || assert (Object.hasOwnProperty.call(tP, "class"));
       }
-      release || assert (instanceConstructor.class === this);
+      release || assert (instanceConstructor.class === <any>this);
     }
 
     public coerce(value) {

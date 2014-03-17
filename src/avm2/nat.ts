@@ -28,6 +28,7 @@ module Shumway.AVM2.AS {
   import ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
   import Scope = Shumway.AVM2.Runtime.Scope;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
+  import isNumber = Shumway.isNumber;
   import createObject = Shumway.ObjectUtilities.createObject;
   import isPrototypeWriteable = Shumway.ObjectUtilities.isPrototypeWriteable;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
@@ -35,9 +36,9 @@ module Shumway.AVM2.AS {
   import createFunction = Shumway.AVM2.Runtime.createFunction;
   import Runtime = Shumway.AVM2.Runtime;
   import IndentingWriter = Shumway.IndentingWriter;
+  import boxValue = Shumway.ObjectUtilities.boxValue;
 
-  var writer = new IndentingWriter();
-  // writer = null;
+
 
   import ClassBindings = Shumway.AVM2.Runtime.ClassBindings;
   import InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;
@@ -47,6 +48,16 @@ module Shumway.AVM2.AS {
   import Float64Vector = Shumway.AVM2.AS.Float64Vector;
 
   declare var arraySort;
+
+  var debug = false;
+
+  function log(message?: any, ...optionalParams: any[]): void {
+    if (debug) {
+      jsGlobal.print(message);
+    }
+  }
+
+  var writer = debug ? new IndentingWriter() : null;
 
   /**
    * This is all very magical, things are not what they seem, beware!!!
@@ -124,11 +135,6 @@ module Shumway.AVM2.AS {
       log("ASObject::apply - Ignoring");
     }
 
-//    static get asPrototype(): Object {
-//      assert (this.dynamicPrototype);
-//      return this.dynamicPrototype;
-//    }
-
     /**
      * Makes native class definitions look like ASClass instances.
      */
@@ -147,21 +153,8 @@ module Shumway.AVM2.AS {
       return Runtime.asCoerceObject(value);
     }
 
-    public static isInstanceOf(value: any): boolean {
-      if (value === null) {
-        return false;
-      }
-      // In AS3, |true instanceof Object| is true. It seems that is the case for all primitive values
-      // except for |undefined| which should throw an exception (TODO).
-      return true;
-    }
-
-    public static isInstance(value: any): boolean {
-      if (Shumway.isNullOrUndefined(value)) {
-        return false;
-      }
-      return true;
-    }
+    public static isInstanceOf: (value: any) => boolean;
+    public static isInstance: (value: any) => boolean;
 
     public static asCall(self: any, ...argArray: any[]): any {
       assert (this.callableStyle === CallableStyle.PASSTHROUGH);
@@ -205,9 +198,13 @@ module Shumway.AVM2.AS {
       return false;
     }
 
-    static _toString(o): string {
-      notImplemented("_toString");
-      return "";
+    static _toString(o: Object): string {
+      o = boxValue(o);
+      if (o instanceof ASClass) {
+        var cls: ASClass = <any>o;
+        return "[class " + cls.classInfo.instanceInfo.name.name + "]";
+      }
+      return "[object " + o.class.classInfo.instanceInfo.name.name + "]";
     }
 
     // Hack to make the TypeScript compiler find the original Object.defineProperty.
@@ -227,6 +224,8 @@ module Shumway.AVM2.AS {
       notImplemented("propertyIsEnumerable");
       return false;
     }
+
+
   }
 
   /**
@@ -301,8 +300,8 @@ module Shumway.AVM2.AS {
       }
 
       self.instanceConstructorNoInitialize = self.instanceConstructor;
-      self.instanceConstructor.class = self;
       self.instanceConstructor.prototype = self.traitsPrototype;
+      self.instanceConstructor.prototype.class = self;
     }
 
     /**
@@ -398,10 +397,31 @@ module Shumway.AVM2.AS {
     }
 
     public isInstanceOf(value: any): boolean {
-      return true; // TODO: Fix me.
+      // log("ASClass::isInstanceOf");
+      if (value === null) {
+        return false;
+      }
+      // In AS3, |true instanceof Object| is true. It seems that is the case for all primitive values
+      // except for |undefined| which should throw an exception (TODO).
+      return true;
     }
 
     public isInstance(value: any): boolean {
+      // log("ASClass::isInstance");
+      if (value === 0) {
+        // debugger;
+      }
+      if (this === ASInt) {
+        debugger;
+      }
+      if (Shumway.isNullOrUndefined(value)) {
+        return false;
+      }
+      // We need to box primitive types before doing the |instanceof| test. In AS3 primitive values are
+      // identical to their boxed representations: |0 === new Number(0)| is |true|.
+      value = boxValue(value);
+
+
       return value instanceof this.instanceConstructor;
     }
 
@@ -475,7 +495,7 @@ module Shumway.AVM2.AS {
       }
 
       writer && writer.leave("}");
-      writer && this.trace(writer);
+      // writer && this.trace(writer);
 
       Debug.assert(self.instanceConstructor, "Must have a constructor function.");
     }
@@ -644,6 +664,14 @@ module Shumway.AVM2.AS {
     public static asApply(self: any, argArray?: any): any {
       return argArray[0] | 0;
     }
+
+    public static isInstance(value: any): boolean {
+      if (isNumber(value) || value instanceof Number) {
+        value = +value; // Make sure value is unboxed.
+        return (value | 0) === value;
+      }
+      return false;
+    }
   }
 
   export class ASUint extends ASObject {
@@ -666,6 +694,14 @@ module Shumway.AVM2.AS {
 
     public static asApply(self: any, argArray?: any): any {
       return argArray[0] >>> 0;
+    }
+
+    public static isInstance(value: any): boolean {
+      if (isNumber(value) || value instanceof Number) {
+        value = +value; // Make sure value is unboxed.
+        return (value >>> 0) === value;
+      }
+      return false;
     }
   }
 
@@ -741,8 +777,7 @@ module Shumway.AVM2.AS {
       notImplemented("public.Array::private static _forEach"); return;
     }
     private static _map(o: any, callback: Function, thisObject: any): any [] {
-      callback = callback;
-      notImplemented("public.Array::private static _map"); return;
+      return o.map(callback, thisObject);
     }
     private static _some(o: any, callback: Function, thisObject: any): boolean {
       callback = callback;
