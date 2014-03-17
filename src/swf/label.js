@@ -41,6 +41,7 @@ function defineLabel(tag, dictionary) {
   var i = 0;
   var record;
   var codes;
+  var color = 0;
   while ((record = records[i++])) {
     if (record.eot)
       break;
@@ -52,7 +53,11 @@ function defineLabel(tag, dictionary) {
       dependencies.push(font.id);
     }
 
-    cmds.push('c.fillStyle="' + rgbaObjToStr(record.color) + '"');
+    if (record.hasColor) {
+      color = record.color;
+    }
+
+    cmds.push('c.fillStyle="' + rgbaObjToStr(color) + '"');
 
     if (record.hasMoveX)
       x = record.moveX;
