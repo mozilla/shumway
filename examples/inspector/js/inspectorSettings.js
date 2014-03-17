@@ -16,66 +16,6 @@
  * limitations under the License.
  */
 
-var DEFAULT_SETTINGS = {
-  sysCompiler: true,
-  appCompiler: true,
-  verifier: true,
-  trace: false,
-  traceCalls: false,
-  traceRuntime: false,
-  allocator: false,
-  render: true,
-  mouse: true,
-  qtree: false,
-  redraw: false,
-  wireframe: false,
-  release: true,
-  logToConsole: false,
-  mute: false,
-  turbo: true,
-  caching: true
-};
-
-function loadState() {
-  var settings = {};
-  if (localStorage["Inspector-Settings"]) {
-    settings = JSON.parse(localStorage["Inspector-Settings"]);
-  }
-  for (var key in DEFAULT_SETTINGS) {
-    if (settings[key] === undefined) {
-      settings[key] = DEFAULT_SETTINGS[key];
-    }
-  }
-  return settings;
-}
-
-function saveState(state) {
-  localStorage["Inspector-Settings"] = JSON.stringify(state);
-}
-
-var state = loadState();
-
-//updateAVM2State();
-
-function updateAVM2State() {
-  enableC4.value = true;
-  Shumway.AVM2.Runtime.enableVerifier.value = state.verifier;
-  enableRegisterAllocator.value = state.allocator;
-  Shumway.AVM2.Runtime.traceExecution.value = state.trace ? 2 : 0;
-  traceRenderer.value = state.trace ? 2 : 0;
-  disableRenderVisitor.value = state.render ? false : true;
-  disableMouseVisitor.value = state.mouse ? false : true;
-  showQuadTree.value = state.qtree ? true : false;
-  turboMode.value = state.turbo ? true : false;
-  Shumway.AVM2.Runtime.codeCaching.value = state.caching ? true : false;
-  showRedrawRegions.value = state.redraw ? true : false;
-  renderAsWireframe.value = state.wireframe ? true : false;
-  Shumway.AVM2.Runtime.traceCallExecution.value = state.traceCalls ? 1 : 0;
-  Shumway.AVM2.Runtime.traceCallExecution.value = state.traceRuntime ? 2 : Shumway.AVM2.Runtime.traceCallExecution.value;
-  Shumway.AVM2.Runtime.debuggerMode.value = true;
-  release = state.release;
-}
-
 var lastCounts = {};
 
 setTimeout(function displayInfo() {
@@ -125,41 +65,27 @@ setTimeout(function displayInfo() {
       ", last: " + timer._last.toFixed(2) + " ms";
     output += str + "<br>";
   }
+
   document.getElementById("timerInfo").innerHTML = output;
 
   setTimeout(displayInfo, 500);
 }, 500);
 
-Array.prototype.forEach.call(document.querySelectorAll(".avm2Option"), function(element) {
-  function setElementState(pressed) {
-    if (pressed)
-      element.classList.add("pressedState");
-    else
-      element.classList.remove("pressedState");
+var stateKey = "Inspector Options";
+var state = Shumway.Settings.load(stateKey);
+if (Shumway.isNullOrUndefined(state)) {
+  state = {
+    logToConsole: false,
+    mute: false
   }
-
-  var id = element.getAttribute("id");
-  element.addEventListener("click", function () {
-    setElementState(state[id] = !state[id]);
-    updateAVM2State();
-    saveState(state);
-    if (id === "wireframe" && swfController.stage) {
-      swfController.stage._invalid = true;
-    }
-  });
-  setElementState(state[id]);
-});
-
-document.getElementById("sample").addEventListener("click", function () {
-  triggerSampling(5);
-});
+}
 
 (function() {
   var chkLogToConsole = document.getElementById("chkLogToConsole")
   chkLogToConsole.checked = state.logToConsole;
   chkLogToConsole.addEventListener("click", function (event) {
     state.logToConsole = event.target.checked;
-    saveState(state);
+    Shumway.Settings.save(state, stateKey);
   });
 })();
 
@@ -178,7 +104,7 @@ document.getElementById("sample").addEventListener("click", function () {
     state.mute = !state.mute;
     avm2.systemDomain.getClass("flash.media.SoundMixer").native.static._setMasterVolume(state.mute ? 0 : 1);
     setElementState();
-    saveState(state);
+    Shumway.Settings.save(state, stateKey);
   });
   setElementState();
 })();
@@ -192,7 +118,7 @@ document.getElementById("sample").addEventListener("click", function () {
       var option = findOptionSetByName(e.target.textContent, shumwayOptions);
       if (option) {
         option.open = !e.target.parentElement.classList.contains("closed");
-        saveShumwaySettings(shumwayOptions.getSettings());
+        Shumway.Settings.save();
       }
     }
   });
@@ -249,7 +175,7 @@ document.getElementById("sample").addEventListener("click", function () {
         }
         ctrl.name(option.longName);
         ctrl.onChange(function() {
-          saveShumwaySettings(shumwayOptions.getSettings());
+          Shumway.Settings.save();
         });
         addTooltip(ctrl, option.description);
       }

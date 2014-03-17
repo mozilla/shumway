@@ -17,6 +17,7 @@
 ///<reference path='../global.ts' />
 ///<reference path='../utilities.ts' />
 ///<reference path='../options.ts' />
+///<reference path='../settings.ts' />
 
 ///<reference path='lib/lib.d.ts' />
 ///<reference path='metrics.ts' />

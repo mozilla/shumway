@@ -64,26 +64,6 @@ limitations under the License.
     <div id="settingsContainer" class="active">
     </div>
 
-    <div id="bottomToolbar" class="toolbarBox">
-      <div class="toolbarLabel">AVM2 Options</div>
-      <div class="avm2Option toolbarButton" id="sysCompiler">Sys</div>
-      <div class="avm2Option toolbarButton" id="appCompiler">App</div>
-      <div class="avm2Option toolbarButton" id="verifier">Verifier</div>
-      <div class="avm2Option toolbarButton" id="allocator">Allocator</div>
-      <div class="avm2Option toolbarButton" id="trace">Trace</div>
-      <div class="avm2Option toolbarButton" id="traceCalls">Trace Calls</div>
-      <div class="avm2Option toolbarButton" id="traceRuntime">Trace Runtime</div>
-      <div class="avm2Option toolbarButton" id="release">Release</div>
-      <div class="avm2Option toolbarButton" id="render">Render</div>
-      <div class="avm2Option toolbarButton" id="mouse">Mouse</div>
-      <div class="avm2Option toolbarButton" id="qtree">QuadTree</div>
-      <div class="avm2Option toolbarButton" id="redraw">Redraw</div>
-      <div class="avm2Option toolbarButton" id="wireframe">Wireframe</div>
-      <div class="toolbarButton" id="sample">Sample</div>
-      <div class="avm2Option toolbarButton" id="turbo">Turbo</div>
-      <div class="avm2Option toolbarButton" id="caching">Caching</div>
-    </div>
-
     <script>
       var requiredConsoleFunctions = ["profile", "profileEnd", "markTimeline",
         "time", "timeEnd"];
@@ -173,9 +153,8 @@ limitations under the License.
       var CanvasCounter = new Shumway.Metrics.Counter(true);
 
       var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
-      var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter"));
-      var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter"));
-      var traceLevel = avm2Options.register(new Option("t", "traceLevel", "number", 0, "trace level", { choices: { "off":0, "normal":1, "verbose":2 } }));
+      var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
+      var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
 
       var nativeCreateElement = document.createElement;
       document.createElement = function (x) {
@@ -205,9 +184,6 @@ limitations under the License.
 
     <script src="../../src/avm2/class.js"></script>
     <script>
-      var domainOptions = avm2Options.register(new OptionSet("ApplicationDomain"));
-      var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
-      var traceDomain = domainOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
       var playerglobal;
       var playerglobalLoadedPromise;
     </script>

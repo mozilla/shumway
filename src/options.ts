@@ -191,7 +191,14 @@ module Shumway.Options {
           }
         } else {
           if (!isNullOrUndefined(this.settings[option.longName])) {
-            option.value = this.settings[option.longName];
+            switch (option.type) {
+              case "boolean":
+                option.value = !!this.settings[option.longName];
+                break;
+              default:
+                option.value = this.settings[option.longName];
+                break;
+            }
           }
         }
       }
