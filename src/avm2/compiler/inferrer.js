@@ -18,9 +18,7 @@
 
 "use strict";
 
-var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
-var verifierOptions = avm2Options.register(new OptionSet("Verifier"));
-var verifierTraceLevel = verifierOptions.register(new Option("tv", "tv", "number", 0, "Verifier Trace Level"));
+var verifierTraceLevel = new Option("tv", "tv", "number", 0, "Verifier Trace Level");
 
 var Type = (function () {
   function type () {
