@@ -474,8 +474,12 @@ var DisplayObjectDefinition = (function () {
       message.writeIntUnsafe(blendModes.indexOf(this._blendMode));
 
       if (this._mask) {
-        message.writeIntUnsafe(this._mask._layerId);
-        message.writeIntUnsafe(false);
+        if (this._maskedObject) {
+          message.writeIntUnsafe(0);
+        } else {
+          message.writeIntUnsafe(this._mask._layerId);
+          message.writeIntUnsafe(false);
+        }
       } else if (this._clip) {
         message.writeIntUnsafe(this._clip._layerId);
         message.writeIntUnsafe(true);
