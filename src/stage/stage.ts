@@ -14,6 +14,24 @@ module Shumway.Layers {
     Dirty   = 1
   }
 
+  export enum BlendMode {
+    DEFAULT    = 0,
+    NORMAL     = 1,
+    LAYER      = 2,
+    MULTIPLY   = 3,
+    SCREEN     = 4,
+    LIGHTEN    = 5,
+    DARKEN     = 6,
+    DIFFERENCE = 7,
+    ADD        = 8,
+    SUBTRACT   = 9,
+    INVERT     = 10,
+    ALPHA      = 11,
+    ERASE      = 12,
+    OVERLAY    = 13,
+    HARDLIGHT  = 14
+  }
+
   function getRandomIntInclusive(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
@@ -22,7 +40,7 @@ module Shumway.Layers {
     private _x: number;
     private _y: number;
     private _alpha: number = 1;
-    private _blendMode = 0;
+    private _blendMode: BlendMode = BlendMode.DEFAULT;
     private _scaleX: number;
     private _scaleY: number;
     private _rotation: number;
