@@ -11,7 +11,8 @@ module Shumway.Layers {
 
   export enum FrameFlags {
     Empty   = 0,
-    Dirty   = 1
+    Dirty   = 1,
+    Hidden  = 2
   }
 
   /**
@@ -70,8 +71,8 @@ module Shumway.Layers {
       }
     }
 
-    hasFlags(flags: FrameFlags) {
-      this._flags |= flags;
+    hasFlags(flags: FrameFlags): boolean {
+      return !!(this._flags & flags);
     }
 
     get properties(): {[name: string]: any} {
@@ -253,7 +254,6 @@ module Shumway.Layers {
     public w: number;
     public h: number;
     public parent: Frame;
-    public isVisible: boolean;
     public ignoreMaskAlpha: boolean;
 
     public filters: Filter [];
@@ -271,7 +271,6 @@ module Shumway.Layers {
       this.parent = null;
       this.transform = Matrix.createIdentity();
       this.filters = null;
-      this.isVisible = true;
     }
 
     get stage(): Stage {
@@ -308,7 +307,7 @@ module Shumway.Layers {
       var stack: Frame [];
       var frame: Frame;
       var frameContainer: FrameContainer;
-      if (visibleOnly && !this.isVisible) {
+      if (visibleOnly && this.hasFlags(FrameFlags.Hidden)) {
         return;
       }
       stack = [this];
@@ -323,13 +322,13 @@ module Shumway.Layers {
         if (calculateTransform) {
           transform = transformStack.pop();
         }
-        flags = flagsStack.pop();
+        flags = flagsStack.pop() | frame._flags;
         if (visitor(frame, transform, flags) === VisitorFlags.Continue) {
           if (frame instanceof FrameContainer) {
             frameContainer = <FrameContainer>frame;
             for (var i = frameContainer.children.length - 1; i >= 0; i--) {
               var child = frameContainer.children[i];
-              if (!child || (visibleOnly && !child.isVisible)) {
+              if (!child || (visibleOnly && child.hasFlags(FrameFlags.Hidden))) {
                 continue;
               }
               stack.push(child);
@@ -338,8 +337,7 @@ module Shumway.Layers {
                 Matrix.multiply(t, child.transform);
                 transformStack.push(t);
               }
-              var f = flags | child._flags;
-              flagsStack.push(f);
+              flagsStack.push(flags);
             }
           }
         }
@@ -431,7 +429,7 @@ module Shumway.Layers {
       var bounds = Rectangle.createEmpty();
       for (var i = 0; i < this.children.length; i++) {
         var child = this.children[i];
-        if (child.isVisible) {
+        if (!child.hasFlags(FrameFlags.Hidden)) {
           var childBounds = child.getBounds();
           child.transform.transformRectangleAABB(childBounds);
           bounds.union(childBounds);
@@ -454,8 +452,11 @@ module Shumway.Layers {
       super();
       this.w = w;
       this.h = h;
-      this.trackDirtyRegions = trackDirtyRegions;
       this.dirtyRegion = new DirtyRegion(w, h);
+      this.trackDirtyRegions = trackDirtyRegions;
+      if (trackDirtyRegions) {
+        this.dirtyRegion.addDirtyRectangle(this.dirtyRegion.getBounds());
+      }
     }
 
     gatherMarkedDirtyRegions(transform: Matrix) {

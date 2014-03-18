@@ -1051,6 +1051,10 @@ module Shumway.Geometry {
       }
     }
 
+    getBounds (): Rectangle {
+      return new Rectangle(0, 0, this.w, this.h);
+    }
+
     addDirtyRectangle (rectangle: Rectangle) {
       var x = rectangle.x >> this.sizeInBits;
       var y = rectangle.y >> this.sizeInBits;
