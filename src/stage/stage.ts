@@ -12,7 +12,8 @@ module Shumway.Layers {
   export enum FrameFlags {
     Empty   = 0,
     Dirty   = 1,
-    Hidden  = 2
+    Hidden  = 2,
+    IsMask  = 4
   }
 
   export enum BlendMode {
@@ -165,7 +166,15 @@ module Shumway.Layers {
     }
 
     set mask(value: Frame) {
+      if (this._mask && this._mask !== value) {
+        this._mask.setFlags(FrameFlags.IsMask, false);
+      }
       this._mask = value;
+      if (this._mask) {
+        assert (!this._mask.hasFlags(FrameFlags.IsMask));
+        this._mask.setFlags(FrameFlags.IsMask, true);
+        this._mask.invalidate();
+      }
       this.invalidate();
     }
 
@@ -472,9 +481,7 @@ module Shumway.Layers {
       this.h = h;
       this.dirtyRegion = new DirtyRegion(w, h);
       this.trackDirtyRegions = trackDirtyRegions;
-      if (trackDirtyRegions) {
-        this.dirtyRegion.addDirtyRectangle(this.dirtyRegion.getBounds());
-      }
+      this.setFlags(FrameFlags.Dirty, true);
     }
 
     gatherMarkedDirtyRegions(transform: Matrix) {

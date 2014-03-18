@@ -1,4 +1,9 @@
 /// <reference path='all.ts'/>
+
+interface CanvasRenderingContext2D {
+  stackDepth: number;
+}
+
 module Shumway.Layers {
 
   import Rectangle = Shumway.Geometry.Rectangle;
@@ -9,6 +14,22 @@ module Shumway.Layers {
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
+
+  var originalSave = CanvasRenderingContext2D.prototype.save;
+  var originalRestore = CanvasRenderingContext2D.prototype.restore;
+
+  CanvasRenderingContext2D.prototype.save = function () {
+    if (this.stackDepth === undefined) {
+      this.stackDepth = 0;
+    }
+    this.stackDepth ++;
+    originalSave.call(this);
+  };
+
+  CanvasRenderingContext2D.prototype.restore = function () {
+    this.stackDepth --;
+    originalRestore.call(this);
+  };
 
   export class Canvas2DStageRenderer {
     private _maskCanvas: HTMLCanvasElement;
@@ -44,8 +65,10 @@ module Shumway.Layers {
         if (options.clipDirtyRegions) {
           if (!lastDirtyRectangles.length) {
             // Nothing is dirty, so skip rendering.
+            context.restore();
             return;
           }
+          context.beginPath();
           for (var i = 0; i < lastDirtyRectangles.length; i++) {
             var rectangle = lastDirtyRectangles[i];
             rectangle.expand(2, 2);
@@ -56,8 +79,7 @@ module Shumway.Layers {
         stage.dirtyRegion.clear();
       }
 
-      context.fillRect(0, 0, stage.w, stage.h);
-
+      context.clearRect(0, 0, stage.w, stage.h);
       context.globalAlpha = 1;
 
       this.renderFrame(context, stage, stage.transform, stage.trackDirtyRegions, 0, options);
@@ -90,10 +112,15 @@ module Shumway.Layers {
       var maskCanvasContext = self._scratchContexts[0];
       var maskeeCanvasContext = self._scratchContexts[1];
 
-      root.visit(function visitFrame(frame: Frame, transform?: Matrix): VisitorFlags {
+      root.visit(function visitFrame(frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
         context.save();
         context.setTransform(transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty);
         context.globalAlpha = frame.getConcatenatedAlpha();
+
+        if (maskDepth === 0 && (flags & FrameFlags.IsMask)) {
+          context.restore();
+          return VisitorFlags.Skip;
+        }
 
         if (!options.disableMasking && maskDepth < Canvas2DStageRenderer.MAX_MASK_DEPTH && frame.mask) {
           var maskTransform = frame.mask.getConcatenatedTransform();
@@ -103,9 +130,11 @@ module Shumway.Layers {
           maskBounds.intersect(self._viewport);
           Canvas2DStageRenderer.clearContext(maskCanvasContext, maskBounds);
           self.renderFrame(maskCanvasContext, frame.mask, maskTransform, false, maskDepth + 1, options);
+
           Canvas2DStageRenderer.clearContext(maskeeCanvasContext, maskBounds);
           maskeeCanvasContext.globalCompositeOperation = 'source-over';
           self.renderFrame(maskeeCanvasContext, frame, transform, false, maskDepth + 1, options);
+
           if (options.compositeMask) {
             maskeeCanvasContext.globalCompositeOperation = 'destination-in';
           }
