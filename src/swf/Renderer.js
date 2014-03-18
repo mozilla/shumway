@@ -123,6 +123,8 @@ function handleRenderMessages(renderer, layers, i32) {
       );
       var alpha = f32[p++];
       var visible = i32[p++];
+      var maskId = i32[p++];
+      var clip = maskId ? !!i32[p++] : false;
 
       var colorTransform = null;
       var hasColorTransform = i32[p++];
@@ -216,6 +218,17 @@ function handleRenderMessages(renderer, layers, i32) {
       layer.transform = transform;
       layer.alpha = alpha;
       layer.isVisible = visible;
+
+      if (maskId) {
+        layer.mask = layers[maskId];
+        if (clip) {
+          layer.ignoreMaskAlpha = true;
+        }
+      } else {
+        layer.mask = null;
+        layer.ignoreMaskAlpha = false;
+      }
+
       layer.colorTransform = colorTransform;
       layer.index = index;
       break;

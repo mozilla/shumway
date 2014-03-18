@@ -49,7 +49,7 @@ var DisplayObjectDefinition = (function () {
       this._bounds = { xMin: 0, xMax: 0, yMin: 0, yMax: 0, invalid: true };
       this._cacheAsBitmap = false;
       this._children = [];
-      this._clipDepth = null;
+      this._clipDepth = 0;
       this._currentTransform = { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
       this._concatenatedTransform = { a: 1, b: 0, c: 0, d: 1,
                                       tx: 0, ty: 0, invalid: true };
@@ -89,6 +89,7 @@ var DisplayObjectDefinition = (function () {
       this._updateRenderable = false;
       this._layerId = 0;
       this._isSymbol = false;
+      this._clip = null;
 
       blendModes = [
         blendModeClass.NORMAL,     // 0
@@ -455,7 +456,7 @@ var DisplayObjectDefinition = (function () {
     },
 
     _serialize: function (message) {
-      message.ensureAdditionalCapacity(44);
+      message.ensureAdditionalCapacity(52);
 
       message.writeIntUnsafe(this._renderableId);
 
@@ -469,6 +470,17 @@ var DisplayObjectDefinition = (function () {
 
       message.writeFloatUnsafe(this._alpha);
       message.writeIntUnsafe(!this._invisible);
+
+
+      if (this._mask) {
+        message.writeIntUnsafe(this._mask._layerId);
+        message.writeIntUnsafe(false);
+      } else if (this._clip) {
+        message.writeIntUnsafe(this._clip._layerId);
+        message.writeIntUnsafe(true);
+      } else {
+        message.writeIntUnsafe(0);
+      }
 
       var cxform = this._cxform;
       if (cxform) {

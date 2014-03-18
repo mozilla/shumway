@@ -319,8 +319,21 @@ var StageDefinition = (function () {
 
         var children = node._children;
         var i = children.length;
+        var clip = null;
         while (i--) {
           var child = children[i];
+
+          if (clip) {
+            if (child._depth && child._depth <= clip._clipDepth) {
+              child._clip = clip;
+            }
+          } else {
+            if (child._clipDepth) {
+              clip = child;
+            }
+
+            child._clip = null;
+          }
 
           if (refreshStage) {
             child._invalid = true;

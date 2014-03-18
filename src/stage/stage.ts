@@ -27,6 +27,7 @@ module Shumway.Layers {
     private _rotation: number;
     private _transform: Matrix;
     private _colorTransform: ColorTransform;
+    private _mask: Frame;
     private _isTransformInvalid: boolean = true;
     private _origin: Point = new Point(0, 0);
     private _properties: {[name: string]: any};
@@ -112,6 +113,15 @@ module Shumway.Layers {
 
     get colorTransform(): ColorTransform {
       return this._colorTransform;
+    }
+
+    set mask(value: Frame) {
+      this._mask = value;
+      this.invalidate();
+    }
+
+    get mask() {
+      return this._mask;
     }
 
     gatherPreviousDirtyRegions() {
@@ -209,9 +219,9 @@ module Shumway.Layers {
     public parent: Frame;
     public isInvalid: boolean;
     public isVisible: boolean;
+    public ignoreMaskAlpha: boolean;
 
     public filters: Filter [];
-    public mask: Frame;
 
     get origin(): Point {
       return this._origin;
