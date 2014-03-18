@@ -79,8 +79,8 @@ module Shumway.AVM2.Runtime {
 
   var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
   var runtimeOptions = avm2Options.register(new OptionSet("Runtime"));
-  export var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution", { choices: { "off":0, "normal":3, "verbose":3 } }));
-  export var traceCallExecution = /*runtimeOptions.register(*/new Option("txc", "traceCallExecution", "number", 0, "trace call execution", { choices: { "off":0, "normal":1, "verbose":2 } })/*)*/;
+  export var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution", { choices: { "off":0, "normal":2, "verbose":3 } }));
+  export var traceCallExecution = runtimeOptions.register(new Option("txc", "traceCallExecution", "number", 0, "trace call execution", { choices: { "off":0, "normal":1, "verbose":2 } }));
   var traceFunctions = runtimeOptions.register(new Option("t", "traceFunctions", "number", 0, "trace functions", { choices: { "off":0, "compiled":1, "compiled & abc":2 } }));
   export var traceClasses = runtimeOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
   export var traceDomain = runtimeOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
