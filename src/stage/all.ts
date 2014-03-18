@@ -7,6 +7,7 @@
 /// <reference path='gl.ts'/>
 /// <reference path='gl/core.ts'/>
 /// <reference path='dom.ts'/>
+/// <reference path='2d.ts'/>
 /// <reference path='bench.ts'/>
 
 declare function randomStyle(): string;

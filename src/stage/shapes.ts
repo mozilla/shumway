@@ -240,6 +240,34 @@ module Shumway {
       context.restore();
     }
   }
+
+  export class RectangleShape implements IRenderable {
+    private _bounds: Rectangle;
+    properties: {[name: string]: any} = {};
+    isDynamic: boolean = false;
+    isInvalid: boolean = true;
+    isScalable: boolean = true;
+    isTileable: boolean = true;
+    private _style = null;
+    constructor(w, h) {
+      this._bounds = new Rectangle(0, 0, w, h);
+      this._style = randomStyle();
+    }
+    getBounds (): Rectangle {
+      return this._bounds;
+    }
+    render (context: CanvasRenderingContext2D) {
+      var bounds = this._bounds;
+      context.save();
+      context.fillStyle = this._style;
+      context.fillRect(0, 0, this._bounds.w, this._bounds.h);
+      // context.fillStyle = "black";
+      // context.font = 14 + 'px Consolas';
+      // context.fillText("" + this._index, 4, 16);
+      context.restore();
+    }
+  }
+
   export class SpriteShape implements IRenderable {
     private _index: number;
     private _bounds: Rectangle;

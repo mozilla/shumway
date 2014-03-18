@@ -32,6 +32,26 @@ module Shumway.Layers {
     HARDLIGHT  = 14
   }
 
+  /**
+   * Controls how the visitor walks the display tree.
+   */
+  export enum VisitorFlags {
+    /**
+     * Continue with normal traversal.
+     */
+    Continue   = 0,
+
+    /**
+     * Not used yet, should probably just stop the visitor.
+     */
+    Stop       = 1,
+
+    /**
+     * Skip processing current frame.
+     */
+    Skip       = 2
+  }
+
   function getRandomIntInclusive(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   }
@@ -46,11 +66,11 @@ module Shumway.Layers {
     private _rotation: number;
     private _transform: Matrix;
     private _colorTransform: ColorTransform;
-    private _mask: Frame;
     private _isTransformInvalid: boolean = true;
     private _origin: Point = new Point(0, 0);
     private _properties: {[name: string]: any};
     private static _path: Frame[] = [];
+    private _mask: Frame;
 
     /**
      * Stage location where the frame was previously drawn. This is used to compute dirty regions and
@@ -152,18 +172,24 @@ module Shumway.Layers {
       return this._mask;
     }
 
+    public getBounds(): Rectangle {
+      assert(false, "Override this.");
+      return null;
+    }
+
     gatherPreviousDirtyRegions() {
       var stage = this.stage;
       if (!stage.trackDirtyRegions) {
         return;
       }
-      this.visit(function (frame: Frame) {
+      this.visit(function (frame: Frame): VisitorFlags {
         if (frame instanceof FrameContainer) {
-          return;
+          return VisitorFlags.Continue;
         }
         if (frame._previouslyRenderedAABB) {
           stage.dirtyRegion.addDirtyRectangle(frame._previouslyRenderedAABB);
         }
+        return VisitorFlags.Continue;
       });
     }
 
@@ -245,7 +271,6 @@ module Shumway.Layers {
     public w: number;
     public h: number;
     public parent: Frame;
-    public isInvalid: boolean;
     public isVisible: boolean;
     public ignoreMaskAlpha: boolean;
 
@@ -289,7 +314,6 @@ module Shumway.Layers {
     }
 
     invalidate() {
-      this.isInvalid = true;
       this.setFlags(FrameFlags.Dirty, true);
     }
 
@@ -298,7 +322,7 @@ module Shumway.Layers {
       this.invalidate();
     }
 
-    public visit(visitor: (Frame, Matrix?, FrameFlags?) => void, transform?: Matrix, flags: FrameFlags = FrameFlags.Empty, visibleOnly: boolean = true) {
+    public visit(visitor: (Frame, Matrix?, FrameFlags?) => VisitorFlags, transform?: Matrix, flags: FrameFlags = FrameFlags.Empty, visibleOnly: boolean = true) {
       var stack: Frame [];
       var frame: Frame;
       var frameContainer: FrameContainer;
@@ -318,24 +342,25 @@ module Shumway.Layers {
           transform = transformStack.pop();
         }
         flags = flagsStack.pop();
-        if (frame instanceof FrameContainer) {
-          frameContainer = <FrameContainer>frame;
-          for (var i = frameContainer.children.length - 1; i >= 0; i--) {
-            var child = frameContainer.children[i];
-            if (!child || (visibleOnly && !child.isVisible)) {
-              continue;
+        if (visitor(frame, transform, flags) === VisitorFlags.Continue) {
+          if (frame instanceof FrameContainer) {
+            frameContainer = <FrameContainer>frame;
+            for (var i = frameContainer.children.length - 1; i >= 0; i--) {
+              var child = frameContainer.children[i];
+              if (!child || (visibleOnly && !child.isVisible)) {
+                continue;
+              }
+              stack.push(child);
+              if (calculateTransform) {
+                var t = transform.clone();
+                Matrix.multiply(t, child.transform);
+                transformStack.push(t);
+              }
+              var f = flags | child._flags;
+              flagsStack.push(f);
             }
-            stack.push(child);
-            if (calculateTransform) {
-              var t = transform.clone();
-              Matrix.multiply(t, child._transform);
-              transformStack.push(t);
-            }
-            var f = flags | child._flags;
-            flagsStack.push(f);
           }
         }
-        visitor(frame, transform, flags);
       }
     }
 
@@ -419,87 +444,25 @@ module Shumway.Layers {
         this.children[b].invalidate();
       }
     }
+
+    public getBounds(): Rectangle {
+      var bounds = Rectangle.createEmpty();
+      for (var i = 0; i < this.children.length; i++) {
+        var child = this.children[i];
+        if (child.isVisible) {
+          var childBounds = child.getBounds();
+          child.transform.transformRectangleAABB(childBounds);
+          bounds.union(childBounds);
+        }
+      }
+      return bounds;
+    }
+
   }
 
   export interface ITextureRegion {
     texture: any;
     region: Rectangle;
-  }
-
-  export class Canvas2DStageRenderer {
-    context: CanvasRenderingContext2D;
-    count = 0;
-    constructor(context: CanvasRenderingContext2D) {
-      this.context = context;
-    }
-
-    public render(stage: Stage, options: any) {
-      var context = this.context;
-      context.save();
-
-      if (stage.trackDirtyRegions) {
-        stage.gatherMarkedDirtyRegions(stage.transform);
-        var lastDirtyRectangles: Rectangle[] = [];
-        stage.dirtyRegion.gatherRegions(lastDirtyRectangles);
-        if (options.clipDirtyRegions) {
-          if (!lastDirtyRectangles.length) {
-            // Nothing is dirty, so skip rendering.
-            return;
-          }
-          for (var i = 0; i < lastDirtyRectangles.length; i++) {
-            var rectangle = lastDirtyRectangles[i];
-            rectangle.expand(2, 2);
-            context.rect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
-          }
-          context.clip();
-        }
-        stage.dirtyRegion.clear();
-      }
-
-      context.fillStyle = "white"; // We need to set this to the background color.
-      context.fillRect(0, 0, stage.w, stage.h);
-
-      context.globalAlpha = 1;
-
-      stage.visit(function visitFrame(frame: Frame, transform?: Matrix) {
-        context.save();
-        context.setTransform(transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty);
-        context.globalAlpha = frame.getConcatenatedAlpha();
-        if (frame instanceof Shape) {
-          var rectangle = new Rectangle(0, 0, frame.w, frame.h);
-          transform.transformRectangleAABB(rectangle);
-          if (stage.trackDirtyRegions) {
-            frame._previouslyRenderedAABB = rectangle;
-          }
-          var shape = <Shape>frame;
-          shape.source.render(context);
-
-          if (options.paintFlashing) {
-            context.fillStyle = randomStyle();
-            context.globalAlpha = 0.5;
-            context.fillRect(0, 0, frame.w, frame.h);
-          }
-        }
-        context.restore();
-      }, stage.transform);
-
-      if (false && lastDirtyRectangles) {
-        context.strokeStyle = "red";
-        for (var i = 0; i < lastDirtyRectangles.length; i++) {
-          var rectangle = lastDirtyRectangles[i];
-          context.strokeRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
-        }
-      }
-
-      if (options && options.drawLayers) {
-        function drawRectangle(rectangle: Rectangle) {
-          context.rect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
-        }
-        context.strokeStyle = "#FF4981";
-      }
-
-      context.restore();
-    }
   }
 
   export class Stage extends FrameContainer {
@@ -516,10 +479,10 @@ module Shumway.Layers {
     gatherMarkedDirtyRegions(transform: Matrix) {
       var self = this;
       // Find all invalid frames.
-      this.visit(function (frame: Frame, transform?: Matrix, flags?: FrameFlags) {
+      this.visit(function (frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
         frame.setFlags(FrameFlags.Dirty, false);
         if (frame instanceof FrameContainer) {
-          return;
+          return VisitorFlags.Continue;
         }
         if (flags & FrameFlags.Dirty) {
           var rectangle = new Rectangle(0, 0, frame.w, frame.h);
@@ -530,15 +493,17 @@ module Shumway.Layers {
             self.dirtyRegion.addDirtyRectangle(frame._previouslyRenderedAABB);
           }
         }
+        return VisitorFlags.Continue;
       }, transform, FrameFlags.Empty);
     }
 
     gatherFrames() {
       var frames = [];
-      this.visit(function (frame: Frame, transform?: Matrix) {
+      this.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
         if (!(frame instanceof FrameContainer)) {
           frames.push(frame);
         }
+        return VisitorFlags.Continue;
       }, this.transform);
       return frames;
     }
@@ -546,9 +511,9 @@ module Shumway.Layers {
     gatherLayers() {
       var layers = [];
       var currentLayer;
-      this.visit(function (frame: Frame, transform?: Matrix) {
+      this.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
         if (frame instanceof FrameContainer) {
-          return;
+          return VisitorFlags.Continue;
         }
         var rectangle = new Rectangle(0, 0, frame.w, frame.h);
         transform.transformRectangleAABB(rectangle);
@@ -565,6 +530,7 @@ module Shumway.Layers {
             currentLayer.union(rectangle);
           }
         }
+        return VisitorFlags.Continue;
       }, this.transform);
 
       if (currentLayer) {
@@ -595,6 +561,10 @@ module Shumway.Layers {
       var bounds = source.getBounds();
       this.w = bounds.w;
       this.h = bounds.h;
+    }
+
+    public getBounds(): Rectangle {
+      return new Rectangle(0, 0, this.w, this.h);
     }
   }
 }

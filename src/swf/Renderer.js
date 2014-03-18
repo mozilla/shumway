@@ -346,6 +346,9 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop(canvas, bgco
     sceneOptions.ignoreColorTransform = ignoreColorTransform.value;
     sceneOptions.clipDirtyRegions = clipDirtyRegions.value;
     sceneOptions.paintFlashing = paintFlashing.value;
+    sceneOptions.disableMasking = disableMasking.value;
+    sceneOptions.debug = debugStage.value;
+    sceneOptions.compositeMask = compositeMask.value;
     sceneOptions.useUploadCanvas = useUploadCanvas.value;
     sceneOptions.disableTextureUploads = disableTextureUploads.value;
 
