@@ -456,7 +456,7 @@ var DisplayObjectDefinition = (function () {
     },
 
     _serialize: function (message) {
-      message.ensureAdditionalCapacity(52);
+      message.ensureAdditionalCapacity(56);
 
       message.writeIntUnsafe(this._renderableId);
 
@@ -471,6 +471,7 @@ var DisplayObjectDefinition = (function () {
       message.writeFloatUnsafe(this._alpha);
       message.writeIntUnsafe(!this._invisible);
 
+      message.writeIntUnsafe(blendModes.indexOf(this._blendMode));
 
       if (this._mask) {
         message.writeIntUnsafe(this._mask._layerId);

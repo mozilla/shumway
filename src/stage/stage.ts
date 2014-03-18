@@ -22,6 +22,7 @@ module Shumway.Layers {
     private _x: number;
     private _y: number;
     private _alpha: number = 1;
+    private _blendMode = 0;
     private _scaleX: number;
     private _scaleY: number;
     private _rotation: number;
@@ -104,6 +105,15 @@ module Shumway.Layers {
 
     get alpha(): number {
       return this._alpha;
+    }
+
+    set blendMode(value: number) {
+      this._blendMode = value;
+      this.invalidate();
+    }
+
+    get blendMode() {
+      return this._blendMode;
     }
 
     set colorTransform(value: ColorTransform) {

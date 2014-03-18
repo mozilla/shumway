@@ -123,6 +123,7 @@ function handleRenderMessages(renderer, layers, i32) {
       );
       var alpha = f32[p++];
       var visible = i32[p++];
+      var blendMode = i32[p++];
       var maskId = i32[p++];
       var clip = maskId ? !!i32[p++] : false;
 
