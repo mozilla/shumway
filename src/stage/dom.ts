@@ -5,6 +5,7 @@ module Shumway.Layers {
   import Matrix = Shumway.Geometry.Matrix;
   import DirtyRegion = Shumway.Geometry.DirtyRegion;
   import Filter = Shumway.Layers.Filter;
+  import VisitorFlags = Shumway.Layers.VisitorFlags;
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
@@ -20,7 +21,7 @@ module Shumway.Layers {
     public render(stage: Stage, options: any) {
       var stageScale = 1 / this.pixelRatio;
       var that = this;
-      stage.visit(function visitFrame(frame: Frame, transform?: Matrix) {
+      stage.visit(function visitFrame(frame: Frame, transform?: Matrix): VisitorFlags {
         transform = transform.clone();
         transform.scale(stageScale, stageScale);
         if (frame instanceof Shape) {
@@ -28,6 +29,7 @@ module Shumway.Layers {
           var div = that.getDIV(shape);
           div.style.transform = div.style["webkitTransform"] = transform.toCSSTransform();
         }
+        return VisitorFlags.Continue;
       }, stage.transform);
     }
 

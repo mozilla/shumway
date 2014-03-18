@@ -26,6 +26,7 @@
   <script src="filters.js"></script>
   <script src="gl.js"></script>
   <script src="gl/core.js"></script>
+  <script src="2d.js"></script>
   <script src="dom.js"></script>
   <script src="glTests.js"></script>
   <script src="bench.js"></script>
@@ -39,6 +40,8 @@
     var Flake = Shumway.Layers.Elements.Flake;
     var Bitmap = Shumway.Layers.Bitmap;
     var DynamicShape = Shumway.Layers.DynamicShape;
+
+
     var Text = Shumway.Layers.Text;
     var Shape = Shumway.Layers.Shape;
 
@@ -84,9 +87,10 @@
     <!--<video id="video" src="http://upload.wikimedia.org/wikipedia/commons/7/79/Big_Buck_Bunny_small.ogv" controls="true"></video>-->
     <!--<canvas id="stageCanvas" width="512" height="256" style="background-color: #1F1F21;"></canvas>-->
     <canvas id="webGLCanvas" style="background-color: #000000; margin: 10px;"></canvas>
+    <canvas id="canvas2DCanvas" style="background-color: #000000; margin: 10px;"></canvas>
     <div id="DOMDiv" style="position: relative; background-color: #000000; margin: 10px; overflow: hidden;">
     </div>
-    <canvas id="canvas2DCanvas" style="background-color: #000000; margin: 10px;"></canvas>
+
     <!--<canvas id="stageCanvas" style="background-color: #1F1F21;"></canvas>-->
   </div>
 
@@ -115,20 +119,20 @@
       var tween = new TWEEN.Tween(target);
       tween.easing(easing);
       var motion = [
-//        function () {
-//          var x = Math.random() * (stage.w - target.w) + target.w / 2;
-//          var y = Math.random() * (stage.h - target.h) + target.h / 2;
-//          var s = 1 + Math.random() * 0.5;
-//          tween.easing(easing);
-//          tween.delay(Math.random() * (500000 / sceneOptions.movement));
-//          tween.to({
-//            x: x,
-//            y: y,
-//            scaleX: s,
-//            scaleY: s,
-//            rotation: (Math.random() - 0.5) * 180 * 1
-//          }, 100000 / sceneOptions.speed).start();
-//        },
+        function () {
+          var x = Math.random() * (stage.w - target.w) + target.w / 2;
+          var y = Math.random() * (stage.h - target.h) + target.h / 2;
+          var s = 2 + Math.random() * 0.5;
+          tween.easing(easing);
+          tween.delay(Math.random() * (500000 / sceneOptions.movement));
+          tween.to({
+            x: x,
+            y: y,
+            scaleX: s,
+            scaleY: s,
+            rotation: (Math.random() - 0.5) * 180 * 1
+          }, 100000 / sceneOptions.speed).start();
+        },
 //        function () {
 //          var s = 0.1 + Math.random() * 10;
 //          tween.easing(easing);
@@ -138,20 +142,20 @@
 //            scaleY: 1 + Math.cos(s) / 2,
 //          }, 100000 / sceneOptions.speed).start();
 //        },
-//        function () {
-//          tween.easing(easing);
-//          tween.delay(Math.random() * (50000 / sceneOptions.movement));
-//          tween.to({
-//            rotation: (Math.random() - 0.5) * 180 * 10
-//          }, 100000 / sceneOptions.speed).start();
-//        },
+        function () {
+          tween.easing(easing);
+          tween.delay(Math.random() * (50000 / sceneOptions.movement));
+          tween.to({
+            rotation: (Math.random() - 0.5) * 180 * 1
+          }, 100000 / sceneOptions.speed).start();
+        },
         function () {
           tween.easing(easing);
           tween.delay(Math.random() * (50000 / sceneOptions.movement));
           var s = 0.01 + Math.random() * 4;
           tween.to({
             scaleX: s,
-            scaleY: s,
+            scaleY: s
           }, 100000 / sceneOptions.speed).start();
         }
       ];
@@ -190,6 +194,9 @@
 
     var width = (window.innerWidth * 0.7) | 0;
     var height = (window.innerHeight * 0.7) | 0;
+
+    var width = 512;
+    var height = 512;
 
     var gui = new dat.GUI();
 
@@ -239,6 +246,9 @@
       drawLayers: false,
       clear: true,
       imageSmoothing: true,
+      paintFlashing: false,
+      disableMasking: false,
+      compositeMask: true,
       snap: false,
       alpha: false,
 
@@ -319,6 +329,10 @@
       c.push(f.add(sceneOptions, "drawLayers"));
       c.push(f.add(sceneOptions, "clear"));
       c.push(f.add(sceneOptions, "imageSmoothing"));
+      c.push(f.add(sceneOptions, "paintFlashing"));
+      c.push(f.add(sceneOptions, "disableMasking"));
+      c.push(f.add(sceneOptions, "debugStage"));
+      c.push(f.add(sceneOptions, "compositeMask"));
       c.push(f.add(sceneOptions, "snap"));
       c.push(f.add(sceneOptions, "alpha"));
       c.push(f.add(sceneOptions, "move"));
@@ -337,7 +351,7 @@
     webGLContext = new WebGLContext(webGLCanvas, sceneOptions);
     webGLStageRenderer = new WebGLStageRenderer(webGLContext, webGLCanvas.width, webGLCanvas.height);
 
-    canvas2DStageRenderer = new Canvas2DStageRenderer(canvas2DCanvas.getContext("2d"));
+    canvas2DStageRenderer = new Canvas2DStageRenderer(canvas2DCanvas.getContext("2d"), true);
     domStageRenderer = new DOMStageRenderer(DOMDiv, pixelRatio);
 
     var stage, animators;
@@ -399,6 +413,9 @@
         frame.x = (Math.random()) * canvas.width;
 //        frame.x = 0;
         frame.y = (Math.random()) * canvas.height;
+        frame.mask = new Shape(new Shumway.RectangleShape(100, 300));
+        frame.mask.origin = new Point(frame.mask.w / 2, frame.mask.h / 2);
+        shuffle(frame.mask, TWEEN.Easing.Exponential.Out);
 //        frame.x = frame.y = 0;
 //        frame.y = (Math.random()) * (canvas.height - frame.h);
         // frame.alpha = Math.random();
@@ -437,6 +454,11 @@
           frame.x = (Math.random()) * canvas.width;
           frame.y = (Math.random()) * canvas.height;
           frame.origin = new Point(frame.w / 2, frame.h / 2);
+
+          frame.mask = new Shape(new Shumway.RectangleShape(100, 300));
+          frame.mask.origin = new Point(frame.mask.w / 2, frame.mask.h / 2);
+          shuffle(frame.mask, TWEEN.Easing.Exponential.Out);
+
           // frame.alpha = Math.random();
           if (false || Math.random() < 0.5) {
             frame.filters = [new BlurFilter(10, 10)];

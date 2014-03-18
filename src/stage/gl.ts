@@ -41,6 +41,7 @@ module Shumway.GL {
   import Filter = Shumway.Layers.Filter;
   import BlurFilter = Shumway.Layers.BlurFilter;
   import ColorTransform = Shumway.Layers.ColorTransform;
+  import VisitorFlags = Shumway.Layers.VisitorFlags;
 
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
@@ -802,7 +803,7 @@ module Shumway.GL {
       var parent = null;
       var tileTransform = Matrix.createIdentity();
       var colorTransform = ColorTransform.createIdentity();
-      stage.visit(function (frame: Frame, transform?: Matrix) {
+      stage.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
         if (frame.parent !== parent) {
           parent = frame.parent;
           depth += options.frameSpacing;
@@ -851,6 +852,7 @@ module Shumway.GL {
             }
           }
         }
+        return VisitorFlags.Continue;
       }, stage.transform);
 
       brush.flush(options.drawElements);
