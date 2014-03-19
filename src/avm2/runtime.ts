@@ -1820,10 +1820,11 @@ module Shumway.AVM2.Runtime {
       if (!isNullOrUndefined(type)) {
         typeClassName = type.classInfo.instanceInfo.name.name.toLowerCase();
         switch (typeClassName) {
+          case "Number":
+            typeClassName = "double";
           case "int":
           case "uint":
           case "double":
-          case "object":
             return domain.getClass("packageInternal __AS3__.vec.Vector$" + typeClassName);
         }
       }
