@@ -17,14 +17,10 @@
 
 import Namespace = Shumway.AVM2.ABC.Namespace;
 
-interface Object {
-  runtimeId: number;
-  resolutionMap: Shumway.Map<Shumway.Map<string>>;
-  bindings: Shumway.AVM2.Runtime.Bindings;
-
-
-  getNamespaceResolutionMap: any;
-  resolveMultinameProperty: (namespaces: Namespace [], name: any, flags: number) => any;
+/**
+ * Defines the MetaObject protocol for all AS3 Objects.
+ */
+interface IProtocol {
   asGetProperty: (namespaces: Namespace [], name: any, flags: number) => any;
   asGetNumericProperty: (name: number) => any;
   asGetPublicProperty: (name: any) => any;
@@ -41,15 +37,26 @@ interface Object {
   asCallPublicProperty: (name: any, args: any []) => void;
   asCallResolvedStringProperty: (resolved: any, isLex: boolean, args: any []) => any;
   asConstructProperty: (namespaces: Namespace [], name: any, flags: number, args: any []) => any;
-  asHasProperty: (namespaces: Namespace [], name: any, flags: number, nonProxy?: boolean) => boolean;
+  asHasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asHasTraitProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asDeleteProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asNextName: (index: number) => any;
   asNextValue: (index: number) => any;
   asNextNameIndex: (index: number) => number;
   asGetEnumerableKeys: () => any [];
-  class: Shumway.AVM2.AS.ASClass;
   hasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean; // TODO: What's this?
+}
+
+interface Object extends IProtocol {
+  runtimeId: number;
+  resolutionMap: Shumway.Map<Shumway.Map<string>>;
+  bindings: Shumway.AVM2.Runtime.Bindings;
+
+  getNamespaceResolutionMap: any;
+  resolveMultinameProperty: (namespaces: Namespace [], name: any, flags: number) => any;
+
+
+  class: Shumway.AVM2.AS.ASClass;
 
   asEnumerableKeys: any [];
   asLazyInitializer: Shumway.AVM2.Runtime.LazyInitializer;
@@ -944,7 +951,7 @@ module Shumway.AVM2.Runtime {
     return String(a).localeCompare(String(b));
   }
 
-  export function asCompare(a, b, options, compareFunction) {
+  export function asCompare(a: any, b: any, options: SORT, compareFunction?) {
     release || Shumway.Debug.assertNotImplemented (!(options & SORT.UNIQUESORT), "UNIQUESORT");
     release || Shumway.Debug.assertNotImplemented (!(options & SORT.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
     var result = 0;

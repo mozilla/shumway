@@ -38,8 +38,8 @@ module Shumway.AVM2.AS {
   import Runtime = Shumway.AVM2.Runtime;
   import IndentingWriter = Shumway.IndentingWriter;
   import boxValue = Shumway.ObjectUtilities.boxValue;
-
-
+  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
+  import SORT = Shumway.AVM2.ABC.SORT;
 
   import ClassBindings = Shumway.AVM2.Runtime.ClassBindings;
   import InstanceBindings = Shumway.AVM2.Runtime.InstanceBindings;
@@ -134,6 +134,7 @@ module Shumway.AVM2.AS {
     public static implementedInterfaces: Shumway.Map<ASClass>;
     public static isInterface: () => boolean;
     public static applyType: (type: ASClass) => ASClass;
+    public static protocol: IProtocol;
 
     public static call(): any {
       // We need to change TS here not to emit super calls.
@@ -230,7 +231,6 @@ module Shumway.AVM2.AS {
       return false;
     }
 
-
   }
 
   /**
@@ -307,6 +307,10 @@ module Shumway.AVM2.AS {
       self.instanceConstructorNoInitialize = self.instanceConstructor;
       self.instanceConstructor.prototype = self.traitsPrototype;
       self.instanceConstructor.prototype.class = self;
+
+      if (self.protocol) {
+        Shumway.ObjectUtilities.copyOwnPropertyDescriptors(self.traitsPrototype, self.protocol);
+      }
     }
 
     /**
@@ -381,6 +385,12 @@ module Shumway.AVM2.AS {
      * Initialization flags that determine how native initializers get called.
      */
     initializationFlags: InitializationFlags = InitializationFlags.NONE;
+
+    /**
+     * Defines the AS MetaObject Protocol, |null| if no protocol is used.
+     */
+    protocol: IProtocol;
+
     prototype: Object;
 
     /**
@@ -786,64 +796,111 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Array];
     public static instanceNatives: any [] = [Array.prototype];
 
+    static CACHE_NUMERIC_COMPARATORS = true;
+    static numericComparatorCache = createEmptyObject();
+
     private static _pop(o: any): any {
-      notImplemented("public.Array::private static _pop"); return;
+      return o.reverse();
     }
     private static _reverse(o: any): any {
-      notImplemented("public.Array::private static _reverse"); return;
+      return o.reverse();
     }
     private static _concat(o: any, args: any []): any [] {
-      args = args;
-      notImplemented("public.Array::private static _concat"); return;
+      return o.concat.apply(o, args);
     }
     private static _shift(o: any): any {
-      notImplemented("public.Array::private static _shift"); return;
+      return o.shift();
     }
     private static _slice(o: any, A: number, B: number): any [] {
       A = +A; B = +B;
-      notImplemented("public.Array::private static _slice"); return;
+      return o.slice(A, B);
     }
     private static _unshift(o: any, args: any []): number /*uint*/ {
-      args = args;
-      notImplemented("public.Array::private static _unshift"); return;
+      return o.unshift.apply(o, args);
     }
     private static _splice(o: any, args: any []): any [] {
-      args = args;
-      notImplemented("public.Array::private static _splice"); return;
+      return o.splice.apply(o, args);
     }
     private static _sort(o: any, args: any []): any {
-      args = args;
-      notImplemented("public.Array::private static _sort"); return;
+      if (args.length === 0) {
+        return o.sort();
+      }
+      var compareFunction, options = 0;
+      if (args[0] instanceof Function) {
+        compareFunction = args[0];
+      } else if (isNumber(args[0])) {
+        options = args[0];
+      }
+      if (isNumber(args[1])) {
+        options = args[1];
+      }
+      o.sort(function (a, b) {
+        return Runtime.asCompare(a, b, options, compareFunction);
+      });
+      return o;
     }
     private static _sortOn(o: any, names: any, options: any): any {
-      notImplemented("public.Array::private static _sortOn"); return;
+      if (isString(names)) {
+        names = [names];
+      }
+      if (isNumber(options)) {
+        options = [options];
+      }
+      for (var i = names.length - 1; i >= 0; i--) {
+        var key = Multiname.getPublicQualifiedName(names[i]);
+        if (ASArray.CACHE_NUMERIC_COMPARATORS && options[i] & SORT.NUMERIC) {
+          var str = "var x = toNumber(a." + key + "), y = toNumber(b." + key + ");";
+          if (options[i] & SORT.DESCENDING) {
+            str += "return x < y ? 1 : (x > y ? -1 : 0);";
+          } else {
+            str += "return x < y ? -1 : (x > y ? 1 : 0);";
+          }
+          var numericComparator = ASArray.numericComparatorCache[str];
+          if (!numericComparator) {
+            numericComparator = ASArray.numericComparatorCache[str] = new Function("a", "b", str);
+          }
+          o.sort(numericComparator);
+        } else {
+          o.sort(function (a, b) {
+            return Runtime.asCompare(a[key], b[key], options[i] | 0);
+          });
+        }
+      }
+      return o;
     }
     private static _indexOf(o: any, searchElement: any, fromIndex: number /*int*/): number /*int*/ {
       fromIndex = fromIndex | 0;
-      notImplemented("public.Array::private static _indexOf"); return;
+      return o.indexOf(searchElement, fromIndex);
     }
     private static _lastIndexOf(o: any, searchElement: any, fromIndex: number /*int*/ = 0): number /*int*/ {
       fromIndex = fromIndex | 0;
-      notImplemented("public.Array::private static _lastIndexOf"); return;
+      return o.lastIndexOf(searchElement, fromIndex);
     }
     private static _every(o: any, callback: Function, thisObject: any): boolean {
-      callback = callback;
-      notImplemented("public.Array::private static _every"); return;
+      for (var i = 0; i < o.length; i++) {
+        if (callback.call(thisObject, o[i], i, o) !== true) {
+          return false;
+        }
+      }
+      return false;
     }
     private static _filter(o: any, callback: Function, thisObject: any): any [] {
-      callback = callback;
-      notImplemented("public.Array::private static _filter"); return;
+      var result = [];
+      for (var i = 0; i < o.length; i++) {
+        if (callback.call(thisObject, o[i], i, o) === true) {
+          result.push(o[i]);
+        }
+      }
+      return result;
     }
     private static _forEach(o: any, callback: Function, thisObject: any): void {
-      callback = callback;
-      notImplemented("public.Array::private static _forEach"); return;
+      return o.forEach(callback, thisObject);
     }
     private static _map(o: any, callback: Function, thisObject: any): any [] {
       return o.map(callback, thisObject);
     }
     private static _some(o: any, callback: Function, thisObject: any): boolean {
-      callback = callback;
-      notImplemented("public.Array::private static _some"); return;
+      return o.some(callback, thisObject);
     }
     get length(): number /*uint*/ {
       return this.length;
@@ -851,15 +908,6 @@ module Shumway.AVM2.AS {
     set length(newLength: number /*uint*/) {
       newLength = newLength >>> 0;
       this.length = newLength;
-    }
-    pop(): any {
-      notImplemented("public.Array::pop"); return;
-    }
-    push(): number /*uint*/ {
-      notImplemented("public.Array::push"); return;
-    }
-    unshift(): number /*uint*/ {
-      notImplemented("public.Array::unshift"); return;
     }
   }
 

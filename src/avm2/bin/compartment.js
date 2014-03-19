@@ -81,6 +81,7 @@ load(homePath + "src/avm2/natives/uint32Vector.js");
 load(homePath + "src/avm2/natives/float64Vector.js");
 load(homePath + "src/avm2/nat.js");
 load(homePath + "src/avm2/natives/genericVector.js");
+load(homePath + "src/avm2/natives/dictionary.js");
 
 
 

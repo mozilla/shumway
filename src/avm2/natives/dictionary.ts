@@ -36,6 +36,8 @@ module Shumway.AVM2.AS {
      */
     export class Dictionary extends ASNative {
 
+      public static protocol: IProtocol = Dictionary.prototype;
+
       private map: WeakMap<any, any>;
       private keys: any [];
       private weakKeys: boolean;
@@ -43,12 +45,6 @@ module Shumway.AVM2.AS {
 
       constructor (weakKeys: boolean = false) {
         super();
-        this.weakKeys = !!weakKeys;
-        this.map = new WeakMap();
-        if (!weakKeys) {
-          this.keys = [];
-        }
-        this.primitiveMap = createEmptyObject();
       }
 
       static makePrimitiveKey(key) {
@@ -60,8 +56,12 @@ module Shumway.AVM2.AS {
       }
 
       private init(weakKeys: boolean): void {
-        weakKeys = !!weakKeys;
-        // Nop.
+        this.weakKeys = !!weakKeys;
+        this.map = new WeakMap();
+        if (!weakKeys) {
+          this.keys = [];
+        }
+        this.primitiveMap = createEmptyObject();
       }
 
       public asGetProperty(namespaces: Namespace [], name: any, flags: number) {
@@ -84,11 +84,12 @@ module Shumway.AVM2.AS {
         }
       }
 
-      public asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
-        notImplemented("asCallProperty");
-      }
+      // TODO: Not implemented yet.
+      // public asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
+      //   notImplemented("asCallProperty");
+      // }
 
-      public asHasProperty(namespaces: Namespace [], name: any, flags: number, nonProxy: boolean) {
+      public asHasProperty(namespaces: Namespace [], name: any, flags: number) {
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
           return key in this.primitiveMap;
@@ -110,7 +111,7 @@ module Shumway.AVM2.AS {
       }
 
       public asGetEnumerableKeys() {
-        if (Dictionary.prototype === this) {
+        if (Dictionary.traitsPrototype === this || Dictionary.dynamicPrototype === this) {
           return Object.prototype.asGetEnumerableKeys.call(this);
         }
         var primitiveMapKeys = [];

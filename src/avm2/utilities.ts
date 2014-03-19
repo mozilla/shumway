@@ -332,6 +332,24 @@ module Shumway {
       }
     }
 
+    export function copyOwnProperties(object: Object, template: Object) {
+      for (var property in template) {
+        if (hasOwnProperty(template, property)) {
+          object[property] = template[property];
+        }
+      }
+    }
+
+    export function copyOwnPropertyDescriptors(object: Object, template: Object) {
+      for (var property in template) {
+        if (hasOwnProperty(template, property)) {
+          var descriptor = Object.getOwnPropertyDescriptor(template, property);
+          assert (descriptor);
+          Object.defineProperty(object, property, descriptor);
+        }
+      }
+    }
+
     export function getLatestGetterOrSetterPropertyDescriptor(object, name) {
       var descriptor: PropertyDescriptor = {};
       while (object) {

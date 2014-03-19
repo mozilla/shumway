@@ -137,7 +137,7 @@ module Shumway.AVM2.Runtime {
       if (!scopeOnly && (object = this.cache[key])) {
         return object;
       }
-      if (this.object.asHasProperty(namespaces, name, flags, true)) {
+      if (this.object.asHasProperty(namespaces, name, flags)) {
         return this.isWith ? this.object : (this.cache[key] = this.object);
       }
       if (this.parent) {
