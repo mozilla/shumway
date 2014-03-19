@@ -210,10 +210,17 @@ var LoaderDefinition = (function () {
                                            dependenciesResolve);
       var framesLoaded = timeline.length;
 
-      if (frame.bgcolor)
-        loaderInfo._backgroundColor = frame.bgcolor;
-      else if (isNullOrUndefined(loaderInfo._backgroundColor))
-        loaderInfo._backgroundColor = { red: 255, green: 255, blue: 255, alpha: 255 };
+      if (frame.bgcolor) {
+        var color = frame.bgcolor;
+        loaderInfo._backgroundColor = color.red << 24 |
+                                      color.green << 16 |
+                                      color.blue << 8 |
+                                      color.alpha;
+      } else if (isNullOrUndefined(loaderInfo._backgroundColor)) {
+        loaderInfo._backgroundColor = 0xffffffff;
+      }
+
+      loader._stage._color = loaderInfo._backgroundColor;
 
       Promise.all([prevPromise, dependenciesPromise]).then(function () {
         if (abcBlocks && loader._isAvm2Enabled) {

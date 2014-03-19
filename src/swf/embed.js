@@ -17,164 +17,36 @@
  */
 /*global SWF, renderStage, rgbaObjToStr, ShumwayKeyboardListener, forceHidpi */
 
-SWF.embed = function(file, doc, container, options) {
-  var canvas = doc.createElement('canvas');
+MessageCenter.subscribe('load', function (data) {
+  var file = data.file;
+
+  var stage = new flash.display.Stage();
   var loader = new flash.display.Loader();
   var loaderInfo = loader._contentLoaderInfo;
-  var stage = new flash.display.Stage();
-
-  var pixelRatio = 1;
-  var forceHidpiSetting = forceHidpi.value;
 
   stage._loader = loader;
-  loaderInfo._parameters = options.movieParams;
-  loaderInfo._url = options.url || (typeof file === 'string' ? file : null);
-  loaderInfo._loaderURL = options.loaderURL || loaderInfo._url;
+
+  loaderInfo._parameters = data.movieParams;
+  loaderInfo._url = data.url || (typeof file === 'string' ? file : null);
+  loaderInfo._loaderURL = data.loaderURL || loaderInfo._url;
 
   loader._parent = stage;
   loader._stage = stage;
 
-  function setCanvasSize(width, height) {
-    if (pixelRatio === 1.0) {
-      canvas.width = width | 0;
-      canvas.height = height | 0;
-      return;
-    }
-    var canvasWidth = Math.floor(width * pixelRatio);
-    var canvasHeight = Math.floor(height * pixelRatio);
-    // trying fit into fractional amount of pixels if pixelRatio is not int
-    canvas.style.width = (canvasWidth / pixelRatio) + 'px';
-    canvas.style.height = (canvasHeight / pixelRatio) + 'px';
-    canvas.width = canvasWidth;
-    canvas.height = canvasHeight;
-  }
+  var pixelRatio = 1;
 
-  function fitCanvas(container) {
-    setCanvasSize(container.clientWidth, container.clientHeight);
-    stage._invalid = true;
-  }
+  if (forceHidpi.value || loaderInfo._swfVersion >= 18) {
+    pixelRatio = data.pixelRatio || 1;
 
-  var renderer = new Renderer(stage);
-
-  loaderInfo._addEventListener('init', function () {
-    if (forceHidpiSetting || loaderInfo._swfVersion >= 18) {
-      // Support of HiDPI displays  (for SWF version 18 and above only)
-      pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
-    }
-    canvas._pixelRatio = pixelRatio;
     stage._contentsScaleFactor = pixelRatio;
 
-    if (container.clientHeight) {
-      fitCanvas(container);
-      window.addEventListener('resize', function () {
-        fitCanvas(container);
-      });
-    } else {
-      setCanvasSize(stage._stageWidth / 20, stage._stageHeight / 20);
-    }
+    var m = stage._concatenatedTransform;
+    m.a = pixelRatio;
+    m.d = pixelRatio;
+  }
 
-    container.setAttribute("style", "position: relative");
-
-    canvas.addEventListener('click', function () {
-      ShumwayKeyboardListener.focus = stage;
-
-      stage._mouseTarget._dispatchEvent('click');
-    });
-    canvas.addEventListener('dblclick', function () {
-      if (stage._mouseTarget._doubleClickEnabled) {
-        stage._mouseTarget._dispatchEvent('doubleClick');
-      }
-    });
-    canvas.addEventListener('mousedown', function () {
-      stage._mouseEvents.push('mousedown');
-    });
-    canvas.addEventListener('mousemove', function (domEvt) {
-      var node = this;
-      var left = 0;
-      var top = 0;
-      if (node.offsetParent) {
-        do {
-          left += node.offsetLeft;
-          top += node.offsetTop;
-        } while ((node = node.offsetParent));
-      }
-
-      var m = stage._concatenatedTransform;
-      var mouseX = ((domEvt.pageX - left) * pixelRatio - m.tx / 20) / m.a;
-      var mouseY = ((domEvt.pageY - top) * pixelRatio - m.ty / 20) / m.d;
-
-      if (mouseX !== stage._mouseX || mouseY !== stage._mouseY) {
-        stage._mouseMoved = true;
-        stage._mouseX = mouseX * 20;
-        stage._mouseY = mouseY * 20;
-      }
-    });
-    canvas.addEventListener('mouseup', function () {
-      stage._mouseEvents.push('mouseup');
-    });
-    canvas.addEventListener('mouseover', function () {
-      stage._mouseMoved = true;
-      stage._mouseOver = true;
-    });
-    canvas.addEventListener('mouseout', function () {
-      stage._mouseMoved = true;
-      stage._mouseOver = false;
-    });
-
-    // Also accepting postMessages from the parent windows to control
-    // mouse and keyboard (e.g. when embedded in iframe).
-    window.addEventListener('message', function (evt) {
-      var data = evt.data;
-      if (typeof data !== 'object' || data === null) {
-        return;
-      }
-
-      var type = data.type;
-      switch (type) {
-      case 'mousemove':
-      case 'mouseup':
-      case 'mousedown':
-        var isMouseMove = type === 'mousemove';
-        stage._mouseMoved = true;
-        stage._mouseOver = true;
-        stage._mouseX = data.x * 20;
-        stage._mouseY = data.y * 20;
-        if (!isMouseMove) {
-          stage._mouseEvents.push(type);
-        }
-        break;
-      case 'mouseover':
-      case 'mouseout':
-        stage._mouseMoved = true;
-        stage._mouseOver = type === 'mouseover';
-        break;
-      case 'keyup':
-      case 'keydown':
-        stage._dispatchEvent(new flash.events.KeyboardEvent(
-          type === 'keyup' ? 'keyUp' : 'keyDown', true, false,
-          data.charCode, data.keyCode, data.keyLocation,
-          data.ctrlKey || false, data.altKey || false, data.shiftKey || false));
-        break;
-      }
-    }, false);
-
+  loaderInfo._addEventListener('init', function () {
     var bgcolor = loaderInfo._backgroundColor;
-    if (options.objectParams) {
-      var m;
-      if (options.objectParams.bgcolor &&
-          (m = /#([0-9A-F]{6})/i.exec(options.objectParams.bgcolor))) {
-        var hexColor = parseInt(m[1], 16);
-        bgcolor = {
-          red: (hexColor >> 16) & 255,
-          green: (hexColor >> 8) & 255,
-          blue: hexColor & 255,
-          alpha: 255
-        };
-      }
-      if (options.objectParams.wmode === 'transparent') {
-        bgcolor = {red: 0, green: 0, blue: 0, alpha: 0};
-      }
-    }
     stage._color = bgcolor;
 
     var root = loader._content;
@@ -183,26 +55,139 @@ SWF.embed = function(file, doc, container, options) {
     root._dispatchEvent("addedToStage");
 
     root._layerId = stage._nextLayerId++;
+    root._renderableId = stage._nextRenderableId++;
     stage._addLayer(root._layerId, 0, root);
 
-    container.appendChild(canvas);
-    stage._domContainer = container;
+    MessageCenter.post('init');
 
-    if (options.onStageInitialized) {
-      options.onStageInitialized(stage);
-    }
-
-    renderer.enterRenderingLoop(canvas, bgcolor, options);
     stage._enterEventLoop();
   });
 
+  loaderInfo._addEventListener('complete', function () {
+    MessageCenter.post('complete');
+  });
+
+  loader._load(typeof file === 'string' ? new flash.net.URLRequest(file) : file);
+
+  MessageCenter.subscribe('mouse', function (data) {
+    switch (data.type) {
+    case 'click':
+      ShumwayKeyboardListener.focus = stage;
+
+      stage._mouseTarget._dispatchEvent('click');
+      break;
+    case 'dblclick':
+      if (stage._mouseTarget._doubleClickEnabled) {
+        stage._mouseTarget._dispatchEvent('doubleClick');
+      }
+    case 'mousedown':
+      stage._mouseEvents.push('mousedown');
+    case 'mousemove':
+      var m = stage._concatenatedTransform;
+      var mouseX = ((data.x) * pixelRatio - m.tx / 20) / m.a;
+      var mouseY = ((data.y) * pixelRatio - m.ty / 20) / m.d;
+
+      if (mouseX !== stage._mouseX || mouseY !== stage._mouseY) {
+        stage._mouseMoved = true;
+        stage._mouseX = mouseX * 20;
+        stage._mouseY = mouseY * 20;
+      }
+    case 'mouseup':
+      stage._mouseEvents.push('mouseup');
+    case 'mouseover':
+      stage._mouseMoved = true;
+      stage._mouseOver = true;
+    case 'mouseout':
+      stage._mouseMoved = true;
+      stage._mouseOver = false;
+    }
+  });
+});
+
+MessageCenter.subscribe('options', function (data) {
+  // TODO
+});
+
+SWF.embed = function(file, doc, container, options) {
+  var pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
+
+  var bgcolor;
+  if (options.objectParams) {
+   var m;
+   if (options.objectParams.bgcolor &&
+       (m = /#([0-9A-F]{6})/i.exec(options.objectParams.bgcolor)))
+    {
+      var hexColor = parseInt(m[1], 16);
+      bgcolor = hexColor << 8 | 0xff;
+    }
+    if (options.objectParams.wmode === 'transparent') {
+      bgcolor = 0;
+    }
+  }
+
+  container.setAttribute('style', 'position: relative');
+
+  var renderer = new Renderer(container, bgcolor, options);
+
+  MessageCenter.subscribe('init', function (data) {
+    if (options.onStageInitialized) {
+      options.onStageInitialized({ _frameRate: 24 });
+    }
+  });
+
   if (options.onComplete) {
-    loaderInfo._addEventListener("complete", function () {
+    MessageCenter.subscribe('complete', function (data) {
       options.onComplete();
     });
   }
 
-  loader._load(typeof file === 'string' ? new flash.net.URLRequest(file) : file);
-
-  return loader;
+  MessageCenter.post('load', {
+    file: file,
+    url: options.url,
+    loaderURL: options.loaderURL,
+    movieParams: options.movieParams,
+    pixelRatio: pixelRatio
+  });
 };
+
+function mouseListener(e) {
+  if (e.target instanceof HTMLCanvasElement) {
+    var node = this;
+    var left = 0;
+    var top = 0;
+    if (node.offsetParent) {
+      do {
+        left += node.offsetLeft;
+        top += node.offsetTop;
+      } while ((node = node.offsetParent));
+    }
+
+    MessageCenter.post('mouse', {
+      type: e.type,
+      x: e.pageX - left,
+      y: e.pageY - top
+    });
+  }
+}
+window.addEventListener('click', mouseListener);
+window.addEventListener('dblclick', mouseListener);
+window.addEventListener('mousedown', mouseListener);
+window.addEventListener('mousemove', mouseListener);
+window.addEventListener('mouseup', mouseListener);
+window.addEventListener('mouseover', mouseListener);
+window.addEventListener('mouseout', mouseListener);
+
+function keyListener(e) {
+  MessageCenter.post('key', {
+    type: e.type,
+    keyCode: e.keyCode,
+    charCode: e.charCode,
+    keyLocation: e.keyLocation,
+    ctrlKey: e.ctrlKey,
+    altKey: e.altKey,
+    shiftKey: e.shiftKey
+  });
+}
+window.addEventListener('keydown', keyListener);
+window.addEventListener('keypress', keyListener);
+window.addEventListener('keyup', keyListener);

@@ -41,9 +41,12 @@ function rgbaUintToStr(rgba) {
          (rgba >>> 8 & 0xff) + ',' + (rgba & 0xff) / 0xff + ')';
 }
 
-function Renderer(target) {
-  this._target = target;
-
+function Renderer(container, bgcolor, options) {
+  this._container = container;
+  this._bgcolor = bgcolor;
+  this._options = options || { };
+  this._canvas = document.createElement('canvas');
+  this._contentsScaleFactor = 1;
   this._promises = Object.create(null);
   this._renderables = Object.create(null);
   this._layers = Object.create(null);
@@ -52,15 +55,11 @@ function Renderer(target) {
 
   var renderer = this;
   var layers = this._layers;
-  window.onmessage = function (e) {
-    var data = e.data;
-    if (data.command === 'render') {
-      var i32 = new Int32Array(data.data);
-      handleRenderMessages(renderer, layers, i32);
-    } else if (data.command === 'callback') {
-      renderer._target._callback(data.data);
-    }
-  };
+
+  MessageCenter.subscribe('render', function (data) {
+    var i32 = new Int32Array(data);
+    handleRenderMessages(renderer, layers, i32);
+  });
 }
 
 function handleRenderMessages(renderer, layers, i32) {
@@ -91,28 +90,53 @@ function handleRenderMessages(renderer, layers, i32) {
       var dependencies = i32.subarray(p, offset + n);
       p = offset + n;
       renderer.requireRenderables(dependencies, function () {
-        postMessage({
-          command: 'callback',
-          data: callbackId
-        }, '*');
+        MessageCenter.post('callback', callbackId);
       });
       break;
     case Renderer.MESSAGE_SETUP_STAGE:
+      var bgcolor = i32[p++];
       var width = i32[p++];
       var height = i32[p++];
-      var pixelRatio = renderer._target._contentsScaleFactor;
+      var contentsScaleFactor = i32[p++];
+
+      renderer._contentsScaleFactor = contentsScaleFactor;
+
+      var container = renderer._container;
+      var canvas = renderer._canvas;
+
+      if (!isNaN(renderer._bgcolor)) {
+        bgcolor = renderer._bgcolor;
+      }
+
+      if (bgcolor) {
+        canvas.style.backgroundColor = rgbaUintToStr(bgcolor);
+      }
+
+      if (container.clientHeight) {
+        renderer.fitCanvas(container);
+        window.addEventListener('resize', function () {
+          renderer.fitCanvas(container);
+        });
+      } else {
+        renderer.setCanvasSize(width, height);
+      }
+
+      container.appendChild(canvas);
+
       var stage = new Shumway.Layers.Stage(
-        // width, height, width * pixelRatio, height * pixelRatio
-        width * pixelRatio, height * pixelRatio
+        // width, height, width * contentsScaleFactor, height * contentsScaleFactor
+        width * contentsScaleFactor, height * contentsScaleFactor
       );
       stage.transform =
         new Shumway.Geometry.Matrix.createIdentity()
-                                   .scale(pixelRatio, pixelRatio);
+                                   .scale(contentsScaleFactor, contentsScaleFactor);
       layers[0] = stage;
+
+      renderer.enterRenderingLoop();
       break;
     case Renderer.MESSAGE_ADD_LAYER:
       var layerId = i32[p++];
-      var isContainer = i32[p++];
+      var isContainer = !!i32[p++];
       var parentId = i32[p++];
       var index = i32[p++];
       var renderableId = i32[p++];
@@ -122,7 +146,7 @@ function handleRenderMessages(renderer, layers, i32) {
         f32[p++], f32[p++], f32[p++], f32[p++], i32[p++], i32[p++]
       );
       var alpha = f32[p++];
-      var visible = i32[p++];
+      var visible = !!i32[p++];
       var blendMode = i32[p++];
       var maskId = i32[p++];
       var clip = maskId ? !!i32[p++] : false;
@@ -281,7 +305,28 @@ function timelineLeave(name) {
   hudTimeline && hudTimeline.leave(name);
 }
 
-Renderer.prototype.enterRenderingLoop = function enterRenderingLoop(canvas, bgcolor, options) {
+Renderer.prototype.setCanvasSize = function setCanvasSize(width, height) {
+  var canvas = this._canvas;
+  if (this._contentsScaleFactor === 1.0) {
+    canvas.width = width | 0;
+    canvas.height = height | 0;
+    return;
+  }
+  var canvasWidth = Math.floor(width * this._contentsScaleFactor);
+  var canvasHeight = Math.floor(height * this._contentsScaleFactor);
+  // trying fit into fractional amount of pixels if pixelRatio is not int
+  canvas.style.width = (canvasWidth / this._contentsScaleFactor) + 'px';
+  canvas.style.height = (canvasHeight / this._contentsScaleFactor) + 'px';
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+}
+
+Renderer.prototype.fitCanvas = function fitCanvas(container) {
+  this.setCanvasSize(container.clientWidth, container.clientHeight);
+  //stage._invalid = true;
+}
+
+Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
   var timeline = new Timeline(document.getElementById("frameTimeline"));
   timeline.setFrameRate(60);
   timeline.refreshEvery(60);
@@ -289,9 +334,7 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop(canvas, bgco
 
   Shumway.GL.SHADER_ROOT = "../../src/stage/shaders/";
 
-  if (bgcolor) {
-    canvas.style.backgroundColor = rgbaObjToStr(bgcolor);
-  }
+  var canvas = this._canvas;
 
   var WebGLContext = Shumway.GL.WebGLContext;
   var WebGLStageRenderer = Shumway.GL.WebGLStageRenderer;
@@ -317,7 +360,7 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop(canvas, bgco
     alpha: true
   };
 
-  var useWebGL = true;
+  var useWebGL = false;
   if (useWebGL) {
     var webGLContext = new WebGLContext(canvas, sceneOptions);
     stageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
@@ -329,6 +372,7 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop(canvas, bgco
   var firstRun = true;
 
   var renderer = this;
+  var options = this._options;
 
   (function tick() {
     if (renderingTerminated) {

@@ -17,6 +17,12 @@
  */
 /*global ShapePath */
 
+function timelineWrapBroadcastMessage(domain, message) {
+  //timelineEnter(message);
+  domain.broadcastMessage(message);
+  //timelineLeave(message);
+}
+
 var StageDefinition = (function () {
   return {
     // ()
@@ -28,7 +34,7 @@ var StageDefinition = (function () {
       this._stageWidth = 0;
       this._stageHeight = 0;
       this._quality = 'high';
-      this._color = 0xFFFFFFFF;
+      this._color = null;
       this._stage = this;
       this._deferRenderEvent = false;
       this._focus = null;
@@ -49,19 +55,27 @@ var StageDefinition = (function () {
       this._message = new Shumway.Util.ArrayWriter(1024);
       this._callbacks = { };
       this._nextCallbackId = 0;
+      this._contentsScaleFactor = 1;
 
       this._concatenatedTransform.invalid = false;
+
+      var stage = this;
+      MessageCenter.subscribe('callback', function (data) {
+        stage._callback(data);
+      });
     },
 
     _setup: function setup() {
       this._invalid = true;
 
       var message = this._message;
-      message.ensureAdditionalCapacity(12);
+      message.ensureAdditionalCapacity(28);
       message.writeIntUnsafe(Renderer.MESSAGE_SETUP_STAGE);
-      message.writeIntUnsafe(8);
+      message.writeIntUnsafe(20);
+      message.writeIntUnsafe(this._color);
       message.writeIntUnsafe(this._stageWidth / 20);
       message.writeIntUnsafe(this._stageHeight / 20);
+      message.writeIntUnsafe(this._contentsScaleFactor);
     },
     _defineRenderable: function defineRenderable(symbol) {
       var message = this._message;
@@ -251,11 +265,7 @@ var StageDefinition = (function () {
       message.writeIntUnsafe(node._layerId);
     },
     _commit: function commit() {
-      var message = this._message;
-      postMessage({
-        command: 'render',
-        data: message.u8.buffer
-      }, '*');
+      MessageCenter.post('render', this._message.u8.buffer);
       this._message = new Shumway.Util.ArrayWriter(1024);
     },
     _callback: function callback(id) {
@@ -388,7 +398,7 @@ var StageDefinition = (function () {
       var frameScheduler = new FrameScheduler();
 
       function drawFrame(renderFrame, repaint) {
-        sampleStart();
+        //sampleStart();
 
         var refreshStage = false;
         if (stage._invalid) {
@@ -406,15 +416,15 @@ var StageDefinition = (function () {
         }
 
         if (renderFrame || refreshStage || mouseMoved) {
-          FrameCounter.clear();
-          var frameStartTime = performance.now();
-          timelineEnter("frame");
-          traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
+          //FrameCounter.clear();
+          //var frameStartTime = performance.now();
+          //timelineEnter("frame");
+          //traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
 
           var domain = avm2.systemDomain;
 
           if (renderFrame) {
-            timelineEnter("events");
+            //timelineEnter("events");
             if (firstRun) {
               // Initial display list is already constructed, skip frame construction phase.
               firstRun = false;
@@ -427,7 +437,7 @@ var StageDefinition = (function () {
             timelineWrapBroadcastMessage(domain, "frameConstructed");
             timelineWrapBroadcastMessage(domain, "executeFrame");
             timelineWrapBroadcastMessage(domain, "exitFrame");
-            timelineLeave("events");
+            //timelineLeave("events");
           }
 
           if (stage._deferRenderEvent) {
@@ -443,16 +453,16 @@ var StageDefinition = (function () {
               frameScheduler.shallSkipDraw) {
             drawEnabled = false;
             frameScheduler.skipDraw();
-            traceRenderer.value && appendToFrameTerminal("Skip Frame Draw", "red");
+            //traceRenderer.value && appendToFrameTerminal("Skip Frame Draw", "red");
           }
           if (drawEnabled) {
             frameScheduler.startDraw();
 
-            traceRenderer.value && frameWriter.enter("> Invalidation");
-            timelineEnter("invalidate");
+            //traceRenderer.value && frameWriter.enter("> Invalidation");
+            //timelineEnter("invalidate");
             stage._processInvalidations(refreshStage);
-            timelineLeave("invalidate");
-            traceRenderer.value && frameWriter.leave("< Invalidation");
+            //timelineLeave("invalidate");
+            //traceRenderer.value && frameWriter.leave("< Invalidation");
 
             stage._commit();
 
@@ -460,30 +470,29 @@ var StageDefinition = (function () {
           }
 
           if (mouseMoved && !disableMouse.value) {
-            renderFrame && timelineEnter("mouse");
-            traceRenderer.value && frameWriter.enter("> Mouse Handling");
+            //renderFrame && timelineEnter("mouse");
+            //traceRenderer.value && frameWriter.enter("> Mouse Handling");
             stage._handleMouse();
-            traceRenderer.value && frameWriter.leave("< Mouse Handling");
-            renderFrame && timelineLeave("mouse");
+            //traceRenderer.value && frameWriter.leave("< Mouse Handling");
+            //renderFrame && timelineLeave("mouse");
 
             //ctx.canvas.style.cursor = stage._cursor;
           }
 
           if (traceRenderer.value) {
-            frameWriter.enter("> Frame Counters");
-            for (var name in FrameCounter.counts) {
-              frameWriter.writeLn(name + ": " + FrameCounter.counts[name]);
-            }
-            frameWriter.leave("< Frame Counters");
+            //frameWriter.enter("> Frame Counters");
+            //for (var name in FrameCounter.counts) {
+            //  frameWriter.writeLn(name + ": " + FrameCounter.counts[name]);
+            //}
+            //frameWriter.leave("< Frame Counters");
             var frameElapsedTime = performance.now() - frameStartTime;
             var frameFPS = 1000 / frameElapsedTime;
             frameFPSAverage.push(frameFPS);
-            traceRenderer.value && appendToFrameTerminal("End Frame Time: " + frameElapsedTime.toFixed(2) + " (" + frameFPS.toFixed(2) + " fps, " + frameFPSAverage.average().toFixed(2) + " average fps)", "purple");
-
+            //traceRenderer.value && appendToFrameTerminal("End Frame Time: " + frameElapsedTime.toFixed(2) + " (" + frameFPS.toFixed(2) + " fps, " + frameFPSAverage.average().toFixed(2) + " average fps)", "purple");
           }
-          timelineLeave("frame");
+          //timelineLeave("frame");
         } else {
-          traceRenderer.value && appendToFrameTerminal("Skip Frame", "black");
+          //traceRenderer.value && appendToFrameTerminal("Skip Frame", "black");
         }
 
         sampleEnd();
@@ -497,9 +506,9 @@ var StageDefinition = (function () {
         frameScheduler.endFrame();
         //frameRequested = false;
 
-        if (!frameScheduler.isOnTime) {
-          traceRenderer.value && appendToFrameTerminal("Frame Is Late", "red");
-        }
+        //if (!frameScheduler.isOnTime) {
+        //  traceRenderer.value && appendToFrameTerminal("Frame Is Late", "red");
+        //}
 
         setTimeout(draw, turboMode.value ? 0 : frameScheduler.nextFrameIn);
       })();

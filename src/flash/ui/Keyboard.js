@@ -21,9 +21,9 @@ var ShumwayKeyboardListener = {
   _captureKeyPress: false,
   _charCodeMap: [],
   focus: null,
-  handleEvent: function (domEvt) {
-    var keyCode = domEvt.keyCode;
-    if (domEvt.type === 'keydown') {
+  handleMessage: function (data) {
+    var keyCode = data.keyCode;
+    if (data.type === 'keydown') {
       this._lastKeyCode = keyCode;
       // trying to capture charCode for ASCII keys
       this._captureKeyPress = keyCode === 8 || keyCode === 9 ||
@@ -33,10 +33,10 @@ var ShumwayKeyboardListener = {
         return; // skipping keydown, waiting for keypress
       }
       this._charCodeMap[keyCode] = 0;
-    } else if (domEvt.type === 'keypress') {
+    } else if (data.type === 'keypress') {
       if (this._captureKeyPress) {
         keyCode = this._lastKeyCode;
-        this._charCodeMap[keyCode] = domEvt.charCode;
+        this._charCodeMap[keyCode] = data.charCode;
       } else {
         return;
       }
@@ -44,23 +44,21 @@ var ShumwayKeyboardListener = {
 
     if (this.focus) {
       this.focus._dispatchEvent(new flash.events.KeyboardEvent(
-        domEvt.type === 'keyup' ? 'keyUp' : 'keyDown',
+        data.type === 'keyup' ? 'keyUp' : 'keyDown',
         true,
         false,
-        domEvt.type === 'keyup' ? this._charCodeMap[keyCode] : domEvt.charCode,
-        domEvt.type === 'keyup' ? domEvt.keyCode : this._lastKeyCode,
-        domEvt.keyLocation,
-        domEvt.ctrlKey,
-        domEvt.altKey,
-        domEvt.shiftKey
+        data.type === 'keyup' ? this._charCodeMap[keyCode] : data.charCode,
+        data.type === 'keyup' ? data.keyCode : this._lastKeyCode,
+        data.keyLocation,
+        data.ctrlKey,
+        data.altKey,
+        data.shiftKey
       ));
     }
   }
 };
 
-window.addEventListener('keydown', ShumwayKeyboardListener);
-window.addEventListener('keypress', ShumwayKeyboardListener);
-window.addEventListener('keyup', ShumwayKeyboardListener);
+MessageCenter.subscribe('key', ShumwayKeyboardListener);
 
 var KeyboardDefinition = (function () {
   var def = {
