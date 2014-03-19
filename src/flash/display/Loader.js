@@ -196,6 +196,10 @@ var LoaderDefinition = (function () {
       var framePromise = new Promise(function (resolve) {
         framePromiseResolve = resolve;
       });
+      var dependenciesResolve;
+      var dependenciesPromise = new Promise(function (resolve) {
+        dependenciesResolve = resolve;
+      });
       var labelName = frame.labelName;
       var prevPromise = this._lastPromise;
       this._lastPromise = framePromise;
@@ -203,7 +207,7 @@ var LoaderDefinition = (function () {
       this._displayList = this._buildFrame(this._displayList,
                                            timeline,
                                            frame,
-                                           framePromiseResolve);
+                                           dependenciesResolve);
       var framesLoaded = timeline.length;
 
       if (frame.bgcolor)
@@ -211,7 +215,7 @@ var LoaderDefinition = (function () {
       else if (isNullOrUndefined(loaderInfo._backgroundColor))
         loaderInfo._backgroundColor = { red: 255, green: 255, blue: 255, alpha: 255 };
 
-      Promise.all([this._vmPromise, prevPromise, framePromise]).then(function () {
+      Promise.all([prevPromise, dependenciesPromise]).then(function () {
         if (abcBlocks && loader._isAvm2Enabled) {
           var appDomain = avm2.applicationDomain;
           for (var i = 0, n = abcBlocks.length; i < n; i++) {
@@ -417,6 +421,8 @@ var LoaderDefinition = (function () {
 
         if (frameNum === 1)
           loaderInfo._dispatchEvent(new flash.events.Event('init', false, false));
+
+        framePromiseResolve();
       });
     },
     _commitImage : function (imageInfo) {
@@ -622,6 +628,7 @@ var LoaderDefinition = (function () {
       // HACK making resolve and reject public
       vmPromise.resolve = vmPromiseResolve;
       vmPromise.reject = vmPromiseReject;
+      this._lastPromise = vmPromise;
 
       var rootInfo = {
         className: 'flash.display.MovieClip',
