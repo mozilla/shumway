@@ -82,7 +82,7 @@ module Shumway.Layers {
       context.clearRect(0, 0, stage.w, stage.h);
       context.globalAlpha = 1;
 
-      this.renderFrame(context, stage, stage.transform, stage.trackDirtyRegions, 0, options);
+      this.renderFrame(context, stage, stage.transform, null, stage.trackDirtyRegions, 0, options);
 
       if (false && lastDirtyRectangles) {
         context.strokeStyle = "red";
@@ -107,10 +107,17 @@ module Shumway.Layers {
       context.clearRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
     }
 
-    renderFrame(context: CanvasRenderingContext2D, root: Frame, transform: Matrix, trackDirtyRegions: boolean, maskDepth: number, options: any) {
+    renderFrame(context: CanvasRenderingContext2D, root: Frame, transform: Matrix, clipRect: Rectangle, trackDirtyRegions: boolean, maskDepth: number, options: any) {
       var self = this;
       var maskCanvasContext = self._scratchContexts[0];
       var maskeeCanvasContext = self._scratchContexts[1];
+
+      if (clipRect) {
+        context.save();
+        context.beginPath();
+        context.rect(clipRect.x, clipRect.y, clipRect.w, clipRect.h);
+        context.clip();
+      }
 
       root.visit(function visitFrame(frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
         context.save();
@@ -126,14 +133,19 @@ module Shumway.Layers {
           var maskTransform = frame.mask.getConcatenatedTransform();
           var maskBounds = frame.mask.getBounds();
           maskTransform.transformRectangleAABB(maskBounds);
-          maskBounds.snap();
           maskBounds.intersect(self._viewport);
+
+          var frameBounds = frame.getBounds();
+          transform.transformRectangleAABB(frameBounds);
+          maskBounds.intersect(frameBounds);
+          maskBounds.snap();
+
           Canvas2DStageRenderer.clearContext(maskCanvasContext, maskBounds);
-          self.renderFrame(maskCanvasContext, frame.mask, maskTransform, false, maskDepth + 1, options);
+          self.renderFrame(maskCanvasContext, frame.mask, maskTransform, maskBounds, false, maskDepth + 1, options);
 
           Canvas2DStageRenderer.clearContext(maskeeCanvasContext, maskBounds);
           maskeeCanvasContext.globalCompositeOperation = 'source-over';
-          self.renderFrame(maskeeCanvasContext, frame, transform, false, maskDepth + 1, options);
+          self.renderFrame(maskeeCanvasContext, frame, transform, maskBounds, false, maskDepth + 1, options);
 
           if (options.compositeMask) {
             maskeeCanvasContext.globalCompositeOperation = 'destination-in';
@@ -167,6 +179,10 @@ module Shumway.Layers {
         context.restore();
         return VisitorFlags.Continue;
       }, transform);
+
+      if (clipRect) {
+        context.restore();
+      }
     }
   }
 }
