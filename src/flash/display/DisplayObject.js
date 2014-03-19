@@ -615,7 +615,7 @@ var DisplayObjectDefinition = (function () {
       return this._mask;
     },
     set mask(val) {
-      if (this._mask === val) {
+      if (this._mask === val || val === this) {
         return;
       }
 
