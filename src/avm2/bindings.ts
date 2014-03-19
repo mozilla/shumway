@@ -308,7 +308,7 @@ module Shumway.AVM2.Runtime {
     parent: InstanceBindings;
     scope: any;
     natives: any;
-    implementedInterfaces: any;
+    implementedInterfaces: Shumway.Map<Shumway.AVM2.AS.ASClass>;
     constructor(parent, instanceInfo, scope, natives) {
       super();
       this.scope = scope;
@@ -460,18 +460,19 @@ module Shumway.AVM2.Runtime {
       var domain = ii.abc.applicationDomain;
       var interfaces = ii.interfaces;
 
+      var interface: Shumway.AVM2.AS.ASClass;
       // Collect all implemented interfaces.
       for (var i = 0; i < interfaces.length; i++) {
-        var interface = domain.getProperty(interfaces[i], true, true);
+        interface = domain.getProperty(interfaces[i], true, true);
         // This can be undefined if the interface is defined after a class that implements it is defined.
         release || assert(interface);
         copyProperties(this.implementedInterfaces, interface.interfaceBindings.implementedInterfaces);
-        this.implementedInterfaces[Multiname.getQualifiedName(interface.name)] = interface;
+        this.implementedInterfaces[Multiname.getQualifiedName(interface.classInfo.instanceInfo.name)] = interface;
       }
 
       // Apply all interface bindings.
       for (var interfaceName in this.implementedInterfaces) {
-        var interface = this.implementedInterfaces[interfaceName];
+        interface = this.implementedInterfaces[interfaceName];
         ib = interface.interfaceBindings;
         for (var interfaceKey in ib.map) {
           var interfaceBinding = ib.map[interfaceKey];

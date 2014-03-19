@@ -68,7 +68,7 @@ module Shumway.AVM2.Runtime {
       return "[interface " + this.name + "]";
     }
 
-    public isInstance(value) {
+    public isType(value) {
       if (value === null || typeof value !== "object") {
         return false;
       }
@@ -445,10 +445,10 @@ module Shumway.AVM2.Runtime {
 
     public isInstanceOf(value) {
       // TODO: Fix me.
-      return this.isInstance(value);
+      return this.isType(value);
     }
 
-    public isInstance(value) {
+    public isType(value) {
       if (value === null || typeof value !== "object") {
         return false;
       }

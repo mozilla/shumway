@@ -636,7 +636,7 @@ module Shumway.AVM2 {
             var handler = exceptions[i];
             if (pc >= handler.start && pc <= handler.end &&
               (!handler.typeName ||
-                domain.getType(handler.typeName).isInstance(e))) {
+                domain.getType(handler.typeName).isType(e))) {
               stack.length = 0;
               stack.push(e);
               scopeStack.clear();

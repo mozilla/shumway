@@ -853,7 +853,7 @@ module Shumway.AVM2.Runtime {
   }
 
   export function asIsType(type, value) {
-    return type.isInstance(value);
+    return type.isType(value);
   }
 
   export function asAsType(type, value) {
@@ -888,7 +888,7 @@ module Shumway.AVM2.Runtime {
       return null;
     }
 
-    if (type.isInstance(value)) {
+    if (type.isType(value)) {
       return value;
     } else {
       // FIXME throwErrorFromVM needs to be called from within the runtime
@@ -1735,7 +1735,7 @@ module Shumway.AVM2.Runtime {
     var cls;
 
     if (ii.isInterface()) {
-      cls = Interface.createInterface(classInfo);
+      cls = Shumway.AVM2.AS.createInterface(classInfo);
     } else {
       // cls = Class.createClass(classInfo, baseClass, scope);
       cls = Shumway.AVM2.AS.createClass(classInfo, baseClass, scope);

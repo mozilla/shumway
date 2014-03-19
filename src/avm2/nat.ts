@@ -118,6 +118,7 @@ module Shumway.AVM2.AS {
     public static instanceConstructorNoInitialize: any = null;
     public static classBindings: ClassBindings;
     public static instanceBindings: InstanceBindings;
+    public static interfaceBindings: InstanceBindings;
     public static staticNatives: any [];
     public static instanceNatives: any [];
     public static traitsPrototype: Object;
@@ -126,6 +127,8 @@ module Shumway.AVM2.AS {
     public static initializationFlags: InitializationFlags = InitializationFlags.NONE;
     public static callableStyle: CallableStyle = CallableStyle.PASSTHROUGH;
     public static asPrototype: Object;
+    public static implementedInterfaces: Shumway.Map<ASClass>;
+    public static isInterface: () => boolean;
 
     public static call(): any {
       log("ASObject::call - Ignoring");
@@ -145,7 +148,6 @@ module Shumway.AVM2.AS {
 
     static create(self: ASClass, baseClass: ASClass, instanceConstructor: any) {
       // ! The AS3 instanceConstructor is ignored.
-      log("HERE");
       ASClass.create(self, baseClass, this.instanceConstructor);
     }
 
@@ -154,7 +156,7 @@ module Shumway.AVM2.AS {
     }
 
     public static isInstanceOf: (value: any) => boolean;
-    public static isInstance: (value: any) => boolean;
+    public static isType: (value: any) => boolean;
 
     public static asCall(self: any, ...argArray: any[]): any {
       assert (this.callableStyle === CallableStyle.PASSTHROUGH);
@@ -345,6 +347,11 @@ module Shumway.AVM2.AS {
     instanceBindings: InstanceBindings;
 
     /**
+     * Instance bindings associated with this interface.
+     */
+    interfaceBindings: InstanceBindings;
+
+    /**
      * Prototype object that holds all class instance traits. This is not usually accessible from AS3 code directly. However,
      * for some classes (native classes) the |traitsPrototype| === |dynamicPrototype|.
      */
@@ -354,6 +361,11 @@ module Shumway.AVM2.AS {
      * Prototype object accessible from AS3 script code. This is the AS3 Class prototype object |class A { ... }, A.prototype|
      */
     dynamicPrototype: Object;
+
+    /**
+     * Set of implemented interfaces.
+     */
+    implementedInterfaces: Shumway.Map<ASClass>;
 
     coerce: (any) => any;
     defaultValue: any = null;
@@ -397,32 +409,39 @@ module Shumway.AVM2.AS {
     }
 
     public isInstanceOf(value: any): boolean {
-      // log("ASClass::isInstanceOf");
-      if (value === null) {
+      // Nothing is an |instanceOf| interfaces.
+      if (this.isInterface()) {
         return false;
       }
-      // In AS3, |true instanceof Object| is true. It seems that is the case for all primitive values
-      // except for |undefined| which should throw an exception (TODO).
-      return true;
+      return this.isType(value);
     }
 
-    public isInstance(value: any): boolean {
-      // log("ASClass::isInstance");
-      if (value === 0) {
-        // debugger;
-      }
-      if (this === ASInt) {
-        debugger;
-      }
+    /**
+     * The isType check for classes looks for the |dynamicPrototype| on the prototype chain.
+     */
+    public isType(value: any): boolean {
       if (Shumway.isNullOrUndefined(value)) {
         return false;
       }
-      // We need to box primitive types before doing the |instanceof| test. In AS3 primitive values are
+
+      // We need to box primitive types before doing the |isPrototypeOf| test. In AS3, primitive values are
       // identical to their boxed representations: |0 === new Number(0)| is |true|.
       value = boxValue(value);
 
+      if (this.isInterface()) {
+        if (value === null || typeof value !== "object") {
+          return false;
+        }
+        release || assert(value.class.implementedInterfaces, "No 'implementedInterfaces' map found on class " + value.class);
+        var qualifiedName = Multiname.getQualifiedName(this.classInfo.instanceInfo.name);
+        return value.class.implementedInterfaces[qualifiedName] !== undefined;
+      }
 
-      return value instanceof this.instanceConstructor;
+      return this.dynamicPrototype.isPrototypeOf(value);
+    }
+
+    public isInterface(): boolean {
+      return this.classInfo.instanceInfo.isInterface();
     }
 
     /**
@@ -430,6 +449,12 @@ module Shumway.AVM2.AS {
      */
     public verify() {
       var self: ASClass = this;
+
+      // Not much to check for interfaces.
+      if (this.isInterface()) {
+        return;
+      }
+
       // Verify that we have bindings for all native traits.
       writer && writer.enter("Verifying Class: " + self.classInfo + " {");
       var traits = [self.classInfo.traits, self.classInfo.instanceInfo.traits];
@@ -665,7 +690,14 @@ module Shumway.AVM2.AS {
       return argArray[0] | 0;
     }
 
-    public static isInstance(value: any): boolean {
+    /**
+     * In AS3, |new int(42) instanceof int| is |false|.
+     */
+    public static isInstanceOf(value: any): boolean {
+      return false;
+    }
+
+    public static isType(value: any): boolean {
       if (isNumber(value) || value instanceof Number) {
         value = +value; // Make sure value is unboxed.
         return (value | 0) === value;
@@ -696,7 +728,14 @@ module Shumway.AVM2.AS {
       return argArray[0] >>> 0;
     }
 
-    public static isInstance(value: any): boolean {
+    /**
+     * In AS3, |new int(42) instanceof int| is |false|.
+     */
+    public static isInstanceOf(value: any): boolean {
+      return false;
+    }
+
+    public static isType(value: any): boolean {
       if (isNumber(value) || value instanceof Number) {
         value = +value; // Make sure value is unboxed.
         return (value >>> 0) === value;
@@ -982,6 +1021,15 @@ module Shumway.AVM2.AS {
   nativeClasses["D"] = XYZ.D;
   nativeClasses["E"] = XYZ.E;
 
+  export function createInterface(classInfo: ClassInfo) {
+    var ii = classInfo.instanceInfo;
+    release || assert(ii.isInterface());
+    var cls = new ASClass(classInfo);
+    cls.interfaceBindings = new InstanceBindings(null, ii, null, null);
+    cls.verify();
+    return cls;
+  }
+
   export function createClass(classInfo: ClassInfo, baseClass: ASClass, scope: Scope) {
     var ci = classInfo;
     var ii = ci.instanceInfo;
@@ -1033,6 +1081,8 @@ module Shumway.AVM2.AS {
     if (cls.instanceConstructor) {
       cls.instanceBindings.applyTo(domain, cls.traitsPrototype);
     }
+
+    cls.implementedInterfaces = cls.instanceBindings.implementedInterfaces;
 
     if (cls === ASClass) {
       cls.instanceBindings.applyTo(domain, ASObject, true);
