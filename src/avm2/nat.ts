@@ -33,6 +33,7 @@ module Shumway.AVM2.AS {
   import isPrototypeWriteable = Shumway.ObjectUtilities.isPrototypeWriteable;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import createFunction = Shumway.AVM2.Runtime.createFunction;
   import Runtime = Shumway.AVM2.Runtime;
   import IndentingWriter = Shumway.IndentingWriter;
@@ -48,6 +49,7 @@ module Shumway.AVM2.AS {
   import Float64Vector = Shumway.AVM2.AS.Float64Vector;
 
   declare var arraySort;
+  declare var XRegExp;
 
   var debug = false;
 
@@ -116,6 +118,8 @@ module Shumway.AVM2.AS {
     public static classInfo: ClassInfo;
     public static instanceConstructor: any = Object;
     public static instanceConstructorNoInitialize: any = null;
+    public static callableConstructor: any = ASObject.instanceConstructor;
+
     public static classBindings: ClassBindings;
     public static instanceBindings: InstanceBindings;
     public static interfaceBindings: InstanceBindings;
@@ -129,13 +133,16 @@ module Shumway.AVM2.AS {
     public static asPrototype: Object;
     public static implementedInterfaces: Shumway.Map<ASClass>;
     public static isInterface: () => boolean;
+    public static applyType: (type: ASClass) => ASClass;
 
     public static call(): any {
-      log("ASObject::call - Ignoring");
+      // We need to change TS here not to emit super calls.
+      log("ASObject::call - Ignoring Super Call");
     }
 
     public static apply(): any {
-      log("ASObject::apply - Ignoring");
+      // We need to change TS here not to emit super calls.
+      log("ASObject::apply - Ignoring Super Call");
     }
 
     /**
@@ -151,23 +158,19 @@ module Shumway.AVM2.AS {
       ASClass.create(self, baseClass, this.instanceConstructor);
     }
 
-    public static coerce(value: any): any {
-      return Runtime.asCoerceObject(value);
-    }
+    public static coerce: (value: any) => any = Runtime.asCoerceObject;
 
     public static isInstanceOf: (value: any) => boolean;
     public static isType: (value: any) => boolean;
 
     public static asCall(self: any, ...argArray: any[]): any {
       assert (this.callableStyle === CallableStyle.PASSTHROUGH);
-      log("HERE CALL");
-      return this.instanceConstructor.apply(self, argArray);
+      return this.callableConstructor.apply(self, argArray);
     }
 
     public static asApply(self: any, argArray?: any): any {
       assert (this.callableStyle === CallableStyle.PASSTHROUGH);
-      log("HERE APPLY");
-      return this.instanceConstructor.apply(self, argArray);
+      return this.callableConstructor.apply(self, argArray);
     }
 
     public static verify() {
@@ -327,6 +330,11 @@ module Shumway.AVM2.AS {
     instanceConstructorNoInitialize: new (...args) => any;
 
     /**
+     * Constructs an instance of this class.
+     */
+    callableConstructor: new (...args) => any;
+
+    /**
      * A list of objects to search for methods or accessors when linking static native traits.
      */
     staticNatives: Object [];
@@ -367,7 +375,6 @@ module Shumway.AVM2.AS {
      */
     implementedInterfaces: Shumway.Map<ASClass>;
 
-    coerce: (any) => any;
     defaultValue: any = null;
 
     /**
@@ -408,6 +415,11 @@ module Shumway.AVM2.AS {
       return Runtime.asCoerce(this, argArray[0])
     }
 
+    public applyType(type: ASClass): ASClass {
+      debugger;
+      return null;
+    }
+
     public isInstanceOf(value: any): boolean {
       // Nothing is an |instanceOf| interfaces.
       if (this.isInterface()) {
@@ -438,6 +450,11 @@ module Shumway.AVM2.AS {
       }
 
       return this.dynamicPrototype.isPrototypeOf(value);
+    }
+
+    public coerce(value: any): any {
+      log("Coercing " + value + " to " + this);
+      return value;
     }
 
     public isInterface(): boolean {
@@ -480,10 +497,10 @@ module Shumway.AVM2.AS {
 
       if (self !== ASObject) {
         if (ASObject.staticNatives === self.staticNatives) {
-          writer && writer.warnLn("Template does not override its staticNatives.");
+          writer && writer.warnLn("Template does not override its staticNatives, possibly a bug.");
         }
         if (ASObject.instanceNatives === self.instanceNatives) {
-          writer && writer.warnLn("Template does not override its instanceNatives.");
+          writer && writer.warnLn("Template does not override its instanceNatives, possibly a bug.");
         }
       }
 
@@ -617,6 +634,7 @@ module Shumway.AVM2.AS {
     public static classInfo: ClassInfo;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
+    public static coerce: (value: any) => boolean = Runtime.asCoerceBoolean;
 
     constructor(value: any = undefined) {
       super();
@@ -663,6 +681,7 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Math];
     public static instanceNatives: any [] = [Number.prototype];
     public static defaultValue: any = Number(0);
+    public static coerce: (value: any) => number = Runtime.asCoerceNumber;
 
     static _numberToString(n: number, radix: number): string { notImplemented("_numberToString"); return; }
     static _convert(n: number, precision: number, mode: number): string { notImplemented("_convert"); return; }
@@ -677,6 +696,8 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Math];
     public static instanceNatives: any [] = [Number.prototype];
     public static defaultValue: any = 0;
+    public static coerce: (value: any) => number = Runtime.asCoerceInt;
+
     constructor(value: any) {
       super();
       return Object(value | 0);
@@ -714,6 +735,7 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [Math];
     public static instanceNatives: any [] = [Number.prototype];
     public static defaultValue: any = 0;
+    public static coerce: (value: any) => number = Runtime.asCoerceUint;
 
     constructor(value: any) {
       super();
@@ -751,6 +773,7 @@ module Shumway.AVM2.AS {
     public static classInfo: ClassInfo;
     public static staticNatives: any [] = [String];
     public static instanceNatives: any [] = [String.prototype];
+    public static coerce: (value: any) => string = Runtime.asCoerceString;
 
     get length(): number {
       notImplemented("get length");
@@ -844,12 +867,18 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
     public static instanceConstructor: any = ASVector;
+    public static callableConstructor: any = null;
+    newThisType(): ASVector<T> {
+      return new this.class.instanceConstructor();
+    }
   }
 
-  export class ASIntVector extends ASObject {
+  export class ASIntVector extends ASVector<ASInt> {
     public static instanceConstructor: any = Int32Vector;
     public static staticNatives: any [] = [Int32Vector];
-    public static instanceNatives: any [] = [Int32Vector.prototype];
+    public static instanceNatives: any [] = [Int32Vector.prototype, ASVector.prototype];
+    public static callableConstructor: any = Int32Vector.callable;
+
     private static _every(o: any, callback: Function, thisObject: any): boolean {
       return o.every(callback, thisObject);
     }
@@ -862,10 +891,11 @@ module Shumway.AVM2.AS {
     private static _sort: (o: any, args: any []) => any = arraySort;
   }
 
-  export class ASUIntVector extends ASObject {
+  export class ASUIntVector extends ASVector<ASUint>{
     public static instanceConstructor: any = Uint32Vector;
     public static staticNatives: any [] = [Uint32Vector];
-    public static instanceNatives: any [] = [Uint32Vector.prototype];
+    public static instanceNatives: any [] = [Uint32Vector.prototype, ASVector.prototype];
+    public static callableConstructor: any = Uint32Vector.callable;
     private static _every(o: any, callback: Function, thisObject: any): boolean {
       return o.every(callback, thisObject);
     }
@@ -878,10 +908,11 @@ module Shumway.AVM2.AS {
     private static _sort: (o: any, args: any []) => any = arraySort;
   }
 
-  export class ASDoubleVector extends ASObject {
+  export class ASDoubleVector extends ASVector<ASNumber> {
     public static instanceConstructor: any = Float64Vector;
     public static staticNatives: any [] = [Float64Vector];
-    public static instanceNatives: any [] = [Float64Vector.prototype];
+    public static instanceNatives: any [] = [Float64Vector.prototype, ASVector.prototype];
+    public static callableConstructor: any = Float64Vector.callable;
     private static _every(o: any, callback: Function, thisObject: any): boolean {
       return o.every(callback, thisObject);
     }
@@ -957,9 +988,85 @@ module Shumway.AVM2.AS {
   }
 
   export class ASError extends ASObject {
-    public static instanceConstructor: any = Array;
-    constructor(message = "", id = 0) {
-      super();
+    public static instanceConstructor: any = null;
+    public static staticNatives: any [] = null;
+    public static instanceNatives: any [] = null;
+    public static getErrorMessage = Shumway.AVM2.getErrorMessage;
+    public getStackTrace(): string {
+      somewhatImplemented("Error.getStackTrace()");
+      return Shumway.AVM2.Runtime.AVM2.getStackTrace();
+    }
+  }
+
+  export class ASDefinitionError extends ASError { }
+  export class ASEvalError extends ASError { }
+  export class ASRangeError extends ASError { }
+  export class ASReferenceError extends ASError { }
+  export class ASSecurityError extends ASError { }
+  export class ASSyntaxError extends ASError { }
+  export class ASTypeError extends ASError { }
+  export class ASURIError extends ASError { }
+  export class ASVerifyError extends ASError { }
+  export class ASUninitializedError extends ASError { }
+  export class ASArgumentError extends ASError { }
+
+  export class ASRegExp extends ASObject {
+    public static instanceConstructor: any = XRegExp;
+    public static staticNatives: any [] = [XRegExp];
+    public static instanceNatives: any [] = [XRegExp.prototype];
+
+    get source(): string {
+      return this.source;
+    }
+
+    get global(): boolean {
+      return this.global;
+    }
+
+    get ignoreCase(): boolean {
+      return this.ignoreCase;
+    }
+
+    get multiline(): boolean {
+      return this.multiline;
+    }
+
+    get lastIndex(): number /*int*/ {
+      return this.lastIndex;
+    }
+
+    set lastIndex(i: number /*int*/) {
+      i = i | 0;
+      this.lastIndex = i;
+    }
+
+    get dotall(): boolean {
+      return this.dotall;
+    }
+
+    get extended(): boolean {
+      return this.extended;
+    }
+
+    exec(s: string = ""): any {
+      var result = this.exec.apply(this, arguments);
+      if (!result) {
+        return result;
+      }
+      // For some reason named groups in AS3 are set to the empty string instead of
+      // undefined as is the case for indexed groups. Here we just emulate the AS3
+      // behaviour.
+      var keys = Object.keys(result);
+      for (var i = 0; i < keys.length; i++) {
+        var k = keys[i];
+        if (!isNumeric(k)) {
+          if (result[k] === undefined) {
+            result[k] = "";
+          }
+        }
+      }
+      Shumway.AVM2.Runtime.publicizeProperties(result);
+      return result;
     }
   }
 
@@ -993,26 +1100,44 @@ module Shumway.AVM2.AS {
     if (isInitialized) {
       return;
     }
-    builtinNativeClasses["ObjectClass"]           = ASObject;
-    builtinNativeClasses["Class"]                 = ASClass;
-    builtinNativeClasses["FunctionClass"]         = ASFunction;
-    builtinNativeClasses["BooleanClass"]          = ASBoolean;
-    builtinNativeClasses["MethodClosureClass"]    = ASMethodClosure;
-    builtinNativeClasses["NamespaceClass"]        = ASNamespace;
-    builtinNativeClasses["NumberClass"]           = ASNumber;
-    builtinNativeClasses["intClass"]              = ASInt;
-    builtinNativeClasses["uintClass"]             = ASUint;
-    builtinNativeClasses["StringClass"]           = ASString;
-    builtinNativeClasses["ArrayClass"]            = ASArray;
-    builtinNativeClasses["VectorClass"]           = ASVector;
-    builtinNativeClasses["ObjectVectorClass"]     = GenericVector;
-    builtinNativeClasses["IntVectorClass"]        = ASIntVector;
-    builtinNativeClasses["UIntVectorClass"]       = ASUIntVector;
-    builtinNativeClasses["DoubleVectorClass"]     = ASDoubleVector;
-    builtinNativeClasses["JSONClass"]             = ASJSON;
-    builtinNativeClasses["XMLClass"]              = ASXML;
-    builtinNativeClasses["XMLListClass"]          = ASXMLList;
-    builtinNativeClasses["QNameClass"]            = ASQName;
+
+    builtinNativeClasses["ObjectClass"]              = ASObject;
+    builtinNativeClasses["Class"]                    = ASClass;
+    builtinNativeClasses["FunctionClass"]            = ASFunction;
+    builtinNativeClasses["BooleanClass"]             = ASBoolean;
+    builtinNativeClasses["MethodClosureClass"]       = ASMethodClosure;
+    builtinNativeClasses["NamespaceClass"]           = ASNamespace;
+    builtinNativeClasses["NumberClass"]              = ASNumber;
+    builtinNativeClasses["intClass"]                 = ASInt;
+    builtinNativeClasses["uintClass"]                = ASUint;
+    builtinNativeClasses["StringClass"]              = ASString;
+    builtinNativeClasses["ArrayClass"]               = ASArray;
+    builtinNativeClasses["VectorClass"]              = ASVector;
+    builtinNativeClasses["ObjectVectorClass"]        = GenericVector;
+    builtinNativeClasses["IntVectorClass"]           = ASIntVector;
+    builtinNativeClasses["UIntVectorClass"]          = ASUIntVector;
+    builtinNativeClasses["DoubleVectorClass"]        = ASDoubleVector;
+    builtinNativeClasses["JSONClass"]                = ASJSON;
+    builtinNativeClasses["XMLClass"]                 = ASXML;
+    builtinNativeClasses["XMLListClass"]             = ASXMLList;
+    builtinNativeClasses["QNameClass"]               = ASQName;
+
+    // Errors
+    builtinNativeClasses["ErrorClass"]               = ASError;
+    builtinNativeClasses["DefinitionErrorClass"]     = ASDefinitionError;
+    builtinNativeClasses["EvalErrorClass"]           = ASEvalError;
+    builtinNativeClasses["RangeErrorClass"]          = ASRangeError;
+    builtinNativeClasses["ReferenceErrorClass"]      = ASReferenceError;
+    builtinNativeClasses["SecurityErrorClass"]       = ASSecurityError;
+    builtinNativeClasses["SyntaxErrorClass"]         = ASSyntaxError;
+    builtinNativeClasses["TypeErrorClass"]           = ASTypeError;
+    builtinNativeClasses["URIErrorClass"]            = ASURIError;
+    builtinNativeClasses["VerifyErrorClass"]         = ASVerifyError;
+    builtinNativeClasses["UninitializedErrorClass"]  = ASUninitializedError;
+    builtinNativeClasses["ArgumentErrorClass"]       = ASArgumentError;
+
+    builtinNativeClasses["RegExpClass"]              = ASRegExp;
+
     isInitialized = true;
   }
 

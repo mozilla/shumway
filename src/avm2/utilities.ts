@@ -64,6 +64,10 @@ module Shumway {
     return typeof value === "number";
   }
 
+  export function isArray(value) {
+    return value instanceof Array;
+  }
+
   export function isNumberOrString(value) {
     return typeof value === "number" || typeof value === "string";
   }

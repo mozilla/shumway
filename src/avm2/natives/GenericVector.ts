@@ -61,7 +61,7 @@ module Shumway.AVM2.AS {
 
     public static instanceConstructor: any = GenericVector;
     public static staticNatives: any [] = [GenericVector];
-    public static instanceNatives: any [] = [GenericVector.prototype];
+    public static instanceNatives: any [] = [GenericVector.prototype, ASVector.prototype];
 
     private static _every(o: any, callback: Function, thisObject: any): boolean {
       return o.every(callback, thisObject);
@@ -90,6 +90,37 @@ module Shumway.AVM2.AS {
       this._type = type;
       this._defaultValue = type ? type.defaultValue : null;
       this._fill(0, length, this._defaultValue);
+    }
+
+    /**
+     * TODO: Need to really debug this, very tricky.
+     */
+    public static applyType(type: ASClass): ASClass {
+      function parameterizedVectorConstructor(length: number /*uint*/, fixed: boolean) {
+        Function.prototype.call.call(GenericVector.instanceConstructor, this, length, fixed, type);
+      };
+
+      function parameterizedVectorCallableConstructor(object) {
+        if (object instanceof Int32Vector) {
+          return object;
+        }
+        var length = object.asGetProperty(undefined, "length");
+        if (length !== undefined) {
+          var v = new parameterizedVectorConstructor(length, false);
+          for (var i = 0; i < length; i++) {
+            v.asSetNumericProperty(i, object.asGetPublicProperty(i));
+          }
+          return v;
+        }
+        Shumway.Debug.unexpected();
+      }
+
+      var parameterizedVector = <any>parameterizedVectorConstructor;
+      parameterizedVector.prototype = GenericVector.prototype;
+      parameterizedVector.instanceConstructor = parameterizedVector;
+      parameterizedVector.callableConstructor = parameterizedVectorCallableConstructor;
+      parameterizedVector.__proto__ = GenericVector;
+      return <any>parameterizedVector;
     }
 
     private _fill(index: number, length: number, value: any) {
@@ -298,11 +329,6 @@ module Shumway.AVM2.AS {
       }
       var index = toNumber(name);
       return index >= 0 && index < this._buffer.length;
-    }
-
-    private newThisType(): any {
-      notImplemented("Do we really need this?");
-      return;
     }
 
     _reverse: () => void;

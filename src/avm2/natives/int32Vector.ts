@@ -81,7 +81,8 @@ module Shumway.AVM2.AS {
     private _offset: number;
 
     constructor (length: number = 0, fixed: boolean = false) {
-      this._fixed = !!fixed;
+      length = length >>> 0; fixed = !!fixed;
+      this._fixed = fixed;
       this._buffer = new Int32Array(Math.max(Int32Vector.INITIAL_CAPACITY, length + Int32Vector.EXTRA_CAPACITY));
       this._offset = 0;
       this._length = length;
@@ -477,11 +478,6 @@ module Shumway.AVM2.AS {
         keys.push(i);
       }
       return keys;
-    }
-
-    private newThisType(): any {
-      notImplemented("Do we really need this?");
-      return;
     }
 
     _reverse: () => void;

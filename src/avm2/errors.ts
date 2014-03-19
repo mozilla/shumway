@@ -622,7 +622,7 @@ module Shumway.AVM2 {
   //  CubeMapSamplerMustUseMipmap                               : { code: 3704, message: "AGAL validation failed: Cube map samplers must enable mipmapping for %2 at token %3 of %1 program."}
   };
 
-  export function getErrorMessage(index) {
+  export function getErrorMessage(index: number): string {
     if (!Shumway.AVM2.Runtime.debuggerMode.value) {
       return "Error #" + index;
     }

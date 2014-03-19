@@ -228,8 +228,9 @@ module Shumway.AVM2.Runtime {
       // REMOVEME
     }
 
-    public static getStackTrace() {
+    public static getStackTrace(): string {
       Shumway.Debug.notImplemented("getStackTrace");
+      return;
     }
   }
 
@@ -333,7 +334,7 @@ module Shumway.AVM2.Runtime {
       return undefined;
     }
 
-    public getClass(simpleName) {
+    public getClass(simpleName): Shumway.AVM2.AS.ASClass {
       var cache = this.classCache;
       var c = cache[simpleName];
       if (!c) {

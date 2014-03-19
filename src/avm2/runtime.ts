@@ -1811,7 +1811,7 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-  export function applyType(domain, factory, types) {
+  export function applyType(domain: ApplicationDomain, factory: Shumway.AVM2.AS.ASClass, types) {
     var factoryClassName = factory.classInfo.instanceInfo.name.name;
     if (factoryClassName === "Vector") {
       release || assert(types.length === 1);
@@ -1829,7 +1829,8 @@ module Shumway.AVM2.Runtime {
       }
       return domain.getClass("packageInternal __AS3__.vec.Vector$object").applyType(type);
     } else {
-      return Shumway.Debug.notImplemented(factoryClassName);
+      Shumway.Debug.notImplemented(factoryClassName);
+      return;
     }
   }
 }
