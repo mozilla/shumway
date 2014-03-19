@@ -59,7 +59,6 @@ declare module avm1lib {
 }
 
 module Shumway.AVM1 {
-  import ActionsDataStream = Shumway.AVM1.ActionsDataStream;
   import Multiname = Shumway.AVM2.ABC.Multiname;
   import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
   import construct = Shumway.AVM2.Runtime.construct;
@@ -68,16 +67,6 @@ module Shumway.AVM1 {
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
 
-  import ActionsDataParser = Shumway.AVM1.ActionsDataParser;
-  import ParsedAction = Shumway.AVM1.ParsedAction;
-  import ParsedPushRegisterAction = Shumway.AVM1.ParsedPushRegisterAction;
-  import ParsedPushConstantAction = Shumway.AVM1.ParsedPushConstantAction;
-  import ActionCode = Shumway.AVM1.ActionCode;
-  import AS2ActionsData = Shumway.AVM1.AS2ActionsData;
-  import ActionsDataAnalyzer = Shumway.AVM1.ActionsDataAnalyzer;
-  import ActionCodeBlockItem = Shumway.AVM1.ActionCodeBlockItem;
-  import ActionCodeBlock = Shumway.AVM1.ActionCodeBlock;
-  import AnalyzerResults = Shumway.AVM1.AnalyzerResults;
 
   declare var avm2;
   declare var Proxy;
@@ -597,10 +586,13 @@ module Shumway.AVM1 {
       }
     }
 
-
-    function avm1DefineFunction(ectx: ExecutionContext, functionName: string,
+    function avm1DefineFunction(ectx: ExecutionContext,
+                                actionsData: AS2ActionsData,
+                                functionName: string,
                                 parametersNames: string[],
-                                registersAllocation, actionsData) {
+                                registersCount: number,
+                                registersAllocation: ArgumentAssignment[],
+                                suppressArguments: ArgumentAssignmentType) {
       var currentContext = ectx.context;
       var _global = ectx.global;
       var scopeContainer = ectx.scopeContainer;
@@ -609,17 +601,37 @@ module Shumway.AVM1 {
       var defaultTarget = currentContext.defaultTarget;
       var constantPool = ectx.constantPool;
 
+      var skipArguments = null;
+      if (registersAllocation) {
+        for (var i = 0; i < registersAllocation.length; i++) {
+          var registerAllocation = registersAllocation[i];
+          if (registerAllocation &&
+              registerAllocation.type === ArgumentAssignmentType.Argument) {
+            if (!skipArguments) {
+              skipArguments = [];
+            }
+            skipArguments[registersAllocation[i].index] = true;
+          }
+        }
+      }
+
       var ownerClass;
       var fn = (function() {
         var newScopeContainer;
         var newScope = {};
-        newScope.asSetPublicProperty('arguments', arguments);
-        newScope.asSetPublicProperty('this', this);
-        newScope.asSetPublicProperty('super', AS2_SUPER_STUB);
+        debugger;
+        if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
+          newScope.asSetPublicProperty('arguments', arguments);
+        }
+        if (!(suppressArguments & ArgumentAssignmentType.This)) {
+          newScope.asSetPublicProperty('this', this);
+        }
+        if (!(suppressArguments & ArgumentAssignmentType.Super)) {
+          newScope.asSetPublicProperty('super', AS2_SUPER_STUB);
+        }
         newScope.asSetPublicProperty('__class', ownerClass);
         newScopeContainer = scopeContainer.create(newScope);
         var i;
-        var skipArguments = null;
         var registers = [];
         if (registersAllocation) {
           for (i = 0; i < registersAllocation.length; i++) {
@@ -627,33 +639,28 @@ module Shumway.AVM1 {
             if (!registerAllocation) {
               continue;
             }
-            if (registerAllocation.type === 'param') {
-              registers[i] = arguments[registerAllocation.index];
-              if (!skipArguments) {
-                skipArguments = [];
-              }
-              skipArguments[registerAllocation.index] = true;
-            } else { // var
-              switch (registerAllocation.name) {
-                case 'this':
-                  registers[i] = this;
-                  break;
-                case 'arguments':
-                  registers[i] = arguments;
-                  break;
-                case 'super':
-                  registers[i] = AS2_SUPER_STUB;
-                  break;
-                case '_global':
-                  registers[i] = _global;
-                  break;
-                case '_parent':
-                  registers[i] = scope.asGetPublicProperty('_parent');
-                  break;
-                case '_root':
-                  registers[i] = _global.asGetPublicProperty('_root');
-                  break;
-              }
+            switch (registerAllocation.type) {
+              case ArgumentAssignmentType.Argument:
+                registers[i] = arguments[registerAllocation.index];
+                break;
+              case ArgumentAssignmentType.This:
+                registers[i] = this;
+                break;
+              case ArgumentAssignmentType.Arguments:
+                registers[i] = arguments;
+                break;
+              case ArgumentAssignmentType.Super:
+                registers[i] = AS2_SUPER_STUB;
+                break;
+              case ArgumentAssignmentType.Global:
+                registers[i] = _global;
+                break;
+              case ArgumentAssignmentType.Parent:
+                registers[i] = scope.asGetPublicProperty('_parent');
+                break;
+              case ArgumentAssignmentType.Root:
+                registers[i] = _global.asGetPublicProperty('_root');
+                break;
             }
           }
         }
@@ -1373,12 +1380,12 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
       var scope = ectx.scope;
 
-      var functionName: string = args[0];
-      var functionParams: string[] = args[1];
-      var functionBody = args[2];
+      var functionBody = args[0];
+      var functionName: string = args[1];
+      var functionParams: string[] = args[2];
 
-      var fn = avm1DefineFunction(ectx, functionName, functionParams, null,
-        functionBody);
+      var fn = avm1DefineFunction(ectx, functionBody, functionName,
+        functionParams, 0, null, 0);
       if (functionName) {
         scope.asSetPublicProperty(functionName, fn);
       } else {
@@ -1713,14 +1720,15 @@ module Shumway.AVM1 {
       var stack = ectx.stack;
       var scope = ectx.scope;
 
-      var functionName: string = args[0];
-      var functionParams: string[] = args[1];
-      var registerCount: number = args[2];
-      var registerAllocation = args[3];
-      var functionBody = args[4];
+      var functionBody = args[0];
+      var functionName: string = args[1];
+      var functionParams: string[] = args[2];
+      var registerCount: number = args[3];
+      var registerAllocation = args[4];
+      var suppressArguments = args[5];
 
-      var fn = avm1DefineFunction(ectx, functionName, functionParams,
-        registerAllocation, functionBody);
+      var fn = avm1DefineFunction(ectx, functionBody, functionName,
+        functionParams, registerCount, registerAllocation, suppressArguments);
       if (functionName) {
         scope.asSetPublicProperty(functionName, fn);
       } else {

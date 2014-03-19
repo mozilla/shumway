@@ -15,9 +15,6 @@
  */
 
 module Shumway.AVM1 {
-  import ActionsDataParser = Shumway.AVM1.ActionsDataParser;
-  import ParsedAction = Shumway.AVM1.ParsedAction;
-  import ActionCode = Shumway.AVM1.ActionCode;
 
   export interface ActionCodeBlock {
     label: number;
