@@ -1137,6 +1137,7 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["ArgumentErrorClass"]       = ASArgumentError;
 
     builtinNativeClasses["RegExpClass"]              = ASRegExp;
+    builtinNativeClasses["DictionaryClass"]          = flash.utils.Dictionary;
 
     isInitialized = true;
   }
