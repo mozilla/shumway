@@ -312,8 +312,7 @@ var StageDefinition = (function () {
       var stack = [];
 
       var children = this._children;
-      var i = children.length;
-      while (i--) {
+      for (var i = 0; i < children.length; i++) {
         var child = children[i];
         if (refreshStage) {
           child._invalid = true;
@@ -323,22 +322,27 @@ var StageDefinition = (function () {
       }
 
       while (stack.length) {
-        var node = stack.pop();
+        var node = stack.shift();
 
         var m = node._concatenatedTransform;
 
         var children = node._children;
-        var i = children.length;
-        var clip = null;
-        while (i--) {
+        var clip = undefined;
+        var clipStack = [];
+        for (var i = 0; i < children.length; i++) {
           var child = children[i];
 
           if (clip) {
-            if (child._depth && child._depth <= clip._clipDepth) {
-              child._clip = clip;
+            if (child._depth) {
+              if (child._depth <= clip._clipDepth) {
+                child._clip = clip;
+              } else {
+                clip = clip.pop();
+              }
             }
           } else {
             if (child._clipDepth) {
+              clipStack.push(clip);
               clip = child;
             }
 
