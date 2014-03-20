@@ -197,7 +197,7 @@ function handleRenderMessages(renderer, layers, i32) {
           if (!target) {
             target = new Shumway.Layers.Shape(renderable);
             target.origin = new Shumway.Geometry.Point(
-              -renderable.rect.x, -renderable.rect.y
+              renderable.rect.x, renderable.rect.y
             );
             layer.addChild(target);
           }
@@ -215,7 +215,7 @@ function handleRenderMessages(renderer, layers, i32) {
           layer = new Shumway.Layers.FrameContainer();
           var child = new Shumway.Layers.Shape(renderable);
           child.origin = new Shumway.Geometry.Point(
-            -renderable.rect.x, -renderable.rect.y
+            renderable.rect.x, renderable.rect.y
           );
           layer.addChild(child);
         } else {
