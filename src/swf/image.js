@@ -99,7 +99,7 @@ function defineImage(tag, dictionary) {
       var offset = 0;
       for (var i = 0; i < chunks.length; i++) {
         var chunk = chunks[i];
-        imgData.set(chunk, offset);
+        data.set(chunk, offset);
         offset += chunk.length;
       }
       img.data = data;

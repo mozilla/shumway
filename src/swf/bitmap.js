@@ -40,30 +40,29 @@ function defineBitmap(tag) {
     var pos = paletteSize;
 
     stream.ensure(paletteSize);
+    stream.pos = pos;
 
-    while (pos < datalen) {
+    for (var y = 0, i = 0; y < height; ++y) {
       stream.ensure(bytesPerLine);
-      var begin = pos;
-      var end = begin + width;
       var index;
       if (hasAlpha) {
-        for (var i = begin, j = 0; i < end; i++, j += 4) {
+        for (var x = 0; x < width; ++x, i += 4) {
           index = bytes[pos++] * 4;
-          data[j] = bytes[index];
-          data[j + 1] = bytes[index + 1];
-          data[j + 2] = bytes[index + 2];
-          data[j + 3] = bytes[index + 3];
+          data[i] = bytes[index];
+          data[i + 1] = bytes[index + 1];
+          data[i + 2] = bytes[index + 2];
+          data[i + 3] = bytes[index + 3];
         }
       } else {
-        for (var i = begin, j = 0; i < end; i++, j += 4) {
+        for (var x = 0; x < width; ++x, i += 4) {
           index = bytes[pos++] * 3;
-          data[j] = bytes[index];
-          data[j + 1] = bytes[index + 1];
-          data[j + 2] = bytes[index + 2];
-          data[j + 3] = 255;
+          data[i] = bytes[index];
+          data[i + 1] = bytes[index + 1];
+          data[i + 2] = bytes[index + 2];
+          data[i + 3] = 255;
         }
       }
-      stream.pos = (pos += bytesPerLine);
+      pos = stream.pos += bytesPerLine;
     }
     break;
   case FORMAT_15BPP:
@@ -84,7 +83,7 @@ function defineBitmap(tag) {
         data[i + 2] = 0 | (FACTOR_5BBP * (word & 0x1f));
         data[i + 3] = 255;
       }
-      stream.pos = (pos += bytesPerLine);
+      pos = stream.pos += bytesPerLine;
     }
     break;
   case FORMAT_24BPP:
