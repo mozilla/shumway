@@ -107,15 +107,15 @@ module Shumway.Layers {
       context.clearRect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
     }
 
-    renderFrame(context: CanvasRenderingContext2D, root: Frame, transform: Matrix, clipRect: Rectangle, trackDirtyRegions: boolean, maskDepth: number, options: any) {
+    renderFrame(context: CanvasRenderingContext2D, root: Frame, transform: Matrix, clipRectangle: Rectangle, trackDirtyRegions: boolean, maskDepth: number, options: any) {
       var self = this;
       var maskCanvasContext = self._scratchContexts[0];
       var maskeeCanvasContext = self._scratchContexts[1];
 
-      if (clipRect) {
+      if (clipRectangle) {
         context.save();
         context.beginPath();
-        context.rect(clipRect.x, clipRect.y, clipRect.w, clipRect.h);
+        context.rect(clipRectangle.x, clipRectangle.y, clipRectangle.w, clipRectangle.h);
         context.clip();
       }
 
@@ -180,7 +180,7 @@ module Shumway.Layers {
         return VisitorFlags.Continue;
       }, transform);
 
-      if (clipRect) {
+      if (clipRectangle) {
         context.restore();
       }
     }
