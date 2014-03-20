@@ -275,14 +275,23 @@ var SpriteDefinition = (function () {
           for (var eventName in event) {
             if (eventName.indexOf("on") !== 0 || !event[eventName])
               continue;
+
             var avm2EventName = eventName[2].toLowerCase() + eventName.substring(3);
-            if (avm2EventName === 'enterFrame') {
-              avm2EventName = 'frameConstructed';
-            }
             var avm2EventTarget = instance;
-            if (avm2EventName === 'mouseDown' || avm2EventName === 'mouseUp' || avm2EventName === 'mouseMove') {
-              avm2EventTarget = this._stage;
+            switch (avm2EventName) {
+              case 'enterFrame':
+                avm2EventName = 'frameConstructed';
+                break;
+              case 'initialize':
+                avm2EventName = 'init';
+                break;
+              case 'mouseDown':
+              case 'mouseUp':
+              case 'mouseMove':
+                avm2EventTarget = this._stage;
+                break;
             }
+
             avm2EventTarget._addEventListener(avm2EventName, fn, false);
             eventsBound.push({name: avm2EventName, fn: fn, target: avm2EventTarget});
           }
