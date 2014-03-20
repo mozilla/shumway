@@ -40,12 +40,10 @@ module.exports = function(grunt) {
         cmd: 'make -C utils/builder build'
       },
       build_avm2_ts: {
-        cmd: '../../node_modules/.bin/tsc --target ES5 references.ts',
-        cwd: 'src/avm2'
+        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/avm2/references.ts'
       },
       build_avm1_ts: {
-        cmd: '../../node_modules/.bin/tsc --target ES5 references.ts',
-        cwd: 'src/avm1'
+        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/avm1/references.ts'
       },
       generate_abcs: {
         cmd: 'python generate.py',
