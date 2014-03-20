@@ -312,7 +312,8 @@ var StageDefinition = (function () {
       var stack = [];
 
       var children = this._children;
-      for (var i = 0; i < children.length; i++) {
+      var i = children.length;
+      while (i--) {
         var child = children[i];
         if (refreshStage) {
           child._invalid = true;
@@ -322,7 +323,7 @@ var StageDefinition = (function () {
       }
 
       while (stack.length) {
-        var node = stack.shift();
+        var node = stack.pop();
 
         var m = node._concatenatedTransform;
 
@@ -331,6 +332,10 @@ var StageDefinition = (function () {
         var clipStack = [];
         for (var i = 0; i < children.length; i++) {
           var child = children[i];
+
+          if (!flash.display.DisplayObject.class.isInstanceOf(child)) {
+            continue;
+          }
 
           if (clip) {
             if (child._depth) {
@@ -356,8 +361,9 @@ var StageDefinition = (function () {
             child._concatenatedTransform.invalid = true;
           }
           child._invisible = node._invisible || !child._visible;
-
-          stack.push(child);
+        }
+        while (i--) {
+          stack.push(children[i]);
         }
 
         if (node._level && m.invalid) {
