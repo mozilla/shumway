@@ -353,6 +353,13 @@ module Shumway.AVM1 {
       return null;
     }
 
+    if (isAS2MovieClip(obj)) {
+      var child = (<avm1lib.AS2MovieClip> obj).__lookupChild(name);
+      if (child) {
+        return name;
+      }
+    }
+
     // versions 6 and below ignore identifier case
     if (as2GetCurrentSwfVersion() > 6) {
       return null;
@@ -360,7 +367,7 @@ module Shumway.AVM1 {
 
     var foundName = null;
     var lowerCaseName = name.toLowerCase();
-    forEachPublicProperty(obj, function (name) {
+    as2Enumerate(obj, function (name) {
       if (name.toLowerCase() === lowerCaseName) {
         foundName = name;
       }
@@ -368,8 +375,32 @@ module Shumway.AVM1 {
     return foundName;
   }
 
+  function as2GetProperty(obj, name: string) {
+    if (!obj.asHasProperty(undefined, name, 0) && isAS2MovieClip(obj)) {
+      return (<avm1lib.AS2MovieClip> obj).__lookupChild(name);
+    }
+    return obj.asGetPublicProperty(name);
+  }
+
   function as2GetPrototype(obj) {
     return obj && obj.asGetPublicProperty('prototype');
+  }
+
+  function as2Enumerate(obj, fn, thisArg) {
+    forEachPublicProperty(obj, fn, thisArg);
+
+    if (!isAS2MovieClip(obj)) {
+      return;
+    }
+    // if it's a movie listing the children as well
+    var as3MovieClip = obj._nativeAS3Object;
+    for (var i = 0, length = as3MovieClip._children.length; i < length; i++) {
+      var child = as3MovieClip._children[i];
+      var name = child.name;
+      if (!obj.asHasProperty(undefined, name, 0)) {
+        fn.call(thisArg, name);
+      }
+    }
   }
 
   function isAvm2Class(obj): boolean {
@@ -619,7 +650,7 @@ module Shumway.AVM1 {
       var fn = (function() {
         var newScopeContainer;
         var newScope = {};
-        debugger;
+
         if (!(suppressArguments & ArgumentAssignmentType.Arguments)) {
           newScope.asSetPublicProperty('arguments', arguments);
         }
@@ -859,7 +890,7 @@ module Shumway.AVM1 {
       }
       return obj;
     }
-    function avm1ProcessWith(ectx, obj, withBlock) {
+    function avm1ProcessWith(ectx: ExecutionContext, obj, withBlock) {
       var scopeContainer = ectx.scopeContainer;
       var constantPool = ectx.constantPool;
       var registers = ectx.registers;
@@ -1429,7 +1460,7 @@ module Shumway.AVM1 {
       var objectName = stack.pop();
       stack.push(null);
       var obj = avm1GetObjectByName(ectx, objectName);
-      forEachPublicProperty(obj, function (name) {
+      as2Enumerate(obj, function (name) {
         stack.push(name);
       }, null);
     }
@@ -1451,7 +1482,7 @@ module Shumway.AVM1 {
       } else {
         var resolvedName = as2ResolveProperty(Object(obj), name);
         stack.push(resolvedName === null ? undefined :
-          obj.asGetPublicProperty(resolvedName));
+          as2GetProperty(Object(obj), resolvedName));
       }
     }
     function avm1_0x42_ActionInitArray(ectx: ExecutionContext) {
@@ -1688,7 +1719,7 @@ module Shumway.AVM1 {
       var obj = stack.pop();
       stack.push(null);
 
-      forEachPublicProperty(obj, function (name) {
+      as2Enumerate(obj, function (name) {
         stack.push(name);
       }, null);
     }
