@@ -176,7 +176,7 @@ var StageDefinition = (function () {
 
         if (tag.hasFont) {
           var fontInfo = this._loader._dictionary[tag.fontId];
-          message.writeIntUnsafe(fontInfo.props.id);
+          message.writeIntUnsafe(fontInfo.props.renderableId);
         } else {
           message.writeIntUnsafe(0);
         }
