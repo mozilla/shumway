@@ -82,13 +82,13 @@ MessageCenter.subscribe('load', function (data) {
       break;
     case 'mousemove':
       var m = stage._concatenatedTransform;
-      var mouseX = ((data.x) * pixelRatio - m.tx / 20) / m.a;
-      var mouseY = ((data.y) * pixelRatio - m.ty / 20) / m.d;
+      var mouseX = (data.x - m.tx) / m.a;
+      var mouseY = (data.y - m.ty) / m.d;
 
       if (mouseX !== stage._mouseX || mouseY !== stage._mouseY) {
         stage._mouseMoved = true;
-        stage._mouseX = mouseX * 20;
-        stage._mouseY = mouseY * 20;
+        stage._mouseX = mouseX;
+        stage._mouseY = mouseY;
       }
       break;
     case 'mouseup':
@@ -154,22 +154,31 @@ SWF.embed = function(file, doc, container, options) {
 
 function mouseListener(e) {
   var node = e.target;
-  if (node instanceof HTMLCanvasElement) {
-    var left = 0;
-    var top = 0;
-    if (node.offsetParent) {
-      do {
-        left += node.offsetLeft;
-        top += node.offsetTop;
-      } while ((node = node.offsetParent));
-    }
 
-    MessageCenter.post('mouse', {
-      type: e.type,
-      x: e.pageX - left,
-      y: e.pageY - top
-    });
+  if (!(node instanceof HTMLCanvasElement)) {
+    return;
   }
+
+  var contentsScaleFactor = node.dataset['contentsScaleFactor'];
+
+  if (!contentsScaleFactor) {
+    return;
+  }
+
+  var left = 0;
+  var top = 0;
+  if (node.offsetParent) {
+    do {
+      left += node.offsetLeft;
+      top += node.offsetTop;
+    } while ((node = node.offsetParent));
+  }
+
+  MessageCenter.post('mouse', {
+    type: e.type,
+    x: (e.pageX - left) * contentsScaleFactor * 20,
+    y: (e.pageY - top) * contentsScaleFactor * 20
+  });
 }
 window.addEventListener('click', mouseListener);
 window.addEventListener('dblclick', mouseListener);

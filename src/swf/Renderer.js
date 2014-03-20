@@ -46,7 +46,7 @@ function Renderer(container, bgcolor, options) {
   this._bgcolor = bgcolor;
   this._options = options || { };
   this._canvas = document.createElement('canvas');
-  this._contentsScaleFactor = 1;
+  this._canvas.dataset['contentsScaleFactor'] = 1;
   this._promises = Object.create(null);
   this._renderables = Object.create(null);
   this._layers = Object.create(null);
@@ -99,10 +99,10 @@ function handleRenderMessages(renderer, layers, i32) {
       var height = i32[p++];
       var contentsScaleFactor = i32[p++];
 
-      renderer._contentsScaleFactor = contentsScaleFactor;
-
       var container = renderer._container;
       var canvas = renderer._canvas;
+
+      canvas.dataset['contentsScaleFactor'] = contentsScaleFactor;
 
       if (!isNaN(renderer._bgcolor)) {
         bgcolor = renderer._bgcolor;
@@ -307,16 +307,17 @@ function timelineLeave(name) {
 
 Renderer.prototype.setCanvasSize = function setCanvasSize(width, height) {
   var canvas = this._canvas;
-  if (this._contentsScaleFactor === 1.0) {
+  var contentsScaleFactor = canvas.dataset['contentsScaleFactor'];
+  if (contentsScaleFactor === 1.0) {
     canvas.width = width | 0;
     canvas.height = height | 0;
     return;
   }
-  var canvasWidth = Math.floor(width * this._contentsScaleFactor);
-  var canvasHeight = Math.floor(height * this._contentsScaleFactor);
+  var canvasWidth = Math.floor(width * contentsScaleFactor);
+  var canvasHeight = Math.floor(height * contentsScaleFactor);
   // trying fit into fractional amount of pixels if pixelRatio is not int
-  canvas.style.width = (canvasWidth / this._contentsScaleFactor) + 'px';
-  canvas.style.height = (canvasHeight / this._contentsScaleFactor) + 'px';
+  canvas.style.width = (canvasWidth / contentsScaleFactor) + 'px';
+  canvas.style.height = (canvasHeight / contentsScaleFactor) + 'px';
   canvas.width = canvasWidth;
   canvas.height = canvasHeight;
 }
@@ -360,7 +361,7 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
     alpha: true
   };
 
-  var useWebGL = false;
+  var useWebGL = true;
   if (useWebGL) {
     var webGLContext = new WebGLContext(canvas, sceneOptions);
     stageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
