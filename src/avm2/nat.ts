@@ -15,6 +15,7 @@
  */
 ///<reference path='references.ts' />
 
+
 interface Object {
   __proto__: Object;
 }
@@ -50,6 +51,9 @@ module Shumway.AVM2.AS {
 
   declare var arraySort;
   declare var XRegExp;
+  declare var escape;
+  declare var unescape;
+  declare var isXMLName;
 
   var debug = false;
 
@@ -703,9 +707,14 @@ module Shumway.AVM2.AS {
     public static defaultValue: any = Number(0);
     public static coerce: (value: any) => number = Runtime.asCoerceNumber;
 
-    static _numberToString(n: number, radix: number): string { notImplemented("_numberToString"); return; }
-    static _convert(n: number, precision: number, mode: number): string { notImplemented("_convert"); return; }
-    static _minValue(): number { notImplemented("_minValue"); return; }
+    static _numberToString(n: number, radix: number): string {
+      radix = radix | 0;
+      return Number(n).toString(radix);
+    }
+
+    static _minValue(): number {
+      return Number.MIN_VALUE;
+    }
   }
 
   export class ASInt extends ASObject {
@@ -801,7 +810,7 @@ module Shumway.AVM2.AS {
       return this.length;
     }
 
-    function match(re) {
+    match(re) {
       if (re === (void 0) || re === null) {
         return null;
       } else {
@@ -819,7 +828,7 @@ module Shumway.AVM2.AS {
       }
     }
 
-    function search(re) {
+    search(re) {
       if (re === void 0) {
         return -1;
       } else {
@@ -827,16 +836,16 @@ module Shumway.AVM2.AS {
       }
     }
 
-    function toUpperCase() {
+    toUpperCase() {
       // avmshell bug compatibility
-      var str = Sp.toUpperCase.apply(this);
+      var str = String.prototype.toUpperCase.apply(this);
       var str = str.replace(/\u039C/g, String.fromCharCode(181));
       return str;
     }
 
-    function toLocaleUpperCase() {
+    toLocaleUpperCase() {
       // avmshell bug compatibility
-      var str = Sp.toLocaleUpperCase.apply(this);
+      var str = String.prototype.toLocaleUpperCase.apply(this);
       var str = str.replace(/\u039C/g, String.fromCharCode(181));
       return str;
     }
@@ -1169,26 +1178,13 @@ module Shumway.AVM2.AS {
     }
   }
 
-  module XYZ {
-    export class D extends ASNative {
-      d () {
-        log("instance d()");
-      }
+  export class ASMath extends ASNative {
+    public static staticNatives: any [] = [Math];
+  }
 
-      static d () {
-        log("static d()");
-      }
-    }
-
-    export class E extends D {
-      e () {
-        log("instance e()");
-      }
-
-      static e () {
-        log("static e()");
-      }
-    }
+  export class ASDate extends ASNative {
+    public static staticNatives: any [] = [Date];
+    public static instanceNatives: any [] = [Date.prototype];
   }
 
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
@@ -1207,8 +1203,8 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["MethodClosureClass"]       = ASMethodClosure;
     builtinNativeClasses["NamespaceClass"]           = ASNamespace;
     builtinNativeClasses["NumberClass"]              = ASNumber;
-    builtinNativeClasses["intClass"]                 = ASInt;
-    builtinNativeClasses["uintClass"]                = ASUint;
+    builtinNativeClasses["IntClass"]                 = ASInt;
+    builtinNativeClasses["UIntClass"]                = ASUint;
     builtinNativeClasses["StringClass"]              = ASString;
     builtinNativeClasses["ArrayClass"]               = ASArray;
     builtinNativeClasses["VectorClass"]              = ASVector;
@@ -1235,16 +1231,18 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["UninitializedErrorClass"]  = ASUninitializedError;
     builtinNativeClasses["ArgumentErrorClass"]       = ASArgumentError;
 
+    builtinNativeClasses["DateClass"]                = ASDate;
+    builtinNativeClasses["MathClass"]                = ASMath;
+
     builtinNativeClasses["RegExpClass"]              = ASRegExp;
     builtinNativeClasses["DictionaryClass"]          = flash.utils.Dictionary;
 
     isInitialized = true;
   }
 
+
   var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
 
-  nativeClasses["D"] = XYZ.D;
-  nativeClasses["E"] = XYZ.E;
 
   export function createInterface(classInfo: ClassInfo) {
     var ii = classInfo.instanceInfo;
@@ -1358,4 +1356,62 @@ module Shumway.AVM2.AS {
       default:                      return name;
     }
   }
+
+  /**
+   * Other natives can live in this module
+   */
+  export module Natives {
+    // Expose Some Builtin Objects
+    export var String = jsGlobal.String;
+
+    export function print(v: any) {
+      jsGlobal.print(v);
+    }
+
+    export function notImplemented(v: any) {
+      notImplemented(v);
+    }
+
+    export function debugBreak(v: any) {
+      debugger;
+    }
+
+    export function bugzilla(n) {
+      switch (n) {
+        case 574600: // AS3 Vector::map Bug
+          return true;
+      }
+      return false;
+    }
+
+    export var decodeURI: (encodedURI: string) => string = decodeURI;
+    export var decodeURIComponent: (encodedURIComponent: string) =>  string = decodeURIComponent;
+    export var encodeURI: (uri: string) => string = encodeURI;
+    export var encodeURIComponent: (uriComponent: string) => string = encodeURIComponent;
+    export var isNaN: (number: number) => boolean = isNaN;
+    export var isFinite: (number: number) => boolean = isFinite;
+    export var parseInt: (s: string, radix?: number) => number = parseInt;
+    export var parseFloat: (string: string) => number = parseFloat;
+    export var escape: (x: any) => any = escape;
+    export var unescape: (x: any) => any = unescape;
+    export var isXMLName: (x: any) => any = typeof (isXMLName) !== "undefined" ? isXMLName : function () {
+      notImplemented("Chrome doesn't support isXMLName.");
+    }
+  }
+
+  /**
+   * Searchs for natives using a string path "a.b.c...".
+   */
+  export function getNative(path: string): Function {
+    log(path);
+    var chain = path.split(".");
+    var v = Natives;
+    for (var i = 0, j = chain.length; i < j; i++) {
+      v = v && v[chain[i]];
+    }
+
+    release || assert(v, "getNative(" + path + ") not found.");
+    return <any>v;
+  }
 }
+

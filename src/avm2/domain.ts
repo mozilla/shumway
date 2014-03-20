@@ -29,7 +29,6 @@ module Shumway.AVM2.Runtime {
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import IndentingWriter = Shumway.IndentingWriter;
 
-  declare var getNative;
   declare var createFunction;
   declare var Timer;
 
@@ -61,7 +60,7 @@ module Shumway.AVM2.Runtime {
     release || assert(!script.executing && !script.executed);
     var global = new Global(script);
     if (abc.applicationDomain.allowNatives) {
-      global[Multiname.getPublicQualifiedName("unsafeJSNative")] = getNative;
+      global[Multiname.getPublicQualifiedName("unsafeJSNative")] = Shumway.AVM2.AS.getNative;
     }
     script.executing = true;
     var scope = new Scope(null, script.global);

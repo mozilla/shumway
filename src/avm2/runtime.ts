@@ -115,7 +115,6 @@ module Shumway.AVM2.Runtime {
   export var traceDomain = runtimeOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
 
   declare var Analysis;
-  declare var getNative;
 
   /**
    * Seals const traits. Technically we need to throw an exception if they are ever modified after
@@ -1682,10 +1681,9 @@ module Shumway.AVM2.Runtime {
       var md = trait.metadata;
       if (md && md.native) {
         var nativeName = md.native.value[0].value;
-        var makeNativeFunction = getNative(nativeName);
-        fn = makeNativeFunction && makeNativeFunction(null, scope);
+        fn = Shumway.AVM2.AS.getNative(nativeName);
       } else if (md && md.unsafeJSNative) {
-        fn = getNative(md.unsafeJSNative.value[0].value);
+        fn = Shumway.AVM2.AS.getNative(md.unsafeJSNative.value[0].value);
       } else if (natives) {
         fn = Shumway.AVM2.AS.getMethodOrAccessorNative(trait, natives);
       }
