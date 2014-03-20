@@ -18,6 +18,8 @@
 
 /* global Errors, throwError */
 
+var natives = {};
+
 /**
  * Stubs Overview
  *

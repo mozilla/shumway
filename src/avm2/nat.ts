@@ -318,7 +318,7 @@ module Shumway.AVM2.AS {
       self.instanceConstructor.prototype.class = self;
 
       if (self.protocol) {
-        Shumway.ObjectUtilities.copyOwnPropertyDescriptors(self.traitsPrototype, self.protocol);
+        Shumway.ObjectUtilities.copyOwnPropertyDescriptors(self.dynamicPrototype, self.protocol);
       }
     }
 
@@ -396,7 +396,8 @@ module Shumway.AVM2.AS {
     initializationFlags: InitializationFlags;
 
     /**
-     * Defines the AS MetaObject Protocol, |null| if no protocol is used.
+     * Defines the AS MetaObject Protocol, |null| if the default protocol should
+     * be used. Override this to provide a different protocol.
      */
     protocol: IProtocol;
 
@@ -1216,6 +1217,8 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["XMLClass"]                 = ASXML;
     builtinNativeClasses["XMLListClass"]             = ASXMLList;
     builtinNativeClasses["QNameClass"]               = ASQName;
+
+    builtinNativeClasses["ProxyClass"]               = flash.utils.Proxy;
 
     // Errors
     builtinNativeClasses["ErrorClass"]               = ASError;

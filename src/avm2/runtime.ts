@@ -68,8 +68,6 @@ interface Object extends IProtocol {
   asIsNativePrototype: boolean;
   asOpenMethods: Shumway.Map<Function>;
   asIsClass: boolean;
-  asIsProxy: boolean;
-  asCallProxy: any;
 }
 
 interface Function {
@@ -81,9 +79,6 @@ module Shumway.AVM2.Runtime {
 
   declare var traceLevel;
   declare var systemOptions: OptionSet;
-
-  declare var isProxy;
-  declare var isProxyObject;
 
   declare var XML;
   declare var XMLList;
@@ -136,7 +131,6 @@ module Shumway.AVM2.Runtime {
 
   declare var Counter: Shumway.Metrics.Counter;
   declare var Compiler;
-  declare var installProxyClassWrapper;
 
   import Map = Shumway.Map;
   import Multiname = Shumway.AVM2.ABC.Multiname;
@@ -176,8 +170,6 @@ module Shumway.AVM2.Runtime {
   export var VM_NATIVE_PROTOTYPE_FLAG = "asIsNative";
   export var VM_OPEN_METHODS = "asOpenMethods";
   export var VM_IS_CLASS = "asIsClass";
-  export var VM_IS_PROXY = "asIsProxy";
-  export var VM_CALL_PROXY = "asCallProxy";
 
   export var VM_OPEN_METHOD_PREFIX = "m";
   export var VM_MEMOIZER_PREFIX = "z";
@@ -544,25 +536,21 @@ module Shumway.AVM2.Runtime {
     }
     var receiver: Object = isLex ? null : self;
     var result;
-    if (isProxyObject(self)) {
-      result = self[VM_CALL_PROXY](new Multiname(namespaces, name, flags), receiver, args);
+    var method;
+    var resolved = self.resolveMultinameProperty(namespaces, name, flags);
+    if (self.asGetNumericProperty && Multiname.isNumeric(resolved)) {
+      method = self.asGetNumericProperty(resolved);
     } else {
-      var method;
-      var resolved = self.resolveMultinameProperty(namespaces, name, flags);
-      if (self.asGetNumericProperty && Multiname.isNumeric(resolved)) {
-        method = self.asGetNumericProperty(resolved);
+      var openMethods = self.asOpenMethods;
+      // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to work
+      // when using memoizers because the function gets bound to |this|.
+      if (receiver && openMethods && openMethods[resolved]) {
+        method = openMethods[resolved];
       } else {
-        var openMethods = self.asOpenMethods;
-        // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to work
-        // when using memoizers because the function gets bound to |this|.
-        if (receiver && openMethods && openMethods[resolved]) {
-          method = openMethods[resolved];
-        } else {
-          method = self[resolved];
-        }
+        method = self[resolved];
       }
-      result = method.asApply(receiver, args);
     }
+    result = method.asApply(receiver, args);
     traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
     return result;
   }
@@ -1768,13 +1756,6 @@ module Shumway.AVM2.Runtime {
 
     // TODO: Seal constant traits in the instance object. This should be done after
     // the instance constructor has executed.
-
-    if (baseClass && (Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy" ||
-      baseClass.isProxy)) {
-      // TODO: This is very hackish.
-      installProxyClassWrapper(cls);
-      cls.isProxy = true;
-    }
 
     classInfo.classObject = cls;
 
