@@ -142,6 +142,22 @@ module Shumway.AVM1 {
     args: any[];
   }
 
+  export interface ArgumentAssignment {
+    type: ArgumentAssignmentType;
+    name?: string;
+    index?: number;
+  }
+  export enum ArgumentAssignmentType {
+    None = 0,
+    Argument = 1,
+    This = 2,
+    Arguments = 4,
+    Super = 8,
+    Global = 16,
+    Parent = 32,
+    Root = 64
+  }
+
   export class ActionsDataParser {
     public dataId: string;
     constructor(public stream: ActionsDataStream) {}
@@ -284,7 +300,7 @@ module Shumway.AVM1 {
           var functionBody = new AS2ActionsData(stream.readBytes(codeSize),
             this.dataId + '_f' + stream.position);
 
-          args = [functionName, functionParams, functionBody];
+          args = [functionBody, functionName, functionParams];
           break;
         case ActionCode.ActionWith:
           var codeSize = stream.readUI16();
@@ -302,7 +318,7 @@ module Shumway.AVM1 {
           var count = stream.readUI16();
           var registerCount = stream.readUI8();
           var flags = stream.readUI16();
-          var registerAllocation = [];
+          var registerAllocation: ArgumentAssignment[] = [];
           var functionParams = [];
           for (var i = 0; i < count; i++) {
             var register = stream.readUI8();
@@ -310,7 +326,7 @@ module Shumway.AVM1 {
             functionParams.push(paramName);
             if (register) {
               registerAllocation[register] = {
-                type: 'param',
+                type: ArgumentAssignmentType.Argument,
                 name: paramName,
                 index: i
               };
@@ -320,22 +336,33 @@ module Shumway.AVM1 {
           var j = 1;
           // order this, arguments, super, _root, _parent, and _global
           if (flags & 0x0001) { // preloadThis
-            registerAllocation[j++] = { type: 'var', name: 'this' };
+            registerAllocation[j++] = { type: ArgumentAssignmentType.This };
           }
           if (flags & 0x0004) { // preloadArguments
-            registerAllocation[j++] = { type: 'var', name: 'arguments' };
+            registerAllocation[j++] = { type: ArgumentAssignmentType.Arguments };
           }
           if (flags & 0x0010) { // preloadSuper
-            registerAllocation[j++] = { type: 'var', name: 'super' };
+            registerAllocation[j++] = { type: ArgumentAssignmentType.Super };
           }
           if (flags & 0x0040) { // preloadRoot
-            registerAllocation[j++] = { type: 'var', name: '_root' };
+            registerAllocation[j++] = { type: ArgumentAssignmentType.Root };
           }
           if (flags & 0x0080) { // preloadParent
-            registerAllocation[j++] = { type: 'var', name: '_parent' };
+            registerAllocation[j++] = { type: ArgumentAssignmentType.Parent };
           }
           if (flags & 0x0100) { // preloadGlobal
-            registerAllocation[j++] = { type: 'var', name: '_global' };
+            registerAllocation[j++] = { type: ArgumentAssignmentType.Global };
+          }
+
+          var suppressArguments: ArgumentAssignmentType = 0;
+          if (flags & 0x0002) { // suppressThis
+            suppressArguments |= ArgumentAssignmentType.This;
+          }
+          if (flags & 0x0008) { // suppressArguments
+            suppressArguments |= ArgumentAssignmentType.Arguments;
+          }
+          if (flags & 0x0020) { // suppressSuper
+            suppressArguments |= ArgumentAssignmentType.Super;
           }
 
           var codeSize = stream.readUI16();
@@ -343,8 +370,8 @@ module Shumway.AVM1 {
           var functionBody = new AS2ActionsData(stream.readBytes(codeSize),
             this.dataId + '_f' + stream.position);
 
-          args = [functionName, functionParams, registerCount,
-            registerAllocation, functionBody];
+          args = [functionBody, functionName, functionParams, registerCount,
+            registerAllocation, suppressArguments];
           break;
         case ActionCode.ActionTry:
           var flags = stream.readUI8();
