@@ -80,8 +80,10 @@ MessageCenter.subscribe('load', function (data) {
       if (stage._mouseTarget._doubleClickEnabled) {
         stage._mouseTarget._dispatchEvent('doubleClick');
       }
+      break;
     case 'mousedown':
       stage._mouseEvents.push('mousedown');
+      break;
     case 'mousemove':
       var m = stage._concatenatedTransform;
       var mouseX = ((data.x) * pixelRatio - m.tx / 20) / m.a;
@@ -92,14 +94,18 @@ MessageCenter.subscribe('load', function (data) {
         stage._mouseX = mouseX * 20;
         stage._mouseY = mouseY * 20;
       }
+      break;
     case 'mouseup':
       stage._mouseEvents.push('mouseup');
+      break;
     case 'mouseover':
       stage._mouseMoved = true;
       stage._mouseOver = true;
+      break;
     case 'mouseout':
       stage._mouseMoved = true;
       stage._mouseOver = false;
+      break;
     }
   });
 });
@@ -151,8 +157,8 @@ SWF.embed = function(file, doc, container, options) {
 };
 
 function mouseListener(e) {
-  if (e.target instanceof HTMLCanvasElement) {
-    var node = this;
+  var node = e.target;
+  if (node instanceof HTMLCanvasElement) {
     var left = 0;
     var top = 0;
     if (node.offsetParent) {
