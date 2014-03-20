@@ -54,10 +54,6 @@ MessageCenter.subscribe('load', function (data) {
     root._dispatchEvent("added", undefined, true);
     root._dispatchEvent("addedToStage");
 
-    root._layerId = stage._nextLayerId++;
-    root._renderableId = stage._nextRenderableId++;
-    stage._addLayer(root._layerId, 0, root);
-
     MessageCenter.post('init');
 
     stage._enterEventLoop();
