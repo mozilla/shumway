@@ -270,6 +270,10 @@ module Shumway {
       return Object.prototype.hasOwnProperty.call(object, name);
     }
 
+    export function propertyIsEnumerable(object: Object, name: string): boolean {
+      return Object.prototype.propertyIsEnumerable.call(object, name);
+    }
+
     export function getOwnPropertyDescriptor(object: Object, name: string): PropertyDescriptor {
       return Object.getOwnPropertyDescriptor(object, name);
     }

@@ -44,7 +44,7 @@ module Shumway.AVM2.AS {
       private primitiveMap: Object;
 
       constructor (weakKeys: boolean = false) {
-        super();
+        false && super();
       }
 
       static makePrimitiveKey(key) {
@@ -85,7 +85,7 @@ module Shumway.AVM2.AS {
       }
 
       // TODO: Not implemented yet.
-      // public asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
+      // public asCallProperty(namesp aces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
       //   notImplemented("asCallProperty");
       // }
 

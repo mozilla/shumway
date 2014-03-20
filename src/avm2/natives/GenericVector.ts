@@ -83,7 +83,7 @@ module Shumway.AVM2.AS {
     private _defaultValue: any;
 
     constructor (length: number /*uint*/, fixed: boolean, type: ASClass) {
-      super();
+      false && super();
       length = length >>> 0; fixed = !!fixed;
       this._fixed = !!fixed;
       this._buffer = new Array(length);

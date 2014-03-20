@@ -71,8 +71,7 @@ var values = [
   null, undefined,
   true, false, "true", "false",
   -1, 0, 1, 3.5, NaN, Infinity, -Infinity, -0, "0", "08", "1",
-  "A",
-  (function foo() {})
+  "A"
 ];
 
 trace(ruler());

@@ -130,7 +130,7 @@ module Shumway.AVM2.AS {
     public static defaultValue: any = null;
     public static initializationFlags: InitializationFlags = InitializationFlags.NONE;
     public static callableStyle: CallableStyle = CallableStyle.PASSTHROUGH;
-    public static asPrototype: Object;
+    public static native_prototype: Object;
     public static implementedInterfaces: Shumway.Map<ASClass>;
     public static isInterface: () => boolean;
     public static applyType: (type: ASClass) => ASClass;
@@ -216,19 +216,23 @@ module Shumway.AVM2.AS {
     // Hack to make the TypeScript compiler find the original Object.defineProperty.
     static defineProperty = Object.defineProperty;
 
-    isPrototypeOf(V: Object): boolean {
+    static native_isPrototypeOf: (V: Object) => boolean;
+    static native_hasOwnProperty: (V: string) => boolean;
+    static native_propertyIsEnumerable: (V: string) => boolean;
+
+    native_isPrototypeOf(V: Object): boolean {
       notImplemented("isPrototypeOf");
       return false;
     }
 
-    hasOwnProperty(V: string): boolean {
-      notImplemented("hasOwnProperty");
-      return false;
+    native_hasOwnProperty(name: string): boolean {
+      var self: Object = this;
+      return self.asHasOwnProperty(null, name, 0);
     }
 
-    propertyIsEnumerable(V: string): boolean {
-      notImplemented("propertyIsEnumerable");
-      return false;
+    native_propertyIsEnumerable(name: string): boolean {
+      var self: Object = this;
+      return self.asPropertyIsEnumerable(null, name, 0);
     }
 
   }
@@ -264,6 +268,7 @@ module Shumway.AVM2.AS {
     public static instanceConstructor: any = ASClass;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
+
 
     /**
      * We can't do our traits / dynamic prototype chaining trick when dealing with builtin
@@ -379,12 +384,12 @@ module Shumway.AVM2.AS {
      */
     implementedInterfaces: Shumway.Map<ASClass>;
 
-    defaultValue: any = null;
+    defaultValue: any;
 
     /**
      * Initialization flags that determine how native initializers get called.
      */
-    initializationFlags: InitializationFlags = InitializationFlags.NONE;
+    initializationFlags: InitializationFlags;
 
     /**
      * Defines the AS MetaObject Protocol, |null| if no protocol is used.
@@ -396,13 +401,16 @@ module Shumway.AVM2.AS {
     /**
      * Non-native classes always have coercing callables.
      */
-    callableStyle: CallableStyle = CallableStyle.COERCE;
+    callableStyle: CallableStyle;
 
     constructor(classInfo: ClassInfo) {
-      super();
+      false && super();
       this.classInfo = classInfo;
       this.staticNatives = null;
       this.instanceNatives = null;
+      this.initializationFlags = InitializationFlags.NONE;
+      this.callableStyle = CallableStyle.COERCE;
+      this.defaultValue = null;
     }
 
     morphIntoASClass(classInfo: ClassInfo): void {
@@ -410,7 +418,7 @@ module Shumway.AVM2.AS {
       assert (this instanceof ASClass);
     }
 
-    get asPrototype(): Object {
+    get native_prototype(): Object {
       assert (this.dynamicPrototype);
       return this.dynamicPrototype;
     }
@@ -612,15 +620,15 @@ module Shumway.AVM2.AS {
     public static instanceNatives: any [] = [Function.prototype];
 
     constructor() {
-      super();
+      false && super();
     }
 
-    get asPrototype(): Object {
+    get native_prototype(): Object {
       var self: Function = <any>this;
       return self.prototype;
     }
 
-    set asPrototype(p) {
+    set native_prototype(p) {
       var self: Function = <any>this;
       self.prototype = p;
     }
@@ -639,6 +647,7 @@ module Shumway.AVM2.AS {
 
   export class ASBoolean extends ASObject {
     public static instanceConstructor: any = Boolean;
+    public static callableConstructor: any = ASBoolean.instanceConstructor;
     public static classBindings: ClassBindings;
     public static instanceBindings: InstanceBindings;
     public static classInfo: ClassInfo;
@@ -647,7 +656,7 @@ module Shumway.AVM2.AS {
     public static coerce: (value: any) => boolean = Runtime.asCoerceBoolean;
 
     constructor(value: any = undefined) {
-      super();
+      false && super();
     }
   }
 
@@ -660,7 +669,7 @@ module Shumway.AVM2.AS {
     public static instanceConstructor: any = ASMethodClosure;
 
     constructor(self, fn) {
-      super();
+      false && super();
       var bound = Shumway.FunctionUtilities.bindSafely(fn, self);
       Shumway.ObjectUtilities.defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
       Shumway.ObjectUtilities.defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
@@ -685,6 +694,7 @@ module Shumway.AVM2.AS {
 
   export class ASNumber extends ASObject {
     public static instanceConstructor: any = Number;
+    public static callableConstructor: any = ASNumber.instanceConstructor;
     public static classBindings: ClassBindings;
     public static instanceBindings: InstanceBindings;
     public static classInfo: ClassInfo;
@@ -700,6 +710,7 @@ module Shumway.AVM2.AS {
 
   export class ASInt extends ASObject {
     public static instanceConstructor: any = ASInt;
+    public static callableConstructor: any = ASInt.instanceConstructor;
     public static classBindings: ClassBindings;
     public static instanceBindings: InstanceBindings;
     public static classInfo: ClassInfo;
@@ -709,7 +720,7 @@ module Shumway.AVM2.AS {
     public static coerce: (value: any) => number = Runtime.asCoerceInt;
 
     constructor(value: any) {
-      super();
+      false && super();
       return Object(value | 0);
     }
 
@@ -739,6 +750,7 @@ module Shumway.AVM2.AS {
 
   export class ASUint extends ASObject {
     public static instanceConstructor: any = ASUint;
+    public static callableConstructor: any = ASUint.instanceConstructor;
     public static classBindings: ClassBindings;
     public static instanceBindings: InstanceBindings;
     public static classInfo: ClassInfo;
@@ -748,7 +760,7 @@ module Shumway.AVM2.AS {
     public static coerce: (value: any) => number = Runtime.asCoerceUint;
 
     constructor(value: any) {
-      super();
+      false && super();
       return Object(value >>> 0);
     }
 
@@ -778,16 +790,55 @@ module Shumway.AVM2.AS {
 
   export class ASString extends ASObject {
     public static instanceConstructor: any = String;
+    public static callableConstructor: any = ASString.instanceConstructor;
     public static classBindings: ClassBindings;
     public static instanceBindings: InstanceBindings;
     public static classInfo: ClassInfo;
     public static staticNatives: any [] = [String];
     public static instanceNatives: any [] = [String.prototype];
     public static coerce: (value: any) => string = Runtime.asCoerceString;
-
     get length(): number {
-      notImplemented("get length");
-      return 0;
+      return this.length;
+    }
+
+    function match(re) {
+      if (re === (void 0) || re === null) {
+        return null;
+      } else {
+        if (re instanceof RegExp && re.global) {
+          var matches = [], m;
+          while ((m = re.exec(this))) {
+            matches.push(m[0]);
+          }
+          return matches;
+        }
+        if (!(re instanceof RegExp) && !(typeof re === 'string')) {
+          re = String(re);
+        }
+        return this.match(re);
+      }
+    }
+
+    function search(re) {
+      if (re === void 0) {
+        return -1;
+      } else {
+        return this.search(re);
+      }
+    }
+
+    function toUpperCase() {
+      // avmshell bug compatibility
+      var str = Sp.toUpperCase.apply(this);
+      var str = str.replace(/\u039C/g, String.fromCharCode(181));
+      return str;
+    }
+
+    function toLocaleUpperCase() {
+      // avmshell bug compatibility
+      var str = Sp.toLocaleUpperCase.apply(this);
+      var str = str.replace(/\u039C/g, String.fromCharCode(181));
+      return str;
     }
   }
 
@@ -1300,10 +1351,11 @@ module Shumway.AVM2.AS {
    */
   export function escapeNativeName(name: string) {
     switch (name) {
-      case "prototype":
-        return "asPrototype";
-      default:
-        return name;
+      case "prototype":             return "native_prototype";
+      case "hasOwnProperty":        return "native_hasOwnProperty";
+      case "isPrototypeOf":         return "native_isPrototypeOf";
+      case "propertyIsEnumerable":  return "native_propertyIsEnumerable";
+      default:                      return name;
     }
   }
 }

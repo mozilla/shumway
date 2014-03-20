@@ -38,6 +38,8 @@ interface IProtocol {
   asCallResolvedStringProperty: (resolved: any, isLex: boolean, args: any []) => any;
   asConstructProperty: (namespaces: Namespace [], name: any, flags: number, args: any []) => any;
   asHasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
+  asHasOwnProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
+  asPropertyIsEnumerable: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asHasTraitProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asDeleteProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asNextName: (index: number) => any;
@@ -149,6 +151,8 @@ module Shumway.AVM2.Runtime {
   import Trait = Shumway.AVM2.ABC.Trait;
   import IndentingWriter = Shumway.IndentingWriter;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
+  import propertyIsEnumerable = Shumway.ObjectUtilities.propertyIsEnumerable;
+  import isNullOrUndefined = Shumway.isNullOrUndefined;
   import createMap = Shumway.ObjectUtilities.createMap;
   import cloneObject = Shumway.ObjectUtilities.cloneObject;
   import copyProperties = Shumway.ObjectUtilities.copyProperties;
@@ -408,7 +412,7 @@ module Shumway.AVM2.Runtime {
 
   export function resolveMultinameProperty(namespaces: Namespace [], name: string, flags: number) {
     var self: Object = this;
-    if (typeof name === "object") {
+    if (isNullOrUndefined(name) || typeof name === "object") {
       name = String(name);
     }
     if (isNumeric(name)) {
@@ -661,23 +665,21 @@ module Shumway.AVM2.Runtime {
     return result;
   }
 
-  /**
-   * Proxy traps ignore operations passing through nonProxying functions.
-   */
-  export function nonProxyingHasProperty(object, name) {
-    return name in object;
+  export function asHasProperty(namespaces: Namespace [], name: any, flags: number) {
+    var self: Object = this;
+    return self.resolveMultinameProperty(namespaces, name, flags) in this;
   }
 
-  export function asHasProperty(namespaces: Namespace [], name: any, flags: number, nonProxy: boolean) {
+  export function asHasOwnProperty(namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
-    if (self.hasProperty) {
-      return self.hasProperty(namespaces, name, flags);
-    }
-    if (nonProxy) {
-      return nonProxyingHasProperty(self, self.resolveMultinameProperty(namespaces, name, flags));
-    } else {
-      return self.resolveMultinameProperty(namespaces, name, flags) in this;
-    }
+    var resolved: string = self.resolveMultinameProperty(namespaces, name, flags);
+    return hasOwnProperty(self, resolved);
+  }
+
+  export function asPropertyIsEnumerable(namespaces: Namespace [], name: any, flags: number) {
+    var self: Object = this;
+    var resolved: string = self.resolveMultinameProperty(namespaces, name, flags);
+    return propertyIsEnumerable(self, resolved);
   }
 
   export function asDeleteProperty(namespaces: Namespace [], name: any, flags: number) {
@@ -1109,6 +1111,8 @@ module Shumway.AVM2.Runtime {
     defineNonEnumerableProperty(global.Object.prototype, "asCallResolvedStringProperty", asCallResolvedStringProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asConstructProperty", asConstructProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asHasOwnProperty", asHasOwnProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asPropertyIsEnumerable", asPropertyIsEnumerable);
     defineNonEnumerableProperty(global.Object.prototype, "asHasTraitProperty", asHasTraitProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
 
