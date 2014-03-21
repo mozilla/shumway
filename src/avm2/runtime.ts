@@ -39,6 +39,7 @@ interface IProtocol {
   asConstructProperty: (namespaces: Namespace [], name: any, flags: number, args: any []) => any;
   asHasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asHasOwnProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
+  asHasPropertyInternal: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asPropertyIsEnumerable: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asHasTraitProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asDeleteProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
@@ -1098,6 +1099,7 @@ module Shumway.AVM2.Runtime {
     defineNonEnumerableProperty(global.Object.prototype, "asCallResolvedStringProperty", asCallResolvedStringProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asConstructProperty", asConstructProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asHasPropertyInternal", asHasProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asHasOwnProperty", asHasOwnProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asPropertyIsEnumerable", asPropertyIsEnumerable);
     defineNonEnumerableProperty(global.Object.prototype, "asHasTraitProperty", asHasTraitProperty);

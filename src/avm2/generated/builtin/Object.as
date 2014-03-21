@@ -23,26 +23,14 @@ public dynamic class Object
   // E262 {ReadOnly, DontDelete, DontEnum }
   public static const length:int = 1
 
-  private static native function _hasOwnProperty(o, V:String):Boolean
-  private static native function _propertyIsEnumerable(o, V:String):Boolean
   protected static native function _setPropertyIsEnumerable(o, V:String, enumerable:Boolean):void
-  private static native function _isPrototypeOf(o, V):Boolean
   private static native function _toString(o):String
 
-  AS3 function isPrototypeOf(V=void 0):Boolean
-  {
-    return _isPrototypeOf(this,V)
-  }
+  AS3 native function isPrototypeOf(V=void 0):Boolean;
 
-  AS3 function hasOwnProperty(V=void 0):Boolean
-  {
-    return _hasOwnProperty(this,V)
-  }
+  AS3 native function hasOwnProperty(V=void 0):Boolean;
 
-  AS3 function propertyIsEnumerable(V=void 0):Boolean
-  {
-    return _propertyIsEnumerable(this, V)
-  }
+  AS3 native function propertyIsEnumerable(V=void 0):Boolean;
 
   protected static function _dontEnumPrototype(proto:Object):void
   {

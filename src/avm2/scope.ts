@@ -137,7 +137,8 @@ module Shumway.AVM2.Runtime {
       if (!scopeOnly && (object = this.cache[key])) {
         return object;
       }
-      if (this.object.asHasProperty(namespaces, name, flags)) {
+      // Scope lookups should not be trapped by proxies.
+      if (this.object.asHasPropertyInternal(namespaces, name, flags)) {
         return this.isWith ? this.object : (this.cache[key] = this.object);
       }
       if (this.parent) {

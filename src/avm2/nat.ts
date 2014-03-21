@@ -193,21 +193,6 @@ module Shumway.AVM2.AS {
       Object.defineProperty(o, name, descriptor);
     }
 
-    static _hasOwnProperty(o, V: string): boolean {
-      notImplemented("_hasOwnProperty");
-      return false;
-    }
-
-    static _propertyIsEnumerable(o, V: string): boolean {
-      notImplemented("_propertyIsEnumerable");
-      return false;
-    }
-
-    static _isPrototypeOf(o, V): boolean {
-      notImplemented("_isPrototypeOf");
-      return false;
-    }
-
     static _toString(o: Object): string {
       o = boxValue(o);
       if (o instanceof ASClass) {
@@ -1366,6 +1351,9 @@ module Shumway.AVM2.AS {
   export module Natives {
     // Expose Some Builtin Objects
     export var String = jsGlobal.String;
+    export var Function = jsGlobal.Function;
+    export var Boolean = jsGlobal.Boolean;
+    export var Number = jsGlobal.Number;
 
     export function print(v: any) {
       jsGlobal.print(v);
