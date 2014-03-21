@@ -27,9 +27,6 @@ module.exports = function(grunt) {
       all: ['src/flash/**/*.js', 'src/swf/*.js']
     },
     exec: {
-      webserver: {
-        cmd: 'python utils/webserver.py'
-      },
       build_web: {
         cmd: 'make -C web/ build'
       },
@@ -105,10 +102,10 @@ module.exports = function(grunt) {
   });
 
   grunt.registerTask('server', function () {
+    var WebServer = require('./utils/webserver.js').WebServer;
     var done = this.async();
-    grunt.util.spawn({cmd: 'python', args: ['utils/webserver.py']}, function () {
-      done();
-    });
+    var server = new WebServer();
+    server.start();
   });
 
   grunt.registerTask('reftest', function () {
