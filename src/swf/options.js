@@ -50,6 +50,8 @@ var ignoreViewport = stageOptions.register(new Option("", "ignoreViewport", "boo
 var ignoreColorTransform = stageOptions.register(new Option("", "ignoreColorTransform", "boolean", false, "Ignore Color Transform."));
 
 var clipDirtyRegions = stageOptions.register(new Option("", "clipDirtyRegions", "boolean", true, "Clip Dirty Regions."));
+var clipCanvas = stageOptions.register(new Option("", "clipCanvas", "boolean", true, "Clip Regions."));
+var cull = stageOptions.register(new Option("", "cull", "boolean", true, "cull."));
 var paintFlashing = stageOptions.register(new Option("", "paintFlashing", "boolean", false, "Paint Flashing."));
 var compositeMask = stageOptions.register(new Option("", "compositeMask", "boolean", true, "Composite Mask."));
 var disableMasking = stageOptions.register(new Option("", "disableMasking", "boolean", false, "Disable Masking."));

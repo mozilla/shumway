@@ -215,8 +215,21 @@ module Shumway.Geometry {
         (b1 <= b2);
     }
 
+    isContained (others: Rectangle []) {
+      for (var i = 0; i < others.length; i++) {
+        if (others[i].contains(this)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
     isSmallerThan (other: Rectangle): boolean {
       return this.w < other.w && this.h < other.h;
+    }
+
+    isLargerThan (other: Rectangle): boolean {
+      return this.w > other.w && this.h > other.h;
     }
 
     union (other: Rectangle) {

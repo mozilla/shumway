@@ -10,10 +10,11 @@ module Shumway.Layers {
   import OBB = Shumway.Geometry.OBB;
 
   export enum FrameFlags {
-    Empty   = 0,
-    Dirty   = 1,
-    Hidden  = 2,
-    IsMask  = 4
+    Empty      = 0,
+    Dirty      = 1,
+    Hidden     = 2,
+    IsMask     = 4,
+    Culled     = 8
   }
 
   export enum BlendMode {
@@ -41,17 +42,27 @@ module Shumway.Layers {
     /**
      * Continue with normal traversal.
      */
-    Continue   = 0,
+    Continue     = 0,
 
     /**
      * Not used yet, should probably just stop the visitor.
      */
-    Stop       = 1,
+    Stop         = 1,
 
     /**
      * Skip processing current frame.
      */
-    Skip       = 2
+    Skip         = 2,
+
+    /**
+     * Only visit visible frames.
+     */
+    VisibleOnly  = 4,
+
+    /**
+     * Visit front to back.
+     */
+    FrontToBack  = 8
   }
 
   function getRandomIntInclusive(min: number, max: number): number {
@@ -330,10 +341,15 @@ module Shumway.Layers {
       this.invalidate();
     }
 
-    public visit(visitor: (Frame, Matrix?, FrameFlags?) => VisitorFlags, transform?: Matrix, flags: FrameFlags = FrameFlags.Empty, visibleOnly: boolean = true) {
+    public visit(visitor: (Frame, Matrix?, FrameFlags?) => VisitorFlags,
+                 transform?: Matrix,
+                 flags: FrameFlags = FrameFlags.Empty,
+                 visitorFlags: VisitorFlags = VisitorFlags.VisibleOnly) {
       var stack: Frame [];
       var frame: Frame;
       var frameContainer: FrameContainer;
+      var frontToBack = visitorFlags & VisitorFlags.FrontToBack;
+      var visibleOnly = visitorFlags & VisitorFlags.VisibleOnly;
       if (visibleOnly && this.hasFlags(FrameFlags.Hidden)) {
         return;
       }
@@ -353,8 +369,9 @@ module Shumway.Layers {
         if (visitor(frame, transform, flags) === VisitorFlags.Continue) {
           if (frame instanceof FrameContainer) {
             frameContainer = <FrameContainer>frame;
-            for (var i = frameContainer.children.length - 1; i >= 0; i--) {
-              var child = frameContainer.children[i];
+            var length = frameContainer.children.length;
+            for (var i = 0; i < length; i++) {
+              var child = frameContainer.children[frontToBack ? i : length - 1 - i];
               if (!child || (visibleOnly && child.hasFlags(FrameFlags.Hidden))) {
                 continue;
               }
