@@ -275,7 +275,7 @@ module Shumway.Layers {
       t.translate(this._origin.x, this._origin.y);
       t.concat(value);
 
-      if (this._transform && this._transform.isEqual(t)) {
+      if (this._transform && this.transform.isEqual(t)) {
         return;
       }
 
