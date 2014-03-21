@@ -93,8 +93,11 @@ var SWFController = (function() {
     isPaused: function isPaused() {
       return state === STATE_PAUSED;
     },
-    isPlaying: function isPaused() {
+    isPlaying: function isPlaying() {
       return state === STATE_PLAYING;
+    },
+    isInitializing: function isInitializing() {
+      return state === STATE_INIT;
     },
 
     stageInitializedCallback: function stageInitializedCallback(stage) {
