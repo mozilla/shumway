@@ -361,7 +361,7 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
     alpha: true
   };
 
-  var useWebGL = true;
+  var useWebGL = false;
   if (useWebGL) {
     var webGLContext = new WebGLContext(canvas, sceneOptions);
     stageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
