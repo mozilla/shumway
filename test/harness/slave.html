@@ -150,13 +150,8 @@ limitations under the License.
     <script>
       var Class = Shumway.AVM2.Runtime.Class;
       var Interface = Shumway.AVM2.Runtime.Interface;
-
-      var domainOptions = systemOptions.register(new OptionSet("ApplicationDomain Options"));
-      var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
-      var traceDomain = domainOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
       var playerglobal;
       var playerglobalLoadedPromise;
-
     </script>
     <script src="../../src/avm2/xregexp.js"></script>
     <script src="../../src/avm2/runtime.js"></script>
