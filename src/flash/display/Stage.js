@@ -546,8 +546,8 @@ var StageDefinition = (function () {
     },
 
     _handleMouse: function handleMouse() {
-      var mouseX = (this._mouseX / 20) | 0;
-      var mouseY = (this._mouseY / 20) | 0;
+      var mouseX = this._mouseX;
+      var mouseY = this._mouseY;
 
       var stack = [];
       var objectsUnderMouse = [];
@@ -578,8 +578,10 @@ var StageDefinition = (function () {
           var hitArea = node._hitTestState;
 
           hitArea._parent = node;
+          hitArea._stage = this;
           isUnderMouse = hitArea._hitTest(true, mouseX, mouseY, true);
           hitArea._parent = null;
+          hitArea._stage = null;
         } else {
           isUnderMouse = node._hitTest(true, mouseX, mouseY, true);
         }

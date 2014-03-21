@@ -82,8 +82,8 @@ MessageCenter.subscribe('load', function (data) {
       break;
     case 'mousemove':
       var m = stage._concatenatedTransform;
-      var mouseX = (data.x - m.tx) / m.a;
-      var mouseY = (data.y - m.ty) / m.d;
+      var mouseX = (data.x * 20 - m.tx) / m.a;
+      var mouseY = (data.y * 20 - m.ty) / m.d;
 
       if (mouseX !== stage._mouseX || mouseY !== stage._mouseY) {
         stage._mouseMoved = true;
@@ -176,8 +176,8 @@ function mouseListener(e) {
 
   MessageCenter.post('mouse', {
     type: e.type,
-    x: (e.pageX - left) * contentsScaleFactor * 20,
-    y: (e.pageY - top) * contentsScaleFactor * 20
+    x: (e.pageX - left) * contentsScaleFactor,
+    y: (e.pageY - top) * contentsScaleFactor
   });
 }
 window.addEventListener('click', mouseListener);
