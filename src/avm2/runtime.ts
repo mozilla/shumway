@@ -65,8 +65,7 @@ interface Object {
 
 module Shumway.AVM2.Runtime {
 
-  declare var traceLevel;
-  declare var systemOptions: OptionSet;
+  declare var shumwayOptions: OptionSet;
 
   declare var isProxy;
   declare var isProxyObject;
@@ -75,30 +74,28 @@ module Shumway.AVM2.Runtime {
   declare var XMLList;
   declare var isXMLType;
 
-
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
 
-  var runtimeOptions = systemOptions.register(new OptionSet("Runtime Options"));
-  var traceScope = runtimeOptions.register(new Option("ts", "traceScope", "boolean", false, "trace scope execution"));
-  export var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution"));
-  export var traceCallExecution = runtimeOptions.register(new Option("txc", "traceCallExecution", "number", 0, "trace call execution"));
+  var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
+  var runtimeOptions = avm2Options.register(new OptionSet("Runtime"));
+  export var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution", { choices: { "off":0, "normal":2, "verbose":3 } }));
+  export var traceCallExecution = runtimeOptions.register(new Option("txc", "traceCallExecution", "number", 0, "trace call execution", { choices: { "off":0, "normal":1, "verbose":2 } }));
+  var traceFunctions = runtimeOptions.register(new Option("t", "traceFunctions", "number", 0, "trace functions", { choices: { "off":0, "compiled":1, "compiled & abc":2 } }));
+  export var traceClasses = runtimeOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
+  export var traceDomain = runtimeOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
 
-  var functionBreak = runtimeOptions.register(new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #."));
-  var compileOnly = runtimeOptions.register(new Option("co", "compileOnly", "number", -1, "Compiles only function number."));
-  var compileUntil = runtimeOptions.register(new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number."));
-  export var debuggerMode = runtimeOptions.register(new Option("dm", "debuggerMode", "boolean", false, "matches avm2 debugger build semantics"));
-  export var enableVerifier = runtimeOptions.register(new Option("verify", "verify", "boolean", false, "Enable verifier."));
+  var functionBreak = new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #");
+  var compileOnly = new Option("co", "compileOnly", "number", -1, "Compiles only function number");
+  var compileUntil = new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number");
+
+  export var enableVerifier = runtimeOptions.register(new Option("verifier", "verifier", "boolean", false, "Enable verifier."));
 
   export var globalMultinameAnalysis = runtimeOptions.register(new Option("ga", "globalMultinameAnalysis", "boolean", false, "Global multiname analysis."));
-  var traceInlineCaching = runtimeOptions.register(new Option("tic", "traceInlineCaching", "boolean", false, "Trace inline caching execution."));
   export var codeCaching = runtimeOptions.register(new Option("cc", "codeCaching", "boolean", false, "Enable code caching."));
 
   var compilerEnableExceptions = runtimeOptions.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
   var compilerMaximumMethodSize = runtimeOptions.register(new Option("cmms", "maximumMethodSize", "number", 4 * 1024, "Compiler maximum method size."));
-
-  export var traceClasses = runtimeOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
-  export var traceDomain = runtimeOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
 
   declare var Analysis;
   declare var getNative;
@@ -1516,13 +1513,13 @@ module Shumway.AVM2.Runtime {
       var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
     }
 
-    if (traceLevel.value > 1) {
+    if (traceFunctions.value > 1) {
       mi.trace(new IndentingWriter(), mi.abc);
     }
     mi.debugTrace = function () {
       mi.trace(new IndentingWriter(), mi.abc);
     };
-    if (traceLevel.value > 0) {
+    if (traceFunctions.value > 0) {
       log(fnSource);
     }
     // mi.freeMethod = (1, eval)('[$M[' + ($M.length - 1) + '],' + fnSource + '][1]');

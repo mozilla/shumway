@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
+///<reference path='avm2/references.ts' />
 
 interface String {
   padRight(c: string, n: number): string;

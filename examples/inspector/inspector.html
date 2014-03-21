@@ -42,9 +42,9 @@ limitations under the License.
 
     <div id="debugInfoToolbar" class="toolbarBox withEmphasis">
       <div class="toolbarButtonBar">
-        <div id="showDebugInfo" class="toolbarButton pressedState" data-panelid="debugInfoContainer">Debug Info</div>
+        <div id="showDebugInfo" class="toolbarButton" data-panelid="debugInfoContainer">Debug Info</div>
         <div id="showDisplayList" class="toolbarButton" data-panelid="displayListContainer">Display List</div>
-        <div id="showSettings" class="toolbarButton" data-panelid="settingsContainer">Settings</div>
+        <div id="showSettings" class="toolbarButton pressedState" data-panelid="settingsContainer">Settings</div>
       </div>
       <div id="ctrlLogToConsole">
         <label for="chkLogToConsole">Log to Browser Console</label>
@@ -53,7 +53,7 @@ limitations under the License.
       <div id="openFile" class="toolbarButton" title="Select SWF/ABC file (or drag'n'drop the file on the stage).">Open File</div>
     </div>
 
-    <div id="debugInfoContainer" class="active">
+    <div id="debugInfoContainer">
       <canvas id="traceTerminal" width="600" height="210" tabindex='2'></canvas>
       <canvas id="frameTerminal" width="600" height="410" tabindex='3'></canvas>
       <div id="info" class="debugPanel" tabindex='4'></div>
@@ -61,27 +61,7 @@ limitations under the License.
     </div>
     <div id="displayListContainer">
     </div>
-    <div id="settingsContainer">
-    </div>
-
-    <div id="bottomToolbar" class="toolbarBox">
-      <div class="toolbarLabel">AVM2 Options</div>
-      <div class="avm2Option toolbarButton" id="sysCompiler">Sys</div>
-      <div class="avm2Option toolbarButton" id="appCompiler">App</div>
-      <div class="avm2Option toolbarButton" id="verifier">Verifier</div>
-      <div class="avm2Option toolbarButton" id="allocator">Allocator</div>
-      <div class="avm2Option toolbarButton" id="trace">Trace</div>
-      <div class="avm2Option toolbarButton" id="traceCalls">Trace Calls</div>
-      <div class="avm2Option toolbarButton" id="traceRuntime">Trace Runtime</div>
-      <div class="avm2Option toolbarButton" id="release">Release</div>
-      <div class="avm2Option toolbarButton" id="render">Render</div>
-      <div class="avm2Option toolbarButton" id="mouse">Mouse</div>
-      <div class="avm2Option toolbarButton" id="qtree">QuadTree</div>
-      <div class="avm2Option toolbarButton" id="redraw">Redraw</div>
-      <div class="avm2Option toolbarButton" id="wireframe">Wireframe</div>
-      <div class="toolbarButton" id="sample">Sample</div>
-      <div class="avm2Option toolbarButton" id="turbo">Turbo</div>
-      <div class="avm2Option toolbarButton" id="caching">Caching</div>
+    <div id="settingsContainer" class="active">
     </div>
 
     <script>
@@ -100,17 +80,16 @@ limitations under the License.
     <script>
       console.time("Load");
     </script>
+
     <script src="../../lib/DataView.js/DataView.js"></script>
     <script src="../../lib/ByteArray.js"></script>
 
-    <script src="../../src/avm2/options.js"></script>
-    <script src="../../src/swf/Timeline.js"></script>
+    <script src="../../src/global.js"></script>
+    <script src="../../src/utilities.js"></script>
+    <script src="../../src/options.js"></script>
+    <script src="../../src/settings.js"></script>
 
-    <script>
-      var Option = Shumway.Options.Option;
-      var OptionSet = Shumway.Options.OptionSet;
-      var coreOptions = new OptionSet("Core Options");
-    </script>
+    <script src="../../src/swf/Timeline.js"></script>
 
     <script> console.time("Load SWF Dependencies"); </script>
     <!-- Load SWF Dependencies -->
@@ -165,8 +144,6 @@ limitations under the License.
     <!-- Load AVM2 Dependencies -->
     <script> console.time("Load AVM2 Dependencies"); </script>
 
-    <script src="../../src/avm2/global.js"></script>
-    <script src="../../src/avm2/utilities.js"></script>
     <script src="../../src/avm2/settings.js"></script>
     <script src="../../src/avm2/avm2Util.js"></script>
     <script src="../../src/avm2/metrics.js"></script>
@@ -174,9 +151,10 @@ limitations under the License.
     <script>
       var FrameCounter = new Shumway.Metrics.Counter(true);
       var CanvasCounter = new Shumway.Metrics.Counter(true);
-      var systemOptions = new OptionSet("System Options");
-      var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
-      var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+
+      var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
+      var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
+      var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
 
       var nativeCreateElement = document.createElement;
       document.createElement = function (x) {
@@ -206,12 +184,8 @@ limitations under the License.
 
     <script src="../../src/avm2/class.js"></script>
     <script>
-      var domainOptions = systemOptions.register(new OptionSet("ApplicationDomain Options"));
-      var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
-      var traceDomain = domainOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
       var playerglobal;
       var playerglobalLoadedPromise;
-
     </script>
     <script src="../../src/avm2/xregexp.js"></script>
     <script src="../../src/avm2/runtime.js"></script>
@@ -375,7 +349,9 @@ limitations under the License.
     <script src="js/classes/SWFController.js"></script>
     <script src="js/classes/Terminal.js"></script>
     <script src="js/classes/DebugCanvas.js"></script>
+
     <script src="js/classes/dat.gui.min.js"></script>
+
     <script src="js/inspectorSettings.js"></script>
     <script src="js/inspectorLoader.js"></script>
     <script src="js/inspectorLogging.js"></script>

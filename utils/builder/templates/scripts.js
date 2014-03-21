@@ -28,10 +28,11 @@
 
 load($SHUMWAY_ROOT + "lib/DataView.js/DataView.js");
 load($SHUMWAY_ROOT + "lib/ByteArray.js");
-load($SHUMWAY_ROOT + "src/avm2/options.js");
-var Option = Shumway.Options.Option;
-var OptionSet = Shumway.Options.OptionSet;
-var coreOptions = new OptionSet("Core Options");
+
+load($SHUMWAY_ROOT + "src/global.js");
+load($SHUMWAY_ROOT + "src/utilities.js");
+load($SHUMWAY_ROOT + "src/options.js");
+load($SHUMWAY_ROOT + "src/settings.js");
 
 load($SHUMWAY_ROOT + "src/swf/Timeline.js");
 load($SHUMWAY_ROOT + "src/flash/util.js");
@@ -55,27 +56,22 @@ load($SHUMWAY_ROOT + "src/swf/handlers.js");
 load($SHUMWAY_ROOT + "src/swf/parser.js");
 load($SHUMWAY_ROOT + "src/swf/resourceloader.js");
 
-load($SHUMWAY_ROOT + "src/avm2/global.js");
-load($SHUMWAY_ROOT + "src/avm2/utilities.js");
-
-var assert = Shumway.Debug.assert;
+load($SHUMWAY_ROOT + "src/avm1/stream.js");
+load($SHUMWAY_ROOT + "src/avm1/interpreter.js");
 
 load($SHUMWAY_ROOT + "src/avm2/settings.js");
 load($SHUMWAY_ROOT + "src/avm2/avm2Util.js");
-load($SHUMWAY_ROOT + "src/avm2/options.js");
-
-var ArgumentParser = Shumway.Options.ArgumentParser;
-var Option = Shumway.Options.Option;
-var OptionSet = Shumway.Options.OptionSet;
 
 load($SHUMWAY_ROOT + "src/avm2/metrics.js");
 
 var Timer = Shumway.Metrics.Timer;
 var Counter = new Shumway.Metrics.Counter(true);
 var FrameCounter = new Shumway.Metrics.Counter(true);
-var systemOptions = new OptionSet("System Options");
-var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
-var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+
+var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
+var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter"));
+var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter"));
+var traceLevel = avm2Options.register(new Option("t", "traceLevel", "number", 0, "trace level", { choices: { "off":0, "normal":1, "verbose":2 } }));
 
 window.print = function(s) {
   console.log(s);
