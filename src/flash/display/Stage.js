@@ -50,230 +50,21 @@ var StageDefinition = (function () {
       this._mouseEvents = [];
       this._cursor = 'auto';
       this._stageVideos = [];
-      this._nextRenderableId = 1;
-      this._nextLayerId = 1;
-      this._message = new Shumway.Util.ArrayWriter(1024);
-      this._callbacks = { };
-      this._nextCallbackId = 0;
       this._contentsScaleFactor = 1;
+      this._message = new BinaryMessage();
 
       this._concatenatedTransform.invalid = false;
-
-      var stage = this;
-      MessageCenter.subscribe('callback', function (data) {
-        stage._callback(data);
-      });
     },
 
     _setup: function setup() {
       this._invalid = true;
 
-      var message = this._message;
-      message.ensureAdditionalCapacity(28);
-      message.writeIntUnsafe(Renderer.MESSAGE_SETUP_STAGE);
-      message.writeIntUnsafe(20);
-      message.writeIntUnsafe(this._color);
-      message.writeIntUnsafe(this._stageWidth / 20);
-      message.writeIntUnsafe(this._stageHeight / 20);
-      message.writeIntUnsafe(this._contentsScaleFactor);
-    },
-    _defineRenderable: function defineRenderable(symbol) {
-      var message = this._message;
-
-      message.ensureAdditionalCapacity(16);
-      message.writeIntUnsafe(Renderer.MESSAGE_DEFINE_RENDERABLE);
-
-      var p = message.getIndex(4);
-      message.reserve(4);
-
-      var renderableId = this._nextRenderableId++;
-      symbol.renderableId = renderableId;
-
-      message.writeIntUnsafe(renderableId);
-
-      var dependencies = symbol.require;
-      var n = dependencies ? dependencies.length : 0;
-      message.ensureAdditionalCapacity((1 + n) * 4);
-      message.writeIntUnsafe(n);
-      for (var i = 0; i < n; i++) {
-        message.writeIntUnsafe(dependencies[i]);
       if (this._contentsScaleFactor !== 1) {
         var m = this._concatenatedTransform;
         m.a = m.d = this._contentsScaleFactor;
       }
 
-      switch (symbol.type) {
-      case 'shape':
-        message.writeIntUnsafe(Renderer.RENDERABLE_TYPE_SHAPE);
-
-        var paths = symbol.paths;
-        for (var i = 0; i < paths.length; i++) {
-          paths[i] = finishShapePath(symbol.paths[i], this._loader._dictionary);
-        }
-
-        var graphics = symbol.graphics = new flash.display.Graphics();
-        graphics._paths = symbol.paths;
-        graphics.bbox = symbol.bbox;
-        graphics.strokeBbox = symbol.strokeBbox;
-
-        graphics._serialize(message);
-        break;
-      case 'image':
-        message.writeIntUnsafe(Renderer.RENDERABLE_TYPE_BITMAP);
-        message.ensureAdditionalCapacity(16);
-        message.writeIntUnsafe(symbol.width);
-        message.writeIntUnsafe(symbol.height);
-        message.writeIntUnsafe(symbol.mimeType === 'application/octet-stream' ?
-                                Renderer.BITMAP_TYPE_RAW :
-                                Renderer.BITMAP_TYPE_DATA);
-
-        var len = symbol.data.length;
-        message.writeIntUnsafe(len);
-        var offset = message.getIndex(1);
-        message.reserve(len);
-        message.subU8View().set(symbol.data, offset);
-        break;
-      case 'font':
-        if (!symbol.data) {
-          break;
-        }
-
-        message.writeIntUnsafe(Renderer.RENDERABLE_TYPE_FONT);
-
-        var len = symbol.data.length;
-        message.writeInt(len);
-        var offset = message.getIndex(1);
-        message.reserve(len);
-        message.subU8View().set(symbol.data, offset);
-        break;
-      case 'label':
-        message.writeIntUnsafe(Renderer.RENDERABLE_TYPE_LABEL);
-
-        var bbox = symbol.bbox;
-        message.ensureAdditionalCapacity(16);
-        message.writeIntUnsafe(bbox.xMin);
-        message.writeIntUnsafe(bbox.xMax);
-        message.writeIntUnsafe(bbox.yMin);
-        message.writeIntUnsafe(bbox.yMax);
-
-        var labelData = symbol.data;
-        n = labelData.length;
-        message.ensureAdditionalCapacity((1 + n) * 4);
-        message.writeIntUnsafe(n);
-        for (var i = 0; i < n; i++) {
-          message.writeIntUnsafe(labelData.charCodeAt(i));
-        }
-        break;
-      case 'text':
-        message.writeIntUnsafe(Renderer.RENDERABLE_TYPE_TEXT);
-
-        var tag = symbol.tag;
-
-        message.ensureAdditionalCapacity(84);
-
-        var bbox = tag.bbox;
-        message.writeIntUnsafe(bbox.xMin);
-        message.writeIntUnsafe(bbox.xMax);
-        message.writeIntUnsafe(bbox.yMin);
-        message.writeIntUnsafe(bbox.yMax);
-
-        if (tag.hasFont) {
-          var fontInfo = this._loader._dictionary[tag.fontId];
-          message.writeIntUnsafe(fontInfo.props.renderableId);
-        } else {
-          message.writeIntUnsafe(0);
-        }
-
-        message.writeIntUnsafe(symbol.bold);
-        message.writeIntUnsafe(symbol.italic);
-        message.writeIntUnsafe(tag.fontHeight / 20);
-
-        var color = 0;
-        if (tag.hasColor) {
-          var colorObj = tag.color;
-          color = (colorObj.red << 24) |
-                  (colorObj.green << 16) |
-                  (colorObj.blue << 8) |
-                  colorObj.alpha;
-        }
-        message.writeIntUnsafe(color);
-
-        message.writeIntUnsafe(0); // backgroundColor
-        message.writeIntUnsafe(0); // borderColor
-        message.writeIntUnsafe(tag.autoSize);
-        message.writeIntUnsafe(tag.align);
-        message.writeIntUnsafe(tag.wordWrap);
-        message.writeIntUnsafe(tag.multiline);
-        message.writeIntUnsafe(tag.leading / 20);
-        message.writeIntUnsafe(0); // letterspacing
-        message.writeIntUnsafe(0); // kerning
-        message.writeIntUnsafe(tag.html);
-        message.writeIntUnsafe(false); // condenseWhite
-        message.writeIntUnsafe(1); // scrollV
-
-        var text = tag.initialText;
-        var n = text.length;
-        message.ensureAdditionalCapacity((1 + n) * 4);
-        message.writeIntUnsafe(n);
-        for (var i = 0; i < n; i++) {
-          message.writeIntUnsafe(text.charCodeAt(i));
-        }
-      }
-
-      message.subI32View()[p] = message.getIndex(4) - (p + 1);
-    },
-    _requireRenderables: function requireRenderables(dependencies, callback) {
-      var message = this._message;
-      var len = (1 + dependencies.length) * 4;
-      message.ensureAdditionalCapacity(4 + len);
-
-      message.writeIntUnsafe(Renderer.MESSAGE_REQUIRE_RENDERABLES);
-      message.writeIntUnsafe(len);
-
-      var callbackId = this._nextCallbackId++;
-      this._callbacks[callbackId] = callback;
-      message.writeIntUnsafe(callbackId);
-
-      for (var i = 0; i < dependencies.length; i++) {
-        message.writeIntUnsafe(dependencies[i]);
-      }
-
-      this._commit();
-    },
-    _addLayer: function addLayer(id, parentId, node) {
-      var message = this._message;
-      message.ensureAdditionalCapacity(24);
-      message.writeIntUnsafe(Renderer.MESSAGE_ADD_LAYER);
-
-      var p = message.getIndex(4);
-      message.reserve(4);
-
-      message.writeIntUnsafe(id);
-      message.writeIntUnsafe(node._isContainer);
-      message.writeIntUnsafe(parentId);
-      message.writeIntUnsafe(node._index);
-
-      node._serialize(message);
-
-      message.subI32View()[p] = message.getIndex(4) - (p + 1);
-    },
-    _removeLayer: function removeLayer(node) {
-      if (!node._layerId) {
-        return;
-      }
-      var message = this._message;
-      message.ensureAdditionalCapacity(12);
-      message.writeIntUnsafe(Renderer.MESSAGE_REMOVE_LAYER);
-      message.writeIntUnsafe(4);
-      message.writeIntUnsafe(node._layerId);
-    },
-    _commit: function commit() {
-      MessageCenter.post('render', this._message.u8.buffer);
-      this._message = new Shumway.Util.ArrayWriter(1024);
-    },
-    _callback: function callback(id) {
-      this._callbacks[id]();
-      delete this._callbacks[id];
+      this._message.setup(this);
     },
 
     _addToStage: function addToStage(displayObject) {
@@ -308,7 +99,7 @@ var StageDefinition = (function () {
       displayObject._stage = null;
       displayObject._level = -1;
 
-      this._removeLayer(displayObject);
+      this._message.removeLayer(displayObject);
     },
 
     _processInvalidations: function processInvalidations(refreshStage) {
@@ -382,18 +173,7 @@ var StageDefinition = (function () {
         }
 
         if (node._invalid) {
-          var layerId = node._layerId;
-          var renderableId = node._renderableId;
-          if (!layerId) {
-            layerId = this._nextLayerId++;
-            node._layerId = layerId;
-          }
-          if (!renderableId) {
-            renderableId = this._nextRenderableId++;
-            node._renderableId = renderableId;
-          }
-          this._addLayer(layerId, node._parent._layerId, node);
-
+          this._message.addLayer(node._layerId, node._parent._layerId, node);
           node._invalid = false;
         }
       }
@@ -477,7 +257,7 @@ var StageDefinition = (function () {
             //timelineLeave("invalidate");
             //traceRenderer.value && frameWriter.leave("< Invalidation");
 
-            stage._commit();
+            stage._message.post('render');
 
             frameScheduler.endDraw();
           }

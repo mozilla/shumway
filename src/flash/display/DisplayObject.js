@@ -456,9 +456,7 @@ var DisplayObjectDefinition = (function () {
     },
 
     _serialize: function (message) {
-      message.ensureAdditionalCapacity(56);
-
-      message.writeIntUnsafe(this._renderableId);
+      message.ensureAdditionalCapacity(52);
 
       var m = this._currentTransform;
       message.writeFloatUnsafe(m.a);

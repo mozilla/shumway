@@ -19,10 +19,11 @@ head.insertBefore(document.createElement('style'), head.firstChild);
 var style = document.styleSheets[0];
 
 Renderer.MESSAGE_DEFINE_RENDERABLE = 1;
-Renderer.MESSAGE_REQUIRE_RENDERABLES = 2;
-Renderer.MESSAGE_SETUP_STAGE = 3;
-Renderer.MESSAGE_ADD_LAYER = 4;
-Renderer.MESSAGE_REMOVE_LAYER = 5;
+Renderer.MESSAGE_SYNC_RENDERABLE = 2;
+Renderer.MESSAGE_REQUIRE_RENDERABLES = 3;
+Renderer.MESSAGE_SETUP_STAGE = 4;
+Renderer.MESSAGE_ADD_LAYER = 5;
+Renderer.MESSAGE_REMOVE_LAYER = 6;
 
 Renderer.RENDERABLE_TYPE_SHAPE = 1;
 Renderer.RENDERABLE_TYPE_BITMAP = 2;
@@ -56,13 +57,13 @@ function Renderer(container, bgcolor, options) {
   var renderer = this;
   var layers = this._layers;
 
-  MessageCenter.subscribe('render', function (data) {
+  MessageCenter.subscribe('render', function (data, sync) {
     var i32 = new Int32Array(data);
-    handleRenderMessages(renderer, layers, i32);
+    handleRenderMessages(renderer, layers, i32, sync);
   });
 }
 
-function handleRenderMessages(renderer, layers, i32) {
+function handleRenderMessages(renderer, layers, i32, sync) {
   var f32 = new Float32Array(i32.buffer, i32.byteOffset);
   var p = 0;
   var len = i32.length;
@@ -85,12 +86,39 @@ function handleRenderMessages(renderer, layers, i32) {
         id, renderableType, dependencies, renderableData
       );
       break;
+    case Renderer.MESSAGE_SYNC_RENDERABLE:
+      var callbackId = i32[p++];
+      var renderableId = i32[p++];
+      var renderable = renderer._renderables[renderableId];
+
+      if (p < offset + n) {
+        var renderableType = i32[p++];
+        var renderableData = i32.subarray(p, offset + n);
+        p = offset + n;
+        if (renderable) {
+          renderable.constructor.call(renderable, renderableData, renderer);
+        } else {
+          renderable = renderer.defineRenderable(renderableId,
+                                                 renderableType,
+                                                 null,
+                                                 renderableData);
+        }
+      }
+
+      var data = renderable.shared;
+
+      if (sync) {
+        MessageCenter.postSync('callback:' + callbackId, data);
+      } else {
+        MessageCenter.post('callback:' + callbackId, data);
+      }
+      break;
     case Renderer.MESSAGE_REQUIRE_RENDERABLES:
       var callbackId = i32[p++];
       var dependencies = i32.subarray(p, offset + n);
       p = offset + n;
       renderer.requireRenderables(dependencies, function () {
-        MessageCenter.post('callback', callbackId);
+        MessageCenter.post('callback:' + callbackId);
       });
       break;
     case Renderer.MESSAGE_SETUP_STAGE:

@@ -180,13 +180,19 @@ var TextFieldDefinition = (function () {
         return;
       }
 
-      ////////////// SYNC WITH MAIN THREAD //////////////
-      // UPDATE this._lines
-      // UPDATE this._textWidth
-      // UPDATE this._textHeight
-      // GET diffX
-
       var bounds = this._bbox;
+      var lines = this._lines;
+      var diffX = 0;
+
+      var message = new BinaryMessage();
+      message.syncRenderable(this, function (data) {
+         // UPDATE this._lines
+         // UPDATE this._textWidth
+         // UPDATE this._textHeight
+         // GET diffX
+
+      });
+      message.post('render', true);
 
       this._scrollV = 1;
       this._maxScrollV = 1;
@@ -195,7 +201,6 @@ var TextFieldDefinition = (function () {
       if (autoSize === 'none') {
         var maxVisibleY = (bounds.yMax - 80) / 20;
         if (this._textHeight > maxVisibleY) {
-          var lines = this._lines;
           for (var i = 0; i < lines.length; i++) {
             var line = lines[i];
             if (line.y + line.height > maxVisibleY) {

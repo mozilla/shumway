@@ -46,6 +46,7 @@ var LoaderDefinition = (function () {
       this._lastPromise = null;
       this._uncaughtErrorEvents = null;
       this._worker = null;
+      this._message = new BinaryMessage();
 
       var abc = AVM2.currentAbc();
       if (abc) {
@@ -174,7 +175,8 @@ var LoaderDefinition = (function () {
       }
 
       if (resolve) {
-        loader._stage._requireRenderables(dependencies, resolve);
+        loader._message.requireRenderables(dependencies, resolve);
+        loader._message.post('render');
         this._dependencies = [];
       }
 
@@ -220,7 +222,9 @@ var LoaderDefinition = (function () {
         loaderInfo._backgroundColor = 0xffffffff;
       }
 
-      loader._stage._color = loaderInfo._backgroundColor;
+      if (loader._stage._color === null) {
+        loader._stage._color = loaderInfo._backgroundColor;
+      }
 
       Promise.all([prevPromise, dependenciesPromise]).then(function () {
         if (abcBlocks && loader._isAvm2Enabled) {
@@ -457,8 +461,8 @@ var LoaderDefinition = (function () {
       loaderInfo._height = image.height;
       loaderInfo._dispatchEvent("init");
 
-      this._stage._defineRenderable(imageInfo);
-      this._stage._commit();
+      this._message.defineRenderable(imageInfo, this._dictionary);
+      this._message.post('render');
     },
     _commitSymbol: function (symbol) {
       var dictionary = this._dictionary;
@@ -530,6 +534,16 @@ var LoaderDefinition = (function () {
       case 'shape':
         className = symbol.morph ?
                     'flash.display.MorphShape' : 'flash.display.Shape';
+
+        var paths = symbol.paths;
+        for (var i = 0; i < paths.length; i++) {
+          paths[i] = finishShapePath(symbol.paths[i], dictionary);
+        }
+
+        var graphics = symbol.graphics = new flash.display.Graphics();
+        graphics._paths = symbol.paths;
+        graphics.bbox = symbol.bbox;
+        graphics.strokeBbox = symbol.strokeBbox;
         break;
       case 'sound':
         if (!symbol.pcm && !PLAY_USING_AUDIO_TAG) {
@@ -606,8 +620,8 @@ var LoaderDefinition = (function () {
         props: symbol
       };
 
-      this._stage._defineRenderable(symbol);
-      this._stage._commit();
+      this._message.defineRenderable(symbol, this._dictionary);
+      this._message.post('render');
     },
     _registerFont: function (className, props) {
       this._vmPromise.then(function () {
