@@ -197,7 +197,7 @@ function handleRenderMessages(renderer, layers, i32) {
           if (!target) {
             target = new Shumway.Layers.Shape(renderable);
             target.origin = new Shumway.Geometry.Point(
-              renderable.rect.x, renderable.rect.y
+              -renderable.rect.x, -renderable.rect.y
             );
             layer.addChild(target);
           }
@@ -205,17 +205,24 @@ function handleRenderMessages(renderer, layers, i32) {
 
         if (target.source !== renderable) {
           target.source = renderable;
-          // TODO: this should be done in a setter
+        }
+
+        if (updateRenderable) {
           var bounds = renderable.getBounds();
           target.w = bounds.w;
           target.h = bounds.h;
+
+          var origin = target.origin;
+          origin.x = -bounds.x;
+          origin.y = -bounds.y;
+          target.origin = origin;
         }
       } else {
         if (isContainer) {
           layer = new Shumway.Layers.FrameContainer();
           var child = new Shumway.Layers.Shape(renderable);
           child.origin = new Shumway.Geometry.Point(
-            renderable.rect.x, renderable.rect.y
+            -renderable.rect.x, -renderable.rect.y
           );
           layer.addChild(child);
         } else {
