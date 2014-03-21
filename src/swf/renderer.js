@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global rgbaObjToStr, Shumway, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
+/*global rgbaObjToStr, Shumway, Timer, FrameCounter, metrics, shumwayOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
 
 var rendererOptions = shumwayOptions.register(new OptionSet("Renderer"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "boolean", false, "trace renderer execution"));
