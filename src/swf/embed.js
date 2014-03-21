@@ -33,17 +33,9 @@ MessageCenter.subscribe('load', function (data) {
   loader._parent = stage;
   loader._stage = stage;
 
-  var pixelRatio = 1;
-
-  if (forceHidpi.value || loaderInfo._swfVersion >= 18) {
-    pixelRatio = data.pixelRatio || 1;
-
-    stage._contentsScaleFactor = pixelRatio;
-
-    var m = stage._concatenatedTransform;
-    m.a = pixelRatio;
-    m.d = pixelRatio;
-  }
+  //if (forceHidpi.value /*|| loaderInfo._swfVersion >= 18*/) {
+    stage._contentsScaleFactor = data.pixelRatio || 1;
+  //}
 
   loaderInfo._addEventListener('init', function () {
     var bgcolor = loaderInfo._backgroundColor;

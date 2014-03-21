@@ -97,6 +97,9 @@ var StageDefinition = (function () {
       message.writeIntUnsafe(n);
       for (var i = 0; i < n; i++) {
         message.writeIntUnsafe(dependencies[i]);
+      if (this._contentsScaleFactor !== 1) {
+        var m = this._concatenatedTransform;
+        m.a = m.d = this._contentsScaleFactor;
       }
 
       switch (symbol.type) {
