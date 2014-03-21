@@ -66,8 +66,6 @@
     iframe.setAttribute("width", swf.width);
     iframe.setAttribute("height", swf.height);
     iframe.setAttribute("frameborder", "0");
-    iframe.setAttribute("style", "visibility: hidden");
-    iframe.setAttribute("onload", "this.style.visibility = 'visible'");
     while (container.firstChild) {
       container.removeChild(container.firstChild);
     }

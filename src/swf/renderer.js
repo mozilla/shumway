@@ -15,15 +15,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global rgbaObjToStr, Shumway, Timer, FrameCounter, metrics, shumwayOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
+/*global rgbaObjToStr, Shumway, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
 
-var rendererOptions = shumwayOptions.register(new OptionSet("Renderer"));
-var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "boolean", false, "trace renderer execution"));
+var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
+var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
 var disableRenderVisitor = rendererOptions.register(new Option("drv", "disableRenderVisitor", "boolean", false, "disable render visitor"));
 var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMouseVisitor", "boolean", false, "disable mouse visitor"));
-var disableConstructChildren = rendererOptions.register(new Option("", "disableConstructChildren", "boolean", false, "disable constructchildren"));
-var disableEnterFrame = rendererOptions.register(new Option("", "disableEnterFrame", "boolean", false, "disable enterframe"));
-var disableAdvanceFrame = rendererOptions.register(new Option("", "disableAdvanceFrame", "boolean", false, "disable advanceframe"));
 var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
 var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
 var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
@@ -32,6 +29,10 @@ var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean"
 var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", false, "skip frame when not on time"));
 var hud = rendererOptions.register(new Option("", "hud", "boolean", false, "show hud mode"));
 var dummyAnimation = rendererOptions.register(new Option("", "dummy", "boolean", false, "show test balls animation"));
+
+var enableConstructChildren = rendererOptions.register(new Option("", "constructChildren", "boolean", true, "Construct Children"));
+var enableEnterFrame = rendererOptions.register(new Option("", "enterFrame", "boolean", true, "Enter Frame"));
+var enableAdvanceFrame = rendererOptions.register(new Option("", "advanceFrame", "boolean", true, "Advance Frame"));
 
 var CanvasCache = {
   cache: [],
@@ -802,9 +803,9 @@ function renderStage(stage, ctx, events) {
           // Initial display list is already constructed, skip frame construction phase.
           firstRun = false;
         } else {
-          !disableAdvanceFrame.value && timelineWrapBroadcastMessage(domain, "advanceFrame");
-          !disableEnterFrame.value && timelineWrapBroadcastMessage(domain, "enterFrame");
-          !disableConstructChildren.value && timelineWrapBroadcastMessage(domain, "constructChildren");
+          enableAdvanceFrame.value && timelineWrapBroadcastMessage(domain, "advanceFrame");
+          enableEnterFrame.value && timelineWrapBroadcastMessage(domain, "enterFrame");
+          enableConstructChildren.value && timelineWrapBroadcastMessage(domain, "constructChildren");
         }
 
         timelineWrapBroadcastMessage(domain, "frameConstructed");

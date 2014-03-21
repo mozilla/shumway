@@ -38,12 +38,14 @@ limitations under the License.
     <script src="../../lib/DataView.js/DataView.js"></script>
     <script src="../../lib/ByteArray.js"></script>
 
-    <script src="../../src/global.js"></script>
-    <script src="../../src/utilities.js"></script>
-    <script src="../../src/options.js"></script>
-    <script src="../../src/settings.js"></script>
-
+    <script src="../../src/avm2/options.js"></script>
     <script src="../../src/swf/Timeline.js"></script>
+
+    <script>
+      var Option = options.Option;
+      var OptionSet = options.OptionSet;
+      var coreOptions = new OptionSet("Core Options");
+    </script>
 
     <script> console.time("Load SWF Dependencies"); </script>
     <!-- Load SWF Dependencies -->
@@ -70,11 +72,9 @@ limitations under the License.
       var Counter = new metrics.Counter(true);
       var FrameCounter = new metrics.Counter(true);
       var Timer = metrics.Timer;
-
-      var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
-      var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter"));
-      var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter"));
-      var traceLevel = avm2Options.register(new Option("t", "traceLevel", "number", 0, "trace level", { choices: { "off":0, "normal":1, "verbose":2 } }));
+      var systemOptions = new OptionSet("System Options");
+      var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
+      var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 
       var nativeCreateElement = document.createElement;
       document.createElement = function (x) {

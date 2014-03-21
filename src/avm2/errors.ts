@@ -623,9 +623,9 @@ module Shumway.AVM2 {
   };
 
   export function getErrorMessage(index) {
-    //if (!Shumway.AVM2.Runtime.debuggerMode.value) {
-    //  return "Error #" + index;
-    //}
+    if (!Shumway.AVM2.Runtime.debuggerMode.value) {
+      return "Error #" + index;
+    }
     for (var k in Errors) {
       if (Errors[k].code == index) {
         return "Error #" + index + ": " + Errors[k].message;
