@@ -25,6 +25,7 @@ assert(homePath, "Host compartment needs to initialize homePath.");
 load(homePath + "src/avm2/settings.js");
 load(homePath + "src/avm2/avm2Util.js");
 load(homePath + "src/options.js");
+load(homePath + "src/settings.js");
 load(homePath + "src/avm2/metrics.js");
 
 var systemOptions = new OptionSet("System Options");
