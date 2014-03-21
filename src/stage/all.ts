@@ -44,6 +44,11 @@ interface WebGLTexture {
   regions: Shumway.GL.WebGLTextureRegion [];
 }
 
+interface CanvasRenderingContext2D {
+  fillRule: string;
+  mozFillRule: string;
+}
+
 module Shumway {
   export interface IRenderable {
     /**

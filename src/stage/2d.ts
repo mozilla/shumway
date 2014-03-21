@@ -15,6 +15,11 @@ module Shumway.Layers {
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
 
+  export enum FillRule {
+    NONZERO,
+    EVENODD
+  }
+
   var originalSave = CanvasRenderingContext2D.prototype.save;
   var originalRestore = CanvasRenderingContext2D.prototype.restore;
 
@@ -141,10 +146,14 @@ module Shumway.Layers {
     private static MAX_MASK_DEPTH = 1;
     private _viewport: Rectangle;
 
+    private _fillRule: string;
+
     context: CanvasRenderingContext2D;
     count = 0;
-    constructor(context: CanvasRenderingContext2D) {
+    constructor(context: CanvasRenderingContext2D, fillRule: FillRule = FillRule.NONZERO) {
       this.context = context;
+      this._fillRule = fillRule === FillRule.EVENODD ? 'evenodd' : 'nonzero';
+      context.fillRule = context.mozFillRule = this._fillRule;
       for (var i = 0; i < 2; i++) {
         var canvas = document.createElement("canvas");
         canvas.width = context.canvas.width;
@@ -152,6 +161,7 @@ module Shumway.Layers {
         var canvasContext = canvas.getContext("2d", {
           willReadFrequently: true
         });
+        canvasContext.fillRule = canvasContext.mozFillRule = this._fillRule;
         this._scratchContexts.push(canvasContext);
       }
       this._viewport = new Rectangle(0, 0, context.canvas.width, context.canvas.height);

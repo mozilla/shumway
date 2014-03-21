@@ -366,7 +366,7 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
     var webGLContext = new WebGLContext(canvas, sceneOptions);
     stageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
   } else {
-    stageRenderer = new Canvas2DStageRenderer(canvas.getContext("2d"));
+    stageRenderer = new Canvas2DStageRenderer(canvas.getContext("2d"), Shumway.Layers.FillRule.EVENODD);
   }
 
   var domain = avm2.systemDomain;
