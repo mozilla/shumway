@@ -16,7 +16,9 @@
  * limitations under the License.
  */
 
-var filter = new Option("f", "filter", "string", "SpciMsmNtu", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames, S[t]atistics, [u]tf");
+var disassemblerOptions = systemOptions.register(new OptionSet("Disassembler Options"));
+
+var filter = disassemblerOptions.register(new Option("f", "filter", "string", "SpciMsmNtu", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames, S[t]atistics, [u]tf"));
 
 function traceArray(writer, name, array, abc) {
   if (array.length === 0) {

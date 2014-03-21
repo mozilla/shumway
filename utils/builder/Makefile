@@ -20,7 +20,6 @@ CLOSURE_ADV_OPT ?= -fc -c a
 
 build: ensureoutputdir
 	# Coping JavaScript content files
-	cp ../../src/*.js $(BUILD_DIR)/
 	mkdir $(BUILD_DIR)/swf
 	cp ../../src/swf/*.js $(BUILD_DIR)/swf/
 	mkdir $(BUILD_DIR)/avm1lib

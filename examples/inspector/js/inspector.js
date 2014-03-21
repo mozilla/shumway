@@ -127,11 +127,11 @@ function showMessage(msg) {
 
 function executeFile(file, buffer, movieParams) {
   // All execution paths must now load AVM2.
-  if (!appCompiler.value) {
+  if (!state.appCompiler) {
     showMessage("Running in the Interpreter");
   }
-  var sysMode = sysCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
-  var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var sysMode = state.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
+  var appMode = state.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
 
   var filename = file.split('?')[0].split('#')[0];
   if (filename.endsWith(".abc")) {
@@ -275,64 +275,6 @@ var FileLoadingService = {
   }
 };
 
-// Counter debug panel
-(function() {
-  var lastCounts = {};
-
-  setTimeout(function displayInfo() {
-    var output = "";
-    var pairs = [];
-
-    for (var name in Counter.counts) {
-      pairs.push([name, Counter.counts[name]]);
-    }
-
-    pairs.sort(function (a, b) {
-      return b[1] - a[1];
-    });
-
-    var totalCount = 0;
-    pairs.forEach(function (pair) {
-      var color;
-      if (pair[1] > 100000) {
-        color = "magenta";
-      } else if (pair[1] > 10000) {
-        color = "purple";
-      } else if (pair[1] > 1000) {
-        color = "red";
-      } else if (pair[1] > 100) {
-        color = "orange";
-      } else {
-        color = "green";
-      }
-      output += "<div style='padding: 2px; background-color: " + color + "'>" + pair[0] + ": " + pair[1] + " " + (pair[1] - lastCounts[pair[0]]) + "</div>";
-      totalCount += pair[1];
-    });
-    if (totalCount > 30000000) {
-      // Don't delete me, this is meant to be annoying.
-      throw "The Counters Are Too Damn High (> 30,000,000).";
-    }
-
-    document.getElementById("info").innerHTML = output;
-
-    copyProperties(lastCounts, Counter.counts);
-
-    output = "";
-    for (var name in Timer._flat._timers) {
-      var timer = Timer._flat._timers[name];
-      var str = timer._name + ": " + timer._total.toFixed(2) + " ms" +
-        ", count: " + timer._count +
-        ", avg: " + (timer._total / timer._count).toFixed(2) + " ms" +
-        ", last: " + timer._last.toFixed(2) + " ms";
-      output += str + "<br>";
-    }
-
-    document.getElementById("timerInfo").innerHTML = output;
-
-    setTimeout(displayInfo, 500);
-  }, 500);
-})();
-
 // toggle button states in button bars
 Array.prototype.forEach.call(document.querySelectorAll(".toolbarButtonBar > .toolbarButton"), function (element) {
   element.addEventListener("click", function (event) {
@@ -346,7 +288,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".toolbarButtonBar > .too
   });
 });
 
-// toggle info panels (debug info, display list, settings)
+// toggle info panels (debug info, display list)
 var panelToggleButtonSelector = "#debugInfoToolbar > .toolbarButtonBar > .toolbarButton";
 function panelToggleButtonClickHandler(event) {
   Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
@@ -358,11 +300,9 @@ function panelToggleButtonClickHandler(event) {
       panel.classList.remove("active");
     }
   });
-  state.debugPanelId = event.target.dataset.panelid;
-  saveInspectorState();
-  switch (state.debugPanelId) {
+  switch (event.target.dataset.panelid) {
     case "displayListContainer":
-      if (swfController.isPlaying() || swfController.isInitializing()) {
+      if (swfController.isPlaying()) {
         swfController.pause(function() {
           updateDisplayListTree();
         });
@@ -378,41 +318,7 @@ function panelToggleButtonClickHandler(event) {
 }
 Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
   element.addEventListener("click", panelToggleButtonClickHandler);
-  if (element.dataset.panelid === state.debugPanelId) {
-    element.click();
-  }
 });
-
-// Log To Browser Console checkbox
-(function() {
-  var chkLogToConsole = document.getElementById("chkLogToConsole")
-  chkLogToConsole.checked = state.logToConsole || false;
-  chkLogToConsole.addEventListener("click", function (event) {
-    state.logToConsole = event.target.checked;
-    saveInspectorState();
-  });
-})();
-
-// Mute button
-(function() {
-  var muteButton = document.getElementById("muteButton");
-  function setElementState() {
-    if (state.mute) {
-      muteButton.classList.remove("icon-volume-up");
-      muteButton.classList.add("icon-volume-off");
-    } else {
-      muteButton.classList.add("icon-volume-up");
-      muteButton.classList.remove("icon-volume-off");
-    }
-  }
-  muteButton.addEventListener("click", function (event) {
-    state.mute = !state.mute;
-    avm2.systemDomain.getClass("flash.media.SoundMixer").native.static._setMasterVolume(state.mute ? 0 : 1);
-    setElementState();
-    saveInspectorState();
-  });
-  setElementState();
-})();
 
 swfController.onStateChange = function onStateChange(newState, oldState) {
   if (oldState === swfController.STATE_INIT) {
@@ -437,6 +343,7 @@ swfController.onStateChange = function onStateChange(newState, oldState) {
 
 function initUI() {
   document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
+  document.getElementById("ctrlLogToConsole").classList.add("active");
   document.getElementById("muteButton").classList.add("active");
   document.getElementById("pauseButton").classList.add("active");
   document.getElementById("stepButton").classList.add("active");
