@@ -37,6 +37,7 @@
 ///<reference path='natives/float64Vector.ts' />
 ///<reference path='natives/dictionary.ts' />
 ///<reference path='natives/proxy.ts' />
+///<reference path='natives/byteArray.ts' />
 
 ///<reference path='stubs.ts' />
 

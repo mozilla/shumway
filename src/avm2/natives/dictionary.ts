@@ -29,6 +29,14 @@ module Shumway.AVM2.AS {
   import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
 
   export module flash.utils {
+    var _asGetProperty = Object.prototype.asGetProperty;
+    var _asSetProperty = Object.prototype.asSetProperty;
+    var _asCallProperty = Object.prototype.asCallProperty;
+    var _asHasProperty = Object.prototype.asHasProperty;
+    var _asHasOwnProperty = Object.prototype.asHasOwnProperty;
+    var _asHasTraitProperty = Object.prototype.asHasTraitProperty;
+    var _asDeleteProperty = Object.prototype.asDeleteProperty;
+    var _asGetEnumerableKeys = Object.prototype.asGetEnumerableKeys;
 
     /**
      * TODO: We need a more robust Dictionary implementation that doesn't only give you back
@@ -36,7 +44,12 @@ module Shumway.AVM2.AS {
      */
     export class Dictionary extends ASNative {
 
+      public static isTraitsOrDynamicPrototype(value): boolean {
+        return value === Dictionary.traitsPrototype || value === Dictionary.dynamicPrototype;
+      }
+
       public static protocol: IProtocol = Dictionary.prototype;
+
 
       private map: WeakMap<any, any>;
       private keys: any [];
@@ -65,6 +78,9 @@ module Shumway.AVM2.AS {
       }
 
       public asGetProperty(namespaces: Namespace [], name: any, flags: number) {
+        if (Dictionary.isTraitsOrDynamicPrototype(this)) {
+          return _asGetProperty.call(this, namespaces, name, flags);
+        }
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
           return this.primitiveMap[key];
@@ -73,6 +89,9 @@ module Shumway.AVM2.AS {
       }
 
       public asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
+        if (Dictionary.isTraitsOrDynamicPrototype(this)) {
+          return _asSetProperty.call(this, namespaces, name, flags, value);
+        }
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
           this.primitiveMap[key] = value;
@@ -90,6 +109,9 @@ module Shumway.AVM2.AS {
       // }
 
       public asHasProperty(namespaces: Namespace [], name: any, flags: number) {
+        if (Dictionary.isTraitsOrDynamicPrototype(this)) {
+          return _asHasProperty.call(this, namespaces, name, flags);
+        }
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
           return key in this.primitiveMap;
@@ -98,6 +120,9 @@ module Shumway.AVM2.AS {
       }
 
       public asDeleteProperty(namespaces: Namespace [], name: any, flags: number) {
+        if (Dictionary.isTraitsOrDynamicPrototype(this)) {
+          return _asDeleteProperty.call(this, namespaces, name, flags);
+        }
         var key = Dictionary.makePrimitiveKey(name);
         if (key !== undefined) {
           delete this.primitiveMap[key];
@@ -111,8 +136,8 @@ module Shumway.AVM2.AS {
       }
 
       public asGetEnumerableKeys() {
-        if (Dictionary.traitsPrototype === this || Dictionary.dynamicPrototype === this) {
-          return Object.prototype.asGetEnumerableKeys.call(this);
+        if (Dictionary.isTraitsOrDynamicPrototype(this)) {
+          return _asGetEnumerableKeys.call(this);
         }
         var primitiveMapKeys = [];
         for (var k in this.primitiveMap) {

@@ -77,6 +77,7 @@ load(homePath + "src/avm2/nat.js");
 load(homePath + "src/avm2/natives/genericVector.js");
 load(homePath + "src/avm2/natives/dictionary.js");
 load(homePath + "src/avm2/natives/proxy.js");
+load(homePath + "src/avm2/natives/byteArray.js");
 
 Timer.stop();
 Timer.stop();

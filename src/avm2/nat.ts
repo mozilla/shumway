@@ -846,7 +846,7 @@ module Shumway.AVM2.AS {
     static numericComparatorCache = createEmptyObject();
 
     private static _pop(o: any): any {
-      return o.reverse();
+      return o.pop();
     }
     private static _reverse(o: any): any {
       return o.reverse();
@@ -1224,6 +1224,7 @@ module Shumway.AVM2.AS {
 
     builtinNativeClasses["RegExpClass"]              = ASRegExp;
     builtinNativeClasses["DictionaryClass"]          = flash.utils.Dictionary;
+    builtinNativeClasses["ByteArrayClass"]           = flash.utils.ByteArray;
 
     isInitialized = true;
   }
@@ -1355,8 +1356,8 @@ module Shumway.AVM2.AS {
     export var Boolean = jsGlobal.Boolean;
     export var Number = jsGlobal.Number;
 
-    export function print(v: any) {
-      jsGlobal.print(v);
+    export function print(...args: any []) {
+      jsGlobal.print.apply(null, args);
     }
 
     export function notImplemented(v: any) {

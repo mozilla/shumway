@@ -768,6 +768,17 @@ module Shumway {
     }
   }
 
+  export module NumberUtilities {
+    export function clamp(value: number, min: number, max: number) {
+      if (value < min) {
+        return min;
+      } else if (value > max) {
+        return max;
+      }
+      return value;
+    }
+  }
+
   export module IntegerUtilities {
     export function bitCount(i: number): number {
       i = i - ((i >> 1) & 0x55555555);

@@ -97,6 +97,7 @@ module Shumway.AVM2.AS {
 
       public asNextNameIndex(index: number): number {
         notImplemented("Proxy asNextNameIndex");
+        return;
       }
     }
 
