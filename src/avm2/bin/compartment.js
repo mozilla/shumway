@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-load(homePath + "src/avm2/global.js");
-load(homePath + "src/avm2/utilities.js");
+load(homePath + "src/global.js");
+load(homePath + "src/utilities.js");
 
 var homePath;
 var release;
