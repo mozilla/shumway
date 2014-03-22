@@ -18,8 +18,7 @@
 
 "use strict";
 
-var verifierOptions = systemOptions.register(new OptionSet("Verifier Options"));
-var verifierTraceLevel = verifierOptions.register(new Option("tv", "tv", "number", 0, "Verifier Trace Level"));
+var verifierTraceLevel = new Option("tv", "tv", "number", 0, "Verifier Trace Level");
 
 var Type = (function () {
   function type () {
@@ -761,7 +760,7 @@ var Verifier = (function() {
           if (mn.name === "Array") { debugger; }
           return Type.Any;
         }
-        
+
         /**
          * Try to find the property in the scope stack. For instance methods the scope
          * stack should already have the instance object.
