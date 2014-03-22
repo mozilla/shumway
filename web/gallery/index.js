@@ -3,9 +3,21 @@
   var swfs = [];
   var swfIndex = 0;
 
-  var VIEWER_URL = "http://www.areweflashyet.com/shumway/iframe/viewer.html?swf=";
+  var VIEWER_URL = "http://www.areweflashyet.com/shumway/iframe/viewer.html?forceHidpi=" + (isHidpi() ? 1 : 0) + "&swf=";
   var ARCHIVE_URL = "http://swf.codeazur.com.br/archive/";
   var GALLERY_API_URL = "http://swf.codeazur.com.br/api/gallery.php";
+
+  function isHidpi() {
+    if (window.matchMedia) {
+      var mq = window.matchMedia("only screen and (-moz-min-device-pixel-ratio: 1.3), " +
+                                 "only screen and (-o-min-device-pixel-ratio: 2.6/2), " +
+                                 "only screen and (-webkit-min-device-pixel-ratio: 1.3), " +
+                                 "only screen and (min-device-pixel-ratio: 1.3), " +
+                                 "only screen and (min-resolution: 1.3dppx)");
+      return mq && mq.matches;
+    }
+    return false;
+  }
 
   getJSON(GALLERY_API_URL, function(galleryJSON) {
     if (galleryJSON && galleryJSON.swfs) {
@@ -45,8 +57,9 @@
     swfIndex = getIndexFromHash(window.location.hash);
     if (swfIndex >= 0) {
       var swf = swfs[swfIndex];
+      var url = VIEWER_URL + getSWFUrl(swf);
       el = document.createElement("iframe");
-      el.setAttribute("src", VIEWER_URL + getSWFUrl(swf));
+      el.setAttribute("src", url);
       el.setAttribute("width", swf.width);
       el.setAttribute("height", swf.height);
       el.setAttribute("frameborder", "0");
