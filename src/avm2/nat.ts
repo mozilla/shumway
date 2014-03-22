@@ -30,10 +30,12 @@ module Shumway.AVM2.AS {
   import Scope = Shumway.AVM2.Runtime.Scope;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
   import isNumber = Shumway.isNumber;
+  import isNullOrUndefined = Shumway.isNullOrUndefined;
   import createObject = Shumway.ObjectUtilities.createObject;
   import isPrototypeWriteable = Shumway.ObjectUtilities.isPrototypeWriteable;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import notImplemented = Shumway.Debug.notImplemented;
+  var _notImplemented = notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import createFunction = Shumway.AVM2.Runtime.createFunction;
   import Runtime = Shumway.AVM2.Runtime;
@@ -186,6 +188,10 @@ module Shumway.AVM2.AS {
       ASClassPrototype.trace.call(this, writer);
     }
 
+    public static getQualifiedClassName(): string {
+      return ASClassPrototype.getQualifiedClassName.call(this);
+    }
+
     static _setPropertyIsEnumerable(o, V: string, enumerable: boolean): void {
       var name = Multiname.getPublicQualifiedName(V);
       var descriptor = getOwnPropertyDescriptor(o, name);
@@ -301,6 +307,11 @@ module Shumway.AVM2.AS {
       self.instanceConstructorNoInitialize = self.instanceConstructor;
       self.instanceConstructor.prototype = self.traitsPrototype;
       self.instanceConstructor.prototype.class = self;
+
+      /**
+       * Set the |constructor| property.
+       */
+      Shumway.ObjectUtilities.defineNonEnumerableProperty(self.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), self);
 
       if (self.protocol) {
         Shumway.ObjectUtilities.copyOwnPropertyDescriptors(self.dynamicPrototype, self.protocol);
@@ -467,6 +478,15 @@ module Shumway.AVM2.AS {
 
     public isInterface(): boolean {
       return this.classInfo.instanceInfo.isInterface();
+    }
+
+    public getQualifiedClassName(): string {
+      var name = this.classInfo.instanceInfo.name;
+      var uri = name.namespaces[0].uri;
+      if (uri) {
+        return uri + "::" + name.name;
+      }
+      return name.name;
     }
 
     /**
@@ -1069,14 +1089,6 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASXML extends ASObject {
-    public static instanceConstructor: any = ASXML;
-  }
-
-  export class ASXMLList extends ASObject {
-    public static instanceConstructor: any = ASXMLList;
-  }
-
   export class ASQName extends ASObject {
     public static instanceConstructor: any = ASQName;
   }
@@ -1143,7 +1155,7 @@ module Shumway.AVM2.AS {
     }
 
     exec(s: string = ""): any {
-      var result = this.exec.apply(this, arguments);
+      var result = RegExp.prototype.exec.apply(this, arguments);
       if (!result) {
         return result;
       }
@@ -1223,8 +1235,13 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["MathClass"]                = ASMath;
 
     builtinNativeClasses["RegExpClass"]              = ASRegExp;
+
+    // flash.utils
     builtinNativeClasses["DictionaryClass"]          = flash.utils.Dictionary;
     builtinNativeClasses["ByteArrayClass"]           = flash.utils.ByteArray;
+
+    // flash.system
+    builtinNativeClasses["SystemClass"]              = flash.system.System;
 
     isInitialized = true;
   }
@@ -1325,7 +1342,7 @@ module Shumway.AVM2.AS {
           assert (trait.isMethod());
           value = native[name];
         }
-        assert (value, "Method or Accessor property exists but it's undefined.");
+        assert (value, "Method or Accessor property exists but it's undefined: " + trait);
         return value;
       }
     }
@@ -1361,7 +1378,7 @@ module Shumway.AVM2.AS {
     }
 
     export function notImplemented(v: any) {
-      notImplemented(v);
+      _notImplemented(v);
     }
 
     export function debugBreak(v: any) {
@@ -1388,6 +1405,45 @@ module Shumway.AVM2.AS {
     export var unescape: (x: any) => any = unescape;
     export var isXMLName: (x: any) => any = typeof (isXMLName) !== "undefined" ? isXMLName : function () {
       notImplemented("Chrome doesn't support isXMLName.");
+    }
+
+    /**
+     * Returns the fully qualified class name of an object.
+     */
+    export function getQualifiedClassName(value: any):string {
+      if (value === null) {
+        return "null";
+      } else if (value === undefined) {
+        return "void";
+      }
+      if (ASInt.isType(value)) {
+        return "int";
+      }
+      value = boxValue(value)
+      if (ASClass.isType(value)) {
+        return value.getQualifiedClassName();
+      }
+      return value.class.getQualifiedClassName();
+    }
+
+    /**
+     * Returns the fully qualified class name of the base class of the object specified by the |value| parameter.
+     */
+    export function getQualifiedSuperclassName(value: any) {
+      if (isNullOrUndefined(value)) {
+        return "null";
+      }
+      value = boxValue(value);
+      var cls: ASClass = ASClass.isType(value) ? value : value.class;
+      if (!cls.baseClass) {
+        return "null";
+      }
+      return cls.baseClass.getQualifiedClassName();
+    }
+
+    export function getDefinitionByName(name) {
+      var simpleName = String(name).replace("::", ".");
+      return Shumway.AVM2.Runtime.AVM2.currentDomain().getClass(simpleName);
     }
   }
 

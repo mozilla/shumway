@@ -765,6 +765,8 @@ module Shumway.AVM2.Runtime {
         return "number"
       } else if (x.constructor === Boolean) {
         return "boolean"
+      } else if (Shumway.AVM2.AS.ASClass.isType(x)) {
+        return "object";
       }
 // else if (x instanceof XML || x instanceof XMLList) {
 //        return "xml"
