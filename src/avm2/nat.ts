@@ -1089,10 +1089,6 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASQName extends ASObject {
-    public static instanceConstructor: any = ASQName;
-  }
-
   export class ASError extends ASObject {
     public static instanceConstructor: any = null;
     public static staticNatives: any [] = null;
