@@ -80,6 +80,11 @@ function fallback() {
   FirefoxCom.requestSync('fallback', null)
 }
 
+var playerglobalInfo = {
+  abcs: SHUMWAY_ROOT + "playerglobal/playerglobal.abcs",
+  catalog: SHUMWAY_ROOT + "playerglobal/playerglobal.json"
+};
+
 function runViewer() {
   var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
   FileLoadingService.setBaseUrl(flashParams.baseUrl);
@@ -108,10 +113,15 @@ function runViewer() {
   parseSwf(movieUrl, movieParams, objectParams);
 
   if (isOverlay) {
+    document.getElementById('overlay').className = 'enabled';
     var fallbackDiv = document.getElementById('fallback');
-    fallbackDiv.className = 'enabled';
     fallbackDiv.addEventListener('click', function(e) {
       fallback();
+      e.preventDefault();
+    });
+    var reportDiv = document.getElementById('report');
+    reportDiv.addEventListener('click', function(e) {
+      reportIssue();
       e.preventDefault();
     });
     var fallbackMenu = document.getElementById('fallbackMenu');
@@ -122,13 +132,14 @@ function runViewer() {
   showURLMenu.addEventListener('click', showURL);
   var inspectorMenu = document.getElementById('inspectorMenu');
   inspectorMenu.addEventListener('click', showInInspector);
+  var reportMenu = document.getElementById('reportMenu');
+  reportMenu.addEventListener('click', reportIssue);
 
   document.getElementById('copyProfileMenu').addEventListener('click', copyProfile);
 }
 
 function showURL() {
-  var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
-  window.prompt("Copy to clipboard", flashParams.url);
+  window.prompt("Copy to clipboard", movieUrl);
 }
 
 function showInInspector() {
@@ -138,6 +149,26 @@ function showInInspector() {
     params += '&' + k + '=' + encodeURIComponent(movieParams[k]);
   }
   window.open(base + encodeURIComponent(movieUrl) + params);
+}
+
+function reportIssue() {
+  var duplicatesMap = Object.create(null);
+  var prunedExceptions = [];
+  avm2.exceptions.forEach(function(e) {
+    var ident = e.source + e.message + e.stack;
+    var entry = duplicatesMap[ident];
+    if (!entry) {
+      entry = duplicatesMap[ident] = {
+        source: e.source,
+        message: e.message,
+        stack: e.stack,
+        count: 0
+      };
+      prunedExceptions.push(entry);
+    }
+    entry.count++;
+  });
+  FirefoxCom.requestSync('reportIssue', JSON.stringify(prunedExceptions));
 }
 
 function copyProfile() {
@@ -196,7 +227,7 @@ var FileLoadingService = {
           case "open": this.onopen(); break;
           case "close":
             this.onclose();
-            delete FileLoadingService.sessions[sessionId];
+            FileLoadingService.sessions[sessionId] = null;
             console.log('Session #' + sessionId +': closed');
             break;
           case "error":
@@ -232,9 +263,18 @@ var FileLoadingService = {
 };
 
 function parseSwf(url, movieParams, objectParams) {
+  var enableVerifier = Shumway.AVM2.Runtime.enableVerifier;
+  var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
+
   var compilerSettings = JSON.parse(
     FirefoxCom.requestSync('getCompilerSettings', null));
   enableVerifier.value = compilerSettings.verifier;
+
+  // init misc preferences
+  turboMode.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.turboMode', def: false});
+  hud.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.hud', def: false});
+  forceHidpi.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.force_hidpi', def: false});
+  dummyAnimation.value = FirefoxCom.requestSync('getBoolPref', {pref: 'shumway.dummyMode', def: false});
 
   console.log("Compiler settings: " + JSON.stringify(compilerSettings));
   console.log("Parsing " + url + "...");
@@ -242,7 +282,7 @@ function parseSwf(url, movieParams, objectParams) {
     FirefoxCom.request('endActivation', null);
   }
 
-  createAVM2(builtinPath, playerGlobalPath, avm1Path,
+  createAVM2(builtinPath, playerglobalInfo, avm1Path,
     compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     function (avm2) {

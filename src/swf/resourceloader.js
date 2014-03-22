@@ -347,6 +347,9 @@ function createParsingContext(commitData) {
       }
 
       commitData({command: 'complete', stats: stats});
+    },
+    onexception: function(e) {
+      commitData({type: 'exception', message: e.message, stack: e.stack});
     }
   };
 }

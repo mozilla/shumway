@@ -18,6 +18,8 @@ src/avm2/utils/js
 
 src/flash/playerglobal.js
 src/flash/playerglobal.abc
+src/flash/playerglobal-new.js
+src/flash/playerglobal-new.abc
 
 node_modules/
 

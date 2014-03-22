@@ -1,0 +1,18 @@
+{
+  "playerglobal": true,
+  "files": [
+    "AS2Utils.as",
+    "AS2Broadcaster.as",
+    "AS2MovieClip.as",
+    "AS2Button.as",
+    "AS2TextField.as",
+    "AS2Key.as",
+    "AS2Mouse.as",
+    "AS2Stage.as",
+    "AS2System.as",
+    "AS2Color.as",
+    "AS2Globals.as",
+    "AS2MovieClipLoader.as"
+  ],
+  "output": "../avm2/generated/avm1lib/avm1lib.abc"
+}

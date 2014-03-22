@@ -21,7 +21,7 @@
          readHeader */
 /*jshint -W069 */
 
-function readTags(context, stream, swfVersion, final, onprogress) {
+function readTags(context, stream, swfVersion, final, onprogress, onexception) {
   var tags = context.tags;
   var bytes = stream.bytes;
   var lastSuccessfulPosition;
@@ -29,7 +29,7 @@ function readTags(context, stream, swfVersion, final, onprogress) {
   var tag = null;
   if (context._readTag) {
     tag = context._readTag;
-    delete context._readTag;
+    context._readTag = null;
   }
 
   try {
@@ -100,6 +100,7 @@ function readTags(context, stream, swfVersion, final, onprogress) {
     }
   } catch (e) {
     if (e !== StreamNoDataError) {
+      onexception && onexception(e);
       throw e;
     }
     // recovering the stream state
@@ -161,7 +162,9 @@ function CompressedPipe(target, length) {
   this.length = length;
   this.initialize = true;
   this.buffer = new HeadTailBuffer(8096);
-  this.state = { bitBuffer: 0, bitLength : 0, compression: {} };
+  this.state = { bitBuffer: 0, bitLength : 0, compression: {
+    header: null, distanceTable: null, literalTable: null,
+    sym: null, len: null, sym2: null } };
   this.output = {
     data: new Uint8Array(length),
     available: 0,
@@ -271,7 +274,8 @@ BodyParser.prototype = {
     }
 
     var readStartTime = performance.now();
-    readTags(swf, stream, swfVersion, finalBlock, options.onprogress);
+    readTags(swf, stream, swfVersion, finalBlock, options.onprogress,
+             options.onexception);
     swf.parseTime += performance.now() - readStartTime;
 
     var read = stream.pos;

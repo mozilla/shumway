@@ -534,7 +534,7 @@ Renderer.prototype.defineRenderable = function defineRenderable(id, type,
       style.insertRule(
         '@font-face{' +
           'font-family:"' + uniqueName + '";' +
-          'src:url(data:font/opentype;base64,' + base64ArrayBuffer(fontData) + ')' +
+          'src:url(data:font/opentype;base64,' + Shumway.StringUtilities.base64ArrayBuffer(fontData) + ')' +
         '}',
         style.cssRules.length
       );

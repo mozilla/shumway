@@ -70,7 +70,7 @@ SWF.parse(snarf(swfFile.value, "binary"), {
       var tag = tags[i];
       if (tag.code === 82) {
         stdout.writeLn("<<< BASE64 " + prefix.value + "-" + abcCount++ + ".abc");
-        print (base64ArrayBuffer(tag.data));
+        print (Shumway.StringUtilities.base64ArrayBuffer(tag.data));
         stdout.writeLn(">>>");
       }
     }

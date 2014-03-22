@@ -215,15 +215,11 @@ var GraphicsDefinition = (function () {
                                 (x * 20)|0, (y * 20)|0);
     },
     drawCircle: function (x, y, radius) {
-      this._invalidate();
-      this._currentPath.circle((x * 20)|0, (y * 20)|0, (radius * 20)|0);
+      var radius2 = radius * 2;
+      this.drawRoundRect(x - radius, y - radius, radius2, radius2, radius2, radius2);
     },
     drawEllipse: function (x, y, width, height) {
-      this._invalidate();
-      var radiusX = (width / 2 * 20)|0;
-      var radiusY = (height / 2 * 20)|0;
-      this._currentPath.ellipse((x * 20)|0 + radiusX, (y * 20)|0 + radiusY,
-                                radiusX, radiusY);
+      this.drawRoundRect(x, y, width, height, width, height);
     },
     drawPath: function (commands, data, winding) {
       this._invalidate();
@@ -347,8 +343,56 @@ var GraphicsDefinition = (function () {
       this._currentPath.curveTo(right, y, right, y + topRightRadius);
       this._currentPath.lineTo(right, bottom - bottomRightRadius);
     },
-    drawTriangles: function(vertices, indices, uvtData, culling) {
+    drawTriangles: function(vertices, indices, uvtData, cullingStr) {
+      if (vertices === null || vertices.length === 0) {
+        return;
+      }
+
+      var numVertices = vertices.length/2;
+      var numTriangles = 0;
+
+      // check for valid triangles
+      if (indices) {
+        if(indices.length % 3 ) {
+          throwError('ArgumentError', Errors.InvalidParamError);
+        } else {
+          numTriangles = indices.length / 3;
+        }
+      } else {
+        if (vertices.length % 6) {
+          throwError('ArgumentError', Errors.InvalidParamError);
+        } else {
+          numTriangles = vertices.length / 6;
+        }
+      }
+
+      // check for valid uv data count
+      var numStrides = 0;
+      if (uvtData) {
+        if ( uvtData.length == numVertices * 2 ) {
+          numStrides = 2;
+        }
+        else if ( uvtData.length == numVertices * 3 ) {
+          numStrides = 3;
+        }
+        else {
+          throwError('ArgumentError', Errors.InvalidParamError);
+        }
+      }
+
+      var culling = 0;
+      if ( cullingStr ===  'none' ) {
+        culling = 0;
+      } else if ( cullingStr === 'negative' ) {
+        culling = -1;
+      } else if ( cullingStr === 'positive' ) {
+        culling = 1;
+      } else {
+        throwError('ArgumentError', Errors.InvalidEnumError, 'culling');
+      }
+
       notImplemented("Graphics#drawTriangles");
+
     },
     endFill: function () {
       this.beginPath();

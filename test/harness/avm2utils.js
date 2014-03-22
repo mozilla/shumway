@@ -16,14 +16,17 @@
  * limitations under the License.
  */
 
-enableVerifier.value = true;
-enableC4.value = true;
+Shumway.AVM2.Runtime.enableVerifier.value = true;
 release = true;
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
 var builtinPath = avm2Root + "generated/builtin/builtin.abc";
 var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
-var playerGlobalPath = SHUMWAY_ROOT + "flash/playerglobal.abc";
+
+var playerglobalInfo = {
+  abcs: WEB_ROOT + "../build/playerglobal/playerglobal.abcs",
+  catalog: WEB_ROOT + "../build/playerglobal/playerglobal.json"
+};
 
 var BinaryFileReader = (function binaryFileReader() {
   function constructor(url, responseType) {
@@ -98,49 +101,16 @@ var BinaryFileReader = (function binaryFileReader() {
   return constructor;
 })();
 
-var libraryAbcs;
-function grabAbc(abcName) {
-  var entry = libraryScripts[abcName];
-  if (entry) {
-    var offset = entry.offset;
-    var length = entry.length;
-    return new AbcFile(new Uint8Array(libraryAbcs, offset, length), abcName);
-  }
-  return null;
-}
-
-function findDefiningAbc(mn) {
-  if (!avm2.builtinsLoaded) {
-    return null;
-  }
-  var name;
-  for (var i = 0; i < mn.namespaces.length; i++) {
-    var name = mn.namespaces[i].originalURI + ":" + mn.name;
-    var abcName = playerGlobalNames[name];
-    if (abcName) {
-      break;
-    }
-  }
-  if (abcName) {
-    return grabAbc(abcName);
-  }
-  return null;
-}
-
 // avm2 must be global.
 var avm2;
 var sanityTests = [];
-var libraryScripts = playerGlobalScripts;    // defined in playerglobal.js
-var libraryNames = playerGlobalNames;        // ditto
 
 function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
   assert (builtinPath);
-  avm2 = new AVM2(sysMode, appMode, findDefiningAbc, loadAVM1);
-  var builtinAbc, libraryAbc, avm1Abc;
+  avm2 = new AVM2(sysMode, appMode, loadAVM1);
+  var builtinAbc, avm1Abc;
 
-  // Batch I/O requests.
-  new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
-    libraryAbcs = buffer;
+  AVM2.loadPlayerglobal(libraryPath.abcs, libraryPath.catalog).then(function () {
     new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
       builtinAbc = new AbcFile(new Uint8Array(buffer), "builtin.abc");
       executeAbc();

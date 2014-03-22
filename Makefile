@@ -17,13 +17,11 @@ default:
 	@echo "           build-playerglobal|build-extension|build-bundle|build-web|"
 	@echo "           run-tamarin-tests|run-tamarin-sanity-tests|check-extension|"
 	@echo "           test|push-test|build-bot|start-build-bot|update-flash-refs|"
-	@echo "           install-tamarin|bootstrap]"
+	@echo "           install-avmshell|install-tamarin-src|bootstrap]"
 
 check-system:
 	echo "Checking the presence of grunt-cli..."
 	grunt --version
-	echo "Checking the presence of wget..."
-	wget --version
 	echo "Checking the presence of java..."
 	java -version
 	echo "Checking the presence of node..."
@@ -33,7 +31,7 @@ check-system:
 	fi
 	echo "The environment is good"
 
-bootstrap: check-system install-libs install-utils build-playerglobal
+bootstrap: check-system install-libs install-utils build-libs build-playerglobal
 
 install-libs:
 	git submodule init
@@ -41,18 +39,21 @@ install-libs:
 
 install-utils: check-system
 	npm install
-	make -C utils/ install-asc install-closure install-js install-node-modules install-flex-sdk
+	make -C utils/ install-avmshell install-js
 
-install-tamarin: check-system
+install-avmshell:
+	make -C utils/ install-avmshell
+
+install-tamarin-src: check-system
 	echo "Checking the presence of mercurial..."
 	hg --version
-	make -C utils/ install-tamarin install-tamarin-tests
+	make -C utils/ install-tamarin-src install-tamarin-tests
 
 BASE ?= $(error ERROR: Specify BASE that points to the Shumway folder with installed utils)
 
 link-utils:
 	ln -s $(BASE)/node_modules .
-	ln -s $(BASE)/utils/asc.jar $(BASE)/utils/cc.jar $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell $(BASE)/utils/node_modules utils/
+	ln -s $(BASE)/utils/tamarin-redux $(BASE)/utils/jsshell utils/
 
 run-tamarin-sanity-tests:
 	make -C utils/ run-tamarin-sanity-tests
@@ -60,15 +61,21 @@ run-tamarin-sanity-tests:
 run-tamarin-tests:
 	make -C utils/ run-tamarin-tests
 
+build-libs:
+	grunt avm2 avm1
+
 build-playerglobal:
 	make -C utils/ build-playerglobal
+
+build-playerglobal-fp:
+	make -C utils/ build-playerglobal-fp
 
 build-playerglobal-min:
 	make -C utils/ install-apparat
 	make -C utils/playerglobal build-min
 
 build-bundle:
-	make -C utils/builder build
+	grunt build-bundle
 
 build-extension: build-bundle
 	make -C extension/firefox/ build
@@ -87,7 +94,7 @@ MXMLC = ./utils/flex_sdk/bin/mxmlc $(MXMLC_FLAGS)
 	$(MXMLC) $<
 
 update-flash-refs:
-	grint update-flash-refs
+	grunt update-flash-refs
 
 test-avm1:
 	make -C src/avm1/tests/ test

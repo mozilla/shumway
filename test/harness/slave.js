@@ -16,7 +16,10 @@
  * limitations under the License.
  */
 
-turboMode.value = true;
+// turbo mode introduces intermittent failures in timeline and timeline_scene
+// tests since frames are not parsed fast enough for gotoAndPlay/gotoAndStop
+// turboMode.value = true;
+
 skipFrameDraw.value = false;
 
 function loadMovie(path, reportFrames) {
@@ -43,7 +46,7 @@ function loadMovie(path, reportFrames) {
     };
   }
 
-  createAVM2(builtinPath, playerGlobalPath, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+  createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
     function loaded() { movieReadyResolve(); }
     function terminate() {
       ignoreAdanvances = true;
@@ -68,7 +71,8 @@ function loadMovie(path, reportFrames) {
       }
       SWF.embed(buffer, document, document.getElementById("stage"), {
         url: path,
-        onComplete: loaded,
+        startPromise: movieReady,
+        onParsed: loaded,
         onAfterFrame: onFrameCallback,
         onTerminated: terminate
       });
@@ -101,7 +105,7 @@ function loadScripts(files) {
 }
 
 function runSanityTests(tests) {
-  createAVM2(builtinPath, playerGlobalPath, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+  createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
     sendResponse();
     for (var i = 0; i < tests.length; i++) {
       var failed = false;

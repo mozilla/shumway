@@ -19,29 +19,34 @@ GENERIC_DIR = ../../build/bundle
 
 # Just builds a ff extension
 
-VERSION_BASELINE=53e176ef900a83e379
-VERSION=0.7.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
+VERSION_BASELINE=9c77cb929464c1bca343f4
+VERSION=0.8.`git log --format=oneline $(VERSION_BASELINE)..|wc -l|tr -d ' '`
+VERSION_SHA=`git log --format="%h" -n 1`
 
-build: ensureoutputdir ../src/flash/playerglobal.abc
+build: ensureoutputdir ../../build/playerglobal/playerglobal.abcs
 	# Coping extension files
 	echo "Creating extension verions: $(VERSION)"
 	cp -R ../../LICENSE content bootstrap.js $(BUILD_DIR)/
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ install.rdf > $(BUILD_DIR)/install.rdf
 	sed s/\(SHUMWAY_VERSION\)/$(VERSION)/ update.rdf > $(BUILD_DIR)/update.rdf
 	# Coping JavaScript content files
-	mkdir -p $(BUILD_DIR)/content/flash
-	cp ../../src/flash/playerglobal.abc $(BUILD_DIR)/content/flash/
+	mkdir -p $(BUILD_DIR)/content/playerglobal
+	cp ../../build/playerglobal/playerglobal.json $(BUILD_DIR)/content/playerglobal/
+	cp ../../build/playerglobal/playerglobal.abcs $(BUILD_DIR)/content/playerglobal/
 	mkdir -p $(BUILD_DIR)/content/avm2/generated/builtin
 	cp ../../src/avm2/generated/builtin/builtin.abc $(BUILD_DIR)/content/avm2/generated/builtin/
 	mkdir -p $(BUILD_DIR)/content/avm2/generated/avm1lib
 	cp ../../src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_DIR)/content/avm2/generated/avm1lib/
 	# Coping shumway.js files
 	cp $(GENERIC_DIR)/shumway*.js $(BUILD_DIR)/content/
+	echo $(VERSION) > $(BUILD_DIR)/content/version.txt
+	echo $(VERSION_SHA) >> $(BUILD_DIR)/content/version.txt
+	echo "extension" >> $(BUILD_DIR)/content/version.txt
 	# Packaging XPI file
 	cd $(BUILD_DIR); zip -r shumway.xpi *
 
-../src/flash/playerglobal.abc:
-	$(MAKE) -C ../../utils build-playerglobal
+../../build/playerglobal/playerglobal.abcs:
+	make -C $(UTILS_HOME) build-playerglobal
 
 ensureoutputdir: clean
 	-mkdir -p $(BUILD_DIR)

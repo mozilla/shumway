@@ -184,7 +184,7 @@ var StageDefinition = (function () {
 
       var firstRun = true;
       var frameCount = 0;
-      var frameFPSAverage = new metrics.Average(120);
+      var frameFPSAverage = new Shumway.Metrics.Average(120);
 
       var frameRequested = true;
 
@@ -610,6 +610,9 @@ var StageDefinition = (function () {
           displayState: {
             get: function displayState() { // (void) -> String
               return this._displayState;
+            },
+            set: function displayState(value) { // (value:String) -> void
+              this._displayState = value;
             }
           },
           simulatedDisplayState: {

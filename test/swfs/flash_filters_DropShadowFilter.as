@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf DropShadowFilterTest,600,600 test/swfs/flash_filters_DropShadowFilter.as
+   node utils/compileabc.js --swf DropShadowFilterTest,600,600,60 -p test/swfs/flash_filters_DropShadowFilter.as
 */
 
 package {
@@ -13,7 +13,6 @@ package {
     public class DropShadowFilterTest extends Sprite {
         public var loader;
         public function DropShadowFilterTest() {
-            stage.frameRate = 30;
             var child = new TestObject();
             background(0xFFFFFF);
             addEventListener(Event.ENTER_FRAME, child.enterFrameHandler);

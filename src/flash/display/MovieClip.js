@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 /*global MP3DecoderSession, avm1lib, construct, URL, Blob, PLAY_USING_AUDIO_TAG, $DEBUG,
-         TelemetryService */
+         TelemetryService, MediaSource */
 
 var MovieClipDefinition = (function () {
   var def = {
@@ -190,7 +190,7 @@ var MovieClipDefinition = (function () {
             }
 
             if (nextCmd.blend) {
-              currentChild.blendMode = this._resolveBlendMode(nextCmd.blendMode);
+              currentChild._blendMode = this._resolveBlendMode(nextCmd.blendMode);
             }
           }
 
@@ -397,56 +397,10 @@ var MovieClipDefinition = (function () {
       this._startSoundRegistrations[frameNum] = starts;
     },
     _initSoundStream: function (streamInfo) {
-      var soundStream = this._soundStream = {
-        data: {
-          sampleRate: streamInfo.sampleRate,
-          channels: streamInfo.channels
-        },
-        seekIndex: [],
-        position: 0
-      };
-      var isMP3 = streamInfo.format === 'mp3';
-      if (isMP3 && PLAY_USING_AUDIO_TAG) {
-        var element = document.createElement('audio');
-        if (element.canPlayType('audio/mpeg')) {
-          soundStream.element = element;
-          soundStream.rawFrames = [];
-          return;
-        }
-      }
-      soundStream.data.pcm = new Float32Array(streamInfo.samplesCount * streamInfo.channels);
-      if (isMP3) {
-        soundStream.decoderPosition = 0;
-        soundStream.decoderSession = new MP3DecoderSession();
-        soundStream.decoderSession.onframedata = function (frameData) {
-          var position = soundStream.decoderPosition;
-          soundStream.data.pcm.set(frameData, position);
-          soundStream.decoderPosition = position + frameData.length;
-        }.bind(this);
-        soundStream.decoderSession.onerror = function (error) {
-          console.error('ERROR: MP3DecoderSession: ' + error);
-        };
-        // TODO close the session somewhere
-      }
+      this._soundStream = new MovieClipSoundStream(streamInfo, this);
     },
     _addSoundStreamBlock: function (frameNum, streamBlock) {
-      var soundStream = this._soundStream;
-      var streamPosition = soundStream.position;
-      soundStream.seekIndex[frameNum] = streamPosition +
-        streamBlock.seek * soundStream.data.channels;
-      soundStream.position = streamPosition +
-        streamBlock.samplesCount * soundStream.data.channels;
-      if (soundStream.rawFrames) {
-        soundStream.rawFrames.push(streamBlock.data);
-        return;
-      }
-
-      var decoderSession = soundStream.decoderSession;
-      if (decoderSession) {
-        decoderSession.pushAsync(streamBlock.data);
-      } else {
-        soundStream.data.pcm.set(streamBlock.pcm, streamPosition);
-      }
+      this._soundStream.appendBlock(frameNum, streamBlock);
     },
     _startSounds: function (frameNum) {
       var starts = this._startSoundRegistrations[frameNum];
@@ -474,7 +428,7 @@ var MovieClipDefinition = (function () {
 
           if (sound.channel) {
             sound.channel.stop();
-            delete sound.channel;
+            sound.channel = null;
           }
           if (!info.stop) {
             // TODO envelope, in/out point
@@ -483,49 +437,13 @@ var MovieClipDefinition = (function () {
           }
         }
       }
-      if (this._soundStream && !isNaN(this._soundStream.seekIndex[frameNum])) {
-        var PAUSE_WHEN_OF_SYNC_GREATER = 2.0;
-        var RESET_WHEN_OF_SYNC_GREATER = 4.0;
-        var soundStream = this._soundStream;
-        var element = soundStream.element;
-        if (element) {
-          var soundStreamData = soundStream.data;
-          var time = soundStream.seekIndex[frameNum] / soundStreamData.sampleRate / soundStreamData.channels;
-          if (this._complete && !soundStream.channel) {
-            var blob = new Blob(soundStream.rawFrames);
-            element.preload = 'metadata'; // for mobile devices
-            element.loop = false;
-            element.src = URL.createObjectURL(blob);
-
-            var symbolClass = flash.media.SoundChannel.class;
-            var channel = symbolClass.createAsSymbol({element: element});
-            symbolClass.instanceConstructor.call(channel);
-            soundStream.channel = channel;
-          } else if (!isNaN(element.duration) && element.currentTime > time + PAUSE_WHEN_OF_SYNC_GREATER &&
-            element.currentTime < time + RESET_WHEN_OF_SYNC_GREATER) {
-            element.pause();
-          } else if (!isNaN(element.duration) &&
-                     (element.paused || Math.abs(element.currentTime - time) > RESET_WHEN_OF_SYNC_GREATER)) {
-            if (Math.abs(element.currentTime - time) > PAUSE_WHEN_OF_SYNC_GREATER) {
-              element.pause();
-              element.currentTime = time;
-            }
-            element.play();
-          }
-        } else if (!soundStream.sound) {
-          // Start from some seek offset, stopping
-          var symbolClass = flash.media.Sound.class;
-          var sound = symbolClass.createAsSymbol(this._soundStream.data);
-          symbolClass.instanceConstructor.call(sound);
-          var channel = sound.play();
-          soundStream.sound = sound;
-          soundStream.channel = channel;
-        }
+      if (this._soundStream) {
+        this._soundStream.playFrame(frameNum);
       }
     },
 
     _getAS2Object: function () {
-      if (!this.$as2Object) {
+      if (!this._as2Object) {
         if (this._avm1SymbolClass) {
           // hacking wrapper to pass/initialize AS2MovieClip with nativeObject before AS2 constructor is run
           var nativeObject = this, nativeObjectClass = this._avm1SymbolClass;
@@ -536,12 +454,12 @@ var MovieClipDefinition = (function () {
           constructWrapper.prototype = Object.create(nativeObjectClass.prototype);
           constructWrapper.instanceConstructor = constructWrapper;
           constructWrapper.debugName = 'avm1 <symbol constructor wrapper>';
-          construct(constructWrapper);
+          construct(constructWrapper, []);
         } else {
           new avm1lib.AS2MovieClip(this);
         }
       }
-      return this.$as2Object;
+      return this._as2Object;
     },
 
     get currentFrame() {
@@ -720,3 +638,184 @@ var MovieClipDefinition = (function () {
 
   return def;
 }).call(this);
+
+var MovieClipSoundStream = (function () {
+  var MP3_MIME_TYPE = 'audio/mpeg';
+  function openMediaSource(soundStream, mediaSource) {
+    var sourceBuffer;
+    try {
+      sourceBuffer = mediaSource.addSourceBuffer(MP3_MIME_TYPE);
+      soundStream.mediaSource = mediaSource;
+      soundStream.sourceBuffer = sourceBuffer;
+      soundStream.rawFrames.forEach(function (data) {
+        sourceBuffer.appendBuffer(data);
+      });
+      delete soundStream.rawFrames;
+    } catch (e) {
+      console.error('MediaSource mp3 playback is not supported: ' + e);
+    }
+  }
+
+  function syncTime(element, movieClip) {
+    var initialized = false;
+    var startMediaTime, startRealTime;
+    element.addEventListener('timeupdate', function (e) {
+      if (!initialized) {
+        startMediaTime = element.currentTime;
+        startRealTime = performance.now();
+        initialized = true;
+        movieClip._stage._frameScheduler.startTrackDelta();
+        return;
+      }
+      var mediaDelta = element.currentTime - startMediaTime;
+      var realDelta = performance.now() - startRealTime;
+      movieClip._stage._frameScheduler.setDelta(realDelta - mediaDelta * 1000);
+    });
+    element.addEventListener('pause', function (e) {
+      movieClip._stage._frameScheduler.endTrackDelta();
+      initialized = false;
+    });
+    element.addEventListener('seeking', function (e) {
+      movieClip._stage._frameScheduler.endTrackDelta();
+      initialized = false;
+    });
+  }
+
+  function MovieClipSoundStream(streamInfo, movieClip) {
+    this.movieClip = movieClip;
+    this.data = {
+      sampleRate: streamInfo.sampleRate,
+      channels: streamInfo.channels
+    };
+    this.seekIndex = [];
+    this.position = 0;
+    var isMP3 = streamInfo.format === 'mp3';
+    if (isMP3 && PLAY_USING_AUDIO_TAG) {
+      var element = document.createElement('audio');
+      element.preload = 'metadata'; // for mobile devices
+      element.loop = false;
+      syncTime(element, movieClip);
+      if (element.canPlayType(MP3_MIME_TYPE)) {
+        this.element = element;
+        if (typeof MediaSource !== 'undefined') {
+          var mediaSource = new MediaSource();
+          mediaSource.addEventListener('sourceopen',
+            openMediaSource.bind(null, this, mediaSource));
+          element.src = URL.createObjectURL(mediaSource);
+        } else {
+          console.warn('MediaSource is not supported');
+        }
+        this.rawFrames = [];
+        return;
+      }
+    }
+    var totalSamples = streamInfo.samplesCount * streamInfo.channels;
+    this.data.pcm = new Float32Array(totalSamples);
+    if (isMP3) {
+      var soundStream = this;
+      soundStream.decoderPosition = 0;
+      soundStream.decoderSession = new MP3DecoderSession();
+      soundStream.decoderSession.onframedata = function (frameData) {
+        var position = soundStream.decoderPosition;
+        soundStream.data.pcm.set(frameData, position);
+        soundStream.decoderPosition = position + frameData.length;
+      }.bind(this);
+      soundStream.decoderSession.onerror = function (error) {
+        console.error('ERROR: MP3DecoderSession: ' + error);
+      };
+      // TODO close the session somewhere
+    }
+  }
+  MovieClipSoundStream.prototype = {
+    appendBlock: function (frameNum, streamBlock) {
+      var streamPosition = this.position;
+      this.seekIndex[frameNum] = streamPosition +
+        streamBlock.seek * this.data.channels;
+      this.position = streamPosition +
+        streamBlock.samplesCount * this.data.channels;
+
+      if (this.sourceBuffer) {
+        this.sourceBuffer.appendBuffer(streamBlock.data);
+        return;
+      }
+      if (this.rawFrames) {
+        this.rawFrames.push(streamBlock.data);
+        return;
+      }
+
+      var decoderSession = this.decoderSession;
+      if (decoderSession) {
+        decoderSession.pushAsync(streamBlock.data);
+      } else {
+        this.data.pcm.set(streamBlock.pcm, streamPosition);
+      }
+    },
+    playFrame: function (frameNum) {
+      if (isNaN(this.seekIndex[frameNum])) {
+        return;
+      }
+      var PAUSE_WHEN_OF_SYNC_GREATER = 1.0;
+      var PLAYBACK_ADJUSTMENT = 0.25;
+      var element = this.element;
+      if (element) {
+        var soundStreamData = this.data;
+        var time = this.seekIndex[frameNum] /
+          soundStreamData.sampleRate / soundStreamData.channels;
+        if (!this.channel && (this.movieClip._complete || this.sourceBuffer)) {
+          if (!this.sourceBuffer) {
+            var blob = new Blob(this.rawFrames);
+            element.src = URL.createObjectURL(blob);
+          }
+
+          var symbolClass = flash.media.SoundChannel.class;
+          var channel = symbolClass.createAsSymbol({element: element});
+          symbolClass.instanceConstructor.call(channel);
+          this.channel = channel;
+          this.expectedFrame = 0;
+          this.waitFor = 0;
+        } else if (this.sourceBuffer || !isNaN(element.duration)) {
+          if (this.mediaSource && this.movieClip._complete) {
+            this.mediaSource.endOfStream();
+            this.mediaSource = null;
+          }
+          var elementTime = element.currentTime;
+          if (this.expectedFrame !== frameNum) {
+            if (element.paused) {
+              element.play();
+              element.addEventListener('playing', function setTime(e) {
+                element.removeEventListener('playing', setTime);
+                element.currentTime = time;
+              });
+            } else {
+              element.currentTime = time;
+            }
+          } else if (this.waitFor > 0) {
+            if (this.waitFor <= time) {
+              if (element.paused) {
+                element.play();
+              }
+              this.waitFor = 0;
+            }
+          } else if (elementTime - time > PAUSE_WHEN_OF_SYNC_GREATER) {
+            console.warn('Sound is faster than frames by ' + (elementTime - time));
+            this.waitFor = elementTime - PLAYBACK_ADJUSTMENT;
+            element.pause();
+          } else if (time - elementTime > PAUSE_WHEN_OF_SYNC_GREATER) {
+            console.warn('Sound is slower than frames by ' + (time - elementTime));
+            element.currentTime = time + PLAYBACK_ADJUSTMENT;
+          }
+          this.expectedFrame = frameNum + 1;
+        }
+      } else if (!this.sound) {
+        // Start from some seek offset, stopping
+        var symbolClass = flash.media.Sound.class;
+        var sound = symbolClass.createAsSymbol(this.data);
+        symbolClass.instanceConstructor.call(sound);
+        var channel = sound.play();
+        this.sound = sound;
+        this.channel = channel;
+      }
+    }
+  };
+  return MovieClipSoundStream;
+})();

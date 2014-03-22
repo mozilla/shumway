@@ -358,25 +358,25 @@ var TextFieldDefinition = (function () {
         },
         multiline: {
           get: function multiline() { // (void) -> Boolean
-            return this._multiline;
+            return this._content.multiline;
           },
           set: function multiline(value) { // (value:Boolean) -> void
-            if (this._multiline === value) {
+            if (this._content.multiline === value) {
               return;
             }
-            this._multiline = value;
+            this._content.multiline = value;
             this.invalidateDimensions();
           }
         },
         textColor: {
           get: function textColor() { // (void) -> uint
-            return this._textColor;
+            return this._content.textColor;
           },
           set: function textColor(value) { // (value:uint) -> void
-            if (this._textColor === value) {
+            if (this._content.textColor === value) {
               return;
             }
-            this._textColor = value;
+            this._content.textColor = value;
             this._invalidate();
           }
         },
@@ -391,26 +391,26 @@ var TextFieldDefinition = (function () {
         },
         wordWrap: {
           get: function wordWrap() { // (void) -> Boolean
-            return this._wordWrap;
+            return this._content.wordWrap;
           },
           set: function wordWrap(value) { // (value:Boolean) -> void
-            if (this._wordWrap === value) {
+            if (this._content.wordWrap === value) {
               return;
             }
-            this._wordWrap = value;
+            this._content.wordWrap = value;
             this.invalidateDimensions();
           }
         },
         textHeight: {
           get: function textHeight() { // (void) -> Number
             this.ensureDimensions();
-            return this._textHeight;
+            return this._content.textHeight;
           }
         },
         textWidth: {
           get: function textWidth() { // (void) -> Number
             this.ensureDimensions();
-            return this._textWidth;
+            return this._content.textWidth;
           }
         },
         length: {
@@ -421,7 +421,7 @@ var TextFieldDefinition = (function () {
         numLines: {
           get: function numLines() { // (void) -> uint
             this.ensureDimensions();
-            return this._lines.length;
+            return this._content.lines.length;
           }
         },
         getLineMetrics: function(lineIndex) {
@@ -545,11 +545,11 @@ var TextFieldDefinition = (function () {
         },
         condenseWhite: {
           get: function condenseWhite() { // (void) -> Boolean
-            return this._condenseWhite;
+            return this._content.condenseWhite;
           },
           set: function condenseWhite(value) { // (value:Boolean) -> void
             somewhatImplemented("TextField.condenseWhite");
-            this._condenseWhite = value;
+            this._content.condenseWhite = value;
           }
         },
         sharpness: {

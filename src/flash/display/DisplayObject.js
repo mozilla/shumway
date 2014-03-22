@@ -280,7 +280,8 @@ var DisplayObjectDefinition = (function () {
       }
 
       if (targetCoordSpace && targetCoordSpace !== this._stage) {
-        m2 = targetCoordMatrix || targetCoordSpace._getConcatenatedTransform();
+        m2 = targetCoordMatrix ||
+             targetCoordSpace._getConcatenatedTransform(null, false);
 
         var a = 1, b = 0, c = 0, d = 1, tx = 0, ty = 0;
         if (m2.b || m2.c) {
@@ -322,14 +323,14 @@ var DisplayObjectDefinition = (function () {
       return m;
     },
     _applyCurrentTransform: function (pt) {
-      var m = this._getConcatenatedTransform();
+      var m = this._getConcatenatedTransform(null, false);
       var x = pt.x;
       var y = pt.y;
       pt.x = (m.a * x + m.c * y + m.tx)|0;
       pt.y = (m.d * y + m.b * x + m.ty)|0;
     },
     _applyConcatenatedInverseTransform: function (pt) {
-      var m = this._getConcatenatedTransform();
+      var m = this._getConcatenatedTransform(null, false);
       var det = 1 / (m.a * m.d - m.b * m.c);
       var x = pt.x - m.tx;
       var y = pt.y - m.ty;
@@ -380,7 +381,7 @@ var DisplayObjectDefinition = (function () {
           var child = children[i];
           // FIXME first condition avoids crash in second expression. This
           // issue does not occur in Chrome or FF22, but does in FF23.0.1.
-          if (child._hitTest && child._hitTest(true, x, y, true)) {
+          if (child._hitTest && child._hitTest(true, x, y, true, null)) {
             return true;
           }
         }
@@ -905,6 +906,10 @@ var DisplayObjectDefinition = (function () {
           for (var i = 0; i < numChildren; i++) {
             var child = children[i];
 
+            if (!flash.display.DisplayObject.class.isInstanceOf(child)) {
+              continue;
+            }
+
             var b = child.getBounds(this);
 
             var x1 = b.xMin;
@@ -969,7 +974,7 @@ var DisplayObjectDefinition = (function () {
       var m = targetCoordSpace &&
               !flash.display.DisplayObject.class.isInstanceOf(targetCoordSpace) ?
                 targetCoordSpace :
-                this._getConcatenatedTransform(targetCoordSpace);
+                this._getConcatenatedTransform(targetCoordSpace, false);
 
       var x0 = (m.a * xMin + m.c * yMin + m.tx)|0;
       var y0 = (m.b * xMin + m.d * yMin + m.ty)|0;

@@ -26,6 +26,12 @@ if (typeof performance === 'undefined') {
 
 var SHUMWAY_ROOT = "../src/";
 
+var viewerPlayerglobalInfo = {
+  abcs: "../build/playerglobal/playerglobal.abcs",
+  catalog: "../build/playerglobal/playerglobal.json"
+};
+
+
 function parseQueryString(qs) {
   if (!qs)
     return {};
@@ -117,6 +123,9 @@ var FileLoadingService = {
 };
 
 function parseSwf(url, movieParams, objectParams, compilerSettings) {
+  var enableVerifier = Shumway.AVM2.Runtime.enableVerifier;
+  var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
+
   enableVerifier.value = compilerSettings.verifier;
 
   console.log("Compiler settings: " + JSON.stringify(compilerSettings));
@@ -124,7 +133,7 @@ function parseSwf(url, movieParams, objectParams, compilerSettings) {
   function loaded() { }
   function frame(e) {}
 
-  createAVM2(builtinPath, playerGlobalPath, avm1Path,
+  createAVM2(builtinPath, viewerPlayerglobalInfo, avm1Path,
     compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     function (avm2) {

@@ -15,6 +15,11 @@
  */
 
 /**
+ * Check arguments and throw the appropriate errors.
+ */
+var checkArguments = true;
+
+/**
  * TypedArray Vector Template
  *
  * If you make any changes to this code you'll need to run it through the closure compiler:
@@ -40,7 +45,6 @@ function asCheckVectorGetNumericProperty(i, length) {
 }
 
 var TypedArrayVector = (function () {
-  // <<-- COPY FROM HERE
   var EXTRA_CAPACITY = 4;
   var INITIAL_CAPACITY = 10;
 
@@ -479,18 +483,17 @@ var TypedArrayVector = (function () {
     }
     return keys;
   };
-
-  // <<-- COPY UNTIL HERE
   return vector;
 })();
 
 var typedArrayVectorTemplate = 'var EXTRA_CAPACITY=4,INITIAL_CAPACITY=10,DEFAULT_VALUE=0;function vector(a,b){a|=0;this._fixed=!!b;this._buffer=new Int32Array(Math.max(INITIAL_CAPACITY,a+EXTRA_CAPACITY));this._offset=0;this._length=a}vector.callable=function(a){if(a instanceof vector)return a;var b=a.asGetProperty(void 0,"length");if(void 0!==b){for(var c=new vector(b,!1),d=0;d<b;d++)c.asSetNumericProperty(d,a.asGetPublicProperty(d));return c}unexpected()}; vector.prototype.internalToString=function(){for(var a="",b=this._offset,c=b+this._length,d=0;d<this._buffer.length;d++)d===b&&(a+="["),d===c&&(a+="]"),a+=this._buffer[d],d<this._buffer.length-1&&(a+=",");this._offset+this._length===this._buffer.length&&(a+="]");return a+": offset: "+this._offset+", length: "+this._length+", capacity: "+this._buffer.length};vector.prototype.toString=function(){for(var a="",b=0;b<this._length;b++)a+=this._buffer[this._offset+b],b<this._length-1&&(a+=",");return a}; vector.prototype._view=function(){return this._buffer.subarray(this._offset,this._offset+this._length)};vector.prototype._ensureCapacity=function(a){var b=this._offset+a;b<this._buffer.length||(a<=this._buffer.length?(b=this._buffer.length-a>>2,this._buffer.set(this._view(),b),this._offset=b):(a=3*this._buffer.length>>2,a<b&&(a=b),b=new Int32Array(a),b.set(this._buffer,0),this._buffer=b))}; vector.prototype.every=function(a,b){for(var c=0;c<this._length;c++)if(!a.call(b,this.asGetNumericProperty(c),c,this))return!1;return!0};vector.prototype.filter=function(a,b){for(var c=new vector,d=0;d<this._length;d++)a.call(b,this.asGetNumericProperty(d),d,this)&&c.push(this.asGetNumericProperty(d));return c}; vector.prototype.some=function(a,b){2!==arguments.length?throwError("ArgumentError",Errors.WrongArgumentCountError):isFunction(a)||throwError("ArgumentError",Errors.CheckTypeFailedError);for(var c=0;c<this._length;c++)if(a.call(b,this.asGetNumericProperty(c),c,this))return!0;return!1};vector.prototype.forEach=function(a,b){for(var c=0;c<this._length;c++)a.call(b,this.asGetNumericProperty(c),c,this)};vector.prototype.join=function(a){notImplemented("TypedArrayVector.join")}; vector.prototype.indexOf=function(a,b){notImplemented("TypedArrayVector.indexOf")};vector.prototype.lastIndexOf=function(a,b){notImplemented("TypedArrayVector.lastIndexOf")};vector.prototype.map=function(a,b){isFunction(a)||throwError("ArgumentError",Errors.CheckTypeFailedError);for(var c=new vector,d=0;d<this._length;d++)c.push(a.call(b,this.asGetNumericProperty(d),d,this));return c}; vector.prototype.push=function(){this._checkFixed();this._ensureCapacity(this._length+arguments.length);for(var a=0;a<arguments.length;a++)this._buffer[this._offset+this._length++]=arguments[a]};vector.prototype.pop=function(){this._checkFixed();if(0===this._length)return DEFAULT_VALUE;this._length--;return this._buffer[this._offset+this._length]};vector.prototype.reverse=function(){for(var a=this._offset,b=this._offset+this._length-1,c=this._buffer;a<b;){var d=c[a];c[a]=c[b];c[b]=d;a++;b--}}; vector.CASEINSENSITIVE=1;vector.DESCENDING=2;vector.UNIQUESORT=4;vector.RETURNINDEXEDARRAY=8;vector.NUMERIC=16;function defaultCompareFunction(a,b){return String(a).localeCompare(String(b))} function compare(a,b,c,d){assertNotImplemented(!(c&vector.CASEINSENSITIVE),"CASEINSENSITIVE");assertNotImplemented(!(c&vector.UNIQUESORT),"UNIQUESORT");assertNotImplemented(!(c&vector.RETURNINDEXEDARRAY),"RETURNINDEXEDARRAY");var f=0;d||(d=defaultCompareFunction);c&vector.NUMERIC?(a=toNumber(a),b=toNumber(b),f=a<b?-1:a>b?1:0):f=d(a,b);c&vector.DESCENDING&&(f*=-1);return f} function _sort(a){for(var b=[],c=-1,d=0,f=a.length-1,e,g,h,k;;)if(100>=f-d){for(g=d+1;g<=f;g++){h=a[g];for(e=g-1;e>=d&&a[e]>h;)a[e+1]=a[e--];a[e+1]=h}if(-1==c)break;f=b[c--];d=b[c--]}else{k=d+f>>1;e=d+1;g=f;h=a[k];a[k]=a[e];a[e]=h;a[d]>a[f]&&(h=a[d],a[d]=a[f],a[f]=h);a[e]>a[f]&&(h=a[e],a[e]=a[f],a[f]=h);a[d]>a[e]&&(h=a[d],a[d]=a[e],a[e]=h);for(k=a[e];;){do e++;while(a[e]<k);do g--;while(a[g]>k);if(g<e)break;h=a[e];a[e]=a[g];a[g]=h}a[d+1]=a[g];a[g]=k;f-e+1>=g-d?(b[++c]=e,b[++c]=f,f=g-1):(b[++c]=d, b[++c]=g-1,d=e)}return a}vector.prototype._sortNumeric=function(a){_sort(this._view());a&&this.reverse()};vector.prototype.sort=function(){if(0===arguments.length)return Array.prototype.sort.call(this._view());var a,b=0;arguments[0]instanceof Function?a=arguments[0]:isNumber(arguments[0])&&(b=arguments[0]);isNumber(arguments[1])&&(b=arguments[1]);if(b&TypedArrayVector.NUMERIC)return this._sortNumeric(b&vector.DESCENDING);Array.prototype.sort.call(this._view(),function(c,d){return compare(c,d,b,a)})}; vector.prototype.asGetNumericProperty=function(a){checkArguments&&asCheckVectorGetNumericProperty(a,this._length);return this._buffer[this._offset+a]};vector.prototype.asSetNumericProperty=function(a,b){checkArguments&&asCheckVectorSetNumericProperty(a,this._length,this._fixed);a===this._length&&(this._ensureCapacity(this._length+1),this._length++);this._buffer[this._offset+a]=b};vector.prototype.shift=function(){this._checkFixed();if(0===this._length)return 0;this._length--;return this._buffer[this._offset++]}; vector.prototype._checkFixed=function(){this._fixed&&throwError("RangeError",Errors.VectorFixedError)};vector.prototype._slide=function(a){this._buffer.set(this._view(),this._offset+a);this._offset+=a};vector.prototype.unshift=function(){this._checkFixed();if(arguments.length){this._ensureCapacity(this._length+arguments.length);this._slide(arguments.length);this._offset-=arguments.length;this._length+=arguments.length;for(var a=0;a<arguments.length;a++)this._buffer[this._offset+a]=arguments[a]}}; vector.prototype.asGetEnumerableKeys=function(){if(vector.prototype===this)return Object.prototype.asGetEnumerableKeys.call(this);for(var a=[],b=0;b<this._length;b++)a.push(b);return a};vector.prototype.asHasProperty=function(a,b,c){if(vector.prototype===this||!isNumeric(b))return Object.prototype.asHasProperty.call(this,a,b,c);a=toNumber(b);return 0<=a&&a<this._length}; Object.defineProperty(vector.prototype,"length",{get:function(){return this._length},set:function(a){a>>>=0;if(a>this._length){this._ensureCapacity(a);for(var b=this._offset+this._length,c=this._offset+a;b<c;b++)this._buffer[b]=DEFAULT_VALUE}this._length=a}}); vector.prototype._spliceHelper=function(a,b,c,d,f){debugger;b=clamp(b,0,d.length-f);c=clamp(c,0,this._length-a);this._ensureCapacity(this._length-c+b);var e=this._offset+a+c,e=this._buffer.subarray(e,e+this._length-a-c);this._buffer.set(e,this._offset+a+b);this._length+=b-c;for(c=0;c<b;c++)this._buffer[this._offset+a+c]=d.asGetNumericProperty(f+c)}; vector.prototype.asGetEnumerableKeys=function(){if(vector.prototype===this)return Object.prototype.asGetEnumerableKeys.call(this);for(var a=[],b=0;b<this._length;b++)a.push(b);return a};';
 
-var Int32Vector  = new Function(typedArrayVectorTemplate.replace(/Int32Array/g, "Int32Array") + " return vector;")();
-var Uint32Vector = new Function(typedArrayVectorTemplate.replace(/Int32Array/g, "Uint32Array") + " return vector;")();
-var Float64Vector = new Function(typedArrayVectorTemplate.replace(/Int32Array/g, "Float64Array") + " return vector;")();
+// TODO: We should probably inline all the typed vectors instead of evaling them. Or,
+// we can at least eval them lazily so we don't pay a startup cost, which is about 1ms.
 
-Int32Vector = TypedArrayVector;
+var Int32Vector   = TypedArrayVector;
+var Uint32Vector  = new Function(originalStringReplace.call(typedArrayVectorTemplate,/Int32Array/g, "Uint32Array") + " return vector;")();
+var Float64Vector = new Function(originalStringReplace.call(typedArrayVectorTemplate,/Int32Array/g, "Float64Array") + " return vector;")();
 
 /*
  * Why all the ugly code duplication you may wonder? Well, it's to avoid polymorphic

@@ -26,6 +26,7 @@ limitations under the License.
     </style>
 
     <script>
+      WEB_ROOT = "../../";
       SHUMWAY_ROOT = "../../src/";
     </script>
 
@@ -35,8 +36,8 @@ limitations under the License.
     <script src="../../src/swf/Timeline.js"></script>
 
     <script>
-      var Option = options.Option;
-      var OptionSet = options.OptionSet;
+      var Option = Shumway.Options.Option;
+      var OptionSet = Shumway.Options.OptionSet;
       var coreOptions = new OptionSet("Core Options");
     </script>
 
@@ -67,35 +68,63 @@ limitations under the License.
     <script src="../../src/swf/parser.js"></script>
     <script src="../../src/swf/resourceloader.js"></script>
 
-    <!-- Load AVM1 Dependencies -->
-    <script src="../../src/avm1/stream.js"></script>
-    <script src="../../src/avm1/interpreter.js"></script>
-
     <script>
     </script>
 
     <!-- Load AVM2 Dependencies -->
+    <script src="../../src/avm2/global.js"></script>
+    <script src="../../src/avm2/utilities.js"></script>
     <script src="../../src/avm2/settings.js"></script>
     <script src="../../src/avm2/avm2Util.js"></script>
     <script src="../../src/avm2/metrics.js"></script>
 
     <script>
-      var Counter = new metrics.Counter(true);
-      var FrameCounter = new metrics.Counter(true);
-      var Timer = metrics.Timer;
+      var jsGlobal = (function() { return this || (1, eval)('this'); })();
+
+      var IndentingWriter = Shumway.IndentingWriter;
+      var Counter = new Shumway.Metrics.Counter(true);
+      var FrameCounter = new Shumway.Metrics.Counter(true);
+      var CanvasCounter = new Shumway.Metrics.Counter(true);
+      var Timer = Shumway.Metrics.Timer;
       var systemOptions = new OptionSet("System Options");
       var disassemble = systemOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
       var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 
-      window.print = function(s) {
-        console.log(s);
-      };
+      var nativeCreateElement = document.createElement;
+      document.createElement = function (x) {
+        Counter.count("createElement: " + x);
+        return nativeCreateElement.call(document, x);
+      }
+
     </script>
 
     <script src="../../src/avm2/constants.js"></script>
     <script src="../../src/avm2/errors.js"></script>
+
+    <script>
+      var Errors = Shumway.AVM2.Errors;
+      var getErrorMessage = Shumway.AVM2.getErrorMessage;
+      var formatErrorMessage = Shumway.AVM2.formatErrorMessage;
+      var translateErrorMessage = Shumway.AVM2.translateErrorMessage;
+    </script>
+
     <script src="../../src/avm2/opcodes.js"></script>
     <script src="../../src/avm2/parser.js"></script>
+
+    <script>
+      var AbcFile = Shumway.AVM2.ABC.AbcFile;
+      var AbcStream = Shumway.AVM2.ABC.AbcStream;
+      var ConstantPool = Shumway.AVM2.ABC.ConstantPool;
+      var ClassInfo = Shumway.AVM2.ABC.ClassInfo;
+      var MetaDataInfo = Shumway.AVM2.ABC.MetaDataInfo;
+      var InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
+      var ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+      var Trait = Shumway.AVM2.ABC.Trait;
+      var MethodInfo = Shumway.AVM2.ABC.MethodInfo;
+      var Multiname = Shumway.AVM2.ABC.Multiname;
+      var Namespace = Shumway.AVM2.ABC.Namespace;
+      var ASNamespace = Shumway.AVM2.ABC.Namespace;
+    </script>
     <script src="../../src/avm2/analyze.js"></script>
     <script src="../../src/avm2/compiler/lljs/src/estransform.js"></script>
     <script src="../../src/avm2/compiler/lljs/src/escodegen.js"></script>
@@ -105,36 +134,69 @@ limitations under the License.
     <script src="../../src/avm2/compiler/c4/looper.js"></script>
     <script src="../../src/avm2/compiler/c4/transform.js"></script>
     <script src="../../src/avm2/compiler/c4/backend.js"></script>
+
+    <script src="../../src/avm2/trampoline.js"></script>
+    <script src="../../src/avm2/bindings.js"></script>
+    <script src="../../src/avm2/scope.js"></script>
     <script src="../../src/avm2/domain.js"></script>
+
+    <script>
+      var Glue = Shumway.AVM2.Runtime.Glue;
+      var ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
+      var AVM2 = Shumway.AVM2.Runtime.AVM2;
+      var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
+    </script>
+
     <script src="../../src/avm2/class.js"></script>
+    <script>
+      var Class = Shumway.AVM2.Runtime.Class;
+      var Interface = Shumway.AVM2.Runtime.Interface;
+
+      var domainOptions = systemOptions.register(new OptionSet("ApplicationDomain Options"));
+      var traceClasses = domainOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
+      var traceDomain = domainOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
+      var playerglobal;
+      var playerglobalLoadedPromise;
+
+    </script>
     <script src="../../src/avm2/xregexp.js"></script>
     <script src="../../src/avm2/runtime.js"></script>
+    <script>
+      var CC = Shumway.AVM2.Runtime.CODE_CACHE;
+    </script>
+    <script src="../../src/avm2/runtime-exports.js"></script>
+    <script src="../../src/avm2/hacks.js"></script>
+    <script src="../../src/avm2/array.js"></script>
     <script src="../../src/avm2/vectors-numeric.js"></script>
     <script src="../../src/avm2/vectors-generic.js"></script>
-    <script src="../../src/avm2/array.js"></script>
     <script src="../../src/avm2/xml.js"></script>
-    <script src="../../src/avm2/json2.js"></script>
     <script src="../../src/avm2/amf.js"></script>
     <script src="../../src/avm2/proxy.js"></script>
     <script src="../../src/avm2/dictionary.js"></script>
     <script src="../../src/avm2/native.js"></script>
     <script src="../../src/avm2/disassembler.js"></script>
     <script src="../../src/avm2/interpreter.js"></script>
-    <script src="../../src/avm2/vm.js"></script>
 
-    <script src="../../src/flash/playerglobal.js"></script>
     <script src="avm2utils.js"></script>
+
+    <!-- Load AVM1 Dependencies -->
+    <script src="../../src/avm1/stream.js"></script>
+    <script src="../../src/avm1/parser.js"></script>
+    <script src="../../src/avm1/analyze.js"></script>
+    <script src="../../src/avm1/interpreter.js"></script>
 
     <!-- Load Flash Dependencies -->
 
+    <!-- Autogenerated avm1lib references: base=../../src/avm1lib/ -->
+    <script src="../../src/avm1lib/AS2Button.js"></script>
+    <script src="../../src/avm1lib/AS2Globals.js"></script>
+    <script src="../../src/avm1lib/AS2MovieClip.js"></script>
+    <script src="../../src/avm1lib/AS2MovieClipLoader.js"></script>
+    <script src="../../src/avm1lib/AS2TextField.js"></script>
+    <script src="../../src/avm1lib/AS2Utils.js"></script>
+    <!-- Autogenerated avm1lib references end -->
     <!-- Autogenerated flash references: base=../../src/flash/ -->
     <script src="../../src/flash/accessibility/Accessibility.js"></script>
-    <script src="../../src/flash/avm1lib/AS2Button.js"></script>
-    <script src="../../src/flash/avm1lib/AS2Globals.js"></script>
-    <script src="../../src/flash/avm1lib/AS2MovieClip.js"></script>
-    <script src="../../src/flash/avm1lib/AS2MovieClipLoader.js"></script>
-    <script src="../../src/flash/avm1lib/AS2TextField.js"></script>
-    <script src="../../src/flash/avm1lib/AS2Utils.js"></script>
     <script src="../../src/flash/display/Bitmap.js"></script>
     <script src="../../src/flash/display/BitmapData.js"></script>
     <script src="../../src/flash/display/DisplayObject.js"></script>

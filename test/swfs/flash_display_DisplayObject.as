@@ -1,7 +1,7 @@
 /* -*- Mode: java; indent-tabs-mode: nil -*- */
 /*
    Compiled with:
-   java -jar utils/asc.jar -import playerglobal.abc -swf DisplayObjectTest,600,600 test/swfs/flash_display_DisplayObject.as
+   node utils/compileabc.js --swf DisplayObjectTest,600,600,60 -p test/swfs/flash_display_DisplayObject.as
 */
 
 package {
@@ -10,7 +10,6 @@ package {
 
     public class DisplayObjectTest extends Sprite {
         public function DisplayObjectTest() {
-            stage.frameRate = 20;
             var child:CustomDisplayObject = new CustomDisplayObject();
             addChild(child);
         }
