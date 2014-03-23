@@ -464,8 +464,8 @@ var DisplayObjectDefinition = (function () {
       message.writeFloatUnsafe(m.b);
       message.writeFloatUnsafe(m.c);
       message.writeFloatUnsafe(m.d);
-      message.writeIntUnsafe(m.tx / 20);
-      message.writeIntUnsafe(m.ty / 20);
+      message.writeFloatUnsafe(m.tx / 20);
+      message.writeFloatUnsafe(m.ty / 20);
 
       message.writeFloatUnsafe(this._alpha);
       message.writeIntUnsafe(!this._invisible);
@@ -494,10 +494,10 @@ var DisplayObjectDefinition = (function () {
         message.writeFloatUnsafe(cxform.greenMultiplier / 256);
         message.writeFloatUnsafe(cxform.blueMultiplier / 256);
         message.writeFloatUnsafe(cxform.alphaMultiplier / 256);
-        message.writeIntUnsafe(cxform.redOffset / 255);
-        message.writeIntUnsafe(cxform.greenOffset / 255);
-        message.writeIntUnsafe(cxform.blueOffset / 255);
-        message.writeIntUnsafe(cxform.alphaOffset / 255);
+        message.writeFloatUnsafe(cxform.redOffset / 255);
+        message.writeFloatUnsafe(cxform.greenOffset / 255);
+        message.writeFloatUnsafe(cxform.blueOffset / 255);
+        message.writeFloatUnsafe(cxform.alphaOffset / 255);
       } else {
         message.writeIntUnsafe(0);
       }

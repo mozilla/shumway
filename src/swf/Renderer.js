@@ -171,7 +171,7 @@ function handleRenderMessages(renderer, layers, i32, sync) {
       var renderable = renderer._renderables[renderableId];
 
       var transform = new Shumway.Geometry.Matrix(
-        f32[p++], f32[p++], f32[p++], f32[p++], i32[p++], i32[p++]
+        f32[p++], f32[p++], f32[p++], f32[p++], f32[p++], f32[p++]
       );
       var alpha = f32[p++];
       var visible = !!i32[p++];
@@ -185,7 +185,7 @@ function handleRenderMessages(renderer, layers, i32, sync) {
         colorTransform =
           Shumway.Layers.ColorTransform.fromMultipliersAndOffsets(
             f32[p++], f32[p++], f32[p++], f32[p++],
-            i32[p++], i32[p++], i32[p++], i32[p++]
+            f32[p++], f32[p++], f32[p++], f32[p++]
           );
       }
 
