@@ -690,18 +690,6 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASNamespace extends ASObject {
-    public static staticNatives: any [] = null;
-    public static instanceNatives: any [] = null
-
-    public static instanceConstructor: any = function(prefix: string = undefined, uri: string = undefined) {
-
-    }
-
-    get prefix(): any { notImplemented("get prefix"); return; }
-    get uri(): String { notImplemented("get uri"); return; }
-  }
-
   export class ASNumber extends ASObject {
     public static instanceConstructor: any = Number;
     public static callableConstructor: any = ASNumber.instanceConstructor;

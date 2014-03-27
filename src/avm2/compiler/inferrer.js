@@ -758,7 +758,6 @@ var Verifier = (function() {
 
       function findProperty(mn, strict) {
         if (mn instanceof MultinameType) {
-          if (mn.name === "Array") { debugger; }
           return Type.Any;
         }
         
@@ -779,7 +778,6 @@ var Verifier = (function() {
               return s;
             }
           } else {
-            if (mn.name === "Array") { debugger; }
             return Type.Any;
           }
         }
@@ -819,7 +817,6 @@ var Verifier = (function() {
           ti().object = LazyInitializer.create(resolved.script);
           return Type.from(resolved.script, domain);
         }
-        if (mn.name === "Array") { debugger; }
         return Type.Any;
       }
 

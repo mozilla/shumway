@@ -69,6 +69,9 @@ interface Object extends IProtocol {
   asIsNativePrototype: boolean;
   asOpenMethods: Shumway.Map<Function>;
   asIsClass: boolean;
+
+  // E4X
+  asDefaultNamepsace: Namespace;
 }
 
 interface Function {
@@ -126,7 +129,7 @@ module Shumway.AVM2.Runtime {
   /**
    * Allow overwriting of the native toString / valueOf with AS3 versions.
    */
-  var useSurrogates = false;
+  var useSurrogates = true;
 
   var callCounter = new Shumway.Metrics.Counter(true);
 

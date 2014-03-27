@@ -457,18 +457,18 @@ var isXMLType, isXMLName, XMLParser;
   function toString(node) {
     if (typeof node === "object" && node !== null) {
       switch (node.kind) {
-      case "text":
-      case "attribute":
-        return node.value;
-      default:
-        if (node.hasSimpleContent()) {
-          var str = "";
-          node.children.forEach(function (v, i) {
-            str += toString(v);
-          });
-          return str;
-        }
-        return toXMLString(node);
+        case "text":
+        case "attribute":
+          return node.value;
+        default:
+          if (node.hasSimpleContent()) {
+            var str = "";
+            node.children.forEach(function (v, i) {
+              str += toString(v);
+            });
+            return str;
+          }
+          return toXMLString(node);
       }
     } else {
       return String(node);

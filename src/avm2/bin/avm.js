@@ -293,7 +293,11 @@ function runAbcs(securityDomain, abcArrays) {
       } else if (compile.value) {
         compileQueue.push(abc);
       } else {
-        securityDomain.applicationDomain.executeAbc(abc);
+        try {
+          securityDomain.applicationDomain.executeAbc(abc);
+        } catch (x) {
+          print(x.stack);
+        }
       }
     }
   }

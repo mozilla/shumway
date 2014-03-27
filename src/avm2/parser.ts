@@ -885,7 +885,7 @@ module Shumway.AVM2.ABC {
       return release || assert(false, "Cannot find kind " + str);
     }
 
-    public static createNamespace(uri: string, prefix: string) {
+    public static createNamespace(uri: string, prefix: string = undefined) {
       return new Namespace(CONSTANT.Namespace, uri, prefix);
     }
 
