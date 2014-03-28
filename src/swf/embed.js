@@ -47,9 +47,13 @@ MessageCenter.subscribe('load', function (data) {
     root._dispatchEvent("added", undefined, true);
     root._dispatchEvent("addedToStage");
 
-    MessageCenter.post('init');
+    MessageCenter.post('init', { frameRate: stage._frameRate });
 
     stage._enterEventLoop();
+  });
+
+  loaderInfo._addEventListener('parsed', function () {
+    MessageCenter.post('parsed');
   });
 
   loaderInfo._addEventListener('complete', function () {
@@ -126,17 +130,17 @@ SWF.embed = function(file, doc, container, options) {
 
   MessageCenter.subscribe('init', function (data) {
     if (options.onStageInitialized) {
-      options.onStageInitialized({ _frameRate: 24 });
+      options.onStageInitialized({ _frameRate: data.frameRate });
     }
 
-    //var startPromise = options.startPromise || Promise.resolve();
-    //startPromise.then(function () {
-    //  renderStage(stage, ctx, options);
-    //});
+    var startPromise = options.startPromise || Promise.resolve();
+    startPromise.then(function () {
+      renderer.enterRenderingLoop();
+    });
   });
 
   if (options.onParsed) {
-    loaderInfo._addEventListener("parsed", function () {
+    MessageCenter.subscribe('parsed', function () {
       options.onParsed();
     });
   }

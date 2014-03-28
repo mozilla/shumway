@@ -159,8 +159,6 @@ function handleRenderMessages(renderer, layers, i32, sync) {
         new Shumway.Geometry.Matrix.createIdentity()
                                    .scale(contentsScaleFactor, contentsScaleFactor);
       layers[0] = stage;
-
-      renderer.enterRenderingLoop();
       break;
     case Renderer.MESSAGE_ADD_LAYER:
       var layerId = i32[p++];
@@ -363,11 +361,6 @@ Renderer.prototype.fitCanvas = function fitCanvas(container) {
 }
 
 Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
-  var timeline = new Timeline(document.getElementById("frameTimeline"));
-  timeline.setFrameRate(60);
-  timeline.refreshEvery(60);
-  Shumway.GL.timeline = timeline;
-
   Shumway.GL.SHADER_ROOT = "../../src/stage/shaders/";
 
   var canvas = this._canvas;
@@ -379,7 +372,7 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
   var sceneOptions = {
     redraw: 1,
     maxTextures: 4,
-    maxTextureSize: 1024 * 2,
+    maxTextureSize: 1024 * 4,
     useStencil: false,
     render: true,
     drawElements: true,
@@ -512,7 +505,7 @@ Renderer.prototype.defineRenderable = function defineRenderable(id, type,
         offset = (offset + 3) & ~0x3;
         if (tableType === 0x68686561) {
           fontInfo.ascent = view.getInt16(offset += 4) / 1024;
-          fontInfo.descent = view.getInt16(offset += 2) / 1024;
+          fontInfo.descent = -view.getInt16(offset += 2) / 1024;
           fontInfo.leading = view.getInt16(offset += 2) / 1024;
           fontInfo.height = fontInfo.ascent + fontInfo.descent + fontInfo.leading;
         } else if (tableType === 0x6e616d65) {
@@ -941,6 +934,11 @@ function RenderableBitmap(data, renderer, resolve) {
     drawable = document.createElement('canvas');
     drawable.width = width;
     drawable.height = height;
+
+    // draw
+
+    var imageData = drawable.getImageData(0, 0, width, height);
+    this.shared = imageData.data;
     break;
   }
 
@@ -1043,9 +1041,9 @@ function RenderableText(data, renderer, resolve) {
 
   var combinedAlign = content.calculateMetrics(width, height, true);
 
+  var diffX = 0;
   if (autoSize) {
     var targetWidth = content.textWidth;
-    var diffX = 0;
     if (combinedAlign !== 'mixed') {
       switch (ALIGN_TYPES[autoSize]) {
         case 'LEFT':
@@ -1061,11 +1059,13 @@ function RenderableText(data, renderer, resolve) {
     height = textHeight + 4;
   }
 
-  ////////////// SYNC WITH SCRIPT THREAD //////////////
-  // SEND lines
-  // SEND textWidth
-  // SEND textHeight
-  // SEND diffX
+  // TODO: serialize to binary message
+  this.shared = {
+    lines: content.lines,
+    textWidth: content.textWidth,
+    textHeight: content.textHeight,
+    diffX: diffX
+  };
 
   this.rect = new Shumway.Geometry.Rectangle(0, 0, width, height);
 
@@ -1890,8 +1890,8 @@ TextFieldContent.prototype = {
     this.renderer.resolveFont(initialFormat, embedFonts);
     this.lines = [];
     this._textRuns = [{type: 'f', format: initialFormat}];
-    var width = Math.max(width - 4, 1);
-    var height = Math.max(height - 4, 1);
+    var width = Math.max(width - 8, 1);
+    var height = Math.max(height - 8, 1);
     var state = {ctx: measureCtx, w: width, h: height, maxLineWidth: 0,
       formats: [initialFormat], currentFormat: initialFormat,
       line: new TextFieldContent.TextLine(0),
@@ -2208,16 +2208,16 @@ TextFieldContent.prototype = {
     for (var i = runs.length; i--;) {
       runs[i].y = baselinePos;
     }
-    var align = (state.currentFormat.align || '').toLowerCase();
+    var align = state.currentFormat.align || '';
     if (state.combinedAlign === null) {
       state.combinedAlign = align;
     } else if (state.combinedAlign !== align) {
       state.combinedAlign = 'mixed';
     }
     // TODO: maybe support justified text somehow
-    if (align === 'center' || align === 'right') {
+    if (align === 'CENTER' || align === 'RIGHT') {
       var offset = Math.max(state.w - line.width, 0);
-      if (align === 'center') {
+      if (align === 'CENTER') {
         offset >>= 1;
       }
       for (i = runs.length; i--;) {

@@ -86,9 +86,9 @@ var TextFieldDefinition = (function () {
       this._border = !!tag.border;
 
       switch (tag.align) {
-        case 1: initialFormat.align = 'right'; break;
-        case 2: initialFormat.align = 'center'; break;
-        case 3: initialFormat.align = 'justified'; break;
+        case 1: initialFormat.align = 'RIGHT'; break;
+        case 2: initialFormat.align = 'CENTER'; break;
+        case 3: initialFormat.align = 'JUSTIFIED'; break;
         default: // 'left' is pre-set
       }
 
@@ -140,7 +140,7 @@ var TextFieldDefinition = (function () {
       message.writeIntUnsafe(this._border ?
                                (this._borderColor << 8) & 0xff : 0);
       message.writeIntUnsafe(this._autoSize);
-      message.writeIntUnsafe(this._align);
+      message.writeIntUnsafe(ALIGN_TYPES.indexOf(textFormat.align));
       message.writeIntUnsafe(this._wordWrap);
       message.writeIntUnsafe(this._multiline);
       message.writeIntUnsafe(textFormat.leading);
@@ -164,7 +164,7 @@ var TextFieldDefinition = (function () {
 
     replaceText: function(begin, end, str) {
       // TODO: preserve formatting
-      var text = this._content.text;
+      var text = this._text;
       this.text = text.substring(0, begin) + str + text.substring(end);
     },
 
@@ -181,18 +181,19 @@ var TextFieldDefinition = (function () {
       }
 
       var bounds = this._bbox;
-      var lines = this._lines;
       var diffX = 0;
 
+      var that = this;
       var message = new BinaryMessage();
       message.syncRenderable(this, function (data) {
-         // UPDATE this._lines
-         // UPDATE this._textWidth
-         // UPDATE this._textHeight
-         // GET diffX
-
+         that._lines = data.lines;
+         that._textWidth = data.textWidth;
+         that._textHeight = data.textHeight;
+         diffX = data.diffX;
       });
       message.post('render', true);
+
+      var lines = this._lines;
 
       this._scrollV = 1;
       this._maxScrollV = 1;
@@ -311,20 +312,20 @@ var TextFieldDefinition = (function () {
       if (lineIndex < 0 || lineIndex >= this._lines.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
-      //var line = this._lines[lineIndex];
-      //var format = line.largestFormat;
-      //var metrics = format.font._metrics;
-      //var size = format.size;
-      //// Rounding for metrics seems to be screwy. A descent of 3.5 gets
-      //// rounded to 3, but an ascent of 12.8338 gets rounded to 13.
-      //// For now, round up for things slightly above .5.
-      //var ascent = metrics.ascent * size + 0.49999 | 0;
-      //var descent = metrics.descent * size + 0.49999 | 0;
-      ////var leading = metrics.leading * size + 0.49999 + line.leading | 0;
-      //// TODO: check if metrics values can be floats for embedded fonts
-      //return new flash.text.TextLineMetrics(line.x + 2, line.width,
-      //                                      line.height,
-      //                                      ascent, descent, leading);
+      var line = this._lines[lineIndex];
+      var format = line.largestFormat;
+      var metrics = format.font._metrics;
+      var size = format.size;
+      // Rounding for metrics seems to be screwy. A descent of 3.5 gets
+      // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
+      // For now, round up for things slightly above .5.
+      var ascent = metrics.ascent * size + 0.49999 | 0;
+      var descent = metrics.descent * size + 0.49999 | 0;
+      //var leading = metrics.leading * size + 0.49999 + line.leading | 0;
+      // TODO: check if metrics values can be floats for embedded fonts
+      return new flash.text.TextLineMetrics(line.x + 2, line.width,
+                                            line.height,
+                                            ascent, descent, leading);
     },
     getCharBoundaries: function getCharBoundaries(index) {
       somewhatImplemented("TextField.getCharBoundaries");
@@ -358,25 +359,25 @@ var TextFieldDefinition = (function () {
         },
         multiline: {
           get: function multiline() { // (void) -> Boolean
-            return this._content.multiline;
+            return this._multiline;
           },
           set: function multiline(value) { // (value:Boolean) -> void
-            if (this._content.multiline === value) {
+            if (this._multiline === value) {
               return;
             }
-            this._content.multiline = value;
+            this._multiline = value;
             this.invalidateDimensions();
           }
         },
         textColor: {
           get: function textColor() { // (void) -> uint
-            return this._content.textColor;
+            return this._textColor;
           },
           set: function textColor(value) { // (value:uint) -> void
-            if (this._content.textColor === value) {
+            if (this._textColor === value) {
               return;
             }
-            this._content.textColor = value;
+            this._textColor = value;
             this._invalidate();
           }
         },
@@ -391,26 +392,26 @@ var TextFieldDefinition = (function () {
         },
         wordWrap: {
           get: function wordWrap() { // (void) -> Boolean
-            return this._content.wordWrap;
+            return this._wordWrap;
           },
           set: function wordWrap(value) { // (value:Boolean) -> void
-            if (this._content.wordWrap === value) {
+            if (this._wordWrap === value) {
               return;
             }
-            this._content.wordWrap = value;
+            this._wordWrap = value;
             this.invalidateDimensions();
           }
         },
         textHeight: {
           get: function textHeight() { // (void) -> Number
             this.ensureDimensions();
-            return this._content.textHeight;
+            return this._textHeight;
           }
         },
         textWidth: {
           get: function textWidth() { // (void) -> Number
             this.ensureDimensions();
-            return this._content.textWidth;
+            return this._textWidth;
           }
         },
         length: {
@@ -421,7 +422,7 @@ var TextFieldDefinition = (function () {
         numLines: {
           get: function numLines() { // (void) -> uint
             this.ensureDimensions();
-            return this._content.lines.length;
+            return this._lines.length;
           }
         },
         getLineMetrics: function(lineIndex) {
@@ -545,11 +546,11 @@ var TextFieldDefinition = (function () {
         },
         condenseWhite: {
           get: function condenseWhite() { // (void) -> Boolean
-            return this._content.condenseWhite;
+            return this._condenseWhite;
           },
           set: function condenseWhite(value) { // (value:Boolean) -> void
             somewhatImplemented("TextField.condenseWhite");
-            this._content.condenseWhite = value;
+            this._condenseWhite = value;
           }
         },
         sharpness: {
