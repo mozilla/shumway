@@ -36,6 +36,12 @@ function saveInspectorState() {
 
   var gui = new dat.GUI({ autoPlace: false, width: 499 });
 
+  gui.add({
+    "Reset Options": function () {
+      delete window.localStorage[Shumway.Settings.ROOT];
+    }
+  }, "Reset Options");
+
   gui.domElement.addEventListener("click", function(e) {
     if (e.target.nodeName.toLowerCase() == "li" && e.target.classList.contains("title")) {
       var option = findOptionSetByName(e.target.textContent, shumwayOptions);

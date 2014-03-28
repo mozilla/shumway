@@ -19,7 +19,7 @@ module Shumway.Settings {
 
   declare var window;
 
-  var ROOT:string = "Shumway Options";
+  export var ROOT: string = "Shumway Options";
 
   export var shumwayOptions = new Shumway.Options.OptionSet(ROOT, load());
 
