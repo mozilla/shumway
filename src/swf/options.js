@@ -16,11 +16,11 @@
  * limitations under the License.
  */
 
-var rendererOptions = coreOptions.register(new OptionSet("Renderer Options"));
+var rendererOptions = shumwayOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
 var disableRendering = rendererOptions.register(new Option("drv", "disableRendering", "boolean", false, "disable rendering"));
 var disableMouse = rendererOptions.register(new Option("dmv", "disableMouse", "boolean", false, "disable mouse handling"));
-//var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
+// var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
 var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
 var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
 var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", true, "force hidpi"));
@@ -32,29 +32,33 @@ var enableConstructChildren = rendererOptions.register(new Option("", "construct
 var enableEnterFrame = rendererOptions.register(new Option("", "enterFrame", "boolean", true, "Enter Frame"));
 var enableAdvanceFrame = rendererOptions.register(new Option("", "advanceFrame", "boolean", true, "Advance Frame"));
 
-var stageOptions = coreOptions.register(new OptionSet("Stage Renderer Options"));
-var perspectiveCamera = stageOptions.register(new Option("", "pc", "boolean", false, "Use perspective camera."));
+var stageOptions = shumwayOptions.register(new OptionSet("Stage Renderer Options"));
 
-var perspectiveCameraFOV = stageOptions.register(new Option("", "pcFOV", "number", 60, "Perspective Camera FOV."));
-var perspectiveCameraDistance = stageOptions.register(new Option("", "pcDistance", "number", 2, "Perspective Camera Distance."));
-var perspectiveCameraAngle = stageOptions.register(new Option("", "pcAngle", "number", 0, "Perspective Camera Angle."));
-var perspectiveCameraAngleRotate = stageOptions.register(new Option("", "pcRotate", "boolean", false, "Rotate Use perspective camera."));
-var perspectiveCameraSpacing = stageOptions.register(new Option("", "pcSpacing", "number", 0.01, "Element Spacing."));
-var perspectiveCameraSpacingInflate = stageOptions.register(new Option("", "pcInflate", "boolean", false, "Rotate Use perspective camera."));
-
-var drawTiles = stageOptions.register(new Option("", "drawTiles", "boolean", false, "Draw Tiles."));
-var drawTextures = stageOptions.register(new Option("", "drawTextures", "boolean", false, "Draw Textures."));
-var drawTexture = stageOptions.register(new Option("", "drawTextures", "number", -1, "Draw Texture."));
-var drawElements = stageOptions.register(new Option("", "drawElements", "boolean", true, "Draw Elements."));
-var ignoreViewport = stageOptions.register(new Option("", "ignoreViewport", "boolean", false, "Ignore Viewport."));
-var ignoreColorTransform = stageOptions.register(new Option("", "ignoreColorTransform", "boolean", false, "Ignore Color Transform."));
-
-var clipDirtyRegions = stageOptions.register(new Option("", "clipDirtyRegions", "boolean", true, "Clip Dirty Regions."));
-var clipCanvas = stageOptions.register(new Option("", "clipCanvas", "boolean", true, "Clip Regions."));
-var cull = stageOptions.register(new Option("", "cull", "boolean", true, "cull."));
-var paintFlashing = stageOptions.register(new Option("", "paintFlashing", "boolean", false, "Paint Flashing."));
-var compositeMask = stageOptions.register(new Option("", "compositeMask", "boolean", true, "Composite Mask."));
-var disableMasking = stageOptions.register(new Option("", "disableMasking", "boolean", false, "Disable Masking."));
+var ignoreViewport = stageOptions.register(new Option("", "ignoreViewport", "boolean", false, "Cull elements outside of the viewport."));
+var ignoreColorTransform = stageOptions.register(new Option("", "ignoreColorTransform", "boolean", false, "Don't apply color transforms."));
 var debugStage = stageOptions.register(new Option("", "debugStage", "boolean", false, "Debug Stage."));
-var disableTextureUploads = stageOptions.register(new Option("", "disableTextureUploads", "boolean", false, "Disable texture uploads."));
+var disableMasking = stageOptions.register(new Option("", "disableMasking", "boolean", false, "Disable masking."));
 
+var useWebGL = stageOptions.register(new Option("", "useWebGL", "boolean", false, "Use WebGL"));
+
+var webGLOptions = stageOptions.register(new OptionSet("WebGL Options"));
+  var perspectiveCamera = webGLOptions.register(new Option("", "pc", "boolean", false, "Use perspective camera."));
+  var perspectiveCameraFOV = webGLOptions.register(new Option("", "pcFOV", "number", 60, "Perspective Camera FOV."));
+  var perspectiveCameraDistance = webGLOptions.register(new Option("", "pcDistance", "number", 2, "Perspective Camera Distance."));
+  var perspectiveCameraAngle = webGLOptions.register(new Option("", "pcAngle", "number", 0, "Perspective Camera Angle."));
+  var perspectiveCameraAngleRotate = webGLOptions.register(new Option("", "pcRotate", "boolean", false, "Rotate Use perspective camera."));
+  var perspectiveCameraSpacing = webGLOptions.register(new Option("", "pcSpacing", "number", 0.01, "Element Spacing."));
+  var perspectiveCameraSpacingInflate = webGLOptions.register(new Option("", "pcInflate", "boolean", false, "Rotate Use perspective camera."));
+
+  var drawTiles = webGLOptions.register(new Option("", "drawTiles", "boolean", false, "Draw WebGL Tiles"));
+  var drawTextures = webGLOptions.register(new Option("", "drawTextures", "boolean", false, "Draw WebGL Textures."));
+  var drawTexture = webGLOptions.register(new Option("", "drawTexture", "number", -1, "Draw WebGL Texture #"));
+  var drawElements = webGLOptions.register(new Option("", "drawElements", "boolean", true, "Actually call gl.drawElements. This is useful to test if the GPU is the bottleneck."));
+  var disableTextureUploads = webGLOptions.register(new Option("", "disableTextureUploads", "boolean", false, "Disable texture uploads."));
+
+var canvas2DOptions = stageOptions.register(new OptionSet("Canvas2D Options"));
+  var clipDirtyRegions = canvas2DOptions.register(new Option("", "clipDirtyRegions", "boolean", true, "Clip dirty regions."));
+  var clipCanvas = canvas2DOptions.register(new Option("", "clipCanvas", "boolean", true, "Clip Regions."));
+  var cull = canvas2DOptions.register(new Option("", "cull", "boolean", true, "Enable culling."));
+  var paintFlashing = canvas2DOptions.register(new Option("", "paintFlashing", "boolean", false, "Flash redrawn regions."));
+  var compositeMask = canvas2DOptions.register(new Option("", "compositeMask", "boolean", true, "Composite Mask."));

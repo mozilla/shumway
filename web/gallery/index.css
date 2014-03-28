@@ -104,3 +104,9 @@ body {
 #next > a {
   background-position: -36px 0;
 }
+
+.not-found {
+  color: #e44d26;
+  font-size: 16px;
+  font-weight: bold;
+}

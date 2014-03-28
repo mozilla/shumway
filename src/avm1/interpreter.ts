@@ -79,9 +79,9 @@ module Shumway.AVM1 {
     constructor(obj: string);
   }
 
-  declare var systemOptions: OptionSet;
+  declare var shumwayOptions: OptionSet;
 
-  var avm1Options = systemOptions.register(new OptionSet("AVM1 Options"));
+  var avm1Options = shumwayOptions.register(new OptionSet("AVM1"));
   export var avm1TraceEnabled = avm1Options.register(new Option("t1", "traceAvm1", "boolean", false, "trace AVM1 execution"));
   export var avm1ErrorsEnabled = avm1Options.register(new Option("e1", "errorsAvm1", "boolean", false, "fail on AVM1 errors"));
   export var avm1TimeoutDisabled = avm1Options.register(new Option("ha1", "nohangAvm1", "boolean", false, "disable fail on AVM1 hang"));
