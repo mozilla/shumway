@@ -264,8 +264,8 @@ module Shumway.AVM2.AS {
           }
           var t = n;
           while (t) {
-            for (var i = 0; i < t.inScopeNamespaces.length; i++) {
-              ns = t.inScopeNamespaces[i];
+            for (var i = 0; i < t._inScopeNamespaces.length; i++) {
+              ns = t._inScopeNamespaces[i];
               if (!namespaceDeclarations[ns.prefix]) {
                 namespaceDeclarations.push(ns);
                 namespaceDeclarations[ns.prefix] = true;  // flag inclusion
@@ -576,7 +576,7 @@ module Shumway.AVM2.AS {
           for (var i = 0; i < namespaces.length; ++i) {
             var rawNs = namespaces[i];
             var ns = Namespace.createNamespace(rawNs.uri, rawNs.prefix);
-            currentElement.inScopeNamespaces.push(ns);
+            currentElement._inScopeNamespaces.push(ns);
           }
           parent.insert(parent.length(), currentElement);
           if (isEmpty) {
@@ -755,13 +755,38 @@ module Shumway.AVM2.AS {
     get uri(): string {
       return this._ns.uri;
     }
+
   }
 
 
   export class ASQName extends ASNative {
+    public static callableStyle: CallableStyle = CallableStyle.PASSTHROUGH;
 
     public static instanceConstructor: any = ASQName;
 
+    /**
+     * 13.3.1 The QName Constructor Called as a Function
+     *
+     * QName ( )
+     * QName ( Name )
+     * QName ( Namespace , Name )
+     */
+    public static callableConstructor: any = function (a?: any, b?: any): ASQName {
+      // 1. If Namespace is not specified and Type(Name) is Object and Name.[[Class]] == “QName”
+      if (arguments.length === 1 && isObject(a) && a instanceof ASQName) {
+        // a. Return Name
+        return  a;
+      }
+      // 2. Create and return a new QName object exactly as if the QName constructor had been called with the same arguments (section 13.3.2).
+      switch (arguments.length) {
+        case 0:
+          return new ASQName();
+        case 1:
+          return new ASQName(a);
+        default:
+          return new ASQName(a, b);
+      }
+    };
 
     _mn: Multiname;
 
@@ -773,7 +798,7 @@ module Shumway.AVM2.AS {
      * new QName (Name)
      * new QName (Namespace, Name)
      */
-    constructor(a: any, b?: any, c?: boolean) {
+    constructor(a?: any, b?: any, c?: boolean) {
       false && super();
 
       var name;
@@ -1196,7 +1221,7 @@ module Shumway.AVM2.AS {
       notImplemented("public.XML::localName"); return;
     }
     name(): Object {
-      notImplemented("public.XML::name"); return;
+      return this._name;
     }
     private _namespace(prefix: any, argc: number /*int*/): any {
       argc = argc | 0;
@@ -1588,7 +1613,7 @@ module Shumway.AVM2.AS {
         if (match !== null && match.uri !== ns.uri) {
           self._inScopeNamespaces.forEach(function (v, i) {
             if (v.prefix === match.prefix) {
-              self.inScopeNamespaces[i] = ns;  // replace old with new
+              self._inScopeNamespaces[i] = ns;  // replace old with new
             }
           });
         }
