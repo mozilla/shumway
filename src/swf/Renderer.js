@@ -431,7 +431,6 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
     sceneOptions.disableMasking = disableMasking.value;
     sceneOptions.debug = debugStage.value;
     sceneOptions.compositeMask = compositeMask.value;
-    sceneOptions.useUploadCanvas = useUploadCanvas.value;
     sceneOptions.disableTextureUploads = disableTextureUploads.value;
 
     if (perspectiveCameraAngleRotate.value) {
@@ -676,6 +675,7 @@ function RenderableShape(data, renderer, resolve) {
   }
 }
 RenderableShape.prototype.isScalable = true;
+RenderableShape.prototype.isTileable = true;
 RenderableShape.prototype.getBounds = function getBounds() {
   return this.rect;
 };

@@ -56,6 +56,5 @@ var paintFlashing = stageOptions.register(new Option("", "paintFlashing", "boole
 var compositeMask = stageOptions.register(new Option("", "compositeMask", "boolean", true, "Composite Mask."));
 var disableMasking = stageOptions.register(new Option("", "disableMasking", "boolean", false, "Disable Masking."));
 var debugStage = stageOptions.register(new Option("", "debugStage", "boolean", false, "Debug Stage."));
-var useUploadCanvas = stageOptions.register(new Option("", "useUploadCanvas", "boolean", true, "Use temporary canvas.."));
 var disableTextureUploads = stageOptions.register(new Option("", "disableTextureUploads", "boolean", false, "Disable texture uploads."));
 

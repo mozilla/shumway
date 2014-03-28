@@ -766,26 +766,59 @@ module Shumway.GL {
       var inverseTransform = Matrix.createIdentity();
 
       function cacheImageCallback(oldTextureRegion: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {
-        // getImageData is incredibly slow, we are much better off copying the sub region into a canvas buffer
-        // and uploading that as a texture.
-        if (options.useUploadCanvas) {
-          self._uploadCanvas.width = srcBounds.w;
-          self._uploadCanvas.height = srcBounds.h;
-          self._uploadCanvasContext.drawImage(src.canvas, srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h, 0, 0, srcBounds.w, srcBounds.h);
-        }
+        /*
+         * To avoid seeming caused by linear texture sampling we need to pad each atlased image with a 1 pixel border that duplicates
+         * edge pixels, similar to CLAMP_TO_EDGE
+         *
+         * See the discussion here: http://gamedev.stackexchange.com/questions/61796/sprite-sheet-textures-picking-up-edges-of-adjacent-texture
+         *
+         * For the image:
+         *
+         *    +---+
+         *    |123|
+         *    |456|
+         *    |789|
+         *    +---+
+         *
+         * We instead create:
+         *
+         *  +-------+
+         *  |? 123 ?|
+         *  | +---+ |
+         *  |1|123|3|
+         *  |4|456|6|
+         *  |7|789|9|
+         *  | +---+ |
+         *  |? 789 ?|
+         *  +-------+
+         *
+         *  I don't know what to do about corners yet. Might not be a problem, I don't see any artifacts if they are left empty.
+         */
+
+        var w  = srcBounds.w;
+        var h  = srcBounds.h;
+        var sx = srcBounds.x;
+        var sy = srcBounds.y;
+
+        self._uploadCanvas.width  = w + 2;
+        self._uploadCanvas.height = h + 2;
+
+        // Draw Image
+        self._uploadCanvasContext.drawImage(src.canvas, sx, sy,         w, h, 1, 1,     w, h);
+
+        // Top & Bottom Margins
+        self._uploadCanvasContext.drawImage(src.canvas, sx, sy,         w, 1, 1, 0,     w, 1);
+        self._uploadCanvasContext.drawImage(src.canvas, sx, sy + h - 1, w, 1, 1, h + 1, w, 1);
+
+        // Left & Right Margins
+        self._uploadCanvasContext.drawImage(src.canvas, sx,         sy, 1, h, 0,     1, 1, h);
+        self._uploadCanvasContext.drawImage(src.canvas, sx + w - 1, sy, 1, h, w + 1, 1, 1, h);
+
         if (!oldTextureRegion) {
-          if (options.useUploadCanvas) {
-            return context.cacheImage(self._uploadCanvas);
-          } else {
-            return context.cacheImage(src.getImageData(srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h));
-          }
+          return context.cacheImage(self._uploadCanvas);
         } else {
           if (!options.disableTextureUploads) {
-            if (options.useUploadCanvas) {
-              context.updateTextureRegion(self._uploadCanvas, oldTextureRegion);
-            } else {
-              context.updateTextureRegion(src.getImageData(srcBounds.x, srcBounds.y, srcBounds.w, srcBounds.h), oldTextureRegion);
-            }
+            context.updateTextureRegion(self._uploadCanvas, oldTextureRegion);
           }
           return oldTextureRegion;
         }
@@ -839,7 +872,7 @@ module Shumway.GL {
               if (src && src.texture) {
                 context.textureRegionCache.put(src);
               }
-              if (!brush.drawImage(src, undefined, new Color(1, 1, 1, alpha), colorTransform, tileTransform, depth)) {
+              if (!brush.drawImage(src, new Rectangle(0, 0, tile.bounds.w, tile.bounds.h), new Color(1, 1, 1, alpha), colorTransform, tileTransform, depth)) {
                 unexpected();
               }
               if (options.drawTiles) {
@@ -1096,11 +1129,7 @@ module Shumway.GL {
       if (!src || !src.texture) {
         return true;
       }
-      if (!dstRectangle) {
-        dstRectangle = new Rectangle(0, 0, src.region.w, src.region.h);
-      } else {
-        dstRectangle = dstRectangle.clone();
-      }
+      dstRectangle = dstRectangle.clone();
       if (this._colorTransform) {
         if (!colorTransform || !this._colorTransform.equals(colorTransform)) {
           this.flush();
@@ -1113,15 +1142,18 @@ module Shumway.GL {
           this.flush();
         }
         this._textures.push(src.texture);
-//        if (this._textures.length > 8) {
-//          return false;
-//          notImplemented("Cannot handle more than 8 texture samplers.");
-//        }
+        // if (this._textures.length > 8) {
+        //   return false;
+        //   notImplemented("Cannot handle more than 8 texture samplers.");
+        // }
         sampler = this._textures.length - 1;
       }
       var tmpVertices = WebGLCombinedBrush._tmpVertices;
       var srcRectangle = src.region.clone();
-      srcRectangle.offset(0.5, 0.5).resize(-1, -1);
+
+      // TODO: This takes into the consideration the 1 pixel border added around tiles in the atlas. It should
+      // probably be moved elsewhere.
+      srcRectangle.offset(1, 1).resize(-2, -2);
       srcRectangle.scale(1 / src.texture.w, 1 / src.texture.h);
       transform.transformRectangle(dstRectangle, <Point[]><any>tmpVertices);
       for (var i = 0; i < 4; i++) {
