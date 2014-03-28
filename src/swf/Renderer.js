@@ -159,6 +159,8 @@ function handleRenderMessages(renderer, layers, i32, sync) {
         new Shumway.Geometry.Matrix.createIdentity()
                                    .scale(contentsScaleFactor, contentsScaleFactor);
       layers[0] = stage;
+
+      renderer.enterRenderingLoop();
       break;
     case Renderer.MESSAGE_ADD_LAYER:
       var layerId = i32[p++];
@@ -361,6 +363,7 @@ Renderer.prototype.fitCanvas = function fitCanvas(container) {
 }
 
 Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
+  Shumway.GL.timeline = timeline;
   Shumway.GL.SHADER_ROOT = "../../src/stage/shaders/";
 
   var canvas = this._canvas;
@@ -993,6 +996,7 @@ function RenderableText(data, renderer, resolve) {
   var width = xMax - xMin + 4;
   var height = yMax - yMin + 4;
 
+  var embedFont = !!data[p++];
   var fontId = data[p++];
   var bold = !!data[p++];
   var italic = !!data[p++];
@@ -1016,17 +1020,26 @@ function RenderableText(data, renderer, resolve) {
   var n = data[p++];
   var text = String.fromCharCode.apply(null, data.subarray(p, p + n));
 
-  var fontInfo = renderer._fonts[fontId];
-  var content = new TextFieldContent(renderer, { align: ALIGN_TYPES[align],
-                                                 font: null,
-                                                 bold: bold,
-                                                 italic: italic,
-                                                 face: fontInfo.name,
-                                                 size: size,
-                                                 letterSpacing: letterspacing,
-                                                 kerning: kerning,
-                                                 color: color >>> 0,
-                                                 leading: leading });
+  var format = { align: ALIGN_TYPES[align],
+                 font: null,
+                 bold: bold,
+                 italic: italic,
+                 // TODO: support device fonts
+                 face: 'serif',
+                 font: null,
+                 size: size,
+                 letterSpacing: letterspacing,
+                 kerning: kerning,
+                 color: color >>> 0,
+                 leading: leading };
+
+  if (embedFont) {
+    var fontInfo = renderer._fonts[fontId];
+    format.face = fontInfo.name;
+    format.font = fontInfo;
+  }
+
+  var content = new TextFieldContent(renderer, format);
 
   content.wordWrap = wordWrap;
   content.multiline = multiline;
@@ -1038,7 +1051,7 @@ function RenderableText(data, renderer, resolve) {
     content.text = text;
   }
 
-  var combinedAlign = content.calculateMetrics(width, height, true);
+  var combinedAlign = content.calculateMetrics(width, height, embedFont);
 
   var diffX = 0;
   if (autoSize) {
@@ -1053,9 +1066,7 @@ function RenderableText(data, renderer, resolve) {
         case 'RIGHT':
           diffX = width - targetWidth;
       }
-      width = targetWidth + 4;
     }
-    height = textHeight + 4;
   }
 
   // TODO: serialize to binary message
@@ -1063,7 +1074,9 @@ function RenderableText(data, renderer, resolve) {
     lines: content.lines,
     textWidth: content.textWidth,
     textHeight: content.textHeight,
-    diffX: diffX
+    diffX: diffX,
+    text: content._text,
+    htmlText: content._htmlText
   };
 
   this.rect = new Shumway.Geometry.Rectangle(0, 0, width, height);
@@ -2230,7 +2243,7 @@ TextFieldContent.prototype = {
   },
   _pushFormat: function(state, node) {
     var attributes = node.format;
-    var format = Object.create(state.formats[state.formats.length - 1]);
+    var format = cloneObject(state.formats[state.formats.length - 1]);
     var fontChanged = false;
     switch (node.type) {
       case 'P':
