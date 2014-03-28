@@ -36,7 +36,7 @@ var temp = require('temp');
 
 global.assert = function () { };
 global.release = false;
-var options = require("../options.js");
+var options = require("../../options.js");
 var ArgumentParser = options.Shumway.Options.ArgumentParser;
 var Option = options.Shumway.Options.Option;
 var OptionSet = options.Shumway.Options.OptionSet;

@@ -3,11 +3,28 @@
   var swfs = [];
   var swfIndex = 0;
 
-  getJSON("http://swf.codeazur.com.br/api/gallery.php", function(galleryJSON) {
+  var VIEWER_URL = "http://www.areweflashyet.com/shumway/iframe/viewer.html?forceHidpi=" + (isHidpi() ? 1 : 0) + "&swf=";
+  var ARCHIVE_URL = "http://swf.codeazur.com.br/archive/";
+  var GALLERY_API_URL = "http://swf.codeazur.com.br/api/gallery.php";
+
+  function isHidpi() {
+    if (window.matchMedia) {
+      var mq = window.matchMedia("only screen and (-moz-min-device-pixel-ratio: 1.3), " +
+                                 "only screen and (-o-min-device-pixel-ratio: 2.6/2), " +
+                                 "only screen and (-webkit-min-device-pixel-ratio: 1.3), " +
+                                 "only screen and (min-device-pixel-ratio: 1.3), " +
+                                 "only screen and (min-resolution: 1.3dppx)");
+      return mq && mq.matches;
+    }
+    return false;
+  }
+
+  getJSON(GALLERY_API_URL, function(galleryJSON) {
     if (galleryJSON && galleryJSON.swfs) {
       swfs = galleryJSON.swfs;
-      swfCount = swfs.length;
-      setup();
+      document.getElementById("prev").classList.add("active");
+      document.getElementById("next").classList.add("active");
+      window.addEventListener("hashchange", show, false);
       show();
     }
   });
@@ -31,54 +48,76 @@
     req.send(null);
   }
 
-  function setup() {
-    var elPrev = document.getElementById("prev");
-    var elNext = document.getElementById("next");
-    elPrev.classList.add("active");
-    elNext.classList.add("active");
-    elPrev.addEventListener("click", function(e) { prev(); e.preventDefault(); });
-    elNext.addEventListener("click", function(e) { next(); e.preventDefault(); });
-  }
-
-  function prev() {
-    if (swfIndex > 0) {
-      swfIndex--;
-    } else {
-      swfIndex = swfs.length - 1;
-    }
-    show();
-  }
-
-  function next() {
-    if (swfIndex < swfs.length - 1) {
-      swfIndex++;
-    } else {
-      swfIndex = 0;
-    }
-    show();
-  }
-
   function show() {
-    var swf = swfs[swfIndex];
+    var el;
     var container = document.getElementById("content");
-    var iframe = document.createElement("iframe");
-    iframe.setAttribute("src", "http://www.areweflashyet.com/shumway/iframe/viewer.html?swf=" + getSWFUrl(swf));
-    iframe.setAttribute("width", swf.width);
-    iframe.setAttribute("height", swf.height);
-    iframe.setAttribute("frameborder", "0");
     while (container.firstChild) {
       container.removeChild(container.firstChild);
     }
-    container.appendChild(iframe);
+    swfIndex = getIndexFromHash(window.location.hash);
+    if (swfIndex >= 0) {
+      var swf = swfs[swfIndex];
+      var url = VIEWER_URL + getSWFUrl(swf);
+      el = document.createElement("iframe");
+      el.setAttribute("src", url);
+      el.setAttribute("width", swf.width);
+      el.setAttribute("height", swf.height);
+      el.setAttribute("frameborder", "0");
+      el.setAttribute("style", "visibility: hidden");
+      el.setAttribute("onload", "this.style.visibility = 'visible'");
+    } else {
+      el = document.createElement("span");
+      el.textContent = "404 Not Found";
+      el.classList.add("not-found");
+    }
+    container.appendChild(el);
+    setHrefs();
   }
 
   function getSWFUrl(swf) {
-    return "http://swf.codeazur.com.br/archive/" +
+    return ARCHIVE_URL +
            swf.hash.substr(0, 2) + "/" +
            swf.hash.substr(2, 2) + "/" +
            swf.hash.substr(4, 2) + "/" +
            swf.hash.substr(6, 2) + "/" +
            swf.hash + ".swf";
+  }
+
+  function setHrefs() {
+    document.querySelector("#prev > a").setAttribute("href", "#" + swfs[getPrevIndex()].id);
+    document.querySelector("#next > a").setAttribute("href", "#" + swfs[getNextIndex()].id);
+  }
+
+  function getPrevIndex() {
+    if (swfIndex >= 0) {
+      return (swfIndex + swfs.length - 1) % swfs.length;
+    } else {
+      return swfs.length - 1;
+    }
+  }
+
+  function getNextIndex() {
+    if (swfIndex >= 0) {
+      return (swfIndex + swfs.length + 1) % swfs.length;
+    } else {
+      return 0;
+    }
+  }
+
+  function getIndexFromHash(hash) {
+    if (typeof hash === "string") {
+      var id = parseInt((hash.match(/^#?(\d*)$/) || [,"-1"])[1]);
+      if (!isNaN(id)) {
+        for (var i = 0; i < swfs.length; i++) {
+          if (swfs[i].id == id) {
+            return i;
+          }
+        }
+      } else {
+        return 0;
+      }
+    }
+    return -1;
   }
 
 })();
