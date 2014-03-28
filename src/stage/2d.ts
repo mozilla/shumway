@@ -210,12 +210,18 @@ module Shumway.Layers {
           }
           if (options.clipCanvas) {
             context.beginPath();
+            /**
+             * If we have overlapping clippling regions we don't want to use even-odd fill rules.
+             */
+            var savedFillRule = context.mozFillRule;
+            context.fillRule = context.mozFillRule = 'nonzero';
             for (var i = 0; i < lastDirtyRectangles.length; i++) {
               var rectangle = lastDirtyRectangles[i];
               rectangle.expand(2, 2);
               context.rect(rectangle.x, rectangle.y, rectangle.w, rectangle.h);
             }
             context.clip();
+            context.fillRule = context.mozFillRule = savedFillRule;
           }
         }
 
