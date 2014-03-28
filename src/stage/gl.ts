@@ -199,10 +199,10 @@ module Shumway.GL {
       }
       if (image) {
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        timeline.enter("texSubImage2D");
+        timeline && timeline.enter("texSubImage2D");
         gl.texSubImage2D(gl.TEXTURE_2D, 0, region.x, region.y, gl.RGBA, gl.UNSIGNED_BYTE, image);
         traceLevel >= TraceLevel.Verbose && writer.writeLn("texSubImage2D: " + region);
-        timeline.leave("texSubImage2D");
+        timeline && timeline.leave("texSubImage2D");
         count("texSubImage2D");
       }
       return region;
@@ -483,9 +483,9 @@ module Shumway.GL {
     public updateTextureRegion(image: any, textureRegion: WebGLTextureRegion) {
       var gl = this.gl;
       gl.bindTexture(gl.TEXTURE_2D, textureRegion.texture);
-      timeline.enter("texSubImage2D");
+      timeline && timeline.enter("texSubImage2D");
       gl.texSubImage2D(gl.TEXTURE_2D, 0, textureRegion.region.x, textureRegion.region.y, gl.RGBA, gl.UNSIGNED_BYTE, image);
-      timeline.leave("texSubImage2D");
+      timeline && timeline.leave("texSubImage2D");
     }
 
     /**
@@ -1023,11 +1023,11 @@ module Shumway.GL {
       scratchContext.clearRect(0, 0, scratchBounds.w, scratchBounds.h);
       scratchContext.translate(-uncachedTileBounds.x, -uncachedTileBounds.y);
       scratchContext.scale(uncachedTiles[0].scale, uncachedTiles[0].scale);
-      timeline.enter("renderTiles");
+      timeline && timeline.enter("renderTiles");
       traceLevel >= TraceLevel.Verbose && writer.writeLn("Rendering Tiles: " + uncachedTileBounds);
       this.source.render(scratchContext);
       scratchContext.restore();
-      timeline.leave("renderTiles");
+      timeline && timeline.leave("renderTiles");
 
       var remainingUncachedTiles = null;
       for (var i = 0; i < uncachedTiles.length; i++) {
