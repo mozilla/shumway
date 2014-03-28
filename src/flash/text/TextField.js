@@ -45,6 +45,9 @@ var TextFieldDefinition = (function () {
       this._text = '';
       this._htmlText = '';
       this._condenseWhite = false;
+      this._multiline = false;
+      this._wordWrap = false;
+      this._textColor = 0;
 
       var s = this.symbol;
       if (!s) {
@@ -67,7 +70,12 @@ var TextFieldDefinition = (function () {
         initialFormat.leading = (tag.leading|0) / 20;
       }
       if (tag.hasColor) {
-        initialFormat.color = tag.color;
+        var colorObj = tag.color;
+        var color = (colorObj.red << 24) |
+                    (colorObj.green << 16) |
+                    (colorObj.blue << 8) |
+                    colorObj.alpha;
+        initialFormat.color = this._textColor = color;
       }
       if (tag.hasFont) {
         var font = FontDefinition.getFontBySymbolId(tag.fontId);
@@ -111,7 +119,7 @@ var TextFieldDefinition = (function () {
     },
 
     _serializeRenderableData: function (message) {
-      message.ensureAdditionalCapacity(88);
+      message.ensureAdditionalCapacity(92);
 
       message.writeInt(Renderer.RENDERABLE_TYPE_TEXT);
 
@@ -123,17 +131,19 @@ var TextFieldDefinition = (function () {
 
       var textFormat = this._defaultTextFormat;
 
-      message.writeIntUnsafe(textFormat.font._fontId || 0);
+      if (this._embedFonts) {
+        message.writeIntUnsafe(1);
+        message.writeIntUnsafe(textFormat.font._fontId);
+      } else {
+        message.writeIntUnsafe(0);
+        message.writeIntUnsafe(0);
+      }
+
       message.writeIntUnsafe(textFormat.bold);
       message.writeIntUnsafe(textFormat.italic);
       message.writeIntUnsafe(textFormat.size);
 
-      var colorObj = textFormat.color;
-      var color = (colorObj.red << 24) |
-                  (colorObj.green << 16) |
-                  (colorObj.blue << 8) |
-                  colorObj.alpha;
-      message.writeIntUnsafe(color);
+      message.writeIntUnsafe(this._textColor);
 
       message.writeIntUnsafe(this._background ?
                                (this._backgroundColor << 8) & 0xff : 0);
@@ -186,10 +196,12 @@ var TextFieldDefinition = (function () {
       var that = this;
       var message = new BinaryMessage();
       message.syncRenderable(this, function (data) {
-         that._lines = data.lines;
-         that._textWidth = data.textWidth;
-         that._textHeight = data.textHeight;
-         diffX = data.diffX;
+        that._lines = data.lines;
+        that._textWidth = data.textWidth;
+        that._textHeight = data.textHeight;
+        diffX = data.diffX;
+        that._text = data.text;
+        that._htmlText = data.htmlText;
       });
       message.post('render', true);
 
@@ -214,10 +226,10 @@ var TextFieldDefinition = (function () {
       } else {
         if (diffX) {
           this._invalidateTransform();
-          this._currentTransform.tx += diffX*20|0;
-          bounds.xMax = (targetWidth*20|0) + 80;
+          this._currentTransform.tx += diffX * 20 | 0;
+          bounds.xMax = (targetWidth * 20 | 0) + 80;
         }
-        bounds.yMax = (this._textHeight*20|0) + 80;
+        bounds.yMax = (this._textHeight * 20 | 0) + 80;
         this._invalidateBounds();
       }
 
@@ -225,18 +237,22 @@ var TextFieldDefinition = (function () {
     },
 
     get text() {
+      this.ensureDimensions();
       return this._text;
     },
     set text(val) {
       this._text = val;
+      this._htmlText = '';
       this.invalidateDimensions();
     },
 
     get htmlText() {
+      this.ensureDimensions();
       return this._htmlText;
     },
     set htmlText(val) {
       this._htmlText = val;
+      this._text = '';
       this.invalidateDimensions();
     },
 
@@ -255,7 +271,7 @@ var TextFieldDefinition = (function () {
     setTextFormat: function (format, beginIndex /*:int = -1*/,
                              endIndex /*:int = -1*/)
     {
-      this._defaultTextFormat = format;// TODO
+      this.defaultTextFormat = format;// TODO
       if (this.text === this.htmlText) {
         // HACK replacing format for non-html text
         this.text = this.text;
@@ -314,14 +330,14 @@ var TextFieldDefinition = (function () {
       }
       var line = this._lines[lineIndex];
       var format = line.largestFormat;
-      var metrics = format.font._metrics;
+      var font = format.font;
       var size = format.size;
       // Rounding for metrics seems to be screwy. A descent of 3.5 gets
       // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
       // For now, round up for things slightly above .5.
-      var ascent = metrics.ascent * size + 0.49999 | 0;
-      var descent = metrics.descent * size + 0.49999 | 0;
-      //var leading = metrics.leading * size + 0.49999 + line.leading | 0;
+      var ascent = font.ascent * size + 0.49999 | 0;
+      var descent = font.descent * size + 0.49999 | 0;
+      var leading = font.leading * size + 0.49999 + line.leading | 0;
       // TODO: check if metrics values can be floats for embedded fonts
       return new flash.text.TextLineMetrics(line.x + 2, line.width,
                                             line.height,

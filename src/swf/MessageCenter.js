@@ -166,7 +166,7 @@ BinaryMessage.prototype.defineRenderable = function defineRenderable(symbol, dic
 
     var tag = symbol.tag;
 
-    message.ensureAdditionalCapacity(84);
+    message.ensureAdditionalCapacity(88);
 
     var bbox = tag.bbox;
     message.writeIntUnsafe(bbox.xMin);
@@ -175,9 +175,11 @@ BinaryMessage.prototype.defineRenderable = function defineRenderable(symbol, dic
     message.writeIntUnsafe(bbox.yMax);
 
     if (tag.hasFont) {
+      message.writeIntUnsafe(1);
       var fontInfo = dictionary[tag.fontId];
       message.writeIntUnsafe(fontInfo.props.renderableId);
     } else {
+      message.writeIntUnsafe(0);
       message.writeIntUnsafe(0);
     }
 
