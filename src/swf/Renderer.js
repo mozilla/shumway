@@ -361,6 +361,7 @@ Renderer.prototype.fitCanvas = function fitCanvas(container) {
 }
 
 Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
+  Shumway.GL.timeline = timeline;
   Shumway.GL.SHADER_ROOT = "../../src/stage/shaders/";
 
   var canvas = this._canvas;
@@ -1032,7 +1033,7 @@ function RenderableText(data, renderer, resolve) {
 
   if (embedFont) {
     var fontInfo = renderer._fonts[fontId];
-    format.name = fontInfo.name;
+    format.face = fontInfo.name;
     format.font = fontInfo;
   }
 
