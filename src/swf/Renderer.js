@@ -159,8 +159,6 @@ function handleRenderMessages(renderer, layers, i32, sync) {
         new Shumway.Geometry.Matrix.createIdentity()
                                    .scale(contentsScaleFactor, contentsScaleFactor);
       layers[0] = stage;
-
-      renderer.enterRenderingLoop();
       break;
     case Renderer.MESSAGE_ADD_LAYER:
       var layerId = i32[p++];
@@ -363,11 +361,6 @@ Renderer.prototype.fitCanvas = function fitCanvas(container) {
 }
 
 Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
-  var timeline = new Timeline(document.getElementById("frameTimeline"));
-  timeline.setFrameRate(60);
-  timeline.refreshEvery(60);
-  Shumway.GL.timeline = timeline;
-
   Shumway.GL.SHADER_ROOT = "../../src/stage/shaders/";
 
   var canvas = this._canvas;
@@ -379,7 +372,7 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
   var sceneOptions = {
     redraw: 1,
     maxTextures: 4,
-    maxTextureSize: 1024 * 2,
+    maxTextureSize: 1024 * 4,
     useStencil: false,
     render: true,
     drawElements: true,
@@ -676,6 +669,7 @@ function RenderableShape(data, renderer, resolve) {
   }
 }
 RenderableShape.prototype.isScalable = true;
+RenderableShape.prototype.isTileable = true;
 RenderableShape.prototype.getBounds = function getBounds() {
   return this.rect;
 };
@@ -941,6 +935,11 @@ function RenderableBitmap(data, renderer, resolve) {
     drawable = document.createElement('canvas');
     drawable.width = width;
     drawable.height = height;
+
+    // draw
+
+    var imageData = drawable.getImageData(0, 0, width, height);
+    this.shared = imageData.data;
     break;
   }
 
