@@ -133,10 +133,10 @@ SWF.embed = function(file, doc, container, options) {
       options.onStageInitialized({ _frameRate: data.frameRate });
     }
 
-    var startPromise = options.startPromise || Promise.resolve();
-    startPromise.then(function () {
-      renderer.enterRenderingLoop();
-    });
+    //var startPromise = options.startPromise || Promise.resolve();
+    //startPromise.then(function () {
+
+    //});
   });
 
   if (options.onParsed) {

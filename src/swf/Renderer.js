@@ -159,6 +159,8 @@ function handleRenderMessages(renderer, layers, i32, sync) {
         new Shumway.Geometry.Matrix.createIdentity()
                                    .scale(contentsScaleFactor, contentsScaleFactor);
       layers[0] = stage;
+
+      renderer.enterRenderingLoop();
       break;
     case Renderer.MESSAGE_ADD_LAYER:
       var layerId = i32[p++];
