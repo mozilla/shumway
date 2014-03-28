@@ -125,7 +125,7 @@ function handleRenderMessages(renderer, layers, i32, sync) {
       var bgcolor = i32[p++];
       var width = i32[p++];
       var height = i32[p++];
-      var contentsScaleFactor = i32[p++];
+      var contentsScaleFactor = f32[p++];
 
       var container = renderer._container;
       var canvas = renderer._canvas;

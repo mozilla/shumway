@@ -86,7 +86,7 @@ BinaryMessage.prototype.setup = function setup(stage) {
   message.writeIntUnsafe(stage._color);
   message.writeIntUnsafe(stage._stageWidth / 20);
   message.writeIntUnsafe(stage._stageHeight / 20);
-  message.writeIntUnsafe(stage._contentsScaleFactor);
+  message.writeFloatUnsafe(stage._contentsScaleFactor);
 };
 BinaryMessage.prototype.defineRenderable = function defineRenderable(symbol, dictionary) {
   var message = this._message;
