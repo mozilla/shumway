@@ -143,11 +143,11 @@ body.simple #xstats {
   width: 499px !important;
 }
 #settingsContainer > .dg .property-name {
-  width: 70%;
+  width: 50%;
   color: #ccc;
 }
 #settingsContainer > .dg .c {
-  width: 30%;
+  width: 50%;
 }
 #settingsContainer > .dg li.title {
   font-weight: bold;

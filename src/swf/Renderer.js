@@ -46,8 +46,15 @@ function Renderer(container, bgcolor, options) {
   this._container = container;
   this._bgcolor = bgcolor;
   this._options = options || { };
-  this._canvas = document.createElement('canvas');
-  this._canvas.dataset['contentsScaleFactor'] = 1;
+  this._canvases = [
+    document.createElement('canvas')
+  ];
+  if ((backend.value | 0) === 2 /* Both */) {
+    this._canvases.push(document.createElement('canvas'));
+  };
+  this._canvases.forEach(function (canvas) {
+    canvas.dataset['contentsScaleFactor'] = 1;
+  });
   this._promises = Object.create(null);
   this._renderables = Object.create(null);
   this._layers = Object.create(null);
@@ -128,28 +135,29 @@ function handleRenderMessages(renderer, layers, i32, sync) {
       var contentsScaleFactor = f32[p++];
 
       var container = renderer._container;
-      var canvas = renderer._canvas;
+      renderer._canvases.forEach(function (canvas) {
 
-      canvas.dataset['contentsScaleFactor'] = contentsScaleFactor;
+        canvas.dataset['contentsScaleFactor'] = contentsScaleFactor;
 
-      if (!isNaN(renderer._bgcolor)) {
-        bgcolor = renderer._bgcolor;
-      }
+        if (!isNaN(renderer._bgcolor)) {
+          bgcolor = renderer._bgcolor;
+        }
 
-      if (bgcolor) {
-        canvas.style.backgroundColor = rgbaUintToStr(bgcolor);
-      }
+        if (bgcolor) {
+          canvas.style.backgroundColor = rgbaUintToStr(bgcolor);
+        }
 
-      if (container.clientHeight) {
-        renderer.fitCanvas(container);
-        window.addEventListener('resize', function () {
+        if (container.clientHeight) {
           renderer.fitCanvas(container);
-        });
-      } else {
-        renderer.setCanvasSize(width, height);
-      }
+          window.addEventListener('resize', function () {
+            renderer.fitCanvas(container);
+          });
+        } else {
+          renderer.setCanvasSize(width, height);
+        }
 
-      container.appendChild(canvas);
+        container.appendChild(canvas);
+      });
 
       var stage = new Shumway.Layers.Stage(
         // width, height, width * contentsScaleFactor, height * contentsScaleFactor
@@ -341,20 +349,21 @@ function timelineLeave(name) {
 }
 
 Renderer.prototype.setCanvasSize = function setCanvasSize(width, height) {
-  var canvas = this._canvas;
-  var contentsScaleFactor = canvas.dataset['contentsScaleFactor'];
-  if (contentsScaleFactor === 1.0) {
-    canvas.width = width | 0;
-    canvas.height = height | 0;
-    return;
-  }
-  var canvasWidth = Math.floor(width * contentsScaleFactor);
-  var canvasHeight = Math.floor(height * contentsScaleFactor);
-  // trying fit into fractional amount of pixels if pixelRatio is not int
-  canvas.style.width = (canvasWidth / contentsScaleFactor) + 'px';
-  canvas.style.height = (canvasHeight / contentsScaleFactor) + 'px';
-  canvas.width = canvasWidth;
-  canvas.height = canvasHeight;
+  this._canvases.forEach(function (canvas) {
+    var contentsScaleFactor = canvas.dataset['contentsScaleFactor'];
+    if (contentsScaleFactor === 1.0) {
+      canvas.width = width | 0;
+      canvas.height = height | 0;
+      return;
+    }
+    var canvasWidth = Math.floor(width * contentsScaleFactor);
+    var canvasHeight = Math.floor(height * contentsScaleFactor);
+    // trying fit into fractional amount of pixels if pixelRatio is not int
+    canvas.style.width = (canvasWidth / contentsScaleFactor) + 'px';
+    canvas.style.height = (canvasHeight / contentsScaleFactor) + 'px';
+    canvas.width = canvasWidth;
+    canvas.height = canvasHeight;
+  });
 }
 
 Renderer.prototype.fitCanvas = function fitCanvas(container) {
@@ -365,8 +374,6 @@ Renderer.prototype.fitCanvas = function fitCanvas(container) {
 Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
   Shumway.GL.timeline = timeline;
   Shumway.GL.SHADER_ROOT = "../../src/stage/shaders/";
-
-  var canvas = this._canvas;
 
   var WebGLContext = Shumway.GL.WebGLContext;
   var WebGLStageRenderer = Shumway.GL.WebGLStageRenderer;
@@ -392,11 +399,30 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
     alpha: true
   };
 
-  if (useWebGL.value) {
-    var webGLContext = new WebGLContext(canvas, sceneOptions);
-    stageRenderer = new WebGLStageRenderer(webGLContext, canvas.width, canvas.height);
-  } else {
-    stageRenderer = new Canvas2DStageRenderer(canvas.getContext("2d"), Shumway.Layers.FillRule.EVENODD);
+  var canvas2DCanvas, webGLCanvas;
+
+  var stageRenderers = [];
+
+  // TODO: Value here should be a number;
+  switch (backend.value | 0) {
+    case 0:
+      canvas2DCanvas = this._canvases[0];
+      break;
+    case 1:
+      webGLCanvas = this._canvases[0];
+      break;
+    case 2:
+      canvas2DCanvas = this._canvases[0];
+      webGLCanvas = this._canvases[1];
+      break;
+  }
+
+  if (webGLCanvas) {
+    stageRenderers.push(new WebGLStageRenderer(new WebGLContext(webGLCanvas, sceneOptions), webGLCanvas.width, webGLCanvas.height));
+  }
+
+  if (canvas2DCanvas) {
+    stageRenderers.push(new Canvas2DStageRenderer(canvas2DCanvas.getContext("2d"), Shumway.Layers.FillRule.EVENODD));
   }
 
   var domain = avm2.systemDomain;
@@ -454,9 +480,11 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
     if (sceneOptions.render && !disableRendering.value && renderer._layers[0]) {
       timelineEnter("Renderer");
       traceRenderer.value && frameWriter.enter("> Rendering");
-      // HACK: Setting this flag should be nicer.
-      renderer._layers[0].trackDirtyRegions = stageRenderer instanceof Canvas2DStageRenderer;
-      stageRenderer.render(renderer._layers[0], sceneOptions);
+      stageRenderers.forEach(function (stageRenderer) {
+        // HACK: Setting this flag should be nicer.
+        renderer._layers[0].trackDirtyRegions = stageRenderer instanceof Canvas2DStageRenderer;
+        stageRenderer.render(renderer._layers[0], sceneOptions);
+      });
       traceRenderer.value && frameWriter.leave("< Rendering");
       timelineLeave("Renderer");
     }

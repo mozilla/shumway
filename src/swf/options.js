@@ -39,7 +39,13 @@ var ignoreColorTransform = stageOptions.register(new Option("", "ignoreColorTran
 var debugStage = stageOptions.register(new Option("", "debugStage", "boolean", false, "Debug Stage."));
 var disableMasking = stageOptions.register(new Option("", "disableMasking", "boolean", false, "Disable masking."));
 
-var useWebGL = stageOptions.register(new Option("", "useWebGL", "boolean", false, "Use WebGL"));
+var backend = stageOptions.register(new Option("t", "backend", "number", 0, "Backends", {
+  choices: {
+    Canvas2D: 0,
+    WebGL: 1,
+    Both: 2
+  }
+}));
 
 var webGLOptions = stageOptions.register(new OptionSet("WebGL Options"));
   var perspectiveCamera = webGLOptions.register(new Option("", "pc", "boolean", false, "Use perspective camera."));
