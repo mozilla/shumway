@@ -79,7 +79,7 @@ module.exports = function(grunt) {
         tasks: ['exec:build_playerglobal']
       },
       avm2_ts: {
-        files: ['src/avm2/*.ts'],
+        files: ['src/avm2/**/*.ts'],
         tasks: ['exec:build_avm2_ts']
       }
     }

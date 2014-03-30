@@ -95,7 +95,8 @@ module Shumway {
     } else if (typeof value === "string") {
       return isIndex(value) || isNumericString(value);
     } else {
-      Debug.notImplemented(typeof value);
+      // Debug.notImplemented(typeof value);
+      return false;
     }
   }
 
