@@ -680,10 +680,10 @@ var RenderableNoop = {
 }
 
 function RenderableShape(data, renderer, resolve) {
-  var xMin = (data[0] / 20) | 0;
-  var xMax = (data[1] / 20) | 0;
-  var yMin = (data[2] / 20) | 0;
-  var yMax = (data[3] / 20) | 0;
+  var xMin = data[0];
+  var xMax = data[1];
+  var yMin = data[2];
+  var yMax = data[3];
   this.rect = new Shumway.Geometry.Rectangle(xMin, yMin, xMax - xMin, yMax - yMin);
 
   if (!this.properties) {
@@ -722,7 +722,7 @@ RenderableShape.prototype.render = function render(ctx) {
         style = ctx.createLinearGradient(-1, 0, 1, 0);
       case GRAPHICS_FILL_RADIAL_GRADIENT:
       case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
-        var focalPoint = (i32[p++] / 20) | 0;
+        var focalPoint = i32[p++] / 20;
 
         if (!style) {
           style = ctx.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
@@ -755,8 +755,8 @@ RenderableShape.prototype.render = function render(ctx) {
                             b: f32[p++],
                             c: f32[p++],
                             d: f32[p++],
-                            e: (i32[p++] / 20) | 0,
-                            f: (i32[p++] / 20) | 0 };
+                            e: i32[p++] / 20,
+                            f: i32[p++] / 20 };
       }
       styles.push(style);
     }
@@ -988,10 +988,10 @@ RenderableBitmap.prototype.render = function render(ctx) {
 };
 
 function RenderableLabel(data, renderer, resolve) {
-  var xMin = (data[0] / 20) | 0;
-  var xMax = (data[1] / 20) | 0;
-  var yMin = (data[2] / 20) | 0;
-  var yMax = (data[3] / 20) | 0;
+  var xMin = data[0] / 20;
+  var xMax = data[1] / 20;
+  var yMin = data[2] / 20;
+  var yMax = data[3] / 20;
   this.rect = new Shumway.Geometry.Rectangle(xMin, yMin, xMax - xMin, yMax - yMin);
 
   var n = data[4];
@@ -1016,10 +1016,10 @@ RenderableLabel.prototype.getBounds = function getBounds() {
 function RenderableText(data, renderer, resolve) {
   var p = 0;
 
-  var xMin = (data[p++] / 20) | 0;
-  var xMax = (data[p++] / 20) | 0;
-  var yMin = (data[p++] / 20) | 0;
-  var yMax = (data[p++] / 20) | 0;
+  var xMin = data[p++] / 20;
+  var xMax = data[p++] / 20;
+  var yMin = data[p++] / 20;
+  var yMax = data[p++] / 20;
 
   var width = xMax - xMin + 4;
   var height = yMax - yMin + 4;
