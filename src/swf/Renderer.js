@@ -462,7 +462,7 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
     if (perspectiveCameraSpacingInflate.value) {
       sceneOptions.frameSpacing = (1.01 + Math.sin(Date.now() / 1000)) * 5;
     } else {
-      sceneOptions.frameSpacing = sceneOptions.perspectiveCamera ? Math.max(0.01, perspectiveCameraSpacing.value) : 0.1;
+      sceneOptions.frameSpacing = sceneOptions.perspectiveCamera ? Math.max(0.01, perspectiveCameraSpacing.value) : 0.01;
     }
 
     if (options.onBeforeFrame) {

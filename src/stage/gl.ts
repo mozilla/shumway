@@ -166,7 +166,6 @@ module Shumway.GL {
     private _regionAllocator: RegionAllocator.IRegionAllocator;
     private _w: number;
     private _h: number;
-    private _padding: number;
     private _compact: boolean;
 
     get compact(): boolean {
@@ -181,12 +180,11 @@ module Shumway.GL {
       return this._h;
     }
 
-    constructor(context: WebGLContext, texture: WebGLTexture, w: number, h: number, compact: boolean, padding: number) {
+    constructor(context: WebGLContext, texture: WebGLTexture, w: number, h: number, compact: boolean) {
       this._context = context;
       this.texture = texture;
       this._w = w;
       this._h = h;
-      this._padding = padding;
       this._compact = compact;
       this.reset();
     }
@@ -214,9 +212,9 @@ module Shumway.GL {
 
     reset() {
       if (this._compact) {
-        this._regionAllocator = new RegionAllocator.Compact(this._w, this._h, this._padding);
+        this._regionAllocator = new RegionAllocator.Compact(this._w, this._h);
       } else {
-        this._regionAllocator = new RegionAllocator.Grid(this._w, this._h, this._padding, TILE_SIZE);
+        this._regionAllocator = new RegionAllocator.Grid(this._w, this._h, TILE_SIZE);
       }
     }
   }
@@ -463,7 +461,7 @@ module Shumway.GL {
       if (!region) {
         if (w >= this._maxTextureSize || h >= this._maxTextureSize) {
           // Region cannot possibly fit in the standard texture atlas.
-          texture = this.createTexture(w, h, !imageIsTileSized, 0);
+          texture = this.createTexture(w, h, !imageIsTileSized);
         } else if (this._textures.length === this._maxTextures) {
           if (discardCache) {
             this.discardCachedImages();
@@ -471,7 +469,7 @@ module Shumway.GL {
           }
           return null;
         } else {
-          texture = this.createTexture(this._maxTextureSize, this._maxTextureSize, !imageIsTileSized, 2);
+          texture = this.createTexture(this._maxTextureSize, this._maxTextureSize, !imageIsTileSized);
         }
         this._textures.push(texture);
         region = texture.atlas.add(null, w, h);
@@ -582,7 +580,7 @@ module Shumway.GL {
       return shader;
     }
 
-    createTexture(w: number, h: number, compact: boolean, padding: number): WebGLTexture {
+    createTexture(w: number, h: number, compact: boolean): WebGLTexture {
       var gl = this.gl;
       var texture = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -595,7 +593,7 @@ module Shumway.GL {
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
       texture.w = w;
       texture.h = h;
-      texture.atlas = new WebGLTextureAtlas(this, texture, w, h, compact, padding);
+      texture.atlas = new WebGLTextureAtlas(this, texture, w, h, compact);
       texture.framebuffer = this.createFramebuffer(texture);
       texture.regions = [];
       return texture;
@@ -735,6 +733,9 @@ module Shumway.GL {
       this._uploadCanvasContext = this._uploadCanvas.getContext("2d", {
         willReadFrequently: true
       });
+
+      // document.getElementById("debugContainer").appendChild(this._uploadCanvas);
+      // document.getElementById("debugContainer").appendChild(this._scratchCanvas);
     }
 
     private _cachedTiles = [];
