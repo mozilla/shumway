@@ -1212,17 +1212,14 @@ module Shumway.Geometry {
       static RANDOM_ORIENTATION: boolean = true;
       static MAX_DEPTH: number = 256;
       private _root: Compact.Cell;
-      private _padding: number;
       private _allocations: Compact.Cell [] = [];
-      constructor(w: number, h: number, padding: number) {
-        this._root = new Compact.Cell(padding, padding, w - 2 * padding, h - 2 * padding, false);
-        this._padding = padding;
+      constructor(w: number, h: number) {
+        this._root = new Compact.Cell(0, 0, w, h, false);
       }
 
       allocate(w: number, h: number): Region {
-        var result = this._root.insert(w + this._padding, h + this._padding);
+        var result = this._root.insert(w, h);
         if (result) {
-          result.resize(-this._padding, -this._padding);
           result.allocator = this;
         }
         return result;
@@ -1302,16 +1299,13 @@ module Shumway.Geometry {
 
     export class Grid implements IRegionAllocator {
       private _size: number;
-      private _padding: number;
       private _rows: number;
       private _columns: number;
       private _cells: Grid.Cell [];
-      constructor(w: number, h: number, padding: number, size: number) {
-        var sizeWithPadding = size + 2 * padding;
-        this._columns = w / sizeWithPadding | 0;
-        this._rows = h / sizeWithPadding | 0;
+      constructor(w: number, h: number, size: number) {
+        this._columns = w / size | 0;
+        this._rows = h / size | 0;
         this._size = size;
-        this._padding = padding;
         this._cells = [];
         for (var y = 0; y < this._rows; y++) {
           for (var x = 0; x < this._columns; x++) {
@@ -1321,15 +1315,15 @@ module Shumway.Geometry {
       }
 
       allocate(w: number, h: number): Region {
-        var sizeWithPadding = this._size + 2 * this._padding;
-        if (w > sizeWithPadding || h > sizeWithPadding) {
+        var size = this._size;
+        if (w > size || h > size) {
           return null;
         }
         for (var y = 0; y < this._rows; y++) {
           for (var x = 0; x < this._columns; x++) {
             var index = y * this._columns + x;
             if (!this._cells[index]) {
-              var cell = new Grid.Cell(x * sizeWithPadding + this._padding, y * sizeWithPadding + this._padding, w, h);
+              var cell = new Grid.Cell(x * size, y * size, w, h);
               cell.index = index;
               cell.allocator = this;
               this._cells[index] = cell;

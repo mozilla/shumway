@@ -18,7 +18,7 @@ module Shumway.Bench {
       glCanvas.width = 1024;
       glCanvas.height = 1024;
       var context = new WebGLContext(glCanvas, {});
-      var texture = context.createTexture(0, 0, false, 0);
+      var texture = context.createTexture(0, 0, false);
 
       var gl = context.gl;
       var last = 1;
