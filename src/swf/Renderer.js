@@ -680,10 +680,10 @@ var RenderableNoop = {
 }
 
 function RenderableShape(data, renderer, resolve) {
-  var xMin = data[0];
-  var xMax = data[1];
-  var yMin = data[2];
-  var yMax = data[3];
+  var xMin = data[0] / 20;
+  var xMax = data[1] / 20;
+  var yMin = data[2] / 20;
+  var yMax = data[3] / 20;
   this.rect = new Shumway.Geometry.Rectangle(xMin, yMin, xMax - xMin, yMax - yMin);
 
   if (!this.properties) {
