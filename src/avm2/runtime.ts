@@ -86,8 +86,6 @@ module Shumway.AVM2.Runtime {
 
   declare var XML;
   declare var XMLList;
-  declare var isXMLType;
-
 
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
@@ -768,12 +766,12 @@ module Shumway.AVM2.Runtime {
         return "number"
       } else if (x.constructor === Boolean) {
         return "boolean"
+      } else if (x instanceof Shumway.AVM2.AS.ASXML ||
+                 x instanceof Shumway.AVM2.AS.ASXMLList) {
+        return "xml";
       } else if (Shumway.AVM2.AS.ASClass.isType(x)) {
         return "object";
       }
-// else if (x instanceof XML || x instanceof XMLList) {
-//        return "xml"
-//      }
     }
     return typeof x;
   }
@@ -1028,6 +1026,11 @@ module Shumway.AVM2.Runtime {
       }
     }
     return {index: 0, object: null};
+  }
+
+  function isXMLType(x): boolean {
+    return x instanceof Shumway.AVM2.AS.ASXML ||
+           x instanceof Shumway.AVM2.AS.ASXMLList;
   }
 
   export function getDescendants(object, mn) {

@@ -67,8 +67,8 @@ module Shumway.AVM2.AS {
   var _asDeleteProperty = Object.prototype.asDeleteProperty;
   var _asGetEnumerableKeys = Object.prototype.asGetEnumerableKeys;
 
-  function isXMLType(val) {
-    return val.isXML || val.isXMLList;
+  function isXMLType(val: any): boolean {
+    return (val instanceof ASXML || val instanceof ASXMLList);
   }
 
   // 10.1 ToString
@@ -1230,15 +1230,13 @@ module Shumway.AVM2.AS {
       notImplemented("public.XML::appendChild"); return;
     }
     attribute(arg: any): ASXMLList {
-
-      notImplemented("public.XML::attribute"); return;
+      return this.getProperty(arg, false, false);
     }
     attributes(): ASXMLList {
       notImplemented("public.XML::attributes"); return;
     }
     child(propertyName: any): ASXMLList {
-
-      notImplemented("public.XML::child"); return;
+      return this.getProperty(propertyName, false, false);
     }
     childIndex(): number /*int*/ {
       notImplemented("public.XML::childIndex"); return;
@@ -1489,7 +1487,7 @@ module Shumway.AVM2.AS {
       return this.getProperty(name, isAttribute, false);
     }
 
-    hasProperty(mn, isMethod) {
+    hasProperty(mn, isAttribute, isMethod) {
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn :
           this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
@@ -1497,7 +1495,7 @@ module Shumway.AVM2.AS {
       }
       var self: ASXML = this;
       var xl = new XMLList();
-      if (!Multiname.isQName(mn) && isNumeric(mn)) {
+      if (isIndex(mn)) {
         // this is a shortcut to the E4X logic that wants us to create a new
         // XMLList with of size 1 and access it with the given index.
         if (Number(mn) === 0) {
@@ -1509,36 +1507,20 @@ module Shumway.AVM2.AS {
       var flags = name._flags;
       var anyName = flags & ASQNameFlags.ANY_NAME;
       var anyNamespace = flags & ASQNameFlags.ANY_NAMESPACE;
-      if (flags & ASQNameFlags.ATTR_NAME) {
-        return this._attributes.some(function (v, i) {
-          if ((anyName || (v._name.localName === name.localName)) &&
-            ((anyNamespace || v._name.uri === name.uri))) {
-            return true;
-          }
-        });
-
+      if (isAttribute) {
         if (self._attributes) {
-          self._attributes.forEach(function (v, i) {
-            if ((anyName || (v._name.localName === name.localName)) &&
-              ((anyNamespace || v._name.uri === name.uri))) {
-              xl.appendChild(v);
-            }
+          return this._attributes.some(function (v, i): any {
+            return ((anyName || (v._name.localName === name.localName)) &&
+              ((anyNamespace || v._name.uri === name.uri)));
           });
         }
       } else {
-        if (this._children.some(function (v, i) {
-          if ((anyName || v._kind === "element" && v._name.localName === name.localName) &&
-            ((anyNamespace || v._kind === "element" && v._name.uri === name.uri))) {
-            return true;
-          }
+        if (this._children.some(function (v, i): any {
+          return ((anyName || v._kind === "element" && v._name.localName === name.localName) &&
+            ((anyNamespace || v._kind === "element" && v._name.uri === name.uri)));
         })) {
           return true;
         }
-        // HACK if child with specific name is not present, check object's attributes.
-        // The presence of the attribute/method can be checked during with(), see #850.
-        var resolved = Multiname.isQName(mn) ? mn :
-          this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
-        return !!this[Multiname.getQualifiedName(resolved)];
       }
     }
 
@@ -1546,7 +1528,20 @@ module Shumway.AVM2.AS {
       if (ASXML.isTraitsOrDynamicPrototype(this)) {
         return _asHasProperty.call(this, namespaces, name, flags);
       }
-      return this.hasProperty(name, false);
+      var isAttribute = flags & Multiname.ATTRIBUTE;
+      if (this.hasProperty(name, isAttribute, false)) {
+        return true;
+      }
+
+      // HACK if child with specific name is not present, check object's attributes.
+      // The presence of the attribute/method can be checked during with(), see #850.
+      var resolved = Multiname.isQName(name) ? name :
+        this.resolveMultinameProperty(namespaces, name, flags);
+      return !!this[Multiname.getQualifiedName(resolved)];
+    }
+
+    public asHasPropertyInternal(namespaces: Namespace [], name: any, flags: number) {
+      return this.asHasProperty(namespaces, name, flags);
     }
 
     _delete(key, isMethod) {
@@ -1748,11 +1743,12 @@ module Shumway.AVM2.AS {
     }
 
     text() {
+      // 13.4.4.37 XML.prototype.text ( );
       var self: ASXML = this;
       var xl = new XMLList(self, null);
       self._children.forEach(function (v, i) {
         if (v._kind === "text") {
-          xl.append(v);
+          xl.appendChild(v);
         }
       });
       return xl;
@@ -1801,15 +1797,13 @@ module Shumway.AVM2.AS {
       notImplemented("public.XMLList::propertyIsEnumerable"); return;
     }
     attribute(arg: any): ASXMLList {
-
-      notImplemented("public.XMLList::attribute"); return;
+      return this.getProperty(arg, false, false);
     }
     attributes(): ASXMLList {
       notImplemented("public.XMLList::attributes"); return;
     }
     child(propertyName: any): ASXMLList {
-
-      notImplemented("public.XMLList::child"); return;
+      return this.getProperty(propertyName, false, false);
     }
     children(): ASXMLList {
       notImplemented("public.XMLList::children"); return;
@@ -1853,7 +1847,17 @@ module Shumway.AVM2.AS {
       notImplemented("public.XMLList::processingInstructions"); return;
     }
     text(): ASXMLList {
-      notImplemented("public.XMLList::text"); return;
+      // 13.5.4.20 XMLList.prototype.text ( )
+      var xl = new XMLList(this);
+      this._children.forEach(function (v:any, i) {
+        if (v._kind === "element") {
+          var gq = v.text();
+          if (gq.length() > 0) {
+            xl.appendChild(gq);
+          }
+        }
+      });
+      return xl;
     }
     toXMLString(): string {
       return toXMLString(this);
@@ -1933,14 +1937,10 @@ module Shumway.AVM2.AS {
     }
 
     asGetEnumerableKeys() {
-      if (ASXML.isTraitsOrDynamicPrototype(this)) {
+      if (ASXMLList.isTraitsOrDynamicPrototype(this)) {
         return _asGetEnumerableKeys.call(this);
       }
-      var keys = [];
-      this._children.forEach(function (v, i) {
-        keys.push(v.name);
-      });
-      return keys;
+      return this._children.asGetEnumerableKeys();
     }
 
     // 9.2.1.1 [[Get]] (P)
@@ -1950,13 +1950,8 @@ module Shumway.AVM2.AS {
           this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
         return this[Multiname.getQualifiedName(resolved)];
       }
-      if (!Multiname.isQName(mn) && isNumeric(mn)) {
-        // this is a shortcut to the E4X logic that wants us to create a new
-        // XMLList with of size 1 and access it with the given index.
-        if (Number(mn) === 0) {
-          return this._children[0];
-        }
-        return null;
+      if (isIndex(mn)) {
+        return this._children[mn];
       }
       var name = toXMLName(mn);
       var xl = new XMLList(this, name);
@@ -1982,7 +1977,43 @@ module Shumway.AVM2.AS {
       return this.getProperty(name, isAttribute, false);
     }
 
+    hasProperty(mn, isAttribute) {
+      if (isIndex(mn)) {
+        return Number(mn) < this._children.length;
+      }
+      // TODO scan children on property presence?
+      return true;
+    }
 
+    public asHasProperty(namespaces: Namespace [], name: any, flags: number) {
+      if (ASXMLList.isTraitsOrDynamicPrototype(this)) {
+        return _asGetProperty.call(this, namespaces, name, flags);
+      }
+      var isAttribute = flags & Multiname.ATTRIBUTE;
+      return this.hasProperty(name, isAttribute);
+    }
+
+    public asHasPropertyInternal(namespaces: Namespace [], name: any, flags: number) {
+      var isAttribute = flags & Multiname.ATTRIBUTE;
+      return this.hasProperty(name, isAttribute);
+    }
+
+    setProperty(mn, isAttribute, value) {
+      if (isIndex(mn)) {
+        // TODO do we need to simulate a sparse array here?
+        this.appendChild(value);
+        return;
+      }
+      notImplemented("setProperty"); return;
+    }
+
+    public asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
+      if (ASXMLList.isTraitsOrDynamicPrototype(this)) {
+        return _asSetProperty.call(this, namespaces, name, flags, value);
+      }
+      var isAttribute = flags & Multiname.ATTRIBUTE;
+      return this.setProperty(name, isAttribute, value);
+    }
   }
 
   function XMLList(targetObject?, targetProperty?) {

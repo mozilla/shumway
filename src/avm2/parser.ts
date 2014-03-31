@@ -1202,7 +1202,7 @@ module Shumway.AVM2.ABC {
       if (mn instanceof Multiname) {
         return mn.namespaces && mn.namespaces.length === 1;
       }
-      return false;
+      return true;
     }
 
     /**
