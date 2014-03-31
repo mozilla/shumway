@@ -15,8 +15,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global AS2Context, Stubs */
+/*global Shumway, Stubs */
 var AS2UtilsDefinition = (function () {
+  var AS2Context = Shumway.AVM1.AS2Context;
+
   var def = {
     __class__: 'avm1lib.AS2Utils',
 
@@ -92,7 +94,7 @@ var AS2UtilsDefinition = (function () {
 }).call(this);
 
 function initDefaultListeners(thisArg) {
-  var defaultListeners = thisArg.asGetPublicProperty('$defaultListeners');
+  var defaultListeners = thisArg.asGetPublicProperty('_as2DefaultListeners');
   if (!defaultListeners) {
     return;
   }

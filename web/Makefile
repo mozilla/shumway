@@ -22,9 +22,10 @@ EXTENSION_DIR=../build/firefox
 build: ensureoutputdir \
        $(SHUMWAY_ROOT)/build/playerglobal/playerglobal.abcs
 
-	cp -R $(SHUMWAY_ROOT)/LICENSE index.html main.css main.swf images $(BUILD_DIR)/
+	cp -R $(SHUMWAY_ROOT)/LICENSE index.html main.css main.swf gallery images $(BUILD_DIR)/
 	# Coping JavaScript content files
 	mkdir $(BUILD_DIR)/src
+	cp $(SHUMWAY_ROOT)/src/*.js $(BUILD_DIR)/src/
 	mkdir $(BUILD_DIR)/src/swf
 	cp $(SHUMWAY_ROOT)/src/swf/*.js $(BUILD_DIR)/src/swf/
 	mkdir $(BUILD_DIR)/src/flash

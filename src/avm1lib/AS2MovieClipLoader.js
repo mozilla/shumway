@@ -23,8 +23,14 @@ var AS2MovieClipLoaderDefinition = (function () {
     initialize: function () {
     },
 
+    _setAS3Object: function (nativeLoader) {
+      Object.defineProperty(this, '_nativeAS3Object', { value: nativeLoader });
+    },
+    get _as3Object() {
+      return this._nativeAS3Object;
+    },
     get _bytesLoaded() {
-      return this.$nativeObject._contentLoaderInfo._bytesLoaded;
+      return this._nativeAS3Object._contentLoaderInfo._bytesLoaded;
     }
   };
 
@@ -33,11 +39,8 @@ var AS2MovieClipLoaderDefinition = (function () {
   def.__glue__ = {
     native: {
       instance: {
-        $nativeObject: {
-          get: function () {
-            return this.$nativeObject;
-          }
-        },
+        _as3Object: desc(def, '_as3Object'),
+        _setAS3Object: def._setAS3Object,
         _bytesLoaded: desc(def, '_bytesLoaded'),
       }
     },

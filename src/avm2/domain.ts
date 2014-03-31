@@ -121,8 +121,13 @@ module Shumway.AVM2.Runtime {
       xhr.open('GET', path);
       xhr.responseType = responseType;
       xhr.onload = function () {
-        if (xhr.response) {
-          resolve(xhr.response);
+        var response = xhr.response;
+        if (response) {
+          if (responseType === 'json' && xhr.responseType !== 'json') {
+            // some browsers (e.g. Safari) have no idea what json is
+            response = JSON.parse(response);
+          }
+          resolve(response);
         } else {
           reject('Unable to load ' + path + ': ' + xhr.statusText);
         }

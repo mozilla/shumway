@@ -17,7 +17,7 @@
  */
 /*global self, ResourceLoader, Image, Worker, btoa, URL, FileLoadingService,
          Promise, AVM2, AbcFile, SHUMWAY_ROOT, TelemetryService,
-         avm1lib, AS2Context, executeActions,
+         avm1lib, Shumway,
          MP3DecoderSession, PLAY_USING_AUDIO_TAG,
          cloneObject, createEmptyObject, fromCharCode,
          isNullOrUndefined, sortNumeric */
@@ -29,6 +29,10 @@
 var $RELEASE = false;
 
 var LoaderDefinition = (function () {
+  var AS2Context = Shumway.AVM1.AS2Context;
+  var executeActions = Shumway.AVM1.executeActions;
+  var AS2ActionsData = Shumway.AVM1.AS2ActionsData;
+
   var WORKERS_ENABLED = true;
   var LOADER_PATH = $RELEASE ? 'shumway-worker.js' : 'swf/resourceloader.js';
 
@@ -74,7 +78,9 @@ var LoaderDefinition = (function () {
         });
 
         // signal when we finish parsing, it's mostly to provide consistent testing results
-        this._contentLoaderInfo._dispatchEvent("parsed");
+        this._lastPromise.then(function () {
+          this._contentLoaderInfo._dispatchEvent("parsed");
+        }.bind(this));
 
         Promise.all([frameConstructed, this._lastPromise]).then(function () {
           this._content._complete = true;
@@ -421,7 +427,8 @@ var LoaderDefinition = (function () {
             // "DoAction tag is not the same as specifying them in a DoInitAction tag"
             for (var i = 0; i < initActionBlocks.length; i++) {
               var spriteId = initActionBlocks[i].spriteId;
-              var actionsData = initActionBlocks[i].actionsData;
+              var actionsData = new AS2ActionsData(initActionBlocks[i].actionsData,
+                'f' + frameNum + 's' + spriteId + 'i' + i);
               root.addFrameScript(frameNum - 1, function(actionsData, spriteId, state) {
                 if (state.executed) return;
                 state.executed = true;
@@ -432,12 +439,13 @@ var LoaderDefinition = (function () {
 
           if (actionBlocks) {
             for (var i = 0; i < actionBlocks.length; i++) {
-              var block = actionBlocks[i];
-              root.addFrameScript(frameNum - 1, (function(block) {
+              var actionsData = new AS2ActionsData(actionBlocks[i],
+                'f' + frameNum + 'i' + i);
+              root.addFrameScript(frameNum - 1, (function(actionsData) {
                 return function () {
-                  return executeActions(block, avm1Context, this._getAS2Object());
+                  return executeActions(actionsData, avm1Context, this._getAS2Object());
                 };
-              })(block));
+              })(actionsData));
             }
           }
         }
@@ -724,13 +732,15 @@ var LoaderDefinition = (function () {
             var data = symbol.frameScripts;
             for (var i = 0; i < data.length; i += 2) {
                 var frameNum = data[i] + 1;
-                var block = data[i + 1];
-                var script = (function(block, loader) {
+                var actionsData = new AS2ActionsData(data[i + 1],
+                  's' + symbol.id + 'f' + frameNum + 'i' +
+                    (frameScripts[frameNum] ? frameScripts[frameNum].length : 0));
+                var script = (function(actionsData, loader) {
                   return function () {
                     var avm1Context = loader._avm1Context;
-                    return executeActions(block, avm1Context, this._getAS2Object());
+                    return executeActions(actionsData, avm1Context, this._getAS2Object());
                   };
-                })(block, this);
+                })(actionsData, this);
                 if (!frameScripts[frameNum])
                   frameScripts[frameNum] = [script];
                 else
@@ -865,12 +875,12 @@ var LoaderDefinition = (function () {
       var loaded = function () {
         // avm1 initialization
         var loaderInfo = loader._contentLoaderInfo;
-        var avm1Context = new AS2Context(loaderInfo._swfVersion);
+        var avm1Context = AS2Context.create(loaderInfo._swfVersion);
         avm1Context.stage = stage;
         loader._avm1Context = avm1Context;
 
-        avm1lib.AS2Key.class.$bind(stage);
-        avm1lib.AS2Mouse.class.$bind(stage);
+        avm1lib.AS2Key.class.__bind(stage);
+        avm1lib.AS2Mouse.class.__bind(stage);
 
         stage._addEventListener('frameConstructed',
                                 avm1Context.flushPendingScripts.bind(avm1Context),
