@@ -46,10 +46,14 @@ module Shumway.AVM2 {
     abc.classes.forEach(generateClassStubs);
     // writer.leave("}");
 
-    generatedFiles.sort();
+    // generatedFiles.sort();
     generatedFiles.forEach(function (file) {
       // writer.writeLn(file);
       writer.writeLn("///<reference path='" + file + "' />");
+    });
+    generatedFiles.forEach(function (file) {
+      file = file.replace(/\.ts/g, ".js");
+      writer.writeLn("<script src=\"../../src/flash.ts/" + file + "\"></script>");
     });
   }
 
@@ -244,6 +248,7 @@ module Shumway.AVM2 {
       writer.enter("export class " + ii.name.name + extendsString + " {");
       if (ii.init) {
         var parameters = ii.init.parameters;
+        writer.writeLn("static initializer: any = null;");
         writer.enter("constructor (" + toParameterList(parameters) + ") {");
         if (parameters.length) {
           writer.writeLn(parameters.filter(p => !!p.type).map(
@@ -253,7 +258,8 @@ module Shumway.AVM2 {
         if (superName) {
           var superClassInfo = findClassInfo(superName);
           var superParameters = superClassInfo.instanceInfo.init.parameters;
-          writer.writeLn("super(" + toSuperArgumentList(parameters, superParameters) + ");");
+          writer.writeLn("false && super(" + toSuperArgumentList(parameters, superParameters) + ");");
+          writer.writeLn("notImplemented(\"Dummy Constructor: " + className.namespaces[0] + "." + className.name + "\");");
         }
         writer.leave("}");
       }
@@ -262,37 +268,61 @@ module Shumway.AVM2 {
     var traits = [ci.traits, ii.traits];
     for (var j = 0; j < traits.length; j++) {
       var isClassTrait = j === 0;
+
+      // Generate AS Bindings
+      writer.writeComment((isClassTrait ? "Static  " : "Instance") + " JS -> AS Bindings");
+      var skip = {};
       for (var i = 0; i < traits[j].length; i++) {
         var trait = traits[j][i];
         var name = trait.name.name;
-        if (!(trait.isMethodOrAccessor() && trait.methodInfo.isNative())) {
+        if (skip[name]) {
           continue;
         }
-        var methodParameters = trait.methodInfo.parameters;
         var prefix = isClassTrait ? "static " : "";
-        if (trait.isMethod()) {
-        } else if (trait.isGetter()) {
-          prefix = "get ";
-        } else if (trait.isSetter()) {
-          prefix = "set ";
-        }
         prefix += trait.name.name;
-        // TypeScript private doesn't work the same way, don't mark stuff as private.
-//        if (trait.name.namespaces[0].isPrivate()) {
-//          prefix = "private " + prefix;
-//        }
-        if (!trait.isSetter()) {
-          writer.enter(prefix + "(" + toParameterList(methodParameters) + "): " + toType(trait.methodInfo.returnType) + " {");
-        } else {
-          writer.enter(prefix + "(" + toParameterList(methodParameters) + ") {");
+        if (trait.isMethodOrAccessor() && !trait.methodInfo.isNative()) {
+          if (trait.isGetter()) {
+            writer.writeLn(prefix + ": " + toType(trait.methodInfo.returnType) + ";");
+            skip[name] = true;
+          } else if (trait.isSetter()) {
+            writer.writeLn(prefix + ": " + toType(trait.methodInfo.parameters[0].type) + ";");
+            skip[name] = true;
+          } else if (trait.isMethod()) {
+            writer.writeLn(prefix + ": (" + toParameterList(trait.methodInfo.parameters) + ") => " + toType(trait.methodInfo.returnType) + ";");
+          }
+        } else if (trait.isSlot()) {
+          writer.writeLn(prefix + ": " + toType(trait.typeName) + ";");
         }
-        if (methodParameters.length) {
-          writer.writeLn(methodParameters.filter(p => !!p.type).map(
-            p => p.name + " = " + coerceParameter(p) + ";"
-          ).join(" "));
+      }
+
+      // Generate JS Bindings
+      writer.writeComment((isClassTrait ? "Static  " : "Instance") + " AS -> JS Bindings");
+      for (var i = 0; i < traits[j].length; i++) {
+        var trait = traits[j][i];
+        var name = trait.name.name;
+        if (trait.isMethodOrAccessor() && trait.methodInfo.isNative()) {
+          var methodParameters = trait.methodInfo.parameters;
+          var prefix = isClassTrait ? "static " : "";
+          if (trait.isMethod()) {
+          } else if (trait.isGetter()) {
+            prefix = "get ";
+          } else if (trait.isSetter()) {
+            prefix = "set ";
+          }
+          prefix += trait.name.name;
+          if (!trait.isSetter()) {
+            writer.enter(prefix + "(" + toParameterList(methodParameters) + "): " + toType(trait.methodInfo.returnType) + " {");
+          } else {
+            writer.enter(prefix + "(" + toParameterList(methodParameters) + ") {");
+          }
+          if (methodParameters.length) {
+            writer.writeLn(methodParameters.filter(p => !!p.type).map(
+              p => p.name + " = " + coerceParameter(p) + ";"
+            ).join(" "));
+          }
+          writer.writeLn("notImplemented(\"" + className.namespaces[0] + "." + className.name + "::" + prefix + "\"); return;");
+          writer.leave("}");
         }
-        writer.writeLn("notImplemented(\"" + className.namespaces[0] + "." + className.name + "::" + prefix + "\"); return;");
-        writer.leave("}");
       }
     }
 

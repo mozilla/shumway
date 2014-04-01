@@ -39,12 +39,13 @@ function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) 
 
   assert (builtinPath);
   new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
-    avm2 = new AVM2(sysMode, appMode, avm1Path && loadAVM1);
+    AVM2.initialize(sysMode, appMode, avm1Path && loadAVM1);
+    avm2 = AVM2.instance;
     console.time("Execute builtin.abc");
     avm2.loadedAbcs = {};
     // Avoid loading more Abcs while the builtins are loaded
     avm2.builtinsLoaded = false;
-    avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
+    // avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
     avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
     avm2.builtinsLoaded = true;
     console.timeEnd("Execute builtin.abc");

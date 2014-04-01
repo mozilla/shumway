@@ -124,6 +124,9 @@ module Shumway.AVM2.AS {
     public static classInfo: ClassInfo;
     public static instanceConstructor: any = Object;
     public static instanceConstructorNoInitialize: any = null;
+
+    public static initializer: any = null;
+    public static initializers: any = null;
     public static callableConstructor: any = ASObject.instanceConstructor;
 
     public static classBindings: ClassBindings;
@@ -319,6 +322,62 @@ module Shumway.AVM2.AS {
     }
 
     /**
+     * Calls the initializers of an object in order.
+     */
+    static runInitializers(self: Object) {
+      var cls: ASClass = self.class;
+      var initializers = cls.initializers;
+      if (initializers) {
+        for (var i = 0; i < initializers.length; i++) {
+          initializers[i].call(self);
+        }
+      }
+    }
+
+    /**
+     * Some AS3 classes have two parallel constructor chains:
+     *
+     * Consider the following inheritance hierarchy, (superClass <- subClass)
+     *
+     * A  <- B  <- C  <- D
+     *
+     * X' is the Class X AS3 Constructor
+     * X" is the Class X Native Constructor
+     *
+     * new D() first calls all the native constructors top down, and then
+     * all the AS3 constructors bottom up. So, new D() calls:
+     *
+     * A", B", C", D", D', C', B', A'
+     *
+     * To implement this behaviour we maintain two constructors, |instanceConstructor|
+     * and |instanceConstructorNoInitialize| as well as a list of native initializers
+     * for each class, |initializers|. Classes that have at least one initializer need
+     * their instanceConstructor to first call all the initializers and then recursively
+     * go through all the super constructors.
+     */
+    static configureInitializers(self: ASClass) {
+      if (self.baseClass && self.baseClass.initializers) {
+        self.initializers = self.baseClass.initializers.slice(0);
+      }
+      if (self.initializer) {
+        if (!self.initializers) {
+          self.initializers = [];
+        }
+        self.initializers.push(self.initializer);
+      }
+
+      if (self.initializers) {
+        assert (self.instanceConstructorNoInitialize === self.instanceConstructor);
+        self.instanceConstructor = <any>function (...args) {
+          ASClass.runInitializers(this);
+          return self.instanceConstructorNoInitialize.asApply(this, arguments);
+        };
+        self.instanceConstructor.prototype = self.traitsPrototype;
+        self.instanceConstructor.prototype.class = self;
+      }
+    }
+
+    /**
      * Class info.
      */
     classInfo: ClassInfo;
@@ -337,6 +396,17 @@ module Shumway.AVM2.AS {
      * Constructs an instance of this class without calling the "native" initializer.
      */
     instanceConstructorNoInitialize: new (...args) => any;
+
+    /**
+     * Native initializer. Classes that have these defined are constructed in a two phases. All initializers
+     * along the inheritance chain are executed before any constructors are called.
+     */
+    initializer: (...args) => any;
+
+    /**
+     * All native initializers
+     */
+    initializers: Array<(...args) => any>;
 
     /**
      * Constructs an instance of this class.
@@ -1237,6 +1307,10 @@ module Shumway.AVM2.AS {
 
   var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
 
+  export function registerNativeClass(name: string, cls: ASClass) {
+    assert (!nativeClasses[name], "Native class: " + name + " is already registered.");
+    nativeClasses[name] = cls;
+  }
 
   export function createInterface(classInfo: ClassInfo) {
     var ii = classInfo.instanceInfo;
@@ -1306,6 +1380,8 @@ module Shumway.AVM2.AS {
     } else if (ASClass.instanceBindings) {
       ASClass.instanceBindings.applyTo(domain, cls, true);
     }
+
+    ASClass.configureInitializers(cls);
 
     return cls;
   }

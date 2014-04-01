@@ -1,0 +1,66 @@
+/**
+ * Copyright 2013 Mozilla Foundation
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations undxr the License.
+ */
+// Class: Video
+module Shumway.AVM2.AS.flash.media {
+  import notImplemented = Shumway.Debug.notImplemented;
+  export class Video extends flash.display.DisplayObject {
+    static initializer: any = null;
+    constructor (width: number /*int*/ = 320, height: number /*int*/ = 240) {
+      width = width | 0; height = height | 0;
+      false && super();
+      notImplemented("Dummy Constructor: public flash.media.Video");
+    }
+    // Static   JS -> AS Bindings
+    // Static   AS -> JS Bindings
+    // Instance JS -> AS Bindings
+    // Instance AS -> JS Bindings
+    ctor(width: number /*int*/, height: number /*int*/): void {
+      width = width | 0; height = height | 0;
+      notImplemented("public flash.media.Video::ctor"); return;
+    }
+    get deblocking(): number /*int*/ {
+      notImplemented("public flash.media.Video::get deblocking"); return;
+    }
+    set deblocking(value: number /*int*/) {
+      value = value | 0;
+      notImplemented("public flash.media.Video::set deblocking"); return;
+    }
+    get smoothing(): boolean {
+      notImplemented("public flash.media.Video::get smoothing"); return;
+    }
+    set smoothing(value: boolean) {
+      value = !!value;
+      notImplemented("public flash.media.Video::set smoothing"); return;
+    }
+    get videoWidth(): number /*int*/ {
+      notImplemented("public flash.media.Video::get videoWidth"); return;
+    }
+    get videoHeight(): number /*int*/ {
+      notImplemented("public flash.media.Video::get videoHeight"); return;
+    }
+    clear(): void {
+      notImplemented("public flash.media.Video::clear"); return;
+    }
+    attachNetStream(netStream: flash.net.NetStream): void {
+      netStream = netStream;
+      notImplemented("public flash.media.Video::attachNetStream"); return;
+    }
+    attachCamera(camera: flash.media.Camera): void {
+      camera = camera;
+      notImplemented("public flash.media.Video::attachCamera"); return;
+    }
+  }
+}
