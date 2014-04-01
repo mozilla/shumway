@@ -201,7 +201,6 @@ module Shumway.AVM2.AS {
         // ToString
         name = toString(mn);
       } else if (mn instanceof Multiname) {
-        debugger;
         name = mn.name; // ?? Can be two or none namespaces here
       } else {
         // Object - Otherwise, convert the input argument to a
@@ -223,6 +222,16 @@ module Shumway.AVM2.AS {
       return toAttributeName(name.substring(1));
     }
     return new ASQName(name);
+  }
+
+  function prefixWithNamespace(namespaces, name, isAttribute) {
+    if (!namespaces ||
+        namespaces.length !== 1 ||
+        !(namespaces[0] instanceof ASNamespace) ||
+        typeof name !== 'string') {
+      return name;
+    }
+    return new ASQName(namespaces[0], name, isAttribute);
   }
 
   // 12.1 GetDefaultNamespace
@@ -859,7 +868,7 @@ module Shumway.AVM2.AS {
         name = "";
       } else if (arguments.length === 1) {
         name = a;
-      } else if (arguments.length === 2) {
+      } else { // if (arguments.length === 2) {
         namespace = a;
         name = b;
       }
@@ -885,7 +894,7 @@ module Shumway.AVM2.AS {
         name = toString(name);
       }
       // 4. If (Namespace is undefined or not specified)
-      if (namespace === undefined || arguments.length !== 2) {
+      if (namespace === undefined || arguments.length < 2) {
         // a. If Name = "*"
         if (name === "*") {
           // i. Let Namespace = null
@@ -909,7 +918,8 @@ module Shumway.AVM2.AS {
       // 7. Else
       else {
         // a. Let Namespace be a new Namespace created as if by calling the constructor new Namespace(Namespace)
-        namespace = new ASNamespace(namespace);
+        namespace = namespace instanceof ASNamespace ? namespace :
+          new ASNamespace(namespace);
         // b. Let q.uri = Namespace.uri
         uri = namespace.uri
           // NOTE implementations that preserve prefixes in qualified names may also set q.[[Prefix]] to Namespace.prefix
@@ -1092,10 +1102,6 @@ module Shumway.AVM2.AS {
     public static instanceConstructor: any = ASXML;
     private static _flags: ASXML_FLAGS = ASXML_FLAGS.ALL;
     private static _prettyIndent = 2;
-    private static _ignoreComments: boolean = true;
-    private static _ignoreProcessingInstructions: boolean = true;
-    private static _ignoreWhitespace: boolean = true;
-    private static _prettyPrinting: boolean = true;
     private _name: ASQName;
     private _parent: ASXML;
     private _attributes: ASXML [];
@@ -1180,32 +1186,48 @@ module Shumway.AVM2.AS {
     }
 
     static get ignoreComments(): boolean {
-      return ASXML._ignoreComments;
+      return !!(ASXML._flags & ASXML_FLAGS.FLAG_IGNORE_COMMENTS);
     }
     static set ignoreComments(newIgnore: boolean) {
       newIgnore = !!newIgnore;
-      ASXML._ignoreComments = newIgnore;
+      if (newIgnore) {
+        ASXML._flags |= ASXML_FLAGS.FLAG_IGNORE_COMMENTS;
+      } else {
+        ASXML._flags &= ~ASXML_FLAGS.FLAG_IGNORE_COMMENTS;
+      }
     }
     static get ignoreProcessingInstructions(): boolean {
-      return ASXML._ignoreProcessingInstructions;
+      return !!(ASXML._flags & ASXML_FLAGS.FLAG_IGNORE_PROCESSING_INSTRUCTIONS);
     }
     static set ignoreProcessingInstructions(newIgnore: boolean) {
       newIgnore = !!newIgnore;
-      ASXML._ignoreProcessingInstructions = newIgnore;
+      if (newIgnore) {
+        ASXML._flags |= ASXML_FLAGS.FLAG_IGNORE_PROCESSING_INSTRUCTIONS;
+      } else {
+        ASXML._flags &= ~ASXML_FLAGS.FLAG_IGNORE_PROCESSING_INSTRUCTIONS;
+      }
     }
     static get ignoreWhitespace(): boolean {
-      return ASXML._ignoreWhitespace;
+      return !!(ASXML._flags & ASXML_FLAGS.FLAG_IGNORE_WHITESPACE);
     }
     static set ignoreWhitespace(newIgnore: boolean) {
       newIgnore = !!newIgnore;
-      ASXML._ignoreComments = newIgnore;
+      if (newIgnore) {
+        ASXML._flags |= ASXML_FLAGS.FLAG_IGNORE_WHITESPACE;
+      } else {
+        ASXML._flags &= ~ASXML_FLAGS.FLAG_IGNORE_WHITESPACE;
+      }
     }
     static get prettyPrinting(): boolean {
-      return ASXML._prettyPrinting;
+      return !!(ASXML._flags & ASXML_FLAGS.FLAG_PRETTY_PRINTING);
     }
     static set prettyPrinting(newPretty: boolean) {
       newPretty = !!newPretty;
-      ASXML._prettyPrinting = newPretty;
+      if (newPretty) {
+        ASXML._flags |= ASXML_FLAGS.FLAG_PRETTY_PRINTING;
+      } else {
+        ASXML._flags &= ~ASXML_FLAGS.FLAG_PRETTY_PRINTING;
+      }
     }
     static get prettyIndent(): number /*int*/ {
       return ASXML._prettyIndent;
@@ -1491,7 +1513,8 @@ module Shumway.AVM2.AS {
         return _asGetProperty.call(this, namespaces, name, flags);
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
-      return this.getProperty(name, isAttribute, false);
+      return this.getProperty(prefixWithNamespace(namespaces, name, isAttribute),
+        isAttribute, false);
     }
 
     hasProperty(mn, isAttribute, isMethod) {
@@ -1536,6 +1559,7 @@ module Shumway.AVM2.AS {
         return _asHasProperty.call(this, namespaces, name, flags);
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
+      name = prefixWithNamespace(namespaces, name, isAttribute);
       if (this.hasProperty(name, isAttribute, false)) {
         return true;
       }
@@ -1751,7 +1775,6 @@ module Shumway.AVM2.AS {
 
     // 9.1.1.8 [[Descendants]] (P)
     descendants(name: any = "*"): ASXMLList {
-      debugger;
       name = toXMLName(name);
       var flags = name._flags;
       var self: ASXML = this;
@@ -2008,7 +2031,6 @@ module Shumway.AVM2.AS {
         return this._children[mn];
       }
       var name = toXMLName(mn);
-      if (name.localName === 'bar') debugger;
       var xl = new XMLList(this, name);
       this._children.forEach(function (v:any, i) {
         // a. If x[i].[[Class]] == "element",
@@ -2029,7 +2051,8 @@ module Shumway.AVM2.AS {
         return _asGetProperty.call(this, namespaces, name, flags);
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
-      return this.getProperty(name, isAttribute, false);
+      return this.getProperty(prefixWithNamespace(namespaces, name, isAttribute),
+        isAttribute, false);
     }
 
     hasProperty(mn, isAttribute) {
@@ -2045,12 +2068,14 @@ module Shumway.AVM2.AS {
         return _asGetProperty.call(this, namespaces, name, flags);
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
-      return this.hasProperty(name, isAttribute);
+      return this.hasProperty(prefixWithNamespace(namespaces, name, isAttribute),
+        isAttribute);
     }
 
     public asHasPropertyInternal(namespaces: Namespace [], name: any, flags: number) {
       var isAttribute = flags & Multiname.ATTRIBUTE;
-      return this.hasProperty(name, isAttribute);
+      return this.hasProperty(prefixWithNamespace(namespaces, name, isAttribute),
+        isAttribute);
     }
 
     setProperty(mn, isAttribute, value) {
@@ -2059,7 +2084,9 @@ module Shumway.AVM2.AS {
         this.appendChild(value);
         return;
       }
-      notImplemented("setProperty"); return;
+      // TODO
+      var node = this.getProperty(mn, isAttribute, false);
+      toXML(node).replace(0, toXML(value));
     }
 
     public asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
@@ -2067,11 +2094,12 @@ module Shumway.AVM2.AS {
         return _asSetProperty.call(this, namespaces, name, flags, value);
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
+      name = prefixWithNamespace(namespaces, name, isAttribute);
       return this.setProperty(name, isAttribute, value);
     }
 
     asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
-      if (ASXML.isTraitsOrDynamicPrototype(this) || isLex) {
+      if (ASXMLList.isTraitsOrDynamicPrototype(this) || isLex) {
         return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
       }
       // Checking if the method exists before calling it
