@@ -167,6 +167,7 @@ void blurY(unsigned char *img, int width, int height, int distance, unsigned int
 		src += 4;
 	}
 
+	freeMemory(lineBufferOut);
 	freeMemory(lineBufferIn);
 }
 
@@ -294,6 +295,7 @@ void blurYAlpha(unsigned char *img, int width, int height, int distance, unsigne
 		src++;
 	}
 
+	freeMemory(lineBufferOut);
 	freeMemory(lineBufferIn);
 }
 
