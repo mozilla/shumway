@@ -45,7 +45,7 @@ var DisplayObjectDefinition = (function () {
       this._animated = false;
       this._bbox = null;
       this._bitmap = null;
-      this._blendMode = blendModeClass.NORMAL;
+      this._blendMode = null;
       this._bounds = { xMin: 0, xMax: 0, yMin: 0, yMax: 0, invalid: true };
       this._cacheAsBitmap = false;
       this._children = [];
@@ -92,7 +92,7 @@ var DisplayObjectDefinition = (function () {
       this._clip = null;
 
       blendModes = [
-        blendModeClass.NORMAL,     // 0
+        null,                      // 0
         blendModeClass.NORMAL,     // 1
         blendModeClass.LAYER,      // 2
         blendModeClass.MULTIPLY,   // 3
@@ -190,8 +190,7 @@ var DisplayObjectDefinition = (function () {
     },
 
     _resolveBlendMode: function (blendModeNumeric) {
-      return blendModes[blendModeNumeric] ||
-             flash.display.BlendMode.class.NORMAL;
+      return blendModes[blendModeNumeric] || null;
     },
 
     _initializeFilters: function (filters) {
@@ -588,7 +587,8 @@ var DisplayObjectDefinition = (function () {
       message.writeFloatUnsafe(this._alpha);
       message.writeIntUnsafe(!this._invisible);
 
-      message.writeIntUnsafe(blendModes.indexOf(this._blendMode));
+      var bm = blendModes.indexOf(this._blendMode);
+      message.writeIntUnsafe(bm < 0 ? 0 : bm);
 
       if (this._mask) {
         if (this._maskedObject) {
@@ -674,7 +674,7 @@ var DisplayObjectDefinition = (function () {
       return this._blendMode;
     },
     set blendMode(val) {
-      if (blendModes.indexOf(val) >= 0) {
+      if (blendModes.indexOf(val) > 0) {
         this._blendMode = val;
       } else {
         throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");

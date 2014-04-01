@@ -155,7 +155,7 @@ module Shumway.Layers {
       this.context = context;
       this._fillRule = fillRule === FillRule.EVENODD ? 'evenodd' : 'nonzero';
       context.fillRule = context.mozFillRule = this._fillRule;
-      for (var i = 0; i < 2; i++) {
+      for (var i = 0; i < 3; i++) {
         var canvas = document.createElement("canvas");
         canvas.width = context.canvas.width;
         canvas.height = context.canvas.height;
@@ -263,6 +263,7 @@ module Shumway.Layers {
       var self = this;
       var maskCanvasContext = self._scratchContexts[0];
       var maskeeCanvasContext = self._scratchContexts[1];
+      var blendCanvasContext = self._scratchContexts[2];
 
       if (clipRectangle) {
         context.save();
@@ -273,14 +274,25 @@ module Shumway.Layers {
 
       root.visit(function visitFrame(frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
 
-        console.log(frame)
-        context.globalCompositeOperation = self.getCompositeOperation(frame.blendMode);
-
         context.save();
         context.setTransform(transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty);
         context.globalAlpha = frame.getConcatenatedAlpha();
 
         if (maskDepth === 0 && (flags & FrameFlags.IsMask)) {
+          context.restore();
+          return VisitorFlags.Skip;
+        }
+
+        if (frame.blendMode > 0 && maskDepth < Canvas2DStageRenderer.MAX_MASK_DEPTH) {
+          var frameBoundsAABB = frame.getBounds();
+          transform.transformRectangleAABB(frameBoundsAABB);
+          Canvas2DStageRenderer.clearContext(blendCanvasContext, frameBoundsAABB);
+          self.renderFrame(blendCanvasContext, frame, transform, frameBoundsAABB, null, maskDepth + 1, options);
+          context.globalCompositeOperation = self.getCompositeOperation(frame.blendMode);
+          context.save();
+          context.setTransform(1, 0, 0, 1, 0, 0);
+          context.drawImage(blendCanvasContext.canvas, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
+          context.restore();
           context.restore();
           return VisitorFlags.Skip;
         }
@@ -320,7 +332,6 @@ module Shumway.Layers {
         } else {
           var frameBoundsAABB = frame.getBounds();
           transform.transformRectangleAABB(frameBoundsAABB);
-          console.log(frameBoundsAABB)
           if (frame.hasFlags(FrameFlags.Culled)) {
             frame.setFlags(FrameFlags.Culled, false);
           } else {
@@ -340,6 +351,7 @@ module Shumway.Layers {
           }
         }
         context.restore();
+
         return VisitorFlags.Continue;
       }, transform, FrameFlags.Empty);
 
@@ -364,7 +376,7 @@ module Shumway.Layers {
       // - blendModeClass.ERASE (destination-out)
       // - blendModeClass.LAYER [defines backdrop]
 
-      var compositeOp: string = "normal";
+      var compositeOp: string = "source-over";
 
       switch (blendMode) {
         case BlendMode.MULTIPLY:   compositeOp = "multiply";   break;
