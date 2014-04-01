@@ -1095,6 +1095,7 @@ module Shumway.AVM2.AS {
     private static _ignoreComments: boolean = true;
     private static _ignoreProcessingInstructions: boolean = true;
     private static _ignoreWhitespace: boolean = true;
+    private static _prettyPrinting: boolean = true;
     private _name: ASQName;
     private _parent: ASXML;
     private _attributes: ASXML [];
@@ -1200,18 +1201,18 @@ module Shumway.AVM2.AS {
       ASXML._ignoreComments = newIgnore;
     }
     static get prettyPrinting(): boolean {
-      notImplemented("public.XML::get prettyPrinting"); return;
+      return ASXML._prettyPrinting;
     }
     static set prettyPrinting(newPretty: boolean) {
       newPretty = !!newPretty;
-      notImplemented("public.XML::set prettyPrinting"); return;
+      ASXML._prettyPrinting = newPretty;
     }
     static get prettyIndent(): number /*int*/ {
-      notImplemented("public.XML::get prettyIndent"); return;
+      return ASXML._prettyIndent;
     }
     static set prettyIndent(newIndent: number /*int*/) {
       newIndent = newIndent | 0;
-      notImplemented("public.XML::set prettyIndent"); return;
+      ASXML._prettyIndent = newIndent;
     }
     toString(): string {
       return toString(this);
@@ -1550,6 +1551,37 @@ module Shumway.AVM2.AS {
       return this.asHasProperty(namespaces, name, flags);
     }
 
+    asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
+      if (ASXML.isTraitsOrDynamicPrototype(this) || isLex) {
+        return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
+      }
+      // Checking if the method exists before calling it
+      var self: Object = this;
+      var result;
+      var method;
+      var resolved = self.resolveMultinameProperty(namespaces, name, flags);
+      if (self.asGetNumericProperty && Multiname.isNumeric(resolved)) {
+        method = self.asGetNumericProperty(resolved);
+      } else {
+        var openMethods = self.asOpenMethods;
+        method = (openMethods && openMethods[resolved]) || self[resolved];
+      }
+      if (method) {
+        return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
+      }
+      // Otherwise, 11.2.2.1 CallMethod ( r , args )
+      // If f == undefined and Type(base) is XMLList and base.[[Length]] == 1
+      //   ii. Return the result of calling CallMethod(r0, args) recursively
+
+      // f. If f == undefined and Type(base) is XML and base.hasSimpleContent () == true
+      //   i. Let r0 be a new Reference with base object = ToObject(ToString(base)) and property name = P
+      //   ii. Return the result of calling CallMethod(r0, args) recursively
+      if (this.hasSimpleContent()) {
+        return Object(toString(this)).asCallProperty(namespaces, name, flags, isLex, args);
+      }
+      throw new TypeError();
+    }
+
     _delete(key, isMethod) {
       notImplemented("XML.[[Delete]]");
     }
@@ -1627,14 +1659,7 @@ module Shumway.AVM2.AS {
         self._kind === "comment" ||
         self._kind === "processing-instruction" ||
         self._kind === "attribute") {
-        return;
-      }
-      var i = p >>> 0;
-      if (String(p) !== String(i)) {
-        throw "TypeError in XML.prototype.replace(): invalid name " + p;
-      }
-      if (i >= self.length()) {
-        p = String(self.length());
+        return self;
       }
       if (v._kind === "element") {
         var a = self;
@@ -1645,28 +1670,45 @@ module Shumway.AVM2.AS {
           a = a._parent;
         }
       }
+      var i = p >>> 0;
+      if (String(p) === String(i)) {
+        if (i >= self.length()) {
+          p = String(self.length());
+        }
+        if (self._children[p]) {
+          self._children[p]._parent = null;
+        }
+      } else {
+        var toRemove = this.getProperty(p, false, false);
+        if (toRemove.length() === 0) { // nothing to replace
+          return self;
+        }
+        toRemove._children.forEach(function (v, i) {
+          var index = self._children.indexOf(v);
+          v._parent = null;
+          if (i === 0) {
+            p = String(index);
+            self._children.splice(index, 1, undefined);
+          } else {
+            self._children.splice(index, 1);
+          }
+        });
+      }
+
       if (v._kind === "element" ||
         v._kind === "text" ||
         v._kind === "comment" ||
         v._kind === "processing-instruction") {
         v._parent = self;
-        if (self._children[p]) {
-          self._children[p]._parent = null;
-        }
         self._children[p] = v;
-      } else if (self instanceof ASXMLList) {
-        self.deleteByIndex(p);
-        self.insert(p, v);
       } else {
         s = toString(v);
         var t = new XML();
         t._parent = self;
         t._value = s;
-        if (self._children[p]) {
-          self._children[p]._parent = null;
-        }
         self._children[p] = t;
       }
+      return self;
     }
 
     // 9.1.1.13 [[AddInScopeNamespace]] ( N )
@@ -2026,6 +2068,33 @@ module Shumway.AVM2.AS {
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
       return this.setProperty(name, isAttribute, value);
+    }
+
+    asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
+      if (ASXML.isTraitsOrDynamicPrototype(this) || isLex) {
+        return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
+      }
+      // Checking if the method exists before calling it
+      var self: Object = this;
+      var result;
+      var method;
+      var resolved = self.resolveMultinameProperty(namespaces, name, flags);
+      if (self.asGetNumericProperty && Multiname.isNumeric(resolved)) {
+        method = self.asGetNumericProperty(resolved);
+      } else {
+        var openMethods = self.asOpenMethods;
+        method = (openMethods && openMethods[resolved]) || self[resolved];
+      }
+      if (method) {
+        return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
+      }
+      // Otherwise, 11.2.2.1 CallMethod ( r , args )
+      // If f == undefined and Type(base) is XMLList and base.[[Length]] == 1
+      //   ii. Return the result of calling CallMethod(r0, args) recursively
+      if (this.length() === 1) {
+        return this._children[0].asCallProperty(namespaces, name, flags, isLex, args);
+      }
+      throw new TypeError();
     }
   }
 
