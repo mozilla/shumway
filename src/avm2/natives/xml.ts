@@ -93,8 +93,8 @@ module Shumway.AVM2.AS {
   }
 
   // 10.2 ToXMLString
-  function toXMLString(node, ancestorNamespaces?, indentLevel?) {
-    return new XMLEncoder(ancestorNamespaces, indentLevel, true).encode(node)
+  function toXMLString(node) {
+    return new XMLEncoder().encode(node)
   }
 
 
@@ -228,10 +228,10 @@ module Shumway.AVM2.AS {
     if (!namespaces ||
         namespaces.length !== 1 ||
         !(namespaces[0] instanceof ASNamespace) ||
-        typeof name !== 'string') {
+        (typeof name !== 'string' && name !== undefined)) {
       return name;
     }
-    return new ASQName(namespaces[0], name, isAttribute);
+    return new ASQName(namespaces[0], name || '*', isAttribute);
   }
 
   // 12.1 GetDefaultNamespace
@@ -257,7 +257,7 @@ module Shumway.AVM2.AS {
     return true;
   }
 
-  function XMLEncoder(ancestorNamespaces, indentLevel?, prettyPrinting?) {
+  function XMLEncoder() {
     function visit(node, encode) {
       if (node instanceof ASXML) {
         switch (node._kind) {
@@ -281,6 +281,7 @@ module Shumway.AVM2.AS {
       }
     }
     function encode(node, encoder) {
+      var addAncestorNamespaces: boolean = true;
       return visit(node, {
         element: function (n) {
           var s, a;
@@ -289,6 +290,9 @@ module Shumway.AVM2.AS {
           s = "<" + prefix + n._name.localName;
           // Enumerate namespace declarations
           var namespaceDeclarations = [];
+          if (addAncestorNamespaces) {
+            addAncestorNamespaces = false;
+          }
           if (ns.prefix || ns.uri) {
             // If either is a non-empty string then create a namespace
             // declaration for it
@@ -297,17 +301,21 @@ module Shumway.AVM2.AS {
           if (prefix) {
             namespaceDeclarations[ns.prefix] = true;
           }
+
           var t = n;
           while (t) {
-            for (var i = 0; t._inScopeNamespaces && i < t._inScopeNamespaces.length; i++) {
+            for (var i = 0; t._inScopeNamespaces && addAncestorNamespaces
+              && i < t._inScopeNamespaces.length; i++) {
               ns = t._inScopeNamespaces[i];
               if (!namespaceDeclarations[ns.prefix]) {
                 namespaceDeclarations.push(ns);
                 namespaceDeclarations[ns.prefix] = true;  // flag inclusion
               }
             }
-            t = t.parent;
+            t = t._parent;
           }
+          addAncestorNamespaces = false;
+
           for (var i = 0; i < namespaceDeclarations.length; i++) {
             a = namespaceDeclarations[i];
             if (a.prefix) {
@@ -354,7 +362,7 @@ module Shumway.AVM2.AS {
             if (i > 0) {
               s += "\n";
             }
-            s += toXMLString(n._children[i], []/*ancestor namespaces*/);
+            s += toXMLString(n._children[i]);
           }
           return s;
         },
@@ -985,111 +993,6 @@ module Shumway.AVM2.AS {
     }
   }
 
-//  export class ASQName2 extends ASNative {
-//    public static instanceConstructor: any = ASQName;
-//    mn: Multiname;
-//    isAny: boolean;
-//    isAnyNamespace: boolean;
-//    isAttr: boolean;
-//    _localName: string;
-//    _uri: string;
-//    constructor(ns, name?, isAttr?) {
-//      false && super();
-//      // handle coerce case
-//      if (!(this instanceof ASQName)) {
-//        if (name === undefined && (ns instanceof ASQName)) {
-//          return ns;
-//        } else {
-//          return new ASQName2(ns, name);
-//        }
-//      }
-//      // if only one arg, then its the name
-//      if (name === undefined) {
-//        name = ns;
-//        ns = undefined;
-//      }
-//      if (typeof ns === "string" || (ns instanceof ASQName)) {
-//        ns = Namespace.createNamespace(ns, "");
-//      }
-//      // construct the multiname for this qname
-//      var mn;
-//      if (name instanceof ASQName) {
-//        if (ns === undefined) {
-//          // reuse the original multiname
-//          mn = name.mn;
-//        } else {
-//          mn = new Multiname([ns], name.mn.getName());
-//        }
-//      } else if (name instanceof Multiname) {
-//        if (ns === undefined) {
-//          if (name.isQName() || name.isAnyName() || name.isAnyNamespace()) {
-//            mn = name;
-//          } else {
-//            mn = new Multiname([getDefaultNamespace(/* scope */)], name.getName(), name.flags);
-//          }
-//        } else {
-//          mn = new Multiname([ns], name.getName(), name.flags);
-//        }
-//      } else if (name === "*") {
-//        // Any name has a null name and is not a runtime name
-//        mn = new Multiname([], null, isAttr ? Multiname.ATTRIBUTE : 0);
-//      } else if (name === "@*") {
-//        // Any name has a null name and is not a runtime name
-//        mn = new Multiname([], null, Multiname.ATTRIBUTE);
-//      } else {
-//        ns = ns === undefined ? getDefaultNamespace(/* scope */) : ns;
-//        if (name === undefined) {
-//          mn = new Multiname([ns], "");
-//        } else {
-//          mn = new Multiname([ns], toString(name), isAttr ? Multiname.ATTRIBUTE : 0);
-//        }
-//      }
-//      this.mn = mn;
-//      this.isAny = mn.isAnyName();
-//      this.isAnyNamespace = mn.isAnyNamespace();
-//      this.isAttr = mn.isAttribute();
-//    }
-//
-//    get localName(): string {
-//      if (!this.localName) {
-//        this.localName = this.isAny ? "*" : this.mn.getName();
-//      }
-//      return this.localName;
-//    }
-//
-//    get uri(): string {
-//      if (!this.uri) {
-//        var ns = this.mn.namespaces[0]
-//        this.uri = ns && ns.uri ? ns.uri : this.isAny || this.isAnyNamespace ? null : "";
-//      }
-//      return this.uri;
-//    }
-//
-//    get prefix(): string {
-//      return this.mn.namespaces[0].prefix
-//    }
-//
-//    // 13.3.5.4 [[GetNamespace]]([InScopeNamespaces])
-//    getNamespace(inScopeNamespaces?) {
-//      if (this.uri === null) {
-//        throw "TypeError in QName.prototype.getNamespace()";
-//      }
-//      if (!inScopeNamespaces) {
-//        inScopeNamespaces = [];
-//      }
-//      var ns;
-//      for (var i = 0; i < inScopeNamespaces.length; i++) {
-//        if (this.uri === inScopeNamespaces[i].uri) {
-//          ns = inScopeNamespaces[i];
-//        }
-//      }
-//      if (!ns) {
-//        ns = Namespace.createNamespace(this.uri, "");  // FIXME what about the prefix
-//      }
-//      return ns;
-//    }
-//  }
-
   enum ASXML_FLAGS {
     FLAG_IGNORE_COMMENTS                = 0x01,
     FLAG_IGNORE_PROCESSING_INSTRUCTIONS = 0x02,
@@ -1397,6 +1300,7 @@ module Shumway.AVM2.AS {
         c = v.deepCopy();
       }
       n = toXMLName(p);
+
       if (isAttribute) {
         if (!this._attributes) {
           return;
@@ -1412,16 +1316,15 @@ module Shumway.AVM2.AS {
         this._attributes.push(a);
         return;
       }
-      var isValidName = isXMLName(n)
-      if (!isValidName && n.localName !== "*") {
-        return; // We're done
-      }
+
       var i = undefined;
       var primitiveAssign = !isXMLType(c) && n.localName !== "*";
+      var isAny = n._flags & ASQNameFlags.ANY_NAME;
+      var isAnyNamespace = n._flags & ASQNameFlags.ANY_NAMESPACE;
       for (var k = self.length() - 1; k >= 0; k--) {
-        if ((n.isAny || self._children[k]._kind === "element" &&
+        if ((isAny || self._children[k]._kind === "element" &&
           self._children[k]._name.localName === n.localName) &&
-          (n.uri === null ||
+          (isAnyNamespace ||
             self._children[k]._kind === "element" &&
             self._children[k]._name.uri === n.uri)) {
           if (i !== undefined) {
@@ -1462,7 +1365,8 @@ module Shumway.AVM2.AS {
         return _asSetProperty.call(this, namespaces, name, flags, value);
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
-      this.setProperty(name, isAttribute, value);
+      this.setProperty(prefixWithNamespace(namespaces, name, isAttribute),
+        isAttribute, value);
     }
 
 
