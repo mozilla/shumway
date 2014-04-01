@@ -130,6 +130,10 @@ var DisplayObjectDefinition = (function () {
         this._renderableId = s.renderableId || 0;
         this._isSymbol = true;
 
+        if (s.filters) {
+          this._initializeFilters(s.filters);
+        }
+
         var scale9Grid = s.scale9Grid;
         if (scale9Grid) {
           this._scale9Grid = new flash.geom.Rectangle(
@@ -188,6 +192,119 @@ var DisplayObjectDefinition = (function () {
     _resolveBlendMode: function (blendModeNumeric) {
       return blendModes[blendModeNumeric] ||
              flash.display.BlendMode.class.NORMAL;
+    },
+
+    _initializeFilters: function (filters) {
+      function getRGB(color) {
+        return (color.red << 16) | (color.green << 8) | color.blue;
+      }
+      function getRGBs(colors) {
+        var ca = [];
+        for (var i = 0, n = colors.length; i < n; i++) {
+          ca.push(getRGB(colors[i]));
+        }
+        return ca;
+      }
+      function getAlpha(color) {
+        return color.alpha / 255;
+      }
+      function getAlphas(colors) {
+        var ca = [];
+        for (var i = 0, n = colors.length; i < n; i++) {
+          ca.push(getAlpha(colors[i]));
+        }
+        return ca;
+      }
+      function getFilterType(filterObject) {
+        if (filterObject.onTop === 1) {
+          return "full";
+        } else {
+          return filterObject.inner === 1 ? "inner" : "outer";
+        }
+      }
+      for (var i = 0, n = filters.length; i < n; i++) {
+        var fo = filters[i];
+        var filter;
+        switch (fo.type) {
+          case 0:
+            filter = new flash.filters.DropShadowFilter(fo.distance,
+                                                        fo.angle * 180 / Math.PI,
+                                                        getRGB(fo.colors[0]),
+                                                        getAlpha(fo.colors[0]),
+                                                        fo.blurX,
+                                                        fo.blurY,
+                                                        fo.strength,
+                                                        fo.passes,
+                                                        !!fo.innerShadow,
+                                                        !!fo.knockout,
+                                                        !fo.componsiteSource);
+            break;
+          case 1:
+            filter = new flash.filters.BlurFilter(fo.blurX,
+                                                  fo.blurY,
+                                                  fo.passes);
+            break;
+          case 2:
+            filter = new flash.filters.GlowFilter(getRGB(fo.colors[0]),
+                                                  getAlpha(fo.colors[0]),
+                                                  fo.blurX,
+                                                  fo.blurY,
+                                                  fo.strength,
+                                                  fo.passes,
+                                                  !!fo.innerShadow,
+                                                  !!fo.knockout);
+            break;
+          case 3:
+            filter = new flash.filters.BevelFilter(fo.distance,
+                                                   fo.angle * 180 / Math.PI,
+                                                   getRGB(fo.highlightColor),
+                                                   getAlpha(fo.highlightColor),
+                                                   getRGB(fo.colors[0]),
+                                                   getAlpha(fo.colors[0]),
+                                                   fo.blurX,
+                                                   fo.blurY,
+                                                   fo.strength,
+                                                   fo.passes,
+                                                   getFilterType(fo),
+                                                   !!fo.knockout);
+            break;
+          case 4:
+            filter = new flash.filters.GradientGlowFilter(fo.distance,
+                                                          fo.angle * 180 / Math.PI,
+                                                          getRGBs(fo.colors),
+                                                          getAlphas(fo.colors),
+                                                          fo.ratios,
+                                                          fo.blurX,
+                                                          fo.blurY,
+                                                          fo.strength,
+                                                          fo.passes,
+                                                          getFilterType(fo),
+                                                          !!fo.knockout);
+            break;
+          case 5:
+            filter = null; //new flash.filters.ConvolutionFilter();
+            break;
+          case 6:
+            filter = new flash.filters.ColorMatrixFilter(fo.matrix);
+            break;
+          case 7:
+            filter = new flash.filters.GradientBevelFilter(fo.distance,
+                                                           fo.angle * 180 / Math.PI,
+                                                           getRGBs(fo.colors),
+                                                           getAlphas(fo.colors),
+                                                           fo.ratios,
+                                                           fo.blurX,
+                                                           fo.blurY,
+                                                           fo.strength,
+                                                           fo.passes,
+                                                           getFilterType(fo),
+                                                           !!fo.knockout);
+            break;
+        }
+        if (filter) {
+          this._filters.push(filter);
+        }
+      }
     },
 
     _getConcatenatedTransform: function (targetCoordSpace, toDeviceSpace) {
