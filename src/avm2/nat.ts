@@ -1086,6 +1086,10 @@ module Shumway.AVM2.AS {
       somewhatImplemented("Error.getStackTrace()");
       return Shumway.AVM2.Runtime.AVM2.getStackTrace();
     }
+    constructor(msg: any = "", id: any = 0) {
+      false && super();
+      notImplemented("ASError");
+    }
   }
 
   export class ASDefinitionError extends ASError { }

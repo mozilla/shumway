@@ -20,8 +20,41 @@ module Shumway.AVM2.AS {
   import notImplemented = Shumway.Debug.notImplemented;
 
   export module flash.system {
-    export class IME extends ASNative {
-
+    export class IME extends ASNative /* flash.events.EventDispatcher */ {
+      constructor () {
+        false && super();
+      }
+      get enabled(): boolean {
+        notImplemented("public flash.system.IME::get enabled"); return;
+      }
+      set enabled(enabled: boolean) {
+        enabled = !!enabled;
+        notImplemented("public flash.system.IME::set enabled"); return;
+      }
+      get conversionMode(): string {
+        notImplemented("public flash.system.IME::get conversionMode"); return;
+      }
+      set conversionMode(mode: string) {
+        mode = "" + mode;
+        notImplemented("public flash.system.IME::set conversionMode"); return;
+      }
+      static setCompositionString(composition: string): void {
+        composition = "" + composition;
+        notImplemented("public flash.system.IME::static setCompositionString"); return;
+      }
+      static doConversion(): void {
+        notImplemented("public flash.system.IME::static doConversion"); return;
+      }
+      static compositionSelectionChanged(start: number /*int*/, end: number /*int*/): void {
+        start = start | 0; end = end | 0;
+        notImplemented("public flash.system.IME::static compositionSelectionChanged"); return;
+      }
+      static compositionAbandoned(): void {
+        notImplemented("public flash.system.IME::static compositionAbandoned"); return;
+      }
+      static _checkSupported(): boolean {
+        notImplemented("public flash.system.IME::static _checkSupported"); return;
+      }
     }
 
     export class System extends ASNative {

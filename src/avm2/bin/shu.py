@@ -356,6 +356,10 @@ class Split(Command):
         type = tokens[1]
         name = tokens[2]
         print "Open " + dst + "/" + name
+        pathName = os.path.dirname(dst + "/" + name)
+        print "Path " + pathName
+        if not os.path.exists(pathName):
+          os.makedirs(pathName)
         file = open(dst + "/" + name, "w")
       elif line == ">>>":
         file.close()

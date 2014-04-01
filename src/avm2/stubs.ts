@@ -35,16 +35,22 @@ module Shumway.AVM2 {
     return null;
   }
 
+  var generatedFiles = [];
+
   export function generateStub(abc: AbcFile) {
     abc.classes.forEach(function (x) {
       allClasses.push(x);
     });
-    writeLicense();
     writer.writeLn("///<reference path='references.ts' />");
-    writer.enter("module Shumway.AVM2.AS {");
-    writer.writeLn("import notImplemented = Shumway.Debug.notImplemented;");
+    // writer.enter("module Shumway.AVM2.AS {");
     abc.classes.forEach(generateClassStubs);
-    writer.leave("}");
+    // writer.leave("}");
+
+    generatedFiles.sort();
+    generatedFiles.forEach(function (file) {
+      // writer.writeLn(file);
+      writer.writeLn("///<reference path='" + file + "' />");
+    });
   }
 
   export function writeLicense() {
@@ -72,7 +78,29 @@ module Shumway.AVM2 {
     Boolean: "boolean",
     String: "string",
     Array: "any []",
-    Vector: "Vector"
+    Vector: "ASVector",
+    Object: "ASObject",
+    Function: "ASFunction",
+    Class: "ASClass",
+    JSON: "ASJSON",
+    Namespace: "ASNamespace",
+    XML: "ASXML",
+    XMLList: "ASXMLList",
+    QName: "ASQName",
+    Error: "ASError",
+    DefinitionError: "ASDefinitionError",
+    EvalError: "EvalError",
+    RangeError: "RangeError",
+    ReferenceError: "ReferenceError",
+    SecurityError: "SecurityError",
+    SyntaxError: "SyntaxError",
+    TypeError: "TypeError",
+    URIError: "URIError",
+    VerifyError: "VerifyError",
+    UninitializedError: "UninitializedError",
+    ArgumentError: "ArgumentError",
+    Date: "ASDate",
+    Math: "ASMath"
   };
 
   function toType(name: Multiname): string {
@@ -83,9 +111,11 @@ module Shumway.AVM2 {
     var type = "";
     if (primitiveTypeMap[name.name]) {
       type = primitiveTypeMap[name.name];
-      if (type === "Vector") {
+      if (type === "ASVector") {
         if (name.typeParameter) {
-          type = "Vector<" + toType(name.typeParameter) + ">";
+          type = "ASVector<" + toType(name.typeParameter) + ">";
+        } else {
+          type = "ASVector<any>";
         }
       }
       if (name.name === "int" || name.name === "Int" ||
@@ -146,39 +176,87 @@ module Shumway.AVM2 {
     }).join(", ");
   }
 
+  function escapeTypeName(name) {
+    switch (name) {
+      case "Object":
+        return "ASObject"
+      case "Array":
+    }
+  }
+
   export function generateClassStubs(classInfo: ClassInfo) {
     var ci = classInfo;
     var ii = classInfo.instanceInfo;
     var className = ii.name;
     var namespace = className.namespaces[0];
     var needsModule = !!namespace.uri;
-//    if (namespace.uri.indexOf("flash.") !== 0) {
-//      return;
-//    }
+    if (namespace.uri.indexOf("flash.") !== 0) {
+      return;
+    }
+    var ignore = [
+      "flash.util.ByteArray",
+      "flash.util.Dictionary",
+      "flash.util.Proxy",
+      "flash.net.ObjectEncoding",
+      "flash.system.System",
+      "flash.system.IME",
+      "flash.system.SystemUpdater"
+    ];
+
+    for (var i = 0; i < ignore.length; i++) {
+      if (namespace.uri.indexOf(ignore[i]) === 0) {
+        return;
+      }
+    }
+    var filePath = namespace.uri.substring("flash.".length).replace(/\./g, "/");
+    filePath = filePath ? filePath + "/" + ii.name.name : ii.name.name;
+    filePath += ".ts";
+    generatedFiles.push(filePath);
+    writer.writeLn("<<< ASCII " + filePath);
+    writeLicense();
     writer.writeComment("Class: " + ii.name.name);
-    needsModule && writer.enter("module " + namespace.uri + " {");
+    needsModule && writer.enter("module Shumway.AVM2.AS." + namespace.uri + " {");
+    writer.writeLn("import notImplemented = Shumway.Debug.notImplemented;");
     var superName = ii.superName;
     var extendsString = "";
     if (superName) {
       extendsString = " extends ";
-      extendsString += (superName.namespaces[0].uri ? superName.namespaces[0].uri + "." : "");
-      extendsString += superName.name;
+      if (superName.name === "Object") {
+        extendsString += "ASNative";
+      } else {
+        extendsString += toType(superName);
+      }
+      // extendsString += (superName.namespaces[0].uri ? superName.namespaces[0].uri + "." : "");
+      // extendsString += superName.name;
     }
-    writer.enter("export class " + ii.name.name + extendsString + " {");
-    if (ii.init) {
-      var parameters = ii.init.parameters;
-      writer.enter("constructor (" + toParameterList(parameters) + ") {");
-      if (parameters.length) {
-        writer.writeLn(parameters.filter(p => !!p.type).map(
-          p => p.name + " = " + coerceParameter(p) + ";"
-        ).join(" "));
+    if (ii.interfaces && ii.interfaces.length) {
+      extendsString += ii.isInterface() ? " extends " : " implements ";
+      extendsString += ii.interfaces.map(function (i) {
+        if (i.name === "IDataInput" || i.name === "IDataOutput") {
+          return "flash.utils." + i.name;
+        }
+        return i.name;
+      }).join(", ");
+    }
+    if (ii.isInterface()) {
+      writer.enter("export interface " + ii.name.name + extendsString + " {");
+    } else {
+      writer.enter("export class " + ii.name.name + extendsString + " {");
+      if (ii.init) {
+        var parameters = ii.init.parameters;
+        writer.enter("constructor (" + toParameterList(parameters) + ") {");
+        if (parameters.length) {
+          writer.writeLn(parameters.filter(p => !!p.type).map(
+            p => p.name + " = " + coerceParameter(p) + ";"
+          ).join(" "));
+        }
+        if (superName) {
+          var superClassInfo = findClassInfo(superName);
+          var superParameters = superClassInfo.instanceInfo.init.parameters;
+          writer.writeLn("super(" + toSuperArgumentList(parameters, superParameters) + ");");
+        }
+        writer.leave("}");
       }
-      if (superName) {
-        var superClassInfo = findClassInfo(superName);
-        var superParameters = superClassInfo.instanceInfo.init.parameters;
-        writer.writeLn("super(" + toSuperArgumentList(parameters, superParameters) + ");");
-      }
-      writer.leave("}");
     }
 
     var traits = [ci.traits, ii.traits];
@@ -199,9 +277,10 @@ module Shumway.AVM2 {
           prefix = "set ";
         }
         prefix += trait.name.name;
-        if (trait.name.namespaces[0].isPrivate()) {
-          prefix = "private " + prefix;
-        }
+        // TypeScript private doesn't work the same way, don't mark stuff as private.
+//        if (trait.name.namespaces[0].isPrivate()) {
+//          prefix = "private " + prefix;
+//        }
         if (!trait.isSetter()) {
           writer.enter(prefix + "(" + toParameterList(methodParameters) + "): " + toType(trait.methodInfo.returnType) + " {");
         } else {
@@ -219,6 +298,7 @@ module Shumway.AVM2 {
 
     writer.leave("}");
     needsModule && writer.leave("}");
+    writer.writeLn(">>>");
   }
 
   export class Stub {
