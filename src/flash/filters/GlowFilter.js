@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global glowFilter */
+/* global clamp */
 
 var GlowFilterDefinition = (function () {
   return {
@@ -23,34 +23,58 @@ var GlowFilterDefinition = (function () {
     initialize: function () {
 
     },
-    _updateFilterBounds: function (bounds) {
-      var bx = this._blurX * this._quality * 20;
-      var by = this._blurY * this._quality * 20;
-      bounds.xMin -= bx;
-      bounds.xMax += bx;
-      bounds.yMin -= by;
-      bounds.yMax += by;
+    _generateFilterBounds: function () {
+      var bounds = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
+      this._updateBlurBounds(bounds);
+      return bounds;
+    },
+    _applyFilter: function (imageData, width, height) {
+      var pimg = Module._malloc(imageData.length);
+      Module.HEAPU8.set(imageData, pimg);
+      this._applyFilterMulti(pimg, width, height, false);
+      FILTERS.unpreMultiplyAlpha(pimg, width, height);
+      imageData.set(Module.HEAPU8.subarray(pimg, pimg + imageData.length));
+      Module._free(pimg);
+    },
+    _applyFilterMulti: function (pimg, width, height, isPremult) {
+      if (!isPremult) {
+        FILTERS.preMultiplyAlpha(pimg, width, height);
+      }
+      var flags = 0;
+      if (this._inner) { flags |= 0x01; }
+      if (this._knockout) { flags |= 0x02; }
+      if (this._hideObject) { flags |= 0x04; }
+      FILTERS.dropshadow(pimg,
+                         width, height,
+                         0, 0,
+                         this._color, this._alpha,
+                         Math.round(Math.ceil(this._blurX - 1) / 2),
+                         Math.round(Math.ceil(this._blurY - 1) / 2),
+                         this._strength,
+                         this._quality,
+                         flags);
+      return true;
     },
     __glue__: {
       native: {
         static: {
         },
         instance: {
-          color: {
-            get: function color() { return this._color; },
-            set: function color(value) { this._color = value; }
-          },
           alpha: {
             get: function alpha() { return this._alpha; },
-            set: function alpha(value) { this._alpha = value; }
+            set: function alpha(value) { this._alpha = clamp(value, 0, 1); }
           },
           blurX: {
             get: function blurX() { return this._blurX; },
-            set: function blurX(value) { this._blurX = value; }
+            set: function blurX(value) { this._blurX = clamp(value, 0, 255); }
           },
           blurY: {
             get: function blurY() { return this._blurY; },
-            set: function blurY(value) { this._blurY = value; }
+            set: function blurY(value) { this._blurY = clamp(value, 0, 255); }
+          },
+          color: {
+            get: function color() { return this._color; },
+            set: function color(value) { this._color = value; }
           },
           inner: {
             get: function inner() { return this._inner; },
@@ -62,11 +86,11 @@ var GlowFilterDefinition = (function () {
           },
           quality: {
             get: function quality() { return this._quality; },
-            set: function quality(value) { this._quality = value; }
+            set: function quality(value) { this._quality = clamp(value, 0, 15); }
           },
           strength: {
             get: function strength() { return this._strength; },
-            set: function strength(value) { this._strength = value; }
+            set: function strength(value) { this._strength = clamp(value, 0, 255); }
           }
         }
       }
