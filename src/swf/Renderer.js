@@ -286,6 +286,7 @@ function handleRenderMessages(renderer, layers, i32, sync) {
       layer.transform = transform;
       layer.alpha = alpha;
       layer.isVisible = visible;
+      layer.blendMode = blendMode;
 
       if (maskId) {
         layer.mask = layers[maskId];

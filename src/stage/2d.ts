@@ -11,6 +11,7 @@ module Shumway.Layers {
   import Matrix = Shumway.Geometry.Matrix;
   import DirtyRegion = Shumway.Geometry.DirtyRegion;
   import Filter = Shumway.Layers.Filter;
+  import BlendMode = Shumway.Layers.BlendMode;
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
@@ -271,6 +272,10 @@ module Shumway.Layers {
       }
 
       root.visit(function visitFrame(frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
+
+        console.log(frame)
+        context.globalCompositeOperation = self.getCompositeOperation(frame.blendMode);
+
         context.save();
         context.setTransform(transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty);
         context.globalAlpha = frame.getConcatenatedAlpha();
@@ -315,6 +320,7 @@ module Shumway.Layers {
         } else {
           var frameBoundsAABB = frame.getBounds();
           transform.transformRectangleAABB(frameBoundsAABB);
+          console.log(frameBoundsAABB)
           if (frame.hasFlags(FrameFlags.Culled)) {
             frame.setFlags(FrameFlags.Culled, false);
           } else {
@@ -341,5 +347,37 @@ module Shumway.Layers {
         context.restore();
       }
     }
+
+    private getCompositeOperation(blendMode: BlendMode): string {
+      // TODO:
+
+      // These Flash blend modes have no canvas equivalent:
+      // - blendModeClass.SUBTRACT
+      // - blendModeClass.INVERT
+      // - blendModeClass.SHADER
+      // - blendModeClass.ADD
+
+      // These blend modes are actually Porter-Duff compositing operators.
+      // The backdrop is the nearest parent with blendMode set to LAYER.
+      // When there is no LAYER parent, they are ignored (treated as NORMAL).
+      // - blendModeClass.ALPHA (destination-in)
+      // - blendModeClass.ERASE (destination-out)
+      // - blendModeClass.LAYER [defines backdrop]
+
+      var compositeOp: string = "normal";
+
+      switch (blendMode) {
+        case BlendMode.MULTIPLY:   compositeOp = "multiply";   break;
+        case BlendMode.SCREEN:     compositeOp = "screen";     break;
+        case BlendMode.LIGHTEN:    compositeOp = "lighten";    break;
+        case BlendMode.DARKEN:     compositeOp = "darken";     break;
+        case BlendMode.DIFFERENCE: compositeOp = "difference"; break;
+        case BlendMode.OVERLAY:    compositeOp = "overlay";    break;
+        case BlendMode.HARDLIGHT:  compositeOp = "hard-light"; break;
+      }
+
+      return compositeOp;
+    }
+
   }
 }
