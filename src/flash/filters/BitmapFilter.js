@@ -87,6 +87,12 @@ var BitmapFilterDefinition = (function () {
     },
     _applyFilterMulti: function (pimg, width, height, isPremult) {
       return isPremult;
+    },
+    _serialize: function (message) {
+      // Overridden by subclasses
+      // -1: Filter not supported, no further serialization
+      // 0-7: Filter IDs according to SWF spec
+      message.writeInt(-1);
     }
   };
 

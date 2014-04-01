@@ -575,7 +575,7 @@ var DisplayObjectDefinition = (function () {
     },
 
     _serialize: function (message) {
-      message.ensureAdditionalCapacity(52);
+      message.ensureAdditionalCapacity(53);
 
       var m = this._currentTransform;
       message.writeFloatUnsafe(m.a);
@@ -618,6 +618,12 @@ var DisplayObjectDefinition = (function () {
         message.writeFloatUnsafe(cxform.alphaOffset / 255);
       } else {
         message.writeIntUnsafe(0);
+      }
+
+      var filters = this._filters;
+      message.writeIntUnsafe(filters.length);
+      for (var i = 0; i < filters.length; i++) {
+        filters[i]._serialize(message);
       }
 
       if (this._updateRenderable) {

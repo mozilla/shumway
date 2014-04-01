@@ -55,6 +55,18 @@ var GlowFilterDefinition = (function () {
                          flags);
       return true;
     },
+    _serialize: function (message) {
+      message.ensureAdditionalCapacity(36);
+      message.writeIntUnsafe(2);
+      message.writeFloatUnsafe(this._alpha);
+      message.writeFloatUnsafe(this._blurX);
+      message.writeFloatUnsafe(this._blurY);
+      message.writeIntUnsafe(this._color);
+      message.writeIntUnsafe(this._inner);
+      message.writeIntUnsafe(this._knockout);
+      message.writeIntUnsafe(this._quality);
+      message.writeFloatUnsafe(this._strength);
+    },
     __glue__: {
       native: {
         static: {

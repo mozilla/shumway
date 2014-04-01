@@ -45,6 +45,14 @@ var ColorMatrixFilterDefinition = (function () {
       Module._free(pm);
       return false;
     },
+    _serialize: function (message) {
+      var matrix = this._matrix;
+      message.ensureAdditionalCapacity((matrix.length + 1) * 4);
+      message.writeIntUnsafe(6);
+      for (var i = 0; i < matrix.length; i++) {
+        message.writeFloatUnsafe(matrix[i]);
+      }
+    },
     __glue__: {
       native: {
         instance: {

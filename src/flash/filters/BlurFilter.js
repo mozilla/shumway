@@ -47,6 +47,13 @@ var BlurFilterDefinition = (function () {
                    this._quality, 0);
       return true;
     },
+    _serialize: function (message) {
+      message.ensureAdditionalCapacity(16);
+      message.writeIntUnsafe(1);
+      message.writeFloatUnsafe(this._blurX);
+      message.writeFloatUnsafe(this._blurY);
+      message.writeIntUnsafe(this._quality);
+    },
     __glue__: {
       native: {
         instance: {

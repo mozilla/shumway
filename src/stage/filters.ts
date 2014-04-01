@@ -12,10 +12,67 @@ module Shumway.Layers {
   export class BlurFilter extends Filter {
     blurX: number;
     blurY: number;
-    constructor(blurX: number, blurY: number) {
+    quality: number;
+    constructor(blurX: number, blurY: number, quality: number) {
       super();
       this.blurX = blurX;
       this.blurY = blurY;
+      this.quality = quality;
+    }
+  }
+
+  export class DropshadowFilter extends Filter {
+    alpha: number;
+    angle: number;
+    blurX: number;
+    blurY: number;
+    color: number;
+    distance: number;
+    hideObject: boolean;
+    inner: boolean;
+    knockout: boolean;
+    quality: number;
+    strength: number;
+    constructor(alpha: number, angle: number, blurX: number, blurY: number,
+                color: number, distance: number,
+                hideObject: boolean, inner: boolean, knockout: boolean,
+                quality: number, strength: number) {
+      super();
+      this.alpha = alpha;
+      this.angle = angle;
+      this.blurX = blurX;
+      this.blurY = blurY;
+      this.color = color;
+      this.distance = distance;
+      this.hideObject = hideObject;
+      this.inner = inner;
+      this.knockout = knockout;
+      this.quality = quality;
+      this.strength = strength;
+    }
+  }
+
+  export class GlowFilter extends Filter {
+    alpha: number;
+    blurX: number;
+    blurY: number;
+    color: number;
+    inner: boolean;
+    knockout: boolean;
+    quality: number;
+    strength: number;
+    constructor(alpha: number, blurX: number, blurY: number, color: number,
+                inner: boolean, knockout: boolean,
+                quality: number, strength: number) {
+      super();
+      this.alpha = alpha;
+      this.blurX = blurX;
+      this.blurY = blurY;
+      this.color = color;
+      this.inner = inner;
+      this.knockout = knockout;
+      this.quality = quality;
+      this.strength = strength;
     }
   }
 
