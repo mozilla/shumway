@@ -58,14 +58,7 @@ var BitmapDefinition = (function () {
     _serializeRenderableData: function (message) {
       var bitmapData = this._bitmapData;
 
-      if (!bitmapData || !bitmapData._message) {
-        return;
-      }
-
-      var subview = bitmapData._message.subU8View();
-      var len = subview.length;
-
-      if (!len) {
+      if (!bitmapData) {
         return;
       }
 
@@ -74,14 +67,14 @@ var BitmapDefinition = (function () {
       message.ensureAdditionalCapacity(16);
       message.writeIntUnsafe(this._bbox.xMax / 20);
       message.writeIntUnsafe(this._bbox.yMax / 20);
-      message.writeIntUnsafe(Renderer.BITMAP_TYPE_DRAW);
+      message.writeIntUnsafe(Renderer.BITMAP_TYPE_RAW);
 
-      var len = subview.length;
+      var imgData = bitmapData._imgData;
+      var len = imgData.length;
       message.writeIntUnsafe(len);
       var offset = message.getIndex(1);
       message.reserve(len);
-      message.subU8View().set(subview, offset);
-      bitmapData._message.reset();
+      message.subU8View().set(imgData, offset);
 
       if (!bitmapData._renderableId) {
         bitmapData._renderableId = this._renderableId;

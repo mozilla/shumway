@@ -239,7 +239,10 @@ BinaryMessage.prototype.syncRenderable = function (node, callback) {
   }
   message.writeIntUnsafe(renderableId);
 
-  node._serializeRenderableData(message);
+  if (node._updateRenderable) {
+    node._serializeRenderableData(message);
+    node._updateRenderable = false;
+  }
 
   message.subI32View()[p] = message.getIndex(4) - (p + 1);
 };
@@ -296,6 +299,56 @@ BinaryMessage.prototype.removeLayer = function removeLayer(node) {
   message.writeIntUnsafe(Renderer.MESSAGE_REMOVE_LAYER);
   message.writeIntUnsafe(4);
   message.writeIntUnsafe(node._layerId);
+};
+BinaryMessage.prototype.cacheAsBitmap = function (node) {
+  var message = this._message;
+
+  message.ensureAdditionalCapacity(36);
+  message.writeIntUnsafe(Renderer.MESSAGE_DEFINE_RENDERABLE);
+
+  var p1 = message.getIndex(4);
+  message.reserve(4);
+
+  var renderableId = BinaryMessage.nextRenderableId++;
+  node._renderableId = renderableId;
+
+  message.writeIntUnsafe(renderableId);
+
+  message.writeIntUnsafe(0);
+
+  message.writeIntUnsafe(Renderer.RENDERABLE_TYPE_BITMAP);
+  message.writeIntUnsafe(node.width / 20);
+  message.writeIntUnsafe(node.height / 20);
+  message.writeIntUnsafe(Renderer.BITMAP_TYPE_DRAW);
+
+  var p2 = message.getIndex(4);
+  message.reserve(4);
+
+  var nextLayerId = 1;
+  var stack = [0, node];
+
+  while (stack.length) {
+    var node = stack.pop();
+    var parentId = stack.pop();
+    var layerId = nextLayerId++;
+
+    var children = node._children;
+    var i = children.length;
+    while (i--) {
+      var child = children[i];
+
+      if (child._visible && child._alpha) {
+        stack.push(layerId, child);
+      }
+    }
+
+    this.addLayer(layerId, parentId, node);
+  }
+
+  var len = message.getIndex(4) - (p1 + 1);
+  var subview = message.subI32View();
+  subview[p1] = len;
+  subview[p2] = (len * 4) - 28;
 };
 BinaryMessage.prototype.post = function commit(type, sync) {
   var data = this._message.u8.buffer;

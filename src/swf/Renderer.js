@@ -68,6 +68,26 @@ function Renderer(container, bgcolor, options) {
     var i32 = new Int32Array(data);
     handleRenderMessages(renderer, layers, i32, sync);
   });
+
+  this._sceneOptions = {
+    redraw: 1,
+    maxTextures: 4,
+    maxTextureSize: 1024 * 4,
+    useStencil: false,
+    render: true,
+    drawElements: true,
+    drawTiles: false,
+    drawTextures: false,
+    ignoreViewport: false,
+    ignoreColorTransform: false,
+    drawTexture: -1,
+    drawDirtyRegions: false,
+    drawLayers: false,
+    clear: true,
+    imageSmoothing: true,
+    snap: false,
+    alpha: true
+  };
 }
 
 function handleRenderMessages(renderer, layers, i32, sync) {
@@ -379,26 +399,6 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
   var WebGLStageRenderer = Shumway.GL.WebGLStageRenderer;
   var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
 
-  var sceneOptions = {
-    redraw: 1,
-    maxTextures: 4,
-    maxTextureSize: 1024 * 4,
-    useStencil: false,
-    render: true,
-    drawElements: true,
-    drawTiles: false,
-    drawTextures: false,
-    ignoreViewport: false,
-    ignoreColorTransform: false,
-    drawTexture: -1,
-    drawDirtyRegions: false,
-    drawLayers: false,
-    clear: true,
-    imageSmoothing: true,
-    snap: false,
-    alpha: true
-  };
-
   var canvas2DCanvas, webGLCanvas;
 
   var stageRenderers = [];
@@ -418,7 +418,7 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
   }
 
   if (webGLCanvas) {
-    stageRenderers.push(new WebGLStageRenderer(new WebGLContext(webGLCanvas, sceneOptions), webGLCanvas.width, webGLCanvas.height));
+    stageRenderers.push(new WebGLStageRenderer(new WebGLContext(webGLCanvas, this._sceneOptions), webGLCanvas.width, webGLCanvas.height));
   }
 
   if (canvas2DCanvas) {
@@ -436,6 +436,7 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
       return;
     }
 
+    var sceneOptions = renderer._sceneOptions;
     sceneOptions.perspectiveCamera = perspectiveCamera.value;
     sceneOptions.perspectiveCameraFOV = perspectiveCameraFOV.value;
     sceneOptions.perspectiveCameraDistance = perspectiveCameraDistance.value;
@@ -510,14 +511,14 @@ Renderer.prototype.defineRenderable = function defineRenderable(id, type,
                                                                 dependencies,
                                                                 data) {
   var renderer = this;
-  var rendererable = null;
+  var renderable = null;
   var promise = new Promise(function (resolve) {
     switch (type) {
     case Renderer.RENDERABLE_TYPE_SHAPE:
-      rendererable = new RenderableShape(data, renderer, resolve);
+      renderable = new RenderableShape(data, renderer, resolve);
       break;
     case Renderer.RENDERABLE_TYPE_BITMAP:
-      rendererable = new RenderableBitmap(data, renderer, resolve);
+      renderable = new RenderableBitmap(data, renderer, resolve);
       break;
     case Renderer.RENDERABLE_TYPE_FONT:
       var uniqueName = 'swf-font-' + id;
@@ -579,10 +580,10 @@ Renderer.prototype.defineRenderable = function defineRenderable(id, type,
       }
       break;
     case Renderer.RENDERABLE_TYPE_LABEL:
-      rendererable = new RenderableLabel(data, renderer, resolve);
+      renderable = new RenderableLabel(data, renderer, resolve);
       break;
     case Renderer.RENDERABLE_TYPE_TEXT:
-      rendererable = new RenderableText(data, renderer, resolve);
+      renderable = new RenderableText(data, renderer, resolve);
       break;
     default:
       resolve();
@@ -598,11 +599,9 @@ Renderer.prototype.defineRenderable = function defineRenderable(id, type,
     promise = Promise.all(promiseQueue);
   }
 
-  this._promises[id] = promise.then(function () {
-    renderer._renderables[id] = rendererable;
-  });
+  renderer._renderables[id] = renderable;
 
-  return rendererable;
+  return renderable;
 };
 Renderer.prototype.getRenderable = function getRenderable(id) {
   return this._renderables[id];
@@ -965,10 +964,19 @@ function RenderableBitmap(data, renderer, resolve) {
     drawable.width = width;
     drawable.height = height;
 
-    // draw
+    var ctx = drawable.getContext('2d');
 
-    var imageData = drawable.getImageData(0, 0, width, height);
+    var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
+    var r = new Canvas2DStageRenderer(ctx, Shumway.Layers.FillRule.EVENODD);
+
+    stage.trackDirtyRegions = true;
+    r.render(stage, renderer._sceneOptions);
+
+    var imageData = ctx.getImageData(0, 0, width, height);
     this.shared = imageData.data;
+    if (resolve) {
+      resolve();
+    }
     break;
   }
 

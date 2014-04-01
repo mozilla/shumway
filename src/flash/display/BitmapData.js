@@ -25,8 +25,6 @@ var BitmapDataDefinition = (function () {
       this._changeNotificationTarget = null;
       this._locked = false;
       this._renderableId = 0;
-
-      this._message = new Shumway.Util.ArrayWriter(1024);
     },
 
     ctor: function(width, height, transparent, backgroundColor) {
@@ -60,10 +58,14 @@ var BitmapDataDefinition = (function () {
         throwError('ArgumentError', Errors.ArgumentError);
       }
 
-      // TODO: support smoothing, blendMode and clipRect
+      if (!source._visible || !source._alpha) {
+        return;
+      }
 
-      var root = new flash.display.DisplayObjectContainer;
-      var transform = root.transform;
+      // TODO: support smoothing and clipRect
+
+      var container = new flash.display.DisplayObjectContainer;
+      var transform = container.transform;
       if (matrix) {
         transform.matrix = matrix;
       }
@@ -74,31 +76,17 @@ var BitmapDataDefinition = (function () {
         transform.blendMode = blendMode;
       }
 
-      StageDefinition._addLayer.call(this, 0, 0, root);
+      container._children[0] = source;
 
-      var nextLayerId = 1;
-      var stack = [nextLayerId++, source];
-
-      if (!source._visible || !source._alpha) {
-        return;
-      }
-
-      while (stack.length) {
-        var node = stack.pop();
-        var parentId = stack.pop();
-
-        var children = node._children;
-        var i = children.length;
-        while (i--) {
-          var child = children[i];
-
-          if (child._visible && child._alpha) {
-            stack.push(nextLayerId++, child);
-          }
-        }
-
-        StageDefinition._addLayer.call(this, nextLayerId++, parentId, node);
-      }
+      var message = new BinaryMessage();
+      var that = this;
+      message.cacheAsBitmap(container);
+      this._renderableId = container._renderableId;
+      message.syncRenderable(container, function (data) {
+        that._imgData = data;
+        that._pixels = new Uint32Array(that._imgData);
+      });
+      message.post('render', true);
 
       this._invalidate();
     },
@@ -108,8 +96,6 @@ var BitmapDataDefinition = (function () {
       //if (!imgData) {
       //  throwError('ArgumentError', Errors.ArgumentError);
       //}
-
-      //////////////// SYNC WITH MAIN THREAD //////////////
 
       //if (!this._transparent) {
       //  color |= 0xff000000;
@@ -162,16 +148,12 @@ var BitmapDataDefinition = (function () {
         throwError('ArgumentError', Errors.ArgumentError);
       }
 
-      ////////////// SYNC WITH MAIN THREAD //////////////
-
       return this._pixels[y * this._width + x] >> 8;
     },
     getPixel32: function(x, y) {
       if (!this._imgData) {
         throwError('ArgumentError', Errors.ArgumentError);
       }
-
-      ////////////// SYNC WITH MAIN THREAD //////////////
 
       var color = this._pixels[y * this._width + x];
       return (color >> 8) | (color >> 24);
@@ -202,8 +184,6 @@ var BitmapDataDefinition = (function () {
       if (!this._imgData) {
         throwError('ArgumentError', Errors.ArgumentError);
       }
-
-      ////////////// SYNC WITH MAIN THREAD //////////////
 
       //if (alphaBitmapData) {
       //  notImplemented("BitmapData.copyPixels w/ alpha");
@@ -261,8 +241,6 @@ var BitmapDataDefinition = (function () {
       if (!this._imgData) {
         throwError('ArgumentError', Errors.ArgumentError);
       }
-
-      ////////////// SYNC WITH MAIN THREAD //////////////
 
       //this._checkCanvas();
       //this._ctx.draw(this._drawable, x, y);
