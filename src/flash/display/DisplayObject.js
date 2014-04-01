@@ -222,6 +222,7 @@ var DisplayObjectDefinition = (function () {
           return filterObject.inner === 1 ? "inner" : "outer";
         }
       }
+      this._filters = [];
       for (var i = 0, n = filters.length; i < n; i++) {
         var fo = filters[i];
         var filter;
