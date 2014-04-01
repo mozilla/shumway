@@ -697,6 +697,7 @@ var DisplayObjectDefinition = (function () {
 
       this._filters = val;
       this._animated = false;
+      this._invalidate();
     },
     get height() {
       var bounds = this._getContentBounds();
