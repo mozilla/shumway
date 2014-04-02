@@ -44,7 +44,7 @@ module Shumway.AVM2.AS.flash.text.engine {
     tabEnabled: boolean;
     tabIndex: number /*int*/;
     contextMenu: flash.ui.ContextMenu;
-    getMirrorRegion: (mirror: flash.events.EventDispatcher) => flash.text.engine.TextLineMirrorRegion;
+    getMirrorRegion: (mirror: flash.events.EventDispatcher) => any /* flash.text.engine.TextLineMirrorRegion */;
     flushAtomData: () => void;
     
     // AS -> JS Bindings
@@ -150,7 +150,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       notImplemented("public flash.text.engine.TextLine::get atomCount"); return;
       // return this._atomCount;
     }
-    get mirrorRegions(): ASVector<flash.text.engine.TextLineMirrorRegion> {
+    get mirrorRegions(): ASVector<any /* flash.text.engine.TextLineMirrorRegion */> {
       notImplemented("public flash.text.engine.TextLine::get mirrorRegions"); return;
       // return this._mirrorRegions;
     }
