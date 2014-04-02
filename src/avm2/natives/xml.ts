@@ -258,6 +258,14 @@ module Shumway.AVM2.AS {
   }
 
   function XMLEncoder() {
+    var prettyPrinting = ASXML.prettyPrinting;
+    var indentString = '';
+    if (prettyPrinting) {
+      var prettyIndent = ASXML.prettyIndent;
+      for (var i = 0; i < prettyIndent; i++) {
+        indentString += ' ';
+      }
+    }
     function visit(node, encode) {
       if (node instanceof ASXML) {
         switch (node._kind) {
@@ -282,12 +290,17 @@ module Shumway.AVM2.AS {
     }
     function encode(node, encoder) {
       var addAncestorNamespaces: boolean = true;
+      var currentIndent = '';
+      var indentNext = false;
       return visit(node, {
         element: function (n) {
           var s, a;
           var ns = n._name._mn.namespaces[0];
           var prefix = ns.prefix ? (ns.prefix + ":") : "";
           s = "<" + prefix + n._name.localName;
+          if (prettyPrinting && indentNext) {
+            s = "\n" + currentIndent + s;
+          }
           // Enumerate namespace declarations
           var namespaceDeclarations = [];
           if (addAncestorNamespaces) {
@@ -333,16 +346,30 @@ module Shumway.AVM2.AS {
           }
           if (n._children.length) {
             s += ">";
+            var oldIndent;
+            if (prettyPrinting) {
+              oldIndent = currentIndent;
+              currentIndent += indentString;
+              indentNext = true;
+            }
             for (var i = 0; i < n._children.length; i++) {
               s += visit(n._children[i], this);
+            }
+            if (prettyPrinting) {
+              currentIndent = oldIndent;
+              if (indentNext) {
+                s += '\n' + currentIndent;
+              }
             }
             s += "</" + prefix + n._name._mn.name + ">";
           } else {
             s += "/>";
           }
+          indentNext = true;
           return s;
         },
         text: function(text) {
+          indentNext = false;
           return escapeAttributeValue(text._value);
         },
         attribute: function(n) {
@@ -359,10 +386,7 @@ module Shumway.AVM2.AS {
         list: function (n) {
           var s = "";
           for (var i = 0; i < n._children.length; i++) {
-            if (i > 0) {
-              s += "\n";
-            }
-            s += toXMLString(n._children[i]);
+            s += visit(n._children[i], this);
           }
           return s;
         },
@@ -1155,8 +1179,14 @@ module Shumway.AVM2.AS {
       notImplemented("public.XML::addNamespace"); return;
     }
     appendChild(child: any): ASXML {
-
-      notImplemented("public.XML::appendChild"); return;
+      if (child._parent) {
+        var index = child._parent._children.indexOf(child);
+        assert(index >= 0);
+        child._parent._children.splice(index, 1);
+      }
+      this._children.push(child);
+      child._parent = this;
+      return this;
     }
     attribute(arg: any): ASXMLList {
       return this.getProperty(arg, true, false);
@@ -1182,7 +1212,7 @@ module Shumway.AVM2.AS {
       notImplemented("public.XML::contains"); return;
     }
     copy(): ASXML {
-      notImplemented("public.XML::copy"); return;
+      return this.deepCopy();
     }
     elements(name: any = "*"): ASXMLList {
 
@@ -1850,7 +1880,6 @@ module Shumway.AVM2.AS {
     appendChild(child: any) {
       if (child instanceof ASXMLList) {
         this._children.push.apply(this._children, child._children);
-        child._children.length = 0;
         return child;
       }
       this._children.push(child);
