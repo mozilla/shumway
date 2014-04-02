@@ -17,15 +17,79 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class URLStream extends flash.events.EventDispatcher implements flash.utils.IDataInput {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.net.URLStream");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _connected: boolean;
+    // _bytesAvailable: number /*uint*/;
+    // _objectEncoding: number /*uint*/;
+    // _endian: string;
+    // _diskCacheEnabled: boolean;
+    // _position: number;
+    // _length: number;
+    get connected(): boolean {
+      notImplemented("public flash.net.URLStream::get connected"); return;
+      // return this._connected;
+    }
+    get bytesAvailable(): number /*uint*/ {
+      notImplemented("public flash.net.URLStream::get bytesAvailable"); return;
+      // return this._bytesAvailable;
+    }
+    get objectEncoding(): number /*uint*/ {
+      notImplemented("public flash.net.URLStream::get objectEncoding"); return;
+      // return this._objectEncoding;
+    }
+    set objectEncoding(version: number /*uint*/) {
+      version = version >>> 0;
+      notImplemented("public flash.net.URLStream::set objectEncoding"); return;
+      // this._objectEncoding = version;
+    }
+    get endian(): string {
+      notImplemented("public flash.net.URLStream::get endian"); return;
+      // return this._endian;
+    }
+    set endian(type: string) {
+      type = "" + type;
+      notImplemented("public flash.net.URLStream::set endian"); return;
+      // this._endian = type;
+    }
+    get diskCacheEnabled(): boolean {
+      notImplemented("public flash.net.URLStream::get diskCacheEnabled"); return;
+      // return this._diskCacheEnabled;
+    }
+    get position(): number {
+      notImplemented("public flash.net.URLStream::get position"); return;
+      // return this._position;
+    }
+    set position(offset: number) {
+      offset = +offset;
+      notImplemented("public flash.net.URLStream::set position"); return;
+      // this._position = offset;
+    }
+    get length(): number {
+      notImplemented("public flash.net.URLStream::get length"); return;
+      // return this._length;
+    }
     load(request: flash.net.URLRequest): void {
       request = request;
       notImplemented("public flash.net.URLStream::load"); return;
@@ -72,44 +136,11 @@ module Shumway.AVM2.AS.flash.net {
       length = length >>> 0;
       notImplemented("public flash.net.URLStream::readUTFBytes"); return;
     }
-    get connected(): boolean {
-      notImplemented("public flash.net.URLStream::get connected"); return;
-    }
-    get bytesAvailable(): number /*uint*/ {
-      notImplemented("public flash.net.URLStream::get bytesAvailable"); return;
-    }
     close(): void {
       notImplemented("public flash.net.URLStream::close"); return;
     }
     readObject(): any {
       notImplemented("public flash.net.URLStream::readObject"); return;
-    }
-    get objectEncoding(): number /*uint*/ {
-      notImplemented("public flash.net.URLStream::get objectEncoding"); return;
-    }
-    set objectEncoding(version: number /*uint*/) {
-      version = version >>> 0;
-      notImplemented("public flash.net.URLStream::set objectEncoding"); return;
-    }
-    get endian(): string {
-      notImplemented("public flash.net.URLStream::get endian"); return;
-    }
-    set endian(type: string) {
-      type = "" + type;
-      notImplemented("public flash.net.URLStream::set endian"); return;
-    }
-    get diskCacheEnabled(): boolean {
-      notImplemented("public flash.net.URLStream::get diskCacheEnabled"); return;
-    }
-    get position(): number {
-      notImplemented("public flash.net.URLStream::get position"); return;
-    }
-    set position(offset: number) {
-      offset = +offset;
-      notImplemented("public flash.net.URLStream::set position"); return;
-    }
-    get length(): number {
-      notImplemented("public flash.net.URLStream::get length"); return;
     }
     stop(): void {
       notImplemented("public flash.net.URLStream::stop"); return;

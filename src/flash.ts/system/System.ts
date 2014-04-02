@@ -17,43 +17,73 @@
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   export class System extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // ["totalMemory"];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.system.System");
     }
-    // Static   JS -> AS Bindings
-    static theIME: flash.system.IME;
+    
+    // JS -> AS Bindings
     static totalMemory: number /*uint*/;
-    // Static   AS -> JS Bindings
+    
+    
+    // AS -> JS Bindings
+    // static _ime: flash.system.IME;
+    // static _totalMemoryNumber: number;
+    // static _freeMemory: number;
+    // static _privateMemory: number;
+    // static _processCPUUsage: number;
+    // static _useCodePage: boolean;
+    // static _vmVersion: string;
+    // static _totalMemory: number /*uint*/;
     get ime(): flash.system.IME {
       notImplemented("public flash.system.System::get ime"); return;
-    }
-    static setClipboard(string: string): void {
-      string = "" + string;
-      notImplemented("public flash.system.System::static setClipboard"); return;
+      // return this._ime;
     }
     get totalMemoryNumber(): number {
       notImplemented("public flash.system.System::get totalMemoryNumber"); return;
+      // return this._totalMemoryNumber;
     }
     get freeMemory(): number {
       notImplemented("public flash.system.System::get freeMemory"); return;
+      // return this._freeMemory;
     }
     get privateMemory(): number {
       notImplemented("public flash.system.System::get privateMemory"); return;
+      // return this._privateMemory;
     }
     get processCPUUsage(): number {
       notImplemented("public flash.system.System::get processCPUUsage"); return;
+      // return this._processCPUUsage;
     }
     get useCodePage(): boolean {
       notImplemented("public flash.system.System::get useCodePage"); return;
+      // return this._useCodePage;
     }
     set useCodePage(value: boolean) {
       value = !!value;
       notImplemented("public flash.system.System::set useCodePage"); return;
+      // this._useCodePage = value;
     }
     get vmVersion(): string {
       notImplemented("public flash.system.System::get vmVersion"); return;
+      // return this._vmVersion;
+    }
+    static setClipboard(string: string): void {
+      string = "" + string;
+      notImplemented("public flash.system.System::static setClipboard"); return;
     }
     static pause(): void {
       notImplemented("public flash.system.System::static pause"); return;
@@ -76,7 +106,6 @@ module Shumway.AVM2.AS.flash.system {
       node = node;
       notImplemented("public flash.system.System::static disposeXML"); return;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
   }
 }

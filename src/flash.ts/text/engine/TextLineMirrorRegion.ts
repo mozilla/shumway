@@ -17,32 +17,58 @@
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   export class TextLineMirrorRegion extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.text.engine.TextLineMirrorRegion");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _textLine: flash.text.engine.TextLine;
+    // _nextRegion: flash.text.engine.TextLineMirrorRegion;
+    // _previousRegion: flash.text.engine.TextLineMirrorRegion;
+    // _mirror: flash.events.EventDispatcher;
+    // _element: flash.text.engine.ContentElement;
+    // _bounds: flash.geom.Rectangle;
     get textLine(): flash.text.engine.TextLine {
       notImplemented("public flash.text.engine.TextLineMirrorRegion::get textLine"); return;
+      // return this._textLine;
     }
     get nextRegion(): flash.text.engine.TextLineMirrorRegion {
       notImplemented("public flash.text.engine.TextLineMirrorRegion::get nextRegion"); return;
+      // return this._nextRegion;
     }
     get previousRegion(): flash.text.engine.TextLineMirrorRegion {
       notImplemented("public flash.text.engine.TextLineMirrorRegion::get previousRegion"); return;
+      // return this._previousRegion;
     }
     get mirror(): flash.events.EventDispatcher {
       notImplemented("public flash.text.engine.TextLineMirrorRegion::get mirror"); return;
+      // return this._mirror;
     }
     get element(): flash.text.engine.ContentElement {
       notImplemented("public flash.text.engine.TextLineMirrorRegion::get element"); return;
+      // return this._element;
     }
     get bounds(): flash.geom.Rectangle {
       notImplemented("public flash.text.engine.TextLineMirrorRegion::get bounds"); return;
+      // return this._bounds;
     }
   }
 }

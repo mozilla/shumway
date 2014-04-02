@@ -17,14 +17,32 @@
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   export class LineJustification extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.text.engine.LineJustification");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static UNJUSTIFIED: string = "unjustified";
+    static ALL_BUT_LAST: string = "allButLast";
+    static ALL_INCLUDING_LAST: string = "allIncludingLast";
+    static ALL_BUT_MANDATORY_BREAK: string = "allButMandatoryBreak";
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

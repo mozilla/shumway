@@ -17,18 +17,37 @@
 module Shumway.AVM2.AS.flash.profiler {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Telemetry extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.profiler.Telemetry");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    // static _spanMarker: number;
+    // static _connected: boolean;
     get spanMarker(): number {
       notImplemented("public flash.profiler.Telemetry::get spanMarker"); return;
+      // return this._spanMarker;
     }
     get connected(): boolean {
       notImplemented("public flash.profiler.Telemetry::get connected"); return;
+      // return this._connected;
     }
     static sendMetric(metric: string, value: any): void {
       metric = "" + metric;
@@ -46,7 +65,6 @@ module Shumway.AVM2.AS.flash.profiler {
       commandName = "" + commandName;
       notImplemented("public flash.profiler.Telemetry::static unregisterCommandHandler"); return;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
   }
 }

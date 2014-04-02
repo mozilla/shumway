@@ -17,19 +17,29 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ShaderData extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor (byteCode: flash.utils.ByteArray) {
       byteCode = byteCode;
       false && super();
       notImplemented("Dummy Constructor: public flash.display.ShaderData");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
-    _setByteCode(code: flash.utils.ByteArray): void {
-      code = code;
-      notImplemented("public flash.display.ShaderData::_setByteCode"); return;
-    }
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

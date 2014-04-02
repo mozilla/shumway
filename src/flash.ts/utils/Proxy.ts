@@ -17,14 +17,26 @@
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Proxy extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["getProperty", "setProperty", "callProperty", "hasProperty", "deleteProperty", "getDescendants", "nextNameIndex", "nextName", "nextValue"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.utils.Proxy");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     getProperty: (name: any) => any;
     setProperty: (name: any, value: any) => void;
     callProperty: (name: any) => any;
@@ -34,7 +46,9 @@ module Shumway.AVM2.AS.flash.utils {
     nextNameIndex: (index: number /*int*/) => number /*int*/;
     nextName: (index: number /*int*/) => string;
     nextValue: (index: number /*int*/) => any;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
     isAttribute(name: any): boolean {
       
       notImplemented("public flash.utils.Proxy::isAttribute"); return;

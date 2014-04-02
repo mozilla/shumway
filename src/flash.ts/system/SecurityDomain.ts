@@ -17,23 +17,38 @@
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   export class SecurityDomain extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.system.SecurityDomain");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    // static _currentDomain: flash.system.SecurityDomain;
     get currentDomain(): flash.system.SecurityDomain {
       notImplemented("public flash.system.SecurityDomain::get currentDomain"); return;
+      // return this._currentDomain;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
-    ctor_impl(): void {
-      notImplemented("public flash.system.SecurityDomain::ctor_impl"); return;
-    }
+    
+    // _domainID: string;
     get domainID(): string {
       notImplemented("public flash.system.SecurityDomain::get domainID"); return;
+      // return this._domainID;
     }
   }
 }

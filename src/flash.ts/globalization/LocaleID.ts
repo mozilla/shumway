@@ -17,23 +17,44 @@
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
   export class LocaleID extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor (name: string) {
       name = "" + name;
       false && super();
       notImplemented("Dummy Constructor: public flash.globalization.LocaleID");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    static determinePreferredLocales(want: ASVector<string>, have: ASVector<string>, keyword: string = "userinterface"): ASVector<string> {
+    
+    // JS -> AS Bindings
+    static DEFAULT: string = "i-default";
+    
+    
+    // AS -> JS Bindings
+    static determinePreferredLocales(want: ASVector<any>, have: ASVector<any>, keyword: string = "userinterface"): ASVector<any> {
       want = want; have = have; keyword = "" + keyword;
       notImplemented("public flash.globalization.LocaleID::static determinePreferredLocales"); return;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
-    ctor(name: string): void {
-      name = "" + name;
-      notImplemented("public flash.globalization.LocaleID::ctor"); return;
+    
+    // _name: string;
+    // _lastOperationStatus: string;
+    get name(): string {
+      notImplemented("public flash.globalization.LocaleID::get name"); return;
+      // return this._name;
+    }
+    get lastOperationStatus(): string {
+      notImplemented("public flash.globalization.LocaleID::get lastOperationStatus"); return;
+      // return this._lastOperationStatus;
     }
     getLanguage(): string {
       notImplemented("public flash.globalization.LocaleID::getLanguage"); return;
@@ -47,17 +68,15 @@ module Shumway.AVM2.AS.flash.globalization {
     getVariant(): string {
       notImplemented("public flash.globalization.LocaleID::getVariant"); return;
     }
-    get name(): string {
-      notImplemented("public flash.globalization.LocaleID::get name"); return;
-    }
     getKeysAndValues(): ASObject {
       notImplemented("public flash.globalization.LocaleID::getKeysAndValues"); return;
     }
-    get lastOperationStatus(): string {
-      notImplemented("public flash.globalization.LocaleID::get lastOperationStatus"); return;
-    }
     isRightToLeft(): boolean {
       notImplemented("public flash.globalization.LocaleID::isRightToLeft"); return;
+    }
+    ctor(name: string): void {
+      name = "" + name;
+      notImplemented("public flash.globalization.LocaleID::ctor"); return;
     }
   }
 }

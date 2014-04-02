@@ -17,37 +17,61 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class FileReference extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["load", "save"];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.net.FileReference");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    static _ensureIsRootPlayer(): void {
-      notImplemented("public flash.net.FileReference::static _ensureIsRootPlayer"); return;
-    }
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     load: () => void;
     save: (data: any, defaultFileName: string = null) => void;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _creationDate: ASDate;
+    // _creator: string;
+    // _modificationDate: ASDate;
+    // _name: string;
+    // _size: number;
+    // _type: string;
+    // _data: flash.utils.ByteArray;
     get creationDate(): ASDate {
       notImplemented("public flash.net.FileReference::get creationDate"); return;
+      // return this._creationDate;
     }
     get creator(): string {
       notImplemented("public flash.net.FileReference::get creator"); return;
+      // return this._creator;
     }
     get modificationDate(): ASDate {
       notImplemented("public flash.net.FileReference::get modificationDate"); return;
+      // return this._modificationDate;
     }
     get name(): string {
       notImplemented("public flash.net.FileReference::get name"); return;
+      // return this._name;
     }
     get size(): number {
       notImplemented("public flash.net.FileReference::get size"); return;
+      // return this._size;
     }
     get type(): string {
       notImplemented("public flash.net.FileReference::get type"); return;
+      // return this._type;
     }
     cancel(): void {
       notImplemented("public flash.net.FileReference::cancel"); return;
@@ -62,14 +86,7 @@ module Shumway.AVM2.AS.flash.net {
     }
     get data(): flash.utils.ByteArray {
       notImplemented("public flash.net.FileReference::get data"); return;
-    }
-    _load(dest: flash.utils.ByteArray): void {
-      dest = dest;
-      notImplemented("public flash.net.FileReference::_load"); return;
-    }
-    _save(data: flash.utils.ByteArray, defaultFileName: string): void {
-      data = data; defaultFileName = "" + defaultFileName;
-      notImplemented("public flash.net.FileReference::_save"); return;
+      // return this._data;
     }
     browse(typeFilter: any [] = null): boolean {
       typeFilter = typeFilter;

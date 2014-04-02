@@ -17,20 +17,37 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class NetDataEvent extends flash.events.Event {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_timestamp", "_info", "timestamp", "info", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, timestamp: number = 0, info: ASObject = null) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; timestamp = +timestamp; info = info;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.NetDataEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_info: ASObject;
-    m_timestamp: number;
-    clone: () => flash.events.Event;
+    
+    // JS -> AS Bindings
+    static MEDIA_TYPE_DATA: string = "mediaTypeData";
+    
+    _timestamp: number;
+    _info: ASObject;
     timestamp: number;
     info: ASObject;
-    // Instance AS -> JS Bindings
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
+    // _timestamp: number;
+    // _info: ASObject;
   }
 }

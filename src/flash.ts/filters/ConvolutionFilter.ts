@@ -17,79 +17,120 @@
 module Shumway.AVM2.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ConvolutionFilter extends flash.filters.BitmapFilter {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["clone"];
+    
     constructor (matrixX: number = 0, matrixY: number = 0, matrix: any [] = null, divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true, clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0) {
       matrixX = +matrixX; matrixY = +matrixY; matrix = matrix; divisor = +divisor; bias = +bias; preserveAlpha = !!preserveAlpha; clamp = !!clamp; color = color >>> 0; alpha = +alpha;
       false && super();
       notImplemented("Dummy Constructor: public flash.filters.ConvolutionFilter");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     clone: () => flash.filters.BitmapFilter;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _matrix: any [];
+    // _matrixX: number;
+    // _matrixY: number;
+    // _divisor: number;
+    // _bias: number;
+    // _preserveAlpha: boolean;
+    // _clamp: boolean;
+    // _color: number /*uint*/;
+    // _alpha: number;
     get matrix(): any [] {
       notImplemented("public flash.filters.ConvolutionFilter::get matrix"); return;
+      // return this._matrix;
     }
     set matrix(value: any []) {
       value = value;
       notImplemented("public flash.filters.ConvolutionFilter::set matrix"); return;
+      // this._matrix = value;
     }
     get matrixX(): number {
       notImplemented("public flash.filters.ConvolutionFilter::get matrixX"); return;
+      // return this._matrixX;
     }
     set matrixX(value: number) {
       value = +value;
       notImplemented("public flash.filters.ConvolutionFilter::set matrixX"); return;
+      // this._matrixX = value;
     }
     get matrixY(): number {
       notImplemented("public flash.filters.ConvolutionFilter::get matrixY"); return;
+      // return this._matrixY;
     }
     set matrixY(value: number) {
       value = +value;
       notImplemented("public flash.filters.ConvolutionFilter::set matrixY"); return;
+      // this._matrixY = value;
     }
     get divisor(): number {
       notImplemented("public flash.filters.ConvolutionFilter::get divisor"); return;
+      // return this._divisor;
     }
     set divisor(value: number) {
       value = +value;
       notImplemented("public flash.filters.ConvolutionFilter::set divisor"); return;
+      // this._divisor = value;
     }
     get bias(): number {
       notImplemented("public flash.filters.ConvolutionFilter::get bias"); return;
+      // return this._bias;
     }
     set bias(value: number) {
       value = +value;
       notImplemented("public flash.filters.ConvolutionFilter::set bias"); return;
+      // this._bias = value;
     }
     get preserveAlpha(): boolean {
       notImplemented("public flash.filters.ConvolutionFilter::get preserveAlpha"); return;
+      // return this._preserveAlpha;
     }
     set preserveAlpha(value: boolean) {
       value = !!value;
       notImplemented("public flash.filters.ConvolutionFilter::set preserveAlpha"); return;
+      // this._preserveAlpha = value;
     }
     get clamp(): boolean {
       notImplemented("public flash.filters.ConvolutionFilter::get clamp"); return;
+      // return this._clamp;
     }
     set clamp(value: boolean) {
       value = !!value;
       notImplemented("public flash.filters.ConvolutionFilter::set clamp"); return;
+      // this._clamp = value;
     }
     get color(): number /*uint*/ {
       notImplemented("public flash.filters.ConvolutionFilter::get color"); return;
+      // return this._color;
     }
     set color(value: number /*uint*/) {
       value = value >>> 0;
       notImplemented("public flash.filters.ConvolutionFilter::set color"); return;
+      // this._color = value;
     }
     get alpha(): number {
       notImplemented("public flash.filters.ConvolutionFilter::get alpha"); return;
+      // return this._alpha;
     }
     set alpha(value: number) {
       value = +value;
       notImplemented("public flash.filters.ConvolutionFilter::set alpha"); return;
+      // this._alpha = value;
     }
   }
 }

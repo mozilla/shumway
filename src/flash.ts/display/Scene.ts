@@ -17,21 +17,38 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Scene extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_name", "_labels", "_numFrames", "name", "labels", "numFrames"];
+    
     constructor (name: string, labels: any [], numFrames: number /*int*/) {
       name = "" + name; labels = labels; numFrames = numFrames | 0;
       false && super();
       notImplemented("Dummy Constructor: public flash.display.Scene");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     _name: string;
     _labels: any [];
     _numFrames: number /*int*/;
     name: string;
     labels: any [];
     numFrames: number /*int*/;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _name: string;
+    // _labels: any [];
+    // _numFrames: number /*int*/;
   }
 }

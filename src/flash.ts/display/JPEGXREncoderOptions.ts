@@ -17,18 +17,32 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class JPEGXREncoderOptions extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["quantization", "colorSpace", "trimFlexBits"];
+    
     constructor (quantization: number /*uint*/ = 20, colorSpace: string = "auto", trimFlexBits: number /*uint*/ = 0) {
       quantization = quantization >>> 0; colorSpace = "" + colorSpace; trimFlexBits = trimFlexBits >>> 0;
       false && super();
       notImplemented("Dummy Constructor: public flash.display.JPEGXREncoderOptions");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     quantization: number /*uint*/;
     colorSpace: string;
     trimFlexBits: number /*uint*/;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
   }
 }

@@ -17,37 +17,56 @@
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Timer extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_delay", "_repeatCount", "_iteration", "delay", "delay", "repeatCount", "repeatCount", "currentCount", "reset", "start", "tick"];
+    
     constructor (delay: number, repeatCount: number /*int*/ = 0) {
       delay = +delay; repeatCount = repeatCount | 0;
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.utils.Timer");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_delay: number;
-    m_repeatCount: number /*int*/;
-    m_iteration: number /*int*/;
+    
+    // JS -> AS Bindings
+    
+    _delay: number;
+    _repeatCount: number /*int*/;
+    _iteration: number /*int*/;
     delay: number;
     repeatCount: number /*int*/;
     currentCount: number /*int*/;
-    tick: () => void;
-    start: () => void;
     reset: () => void;
-    // Instance AS -> JS Bindings
+    start: () => void;
+    tick: () => void;
+    
+    // AS -> JS Bindings
+    
+    // _running: boolean;
+    // _delay: number;
+    // _repeatCount: number /*int*/;
+    // _currentCount: number /*int*/;
     get running(): boolean {
       notImplemented("public flash.utils.Timer::get running"); return;
+      // return this._running;
+    }
+    stop(): void {
+      notImplemented("public flash.utils.Timer::stop"); return;
     }
     _start(delay: number, closure: ASFunction): void {
       delay = +delay; closure = closure;
       notImplemented("public flash.utils.Timer::_start"); return;
     }
-    _timerDispatch(): void {
-      notImplemented("public flash.utils.Timer::_timerDispatch"); return;
-    }
-    stop(): void {
-      notImplemented("public flash.utils.Timer::stop"); return;
+    _tick(): void {
+      notImplemented("public flash.utils.Timer::_tick"); return;
     }
   }
 }

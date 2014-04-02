@@ -17,26 +17,42 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GraphicsGradientFill extends ASNative implements IGraphicsFill, IGraphicsData {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["colors", "alphas", "ratios", "matrix", "focalPointRatio", "_type", "_spreadMethod", "_interpolationMethod", "type", "type", "spreadMethod", "spreadMethod", "interpolationMethod", "interpolationMethod"];
+    
     constructor (type: string = "linear", colors: any [] = null, alphas: any [] = null, ratios: any [] = null, matrix: any = null, spreadMethod: any = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0) {
       type = "" + type; colors = colors; alphas = alphas; ratios = ratios; interpolationMethod = "" + interpolationMethod; focalPointRatio = +focalPointRatio;
       false && super();
       notImplemented("Dummy Constructor: public flash.display.GraphicsGradientFill");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    type: string;
-    _type: string;
+    
+    // JS -> AS Bindings
+    
     colors: any [];
     alphas: any [];
     ratios: any [];
     matrix: flash.geom.Matrix;
-    spreadMethod: string;
-    _spreadMethod: string;
-    interpolationMethod: string;
-    _interpolationMethod: string;
     focalPointRatio: number;
-    // Instance AS -> JS Bindings
+    _type: string;
+    _spreadMethod: any;
+    _interpolationMethod: string;
+    type: string;
+    spreadMethod: any;
+    interpolationMethod: string;
+    
+    // AS -> JS Bindings
+    
+    // _type: string;
+    // _interpolationMethod: string;
   }
 }

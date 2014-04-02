@@ -17,14 +17,38 @@
 module Shumway.AVM2.AS.flash.display3D {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Context3DBlendFactor extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display3D.Context3DBlendFactor");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static ONE: string = "one";
+    static ZERO: string = "zero";
+    static SOURCE_ALPHA: string = "sourceAlpha";
+    static SOURCE_COLOR: string = "sourceColor";
+    static ONE_MINUS_SOURCE_ALPHA: string = "oneMinusSourceAlpha";
+    static ONE_MINUS_SOURCE_COLOR: string = "oneMinusSourceColor";
+    static DESTINATION_ALPHA: string = "destinationAlpha";
+    static DESTINATION_COLOR: string = "destinationColor";
+    static ONE_MINUS_DESTINATION_ALPHA: string = "oneMinusDestinationAlpha";
+    static ONE_MINUS_DESTINATION_COLOR: string = "oneMinusDestinationColor";
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

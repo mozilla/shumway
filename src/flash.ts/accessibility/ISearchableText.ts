@@ -17,10 +17,13 @@
 module Shumway.AVM2.AS.flash.accessibility {
   import notImplemented = Shumway.Debug.notImplemented;
   export interface ISearchableText {
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     searchText: string;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _searchText: string;
   }
 }

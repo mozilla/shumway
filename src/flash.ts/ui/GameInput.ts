@@ -17,24 +17,42 @@
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GameInput extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.ui.GameInput");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    // static _numDevices: number /*int*/;
+    // static _isSupported: boolean;
+    get numDevices(): number /*int*/ {
+      notImplemented("public flash.ui.GameInput::get numDevices"); return;
+      // return this._numDevices;
+    }
+    get isSupported(): boolean {
+      notImplemented("public flash.ui.GameInput::get isSupported"); return;
+      // return this._isSupported;
+    }
     static getDeviceAt(index: number /*int*/): flash.ui.GameInputDevice {
       index = index | 0;
       notImplemented("public flash.ui.GameInput::static getDeviceAt"); return;
     }
-    get numDevices(): number /*int*/ {
-      notImplemented("public flash.ui.GameInput::get numDevices"); return;
-    }
-    get isSupported(): boolean {
-      notImplemented("public flash.ui.GameInput::get isSupported"); return;
-    }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
   }
 }

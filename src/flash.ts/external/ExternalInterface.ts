@@ -17,44 +17,45 @@
 module Shumway.AVM2.AS.flash.external {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ExternalInterface extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // ["marshallExceptions", "ensureInitialized", "addCallback", "convertToXML", "convertToXMLString", "convertFromXML", "convertToJSString", "call"];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.external.ExternalInterface");
     }
-    // Static   JS -> AS Bindings
+    
+    // JS -> AS Bindings
     static marshallExceptions: boolean;
+    static ensureInitialized: () => void;
     static addCallback: (functionName: string, closure: ASFunction) => void;
-    static call: (functionName: string) => any;
-    static _callIn: (closure: ASFunction, request: string, args: any []) => string;
-    static _arrayToXML: (obj: any []) => string;
-    static _argumentsToXML: (obj: any []) => string;
-    static _objectToXML: (obj: any) => string;
-    static _escapeXML: (s: string) => string;
-    static _toXML: (value: any) => string;
-    static _objectToAS: (obj: ASObject) => any;
-    static _arrayToAS: (obj: ASObject) => any;
-    static _toAS: (obj: ASObject) => any;
-    static _argumentsToAS: (obj: any) => any [];
-    static _arrayToJS: (value: any []) => string;
-    static _objectToJS: (value: any) => string;
-    static _toJS: (value: any) => string;
-    // Static   AS -> JS Bindings
+    static convertToXML: (s: string) => ASXML;
+    static convertToXMLString: (obj: any) => string;
+    static convertFromXML: (xml: ASXML) => ASObject;
+    static convertToJSString: (obj: any) => string;
+    // static call: (functionName: string) => any;
+    
+    
+    // AS -> JS Bindings
+    // static _available: boolean;
+    // static _objectID: string;
     get available(): boolean {
       notImplemented("public flash.external.ExternalInterface::get available"); return;
-    }
-    static _initJS(): void {
-      notImplemented("public flash.external.ExternalInterface::static _initJS"); return;
-    }
-    static _getPropNames(obj: ASObject): any [] {
-      obj = obj;
-      notImplemented("public flash.external.ExternalInterface::static _getPropNames"); return;
+      // return this._available;
     }
     get objectID(): string {
       notImplemented("public flash.external.ExternalInterface::get objectID"); return;
-    }
-    get activeX(): boolean {
-      notImplemented("public flash.external.ExternalInterface::get activeX"); return;
+      // return this._objectID;
     }
     static _addCallback(functionName: string, closure: ASFunction, hasNullCallback: boolean): void {
       functionName = "" + functionName; closure = closure; hasNullCallback = !!hasNullCallback;
@@ -64,11 +65,13 @@ module Shumway.AVM2.AS.flash.external {
       expression = "" + expression;
       notImplemented("public flash.external.ExternalInterface::static _evalJS"); return;
     }
-    static _callOut(request: string): string {
-      request = "" + request;
-      notImplemented("public flash.external.ExternalInterface::static _callOut"); return;
+    static _getPropNames(obj: ASObject): any [] {
+      obj = obj;
+      notImplemented("public flash.external.ExternalInterface::static _getPropNames"); return;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    static _initJS(): void {
+      notImplemented("public flash.external.ExternalInterface::static _initJS"); return;
+    }
+    
   }
 }

@@ -17,23 +17,44 @@
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   export class MessageChannel extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["addEventListener", "removeEventListener", "toString"];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.system.MessageChannel");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    addEventListener: (type: string, listener: ASFunction, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false) => void;
-    removeEventListener: (type: string, listener: ASFunction, useCapture: boolean = false) => void;
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    // addEventListener: (type: string, listener: ASFunction, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false) => void;
+    // removeEventListener: (type: string, listener: ASFunction, useCapture: boolean = false) => void;
+    
+    // AS -> JS Bindings
+    
+    // _messageAvailable: boolean;
+    // _state: string;
+    get messageAvailable(): boolean {
+      notImplemented("public flash.system.MessageChannel::get messageAvailable"); return;
+      // return this._messageAvailable;
+    }
+    get state(): string {
+      notImplemented("public flash.system.MessageChannel::get state"); return;
+      // return this._state;
+    }
     send(arg: any, queueLimit: number /*int*/ = -1): void {
       queueLimit = queueLimit | 0;
       notImplemented("public flash.system.MessageChannel::send"); return;
-    }
-    get messageAvailable(): boolean {
-      notImplemented("public flash.system.MessageChannel::get messageAvailable"); return;
     }
     receive(blockUntilReceived: boolean = false): any {
       blockUntilReceived = !!blockUntilReceived;
@@ -41,17 +62,6 @@ module Shumway.AVM2.AS.flash.system {
     }
     close(): void {
       notImplemented("public flash.system.MessageChannel::close"); return;
-    }
-    get state(): string {
-      notImplemented("public flash.system.MessageChannel::get state"); return;
-    }
-    internalRemoveEventListener(type: string, listener: ASFunction, useCapture: boolean = false): void {
-      type = "" + type; listener = listener; useCapture = !!useCapture;
-      notImplemented("public flash.system.MessageChannel::internalRemoveEventListener"); return;
-    }
-    internalAddEventListener(type: string, listener: ASFunction, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false): void {
-      type = "" + type; listener = listener; useCapture = !!useCapture; priority = priority | 0; useWeakReference = !!useWeakReference;
-      notImplemented("public flash.system.MessageChannel::internalAddEventListener"); return;
     }
   }
 }

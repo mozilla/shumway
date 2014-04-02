@@ -17,26 +17,30 @@
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   export class SystemUpdater extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["update", "cancel"];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.system.SystemUpdater");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    _pm: adobe.utils.ProductManager;
+    
+    // JS -> AS Bindings
+    
     update: (type: string) => void;
     cancel: () => void;
-    onProductManagerEvent: (e: flash.events.Event) => void;
-    // Instance AS -> JS Bindings
-    _update(type: string, pm: adobe.utils.ProductManager): boolean {
-      type = "" + type; pm = pm;
-      notImplemented("public flash.system.SystemUpdater::_update"); return;
-    }
-    _cancel(viaAPI: boolean, pm: adobe.utils.ProductManager): void {
-      viaAPI = !!viaAPI; pm = pm;
-      notImplemented("public flash.system.SystemUpdater::_cancel"); return;
-    }
+    
+    // AS -> JS Bindings
+    
   }
 }

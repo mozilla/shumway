@@ -17,15 +17,59 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.DisplayObjectContainer");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _numChildren: number /*int*/;
+    // _textSnapshot: flash.text.TextSnapshot;
+    // _tabChildren: boolean;
+    // _mouseChildren: boolean;
+    get numChildren(): number /*int*/ {
+      notImplemented("public flash.display.DisplayObjectContainer::get numChildren"); return;
+      // return this._numChildren;
+    }
+    get textSnapshot(): flash.text.TextSnapshot {
+      notImplemented("public flash.display.DisplayObjectContainer::get textSnapshot"); return;
+      // return this._textSnapshot;
+    }
+    get tabChildren(): boolean {
+      notImplemented("public flash.display.DisplayObjectContainer::get tabChildren"); return;
+      // return this._tabChildren;
+    }
+    set tabChildren(enable: boolean) {
+      enable = !!enable;
+      notImplemented("public flash.display.DisplayObjectContainer::set tabChildren"); return;
+      // this._tabChildren = enable;
+    }
+    get mouseChildren(): boolean {
+      notImplemented("public flash.display.DisplayObjectContainer::get mouseChildren"); return;
+      // return this._mouseChildren;
+    }
+    set mouseChildren(enable: boolean) {
+      enable = !!enable;
+      notImplemented("public flash.display.DisplayObjectContainer::set mouseChildren"); return;
+      // this._mouseChildren = enable;
+    }
     addChild(child: flash.display.DisplayObject): flash.display.DisplayObject {
       child = child;
       notImplemented("public flash.display.DisplayObjectContainer::addChild"); return;
@@ -58,12 +102,6 @@ module Shumway.AVM2.AS.flash.display {
       name = "" + name;
       notImplemented("public flash.display.DisplayObjectContainer::getChildByName"); return;
     }
-    get numChildren(): number /*int*/ {
-      notImplemented("public flash.display.DisplayObjectContainer::get numChildren"); return;
-    }
-    get textSnapshot(): flash.text.TextSnapshot {
-      notImplemented("public flash.display.DisplayObjectContainer::get textSnapshot"); return;
-    }
     getObjectsUnderPoint(point: flash.geom.Point): any [] {
       point = point;
       notImplemented("public flash.display.DisplayObjectContainer::getObjectsUnderPoint"); return;
@@ -71,20 +109,6 @@ module Shumway.AVM2.AS.flash.display {
     areInaccessibleObjectsUnderPoint(point: flash.geom.Point): boolean {
       point = point;
       notImplemented("public flash.display.DisplayObjectContainer::areInaccessibleObjectsUnderPoint"); return;
-    }
-    get tabChildren(): boolean {
-      notImplemented("public flash.display.DisplayObjectContainer::get tabChildren"); return;
-    }
-    set tabChildren(enable: boolean) {
-      enable = !!enable;
-      notImplemented("public flash.display.DisplayObjectContainer::set tabChildren"); return;
-    }
-    get mouseChildren(): boolean {
-      notImplemented("public flash.display.DisplayObjectContainer::get mouseChildren"); return;
-    }
-    set mouseChildren(enable: boolean) {
-      enable = !!enable;
-      notImplemented("public flash.display.DisplayObjectContainer::set mouseChildren"); return;
     }
     contains(child: flash.display.DisplayObject): boolean {
       child = child;

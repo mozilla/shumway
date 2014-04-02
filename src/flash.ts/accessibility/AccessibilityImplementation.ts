@@ -17,14 +17,26 @@
 module Shumway.AVM2.AS.flash.accessibility {
   import notImplemented = Shumway.Debug.notImplemented;
   export class AccessibilityImplementation extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["stub", "errno", "get_accRole", "get_accName", "get_accValue", "get_accState", "get_accDefaultAction", "accDoDefaultAction", "isLabeledBy", "getChildIDArray", "accLocation", "get_accSelection", "get_accFocus", "accSelect", "get_selectionAnchorIndex", "get_selectionActiveIndex"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.accessibility.AccessibilityImplementation");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     stub: boolean;
     errno: number /*uint*/;
     get_accRole: (childID: number /*uint*/) => number /*uint*/;
@@ -41,6 +53,8 @@ module Shumway.AVM2.AS.flash.accessibility {
     accSelect: (operation: number /*uint*/, childID: number /*uint*/) => void;
     get_selectionAnchorIndex: () => any;
     get_selectionActiveIndex: () => any;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
   }
 }

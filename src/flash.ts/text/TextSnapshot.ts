@@ -17,21 +17,37 @@
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   export class TextSnapshot extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.text.TextSnapshot");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _charCount: number /*int*/;
+    get charCount(): number /*int*/ {
+      notImplemented("public flash.text.TextSnapshot::get charCount"); return;
+      // return this._charCount;
+    }
     findText(beginIndex: number /*int*/, textToFind: string, caseSensitive: boolean): number /*int*/ {
       beginIndex = beginIndex | 0; textToFind = "" + textToFind; caseSensitive = !!caseSensitive;
       notImplemented("public flash.text.TextSnapshot::findText"); return;
-    }
-    get charCount(): number /*int*/ {
-      notImplemented("public flash.text.TextSnapshot::get charCount"); return;
     }
     getSelected(beginIndex: number /*int*/, endIndex: number /*int*/): boolean {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;

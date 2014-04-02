@@ -17,20 +17,37 @@
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   export class H264VideoStreamSettings extends flash.media.VideoStreamSettings {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_profile", "_level", "codec", "profile", "level", "setProfileLevel"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.media.H264VideoStreamSettings");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_profile: string;
-    m_level: string;
+    
+    // JS -> AS Bindings
+    
+    _profile: string;
+    _level: string;
     codec: string;
-    setProfileLevel: (profile: string, level: string) => void;
     profile: string;
     level: string;
-    // Instance AS -> JS Bindings
+    setProfileLevel: (profile: string, level: string) => void;
+    
+    // AS -> JS Bindings
+    
+    // _codec: string;
+    // _profile: string;
+    // _level: string;
   }
 }

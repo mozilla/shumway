@@ -17,32 +17,58 @@
 module Shumway.AVM2.AS.flash.security {
   import notImplemented = Shumway.Debug.notImplemented;
   export class X500DistinguishedName extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.security.X500DistinguishedName");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _commonName: string;
+    // _organizationName: string;
+    // _organizationalUnitName: string;
+    // _localityName: string;
+    // _stateOrProvinceName: string;
+    // _countryName: string;
     get commonName(): string {
       notImplemented("public flash.security.X500DistinguishedName::get commonName"); return;
+      // return this._commonName;
     }
     get organizationName(): string {
       notImplemented("public flash.security.X500DistinguishedName::get organizationName"); return;
+      // return this._organizationName;
     }
     get organizationalUnitName(): string {
       notImplemented("public flash.security.X500DistinguishedName::get organizationalUnitName"); return;
+      // return this._organizationalUnitName;
     }
     get localityName(): string {
       notImplemented("public flash.security.X500DistinguishedName::get localityName"); return;
+      // return this._localityName;
     }
     get stateOrProvinceName(): string {
       notImplemented("public flash.security.X500DistinguishedName::get stateOrProvinceName"); return;
+      // return this._stateOrProvinceName;
     }
     get countryName(): string {
       notImplemented("public flash.security.X500DistinguishedName::get countryName"); return;
+      // return this._countryName;
     }
     toString(): string {
       notImplemented("public flash.security.X500DistinguishedName::toString"); return;

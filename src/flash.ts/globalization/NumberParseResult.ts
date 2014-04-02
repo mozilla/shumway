@@ -17,28 +17,48 @@
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
   export class NumberParseResult extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor (value: number = NaN, startIndex: number /*int*/ = 2147483647, endIndex: number /*int*/ = 2147483647) {
       value = +value; startIndex = startIndex | 0; endIndex = endIndex | 0;
       false && super();
       notImplemented("Dummy Constructor: public flash.globalization.NumberParseResult");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
-    ctor(value: number, startIndex: number /*int*/, endIndex: number /*int*/): void {
-      value = +value; startIndex = startIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.globalization.NumberParseResult::ctor"); return;
-    }
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _value: number;
+    // _startIndex: number /*int*/;
+    // _endIndex: number /*int*/;
     get value(): number {
       notImplemented("public flash.globalization.NumberParseResult::get value"); return;
+      // return this._value;
     }
     get startIndex(): number /*int*/ {
       notImplemented("public flash.globalization.NumberParseResult::get startIndex"); return;
+      // return this._startIndex;
     }
     get endIndex(): number /*int*/ {
       notImplemented("public flash.globalization.NumberParseResult::get endIndex"); return;
+      // return this._endIndex;
+    }
+    ctor(value: number, startIndex: number /*int*/, endIndex: number /*int*/): void {
+      value = +value; startIndex = startIndex | 0; endIndex = endIndex | 0;
+      notImplemented("public flash.globalization.NumberParseResult::ctor"); return;
     }
   }
 }

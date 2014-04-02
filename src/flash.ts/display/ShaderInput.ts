@@ -17,41 +17,68 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ShaderInput extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.ShaderInput");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _input: ASObject;
+    // _width: number /*int*/;
+    // _height: number /*int*/;
+    // _channels: number /*int*/;
+    // _index: number /*int*/;
     get input(): ASObject {
       notImplemented("public flash.display.ShaderInput::get input"); return;
+      // return this._input;
     }
     set input(input: ASObject) {
       input = input;
       notImplemented("public flash.display.ShaderInput::set input"); return;
+      // this._input = input;
     }
     get width(): number /*int*/ {
       notImplemented("public flash.display.ShaderInput::get width"); return;
+      // return this._width;
     }
     set width(value: number /*int*/) {
       value = value | 0;
       notImplemented("public flash.display.ShaderInput::set width"); return;
+      // this._width = value;
     }
     get height(): number /*int*/ {
       notImplemented("public flash.display.ShaderInput::get height"); return;
+      // return this._height;
     }
     set height(value: number /*int*/) {
       value = value | 0;
       notImplemented("public flash.display.ShaderInput::set height"); return;
+      // this._height = value;
     }
     get channels(): number /*int*/ {
       notImplemented("public flash.display.ShaderInput::get channels"); return;
+      // return this._channels;
     }
     get index(): number /*int*/ {
       notImplemented("public flash.display.ShaderInput::get index"); return;
+      // return this._index;
     }
   }
 }

@@ -17,44 +17,36 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GroupSpecifier extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // ["encodePostingAuthorization", "encodePublishAuthorization", "encodeIPMulticastAddressSpec", "encodeBootstrapPeerIDSpec"];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["makeUnique", "routingEnabled", "routingEnabled", "multicastEnabled", "multicastEnabled", "objectReplicationEnabled", "objectReplicationEnabled", "postingEnabled", "postingEnabled", "peerToPeerDisabled", "peerToPeerDisabled", "ipMulticastMemberUpdatesEnabled", "ipMulticastMemberUpdatesEnabled", "setPublishPassword", "setPostingPassword", "serverChannelEnabled", "serverChannelEnabled", "addBootstrapPeer", "addIPMulticastAddress", "toString", "groupspecWithoutAuthorizations", "groupspecWithAuthorizations", "authorizations"];
+    
     constructor (name: string) {
       name = "" + name;
       false && super();
       notImplemented("Dummy Constructor: public flash.net.GroupSpecifier");
     }
-    // Static   JS -> AS Bindings
+    
+    // JS -> AS Bindings
     static encodePostingAuthorization: (password: string) => string;
     static encodePublishAuthorization: (password: string) => string;
     static encodeIPMulticastAddressSpec: (address: string, port: any = null, source: string = null) => string;
     static encodeBootstrapPeerIDSpec: (peerID: string) => string;
-    static SaltedSHA256: (salt: string, bytes: flash.utils.ByteArray) => string;
-    static encodeIPMulticastAddress: (address: string, port: any, source: string) => string;
-    static hexByte: (byte: number /*uint*/) => string;
-    static vlu: (num: number /*uint*/) => string;
-    static toOption: (optionID: number /*uint*/, hexBytes: string) => string;
-    static inet_ptohex4: (address: string, port: any = null) => string;
-    static inet_ptohex6: (address: string, port: any = null) => string;
-    static byteArrayToHex: (bytes: flash.utils.ByteArray) => string;
-    static stringToBytes: (str: string) => flash.utils.ByteArray;
-    static SHA256: (arr: flash.utils.ByteArray) => string;
-    // Static   AS -> JS Bindings
-    static calcSHA256Digest(input: flash.utils.ByteArray): string {
-      input = input;
-      notImplemented("public flash.net.GroupSpecifier::static calcSHA256Digest"); return;
-    }
-    static GetCryptoRandomString(length: number /*uint*/): string {
-      length = length >>> 0;
-      notImplemented("public flash.net.GroupSpecifier::static GetCryptoRandomString"); return;
-    }
-    // Instance JS -> AS Bindings
+    
     makeUnique: () => void;
     routingEnabled: boolean;
     multicastEnabled: boolean;
     objectReplicationEnabled: boolean;
     postingEnabled: boolean;
-    clearIPMulticastAddresses: () => void;
-    clearBootstrapPeers: () => void;
     peerToPeerDisabled: boolean;
     ipMulticastMemberUpdatesEnabled: boolean;
     setPublishPassword: (password: string = null, salt: string = null) => void;
@@ -63,24 +55,17 @@ module Shumway.AVM2.AS.flash.net {
     addBootstrapPeer: (peerID: string) => void;
     addIPMulticastAddress: (address: string, port: any = null, source: string = null) => void;
     groupspecWithoutAuthorizations: () => string;
-    groupspecExtras: () => string;
     groupspecWithAuthorizations: () => string;
     authorizations: () => string;
-    m_routing: string;
-    m_multicast: string;
-    m_objectReplication: string;
-    m_posting: string;
-    m_publishAuthHash: string;
-    m_postingAuthHash: string;
-    m_ipMulticastAddresses: string;
-    m_bootstrapPeers: string;
-    m_openServerChannel: string;
-    m_disablePeerToPeer: string;
-    m_tag: string;
-    m_unique: string;
-    m_publishAuth: string;
-    m_postingAuth: string;
-    m_ipMulticastMemberUpdates: string;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _routingEnabled: boolean;
+    // _multicastEnabled: boolean;
+    // _objectReplicationEnabled: boolean;
+    // _postingEnabled: boolean;
+    // _peerToPeerDisabled: boolean;
+    // _ipMulticastMemberUpdatesEnabled: boolean;
+    // _serverChannelEnabled: boolean;
   }
 }

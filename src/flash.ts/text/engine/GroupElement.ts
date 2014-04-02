@@ -17,25 +17,41 @@
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GroupElement extends flash.text.engine.ContentElement {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    constructor (elements: ASVector<flash.text.engine.ContentElement> = null, elementFormat: flash.text.engine.ElementFormat = null, eventMirror: flash.events.EventDispatcher = null, textRotation: string = "rotate0") {
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["getElementIndex"];
+    
+    constructor (elements: ASVector<any> = null, elementFormat: flash.text.engine.ElementFormat = null, eventMirror: flash.events.EventDispatcher = null, textRotation: string = "rotate0") {
       elements = elements; elementFormat = elementFormat; eventMirror = eventMirror; textRotation = "" + textRotation;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.text.engine.GroupElement");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     getElementIndex: (element: flash.text.engine.ContentElement) => number /*int*/;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _elementCount: number /*int*/;
     get elementCount(): number /*int*/ {
       notImplemented("public flash.text.engine.GroupElement::get elementCount"); return;
+      // return this._elementCount;
     }
     getElementAt(index: number /*int*/): flash.text.engine.ContentElement {
       index = index | 0;
       notImplemented("public flash.text.engine.GroupElement::getElementAt"); return;
     }
-    setElements(value: ASVector<flash.text.engine.ContentElement>): void {
+    setElements(value: ASVector<any>): void {
       value = value;
       notImplemented("public flash.text.engine.GroupElement::setElements"); return;
     }
@@ -55,7 +71,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       elementIndex = elementIndex | 0; splitIndex = splitIndex | 0;
       notImplemented("public flash.text.engine.GroupElement::splitTextElement"); return;
     }
-    replaceElements(beginIndex: number /*int*/, endIndex: number /*int*/, newElements: ASVector<flash.text.engine.ContentElement>): ASVector<flash.text.engine.ContentElement> {
+    replaceElements(beginIndex: number /*int*/, endIndex: number /*int*/, newElements: ASVector<any>): ASVector<any> {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0; newElements = newElements;
       notImplemented("public flash.text.engine.GroupElement::replaceElements"); return;
     }

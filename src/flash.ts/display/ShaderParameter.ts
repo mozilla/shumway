@@ -17,27 +17,48 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ShaderParameter extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.ShaderParameter");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _value: any [];
+    // _type: string;
+    // _index: number /*int*/;
     get value(): any [] {
       notImplemented("public flash.display.ShaderParameter::get value"); return;
+      // return this._value;
     }
     set value(v: any []) {
       v = v;
       notImplemented("public flash.display.ShaderParameter::set value"); return;
+      // this._value = v;
     }
     get type(): string {
       notImplemented("public flash.display.ShaderParameter::get type"); return;
+      // return this._type;
     }
     get index(): number /*int*/ {
       notImplemented("public flash.display.ShaderParameter::get index"); return;
+      // return this._index;
     }
   }
 }

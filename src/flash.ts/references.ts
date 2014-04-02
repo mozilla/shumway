@@ -291,11 +291,11 @@
 ///<reference path='printing/PrintJobOptions.ts' />
 ///<reference path='printing/PrintJobOrientation.ts' />
 ///<reference path='profiler/Telemetry.ts' />
-///<reference path='sampler/ClassFactory.ts' />
-///<reference path='sampler/DeleteObjectSample.ts' />
-///<reference path='sampler/NewObjectSample.ts' />
-///<reference path='sampler/Sample.ts' />
-///<reference path='sampler/StackFrame.ts' />
+// ///<reference path='sampler/ClassFactory.ts' />
+// ///<reference path='sampler/DeleteObjectSample.ts' />
+// ///<reference path='sampler/NewObjectSample.ts' />
+// ///<reference path='sampler/Sample.ts' />
+// ///<reference path='sampler/StackFrame.ts' />
 ///<reference path='security/CertificateStatus.ts' />
 ///<reference path='security/X500DistinguishedName.ts' />
 ///<reference path='security/X509Certificate.ts' />

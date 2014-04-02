@@ -17,19 +17,33 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GraphicsBitmapFill extends ASNative implements IGraphicsFill, IGraphicsData {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["bitmapData", "matrix", "repeat", "smooth"];
+    
     constructor (bitmapData: flash.display.BitmapData = null, matrix: flash.geom.Matrix = null, repeat: boolean = true, smooth: boolean = false) {
       bitmapData = bitmapData; matrix = matrix; repeat = !!repeat; smooth = !!smooth;
       false && super();
       notImplemented("Dummy Constructor: public flash.display.GraphicsBitmapFill");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     bitmapData: flash.display.BitmapData;
     matrix: flash.geom.Matrix;
     repeat: boolean;
     smooth: boolean;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
   }
 }

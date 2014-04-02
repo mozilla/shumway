@@ -17,34 +17,68 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Socket extends flash.events.EventDispatcher implements flash.utils.IDataInput, flash.utils.IDataOutput {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["timeout", "timeout", "connect", "close"];
+    
     constructor (host: string = null, port: number /*int*/ = 0) {
       host = "" + host; port = port | 0;
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.net.Socket");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    _init: () => void;
-    _timeout: number /*uint*/;
-    _timeoutTimer: flash.utils.Timer;
-    _timeoutEvent: flash.events.SecurityErrorEvent;
-    connect: (host: string, port: number /*int*/) => void;
+    
+    // JS -> AS Bindings
+    
     timeout: number /*uint*/;
-    onTimeout: (event: flash.events.TimerEvent) => void;
+    connect: (host: string, port: number /*int*/) => void;
     close: () => void;
-    // Instance AS -> JS Bindings
-    internalGetSecurityErrorMessage(host: string, port: number /*int*/): string {
-      host = "" + host; port = port | 0;
-      notImplemented("public flash.net.Socket::internalGetSecurityErrorMessage"); return;
+    
+    // AS -> JS Bindings
+    
+    // _timeout: number /*uint*/;
+    // _bytesAvailable: number /*uint*/;
+    // _connected: boolean;
+    // _objectEncoding: number /*uint*/;
+    // _endian: string;
+    // _bytesPending: number /*uint*/;
+    get bytesAvailable(): number /*uint*/ {
+      notImplemented("public flash.net.Socket::get bytesAvailable"); return;
+      // return this._bytesAvailable;
     }
-    internalConnect(host: string, port: number /*int*/): void {
-      host = "" + host; port = port | 0;
-      notImplemented("public flash.net.Socket::internalConnect"); return;
+    get connected(): boolean {
+      notImplemented("public flash.net.Socket::get connected"); return;
+      // return this._connected;
     }
-    didFailureOccur(): boolean {
-      notImplemented("public flash.net.Socket::didFailureOccur"); return;
+    get objectEncoding(): number /*uint*/ {
+      notImplemented("public flash.net.Socket::get objectEncoding"); return;
+      // return this._objectEncoding;
+    }
+    set objectEncoding(version: number /*uint*/) {
+      version = version >>> 0;
+      notImplemented("public flash.net.Socket::set objectEncoding"); return;
+      // this._objectEncoding = version;
+    }
+    get endian(): string {
+      notImplemented("public flash.net.Socket::get endian"); return;
+      // return this._endian;
+    }
+    set endian(type: string) {
+      type = "" + type;
+      notImplemented("public flash.net.Socket::set endian"); return;
+      // this._endian = type;
+    }
+    get bytesPending(): number /*uint*/ {
+      notImplemented("public flash.net.Socket::get bytesPending"); return;
+      // return this._bytesPending;
     }
     readBytes(bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
       bytes = bytes; offset = offset >>> 0; length = length >>> 0;
@@ -132,15 +166,6 @@ module Shumway.AVM2.AS.flash.net {
       length = length >>> 0;
       notImplemented("public flash.net.Socket::readUTFBytes"); return;
     }
-    get bytesAvailable(): number /*uint*/ {
-      notImplemented("public flash.net.Socket::get bytesAvailable"); return;
-    }
-    get connected(): boolean {
-      notImplemented("public flash.net.Socket::get connected"); return;
-    }
-    internalClose(): void {
-      notImplemented("public flash.net.Socket::internalClose"); return;
-    }
     flush(): void {
       notImplemented("public flash.net.Socket::flush"); return;
     }
@@ -150,23 +175,6 @@ module Shumway.AVM2.AS.flash.net {
     }
     readObject(): any {
       notImplemented("public flash.net.Socket::readObject"); return;
-    }
-    get objectEncoding(): number /*uint*/ {
-      notImplemented("public flash.net.Socket::get objectEncoding"); return;
-    }
-    set objectEncoding(version: number /*uint*/) {
-      version = version >>> 0;
-      notImplemented("public flash.net.Socket::set objectEncoding"); return;
-    }
-    get endian(): string {
-      notImplemented("public flash.net.Socket::get endian"); return;
-    }
-    set endian(type: string) {
-      type = "" + type;
-      notImplemented("public flash.net.Socket::set endian"); return;
-    }
-    get bytesPending(): number /*uint*/ {
-      notImplemented("public flash.net.Socket::get bytesPending"); return;
     }
   }
 }

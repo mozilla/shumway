@@ -17,23 +17,27 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class NetGroupInfo extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["postingSendDataBytesPerSecond", "postingSendControlBytesPerSecond", "postingReceiveDataBytesPerSecond", "postingReceiveControlBytesPerSecond", "routingSendBytesPerSecond", "routingReceiveBytesPerSecond", "objectReplicationSendBytesPerSecond", "objectReplicationReceiveBytesPerSecond", "toString"];
+    
     constructor (postingSendDataBytesPerSecond: number, postingSendControlBytesPerSecond: number, postingReceiveDataBytesPerSecond: number, postingReceiveControlBytesPerSecond: number, routingSendBytesPerSecond: number, routingReceiveBytesPerSecond: number, objectReplicationSendBytesPerSecond: number, objectReplicationReceiveBytesPerSecond: number) {
       postingSendDataBytesPerSecond = +postingSendDataBytesPerSecond; postingSendControlBytesPerSecond = +postingSendControlBytesPerSecond; postingReceiveDataBytesPerSecond = +postingReceiveDataBytesPerSecond; postingReceiveControlBytesPerSecond = +postingReceiveControlBytesPerSecond; routingSendBytesPerSecond = +routingSendBytesPerSecond; routingReceiveBytesPerSecond = +routingReceiveBytesPerSecond; objectReplicationSendBytesPerSecond = +objectReplicationSendBytesPerSecond; objectReplicationReceiveBytesPerSecond = +objectReplicationReceiveBytesPerSecond;
       false && super();
       notImplemented("Dummy Constructor: public flash.net.NetGroupInfo");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_postingSendDataBytesPerSecond: number;
-    m_postingSendControlBytesPerSecond: number;
-    m_postingReceiveDataBytesPerSecond: number;
-    m_postingReceiveControlBytesPerSecond: number;
-    m_routingSendBytesPerSecond: number;
-    m_routingReceiveBytesPerSecond: number;
-    m_objectReplicationSendBytesPerSecond: number;
-    m_objectReplicationReceiveBytesPerSecond: number;
+    
+    // JS -> AS Bindings
+    
     postingSendDataBytesPerSecond: number;
     postingSendControlBytesPerSecond: number;
     postingReceiveDataBytesPerSecond: number;
@@ -42,6 +46,16 @@ module Shumway.AVM2.AS.flash.net {
     routingReceiveBytesPerSecond: number;
     objectReplicationSendBytesPerSecond: number;
     objectReplicationReceiveBytesPerSecond: number;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _postingSendDataBytesPerSecond: number;
+    // _postingSendControlBytesPerSecond: number;
+    // _postingReceiveDataBytesPerSecond: number;
+    // _postingReceiveControlBytesPerSecond: number;
+    // _routingSendBytesPerSecond: number;
+    // _routingReceiveBytesPerSecond: number;
+    // _objectReplicationSendBytesPerSecond: number;
+    // _objectReplicationReceiveBytesPerSecond: number;
   }
 }

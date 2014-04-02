@@ -17,21 +17,35 @@
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   export class TextLineMetrics extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["x", "width", "height", "ascent", "descent", "leading"];
+    
     constructor (x: number, width: number, height: number, ascent: number, descent: number, leading: number) {
       x = +x; width = +width; height = +height; ascent = +ascent; descent = +descent; leading = +leading;
       false && super();
       notImplemented("Dummy Constructor: public flash.text.TextLineMetrics");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     x: number;
     width: number;
     height: number;
     ascent: number;
     descent: number;
     leading: number;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
   }
 }

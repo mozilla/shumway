@@ -17,14 +17,35 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GraphicsPathCommand extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.GraphicsPathCommand");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static NO_OP: number /*int*/ = undefined;
+    static MOVE_TO: number /*int*/ = 1;
+    static LINE_TO: number /*int*/ = 2;
+    static CURVE_TO: number /*int*/ = 3;
+    static WIDE_MOVE_TO: number /*int*/ = 4;
+    static WIDE_LINE_TO: number /*int*/ = 5;
+    static CUBIC_CURVE_TO: number /*int*/ = 6;
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

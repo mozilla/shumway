@@ -17,31 +17,47 @@
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
   export class StringTools extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor (requestedLocaleIDName: string) {
       requestedLocaleIDName = "" + requestedLocaleIDName;
       false && super();
       notImplemented("Dummy Constructor: public flash.globalization.StringTools");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    static getAvailableLocaleIDNames(): ASVector<string> {
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    static getAvailableLocaleIDNames(): ASVector<any> {
       notImplemented("public flash.globalization.StringTools::static getAvailableLocaleIDNames"); return;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
-    ctor(requestedLocaleIDName: string): void {
-      requestedLocaleIDName = "" + requestedLocaleIDName;
-      notImplemented("public flash.globalization.StringTools::ctor"); return;
-    }
+    
+    // _lastOperationStatus: string;
+    // _requestedLocaleIDName: string;
+    // _actualLocaleIDName: string;
     get lastOperationStatus(): string {
       notImplemented("public flash.globalization.StringTools::get lastOperationStatus"); return;
+      // return this._lastOperationStatus;
     }
     get requestedLocaleIDName(): string {
       notImplemented("public flash.globalization.StringTools::get requestedLocaleIDName"); return;
+      // return this._requestedLocaleIDName;
     }
     get actualLocaleIDName(): string {
       notImplemented("public flash.globalization.StringTools::get actualLocaleIDName"); return;
+      // return this._actualLocaleIDName;
     }
     toLowerCase(s: string): string {
       s = "" + s;
@@ -50,6 +66,10 @@ module Shumway.AVM2.AS.flash.globalization {
     toUpperCase(s: string): string {
       s = "" + s;
       notImplemented("public flash.globalization.StringTools::toUpperCase"); return;
+    }
+    ctor(requestedLocaleIDName: string): void {
+      requestedLocaleIDName = "" + requestedLocaleIDName;
+      notImplemented("public flash.globalization.StringTools::ctor"); return;
     }
   }
 }

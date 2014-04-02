@@ -17,45 +17,36 @@
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   export class StyleSheet extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_styles", "styleNames", "getStyle", "setStyle", "clear", "transform", "parseCSS"];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.text.StyleSheet");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
+    _styles: ASObject;
+    styleNames: any [];
     getStyle: (styleName: string) => ASObject;
     setStyle: (styleName: string, styleObject: ASObject) => void;
     clear: () => void;
-    styleNames: any [];
     transform: (formatObject: ASObject) => flash.text.TextFormat;
     parseCSS: (CSSText: string) => void;
-    _css: ASObject;
-    doTransform: (n: string) => void;
-    _copy: (o: ASObject) => ASObject;
-    // Instance AS -> JS Bindings
-    get _styles(): ASObject {
-      notImplemented("public flash.text.StyleSheet::get _styles"); return;
-    }
-    set _styles(styles: ASObject) {
-      styles = styles;
-      notImplemented("public flash.text.StyleSheet::set _styles"); return;
-    }
-    _update(): void {
-      notImplemented("public flash.text.StyleSheet::_update"); return;
-    }
-    _parseCSSInternal(cssText: string): ASObject {
-      cssText = "" + cssText;
-      notImplemented("public flash.text.StyleSheet::_parseCSSInternal"); return;
-    }
-    _parseCSSFontFamily(fontFamily: string): string {
-      fontFamily = "" + fontFamily;
-      notImplemented("public flash.text.StyleSheet::_parseCSSFontFamily"); return;
-    }
-    _parseColor(color: string): number /*uint*/ {
-      color = "" + color;
-      notImplemented("public flash.text.StyleSheet::_parseColor"); return;
-    }
+    
+    // AS -> JS Bindings
+    
+    // _styleNames: any [];
   }
 }

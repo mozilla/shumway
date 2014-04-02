@@ -17,11 +17,15 @@
 module Shumway.AVM2.AS.flash.accessibility {
   import notImplemented = Shumway.Debug.notImplemented;
   export interface ISimpleTextSelection {
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     selectionAnchorIndex: number /*int*/;
     selectionActiveIndex: number /*int*/;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _selectionAnchorIndex: number /*int*/;
+    // _selectionActiveIndex: number /*int*/;
   }
 }

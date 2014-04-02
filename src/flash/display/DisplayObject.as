@@ -58,6 +58,7 @@ public class DisplayObject extends EventDispatcher implements IBitmapDrawable {
   public native function set rotationZ(value:Number):void;
   public native function get alpha():Number;
   public native function set alpha(value:Number):void;
+  public native function get width():Number;
   public native function set width(value:Number):void;
   public native function get height():Number;
   public native function set height(value:Number):void;

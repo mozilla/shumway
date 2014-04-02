@@ -17,48 +17,63 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Loader extends flash.display.DisplayObjectContainer {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.Loader");
     }
-    // Static   JS -> AS Bindings
-    static cloneParams: (lc: flash.system.LoaderContext) => void;
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
+    uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
+//    addChild: (child: flash.display.DisplayObject) => flash.display.DisplayObject;
+//    addChildAt: (child: flash.display.DisplayObject, index: number /*int*/) => flash.display.DisplayObject;
+//    removeChild: (child: flash.display.DisplayObject) => flash.display.DisplayObject;
+//    removeChildAt: (index: number /*int*/) => flash.display.DisplayObject;
+//    setChildIndex: (child: flash.display.DisplayObject, index: number /*int*/) => void;
     load: (request: flash.net.URLRequest, context: flash.system.LoaderContext = null) => void;
-    _buildLoaderContext: (context: flash.system.LoaderContext) => flash.system.LoaderContext;
+    sanitizeContext: (context: flash.system.LoaderContext) => flash.system.LoaderContext;
     loadBytes: (bytes: flash.utils.ByteArray, context: flash.system.LoaderContext = null) => void;
     close: () => void;
     unload: () => void;
     unloadAndStop: (gc: boolean = true) => void;
-    addChild: (child: flash.display.DisplayObject) => flash.display.DisplayObject;
-    addChildAt: (child: flash.display.DisplayObject, index: number /*int*/) => flash.display.DisplayObject;
-    removeChild: (child: flash.display.DisplayObject) => flash.display.DisplayObject;
-    removeChildAt: (index: number /*int*/) => flash.display.DisplayObject;
-    setChildIndex: (child: flash.display.DisplayObject, index: number /*int*/) => void;
-    uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
-    // Instance AS -> JS Bindings
-    _getJPEGLoaderContextdeblockingfilter(context: ASObject): number {
-      context = context;
-      notImplemented("public flash.display.Loader::_getJPEGLoaderContextdeblockingfilter"); return;
+    cloneObject: (obj: ASObject) => ASObject;
+    
+    // AS -> JS Bindings
+    
+    // _content: flash.display.DisplayObject;
+    // _contentLoaderInfo: flash.display.LoaderInfo;
+    // _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
+    get content(): flash.display.DisplayObject {
+      notImplemented("public flash.display.Loader::get content"); return;
+      // return this._content;
     }
-    _loadBytes(bytes: flash.utils.ByteArray, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowLoadBytesCodeExecution: boolean, imageDecodingPolicy: string): void {
-      bytes = bytes; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain; requestedContentParent = requestedContentParent; parameters = parameters; deblockingFilter = +deblockingFilter; allowLoadBytesCodeExecution = !!allowLoadBytesCodeExecution; imageDecodingPolicy = "" + imageDecodingPolicy;
-      notImplemented("public flash.display.Loader::_loadBytes"); return;
-    }
-    _unload(halt: boolean, gc: boolean): void {
-      halt = !!halt; gc = !!gc;
-      notImplemented("public flash.display.Loader::_unload"); return;
+    get contentLoaderInfo(): flash.display.LoaderInfo {
+      notImplemented("public flash.display.Loader::get contentLoaderInfo"); return;
+      // return this._contentLoaderInfo;
     }
     _close(): void {
       notImplemented("public flash.display.Loader::_close"); return;
     }
-    get content(): flash.display.DisplayObject {
-      notImplemented("public flash.display.Loader::get content"); return;
+    _unload(stopExecution: boolean, gc: boolean): void {
+      stopExecution = !!stopExecution; gc = !!gc;
+      notImplemented("public flash.display.Loader::_unload"); return;
     }
-    get contentLoaderInfo(): flash.display.LoaderInfo {
-      notImplemented("public flash.display.Loader::get contentLoaderInfo"); return;
+    _getJPEGLoaderContextdeblockingfilter(context: flash.system.LoaderContext): number {
+      context = context;
+      notImplemented("public flash.display.Loader::_getJPEGLoaderContextdeblockingfilter"); return;
     }
     _getUncaughtErrorEvents(): flash.events.UncaughtErrorEvents {
       notImplemented("public flash.display.Loader::_getUncaughtErrorEvents"); return;
@@ -70,6 +85,10 @@ module Shumway.AVM2.AS.flash.display {
     _load(request: flash.net.URLRequest, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {
       request = request; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain; requestedContentParent = requestedContentParent; parameters = parameters; deblockingFilter = +deblockingFilter; allowCodeExecution = !!allowCodeExecution; imageDecodingPolicy = "" + imageDecodingPolicy;
       notImplemented("public flash.display.Loader::_load"); return;
+    }
+    _loadBytes(bytes: flash.utils.ByteArray, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {
+      bytes = bytes; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain; requestedContentParent = requestedContentParent; parameters = parameters; deblockingFilter = +deblockingFilter; allowCodeExecution = !!allowCodeExecution; imageDecodingPolicy = "" + imageDecodingPolicy;
+      notImplemented("public flash.display.Loader::_loadBytes"); return;
     }
   }
 }

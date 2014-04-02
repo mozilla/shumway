@@ -17,15 +17,27 @@
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Rectangle extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["x", "y", "width", "height", "left", "left", "right", "right", "top", "top", "bottom", "bottom", "topLeft", "topLeft", "bottomRight", "bottomRight", "size", "size", "clone", "isEmpty", "setEmpty", "inflate", "inflatePoint", "offset", "offsetPoint", "contains", "containsPoint", "containsRect", "intersection", "intersects", "union", "equals", "copyFrom", "setTo", "toString"];
+    
     constructor (x: number = 0, y: number = 0, width: number = 0, height: number = 0) {
       x = +x; y = +y; width = +width; height = +height;
       false && super();
       notImplemented("Dummy Constructor: public flash.geom.Rectangle");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     x: number;
     y: number;
     width: number;
@@ -53,6 +65,15 @@ module Shumway.AVM2.AS.flash.geom {
     equals: (toCompare: flash.geom.Rectangle) => boolean;
     copyFrom: (sourceRect: flash.geom.Rectangle) => void;
     setTo: (xa: number, ya: number, widtha: number, heighta: number) => void;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _left: number;
+    // _right: number;
+    // _top: number;
+    // _bottom: number;
+    // _topLeft: flash.geom.Point;
+    // _bottomRight: flash.geom.Point;
+    // _size: flash.geom.Point;
   }
 }

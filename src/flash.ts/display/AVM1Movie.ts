@@ -17,29 +17,30 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class AVM1Movie extends flash.display.DisplayObject {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["call", "addCallback"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.AVM1Movie");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     call: (functionName: string) => any;
-    _callAS3: (functionName: string, data: flash.utils.ByteArray) => void;
     addCallback: (functionName: string, closure: ASFunction) => void;
-    callbackTable: ASObject;
-    // Instance AS -> JS Bindings
-    get _interopAvailable(): boolean {
-      notImplemented("public flash.display.AVM1Movie::get _interopAvailable"); return;
-    }
-    _callAS2(functionName: string, arguments: flash.utils.ByteArray): void {
-      functionName = "" + functionName; arguments = arguments;
-      notImplemented("public flash.display.AVM1Movie::_callAS2"); return;
-    }
-    _setCallAS3(closure: ASFunction): void {
-      closure = closure;
-      notImplemented("public flash.display.AVM1Movie::_setCallAS3"); return;
-    }
+    
+    // AS -> JS Bindings
+    
   }
 }

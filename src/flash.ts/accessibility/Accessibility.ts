@@ -17,15 +17,32 @@
 module Shumway.AVM2.AS.flash.accessibility {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Accessibility extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.accessibility.Accessibility");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    // static _active: boolean;
     get active(): boolean {
       notImplemented("public flash.accessibility.Accessibility::get active"); return;
+      // return this._active;
     }
     static sendEvent(source: flash.display.DisplayObject, childID: number /*uint*/, eventType: number /*uint*/, nonHTML: boolean = false): void {
       source = source; childID = childID >>> 0; eventType = eventType >>> 0; nonHTML = !!nonHTML;
@@ -34,7 +51,6 @@ module Shumway.AVM2.AS.flash.accessibility {
     static updateProperties(): void {
       notImplemented("public flash.accessibility.Accessibility::static updateProperties"); return;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
   }
 }

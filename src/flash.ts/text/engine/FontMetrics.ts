@@ -17,15 +17,27 @@
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   export class FontMetrics extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["emBox", "strikethroughOffset", "strikethroughThickness", "underlineOffset", "underlineThickness", "subscriptOffset", "subscriptScale", "superscriptOffset", "superscriptScale", "lineGap"];
+    
     constructor (emBox: flash.geom.Rectangle, strikethroughOffset: number, strikethroughThickness: number, underlineOffset: number, underlineThickness: number, subscriptOffset: number, subscriptScale: number, superscriptOffset: number, superscriptScale: number, lineGap: number = 0) {
       emBox = emBox; strikethroughOffset = +strikethroughOffset; strikethroughThickness = +strikethroughThickness; underlineOffset = +underlineOffset; underlineThickness = +underlineThickness; subscriptOffset = +subscriptOffset; subscriptScale = +subscriptScale; superscriptOffset = +superscriptOffset; superscriptScale = +superscriptScale; lineGap = +lineGap;
       false && super();
       notImplemented("Dummy Constructor: public flash.text.engine.FontMetrics");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     emBox: flash.geom.Rectangle;
     strikethroughOffset: number;
     strikethroughThickness: number;
@@ -36,6 +48,8 @@ module Shumway.AVM2.AS.flash.text.engine {
     superscriptOffset: number;
     superscriptScale: number;
     lineGap: number;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
   }
 }

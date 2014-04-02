@@ -17,32 +17,49 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class BitmapData extends ASNative implements IBitmapDrawable {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["rect"];
+    
     constructor (width: number /*int*/, height: number /*int*/, transparent: boolean = true, fillColor: number /*uint*/ = 4294967295) {
       width = width | 0; height = height | 0; transparent = !!transparent; fillColor = fillColor >>> 0;
       false && super();
       notImplemented("Dummy Constructor: public flash.display.BitmapData");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     rect: flash.geom.Rectangle;
-    // Instance AS -> JS Bindings
-    ctor(width: number /*int*/, height: number /*int*/, transparent: boolean, fillColor: number /*uint*/): void {
-      width = width | 0; height = height | 0; transparent = !!transparent; fillColor = fillColor >>> 0;
-      notImplemented("public flash.display.BitmapData::ctor"); return;
-    }
-    clone(): flash.display.BitmapData {
-      notImplemented("public flash.display.BitmapData::clone"); return;
-    }
+    
+    // AS -> JS Bindings
+    
+    // _width: number /*int*/;
+    // _height: number /*int*/;
+    // _transparent: boolean;
+    // _rect: flash.geom.Rectangle;
     get width(): number /*int*/ {
       notImplemented("public flash.display.BitmapData::get width"); return;
+      // return this._width;
     }
     get height(): number /*int*/ {
       notImplemented("public flash.display.BitmapData::get height"); return;
+      // return this._height;
     }
     get transparent(): boolean {
       notImplemented("public flash.display.BitmapData::get transparent"); return;
+      // return this._transparent;
+    }
+    clone(): flash.display.BitmapData {
+      notImplemented("public flash.display.BitmapData::clone"); return;
     }
     getPixel(x: number /*int*/, y: number /*int*/): number /*uint*/ {
       x = x | 0; y = y | 0;
@@ -115,7 +132,7 @@ module Shumway.AVM2.AS.flash.display {
       rect = rect; data = data;
       notImplemented("public flash.display.BitmapData::copyPixelsToByteArray"); return;
     }
-    getVector(rect: flash.geom.Rectangle): ASVector<number /*uint*/> {
+    getVector(rect: flash.geom.Rectangle): ASVector<any> {
       rect = rect;
       notImplemented("public flash.display.BitmapData::getVector"); return;
     }
@@ -151,7 +168,7 @@ module Shumway.AVM2.AS.flash.display {
       rect = rect; inputByteArray = inputByteArray;
       notImplemented("public flash.display.BitmapData::setPixels"); return;
     }
-    setVector(rect: flash.geom.Rectangle, inputVector: ASVector<number /*uint*/>): void {
+    setVector(rect: flash.geom.Rectangle, inputVector: ASVector<any>): void {
       rect = rect; inputVector = inputVector;
       notImplemented("public flash.display.BitmapData::setVector"); return;
     }
@@ -166,13 +183,17 @@ module Shumway.AVM2.AS.flash.display {
       changeRect = changeRect;
       notImplemented("public flash.display.BitmapData::unlock"); return;
     }
-    histogram(hRect: flash.geom.Rectangle = null): ASVector<ASVector<number>> {
+    histogram(hRect: flash.geom.Rectangle = null): ASVector<any> {
       hRect = hRect;
       notImplemented("public flash.display.BitmapData::histogram"); return;
     }
     encode(rect: flash.geom.Rectangle, compressor: ASObject, byteArray: flash.utils.ByteArray = null): flash.utils.ByteArray {
       rect = rect; compressor = compressor; byteArray = byteArray;
       notImplemented("public flash.display.BitmapData::encode"); return;
+    }
+    ctor(width: number /*int*/, height: number /*int*/, transparent: boolean, fillColor: number /*uint*/): any {
+      width = width | 0; height = height | 0; transparent = !!transparent; fillColor = fillColor >>> 0;
+      notImplemented("public flash.display.BitmapData::ctor"); return;
     }
   }
 }

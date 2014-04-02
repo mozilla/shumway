@@ -17,16 +17,30 @@
 module Shumway.AVM2.AS.flash.display3D {
   import notImplemented = Shumway.Debug.notImplemented;
   export class VertexBuffer3D extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display3D.VertexBuffer3D");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
-    uploadFromVector(data: ASVector<number>, startVertex: number /*int*/, numVertices: number /*int*/): void {
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    uploadFromVector(data: ASVector<any>, startVertex: number /*int*/, numVertices: number /*int*/): void {
       data = data; startVertex = startVertex | 0; numVertices = numVertices | 0;
       notImplemented("public flash.display3D.VertexBuffer3D::uploadFromVector"); return;
     }

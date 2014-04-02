@@ -17,22 +17,41 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ContextMenuEvent extends flash.events.Event {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_mouseTarget", "_contextMenuOwner", "_isMouseTargetInaccessible", "mouseTarget", "mouseTarget", "contextMenuOwner", "contextMenuOwner", "isMouseTargetInaccessible", "isMouseTargetInaccessible", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, mouseTarget: flash.display.InteractiveObject = null, contextMenuOwner: flash.display.InteractiveObject = null) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; mouseTarget = mouseTarget; contextMenuOwner = contextMenuOwner;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.ContextMenuEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_mouseTarget: flash.display.InteractiveObject;
-    m_contextMenuOwner: flash.display.InteractiveObject;
-    m_isMouseTargetInaccessible: boolean;
-    clone: () => flash.events.Event;
+    
+    // JS -> AS Bindings
+    static MENU_ITEM_SELECT: string = "menuItemSelect";
+    static MENU_SELECT: string = "menuSelect";
+    
+    _mouseTarget: flash.display.InteractiveObject;
+    _contextMenuOwner: flash.display.InteractiveObject;
+    _isMouseTargetInaccessible: boolean;
     mouseTarget: flash.display.InteractiveObject;
     contextMenuOwner: flash.display.InteractiveObject;
     isMouseTargetInaccessible: boolean;
-    // Instance AS -> JS Bindings
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
+    // _mouseTarget: flash.display.InteractiveObject;
+    // _contextMenuOwner: flash.display.InteractiveObject;
+    // _isMouseTargetInaccessible: boolean;
   }
 }

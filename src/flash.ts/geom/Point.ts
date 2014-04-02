@@ -17,18 +17,30 @@
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Point extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // ["interpolate", "distance", "polar"];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["x", "y", "length", "clone", "offset", "equals", "subtract", "add", "normalize", "copyFrom", "setTo", "toString"];
+    
     constructor (x: number = 0, y: number = 0) {
       x = +x; y = +y;
       false && super();
       notImplemented("Dummy Constructor: public flash.geom.Point");
     }
-    // Static   JS -> AS Bindings
+    
+    // JS -> AS Bindings
     static interpolate: (pt1: flash.geom.Point, pt2: flash.geom.Point, f: number) => flash.geom.Point;
     static distance: (pt1: flash.geom.Point, pt2: flash.geom.Point) => number;
     static polar: (len: number, angle: number) => flash.geom.Point;
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
     x: number;
     y: number;
     length: number;
@@ -40,6 +52,9 @@ module Shumway.AVM2.AS.flash.geom {
     normalize: (thickness: number) => void;
     copyFrom: (sourcePoint: flash.geom.Point) => void;
     setTo: (xa: number, ya: number) => void;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _length: number;
   }
 }

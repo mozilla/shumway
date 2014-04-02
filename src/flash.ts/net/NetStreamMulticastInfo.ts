@@ -17,34 +17,46 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class NetStreamMulticastInfo extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_sendDataBytesPerSecond", "_sendControlBytesPerSecond", "_receiveDataBytesPerSecond", "_receiveControlBytesPerSecond", "_bytesPushedToPeers", "_fragmentsPushedToPeers", "_bytesRequestedByPeers", "_fragmentsRequestedByPeers", "_bytesPushedFromPeers", "_fragmentsPushedFromPeers", "_bytesRequestedFromPeers", "_fragmentsRequestedFromPeers", "_sendControlBytesPerSecondToServer", "_receiveDataBytesPerSecondFromServer", "_bytesReceivedFromServer", "_fragmentsReceivedFromServer", "_receiveDataBytesPerSecondFromIPMulticast", "_bytesReceivedFromIPMulticast", "_fragmentsReceivedFromIPMulticast", "sendDataBytesPerSecond", "sendControlBytesPerSecond", "receiveDataBytesPerSecond", "receiveControlBytesPerSecond", "bytesPushedToPeers", "fragmentsPushedToPeers", "bytesRequestedByPeers", "fragmentsRequestedByPeers", "bytesPushedFromPeers", "fragmentsPushedFromPeers", "bytesRequestedFromPeers", "fragmentsRequestedFromPeers", "sendControlBytesPerSecondToServer", "receiveDataBytesPerSecondFromServer", "bytesReceivedFromServer", "fragmentsReceivedFromServer", "receiveDataBytesPerSecondFromIPMulticast", "bytesReceivedFromIPMulticast", "fragmentsReceivedFromIPMulticast", "toString"];
+    
     constructor (sendDataBytesPerSecond: number, sendControlBytesPerSecond: number, receiveDataBytesPerSecond: number, receiveControlBytesPerSecond: number, bytesPushedToPeers: number, fragmentsPushedToPeers: number, bytesRequestedByPeers: number, fragmentsRequestedByPeers: number, bytesPushedFromPeers: number, fragmentsPushedFromPeers: number, bytesRequestedFromPeers: number, fragmentsRequestedFromPeers: number, sendControlBytesPerSecondToServer: number, receiveDataBytesPerSecondFromServer: number, bytesReceivedFromServer: number, fragmentsReceivedFromServer: number, receiveDataBytesPerSecondFromIPMulticast: number, bytesReceivedFromIPMulticast: number, fragmentsReceivedFromIPMulticast: number) {
       sendDataBytesPerSecond = +sendDataBytesPerSecond; sendControlBytesPerSecond = +sendControlBytesPerSecond; receiveDataBytesPerSecond = +receiveDataBytesPerSecond; receiveControlBytesPerSecond = +receiveControlBytesPerSecond; bytesPushedToPeers = +bytesPushedToPeers; fragmentsPushedToPeers = +fragmentsPushedToPeers; bytesRequestedByPeers = +bytesRequestedByPeers; fragmentsRequestedByPeers = +fragmentsRequestedByPeers; bytesPushedFromPeers = +bytesPushedFromPeers; fragmentsPushedFromPeers = +fragmentsPushedFromPeers; bytesRequestedFromPeers = +bytesRequestedFromPeers; fragmentsRequestedFromPeers = +fragmentsRequestedFromPeers; sendControlBytesPerSecondToServer = +sendControlBytesPerSecondToServer; receiveDataBytesPerSecondFromServer = +receiveDataBytesPerSecondFromServer; bytesReceivedFromServer = +bytesReceivedFromServer; fragmentsReceivedFromServer = +fragmentsReceivedFromServer; receiveDataBytesPerSecondFromIPMulticast = +receiveDataBytesPerSecondFromIPMulticast; bytesReceivedFromIPMulticast = +bytesReceivedFromIPMulticast; fragmentsReceivedFromIPMulticast = +fragmentsReceivedFromIPMulticast;
       false && super();
       notImplemented("Dummy Constructor: public flash.net.NetStreamMulticastInfo");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_sendDataBytesPerSecond: number;
-    m_sendControlBytesPerSecond: number;
-    m_receiveDataBytesPerSecond: number;
-    m_receiveControlBytesPerSecond: number;
-    m_bytesPushedToPeers: number;
-    m_fragmentsPushedToPeers: number;
-    m_bytesRequestedByPeers: number;
-    m_fragmentsRequestedByPeers: number;
-    m_bytesPushedFromPeers: number;
-    m_fragmentsPushedFromPeers: number;
-    m_bytesRequestedFromPeers: number;
-    m_fragmentsRequestedFromPeers: number;
-    m_sendControlBytesPerSecondToServer: number;
-    m_receiveDataBytesPerSecondFromServer: number;
-    m_bytesReceivedFromServer: number;
-    m_fragmentsReceivedFromServer: number;
-    m_receiveDataBytesPerSecondFromIPMulticast: number;
-    m_bytesReceivedFromIPMulticast: number;
-    m_fragmentsReceivedFromIPMulticast: number;
+    
+    // JS -> AS Bindings
+    
+    _sendDataBytesPerSecond: number;
+    _sendControlBytesPerSecond: number;
+    _receiveDataBytesPerSecond: number;
+    _receiveControlBytesPerSecond: number;
+    _bytesPushedToPeers: number;
+    _fragmentsPushedToPeers: number;
+    _bytesRequestedByPeers: number;
+    _fragmentsRequestedByPeers: number;
+    _bytesPushedFromPeers: number;
+    _fragmentsPushedFromPeers: number;
+    _bytesRequestedFromPeers: number;
+    _fragmentsRequestedFromPeers: number;
+    _sendControlBytesPerSecondToServer: number;
+    _receiveDataBytesPerSecondFromServer: number;
+    _bytesReceivedFromServer: number;
+    _fragmentsReceivedFromServer: number;
+    _receiveDataBytesPerSecondFromIPMulticast: number;
+    _bytesReceivedFromIPMulticast: number;
+    _fragmentsReceivedFromIPMulticast: number;
     sendDataBytesPerSecond: number;
     sendControlBytesPerSecond: number;
     receiveDataBytesPerSecond: number;
@@ -64,6 +76,27 @@ module Shumway.AVM2.AS.flash.net {
     receiveDataBytesPerSecondFromIPMulticast: number;
     bytesReceivedFromIPMulticast: number;
     fragmentsReceivedFromIPMulticast: number;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _sendDataBytesPerSecond: number;
+    // _sendControlBytesPerSecond: number;
+    // _receiveDataBytesPerSecond: number;
+    // _receiveControlBytesPerSecond: number;
+    // _bytesPushedToPeers: number;
+    // _fragmentsPushedToPeers: number;
+    // _bytesRequestedByPeers: number;
+    // _fragmentsRequestedByPeers: number;
+    // _bytesPushedFromPeers: number;
+    // _fragmentsPushedFromPeers: number;
+    // _bytesRequestedFromPeers: number;
+    // _fragmentsRequestedFromPeers: number;
+    // _sendControlBytesPerSecondToServer: number;
+    // _receiveDataBytesPerSecondFromServer: number;
+    // _bytesReceivedFromServer: number;
+    // _fragmentsReceivedFromServer: number;
+    // _receiveDataBytesPerSecondFromIPMulticast: number;
+    // _bytesReceivedFromIPMulticast: number;
+    // _fragmentsReceivedFromIPMulticast: number;
   }
 }

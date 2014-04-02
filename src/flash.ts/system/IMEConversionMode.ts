@@ -17,14 +17,36 @@
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   export class IMEConversionMode extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.system.IMEConversionMode");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static ALPHANUMERIC_FULL: string = "ALPHANUMERIC_FULL";
+    static ALPHANUMERIC_HALF: string = "ALPHANUMERIC_HALF";
+    static CHINESE: string = "CHINESE";
+    static JAPANESE_HIRAGANA: string = "JAPANESE_HIRAGANA";
+    static JAPANESE_KATAKANA_FULL: string = "JAPANESE_KATAKANA_FULL";
+    static JAPANESE_KATAKANA_HALF: string = "JAPANESE_KATAKANA_HALF";
+    static KOREAN: string = "KOREAN";
+    static UNKNOWN: string = "UNKNOWN";
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

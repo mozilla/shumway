@@ -17,18 +17,32 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class NetFilterEvent extends flash.events.Event {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["header", "data", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, header: flash.utils.ByteArray = null, data: flash.utils.ByteArray = null) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; header = header; data = data;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.NetFilterEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     header: flash.utils.ByteArray;
     data: flash.utils.ByteArray;
     clone: () => flash.events.Event;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
   }
 }

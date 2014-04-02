@@ -17,17 +17,35 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class DataEvent extends flash.events.TextEvent {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_data", "data", "data", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, data: string = "") {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; data = "" + data;
       false && super(undefined, undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.DataEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    clone: () => flash.events.Event;
+    
+    // JS -> AS Bindings
+    static DATA: string = "data";
+    static UPLOAD_COMPLETE_DATA: string = "uploadCompleteData";
+    
+    _data: string;
     data: string;
-    // Instance AS -> JS Bindings
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
+    // _data: string;
   }
 }

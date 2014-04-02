@@ -17,18 +17,33 @@
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Utils3D extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.geom.Utils3D");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
     static projectVector(m: flash.geom.Matrix3D, v: flash.geom.Vector3D): flash.geom.Vector3D {
       m = m; v = v;
       notImplemented("public flash.geom.Utils3D::static projectVector"); return;
     }
-    static projectVectors(m: flash.geom.Matrix3D, verts: ASVector<number>, projectedVerts: ASVector<number>, uvts: ASVector<number>): void {
+    static projectVectors(m: flash.geom.Matrix3D, verts: ASVector<any>, projectedVerts: ASVector<any>, uvts: ASVector<any>): void {
       m = m; verts = verts; projectedVerts = projectedVerts; uvts = uvts;
       notImplemented("public flash.geom.Utils3D::static projectVectors"); return;
     }
@@ -36,7 +51,6 @@ module Shumway.AVM2.AS.flash.geom {
       percent = +percent; mat = mat; pos = pos; at = at; up = up;
       notImplemented("public flash.geom.Utils3D::static pointTowards"); return;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
   }
 }

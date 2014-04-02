@@ -17,14 +17,34 @@
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   export class AudioDecoder extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.media.AudioDecoder");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static DOLBY_DIGITAL: string = "DolbyDigital";
+    static DOLBY_DIGITAL_PLUS: string = "DolbyDigitalPlus";
+    static DTS: string = "DTS";
+    static DTS_EXPRESS: string = "DTSExpress";
+    static DTS_HD_HIGH_RESOLUTION_AUDIO: string = "DTSHDHighResolutionAudio";
+    static DTS_HD_MASTER_AUDIO: string = "DTSHDMasterAudio";
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

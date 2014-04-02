@@ -17,38 +17,41 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class PressAndTapGestureEvent extends flash.events.GestureEvent {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_tapLocalX", "_tapLocalY", "tapLocalX", "tapLocalX", "tapLocalY", "tapLocalY", "tapStageX", "tapStageY", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = true, cancelable: boolean = false, phase: string = null, localX: number = 0, localY: number = 0, tapLocalX: number = 0, tapLocalY: number = 0, ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; phase = "" + phase; localX = +localX; localY = +localY; tapLocalX = +tapLocalX; tapLocalY = +tapLocalY; ctrlKey = !!ctrlKey; altKey = !!altKey; shiftKey = !!shiftKey;
       false && super(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.PressAndTapGestureEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    clone: () => flash.events.Event;
+    
+    // JS -> AS Bindings
+    static GESTURE_PRESS_AND_TAP: string = "gesturePressAndTap";
+    
+    _tapLocalX: number;
+    _tapLocalY: number;
+    tapLocalX: number;
+    tapLocalY: number;
     tapStageX: number;
     tapStageY: number;
-    // Instance AS -> JS Bindings
-    get tapLocalX(): number {
-      notImplemented("public flash.events.PressAndTapGestureEvent::get tapLocalX"); return;
-    }
-    set tapLocalX(value: number) {
-      value = +value;
-      notImplemented("public flash.events.PressAndTapGestureEvent::set tapLocalX"); return;
-    }
-    get tapLocalY(): number {
-      notImplemented("public flash.events.PressAndTapGestureEvent::get tapLocalY"); return;
-    }
-    set tapLocalY(value: number) {
-      value = +value;
-      notImplemented("public flash.events.PressAndTapGestureEvent::set tapLocalY"); return;
-    }
-    getTapStageX(): number {
-      notImplemented("public flash.events.PressAndTapGestureEvent::getTapStageX"); return;
-    }
-    getTapStageY(): number {
-      notImplemented("public flash.events.PressAndTapGestureEvent::getTapStageY"); return;
-    }
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
+    // _tapLocalX: number;
+    // _tapLocalY: number;
+    // _tapStageX: number;
+    // _tapStageY: number;
   }
 }

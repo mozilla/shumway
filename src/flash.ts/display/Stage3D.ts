@@ -17,42 +17,67 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Stage3D extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.display.Stage3D");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _context3D: flash.display3D.Context3D;
+    // _x: number;
+    // _y: number;
+    // _visible: boolean;
     get context3D(): flash.display3D.Context3D {
       notImplemented("public flash.display.Stage3D::get context3D"); return;
-    }
-    requestContext3D(context3DRenderMode: string = "auto", profile: string = "baseline"): void {
-      context3DRenderMode = "" + context3DRenderMode; profile = "" + profile;
-      notImplemented("public flash.display.Stage3D::requestContext3D"); return;
+      // return this._context3D;
     }
     get x(): number {
       notImplemented("public flash.display.Stage3D::get x"); return;
+      // return this._x;
     }
     set x(value: number) {
       value = +value;
       notImplemented("public flash.display.Stage3D::set x"); return;
+      // this._x = value;
     }
     get y(): number {
       notImplemented("public flash.display.Stage3D::get y"); return;
+      // return this._y;
     }
     set y(value: number) {
       value = +value;
       notImplemented("public flash.display.Stage3D::set y"); return;
+      // this._y = value;
     }
     get visible(): boolean {
       notImplemented("public flash.display.Stage3D::get visible"); return;
+      // return this._visible;
     }
     set visible(value: boolean) {
       value = !!value;
       notImplemented("public flash.display.Stage3D::set visible"); return;
+      // this._visible = value;
+    }
+    requestContext3D(context3DRenderMode: string = "auto", profile: string = "baseline"): void {
+      context3DRenderMode = "" + context3DRenderMode; profile = "" + profile;
+      notImplemented("public flash.display.Stage3D::requestContext3D"); return;
     }
   }
 }

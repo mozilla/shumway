@@ -17,13 +17,37 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class SharedObject extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["connect", "close", "flush", "size", "fps", "send", "clear", "setProperty"];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.net.SharedObject");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    connect: (myConnection: flash.net.NetConnection, params: string = null) => void;
+    close: () => void;
+    flush: (minDiskSpace: number /*int*/ = 0) => string;
+    size: number /*uint*/;
+    fps: number;
+    send: () => void;
+    clear: () => void;
+    setProperty: (propertyName: string, value: ASObject = null) => void;
+    
+    // AS -> JS Bindings
+    // static _defaultObjectEncoding: number /*uint*/;
     static deleteAll(url: string): number /*int*/ {
       url = "" + url;
       notImplemented("public flash.net.SharedObject::static deleteAll"); return;
@@ -36,43 +60,46 @@ module Shumway.AVM2.AS.flash.net {
       name = "" + name; localPath = "" + localPath; secure = !!secure;
       notImplemented("public flash.net.SharedObject::static getLocal"); return;
     }
-    static getRemote(name: string, remotePath: string = null, persistence: ASObject = false, secure: boolean = false): flash.net.SharedObject {
+    static getRemote(name: string, remotePath: string = null, persistence: any = false, secure: boolean = false): flash.net.SharedObject {
       name = "" + name; remotePath = "" + remotePath; persistence = persistence; secure = !!secure;
       notImplemented("public flash.net.SharedObject::static getRemote"); return;
     }
     get defaultObjectEncoding(): number /*uint*/ {
       notImplemented("public flash.net.SharedObject::get defaultObjectEncoding"); return;
+      // return this._defaultObjectEncoding;
     }
     set defaultObjectEncoding(version: number /*uint*/) {
       version = version >>> 0;
       notImplemented("public flash.net.SharedObject::set defaultObjectEncoding"); return;
+      // this._defaultObjectEncoding = version;
     }
-    // Instance JS -> AS Bindings
-    connect: (myConnection: flash.net.NetConnection, params: string = null) => void;
-    close: () => void;
-    flush: (minDiskSpace: number /*int*/ = 0) => string;
-    size: number /*uint*/;
-    fps: number;
-    send: () => void;
-    clear: () => void;
-    setProperty: (propertyName: string, value: ASObject = null) => void;
-    // Instance AS -> JS Bindings
+    
+    // _data: ASObject;
+    // _size: number /*uint*/;
+    // _fps: number;
+    // _objectEncoding: number /*uint*/;
+    // _client: ASObject;
     get data(): ASObject {
       notImplemented("public flash.net.SharedObject::get data"); return;
+      // return this._data;
     }
     get objectEncoding(): number /*uint*/ {
       notImplemented("public flash.net.SharedObject::get objectEncoding"); return;
+      // return this._objectEncoding;
     }
     set objectEncoding(version: number /*uint*/) {
       version = version >>> 0;
       notImplemented("public flash.net.SharedObject::set objectEncoding"); return;
+      // this._objectEncoding = version;
     }
     get client(): ASObject {
       notImplemented("public flash.net.SharedObject::get client"); return;
+      // return this._client;
     }
     set client(object: ASObject) {
       object = object;
       notImplemented("public flash.net.SharedObject::set client"); return;
+      // this._client = object;
     }
     setDirty(propertyName: string): void {
       propertyName = "" + propertyName;

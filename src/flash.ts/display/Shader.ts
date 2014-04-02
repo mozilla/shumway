@@ -17,30 +17,51 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Shader extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["byteCode"];
+    
     constructor (code: flash.utils.ByteArray = null) {
       code = code;
       false && super();
       notImplemented("Dummy Constructor: public flash.display.Shader");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     byteCode: flash.utils.ByteArray;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _byteCode: flash.utils.ByteArray;
+    // _data: flash.display.ShaderData;
+    // _precisionHint: string;
     get data(): flash.display.ShaderData {
       notImplemented("public flash.display.Shader::get data"); return;
+      // return this._data;
     }
     set data(p: flash.display.ShaderData) {
       p = p;
       notImplemented("public flash.display.Shader::set data"); return;
+      // this._data = p;
     }
     get precisionHint(): string {
       notImplemented("public flash.display.Shader::get precisionHint"); return;
+      // return this._precisionHint;
     }
     set precisionHint(p: string) {
       p = "" + p;
       notImplemented("public flash.display.Shader::set precisionHint"); return;
+      // this._precisionHint = p;
     }
   }
 }

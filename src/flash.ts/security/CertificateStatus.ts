@@ -17,14 +17,37 @@
 module Shumway.AVM2.AS.flash.security {
   import notImplemented = Shumway.Debug.notImplemented;
   export class CertificateStatus extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.security.CertificateStatus");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static TRUSTED: string = "trusted";
+    static UNKNOWN: string = "unknown";
+    static INVALID: string = "invalid";
+    static EXPIRED: string = "expired";
+    static NOT_YET_VALID: string = "notYetValid";
+    static PRINCIPAL_MISMATCH: string = "principalMismatch";
+    static UNTRUSTED_SIGNERS: string = "untrustedSigners";
+    static REVOKED: string = "revoked";
+    static INVALID_CHAIN: string = "invalidChain";
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

@@ -35,7 +35,7 @@ module Shumway.AVM2.AS.flash.system {
     getSharedProperty: (key: string) => any;
     state: string;
     // addEventListener: (type: string, listener: ASFunction, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false) => void;
-    removeEventListener: (type: string, listener: ASFunction, useCapture: boolean = false) => void;
+    // removeEventListener: (type: string, listener: ASFunction, useCapture: boolean = false) => void;
     _byteCode: flash.utils.ByteArray;
     // Instance AS -> JS Bindings
     createMessageChannel(receiver: flash.system.Worker): flash.system.MessageChannel {

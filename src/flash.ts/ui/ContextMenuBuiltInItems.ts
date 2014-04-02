@@ -17,31 +17,53 @@
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ContextMenuBuiltInItems extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_save", "_zoom", "_quality", "_play", "_loop", "_rewind", "_forwardAndBack", "_print", "save", "save", "zoom", "zoom", "quality", "quality", "play", "play", "loop", "loop", "rewind", "rewind", "forwardAndBack", "forwardAndBack", "print", "print", "clone"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.ui.ContextMenuBuiltInItems");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    save: boolean;
+    
+    // JS -> AS Bindings
+    
     _save: boolean;
-    zoom: boolean;
     _zoom: boolean;
-    quality: boolean;
     _quality: boolean;
-    play: boolean;
     _play: boolean;
-    loop: boolean;
     _loop: boolean;
-    rewind: boolean;
     _rewind: boolean;
-    forwardAndBack: boolean;
     _forwardAndBack: boolean;
-    print: boolean;
     _print: boolean;
+    save: boolean;
+    zoom: boolean;
+    quality: boolean;
+    play: boolean;
+    loop: boolean;
+    rewind: boolean;
+    forwardAndBack: boolean;
+    print: boolean;
     clone: () => flash.ui.ContextMenuBuiltInItems;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _save: boolean;
+    // _zoom: boolean;
+    // _quality: boolean;
+    // _play: boolean;
+    // _loop: boolean;
+    // _rewind: boolean;
+    // _forwardAndBack: boolean;
+    // _print: boolean;
   }
 }

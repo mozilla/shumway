@@ -17,25 +17,36 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class XMLSocket extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["timeout", "timeout", "connected", "connect", "send", "close"];
+    
     constructor (host: string = null, port: number /*int*/ = 0) {
       host = "" + host; port = port | 0;
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.net.XMLSocket");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    _internalSocket: flash.net.Socket;
-    _rcvBuffer: flash.utils.ByteArray;
-    _bytesInPacket: number /*uint*/;
-    reflectEvent: (e: flash.events.Event) => void;
-    scanAndSendEvent: (e: flash.events.ProgressEvent) => void;
+    
+    // JS -> AS Bindings
+    
+    timeout: number /*int*/;
+    connected: boolean;
     connect: (host: string, port: number /*int*/) => void;
     send: (object: any) => void;
-    timeout: number /*int*/;
     close: () => void;
-    connected: boolean;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _timeout: number /*int*/;
+    // _connected: boolean;
   }
 }

@@ -17,14 +17,16 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export interface IEventDispatcher {
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     addEventListener: (type: string, listener: ASFunction, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false) => void;
     removeEventListener: (type: string, listener: ASFunction, useCapture: boolean = false) => void;
-    dispatchEvent: (event: flash.events.Event) => boolean;
     hasEventListener: (type: string) => boolean;
     willTrigger: (type: string) => boolean;
-    // Instance AS -> JS Bindings
+    dispatchEvent: (event: flash.events.Event) => boolean;
+    
+    // AS -> JS Bindings
+    
   }
 }
