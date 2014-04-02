@@ -1140,6 +1140,9 @@ module Shumway.AVM2.AS {
       if (typeof value !== "object") {
         return value;
       }
+      if (isNullOrUndefined(value)) {
+        return value;
+      }
       var keys = Object.keys(value);
       var result = value instanceof Array ? [] : {};
       for (var i = 0; i < keys.length; i++) {
