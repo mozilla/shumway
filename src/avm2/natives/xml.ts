@@ -93,8 +93,8 @@ module Shumway.AVM2.AS {
   }
 
   // 10.2 ToXMLString
-  function toXMLString(node, ancestorNamespaces?, indentLevel?) {
-    return new XMLEncoder(ancestorNamespaces, indentLevel, true).encode(node)
+  function toXMLString(node) {
+    return new XMLEncoder().encode(node)
   }
 
 
@@ -201,7 +201,6 @@ module Shumway.AVM2.AS {
         // ToString
         name = toString(mn);
       } else if (mn instanceof Multiname) {
-        debugger;
         name = mn.name; // ?? Can be two or none namespaces here
       } else {
         // Object - Otherwise, convert the input argument to a
@@ -223,6 +222,16 @@ module Shumway.AVM2.AS {
       return toAttributeName(name.substring(1));
     }
     return new ASQName(name);
+  }
+
+  function prefixWithNamespace(namespaces, name, isAttribute) {
+    if (!namespaces ||
+        namespaces.length !== 1 ||
+        !(namespaces[0] instanceof ASNamespace) ||
+        (typeof name !== 'string' && name !== undefined)) {
+      return name;
+    }
+    return new ASQName(namespaces[0], name || '*', isAttribute);
   }
 
   // 12.1 GetDefaultNamespace
@@ -248,7 +257,7 @@ module Shumway.AVM2.AS {
     return true;
   }
 
-  function XMLEncoder(ancestorNamespaces, indentLevel?, prettyPrinting?) {
+  function XMLEncoder() {
     function visit(node, encode) {
       if (node instanceof ASXML) {
         switch (node._kind) {
@@ -272,6 +281,7 @@ module Shumway.AVM2.AS {
       }
     }
     function encode(node, encoder) {
+      var addAncestorNamespaces: boolean = true;
       return visit(node, {
         element: function (n) {
           var s, a;
@@ -280,6 +290,9 @@ module Shumway.AVM2.AS {
           s = "<" + prefix + n._name.localName;
           // Enumerate namespace declarations
           var namespaceDeclarations = [];
+          if (addAncestorNamespaces) {
+            addAncestorNamespaces = false;
+          }
           if (ns.prefix || ns.uri) {
             // If either is a non-empty string then create a namespace
             // declaration for it
@@ -288,17 +301,21 @@ module Shumway.AVM2.AS {
           if (prefix) {
             namespaceDeclarations[ns.prefix] = true;
           }
+
           var t = n;
           while (t) {
-            for (var i = 0; t._inScopeNamespaces && i < t._inScopeNamespaces.length; i++) {
+            for (var i = 0; t._inScopeNamespaces && addAncestorNamespaces
+              && i < t._inScopeNamespaces.length; i++) {
               ns = t._inScopeNamespaces[i];
               if (!namespaceDeclarations[ns.prefix]) {
                 namespaceDeclarations.push(ns);
                 namespaceDeclarations[ns.prefix] = true;  // flag inclusion
               }
             }
-            t = t.parent;
+            t = t._parent;
           }
+          addAncestorNamespaces = false;
+
           for (var i = 0; i < namespaceDeclarations.length; i++) {
             a = namespaceDeclarations[i];
             if (a.prefix) {
@@ -345,7 +362,7 @@ module Shumway.AVM2.AS {
             if (i > 0) {
               s += "\n";
             }
-            s += toXMLString(n._children[i], []/*ancestor namespaces*/);
+            s += toXMLString(n._children[i]);
           }
           return s;
         },
@@ -859,7 +876,7 @@ module Shumway.AVM2.AS {
         name = "";
       } else if (arguments.length === 1) {
         name = a;
-      } else if (arguments.length === 2) {
+      } else { // if (arguments.length === 2) {
         namespace = a;
         name = b;
       }
@@ -885,7 +902,7 @@ module Shumway.AVM2.AS {
         name = toString(name);
       }
       // 4. If (Namespace is undefined or not specified)
-      if (namespace === undefined || arguments.length !== 2) {
+      if (namespace === undefined || arguments.length < 2) {
         // a. If Name = "*"
         if (name === "*") {
           // i. Let Namespace = null
@@ -909,7 +926,8 @@ module Shumway.AVM2.AS {
       // 7. Else
       else {
         // a. Let Namespace be a new Namespace created as if by calling the constructor new Namespace(Namespace)
-        namespace = new ASNamespace(namespace);
+        namespace = namespace instanceof ASNamespace ? namespace :
+          new ASNamespace(namespace);
         // b. Let q.uri = Namespace.uri
         uri = namespace.uri
           // NOTE implementations that preserve prefixes in qualified names may also set q.[[Prefix]] to Namespace.prefix
@@ -975,111 +993,6 @@ module Shumway.AVM2.AS {
     }
   }
 
-//  export class ASQName2 extends ASNative {
-//    public static instanceConstructor: any = ASQName;
-//    mn: Multiname;
-//    isAny: boolean;
-//    isAnyNamespace: boolean;
-//    isAttr: boolean;
-//    _localName: string;
-//    _uri: string;
-//    constructor(ns, name?, isAttr?) {
-//      false && super();
-//      // handle coerce case
-//      if (!(this instanceof ASQName)) {
-//        if (name === undefined && (ns instanceof ASQName)) {
-//          return ns;
-//        } else {
-//          return new ASQName2(ns, name);
-//        }
-//      }
-//      // if only one arg, then its the name
-//      if (name === undefined) {
-//        name = ns;
-//        ns = undefined;
-//      }
-//      if (typeof ns === "string" || (ns instanceof ASQName)) {
-//        ns = Namespace.createNamespace(ns, "");
-//      }
-//      // construct the multiname for this qname
-//      var mn;
-//      if (name instanceof ASQName) {
-//        if (ns === undefined) {
-//          // reuse the original multiname
-//          mn = name.mn;
-//        } else {
-//          mn = new Multiname([ns], name.mn.getName());
-//        }
-//      } else if (name instanceof Multiname) {
-//        if (ns === undefined) {
-//          if (name.isQName() || name.isAnyName() || name.isAnyNamespace()) {
-//            mn = name;
-//          } else {
-//            mn = new Multiname([getDefaultNamespace(/* scope */)], name.getName(), name.flags);
-//          }
-//        } else {
-//          mn = new Multiname([ns], name.getName(), name.flags);
-//        }
-//      } else if (name === "*") {
-//        // Any name has a null name and is not a runtime name
-//        mn = new Multiname([], null, isAttr ? Multiname.ATTRIBUTE : 0);
-//      } else if (name === "@*") {
-//        // Any name has a null name and is not a runtime name
-//        mn = new Multiname([], null, Multiname.ATTRIBUTE);
-//      } else {
-//        ns = ns === undefined ? getDefaultNamespace(/* scope */) : ns;
-//        if (name === undefined) {
-//          mn = new Multiname([ns], "");
-//        } else {
-//          mn = new Multiname([ns], toString(name), isAttr ? Multiname.ATTRIBUTE : 0);
-//        }
-//      }
-//      this.mn = mn;
-//      this.isAny = mn.isAnyName();
-//      this.isAnyNamespace = mn.isAnyNamespace();
-//      this.isAttr = mn.isAttribute();
-//    }
-//
-//    get localName(): string {
-//      if (!this.localName) {
-//        this.localName = this.isAny ? "*" : this.mn.getName();
-//      }
-//      return this.localName;
-//    }
-//
-//    get uri(): string {
-//      if (!this.uri) {
-//        var ns = this.mn.namespaces[0]
-//        this.uri = ns && ns.uri ? ns.uri : this.isAny || this.isAnyNamespace ? null : "";
-//      }
-//      return this.uri;
-//    }
-//
-//    get prefix(): string {
-//      return this.mn.namespaces[0].prefix
-//    }
-//
-//    // 13.3.5.4 [[GetNamespace]]([InScopeNamespaces])
-//    getNamespace(inScopeNamespaces?) {
-//      if (this.uri === null) {
-//        throw "TypeError in QName.prototype.getNamespace()";
-//      }
-//      if (!inScopeNamespaces) {
-//        inScopeNamespaces = [];
-//      }
-//      var ns;
-//      for (var i = 0; i < inScopeNamespaces.length; i++) {
-//        if (this.uri === inScopeNamespaces[i].uri) {
-//          ns = inScopeNamespaces[i];
-//        }
-//      }
-//      if (!ns) {
-//        ns = Namespace.createNamespace(this.uri, "");  // FIXME what about the prefix
-//      }
-//      return ns;
-//    }
-//  }
-
   enum ASXML_FLAGS {
     FLAG_IGNORE_COMMENTS                = 0x01,
     FLAG_IGNORE_PROCESSING_INSTRUCTIONS = 0x02,
@@ -1092,9 +1005,6 @@ module Shumway.AVM2.AS {
     public static instanceConstructor: any = ASXML;
     private static _flags: ASXML_FLAGS = ASXML_FLAGS.ALL;
     private static _prettyIndent = 2;
-    private static _ignoreComments: boolean = true;
-    private static _ignoreProcessingInstructions: boolean = true;
-    private static _ignoreWhitespace: boolean = true;
     private _name: ASQName;
     private _parent: ASXML;
     private _attributes: ASXML [];
@@ -1179,39 +1089,55 @@ module Shumway.AVM2.AS {
     }
 
     static get ignoreComments(): boolean {
-      return ASXML._ignoreComments;
+      return !!(ASXML._flags & ASXML_FLAGS.FLAG_IGNORE_COMMENTS);
     }
     static set ignoreComments(newIgnore: boolean) {
       newIgnore = !!newIgnore;
-      ASXML._ignoreComments = newIgnore;
+      if (newIgnore) {
+        ASXML._flags |= ASXML_FLAGS.FLAG_IGNORE_COMMENTS;
+      } else {
+        ASXML._flags &= ~ASXML_FLAGS.FLAG_IGNORE_COMMENTS;
+      }
     }
     static get ignoreProcessingInstructions(): boolean {
-      return ASXML._ignoreProcessingInstructions;
+      return !!(ASXML._flags & ASXML_FLAGS.FLAG_IGNORE_PROCESSING_INSTRUCTIONS);
     }
     static set ignoreProcessingInstructions(newIgnore: boolean) {
       newIgnore = !!newIgnore;
-      ASXML._ignoreProcessingInstructions = newIgnore;
+      if (newIgnore) {
+        ASXML._flags |= ASXML_FLAGS.FLAG_IGNORE_PROCESSING_INSTRUCTIONS;
+      } else {
+        ASXML._flags &= ~ASXML_FLAGS.FLAG_IGNORE_PROCESSING_INSTRUCTIONS;
+      }
     }
     static get ignoreWhitespace(): boolean {
-      return ASXML._ignoreWhitespace;
+      return !!(ASXML._flags & ASXML_FLAGS.FLAG_IGNORE_WHITESPACE);
     }
     static set ignoreWhitespace(newIgnore: boolean) {
       newIgnore = !!newIgnore;
-      ASXML._ignoreComments = newIgnore;
+      if (newIgnore) {
+        ASXML._flags |= ASXML_FLAGS.FLAG_IGNORE_WHITESPACE;
+      } else {
+        ASXML._flags &= ~ASXML_FLAGS.FLAG_IGNORE_WHITESPACE;
+      }
     }
     static get prettyPrinting(): boolean {
-      notImplemented("public.XML::get prettyPrinting"); return;
+      return !!(ASXML._flags & ASXML_FLAGS.FLAG_PRETTY_PRINTING);
     }
     static set prettyPrinting(newPretty: boolean) {
       newPretty = !!newPretty;
-      notImplemented("public.XML::set prettyPrinting"); return;
+      if (newPretty) {
+        ASXML._flags |= ASXML_FLAGS.FLAG_PRETTY_PRINTING;
+      } else {
+        ASXML._flags &= ~ASXML_FLAGS.FLAG_PRETTY_PRINTING;
+      }
     }
     static get prettyIndent(): number /*int*/ {
-      notImplemented("public.XML::get prettyIndent"); return;
+      return ASXML._prettyIndent;
     }
     static set prettyIndent(newIndent: number /*int*/) {
       newIndent = newIndent | 0;
-      notImplemented("public.XML::set prettyIndent"); return;
+      ASXML._prettyIndent = newIndent;
     }
     toString(): string {
       return toString(this);
@@ -1374,6 +1300,7 @@ module Shumway.AVM2.AS {
         c = v.deepCopy();
       }
       n = toXMLName(p);
+
       if (isAttribute) {
         if (!this._attributes) {
           return;
@@ -1389,16 +1316,15 @@ module Shumway.AVM2.AS {
         this._attributes.push(a);
         return;
       }
-      var isValidName = isXMLName(n)
-      if (!isValidName && n.localName !== "*") {
-        return; // We're done
-      }
+
       var i = undefined;
       var primitiveAssign = !isXMLType(c) && n.localName !== "*";
+      var isAny = n._flags & ASQNameFlags.ANY_NAME;
+      var isAnyNamespace = n._flags & ASQNameFlags.ANY_NAMESPACE;
       for (var k = self.length() - 1; k >= 0; k--) {
-        if ((n.isAny || self._children[k]._kind === "element" &&
+        if ((isAny || self._children[k]._kind === "element" &&
           self._children[k]._name.localName === n.localName) &&
-          (n.uri === null ||
+          (isAnyNamespace ||
             self._children[k]._kind === "element" &&
             self._children[k]._name.uri === n.uri)) {
           if (i !== undefined) {
@@ -1439,7 +1365,8 @@ module Shumway.AVM2.AS {
         return _asSetProperty.call(this, namespaces, name, flags, value);
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
-      this.setProperty(name, isAttribute, value);
+      this.setProperty(prefixWithNamespace(namespaces, name, isAttribute),
+        isAttribute, value);
     }
 
 
@@ -1490,7 +1417,8 @@ module Shumway.AVM2.AS {
         return _asGetProperty.call(this, namespaces, name, flags);
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
-      return this.getProperty(name, isAttribute, false);
+      return this.getProperty(prefixWithNamespace(namespaces, name, isAttribute),
+        isAttribute, false);
     }
 
     hasProperty(mn, isAttribute, isMethod) {
@@ -1535,6 +1463,7 @@ module Shumway.AVM2.AS {
         return _asHasProperty.call(this, namespaces, name, flags);
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
+      name = prefixWithNamespace(namespaces, name, isAttribute);
       if (this.hasProperty(name, isAttribute, false)) {
         return true;
       }
@@ -1548,6 +1477,37 @@ module Shumway.AVM2.AS {
 
     public asHasPropertyInternal(namespaces: Namespace [], name: any, flags: number) {
       return this.asHasProperty(namespaces, name, flags);
+    }
+
+    asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
+      if (ASXML.isTraitsOrDynamicPrototype(this) || isLex) {
+        return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
+      }
+      // Checking if the method exists before calling it
+      var self: Object = this;
+      var result;
+      var method;
+      var resolved = self.resolveMultinameProperty(namespaces, name, flags);
+      if (self.asGetNumericProperty && Multiname.isNumeric(resolved)) {
+        method = self.asGetNumericProperty(resolved);
+      } else {
+        var openMethods = self.asOpenMethods;
+        method = (openMethods && openMethods[resolved]) || self[resolved];
+      }
+      if (method) {
+        return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
+      }
+      // Otherwise, 11.2.2.1 CallMethod ( r , args )
+      // If f == undefined and Type(base) is XMLList and base.[[Length]] == 1
+      //   ii. Return the result of calling CallMethod(r0, args) recursively
+
+      // f. If f == undefined and Type(base) is XML and base.hasSimpleContent () == true
+      //   i. Let r0 be a new Reference with base object = ToObject(ToString(base)) and property name = P
+      //   ii. Return the result of calling CallMethod(r0, args) recursively
+      if (this.hasSimpleContent()) {
+        return Object(toString(this)).asCallProperty(namespaces, name, flags, isLex, args);
+      }
+      throw new TypeError();
     }
 
     _delete(key, isMethod) {
@@ -1627,14 +1587,7 @@ module Shumway.AVM2.AS {
         self._kind === "comment" ||
         self._kind === "processing-instruction" ||
         self._kind === "attribute") {
-        return;
-      }
-      var i = p >>> 0;
-      if (String(p) !== String(i)) {
-        throw "TypeError in XML.prototype.replace(): invalid name " + p;
-      }
-      if (i >= self.length()) {
-        p = String(self.length());
+        return self;
       }
       if (v._kind === "element") {
         var a = self;
@@ -1645,28 +1598,45 @@ module Shumway.AVM2.AS {
           a = a._parent;
         }
       }
+      var i = p >>> 0;
+      if (String(p) === String(i)) {
+        if (i >= self.length()) {
+          p = String(self.length());
+        }
+        if (self._children[p]) {
+          self._children[p]._parent = null;
+        }
+      } else {
+        var toRemove = this.getProperty(p, false, false);
+        if (toRemove.length() === 0) { // nothing to replace
+          return self;
+        }
+        toRemove._children.forEach(function (v, i) {
+          var index = self._children.indexOf(v);
+          v._parent = null;
+          if (i === 0) {
+            p = String(index);
+            self._children.splice(index, 1, undefined);
+          } else {
+            self._children.splice(index, 1);
+          }
+        });
+      }
+
       if (v._kind === "element" ||
         v._kind === "text" ||
         v._kind === "comment" ||
         v._kind === "processing-instruction") {
         v._parent = self;
-        if (self._children[p]) {
-          self._children[p]._parent = null;
-        }
         self._children[p] = v;
-      } else if (self instanceof ASXMLList) {
-        self.deleteByIndex(p);
-        self.insert(p, v);
       } else {
         s = toString(v);
         var t = new XML();
         t._parent = self;
         t._value = s;
-        if (self._children[p]) {
-          self._children[p]._parent = null;
-        }
         self._children[p] = t;
       }
+      return self;
     }
 
     // 9.1.1.13 [[AddInScopeNamespace]] ( N )
@@ -1709,7 +1679,6 @@ module Shumway.AVM2.AS {
 
     // 9.1.1.8 [[Descendants]] (P)
     descendants(name: any = "*"): ASXMLList {
-      debugger;
       name = toXMLName(name);
       var flags = name._flags;
       var self: ASXML = this;
@@ -1966,7 +1935,6 @@ module Shumway.AVM2.AS {
         return this._children[mn];
       }
       var name = toXMLName(mn);
-      if (name.localName === 'bar') debugger;
       var xl = new XMLList(this, name);
       this._children.forEach(function (v:any, i) {
         // a. If x[i].[[Class]] == "element",
@@ -1987,7 +1955,8 @@ module Shumway.AVM2.AS {
         return _asGetProperty.call(this, namespaces, name, flags);
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
-      return this.getProperty(name, isAttribute, false);
+      return this.getProperty(prefixWithNamespace(namespaces, name, isAttribute),
+        isAttribute, false);
     }
 
     hasProperty(mn, isAttribute) {
@@ -2003,12 +1972,14 @@ module Shumway.AVM2.AS {
         return _asGetProperty.call(this, namespaces, name, flags);
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
-      return this.hasProperty(name, isAttribute);
+      return this.hasProperty(prefixWithNamespace(namespaces, name, isAttribute),
+        isAttribute);
     }
 
     public asHasPropertyInternal(namespaces: Namespace [], name: any, flags: number) {
       var isAttribute = flags & Multiname.ATTRIBUTE;
-      return this.hasProperty(name, isAttribute);
+      return this.hasProperty(prefixWithNamespace(namespaces, name, isAttribute),
+        isAttribute);
     }
 
     setProperty(mn, isAttribute, value) {
@@ -2017,7 +1988,9 @@ module Shumway.AVM2.AS {
         this.appendChild(value);
         return;
       }
-      notImplemented("setProperty"); return;
+      // TODO
+      var node = this.getProperty(mn, isAttribute, false);
+      toXML(node).replace(0, toXML(value));
     }
 
     public asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
@@ -2025,7 +1998,35 @@ module Shumway.AVM2.AS {
         return _asSetProperty.call(this, namespaces, name, flags, value);
       }
       var isAttribute = flags & Multiname.ATTRIBUTE;
+      name = prefixWithNamespace(namespaces, name, isAttribute);
       return this.setProperty(name, isAttribute, value);
+    }
+
+    asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
+      if (ASXMLList.isTraitsOrDynamicPrototype(this) || isLex) {
+        return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
+      }
+      // Checking if the method exists before calling it
+      var self: Object = this;
+      var result;
+      var method;
+      var resolved = self.resolveMultinameProperty(namespaces, name, flags);
+      if (self.asGetNumericProperty && Multiname.isNumeric(resolved)) {
+        method = self.asGetNumericProperty(resolved);
+      } else {
+        var openMethods = self.asOpenMethods;
+        method = (openMethods && openMethods[resolved]) || self[resolved];
+      }
+      if (method) {
+        return _asCallProperty.call(this, namespaces, name, flags, isLex, args);
+      }
+      // Otherwise, 11.2.2.1 CallMethod ( r , args )
+      // If f == undefined and Type(base) is XMLList and base.[[Length]] == 1
+      //   ii. Return the result of calling CallMethod(r0, args) recursively
+      if (this.length() === 1) {
+        return this._children[0].asCallProperty(namespaces, name, flags, isLex, args);
+      }
+      throw new TypeError();
     }
   }
 
