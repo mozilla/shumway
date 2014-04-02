@@ -17,9 +17,9 @@
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
   export interface IDataOutput {
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     writeBytes: (bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0) => void;
     writeBoolean: (value: boolean) => void;
     writeByte: (value: number /*int*/) => void;
@@ -34,6 +34,10 @@ module Shumway.AVM2.AS.flash.utils {
     writeObject: (object: any) => void;
     objectEncoding: number /*uint*/;
     endian: string;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _objectEncoding: number /*uint*/;
+    // _endian: string;
   }
 }

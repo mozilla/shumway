@@ -17,64 +17,107 @@
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Collator extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor (requestedLocaleIDName: string, initialMode: string = "sorting") {
       requestedLocaleIDName = "" + requestedLocaleIDName; initialMode = "" + initialMode;
       false && super();
       notImplemented("Dummy Constructor: public flash.globalization.Collator");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    static getAvailableLocaleIDNames(): ASVector<string> {
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    static getAvailableLocaleIDNames(): ASVector<any> {
       notImplemented("public flash.globalization.Collator::static getAvailableLocaleIDNames"); return;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
-    ctor(requestedLocaleIDName: string, initialMode: string): void {
-      requestedLocaleIDName = "" + requestedLocaleIDName; initialMode = "" + initialMode;
-      notImplemented("public flash.globalization.Collator::ctor"); return;
-    }
+    
+    // _ignoreCase: boolean;
+    // _ignoreDiacritics: boolean;
+    // _ignoreKanaType: boolean;
+    // _ignoreSymbols: boolean;
+    // _ignoreCharacterWidth: boolean;
+    // _numericComparison: boolean;
+    // _lastOperationStatus: string;
+    // _actualLocaleIDName: string;
+    // _requestedLocaleIDName: string;
     get ignoreCase(): boolean {
       notImplemented("public flash.globalization.Collator::get ignoreCase"); return;
+      // return this._ignoreCase;
     }
     set ignoreCase(value: boolean) {
       value = !!value;
       notImplemented("public flash.globalization.Collator::set ignoreCase"); return;
+      // this._ignoreCase = value;
     }
     get ignoreDiacritics(): boolean {
       notImplemented("public flash.globalization.Collator::get ignoreDiacritics"); return;
+      // return this._ignoreDiacritics;
     }
     set ignoreDiacritics(value: boolean) {
       value = !!value;
       notImplemented("public flash.globalization.Collator::set ignoreDiacritics"); return;
+      // this._ignoreDiacritics = value;
     }
     get ignoreKanaType(): boolean {
       notImplemented("public flash.globalization.Collator::get ignoreKanaType"); return;
+      // return this._ignoreKanaType;
     }
     set ignoreKanaType(value: boolean) {
       value = !!value;
       notImplemented("public flash.globalization.Collator::set ignoreKanaType"); return;
+      // this._ignoreKanaType = value;
     }
     get ignoreSymbols(): boolean {
       notImplemented("public flash.globalization.Collator::get ignoreSymbols"); return;
+      // return this._ignoreSymbols;
     }
     set ignoreSymbols(value: boolean) {
       value = !!value;
       notImplemented("public flash.globalization.Collator::set ignoreSymbols"); return;
+      // this._ignoreSymbols = value;
     }
     get ignoreCharacterWidth(): boolean {
       notImplemented("public flash.globalization.Collator::get ignoreCharacterWidth"); return;
+      // return this._ignoreCharacterWidth;
     }
     set ignoreCharacterWidth(value: boolean) {
       value = !!value;
       notImplemented("public flash.globalization.Collator::set ignoreCharacterWidth"); return;
+      // this._ignoreCharacterWidth = value;
     }
     get numericComparison(): boolean {
       notImplemented("public flash.globalization.Collator::get numericComparison"); return;
+      // return this._numericComparison;
     }
     set numericComparison(value: boolean) {
       value = !!value;
       notImplemented("public flash.globalization.Collator::set numericComparison"); return;
+      // this._numericComparison = value;
+    }
+    get lastOperationStatus(): string {
+      notImplemented("public flash.globalization.Collator::get lastOperationStatus"); return;
+      // return this._lastOperationStatus;
+    }
+    get actualLocaleIDName(): string {
+      notImplemented("public flash.globalization.Collator::get actualLocaleIDName"); return;
+      // return this._actualLocaleIDName;
+    }
+    get requestedLocaleIDName(): string {
+      notImplemented("public flash.globalization.Collator::get requestedLocaleIDName"); return;
+      // return this._requestedLocaleIDName;
     }
     compare(string1: string, string2: string): number /*int*/ {
       string1 = "" + string1; string2 = "" + string2;
@@ -84,14 +127,9 @@ module Shumway.AVM2.AS.flash.globalization {
       string1 = "" + string1; string2 = "" + string2;
       notImplemented("public flash.globalization.Collator::equals"); return;
     }
-    get lastOperationStatus(): string {
-      notImplemented("public flash.globalization.Collator::get lastOperationStatus"); return;
-    }
-    get actualLocaleIDName(): string {
-      notImplemented("public flash.globalization.Collator::get actualLocaleIDName"); return;
-    }
-    get requestedLocaleIDName(): string {
-      notImplemented("public flash.globalization.Collator::get requestedLocaleIDName"); return;
+    ctor(requestedLocaleIDName: string, initialMode: string): void {
+      requestedLocaleIDName = "" + requestedLocaleIDName; initialMode = "" + initialMode;
+      notImplemented("public flash.globalization.Collator::ctor"); return;
     }
   }
 }

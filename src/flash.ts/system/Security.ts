@@ -17,14 +17,63 @@
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Security extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.system.Security");
     }
-    // Static   JS -> AS Bindings
-    static createSandboxBridgeProxyFunction: (targetFunc: ASObject, targetObj: ASObject, srcToplevel: ASObject, destToplevel: ASObject) => ASObject;
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static REMOTE: string = "remote";
+    static LOCAL_WITH_FILE: string = "localWithFile";
+    static LOCAL_WITH_NETWORK: string = "localWithNetwork";
+    static LOCAL_TRUSTED: string = "localTrusted";
+    static APPLICATION: string = "application";
+    
+    
+    // AS -> JS Bindings
+    // static _exactSettings: boolean;
+    // static _disableAVM1Loading: boolean;
+    // static _sandboxType: string;
+    // static _pageDomain: string;
+    get exactSettings(): boolean {
+      notImplemented("public flash.system.Security::get exactSettings"); return;
+      // return this._exactSettings;
+    }
+    set exactSettings(value: boolean) {
+      value = !!value;
+      notImplemented("public flash.system.Security::set exactSettings"); return;
+      // this._exactSettings = value;
+    }
+    get disableAVM1Loading(): boolean {
+      notImplemented("public flash.system.Security::get disableAVM1Loading"); return;
+      // return this._disableAVM1Loading;
+    }
+    set disableAVM1Loading(value: boolean) {
+      value = !!value;
+      notImplemented("public flash.system.Security::set disableAVM1Loading"); return;
+      // this._disableAVM1Loading = value;
+    }
+    get sandboxType(): string {
+      notImplemented("public flash.system.Security::get sandboxType"); return;
+      // return this._sandboxType;
+    }
+    get pageDomain(): string {
+      notImplemented("public flash.system.Security::get pageDomain"); return;
+      // return this._pageDomain;
+    }
     static allowDomain(): void {
       notImplemented("public flash.system.Security::static allowDomain"); return;
     }
@@ -35,19 +84,9 @@ module Shumway.AVM2.AS.flash.system {
       url = "" + url;
       notImplemented("public flash.system.Security::static loadPolicyFile"); return;
     }
-    get exactSettings(): boolean {
-      notImplemented("public flash.system.Security::get exactSettings"); return;
-    }
-    set exactSettings(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.system.Security::set exactSettings"); return;
-    }
-    get disableAVM1Loading(): boolean {
-      notImplemented("public flash.system.Security::get disableAVM1Loading"); return;
-    }
-    set disableAVM1Loading(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.system.Security::set disableAVM1Loading"); return;
+    static showSettings(panel: string = "default"): void {
+      panel = "" + panel;
+      notImplemented("public flash.system.Security::static showSettings"); return;
     }
     static duplicateSandboxBridgeInputArguments(toplevel: ASObject, args: any []): any [] {
       toplevel = toplevel; args = args;
@@ -57,17 +96,6 @@ module Shumway.AVM2.AS.flash.system {
       toplevel = toplevel;
       notImplemented("public flash.system.Security::static duplicateSandboxBridgeOutputArgument"); return;
     }
-    static showSettings(panel: string = "default"): void {
-      panel = "" + panel;
-      notImplemented("public flash.system.Security::static showSettings"); return;
-    }
-    get sandboxType(): string {
-      notImplemented("public flash.system.Security::get sandboxType"); return;
-    }
-    get pageDomain(): string {
-      notImplemented("public flash.system.Security::get pageDomain"); return;
-    }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
   }
 }

@@ -17,49 +17,51 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class KeyboardEvent extends flash.events.Event {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_charCode", "_keyCode", "_keyLocation", "_ctrlKey", "_altKey", "_shiftKey", "charCode", "charCode", "keyCode", "keyCode", "keyLocation", "keyLocation", "ctrlKey", "ctrlKey", "altKey", "altKey", "shiftKey", "shiftKey", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = true, cancelable: boolean = false, charCodeValue: number /*uint*/ = 0, keyCodeValue: number /*uint*/ = 0, keyLocationValue: number /*uint*/ = 0, ctrlKeyValue: boolean = false, altKeyValue: boolean = false, shiftKeyValue: boolean = false) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; charCodeValue = charCodeValue >>> 0; keyCodeValue = keyCodeValue >>> 0; keyLocationValue = keyLocationValue >>> 0; ctrlKeyValue = !!ctrlKeyValue; altKeyValue = !!altKeyValue; shiftKeyValue = !!shiftKeyValue;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.KeyboardEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_keyLocation: number /*uint*/;
-    m_keyCode: number /*uint*/;
-    clone: () => flash.events.Event;
+    
+    // JS -> AS Bindings
+    static KEY_DOWN: string = "keyDown";
+    static KEY_UP: string = "keyUp";
+    
+    _charCode: number /*uint*/;
+    _keyCode: number /*uint*/;
+    _keyLocation: number /*uint*/;
+    _ctrlKey: boolean;
+    _altKey: boolean;
+    _shiftKey: boolean;
+    charCode: number /*uint*/;
     keyCode: number /*uint*/;
     keyLocation: number /*uint*/;
-    // Instance AS -> JS Bindings
-    get charCode(): number /*uint*/ {
-      notImplemented("public flash.events.KeyboardEvent::get charCode"); return;
-    }
-    set charCode(value: number /*uint*/) {
-      value = value >>> 0;
-      notImplemented("public flash.events.KeyboardEvent::set charCode"); return;
-    }
-    get ctrlKey(): boolean {
-      notImplemented("public flash.events.KeyboardEvent::get ctrlKey"); return;
-    }
-    set ctrlKey(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.events.KeyboardEvent::set ctrlKey"); return;
-    }
-    get altKey(): boolean {
-      notImplemented("public flash.events.KeyboardEvent::get altKey"); return;
-    }
-    set altKey(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.events.KeyboardEvent::set altKey"); return;
-    }
-    get shiftKey(): boolean {
-      notImplemented("public flash.events.KeyboardEvent::get shiftKey"); return;
-    }
-    set shiftKey(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.events.KeyboardEvent::set shiftKey"); return;
-    }
+    ctrlKey: boolean;
+    altKey: boolean;
+    shiftKey: boolean;
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
+    // _charCode: number /*uint*/;
+    // _keyCode: number /*uint*/;
+    // _keyLocation: number /*uint*/;
+    // _ctrlKey: boolean;
+    // _altKey: boolean;
+    // _shiftKey: boolean;
     updateAfterEvent(): void {
       notImplemented("public flash.events.KeyboardEvent::updateAfterEvent"); return;
     }

@@ -17,61 +17,89 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class URLRequest extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["method", "requestHeaders"];
+    
     constructor (url: string = null) {
       url = "" + url;
       false && super();
       notImplemented("Dummy Constructor: public flash.net.URLRequest");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     // method: string;
     // requestHeaders: any [];
-    filterRequestHeaders: (item: any, index: number /*int*/, array: any []) => boolean;
-    shouldFilterHTTPHeader: (header: string) => boolean;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _url: string;
+    // _data: ASObject;
+    // _method: string;
+    // _contentType: string;
+    // _requestHeaders: any [];
+    // _digest: string;
     get url(): string {
       notImplemented("public flash.net.URLRequest::get url"); return;
+      // return this._url;
     }
     set url(value: string) {
       value = "" + value;
       notImplemented("public flash.net.URLRequest::set url"); return;
+      // this._url = value;
     }
     get data(): ASObject {
       notImplemented("public flash.net.URLRequest::get data"); return;
+      // return this._data;
     }
     set data(value: ASObject) {
       value = value;
       notImplemented("public flash.net.URLRequest::set data"); return;
+      // this._data = value;
     }
     get method(): string {
       notImplemented("public flash.net.URLRequest::get method"); return;
-    }
-    setMethod(value: string): void {
-      value = "" + value;
-      notImplemented("public flash.net.URLRequest::setMethod"); return;
+      // return this._method;
     }
     get contentType(): string {
       notImplemented("public flash.net.URLRequest::get contentType"); return;
+      // return this._contentType;
     }
     set contentType(value: string) {
       value = "" + value;
       notImplemented("public flash.net.URLRequest::set contentType"); return;
+      // this._contentType = value;
     }
     get requestHeaders(): any [] {
       notImplemented("public flash.net.URLRequest::get requestHeaders"); return;
-    }
-    setRequestHeaders(value: any []): void {
-      value = value;
-      notImplemented("public flash.net.URLRequest::setRequestHeaders"); return;
+      // return this._requestHeaders;
     }
     get digest(): string {
       notImplemented("public flash.net.URLRequest::get digest"); return;
+      // return this._digest;
     }
     set digest(value: string) {
       value = "" + value;
       notImplemented("public flash.net.URLRequest::set digest"); return;
+      // this._digest = value;
+    }
+    setMethod(value: string): any {
+      value = "" + value;
+      notImplemented("public flash.net.URLRequest::setMethod"); return;
+    }
+    setRequestHeaders(value: any []): any {
+      value = value;
+      notImplemented("public flash.net.URLRequest::setRequestHeaders"); return;
     }
   }
 }

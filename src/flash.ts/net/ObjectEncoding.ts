@@ -17,21 +17,41 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ObjectEncoding extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.net.ObjectEncoding");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static AMF0: number /*uint*/ = undefined;
+    static AMF3: number /*uint*/ = 3;
+    static DEFAULT: number /*uint*/ = 3;
+    
+    
+    // AS -> JS Bindings
+    // static _dynamicPropertyWriter: flash.net.IDynamicPropertyWriter;
     get dynamicPropertyWriter(): flash.net.IDynamicPropertyWriter {
       notImplemented("public flash.net.ObjectEncoding::get dynamicPropertyWriter"); return;
+      // return this._dynamicPropertyWriter;
     }
     set dynamicPropertyWriter(object: flash.net.IDynamicPropertyWriter) {
       object = object;
       notImplemented("public flash.net.ObjectEncoding::set dynamicPropertyWriter"); return;
+      // this._dynamicPropertyWriter = object;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
   }
 }

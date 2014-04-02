@@ -17,15 +17,27 @@
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ColorTransform extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["redMultiplier", "greenMultiplier", "blueMultiplier", "alphaMultiplier", "redOffset", "greenOffset", "blueOffset", "alphaOffset", "color", "color", "concat", "toString"];
+    
     constructor (redMultiplier: number = 1, greenMultiplier: number = 1, blueMultiplier: number = 1, alphaMultiplier: number = 1, redOffset: number = 0, greenOffset: number = 0, blueOffset: number = 0, alphaOffset: number = 0) {
       redMultiplier = +redMultiplier; greenMultiplier = +greenMultiplier; blueMultiplier = +blueMultiplier; alphaMultiplier = +alphaMultiplier; redOffset = +redOffset; greenOffset = +greenOffset; blueOffset = +blueOffset; alphaOffset = +alphaOffset;
       false && super();
       notImplemented("Dummy Constructor: public flash.geom.ColorTransform");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     redMultiplier: number;
     greenMultiplier: number;
     blueMultiplier: number;
@@ -36,6 +48,9 @@ module Shumway.AVM2.AS.flash.geom {
     alphaOffset: number;
     color: number /*uint*/;
     concat: (second: flash.geom.ColorTransform) => void;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _color: number /*uint*/;
   }
 }

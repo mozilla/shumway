@@ -17,22 +17,40 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ShaderEvent extends flash.events.Event {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, bitmap: flash.display.BitmapData = null, array: flash.utils.ByteArray = null, vector: ASVector<number> = null) {
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_bitmap", "_array", "_vector", "bitmap", "bitmap", "array", "array", "vector", "vector", "clone", "toString"];
+    
+    constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, bitmap: flash.display.BitmapData = null, array: flash.utils.ByteArray = null, vector: ASVector<any> = null) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; bitmap = bitmap; array = array; vector = vector;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.ShaderEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    static COMPLETE: string = "complete";
+    
+    _bitmap: flash.display.BitmapData;
+    _array: flash.utils.ByteArray;
+    _vector: ASVector<any>;
+    bitmap: flash.display.BitmapData;
+    array: flash.utils.ByteArray;
+    vector: ASVector<any>;
     clone: () => flash.events.Event;
-    bitmapData: flash.display.BitmapData;
-    byteArray: flash.utils.ByteArray;
-    vector: ASVector<number>;
-    m_bitmapData: flash.display.BitmapData;
-    m_byteArray: flash.utils.ByteArray;
-    m_vector: ASVector<number>;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _bitmap: flash.display.BitmapData;
+    // _array: flash.utils.ByteArray;
+    // _vector: ASVector<any>;
   }
 }

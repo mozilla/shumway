@@ -17,15 +17,29 @@
 module Shumway.AVM2.AS.flash.errors {
   import notImplemented = Shumway.Debug.notImplemented;
   export class EOFError extends flash.errors.IOError {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor (message: string = "", id: number /*int*/ = 0) {
       message = "" + message; id = id | 0;
       false && super(undefined, undefined);
       notImplemented("Dummy Constructor: public flash.errors.EOFError");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

@@ -17,17 +17,31 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GraphicsSolidFill extends ASNative implements IGraphicsFill, IGraphicsData {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["color", "alpha"];
+    
     constructor (color: number /*uint*/ = 0, alpha: number = 1) {
       color = color >>> 0; alpha = +alpha;
       false && super();
       notImplemented("Dummy Constructor: public flash.display.GraphicsSolidFill");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     color: number /*uint*/;
     alpha: number;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
   }
 }

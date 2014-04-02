@@ -17,32 +17,55 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GeolocationEvent extends flash.events.Event {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_latitude", "_longitude", "_altitude", "_hAccuracy", "_vAccuracy", "_speed", "_heading", "_timestamp", "latitude", "latitude", "longitude", "longitude", "altitude", "altitude", "hAccuracy", "hAccuracy", "vAccuracy", "vAccuracy", "speed", "speed", "heading", "heading", "timestamp", "timestamp", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, latitude: number = 0, longitude: number = 0, altitude: number = 0, hAccuracy: number = 0, vAccuracy: number = 0, speed: number = 0, heading: number = 0, timestamp: number = 0) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; latitude = +latitude; longitude = +longitude; altitude = +altitude; hAccuracy = +hAccuracy; vAccuracy = +vAccuracy; speed = +speed; heading = +heading; timestamp = +timestamp;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.GeolocationEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_latitude: number;
-    m_longitude: number;
-    m_altitude: number;
-    m_horizontalAccuracy: number;
-    m_verticalAccuracy: number;
-    m_speed: number;
-    m_heading: number;
-    m_timestamp: number;
-    clone: () => flash.events.Event;
+    
+    // JS -> AS Bindings
+    static UPDATE: string = "update";
+    
+    _latitude: number;
+    _longitude: number;
+    _altitude: number;
+    _hAccuracy: number;
+    _vAccuracy: number;
+    _speed: number;
+    _heading: number;
+    _timestamp: number;
     latitude: number;
     longitude: number;
     altitude: number;
-    horizontalAccuracy: number;
-    verticalAccuracy: number;
+    hAccuracy: number;
+    vAccuracy: number;
     speed: number;
     heading: number;
     timestamp: number;
-    // Instance AS -> JS Bindings
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
+    // _latitude: number;
+    // _longitude: number;
+    // _altitude: number;
+    // _hAccuracy: number;
+    // _vAccuracy: number;
+    // _speed: number;
+    // _heading: number;
+    // _timestamp: number;
   }
 }

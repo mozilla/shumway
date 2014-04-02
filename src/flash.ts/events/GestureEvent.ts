@@ -17,49 +17,72 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GestureEvent extends flash.events.Event {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_phase", "_localX", "_localY", "_ctrlKey", "_altKey", "_shiftKey", "phase", "phase", "ctrlKey", "ctrlKey", "altKey", "altKey", "shiftKey", "shiftKey", "stageX", "stageY", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = true, cancelable: boolean = false, phase: string = null, localX: number = 0, localY: number = 0, ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; phase = "" + phase; localX = +localX; localY = +localY; ctrlKey = !!ctrlKey; altKey = !!altKey; shiftKey = !!shiftKey;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.GestureEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_phase: string;
-    m_ctrlKey: boolean;
-    m_altKey: boolean;
-    m_shiftKey: boolean;
-    clone: () => flash.events.Event;
+    
+    // JS -> AS Bindings
+    static GESTURE_TWO_FINGER_TAP: string = "gestureTwoFingerTap";
+    
+    _phase: string;
+    _localX: number;
+    _localY: number;
+    _ctrlKey: boolean;
+    _altKey: boolean;
+    _shiftKey: boolean;
     phase: string;
     ctrlKey: boolean;
     altKey: boolean;
     shiftKey: boolean;
     stageX: number;
     stageY: number;
-    // Instance AS -> JS Bindings
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
+    // _localX: number;
+    // _localY: number;
+    // _phase: string;
+    // _ctrlKey: boolean;
+    // _altKey: boolean;
+    // _shiftKey: boolean;
+    // _stageX: number;
+    // _stageY: number;
     get localX(): number {
       notImplemented("public flash.events.GestureEvent::get localX"); return;
+      // return this._localX;
     }
     set localX(value: number) {
       value = +value;
       notImplemented("public flash.events.GestureEvent::set localX"); return;
+      // this._localX = value;
     }
     get localY(): number {
       notImplemented("public flash.events.GestureEvent::get localY"); return;
+      // return this._localY;
     }
     set localY(value: number) {
       value = +value;
       notImplemented("public flash.events.GestureEvent::set localY"); return;
+      // this._localY = value;
     }
     updateAfterEvent(): void {
       notImplemented("public flash.events.GestureEvent::updateAfterEvent"); return;
-    }
-    getStageX(): number {
-      notImplemented("public flash.events.GestureEvent::getStageX"); return;
-    }
-    getStageY(): number {
-      notImplemented("public flash.events.GestureEvent::getStageY"); return;
     }
   }
 }

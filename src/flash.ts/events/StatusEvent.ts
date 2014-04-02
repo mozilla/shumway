@@ -17,20 +17,37 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class StatusEvent extends flash.events.Event {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_code", "_level", "code", "code", "level", "level", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, code: string = "", level: string = "") {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; code = "" + code; level = "" + level;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.StatusEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_code: string;
-    m_level: string;
-    clone: () => flash.events.Event;
+    
+    // JS -> AS Bindings
+    static STATUS: string = "status";
+    
+    _code: string;
+    _level: string;
     code: string;
     level: string;
-    // Instance AS -> JS Bindings
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
+    // _code: string;
+    // _level: string;
   }
 }

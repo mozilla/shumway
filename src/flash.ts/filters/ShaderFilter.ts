@@ -17,33 +17,47 @@
 module Shumway.AVM2.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ShaderFilter extends flash.filters.BitmapFilter {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["leftExtension", "leftExtension", "topExtension", "topExtension", "rightExtension", "rightExtension", "bottomExtension", "bottomExtension"];
+    
     constructor (shader: flash.display.Shader = null) {
       shader = shader;
       false && super();
       notImplemented("Dummy Constructor: public flash.filters.ShaderFilter");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     leftExtension: number /*int*/;
     topExtension: number /*int*/;
     rightExtension: number /*int*/;
     bottomExtension: number /*int*/;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _shader: flash.display.Shader;
+    // _leftExtension: number /*int*/;
+    // _topExtension: number /*int*/;
+    // _rightExtension: number /*int*/;
+    // _bottomExtension: number /*int*/;
     get shader(): flash.display.Shader {
       notImplemented("public flash.filters.ShaderFilter::get shader"); return;
+      // return this._shader;
     }
     set shader(shader: flash.display.Shader) {
       shader = shader;
       notImplemented("public flash.filters.ShaderFilter::set shader"); return;
-    }
-    get _extendBy(): flash.geom.Rectangle {
-      notImplemented("public flash.filters.ShaderFilter::get _extendBy"); return;
-    }
-    set _extendBy(extend: flash.geom.Rectangle) {
-      extend = extend;
-      notImplemented("public flash.filters.ShaderFilter::set _extendBy"); return;
+      // this._shader = shader;
     }
   }
 }

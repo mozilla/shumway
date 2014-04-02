@@ -17,20 +17,39 @@
 module Shumway.AVM2.AS.flash.sampler {
   import notImplemented = Shumway.Debug.notImplemented;
   export class NewObjectSample extends flash.sampler.Sample {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.sampler.NewObjectSample");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    id: number = undefined;
+    type: ASClass = undefined;
+    
+    // AS -> JS Bindings
+    
+    // _size: number;
     get object(): any {
       notImplemented("public flash.sampler.NewObjectSample::get object"); return;
+      // return this._object;
     }
     get size(): number {
       notImplemented("public flash.sampler.NewObjectSample::get size"); return;
+      // return this._size;
     }
   }
 }

@@ -17,14 +17,26 @@
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ID3Info extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["songName", "artist", "album", "year", "comment", "genre", "track"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.media.ID3Info");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     songName: string;
     artist: string;
     album: string;
@@ -32,6 +44,8 @@ module Shumway.AVM2.AS.flash.media {
     comment: string;
     genre: string;
     track: string;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
   }
 }

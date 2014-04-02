@@ -17,26 +17,46 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class URLLoader extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["data", "dataFormat", "bytesLoaded", "bytesTotal", "addEventListener", "load", "close", "_stream", "_httpResponseEventBound", "complete", "onStreamOpen", "onStreamComplete", "onStreamProgress", "onStreamIOError", "onStreamHTTPStatus", "onStreamHTTPResponseStatus", "onStreamSecurityError"];
+    
     constructor (request: flash.net.URLRequest = null) {
       request = request;
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.net.URLLoader");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     data: any;
     dataFormat: string;
-    stream: flash.net.URLStream;
     bytesLoaded: number /*uint*/;
     bytesTotal: number /*uint*/;
     // addEventListener: (type: string, listener: ASFunction, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false) => void;
     load: (request: flash.net.URLRequest) => void;
     close: () => void;
-    redirectEvent: (event: flash.events.Event) => void;
-    onComplete: (event: flash.events.Event) => void;
-    onProgress: (event: flash.events.ProgressEvent) => void;
-    // Instance AS -> JS Bindings
+    _stream: flash.net.URLStream;
+    _httpResponseEventBound: boolean;
+    complete: () => any;
+    onStreamOpen: (e: flash.events.Event) => any;
+    onStreamComplete: (e: flash.events.Event) => any;
+    onStreamProgress: (e: flash.events.ProgressEvent) => any;
+    onStreamIOError: (e: flash.events.IOErrorEvent) => any;
+    onStreamHTTPStatus: (e: flash.events.HTTPStatusEvent) => any;
+    onStreamHTTPResponseStatus: (e: flash.events.HTTPStatusEvent) => any;
+    onStreamSecurityError: (e: flash.events.SecurityErrorEvent) => any;
+    
+    // AS -> JS Bindings
+    
   }
 }

@@ -17,10 +17,12 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export interface IDynamicPropertyWriter {
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     writeDynamicProperties: (obj: ASObject, output: flash.net.IDynamicPropertyOutput) => void;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
   }
 }

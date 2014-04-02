@@ -17,48 +17,70 @@
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   export class SpaceJustifier extends flash.text.engine.TextJustifier {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["clone"];
+    
     constructor (locale: string = "en", lineJustification: string = "unjustified", letterSpacing: boolean = false) {
       locale = "" + locale; lineJustification = "" + lineJustification; letterSpacing = !!letterSpacing;
       false && super(undefined, undefined);
       notImplemented("Dummy Constructor: public flash.text.engine.SpaceJustifier");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     clone: () => flash.text.engine.TextJustifier;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _letterSpacing: boolean;
+    // _minimumSpacing: number;
+    // _optimumSpacing: number;
+    // _maximumSpacing: number;
     get letterSpacing(): boolean {
       notImplemented("public flash.text.engine.SpaceJustifier::get letterSpacing"); return;
+      // return this._letterSpacing;
     }
     set letterSpacing(value: boolean) {
       value = !!value;
       notImplemented("public flash.text.engine.SpaceJustifier::set letterSpacing"); return;
+      // this._letterSpacing = value;
     }
     get minimumSpacing(): number {
       notImplemented("public flash.text.engine.SpaceJustifier::get minimumSpacing"); return;
+      // return this._minimumSpacing;
     }
     set minimumSpacing(value: number) {
       value = +value;
       notImplemented("public flash.text.engine.SpaceJustifier::set minimumSpacing"); return;
+      // this._minimumSpacing = value;
     }
     get optimumSpacing(): number {
       notImplemented("public flash.text.engine.SpaceJustifier::get optimumSpacing"); return;
+      // return this._optimumSpacing;
     }
     set optimumSpacing(value: number) {
       value = +value;
       notImplemented("public flash.text.engine.SpaceJustifier::set optimumSpacing"); return;
+      // this._optimumSpacing = value;
     }
     get maximumSpacing(): number {
       notImplemented("public flash.text.engine.SpaceJustifier::get maximumSpacing"); return;
+      // return this._maximumSpacing;
     }
     set maximumSpacing(value: number) {
       value = +value;
       notImplemented("public flash.text.engine.SpaceJustifier::set maximumSpacing"); return;
-    }
-    cloneSpacing(justifier: flash.text.engine.SpaceJustifier): void {
-      justifier = justifier;
-      notImplemented("public flash.text.engine.SpaceJustifier::cloneSpacing"); return;
+      // this._maximumSpacing = value;
     }
   }
 }

@@ -17,55 +17,82 @@
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ContextMenu extends flash.display.NativeMenu {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // ["isSupported"];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["hideBuiltInItems", "clone"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.ui.ContextMenu");
     }
-    // Static   JS -> AS Bindings
+    
+    // JS -> AS Bindings
     static isSupported: boolean;
-    // Static   AS -> JS Bindings
-    static _checkSupported(): boolean {
-      notImplemented("public flash.ui.ContextMenu::static _checkSupported"); return;
-    }
-    // Instance JS -> AS Bindings
+    
     hideBuiltInItems: () => void;
     clone: () => flash.ui.ContextMenu;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    // static _isSupported: boolean;
+    
+    // _builtInItems: flash.ui.ContextMenuBuiltInItems;
+    // _customItems: any [];
+    // _link: flash.net.URLRequest;
+    // _clipboardMenu: boolean;
+    // _clipboardItems: flash.ui.ContextMenuClipboardItems;
     get builtInItems(): flash.ui.ContextMenuBuiltInItems {
       notImplemented("public flash.ui.ContextMenu::get builtInItems"); return;
+      // return this._builtInItems;
     }
     set builtInItems(value: flash.ui.ContextMenuBuiltInItems) {
       value = value;
       notImplemented("public flash.ui.ContextMenu::set builtInItems"); return;
+      // this._builtInItems = value;
     }
     get customItems(): any [] {
       notImplemented("public flash.ui.ContextMenu::get customItems"); return;
+      // return this._customItems;
     }
     set customItems(value: any []) {
       value = value;
       notImplemented("public flash.ui.ContextMenu::set customItems"); return;
+      // this._customItems = value;
     }
     get link(): flash.net.URLRequest {
       notImplemented("public flash.ui.ContextMenu::get link"); return;
+      // return this._link;
     }
     set link(value: flash.net.URLRequest) {
       value = value;
       notImplemented("public flash.ui.ContextMenu::set link"); return;
+      // this._link = value;
     }
     get clipboardMenu(): boolean {
       notImplemented("public flash.ui.ContextMenu::get clipboardMenu"); return;
+      // return this._clipboardMenu;
     }
     set clipboardMenu(value: boolean) {
       value = !!value;
       notImplemented("public flash.ui.ContextMenu::set clipboardMenu"); return;
+      // this._clipboardMenu = value;
     }
     get clipboardItems(): flash.ui.ContextMenuClipboardItems {
       notImplemented("public flash.ui.ContextMenu::get clipboardItems"); return;
+      // return this._clipboardItems;
     }
     set clipboardItems(value: flash.ui.ContextMenuClipboardItems) {
       value = value;
       notImplemented("public flash.ui.ContextMenu::set clipboardItems"); return;
+      // this._clipboardItems = value;
     }
     cloneLinkAndClipboardProperties(c: flash.ui.ContextMenu): void {
       c = c;

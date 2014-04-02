@@ -17,35 +17,58 @@
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   export class MouseCursorData extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.ui.MouseCursorData");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
-    get data(): ASVector<flash.display.BitmapData> {
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _data: ASVector<any>;
+    // _hotSpot: flash.geom.Point;
+    // _frameRate: number;
+    get data(): ASVector<any> {
       notImplemented("public flash.ui.MouseCursorData::get data"); return;
+      // return this._data;
     }
-    set data(data: ASVector<flash.display.BitmapData>) {
+    set data(data: ASVector<any>) {
       data = data;
       notImplemented("public flash.ui.MouseCursorData::set data"); return;
+      // this._data = data;
     }
     get hotSpot(): flash.geom.Point {
       notImplemented("public flash.ui.MouseCursorData::get hotSpot"); return;
+      // return this._hotSpot;
     }
     set hotSpot(data: flash.geom.Point) {
       data = data;
       notImplemented("public flash.ui.MouseCursorData::set hotSpot"); return;
+      // this._hotSpot = data;
     }
     get frameRate(): number {
       notImplemented("public flash.ui.MouseCursorData::get frameRate"); return;
+      // return this._frameRate;
     }
     set frameRate(data: number) {
       data = +data;
       notImplemented("public flash.ui.MouseCursorData::set frameRate"); return;
+      // this._frameRate = data;
     }
   }
 }

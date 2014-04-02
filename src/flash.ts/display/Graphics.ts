@@ -17,21 +17,29 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Graphics extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.Graphics");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    drawCircle: (x: number, y: number, radius: number) => void;
-    drawEllipse: (x: number, y: number, width: number, height: number) => void;
-    drawPathObject: (path: flash.display.IGraphicsPath) => void;
-    beginFillObject: (fill: flash.display.IGraphicsFill) => void;
-    beginStrokeObject: (istroke: flash.display.IGraphicsStroke) => void;
-    drawGraphicsData: (graphicsData: ASVector<flash.display.IGraphicsData>) => void;
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
     clear(): void {
       notImplemented("public flash.display.Graphics::clear"); return;
     }
@@ -55,7 +63,7 @@ module Shumway.AVM2.AS.flash.display {
       type = "" + type; colors = colors; alphas = alphas; ratios = ratios; matrix = matrix; spreadMethod = "" + spreadMethod; interpolationMethod = "" + interpolationMethod; focalPointRatio = +focalPointRatio;
       notImplemented("public flash.display.Graphics::lineGradientStyle"); return;
     }
-    lineStyle(thickness: number = undefined, color: number /*uint*/ = 0, alpha: number = 1, pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = null, joints: string = null, miterLimit: number = 3): void {
+    lineStyle(thickness: number, color: number /*uint*/ = 0, alpha: number = 1, pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = null, joints: string = null, miterLimit: number = 3): void {
       thickness = +thickness; color = color >>> 0; alpha = +alpha; pixelHinting = !!pixelHinting; scaleMode = "" + scaleMode; caps = "" + caps; joints = "" + joints; miterLimit = +miterLimit;
       notImplemented("public flash.display.Graphics::lineStyle"); return;
     }
@@ -63,13 +71,21 @@ module Shumway.AVM2.AS.flash.display {
       x = +x; y = +y; width = +width; height = +height;
       notImplemented("public flash.display.Graphics::drawRect"); return;
     }
-    drawRoundRect(x: number, y: number, width: number, height: number, ellipseWidth: number, ellipseHeight: number = undefined): void {
+    drawRoundRect(x: number, y: number, width: number, height: number, ellipseWidth: number, ellipseHeight: number): void {
       x = +x; y = +y; width = +width; height = +height; ellipseWidth = +ellipseWidth; ellipseHeight = +ellipseHeight;
       notImplemented("public flash.display.Graphics::drawRoundRect"); return;
     }
     drawRoundRectComplex(x: number, y: number, width: number, height: number, topLeftRadius: number, topRightRadius: number, bottomLeftRadius: number, bottomRightRadius: number): void {
       x = +x; y = +y; width = +width; height = +height; topLeftRadius = +topLeftRadius; topRightRadius = +topRightRadius; bottomLeftRadius = +bottomLeftRadius; bottomRightRadius = +bottomRightRadius;
       notImplemented("public flash.display.Graphics::drawRoundRectComplex"); return;
+    }
+    drawCircle(x: number, y: number, radius: number): void {
+      x = +x; y = +y; radius = +radius;
+      notImplemented("public flash.display.Graphics::drawCircle"); return;
+    }
+    drawEllipse(x: number, y: number, width: number, height: number): void {
+      x = +x; y = +y; width = +width; height = +height;
+      notImplemented("public flash.display.Graphics::drawEllipse"); return;
     }
     moveTo(x: number, y: number): void {
       x = +x; y = +y;
@@ -102,13 +118,17 @@ module Shumway.AVM2.AS.flash.display {
       shader = shader; matrix = matrix;
       notImplemented("public flash.display.Graphics::lineShaderStyle"); return;
     }
-    drawPath(commands: ASVector<number /*int*/>, data: ASVector<number>, winding: string = "evenOdd"): void {
+    drawPath(commands: ASVector<any>, data: ASVector<any>, winding: string = "evenOdd"): void {
       commands = commands; data = data; winding = "" + winding;
       notImplemented("public flash.display.Graphics::drawPath"); return;
     }
-    drawTriangles(vertices: ASVector<number>, indices: ASVector<number /*int*/> = null, uvtData: ASVector<number> = null, culling: string = "none"): void {
+    drawTriangles(vertices: ASVector<any>, indices: ASVector<any> = null, uvtData: ASVector<any> = null, culling: string = "none"): void {
       vertices = vertices; indices = indices; uvtData = uvtData; culling = "" + culling;
       notImplemented("public flash.display.Graphics::drawTriangles"); return;
+    }
+    drawGraphicsData(graphicsData: ASVector<any>): void {
+      graphicsData = graphicsData;
+      notImplemented("public flash.display.Graphics::drawGraphicsData"); return;
     }
   }
 }

@@ -17,27 +17,49 @@
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   export class IME extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // ["isSupported"];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.system.IME");
     }
-    // Static   JS -> AS Bindings
+    
+    // JS -> AS Bindings
     static isSupported: boolean;
-    // Static   AS -> JS Bindings
+    
+    
+    // AS -> JS Bindings
+    // static _enabled: boolean;
+    // static _conversionMode: string;
+    // static _isSupported: boolean;
     get enabled(): boolean {
       notImplemented("public flash.system.IME::get enabled"); return;
+      // return this._enabled;
     }
     set enabled(enabled: boolean) {
       enabled = !!enabled;
       notImplemented("public flash.system.IME::set enabled"); return;
+      // this._enabled = enabled;
     }
     get conversionMode(): string {
       notImplemented("public flash.system.IME::get conversionMode"); return;
+      // return this._conversionMode;
     }
     set conversionMode(mode: string) {
       mode = "" + mode;
       notImplemented("public flash.system.IME::set conversionMode"); return;
+      // this._conversionMode = mode;
     }
     static setCompositionString(composition: string): void {
       composition = "" + composition;
@@ -53,10 +75,6 @@ module Shumway.AVM2.AS.flash.system {
     static compositionAbandoned(): void {
       notImplemented("public flash.system.IME::static compositionAbandoned"); return;
     }
-    static _checkSupported(): boolean {
-      notImplemented("public flash.system.IME::static _checkSupported"); return;
-    }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
   }
 }

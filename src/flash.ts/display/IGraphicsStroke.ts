@@ -17,9 +17,11 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export interface IGraphicsStroke {
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

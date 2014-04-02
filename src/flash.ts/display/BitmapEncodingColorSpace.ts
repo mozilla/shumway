@@ -17,14 +17,32 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class BitmapEncodingColorSpace extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.BitmapEncodingColorSpace");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static COLORSPACE_AUTO: string = "auto";
+    static COLORSPACE_4_4_4: string = "4:4:4";
+    static COLORSPACE_4_2_2: string = "4:2:2";
+    static COLORSPACE_4_2_0: string = "4:2:0";
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

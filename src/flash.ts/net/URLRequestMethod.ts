@@ -17,14 +17,34 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class URLRequestMethod extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.net.URLRequestMethod");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static POST: string = "POST";
+    static GET: string = "GET";
+    static PUT: string = "PUT";
+    static DELETE: string = "DELETE";
+    static HEAD: string = "HEAD";
+    static OPTIONS: string = "OPTIONS";
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

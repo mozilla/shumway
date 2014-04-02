@@ -17,18 +17,27 @@
 module Shumway.AVM2.AS.flash.printing {
   import notImplemented = Shumway.Debug.notImplemented;
   export class PrintJob extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // ["isSupported"];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["paperHeight", "paperWidth", "pageHeight", "pageWidth", "orientation", "start", "send", "addPage"];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.printing.PrintJob");
     }
-    // Static   JS -> AS Bindings
+    
+    // JS -> AS Bindings
     static isSupported: boolean;
-    // Static   AS -> JS Bindings
-    static _checkSupported(): boolean {
-      notImplemented("public flash.printing.PrintJob::static _checkSupported"); return;
-    }
-    // Instance JS -> AS Bindings
+    
     paperHeight: number /*int*/;
     paperWidth: number /*int*/;
     pageHeight: number /*int*/;
@@ -36,16 +45,15 @@ module Shumway.AVM2.AS.flash.printing {
     orientation: string;
     start: () => boolean;
     send: () => void;
-    toClassicRectangle: (printArea: flash.geom.Rectangle) => any;
     addPage: (sprite: flash.display.Sprite, printArea: flash.geom.Rectangle = null, options: flash.printing.PrintJobOptions = null, frameNum: number /*int*/ = 0) => void;
-    // Instance AS -> JS Bindings
-    invoke(index: number /*uint*/): any {
-      index = index >>> 0;
-      notImplemented("public flash.printing.PrintJob::invoke"); return;
-    }
-    _invoke(index: any): any {
-      
-      notImplemented("public flash.printing.PrintJob::_invoke"); return;
-    }
+    
+    // AS -> JS Bindings
+    // static _isSupported: boolean;
+    
+    // _paperHeight: number /*int*/;
+    // _paperWidth: number /*int*/;
+    // _pageHeight: number /*int*/;
+    // _pageWidth: number /*int*/;
+    // _orientation: string;
   }
 }

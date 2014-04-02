@@ -17,25 +17,39 @@
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ContextMenuClipboardItems extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["cut", "cut", "copy", "copy", "paste", "paste", "clear", "clear", "selectAll", "selectAll", "clone"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.ui.ContextMenuClipboardItems");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    _cut: boolean;
+    
+    // JS -> AS Bindings
+    
     cut: boolean;
-    _copy: boolean;
     copy: boolean;
-    _paste: boolean;
     paste: boolean;
-    _clear: boolean;
     clear: boolean;
-    _selectAll: boolean;
     selectAll: boolean;
     clone: () => flash.ui.ContextMenuClipboardItems;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _cut: boolean;
+    // _copy: boolean;
+    // _paste: boolean;
+    // _clear: boolean;
+    // _selectAll: boolean;
   }
 }

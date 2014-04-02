@@ -17,37 +17,42 @@
 module Shumway.AVM2.AS.flash.desktop {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Clipboard extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["setData", "setDataHandler", "getData", "hasFormat"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.desktop.Clipboard");
     }
-    // Static   JS -> AS Bindings
-    static isSystemFormat: (format: string) => boolean;
-    static initFormatMap: () => void;
-    static addFormatMapping: (flashFormat: string, exportFromFlash: ASFunction, importToFlash: ASFunction) => any;
-    static _fromFlash: flash.utils.Dictionary;
-    static _toFlash: flash.utils.Dictionary;
-    static _wasFormatMapInitialized: boolean;
-    // Static   AS -> JS Bindings
-    get generalClipboard(): flash.desktop.Clipboard {
-      notImplemented("public flash.desktop.Clipboard::get generalClipboard"); return;
-    }
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     setData: (format: string, data: ASObject, serializable: boolean = true) => boolean;
     setDataHandler: (format: string, handler: ASFunction, serializable: boolean = true) => boolean;
     getData: (format: string, transferMode: string = "originalPreferred") => ASObject;
     hasFormat: (format: string) => boolean;
-    getOriginal: (format: string) => ASObject;
-    getClone: (format: string) => ASObject;
-    checkAccess: (requestRead: boolean, requestWrite: boolean) => void;
-    getDeserialization: (format: string) => ASObject;
-    putSerialization: (format: string, data: ASObject) => void;
-    convertNativeFormat: (format: string) => ASObject;
-    convertFlashFormat: (flashFormat: string, data: ASObject, serializable: boolean) => boolean;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    // static _generalClipboard: flash.desktop.Clipboard;
+    get generalClipboard(): flash.desktop.Clipboard {
+      notImplemented("public flash.desktop.Clipboard::get generalClipboard"); return;
+      // return this._generalClipboard;
+    }
+    
+    // _formats: any [];
     get formats(): any [] {
       notImplemented("public flash.desktop.Clipboard::get formats"); return;
+      // return this._formats;
     }
     clear(): void {
       notImplemented("public flash.desktop.Clipboard::clear"); return;
@@ -55,63 +60,6 @@ module Shumway.AVM2.AS.flash.desktop {
     clearData(format: string): void {
       format = "" + format;
       notImplemented("public flash.desktop.Clipboard::clearData"); return;
-    }
-    get alive(): boolean {
-      notImplemented("public flash.desktop.Clipboard::get alive"); return;
-    }
-    get canReadContents(): boolean {
-      notImplemented("public flash.desktop.Clipboard::get canReadContents"); return;
-    }
-    get canWriteContents(): boolean {
-      notImplemented("public flash.desktop.Clipboard::get canWriteContents"); return;
-    }
-    nativeSetHandler(format: string, handler: ASFunction): void {
-      format = "" + format; handler = handler;
-      notImplemented("public flash.desktop.Clipboard::nativeSetHandler"); return;
-    }
-    getObjectReference(format: string): ASObject {
-      format = "" + format;
-      notImplemented("public flash.desktop.Clipboard::getObjectReference"); return;
-    }
-    putObjectReference(format: string, data: ASObject): void {
-      format = "" + format; data = data;
-      notImplemented("public flash.desktop.Clipboard::putObjectReference"); return;
-    }
-    getString(): string {
-      notImplemented("public flash.desktop.Clipboard::getString"); return;
-    }
-    putString(s: string): void {
-      s = "" + s;
-      notImplemented("public flash.desktop.Clipboard::putString"); return;
-    }
-    getHTML(): string {
-      notImplemented("public flash.desktop.Clipboard::getHTML"); return;
-    }
-    putHTML(html: string): void {
-      html = "" + html;
-      notImplemented("public flash.desktop.Clipboard::putHTML"); return;
-    }
-    getRTF(): flash.utils.ByteArray {
-      notImplemented("public flash.desktop.Clipboard::getRTF"); return;
-    }
-    putRTF(rtf: flash.utils.ByteArray): void {
-      rtf = rtf;
-      notImplemented("public flash.desktop.Clipboard::putRTF"); return;
-    }
-    getByteArray(format: string): flash.utils.ByteArray {
-      format = "" + format;
-      notImplemented("public flash.desktop.Clipboard::getByteArray"); return;
-    }
-    putByteArray(format: string, bytes: flash.utils.ByteArray): void {
-      format = "" + format; bytes = bytes;
-      notImplemented("public flash.desktop.Clipboard::putByteArray"); return;
-    }
-    get swfVersion(): number /*int*/ {
-      notImplemented("public flash.desktop.Clipboard::get swfVersion"); return;
-    }
-    setHandlerStoringData(status: boolean): void {
-      status = !!status;
-      notImplemented("public flash.desktop.Clipboard::setHandlerStoringData"); return;
     }
   }
 }

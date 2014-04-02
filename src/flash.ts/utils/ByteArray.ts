@@ -17,27 +17,49 @@
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ByteArray extends ASNative implements IDataInput2, IDataOutput2 {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // ["_defaultObjectEncoding"];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["deflate", "compress", "inflate", "uncompress"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.utils.ByteArray");
     }
-    // Static   JS -> AS Bindings
+    
+    // JS -> AS Bindings
     static _defaultObjectEncoding: number /*uint*/;
-    // Static   AS -> JS Bindings
-    get defaultObjectEncoding(): number /*uint*/ {
-      notImplemented("public flash.utils.ByteArray::get defaultObjectEncoding"); return;
-    }
-    set defaultObjectEncoding(version: number /*uint*/) {
-      version = version >>> 0;
-      notImplemented("public flash.utils.ByteArray::set defaultObjectEncoding"); return;
-    }
-    // Instance JS -> AS Bindings
+    
     deflate: () => void;
     compress: (algorithm: string = "zlib") => void;
     inflate: () => void;
     uncompress: (algorithm: string = "zlib") => void;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    // static _defaultObjectEncoding: number /*uint*/;
+    get defaultObjectEncoding(): number /*uint*/ {
+      notImplemented("public flash.utils.ByteArray::get defaultObjectEncoding"); return;
+      // return this._defaultObjectEncoding;
+    }
+    set defaultObjectEncoding(version: number /*uint*/) {
+      version = version >>> 0;
+      notImplemented("public flash.utils.ByteArray::set defaultObjectEncoding"); return;
+      // this._defaultObjectEncoding = version;
+    }
+    
+    // _length: number /*uint*/;
+    // _bytesAvailable: number /*uint*/;
+    // _position: number /*uint*/;
+    // _objectEncoding: number /*uint*/;
+    // _endian: string;
     readBytes(bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
       bytes = bytes; offset = offset >>> 0; length = length >>> 0;
       notImplemented("public flash.utils.ByteArray::readBytes"); return;
@@ -126,10 +148,12 @@ module Shumway.AVM2.AS.flash.utils {
     }
     get length(): number /*uint*/ {
       notImplemented("public flash.utils.ByteArray::get length"); return;
+      // return this._length;
     }
     set length(value: number /*uint*/) {
       value = value >>> 0;
       notImplemented("public flash.utils.ByteArray::set length"); return;
+      // this._length = value;
     }
     writeObject(object: any): void {
       
@@ -146,50 +170,42 @@ module Shumway.AVM2.AS.flash.utils {
       algorithm = "" + algorithm;
       notImplemented("public flash.utils.ByteArray::_uncompress"); return;
     }
-    _toString(): string {
-      notImplemented("public flash.utils.ByteArray::_toString"); return;
+    toString(): string {
+      notImplemented("public flash.utils.ByteArray::toString"); return;
     }
     get bytesAvailable(): number /*uint*/ {
       notImplemented("public flash.utils.ByteArray::get bytesAvailable"); return;
+      // return this._bytesAvailable;
     }
     get position(): number /*uint*/ {
       notImplemented("public flash.utils.ByteArray::get position"); return;
+      // return this._position;
     }
     set position(offset: number /*uint*/) {
       offset = offset >>> 0;
       notImplemented("public flash.utils.ByteArray::set position"); return;
+      // this._position = offset;
     }
     get objectEncoding(): number /*uint*/ {
       notImplemented("public flash.utils.ByteArray::get objectEncoding"); return;
+      // return this._objectEncoding;
     }
     set objectEncoding(version: number /*uint*/) {
       version = version >>> 0;
       notImplemented("public flash.utils.ByteArray::set objectEncoding"); return;
+      // this._objectEncoding = version;
     }
     get endian(): string {
       notImplemented("public flash.utils.ByteArray::get endian"); return;
+      // return this._endian;
     }
     set endian(type: string) {
       type = "" + type;
       notImplemented("public flash.utils.ByteArray::set endian"); return;
+      // this._endian = type;
     }
     clear(): void {
       notImplemented("public flash.utils.ByteArray::clear"); return;
-    }
-    atomicCompareAndSwapIntAt(byteIndex: number /*int*/, expectedValue: number /*int*/, newValue: number /*int*/): number /*int*/ {
-      byteIndex = byteIndex | 0; expectedValue = expectedValue | 0; newValue = newValue | 0;
-      notImplemented("public flash.utils.ByteArray::atomicCompareAndSwapIntAt"); return;
-    }
-    atomicCompareAndSwapLength(expectedLength: number /*int*/, newLength: number /*int*/): number /*int*/ {
-      expectedLength = expectedLength | 0; newLength = newLength | 0;
-      notImplemented("public flash.utils.ByteArray::atomicCompareAndSwapLength"); return;
-    }
-    get shareable(): boolean {
-      notImplemented("public flash.utils.ByteArray::get shareable"); return;
-    }
-    set shareable(newValue: boolean) {
-      newValue = !!newValue;
-      notImplemented("public flash.utils.ByteArray::set shareable"); return;
     }
   }
 }

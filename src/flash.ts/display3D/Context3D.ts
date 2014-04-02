@@ -17,30 +17,49 @@
 module Shumway.AVM2.AS.flash.display3D {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Context3D extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["setTextureAt", "setRenderToTexture", "setRenderToBackBuffer"];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.display3D.Context3D");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     setTextureAt: (sampler: number /*int*/, texture: flash.display3D.textures.TextureBase) => void;
     setRenderToTexture: (texture: flash.display3D.textures.TextureBase, enableDepthAndStencil: boolean = false, antiAlias: number /*int*/ = 0, surfaceSelector: number /*int*/ = 0) => void;
     setRenderToBackBuffer: () => void;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _driverInfo: string;
+    // _enableErrorChecking: boolean;
     get driverInfo(): string {
       notImplemented("public flash.display3D.Context3D::get driverInfo"); return;
-    }
-    dispose(): void {
-      notImplemented("public flash.display3D.Context3D::dispose"); return;
+      // return this._driverInfo;
     }
     get enableErrorChecking(): boolean {
       notImplemented("public flash.display3D.Context3D::get enableErrorChecking"); return;
+      // return this._enableErrorChecking;
     }
     set enableErrorChecking(toggle: boolean) {
       toggle = !!toggle;
       notImplemented("public flash.display3D.Context3D::set enableErrorChecking"); return;
+      // this._enableErrorChecking = toggle;
+    }
+    dispose(): void {
+      notImplemented("public flash.display3D.Context3D::dispose"); return;
     }
     configureBackBuffer(width: number /*int*/, height: number /*int*/, antiAlias: number /*int*/, enableDepthAndStencil: boolean = true, wantsBestResolution: boolean = false): void {
       width = width | 0; height = height | 0; antiAlias = antiAlias | 0; enableDepthAndStencil = !!enableDepthAndStencil; wantsBestResolution = !!wantsBestResolution;
@@ -61,7 +80,7 @@ module Shumway.AVM2.AS.flash.display3D {
       program = program;
       notImplemented("public flash.display3D.Context3D::setProgram"); return;
     }
-    setProgramConstantsFromVector(programType: string, firstRegister: number /*int*/, data: ASVector<number>, numRegisters: number /*int*/ = -1): void {
+    setProgramConstantsFromVector(programType: string, firstRegister: number /*int*/, data: ASVector<any>, numRegisters: number /*int*/ = -1): void {
       programType = "" + programType; firstRegister = firstRegister | 0; data = data; numRegisters = numRegisters | 0;
       notImplemented("public flash.display3D.Context3D::setProgramConstantsFromVector"); return;
     }
@@ -88,10 +107,6 @@ module Shumway.AVM2.AS.flash.display3D {
     setDepthTest(depthMask: boolean, passCompareMode: string): void {
       depthMask = !!depthMask; passCompareMode = "" + passCompareMode;
       notImplemented("public flash.display3D.Context3D::setDepthTest"); return;
-    }
-    setRenderToTextureInternal(texture: flash.display3D.textures.TextureBase, targetType: number /*int*/, enableDepthAndStencil: boolean, antiAlias: number /*int*/, surfaceSelector: number /*int*/, colorOutputIndex: number /*int*/): void {
-      texture = texture; targetType = targetType | 0; enableDepthAndStencil = !!enableDepthAndStencil; antiAlias = antiAlias | 0; surfaceSelector = surfaceSelector | 0; colorOutputIndex = colorOutputIndex | 0;
-      notImplemented("public flash.display3D.Context3D::setRenderToTextureInternal"); return;
     }
     setCulling(triangleFaceToCull: string): void {
       triangleFaceToCull = "" + triangleFaceToCull;
@@ -131,6 +146,10 @@ module Shumway.AVM2.AS.flash.display3D {
     drawToBitmapData(destination: flash.display.BitmapData): void {
       destination = destination;
       notImplemented("public flash.display3D.Context3D::drawToBitmapData"); return;
+    }
+    setRenderToTextureInternal(texture: flash.display3D.textures.TextureBase, targetType: number /*int*/, enableDepthAndStencil: boolean, antiAlias: number /*int*/, surfaceSelector: number /*int*/): void {
+      texture = texture; targetType = targetType | 0; enableDepthAndStencil = !!enableDepthAndStencil; antiAlias = antiAlias | 0; surfaceSelector = surfaceSelector | 0;
+      notImplemented("public flash.display3D.Context3D::setRenderToTextureInternal"); return;
     }
     setTextureInternal(sampler: number /*int*/, texture: flash.display3D.textures.Texture): void {
       sampler = sampler | 0; texture = texture;

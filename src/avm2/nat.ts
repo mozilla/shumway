@@ -127,6 +127,8 @@ module Shumway.AVM2.AS {
 
     public static initializer: any = null;
     public static initializers: any = null;
+    public static classInitializer: any = null;
+
     public static callableConstructor: any = ASObject.instanceConstructor;
 
     public static classBindings: ClassBindings;
@@ -378,6 +380,15 @@ module Shumway.AVM2.AS {
     }
 
     /**
+     * Runs the class initializer, if it has one.
+     */
+    static runClassInitializer(self: ASClass) {
+      if (self.classInitializer) {
+        self.classInitializer();
+      }
+    }
+
+    /**
      * Class info.
      */
     classInfo: ClassInfo;
@@ -402,6 +413,11 @@ module Shumway.AVM2.AS {
      * along the inheritance chain are executed before any constructors are called.
      */
     initializer: (...args) => any;
+
+    /**
+     * Native class initializer.
+     */
+    classInitializer: (...args) => any;
 
     /**
      * All native initializers
@@ -1382,6 +1398,7 @@ module Shumway.AVM2.AS {
     }
 
     ASClass.configureInitializers(cls);
+    ASClass.runClassInitializer(cls);
 
     return cls;
   }

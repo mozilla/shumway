@@ -17,21 +17,35 @@
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
   export class SetIntervalTimer extends flash.utils.Timer {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // ["intervalArray", "_clearInterval"];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["reference", "closure", "rest", "onTimer"];
+    
     constructor (closure: ASFunction, delay: number, repeats: boolean, rest: any []) {
       closure = closure; delay = +delay; repeats = !!repeats; rest = rest;
       false && super(undefined, undefined);
       notImplemented("Dummy Constructor: packageInternal flash.utils.SetIntervalTimer");
     }
-    // Static   JS -> AS Bindings
-    static clearInterval: (id_to_clear: number /*uint*/) => void;
-    static intervals: any [];
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    onTimer: (event: flash.events.Event) => void;
-    id: number /*uint*/;
+    
+    // JS -> AS Bindings
+    static intervalArray: any [];
+    static _clearInterval: (id: number /*uint*/) => void;
+    
+    reference: number /*uint*/;
     closure: ASFunction;
     rest: any [];
-    // Instance AS -> JS Bindings
+    onTimer: (event: flash.events.Event) => void;
+    
+    // AS -> JS Bindings
+    
   }
 }

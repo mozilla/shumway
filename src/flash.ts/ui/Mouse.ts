@@ -17,28 +17,53 @@
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Mouse extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.ui.Mouse");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    // static _supportsCursor: boolean;
+    // static _cursor: string;
+    // static _supportsNativeCursor: boolean;
+    get supportsCursor(): boolean {
+      notImplemented("public flash.ui.Mouse::get supportsCursor"); return;
+      // return this._supportsCursor;
+    }
+    get cursor(): string {
+      notImplemented("public flash.ui.Mouse::get cursor"); return;
+      // return this._cursor;
+    }
+    set cursor(value: string) {
+      value = "" + value;
+      notImplemented("public flash.ui.Mouse::set cursor"); return;
+      // this._cursor = value;
+    }
+    get supportsNativeCursor(): boolean {
+      notImplemented("public flash.ui.Mouse::get supportsNativeCursor"); return;
+      // return this._supportsNativeCursor;
+    }
     static hide(): void {
       notImplemented("public flash.ui.Mouse::static hide"); return;
     }
     static show(): void {
       notImplemented("public flash.ui.Mouse::static show"); return;
-    }
-    get supportsCursor(): boolean {
-      notImplemented("public flash.ui.Mouse::get supportsCursor"); return;
-    }
-    get cursor(): string {
-      notImplemented("public flash.ui.Mouse::get cursor"); return;
-    }
-    set cursor(value: string) {
-      value = "" + value;
-      notImplemented("public flash.ui.Mouse::set cursor"); return;
     }
     static registerCursor(name: string, cursor: flash.ui.MouseCursorData): void {
       name = "" + name; cursor = cursor;
@@ -48,10 +73,6 @@ module Shumway.AVM2.AS.flash.ui {
       name = "" + name;
       notImplemented("public flash.ui.Mouse::static unregisterCursor"); return;
     }
-    get supportsNativeCursor(): boolean {
-      notImplemented("public flash.ui.Mouse::get supportsNativeCursor"); return;
-    }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
   }
 }

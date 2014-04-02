@@ -17,15 +17,54 @@
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ObjectInput extends ASNative implements flash.utils.IDataInput {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: packageInternal flash.utils.ObjectInput");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _bytesAvailable: number /*uint*/;
+    // _objectEncoding: number /*uint*/;
+    // _endian: string;
+    get bytesAvailable(): number /*uint*/ {
+      notImplemented("packageInternal flash.utils.ObjectInput::get bytesAvailable"); return;
+      // return this._bytesAvailable;
+    }
+    get objectEncoding(): number /*uint*/ {
+      notImplemented("packageInternal flash.utils.ObjectInput::get objectEncoding"); return;
+      // return this._objectEncoding;
+    }
+    set objectEncoding(version: number /*uint*/) {
+      version = version >>> 0;
+      notImplemented("packageInternal flash.utils.ObjectInput::set objectEncoding"); return;
+      // this._objectEncoding = version;
+    }
+    get endian(): string {
+      notImplemented("packageInternal flash.utils.ObjectInput::get endian"); return;
+      // return this._endian;
+    }
+    set endian(type: string) {
+      type = "" + type;
+      notImplemented("packageInternal flash.utils.ObjectInput::set endian"); return;
+      // this._endian = type;
+    }
     readBytes(bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
       bytes = bytes; offset = offset >>> 0; length = length >>> 0;
       notImplemented("packageInternal flash.utils.ObjectInput::readBytes"); return;
@@ -68,25 +107,8 @@ module Shumway.AVM2.AS.flash.utils {
       length = length >>> 0;
       notImplemented("packageInternal flash.utils.ObjectInput::readUTFBytes"); return;
     }
-    get bytesAvailable(): number /*uint*/ {
-      notImplemented("packageInternal flash.utils.ObjectInput::get bytesAvailable"); return;
-    }
     readObject(): any {
       notImplemented("packageInternal flash.utils.ObjectInput::readObject"); return;
-    }
-    get objectEncoding(): number /*uint*/ {
-      notImplemented("packageInternal flash.utils.ObjectInput::get objectEncoding"); return;
-    }
-    set objectEncoding(version: number /*uint*/) {
-      version = version >>> 0;
-      notImplemented("packageInternal flash.utils.ObjectInput::set objectEncoding"); return;
-    }
-    get endian(): string {
-      notImplemented("packageInternal flash.utils.ObjectInput::get endian"); return;
-    }
-    set endian(type: string) {
-      type = "" + type;
-      notImplemented("packageInternal flash.utils.ObjectInput::set endian"); return;
     }
   }
 }

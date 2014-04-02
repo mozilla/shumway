@@ -17,16 +17,27 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class NetGroup extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["close", "replicationStrategy", "replicationStrategy", "addHaveObjects", "removeHaveObjects", "addWantObjects", "removeWantObjects", "writeRequestedObject", "denyRequestedObject", "estimatedMemberCount", "neighborCount", "receiveMode", "receiveMode", "post", "sendToNearest", "sendToNeighbor", "sendToAllNeighbors", "addNeighbor", "addMemberHint"];
+    
     constructor (connection: flash.net.NetConnection, groupspec: string) {
       connection = connection; groupspec = "" + groupspec;
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.net.NetGroup");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    onStatus: (info: any) => void;
+    
+    // JS -> AS Bindings
+    
     close: () => void;
     replicationStrategy: string;
     addHaveObjects: (startIndex: number, endIndex: number) => void;
@@ -44,17 +55,19 @@ module Shumway.AVM2.AS.flash.net {
     sendToAllNeighbors: (message: ASObject) => string;
     addNeighbor: (peerID: string) => boolean;
     addMemberHint: (peerID: string) => boolean;
-    // Instance AS -> JS Bindings
-    ctor(connection: flash.net.NetConnection, groupspec: string): void {
-      connection = connection; groupspec = "" + groupspec;
-      notImplemented("public flash.net.NetGroup::ctor"); return;
-    }
-    invoke(index: number /*uint*/): any {
-      index = index >>> 0;
-      notImplemented("public flash.net.NetGroup::invoke"); return;
-    }
+    
+    // AS -> JS Bindings
+    
+    // _replicationStrategy: string;
+    // _estimatedMemberCount: number;
+    // _neighborCount: number;
+    // _receiveMode: string;
+    // _info: flash.net.NetGroupInfo;
+    // _localCoverageFrom: string;
+    // _localCoverageTo: string;
     get info(): flash.net.NetGroupInfo {
       notImplemented("public flash.net.NetGroup::get info"); return;
+      // return this._info;
     }
     convertPeerIDToGroupAddress(peerID: string): string {
       peerID = "" + peerID;
@@ -62,9 +75,11 @@ module Shumway.AVM2.AS.flash.net {
     }
     get localCoverageFrom(): string {
       notImplemented("public flash.net.NetGroup::get localCoverageFrom"); return;
+      // return this._localCoverageFrom;
     }
     get localCoverageTo(): string {
       notImplemented("public flash.net.NetGroup::get localCoverageTo"); return;
+      // return this._localCoverageTo;
     }
   }
 }

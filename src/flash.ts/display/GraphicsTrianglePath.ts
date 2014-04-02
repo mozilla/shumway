@@ -17,20 +17,35 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GraphicsTrianglePath extends ASNative implements IGraphicsPath, IGraphicsData {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["indices", "vertices", "uvtData", "_culling", "culling", "culling"];
+    
     constructor (vertices: ASVector<number> = null, indices: ASVector<number /*int*/> = null, uvtData: ASVector<number> = null, culling: string = "none") {
       vertices = vertices; indices = indices; uvtData = uvtData; culling = "" + culling;
       false && super();
       notImplemented("Dummy Constructor: public flash.display.GraphicsTrianglePath");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     indices: ASVector<number /*int*/>;
     vertices: ASVector<number>;
     uvtData: ASVector<number>;
-    culling: string;
     _culling: string;
-    // Instance AS -> JS Bindings
+    culling: string;
+    
+    // AS -> JS Bindings
+    
+    // _culling: string;
   }
 }

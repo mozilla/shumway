@@ -17,25 +17,42 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GraphicsStroke extends ASNative implements IGraphicsStroke, IGraphicsData {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["thickness", "pixelHinting", "miterLimit", "fill", "_scaleMode", "_caps", "_joints", "scaleMode", "scaleMode", "caps", "caps", "joints", "joints"];
+    
     constructor (thickness: number = NaN, pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = "none", joints: string = "round", miterLimit: number = 3, fill: flash.display.IGraphicsFill = null) {
       thickness = +thickness; pixelHinting = !!pixelHinting; scaleMode = "" + scaleMode; caps = "" + caps; joints = "" + joints; miterLimit = +miterLimit; fill = fill;
       false && super();
       notImplemented("Dummy Constructor: public flash.display.GraphicsStroke");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     thickness: number;
     pixelHinting: boolean;
-    caps: string;
-    _caps: string;
-    joints: string;
-    _joints: string;
     miterLimit: number;
-    scaleMode: string;
-    _scaleMode: string;
     fill: flash.display.IGraphicsFill;
-    // Instance AS -> JS Bindings
+    _scaleMode: string;
+    _caps: string;
+    _joints: string;
+    scaleMode: string;
+    caps: string;
+    joints: string;
+    
+    // AS -> JS Bindings
+    
+    // _scaleMode: string;
+    // _caps: string;
+    // _joints: string;
   }
 }

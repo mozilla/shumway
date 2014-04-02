@@ -17,20 +17,37 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class SampleDataEvent extends flash.events.Event {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_theposition", "_thedata", "theposition", "theposition", "thedata", "thedata", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, theposition: number = 0, thedata: flash.utils.ByteArray = null) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; theposition = +theposition; thedata = thedata;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.SampleDataEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    static SAMPLE_DATA: string = "sampleData";
+    
+    _theposition: number;
+    _thedata: flash.utils.ByteArray;
+    theposition: number;
+    thedata: flash.utils.ByteArray;
     clone: () => flash.events.Event;
-    position: number;
-    data: flash.utils.ByteArray;
-    m_position: number;
-    m_data: flash.utils.ByteArray;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _theposition: number;
+    // _thedata: flash.utils.ByteArray;
   }
 }

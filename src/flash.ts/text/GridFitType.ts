@@ -17,14 +17,31 @@
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GridFitType extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.text.GridFitType");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static NONE: string = "none";
+    static PIXEL: string = "pixel";
+    static SUBPIXEL: string = "subpixel";
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

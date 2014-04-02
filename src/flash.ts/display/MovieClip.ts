@@ -17,31 +17,90 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class MovieClip extends flash.display.Sprite {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["currentLabels"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.MovieClip");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     currentLabels: any [];
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _currentFrame: number /*int*/;
+    // _framesLoaded: number /*int*/;
+    // _totalFrames: number /*int*/;
+    // _trackAsMenu: boolean;
+    // _scenes: any [];
+    // _currentScene: flash.display.Scene;
+    // _currentLabel: string;
+    // _currentFrameLabel: string;
+    // _currentLabels: any [];
+    // _enabled: boolean;
+    // _isPlaying: boolean;
     get currentFrame(): number /*int*/ {
       notImplemented("public flash.display.MovieClip::get currentFrame"); return;
+      // return this._currentFrame;
     }
     get framesLoaded(): number /*int*/ {
       notImplemented("public flash.display.MovieClip::get framesLoaded"); return;
+      // return this._framesLoaded;
     }
     get totalFrames(): number /*int*/ {
       notImplemented("public flash.display.MovieClip::get totalFrames"); return;
+      // return this._totalFrames;
     }
     get trackAsMenu(): boolean {
       notImplemented("public flash.display.MovieClip::get trackAsMenu"); return;
+      // return this._trackAsMenu;
     }
     set trackAsMenu(value: boolean) {
       value = !!value;
       notImplemented("public flash.display.MovieClip::set trackAsMenu"); return;
+      // this._trackAsMenu = value;
+    }
+    get scenes(): any [] {
+      notImplemented("public flash.display.MovieClip::get scenes"); return;
+      // return this._scenes;
+    }
+    get currentScene(): flash.display.Scene {
+      notImplemented("public flash.display.MovieClip::get currentScene"); return;
+      // return this._currentScene;
+    }
+    get currentLabel(): string {
+      notImplemented("public flash.display.MovieClip::get currentLabel"); return;
+      // return this._currentLabel;
+    }
+    get currentFrameLabel(): string {
+      notImplemented("public flash.display.MovieClip::get currentFrameLabel"); return;
+      // return this._currentFrameLabel;
+    }
+    get enabled(): boolean {
+      notImplemented("public flash.display.MovieClip::get enabled"); return;
+      // return this._enabled;
+    }
+    set enabled(value: boolean) {
+      value = !!value;
+      notImplemented("public flash.display.MovieClip::set enabled"); return;
+      // this._enabled = value;
+    }
+    get isPlaying(): boolean {
+      notImplemented("public flash.display.MovieClip::get isPlaying"); return;
+      // return this._isPlaying;
     }
     play(): void {
       notImplemented("public flash.display.MovieClip::play"); return;
@@ -66,33 +125,11 @@ module Shumway.AVM2.AS.flash.display {
     addFrameScript(): void {
       notImplemented("public flash.display.MovieClip::addFrameScript"); return;
     }
-    get scenes(): any [] {
-      notImplemented("public flash.display.MovieClip::get scenes"); return;
-    }
-    get currentScene(): flash.display.Scene {
-      notImplemented("public flash.display.MovieClip::get currentScene"); return;
-    }
-    get currentLabel(): string {
-      notImplemented("public flash.display.MovieClip::get currentLabel"); return;
-    }
-    get currentFrameLabel(): string {
-      notImplemented("public flash.display.MovieClip::get currentFrameLabel"); return;
-    }
     prevScene(): void {
       notImplemented("public flash.display.MovieClip::prevScene"); return;
     }
     nextScene(): void {
       notImplemented("public flash.display.MovieClip::nextScene"); return;
-    }
-    get enabled(): boolean {
-      notImplemented("public flash.display.MovieClip::get enabled"); return;
-    }
-    set enabled(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.display.MovieClip::set enabled"); return;
-    }
-    get isPlaying(): boolean {
-      notImplemented("public flash.display.MovieClip::get isPlaying"); return;
     }
   }
 }

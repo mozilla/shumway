@@ -17,18 +17,33 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class UncaughtErrorEvent extends flash.events.ErrorEvent {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_error", "error", "clone", "toString"];
+    
     constructor (type: string = "uncaughtError", bubbles: boolean = true, cancelable: boolean = true, error_in: any = null) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable;
       false && super(undefined, undefined, undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.UncaughtErrorEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    static UNCAUGHT_ERROR: string = "uncaughtError";
+    
     _error: any;
-    clone: () => flash.events.Event;
     error: any;
-    // Instance AS -> JS Bindings
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
   }
 }

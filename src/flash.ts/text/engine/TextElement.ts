@@ -17,19 +17,35 @@
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   export class TextElement extends flash.text.engine.ContentElement {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor (text: string = null, elementFormat: flash.text.engine.ElementFormat = null, eventMirror: flash.events.EventDispatcher = null, textRotation: string = "rotate0") {
       text = "" + text; elementFormat = elementFormat; eventMirror = eventMirror; textRotation = "" + textRotation;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.text.engine.TextElement");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _text: string;
     set text(value: string) {
       value = "" + value;
       notImplemented("public flash.text.engine.TextElement::set text"); return;
+      // this._text = value;
     }
     replaceText(beginIndex: number /*int*/, endIndex: number /*int*/, newText: string): void {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0; newText = "" + newText;

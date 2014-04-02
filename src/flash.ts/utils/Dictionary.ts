@@ -17,16 +17,30 @@
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Dictionary extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor (weakKeys: boolean = false) {
       weakKeys = !!weakKeys;
       false && super();
       notImplemented("Dummy Constructor: public flash.utils.Dictionary");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
     init(weakKeys: boolean): void {
       weakKeys = !!weakKeys;
       notImplemented("public flash.utils.Dictionary::init"); return;

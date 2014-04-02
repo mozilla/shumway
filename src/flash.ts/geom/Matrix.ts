@@ -17,22 +17,33 @@
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Matrix extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["a", "b", "c", "d", "tx", "ty", "concat", "invert", "identity", "createBox", "createGradientBox", "rotate", "translate", "scale", "deltaTransformPoint", "transformPoint", "copyFrom", "setTo", "copyRowTo", "copyColumnTo", "copyRowFrom", "copyColumnFrom", "clone", "toString"];
+    
     constructor (a: number = 1, b: number = 0, c: number = 0, d: number = 1, tx: number = 0, ty: number = 0) {
       a = +a; b = +b; c = +c; d = +d; tx = +tx; ty = +ty;
       false && super();
       notImplemented("Dummy Constructor: public flash.geom.Matrix");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     a: number;
     b: number;
     c: number;
     d: number;
     tx: number;
     ty: number;
-    clone: () => flash.geom.Matrix;
     concat: (m: flash.geom.Matrix) => void;
     invert: () => void;
     identity: () => void;
@@ -49,6 +60,9 @@ module Shumway.AVM2.AS.flash.geom {
     copyColumnTo: (column: number /*uint*/, vector3D: flash.geom.Vector3D) => void;
     copyRowFrom: (row: number /*uint*/, vector3D: flash.geom.Vector3D) => void;
     copyColumnFrom: (column: number /*uint*/, vector3D: flash.geom.Vector3D) => void;
-    // Instance AS -> JS Bindings
+    clone: () => flash.geom.Matrix;
+    
+    // AS -> JS Bindings
+    
   }
 }

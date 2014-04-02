@@ -17,13 +17,28 @@
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ApplicationInstaller extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.system.ApplicationInstaller");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
     static stringsDigest(strings: ASXML): string {
       strings = strings;
       notImplemented("public flash.system.ApplicationInstaller::static stringsDigest"); return;
@@ -32,16 +47,15 @@ module Shumway.AVM2.AS.flash.system {
       icon = icon;
       notImplemented("public flash.system.ApplicationInstaller::static iconDigest"); return;
     }
-    // Instance JS -> AS Bindings
-    _strings: ASXML;
-    _icon: flash.utils.ByteArray;
-    // Instance AS -> JS Bindings
+    
+    // _isInstalled: boolean;
+    get isInstalled(): boolean {
+      notImplemented("public flash.system.ApplicationInstaller::get isInstalled"); return;
+      // return this._isInstalled;
+    }
     install(shortcutsOnly: boolean = false): void {
       shortcutsOnly = !!shortcutsOnly;
       notImplemented("public flash.system.ApplicationInstaller::install"); return;
-    }
-    get isInstalled(): boolean {
-      notImplemented("public flash.system.ApplicationInstaller::get isInstalled"); return;
     }
   }
 }

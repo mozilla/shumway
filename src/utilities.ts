@@ -844,7 +844,7 @@ module Shumway {
       this._out = outFn || IndentingWriter._consoleOutFn;
     }
 
-    writeLn(str: string) {
+    writeLn(str: string = "") {
       if (!this._suppressOutput) {
         this._out(this._padding + str);
       }

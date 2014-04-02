@@ -17,23 +17,52 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class MouseEvent extends flash.events.Event {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_relatedObject", "_ctrlKey", "_altKey", "_shiftKey", "_buttonDown", "_delta", "_isRelatedObjectInaccessible", "relatedObject", "relatedObject", "ctrlKey", "ctrlKey", "altKey", "altKey", "shiftKey", "shiftKey", "buttonDown", "buttonDown", "delta", "delta", "stageX", "stageY", "isRelatedObjectInaccessible", "isRelatedObjectInaccessible", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = true, cancelable: boolean = false, localX: number = undefined, localY: number = undefined, relatedObject: flash.display.InteractiveObject = null, ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false, buttonDown: boolean = false, delta: number /*int*/ = 0) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; localX = +localX; localY = +localY; relatedObject = relatedObject; ctrlKey = !!ctrlKey; altKey = !!altKey; shiftKey = !!shiftKey; buttonDown = !!buttonDown; delta = delta | 0;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.MouseEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_relatedObject: flash.display.InteractiveObject;
-    m_ctrlKey: boolean;
-    m_altKey: boolean;
-    m_shiftKey: boolean;
-    m_buttonDown: boolean;
-    m_delta: number /*int*/;
-    m_isRelatedObjectInaccessible: boolean;
-    clone: () => flash.events.Event;
+    
+    // JS -> AS Bindings
+    static CLICK: string = "click";
+    static DOUBLE_CLICK: string = "doubleClick";
+    static MOUSE_DOWN: string = "mouseDown";
+    static MOUSE_MOVE: string = "mouseMove";
+    static MOUSE_OUT: string = "mouseOut";
+    static MOUSE_OVER: string = "mouseOver";
+    static MOUSE_UP: string = "mouseUp";
+    static RELEASE_OUTSIDE: string = "releaseOutside";
+    static MOUSE_WHEEL: string = "mouseWheel";
+    static ROLL_OUT: string = "rollOut";
+    static ROLL_OVER: string = "rollOver";
+    static MIDDLE_CLICK: string = "middleClick";
+    static MIDDLE_MOUSE_DOWN: string = "middleMouseDown";
+    static MIDDLE_MOUSE_UP: string = "middleMouseUp";
+    static RIGHT_CLICK: string = "rightClick";
+    static RIGHT_MOUSE_DOWN: string = "rightMouseDown";
+    static RIGHT_MOUSE_UP: string = "rightMouseUp";
+    static CONTEXT_MENU: string = "contextMenu";
+    
+    _relatedObject: flash.display.InteractiveObject;
+    _ctrlKey: boolean;
+    _altKey: boolean;
+    _shiftKey: boolean;
+    _buttonDown: boolean;
+    _delta: number /*int*/;
+    _isRelatedObjectInaccessible: boolean;
     relatedObject: flash.display.InteractiveObject;
     ctrlKey: boolean;
     altKey: boolean;
@@ -43,20 +72,58 @@ module Shumway.AVM2.AS.flash.events {
     stageX: number;
     stageY: number;
     isRelatedObjectInaccessible: boolean;
-    // Instance AS -> JS Bindings
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
+    // _localX: number;
+    // _localY: number;
+    // _relatedObject: flash.display.InteractiveObject;
+    // _ctrlKey: boolean;
+    // _altKey: boolean;
+    // _shiftKey: boolean;
+    // _buttonDown: boolean;
+    // _delta: number /*int*/;
+    // _stageX: number;
+    // _stageY: number;
+    // _isRelatedObjectInaccessible: boolean;
+    // _movementX: number;
+    // _movementY: number;
     get localX(): number {
       notImplemented("public flash.events.MouseEvent::get localX"); return;
+      // return this._localX;
     }
     set localX(value: number) {
       value = +value;
       notImplemented("public flash.events.MouseEvent::set localX"); return;
+      // this._localX = value;
     }
     get localY(): number {
       notImplemented("public flash.events.MouseEvent::get localY"); return;
+      // return this._localY;
     }
     set localY(value: number) {
       value = +value;
       notImplemented("public flash.events.MouseEvent::set localY"); return;
+      // this._localY = value;
+    }
+    get movementX(): number {
+      notImplemented("public flash.events.MouseEvent::get movementX"); return;
+      // return this._movementX;
+    }
+    set movementX(value: number) {
+      value = +value;
+      notImplemented("public flash.events.MouseEvent::set movementX"); return;
+      // this._movementX = value;
+    }
+    get movementY(): number {
+      notImplemented("public flash.events.MouseEvent::get movementY"); return;
+      // return this._movementY;
+    }
+    set movementY(value: number) {
+      value = +value;
+      notImplemented("public flash.events.MouseEvent::set movementY"); return;
+      // this._movementY = value;
     }
     updateAfterEvent(): void {
       notImplemented("public flash.events.MouseEvent::updateAfterEvent"); return;
@@ -66,20 +133,6 @@ module Shumway.AVM2.AS.flash.events {
     }
     getStageY(): number {
       notImplemented("public flash.events.MouseEvent::getStageY"); return;
-    }
-    get movementX(): number {
-      notImplemented("public flash.events.MouseEvent::get movementX"); return;
-    }
-    set movementX(value: number) {
-      value = +value;
-      notImplemented("public flash.events.MouseEvent::set movementX"); return;
-    }
-    get movementY(): number {
-      notImplemented("public flash.events.MouseEvent::get movementY"); return;
-    }
-    set movementY(value: number) {
-      value = +value;
-      notImplemented("public flash.events.MouseEvent::set movementY"); return;
     }
   }
 }

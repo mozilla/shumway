@@ -17,18 +17,32 @@
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   export class TextRun extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["beginIndex", "endIndex", "textFormat"];
+    
     constructor (beginIndex: number /*int*/, endIndex: number /*int*/, textFormat: flash.text.TextFormat) {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0; textFormat = textFormat;
       false && super();
       notImplemented("Dummy Constructor: public flash.text.TextRun");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     beginIndex: number /*int*/;
     endIndex: number /*int*/;
     textFormat: flash.text.TextFormat;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
   }
 }

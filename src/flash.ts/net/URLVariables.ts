@@ -17,17 +17,32 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class URLVariables extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["decode", "toString", "unescape", "escape"];
+    
     constructor (source: string = null) {
       source = "" + source;
       false && super();
       notImplemented("Dummy Constructor: public flash.net.URLVariables");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     decode: (source: string) => void;
-    _unescape: (value: string) => string;
-    // Instance AS -> JS Bindings
+    unescape: (s: string) => string;
+    escape: (s: string) => string;
+    
+    // AS -> JS Bindings
+    
   }
 }

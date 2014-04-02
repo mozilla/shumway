@@ -17,83 +17,142 @@
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   export class TextLine extends flash.display.DisplayObjectContainer {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["userData", "focusRect", "tabChildren", "tabEnabled", "tabIndex", "contextMenu", "getMirrorRegion", "flushAtomData"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.text.engine.TextLine");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    static MAX_LINE_WIDTH: number /*int*/ = 1000000;
+    
+    userData: any;
     focusRect: ASObject;
     tabChildren: boolean;
     tabEnabled: boolean;
     tabIndex: number /*int*/;
-    userData: any;
+    contextMenu: flash.ui.ContextMenu;
     getMirrorRegion: (mirror: flash.events.EventDispatcher) => flash.text.engine.TextLineMirrorRegion;
     flushAtomData: () => void;
-    contextMenu: flash.ui.ContextMenu;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _focusRect: ASObject;
+    // _tabChildren: boolean;
+    // _tabEnabled: boolean;
+    // _tabIndex: number /*int*/;
+    // _contextMenu: flash.ui.ContextMenu;
+    // _textBlock: flash.text.engine.TextBlock;
+    // _hasGraphicElement: boolean;
+    // _hasTabs: boolean;
+    // _nextLine: flash.text.engine.TextLine;
+    // _previousLine: flash.text.engine.TextLine;
+    // _ascent: number;
+    // _descent: number;
+    // _textHeight: number;
+    // _textWidth: number;
+    // _totalAscent: number;
+    // _totalDescent: number;
+    // _totalHeight: number;
+    // _textBlockBeginIndex: number /*int*/;
+    // _rawTextLength: number /*int*/;
+    // _specifiedWidth: number;
+    // _unjustifiedTextWidth: number;
+    // _validity: string;
+    // _atomCount: number /*int*/;
+    // _mirrorRegions: ASVector<flash.text.engine.TextLineMirrorRegion>;
     get textBlock(): flash.text.engine.TextBlock {
       notImplemented("public flash.text.engine.TextLine::get textBlock"); return;
+      // return this._textBlock;
     }
     get hasGraphicElement(): boolean {
       notImplemented("public flash.text.engine.TextLine::get hasGraphicElement"); return;
+      // return this._hasGraphicElement;
     }
     get hasTabs(): boolean {
       notImplemented("public flash.text.engine.TextLine::get hasTabs"); return;
+      // return this._hasTabs;
     }
     get nextLine(): flash.text.engine.TextLine {
       notImplemented("public flash.text.engine.TextLine::get nextLine"); return;
+      // return this._nextLine;
     }
     get previousLine(): flash.text.engine.TextLine {
       notImplemented("public flash.text.engine.TextLine::get previousLine"); return;
+      // return this._previousLine;
     }
     get ascent(): number {
       notImplemented("public flash.text.engine.TextLine::get ascent"); return;
+      // return this._ascent;
     }
     get descent(): number {
       notImplemented("public flash.text.engine.TextLine::get descent"); return;
+      // return this._descent;
     }
     get textHeight(): number {
       notImplemented("public flash.text.engine.TextLine::get textHeight"); return;
+      // return this._textHeight;
     }
     get textWidth(): number {
       notImplemented("public flash.text.engine.TextLine::get textWidth"); return;
+      // return this._textWidth;
     }
     get totalAscent(): number {
       notImplemented("public flash.text.engine.TextLine::get totalAscent"); return;
+      // return this._totalAscent;
     }
     get totalDescent(): number {
       notImplemented("public flash.text.engine.TextLine::get totalDescent"); return;
+      // return this._totalDescent;
     }
     get totalHeight(): number {
       notImplemented("public flash.text.engine.TextLine::get totalHeight"); return;
+      // return this._totalHeight;
     }
     get textBlockBeginIndex(): number /*int*/ {
       notImplemented("public flash.text.engine.TextLine::get textBlockBeginIndex"); return;
+      // return this._textBlockBeginIndex;
     }
     get rawTextLength(): number /*int*/ {
       notImplemented("public flash.text.engine.TextLine::get rawTextLength"); return;
+      // return this._rawTextLength;
     }
     get specifiedWidth(): number {
       notImplemented("public flash.text.engine.TextLine::get specifiedWidth"); return;
+      // return this._specifiedWidth;
     }
     get unjustifiedTextWidth(): number {
       notImplemented("public flash.text.engine.TextLine::get unjustifiedTextWidth"); return;
+      // return this._unjustifiedTextWidth;
     }
     get validity(): string {
       notImplemented("public flash.text.engine.TextLine::get validity"); return;
+      // return this._validity;
     }
     set validity(value: string) {
       value = "" + value;
       notImplemented("public flash.text.engine.TextLine::set validity"); return;
+      // this._validity = value;
     }
     get atomCount(): number /*int*/ {
       notImplemented("public flash.text.engine.TextLine::get atomCount"); return;
+      // return this._atomCount;
     }
     get mirrorRegions(): ASVector<flash.text.engine.TextLineMirrorRegion> {
       notImplemented("public flash.text.engine.TextLine::get mirrorRegions"); return;
+      // return this._mirrorRegions;
     }
     getAtomIndexAtPoint(stageX: number, stageY: number): number /*int*/ {
       stageX = +stageX; stageY = +stageY;

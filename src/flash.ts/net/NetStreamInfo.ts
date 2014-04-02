@@ -17,40 +17,27 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   export class NetStreamInfo extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["currentBytesPerSecond", "byteCount", "maxBytesPerSecond", "audioBytesPerSecond", "audioByteCount", "videoBytesPerSecond", "videoByteCount", "dataBytesPerSecond", "dataByteCount", "playbackBytesPerSecond", "droppedFrames", "audioBufferByteLength", "videoBufferByteLength", "dataBufferByteLength", "audioBufferLength", "videoBufferLength", "dataBufferLength", "SRTT", "audioLossRate", "videoLossRate", "metaData", "xmpData", "uri", "resourceName", "isLive", "toString", "_curBPS", "_byteCount", "_maxBPS", "_audioBPS", "_audioByteCount", "_videoBPS", "_videoByteCount", "_dataBPS", "_dataByteCount", "_playbackBPS", "_droppedFrames", "_audioBufferByteLength", "_videoBufferByteLength", "_dataBufferByteLength", "_audioBufferLength", "_videoBufferLength", "_dataBufferLength", "_srtt", "_audioLossRate", "_videoLossRate", "_metaData", "_xmpData", "_uri", "_resourceName", "_isLive"];
+    
     constructor (curBPS: number, byteCount: number, maxBPS: number, audioBPS: number, audioByteCount: number, videoBPS: number, videoByteCount: number, dataBPS: number, dataByteCount: number, playbackBPS: number, droppedFrames: number, audioBufferByteLength: number, videoBufferByteLength: number, dataBufferByteLength: number, audioBufferLength: number, videoBufferLength: number, dataBufferLength: number, srtt: number, audioLossRate: number, videoLossRate: number, metaData: ASObject = null, xmpData: ASObject = null, uri: string = null, resourceName: string = null, isLive: boolean = true) {
       curBPS = +curBPS; byteCount = +byteCount; maxBPS = +maxBPS; audioBPS = +audioBPS; audioByteCount = +audioByteCount; videoBPS = +videoBPS; videoByteCount = +videoByteCount; dataBPS = +dataBPS; dataByteCount = +dataByteCount; playbackBPS = +playbackBPS; droppedFrames = +droppedFrames; audioBufferByteLength = +audioBufferByteLength; videoBufferByteLength = +videoBufferByteLength; dataBufferByteLength = +dataBufferByteLength; audioBufferLength = +audioBufferLength; videoBufferLength = +videoBufferLength; dataBufferLength = +dataBufferLength; srtt = +srtt; audioLossRate = +audioLossRate; videoLossRate = +videoLossRate; metaData = metaData; xmpData = xmpData; uri = "" + uri; resourceName = "" + resourceName; isLive = !!isLive;
       false && super();
       notImplemented("Dummy Constructor: public flash.net.NetStreamInfo");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_currentBytesPerSecond: number;
-    m_byteCount: number;
-    m_maxBytesPerSecond: number;
-    m_audioBytesPerSecond: number;
-    m_audioByteCount: number;
-    m_videoBytesPerSecond: number;
-    m_videoByteCount: number;
-    m_dataBytesPerSecond: number;
-    m_dataByteCount: number;
-    m_playbackBytesPerSecond: number;
-    m_droppedFrames: number;
-    m_audioBufferByteLength: number;
-    m_videoBufferByteLength: number;
-    m_dataBufferByteLength: number;
-    m_audioBufferLength: number;
-    m_videoBufferLength: number;
-    m_dataBufferLength: number;
-    m_srtt: number;
-    m_audioLossRate: number;
-    m_videoLossRate: number;
-    m_metaData: ASObject;
-    m_xmpData: ASObject;
-    m_resourceName: string;
-    m_uri: string;
-    m_isLive: boolean;
+    
+    // JS -> AS Bindings
+    
     currentBytesPerSecond: number;
     byteCount: number;
     maxBytesPerSecond: number;
@@ -76,6 +63,58 @@ module Shumway.AVM2.AS.flash.net {
     uri: string;
     resourceName: string;
     isLive: boolean;
-    // Instance AS -> JS Bindings
+    _curBPS: number;
+    _byteCount: number;
+    _maxBPS: number;
+    _audioBPS: number;
+    _audioByteCount: number;
+    _videoBPS: number;
+    _videoByteCount: number;
+    _dataBPS: number;
+    _dataByteCount: number;
+    _playbackBPS: number;
+    _droppedFrames: number;
+    _audioBufferByteLength: number;
+    _videoBufferByteLength: number;
+    _dataBufferByteLength: number;
+    _audioBufferLength: number;
+    _videoBufferLength: number;
+    _dataBufferLength: number;
+    _srtt: number;
+    _audioLossRate: number;
+    _videoLossRate: number;
+    _metaData: ASObject;
+    _xmpData: ASObject;
+    _uri: string;
+    _resourceName: string;
+    _isLive: boolean;
+    
+    // AS -> JS Bindings
+    
+    // _currentBytesPerSecond: number;
+    // _byteCount: number;
+    // _maxBytesPerSecond: number;
+    // _audioBytesPerSecond: number;
+    // _audioByteCount: number;
+    // _videoBytesPerSecond: number;
+    // _videoByteCount: number;
+    // _dataBytesPerSecond: number;
+    // _dataByteCount: number;
+    // _playbackBytesPerSecond: number;
+    // _droppedFrames: number;
+    // _audioBufferByteLength: number;
+    // _videoBufferByteLength: number;
+    // _dataBufferByteLength: number;
+    // _audioBufferLength: number;
+    // _videoBufferLength: number;
+    // _dataBufferLength: number;
+    // _SRTT: number;
+    // _audioLossRate: number;
+    // _videoLossRate: number;
+    // _metaData: ASObject;
+    // _xmpData: ASObject;
+    // _uri: string;
+    // _resourceName: string;
+    // _isLive: boolean;
   }
 }

@@ -17,14 +17,32 @@
 module Shumway.AVM2.AS.flash.desktop {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ClipboardTransferMode extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.desktop.ClipboardTransferMode");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static ORIGINAL_PREFERRED: string = "originalPreferred";
+    static ORIGINAL_ONLY: string = "originalOnly";
+    static CLONE_PREFERRED: string = "clonePreferred";
+    static CLONE_ONLY: string = "cloneOnly";
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

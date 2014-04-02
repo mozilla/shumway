@@ -17,25 +17,43 @@
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
   export class CurrencyParseResult extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor (value: number = NaN, symbol: string = "") {
       value = +value; symbol = "" + symbol;
       false && super();
       notImplemented("Dummy Constructor: public flash.globalization.CurrencyParseResult");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
-    ctor(value: number, symbol: string): void {
-      value = +value; symbol = "" + symbol;
-      notImplemented("public flash.globalization.CurrencyParseResult::ctor"); return;
-    }
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    
+    // _value: number;
+    // _currencyString: string;
     get value(): number {
       notImplemented("public flash.globalization.CurrencyParseResult::get value"); return;
+      // return this._value;
     }
     get currencyString(): string {
       notImplemented("public flash.globalization.CurrencyParseResult::get currencyString"); return;
+      // return this._currencyString;
+    }
+    ctor(value: number, symbol: string): void {
+      value = +value; symbol = "" + symbol;
+      notImplemented("public flash.globalization.CurrencyParseResult::ctor"); return;
     }
   }
 }

@@ -17,22 +17,41 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class HTTPStatusEvent extends flash.events.Event {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_status", "_responseURL", "_responseHeaders", "status", "responseURL", "responseURL", "responseHeaders", "responseHeaders", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, status: number /*int*/ = 0) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; status = status | 0;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.HTTPStatusEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_status: number /*int*/;
-    m_responseHeaders: any [];
-    m_responseUrl: string;
-    clone: () => flash.events.Event;
+    
+    // JS -> AS Bindings
+    static HTTP_STATUS: string = "httpStatus";
+    static HTTP_RESPONSE_STATUS: string = "httpResponseStatus";
+    
+    _status: number /*int*/;
+    _responseURL: string;
+    _responseHeaders: any [];
     status: number /*int*/;
     responseURL: string;
     responseHeaders: any [];
-    // Instance AS -> JS Bindings
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
+    // _status: number /*int*/;
+    // _responseURL: string;
+    // _responseHeaders: any [];
   }
 }

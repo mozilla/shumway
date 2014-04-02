@@ -17,13 +17,35 @@
 module Shumway.AVM2.AS.flash.trace {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Trace extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.trace.Trace");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static OFF: number /*int*/ = undefined;
+    static METHODS: number /*int*/ = 1;
+    static METHODS_WITH_ARGS: number /*int*/ = 2;
+    static METHODS_AND_LINES: number /*int*/ = 3;
+    static METHODS_AND_LINES_WITH_ARGS: number /*int*/ = 4;
+    static FILE: any = 1;
+    static LISTENER: any = 2;
+    
+    
+    // AS -> JS Bindings
     static setLevel(l: number /*int*/, target: number /*int*/ = 2): any {
       l = l | 0; target = target | 0;
       notImplemented("public flash.trace.Trace::static setLevel"); return;
@@ -39,7 +61,6 @@ module Shumway.AVM2.AS.flash.trace {
     static getListener(): ASFunction {
       notImplemented("public flash.trace.Trace::static getListener"); return;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
   }
 }

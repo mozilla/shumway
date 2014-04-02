@@ -17,40 +17,68 @@
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Multitouch extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.ui.Multitouch");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    // static _inputMode: string;
+    // static _supportsTouchEvents: boolean;
+    // static _supportsGestureEvents: boolean;
+    // static _supportedGestures: ASVector<any>;
+    // static _maxTouchPoints: number /*int*/;
+    // static _mapTouchToMouse: boolean;
     get inputMode(): string {
       notImplemented("public flash.ui.Multitouch::get inputMode"); return;
+      // return this._inputMode;
     }
     set inputMode(value: string) {
       value = "" + value;
       notImplemented("public flash.ui.Multitouch::set inputMode"); return;
+      // this._inputMode = value;
     }
     get supportsTouchEvents(): boolean {
       notImplemented("public flash.ui.Multitouch::get supportsTouchEvents"); return;
+      // return this._supportsTouchEvents;
     }
     get supportsGestureEvents(): boolean {
       notImplemented("public flash.ui.Multitouch::get supportsGestureEvents"); return;
+      // return this._supportsGestureEvents;
     }
-    get supportedGestures(): ASVector<string> {
+    get supportedGestures(): ASVector<any> {
       notImplemented("public flash.ui.Multitouch::get supportedGestures"); return;
+      // return this._supportedGestures;
     }
     get maxTouchPoints(): number /*int*/ {
       notImplemented("public flash.ui.Multitouch::get maxTouchPoints"); return;
+      // return this._maxTouchPoints;
     }
     get mapTouchToMouse(): boolean {
       notImplemented("public flash.ui.Multitouch::get mapTouchToMouse"); return;
+      // return this._mapTouchToMouse;
     }
     set mapTouchToMouse(value: boolean) {
       value = !!value;
       notImplemented("public flash.ui.Multitouch::set mapTouchToMouse"); return;
+      // this._mapTouchToMouse = value;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
   }
 }

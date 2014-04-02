@@ -17,19 +17,26 @@
 module Shumway.AVM2.AS.flash.text.ime {
   import notImplemented = Shumway.Debug.notImplemented;
   export interface IIMEClient {
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    updateComposition: (text: string, attributes: ASVector<flash.text.ime.CompositionAttributeRange>, compositionStartIndex: number /*int*/, compositionEndIndex: number /*int*/) => void;
-    confirmComposition: (text: string = null, preserveSelection: boolean = false) => void;
-    getTextBounds: (startIndex: number /*int*/, endIndex: number /*int*/) => flash.geom.Rectangle;
+    
+    // JS -> AS Bindings
+    
     compositionStartIndex: number /*int*/;
     compositionEndIndex: number /*int*/;
     verticalTextLayout: boolean;
     selectionAnchorIndex: number /*int*/;
     selectionActiveIndex: number /*int*/;
+    updateComposition: (text: string, attributes: ASVector<any>, compositionStartIndex: number /*int*/, compositionEndIndex: number /*int*/) => void;
+    confirmComposition: (text: string = null, preserveSelection: boolean = false) => void;
+    getTextBounds: (startIndex: number /*int*/, endIndex: number /*int*/) => flash.geom.Rectangle;
     selectRange: (anchorIndex: number /*int*/, activeIndex: number /*int*/) => void;
     getTextInRange: (startIndex: number /*int*/, endIndex: number /*int*/) => string;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _compositionStartIndex: number /*int*/;
+    // _compositionEndIndex: number /*int*/;
+    // _verticalTextLayout: boolean;
+    // _selectionAnchorIndex: number /*int*/;
+    // _selectionActiveIndex: number /*int*/;
   }
 }

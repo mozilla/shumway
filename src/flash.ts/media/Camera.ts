@@ -17,72 +17,120 @@
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Camera extends flash.events.EventDispatcher {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.media.Camera");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    static _scanHardware(): void {
-      notImplemented("public flash.media.Camera::static _scanHardware"); return;
-    }
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
+    // static _names: any [];
+    // static _isSupported: boolean;
     get names(): any [] {
       notImplemented("public flash.media.Camera::get names"); return;
+      // return this._names;
     }
     get isSupported(): boolean {
       notImplemented("public flash.media.Camera::get isSupported"); return;
+      // return this._isSupported;
     }
     static getCamera(name: string = null): flash.media.Camera {
       name = "" + name;
       notImplemented("public flash.media.Camera::static getCamera"); return;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    static _scanHardware(): void {
+      notImplemented("public flash.media.Camera::static _scanHardware"); return;
+    }
+    
+    // _activityLevel: number;
+    // _bandwidth: number /*int*/;
+    // _currentFPS: number;
+    // _fps: number;
+    // _height: number /*int*/;
+    // _index: number /*int*/;
+    // _keyFrameInterval: number /*int*/;
+    // _loopback: boolean;
+    // _motionLevel: number /*int*/;
+    // _motionTimeout: number /*int*/;
+    // _muted: boolean;
+    // _name: string;
+    // _position: string;
+    // _quality: number /*int*/;
+    // _width: number /*int*/;
     get activityLevel(): number {
       notImplemented("public flash.media.Camera::get activityLevel"); return;
+      // return this._activityLevel;
     }
     get bandwidth(): number /*int*/ {
       notImplemented("public flash.media.Camera::get bandwidth"); return;
+      // return this._bandwidth;
     }
     get currentFPS(): number {
       notImplemented("public flash.media.Camera::get currentFPS"); return;
+      // return this._currentFPS;
     }
     get fps(): number {
       notImplemented("public flash.media.Camera::get fps"); return;
+      // return this._fps;
     }
     get height(): number /*int*/ {
       notImplemented("public flash.media.Camera::get height"); return;
+      // return this._height;
     }
     get index(): number /*int*/ {
       notImplemented("public flash.media.Camera::get index"); return;
+      // return this._index;
     }
     get keyFrameInterval(): number /*int*/ {
       notImplemented("public flash.media.Camera::get keyFrameInterval"); return;
+      // return this._keyFrameInterval;
     }
     get loopback(): boolean {
       notImplemented("public flash.media.Camera::get loopback"); return;
+      // return this._loopback;
     }
     get motionLevel(): number /*int*/ {
       notImplemented("public flash.media.Camera::get motionLevel"); return;
+      // return this._motionLevel;
     }
     get motionTimeout(): number /*int*/ {
       notImplemented("public flash.media.Camera::get motionTimeout"); return;
+      // return this._motionTimeout;
     }
     get muted(): boolean {
       notImplemented("public flash.media.Camera::get muted"); return;
+      // return this._muted;
     }
     get name(): string {
       notImplemented("public flash.media.Camera::get name"); return;
+      // return this._name;
     }
     get position(): string {
       notImplemented("public flash.media.Camera::get position"); return;
+      // return this._position;
     }
     get quality(): number /*int*/ {
       notImplemented("public flash.media.Camera::get quality"); return;
+      // return this._quality;
     }
     get width(): number /*int*/ {
       notImplemented("public flash.media.Camera::get width"); return;
+      // return this._width;
     }
     setCursor(value: boolean): void {
       value = !!value;
@@ -116,7 +164,7 @@ module Shumway.AVM2.AS.flash.media {
       rect = rect; destination = destination;
       notImplemented("public flash.media.Camera::copyToByteArray"); return;
     }
-    copyToVector(rect: flash.geom.Rectangle, destination: ASVector<number /*uint*/>): void {
+    copyToVector(rect: flash.geom.Rectangle, destination: ASVector<any>): void {
       rect = rect; destination = destination;
       notImplemented("public flash.media.Camera::copyToVector"); return;
     }

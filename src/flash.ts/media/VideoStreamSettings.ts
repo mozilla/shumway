@@ -17,30 +17,45 @@
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   export class VideoStreamSettings extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["width", "height", "fps", "quality", "bandwidth", "keyFrameInterval", "codec", "setMode", "setQuality", "setKeyFrameInterval"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.media.VideoStreamSettings");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_height: number /*int*/;
-    m_width: number /*int*/;
-    m_fps: number;
-    m_bandwidth: number /*int*/;
-    m_quality: number /*int*/;
-    m_keyFrameInterval: number /*int*/;
-    setMode: (width: number /*int*/, height: number /*int*/, fps: number) => void;
+    
+    // JS -> AS Bindings
+    
     width: number /*int*/;
     height: number /*int*/;
     fps: number;
-    setQuality: (bandwidth: number /*int*/, quality: number /*int*/) => void;
     quality: number /*int*/;
     bandwidth: number /*int*/;
-    setKeyFrameInterval: (keyFrameInterval: number /*int*/) => void;
     keyFrameInterval: number /*int*/;
     codec: string;
-    // Instance AS -> JS Bindings
+    setMode: (width: number /*int*/, height: number /*int*/, fps: number) => void;
+    setQuality: (bandwidth: number /*int*/, quality: number /*int*/) => void;
+    setKeyFrameInterval: (keyFrameInterval: number /*int*/) => void;
+    
+    // AS -> JS Bindings
+    
+    // _width: number /*int*/;
+    // _height: number /*int*/;
+    // _fps: number;
+    // _quality: number /*int*/;
+    // _bandwidth: number /*int*/;
+    // _keyFrameInterval: number /*int*/;
+    // _codec: string;
   }
 }

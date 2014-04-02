@@ -17,25 +17,41 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class GraphicsPath extends ASNative implements IGraphicsPath, IGraphicsData {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["commands", "data", "_winding", "winding", "winding", "moveTo", "lineTo", "curveTo", "cubicCurveTo", "wideLineTo", "wideMoveTo", "ensureLists"];
+    
     constructor (commands: ASVector<number /*int*/> = null, data: ASVector<number> = null, winding: string = "evenOdd") {
       commands = commands; data = data; winding = "" + winding;
       false && super();
       notImplemented("Dummy Constructor: public flash.display.GraphicsPath");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     commands: ASVector<number /*int*/>;
     data: ASVector<number>;
-    winding: string;
     _winding: string;
+    winding: string;
     moveTo: (x: number, y: number) => void;
     lineTo: (x: number, y: number) => void;
     curveTo: (controlX: number, controlY: number, anchorX: number, anchorY: number) => void;
     cubicCurveTo: (controlX1: number, controlY1: number, controlX2: number, controlY2: number, anchorX: number, anchorY: number) => void;
     wideLineTo: (x: number, y: number) => void;
     wideMoveTo: (x: number, y: number) => void;
-    // Instance AS -> JS Bindings
+    ensureLists: () => void;
+    
+    // AS -> JS Bindings
+    
+    // _winding: string;
   }
 }

@@ -17,13 +17,28 @@
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Font extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.text.Font");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    
+    
+    // AS -> JS Bindings
     static enumerateFonts(enumerateDeviceFonts: boolean = false): any [] {
       enumerateDeviceFonts = !!enumerateDeviceFonts;
       notImplemented("public flash.text.Font::static enumerateFonts"); return;
@@ -32,16 +47,21 @@ module Shumway.AVM2.AS.flash.text {
       font = font;
       notImplemented("public flash.text.Font::static registerFont"); return;
     }
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // _fontName: string;
+    // _fontStyle: string;
+    // _fontType: string;
     get fontName(): string {
       notImplemented("public flash.text.Font::get fontName"); return;
+      // return this._fontName;
     }
     get fontStyle(): string {
       notImplemented("public flash.text.Font::get fontStyle"); return;
+      // return this._fontStyle;
     }
     get fontType(): string {
       notImplemented("public flash.text.Font::get fontType"); return;
+      // return this._fontType;
     }
     hasGlyphs(str: string): boolean {
       str = "" + str;

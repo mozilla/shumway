@@ -17,14 +17,35 @@
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   export class TypographicCase extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.text.engine.TypographicCase");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static DEFAULT: string = "default";
+    static TITLE: string = "title";
+    static CAPS: string = "caps";
+    static SMALL_CAPS: string = "smallCaps";
+    static UPPERCASE: string = "uppercase";
+    static LOWERCASE: string = "lowercase";
+    static CAPS_AND_SMALL_CAPS: string = "capsAndSmallCaps";
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

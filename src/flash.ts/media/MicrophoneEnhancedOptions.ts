@@ -17,23 +17,38 @@
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   export class MicrophoneEnhancedOptions extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["mode", "mode", "echoPath", "echoPath", "nonLinearProcessing", "nonLinearProcessing", "autoGain", "autoGain", "isVoiceDetected", "isVoiceDetected"];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.media.MicrophoneEnhancedOptions");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_mode: string;
-    m_echoPath: number /*int*/;
-    m_nlp: boolean;
-    m_isVoiceDetected: number /*int*/;
+    
+    // JS -> AS Bindings
+    
     mode: string;
     echoPath: number /*int*/;
     nonLinearProcessing: boolean;
     autoGain: boolean;
     isVoiceDetected: number /*int*/;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _mode: string;
+    // _echoPath: number /*int*/;
+    // _nonLinearProcessing: boolean;
+    // _autoGain: boolean;
+    // _isVoiceDetected: number /*int*/;
   }
 }

@@ -17,23 +17,40 @@
 module Shumway.AVM2.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
   export class ColorMatrixFilter extends flash.filters.BitmapFilter {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["clone"];
+    
     constructor (matrix: any [] = null) {
       matrix = matrix;
       false && super();
       notImplemented("Dummy Constructor: public flash.filters.ColorMatrixFilter");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     clone: () => flash.filters.BitmapFilter;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _matrix: any [];
     get matrix(): any [] {
       notImplemented("public flash.filters.ColorMatrixFilter::get matrix"); return;
+      // return this._matrix;
     }
     set matrix(value: any []) {
       value = value;
       notImplemented("public flash.filters.ColorMatrixFilter::set matrix"); return;
+      // this._matrix = value;
     }
   }
 }

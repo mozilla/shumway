@@ -17,19 +17,33 @@
 module Shumway.AVM2.AS.flash.text.ime {
   import notImplemented = Shumway.Debug.notImplemented;
   export class CompositionAttributeRange extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["relativeStart", "relativeEnd", "selected", "converted"];
+    
     constructor (relativeStart: number /*int*/, relativeEnd: number /*int*/, selected: boolean, converted: boolean) {
       relativeStart = relativeStart | 0; relativeEnd = relativeEnd | 0; selected = !!selected; converted = !!converted;
       false && super();
       notImplemented("Dummy Constructor: public flash.text.ime.CompositionAttributeRange");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
+    // JS -> AS Bindings
+    
     relativeStart: number /*int*/;
     relativeEnd: number /*int*/;
     selected: boolean;
     converted: boolean;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
   }
 }

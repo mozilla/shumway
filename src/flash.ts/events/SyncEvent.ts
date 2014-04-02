@@ -17,18 +17,34 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class SyncEvent extends flash.events.Event {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_changeList", "changeList", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, changeList: any [] = null) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; changeList = changeList;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.SyncEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_changeList: any [];
-    clone: () => flash.events.Event;
+    
+    // JS -> AS Bindings
+    static SYNC: string = "sync";
+    
+    _changeList: any [];
     changeList: any [];
-    // Instance AS -> JS Bindings
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
+    // _changeList: any [];
   }
 }

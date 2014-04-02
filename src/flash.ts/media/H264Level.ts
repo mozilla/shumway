@@ -17,14 +17,44 @@
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
   export class H264Level extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // [];
+    
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.media.H264Level");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    // Instance AS -> JS Bindings
+    
+    // JS -> AS Bindings
+    static LEVEL_1: string = "1";
+    static LEVEL_1B: string = "1b";
+    static LEVEL_1_1: string = "1.1";
+    static LEVEL_1_2: string = "1.2";
+    static LEVEL_1_3: string = "1.3";
+    static LEVEL_2: string = "2";
+    static LEVEL_2_1: string = "2.1";
+    static LEVEL_2_2: string = "2.2";
+    static LEVEL_3: string = "3";
+    static LEVEL_3_1: string = "3.1";
+    static LEVEL_3_2: string = "3.2";
+    static LEVEL_4: string = "4";
+    static LEVEL_4_1: string = "4.1";
+    static LEVEL_4_2: string = "4.2";
+    static LEVEL_5: string = "5";
+    static LEVEL_5_1: string = "5.1";
+    
+    
+    // AS -> JS Bindings
+    
   }
 }

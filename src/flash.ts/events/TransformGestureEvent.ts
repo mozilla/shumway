@@ -17,26 +17,49 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class TransformGestureEvent extends flash.events.GestureEvent {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["_scaleX", "_scaleY", "_rotation", "_offsetX", "_offsetY", "scaleX", "scaleX", "scaleY", "scaleY", "rotation", "rotation", "offsetX", "offsetX", "offsetY", "offsetY", "clone", "toString"];
+    
     constructor (type: string, bubbles: boolean = true, cancelable: boolean = false, phase: string = null, localX: number = 0, localY: number = 0, scaleX: number = 1, scaleY: number = 1, rotation: number = 0, offsetX: number = 0, offsetY: number = 0, ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; phase = "" + phase; localX = +localX; localY = +localY; scaleX = +scaleX; scaleY = +scaleY; rotation = +rotation; offsetX = +offsetX; offsetY = +offsetY; ctrlKey = !!ctrlKey; altKey = !!altKey; shiftKey = !!shiftKey;
       false && super(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.TransformGestureEvent");
     }
-    // Static   JS -> AS Bindings
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
-    m_scaleX: number;
-    m_scaleY: number;
-    m_rotation: number;
-    m_offsetX: number;
-    m_offsetY: number;
-    clone: () => flash.events.Event;
+    
+    // JS -> AS Bindings
+    static GESTURE_ZOOM: string = "gestureZoom";
+    static GESTURE_PAN: string = "gesturePan";
+    static GESTURE_ROTATE: string = "gestureRotate";
+    static GESTURE_SWIPE: string = "gestureSwipe";
+    
+    _scaleX: number;
+    _scaleY: number;
+    _rotation: number;
+    _offsetX: number;
+    _offsetY: number;
     scaleX: number;
     scaleY: number;
     rotation: number;
     offsetX: number;
     offsetY: number;
-    // Instance AS -> JS Bindings
+    clone: () => flash.events.Event;
+    
+    // AS -> JS Bindings
+    
+    // _scaleX: number;
+    // _scaleY: number;
+    // _rotation: number;
+    // _offsetX: number;
+    // _offsetY: number;
   }
 }

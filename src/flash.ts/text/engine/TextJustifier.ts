@@ -17,31 +17,50 @@
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
   export class TextJustifier extends ASNative {
+    
+    // Called whenever the class is initialized.
+    static classInitializer: any = null;
+    
+    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
+    
+    // List of static symbols to link.
+    static staticBindings: string [] = null; // ["getJustifierForLocale"];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null; // ["clone"];
+    
     constructor (locale: string, lineJustification: string) {
       locale = "" + locale; lineJustification = "" + lineJustification;
       false && super();
       notImplemented("Dummy Constructor: public flash.text.engine.TextJustifier");
     }
-    // Static   JS -> AS Bindings
+    
+    // JS -> AS Bindings
     static getJustifierForLocale: (locale: string) => flash.text.engine.TextJustifier;
-    // Static   AS -> JS Bindings
-    // Instance JS -> AS Bindings
+    
     clone: () => flash.text.engine.TextJustifier;
-    // Instance AS -> JS Bindings
+    
+    // AS -> JS Bindings
+    
+    // _locale: string;
+    // _lineJustification: string;
     get locale(): string {
       notImplemented("public flash.text.engine.TextJustifier::get locale"); return;
-    }
-    setLocale(value: string): void {
-      value = "" + value;
-      notImplemented("public flash.text.engine.TextJustifier::setLocale"); return;
+      // return this._locale;
     }
     get lineJustification(): string {
       notImplemented("public flash.text.engine.TextJustifier::get lineJustification"); return;
+      // return this._lineJustification;
     }
     set lineJustification(value: string) {
       value = "" + value;
       notImplemented("public flash.text.engine.TextJustifier::set lineJustification"); return;
+      // this._lineJustification = value;
+    }
+    setLocale(value: string): void {
+      value = "" + value;
+      notImplemented("public flash.text.engine.TextJustifier::setLocale"); return;
     }
   }
 }
