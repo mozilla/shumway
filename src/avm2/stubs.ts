@@ -248,7 +248,23 @@ module Shumway.AVM2 {
       writer.enter("export class " + ii.name.name + extendsString + " {");
       if (ii.init) {
         var parameters = ii.init.parameters;
+        writer.writeLn();
+        writer.writeComment("Called whenever the class is initialized.");
+        writer.writeLn("static classInitializer: any = null;");
+
+        writer.writeLn();
+        writer.writeComment("Called whenever an instance of the class is initialized.");
         writer.writeLn("static initializer: any = null;");
+
+        writer.writeLn();
+        writer.writeComment("List of static symbols to link.");
+        writer.writeLn("static staticBindings: string [] = null; // [" + getBindingNames(ci.traits).map(x => "\"" + x.name + "\"").join(", ") + "];");
+
+        writer.writeLn();
+        writer.writeComment("List of instance symbols to link.");
+        writer.writeLn("static bindings: string [] = null; // [" + getBindingNames(ii.traits).map(x => "\"" + x.name + "\"").join(", ") + "];");
+
+        writer.writeLn();
         writer.enter("constructor (" + toParameterList(parameters) + ") {");
         if (parameters.length) {
           writer.writeLn(parameters.filter(p => !!p.type).map(
@@ -257,6 +273,7 @@ module Shumway.AVM2 {
         }
         if (superName) {
           var superClassInfo = findClassInfo(superName);
+          assert (superClassInfo, "Can't find: " + superName);
           var superParameters = superClassInfo.instanceInfo.init.parameters;
           writer.writeLn("false && super(" + toSuperArgumentList(parameters, superParameters) + ");");
           writer.writeLn("notImplemented(\"Dummy Constructor: " + className.namespaces[0] + "." + className.name + "\");");
@@ -265,15 +282,23 @@ module Shumway.AVM2 {
       }
     }
 
-    var traits = [ci.traits, ii.traits];
-    for (var j = 0; j < traits.length; j++) {
-      var isClassTrait = j === 0;
+    function literal(value) {
+      if (value === undefined) {
+        return "undefined";
+      } else if (value === null) {
+        return "null";
+      } else if (typeof (value) === "string") {
+        return "\"" + value + "\"";
+      } else {
+        return String(value);
+      }
+    }
 
+    function asBindings(traits, isClassTrait) {
       // Generate AS Bindings
-      writer.writeComment((isClassTrait ? "Static  " : "Instance") + " JS -> AS Bindings");
       var skip = {};
-      for (var i = 0; i < traits[j].length; i++) {
-        var trait = traits[j][i];
+      for (var i = 0; i < traits.length; i++) {
+        var trait = traits[i];
         var name = trait.name.name;
         if (skip[name]) {
           continue;
@@ -292,13 +317,36 @@ module Shumway.AVM2 {
           }
         } else if (trait.isSlot()) {
           writer.writeLn(prefix + ": " + toType(trait.typeName) + ";");
+        } else if (trait.isConst()) {
+          writer.writeLn(prefix + ": " + toType(trait.typeName) + " = " + literal(trait.value) + ";");
         }
       }
+    }
 
+    function jsBindings(traits, isClassTrait) {
       // Generate JS Bindings
-      writer.writeComment((isClassTrait ? "Static  " : "Instance") + " AS -> JS Bindings");
-      for (var i = 0; i < traits[j].length; i++) {
-        var trait = traits[j][i];
+
+      var skip = {}
+      for (var i = 0; i < traits.length; i++) {
+        var trait = traits[i];
+        var name = trait.name.name;
+        if (skip[name]) {
+          continue;
+        }
+        var type = undefined;
+        if (trait.isGetter()) {
+          type = trait.methodInfo.returnType;
+          skip[name] = true;
+        } else if (trait.isSetter()) {
+          type = trait.methodInfo.parameters[0].type;
+          skip[name] = true;
+        }
+        if (type) {
+          writer.writeLn("// " + (isClassTrait ? "static " : "") + "_" + name + ": " + toType(type) + ";");
+        }
+      }
+      for (var i = 0; i < traits.length; i++) {
+        var trait = traits[i];
         var name = trait.name.name;
         if (trait.isMethodOrAccessor() && trait.methodInfo.isNative()) {
           var methodParameters = trait.methodInfo.parameters;
@@ -321,10 +369,39 @@ module Shumway.AVM2 {
             ).join(" "));
           }
           writer.writeLn("notImplemented(\"" + className.namespaces[0] + "." + className.name + "::" + prefix + "\"); return;");
+          if (trait.isSetter()) {
+            writer.writeLn("// this._" + trait.name.name + " = " + methodParameters[0].name + ";");
+          } else if (trait.isGetter()) {
+            writer.writeLn("// return this._" + trait.name.name + ";");
+          }
           writer.leave("}");
         }
       }
     }
+
+    function getBindingNames(traits): Multiname [] {
+      var names: Multiname [] = [];
+      for (var i = 0; i < traits.length; i++) {
+        var trait = traits[i];
+        if (trait.isMethodOrAccessor() && !trait.methodInfo.isNative() || trait.isSlot()) {
+          names.push(trait.name);
+        }
+      }
+      return names;
+    }
+
+    writer.writeLn("");
+    writer.writeComment("JS -> AS Bindings");
+    asBindings(ci.traits, true);
+    writer.writeLn("");
+    asBindings(ii.traits, false);
+
+    writer.writeLn("");
+    writer.writeComment("AS -> JS Bindings");
+
+    jsBindings(ci.traits, true);
+    writer.writeLn("");
+    jsBindings(ii.traits, false);
 
     writer.leave("}");
     needsModule && writer.leave("}");

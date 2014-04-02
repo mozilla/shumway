@@ -240,6 +240,7 @@ if (execute.value || compile.value || compileAll.value || compileBuiltins.value)
     });
   });
 } else if (stubs.value) {
+  MethodInfo.parseParameterNames = true;
   grabAbcs(abcBuffers).forEach(function (abcArray) {
     abcArray.forEach(function (abc) {
       Shumway.AVM2.generateStub(abc);
