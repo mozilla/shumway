@@ -78,8 +78,8 @@ module Shumway.AVM2.AS {
         return node._children.map(toString).join('');
       }
       switch (node._kind) {
-        case "text":
-        case "attribute":
+        case ASXMLKind.Text:
+        case ASXMLKind.Attribute:
           return node._value;
         default:
           if (node.hasSimpleContent()) {
@@ -92,9 +92,255 @@ module Shumway.AVM2.AS {
     }
   }
 
+  // 10.2.1.1 EscapeElementValue ( s )
+  function escapeElementValue(s: string): string {
+    var i = 0, ch;
+    while (i < s.length && (ch = s[i]) !== '&' && ch !== '<' && ch !== '>') {
+      i++;
+    }
+    if (i >= s.length) {
+      return s;
+    }
+    var buf = s.substring(0, i);
+    while (i < s.length) {
+      ch = s[i];
+      switch (ch) {
+        case '&':
+          buf += '&amp;';
+          break;
+        case '<':
+          buf += '&lt;';
+          break;
+        case '>':
+          buf += '&gt;';
+          break;
+        default:
+          buf += ch;
+          break;
+      }
+    }
+    return buf;
+  }
+
+  // 10.2.1.2 EscapeAttributeValue ( s )
+  function escapeAttributeValue(s: string): string {
+    // '>' not per spec, but let's do that anyway
+    var i = 0, ch;
+    while (i < s.length && (ch = s[i]) !== '&' && ch !== '<' && ch !== '>' &&
+           ch !== '\"' && ch !== '\n' && ch !== '\r' && ch !== '\t') {
+      i++;
+    }
+    if (i >= s.length) {
+      return s;
+    }
+    var buf = s.substring(0, i);
+    while (i < s.length) {
+      ch = s[i];
+      switch (ch) {
+        case '&':
+          buf += '&amp;';
+          break;
+        case '<':
+          buf += '&lt;';
+          break;
+        case '>':
+          buf += '&gt;';
+          break;
+        case '\"':
+          buf += '&quot;';
+          break;
+        case '\n':
+          buf += '&#xA;';
+          break;
+        case '\r':
+          buf += '&#xD;';
+          break;
+        case '\t':
+          buf += '&#x9;';
+          break;
+        default:
+          buf += ch;
+          break;
+      }
+    }
+    return buf;
+  }
+
+  function isWhitespace(s: string, index: number) {
+    var ch = s[index];
+    return ch === ' ' || ch === '\n' || ch === '\r' || ch === '\t';
+  }
+
+  function trimWhitespaces(s: string): string {
+    var i = 0;
+    while (i < s.length && isWhitespace(s, i)) {
+      i++;
+    }
+    if (i >= s.length) {
+      return '';
+    }
+    var j = s.length - 1;
+    while (isWhitespace(s, j)) {
+      j--;
+    }
+    return i === 0 && j === s.length - 1 ? s : s.substring(i, j);
+  }
+
+  var indentStringCache: string[] = [];
+  function getIndentString(indent: number): string {
+    if (indent > 0) {
+      if (indentStringCache[indent] !== undefined) {
+        return indentStringCache[indent];
+      }
+      var s = '';
+      for (var i = 0; i < indent; i++) {
+        s += ' ';
+      }
+      indentStringCache[indent] = s;
+      return s;
+    }
+    return '';
+  }
+
+  function generateUniquePrefix(namespaces: ASNamespace[]) {
+    var i = 1, newPrefix;
+    while (true) {
+      newPrefix = '_ns' + i;
+      if (!namespaces.some(function (ns) { return ns.prefix == newPrefix; })) {
+        break;
+      }
+      i++;
+    }
+    return newPrefix;
+  }
+
   // 10.2 ToXMLString
-  function toXMLString(node) {
-    return new XMLEncoder().encode(node)
+  function toXMLString(node:any, ancestorNamespaces?: ASNamespace[], indentLevel?: number) {
+    if (node === null || node === undefined) {
+      throw new TypeError();
+    }
+    if (!(node instanceof ASXML)) {
+      if (node instanceof ASXMLList) {
+        // 10.2.2 ToXMLString Applied to the XMLList Type
+        return node._children.map(function (childNode) {
+          return toXMLString(childNode, ancestorNamespaces);
+        }).join(ASXML.prettyPrinting ? '\n' : '');
+      }
+      return escapeElementValue(String(node));
+    }
+
+    var prettyPrinting = ASXML.prettyPrinting;
+
+    // 10.2.1 ToXMLString Applied to the XML Type
+    indentLevel |= 0;
+    var s = prettyPrinting ? getIndentString(indentLevel) : '';
+
+    var kind: ASXMLKind = node._kind;
+    switch (kind) {
+      // 4. If x.[[Class]] == "text",
+      case ASXMLKind.Text:
+        return prettyPrinting ?
+          s + escapeElementValue(trimWhitespaces(node._value)) :
+          escapeElementValue(node._value);
+      // 5. If x.[[Class]] == "attribute", return the result of concatenating s and EscapeAttributeValue(x.[[Value]])
+      case ASXMLKind.Attribute:
+        return s + escapeAttributeValue(node._value);
+      // 6. If x.[[Class]] == "comment", return the result of concatenating s, the string "<!--", x.[[Value]] and the string "-->"
+      case ASXMLKind.Comment:
+        return s + '<!--' + node._value + '-->';
+      // 7 If x.[[Class]] == "processing-instruction", return the result of concatenating s, the string "<?", x.[[Name]].localName, the space <SP> character, x.[[Value]] and the string "?>"
+      case ASXMLKind.ProcessingInstruction:
+        return s + '<?' + node._name.localName + ' ' + node._value + '?>';
+      default:
+        assert(kind === ASXMLKind.Element);
+        break;
+    }
+
+    ancestorNamespaces = ancestorNamespaces || [];
+    var namespaceDeclarations = [];
+
+    // 10. For each ns in x.[[InScopeNamespaces]]
+    for (var i = 0; i < node._inScopeNamespaces.length; i++) {
+      var nsPrefix = node._inScopeNamespaces[i].prefix;
+      var nsUri = node._inScopeNamespaces[i].uri;
+      if (ancestorNamespaces.every(function (ans) { return ans.uri != nsUri || ans.prefix != nsPrefix; })) {
+        var ns1 = new ASNamespace(nsPrefix, nsUri);
+        namespaceDeclarations.push(ns1);
+      }
+    }
+    // 11. For each name in the set of names consisting of x.[[Name]] and the name of each attribute in x.[[Attributes]]
+    var currentNamespaces = ancestorNamespaces.concat(namespaceDeclarations);
+    var namespace = node._name.getNamespace(currentNamespaces);
+    if (namespace.prefix === undefined) {
+      // Let namespace.prefix be an arbitrary implementation defined namespace prefix, such that there is no ns2 ∈ (AncestorNamespaces ∪ namespaceDeclarations) with namespace.prefix == ns2.prefix
+      var newPrefix = generateUniquePrefix(currentNamespaces);
+      var ns2 = new ASNamespace(newPrefix, namespace.uri);
+      // Let namespaceDeclarations = namespaceDeclarations ∪ { namespace }
+      namespaceDeclarations.push(ns2);
+      currentNamespaces.push(ns2);
+    }
+
+    // 12. Let s be the result of concatenating s and the string "<"
+    // 13. If namespace.prefix is not the empty string,
+    //   a. Let s be the result of concatenating s, namespace.prefix and the string ":"
+    // 14. Let s be the result of concatenating s and x.[[Name]].localName
+    var elementName = (namespace.prefix ? namespace.prefix + ':' : '') + node._name.localName;
+    s += '<' + elementName;
+
+    node._attributes.forEach(function (attr) {
+      var name: ASQName = attr._name;
+      var namespace = name.getNamespace(currentNamespaces);
+      if (namespace.prefix === undefined) {
+        // Let namespace.prefix be an arbitrary implementation defined namespace prefix, such that there is no ns2 ∈ (AncestorNamespaces ∪ namespaceDeclarations) with namespace.prefix == ns2.prefix
+        var newPrefix = generateUniquePrefix(currentNamespaces);
+        var ns2 = new ASNamespace(newPrefix, namespace.uri);
+        // Let namespaceDeclarations = namespaceDeclarations ∪ { namespace }
+        namespaceDeclarations.push(ns2);
+        currentNamespaces.push(ns2);
+      }
+    });
+
+    for (var i = 0; i < namespaceDeclarations.length; i++) {
+      var namespace = namespaceDeclarations[i];
+      var attributeName = namespace.prefix ? 'xmlns:' + namespace.prefix : 'xmlns';
+      s += ' ' +  attributeName + '=\"' + escapeAttributeValue(namespace.uri) + '\"';
+    }
+    node._attributes.forEach(function (attr) {
+      var name: ASQName = attr._name;
+      var namespace = name.getNamespace(ancestorNamespaces);
+      var attributeName = namespace.prefix ? namespace.prefix + ':' + name.localName : name.localName;
+      s += ' ' +  attributeName + '=\"' + escapeAttributeValue(attr._value) + '\"';
+    });
+
+    // 17. If x.[[Length]] == 0
+    if (node._children.length === 0) {
+      //   a. Let s be the result of concatenating s and "/>"
+      s += '/>';
+      //   b. Return s
+      return s;
+    }
+
+    // 18. Let s be the result of concatenating s and the string ">"
+    s += '>';
+    // 19. Let indentChildren = ((x.[[Length]] > 1) or (x.[[Length]] == 1 and x[0].[[Class]] is not equal to "text"))
+    var indentChildren = node._children.length > 1 ||
+        (node._children.length === 1 && node._children[0]._kind !== ASXMLKind.Text);
+    var nextIndentLevel = (prettyPrinting && indentChildren) ?
+      indentLevel + ASXML.prettyIndent : 0;
+
+    node._children.forEach(function (childNode, i) {
+      if (prettyPrinting && indentChildren) {
+        s += '\n';
+      }
+      var child = toXMLString(childNode, currentNamespaces, nextIndentLevel);
+      s += child;
+    });
+    if (prettyPrinting && indentChildren) {
+      s += '\n' + getIndentString(indentLevel);
+    }
+
+    s += '</' + elementName + '>';
+    return s;
   }
 
 
@@ -114,7 +360,7 @@ module Shumway.AVM2.AS {
     } else {
       var x = xmlParser.parseFromString(String(v));
       if (x.length() === 0) {
-        var x = new XML("text");
+        var x = new XML(ASXMLKind.Text);
         return x;
       } else if (x.length() === 1) {
         x._children[0]._parent = null;
@@ -257,177 +503,34 @@ module Shumway.AVM2.AS {
     return true;
   }
 
-  function XMLEncoder() {
-    var prettyPrinting = ASXML.prettyPrinting;
-    var indentString = '';
-    if (prettyPrinting) {
-      var prettyIndent = ASXML.prettyIndent;
-      for (var i = 0; i < prettyIndent; i++) {
-        indentString += ' ';
-      }
-    }
-    function visit(node, encode) {
-      if (node instanceof ASXML) {
-        switch (node._kind) {
-          case "element":
-            return encode.element(node);
-          case "attribute":
-            return encode.attribute(node);
-          case "text":
-            return encode.text(node);
-          case "cdata":
-            return encode.cdata(node);
-          case "comment":
-            return encode.comment(node);
-          case "processing-instruction":
-            return encode.pi(node);
-        }
-      } else if (node instanceof ASXMLList) {
-        return encode.list(node);
-      } else {
-        throw "Not implemented";
-      }
-    }
-    function encode(node, encoder) {
-      var addAncestorNamespaces: boolean = true;
-      var currentIndent = '';
-      var indentNext = false;
-      return visit(node, {
-        element: function (n) {
-          var s, a;
-          var ns = n._name._mn.namespaces[0];
-          var prefix = ns.prefix ? (ns.prefix + ":") : "";
-          s = "<" + prefix + n._name.localName;
-          if (prettyPrinting && indentNext) {
-            s = "\n" + currentIndent + s;
-          }
-          // Enumerate namespace declarations
-          var namespaceDeclarations = [];
-          if (addAncestorNamespaces) {
-            addAncestorNamespaces = false;
-          }
-          if (ns.prefix || ns.uri) {
-            // If either is a non-empty string then create a namespace
-            // declaration for it
-            namespaceDeclarations.push(ns)
-          }
-          if (prefix) {
-            namespaceDeclarations[ns.prefix] = true;
-          }
-
-          var t = n;
-          while (t) {
-            for (var i = 0; t._inScopeNamespaces && addAncestorNamespaces
-              && i < t._inScopeNamespaces.length; i++) {
-              ns = t._inScopeNamespaces[i];
-              if (!namespaceDeclarations[ns.prefix]) {
-                namespaceDeclarations.push(ns);
-                namespaceDeclarations[ns.prefix] = true;  // flag inclusion
-              }
-            }
-            t = t._parent;
-          }
-          addAncestorNamespaces = false;
-
-          for (var i = 0; i < namespaceDeclarations.length; i++) {
-            a = namespaceDeclarations[i];
-            if (a.prefix) {
-              s += " xmlns:" + a.prefix + "=\"" + a.uri + "\"";
-            } else {
-              s += " xmlns=\"" + a.uri + "\"";
-            }
-          }
-          for (var i = 0; i < n._attributes.length; i++) {
-            a = n._attributes[i];
-            var ns = n._name.uri;
-            var prefix = n.prefix ? (ns.prefix + ":") : "";
-            var name = prefix + a._name.localName;
-            s += " " + name + "=\"" + a._value + "\"";
-          }
-          if (n._children.length) {
-            s += ">";
-            var oldIndent;
-            if (prettyPrinting) {
-              oldIndent = currentIndent;
-              currentIndent += indentString;
-              indentNext = true;
-            }
-            for (var i = 0; i < n._children.length; i++) {
-              s += visit(n._children[i], this);
-            }
-            if (prettyPrinting) {
-              currentIndent = oldIndent;
-              if (indentNext) {
-                s += '\n' + currentIndent;
-              }
-            }
-            s += "</" + prefix + n._name._mn.name + ">";
-          } else {
-            s += "/>";
-          }
-          indentNext = true;
-          return s;
-        },
-        text: function(text) {
-          indentNext = false;
-          return escapeAttributeValue(text._value);
-        },
-        attribute: function(n) {
-          return escapeAttributeValue(n._value);
-        },
-        cdata: function(n) {
-        },
-        comment: function(n) {
-        },
-        pi: function(n) {
-        },
-        doctype: function(n) {
-        },
-        list: function (n) {
-          var s = "";
-          for (var i = 0; i < n._children.length; i++) {
-            s += visit(n._children[i], this);
-          }
-          return s;
-        },
-      });
-    }
-    this.encode = encode;
-  }
-
-  function escapeAttributeValue(v) {
-    return v.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;');
-  }
-
   function XMLParser() {
     function parseXml(s, sink) {
       var i = 0, scopes: any [] = [{
-        space:"default",
-        xmlns:"",
-        namespaces: {
-          "xmlns":"http://www.w3.org/2000/xmlns/",
-          "xml":"http://www.w3.org/XML/1998/namespace"
-        }
+        namespaces: [],
+        lookup: {
+          "xmlns": 'http://www.w3.org/2000/xmlns/',
+          "xml": 'http://www.w3.org/XML/1998/namespace'
+        },
+        inScopes: [],
+        space: 'default',
+        xmlns: ''
       }];
-      function trim(s) {
-        return s.replace(/^\s+/, "").replace(/\s+$/, "");
-      }
       function resolveEntities(s) {
         return s.replace(/&([^;]+);/g, function(all, entity) {
-          if (entity.substring(0, 2) === "#x") {
+          if (entity.substring(0, 2) === '#x') {
             return String.fromCharCode(parseInt(entity.substring(2), 16));
-          } else if(entity.substring(0,1) === "#") {
+          } else if(entity.substring(0,1) === '#') {
             return String.fromCharCode(parseInt(entity.substring(1), 10));
           }
           switch (entity) {
-            case "lt": return "<";
-            case "gt": return ">";
-            case "amp": return "&";
+            case 'lt': return '<';
+            case 'gt': return '>';
+            case 'amp': return '&';
           }
           throw "Unknown entity: " + entity;
         });
       }
-      function isWhitespacePreserved() {
+      function isWhitespacePreserved(): boolean {
         for (var j = scopes.length - 1; j >= 0; --j) {
           if (scopes[j].space === "preserve") {
             return true;
@@ -435,29 +538,33 @@ module Shumway.AVM2.AS {
         }
         return false;
       }
-      function lookupDefaultNs() {
+      function lookupDefaultNs(): string {
         for (var j = scopes.length - 1; j >= 0; --j) {
-          if (scopes[j].hasOwnProperty("xmlns")) {
+          if ('xmlns' in scopes[j]) {
             return scopes[j].xmlns;
           }
         }
+        return '';
       }
-      function lookupNs(prefix) {
+      function lookupNs(prefix: string): string {
         for (var j = scopes.length - 1; j >= 0; --j) {
-          if (scopes[j].namespaces.hasOwnProperty(prefix)) {
-            return scopes[j].namespaces[prefix];
+          if (prefix in scopes[j].lookup) {
+            return scopes[j].lookup[prefix];
           }
         }
-        throw "Unknown namespace: " + prefix;
+        return undefined;
       }
-      function getName(name, resolveDefaultNs): any {
-        var j = name.indexOf(":");
+      function getName(name: string, resolveDefaultNs: boolean): any {
+        var j = name.indexOf(':');
         if (j >= 0) {
-          var namespace = lookupNs(name.substring(0,j));
           var prefix = name.substring(0,j);
+          var namespace = lookupNs(prefix);
+          if (namespace === undefined) {
+            throw "Unknown namespace: " + prefix;
+          }
           var localName = name.substring(j + 1);
           return {
-            name: namespace + "::" + localName,
+            name: namespace + '::' + localName,
             localName: localName,
             prefix: prefix,
             namespace: namespace,
@@ -466,22 +573,19 @@ module Shumway.AVM2.AS {
           return {
             name: name,
             localName: name,
-            prefix: "",
+            prefix: '',
             namespace: lookupDefaultNs()
           };
         } else {
           return {
             name:name,
             localName: name,
-            prefix: "",
-            namespace: ""
+            prefix: '',
+            namespace: ''
           };
         }
       }
-      var whitespaceMap = {'10': true, '13': true, '9': true, '32': true};
-      function isWhitespace(s, index) {
-        return s.charCodeAt(index) in whitespaceMap;
-      }
+
       function parseContent(s, start) {
         var pos = start, name, attributes = [];
         function skipWs() {
@@ -573,7 +677,7 @@ module Shumway.AVM2.AS {
               } else if (s.substring(j + content.parsed, j + content.parsed + 1) !== ">") {
                 throw "Unexpected EOF[2]";
               }
-              var scope = {namespaces:[]};
+              var scope: any = {namespaces:[], lookup: Object.create(null)};
               var contentAttributes = content.attributes;
               for (q = 0; q < contentAttributes.length; ++q) {
                 var attribute = contentAttributes[q];
@@ -581,22 +685,45 @@ module Shumway.AVM2.AS {
                 if (attributeName.substring(0, 6) === "xmlns:") {
                   var prefix = attributeName.substring(6);
                   var uri = attribute.value;
-                  scope.namespaces[prefix] = trim(uri);
-                  scope.namespaces.push({uri: uri, prefix: prefix});
+                  if (lookupNs(prefix) !== uri) {
+                    scope.lookup[prefix] = trimWhitespaces(uri);
+                    scope.namespaces.push({uri: uri, prefix: prefix});
+                  }
                   delete contentAttributes[q];
                 } else if (attributeName === "xmlns") {
                   var uri = attribute.value;
-                  scope.namespaces["xmlns"] = trim(uri);
-                  scope.namespaces.push({uri: uri, prefix: ''});
+                  if (lookupDefaultNs() !== uri) {
+                    scope["xmlns"] = trimWhitespaces(uri);
+                    scope.namespaces.push({uri: uri, prefix: ''});
+                  }
                   delete contentAttributes[q];
                 } else if (attributeName.substring(0, 4) === "xml:") {
-                  scope[attributeName.substring(4)] = trim(attribute.value);
+                  var xmlAttrName = attributeName.substring(4);
+                  if (xmlAttrName !== 'space' && xmlAttrName !== 'lang' && xmlAttrName !== 'base') {
+                    throw "Invalid xml attribute: " + attributeName;
+                  }
+                  scope[xmlAttrName] = trimWhitespaces(attribute.value);
                 } else if (attributeName.substring(0, 3) === "xml") {
                   throw "Invalid xml attribute";
                 } else {
                   // skip ordinary attributes until all xmlns have been handled
                 }
               }
+              // build list of all namespaces including ancestors'
+              var inScopeNamespaces: any[] = [];
+              scope.namespaces.forEach(function (ns) {
+                if (!ns.prefix || scope.lookup[ns.prefix] === ns.uri) {
+                  inScopeNamespaces.push(ns);
+                }
+              });
+              scopes[scopes.length - 1].inScopes.forEach(function (ns) {
+                if ((ns.prefix && !(ns.prefix in scope.lookup)) ||
+                    (!ns.prefix && !('xmlns' in scope))) {
+                  inScopeNamespaces.push(ns);
+                }
+              });
+              scope.inScopes = inScopeNamespaces;
+
               scopes.push(scope);
               var attributes = [];
               for (q = 0; q < contentAttributes.length; ++q) {
@@ -605,7 +732,7 @@ module Shumway.AVM2.AS {
                   attributes.push({name: getName(attribute.name, false), value: attribute.value});
                 }
               }
-              sink.beginElement(getName(content.name, true), attributes, scope, isClosed);
+              sink.beginElement(getName(content.name, true), attributes, inScopeNamespaces, isClosed);
               j += content.parsed + (isClosed ? 2 : 1);
               if (isClosed) scopes.pop();
               break;
@@ -626,20 +753,19 @@ module Shumway.AVM2.AS {
     // end of parser
 
     this.parseFromString = function(s, mimeType) {
-      var currentElement = new XML("element", '', '', '');  // placeholder
+      var currentElement = new XML(ASXMLKind.Element, '', '', '');  // placeholder
       var elementsStack = [];
       parseXml(s, {
-        beginElement: function(name, attrs, scope, isEmpty) {
+        beginElement: function(name, attrs, namespaces, isEmpty) {
           var parent = currentElement;
           elementsStack.push(parent);
-          currentElement = createNode("element", name.namespace, name.localName, name.prefix);
+          currentElement = createNode(ASXMLKind.Element, name.namespace, name.localName, name.prefix);
           for (var i = 0; i < attrs.length; ++i) {
             var rawAttr = attrs[i];
-            var attr = createNode("attribute", rawAttr.name.namespace, rawAttr.name.localName, rawAttr.name.prefix);
+            var attr = createNode(ASXMLKind.Attribute, rawAttr.name.namespace, rawAttr.name.localName, rawAttr.name.prefix);
             attr._value = rawAttr.value;
             currentElement._attributes.push(attr);
           }
-          var namespaces = scope.namespaces;
           for (var i = 0; i < namespaces.length; ++i) {
             var rawNs = namespaces[i];
             var ns = Namespace.createNamespace(rawNs.uri, rawNs.prefix);
@@ -654,24 +780,32 @@ module Shumway.AVM2.AS {
           currentElement = elementsStack.pop();
         },
         text: function(text, isWhitespace) {
-          var node = createNode("text", "", "");
+          var node = createNode(ASXMLKind.Text, "", "");
           node._value = text;
           // isWhitespace?
           currentElement.insert(currentElement.length(), node);
         },
         cdata: function(text) {
-          var node = createNode("text", "", "");
+          var node = createNode(ASXMLKind.Text, "", "");
           node._value = text;
           currentElement.insert(currentElement.length(), node);
         },
-        comment: function(text) { },
-        pi: function(name, attrs) { },
+        comment: function(text) {
+          var node = createNode(ASXMLKind.Comment, "", "");
+          node._value = text;
+          currentElement.insert(currentElement.length(), node);
+        },
+        pi: function(name, value) {
+          var node = createNode(ASXMLKind.ProcessingInstruction, "", name);
+          node._value = value;
+          currentElement.insert(currentElement.length(), node);
+        },
         doctype: function(text) { }
       });
       return currentElement;
     };
 
-    function createNode(kind, uri, name, prefix?) {
+    function createNode(kind: ASXMLKind, uri, name, prefix?) {
       return new XML(kind, uri, name, prefix);
     }
   }
@@ -1011,7 +1145,7 @@ module Shumway.AVM2.AS {
         }
       }
       if (!ns) {
-        ns = new ASNamespace(this.uri); // FIXME what about the prefix
+        ns = new ASNamespace(this.prefix, this.uri);
       }
       return ns;
     }
@@ -1025,6 +1159,15 @@ module Shumway.AVM2.AS {
     ALL = FLAG_IGNORE_COMMENTS | FLAG_IGNORE_PROCESSING_INSTRUCTIONS | FLAG_IGNORE_WHITESPACE | FLAG_PRETTY_PRINTING
   }
 
+  enum ASXMLKind {
+    Unknown,
+    Element,
+    Attribute,
+    Text,
+    Comment,
+    ProcessingInstruction
+  }
+
   export class ASXML extends ASNative {
     public static instanceConstructor: any = ASXML;
     private static _flags: ASXML_FLAGS = ASXML_FLAGS.ALL;
@@ -1034,7 +1177,7 @@ module Shumway.AVM2.AS {
     private _attributes: ASXML [];
     private _inScopeNamespaces: ASNamespace [];
 
-    private _kind: any;
+    private _kind: ASXMLKind;
 
     private _children: ASXML [];
     private _value: any;
@@ -1052,24 +1195,27 @@ module Shumway.AVM2.AS {
       }
       var x = toXML(value);
       if (isXMLType(value)) {
-        x = x.deepCopy();
+        x = x._deepCopy();
       }
       return x;
     }
 
-    init(kind, uri, name, prefix) {
-      this._name = new ASQName(new ASNamespace(prefix, uri), name);
+    init(kind: number, uri, name, prefix) {
+      var namespace = uri || prefix ? new ASNamespace(prefix, uri) : undefined;
+      this._name = new ASQName(namespace, name);
       this._kind = kind;    // E4X [[Class]]
       this._parent = null;
-      this._inScopeNamespaces = [];
-      switch (kind) {
-        case "element":
+      switch (<ASXMLKind> kind) {
+        case ASXMLKind.Element:
+          this._inScopeNamespaces = [];
           this._attributes = [];
           this._children = [];  // child nodes go here
           break;
-        case "attribute":
-        case "text":
-          this._value = "";
+        case ASXMLKind.Comment:
+        case ASXMLKind.ProcessingInstruction:
+        case ASXMLKind.Attribute:
+        case ASXMLKind.Text:
+          this._value = '';
           break;
         default:
           break;
@@ -1086,9 +1232,40 @@ module Shumway.AVM2.AS {
     }
 
     // 9.1.1.7 [[DeepCopy]] ( )
-    deepCopy(): ASXML {
-      // WARNING lots of cases not handled by both toXMLString() and XML()
-      return new ASXML(toXMLString(this));
+    _deepCopy(): ASXML {
+      var kind: ASXMLKind = this._kind;
+      var clone = new ASXML();
+      clone._kind = kind;
+      clone._name = this._name;
+      switch (kind) {
+        case ASXMLKind.Element:
+          clone._inScopeNamespaces = [];
+          if (this._inScopeNamespaces.length > 0) {
+            this._inScopeNamespaces.forEach(function (ns) {
+              clone._inScopeNamespaces.push(new ASNamespace(ns.prefix, ns.uri));
+            });
+          }
+          clone._attributes = this._attributes.map(function (attr) {
+            attr = attr._deepCopy();
+            attr._parent = clone;
+            return attr;
+          });
+          clone._children = this._children.map(function (child) {
+            child = child._deepCopy();
+            child._parent = clone;
+            return child;
+          });
+          break;
+        case ASXMLKind.Comment:
+        case ASXMLKind.ProcessingInstruction:
+        case ASXMLKind.Attribute:
+        case ASXMLKind.Text:
+          clone._value = this._value;
+          break;
+        default:
+          break;
+      }
+      return clone;
     }
 
     // 9.1.1.10 [[ResolveValue]] ( )
@@ -1098,13 +1275,14 @@ module Shumway.AVM2.AS {
 
     // 13.4.4.16 XML.prototype.hasSimpleContent()
     hasSimpleContent(): boolean {
-      if (this._kind === "comment" || this._kind === "processing-instruction") {
+      if (this._kind === ASXMLKind.Comment ||
+          this._kind === ASXMLKind.ProcessingInstruction) {
         return false;
       }
       var result = true;
       if (this._children) {
         this._children.forEach(function (v) {
-          if (v._kind === "element") {
+          if (v._kind === ASXMLKind.Element) {
             result = false;
           }
         });
@@ -1212,7 +1390,7 @@ module Shumway.AVM2.AS {
       notImplemented("public.XML::contains"); return;
     }
     copy(): ASXML {
-      return this.deepCopy();
+      return this._deepCopy();
     }
     elements(name: any = "*"): ASXMLList {
 
@@ -1315,19 +1493,19 @@ module Shumway.AVM2.AS {
       if (p === p >>> 0) {
         throw "TypeError in XML.prototype.setProperty(): invalid property name " + p;
       }
-      if (self._kind === "text" ||
-          self._kind === "comment" ||
-          self._kind === "processing-instruction" ||
-          self._kind === "attribute") {
+      if (self._kind === ASXMLKind.Text ||
+          self._kind === ASXMLKind.Comment ||
+          self._kind === ASXMLKind.ProcessingInstruction ||
+          self._kind === ASXMLKind.Attribute) {
         return;
       }
       if (!v ||
         !isXMLType(v) ||
-        v._kind === "text" ||
-        v._kind === "attribute") {
+        v._kind === ASXMLKind.Text ||
+        v._kind === ASXMLKind.Attribute) {
         c = toString(v);
       } else {
-        c = v.deepCopy();
+        c = v._deepCopy();
       }
       n = toXMLName(p);
 
@@ -1340,7 +1518,7 @@ module Shumway.AVM2.AS {
             delete o[i];
           }
         });
-        var a = new XML("attribute", n.uri, n.localName);
+        var a = new XML(ASXMLKind.Attribute, n.uri, n.localName);
         a._value = v;
         a._parent = this;
         this._attributes.push(a);
@@ -1352,10 +1530,10 @@ module Shumway.AVM2.AS {
       var isAny = n._flags & ASQNameFlags.ANY_NAME;
       var isAnyNamespace = n._flags & ASQNameFlags.ANY_NAMESPACE;
       for (var k = self.length() - 1; k >= 0; k--) {
-        if ((isAny || self._children[k]._kind === "element" &&
+        if ((isAny || self._children[k]._kind === ASXMLKind.Element &&
           self._children[k]._name.localName === n.localName) &&
           (isAnyNamespace ||
-            self._children[k]._kind === "element" &&
+            self._children[k]._kind === ASXMLKind.Element &&
             self._children[k]._name.uri === n.uri)) {
           if (i !== undefined) {
             self.deleteByIndex(String(i));
@@ -1371,7 +1549,7 @@ module Shumway.AVM2.AS {
           } else {
             var name = new ASQName(n);
           }
-          var y = new XML("element", name.uri, name.localName, name.prefix);
+          var y = new XML(ASXMLKind.Element, name.uri, name.localName, name.prefix);
           y._parent = self;
           var ns = name.getNamespace();
           self.replace(String(i), y);
@@ -1433,8 +1611,8 @@ module Shumway.AVM2.AS {
         }
       } else {
         self._children.forEach(function (v, i) {
-          if ((anyName || v._kind === "element" && v._name.localName === name.localName) &&
-            ((anyNamespace || v._kind === "element" && v._name.uri === name.uri))) {
+          if ((anyName || v._kind === ASXMLKind.Element && v._name.localName === name.localName) &&
+            ((anyNamespace || v._kind === ASXMLKind.Element && v._name.uri === name.uri))) {
             xl.appendChild(v);
           }
         });
@@ -1480,8 +1658,8 @@ module Shumway.AVM2.AS {
         }
       } else {
         if (this._children.some(function (v, i): any {
-          return ((anyName || v._kind === "element" && v._name.localName === name.localName) &&
-            ((anyNamespace || v._kind === "element" && v._name.uri === name.uri)));
+          return ((anyName || v._kind === ASXMLKind.Element && v._name.localName === name.localName) &&
+            ((anyNamespace || v._kind === ASXMLKind.Element && v._name.uri === name.uri)));
         })) {
           return true;
         }
@@ -1566,17 +1744,17 @@ module Shumway.AVM2.AS {
     insert(p, v) {
       var s, i, n;
       var self: ASXML = this;
-      if (self._kind === "text" ||
-        self._kind === "comment" ||
-        self._kind === "processing-instruction" ||
-        self._kind === "attribute") {
+      if (self._kind === ASXMLKind.Text ||
+          self._kind === ASXMLKind.Comment ||
+          self._kind === ASXMLKind.ProcessingInstruction ||
+          self._kind === ASXMLKind.Attribute) {
         return;
       }
       i = p >>> 0;
       if (String(p) !== String(i)) {
         throw "TypeError in XML.prototype.insert(): invalid property name " + p;
       }
-      if (self._kind === "element") {
+      if (self._kind === ASXMLKind.Element) {
         var a = self;
         while (a) {
           if (a === v) {
@@ -1613,13 +1791,13 @@ module Shumway.AVM2.AS {
     replace(p: any, v: any): ASXML {
       var s;
       var self: ASXML = this;
-      if (self._kind === "text" ||
-        self._kind === "comment" ||
-        self._kind === "processing-instruction" ||
-        self._kind === "attribute") {
+      if (self._kind === ASXMLKind.Text ||
+          self._kind === ASXMLKind.Comment ||
+          self._kind === ASXMLKind.ProcessingInstruction ||
+          self._kind === ASXMLKind.Attribute) {
         return self;
       }
-      if (v._kind === "element") {
+      if (v._kind === ASXMLKind.Element) {
         var a = self;
         while (a) {
           if (a === v) {
@@ -1653,10 +1831,10 @@ module Shumway.AVM2.AS {
         });
       }
 
-      if (v._kind === "element" ||
-        v._kind === "text" ||
-        v._kind === "comment" ||
-        v._kind === "processing-instruction") {
+      if (v._kind === ASXMLKind.Element ||
+          v._kind === ASXMLKind.Text ||
+          v._kind === ASXMLKind.Comment ||
+          v._kind === ASXMLKind.ProcessingInstruction) {
         v._parent = self;
         self._children[p] = v;
       } else {
@@ -1673,10 +1851,10 @@ module Shumway.AVM2.AS {
     addInScopeNamespace(ns: ASNamespace) {
       var s;
       var self: ASXML = this;
-      if (self._kind === "text" ||
-        self._kind === "comment" ||
-        self._kind === "processing-instruction" ||
-        self._kind === "attribute") {
+      if (self._kind === ASXMLKind.Text ||
+          self._kind === ASXMLKind.Comment ||
+          self._kind === ASXMLKind.ProcessingInstruction ||
+          self._kind === ASXMLKind.Attribute) {
         return;
       }
       if (ns.prefix !== undefined) {
@@ -1713,7 +1891,7 @@ module Shumway.AVM2.AS {
       var flags = name._flags;
       var self: ASXML = this;
       var xl = new XMLList();
-      if (self._kind !== "element") {
+      if (self._kind !== ASXMLKind.Element) {
         return xl;
       }
       var isAny = flags & ASQNameFlags.ANY_NAME;
@@ -1743,7 +1921,7 @@ module Shumway.AVM2.AS {
       var self: ASXML = this;
       var xl = new XMLList(self, null);
       self._children.forEach(function (v, i) {
-        if (v._kind === "comment") {
+        if (v._kind === ASXMLKind.Comment) {
           xl.appendChild(v);
         }
       });
@@ -1755,7 +1933,7 @@ module Shumway.AVM2.AS {
       var self: ASXML = this;
       var xl = new XMLList(self, null);
       self._children.forEach(function (v, i) {
-        if (v._kind === "text") {
+        if (v._kind === ASXMLKind.Text) {
           xl.appendChild(v);
         }
       });
@@ -1763,9 +1941,9 @@ module Shumway.AVM2.AS {
     }
   }
 
-  function XML(kind?, uri?, name?, prefix?) {
+  function XML(kind?: ASXMLKind, uri?, name?, prefix?) {
     if (kind === undefined) {
-      kind = "text";
+      kind = ASXMLKind.Text;
     }
     if (uri === undefined) {
       uri = "";
@@ -1789,12 +1967,22 @@ module Shumway.AVM2.AS {
       }
       var xl = toXMLList(value);
       if (isXMLType(value)) {
-        xl = xl.deepCopy();
+        xl = xl._deepCopy();
       }
       return xl;
     }
     toString(): string {
       return toString(this);
+    }
+
+    // 9.2.1.7 [[DeepCopy]] ( )
+    _deepCopy() {
+      // TODO 2. Copy all internal properties of x to list
+      var xl = new XMLList();
+      for (var i = 0; i < this.length(); i++) {
+        xl.appendChild(this._children[i]._deepCopy());
+      }
+      return xl;
     }
 
     hasOwnProperty(P: any = undefined): boolean {
@@ -1826,7 +2014,8 @@ module Shumway.AVM2.AS {
       notImplemented("public.XMLList::contains"); return;
     }
     copy(): ASXMLList {
-      notImplemented("public.XMLList::copy"); return;
+      // 13.5.4.9 XMLList.prototype.copy ( )
+      return this._deepCopy();
     }
     elements(name: any = "*"): ASXMLList {
 
@@ -1861,7 +2050,7 @@ module Shumway.AVM2.AS {
       // 13.5.4.20 XMLList.prototype.text ( )
       var xl = new XMLList(this);
       this._children.forEach(function (v:any, i) {
-        if (v._kind === "element") {
+        if (v._kind === ASXMLKind.Element) {
           var gq = v.text();
           if (gq.length() > 0) {
             xl.appendChild(gq);
@@ -1967,7 +2156,7 @@ module Shumway.AVM2.AS {
       var xl = new XMLList(this, name);
       this._children.forEach(function (v:any, i) {
         // a. If x[i].[[Class]] == "element",
-        if (v._kind === "element") {
+        if (v._kind === ASXMLKind.Element) {
           // i. Let gq be the result of calling the [[Get]] method of x[i] with argument P
           var gq = v.getProperty(name, isAttribute, isMethod);
           // ii. If gq.[[Length]] > 0, call the [[Append]] method of list with argument gq
@@ -2060,8 +2249,8 @@ module Shumway.AVM2.AS {
   }
 
   function XMLList(targetObject?, targetProperty?) {
-    this.targetObject = targetObject ? targetObject : null;
-    this.targetProperty = targetProperty ? targetProperty : null;
+    this._targetObject = targetObject ? targetObject : null;
+    this._targetProperty = targetProperty ? targetProperty : null;
     this._children = [];
   }
 
