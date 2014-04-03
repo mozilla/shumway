@@ -296,8 +296,8 @@ module Shumway.Layers {
           return VisitorFlags.Skip;
         }
 
-        if (frame.blendMode > 0) {
-          var blendCanvasContext = this.createScratchContext(context); // TODO: FIX THIS!
+        if (frame.blendMode > 0 && !(target & RenderTarget.BlendMode)) {
+          var blendCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
           var frameBoundsAABB = frame.getBounds();
           transform.transformRectangleAABB(frameBoundsAABB);
           Canvas2DStageRenderer.clearContext(blendCanvasContext, frameBoundsAABB);
@@ -306,6 +306,10 @@ module Shumway.Layers {
           context.setTransform(1, 0, 0, 1, 0, 0);
           context.globalCompositeOperation = self.getCompositeOperation(frame.blendMode);
           context.drawImage(blendCanvasContext.canvas, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
+          if (options.debug) {
+            context.strokeStyle = "red";
+            context.strokeRect(frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
+          }
           context.restore();
           context.restore();
           return VisitorFlags.Skip;
@@ -351,7 +355,6 @@ module Shumway.Layers {
         } else {
           var frameBoundsAABB = frame.getBounds();
           transform.transformRectangleAABB(frameBoundsAABB);
-          frame.setFlags(FrameFlags.IgnoreMask, false);
           if (frame.hasFlags(FrameFlags.Culled)) {
             frame.setFlags(FrameFlags.Culled, false);
           } else {
@@ -371,6 +374,8 @@ module Shumway.Layers {
           }
         }
         context.restore();
+
+        frame.setFlags(FrameFlags.IgnoreMask, false);
 
         return VisitorFlags.Continue;
       }, transform, FrameFlags.Empty);
