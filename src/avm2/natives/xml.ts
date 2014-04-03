@@ -103,7 +103,7 @@ module Shumway.AVM2.AS {
     }
     var buf = s.substring(0, i);
     while (i < s.length) {
-      ch = s[i];
+      ch = s[i++];
       switch (ch) {
         case '&':
           buf += '&amp;';
@@ -124,9 +124,8 @@ module Shumway.AVM2.AS {
 
   // 10.2.1.2 EscapeAttributeValue ( s )
   function escapeAttributeValue(s: string): string {
-    // '>' not per spec, but let's do that anyway
     var i = 0, ch;
-    while (i < s.length && (ch = s[i]) !== '&' && ch !== '<' && ch !== '>' &&
+    while (i < s.length && (ch = s[i]) !== '&' && ch !== '<' &&
            ch !== '\"' && ch !== '\n' && ch !== '\r' && ch !== '\t') {
       i++;
     }
@@ -135,16 +134,13 @@ module Shumway.AVM2.AS {
     }
     var buf = s.substring(0, i);
     while (i < s.length) {
-      ch = s[i];
+      ch = s[i++];
       switch (ch) {
         case '&':
           buf += '&amp;';
           break;
         case '<':
           buf += '&lt;';
-          break;
-        case '>':
-          buf += '&gt;';
           break;
         case '\"':
           buf += '&quot;';
@@ -523,11 +519,17 @@ module Shumway.AVM2.AS {
             return String.fromCharCode(parseInt(entity.substring(1), 10));
           }
           switch (entity) {
-            case 'lt': return '<';
-            case 'gt': return '>';
-            case 'amp': return '&';
+            case 'lt':
+              return '<';
+            case 'gt':
+              return '>';
+            case 'amp':
+              return '&';
+            case 'quot':
+              return '\"';
           }
-          throw "Unknown entity: " + entity;
+          // throw "Unknown entity: " + entity;
+          return all;
         });
       }
       function isWhitespacePreserved(): boolean {

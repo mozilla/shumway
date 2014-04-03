@@ -1,4 +1,5 @@
 // misc test for refactoring
+
 (function () {
   print('Clone')
   var items = [
@@ -39,4 +40,18 @@
 
   x1.soap::Body.stock::getLastTradePrice.symbol = "MYCO";
   print(x1.soap::Body.stock::getLastTradePrice.symbol.toXMLString());
+})();
+
+/*
+(function () {
+  default xml namespace = 'http://boo';
+  var x = new XML("<test>a</test>");
+  print(x.toXMLString());
+})();
+*/
+
+(function () {
+  print('Basic entity parsing');
+  print(new XML('<t a="&quot;&lt;&gt;&#10;&#x0D;" />').toXMLString());
+  print(new XML('<t>&quot;&lt;&gt;&#65;&#x42;"</t>').toXMLString());
 })();
