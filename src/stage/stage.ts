@@ -14,7 +14,8 @@ module Shumway.Layers {
     Dirty      = 1,
     Hidden     = 2,
     IsMask     = 4,
-    Culled     = 8
+    Culled     = 8,
+    IgnoreMask = 16
   }
 
   export enum BlendMode {
