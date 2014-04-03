@@ -466,6 +466,14 @@ module Shumway.AVM2.AS {
     return new ASQName(name);
   }
 
+  function isQNameAttribute(name: any): boolean {
+    if (typeof name === 'object' && (name instanceof ASQName)) {
+      var flags = name._flags;
+      return !!(flags & ASQNameFlags.ATTR_NAME);
+    }
+    return false;
+  }
+
   function prefixWithNamespace(namespaces, name, isAttribute) {
     if (!namespaces ||
         namespaces.length !== 1 ||
@@ -1198,8 +1206,21 @@ module Shumway.AVM2.AS {
     ProcessingInstruction
   }
 
+  var ASXMLKindNames = [null, 'element', 'attribute', 'text', 'comment',
+    'processing-instruction'];
+
   export class ASXML extends ASNative {
     public static instanceConstructor: any = ASXML;
+    public static callableStyle: CallableStyle = CallableStyle.PASSTHROUGH;
+
+    public static callableConstructor: any = function (value: any = undefined): ASXML {
+      // 13.5.1 The XMLList Constructor Called as a Function
+      if (value === null || value === undefined) {
+        value = '';
+      }
+      return toXML(value);
+    };
+
     private static _flags: ASXML_FLAGS = ASXML_FLAGS.ALL;
     private static _prettyIndent = 2;
     private _name: ASQName;
@@ -1232,7 +1253,8 @@ module Shumway.AVM2.AS {
 
     init(kind: number, uri, name, prefix) {
       var namespace = uri || prefix ? new ASNamespace(prefix, uri) : undefined;
-      this._name = new ASQName(namespace, name);
+      var isAttribute = kind === ASXMLKind.Attribute;
+      this._name = new ASQName(namespace, name, isAttribute);
       this._kind = kind;    // E4X [[Class]]
       this._parent = null;
       switch (<ASXMLKind> kind) {
@@ -1303,21 +1325,11 @@ module Shumway.AVM2.AS {
       return this;
     }
 
-    // 13.4.4.16 XML.prototype.hasSimpleContent()
-    hasSimpleContent(): boolean {
-      if (this._kind === ASXMLKind.Comment ||
-          this._kind === ASXMLKind.ProcessingInstruction) {
-        return false;
+    _addInScopeNamespaces(ns) {
+      if (this._inScopeNamespaces.some(function (ins) { return ins.uri === ns.uri && ins.prefix === ns.prefix; })) {
+        return;
       }
-      var result = true;
-      if (this._children) {
-        this._children.forEach(function (v) {
-          if (v._kind === ASXMLKind.Element) {
-            result = false;
-          }
-        });
-      }
-      return result;
+      this._inScopeNamespaces.push(ns);
     }
 
     static get ignoreComments(): boolean {
@@ -1374,19 +1386,24 @@ module Shumway.AVM2.AS {
     toString(): string {
       return toString(this);
     }
-    hasOwnProperty(P: any = undefined): boolean {
-
-      notImplemented("public.XML::hasOwnProperty"); return;
+    native_hasOwnProperty(P: any = undefined): boolean {
+      // 13.4.4.14 XML.prototype.hasOwnProperty ( P )
+      if (this.hasProperty(P, isQNameAttribute(P), false)) {
+        return true;
+      }
+      return _asHasOwnProperty.call(this, String(P));
     }
-    propertyIsEnumerable(P: any = undefined): boolean {
-
-      notImplemented("public.XML::propertyIsEnumerable"); return;
+    native_propertyIsEnumerable(P: any = undefined): boolean {
+      // 13.4.4.30 XML.prototype.propertyIsEnumerable ( P )
+      return String(P) === "0";
     }
     addNamespace(ns: any): ASXML {
-
-      notImplemented("public.XML::addNamespace"); return;
+      // 13.4.4.2 XML.prototype.addNamespace ( namespace )
+      this._addInScopeNamespaces(new ASNamespace(ns));
+      return this;
     }
     appendChild(child: any): ASXML {
+      // TODO review
       if (child._parent) {
         var index = child._parent._children.indexOf(child);
         assert(index >= 0);
@@ -1405,30 +1422,57 @@ module Shumway.AVM2.AS {
       return list;
     }
     child(propertyName: any): ASXMLList {
-      return this.getProperty(propertyName, false, false);
+      return this.getProperty(propertyName, isQNameAttribute(propertyName), false);
     }
     childIndex(): number /*int*/ {
-      notImplemented("public.XML::childIndex"); return;
+      // 13.4.4.7 XML.prototype.childIndex ( )
+      if (!this._parent || this._kind === ASXMLKind.Attribute) {
+        return -1;
+      }
+      return this._parent._children.indexOf(this);
     }
     children(): ASXMLList {
-      var list = new XMLList();
-      Array.prototype.push.apply(list._children, this._children);
-      return list;
+      var xl = new XMLList(this);
+      Array.prototype.push.apply(xl._children, this._children);
+      return xl;
     }
     contains(value: any): boolean {
-
-      notImplemented("public.XML::contains"); return;
+      // 13.4.4.10 XML.prototype.contains ( value )
+      return this === value;
     }
     copy(): ASXML {
       return this._deepCopy();
     }
     elements(name: any = "*"): ASXMLList {
-
-      notImplemented("public.XML::elements"); return;
+      // 13.4.4.13 XML.prototype.elements ( [ name ] )
+      return this.getProperty(name, false, false);
     }
     hasComplexContent(): boolean {
-      notImplemented("public.XML::hasComplexContent"); return;
+      // 13.4.4.15 XML.prototype.hasComplexContent( )
+      if (this._kind === ASXMLKind.Attribute ||
+          this._kind === ASXMLKind.Comment ||
+          this._kind === ASXMLKind.ProcessingInstruction ||
+          this._kind === ASXMLKind.Text) {
+        return false;
+      }
+      return this._children.some(function (child) {
+        return child._kind === ASXMLKind.Element;
+      });
     }
+    hasSimpleContent(): boolean {
+      // 13.4.4.16 XML.prototype.hasSimpleContent()
+      if (this._kind === ASXMLKind.Comment ||
+          this._kind === ASXMLKind.ProcessingInstruction) {
+        return false;
+      }
+      if (!this._children && this._children.length === 0) {
+        return true;
+      }
+      return this._children.every(function (child) {
+        return child._kind !== ASXMLKind.Element;
+      });
+    }
+
     inScopeNamespaces(): any [] {
       notImplemented("public.XML::inScopeNamespaces"); return;
     }
@@ -1441,7 +1485,7 @@ module Shumway.AVM2.AS {
       notImplemented("public.XML::insertChildBefore"); return;
     }
     localName(): Object {
-      notImplemented("public.XML::localName"); return;
+      return this._name.localName;
     }
     name(): Object {
       return this._name;
@@ -1454,13 +1498,13 @@ module Shumway.AVM2.AS {
       notImplemented("public.XML::namespaceDeclarations"); return;
     }
     nodeKind(): string {
-      notImplemented("public.XML::nodeKind"); return;
+      return ASXMLKindNames[this._kind];
     }
     normalize(): ASXML {
       notImplemented("public.XML::normalize"); return;
     }
     parent(): any {
-      notImplemented("public.XML::parent"); return;
+      return this._parent;
     }
     processingInstructions(name: any = "*"): ASXMLList {
 
@@ -1659,7 +1703,7 @@ module Shumway.AVM2.AS {
         isAttribute, false);
     }
 
-    hasProperty(mn, isAttribute, isMethod) {
+    hasProperty(mn, isAttribute?, isMethod?) {
       if (isMethod) {
         var resolved = Multiname.isQName(mn) ? mn :
           this.resolveMultinameProperty(mn.namespaces, mn.name, mn.flags);
@@ -1948,6 +1992,7 @@ module Shumway.AVM2.AS {
     }
 
     comments() {
+      // 13.4.4.9 XML.prototype.comments ( )
       var self: ASXML = this;
       var xl = new XMLList(self, null);
       self._children.forEach(function (v, i) {
@@ -1988,6 +2033,16 @@ module Shumway.AVM2.AS {
 
   export class ASXMLList extends ASNative {
     public static instanceConstructor: any = ASXMLList;
+    public static callableStyle: CallableStyle = CallableStyle.PASSTHROUGH;
+
+    public static callableConstructor: any = function (value: any = undefined): ASXMLList {
+      // 13.5.1 The XMLList Constructor Called as a Function
+      if (value === null || value === undefined) {
+        value = '';
+      }
+      return toXMLList(value);
+    };
+
     private _children: ASXML [];
     constructor (value: any = undefined) {
       false && super();
@@ -2037,40 +2092,82 @@ module Shumway.AVM2.AS {
       return this.getProperty('*', false, false);
     }
     comments(): ASXMLList {
-      notImplemented("public.XMLList::comments"); return;
+      // 13.5.4.6 XMLList.prototype.comments ( )
+      var xl = new XMLList(this);
+      this._children.forEach(function (child) {
+        if ((<any> child)._kind === ASXMLKind.Element) {
+          var r = child.comments();
+          Array.prototype.push.apply(xl._children, r._children);
+        }
+      });
+      return xl;
     }
     contains(value: any): boolean {
-
-      notImplemented("public.XMLList::contains"); return;
+      // 13.5.4.8 XMLList.prototype.contains ( value )
+      return this._children.indexOf(value) >= 0;
     }
     copy(): ASXMLList {
       // 13.5.4.9 XMLList.prototype.copy ( )
       return this._deepCopy();
     }
     elements(name: any = "*"): ASXMLList {
-
-      notImplemented("public.XMLList::elements"); return;
+      // 13.5.4.11 XMLList.prototype.elements ( [ name ] )
+      var xl = new XMLList(this, new ASQName(name));
+      this._children.forEach(function (child) {
+        if ((<any> child)._kind === ASXMLKind.Element) {
+          var r = child.elements(name);
+          Array.prototype.push.apply(xl._children, r._children);
+        }
+      });
+      return xl;
     }
     hasComplexContent(): boolean {
-      notImplemented("public.XMLList::hasComplexContent"); return;
+      // 13.5.4.13 XMLList.prototype.hasComplexContent( )
+      switch (this.length()) {
+        case 0:
+          return false;
+        case 1:
+          return this._children[0].hasComplexContent();
+        default:
+          return this._children.some(function (child) {
+            return (<any> child)._kind === ASXMLKind.Element;
+          });
+      }
     }
     hasSimpleContent(): boolean {
-      return this._children.every(function (x) {
-        return x.hasSimpleContent();
-      });
+      // 13.5.4.14 XMLList.prototype.hasSimpleContent( )
+      switch (this.length()) {
+        case 0:
+          return true;
+        case 1:
+          return this._children[0].hasSimpleContent();
+        default:
+          return this._children.every(function (child) {
+            return (<any> child)._kind !== ASXMLKind.Element;
+          });
+      }
     }
     length(): number /*int*/ {
       return this._children.length;
     }
     name(): Object {
       return this._children[0].name();
-      notImplemented("public.XMLList::name"); return;
     }
     normalize(): ASXMLList {
       notImplemented("public.XMLList::normalize"); return;
     }
     parent(): any {
-      notImplemented("public.XMLList::parent"); return;
+      // 13.5.4.17 XMLList.prototype.parent ( )
+      if (this.length() === 0) {
+        return undefined;
+      }
+      var parent = (<any> this._children[0])._parent;
+      for (var i = 1; i < this.length(); i++) {
+        if (parent !== (<any> this._children[i])._parent) {
+          return undefined;
+        }
+      }
+      return parent;
     }
     processingInstructions(name: any = "*"): ASXMLList {
 
