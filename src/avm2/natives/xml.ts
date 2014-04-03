@@ -183,7 +183,7 @@ module Shumway.AVM2.AS {
     while (isWhitespace(s, j)) {
       j--;
     }
-    return i === 0 && j === s.length - 1 ? s : s.substring(i, j);
+    return i === 0 && j === s.length - 1 ? s : s.substring(i, j + 1);
   }
 
   var indentStringCache: string[] = [];
@@ -593,24 +593,24 @@ module Shumway.AVM2.AS {
             ++pos;
           }
         }
-        while (pos < s.length && !isWhitespace(s, pos) && s.charAt(pos) !== ">" && s.charAt(pos) !== "/") {
+        while (pos < s.length && !isWhitespace(s, pos) && s[pos] !== ">" && s[pos] !== "/") {
           ++pos;
         }
         name = s.substring(start, pos);
         skipWs();
-        while (pos < s.length && s.charAt(pos) !== ">" &&
-          s.charAt(pos) !== "/" && s.charAt(pos) !== "?") {
+        while (pos < s.length && s[pos] !== ">" &&
+          s[pos] !== "/" && s[pos] !== "?") {
           skipWs();
           var attrName = "", attrValue = "";
-          while (pos < s.length && !isWhitespace(s, pos) && s.charAt(pos) !== "=") {
-            attrName += s.charAt(pos);
+          while (pos < s.length && !isWhitespace(s, pos) && s[pos] !== "=") {
+            attrName += s[pos];
             ++pos;
           }
           skipWs();
-          if (s.charAt(pos) !== "=") throw "'=' expected";
+          if (s[pos] !== "=") throw "'=' expected";
           ++pos;
           skipWs();
-          var attrEndChar = s.charAt(pos);
+          var attrEndChar = s[pos];
           if (attrEndChar !== "\"" && attrEndChar !== "\'" ) throw "Quote expected";
           var attrEndIndex = s.indexOf(attrEndChar, ++pos);
           if (attrEndIndex < 0) throw "Unexpected EOF[6]";
@@ -621,12 +621,33 @@ module Shumway.AVM2.AS {
         }
         return {name: name, attributes: attributes, parsed: pos - start};
       }
+
+      function parseProcessingInstruction(s, start) {
+        var pos = start, name, value;
+        function skipWs() {
+          while (pos < s.length && isWhitespace(s, pos)) {
+            ++pos;
+          }
+        }
+        while (pos < s.length && !isWhitespace(s, pos) && s[pos] !== ">" && s[pos] !== "/") {
+          ++pos;
+        }
+        name = s.substring(start, pos);
+        skipWs();
+        var attrStart = pos;
+        while (pos < s.length && (s[pos] !== "?" || s[pos + 1] != '>')) {
+          ++pos;
+        }
+        value = s.substring(attrStart, pos);
+        return {name: name, value: value, parsed: pos - start};
+      }
+
       while (i < s.length) {
-        var ch = s.charAt(i);
+        var ch = s[i];
         var j = i;
         if (ch === "<") {
           ++j;
-          var ch2 = s.charAt(j), q, name;
+          var ch2 = s[j], q, name;
           switch (ch2) {
             case "/":
               ++j;
@@ -638,12 +659,12 @@ module Shumway.AVM2.AS {
               break;
             case "?":
               ++j;
-              var content = parseContent(s, j);
-              if (s.substring(j + content.parsed, j + content.parsed + 2) != "?>") {
+              var pi = parseProcessingInstruction(s, j);
+              if (s.substring(j + pi.parsed, j + pi.parsed + 2) != "?>") {
                 throw "Unexpected EOF[2]";
               }
-              sink.pi(content.name, content.attributes);
-              j += content.parsed + 2;
+              sink.pi(pi.name, pi.value);
+              j += pi.parsed + 2;
               break;
             case "!":
               if (s.substring(j + 1, j + 3) === "--") {
@@ -738,14 +759,13 @@ module Shumway.AVM2.AS {
               break;
           }
         } else {
+          var isWs = true;
           do {
+            isWs = isWs && isWhitespace(s, j);
             if (++j >= s.length) break;
-          } while(s.charAt(j) !== "<");
+          } while(s[j] !== "<");
           var text = s.substring(i, j);
-          var isWs = text.replace(/^\s+/, "").length === 0;
-          if (!isWs || isWhitespacePreserved()) {
-            sink.text(resolveEntities(text), isWs);
-          }
+          sink.text(resolveEntities(text), isWs || isWhitespacePreserved());
         }
         i = j;
       }
@@ -780,9 +800,11 @@ module Shumway.AVM2.AS {
           currentElement = elementsStack.pop();
         },
         text: function(text, isWhitespace) {
+          if (isWhitespace && ASXML.ignoreWhitespace) {
+            return;
+          }
           var node = createNode(ASXMLKind.Text, "", "");
           node._value = text;
-          // isWhitespace?
           currentElement.insert(currentElement.length(), node);
         },
         cdata: function(text) {
@@ -791,11 +813,17 @@ module Shumway.AVM2.AS {
           currentElement.insert(currentElement.length(), node);
         },
         comment: function(text) {
+          if (ASXML.ignoreComments) {
+            return;
+          }
           var node = createNode(ASXMLKind.Comment, "", "");
           node._value = text;
           currentElement.insert(currentElement.length(), node);
         },
         pi: function(name, value) {
+          if (ASXML.ignoreProcessingInstructions) {
+            return;
+          }
           var node = createNode(ASXMLKind.ProcessingInstruction, "", name);
           node._value = value;
           currentElement.insert(currentElement.length(), node);
