@@ -304,6 +304,7 @@ module Shumway.Layers {
           var cxformCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
           var frameBoundsAABB = frame.getBounds();
           transform.transformRectangleAABB(frameBoundsAABB);
+          frameBoundsAABB.intersect(self._viewport);
           Canvas2DStageRenderer.clearContext(cxformCanvasContext, frameBoundsAABB);
           self.renderFrame(cxformCanvasContext, frame, transform, frameBoundsAABB, null, target | RenderTarget.ColorTransform, options);
 
@@ -338,6 +339,7 @@ module Shumway.Layers {
           var blendCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
           var frameBoundsAABB = frame.getBounds();
           transform.transformRectangleAABB(frameBoundsAABB);
+          frameBoundsAABB.intersect(self._viewport);
           Canvas2DStageRenderer.clearContext(blendCanvasContext, frameBoundsAABB);
           self.renderFrame(blendCanvasContext, frame, transform, frameBoundsAABB, null, target | RenderTarget.BlendMode, options);
           context.save();
