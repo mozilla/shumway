@@ -95,6 +95,32 @@ module Shumway.Layers {
       return this._m.subarray(16, 20);
     }
 
+    public getColorMatrix(): Float32Array {
+      var t: Float32Array = new Float32Array(20);
+      var m: Float32Array = this._m;
+      t[0] = m[0];
+      t[1] = m[4];
+      t[2] = m[8];
+      t[3] = m[12];
+      t[4] = m[16] * 255;
+      t[5] = m[1];
+      t[6] = m[5];
+      t[7] = m[9];
+      t[8] = m[13];
+      t[9] = m[17] * 255;
+      t[10] = m[2];
+      t[11] = m[6];
+      t[12] = m[10];
+      t[13] = m[14];
+      t[14] = m[18] * 255;
+      t[15] = m[3];
+      t[16] = m[7];
+      t[17] = m[11];
+      t[18] = m[15];
+      t[19] = m[19] * 255;
+      return t;
+    }
+
     public static createIdentity(): ColorTransform {
       return new ColorTransform ([
         1, 0, 0, 0,

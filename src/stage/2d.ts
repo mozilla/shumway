@@ -6,6 +6,8 @@ interface CanvasRenderingContext2D {
 
 module Shumway.Layers {
 
+  declare var FILTERS;
+
   import Rectangle = Shumway.Geometry.Rectangle;
   import Point = Shumway.Geometry.Point;
   import Matrix = Shumway.Geometry.Matrix;
@@ -22,11 +24,12 @@ module Shumway.Layers {
   }
 
   export enum RenderTarget {
-    Default    = 0,
-    Mask       = 1,
-    Maskee     = 2,
-    BlendMode  = 4,
-    Filters    = 8
+    Default        = 0,
+    Mask           = 1,
+    Maskee         = 2,
+    BlendMode      = 4,
+    ColorTransform = 8,
+    Filters        = 16
   }
 
   var originalSave = CanvasRenderingContext2D.prototype.save;
@@ -149,6 +152,7 @@ module Shumway.Layers {
   }
 
   export class Canvas2DStageRenderer {
+
     private _scratchContexts: CanvasRenderingContext2D [] = [];
 
     private static MAX_MASK_DEPTH = 1;
@@ -296,20 +300,50 @@ module Shumway.Layers {
           return VisitorFlags.Skip;
         }
 
+        if (frame.colorTransform && !(target & RenderTarget.ColorTransform)) {
+          var cxformCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
+          var frameBoundsAABB = frame.getBounds();
+          transform.transformRectangleAABB(frameBoundsAABB);
+          Canvas2DStageRenderer.clearContext(cxformCanvasContext, frameBoundsAABB);
+          self.renderFrame(cxformCanvasContext, frame, transform, frameBoundsAABB, null, target | RenderTarget.ColorTransform, options);
+
+          var image = cxformCanvasContext.getImageData(frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
+          var imageData = image.data;
+          var pimg = FILTERS.allocMemory(imageData.length);
+          FILTERS.HEAPU8.set(imageData, pimg);
+          //console.log("###", FILTERS.HEAPU8.subarray(pimg, pimg + 100));
+          var pm = FILTERS.allocMemory(20 << 2);
+          FILTERS.HEAPF32.set(frame.colorTransform.getColorMatrix(), pm >> 2);
+          FILTERS.colormatrix(pimg, image.width, image.height, pm);
+          //console.log("###", FILTERS.HEAPU8.subarray(pimg, pimg + 100));
+          //var m = frame.colorTransform.getColorMatrix();
+          //console.log("###", m[0], m[1], m[2], m[3], m[4]);
+          //console.log("###", m[5], m[6], m[7], m[8], m[9]);
+          //console.log("###", m[10], m[11], m[12], m[13], m[14]);
+          //console.log("###", m[15], m[16], m[17], m[18], m[19]);
+          FILTERS.freeMemory(pm);
+          imageData.set(FILTERS.HEAPU8.subarray(pimg, pimg + imageData.length));
+          FILTERS.freeMemory(pimg);
+          cxformCanvasContext.putImageData(image, frameBoundsAABB.x, frameBoundsAABB.y);
+
+          context.save();
+          context.setTransform(1, 0, 0, 1, 0, 0);
+          context.drawImage(cxformCanvasContext.canvas, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
+          context.restore();
+          context.restore();
+          return VisitorFlags.Skip;
+        }
+
         if (frame.blendMode > 0 && !(target & RenderTarget.BlendMode)) {
           var blendCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
           var frameBoundsAABB = frame.getBounds();
           transform.transformRectangleAABB(frameBoundsAABB);
           Canvas2DStageRenderer.clearContext(blendCanvasContext, frameBoundsAABB);
-          self.renderFrame(blendCanvasContext, frame, transform, frameBoundsAABB, null, RenderTarget.BlendMode, options);
+          self.renderFrame(blendCanvasContext, frame, transform, frameBoundsAABB, null, target | RenderTarget.BlendMode, options);
           context.save();
           context.setTransform(1, 0, 0, 1, 0, 0);
           context.globalCompositeOperation = self.getCompositeOperation(frame.blendMode);
           context.drawImage(blendCanvasContext.canvas, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
-          if (options.debug) {
-            context.strokeStyle = "red";
-            context.strokeRect(frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
-          }
           context.restore();
           context.restore();
           return VisitorFlags.Skip;
@@ -332,11 +366,11 @@ module Shumway.Layers {
           maskBoundsAABB.snap();
 
           //Canvas2DStageRenderer.clearContext(maskCanvasContext, maskBoundsAABB);
-          self.renderFrame(maskCanvasContext, frame.mask, maskTransform, maskBoundsAABB, null, RenderTarget.Mask, options);
+          self.renderFrame(maskCanvasContext, frame.mask, maskTransform, maskBoundsAABB, null, target | RenderTarget.Mask, options);
 
           //Canvas2DStageRenderer.clearContext(maskeeCanvasContext, maskBoundsAABB);
           maskeeCanvasContext.globalCompositeOperation = 'source-over';
-          self.renderFrame(maskeeCanvasContext, frame, transform, maskBoundsAABB, null, RenderTarget.Maskee, options);
+          self.renderFrame(maskeeCanvasContext, frame, transform, maskBoundsAABB, null, target | RenderTarget.Maskee, options);
 
           if (options.compositeMask) {
             maskeeCanvasContext.globalCompositeOperation = 'destination-in';
@@ -352,27 +386,28 @@ module Shumway.Layers {
           context.restore();
           context.restore();
           return VisitorFlags.Skip;
+        }
+
+        var frameBoundsAABB = frame.getBounds();
+        transform.transformRectangleAABB(frameBoundsAABB);
+        if (frame.hasFlags(FrameFlags.Culled)) {
+          frame.setFlags(FrameFlags.Culled, false);
         } else {
-          var frameBoundsAABB = frame.getBounds();
-          transform.transformRectangleAABB(frameBoundsAABB);
-          if (frame.hasFlags(FrameFlags.Culled)) {
-            frame.setFlags(FrameFlags.Culled, false);
-          } else {
-            if (frame instanceof Shape) {
-              frame._previouslyRenderedAABB = frameBoundsAABB;
-              var shape = <Shape>frame;
-              var bounds = shape.getBounds();
-              if (!bounds.isEmpty()) {
-                shape.source.render(context);
-              }
-              if (options.paintFlashing) {
-                context.fillStyle = randomStyle();
-                context.globalAlpha = 0.5;
-                context.fillRect(0, 0, frame.w, frame.h);
-              }
+          if (frame instanceof Shape) {
+            frame._previouslyRenderedAABB = frameBoundsAABB;
+            var shape = <Shape>frame;
+            var bounds = shape.getBounds();
+            if (!bounds.isEmpty()) {
+              shape.source.render(context);
+            }
+            if (options.paintFlashing) {
+              context.fillStyle = randomStyle();
+              context.globalAlpha = 0.5;
+              context.fillRect(0, 0, frame.w, frame.h);
             }
           }
         }
+
         context.restore();
 
         frame.setFlags(FrameFlags.IgnoreMask, false);
