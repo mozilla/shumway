@@ -471,6 +471,9 @@ module Shumway.AVM2.ABC {
     public isScriptMember(): boolean {
       return this.holder instanceof ScriptInfo;
     }
+    public hasSetsDxns(): boolean {
+      return !!(this.flags & METHOD.Setsdxns);
+    }
 
     static parseException(abc, stream) {
       var multinames = abc.constantPool.multinames;
