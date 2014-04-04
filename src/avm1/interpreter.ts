@@ -117,9 +117,9 @@ module Shumway.AVM1 {
     }
     public flushPendingScripts() {}
     public addAsset(className: string, symbolProps) {}
-    public getAsset(className: string) {}
-    public resolveTarget(target) {}
-    public resolveLevel(level: number) {}
+    public getAsset(className: string): any {}
+    public resolveTarget(target): any {}
+    public resolveLevel(level: number): any {}
     public addToPendingScripts(fn) {}
   }
 
@@ -155,10 +155,10 @@ module Shumway.AVM1 {
     addAsset(className: string, symbolProps) {
       this.assets[className] = symbolProps;
     }
-    getAsset(className: string) {
+    getAsset(className: string) : any {
       return this.assets[className];
     }
-    resolveTarget(target) {
+    resolveTarget(target) : any {
       var currentTarget = this.currentTarget || this.defaultTarget;
       if (!target) {
         target = currentTarget;
@@ -174,7 +174,7 @@ module Shumway.AVM1 {
 
       return target;
     }
-    resolveLevel(level: number) {
+    resolveLevel(level: number) : any {
       return this.resolveTarget(this.globals['_level' + level]);
     }
     addToPendingScripts(fn: Function) {

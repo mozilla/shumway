@@ -311,7 +311,9 @@ module Shumway.AVM2.AS {
 
       if (!self.instanceConstructor) {
         self.instanceConstructor = instanceConstructor;
-        self.instanceConstructor.__proto__ = self;
+        if (self !== instanceConstructor) {
+          self.instanceConstructor.__proto__ = self;
+        }
       } else {
         writer && writer.warnLn("Ignoring AS3 instanceConstructor.");
       }
@@ -1415,7 +1417,13 @@ module Shumway.AVM2.AS {
 
     var classScope = new Scope(scope, null);
     classScope.object = cls;
-    var instanceConstructor = createFunction(ii.init, classScope, false);
+    var instanceConstructor = null;
+    if (ii.init.isNative()) {
+      assert (isNativeClass);
+      instanceConstructor = cls;
+    } else {
+      instanceConstructor = createFunction(ii.init, classScope, false);
+    }
 
     /**
      * Only collect natives for native classes.
@@ -1468,10 +1476,16 @@ module Shumway.AVM2.AS {
     var name = escapeNativeName(Multiname.getName(trait.name));
     for (var i = 0; i < natives.length; i++) {
       var native = natives[i];
-      if (hasOwnProperty(native, name)) {
+      var fullName = name;
+      // Because of name conflicts we need to prefix some names with "native_" sometimes,
+      // check for that case here.
+      if (!hasOwnProperty(native, name) && hasOwnProperty(native, "native_" + name)) {
+        fullName = "native_" + name;
+      }
+      if (hasOwnProperty(native, fullName)) {
         var value;
         if (trait.isAccessor()) {
-          var pd = getOwnPropertyDescriptor(native, name);
+          var pd = getOwnPropertyDescriptor(native, fullName);
           if (trait.isGetter()) {
             value = pd.get;
           } else {
@@ -1479,7 +1493,7 @@ module Shumway.AVM2.AS {
           }
         } else {
           assert (trait.isMethod());
-          value = native[name];
+          value = native[fullName];
         }
         assert (value, "Method or Accessor property exists but it's undefined: " + trait);
         return value;
