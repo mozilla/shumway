@@ -134,6 +134,10 @@ module Shumway.AVM2.AS {
     public static classBindings: ClassBindings;
     public static instanceBindings: InstanceBindings;
     public static interfaceBindings: InstanceBindings;
+
+    public static classSymbols: string [];
+    public static instanceSymbols: string [];
+
     public static staticNatives: any [];
     public static instanceNatives: any [];
     public static traitsPrototype: Object;
@@ -289,6 +293,8 @@ module Shumway.AVM2.AS {
       } else {
         self.traitsPrototype = createObject(self.dynamicPrototype);
       }
+
+      Shumway.ObjectUtilities.copyOwnPropertyDescriptors(self.traitsPrototype, self.prototype);
     }
 
     /**
@@ -305,6 +311,7 @@ module Shumway.AVM2.AS {
 
       if (!self.instanceConstructor) {
         self.instanceConstructor = instanceConstructor;
+        self.instanceConstructor.__proto__ = self;
       } else {
         writer && writer.warnLn("Ignoring AS3 instanceConstructor.");
       }
@@ -372,7 +379,7 @@ module Shumway.AVM2.AS {
         assert (self.instanceConstructorNoInitialize === self.instanceConstructor);
         self.instanceConstructor = <any>function (...args) {
           ASClass.runInitializers(this);
-          return self.instanceConstructorNoInitialize.asApply(this, arguments);
+          return self.instanceConstructorNoInitialize.apply(this, arguments);
         };
         self.instanceConstructor.prototype = self.traitsPrototype;
         self.instanceConstructor.prototype.class = self;
@@ -385,6 +392,43 @@ module Shumway.AVM2.AS {
     static runClassInitializer(self: ASClass) {
       if (self.classInitializer) {
         self.classInitializer();
+      }
+    }
+
+    static linkSymbols(self: ASClass) {
+      function link(symbols, traits, obj) {
+        for (var i = 0; i < traits.length; i++) {
+          var trait = traits[i];
+          if (symbols.indexOf(trait.name.name) < 0) {
+            continue;
+          }
+          if (trait.isConst()) {
+            notImplemented("Don't link against const traits.");
+            return;
+          }
+          var name = trait.name.name;
+          var qn = Multiname.getQualifiedName(trait.name);
+          if (trait.isSlot()) {
+            Object.defineProperty(obj, name, {
+              get: <() => any>new Function("", "return this." + qn),
+              set: <(any) => void>new Function("v", "this." + qn + " = v")
+            });
+          } else if (trait.isMethod()) {
+            assert (!obj[name], "Symbol should not already exist.")
+            assert (obj.asOpenMethods[qn], "There should be an open method for this symbol.");
+            obj[name] = obj.asOpenMethods[qn];
+          } else {
+            notImplemented(trait);
+          }
+        }
+      }
+
+      if (self.classSymbols) {
+        link(self.classSymbols, self.classInfo.traits,  self);
+      }
+
+      if (self.instanceSymbols) {
+        link(self.instanceSymbols, self.classInfo.instanceInfo.traits,  self.traitsPrototype);
       }
     }
 
@@ -448,6 +492,16 @@ module Shumway.AVM2.AS {
      * Instance bindings associated with this class.
      */
     instanceBindings: InstanceBindings;
+
+    /**
+     * List of class symbols to link.
+     */
+    classSymbols: string [];
+
+    /**
+     * List of instance symbols to link.
+     */
+    instanceSymbols: string [];
 
     /**
      * Instance bindings associated with this interface.
@@ -1401,6 +1455,7 @@ module Shumway.AVM2.AS {
     }
 
     ASClass.configureInitializers(cls);
+    ASClass.linkSymbols(cls);
     ASClass.runClassInitializer(cls);
 
     return cls;

@@ -144,7 +144,7 @@
 ///<reference path='events/ErrorEvent.ts' />
 ///<reference path='events/Event.ts' />
 ///<reference path='events/EventDispatcher.ts' />
-// ///<reference path='events/EventPhase.ts' />
+///<reference path='events/EventPhase.ts' />
 // ///<reference path='events/FocusEvent.ts' />
 // ///<reference path='events/FullScreenEvent.ts' />
 // ///<reference path='events/GameInputEvent.ts' />

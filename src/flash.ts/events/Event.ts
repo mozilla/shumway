@@ -17,7 +17,7 @@
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Event extends ASNative {
-    
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
@@ -85,51 +85,62 @@ module Shumway.AVM2.AS.flash.events {
     
     // AS -> JS Bindings
     
-    // _type: string;
-    // _bubbles: boolean;
-    // _cancelable: boolean;
-    // _target: ASObject;
-    // _currentTarget: ASObject;
-    // _eventPhase: number /*uint*/;
+    _type: string;
+    _bubbles: boolean;
+    _cancelable: boolean;
+
+    _target: Object;
+    _currentTarget: Object;
+    _eventPhase: number /*uint*/;
+
+    _stopPropagation: boolean;
+    _stopImmediatePropagation: boolean;
+    _isDefaultPrevented: boolean;
+
     get type(): string {
-      notImplemented("public flash.events.Event::get type"); return;
-      // return this._type;
+      return this._type;
     }
     get bubbles(): boolean {
-      notImplemented("public flash.events.Event::get bubbles"); return;
-      // return this._bubbles;
+      return this._bubbles;
     }
     get cancelable(): boolean {
-      notImplemented("public flash.events.Event::get cancelable"); return;
-      // return this._cancelable;
+      return this._cancelable;
     }
-    get target(): ASObject {
-      notImplemented("public flash.events.Event::get target"); return;
-      // return this._target;
+    get target(): Object {
+      return this._target;
     }
-    get currentTarget(): ASObject {
-      notImplemented("public flash.events.Event::get currentTarget"); return;
-      // return this._currentTarget;
+    get currentTarget(): Object {
+      return this._currentTarget;
     }
     get eventPhase(): number /*uint*/ {
-      notImplemented("public flash.events.Event::get eventPhase"); return;
-      // return this._eventPhase;
+      return this._eventPhase;
     }
     stopPropagation(): void {
-      notImplemented("public flash.events.Event::stopPropagation"); return;
+      this._stopPropagation = true;
     }
     stopImmediatePropagation(): void {
-      notImplemented("public flash.events.Event::stopImmediatePropagation"); return;
+      this._stopImmediatePropagation = this._stopPropagation = true;
     }
     preventDefault(): void {
-      notImplemented("public flash.events.Event::preventDefault"); return;
+      if (this._cancelable) {
+        this._isDefaultPrevented = true;
+      }
     }
     isDefaultPrevented(): boolean {
-      notImplemented("public flash.events.Event::isDefaultPrevented"); return;
+      return this._isDefaultPrevented;
     }
     ctor(type: string, bubbles: boolean, cancelable: boolean): void {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable;
-      notImplemented("public flash.events.Event::ctor"); return;
+      this._type = "" + type;
+      this._bubbles = !!bubbles;
+      this._cancelable = !!cancelable;
+
+      this._target = null;
+      this._currentTarget = null;
+      this._eventPhase = EventPhase.AT_TARGET;
+
+      this._stopPropagation = false;
+      this._stopImmediatePropagation = false;
+      this._isDefaultPrevented = false;
     }
   }
 }

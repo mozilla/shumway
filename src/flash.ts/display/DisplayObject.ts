@@ -45,7 +45,7 @@ module Shumway.AVM2.AS.flash.display {
     // _root: flash.display.DisplayObject;
     // _stage: flash.display.Stage;
     // _name: string;
-    // _parent: flash.display.DisplayObjectContainer;
+    _parent: flash.display.DisplayObjectContainer;
     // _mask: flash.display.DisplayObject;
     // _visible: boolean;
     // _x: number;

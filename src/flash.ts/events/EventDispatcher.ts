@@ -19,9 +19,109 @@ module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import isString = Shumway.isString;
+  import isFunction = Shumway.isFunction;
 
   import throwError = Shumway.AVM2.Runtime.throwError;
 
+  import Event = flash.events.Event;
+  import IEventDispatcher = flash.events.IEventDispatcher;
+  import EventDispatcher = flash.events.EventDispatcher;
+  import DisplayObject = flash.display.DisplayObject;
+
+  class EventListenerEntry {
+    constructor (
+      public listener: EventHandler,
+      public useCapture: boolean,
+      public priority: number
+    ) { }
+  }
+
+  /**
+   * Implements Copy-On-Write for event listener lists. Event handlers can add and/or remove
+   * event handlers while the events are processed. The easiest way to implement this is to
+   * clone the event listener list before executing the event listeners. This however can be
+   * wasteful, since most of the time, event handlers don't mutate the event list. Here we
+   * implement a simple copy-on-write strategy that clones the entry list if it's been
+   * snapshotted and it's about to be mutated.
+   */
+
+  class EventListenerList {
+    private _entries: EventListenerEntry [];
+
+    /**
+     * Indicates whether the current entry list has been aliased (or snapshotted).
+     */
+    private _aliased = false;
+
+    constructor() {
+      this._entries = [];
+    }
+
+    isEmpty(): boolean {
+      return this._entries.length === 0;
+    }
+
+    insert(listener: EventHandler, useCapture: boolean, priority: number) {
+      var entries = this._entries;
+      var index = entries.length;
+      for (var i = index - 1; i >= 0; i--) {
+        var entry = entries[i];
+        if (entry.listener === listener) {
+          return;
+        }
+        if (priority > entry.priority) {
+          index = i;
+        } else {
+          break;
+        }
+      }
+      this.ensureNotAliasedEntries().splice(index, 0, new EventListenerEntry(listener, useCapture, priority));
+    }
+
+    /**
+     * Make sure we get a fresh list if it's been aliased.
+     */
+    private ensureNotAliasedEntries(): EventListenerEntry [] {
+      var entries = this._entries;
+      if (this._aliased) {
+        entries = this._entries = entries.slice();
+        this._aliased = false;
+      }
+      return entries;
+    }
+
+    remove(listener: EventHandler) {
+      var entries = this._entries;
+      for (var i = 0; i < entries.length; i++) {
+        var item = entries[i];
+        if (item.listener === listener) {
+          this.ensureNotAliasedEntries().splice(i, 1);
+          return;
+        }
+      }
+    }
+
+    /**
+     * Get a snapshot of the current entry list.
+     */
+    snapshot(): EventListenerEntry [] {
+      this._aliased = true;
+      return this._entries;
+    }
+
+    /**
+     * Release the snapshot, hopefully no other mutations occured so we can reuse the entry list.
+     */
+    releaseSnapshot(snapshot) {
+      if (this._aliased && this._entries === snapshot) {
+        this._aliased = false;
+      }
+    }
+  }
+
+  /**
+   * The EventDispatcher class is the base class for all classes that dispatch events. The EventDispatcher class implements the IEventDispatcher interface and is the base class for the DisplayObject class. The EventDispatcher class allows any object on the display list to be an event target and as such, to use the methods of the IEventDispatcher interface.
+   */
   export class EventDispatcher extends ASNative implements IEventDispatcher {
 
     /**
@@ -53,127 +153,24 @@ module Shumway.AVM2.AS.flash.events {
       };
     };
 
-    private static doDispatchEvent(dispatcher, event, eventClass?, bubbles?): boolean {
-      var target = dispatcher._target;
-      var type = event._type || event;
-      var listeners = dispatcher._listeners[type];
-
-      if (bubbles || (isString(event) && EventDispatcher._mouseEvents[event]) || event._bubbles) {
-        var ancestors = [];
-        var currentNode = target._parent;
-        while (currentNode) {
-          if (currentNode._hasEventListener(type)) {
-            ancestors.push(currentNode);
-          }
-          currentNode = currentNode._parent;
-        }
-        if (!listeners && !ancestors.length) {
-          return true;
-        }
-        var keepPropagating = true;
-        var i = ancestors.length;
-        while (i-- && keepPropagating) {
-          var currentTarget = ancestors[i];
-          var queue = currentTarget._captureListeners[type];
-          keepPropagating = EventDispatcher.processListeners(queue, event, eventClass, bubbles, target, currentTarget, 1);
-        }
-        if (listeners && keepPropagating) {
-          keepPropagating = EventDispatcher.processListeners(listeners, event, eventClass, bubbles, target);
-        }
-
-        for (var i = 0; i < ancestors.length && keepPropagating; i++) {
-          var currentTarget = ancestors[i];
-          var queue = currentTarget._listeners[type];
-          keepPropagating = EventDispatcher.processListeners(queue, event, eventClass, bubbles, target, currentTarget, 3);
-        }
-      } else if (listeners) {
-        EventDispatcher.processListeners(listeners, event, eventClass, bubbles, target);
-      }
-
-      return !event._isDefaultPrevented;
-    }
-
-    private static processListeners(queue, event, eventClass, bubbles, target, currentTarget?, eventPhase?) {
-      if (queue) {
-        queue = queue.slice();
-
-        var needsInit = true;
-
-        try {
-          for (var i = 0; i < queue.length; i++) {
-            var item = queue[i];
-
-            var methodInfo = item.handleEvent.methodInfo;
-            if (methodInfo) {
-              if (methodInfo.parameters.length) {
-                if (!methodInfo.parameters[0].isUsed) {
-                  item.handleEvent();
-                  continue;
-                }
-              }
-            }
-
-            if (needsInit) {
-              if (typeof event === 'string') {
-                if (eventClass) {
-                  event = new eventClass(event);
-                } else {
-                  if (EventDispatcher._mouseEvents[event]) {
-                    event = new flash.events.MouseEvent(event, EventDispatcher._mouseEvents[event]);
-                    if (target._stage) {
-                      event._localX = target.mouseX;
-                      event._localY = target.mouseY;
-                    }
-                  } else {
-                    event = new flash.events.Event(event);
-                  }
-                }
-              } else if (event._target) {
-                event = event.clone();
-              }
-
-              event._target = target;
-              event._currentTarget = currentTarget || target;
-              event._eventPhase = eventPhase || 2;
-
-              needsInit = false;
-            }
-
-            item.handleEvent(event);
-            if (event._stopImmediatePropagation) {
-              break;
-            }
-          }
-        } catch (e) {
-          AVM2.instance.exceptions.push({
-            source: 'avm2',
-            message: e.message,
-            stack: e.stack
-          });
-          throw e;
-        }
-      }
-
-      return !event._stopPropagation;
-    }
-
     private _target: flash.events.IEventDispatcher;
-    private _listeners: any;
-    private _captureListeners: any;
+
+    /*
+     * Keep two lists of listeners, one for capture events and one for all others.
+     */
+
+
+    private _captureListeners: Shumway.Map<EventListenerList>;
+    private _targetOrBubblingListeners: Shumway.Map<EventListenerList>;
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
-      var self: EventDispatcher = this;
-      self._target = self;
-      self._listeners = createEmptyObject();
-      self._captureListeners = createEmptyObject();
-    };
+    static initializer: any = null;
 
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["toString", "dispatchEvent"];
+    static instanceSymbols: string [] = ["dispatchEvent"]; // ["toString", "dispatchEvent"];
 
     constructor (target: flash.events.IEventDispatcher = null) {
       target = target;
@@ -187,111 +184,141 @@ module Shumway.AVM2.AS.flash.events {
 
     // AS -> JS Bindings
 
-    private _addEventListenerImpl(type, listener, useCapture, priority) {
-      if (typeof listener !== 'function') {
-        // TODO: The Player unevals the `listener`. To some extend, we could, too
-        throwError("TypeError", Errors.CheckTypeFailedError, listener, "Function");
-      }
-
-      var listeners = useCapture ? this._captureListeners : this._listeners;
-      var queue = listeners[type];
-      var listenerObj = {
-        handleEvent: listener,
-        priority: priority || 0
-      };
-      if (queue) {
-        var level = queue.length;
-
-        var i = level;
-        while (i--) {
-          var item = queue[i];
-
-          if (item.handleEvent === listener) {
-            return;
-          }
-
-          if (priority > item.priority) {
-            level = i;
-          }
-        }
-
-        queue.splice(level, 0, listenerObj);
-      } else {
-        listeners[type] = [listenerObj];
-      }
-    }
-
-    _addEventListener(type, listener, useCapture, priority) {
-      this._addEventListenerImpl(type, listener, useCapture, priority);
-    }
-
-    _removeEventListenerImpl(type, listener, useCapture) {
-      if (typeof listener !== 'function') {
-        // TODO: The Player unevals the `listener`. To some extend, we could, too
-        throwError("TypeError", Errors.CheckTypeFailedError, listener, "Function");
-      }
-
-      var listeners = useCapture ? this._captureListeners : this._listeners;
-      var queue = listeners[type];
-      if (queue) {
-        for (var i = 0; i < queue.length; i++) {
-          var item = queue[i];
-          if (item.handleEvent === listener) {
-            queue.splice(i, 1);
-            if (!queue.length) {
-              listeners[type] = null;
-            }
-            return;
-          }
-        }
-      }
-    }
-
-    _removeEventListener(type, listener, useCapture) {
-      this._removeEventListenerImpl(type, listener, useCapture);
-    }
-
-    _hasEventListener(type) { // (type:String) -> Boolean
-      return this._listeners[type] || this._captureListeners[type];
-    }
-
-    _dispatchEvent(event, eventClass, bubbles) {
-      EventDispatcher.doDispatchEvent(this, event, eventClass, bubbles);
-    }
-
     private eventDispatcher_ctor(target: flash.events.IEventDispatcher): void {
-      target = target;
-      notImplemented("public flash.events.EventDispatcher::ctor"); return;
+      this._target = target || this;
+      this._captureListeners = null;
+      this._targetOrBubblingListeners = null;
     }
 
-    addEventListener(type: string, listener: ASFunction, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false): void {
+    /**
+     * Lazily construct listeners lists to avoid object allocation.
+     */
+    private getListeners(useCapture: boolean): Shumway.Map<EventListenerList> {
+      if (useCapture) {
+        return this._captureListeners || (this._captureListeners = createEmptyObject());
+      }
+      return this._targetOrBubblingListeners || (this._targetOrBubblingListeners = createEmptyObject());
+    }
+
+    addEventListener(type: string, listener: EventHandler, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false): void {
       type = "" + type; listener = listener; useCapture = !!useCapture; priority = priority | 0; useWeakReference = !!useWeakReference;
-      this._addEventListener(type, listener, useCapture, priority);
+      assert (isFunction(listener));
+      var listeners = this.getListeners(useCapture);
+      var list = listeners[type] || (listeners[type] = new EventListenerList());
+      list.insert(listener, useCapture, priority);
     }
 
-    removeEventListener(type: string, listener: ASFunction, useCapture: boolean = false): void {
+    removeEventListener(type: string, listener: EventHandler, useCapture: boolean = false): void {
       type = "" + type; listener = listener; useCapture = !!useCapture;
-      this._removeEventListener(type, listener, useCapture);
+      if (!isFunction(listener)) {
+        // TODO: The Player unevals the `listener`. To some extend, we could, too
+        throwError("TypeError", Errors.CheckTypeFailedError, listener, "Function");
+      }
+      var listeners = this.getListeners(useCapture);
+      var list = listeners[type];
+      if (list) {
+        list.remove(listener);
+        if (list.isEmpty()) {
+          listeners[type] = null;
+        }
+      }
     }
 
     hasEventListener(type: string): boolean {
       type = "" + type;
-      return this._hasEventListener(type);
+      return !!this._targetOrBubblingListeners[type] ||
+             !!this._captureListeners[type];
     }
 
     willTrigger(type: string): boolean {
       type = "" + type;
-      var currentNode = this._target;
-      do {
-        if (currentNode._hasEventListener(type)) {
-          return true;
-        }
-      } while ((currentNode = currentNode._parent));
+      if (this.hasEventListener(type)) {
+        return true;
+      }
+      if (this instanceof DisplayObject) {
+        var node: DisplayObject = (<DisplayObject>this)._parent;
+        do {
+          if (node.hasEventListener(type)) {
+            return true;
+          }
+        } while ((node = node._parent));
+      }
       return false;
     }
 
     dispatchEventFunction(event: flash.events.Event): boolean {
-      return EventDispatcher.doDispatchEvent(this, event);
+      return this.dispatchEventInternal(event);
+    }
+
+    private static callListeners(list: EventListenerList, event: Event, target: IEventDispatcher, currentTarget: IEventDispatcher, eventPhase: number) {
+      var snapshot = list.snapshot();
+      for (var i = 0; i < snapshot.length; i++) {
+        var entry = snapshot[i];
+        event._target = target;
+        event._currentTarget = currentTarget;
+        event._eventPhase = eventPhase;
+        entry.listener(event);
+        if (event._stopImmediatePropagation) {
+          break;
+        }
+      }
+      list.releaseSnapshot(snapshot);
+      return !event._stopPropagation;
+    }
+
+    private dispatchEventInternal(event: Event): boolean {
+      if (event._target) {
+        event = event.clone();
+      }
+
+      var type = event._type;
+      var target = this._target;
+
+      /**
+       * 1. Capturing Phase
+       */
+
+      var keepPropagating = true;
+      var ancestors: DisplayObject [];
+
+      if (event.bubbles && this instanceof DisplayObject) {
+        var node: DisplayObject = (<DisplayObject>this)._parent;
+
+        // Gather all parent display objects that have event listeners for this event type.
+        while (node) {
+          if (node.hasEventListener(type)) {
+            ancestors.push(node)
+          }
+          node = node._parent;
+        }
+
+        for (var i = ancestors.length - 1; i >= 0 && keepPropagating; i--) {
+          var ancestor = ancestors[i];
+          var list = ancestor.getListeners(true)[type];
+          keepPropagating = EventDispatcher.callListeners(list, event, target, ancestor, EventPhase.CAPTURING_PHASE);
+        }
+      }
+
+      /**
+       * 2. At Target
+       */
+
+      if (keepPropagating) {
+        keepPropagating = EventDispatcher.callListeners(this.getListeners(false)[type], event, target, target, EventPhase.AT_TARGET);
+      }
+
+      /**
+       * 3. Bubbling Phase
+       */
+      if (event.bubbles) {
+        for (var i = 0; i < ancestors.length && keepPropagating; i++) {
+          var ancestor = ancestors[i];
+          var list = ancestor.getListeners(false)[type];
+          keepPropagating = EventDispatcher.callListeners(list, event, target, ancestor, EventPhase.BUBBLING_PHASE);
+        }
+      }
+
+      return !event._isDefaultPrevented;
     }
   }
 }
