@@ -55,5 +55,40 @@ module Shumway.AVM2.AS.flash.display {
     
     // AS -> JS Bindings
     
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+        case 1:
+          return BlendMode.NORMAL;
+        case 2:
+          return BlendMode.LAYER;
+        case 3:
+          return BlendMode.MULTIPLY;
+        case 4:
+          return BlendMode.SCREEN;
+        case 5:
+          return BlendMode.LIGHTEN;
+        case 6:
+          return BlendMode.DARKEN;
+        case 7:
+          return BlendMode.DIFFERENCE;
+        case 8:
+          return BlendMode.ADD;
+        case 9:
+          return BlendMode.SUBTRACT;
+        case 10:
+          return BlendMode.INVERT;
+        case 11:
+          return BlendMode.ALPHA;
+        case 12:
+          return BlendMode.ERASE;
+        case 13:
+          return BlendMode.OVERLAY;
+        case 14:
+          return BlendMode.HARDLIGHT;
+        default:
+          return BlendMode.NORMAL;
+      }
+    }
   }
 }
