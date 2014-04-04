@@ -121,6 +121,20 @@ module Shumway.Layers {
       return t;
     }
 
+    public getColorTransform(): Float32Array {
+      var t: Float32Array = new Float32Array(8);
+      var m: Float32Array = this._m;
+      t[0] = m[0];
+      t[1] = m[5];
+      t[2] = m[10];
+      t[3] = m[15];
+      t[4] = m[16] * 255;
+      t[5] = m[17] * 255;
+      t[6] = m[18] * 255;
+      t[7] = m[19] * 255;
+      return t;
+    }
+
     public static createIdentity(): ColorTransform {
       return new ColorTransform ([
         1, 0, 0, 0,

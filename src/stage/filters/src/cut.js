@@ -288,7 +288,7 @@ exports.reduceFilterToAsmjs = function (sourcePath, outputPath) {
 
   newBody.push(asm);
 
-  var exportedFunctions = ['_allocMemory', '_freeMemory', '_preMultiplyAlpha', '_unpreMultiplyAlpha', '_blur', '_dropshadow', '_colormatrix'];
+  var exportedFunctions = ['_allocMemory', '_freeMemory', '_preMultiplyAlpha', '_unpreMultiplyAlpha', '_blur', '_dropshadow', '_colormatrix', '_colortransform'];
   // return
   newBody.push({
     "type": "ReturnStatement",

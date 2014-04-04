@@ -678,3 +678,26 @@ void colormatrix(unsigned char *img, int width, int height, float *m)
 		img += 4;
 	}
 }
+
+void colortransform(unsigned char *img, int width, int height, float *m)
+{
+	unsigned char *imgEnd = img + ((width * height) << 2);
+
+	unsigned int *img32 = (unsigned int *)img;
+
+	int r, g, b, a;
+	float rr, rg, rb, ra;
+
+	while (img < imgEnd) {
+		r = *img;
+		g = *(img + 1);
+		b = *(img + 2);
+		a = *(img + 3);
+		rr = r * m[0] + m[4];
+		rg = g * m[1] + m[5];
+		rb = b * m[2] + m[6];
+		ra = a * m[3] + m[7];
+		*img32++ = clamp(rr) | clamp(rg) << 8 | clamp(rb) << 16 | clamp(ra) << 24;
+		img += 4;
+	}
+}

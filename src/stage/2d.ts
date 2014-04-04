@@ -314,8 +314,8 @@ module Shumway.Layers {
           FILTERS.HEAPU8.set(imageData, pimg);
           //console.log("###", FILTERS.HEAPU8.subarray(pimg, pimg + 100));
           var pm = FILTERS.allocMemory(20 << 2);
-          FILTERS.HEAPF32.set(frame.colorTransform.getColorMatrix(), pm >> 2);
-          FILTERS.colormatrix(pimg, image.width, image.height, pm);
+          FILTERS.HEAPF32.set(frame.colorTransform.getColorTransform(), pm >> 2);
+          FILTERS.colortransform(pimg, image.width, image.height, pm);
           //console.log("###", FILTERS.HEAPU8.subarray(pimg, pimg + 100));
           //var m = frame.colorTransform.getColorMatrix();
           //console.log("###", m[0], m[1], m[2], m[3], m[4]);
