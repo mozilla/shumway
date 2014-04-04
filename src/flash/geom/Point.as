@@ -16,6 +16,7 @@
 
 package flash.geom
 {
+  [native(cls='PointClass')]
   public class Point
   {
     public native function set x(xa:Number);
