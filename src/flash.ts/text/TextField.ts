@@ -70,7 +70,7 @@ module Shumway.AVM2.AS.flash.text {
     // _maxScrollH: number /*int*/;
     // _maxScrollV: number /*int*/;
     // _mouseWheelEnabled: boolean;
-    // _multiline: boolean;
+    _multiline: boolean;
     // _numLines: number /*int*/;
     // _displayAsPassword: boolean;
     // _restrict: string;
@@ -84,11 +84,11 @@ module Shumway.AVM2.AS.flash.text {
     // _styleSheet: flash.text.StyleSheet;
     // _text: string;
     // _textColor: number /*uint*/;
-    // _textHeight: number;
-    // _textWidth: number;
+    _textHeight: number;
+    _textWidth: number;
     // _thickness: number;
     // _type: string;
-    // _wordWrap: boolean;
+    _wordWrap: boolean;
     // _useRichTextClipboard: boolean;
     get alwaysShowSelection(): boolean {
       notImplemented("public flash.text.TextField::get alwaysShowSelection"); return;
