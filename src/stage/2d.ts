@@ -310,19 +310,11 @@ module Shumway.Layers {
 
           var image = cxformCanvasContext.getImageData(frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
           var imageData = image.data;
-          var pimg = FILTERS.allocMemory(imageData.length);
+          var pimg = FILTERS.allocMemory(imageData.length + 32);
+          var pm = pimg + imageData.length;
           FILTERS.HEAPU8.set(imageData, pimg);
-          //console.log("###", FILTERS.HEAPU8.subarray(pimg, pimg + 100));
-          var pm = FILTERS.allocMemory(8 << 2);
           FILTERS.HEAPF32.set(frame.colorTransform.getColorTransform(), pm >> 2);
           FILTERS.colortransform(pimg, image.width, image.height, pm);
-          //console.log("###", FILTERS.HEAPU8.subarray(pimg, pimg + 100));
-          //var m = frame.colorTransform.getColorMatrix();
-          //console.log("###", m[0], m[1], m[2], m[3], m[4]);
-          //console.log("###", m[5], m[6], m[7], m[8], m[9]);
-          //console.log("###", m[10], m[11], m[12], m[13], m[14]);
-          //console.log("###", m[15], m[16], m[17], m[18], m[19]);
-          FILTERS.freeMemory(pm);
           imageData.set(FILTERS.HEAPU8.subarray(pimg, pimg + imageData.length));
           FILTERS.freeMemory(pimg);
           cxformCanvasContext.putImageData(image, frameBoundsAABB.x, frameBoundsAABB.y);
