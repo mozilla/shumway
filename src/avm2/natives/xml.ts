@@ -366,8 +366,6 @@ module Shumway.AVM2.AS {
     }
   }
 
-  var defaultNamespace = "";
-
   // 10.4 ToXMLList
   function toXMLList(value) {
     if (value === null) {
@@ -381,7 +379,7 @@ module Shumway.AVM2.AS {
     } else if (value instanceof XMLList) {
       return value;
     } else {
-      var parentString = '<parent xmlns=\'' + defaultNamespace + '\'>' +
+      var parentString = '<parent xmlns=\'' + ASXML.defaultNamespace + '\'>' +
         value + '</parent>';
       var x = toXML(parentString);
       var xl = new XMLList();
@@ -485,15 +483,10 @@ module Shumway.AVM2.AS {
   }
 
   // 12.1 GetDefaultNamespace
-  function getDefaultNamespace(scope?): ASNamespace {
-    while (scope) {
-      var obj = scope.object;
-      if (obj.defaultNamepsace !== undefined) {
-        return obj.defaultNamespace;
-      }
-      scope = scope.parent;
-    }
-    return new ASNamespace("", "");
+  function getDefaultNamespace(): ASNamespace {
+    // The scope's default xml namespace is stored in XML.defaultNamespace
+    // (see runtime.ts createInterpretedFunction)
+    return new ASNamespace("", ASXML.defaultNamespace);
   }
 
   // 13.1.2.1 isXMLName ( value )
@@ -515,9 +508,10 @@ module Shumway.AVM2.AS {
           "xmlns": 'http://www.w3.org/2000/xmlns/',
           "xml": 'http://www.w3.org/XML/1998/namespace'
         },
-        inScopes: [],
+        inScopes: !ASXML.defaultNamespace ? [] :
+          [{uri: ASXML.defaultNamespace, prefix: ''}],
         space: 'default',
-        xmlns: ''
+        xmlns: (ASXML.defaultNamespace || '')
       }];
       function resolveEntities(s) {
         return s.replace(/&([^;]+);/g, function(all, entity) {
@@ -1221,6 +1215,7 @@ module Shumway.AVM2.AS {
       return toXML(value);
     };
 
+    public static defaultNamespace = '';
     private static _flags: ASXML_FLAGS = ASXML_FLAGS.ALL;
     private static _prettyIndent = 2;
     private _name: ASQName;

@@ -618,6 +618,12 @@ module Shumway.AVM2 {
           case OP.setlocal3:
             locals[op - OP.setlocal0] = stack.pop();
             break;
+          case OP.dxns:
+            Shumway.AVM2.AS.ASXML.defaultNamespace = strings[bc.index];
+            break;
+          case OP.dxnslate:
+            Shumway.AVM2.AS.ASXML.defaultNamespace = stack.pop();
+            break;
           case OP.debug:
           case OP.debugline:
           case OP.debugfile:

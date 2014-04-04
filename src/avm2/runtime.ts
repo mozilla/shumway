@@ -1385,6 +1385,8 @@ module Shumway.AVM2.Runtime {
     }
     if (mi.hasExceptions() && !compilerEnableExceptions.value) {
       return false;
+    } else if (mi.hasSetsDxns()) {
+      return false;
     } else if (mi.code.length > compilerMaximumMethodSize.value) {
       return false;
     }
@@ -1500,6 +1502,21 @@ module Shumway.AVM2.Runtime {
         }
         return Shumway.AVM2.Interpreter.interpretMethod(global, methodInfo, scope, args);
       };
+    }
+    if (methodInfo.hasSetsDxns()) {
+      // SETS_DXNS means we allowed to save default xml namespace in the scope.
+      // Simulating that by saving/restoring current xml namespace, problem
+      // that this method will not work for closures.
+      fn = (function (fn) {
+        return function () {
+          var savedDxns = Shumway.AVM2.AS.ASXML.defaultNamespace;
+          try {
+            return fn.apply(this, arguments);
+          } finally {
+            Shumway.AVM2.AS.ASXML.defaultNamespace = savedDxns;
+          }
+        };
+      })(fn);
     }
     fn.instanceConstructor = fn;
     fn.debugName = "Interpreter Function #" + vmNextInterpreterFunctionId++;
