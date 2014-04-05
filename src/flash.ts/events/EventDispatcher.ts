@@ -246,27 +246,7 @@ module Shumway.AVM2.AS.flash.events {
       return false;
     }
 
-    dispatchEventFunction(event: flash.events.Event): boolean {
-      return this.dispatchEventInternal(event);
-    }
-
-    private static callListeners(list: EventListenerList, event: Event, target: IEventDispatcher, currentTarget: IEventDispatcher, eventPhase: number) {
-      var snapshot = list.snapshot();
-      for (var i = 0; i < snapshot.length; i++) {
-        var entry = snapshot[i];
-        event._target = target;
-        event._currentTarget = currentTarget;
-        event._eventPhase = eventPhase;
-        entry.listener(event);
-        if (event._stopImmediatePropagation) {
-          break;
-        }
-      }
-      list.releaseSnapshot(snapshot);
-      return !event._stopPropagation;
-    }
-
-    private dispatchEventInternal(event: Event): boolean {
+    private dispatchEventFunction(event: Event): boolean {
       if (event._target) {
         event = event.clone();
       }
@@ -319,6 +299,22 @@ module Shumway.AVM2.AS.flash.events {
       }
 
       return !event._isDefaultPrevented;
+    }
+
+    private static callListeners(list: EventListenerList, event: Event, target: IEventDispatcher, currentTarget: IEventDispatcher, eventPhase: number) {
+      var snapshot = list.snapshot();
+      for (var i = 0; i < snapshot.length; i++) {
+        var entry = snapshot[i];
+        event._target = target;
+        event._currentTarget = currentTarget;
+        event._eventPhase = eventPhase;
+        entry.listener(event);
+        if (event._stopImmediatePropagation) {
+          break;
+        }
+      }
+      list.releaseSnapshot(snapshot);
+      return !event._stopPropagation;
     }
   }
 }

@@ -178,10 +178,10 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public union(toUnion: Rectangle): Rectangle {
-      if (toUnion.width == 0 || toUnion.height == 0) {
+      if (toUnion.isEmpty()) {
         return this.clone();
       }
-      if (this.width == 0 || this.height == 0) {
+      if (this.isEmpty()) {
         return toUnion.clone();
       }
       var l: number = Math.min(this.x, toUnion.x);

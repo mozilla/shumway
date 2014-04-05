@@ -25,24 +25,10 @@ module Shumway.AVM2.AS.flash.display {
 
   export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable {
 
-    /**
-     * Dictionary of all broadcasted events with the event type as key and a value specifying if public or internal only.
-     */
-    private static _broadcastedEvents: any;
-
     private static _instances: DisplayObject [];
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
-      DisplayObject._broadcastedEvents = {
-        advanceFrame:       false,
-        constructChildren:  false,
-        enterFrame:         true,
-        executeFrame:       false,
-        exitFrame:          true,
-        frameConstructed:   true,
-        render:             true
-      };
       DisplayObject._instances = [];
     };
     
@@ -101,6 +87,7 @@ module Shumway.AVM2.AS.flash.display {
       // TODO: make these flags
       self._animated = false;
       self._boundsInvalid = false;
+      self._constructed = false;
       self._destroyed = false;
       self._invalid = false;
       self._owned = false;
@@ -205,6 +192,7 @@ module Shumway.AVM2.AS.flash.display {
     _children: flash.display.DisplayObject [];
     _clipDepth: number;
     _concatenatedTransform: flash.geom.Matrix;
+    _constructed: boolean;
     _currentTransform: flash.geom.Matrix;
     _current3dTransform: flash.geom.Matrix3D;
     _cxform: flash.geom.ColorTransform;
@@ -250,8 +238,8 @@ module Shumway.AVM2.AS.flash.display {
       this._scaleX = Math.sqrt(a * a + b * b);
       this._scaleY = Math.sqrt(d * d + c * c);
       this._currentTransform.setTo(a, b, c, d, tx, ty);
-      this._invalidateTransform();
       this._invalidate();
+      this._invalidateTransform();
     }
     private _getConcatenatedTransform(targetCoordSpace: DisplayObject): Matrix {
       var stage = this._stage;
@@ -430,24 +418,25 @@ module Shumway.AVM2.AS.flash.display {
 
       rect.setTo(xMin, yMin, xMax - xMin, yMax - yMin);
     }
-    private _invalidate(): void {
+    private destroy(): void {
+      this._destroyed = true;
+    }
+
+    _invalidate(): void {
       this._invalid = true;
     }
-    private _invalidateBounds(): void {
+    _invalidateBounds(): void {
       var currentNode = this;
       while (currentNode && !currentNode._boundsInvalid) {
         currentNode._boundsInvalid = true;
         currentNode = currentNode._parent;
       }
     }
-    private _invalidateTransform(): void {
+    _invalidateTransform(): void {
       this._transformInvalid = true;
       if (this._parent) {
         this._parent._invalidateBounds();
       }
-    }
-    private destroy(): void {
-      this._destroyed = true;
     }
 
     get root(): flash.display.DisplayObject {
@@ -529,8 +518,7 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidateTransform();
     }
     get z(): number {
-      notImplemented("public flash.display.DisplayObject::get z"); return;
-      // return this._z;
+      return this._z;
     }
     set z(value: number) {
       value = +value;
@@ -570,8 +558,7 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidateTransform();
     }
     get scaleZ(): number {
-      notImplemented("public flash.display.DisplayObject::get scaleZ"); return;
-      // return this._scaleZ;
+      return this._scaleZ;
     }
     set scaleZ(value: number) {
       value = +value;
@@ -632,8 +619,7 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidateTransform();
     }
     get rotationX(): number {
-      notImplemented("public flash.display.DisplayObject::get rotationX"); return;
-      // return this._rotationX;
+      return this._rotationX;
     }
     set rotationX(value: number) {
       value = +value;
@@ -641,8 +627,7 @@ module Shumway.AVM2.AS.flash.display {
       // this._rotationX = value;
     }
     get rotationY(): number {
-      notImplemented("public flash.display.DisplayObject::get rotationY"); return;
-      // return this._rotationY;
+      return this._rotationY;
     }
     set rotationY(value: number) {
       value = +value;
@@ -650,8 +635,7 @@ module Shumway.AVM2.AS.flash.display {
       // this._rotationY = value;
     }
     get rotationZ(): number {
-      notImplemented("public flash.display.DisplayObject::get rotationZ"); return;
-      // return this._rotationZ;
+      return this._rotationZ;
     }
     set rotationZ(value: number) {
       value = +value;
@@ -735,8 +719,7 @@ module Shumway.AVM2.AS.flash.display {
       this._animated = false;
     }
     get opaqueBackground(): ASObject {
-      notImplemented("public flash.display.DisplayObject::get opaqueBackground"); return;
-      // return this._opaqueBackground;
+      return this._opaqueBackground;
     }
     set opaqueBackground(value: ASObject) {
       value = value;
@@ -744,8 +727,7 @@ module Shumway.AVM2.AS.flash.display {
       // this._opaqueBackground = value;
     }
     get scrollRect(): flash.geom.Rectangle {
-      notImplemented("public flash.display.DisplayObject::get scrollRect"); return;
-      // return this._scrollRect;
+      return this._scrollRect;
     }
     set scrollRect(value: flash.geom.Rectangle) {
       value = value;
@@ -797,8 +779,7 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
     get scale9Grid(): flash.geom.Rectangle {
-      notImplemented("public flash.display.DisplayObject::get scale9Grid"); return;
-      // return this._scale9Grid;
+      return this._scale9Grid;
     }
     set scale9Grid(innerRectangle: flash.geom.Rectangle) {
       innerRectangle = innerRectangle;
@@ -810,8 +791,7 @@ module Shumway.AVM2.AS.flash.display {
              (this._parent && this._parent.loaderInfo);
     }
     get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
-      notImplemented("public flash.display.DisplayObject::get accessibilityProperties"); return;
-      // return this._accessibilityProperties;
+      return this._accessibilityProperties;
     }
     set accessibilityProperties(value: flash.accessibility.AccessibilityProperties) {
       value = value;
