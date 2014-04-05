@@ -16,13 +16,141 @@
 // Class: DisplayObject
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import throwError = Shumway.AVM2.Runtime.throwError;
+
+  import BlendMode = flash.display.BlendMode;
+  import Matrix = flash.geom.Matrix;
+  import Point = flash.geom.Point;
+  import Rectangle = flash.geom.Rectangle;
+
   export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable {
-    
+
+    /**
+     * Dictionary of all broadcasted events with the event type as key and a value specifying if public or internal only.
+     */
+    private static _broadcastedEvents: any;
+
+    private static _instances: DisplayObject [];
+
     // Called whenever the class is initialized.
-    static classInitializer: any = null;
+    static classInitializer: any = function () {
+      DisplayObject._broadcastedEvents = {
+        advanceFrame:       false,
+        constructChildren:  false,
+        enterFrame:         true,
+        executeFrame:       false,
+        exitFrame:          true,
+        frameConstructed:   true,
+        render:             true
+      };
+      DisplayObject._instances = [];
+    };
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
+    static initializer: any = function () {
+      var self: DisplayObject = this;
+
+      DisplayObject._instances.push(self);
+
+      self._root = null;
+      self._stage = null;
+      self._name = 'instance' + DisplayObject._instances.length;
+      self._parent = null;
+      self._mask = null;
+      self._visible = true;
+      self._z = 0;
+      self._scaleX = 1;
+      self._scaleY = 1;
+      self._scaleZ = 1;
+      self._mouseX = 0;
+      self._mouseY = 0;
+      self._rotation = 0;
+      self._rotationX = 0;
+      self._rotationY = 0;
+      self._rotationZ = 0;
+      self._alpha = 1;
+      self._width = 0;
+      self._height = 0;
+      self._cacheAsBitmap = false;
+      self._opaqueBackground = null;
+      self._scrollRect = null;
+      self._filters = [];
+      self._blendMode = BlendMode.NORMAL;
+      self._scale9Grid = null;
+      self._loaderInfo = null;
+      self._accessibilityProperties = null;
+
+      self._bbox = null;
+      self._bounds = null;
+      self._clipDepth = 0;
+      self._concatenatedTransform = new Matrix;
+      self._currentTransform = new Matrix;
+      self._current3dTransform = null;
+      self._cxform = null;
+      self._depth = 0;
+      self._graphics = null;
+      self._index = -1;
+      self._level = -1;
+      self._maskedObject = null;
+      self._rotationCos = 0;
+      self._rotationSin = 0;
+
+      // TODO: get this via loaderInfo
+      self._loader = null;
+
+      // TODO: make these flags
+      self._animated = false;
+      self._boundsInvalid = false;
+      self._destroyed = false;
+      self._invalid = false;
+      self._owned = false;
+      self._transformInvalid = false;
+
+      // TODO: move to InteractiveObject
+      self._mouseOver = false;
+
+      // TODO: move to DisplayObjectContainer
+      self._children = [];
+      self._isContainer = false;
+      self._mouseChildren = true;
+
+      // Not sure if needed anymore
+      self._invisible = false;
+
+      var s = self.symbol;
+      if (s) {
+        self._root = s.root || self._root;
+        self._stage = s.stage || self._stage;
+        self._name = s.name || self._stage;
+        self._parent = s.parent || self._parent;
+        self._blendMode = s.blendMode ? BlendMode.fromNumber(s.blendMode) : self._blendMode;
+
+        //var scale9Grid = s.scale9Grid;
+        //if (scale9Grid) {
+        //  this._scale9Grid = new flash.geom.Rectangle(
+        //    scale9Grid.left,
+        //    scale9Grid.top,
+        //    (scale9Grid.right - scale9Grid.left),
+        //    (scale9Grid.bottom - scale9Grid.top)
+        //  );
+        //}
+
+        self._animated = s.animated || self._animated;
+        self._bbox = s.bbox || self._bbox;
+        self._clipDepth = s.clipDepth || self._clipDepth;
+        //self._cxform = new flash.geom.ColorTransform;
+
+        if (s.currentTransform) {
+          this._setTransformMatrix(s.currentTransform, false);
+        }
+
+        self._depth = s.depth || self._depth;
+        self._index = isNaN(s.index) ? self._index : s.index;
+        self._level = isNaN(s.level) ? self._level : s.level;
+        self._loader = s.loader || self._loader;
+        self._owned = s.owned || self._owned;
+      }
+    };
     
     // List of static symbols to link.
     static staticBindings: string [] = null; // [];
@@ -42,93 +170,363 @@ module Shumway.AVM2.AS.flash.display {
     
     // AS -> JS Bindings
     
-    // _root: flash.display.DisplayObject;
-    // _stage: flash.display.Stage;
-    // _name: string;
+    _root: flash.display.DisplayObject;
+    _stage: flash.display.Stage;
+    _name: string;
     _parent: flash.display.DisplayObjectContainer;
-    // _mask: flash.display.DisplayObject;
-    // _visible: boolean;
-    // _x: number;
-    // _y: number;
-    // _z: number;
-    // _scaleX: number;
-    // _scaleY: number;
-    // _scaleZ: number;
-    // _mouseX: number;
-    // _mouseY: number;
-    // _rotation: number;
-    // _rotationX: number;
-    // _rotationY: number;
-    // _rotationZ: number;
-    // _alpha: number;
-    // _width: number;
-    // _height: number;
-    // _cacheAsBitmap: boolean;
-    // _opaqueBackground: ASObject;
-    // _scrollRect: flash.geom.Rectangle;
-    // _filters: any [];
-    // _blendMode: string;
-    // _transform: flash.geom.Transform;
-    // _scale9Grid: flash.geom.Rectangle;
-    // _loaderInfo: flash.display.LoaderInfo;
-    // _accessibilityProperties: flash.accessibility.AccessibilityProperties;
-    // _blendShader: flash.display.Shader;
+    _mask: flash.display.DisplayObject;
+    _visible: boolean;
+    _z: number;
+    _scaleX: number;
+    _scaleY: number;
+    _scaleZ: number;
+    _mouseX: number;
+    _mouseY: number;
+    _rotation: number;
+    _rotationX: number;
+    _rotationY: number;
+    _rotationZ: number;
+    _alpha: number;
+    _width: number;
+    _height: number;
+    _cacheAsBitmap: boolean;
+    _opaqueBackground: ASObject;
+    _scrollRect: flash.geom.Rectangle;
+    _filters: any [];
+    _blendMode: string;
+    _scale9Grid: flash.geom.Rectangle;
+    _loaderInfo: flash.display.LoaderInfo;
+    _accessibilityProperties: flash.accessibility.AccessibilityProperties;
+
+    _animated: boolean;
+    _bbox: any;
+    _bounds: flash.geom.Rectangle;
+    _boundsInvalid: boolean;
+    _children: flash.display.DisplayObject [];
+    _clipDepth: number;
+    _concatenatedTransform: flash.geom.Matrix;
+    _currentTransform: flash.geom.Matrix;
+    _current3dTransform: flash.geom.Matrix3D;
+    _cxform: flash.geom.ColorTransform;
+    _depth: number;
+    _destroyed: boolean;
+    _graphics: flash.display.Graphics;
+    _index: number;
+    _invalid: boolean;
+    _invisible: boolean;
+    _isContainer: boolean;
+    _level: number;
+    _loader: flash.display.Loader;
+    _maskedObject: flash.display.DisplayObject;
+    _mouseChildren: boolean;
+    _mouseOver: boolean;
+    _owned: boolean;
+    _rotationCos: number;
+    _rotationSin: number;
+    _transformInvalid: boolean;
+    _zindex: number;
+
+    symbol: any;
+
+    private _setTransformMatrix(matrix: Matrix, convertToTwips: boolean): void {
+      convertToTwips = !!convertToTwips;
+
+      var a = matrix.a;
+      var b = matrix.b;
+      var c = matrix.c;
+      var d = matrix.d;
+      var tx, ty;
+      if (convertToTwips) {
+        tx = (matrix.tx * 20) | 0;
+        ty = (matrix.ty * 20) | 0;
+      } else {
+        tx = matrix.tx;
+        ty = matrix.ty;
+      }
+      var angle = a ? Math.atan(b / a) : (b > 0 ? Math.PI / 2 : -Math.PI / 2);
+      this._rotation = angle * 180 / Math.PI;
+      this._rotationCos = Math.cos(angle);
+      this._rotationSin = Math.sin(angle);
+      this._scaleX = Math.sqrt(a * a + b * b);
+      this._scaleY = Math.sqrt(d * d + c * c);
+      this._currentTransform.setTo(a, b, c, d, tx, ty);
+      this._invalidateTransform();
+      this._invalidate();
+    }
+    private _getConcatenatedTransform(targetCoordSpace: DisplayObject): Matrix {
+      var stage = this._stage;
+
+      if (this === stage || targetCoordSpace === this._parent) {
+        return this._currentTransform;
+      }
+
+      var invalidNode = null;
+      var m1, m2;
+      var currentNode = this;
+      while (currentNode !== stage) {
+        if (currentNode._transformInvalid) {
+          invalidNode = currentNode;
+        }
+        if (currentNode === targetCoordSpace) {
+          m2 = currentNode._concatenatedTransform.clone();
+        }
+        currentNode = currentNode._parent;
+      }
+
+      if (invalidNode) {
+        if (this._parent === stage) {
+          m1 = this._concatenatedTransform;
+          m1.copyFrom(this._currentTransform);
+        } else {
+          var stack = [];
+          var currentNode = this;
+          while (currentNode !== invalidNode) {
+            stack.push(currentNode);
+            currentNode = currentNode._parent;
+          }
+
+          var node = invalidNode;
+          do {
+            m1 = node._concatenatedTransform;
+            if (node._parent) {
+              if (node._parent !== stage) {
+                m1.copyFrom(node._parent._concatenatedTransform);
+                m1.concat(node._currentTransform);
+              }
+            } else {
+              m1.copyFrom(node._currentTransform);
+            }
+            node._transformInvalid = false;
+
+            var nextNode = stack.pop();
+            var children = node._children;
+            for (var i = 0; i < children.length; i++) {
+              var child = children[i];
+              if (child !== nextNode) {
+                child._transformInvalid = true;
+              }
+            }
+            node = nextNode;
+          } while (node);
+        }
+      } else {
+        m1 = this._concatenatedTransform;
+      }
+
+      if (targetCoordSpace && targetCoordSpace !== stage) {
+        if (!m2) {
+          m2 = targetCoordSpace._getConcatenatedTransform(null).clone();
+        }
+        m2.invert();
+        m2.concat(m1);
+        return m2;
+      }
+
+      return m1;
+    }
+    private _getContentBounds(): Rectangle {
+      var bounds = this._bounds;
+
+      if (this._boundsInvalid) {
+        var xMin = Number.MAX_VALUE;
+        var xMax = Number.MIN_VALUE;
+        var yMin = Number.MAX_VALUE;
+        var yMax = Number.MIN_VALUE;
+
+        var bbox = this._bbox;
+        if (bbox) {
+          xMin = bbox.xMin;
+          xMax = bbox.xMax;
+          yMin = bbox.yMin;
+          yMax = bbox.yMax;
+        } else {
+          var children = this._children;
+          for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            var b = child.getBounds(this);
+            var x1 = b.x;
+            var y1 = b.y;
+            var x2 = b.x + b.width;
+            var y2 = b.y + b.height;
+            xMin = Math.min(xMin, x1, x2);
+            xMax = Math.max(xMax, x1, x2);
+            yMin = Math.min(yMin, y1, y2);
+            yMax = Math.max(yMax, y1, y2);
+          }
+
+          if (this._graphics) {
+            var b = this._graphics._getBounds(true);
+            if (!b.isEmpty()) {
+              var x1 = b.x;
+              var y1 = b.y;
+              var x2 = b.x + b.width;
+              var y2 = b.y + b.height;
+              xMin = Math.min(xMin, x1, x2);
+              xMax = Math.max(xMax, x1, x2);
+              yMin = Math.min(yMin, y1, y2);
+              yMax = Math.max(yMax, y1, y2);
+            }
+          }
+        }
+
+        if (xMin === Number.MAX_VALUE) {
+          xMin = xMax = yMin = yMax = 0;
+        }
+        bounds.setTo(xMin, yMin, xMax - xMin, yMax - yMin);
+        this._boundsInvalid = false;
+      }
+
+      return bounds;
+    }
+    private _transformRect(rect: Rectangle, targetCoordSpace: flash.display.DisplayObject): void {
+      if (!targetCoordSpace || targetCoordSpace === this || rect.isEmpty()) {
+        return;
+      }
+
+      var xMin = rect.x;
+      var xMax = rect.y;
+      var yMin = rect.x + rect.width;
+      var yMax = rect.y + rect.height;
+
+      var m = this._getConcatenatedTransform(targetCoordSpace);
+      var x0 = (m.a * xMin + m.c * yMin + m.tx) | 0;
+      var y0 = (m.b * xMin + m.d * yMin + m.ty) | 0;
+      var x1 = (m.a * xMax + m.c * yMin + m.tx) | 0;
+      var y1 = (m.b * xMax + m.d * yMin + m.ty) | 0;
+      var x2 = (m.a * xMax + m.c * yMax + m.tx) | 0;
+      var y2 = (m.b * xMax + m.d * yMax + m.ty) | 0;
+      var x3 = (m.a * xMin + m.c * yMax + m.tx) | 0;
+      var y3 = (m.b * xMin + m.d * yMax + m.ty) | 0;
+      var tmp = 0;
+
+      // Manual Min/Max is a lot faster than calling Math.min/max
+      // X Min-Max
+      if (x0 > x1) {
+        tmp = x0;
+        x0 = x1;
+        x1 = tmp;
+      }
+      if (x2 > x3) {
+        tmp = x2;
+        x2 = x3;
+        x3 = tmp;
+      }
+      xMin = x0 < x2 ? x0 : x2;
+      xMax = x1 > x3 ? x1 : x3;
+
+      // Y Min-Max
+      if (y0 > y1) {
+        tmp = y0;
+        y0 = y1;
+        y1 = tmp;
+      }
+      if (y2 > y3) {
+        tmp = y2;
+        y2 = y3;
+        y3 = tmp;
+      }
+      yMin = y0 < y2 ? y0 : y2;
+      yMax = y1 > y3 ? y1 : y3;
+
+      rect.setTo(xMin, yMin, xMax - xMin, yMax - yMin);
+    }
+    private _invalidate(): void {
+      this._invalid = true;
+    }
+    private _invalidateBounds(): void {
+      var currentNode = this;
+      while (currentNode && !currentNode._boundsInvalid) {
+        currentNode._boundsInvalid = true;
+        currentNode = currentNode._parent;
+      }
+    }
+    private _invalidateTransform(): void {
+      this._transformInvalid = true;
+      if (this._parent) {
+        this._parent._invalidateBounds();
+      }
+    }
+    private destroy(): void {
+      this._destroyed = true;
+    }
+
     get root(): flash.display.DisplayObject {
-      notImplemented("public flash.display.DisplayObject::get root"); return;
-      // return this._root;
+      return this._root;
     }
     get stage(): flash.display.Stage {
-      notImplemented("public flash.display.DisplayObject::get stage"); return;
-      // return this._stage;
+      return this._stage;
     }
     get name(): string {
-      notImplemented("public flash.display.DisplayObject::get name"); return;
-      // return this._name;
+      return this._name;
     }
     set name(value: string) {
-      value = "" + value;
-      notImplemented("public flash.display.DisplayObject::set name"); return;
-      // this._name = value;
+      this._name = "" + value;
     }
     get parent(): flash.display.DisplayObjectContainer {
-      notImplemented("public flash.display.DisplayObject::get parent"); return;
-      // return this._parent;
+      return this._parent;
     }
     get mask(): flash.display.DisplayObject {
-      notImplemented("public flash.display.DisplayObject::get mask"); return;
-      // return this._mask;
+      return this._mask;
     }
     set mask(value: flash.display.DisplayObject) {
-      value = value;
-      notImplemented("public flash.display.DisplayObject::set mask"); return;
-      // this._mask = value;
+      //value = value;
+
+      if (this._mask === value || value === this) {
+        return;
+      }
+
+      if (value && value._maskedObject) {
+        value._maskedObject.mask = null;
+      }
+      this._mask = value;
+      if (value) {
+        value._maskedObject = this;
+      }
+      this._animated = false;
+      this._invalidate();
     }
     get visible(): boolean {
-      notImplemented("public flash.display.DisplayObject::get visible"); return;
-      // return this._visible;
+      return this._visible;
     }
     set visible(value: boolean) {
       value = !!value;
-      notImplemented("public flash.display.DisplayObject::set visible"); return;
-      // this._visible = value;
+
+      if (value === this._visible)
+        return;
+
+      this._visible = value;
+      this._animated = false;
+      this._invalidate();
     }
     get x(): number {
-      notImplemented("public flash.display.DisplayObject::get x"); return;
-      // return this._x;
+      return this._currentTransform.tx;
     }
     set x(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set x"); return;
-      // this._x = value;
+
+      if (value === this._currentTransform.tx) {
+        return;
+      }
+
+      this._currentTransform.tx = value;
+      this._animated = false;
+      this._invalidate();
+      this._invalidateTransform();
     }
     get y(): number {
-      notImplemented("public flash.display.DisplayObject::get y"); return;
-      // return this._y;
+      return this._currentTransform.ty;
     }
     set y(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set y"); return;
-      // this._y = value;
+
+      if (value === this._currentTransform.ty) {
+        return;
+      }
+
+      this._currentTransform.ty = value;
+      this._animated = false;
+      this._invalidate();
+      this._invalidateTransform();
     }
     get z(): number {
       notImplemented("public flash.display.DisplayObject::get z"); return;
@@ -140,22 +538,36 @@ module Shumway.AVM2.AS.flash.display {
       // this._z = value;
     }
     get scaleX(): number {
-      notImplemented("public flash.display.DisplayObject::get scaleX"); return;
-      // return this._scaleX;
+      return this._scaleX;
     }
     set scaleX(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set scaleX"); return;
-      // this._scaleX = value;
+
+      if (value === this._scaleX) {
+        return;
+      }
+
+      this._scaleX = value;
+      this._currentTransform.scale(value, this._scaleY);
+      this._animated = false;
+      this._invalidate();
+      this._invalidateTransform();
     }
     get scaleY(): number {
-      notImplemented("public flash.display.DisplayObject::get scaleY"); return;
-      // return this._scaleY;
+      return this._scaleY;
     }
     set scaleY(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set scaleY"); return;
-      // this._scaleY = value;
+
+      if (value === this._scaleY) {
+        return;
+      }
+
+      this._scaleY = value;
+      this._currentTransform.scale(this._scaleX, value);
+      this._animated = false;
+      this._invalidate();
+      this._invalidateTransform();
     }
     get scaleZ(): number {
       notImplemented("public flash.display.DisplayObject::get scaleZ"); return;
@@ -167,21 +579,57 @@ module Shumway.AVM2.AS.flash.display {
       // this._scaleZ = value;
     }
     get mouseX(): number {
-      notImplemented("public flash.display.DisplayObject::get mouseX"); return;
-      // return this._mouseX;
+      return (this._mouseX / 20) | 0;
     }
     get mouseY(): number {
-      notImplemented("public flash.display.DisplayObject::get mouseY"); return;
-      // return this._mouseY;
+      return (this._mouseY / 20) | 0;
     }
     get rotation(): number {
-      notImplemented("public flash.display.DisplayObject::get rotation"); return;
-      // return this._rotation;
+      return this._rotation;
     }
     set rotation(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set rotation"); return;
-      // this._rotation = value;
+
+      value %= 360;
+      if (value > 180) {
+        value -= 360;
+      }
+
+      if (value === this._rotation) {
+        return;
+      }
+
+      var angle = value / 180 * Math.PI;
+      var u, v;
+      switch (value) {
+        case 0:
+        case 360:
+          u = 1, v = 0;
+          break;
+        case 90:
+        case -270:
+          u = 0, v = 1;
+          break;
+        case 180:
+        case -180:
+          u = -1, v = 0;
+          break;
+        case 270:
+        case -90:
+          u = 0, v = -1;
+          break;
+        default:
+          u = Math.cos(angle);
+          v = Math.sin(angle);
+          break;
+      }
+      this._rotation = value;
+      this._rotationCos = u;
+      this._rotationSin = v;
+      this._currentTransform.rotate(angle);
+      this._animated = false;
+      this._invalidate();
+      this._invalidateTransform();
     }
     get rotationX(): number {
       notImplemented("public flash.display.DisplayObject::get rotationX"); return;
@@ -211,40 +659,80 @@ module Shumway.AVM2.AS.flash.display {
       // this._rotationZ = value;
     }
     get alpha(): number {
-      notImplemented("public flash.display.DisplayObject::get alpha"); return;
-      // return this._alpha;
+      return this._alpha;
     }
     set alpha(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set alpha"); return;
-      // this._alpha = value;
+
+      if (value === this._alpha) {
+        return;
+      }
+
+      this._alpha = value;
+      this._animated = false;
+      this._invalidate();
     }
     get width(): number {
-      notImplemented("public flash.display.DisplayObject::get width"); return;
-      // return this._width;
+      var bounds = this._getContentBounds();
+      var m = this._currentTransform;
+      return (Math.abs(m.a) * bounds.width +
+              Math.abs(m.c) * bounds.height) | 0;
     }
     set width(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set width"); return;
-      // this._width = value;
+
+      if (value < 0) {
+        return;
+      }
+
+      var u = Math.abs(this._rotationCos);
+      var v = Math.abs(this._rotationSin);
+      var bounds = this._getContentBounds();
+      var baseWidth = u * bounds.width + v * bounds.height;
+
+      if (!baseWidth) {
+        return;
+      }
+
+      var baseHeight = v * bounds.width + u * bounds.height;
+      this.scaleY = this.height / baseHeight;
+      this.scaleX = value / baseWidth;
     }
     get height(): number {
-      notImplemented("public flash.display.DisplayObject::get height"); return;
-      // return this._height;
+      var bounds = this._getContentBounds();
+      var m = this._currentTransform;
+      return (Math.abs(m.b) * bounds.width +
+              Math.abs(m.d) * bounds.height) | 0;
     }
     set height(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set height"); return;
-      // this._height = value;
+
+      if (value < 0) {
+        return;
+      }
+
+      var u = Math.abs(this._rotationCos);
+      var v = Math.abs(this._rotationSin);
+      var bounds = this._getContentBounds();
+      var baseHeight = v * bounds.width + u * bounds.height;
+
+      if (!baseHeight) {
+        return;
+      }
+
+      var baseWidth = u * bounds.width + v * bounds.height;
+      this.scaleX = this.width / baseWidth;
+      this.scaleY = value / baseHeight;
     }
     get cacheAsBitmap(): boolean {
-      notImplemented("public flash.display.DisplayObject::get cacheAsBitmap"); return;
-      // return this._cacheAsBitmap;
+      return this._filters.length > 0 || this._cacheAsBitmap;
     }
     set cacheAsBitmap(value: boolean) {
       value = !!value;
-      notImplemented("public flash.display.DisplayObject::set cacheAsBitmap"); return;
-      // this._cacheAsBitmap = value;
+      if (!this._filters.length) {
+        this._cacheAsBitmap = value;
+      }
+      this._animated = false;
     }
     get opaqueBackground(): ASObject {
       notImplemented("public flash.display.DisplayObject::get opaqueBackground"); return;
@@ -265,31 +753,48 @@ module Shumway.AVM2.AS.flash.display {
       // this._scrollRect = value;
     }
     get filters(): any [] {
-      notImplemented("public flash.display.DisplayObject::get filters"); return;
-      // return this._filters;
+      return this._filters;
     }
     set filters(value: any []) {
-      value = value;
-      notImplemented("public flash.display.DisplayObject::set filters"); return;
-      // this._filters = value;
+      //value = value;
+
+      this._invalidate();
+      this._filters = value;
+      this._animated = false;
     }
     get blendMode(): string {
-      notImplemented("public flash.display.DisplayObject::get blendMode"); return;
-      // return this._blendMode;
+     return this._blendMode;
     }
     set blendMode(value: string) {
       value = "" + value;
-      notImplemented("public flash.display.DisplayObject::set blendMode"); return;
-      // this._blendMode = value;
+
+      if (this._blendMode === value) {
+        return;
+      }
+
+      if (BlendMode.isMember(value)) {
+        this._blendMode = value;
+      } else {
+        throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
+      }
+
+      this._animated = false;
+      this._invalidate();
     }
     get transform(): flash.geom.Transform {
-      notImplemented("public flash.display.DisplayObject::get transform"); return;
-      // return this._transform;
+      // TODO: Twips-ify
+      return new flash.geom.Transform(this);
     }
     set transform(value: flash.geom.Transform) {
-      value = value;
-      notImplemented("public flash.display.DisplayObject::set transform"); return;
-      // this._transform = value;
+      //value = value;
+
+      var transform = this.transform;
+      transform.colorTransform = value.colorTransform;
+      if (value.matrix3D) {
+        transform.matrix3D = value.matrix3D;
+      } else {
+        transform.matrix = value.matrix;
+      }
     }
     get scale9Grid(): flash.geom.Rectangle {
       notImplemented("public flash.display.DisplayObject::get scale9Grid"); return;
@@ -301,8 +806,8 @@ module Shumway.AVM2.AS.flash.display {
       // this._scale9Grid = innerRectangle;
     }
     get loaderInfo(): flash.display.LoaderInfo {
-      notImplemented("public flash.display.DisplayObject::get loaderInfo"); return;
-      // return this._loaderInfo;
+      return (this._loader && this._loader._contentLoaderInfo) ||
+             (this._parent && this._parent.loaderInfo);
     }
     get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
       notImplemented("public flash.display.DisplayObject::get accessibilityProperties"); return;
@@ -319,16 +824,33 @@ module Shumway.AVM2.AS.flash.display {
       // this._blendShader = value;
     }
     globalToLocal(point: flash.geom.Point): flash.geom.Point {
-      point = point;
-      notImplemented("public flash.display.DisplayObject::globalToLocal"); return;
+      //point = point;
+
+      var m = this._getConcatenatedTransform(null).clone();
+      m.invert();
+      var p = m.transformCoords(point.x * 20, point.y * 20);
+      p.x = (p.x / 20) | 0;
+      p.y = (p.y / 20) | 0;
+      return p;
     }
     localToGlobal(point: flash.geom.Point): flash.geom.Point {
-      point = point;
-      notImplemented("public flash.display.DisplayObject::localToGlobal"); return;
+      //point = point;
+
+      var m = this._getConcatenatedTransform(null);
+      var p = m.transformCoords(point.x * 20, point.y * 20);
+      p.x = (p.x / 20) | 0;
+      p.y = (p.y / 20) | 0;
+      return p;
     }
     getBounds(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
-      targetCoordinateSpace = targetCoordinateSpace;
-      notImplemented("public flash.display.DisplayObject::getBounds"); return;
+      //targetCoordinateSpace = targetCoordinateSpace;
+      var rect = this._getContentBounds().clone();
+      this._transformRect(rect, targetCoordinateSpace);
+      rect.x = (rect.x / 20) | 0;
+      rect.y = (rect.x / 20) | 0;
+      rect.width = (rect.width / 20) | 0;
+      rect.height = (rect.height / 20) | 0;
+      return rect;
     }
     getRect(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
       targetCoordinateSpace = targetCoordinateSpace;
@@ -344,7 +866,59 @@ module Shumway.AVM2.AS.flash.display {
     }
     _hitTest(use_xy: boolean, x: number, y: number, useShape: boolean, hitTestObject: flash.display.DisplayObject): boolean {
       use_xy = !!use_xy; x = +x; y = +y; useShape = !!useShape; hitTestObject = hitTestObject;
-      notImplemented("public flash.display.DisplayObject::_hitTest"); return;
+
+      if (use_xy) {
+        var m = this._getConcatenatedTransform(null).clone();
+        m.invert();
+        var point = m.transformCoords(x, y);
+
+        var b = this._getContentBounds();
+        if (!b.containsPoint(point)) {
+          return false;
+        }
+
+        if (!useShape || !this._graphics) {
+          return true;
+        }
+
+        // TODO: move into Graphics
+        if (this._graphics) {
+          var paths = this._graphics._paths;
+          for (var i = 0; i < paths.length; i++) {
+            var path = paths[i];
+
+            if (path.isPointInPath(point.x, point.y)) {
+              return true;
+            }
+
+            if (path.strokeStyle) {
+              var strokePath = path._strokePath;
+              if (!strokePath) {
+                strokePath = path.strokePath(path.drawingStyles);
+                path._strokePath = strokePath;
+              }
+
+              if (strokePath.isPointInPath(point.x, point.y)) {
+                return true;
+              }
+            }
+          }
+        }
+
+        var children = this._children;
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          if (child._hitTest(true, x, y, true, null)) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      var b1 = this.getBounds(this._stage);
+      var b2 = hitTestObject.getBounds(hitTestObject._stage);
+      return b1.intersects(b2);
     }
   }
 }

@@ -204,6 +204,15 @@ module Shumway.AVM2.AS.flash.geom {
       return new Point(this.a * point.x + this.c * point.y + this.tx, this.b * point.x + this.d * point.y + this.ty);
     }
 
+    public transformCoords(x: number, y: number): Point {
+      x = +x;
+      y = +y;
+      return new Point(
+        this.a * x + this.c * y + this.tx,
+        this.b * x + this.d * y + this.ty
+      );
+    }
+
     public copyFrom(sourceMatrix: Matrix): void {
       this.a = sourceMatrix.a;
       this.b = sourceMatrix.b;

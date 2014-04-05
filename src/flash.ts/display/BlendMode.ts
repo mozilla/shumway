@@ -90,5 +90,27 @@ module Shumway.AVM2.AS.flash.display {
           return BlendMode.NORMAL;
       }
     }
+
+    static isMember(value: string): boolean {
+      switch (value) {
+        case BlendMode.NORMAL:
+        case BlendMode.LAYER:
+        case BlendMode.MULTIPLY:
+        case BlendMode.SCREEN:
+        case BlendMode.LIGHTEN:
+        case BlendMode.DARKEN:
+        case BlendMode.ADD:
+        case BlendMode.SUBTRACT:
+        case BlendMode.DIFFERENCE:
+        case BlendMode.INVERT:
+        case BlendMode.OVERLAY:
+        case BlendMode.HARDLIGHT:
+        case BlendMode.ALPHA:
+        case BlendMode.ERASE:
+        case BlendMode.SHADER:
+          return true;
+      }
+      return false;
+    }
   }
 }
