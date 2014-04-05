@@ -11,7 +11,7 @@
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
- * limitations undxr the License.
+ * limitations under the License.
  */
 // Class: ColorTransform
 module Shumway.AVM2.AS.flash.geom {
@@ -35,22 +35,123 @@ module Shumway.AVM2.AS.flash.geom {
       false && super();
       notImplemented("Dummy Constructor: public flash.geom.ColorTransform");
     }
-    
-    // JS -> AS Bindings
-    
-    redMultiplier: number;
-    greenMultiplier: number;
-    blueMultiplier: number;
-    alphaMultiplier: number;
-    redOffset: number;
-    greenOffset: number;
-    blueOffset: number;
-    alphaOffset: number;
-    color: number /*uint*/;
-    concat: (second: flash.geom.ColorTransform) => void;
-    
-    // AS -> JS Bindings
-    
-    // _color: number /*uint*/;
+
+    public redMultiplier: number;
+    public greenMultiplier: number;
+    public blueMultiplier: number;
+    public alphaMultiplier: number;
+    public redOffset: number;
+    public greenOffset: number;
+    public blueOffset: number;
+    public alphaOffset: number;
+
+    public set native_redMultiplier(redMultiplier: number) {
+      this.redMultiplier = +redMultiplier;
+    }
+
+    public get native_redMultiplier(): number {
+      return this.redMultiplier;
+    }
+
+    public set native_greenMultiplier(greenMultiplier: number) {
+      this.greenMultiplier = +greenMultiplier;
+    }
+
+    public get native_greenMultiplier(): number {
+      return this.greenMultiplier;
+    }
+
+    public set native_blueMultiplier(blueMultiplier: number) {
+      this.blueMultiplier = +blueMultiplier;
+    }
+
+    public get native_blueMultiplier(): number {
+      return this.blueMultiplier;
+    }
+
+    public set native_alphaMultiplier(alphaMultiplier: number) {
+      this.alphaMultiplier = +alphaMultiplier;
+    }
+
+    public get native_alphaMultiplier(): number {
+      return this.alphaMultiplier;
+    }
+
+    public set native_redOffset(redOffset: number) {
+      this.redOffset = +redOffset;
+    }
+
+    public get native_redOffset(): number {
+      return this.redOffset;
+    }
+
+    public set native_greenOffset(greenOffset: number) {
+      this.greenOffset = +greenOffset;
+    }
+
+    public get native_greenOffset(): number {
+      return this.greenOffset;
+    }
+
+    public set native_blueOffset(blueOffset: number) {
+      this.blueOffset = +blueOffset;
+    }
+
+    public get native_blueOffset(): number {
+      return this.blueOffset;
+    }
+
+    public set native_alphaOffset(alphaOffset: number) {
+      this.alphaOffset = +alphaOffset;
+    }
+
+    public get native_alphaOffset(): number {
+      return this.alphaOffset;
+    }
+
+    public ColorTransform(redMultiplier: number = 1, greenMultiplier: number = 1, blueMultiplier: number = 1, alphaMultiplier: number = 1, redOffset: number = 0, greenOffset: number = 0, blueOffset: number = 0, alphaOffset: number = 0) {
+      this.redMultiplier = redMultiplier;
+      this.greenMultiplier = greenMultiplier;
+      this.blueMultiplier = blueMultiplier;
+      this.alphaMultiplier = alphaMultiplier;
+      this.redOffset = redOffset;
+      this.greenOffset = greenOffset;
+      this.blueOffset = blueOffset;
+      this.alphaOffset = alphaOffset;
+    }
+
+    public get color(): number {
+      return (this.redOffset << 16) | (this.greenOffset << 8) | this.blueOffset;
+    }
+
+    public set color(newColor: number) {
+      this.redOffset = (newColor >> 16) & 0xff;
+      this.greenOffset = (newColor >> 8) & 0xff;
+      this.blueOffset = newColor & 0xff;
+      this.redMultiplier = this.greenMultiplier = this.blueMultiplier = 1;
+    }
+
+    public concat(second:ColorTransform): void {
+      this.redMultiplier *= second.redMultiplier;
+      this.greenMultiplier *= second.greenMultiplier;
+      this.blueMultiplier *= second.blueMultiplier;
+      this.alphaMultiplier *= second.alphaMultiplier;
+      this.redOffset += second.redOffset;
+      this.greenOffset += second.greenOffset;
+      this.blueOffset += second.blueOffset;
+      this.alphaOffset += second.alphaOffset;
+    }
+
+    public toString():String {
+      return "(redMultiplier=" + this.redMultiplier +
+        ", greenMultiplier=" + this.greenMultiplier +
+        ", blueMultiplier=" + this.blueMultiplier +
+        ", alphaMultiplier=" + this.alphaMultiplier +
+        ", redOffset=" + this.redOffset +
+        ", greenOffset=" + this.greenOffset +
+        ", blueOffset=" + this.blueOffset +
+        ", alphaOffset=" + this.alphaOffset +
+        ")";
+    }
   }
 }
