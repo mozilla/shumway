@@ -16,13 +16,28 @@
 // Class: InteractiveObject
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+
+  import Event = flash.events.Event;
+
   export class InteractiveObject extends flash.display.DisplayObject {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
+    static initializer: any = function () {
+      var self: InteractiveObject = this;
+
+      self._tabEnabled = false;
+      self._tabIndex = -1;
+      self._focusRect = null;
+      self._mouseEnabled = true;
+      self._doubleClickEnabled = false;
+      self._accessibilityImplementation = null;
+      self._softKeyboardInputAreaOfInterest = null;
+      self._needsSoftKeyboard = false;
+      self._contextMenu = null;
+    };
     
     // List of static symbols to link.
     static staticBindings: string [] = null; // [];
@@ -40,36 +55,42 @@ module Shumway.AVM2.AS.flash.display {
     
     // AS -> JS Bindings
     
-    // _tabEnabled: boolean;
-    // _tabIndex: number /*int*/;
-    // _focusRect: ASObject;
-    // _mouseEnabled: boolean;
-    // _doubleClickEnabled: boolean;
-    // _accessibilityImplementation: flash.accessibility.AccessibilityImplementation;
-    // _softKeyboardInputAreaOfInterest: flash.geom.Rectangle;
-    // _needsSoftKeyboard: boolean;
-    // _contextMenu: flash.ui.ContextMenu;
+    _tabEnabled: boolean;
+    _tabIndex: number /*int*/;
+    _focusRect: ASObject;
+    _mouseEnabled: boolean;
+    _doubleClickEnabled: boolean;
+    _accessibilityImplementation: flash.accessibility.AccessibilityImplementation;
+    _softKeyboardInputAreaOfInterest: flash.geom.Rectangle;
+    _needsSoftKeyboard: boolean;
+    _contextMenu: flash.ui.ContextMenu;
+
     get tabEnabled(): boolean {
-      notImplemented("public flash.display.InteractiveObject::get tabEnabled"); return;
-      // return this._tabEnabled;
+      return this._tabEnabled;
     }
     set tabEnabled(enabled: boolean) {
       enabled = !!enabled;
-      notImplemented("public flash.display.InteractiveObject::set tabEnabled"); return;
-      // this._tabEnabled = enabled;
+
+      var old = this._tabEnabled;
+      this._tabEnabled = enabled;
+      if (old !== enabled) {
+        this.dispatchEvent(new Event(Event.TAB_ENABLED_CHANGE, true));
+      }
     }
     get tabIndex(): number /*int*/ {
-      notImplemented("public flash.display.InteractiveObject::get tabIndex"); return;
-      // return this._tabIndex;
+      return this._tabIndex;
     }
     set tabIndex(index: number /*int*/) {
       index = index | 0;
-      notImplemented("public flash.display.InteractiveObject::set tabIndex"); return;
-      // this._tabIndex = index;
+
+      var old = this._tabIndex;
+      this._tabIndex = index;
+      if (old !== index) {
+        this.dispatchEvent(new Event(Event.TAB_INDEX_CHANGE, true));
+      }
     }
     get focusRect(): ASObject {
-      notImplemented("public flash.display.InteractiveObject::get focusRect"); return;
-      // return this._focusRect;
+      return this._focusRect;
     }
     set focusRect(focusRect: ASObject) {
       focusRect = focusRect;
@@ -77,26 +98,19 @@ module Shumway.AVM2.AS.flash.display {
       // this._focusRect = focusRect;
     }
     get mouseEnabled(): boolean {
-      notImplemented("public flash.display.InteractiveObject::get mouseEnabled"); return;
-      // return this._mouseEnabled;
+      return this._mouseEnabled;
     }
     set mouseEnabled(enabled: boolean) {
-      enabled = !!enabled;
-      notImplemented("public flash.display.InteractiveObject::set mouseEnabled"); return;
-      // this._mouseEnabled = enabled;
+      this._mouseEnabled = !!enabled;
     }
     get doubleClickEnabled(): boolean {
-      notImplemented("public flash.display.InteractiveObject::get doubleClickEnabled"); return;
-      // return this._doubleClickEnabled;
+      return this._doubleClickEnabled;
     }
     set doubleClickEnabled(enabled: boolean) {
-      enabled = !!enabled;
-      notImplemented("public flash.display.InteractiveObject::set doubleClickEnabled"); return;
-      // this._doubleClickEnabled = enabled;
+      this._doubleClickEnabled = !!enabled;
     }
     get accessibilityImplementation(): flash.accessibility.AccessibilityImplementation {
-      notImplemented("public flash.display.InteractiveObject::get accessibilityImplementation"); return;
-      // return this._accessibilityImplementation;
+      return this._accessibilityImplementation;
     }
     set accessibilityImplementation(value: flash.accessibility.AccessibilityImplementation) {
       value = value;
@@ -104,8 +118,7 @@ module Shumway.AVM2.AS.flash.display {
       // this._accessibilityImplementation = value;
     }
     get softKeyboardInputAreaOfInterest(): flash.geom.Rectangle {
-      notImplemented("public flash.display.InteractiveObject::get softKeyboardInputAreaOfInterest"); return;
-      // return this._softKeyboardInputAreaOfInterest;
+      return this._softKeyboardInputAreaOfInterest;
     }
     set softKeyboardInputAreaOfInterest(value: flash.geom.Rectangle) {
       value = value;
@@ -113,8 +126,7 @@ module Shumway.AVM2.AS.flash.display {
       // this._softKeyboardInputAreaOfInterest = value;
     }
     get needsSoftKeyboard(): boolean {
-      notImplemented("public flash.display.InteractiveObject::get needsSoftKeyboard"); return;
-      // return this._needsSoftKeyboard;
+      return this._needsSoftKeyboard;
     }
     set needsSoftKeyboard(value: boolean) {
       value = !!value;
@@ -122,8 +134,7 @@ module Shumway.AVM2.AS.flash.display {
       // this._needsSoftKeyboard = value;
     }
     get contextMenu(): flash.ui.ContextMenu {
-      notImplemented("public flash.display.InteractiveObject::get contextMenu"); return;
-      // return this._contextMenu;
+      return this._contextMenu;
     }
     set contextMenu(cm: flash.ui.ContextMenu) {
       cm = cm;

@@ -300,7 +300,7 @@ module Shumway.AVM2 {
   //  ForbiddenProtocolError                                    : { code: 2147, message: "Forbidden protocol in URL %1."},
   //  RemoteToLocalSecurityError                                : { code: 2148, message: "SWF file %1 cannot access local resource %2. Only local-with-filesystem and trusted local SWF files may access local resources."},
   //  FsCommandSecurityError                                    : { code: 2149, message: "Security sandbox violation: %1 cannot make fscommand calls to %2 (allowScriptAccess is %3)."},
-  //  CantAddParentError                                        : { code: 2150, message: "An object cannot be added as a child to one of it's children (or children's children, etc.)."},
+    CantAddParentError                                        : { code: 2150, message: "An object cannot be added as a child to one of it's children (or children's children, etc.)."},
   //  FullScreenSecurityError                                   : { code: 2151, message: "You cannot enter full screen mode when the settings dialog is visible."},
   //  FullScreenNotAllowedError                                 : { code: 2152, message: "Full screen mode is not allowed."},
   //  URLRequestInvalidHeader                                   : { code: 2153, message: "The URLRequest.requestHeaders array must contain only non-NULL URLRequestHeader objects."},
