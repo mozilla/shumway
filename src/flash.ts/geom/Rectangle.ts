@@ -112,7 +112,7 @@ module Shumway.AVM2.AS.flash.geom {
       return new Rectangle(this.x, this.y, this.width, this.height);
     }
 
-    public isEmpty(): Boolean {
+    public isEmpty(): boolean {
       return this.width <= 0 || this.height <= 0;
     }
 
@@ -145,17 +145,17 @@ module Shumway.AVM2.AS.flash.geom {
       this.offset(point.x, point.y);
     }
 
-    public contains(x: number, y: number): Boolean {
+    public contains(x: number, y: number): boolean {
       x = +x;
       y = +y;
       return this.x <= x && x <= this.right && this.y <= y && y <= this.bottom;
     }
 
-    public containsPoint(point: Point): Boolean {
+    public containsPoint(point: Point): boolean {
       return this.contains(point.x, point.y);
     }
 
-    public containsRect(rect: Rectangle): Boolean {
+    public containsRect(rect: Rectangle): boolean {
       return this.containsPoint(rect.topLeft) && this.containsPoint(rect.bottomRight);
     }
 
@@ -172,7 +172,7 @@ module Shumway.AVM2.AS.flash.geom {
       return new Rectangle();
     }
 
-    public intersects(toIntersect: Rectangle): Boolean {
+    public intersects(toIntersect: Rectangle): boolean {
       return Math.max(this.x, toIntersect.x) <= Math.min(this.right, toIntersect.right)
         && Math.max(this.y, toIntersect.y) <= Math.min(this.bottom, toIntersect.bottom);
     }
@@ -191,7 +191,7 @@ module Shumway.AVM2.AS.flash.geom {
         Math.max(this.bottom, toUnion.bottom) - t);
     }
 
-    public equals(toCompare: Rectangle): Boolean {
+    public equals(toCompare: Rectangle): boolean {
       return this.x == toCompare.x
         && this.y == toCompare.y
         && this.width == toCompare.width
