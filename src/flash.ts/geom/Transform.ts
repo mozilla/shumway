@@ -29,18 +29,16 @@ module Shumway.AVM2.AS.flash.geom {
     
     // List of instance symbols to link.
     static bindings: string [] = null; // [];
-    
+
+    private _target: flash.display.DisplayObject;
+
+
     constructor (displayObject: flash.display.DisplayObject) {
-      displayObject = displayObject;
       false && super();
-      notImplemented("Dummy Constructor: public flash.geom.Transform");
+      assert (displayObject);
+      this._target = displayObject;
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
+
     // _matrix: flash.geom.Matrix;
     // _colorTransform: flash.geom.ColorTransform;
     // _concatenatedMatrix: flash.geom.Matrix;
@@ -48,6 +46,7 @@ module Shumway.AVM2.AS.flash.geom {
     // _pixelBounds: flash.geom.Rectangle;
     // _matrix3D: flash.geom.Matrix3D;
     // _perspectiveProjection: flash.geom.PerspectiveProjection;
+
     get matrix(): flash.geom.Matrix {
       notImplemented("public flash.geom.Transform::get matrix"); return;
       // return this._matrix;

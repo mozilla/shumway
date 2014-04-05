@@ -20,9 +20,7 @@ package flash.geom {
 public class Matrix3D {
   public static native function interpolate(thisMat: Matrix3D, toMat: Matrix3D,
                                             percent: Number): Matrix3D;
-  public function Matrix3D(v: Vector = null) {
-    ctor(v);
-  }
+  public native function Matrix3D(v: Vector = null);
   public native function get rawData(): Vector;
   public native function set rawData(v: Vector): void;
   public native function get position(): Vector3D;
