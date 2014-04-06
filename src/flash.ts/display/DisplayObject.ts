@@ -328,22 +328,20 @@ module Shumway.AVM2.AS.flash.display {
           yMin = bbox.yMin;
           yMax = bbox.yMax;
         } else {
+          if (this._graphics) {
+            var b = this._graphics._getBounds(true);
+            if (!b.isEmpty()) {
+              xMin = b.x;
+              yMin = b.y;
+              xMax = b.x + b.width;
+              yMax = b.y + b.height;
+            }
+          }
+
           var children = this._children;
           for (var i = 0; i < children.length; i++) {
             var child = children[i];
             var b = child.getBounds(this);
-            var x1 = b.x;
-            var y1 = b.y;
-            var x2 = b.x + b.width;
-            var y2 = b.y + b.height;
-            xMin = Math.min(xMin, x1, x2);
-            xMax = Math.max(xMax, x1, x2);
-            yMin = Math.min(yMin, y1, y2);
-            yMax = Math.max(yMax, y1, y2);
-          }
-
-          if (this._graphics) {
-            var b = this._graphics._getBounds(true);
             if (!b.isEmpty()) {
               var x1 = b.x;
               var y1 = b.y;
