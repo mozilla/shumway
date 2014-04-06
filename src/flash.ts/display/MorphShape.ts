@@ -22,7 +22,17 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
+    static initializer: any = function () {
+      var self: MorphShape = this;
+
+      var s = self.symbol;
+      if (s) {
+        self._graphics = s.graphics;
+      } else {
+        self._graphics = new flash.display.Graphics();
+        self._graphics._parent = self;
+      }
+    };
     
     // List of static symbols to link.
     static staticBindings: string [] = null; // [];
