@@ -31,9 +31,15 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null; // ["colors", "alphas", "ratios", "matrix", "focalPointRatio", "_type", "_spreadMethod", "_interpolationMethod", "type", "type", "spreadMethod", "spreadMethod", "interpolationMethod", "interpolationMethod"];
     
     constructor (type: string = "linear", colors: any [] = null, alphas: any [] = null, ratios: any [] = null, matrix: any = null, spreadMethod: any = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0) {
-      type = "" + type; colors = colors; alphas = alphas; ratios = ratios; interpolationMethod = "" + interpolationMethod; focalPointRatio = +focalPointRatio;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.GraphicsGradientFill");
+      this.type = "" + type;
+      this.colors = colors;
+      this.alphas = alphas;
+      this.ratios = ratios;
+      this.matrix = matrix;
+      this.spreadMethod = spreadMethod;
+      this.interpolationMethod = "" + interpolationMethod;
+      this.focalPointRatio = +focalPointRatio;
     }
     
     // JS -> AS Bindings
@@ -43,9 +49,6 @@ module Shumway.AVM2.AS.flash.display {
     ratios: any [];
     matrix: flash.geom.Matrix;
     focalPointRatio: number;
-    _type: string;
-    _spreadMethod: any;
-    _interpolationMethod: string;
     type: string;
     spreadMethod: any;
     interpolationMethod: string;
