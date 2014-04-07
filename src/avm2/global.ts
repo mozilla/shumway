@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+var jsGlobal = (function() { return this || (1, eval)('this'); })();
+var inBrowser = typeof console != "undefined";
+
 interface JSGlobal {
   Object: any;
   String: Function;
