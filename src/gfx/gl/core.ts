@@ -1,10 +1,10 @@
-/// <reference path='../all.ts'/>
+/// <reference path='../references.ts'/>
 /// <reference path="../WebGL.d.ts" />
 
-module Shumway.GL {
+module Shumway.GFX.GL {
   var release = false;
 
-  export class ArrayWriter extends Util.ArrayWriter {
+  export class BufferWriter extends Shumway.ArrayUtilities.ArrayWriter {
     ensureVertexCapacity(count: number) {
       release || assert ((this.offset & 0x3) === 0);
       this.ensureCapacity(this.offset + count * 8);
@@ -148,10 +148,10 @@ module Shumway.GL {
   }
 
   export class WebGLGeometry {
-    array: ArrayWriter;
+    array: BufferWriter;
     buffer: WebGLBuffer;
 
-    elementArray: ArrayWriter;
+    elementArray: BufferWriter;
     elementBuffer: WebGLBuffer;
 
     context: WebGLContext;
@@ -165,10 +165,10 @@ module Shumway.GL {
 
     constructor(context: WebGLContext) {
       this.context = context;
-      this.array = new ArrayWriter(8);
+      this.array = new BufferWriter(8);
       this.buffer = context.gl.createBuffer();
 
-      this.elementArray = new ArrayWriter(8);
+      this.elementArray = new BufferWriter(8);
       this.elementBuffer = context.gl.createBuffer();
     }
 

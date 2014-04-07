@@ -1,10 +1,10 @@
-/// <reference path='all.ts'/>
-module Shumway.Layers {
+/// <reference path='references.ts'/>
+module Shumway.GFX.Layers {
   import Rectangle = Shumway.Geometry.Rectangle;
   import Point = Shumway.Geometry.Point;
   import Matrix = Shumway.Geometry.Matrix;
   import DirtyRegion = Shumway.Geometry.DirtyRegion;
-  import Filter = Shumway.Layers.Filter;
+  import Filter = Shumway.GFX.Layers.Filter;
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
@@ -78,7 +78,7 @@ module Shumway.Layers {
     private _scaleY: number;
     private _rotation: number;
     private _transform: Matrix;
-    private _colorTransform: ColorTransform;
+    private _colorTransform: ColorMatrix;
     private _isTransformInvalid: boolean = true;
     private _origin: Point = new Point(0, 0);
     private _properties: {[name: string]: any};
@@ -167,12 +167,12 @@ module Shumway.Layers {
       return this._blendMode;
     }
 
-    set colorTransform(value: ColorTransform) {
+    set colorTransform(value: ColorMatrix) {
       this._colorTransform = value;
       this.invalidate();
     }
 
-    get colorTransform(): ColorTransform {
+    get colorTransform(): ColorMatrix {
       return this._colorTransform;
     }
 
@@ -224,14 +224,14 @@ module Shumway.Layers {
       }
     }
 
-    getConcatenatedColorTransform(): ColorTransform {
+    getConcatenatedColorMatrix(): ColorMatrix {
       var path = Frame._path;
       this.getPathInto(path);
       var colorTransform = null;
       for (var i = path.length - 1; i >= 0; i--) {
         if (path[i]._colorTransform) {
           if (!colorTransform) {
-            colorTransform = ColorTransform.createIdentity();
+            colorTransform = ColorMatrix.createIdentity();
           }
           colorTransform.multiply(path[i]._colorTransform);
         }

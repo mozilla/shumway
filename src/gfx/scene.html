@@ -35,22 +35,22 @@
     var Point = Shumway.Geometry.Point;
     var Rectangle = Shumway.Geometry.Rectangle;
     var Matrix = Shumway.Geometry.Matrix;
-    var Stage = Shumway.Layers.Stage;
-    var Snow = Shumway.Layers.Elements.Snow;
-    var Flake = Shumway.Layers.Elements.Flake;
-    var Bitmap = Shumway.Layers.Bitmap;
-    var DynamicShape = Shumway.Layers.DynamicShape;
+    var Stage = Shumway.GFX.Layers.Stage;
+    var Snow = Shumway.GFX.Layers.Elements.Snow;
+    var Flake = Shumway.GFX.Layers.Elements.Flake;
+    var Bitmap = Shumway.GFX.Layers.Bitmap;
+    var DynamicShape = Shumway.GFX.Layers.DynamicShape;
 
 
-    var Text = Shumway.Layers.Text;
-    var Shape = Shumway.Layers.Shape;
+    var Text = Shumway.GFX.Layers.Text;
+    var Shape = Shumway.GFX.Layers.Shape;
 
-    var BlurFilter = Shumway.Layers.BlurFilter;
-    var WebGLContext = Shumway.GL.WebGLContext;
-    var WebGLStageRenderer = Shumway.GL.WebGLStageRenderer;
-    var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
-    var DOMStageRenderer = Shumway.Layers.DOMStageRenderer;
-    var FontAtlas = Shumway.Layers.Elements.FontAtlas;
+    var BlurFilter = Shumway.GFX.Layers.BlurFilter;
+    var WebGLContext = Shumway.GFX.GL.WebGLContext;
+    var WebGLStageRenderer = Shumway.GFX.GL.WebGLStageRenderer;
+    var Canvas2DStageRenderer = Shumway.GFX.Layers.Canvas2DStageRenderer;
+    var DOMStageRenderer = Shumway.GFX.Layers.DOMStageRenderer;
+    var FontAtlas = Shumway.GFX.Layers.Elements.FontAtlas;
 
     var Counter = new metrics.Counter(true);
     var FrameCounter = new metrics.Counter(true);
@@ -111,7 +111,7 @@
       }
     }
 
-    var writer = Shumway.GL.writer = new IndentingWriter(false, function (str){
+    var writer = Shumway.GFX.GL.writer = new IndentingWriter(false, function (str){
       appendToTraceTerminal(str);
     });
 
@@ -173,7 +173,7 @@
       timeline = new Timeline(document.getElementById("frameTimeline"));
       timeline.setFrameRate(60);
       timeline.refreshEvery(60);
-      Shumway.GL.timeline = timeline;
+      Shumway.GFX.GL.timeline = timeline;
     }
 
 
@@ -267,11 +267,11 @@
       },
 
       test: function () {
-        Shumway.GL.Tests.runTests(Shumway.GL.writer);
+        Shumway.GFX.GL.Tests.runTests(Shumway.GFX.GL.writer);
       },
 
       bench: function () {
-        new Shumway.Bench.TextureUpload(Shumway.GL.writer).run();
+        new Shumway.Bench.TextureUpload(Shumway.GFX.GL.writer).run();
       }
     };
 
@@ -354,7 +354,7 @@
     canvas2DStageRenderer = new Canvas2DStageRenderer(canvas2DCanvas.getContext("2d"), true);
     domStageRenderer = new DOMStageRenderer(DOMDiv, pixelRatio);
 
-    var stage, animators;
+    var gfx, animators;
 
     var videoElements = [];
 

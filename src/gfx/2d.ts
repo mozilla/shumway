@@ -1,16 +1,16 @@
-/// <reference path='all.ts'/>
+/// <reference path='references.ts'/>
 
 interface CanvasRenderingContext2D {
   stackDepth: number;
 }
 
-module Shumway.Layers {
+module Shumway.GFX.Layers {
 
   import Rectangle = Shumway.Geometry.Rectangle;
   import Point = Shumway.Geometry.Point;
   import Matrix = Shumway.Geometry.Matrix;
   import DirtyRegion = Shumway.Geometry.DirtyRegion;
-  import Filter = Shumway.Layers.Filter;
+  import Filter = Shumway.GFX.Layers.Filter;
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;

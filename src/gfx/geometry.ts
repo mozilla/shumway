@@ -1,7 +1,7 @@
-/// <reference path='all.ts'/>
+/// <reference path='references.ts'/>
 module Shumway.Geometry {
 
-  import clamp = Shumway.Util.clamp;
+  import clamp = Shumway.NumberUtilities.clamp;
 
   export function radianToDegrees(r) {
     return r * 180 / Math.PI;
@@ -1565,8 +1565,8 @@ module Shumway.Geometry {
     index: number;
     scale: number;
     bounds: Rectangle;
-    cachedTextureRegion: Shumway.Layers.ITextureRegion;
-    color: Shumway.GL.Color;
+    cachedTextureRegion: Shumway.GFX.Layers.ITextureRegion;
+    color: Shumway.Color;
     private _obb: OBB;
     private static corners = Point.createEmptyPoints(4);
     getOBB(): OBB {

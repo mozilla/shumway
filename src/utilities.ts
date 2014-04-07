@@ -13,7 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='avm2/references.ts' />
+
+var jsGlobal = (function() { return this || (1, eval)('this'); })();
+var inBrowser = typeof console != "undefined";
+
+function log(message?: any, ...optionalParams: any[]): void {
+  jsGlobal.print(message);
+}
+
+function warn(message?: any, ...optionalParams: any[]): void {
+  if (inBrowser) {
+    console.warn(message);
+  } else {
+    jsGlobal.print(Shumway.IndentingWriter.RED + message + Shumway.IndentingWriter.ENDC);
+  }
+}
 
 interface String {
   padRight(c: string, n: number): string;
@@ -240,6 +254,113 @@ module Shumway {
     export function pushMany(dst: any [], src: any []) {
       for (var i = 0; i < src.length; i++) {
         dst.push(src[i]);
+      }
+    }
+
+    export class ArrayWriter {
+      u8: Uint8Array;
+      u16: Uint16Array;
+      i32: Int32Array;
+      f32: Float32Array;
+      u32: Uint32Array;
+      offset: number;
+
+      constructor(initialCapacity) {
+        this.u8 = null;
+        this.u16 = null;
+        this.i32 = null;
+        this.f32 = null;
+        this.offset = 0;
+        this.ensureCapacity(initialCapacity);
+      }
+
+      public reset() {
+        this.offset = 0;
+      }
+
+      getIndex(size) {
+        release || assert (size === 1 || size === 2 || size === 4 || size === 8 || size === 16);
+        var index = this.offset / size;
+        release || assert ((index | 0) === index);
+        return index;
+      }
+
+      ensureAdditionalCapacity(size) {
+        this.ensureCapacity(this.offset + size);
+      }
+
+      ensureCapacity(minCapacity: number) {
+        if (!this.u8) {
+          this.u8 = new Uint8Array(minCapacity);
+        } else if (this.u8.length > minCapacity) {
+          return;
+        }
+        var oldCapacity = this.u8.length;
+        // var newCapacity = (((oldCapacity * 3) >> 1) + 8) & ~0x7;
+        var newCapacity = oldCapacity * 2;
+        if (newCapacity < minCapacity) {
+          newCapacity = minCapacity;
+        }
+        var u8 = new Uint8Array(newCapacity);
+        u8.set(this.u8, 0);
+        this.u8 = u8;
+        this.u16 = new Uint16Array(u8.buffer);
+        this.i32 = new Int32Array(u8.buffer);
+        this.f32 = new Float32Array(u8.buffer);
+      }
+
+      writeInt(v: number) {
+        release || assert ((this.offset & 0x3) === 0);
+        this.ensureCapacity(this.offset + 4);
+        this.writeIntUnsafe(v);
+      }
+
+      writeIntUnsafe(v: number) {
+        var index = this.offset >> 2;
+        this.i32[index] = v;
+        this.offset += 4;
+      }
+
+      writeFloat(v: number) {
+        release || assert ((this.offset & 0x3) === 0);
+        this.ensureCapacity(this.offset + 4);
+        this.writeFloatUnsafe(v);
+      }
+
+      writeFloatUnsafe(v: number) {
+        var index = this.offset >> 2;
+        this.f32[index] = v;
+        this.offset += 4;
+      }
+
+      subF32View(): Float32Array {
+        return this.f32.subarray(0, this.offset >> 2);
+      }
+
+      subI32View(): Int32Array {
+        return this.i32.subarray(0, this.offset >> 2);
+      }
+
+      subU16View(): Uint16Array {
+        return this.u16.subarray(0, this.offset >> 1);
+      }
+
+      subU8View(): Uint8Array {
+        return this.u8.subarray(0, this.offset);
+      }
+
+      hashWords(hash: number, offset: number, length: number) {
+        var i32 = this.i32;
+        for (var i = 0; i < length; i++) {
+          hash = (((31 * hash) | 0) + i32[i]) | 0;
+        }
+        return hash;
+      }
+
+      reserve(size) {
+        size = (size + 3) & ~0x3; // Round up to multiple of 4.
+        this.ensureCapacity(this.offset + size);
+        this.offset += size;
       }
     }
   }
@@ -770,6 +891,16 @@ module Shumway {
   }
 
   export module NumberUtilities {
+    export function pow2(exponent: number): number {
+      if (exponent === (exponent | 0)) {
+        if (exponent < 0) {
+          return 1 / (1 << -exponent);
+        }
+        return 1 << exponent;
+      }
+      return Math.pow(2, exponent);
+    }
+
     export function clamp(value: number, min: number, max: number) {
       if (value < min) {
         return min;
@@ -1111,6 +1242,57 @@ module Shumway {
 
     public isEmpty(): boolean  {
       return this.index === this.start;
+    }
+  }
+
+  export class Color {
+    public r: number;
+    public g: number;
+    public b: number;
+    public a: number;
+    constructor(r: number, g: number, b: number, a: number) {
+      this.r = r;
+      this.g = g;
+      this.b = b;
+      this.a = a;
+    }
+    set (other: Color) {
+      this.r = other.r;
+      this.g = other.g;
+      this.b = other.b;
+      this.a = other.a;
+    }
+    public static Red   = new Color(1, 0, 0, 1);
+    public static Green = new Color(0, 1, 0, 1);
+    public static Blue  = new Color(0, 0, 1, 1);
+    public static None  = new Color(0, 0, 0, 0);
+    public static White = new Color(1, 1, 1, 1);
+    public static Black = new Color(0, 0, 0, 1);
+    private static colorCache: { [color: string]: Color } = {};
+    public static randomColor(alpha: number = 1): Color {
+      return new Color(Math.random(), Math.random(), Math.random(), alpha);
+    }
+    public static parseColor(color: string) {
+      if (!Color.colorCache) {
+        Color.colorCache = Object.create(null);
+      }
+      if (Color.colorCache[color]) {
+        return Color.colorCache[color];
+      }
+      // TODO: Obviously slow, but it will do for now.
+      var span = document.createElement('span');
+      document.body.appendChild(span);
+      span.style.backgroundColor = color;
+      var rgb = getComputedStyle(span).backgroundColor;
+      document.body.removeChild(span);
+      var m = /^rgb\((\d+), (\d+), (\d+)\)$/.exec(rgb);
+      if (!m) m = /^rgba\((\d+), (\d+), (\d+), ([\d.]+)\)$/.exec(rgb);
+      var result = new Color(0, 0, 0, 0);
+      result.r = parseFloat(m[1]) / 255;
+      result.g = parseFloat(m[2]) / 255;
+      result.b = parseFloat(m[3]) / 255;
+      result.a = m[4] ? parseFloat(m[4]) / 255 : 1;
+      return Color.colorCache[color] = result;
     }
   }
 }
