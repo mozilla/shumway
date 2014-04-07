@@ -49,4 +49,4 @@ var frameWriter = new IndentingWriter(false, function (str){
 
 var timeline = new Timeline(document.getElementById("fpsCanvas"));
 
-Shumway.GL.writer = frameWriter;
+Shumway.GFX.GL.writer = frameWriter;
