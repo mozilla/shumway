@@ -17,8 +17,9 @@
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
 
+  // TODO should this be a static class member?
+  var measureTextField: TextField;
 
-  var measureTextField : TextField;
   export class TextFormat extends ASNative {
     
     // Called whenever the class is initialized.
@@ -40,23 +41,23 @@ module Shumway.AVM2.AS.flash.text {
     }
     
     // JS -> AS Bindings
+
     public as2GetTextExtent(text: string, width?: number) {
       if (!measureTextField) {
         measureTextField = new TextField();
-        measureTextField._multiline = true;
+        measureTextField.multiline = true;
       }
       if (!isNaN(width) && width > 0) {
         measureTextField.width = width + 4;
-        measureTextField._wordWrap = true;
+        measureTextField.wordWrap = true;
       } else {
-        measureTextField._wordWrap = false;
+        measureTextField.wordWrap = false;
       }
       measureTextField.defaultTextFormat = this;
       measureTextField.text = text;
-      measureTextField.ensureDimensions();
       var result = {};
-      var textWidth = measureTextField._textWidth;
-      var textHeight = measureTextField._textHeight;
+      var textWidth = measureTextField.textWidth;
+      var textHeight = measureTextField.textHeight;
       result.asSetPublicProperty('width', textWidth);
       result.asSetPublicProperty('height', textHeight);
       result.asSetPublicProperty('textFieldWidth', textWidth + 4);

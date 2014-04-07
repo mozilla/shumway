@@ -90,6 +90,7 @@ module Shumway.AVM2.AS.flash.text {
     // _type: string;
     _wordWrap: boolean;
     // _useRichTextClipboard: boolean;
+
     get alwaysShowSelection(): boolean {
       notImplemented("public flash.text.TextField::get alwaysShowSelection"); return;
       // return this._alwaysShowSelection;

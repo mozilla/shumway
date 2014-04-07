@@ -82,10 +82,10 @@ module Shumway.AVM2.AS.flash.display {
       self._rotationCos = 0;
       self._rotationSin = 0;
 
-      // TODO: get this via loaderInfo
+      // TODO get this via loaderInfo
       self._loader = null;
 
-      // TODO: make these flags
+      // TODO make these flags
       self._animated = false;
       self._boundsInvalid = false;
       self._constructed = false;
@@ -94,10 +94,10 @@ module Shumway.AVM2.AS.flash.display {
       self._owned = false;
       self._transformInvalid = false;
 
-      // TODO: move to InteractiveObject
+      // TODO move to InteractiveObject
       self._mouseOver = false;
 
-      // TODO: move to DisplayObjectContainer
+      // TODO move to DisplayObjectContainer
       self._children = [];
       self._isContainer = false;
       self._mouseChildren = true;
@@ -244,10 +244,6 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidate();
       this._invalidateTransform();
     }
-    private _setColorTransform(cxform: flash.geom.ColorTransform) {
-      this._cxform.copyFrom(cxform);
-      this._invalidate();
-    }
     private _getConcatenatedTransform(targetCoordSpace: DisplayObject): Matrix {
       var stage = this._stage;
 
@@ -318,6 +314,10 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       return m1;
+    }
+    private _setColorTransform(cxform: flash.geom.ColorTransform) {
+      this._cxform.copyFrom(cxform);
+      this._invalidate();
     }
     private _getContentBounds(): Rectangle {
       var bounds = this._bounds;
@@ -769,7 +769,7 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidate();
     }
     get transform(): flash.geom.Transform {
-      // TODO: Twips-ify
+      // TODO Twips-ify
       return new flash.geom.Transform(this);
     }
     set transform(value: flash.geom.Transform) {
@@ -866,7 +866,7 @@ module Shumway.AVM2.AS.flash.display {
           return true;
         }
 
-        // TODO: move into Graphics
+        // TODO move into Graphics
         if (this._graphics) {
           var paths = this._graphics._paths;
           for (var i = 0; i < paths.length; i++) {
