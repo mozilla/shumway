@@ -1,8 +1,8 @@
-/// <reference path='all.ts'/>
+/// <reference path='references.ts'/>
 /// <reference path="WebGL.d.ts" />
 
 module Shumway.Bench {
-  import WebGLContext = Shumway.GL.WebGLContext;
+  import WebGLContext = Shumway.GFX.GL.WebGLContext;
   export class TextureUpload {
     private _writer: IndentingWriter;
     constructor (writer: IndentingWriter) {

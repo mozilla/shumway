@@ -1,5 +1,5 @@
-/// <reference path='all.ts'/>
-module Shumway.Layers {
+/// <reference path='references.ts'/>
+module Shumway.GFX.Layers {
   import Rectangle = Shumway.Geometry.Rectangle;
   import Point = Shumway.Geometry.Point;
   import Matrix = Shumway.Geometry.Matrix;
@@ -19,7 +19,7 @@ module Shumway.Layers {
     }
   }
 
-  export class ColorTransform {
+  export class ColorMatrix {
     private _m: Float32Array;
     constructor (m: number []) {
       assert (m.length === 20);
@@ -38,8 +38,8 @@ module Shumway.Layers {
       return this._m.subarray(16, 20);
     }
 
-    public static createIdentity(): ColorTransform {
-      return new ColorTransform ([
+    public static createIdentity(): ColorMatrix {
+      return new ColorMatrix ([
         1, 0, 0, 0,
         0, 1, 0, 0,
         0, 0, 1, 0,
@@ -49,8 +49,8 @@ module Shumway.Layers {
     }
 
     public static fromMultipliersAndOffsets(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number,
-                                            redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number): ColorTransform {
-      return new ColorTransform ([
+                                            redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number): ColorMatrix {
+      return new ColorMatrix ([
         redMultiplier, 0, 0, 0,
         0, greenMultiplier, 0, 0,
         0, 0, blueMultiplier, 0,
@@ -59,7 +59,7 @@ module Shumway.Layers {
       ]);
     }
 
-    public multiply(other: ColorTransform) {
+    public multiply(other: ColorMatrix) {
       var a = this._m, b = other._m;
       var a00 = a[0 * 4 + 0];
       var a01 = a[0 * 4 + 1];
@@ -126,7 +126,7 @@ module Shumway.Layers {
       a[4 * 4 + 3] = a03 * b40 + a13 * b41 + a23 * b42 + a33 * b43 + a43;
     }
 
-    public equals(other: ColorTransform): boolean {
+    public equals(other: ColorMatrix): boolean {
       if (!other) {
         return false;
       }

@@ -1,7 +1,8 @@
-/// <reference path='all.ts'/>
+/// <reference path='references.ts'/>
 /// <reference path="WebGL.d.ts" />
 
-module Shumway.GL {
+module Shumway.GFX.GL {
+  import Color = Shumway.Color;
   var traceLevel = 2;
   var SCRATCH_CANVAS_SIZE = 1024 * 2;
   var TILE_SIZE = 256;
@@ -33,15 +34,15 @@ module Shumway.GL {
   import Rectangle = Shumway.Geometry.Rectangle;
   import RegionAllocator = Shumway.Geometry.RegionAllocator;
 
-  import Frame = Shumway.Layers.Frame;
-  import Stage = Shumway.Layers.Stage;
-  import Shape = Shumway.Layers.Shape;
-  import Flake = Shumway.Layers.Elements.Flake;
-  import SolidRectangle = Shumway.Layers.SolidRectangle;
-  import Filter = Shumway.Layers.Filter;
-  import BlurFilter = Shumway.Layers.BlurFilter;
-  import ColorTransform = Shumway.Layers.ColorTransform;
-  import VisitorFlags = Shumway.Layers.VisitorFlags;
+  import Frame = Shumway.GFX.Layers.Frame;
+  import Stage = Shumway.GFX.Layers.Stage;
+  import Shape = Shumway.GFX.Layers.Shape;
+  import Flake = Shumway.GFX.Layers.Elements.Flake;
+  import SolidRectangle = Shumway.GFX.Layers.SolidRectangle;
+  import Filter = Shumway.GFX.Layers.Filter;
+  import BlurFilter = Shumway.GFX.Layers.BlurFilter;
+  import ColorMatrix = Shumway.GFX.Layers.ColorMatrix;
+  import VisitorFlags = Shumway.GFX.Layers.VisitorFlags;
 
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
@@ -51,8 +52,8 @@ module Shumway.GL {
   import radianToDegrees = Shumway.Geometry.radianToDegrees;
   import degreesToRadian = Shumway.Geometry.degreesToRadian;
 
-  import clamp = Shumway.Util.clamp;
-  import pow2 = Shumway.Util.pow2;
+  import clamp = Shumway.NumberUtilities.clamp;
+  import pow2 = Shumway.NumberUtilities.pow2;
 
   function count(name) {
     Counter.count(name);
@@ -78,57 +79,6 @@ module Shumway.GL {
         this.target = null;
         this.transform = Matrix.createIdentity();
       }
-    }
-  }
-
-  export class Color {
-    public r: number;
-    public g: number;
-    public b: number;
-    public a: number;
-    constructor(r: number, g: number, b: number, a: number) {
-      this.r = r;
-      this.g = g;
-      this.b = b;
-      this.a = a;
-    }
-    set (other: Color) {
-      this.r = other.r;
-      this.g = other.g;
-      this.b = other.b;
-      this.a = other.a;
-    }
-    public static Red   = new Color(1, 0, 0, 1);
-    public static Green = new Color(0, 1, 0, 1);
-    public static Blue  = new Color(0, 0, 1, 1);
-    public static None  = new Color(0, 0, 0, 0);
-    public static White = new Color(1, 1, 1, 1);
-    public static Black = new Color(0, 0, 0, 1);
-    private static colorCache: { [color: string]: Color } = {};
-    public static randomColor(alpha: number = 1): Color {
-      return new Color(Math.random(), Math.random(), Math.random(), alpha);
-    }
-    public static parseColor(color: string) {
-      if (!Color.colorCache) {
-        Color.colorCache = Object.create(null);
-      }
-      if (Color.colorCache[color]) {
-        return Color.colorCache[color];
-      }
-      // TODO: Obviously slow, but it will do for now.
-      var span = document.createElement('span');
-      document.body.appendChild(span);
-      span.style.backgroundColor = color;
-      var rgb = getComputedStyle(span).backgroundColor;
-      document.body.removeChild(span);
-      var m = /^rgb\((\d+), (\d+), (\d+)\)$/.exec(rgb);
-      if (!m) m = /^rgba\((\d+), (\d+), (\d+), ([\d.]+)\)$/.exec(rgb);
-      var result = new Color(0, 0, 0, 0);
-      result.r = parseFloat(m[1]) / 255;
-      result.g = parseFloat(m[2]) / 255;
-      result.b = parseFloat(m[3]) / 255;
-      result.a = m[4] ? parseFloat(m[4]) / 255 : 1;
-      return Color.colorCache[color] = result;
     }
   }
 
@@ -836,7 +786,7 @@ module Shumway.GL {
 
       var parent = null;
       var tileTransform = Matrix.createIdentity();
-      var colorTransform = ColorTransform.createIdentity();
+      var colorTransform = ColorMatrix.createIdentity();
       stage.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
         if (frame.parent !== parent) {
           parent = frame.parent;
@@ -844,8 +794,8 @@ module Shumway.GL {
         }
 
         var alpha = frame.getConcatenatedAlpha();
-        if (!options.ignoreColorTransform) {
-          colorTransform = frame.getConcatenatedColorTransform();
+        if (!options.ignoreColorMatrix) {
+          colorTransform = frame.getConcatenatedColorMatrix();
         }
         that.context.setTransform(transform);
         if (frame instanceof Flake) {
@@ -1112,7 +1062,7 @@ module Shumway.GL {
     private static _tmpVertices: WebGLCombinedBrushVertex [] = Vertex.createEmptyVertices(WebGLCombinedBrushVertex, 4);
     private _program: WebGLProgram;
     private _textures: WebGLTexture [];
-    private _colorTransform: ColorTransform;
+    private _colorTransform: ColorMatrix;
     private static _depth: number = 1;
     constructor(context: WebGLContext, geometry: WebGLGeometry) {
       super(context, geometry);
@@ -1126,7 +1076,7 @@ module Shumway.GL {
       this.geometry.reset();
     }
 
-    public drawImage(src: WebGLTextureRegion, dstRectangle: Rectangle, color: Color, colorTransform: ColorTransform, transform: Matrix, depth: number = 0): boolean {
+    public drawImage(src: WebGLTextureRegion, dstRectangle: Rectangle, color: Color, colorTransform: ColorMatrix, transform: Matrix, depth: number = 0): boolean {
       if (!src || !src.texture) {
         return true;
       }

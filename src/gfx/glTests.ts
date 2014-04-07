@@ -1,15 +1,15 @@
-/// <reference path='all.ts'/>
+/// <reference path='references.ts'/>
 /// <reference path="WebGL.d.ts" />
 
-module Shumway.GL.Tests {
+module Shumway.GFX.GL.Tests {
   export function runTests(writer: IndentingWriter) {
     writer.writeLn("Running Tests");
     runLRUListTests(writer);
     runCompact(writer);
   }
 
-  import LRUList = Shumway.GL.LRUList;
-  import ILinkedListNode = Shumway.GL.ILinkedListNode;
+  import LRUList = Shumway.GFX.GL.LRUList;
+  import ILinkedListNode = Shumway.GFX.GL.ILinkedListNode;
 
   class Node implements ILinkedListNode<Node> {
     previous: Node;

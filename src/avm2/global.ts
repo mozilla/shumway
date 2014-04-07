@@ -26,14 +26,14 @@ interface JSGlobal {
   print: any;
 }
 
-var jsGlobal: JSGlobal = (function() { return this || (1, eval)('this'); })();
 
 declare var print;
 declare var console;
 declare var performance;
 declare var XMLHttpRequest;
+declare var document;
+declare var getComputedStyle;
 
-/** @const */ var inBrowser = typeof console != "undefined";
 /** @const */ var release: boolean = false;
 /** @const */ var debug: boolean = !release;
 
@@ -46,16 +46,4 @@ if (!jsGlobal.performance) {
 
 if (!jsGlobal.performance.now) {
   jsGlobal.performance.now = dateNow;
-}
-
-function log(message?: any, ...optionalParams: any[]): void {
-  jsGlobal.print(message);
-}
-
-function warn(message?: any, ...optionalParams: any[]): void {
-  if (inBrowser) {
-    console.warn(message);
-  } else {
-    jsGlobal.print(IndentingWriter.RED + message + IndentingWriter.ENDC);
-  }
 }

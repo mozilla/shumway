@@ -1,9 +1,9 @@
-/// <reference path='all.ts'/>
+/// <reference path='references.ts'/>
 
-module Shumway.Layers.Elements {
+module Shumway.GFX.Layers.Elements {
 
-  import Frame = Shumway.Layers.Frame;
-  import FrameContainer = Shumway.Layers.FrameContainer;
+  import Frame = Shumway.GFX.Layers.Frame;
+  import FrameContainer = Shumway.GFX.Layers.FrameContainer;
   // import RectanglePacker = Shumway.Geometry.RectanglePacker;
 
   export class FontAtlas {
