@@ -18,18 +18,23 @@
 
 function defineText(tag, dictionary) {
   var dependencies = [];
+  var bold = false;
+  var italic = false;
   if (tag.hasFont) {
     var font = dictionary[tag.fontId];
     assert(font, 'undefined font', 'label');
-    tag.font = font.uniqueName;
     dependencies.push(font.id);
+    bold = font.bold;
+    italic = font.italic;
   }
 
   var props = {
     type: 'text',
     id: tag.id,
     variableName: tag.variableName, // for AVM1
-    tag: tag
+    tag: tag,
+    bold: bold,
+    italic: italic
   };
   if (dependencies.length)
     props.require = dependencies;

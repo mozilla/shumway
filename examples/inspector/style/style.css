@@ -217,12 +217,12 @@ body.simple #xstats {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 100px;
+  height: 200px;
   border-top: 1px solid #666;
   padding: 6px 8px;
 }
 #displayListContainer.hasProperties > #displayList {
-  bottom: 113px;
+  bottom: 213px;
 }
 #displayListContainer.hasProperties > #displayObjectProperties {
   display: block;

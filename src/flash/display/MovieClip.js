@@ -413,7 +413,7 @@ var MovieClipDefinition = (function () {
           var info = start.soundInfo;
           var sound = sounds[symbolId];
           if (!sound) {
-            var symbolInfo = loader._dictionaryResolved[symbolId];
+            var symbolInfo = loader._dictionary[symbolId];
             if (!symbolInfo)
               continue;
 

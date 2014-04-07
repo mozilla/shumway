@@ -16,28 +16,17 @@
  * limitations under the License.
  */
 
-/* global finishShapePath */
-
 var ShapeDefinition = (function () {
   var def = {
     __class__: 'flash.display.Shape',
 
     initialize: function () {
-      var graphics = this._graphics = new flash.display.Graphics();
-      graphics._parent = this;
       var s = this.symbol;
-      if (s && s.paths) {
-        graphics._paths = s.paths;
-        // TODO: this really should be done only once, but I don't know how I
-        // can know when all the required data has been loaded.
-        for (var i = 0; i < s.paths.length; i++) {
-          s.paths[i] = finishShapePath(s.paths[i], s.dictionaryResolved);
-        }
-        graphics.bbox = s.bbox;
-        graphics.strokeBbox = s.strokeBbox;
-        if (this._stage && this._stage._quality === 'low' && !graphics._bitmap)
-          graphics._cacheAsBitmap(this._bbox);
-        this.ratio = s.ratio || 0;
+      if (s) {
+        this._graphics = s.graphics;
+      } else {
+        this._graphics = new flash.display.Graphics();
+        this._graphics._parent = this;
       }
     }
   };

@@ -15,10 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global FrameCounter, traceRenderer, frameWriter, URL, Counter */
-
-var MAX_SNAP_DRAW_SCALE_TO_CACHE = 8;
-var CACHE_SNAP_DRAW_AFTER = 3;
 
 var BitmapDefinition = (function () {
   function setBitmapData(value) {
@@ -31,13 +27,17 @@ var BitmapDefinition = (function () {
     }
 
     if (value) {
-      var canvas = value._drawable;
       this._bbox = {
         xMin: 0,
         yMin: 0,
-        xMax: canvas.width * 20,
-        yMax: canvas.height * 20
+        xMax: value._width * 20,
+        yMax: value._height * 20
       };
+      if (value._renderableId) {
+        this._renderableId = value._renderableId;
+      } else {
+        this._renderableId = 0;
+      }
     } else {
       this._bbox = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
     }
@@ -49,102 +49,38 @@ var BitmapDefinition = (function () {
   return {
     // (bitmapData:BitmapData = null, pixelSnapping:String = "auto", smoothing:Boolean = false)
     __class__: "flash.display.Bitmap",
-    draw: function(ctx, ratio, colorTransform) {
-      if (!this._bitmapData) {
-        return;
-      }
-      var scaledImage;
-      ctx.save();
-      if (this._pixelSnapping === 'auto' || this._pixelSnapping === 'always') {
-        var transform = this._getConcatenatedTransform(null, true);
-        var EPSILON = 0.001;
-        var aInt = Math.abs(Math.round(transform.a));
-        var dInt = Math.abs(Math.round(transform.d));
-        var snapPixels;
-        if (aInt >= 1 && aInt <= MAX_SNAP_DRAW_SCALE_TO_CACHE &&
-            dInt >= 1 && dInt <= MAX_SNAP_DRAW_SCALE_TO_CACHE &&
-            Math.abs(Math.abs(transform.a) / aInt - 1) <= EPSILON &&
-            Math.abs(Math.abs(transform.d) / dInt - 1) <= EPSILON &&
-            Math.abs(transform.b) <= EPSILON && Math.abs(transform.c) <= EPSILON) {
-          if (aInt === 1 && dInt === 1) {
-            snapPixels = true;
-          } else {
-            var sizeKey = aInt + 'x' + dInt;
-            if (this._snapImageCache.size !== sizeKey) {
-              this._snapImageCache.size = sizeKey;
-              this._snapImageCache.hits = 0;
-              this._snapImageCache.image = null;
-            }
-            if (++this._snapImageCache.hits === CACHE_SNAP_DRAW_AFTER) {
-              this._cacheSnapImage(sizeKey, aInt, dInt);
-            }
-            scaledImage = this._snapImageCache.image;
-            snapPixels = !!scaledImage;
-          }
-        } else {
-          snapPixels = false;
-        }
-        if (snapPixels) {
-          ctx.setTransform(transform.a < 0 ? -1 : 1, 0,
-                           0, transform.d < 0 ? -1 : 1,
-                           (transform.tx/20)|0, (transform.ty/20)|0);
-        }
-        // TODO this._pixelSnapping === 'always'; does it even make sense in other cases?
-      }
-
-      colorTransform.setAlpha(ctx, true);
-      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
-                                  this._smoothing;
-      ctx.drawImage(scaledImage || this._bitmapData._getDrawable(), 0, 0);
-      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled = false;
-      ctx.restore();
-      traceRenderer.value && frameWriter.writeLn("Bitmap.draw() snapping: " + this._pixelSnapping +
-        ", dimensions: " + this._bitmapData._drawable.width + " x " + this._bitmapData._drawable.height);
-    },
     _drawableChanged: function () {
       this._invalidate();
-      this._snapImageCache.image = null;
-      this._snapImageCache.hints = 0;
+      this._invalidateRenderable();
     },
-    _cacheSnapImage: function (sizeKey, xScale, yScale) {
-      Counter.count('Cache scaled image');
-      var original = this._bitmapData._getDrawable();
-      var canvas = document.createElement('canvas');
-      canvas.width = xScale * original.width;
-      canvas.height = yScale * original.height;
-      var ctx = canvas.getContext('2d');
-      ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
-        this._smoothing;
-      ctx.drawImage(original, 0, 0, original.width, original.height,
-                              0, 0, canvas.width, canvas.height);
+    initialize: function () { },
 
-      var cache = this._snapImageCache;
-      var image = document.createElement('img');
-      cache._tmp = [canvas, image];
-      if ('toBlob' in canvas) {
-        canvas.toBlob(function (blob) {
-          if (cache.size !== sizeKey) {
-            return;
-          }
-          image.onload = function () {
-            URL.revokeObjectURL(blob);
-            if (cache.size === sizeKey) {
-              cache.image = image;
-            }
-          };
-          image.src = URL.createObjectURL(blob);
-        });
-      } else {
-        image.onload = function () {
-          if (cache.size === sizeKey) {
-            cache.image = image;
-          }
-        };
-        image.src = canvas.toDataURL();
+    _serializeRenderableData: function (message) {
+      var bitmapData = this._bitmapData;
+
+      if (!bitmapData) {
+        return;
+      }
+
+      message.writeInt(Renderer.RENDERABLE_TYPE_BITMAP);
+
+      message.ensureAdditionalCapacity(16);
+      message.writeIntUnsafe(this._bbox.xMax / 20);
+      message.writeIntUnsafe(this._bbox.yMax / 20);
+      message.writeIntUnsafe(Renderer.BITMAP_TYPE_RAW);
+
+      var imgData = bitmapData._imgData;
+      var len = imgData.length;
+      message.writeIntUnsafe(len);
+      var offset = message.getIndex(1);
+      message.reserve(len);
+      message.subU8View().set(imgData, offset);
+
+      if (!bitmapData._renderableId) {
+        bitmapData._renderableId = this._renderableId;
       }
     },
-    initialize: function () {
-    },
+
     __glue__: {
       native: {
         static: {
@@ -157,21 +93,11 @@ var BitmapDefinition = (function () {
               this._pixelSnapping = 'auto';
             }
             this._smoothing = !!smoothing;
-            this._snapImageCache = {
-              hits: 0,
-              size: '',
-              image: null
-            };
 
             if (!bitmapData && this.symbol) {
               var symbol = this.symbol;
               bitmapData = new flash.display.BitmapData(symbol.width,
                                                         symbol.height, true, 0);
-              bitmapData._ctx.imageSmoothingEnabled = this._smoothing;
-              bitmapData._ctx.mozImageSmoothingEnabled = this._smoothing;
-              bitmapData._ctx.drawImage(symbol.img, 0, 0);
-              bitmapData._ctx.imageSmoothingEnabled = false;
-              bitmapData._ctx.mozImageSmoothingEnabled = false;
             }
 
             setBitmapData.call(this, bitmapData || null);

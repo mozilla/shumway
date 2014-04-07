@@ -20,12 +20,7 @@ var StaticTextDefinition = (function () {
   var def = {
     __class__: 'flash.text.StaticText',
 
-    initialize: function () {
-      var s = this.symbol;
-      if (s) {
-        this.draw = s.draw;
-      }
-    },
+    initialize: function () { },
 
     get text() {
       return this._text;

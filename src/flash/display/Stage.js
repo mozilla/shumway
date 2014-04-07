@@ -15,7 +15,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global QuadTree, RegionCluster, ShapePath, sortByZindex */
+/*global ShapePath */
+
+function timelineWrapBroadcastMessage(domain, message) {
+  //timelineEnter(message);
+  domain.broadcastMessage(message);
+  //timelineLeave(message);
+}
 
 var StageDefinition = (function () {
   return {
@@ -28,7 +34,7 @@ var StageDefinition = (function () {
       this._stageWidth = 0;
       this._stageHeight = 0;
       this._quality = 'high';
-      this._color = 0xFFFFFFFF;
+      this._color = null;
       this._stage = this;
       this._deferRenderEvent = false;
       this._focus = null;
@@ -39,21 +45,26 @@ var StageDefinition = (function () {
       this._fullScreenSourceRect = null;
       this._wmodeGPU = false;
       this._root = null;
-      this._qtree = null;
-      this._invalidRegions = new RegionCluster();
       this._mouseMoved = false;
       this._mouseTarget = this;
       this._mouseEvents = [];
       this._cursor = 'auto';
       this._stageVideos = [];
+      this._contentsScaleFactor = 1;
+      this._message = new BinaryMessage();
 
       this._concatenatedTransform.invalid = false;
     },
 
-    _setup: function setup(ctx, options) {
-      this._qtree = new QuadTree(0, 0, this._stageWidth, this._stageHeight,
-                                 null);
+    _setup: function setup() {
       this._invalid = true;
+
+      if (this._contentsScaleFactor !== 1) {
+        var m = this._concatenatedTransform;
+        m.a = m.d = this._contentsScaleFactor;
+      }
+
+      this._message.setup(this);
     },
 
     _addToStage: function addToStage(displayObject) {
@@ -88,18 +99,11 @@ var StageDefinition = (function () {
       displayObject._stage = null;
       displayObject._level = -1;
 
-      if (displayObject._region) {
-        this._qtree.remove(displayObject._region);
-        this._invalidRegions.insert(displayObject._region);
-        displayObject._region = null;
-      }
+      this._message.removeLayer(displayObject);
     },
 
     _processInvalidations: function processInvalidations(refreshStage) {
-      var qtree = this._qtree;
-      var invalidRegions = this._invalidRegions;
       var stack = [];
-      var zindex = 0;
 
       var children = this._children;
       var i = children.length;
@@ -118,22 +122,42 @@ var StageDefinition = (function () {
         var m = node._concatenatedTransform;
 
         var children = node._children;
-        var i = children.length;
-        while (i--) {
+        var clip = undefined;
+        var clipStack = [];
+        for (var i = 0; i < children.length; i++) {
           var child = children[i];
 
           if (!flash.display.DisplayObject.class.isInstanceOf(child)) {
             continue;
           }
 
-          if (node._invalid) {
+          if (clip) {
+            if (child._depth) {
+              if (child._depth <= clip._clipDepth) {
+                child._clip = clip;
+              } else {
+                clip = clip.pop();
+              }
+            }
+          } else {
+            if (child._clipDepth) {
+              clipStack.push(clip);
+              clip = child;
+            }
+
+            child._clip = null;
+          }
+
+          if (refreshStage) {
             child._invalid = true;
           }
           if (m.invalid) {
             child._concatenatedTransform.invalid = true;
           }
           child._invisible = node._invisible || !child._visible;
-          stack.push(child);
+        }
+        while (i--) {
+          stack.push(children[i]);
         }
 
         if (node._level && m.invalid) {
@@ -148,82 +172,139 @@ var StageDefinition = (function () {
           m.invalid = false;
         }
 
-        var invalidRegion = node._region;
-        var currentRegion = node._getRegion(m);
-
-        var hidden = node._invisible ||
-                     !currentRegion ||
-                     currentRegion.xMax - currentRegion.xMin === 0 ||
-                     currentRegion.yMax - currentRegion.yMin === 0 ||
-                     currentRegion.xMax <= 0 ||
-                     currentRegion.xMin >= this._stageWidth ||
-                     currentRegion.yMax <= 0 ||
-                     currentRegion.yMin >= this._stageHeight;
-
         if (node._invalid) {
-          if (invalidRegion) {
-            invalidRegions.insert(invalidRegion);
-          }
+          this._message.addLayer(node._layerId, node._parent._layerId, node);
+          node._invalid = false;
+        }
+      }
+    },
 
-          if (!hidden && (!invalidRegion ||
-                          currentRegion.xMin !== invalidRegion.xMin ||
-                          currentRegion.yMin !== invalidRegion.yMin ||
-                          currentRegion.xMax !== invalidRegion.xMax ||
-                          currentRegion.yMax !== invalidRegion.yMax))
-          {
-            invalidRegions.insert(currentRegion);
-          }
+    _enterEventLoop: function _enterEventLoop() {
+      var stage = this;
+
+      var firstRun = true;
+      var frameCount = 0;
+      var frameFPSAverage = new Shumway.Metrics.Average(120);
+
+      var frameRequested = true;
+
+      var frameScheduler = new FrameScheduler();
+
+      function drawFrame(renderFrame, repaint) {
+        //sampleStart();
+
+        var refreshStage = false;
+        if (stage._invalid) {
+          //updateRenderTransform();
+          stage._invalid = false;
+          refreshStage = true;
         }
 
-        if (hidden) {
-          if (invalidRegion) {
-            qtree.remove(invalidRegion);
-            node._region = null;
-          }
-        } else if (invalidRegion) {
-          invalidRegion.xMin = currentRegion.xMin;
-          invalidRegion.xMax = currentRegion.xMax;
-          invalidRegion.yMin = currentRegion.yMin;
-          invalidRegion.yMax = currentRegion.yMax;
-          qtree.update(invalidRegion);
+        var mouseMoved = false;
+        if (stage._mouseMoved) {
+          stage._mouseMoved = false;
+          mouseMoved = stage._mouseOver;
         } else {
-          currentRegion.obj = node;
-          qtree.insert(currentRegion);
-
-          node._region = currentRegion;
+          stage._handleMouseButtons();
         }
 
-        node._zindex = zindex++;
-      }
+        if (renderFrame || refreshStage || mouseMoved) {
+          //FrameCounter.clear();
+          //var frameStartTime = performance.now();
+          //timelineEnter("frame");
+          //traceRenderer.value && appendToFrameTerminal("Begin Frame #" + (frameCount++), "purple");
 
-      var invalidPath = new ShapePath();
-      if (refreshStage) {
-        invalidPath.rect(0, 0, this._stageWidth, this._stageHeight);
-        invalidRegions.reset();
-        return invalidPath;
-      }
+          var domain = avm2.systemDomain;
 
-      var redrawRegions = invalidRegions.retrieve();
+          if (renderFrame) {
+            //timelineEnter("events");
+            if (firstRun) {
+              // Initial display list is already constructed, skip frame construction phase.
+              firstRun = false;
+            } else {
+              enableAdvanceFrame.value && timelineWrapBroadcastMessage(domain, "advanceFrame");
+              enableEnterFrame.value && timelineWrapBroadcastMessage(domain, "enterFrame");
+              enableConstructChildren.value && timelineWrapBroadcastMessage(domain, "constructChildren");
+            }
 
-      for (var i = 0; i < redrawRegions.length; i++) {
-        var region = redrawRegions[i];
-        var xMin = region.xMin - region.xMin % 20 - 40;
-        var yMin = region.yMin - region.yMin % 20 - 40;
-        var xMax = region.xMax - region.xMax % 20 + 80;
-        var yMax = region.yMax - region.yMax % 20 + 80;
+            timelineWrapBroadcastMessage(domain, "frameConstructed");
+            timelineWrapBroadcastMessage(domain, "executeFrame");
+            timelineWrapBroadcastMessage(domain, "exitFrame");
+            //timelineLeave("events");
+          }
 
-        var intersectees = qtree.retrieve(xMin, xMax, yMin, yMax);
-        for (var j = 0; j < intersectees.length; j++) {
-          var item = intersectees[j];
-          item.obj._invalid = true;
+          if (stage._deferRenderEvent) {
+            stage._deferRenderEvent = false;
+            domain.broadcastMessage("render", "render");
+          }
+
+          var drawEnabled = (refreshStage || renderFrame) &&
+                            (frameRequested || repaint || !skipFrameDraw.value);
+          // checking if we need to skip painting, however not doing it in repaint
+          // mode or during testing
+          if (drawEnabled && !repaint && skipFrameDraw.value &&
+              frameScheduler.shallSkipDraw) {
+            drawEnabled = false;
+            frameScheduler.skipDraw();
+            //traceRenderer.value && appendToFrameTerminal("Skip Frame Draw", "red");
+          }
+          if (drawEnabled) {
+            frameScheduler.startDraw();
+
+            //traceRenderer.value && frameWriter.enter("> Invalidation");
+            //timelineEnter("invalidate");
+            stage._processInvalidations(refreshStage);
+            //timelineLeave("invalidate");
+            //traceRenderer.value && frameWriter.leave("< Invalidation");
+
+            stage._message.post('render');
+
+            frameScheduler.endDraw();
+          }
+
+          if (mouseMoved && !disableMouse.value) {
+            //renderFrame && timelineEnter("mouse");
+            //traceRenderer.value && frameWriter.enter("> Mouse Handling");
+            stage._handleMouse();
+            //traceRenderer.value && frameWriter.leave("< Mouse Handling");
+            //renderFrame && timelineLeave("mouse");
+
+            //ctx.canvas.style.cursor = stage._cursor;
+          }
+
+          if (traceRenderer.value) {
+            //frameWriter.enter("> Frame Counters");
+            //for (var name in FrameCounter.counts) {
+            //  frameWriter.writeLn(name + ": " + FrameCounter.counts[name]);
+            //}
+            //frameWriter.leave("< Frame Counters");
+            var frameElapsedTime = performance.now() - frameStartTime;
+            var frameFPS = 1000 / frameElapsedTime;
+            frameFPSAverage.push(frameFPS);
+            //traceRenderer.value && appendToFrameTerminal("End Frame Time: " + frameElapsedTime.toFixed(2) + " (" + frameFPS.toFixed(2) + " fps, " + frameFPSAverage.average().toFixed(2) + " average fps)", "purple");
+          }
+          //timelineLeave("frame");
+        } else {
+          //traceRenderer.value && appendToFrameTerminal("Skip Frame", "black");
         }
 
-        invalidPath.rect(xMin, yMin, xMax - xMin, yMax - yMin);
+        sampleEnd();
       }
 
-      invalidRegions.reset();
+      (function draw() {
+        var renderFrame = true;
 
-      return invalidPath;
+        frameScheduler.startFrame(stage._frameRate);
+        drawFrame(renderFrame, false);
+        frameScheduler.endFrame();
+        //frameRequested = false;
+
+        //if (!frameScheduler.isOnTime) {
+        //  traceRenderer.value && appendToFrameTerminal("Frame Is Late", "red");
+        //}
+
+        setTimeout(draw, turboMode.value ? 0 : frameScheduler.nextFrameIn);
+      })();
     },
 
     _handleMouseButtons: function () {
@@ -251,29 +332,45 @@ var StageDefinition = (function () {
       var mouseX = this._mouseX;
       var mouseY = this._mouseY;
 
-      var candidates = this._qtree.retrieve(mouseX, mouseX, mouseY, mouseY);
+      var stack = [];
       var objectsUnderMouse = [];
 
-      for (var i = 0; i < candidates.length; i++) {
-        var item = candidates[i];
-        var displayObject = item.obj;
+      var children = this._children;
+      var i = children.length;
+      while (i--) {
+        var child = children[i];
+        stack.push(child);
+      }
+
+      while (stack.length) {
+        var node = stack.pop();
+
+        var children = node._children;
+        var i = children.length;
+        while (i--) {
+          var child = children[i];
+          stack.push(child);
+        }
+
         var isUnderMouse = false;
-        if (flash.display.SimpleButton.class.isInstanceOf(displayObject)) {
-          if (!displayObject._enabled) {
+        if (flash.display.SimpleButton.class.isInstanceOf(node)) {
+          if (!node._enabled) {
             continue;
           }
 
-          var hitArea = displayObject._hitTestState;
+          var hitArea = node._hitTestState;
 
-          hitArea._parent = displayObject;
+          hitArea._parent = node;
+          hitArea._stage = this;
           isUnderMouse = hitArea._hitTest(true, mouseX, mouseY, true);
           hitArea._parent = null;
+          hitArea._stage = null;
         } else {
-          isUnderMouse = displayObject._hitTest(true, mouseX, mouseY, true);
+          isUnderMouse = node._hitTest(true, mouseX, mouseY, true);
         }
         if (isUnderMouse) {
           // skipping mouse disabled objects
-          var currentNode = displayObject;
+          var currentNode = node;
           var lastEnabled = null;
           if (!flash.display.InteractiveObject.class.isInstanceOf(currentNode)) {
             lastEnabled = currentNode;
@@ -294,8 +391,6 @@ var StageDefinition = (function () {
       var target;
 
       if (objectsUnderMouse.length) {
-        objectsUnderMouse.sort(sortByZindex);
-
         var i = objectsUnderMouse.length;
         while (i--) {
           target = null;

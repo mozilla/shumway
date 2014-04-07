@@ -20,9 +20,19 @@
 function defineLabel(tag, dictionary) {
   var records = tag.records;
   var m = tag.matrix;
+  var bbox = tag.bbox;
+
+  // expand bbox to match browser text metrices
+  bbox.xMin -= 40;
+  bbox.xMax += 40;
+  bbox.yMin -= 40;
+  bbox.yMax += 40;
+
+  var tx = ((m.tx - bbox.xMin) / 20) | 0;
+  var ty = ((m.ty - bbox.yMin) / 20) | 0;
   var cmds = [
     'c.save()',
-    'c.transform(' + [m.a, m.b, m.c, m.d, m.tx/20, m.ty/20].join(',') + ')',
+    'c.transform(' + [m.a, m.b, m.c, m.d, tx, ty].join(',') + ')',
     'c.scale(0.05, 0.05)'
   ];
   var dependencies = [];
@@ -31,6 +41,7 @@ function defineLabel(tag, dictionary) {
   var i = 0;
   var record;
   var codes;
+  var color = 0;
   while ((record = records[i++])) {
     if (record.eot)
       break;
@@ -38,17 +49,15 @@ function defineLabel(tag, dictionary) {
       var font = dictionary[record.fontId];
       assert(font, 'undefined font', 'label');
       codes = font.codes;
-      cmds.push('c.font="' + record.fontHeight + 'px \'' + font.uniqueName + '\'"');
+      cmds.push('c.font="' + record.fontHeight + 'px \'swf-font-' + font.id + '\'"');
       dependencies.push(font.id);
     }
 
     if (record.hasColor) {
-      cmds.push('ct.setFillStyle(c,"' + rgbaObjToStr(record.color) + '")');
-      cmds.push('ct.setAlpha(c)');
-    } else {
-      // FIXME what sets color of the text?
-      cmds.push('ct.setAlpha(c,true)');
+      color = record.color;
     }
+
+    cmds.push('c.fillStyle="' + rgbaObjToStr(color) + '"');
 
     if (record.hasMoveX)
       x = record.moveX;
@@ -70,7 +79,7 @@ function defineLabel(tag, dictionary) {
   var label = {
     type: 'label',
     id: tag.id,
-    bbox: tag.bbox,
+    bbox: bbox,
     data: cmds.join('\n')
   };
   if (dependencies.length)
