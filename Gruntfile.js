@@ -37,7 +37,7 @@ module.exports = function(grunt) {
         cmd: 'make -C utils/builder build'
       },
       build_stage_ts: {
-        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/stage/all.ts'
+        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/gfx/all.ts'
       },
       build_avm2_ts: {
         cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/avm2/references.ts'
@@ -88,7 +88,7 @@ module.exports = function(grunt) {
         tasks: ['exec:build_flash_ts']
       },
       stage_ts: {
-        files: ['src/stage/**/*.ts'],
+        files: ['src/gfx/**/*.ts'],
         tasks: ['exec:build_stage_ts']
       },
       avm2_ts: {
@@ -140,7 +140,7 @@ module.exports = function(grunt) {
   grunt.registerTask('watch-avm1lib', ['exec:build_avm1lib', 'watch:avm1lib']);
   grunt.registerTask('watch-avm2', ['exec:build_avm2_ts', 'watch:avm2_ts']);
   grunt.registerTask('watch-flash', ['exec:build_flash_ts', 'watch:flash_ts']);
-  grunt.registerTask('watch-stage', ['exec:build_stage_ts', 'watch:stage_ts']);
+  grunt.registerTask('watch-gfx', ['exec:build_stage_ts', 'watch:stage_ts']);
 
   // temporary make/python calls based on grunt-exec
   grunt.registerTask('build-web', ['exec:build_avm2_ts', 'exec:build_bundle', 'exec:build_extension', 'exec:build_web']);
@@ -154,4 +154,10 @@ module.exports = function(grunt) {
   grunt.registerTask('avm2', ['exec:build_avm2_ts']);
   grunt.registerTask('stage', ['exec:build_stage_ts']);
   grunt.registerTask('avm1', ['exec:build_avm1_ts']);
+  grunt.registerTask('shu', [
+    'exec:build_avm1_ts',
+    'exec:build_avm2_ts',
+    'exec:build_stage_ts',
+    'exec:build_flash_ts'
+  ]);
 };
