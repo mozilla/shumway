@@ -44,7 +44,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
     set matrix(value: flash.geom.Matrix) {
       //value = value;
-      this._target._setTransformMatrix(value, true);
+      this._target._setTransformMatrix(value);
     }
     get colorTransform(): flash.geom.ColorTransform {
       return this._target._cxform.clone();

@@ -34,7 +34,7 @@ module Shumway.AVM2.AS.flash.display {
     };
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
+    static initializer: any = function (symbol: DisplayObject) {
       var self: DisplayObject = this;
 
       DisplayObject._instances.push(self);
@@ -67,7 +67,6 @@ module Shumway.AVM2.AS.flash.display {
       self._loaderInfo = null;
       self._accessibilityProperties = null;
 
-      self._bbox = null;
       self._bounds = null;
       self._clipDepth = 0;
       self._concatenatedTransform = new Matrix();
@@ -102,43 +101,53 @@ module Shumway.AVM2.AS.flash.display {
       self._isContainer = false;
       self._mouseChildren = true;
 
-      // Not sure if needed anymore
+      // TODO not sure if needed anymore
       self._invisible = false;
 
-      var s = self.symbol;
-      if (s) {
-        self._root = s.root || self._root;
-        self._stage = s.stage || self._stage;
-        self._name = s.name || self._stage;
-        self._parent = s.parent || self._parent;
-        self._blendMode = s.blendMode ? BlendMode.fromNumber(s.blendMode) : self._blendMode;
+      if (symbol) {
+        self._root = symbol.root || self._root;
+        self._stage = symbol.stage || self._stage;
+        self._name = symbol.name || self._stage;
+        self._parent = symbol.parent || self._parent;
+        self._blendMode = symbol.blendMode ?
+          BlendMode.fromNumber(symbol.blendMode) : self._blendMode;
 
-        //var scale9Grid = s.scale9Grid;
-        //if (scale9Grid) {
-        //  this._scale9Grid = new flash.geom.Rectangle(
-        //    scale9Grid.left,
-        //    scale9Grid.top,
-        //    (scale9Grid.right - scale9Grid.left),
-        //    (scale9Grid.bottom - scale9Grid.top)
-        //  );
-        //}
-
-        self._animated = s.animated || self._animated;
-        self._bbox = s.bbox || self._bbox;
-        self._clipDepth = s.clipDepth || self._clipDepth;
-
-        if (s.currentTransform) {
-          this._setTransformMatrix(s.currentTransform, false);
-        }
-        if (s.cxform) {
-          this._setColorTransform(s.cxform);
+        if (symbol.scale9Grid) {
+          var scale9Grid = symbol.scale9Grid;
+          this._scale9Grid = new Rectangle(
+            scale9Grid.left,
+            scale9Grid.top,
+            scale9Grid.right - scale9Grid.left,
+            scale9Grid.bottom - scale9Grid.top
+          );
         }
 
-        self._depth = s.depth || self._depth;
-        self._index = isNaN(s.index) ? self._index : s.index;
-        self._level = isNaN(s.level) ? self._level : s.level;
-        self._loader = s.loader || self._loader;
-        self._owned = s.owned || self._owned;
+        self._animated = symbol.animated || self._animated;
+
+        if (symbol._bbox) {
+          var bbox = symbol._bbox;
+          self._bounds.setTo(
+            bbox.xMin,
+            bbox.yMin,
+            bbox.xMax - bbox.xMin,
+            bbox.yMax - bbox.yMin
+          );
+        }
+
+        self._clipDepth = symbol.clipDepth || self._clipDepth;
+
+        if (symbol.currentTransform) {
+          this._setTransformMatrix(symbol.currentTransform);
+        }
+        if (symbol.cxform) {
+          this._setColorTransform(symbol.cxform);
+        }
+
+        self._depth = symbol.depth || self._depth;
+        self._index = isNaN(symbol.index) ? self._index : symbol.index;
+        self._level = isNaN(symbol.level) ? self._level : symbol.level;
+        self._loader = symbol.loader || self._loader;
+        self._owned = symbol.owned || self._owned;
       }
     };
     
@@ -189,7 +198,6 @@ module Shumway.AVM2.AS.flash.display {
     _accessibilityProperties: flash.accessibility.AccessibilityProperties;
 
     _animated: boolean;
-    _bbox: any;
     _bounds: flash.geom.Rectangle;
     _boundsInvalid: boolean;
     _children: flash.display.DisplayObject [];
@@ -219,22 +227,14 @@ module Shumway.AVM2.AS.flash.display {
 
     symbol: any;
 
-    private _setTransformMatrix(matrix: Matrix, convertToTwips: boolean): void {
-      convertToTwips = !!convertToTwips;
-
+    private _setTransformMatrix(matrix: Matrix): void {
       var a = matrix.a;
       var b = matrix.b;
       var c = matrix.c;
       var d = matrix.d;
-      var tx, ty;
-      if (convertToTwips) {
-        tx = (matrix.tx * 20) | 0;
-        ty = (matrix.ty * 20) | 0;
-      } else {
-        tx = matrix.tx;
-        ty = matrix.ty;
-      }
-      var angle = a ? Math.atan(b / a) : (b > 0 ? Math.PI / 2 : -Math.PI / 2);
+      var tx = matrix.tx;
+      var ty = matrix.ty;
+      var angle = matrix.getAngle();
       this._rotation = angle * 180 / Math.PI;
       this._rotationCos = Math.cos(angle);
       this._rotationSin = Math.sin(angle);
@@ -321,107 +321,19 @@ module Shumway.AVM2.AS.flash.display {
     }
     private _getContentBounds(): Rectangle {
       var bounds = this._bounds;
-
       if (this._boundsInvalid) {
-        var xMin = Number.MAX_VALUE;
-        var xMax = Number.MIN_VALUE;
-        var yMin = Number.MAX_VALUE;
-        var yMax = Number.MIN_VALUE;
-
-        var bbox = this._bbox;
-        if (bbox) {
-          xMin = bbox.xMin;
-          xMax = bbox.xMax;
-          yMin = bbox.yMin;
-          yMax = bbox.yMax;
-        } else {
-          if (this._graphics) {
-            var b = this._graphics._getBounds(true);
-            if (!b.isEmpty()) {
-              xMin = b.x;
-              yMin = b.y;
-              xMax = b.x + b.width;
-              yMax = b.y + b.height;
-            }
-          }
-
-          var children = this._children;
-          for (var i = 0; i < children.length; i++) {
-            var child = children[i];
-            var b = child.getBounds(this);
-            if (!b.isEmpty()) {
-              var x1 = b.x;
-              var y1 = b.y;
-              var x2 = b.x + b.width;
-              var y2 = b.y + b.height;
-              xMin = Math.min(xMin, x1, x2);
-              xMax = Math.max(xMax, x1, x2);
-              yMin = Math.min(yMin, y1, y2);
-              yMax = Math.max(yMax, y1, y2);
-            }
-          }
+        bounds.setEmpty();
+        if (this._graphics) {
+          bounds.unionWith(this._graphics._getBounds(true));
         }
-
-        if (xMin === Number.MAX_VALUE) {
-          xMin = xMax = yMin = yMax = 0;
+        var children = this._children;
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          bounds.unionWith(child.getBounds(this));
         }
-        bounds.setTo(xMin, yMin, xMax - xMin, yMax - yMin);
         this._boundsInvalid = false;
       }
-
       return bounds;
-    }
-    private _transformRect(rect: Rectangle, targetCoordSpace: flash.display.DisplayObject): void {
-      if (!targetCoordSpace || targetCoordSpace === this || rect.isEmpty()) {
-        return;
-      }
-
-      var xMin = rect.x;
-      var xMax = rect.y;
-      var yMin = rect.x + rect.width;
-      var yMax = rect.y + rect.height;
-
-      var m = this._getConcatenatedTransform(targetCoordSpace);
-      var x0 = (m.a * xMin + m.c * yMin + m.tx) | 0;
-      var y0 = (m.b * xMin + m.d * yMin + m.ty) | 0;
-      var x1 = (m.a * xMax + m.c * yMin + m.tx) | 0;
-      var y1 = (m.b * xMax + m.d * yMin + m.ty) | 0;
-      var x2 = (m.a * xMax + m.c * yMax + m.tx) | 0;
-      var y2 = (m.b * xMax + m.d * yMax + m.ty) | 0;
-      var x3 = (m.a * xMin + m.c * yMax + m.tx) | 0;
-      var y3 = (m.b * xMin + m.d * yMax + m.ty) | 0;
-      var tmp = 0;
-
-      // Manual Min/Max is a lot faster than calling Math.min/max
-      // X Min-Max
-      if (x0 > x1) {
-        tmp = x0;
-        x0 = x1;
-        x1 = tmp;
-      }
-      if (x2 > x3) {
-        tmp = x2;
-        x2 = x3;
-        x3 = tmp;
-      }
-      xMin = x0 < x2 ? x0 : x2;
-      xMax = x1 > x3 ? x1 : x3;
-
-      // Y Min-Max
-      if (y0 > y1) {
-        tmp = y0;
-        y0 = y1;
-        y1 = tmp;
-      }
-      if (y2 > y3) {
-        tmp = y2;
-        y2 = y3;
-        y3 = tmp;
-      }
-      yMin = y0 < y2 ? y0 : y2;
-      yMax = y1 > y3 ? y1 : y3;
-
-      rect.setTo(xMin, yMin, xMax - xMin, yMax - yMin);
     }
     private destroy(): void {
       this._destroyed = true;
@@ -571,10 +483,10 @@ module Shumway.AVM2.AS.flash.display {
       // this._scaleZ = value;
     }
     get mouseX(): number {
-      return (this._mouseX / 20) | 0;
+      return this._mouseX;
     }
     get mouseY(): number {
-      return (this._mouseY / 20) | 0;
+      return this._mouseY;
     }
     get rotation(): number {
       return this._rotation;
@@ -664,8 +576,7 @@ module Shumway.AVM2.AS.flash.display {
     get width(): number {
       var bounds = this._getContentBounds();
       var m = this._currentTransform;
-      return (Math.abs(m.a) * bounds.width +
-              Math.abs(m.c) * bounds.height) | 0;
+      return Math.abs(m.a) * bounds.width + Math.abs(m.c) * bounds.height;
     }
     set width(value: number) {
       value = +value;
@@ -769,12 +680,10 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidate();
     }
     get transform(): flash.geom.Transform {
-      // TODO Twips-ify
       return new flash.geom.Transform(this);
     }
     set transform(value: flash.geom.Transform) {
       //value = value;
-
       var transform = this.transform;
       transform.colorTransform = value.colorTransform;
       if (value.matrix3D) {
@@ -810,32 +719,23 @@ module Shumway.AVM2.AS.flash.display {
     }
     globalToLocal(point: flash.geom.Point): flash.geom.Point {
       //point = point;
-
       var m = this._getConcatenatedTransform(null).clone();
       m.invert();
-      var p = m.transformCoords(point.x * 20, point.y * 20);
-      p.x = (p.x / 20) | 0;
-      p.y = (p.y / 20) | 0;
-      return p;
+      return m.transformPoint(point);
     }
     localToGlobal(point: flash.geom.Point): flash.geom.Point {
       //point = point;
-
       var m = this._getConcatenatedTransform(null);
-      var p = m.transformCoords(point.x * 20, point.y * 20);
-      p.x = (p.x / 20) | 0;
-      p.y = (p.y / 20) | 0;
-      return p;
+      return m.transformPoint(point);
     }
     getBounds(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
       //targetCoordinateSpace = targetCoordinateSpace;
-      var rect = this._getContentBounds().clone();
-      this._transformRect(rect, targetCoordinateSpace);
-      rect.x = (rect.x / 20) | 0;
-      rect.y = (rect.x / 20) | 0;
-      rect.width = (rect.width / 20) | 0;
-      rect.height = (rect.height / 20) | 0;
-      return rect;
+      var bounds = this._getContentBounds();
+      if (!targetCoordSpace || targetCoordSpace === this || bounds.isEmpty()) {
+        return bounds.clone();
+      }
+      var m = this._getConcatenatedTransform(targetCoordSpace);
+      return m.transformRect(bounds);
     }
     getRect(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
       targetCoordinateSpace = targetCoordinateSpace;
@@ -850,7 +750,8 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.DisplayObject::local3DToGlobal"); return;
     }
     _hitTest(use_xy: boolean, x: number, y: number, useShape: boolean, hitTestObject: flash.display.DisplayObject): boolean {
-      use_xy = !!use_xy; x = +x; y = +y; useShape = !!useShape; hitTestObject = hitTestObject;
+      use_xy = !!use_xy; x = +x; y = +y; useShape = !!useShape;
+      //hitTestObject = hitTestObject;
 
       if (use_xy) {
         var m = this._getConcatenatedTransform(null).clone();
