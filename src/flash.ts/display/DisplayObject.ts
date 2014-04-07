@@ -19,6 +19,7 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
 
   import BlendMode = flash.display.BlendMode;
+  import ColorTransform = flash.geom.ColorTransform;
   import Matrix = flash.geom.Matrix;
   import Point = flash.geom.Point;
   import Rectangle = flash.geom.Rectangle;
@@ -69,10 +70,10 @@ module Shumway.AVM2.AS.flash.display {
       self._bbox = null;
       self._bounds = null;
       self._clipDepth = 0;
-      self._concatenatedTransform = new Matrix;
-      self._currentTransform = new Matrix;
+      self._concatenatedTransform = new Matrix();
+      self._currentTransform = new Matrix();
       self._current3dTransform = null;
-      self._cxform = null;
+      self._cxform = new ColorTransform();
       self._depth = 0;
       self._graphics = null;
       self._index = -1;
@@ -125,10 +126,12 @@ module Shumway.AVM2.AS.flash.display {
         self._animated = s.animated || self._animated;
         self._bbox = s.bbox || self._bbox;
         self._clipDepth = s.clipDepth || self._clipDepth;
-        //self._cxform = new flash.geom.ColorTransform;
 
         if (s.currentTransform) {
           this._setTransformMatrix(s.currentTransform, false);
+        }
+        if (s.cxform) {
+          this._setColorTransform(s.cxform);
         }
 
         self._depth = s.depth || self._depth;
@@ -240,6 +243,10 @@ module Shumway.AVM2.AS.flash.display {
       this._currentTransform.setTo(a, b, c, d, tx, ty);
       this._invalidate();
       this._invalidateTransform();
+    }
+    private _setColorTransform(cxform: flash.geom.ColorTransform) {
+      this._cxform.copyFrom(cxform);
+      this._invalidate();
     }
     private _getConcatenatedTransform(targetCoordSpace: DisplayObject): Matrix {
       var stage = this._stage;

@@ -31,9 +31,15 @@ module Shumway.AVM2.AS.flash.geom {
     static bindings: string [] = null; // ["redMultiplier", "greenMultiplier", "blueMultiplier", "alphaMultiplier", "redOffset", "greenOffset", "blueOffset", "alphaOffset", "color", "color", "concat", "toString"];
     
     constructor (redMultiplier: number = 1, greenMultiplier: number = 1, blueMultiplier: number = 1, alphaMultiplier: number = 1, redOffset: number = 0, greenOffset: number = 0, blueOffset: number = 0, alphaOffset: number = 0) {
-      redMultiplier = +redMultiplier; greenMultiplier = +greenMultiplier; blueMultiplier = +blueMultiplier; alphaMultiplier = +alphaMultiplier; redOffset = +redOffset; greenOffset = +greenOffset; blueOffset = +blueOffset; alphaOffset = +alphaOffset;
       false && super();
-      notImplemented("Dummy Constructor: public flash.geom.ColorTransform");
+      this.redMultiplier = +redMultiplier;
+      this.greenMultiplier = +greenMultiplier;
+      this.blueMultiplier = +blueMultiplier;
+      this.alphaMultiplier = +alphaMultiplier;
+      this.redOffset = +redOffset;
+      this.greenOffset = +greenOffset;
+      this.blueOffset = +blueOffset;
+      this.alphaOffset = +alphaOffset;
     }
 
     public redMultiplier: number;
