@@ -178,15 +178,22 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public union(toUnion: Rectangle): Rectangle {
+      var rect = this.clone();
+      rect.unionWith(toUnion);
+      return rect;
+    }
+
+    public unionWith(toUnion: Rectangle): void {
       if (toUnion.isEmpty()) {
-        return this.clone();
+        return;
       }
       if (this.isEmpty()) {
-        return toUnion.clone();
+        this.copyFrom(toUnion);
+        return;
       }
       var l: number = Math.min(this.x, toUnion.x);
       var t: number = Math.min(this.y, toUnion.y);
-      return new Rectangle(l, t,
+      this.setTo(l, t,
         Math.max(this.right, toUnion.right) - l,
         Math.max(this.bottom, toUnion.bottom) - t);
     }

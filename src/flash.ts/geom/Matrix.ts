@@ -213,6 +213,68 @@ module Shumway.AVM2.AS.flash.geom {
       );
     }
 
+    public transformRect(rect: Rectangle): Rectangle {
+      var r = rect.clone();
+      var xMin = r.x;
+      var xMax = r.x + r.width;
+      var yMin = r.y;
+      var yMax = r.y + r.height;
+
+      var a = this.a;
+      var b = this.b;
+      var c = this.c;
+      var d = this.d;
+      var tx = this.tx;
+      var ty = this.ty;
+
+      var x0 = (a * xMin + c * yMin + tx) | 0;
+      var y0 = (b * xMin + d * yMin + ty) | 0;
+      var x1 = (a * xMax + c * yMin + tx) | 0;
+      var y1 = (b * xMax + d * yMin + ty) | 0;
+      var x2 = (a * xMax + c * yMax + tx) | 0;
+      var y2 = (b * xMax + d * yMax + ty) | 0;
+      var x3 = (a * xMin + c * yMax + tx) | 0;
+      var y3 = (b * xMin + d * yMax + ty) | 0;
+      var tmp = 0;
+
+      // Manual Min/Max is a lot faster than calling Math.min/max
+      // X Min-Max
+      if (x0 > x1) {
+        tmp = x0;
+        x0 = x1;
+        x1 = tmp;
+      }
+      if (x2 > x3) {
+        tmp = x2;
+        x2 = x3;
+        x3 = tmp;
+      }
+      xMin = x0 < x2 ? x0 : x2;
+      xMax = x1 > x3 ? x1 : x3;
+
+      // Y Min-Max
+      if (y0 > y1) {
+        tmp = y0;
+        y0 = y1;
+        y1 = tmp;
+      }
+      if (y2 > y3) {
+        tmp = y2;
+        y2 = y3;
+        y3 = tmp;
+      }
+      yMin = y0 < y2 ? y0 : y2;
+      yMax = y1 > y3 ? y1 : y3;
+
+      r.setTo(xMin, yMin, xMax - xMin, yMax - yMin);
+      return r;
+    }
+
+    public getAngle(): number {
+      return this.a ? Math.atan(this.b / this.a) :
+                      (this.b > 0 ? Math.PI / 2 : -Math.PI / 2);
+    }
+
     public copyFrom(sourceMatrix: Matrix): void {
       this.a = sourceMatrix.a;
       this.b = sourceMatrix.b;
