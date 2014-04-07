@@ -60,6 +60,9 @@ module.exports = function(grunt) {
         cmd: 'node compileabc -m ../src/avm1lib/avm1lib.manifest',
         cwd: 'utils/'
       },
+      build_avm1lib_ts: {
+        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/avm1lib/references.ts'
+      },
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
       }
@@ -73,6 +76,12 @@ module.exports = function(grunt) {
         files: 'extension/firefox/**/*',
         tasks: ['build-extension']
       },
+      avm1lib_ts: {
+        files: ['src/avm2/**/*.ts',
+                'src/flash.ts/**/*.ts',
+                'src/avm1lib/*.ts'],
+        tasks: ['exec:build_avm1lib_ts']
+      },
       avm1lib: {
         files: ['src/avm1lib/*.as',
                 'src/avm1lib/avm1lib.manifest'],
@@ -84,7 +93,8 @@ module.exports = function(grunt) {
         tasks: ['exec:build_playerglobal']
       },
       flash_ts: {
-        files: ['src/avm2/**/*.ts'],
+        files: ['src/avm2/**/*.ts',
+                'src/flash.ts/**/*.ts'],
         tasks: ['exec:build_flash_ts']
       },
       stage_ts: {
