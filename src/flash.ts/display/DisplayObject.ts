@@ -75,6 +75,7 @@ module Shumway.AVM2.AS.flash.display {
       self._cxform = new ColorTransform();
       self._depth = 0;
       self._graphics = null;
+      self._hitTarget = null;
       self._index = -1;
       self._level = -1;
       self._maskedObject = null;
@@ -204,6 +205,7 @@ module Shumway.AVM2.AS.flash.display {
     _depth: number;
     _destroyed: boolean;
     _graphics: flash.display.Graphics;
+    _hitTarget: flash.display.DisplayObject;
     _index: number;
     _invalid: boolean;
     _invisible: boolean;
@@ -212,6 +214,7 @@ module Shumway.AVM2.AS.flash.display {
     _loader: flash.display.Loader;
     _maskedObject: flash.display.DisplayObject;
     _mouseChildren: boolean;
+    _mouseDown: boolean;
     _mouseOver: boolean;
     _owned: boolean;
     _rotationCos: number;
