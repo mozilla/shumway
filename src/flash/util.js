@@ -476,13 +476,6 @@ function randomStyle() {
   global.Promise = Promise;
 })();
 
-var EXTERNAL_INTERFACE_FEATURE = 1;
-var CLIPBOARD_FEATURE = 2;
-var SHAREDOBJECT_FEATURE = 3;
-var VIDEO_FEATURE = 4;
-var SOUND_FEATURE = 5;
-var NETCONNECTION_FEATURE = 6;
-
 if (!this.performance) {
   this.performance = {};
 }
