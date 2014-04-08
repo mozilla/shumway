@@ -95,11 +95,6 @@ module Shumway.AVM2.AS.flash.display {
       self._owned = false;
       self._transformInvalid = false;
 
-      // TODO move to DisplayObjectContainer
-      self._children = [];
-      self._isContainer = false;
-      self._mouseChildren = true;
-
       // TODO not sure if needed anymore
       self._invisible = false;
 
