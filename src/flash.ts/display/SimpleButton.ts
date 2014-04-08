@@ -89,6 +89,9 @@ module Shumway.AVM2.AS.flash.display {
     set upState(value: flash.display.DisplayObject) {
       //value = value;
       var old = this._upState;
+      if (value._parent) {
+        value._parent.removeChild(value);
+      }
       this._upState = value;
       if (this._currentState === old) {
         this._updateButton();
@@ -100,6 +103,9 @@ module Shumway.AVM2.AS.flash.display {
     set overState(value: flash.display.DisplayObject) {
       //value = value;
       var old = this._overState;
+      if (value._parent) {
+        value._parent.removeChild(value);
+      }
       this._overState = value;
       if (this._currentState === old) {
         this._updateButton();
@@ -111,6 +117,9 @@ module Shumway.AVM2.AS.flash.display {
     set downState(value: flash.display.DisplayObject) {
       //value = value;
       var old = this._downState;
+      if (value._parent) {
+        value._parent.removeChild(value);
+      }
       this._downState = value;
       if (this._currentState === old) {
         this._updateButton();
@@ -144,7 +153,14 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
+      if (this._currentState) {
+        // TODO dispatch removedFromStage event
+      }
+
       this._currentState = state;
+      if (this._stage) {
+        // TODO dispatch addedToStage event
+      }
       this._invalidate();
     }
   }
