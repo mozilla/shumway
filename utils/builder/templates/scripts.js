@@ -125,8 +125,6 @@ var ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
 var AVM2 = Shumway.AVM2.Runtime.AVM2;
 var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
 
-load($SHUMWAY_ROOT + "src/avm2/class.js");
-
 var Binding = Shumway.AVM2.Runtime.Binding;
 var Bindings = Shumway.AVM2.Runtime.Bindings;
 var ActivationBindings = Shumway.AVM2.Runtime.ActivationBindings;

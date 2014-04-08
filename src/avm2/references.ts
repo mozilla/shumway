@@ -27,7 +27,6 @@
 ///<reference path='runtime.ts' />
 ///<reference path='domain.ts' />
 ///<reference path='scope.ts' />
-///<reference path='class.ts' />
 ///<reference path='bindings.ts' />
 ///<reference path='trampoline.ts' />
 ///<reference path='interpreter.ts' />

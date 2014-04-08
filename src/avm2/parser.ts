@@ -578,7 +578,7 @@ module Shumway.AVM2.ABC {
     instanceInfo: InstanceInfo;
     defaultValue: any;
     native: any;
-    classObject: Shumway.AVM2.Runtime.Class;
+    classObject: Shumway.AVM2.AS.ASClass;
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
       super(abc, index);

@@ -541,7 +541,7 @@ module Shumway.AVM2.Runtime {
       lastOnly || writer.enter("Loaded Classes And Interfaces");
       var classes = lastOnly ? [this.loadedClasses.last()] : this.loadedClasses;
       classes.forEach(function (cls) {
-        if (cls !== Class) {
+        if (cls !== Shumway.AVM2.AS.ASClass) {
           cls.trace(writer);
         }
       });

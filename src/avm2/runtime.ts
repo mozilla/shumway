@@ -607,7 +607,7 @@ module Shumway.AVM2.Runtime {
     return result;
   }
 
-  export function construct(cls: Class, args: any []) {
+  export function construct(cls: Shumway.AVM2.AS.ASClass, args: any []) {
     if (cls.classInfo) {
       // return primitive values for new'd boxes
       var qn = Multiname.getQualifiedName(cls.classInfo.instanceInfo.name);
@@ -1756,7 +1756,7 @@ module Shumway.AVM2.Runtime {
       log("Creating " + (ii.isInterface() ? "Interface" : "Class") + ": " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
     }
 
-    var cls;
+    var cls: Shumway.AVM2.AS.ASClass;
 
     if (ii.isInterface()) {
       cls = Shumway.AVM2.AS.createInterface(classInfo);
@@ -1776,10 +1776,6 @@ module Shumway.AVM2.Runtime {
 
     // Notify domain of class creation.
     domain.onMessage.notify1('classCreated', cls);
-
-    if (cls.instanceConstructor && cls !== Class) {
-      // cls.verify();
-    }
 
     // TODO: Seal constant traits in the instance object. This should be done after
     // the instance constructor has executed.
