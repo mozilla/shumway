@@ -90,11 +90,10 @@ module Shumway.AVM2.AS.flash.display {
       self._constructed = false;
       self._destroyed = false;
       self._invalid = false;
+      self._mouseDown = false;
+      self._mouseOver = false;
       self._owned = false;
       self._transformInvalid = false;
-
-      // TODO move to InteractiveObject
-      self._mouseOver = false;
 
       // TODO move to DisplayObjectContainer
       self._children = [];
