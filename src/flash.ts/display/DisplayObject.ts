@@ -239,10 +239,10 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidate();
       this._invalidateTransform();
     }
-    private _getConcatenatedTransform(targetCoordSpace: DisplayObject): Matrix {
+    private _getConcatenatedTransform(targetCoordinateSpace: DisplayObject): Matrix {
       var stage = this._stage;
 
-      if (this === stage || targetCoordSpace === this._parent) {
+      if (this === stage || targetCoordinateSpace === this._parent) {
         return this._currentTransform;
       }
 
@@ -253,7 +253,7 @@ module Shumway.AVM2.AS.flash.display {
         if (currentNode._transformInvalid) {
           invalidNode = currentNode;
         }
-        if (currentNode === targetCoordSpace) {
+        if (currentNode === targetCoordinateSpace) {
           m2 = currentNode._concatenatedTransform.clone();
         }
         currentNode = currentNode._parent;
@@ -299,9 +299,9 @@ module Shumway.AVM2.AS.flash.display {
         m1 = this._concatenatedTransform;
       }
 
-      if (targetCoordSpace && targetCoordSpace !== stage) {
+      if (targetCoordinateSpace && targetCoordinateSpace !== stage) {
         if (!m2) {
-          m2 = targetCoordSpace._getConcatenatedTransform(null).clone();
+          m2 = targetCoordinateSpace._getConcatenatedTransform(null).clone();
         }
         m2.invert();
         m2.concat(m1);
@@ -332,10 +332,10 @@ module Shumway.AVM2.AS.flash.display {
     }
     private _getTransformedBounds(targetCoordinateSpace: DisplayObject, includeStroke: boolean = true, convertToPx: boolean = false) {
       var bounds = this._getContentBounds(includeStroke);
-      if (!targetCoordSpace || targetCoordSpace === this || bounds.isEmpty()) {
+      if (!targetCoordinateSpace || targetCoordinateSpace === this || bounds.isEmpty()) {
         return bounds.clone();
       }
-      var m = this._getConcatenatedTransform(targetCoordSpace);
+      var m = this._getConcatenatedTransform(targetCoordinateSpace);
       var r = m.transformRect(bounds);
       if (convertToPx) {
         r.twipsToPx();
