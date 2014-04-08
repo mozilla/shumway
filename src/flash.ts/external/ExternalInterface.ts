@@ -16,6 +16,8 @@
 // Class: ExternalInterface
 module Shumway.AVM2.AS.flash.external {
   import notImplemented = Shumway.Debug.notImplemented;
+  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
+
   export class ExternalInterface extends ASNative {
     
     // Called whenever the class is initialized.
@@ -44,34 +46,58 @@ module Shumway.AVM2.AS.flash.external {
     static convertFromXML: (xml: ASXML) => ASObject;
     static convertToJSString: (obj: any) => string;
     // static call: (functionName: string) => any;
-    
-    
-    // AS -> JS Bindings
-    // static _available: boolean;
-    // static _objectID: string;
-    get available(): boolean {
-      notImplemented("public flash.external.ExternalInterface::get available"); return;
-      // return this._available;
+
+    static initialized: boolean = false;
+    static registeredCallbacks: Shumway.Map<(request: string, args: any []) => any> = createEmptyObject();
+
+    static getAvailable(): string {
+      return $EXTENSION;
     }
-    get objectID(): string {
-      notImplemented("public flash.external.ExternalInterface::get objectID"); return;
-      // return this._objectID;
+
+    static _initJS(): void {
+      if (initialized)
+        return;
+      TelemetryService.reportTelemetry({topic: 'feature', feature: EXTERNAL_INTERFACE_FEATURE});
+      initialized = true;
+      FirefoxCom.initJS(callIn);
     }
-    static _addCallback(functionName: string, closure: ASFunction, hasNullCallback: boolean): void {
-      functionName = "" + functionName; closure = closure; hasNullCallback = !!hasNullCallback;
-      notImplemented("public flash.external.ExternalInterface::static _addCallback"); return;
-    }
-    static _evalJS(expression: string): string {
-      expression = "" + expression;
-      notImplemented("public flash.external.ExternalInterface::static _evalJS"); return;
-    }
+
     static _getPropNames(obj: ASObject): any [] {
       obj = obj;
-      notImplemented("public flash.external.ExternalInterface::static _getPropNames"); return;
+      var keys = [];
+      forEachPublicProperty(obj, function (key) { keys.push(key); });
+      return keys;
     }
-    static _initJS(): void {
-      notImplemented("public flash.external.ExternalInterface::static _initJS"); return;
+
+    static _addCallback(functionName: string, closure: (request: string, args: any []) => any, hasNullCallback: boolean): void {
+      FirefoxCom.request('externalCom',
+      {action: 'register', functionName: functionName, remove: hasNullCallback});
+      if (hasNullCallback) {
+        delete registeredCallbacks[functionName];
+      } else {
+        registeredCallbacks[functionName] = closure;
+      }
     }
-    
+
+    static _evalJS(expression: string): string {
+      expression = "" + expression;
+      return FirefoxCom.requestSync('externalCom', {action: 'eval', expression: expression});
+    }
+
+    static _callOut(request: string): string {
+      return FirefoxCom.requestSync('externalCom', {action: 'call', request: request});
+    }
+
+    static get available(): boolean {
+      return getAvailable();
+    }
+
+    static get objectID(): string {
+      return FirefoxCom.requestSync('externalCom', {action: 'getId'});
+    }
+
+    static get activeX(): boolean {
+      return false;
+    }
   }
 }
