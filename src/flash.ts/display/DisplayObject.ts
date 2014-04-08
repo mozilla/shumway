@@ -222,8 +222,6 @@ module Shumway.AVM2.AS.flash.display {
     _transformInvalid: boolean;
     _zindex: number;
 
-    symbol: any;
-
     private _setTransformMatrix(matrix: Matrix, convertToTwips: boolean = false): void {
       var m = this._currentTransform;
       m.copyFrom(matrix);
