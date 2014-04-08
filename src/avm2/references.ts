@@ -32,7 +32,7 @@
 ///<reference path='trampoline.ts' />
 ///<reference path='interpreter.ts' />
 ///<reference path='hacks.ts' />
-///<reference path='nat.ts' />
+///<reference path='native.ts' />
 ///<reference path='natives/xml.ts' />
 ///<reference path='natives/genericVector.ts' />
 ///<reference path='natives/int32Vector.ts' />

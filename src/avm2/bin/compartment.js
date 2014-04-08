@@ -74,7 +74,7 @@ load(homePath + "src/avm2/array.js");
 load(homePath + "src/avm2/natives/int32Vector.js");
 load(homePath + "src/avm2/natives/uint32Vector.js");
 load(homePath + "src/avm2/natives/float64Vector.js");
-load(homePath + "src/avm2/nat.js");
+load(homePath + "src/avm2/native.js");
 load(homePath + "src/avm2/natives/genericVector.js");
 load(homePath + "src/avm2/natives/dictionary.js");
 load(homePath + "src/avm2/natives/proxy.js");
