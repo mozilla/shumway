@@ -16,6 +16,18 @@
 // Class: ExternalInterface
 module Shumway.AVM2.AS.flash.external {
   import notImplemented = Shumway.Debug.notImplemented;
+  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
+  import Feature = Shumway.Telemetry.Feature;
+  import ASObject = Shumway.AVM2.AS.ASObject;
+  import ASFunction = Shumway.AVM2.AS.ASFunction;
+  import ASNative = Shumway.AVM2.AS.ASNative;
+  import ASXML = Shumway.AVM2.AS.ASXML;
+  import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
+
+  declare var FirefoxCom;
+  declare var $EXTENSION: boolean;
+  declare var TelemetryService;
+
   export class ExternalInterface extends ASNative {
     
     // Called whenever the class is initialized.
@@ -44,34 +56,65 @@ module Shumway.AVM2.AS.flash.external {
     static convertFromXML: (xml: ASXML) => ASObject;
     static convertToJSString: (obj: any) => string;
     // static call: (functionName: string) => any;
-    
-    
-    // AS -> JS Bindings
-    // static _available: boolean;
-    // static _objectID: string;
-    get available(): boolean {
-      notImplemented("public flash.external.ExternalInterface::get available"); return;
-      // return this._available;
+
+    private static initialized: boolean = false;
+    private static registeredCallbacks: Shumway.Map<(request: string, args: any []) => any> = createEmptyObject();
+
+    private static _getAvailable(): boolean {
+      return $EXTENSION;
     }
-    get objectID(): string {
-      notImplemented("public flash.external.ExternalInterface::get objectID"); return;
-      // return this._objectID;
+
+    static _initJS(): void {
+      if (ExternalInterface.initialized)
+        return;
+      TelemetryService.reportTelemetry({topic: 'feature', feature: Feature.EXTERNAL_INTERFACE_FEATURE});
+      ExternalInterface.initialized = true;
+      FirefoxCom.initJS(ExternalInterface._callIn);
     }
-    static _addCallback(functionName: string, closure: ASFunction, hasNullCallback: boolean): void {
-      functionName = "" + functionName; closure = closure; hasNullCallback = !!hasNullCallback;
-      notImplemented("public flash.external.ExternalInterface::static _addCallback"); return;
+
+    private static _callIn(functionName: string, args: any[]) {
+      var callback = ExternalInterface.registeredCallbacks[functionName];
+      if (!callback) {
+        return;
+      }
+      return callback(functionName, args);
     }
+
+    static _getPropNames(obj: ASObject): any [] {
+      var keys = [];
+      forEachPublicProperty(obj, function (key) { keys.push(key); }, null);
+      return keys;
+    }
+
+    static _addCallback(functionName: string, closure: (request: string, args: any []) => any, hasNullCallback: boolean): void {
+      FirefoxCom.request('externalCom',
+      {action: 'register', functionName: functionName, remove: hasNullCallback});
+      if (hasNullCallback) {
+        delete ExternalInterface.registeredCallbacks[functionName];
+      } else {
+        ExternalInterface.registeredCallbacks[functionName] = closure;
+      }
+    }
+
     static _evalJS(expression: string): string {
       expression = "" + expression;
-      notImplemented("public flash.external.ExternalInterface::static _evalJS"); return;
+      return FirefoxCom.requestSync('externalCom', {action: 'eval', expression: expression});
     }
-    static _getPropNames(obj: ASObject): any [] {
-      obj = obj;
-      notImplemented("public flash.external.ExternalInterface::static _getPropNames"); return;
+
+    static _callOut(request: string): string {
+      return FirefoxCom.requestSync('externalCom', {action: 'call', request: request});
     }
-    static _initJS(): void {
-      notImplemented("public flash.external.ExternalInterface::static _initJS"); return;
+
+    static get available(): boolean {
+      return ExternalInterface._getAvailable();
     }
-    
+
+    static get objectID(): string {
+      return FirefoxCom.requestSync('externalCom', {action: 'getId'});
+    }
+
+    static get activeX(): boolean {
+      return false;
+    }
   }
 }

@@ -59,7 +59,8 @@ module Shumway.AVM2.AS.avm1lib {
       this._nativeAS3Object = nativeLoader;
     }
     get _bytesLoaded(): number {
-      return this._nativeAS3Object._contentLoaderInfo._bytesLoaded;
+      var nativeAS3Object = <any> this._nativeAS3Object;
+      return nativeAS3Object._contentLoaderInfo._bytesLoaded;
     }
   }
 }

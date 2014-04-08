@@ -227,20 +227,18 @@ module Shumway.AVM2.AS.flash.display {
 
     symbol: any;
 
-    private _setTransformMatrix(matrix: Matrix): void {
-      var a = matrix.a;
-      var b = matrix.b;
-      var c = matrix.c;
-      var d = matrix.d;
-      var tx = matrix.tx;
-      var ty = matrix.ty;
+    private _setTransformMatrix(matrix: Matrix, convertToTwips: boolean = false): void {
+      var m = this._currentTransform;
+      m.copyFrom(matrix);
+      if (convertToTwips) {
+        m.pxToTwips();
+      }
       var angle = matrix.getAngle();
       this._rotation = angle * 180 / Math.PI;
       this._rotationCos = Math.cos(angle);
       this._rotationSin = Math.sin(angle);
-      this._scaleX = Math.sqrt(a * a + b * b);
-      this._scaleY = Math.sqrt(d * d + c * c);
-      this._currentTransform.setTo(a, b, c, d, tx, ty);
+      this._scaleX = Math.sqrt(m.a * m.a + m.b * m.b);
+      this._scaleY = Math.sqrt(m.d * m.d + m.c * m.c);
       this._invalidate();
       this._invalidateTransform();
     }
@@ -319,12 +317,12 @@ module Shumway.AVM2.AS.flash.display {
       this._cxform.copyFrom(cxform);
       this._invalidate();
     }
-    private _getContentBounds(): Rectangle {
+    private _getContentBounds(includeStrokes: boolean = true): Rectangle {
       var bounds = this._bounds;
       if (this._boundsInvalid) {
         bounds.setEmpty();
         if (this._graphics) {
-          bounds.unionWith(this._graphics._getBounds(true));
+          bounds.unionWith(this._graphics._getBounds(includeStrokes));
         }
         var children = this._children;
         for (var i = 0; i < children.length; i++) {
@@ -334,6 +332,18 @@ module Shumway.AVM2.AS.flash.display {
         this._boundsInvalid = false;
       }
       return bounds;
+    }
+    private _getTransformedBounds(targetCoordinateSpace: DisplayObject, includeStroke: boolean = true, convertToPx: boolean = false) {
+      var bounds = this._getContentBounds(includeStroke);
+      if (!targetCoordSpace || targetCoordSpace === this || bounds.isEmpty()) {
+        return bounds.clone();
+      }
+      var m = this._getConcatenatedTransform(targetCoordSpace);
+      var r = m.transformRect(bounds);
+      if (convertToPx) {
+        r.twipsToPx();
+      }
+      return r;
     }
     private destroy(): void {
       this._destroyed = true;
@@ -405,7 +415,7 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidate();
     }
     get x(): number {
-      return this._currentTransform.tx;
+      return this._currentTransform.tx / 20;
     }
     set x(value: number) {
       value = +value;
@@ -420,7 +430,7 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidateTransform();
     }
     get y(): number {
-      return this._currentTransform.ty;
+      return this._currentTransform.ty / 20;
     }
     set y(value: number) {
       value = +value;
@@ -483,10 +493,10 @@ module Shumway.AVM2.AS.flash.display {
       // this._scaleZ = value;
     }
     get mouseX(): number {
-      return this._mouseX;
+      return this._mouseX / 20;
     }
     get mouseY(): number {
-      return this._mouseY;
+      return this._mouseY / 20;
     }
     get rotation(): number {
       return this._rotation;
@@ -576,7 +586,8 @@ module Shumway.AVM2.AS.flash.display {
     get width(): number {
       var bounds = this._getContentBounds();
       var m = this._currentTransform;
-      return Math.abs(m.a) * bounds.width + Math.abs(m.c) * bounds.height;
+      return (Math.abs(m.a) * bounds.width +
+              Math.abs(m.c) * bounds.height) / 20;
     }
     set width(value: number) {
       value = +value;
@@ -596,13 +607,13 @@ module Shumway.AVM2.AS.flash.display {
 
       var baseHeight = v * bounds.width + u * bounds.height;
       this.scaleY = this.height / baseHeight;
-      this.scaleX = value / baseWidth;
+      this.scaleX = ((value * 20) | 0) / baseWidth;
     }
     get height(): number {
       var bounds = this._getContentBounds();
       var m = this._currentTransform;
       return (Math.abs(m.b) * bounds.width +
-              Math.abs(m.d) * bounds.height) | 0;
+              Math.abs(m.d) * bounds.height) / 20;
     }
     set height(value: number) {
       value = +value;
@@ -622,7 +633,7 @@ module Shumway.AVM2.AS.flash.display {
 
       var baseWidth = u * bounds.width + v * bounds.height;
       this.scaleX = this.width / baseWidth;
-      this.scaleY = value / baseHeight;
+      this.scaleY = ((value * 20) | 0) / baseHeight;
     }
     get cacheAsBitmap(): boolean {
       return this._filters.length > 0 || this._cacheAsBitmap;
@@ -684,13 +695,12 @@ module Shumway.AVM2.AS.flash.display {
     }
     set transform(value: flash.geom.Transform) {
       //value = value;
-      var transform = this.transform;
-      transform.colorTransform = value.colorTransform;
       if (value.matrix3D) {
-        transform.matrix3D = value.matrix3D;
+        this._current3dTransform = value.matrix3D;
       } else {
-        transform.matrix = value.matrix;
+        this._setTransformMatrix(transform.matrix, true);
       }
+      this._setColorTransform(value.colorTransform);
     }
     get scale9Grid(): flash.geom.Rectangle {
       return this._scale9Grid;
@@ -721,25 +731,24 @@ module Shumway.AVM2.AS.flash.display {
       //point = point;
       var m = this._getConcatenatedTransform(null).clone();
       m.invert();
-      return m.transformPoint(point);
+      var p = m.transformCoords(point.x, point.y, true);
+      p.twipsToPx();
+      return p;
     }
     localToGlobal(point: flash.geom.Point): flash.geom.Point {
       //point = point;
       var m = this._getConcatenatedTransform(null);
-      return m.transformPoint(point);
+      var p = m.transformCoords(point.x, point.y, true);
+      p.twipsToPx();
+      return p;
     }
     getBounds(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
       //targetCoordinateSpace = targetCoordinateSpace;
-      var bounds = this._getContentBounds();
-      if (!targetCoordSpace || targetCoordSpace === this || bounds.isEmpty()) {
-        return bounds.clone();
-      }
-      var m = this._getConcatenatedTransform(targetCoordSpace);
-      return m.transformRect(bounds);
+      return this._getTransformedBounds(targetCoordinateSpace, true, true);
     }
     getRect(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
-      targetCoordinateSpace = targetCoordinateSpace;
-      notImplemented("public flash.display.DisplayObject::getRect"); return;
+      //targetCoordinateSpace = targetCoordinateSpace;
+      return this._getTransformedBounds(targetCoordinateSpace, false, true);
     }
     globalToLocal3D(point: flash.geom.Point): flash.geom.Vector3D {
       point = point;

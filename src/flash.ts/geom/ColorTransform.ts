@@ -148,6 +148,41 @@ module Shumway.AVM2.AS.flash.geom {
       this.alphaOffset += second.alphaOffset;
     }
 
+    public copyFrom(sourceColorTransform: ColorTransform): void {
+      this.redMultiplier = sourceColorTransform.redMultiplier;
+      this.greenMultiplier = sourceColorTransform.greenMultiplier;
+      this.blueMultiplier = sourceColorTransform.blueMultiplier;
+      this.alphaMultiplier = sourceColorTransform.alphaMultiplier;
+      this.redOffset = sourceColorTransform.redOffset;
+      this.greenOffset = sourceColorTransform.greenOffset;
+      this.blueOffset = sourceColorTransform.blueOffset;
+      this.alphaOffset = sourceColorTransform.alphaOffset;
+    }
+
+    public setTo(redMultiplier: number, greenMultiplier: number, blueMultiplier: number, alphaMultiplier: number, redOffset: number, greenOffset: number, blueOffset: number, alphaOffset: number): void {
+      this.redMultiplier = redMultiplier;
+      this.greenMultiplier = greenMultiplier;
+      this.blueMultiplier = blueMultiplier;
+      this.alphaMultiplier = alphaMultiplier;
+      this.redOffset = redOffset;
+      this.greenOffset = greenOffset;
+      this.blueOffset = blueOffset;
+      this.alphaOffset = alphaOffset;
+    }
+
+    public clone(): ColorTransform {
+      return new ColorTransform(
+        this.redMultiplier,
+        this.greenMultiplier,
+        this.blueMultiplier,
+        this.alphaMultiplier,
+        this.redOffset,
+        this.greenOffset,
+        this.blueOffset,
+        this.alphaOffset
+      );
+    }
+
     public toString():String {
       return "(redMultiplier=" + this.redMultiplier +
         ", greenMultiplier=" + this.greenMultiplier +

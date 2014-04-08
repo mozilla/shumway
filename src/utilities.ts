@@ -1299,6 +1299,18 @@ module Shumway {
       return Color.colorCache[color] = result;
     }
   }
+
+  export module Telemetry {
+    export enum Feature {
+      EXTERNAL_INTERFACE_FEATURE = 1,
+      CLIPBOARD_FEATURE = 2,
+      SHAREDOBJECT_FEATURE = 3,
+      VIDEO_FEATURE = 4,
+      SOUND_FEATURE = 5,
+      NETCONNECTION_FEATURE = 6
+    }
+  }
+
 }
 
 //["000", "4294967296", 4294967290, "4294967290", "4294967290", "1234",12345, "i","", "123.456", "-4", "0x2", "123456789123467", "4294967296"].forEach(function (x) {

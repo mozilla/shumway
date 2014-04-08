@@ -44,7 +44,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
     set matrix(value: flash.geom.Matrix) {
       //value = value;
-      this._target._setTransformMatrix(value);
+      this._target._setTransformMatrix(value, true);
     }
     get colorTransform(): flash.geom.ColorTransform {
       return this._target._cxform.clone();
@@ -76,7 +76,7 @@ module Shumway.AVM2.AS.flash.geom {
     set matrix3D(m: flash.geom.Matrix3D) {
       //m = m;
 
-      if (m instanceof Matrix3D){
+      if (!(m instanceof Matrix3D)) {
         throwError('TypeError', Errors.CheckTypeFailedError, m, 'flash.geom.Matrix3D');
       }
 
