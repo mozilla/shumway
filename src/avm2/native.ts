@@ -50,8 +50,8 @@ module Shumway.AVM2.AS {
   import Int32Vector = Shumway.AVM2.AS.Int32Vector;
   import Uint32Vector = Shumway.AVM2.AS.Uint32Vector;
   import Float64Vector = Shumway.AVM2.AS.Float64Vector;
+  import asCompare = Shumway.AVM2.Runtime.asCompare;
 
-  declare var arraySort;
   declare var XRegExp;
   declare var escape;
   declare var unescape;
@@ -974,6 +974,28 @@ module Shumway.AVM2.AS {
       var str = str.replace(/\u039C/g, String.fromCharCode(181));
       return str;
     }
+  }
+
+  /**
+   * Format: args: [compareFunction], [sortOptions]
+   */
+  export function arraySort(o, args) {
+    if (args.length === 0) {
+      return o.sort();
+    }
+    var compareFunction, options = 0;
+    if (args[0] instanceof Function) {
+      compareFunction = args[0];
+    } else if (isNumber(args[0])) {
+      options = args[0];
+    }
+    if (isNumber(args[1])) {
+      options = args[1];
+    }
+    o.sort(function (a, b) {
+      return asCompare(a, b, options, compareFunction);
+    });
+    return o;
   }
 
   export class ASArray extends ASObject {

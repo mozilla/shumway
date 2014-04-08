@@ -16,11 +16,11 @@
 
 ///<reference path='global.ts' />
 ///<reference path='../utilities.ts' />
+///<reference path='../metrics.ts' />
 ///<reference path='../options.ts' />
 ///<reference path='../settings.ts' />
 
 ///<reference path='lib/lib.d.ts' />
-///<reference path='metrics.ts' />
 ///<reference path='errors.ts' />
 ///<reference path='opcodes.ts' />
 ///<reference path='parser.ts' />

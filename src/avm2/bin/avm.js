@@ -81,7 +81,7 @@ var help = shellOptions.register(new Option("h", "help", "boolean", false, "prin
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", false, "run in release mode (!release is the default)"));
 
-load(homePath + "src/avm2/metrics.js");
+load(homePath + "src/metrics.js");
 load(homePath + "src/avm2/constants.js");
 load(homePath + "src/avm2/opcodes.js");
 load(homePath + "src/avm2/parser.js");

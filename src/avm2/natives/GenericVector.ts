@@ -16,7 +16,6 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM2.AS {
-  declare var arraySort;
   declare var checkArguments;
   declare var clamp;
 
@@ -25,6 +24,8 @@ module Shumway.AVM2.AS {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
   import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
+
+  import arraySort = Shumway.AVM2.AS.arraySort;
 
   export class GenericVector extends ASVector<Object> {
 

@@ -26,7 +26,7 @@ load(homePath + "src/avm2/settings.js");
 load(homePath + "src/avm2/avm2Util.js");
 load(homePath + "src/options.js");
 load(homePath + "src/settings.js");
-load(homePath + "src/avm2/metrics.js");
+load(homePath + "src/metrics.js");
 
 var systemOptions = new OptionSet("System Options");
 var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
@@ -69,7 +69,6 @@ load(homePath + "src/avm2/runtime-exports.js");
 load(homePath + "src/avm2/interpreter.js");
 load(homePath + "src/avm2/viz.js");
 load(homePath + "src/avm2/xml.js");
-load(homePath + "src/avm2/array.js");
 
 load(homePath + "src/avm2/natives/int32Vector.js");
 load(homePath + "src/avm2/natives/uint32Vector.js");

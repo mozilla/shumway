@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='references.ts' />
+///<reference path='utilities.ts' />
 module Shumway.Metrics {
   export class Timer {
     private static _base: Timer = new Timer(null, "Total");
