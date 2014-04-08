@@ -17,8 +17,16 @@
 module Shumway.AVM2.AS.flash.external {
   import notImplemented = Shumway.Debug.notImplemented;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
-  import Telemetry = Shumway.Telemetry;
   import Feature = Shumway.Telemetry.Feature;
+  import ASObject = Shumway.AVM2.AS.ASObject;
+  import ASFunction = Shumway.AVM2.AS.ASFunction;
+  import ASNative = Shumway.AVM2.AS.ASNative;
+  import ASXML = Shumway.AVM2.AS.ASXML;
+  import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
+
+  declare var FirefoxCom;
+  declare var $EXTENSION: boolean;
+  declare var TelemetryService;
 
   export class ExternalInterface extends ASNative {
     
@@ -49,10 +57,10 @@ module Shumway.AVM2.AS.flash.external {
     static convertToJSString: (obj: any) => string;
     // static call: (functionName: string) => any;
 
-    static initialized: boolean = false;
-    static registeredCallbacks: Shumway.Map<(request: string, args: any []) => any> = createEmptyObject();
+    private static initialized: boolean = false;
+    private static registeredCallbacks: Shumway.Map<(request: string, args: any []) => any> = createEmptyObject();
 
-    static getAvailable(): string {
+    private static _getAvailable(): boolean {
       return $EXTENSION;
     }
 
@@ -61,13 +69,20 @@ module Shumway.AVM2.AS.flash.external {
         return;
       TelemetryService.reportTelemetry({topic: 'feature', feature: Feature.EXTERNAL_INTERFACE_FEATURE});
       ExternalInterface.initialized = true;
-      FirefoxCom.initJS(callIn);
+      FirefoxCom.initJS(ExternalInterface._callIn);
+    }
+
+    private static _callIn(functionName: string, args: any[]) {
+      var callback = ExternalInterface.registeredCallbacks[functionName];
+      if (!callback) {
+        return;
+      }
+      return callback(functionName, args);
     }
 
     static _getPropNames(obj: ASObject): any [] {
-      obj = obj;
       var keys = [];
-      forEachPublicProperty(obj, function (key) { keys.push(key); });
+      forEachPublicProperty(obj, function (key) { keys.push(key); }, null);
       return keys;
     }
 
@@ -91,7 +106,7 @@ module Shumway.AVM2.AS.flash.external {
     }
 
     static get available(): boolean {
-      return getAvailable();
+      return ExternalInterface._getAvailable();
     }
 
     static get objectID(): string {
