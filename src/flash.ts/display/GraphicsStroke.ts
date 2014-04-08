@@ -31,9 +31,14 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null; // ["thickness", "pixelHinting", "miterLimit", "fill", "_scaleMode", "_caps", "_joints", "scaleMode", "scaleMode", "caps", "caps", "joints", "joints"];
     
     constructor (thickness: number = NaN, pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = "none", joints: string = "round", miterLimit: number = 3, fill: flash.display.IGraphicsFill = null) {
-      thickness = +thickness; pixelHinting = !!pixelHinting; scaleMode = "" + scaleMode; caps = "" + caps; joints = "" + joints; miterLimit = +miterLimit; fill = fill;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.GraphicsStroke");
+      this.thickness = +thickness;
+      this.pixelHinting = !!pixelHinting;
+      this.scaleMode = "" + scaleMode;
+      this.caps = "" + caps;
+      this.joints = "" + joints;
+      this.miterLimit = +miterLimit;
+      this.fill = fill;
     }
     
     // JS -> AS Bindings
@@ -42,9 +47,6 @@ module Shumway.AVM2.AS.flash.display {
     pixelHinting: boolean;
     miterLimit: number;
     fill: flash.display.IGraphicsFill;
-    _scaleMode: string;
-    _caps: string;
-    _joints: string;
     scaleMode: string;
     caps: string;
     joints: string;

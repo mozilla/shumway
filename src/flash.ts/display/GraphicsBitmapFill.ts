@@ -31,9 +31,11 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null; // ["bitmapData", "matrix", "repeat", "smooth"];
     
     constructor (bitmapData: flash.display.BitmapData = null, matrix: flash.geom.Matrix = null, repeat: boolean = true, smooth: boolean = false) {
-      bitmapData = bitmapData; matrix = matrix; repeat = !!repeat; smooth = !!smooth;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.GraphicsBitmapFill");
+      this.bitmapData = bitmapData;
+      this.matrix = matrix;
+      this.repeat = !!repeat;
+      this.smooth = !!smooth;
     }
     
     // JS -> AS Bindings
