@@ -31,9 +31,10 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null; // ["commands", "data", "_winding", "winding", "winding", "moveTo", "lineTo", "curveTo", "cubicCurveTo", "wideLineTo", "wideMoveTo", "ensureLists"];
     
     constructor (commands: ASVector<number /*int*/> = null, data: ASVector<number> = null, winding: string = "evenOdd") {
-      commands = commands; data = data; winding = "" + winding;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.GraphicsPath");
+      this.commands = commands;
+      this.data = data;
+      this.winding = "" + winding;
     }
     
     // JS -> AS Bindings

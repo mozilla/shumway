@@ -124,8 +124,8 @@ module Shumway.AVM2.AS.flash.display {
 
         self._animated = symbol.animated || self._animated;
 
-        if (symbol._bbox) {
-          var bbox = symbol._bbox;
+        if (symbol.bbox) {
+          var bbox = symbol.bbox;
           self._bounds.setTo(
             bbox.xMin,
             bbox.yMin,

@@ -31,9 +31,9 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null; // ["color", "alpha"];
     
     constructor (color: number /*uint*/ = 0, alpha: number = 1) {
-      color = color >>> 0; alpha = +alpha;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.GraphicsSolidFill");
+      this.color = color >>> 0;
+      this.alpha = +alpha;
     }
     
     // JS -> AS Bindings
