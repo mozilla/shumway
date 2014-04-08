@@ -999,8 +999,6 @@ module Shumway.AVM2.AS {
   }
 
   export class ASQName extends ASNative {
-    public static callableStyle: CallableStyle = CallableStyle.PASSTHROUGH;
-
     public static instanceConstructor: any = ASQName;
 
     /**
@@ -1205,7 +1203,6 @@ module Shumway.AVM2.AS {
 
   export class ASXML extends ASNative {
     public static instanceConstructor: any = ASXML;
-    public static callableStyle: CallableStyle = CallableStyle.PASSTHROUGH;
 
     public static callableConstructor: any = function (value: any = undefined): ASXML {
       // 13.5.1 The XMLList Constructor Called as a Function
@@ -2028,7 +2025,6 @@ module Shumway.AVM2.AS {
 
   export class ASXMLList extends ASNative {
     public static instanceConstructor: any = ASXMLList;
-    public static callableStyle: CallableStyle = CallableStyle.PASSTHROUGH;
 
     public static callableConstructor: any = function (value: any = undefined): ASXMLList {
       // 13.5.1 The XMLList Constructor Called as a Function

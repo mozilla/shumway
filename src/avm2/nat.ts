@@ -102,18 +102,6 @@ module Shumway.AVM2.AS {
     SUPER_INITIALIZE = 0x2
   }
 
-  export enum CallableStyle {
-    /**
-     * Calls class instance constructor.
-     */
-    PASSTHROUGH      = 0x0,
-
-    /**
-     * Coerces value to the class type.
-     */
-    COERCE           = 0x1
-  }
-
   /**
    * In order to avoid shadowing of JS top level Objects we prefix the AS top level
    * classes with the "AS" prefix.
@@ -144,22 +132,18 @@ module Shumway.AVM2.AS {
     public static dynamicPrototype: Object;
     public static defaultValue: any = null;
     public static initializationFlags: InitializationFlags = InitializationFlags.NONE;
-    public static callableStyle: CallableStyle = CallableStyle.PASSTHROUGH;
     public static native_prototype: Object;
     public static implementedInterfaces: Shumway.Map<ASClass>;
     public static isInterface: () => boolean;
     public static applyType: (type: ASClass) => ASClass;
     public static protocol: IProtocol;
 
-    public static call(): any {
-      // We need to change TS here not to emit super calls.
-      log("ASObject::call - Ignoring Super Call");
-    }
-
-    public static apply(): any {
-      // We need to change TS here not to emit super calls.
-      log("ASObject::apply - Ignoring Super Call");
-    }
+    /**
+     * Because we mess around with  __proto__'s we need to make
+     * sure call and apply are made available on class constructors.
+     */
+    public static call = Function.prototype.call;
+    public static apply = Function.prototype.apply;
 
     /**
      * Makes native class definitions look like ASClass instances.
@@ -182,12 +166,10 @@ module Shumway.AVM2.AS {
     public static isType: (value: any) => boolean;
 
     public static asCall(self: any, ...argArray: any[]): any {
-      assert (this.callableStyle === CallableStyle.PASSTHROUGH);
       return this.callableConstructor.apply(self, argArray);
     }
 
     public static asApply(self: any, argArray?: any): any {
-      assert (this.callableStyle === CallableStyle.PASSTHROUGH);
       return this.callableConstructor.apply(self, argArray);
     }
 
@@ -250,6 +232,7 @@ module Shumway.AVM2.AS {
     public static baseClass: typeof ASClass = null;
     public static classInfo: ClassInfo = null;
     public static instanceConstructor: any = null;
+    public static callableConstructor: any = null;
     public static classBindings: ClassBindings = null;
     public static instanceBindings: InstanceBindings = null;
     public static staticNatives: any [] = null;
@@ -258,7 +241,6 @@ module Shumway.AVM2.AS {
     public static dynamicPrototype: Object = null;
     public static defaultValue: any = null;
     public static initializationFlags: InitializationFlags = InitializationFlags.NONE;
-    public static callableStyle: CallableStyle = CallableStyle.COERCE;
   }
 
   /**
@@ -318,6 +300,10 @@ module Shumway.AVM2.AS {
         }
       } else {
         writer && writer.warnLn("Ignoring AS3 instanceConstructor.");
+      }
+
+      if (!self.callableConstructor) {
+        self.callableConstructor = self.instanceConstructor;
       }
 
       self.instanceConstructorNoInitialize = self.instanceConstructor;
@@ -552,18 +538,12 @@ module Shumway.AVM2.AS {
 
     prototype: Object;
 
-    /**
-     * Non-native classes always have coercing callables.
-     */
-    callableStyle: CallableStyle;
-
     constructor(classInfo: ClassInfo) {
       false && super();
       this.classInfo = classInfo;
       this.staticNatives = null;
       this.instanceNatives = null;
       this.initializationFlags = InitializationFlags.NONE;
-      this.callableStyle = CallableStyle.COERCE;
       this.defaultValue = null;
     }
 
@@ -578,12 +558,10 @@ module Shumway.AVM2.AS {
     }
 
     public asCall(self: any, ...argArray: any[]): any {
-      assert (this.callableStyle === CallableStyle.COERCE);
       return Runtime.asCoerce(this, argArray[0])
     }
 
     public asApply(self: any, argArray?: any): any {
-      assert (this.callableStyle === CallableStyle.COERCE);
       return Runtime.asCoerce(this, argArray[0])
     }
 
@@ -1118,7 +1096,7 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASVector<T> extends ASObject {
+  export class ASVector<T> extends ASNative {
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;
     public static instanceConstructor: any = ASVector;
@@ -1233,7 +1211,7 @@ module Shumway.AVM2.AS {
     }
   }
 
-  export class ASError extends ASObject {
+  export class ASError extends ASNative {
     public static instanceConstructor: any = null;
     public static staticNatives: any [] = null;
     public static instanceNatives: any [] = null;

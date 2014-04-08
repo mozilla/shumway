@@ -471,7 +471,11 @@ module Shumway {
         if (hasOwnProperty(template, property)) {
           var descriptor = Object.getOwnPropertyDescriptor(template, property);
           assert (descriptor);
-          Object.defineProperty(object, property, descriptor);
+          try {
+            Object.defineProperty(object, property, descriptor);
+          } catch (e) {
+            // log("Can't define " + property);
+          }
         }
       }
     }
