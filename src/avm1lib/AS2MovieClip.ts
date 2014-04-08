@@ -147,25 +147,30 @@ module Shumway.AVM2.AS.avm1lib {
       var theClass = AS2Context.instance.classes && AS2Context.instance.classes[symbolId];
       var symbolProps = AS2Context.instance.getAsset(symbolId);
 
-      var symbolClass = MovieClip;
-      var mc = symbolClass.createAsSymbol(symbolProps);
+      var symbolClass = <any> MovieClip;
+      var mc = symbolClass.createAsSymbol(symbolProps); // TODO review
       mc._avm1SymbolClass = theClass;
       symbolClass.instanceConstructor.call(mc);
-      this._nativeAS3Object.addChild(mc);
+      var nativeAS3Object = <any> this._nativeAS3Object;
+      nativeAS3Object.addChild(mc);
 
       return mc;
     }
     _callFrame(frame: any): any {
-      this._nativeAS3Object._callFrame(frame);
+      var nativeAS3Object = <any> this._nativeAS3Object;
+      nativeAS3Object._callFrame(frame);
     }
     _insertChildAtDepth(mc: any, depth: any): any {
-      return this._nativeAS3Object._insertChildAtDepth(mc, depth);
+      var nativeAS3Object = <any> this._nativeAS3Object;
+      nativeAS3Object._insertChildAtDepth(mc, depth);
     }
     _duplicate(name: any, depth: any, initObject: any): any {
-      return this._nativeAS3Object._duplicate(name, depth, initObject);
+      var nativeAS3Object = <any> this._nativeAS3Object;
+      nativeAS3Object._duplicate(name, depth, initObject);
     }
     _gotoLabel(label: any): any {
-      this._nativeAS3Object.gotoLabel(label);
+      var nativeAS3Object = <any> this._nativeAS3Object;
+      nativeAS3Object.gotoLabel(label);
     }
   }
 }

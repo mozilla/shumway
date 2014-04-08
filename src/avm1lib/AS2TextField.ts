@@ -98,7 +98,7 @@ module Shumway.AVM2.AS.avm1lib {
 
     _init(nativeTextField: TextField): any {
       this._nativeAS3Object = nativeTextField;
-      nativeTextField._as2Object = this;
+      (<any> nativeTextField)._as2Object = this;
       initDefaultListeners(this);
     }
     get _as3Object(): TextField {
@@ -112,7 +112,7 @@ module Shumway.AVM2.AS.avm1lib {
         return;
       }
       this._variable = name;
-      var instance = this._nativeAS3Object;
+      var instance = <any> this._nativeAS3Object; // TODO remove any
       var hasPath = name.indexOf('.') >= 0 || name.indexOf(':') >= 0;
       var clip;
       if (hasPath) {
