@@ -204,9 +204,13 @@ module Shumway.AVM2.AS.flash.geom {
       return new Point(this.a * point.x + this.c * point.y + this.tx, this.b * point.x + this.d * point.y + this.ty);
     }
 
-    public transformCoords(x: number, y: number): Point {
+    public transformCoords(x: number, y: number, convertToTwips: boolean = false): Point {
       x = +x;
       y = +y;
+      if (convertToTwips) {
+        x = (x * 20) | 0;
+        y = (y * 20) | 0;
+      }
       return new Point(
         this.a * x + this.c * y + this.tx,
         this.b * x + this.d * y + this.ty
@@ -291,6 +295,16 @@ module Shumway.AVM2.AS.flash.geom {
       this.d = +da;
       this.tx = +txa;
       this.ty = +tya;
+    }
+
+    public pxToTwips() {
+      this.tx = (this.tx * 20) | 0;
+      this.ty = (this.ty * 20) | 0;
+    }
+
+    public twipsToPx() {
+      this.tx /= 20;
+      this.ty /= 20;
     }
 
     public copyRowTo(row: number, vector3D: Vector3D): void {
