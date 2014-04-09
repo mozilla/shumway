@@ -24,8 +24,35 @@ module Shumway.AVM2.AS.flash.display {
   import Point = flash.geom.Point;
   import Rectangle = flash.geom.Rectangle;
 
+  /*
+   * Invalid Bits:
+   *
+   * Invalid bits are used to mark path dependent properties of display objects as stale. To compute these properties we either have to
+   * walk the tree all the way the root, or visit all children.
+   *
+   *       +---+
+   *       | A |
+   *       +---+
+   *       /   \
+   *   +---+   +---+
+   *   | B |   | C |
+   *   +---+   +---+
+   *           /   \
+   *       +---+   +---+
+   *       | D |   | E |
+   *       +---+   +---+
+   *
+   * We use a combination of eager invalid bit propagation and lazy property evaluation. If a node becomes invalid because one of its
+   * local properties has changed, we mark all of its valid descendents as invalid. When computing dependent properties, we walk up
+   * the tree until we find a valid node and propagate the computation lazily downwards, marking all the nodes along the path as
+   * valid.
+   *
+   * Suppose we mark A as invalid, this causes nodes B, C, D, and E to become invalid. We then compute a path dependent property
+   * on E, causing A, and C to become valid. If we mark A as invalid again, A and C become invalid again. We don't need to mark
+   * parts of the tree that are already invalid.
+   */
   export enum DisplayObjectFlags {
-    None                                      = 0x00,
+    None                                      = 0x0000,
 
     /**
      * Display object is visible.
@@ -84,7 +111,7 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = function (symbol: DisplayObject) {
       var self: DisplayObject = this;
 
-      register(self);
+      DisplayObject.register(self);
 
       self._flags = DisplayObjectFlags.None;
       self._root = null;
@@ -276,8 +303,8 @@ module Shumway.AVM2.AS.flash.display {
     _bounds: flash.geom.Rectangle;
     _children: flash.display.DisplayObject [];
     _clipDepth: number;
-    _concatenatedTransform: flash.geom.Matrix;
     _currentTransform: flash.geom.Matrix;
+    _concatenatedTransform: flash.geom.Matrix;
     _current3dTransform: flash.geom.Matrix3D;
     _colorTransform: flash.geom.ColorTransform;
     _depth: number;
@@ -312,15 +339,18 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Finds the oldest ancestor with a given set of flags.
+     * Finds the furthest ancestor with a given set of flags.
      */
-    private _findOldestAncestor(flags: DisplayObjectFlags): DisplayObject {
+    private _findFurthestAncestor(flags: DisplayObjectFlags, on: boolean): DisplayObject {
       var node = this;
-      var root = this._stage;
+      var last = this._stage;
       var oldest = null;
-      while (node !== root) {
-        if (node._hasFlags(flags)) {
+      while (node) {
+        if (node._hasFlags(flags) === on) {
           oldest = node;
+        }
+        if (node === last) {
+          break;
         }
         node = node._parent;
       }
@@ -328,12 +358,29 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
+     * Finds the closest ancestor with a given set of flags that are either turned on or off.
+     */
+    private _findClosestAncestor(flags: DisplayObjectFlags, on: boolean): DisplayObject {
+      var node = this;
+      var last = this._stage;
+      while (node) {
+        if (node._hasFlags(flags) === on) {
+          return node;
+        }
+        if (node === last) {
+          return null;
+        }
+        node = node._parent;
+      }
+      return null;
+    }
+
+    /**
      * Tests if the given display object is an ancestor of this display object.
      */
     private _isAncestor(ancestor: DisplayObject): boolean {
       var node = this;
-      var root = this._stage;
-      while (node !== root) {
+      while (node) {
         if (node === ancestor) {
           return true;
         }
@@ -342,7 +389,26 @@ module Shumway.AVM2.AS.flash.display {
       return false;
     }
 
-    private _getConcatenatedTransformNew(targetCoordinateSpace: DisplayObject): Matrix {
+    /**
+     * Used as a temporary array to avoid allocations.
+     */
+    private static _path: DisplayObject[] = [];
+
+    /**
+     * Return's a list of ancestors excluding the |last|, the return list is reused.
+     */
+    private static _getAncestors(node: DisplayObject, last: DisplayObject = null) {
+      var path = DisplayObject._path;
+      path.length = 0;
+      while (node && node === last) {
+        path.push(this);
+        node = node._parent;
+      }
+      assert (node === last, "Last ancestor is not an ancestor.");
+      return path;
+    }
+
+    private _getConcatenatedTransformWIP(targetCoordinateSpace: DisplayObject): Matrix {
       // If we're the stage or the |targetCoordinateSpace| is our parent then return
       // the current transform.
 
@@ -350,6 +416,36 @@ module Shumway.AVM2.AS.flash.display {
       if (this === this._stage || targetCoordinateSpace === this._parent) {
         return this._currentTransform;
       }
+
+      // Compute the concatenated transforms for this node and all of its ancestors.
+      if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedTransform)) {
+        // Start from the closest ancestor that has a valid concatenated transform.
+        var node = this;
+        var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedTransform, false);
+        if (ancestor) {
+          // There are no ancestors that have a valid transform ..
+          notImplemented();
+        }
+        var path = DisplayObject._getAncestors(this, ancestor);
+        var m = ancestor._concatenatedTransform.clone();
+        for (var i = path.length - 1; i >= 0; i--) {
+          var ancestor = path[i];
+          assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedTransform));
+          m.concat(ancestor._currentTransform);
+          ancestor._concatenatedTransform.copyFrom(m);
+          ancestor._removeFlags(DisplayObjectFlags.InvalidConcatenatedTransform);
+        }
+      }
+
+      assert (!this._hasFlags(DisplayObjectFlags.InvalidConcatenatedTransform));
+      if (!targetCoordinateSpace) {
+        return this._concatenatedTransform;
+      }
+
+      notImplemented("WIP ...");
+      var inverse = targetCoordinateSpace._getConcatenatedTransform(null).clone();
+      inverse.invert();
+
     }
 
     private _getConcatenatedTransform(targetCoordinateSpace: DisplayObject): Matrix {
@@ -487,6 +583,7 @@ module Shumway.AVM2.AS.flash.display {
     get root(): flash.display.DisplayObject {
       return this._root;
     }
+
     get stage(): flash.display.Stage {
       return this._stage;
     }
@@ -532,9 +629,11 @@ module Shumway.AVM2.AS.flash.display {
       this._setFlags(DisplayObjectFlags.Visible | DisplayObjectFlags.Invalid);
       this._removeFlags(DisplayObjectFlags.Animated);
     }
+
     get x(): number {
       return this._currentTransform.tx / 20;
     }
+
     set x(value: number) {
       value = (value * 20) | 0;
 
