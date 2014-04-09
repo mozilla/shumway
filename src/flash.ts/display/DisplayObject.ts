@@ -121,6 +121,7 @@ module Shumway.AVM2.AS.flash.display {
       self._colorTransform = new ColorTransform();
       self._depth = 0;
       self._graphics = null;
+      self._hitTarget = null;
       self._index = -1;
       self._level = -1;
       self._maskedObject = null;
@@ -281,18 +282,18 @@ module Shumway.AVM2.AS.flash.display {
     _colorTransform: flash.geom.ColorTransform;
     _depth: number;
     _graphics: flash.display.Graphics;
+    _hitTarget: flash.display.DisplayObject;
     _index: number;
     _isContainer: boolean;
     _level: number;
     _loader: flash.display.Loader;
     _maskedObject: flash.display.DisplayObject;
     _mouseChildren: boolean;
+    _mouseDown: boolean;
     _mouseOver: boolean;
     _rotationCos: number;
     _rotationSin: number;
     _zindex: number;
-
-    symbol: any;
 
     private _setTransformMatrix(matrix: Matrix, toTwips: boolean = false): void {
       var m = this._currentTransform;
@@ -346,7 +347,7 @@ module Shumway.AVM2.AS.flash.display {
       // the current transform.
 
       // Tobias: It's not immediately obvious that the current transform should be returned if we're the stage.
-      if (this === stage || targetCoordinateSpace === this._parent) {
+      if (this === this._stage || targetCoordinateSpace === this._parent) {
         return this._currentTransform;
       }
     }
@@ -535,7 +536,7 @@ module Shumway.AVM2.AS.flash.display {
       return this._currentTransform.tx / 20;
     }
     set x(value: number) {
-      value = +value;
+      value = (value * 20) | 0;
 
       if (value === this._currentTransform.tx) {
         return;
@@ -550,7 +551,7 @@ module Shumway.AVM2.AS.flash.display {
       return this._currentTransform.ty / 20;
     }
     set y(value: number) {
-      value = +value;
+      value = (value * 20) | 0;
 
       if (value === this._currentTransform.ty) {
         return;
@@ -579,8 +580,11 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
+      var m = currentTransform;
+      m.a = this._rotationCos * value;
+      m.b = this._rotationSin * value;
+
       this._scaleX = value;
-      this._currentTransform.scale(value, this._scaleY);
       this._removeFlags(DisplayObjectFlags.Animated);
       this._invalidate();
       this._invalidateTransform();
@@ -595,8 +599,11 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
+      var m = this._currentTransform;
+      m.c = -this._rotationSin * value;
+      m.d = this._rotationCos * value;
+
       this._scaleY = value;
-      this._currentTransform.scale(this._scaleX, value);
       this._removeFlags(DisplayObjectFlags.Animated);
       this._invalidate();
       this._invalidateTransform();
@@ -654,10 +661,16 @@ module Shumway.AVM2.AS.flash.display {
           v = Math.sin(angle);
           break;
       }
+
+      var m = this._currentTransform;
+      m.a = u * this._scaleX;
+      m.b = v * this._scaleX;
+      m.c = -v * this._scaleY;
+      m.d = u * this._scaleY;
+
       this._rotation = value;
       this._rotationCos = u;
       this._rotationSin = v;
-      this._currentTransform.rotate(angle);
       this._removeFlags(DisplayObjectFlags.Animated);
       this._invalidate();
       this._invalidateTransform();

@@ -219,14 +219,14 @@ module Shumway.AVM2.AS.flash.geom {
       this.height = +height;
     }
 
-    public pxToTwips() {
+    public toTwips() {
       this.x = (this.x * 20) | 0;
       this.y = (this.y * 20) | 0;
       this.width = (this.width * 20) | 0;
       this.height = (this.height * 20) | 0;
     }
 
-    public twipsToPx() {
+    public toPixels() {
       this.x /= 20;
       this.y /= 20;
       this.width /= 20;
