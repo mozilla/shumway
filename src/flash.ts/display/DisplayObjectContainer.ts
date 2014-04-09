@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   import Event = flash.events.Event;
 
@@ -91,12 +92,10 @@ module Shumway.AVM2.AS.flash.display {
       if (child === this) {
         throwError('ArgumentError', Errors.CantAddSelfError);
       }
-      if (child instanceof DisplayObjectContainer &&
-          (<DisplayObjectContainer>child).contains(this))
-      {
+      if (child instanceof DisplayObjectContainer && (<DisplayObjectContainer>child).contains(this)) {
         throwError('ArgumentError', Errors.CantAddParentError);
       }
-
+      // Tobias: I forgot, what happens if we have larger cycles?
       if (child._parent === this) {
         this.setChildIndex(child, index);
         return child;
@@ -151,6 +150,8 @@ module Shumway.AVM2.AS.flash.display {
       child._removeFlags(DisplayObjectFlags.Owned); ;
       child._parent = null;
       child._stage = null;
+      // Tobias: How come we have to invalidate the transform if we just remove the object from the list?
+      // I can see that the concatenated matrix would be different, but the transform?
       child._invalidateTransform();
       return child;
     }
@@ -200,14 +201,14 @@ module Shumway.AVM2.AS.flash.display {
 
       var child = children[index];
 
-      if (!child._constructed) {
+      if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
         return null;
       }
 
       return child;
     }
     getChildByName(name: string): flash.display.DisplayObject {
-      name = "" + name;
+      name = asCoerceString(name);
 
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
@@ -218,7 +219,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       return null;
     }
-    getObjectsUnderPoint(point: flash.geom.Point): any [] {
+    getObjectsUnderPoint(point: flash.geom.Point): flash.display.DisplayObject [] {
       //point = point;
 
       var children = this._children;
