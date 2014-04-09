@@ -217,13 +217,7 @@ module Shumway.AVM2.AS.flash.geom {
       );
     }
 
-    public transformRect(rect: Rectangle): Rectangle {
-      var r = rect.clone();
-      var xMin = r.x;
-      var xMax = r.x + r.width;
-      var yMin = r.y;
-      var yMax = r.y + r.height;
-
+    transformRectAABB (rectangle: Rectangle) {
       var a = this.a;
       var b = this.b;
       var c = this.c;
@@ -231,52 +225,70 @@ module Shumway.AVM2.AS.flash.geom {
       var tx = this.tx;
       var ty = this.ty;
 
-      var x0 = (a * xMin + c * yMin + tx) | 0;
-      var y0 = (b * xMin + d * yMin + ty) | 0;
-      var x1 = (a * xMax + c * yMin + tx) | 0;
-      var y1 = (b * xMax + d * yMin + ty) | 0;
-      var x2 = (a * xMax + c * yMax + tx) | 0;
-      var y2 = (b * xMax + d * yMax + ty) | 0;
-      var x3 = (a * xMin + c * yMax + tx) | 0;
-      var y3 = (b * xMin + d * yMax + ty) | 0;
+      var x = rectangle.x;
+      var y = rectangle.y;
+      var w = rectangle.width;
+      var h = rectangle.height;
+
+      var x0 = a * x + c * y + tx;
+      var y0 = b * x + d * y + ty;
+      var x1 = a * (x + w) + c * y + tx;
+      var y1 = b * (x + w) + d * y + ty;
+      var x2 = a * (x + w) + c * (y + h) + tx;
+      var y2 = b * (x + w) + d * (y + h) + ty;
+      var x3 = a * x + c * (y + h) + tx;
+      var y3 = b * x + d * (y + h) + ty;
+
       var tmp = 0;
 
       // Manual Min/Max is a lot faster than calling Math.min/max
       // X Min-Max
-      if (x0 > x1) {
-        tmp = x0;
-        x0 = x1;
-        x1 = tmp;
-      }
-      if (x2 > x3) {
-        tmp = x2;
-        x2 = x3;
-        x3 = tmp;
-      }
-      xMin = x0 < x2 ? x0 : x2;
-      xMax = x1 > x3 ? x1 : x3;
+      if (x0 > x1) { tmp = x0; x0 = x1; x1 = tmp; }
+      if (x2 > x3) { tmp = x2; x2 = x3; x3 = tmp; }
+
+      rectangle.x = x0 < x2 ? x0 : x2;
+      rectangle.width = (x1 > x3 ? x1 : x3) - rectangle.x;
 
       // Y Min-Max
-      if (y0 > y1) {
-        tmp = y0;
-        y0 = y1;
-        y1 = tmp;
-      }
-      if (y2 > y3) {
-        tmp = y2;
-        y2 = y3;
-        y3 = tmp;
-      }
-      yMin = y0 < y2 ? y0 : y2;
-      yMax = y1 > y3 ? y1 : y3;
+      if (y0 > y1) { tmp = y0; y0 = y1; y1 = tmp; }
+      if (y2 > y3) { tmp = y2; y2 = y3; y3 = tmp; }
 
-      r.setTo(xMin, yMin, xMax - xMin, yMax - yMin);
-      return r;
+      rectangle.y = y0 < y2 ? y0 : y2;
+      rectangle.height = (y1 > y3 ? y1 : y3) - rectangle.y;
     }
 
-    public getAngle(): number {
-      return this.a ? Math.atan(this.b / this.a) :
-                      (this.b > 0 ? Math.PI / 2 : -Math.PI / 2);
+    getScaleX(): number {
+      if (this.a === 1 && this.b === 0) {
+        return 1;
+      }
+      var result = Math.sqrt(this.a * this.a + this.b * this.b);
+      return this.a > 0 ? result : -result;
+    }
+
+    getScaleY(): number {
+      if (this.c === 0 && this.d === 1) {
+        return 1;
+      }
+      var result = Math.sqrt(this.c * this.c + this.d * this.d);
+      return this.d > 0 ? result : -result;
+    }
+
+    getAbsoluteScaleX(): number {
+      return Math.abs(this.getScaleX());
+    }
+
+    getAbsoluteScaleY(): number {
+      return Math.abs(this.getScaleY());
+    }
+
+    public getRotation(): number {
+      if (this.a) {
+        return Math.atan(this.b / this.a);
+      }
+      if (this.b > 0) {
+        return Math.PI / 2;
+      }
+      return -Math.PI / 2
     }
 
     public copyFrom(sourceMatrix: Matrix): void {
@@ -297,12 +309,12 @@ module Shumway.AVM2.AS.flash.geom {
       this.ty = +tya;
     }
 
-    public pxToTwips() {
+    public toTwips() {
       this.tx = (this.tx * 20) | 0;
       this.ty = (this.ty * 20) | 0;
     }
 
-    public twipsToPx() {
+    public toPixels() {
       this.tx /= 20;
       this.ty /= 20;
     }

@@ -120,12 +120,12 @@ module Shumway.AVM2.AS.flash.geom {
       this.y = +y;
     }
 
-    public pxToTwips() {
+    public toTwips() {
       this.x = (this.x * 20) | 0;
       this.y = (this.y * 20) | 0;
     }
 
-    public twipsToPx() {
+    public toPixels() {
       this.x /= 20;
       this.y /= 20;
     }

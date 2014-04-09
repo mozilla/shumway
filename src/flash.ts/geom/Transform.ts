@@ -47,7 +47,7 @@ module Shumway.AVM2.AS.flash.geom {
       this._target._setTransformMatrix(value, true);
     }
     get colorTransform(): flash.geom.ColorTransform {
-      return this._target._cxform.clone();
+      return this._target._colorTransform.clone();
     }
     set colorTransform(value: flash.geom.ColorTransform) {
       //value = value;
@@ -57,13 +57,13 @@ module Shumway.AVM2.AS.flash.geom {
       return this._target._getConcatenatedTransform(null).clone();
     }
     get concatenatedColorTransform(): flash.geom.ColorTransform {
-      var cxform = new ColorTransform();
+      var colorTransform = new ColorTransform();
       var currentNode = this._target;
       do {
-        cxform.concat(currentNode._cxform);
+        colorTransform.concat(currentNode._colorTransform);
         currentNode = currentNode._parent;
       } while (currentNode);
-      return cxform;
+      return colorTransform;
     }
     get pixelBounds(): flash.geom.Rectangle {
       notImplemented("public flash.geom.Transform::get pixelBounds"); return;
