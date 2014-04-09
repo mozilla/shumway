@@ -905,7 +905,7 @@ module Shumway.AVM2.Runtime {
    * Similar to |toString| but returns |null| for |null| or |undefined| instead
    * of "null" or "undefined".
    */
-  export function asCoerceString(x) {
+  export function asCoerceString(x): string {
     if (typeof x === "string") {
       return x;
     } else if (x == undefined) {
@@ -914,19 +914,19 @@ module Shumway.AVM2.Runtime {
     return x + '';
   }
 
-  export function asCoerceInt(x) {
+  export function asCoerceInt(x): number {
     return x | 0;
   }
 
-  export function asCoerceUint(x) {
+  export function asCoerceUint(x): number {
     return x >>> 0;
   }
 
-  export function asCoerceNumber(x) {
+  export function asCoerceNumber(x): number {
     return +x;
   }
 
-  export function asCoerceBoolean(x) {
+  export function asCoerceBoolean(x): boolean {
     return !!x;
   }
 

@@ -15,7 +15,8 @@
  */
 // Class: FileFilter
 module Shumway.AVM2.AS.flash.net {
-  import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
   export class FileFilter extends ASNative {
     
     // Called whenever the class is initialized.
@@ -31,9 +32,10 @@ module Shumway.AVM2.AS.flash.net {
     static bindings: string [] = null; // [];
     
     constructor (description: string, extension: string, macType: string = null) {
-      description = "" + description; extension = "" + extension; macType = "" + macType;
       false && super();
-      notImplemented("Dummy Constructor: public flash.net.FileFilter");
+      this.description = asCoerceString(description);
+      this.extension = asCoerceString(extension);
+      this.macType = asCoerceString(macType);
     }
     
     // JS -> AS Bindings
@@ -41,35 +43,26 @@ module Shumway.AVM2.AS.flash.net {
     
     // AS -> JS Bindings
     
-    // _description: string;
-    // _extension: string;
-    // _macType: string;
+    private _description: string;
+    private _extension: string;
+    private _macType: string;
     get description(): string {
-      notImplemented("public flash.net.FileFilter::get description"); return;
-      // return this._description;
+      return this._description;
     }
     set description(value: string) {
-      value = "" + value;
-      notImplemented("public flash.net.FileFilter::set description"); return;
-      // this._description = value;
+      this._description = asCoerceString(value);
     }
     get extension(): string {
-      notImplemented("public flash.net.FileFilter::get extension"); return;
-      // return this._extension;
+      return this._extension;
     }
     set extension(value: string) {
-      value = "" + value;
-      notImplemented("public flash.net.FileFilter::set extension"); return;
-      // this._extension = value;
+      this._extension = asCoerceString(value);
     }
     get macType(): string {
-      notImplemented("public flash.net.FileFilter::get macType"); return;
-      // return this._macType;
+      return this._macType;
     }
     set macType(value: string) {
-      value = "" + value;
-      notImplemented("public flash.net.FileFilter::set macType"); return;
-      // this._macType = value;
+      this._macType = asCoerceString(value);
     }
   }
 }

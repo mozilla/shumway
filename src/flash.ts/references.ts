@@ -437,4 +437,6 @@
 ///<reference path='xml/XMLParser.ts' />
 ///<reference path='xml/XMLTag.ts' />
 
+///<reference path='../avm1lib/references.ts' />
+
 ///<reference path='linker.ts' />

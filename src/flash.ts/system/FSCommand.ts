@@ -16,6 +16,8 @@
 // Class: FSCommand
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  declare var renderingTerminated: boolean;
+
   export class FSCommand extends ASNative {
     
     // Called whenever the class is initialized.
@@ -41,7 +43,18 @@ module Shumway.AVM2.AS.flash.system {
     // AS -> JS Bindings
     static _fscommand(command: string, args: string): void {
       command = "" + command; args = "" + args;
-      notImplemented("packageInternal flash.system.FSCommand::static _fscommand"); return;
+      console.log('FSCommand: ' + command + '; ' + args);
+      switch (command.toLowerCase()) {
+        case 'quit':
+          renderingTerminated = true;
+          return;
+        case 'debugger':
+          debugger; // shumway breakpoint... for convinience
+          return;
+        default:
+          // TODO ignoring all other fscommand
+          break;
+      }
     }
     
   }
