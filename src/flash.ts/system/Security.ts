@@ -16,6 +16,10 @@
 // Class: Security
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+
+  declare var FileLoadingService;
+
   export class Security extends ASNative {
     
     // Called whenever the class is initialized.
@@ -44,45 +48,46 @@ module Shumway.AVM2.AS.flash.system {
     
     
     // AS -> JS Bindings
-    // static _exactSettings: boolean;
+    private static _exactSettings: boolean = false;
     // static _disableAVM1Loading: boolean;
-    // static _sandboxType: string;
+    private static _sandboxType: string = 'remote';
     // static _pageDomain: string;
-    get exactSettings(): boolean {
-      notImplemented("public flash.system.Security::get exactSettings"); return;
-      // return this._exactSettings;
+    static get exactSettings(): boolean {
+      return Security._exactSettings;
     }
-    set exactSettings(value: boolean) {
+    static set exactSettings(value: boolean) {
       value = !!value;
-      notImplemented("public flash.system.Security::set exactSettings"); return;
-      // this._exactSettings = value;
+      Security._exactSettings = value;
     }
-    get disableAVM1Loading(): boolean {
+    static get disableAVM1Loading(): boolean {
       notImplemented("public flash.system.Security::get disableAVM1Loading"); return;
-      // return this._disableAVM1Loading;
+      // return Security._disableAVM1Loading;
     }
-    set disableAVM1Loading(value: boolean) {
+    static set disableAVM1Loading(value: boolean) {
       value = !!value;
       notImplemented("public flash.system.Security::set disableAVM1Loading"); return;
-      // this._disableAVM1Loading = value;
+      // Security._disableAVM1Loading = value;
     }
-    get sandboxType(): string {
-      notImplemented("public flash.system.Security::get sandboxType"); return;
-      // return this._sandboxType;
+    static get sandboxType(): string {
+      somewhatImplemented("public flash.system.Security::get sandboxType");
+      return Security._sandboxType;
     }
-    get pageDomain(): string {
-      notImplemented("public flash.system.Security::get pageDomain"); return;
-      // return this._pageDomain;
+    static get pageDomain(): string {
+      somewhatImplemented("public flash.system.Security::get pageDomain");
+      var pageHost: string = FileLoadingService.resolveUrl('/');
+      var parts = pageHost.split('/'); parts.pop();
+      return parts.pop();
     }
     static allowDomain(): void {
-      notImplemented("public flash.system.Security::static allowDomain"); return;
+      somewhatImplemented("public flash.system.Security::static allowDomain [\"" +
+        Array.prototype.join.call(arguments, "\", \"") + "\"]");
     }
     static allowInsecureDomain(): void {
-      notImplemented("public flash.system.Security::static allowInsecureDomain"); return;
+      somewhatImplemented("public flash.system.Security::static allowInsecureDomain");
     }
     static loadPolicyFile(url: string): void {
       url = "" + url;
-      notImplemented("public flash.system.Security::static loadPolicyFile"); return;
+      somewhatImplemented("public flash.system.Security::static loadPolicyFile");
     }
     static showSettings(panel: string = "default"): void {
       panel = "" + panel;
