@@ -59,10 +59,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     Visible                                   = 0x0001,
 
-    /**
-     * Tobias: I don't know what this is?
-     */
-    Animated                                  = 0x0002,
+
     InvalidBounds                             = 0x0004,
     InvalidTransform                          = 0x0008,
     InvalidConcatenatedTransform              = 0x0010,
@@ -73,21 +70,30 @@ module Shumway.AVM2.AS.flash.display {
     Destroyed                                 = 0x0100,
 
     /**
-     * Tobias: What's the diference between this and not Animated?
+     * Display object is owned by the timeline, meaning that it is under the control of the timeline and that a reference
+     * to this object has not leaked into AS3 code via the DisplayObjectContainer methods |getChildAt|,  |getChildByName|
+     * or through the execution of the symbol class constructor.
      */
-    Owned                                     = 0x0200,
+    OwnedByTimeline                           = 0x0200,
+
+    /**
+     * Display object is animated by the timeline. It may no longer be owned by the timeline (|OwnedByTimeline|) but it
+     * is still animated by it. If AS3 code mutates any property on the display object, this flag is cleared and further
+     * timeline mutations are ignored.
+     */
+    AnimatedByTimeline                        = 0x0400,
 
     /**
      * Tobias: Should this really be just true of if any of the other invalid bits are on?
      */
-    Invalid                                   = 0x0400,
+    Invalid                                   = 0x0800,
 
     /**
      * Indicates whether this display object should be cached as a bitmap. The display object
      * may be cached as bitmap even if this flag is not set, depending on whether any filters
      * are applied or if the bitmap is too large or we've run out of memory.
      */
-    CacheAsBitmap                             = 0x0800
+    CacheAsBitmap                             = 0x1000
   }
 
   export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable {
@@ -159,12 +165,12 @@ module Shumway.AVM2.AS.flash.display {
       self._loader = null;
 
       self._removeFlags (
-        DisplayObjectFlags.Animated         |
-        DisplayObjectFlags.InvalidBounds    |
-        DisplayObjectFlags.Constructed      |
-        DisplayObjectFlags.Destroyed        |
-        DisplayObjectFlags.Invalid          |
-        DisplayObjectFlags.Owned            |
+        DisplayObjectFlags.AnimatedByTimeline    |
+        DisplayObjectFlags.InvalidBounds         |
+        DisplayObjectFlags.Constructed           |
+        DisplayObjectFlags.Destroyed             |
+        DisplayObjectFlags.Invalid               |
+        DisplayObjectFlags.OwnedByTimeline       |
         DisplayObjectFlags.InvalidTransform
       );
 
@@ -197,8 +203,8 @@ module Shumway.AVM2.AS.flash.display {
           );
         }
 
-        if (symbol._hasFlags(DisplayObjectFlags.Animated)) {
-          self._setFlags(DisplayObjectFlags.Animated);
+        if (symbol._hasFlags(DisplayObjectFlags.AnimatedByTimeline)) {
+          self._setFlags(DisplayObjectFlags.AnimatedByTimeline);
         }
 
         if (symbol.bbox) {
@@ -224,8 +230,8 @@ module Shumway.AVM2.AS.flash.display {
         self._level = isNaN(symbol.level) ? self._level : symbol.level;
         self._loader = symbol.loader || self._loader;
 
-        if (symbol._hasFlags(DisplayObjectFlags.Owned)) {
-          self._setFlags(DisplayObjectFlags.Owned);
+        if (symbol._hasFlags(DisplayObjectFlags.OwnedByTimeline)) {
+          self._setFlags(DisplayObjectFlags.OwnedByTimeline);
         }
       }
     };
@@ -613,7 +619,7 @@ module Shumway.AVM2.AS.flash.display {
       if (value) {
         value._maskedObject = this;
       }
-      this._removeFlags(DisplayObjectFlags.Animated);
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
     }
     get visible(): boolean {
@@ -627,7 +633,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       this._setFlags(DisplayObjectFlags.Visible | DisplayObjectFlags.Invalid);
-      this._removeFlags(DisplayObjectFlags.Animated);
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
     }
 
     get x(): number {
@@ -642,7 +648,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       this._currentTransform.tx = value;
-      this._removeFlags(DisplayObjectFlags.Animated);
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
       this._invalidateTransform();
     }
@@ -657,7 +663,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       this._currentTransform.ty = value;
-      this._removeFlags(DisplayObjectFlags.Animated);
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
       this._invalidateTransform();
     }
@@ -684,7 +690,7 @@ module Shumway.AVM2.AS.flash.display {
       m.b = this._rotationSin * value;
 
       this._scaleX = value;
-      this._removeFlags(DisplayObjectFlags.Animated);
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
       this._invalidateTransform();
     }
@@ -703,7 +709,7 @@ module Shumway.AVM2.AS.flash.display {
       m.d = this._rotationCos * value;
 
       this._scaleY = value;
-      this._removeFlags(DisplayObjectFlags.Animated);
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
       this._invalidateTransform();
     }
@@ -770,7 +776,7 @@ module Shumway.AVM2.AS.flash.display {
       this._rotation = value;
       this._rotationCos = u;
       this._rotationSin = v;
-      this._removeFlags(DisplayObjectFlags.Animated);
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
       this._invalidateTransform();
     }
@@ -809,7 +815,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       this._alpha = value;
-      this._removeFlags(DisplayObjectFlags.Animated);
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
     }
     get width(): number {
@@ -874,7 +880,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._filters.length) {
         this._toggleFlags(DisplayObjectFlags.CacheAsBitmap, value);
       }
-      this._removeFlags(DisplayObjectFlags.Animated);
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
     }
 
     get opaqueBackground(): Object {
@@ -901,7 +907,7 @@ module Shumway.AVM2.AS.flash.display {
 
       this._invalidate();
       this._filters = value;
-      this._removeFlags(DisplayObjectFlags.Animated);
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
     }
     get blendMode(): string {
      return this._blendMode;
@@ -919,7 +925,7 @@ module Shumway.AVM2.AS.flash.display {
         throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
       }
 
-      this._removeFlags(DisplayObjectFlags.Animated);
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
     }
     get transform(): flash.geom.Transform {

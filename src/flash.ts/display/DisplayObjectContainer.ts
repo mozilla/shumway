@@ -117,7 +117,7 @@ module Shumway.AVM2.AS.flash.display {
       children.splice(index, 0, child);
 
       child._index = index;
-      child._removeFlags(DisplayObjectFlags.Owned); ;
+      child._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
       child._parent = this;
       child._stage = this._stage;
       child._invalidateTransform();
@@ -147,7 +147,7 @@ module Shumway.AVM2.AS.flash.display {
       children.splice(index, 1);
 
       child._index = -1;
-      child._removeFlags(DisplayObjectFlags.Owned); ;
+      child._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
       child._parent = null;
       child._stage = null;
       // Tobias: How come we have to invalidate the transform if we just remove the object from the list?
@@ -187,7 +187,7 @@ module Shumway.AVM2.AS.flash.display {
         children[i]._index = i++;
       }
 
-      child._removeFlags(DisplayObjectFlags.Owned);
+      child._removeFlags(DisplayObjectFlags.OwnedByTimeline);
       child._invalidate();
     }
     getChildAt(index: number /*int*/): flash.display.DisplayObject {
@@ -272,11 +272,11 @@ module Shumway.AVM2.AS.flash.display {
       var child2 = children[index2];
       children[index2] = child1;
       child1._index = index2;
-      child1._removeFlags(DisplayObjectFlags.Owned); ;
+      child1._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
       child1._invalidate();
       children[index1] = child2;
       child2._index = index1;
-      child2._removeFlags(DisplayObjectFlags.Owned); ;
+      child2._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
       child2._invalidate();
     }
     swapChildren(child1: flash.display.DisplayObject, child2: flash.display.DisplayObject): void {
