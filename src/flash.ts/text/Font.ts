@@ -22,7 +22,27 @@ module Shumway.AVM2.AS.flash.text {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
+    static initializer: any = function(symbol) {
+      var s = symbol;
+      if (s) {
+        this._fontId = s.renderableId;
+        this._fontName = s.name || null;
+        if (s.bold) {
+          if (s.italic) {
+            this._fontStyle = 'boldItalic';
+          } else {
+            this._fontStyle = 'bold';
+          }
+        } else if (s.italic) {
+          this._fontStyle = 'italic';
+        } else {
+          this._fontStyle = 'regular';
+        }
+        this._fontType = 'embedded';
+        Font.fonts.push(this);
+        Font.fontsBySymbolId[s.id] = this;
+      }
+    };
     
     // List of static symbols to link.
     static staticBindings: string [] = null; // [];
@@ -31,8 +51,13 @@ module Shumway.AVM2.AS.flash.text {
     static bindings: string [] = null; // [];
     
     constructor () {
-      false && super();
-      notImplemented("Dummy Constructor: public flash.text.Font");
+    }
+
+    private static fonts: Font[] = [];
+    private static fontsBySymbolId = Object.create(null);
+
+    static getFontBySymbolId(id) {
+      return this.fontsBySymbolId[id];
     }
     
     // JS -> AS Bindings
@@ -40,32 +65,28 @@ module Shumway.AVM2.AS.flash.text {
     
     // AS -> JS Bindings
     static enumerateFonts(enumerateDeviceFonts: boolean = false): any [] {
-      enumerateDeviceFonts = !!enumerateDeviceFonts;
-      notImplemented("public flash.text.Font::static enumerateFonts"); return;
+      return this.fonts.slice();
     }
     static registerFont(font: ASClass): void {
-      font = font;
-      notImplemented("public flash.text.Font::static registerFont"); return;
+      somewhatImplemented('Font.registerFont');
     }
     
-    // _fontName: string;
-    // _fontStyle: string;
-    // _fontType: string;
+    private _fontId: string;
+    private _fontName: string;
+    private _fontStyle: string;
+    private _fontType: string;
     get fontName(): string {
-      notImplemented("public flash.text.Font::get fontName"); return;
-      // return this._fontName;
+      return this._fontName;
     }
     get fontStyle(): string {
-      notImplemented("public flash.text.Font::get fontStyle"); return;
-      // return this._fontStyle;
+      return this._fontStyle;
     }
     get fontType(): string {
-      notImplemented("public flash.text.Font::get fontType"); return;
-      // return this._fontType;
+      return this._fontType;
     }
     hasGlyphs(str: string): boolean {
-      str = "" + str;
-      notImplemented("public flash.text.Font::hasGlyphs"); return;
+      somewhatImplemented('Font#hasGlyphs');
+      return true;
     }
   }
 }
