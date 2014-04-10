@@ -33,9 +33,12 @@ module Shumway.AVM2.AS.flash.net {
     constructor (url: string = null) {
       url = "" + url;
       false && super();
+      this._checkPolicyFile = false;
       notImplemented("Dummy Constructor: public flash.net.URLRequest");
     }
-    
+
+    _checkPolicyFile: boolean;
+
     // JS -> AS Bindings
     
     // method: string;

@@ -16,6 +16,12 @@
 // Class: NetConnection
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import Telemetry = Shumway.Telemetry;
+  import NetStatusEvent = Shumway.AVM2.AS.flash.events.NetStatusEvent;
+
   export class NetConnection extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -28,11 +34,11 @@ module Shumway.AVM2.AS.flash.net {
     static staticBindings: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["close", "addHeader", "call"];
+    static bindings: string [] = ["close", "addHeader", "call"];
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.net.NetConnection");
+      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.NETCONNECTION_FEATURE});
     }
     
     // JS -> AS Bindings
@@ -42,24 +48,22 @@ module Shumway.AVM2.AS.flash.net {
     call: (command: string, responder: flash.net.Responder) => void;
     
     // AS -> JS Bindings
-    // static _defaultObjectEncoding: number /*uint*/;
-    get defaultObjectEncoding(): number /*uint*/ {
-      notImplemented("public flash.net.NetConnection::get defaultObjectEncoding"); return;
-      // return this._defaultObjectEncoding;
+    static _defaultObjectEncoding: number /*uint*/ = 3 /* AMF3 */;
+    static get defaultObjectEncoding(): number /*uint*/ {
+      return NetConnection._defaultObjectEncoding;
     }
-    set defaultObjectEncoding(version: number /*uint*/) {
+    static set defaultObjectEncoding(version: number /*uint*/) {
       version = version >>> 0;
-      notImplemented("public flash.net.NetConnection::set defaultObjectEncoding"); return;
-      // this._defaultObjectEncoding = version;
+      NetConnection._defaultObjectEncoding = version;
     }
     
-    // _connected: boolean;
-    // _uri: string;
-    // _client: ASObject;
-    // _objectEncoding: number /*uint*/;
-    // _proxyType: string;
+    private _connected: boolean;
+    private _uri: string;
+    private _client: ASObject;
+    private _objectEncoding: number /*uint*/;
+    private _proxyType: string;
     // _connectedProxyType: string;
-    // _usingTLS: boolean;
+    private _usingTLS: boolean;
     // _protocol: string;
     // _maxPeerConnections: number /*uint*/;
     // _nearID: string;
@@ -68,51 +72,56 @@ module Shumway.AVM2.AS.flash.net {
     // _farNonce: string;
     // _unconnectedPeerStreams: any [];
     get connected(): boolean {
-      notImplemented("public flash.net.NetConnection::get connected"); return;
-      // return this._connected;
+      return this._connected;
     }
     get uri(): string {
-      notImplemented("public flash.net.NetConnection::get uri"); return;
-      // return this._uri;
+      return this._uri;
     }
     connect(command: string): void {
-      command = "" + command;
-      notImplemented("public flash.net.NetConnection::connect"); return;
+      command = asCoerceString(command);
+
+      somewhatImplemented("public flash.net.NetConnection::connect");
+      this._uri = command;
+      if (!command) {
+        this._connected = true;
+        this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+          false, false,
+          wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Success'})));
+      } else {
+        this.dispatchEvent(new NetStatusEvent(NetStatusEvent.NET_STATUS,
+          false, false,
+          wrapJSObject({ level : 'status', code : 'NetConnection.Connect.Failed'})));
+      }
     }
     get client(): ASObject {
-      notImplemented("public flash.net.NetConnection::get client"); return;
-      // return this._client;
+      return this._client;
     }
     set client(object: ASObject) {
-      object = object;
-      notImplemented("public flash.net.NetConnection::set client"); return;
-      // this._client = object;
+      this._client = object;
     }
     get objectEncoding(): number /*uint*/ {
-      notImplemented("public flash.net.NetConnection::get objectEncoding"); return;
-      // return this._objectEncoding;
+      return this._objectEncoding;
     }
     set objectEncoding(version: number /*uint*/) {
       version = version >>> 0;
-      notImplemented("public flash.net.NetConnection::set objectEncoding"); return;
-      // this._objectEncoding = version;
+      somewhatImplemented("public flash.net.NetConnection::set objectEncoding");
+      this._objectEncoding = version;
     }
     get proxyType(): string {
-      notImplemented("public flash.net.NetConnection::get proxyType"); return;
-      // return this._proxyType;
+      return this._proxyType;
     }
     set proxyType(ptype: string) {
-      ptype = "" + ptype;
-      notImplemented("public flash.net.NetConnection::set proxyType"); return;
-      // this._proxyType = ptype;
+      ptype = asCoerceString(ptype);
+      somewhatImplemented("public flash.net.NetConnection::set proxyType");
+      this._proxyType = ptype;
     }
     get connectedProxyType(): string {
       notImplemented("public flash.net.NetConnection::get connectedProxyType"); return;
       // return this._connectedProxyType;
     }
     get usingTLS(): boolean {
-      notImplemented("public flash.net.NetConnection::get usingTLS"); return;
-      // return this._usingTLS;
+      somewhatImplemented("public flash.net.NetConnection::get usingTLS");
+      return this._usingTLS;
     }
     get protocol(): string {
       notImplemented("public flash.net.NetConnection::get protocol"); return;
@@ -148,15 +157,33 @@ module Shumway.AVM2.AS.flash.net {
       // return this._unconnectedPeerStreams;
     }
     ctor(): void {
-      notImplemented("public flash.net.NetConnection::ctor"); return;
+      this._uri = null;
+      this._connected = false;
+      this._client = null;
+      this._proxyType = 'none';
+      this._objectEncoding = NetConnection.defaultObjectEncoding;
+      this._usingTLS = false;
     }
     invoke(index: number /*uint*/): any {
       index = index >>> 0;
-      notImplemented("public flash.net.NetConnection::invoke"); return;
+      return this._invoke(index, Array.prototype.slice.call(arguments, 1));
     }
     invokeWithArgsArray(index: number /*uint*/, p_arguments: any []): any {
       index = index >>> 0; p_arguments = p_arguments;
-      notImplemented("public flash.net.NetConnection::invokeWithArgsArray"); return;
+      return this._invoke.call(this, index, p_arguments);
     }
+    private _invoke(index: number, args: any[]): any {
+      var simulated = false;
+      var result;
+      switch (index) {
+        case 2: // call, e.g. with ('createStream', <Responder>)
+          simulated = true;
+          break;
+      }
+      (simulated ? somewhatImplemented : notImplemented)(
+        "private flash.net.NetConnection::_invoke (" + index + ")");
+      return result;
+    }
+
   }
 }
