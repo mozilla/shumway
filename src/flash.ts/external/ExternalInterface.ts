@@ -17,7 +17,7 @@
 module Shumway.AVM2.AS.flash.external {
   import notImplemented = Shumway.Debug.notImplemented;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
-  import Feature = Shumway.Telemetry.Feature;
+  import Telemetry = Shumway.Telemetry;
   import ASObject = Shumway.AVM2.AS.ASObject;
   import ASFunction = Shumway.AVM2.AS.ASFunction;
   import ASNative = Shumway.AVM2.AS.ASNative;
@@ -26,7 +26,6 @@ module Shumway.AVM2.AS.flash.external {
 
   declare var FirefoxCom;
   declare var $EXTENSION: boolean;
-  declare var TelemetryService;
 
   export class ExternalInterface extends ASNative {
     
@@ -67,7 +66,7 @@ module Shumway.AVM2.AS.flash.external {
     static _initJS(): void {
       if (ExternalInterface.initialized)
         return;
-      TelemetryService.reportTelemetry({topic: 'feature', feature: Feature.EXTERNAL_INTERFACE_FEATURE});
+      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.EXTERNAL_INTERFACE_FEATURE});
       ExternalInterface.initialized = true;
       FirefoxCom.initJS(ExternalInterface._callIn);
     }

@@ -1309,6 +1309,12 @@ module Shumway {
       SOUND_FEATURE = 5,
       NETCONNECTION_FEATURE = 6
     }
+
+    declare var TelemetryService;
+
+    export function reportTelemetry(data) {
+      TelemetryService.reportTelemetry(data);
+    }
   }
 
 }
