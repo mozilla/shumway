@@ -15,20 +15,55 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/* global clamp */
 
 var DisplacementMapFilterDefinition = (function () {
-  var def = {
-    __class__: 'flash.filters.DisplacementMapFilter',
-
+  return {
+    __class__: "flash.filters.DisplacementMapFilter",
     initialize: function () {
 
     },
-    _updateFilterBounds: function (bounds) {
-
+    __glue__: {
+      native: {
+        instance: {
+          alpha: {
+            get: function alpha() { return this._alpha; },
+            set: function alpha(value) { this._alpha = clamp(value, 0, 1); }
+          },
+          color: {
+            get: function color() { return this._color; },
+            set: function color(value) { this._color = value; }
+          },
+          componentX: {
+            get: function componentX() { return this._componentX; },
+            set: function componentX(value) { this._componentX = value; }
+          },
+          componentY: {
+            get: function componentY() { return this._componentY; },
+            set: function componentY(value) { this._componentY = value; }
+          },
+          mapBitmap: {
+            get: function mapBitmap() { return this._mapBitmap; },
+            set: function mapBitmap(value) { this._mapBitmap = value; }
+          },
+          mapPoint: {
+            get: function mapPoint() { return this._mapPoint; },
+            set: function mapPoint(value) { this._mapPoint = value; }
+          },
+          mode: {
+            get: function mode() { return this._mode; },
+            set: function mode(value) { this._mode = value; }
+          },
+          scaleX: {
+            get: function scaleX() { return this._scaleX; },
+            set: function scaleX(value) { this._scaleX = value; }
+          },
+          scaleY: {
+            get: function scaleY() { return this._scaleY; },
+            set: function scaleY(value) { this._scaleY = value; }
+          }
+        }
+      }
     }
   };
-
-  def.__glue__ = { };
-
-  return def;
 }).call(this);

@@ -14,7 +14,8 @@ module Shumway.Layers {
     Dirty      = 1,
     Hidden     = 2,
     IsMask     = 4,
-    Culled     = 8
+    Culled     = 8,
+    IgnoreMask = 16
   }
 
   export enum BlendMode {
@@ -78,6 +79,7 @@ module Shumway.Layers {
     private _scaleY: number;
     private _rotation: number;
     private _transform: Matrix;
+    private _filters: Filter[] = [];
     private _colorTransform: ColorTransform;
     private _isTransformInvalid: boolean = true;
     private _origin: Point = new Point(0, 0);
@@ -165,6 +167,15 @@ module Shumway.Layers {
 
     get blendMode() {
       return this._blendMode;
+    }
+
+    set filters(value: Filter[]) {
+      this._filters = value;
+      this.invalidate();
+    }
+
+    get filters(): Filter[] {
+      return this._filters;
     }
 
     set colorTransform(value: ColorTransform) {
@@ -294,8 +305,6 @@ module Shumway.Layers {
     public parent: Frame;
     public ignoreMaskAlpha: boolean;
 
-    public filters: Filter [];
-
     get origin(): Point {
       return this._origin;
     }
@@ -308,7 +317,6 @@ module Shumway.Layers {
     constructor () {
       this.parent = null;
       this.transform = Matrix.createIdentity();
-      this.filters = null;
     }
 
     get stage(): Stage {
