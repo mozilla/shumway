@@ -15,32 +15,18 @@
  */
 // Class: TextColorType
 module Shumway.AVM2.AS.flash.text {
-  import notImplemented = Shumway.Debug.notImplemented;
   export class TextColorType extends ASNative {
-    
-    // Called whenever the class is initialized.
+
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static bindings: string [] = null; // [];
-    
+    static staticBindings: string [] = null;
+    static bindings: string [] = null;
+
     constructor () {
-      false && super();
-      notImplemented("Dummy Constructor: public flash.text.TextColorType");
     }
     
     // JS -> AS Bindings
     static DARK_COLOR: string = "dark";
     static LIGHT_COLOR: string = "light";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }
