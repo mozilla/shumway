@@ -17,13 +17,13 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import assert = Shumway.Debug.assert;
 
-  import BlendMode = flash.display.BlendMode;
-  import ColorTransform = flash.geom.ColorTransform;
-  import Matrix = flash.geom.Matrix;
-  import Point = flash.geom.Point;
-  import Rectangle = flash.geom.Rectangle;
-  import DisplayObjectContainer = flash.display.DisplayObjectContainer;
+  import BlendMode = flash.display.BlendMode; assert (BlendMode);
+  import ColorTransform = flash.geom.ColorTransform; assert (ColorTransform);
+  import Matrix = flash.geom.Matrix; assert (Matrix);
+  import Point = flash.geom.Point; assert (Point);
+  import Rectangle = flash.geom.Rectangle; assert (Rectangle);
 
   export enum Direction {
     Upward     = 1,
@@ -149,7 +149,6 @@ module Shumway.AVM2.AS.flash.display {
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: DisplayObject) {
       var self: DisplayObject = this;
-
       DisplayObject.register(self);
 
       self._flags = DisplayObjectFlags.None;
@@ -216,24 +215,20 @@ module Shumway.AVM2.AS.flash.display {
       self._mouseChildren = true;
 
       if (symbol) {
-        self._root        = symbol._root       || self._root;
-        self._stage       = symbol._stage      || self._stage;
-        self._name        = symbol._name       || self._stage;
-        self._parent      = symbol._parent     || self._parent;
-        self._clipDepth   = symbol._clipDepth  || self._clipDepth;
+        self._root        = symbol._root      || self._root;
+        self._stage       = symbol._stage     || self._stage;
+        self._name        = symbol._name      || self._stage;
+        self._parent      = symbol._parent    || self._parent;
+        self._clipDepth   = symbol._clipDepth || self._clipDepth;
+        self._blendMode   = symbol._blendMode || self._blendMode;
+        self._depth       = symbol._depth     || self._depth;
+        self._loader      = symbol._loader    || self._loader;
 
-        if (symbol._blendMode) {
-          self._blendMode = BlendMode.fromNumber(symbol.blendMode);
-        }
+        self._index       = isNaN(symbol._index) ? self._index : symbol._index;
+        self._level       = isNaN(symbol._level) ? self._level : symbol._level;
 
         if (symbol._scale9Grid) {
-          var scale9Grid = symbol._scale9Grid;
-          this._scale9Grid = new Rectangle(
-            scale9Grid.left,
-            scale9Grid.top,
-            scale9Grid.right - scale9Grid.left,
-            scale9Grid.bottom - scale9Grid.top
-          );
+          self._scale9Grid = symbol._scale9Grid.clone();
         }
 
         if (symbol._hasFlags(DisplayObjectFlags.AnimatedByTimeline)) {
@@ -242,12 +237,7 @@ module Shumway.AVM2.AS.flash.display {
 
         if (symbol.bbox) {
           var bbox = symbol.bbox;
-          self._bounds.setTo (
-            bbox.xMin,
-            bbox.yMin,
-            bbox.xMax - bbox.xMin,
-            bbox.yMax - bbox.yMin
-          );
+          self._bounds.setTo(bbox.xMin, bbox.yMin, bbox.xMax - bbox.xMin, bbox.yMax - bbox.yMin);
         }
 
         if (symbol._matrix) {
@@ -257,11 +247,6 @@ module Shumway.AVM2.AS.flash.display {
         if (symbol._colorTransform) {
           this._setColorTransform(symbol._colorTransform);
         }
-
-        self._depth = symbol._depth || self._depth;
-        self._index = isNaN(symbol._index) ? self._index : symbol._index;
-        self._level = isNaN(symbol._level) ? self._level : symbol._level;
-        self._loader = symbol._loader || self._loader;
 
         if (symbol._hasFlags(DisplayObjectFlags.OwnedByTimeline)) {
           self._setFlags(DisplayObjectFlags.OwnedByTimeline);
@@ -322,8 +307,8 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (direction & Direction.Downward) {
-        if (this instanceof DisplayObjectContainer) {
-          var children = (<DisplayObjectContainer>this)._children;
+        if (this instanceof flash.display.DisplayObjectContainer) {
+          var children = (<flash.display.DisplayObjectContainer>this)._children;
           for (var i = 0; i < children.length; i++) {
             if (!children[i]._hasFlags(flags)) {
               children[i]._propagateFlags(flags);
@@ -559,8 +544,8 @@ module Shumway.AVM2.AS.flash.display {
         if (graphics) {
           rectangle.unionWith(graphics._getContentBounds(includeStrokes));
         }
-        if (this instanceof DisplayObjectContainer) {
-          var container: DisplayObjectContainer = <DisplayObjectContainer>this;
+        if (this instanceof flash.display.DisplayObjectContainer) {
+          var container: flash.display.DisplayObjectContainer = <flash.display.DisplayObjectContainer>this;
           for (var i = 0; i < children.length; i++) {
             var child = children[i];
             if (includeStrokes) {

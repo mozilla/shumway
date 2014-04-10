@@ -158,7 +158,9 @@ module Shumway.AVM2.AS {
       ASClass.create(self, baseClass, this.instanceConstructor);
     }
 
-    public static initializeFrom: (value: any) => any;
+    public static initializeFrom(value: any) {
+      return ASClassPrototype.initializeFrom.call(this, value);
+    }
 
     public static coerce: (value: any) => any = Runtime.asCoerceObject;
 
@@ -376,12 +378,16 @@ module Shumway.AVM2.AS {
 
       if (self.initializers) {
         assert (self.instanceConstructorNoInitialize === self.instanceConstructor);
+        var previousConstructor: any = self.instanceConstructor;
         self.instanceConstructor = <any>function (...args) {
           ASClass.runInitializers(this, undefined);
           return self.instanceConstructorNoInitialize.apply(this, arguments);
         };
         self.instanceConstructor.prototype = self.traitsPrototype;
         self.instanceConstructor.prototype.class = self;
+
+        (<any>(self.instanceConstructor)).classInfo = previousConstructor.classInfo;
+        self.instanceConstructor.__proto__ = previousConstructor.__proto__;
       }
     }
 

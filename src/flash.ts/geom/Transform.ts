@@ -54,7 +54,7 @@ module Shumway.AVM2.AS.flash.geom {
     get concatenatedMatrix(): flash.geom.Matrix {
       var matrix = this._displayObject._getConcatenatedMatrix().clone();
       if (!this._displayObject._stage) {
-        matrix.scale(1 / 5, 1 / 5);
+        matrix.scale(5, 5);
       }
       return matrix;
     }
