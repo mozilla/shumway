@@ -23,6 +23,12 @@ module Shumway.AVM2.AS.flash.display {
   import Matrix = flash.geom.Matrix;
   import Point = flash.geom.Point;
   import Rectangle = flash.geom.Rectangle;
+  import DisplayObjectContainer = flash.display.DisplayObjectContainer;
+
+  export enum Direction {
+    Upward     = 1,
+    Downward   = 2
+  }
 
   /*
    * Invalid Bits:
@@ -60,13 +66,40 @@ module Shumway.AVM2.AS.flash.display {
     Visible                                   = 0x0001,
 
 
+    /**
+     * Display object has invalid bounds.
+     */
     InvalidBounds                             = 0x0004,
-    InvalidTransform                          = 0x0008,
-    InvalidConcatenatedTransform              = 0x0010,
 
-    // ...
+    /**
+     * Display object has an invalid matrix because one of its local properties: x, y, scaleX, ... has been mutated.
+     */
+    InvalidMatrix                             = 0x0008,
 
+    /**
+     * Display object has an invalid concatenated matrix because its matrix or one of its ancestor's matrices has been mutated.
+     */
+    InvalidConcatenatedMatrix                 = 0x0010,
+
+    /**
+     * Display object has an invalid concatenated color transform because its color transform or one of its ancestor's color
+     * transforms has been mutated.
+     */
+    InvalidConcatenatedColorTransform         = 0x0020,
+
+    /**
+     * Display object has changed since the last time it was drawn.
+     */
+    InvalidPaint                              = 0x0040,
+
+    /**
+     * Tobias: What's this?
+     */
     Constructed                               = 0x0080,
+
+    /**
+     * Tobias: What's this?
+     */
     Destroyed                                 = 0x0100,
 
     /**
@@ -148,18 +181,18 @@ module Shumway.AVM2.AS.flash.display {
 
       self._bounds = null;
       self._clipDepth = 0;
-      self._concatenatedTransform = new Matrix();
-      self._currentTransform = new Matrix();
-      self._current3dTransform = null;
+
+      self._concatenatedMatrix = new Matrix();
+      self._matrix = new Matrix();
+      self._matrix3D = null;
       self._colorTransform = new ColorTransform();
+
       self._depth = 0;
       self._graphics = null;
       self._hitTarget = null;
       self._index = -1;
       self._level = -1;
       self._maskedObject = null;
-      self._rotationCos = 0;
-      self._rotationSin = 0;
 
       // TODO get this via loaderInfo
       self._loader = null;
@@ -171,7 +204,7 @@ module Shumway.AVM2.AS.flash.display {
         DisplayObjectFlags.Destroyed             |
         DisplayObjectFlags.Invalid               |
         DisplayObjectFlags.OwnedByTimeline       |
-        DisplayObjectFlags.InvalidTransform
+        DisplayObjectFlags.InvalidMatrix
       );
 
       // TODO move to InteractiveObject
@@ -183,18 +216,18 @@ module Shumway.AVM2.AS.flash.display {
       self._mouseChildren = true;
 
       if (symbol) {
-        self._root        = symbol.root       || self._root;
-        self._stage       = symbol.stage      || self._stage;
-        self._name        = symbol.name       || self._stage;
-        self._parent      = symbol.parent     || self._parent;
-        self._clipDepth   = symbol.clipDepth  || self._clipDepth;
+        self._root        = symbol._root       || self._root;
+        self._stage       = symbol._stage      || self._stage;
+        self._name        = symbol._name       || self._stage;
+        self._parent      = symbol._parent     || self._parent;
+        self._clipDepth   = symbol._clipDepth  || self._clipDepth;
 
-        if (symbol.blendMode) {
+        if (symbol._blendMode) {
           self._blendMode = BlendMode.fromNumber(symbol.blendMode);
         }
 
-        if (symbol.scale9Grid) {
-          var scale9Grid = symbol.scale9Grid;
+        if (symbol._scale9Grid) {
+          var scale9Grid = symbol._scale9Grid;
           this._scale9Grid = new Rectangle(
             scale9Grid.left,
             scale9Grid.top,
@@ -217,18 +250,18 @@ module Shumway.AVM2.AS.flash.display {
           );
         }
 
-        if (symbol.currentTransform) {
-          this._setTransformMatrix(symbol.currentTransform);
+        if (symbol._matrix) {
+          this._setMatrix(symbol._matrix, false);
         }
 
-        if (symbol.cxform) {
-          this._setColorTransform(symbol.cxform);
+        if (symbol._colorTransform) {
+          this._setColorTransform(symbol._colorTransform);
         }
 
-        self._depth = symbol.depth || self._depth;
-        self._index = isNaN(symbol.index) ? self._index : symbol.index;
-        self._level = isNaN(symbol.level) ? self._level : symbol.level;
-        self._loader = symbol.loader || self._loader;
+        self._depth = symbol._depth || self._depth;
+        self._index = isNaN(symbol._index) ? self._index : symbol._index;
+        self._level = isNaN(symbol._level) ? self._level : symbol._level;
+        self._loader = symbol._loader || self._loader;
 
         if (symbol._hasFlags(DisplayObjectFlags.OwnedByTimeline)) {
           self._setFlags(DisplayObjectFlags.OwnedByTimeline);
@@ -271,6 +304,35 @@ module Shumway.AVM2.AS.flash.display {
       return !!(this._flags & flags);
     }
 
+    /**
+     * Propagates flags up and down the the display list.
+     */
+    _propagateFlags(flags: DisplayObjectFlags, direction: Direction) {
+      if (this._hasFlags(flags)) {
+        return;
+      }
+      this._setFlags(flags);
+
+      if (direction & Direction.Upward) {
+        var node = this._parent;
+        while (node) {
+          node._setFlags(flags);
+          node = node._parent;
+        }
+      }
+
+      if (direction & Direction.Downward) {
+        if (this instanceof DisplayObjectContainer) {
+          var children = (<DisplayObjectContainer>this)._children;
+          for (var i = 0; i < children.length; i++) {
+            if (!children[i]._hasFlags(flags)) {
+              children[i]._propagateFlags(flags);
+            }
+          }
+        }
+      }
+    }
+
     // JS -> AS Bindings
     
     hitTestObject: (obj: flash.display.DisplayObject) => boolean;
@@ -306,13 +368,23 @@ module Shumway.AVM2.AS.flash.display {
     _loaderInfo: flash.display.LoaderInfo;
     _accessibilityProperties: flash.accessibility.AccessibilityProperties;
 
+    /**
+     * Bounding box excluding strokes.
+     */
+    _rect: flash.geom.Rectangle;
+
+    /**
+     * Bounding box including strokes.
+     */
     _bounds: flash.geom.Rectangle;
+
     _children: flash.display.DisplayObject [];
     _clipDepth: number;
-    _currentTransform: flash.geom.Matrix;
-    _concatenatedTransform: flash.geom.Matrix;
-    _current3dTransform: flash.geom.Matrix3D;
+    _matrix: flash.geom.Matrix;
+    _concatenatedMatrix: flash.geom.Matrix;
     _colorTransform: flash.geom.ColorTransform;
+    _concatenatedColorTransform: flash.geom.ColorTransform;
+    _matrix3D: flash.geom.Matrix3D;
     _depth: number;
     _graphics: flash.display.Graphics;
     _hitTarget: flash.display.DisplayObject;
@@ -324,25 +396,7 @@ module Shumway.AVM2.AS.flash.display {
     _mouseChildren: boolean;
     _mouseDown: boolean;
     _mouseOver: boolean;
-    _rotationCos: number;
-    _rotationSin: number;
     _zindex: number;
-
-    private _setTransformMatrix(matrix: Matrix, toTwips: boolean = false): void {
-      var m = this._currentTransform;
-      m.copyFrom(matrix);
-      if (toTwips) {
-        m.toTwips();
-      }
-      var angleInRadians = matrix.getRotation();
-      this._rotation = angleInRadians * 180 / Math.PI;
-      this._rotationCos = Math.cos(angleInRadians);
-      this._rotationSin = Math.sin(angleInRadians);
-      this._scaleX = m.getScaleX();
-      this._scaleY = m.getScaleY();
-      this._invalidate();
-      this._invalidateTransform();
-    }
 
     /**
      * Finds the furthest ancestor with a given set of flags.
@@ -407,207 +461,186 @@ module Shumway.AVM2.AS.flash.display {
       var path = DisplayObject._path;
       path.length = 0;
       while (node && node === last) {
-        path.push(this);
+        path.push(node);
         node = node._parent;
       }
       assert (node === last, "Last ancestor is not an ancestor.");
       return path;
     }
 
-    private _getConcatenatedTransformWIP(targetCoordinateSpace: DisplayObject): Matrix {
-      // If we're the stage or the |targetCoordinateSpace| is our parent then return
-      // the current transform.
-
-      // Tobias: It's not immediately obvious that the current transform should be returned if we're the stage.
-      if (this === this._stage || targetCoordinateSpace === this._parent) {
-        return this._currentTransform;
+    /**
+     * Computes the combined transformation matrixes of this display object and all of its parents. It is not
+     * the same as |transform.concatenatedMatrix|, the latter also includes the screen space matrix.
+     */
+    _getConcatenatedMatrix(): Matrix {
+      if (ancestor === this._parent) {
+        return this._matrix;
       }
-
       // Compute the concatenated transforms for this node and all of its ancestors.
-      if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedTransform)) {
-        // Start from the closest ancestor that has a valid concatenated transform.
-        var node = this;
-        var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedTransform, false);
-        if (ancestor) {
-          // There are no ancestors that have a valid transform ..
-          notImplemented();
-        }
+      if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix)) {
+        var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedMatrix, false);
         var path = DisplayObject._getAncestors(this, ancestor);
-        var m = ancestor._concatenatedTransform.clone();
+        var m = ancestor ? ancestor._concatenatedMatrix : new Matrix();
         for (var i = path.length - 1; i >= 0; i--) {
           var ancestor = path[i];
-          assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedTransform));
-          m.concat(ancestor._currentTransform);
-          ancestor._concatenatedTransform.copyFrom(m);
-          ancestor._removeFlags(DisplayObjectFlags.InvalidConcatenatedTransform);
+          assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix));
+          m.concat(ancestor._matrix);
+          ancestor._concatenatedMatrix.copyFrom(m);
+          ancestor._removeFlags(DisplayObjectFlags.InvalidConcatenatedMatrix);
         }
       }
-
-      assert (!this._hasFlags(DisplayObjectFlags.InvalidConcatenatedTransform));
-      if (!targetCoordinateSpace) {
-        return this._concatenatedTransform;
-      }
-
-      notImplemented("WIP ...");
-      var inverse = targetCoordinateSpace._getConcatenatedTransform(null).clone();
-      inverse.invert();
-
+      return this._concatenatedMatrix;
     }
 
-    private _getConcatenatedTransform(targetCoordinateSpace: DisplayObject): Matrix {
-      var stage = this._stage;
-
-      if (this === stage || targetCoordinateSpace === this._parent) {
-        return this._currentTransform;
+    _setMatrix(matrix: Matrix, toTwips: boolean): void {
+      var m = this._matrix;
+      m.copyFrom(matrix);
+      if (toTwips) {
+        m.toTwips();
       }
-
-      var invalidNode = null;
-      var m1, m2;
-      var currentNode = this;
-      while (currentNode !== stage) {
-        if (currentNode._hasFlags(DisplayObjectFlags.InvalidTransform)) {
-          invalidNode = currentNode;
-        }
-        if (currentNode === targetCoordinateSpace) {
-          m2 = currentNode._concatenatedTransform.clone();
-        }
-        currentNode = currentNode._parent;
-      }
-
-      if (invalidNode) {
-        if (this._parent === stage) {
-          m1 = this._concatenatedTransform;
-          m1.copyFrom(this._currentTransform);
-        } else {
-          var stack = [];
-          var currentNode = this;
-          while (currentNode !== invalidNode) {
-            stack.push(currentNode);
-            currentNode = currentNode._parent;
-          }
-
-          var node = invalidNode;
-          do {
-            m1 = node._concatenatedTransform;
-            if (node._parent) {
-              if (node._parent !== stage) {
-                m1.copyFrom(node._parent._concatenatedTransform);
-                m1.concat(node._currentTransform);
-              }
-            } else {
-              m1.copyFrom(node._currentTransform);
-            }
-            node._removeFlags(DisplayObjectFlags.InvalidTransform);
-
-            var nextNode = stack.pop();
-            var children = node._children;
-            for (var i = 0; i < children.length; i++) {
-              var child = children[i];
-              if (child !== nextNode) {
-                child._setFlags(DisplayObjectFlags.InvalidTransform);
-              }
-            }
-            node = nextNode;
-          } while (node);
-        }
-      } else {
-        m1 = this._concatenatedTransform;
-      }
-
-      if (targetCoordinateSpace && targetCoordinateSpace !== stage) {
-        if (!m2) {
-          m2 = targetCoordinateSpace._getConcatenatedTransform(null).clone();
-        }
-        m2.invert();
-        m2.concat(m1);
-        return m2;
-      }
-
-      return m1;
+      var angleInRadians = matrix.getRotation();
+      this._rotation = angleInRadians * 180 / Math.PI;
+      this._scaleX = m.getScaleX();
+      this._scaleY = m.getScaleY();
+      this._removeFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidatePosition();
     }
 
-    private _setColorTransform(colorTransform: flash.geom.ColorTransform) {
+    /**
+     * Computes the combined transformation color matrixes of this display object and all of its ancestors.
+     */
+    _getConcatenatedColorTransform(): ColorTransform {
+      if (ancestor === this._parent) {
+        return this._colorTransform;
+      }
+      // Compute the concatenated color transforms for this node and all of its ancestors.
+      if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform)) {
+        var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedColorTransform, false);
+        var path = DisplayObject._getAncestors(this, ancestor);
+        var m = ancestor ? ancestor._concatenatedColorTransform : new ColorTransform();
+        for (var i = path.length - 1; i >= 0; i--) {
+          var ancestor = path[i];
+          assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
+          m.concat(ancestor._colorTransform);
+          ancestor._concatenatedColorTransform.copyFrom(m);
+          ancestor._removeFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform);
+        }
+      }
+      return this._concatenatedColorTransform;
+    }
+
+    _setColorTransform(colorTransform: flash.geom.ColorTransform) {
       this._colorTransform.copyFrom(colorTransform);
-      this._invalidate();
+      this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform, Direction.Downward);
+      this._invalidatePaint();
     }
 
+    /**
+     * Invalidates the bounds of this display object along with all of its ancestors.
+     */
+    _invalidateBounds(): void {
+      this._propagateFlags(DisplayObjectFlags.InvalidBounds, Direction.Upward);
+    }
+
+    /**
+     * Computes the bounding box for all of this display object's content, its graphics and all of its children.
+     */
     private _getContentBounds(includeStrokes: boolean = true): Rectangle {
-      var bounds = this._bounds;
+      // Tobias: What about filters?
+      var rectangle = includeStrokes ? this._bounds : this._rect;
       if (this._hasFlags(DisplayObjectFlags.InvalidBounds)) {
-        bounds.setEmpty();
-        if (this._graphics) {
-          bounds.unionWith(this._graphics._getBounds(includeStrokes));
+        rectangle.setEmpty();
+        var graphics: Graphics = null;
+        if (this instanceof Shape) {
+          graphics = (<Shape>this)._graphics;
+        } else if (this instanceof Sprite) {
+          graphics = (<Sprite>this)._graphics;
         }
-        var children = this._children;
-        for (var i = 0; i < children.length; i++) {
-          var child = children[i];
-          bounds.unionWith(child.getBounds(this));
+        if (graphics) {
+          rectangle.unionWith(graphics._getContentBounds(includeStrokes));
+        }
+        if (this instanceof DisplayObjectContainer) {
+          var container: DisplayObjectContainer = <DisplayObjectContainer>this;
+          for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (includeStrokes) {
+              rectangle.unionWith(child.getBounds(this));
+            } else {
+              rectangle.unionWith(child.getRect(this));
+            }
+          }
         }
         this._removeFlags(DisplayObjectFlags.InvalidBounds);
       }
-      return bounds;
+      return rectangle;
     }
 
     private _getTransformedBounds(targetCoordinateSpace: DisplayObject, includeStroke: boolean = true, toPixels: boolean = false) {
-      var bounds = this._getContentBounds(includeStroke);
+      var bounds = this._getContentBounds(includeStroke).clone();
       if (!targetCoordinateSpace || targetCoordinateSpace === this || bounds.isEmpty()) {
         return bounds.clone();
       }
-      bounds = bounds.clone();
-      var m = this._getConcatenatedTransform(targetCoordinateSpace);
-      m.transformRectAABB(bounds);
+      // MBX: Probably broken.
+      var t = targetCoordinateSpace._getConcatenatedMatrix();
+      t.invert();
+      t.concat(this._getConcatenatedMatrix());
+      t.transformRectAABB(bounds);
       if (toPixels) {
         bounds.toPixels();
       }
       return bounds;
     }
 
-    private destroy(): void {
-      this._setFlags(DisplayObjectFlags.Destroyed);
+    /**
+     * Marks this object as needing to be repainted.
+     */
+    private _invalidatePaint() {
+      this._propagateFlags(DisplayObjectFlags.InvalidPaint, Direction.Upward);
     }
 
-    _invalidate(flags: DisplayObjectFlags): void {
-      // Invalidate what ?
-      notImplemented("public flash.display.DisplayObject::_invalidate"); return;
-    }
-
-    _invalidateBounds(): void {
-      var currentNode = this;
-      while (currentNode && !currentNode._hasFlags(DisplayObjectFlags.InvalidBounds)) {
-        currentNode._setFlags(DisplayObjectFlags.InvalidBounds);
-        currentNode = currentNode._parent;
-      }
-    }
-
-    _invalidateTransform(): void {
-      this._setFlags(DisplayObjectFlags.InvalidTransform);
+    /**
+     * Marks this object as having been moved.
+     */
+    private _invalidatePosition() {
+      // Tobias: Do we set this flag only if the assignment is successful?
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
+      this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedMatrix, Direction.Downward);
       if (this._parent) {
         this._parent._invalidateBounds();
       }
     }
 
-    get root(): flash.display.DisplayObject {
-      return this._root;
+    get x(): number {
+      return this._matrix.tx / 20;
     }
 
-    get stage(): flash.display.Stage {
-      return this._stage;
+    set x(value: number) {
+      value = (value * 20) | 0;
+      if (value === this._matrix.tx) {
+        return;
+      }
+      this._matrix.tx = value;
+      this._invalidatePosition();
     }
-    get name(): string {
-      return this._name;
+
+    get y(): number {
+      return this._matrix.ty / 20;
     }
-    set name(value: string) {
-      this._name = "" + value;
+
+    set y(value: number) {
+      value = (value * 20) | 0;
+      if (value === this._matrix.ty) {
+        return;
+      }
+      this._matrix.ty = value;
+      this._invalidatePosition();
     }
-    get parent(): flash.display.DisplayObjectContainer {
-      return this._parent;
-    }
+
     get mask(): flash.display.DisplayObject {
       return this._mask;
     }
-    set mask(value: flash.display.DisplayObject) {
-      //value = value;
 
+    set mask(value: flash.display.DisplayObject) {
       if (this._mask === value || value === this) {
         return;
       }
@@ -619,54 +652,61 @@ module Shumway.AVM2.AS.flash.display {
       if (value) {
         value._maskedObject = this;
       }
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      this._invalidate();
+      this._invalidatePaint();
+      // Tobias: Does masking affect the bounds?
     }
+
+    get transform(): flash.geom.Transform {
+      return new flash.geom.Transform(this);
+    }
+
+    set transform(value: flash.geom.Transform) {
+      if (value.matrix3D) {
+        this._matrix3D = value.matrix3D;
+      } else {
+        this._setMatrix(transform.matrix, true);
+      }
+      this._setColorTransform(value.colorTransform);
+    }
+
+    private destroy(): void {
+      this._setFlags(DisplayObjectFlags.Destroyed);
+    }
+
+    get root(): flash.display.DisplayObject {
+      return this._root;
+    }
+
+    get stage(): flash.display.Stage {
+      return this._stage;
+    }
+
+    get name(): string {
+      return this._name;
+    }
+
+    set name(value: string) {
+      this._name = "" + value;
+    }
+
+    get parent(): flash.display.DisplayObjectContainer {
+      return this._parent;
+    }
+
     get visible(): boolean {
       return this._hasFlags(DisplayObjectFlags.Visible);
     }
+
     set visible(value: boolean) {
       value = !!value;
-
       if (value === this._hasFlags(DisplayObjectFlags.Visible)) {
         return;
       }
-
-      this._setFlags(DisplayObjectFlags.Visible | DisplayObjectFlags.Invalid);
+      this._setFlags(DisplayObjectFlags.Visible);
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
+      // Tobias: Does visibility affect the bounds?
     }
 
-    get x(): number {
-      return this._currentTransform.tx / 20;
-    }
-
-    set x(value: number) {
-      value = (value * 20) | 0;
-
-      if (value === this._currentTransform.tx) {
-        return;
-      }
-
-      this._currentTransform.tx = value;
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      this._invalidate();
-      this._invalidateTransform();
-    }
-    get y(): number {
-      return this._currentTransform.ty / 20;
-    }
-    set y(value: number) {
-      value = (value * 20) | 0;
-
-      if (value === this._currentTransform.ty) {
-        return;
-      }
-
-      this._currentTransform.ty = value;
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      this._invalidate();
-      this._invalidateTransform();
-    }
     get z(): number {
       return this._z;
     }
@@ -675,9 +715,16 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.DisplayObject::set z"); return;
       // this._z = value;
     }
+
+    // ---------------------------------------------------------------------------------------------------------------------------------------------
+    // -- Stuff below we still need to port.                                                                                                      --
+    // ---------------------------------------------------------------------------------------------------------------------------------------------
+
+    /*
     get scaleX(): number {
       return this._scaleX;
     }
+
     set scaleX(value: number) {
       value = +value;
 
@@ -686,17 +733,19 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       var m = currentTransform;
-      m.a = this._rotationCos * value;
-      m.b = this._rotationSin * value;
+      m.a = Math.cos(this._rotation) * value;
+      m.b = Math.sin(this._rotation) * value;
 
       this._scaleX = value;
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
       this._invalidateTransform();
     }
+
     get scaleY(): number {
       return this._scaleY;
     }
+
     set scaleY(value: number) {
       value = +value;
 
@@ -704,15 +753,16 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
-      var m = this._currentTransform;
-      m.c = -this._rotationSin * value;
-      m.d = this._rotationCos * value;
+      var m = this._matrix;
+      m.c = Math.sin(-this._rotation) * value;
+      m.d = Math.cos(this._rotation) * value;
 
       this._scaleY = value;
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
       this._invalidateTransform();
     }
+
     get scaleZ(): number {
       return this._scaleZ;
     }
@@ -767,15 +817,13 @@ module Shumway.AVM2.AS.flash.display {
           break;
       }
 
-      var m = this._currentTransform;
+      var m = this._matrix;
       m.a = u * this._scaleX;
       m.b = v * this._scaleX;
       m.c = -v * this._scaleY;
       m.d = u * this._scaleY;
 
       this._rotation = value;
-      this._rotationCos = u;
-      this._rotationSin = v;
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
       this._invalidateTransform();
@@ -820,7 +868,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     get width(): number {
       var bounds = this._getContentBounds();
-      var m = this._currentTransform;
+      var m = this._matrix;
       return (Math.abs(m.a) * bounds.width +
               Math.abs(m.c) * bounds.height) / 20;
     }
@@ -831,8 +879,8 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
-      var u = Math.abs(this._rotationCos);
-      var v = Math.abs(this._rotationSin);
+      var u = Math.abs(Math.cos(this._rotation));
+      var v = Math.abs(Math.sin(this._rotation));
       var bounds = this._getContentBounds();
       var baseWidth = u * bounds.width + v * bounds.height;
 
@@ -846,7 +894,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     get height(): number {
       var bounds = this._getContentBounds();
-      var m = this._currentTransform;
+      var m = this._matrix;
       return (Math.abs(m.b) * bounds.width +
               Math.abs(m.d) * bounds.height) / 20;
     }
@@ -857,8 +905,8 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
-      var u = Math.abs(this._rotationCos);
-      var v = Math.abs(this._rotationSin);
+      var u = Math.abs(Math.cos(this._rotation));
+      var v = Math.abs(Math.sin(this._rotation));
       var bounds = this._getContentBounds();
       var baseHeight = v * bounds.width + u * bounds.height;
 
@@ -928,18 +976,7 @@ module Shumway.AVM2.AS.flash.display {
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
     }
-    get transform(): flash.geom.Transform {
-      return new flash.geom.Transform(this);
-    }
-    set transform(value: flash.geom.Transform) {
-      //value = value;
-      if (value.matrix3D) {
-        this._current3dTransform = value.matrix3D;
-      } else {
-        this._setTransformMatrix(transform.matrix, true);
-      }
-      this._setColorTransform(value.colorTransform);
-    }
+
     get scale9Grid(): flash.geom.Rectangle {
       return this._scale9Grid;
     }
@@ -967,7 +1004,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     globalToLocal(point: flash.geom.Point): flash.geom.Point {
       //point = point;
-      var m = this._getConcatenatedTransform(null).clone();
+      var m = this._getConcatenatedMatrix(null).clone();
       m.invert();
       var p = m.transformCoords(point.x, point.y, true);
       p.toPixels();
@@ -975,7 +1012,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     localToGlobal(point: flash.geom.Point): flash.geom.Point {
       //point = point;
-      var m = this._getConcatenatedTransform(null);
+      var m = this._getConcatenatedMatrix(null);
       var p = m.transformCoords(point.x, point.y, true);
       p.toPixels();
       return p;
@@ -1001,7 +1038,7 @@ module Shumway.AVM2.AS.flash.display {
       //hitTestObject = hitTestObject;
 
       if (use_xy) {
-        var m = this._getConcatenatedTransform(null).clone();
+        var m = this._getConcatenatedMatrix(null).clone();
         m.invert();
         var point = m.transformCoords(x, y);
 
@@ -1053,5 +1090,6 @@ module Shumway.AVM2.AS.flash.display {
       var b2 = hitTestObject.getBounds(hitTestObject._stage);
       return b1.intersects(b2);
     }
+   */
   }
 }

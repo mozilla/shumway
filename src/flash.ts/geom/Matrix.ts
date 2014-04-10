@@ -29,11 +29,15 @@ module Shumway.AVM2.AS.flash.geom {
     
     // List of instance symbols to link.
     static bindings: string [] = null; // ["a", "b", "c", "d", "tx", "ty", "concat", "invert", "identity", "createBox", "createGradientBox", "rotate", "translate", "scale", "deltaTransformPoint", "transformPoint", "copyFrom", "setTo", "copyRowTo", "copyColumnTo", "copyRowFrom", "copyColumnFrom", "clone", "toString"];
-    
+
     constructor (a: number = 1, b: number = 0, c: number = 0, d: number = 1, tx: number = 0, ty: number = 0) {
-      a = +a; b = +b; c = +c; d = +d; tx = +tx; ty = +ty;
       false && super();
-      notImplemented("Dummy Constructor: public flash.geom.Matrix");
+      this.a = +a;
+      this.b = +b;
+      this.c = +c;
+      this.d = +d;
+      this.tx = +tx;
+      this.ty = +ty;
     }
 
     public a: number;
@@ -101,18 +105,28 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public concat(m: Matrix): void {
-      var ta: number = this.a;
-      var tb: number = this.b;
-      var tc: number = this.c;
-      var td: number = this.d;
-      var ttx: number = this.tx;
-      var tty: number = this.ty;
-      this.a = m.a * ta + m.c * tb;
-      this.b = m.b * ta + m.d * tb;
-      this.c = m.a * tc + m.c * td;
-      this.d = m.b * tc + m.d * td;
-      this.tx = m.a * ttx + m.c * tty + m.tx;
-      this.ty = m.b * ttx + m.d * tty + m.ty;
+      var a =  this.a * m.a;
+      var b =  0.0;
+      var c =  0.0;
+      var d =  this.d * m.d;
+      var tx = this.tx * m.a + m.tx;
+      var ty = this.ty * m.d + m.ty;
+
+      if (this.b !== 0.0 || this.c !== 0.0 || m.b !== 0.0 || m.c !== 0.0) {
+        a  += this.b  * m.c;
+        d  += this.c  * m.b;
+        b  += this.a  * m.b + this.b * m.d;
+        c  += this.c  * m.a + this.d * m.c;
+        tx += this.ty * m.c;
+        ty += this.tx * m.b;
+      }
+
+      this.a  = a;
+      this.b  = b;
+      this.c  = c;
+      this.d  = d;
+      this.tx = tx;
+      this.ty = ty;
     }
 
     public invert(): void {

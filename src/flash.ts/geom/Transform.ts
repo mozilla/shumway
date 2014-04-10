@@ -17,62 +17,62 @@
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import Errors = Shumway.AVM2.Errors;
 
   export class Transform extends ASNative {
-    
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static staticBindings: string [] = null; // [];
-    
-    // List of instance symbols to link.
     static bindings: string [] = null; // [];
 
-    private _target: flash.display.DisplayObject;
+    private _displayObject: flash.display.DisplayObject;
 
     constructor (displayObject: flash.display.DisplayObject) {
       false && super();
-      notImplemented("Dummy Constructor: public flash.geom.ColorTransform");
+      if (!displayObject) {
+        throwError("ArgumentError", Errors.NullPointerError, "displayObject");
+      }
+      this._displayObject = displayObject;
     }
 
     get matrix(): flash.geom.Matrix {
-      return this._target._currentTransform.clone();
+      return this._displayObject._matrix.clone();
     }
+
     set matrix(value: flash.geom.Matrix) {
-      //value = value;
-      this._target._setTransformMatrix(value, true);
+      this._displayObject._setMatrix(value, true);
     }
+
     get colorTransform(): flash.geom.ColorTransform {
-      return this._target._colorTransform.clone();
+      return this._displayObject._colorTransform.clone();
     }
+
     set colorTransform(value: flash.geom.ColorTransform) {
-      //value = value;
-      this._target._setColorTransform(value);
+      this._displayObject._setColorTransform(value);
     }
+
     get concatenatedMatrix(): flash.geom.Matrix {
-      return this._target._getConcatenatedTransform(null).clone();
+      var matrix = this._displayObject._getConcatenatedMatrix().clone();
+      if (!this._displayObject._stage) {
+        matrix.scale(1 / 5, 1 / 5);
+      }
+      return matrix;
     }
+
     get concatenatedColorTransform(): flash.geom.ColorTransform {
-      var colorTransform = new ColorTransform();
-      var currentNode = this._target;
-      do {
-        colorTransform.concat(currentNode._colorTransform);
-        currentNode = currentNode._parent;
-      } while (currentNode);
-      return colorTransform;
+      return this._displayObject._getConcatenatedColorTransform();
     }
+
     get pixelBounds(): flash.geom.Rectangle {
       notImplemented("public flash.geom.Transform::get pixelBounds"); return;
       // return this._pixelBounds;
     }
+
     get matrix3D(): flash.geom.Matrix3D {
-      var m = this._target._current3dTransform;
+      var m = this._displayObject._matrix3D;
       return m && m.clone();
     }
+
     set matrix3D(m: flash.geom.Matrix3D) {
       //m = m;
 
@@ -91,24 +91,23 @@ module Shumway.AVM2.AS.flash.geom {
         raw.asGetPublicProperty(13)
       );
       // this.matrix will reset this._target._current3DTransform
-      this._target._current3DTransform = m;
+      this._displayObject._current3DTransform = m;
     }
+
     getRelativeMatrix3D(relativeTo: flash.display.DisplayObject): flash.geom.Matrix3D {
       relativeTo = relativeTo;
       notImplemented("public flash.geom.Transform::getRelativeMatrix3D"); return;
     }
+
     get perspectiveProjection(): flash.geom.PerspectiveProjection {
       notImplemented("public flash.geom.Transform::get perspectiveProjection"); return;
       // return this._perspectiveProjection;
     }
+
     set perspectiveProjection(pm: flash.geom.PerspectiveProjection) {
       pm = pm;
       notImplemented("public flash.geom.Transform::set perspectiveProjection"); return;
       // this._perspectiveProjection = pm;
-    }
-    ctor(target: flash.display.DisplayObject): void {
-      assert(target);
-      this._target = target;
     }
   }
 }
