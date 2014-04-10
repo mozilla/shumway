@@ -326,11 +326,13 @@ module Shumway.AVM2.AS.flash.geom {
     public toTwips() {
       this.tx = (this.tx * 20) | 0;
       this.ty = (this.ty * 20) | 0;
+      return this;
     }
 
     public toPixels() {
       this.tx /= 20;
       this.ty /= 20;
+      return this;
     }
 
     public copyRowTo(row: number, vector3D: Vector3D): void {
@@ -395,6 +397,12 @@ module Shumway.AVM2.AS.flash.geom {
 
     public clone(): Matrix {
       return new Matrix(this.a, this.b, this.c, this.d, this.tx, this.ty);
+    }
+
+    public equals(other: Matrix): boolean {
+      return this.a === other.a   && this.b === other.b &&
+             this.c === other.c   && this.d === other.d &&
+             this.tx === other.tx && this.ty === other.ty;
     }
 
     public toString(): String {
