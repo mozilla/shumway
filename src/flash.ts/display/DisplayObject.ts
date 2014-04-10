@@ -65,7 +65,6 @@ module Shumway.AVM2.AS.flash.display {
      */
     Visible                                   = 0x0001,
 
-
     /**
      * Display object has invalid bounds.
      */
@@ -93,12 +92,12 @@ module Shumway.AVM2.AS.flash.display {
     InvalidPaint                              = 0x0040,
 
     /**
-     * Tobias: What's this?
+     * The display object's constructor has executed.
      */
     Constructed                               = 0x0080,
 
     /**
-     * Tobias: What's this?
+     * Display object has been removed by the timeline but it no longer recieves any event.
      */
     Destroyed                                 = 0x0100,
 
@@ -115,11 +114,6 @@ module Shumway.AVM2.AS.flash.display {
      * timeline mutations are ignored.
      */
     AnimatedByTimeline                        = 0x0400,
-
-    /**
-     * Tobias: Should this really be just true of if any of the other invalid bits are on?
-     */
-    Invalid                                   = 0x0800,
 
     /**
      * Indicates whether this display object should be cached as a bitmap. The display object
@@ -560,7 +554,7 @@ module Shumway.AVM2.AS.flash.display {
       return rectangle;
     }
 
-    private _getTransformedBounds(targetCoordinateSpace: DisplayObject, includeStroke: boolean = true, toPixels: boolean = false) {
+    private _getTransformedBounds(targetCoordinateSpace: DisplayObject, includeStroke: boolean = true) {
       var bounds = this._getContentBounds(includeStroke).clone();
       if (!targetCoordinateSpace || targetCoordinateSpace === this || bounds.isEmpty()) {
         return bounds.clone();
@@ -569,11 +563,7 @@ module Shumway.AVM2.AS.flash.display {
       var t = targetCoordinateSpace._getConcatenatedMatrix();
       t.invert();
       t.concat(this._getConcatenatedMatrix());
-      t.transformRectAABB(bounds);
-      if (toPixels) {
-        bounds.toPixels();
-      }
-      return bounds;
+      return t.transformRectAABB(bounds);
     }
 
     /**
@@ -583,12 +573,14 @@ module Shumway.AVM2.AS.flash.display {
       this._propagateFlags(DisplayObjectFlags.InvalidPaint, Direction.Upward);
     }
 
+    private _stopTimelineAnimation() {
+      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
+    }
+
     /**
      * Marks this object as having been moved.
      */
     private _invalidatePosition() {
-      // Tobias: Do we set this flag only if the assignment is successful?
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedMatrix, Direction.Downward);
       if (this._parent) {
         this._parent._invalidateBounds();
@@ -600,6 +592,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set x(value: number) {
+      this._stopTimelineAnimation();
       value = (value * 20) | 0;
       if (value === this._matrix.tx) {
         return;
@@ -613,6 +606,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set y(value: number) {
+      this._stopTimelineAnimation();
       value = (value * 20) | 0;
       if (value === this._matrix.ty) {
         return;
@@ -625,7 +619,11 @@ module Shumway.AVM2.AS.flash.display {
       return this._mask;
     }
 
+    /**
+     * Sets the mask for this display object. This does not affect the bounds.
+     */
     set mask(value: flash.display.DisplayObject) {
+      this._stopTimelineAnimation();
       if (this._mask === value || value === this) {
         return;
       }
@@ -638,7 +636,6 @@ module Shumway.AVM2.AS.flash.display {
         value._maskedObject = this;
       }
       this._invalidatePaint();
-      // Tobias: Does masking affect the bounds?
     }
 
     get transform(): flash.geom.Transform {
@@ -646,6 +643,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set transform(value: flash.geom.Transform) {
+      this._stopTimelineAnimation();
       if (value.matrix3D) {
         this._matrix3D = value.matrix3D;
       } else {
@@ -682,14 +680,17 @@ module Shumway.AVM2.AS.flash.display {
       return this._hasFlags(DisplayObjectFlags.Visible);
     }
 
+    /**
+     * Marks this display object as visible / invisible. This does not affect the bounds.
+     */
     set visible(value: boolean) {
+      this._stopTimelineAnimation();
       value = !!value;
       if (value === this._hasFlags(DisplayObjectFlags.Visible)) {
         return;
       }
       this._setFlags(DisplayObjectFlags.Visible);
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      // Tobias: Does visibility affect the bounds?
     }
 
     get z(): number {

@@ -231,7 +231,7 @@ module Shumway.AVM2.AS.flash.geom {
       );
     }
 
-    transformRectAABB (rectangle: Rectangle) {
+    transformRectAABB (rectangle: Rectangle): Rectangle {
       var a = this.a;
       var b = this.b;
       var c = this.c;
@@ -269,6 +269,7 @@ module Shumway.AVM2.AS.flash.geom {
 
       rectangle.y = y0 < y2 ? y0 : y2;
       rectangle.height = (y1 > y3 ? y1 : y3) - rectangle.y;
+      return rectangle;
     }
 
     getScaleX(): number {
