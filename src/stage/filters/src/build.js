@@ -54,7 +54,7 @@ var emccCmd = 'emcc';
 var emccArgs = [
   '-O2', SOURCES,
   '-o', EMCC_OUTPUT,
-  '-s', "EXPORTED_FUNCTIONS=['_allocMemory', '_freeMemory', '_preMultiplyAlpha','_unpreMultiplyAlpha','_blur','_dropshadow','_colormatrix','_colortransform']"
+  '-s', "EXPORTED_FUNCTIONS=['_allocMemory', '_freeMemory', '_preMultiplyAlpha','_unpreMultiplyAlpha','_blur','_dropshadow','_colormatrix']"
 ];
 if (process.platform == 'win32') {
   emccCmd = emSettings.PYTHON;

@@ -34,4 +34,6 @@ void compositeDestinationIn(unsigned char *dst, unsigned char *src, int width, i
 void compositeDestinationAtop(unsigned char *dst, unsigned char *src, int width, int height);
 
 void colormatrix(unsigned char *img, int width, int height, float *m);
+/*
 void colortransform(unsigned char *img, int width, int height, float *m);
+*/

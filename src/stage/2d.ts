@@ -308,15 +308,9 @@ module Shumway.Layers {
           Canvas2DStageRenderer.clearContext(cxformCanvasContext, frameBoundsAABB);
           self.renderFrame(cxformCanvasContext, frame, transform, frameBoundsAABB, null, target | RenderTarget.ColorTransform, options);
 
+          var ct = frame.colorTransform.getColorTransform();
           var image = cxformCanvasContext.getImageData(frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
-          var imageData = image.data;
-          var pimg = FILTERS.allocMemory(imageData.length + 32);
-          var pm = pimg + imageData.length;
-          FILTERS.HEAPU8.set(imageData, pimg);
-          FILTERS.HEAPF32.set(frame.colorTransform.getColorTransform(), pm >> 2);
-          FILTERS.colortransform(pimg, image.width, image.height, pm);
-          imageData.set(FILTERS.HEAPU8.subarray(pimg, pimg + imageData.length));
-          FILTERS.freeMemory(pimg);
+          FILTERS.colortransform(image.data, image.width, image.height, ct[0], ct[1], ct[2], ct[4], ct[5], ct[6]);
           cxformCanvasContext.putImageData(image, frameBoundsAABB.x, frameBoundsAABB.y);
 
           context.save();
