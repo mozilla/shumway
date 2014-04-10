@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Mozilla Foundation
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,12 +17,11 @@
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Font extends ASNative {
-    
-    // Called whenever the class is initialized.
+
     static classInitializer: any = null;
-    
+
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function(symbol) {
+    static initializer: any = function (symbol) {
       var s = symbol;
       if (s) {
         this._fontId = s.renderableId;
@@ -43,14 +42,11 @@ module Shumway.AVM2.AS.flash.text {
         Font.fontsBySymbolId[s.id] = this;
       }
     };
-    
-    // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static bindings: string [] = null; // [];
-    
-    constructor () {
+
+    static staticBindings: string [] = null;
+    static bindings: string [] = null;
+
+    constructor() {
     }
 
     private static fonts: Font[] = [];
@@ -59,31 +55,36 @@ module Shumway.AVM2.AS.flash.text {
     static getFontBySymbolId(id) {
       return this.fontsBySymbolId[id];
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    static enumerateFonts(enumerateDeviceFonts: boolean = false): any [] {
-      return this.fonts.slice();
-    }
-    static registerFont(font: ASClass): void {
-      somewhatImplemented('Font.registerFont');
-    }
-    
+
     private _fontId: string;
     private _fontName: string;
     private _fontStyle: string;
     private _fontType: string;
+
+    // JS -> AS Bindings
+
+
+    // AS -> JS Bindings
+    static enumerateFonts(enumerateDeviceFonts: boolean = false): any [] {
+      return Font.fonts.slice();
+    }
+
+    static registerFont(font: ASClass): void {
+      somewhatImplemented('Font.registerFont');
+    }
+
     get fontName(): string {
       return this._fontName;
     }
+
     get fontStyle(): string {
       return this._fontStyle;
     }
+
     get fontType(): string {
       return this._fontType;
     }
+
     hasGlyphs(str: string): boolean {
       somewhatImplemented('Font#hasGlyphs');
       return true;
