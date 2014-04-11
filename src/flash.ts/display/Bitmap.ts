@@ -45,6 +45,10 @@ module Shumway.AVM2.AS.flash.display {
     _smoothing: boolean;
     _bitmapData: flash.display.BitmapData;
 
+    _getContentBounds(includeStrokes: boolean = true): flash.geom.Rectangle {
+      return this._bitmapData.rect.toTwips();
+    }
+
     get pixelSnapping(): string {
       return this._pixelSnapping;
     }
@@ -68,7 +72,8 @@ module Shumway.AVM2.AS.flash.display {
     set bitmapData(value: flash.display.BitmapData) {
       //value = value;
       this._bitmapData = value;
-      this._invalidate();
+      this._invalidateBounds();
+      this._invalidatePaint();
     }
 
     ctor(bitmapData: flash.display.BitmapData, pixelSnapping: string, smoothing: boolean): void {

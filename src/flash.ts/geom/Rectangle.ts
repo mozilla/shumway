@@ -108,6 +108,10 @@ module Shumway.AVM2.AS.flash.geom {
       this.height = value.y;
     }
 
+    public get area(): number {
+      return this.width * this.height;
+    }
+
     public clone(): Rectangle {
       return new Rectangle(this.x, this.y, this.width, this.height);
     }

@@ -38,7 +38,7 @@ module Shumway.AVM2.AS.flash.display {
     
     // JS -> AS Bindings
 
-    
+
     // AS -> JS Bindings
     
     _width: number /*int*/;
@@ -48,31 +48,61 @@ module Shumway.AVM2.AS.flash.display {
     _disposed: boolean;
     _fillColor: number;
     _locked: boolean;
-    _pixelData: Uint8Array;
-    _pixels: Uint32Array;
+    _pixelData: Uint32Array;
 
     private _getPixelData(rect: flash.geom.Rectangle): Uint32Array {
-      var data = new Uint32Array(rect.width * rect.height);
+      var output = new Uint32Array(rect.area);
       var xMin = rect.x;
       var xMax = rect.x + rect.width;
       var yMin = rect.y;
       var yMax = rect.y + rect.height;
-      var i = 0;
-      for (var y = yMin; y < yMax; y++) {
-        for (var x = xMin; x < xMax; x++) {
-          data[i] = this._pixels[y * this._width + x];
+
+      var width = this._width;
+      var data = this._pixelData;
+
+      if (rect.width < 64) {
+        var i = 0;
+        for (var y = yMin; y < yMax; y++) {
+          var rowOffset = width * y;
+          for (var x = xMin; x < xMax; x++) {
+            output[i++] = data[rowOffset + x];
+          }
+        }
+      } else {
+        for (var y = yMin; y < yMax; y++) {
+          var offset = width * y + xMin;
+          output.set(data.subarray(offset, offset + width), rect.width * y);
         }
       }
-      return data;
+      return output;
     }
 
-    private _putPixelData(rect: flash.geom.Rectangle, data: Uint32Array) {
-      var i = 0;
-      for (var y = rect.y; y < rect.height; y++) {
-        for (var x = rect.x; x < rect.width; x++) {
-          this._pixels[y * this._width + x] = data[i++];
+    private _putPixelDataWIP(rect: flash.geom.Rectangle, input: Uint32Array) {
+      assert(input.length >= rect.area / 4);
+
+      var xMin = rect.x;
+      var xMax = rect.x + rect.width;
+      var yMin = rect.y;
+      var yMax = rect.y + rect.height;
+
+      var width = this._width;
+      var data = this._pixelData;
+
+      if (rect.width < 64) {
+        var i = 0;
+        for (var y = yMin; y < yMax; y++) {
+          //var rowOffset = width * y;
+          //for (var x = xMin; x < xMax; x++) {
+          //  data[i++] = data[rowOffset + x];
+          //}
         }
+      } else {
+        //for (var y = yMin; y < yMax; y++) {
+          //var offset = width * y + xMin;
+          //data.set(data.subarray(offset, offset + width), rect.width * y);
+        //}
       }
+      return data;
     }
 
     get width(): number /*int*/ {
@@ -83,8 +113,12 @@ module Shumway.AVM2.AS.flash.display {
       return this._height;
     }
 
+    get rect(): flash.geom.Rectangle {
+      return new flash.geom.Rectangle(0, 0, this._width, this._height);
+    }
+
     get transparent(): boolean {
-      this._transparent;
+      return this._transparent;
     }
 
     clone(): flash.display.BitmapData {
@@ -95,23 +129,23 @@ module Shumway.AVM2.AS.flash.display {
 
     getPixel(x: number /*int*/, y: number /*int*/): number /*uint*/ {
       x = x | 0; y = y | 0;
-      return this._pixels[y * this._width + x] >> 8;
+      return this._pixelData[this._width * y + x] >> 8;
     }
 
     getPixel32(x: number /*int*/, y: number /*int*/): number /*uint*/ {
       x = x | 0; y = y | 0;
-      return this._pixels[y * this._width + x] | 0;
+      return this._pixelData[this._width * y + x] | 0;
     }
 
     setPixel(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
       x = x | 0; y = y | 0; color = color >>> 0;
-      var i = y * this._width + x;
-      this._pixels[i] = (color << 8) | (this._pixels[i] & 0xff);
+      var i = this._width * y + x;
+      this._pixelData[i] = (color << 8) | (this._pixelData[i] & 0xff);
     }
 
     setPixel32(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
       x = x | 0; y = y | 0;
-      this._pixels[y * this._width + x] = color >>> 0;
+      this._pixelData[this._width * y + x] = color >>> 0;
     }
 
     applyFilter(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, filter: flash.filters.BitmapFilter): void {
@@ -155,7 +189,7 @@ module Shumway.AVM2.AS.flash.display {
       color = color >>> 0;
       for (var y = rect.y; y < rect.height; y++) {
         for (var x = rect.x; x < rect.width; x++) {
-          this._pixels[y * this._width + x] = color;
+          this._pixelData[this._width * y + x] = color;
         }
       }
     }
@@ -182,12 +216,12 @@ module Shumway.AVM2.AS.flash.display {
 
     copyPixelsToByteArray(rect: flash.geom.Rectangle, data: flash.utils.ByteArray): void {
       //rect = rect; data = data;
-      data._view().set(new Uint8Array(this._getPixelData(rect)));
+      data.writeRawBytes(new Uint8Array(this._getPixelData(rect)));
     }
 
-    getVector(rect: flash.geom.Rectangle): ASVector<any> {
+    getVector(rect: flash.geom.Rectangle): Uint32Vector {
       //rect = rect;
-      var outputVector = new Uint32Vector(rect.width * rect.height);
+      var outputVector = new Uint32Vector(rect.area);
       outputVector._view().set(this._getPixelData(rect));
       return outputVector;
     }
@@ -223,12 +257,12 @@ module Shumway.AVM2.AS.flash.display {
 
     setPixels(rect: flash.geom.Rectangle, inputByteArray: flash.utils.ByteArray): void {
       //rect = rect; inputByteArray = inputByteArray;
-      this._putPixelData(rect, new Uint32Array(inputByteArray._view()));
+      this._putPixelDataWIP(rect, new Uint32Array(inputByteArray.readRawBytes()));
     }
 
-    setVector(rect: flash.geom.Rectangle, inputVector: ASVector<any>): void {
+    setVector(rect: flash.geom.Rectangle, inputVector: Uint32Vector): void {
       //rect = rect; inputVector = inputVector;
-      this._putPixelData(rect, inputVector._view());
+      this._putPixelDataWIP(rect, inputVector._view());
     }
 
     threshold(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, operation: string, threshold: number /*uint*/, color: number /*uint*/ = 0, mask: number /*uint*/ = 4294967295, copySource: boolean = false): number /*uint*/ {

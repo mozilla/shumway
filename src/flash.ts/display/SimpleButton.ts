@@ -173,7 +173,8 @@ module Shumway.AVM2.AS.flash.display {
       if (this._stage) {
         // TODO dispatch addedToStage event
       }
-      this._invalidate();
+      this._invalidateBounds();
+      this._invalidatePaint();
     }
   }
 }

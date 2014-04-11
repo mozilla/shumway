@@ -143,10 +143,6 @@ module Shumway.AVM2.AS {
         this._dataView   = new DataView(this._buffer);
       }
 
-      _view() {
-        return this._i8View.subarray(this._position, this._position + this._length);
-      }
-
       getBytes(): Uint8Array {
         return new Uint8Array(this._buffer, 0, this._length);
       }
