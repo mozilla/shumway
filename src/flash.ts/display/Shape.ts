@@ -24,7 +24,6 @@ module Shumway.AVM2.AS.flash.display {
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: DisplayObject) {
       var self: Shape = this;
-
       self._graphics = symbol ? symbol.graphics : new flash.display.Graphics();
     };
     

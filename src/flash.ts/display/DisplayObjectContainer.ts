@@ -47,21 +47,24 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public DisplayObjectContainer::get textSnapshot"); return;
       // return this._textSnapshot;
     }
+
     get tabChildren(): boolean {
       return this._tabChildren;
     }
+
     set tabChildren(enable: boolean) {
       enable = !!enable;
-
       var old = this._tabChildren;
       this._tabChildren = enable;
       if (old !== enable) {
         this.dispatchEvent(new Event(Event.TAB_CHILDREN_CHANGE, true));
       }
     }
+
     get mouseChildren(): boolean {
       return this._mouseChildren;
     }
+
     set mouseChildren(enable: boolean) {
       this._mouseChildren = !!enable;
     }
@@ -70,34 +73,30 @@ module Shumway.AVM2.AS.flash.display {
     }
     addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
       index = index | 0;
-
       if (child === this) {
         throwError('ArgumentError', Errors.CantAddSelfError);
       }
       if (child instanceof DisplayObjectContainer && (<DisplayObjectContainer>child).contains(this)) {
         throwError('ArgumentError', Errors.CantAddParentError);
       }
+      var children = this._children;
+      if (index < 0 || index > children.length) {
+        throwError('RangeError', Errors.ParamRangeError);
+      }
+
       // Tobias: I forgot, what happens if we have larger cycles?
       if (child._parent === this) {
         this.setChildIndex(child, index);
         return child;
       }
 
-      var children = this._children;
-
-      if (index < 0 || index > children.length) {
-        throwError('RangeError', Errors.ParamRangeError);
-      }
-
       if (child._parent) {
         child._parent.removeChild(child);
       }
-
       for (var i = children.length; i && i > index; i--) {
         children[i - 1]._index++;
       }
       children.splice(index, 0, child);
-
       child._index = index;
       child._removeFlags(DisplayObjectFlags.OwnedByTimeline);
       child._parent = this;
@@ -111,22 +110,17 @@ module Shumway.AVM2.AS.flash.display {
     }
     removeChildAt(index: number): DisplayObject {
       index = index | 0;
-
       var children = this._children;
-
       if (index < 0 || index >= children.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
       var child = children[index];
-
       child.dispatchEvent(new Event(Event.REMOVED, true));
-
       for (var i = children.length; i && i > index; i--) {
         children[i - 1]._index--;
       }
       children.splice(index, 1);
-
       child._index = -1;
       child._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
       child._parent = null;
@@ -142,50 +136,39 @@ module Shumway.AVM2.AS.flash.display {
     }
     setChildIndex(child: DisplayObject, index: number /*int*/): void {
       index = index | 0;
-
+      var children = this._children;
+      if (index < 0 || index > children.length) {
+        throwError('RangeError', Errors.ParamRangeError);
+      }
       var currentIndex = this.getChildIndex(child);
-
       if (currentIndex === index) {
         return;
       }
 
-      var children = this._children;
-
-      if (index < 0 || index > children.length) {
-        throwError('RangeError', Errors.ParamRangeError);
-      }
-
       children.splice(currentIndex, 1);
       children.splice(index, 0, child);
-
       var i = currentIndex < index ? currentIndex : index;
       while (i < children.length) {
         children[i]._index = i++;
       }
-
       child._removeFlags(DisplayObjectFlags.OwnedByTimeline);
       child._invalidatePosition();
     }
     getChildAt(index: number): DisplayObject {
       index = index | 0;
-
       var children = this._children;
-
       if (index < 0 || index > children.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
       var child = children[index];
-
       if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
         return null;
       }
-
       return child;
     }
     getChildByName(name: string): DisplayObject {
       name = asCoerceString(name);
-
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
@@ -211,24 +194,24 @@ module Shumway.AVM2.AS.flash.display {
       }
       return objectsUnderPoint;
     }
+
     areInaccessibleObjectsUnderPoint(point: flash.geom.Point): boolean {
       point = point;
       notImplemented("public DisplayObjectContainer::areInaccessibleObjectsUnderPoint"); return;
     }
     contains(child: DisplayObject): boolean {
-      var currentNode = this;
+      var node = this;
       do {
-        if (currentNode === child) {
+        if (node === child) {
           return true;
         }
-        currentNode = currentNode._parent;
-      } while (currentNode);
+        node = node._parent;
+      } while (node);
     }
+
     swapChildrenAt(index1: number /*int*/, index2: number /*int*/): void {
       index1 = index1 | 0; index2 = index2 | 0;
-
       var children = this._children;
-
       if (index1 < 0 || index1 > children.length ||
           index2 < 0 || index2 > children.length) {
         throwError('RangeError', Errors.ParamRangeError);

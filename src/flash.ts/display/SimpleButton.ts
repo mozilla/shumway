@@ -66,26 +66,33 @@ module Shumway.AVM2.AS.flash.display {
     get useHandCursor(): boolean {
       return this._useHandCursor;
     }
+
     set useHandCursor(value: boolean) {
       this._useHandCursor = !!value;
     }
+
     get enabled(): boolean {
       return this._enabled;
     }
+
     set enabled(value: boolean) {
       this._enabled = !!value;
     }
+
     get trackAsMenu(): boolean {
       return this._trackAsMenu;
     }
+
     set trackAsMenu(value: boolean) {
       value = !!value;
       notImplemented("public flash.display.SimpleButton::set trackAsMenu"); return;
       // this._trackAsMenu = value;
     }
+
     get upState(): flash.display.DisplayObject {
       return this._upState;
     }
+
     set upState(value: flash.display.DisplayObject) {
       //value = value;
       var old = this._upState;
@@ -97,9 +104,11 @@ module Shumway.AVM2.AS.flash.display {
         this._updateButton();
       }
     }
+
     get overState(): flash.display.DisplayObject {
       return this._overState;
     }
+
     set overState(value: flash.display.DisplayObject) {
       //value = value;
       var old = this._overState;
@@ -111,9 +120,11 @@ module Shumway.AVM2.AS.flash.display {
         this._updateButton();
       }
     }
+
     get downState(): flash.display.DisplayObject {
       return this._downState;
     }
+
     set downState(value: flash.display.DisplayObject) {
       //value = value;
       var old = this._downState;
@@ -125,13 +136,16 @@ module Shumway.AVM2.AS.flash.display {
         this._updateButton();
       }
     }
+
     get hitTestState(): flash.display.DisplayObject {
       return this._hitTestState;
     }
+
     set hitTestState(value: flash.display.DisplayObject) {
       //value = value;
       this._hitTestState = value;
     }
+
     get soundTransform(): flash.media.SoundTransform {
       notImplemented("public flash.display.SimpleButton::get soundTransform"); return;
       // return this._soundTransform;
@@ -141,6 +155,7 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.SimpleButton::set soundTransform"); return;
       // this._soundTransform = sndTransform;
     }
+
     _updateButton(): void {
       var state;
       if (this._mouseOver) {
@@ -148,15 +163,12 @@ module Shumway.AVM2.AS.flash.display {
       } else {
         state = this._upState;
       }
-
       if (state === this._currentState) {
         return;
       }
-
       if (this._currentState) {
         // TODO dispatch removedFromStage event
       }
-
       this._currentState = state;
       if (this._stage) {
         // TODO dispatch addedToStage event

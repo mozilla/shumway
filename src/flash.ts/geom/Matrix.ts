@@ -184,7 +184,7 @@ module Shumway.AVM2.AS.flash.geom {
         var ttx: number = this.tx;
         var tty: number = this.ty;
         this.a = ta * u - tb * v;
-        this. b = ta * v + tb * u;
+        this.b = ta * v + tb * u;
         this.c = tc * u - td * v;
         this.d = tc * v + td * u;
         this.tx = ttx * u - tty * v;
@@ -324,13 +324,13 @@ module Shumway.AVM2.AS.flash.geom {
       this.ty = +tya;
     }
 
-    public toTwips() {
+    public toTwips(): Matrix {
       this.tx = (this.tx * 20) | 0;
       this.ty = (this.ty * 20) | 0;
       return this;
     }
 
-    public toPixels() {
+    public toPixels(): Matrix {
       this.tx /= 20;
       this.ty /= 20;
       return this;
