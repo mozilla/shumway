@@ -155,8 +155,6 @@ module Shumway.AVM2.AS.flash.display {
       self._scaleX = 1;
       self._scaleY = 1;
       self._scaleZ = 1;
-      self._mouseX = 0;
-      self._mouseY = 0;
       self._rotation = 0;
       self._rotationX = 0;
       self._rotationY = 0;
@@ -195,7 +193,6 @@ module Shumway.AVM2.AS.flash.display {
         DisplayObjectFlags.InvalidBounds         |
         DisplayObjectFlags.Constructed           |
         DisplayObjectFlags.Destroyed             |
-        DisplayObjectFlags.Invalid               |
         DisplayObjectFlags.OwnedByTimeline       |
         DisplayObjectFlags.InvalidMatrix
       );
@@ -203,15 +200,10 @@ module Shumway.AVM2.AS.flash.display {
       // TODO move to InteractiveObject
       self._mouseOver = false;
 
-      // TODO move to DisplayObjectContainer
-      self._children = [];
-      self._isContainer = false;
-      self._mouseChildren = true;
-
       if (symbol) {
         self._root        = symbol._root      || self._root;
         self._stage       = symbol._stage     || self._stage;
-        self._name        = symbol._name      || self._stage;
+        self._name        = symbol._name      || self._name;
         self._parent      = symbol._parent    || self._parent;
         self._clipDepth   = symbol._clipDepth || self._clipDepth;
         self._blendMode   = symbol._blendMode || self._blendMode;
@@ -229,10 +221,10 @@ module Shumway.AVM2.AS.flash.display {
           self._setFlags(DisplayObjectFlags.AnimatedByTimeline);
         }
 
-        if (symbol.bbox) {
-          var bbox = symbol.bbox;
-          self._bounds.setTo(bbox.xMin, bbox.yMin, bbox.xMax - bbox.xMin, bbox.yMax - bbox.yMin);
-        }
+//        if (symbol.bbox) {
+//          var bbox = symbol.bbox;
+//          self._bounds.setTo(bbox.xMin, bbox.yMin, bbox.xMax - bbox.xMin, bbox.yMax - bbox.yMin);
+//        }
 
         if (symbol._matrix) {
           this._setMatrix(symbol._matrix, false);
@@ -304,8 +296,9 @@ module Shumway.AVM2.AS.flash.display {
         if (this instanceof flash.display.DisplayObjectContainer) {
           var children = (<flash.display.DisplayObjectContainer>this)._children;
           for (var i = 0; i < children.length; i++) {
-            if (!children[i]._hasFlags(flags)) {
-              children[i]._propagateFlags(flags);
+            var child = children[i];
+            if (!child._hasFlags(flags)) {
+              child._propagateFlags(flags, Direction.Downward);
             }
           }
         }
@@ -357,7 +350,6 @@ module Shumway.AVM2.AS.flash.display {
      */
     _bounds: flash.geom.Rectangle;
 
-    _children: flash.display.DisplayObject [];
     _clipDepth: number;
     _matrix: flash.geom.Matrix;
     _concatenatedMatrix: flash.geom.Matrix;
@@ -367,6 +359,10 @@ module Shumway.AVM2.AS.flash.display {
     _depth: number;
     _graphics: flash.display.Graphics;
     _hitTarget: flash.display.DisplayObject;
+
+    /**
+     * Index of this display object within its container's children
+     */
     _index: number;
     _isContainer: boolean;
     _level: number;
@@ -540,13 +536,9 @@ module Shumway.AVM2.AS.flash.display {
         }
         if (this instanceof flash.display.DisplayObjectContainer) {
           var container: flash.display.DisplayObjectContainer = <flash.display.DisplayObjectContainer>this;
+          var children = container._children;
           for (var i = 0; i < children.length; i++) {
-            var child = children[i];
-            if (includeStrokes) {
-              rectangle.unionWith(child.getBounds(this));
-            } else {
-              rectangle.unionWith(child.getRect(this));
-            }
+            rectangle.unionWith(children[i]._getTransformedBounds(this, includeStrokes));
           }
         }
         this._removeFlags(DisplayObjectFlags.InvalidBounds);
@@ -580,7 +572,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Marks this object as having been moved.
      */
-    private _invalidatePosition() {
+    _invalidatePosition() {
       this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedMatrix, Direction.Downward);
       if (this._parent) {
         this._parent._invalidateBounds();
@@ -647,7 +639,7 @@ module Shumway.AVM2.AS.flash.display {
       if (value.matrix3D) {
         this._matrix3D = value.matrix3D;
       } else {
-        this._setMatrix(transform.matrix, true);
+        this._setMatrix(value.matrix, true);
       }
       this._setColorTransform(value.colorTransform);
     }
@@ -696,10 +688,19 @@ module Shumway.AVM2.AS.flash.display {
     get z(): number {
       return this._z;
     }
+
     set z(value: number) {
       value = +value;
       notImplemented("public flash.display.DisplayObject::set z"); return;
       // this._z = value;
+    }
+
+    getBounds(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
+      return this._getTransformedBounds(targetCoordinateSpace, true).toPixels();
+    }
+
+    getRect(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
+      return this._getTransformedBounds(targetCoordinateSpace, false).toPixels();
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -1002,14 +1003,6 @@ module Shumway.AVM2.AS.flash.display {
       var p = m.transformCoords(point.x, point.y, true);
       p.toPixels();
       return p;
-    }
-    getBounds(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
-      //targetCoordinateSpace = targetCoordinateSpace;
-      return this._getTransformedBounds(targetCoordinateSpace, true, true);
-    }
-    getRect(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
-      //targetCoordinateSpace = targetCoordinateSpace;
-      return this._getTransformedBounds(targetCoordinateSpace, false, true);
     }
     globalToLocal3D(point: flash.geom.Point): flash.geom.Vector3D {
       point = point;

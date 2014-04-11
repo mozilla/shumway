@@ -20,48 +20,31 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   import Event = flash.events.Event;
+  // import DisplayObject = DisplayObject;
 
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
-    
-    // Called whenever the class is initialized.
+    static bindings: string [] = null;
+    static staticBindings: string [] = null;
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
-      var self: DisplayObjectContainer = this;
-
-      self._tabChildren = true;
-      self._mouseChildren = true;
-
-      self._children = [];
-    };
-    
-    // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static bindings: string [] = null; // [];
-    
-    constructor () {
-      false && super();
-      notImplemented("Dummy Constructor: public flash.display.DisplayObjectContainer");
-    }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
+    static initializer: any = null;
 
     _tabChildren: boolean;
     _mouseChildren: boolean;
+    _children: DisplayObject [];
 
-    _children: flash.display.DisplayObject [];
+    constructor () {
+      false && super();
+      this._tabChildren = true;
+      this._mouseChildren = true;
+      this._children = [];
+    }
 
-    get numChildren(): number /*int*/ {
+    get numChildren(): number {
       return this._children.length;
     }
+
     get textSnapshot(): flash.text.TextSnapshot {
-      notImplemented("public flash.display.DisplayObjectContainer::get textSnapshot"); return;
+      notImplemented("public DisplayObjectContainer::get textSnapshot"); return;
       // return this._textSnapshot;
     }
     get tabChildren(): boolean {
@@ -82,11 +65,10 @@ module Shumway.AVM2.AS.flash.display {
     set mouseChildren(enable: boolean) {
       this._mouseChildren = !!enable;
     }
-    addChild(child: flash.display.DisplayObject): flash.display.DisplayObject {
+    addChild(child: DisplayObject): DisplayObject {
       return this.addChildAt(child, this._children.length);
     }
-    addChildAt(child: flash.display.DisplayObject, index: number /*int*/): flash.display.DisplayObject {
-      //child = child;
+    addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
       index = index | 0;
 
       if (child === this) {
@@ -117,18 +99,17 @@ module Shumway.AVM2.AS.flash.display {
       children.splice(index, 0, child);
 
       child._index = index;
-      child._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
+      child._removeFlags(DisplayObjectFlags.OwnedByTimeline);
       child._parent = this;
       child._stage = this._stage;
-      child._invalidateTransform();
+      child._invalidatePosition();
       child.dispatchEvent(new Event(Event.ADDED, true));
       return child;
     }
-    removeChild(child: flash.display.DisplayObject): flash.display.DisplayObject {
-      //child = child
+    removeChild(child: DisplayObject): DisplayObject {
       return this.removeChildAt(this.getChildIndex(child));
     }
-    removeChildAt(index: number /*int*/): flash.display.DisplayObject {
+    removeChildAt(index: number): DisplayObject {
       index = index | 0;
 
       var children = this._children;
@@ -150,21 +131,16 @@ module Shumway.AVM2.AS.flash.display {
       child._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
       child._parent = null;
       child._stage = null;
-      // Tobias: How come we have to invalidate the transform if we just remove the object from the list?
-      // I can see that the concatenated matrix would be different, but the transform?
-      child._invalidateTransform();
+      child._invalidatePosition();
       return child;
     }
-    getChildIndex(child: flash.display.DisplayObject): number /*int*/ {
-      //child = child
-
+    getChildIndex(child: DisplayObject): number /*int*/ {
       if (child._parent !== this) {
         throwError('ArgumentError', Errors.NotAChildError);
       }
       return child._index;
     }
-    setChildIndex(child: flash.display.DisplayObject, index: number /*int*/): void {
-      //child = child;
+    setChildIndex(child: DisplayObject, index: number /*int*/): void {
       index = index | 0;
 
       var currentIndex = this.getChildIndex(child);
@@ -188,9 +164,9 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       child._removeFlags(DisplayObjectFlags.OwnedByTimeline);
-      child._invalidate();
+      child._invalidatePosition();
     }
-    getChildAt(index: number /*int*/): flash.display.DisplayObject {
+    getChildAt(index: number): DisplayObject {
       index = index | 0;
 
       var children = this._children;
@@ -207,7 +183,7 @@ module Shumway.AVM2.AS.flash.display {
 
       return child;
     }
-    getChildByName(name: string): flash.display.DisplayObject {
+    getChildByName(name: string): DisplayObject {
       name = asCoerceString(name);
 
       var children = this._children;
@@ -219,9 +195,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       return null;
     }
-    getObjectsUnderPoint(point: flash.geom.Point): flash.display.DisplayObject [] {
-      //point = point;
-
+    getObjectsUnderPoint(point: flash.geom.Point): DisplayObject [] {
       var children = this._children;
       var objectsUnderPoint = [];
       for (var i = 0; i < children.length; i++) {
@@ -239,11 +213,9 @@ module Shumway.AVM2.AS.flash.display {
     }
     areInaccessibleObjectsUnderPoint(point: flash.geom.Point): boolean {
       point = point;
-      notImplemented("public flash.display.DisplayObjectContainer::areInaccessibleObjectsUnderPoint"); return;
+      notImplemented("public DisplayObjectContainer::areInaccessibleObjectsUnderPoint"); return;
     }
-    contains(child: flash.display.DisplayObject): boolean {
-      //child = child
-
+    contains(child: DisplayObject): boolean {
       var currentNode = this;
       do {
         if (currentNode === child) {
@@ -256,14 +228,13 @@ module Shumway.AVM2.AS.flash.display {
       index1 = index1 | 0; index2 = index2 | 0;
 
       var children = this._children;
-      var numChildren = children.length;
 
-      if (index1 < 0 || index1 > numChildren ||
-          index2 < 0 || index2 > numChildren)
-      {
+      if (index1 < 0 || index1 > children.length ||
+          index2 < 0 || index2 > children.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
+      // Tobias: Do we need to remove timeline ownership here?
       if (index1 === index2) {
         return;
       }
@@ -273,24 +244,19 @@ module Shumway.AVM2.AS.flash.display {
       children[index2] = child1;
       child1._index = index2;
       child1._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
-      child1._invalidate();
+      child1._invalidatePosition();
       children[index1] = child2;
       child2._index = index1;
       child2._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
-      child2._invalidate();
+      child2._invalidatePosition();
     }
-    swapChildren(child1: flash.display.DisplayObject, child2: flash.display.DisplayObject): void {
-      //child1 = child1; child2 = child2;
+    swapChildren(child1: DisplayObject, child2: DisplayObject): void {
       this.swapChildrenAt(this.getChildIndex(child1), this.getChildIndex(child2));
     }
-    removeChildren(beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647): void {
+    removeChildren(beginIndex: number = 0, endIndex: number = 2147483647): void {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
 
-      if (beginIndex < 0 ||
-          endIndex < 0 ||
-          endIndex < beginIndex ||
-          endIndex > this.numChildren - 1)
-      {
+      if (beginIndex < 0 || endIndex < 0 || endIndex < beginIndex || endIndex > this._children.length - 1) {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
