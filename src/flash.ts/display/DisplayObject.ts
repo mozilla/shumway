@@ -548,6 +548,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         if (this instanceof flash.display.DisplayObjectContainer) {
           var container: flash.display.DisplayObjectContainer = <flash.display.DisplayObjectContainer>this;
+          var children = container._children;
           for (var i = 0; i < children.length; i++) {
             var child = children[i];
             if (includeStrokes) {
@@ -651,7 +652,7 @@ module Shumway.AVM2.AS.flash.display {
       if (value.matrix3D) {
         this._matrix3D = value.matrix3D;
       } else {
-        this._setMatrix(transform.matrix, true);
+        this._setMatrix(value.matrix, true);
       }
       this._setColorTransform(value.colorTransform);
     }

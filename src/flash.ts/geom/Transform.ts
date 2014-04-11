@@ -89,8 +89,8 @@ module Shumway.AVM2.AS.flash.geom {
         raw.asGetPublicProperty(12),
         raw.asGetPublicProperty(13)
       );
-      // this.matrix will reset this._target._current3DTransform
-      this._displayObject._current3DTransform = m;
+      // this.matrix will reset this._target._matrix3D
+      this._displayObject._matrix3D = m;
     }
 
     getRelativeMatrix3D(relativeTo: flash.display.DisplayObject): flash.geom.Matrix3D {
