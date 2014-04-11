@@ -300,40 +300,69 @@ module Shumway.Layers {
           return VisitorFlags.Skip;
         }
 
-        if (frame.colorTransform && !(target & RenderTarget.ColorTransform)) {
-          var cxformCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
+        var hasFilters: boolean = (frame.filters.length > 0 && !(target & RenderTarget.Filters));
+        var hasColorTransform: boolean = (frame.colorTransform && !(target & RenderTarget.ColorTransform));
+        var hasBlendMode: boolean = (frame.blendMode > 0 && !(target & RenderTarget.BlendMode));
+
+        if (hasFilters || hasColorTransform || hasBlendMode) {
+          // TODO
+          // - cache bitmap on frame
+          // - apply filter bounds
+          // - apply filters
+          // - fix alpha blending
+          var scratchContext = self.createScratchContext(context);
           var frameBoundsAABB = frame.getBounds();
           transform.transformRectangleAABB(frameBoundsAABB);
           frameBoundsAABB.intersect(self._viewport);
-          Canvas2DStageRenderer.clearContext(cxformCanvasContext, frameBoundsAABB);
-          self.renderFrame(cxformCanvasContext, frame, transform, frameBoundsAABB, null, target | RenderTarget.ColorTransform, options);
 
-          var ct = frame.colorTransform.getColorTransform();
-          var image = cxformCanvasContext.getImageData(frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
-          FILTERS.colortransform(image.data, image.width, image.height, ct[0], ct[1], ct[2], ct[4], ct[5], ct[6]);
-          cxformCanvasContext.putImageData(image, frameBoundsAABB.x, frameBoundsAABB.y);
+          var needsImageData: boolean = false;
+          if (hasFilters) {
+            target |= RenderTarget.Filters;
+            needsImageData = true;
+          }
+          if (hasColorTransform) {
+            target |= RenderTarget.ColorTransform;
+            needsImageData = true;
+          }
+          if (hasBlendMode) {
+            target |= RenderTarget.BlendMode;
+          }
+
+          self.renderFrame(scratchContext, frame, transform, frameBoundsAABB, null, target, options);
+
+          var image;
+          var imageData;
+          if (needsImageData) {
+            image = scratchContext.getImageData(frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
+            imageData = image.data;
+          }
+
+          if (hasFilters) {
+            //for (var i = 0, n = filters.length; i < n; i++) {
+            //  filters[i].applyFilter(imageData);
+            //}
+          }
+
+          if (hasColorTransform) {
+            var ct = frame.colorTransform.getColorTransform();
+            FILTERS.colortransform(imageData, image.width, image.height, ct[0], ct[1], ct[2], ct[4], ct[5], ct[6]);
+          }
+
+          if (needsImageData) {
+            scratchContext.putImageData(image, frameBoundsAABB.x, frameBoundsAABB.y);
+          }
 
           context.save();
           context.setTransform(1, 0, 0, 1, 0, 0);
-          context.drawImage(cxformCanvasContext.canvas, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
-          context.restore();
-          context.restore();
-          return VisitorFlags.Skip;
-        }
 
-        if (frame.blendMode > 0 && !(target & RenderTarget.BlendMode)) {
-          var blendCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
-          var frameBoundsAABB = frame.getBounds();
-          transform.transformRectangleAABB(frameBoundsAABB);
-          frameBoundsAABB.intersect(self._viewport);
-          Canvas2DStageRenderer.clearContext(blendCanvasContext, frameBoundsAABB);
-          self.renderFrame(blendCanvasContext, frame, transform, frameBoundsAABB, null, target | RenderTarget.BlendMode, options);
-          context.save();
-          context.setTransform(1, 0, 0, 1, 0, 0);
-          context.globalCompositeOperation = self.getCompositeOperation(frame.blendMode);
-          context.drawImage(blendCanvasContext.canvas, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
+          if (hasBlendMode) {
+            context.globalCompositeOperation = self.getCompositeOperation(frame.blendMode);
+          }
+
+          context.drawImage(scratchContext.canvas, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
           context.restore();
           context.restore();
+
           return VisitorFlags.Skip;
         }
 
