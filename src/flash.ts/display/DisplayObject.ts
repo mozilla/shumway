@@ -176,6 +176,7 @@ module Shumway.AVM2.AS.flash.display {
       self._name = 'instance' + DisplayObject._instances.length;
       self._parent = null;
       self._mask = null;
+
       self._z = 0;
       self._scaleX = 1;
       self._scaleY = 1;
@@ -184,6 +185,7 @@ module Shumway.AVM2.AS.flash.display {
       self._rotationX = 0;
       self._rotationY = 0;
       self._rotationZ = 0;
+
       self._alpha = 1;
       self._width = 0;
       self._height = 0;
@@ -451,6 +453,16 @@ module Shumway.AVM2.AS.flash.display {
       return false;
     }
 
+    private static _clampRotation(value): number {
+      value %= 360;
+      if (value > 180) {
+        value -= 360;
+      } else if (value < -180) {
+        value += 360;
+      }
+      return value;
+    }
+
     /**
      * Used as a temporary array to avoid allocations.
      */
@@ -462,7 +474,7 @@ module Shumway.AVM2.AS.flash.display {
     private static _getAncestors(node: DisplayObject, last: DisplayObject = null) {
       var path = DisplayObject._path;
       path.length = 0;
-      while (node && node === last) {
+      while (node && node !== last) {
         path.push(node);
         node = node._parent;
       }
@@ -611,8 +623,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set x(value: number) {
-      this._stopTimelineAnimation();
       value = (value * 20) | 0;
+      this._stopTimelineAnimation();
       if (value === this._matrix.tx) {
         return;
       }
@@ -625,12 +637,58 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set y(value: number) {
-      this._stopTimelineAnimation();
       value = (value * 20) | 0;
+      this._stopTimelineAnimation();
       if (value === this._matrix.ty) {
         return;
       }
       this._matrix.ty = value;
+      this._invalidatePosition();
+    }
+
+    get scaleX(): number {
+      return this._scaleX;
+    }
+
+    set scaleX(value: number) {
+      value = +value;
+      this._stopTimelineAnimation();
+      if (value === this._scaleX) {
+        return;
+      }
+      this._scaleX = value;
+      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidatePosition();
+    }
+
+    get scaleY(): number {
+      return this._scaleY;
+    }
+
+    set scaleY(value: number) {
+      value = +value;
+      this._stopTimelineAnimation();
+      if (value === this._scaleY) {
+        return;
+      }
+      this._scaleY = value;
+      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidatePosition();
+    }
+
+    get rotation(): number {
+      return this._rotation;
+    }
+
+    set rotation(value: number) {
+      value = +value;
+      this._stopTimelineAnimation();
+      value = DisplayObject._clampRotation(value);
+      if (value === this._rotation) {
+        return;
+      }
+      this._rotation = value;
+      this._setFlags(DisplayObjectFlags.InvalidMatrix);
       this._invalidatePosition();
     }
 
@@ -757,48 +815,36 @@ module Shumway.AVM2.AS.flash.display {
     // ---------------------------------------------------------------------------------------------------------------------------------------------
 
     /*
-    get scaleX(): number {
-      return this._scaleX;
+    get width(): number {
+      notImplemented("public DisplayObject::get width"); return;
+      var bounds = this._getTransformedBounds(this, true);
+      return bounds.width / 20;
     }
 
-    set scaleX(value: number) {
+    set width(value: number) {
+      notImplemented("public DisplayObject::set width"); return;
       value = +value;
 
-      if (value === this._scaleX) {
+      if (value < 0) {
         return;
       }
 
-      var m = currentTransform;
-      m.a = Math.cos(this._rotation) * value;
-      m.b = Math.sin(this._rotation) * value;
+      var u = Math.abs(Math.cos(this._rotation));
+      var v = Math.abs(Math.sin(this._rotation));
+      var bounds = this._getContentBounds();
+      var baseWidth = u * bounds.width + v * bounds.height;
 
-      this._scaleX = value;
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      this._invalidate();
-      this._invalidateTransform();
-    }
-
-    get scaleY(): number {
-      return this._scaleY;
-    }
-
-    set scaleY(value: number) {
-      value = +value;
-
-      if (value === this._scaleY) {
+      if (!baseWidth) {
         return;
       }
 
-      var m = this._matrix;
-      m.c = Math.sin(-this._rotation) * value;
-      m.d = Math.cos(this._rotation) * value;
-
-      this._scaleY = value;
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      this._invalidate();
-      this._invalidateTransform();
+      var baseHeight = v * bounds.width + u * bounds.height;
+      this.scaleY = this.height / baseHeight;
+      this.scaleX = ((value * 20) | 0) / baseWidth;
     }
+    */
 
+    /*
     get scaleZ(): number {
       return this._scaleZ;
     }
@@ -812,57 +858,6 @@ module Shumway.AVM2.AS.flash.display {
     }
     get mouseY(): number {
       return this._mouseY / 20;
-    }
-    get rotation(): number {
-      return this._rotation;
-    }
-    set rotation(value: number) {
-      value = +value;
-
-      value %= 360;
-      if (value > 180) {
-        value -= 360;
-      }
-
-      if (value === this._rotation) {
-        return;
-      }
-
-      var angle = value / 180 * Math.PI;
-      var u, v;
-      switch (value) {
-        case 0:
-        case 360:
-          u = 1, v = 0;
-          break;
-        case 90:
-        case -270:
-          u = 0, v = 1;
-          break;
-        case 180:
-        case -180:
-          u = -1, v = 0;
-          break;
-        case 270:
-        case -90:
-          u = 0, v = -1;
-          break;
-        default:
-          u = Math.cos(angle);
-          v = Math.sin(angle);
-          break;
-      }
-
-      var m = this._matrix;
-      m.a = u * this._scaleX;
-      m.b = v * this._scaleX;
-      m.c = -v * this._scaleY;
-      m.d = u * this._scaleY;
-
-      this._rotation = value;
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      this._invalidate();
-      this._invalidateTransform();
     }
     get rotationX(): number {
       return this._rotationX;

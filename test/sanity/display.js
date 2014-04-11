@@ -23,8 +23,10 @@ function check(condition, test) {
 }
 
 
+var Random = Shumway.Random;
 var Matrix = flash.geom.Matrix;
 var DisplayObject = flash.display.DisplayObject;
+var DisplayObjectFlags = flash.display.DisplayObjectFlags;
 var InteractiveObject = flash.display.InteractiveObject;
 var DisplayObjectContainer = flash.display.DisplayObjectContainer;
 
@@ -48,13 +50,13 @@ sanityTests.push(function runInspectorSanityTests(console) {
 function createDisplayObjectTree(depth, width, height) {
   var nodes = [];
 
+  Random.seed(0x12343);
+
   function make(parent, count, depth) {
     if (depth > 0) {
       for (var i = 0; i < count; i++) {
         var o = new DisplayObjectContainer();
         nodes.push(o);
-        o.x = Math.random() * width;
-        o.y = Math.random() * height;
         parent.addChild(o);
         make(o, count, depth - 1);
       }
@@ -70,14 +72,63 @@ function createDisplayObjectTree(depth, width, height) {
 
 sanityTests.push(function runInspectorSanityTests(console) {
   var VisitorFlags = Shumway.AVM2.AS.flash.display.VisitorFlags;
-
-  var o = createDisplayObjectTree(11, 1024, 1024);
-
-  var c = 0;
-  o.visit(function (e) {
-    c ++;
+  var r = createDisplayObjectTree(10, 1024, 1024);
+  var containers = [];
+  var leafs = [];
+  r.visit(function (o) {
+    if (o instanceof DisplayObjectContainer) {
+      containers.push(o);
+    } else {
+      leafs.push(o)
+    }
     return VisitorFlags.Continue;
-  })
-  console.info("Made: " + c);
+  });
+
+  r.x = 10;
+  check(leafs[0].x === 0);
+  check(r.transform.concatenatedMatrix.tx === 50);
+
+  var p = ["x", "y", "scaleX", "scaleY"];
+
+  // Test concatenatedMatrix propagation.
+  for (var i = 0; i < p.length; i++) {
+    r[p[i]] += 0.1;
+    check(leafs[0]._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix),
+      "Should invalidate concatenatedMatrix when setting: " + p[i]);
+    leafs[0]._getConcatenatedMatrix();
+    check(!leafs[0]._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix),
+      "Should have cached concatenatedMatrix when setting: " + p[i]);
+  }
+
+  console.info("Made: " + containers.length);
+});
+
+sanityTests.push(function runInspectorSanityTests(console) {
+  Random.seed(0x12343);
+  var o = new DisplayObject();
+  var p = ["x", "y"];
+  for (var i = 0; i < p.length; i++) {
+    var v = Random.next() * 100;
+    o[p[i]] = v;
+    check(o[p[i]] === ((v * 20) | 0) / 20,
+      "Should have converted to twips and back to pixels: " + p[i]);
+  }
+
+  var p = ["scaleX", "scaleY"];
+  for (var i = 0; i < p.length; i++) {
+    var v = Random.next() * 100;
+    o[p[i]] = v;
+    check(o[p[i]] === v,
+      "No loss of precision when writing / reading: " + p[i]);
+  }
+
+  var v = [0.0001, 10, -10, 1000, -193, -193 - 360, 1256.5, -180, -181];
+  var x = [0.0001, 10, -10, -80,   167, 167, 176.5, -180, 179];
+  for (var i = 0; i < v.length; i++) {
+    o.rotation = v[i];
+    if (o.rotation !== x[i]) {
+      check(false, "Should read back rotation: " + x[i] + " got " + o.rotation);
+    }
+  }
 
 });
