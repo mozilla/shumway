@@ -153,30 +153,17 @@ module Shumway.Layers {
 
   export class Canvas2DStageRenderer {
 
-    private _scratchContexts: CanvasRenderingContext2D [] = [];
-
-    private static MAX_MASK_DEPTH = 1;
     private _viewport: Rectangle;
-
     private _fillRule: string;
 
     context: CanvasRenderingContext2D;
     count = 0;
+
     constructor(context: CanvasRenderingContext2D, fillRule: FillRule = FillRule.NONZERO) {
       this.context = context;
+      this._viewport = new Rectangle(0, 0, context.canvas.width, context.canvas.height);
       this._fillRule = fillRule === FillRule.EVENODD ? 'evenodd' : 'nonzero';
       context.fillRule = context.mozFillRule = this._fillRule;
-      for (var i = 0; i < 3; i++) {
-        var canvas = document.createElement("canvas");
-        canvas.width = context.canvas.width;
-        canvas.height = context.canvas.height;
-        var canvasContext = canvas.getContext("2d", {
-          willReadFrequently: true
-        });
-        canvasContext.fillRule = canvasContext.mozFillRule = this._fillRule;
-        this._scratchContexts.push(canvasContext);
-      }
-      this._viewport = new Rectangle(0, 0, context.canvas.width, context.canvas.height);
     }
 
     private createScratchContext(context: CanvasRenderingContext2D): CanvasRenderingContext2D {
