@@ -43,6 +43,10 @@ interface Array {
   runtimeId: number;
 }
 
+interface Math {
+  imul(a: number, b: number): number;
+}
+
 module Shumway {
 
   export enum CharacterCodes {
@@ -894,6 +898,33 @@ module Shumway {
     }
   }
 
+  /**
+   * Marsaglia's algorithm, adapted from V8. Use this if you want a deterministic random number.
+   */
+  export class Random {
+    private static _state: Uint32Array = new Uint32Array([0xDEAD, 0xBEEF]);
+
+    public static seed(seed: number) {
+      Random._state[0] = seed;
+      Random._state[1] = seed;
+    }
+
+    public static nextDouble(): number {
+      var s = this._state;
+      var r0 = (Math.imul(18273, s[0] & 0xFFFF) + (s[0] >>> 16)) | 0;
+      s[0] = r0;
+      var r1 = (Math.imul(36969, s[1] & 0xFFFF) + (s[1] >>> 16)) | 0;
+      s[1] = r1;
+      var x = ((r0 << 16) + (r1 & 0xFFFF)) | 0;
+      // Division by 0x100000000 through multiplication by reciprocal.
+      return (x < 0 ? (x + 0x100000000) : x) * 2.3283064365386962890625e-10;
+    }
+  }
+
+  export function random(): number {
+    return Random.nextDouble();
+  };
+
   export module NumberUtilities {
     export function pow2(exponent: number): number {
       if (exponent === (exponent | 0)) {
@@ -956,6 +987,21 @@ module Shumway {
 
     export function isPowerOfTwo(x) {
       return x && ((x & (x - 1)) === 0);
+    }
+
+    /**
+     * Polyfill imul.
+     */
+    if (!Math.imul) {
+      Math.imul = function imul(a, b) {
+        var ah  = (a >>> 16) & 0xffff;
+        var al = a & 0xffff;
+        var bh  = (b >>> 16) & 0xffff;
+        var bl = b & 0xffff;
+        // the shift by 0 fixes the sign on the high part
+        // the final |0 converts the unsigned value into a signed value
+        return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+      }
     }
   }
 
