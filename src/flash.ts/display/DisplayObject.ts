@@ -190,7 +190,6 @@ module Shumway.AVM2.AS.flash.display {
       self._graphics = null;
       self._hitTarget = null;
       self._index = -1;
-      self._level = -1;
       self._maskedObject = null;
 
       // TODO get this via loaderInfo
@@ -213,6 +212,9 @@ module Shumway.AVM2.AS.flash.display {
       self._children = [];
       self._isContainer = false;
       self._mouseChildren = true;
+
+      // TODO not sure if needed anymore
+      self._level = -1;
 
       if (symbol) {
         self._root        = symbol._root      || self._root;

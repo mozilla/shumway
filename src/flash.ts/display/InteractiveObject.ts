@@ -27,7 +27,6 @@ module Shumway.AVM2.AS.flash.display {
     // Called whenever an instance of the class is initialized.
     static initializer: any = function () {
       var self: InteractiveObject = this;
-
       self._tabEnabled = false;
       self._tabIndex = -1;
       self._focusRect = null;
@@ -68,74 +67,89 @@ module Shumway.AVM2.AS.flash.display {
     get tabEnabled(): boolean {
       return this._tabEnabled;
     }
+
     set tabEnabled(enabled: boolean) {
       enabled = !!enabled;
-
       var old = this._tabEnabled;
       this._tabEnabled = enabled;
       if (old !== enabled) {
         this.dispatchEvent(new Event(Event.TAB_ENABLED_CHANGE, true));
       }
     }
+
     get tabIndex(): number /*int*/ {
       return this._tabIndex;
     }
+
     set tabIndex(index: number /*int*/) {
       index = index | 0;
-
       var old = this._tabIndex;
       this._tabIndex = index;
       if (old !== index) {
         this.dispatchEvent(new Event(Event.TAB_INDEX_CHANGE, true));
       }
     }
+
     get focusRect(): ASObject {
       return this._focusRect;
     }
+
     set focusRect(focusRect: ASObject) {
       focusRect = focusRect;
       notImplemented("public flash.display.InteractiveObject::set focusRect"); return;
       // this._focusRect = focusRect;
     }
+
     get mouseEnabled(): boolean {
       return this._mouseEnabled;
     }
+
     set mouseEnabled(enabled: boolean) {
       this._mouseEnabled = !!enabled;
     }
+
     get doubleClickEnabled(): boolean {
       return this._doubleClickEnabled;
     }
+
     set doubleClickEnabled(enabled: boolean) {
       this._doubleClickEnabled = !!enabled;
     }
+
     get accessibilityImplementation(): flash.accessibility.AccessibilityImplementation {
       return this._accessibilityImplementation;
     }
+
     set accessibilityImplementation(value: flash.accessibility.AccessibilityImplementation) {
       value = value;
       notImplemented("public flash.display.InteractiveObject::set accessibilityImplementation"); return;
       // this._accessibilityImplementation = value;
     }
+
     get softKeyboardInputAreaOfInterest(): flash.geom.Rectangle {
       return this._softKeyboardInputAreaOfInterest;
     }
+
     set softKeyboardInputAreaOfInterest(value: flash.geom.Rectangle) {
       value = value;
       notImplemented("public flash.display.InteractiveObject::set softKeyboardInputAreaOfInterest"); return;
       // this._softKeyboardInputAreaOfInterest = value;
     }
+
     get needsSoftKeyboard(): boolean {
       return this._needsSoftKeyboard;
     }
+
     set needsSoftKeyboard(value: boolean) {
       value = !!value;
       notImplemented("public flash.display.InteractiveObject::set needsSoftKeyboard"); return;
       // this._needsSoftKeyboard = value;
     }
+
     get contextMenu(): flash.ui.ContextMenu {
       return this._contextMenu;
     }
+
     set contextMenu(cm: flash.ui.ContextMenu) {
       cm = cm;
       notImplemented("public flash.display.InteractiveObject::set contextMenu"); return;

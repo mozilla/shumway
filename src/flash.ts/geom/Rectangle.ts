@@ -183,7 +183,7 @@ module Shumway.AVM2.AS.flash.geom {
       return rect;
     }
 
-    public unionWith(toUnion: Rectangle): void {
+    public unionWith(toUnion: Rectangle): Rectangle {
       if (toUnion.isEmpty()) {
         return;
       }
@@ -196,6 +196,7 @@ module Shumway.AVM2.AS.flash.geom {
       this.setTo(l, t,
         Math.max(this.right, toUnion.right) - l,
         Math.max(this.bottom, toUnion.bottom) - t);
+      return this;
     }
 
     public equals(toCompare: Rectangle): boolean {
@@ -219,18 +220,20 @@ module Shumway.AVM2.AS.flash.geom {
       this.height = +height;
     }
 
-    public toTwips() {
+    public toTwips(): Rectangle {
       this.x = (this.x * 20) | 0;
       this.y = (this.y * 20) | 0;
       this.width = (this.width * 20) | 0;
       this.height = (this.height * 20) | 0;
+      return this;
     }
 
-    public toPixels() {
+    public toPixels(): Rectangle {
       this.x /= 20;
       this.y /= 20;
       this.width /= 20;
       this.height /= 20;
+      return this;
     }
 
     public toString(): String {
