@@ -33,7 +33,17 @@ module Shumway.AVM2.AS.flash.events {
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false) {
       type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable;
       false && super();
-      notImplemented("Dummy Constructor: public flash.events.Event");
+      this._type = type;
+      this._bubbles = false;
+      this._cancelable = cancelable;
+
+      this._target = null;
+      this._currentTarget = null;
+      this._eventPhase = EventPhase.AT_TARGET;
+
+      this._stopPropagation = false;
+      this._stopImmediatePropagation = false;
+      this._isDefaultPrevented = false;
     }
     
     // JS -> AS Bindings
@@ -81,8 +91,7 @@ module Shumway.AVM2.AS.flash.events {
     static WORKER_STATE: string = "workerState";
     
     formatToString: (className: string) => string;
-    clone: () => flash.events.Event;
-    
+
     // AS -> JS Bindings
     
     _type: string;
@@ -128,19 +137,6 @@ module Shumway.AVM2.AS.flash.events {
     }
     isDefaultPrevented(): boolean {
       return this._isDefaultPrevented;
-    }
-    ctor(type: string, bubbles: boolean, cancelable: boolean): void {
-      this._type = "" + type;
-      this._bubbles = !!bubbles;
-      this._cancelable = !!cancelable;
-
-      this._target = null;
-      this._currentTarget = null;
-      this._eventPhase = EventPhase.AT_TARGET;
-
-      this._stopPropagation = false;
-      this._stopImmediatePropagation = false;
-      this._isDefaultPrevented = false;
     }
   }
 }

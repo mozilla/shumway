@@ -123,6 +123,31 @@ module Shumway.AVM2.AS.flash.display {
     CacheAsBitmap                             = 0x1000
   }
 
+  /**
+   * Controls how the visitor walks the display tree.
+   */
+  export enum VisitorFlags {
+    /**
+     * Continue with normal traversal.
+     */
+    Continue     = 0,
+
+    /**
+     * Not used yet, should probably just stop the visitor.
+     */
+    Stop         = 1,
+
+    /**
+     * Skip processing current node.
+     */
+    Skip         = 2,
+
+    /**
+     * Visit front to back.
+     */
+    FrontToBack  = 8
+  }
+
   export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable {
 
     private static _instances: DisplayObject [];
@@ -248,7 +273,7 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.display.DisplayObject");
+      notImplemented("Dummy Constructor: public DisplayObject");
     }
 
     _setFlags(flags: DisplayObjectFlags) {
@@ -293,8 +318,8 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (direction & Direction.Downward) {
-        if (this instanceof flash.display.DisplayObjectContainer) {
-          var children = (<flash.display.DisplayObjectContainer>this)._children;
+        if (this instanceof DisplayObjectContainer) {
+          var children = (<DisplayObjectContainer>this)._children;
           for (var i = 0; i < children.length; i++) {
             var child = children[i];
             if (!child._hasFlags(flags)) {
@@ -307,18 +332,18 @@ module Shumway.AVM2.AS.flash.display {
 
     // JS -> AS Bindings
     
-    hitTestObject: (obj: flash.display.DisplayObject) => boolean;
+    hitTestObject: (obj: DisplayObject) => boolean;
     hitTestPoint: (x: number, y: number, shapeFlag: boolean = false) => boolean;
     
     // AS -> JS Bindings
 
     private _flags: number;
 
-    _root: flash.display.DisplayObject;
+    _root: DisplayObject;
     _stage: flash.display.Stage;
     _name: string;
-    _parent: flash.display.DisplayObjectContainer;
-    _mask: flash.display.DisplayObject;
+    _parent: DisplayObjectContainer;
+    _mask: DisplayObject;
     _z: number;
     _scaleX: number;
     _scaleY: number;
@@ -358,7 +383,7 @@ module Shumway.AVM2.AS.flash.display {
     _matrix3D: flash.geom.Matrix3D;
     _depth: number;
     _graphics: flash.display.Graphics;
-    _hitTarget: flash.display.DisplayObject;
+    _hitTarget: DisplayObject;
 
     /**
      * Index of this display object within its container's children
@@ -367,7 +392,7 @@ module Shumway.AVM2.AS.flash.display {
     _isContainer: boolean;
     _level: number;
     _loader: flash.display.Loader;
-    _maskedObject: flash.display.DisplayObject;
+    _maskedObject: DisplayObject;
     _mouseChildren: boolean;
     _mouseDown: boolean;
     _mouseOver: boolean;
@@ -534,8 +559,8 @@ module Shumway.AVM2.AS.flash.display {
         if (graphics) {
           rectangle.unionWith(graphics._getContentBounds(includeStrokes));
         }
-        if (this instanceof flash.display.DisplayObjectContainer) {
-          var container: flash.display.DisplayObjectContainer = <flash.display.DisplayObjectContainer>this;
+        if (this instanceof DisplayObjectContainer) {
+          var container: DisplayObjectContainer = <DisplayObjectContainer>this;
           var children = container._children;
           for (var i = 0; i < children.length; i++) {
             rectangle.unionWith(children[i]._getTransformedBounds(this, includeStrokes));
@@ -607,14 +632,14 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidatePosition();
     }
 
-    get mask(): flash.display.DisplayObject {
+    get mask(): DisplayObject {
       return this._mask;
     }
 
     /**
      * Sets the mask for this display object. This does not affect the bounds.
      */
-    set mask(value: flash.display.DisplayObject) {
+    set mask(value: DisplayObject) {
       this._stopTimelineAnimation();
       if (this._mask === value || value === this) {
         return;
@@ -648,7 +673,7 @@ module Shumway.AVM2.AS.flash.display {
       this._setFlags(DisplayObjectFlags.Destroyed);
     }
 
-    get root(): flash.display.DisplayObject {
+    get root(): DisplayObject {
       return this._root;
     }
 
@@ -664,7 +689,7 @@ module Shumway.AVM2.AS.flash.display {
       this._name = "" + value;
     }
 
-    get parent(): flash.display.DisplayObjectContainer {
+    get parent(): DisplayObjectContainer {
       return this._parent;
     }
 
@@ -691,18 +716,40 @@ module Shumway.AVM2.AS.flash.display {
 
     set z(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set z"); return;
+      notImplemented("public DisplayObject::set z"); return;
       // this._z = value;
     }
 
-    getBounds(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
+    getBounds(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
       return this._getTransformedBounds(targetCoordinateSpace, true).toPixels();
     }
 
-    getRect(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
+    getRect(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
       return this._getTransformedBounds(targetCoordinateSpace, false).toPixels();
     }
 
+    public visit(visitor: (DisplayObject) => VisitorFlags, visitorFlags: VisitorFlags) {
+      var stack: DisplayObject [];
+      var displayObject: DisplayObject;
+      var displayObjectContainer: DisplayObjectContainer;
+      var frontToBack = visitorFlags & VisitorFlags.FrontToBack;
+      stack = [this];
+      while (stack.length > 0) {
+        displayObject = stack.pop();
+        if (visitor(displayObject) === VisitorFlags.Continue) {
+          if (displayObject instanceof DisplayObjectContainer) {
+            displayObjectContainer = <DisplayObjectContainer>displayObject;
+            var children = displayObjectContainer._children;
+            var length = children.length;
+            for (var i = 0; i < length; i++) {
+              var child = children[frontToBack ? i : length - 1 - i];
+              stack.push(child);
+            }
+          }
+        }
+      }
+    }
+    
     // ---------------------------------------------------------------------------------------------------------------------------------------------
     // -- Stuff below we still need to port.                                                                                                      --
     // ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -755,7 +802,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     set scaleZ(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set scaleZ"); return;
+      notImplemented("public DisplayObject::set scaleZ"); return;
       // this._scaleZ = value;
     }
     get mouseX(): number {
@@ -820,7 +867,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     set rotationX(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set rotationX"); return;
+      notImplemented("public DisplayObject::set rotationX"); return;
       // this._rotationX = value;
     }
     get rotationY(): number {
@@ -828,7 +875,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     set rotationY(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set rotationY"); return;
+      notImplemented("public DisplayObject::set rotationY"); return;
       // this._rotationY = value;
     }
     get rotationZ(): number {
@@ -836,7 +883,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     set rotationZ(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set rotationZ"); return;
+      notImplemented("public DisplayObject::set rotationZ"); return;
       // this._rotationZ = value;
     }
     get alpha(): number {
@@ -923,7 +970,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     set opaqueBackground(value: Object) {
       value = value;
-      notImplemented("public flash.display.DisplayObject::set opaqueBackground"); return;
+      notImplemented("public DisplayObject::set opaqueBackground"); return;
       // this._opaqueBackground = value;
     }
     get scrollRect(): flash.geom.Rectangle {
@@ -931,7 +978,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     set scrollRect(value: flash.geom.Rectangle) {
       value = value;
-      notImplemented("public flash.display.DisplayObject::set scrollRect"); return;
+      notImplemented("public DisplayObject::set scrollRect"); return;
       // this._scrollRect = value;
     }
     get filters(): any [] {
@@ -969,7 +1016,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     set scale9Grid(innerRectangle: flash.geom.Rectangle) {
       innerRectangle = innerRectangle;
-      notImplemented("public flash.display.DisplayObject::set scale9Grid"); return;
+      notImplemented("public DisplayObject::set scale9Grid"); return;
       // this._scale9Grid = innerRectangle;
     }
     get loaderInfo(): flash.display.LoaderInfo {
@@ -981,12 +1028,12 @@ module Shumway.AVM2.AS.flash.display {
     }
     set accessibilityProperties(value: flash.accessibility.AccessibilityProperties) {
       value = value;
-      notImplemented("public flash.display.DisplayObject::set accessibilityProperties"); return;
+      notImplemented("public DisplayObject::set accessibilityProperties"); return;
       // this._accessibilityProperties = value;
     }
     set blendShader(value: flash.display.Shader) {
       value = value;
-      notImplemented("public flash.display.DisplayObject::set blendShader"); return;
+      notImplemented("public DisplayObject::set blendShader"); return;
       // this._blendShader = value;
     }
     globalToLocal(point: flash.geom.Point): flash.geom.Point {
@@ -1006,13 +1053,13 @@ module Shumway.AVM2.AS.flash.display {
     }
     globalToLocal3D(point: flash.geom.Point): flash.geom.Vector3D {
       point = point;
-      notImplemented("public flash.display.DisplayObject::globalToLocal3D"); return;
+      notImplemented("public DisplayObject::globalToLocal3D"); return;
     }
     local3DToGlobal(point3d: flash.geom.Vector3D): flash.geom.Point {
       point3d = point3d;
-      notImplemented("public flash.display.DisplayObject::local3DToGlobal"); return;
+      notImplemented("public DisplayObject::local3DToGlobal"); return;
     }
-    _hitTest(use_xy: boolean, x: number, y: number, useShape: boolean, hitTestObject: flash.display.DisplayObject): boolean {
+    _hitTest(use_xy: boolean, x: number, y: number, useShape: boolean, hitTestObject: DisplayObject): boolean {
       use_xy = !!use_xy; x = +x; y = +y; useShape = !!useShape;
       //hitTestObject = hitTestObject;
 

@@ -280,7 +280,17 @@ module Shumway.AVM2.AS {
         self.traitsPrototype = createObject(self.dynamicPrototype);
       }
 
-      Shumway.ObjectUtilities.copyOwnPropertyDescriptors(self.traitsPrototype, self.prototype);
+      // TODO: Kind of a hack for now, this is to make all TS class instance members available in all
+      // classes, even though we change the prototypes. I think we need to guard against ASClassPrototype.
+      var traitsPrototype = self.traitsPrototype;
+      var classes = [];
+      while (self) {
+        classes.push(self);
+        self = self.baseClass
+      }
+      for (var i = classes.length - 1; i >= 0; i--) {
+        Shumway.ObjectUtilities.copyOwnPropertyDescriptors(traitsPrototype, classes[i].prototype);
+      }
     }
 
     /**
