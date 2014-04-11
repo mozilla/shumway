@@ -396,6 +396,33 @@ module Shumway.AVM2.AS.flash.geom {
       }
     }
 
+    /**
+     * Updates the scale and skew componenets of the matrix.
+     */
+    public updateScaleAndRotation(scaleX: number, scaleY: number, rotation: number) {
+      // The common case.
+      if (rotation === 0 || rotation === 360) {
+        this.a = scaleX;
+        this.b = this.c = 0;
+        this.d = scaleY;
+        return;
+      }
+      var u = 0, v = 0;
+      switch (rotation) {
+        case  90: case -270: u =  0, v =  1; break;
+        case 180: case -180: u = -1, v =  0; break;
+        case 270: case  -90: u =  0, v = -1; break;
+        default:
+          var angle = rotation / 180 * Math.PI;
+          u = Math.cos(angle);
+          v = Math.sin(angle);
+      }
+      this.a =  u * scaleX;
+      this.b =  v * scaleX;
+      this.c = -v * scaleY;
+      this.d =  u * scaleY;
+    }
+
     public clone(): Matrix {
       return new Matrix(this.a, this.b, this.c, this.d, this.tx, this.ty);
     }

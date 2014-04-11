@@ -348,16 +348,24 @@ module Shumway.AVM2.AS.flash.display {
     _name: string;
     _parent: DisplayObjectContainer;
     _mask: DisplayObject;
+
+    /**
+     * These are always the most up to date properties. The |_matrix| is kepy in sync with
+     * these values.
+     */
     _z: number;
     _scaleX: number;
     _scaleY: number;
     _scaleZ: number;
-    _mouseX: number;
-    _mouseY: number;
+
     _rotation: number;
     _rotationX: number;
     _rotationY: number;
     _rotationZ: number;
+
+    _mouseX: number;
+    _mouseY: number;
+
     _alpha: number;
     _width: number;
     _height: number;
@@ -380,7 +388,15 @@ module Shumway.AVM2.AS.flash.display {
     _bounds: flash.geom.Rectangle;
 
     _clipDepth: number;
+
+    /**
+     * The a, b, c, d components of the matrix are only valid if the InvalidMatrix flag
+     * is not set. Don't access this directly unless you can be sure that its components
+     * are valid.
+     */
     _matrix: flash.geom.Matrix;
+
+
     _concatenatedMatrix: flash.geom.Matrix;
     _colorTransform: flash.geom.ColorTransform;
     _concatenatedColorTransform: flash.geom.ColorTransform;
@@ -487,9 +503,6 @@ module Shumway.AVM2.AS.flash.display {
      * the same as |transform.concatenatedMatrix|, the latter also includes the screen space matrix.
      */
     _getConcatenatedMatrix(): Matrix {
-      if (ancestor === this._parent) {
-        return this._matrix;
-      }
       // Compute the concatenated transforms for this node and all of its ancestors.
       if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix)) {
         var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedMatrix, false);
@@ -498,7 +511,7 @@ module Shumway.AVM2.AS.flash.display {
         for (var i = path.length - 1; i >= 0; i--) {
           var ancestor = path[i];
           assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix));
-          m.concat(ancestor._matrix);
+          m.concat(ancestor._getMatrix());
           ancestor._concatenatedMatrix.copyFrom(m);
           ancestor._removeFlags(DisplayObjectFlags.InvalidConcatenatedMatrix);
         }
@@ -512,12 +525,22 @@ module Shumway.AVM2.AS.flash.display {
       if (toTwips) {
         m.toTwips();
       }
-      var angleInRadians = matrix.getRotation();
-      this._rotation = angleInRadians * 180 / Math.PI;
       this._scaleX = m.getScaleX();
       this._scaleY = m.getScaleY();
+      this._rotation = DisplayObject._clampRotation(matrix.getRotation() * 180 / Math.PI);
       this._removeFlags(DisplayObjectFlags.InvalidMatrix);
       this._invalidatePosition();
+    }
+
+    /**
+     * Returns an updated matrix if the current one is invalid.
+     */
+    _getMatrix() {
+      if (this._hasFlags(DisplayObjectFlags.InvalidMatrix)) {
+        this._matrix.updateScaleAndRotation(this._scaleX, this._scaleY, this._rotation);
+        this._removeFlags(DisplayObjectFlags.InvalidMatrix);
+      }
+      return this._matrix;
     }
 
     /**
@@ -609,7 +632,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Marks this object as having been moved.
+     * Marks this object as having been moved in its parent display object.
      */
     _invalidatePosition() {
       this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedMatrix, Direction.Downward);
@@ -689,6 +712,48 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._rotation = value;
       this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidatePosition();
+    }
+
+    get width(): number {
+      var bounds = this._getTransformedBounds(this._parent, true);
+      return bounds.width / 20;
+    }
+
+    set width(value: number) {
+      value = +value;
+      this._stopTimelineAnimation();
+      if (value < 0) {
+        return;
+      }
+      var bounds = this._getTransformedBounds(this._parent, true);
+      if (bounds.width || bounds.width === value) {
+        return;
+      }
+      this._scaleX = value / bounds.width;
+      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._scaleY = this._getMatrix().getScaleY();
+      this._invalidatePosition();
+    }
+
+    get height(): number {
+      var bounds = this._getTransformedBounds(this._parent, true);
+      return bounds.height / 20;
+    }
+
+    set height(value: number) {
+      value = +value;
+      this._stopTimelineAnimation();
+      if (value < 0) {
+        return;
+      }
+      var bounds = this._getTransformedBounds(this._parent, true);
+      if (bounds.height || bounds.height === value) {
+        return;
+      }
+      this._scaleY = value / bounds.height;
+      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._scaleX = this._getMatrix().getScaleX();
       this._invalidatePosition();
     }
 
@@ -776,8 +841,8 @@ module Shumway.AVM2.AS.flash.display {
 
     set z(value: number) {
       value = +value;
+      this._z = value;
       notImplemented("public DisplayObject::set z"); return;
-      // this._z = value;
     }
 
     getBounds(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
