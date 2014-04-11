@@ -909,7 +909,7 @@ module Shumway {
       Random._state[1] = seed;
     }
 
-    public static nextDouble(): number {
+    public static next(): number {
       var s = this._state;
       var r0 = (Math.imul(18273, s[0] & 0xFFFF) + (s[0] >>> 16)) | 0;
       s[0] = r0;
@@ -921,8 +921,8 @@ module Shumway {
     }
   }
 
-  export function random(): number {
-    return Random.nextDouble();
+  Math.random = function random(): number {
+    return Random.next();
   };
 
   export module NumberUtilities {
