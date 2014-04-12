@@ -318,10 +318,12 @@ module Shumway.Geometry {
      * the original rectangle.
      */
     snap (): Rectangle  {
-      var x1 = Math.ceil(this.x + this.w);
-      var y1 = Math.ceil(this.y + this.h);
-      this.x |= 0;
-      this.y |= 0;
+      var x1 = this.x + this.w;
+      var y1 = this.y + this.h;
+      x1 = (x1 < 0) ? x1 | 0 : Math.ceil(x1);
+      y1 = (y1 < 0) ? y1 | 0 : Math.ceil(y1);
+      this.x = (this.x < 0) ? Math.floor(this.x) : this.x | 0;
+      this.y = (this.y < 0) ? Math.floor(this.y) : this.y | 0;
       this.w = x1 - this.x;
       this.h = y1 - this.y;
       return this;
