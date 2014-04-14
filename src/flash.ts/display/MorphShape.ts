@@ -22,7 +22,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: DisplayObject) {
+    static initializer: any = function (symbol: Shape) {
       var self: MorphShape = this;
       self._graphics = symbol ? symbol.graphics : new flash.display.Graphics();
     };
@@ -43,5 +43,6 @@ module Shumway.AVM2.AS.flash.display {
     
     // AS -> JS Bindings
 
+    _graphics: flash.display.Graphics;
   }
 }

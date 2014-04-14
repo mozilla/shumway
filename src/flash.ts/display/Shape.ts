@@ -30,6 +30,8 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
     }
 
+    _graphics: flash.display.Graphics;
+
     get graphics(): flash.display.Graphics {
       return this._graphics;
     }

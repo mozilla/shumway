@@ -108,6 +108,10 @@ module Shumway.AVM2.AS.flash.geom {
       this.height = value.y;
     }
 
+    public get area(): number {
+      return this.width * this.height;
+    }
+
     public clone(): Rectangle {
       return new Rectangle(this.x, this.y, this.width, this.height);
     }
@@ -175,6 +179,19 @@ module Shumway.AVM2.AS.flash.geom {
     public intersects(toIntersect: Rectangle): boolean {
       return Math.max(this.x, toIntersect.x) <= Math.min(this.right, toIntersect.right)
         && Math.max(this.y, toIntersect.y) <= Math.min(this.bottom, toIntersect.bottom);
+    }
+
+    public clip(clipRect: Rectangle): Rectangle {
+      var l: number = Math.max(this.x, clipRect.x);
+      var r: number = Math.min(this.right, clipRect.right);
+      if (l <= r) {
+        var t: number = Math.max(this.y, clipRect.y);
+        var b: number = Math.min(this.bottom, clipRect.bottom);
+        if (t <= b) {
+          this.setTo(l, t, r - l, b - t);
+        }
+      }
+      return this;
     }
 
     public union(toUnion: Rectangle): Rectangle {

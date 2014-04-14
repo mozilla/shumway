@@ -31,9 +31,11 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null; // [];
     
     constructor (bitmapData: flash.display.BitmapData = null, pixelSnapping: string = "auto", smoothing: boolean = false) {
-      bitmapData = bitmapData; pixelSnapping = "" + pixelSnapping; smoothing = !!smoothing;
+      //bitmapData = bitmapData;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.Bitmap");
+      this._bitmapData = bitmapData;
+      this._pixelSnapping = "" + pixelSnapping;
+      this._smoothing = !!smoothing;
     }
     
     // JS -> AS Bindings
@@ -68,14 +70,11 @@ module Shumway.AVM2.AS.flash.display {
     set bitmapData(value: flash.display.BitmapData) {
       //value = value;
       this._bitmapData = value;
-      this._invalidate();
-    }
-
-    ctor(bitmapData: flash.display.BitmapData, pixelSnapping: string, smoothing: boolean): void {
-      //bitmapData = bitmapData;
-      this._bitmapData = bitmapData;
-      this._pixelSnapping = "" + pixelSnapping;
-      this._smoothing = !!smoothing;
+      this._bounds.setTo(0, 0, value.width * 20, value.height * 20);
+      if (this._parent) {
+        this._parent._invalidateBounds();
+      }
+      this._invalidatePaint();
     }
   }
 }

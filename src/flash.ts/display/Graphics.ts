@@ -18,7 +18,9 @@ module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
 
-  export class Graphics extends ASNative implements flash.utils.IExternalizable {
+  import Rectangle = flash.geom.Rectangle;
+
+  export class Graphics extends ASNative {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -64,6 +66,10 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._graphicsData.push(this._currentPath);
       this._currentPath = null;
+    }
+
+    getBounds(includeStrokes: boolean = true): Rectangle {
+      return new Rectangle();
     }
 
     clear(): void {
@@ -293,13 +299,6 @@ module Shumway.AVM2.AS.flash.display {
     drawGraphicsData(graphicsData: ASVector<any>): void {
       graphicsData = graphicsData;
       notImplemented("public flash.display.Graphics::drawGraphicsData"); return;
-    }
-
-    writeExternal(output: flash.utils.IDataOutput): void {
-
-    }
-    readExternal(input: flash.utils.IDataInput): void {
-
     }
   }
 }
