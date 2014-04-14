@@ -163,17 +163,18 @@ module Shumway.AVM2.AS.flash.display {
      */
     static register(object: DisplayObject) {
       DisplayObject._instances.push(object);
+      return 'instance' + DisplayObject._instances.length;
     }
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: DisplayObject) {
       var self: DisplayObject = this;
-      DisplayObject.register(self);
+      var instanceName = DisplayObject.register(self);
 
       self._flags = DisplayObjectFlags.None;
       self._root = null;
       self._stage = null;
-      self._name = 'instance' + DisplayObject._instances.length;
+      self._name = instanceName;
       self._parent = null;
       self._mask = null;
 
@@ -582,7 +583,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Computes the bounding box for all of this display object's content, its graphics and all of its children.
      */
-    _getContentBounds(includeStrokes: boolean = true): Rectangle {
+   private _getContentBounds(includeStrokes: boolean = true): Rectangle {
       // Tobias: What about filters?
       var rectangle = includeStrokes ? this._bounds : this._rect;
       if (this._hasFlags(DisplayObjectFlags.InvalidBounds)) {
@@ -594,7 +595,7 @@ module Shumway.AVM2.AS.flash.display {
           graphics = (<Sprite>this)._graphics;
         }
         if (graphics) {
-          rectangle.unionWith(graphics._getContentBounds(includeStrokes));
+          rectangle.unionWith(graphics.getBounds(includeStrokes));
         }
         if (this instanceof DisplayObjectContainer) {
           var container: DisplayObjectContainer = <DisplayObjectContainer>this;
