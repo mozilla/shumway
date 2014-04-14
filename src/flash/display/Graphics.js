@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global describeProperty, ShapePath, factoryCtx, rgbIntAlphaToStr,
+/*global describeProperty, ShapePath, factoryCtx,
   buildLinearGradientFactory, buildRadialGradientFactory,
   SHAPE_MOVE_TO, SHAPE_LINE_TO, SHAPE_CURVE_TO, SHAPE_WIDE_MOVE_TO,
   SHAPE_WIDE_LINE_TO, SHAPE_CUBIC_CURVE_TO, SHAPE_CIRCLE, SHAPE_ELLIPSE,
@@ -24,6 +24,107 @@
 var GraphicsDefinition = (function () {
   var GRAPHICS_PATH_WINDING_EVEN_ODD       = 'evenOdd';
   var GRAPHICS_PATH_WINDING_NON_ZERO       = 'nonZero';
+
+  function createPatternStyle(bitmap, matrix, repeat, smooth) {
+    var transform = matrix ?
+                    { a: matrix.a, b: matrix.b, c: matrix.c,
+                      d: matrix.d, tx: matrix.tx, ty: matrix.ty
+                    } :
+                    { a: 1, b: 0, c: 0, d: 1, tx: 0, ty: 0 };
+
+    return {type: repeat ? GRAPHICS_FILL_REPEATING_BITMAP :
+                           GRAPHICS_FILL_CLIPPED_BITMAP,
+            bitmapId: bitmap._renderableId,
+            transform: transform,
+            smooth: smooth};
+  }
+
+  function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
+                               interpolationMethod, focalPos)
+  {
+    type === null || type === undefined &&
+                     throwError('TypeError', Errors.NullPointerError, 'type');
+    colors === null || type === undefined &&
+                       throwError('TypeError', Errors.NullPointerError, 'colors');
+    if (!(type === 'linear' || type === 'radial')) {
+      throwError('ArgumentError', Errors.InvalidEnumError, 'type');
+    }
+    // TODO: add coercion checks for all args
+    var colorStops = [];
+    for (var i = 0, n = colors.length; i < n; i++) {
+      colorStops.push({
+        ratio: ratios[i],
+        color: (colors[i] << 8) | (alphas[i] * 255)
+      });
+    }
+
+    // NOTE firefox is really sensitive to very small scale when painting gradients
+    var scale = 819.2;
+    var transform = matrix ?
+                    { a: scale * matrix.a, b: scale * matrix.b,
+                      c: scale * matrix.c, d: scale * matrix.d,
+                      tx: matrix.tx, ty: matrix.ty
+                    } :
+                    {a: scale, b: 0, c: 0, d: scale, tx: 0, ty: 0};
+
+    return {type: type === 'linear' ? GRAPHICS_FILL_LINEAR_GRADIENT :
+                                      GRAPHICS_FILL_RADIAL_GRADIENT,
+            records: colorStops,
+            transform: transform,
+            focalPoint: focalPos};
+  }
+
+  function serializeStyle(style, message) {
+    if (!style) {
+      message.ensureAdditionalCapacity(8);
+      message.writeIntUnsafe(GRAPHICS_FILL_SOLID);
+      message.writeIntUnsafe(0);
+      return;
+    }
+
+    message.ensureAdditionalCapacity(8);
+    message.writeIntUnsafe(style.type);
+
+    switch (style.type) {
+    case GRAPHICS_FILL_SOLID:
+      message.writeIntUnsafe(style.color);
+      return;
+    case GRAPHICS_FILL_LINEAR_GRADIENT:
+    case GRAPHICS_FILL_RADIAL_GRADIENT:
+    case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
+      var records = style.records;
+      var n = records.length;
+      message.ensureAdditionalCapacity((2 + n * 2) * 4);
+      message.writeIntUnsafe(style.focalPoint);
+      message.writeIntUnsafe(n);
+      for (var i = 0; i < n; i++) {
+        var record = records[i];
+        message.writeFloatUnsafe(record.ratio / 255);
+        message.writeIntUnsafe(record.color);
+      }
+      break;
+    case GRAPHICS_FILL_REPEATING_BITMAP:
+    case GRAPHICS_FILL_CLIPPED_BITMAP:
+    case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
+    case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
+      message.ensureAdditionalCapacity(12);
+      message.writeIntUnsafe(style.bitmapId);
+      message.writeIntUnsafe(style.repeat);
+      message.writeIntUnsafe(style.smooth);
+      break;
+    default:
+      fail('invalid fill style', 'shape');
+    }
+
+    var t = style.transform;
+    message.ensureAdditionalCapacity(24);
+    message.writeFloatUnsafe(t.a);
+    message.writeFloatUnsafe(t.b);
+    message.writeFloatUnsafe(t.c);
+    message.writeFloatUnsafe(t.d);
+    message.writeIntUnsafe(t.tx);
+    message.writeIntUnsafe(t.ty);
+  }
 
   var def = {
     __class__: 'flash.display.Graphics',
@@ -42,6 +143,7 @@ var GraphicsDefinition = (function () {
       this.strokeBbox = null;
       this._parent._invalidate();
       this._parent._invalidateBounds();
+      this._parent._invalidateRenderable();
     },
 
     beginPath: function() {
@@ -61,13 +163,6 @@ var GraphicsDefinition = (function () {
       }
     },
 
-    _drawPathObject: function (path) {
-      if (path.__class__ === 'flash.display.GraphicsPath')
-        this.drawPath(path.commands, path.data, path.winding);
-      else if (path.__class__ === 'flash.display.GraphicsTrianglePath')
-        this.drawTriangles(path.vertices, path.indices, path.uvtData, path.culling);
-    },
-
     draw: function(ctx, clip, ratio, colorTransform) {
       var paths = this._paths;
       for (var i = 0; i < paths.length; i++) {
@@ -80,7 +175,8 @@ var GraphicsDefinition = (function () {
 
       this.beginPath();
       this._currentPath.fillStyle = alpha ?
-                                    {style:rgbIntAlphaToStr(color, alpha)} :
+                                    { type: GRAPHICS_FILL_SOLID,
+                                      color: (color << 8) | (alpha * 255) } :
                                     null;
     },
     beginGradientFill: function(type, colors, alphas, ratios, matrix,
@@ -262,7 +358,7 @@ var GraphicsDefinition = (function () {
         } else {
           numTriangles = indices.length / 3;
         }
-      } else {  
+      } else {
         if (vertices.length % 6) {
           throwError('ArgumentError', Errors.InvalidParamError);
         } else {
@@ -303,18 +399,20 @@ var GraphicsDefinition = (function () {
       this._currentPath.fillStyle = null;
     },
     lineBitmapStyle: function(bitmap, matrix, repeat, smooth) {
-      this.beginPath();
-      this._currentPath.lineStyle = createPatternStyle(bitmap, matrix, repeat,
-                                                       smooth);
+      notImplemented("Graphics#lineBitmapStyle");
+      //this.beginPath();
+      //this._currentPath.lineStyle = createPatternStyle(bitmap, matrix, repeat,
+      //                                                 smooth);
     },
     lineGradientStyle: function(type, colors, alphas, ratios, matrix,
                                 spreadMethod, interpolationMethod, focalPos)
     {
-      var style = createGradientStyle(type, colors, alphas, ratios, matrix,
-                                      spreadMethod, interpolationMethod,
-                                      focalPos);
-      this.beginPath();
-      this._currentPath.lineStyle = style;
+      notImplemented("Graphics#lineGradientStyle");
+      //var style = createGradientStyle(type, colors, alphas, ratios, matrix,
+      //                                spreadMethod, interpolationMethod,
+      //                                focalPos);
+      //this.beginPath();
+      //this._currentPath.lineStyle = style;
     },
 
     lineStyle: function (width, color, alpha, pxHinting, scale, cap, joint,
@@ -329,7 +427,8 @@ var GraphicsDefinition = (function () {
           mlimit = 3;
 
         this._currentPath.lineStyle = {
-          style: rgbIntAlphaToStr(color, alpha),
+          type: GRAPHICS_FILL_SOLID,
+          color: (color << 8) | (alpha * 255),
           lineCap: cap || 'round',
           lineJoin: cap || 'round',
           width: (width * 20)|0,
@@ -382,7 +481,59 @@ var GraphicsDefinition = (function () {
         this.bbox = bbox;
       }
       return bbox;
-    }
+    },
+
+    _serialize: function (message) {
+      message.ensureAdditionalCapacity(16);
+
+      var bounds = this._getBounds(true);
+      message.writeIntUnsafe(bounds.xMin);
+      message.writeIntUnsafe(bounds.xMax);
+      message.writeIntUnsafe(bounds.yMin);
+      message.writeIntUnsafe(bounds.yMax);
+
+      var paths = this._paths;
+      for (var i = 0; i < paths.length; i++) {
+        var path = paths[i];
+
+        serializeStyle(path.fillStyle, message);
+
+        var lineStyle = path.lineStyle;
+        serializeStyle(lineStyle, message);
+        if (lineStyle &&
+            (lineStyle.type !== GRAPHICS_FILL_SOLID || (lineStyle.color & 0xff)))
+        {
+          message.ensureAdditionalCapacity(16);
+          message.writeIntUnsafe(lineStyle.width);
+          message.writeIntUnsafe(CAPS_STYLE_TYPES.indexOf(lineStyle.lineCap));
+          message.writeIntUnsafe(JOIN_STYLE_TYPES.indexOf(lineStyle.lineJoin));
+          message.writeIntUnsafe(lineStyle.miterLimit);
+        }
+
+        var n = path.commands.length;
+        message.writeInt(n);
+        var offset = message.getIndex(1);
+        message.reserve(n);
+        message.subU8View().set(path.commands, offset);
+
+        n = path.data.length;
+        message.ensureAdditionalCapacity((1 + n) * 4);
+        message.writeIntUnsafe(n);
+        offset = message.getIndex(4);
+        message.reserve(n * 4);
+        message.subI32View().set(path.data, offset);
+
+        // TODO: support mophing shapes
+
+        //n = path.isMorph ? path.morphData.length : 0;
+        //if (n) {
+        //  message.ensureAdditionalCapacity((1 + n) * 4);
+        //  message.writeIntUnsafe(n);
+        //  message.subF32View().set(path.morphData);
+        //  message.offset += n;
+        //}
+      }
+    },
   };
 
   def.__glue__ = {
@@ -416,77 +567,3 @@ var GraphicsDefinition = (function () {
 
   return def;
 }).call(this);
-
-
-
-function createPatternStyle(bitmap, matrix, repeat, smooth) {
-  var repeatStyle = (repeat === false) ? 'no-repeat' : 'repeat';
-  var pattern = factoryCtx.createPattern(bitmap._drawable, repeatStyle);
-
-  var transform = matrix ?
-                  { a: matrix.a, b: matrix.b, c: matrix.c,
-                    d: matrix.d, e: matrix.tx, f: matrix.ty
-                  } :
-                  { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
-
-  return {style: pattern, transform: transform, smooth: smooth};
-}
-
-function createGradientStyle(type, colors, alphas, ratios, matrix, spreadMethod,
-                             interpolationMethod, focalPos)
-{
-  type === null || type === undefined &&
-                   throwError('TypeError', Errors.NullPointerError, 'type');
-  colors === null || type === undefined &&
-                     throwError('TypeError', Errors.NullPointerError, 'colors');
-  if (!(type === 'linear' || type === 'radial')) {
-    throwError('ArgumentError', Errors.InvalidEnumError, 'type');
-  }
-  // TODO: add coercion checks for all args
-  var colorStops = [];
-  for (var i = 0, n = colors.length; i < n; i++) {
-    colorStops.push({
-      ratio: ratios[i] / 255,
-      color: rgbIntAlphaToStr(colors[i], alphas[i])
-    });
-  }
-
-  var gradientConstructor;
-  if (type === 'linear') {
-    gradientConstructor = buildLinearGradientFactory(colorStops);
-  } else {
-    gradientConstructor = buildRadialGradientFactory((focalPos || 0), colorStops);
-  }
-
-  // NOTE firefox is really sensitive to very small scale when painting gradients
-  var scale = 819.2;
-  var transform = matrix ?
-                  { a: scale * matrix.a, b: scale * matrix.b,
-                    c: scale * matrix.c, d: scale * matrix.d,
-                    e: matrix.tx, f: matrix.ty
-                  } :
-                  {a: scale, b: 0, c: 0, d: scale, e: 0, f: 0};
-
-  return {style: gradientConstructor, transform: transform};
-}
-
-function drawGraphicsData(data)
-{
-  if ( data === null ) {
-    return;
-  }
-
-  for( var i = 0; i<data.length; i++ ) {
-    var item = data[i];
-
-    if(flash.display.IGraphicsPath.class.isInstanceOf(item)){
-      this._drawPathObject(item);
-    }
-    else if (flash.display.IGraphicsStroke.class.isInstanceOf(item)) {
-      this.beginStrokeObject(item);
-    }
-    else if (flash.display.IGraphicsFill.class.isInstanceOf(item)) {
-      this.beginFillObject(item);
-    }
-  }
-}

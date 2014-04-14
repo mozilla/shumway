@@ -15,23 +15,73 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global rgbaObjToStr, Shumway, Timer, FrameCounter, metrics, shumwayOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
+/*global rgbaObjToStr, Timer, FrameCounter, metrics, coreOptions, OptionSet, Option, appendToFrameTerminal, frameWriter, randomStyle, Timeline*/
 
-var rendererOptions = shumwayOptions.register(new OptionSet("Renderer"));
-var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "boolean", false, "trace renderer execution"));
-var disableRenderVisitor = rendererOptions.register(new Option("drv", "disableRenderVisitor", "boolean", false, "disable render visitor"));
-var disableMouseVisitor = rendererOptions.register(new Option("dmv", "disableMouseVisitor", "boolean", false, "disable mouse visitor"));
-var disableConstructChildren = rendererOptions.register(new Option("", "disableConstructChildren", "boolean", false, "disable constructchildren"));
-var disableEnterFrame = rendererOptions.register(new Option("", "disableEnterFrame", "boolean", false, "disable enterframe"));
-var disableAdvanceFrame = rendererOptions.register(new Option("", "disableAdvanceFrame", "boolean", false, "disable advanceframe"));
-var showRedrawRegions = rendererOptions.register(new Option("rr", "showRedrawRegions", "boolean", false, "show redraw regions"));
-var renderAsWireframe = rendererOptions.register(new Option("raw", "renderAsWireframe", "boolean", false, "render as wireframe"));
-var showQuadTree = rendererOptions.register(new Option("qt", "showQuadTree", "boolean", false, "show quad tree"));
-var turboMode = rendererOptions.register(new Option("", "turbo", "boolean", false, "turbo mode"));
-var forceHidpi = rendererOptions.register(new Option("", "forceHidpi", "boolean", false, "force hidpi"));
-var skipFrameDraw = rendererOptions.register(new Option("", "skipFrameDraw", "boolean", false, "skip frame when not on time"));
-var hud = rendererOptions.register(new Option("", "hud", "boolean", false, "show hud mode"));
-var dummyAnimation = rendererOptions.register(new Option("", "dummy", "boolean", false, "show test balls animation"));
+var timeline;
+var hudTimeline;
+
+function timelineEnter(name) {
+  timeline && timeline.enter(name);
+  hudTimeline && hudTimeline.enter(name);
+}
+
+function timelineLeave(name) {
+  timeline && timeline.leave(name);
+  hudTimeline && hudTimeline.leave(name);
+}
+
+function timelineWrapBroadcastMessage(domain, message) {
+  timelineEnter(message);
+  domain.broadcastMessage(message);
+  timelineLeave(message);
+}
+
+function initializeHUD(stage, parentCanvas) {
+  var canvas = document.createElement('canvas');
+  var canvasContainer = document.createElement('div');
+  canvasContainer.appendChild(canvas);
+  canvasContainer.style.position = "absolute";
+  canvasContainer.style.top = "0px";
+  canvasContainer.style.left = "0px";
+  canvasContainer.style.width = "100%";
+  canvasContainer.style.height = "150px";
+  canvasContainer.style.backgroundColor = "rgba(0, 0, 0, 0.4)";
+  canvasContainer.style.pointerEvents = "none";
+  parentCanvas.parentElement.appendChild(canvasContainer);
+  hudTimeline = new Timeline(canvas);
+  hudTimeline.setFrameRate(stage._frameRate);
+  hudTimeline.refreshEvery(10);
+}
+
+var BlendModeNameMap = {
+  "normal": 'normal',
+  "multiply": 'multiply',
+  "screen": 'screen',
+  "lighten": 'lighten',
+  "darken": 'darken',
+  "difference": 'difference',
+  "overlay": 'overlay',
+  "hardlight": 'hard-light'
+};
+
+function getBlendModeName(blendMode) {
+  // TODO:
+
+  // These Flash blend modes have no canvas equivalent:
+  // - blendModeClass.SUBTRACT
+  // - blendModeClass.INVERT
+  // - blendModeClass.SHADER
+  // - blendModeClass.ADD
+
+  // These blend modes are actually Porter-Duff compositing operators.
+  // The backdrop is the nearest parent with blendMode set to LAYER.
+  // When there is no LAYER parent, they are ignored (treated as NORMAL).
+  // - blendModeClass.ALPHA (destination-in)
+  // - blendModeClass.ERASE (destination-out)
+  // - blendModeClass.LAYER [defines backdrop]
+
+  return BlendModeNameMap[blendMode] || 'normal';
+}
 
 var CanvasCache = {
   cache: [],
@@ -81,36 +131,6 @@ function visitContainer(container, visitor, context) {
   }
 
   visitor.childrenEnd(container);
-}
-
-var BlendModeNameMap = {
-  "normal": 'normal',
-  "multiply": 'multiply',
-  "screen": 'screen',
-  "lighten": 'lighten',
-  "darken": 'darken',
-  "difference": 'difference',
-  "overlay": 'overlay',
-  "hardlight": 'hard-light'
-};
-
-function getBlendModeName(blendMode) {
-  // TODO:
-
-  // These Flash blend modes have no canvas equivalent:
-  // - blendModeClass.SUBTRACT
-  // - blendModeClass.INVERT
-  // - blendModeClass.SHADER
-  // - blendModeClass.ADD
-
-  // These blend modes are actually Porter-Duff compositing operators.
-  // The backdrop is the nearest parent with blendMode set to LAYER.
-  // When there is no LAYER parent, they are ignored (treated as NORMAL).
-  // - blendModeClass.ALPHA (destination-in)
-  // - blendModeClass.ERASE (destination-out)
-  // - blendModeClass.LAYER [defines backdrop]
-
-  return BlendModeNameMap[blendMode] || 'normal';
 }
 
 function RenderVisitor(root, ctx, invalidPath, refreshStage) {
@@ -603,40 +623,48 @@ function sampleEnd() {
   }
 }
 
-var timeline;
-var hudTimeline;
+function createRenderDummyBalls(ctx, stage) {
+  var dummyBalls;
+  var radius = 10;
+  var speed = 1;
+  var m = stage._concatenatedTransform;
+  var scaleX = m.a, scaleY = m.d;
+  dummyBalls = [];
+  for (var i = 0; i < 10; i++) {
+    dummyBalls.push({
+      position: {
+        x: radius + Math.random() * ((ctx.canvas.width - 2 * radius) / scaleX),
+        y: radius + Math.random() * ((ctx.canvas.height - 2 * radius) / scaleY)
+      },
+      velocity: {x: speed * (Math.random() - 0.5), y: speed * (Math.random() - 0.5)}
+    });
+  }
+  ctx.fillStyle = "black";
+  ctx.lineWidth = 2;
+  ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-function timelineEnter(name) {
-  timeline && timeline.enter(name);
-  hudTimeline && hudTimeline.enter(name);
-}
-
-function timelineLeave(name) {
-  timeline && timeline.leave(name);
-  hudTimeline && hudTimeline.leave(name);
-}
-
-function timelineWrapBroadcastMessage(domain, message) {
-  timelineEnter(message);
-  domain.broadcastMessage(message);
-  timelineLeave(message);
-}
-
-function initializeHUD(stage, parentCanvas) {
-  var canvas = document.createElement('canvas');
-  var canvasContainer = document.createElement('div');
-  canvasContainer.appendChild(canvas);
-  canvasContainer.style.position = "absolute";
-  canvasContainer.style.top = "0px";
-  canvasContainer.style.left = "0px";
-  canvasContainer.style.width = "100%";
-  canvasContainer.style.height = "150px";
-  canvasContainer.style.backgroundColor = "rgba(0, 0, 0, 0.4)";
-  canvasContainer.style.pointerEvents = "none";
-  parentCanvas.parentElement.appendChild(canvasContainer);
-  hudTimeline = new Timeline(canvas);
-  hudTimeline.setFrameRate(stage._frameRate);
-  hudTimeline.refreshEvery(10);
+  return function renderDummyBalls() {
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    ctx.strokeStyle = "green";
+    dummyBalls.forEach(function (ball) {
+      var position = ball.position;
+      var velocity = ball.velocity;
+      ctx.beginPath();
+      ctx.arc(position.x, position.y, radius, 0, Math.PI * 2, true);
+      ctx.stroke();
+      var x = (position.x + velocity.x);
+      var y = (position.y + velocity.y);
+      if (x < radius || x > ctx.canvas.width / scaleX - radius) {
+        velocity.x *= -1;
+      }
+      if (y < radius || y > ctx.canvas.height / scaleY - radius) {
+        velocity.y *= -1;
+      }
+      position.x += velocity.x;
+      position.y += velocity.y;
+    });
+  };
 }
 
 function createRenderDummyBalls(ctx, stage) {

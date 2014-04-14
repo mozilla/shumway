@@ -440,7 +440,6 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     if (!style.color && style.hasFill) {
       var fillStyle = processStyle(style.fillStyle, false, dictionary,
                                    dependencies);
-      style.style = fillStyle.style;
       style.type = fillStyle.type;
       style.transform = fillStyle.transform;
       style.records = fillStyle.records;
@@ -449,14 +448,17 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
       style.repeat = fillStyle.repeat;
       style.fillStyle = null;
       return style;
+    } else {
+      style.type = GRAPHICS_FILL_SOLID;
     }
   }
   var color;
   if (style.type === undefined || style.type === GRAPHICS_FILL_SOLID) {
     color = style.color;
-    style.style = 'rgba(' + color.red + ',' + color.green + ',' +
-                  color.blue + ',' + color.alpha / 255 + ')';
-    style.color = null; // No need to keep data around we won't use anymore.
+    style.color = (color.red << 24) |
+                  (color.green << 16) |
+                  (color.blue << 8) |
+                  color.alpha;
     return style;
   }
   var scale;
@@ -464,12 +466,23 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     case GRAPHICS_FILL_LINEAR_GRADIENT:
     case GRAPHICS_FILL_RADIAL_GRADIENT:
     case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
+      var records = style.records;
+      for (var i = 0; i < records.length; i++) {
+        var record = records[i];
+        color = record.color;
+        record.color = (color.red << 24) |
+                       (color.green << 16) |
+                       (color.blue << 8) |
+                       color.alpha;
+      }
       scale = 819.2;
       break;
     case GRAPHICS_FILL_REPEATING_BITMAP:
     case GRAPHICS_FILL_CLIPPED_BITMAP:
+      style.smooth = true;
     case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
     case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
+      style.smooth = style.smooth || false;
       if (dictionary[style.bitmapId]) {
         dependencies.push(dictionary[style.bitmapId].id);
         scale = 0.05;
@@ -487,8 +500,8 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
     b: (matrix.b * scale),
     c: (matrix.c * scale),
     d: (matrix.d * scale),
-    e: matrix.tx,
-    f: matrix.ty
+    tx: matrix.tx,
+    ty: matrix.ty
   };
   // null data that's unused from here on out
   style.matrix = null;
@@ -696,156 +709,6 @@ ShapePath.prototype = {
   ellipse: function(x, y, radiusX, radiusY) {
     this.commands.push(SHAPE_ELLIPSE);
     this.data.push(x, y, radiusX, radiusY);
-  },
-  draw: function(ctx, clip, ratio, colorTransform) {
-    if (clip && !this.fillStyle) {
-      return;
-    }
-    ctx.beginPath();
-    var commands = this.commands;
-    var data = this.data;
-    var morphData = this.morphData;
-    var formOpen = false;
-    var formOpenX = 0;
-    var formOpenY = 0;
-    if (!this.isMorph) {
-      for (var j = 0, k = 0; j < commands.length; j++) {
-        switch (commands[j]) {
-          case SHAPE_MOVE_TO:
-            formOpen = true;
-            formOpenX = data[k++]/20;
-            formOpenY = data[k++]/20;
-            ctx.moveTo(formOpenX, formOpenY);
-            break;
-          case SHAPE_WIDE_MOVE_TO:
-            ctx.moveTo(data[k++]/20, data[k++]/20);
-            k += 2;
-            break;
-          case SHAPE_LINE_TO:
-            ctx.lineTo(data[k++]/20, data[k++]/20);
-            break;
-          case SHAPE_WIDE_LINE_TO:
-            ctx.lineTo(data[k++]/20, data[k++]/20);
-            k += 2;
-            break;
-          case SHAPE_CURVE_TO:
-            ctx.quadraticCurveTo(data[k++]/20, data[k++]/20,
-                                 data[k++]/20, data[k++]/20);
-            break;
-          case SHAPE_CUBIC_CURVE_TO:
-            ctx.bezierCurveTo(data[k++]/20, data[k++]/20,
-                              data[k++]/20, data[k++]/20,
-                              data[k++]/20, data[k++]/20);
-            break;
-          case SHAPE_CIRCLE:
-            if (formOpen) {
-              ctx.lineTo(formOpenX, formOpenY);
-              formOpen = false;
-            }
-            ctx.moveTo((data[k] + data[k+2])/20, data[k+1]/20);
-            ctx.arc(data[k++]/20, data[k++]/20, data[k++]/20, 0, Math.PI * 2,
-                    false);
-            break;
-          case SHAPE_ELLIPSE:
-            if (formOpen) {
-              ctx.lineTo(formOpenX, formOpenY);
-              formOpen = false;
-            }
-            var x = data[k++];
-            var y = data[k++];
-            var rX = data[k++];
-            var rY = data[k++];
-            var radius;
-            if (rX !== rY) {
-              ctx.save();
-              var ellipseScale;
-              if (rX > rY) {
-                ellipseScale = rX / rY;
-                radius = rY;
-                x /= ellipseScale;
-                ctx.scale(ellipseScale, 1);
-              } else {
-                ellipseScale = rY / rX;
-                radius = rX;
-                y /= ellipseScale;
-                ctx.scale(1, ellipseScale);
-              }
-            }
-            ctx.moveTo((x + radius)/20, y/20);
-            ctx.arc(x/20, y/20, radius/20, 0, Math.PI * 2, false);
-            if (rX !== rY) {
-              ctx.restore();
-            }
-            break;
-          default:
-            // Sometimes, the very last command isn't properly set. Ignore it.
-            if (commands[j] === 0 && j === commands.length -1) {
-              break;
-            }
-            console.warn("Unknown drawing command encountered: " +
-                         commands[j]);
-        }
-      }
-    } else {
-      for (var j = 0, k = 0; j < commands.length; j++) {
-        switch (commands[j]) {
-          case SHAPE_MOVE_TO:
-            ctx.moveTo(morph(data[k]/20, morphData[k++]/20, ratio),
-                       morph(data[k]/20, morphData[k++]/20, ratio));
-            break;
-          case SHAPE_LINE_TO:
-            ctx.lineTo(morph(data[k]/20, morphData[k++]/20, ratio),
-                       morph(data[k]/20, morphData[k++]/20, ratio));
-            break;
-          case SHAPE_CURVE_TO:
-            ctx.quadraticCurveTo(morph(data[k]/20, morphData[k++]/20, ratio),
-                                 morph(data[k]/20, morphData[k++]/20, ratio),
-                                 morph(data[k]/20, morphData[k++]/20, ratio),
-                                 morph(data[k]/20, morphData[k++]/20, ratio));
-            break;
-          default:
-            console.warn("Drawing command not supported for morph " +
-                         "shapes: " + commands[j]);
-        }
-      }
-    }
-    // TODO: enable in-path line-style changes
-//        if (formOpen) {
-//          ctx.lineTo(formOpenX, formOpenY);
-//        }
-    if (!clip) {
-      var fillStyle = this.fillStyle;
-      if (fillStyle) {
-        colorTransform.setFillStyle(ctx, fillStyle.style);
-        ctx.imageSmoothingEnabled = ctx.mozImageSmoothingEnabled =
-                                    fillStyle.smooth;
-        var m = fillStyle.transform;
-        ctx.save();
-        colorTransform.setAlpha(ctx);
-        if (m) {
-          ctx.transform(m.a, m.b, m.c, m.d, m.e/20, m.f/20);
-        }
-        ctx.fill();
-        ctx.restore();
-      }
-      var lineStyle = this.lineStyle;
-      // TODO: All widths except for `undefined` and `NaN` draw something
-      if (lineStyle) {
-        colorTransform.setStrokeStyle(ctx, lineStyle.style);
-        ctx.save();
-        colorTransform.setAlpha(ctx);
-        // Flash's lines are always at least 1px/20twips
-        ctx.lineWidth = Math.max(lineStyle.width/20, 1);
-        ctx.lineCap = lineStyle.lineCap;
-        ctx.lineJoin = lineStyle.lineJoin;
-        ctx.miterLimit = lineStyle.miterLimit;
-        ctx.stroke();
-        ctx.restore();
-      }
-    } else {
-      ctx.fill();
-    }
-    ctx.closePath();
   },
   isPointInPath: function(x, y) {
     if (!(this.fillStyle || this.lineStyle)) {
@@ -1399,6 +1262,36 @@ ShapePath.fromPlainObject = function(obj) {
   return path;
 };
 
+/**
+ * For shapes parsed in a worker thread, we have to finish their
+ * paths after receiving the data in the main thread.
+ *
+ * This entails creating proper instances for all the contained data types.
+ */
+function finishShapePath(path, dictionary) {
+  assert(!inWorker);
+
+  if (path.fullyInitialized) {
+    return path;
+  }
+  if (!(path instanceof ShapePath)) {
+    var untypedPath = path;
+    path = new ShapePath(path.fillStyle, path.lineStyle, 0, 0, path.isMorph);
+    // See the comment in the ShapePath ctor for why we're recreating the
+    // typed arrays here.
+    path.commands = new Uint8Array(untypedPath.buffers[0]);
+    path.data = new Int32Array(untypedPath.buffers[1]);
+    if (untypedPath.isMorph) {
+      path.morphData = new Int32Array(untypedPath.buffers[2]);
+    }
+    path.buffers = null;
+  }
+  path.fillStyle && initStyle(path.fillStyle, dictionary);
+  path.lineStyle && initStyle(path.lineStyle, dictionary);
+  path.fullyInitialized = true;
+  return path;
+}
+
 function distanceSq(x1, y1, x2, y2) {
   var dX = x2 - x1;
   var dY = y2 - y1;
@@ -1667,154 +1560,24 @@ function morph(start, end, ratio) {
   return start + (end - start) * ratio;
 }
 
-/**
- * For shapes parsed in a worker thread, we have to finish their
- * paths after receiving the data in the main thread.
- *
- * This entails creating proper instances for all the contained data types.
- */
-function finishShapePath(path, dictionaryResolved) {
-  assert(!inWorker);
-
-  if (path.fullyInitialized) {
-    return path;
-  }
-  if (!(path instanceof ShapePath)) {
-    var untypedPath = path;
-    path = new ShapePath(path.fillStyle, path.lineStyle, 0, 0, path.isMorph);
-    // See the comment in the ShapePath ctor for why we're recreating the
-    // typed arrays here.
-    path.commands = new Uint8Array(untypedPath.buffers[0]);
-    path.data = new Int32Array(untypedPath.buffers[1]);
-    if (untypedPath.isMorph) {
-      path.morphData = new Int32Array(untypedPath.buffers[2]);
-    }
-    path.buffers = null;
-  }
-  path.fillStyle && initStyle(path.fillStyle, dictionaryResolved);
-  path.lineStyle && initStyle(path.lineStyle, dictionaryResolved);
-  path.fullyInitialized = true;
-  return path;
-}
-
 var inWorker = (typeof window) === 'undefined';
-// Used for creating gradients and patterns
-var factoryCtx = !inWorker ?
-                 document.createElement('canvas').getContext('2d') :
-                 null;
 
-/**
- * @param {Array} colorStops
- * @returns {Function}
- */
-function buildLinearGradientFactory(colorStops) {
-  var defaultGradient = factoryCtx.createLinearGradient(-1, 0, 1, 0);
-  for (var i = 0; i < colorStops.length; i++) {
-    defaultGradient.addColorStop(colorStops[i].ratio, colorStops[i].color);
-  }
-
-  var fn = function createLinearGradient(ctx, colorTransform) {
-    var gradient = ctx.createLinearGradient(-1, 0, 1, 0);
-    for (var i = 0; i < colorStops.length; i++) {
-      colorTransform.addGradientColorStop(gradient, colorStops[i].ratio, colorStops[i].color);
-    }
-    return gradient;
-  };
-  fn.defaultFillStyle = defaultGradient;
-
-  return fn;
-}
-
-/**
- * @param {number} focalPoint
- * @param {Array} colorStops
- * @returns {Function}
- */
-function buildRadialGradientFactory(focalPoint, colorStops) {
-  var defaultGradient = factoryCtx.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
-  for (var i = 0; i < colorStops.length; i++) {
-    defaultGradient.addColorStop(colorStops[i].ratio, colorStops[i].color);
-  }
-
-  var fn = function createRadialGradient(ctx, colorTransform) {
-    var gradient = ctx.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
-    for (var i = 0; i < colorStops.length; i++) {
-      colorTransform.addGradientColorStop(gradient, colorStops[i].ratio, colorStops[i].color);
-    }
-    return gradient;
-  };
-  fn.defaultFillStyle = defaultGradient;
-
-  return fn;
-}
-
-/**
- * @param {Object} img
- * @param {String} repeat
- */
-function buildBitmapPatternFactory(img, repeat) {
-  var defaultPattern = factoryCtx.createPattern(img, repeat);
-
-  var cachedTransform, cachedTransformKey;
-  var fn = function createBitmapPattern(ctx, colorTransform) {
-    if (!colorTransform.mode) {
-      return defaultPattern;
-    }
-    var key = colorTransform.getTransformFingerprint();
-    if (key === cachedTransformKey) {
-      return cachedTransform;
-    }
-    var canvas = document.createElement('canvas');
-    canvas.width = img.width;
-    canvas.height = img.height;
-    var ctx = canvas.getContext('2d');
-    colorTransform.setAlpha(ctx, true);
-    ctx.drawImage(img, 0, 0);
-    cachedTransform = ctx.createPattern(canvas, repeat);
-    cachedTransformKey = key;
-    return cachedTransform;
-  };
-  fn.defaultFillStyle = defaultPattern;
-
-  return fn;
-}
-
-function initStyle(style, dictionaryResolved) {
+function initStyle(style, dictionary) {
   if (style.type === undefined) {
     return;
   }
   switch (style.type) {
     case GRAPHICS_FILL_SOLID:
-      // Solid fill styles are fully processed in shape.js's processStyle
-      break;
     case GRAPHICS_FILL_LINEAR_GRADIENT:
     case GRAPHICS_FILL_RADIAL_GRADIENT:
     case GRAPHICS_FILL_FOCAL_RADIAL_GRADIENT:
-      var records = style.records, colorStops = [];
-      for (var j = 0, n = records.length; j < n; j++) {
-        var record = records[j];
-        var colorStr = rgbaObjToStr(record.color);
-        colorStops.push({ratio: record.ratio / 255, color: colorStr});
-      }
-
-      var gradientConstructor;
-      var isLinear = style.type === GRAPHICS_FILL_LINEAR_GRADIENT;
-      if (isLinear) {
-        gradientConstructor = buildLinearGradientFactory(colorStops);
-      } else {
-        gradientConstructor = buildRadialGradientFactory((style.focalPoint|0)/20, colorStops);
-      }
-      style.style = gradientConstructor;
       break;
     case GRAPHICS_FILL_REPEATING_BITMAP:
     case GRAPHICS_FILL_CLIPPED_BITMAP:
     case GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP:
     case GRAPHICS_FILL_NONSMOOTHED_CLIPPED_BITMAP:
-      var bitmap = dictionaryResolved[style.bitmapId];
-      var repeat = (style.type === GRAPHICS_FILL_REPEATING_BITMAP) ||
-                   (style.type === GRAPHICS_FILL_NONSMOOTHED_REPEATING_BITMAP);
-      style.style = buildBitmapPatternFactory(bitmap.props.img,
-                                              repeat ? "repeat" : "no-repeat");
+      var bitmap = dictionary[style.bitmapId];
+      style.bitmapId = bitmap.props.renderableId;
       break;
     default:
       fail('invalid fill style', 'shape');

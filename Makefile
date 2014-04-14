@@ -62,7 +62,7 @@ run-tamarin-tests:
 	make -C utils/ run-tamarin-tests
 
 build-libs:
-	grunt avm2 avm1
+	grunt avm2 avm1 stage
 
 build-playerglobal:
 	make -C utils/ build-playerglobal

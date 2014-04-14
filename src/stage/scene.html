@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+</head>
+<body style="background-color: #333333;">
+  <script src="tween.js"></script>
+
+  <script src="../avm2/options.js"></script>
+  <script>
+    var Option = options.Option;
+    var OptionSet = options.OptionSet;
+    var coreOptions = new OptionSet("Core Options");
+  </script>
+  <script src="../avm2/avm2Util.js"></script>
+  <script src="../avm2/metrics.js"></script>
+  <script src="../swf/util.js"></script>
+  <script src="../flash/util.js"></script>
+  <script src="../swf/Timeline.js"></script>
+  <script src="../../examples/inspector/js/classes/Terminal.js"></script>
+  <script src="../../examples/inspector/js/classes/dat.gui.min.js"></script>
+  <script src="util.js"></script>
+  <script src="geometry.js"></script>
+  <script src="stage.js"></script>
+  <script src="elements.js"></script>
+  <script src="filters.js"></script>
+  <script src="gl.js"></script>
+  <script src="gl/core.js"></script>
+  <script src="2d.js"></script>
+  <script src="dom.js"></script>
+  <script src="glTests.js"></script>
+  <script src="bench.js"></script>
+  <script src="shapes.js"></script>
+  <script>
+    var Point = Shumway.Geometry.Point;
+    var Rectangle = Shumway.Geometry.Rectangle;
+    var Matrix = Shumway.Geometry.Matrix;
+    var Stage = Shumway.Layers.Stage;
+    var Snow = Shumway.Layers.Elements.Snow;
+    var Flake = Shumway.Layers.Elements.Flake;
+    var Bitmap = Shumway.Layers.Bitmap;
+    var DynamicShape = Shumway.Layers.DynamicShape;
+
+
+    var Text = Shumway.Layers.Text;
+    var Shape = Shumway.Layers.Shape;
+
+    var BlurFilter = Shumway.Layers.BlurFilter;
+    var WebGLContext = Shumway.GL.WebGLContext;
+    var WebGLStageRenderer = Shumway.GL.WebGLStageRenderer;
+    var Canvas2DStageRenderer = Shumway.Layers.Canvas2DStageRenderer;
+    var DOMStageRenderer = Shumway.Layers.DOMStageRenderer;
+    var FontAtlas = Shumway.Layers.Elements.FontAtlas;
+
+    var Counter = new metrics.Counter(true);
+    var FrameCounter = new metrics.Counter(true);
+  </script>
+  <style>
+    #debugInfoContainer {
+      position: absolute;
+      top: 500px;
+      bottom: 0px;
+      right: 0;
+      width: 300px;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background-color: rgba(0, 0, 0, 0.2);
+
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+  </style>
+
+
+  <div>
+    <div style="float: left; width: 512px;">
+      <canvas id="frameTimeline" height="200" style="background-]color: #333333;"  tabindex='0'></canvas>
+    </div>
+    <div style="margin-left: 10px; float: left; width: 512px;">
+      <canvas id="traceTerminal" height="200" width="512" style="background-]color: #333333;" tabindex='1'></canvas>
+    </div>
+  </div>
+
+  <div style="clear: both;">
+    <!--<video id="video" src="http://upload.wikimedia.org/wikipedia/commons/4/41/Big_Buck_Bunny_medium.ogv" controls="true"></video>-->
+    <!--<video id="video" src="http://upload.wikimedia.org/wikipedia/commons/7/79/Big_Buck_Bunny_small.ogv" controls="true"></video>-->
+    <!--<canvas id="stageCanvas" width="512" height="256" style="background-color: #1F1F21;"></canvas>-->
+    <canvas id="webGLCanvas" style="background-color: #000000; margin: 10px;"></canvas>
+    <canvas id="canvas2DCanvas" style="background-color: #000000; margin: 10px;"></canvas>
+    <div id="DOMDiv" style="position: relative; background-color: #000000; margin: 10px; overflow: hidden;">
+    </div>
+
+    <!--<canvas id="stageCanvas" style="background-color: #1F1F21;"></canvas>-->
+  </div>
+
+  <div id="container" style="clear: both;">
+  </div>
+  <script>
+
+
+    var traceTerminal = new Terminal(document.getElementById("traceTerminal"));
+    traceTerminal.refreshEvery(100);
+
+    function appendToTraceTerminal(str, color) {
+      var scroll = traceTerminal.isScrolledToBottom();
+      traceTerminal.buffer.append(str, color);
+      if (scroll) {
+        traceTerminal.gotoLine(traceTerminal.buffer.length - 1);
+        traceTerminal.scrollIntoView();
+      }
+    }
+
+    var writer = Shumway.GL.writer = new IndentingWriter(false, function (str){
+      appendToTraceTerminal(str);
+    });
+
+    function shuffle(target, easing) {
+      var tween = new TWEEN.Tween(target);
+      tween.easing(easing);
+      var motion = [
+        function () {
+          var x = Math.random() * (stage.w - target.w) + target.w / 2;
+          var y = Math.random() * (stage.h - target.h) + target.h / 2;
+          var s = 2 + Math.random() * 0.5;
+          tween.easing(easing);
+          tween.delay(Math.random() * (500000 / sceneOptions.movement));
+          tween.to({
+            x: x,
+            y: y,
+            scaleX: s,
+            scaleY: s,
+            rotation: (Math.random() - 0.5) * 180 * 1
+          }, 100000 / sceneOptions.speed).start();
+        },
+//        function () {
+//          var s = 0.1 + Math.random() * 10;
+//          tween.easing(easing);
+//          tween.delay(Math.random() * (500000 / sceneOptions.movement));
+//          tween.to({
+//            scaleX: 1 + Math.sin(s) / 2,
+//            scaleY: 1 + Math.cos(s) / 2,
+//          }, 100000 / sceneOptions.speed).start();
+//        },
+        function () {
+          tween.easing(easing);
+          tween.delay(Math.random() * (50000 / sceneOptions.movement));
+          tween.to({
+            rotation: (Math.random() - 0.5) * 180 * 1
+          }, 100000 / sceneOptions.speed).start();
+        },
+        function () {
+          tween.easing(easing);
+          tween.delay(Math.random() * (50000 / sceneOptions.movement));
+          var s = 0.01 + Math.random() * 4;
+          tween.to({
+            scaleX: s,
+            scaleY: s
+          }, 100000 / sceneOptions.speed).start();
+        }
+      ];
+      function next() {
+        motion[Math.random() * motion.length | 0]();
+      }
+      next();
+      tween.onComplete(next);
+      tween.start();
+    }
+
+    var timeline;
+
+    if (true) {
+      timeline = new Timeline(document.getElementById("frameTimeline"));
+      timeline.setFrameRate(60);
+      timeline.refreshEvery(60);
+      Shumway.GL.timeline = timeline;
+    }
+
+
+    function timelineEnter(name) {
+      timeline && timeline.enter(name);
+    }
+
+    function timelineLeave(name) {
+      timeline && timeline.leave(name);
+    }
+
+    var webGLCanvas = document.getElementById("webGLCanvas");
+    var canvas2DCanvas = document.getElementById("canvas2DCanvas");
+    var DOMDiv = document.getElementById("DOMDiv");
+
+
+    var pixelRatio = 'devicePixelRatio' in window ? window.devicePixelRatio : 1;
+
+    var width = (window.innerWidth * 0.7) | 0;
+    var height = (window.innerHeight * 0.7) | 0;
+
+    var width = 512;
+    var height = 512;
+
+    var gui = new dat.GUI();
+
+    // var width = gui.domElement.offsetLeft - 10;
+
+    [webGLCanvas, canvas2DCanvas].forEach(function (canvas) {
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+      canvas.width = width * pixelRatio;
+      canvas.height = height * pixelRatio;
+    });
+
+    [DOMDiv].forEach(function (canvas) {
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+    });
+
+    var sceneOptions = {
+      toggle: false,
+      toggle2: false,
+
+      flakes: 1,
+      shapes: 0,
+      dynamicShapes: 0,
+      sprites: 0,
+      bitmaps: 2,
+      videos: 2,
+      text: 1,
+      textLength: 1,
+      webGL: false,
+      canvas2D: false,
+      dom: false,
+
+      movement: 20,
+      speed: 20,
+      redraw: 1,
+      maxTextures: 1,
+      maxTextureSize: 1024 * 4,
+      useStencil: true,
+      render: true,
+      animate: true,
+      drawElements: true,
+      drawTiles: true,
+      drawTextures: true,
+      drawTexture: -1,
+      drawDirtyRegions: false,
+      drawLayers: false,
+      clear: true,
+      imageSmoothing: true,
+      paintFlashing: false,
+      disableMasking: false,
+      compositeMask: true,
+      snap: false,
+      alpha: false,
+
+      move: 0.1,
+
+      perspectiveCamera: false,
+      perspectiveCameraFOV: 30,
+      perspectiveCameraDistance: 1,
+      perspectiveCameraAngle: 0,
+      frameSpacing: 0.1,
+      frameRate: 5,
+      frameCount: 100,
+
+      stop: function () {
+        frames = Number.MAX_VALUE;
+      },
+
+      test: function () {
+        Shumway.GL.Tests.runTests(Shumway.GL.writer);
+      },
+
+      bench: function () {
+        new Shumway.Bench.TextureUpload(Shumway.GL.writer).run();
+      }
+    };
+
+    gui.remember(sceneOptions);
+
+    (function addButtons() {
+      var f = gui.addFolder("Commands");
+      var c = [];
+      c.push(f.add(sceneOptions, "stop"));
+      c.push(f.add(sceneOptions, "test"));
+      c.push(f.add(sceneOptions, "bench"));
+      f.open();
+    })();
+
+    (function addSceneOptions() {
+      var f = gui.addFolder("Scene Options");
+      var c = [];
+
+      c.push(f.add(sceneOptions, "flakes", 0, 50000).step(1));
+      c.push(f.add(sceneOptions, "shapes", 0, 5000).step(1));
+      c.push(f.add(sceneOptions, "dynamicShapes", 0, 5000).step(1));
+      c.push(f.add(sceneOptions, "sprites", 0, 1000).step(1));
+      c.push(f.add(sceneOptions, "bitmaps", 0, 10000).step(2));
+      c.push(f.add(sceneOptions, "videos", 0, 1000).step(1));
+      c.push(f.add(sceneOptions, "text", 0, 1000).step(1));
+      c.push(f.add(sceneOptions, "textLength", 0, 1000).step(1));
+      c.forEach(function (x) {
+        x.onFinishChange(updateScene);
+      });
+      f.open();
+      c.push(f.add(sceneOptions, "webGL"));
+      c.push(f.add(sceneOptions, "dom"));
+      c.push(f.add(sceneOptions, "canvas2D"));
+      c.push(f.add(sceneOptions, "toggle"));
+      c.push(f.add(sceneOptions, "toggle2"));
+    })();
+
+    (function addOptions() {
+      var f = gui.addFolder("Options");
+      var c = [];
+      c.push(f.add(sceneOptions, "movement", 1, 1000).step(1));
+      c.push(f.add(sceneOptions, "speed", 0.1, 200).step(0.1));
+      c.push(f.add(sceneOptions, "redraw", 0, 200).step(1));
+      c.push(f.add(sceneOptions, "maxTextures", 1, 32).step(1));
+      c.push(f.add(sceneOptions, "maxTextureSize", 128, 1024 * 16).step(1));
+      c.push(f.add(sceneOptions, "useStencil"));
+      c.push(f.add(sceneOptions, "frameRate", 1, 60).step(1));
+      c.push(f.add(sceneOptions, "frameCount", 1, 100000).step(1));
+      c.push(f.add(sceneOptions, "render"));
+      c.push(f.add(sceneOptions, "drawElements"));
+      c.push(f.add(sceneOptions, "drawTiles"));
+      c.push(f.add(sceneOptions, "drawTextures"));
+      c.push(f.add(sceneOptions, "animate"));
+      c.push(f.add(sceneOptions, "drawDirtyRegions"));
+      c.push(f.add(sceneOptions, "drawLayers"));
+      c.push(f.add(sceneOptions, "clear"));
+      c.push(f.add(sceneOptions, "imageSmoothing"));
+      c.push(f.add(sceneOptions, "paintFlashing"));
+      c.push(f.add(sceneOptions, "disableMasking"));
+      c.push(f.add(sceneOptions, "debugStage"));
+      c.push(f.add(sceneOptions, "compositeMask"));
+      c.push(f.add(sceneOptions, "snap"));
+      c.push(f.add(sceneOptions, "alpha"));
+      c.push(f.add(sceneOptions, "move"));
+      c.push(f.add(sceneOptions, "perspectiveCamera"));
+      c.push(f.add(sceneOptions, "perspectiveCameraFOV", 1, 160).step(0.1).name("fov"));
+      c.push(f.add(sceneOptions, "perspectiveCameraAngle", 0, 360).step(0.1).name("angle"));
+      c.push(f.add(sceneOptions, "perspectiveCameraDistance", 1, 100).step(0.1).name("distance"));
+      c.push(f.add(sceneOptions, "frameSpacing", 0.1, 100).step(0.1).name("spacing"));
+      f.open();
+      c.forEach(function (x) {
+        x.onFinishChange(updateOptions);
+      })
+    })();
+
+    var webGLContext, webGLStageRenderer, canvas2DStageRenderer, domStageRenderer;
+    webGLContext = new WebGLContext(webGLCanvas, sceneOptions);
+    webGLStageRenderer = new WebGLStageRenderer(webGLContext, webGLCanvas.width, webGLCanvas.height);
+
+    canvas2DStageRenderer = new Canvas2DStageRenderer(canvas2DCanvas.getContext("2d"), true);
+    domStageRenderer = new DOMStageRenderer(DOMDiv, pixelRatio);
+
+    var stage, animators;
+
+    var videoElements = [];
+
+    function ensureLoadedVideos() {
+      if (videoElements.length > 0) {
+        return;
+      }
+      var urls = [
+        "assets/oceans.webm",
+        // "assets/elephants-dream.webm"
+        // "http://upload.wikimedia.org/wikipedia/commons/7/79/Big_Buck_Bunny_small.ogv",
+        // "http://video.webmfiles.org/elephants-dream.webm",
+        // "http://video.webmfiles.org/big-buck-bunny_trailer.webm"
+      ];
+
+      urls.forEach(function (url) {
+        var videoElement = document.createElement("video");
+        videoElement.src = url;
+        videoElement.loop = true;
+        // videoElement.muted = true;
+        videoElements.push(videoElement);
+        videoElement.play();
+        videoElement.textureRegion = webGLContext.allocateTextureRegion(1024, 1024);
+
+      });
+    }
+
+    function updateScene() {
+      var canvas = webGLCanvas;
+      stage = new Stage(canvas.width, canvas.height);
+      animators = [];
+
+      var snow = new Snow(sceneOptions.flakes, 16, canvas.width, canvas.height);
+      animators.push(snow);
+      stage.addChild(snow);
+
+
+      for (var i = 0; i < sceneOptions.text; i++) {
+        var frame = new Shape(new Shumway.TextShape(Shumway.randomText(sceneOptions.textLength)));
+        frame.origin = new Point(frame.w / 2, frame.h / 2);
+        frame.x = (Math.random()) * canvas.width;
+        frame.y = (Math.random()) * canvas.height;
+        frame.x = 0;
+        frame.y = 0;
+        // frame.alpha = Math.random();
+        stage.addChild(frame);
+        shuffle(frame, TWEEN.Easing.Exponential.Out);
+      }
+
+      for (var i = 0; i < sceneOptions.shapes; i++) {
+        var shape = Shumway.getRandomShape();
+        var frame = new Shape(shape);
+        frame.origin = new Point(frame.w / 2, frame.h / 2);
+        // frame.origin.x = 0;
+        // frame.origin.y = 0;
+        frame.x = (Math.random()) * canvas.width;
+//        frame.x = 0;
+        frame.y = (Math.random()) * canvas.height;
+        frame.mask = new Shape(new Shumway.RectangleShape(100, 300));
+        frame.mask.origin = new Point(frame.mask.w / 2, frame.mask.h / 2);
+        shuffle(frame.mask, TWEEN.Easing.Exponential.Out);
+//        frame.x = frame.y = 0;
+//        frame.y = (Math.random()) * (canvas.height - frame.h);
+        // frame.alpha = Math.random();
+        stage.addChild(frame);
+        // shuffle(frame, TWEEN.Easing.Exponential.Out);
+        shuffle(frame, TWEEN.Easing.Linear.None);
+      }
+
+      for (var i = 0; i < sceneOptions.dynamicShapes; i++) {
+        var frame = new Shape(new Shumway.TimeShape());
+        frame.x = Math.random() * canvas.width;
+        frame.y = Math.random() * canvas.height;
+        frame.origin = new Point(frame.w / 2, frame.h / 2);
+        stage.addChild(frame);
+        shuffle(frame, TWEEN.Easing.Exponential.Out);
+      }
+
+      for (var i = 0; i < sceneOptions.sprites; i++) {
+        var shape = Shumway.getSpriteShape(i);
+        var frame = new Shape(shape);
+        frame.origin = new Point(frame.w / 2, frame.h / 2);
+        frame.x = (Math.random()) * canvas.width;
+        frame.y = (Math.random()) * canvas.height;
+        // frame.alpha = Math.random();
+        stage.addChild(frame);
+        shuffle(frame, TWEEN.Easing.Exponential.Out);
+      }
+
+      var image = document.createElement("img");
+      // image.src = "assets/firefox_logo_small.png";
+      image.src = "assets/bridge.jpg";
+      // image.src = "assets/big.jpg";
+      image.addEventListener("load", function () {
+        for (var i = 0; i < sceneOptions.bitmaps; i++) {
+          var frame = new Shape(Shumway.getImageShape(image));
+          frame.x = (Math.random()) * canvas.width;
+          frame.y = (Math.random()) * canvas.height;
+          frame.origin = new Point(frame.w / 2, frame.h / 2);
+
+          frame.mask = new Shape(new Shumway.RectangleShape(100, 300));
+          frame.mask.origin = new Point(frame.mask.w / 2, frame.mask.h / 2);
+          shuffle(frame.mask, TWEEN.Easing.Exponential.Out);
+
+          // frame.alpha = Math.random();
+          if (false || Math.random() < 0.5) {
+            frame.filters = [new BlurFilter(10, 10)];
+          }
+          if (Math.random() < 0.1) {
+            frame.mask = new Flake(20, 20);
+            frame.mask.x = 10;
+            frame.mask.y = 10;
+          }
+          stage.addChild(frame);
+          shuffle(frame, TWEEN.Easing.Exponential.Out);
+        }
+      });
+
+      for (var i = 0; i < sceneOptions.videos; i++) {
+        ensureLoadedVideos();
+        var videoElement = videoElements[Math.random() * videoElements.length | 0];
+        var frame = new DynamicShape(videoElement.textureRegion);
+        frame.x = (Math.random()) * canvas.width;
+        frame.y = (Math.random()) * canvas.height;
+        stage.addChild(frame);
+        shuffle(frame, TWEEN.Easing.Exponential.Out);
+      }
+
+      stage.shuffleChildren();
+    }
+
+    function updateOptions() {
+//      canvas2DContext.imageSmoothingEnabled = canvas2DContext.mozImageSmoothingEnabled = sceneOptions.imageSmoothing;
+    }
+
+    updateScene();
+
+    var mousePosition;
+
+    window.requestAnimationFrame = (function(){
+      return function(callback) {
+        window.setTimeout(callback, 1000 / sceneOptions.frameRate);
+      };
+    })();
+
+    var frames = 0;
+
+    var last = Date.now();
+
+    (function tick() {
+      FrameCounter.clear();
+      timelineEnter("FRAME");
+      for (var i = 0; i < videoElements.length; i++) {
+        var videoElement = videoElements[i];
+        var location = videoElement.textureRegion;
+        if (location) {
+          if (videoElement.lastCurrentTime !== videoElement.currentTime) {
+            webGLContext.updateTextureRegion(videoElement, location);
+          }
+          videoElement.lastCurrentTime = videoElement.currentTime;
+        }
+      }
+      var now = performance.now();
+      if (sceneOptions.animate) {
+        TWEEN.update();
+        timelineEnter("ANIMATE");
+        animators.forEach(function (animator) {
+          animator.onEnterFrame(now);
+        });
+        timelineLeave("ANIMATE");
+      }
+      if (sceneOptions.render) {
+        if (sceneOptions.webGL) {
+          timelineEnter("WebGL");
+          var now = Date.now();
+          webGLStageRenderer.render(stage, sceneOptions, now - last);
+          last = now;
+          timelineLeave("WebGL");
+        }
+        if (sceneOptions.canvas2D) {
+          timelineEnter("Canvas2D");
+          canvas2DStageRenderer.render(stage, sceneOptions);
+          timelineLeave("Canvas2D");
+        }
+        if (sceneOptions.dom) {
+          timelineEnter("DOM");
+          domStageRenderer.render(stage, sceneOptions);
+          timelineLeave("DOM");
+        }
+        /*
+        if (sceneOptions.webGL) {
+          renderer.render(stage, sceneOptions);
+        } else {
+          if (sceneOptions.clear) {
+            context.fillStyle = "#1F1F21";
+            if (!sceneOptions.webGL) {
+              context.fillRect(0, 0, stage.w, stage.h);
+            }
+          }
+          stage.render(context, {
+            drawLayers: sceneOptions.drawLayers,
+            snap: sceneOptions.snap,
+            alpha: sceneOptions.alpha
+          });
+          if (sceneOptions.drawDirtyRegions) {
+            stage.dirtyRegion.render(context, {
+              drawGrid: false
+            });
+          }
+        }
+        */
+      }
+
+      timelineLeave("FRAME");
+
+      // writer.writeLn("Counter");
+      // console.info(Counter.counts);
+
+      // writer.writeLn("Frame Counter");
+      // FrameCounter.trace(writer);
+
+      stage.dirtyRegion.clear();
+      if (frames ++ < sceneOptions.frameCount) {
+        requestAnimationFrame(tick);
+      }
+    })();
+
+    function getMousePosition(canvas, evt) {
+      var rect = canvas.getBoundingClientRect();
+      return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+      };
+    }
+
+    var originalPosition;
+
+//    canvas.addEventListener('mousemove', function(evt) {
+//      mousePosition = getMousePosition(canvas, evt);
+//    }, false);
+
+  </script>
+</body>
+</html>
