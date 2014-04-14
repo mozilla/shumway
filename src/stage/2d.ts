@@ -17,6 +17,9 @@ module Shumway.Layers {
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
+  import Grid = Shumway.Geometry.RegionAllocator.Grid;
+  import Region = Shumway.Geometry.RegionAllocator.Region;
+  import IRegionAllocator = Shumway.Geometry.RegionAllocator.IRegionAllocator;
 
   export enum FillRule {
     NONZERO,
@@ -35,6 +38,110 @@ module Shumway.Layers {
   var originalSave = CanvasRenderingContext2D.prototype.save;
   var originalRestore = CanvasRenderingContext2D.prototype.restore;
 
+
+  class CanvasGrid extends Grid {
+    private _context: CanvasRenderingContext2D;
+
+    constructor(canvasSize: number, gridSize: number) {
+      super(canvasSize, canvasSize, gridSize);
+      var canvas = document.createElement("canvas");
+      canvas.width = canvas.height = canvasSize | 0;
+      this._context = canvas.getContext("2d", { willReadFrequently: true });
+      //document.getElementById("settingsContainer").appendChild(canvas);
+      //canvas.setAttribute("style", "display: block; transform: scale(0.5, 0.5);")
+    }
+
+    get context(): CanvasRenderingContext2D {
+      return this._context;
+    }
+  }
+
+  class CanvasCache {
+    private canvasSize: number;
+    private gridSizes: number[];
+    private allocators: IRegionAllocator[][];
+
+    maxCanvasCount: number = 0;
+
+    constructor(canvasSize: number = 2048, gridSizes: number[] = [128, 256, 512]) {
+      gridSizes.sort();
+      this.canvasSize = canvasSize;
+      this.gridSizes = gridSizes;
+      this.allocators = [];
+      var gridSize: number;
+      for (var i = 0; i < this.gridSizes.length; i++) {
+        gridSize = this.gridSizes[i];
+        assert(canvasSize >= gridSize, "CanvasCache: gridSize (" + gridSize + ") > canvasSize (" + canvasSize + ")");
+        assert(canvasSize % gridSize == 0, "CanvasCache: gridSize (" + gridSize + ") not optimal");
+        this.allocators[i] = [];
+      }
+      if (gridSize != canvasSize) {
+        this.gridSizes[i] = canvasSize;
+        this.allocators[i] = [];
+      }
+    }
+
+    allocate(w: number, h: number, i: number = -1): Region {
+      if (i == -1) {
+        i = this.getOptimalGridSizeIndex(w, h);
+      }
+      if (i != -1) {
+        var allocators: IRegionAllocator[] = this.allocators[i];
+        var region: Region = null;
+        for (var j = 0; j < allocators.length && region == null; j++) {
+          region = allocators[j].allocate(w, h);
+        }
+        if (region == null && (this.maxCanvasCount == 0 || this.maxCanvasCount > allocators.length)) {
+          var allocator: IRegionAllocator = allocators[j++] = new CanvasGrid(this.canvasSize, this.gridSizes[i]);
+          region = allocator.allocate(w, h);
+        }
+        //console.log("allocate", region.w.toFixed(2), region.h.toFixed(2), i, j-1);
+        return region;
+      }
+      //console.log("allocate failed");
+      return null;
+    }
+
+    free(region: Region) {
+      //console.log("free", region.w.toFixed(2), region.h.toFixed(2));
+      region.allocator.free(region);
+    }
+
+    allocateOrUpdate(w: number, h: number, region: Region = null): Region {
+      if (region) {
+        if (region.w != w || region.h != h) {
+          var oldIndex: number = this.getOptimalGridSizeIndex(region.w, region.h);
+          var newIndex: number = this.getOptimalGridSizeIndex(w, h);
+          if (oldIndex != newIndex) {
+            this.free(region);
+            if (newIndex != -1) {
+              region = this.allocate(w, h, newIndex);
+            } else {
+              region = null;
+            }
+          } else {
+            region.w = w;
+            region.h = h;
+          }
+        //} else {
+          //console.log("noop");
+        }
+      } else {
+        region = this.allocate(w, h);
+      }
+      return region;
+    }
+
+    private getOptimalGridSizeIndex(w: number, h: number): number {
+      var minSize: number = Math.max(w, h);
+      for (var i = 0; i < this.gridSizes.length; i++) {
+        if (minSize <= this.gridSizes[i]) {
+          return i;
+        }
+      }
+      return -1;
+    }
+  }
 
   /**
    * Computes an opaquness grid by rendering a shape at a lower resolution and testing the alpha channel for each pixel.
@@ -155,12 +262,14 @@ module Shumway.Layers {
 
     private _viewport: Rectangle;
     private _fillRule: string;
+    private canvasCache: CanvasCache;
 
     context: CanvasRenderingContext2D;
     count = 0;
 
     constructor(context: CanvasRenderingContext2D, fillRule: FillRule = FillRule.NONZERO) {
       this.context = context;
+      this.canvasCache = new CanvasCache(512);
       this._viewport = new Rectangle(0, 0, context.canvas.width, context.canvas.height);
       this._fillRule = fillRule === FillRule.EVENODD ? 'evenodd' : 'nonzero';
       context.fillRule = context.mozFillRule = this._fillRule;
@@ -292,65 +401,82 @@ module Shumway.Layers {
         var hasBlendMode: boolean = (frame.blendMode > 0 && !(target & RenderTarget.BlendMode));
 
         if (hasFilters || hasColorTransform || hasBlendMode) {
-          // TODO
-          // - cache bitmap on frame
-          // - apply filter bounds
-          // - apply filters
-          // - fix alpha blending
-          var scratchContext = self.createScratchContext(context);
-          var frameBoundsAABB = frame.getBounds();
-          transform.transformRectangleAABB(frameBoundsAABB);
-          frameBoundsAABB.intersect(self._viewport);
+          var boundsAABB = frame.getBounds();
+          transform.transformRectangleAABB(boundsAABB);
+          var tx = boundsAABB.x;
+          var ty = boundsAABB.y;
+          boundsAABB.snap();
+          var tx = boundsAABB.x - tx;
+          var ty = boundsAABB.y - ty;
+          //console.log(fbx.toFixed(3), fby.toFixed(3), fbw.toFixed(3), fbh.toFixed(3), boundsAABB.x, boundsAABB.y, boundsAABB.w, boundsAABB.h);
 
-          var needsImageData: boolean = false;
-          if (hasFilters) {
-            target |= RenderTarget.Filters;
-            needsImageData = true;
+          var region: Region = frame.properties["regionCanvas2D"]
+                             = self.canvasCache.allocateOrUpdate(boundsAABB.w,
+                                                                 boundsAABB.h,
+                                                                 frame.properties["regionCanvas2D"]);
+          if (region) {
+            var needsImageData: boolean = false;
+            if (hasFilters) {
+              target |= RenderTarget.Filters;
+              needsImageData = true;
+            }
+            if (hasColorTransform) {
+              target |= RenderTarget.ColorTransform;
+              needsImageData = true;
+            }
+            if (hasBlendMode) {
+              target |= RenderTarget.BlendMode;
+            }
+
+            var allocator: CanvasGrid = <CanvasGrid>region.allocator;
+            var scratchContext: CanvasRenderingContext2D = allocator.context;
+            Canvas2DStageRenderer.clearContext(scratchContext, region);
+            transform.translate(region.x + tx - boundsAABB.x, region.y + ty - boundsAABB.y);
+            self.renderFrame(scratchContext, frame, transform, region, null, target, options);
+            transform.translate(-region.x - tx + boundsAABB.x, -region.y - ty + boundsAABB.y);
+
+            var image;
+            var imageData;
+            if (needsImageData) {
+              image = scratchContext.getImageData(region.x, region.y, region.w, region.h);
+              imageData = image.data;
+            }
+
+            if (hasFilters) {
+              //for (var i = 0, n = filters.length; i < n; i++) {
+              //  filters[i].applyFilter(imageData);
+              //}
+            }
+
+            if (hasColorTransform) {
+              var ct = frame.colorTransform.getColorTransform();
+              FILTERS.colortransform(imageData, image.width, image.height, ct[0], ct[1], ct[2], ct[4], ct[5], ct[6]);
+            }
+
+            if (needsImageData) {
+              scratchContext.putImageData(image, region.x, region.y);
+            }
+
+            context.save();
+            context.setTransform(1, 0, 0, 1, 0, 0);
+
+            if (hasBlendMode) {
+              context.globalCompositeOperation = self.getCompositeOperation(frame.blendMode);
+            }
+
+            tx = boundsAABB.x;
+            ty = boundsAABB.y;
+            boundsAABB.intersect(self._viewport);
+            tx = boundsAABB.x - tx;
+            ty = boundsAABB.y - ty;
+            //console.log(boundsAABB.x, boundsAABB.y, boundsAABB.w, boundsAABB.h, region.x, region.y, region.w, region.h)
+
+            context.drawImage(scratchContext.canvas, region.x + tx, region.y + ty, boundsAABB.w, boundsAABB.h, boundsAABB.x, boundsAABB.y, boundsAABB.w, boundsAABB.h);
+
+            context.restore();
+            context.restore();
+            return VisitorFlags.Skip;
           }
-          if (hasColorTransform) {
-            target |= RenderTarget.ColorTransform;
-            needsImageData = true;
-          }
-          if (hasBlendMode) {
-            target |= RenderTarget.BlendMode;
-          }
-
-          self.renderFrame(scratchContext, frame, transform, frameBoundsAABB, null, target, options);
-
-          var image;
-          var imageData;
-          if (needsImageData) {
-            image = scratchContext.getImageData(frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
-            imageData = image.data;
-          }
-
-          if (hasFilters) {
-            //for (var i = 0, n = filters.length; i < n; i++) {
-            //  filters[i].applyFilter(imageData);
-            //}
-          }
-
-          if (hasColorTransform) {
-            var ct = frame.colorTransform.getColorTransform();
-            FILTERS.colortransform(imageData, image.width, image.height, ct[0], ct[1], ct[2], ct[4], ct[5], ct[6]);
-          }
-
-          if (needsImageData) {
-            scratchContext.putImageData(image, frameBoundsAABB.x, frameBoundsAABB.y);
-          }
-
-          context.save();
-          context.setTransform(1, 0, 0, 1, 0, 0);
-
-          if (hasBlendMode) {
-            context.globalCompositeOperation = self.getCompositeOperation(frame.blendMode);
-          }
-
-          context.drawImage(scratchContext.canvas, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h, frameBoundsAABB.x, frameBoundsAABB.y, frameBoundsAABB.w, frameBoundsAABB.h);
-          context.restore();
-          context.restore();
-
-          return VisitorFlags.Skip;
         }
 
         if (!options.disableMasking && frame.mask && !frame.hasFlags(FrameFlags.IgnoreMask) && !(target & RenderTarget.Mask)) {
