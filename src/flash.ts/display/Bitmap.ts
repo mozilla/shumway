@@ -31,9 +31,11 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null; // [];
     
     constructor (bitmapData: flash.display.BitmapData = null, pixelSnapping: string = "auto", smoothing: boolean = false) {
-      bitmapData = bitmapData; pixelSnapping = "" + pixelSnapping; smoothing = !!smoothing;
+      //bitmapData = bitmapData;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.Bitmap");
+      this._bitmapData = bitmapData;
+      this._pixelSnapping = "" + pixelSnapping;
+      this._smoothing = !!smoothing;
     }
     
     // JS -> AS Bindings
@@ -44,10 +46,6 @@ module Shumway.AVM2.AS.flash.display {
     _pixelSnapping: string;
     _smoothing: boolean;
     _bitmapData: flash.display.BitmapData;
-
-    _getContentBounds(includeStrokes: boolean = true): flash.geom.Rectangle {
-      return this._bitmapData.rect.toTwips();
-    }
 
     get pixelSnapping(): string {
       return this._pixelSnapping;
@@ -72,15 +70,11 @@ module Shumway.AVM2.AS.flash.display {
     set bitmapData(value: flash.display.BitmapData) {
       //value = value;
       this._bitmapData = value;
-      this._invalidateBounds();
+      this._bounds.setTo(0, 0, value.width * 20, value.height * 20);
+      if (this._parent) {
+        this._parent._invalidateBounds();
+      }
       this._invalidatePaint();
-    }
-
-    ctor(bitmapData: flash.display.BitmapData, pixelSnapping: string, smoothing: boolean): void {
-      //bitmapData = bitmapData;
-      this._bitmapData = bitmapData;
-      this._pixelSnapping = "" + pixelSnapping;
-      this._smoothing = !!smoothing;
     }
   }
 }

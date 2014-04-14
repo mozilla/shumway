@@ -1346,6 +1346,16 @@ module Shumway {
     }
   }
 
+  export module ColorUtilities {
+    export function argbToRgba(color: number): number {
+      return ((color << 8) | (color >> 24)) >>> 0;
+    }
+
+    export function rgbaToArgb(color: number): number {
+      return ((color >> 8) | (color << 24)) >>> 0;
+    }
+  }
+
   export module Telemetry {
     export enum Feature {
       EXTERNAL_INTERFACE_FEATURE = 1,

@@ -181,6 +181,19 @@ module Shumway.AVM2.AS.flash.geom {
         && Math.max(this.y, toIntersect.y) <= Math.min(this.bottom, toIntersect.bottom);
     }
 
+    public clip(clipRect: Rectangle): Rectangle {
+      var l: number = Math.max(this.x, clipRect.x);
+      var r: number = Math.min(this.right, clipRect.right);
+      if (l <= r) {
+        var t: number = Math.max(this.y, clipRect.y);
+        var b: number = Math.min(this.bottom, clipRect.bottom);
+        if (t <= b) {
+          this.setTo(l, t, r - l, b - t);
+        }
+      }
+      return this;
+    }
+
     public union(toUnion: Rectangle): Rectangle {
       var rect = this.clone();
       rect.unionWith(toUnion);
