@@ -471,3 +471,17 @@ HTMLCanvasElement.prototype.getContext = function getContext(contextId, args) {
   }
   return nativeGetContext.call(this, contextId, args);
 };
+
+
+var Stage = Shumway.GFX.Layers.Stage;
+var Easel = Shumway.GFX.Layers.Easel;
+var Canvas2DStageRenderer = Shumway.GFX.Layers.Canvas2DStageRenderer;
+var easel = null
+
+function createEasel() {
+  var canvas = document.createElement("canvas");
+  canvas.style.backgroundColor = "#14171a";
+  document.getElementById("stageContainer").appendChild(canvas);
+  var stage = new Stage(canvas.width, canvas.height);
+  easel = new Easel(canvas, stage);
+}

@@ -198,9 +198,9 @@ module Shumway.GFX.Layers {
       var context = this.context;
       context.save();
 
+      var lastDirtyRectangles: Rectangle[] = [];
       if (stage.trackDirtyRegions) {
         stage.gatherMarkedDirtyRegions(stage.transform);
-        var lastDirtyRectangles: Rectangle[] = [];
         stage.dirtyRegion.gatherRegions(lastDirtyRectangles);
         if (options.clipDirtyRegions) {
           if (!lastDirtyRectangles.length) {
@@ -229,8 +229,6 @@ module Shumway.GFX.Layers {
 
       var dirtyRectangles = lastDirtyRectangles.slice(0);
 
-
-      context.clearRect(0, 0, stage.w, stage.h);
       context.globalAlpha = 1;
 
       if (options.cull) {
@@ -313,6 +311,10 @@ module Shumway.GFX.Layers {
           context.restore();
           return VisitorFlags.Skip;
         } else {
+          var inverseTransform: Matrix = Matrix.createIdentity();
+          frame.getConcatenatedTransform().inverse(inverseTransform);
+          var clip = self._viewport.clone();
+          inverseTransform.transformRectangleAABB(clip);
           var frameBoundsAABB = frame.getBounds();
           transform.transformRectangleAABB(frameBoundsAABB);
           if (frame.hasFlags(FrameFlags.Culled)) {
@@ -323,7 +325,7 @@ module Shumway.GFX.Layers {
               var shape = <Shape>frame;
               var bounds = shape.getBounds();
               if (!bounds.isEmpty()) {
-                shape.source.render(context);
+                shape.source.render(context, clip);
               }
               if (options.paintFlashing) {
                 context.fillStyle = randomStyle();

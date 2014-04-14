@@ -592,4 +592,110 @@ module Shumway.GFX.Layers {
       return new Rectangle(0, 0, this.w, this.h);
     }
   }
+
+  export class Label implements IRenderable {
+    properties: {[name: string]: any} = {};
+    private _text: string;
+    private _bounds: Rectangle;
+
+    get text (): string {
+      return this._text;
+    }
+
+    set text (value: string) {
+      this._text = value;
+    }
+
+    isDynamic: boolean = true;
+    isInvalid: boolean = true;
+    isScalable: boolean = true;
+    isTileable: boolean = false;
+    constructor(w: number, h: number) {
+      this._bounds = new Rectangle(0, 0, w, h);
+    }
+    getBounds (): Rectangle {
+      return this._bounds;
+    }
+    render (context: CanvasRenderingContext2D, clipBounds?: Rectangle) {
+      context.save();
+      context.fillStyle = "white";
+      context.fillText(this.text, 0, 0);
+      context.restore();
+    }
+  }
+
+  export class Grid implements IRenderable {
+    static RADIUS = 1024;
+    properties: {[name: string]: any} = {};
+    isDynamic: boolean = false;
+    isInvalid: boolean = true;
+    isScalable: boolean = true;
+    isTileable: boolean = true;
+
+    private _maxBounds = new Rectangle(-Grid.RADIUS, -Grid.RADIUS, Grid.RADIUS * 2, Grid.RADIUS * 2);
+
+    constructor() {
+
+    }
+
+    getBounds (): Rectangle {
+      return this._maxBounds;
+    }
+
+    render (context: CanvasRenderingContext2D, clipBounds?: Rectangle) {
+      context.save();
+
+      var gridBounds = clipBounds || this.getBounds();
+
+      context.fillStyle = "#14171a";
+      context.fillRect(gridBounds.x, gridBounds.y, gridBounds.w, gridBounds.h);
+
+      function gridPath(level) {
+        var vStart = Math.floor(gridBounds.x / level) * level;
+        var vEnd   = Math.ceil((gridBounds.x + gridBounds.w) / level) * level;
+
+        for (var x = vStart; x < vEnd; x += level) {
+          context.moveTo(x + 0.5, gridBounds.y);
+          context.lineTo(x + 0.5, gridBounds.y + gridBounds.h);
+        }
+
+        var hStart = Math.floor(gridBounds.y / level) * level;
+        var hEnd   = Math.ceil((gridBounds.y + gridBounds.h) / level) * level;
+
+        for (var y = hStart; y < hEnd; y += level) {
+          context.moveTo(gridBounds.x, y + 0.5);
+          context.lineTo(gridBounds.x + gridBounds.w, y + 0.5);
+        }
+      }
+
+      context.beginPath();
+      gridPath(50);
+      context.lineWidth = 1;
+      context.strokeStyle = "#292e33";
+      context.stroke();
+
+      context.beginPath();
+      gridPath(200);
+      context.lineWidth = 1;
+      context.strokeStyle = "#585959";
+      context.stroke();
+
+      context.beginPath();
+      gridPath(1000);
+      context.lineWidth = 3;
+      context.strokeStyle = "#667380";
+      context.stroke();
+
+      var MAX = 1024 * 1024;
+      context.lineWidth = 3;
+      context.beginPath();
+      context.moveTo(-MAX, 0.5);
+      context.lineTo(MAX , 0.5);
+      context.moveTo(0.5, -MAX);
+      context.lineTo(0.5, MAX);
+      context.strokeStyle = "#eb5368";
+
+      context.restore();
+    }
+  }
 }

@@ -25,7 +25,9 @@
 /// <reference path='dom.ts'/>
 /// <reference path='2d.ts'/>
 /// <reference path='bench.ts'/>
+/// <reference path='easel.ts'/>
 
+import Rectangle = Shumway.Geometry.Rectangle;
 declare function randomStyle(): string;
 declare function assert(...args : any[]);
 declare function unexpected(...args : any[]);
@@ -70,7 +72,7 @@ module Shumway {
     /**
      * Bounds of the source content. This should never change.
      */
-    getBounds(): Shumway.Geometry.Rectangle;
+    getBounds(): Rectangle;
     /**
      * Property bag used to attach dynamic properties to this object.
      */
@@ -78,7 +80,7 @@ module Shumway {
     /**
      * Render source content.
      */
-    render (context: CanvasRenderingContext2D, options? : any);
+    render (context: CanvasRenderingContext2D, clipBounds?: Rectangle, options? : any);
     /**
      * Whether source has dynamic content.
      */

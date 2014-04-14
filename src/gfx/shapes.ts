@@ -2,7 +2,7 @@ module Shumway {
   import IRenderable = Shumway.IRenderable;
   import Rectangle = Shumway.Geometry.Rectangle;
 
-  var SHAPE_ROOT = "assets/shapes/";
+  var SHAPE_ROOT = "../../src/gfx/assets/shapes/";
 
   function loadShape(file) {
     var path = SHAPE_ROOT + file;
