@@ -52,7 +52,8 @@ module Shumway.AVM2.AS.flash.events {
     ctrlKey: boolean;
     altKey: boolean;
     shiftKey: boolean;
-    clone: () => flash.events.Event;
+
+    clone: () => flash.events.KeyboardEvent;
     
     // AS -> JS Bindings
     

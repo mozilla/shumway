@@ -36,7 +36,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     get matrix(): flash.geom.Matrix {
-      return this._displayObject._matrix.clone().toPixels();
+      return this._displayObject._getMatrix().clone().toPixels();
     }
 
     set matrix(value: flash.geom.Matrix) {

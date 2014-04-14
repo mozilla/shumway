@@ -13,6 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * Flash bugs to keep in mind:
+ *
+ * http://aaronhardy.com/flex/displayobject-quirks-and-tips/
+ * http://blog.anselmbradford.com/2009/02/12/flash-movie-clip-transformational-properties-explorer-x-y-width-height-more/
+ * http://gskinner.com/blog/archives/2007/08/annoying_as3_bu.html
+ *
+ */
 // Class: DisplayObject
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
@@ -210,6 +219,9 @@ module Shumway.AVM2.AS.flash.display {
       self._hitTarget = null;
       self._index = -1;
       self._maskedObject = null;
+
+      self._rect = new Rectangle();
+      self._bounds = new Rectangle();
 
       // TODO get this via loaderInfo
       self._loader = null;
@@ -507,7 +519,7 @@ module Shumway.AVM2.AS.flash.display {
       if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix)) {
         var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedMatrix, false);
         var path = DisplayObject._getAncestors(this, ancestor);
-        var m = ancestor ? ancestor._concatenatedMatrix : new Matrix();
+        var m = ancestor ? ancestor._concatenatedMatrix.clone() : new Matrix();
         for (var i = path.length - 1; i >= 0; i--) {
           var ancestor = path[i];
           assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix));
@@ -554,7 +566,7 @@ module Shumway.AVM2.AS.flash.display {
       if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform)) {
         var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedColorTransform, false);
         var path = DisplayObject._getAncestors(this, ancestor);
-        var m = ancestor ? ancestor._concatenatedColorTransform : new ColorTransform();
+        var m = ancestor ? ancestor._concatenatedColorTransform.clone() : new ColorTransform();
         for (var i = path.length - 1; i >= 0; i--) {
           var ancestor = path[i];
           assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
@@ -609,15 +621,14 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _getTransformedBounds(targetCoordinateSpace: DisplayObject, includeStroke: boolean = true) {
-      var bounds = this._getContentBounds(includeStroke).clone();
+      var bounds = this._getContentBounds(includeStroke);
       if (!targetCoordinateSpace || targetCoordinateSpace === this || bounds.isEmpty()) {
         return bounds.clone();
       }
-      // MBX: Probably broken.
-      var t = targetCoordinateSpace._getConcatenatedMatrix();
-      t.invert();
-      t.concat(this._getConcatenatedMatrix());
-      return t.transformRectAABB(bounds);
+      var m = targetCoordinateSpace._getConcatenatedMatrix().clone();
+      m.invert();
+      m.concat(this._getConcatenatedMatrix());
+      return m.transformRectAABB(bounds);
     }
 
     /**
@@ -715,24 +726,31 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidatePosition();
     }
 
+    /**
+     *
+     */
     get width(): number {
       var bounds = this._getTransformedBounds(this._parent, true);
       return bounds.width / 20;
     }
 
     set width(value: number) {
-      value = +value;
+      value = (value * 20) | 0;
       this._stopTimelineAnimation();
       if (value < 0) {
         return;
       }
       var bounds = this._getTransformedBounds(this._parent, true);
-      if (bounds.width || bounds.width === value) {
+      var contentBounds = this._getContentBounds(true);
+      var angle = this._rotation / 180 * Math.PI;
+      var baseWidth = contentBounds.getBaseWidth(angle);
+      if (!baseWidth) {
         return;
       }
-      this._scaleX = value / bounds.width;
+      var baseHeight = contentBounds.getBaseHeight(angle);
+      this._scaleY = this.height / baseHeight;
+      this._scaleX = value / baseWidth;
       this._setFlags(DisplayObjectFlags.InvalidMatrix);
-      this._scaleY = this._getMatrix().getScaleY();
       this._invalidatePosition();
     }
 
@@ -742,18 +760,18 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set height(value: number) {
-      value = +value;
+      value = (value * 20) | 0;
       this._stopTimelineAnimation();
       if (value < 0) {
         return;
       }
       var bounds = this._getTransformedBounds(this._parent, true);
-      if (bounds.height || bounds.height === value) {
+      if (!bounds.height || bounds.height === value) {
         return;
       }
+      this._scaleX = this._getMatrix().getScaleX();
       this._scaleY = value / bounds.height;
       this._setFlags(DisplayObjectFlags.InvalidMatrix);
-      this._scaleX = this._getMatrix().getScaleX();
       this._invalidatePosition();
     }
 

@@ -91,6 +91,7 @@ module Shumway.AVM2.AS.flash.events {
     static WORKER_STATE: string = "workerState";
     
     formatToString: (className: string) => string;
+    clone: () => flash.events.Event;
 
     // AS -> JS Bindings
     

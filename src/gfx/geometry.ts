@@ -40,6 +40,10 @@ module Shumway.Geometry {
       return this.dot(this);
     }
 
+    distanceTo (other: Point): number {
+      return Math.sqrt(this.dot(other));
+    }
+
     sub (other: Point): Point {
       this.x -= other.x;
       this.y -= other.y;
@@ -320,8 +324,8 @@ module Shumway.Geometry {
     snap (): Rectangle  {
       var x1 = Math.ceil(this.x + this.w);
       var y1 = Math.ceil(this.y + this.h);
-      this.x |= 0;
-      this.y |= 0;
+      this.x = Math.floor(this.x);
+      this.y = Math.floor(this.y);
       this.w = x1 - this.x;
       this.h = y1 - this.y;
       return this;
