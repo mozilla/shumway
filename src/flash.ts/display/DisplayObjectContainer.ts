@@ -19,6 +19,7 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import clamp = Shumway.NumberUtilities.clamp;
+
   import Event = flash.events.Event;
   // import DisplayObject = DisplayObject;
 
@@ -80,6 +81,7 @@ module Shumway.AVM2.AS.flash.display {
     addChild(child: DisplayObject): DisplayObject {
       return this.addChildAt(child, this._children.length);
     }
+
     addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
       index = index | 0;
       if (child === this) {
@@ -114,9 +116,33 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidateChildren();
       return child;
     }
+
+    addChildAtDepth(child: flash.display.DisplayObject, depth: number /*int*/) {
+      depth = depth | 0;
+      var children = this._children;
+      var maxIndex = children.length - 1;
+      for (var i = maxIndex; i; i--) {
+        var current = children[i];
+        if (current._depth && current._depth < depth) {
+          if (i === maxIndex) {
+            break;
+          }
+          children.splice(i, 1, child);
+          for (var j = i; j <= maxIndex; j++) {
+            children[j]._index = j;
+          }
+          return;
+        }
+      }
+      children.push(child);
+      child._index = maxIndex + 1;
+    }
+
     removeChild(child: DisplayObject): DisplayObject {
+      //child = child
       return this.removeChildAt(this.getChildIndex(child));
     }
+
     removeChildAt(index: number): DisplayObject {
       index = index | 0;
       var children = this._children;
@@ -139,12 +165,14 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidateChildren();
       return child;
     }
+
     getChildIndex(child: DisplayObject): number /*int*/ {
       if (child._parent !== this) {
         throwError('ArgumentError', Errors.NotAChildError);
       }
       return child._index;
     }
+
     setChildIndex(child: DisplayObject, index: number /*int*/): void {
       index = index | 0;
       var children = this._children;
@@ -168,6 +196,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._invalidateChildren();
     }
+
     getChildAt(index: number): DisplayObject {
       index = index | 0;
       var children = this._children;
@@ -181,22 +210,43 @@ module Shumway.AVM2.AS.flash.display {
       }
       return child;
     }
+
+    getChildAtDepth(depth: number /*int*/): flash.display.DisplayObject {
+      depth = depth | 0;
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        if (child._depth === depth) {
+          return child;
+        }
+      }
+      return null;
+    }
+
     getChildByName(name: string): DisplayObject {
       name = asCoerceString(name);
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
+        if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
+          continue;
+        }
         if (child.name === name) {
           return child;
         }
       }
       return null;
     }
+
     getObjectsUnderPoint(point: flash.geom.Point): DisplayObject [] {
       var children = this._children;
       var objectsUnderPoint = [];
       for (var i = 0; i < children.length; i++) {
         var child = children[0];
+        if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
+          continue;
+        }
+        // TODO exclude inaccessible objects
         if (child._hitTest(true, point.x, point.y, true, null)) {
           objectsUnderPoint.push(child);
         }
@@ -254,6 +304,7 @@ module Shumway.AVM2.AS.flash.display {
     swapChildren(child1: DisplayObject, child2: DisplayObject): void {
       this.swapChildrenAt(this.getChildIndex(child1), this.getChildIndex(child2));
     }
+
     removeChildren(beginIndex: number = 0, endIndex: number = 2147483647): void {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
 
