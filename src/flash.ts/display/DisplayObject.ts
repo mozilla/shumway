@@ -687,6 +687,7 @@ module Shumway.AVM2.AS.flash.display {
 
     set scaleX(value: number) {
       value = +value;
+
       this._stopTimelineAnimation();
       if (value === this._scaleX) {
         return;
@@ -702,6 +703,7 @@ module Shumway.AVM2.AS.flash.display {
 
     set scaleY(value: number) {
       value = +value;
+
       this._stopTimelineAnimation();
       if (value === this._scaleY) {
         return;
@@ -717,6 +719,7 @@ module Shumway.AVM2.AS.flash.display {
 
     set rotation(value: number) {
       value = +value;
+
       this._stopTimelineAnimation();
       value = DisplayObject._clampRotation(value);
       if (value === this._rotation) {
