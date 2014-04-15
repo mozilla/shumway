@@ -28,7 +28,7 @@ module Shumway.GFX.Layers {
 
   class MouseUpState extends State {
     onMouseDown(easel: Easel, event: MouseEvent) {
-      return new DragState(easel.getMousePosition(event, null), easel.world.transform.clone());
+      return new DragState(easel.getMousePosition(event, null), easel.world.matrix.clone());
     }
   }
 
@@ -43,7 +43,7 @@ module Shumway.GFX.Layers {
     onMouseMove(easel: Easel, event: MouseEvent) {
       var p = easel.getMousePosition(event, null);
       p.sub(this._startPosition);
-      easel.world.transform = this._startMatrix.clone().translate(p.x, p.y);
+      easel.world.matrix = this._startMatrix.clone().translate(p.x, p.y);
       return this;
     }
     onMouseUp(easel: Easel, event: MouseEvent) {
@@ -167,7 +167,7 @@ module Shumway.GFX.Layers {
         return p;
       }
       var m = Matrix.createIdentity();
-      coordinateSpace.transform.inverse(m);
+      coordinateSpace.matrix.inverse(m);
       m.transformPoint(p);
       return p;
     }

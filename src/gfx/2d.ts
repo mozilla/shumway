@@ -294,7 +294,7 @@ module Shumway.GFX.Layers {
         transform.transformRectangleAABB(frameBoundsAABB);
         var index = findIntersectingIndex(frameBoundsAABB, cullRectanglesAABB);
         if (index < 0) {
-          frame.setFlags(FrameFlags.Culled, true);
+          frame._setFlags(FrameFlags.Culled);
         } else if (frame instanceof Shape) {
           /* Not ready yet
           var shape = <Shape>frame;
@@ -317,7 +317,7 @@ module Shumway.GFX.Layers {
 
       var lastDirtyRectangles: Rectangle[] = [];
       if (stage.trackDirtyRegions) {
-        stage.gatherMarkedDirtyRegions(stage.transform);
+        stage.gatherMarkedDirtyRegions(stage.matrix);
         stage.dirtyRegion.gatherRegions(lastDirtyRectangles);
         if (options.clipDirtyRegions) {
           if (!lastDirtyRectangles.length) {
@@ -349,10 +349,10 @@ module Shumway.GFX.Layers {
       context.globalAlpha = 1;
 
       if (options.cull) {
-        this.cullFrame(stage, stage.transform, dirtyRectangles.slice(0));
+        this.cullFrame(stage, stage.matrix, dirtyRectangles.slice(0));
       }
 
-      this.renderFrame(context, stage, stage.transform, null, dirtyRectangles, 0, options);
+      this.renderFrame(context, stage, stage.matrix, null, dirtyRectangles, 0, options);
 
       if (stage.trackDirtyRegions) {
         stage.dirtyRegion.clear();
@@ -477,8 +477,8 @@ module Shumway.GFX.Layers {
           }
         }
 
-        if (!options.disableMasking && frame.mask && !frame.hasFlags(FrameFlags.IgnoreMask) && !(target & RenderTarget.Mask)) {
-          frame.setFlags(FrameFlags.IgnoreMask, true);
+        if (!options.disableMasking && frame.mask && !frame._hasFlags(FrameFlags.IgnoreMask) && !(target & RenderTarget.Mask)) {
+          frame._setFlags(FrameFlags.IgnoreMask);
 
           var maskCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
           var maskeeCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
@@ -523,8 +523,8 @@ module Shumway.GFX.Layers {
 
         var frameBoundsAABB = frame.getBounds();
         transform.transformRectangleAABB(frameBoundsAABB);
-        if (frame.hasFlags(FrameFlags.Culled)) {
-          frame.setFlags(FrameFlags.Culled, false);
+        if (frame._hasFlags(FrameFlags.Culled)) {
+          frame._removeFlags(FrameFlags.Culled);
         } else {
           if (frame instanceof Shape) {
             frame._previouslyRenderedAABB = frameBoundsAABB;
@@ -543,7 +543,7 @@ module Shumway.GFX.Layers {
 
         context.restore();
 
-        frame.setFlags(FrameFlags.IgnoreMask, false);
+        frame._removeFlags(FrameFlags.IgnoreMask);
 
         return VisitorFlags.Continue;
       }, transform, FrameFlags.Empty);

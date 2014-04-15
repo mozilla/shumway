@@ -71,18 +71,12 @@ module Shumway.GFX.Layers {
   }
 
   export class Frame {
-    private _x: number;
-    private _y: number;
     private _alpha: number = 1;
     private _blendMode: BlendMode = BlendMode.DEFAULT;
-    private _scaleX: number;
-    private _scaleY: number;
-    private _rotation: number;
-    private _transform: Matrix;
+    private _matrix: Matrix;
     private _filters: Filter[] = [];
     private _colorTransform: ColorMatrix;
     private _isTransformInvalid: boolean = true;
-    private _origin: Point = new Point(0, 0);
     private _properties: {[name: string]: any};
     private static _path: Frame[] = [];
     private _mask: Frame;
@@ -95,15 +89,19 @@ module Shumway.GFX.Layers {
 
     _flags: FrameFlags = FrameFlags.Empty;
 
-    setFlags(flags: FrameFlags, on: boolean) {
-      if (on) {
-        this._flags |= flags;
-      } else {
-        this._flags &= ~flags;
-      }
+    _setFlags(flags: FrameFlags) {
+      this._flags |= flags;
     }
 
-    hasFlags(flags: FrameFlags): boolean {
+    _removeFlags(flags: FrameFlags) {
+      this._flags &= ~flags;
+    }
+
+    _hasFlags(flags: FrameFlags): boolean {
+      return (this._flags & flags) === flags;
+    }
+
+    _hasAnyFlags(flags: FrameFlags): boolean {
       return !!(this._flags & flags);
     }
 
@@ -112,48 +110,19 @@ module Shumway.GFX.Layers {
     }
 
     get x(): number {
-      return this._x;
+      return this._matrix.tx;
     }
 
     set x(value: number) {
-      this._x = value;
-      this.invalidateTransform();
+      this._matrix.tx = value;
     }
 
     get y(): number {
-      return this._y;
+      return this._matrix.ty;
     }
 
     set y(value: number) {
-      this._y = value;
-      this.invalidateTransform();
-    }
-
-    get scaleX(): number {
-      return this._scaleX;
-    }
-
-    set scaleX(value: number) {
-      this._scaleX = value;
-      this.invalidateTransform();
-    }
-
-    get scaleY(): number {
-      return this._scaleY;
-    }
-
-    set scaleY(value: number) {
-      this._scaleY = value;
-      this.invalidateTransform();
-    }
-
-    get rotation(): number {
-      return this._rotation;
-    }
-
-    set rotation(value: number) {
-      this._rotation = value;
-      this.invalidateTransform();
+      this._matrix.ty = value;
     }
 
     get alpha(): number {
@@ -189,12 +158,12 @@ module Shumway.GFX.Layers {
 
     set mask(value: Frame) {
       if (this._mask && this._mask !== value) {
-        this._mask.setFlags(FrameFlags.IsMask, false);
+        this._mask._removeFlags(FrameFlags.IsMask);
       }
       this._mask = value;
       if (this._mask) {
-        assert (!this._mask.hasFlags(FrameFlags.IsMask));
-        this._mask.setFlags(FrameFlags.IsMask, true);
+        assert (!this._mask._hasFlags(FrameFlags.IsMask));
+        this._mask._setFlags(FrameFlags.IsMask);
         this._mask.invalidate();
       }
       this.invalidate();
@@ -265,39 +234,12 @@ module Shumway.GFX.Layers {
       this.invalidate();
     }
 
-    get transform(): Matrix {
-      if (this._isTransformInvalid) {
-        this._transform.setIdentity();
-        this._transform.scale(this._scaleX, this._scaleY);
-        this._transform.rotate(this._rotation * Math.PI / 180);
-        this._transform.translate(this._x, this._y);
-
-        var t = Matrix.createIdentity();
-        t.translate(-this._origin.x, -this._origin.y);
-        t.concat(this._transform);
-        this._transform = t;
-        this._isTransformInvalid = false;
-      }
-      return this._transform;
+    get matrix(): Matrix {
+      return this._matrix;
     }
 
-    set transform(value: Matrix) {
-      var t = Matrix.createIdentity();
-      t.translate(this._origin.x, this._origin.y);
-      t.concat(value);
-
-      if (this._transform && this.transform.isEqual(t)) {
-        return;
-      }
-
-      this._transform = t;
-      this._x = t.getTranslateX();
-      this._y = t.getTranslateY();
-      this._scaleX = t.getScaleX();
-      this._scaleY = t.getScaleY();
-      this._rotation = t.getRotation();
-      this._isTransformInvalid = false;
-      this.invalidate();
+    set matrix(value: Matrix) {
+      this._matrix = value;
     }
 
     public w: number;
@@ -305,18 +247,9 @@ module Shumway.GFX.Layers {
     public parent: Frame;
     public ignoreMaskAlpha: boolean;
 
-    get origin(): Point {
-      return this._origin;
-    }
-
-    set origin(value: Point) {
-      this._origin.set(value);
-      this.invalidateTransform();
-    }
-
     constructor () {
       this.parent = null;
-      this.transform = Matrix.createIdentity();
+      this.matrix = Matrix.createIdentity();
     }
 
     get stage(): Stage {
@@ -334,14 +267,14 @@ module Shumway.GFX.Layers {
       var frame = this;
       var t = Matrix.createIdentity();
       while (frame) {
-        t.concat(frame.transform);
+        t.concat(frame.matrix);
         frame = frame.parent;
       }
       return t;
     }
 
     invalidate() {
-      this.setFlags(FrameFlags.Dirty, true);
+      this._setFlags(FrameFlags.Dirty);
     }
 
     private invalidateTransform() {
@@ -358,7 +291,7 @@ module Shumway.GFX.Layers {
       var frameContainer: FrameContainer;
       var frontToBack = visitorFlags & VisitorFlags.FrontToBack;
       var visibleOnly = visitorFlags & VisitorFlags.VisibleOnly;
-      if (visibleOnly && this.hasFlags(FrameFlags.Hidden)) {
+      if (visibleOnly && this._hasFlags(FrameFlags.Hidden)) {
         return;
       }
       stack = [this];
@@ -380,13 +313,13 @@ module Shumway.GFX.Layers {
             var length = frameContainer.children.length;
             for (var i = 0; i < length; i++) {
               var child = frameContainer.children[frontToBack ? i : length - 1 - i];
-              if (!child || (visibleOnly && child.hasFlags(FrameFlags.Hidden))) {
+              if (!child || (visibleOnly && child._hasFlags(FrameFlags.Hidden))) {
                 continue;
               }
               stack.push(child);
               if (calculateTransform) {
                 var t = transform.clone();
-                Matrix.multiply(t, child.transform);
+                Matrix.multiply(t, child.matrix);
                 transformStack.push(t);
               }
               flagsStack.push(flags);
@@ -483,9 +416,9 @@ module Shumway.GFX.Layers {
       var bounds = Rectangle.createEmpty();
       for (var i = 0; i < this.children.length; i++) {
         var child = this.children[i];
-        if (!child.hasFlags(FrameFlags.Hidden)) {
+        if (!child._hasFlags(FrameFlags.Hidden)) {
           var childBounds = child.getBounds();
-          child.transform.transformRectangleAABB(childBounds);
+          child.matrix.transformRectangleAABB(childBounds);
           bounds.union(childBounds);
         }
       }
@@ -508,14 +441,14 @@ module Shumway.GFX.Layers {
       this.h = h;
       this.dirtyRegion = new DirtyRegion(w, h);
       this.trackDirtyRegions = trackDirtyRegions;
-      this.setFlags(FrameFlags.Dirty, true);
+      this._setFlags(FrameFlags.Dirty);
     }
 
     gatherMarkedDirtyRegions(transform: Matrix) {
       var self = this;
       // Find all invalid frames.
       this.visit(function (frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
-        frame.setFlags(FrameFlags.Dirty, false);
+        frame._removeFlags(FrameFlags.Dirty);
         if (frame instanceof FrameContainer) {
           return VisitorFlags.Continue;
         }
@@ -539,7 +472,7 @@ module Shumway.GFX.Layers {
           frames.push(frame);
         }
         return VisitorFlags.Continue;
-      }, this.transform);
+      }, this.matrix);
       return frames;
     }
 
@@ -552,7 +485,7 @@ module Shumway.GFX.Layers {
         }
         var rectangle = new Rectangle(0, 0, frame.w, frame.h);
         transform.transformRectangleAABB(rectangle);
-        if (frame.hasFlags(FrameFlags.Dirty)) {
+        if (frame._hasFlags(FrameFlags.Dirty)) {
           if (currentLayer) {
             layers.push(currentLayer);
           }
@@ -566,7 +499,7 @@ module Shumway.GFX.Layers {
           }
         }
         return VisitorFlags.Continue;
-      }, this.transform);
+      }, this.matrix);
 
       if (currentLayer) {
         layers.push(currentLayer);

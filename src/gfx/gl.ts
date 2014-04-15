@@ -37,7 +37,6 @@ module Shumway.GFX.GL {
   import Frame = Shumway.GFX.Layers.Frame;
   import Stage = Shumway.GFX.Layers.Stage;
   import Shape = Shumway.GFX.Layers.Shape;
-  import Flake = Shumway.GFX.Layers.Elements.Flake;
   import SolidRectangle = Shumway.GFX.Layers.SolidRectangle;
   import Filter = Shumway.GFX.Layers.Filter;
   import BlurFilter = Shumway.GFX.Layers.BlurFilter;
@@ -64,22 +63,6 @@ module Shumway.GFX.GL {
 
   function endsWith(str, end) {
     return str.indexOf(end, this.length - end.length) !== -1;
-  }
-
-  class WebGLContextState {
-    parent: WebGLContextState;
-    transform: Matrix;
-    target: WebGLTexture;
-    constructor(parent: WebGLContextState = null) {
-      this.parent = parent;
-      if (parent) {
-        this.target = parent.target;
-        this.transform = parent.transform.clone();
-      } else {
-        this.target = null;
-        this.transform = Matrix.createIdentity();
-      }
-    }
   }
 
   export class Vertex extends Shumway.Geometry.Point3D {
@@ -270,7 +253,6 @@ module Shumway.GFX.GL {
     private _maxTextureSize: number;
     public _backgroundColor: Color;
 
-    private _state: WebGLContextState = new WebGLContextState();
     private _geometry: WebGLGeometry;
     private _tmpVertices: Vertex [];
     private _fillColor: Color = Color.Red;
@@ -576,26 +558,7 @@ module Shumway.GFX.GL {
       }
     }
 
-    public save() {
-      this._state = new WebGLContextState(this._state);
-    }
-
-    public restore() {
-      if (this._state.parent) {
-        this._state = this._state.parent;
-      }
-    }
-
-    public transform(a: number, b: number, c: number, d: number, tx: number, ty: number) {
-      this._state.transform.transform(a, b, c, d, tx, ty);
-    }
-
-    public setTransform(transform: Matrix) {
-      this._state.transform.set(transform)
-    }
-
     public setTarget(target: WebGLTexture) {
-      this._state.target = target;
       var gl = this.gl;
       gl.bindFramebuffer(gl.FRAMEBUFFER, target ? target.framebuffer : null);
     }
@@ -797,10 +760,8 @@ module Shumway.GFX.GL {
         if (!options.ignoreColorMatrix) {
           colorTransform = frame.getConcatenatedColorMatrix();
         }
-        that.context.setTransform(transform);
-        if (frame instanceof Flake) {
-          brush.fillRectangle(new Rectangle(0, 0, frame.w, frame.h), Color.parseColor((<Flake>frame).fillStyle), transform, depth);
-        } else if (frame instanceof SolidRectangle) {
+        // that.context.setTransform(transform);
+        if (frame instanceof SolidRectangle) {
           brush.fillRectangle(new Rectangle(0, 0, frame.w, frame.h), Color.parseColor((<SolidRectangle>frame).fillStyle), transform, depth);
         } else if (frame instanceof Shape) {
           var shape = <Shape>frame;
@@ -837,7 +798,7 @@ module Shumway.GFX.GL {
           }
         }
         return VisitorFlags.Continue;
-      }, stage.transform);
+      }, stage.matrix);
 
       brush.flush(options.drawElements);
 

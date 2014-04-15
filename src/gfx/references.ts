@@ -19,7 +19,6 @@
 /// <reference path='geometry.ts'/>
 /// <reference path='stage.ts'/>
 /// <reference path='filters.ts'/>
-/// <reference path='elements.ts'/>
 /// <reference path='gl.ts'/>
 /// <reference path='gl/core.ts'/>
 /// <reference path='dom.ts'/>
