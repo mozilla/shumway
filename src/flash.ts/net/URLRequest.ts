@@ -15,7 +15,9 @@
  */
 // Class: URLRequest
 module Shumway.AVM2.AS.flash.net {
-  import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
+
   export class URLRequest extends ASNative {
     
     // Called whenever the class is initialized.
@@ -28,81 +30,96 @@ module Shumway.AVM2.AS.flash.net {
     static staticBindings: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["method", "requestHeaders"];
+    static bindings: string [] = null;
     
     constructor (url: string = null) {
-      url = "" + url;
+      url = asCoerceString(url);
       false && super();
-      this._checkPolicyFile = false;
-      notImplemented("Dummy Constructor: public flash.net.URLRequest");
+      this._url = null;
+      this._method = 'GET';
+      this._data = null;
+      this._digest = null;
+      this._contentType = 'application/x-www-form-urlencoded';
+      this._requestHeaders = null;
+      this._checkPolicyFile = true;
     }
 
     _checkPolicyFile: boolean;
 
     // JS -> AS Bindings
     
-    // method: string;
-    // requestHeaders: any [];
-    
     // AS -> JS Bindings
     
-    // _url: string;
-    // _data: ASObject;
-    // _method: string;
-    // _contentType: string;
-    // _requestHeaders: any [];
-    // _digest: string;
+    private _url: string;
+    private _data: ASObject;
+    private _method: string;
+    private _contentType: string;
+    private _requestHeaders: any [];
+    private _digest: string;
     get url(): string {
-      notImplemented("public flash.net.URLRequest::get url"); return;
-      // return this._url;
+      return this._url;
     }
     set url(value: string) {
-      value = "" + value;
-      notImplemented("public flash.net.URLRequest::set url"); return;
-      // this._url = value;
+      value = asCoerceString(value);
+      this._url = value;
     }
     get data(): ASObject {
-      notImplemented("public flash.net.URLRequest::get data"); return;
-      // return this._data;
+      return this._data;
     }
     set data(value: ASObject) {
-      value = value;
-      notImplemented("public flash.net.URLRequest::set data"); return;
-      // this._data = value;
+      this._data = value;
     }
     get method(): string {
-      notImplemented("public flash.net.URLRequest::get method"); return;
-      // return this._method;
+      return this._method;
     }
     get contentType(): string {
-      notImplemented("public flash.net.URLRequest::get contentType"); return;
-      // return this._contentType;
+      return this._contentType;
     }
     set contentType(value: string) {
-      value = "" + value;
-      notImplemented("public flash.net.URLRequest::set contentType"); return;
-      // this._contentType = value;
+      value = asCoerceString(value);
+      this._contentType = value;
     }
     get requestHeaders(): any [] {
-      notImplemented("public flash.net.URLRequest::get requestHeaders"); return;
-      // return this._requestHeaders;
+      return this._requestHeaders;
     }
     get digest(): string {
-      notImplemented("public flash.net.URLRequest::get digest"); return;
-      // return this._digest;
+      return this._digest;
     }
     set digest(value: string) {
-      value = "" + value;
-      notImplemented("public flash.net.URLRequest::set digest"); return;
-      // this._digest = value;
+      value = asCoerceString(value);
+      this._digest = value;
     }
     setMethod(value: string): any {
-      value = "" + value;
-      notImplemented("public flash.net.URLRequest::setMethod"); return;
+      value = asCoerceString(value);
+      this._method = value;
     }
     setRequestHeaders(value: any []): any {
       value = value;
-      notImplemented("public flash.net.URLRequest::setRequestHeaders"); return;
+      this._requestHeaders = value;
     }
+
+    _toFileRequest(): any {
+      var obj: any = {};
+      obj.url = this._url;
+      obj.method = this._method;
+      obj.checkPolicyFile = this._checkPolicyFile;
+      if (this._data) {
+        obj.mimeType = this._contentType;
+        if (this._data instanceof ByteArray) {
+          obj.data = <ASObject><any>
+            new Uint8Array((<any> this._data)._buffer, 0, (<any> this._data).length);
+        } else {
+          var data = this._data.asGetPublicProperty("toString").call(this._data);
+          if (this._method === 'GET') {
+            var i = obj.url.lastIndexOf('?');
+            obj.url = (i < 0 ? obj.url : obj.url.substring(0, i)) + '?' + data;
+          } else {
+            obj.data = data;
+          }
+        }
+      }
+      return obj;
+    }
+
   }
 }

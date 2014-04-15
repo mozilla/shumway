@@ -36,9 +36,9 @@ module Shumway.AVM2.AS.flash.net {
     }
     
     // JS -> AS Bindings
-    static AMF0: number /*uint*/ = undefined;
-    static AMF3: number /*uint*/ = 3;
-    static DEFAULT: number /*uint*/ = 3;
+    public static AMF0: number /*uint*/ = undefined;
+    public static AMF3: number /*uint*/ = 3;
+    public static DEFAULT: number /*uint*/ = 3;
     
     
     // AS -> JS Bindings

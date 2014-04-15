@@ -41,41 +41,37 @@ module Shumway.AVM2.AS.flash.display {
     
     // AS -> JS Bindings
     
-    // _currentFrame: number /*int*/;
-    // _framesLoaded: number /*int*/;
-    // _totalFrames: number /*int*/;
-    // _trackAsMenu: boolean;
-    // _scenes: any [];
+    _currentFrame: number /*int*/;
+    _framesLoaded: number /*int*/;
+    _totalFrames: number /*int*/;
+    _trackAsMenu: boolean;
+    _scenes: any [];
     // _currentScene: flash.display.Scene;
-    // _currentLabel: string;
-    // _currentFrameLabel: string;
+    _currentLabel: string;
+    _currentFrameLabel: string;
     // _currentLabels: any [];
-    // _enabled: boolean;
-    // _isPlaying: boolean;
+    _enabled: boolean;
+    _isPlaying: boolean;
+
+    _nextFrame: number /*int*/;
+
     get currentFrame(): number /*int*/ {
-      notImplemented("public flash.display.MovieClip::get currentFrame"); return;
-      // return this._currentFrame;
+      return this._currentFrame;
     }
     get framesLoaded(): number /*int*/ {
-      notImplemented("public flash.display.MovieClip::get framesLoaded"); return;
-      // return this._framesLoaded;
+      return this._framesLoaded;
     }
     get totalFrames(): number /*int*/ {
-      notImplemented("public flash.display.MovieClip::get totalFrames"); return;
-      // return this._totalFrames;
+      return this._totalFrames;
     }
     get trackAsMenu(): boolean {
-      notImplemented("public flash.display.MovieClip::get trackAsMenu"); return;
-      // return this._trackAsMenu;
+      return this._trackAsMenu;
     }
     set trackAsMenu(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.display.MovieClip::set trackAsMenu"); return;
-      // this._trackAsMenu = value;
+      this._trackAsMenu = !!value;
     }
     get scenes(): any [] {
-      notImplemented("public flash.display.MovieClip::get scenes"); return;
-      // return this._scenes;
+      return this._scenes;
     }
     get currentScene(): flash.display.Scene {
       notImplemented("public flash.display.MovieClip::get currentScene"); return;
@@ -90,17 +86,13 @@ module Shumway.AVM2.AS.flash.display {
       // return this._currentFrameLabel;
     }
     get enabled(): boolean {
-      notImplemented("public flash.display.MovieClip::get enabled"); return;
-      // return this._enabled;
+      return this._enabled;
     }
     set enabled(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.display.MovieClip::set enabled"); return;
-      // this._enabled = value;
+      this._enabled = !!value;
     }
     get isPlaying(): boolean {
-      notImplemented("public flash.display.MovieClip::get isPlaying"); return;
-      // return this._isPlaying;
+      return this._isPlaying;
     }
     play(): void {
       notImplemented("public flash.display.MovieClip::play"); return;

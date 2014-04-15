@@ -41,6 +41,7 @@ module Shumway.AVM2.AS.flash.display {
 
     constructor (width: number /*int*/, height: number /*int*/, transparent: boolean = true, fillColor: number /*uint*/ = 4294967295) {
       width = width | 0; height = height | 0;
+      false && super();
       if (width > BitmapData.MAXIMUM_WIDTH ||
         height > BitmapData.MAXIMUM_HEIGHT ||
         width * height > BitmapData.MAXIMUM_DIMENSION) {

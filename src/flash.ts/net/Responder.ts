@@ -15,7 +15,6 @@
  */
 // Class: Responder
 module Shumway.AVM2.AS.flash.net {
-  import notImplemented = Shumway.Debug.notImplemented;
   export class Responder extends ASNative {
     
     // Called whenever the class is initialized.
@@ -31,19 +30,20 @@ module Shumway.AVM2.AS.flash.net {
     static bindings: string [] = null; // [];
     
     constructor (result: ASFunction, status: ASFunction = null) {
-      result = result; status = status;
       false && super();
-      notImplemented("Dummy Constructor: public flash.net.Responder");
     }
-    
+
+    private _result: ASFunction;
+    private _status: ASFunction;
+
     // JS -> AS Bindings
     
     
     // AS -> JS Bindings
     
     ctor(result: ASFunction, status: ASFunction): void {
-      result = result; status = status;
-      notImplemented("public flash.net.Responder::ctor"); return;
+      this._result = result;
+      this._status = status;
     }
   }
 }
