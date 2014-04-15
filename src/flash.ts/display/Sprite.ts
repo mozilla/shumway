@@ -50,6 +50,26 @@ module Shumway.AVM2.AS.flash.display {
       s.actions = this.actions.slice();
       return s;
     }
+
+    make(root: DisplayObject, stage: Stage, parent: DisplayObjectContainer): DisplayObject {
+      var symbol = new DisplayObject;
+      symbol._root = root;
+      symbol._stage = stage;
+      symbol._parent = parent;
+      symbol._depth = this.depth;
+      symbol._setMatrix(this.matrix, false);
+      symbol._setColorTransform(this.colorTransform);
+      //symbol.ratio
+      symbol._name = this.name;
+      symbol._clipDepth = this.clipDepth;
+      symbol._filters = this.filters;
+      symbol._blendMode = this.blendMode;
+      if (this.cacheAsBitmap) {
+        symbol._setFlags(DisplayObjectFlags.CacheAsBitmap);
+      }
+      //symbol.actions
+      return this.symbolClass.initializeFrom(symbol);
+    }
   }
 
   export class TimelineDiff {
@@ -184,6 +204,8 @@ module Shumway.AVM2.AS.flash.display {
       var symbols = diff.place;
       for (var i = 0; i < symbols.length; i++) {
         var symbolInfo = symbols[i];
+        var child = make(this._root, this._stage, this);
+        this.addChildAtDepth(child, child._depth);
       }
     }
 
