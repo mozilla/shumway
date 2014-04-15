@@ -31,7 +31,7 @@ module Shumway.GFX.Layers {
     Mask           = 1,
     Maskee         = 2,
     BlendMode      = 4,
-    ColorTransform = 8,
+    ColorMatrix    = 8,
     Filters        = 16
   }
 
@@ -395,10 +395,10 @@ module Shumway.GFX.Layers {
         }
 
         var hasFilters: boolean = (frame.filters.length > 0 && !(target & RenderTarget.Filters));
-        var hasColorTransform: boolean = (frame.colorTransform && !(target & RenderTarget.ColorTransform));
+        var hasColorMatrix: boolean = (frame.colorMatrix && !(target & RenderTarget.ColorMatrix));
         var hasBlendMode: boolean = (frame.blendMode > 0 && !(target & RenderTarget.BlendMode));
 
-        if (hasFilters || hasColorTransform || hasBlendMode) {
+        if (hasFilters || hasColorMatrix || hasBlendMode) {
           var boundsAABB = frame.getBounds();
           transform.transformRectangleAABB(boundsAABB);
           var tx = boundsAABB.x;
@@ -418,8 +418,8 @@ module Shumway.GFX.Layers {
               target |= RenderTarget.Filters;
               needsImageData = true;
             }
-            if (hasColorTransform) {
-              target |= RenderTarget.ColorTransform;
+            if (hasColorMatrix) {
+              target |= RenderTarget.ColorMatrix;
               needsImageData = true;
             }
             if (hasBlendMode) {
@@ -446,8 +446,8 @@ module Shumway.GFX.Layers {
               //}
             }
 
-            if (hasColorTransform) {
-              var ct = frame.colorTransform.getColorTransform();
+            if (hasColorMatrix) {
+              var ct = frame.colorMatrix.getColorTransform();
               FILTERS.colortransform(imageData, image.width, image.height, ct[0], ct[1], ct[2], ct[4], ct[5], ct[6]);
             }
 
@@ -483,7 +483,7 @@ module Shumway.GFX.Layers {
           var maskCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
           var maskeeCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
 
-          var maskTransform = frame.mask.getConcatenatedTransform();
+          var maskTransform = frame.mask.getConcatenatedMatrix();
           var maskBoundsAABB = frame.mask.getBounds();
           maskTransform.transformRectangleAABB(maskBoundsAABB);
           maskBoundsAABB.intersect(self._viewport);
@@ -517,7 +517,7 @@ module Shumway.GFX.Layers {
         }
 
         var inverseTransform: Matrix = Matrix.createIdentity();
-        frame.getConcatenatedTransform().inverse(inverseTransform);
+        frame.getConcatenatedMatrix().inverse(inverseTransform);
         var clip = self._viewport.clone();
         inverseTransform.transformRectangleAABB(clip);
 

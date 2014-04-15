@@ -75,7 +75,7 @@ module Shumway.GFX.Layers {
     private _blendMode: BlendMode = BlendMode.DEFAULT;
     private _matrix: Matrix;
     private _filters: Filter[] = [];
-    private _colorTransform: ColorMatrix;
+    private _colorMatrix: ColorMatrix;
     private _isTransformInvalid: boolean = true;
     private _properties: {[name: string]: any};
     private static _path: Frame[] = [];
@@ -147,13 +147,13 @@ module Shumway.GFX.Layers {
       return this._filters;
     }
 
-    set colorTransform(value: ColorMatrix) {
-      this._colorTransform = value;
+    set colorMatrix(value: ColorMatrix) {
+      this._colorMatrix = value;
       this.invalidate();
     }
 
-    get colorTransform(): ColorMatrix {
-      return this._colorTransform;
+    get colorMatrix(): ColorMatrix {
+      return this._colorMatrix;
     }
 
     set mask(value: Frame) {
@@ -207,16 +207,16 @@ module Shumway.GFX.Layers {
     getConcatenatedColorMatrix(): ColorMatrix {
       var path = Frame._path;
       this.getPathInto(path);
-      var colorTransform = null;
+      var colorMatrix = null;
       for (var i = path.length - 1; i >= 0; i--) {
-        if (path[i]._colorTransform) {
-          if (!colorTransform) {
-            colorTransform = ColorMatrix.createIdentity();
+        if (path[i]._colorMatrix) {
+          if (!colorMatrix) {
+            colorMatrix = ColorMatrix.createIdentity();
           }
-          colorTransform.multiply(path[i]._colorTransform);
+          colorMatrix.multiply(path[i]._colorMatrix);
         }
       }
-      return colorTransform;
+      return colorMatrix;
     }
 
     getConcatenatedAlpha(): number {
@@ -263,7 +263,7 @@ module Shumway.GFX.Layers {
       return null;
     }
 
-    public getConcatenatedTransform(): Matrix {
+    public getConcatenatedMatrix(): Matrix {
       var frame = this;
       var t = Matrix.createIdentity();
       while (frame) {
