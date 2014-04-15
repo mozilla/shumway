@@ -54,27 +54,37 @@ module Shumway.GFX.Layers {
   export class Easel {
     private _stage: Stage;
     private _world: FrameContainer;
-    private _gui: FrameContainer;
     private _canvas: HTMLCanvasElement;
     private _context: CanvasRenderingContext2D;
     private _renderer: Canvas2DStageRenderer;
     private _state: State = new MouseUpState();
 
     private _mousePositionLabel: Label;
+
+    private _createToolbar(): Frame {
+      var toolbar = new FrameContainer();
+      this._mousePositionLabel = new Label(256, 16);
+      this._mousePositionLabel.text = "Hello World";
+      var self = this;
+      toolbar.addChild(new Shape(new Renderable(1024, 32, function (context: CanvasRenderingContext2D) {
+        context.fillStyle = ColorStyle.Toolbars;
+        context.fillRect(0, 0, self._stage.w, 32);
+      })));
+      var mousePositionLabelShape = toolbar.addChild(new Shape(this._mousePositionLabel));
+      mousePositionLabelShape.x = 4;
+      mousePositionLabelShape.y = 8;
+      return toolbar;
+    }
+
     constructor(canvas: HTMLCanvasElement) {
       this._stage = new Stage(canvas.width, canvas.height, true);
       this._world = new FrameContainer();
       this._stage.addChild(this._world);
-      this._gui = new FrameContainer();
+      this._world.addChild(new Shape(new Grid()));
 
-      this._mousePositionLabel = new Label(256, 16);
-      var f = new Shape(this._mousePositionLabel);
-      f.x = 500;
-      f.y = 10;
-      this._gui.addChild(f);
-      this._stage.addChild(this._gui);
-
-      this._mousePositionLabel.text = "Hello World";
+      var overlay = new FrameContainer();
+      overlay.addChild(this._createToolbar());
+      this._stage.addChild(overlay);
 
       this._canvas = canvas;
       this._context = canvas.getContext('2d');

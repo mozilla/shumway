@@ -6,8 +6,6 @@ createEasel();
   var shapeSource = Shumway.getRandomShape();
   var frame = new Shape(shapeSource);
 
-  easel.world.addChild(new Shape(new Grid()));
-
   easel.world.addChild(frame);
 
   function timeAllocation(C) {

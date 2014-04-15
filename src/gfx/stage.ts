@@ -414,15 +414,16 @@ module Shumway.GFX.Layers {
       this.children = [];
     }
 
-    public addChild(child: Frame) {
+    public addChild(child: Frame): Frame {
       if (child) {
         child.parent = this;
         child.invalidate();
       }
       this.children.push(child);
+      return child;
     }
 
-    public addChildAt(child: Frame, index: number) {
+    public addChildAt(child: Frame, index: number): Frame {
       assert(index >= 0 && index <= this.children.length);
       if (index === this.children.length) {
         this.children.push(child);
@@ -433,6 +434,7 @@ module Shumway.GFX.Layers {
         child.parent = this;
         child.invalidate();
       }
+      return child;
     }
 
     public removeChild(child: Frame) {
@@ -601,6 +603,23 @@ module Shumway.GFX.Layers {
     }
   }
 
+  export class Renderable implements IRenderable {
+    private _bounds: Rectangle;
+    properties: {[name: string]: any} = {};
+    render: (context: CanvasRenderingContext2D, clipBounds?: Rectangle) => void;
+    isDynamic: boolean = true;
+    isInvalid: boolean = true;
+    isScalable: boolean = true;
+    isTileable: boolean = false;
+    constructor(w: number, h: number, render: (context: CanvasRenderingContext2D, clipBounds?: Rectangle) => void) {
+      this.render = render;
+      this._bounds = new Rectangle(0, 0, w, h);
+    }
+    getBounds (): Rectangle {
+      return this._bounds;
+    }
+  }
+
   export class Label implements IRenderable {
     properties: {[name: string]: any} = {};
     private _text: string;
@@ -626,6 +645,7 @@ module Shumway.GFX.Layers {
     }
     render (context: CanvasRenderingContext2D, clipBounds?: Rectangle) {
       context.save();
+      context.textBaseline = "top";
       context.fillStyle = "white";
       context.fillText(this.text, 0, 0);
       context.restore();
@@ -639,6 +659,7 @@ module Shumway.GFX.Layers {
     isInvalid: boolean = true;
     isScalable: boolean = true;
     isTileable: boolean = true;
+
 
     private _maxBounds = new Rectangle(-Grid.RADIUS, -Grid.RADIUS, Grid.RADIUS * 2, Grid.RADIUS * 2);
 
@@ -655,7 +676,7 @@ module Shumway.GFX.Layers {
 
       var gridBounds = clipBounds || this.getBounds();
 
-      context.fillStyle = "#14171a";
+      context.fillStyle = ColorStyle.VeryDark;
       context.fillRect(gridBounds.x, gridBounds.y, gridBounds.w, gridBounds.h);
 
       function gridPath(level) {
@@ -679,19 +700,19 @@ module Shumway.GFX.Layers {
       context.beginPath();
       gridPath(50);
       context.lineWidth = 1;
-      context.strokeStyle = "#292e33";
+      context.strokeStyle = ColorStyle.Dark;
       context.stroke();
 
       context.beginPath();
       gridPath(200);
       context.lineWidth = 1;
-      context.strokeStyle = "#585959";
+      context.strokeStyle = ColorStyle.TabToolbar;
       context.stroke();
 
       context.beginPath();
       gridPath(1000);
       context.lineWidth = 3;
-      context.strokeStyle = "#667380";
+      context.strokeStyle = ColorStyle.Toolbars;
       context.stroke();
 
       var MAX = 1024 * 1024;
@@ -701,7 +722,8 @@ module Shumway.GFX.Layers {
       context.lineTo(MAX , 0.5);
       context.moveTo(0.5, -MAX);
       context.lineTo(0.5, MAX);
-      context.strokeStyle = "#eb5368";
+      context.strokeStyle = ColorStyle.Orange;
+      context.stroke();
 
       context.restore();
     }

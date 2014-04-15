@@ -1295,6 +1295,28 @@ module Shumway {
     }
   }
 
+  export class ColorStyle {
+    static TabToolbar = "#252c33";
+    static Toolbars = "#343c45";
+    static HighlightBlue = "#1d4f73";
+    static LightText = "#f5f7fa";
+    static ForegroundText = "#b6babf";
+    static Black = "#000000";
+    static VeryDark = "#14171a";
+    static Dark = "#181d20";
+    static Light = "#a9bacb";
+    static Grey = "#8fa1b2";
+    static DarkGrey = "#5f7387";
+    static Blue = "#46afe3";
+    static Purple = "#6b7abb";
+    static Pink = "#df80ff";
+    static Red = "#eb5368";
+    static Orange = "#d96629";
+    static LightOrange = "#d99b28";
+    static Green = "#70bf53";
+    static BlueGrey = "#5e88b0";
+  }
+
   export class Color {
     public r: number;
     public g: number;
