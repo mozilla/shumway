@@ -762,7 +762,7 @@ module Shumway.GFX.GL {
         }
         // that.context.setTransform(transform);
         if (frame instanceof SolidRectangle) {
-          brush.fillRectangle(new Rectangle(0, 0, frame.w, frame.h), Color.parseColor((<SolidRectangle>frame).fillStyle), transform, depth);
+          brush.fillRectangle(frame.getBounds(), Color.parseColor((<SolidRectangle>frame).fillStyle), transform, depth);
         } else if (frame instanceof Shape) {
           var shape = <Shape>frame;
           var bounds = shape.source.getBounds();

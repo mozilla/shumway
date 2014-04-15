@@ -242,8 +242,6 @@ module Shumway.GFX.Layers {
       this._matrix = value;
     }
 
-    public w: number;
-    public h: number;
     public parent: Frame;
     public ignoreMaskAlpha: boolean;
 
@@ -277,11 +275,6 @@ module Shumway.GFX.Layers {
       this._setFlags(FrameFlags.Dirty);
     }
 
-    private invalidateTransform() {
-      this._isTransformInvalid = true;
-      this.invalidate();
-    }
-
     public visit(visitor: (Frame, Matrix?, FrameFlags?) => VisitorFlags,
                  transform?: Matrix,
                  flags: FrameFlags = FrameFlags.Empty,
@@ -307,7 +300,8 @@ module Shumway.GFX.Layers {
           transform = transformStack.pop();
         }
         flags = flagsStack.pop() | frame._flags;
-        if (visitor(frame, transform, flags) === VisitorFlags.Continue) {
+        var result: VisitorFlags = visitor(frame, transform, flags);
+        if (result === VisitorFlags.Continue) {
           if (frame instanceof FrameContainer) {
             frameContainer = <FrameContainer>frame;
             var length = frameContainer.children.length;
@@ -325,6 +319,8 @@ module Shumway.GFX.Layers {
               flagsStack.push(flags);
             }
           }
+        } else if (result === VisitorFlags.Stop) {
+          return;
         }
       }
     }
@@ -337,6 +333,36 @@ module Shumway.GFX.Layers {
         frame = frame.parent;
       }
       return depth;
+    }
+
+    /**
+     * Returns a list of frames whose bounds intersect the query point. The frames
+     * are returned front to back. By default, only the first frame that intersects
+     * the query point is returned, unless the |multiple| argument is specified.
+     */
+    public queryFramesByPoint(query: Point, multiple?: boolean): Frame [] {
+      var inverseTransform: Matrix = Matrix.createIdentity();
+      var local = Point.createEmpty();
+      var frames = [];
+      this.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
+        transform.inverse(inverseTransform);
+        local.set(query);
+        inverseTransform.transformPoint(local);
+        if (frame.getBounds().containsPoint(local)) {
+          if (frame instanceof FrameContainer) {
+            return VisitorFlags.Continue;
+          } else {
+            frames.push(frame);
+            if (!multiple) {
+              return VisitorFlags.Stop;
+            }
+          }
+          return VisitorFlags.Continue;
+        } else {
+          return VisitorFlags.Skip;
+        }
+      }, Matrix.createIdentity(), FrameFlags.Empty, VisitorFlags.FrontToBack);
+      return frames;
     }
   }
 
@@ -417,14 +443,13 @@ module Shumway.GFX.Layers {
       for (var i = 0; i < this.children.length; i++) {
         var child = this.children[i];
         if (!child._hasFlags(FrameFlags.Hidden)) {
-          var childBounds = child.getBounds();
+          var childBounds = child.getBounds().clone();
           child.matrix.transformRectangleAABB(childBounds);
           bounds.union(childBounds);
         }
       }
       return bounds;
     }
-
   }
 
   export interface ITextureRegion {
@@ -435,6 +460,9 @@ module Shumway.GFX.Layers {
   export class Stage extends FrameContainer {
     public trackDirtyRegions: boolean;
     public dirtyRegion: DirtyRegion;
+    public w: number;
+    public h: number;
+
     constructor(w: number, h: number, trackDirtyRegions: boolean = false) {
       super();
       this.w = w;
@@ -453,7 +481,7 @@ module Shumway.GFX.Layers {
           return VisitorFlags.Continue;
         }
         if (flags & FrameFlags.Dirty) {
-          var rectangle = new Rectangle(0, 0, frame.w, frame.h);
+          var rectangle = frame.getBounds().clone();
           transform.transformRectangleAABB(rectangle);
           self.dirtyRegion.addDirtyRectangle(rectangle);
           if (frame._previouslyRenderedAABB) {
@@ -483,7 +511,7 @@ module Shumway.GFX.Layers {
         if (frame instanceof FrameContainer) {
           return VisitorFlags.Continue;
         }
-        var rectangle = new Rectangle(0, 0, frame.w, frame.h);
+        var rectangle = frame.getBounds().clone();
         transform.transformRectangleAABB(rectangle);
         if (frame._hasFlags(FrameFlags.Dirty)) {
           if (currentLayer) {
@@ -526,13 +554,10 @@ module Shumway.GFX.Layers {
       super();
       assert(source);
       this.source = source;
-      var bounds = source.getBounds();
-      this.w = bounds.w;
-      this.h = bounds.h;
     }
 
     public getBounds(): Rectangle {
-      return new Rectangle(0, 0, this.w, this.h);
+      return this.source.getBounds();
     }
   }
 
@@ -586,15 +611,13 @@ module Shumway.GFX.Layers {
   }
 
   export class Grid implements IRenderable {
-    static RADIUS = 1024;
     properties: {[name: string]: any} = {};
     isDynamic: boolean = false;
     isInvalid: boolean = true;
     isScalable: boolean = true;
     isTileable: boolean = true;
 
-
-    private _maxBounds = new Rectangle(-Grid.RADIUS, -Grid.RADIUS, Grid.RADIUS * 2, Grid.RADIUS * 2);
+    private _maxBounds = Rectangle.createMaxI16();
 
     constructor() {
 

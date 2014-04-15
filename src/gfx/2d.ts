@@ -290,7 +290,7 @@ module Shumway.GFX.Layers {
     cullFrame(root: Frame, transform: Matrix, cullRectanglesAABB: Rectangle []) {
       var inverseTransform: Matrix = Matrix.createIdentity();
       root.visit(function visitFrame(frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
-        var frameBoundsAABB = frame.getBounds();
+        var frameBoundsAABB = frame.getBounds().clone();
         transform.transformRectangleAABB(frameBoundsAABB);
         var index = findIntersectingIndex(frameBoundsAABB, cullRectanglesAABB);
         if (index < 0) {
@@ -399,7 +399,7 @@ module Shumway.GFX.Layers {
         var hasBlendMode: boolean = (frame.blendMode > 0 && !(target & RenderTarget.BlendMode));
 
         if (hasFilters || hasColorMatrix || hasBlendMode) {
-          var boundsAABB = frame.getBounds();
+          var boundsAABB = frame.getBounds().clone();
           transform.transformRectangleAABB(boundsAABB);
           var tx = boundsAABB.x;
           var ty = boundsAABB.y;
@@ -484,11 +484,11 @@ module Shumway.GFX.Layers {
           var maskeeCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
 
           var maskTransform = frame.mask.getConcatenatedMatrix();
-          var maskBoundsAABB = frame.mask.getBounds();
+          var maskBoundsAABB = frame.mask.getBounds().clone();
           maskTransform.transformRectangleAABB(maskBoundsAABB);
           maskBoundsAABB.intersect(self._viewport);
 
-          var frameBoundsAABB = frame.getBounds();
+          var frameBoundsAABB = frame.getBounds().clone();
           transform.transformRectangleAABB(frameBoundsAABB);
           maskBoundsAABB.intersect(frameBoundsAABB);
           maskBoundsAABB.snap();
@@ -521,7 +521,7 @@ module Shumway.GFX.Layers {
         var clip = self._viewport.clone();
         inverseTransform.transformRectangleAABB(clip);
 
-        var frameBoundsAABB = frame.getBounds();
+        var frameBoundsAABB = frame.getBounds().clone();
         transform.transformRectangleAABB(frameBoundsAABB);
         if (frame._hasFlags(FrameFlags.Culled)) {
           frame._removeFlags(FrameFlags.Culled);
@@ -529,14 +529,14 @@ module Shumway.GFX.Layers {
           if (frame instanceof Shape) {
             frame._previouslyRenderedAABB = frameBoundsAABB;
             var shape = <Shape>frame;
-            var bounds = shape.getBounds();
+            var bounds = shape.getBounds().clone();
             if (!bounds.isEmpty()) {
               shape.source.render(context, clip);
             }
             if (options.paintFlashing) {
               context.fillStyle = randomStyle();
               context.globalAlpha = 0.5;
-              context.fillRect(0, 0, frame.w, frame.h);
+              context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
             }
           }
         }

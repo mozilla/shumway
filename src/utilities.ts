@@ -946,6 +946,12 @@ module Shumway {
     }
   }
 
+  export enum Numbers {
+    MaxU16 = 0xFFFF,
+    MaxI16 = 0x7FFF,
+    MinI16 = -0x8000
+  }
+
   export module IntegerUtilities {
     export function bitCount(i: number): number {
       i = i - ((i >> 1) & 0x55555555);

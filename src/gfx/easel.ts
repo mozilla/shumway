@@ -6,58 +6,113 @@ module Shumway.GFX.Layers {
 
   import Canvas2DStageRenderer = Shumway.GFX.Layers.Canvas2DStageRenderer;
 
-  interface IState {
+  export interface IState {
     onMouseUp(easel: Easel, event: MouseEvent);
     onMouseDown(easel: Easel, event: MouseEvent);
     onMouseMove(easel: Easel, event: MouseEvent);
+    onMouseClick(easel: Easel, event: MouseEvent);
+
+    onKeyUp(easel: Easel, event: KeyboardEvent);
+    onKeyDown(easel: Easel, event: KeyboardEvent);
+    onKeyPress(easel: Easel, event: KeyboardEvent);
   }
 
-  class State implements IState {
+  export class State implements IState {
+
     onMouseUp(easel: Easel, event: MouseEvent) {
-      return this;
+      easel.state = this;
     }
 
     onMouseDown(easel: Easel, event: MouseEvent) {
-      return this;
+      easel.state = this;
     }
 
     onMouseMove(easel: Easel, event: MouseEvent) {
-      return this;
+      easel.state = this;
+    }
+
+    onMouseClick(easel: Easel, event: MouseEvent) {
+      easel.state = this;
+    }
+
+    onKeyUp(easel: Easel, event: KeyboardEvent) {
+      easel.state = this;
+    }
+
+    onKeyDown(easel: Easel, event: KeyboardEvent) {
+      easel.state = this;
+    }
+
+    onKeyPress(easel: Easel, event: KeyboardEvent) {
+      easel.state = this;
     }
   }
 
-  class MouseUpState extends State {
+  class StartState extends State {
+    private _keyCodes: boolean [] = [];
     onMouseDown(easel: Easel, event: MouseEvent) {
-      return new DragState(easel.getMousePosition(event, null), easel.world.matrix.clone());
+      if (this._keyCodes[32]) {
+        easel.state = new DragState(easel.world, easel.getMousePosition(event, null), easel.world.matrix.clone());
+      } else {
+        var p = easel.getMousePosition(event, null);
+        var frames = easel.stage.queryFramesByPoint(p);
+        if (frames.length > 0) {
+          easel.state = new DragState(frames[0], easel.getMousePosition(event, null), frames[0].matrix.clone());
+        }
+      }
+    }
+
+    onMouseClick(easel: Easel, event: MouseEvent) {
+
+    }
+
+    onKeyDown(easel: Easel, event: KeyboardEvent) {
+      this._keyCodes[event.keyCode] = true;
+      this._updateCursor(easel);
+    }
+
+    onKeyUp(easel: Easel, event: KeyboardEvent) {
+      this._keyCodes[event.keyCode] = false;
+      this._updateCursor(easel);
+    }
+
+    private _updateCursor(easel: Easel) {
+      if (this._keyCodes[32]) {
+        easel._canvas.style.cursor = "move";
+      } else {
+        easel._canvas.style.cursor = "auto";
+      }
     }
   }
 
   class DragState extends State {
     private _startMatrix: Matrix;
     private _startPosition: Point;
-    constructor(startPosition: Point, startMatrix: Matrix) {
+    private _target: Frame;
+    constructor(target: Frame, startPosition: Point, startMatrix: Matrix) {
       super();
+      this._target = target;
       this._startPosition = startPosition;
       this._startMatrix = startMatrix;
     }
     onMouseMove(easel: Easel, event: MouseEvent) {
       var p = easel.getMousePosition(event, null);
       p.sub(this._startPosition);
-      easel.world.matrix = this._startMatrix.clone().translate(p.x, p.y);
-      return this;
+      this._target.matrix = this._startMatrix.clone().translate(p.x, p.y);
+      easel.state = this;
     }
     onMouseUp(easel: Easel, event: MouseEvent) {
-      return new MouseUpState();
+      easel.state = new StartState();
     }
   }
 
   export class Easel {
     private _stage: Stage;
     private _world: FrameContainer;
-    private _canvas: HTMLCanvasElement;
+    _canvas: HTMLCanvasElement;
     private _context: CanvasRenderingContext2D;
     private _renderer: Canvas2DStageRenderer;
-    private _state: State = new MouseUpState();
+    private _state: State = new StartState();
 
     private _mousePositionLabel: Label;
 
@@ -84,7 +139,7 @@ module Shumway.GFX.Layers {
 
       var overlay = new FrameContainer();
       overlay.addChild(this._createToolbar());
-      this._stage.addChild(overlay);
+      // this._stage.addChild(overlay);
 
       this._canvas = canvas;
       this._context = canvas.getContext('2d');
@@ -98,21 +153,43 @@ module Shumway.GFX.Layers {
       this._onMouseMove = this._onMouseMove.bind(this);
 
       var self = this;
+
       window.addEventListener("mouseup", function (event) {
-        self._state = self._state.onMouseUp(self, event);
+        self._state.onMouseUp(self, event);
         self._render();
       }, false);
+
       window.addEventListener("mousemove", function (event) {
         var p = self.getMousePosition(event, self._world);
-        self._mousePositionLabel.text = p.x + ", " + p.y;
+        self._mousePositionLabel.text = "x: " + p.x + ", y: " + p.y;
+        self._state.onMouseMove(self, event);
+        self._render();
+      }, false);
 
-        self._state = self._state.onMouseMove(self, event);
-        self._render();
-      }, false);
       canvas.addEventListener("mousedown", function (event) {
-        self._state = self._state.onMouseDown(self, event);
+        self._state.onMouseDown(self, event);
         self._render();
       }, false);
+
+      window.addEventListener("keydown", function (event) {
+        self._state.onKeyDown(self, event);
+        self._render();
+      }, false);
+
+      window.addEventListener("keypress", function (event) {
+        self._state.onKeyPress(self, event);
+        self._render();
+      }, false);
+
+      window.addEventListener("keyup", function (event) {
+        self._state.onKeyUp(self, event);
+        self._render();
+      }, false);
+    }
+
+
+    set state(state: State) {
+      this._state = state;
     }
 
     private _render() {
@@ -125,6 +202,10 @@ module Shumway.GFX.Layers {
 
     get world(): FrameContainer {
       return this._world;
+    }
+
+    get stage(): FrameContainer {
+      return this._stage;
     }
 
     private _resizeHandler() {
@@ -153,6 +234,8 @@ module Shumway.GFX.Layers {
         this._canvas.height = ch;
         this._context.scale(1 / 2, 1 / 2);
       }
+      this._stage.w = this._canvas.width;
+      this._stage.h = this._canvas.height;
       this._context.font = 14 + 'px Consolas, "Liberation Mono", Courier, monospace';
       // this._viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
     }
@@ -167,7 +250,7 @@ module Shumway.GFX.Layers {
         return p;
       }
       var m = Matrix.createIdentity();
-      coordinateSpace.matrix.inverse(m);
+      coordinateSpace.getConcatenatedMatrix().inverse(m);
       m.transformPoint(p);
       return p;
     }
