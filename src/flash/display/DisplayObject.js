@@ -45,7 +45,7 @@ var DisplayObjectDefinition = (function () {
       this._animated = false;
       this._bbox = null;
       this._bitmap = null;
-      this._blendMode = blendModeClass.NORMAL;
+      this._blendMode = null;
       this._bounds = { xMin: 0, xMax: 0, yMin: 0, yMax: 0, invalid: true };
       this._cacheAsBitmap = false;
       this._children = [];
@@ -92,7 +92,7 @@ var DisplayObjectDefinition = (function () {
       this._clip = null;
 
       blendModes = [
-        blendModeClass.NORMAL,     // 0
+        null,                      // 0
         blendModeClass.NORMAL,     // 1
         blendModeClass.LAYER,      // 2
         blendModeClass.MULTIPLY,   // 3
@@ -129,6 +129,10 @@ var DisplayObjectDefinition = (function () {
         this._stage = s.stage || null;
         this._renderableId = s.renderableId || 0;
         this._isSymbol = true;
+
+        if (s.filters) {
+          this._initializeFilters(s.filters);
+        }
 
         var scale9Grid = s.scale9Grid;
         if (scale9Grid) {
@@ -186,8 +190,121 @@ var DisplayObjectDefinition = (function () {
     },
 
     _resolveBlendMode: function (blendModeNumeric) {
-      return blendModes[blendModeNumeric] ||
-             flash.display.BlendMode.class.NORMAL;
+      return blendModes[blendModeNumeric] || null;
+    },
+
+    _initializeFilters: function (filters) {
+      function getRGB(color) {
+        return (color.red << 16) | (color.green << 8) | color.blue;
+      }
+      function getRGBs(colors) {
+        var ca = [];
+        for (var i = 0, n = colors.length; i < n; i++) {
+          ca.push(getRGB(colors[i]));
+        }
+        return ca;
+      }
+      function getAlpha(color) {
+        return color.alpha / 255;
+      }
+      function getAlphas(colors) {
+        var ca = [];
+        for (var i = 0, n = colors.length; i < n; i++) {
+          ca.push(getAlpha(colors[i]));
+        }
+        return ca;
+      }
+      function getFilterType(filterObject) {
+        if (filterObject.onTop === 1) {
+          return "full";
+        } else {
+          return filterObject.inner === 1 ? "inner" : "outer";
+        }
+      }
+      this._filters = [];
+      for (var i = 0, n = filters.length; i < n; i++) {
+        var fo = filters[i];
+        var filter;
+        switch (fo.type) {
+          case 0:
+            filter = new flash.filters.DropShadowFilter(fo.distance,
+                                                        fo.angle * 180 / Math.PI,
+                                                        getRGB(fo.colors[0]),
+                                                        getAlpha(fo.colors[0]),
+                                                        fo.blurX,
+                                                        fo.blurY,
+                                                        fo.strength,
+                                                        fo.passes,
+                                                        !!fo.innerShadow,
+                                                        !!fo.knockout,
+                                                        !fo.componsiteSource);
+            break;
+          case 1:
+            filter = new flash.filters.BlurFilter(fo.blurX,
+                                                  fo.blurY,
+                                                  fo.passes);
+            break;
+          case 2:
+            filter = new flash.filters.GlowFilter(getRGB(fo.colors[0]),
+                                                  getAlpha(fo.colors[0]),
+                                                  fo.blurX,
+                                                  fo.blurY,
+                                                  fo.strength,
+                                                  fo.passes,
+                                                  !!fo.innerShadow,
+                                                  !!fo.knockout);
+            break;
+          case 3:
+            filter = new flash.filters.BevelFilter(fo.distance,
+                                                   fo.angle * 180 / Math.PI,
+                                                   getRGB(fo.highlightColor),
+                                                   getAlpha(fo.highlightColor),
+                                                   getRGB(fo.colors[0]),
+                                                   getAlpha(fo.colors[0]),
+                                                   fo.blurX,
+                                                   fo.blurY,
+                                                   fo.strength,
+                                                   fo.passes,
+                                                   getFilterType(fo),
+                                                   !!fo.knockout);
+            break;
+          case 4:
+            filter = new flash.filters.GradientGlowFilter(fo.distance,
+                                                          fo.angle * 180 / Math.PI,
+                                                          getRGBs(fo.colors),
+                                                          getAlphas(fo.colors),
+                                                          fo.ratios,
+                                                          fo.blurX,
+                                                          fo.blurY,
+                                                          fo.strength,
+                                                          fo.passes,
+                                                          getFilterType(fo),
+                                                          !!fo.knockout);
+            break;
+          case 5:
+            filter = null; //new flash.filters.ConvolutionFilter();
+            break;
+          case 6:
+            filter = new flash.filters.ColorMatrixFilter(fo.matrix);
+            break;
+          case 7:
+            filter = new flash.filters.GradientBevelFilter(fo.distance,
+                                                           fo.angle * 180 / Math.PI,
+                                                           getRGBs(fo.colors),
+                                                           getAlphas(fo.colors),
+                                                           fo.ratios,
+                                                           fo.blurX,
+                                                           fo.blurY,
+                                                           fo.strength,
+                                                           fo.passes,
+                                                           getFilterType(fo),
+                                                           !!fo.knockout);
+            break;
+        }
+        if (filter) {
+          this._filters.push(filter);
+        }
+      }
     },
 
     _getConcatenatedTransform: function (targetCoordSpace, toDeviceSpace) {
@@ -457,7 +574,7 @@ var DisplayObjectDefinition = (function () {
     },
 
     _serialize: function (message) {
-      message.ensureAdditionalCapacity(52);
+      message.ensureAdditionalCapacity(53);
 
       var m = this._currentTransform;
       message.writeFloatUnsafe(m.a);
@@ -470,7 +587,8 @@ var DisplayObjectDefinition = (function () {
       message.writeFloatUnsafe(this._alpha);
       message.writeIntUnsafe(!this._invisible);
 
-      message.writeIntUnsafe(blendModes.indexOf(this._blendMode));
+      var bm = blendModes.indexOf(this._blendMode);
+      message.writeIntUnsafe(bm < 0 ? 0 : bm);
 
       if (this._mask) {
         if (this._maskedObject) {
@@ -500,6 +618,12 @@ var DisplayObjectDefinition = (function () {
         message.writeFloatUnsafe(cxform.alphaOffset / 255);
       } else {
         message.writeIntUnsafe(0);
+      }
+
+      var filters = this._filters;
+      message.writeIntUnsafe(filters.length);
+      for (var i = 0; i < filters.length; i++) {
+        filters[i]._serialize(message);
       }
 
       if (this._updateRenderable) {
@@ -550,7 +674,7 @@ var DisplayObjectDefinition = (function () {
       return this._blendMode;
     },
     set blendMode(val) {
-      if (blendModes.indexOf(val) >= 0) {
+      if (blendModes.indexOf(val) > 0) {
         this._blendMode = val;
       } else {
         throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
@@ -579,6 +703,7 @@ var DisplayObjectDefinition = (function () {
 
       this._filters = val;
       this._animated = false;
+      this._invalidate();
     },
     get height() {
       var bounds = this._getContentBounds();

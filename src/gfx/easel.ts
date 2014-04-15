@@ -61,8 +61,8 @@ module Shumway.GFX.Layers {
     private _state: State = new MouseUpState();
 
     private _mousePositionLabel: Label;
-    constructor(canvas: HTMLCanvasElement, stage: Stage) {
-      this._stage = stage;
+    constructor(canvas: HTMLCanvasElement) {
+      this._stage = new Stage(canvas.width, canvas.height, true);
       this._world = new FrameContainer();
       this._stage.addChild(this._world);
       this._gui = new FrameContainer();
@@ -70,7 +70,7 @@ module Shumway.GFX.Layers {
       this._mousePositionLabel = new Label(256, 16);
       var f = new Shape(this._mousePositionLabel);
       f.x = 500;
-      f.y = 500;
+      f.y = 10;
       this._gui.addChild(f);
       this._stage.addChild(this._gui);
 
@@ -81,7 +81,7 @@ module Shumway.GFX.Layers {
       this._resizeHandler();
       window.addEventListener('resize', this._resizeHandler.bind(this), false);
       this._renderer = new Canvas2DStageRenderer(this._context);
-      this._renderer.render(this._stage, {});
+      this._renderer.render(this._stage, { });
 
       this._onMouseUp = this._onMouseUp.bind(this)
       this._onMouseDown = this._onMouseDown.bind(this);
@@ -106,7 +106,11 @@ module Shumway.GFX.Layers {
     }
 
     private _render() {
-      this._renderer.render(this._stage, {});
+      this._renderer.render(this._stage, {
+        paintFlashing: false,
+        // clipCanvas: true,
+        // clipDirtyRegions: false
+      });
     }
 
     get world(): FrameContainer {

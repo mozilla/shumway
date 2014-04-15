@@ -185,6 +185,10 @@ var MovieClipDefinition = (function () {
               currentChild._clipDepth = nextCmd.clipDepth;
             }
 
+            if (nextCmd.hasFilters) {
+              currentChild._initializeFilters(nextCmd.filters);
+            }
+
             if (nextCmd.hasName) {
               currentChild.name = nextCmd.name;
             }
