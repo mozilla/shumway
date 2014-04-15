@@ -78,8 +78,8 @@ module Shumway.GFX.Layers {
 
       this._canvas = canvas;
       this._context = canvas.getContext('2d');
-      this._resizeHandler();
       window.addEventListener('resize', this._resizeHandler.bind(this), false);
+      this._resizeHandler();
       this._renderer = new Canvas2DStageRenderer(this._context);
       this._renderer.render(this._stage, { });
 
