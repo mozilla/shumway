@@ -16,6 +16,11 @@
 // Class: Socket
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import Errors = Shumway.AVM2.Errors;
+  import throwError = Shumway.AVM2.Runtime.throwError;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
   export class Socket extends flash.events.EventDispatcher implements flash.utils.IDataInput, flash.utils.IDataOutput {
     
     // Called whenever the class is initialized.
@@ -175,6 +180,20 @@ module Shumway.AVM2.AS.flash.net {
     }
     readObject(): any {
       notImplemented("public flash.net.Socket::readObject"); return;
+    }
+    internalGetSecurityErrorMessage(host, port): string {
+      host = asCoerceString(host); port |= 0;
+      somewhatImplemented("flash.net.Socket::internalGetSecurityErrorMessage");
+      return 'SecurityErrorEvent';
+    }
+    internalConnect(host, port) {
+      host = asCoerceString(host); port |= 0;
+      somewhatImplemented("flash.net.Socket::internalConnect");
+      throwError('SecurityError', Errors.SocketConnectError, host, port);
+    }
+    didFailureOccur(): boolean {
+      somewhatImplemented("flash.net.Socket::didFailureOccur");
+      return true;
     }
   }
 }

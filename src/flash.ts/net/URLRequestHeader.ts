@@ -15,7 +15,8 @@
  */
 // Class: URLRequestHeader
 module Shumway.AVM2.AS.flash.net {
-  import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
   export class URLRequestHeader extends ASNative {
     
     // Called whenever the class is initialized.
@@ -28,12 +29,11 @@ module Shumway.AVM2.AS.flash.net {
     static staticBindings: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["name", "value"];
+    static bindings: string [] = ["name", "value"];
     
     constructor (name: string = "", value: string = "") {
-      name = "" + name; value = "" + value;
+      name = asCoerceString(name); value = asCoerceString(value);
       false && super();
-      notImplemented("Dummy Constructor: public flash.net.URLRequestHeader");
     }
     
     // JS -> AS Bindings

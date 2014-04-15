@@ -16,6 +16,12 @@
 // Class: SharedObject
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  declare var sessionStorage;
+
   export class SharedObject extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -32,9 +38,18 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.net.SharedObject");
+
+      this._path = null;
+      this._data = null;
+      this._objectEncoding = SharedObject._defaultObjectEncoding;
+
+      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SHAREDOBJECT_FEATURE});
     }
-    
+
+    static _sharedObjects: any = createEmptyObject();
+
+    private _path: string;
+
     // JS -> AS Bindings
     
     connect: (myConnection: flash.net.NetConnection, params: string = null) => void;
@@ -47,50 +62,58 @@ module Shumway.AVM2.AS.flash.net {
     setProperty: (propertyName: string, value: ASObject = null) => void;
     
     // AS -> JS Bindings
-    // static _defaultObjectEncoding: number /*uint*/;
+    private static _defaultObjectEncoding: number /*uint*/ = 3 /* AMF3 */;
     static deleteAll(url: string): number /*int*/ {
-      url = "" + url;
+      url = asCoerceString(url);
       notImplemented("public flash.net.SharedObject::static deleteAll"); return;
     }
     static getDiskUsage(url: string): number /*int*/ {
-      url = "" + url;
+      url = asCoerceString(url);
       notImplemented("public flash.net.SharedObject::static getDiskUsage"); return;
     }
     static getLocal(name: string, localPath: string = null, secure: boolean = false): flash.net.SharedObject {
-      name = "" + name; localPath = "" + localPath; secure = !!secure;
-      notImplemented("public flash.net.SharedObject::static getLocal"); return;
+      name = asCoerceString(name); localPath = asCoerceString(localPath); secure = !!secure;
+      var path = (localPath || '') + '/' + name;
+      if (SharedObject._sharedObjects[path]) {
+        return SharedObject._sharedObjects[path];
+      }
+      var so = new SharedObject();
+      so._path = path;
+      var data = sessionStorage.getItem(path);
+      so._data = data ? JSON.parse(data) : {};
+      // so._data[Multiname.getPublicQualifiedName("cookie")] = {};
+      // so._data[Multiname.getPublicQualifiedName("cookie")][Multiname.getPublicQualifiedName("lc")] = 32;
+      // so._data[Multiname.getPublicQualifiedName("levelCompleted")] = 32;
+      // so._data[Multiname.getPublicQualifiedName("completeLevels")] = 32;
+      SharedObject._sharedObjects[path] = so;
+      return so;
     }
     static getRemote(name: string, remotePath: string = null, persistence: any = false, secure: boolean = false): flash.net.SharedObject {
-      name = "" + name; remotePath = "" + remotePath; persistence = persistence; secure = !!secure;
+      name = asCoerceString(name); remotePath = asCoerceString(remotePath); secure = !!secure;
       notImplemented("public flash.net.SharedObject::static getRemote"); return;
     }
-    get defaultObjectEncoding(): number /*uint*/ {
-      notImplemented("public flash.net.SharedObject::get defaultObjectEncoding"); return;
-      // return this._defaultObjectEncoding;
+    static get defaultObjectEncoding(): number /*uint*/ {
+      return SharedObject._defaultObjectEncoding;
     }
     set defaultObjectEncoding(version: number /*uint*/) {
       version = version >>> 0;
-      notImplemented("public flash.net.SharedObject::set defaultObjectEncoding"); return;
-      // this._defaultObjectEncoding = version;
+      SharedObject._defaultObjectEncoding = version;
     }
     
-    // _data: ASObject;
+    private _data: ASObject;
     // _size: number /*uint*/;
     // _fps: number;
-    // _objectEncoding: number /*uint*/;
+    private _objectEncoding: number /*uint*/;
     // _client: ASObject;
     get data(): ASObject {
-      notImplemented("public flash.net.SharedObject::get data"); return;
-      // return this._data;
+      return this._data;
     }
     get objectEncoding(): number /*uint*/ {
-      notImplemented("public flash.net.SharedObject::get objectEncoding"); return;
-      // return this._objectEncoding;
+      return this._objectEncoding;
     }
     set objectEncoding(version: number /*uint*/) {
       version = version >>> 0;
-      notImplemented("public flash.net.SharedObject::set objectEncoding"); return;
-      // this._objectEncoding = version;
+      this._objectEncoding = version;
     }
     get client(): ASObject {
       notImplemented("public flash.net.SharedObject::get client"); return;
@@ -102,16 +125,41 @@ module Shumway.AVM2.AS.flash.net {
       // this._client = object;
     }
     setDirty(propertyName: string): void {
-      propertyName = "" + propertyName;
-      notImplemented("public flash.net.SharedObject::setDirty"); return;
+      propertyName = asCoerceString(propertyName);
+      somewhatImplemented("public flash.net.SharedObject::setDirty");
     }
     invoke(index: number /*uint*/): any {
       index = index >>> 0;
-      notImplemented("public flash.net.SharedObject::invoke"); return;
+      return this._invoke(index, Array.prototype.slice.call(arguments, 1));
     }
     invokeWithArgsArray(index: number /*uint*/, args: any []): any {
-      index = index >>> 0; args = args;
-      notImplemented("public flash.net.SharedObject::invokeWithArgsArray"); return;
+      index = index >>> 0;
+      return this._invoke(index, args);
+    }
+    private _invoke(index: number, args: any[]) {
+      var simulated = false, result;
+      switch (index) {
+        case 4: // get size()
+          result = JSON.stringify(this._data).length - 2;
+          simulated = true;
+          break;
+        case 6: // clear
+          this._data = <ASObject> {};
+          sessionStorage.removeItem(this._path);
+          simulated = true;
+          break;
+        case 2: // flush
+          sessionStorage.setItem(this._path, JSON.stringify(this._data));
+          simulated = true;
+          result = true;
+          break;
+        case 3: // close
+          simulated = true;
+          break;
+      }
+      (simulated ? somewhatImplemented : notImplemented)(
+        "private flash.net.SharedObject::_invoke (" + index + ")");
+      return result;
     }
   }
 }
