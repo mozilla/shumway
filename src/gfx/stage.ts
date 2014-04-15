@@ -19,21 +19,21 @@ module Shumway.GFX.Layers {
   }
 
   export enum BlendMode {
-    DEFAULT    = 0,
-    NORMAL     = 1,
-    LAYER      = 2,
-    MULTIPLY   = 3,
-    SCREEN     = 4,
-    LIGHTEN    = 5,
-    DARKEN     = 6,
-    DIFFERENCE = 7,
-    ADD        = 8,
-    SUBTRACT   = 9,
-    INVERT     = 10,
-    ALPHA      = 11,
-    ERASE      = 12,
-    OVERLAY    = 13,
-    HARDLIGHT  = 14
+    Default    = 0,
+    Normal     = 1,
+    Layer      = 2,
+    Multiply   = 3,
+    Screen     = 4,
+    Lighten    = 5,
+    Darken     = 6,
+    Difference = 7,
+    Add        = 8,
+    Subtract   = 9,
+    Invert     = 10,
+    Alpha      = 11,
+    Erase      = 12,
+    Overlay    = 13,
+    HardLight  = 14
   }
 
   /**
@@ -72,7 +72,7 @@ module Shumway.GFX.Layers {
 
   export class Frame {
     private _alpha: number = 1;
-    private _blendMode: BlendMode = BlendMode.DEFAULT;
+    private _blendMode: BlendMode = BlendMode.Default;
     private _matrix: Matrix;
     private _filters: Filter[] = [];
     private _colorMatrix: ColorMatrix;
