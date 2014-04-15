@@ -572,13 +572,13 @@ module Shumway.GFX.Layers {
       var compositeOp: string = "source-over";
 
       switch (blendMode) {
-        case BlendMode.MULTIPLY:   compositeOp = "multiply";   break;
-        case BlendMode.SCREEN:     compositeOp = "screen";     break;
-        case BlendMode.LIGHTEN:    compositeOp = "lighten";    break;
-        case BlendMode.DARKEN:     compositeOp = "darken";     break;
-        case BlendMode.DIFFERENCE: compositeOp = "difference"; break;
-        case BlendMode.OVERLAY:    compositeOp = "overlay";    break;
-        case BlendMode.HARDLIGHT:  compositeOp = "hard-light"; break;
+        case BlendMode.Multiply:   compositeOp = "multiply";   break;
+        case BlendMode.Screen:     compositeOp = "screen";     break;
+        case BlendMode.Lighten:    compositeOp = "lighten";    break;
+        case BlendMode.Darken:     compositeOp = "darken";     break;
+        case BlendMode.Difference: compositeOp = "difference"; break;
+        case BlendMode.Overlay:    compositeOp = "overlay";    break;
+        case BlendMode.HardLight:  compositeOp = "hard-light"; break;
       }
 
       return compositeOp;
