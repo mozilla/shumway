@@ -233,6 +233,7 @@ module Shumway.GFX.Layers {
     }
 
     set blendMode(value: number) {
+      value = value | 0;
       this.checkCapability(FrameCapabilityFlags.AllowBlendModeWrite);
       this._blendMode = value;
       this.invalidate();

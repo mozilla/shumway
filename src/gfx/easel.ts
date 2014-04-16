@@ -7,6 +7,7 @@ module Shumway.GFX.Layers {
   import Canvas2DStageRenderer = Shumway.GFX.Layers.Canvas2DStageRenderer;
 
   declare var GUI;
+  declare var timeline;
 
   export interface IState {
     onMouseUp(easel: Easel, event: MouseEvent);
@@ -125,9 +126,16 @@ module Shumway.GFX.Layers {
 
   class FrameInspectorProxy {
     target: Frame;
-    constructor() {
+    controllers: any [] = [];
+    updateControllers() {
+      this.controllers.forEach(function (c) {
+        c.updateDisplay();
+      });
+    }
+    constructor(target) {
+      this.target = target;
       var self = this;
-      var properties = ["matrix.a", "matrix.b", "matrix.c", "matrix.d", "matrix.tx", "matrix.ty"];
+      var properties = ["matrix.a", "matrix.b", "matrix.c", "matrix.d", "matrix.tx", "matrix.ty", "alpha", "blendMode"];
       properties.forEach(function (p) {
         Object.defineProperty(self, p, {
           get: function (): any {
@@ -139,7 +147,6 @@ module Shumway.GFX.Layers {
               }
               return v;
             }
-            return 0.001;
           },
           set: function (value) {
             if (self.target) {
@@ -157,12 +164,39 @@ module Shumway.GFX.Layers {
 
       var folder = GUI.addFolder("Frame Inspector");
       folder.open();
+      ["alpha"].forEach(function (p) {
+        self.controllers.push(folder.add(self, p).min(0).max(1).step(0.01).name(p));
+      });
+      ["blendMode"].forEach(function (p) {
+        self.controllers.push(folder.add(self, p, {
+          Default    : 0,
+          Normal     : 1,
+          Layer      : 2,
+          Multiply   : 3,
+          Screen     : 4,
+          Lighten    : 5,
+          Darken     : 6,
+          Difference : 7,
+          Add        : 8,
+          Subtract   : 9,
+          Invert     : 10,
+          Alpha      : 11,
+          Erase      : 12,
+          Overlay    : 13,
+          HardLight  : 14
+        }).name(p));
+      });
+
+      ["blendMode"].forEach(function (p) {
+        self.controllers.push(folder.add(self, p).name(p));
+      });
+
       ["matrix.a", "matrix.b", "matrix.c", "matrix.d"].forEach(function (p) {
-        folder.add(self, p).min(-32).max(32).step(0.01).name(p);
+        self.controllers.push(folder.add(self, p).min(-8).max(32).step(0.01).name(p));
       });
 
       ["matrix.tx", "matrix.ty"].forEach(function (p) {
-        folder.add(self, p).step(1).name(p);
+        self.controllers.push(folder.add(self, p).step(1).name(p));
       });
     }
   }
@@ -221,11 +255,10 @@ module Shumway.GFX.Layers {
 
       var self = this;
 
-      this._frameInspectorProxy = new FrameInspectorProxy();
-
       window.addEventListener("mouseup", function (event) {
         self._state.onMouseUp(self, event);
         self._render();
+        self._frameInspectorProxy && self._frameInspectorProxy.updateControllers();
       }, false);
 
       window.addEventListener("mousemove", function (event) {
@@ -263,11 +296,13 @@ module Shumway.GFX.Layers {
     }
 
     private _render() {
+      timeline && timeline.enter("Render");
       this._renderer.render(this._stage, {
         // paintFlashing: true,
         // clipCanvas: true,
         // clipDirtyRegions: true
       });
+      timeline && timeline.leave("Render");
     }
 
     get world(): FrameContainer {
@@ -325,16 +360,25 @@ module Shumway.GFX.Layers {
         bounds.snap();
         bounds.expand(4, 4);
         var selection = this._selection.addChild(new Shape(new Renderable(bounds, function (context: CanvasRenderingContext2D) {
+          context.save();
           context.beginPath();
           context.lineWidth = 2;
           context.strokeStyle = ColorStyle.LightOrange;
           context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          context.restore();
         })));
-        this._frameInspectorProxy.target = frame;
+        if (!this._frameInspectorProxy) {
+          this._frameInspectorProxy = new FrameInspectorProxy(frame);
+        } else {
+          this._frameInspectorProxy.target = frame;
+        }
       } else {
         this._selectedFrames = [];
-        this._frameInspectorProxy.target = null;
+        if (this._frameInspectorProxy) {
+          this._frameInspectorProxy.target = null;
+        }
       }
+      this._frameInspectorProxy && this._frameInspectorProxy.updateControllers();
       this._render();
     }
 
