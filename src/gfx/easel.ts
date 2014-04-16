@@ -6,6 +6,8 @@ module Shumway.GFX.Layers {
 
   import Canvas2DStageRenderer = Shumway.GFX.Layers.Canvas2DStageRenderer;
 
+  declare var GUI;
+
   export interface IState {
     onMouseUp(easel: Easel, event: MouseEvent);
     onMouseDown(easel: Easel, event: MouseEvent);
@@ -121,6 +123,50 @@ module Shumway.GFX.Layers {
     }
   }
 
+  class FrameInspectorProxy {
+    target: Frame;
+    constructor() {
+      var self = this;
+      var properties = ["matrix.a", "matrix.b", "matrix.c", "matrix.d", "matrix.tx", "matrix.ty"];
+      properties.forEach(function (p) {
+        Object.defineProperty(self, p, {
+          get: function (): any {
+            if (self.target) {
+              var chain = p.split(".");
+              var v = self.target;
+              for (var i = 0, j = chain.length; i < j; i++) {
+                v = v && v[chain[i]];
+              }
+              return v;
+            }
+            return 0.001;
+          },
+          set: function (value) {
+            if (self.target) {
+              var chain = p.split(".");
+              var v: any = self.target;
+              for (var i = 0, j = chain.length - 1; i < j; i++) {
+                v = v && v[chain[i]];
+              }
+              return v[chain[chain.length - 1]] = value;
+            }
+            return value;
+          }
+        });
+      });
+
+      var folder = GUI.addFolder("Frame Inspector");
+      folder.open();
+      ["matrix.a", "matrix.b", "matrix.c", "matrix.d"].forEach(function (p) {
+        folder.add(self, p).min(-32).max(32).step(0.01).name(p);
+      });
+
+      ["matrix.tx", "matrix.ty"].forEach(function (p) {
+        folder.add(self, p).step(1).name(p);
+      });
+    }
+  }
+
   export class Easel {
     private _stage: Stage;
     private _world: FrameContainer;
@@ -133,7 +179,7 @@ module Shumway.GFX.Layers {
     private _selectedFrames: Frame [] = [];
 
     private _mousePositionLabel: Label;
-
+    private _frameInspectorProxy: FrameInspectorProxy;
     private _createToolbar(): Frame {
       var toolbar = new FrameContainer();
       this._mousePositionLabel = new Label(256, 16);
@@ -160,6 +206,7 @@ module Shumway.GFX.Layers {
       this._stage.addChild(overlay);
 
       this._selection = <FrameContainer>overlay.addChild(new FrameContainer());
+      this._selection._setFlags(FrameFlags.IgnoreQuery);
 
       this._canvas = canvas;
       this._context = canvas.getContext('2d');
@@ -173,6 +220,8 @@ module Shumway.GFX.Layers {
       this._onMouseMove = this._onMouseMove.bind(this);
 
       var self = this;
+
+      this._frameInspectorProxy = new FrameInspectorProxy();
 
       window.addEventListener("mouseup", function (event) {
         self._state.onMouseUp(self, event);
@@ -205,8 +254,9 @@ module Shumway.GFX.Layers {
         self._state.onKeyUp(self, event);
         self._render();
       }, false);
-    }
 
+
+    }
 
     set state(state: State) {
       this._state = state;
@@ -214,9 +264,9 @@ module Shumway.GFX.Layers {
 
     private _render() {
       this._renderer.render(this._stage, {
-        paintFlashing: false,
+        // paintFlashing: true,
         // clipCanvas: true,
-        // clipDirtyRegions: false
+        // clipDirtyRegions: true
       });
     }
 
@@ -280,8 +330,10 @@ module Shumway.GFX.Layers {
           context.strokeStyle = ColorStyle.LightOrange;
           context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
         })));
+        this._frameInspectorProxy.target = frame;
       } else {
         this._selectedFrames = [];
+        this._frameInspectorProxy.target = null;
       }
       this._render();
     }

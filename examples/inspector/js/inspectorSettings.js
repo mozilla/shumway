@@ -32,9 +32,11 @@ function saveInspectorState() {
   Shumway.Settings.save(state, LC_KEY_INSPECTOR_SETTINGS);
 }
 
+var GUI;
+
 (function () {
 
-  var gui = new dat.GUI({ autoPlace: false, width: 499 });
+  var gui = GUI = new dat.GUI({ autoPlace: false, width: 300 });
 
   gui.add({
     "Reset Options": function () {

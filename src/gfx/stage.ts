@@ -18,11 +18,10 @@ module Shumway.GFX.Layers {
   export enum FrameFlags {
     Empty           = 0,
     Dirty           = 1,
-    Hidden          = 2,
     IsMask          = 4,
     Culled          = 8,
     IgnoreMask      = 16,
-    IgnoreSelection = 32
+    IgnoreQuery     = 32
   }
 
   /**
@@ -67,6 +66,8 @@ module Shumway.GFX.Layers {
    * Controls how the visitor walks the display tree.
    */
   export enum VisitorFlags {
+    None         = 0,
+
     /**
      * Continue with normal traversal.
      */
@@ -377,15 +378,11 @@ module Shumway.GFX.Layers {
     public visit(visitor: (Frame, Matrix?, FrameFlags?) => VisitorFlags,
                  transform?: Matrix,
                  flags: FrameFlags = FrameFlags.Empty,
-                 visitorFlags: VisitorFlags = VisitorFlags.VisibleOnly) {
+                 visitorFlags: VisitorFlags = VisitorFlags.None) {
       var stack: Frame [];
       var frame: Frame;
       var frameContainer: FrameContainer;
       var frontToBack = visitorFlags & VisitorFlags.FrontToBack;
-      var visibleOnly = visitorFlags & VisitorFlags.VisibleOnly;
-      if (visibleOnly && this._hasFlags(FrameFlags.Hidden)) {
-        return;
-      }
       stack = [this];
       var transformStack: Matrix [];
       var calculateTransform = !!transform;
@@ -406,7 +403,7 @@ module Shumway.GFX.Layers {
             var length = frameContainer._children.length;
             for (var i = 0; i < length; i++) {
               var child = frameContainer._children[frontToBack ? i : length - 1 - i];
-              if (!child || (visibleOnly && child._hasFlags(FrameFlags.Hidden))) {
+              if (!child) {
                 continue;
               }
               stack.push(child);
@@ -443,7 +440,10 @@ module Shumway.GFX.Layers {
       var inverseTransform: Matrix = Matrix.createIdentity();
       var local = Point.createEmpty();
       var frames = [];
-      this.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
+      this.visit(function (frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
+        if (flags & FrameFlags.IgnoreQuery) {
+          return VisitorFlags.Skip;
+        }
         transform.inverse(inverseTransform);
         local.set(query);
         inverseTransform.transformPoint(local);
@@ -547,11 +547,9 @@ module Shumway.GFX.Layers {
       var bounds = Rectangle.createEmpty();
       for (var i = 0; i < this._children.length; i++) {
         var child = this._children[i];
-        if (!child._hasFlags(FrameFlags.Hidden)) {
-          var childBounds = child.getBounds().clone();
-          child.matrix.transformRectangleAABB(childBounds);
-          bounds.union(childBounds);
-        }
+        var childBounds = child.getBounds().clone();
+        child.matrix.transformRectangleAABB(childBounds);
+        bounds.union(childBounds);
       }
       return bounds;
     }

@@ -3,12 +3,15 @@ createEasel();
 (function displayTests() {
   var Grid = Shumway.GFX.Layers.Grid;
   var Shape = Shumway.GFX.Layers.Shape;
+  var FrameContainer = Shumway.GFX.Layers.FrameContainer;
 
-  for (var i = 0; i < 1; i++) {
+  var c = new FrameContainer();
+  for (var i = 0; i < 2; i++) {
     var frame = new Shape(Shumway.getRandomShape());
     frame.matrix.translate(Math.random() * 1000, Math.random() * 1000);
-    easel.world.addChild(frame);
+    c.addChild(frame);
   }
+  easel.world.addChild(c);
 
   function timeAllocation(C) {
     var s = Date.now();
