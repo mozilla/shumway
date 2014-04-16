@@ -28,8 +28,6 @@
 // ///<reference path='automation/MouseAutomationAction.ts' />
 // ///<reference path='automation/StageCapture.ts' />
 // ///<reference path='automation/StageCaptureEvent.ts' />
-// ///<reference path='concurrent/Condition.ts' />
-// ///<reference path='concurrent/Mutex.ts' />
 // ///<reference path='desktop/Clipboard.ts' />
 // ///<reference path='desktop/ClipboardFormats.ts' />
 // ///<reference path='desktop/ClipboardTransferMode.ts' />
@@ -310,9 +308,6 @@
 ///<reference path='system/SecurityPanel.ts' />
 ///<reference path='system/SystemUpdaterType.ts' />
 ///<reference path='system/TouchscreenType.ts' />
-///<reference path='system/Worker.ts' />
-///<reference path='system/WorkerDomain.ts' />
-///<reference path='system/WorkerState.ts' />
 
 // ///<reference path='text/AntiAliasType.ts' />
 // ///<reference path='text/CSMSettings.ts' />
