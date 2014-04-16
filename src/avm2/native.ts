@@ -29,6 +29,7 @@ module Shumway.AVM2.AS {
   import ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
   import Scope = Shumway.AVM2.Runtime.Scope;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
+  import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import isNumber = Shumway.isNumber;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
   import createObject = Shumway.ObjectUtilities.createObject;
@@ -320,12 +321,12 @@ module Shumway.AVM2.AS {
 
       self.instanceConstructorNoInitialize = self.instanceConstructor;
       self.instanceConstructor.prototype = self.traitsPrototype;
-      self.instanceConstructor.prototype.class = self;
+      defineNonEnumerableProperty(self.instanceConstructor.prototype, "class", self);
 
       /**
        * Set the |constructor| property.
        */
-      Shumway.ObjectUtilities.defineNonEnumerableProperty(self.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), self);
+      defineNonEnumerableProperty(self.dynamicPrototype, Multiname.getPublicQualifiedName("constructor"), self);
 
       if (self.protocol) {
         Shumway.ObjectUtilities.copyOwnPropertyDescriptors(self.dynamicPrototype, self.protocol);
@@ -394,7 +395,7 @@ module Shumway.AVM2.AS {
           return self.instanceConstructorNoInitialize.apply(this, arguments);
         };
         self.instanceConstructor.prototype = self.traitsPrototype;
-        self.instanceConstructor.prototype.class = self;
+        defineNonEnumerableProperty(self.instanceConstructor.prototype, "class", self);
 
         (<any>(self.instanceConstructor)).classInfo = previousConstructor.classInfo;
         self.instanceConstructor.__proto__ = previousConstructor.__proto__;
@@ -828,8 +829,8 @@ module Shumway.AVM2.AS {
     constructor(self, fn) {
       false && super();
       var bound = Shumway.FunctionUtilities.bindSafely(fn, self);
-      Shumway.ObjectUtilities.defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
-      Shumway.ObjectUtilities.defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
+      defineNonEnumerableProperty(this, "call", bound.call.bind(bound));
+      defineNonEnumerableProperty(this, "apply", bound.apply.bind(bound));
     }
 
     toString() {
