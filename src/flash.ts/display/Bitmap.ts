@@ -33,6 +33,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor (bitmapData: flash.display.BitmapData = null, pixelSnapping: string = "auto", smoothing: boolean = false) {
       //bitmapData = bitmapData;
       false && super();
+      DisplayObject.instanceConstructorNoInitialize.call(this);
       this._bitmapData = bitmapData;
       this._pixelSnapping = "" + pixelSnapping;
       this._smoothing = !!smoothing;
