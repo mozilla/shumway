@@ -16,6 +16,8 @@
 // Class: SoundMixer
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+
   export class SoundMixer extends ASNative {
     
     // Called whenever the class is initialized.
@@ -32,63 +34,97 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.media.SoundMixer");
     }
-    
+
+    private static _masterVolume = 1;
+    private static _registeredChannels: SoundChannel[] = [];
+
     // JS -> AS Bindings
     
     
     // AS -> JS Bindings
     // static _bufferTime: number /*int*/;
-    // static _soundTransform: flash.media.SoundTransform;
+    static _soundTransform: flash.media.SoundTransform;
     // static _audioPlaybackMode: string;
     // static _useSpeakerphoneForVoice: boolean;
-    get bufferTime(): number /*int*/ {
+    static get bufferTime(): number /*int*/ {
       notImplemented("public flash.media.SoundMixer::get bufferTime"); return;
-      // return this._bufferTime;
+      // return SoundMixer._bufferTime;
     }
-    set bufferTime(bufferTime: number /*int*/) {
+    static set bufferTime(bufferTime: number /*int*/) {
       bufferTime = bufferTime | 0;
       notImplemented("public flash.media.SoundMixer::set bufferTime"); return;
-      // this._bufferTime = bufferTime;
+      // SoundMixer._bufferTime = bufferTime;
     }
-    get soundTransform(): flash.media.SoundTransform {
-      notImplemented("public flash.media.SoundMixer::get soundTransform"); return;
-      // return this._soundTransform;
+    static get soundTransform(): flash.media.SoundTransform {
+      somewhatImplemented("public flash.media.SoundMixer::get soundTransform");
+      return isNullOrUndefined(SoundMixer._soundTransform) ?
+        new flash.media.SoundTransform() :
+        new flash.media.SoundTransform(SoundMixer._soundTransform.volume, SoundMixer._soundTransform.pan);
     }
-    set soundTransform(sndTransform: flash.media.SoundTransform) {
-      sndTransform = sndTransform;
-      notImplemented("public flash.media.SoundMixer::set soundTransform"); return;
-      // this._soundTransform = sndTransform;
+    static set soundTransform(sndTransform: flash.media.SoundTransform) {
+      somewhatImplemented("public flash.media.SoundMixer::set soundTransform");
+      SoundMixer._soundTransform = isNullOrUndefined(sndTransform) ?
+        new flash.media.SoundTransform() : sndTransform;
+      SoundMixer._registeredChannels.forEach(function (channel) {
+        channel._applySoundTransform();
+      });
     }
-    get audioPlaybackMode(): string {
+    static get audioPlaybackMode(): string {
       notImplemented("public flash.media.SoundMixer::get audioPlaybackMode"); return;
-      // return this._audioPlaybackMode;
+      // return SoundMixer._audioPlaybackMode;
     }
-    set audioPlaybackMode(value: string) {
+    static set audioPlaybackMode(value: string) {
       value = "" + value;
       notImplemented("public flash.media.SoundMixer::set audioPlaybackMode"); return;
-      // this._audioPlaybackMode = value;
+      // SoundMixer._audioPlaybackMode = value;
     }
-    get useSpeakerphoneForVoice(): boolean {
+    static get useSpeakerphoneForVoice(): boolean {
       notImplemented("public flash.media.SoundMixer::get useSpeakerphoneForVoice"); return;
-      // return this._useSpeakerphoneForVoice;
+      // return SoundMixer._useSpeakerphoneForVoice;
     }
-    set useSpeakerphoneForVoice(value: boolean) {
+    static set useSpeakerphoneForVoice(value: boolean) {
       value = !!value;
       notImplemented("public flash.media.SoundMixer::set useSpeakerphoneForVoice"); return;
-      // this._useSpeakerphoneForVoice = value;
+      // SoundMixer._useSpeakerphoneForVoice = value;
     }
     static stopAll(): void {
-      notImplemented("public flash.media.SoundMixer::static stopAll"); return;
+      SoundMixer._registeredChannels.forEach(function (channel) {
+        channel.stop();
+      });
+      SoundMixer._registeredChannels = [];
     }
     static computeSpectrum(outputArray: flash.utils.ByteArray, FFTMode: boolean = false, stretchFactor: number /*int*/ = 0): void {
-      outputArray = outputArray; FFTMode = !!FFTMode; stretchFactor = stretchFactor | 0;
-      notImplemented("public flash.media.SoundMixer::static computeSpectrum"); return;
+      FFTMode = !!FFTMode; stretchFactor = stretchFactor | 0;
+      somewhatImplemented("public flash.media.SoundMixer::static computeSpectrum");
+      var data = new Float32Array(1024);
+      for (var i = 0; i < 1024; i++) {
+        data[i] = Math.random();
+      }
+      outputArray.writeRawBytes(data);
+      outputArray.position = 0;
     }
     static areSoundsInaccessible(): boolean {
       notImplemented("public flash.media.SoundMixer::static areSoundsInaccessible"); return;
     }
-    
+    static _getMasterVolume(): number {
+      return SoundMixer._masterVolume;
+    }
+    static _setMasterVolume(volume) {
+      volume = +volume;
+      SoundMixer._masterVolume = volume;
+      SoundMixer._registeredChannels.forEach(function (channel) {
+        channel._applySoundTransform();
+      });
+    }
+    static _registerChannel(channel: SoundChannel) {
+      SoundMixer._registeredChannels.push(channel);
+    }
+    static _unregisterChannel(channel: SoundChannel) {
+      var index =  SoundMixer._registeredChannels.indexOf(channel);
+      if (index >= 0) {
+        SoundMixer._registeredChannels.splice(index, 1);
+      }
+    }
   }
 }
