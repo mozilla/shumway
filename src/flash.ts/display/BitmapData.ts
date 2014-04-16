@@ -41,6 +41,7 @@ module Shumway.AVM2.AS.flash.display {
 
     constructor (width: number /*int*/, height: number /*int*/, transparent: boolean = true, fillColor: number /*uint*/ = 4294967295) {
       width = width | 0; height = height | 0;
+
       false && super();
       if (width > BitmapData.MAXIMUM_WIDTH ||
         height > BitmapData.MAXIMUM_HEIGHT ||
@@ -150,6 +151,7 @@ module Shumway.AVM2.AS.flash.display {
 
     setPixel(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
       x = x | 0; y = y | 0; color = color >>> 0;
+
       var i = this._width * y + x;
       var alpha = this._transparent ? this._pixelData[i] & 0xff : 0xff;
       this._pixelData[i] = (color << 8) | alpha;
@@ -157,6 +159,7 @@ module Shumway.AVM2.AS.flash.display {
 
     setPixel32(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
       x = x | 0; y = y | 0;
+
       color = rgbaToArgb(color >>> 0);
       if (!this._transparent) {
         color |= 0xff;

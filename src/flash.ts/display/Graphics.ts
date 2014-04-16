@@ -115,6 +115,7 @@ module Shumway.AVM2.AS.flash.display {
 
     drawRect(x: number, y: number, width: number, height: number): void {
       x = +x; y = +y; width = +width; height = +height;
+
       this._ensurePath();
       this._currentPath.moveTo(x, y);
       this._currentPath.lineTo(x + width, y);
@@ -126,6 +127,7 @@ module Shumway.AVM2.AS.flash.display {
 
     drawRoundRect(x: number, y: number, width: number, height: number, ellipseWidth: number, ellipseHeight: number): void {
       x = +x; y = +y; width = +width; height = +height; ellipseWidth = +ellipseWidth; ellipseHeight = +ellipseHeight;
+
       if (!ellipseHeight || !ellipseWidth) {
         this.drawRect(x, y, width, height);
         return;
@@ -179,6 +181,7 @@ module Shumway.AVM2.AS.flash.display {
 
     drawRoundRectComplex(x: number, y: number, width: number, height: number, topLeftRadius: number, topRightRadius: number, bottomLeftRadius: number, bottomRightRadius: number): void {
       x = +x; y = +y; width = +width; height = +height; topLeftRadius = +topLeftRadius; topRightRadius = +topRightRadius; bottomLeftRadius = +bottomLeftRadius; bottomRightRadius = +bottomRightRadius;
+
       if (!topLeftRadius && !topRightRadius && !bottomLeftRadius && !bottomRightRadius) {
         this.drawRect(x, y, width, height);
         return;
@@ -206,6 +209,7 @@ module Shumway.AVM2.AS.flash.display {
 
     drawEllipse(x: number, y: number, width: number, height: number): void {
       x = +x; y = +y; width = +width; height = +height;
+
       this._ensurePath();
       var rx = width / 2;
       var ry = height / 2;
@@ -241,6 +245,7 @@ module Shumway.AVM2.AS.flash.display {
 
     moveTo(x: number, y: number): void {
       x = +x; y = +y;
+
       this._ensurePath();
       this._currentPath.moveTo(x, y);
       this._invalid = true;
@@ -248,6 +253,7 @@ module Shumway.AVM2.AS.flash.display {
 
     lineTo(x: number, y: number): void {
       x = +x; y = +y;
+
       this._ensurePath();
       this._currentPath.lineTo(x, y);
       this._invalid = true;

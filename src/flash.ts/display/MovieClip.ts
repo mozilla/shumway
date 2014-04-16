@@ -16,13 +16,28 @@
 // Class: MovieClip
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import throwError = Shumway.AVM2.Runtime.throwError;
+
   export class MovieClip extends flash.display.Sprite {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
+    static initializer: any = function (symbol: MovieClip) {
+      var self: MovieClip = this;
+      self._currentFrame = 0;
+      self._framesLoaded = 1;
+      self._totalFrames = 1;
+      self._trackAsMenu = false;
+      self._scenes = [];
+      self._currentLabel = null;
+      self._currentFrameLabel = null;
+      self._enabled = true;
+      self._isPlaying = false;
+
+      self._nextFrame = 1;
+    };
     
     // List of static symbols to link.
     static staticBindings: string [] = null; // [];
@@ -54,6 +69,19 @@ module Shumway.AVM2.AS.flash.display {
     _isPlaying: boolean;
 
     _nextFrame: number /*int*/;
+    _frameScripts: any;
+
+    gotoFrame(frame: any, scene: string = null) {
+      frame = frame; scene = "" + scene;
+    }
+
+    callFrame(frame: ASObject) {
+
+    }
+
+    advanceFrame() {
+      this.gotoFrame(this._currentFrame + 1);
+    }
 
     get currentFrame(): number /*int*/ {
       return this._currentFrame;
@@ -95,10 +123,10 @@ module Shumway.AVM2.AS.flash.display {
       return this._isPlaying;
     }
     play(): void {
-      notImplemented("public flash.display.MovieClip::play"); return;
+      this._isPlaying = true;
     }
     stop(): void {
-      notImplemented("public flash.display.MovieClip::stop"); return;
+      this._isPlaying = false;
     }
     nextFrame(): void {
       notImplemented("public flash.display.MovieClip::nextFrame"); return;
@@ -114,9 +142,26 @@ module Shumway.AVM2.AS.flash.display {
       frame = frame; scene = "" + scene;
       notImplemented("public flash.display.MovieClip::gotoAndStop"); return;
     }
+
     addFrameScript(): void {
-      notImplemented("public flash.display.MovieClip::addFrameScript"); return;
+      // arguments are pairs of frameIndex and script/function
+      // frameIndex is in range 0..totalFrames-1
+      var frameScripts = this._frameScripts;
+      for (var i = 0; i < arguments.length; i += 2) {
+        var frameNum = arguments[i] + 1;
+        var fn = arguments[i + 1];
+        if (!fn) {
+          throwError('ArgumentError', Errors.TooFewArgumentsError, i, i + 1);
+        }
+        var scripts = frameScripts[frameNum];
+        if (scripts) {
+          scripts.push(fn);
+        } else {
+          frameScripts[frameNum] = [fn];
+        }
+      }
     }
+
     prevScene(): void {
       notImplemented("public flash.display.MovieClip::prevScene"); return;
     }

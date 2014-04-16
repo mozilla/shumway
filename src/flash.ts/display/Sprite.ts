@@ -16,144 +16,6 @@
 // Class: Sprite
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-
-  export class SymbolInfo {
-    symbolId: number /*int*/;
-    symbolClass: flash.display.DisplayObject;
-    depth: number /*int*/;
-    matrix: flash.geom.Matrix;
-    colorTransform: flash.geom.ColorTransform;
-    ratio: number /*int*/;
-    name: string;
-    clipDepth: number /*int*/;
-    filters: any [];
-    blendMode: string;
-    cacheAsBitmap: boolean;
-    actions: any [];
-
-    constructor(symbolId: number, symbolClass: flash.display.DisplayObject) {
-      this.symbolId = symbolId | 0;
-      this.symbolClass = symbolClass;
-    }
-
-    copy(): SymbolInfo {
-      var s = new SymbolInfo(this.symbolId, this.symbolClass);
-      s.depth = this.depth;
-      s.matrix = this.matrix;
-      s.colorTransform = this.colorTransform;
-      s.ratio = this.ratio;
-      s.name = this.name;
-      s.clipDepth = this.clipDepth;
-      s.filters = this.filters.slice();
-      s.blendMode = this.blendMode;
-      s.cacheAsBitmap = this.cacheAsBitmap;
-      s.actions = this.actions.slice();
-      return s;
-    }
-
-    make(root: DisplayObject, stage: Stage, parent: DisplayObjectContainer): DisplayObject {
-      var symbol = new DisplayObject;
-      symbol._root = root;
-      symbol._stage = stage;
-      symbol._parent = parent;
-      symbol._depth = this.depth;
-      symbol._setMatrix(this.matrix, false);
-      symbol._setColorTransform(this.colorTransform);
-      //symbol.ratio
-      symbol._name = this.name;
-      symbol._clipDepth = this.clipDepth;
-      symbol._filters = this.filters;
-      symbol._blendMode = this.blendMode;
-      if (this.cacheAsBitmap) {
-        symbol._setFlags(DisplayObjectFlags.CacheAsBitmap);
-      }
-      //symbol.actions
-      return this.symbolClass.initializeFrom(symbol);
-    }
-  }
-
-  export class TimelineDiff {
-    place: SymbolInfo [];
-    update: SymbolInfo [];
-    remove: SymbolInfo [];
-
-    constructor() {
-      this.place = [];
-      this.update = [];
-      this.remove = [];
-    }
-
-    reset(): void {
-      this.place.length = 0;
-      this.update.length = 0;
-      this.remove.length = 0;
-    }
-  }
-
-  export class TimelineSnapshot {
-    private _depths: number /*int*/ [];
-    private _map: Object;
-    private _diff: TimelineDiff;
-
-    constructor() {
-      this._depths = [];
-      this._map = Object.create(null);
-      this._diff = new TimelineDiff();
-    }
-
-    place(depth: number /*int*/, symbolInfo: SymbolInfo) {
-      depth = depth | 0;
-      this._depths.push(depth);
-      this._map[depth] = null;
-    }
-
-    remove(depth: number /*int*/) {
-      this._map[depth | 0] = null;
-    }
-
-    diff(toSnapshot: TimelineSnapshot): TimelineDiff {
-      var d = this._diff;
-      d.reset();
-
-      var depths = this._depths;
-      var map = this._map;
-      for (var i = 0; i < depths.length; i++) {
-        var depth = depths[i];
-        var symbolInfo = map[depth];
-        if (toSnapshot) {
-          var toSymbolInfo = toSnapshot._depths[depth];
-          if (toSymbolInfo) {
-            if (symbolInfo) {
-              if (toSymbolInfo !== symbolInfo) {
-                d.update.push(symbolInfo);
-              }
-            } else {
-              d.place.push(symbolInfo);
-            }
-          } else if (symbolInfo) {
-            d.remove.push(symbolInfo);
-          }
-        } else if (symbolInfo) {
-          d.place.push(symbolInfo);
-        }
-      }
-
-      return d;
-    }
-
-    copy(): TimelineSnapshot {
-      var t = new TimelineSnapshot();
-      var depths = this._depths;
-      for (var i = 0; i < depths.length; i++) {
-        var depth = depths[i];
-        t._depths.push(depth);
-        t._map[depth] = this._map[depth].copy();
-      }
-      t._diff = this._diff;
-      return t;
-    }
-  }
-
   export class Sprite extends flash.display.DisplayObjectContainer {
 
     // Called whenever the class is initialized.
@@ -165,7 +27,6 @@ module Shumway.AVM2.AS.flash.display {
       self._buttonMode = false;
       self._dropTarget = null;
       self._hitArea = null;
-      self._snapshots = null;
       self._useHandCursor = true;
 
       if (symbol) {
@@ -195,16 +56,16 @@ module Shumway.AVM2.AS.flash.display {
     _buttonMode: boolean;
     _dropTarget: flash.display.DisplayObject;
     _hitArea: flash.display.Sprite;
-    _snapshots: TimelineSnapshot [];
+    _snapshots: Shumway.SWF.timeline.Snapshot [];
     _useHandCursor: boolean;
 
     initChildren(): void {
       var snapshot = this._snapshots[0];
       var diff = snapshot.diff(null);
-      var symbols = diff.place;
-      for (var i = 0; i < symbols.length; i++) {
-        var symbolInfo = symbols[i];
-        var child = make(this._root, this._stage, this);
+      var states = diff.place;
+      for (var i = 0; i < states.length; i++) {
+        var state = states[i];
+        var child = state.make();
         this.addChildAtDepth(child, child._depth);
       }
     }
@@ -285,6 +146,9 @@ module Shumway.AVM2.AS.flash.display {
           continue;
         }
         child.instanceConstructorNoInitialize();
+        //if (child._name) {
+        //  this[Multiname.getPublicQualifiedName(name)] = instance;
+        //}
       }
     }
   }
