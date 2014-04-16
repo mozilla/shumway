@@ -376,6 +376,7 @@ module Shumway.AVM2.AS.flash.display {
     _scaleZ: number;
 
     _rotation: number;
+
     _rotationX: number;
     _rotationY: number;
     _rotationZ: number;
@@ -718,6 +719,16 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidatePosition();
     }
 
+    get scaleZ(): number {
+      notImplemented("public DisplayObject::get scaleZ"); return;
+      return this._scaleZ;
+    }
+
+    set scaleZ(value: number) {
+      value = +value;
+      notImplemented("public DisplayObject::set scaleZ"); return;
+    }
+
     get rotation(): number {
       return this._rotation;
     }
@@ -735,14 +746,49 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidatePosition();
     }
 
+    get rotationX(): number {
+      notImplemented("public DisplayObject::get rotationX"); return;
+      return this._rotationX;
+
+    }
+
+    set rotationX(value: number) {
+      value = +value;
+      notImplemented("public DisplayObject::set rotationX"); return;
+    }
+
+    get rotationY(): number {
+      return this._rotationY;
+    }
+
+    set rotationY(value: number) {
+      value = +value;
+      notImplemented("public DisplayObject::set rotationY"); return;
+    }
+
+    get rotationZ(): number {
+      notImplemented("public DisplayObject::get rotationZ"); return;
+      return this._rotationZ;
+    }
+
+    set rotationZ(value: number) {
+      value = +value;
+      notImplemented("public DisplayObject::set rotationZ"); return;
+    }
+
     /**
-     *
+     * The width of this display object in its parent coordinate space.
      */
     get width(): number {
       var bounds = this._getTransformedBounds(this._parent, true);
       return bounds.width / 20;
     }
 
+    /**
+     * Attempts to change the width of this display object by changing its scaleX / scaleY
+     * properties. The scaleX property is set to the specified |width| value / baseWidth
+     * of the object in its parent cooridnate space with rotation applied.
+     */
     set width(value: number) {
       value = (value * 20) | 0;
       this._stopTimelineAnimation();
@@ -757,17 +803,25 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       var baseHeight = contentBounds.getBaseHeight(angle);
-      this._scaleY = this.height / baseHeight;
+      this._scaleY = bounds.height / baseHeight;
       this._scaleX = value / baseWidth;
       this._setFlags(DisplayObjectFlags.InvalidMatrix);
       this._invalidatePosition();
     }
 
+    /**
+     * The height of this display object in its parent coordinate space.
+     */
     get height(): number {
       var bounds = this._getTransformedBounds(this._parent, true);
       return bounds.height / 20;
     }
 
+    /**
+     * Attempts to change the height of this display object by changing its scaleY / scaleX
+     * properties. The scaleY property is set to the specified |height| value / baseHeight
+     * of the object in its parent cooridnate space with rotation applied.
+     */
     set height(value: number) {
       value = (value * 20) | 0;
       this._stopTimelineAnimation();
@@ -775,11 +829,15 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       var bounds = this._getTransformedBounds(this._parent, true);
-      if (!bounds.height || bounds.height === value) {
+      var contentBounds = this._getContentBounds(true);
+      var angle = this._rotation / 180 * Math.PI;
+      var baseHeight = contentBounds.getBaseWidth(angle);
+      if (!baseHeight) {
         return;
       }
-      this._scaleX = this._getMatrix().getScaleX();
-      this._scaleY = value / bounds.height;
+      var baseWidth = contentBounds.getBaseWidth(angle);
+      this._scaleY = value / baseHeight;
+      this._scaleX = bounds.width / baseWidth;
       this._setFlags(DisplayObjectFlags.InvalidMatrix);
       this._invalidatePosition();
     }
@@ -859,7 +917,6 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       this._setFlags(DisplayObjectFlags.Visible);
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
     }
 
     get z(): number {
@@ -907,73 +964,12 @@ module Shumway.AVM2.AS.flash.display {
     // ---------------------------------------------------------------------------------------------------------------------------------------------
 
     /*
-    get width(): number {
-      notImplemented("public DisplayObject::get width"); return;
-      var bounds = this._getTransformedBounds(this, true);
-      return bounds.width / 20;
-    }
 
-    set width(value: number) {
-      notImplemented("public DisplayObject::set width"); return;
-      value = +value;
-
-      if (value < 0) {
-        return;
-      }
-
-      var u = Math.abs(Math.cos(this._rotation));
-      var v = Math.abs(Math.sin(this._rotation));
-      var bounds = this._getContentBounds();
-      var baseWidth = u * bounds.width + v * bounds.height;
-
-      if (!baseWidth) {
-        return;
-      }
-
-      var baseHeight = v * bounds.width + u * bounds.height;
-      this.scaleY = this.height / baseHeight;
-      this.scaleX = ((value * 20) | 0) / baseWidth;
-    }
-    */
-
-    /*
-    get scaleZ(): number {
-      return this._scaleZ;
-    }
-    set scaleZ(value: number) {
-      value = +value;
-      notImplemented("public DisplayObject::set scaleZ"); return;
-      // this._scaleZ = value;
-    }
     get mouseX(): number {
       return this._mouseX / 20;
     }
     get mouseY(): number {
       return this._mouseY / 20;
-    }
-    get rotationX(): number {
-      return this._rotationX;
-    }
-    set rotationX(value: number) {
-      value = +value;
-      notImplemented("public DisplayObject::set rotationX"); return;
-      // this._rotationX = value;
-    }
-    get rotationY(): number {
-      return this._rotationY;
-    }
-    set rotationY(value: number) {
-      value = +value;
-      notImplemented("public DisplayObject::set rotationY"); return;
-      // this._rotationY = value;
-    }
-    get rotationZ(): number {
-      return this._rotationZ;
-    }
-    set rotationZ(value: number) {
-      value = +value;
-      notImplemented("public DisplayObject::set rotationZ"); return;
-      // this._rotationZ = value;
     }
     get alpha(): number {
       return this._alpha;
@@ -988,58 +984,6 @@ module Shumway.AVM2.AS.flash.display {
       this._alpha = value;
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
       this._invalidate();
-    }
-    get width(): number {
-      var bounds = this._getContentBounds();
-      var m = this._matrix;
-      return (Math.abs(m.a) * bounds.width +
-              Math.abs(m.c) * bounds.height) / 20;
-    }
-    set width(value: number) {
-      value = +value;
-
-      if (value < 0) {
-        return;
-      }
-
-      var u = Math.abs(Math.cos(this._rotation));
-      var v = Math.abs(Math.sin(this._rotation));
-      var bounds = this._getContentBounds();
-      var baseWidth = u * bounds.width + v * bounds.height;
-
-      if (!baseWidth) {
-        return;
-      }
-
-      var baseHeight = v * bounds.width + u * bounds.height;
-      this.scaleY = this.height / baseHeight;
-      this.scaleX = ((value * 20) | 0) / baseWidth;
-    }
-    get height(): number {
-      var bounds = this._getContentBounds();
-      var m = this._matrix;
-      return (Math.abs(m.b) * bounds.width +
-              Math.abs(m.d) * bounds.height) / 20;
-    }
-    set height(value: number) {
-      value = +value;
-
-      if (value < 0) {
-        return;
-      }
-
-      var u = Math.abs(Math.cos(this._rotation));
-      var v = Math.abs(Math.sin(this._rotation));
-      var bounds = this._getContentBounds();
-      var baseHeight = v * bounds.width + u * bounds.height;
-
-      if (!baseHeight) {
-        return;
-      }
-
-      var baseWidth = u * bounds.width + v * bounds.height;
-      this.scaleX = this.width / baseWidth;
-      this.scaleY = ((value * 20) | 0) / baseHeight;
     }
 
     get cacheAsBitmap(): boolean {
