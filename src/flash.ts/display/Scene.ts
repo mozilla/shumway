@@ -39,12 +39,11 @@ module Shumway.AVM2.AS.flash.display {
     
     // JS -> AS Bindings
     
-    _name: string;
-    _labels: any [];
-    _numFrames: number /*int*/;
+    private _name: string;
+    private _labels: any [];
+    private _numFrames: number /*int*/;
     
     // AS -> JS Bindings
-
 
     get name(): string {
       return this._name;
@@ -56,6 +55,14 @@ module Shumway.AVM2.AS.flash.display {
 
     get numFrames(): number {
       return this._numFrames;
+    }
+
+    clone() {
+      var labels = this._labels.slice();
+      for (var i = 0; i < labels.length; i++) {
+        labels[i] = labels[i].clone();
+      }
+      return new Scene(this._name, labels, this._numFrames);
     }
   }
 }

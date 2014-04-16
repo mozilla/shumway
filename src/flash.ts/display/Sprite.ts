@@ -59,17 +59,6 @@ module Shumway.AVM2.AS.flash.display {
     _snapshots: Shumway.SWF.timeline.Snapshot [];
     _useHandCursor: boolean;
 
-    initChildren(): void {
-      var snapshot = this._snapshots[0];
-      var diff = snapshot.diff(null);
-      var states = diff.place;
-      for (var i = 0; i < states.length; i++) {
-        var state = states[i];
-        var child = state.make();
-        this.addChildAtDepth(child, child._depth);
-      }
-    }
-
     get graphics(): flash.display.Graphics {
       return this._graphics;
     }
@@ -138,6 +127,17 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.Sprite::stopTouchDrag"); return;
     }
 
+    initChildren(): void {
+      var snapshot = this._snapshots[0];
+      var diff = snapshot.diff(null);
+      var states = diff.place;
+      for (var i = 0; i < states.length; i++) {
+        var state = states[i];
+        var child = state.make();
+        this.addChildAtDepth(child, child._depth);
+      }
+    }
+
     constructChildren(): void {
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
@@ -149,6 +149,7 @@ module Shumway.AVM2.AS.flash.display {
         //if (child._name) {
         //  this[Multiname.getPublicQualifiedName(name)] = instance;
         //}
+        child._setFlags(DisplayObjectFlags.Constructed);
       }
     }
   }
