@@ -227,17 +227,24 @@ module Shumway.AVM2.AS.flash.display {
       return child;
     }
 
-    getChildAtDepth(depth: number /*int*/): flash.display.DisplayObject {
+    getChildForDepth(depth: number /*int*/): flash.display.DisplayObject {
       depth = depth | 0;
 
       var children = this._children;
+      var result = null;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
-        if (child._depth === depth) {
-          return child;
+        if (child._depth <= depth) {
+          result = child;
+          if (child._depth === depth) {
+            break;
+          }
+        } else if (!result) {
+          result = child;
+          break;
         }
       }
-      return null;
+      return result;
     }
 
     getChildByName(name: string): DisplayObject {

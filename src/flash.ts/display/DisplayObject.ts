@@ -216,6 +216,7 @@ module Shumway.AVM2.AS.flash.display {
       self._colorTransform = new ColorTransform();
 
       self._depth = 0;
+      self._ratio = 0;
       self._graphics = null;
       self._hitTarget = null;
       self._index = -1;
@@ -415,6 +416,7 @@ module Shumway.AVM2.AS.flash.display {
     _concatenatedColorTransform: flash.geom.ColorTransform;
     _matrix3D: flash.geom.Matrix3D;
     _depth: number;
+    _ratio: number;
     _graphics: flash.display.Graphics;
     _hitTarget: DisplayObject;
 

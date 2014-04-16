@@ -183,7 +183,7 @@ module Shumway.AVM2 {
      * Player Error Codes
      */
   //  NoSecurityContextError                                    : { code: 2000, message: "No active security context."},
-  //  TooFewArgumentsError                                      : { code: 2001, message: "Too few arguments were specified; got %1, %2 expected."},
+    TooFewArgumentsError                                      : { code: 2001, message: "Too few arguments were specified; got %1, %2 expected."},
   //  InvalidSocketError                                        : { code: 2002, message: "Operation attempted on invalid socket."},
   //  InvalidSocketPortError                                    : { code: 2003, message: "Invalid socket port number specified."},
   //  ParamTypeError                                            : { code: 2005, message: "Parameter %1 is of the incorrect type. Should be type %2."},
