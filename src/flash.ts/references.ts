@@ -119,7 +119,6 @@
 // ///<reference path='display3D/textures/Texture.ts' />
 // ///<reference path='display3D/textures/TextureBase.ts' />
 
-// ///<reference path='errors/DRMManagerError.ts' />
 // ///<reference path='errors/EOFError.ts' />
 // ///<reference path='errors/IOError.ts' />
 // ///<reference path='errors/IllegalOperationError.ts' />
@@ -132,14 +131,6 @@
 // ///<reference path='events/ActivityEvent.ts' />
 // ///<reference path='events/AsyncErrorEvent.ts' />
 // ///<reference path='events/ContextMenuEvent.ts' />
-// ///<reference path='events/DRMAuthenticateEvent.ts' />
-// ///<reference path='events/DRMAuthenticationCompleteEvent.ts' />
-// ///<reference path='events/DRMAuthenticationErrorEvent.ts' />
-// ///<reference path='events/DRMCustomProperties.ts' />
-// ///<reference path='events/DRMDeviceGroupErrorEvent.ts' />
-// ///<reference path='events/DRMDeviceGroupEvent.ts' />
-// ///<reference path='events/DRMErrorEvent.ts' />
-// ///<reference path='events/DRMStatusEvent.ts' />
 // ///<reference path='events/DataEvent.ts' />
 ///<reference path='events/ErrorEvent.ts' />
 ///<reference path='events/Event.ts' />
@@ -283,22 +274,6 @@
 ///<reference path='net/URLStream.ts' />
 ///<reference path='net/URLVariables.ts' />
 // ///<reference path='net/XMLSocket.ts' />
-// ///<reference path='net/drm/AddToDeviceGroupSetting.ts' />
-// ///<reference path='net/drm/AuthenticationMethod.ts' />
-// ///<reference path='net/drm/DRMAuthenticationContext.ts' />
-// ///<reference path='net/drm/DRMContentData.ts' />
-// ///<reference path='net/drm/DRMDeviceGroup.ts' />
-// ///<reference path='net/drm/DRMManager.ts' />
-// ///<reference path='net/drm/DRMManagerSession.ts' />
-// ///<reference path='net/drm/DRMModuleCycleProvider.ts' />
-// ///<reference path='net/drm/DRMPlaybackTimeWindow.ts' />
-// ///<reference path='net/drm/DRMURLDownloadContext.ts' />
-// ///<reference path='net/drm/DRMVoucher.ts' />
-// ///<reference path='net/drm/DRMVoucherDownloadContext.ts' />
-// ///<reference path='net/drm/DRMVoucherStoreContext.ts' />
-// ///<reference path='net/drm/LoadVoucherSetting.ts' />
-// ///<reference path='net/drm/VoucherAccessInfo.ts' />
-
 
 // ///<reference path='printing/PrintJob.ts' />
 // ///<reference path='printing/PrintJobOptions.ts' />
