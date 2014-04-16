@@ -24,7 +24,7 @@ import flash.geom.Vector3D;
 
 [native(cls='DisplayObjectClass')]
 public class DisplayObject extends EventDispatcher implements IBitmapDrawable {
-  public function DisplayObject() {}
+  public native function DisplayObject()
   public native function get root():DisplayObject;
   public native function get stage():Stage;
   public native function get name():String;

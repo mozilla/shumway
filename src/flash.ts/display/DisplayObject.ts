@@ -33,6 +33,7 @@ module Shumway.AVM2.AS.flash.display {
   import Matrix = flash.geom.Matrix; assert (Matrix);
   import Point = flash.geom.Point; assert (Point);
   import Rectangle = flash.geom.Rectangle; assert (Rectangle);
+  import EventDispatcher = flash.events.EventDispatcher; assert (EventDispatcher);
 
   export enum Direction {
     Upward     = 1,
@@ -101,7 +102,8 @@ module Shumway.AVM2.AS.flash.display {
     InvalidPaint                              = 0x0040,
 
     /**
-     * The display object's constructor has executed.
+     * The display object's constructor has been executed or any of the derived class constructors have executed. It may be
+     * that the derived class doesn't call super, in such cases this flag must be set manually elsewhere.
      */
     Constructed                               = 0x0080,
 
@@ -291,7 +293,8 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public DisplayObject");
+      EventDispatcher.instanceConstructorNoInitialize();
+      this._setFlags(DisplayObjectFlags.Constructed);
     }
 
     _setFlags(flags: DisplayObjectFlags) {

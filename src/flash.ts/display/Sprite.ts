@@ -16,6 +16,7 @@
 // Class: Sprite
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import DisplayObjectContainer = flash.display.DisplayObjectContainer;
   export class Sprite extends flash.display.DisplayObjectContainer {
 
     // Called whenever the class is initialized.
@@ -44,7 +45,8 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.Sprite");
+      DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
+      this.constructChildren();
     }
     
     // JS -> AS Bindings

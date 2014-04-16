@@ -21,7 +21,7 @@ module Shumway.AVM2.AS.flash.display {
   import clamp = Shumway.NumberUtilities.clamp;
 
   import Event = flash.events.Event;
-  // import DisplayObject = DisplayObject;
+  import InteractiveObject = flash.display.InteractiveObject;
 
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
     static bindings: string [] = null;
@@ -35,11 +35,11 @@ module Shumway.AVM2.AS.flash.display {
 
     constructor () {
       false && super();
+      InteractiveObject.instanceConstructorNoInitialize.call(this);
       this._tabChildren = true;
       this._mouseChildren = true;
       this._children = [];
     }
-
 
     /**
      * This object's children have changed.
