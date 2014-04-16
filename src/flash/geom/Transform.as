@@ -19,9 +19,7 @@ import flash.display.DisplayObject;
 
 [native(cls='TransformClass')]
 public class Transform {
-  public function Transform(displayObject:DisplayObject) {
-    ctor(displayObject);
-  }
+  public native function Transform(displayObject:DisplayObject);
   public native function get matrix():Matrix;
   public native function set matrix(value:Matrix):void;
   public native function get colorTransform():ColorTransform;
@@ -34,6 +32,5 @@ public class Transform {
   public native function getRelativeMatrix3D(relativeTo:DisplayObject):Matrix3D;
   public native function get perspectiveProjection():PerspectiveProjection;
   public native function set perspectiveProjection(pm:PerspectiveProjection):void;
-  private native function ctor(target:DisplayObject):void;
 }
 }

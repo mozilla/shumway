@@ -29,7 +29,6 @@ module Shumway.AVM2.Runtime {
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import IndentingWriter = Shumway.IndentingWriter;
 
-  declare var getNative;
   declare var createFunction;
   declare var Timer;
 
@@ -61,7 +60,7 @@ module Shumway.AVM2.Runtime {
     release || assert(!script.executing && !script.executed);
     var global = new Global(script);
     if (abc.applicationDomain.allowNatives) {
-      global[Multiname.getPublicQualifiedName("unsafeJSNative")] = getNative;
+      global[Multiname.getPublicQualifiedName("unsafeJSNative")] = Shumway.AVM2.AS.getNative;
     }
     script.executing = true;
     var scope = new Scope(null, script.global);
@@ -233,8 +232,9 @@ module Shumway.AVM2.Runtime {
       // REMOVEME
     }
 
-    public static getStackTrace() {
+    public static getStackTrace(): string {
       Shumway.Debug.notImplemented("getStackTrace");
+      return;
     }
   }
 
@@ -299,10 +299,10 @@ module Shumway.AVM2.Runtime {
       return {
         call: function ($this) {
           Array.prototype.shift.call(arguments);
-          return f.apply($this, arguments);
+          return f.asApply($this, arguments);
         },
         apply: function ($this, args) {
-          return f.apply($this, args);
+          return f.asApply($this, args);
         }
       };
     }
@@ -314,17 +314,6 @@ module Shumway.AVM2.Runtime {
         },
         apply: function ($this, args) {
           return asCoerce(type, args[0]);
-        }
-      };
-    }
-
-    static constructingCallable(instanceConstructor) {
-      return {
-        call: function (self) {
-          return new (Function.bind.apply(instanceConstructor, arguments));
-        },
-        apply: function (self, args) {
-          return new (Function.bind.apply(instanceConstructor, [self].concat(args)));
         }
       };
     }
@@ -349,13 +338,13 @@ module Shumway.AVM2.Runtime {
       return undefined;
     }
 
-    public getClass(simpleName) {
+    public getClass(simpleName): Shumway.AVM2.AS.ASClass {
       var cache = this.classCache;
       var c = cache[simpleName];
       if (!c) {
         c = cache[simpleName] = this.getProperty(Multiname.fromSimpleName(simpleName), true, true);
       }
-      release || assert(c instanceof Class);
+      release || assert(c instanceof Shumway.AVM2.AS.ASClass);
       return c;
     }
 
@@ -445,12 +434,6 @@ module Shumway.AVM2.Runtime {
       return undefined;
     }
 
-    public installNative(name, func) {
-      natives[name] = function() {
-        return func;
-      };
-    }
-
     /**
      * Find the first script that defines a multiname.
      *
@@ -526,7 +509,9 @@ module Shumway.AVM2.Runtime {
       abc.applicationDomain = this;
       GlobalMultinameResolver.loadAbc(abc);
       this.abcs.push(abc);
+
       if (!this.base) {
+        AS.initialize(this);
         Type.initializeTypes(this);
       }
     }
@@ -556,7 +541,7 @@ module Shumway.AVM2.Runtime {
       lastOnly || writer.enter("Loaded Classes And Interfaces");
       var classes = lastOnly ? [this.loadedClasses.last()] : this.loadedClasses;
       classes.forEach(function (cls) {
-        if (cls !== Class) {
+        if (cls !== Shumway.AVM2.AS.ASClass) {
           cls.trace(writer);
         }
       });

@@ -175,10 +175,12 @@ module Shumway.AVM2.ABC {
     name: string;
     type: Multiname;
     value: any;
-    constructor(name: string, type: Multiname, value: any) {
+    optional: boolean;
+    constructor(name: string, type: Multiname, value: any, optional: boolean = false) {
       this.name = name;
       this.type = type;
       this.value = value;
+      this.optional = optional;
     }
   }
 
@@ -292,6 +294,14 @@ module Shumway.AVM2.ABC {
       return this.kind === TRAIT.Setter;
     }
 
+    public isAccessor() {
+      return this.isGetter() || this.isSetter();
+    }
+
+    public isMethodOrAccessor() {
+      return this.isMethod() || this.isGetter() || this.isSetter();
+    }
+
     public isProtected() {
       release || assert (Multiname.isQName(this.name));
       return this.name.namespaces[0].isProtected();
@@ -383,6 +393,7 @@ module Shumway.AVM2.ABC {
       boundMethod: Function;
     };
     activationPrototype: Object;
+    static parseParameterNames: boolean = false;
 
     private static _getParameterName(i) {
       release || assert(i < 26);
@@ -409,6 +420,7 @@ module Shumway.AVM2.ABC {
         for (var i = parameterCount - optionalCount; i < parameterCount; i++) {
           var valueIndex = stream.readU30();
           this.parameters[i].value = constantPool.getValue(stream.readU8(), valueIndex);
+          this.parameters[i].optional = true;
         }
       }
 
@@ -417,7 +429,7 @@ module Shumway.AVM2.ABC {
           // NOTE: We can't get the parameter name as described in the spec because
           // some SWFs have invalid parameter names. Tamarin doesn't parse parameter
           // names correctly, so we must follow that same behaviour.
-          if (false) {
+          if (MethodInfo.parseParameterNames) {
             this.parameters[i].name = constantPool.strings[stream.readU30()];
           } else {
             stream.readU30();
@@ -458,6 +470,9 @@ module Shumway.AVM2.ABC {
     }
     public isScriptMember(): boolean {
       return this.holder instanceof ScriptInfo;
+    }
+    public hasSetsDxns(): boolean {
+      return !!(this.flags & METHOD.Setsdxns);
     }
 
     static parseException(abc, stream) {
@@ -528,7 +543,7 @@ module Shumway.AVM2.ABC {
       this.superName = constantPool.multinames[stream.readU30()];
       this.flags = stream.readU8();
       this.protectedNs = undefined;
-      if (this.flags & 8) {
+      if (this.flags & CONSTANT.ClassProtectedNs) {
         this.protectedNs = constantPool.namespaces[stream.readU30()];
       }
       var interfaceCount = stream.readU30();
@@ -563,7 +578,7 @@ module Shumway.AVM2.ABC {
     instanceInfo: InstanceInfo;
     defaultValue: any;
     native: any;
-    classObject: Shumway.AVM2.Runtime.Class;
+    classObject: Shumway.AVM2.AS.ASClass;
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
       super(abc, index);
@@ -804,6 +819,12 @@ module Shumway.AVM2.ABC {
         assert (uniqueURIHash !== undefined);
         this.uri = "private " + uniqueURIHash;
       }
+      if (this.kind === CONSTANT.StaticProtectedNs) {
+        // FIXME: We need to deal with static protected namespaces the same way as
+        // for instance protected namespaces. For now, let's just reset the URI so
+        // that name resolution works out.
+        this.uri = "*";
+      }
       this.qualifiedName = Namespace._qualifyNamespace(this.kind, this.uri, this.prefix ? this.prefix : "");
     }
 
@@ -868,7 +889,7 @@ module Shumway.AVM2.ABC {
       return release || assert(false, "Cannot find kind " + str);
     }
 
-    public static createNamespace(uri: string, prefix: string) {
+    public static createNamespace(uri: string, prefix: string = undefined) {
       return new Namespace(CONSTANT.Namespace, uri, prefix);
     }
 
@@ -883,7 +904,15 @@ module Shumway.AVM2.ABC {
     }
 
     public isProtected(): boolean {
-      return this.kind === CONSTANT.ProtectedNamespace;
+      return this.kind === CONSTANT.ProtectedNamespace || this.kind === CONSTANT.StaticProtectedNs;
+    }
+
+    public isPrivate(): boolean {
+      return this.kind === CONSTANT.PrivateNs;
+    }
+
+    public isPackageInternal(): boolean {
+      return this.kind === CONSTANT.PackageInternalNs;
     }
 
     public isUnique(): boolean {
@@ -936,6 +965,10 @@ module Shumway.AVM2.ABC {
     public static PUBLIC = new Namespace(CONSTANT.Namespace);
     public static PROTECTED = new Namespace(CONSTANT.ProtectedNamespace);
     public static PROXY = new Namespace(CONSTANT.Namespace, "http://www.adobe.com/2006/actionscript/flash/proxy");
+    public static VECTOR = new Namespace(CONSTANT.Namespace, "__AS3__.vec");
+    public static VECTOR_PACKAGE = new Namespace(CONSTANT.PackageInternalNs, "__AS3__.vec");
+    public static BUILTIN = new Namespace(CONSTANT.PrivateNs, "builtin.as$0");
+
 
     private static _simpleNameCache = Shumway.ObjectUtilities.createMap<Namespace []>();
 
@@ -964,7 +997,7 @@ module Shumway.AVM2.ABC {
           uri = name.substring(name.indexOf(" ") + 1).trim();
         } else {
           var kinds = Namespace._kinds;
-          if (name === kinds[CONSTANT.Namespace]          ||
+          if (name === kinds[CONSTANT.Namespace]        ||
             name === kinds[CONSTANT.PackageInternalNs]  ||
             name === kinds[CONSTANT.PrivateNs]          ||
             name === kinds[CONSTANT.ProtectedNamespace] ||
@@ -981,6 +1014,9 @@ module Shumway.AVM2.ABC {
       });
     }
   }
+
+  // TOTAL HACK ALERT !!!
+  Namespace.prototype = Object.create(Namespace.prototype);
 
 
   /**

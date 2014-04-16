@@ -13,7 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-///<reference path='avm2/references.ts' />
+
+var jsGlobal = (function() { return this || (1, eval)('this'); })();
+var inBrowser = typeof console != "undefined";
+
+function log(message?: any, ...optionalParams: any[]): void {
+  jsGlobal.print(message);
+}
+
+function warn(message?: any, ...optionalParams: any[]): void {
+  if (inBrowser) {
+    console.warn(message);
+  } else {
+    jsGlobal.print(Shumway.IndentingWriter.RED + message + Shumway.IndentingWriter.ENDC);
+  }
+}
 
 interface String {
   padRight(c: string, n: number): string;
@@ -27,6 +41,10 @@ interface Function {
 
 interface Array {
   runtimeId: number;
+}
+
+interface Math {
+  imul(a: number, b: number): number;
 }
 
 module Shumway {
@@ -64,6 +82,10 @@ module Shumway {
     return typeof value === "number";
   }
 
+  export function isArray(value) {
+    return value instanceof Array;
+  }
+
   export function isNumberOrString(value) {
     return typeof value === "number" || typeof value === "string";
   }
@@ -91,7 +113,8 @@ module Shumway {
     } else if (typeof value === "string") {
       return isIndex(value) || isNumericString(value);
     } else {
-      Debug.notImplemented(typeof value);
+      // Debug.notImplemented(typeof value);
+      return false;
     }
   }
 
@@ -164,7 +187,7 @@ module Shumway {
 
     export function error(message: string) {
       if (!inBrowser) {
-        warn(Debug.backtrace());
+        warn(message + "\n\nStack Trace:\n" + Debug.backtrace());
       }
       throw new Error(message);
     }
@@ -195,6 +218,7 @@ module Shumway {
     }
 
     export function notImplemented(message: string) {
+      log("release: " + release);
       release || Debug.assert(false, "Not Implemented " + message);
     }
 
@@ -230,6 +254,119 @@ module Shumway {
       }
       dst.length = count;
     }
+
+    export function pushMany(dst: any [], src: any []) {
+      for (var i = 0; i < src.length; i++) {
+        dst.push(src[i]);
+      }
+    }
+
+    export class ArrayWriter {
+      u8: Uint8Array;
+      u16: Uint16Array;
+      i32: Int32Array;
+      f32: Float32Array;
+      u32: Uint32Array;
+      offset: number;
+
+      constructor(initialCapacity) {
+        this.u8 = null;
+        this.u16 = null;
+        this.i32 = null;
+        this.f32 = null;
+        this.offset = 0;
+        this.ensureCapacity(initialCapacity);
+      }
+
+      public reset() {
+        this.offset = 0;
+      }
+
+      getIndex(size) {
+        release || assert (size === 1 || size === 2 || size === 4 || size === 8 || size === 16);
+        var index = this.offset / size;
+        release || assert ((index | 0) === index);
+        return index;
+      }
+
+      ensureAdditionalCapacity(size) {
+        this.ensureCapacity(this.offset + size);
+      }
+
+      ensureCapacity(minCapacity: number) {
+        if (!this.u8) {
+          this.u8 = new Uint8Array(minCapacity);
+        } else if (this.u8.length > minCapacity) {
+          return;
+        }
+        var oldCapacity = this.u8.length;
+        // var newCapacity = (((oldCapacity * 3) >> 1) + 8) & ~0x7;
+        var newCapacity = oldCapacity * 2;
+        if (newCapacity < minCapacity) {
+          newCapacity = minCapacity;
+        }
+        var u8 = new Uint8Array(newCapacity);
+        u8.set(this.u8, 0);
+        this.u8 = u8;
+        this.u16 = new Uint16Array(u8.buffer);
+        this.i32 = new Int32Array(u8.buffer);
+        this.f32 = new Float32Array(u8.buffer);
+      }
+
+      writeInt(v: number) {
+        release || assert ((this.offset & 0x3) === 0);
+        this.ensureCapacity(this.offset + 4);
+        this.writeIntUnsafe(v);
+      }
+
+      writeIntUnsafe(v: number) {
+        var index = this.offset >> 2;
+        this.i32[index] = v;
+        this.offset += 4;
+      }
+
+      writeFloat(v: number) {
+        release || assert ((this.offset & 0x3) === 0);
+        this.ensureCapacity(this.offset + 4);
+        this.writeFloatUnsafe(v);
+      }
+
+      writeFloatUnsafe(v: number) {
+        var index = this.offset >> 2;
+        this.f32[index] = v;
+        this.offset += 4;
+      }
+
+      subF32View(): Float32Array {
+        return this.f32.subarray(0, this.offset >> 2);
+      }
+
+      subI32View(): Int32Array {
+        return this.i32.subarray(0, this.offset >> 2);
+      }
+
+      subU16View(): Uint16Array {
+        return this.u16.subarray(0, this.offset >> 1);
+      }
+
+      subU8View(): Uint8Array {
+        return this.u8.subarray(0, this.offset);
+      }
+
+      hashWords(hash: number, offset: number, length: number) {
+        var i32 = this.i32;
+        for (var i = 0; i < length; i++) {
+          hash = (((31 * hash) | 0) + i32[i]) | 0;
+        }
+        return hash;
+      }
+
+      reserve(size) {
+        size = (size + 3) & ~0x3; // Round up to multiple of 4.
+        this.ensureCapacity(this.offset + size);
+        this.offset += size;
+      }
+    }
   }
 
   export module ObjectUtilities {
@@ -251,8 +388,34 @@ module Shumway {
       return array;
     }
 
-    export function hasOwnProperty(object: Object, name: string) {
+    export function isPrototypeWriteable(object: Object) {
+      return Object.getOwnPropertyDescriptor(object, "prototype").writable;
+    }
+
+    export function hasOwnProperty(object: Object, name: string): boolean {
       return Object.prototype.hasOwnProperty.call(object, name);
+    }
+
+    export function propertyIsEnumerable(object: Object, name: string): boolean {
+      return Object.prototype.propertyIsEnumerable.call(object, name);
+    }
+
+    export function getOwnPropertyDescriptor(object: Object, name: string): PropertyDescriptor {
+      return Object.getOwnPropertyDescriptor(object, name);
+    }
+
+    export function hasOwnGetter(object: Object, name: string): boolean {
+      var d = Object.getOwnPropertyDescriptor(object, name);
+      return !!(d && d.get);
+    }
+
+    export function hasOwnSetter(object: Object, name: string): boolean {
+      var d = Object.getOwnPropertyDescriptor(object, name);
+      return !!(d && !!d.set);
+    }
+
+    export function createObject(prototype: Object) {
+      return Object.create(prototype);
     }
 
     export function createEmptyObject() {
@@ -296,6 +459,28 @@ module Shumway {
     export function copyProperties(object: Object, template: Object) {
       for (var property in template) {
         object[property] = template[property];
+      }
+    }
+
+    export function copyOwnProperties(object: Object, template: Object) {
+      for (var property in template) {
+        if (hasOwnProperty(template, property)) {
+          object[property] = template[property];
+        }
+      }
+    }
+
+    export function copyOwnPropertyDescriptors(object: Object, template: Object) {
+      for (var property in template) {
+        if (hasOwnProperty(template, property)) {
+          var descriptor = Object.getOwnPropertyDescriptor(template, property);
+          assert (descriptor);
+          try {
+            Object.defineProperty(object, property, descriptor);
+          } catch (e) {
+            // log("Can't define " + property);
+          }
+        }
       }
     }
 
@@ -713,6 +898,60 @@ module Shumway {
     }
   }
 
+  /**
+   * Marsaglia's algorithm, adapted from V8. Use this if you want a deterministic random number.
+   */
+  export class Random {
+    private static _state: Uint32Array = new Uint32Array([0xDEAD, 0xBEEF]);
+
+    public static seed(seed: number) {
+      Random._state[0] = seed;
+      Random._state[1] = seed;
+    }
+
+    public static next(): number {
+      var s = this._state;
+      var r0 = (Math.imul(18273, s[0] & 0xFFFF) + (s[0] >>> 16)) | 0;
+      s[0] = r0;
+      var r1 = (Math.imul(36969, s[1] & 0xFFFF) + (s[1] >>> 16)) | 0;
+      s[1] = r1;
+      var x = ((r0 << 16) + (r1 & 0xFFFF)) | 0;
+      // Division by 0x100000000 through multiplication by reciprocal.
+      return (x < 0 ? (x + 0x100000000) : x) * 2.3283064365386962890625e-10;
+    }
+  }
+
+  Math.random = function random(): number {
+    return Random.next();
+  };
+
+  export module NumberUtilities {
+    export function pow2(exponent: number): number {
+      if (exponent === (exponent | 0)) {
+        if (exponent < 0) {
+          return 1 / (1 << -exponent);
+        }
+        return 1 << exponent;
+      }
+      return Math.pow(2, exponent);
+    }
+
+    export function clamp(value: number, min: number, max: number) {
+      if (value < min) {
+        return min;
+      } else if (value > max) {
+        return max;
+      }
+      return value;
+    }
+  }
+
+  export enum Numbers {
+    MaxU16 = 0xFFFF,
+    MaxI16 = 0x7FFF,
+    MinI16 = -0x8000
+  }
+
   export module IntegerUtilities {
     export function bitCount(i: number): number {
       i = i - ((i >> 1) & 0x55555555);
@@ -755,6 +994,21 @@ module Shumway {
     export function isPowerOfTwo(x) {
       return x && ((x & (x - 1)) === 0);
     }
+
+    /**
+     * Polyfill imul.
+     */
+    if (!Math.imul) {
+      Math.imul = function imul(a, b) {
+        var ah  = (a >>> 16) & 0xffff;
+        var al = a & 0xffff;
+        var bh  = (b >>> 16) & 0xffff;
+        var bl = b & 0xffff;
+        // the shift by 0 fixes the sign on the high part
+        // the final |0 converts the unsigned value into a signed value
+        return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+      }
+    }
   }
 
   export class IndentingWriter {
@@ -777,9 +1031,22 @@ module Shumway {
       this._out = outFn || IndentingWriter._consoleOutFn;
     }
 
-    writeLn(str: string) {
+    writeLn(str: string = "") {
       if (!this._suppressOutput) {
         this._out(this._padding + str);
+      }
+    }
+
+    writeComment(str: string) {
+      var lines = str.split("\n");
+      if (lines.length === 1) {
+        this.writeLn("// " + lines[0]);
+      } else {
+        this.writeLn("/**");
+        for (var i = 0; i < lines.length; i++) {
+          this.writeLn(" * " + lines[i]);
+        }
+        this.writeLn(" */");
       }
     }
 
@@ -804,6 +1071,10 @@ module Shumway {
 
     redLn(str: string) {
       this.colorLn(IndentingWriter.RED, str);
+    }
+
+    warnLn(str: string) {
+      this.yellowLn(str);
     }
 
     colorLn(color: string, str: string) {
@@ -1029,6 +1300,107 @@ module Shumway {
       return this.index === this.start;
     }
   }
+
+  export class ColorStyle {
+    static TabToolbar = "#252c33";
+    static Toolbars = "#343c45";
+    static HighlightBlue = "#1d4f73";
+    static LightText = "#f5f7fa";
+    static ForegroundText = "#b6babf";
+    static Black = "#000000";
+    static VeryDark = "#14171a";
+    static Dark = "#181d20";
+    static Light = "#a9bacb";
+    static Grey = "#8fa1b2";
+    static DarkGrey = "#5f7387";
+    static Blue = "#46afe3";
+    static Purple = "#6b7abb";
+    static Pink = "#df80ff";
+    static Red = "#eb5368";
+    static Orange = "#d96629";
+    static LightOrange = "#d99b28";
+    static Green = "#70bf53";
+    static BlueGrey = "#5e88b0";
+  }
+
+  export class Color {
+    public r: number;
+    public g: number;
+    public b: number;
+    public a: number;
+    constructor(r: number, g: number, b: number, a: number) {
+      this.r = r;
+      this.g = g;
+      this.b = b;
+      this.a = a;
+    }
+    set (other: Color) {
+      this.r = other.r;
+      this.g = other.g;
+      this.b = other.b;
+      this.a = other.a;
+    }
+    public static Red   = new Color(1, 0, 0, 1);
+    public static Green = new Color(0, 1, 0, 1);
+    public static Blue  = new Color(0, 0, 1, 1);
+    public static None  = new Color(0, 0, 0, 0);
+    public static White = new Color(1, 1, 1, 1);
+    public static Black = new Color(0, 0, 0, 1);
+    private static colorCache: { [color: string]: Color } = {};
+    public static randomColor(alpha: number = 1): Color {
+      return new Color(Math.random(), Math.random(), Math.random(), alpha);
+    }
+    public static parseColor(color: string) {
+      if (!Color.colorCache) {
+        Color.colorCache = Object.create(null);
+      }
+      if (Color.colorCache[color]) {
+        return Color.colorCache[color];
+      }
+      // TODO: Obviously slow, but it will do for now.
+      var span = document.createElement('span');
+      document.body.appendChild(span);
+      span.style.backgroundColor = color;
+      var rgb = getComputedStyle(span).backgroundColor;
+      document.body.removeChild(span);
+      var m = /^rgb\((\d+), (\d+), (\d+)\)$/.exec(rgb);
+      if (!m) m = /^rgba\((\d+), (\d+), (\d+), ([\d.]+)\)$/.exec(rgb);
+      var result = new Color(0, 0, 0, 0);
+      result.r = parseFloat(m[1]) / 255;
+      result.g = parseFloat(m[2]) / 255;
+      result.b = parseFloat(m[3]) / 255;
+      result.a = m[4] ? parseFloat(m[4]) / 255 : 1;
+      return Color.colorCache[color] = result;
+    }
+  }
+
+  export module ColorUtilities {
+    export function argbToRgba(color: number): number {
+      return ((color << 8) | (color >> 24)) >>> 0;
+    }
+
+    export function rgbaToArgb(color: number): number {
+      return ((color >> 8) | (color << 24)) >>> 0;
+    }
+  }
+
+  export module Telemetry {
+    export enum Feature {
+      EXTERNAL_INTERFACE_FEATURE = 1,
+      CLIPBOARD_FEATURE = 2,
+      SHAREDOBJECT_FEATURE = 3,
+      VIDEO_FEATURE = 4,
+      SOUND_FEATURE = 5,
+      NETCONNECTION_FEATURE = 6
+    }
+
+    declare var TelemetryService;
+
+    export function reportTelemetry(data) {
+      TelemetryService.reportTelemetry(data);
+    }
+  }
+
 }
 
 //["000", "4294967296", 4294967290, "4294967290", "4294967290", "1234",12345, "i","", "123.456", "-4", "0x2", "123456789123467", "4294967296"].forEach(function (x) {

@@ -65,6 +65,8 @@ var SimpleButtonDefinition = (function () {
           this._initAvm1Events(s.buttonActions, 's' + s.symbolId + 'e');
         }.bind(this), false);
       }
+
+      this._layer = new Shumway.Layers.FrameContainer();
     },
 
     _constructState: function constructState(symbolInfo) {
@@ -131,15 +133,6 @@ var SimpleButtonDefinition = (function () {
       if (this._avm1MouseEvents) {
         this._processAvm1MouseEvents(this._avm1MouseEvents);
       }
-    },
-
-    _getRegion: function getRegion(targetCoordSpace) {
-      if (!this._hitTestState) {
-        return { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
-      }
-
-      var b = this._hitTestState.getBounds(null);
-      return this._getTransformedRect(b, targetCoordSpace);
     },
 
     _getAS2Object: function () {

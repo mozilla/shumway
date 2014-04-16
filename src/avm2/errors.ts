@@ -183,7 +183,7 @@ module Shumway.AVM2 {
      * Player Error Codes
      */
   //  NoSecurityContextError                                    : { code: 2000, message: "No active security context."},
-  //  TooFewArgumentsError                                      : { code: 2001, message: "Too few arguments were specified; got %1, %2 expected."},
+    TooFewArgumentsError                                      : { code: 2001, message: "Too few arguments were specified; got %1, %2 expected."},
   //  InvalidSocketError                                        : { code: 2002, message: "Operation attempted on invalid socket."},
   //  InvalidSocketPortError                                    : { code: 2003, message: "Invalid socket port number specified."},
   //  ParamTypeError                                            : { code: 2005, message: "Parameter %1 is of the incorrect type. Should be type %2."},
@@ -262,8 +262,8 @@ module Shumway.AVM2 {
   //  DecodeParamError                                          : { code: 2101, message: "The String passed to URLVariables.decode() must be a URL-encoded query string containing name/value pairs."},
   //  NotAnXMLChildError                                        : { code: 2102, message: "The before XMLNode parameter must be a child of the caller."},
   //  XMLRecursionError                                         : { code: 2103, message: "XML recursion failure: new child would create infinite loop."},
-  //  SceneNotFoundError                                        : { code: 2108, message: "Scene %1 was not found."},
-  //  FrameLabelNotFoundError                                   : { code: 2109, message: "Frame label %1 not found in scene %2."},
+    SceneNotFoundError                                        : { code: 2108, message: "Scene %1 was not found."},
+    FrameLabelNotFoundError                                   : { code: 2109, message: "Frame label %1 not found in scene %2."},
   //  DisableAVM1LoadingError                                   : { code: 2110, message: "The value of Security.disableAVM1Loading cannot be set unless the caller can access the stage and is in an ActionScript 3.0 SWF file."},
   //  AVM1LoadingError                                          : { code: 2111, message: "Security.disableAVM1Loading is true so the current load of the ActionScript 1.0/2.0 SWF file has been blocked."},
   //  ApplicationDomainSecurityError                            : { code: 2112, message: "Provided parameter LoaderContext.ApplicationDomain is from a disallowed domain."},
@@ -300,7 +300,7 @@ module Shumway.AVM2 {
   //  ForbiddenProtocolError                                    : { code: 2147, message: "Forbidden protocol in URL %1."},
   //  RemoteToLocalSecurityError                                : { code: 2148, message: "SWF file %1 cannot access local resource %2. Only local-with-filesystem and trusted local SWF files may access local resources."},
   //  FsCommandSecurityError                                    : { code: 2149, message: "Security sandbox violation: %1 cannot make fscommand calls to %2 (allowScriptAccess is %3)."},
-  //  CantAddParentError                                        : { code: 2150, message: "An object cannot be added as a child to one of it's children (or children's children, etc.)."},
+    CantAddParentError                                        : { code: 2150, message: "An object cannot be added as a child to one of it's children (or children's children, etc.)."},
   //  FullScreenSecurityError                                   : { code: 2151, message: "You cannot enter full screen mode when the settings dialog is visible."},
   //  FullScreenNotAllowedError                                 : { code: 2152, message: "Full screen mode is not allowed."},
   //  URLRequestInvalidHeader                                   : { code: 2153, message: "The URLRequest.requestHeaders array must contain only non-NULL URLRequestHeader objects."},
@@ -622,10 +622,10 @@ module Shumway.AVM2 {
   //  CubeMapSamplerMustUseMipmap                               : { code: 3704, message: "AGAL validation failed: Cube map samplers must enable mipmapping for %2 at token %3 of %1 program."}
   };
 
-  export function getErrorMessage(index) {
-    //if (!Shumway.AVM2.Runtime.debuggerMode.value) {
-    //  return "Error #" + index;
-    //}
+  export function getErrorMessage(index: number): string {
+    if (!Shumway.AVM2.Runtime.debuggerMode.value) {
+      return "Error #" + index;
+    }
     for (var k in Errors) {
       if (Errors[k].code == index) {
         return "Error #" + index + ": " + Errors[k].message;

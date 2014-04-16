@@ -137,13 +137,16 @@ module Shumway.AVM2.Runtime {
       if (!scopeOnly && (object = this.cache[key])) {
         return object;
       }
-      if (this.object.asHasProperty(namespaces, name, flags, true)) {
+      // Scope lookups should not be trapped by proxies.
+      if (this.object.asHasPropertyInternal(namespaces, name, flags)) {
         return this.isWith ? this.object : (this.cache[key] = this.object);
       }
       if (this.parent) {
         return (this.cache[key] = this.parent.findScopeProperty(namespaces, name, flags, domain, strict, scopeOnly));
       }
-      if (scopeOnly) return null;
+      if (scopeOnly) {
+        return null;
+      }
       // If we can't find the property look in the domain.
       if ((object = domain.findDomainProperty(new Multiname(namespaces, name, flags), strict, true))) {
         return object;
@@ -202,7 +205,7 @@ module Shumway.AVM2.Runtime {
       boundMethod = function () {
         Array.prototype.unshift.call(arguments, scope);
         var global = (this === jsGlobal ? scope.global.object : this);
-        return fn.apply(global, arguments);
+        return fn.asApply(global, arguments);
       };
     }
     boundMethod.methodInfo = methodInfo;

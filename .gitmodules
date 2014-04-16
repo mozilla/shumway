@@ -7,3 +7,6 @@
 [submodule "lib/stats"]
 	path = lib/stats
 	url = https://github.com/mrdoob/stats.js.git
+[submodule "lib/jpgjs"]
+	path = lib/jpgjs
+	url = https://github.com/notmasteryet/jpgjs.git

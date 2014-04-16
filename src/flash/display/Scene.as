@@ -15,27 +15,11 @@
  */
 
 package flash.display {
+[native(cls='SceneClass')]
 public final class Scene {
-  public function Scene(name:String, labels:Array, numFrames:int) {
-    _name = name;
-    _labels = labels;
-    _numFrames = numFrames;
-  }
-
-  private var _name:String;
-  private var _labels:Array;
-  private var _numFrames:int;
-
-  public function get name():String {
-    return _name;
-  }
-
-  public function get labels():Array {
-    return _labels;
-  }
-
-  public function get numFrames():int {
-    return _numFrames;
-  }
+  public native function Scene(name:String, labels:Array, numFrames:int);
+  public native function get name():String;
+  public native function get labels():Array;
+  public native function get numFrames():int;
 }
 }

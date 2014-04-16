@@ -25,6 +25,7 @@ module Shumway.AVM2.Runtime {
   import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
   import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
   import ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+  import ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
 
   import Trait = Shumway.AVM2.ABC.Trait;
   import IndentingWriter = Shumway.IndentingWriter;
@@ -139,19 +140,21 @@ module Shumway.AVM2.Runtime {
      * }
      *
      */
-    public applyTo(domain, object) {
-      release || assert (!hasOwnProperty(object, VM_SLOTS), "Already has VM_SLOTS.");
-      release || assert (!hasOwnProperty(object, VM_BINDINGS), "Already has VM_BINDINGS.");
-      release || assert (!hasOwnProperty(object, VM_OPEN_METHODS), "Already has VM_OPEN_METHODS.");
+    public applyTo(domain: ApplicationDomain, object, append: boolean = false) {
+      if (!append) {
+        release || assert(!hasOwnProperty(object, VM_SLOTS), "Already has VM_SLOTS.");
+        release || assert(!hasOwnProperty(object, VM_BINDINGS), "Already has VM_BINDINGS.");
+        release || assert(!hasOwnProperty(object, VM_OPEN_METHODS), "Already has VM_OPEN_METHODS.");
 
-      defineNonEnumerableProperty(object, VM_SLOTS, new SlotInfoMap());
-      defineNonEnumerableProperty(object, VM_BINDINGS, []);
-      defineNonEnumerableProperty(object, VM_OPEN_METHODS, createMap<Function>());
+        defineNonEnumerableProperty(object, VM_SLOTS, new SlotInfoMap());
+        defineNonEnumerableProperty(object, VM_BINDINGS, []);
+        defineNonEnumerableProperty(object, VM_OPEN_METHODS, createMap<Function>());
 
-      defineNonEnumerableProperty(object, "bindings", this);
-      defineNonEnumerableProperty(object, "resolutionMap", []);
+        defineNonEnumerableProperty(object, "bindings", this);
+        defineNonEnumerableProperty(object, "resolutionMap", []);
+      }
 
-      traitsWriter && traitsWriter.greenLn("Applying Traits");
+      traitsWriter && traitsWriter.greenLn("Applying Traits" + (append ? " (Append)" : ""));
 
       for (var key in this.map) {
         var binding = this.map[key];
@@ -305,7 +308,7 @@ module Shumway.AVM2.Runtime {
     parent: InstanceBindings;
     scope: any;
     natives: any;
-    implementedInterfaces: any;
+    implementedInterfaces: Shumway.Map<Shumway.AVM2.AS.ASClass>;
     constructor(parent, instanceInfo, scope, natives) {
       super();
       this.scope = scope;
@@ -457,18 +460,19 @@ module Shumway.AVM2.Runtime {
       var domain = ii.abc.applicationDomain;
       var interfaces = ii.interfaces;
 
+      var interface: Shumway.AVM2.AS.ASClass;
       // Collect all implemented interfaces.
       for (var i = 0; i < interfaces.length; i++) {
-        var interface = domain.getProperty(interfaces[i], true, true);
+        interface = domain.getProperty(interfaces[i], true, true);
         // This can be undefined if the interface is defined after a class that implements it is defined.
         release || assert(interface);
         copyProperties(this.implementedInterfaces, interface.interfaceBindings.implementedInterfaces);
-        this.implementedInterfaces[Multiname.getQualifiedName(interface.name)] = interface;
+        this.implementedInterfaces[Multiname.getQualifiedName(interface.classInfo.instanceInfo.name)] = interface;
       }
 
       // Apply all interface bindings.
       for (var interfaceName in this.implementedInterfaces) {
-        var interface = this.implementedInterfaces[interfaceName];
+        interface = this.implementedInterfaces[interfaceName];
         ib = interface.interfaceBindings;
         for (var interfaceKey in ib.map) {
           var interfaceBinding = ib.map[interfaceKey];

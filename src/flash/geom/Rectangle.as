@@ -16,177 +16,83 @@
 
 package flash.geom
 {
+[native(cls='RectangleClass')]
 public class Rectangle
   {
-    public var x:Number;
-    public var y:Number;
-    public var width:Number;
-    public var height:Number;
+    public native function set x(x:Number);
+    public native function get x():Number;
 
-    public function Rectangle(x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0) {
-      this.x = x;
-      this.y = y;
-      this.width = width;
-      this.height = height;
-    }
+    public native function set y(y:Number);
+    public native function get y():Number;
 
-    public function get left():Number {
-      return x;
-    }
-    public function set left(value:Number):void {
-      width += x - value
-      x = value;
-    }
+    public native function set width(y:Number);
+    public native function get width():Number;
 
-    public function get right():Number {
-      return x + width;
-    }
-    public function set right(value:Number):void {
-      width = value - x;
-    }
+    public native function set height(y:Number);
+    public native function get height():Number;
 
-    public function get top():Number {
-      return y;
-    }
-    public function set top(value:Number):void {
-      height += y - value;
-      y = value;
-    }
+    public native function Rectangle(x:Number = 0, y:Number = 0, width:Number = 0, height:Number = 0);
 
-    public function get bottom():Number {
-      return y + height;
-    }
-    public function set bottom(value:Number):void {
-      height = value - y;
-    }
+    public native function get left():Number;
 
-    public function get topLeft():Point {
-      return new Point(left, top);
-    }
-    public function set topLeft(value:Point):void {
-      top = value.y;
-      left = value.x;
-    }
+    public native function set left(value:Number):void;
 
-    public function get bottomRight():Point {
-      return new Point(right, bottom);
-    }
-    public function set bottomRight(value:Point):void {
-      bottom = value.y;
-      right = value.x;
-    }
+    public native function get right():Number;
 
-    public function get size():Point {
-      return new Point(width, height);
-    }
-    public function set size(value:Point):void {
-      width = value.x;
-      height = value.y;
-    }
+    public native function set right(value:Number):void;
 
-    public function clone():Rectangle {
-      return new Rectangle(x, y, width, height);
-    }
+    public native function get top():Number;
 
-    public function isEmpty():Boolean {
-      return width <= 0 || height <= 0;
-    }
+    public native function set top(value:Number):void;
 
-    public function setEmpty():void {
-      x = 0;
-      y = 0;
-      width = 0;
-      height = 0;
-    }
+    public native function get bottom():Number;
 
-    public function inflate(dx:Number, dy:Number):void {
-      x -= dx;
-      y -= dy;
-      width += (dx * 2);
-      height += (dy * 2);
-    }
+    public native function set bottom(value:Number):void;
 
-    public function inflatePoint(point:Point):void {
-      inflate(point.x, point.y);
-    }
+    public native function get topLeft():Point;
 
-    public function offset(dx:Number, dy:Number):void {
-      x += dx;
-      y += dy;
-    }
+    public native function set topLeft(value:Point):void;
 
-    public function offsetPoint(point:Point):void {
-      offset(point.x, point.y);
-    }
+    public native function get bottomRight():Point;
 
-    public function contains(x:Number, y:Number):Boolean {
-      return this.x <= x && x <= this.right && this.y <= y && y <= this.bottom;
-    }
+    public native function set bottomRight(value:Point):void;
 
-    public function containsPoint(point:Point):Boolean {
-      return contains(point.x, point.y);
-    }
+    public native function get size():Point;
 
-    public function containsRect(rect:Rectangle):Boolean {
-      return containsPoint(rect.topLeft) && containsPoint(rect.bottomRight);
-    }
+    public native function set size(value:Point):void;
 
-    public function intersection(toIntersect:Rectangle):Rectangle {
-      var l:Number = Math.max(x, toIntersect.x);
-      var r:Number = Math.min(right, toIntersect.right);
-      if (l <= r) {
-        var t:Number = Math.max(y, toIntersect.y);
-        var b:Number = Math.min(bottom, toIntersect.bottom);
-        if (t <= b) {
-          return new Rectangle(l, t, r - l, b - t);
-        }
-      }
-      return new Rectangle();
-    }
+    public native function clone():Rectangle;
 
-    public function intersects(toIntersect:Rectangle):Boolean {
-      return Math.max(x, toIntersect.x) <= Math.min(right, toIntersect.right)
-          && Math.max(y, toIntersect.y) <= Math.min(bottom, toIntersect.bottom);
-    }
+    public native function isEmpty():Boolean;
 
-    public function union(toUnion:Rectangle):Rectangle {
-      if (toUnion.width == 0 || toUnion.height == 0) {
-        return clone();
-      }
-      if (width == 0 || height == 0) {
-        return toUnion.clone();
-      }
-      var l:Number = Math.min(x, toUnion.x);
-      var t:Number = Math.min(y, toUnion.y);
-      return new Rectangle(l,
-                           t,
-                           Math.max(right, toUnion.right) - l,
-                           Math.max(bottom, toUnion.bottom) - t);
-    }
+    public native function setEmpty():void;
 
-    public function equals(toCompare:Rectangle):Boolean {
-      return x == toCompare.x
-          && y == toCompare.y
-          && width == toCompare.width
-          && height == toCompare.height;
-    }
+    public native function inflate(dx:Number, dy:Number):void;
 
-    public function copyFrom(sourceRect:Rectangle):void {
-      x = sourceRect.x;
-      y = sourceRect.y;
-      width = sourceRect.width;
-      height = sourceRect.height;
-    }
+    public native function inflatePoint(point:Point):void;
 
-    public function setTo(xa:Number, ya:Number, widtha:Number, heighta:Number):void {
-      x = xa;
-      y = ya;
-      width = widtha;
-      height = heighta;
-    }
+    public native function offset(dx:Number, dy:Number):void;
 
-    public function toString():String {
-      return "(x=" + x + ", y=" + y + ", w=" + width + ", h=" + height + ")";
-    }
+    public native function offsetPoint(point:Point):void;
+
+    public native function contains(x:Number, y:Number):Boolean;
+
+    public native function containsPoint(point:Point):Boolean;
+
+    public native function containsRect(rect:Rectangle):Boolean;
+
+    public native function intersection(toIntersect:Rectangle):Rectangle;
+
+    public native function intersects(toIntersect:Rectangle):Boolean;
+
+    public native function union(toUnion:Rectangle):Rectangle;
+
+    public native function equals(toCompare:Rectangle):Boolean;
+
+    public native function copyFrom(sourceRect:Rectangle):void;
+
+    public native function setTo(xa:Number, ya:Number, widtha:Number, heighta:Number):void;
+
+    public native function toString():String;
   }
 }

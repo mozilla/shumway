@@ -323,7 +323,7 @@ module Shumway.AVM2 {
           case OP.call:
             popManyInto(stack, bc.argCount, args);
             object = stack.pop();
-            stack[stack.length - 1] = stack[stack.length - 1].apply(object, args);
+            stack[stack.length - 1] = stack[stack.length - 1].asApply(object, args);
             break;
           case OP.construct:
             popManyInto(stack, bc.argCount, args);
@@ -339,7 +339,7 @@ module Shumway.AVM2 {
           case OP.constructsuper:
             popManyInto(stack, bc.argCount, args);
             object = stack.pop();
-            savedScope.object.baseClass.instanceConstructorNoInitialize.apply(object, args);
+            savedScope.object.baseClass.instanceConstructorNoInitialize.asApply(object, args);
             break;
           case OP.constructprop:
             popManyInto(stack, bc.argCount, args);
@@ -618,6 +618,12 @@ module Shumway.AVM2 {
           case OP.setlocal3:
             locals[op - OP.setlocal0] = stack.pop();
             break;
+          case OP.dxns:
+            Shumway.AVM2.AS.ASXML.defaultNamespace = strings[bc.index];
+            break;
+          case OP.dxnslate:
+            Shumway.AVM2.AS.ASXML.defaultNamespace = stack.pop();
+            break;
           case OP.debug:
           case OP.debugline:
           case OP.debugfile:
@@ -636,7 +642,7 @@ module Shumway.AVM2 {
             var handler = exceptions[i];
             if (pc >= handler.start && pc <= handler.end &&
               (!handler.typeName ||
-                domain.getType(handler.typeName).isInstance(e))) {
+                domain.getType(handler.typeName).isType(e))) {
               stack.length = 0;
               stack.push(e);
               scopeStack.clear();

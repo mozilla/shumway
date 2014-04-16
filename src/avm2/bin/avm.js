@@ -49,7 +49,7 @@ console = {
 
 load(homePath + "src/avm2/settings.js");
 
-load(homePath + "src/global.js");
+load(homePath + "src/avm2/global.js");
 load(homePath + "src/utilities.js");
 load(homePath + "src/options.js");
 load(homePath + "src/settings.js");
@@ -69,6 +69,7 @@ var argumentParser = new ArgumentParser();
 var systemOptions = new OptionSet("System Options");
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var disassemble = shellOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
+var stubs = shellOptions.register(new Option("s", "stubs", "boolean", false, "stubs"));
 var traceLevel = shellOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 var execute = shellOptions.register(new Option("x", "execute", "boolean", false, "execute"));
@@ -80,7 +81,7 @@ var help = shellOptions.register(new Option("h", "help", "boolean", false, "prin
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", false, "run in release mode (!release is the default)"));
 
-load(homePath + "src/avm2/metrics.js");
+load(homePath + "src/metrics.js");
 load(homePath + "src/avm2/constants.js");
 load(homePath + "src/avm2/opcodes.js");
 load(homePath + "src/avm2/parser.js");
@@ -103,6 +104,7 @@ var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
 var SecurityDomain = Shumway.AVM2.Runtime.SecurityDomain;
 
 load(homePath + "src/avm2/disassembler.js");
+load(homePath + "src/avm2/stubs.js");
 
 var Timer = Shumway.Metrics.Timer;
 var Counter = new Shumway.Metrics.Counter();
@@ -237,6 +239,13 @@ if (execute.value || compile.value || compileAll.value || compileBuiltins.value)
       abc.trace(stdout);
     });
   });
+} else if (stubs.value) {
+  MethodInfo.parseParameterNames = true;
+  grabAbcs(abcBuffers).forEach(function (abcArray) {
+    abcArray.forEach(function (abc) {
+      Shumway.AVM2.generateStub(abc);
+    });
+  });
 }
 
 function grabAbcs(abcBuffers) {
@@ -283,7 +292,11 @@ function runAbcs(securityDomain, abcArrays) {
       } else if (compile.value) {
         compileQueue.push(abc);
       } else {
-        securityDomain.applicationDomain.executeAbc(abc);
+        try {
+          securityDomain.applicationDomain.executeAbc(abc);
+        } catch (x) {
+          print(x.stack);
+        }
       }
     }
   }

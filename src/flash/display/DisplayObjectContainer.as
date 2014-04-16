@@ -20,7 +20,7 @@ import flash.text.TextSnapshot;
 
 [native(cls='ContainerClass')]
 public class DisplayObjectContainer extends InteractiveObject {
-  public function DisplayObjectContainer() {}
+  public native function DisplayObjectContainer()
   public native function get numChildren():int;
   public native function get textSnapshot():TextSnapshot;
   public native function get tabChildren():Boolean;

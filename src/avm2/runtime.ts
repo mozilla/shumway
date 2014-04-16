@@ -17,14 +17,10 @@
 
 import Namespace = Shumway.AVM2.ABC.Namespace;
 
-interface Object {
-  runtimeId: number;
-  resolutionMap: Shumway.Map<Shumway.Map<string>>;
-  bindings: Shumway.AVM2.Runtime.Bindings;
-
-
-  getNamespaceResolutionMap: any;
-  resolveMultinameProperty: (namespaces: Namespace [], name: any, flags: number) => any;
+/**
+ * Defines the MetaObject protocol for all AS3 Objects.
+ */
+interface IProtocol {
   asGetProperty: (namespaces: Namespace [], name: any, flags: number) => any;
   asGetNumericProperty: (name: number) => any;
   asGetPublicProperty: (name: any) => any;
@@ -41,15 +37,29 @@ interface Object {
   asCallPublicProperty: (name: any, args: any []) => void;
   asCallResolvedStringProperty: (resolved: any, isLex: boolean, args: any []) => any;
   asConstructProperty: (namespaces: Namespace [], name: any, flags: number, args: any []) => any;
-  asHasProperty: (namespaces: Namespace [], name: any, flags: number, nonProxy?: boolean) => boolean;
+  asHasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
+  asHasOwnProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
+  asHasPropertyInternal: (namespaces: Namespace [], name: any, flags: number) => boolean;
+  asPropertyIsEnumerable: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asHasTraitProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asDeleteProperty: (namespaces: Namespace [], name: any, flags: number) => boolean;
   asNextName: (index: number) => any;
   asNextValue: (index: number) => any;
   asNextNameIndex: (index: number) => number;
   asGetEnumerableKeys: () => any [];
-  class: any;
   hasProperty: (namespaces: Namespace [], name: any, flags: number) => boolean; // TODO: What's this?
+}
+
+interface Object extends IProtocol {
+  runtimeId: number;
+  resolutionMap: Shumway.Map<Shumway.Map<string>>;
+  bindings: Shumway.AVM2.Runtime.Bindings;
+
+  getNamespaceResolutionMap: any;
+  resolveMultinameProperty: (namespaces: Namespace [], name: any, flags: number) => any;
+
+
+  class: Shumway.AVM2.AS.ASClass;
 
   asEnumerableKeys: any [];
   asLazyInitializer: Shumway.AVM2.Runtime.LazyInitializer;
@@ -59,20 +69,22 @@ interface Object {
   asIsNativePrototype: boolean;
   asOpenMethods: Shumway.Map<Function>;
   asIsClass: boolean;
-  asIsProxy: boolean;
-  asCallProxy: any;
+
+  // E4X
+  asDefaultNamepsace: Namespace;
+}
+
+interface Function {
+  asCall(thisArg: any, ...argArray: any[]): any;
+  asApply(thisArg: any, argArray?: any): any;
 }
 
 module Shumway.AVM2.Runtime {
 
   declare var shumwayOptions: OptionSet;
 
-  declare var isProxy;
-  declare var isProxyObject;
-
   declare var XML;
   declare var XMLList;
-  declare var isXMLType;
 
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
@@ -84,6 +96,8 @@ module Shumway.AVM2.Runtime {
   var traceFunctions = runtimeOptions.register(new Option("t", "traceFunctions", "number", 0, "trace functions", { choices: { "off":0, "compiled":1, "compiled & abc":2 } }));
   export var traceClasses = runtimeOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
   export var traceDomain = runtimeOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
+  export var debuggerMode = runtimeOptions.register(new Option("db", "debuggerMode", "boolean", true, "enable debugger mode"));
+
 
   var functionBreak = new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #");
   var compileOnly = new Option("co", "compileOnly", "number", -1, "Compiles only function number");
@@ -98,7 +112,6 @@ module Shumway.AVM2.Runtime {
   var compilerMaximumMethodSize = runtimeOptions.register(new Option("cmms", "maximumMethodSize", "number", 4 * 1024, "Compiler maximum method size."));
 
   declare var Analysis;
-  declare var getNative;
 
   /**
    * Seals const traits. Technically we need to throw an exception if they are ever modified after
@@ -120,7 +133,6 @@ module Shumway.AVM2.Runtime {
 
   declare var Counter: Shumway.Metrics.Counter;
   declare var Compiler;
-  declare var installProxyClassWrapper;
 
   import Map = Shumway.Map;
   import Multiname = Shumway.AVM2.ABC.Multiname;
@@ -134,6 +146,8 @@ module Shumway.AVM2.Runtime {
   import Trait = Shumway.AVM2.ABC.Trait;
   import IndentingWriter = Shumway.IndentingWriter;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
+  import propertyIsEnumerable = Shumway.ObjectUtilities.propertyIsEnumerable;
+  import isNullOrUndefined = Shumway.isNullOrUndefined;
   import createMap = Shumway.ObjectUtilities.createMap;
   import cloneObject = Shumway.ObjectUtilities.cloneObject;
   import copyProperties = Shumway.ObjectUtilities.copyProperties;
@@ -158,8 +172,6 @@ module Shumway.AVM2.Runtime {
   export var VM_NATIVE_PROTOTYPE_FLAG = "asIsNative";
   export var VM_OPEN_METHODS = "asOpenMethods";
   export var VM_IS_CLASS = "asIsClass";
-  export var VM_IS_PROXY = "asIsProxy";
-  export var VM_CALL_PROXY = "asCallProxy";
 
   export var VM_OPEN_METHOD_PREFIX = "m";
   export var VM_MEMOIZER_PREFIX = "z";
@@ -197,7 +209,7 @@ module Shumway.AVM2.Runtime {
   }
 
   var traitsWriter: IndentingWriter = null; // new IndentingWriter();
-  var callWriter: IndentingWriter = null; // new IndentingWriter();
+  var callWriter: IndentingWriter = new IndentingWriter();
 
   export interface IPatchTarget {
     object: Object;
@@ -393,7 +405,7 @@ module Shumway.AVM2.Runtime {
 
   export function resolveMultinameProperty(namespaces: Namespace [], name: string, flags: number) {
     var self: Object = this;
-    if (typeof name === "object") {
+    if (isNullOrUndefined(name) || typeof name === "object") {
       name = String(name);
     }
     if (isNumeric(name)) {
@@ -454,7 +466,7 @@ module Shumway.AVM2.Runtime {
     } else {
       method = self[resolved];
     }
-    return method.apply(receiver, args);
+    return method.asApply(receiver, args);
   }
 
   export function asGetResolvedStringPropertyFallback(resolved: any) {
@@ -521,30 +533,26 @@ module Shumway.AVM2.Runtime {
   export function asCallProperty(namespaces: Namespace [], name: any, flags: number, isLex: boolean, args: any []) {
     var self: Object = this;
     if (traceCallExecution.value) {
-      var receiverClassName = self.class ? self.class.className + " ": "";
+      var receiverClassName = self.class ? self.class + " ": "";
       callWriter.enter("call " + receiverClassName + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
     }
     var receiver: Object = isLex ? null : self;
     var result;
-    if (isProxyObject(self)) {
-      result = self[VM_CALL_PROXY](new Multiname(namespaces, name, flags), receiver, args);
+    var method;
+    var resolved = self.resolveMultinameProperty(namespaces, name, flags);
+    if (self.asGetNumericProperty && Multiname.isNumeric(resolved)) {
+      method = self.asGetNumericProperty(resolved);
     } else {
-      var method;
-      var resolved = self.resolveMultinameProperty(namespaces, name, flags);
-      if (self.asGetNumericProperty && Multiname.isNumeric(resolved)) {
-        method = self.asGetNumericProperty(resolved);
+      var openMethods = self.asOpenMethods;
+      // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to work
+      // when using memoizers because the function gets bound to |this|.
+      if (receiver && openMethods && openMethods[resolved]) {
+        method = openMethods[resolved];
       } else {
-        var openMethods = self.asOpenMethods;
-        // TODO: Passing |null| as |this| doesn't work correctly for free methods. It just happens to work
-        // when using memoizers because the function gets bound to |this|.
-        if (receiver && openMethods && openMethods[resolved]) {
-          method = openMethods[resolved];
-        } else {
-          method = self[resolved];
-        }
+        method = self[resolved];
       }
-      result = method.apply(receiver, args);
     }
+    result = method.asApply(receiver, args);
     traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
     return result;
   }
@@ -552,7 +560,7 @@ module Shumway.AVM2.Runtime {
   export function asCallSuper(scope, namespaces: Namespace [], name: any, flags: number, args: any []) {
     var self: Object = this;
     if (traceCallExecution.value) {
-      var receiverClassName = self.class ? self.class.className + " ": "";
+      var receiverClassName = self.class ? self.class + " ": "";
       callWriter.enter("call super " + receiverClassName + name + "(" + toSafeArrayString(args) + ") #" + callCounter.count(name));
     }
     var baseClass = scope.object.baseClass;
@@ -560,7 +568,7 @@ module Shumway.AVM2.Runtime {
     var openMethods = baseClass.traitsPrototype.asOpenMethods;
     assert (openMethods && openMethods[resolved]);
     var method = openMethods[resolved];
-    var result = method.apply(this, args);
+    var result = method.asApply(this, args);
     traceCallExecution.value > 0 && callWriter.leave("return " + toSafeString(result));
     return result;
   }
@@ -568,7 +576,7 @@ module Shumway.AVM2.Runtime {
   export function asSetSuper(scope, namespaces: Namespace [], name: any, flags: number, value: any) {
     var self: Object = this;
     if (traceCallExecution.value) {
-      var receiverClassName = self.class ? self.class.className + " ": "";
+      var receiverClassName = self.class ? self.class + " ": "";
       callWriter.enter("set super " + receiverClassName + name + "(" + toSafeString(value) + ") #" + callCounter.count(name));
     }
     var baseClass = scope.object.baseClass;
@@ -584,7 +592,7 @@ module Shumway.AVM2.Runtime {
   export function asGetSuper(scope, namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
     if (traceCallExecution.value) {
-      var receiver = self.class ? self.class.className + " ": "";
+      var receiver = self.class ? self.class + " ": "";
       callWriter.enter("get super " + receiver + name + " #" + callCounter.count(name));
     }
     var baseClass = scope.object.baseClass;
@@ -599,18 +607,18 @@ module Shumway.AVM2.Runtime {
     return result;
   }
 
-  export function construct(cls: Class, args: any []) {
+  export function construct(cls: Shumway.AVM2.AS.ASClass, args: any []) {
     if (cls.classInfo) {
       // return primitive values for new'd boxes
       var qn = Multiname.getQualifiedName(cls.classInfo.instanceInfo.name);
       if (qn === Multiname.String) {
-        return String.apply(null, args);
+        return String.asApply(null, args);
       }
       if (qn === Multiname.Boolean) {
-        return Boolean.apply(null, args);
+        return Boolean.asApply(null, args);
       }
       if (qn === Multiname.Number) {
-        return Number.apply(null, args);
+        return Number.asApply(null, args);
       }
     }
     var c = <any> cls.instanceConstructor;
@@ -632,7 +640,7 @@ module Shumway.AVM2.Runtime {
     for (var i = 0; i < args.length; i++) {
       applyArguments[i + 1] = args[i];
     }
-    return new (Function.bind.apply(c, applyArguments));
+    return new (Function.bind.asApply(c, applyArguments));
   }
 
   export function asConstructProperty(namespaces: Namespace [], name: any, flags: number, args: any []) {
@@ -646,23 +654,21 @@ module Shumway.AVM2.Runtime {
     return result;
   }
 
-  /**
-   * Proxy traps ignore operations passing through nonProxying functions.
-   */
-  export function nonProxyingHasProperty(object, name) {
-    return name in object;
+  export function asHasProperty(namespaces: Namespace [], name: any, flags: number) {
+    var self: Object = this;
+    return self.resolveMultinameProperty(namespaces, name, flags) in this;
   }
 
-  export function asHasProperty(namespaces: Namespace [], name: any, flags: number, nonProxy: boolean) {
+  export function asHasOwnProperty(namespaces: Namespace [], name: any, flags: number) {
     var self: Object = this;
-    if (self.hasProperty) {
-      return self.hasProperty(namespaces, name, flags);
-    }
-    if (nonProxy) {
-      return nonProxyingHasProperty(self, self.resolveMultinameProperty(namespaces, name, flags));
-    } else {
-      return self.resolveMultinameProperty(namespaces, name, flags) in this;
-    }
+    var resolved: string = self.resolveMultinameProperty(namespaces, name, flags);
+    return hasOwnProperty(self, resolved);
+  }
+
+  export function asPropertyIsEnumerable(namespaces: Namespace [], name: any, flags: number) {
+    var self: Object = this;
+    var resolved: string = self.resolveMultinameProperty(namespaces, name, flags);
+    return propertyIsEnumerable(self, resolved);
   }
 
   export function asDeleteProperty(namespaces: Namespace [], name: any, flags: number) {
@@ -760,8 +766,11 @@ module Shumway.AVM2.Runtime {
         return "number"
       } else if (x.constructor === Boolean) {
         return "boolean"
-      } else if (x instanceof XML || x instanceof XMLList) {
-        return "xml"
+      } else if (x instanceof Shumway.AVM2.AS.ASXML ||
+                 x instanceof Shumway.AVM2.AS.ASXMLList) {
+        return "xml";
+      } else if (Shumway.AVM2.AS.ASClass.isType(x)) {
+        return "object";
       }
     }
     return typeof x;
@@ -802,7 +811,19 @@ module Shumway.AVM2.Runtime {
   }
 
 
-  export function throwError(name, error) {
+  export function asCheckVectorSetNumericProperty(i, length, fixed) {
+    if (i < 0 || i > length || (i === length && fixed) || !isNumeric(i)) {
+      throwError("RangeError", Errors.OutOfRangeError, i, length);
+    }
+  }
+
+  export function asCheckVectorGetNumericProperty(i, length) {
+    if (i < 0 || i >= length || !isNumeric(i)) {
+      throwError("RangeError", Errors.OutOfRangeError, i, length);
+    }
+  }
+
+  export function throwError(name, error, ...rest) {
     if (true) {
       var message = Shumway.AVM2.formatErrorMessage.apply(null, Array.prototype.slice.call(arguments, 1));
       throwErrorFromVM(AVM2.currentDomain(), name, message, error.code);
@@ -832,7 +853,7 @@ module Shumway.AVM2.Runtime {
   }
 
   export function asIsType(type, value) {
-    return type.isInstance(value);
+    return type.isType(value);
   }
 
   export function asAsType(type, value) {
@@ -867,7 +888,7 @@ module Shumway.AVM2.Runtime {
       return null;
     }
 
-    if (type.isInstance(value)) {
+    if (type.isType(value)) {
       return value;
     } else {
       // FIXME throwErrorFromVM needs to be called from within the runtime
@@ -884,7 +905,7 @@ module Shumway.AVM2.Runtime {
    * Similar to |toString| but returns |null| for |null| or |undefined| instead
    * of "null" or "undefined".
    */
-  export function asCoerceString(x) {
+  export function asCoerceString(x): string {
     if (typeof x === "string") {
       return x;
     } else if (x == undefined) {
@@ -893,19 +914,19 @@ module Shumway.AVM2.Runtime {
     return x + '';
   }
 
-  export function asCoerceInt(x) {
+  export function asCoerceInt(x): number {
     return x | 0;
   }
 
-  export function asCoerceUint(x) {
+  export function asCoerceUint(x): number {
     return x >>> 0;
   }
 
-  export function asCoerceNumber(x) {
+  export function asCoerceNumber(x): number {
     return +x;
   }
 
-  export function asCoerceBoolean(x) {
+  export function asCoerceBoolean(x): boolean {
     return !!x;
   }
 
@@ -923,7 +944,7 @@ module Shumway.AVM2.Runtime {
     return String(a).localeCompare(String(b));
   }
 
-  export function asCompare(a, b, options, compareFunction) {
+  export function asCompare(a: any, b: any, options: SORT, compareFunction?) {
     release || Shumway.Debug.assertNotImplemented (!(options & SORT.UNIQUESORT), "UNIQUESORT");
     release || Shumway.Debug.assertNotImplemented (!(options & SORT.RETURNINDEXEDARRAY), "RETURNINDEXEDARRAY");
     var result = 0;
@@ -1007,6 +1028,11 @@ module Shumway.AVM2.Runtime {
     return {index: 0, object: null};
   }
 
+  function isXMLType(x): boolean {
+    return x instanceof Shumway.AVM2.AS.ASXML ||
+           x instanceof Shumway.AVM2.AS.ASXMLList;
+  }
+
   export function getDescendants(object, mn) {
     if (!isXMLType(object)) {
       throw "Not XML object in getDescendants";
@@ -1038,6 +1064,7 @@ module Shumway.AVM2.Runtime {
       assert (object);
       originals[surrogate.name] = createEmptyObject();
       surrogate.methods.forEach(function (originalFunctionName) {
+        assert (originalFunctionName);
         var originalFunction;
         if (object.prototype.hasOwnProperty(originalFunctionName)) {
           originalFunction = object.prototype[originalFunctionName];
@@ -1080,6 +1107,9 @@ module Shumway.AVM2.Runtime {
     defineNonEnumerableProperty(global.Object.prototype, "asCallResolvedStringProperty", asCallResolvedStringProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asConstructProperty", asConstructProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asHasProperty", asHasProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asHasPropertyInternal", asHasProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asHasOwnProperty", asHasOwnProperty);
+    defineNonEnumerableProperty(global.Object.prototype, "asPropertyIsEnumerable", asPropertyIsEnumerable);
     defineNonEnumerableProperty(global.Object.prototype, "asHasTraitProperty", asHasTraitProperty);
     defineNonEnumerableProperty(global.Object.prototype, "asDeleteProperty", asDeleteProperty);
 
@@ -1087,6 +1117,9 @@ module Shumway.AVM2.Runtime {
     defineNonEnumerableProperty(global.Object.prototype, "asNextValue", asNextValue);
     defineNonEnumerableProperty(global.Object.prototype, "asNextNameIndex", asNextNameIndex);
     defineNonEnumerableProperty(global.Object.prototype, "asGetEnumerableKeys", asGetEnumerableKeys);
+
+    defineNonEnumerableProperty(global.Function.prototype, "asCall", global.Function.prototype.call);
+    defineNonEnumerableProperty(global.Function.prototype, "asApply", global.Function.prototype.apply);
 
     [
       "Array",
@@ -1352,6 +1385,8 @@ module Shumway.AVM2.Runtime {
     }
     if (mi.hasExceptions() && !compilerEnableExceptions.value) {
       return false;
+    } else if (mi.hasSetsDxns()) {
+      return false;
     } else if (mi.code.length > compilerMaximumMethodSize.value) {
       return false;
     }
@@ -1467,6 +1502,21 @@ module Shumway.AVM2.Runtime {
         }
         return Shumway.AVM2.Interpreter.interpretMethod(global, methodInfo, scope, args);
       };
+    }
+    if (methodInfo.hasSetsDxns()) {
+      // SETS_DXNS means we allowed to save default xml namespace in the scope.
+      // Simulating that by saving/restoring current xml namespace, problem
+      // that this method will not work for closures.
+      fn = (function (fn) {
+        return function () {
+          var savedDxns = Shumway.AVM2.AS.ASXML.defaultNamespace;
+          try {
+            return fn.apply(this, arguments);
+          } finally {
+            Shumway.AVM2.AS.ASXML.defaultNamespace = savedDxns;
+          }
+        };
+      })(fn);
     }
     fn.instanceConstructor = fn;
     fn.debugName = "Interpreter Function #" + vmNextInterpreterFunctionId++;
@@ -1646,21 +1696,11 @@ module Shumway.AVM2.Runtime {
       var md = trait.metadata;
       if (md && md.native) {
         var nativeName = md.native.value[0].value;
-        var makeNativeFunction = getNative(nativeName);
-        fn = makeNativeFunction && makeNativeFunction(null, scope);
+        fn = Shumway.AVM2.AS.getNative(nativeName);
       } else if (md && md.unsafeJSNative) {
-        fn = getNative(md.unsafeJSNative.value[0].value);
+        fn = Shumway.AVM2.AS.getNative(md.unsafeJSNative.value[0].value);
       } else if (natives) {
-        // At this point the native class already had the scope, so we don't
-        // need to close over the method again.
-        var k = Multiname.getName(mi.name);
-        if (trait.isGetter()) {
-          fn = natives[k] ? natives[k].get : undefined;
-        } else if (trait.isSetter()) {
-          fn = natives[k] ? natives[k].set : undefined;
-        } else {
-          fn = natives[k];
-        }
+        fn = Shumway.AVM2.AS.getMethodOrAccessorNative(trait, natives);
       }
       if (!fn) {
         Shumway.Debug.warning("No native method for: " + trait.kindName() + " " +
@@ -1705,7 +1745,7 @@ module Shumway.AVM2.Runtime {
    * additionally, the class object also has a set of class traits applied to it which are visible via scope lookups.
    */
   export function createClass(classInfo, baseClass, scope) {
-    release || assert (!baseClass || baseClass instanceof Class);
+    // release || assert (!baseClass || baseClass instanceof Class);
 
     var ci = classInfo;
     var ii = ci.instanceInfo;
@@ -1716,12 +1756,13 @@ module Shumway.AVM2.Runtime {
       log("Creating " + (ii.isInterface() ? "Interface" : "Class") + ": " + className  + (ci.native ? " replaced with native " + ci.native.cls : ""));
     }
 
-    var cls;
+    var cls: Shumway.AVM2.AS.ASClass;
 
     if (ii.isInterface()) {
-      cls = Interface.createInterface(classInfo);
+      cls = Shumway.AVM2.AS.createInterface(classInfo);
     } else {
-      cls = Class.createClass(classInfo, baseClass, scope);
+      // cls = Class.createClass(classInfo, baseClass, scope);
+      cls = Shumway.AVM2.AS.createClass(classInfo, baseClass, scope);
     }
 
     if (traceClasses.value) {
@@ -1736,24 +1777,19 @@ module Shumway.AVM2.Runtime {
     // Notify domain of class creation.
     domain.onMessage.notify1('classCreated', cls);
 
-    if (cls.instanceConstructor && cls !== Class) {
-      cls.verify();
-    }
-
     // TODO: Seal constant traits in the instance object. This should be done after
     // the instance constructor has executed.
-
-    if (baseClass && (Multiname.getQualifiedName(baseClass.classInfo.instanceInfo.name.name) === "Proxy" ||
-      baseClass.isProxy)) {
-      // TODO: This is very hackish.
-      installProxyClassWrapper(cls);
-      cls.isProxy = true;
-    }
 
     classInfo.classObject = cls;
 
     // Run the static initializer.
+    if (traceExecution.value) {
+      log("Running " + (ii.isInterface() ? "Interface" : "Class") + ": " + className + " Static Constructor");
+    }
     createFunction(classInfo.init, scope, false, false).call(cls);
+    if (traceExecution.value) {
+      log("Done With Static Constructor");
+    }
 
     // Seal constant traits in the class object.
     if (sealConstTraits) {
@@ -1788,7 +1824,7 @@ module Shumway.AVM2.Runtime {
     }
   }
 
-  export function applyType(domain, factory, types) {
+  export function applyType(domain: ApplicationDomain, factory: Shumway.AVM2.AS.ASClass, types) {
     var factoryClassName = factory.classInfo.instanceInfo.name.name;
     if (factoryClassName === "Vector") {
       release || assert(types.length === 1);
@@ -1797,16 +1833,18 @@ module Shumway.AVM2.Runtime {
       if (!isNullOrUndefined(type)) {
         typeClassName = type.classInfo.instanceInfo.name.name.toLowerCase();
         switch (typeClassName) {
+          case "Number":
+            typeClassName = "double";
           case "int":
           case "uint":
           case "double":
-          case "object":
             return domain.getClass("packageInternal __AS3__.vec.Vector$" + typeClassName);
         }
       }
       return domain.getClass("packageInternal __AS3__.vec.Vector$object").applyType(type);
     } else {
-      return Shumway.Debug.notImplemented(factoryClassName);
+      Shumway.Debug.notImplemented(factoryClassName);
+      return;
     }
   }
 }

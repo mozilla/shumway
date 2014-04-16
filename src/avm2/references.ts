@@ -14,22 +14,33 @@
  * limitations under the License.
  */
 
-///<reference path='../global.ts' />
+///<reference path='global.ts' />
 ///<reference path='../utilities.ts' />
+///<reference path='../metrics.ts' />
 ///<reference path='../options.ts' />
 ///<reference path='../settings.ts' />
 
 ///<reference path='lib/lib.d.ts' />
-///<reference path='metrics.ts' />
 ///<reference path='errors.ts' />
 ///<reference path='opcodes.ts' />
 ///<reference path='parser.ts' />
 ///<reference path='runtime.ts' />
 ///<reference path='domain.ts' />
 ///<reference path='scope.ts' />
-///<reference path='class.ts' />
 ///<reference path='bindings.ts' />
 ///<reference path='trampoline.ts' />
 ///<reference path='interpreter.ts' />
 ///<reference path='hacks.ts' />
+///<reference path='native.ts' />
+///<reference path='natives/xml.ts' />
+///<reference path='natives/genericVector.ts' />
+///<reference path='natives/int32Vector.ts' />
+///<reference path='natives/uint32Vector.ts' />
+///<reference path='natives/float64Vector.ts' />
+///<reference path='natives/dictionary.ts' />
+///<reference path='natives/proxy.ts' />
+///<reference path='natives/byteArray.ts' />
+///<reference path='natives/system.ts' />
+
+///<reference path='stubs.ts' />
 

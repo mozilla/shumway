@@ -189,7 +189,7 @@ module Shumway.AVM2.Runtime {
           target = forward(trampoline);
           release || assert (target);
         }
-        return target.apply(this, arguments);
+        return target.asApply(this, arguments);
       };
       /**
        * Just triggers the trampoline without executing it.

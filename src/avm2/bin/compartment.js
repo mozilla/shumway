@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-load(homePath + "src/global.js");
+load(homePath + "src/avm2/global.js");
 load(homePath + "src/utilities.js");
 
 var homePath;
@@ -26,7 +26,7 @@ load(homePath + "src/avm2/settings.js");
 load(homePath + "src/avm2/avm2Util.js");
 load(homePath + "src/options.js");
 load(homePath + "src/settings.js");
-load(homePath + "src/avm2/metrics.js");
+load(homePath + "src/metrics.js");
 
 var systemOptions = new OptionSet("System Options");
 var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
@@ -63,19 +63,24 @@ var playerglobalLoadedPromise;
 var playerglobal;
 
 load(homePath + "src/avm2/domain.js");
-load(homePath + "src/avm2/class.js");
 load(homePath + "src/avm2/xregexp.js");
 load(homePath + "src/avm2/runtime.js");
 load(homePath + "src/avm2/runtime-exports.js");
 load(homePath + "src/avm2/interpreter.js");
 load(homePath + "src/avm2/viz.js");
 load(homePath + "src/avm2/xml.js");
-load(homePath + "src/avm2/vectors-numeric.js");
-load(homePath + "src/avm2/vectors-generic.js");
-load(homePath + "src/avm2/array.js");
-load(homePath + "src/avm2/proxy.js");
-load(homePath + "src/avm2/dictionary.js");
+
+load(homePath + "src/avm2/natives/int32Vector.js");
+load(homePath + "src/avm2/natives/uint32Vector.js");
+load(homePath + "src/avm2/natives/float64Vector.js");
 load(homePath + "src/avm2/native.js");
+load(homePath + "src/avm2/natives/genericVector.js");
+load(homePath + "src/avm2/natives/dictionary.js");
+load(homePath + "src/avm2/natives/proxy.js");
+load(homePath + "src/avm2/natives/xml.js");
+load(homePath + "src/avm2/natives/system.js");
+load(homePath + "src/avm2/natives/byteArray.js");
+
 Timer.stop();
 Timer.stop();
 
