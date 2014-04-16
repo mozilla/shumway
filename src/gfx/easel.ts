@@ -54,12 +54,7 @@ module Shumway.GFX.Layers {
       if (this._keyCodes[32]) {
         easel.state = new DragState(easel.world, easel.getMousePosition(event, null), easel.world.matrix.clone());
       } else {
-        var p = easel.getMousePosition(event, null);
-        var frames = easel.stage.queryFramesByPoint(p);
-        var frame = frames.length > 0 ? frames[0] : null;
-        if (frame && frame.hasCapability(FrameCapabilityFlags.AllowMatrixWrite)) {
-          easel.state = new DragState(frames[0], easel.getMousePosition(event, null), frames[0].matrix.clone());
-        }
+        easel.state = new MouseDownState();
       }
     }
 
@@ -83,6 +78,26 @@ module Shumway.GFX.Layers {
       } else {
         easel._canvas.style.cursor = "auto";
       }
+    }
+  }
+
+  class MouseDownState extends State {
+    private _startTime: number = Date.now();
+
+    onMouseMove(easel: Easel, event: MouseEvent) {
+      if (Date.now() - this._startTime < 10) {
+        return;
+      }
+      var p = easel.getMousePosition(event, null);
+      var frames = easel.stage.queryFramesByPoint(p);
+      var frame = frames.length > 0 ? frames[0] : null;
+      if (frame && frame.hasCapability(FrameCapabilityFlags.AllowMatrixWrite)) {
+        easel.state = new DragState(frames[0], easel.getMousePosition(event, null), frames[0].matrix.clone());
+      }
+    }
+
+    onMouseUp(easel: Easel, event: MouseEvent) {
+      easel.state = new StartState();
     }
   }
 
@@ -126,10 +141,11 @@ module Shumway.GFX.Layers {
         context.fillStyle = ColorStyle.Toolbars;
         context.fillRect(0, 0, self._stage.w, 32);
       })));
-      toolbar.setCapability(FrameCapabilityFlags.AllowMatrixWrite, false, Direction.Downward);
       var mousePositionLabelShape = toolbar.addChild(new Shape(this._mousePositionLabel));
       mousePositionLabelShape.x = 4;
       mousePositionLabelShape.y = 8;
+      toolbar.setCapability(FrameCapabilityFlags.AllowMatrixWrite, false, Direction.Downward);
+      toolbar.alpha = 0.8;
       return toolbar;
     }
 
