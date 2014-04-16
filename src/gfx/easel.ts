@@ -56,7 +56,8 @@ module Shumway.GFX.Layers {
       } else {
         var p = easel.getMousePosition(event, null);
         var frames = easel.stage.queryFramesByPoint(p);
-        if (frames.length > 0) {
+        var frame = frames.length > 0 ? frames[0] : null;
+        if (frame && frame.hasCapability(FrameCapabilityFlags.AllowMatrixWrite)) {
           easel.state = new DragState(frames[0], easel.getMousePosition(event, null), frames[0].matrix.clone());
         }
       }
@@ -125,6 +126,7 @@ module Shumway.GFX.Layers {
         context.fillStyle = ColorStyle.Toolbars;
         context.fillRect(0, 0, self._stage.w, 32);
       })));
+      toolbar.setCapability(FrameCapabilityFlags.AllowMatrixWrite, false, Direction.Downward);
       var mousePositionLabelShape = toolbar.addChild(new Shape(this._mousePositionLabel));
       mousePositionLabelShape.x = 4;
       mousePositionLabelShape.y = 8;
@@ -135,11 +137,10 @@ module Shumway.GFX.Layers {
       this._stage = new Stage(canvas.width, canvas.height, true);
       this._world = new FrameContainer();
       this._stage.addChild(this._world);
-      this._world.addChild(new Shape(new Grid()));
-
+      this._world.addChild(new Shape(new Grid())).removeCapability(FrameCapabilityFlags.AllowMatrixWrite);
       var overlay = new FrameContainer();
       overlay.addChild(this._createToolbar());
-      // this._stage.addChild(overlay);
+      this._stage.addChild(overlay);
 
       this._canvas = canvas;
       this._context = canvas.getContext('2d');

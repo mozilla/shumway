@@ -4,7 +4,7 @@ createEasel();
   var Grid = Shumway.GFX.Layers.Grid;
   var Shape = Shumway.GFX.Layers.Shape;
 
-  for (var i = 0; i < 4; i++) {
+  for (var i = 0; i < 1; i++) {
     var frame = new Shape(Shumway.getRandomShape());
     frame.matrix.translate(Math.random() * 1000, Math.random() * 1000);
     easel.world.addChild(frame);

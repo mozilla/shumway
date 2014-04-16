@@ -9,6 +9,12 @@ module Shumway.GFX.Layers {
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
 
+  export enum Direction {
+    None       = 0,
+    Upward     = 1,
+    Downward   = 2
+  }
+
   export enum FrameFlags {
     Empty      = 0,
     Dirty      = 1,
@@ -16,6 +22,24 @@ module Shumway.GFX.Layers {
     IsMask     = 4,
     Culled     = 8,
     IgnoreMask = 16
+  }
+
+  /**
+   * Frame capabilities, the fewer capabilities the better.
+   */
+  export enum FrameCapabilityFlags {
+    None                        = 0,
+
+    AllowMatrixWrite            = 1,
+    AllowColorMatrixWrite       = 2,
+    AllowBlendModeWrite         = 4,
+    AllowFiltersWrite           = 8,
+    AllowMaskWrite              = 16,
+    AllowAllWrite               = AllowMatrixWrite |
+                                  AllowColorMatrixWrite |
+                                  AllowBlendModeWrite |
+                                  AllowFiltersWrite |
+                                  AllowMaskWrite
   }
 
   export enum BlendMode {
@@ -71,6 +95,8 @@ module Shumway.GFX.Layers {
   }
 
   export class Frame {
+    private static _path: Frame[] = [];
+
     private _alpha: number = 1;
     private _blendMode: BlendMode = BlendMode.Default;
     private _matrix: Matrix;
@@ -78,16 +104,15 @@ module Shumway.GFX.Layers {
     private _colorMatrix: ColorMatrix;
     private _isTransformInvalid: boolean = true;
     private _properties: {[name: string]: any};
-    private static _path: Frame[] = [];
     private _mask: Frame;
+    private _flags: FrameFlags = FrameFlags.Empty;
+    private _capability: FrameCapabilityFlags = FrameCapabilityFlags.AllowAllWrite;
 
     /**
      * Stage location where the frame was previously drawn. This is used to compute dirty regions and
      * is updated every time the frame is rendered.
      */
     _previouslyRenderedAABB: Rectangle;
-
-    _flags: FrameFlags = FrameFlags.Empty;
 
     _setFlags(flags: FrameFlags) {
       this._flags |= flags;
@@ -105,6 +130,42 @@ module Shumway.GFX.Layers {
       return !!(this._flags & flags);
     }
 
+    /**
+     * Propagates capabilities up and down the frame tree.
+     *
+     * TODO: Make this non-recursive.
+     */
+    public setCapability(capability: FrameCapabilityFlags, on: boolean = true, direction: Direction = Direction.None) {
+      if (on) {
+        this._capability |= capability;
+      } else {
+        this._capability &= ~capability;
+      }
+      if (direction === Direction.Upward && this.parent) {
+        this.parent.setCapability(capability, on, direction);
+      } else if (direction === Direction.Downward && this instanceof FrameContainer) {
+        var frameContainer = <FrameContainer>this;
+        var children = frameContainer.children;
+        for (var i = 0; i < children.length; i++) {
+          children[i].setCapability(capability, on, direction);
+        }
+      }
+    }
+
+    public removeCapability(capability: FrameCapabilityFlags) {
+      this.setCapability(capability, false);
+    }
+
+    public hasCapability(capability: FrameCapabilityFlags) {
+      return this._capability & capability;
+    }
+
+    public checkCapability(capability: FrameCapabilityFlags) {
+      if (!(this._capability & capability)) {
+        unexpected("Frame doesn't have capability: " + FrameCapabilityFlags[capability]);
+      }
+    }
+
     get properties(): {[name: string]: any} {
       return this._properties || (this._properties = Object.create(null));
     }
@@ -114,6 +175,7 @@ module Shumway.GFX.Layers {
     }
 
     set x(value: number) {
+      this.checkCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._matrix.tx = value;
     }
 
@@ -122,7 +184,17 @@ module Shumway.GFX.Layers {
     }
 
     set y(value: number) {
+      this.checkCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._matrix.ty = value;
+    }
+
+    get matrix(): Matrix {
+      return this._matrix;
+    }
+
+    set matrix(value: Matrix) {
+      this.checkCapability(FrameCapabilityFlags.AllowMatrixWrite);
+      this._matrix = value;
     }
 
     get alpha(): number {
@@ -130,6 +202,7 @@ module Shumway.GFX.Layers {
     }
 
     set blendMode(value: number) {
+      this.checkCapability(FrameCapabilityFlags.AllowBlendModeWrite);
       this._blendMode = value;
       this.invalidate();
     }
@@ -139,6 +212,7 @@ module Shumway.GFX.Layers {
     }
 
     set filters(value: Filter[]) {
+      this.checkCapability(FrameCapabilityFlags.AllowFiltersWrite);
       this._filters = value;
       this.invalidate();
     }
@@ -148,6 +222,7 @@ module Shumway.GFX.Layers {
     }
 
     set colorMatrix(value: ColorMatrix) {
+      this.checkCapability(FrameCapabilityFlags.AllowColorMatrixWrite);
       this._colorMatrix = value;
       this.invalidate();
     }
@@ -157,6 +232,7 @@ module Shumway.GFX.Layers {
     }
 
     set mask(value: Frame) {
+      this.checkCapability(FrameCapabilityFlags.AllowMaskWrite);
       if (this._mask && this._mask !== value) {
         this._mask._removeFlags(FrameFlags.IsMask);
       }
@@ -232,14 +308,6 @@ module Shumway.GFX.Layers {
     set alpha(value: number) {
       this._alpha = value;
       this.invalidate();
-    }
-
-    get matrix(): Matrix {
-      return this._matrix;
-    }
-
-    set matrix(value: Matrix) {
-      this._matrix = value;
     }
 
     public parent: Frame;
