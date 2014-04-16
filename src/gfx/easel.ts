@@ -88,16 +88,15 @@ module Shumway.GFX.Layers {
       if (Date.now() - this._startTime < 10) {
         return;
       }
-      var p = easel.getMousePosition(event, null);
-      var frames = easel.stage.queryFramesByPoint(p);
-      var frame = frames.length > 0 ? frames[0] : null;
+      var frame = easel.queryFrameUnderMouse(event);
       if (frame && frame.hasCapability(FrameCapabilityFlags.AllowMatrixWrite)) {
-        easel.state = new DragState(frames[0], easel.getMousePosition(event, null), frames[0].matrix.clone());
+        easel.state = new DragState(frame, easel.getMousePosition(event, null), frame.matrix.clone());
       }
     }
 
     onMouseUp(easel: Easel, event: MouseEvent) {
       easel.state = new StartState();
+      easel.selectFrameUnderMouse(event);
     }
   }
 
@@ -130,6 +129,9 @@ module Shumway.GFX.Layers {
     private _renderer: Canvas2DStageRenderer;
     private _state: State = new StartState();
 
+    private _selection: FrameContainer;
+    private _selectedFrames: Frame [] = [];
+
     private _mousePositionLabel: Label;
 
     private _createToolbar(): Frame {
@@ -137,7 +139,7 @@ module Shumway.GFX.Layers {
       this._mousePositionLabel = new Label(256, 16);
       this._mousePositionLabel.text = "Hello World";
       var self = this;
-      toolbar.addChild(new Shape(new Renderable(1024, 32, function (context: CanvasRenderingContext2D) {
+      toolbar.addChild(new Shape(new Renderable(new Rectangle(0, 0, 1024, 32), function (context: CanvasRenderingContext2D) {
         context.fillStyle = ColorStyle.Toolbars;
         context.fillRect(0, 0, self._stage.w, 32);
       })));
@@ -145,7 +147,6 @@ module Shumway.GFX.Layers {
       mousePositionLabelShape.x = 4;
       mousePositionLabelShape.y = 8;
       toolbar.setCapability(FrameCapabilityFlags.AllowMatrixWrite, false, Direction.Downward);
-      toolbar.alpha = 0.8;
       return toolbar;
     }
 
@@ -157,6 +158,8 @@ module Shumway.GFX.Layers {
       var overlay = new FrameContainer();
       overlay.addChild(this._createToolbar());
       this._stage.addChild(overlay);
+
+      this._selection = <FrameContainer>overlay.addChild(new FrameContainer());
 
       this._canvas = canvas;
       this._context = canvas.getContext('2d');
@@ -257,6 +260,32 @@ module Shumway.GFX.Layers {
       // this._viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
     }
 
+    queryFrameUnderMouse(event: MouseEvent) {
+      var frames = this.stage.queryFramesByPoint(this.getMousePosition(event, null));
+      return frames.length > 0 ? frames[0] : null;
+    }
+
+    selectFrameUnderMouse(event: MouseEvent) {
+      this._selection.clearChildren();
+      var frame = this.queryFrameUnderMouse(event);
+      if (frame && frame.hasCapability(FrameCapabilityFlags.AllowMatrixWrite)) {
+        this._selectedFrames.push(frame);
+        this._selection.matrix = frame.getConcatenatedMatrix();
+        var bounds = frame.getBounds();
+        bounds.snap();
+        bounds.expand(4, 4);
+        var selection = this._selection.addChild(new Shape(new Renderable(bounds, function (context: CanvasRenderingContext2D) {
+          context.beginPath();
+          context.lineWidth = 2;
+          context.strokeStyle = ColorStyle.LightOrange;
+          context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        })));
+      } else {
+        this._selectedFrames = [];
+      }
+      this._render();
+    }
+
     getMousePosition(event: MouseEvent, coordinateSpace: Frame) {
       var canvas = this._canvas;
       var bRect = canvas.getBoundingClientRect();
@@ -273,7 +302,7 @@ module Shumway.GFX.Layers {
     }
 
     private _onMouseDown(event) {
-      this._renderer.render(this._stage, {});
+      this._renderer.render(this._stage, { });
     }
 
     private _onMouseUp(event) {

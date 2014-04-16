@@ -16,12 +16,13 @@ module Shumway.GFX.Layers {
   }
 
   export enum FrameFlags {
-    Empty      = 0,
-    Dirty      = 1,
-    Hidden     = 2,
-    IsMask     = 4,
-    Culled     = 8,
-    IgnoreMask = 16
+    Empty           = 0,
+    Dirty           = 1,
+    Hidden          = 2,
+    IsMask          = 4,
+    Culled          = 8,
+    IgnoreMask      = 16,
+    IgnoreSelection = 32
   }
 
   /**
@@ -35,11 +36,13 @@ module Shumway.GFX.Layers {
     AllowBlendModeWrite         = 4,
     AllowFiltersWrite           = 8,
     AllowMaskWrite              = 16,
+    AllowChildrenWrite          = 32,
     AllowAllWrite               = AllowMatrixWrite |
                                   AllowColorMatrixWrite |
                                   AllowBlendModeWrite |
                                   AllowFiltersWrite |
-                                  AllowMaskWrite
+                                  AllowMaskWrite |
+                                  AllowChildrenWrite
   }
 
   export enum BlendMode {
@@ -141,11 +144,11 @@ module Shumway.GFX.Layers {
       } else {
         this._capability &= ~capability;
       }
-      if (direction === Direction.Upward && this.parent) {
-        this.parent.setCapability(capability, on, direction);
+      if (direction === Direction.Upward && this._parent) {
+        this._parent.setCapability(capability, on, direction);
       } else if (direction === Direction.Downward && this instanceof FrameContainer) {
         var frameContainer = <FrameContainer>this;
-        var children = frameContainer.children;
+        var children = frameContainer._children;
         for (var i = 0; i < children.length; i++) {
           children[i].setCapability(capability, on, direction);
         }
@@ -166,6 +169,33 @@ module Shumway.GFX.Layers {
       }
     }
 
+    _propagateFlags(flags: FrameFlags, direction: Direction) {
+      if (this._hasFlags(flags)) {
+        return;
+      }
+      this._setFlags(flags);
+
+      if (direction & Direction.Upward) {
+        var node = this._parent;
+        while (node) {
+          node._setFlags(flags);
+          node = node._parent;
+        }
+      }
+
+      if (direction & Direction.Downward) {
+        if (this instanceof FrameContainer) {
+          var children = (<FrameContainer>this)._children;
+          for (var i = 0; i < children.length; i++) {
+            var child = children[i];
+            if (!child._hasFlags(flags)) {
+              child._propagateFlags(flags, Direction.Downward);
+            }
+          }
+        }
+      }
+    }
+    
     get properties(): {[name: string]: any} {
       return this._properties || (this._properties = Object.create(null));
     }
@@ -274,8 +304,8 @@ module Shumway.GFX.Layers {
       stack.length = 0;
       stack.push(this);
       var frame = this;
-      while (frame.parent) {
-        frame = frame.parent;
+      while (frame._parent) {
+        frame = frame._parent;
         stack.push(frame);
       }
     }
@@ -300,7 +330,7 @@ module Shumway.GFX.Layers {
       var alpha = 1;
       while (frame) {
         alpha *= frame._alpha;
-        frame = frame.parent;
+        frame = frame._parent;
       }
       return alpha;
     }
@@ -310,18 +340,19 @@ module Shumway.GFX.Layers {
       this.invalidate();
     }
 
-    public parent: Frame;
+    _parent: Frame;
+    
     public ignoreMaskAlpha: boolean;
 
     constructor () {
-      this.parent = null;
+      this._parent = null;
       this.matrix = Matrix.createIdentity();
     }
 
     get stage(): Stage {
       var frame = this;
-      while (frame.parent) {
-        frame = frame.parent;
+      while (frame._parent) {
+        frame = frame._parent;
       }
       if (frame instanceof Stage) {
         return <Stage>frame;
@@ -334,7 +365,7 @@ module Shumway.GFX.Layers {
       var t = Matrix.createIdentity();
       while (frame) {
         t.concat(frame.matrix);
-        frame = frame.parent;
+        frame = frame._parent;
       }
       return t;
     }
@@ -372,9 +403,9 @@ module Shumway.GFX.Layers {
         if (result === VisitorFlags.Continue) {
           if (frame instanceof FrameContainer) {
             frameContainer = <FrameContainer>frame;
-            var length = frameContainer.children.length;
+            var length = frameContainer._children.length;
             for (var i = 0; i < length; i++) {
-              var child = frameContainer.children[frontToBack ? i : length - 1 - i];
+              var child = frameContainer._children[frontToBack ? i : length - 1 - i];
               if (!child || (visibleOnly && child._hasFlags(FrameFlags.Hidden))) {
                 continue;
               }
@@ -396,9 +427,9 @@ module Shumway.GFX.Layers {
     public getDepth(): number {
       var depth = 0;
       var frame = this;
-      while (frame.parent) {
+      while (frame._parent) {
         depth ++;
-        frame = frame.parent;
+        frame = frame._parent;
       }
       return depth;
     }
@@ -435,81 +466,87 @@ module Shumway.GFX.Layers {
   }
 
   export class FrameContainer extends Frame {
-    public children: Frame [];
+    _children: Frame [];
     constructor() {
       super();
-      this.children = [];
+      this._children = [];
     }
 
     public addChild(child: Frame): Frame {
+      this.checkCapability(FrameCapabilityFlags.AllowChildrenWrite);
       if (child) {
-        child.parent = this;
+        child._parent = this;
         child.invalidate();
       }
-      this.children.push(child);
+      this._children.push(child);
       return child;
     }
 
     public addChildAt(child: Frame, index: number): Frame {
-      assert(index >= 0 && index <= this.children.length);
-      if (index === this.children.length) {
-        this.children.push(child);
+      this.checkCapability(FrameCapabilityFlags.AllowChildrenWrite);
+      assert(index >= 0 && index <= this._children.length);
+      if (index === this._children.length) {
+        this._children.push(child);
       } else {
-        this.children.splice(index, 0, child);
+        this._children.splice(index, 0, child);
       }
       if (child) {
-        child.parent = this;
+        child._parent = this;
         child.invalidate();
       }
       return child;
     }
 
     public removeChild(child: Frame) {
-      if (child.parent === this) {
-        var index = this.children.indexOf(child);
+      this.checkCapability(FrameCapabilityFlags.AllowChildrenWrite);
+      if (child._parent === this) {
+        var index = this._children.indexOf(child);
         this.removeChildAt(index)
       }
     }
 
     public removeChildAt(index: number) {
-      assert(index >= 0 && index < this.children.length);
-      var result = this.children.splice(index, 1);
+      this.checkCapability(FrameCapabilityFlags.AllowChildrenWrite);
+      assert(index >= 0 && index < this._children.length);
+      var result = this._children.splice(index, 1);
       var child = result[0];
       if (!child) {
         return;
       }
       child.gatherPreviousDirtyRegions();
-      child.parent = undefined;
+      child._parent = undefined;
       child.invalidate();
     }
 
     public clearChildren() {
-      for (var i = 0; i < this.children.length; i++) {
-        var child = this.children[i];
+      this.checkCapability(FrameCapabilityFlags.AllowChildrenWrite);
+      for (var i = 0; i < this._children.length; i++) {
+        var child = this._children[i];
         if (child) {
           child.gatherPreviousDirtyRegions();
         }
       }
-      this.children.length = 0;
+      this._children.length = 0;
     }
 
     public shuffleChildren() {
-      var length = this.children.length;
+      this.checkCapability(FrameCapabilityFlags.AllowChildrenWrite);
+      var length = this._children.length;
       for (var i = 0; i < length * 2; i++) {
         var a = getRandomIntInclusive(0, length - 1);
         var b = getRandomIntInclusive(0, length - 1);
-        var t = this.children[a];
-        this.children[a] = this.children[b];
-        this.children[b] = t;
-        this.children[a].invalidate();
-        this.children[b].invalidate();
+        var t = this._children[a];
+        this._children[a] = this._children[b];
+        this._children[b] = t;
+        this._children[a].invalidate();
+        this._children[b].invalidate();
       }
     }
 
     public getBounds(): Rectangle {
       var bounds = Rectangle.createEmpty();
-      for (var i = 0; i < this.children.length; i++) {
-        var child = this.children[i];
+      for (var i = 0; i < this._children.length; i++) {
+        var child = this._children[i];
         if (!child._hasFlags(FrameFlags.Hidden)) {
           var childBounds = child.getBounds().clone();
           child.matrix.transformRectangleAABB(childBounds);
@@ -637,9 +674,9 @@ module Shumway.GFX.Layers {
     isInvalid: boolean = true;
     isScalable: boolean = true;
     isTileable: boolean = false;
-    constructor(w: number, h: number, render: (context: CanvasRenderingContext2D, clipBounds?: Rectangle) => void) {
+    constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, clipBounds?: Rectangle) => void) {
       this.render = render;
-      this._bounds = new Rectangle(0, 0, w, h);
+      this._bounds = bounds.clone();
     }
     getBounds (): Rectangle {
       return this._bounds;

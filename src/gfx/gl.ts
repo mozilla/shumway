@@ -751,8 +751,8 @@ module Shumway.GFX.GL {
       var tileTransform = Matrix.createIdentity();
       var colorTransform = ColorMatrix.createIdentity();
       stage.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
-        if (frame.parent !== parent) {
-          parent = frame.parent;
+        if (frame._parent !== parent) {
+          parent = frame._parent;
           depth += options.frameSpacing;
         }
 
