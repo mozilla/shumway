@@ -11,29 +11,6 @@
     console.info(message);
   }
 
-  var testNumber = 0;
-
-  function eqFloat(a, b, test) {
-    test = test ? ": " + test : " #" + testNumber;
-    if (Math.abs(a -b) < 0.1) {
-      console.info("PASS" + test)
-    } else {
-      console.error("FAIL" + test)
-    }
-    testNumber ++;
-  }
-
-  function check(condition, test) {
-    test = test ? ": " + test : " #" + testNumber;
-    if (condition) {
-      console.info("PASS" + test)
-    } else {
-      console.error("FAIL" + test)
-    }
-    testNumber ++;
-  }
-
-
   var Random = Shumway.Random;
   var Matrix = flash.geom.Matrix;
   var Rectangle = flash.geom.Rectangle;

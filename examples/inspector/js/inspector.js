@@ -24,6 +24,28 @@ var yt = getQueryVariable('yt');
 
 var swfController = new SWFController(timeline, pauseExecution);
 
+var testNumber = 0;
+
+function eqFloat(a, b, test) {
+  test = test ? ": " + test : " #" + testNumber;
+  if (Math.abs(a -b) < 0.1) {
+    console.info("PASS" + test)
+  } else {
+    console.error("FAIL" + test)
+  }
+  testNumber ++;
+}
+
+function check(condition, test) {
+  test = test ? ": " + test : " #" + testNumber;
+  if (condition) {
+    console.info("PASS" + test)
+  } else {
+    console.error("FAIL" + test)
+  }
+  testNumber ++;
+}
+
 /** Global sanityTests array, sanity tests add themselves to this */
 var sanityTests = [];
 

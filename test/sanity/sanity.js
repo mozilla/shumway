@@ -2,16 +2,6 @@ sanityTests.push(function runInspectorSanityTests(console, avm2) {
   function log(message) {
     console.info(message);
   }
-  var testNumber = 0;
-  function check(condition, test) {
-    test = test ? ": " + test : " #" + testNumber;
-    if (condition) {
-      console.info("PASS" + test)
-    } else {
-      console.error("FAIL" + test)
-    }
-    testNumber ++;
-  }
 
   check (flash.events.Event.class.ADDED === "added", "Static Class Property");
 
