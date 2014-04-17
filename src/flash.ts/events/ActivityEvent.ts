@@ -16,6 +16,7 @@
 // Class: ActivityEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ActivityEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
     static bindings: string [] = null; // ["_activating", "activating", "activating", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, activating: boolean = false) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; activating = !!activating;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; activating = !!activating;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.ActivityEvent");
     }

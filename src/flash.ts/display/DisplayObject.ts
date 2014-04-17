@@ -25,6 +25,7 @@
 // Class: DisplayObject
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
 
@@ -1028,7 +1029,7 @@ module Shumway.AVM2.AS.flash.display {
      return this._blendMode;
     }
     set blendMode(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
 
       if (this._blendMode === value) {
         return;

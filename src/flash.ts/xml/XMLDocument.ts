@@ -16,10 +16,11 @@
 // Class: XMLDocument
 module Shumway.AVM2.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class XMLDocument extends flash.xml.XMLNode {
     static initializer: any = null;
     constructor (source: string = null) {
-      source = "" + source;
+      source = asCoerceString(source);
       false && super(undefined, undefined);
       notImplemented("Dummy Constructor: public flash.xml.XMLDocument");
     }

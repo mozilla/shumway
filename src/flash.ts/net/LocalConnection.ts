@@ -16,6 +16,7 @@
 // Class: LocalConnection
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   declare var FileLoadingService;
@@ -52,7 +53,7 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.LocalConnection::close"); return;
     }
     connect(connectionName: string): void {
-      connectionName = "" + connectionName;
+      connectionName = asCoerceString(connectionName);
       notImplemented("public flash.net.LocalConnection::connect"); return;
     }
     get domain(): string {
@@ -63,7 +64,7 @@ module Shumway.AVM2.AS.flash.net {
       return m && m[1];
     }
     send(connectionName: string, methodName: string): void {
-      connectionName = "" + connectionName; methodName = "" + methodName;
+      connectionName = asCoerceString(connectionName); methodName = asCoerceString(methodName);
       notImplemented("public flash.net.LocalConnection::send"); return;
     }
     get client(): ASObject {

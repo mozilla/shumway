@@ -16,6 +16,7 @@
 // Class: Trace
 module Shumway.AVM2.AS.flash.trace {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Trace extends ASNative {
     
     // Called whenever the class is initialized.

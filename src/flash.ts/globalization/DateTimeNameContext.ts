@@ -16,6 +16,7 @@
 // Class: DateTimeNameContext
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class DateTimeNameContext extends ASNative {
     
     // Called whenever the class is initialized.

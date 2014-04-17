@@ -16,6 +16,7 @@
 // Class: MicrophoneEnhancedOptions
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class MicrophoneEnhancedOptions extends ASNative {
     
     // Called whenever the class is initialized.

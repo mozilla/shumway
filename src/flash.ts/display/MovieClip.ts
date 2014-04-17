@@ -16,6 +16,7 @@
 // Class: MovieClip
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
 
@@ -142,7 +143,7 @@ module Shumway.AVM2.AS.flash.display {
 
     gotoFrame(frame: any, sceneName: string = null) {
       //frame = frame;
-      sceneName = "" + sceneName;
+      sceneName = asCoerceString(sceneName);
 
       var scenes = this._scenes;
       var realSceneIndex = -1;

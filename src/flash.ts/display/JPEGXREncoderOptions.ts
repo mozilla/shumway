@@ -16,6 +16,7 @@
 // Class: JPEGXREncoderOptions
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class JPEGXREncoderOptions extends ASNative {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null; // ["quantization", "colorSpace", "trimFlexBits"];
     
     constructor (quantization: number /*uint*/ = 20, colorSpace: string = "auto", trimFlexBits: number /*uint*/ = 0) {
-      quantization = quantization >>> 0; colorSpace = "" + colorSpace; trimFlexBits = trimFlexBits >>> 0;
+      quantization = quantization >>> 0; colorSpace = asCoerceString(colorSpace); trimFlexBits = trimFlexBits >>> 0;
       false && super();
       notImplemented("Dummy Constructor: public flash.display.JPEGXREncoderOptions");
     }

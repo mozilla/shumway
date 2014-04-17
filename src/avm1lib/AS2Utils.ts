@@ -16,6 +16,7 @@
 // Class: AS2Utils
 module Shumway.AVM2.AS.avm1lib {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import MovieClip = Shumway.AVM2.AS.flash.display.MovieClip;
   import Stage = Shumway.AVM2.AS.flash.display.Stage;
   import AS2Context = Shumway.AVM1.AS2Context;

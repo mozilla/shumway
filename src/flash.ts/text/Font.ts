@@ -16,6 +16,7 @@
 // Class: Font
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Font extends ASNative {
     
     // Called whenever the class is initialized.
@@ -64,7 +65,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._fontType;
     }
     hasGlyphs(str: string): boolean {
-      str = "" + str;
+      str = asCoerceString(str);
       notImplemented("public flash.text.Font::hasGlyphs"); return;
     }
   }

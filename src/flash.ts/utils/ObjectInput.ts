@@ -16,6 +16,7 @@
 // Class: ObjectInput
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ObjectInput extends ASNative implements flash.utils.IDataInput {
     
     // Called whenever the class is initialized.
@@ -61,7 +62,7 @@ module Shumway.AVM2.AS.flash.utils {
       // return this._endian;
     }
     set endian(type: string) {
-      type = "" + type;
+      type = asCoerceString(type);
       notImplemented("packageInternal flash.utils.ObjectInput::set endian"); return;
       // this._endian = type;
     }
@@ -97,7 +98,7 @@ module Shumway.AVM2.AS.flash.utils {
       notImplemented("packageInternal flash.utils.ObjectInput::readDouble"); return;
     }
     readMultiByte(length: number /*uint*/, charSet: string): string {
-      length = length >>> 0; charSet = "" + charSet;
+      length = length >>> 0; charSet = asCoerceString(charSet);
       notImplemented("packageInternal flash.utils.ObjectInput::readMultiByte"); return;
     }
     readUTF(): string {

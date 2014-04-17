@@ -16,6 +16,7 @@
 // Class: StringTools
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class StringTools extends ASNative {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.globalization {
     static bindings: string [] = null; // [];
     
     constructor (requestedLocaleIDName: string) {
-      requestedLocaleIDName = "" + requestedLocaleIDName;
+      requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
       false && super();
       notImplemented("Dummy Constructor: public flash.globalization.StringTools");
     }
@@ -60,15 +61,15 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._actualLocaleIDName;
     }
     toLowerCase(s: string): string {
-      s = "" + s;
+      s = asCoerceString(s);
       notImplemented("public flash.globalization.StringTools::toLowerCase"); return;
     }
     toUpperCase(s: string): string {
-      s = "" + s;
+      s = asCoerceString(s);
       notImplemented("public flash.globalization.StringTools::toUpperCase"); return;
     }
     ctor(requestedLocaleIDName: string): void {
-      requestedLocaleIDName = "" + requestedLocaleIDName;
+      requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
       notImplemented("public flash.globalization.StringTools::ctor"); return;
     }
   }

@@ -16,6 +16,7 @@
 // Class: Bitmap
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Bitmap extends flash.display.DisplayObject {
     
     // Called whenever the class is initialized.
@@ -35,7 +36,7 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       DisplayObject.instanceConstructorNoInitialize.call(this);
       this._bitmapData = bitmapData;
-      this._pixelSnapping = "" + pixelSnapping;
+      this._pixelSnapping = asCoerceString(pixelSnapping);
       this._smoothing = !!smoothing;
     }
     

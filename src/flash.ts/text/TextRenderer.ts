@@ -16,6 +16,7 @@
 // Class: TextRenderer
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextRenderer extends ASNative {
     
     // Called whenever the class is initialized.
@@ -47,7 +48,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._antiAliasType;
     }
     set antiAliasType(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextRenderer::set antiAliasType"); return;
       // this._antiAliasType = value;
     }
@@ -65,12 +66,12 @@ module Shumway.AVM2.AS.flash.text {
       // return this._displayMode;
     }
     set displayMode(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextRenderer::set displayMode"); return;
       // this._displayMode = value;
     }
     static setAdvancedAntiAliasingTable(fontName: string, fontStyle: string, colorType: string, advancedAntiAliasingTable: any []): void {
-      fontName = "" + fontName; fontStyle = "" + fontStyle; colorType = "" + colorType; advancedAntiAliasingTable = advancedAntiAliasingTable;
+      fontName = asCoerceString(fontName); fontStyle = asCoerceString(fontStyle); colorType = asCoerceString(colorType); advancedAntiAliasingTable = advancedAntiAliasingTable;
       notImplemented("public flash.text.TextRenderer::static setAdvancedAntiAliasingTable"); return;
     }
     

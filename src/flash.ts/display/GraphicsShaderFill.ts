@@ -16,6 +16,7 @@
 // Class: GraphicsShaderFill
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GraphicsShaderFill extends ASNative implements IGraphicsFill, IGraphicsData {
     
     // Called whenever the class is initialized.

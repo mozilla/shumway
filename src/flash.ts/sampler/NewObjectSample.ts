@@ -16,6 +16,7 @@
 // Class: NewObjectSample
 module Shumway.AVM2.AS.flash.sampler {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NewObjectSample extends flash.sampler.Sample {
     
     // Called whenever the class is initialized.

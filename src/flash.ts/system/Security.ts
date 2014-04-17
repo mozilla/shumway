@@ -16,6 +16,7 @@
 // Class: Security
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   declare var FileLoadingService;
@@ -86,11 +87,11 @@ module Shumway.AVM2.AS.flash.system {
       somewhatImplemented("public flash.system.Security::static allowInsecureDomain");
     }
     static loadPolicyFile(url: string): void {
-      url = "" + url;
+      url = asCoerceString(url);
       somewhatImplemented("public flash.system.Security::static loadPolicyFile");
     }
     static showSettings(panel: string = "default"): void {
-      panel = "" + panel;
+      panel = asCoerceString(panel);
       notImplemented("public flash.system.Security::static showSettings"); return;
     }
     static duplicateSandboxBridgeInputArguments(toplevel: ASObject, args: any []): any [] {

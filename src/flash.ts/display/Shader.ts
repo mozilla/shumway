@@ -16,6 +16,7 @@
 // Class: Shader
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Shader extends ASNative {
     
     // Called whenever the class is initialized.
@@ -59,7 +60,7 @@ module Shumway.AVM2.AS.flash.display {
       // return this._precisionHint;
     }
     set precisionHint(p: string) {
-      p = "" + p;
+      p = asCoerceString(p);
       notImplemented("public flash.display.Shader::set precisionHint"); return;
       // this._precisionHint = p;
     }

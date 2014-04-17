@@ -16,6 +16,7 @@
 // Class: TransformGestureEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TransformGestureEvent extends flash.events.GestureEvent {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
     static bindings: string [] = null; // ["_scaleX", "_scaleY", "_rotation", "_offsetX", "_offsetY", "scaleX", "scaleX", "scaleY", "scaleY", "rotation", "rotation", "offsetX", "offsetX", "offsetY", "offsetY", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = true, cancelable: boolean = false, phase: string = null, localX: number = 0, localY: number = 0, scaleX: number = 1, scaleY: number = 1, rotation: number = 0, offsetX: number = 0, offsetY: number = 0, ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; phase = "" + phase; localX = +localX; localY = +localY; scaleX = +scaleX; scaleY = +scaleY; rotation = +rotation; offsetX = +offsetX; offsetY = +offsetY; ctrlKey = !!ctrlKey; altKey = !!altKey; shiftKey = !!shiftKey;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; phase = asCoerceString(phase); localX = +localX; localY = +localY; scaleX = +scaleX; scaleY = +scaleY; rotation = +rotation; offsetX = +offsetX; offsetY = +offsetY; ctrlKey = !!ctrlKey; altKey = !!altKey; shiftKey = !!shiftKey;
       false && super(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.TransformGestureEvent");
     }

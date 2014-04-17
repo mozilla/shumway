@@ -15,11 +15,13 @@
  */
 // Class: StageCaptureEvent
 module Shumway.AVM2.AS.flash.automation {
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class StageCaptureEvent extends flash.events.Event {
     static initializer: any = null;
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, url: string = "", checksum: number /*uint*/ = 0) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; url = "" + url; checksum = checksum >>> 0;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; url = asCoerceString(url); checksum = checksum >>> 0;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.automation.StageCaptureEvent");
     }

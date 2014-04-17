@@ -16,6 +16,7 @@
 // Class: NetDataEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetDataEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
     static bindings: string [] = null; // ["_timestamp", "_info", "timestamp", "info", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, timestamp: number = 0, info: ASObject = null) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; timestamp = +timestamp; info = info;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; timestamp = +timestamp; info = info;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.NetDataEvent");
     }

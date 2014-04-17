@@ -16,6 +16,7 @@
 // Class: SampleDataEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class SampleDataEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
     static bindings: string [] = null; // ["_theposition", "_thedata", "theposition", "theposition", "thedata", "thedata", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, theposition: number = 0, thedata: flash.utils.ByteArray = null) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; theposition = +theposition; thedata = thedata;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; theposition = +theposition; thedata = thedata;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.SampleDataEvent");
     }

@@ -16,6 +16,7 @@
 // Class: FontWeight
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class FontWeight extends ASNative {
     
     // Called whenever the class is initialized.

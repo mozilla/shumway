@@ -16,6 +16,7 @@
 // Class: Capabilities
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
 
@@ -229,7 +230,7 @@ module Shumway.AVM2.AS.flash.system {
       // return Capabilities.__internal;
     }
     static hasMultiChannelAudio(type: string): boolean {
-      type = "" + type;
+      type = asCoerceString(type);
       notImplemented("public flash.system.Capabilities::static hasMultiChannelAudio"); return;
     }
     

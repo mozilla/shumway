@@ -16,6 +16,7 @@
 // Class: StatusEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class StatusEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
     static bindings: string [] = null; // ["_code", "_level", "code", "code", "level", "level", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, code: string = "", level: string = "") {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; code = "" + code; level = "" + level;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; code = asCoerceString(code); level = asCoerceString(level);
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.StatusEvent");
     }

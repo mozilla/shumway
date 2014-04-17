@@ -16,6 +16,7 @@
 // Class: Configuration
 module Shumway.AVM2.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Configuration extends ASNative {
     static initializer: any = null;
     constructor () {
@@ -28,7 +29,7 @@ module Shumway.AVM2.AS.flash.automation {
       notImplemented("public flash.automation.Configuration::get testAutomationConfiguration"); return;
     }
     set deviceConfiguration(configData: string) {
-      configData = "" + configData;
+      1 = asCoerceString(1);
       notImplemented("public flash.automation.Configuration::set deviceConfiguration"); return;
     }
     get deviceConfiguration(): string {

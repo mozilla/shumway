@@ -16,6 +16,7 @@
 // Class: ContextMenu
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ContextMenu extends flash.display.NativeMenu {
     
     // Called whenever the class is initialized.

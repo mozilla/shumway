@@ -16,6 +16,7 @@
 // Class: GeolocationEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GeolocationEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
     static bindings: string [] = null; // ["_latitude", "_longitude", "_altitude", "_hAccuracy", "_vAccuracy", "_speed", "_heading", "_timestamp", "latitude", "latitude", "longitude", "longitude", "altitude", "altitude", "hAccuracy", "hAccuracy", "vAccuracy", "vAccuracy", "speed", "speed", "heading", "heading", "timestamp", "timestamp", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, latitude: number = 0, longitude: number = 0, altitude: number = 0, hAccuracy: number = 0, vAccuracy: number = 0, speed: number = 0, heading: number = 0, timestamp: number = 0) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; latitude = +latitude; longitude = +longitude; altitude = +altitude; hAccuracy = +hAccuracy; vAccuracy = +vAccuracy; speed = +speed; heading = +heading; timestamp = +timestamp;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; latitude = +latitude; longitude = +longitude; altitude = +altitude; hAccuracy = +hAccuracy; vAccuracy = +vAccuracy; speed = +speed; heading = +heading; timestamp = +timestamp;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.GeolocationEvent");
     }

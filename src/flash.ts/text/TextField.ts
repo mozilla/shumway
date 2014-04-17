@@ -16,6 +16,7 @@
 // Class: TextField
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextField extends flash.display.InteractiveObject {
     
     // Called whenever the class is initialized.
@@ -46,7 +47,7 @@ module Shumway.AVM2.AS.flash.text {
     
     // AS -> JS Bindings
     static isFontCompatible(fontName: string, fontStyle: string): boolean {
-      fontName = "" + fontName; fontStyle = "" + fontStyle;
+      fontName = asCoerceString(fontName); fontStyle = asCoerceString(fontStyle);
       notImplemented("public flash.text.TextField::static isFontCompatible"); return;
     }
     
@@ -105,7 +106,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._antiAliasType;
     }
     set antiAliasType(antiAliasType: string) {
-      antiAliasType = "" + antiAliasType;
+      antiAliasType = asCoerceString(antiAliasType);
       notImplemented("public flash.text.TextField::set antiAliasType"); return;
       // this._antiAliasType = antiAliasType;
     }
@@ -114,7 +115,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._autoSize;
     }
     set autoSize(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextField::set autoSize"); return;
       // this._autoSize = value;
     }
@@ -194,7 +195,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._gridFitType;
     }
     set gridFitType(gridFitType: string) {
-      gridFitType = "" + gridFitType;
+      gridFitType = asCoerceString(gridFitType);
       notImplemented("public flash.text.TextField::set gridFitType"); return;
       // this._gridFitType = gridFitType;
     }
@@ -203,7 +204,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._htmlText;
     }
     set htmlText(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextField::set htmlText"); return;
       // this._htmlText = value;
     }
@@ -268,7 +269,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._restrict;
     }
     set restrict(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextField::set restrict"); return;
       // this._restrict = value;
     }
@@ -330,7 +331,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._text;
     }
     set text(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextField::set text"); return;
       // this._text = value;
     }
@@ -365,7 +366,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._type;
     }
     set type(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextField::set type"); return;
       // this._type = value;
     }
@@ -439,11 +440,11 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("public flash.text.TextField::getRawText"); return;
     }
     replaceSelectedText(value: string): void {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextField::replaceSelectedText"); return;
     }
     replaceText(beginIndex: number /*int*/, endIndex: number /*int*/, newText: string): void {
-      beginIndex = beginIndex | 0; endIndex = endIndex | 0; newText = "" + newText;
+      beginIndex = beginIndex | 0; endIndex = endIndex | 0; newText = asCoerceString(newText);
       notImplemented("public flash.text.TextField::replaceText"); return;
     }
     setSelection(beginIndex: number /*int*/, endIndex: number /*int*/): void {
@@ -455,7 +456,7 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("public flash.text.TextField::setTextFormat"); return;
     }
     getImageReference(id: string): flash.display.DisplayObject {
-      id = "" + id;
+      id = asCoerceString(id);
       notImplemented("public flash.text.TextField::getImageReference"); return;
     }
   }

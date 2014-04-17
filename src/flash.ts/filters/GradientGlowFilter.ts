@@ -16,6 +16,7 @@
 // Class: GradientGlowFilter
 module Shumway.AVM2.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GradientGlowFilter extends flash.filters.BitmapFilter {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.filters {
     static bindings: string [] = null; // ["clone"];
     
     constructor (distance: number = 4, angle: number = 45, colors: any [] = null, alphas: any [] = null, ratios: any [] = null, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
-      distance = +distance; angle = +angle; colors = colors; alphas = alphas; ratios = ratios; blurX = +blurX; blurY = +blurY; strength = +strength; quality = quality | 0; type = "" + type; knockout = !!knockout;
+      distance = +distance; angle = +angle; colors = colors; alphas = alphas; ratios = ratios; blurX = +blurX; blurY = +blurY; strength = +strength; quality = quality | 0; type = asCoerceString(type); knockout = !!knockout;
       false && super();
       notImplemented("Dummy Constructor: public flash.filters.GradientGlowFilter");
     }
@@ -148,7 +149,7 @@ module Shumway.AVM2.AS.flash.filters {
       // return this._type;
     }
     set type(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.filters.GradientGlowFilter::set type"); return;
       // this._type = value;
     }

@@ -16,6 +16,7 @@
 // Class: Mouse
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Point = flash.geom.Point;
 
   export class Mouse extends ASNative {
@@ -53,7 +54,7 @@ module Shumway.AVM2.AS.flash.ui {
       // return this._cursor;
     }
     set cursor(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.ui.Mouse::set cursor"); return;
       // this._cursor = value;
     }
@@ -68,11 +69,11 @@ module Shumway.AVM2.AS.flash.ui {
       notImplemented("public flash.ui.Mouse::static show"); return;
     }
     static registerCursor(name: string, cursor: flash.ui.MouseCursorData): void {
-      name = "" + name; cursor = cursor;
+      name = asCoerceString(name); cursor = cursor;
       notImplemented("public flash.ui.Mouse::static registerCursor"); return;
     }
     static unregisterCursor(name: string): void {
-      name = "" + name;
+      name = asCoerceString(name);
       notImplemented("public flash.ui.Mouse::static unregisterCursor"); return;
     }
 

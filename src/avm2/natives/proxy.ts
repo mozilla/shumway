@@ -18,6 +18,7 @@
 module Shumway.AVM2.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import Multiname = Shumway.AVM2.ABC.Multiname;

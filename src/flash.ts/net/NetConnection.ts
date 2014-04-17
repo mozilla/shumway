@@ -16,9 +16,9 @@
 // Class: NetConnection
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Telemetry = Shumway.Telemetry;
   import NetStatusEvent = Shumway.AVM2.AS.flash.events.NetStatusEvent;
 

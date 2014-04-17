@@ -16,6 +16,7 @@
 // Class: DomainMemoryWithStage3D
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class DomainMemoryWithStage3D extends ASNative {
     
     // Called whenever the class is initialized.

@@ -16,8 +16,8 @@
 // Class: DisplayObjectContainer
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import throwError = Shumway.AVM2.Runtime.throwError;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
 
   import Event = flash.events.Event;

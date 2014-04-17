@@ -16,6 +16,7 @@
 // Class: TextLine
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextLine extends flash.display.DisplayObjectContainer {
     
     // Called whenever the class is initialized.
@@ -142,7 +143,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._validity;
     }
     set validity(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.TextLine::set validity"); return;
       // this._validity = value;
     }
@@ -195,7 +196,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       notImplemented("public flash.text.engine.TextLine::getAtomGraphic"); return;
     }
     getBaselinePosition(baseline: string): number {
-      baseline = "" + baseline;
+      baseline = asCoerceString(baseline);
       notImplemented("public flash.text.engine.TextLine::getBaselinePosition"); return;
     }
     dump(): string {

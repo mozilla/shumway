@@ -16,6 +16,7 @@
 // Class: TextFormat
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export class TextFormat extends ASNative {
     
@@ -32,7 +33,7 @@ module Shumway.AVM2.AS.flash.text {
     static bindings: string [] = null; // [];
     
     constructor (font: string = null, size: ASObject = null, color: ASObject = null, bold: ASObject = null, italic: ASObject = null, underline: ASObject = null, url: string = null, target: string = null, align: string = null, leftMargin: ASObject = null, rightMargin: ASObject = null, indent: ASObject = null, leading: ASObject = null) {
-      font = "" + font; size = size; color = color; bold = bold; italic = italic; underline = underline; url = "" + url; target = "" + target; align = "" + align; leftMargin = leftMargin; rightMargin = rightMargin; indent = indent; leading = leading;
+      font = asCoerceString(font); size = size; color = color; bold = bold; italic = italic; underline = underline; url = asCoerceString(url); target = asCoerceString(target); align = asCoerceString(align); leftMargin = leftMargin; rightMargin = rightMargin; indent = indent; leading = leading;
       false && super();
       notImplemented("Dummy Constructor: public flash.text.TextFormat");
     }
@@ -66,7 +67,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._align;
     }
     set align(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextFormat::set align"); return;
       // this._align = value;
     }
@@ -111,7 +112,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._display;
     }
     set display(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextFormat::set display"); return;
       // this._display = value;
     }
@@ -120,7 +121,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._font;
     }
     set font(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextFormat::set font"); return;
       // this._font = value;
     }
@@ -210,7 +211,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._target;
     }
     set target(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextFormat::set target"); return;
       // this._target = value;
     }
@@ -228,7 +229,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._url;
     }
     set url(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.TextFormat::set url"); return;
       // this._url = value;
     }

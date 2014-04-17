@@ -16,6 +16,7 @@
 // Class: XMLParser
 module Shumway.AVM2.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class XMLParser extends ASNative {
     static initializer: any = null;
     constructor () {
@@ -27,7 +28,7 @@ module Shumway.AVM2.AS.flash.xml {
     // Instance JS -> AS Bindings
     // Instance AS -> JS Bindings
     startParse(source: string, ignoreWhite: boolean): void {
-      source = "" + source; ignoreWhite = !!ignoreWhite;
+      source = asCoerceString(source); ignoreWhite = !!ignoreWhite;
       notImplemented("packageInternal flash.xml.XMLParser::startParse"); return;
     }
     getNext(tag: flash.xml.XMLTag): number /*int*/ {

@@ -16,6 +16,7 @@
 // Class: ActionGenerator
 module Shumway.AVM2.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ActionGenerator extends ASNative {
     static initializer: any = null;
     constructor () {

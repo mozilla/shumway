@@ -15,9 +15,9 @@
  */
 // Class: EventDispatcher
 module Shumway.AVM2.AS.flash.events {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import isString = Shumway.isString;
   import isFunction = Shumway.isFunction;

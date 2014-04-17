@@ -16,6 +16,7 @@
 // Class: VertexBuffer3D
 module Shumway.AVM2.AS.flash.display3D {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class VertexBuffer3D extends ASNative {
     
     // Called whenever the class is initialized.

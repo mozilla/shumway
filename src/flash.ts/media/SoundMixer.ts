@@ -16,6 +16,7 @@
 // Class: SoundMixer
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   export class SoundMixer extends ASNative {
@@ -75,7 +76,7 @@ module Shumway.AVM2.AS.flash.media {
       // return SoundMixer._audioPlaybackMode;
     }
     static set audioPlaybackMode(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.media.SoundMixer::set audioPlaybackMode"); return;
       // SoundMixer._audioPlaybackMode = value;
     }

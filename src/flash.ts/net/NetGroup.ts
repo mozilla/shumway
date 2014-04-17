@@ -16,6 +16,7 @@
 // Class: NetGroup
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetGroup extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.net {
     static bindings: string [] = null; // ["close", "replicationStrategy", "replicationStrategy", "addHaveObjects", "removeHaveObjects", "addWantObjects", "removeWantObjects", "writeRequestedObject", "denyRequestedObject", "estimatedMemberCount", "neighborCount", "receiveMode", "receiveMode", "post", "sendToNearest", "sendToNeighbor", "sendToAllNeighbors", "addNeighbor", "addMemberHint"];
     
     constructor (connection: flash.net.NetConnection, groupspec: string) {
-      connection = connection; groupspec = "" + groupspec;
+      connection = connection; groupspec = asCoerceString(groupspec);
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.net.NetGroup");
     }
@@ -70,7 +71,7 @@ module Shumway.AVM2.AS.flash.net {
       // return this._info;
     }
     convertPeerIDToGroupAddress(peerID: string): string {
-      peerID = "" + peerID;
+      peerID = asCoerceString(peerID);
       notImplemented("public flash.net.NetGroup::convertPeerIDToGroupAddress"); return;
     }
     get localCoverageFrom(): string {

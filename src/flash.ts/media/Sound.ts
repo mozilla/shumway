@@ -16,6 +16,7 @@
 // Class: Sound
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import Telemetry = Shumway.Telemetry;
   import ID3Info = Shumway.AVM2.AS.flash.media.ID3Info;
@@ -146,7 +147,7 @@ module Shumway.AVM2.AS.flash.media {
       notImplemented("public flash.media.Sound::loadCompressedDataFromByteArray"); return;
     }
     loadPCMFromByteArray(bytes: flash.utils.ByteArray, samples: number /*uint*/, format: string = "float", stereo: boolean = true, sampleRate: number = 44100): void {
-      bytes = bytes; samples = samples >>> 0; format = "" + format; stereo = !!stereo; sampleRate = +sampleRate;
+      bytes = bytes; samples = samples >>> 0; format = asCoerceString(format); stereo = !!stereo; sampleRate = +sampleRate;
       notImplemented("public flash.media.Sound::loadPCMFromByteArray"); return;
     }
     play(startTime: number = 0, loops: number /*int*/ = 0, sndTransform: flash.media.SoundTransform = null): flash.media.SoundChannel {

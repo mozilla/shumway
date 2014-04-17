@@ -16,6 +16,7 @@
 // Class: ElementFormat
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ElementFormat extends ASNative {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.text.engine {
     static bindings: string [] = null; // ["clone"];
     
     constructor (fontDescription: flash.text.engine.FontDescription = null, fontSize: number = 12, color: number /*uint*/ = 0, alpha: number = 1, textRotation: string = "auto", dominantBaseline: string = "roman", alignmentBaseline: string = "useDominantBaseline", baselineShift: number = 0, kerning: string = "on", trackingRight: number = 0, trackingLeft: number = 0, locale: string = "en", breakOpportunity: string = "auto", digitCase: string = "default", digitWidth: string = "default", ligatureLevel: string = "common", typographicCase: string = "default") {
-      fontDescription = fontDescription; fontSize = +fontSize; color = color >>> 0; alpha = +alpha; textRotation = "" + textRotation; dominantBaseline = "" + dominantBaseline; alignmentBaseline = "" + alignmentBaseline; baselineShift = +baselineShift; kerning = "" + kerning; trackingRight = +trackingRight; trackingLeft = +trackingLeft; locale = "" + locale; breakOpportunity = "" + breakOpportunity; digitCase = "" + digitCase; digitWidth = "" + digitWidth; ligatureLevel = "" + ligatureLevel; typographicCase = "" + typographicCase;
+      fontDescription = fontDescription; fontSize = +fontSize; color = color >>> 0; alpha = +alpha; textRotation = asCoerceString(textRotation); dominantBaseline = asCoerceString(dominantBaseline); alignmentBaseline = asCoerceString(alignmentBaseline); baselineShift = +baselineShift; kerning = asCoerceString(kerning); trackingRight = +trackingRight; trackingLeft = +trackingLeft; locale = asCoerceString(locale); breakOpportunity = asCoerceString(breakOpportunity); digitCase = asCoerceString(digitCase); digitWidth = asCoerceString(digitWidth); ligatureLevel = asCoerceString(ligatureLevel); typographicCase = asCoerceString(typographicCase);
       false && super();
       notImplemented("Dummy Constructor: public flash.text.engine.ElementFormat");
     }
@@ -65,7 +66,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._alignmentBaseline;
     }
     set alignmentBaseline(alignmentBaseline: string) {
-      alignmentBaseline = "" + alignmentBaseline;
+      alignmentBaseline = asCoerceString(alignmentBaseline);
       notImplemented("public flash.text.engine.ElementFormat::set alignmentBaseline"); return;
       // this._alignmentBaseline = alignmentBaseline;
     }
@@ -92,7 +93,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._breakOpportunity;
     }
     set breakOpportunity(opportunityType: string) {
-      opportunityType = "" + opportunityType;
+      opportunityType = asCoerceString(opportunityType);
       notImplemented("public flash.text.engine.ElementFormat::set breakOpportunity"); return;
       // this._breakOpportunity = opportunityType;
     }
@@ -110,7 +111,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._dominantBaseline;
     }
     set dominantBaseline(dominantBaseline: string) {
-      dominantBaseline = "" + dominantBaseline;
+      dominantBaseline = asCoerceString(dominantBaseline);
       notImplemented("public flash.text.engine.ElementFormat::set dominantBaseline"); return;
       // this._dominantBaseline = dominantBaseline;
     }
@@ -128,7 +129,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._digitCase;
     }
     set digitCase(digitCaseType: string) {
-      digitCaseType = "" + digitCaseType;
+      digitCaseType = asCoerceString(digitCaseType);
       notImplemented("public flash.text.engine.ElementFormat::set digitCase"); return;
       // this._digitCase = digitCaseType;
     }
@@ -137,7 +138,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._digitWidth;
     }
     set digitWidth(digitWidthType: string) {
-      digitWidthType = "" + digitWidthType;
+      digitWidthType = asCoerceString(digitWidthType);
       notImplemented("public flash.text.engine.ElementFormat::set digitWidth"); return;
       // this._digitWidth = digitWidthType;
     }
@@ -146,7 +147,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._ligatureLevel;
     }
     set ligatureLevel(ligatureLevelType: string) {
-      ligatureLevelType = "" + ligatureLevelType;
+      ligatureLevelType = asCoerceString(ligatureLevelType);
       notImplemented("public flash.text.engine.ElementFormat::set ligatureLevel"); return;
       // this._ligatureLevel = ligatureLevelType;
     }
@@ -164,7 +165,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._kerning;
     }
     set kerning(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.ElementFormat::set kerning"); return;
       // this._kerning = value;
     }
@@ -173,7 +174,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._locale;
     }
     set locale(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.ElementFormat::set locale"); return;
       // this._locale = value;
     }
@@ -182,7 +183,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._textRotation;
     }
     set textRotation(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.ElementFormat::set textRotation"); return;
       // this._textRotation = value;
     }
@@ -209,7 +210,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._typographicCase;
     }
     set typographicCase(typographicCaseType: string) {
-      typographicCaseType = "" + typographicCaseType;
+      typographicCaseType = asCoerceString(typographicCaseType);
       notImplemented("public flash.text.engine.ElementFormat::set typographicCase"); return;
       // this._typographicCase = typographicCaseType;
     }

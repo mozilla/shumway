@@ -16,6 +16,7 @@
 // Class: ByteArray
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ByteArray extends ASNative implements IDataInput2, IDataOutput2 {
     
     // Called whenever the class is initialized.
@@ -97,15 +98,15 @@ module Shumway.AVM2.AS.flash.utils {
       notImplemented("public flash.utils.ByteArray::writeDouble"); return;
     }
     writeMultiByte(value: string, charSet: string): void {
-      value = "" + value; charSet = "" + charSet;
+      value = asCoerceString(value); charSet = asCoerceString(charSet);
       notImplemented("public flash.utils.ByteArray::writeMultiByte"); return;
     }
     writeUTF(value: string): void {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.utils.ByteArray::writeUTF"); return;
     }
     writeUTFBytes(value: string): void {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.utils.ByteArray::writeUTFBytes"); return;
     }
     readBoolean(): boolean {
@@ -136,7 +137,7 @@ module Shumway.AVM2.AS.flash.utils {
       notImplemented("public flash.utils.ByteArray::readDouble"); return;
     }
     readMultiByte(length: number /*uint*/, charSet: string): string {
-      length = length >>> 0; charSet = "" + charSet;
+      length = length >>> 0; charSet = asCoerceString(charSet);
       notImplemented("public flash.utils.ByteArray::readMultiByte"); return;
     }
     readUTF(): string {
@@ -163,11 +164,11 @@ module Shumway.AVM2.AS.flash.utils {
       notImplemented("public flash.utils.ByteArray::readObject"); return;
     }
     _compress(algorithm: string): void {
-      algorithm = "" + algorithm;
+      algorithm = asCoerceString(algorithm);
       notImplemented("public flash.utils.ByteArray::_compress"); return;
     }
     _uncompress(algorithm: string): void {
-      algorithm = "" + algorithm;
+      algorithm = asCoerceString(algorithm);
       notImplemented("public flash.utils.ByteArray::_uncompress"); return;
     }
     toString(): string {
@@ -200,7 +201,7 @@ module Shumway.AVM2.AS.flash.utils {
       // return this._endian;
     }
     set endian(type: string) {
-      type = "" + type;
+      type = asCoerceString(type);
       notImplemented("public flash.utils.ByteArray::set endian"); return;
       // this._endian = type;
     }

@@ -16,6 +16,7 @@
 // Class: DateTimeStyle
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class DateTimeStyle extends ASNative {
     
     // Called whenever the class is initialized.

@@ -16,6 +16,7 @@
 // Class: IME
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class IME extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -57,12 +58,12 @@ module Shumway.AVM2.AS.flash.system {
       // return this._conversionMode;
     }
     set conversionMode(mode: string) {
-      mode = "" + mode;
+      mode = asCoerceString(mode);
       notImplemented("public flash.system.IME::set conversionMode"); return;
       // this._conversionMode = mode;
     }
     static setCompositionString(composition: string): void {
-      composition = "" + composition;
+      composition = asCoerceString(composition);
       notImplemented("public flash.system.IME::static setCompositionString"); return;
     }
     static doConversion(): void {

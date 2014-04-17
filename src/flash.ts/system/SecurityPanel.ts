@@ -16,6 +16,7 @@
 // Class: SecurityPanel
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class SecurityPanel extends ASNative {
     
     // Called whenever the class is initialized.

@@ -16,6 +16,7 @@
 // Class: Transform
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import Errors = Shumway.AVM2.Errors;
 

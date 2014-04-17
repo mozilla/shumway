@@ -16,6 +16,7 @@
 // Class: IEventDispatcher
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export interface EventHandler {
     (event: flash.events.Event): void;

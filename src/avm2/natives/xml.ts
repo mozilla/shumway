@@ -57,6 +57,7 @@
 module Shumway.AVM2.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   var _asGetProperty = Object.prototype.asGetProperty;
   var _asSetProperty = Object.prototype.asSetProperty;

@@ -16,6 +16,7 @@
 // Class: ExternalInterface
 module Shumway.AVM2.AS.flash.external {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Telemetry = Shumway.Telemetry;
   import ASObject = Shumway.AVM2.AS.ASObject;
@@ -96,7 +97,7 @@ module Shumway.AVM2.AS.flash.external {
     }
 
     static _evalJS(expression: string): string {
-      expression = "" + expression;
+      expression = asCoerceString(expression);
       return FirefoxCom.requestSync('externalCom', {action: 'eval', expression: expression});
     }
 

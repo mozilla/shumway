@@ -16,6 +16,7 @@
 // Class: GraphicsGradientFill
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GraphicsGradientFill extends ASNative implements IGraphicsFill, IGraphicsData {
     
     // Called whenever the class is initialized.
@@ -32,13 +33,13 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor (type: string = "linear", colors: any [] = null, alphas: any [] = null, ratios: any [] = null, matrix: any = null, spreadMethod: any = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0) {
       false && super();
-      this.type = "" + type;
+      this.type = asCoerceString(type);
       this.colors = colors;
       this.alphas = alphas;
       this.ratios = ratios;
       this.matrix = matrix;
       this.spreadMethod = spreadMethod;
-      this.interpolationMethod = "" + interpolationMethod;
+      this.interpolationMethod = asCoerceString(interpolationMethod);
       this.focalPointRatio = +focalPointRatio;
     }
     

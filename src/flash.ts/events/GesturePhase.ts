@@ -16,6 +16,7 @@
 // Class: GesturePhase
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GesturePhase extends ASNative {
     
     // Called whenever the class is initialized.
