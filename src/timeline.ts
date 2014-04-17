@@ -142,12 +142,13 @@ module Shumway.SWF.timeline {
 
     copy(): Snapshot {
       var t = new Snapshot();
-      var depths = this._depths;
+      var depths = this._depths.slice();
+      var states = this._states;
       for (var i = 0; i < depths.length; i++) {
         var depth = depths[i];
-        t._depths.push(depth);
-        t._states[depth] = this._states[depth].copy();
+        t._states[depth] = states[depth].copy();
       }
+      t._depths = depths;
       t._diff = this._diff;
       return t;
     }
