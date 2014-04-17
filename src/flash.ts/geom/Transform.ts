@@ -75,7 +75,7 @@ module Shumway.AVM2.AS.flash.geom {
 
     set matrix3D(m: flash.geom.Matrix3D) {
       //m = m;
-      if (!(m instanceof Matrix3D)) {
+      if (!(Matrix3D.isType(m))) {
         throwError('TypeError', Errors.CheckTypeFailedError, m, 'flash.geom.Matrix3D');
       }
 
