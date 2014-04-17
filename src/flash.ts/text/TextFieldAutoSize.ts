@@ -22,6 +22,8 @@ module Shumway.AVM2.AS.flash.text {
     static staticBindings: string [] = null;
     static bindings: string [] = null;
 
+    static validValues: any = {'none': true, 'left': true, 'center': true, 'right': true};
+
     constructor() {
     }
 

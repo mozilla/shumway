@@ -36,16 +36,15 @@ module Shumway.AVM2.AS.flash.text {
       notImplemented("Dummy Constructor: public flash.text.TextLineMetrics");
     }
 
-    // JS -> AS Bindings
+    largestFormat: TextFormat;
+    y: number;
 
+    // JS -> AS Bindings
     x: number;
     width: number;
     height: number;
     ascent: number;
     descent: number;
     leading: number;
-
-    // AS -> JS Bindings
-
   }
 }

@@ -71,6 +71,9 @@ module Shumway.AVM2.AS.flash.text {
 
 
     fromObject(obj: any): TextFormat {
+      if (!obj) {
+        return this;
+      }
       this._font = obj.face || null;
       this._size = typeof obj.size === 'number' ? obj.size : null;
       this._color = typeof obj.color === 'number' ? obj.color : null;

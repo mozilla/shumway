@@ -1,12 +1,12 @@
 /**
  * Copyright 2013 Mozilla Foundation
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -16,447 +16,703 @@
 // Class: TextField
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import throwError = Shumway.AVM2.Runtime.throwError;
   export class TextField extends flash.display.InteractiveObject {
-    
-    // Called whenever the class is initialized.
+
+    static staticBindings: string [] = null;
+    static bindings: string [] = null;
+
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static bindings: string [] = null; // ["selectedText", "appendText", "getXMLText", "insertXMLText", "copyRichText", "pasteRichText"];
-    
-    constructor () {
+
+    static initializer: any = function (symbol: TextField) {
+      this._bbox = {xMin: 0, yMin: 0, xMax: 2000, yMax: 2000};
+      var initialFormat = this._defaultTextFormat = {
+        align: 'LEFT', face: 'serif', size: 12,
+        letterspacing: 0, kerning: 0, color: 0, leading: 0
+      };
+
+      this._type = 'dynamic';
+      this._embedFonts = false;
+      this._selectable = true;
+      this._autoSize = 'none';
+      this._scrollV = 1;
+      this._maxScrollV = 1;
+      this._bottomScrollV = 1;
+      this._background = false;
+      this._border = false;
+      this._backgroundColor = 0xffffff;
+      this._backgroundColorStr = "#ffffff";
+      this._borderColor = 0x0;
+      this._borderColorStr = "#000000";
+      this._text = '';
+      this._htmlText = '';
+      this._condenseWhite = false;
+      this._multiline = false;
+      this._wordWrap = false;
+      this._textColor = 0;
+
+      var s = symbol;
+      if (!s) {
+        this._currentTransform.tx -= 40;
+        this._currentTransform.ty -= 40;
+        this._text = '';
+        return;
+      }
+
+      var tag = s.tag;
+
+      var bbox = tag.bbox;
+      this._currentTransform.tx += bbox.xMin;
+      this._currentTransform.ty += bbox.yMin;
+      this._bbox.xMax = bbox.xMax - bbox.xMin;
+      this._bbox.yMax = bbox.yMax - bbox.yMin;
+
+      if (tag.hasLayout) {
+        initialFormat.size = tag.fontHeight / 20;
+        initialFormat.leading = (tag.leading | 0) / 20;
+      }
+      if (tag.hasColor) {
+        var colorObj = tag.color;
+        var color = (colorObj.red << 24) |
+                    (colorObj.green << 16) |
+                    (colorObj.blue << 8) |
+                    colorObj.alpha;
+        initialFormat.color = this._textColor = color;
+      }
+      if (tag.hasFont) {
+        var font = FontDefinition.getFontBySymbolId(tag.fontId);
+        initialFormat.font = font;
+        initialFormat.face = font._fontName;
+        initialFormat.bold = font.symbol.bold;
+        initialFormat.italic = font.symbol.italic;
+      }
+
+      this._multiline = !!tag.multiline;
+      this._wordWrap = !!tag.wordWrap;
+
+      this._embedFonts = !!tag.useOutlines;
+      this._selectable = !tag.noSelect;
+      // TODO: Find out how the IDE causes textfields to have a background
+      this._border = !!tag.border;
+
+      switch (tag.align) {
+        case 1:
+          initialFormat.align = 'RIGHT';
+          break;
+        case 2:
+          initialFormat.align = 'CENTER';
+          break;
+        case 3:
+          initialFormat.align = 'JUSTIFIED';
+          break;
+        default: // 'left' is pre-set
+      }
+
+      if (tag.initialText) {
+        if (tag.html) {
+          this._htmlText = tag.initialText;
+        } else {
+          this._text = tag.initialText;
+        }
+      } else {
+        this._text = '';
+      }
+    };
+
+    constructor() {
       false && super();
       notImplemented("Dummy Constructor: public flash.text.TextField");
     }
-    
-    // JS -> AS Bindings
-    
-    selectedText: string;
-    appendText: (newText: string) => void;
-    getXMLText: (beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647) => string;
-    insertXMLText: (beginIndex: number /*int*/, endIndex: number /*int*/, richText: string, pasting: boolean = false) => void;
-    copyRichText: () => string;
-    pasteRichText: (richText: string) => boolean;
-    
+
+    private invalidateDimensions() {
+      this._invalidate();
+      this._invalidateBounds();
+      this._invalidateRenderable();
+      this._dimensionsValid = false;
+    }
+
+    private ensureDimensions() {
+      if (this._dimensionsValid) {
+        return;
+      }
+
+      var bounds = this._bbox;
+      var diffX = 0;
+
+      var message = new BinaryMessage();
+      message.syncRenderable(this, function (data) {
+        this._lines = data.lines;
+        this._textWidth = data.textWidth;
+        this._textHeight = data.textHeight;
+        diffX = data.diffX;
+        this._text = data.text;
+        this._htmlText = data.htmlText;
+      }.bind(this));
+      message.post('render', true);
+
+      var lines = this._lines;
+
+      this._scrollV = 1;
+      this._maxScrollV = 1;
+      this._bottomScrollV = 1;
+      var autoSize = this._autoSize;
+      if (autoSize === 'none') {
+        var maxVisibleY = (bounds.yMax - 80) / 20;
+        if (this._textHeight > maxVisibleY) {
+          for (var i = 0; i < lines.length; i++) {
+            var line = lines[i];
+            if (line.y + line.height > maxVisibleY) {
+              this._maxScrollV = i + 1;
+              this._bottomScrollV = i === 0 ? 1 : i;
+              break;
+            }
+          }
+        }
+      } else {
+        if (diffX) {
+          this._invalidateTransform();
+          this._currentTransform.tx += diffX * 20 | 0;
+          bounds.xMax = (this._textWidth * 20 | 0) + 80;
+        }
+        bounds.yMax = (this._textHeight * 20 | 0) + 80;
+        this._invalidateBounds();
+      }
+
+      this._dimensionsValid = true;
+    }
+
+
     // AS -> JS Bindings
     static isFontCompatible(fontName: string, fontStyle: string): boolean {
-      fontName = "" + fontName; fontStyle = "" + fontStyle;
-      notImplemented("public flash.text.TextField::static isFontCompatible"); return;
+      somewhatImplemented("flash.text.TextField.isFontCompatible");
+      return true;
     }
-    
-    // _alwaysShowSelection: boolean;
-    // _antiAliasType: string;
-    // _autoSize: string;
-    // _background: boolean;
-    // _backgroundColor: number /*uint*/;
-    // _border: boolean;
-    // _borderColor: number /*uint*/;
-    // _bottomScrollV: number /*int*/;
+
+    _alwaysShowSelection: boolean = false;
+    _antiAliasType: string = 'normal';
+
+    _autoSize: string = 'none';
+
+    _background: boolean = false;
+    _backgroundColor: number /*uint*/ = 0xFFFFFF;
+    _border: boolean = false;
+    _borderColor: number /*uint*/ = 0x000000;
+
+    _bbox: {xMin: number; xMax: number; yMin: number; yMax: number};
+    _lines: TextLineMetrics[];
+    _dimensionsValid: boolean;
+
+    _bottomScrollV: number /*int*/ = 0;
     // _caretIndex: number /*int*/;
-    // _condenseWhite: boolean;
-    // _defaultTextFormat: flash.text.TextFormat;
-    // _embedFonts: boolean;
-    // _gridFitType: string;
-    // _htmlText: string;
-    // _length: number /*int*/;
-    // _textInteractionMode: string;
-    // _maxChars: number /*int*/;
-    // _maxScrollH: number /*int*/;
-    // _maxScrollV: number /*int*/;
-    // _mouseWheelEnabled: boolean;
+    _condenseWhite: boolean;
+    _defaultTextFormat: any; // TODO: probably introduce strongly-typed JS obj
+    _embedFonts: boolean;
+    _gridFitType: string;
+    _textInteractionMode: string;
+    _maxChars: number /*int*/;
+    _maxScrollH: number /*int*/ = 0;
+    _maxScrollV: number /*int*/ = 0;
+    _mouseWheelEnabled: boolean;
     _multiline: boolean;
-    // _numLines: number /*int*/;
-    // _displayAsPassword: boolean;
-    // _restrict: string;
-    // _scrollH: number /*int*/;
-    // _scrollV: number /*int*/;
-    // _selectable: boolean;
-    // _selectedText: string;
-    // _selectionBeginIndex: number /*int*/;
-    // _selectionEndIndex: number /*int*/;
-    // _sharpness: number;
+    _displayAsPassword: boolean;
+    _restrict: string;
+    _scrollH: number /*int*/ = 0;
+    _scrollV: number /*int*/ = 0;
+    _selectable: boolean;
+    _selectedText: string;
+    _selectionBeginIndex: number /*int*/;
+    _selectionEndIndex: number /*int*/;
+    _sharpness: number;
     // _styleSheet: flash.text.StyleSheet;
-    // _text: string;
-    // _textColor: number /*uint*/;
+    _text: string;
+    _htmlText: string;
+    _textColor: number /*uint*/;
     _textHeight: number;
     _textWidth: number;
-    // _thickness: number;
-    // _type: string;
+    _thickness: number;
+    _type: string;
     _wordWrap: boolean;
-    // _useRichTextClipboard: boolean;
+    _useRichTextClipboard: boolean;
 
     get alwaysShowSelection(): boolean {
-      notImplemented("public flash.text.TextField::get alwaysShowSelection"); return;
-      // return this._alwaysShowSelection;
+      return this._alwaysShowSelection;
     }
+
     set alwaysShowSelection(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.text.TextField::set alwaysShowSelection"); return;
-      // this._alwaysShowSelection = value;
+      somewhatImplemented("public flash.text.TextField::set alwaysShowSelection");
+      this._alwaysShowSelection = !!value;
     }
+
     get antiAliasType(): string {
-      notImplemented("public flash.text.TextField::get antiAliasType"); return;
-      // return this._antiAliasType;
+      return this._antiAliasType;
     }
+
     set antiAliasType(antiAliasType: string) {
-      antiAliasType = "" + antiAliasType;
-      notImplemented("public flash.text.TextField::set antiAliasType"); return;
-      // this._antiAliasType = antiAliasType;
+      somewhatImplemented("public flash.text.TextField::set antiAliasType");
+      this._antiAliasType = antiAliasType === 'advanced' ? 'advanced' : 'normal';
     }
+
     get autoSize(): string {
-      notImplemented("public flash.text.TextField::get autoSize"); return;
-      // return this._autoSize;
+      return this._autoSize;
     }
+
     set autoSize(value: string) {
-      value = "" + value;
-      notImplemented("public flash.text.TextField::set autoSize"); return;
-      // this._autoSize = value;
+      if (!TextFieldAutoSize.validValues[value]) {
+        throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
+      }
+      this._autoSize = value + '';
     }
+
     get background(): boolean {
-      notImplemented("public flash.text.TextField::get background"); return;
-      // return this._background;
+      return this._background;
     }
+
     set background(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.text.TextField::set background"); return;
-      // this._background = value;
+      this._background = !!value;
     }
+
     get backgroundColor(): number /*uint*/ {
-      notImplemented("public flash.text.TextField::get backgroundColor"); return;
-      // return this._backgroundColor;
+      return this._backgroundColor;
     }
+
     set backgroundColor(value: number /*uint*/) {
-      value = value >>> 0;
-      notImplemented("public flash.text.TextField::set backgroundColor"); return;
-      // this._backgroundColor = value;
+      this._backgroundColor = value >>> 0;
     }
+
     get border(): boolean {
-      notImplemented("public flash.text.TextField::get border"); return;
-      // return this._border;
+      return this._border;
     }
+
     set border(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.text.TextField::set border"); return;
-      // this._border = value;
+      this._border = !!value;
     }
+
     get borderColor(): number /*uint*/ {
-      notImplemented("public flash.text.TextField::get borderColor"); return;
-      // return this._borderColor;
+      return this._borderColor;
     }
+
     set borderColor(value: number /*uint*/) {
-      value = value >>> 0;
-      notImplemented("public flash.text.TextField::set borderColor"); return;
-      // this._borderColor = value;
+      this._borderColor = value >>> 0;
     }
+
     get bottomScrollV(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get bottomScrollV"); return;
-      // return this._bottomScrollV;
+      this.ensureDimensions();
+      if (this._scrollV === 1) {
+        return this._bottomScrollV;
+      }
+      var maxVisibleY = (this._bbox.yMax - 80) / 20;
+      var lines = this._lines;
+      var offsetY = lines[this._scrollV - 1].y;
+      for (var i = this._bottomScrollV; i < lines.length; i++) {
+        var line = lines[i];
+        if (line.y + line.height + offsetY > maxVisibleY) {
+          return i + 1;
+        }
+      }
     }
+
     get caretIndex(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get caretIndex"); return;
+      notImplemented("public flash.text.TextField::get caretIndex");
+      return;
       // return this._caretIndex;
     }
+
     get condenseWhite(): boolean {
-      notImplemented("public flash.text.TextField::get condenseWhite"); return;
-      // return this._condenseWhite;
+      somewhatImplemented("public flash.text.TextField::get condenseWhite");
+      return this._condenseWhite;
     }
+
     set condenseWhite(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.text.TextField::set condenseWhite"); return;
-      // this._condenseWhite = value;
+      somewhatImplemented("public flash.text.TextField::set condenseWhite");
+      this._condenseWhite = !!value;
     }
+
     get defaultTextFormat(): flash.text.TextFormat {
-      notImplemented("public flash.text.TextField::get defaultTextFormat"); return;
-      // return this._defaultTextFormat;
+      return new flash.text.TextFormat().fromObject(this._defaultTextFormat);
     }
+
     set defaultTextFormat(format: flash.text.TextFormat) {
-      format = format;
-      notImplemented("public flash.text.TextField::set defaultTextFormat"); return;
-      // this._defaultTextFormat = format;
+      this._defaultTextFormat = format && format.toObject();
+      this.invalidateDimensions();
     }
+
     get embedFonts(): boolean {
-      notImplemented("public flash.text.TextField::get embedFonts"); return;
-      // return this._embedFonts;
+      return this._embedFonts;
     }
+
     set embedFonts(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.text.TextField::set embedFonts"); return;
-      // this._embedFonts = value;
+      this._embedFonts = !!value;
+      this.invalidateDimensions();
     }
+
     get gridFitType(): string {
-      notImplemented("public flash.text.TextField::get gridFitType"); return;
-      // return this._gridFitType;
+      somewhatImplemented("public flash.text.TextField::get gridFitType");
+      return this._gridFitType;
     }
+
     set gridFitType(gridFitType: string) {
-      gridFitType = "" + gridFitType;
-      notImplemented("public flash.text.TextField::set gridFitType"); return;
-      // this._gridFitType = gridFitType;
+      somewhatImplemented("public flash.text.TextField::set gridFitType");
+      this._gridFitType = "" + gridFitType;
     }
+
     get htmlText(): string {
-      notImplemented("public flash.text.TextField::get htmlText"); return;
-      // return this._htmlText;
+      this.ensureDimensions();
+      return this._htmlText;
     }
+
     set htmlText(value: string) {
-      value = "" + value;
-      notImplemented("public flash.text.TextField::set htmlText"); return;
-      // this._htmlText = value;
+      this._htmlText = value + '';
+      this._text = '';
+      this.invalidateDimensions();
     }
+
     get length(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get length"); return;
-      // return this._length;
+      return this._text.length;
     }
+
     get textInteractionMode(): string {
-      notImplemented("public flash.text.TextField::get textInteractionMode"); return;
-      // return this._textInteractionMode;
+      somewhatImplemented("public flash.text.TextField::get textInteractionMode");
+      return this._textInteractionMode;
     }
+
     get maxChars(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get maxChars"); return;
-      // return this._maxChars;
+      somewhatImplemented("public flash.text.TextField::get maxChars");
+      return this._maxChars;
     }
+
     set maxChars(value: number /*int*/) {
-      value = value | 0;
-      notImplemented("public flash.text.TextField::set maxChars"); return;
-      // this._maxChars = value;
+      this._maxChars = value | 0;
+      somewhatImplemented("public flash.text.TextField::set maxChars");
     }
+
     get maxScrollH(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get maxScrollH"); return;
-      // return this._maxScrollH;
+      return this._maxScrollH;
     }
+
     get maxScrollV(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get maxScrollV"); return;
-      // return this._maxScrollV;
+      return this._maxScrollV;
     }
+
     get mouseWheelEnabled(): boolean {
-      notImplemented("public flash.text.TextField::get mouseWheelEnabled"); return;
-      // return this._mouseWheelEnabled;
+      somewhatImplemented("public flash.text.TextField::get mouseWheelEnabled");
+      return this._mouseWheelEnabled;
     }
+
     set mouseWheelEnabled(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.text.TextField::set mouseWheelEnabled"); return;
-      // this._mouseWheelEnabled = value;
+      somewhatImplemented("public flash.text.TextField::set mouseWheelEnabled");
+      this._mouseWheelEnabled = !!value;
     }
+
     get multiline(): boolean {
-      notImplemented("public flash.text.TextField::get multiline"); return;
-      // return this._multiline;
+      return this._multiline;
     }
+
     set multiline(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.text.TextField::set multiline"); return;
-      // this._multiline = value;
+      this._multiline = !!value;
     }
+
     get numLines(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get numLines"); return;
-      // return this._numLines;
+      this.ensureDimensions();
+      return this._lines.length;
     }
+
     get displayAsPassword(): boolean {
-      notImplemented("public flash.text.TextField::get displayAsPassword"); return;
-      // return this._displayAsPassword;
+      somewhatImplemented("public flash.text.TextField::get displayAsPassword");
+      return this._displayAsPassword;
     }
+
     set displayAsPassword(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.text.TextField::set displayAsPassword"); return;
-      // this._displayAsPassword = value;
+      somewhatImplemented("public flash.text.TextField::set displayAsPassword");
+      this._displayAsPassword = !!value;
     }
+
     get restrict(): string {
-      notImplemented("public flash.text.TextField::get restrict"); return;
-      // return this._restrict;
+      somewhatImplemented("public flash.text.TextField::get restrict");
+      return this._restrict;
     }
+
     set restrict(value: string) {
-      value = "" + value;
-      notImplemented("public flash.text.TextField::set restrict"); return;
-      // this._restrict = value;
+      somewhatImplemented("public flash.text.TextField::set restrict");
+      this._restrict = "" + value;
     }
+
     get scrollH(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get scrollH"); return;
-      // return this._scrollH;
+      return this._scrollH;
     }
+
     set scrollH(value: number /*int*/) {
-      value = value | 0;
-      notImplemented("public flash.text.TextField::set scrollH"); return;
-      // this._scrollH = value;
+      this.ensureDimensions();
+      value = Math.max(1, Math.min(this._maxScrollH, value|0))|0;
+      this._scrollH = value;
     }
+
     get scrollV(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get scrollV"); return;
-      // return this._scrollV;
+      return this._scrollV;
     }
+
     set scrollV(value: number /*int*/) {
-      value = value | 0;
-      notImplemented("public flash.text.TextField::set scrollV"); return;
-      // this._scrollV = value;
+      this.ensureDimensions();
+      value = Math.max(1, Math.min(this._maxScrollV, value|0))|0;
+      this._scrollV = value;
     }
+
     get selectable(): boolean {
-      notImplemented("public flash.text.TextField::get selectable"); return;
-      // return this._selectable;
+      somewhatImplemented("public flash.text.TextField::get selectable");
+      return this._selectable;
     }
+
     set selectable(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.text.TextField::set selectable"); return;
-      // this._selectable = value;
+      somewhatImplemented("public flash.text.TextField::set selectable");
+      this._selectable = !!value;
     }
+
     get selectionBeginIndex(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get selectionBeginIndex"); return;
-      // return this._selectionBeginIndex;
+      somewhatImplemented("public flash.text.TextField::get selectionBeginIndex");
+      return this._selectionBeginIndex;
     }
+
     get selectionEndIndex(): number /*int*/ {
-      notImplemented("public flash.text.TextField::get selectionEndIndex"); return;
-      // return this._selectionEndIndex;
+      somewhatImplemented("public flash.text.TextField::get selectionEndIndex");
+      return this._selectionEndIndex;
     }
+
     get sharpness(): number {
-      notImplemented("public flash.text.TextField::get sharpness"); return;
-      // return this._sharpness;
+      somewhatImplemented("public flash.text.TextField::get sharpness");
+      return this._sharpness;
     }
+
     set sharpness(value: number) {
-      value = +value;
-      notImplemented("public flash.text.TextField::set sharpness"); return;
-      // this._sharpness = value;
+      somewhatImplemented("public flash.text.TextField::set sharpness");
+      this._sharpness = +value;
     }
+
     get styleSheet(): flash.text.StyleSheet {
-      notImplemented("public flash.text.TextField::get styleSheet"); return;
+      notImplemented("public flash.text.TextField::get styleSheet");
+      return;
       // return this._styleSheet;
     }
+
     set styleSheet(value: flash.text.StyleSheet) {
       value = value;
-      notImplemented("public flash.text.TextField::set styleSheet"); return;
+      notImplemented("public flash.text.TextField::set styleSheet");
+      return;
       // this._styleSheet = value;
     }
+
     get text(): string {
-      notImplemented("public flash.text.TextField::get text"); return;
-      // return this._text;
+      return this._text;
     }
+
     set text(value: string) {
-      value = "" + value;
-      notImplemented("public flash.text.TextField::set text"); return;
-      // this._text = value;
+      this._text = value + "";
+      this._htmlText = '';
+      this.invalidateDimensions();
     }
+
     get textColor(): number /*uint*/ {
-      notImplemented("public flash.text.TextField::get textColor"); return;
-      // return this._textColor;
+      return this._textColor;
     }
+
     set textColor(value: number /*uint*/) {
       value = value >>> 0;
-      notImplemented("public flash.text.TextField::set textColor"); return;
-      // this._textColor = value;
+      if (this._textColor === value) {
+        return;
+      }
+      this._textColor = value;
+      this._invalidate();
     }
+
     get textHeight(): number {
-      notImplemented("public flash.text.TextField::get textHeight"); return;
-      // return this._textHeight;
+      this.ensureDimensions();
+      return this._textHeight;
     }
+
     get textWidth(): number {
-      notImplemented("public flash.text.TextField::get textWidth"); return;
-      // return this._textWidth;
+      this.ensureDimensions();
+      return this._textWidth;
     }
+
     get thickness(): number {
-      notImplemented("public flash.text.TextField::get thickness"); return;
-      // return this._thickness;
+      somewhatImplemented("public flash.text.TextField::get thickness");
+      return this._thickness;
     }
+
     set thickness(value: number) {
-      value = +value;
-      notImplemented("public flash.text.TextField::set thickness"); return;
-      // this._thickness = value;
+      somewhatImplemented("public flash.text.TextField::set thickness");
+      this._thickness = +value;
     }
+
     get type(): string {
-      notImplemented("public flash.text.TextField::get type"); return;
-      // return this._type;
+      somewhatImplemented("public flash.text.TextField::get type");
+      return this._type;
     }
+
     set type(value: string) {
       value = "" + value;
-      notImplemented("public flash.text.TextField::set type"); return;
-      // this._type = value;
+      if (value !== TextFieldType.DYNAMIC && value !== TextFieldType.INPUT) {
+        throwError("ArgumentError", Errors.InvalidParamError, "type");
+      }
+      somewhatImplemented("public flash.text.TextField::set type");
+      this._type = value;
     }
+
     get wordWrap(): boolean {
-      notImplemented("public flash.text.TextField::get wordWrap"); return;
-      // return this._wordWrap;
+      return this._wordWrap;
     }
+
     set wordWrap(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.text.TextField::set wordWrap"); return;
-      // this._wordWrap = value;
+      this._wordWrap = !!value;
     }
+
     get useRichTextClipboard(): boolean {
-      notImplemented("public flash.text.TextField::get useRichTextClipboard"); return;
-      // return this._useRichTextClipboard;
+      somewhatImplemented("public flash.text.TextField::get useRichTextClipboard");
+      return this._useRichTextClipboard;
     }
+
     set useRichTextClipboard(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.text.TextField::set useRichTextClipboard"); return;
-      // this._useRichTextClipboard = value;
+      somewhatImplemented("public flash.text.TextField::set useRichTextClipboard");
+      this._useRichTextClipboard = !!value;
     }
+
     getCharBoundaries(charIndex: number /*int*/): flash.geom.Rectangle {
       charIndex = charIndex | 0;
-      notImplemented("public flash.text.TextField::getCharBoundaries"); return;
+      somewhatImplemented("public flash.text.TextField::getCharBoundaries");
+      return new flash.geom.Rectangle(0, 0, 0, 0);
     }
+
     getCharIndexAtPoint(x: number, y: number): number /*int*/ {
-      x = +x; y = +y;
-      notImplemented("public flash.text.TextField::getCharIndexAtPoint"); return;
+      x = +x;
+      y = +y;
+      somewhatImplemented("public flash.text.TextField::getCharIndexAtPoint");
+      return 0;
     }
+
     getFirstCharInParagraph(charIndex: number /*int*/): number /*int*/ {
       charIndex = charIndex | 0;
-      notImplemented("public flash.text.TextField::getFirstCharInParagraph"); return;
+      somewhatImplemented("public flash.text.TextField::getFirstCharInParagraph");
+      return 0;
     }
+
     getLineIndexAtPoint(x: number, y: number): number /*int*/ {
-      x = +x; y = +y;
-      notImplemented("public flash.text.TextField::getLineIndexAtPoint"); return;
+      x = +x;
+      y = +y;
+      somewhatImplemented("public flash.text.TextField::getLineIndexAtPoint");
+      return 0;
     }
+
     getLineIndexOfChar(charIndex: number /*int*/): number /*int*/ {
       charIndex = charIndex | 0;
-      notImplemented("public flash.text.TextField::getLineIndexOfChar"); return;
+      somewhatImplemented("public flash.text.TextField::getLineIndexOfChar");
+      return 0;
     }
+
     getLineLength(lineIndex: number /*int*/): number /*int*/ {
       lineIndex = lineIndex | 0;
-      notImplemented("public flash.text.TextField::getLineLength"); return;
+      notImplemented("public flash.text.TextField::getLineLength");
+      return;
     }
+
     getLineMetrics(lineIndex: number /*int*/): flash.text.TextLineMetrics {
-      lineIndex = lineIndex | 0;
-      notImplemented("public flash.text.TextField::getLineMetrics"); return;
+      lineIndex |= 0;
+      this.ensureDimensions();
+      if (lineIndex < 0 || lineIndex >= this._lines.length) {
+        throwError('RangeError', Errors.ParamRangeError);
+      }
+      var line = this._lines[lineIndex];
+      var format = line.largestFormat;
+      var font = format.font;
+      var size = format.size;
+      // Rounding for metrics seems to be screwy. A descent of 3.5 gets
+      // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
+      // For now, round up for things slightly above .5.
+      var ascent = font.ascent * size + 0.49999 | 0;
+      var descent = font.descent * size + 0.49999 | 0;
+      var leading = font.leading * size + 0.49999 + line.leading | 0;
+      // TODO: check if metrics values can be floats for embedded fonts
+      return new flash.text.TextLineMetrics(line.x + 2, line.width,
+                                            line.height,
+                                            ascent, descent, leading);
     }
+
     getLineOffset(lineIndex: number /*int*/): number /*int*/ {
       lineIndex = lineIndex | 0;
-      notImplemented("public flash.text.TextField::getLineOffset"); return;
+      notImplemented("public flash.text.TextField::getLineOffset");
+      return;
     }
+
     getLineText(lineIndex: number /*int*/): string {
       lineIndex = lineIndex | 0;
-      notImplemented("public flash.text.TextField::getLineText"); return;
+      notImplemented("public flash.text.TextField::getLineText");
+      return;
     }
+
     getParagraphLength(charIndex: number /*int*/): number /*int*/ {
       charIndex = charIndex | 0;
-      notImplemented("public flash.text.TextField::getParagraphLength"); return;
+      notImplemented("public flash.text.TextField::getParagraphLength");
+      return;
     }
-    getTextFormat(beginIndex: number /*int*/ = -1, endIndex: number /*int*/ = -1): flash.text.TextFormat {
-      beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.TextField::getTextFormat"); return;
+
+    getTextFormat(beginIndex: number /*int*/ = -1,
+                  endIndex: number /*int*/ = -1): flash.text.TextFormat {
+      beginIndex = beginIndex | 0;
+      endIndex = endIndex | 0;
+      somewhatImplemented("public flash.text.TextField::getTextFormat");
+      return this.defaultTextFormat;
     }
+
     getTextRuns(beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647): any [] {
-      beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.TextField::getTextRuns"); return;
+      beginIndex = beginIndex | 0;
+      endIndex = endIndex | 0;
+      notImplemented("public flash.text.TextField::getTextRuns");
+      return;
     }
+
     getRawText(): string {
-      notImplemented("public flash.text.TextField::getRawText"); return;
+      notImplemented("public flash.text.TextField::getRawText");
+      return;
     }
+
     replaceSelectedText(value: string): void {
       value = "" + value;
-      notImplemented("public flash.text.TextField::replaceSelectedText"); return;
+      somewhatImplemented("public flash.text.TextField::replaceSelectedText");
+      var text = this._text;
+      this.text = text.substring(0, this._selectionBeginIndex) + value +
+                  text.substring(this._selectionEndIndex);
     }
+
     replaceText(beginIndex: number /*int*/, endIndex: number /*int*/, newText: string): void {
-      beginIndex = beginIndex | 0; endIndex = endIndex | 0; newText = "" + newText;
-      notImplemented("public flash.text.TextField::replaceText"); return;
+      beginIndex |= 0;
+      endIndex |= 0;
+      newText = "" + newText;
+      somewhatImplemented("public flash.text.TextField::replaceText");
+      var text = this._text;
+      this.text = text.substring(0, beginIndex) + newText + text.substring(endIndex);
     }
+
     setSelection(beginIndex: number /*int*/, endIndex: number /*int*/): void {
-      beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.TextField::setSelection"); return;
+      this._selectionBeginIndex = beginIndex | 0;
+      this._selectionEndIndex = endIndex | 0;
+      somewhatImplemented("public flash.text.TextField::setSelection");
     }
-    setTextFormat(format: flash.text.TextFormat, beginIndex: number /*int*/ = -1, endIndex: number /*int*/ = -1): void {
-      format = format; beginIndex = beginIndex | 0; endIndex = endIndex | 0;
-      notImplemented("public flash.text.TextField::setTextFormat"); return;
+
+    setTextFormat(format: flash.text.TextFormat, beginIndex: number /*int*/ = -1,
+                  endIndex: number /*int*/ = -1): void {
+      beginIndex = beginIndex | 0;
+      endIndex = endIndex | 0;
+      somewhatImplemented("public flash.text.TextField::setTextFormat");
+      this.defaultTextFormat = format;// TODO
+      if (this.text === this.htmlText) {
+        // HACK replacing format for non-html text
+        this.text = this.text;
+      }
+      this.invalidateDimensions();
     }
+
     getImageReference(id: string): flash.display.DisplayObject {
       id = "" + id;
-      notImplemented("public flash.text.TextField::getImageReference"); return;
+      notImplemented("public flash.text.TextField::getImageReference");
+      return;
     }
   }
 }
