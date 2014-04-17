@@ -26,6 +26,14 @@ var swfController = new SWFController(timeline, pauseExecution);
 
 var testNumber = 0;
 
+function timeAllocation(C, count) {
+  var s = Date.now();
+  for (var i = 0; i < count; i++) {
+    var o = new C();
+  }
+  console.info("Took: " + (Date.now() - s) + " " + C);
+}
+
 function eqFloat(a, b, test) {
   test = test ? ": " + test : " #" + testNumber;
   if (Math.abs(a -b) < 0.1) {

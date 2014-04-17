@@ -26,7 +26,8 @@ import flash.ui.ContextMenu;
 
 [native(cls='StageClass')]
 public class Stage extends DisplayObjectContainer {
-  public function Stage() {}
+  public native function Stage()
+
   public override function set name(value:String):void {
     Error.throwError(IllegalOperationError, 2071);
   }
