@@ -20,7 +20,7 @@ module Shumway.AVM2.AS.flash.automation {
   export class KeyboardAutomationAction extends flash.automation.AutomationAction {
     static initializer: any = null;
     constructor (type: string, keyCode: number /*uint*/ = 0) {
-      1 = asCoerceString(1); keyCode = keyCode >>> 0;
+      type = asCoerceString(type); keyCode = keyCode >>> 0;
       false && super();
       notImplemented("Dummy Constructor: public flash.automation.KeyboardAutomationAction");
     }

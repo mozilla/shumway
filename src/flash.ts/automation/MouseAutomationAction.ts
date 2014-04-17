@@ -20,7 +20,7 @@ module Shumway.AVM2.AS.flash.automation {
   export class MouseAutomationAction extends flash.automation.AutomationAction {
     static initializer: any = null;
     constructor (type: string, stageX: number = 0, stageY: number = 0, delta: number /*int*/ = 0) {
-      1 = asCoerceString(1); stageX = +stageX; stageY = +stageY; delta = delta | 0;
+      type = asCoerceString(type); stageX = +stageX; stageY = +stageY; delta = delta | 0;
       false && super();
       notImplemented("Dummy Constructor: public flash.automation.MouseAutomationAction");
     }

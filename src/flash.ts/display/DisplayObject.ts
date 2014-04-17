@@ -247,8 +247,6 @@ module Shumway.AVM2.AS.flash.display {
       self._level = -1;
 
       if (symbol) {
-        self._root        = symbol._root      || self._root;
-        self._stage       = symbol._stage     || self._stage;
         self._name        = symbol._name      || self._name;
         self._parent      = symbol._parent    || self._parent;
         self._clipDepth   = symbol._clipDepth || self._clipDepth;
@@ -884,12 +882,36 @@ module Shumway.AVM2.AS.flash.display {
       this._setFlags(DisplayObjectFlags.Destroyed);
     }
 
+    /**
+     * Walks up the tree to find this display object's root. An object is classified
+     * as a root if its _root property points to itself. Root objects are the Stage,
+     * the main timeline object and a Loader's content.
+     */
     get root(): DisplayObject {
-      return this._root;
+      var node = this;
+      do {
+        if (node._root === node) {
+          return node;
+        }
+        node = node._parent;
+      } while (node);
+      return null;
     }
 
+    /**
+     * Walks up the tree to find this display object's stage. The stage is identified
+     * if its _stage property points to itself.
+     */
     get stage(): flash.display.Stage {
-      return this._stage;
+      var node = this;
+      do {
+        if (node._stage === node) {
+          assert(flash.display.Stage.class.isType(node));
+          return node;
+        }
+        node = node._parent;
+      } while (node);
+      return null;
     }
 
     get name(): string {
@@ -958,6 +980,18 @@ module Shumway.AVM2.AS.flash.display {
           }
         }
       }
+    }
+
+    /**
+     * Returns the loader info for this display object's root.
+     */
+    get loaderInfo(): flash.display.LoaderInfo {
+      var root = this.root;
+      if (root) {
+        assert(root._loaderInfo, "No LoaderInfo object found on root.");
+        return root._loaderInfo;
+      }
+      return null;
     }
     
     // ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -1052,10 +1086,6 @@ module Shumway.AVM2.AS.flash.display {
       innerRectangle = innerRectangle;
       notImplemented("public DisplayObject::set scale9Grid"); return;
       // this._scale9Grid = innerRectangle;
-    }
-    get loaderInfo(): flash.display.LoaderInfo {
-      return (this._loader && this._loader._contentLoaderInfo) ||
-             (this._parent && this._parent.loaderInfo);
     }
     get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
       return this._accessibilityProperties;
