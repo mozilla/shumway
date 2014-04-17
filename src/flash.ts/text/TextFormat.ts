@@ -128,10 +128,9 @@ module Shumway.AVM2.AS.flash.text {
       }
       measureTextField.defaultTextFormat = this;
       measureTextField.text = text;
-      measureTextField.ensureDimensions();
       var result = {};
-      var textWidth = measureTextField._textWidth;
-      var textHeight = measureTextField._textHeight;
+      var textWidth = measureTextField.textWidth;
+      var textHeight = measureTextField.textHeight;
       result.asSetPublicProperty('width', textWidth);
       result.asSetPublicProperty('height', textHeight);
       result.asSetPublicProperty('textFieldWidth', textWidth + 4);

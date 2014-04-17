@@ -15,7 +15,7 @@
  */
 // Class: Font
 module Shumway.AVM2.AS.flash.text {
-  import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   export class Font extends ASNative {
 
     static classInitializer: any = null;
@@ -47,6 +47,7 @@ module Shumway.AVM2.AS.flash.text {
     static bindings: string [] = null;
 
     constructor() {
+      super();
     }
 
     private static fonts: Font[] = [];
