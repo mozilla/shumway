@@ -12,10 +12,67 @@ module Shumway.GFX.Layers {
   export class BlurFilter extends Filter {
     blurX: number;
     blurY: number;
-    constructor(blurX: number, blurY: number) {
+    quality: number;
+    constructor(blurX: number, blurY: number, quality: number) {
       super();
       this.blurX = blurX;
       this.blurY = blurY;
+      this.quality = quality;
+    }
+  }
+
+  export class DropshadowFilter extends Filter {
+    alpha: number;
+    angle: number;
+    blurX: number;
+    blurY: number;
+    color: number;
+    distance: number;
+    hideObject: boolean;
+    inner: boolean;
+    knockout: boolean;
+    quality: number;
+    strength: number;
+    constructor(alpha: number, angle: number, blurX: number, blurY: number,
+                color: number, distance: number,
+                hideObject: boolean, inner: boolean, knockout: boolean,
+                quality: number, strength: number) {
+      super();
+      this.alpha = alpha;
+      this.angle = angle;
+      this.blurX = blurX;
+      this.blurY = blurY;
+      this.color = color;
+      this.distance = distance;
+      this.hideObject = hideObject;
+      this.inner = inner;
+      this.knockout = knockout;
+      this.quality = quality;
+      this.strength = strength;
+    }
+  }
+
+  export class GlowFilter extends Filter {
+    alpha: number;
+    blurX: number;
+    blurY: number;
+    color: number;
+    inner: boolean;
+    knockout: boolean;
+    quality: number;
+    strength: number;
+    constructor(alpha: number, blurX: number, blurY: number, color: number,
+                inner: boolean, knockout: boolean,
+                quality: number, strength: number) {
+      super();
+      this.alpha = alpha;
+      this.blurX = blurX;
+      this.blurY = blurY;
+      this.color = color;
+      this.inner = inner;
+      this.knockout = knockout;
+      this.quality = quality;
+      this.strength = strength;
     }
   }
 
@@ -36,6 +93,46 @@ module Shumway.GFX.Layers {
 
     public asWebGLVector(): Float32Array {
       return this._m.subarray(16, 20);
+    }
+
+    public getColorMatrix(): Float32Array {
+      var t: Float32Array = new Float32Array(20);
+      var m: Float32Array = this._m;
+      t[0] = m[0];
+      t[1] = m[4];
+      t[2] = m[8];
+      t[3] = m[12];
+      t[4] = m[16] * 255;
+      t[5] = m[1];
+      t[6] = m[5];
+      t[7] = m[9];
+      t[8] = m[13];
+      t[9] = m[17] * 255;
+      t[10] = m[2];
+      t[11] = m[6];
+      t[12] = m[10];
+      t[13] = m[14];
+      t[14] = m[18] * 255;
+      t[15] = m[3];
+      t[16] = m[7];
+      t[17] = m[11];
+      t[18] = m[15];
+      t[19] = m[19] * 255;
+      return t;
+    }
+
+    public getColorTransform(): Float32Array {
+      var t: Float32Array = new Float32Array(8);
+      var m: Float32Array = this._m;
+      t[0] = m[0];
+      t[1] = m[5];
+      t[2] = m[10];
+      t[3] = m[15];
+      t[4] = m[16] * 255;
+      t[5] = m[17] * 255;
+      t[6] = m[18] * 255;
+      t[7] = m[19] * 255;
+      return t;
     }
 
     public static createIdentity(): ColorMatrix {

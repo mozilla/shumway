@@ -17,34 +17,21 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Shape extends flash.display.DisplayObject {
-    
-    // Called whenever the class is initialized.
-    static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: DisplayObject) {
-      var self: Shape = this;
-
-      self._graphics = symbol ? symbol.graphics : new flash.display.Graphics();
-    };
-    
-    // List of static symbols to link.
     static staticBindings: string [] = null; // [];
-    
-    // List of instance symbols to link.
     static bindings: string [] = null; // [];
-    
+
+    static classInitializer: any = null;
+    static initializer: any = function (symbol: Shape) {
+      var self: Shape = this;
+      self._graphics = symbol ? symbol._graphics : new flash.display.Graphics();
+    };
+
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.Shape");
     }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
-    
-    // _graphics: flash.display.Graphics;
+
+    _graphics: flash.display.Graphics;
+
     get graphics(): flash.display.Graphics {
       return this._graphics;
     }

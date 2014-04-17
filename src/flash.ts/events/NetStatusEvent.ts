@@ -31,13 +31,12 @@ module Shumway.AVM2.AS.flash.events {
     static bindings: string [] = null; // ["_info", "info", "info", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, info: ASObject = null) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; info = info;
+      type = '' + type; bubbles = !!bubbles; cancelable = !!cancelable;
       false && super(undefined, undefined, undefined);
-      notImplemented("Dummy Constructor: public flash.events.NetStatusEvent");
     }
     
     // JS -> AS Bindings
-    static NET_STATUS: string = "netStatus";
+    public static NET_STATUS: string = "netStatus";
     
     _info: ASObject;
     info: ASObject;

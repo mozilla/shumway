@@ -13,6 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * Flash bugs to keep in mind:
+ *
+ * http://aaronhardy.com/flex/displayobject-quirks-and-tips/
+ * http://blog.anselmbradford.com/2009/02/12/flash-movie-clip-transformational-properties-explorer-x-y-width-height-more/
+ * http://gskinner.com/blog/archives/2007/08/annoying_as3_bu.html
+ *
+ */
 // Class: DisplayObject
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
@@ -65,7 +74,6 @@ module Shumway.AVM2.AS.flash.display {
      */
     Visible                                   = 0x0001,
 
-
     /**
      * Display object has invalid bounds.
      */
@@ -93,12 +101,12 @@ module Shumway.AVM2.AS.flash.display {
     InvalidPaint                              = 0x0040,
 
     /**
-     * Tobias: What's this?
+     * The display object's constructor has executed.
      */
     Constructed                               = 0x0080,
 
     /**
-     * Tobias: What's this?
+     * Display object has been removed by the timeline but it no longer recieves any event.
      */
     Destroyed                                 = 0x0100,
 
@@ -117,16 +125,36 @@ module Shumway.AVM2.AS.flash.display {
     AnimatedByTimeline                        = 0x0400,
 
     /**
-     * Tobias: Should this really be just true of if any of the other invalid bits are on?
-     */
-    Invalid                                   = 0x0800,
-
-    /**
      * Indicates whether this display object should be cached as a bitmap. The display object
      * may be cached as bitmap even if this flag is not set, depending on whether any filters
      * are applied or if the bitmap is too large or we've run out of memory.
      */
     CacheAsBitmap                             = 0x1000
+  }
+
+  /**
+   * Controls how the visitor walks the display tree.
+   */
+  export enum VisitorFlags {
+    /**
+     * Continue with normal traversal.
+     */
+    Continue     = 0,
+
+    /**
+     * Not used yet, should probably just stop the visitor.
+     */
+    Stop         = 1,
+
+    /**
+     * Skip processing current node.
+     */
+    Skip         = 2,
+
+    /**
+     * Visit front to back.
+     */
+    FrontToBack  = 8
   }
 
   export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable {
@@ -144,29 +172,30 @@ module Shumway.AVM2.AS.flash.display {
      */
     static register(object: DisplayObject) {
       DisplayObject._instances.push(object);
+      return 'instance' + DisplayObject._instances.length;
     }
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: DisplayObject) {
       var self: DisplayObject = this;
-      DisplayObject.register(self);
+      var instanceName = DisplayObject.register(self);
 
       self._flags = DisplayObjectFlags.None;
       self._root = null;
       self._stage = null;
-      self._name = 'instance' + DisplayObject._instances.length;
+      self._name = instanceName;
       self._parent = null;
       self._mask = null;
+
       self._z = 0;
       self._scaleX = 1;
       self._scaleY = 1;
       self._scaleZ = 1;
-      self._mouseX = 0;
-      self._mouseY = 0;
       self._rotation = 0;
       self._rotationX = 0;
       self._rotationY = 0;
       self._rotationZ = 0;
+
       self._alpha = 1;
       self._width = 0;
       self._height = 0;
@@ -187,11 +216,14 @@ module Shumway.AVM2.AS.flash.display {
       self._colorTransform = new ColorTransform();
 
       self._depth = 0;
+      self._ratio = 0;
       self._graphics = null;
       self._hitTarget = null;
       self._index = -1;
-      self._level = -1;
       self._maskedObject = null;
+
+      self._rect = new Rectangle();
+      self._bounds = new Rectangle();
 
       // TODO get this via loaderInfo
       self._loader = null;
@@ -201,7 +233,6 @@ module Shumway.AVM2.AS.flash.display {
         DisplayObjectFlags.InvalidBounds         |
         DisplayObjectFlags.Constructed           |
         DisplayObjectFlags.Destroyed             |
-        DisplayObjectFlags.Invalid               |
         DisplayObjectFlags.OwnedByTimeline       |
         DisplayObjectFlags.InvalidMatrix
       );
@@ -209,15 +240,13 @@ module Shumway.AVM2.AS.flash.display {
       // TODO move to InteractiveObject
       self._mouseOver = false;
 
-      // TODO move to DisplayObjectContainer
-      self._children = [];
-      self._isContainer = false;
-      self._mouseChildren = true;
+      // TODO not sure if needed anymore
+      self._level = -1;
 
       if (symbol) {
         self._root        = symbol._root      || self._root;
         self._stage       = symbol._stage     || self._stage;
-        self._name        = symbol._name      || self._stage;
+        self._name        = symbol._name      || self._name;
         self._parent      = symbol._parent    || self._parent;
         self._clipDepth   = symbol._clipDepth || self._clipDepth;
         self._blendMode   = symbol._blendMode || self._blendMode;
@@ -235,10 +264,10 @@ module Shumway.AVM2.AS.flash.display {
           self._setFlags(DisplayObjectFlags.AnimatedByTimeline);
         }
 
-        if (symbol.bbox) {
-          var bbox = symbol.bbox;
-          self._bounds.setTo(bbox.xMin, bbox.yMin, bbox.xMax - bbox.xMin, bbox.yMax - bbox.yMin);
-        }
+//        if (symbol.bbox) {
+//          var bbox = symbol.bbox;
+//          self._bounds.setTo(bbox.xMin, bbox.yMin, bbox.xMax - bbox.xMin, bbox.yMax - bbox.yMin);
+//        }
 
         if (symbol._matrix) {
           this._setMatrix(symbol._matrix, false);
@@ -262,7 +291,7 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.display.DisplayObject");
+      notImplemented("Dummy Constructor: public DisplayObject");
     }
 
     _setFlags(flags: DisplayObjectFlags) {
@@ -307,11 +336,12 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (direction & Direction.Downward) {
-        if (this instanceof flash.display.DisplayObjectContainer) {
-          var children = (<flash.display.DisplayObjectContainer>this)._children;
+        if (this instanceof DisplayObjectContainer) {
+          var children = (<DisplayObjectContainer>this)._children;
           for (var i = 0; i < children.length; i++) {
-            if (!children[i]._hasFlags(flags)) {
-              children[i]._propagateFlags(flags);
+            var child = children[i];
+            if (!child._hasFlags(flags)) {
+              child._propagateFlags(flags, Direction.Downward);
             }
           }
         }
@@ -320,28 +350,36 @@ module Shumway.AVM2.AS.flash.display {
 
     // JS -> AS Bindings
     
-    hitTestObject: (obj: flash.display.DisplayObject) => boolean;
+    hitTestObject: (obj: DisplayObject) => boolean;
     hitTestPoint: (x: number, y: number, shapeFlag: boolean = false) => boolean;
     
     // AS -> JS Bindings
 
     private _flags: number;
 
-    _root: flash.display.DisplayObject;
+    _root: DisplayObject;
     _stage: flash.display.Stage;
     _name: string;
-    _parent: flash.display.DisplayObjectContainer;
-    _mask: flash.display.DisplayObject;
+    _parent: DisplayObjectContainer;
+    _mask: DisplayObject;
+
+    /**
+     * These are always the most up to date properties. The |_matrix| is kepy in sync with
+     * these values.
+     */
     _z: number;
     _scaleX: number;
     _scaleY: number;
     _scaleZ: number;
-    _mouseX: number;
-    _mouseY: number;
+
     _rotation: number;
     _rotationX: number;
     _rotationY: number;
     _rotationZ: number;
+
+    _mouseX: number;
+    _mouseY: number;
+
     _alpha: number;
     _width: number;
     _height: number;
@@ -363,21 +401,33 @@ module Shumway.AVM2.AS.flash.display {
      */
     _bounds: flash.geom.Rectangle;
 
-    _children: flash.display.DisplayObject [];
     _clipDepth: number;
+
+    /**
+     * The a, b, c, d components of the matrix are only valid if the InvalidMatrix flag
+     * is not set. Don't access this directly unless you can be sure that its components
+     * are valid.
+     */
     _matrix: flash.geom.Matrix;
+
+
     _concatenatedMatrix: flash.geom.Matrix;
     _colorTransform: flash.geom.ColorTransform;
     _concatenatedColorTransform: flash.geom.ColorTransform;
     _matrix3D: flash.geom.Matrix3D;
     _depth: number;
+    _ratio: number;
     _graphics: flash.display.Graphics;
-    _hitTarget: flash.display.DisplayObject;
+    _hitTarget: DisplayObject;
+
+    /**
+     * Index of this display object within its container's children
+     */
     _index: number;
     _isContainer: boolean;
     _level: number;
     _loader: flash.display.Loader;
-    _maskedObject: flash.display.DisplayObject;
+    _maskedObject: DisplayObject;
     _mouseChildren: boolean;
     _mouseDown: boolean;
     _mouseOver: boolean;
@@ -434,6 +484,16 @@ module Shumway.AVM2.AS.flash.display {
       return false;
     }
 
+    private static _clampRotation(value): number {
+      value %= 360;
+      if (value > 180) {
+        value -= 360;
+      } else if (value < -180) {
+        value += 360;
+      }
+      return value;
+    }
+
     /**
      * Used as a temporary array to avoid allocations.
      */
@@ -445,7 +505,7 @@ module Shumway.AVM2.AS.flash.display {
     private static _getAncestors(node: DisplayObject, last: DisplayObject = null) {
       var path = DisplayObject._path;
       path.length = 0;
-      while (node && node === last) {
+      while (node && node !== last) {
         path.push(node);
         node = node._parent;
       }
@@ -458,18 +518,15 @@ module Shumway.AVM2.AS.flash.display {
      * the same as |transform.concatenatedMatrix|, the latter also includes the screen space matrix.
      */
     _getConcatenatedMatrix(): Matrix {
-      if (ancestor === this._parent) {
-        return this._matrix;
-      }
       // Compute the concatenated transforms for this node and all of its ancestors.
       if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix)) {
         var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedMatrix, false);
         var path = DisplayObject._getAncestors(this, ancestor);
-        var m = ancestor ? ancestor._concatenatedMatrix : new Matrix();
+        var m = ancestor ? ancestor._concatenatedMatrix.clone() : new Matrix();
         for (var i = path.length - 1; i >= 0; i--) {
           var ancestor = path[i];
           assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix));
-          m.concat(ancestor._matrix);
+          m.concat(ancestor._getMatrix());
           ancestor._concatenatedMatrix.copyFrom(m);
           ancestor._removeFlags(DisplayObjectFlags.InvalidConcatenatedMatrix);
         }
@@ -483,12 +540,22 @@ module Shumway.AVM2.AS.flash.display {
       if (toTwips) {
         m.toTwips();
       }
-      var angleInRadians = matrix.getRotation();
-      this._rotation = angleInRadians * 180 / Math.PI;
       this._scaleX = m.getScaleX();
       this._scaleY = m.getScaleY();
+      this._rotation = DisplayObject._clampRotation(matrix.getRotation() * 180 / Math.PI);
       this._removeFlags(DisplayObjectFlags.InvalidMatrix);
       this._invalidatePosition();
+    }
+
+    /**
+     * Returns an updated matrix if the current one is invalid.
+     */
+    _getMatrix() {
+      if (this._hasFlags(DisplayObjectFlags.InvalidMatrix)) {
+        this._matrix.updateScaleAndRotation(this._scaleX, this._scaleY, this._rotation);
+        this._removeFlags(DisplayObjectFlags.InvalidMatrix);
+      }
+      return this._matrix;
     }
 
     /**
@@ -502,7 +569,7 @@ module Shumway.AVM2.AS.flash.display {
       if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform)) {
         var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedColorTransform, false);
         var path = DisplayObject._getAncestors(this, ancestor);
-        var m = ancestor ? ancestor._concatenatedColorTransform : new ColorTransform();
+        var m = ancestor ? ancestor._concatenatedColorTransform.clone() : new ColorTransform();
         for (var i = path.length - 1; i >= 0; i--) {
           var ancestor = path[i];
           assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
@@ -530,7 +597,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Computes the bounding box for all of this display object's content, its graphics and all of its children.
      */
-    private _getContentBounds(includeStrokes: boolean = true): Rectangle {
+   private _getContentBounds(includeStrokes: boolean = true): Rectangle {
       // Tobias: What about filters?
       var rectangle = includeStrokes ? this._bounds : this._rect;
       if (this._hasFlags(DisplayObjectFlags.InvalidBounds)) {
@@ -542,17 +609,13 @@ module Shumway.AVM2.AS.flash.display {
           graphics = (<Sprite>this)._graphics;
         }
         if (graphics) {
-          rectangle.unionWith(graphics._getContentBounds(includeStrokes));
+          rectangle.unionWith(graphics.getBounds(includeStrokes));
         }
-        if (this instanceof flash.display.DisplayObjectContainer) {
-          var container: flash.display.DisplayObjectContainer = <flash.display.DisplayObjectContainer>this;
+        if (this instanceof DisplayObjectContainer) {
+          var container: DisplayObjectContainer = <DisplayObjectContainer>this;
+          var children = container._children;
           for (var i = 0; i < children.length; i++) {
-            var child = children[i];
-            if (includeStrokes) {
-              rectangle.unionWith(child.getBounds(this));
-            } else {
-              rectangle.unionWith(child.getRect(this));
-            }
+            rectangle.unionWith(children[i]._getTransformedBounds(this, includeStrokes));
           }
         }
         this._removeFlags(DisplayObjectFlags.InvalidBounds);
@@ -560,35 +623,32 @@ module Shumway.AVM2.AS.flash.display {
       return rectangle;
     }
 
-    private _getTransformedBounds(targetCoordinateSpace: DisplayObject, includeStroke: boolean = true, toPixels: boolean = false) {
-      var bounds = this._getContentBounds(includeStroke).clone();
+    private _getTransformedBounds(targetCoordinateSpace: DisplayObject, includeStroke: boolean = true) {
+      var bounds = this._getContentBounds(includeStroke);
       if (!targetCoordinateSpace || targetCoordinateSpace === this || bounds.isEmpty()) {
         return bounds.clone();
       }
-      // MBX: Probably broken.
-      var t = targetCoordinateSpace._getConcatenatedMatrix();
-      t.invert();
-      t.concat(this._getConcatenatedMatrix());
-      t.transformRectAABB(bounds);
-      if (toPixels) {
-        bounds.toPixels();
-      }
-      return bounds;
+      var m = targetCoordinateSpace._getConcatenatedMatrix().clone();
+      m.invert();
+      m.concat(this._getConcatenatedMatrix());
+      return m.transformRectAABB(bounds);
     }
 
     /**
      * Marks this object as needing to be repainted.
      */
-    private _invalidatePaint() {
+    _invalidatePaint() {
       this._propagateFlags(DisplayObjectFlags.InvalidPaint, Direction.Upward);
     }
 
-    /**
-     * Marks this object as having been moved.
-     */
-    private _invalidatePosition() {
-      // Tobias: Do we set this flag only if the assignment is successful?
+    private _stopTimelineAnimation() {
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
+    }
+
+    /**
+     * Marks this object as having been moved in its parent display object.
+     */
+    _invalidatePosition() {
       this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedMatrix, Direction.Downward);
       if (this._parent) {
         this._parent._invalidateBounds();
@@ -601,6 +661,7 @@ module Shumway.AVM2.AS.flash.display {
 
     set x(value: number) {
       value = (value * 20) | 0;
+      this._stopTimelineAnimation();
       if (value === this._matrix.tx) {
         return;
       }
@@ -614,6 +675,7 @@ module Shumway.AVM2.AS.flash.display {
 
     set y(value: number) {
       value = (value * 20) | 0;
+      this._stopTimelineAnimation();
       if (value === this._matrix.ty) {
         return;
       }
@@ -621,11 +683,113 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidatePosition();
     }
 
-    get mask(): flash.display.DisplayObject {
+    get scaleX(): number {
+      return this._scaleX;
+    }
+
+    set scaleX(value: number) {
+      value = +value;
+
+      this._stopTimelineAnimation();
+      if (value === this._scaleX) {
+        return;
+      }
+      this._scaleX = value;
+      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidatePosition();
+    }
+
+    get scaleY(): number {
+      return this._scaleY;
+    }
+
+    set scaleY(value: number) {
+      value = +value;
+
+      this._stopTimelineAnimation();
+      if (value === this._scaleY) {
+        return;
+      }
+      this._scaleY = value;
+      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidatePosition();
+    }
+
+    get rotation(): number {
+      return this._rotation;
+    }
+
+    set rotation(value: number) {
+      value = +value;
+
+      this._stopTimelineAnimation();
+      value = DisplayObject._clampRotation(value);
+      if (value === this._rotation) {
+        return;
+      }
+      this._rotation = value;
+      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidatePosition();
+    }
+
+    /**
+     *
+     */
+    get width(): number {
+      var bounds = this._getTransformedBounds(this._parent, true);
+      return bounds.width / 20;
+    }
+
+    set width(value: number) {
+      value = (value * 20) | 0;
+      this._stopTimelineAnimation();
+      if (value < 0) {
+        return;
+      }
+      var bounds = this._getTransformedBounds(this._parent, true);
+      var contentBounds = this._getContentBounds(true);
+      var angle = this._rotation / 180 * Math.PI;
+      var baseWidth = contentBounds.getBaseWidth(angle);
+      if (!baseWidth) {
+        return;
+      }
+      var baseHeight = contentBounds.getBaseHeight(angle);
+      this._scaleY = this.height / baseHeight;
+      this._scaleX = value / baseWidth;
+      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidatePosition();
+    }
+
+    get height(): number {
+      var bounds = this._getTransformedBounds(this._parent, true);
+      return bounds.height / 20;
+    }
+
+    set height(value: number) {
+      value = (value * 20) | 0;
+      this._stopTimelineAnimation();
+      if (value < 0) {
+        return;
+      }
+      var bounds = this._getTransformedBounds(this._parent, true);
+      if (!bounds.height || bounds.height === value) {
+        return;
+      }
+      this._scaleX = this._getMatrix().getScaleX();
+      this._scaleY = value / bounds.height;
+      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidatePosition();
+    }
+
+    get mask(): DisplayObject {
       return this._mask;
     }
 
-    set mask(value: flash.display.DisplayObject) {
+    /**
+     * Sets the mask for this display object. This does not affect the bounds.
+     */
+    set mask(value: DisplayObject) {
+      this._stopTimelineAnimation();
       if (this._mask === value || value === this) {
         return;
       }
@@ -638,7 +802,6 @@ module Shumway.AVM2.AS.flash.display {
         value._maskedObject = this;
       }
       this._invalidatePaint();
-      // Tobias: Does masking affect the bounds?
     }
 
     get transform(): flash.geom.Transform {
@@ -646,10 +809,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set transform(value: flash.geom.Transform) {
+      this._stopTimelineAnimation();
       if (value.matrix3D) {
         this._matrix3D = value.matrix3D;
       } else {
-        this._setMatrix(transform.matrix, true);
+        this._setMatrix(value.matrix, true);
       }
       this._setColorTransform(value.colorTransform);
     }
@@ -658,7 +822,7 @@ module Shumway.AVM2.AS.flash.display {
       this._setFlags(DisplayObjectFlags.Destroyed);
     }
 
-    get root(): flash.display.DisplayObject {
+    get root(): DisplayObject {
       return this._root;
     }
 
@@ -674,7 +838,7 @@ module Shumway.AVM2.AS.flash.display {
       this._name = "" + value;
     }
 
-    get parent(): flash.display.DisplayObjectContainer {
+    get parent(): DisplayObjectContainer {
       return this._parent;
     }
 
@@ -682,78 +846,100 @@ module Shumway.AVM2.AS.flash.display {
       return this._hasFlags(DisplayObjectFlags.Visible);
     }
 
+    /**
+     * Marks this display object as visible / invisible. This does not affect the bounds.
+     */
     set visible(value: boolean) {
+      this._stopTimelineAnimation();
       value = !!value;
       if (value === this._hasFlags(DisplayObjectFlags.Visible)) {
         return;
       }
       this._setFlags(DisplayObjectFlags.Visible);
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      // Tobias: Does visibility affect the bounds?
     }
 
     get z(): number {
       return this._z;
     }
+
     set z(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set z"); return;
-      // this._z = value;
+      this._z = value;
+      notImplemented("public DisplayObject::set z"); return;
     }
 
+    getBounds(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
+      return this._getTransformedBounds(targetCoordinateSpace, true).toPixels();
+    }
+
+    getRect(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
+      return this._getTransformedBounds(targetCoordinateSpace, false).toPixels();
+    }
+
+    public visit(visitor: (DisplayObject) => VisitorFlags, visitorFlags: VisitorFlags) {
+      var stack: DisplayObject [];
+      var displayObject: DisplayObject;
+      var displayObjectContainer: DisplayObjectContainer;
+      var frontToBack = visitorFlags & VisitorFlags.FrontToBack;
+      stack = [this];
+      while (stack.length > 0) {
+        displayObject = stack.pop();
+        if (visitor(displayObject) === VisitorFlags.Continue) {
+          if (displayObject instanceof DisplayObjectContainer) {
+            displayObjectContainer = <DisplayObjectContainer>displayObject;
+            var children = displayObjectContainer._children;
+            var length = children.length;
+            for (var i = 0; i < length; i++) {
+              var child = children[frontToBack ? i : length - 1 - i];
+              stack.push(child);
+            }
+          }
+        }
+      }
+    }
+    
     // ---------------------------------------------------------------------------------------------------------------------------------------------
     // -- Stuff below we still need to port.                                                                                                      --
     // ---------------------------------------------------------------------------------------------------------------------------------------------
 
     /*
-    get scaleX(): number {
-      return this._scaleX;
+    get width(): number {
+      notImplemented("public DisplayObject::get width"); return;
+      var bounds = this._getTransformedBounds(this, true);
+      return bounds.width / 20;
     }
 
-    set scaleX(value: number) {
+    set width(value: number) {
+      notImplemented("public DisplayObject::set width"); return;
       value = +value;
 
-      if (value === this._scaleX) {
+      if (value < 0) {
         return;
       }
 
-      var m = currentTransform;
-      m.a = Math.cos(this._rotation) * value;
-      m.b = Math.sin(this._rotation) * value;
+      var u = Math.abs(Math.cos(this._rotation));
+      var v = Math.abs(Math.sin(this._rotation));
+      var bounds = this._getContentBounds();
+      var baseWidth = u * bounds.width + v * bounds.height;
 
-      this._scaleX = value;
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      this._invalidate();
-      this._invalidateTransform();
-    }
-
-    get scaleY(): number {
-      return this._scaleY;
-    }
-
-    set scaleY(value: number) {
-      value = +value;
-
-      if (value === this._scaleY) {
+      if (!baseWidth) {
         return;
       }
 
-      var m = this._matrix;
-      m.c = Math.sin(-this._rotation) * value;
-      m.d = Math.cos(this._rotation) * value;
-
-      this._scaleY = value;
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      this._invalidate();
-      this._invalidateTransform();
+      var baseHeight = v * bounds.width + u * bounds.height;
+      this.scaleY = this.height / baseHeight;
+      this.scaleX = ((value * 20) | 0) / baseWidth;
     }
+    */
 
+    /*
     get scaleZ(): number {
       return this._scaleZ;
     }
     set scaleZ(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set scaleZ"); return;
+      notImplemented("public DisplayObject::set scaleZ"); return;
       // this._scaleZ = value;
     }
     get mouseX(): number {
@@ -762,63 +948,12 @@ module Shumway.AVM2.AS.flash.display {
     get mouseY(): number {
       return this._mouseY / 20;
     }
-    get rotation(): number {
-      return this._rotation;
-    }
-    set rotation(value: number) {
-      value = +value;
-
-      value %= 360;
-      if (value > 180) {
-        value -= 360;
-      }
-
-      if (value === this._rotation) {
-        return;
-      }
-
-      var angle = value / 180 * Math.PI;
-      var u, v;
-      switch (value) {
-        case 0:
-        case 360:
-          u = 1, v = 0;
-          break;
-        case 90:
-        case -270:
-          u = 0, v = 1;
-          break;
-        case 180:
-        case -180:
-          u = -1, v = 0;
-          break;
-        case 270:
-        case -90:
-          u = 0, v = -1;
-          break;
-        default:
-          u = Math.cos(angle);
-          v = Math.sin(angle);
-          break;
-      }
-
-      var m = this._matrix;
-      m.a = u * this._scaleX;
-      m.b = v * this._scaleX;
-      m.c = -v * this._scaleY;
-      m.d = u * this._scaleY;
-
-      this._rotation = value;
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      this._invalidate();
-      this._invalidateTransform();
-    }
     get rotationX(): number {
       return this._rotationX;
     }
     set rotationX(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set rotationX"); return;
+      notImplemented("public DisplayObject::set rotationX"); return;
       // this._rotationX = value;
     }
     get rotationY(): number {
@@ -826,7 +961,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     set rotationY(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set rotationY"); return;
+      notImplemented("public DisplayObject::set rotationY"); return;
       // this._rotationY = value;
     }
     get rotationZ(): number {
@@ -834,7 +969,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     set rotationZ(value: number) {
       value = +value;
-      notImplemented("public flash.display.DisplayObject::set rotationZ"); return;
+      notImplemented("public DisplayObject::set rotationZ"); return;
       // this._rotationZ = value;
     }
     get alpha(): number {
@@ -921,7 +1056,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     set opaqueBackground(value: Object) {
       value = value;
-      notImplemented("public flash.display.DisplayObject::set opaqueBackground"); return;
+      notImplemented("public DisplayObject::set opaqueBackground"); return;
       // this._opaqueBackground = value;
     }
     get scrollRect(): flash.geom.Rectangle {
@@ -929,7 +1064,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     set scrollRect(value: flash.geom.Rectangle) {
       value = value;
-      notImplemented("public flash.display.DisplayObject::set scrollRect"); return;
+      notImplemented("public DisplayObject::set scrollRect"); return;
       // this._scrollRect = value;
     }
     get filters(): any [] {
@@ -967,7 +1102,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     set scale9Grid(innerRectangle: flash.geom.Rectangle) {
       innerRectangle = innerRectangle;
-      notImplemented("public flash.display.DisplayObject::set scale9Grid"); return;
+      notImplemented("public DisplayObject::set scale9Grid"); return;
       // this._scale9Grid = innerRectangle;
     }
     get loaderInfo(): flash.display.LoaderInfo {
@@ -979,12 +1114,12 @@ module Shumway.AVM2.AS.flash.display {
     }
     set accessibilityProperties(value: flash.accessibility.AccessibilityProperties) {
       value = value;
-      notImplemented("public flash.display.DisplayObject::set accessibilityProperties"); return;
+      notImplemented("public DisplayObject::set accessibilityProperties"); return;
       // this._accessibilityProperties = value;
     }
     set blendShader(value: flash.display.Shader) {
       value = value;
-      notImplemented("public flash.display.DisplayObject::set blendShader"); return;
+      notImplemented("public DisplayObject::set blendShader"); return;
       // this._blendShader = value;
     }
     globalToLocal(point: flash.geom.Point): flash.geom.Point {
@@ -1002,23 +1137,15 @@ module Shumway.AVM2.AS.flash.display {
       p.toPixels();
       return p;
     }
-    getBounds(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
-      //targetCoordinateSpace = targetCoordinateSpace;
-      return this._getTransformedBounds(targetCoordinateSpace, true, true);
-    }
-    getRect(targetCoordinateSpace: flash.display.DisplayObject): flash.geom.Rectangle {
-      //targetCoordinateSpace = targetCoordinateSpace;
-      return this._getTransformedBounds(targetCoordinateSpace, false, true);
-    }
     globalToLocal3D(point: flash.geom.Point): flash.geom.Vector3D {
       point = point;
-      notImplemented("public flash.display.DisplayObject::globalToLocal3D"); return;
+      notImplemented("public DisplayObject::globalToLocal3D"); return;
     }
     local3DToGlobal(point3d: flash.geom.Vector3D): flash.geom.Point {
       point3d = point3d;
-      notImplemented("public flash.display.DisplayObject::local3DToGlobal"); return;
+      notImplemented("public DisplayObject::local3DToGlobal"); return;
     }
-    _hitTest(use_xy: boolean, x: number, y: number, useShape: boolean, hitTestObject: flash.display.DisplayObject): boolean {
+    _hitTest(use_xy: boolean, x: number, y: number, useShape: boolean, hitTestObject: DisplayObject): boolean {
       use_xy = !!use_xy; x = +x; y = +y; useShape = !!useShape;
       //hitTestObject = hitTestObject;
 

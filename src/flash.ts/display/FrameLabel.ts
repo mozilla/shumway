@@ -31,9 +31,9 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null; // [];
     
     constructor (name: string, frame: number /*int*/) {
-      name = "" + name; frame = frame | 0;
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.display.FrameLabel");
+      this._name = "" + name;
+      this._frame = frame | 0;
     }
     
     // JS -> AS Bindings
@@ -41,19 +41,18 @@ module Shumway.AVM2.AS.flash.display {
     
     // AS -> JS Bindings
     
-    // _name: string;
-    // _frame: number /*int*/;
+    private _name: string;
+    private _frame: number /*int*/;
+
     get name(): string {
-      notImplemented("public flash.display.FrameLabel::get name"); return;
-      // return this._name;
+      return this._name;
     }
     get frame(): number /*int*/ {
-      notImplemented("public flash.display.FrameLabel::get frame"); return;
-      // return this._frame;
+      return this._frame;
     }
-    ctor(name: string, frame: number /*int*/): void {
-      name = "" + name; frame = frame | 0;
-      notImplemented("public flash.display.FrameLabel::ctor"); return;
+
+    clone() {
+      return new FrameLabel(this._name, this._frame);
     }
   }
 }

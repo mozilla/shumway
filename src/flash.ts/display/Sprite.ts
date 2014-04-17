@@ -17,12 +17,24 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   export class Sprite extends flash.display.DisplayObjectContainer {
-    
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
+    static initializer: any = function (symbol: MovieClip) {
+      var self: Sprite = this;
+      self._buttonMode = false;
+      self._dropTarget = null;
+      self._hitArea = null;
+      self._useHandCursor = true;
+
+      if (symbol) {
+        self._snapshots = symbol._snapshots || self._snapshots;
+      }
+
+      self.initChildren();
+    };
     
     // List of static symbols to link.
     static staticBindings: string [] = null; // [];
@@ -41,46 +53,55 @@ module Shumway.AVM2.AS.flash.display {
     // AS -> JS Bindings
     
     // _graphics: flash.display.Graphics;
-    // _buttonMode: boolean;
-    // _dropTarget: flash.display.DisplayObject;
-    // _hitArea: flash.display.Sprite;
-    // _useHandCursor: boolean;
-    // _soundTransform: flash.media.SoundTransform;
+    _buttonMode: boolean;
+    _dropTarget: flash.display.DisplayObject;
+    _hitArea: flash.display.Sprite;
+    _snapshots: Shumway.SWF.timeline.Snapshot [];
+    _useHandCursor: boolean;
+
     get graphics(): flash.display.Graphics {
-      notImplemented("public flash.display.Sprite::get graphics"); return;
-      // return this._graphics;
+      return this._graphics;
     }
+
     get buttonMode(): boolean {
-      notImplemented("public flash.display.Sprite::get buttonMode"); return;
-      // return this._buttonMode;
+      return this._buttonMode;
     }
+
     set buttonMode(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.display.Sprite::set buttonMode"); return;
-      // this._buttonMode = value;
+      this._buttonMode = !!value;
     }
+
     get dropTarget(): flash.display.DisplayObject {
       notImplemented("public flash.display.Sprite::get dropTarget"); return;
       // return this._dropTarget;
     }
+
     get hitArea(): flash.display.Sprite {
-      notImplemented("public flash.display.Sprite::get hitArea"); return;
-      // return this._hitArea;
+      return this._hitArea;
     }
+
     set hitArea(value: flash.display.Sprite) {
       value = value;
-      notImplemented("public flash.display.Sprite::set hitArea"); return;
-      // this._hitArea = value;
+      if (this._hitArea === value) {
+        return;
+      }
+      if (value && value._hitTarget) {
+        value._hitTarget._hitArea = null;
+      }
+      this._hitArea = value;
+      if (value) {
+        value._hitTarget = this;
+      }
     }
+
     get useHandCursor(): boolean {
-      notImplemented("public flash.display.Sprite::get useHandCursor"); return;
-      // return this._useHandCursor;
+      return this._useHandCursor;
     }
+
     set useHandCursor(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.display.Sprite::set useHandCursor"); return;
-      // this._useHandCursor = value;
+      this._useHandCursor = !!value;
     }
+
     get soundTransform(): flash.media.SoundTransform {
       notImplemented("public flash.display.Sprite::get soundTransform"); return;
       // return this._soundTransform;
@@ -105,8 +126,31 @@ module Shumway.AVM2.AS.flash.display {
       touchPointID = touchPointID | 0;
       notImplemented("public flash.display.Sprite::stopTouchDrag"); return;
     }
+
+    initChildren(): void {
+      var snapshot = this._snapshots[0];
+      var diff = snapshot.diff(null);
+      var states = diff.place;
+      for (var i = 0; i < states.length; i++) {
+        var state = states[i];
+        var child = state.make();
+        this.addChildAtDepth(child, child._depth);
+      }
+    }
+
     constructChildren(): void {
-      notImplemented("public flash.display.Sprite::constructChildren"); return;
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        if (child._hasFlags(DisplayObjectFlags.Constructed)) {
+          continue;
+        }
+        child.instanceConstructorNoInitialize();
+        //if (child._name) {
+        //  this[Multiname.getPublicQualifiedName(name)] = instance;
+        //}
+        child._setFlags(DisplayObjectFlags.Constructed);
+      }
     }
   }
 }

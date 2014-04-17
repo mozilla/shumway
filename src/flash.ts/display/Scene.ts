@@ -31,24 +31,38 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null; // ["_name", "_labels", "_numFrames", "name", "labels", "numFrames"];
     
     constructor (name: string, labels: any [], numFrames: number /*int*/) {
-      name = "" + name; labels = labels; numFrames = numFrames | 0;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.Scene");
+      this._name = "" + name;
+      this._labels = labels;
+      this._numFrames = numFrames | 0;
     }
     
     // JS -> AS Bindings
     
-    _name: string;
-    _labels: any [];
-    _numFrames: number /*int*/;
-    name: string;
-    labels: any [];
-    numFrames: number /*int*/;
+    private _name: string;
+    private _labels: any [];
+    private _numFrames: number /*int*/;
     
     // AS -> JS Bindings
-    
-    // _name: string;
-    // _labels: any [];
-    // _numFrames: number /*int*/;
+
+    get name(): string {
+      return this._name;
+    }
+
+    get labels(): any [] {
+      return this._labels;
+    }
+
+    get numFrames(): number {
+      return this._numFrames;
+    }
+
+    clone() {
+      var labels = this._labels.slice();
+      for (var i = 0; i < labels.length; i++) {
+        labels[i] = labels[i].clone();
+      }
+      return new Scene(this._name, labels, this._numFrames);
+    }
   }
 }

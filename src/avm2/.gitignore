@@ -13,6 +13,6 @@ runtime.js
 scope.js
 trampoline.js
 utilities.js
-nat.js
+native.js
 stubs.js
 natives/*.js

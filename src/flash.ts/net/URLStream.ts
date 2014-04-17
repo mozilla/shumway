@@ -16,6 +16,10 @@
 // Class: URLStream
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+
+  declare var FileLoadingService;
+  declare var Stream;
+
   export class URLStream extends flash.events.EventDispatcher implements flash.utils.IDataInput {
     
     // Called whenever the class is initialized.
@@ -32,15 +36,22 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.net.URLStream");
+
+      this._stream = null;
+      this._connected = false;
+      this._littleEndian = false;
     }
+
+    private _stream;
+    private _session;
+    private _littleEndian: boolean;
     
     // JS -> AS Bindings
     
     
     // AS -> JS Bindings
     
-    // _connected: boolean;
+    private _connected: boolean;
     // _bytesAvailable: number /*uint*/;
     // _objectEncoding: number /*uint*/;
     // _endian: string;
@@ -91,8 +102,68 @@ module Shumway.AVM2.AS.flash.net {
       // return this._length;
     }
     load(request: flash.net.URLRequest): void {
-      request = request;
-      notImplemented("public flash.net.URLStream::load"); return;
+      var session = FileLoadingService.createSession();
+      var self = this;
+      var initStream = true;
+      session.onprogress = function (data, progressState) {
+        var length: number;
+        var buffer: ArrayBuffer;
+        if (initStream) {
+          initStream = false;
+          length = Math.max(progressState.bytesTotal, data.length);
+          buffer = new ArrayBuffer(length);
+          self._stream = new Stream(buffer, 0, 0, length);
+        } else if (self._stream.end + data.length > self._stream.bytes.length) {
+          length = self._stream.end + data.length;
+          buffer = new ArrayBuffer(length);
+          var newStream = new Stream(buffer, 0, 0, length);
+          newStream.push(self._stream.bytes.subarray(0, self._stream.end));
+          self._stream = newStream;
+        }
+        self._stream.push(data);
+        self.dispatchEvent(new flash.events.ProgressEvent("progress",
+          false, false, progressState.bytesLoaded, progressState.bytesTotal));
+      };
+      session.onerror = function (error) {
+        self._connected = false;
+        if (!self._stream) {
+          // We need to have something to return in data
+          self._stream = new Stream(new ArrayBuffer(0), 0, 0, 0);
+        }
+        self.dispatchEvent(new flash.events.IOErrorEvent(
+          flash.events.IOErrorEvent.IO_ERROR, false, false, error));
+      };
+      session.onopen = function () {
+        self._connected = true;
+        self.dispatchEvent(new flash.events.Event("open", false, false));
+      };
+      session.onhttpstatus = function (location, httpStatus, httpHeaders) {
+        var httpStatusEvent = new flash.events.HTTPStatusEvent('httpStatus', false, false, httpStatus);
+        var headers = [];
+        httpHeaders.split(/(?:\n|\r?\n)/g).forEach(function (h) {
+          var m = /^([^:]+): (.*)$/.exec(h);
+          if (m) {
+            headers.push(new flash.net.URLRequestHeader(m[1], m[2]));
+            if (m[1] === 'Location') { // Headers have redirect location
+              location = m[2];
+            }
+          }
+        });
+        httpStatusEvent.asSetPublicProperty('responseHeaders', headers);
+        httpStatusEvent.asSetPublicProperty('responseURL', location);
+        self.dispatchEvent(httpStatusEvent);
+      };
+      session.onclose = function () {
+        self._connected = false;
+        if (!self._stream) {
+          // We need to have something to return in data
+          self._stream = new Stream(new ArrayBuffer(0), 0, 0, 0);
+        }
+
+        self.dispatchEvent(new flash.events.Event("complete", false, false));
+      };
+      session.open(request._toFileRequest());
+      this._session = session;
     }
     readBytes(bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
       bytes = bytes; offset = offset >>> 0; length = length >>> 0;
@@ -137,7 +208,7 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.URLStream::readUTFBytes"); return;
     }
     close(): void {
-      notImplemented("public flash.net.URLStream::close"); return;
+      this._session.close();
     }
     readObject(): any {
       notImplemented("public flash.net.URLStream::readObject"); return;

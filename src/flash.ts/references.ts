@@ -278,7 +278,7 @@
 ///<reference path='net/URLLoader.ts' />
 // ///<reference path='net/URLLoaderDataFormat.ts' />
 ///<reference path='net/URLRequest.ts' />
-// ///<reference path='net/URLRequestHeader.ts' />
+///<reference path='net/URLRequestHeader.ts' />
 // ///<reference path='net/URLRequestMethod.ts' />
 ///<reference path='net/URLStream.ts' />
 ///<reference path='net/URLVariables.ts' />
@@ -436,6 +436,8 @@
 ///<reference path='xml/XMLNodeType.ts' />
 ///<reference path='xml/XMLParser.ts' />
 ///<reference path='xml/XMLTag.ts' />
+
+///<reference path='../timeline.ts' />
 
 ///<reference path='../avm1lib/references.ts' />
 

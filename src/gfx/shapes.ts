@@ -2,7 +2,7 @@ module Shumway {
   import IRenderable = Shumway.IRenderable;
   import Rectangle = Shumway.Geometry.Rectangle;
 
-  var SHAPE_ROOT = "assets/shapes/";
+  var SHAPE_ROOT = "../../src/gfx/assets/shapes/";
 
   function loadShape(file) {
     var path = SHAPE_ROOT + file;
@@ -38,7 +38,7 @@ module Shumway {
     render (context: CanvasRenderingContext2D) {
       var bounds = this.getBounds();
       context.save();
-      context.translate(-bounds.x, -bounds.y);
+      // context.translate(-bounds.x, -bounds.y);
       var shapes = this._data.shapes;
       for (var i = 0; i < shapes.length; i++) {
         var shape = shapes[i];
@@ -114,10 +114,10 @@ module Shumway {
 //    new VectorShape(loadShape("fire.json")),
 //    new VectorShape(loadShape("large.json")),
 //    new VectorShape(loadShape("wide.json"))
-    new VectorShape(loadShape("flower.json"))
+//    new VectorShape(loadShape("flower.json"))
   ];
 
-  loadShape("assets.json").forEach(function (shape) {
+  loadShape("all-assets.json").forEach(function (shape) {
     Shapes.push(new VectorShape(shape));
   });
 

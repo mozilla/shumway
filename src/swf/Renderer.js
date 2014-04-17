@@ -217,6 +217,67 @@ function handleRenderMessages(renderer, layers, i32, sync) {
           );
       }
 
+      var filters = [];
+      var filterCount = i32[p++];
+      for (var i = 0; i < filterCount; i++) {
+        var filterId = i32[p++];
+        switch (filterId) {
+          case 0:
+            filters.push(
+              new Shumway.Layers.DropshadowFilter(
+                f32[p++], // alpha
+                f32[p++], // angle
+                f32[p++], // blurX
+                f32[p++], // blurY
+                i32[p++], // color
+                f32[p++], // distance
+                !!i32[p++], // hideObject
+                !!i32[p++], // inner
+                !!i32[p++], // knockout
+                i32[p++], // quality
+                f32[p++] // strength
+              )
+            );
+            break;
+          case 1:
+            filters.push(
+              new Shumway.Layers.BlurFilter(
+                f32[p++], // blurX
+                f32[p++], // blurY
+                i32[p++] // quality
+              )
+            );
+            break;
+          case 2:
+            filters.push(
+              new Shumway.Layers.GlowFilter(
+                f32[p++], // alpha
+                f32[p++], // blurX
+                f32[p++], // blurY
+                i32[p++], // color
+                !!i32[p++], // inner
+                !!i32[p++], // knockout
+                i32[p++], // quality
+                f32[p++] // strength
+              )
+            );
+            break;
+          case 6:
+            filters.push(
+              new Shumway.Layers.ColorTransform([
+                f32[p++], f32[p++], f32[p++], f32[p++],
+                f32[p++], f32[p++], f32[p++], f32[p++],
+                f32[p++], f32[p++], f32[p++], f32[p++],
+                f32[p++], f32[p++], f32[p++], f32[p++],
+                f32[p++], f32[p++], f32[p++], f32[p++]
+              ])
+            );
+            break;
+          case -1: break; // Empty (not supported)
+          default: throw("Not implemented: Filter ID " + filterId);
+        }
+      }
+
       var updateRenderable = i32[p++];
       if (updateRenderable) {
         var renderableType = i32[p++];
@@ -306,6 +367,7 @@ function handleRenderMessages(renderer, layers, i32, sync) {
       layer.transform = transform;
       layer.alpha = alpha;
       layer.isVisible = visible;
+      layer.blendMode = blendMode;
 
       if (maskId) {
         layer.mask = layers[maskId];
@@ -318,6 +380,7 @@ function handleRenderMessages(renderer, layers, i32, sync) {
       }
 
       layer.colorTransform = colorTransform;
+      layer.filters = filters;
       layer.index = index;
       break;
     case Renderer.MESSAGE_REMOVE_LAYER:

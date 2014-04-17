@@ -18,7 +18,9 @@ module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
 
-  export class Graphics extends ASNative implements flash.utils.IExternalizable {
+  import Rectangle = flash.geom.Rectangle;
+
+  export class Graphics extends ASNative {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -26,7 +28,6 @@ module Shumway.AVM2.AS.flash.display {
     // Called whenever an instance of the class is initialized.
     static initializer: any = function () {
       var self: Graphics = this;
-
       self._currentPath = null;
       self._graphicsData = [];
       self._invalid = false;
@@ -63,9 +64,12 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._currentPath) {
         return;
       }
-
       this._graphicsData.push(this._currentPath);
       this._currentPath = null;
+    }
+
+    getBounds(includeStrokes: boolean = true): Rectangle {
+      return new Rectangle();
     }
 
     clear(): void {
@@ -73,37 +77,45 @@ module Shumway.AVM2.AS.flash.display {
       this._graphicsData.length = 0;
       this._invalid = true;
     }
+
     beginFill(color: number /*uint*/, alpha: number = 1): void {
       this._closePath();
       this._graphicsData.push(new GraphicsSolidFill(color >>> 0, alpha = +alpha));
     }
+
     beginGradientFill(type: string, colors: any [], alphas: any [], ratios: any [], matrix: flash.geom.Matrix = null, spreadMethod: string = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
       // colors = colors; alphas = alphas; ratios = ratios; matrix = matrix;
       this._closePath();
       this._graphicsData.push(new GraphicsGradientFill("" + type, colors, alphas, ratios, matrix, "" + spreadMethod, "" + interpolationMethod, +focalPointRatio));
     }
+
     beginBitmapFill(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null, repeat: boolean = true, smooth: boolean = false): void {
       //bitmap = bitmap; matrix = matrix;
       this._closePath();
       this._graphicsData.push(new GraphicsBitmapFill(bitmap, matrix, !!repeat, !!smooth));
     }
+
     beginShaderFill(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
       //shader = shader; matrix = matrix;
       notImplemented("public flash.display.Graphics::beginShaderFill"); return;
     }
+
     lineGradientStyle(type: string, colors: any [], alphas: any [], ratios: any [], matrix: flash.geom.Matrix = null, spreadMethod: string = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
       // colors = colors; alphas = alphas; ratios = ratios; matrix = matrix;
       this._closePath();
       var fill = new GraphicsGradientFill("" + type, colors, alphas, ratios, matrix, "" + spreadMethod, "" + interpolationMethod, +focalPointRatio);
       // TODO
     }
+
     lineStyle(thickness: number, color: number /*uint*/ = 0, alpha: number = 1, pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = null, joints: string = null, miterLimit: number = 3): void {
       this._closePath();
       var fill = new GraphicsSolidFill(color >>> 0, +alpha);
       this._graphicsData.push(new GraphicsStroke(+thickness, !!pixelHinting, "" + scaleMode, "" + caps, "" + joints, +miterLimit, fill));
     }
+
     drawRect(x: number, y: number, width: number, height: number): void {
       x = +x; y = +y; width = +width; height = +height;
+
       this._ensurePath();
       this._currentPath.moveTo(x, y);
       this._currentPath.lineTo(x + width, y);
@@ -112,10 +124,9 @@ module Shumway.AVM2.AS.flash.display {
       this._currentPath.lineTo(x, y);
       this._invalid = true;
     }
+
     drawRoundRect(x: number, y: number, width: number, height: number, ellipseWidth: number, ellipseHeight: number): void {
       x = +x; y = +y; width = +width; height = +height; ellipseWidth = +ellipseWidth; ellipseHeight = +ellipseHeight;
-
-      this._ensurePath();
 
       if (!ellipseHeight || !ellipseWidth) {
         this.drawRect(x, y, width, height);
@@ -124,7 +135,6 @@ module Shumway.AVM2.AS.flash.display {
 
       var radiusX = (ellipseWidth / 2) | 0;
       var radiusY = (ellipseHeight / 2) | 0;
-
       var hw = width / 2;
       var hh = height / 2;
       if (radiusX > hw) {
@@ -133,7 +143,6 @@ module Shumway.AVM2.AS.flash.display {
       if (radiusY > hh) {
         radiusY = hh;
       }
-
       if (hw === radiusX && hh === radiusY) {
         if (radiusX === radiusY) {
           this.drawCircle(x + radiusX, y + radiusY, radiusX);
@@ -143,6 +152,7 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
+      this._ensurePath();
       //    A-----B
       //  H         C
       //  G         D
@@ -168,16 +178,16 @@ module Shumway.AVM2.AS.flash.display {
       this._currentPath.lineTo(right, ybw);
       this._invalid = true;
     }
+
     drawRoundRectComplex(x: number, y: number, width: number, height: number, topLeftRadius: number, topRightRadius: number, bottomLeftRadius: number, bottomRightRadius: number): void {
       x = +x; y = +y; width = +width; height = +height; topLeftRadius = +topLeftRadius; topRightRadius = +topRightRadius; bottomLeftRadius = +bottomLeftRadius; bottomRightRadius = +bottomRightRadius;
-
-      this._ensurePath();
 
       if (!topLeftRadius && !topRightRadius && !bottomLeftRadius && !bottomRightRadius) {
         this.drawRect(x, y, width, height);
         return;
       }
 
+      this._ensurePath();
       var right = x + width;
       var bottom = y + height;
       var xtl = x + topLeftRadius;
@@ -192,21 +202,20 @@ module Shumway.AVM2.AS.flash.display {
       this._currentPath.lineTo(right, bottom - bottomRightRadius);
       this._invalid = true;
     }
+
     drawCircle(x: number, y: number, radius: number): void {
       this.drawEllipse(+x, +y, +radius, +radius);
     }
+
     drawEllipse(x: number, y: number, width: number, height: number): void {
       x = +x; y = +y; width = +width; height = +height;
 
       this._ensurePath();
-
       var rx = width / 2;
       var ry = height / 2;
       var currentX = x + rx;
       var currentY = y;
-
       this._currentPath.lineTo(currentX * width, currentY * height);
-
       var startAngle = 0;
       var u = 1;
       var v = 0;
@@ -231,47 +240,56 @@ module Shumway.AVM2.AS.flash.display {
         );
         startAngle = endAngle;
       }
-
       this._invalid = true;
     }
+
     moveTo(x: number, y: number): void {
       x = +x; y = +y;
+
       this._ensurePath();
       this._currentPath.moveTo(x, y);
       this._invalid = true;
     }
+
     lineTo(x: number, y: number): void {
       x = +x; y = +y;
+
       this._ensurePath();
       this._currentPath.lineTo(x, y);
       this._invalid = true;
     }
+
     curveTo(controlX: number, controlY: number, anchorX: number, anchorY: number): void {
       this._ensurePath();
       this._currentPath.curveTo(+controlX, +controlY, +anchorX, +anchorY);
       this._invalid = true;
     }
+
     cubicCurveTo(controlX1: number, controlY1: number, controlX2: number, controlY2: number, anchorX: number, anchorY: number): void {
       this._ensurePath();
       this._currentPath.cubicCurveTo(+controlX1, +controlY1, +controlX2, +controlY2, +anchorX, +anchorY);
       this._invalid = true;
     }
+
     endFill(): void {
       this._closePath();
       this._graphicsData.push(new GraphicsEndFill());
     }
+
     copyFrom(sourceGraphics: flash.display.Graphics): void {
       //sourceGraphics = sourceGraphics;
       this._currentPath = null;
       this._graphicsData = sourceGraphics._graphicsData.slice();
       this._invalid = true;
     }
+
     lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null, repeat: boolean = true, smooth: boolean = false): void {
       //bitmap = bitmap; matrix = matrix;
       this._closePath();
       var fill = this._graphicsData.push(new GraphicsBitmapFill(bitmap, matrix, !!repeat, !!smooth));
       // TODO
     }
+
     lineShaderStyle(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
       //shader = shader; matrix = matrix;
       notImplemented("public flash.display.Graphics::lineShaderStyle"); return;
@@ -287,13 +305,6 @@ module Shumway.AVM2.AS.flash.display {
     drawGraphicsData(graphicsData: ASVector<any>): void {
       graphicsData = graphicsData;
       notImplemented("public flash.display.Graphics::drawGraphicsData"); return;
-    }
-
-    writeExternal(output: flash.utils.IDataOutput): void {
-
-    }
-    readExternal(input: flash.utils.IDataInput): void {
-
     }
   }
 }

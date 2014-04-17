@@ -30,7 +30,7 @@ module Shumway.GFX.Layers {
           div.style.transform = div.style["webkitTransform"] = transform.toCSSTransform();
         }
         return VisitorFlags.Continue;
-      }, stage.transform);
+      }, stage.matrix);
     }
 
     /**

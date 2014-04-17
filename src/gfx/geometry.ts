@@ -40,6 +40,10 @@ module Shumway.Geometry {
       return this.dot(this);
     }
 
+    distanceTo (other: Point): number {
+      return Math.sqrt(this.dot(other));
+    }
+
     sub (other: Point): Point {
       this.x -= other.x;
       this.y -= other.y;
@@ -215,6 +219,13 @@ module Shumway.Geometry {
         (b1 <= b2);
     }
 
+    containsPoint (point: Point): boolean {
+      return (point.x >= this.x) &&
+        (point.x < this.x + this.w) &&
+        (point.y >= this.y) &&
+        (point.y < this.y + this.h);
+    }
+
     isContained (others: Rectangle []) {
       for (var i = 0; i < others.length; i++) {
         if (others[i].contains(this)) {
@@ -320,8 +331,8 @@ module Shumway.Geometry {
     snap (): Rectangle  {
       var x1 = Math.ceil(this.x + this.w);
       var y1 = Math.ceil(this.y + this.h);
-      this.x |= 0;
-      this.y |= 0;
+      this.x = Math.floor(this.x);
+      this.y = Math.floor(this.y);
       this.w = x1 - this.x;
       this.h = y1 - this.y;
       return this;
@@ -371,6 +382,13 @@ module Shumway.Geometry {
 
     static createSquare(size: number): Rectangle {
       return new Rectangle(-size / 2, -size / 2, size, size);
+    }
+
+    /**
+     * Creates the maximum rectangle representable by signed 16 bit integers.
+     */
+    static createMaxI16() {
+      return new Rectangle(Numbers.MinI16, Numbers.MinI16, Numbers.MaxU16, Numbers.MaxU16)
     }
 
     getCorners (points: Point[]) {

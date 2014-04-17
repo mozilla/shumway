@@ -108,6 +108,10 @@ module Shumway.AVM2.AS.flash.geom {
       this.height = value.y;
     }
 
+    public get area(): number {
+      return this.width * this.height;
+    }
+
     public clone(): Rectangle {
       return new Rectangle(this.x, this.y, this.width, this.height);
     }
@@ -177,13 +181,26 @@ module Shumway.AVM2.AS.flash.geom {
         && Math.max(this.y, toIntersect.y) <= Math.min(this.bottom, toIntersect.bottom);
     }
 
+    public clip(clipRect: Rectangle): Rectangle {
+      var l: number = Math.max(this.x, clipRect.x);
+      var r: number = Math.min(this.right, clipRect.right);
+      if (l <= r) {
+        var t: number = Math.max(this.y, clipRect.y);
+        var b: number = Math.min(this.bottom, clipRect.bottom);
+        if (t <= b) {
+          this.setTo(l, t, r - l, b - t);
+        }
+      }
+      return this;
+    }
+
     public union(toUnion: Rectangle): Rectangle {
       var rect = this.clone();
       rect.unionWith(toUnion);
       return rect;
     }
 
-    public unionWith(toUnion: Rectangle): void {
+    public unionWith(toUnion: Rectangle): Rectangle {
       if (toUnion.isEmpty()) {
         return;
       }
@@ -196,6 +213,7 @@ module Shumway.AVM2.AS.flash.geom {
       this.setTo(l, t,
         Math.max(this.right, toUnion.right) - l,
         Math.max(this.bottom, toUnion.bottom) - t);
+      return this;
     }
 
     public equals(toCompare: Rectangle): boolean {
@@ -219,18 +237,46 @@ module Shumway.AVM2.AS.flash.geom {
       this.height = +height;
     }
 
-    public toTwips() {
+    public toTwips(): Rectangle {
       this.x = (this.x * 20) | 0;
       this.y = (this.y * 20) | 0;
       this.width = (this.width * 20) | 0;
       this.height = (this.height * 20) | 0;
+      return this;
     }
 
-    public toPixels() {
+    /**
+     * Snaps the rectangle to pixel boundaries. The computed rectangle covers
+     * the original rectangle.
+     */
+    public snap(): Rectangle {
+      var x1 = Math.ceil(this.x + this.width);
+      var y1 = Math.ceil(this.y + this.height);
+      this.x |= 0;
+      this.y |= 0;
+      this.width = x1 - this.x;
+      this.height = y1 - this.y;
+      return this;
+    }
+
+    public getBaseWidth(angle: number) {
+      var u = Math.abs(Math.cos(angle));
+      var v = Math.abs(Math.sin(angle));
+      return u * this.width + v * this.height;
+    }
+
+    public getBaseHeight(angle: number) {
+      var u = Math.abs(Math.cos(angle));
+      var v = Math.abs(Math.sin(angle));
+      return v * this.width + u * this.height;
+    }
+
+    public toPixels(): Rectangle {
       this.x /= 20;
       this.y /= 20;
       this.width /= 20;
       this.height /= 20;
+      return this;
     }
 
     public toString(): String {

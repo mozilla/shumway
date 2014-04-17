@@ -16,6 +16,10 @@
 // Class: LocalConnection
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+
+  declare var FileLoadingService;
+
   export class LocalConnection extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -32,7 +36,6 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.net.LocalConnection");
     }
     
     // JS -> AS Bindings
@@ -53,8 +56,11 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.LocalConnection::connect"); return;
     }
     get domain(): string {
-      notImplemented("public flash.net.LocalConnection::get domain"); return;
-      // return this._domain;
+      somewhatImplemented("public flash.net.LocalConnection::get domain");
+      // HACK some SWFs want to know where they are hosted
+      var url = FileLoadingService.resolveUrl('/');
+      var m = /:\/\/(.+?)[:?#\/]/.exec(url);
+      return m && m[1];
     }
     send(connectionName: string, methodName: string): void {
       connectionName = "" + connectionName; methodName = "" + methodName;

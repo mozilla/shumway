@@ -43,6 +43,10 @@ interface Array {
   runtimeId: number;
 }
 
+interface Math {
+  imul(a: number, b: number): number;
+}
+
 module Shumway {
 
   export enum CharacterCodes {
@@ -894,6 +898,33 @@ module Shumway {
     }
   }
 
+  /**
+   * Marsaglia's algorithm, adapted from V8. Use this if you want a deterministic random number.
+   */
+  export class Random {
+    private static _state: Uint32Array = new Uint32Array([0xDEAD, 0xBEEF]);
+
+    public static seed(seed: number) {
+      Random._state[0] = seed;
+      Random._state[1] = seed;
+    }
+
+    public static next(): number {
+      var s = this._state;
+      var r0 = (Math.imul(18273, s[0] & 0xFFFF) + (s[0] >>> 16)) | 0;
+      s[0] = r0;
+      var r1 = (Math.imul(36969, s[1] & 0xFFFF) + (s[1] >>> 16)) | 0;
+      s[1] = r1;
+      var x = ((r0 << 16) + (r1 & 0xFFFF)) | 0;
+      // Division by 0x100000000 through multiplication by reciprocal.
+      return (x < 0 ? (x + 0x100000000) : x) * 2.3283064365386962890625e-10;
+    }
+  }
+
+  Math.random = function random(): number {
+    return Random.next();
+  };
+
   export module NumberUtilities {
     export function pow2(exponent: number): number {
       if (exponent === (exponent | 0)) {
@@ -913,6 +944,12 @@ module Shumway {
       }
       return value;
     }
+  }
+
+  export enum Numbers {
+    MaxU16 = 0xFFFF,
+    MaxI16 = 0x7FFF,
+    MinI16 = -0x8000
   }
 
   export module IntegerUtilities {
@@ -956,6 +993,21 @@ module Shumway {
 
     export function isPowerOfTwo(x) {
       return x && ((x & (x - 1)) === 0);
+    }
+
+    /**
+     * Polyfill imul.
+     */
+    if (!Math.imul) {
+      Math.imul = function imul(a, b) {
+        var ah  = (a >>> 16) & 0xffff;
+        var al = a & 0xffff;
+        var bh  = (b >>> 16) & 0xffff;
+        var bl = b & 0xffff;
+        // the shift by 0 fixes the sign on the high part
+        // the final |0 converts the unsigned value into a signed value
+        return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+      }
     }
   }
 
@@ -1249,6 +1301,28 @@ module Shumway {
     }
   }
 
+  export class ColorStyle {
+    static TabToolbar = "#252c33";
+    static Toolbars = "#343c45";
+    static HighlightBlue = "#1d4f73";
+    static LightText = "#f5f7fa";
+    static ForegroundText = "#b6babf";
+    static Black = "#000000";
+    static VeryDark = "#14171a";
+    static Dark = "#181d20";
+    static Light = "#a9bacb";
+    static Grey = "#8fa1b2";
+    static DarkGrey = "#5f7387";
+    static Blue = "#46afe3";
+    static Purple = "#6b7abb";
+    static Pink = "#df80ff";
+    static Red = "#eb5368";
+    static Orange = "#d96629";
+    static LightOrange = "#d99b28";
+    static Green = "#70bf53";
+    static BlueGrey = "#5e88b0";
+  }
+
   export class Color {
     public r: number;
     public g: number;
@@ -1300,6 +1374,16 @@ module Shumway {
     }
   }
 
+  export module ColorUtilities {
+    export function argbToRgba(color: number): number {
+      return ((color << 8) | (color >> 24)) >>> 0;
+    }
+
+    export function rgbaToArgb(color: number): number {
+      return ((color >> 8) | (color << 24)) >>> 0;
+    }
+  }
+
   export module Telemetry {
     export enum Feature {
       EXTERNAL_INTERFACE_FEATURE = 1,
@@ -1308,6 +1392,12 @@ module Shumway {
       VIDEO_FEATURE = 4,
       SOUND_FEATURE = 5,
       NETCONNECTION_FEATURE = 6
+    }
+
+    declare var TelemetryService;
+
+    export function reportTelemetry(data) {
+      TelemetryService.reportTelemetry(data);
     }
   }
 

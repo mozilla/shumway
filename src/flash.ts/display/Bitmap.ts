@@ -31,9 +31,12 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null; // [];
     
     constructor (bitmapData: flash.display.BitmapData = null, pixelSnapping: string = "auto", smoothing: boolean = false) {
-      bitmapData = bitmapData; pixelSnapping = "" + pixelSnapping; smoothing = !!smoothing;
+      //bitmapData = bitmapData;
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.Bitmap");
+      DisplayObject.instanceConstructorNoInitialize.call(this);
+      this._bitmapData = bitmapData;
+      this._pixelSnapping = "" + pixelSnapping;
+      this._smoothing = !!smoothing;
     }
     
     // JS -> AS Bindings
@@ -41,39 +44,38 @@ module Shumway.AVM2.AS.flash.display {
     
     // AS -> JS Bindings
     
-    // _pixelSnapping: string;
-    // _smoothing: boolean;
-    // _bitmapData: flash.display.BitmapData;
+    _pixelSnapping: string;
+    _smoothing: boolean;
+    _bitmapData: flash.display.BitmapData;
+
     get pixelSnapping(): string {
-      notImplemented("public flash.display.Bitmap::get pixelSnapping"); return;
-      // return this._pixelSnapping;
+      return this._pixelSnapping;
     }
+
     set pixelSnapping(value: string) {
-      value = "" + value;
-      notImplemented("public flash.display.Bitmap::set pixelSnapping"); return;
-      // this._pixelSnapping = value;
+      this._pixelSnapping = "" + value;
     }
+
     get smoothing(): boolean {
-      notImplemented("public flash.display.Bitmap::get smoothing"); return;
-      // return this._smoothing;
+      return this._smoothing;
     }
+
     set smoothing(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.display.Bitmap::set smoothing"); return;
-      // this._smoothing = value;
+      this._smoothing = !!value;
     }
+
     get bitmapData(): flash.display.BitmapData {
-      notImplemented("public flash.display.Bitmap::get bitmapData"); return;
-      // return this._bitmapData;
+      return this._bitmapData;
     }
+
     set bitmapData(value: flash.display.BitmapData) {
-      value = value;
-      notImplemented("public flash.display.Bitmap::set bitmapData"); return;
-      // this._bitmapData = value;
-    }
-    ctor(bitmapData: flash.display.BitmapData, pixelSnapping: string, smoothing: boolean): void {
-      bitmapData = bitmapData; pixelSnapping = "" + pixelSnapping; smoothing = !!smoothing;
-      notImplemented("public flash.display.Bitmap::ctor"); return;
+      //value = value;
+      this._bitmapData = value;
+      this._bounds.setTo(0, 0, value.width * 20, value.height * 20);
+      if (this._parent) {
+        this._parent._invalidateBounds();
+      }
+      this._invalidatePaint();
     }
   }
 }

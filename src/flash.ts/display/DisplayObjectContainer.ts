@@ -18,55 +18,49 @@ module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import clamp = Shumway.NumberUtilities.clamp;
 
   import Event = flash.events.Event;
+  // import DisplayObject = DisplayObject;
 
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
-    
-    // Called whenever the class is initialized.
+    static bindings: string [] = null;
+    static staticBindings: string [] = null;
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
-      var self: DisplayObjectContainer = this;
-
-      self._tabChildren = true;
-      self._mouseChildren = true;
-
-      self._children = [];
-    };
-    
-    // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static bindings: string [] = null; // [];
-    
-    constructor () {
-      false && super();
-      notImplemented("Dummy Constructor: public flash.display.DisplayObjectContainer");
-    }
-    
-    // JS -> AS Bindings
-    
-    
-    // AS -> JS Bindings
+    static initializer: any = null;
 
     _tabChildren: boolean;
     _mouseChildren: boolean;
+    _children: DisplayObject [];
 
-    _children: flash.display.DisplayObject [];
+    constructor () {
+      false && super();
+      this._tabChildren = true;
+      this._mouseChildren = true;
+      this._children = [];
+    }
 
-    get numChildren(): number /*int*/ {
+
+    /**
+     * This object's children have changed.
+     */
+    private _invalidateChildren() {
+
+    }
+
+    get numChildren(): number {
       return this._children.length;
     }
+
     get textSnapshot(): flash.text.TextSnapshot {
-      notImplemented("public flash.display.DisplayObjectContainer::get textSnapshot"); return;
+      notImplemented("public DisplayObjectContainer::get textSnapshot"); return;
       // return this._textSnapshot;
     }
+
     get tabChildren(): boolean {
       return this._tabChildren;
     }
+
     set tabChildren(enable: boolean) {
       enable = !!enable;
 
@@ -76,156 +70,208 @@ module Shumway.AVM2.AS.flash.display {
         this.dispatchEvent(new Event(Event.TAB_CHILDREN_CHANGE, true));
       }
     }
+
     get mouseChildren(): boolean {
       return this._mouseChildren;
     }
+
     set mouseChildren(enable: boolean) {
       this._mouseChildren = !!enable;
     }
-    addChild(child: flash.display.DisplayObject): flash.display.DisplayObject {
+
+    addChild(child: DisplayObject): DisplayObject {
       return this.addChildAt(child, this._children.length);
     }
-    addChildAt(child: flash.display.DisplayObject, index: number /*int*/): flash.display.DisplayObject {
-      //child = child;
+
+    addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
       index = index | 0;
 
+      assert(child._hasFlags(DisplayObjectFlags.Constructed));
       if (child === this) {
         throwError('ArgumentError', Errors.CantAddSelfError);
       }
       if (child instanceof DisplayObjectContainer && (<DisplayObjectContainer>child).contains(this)) {
         throwError('ArgumentError', Errors.CantAddParentError);
       }
-      // Tobias: I forgot, what happens if we have larger cycles?
+      var children = this._children;
+      if (index < 0 || index > children.length) {
+        throwError('RangeError', Errors.ParamRangeError);
+      }
+
       if (child._parent === this) {
         this.setChildIndex(child, index);
         return child;
       }
 
-      var children = this._children;
-
-      if (index < 0 || index > children.length) {
-        throwError('RangeError', Errors.ParamRangeError);
-      }
-
       if (child._parent) {
         child._parent.removeChild(child);
+        // The children list could have been mutated as a result of |removeChild|.
+        index = clamp(index, 0, children.length)
       }
-
-      for (var i = children.length; i && i > index; i--) {
+      for (var i = children.length; i > index; i--) {
         children[i - 1]._index++;
       }
       children.splice(index, 0, child);
-
       child._index = index;
-      child._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
       child._parent = this;
+      child._root = this._root;
       child._stage = this._stage;
-      child._invalidateTransform();
       child.dispatchEvent(new Event(Event.ADDED, true));
+      this._invalidateChildren();
       return child;
     }
-    removeChild(child: flash.display.DisplayObject): flash.display.DisplayObject {
+
+    addChildAtDepth(child: flash.display.DisplayObject, depth: number /*int*/) {
+      depth = depth | 0;
+
+      var children = this._children;
+      var maxIndex = children.length - 1;
+      var index = maxIndex + 1;
+      for (var i = maxIndex; i; i--) {
+        var current = children[i];
+        if (current._depth && current._depth < depth) {
+          index = i;
+          break;
+        }
+      }
+      if (index > maxIndex) {
+        children.push(child);
+        child._index = index;
+      } else {
+        children.splice(i, 1, child);
+        for (var i = index; i <= maxIndex; i++) {
+          children[i]._index = i;
+        }
+      }
+      child._parent = this;
+      child._root = this._root;
+      child._stage = this._stage;
+    }
+
+    removeChild(child: DisplayObject): DisplayObject {
       //child = child
       return this.removeChildAt(this.getChildIndex(child));
     }
-    removeChildAt(index: number /*int*/): flash.display.DisplayObject {
+
+    removeChildAt(index: number): DisplayObject {
       index = index | 0;
 
       var children = this._children;
-
       if (index < 0 || index >= children.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
       var child = children[index];
-
-      child.dispatchEvent(new Event(Event.REMOVED, true));
-
-      for (var i = children.length; i && i > index; i--) {
+      if (child._hasFlags(DisplayObjectFlags.Constructed)) {
+        child.dispatchEvent(new Event(Event.REMOVED, true));
+        // Children list might have been mutated by the REMOVED event, we may need to operate on
+        // the new index of the child.
+        index = this.getChildIndex(child);
+      }
+      for (var i = children.length; i > index; i--) {
         children[i - 1]._index--;
       }
       children.splice(index, 1);
-
       child._index = -1;
-      child._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
       child._parent = null;
+      child._root = null;
       child._stage = null;
-      // Tobias: How come we have to invalidate the transform if we just remove the object from the list?
-      // I can see that the concatenated matrix would be different, but the transform?
-      child._invalidateTransform();
+      this._invalidateChildren();
       return child;
     }
-    getChildIndex(child: flash.display.DisplayObject): number /*int*/ {
-      //child = child
 
+    getChildIndex(child: DisplayObject): number /*int*/ {
       if (child._parent !== this) {
         throwError('ArgumentError', Errors.NotAChildError);
       }
       return child._index;
     }
-    setChildIndex(child: flash.display.DisplayObject, index: number /*int*/): void {
-      //child = child;
+
+    setChildIndex(child: DisplayObject, index: number /*int*/): void {
       index = index | 0;
 
-      var currentIndex = this.getChildIndex(child);
-
-      if (currentIndex === index) {
-        return;
-      }
-
       var children = this._children;
-
       if (index < 0 || index > children.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
-
-      children.splice(currentIndex, 1);
-      children.splice(index, 0, child);
-
-      var i = currentIndex < index ? currentIndex : index;
-      while (i < children.length) {
-        children[i]._index = i++;
+      var currentIndex = this.getChildIndex(child);
+      if (currentIndex === index) {
+        return;
       }
-
-      child._removeFlags(DisplayObjectFlags.OwnedByTimeline);
-      child._invalidate();
+      if (index === currentIndex + 1 || index === currentIndex - 1) {
+        // We can't call |swapChildrenAt| here because we don't want to affect the depth value
+        this._swapChildrenAt(currentIndex, index);
+      } else {
+        children.splice(currentIndex, 1);
+        children.splice(index, 0, child);
+        var i = currentIndex < index ? currentIndex : index;
+        while (i < children.length) {
+          children[i]._index = i++;
+        }
+      }
+      this._invalidateChildren();
     }
-    getChildAt(index: number /*int*/): flash.display.DisplayObject {
+
+    getChildAt(index: number): DisplayObject {
       index = index | 0;
 
       var children = this._children;
-
       if (index < 0 || index > children.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
       var child = children[index];
-
       if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
         return null;
       }
-
       return child;
     }
-    getChildByName(name: string): flash.display.DisplayObject {
+
+    getChildForDepth(depth: number /*int*/): flash.display.DisplayObject {
+      depth = depth | 0;
+
+      var children = this._children;
+      var result = null;
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        if (child._depth <= depth) {
+          result = child;
+          if (child._depth === depth) {
+            break;
+          }
+        } else if (!result) {
+          result = child;
+          break;
+        }
+      }
+      return result;
+    }
+
+    getChildByName(name: string): DisplayObject {
       name = asCoerceString(name);
 
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
+        if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
+          continue;
+        }
         if (child.name === name) {
           return child;
         }
       }
       return null;
     }
-    getObjectsUnderPoint(point: flash.geom.Point): flash.display.DisplayObject [] {
-      //point = point;
 
+    getObjectsUnderPoint(point: flash.geom.Point): DisplayObject [] {
       var children = this._children;
       var objectsUnderPoint = [];
       for (var i = 0; i < children.length; i++) {
         var child = children[0];
+        if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
+          continue;
+        }
+        // TODO exclude inaccessible objects
         if (child._hitTest(true, point.x, point.y, true, null)) {
           objectsUnderPoint.push(child);
         }
@@ -237,30 +283,29 @@ module Shumway.AVM2.AS.flash.display {
       }
       return objectsUnderPoint;
     }
+
     areInaccessibleObjectsUnderPoint(point: flash.geom.Point): boolean {
       point = point;
-      notImplemented("public flash.display.DisplayObjectContainer::areInaccessibleObjectsUnderPoint"); return;
+      notImplemented("public DisplayObjectContainer::areInaccessibleObjectsUnderPoint"); return;
     }
-    contains(child: flash.display.DisplayObject): boolean {
-      //child = child
 
-      var currentNode = this;
-      do {
-        if (currentNode === child) {
+    contains(child: DisplayObject): boolean {
+      var node = child;
+      while (node) {
+        if (node === this) {
           return true;
         }
-        currentNode = currentNode._parent;
-      } while (currentNode);
+        node = node._parent;
+      }
+      return false;
     }
+
     swapChildrenAt(index1: number /*int*/, index2: number /*int*/): void {
       index1 = index1 | 0; index2 = index2 | 0;
 
       var children = this._children;
-      var numChildren = children.length;
-
-      if (index1 < 0 || index1 > numChildren ||
-          index2 < 0 || index2 > numChildren)
-      {
+      if (index1 < 0 || index1 > children.length ||
+          index2 < 0 || index2 > children.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
@@ -268,29 +313,28 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
+      this._swapChildrenAt(index1, index2);
+      this._invalidateChildren();
+    }
+
+    private _swapChildrenAt(index1: number, index2: number) {
+      var children = this._children;
       var child1 = children[index1];
       var child2 = children[index2];
       children[index2] = child1;
       child1._index = index2;
-      child1._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
-      child1._invalidate();
       children[index1] = child2;
       child2._index = index1;
-      child2._removeFlags(DisplayObjectFlags.OwnedByTimeline); ;
-      child2._invalidate();
     }
-    swapChildren(child1: flash.display.DisplayObject, child2: flash.display.DisplayObject): void {
-      //child1 = child1; child2 = child2;
+
+    swapChildren(child1: DisplayObject, child2: DisplayObject): void {
       this.swapChildrenAt(this.getChildIndex(child1), this.getChildIndex(child2));
     }
-    removeChildren(beginIndex: number /*int*/ = 0, endIndex: number /*int*/ = 2147483647): void {
+
+    removeChildren(beginIndex: number = 0, endIndex: number = 2147483647): void {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
 
-      if (beginIndex < 0 ||
-          endIndex < 0 ||
-          endIndex < beginIndex ||
-          endIndex > this.numChildren - 1)
-      {
+      if (beginIndex < 0 || endIndex < 0 || endIndex < beginIndex || endIndex > this._children.length - 1) {
         throwError('RangeError', Errors.ParamRangeError);
       }
 

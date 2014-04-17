@@ -158,8 +158,6 @@ module Shumway.AVM2.AS.flash.events {
     /*
      * Keep two lists of listeners, one for capture events and one for all others.
      */
-
-
     private _captureListeners: Shumway.Map<EventListenerList>;
     private _targetOrBubblingListeners: Shumway.Map<EventListenerList>;
 
@@ -170,21 +168,10 @@ module Shumway.AVM2.AS.flash.events {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["dispatchEvent"]; // ["toString", "dispatchEvent"];
+    static instanceSymbols: string [] = null; // ["toString", "dispatchEvent"];
 
     constructor (target: flash.events.IEventDispatcher = null) {
-      target = target;
       false && super();
-      notImplemented("Dummy Constructor: public flash.events.EventDispatcher");
-    }
-
-    // JS -> AS Bindings
-
-    dispatchEvent: (event: flash.events.Event) => boolean;
-
-    // AS -> JS Bindings
-
-    private eventDispatcher_ctor(target: flash.events.IEventDispatcher): void {
       this._target = target || this;
       this._captureListeners = null;
       this._targetOrBubblingListeners = null;
@@ -246,7 +233,7 @@ module Shumway.AVM2.AS.flash.events {
       return false;
     }
 
-    private dispatchEventFunction(event: Event): boolean {
+    public dispatchEvent(event: Event): boolean {
       if (event._target) {
         event = event.clone();
       }
@@ -275,6 +262,7 @@ module Shumway.AVM2.AS.flash.events {
         for (var i = ancestors.length - 1; i >= 0 && keepPropagating; i--) {
           var ancestor = ancestors[i];
           var list = ancestor.getListeners(true)[type];
+          assert (list);
           keepPropagating = EventDispatcher.callListeners(list, event, target, ancestor, EventPhase.CAPTURING_PHASE);
         }
       }
@@ -284,7 +272,10 @@ module Shumway.AVM2.AS.flash.events {
        */
 
       if (keepPropagating) {
-        keepPropagating = EventDispatcher.callListeners(this.getListeners(false)[type], event, target, target, EventPhase.AT_TARGET);
+        var list = this.getListeners(false)[type];
+        if (list) {
+          keepPropagating = EventDispatcher.callListeners(this.getListeners(false)[type], event, target, target, EventPhase.AT_TARGET);
+        }
       }
 
       /**

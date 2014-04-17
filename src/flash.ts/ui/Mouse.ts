@@ -16,6 +16,8 @@
 // Class: Mouse
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import Point = flash.geom.Point;
+
   export class Mouse extends ASNative {
     
     // Called whenever the class is initialized.
@@ -73,6 +75,15 @@ module Shumway.AVM2.AS.flash.ui {
       name = "" + name;
       notImplemented("public flash.ui.Mouse::static unregisterCursor"); return;
     }
-    
+
+    private static _currentPosition: Point;
+
+    public static set currentPosition(value: Point) {
+      this._currentPosition = value;
+    }
+
+    public static get currentPosition(): Point {
+      return this._currentPosition;
+    }
   }
 }
