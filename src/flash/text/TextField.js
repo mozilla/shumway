@@ -227,7 +227,7 @@ var TextFieldDefinition = (function () {
         if (diffX) {
           this._invalidateTransform();
           this._currentTransform.tx += diffX * 20 | 0;
-          bounds.xMax = (targetWidth * 20 | 0) + 80;
+          bounds.xMax = (this._textWidth * 20 | 0) + 80;
         }
         bounds.yMax = (this._textHeight * 20 | 0) + 80;
         this._invalidateBounds();
