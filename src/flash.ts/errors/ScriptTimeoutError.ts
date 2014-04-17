@@ -16,6 +16,7 @@
 // Class: ScriptTimeoutError
 module Shumway.AVM2.AS.flash.errors {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ScriptTimeoutError extends ASError {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.errors {
     static bindings: string [] = null; // [];
     
     constructor (message: string = "", id: number /*int*/ = 0) {
-      message = "" + message; id = id | 0;
+      message = asCoerceString(message); id = id | 0;
       false && super(undefined, undefined);
       notImplemented("Dummy Constructor: public flash.errors.ScriptTimeoutError");
     }

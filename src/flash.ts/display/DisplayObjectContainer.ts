@@ -16,8 +16,8 @@
 // Class: DisplayObjectContainer
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import throwError = Shumway.AVM2.Runtime.throwError;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
 
   import Event = flash.events.Event;
@@ -90,7 +90,7 @@ module Shumway.AVM2.AS.flash.display {
       if (child === this) {
         throwError('ArgumentError', Errors.CantAddSelfError);
       }
-      if (child instanceof DisplayObjectContainer && (<DisplayObjectContainer>child).contains(this)) {
+      if (DisplayObjectContainer.isType(child) && (<DisplayObjectContainer>child).contains(this)) {
         throwError('ArgumentError', Errors.CantAddParentError);
       }
       var children = this._children;
@@ -269,7 +269,7 @@ module Shumway.AVM2.AS.flash.display {
         if (child._hitTest(true, point.x, point.y, true, null)) {
           objectsUnderPoint.push(child);
         }
-        if (child instanceof DisplayObjectContainer) {
+        if (DisplayObjectContainer.isType(child)) {
           objectsUnderPoint = objectsUnderPoint.concat(
             (<DisplayObjectContainer>child).getObjectsUnderPoint(point)
           );

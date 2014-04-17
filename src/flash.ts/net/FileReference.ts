@@ -16,6 +16,7 @@
 // Class: FileReference
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class FileReference extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -77,11 +78,11 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.FileReference::cancel"); return;
     }
     download(request: flash.net.URLRequest, defaultFileName: string = null): void {
-      request = request; defaultFileName = "" + defaultFileName;
+      request = request; defaultFileName = asCoerceString(defaultFileName);
       notImplemented("public flash.net.FileReference::download"); return;
     }
     upload(request: flash.net.URLRequest, uploadDataFieldName: string = "Filedata", testUpload: boolean = false): void {
-      request = request; uploadDataFieldName = "" + uploadDataFieldName; testUpload = !!testUpload;
+      request = request; uploadDataFieldName = asCoerceString(uploadDataFieldName); testUpload = !!testUpload;
       notImplemented("public flash.net.FileReference::upload"); return;
     }
     get data(): flash.utils.ByteArray {

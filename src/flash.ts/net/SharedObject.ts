@@ -16,9 +16,9 @@
 // Class: SharedObject
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   declare var sessionStorage;
 

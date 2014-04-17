@@ -16,6 +16,7 @@
 // Class: Dictionary
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Dictionary extends ASNative {
     
     // Called whenever the class is initialized.

@@ -16,6 +16,7 @@
 // Class: XMLSocket
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class XMLSocket extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.net {
     static bindings: string [] = null; // ["timeout", "timeout", "connected", "connect", "send", "close"];
     
     constructor (host: string = null, port: number /*int*/ = 0) {
-      host = "" + host; port = port | 0;
+      host = asCoerceString(host); port = port | 0;
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.net.XMLSocket");
     }

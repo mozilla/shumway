@@ -16,6 +16,7 @@
 // Class: H264VideoStreamSettings
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class H264VideoStreamSettings extends flash.media.VideoStreamSettings {
     
     // Called whenever the class is initialized.

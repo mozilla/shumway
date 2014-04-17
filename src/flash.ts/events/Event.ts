@@ -15,8 +15,8 @@
  */
 // Class: Event
 module Shumway.AVM2.AS.flash.events {
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Event extends ASNative {
 
     // Called whenever the class is initialized.

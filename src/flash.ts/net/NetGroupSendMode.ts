@@ -16,6 +16,7 @@
 // Class: NetGroupSendMode
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetGroupSendMode extends ASNative {
     
     // Called whenever the class is initialized.

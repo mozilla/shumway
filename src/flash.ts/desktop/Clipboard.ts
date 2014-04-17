@@ -15,7 +15,9 @@
  */
 // Class: Clipboard
 module Shumway.AVM2.AS.flash.desktop {
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Clipboard extends ASNative {
     
     // Called whenever the class is initialized.
@@ -58,7 +60,7 @@ module Shumway.AVM2.AS.flash.desktop {
       notImplemented("public flash.desktop.Clipboard::clear"); return;
     }
     clearData(format: string): void {
-      format = "" + format;
+      format = asCoerceString(format);
       notImplemented("public flash.desktop.Clipboard::clearData"); return;
     }
   }

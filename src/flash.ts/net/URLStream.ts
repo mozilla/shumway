@@ -16,6 +16,7 @@
 // Class: URLStream
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   declare var FileLoadingService;
   declare var Stream;
@@ -80,7 +81,7 @@ module Shumway.AVM2.AS.flash.net {
       // return this._endian;
     }
     set endian(type: string) {
-      type = "" + type;
+      type = asCoerceString(type);
       notImplemented("public flash.net.URLStream::set endian"); return;
       // this._endian = type;
     }
@@ -197,7 +198,7 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.URLStream::readDouble"); return;
     }
     readMultiByte(length: number /*uint*/, charSet: string): string {
-      length = length >>> 0; charSet = "" + charSet;
+      length = length >>> 0; charSet = asCoerceString(charSet);
       notImplemented("public flash.net.URLStream::readMultiByte"); return;
     }
     readUTF(): string {

@@ -16,6 +16,7 @@
 // Class: TextInteractionMode
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextInteractionMode extends ASNative {
     
     // Called whenever the class is initialized.

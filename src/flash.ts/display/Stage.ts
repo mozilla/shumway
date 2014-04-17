@@ -16,6 +16,7 @@
 // Class: Stage
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Stage extends flash.display.DisplayObjectContainer {
     
     // Called whenever the class is initialized.
@@ -154,7 +155,7 @@ module Shumway.AVM2.AS.flash.display {
       // return this._scaleMode;
     }
     set scaleMode(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.display.Stage::set scaleMode"); return;
       // this._scaleMode = value;
     }
@@ -163,7 +164,7 @@ module Shumway.AVM2.AS.flash.display {
       // return this._align;
     }
     set align(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.display.Stage::set align"); return;
       // this._align = value;
     }
@@ -208,7 +209,7 @@ module Shumway.AVM2.AS.flash.display {
       // return this._colorCorrection;
     }
     set colorCorrection(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.display.Stage::set colorCorrection"); return;
       // this._colorCorrection = value;
     }
@@ -230,7 +231,7 @@ module Shumway.AVM2.AS.flash.display {
       // return this._quality;
     }
     set quality(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.display.Stage::set quality"); return;
       // this._quality = value;
     }
@@ -239,7 +240,7 @@ module Shumway.AVM2.AS.flash.display {
       // return this._displayState;
     }
     set displayState(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.display.Stage::set displayState"); return;
       // this._displayState = value;
     }

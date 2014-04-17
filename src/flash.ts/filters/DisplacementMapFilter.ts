@@ -16,6 +16,7 @@
 // Class: DisplacementMapFilter
 module Shumway.AVM2.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class DisplacementMapFilter extends flash.filters.BitmapFilter {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.filters {
     static bindings: string [] = null; // ["clone"];
     
     constructor (mapBitmap: flash.display.BitmapData = null, mapPoint: flash.geom.Point = null, componentX: number /*uint*/ = 0, componentY: number /*uint*/ = 0, scaleX: number = 0, scaleY: number = 0, mode: string = "wrap", color: number /*uint*/ = 0, alpha: number = 0) {
-      mapBitmap = mapBitmap; mapPoint = mapPoint; componentX = componentX >>> 0; componentY = componentY >>> 0; scaleX = +scaleX; scaleY = +scaleY; mode = "" + mode; color = color >>> 0; alpha = +alpha;
+      mapBitmap = mapBitmap; mapPoint = mapPoint; componentX = componentX >>> 0; componentY = componentY >>> 0; scaleX = +scaleX; scaleY = +scaleY; mode = asCoerceString(mode); color = color >>> 0; alpha = +alpha;
       false && super();
       notImplemented("Dummy Constructor: public flash.filters.DisplacementMapFilter");
     }
@@ -110,7 +111,7 @@ module Shumway.AVM2.AS.flash.filters {
       // return this._mode;
     }
     set mode(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.filters.DisplacementMapFilter::set mode"); return;
       // this._mode = value;
     }

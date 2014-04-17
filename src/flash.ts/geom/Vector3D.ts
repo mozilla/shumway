@@ -16,6 +16,7 @@
 // Class: Vector3D
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Vector3D extends ASNative {
     
     // Called whenever the class is initialized.

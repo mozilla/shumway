@@ -16,6 +16,7 @@
 // Class: Sprite
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
   export class Sprite extends flash.display.DisplayObjectContainer {
 

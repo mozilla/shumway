@@ -16,6 +16,7 @@
 // Class: TextExtent
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextExtent extends ASNative {
     static initializer: any = null;
     constructor (width: number, height: number, textFieldWidth: number, textFieldHeight: number, ascent: number, descent: number) {

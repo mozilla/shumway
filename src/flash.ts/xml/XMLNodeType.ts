@@ -16,6 +16,7 @@
 // Class: XMLNodeType
 module Shumway.AVM2.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class XMLNodeType extends ASNative {
     static initializer: any = null;
     constructor () {

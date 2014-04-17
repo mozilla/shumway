@@ -16,6 +16,7 @@
 // Class: GraphicsStroke
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GraphicsStroke extends ASNative implements IGraphicsStroke, IGraphicsData {
     
     // Called whenever the class is initialized.
@@ -34,9 +35,9 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       this.thickness = +thickness;
       this.pixelHinting = !!pixelHinting;
-      this.scaleMode = "" + scaleMode;
-      this.caps = "" + caps;
-      this.joints = "" + joints;
+      this.scaleMode = asCoerceString(scaleMode);
+      this.caps = asCoerceString(caps);
+      this.joints = asCoerceString(joints);
       this.miterLimit = +miterLimit;
       this.fill = fill;
     }

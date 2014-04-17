@@ -16,6 +16,7 @@
 // Class: VideoEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class VideoEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
     static bindings: string [] = null; // ["_status", "status"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, status: string = null) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; status = "" + status;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; status = asCoerceString(status);
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.VideoEvent");
     }

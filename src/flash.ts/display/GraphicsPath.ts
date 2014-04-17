@@ -16,6 +16,7 @@
 // Class: GraphicsPath
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GraphicsPath extends ASNative implements IGraphicsPath, IGraphicsData {
     
     // Called whenever the class is initialized.
@@ -34,7 +35,7 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       this.commands = commands;
       this.data = data;
-      this.winding = "" + winding;
+      this.winding = asCoerceString(winding);
     }
     
     // JS -> AS Bindings

@@ -16,6 +16,7 @@
 // Class: AuthorizedFeatures
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class AuthorizedFeatures extends ASNative {
     
     // Called whenever the class is initialized.
@@ -49,7 +50,7 @@ module Shumway.AVM2.AS.flash.system {
       notImplemented("public flash.system.AuthorizedFeatures::enableDiskCache"); return;
     }
     isFeatureEnabled(feature: string, data: string = null): boolean {
-      feature = "" + feature; data = "" + data;
+      feature = asCoerceString(feature); data = asCoerceString(data);
       notImplemented("public flash.system.AuthorizedFeatures::isFeatureEnabled"); return;
     }
     isNegativeToken(): boolean {

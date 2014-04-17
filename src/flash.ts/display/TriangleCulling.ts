@@ -16,6 +16,7 @@
 // Class: TriangleCulling
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TriangleCulling extends ASNative {
     
     // Called whenever the class is initialized.

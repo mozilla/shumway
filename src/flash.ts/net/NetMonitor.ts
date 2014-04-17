@@ -16,6 +16,7 @@
 // Class: NetMonitor
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetMonitor extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.

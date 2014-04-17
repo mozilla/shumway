@@ -16,6 +16,7 @@
 // Class: BevelFilter
 module Shumway.AVM2.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class BevelFilter extends flash.filters.BitmapFilter {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.filters {
     static bindings: string [] = null; // ["clone"];
     
     constructor (distance: number = 4, angle: number = 45, highlightColor: number /*uint*/ = 16777215, highlightAlpha: number = 1, shadowColor: number /*uint*/ = 0, shadowAlpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
-      distance = +distance; angle = +angle; highlightColor = highlightColor >>> 0; highlightAlpha = +highlightAlpha; shadowColor = shadowColor >>> 0; shadowAlpha = +shadowAlpha; blurX = +blurX; blurY = +blurY; strength = +strength; quality = quality | 0; type = "" + type; knockout = !!knockout;
+      distance = +distance; angle = +angle; highlightColor = highlightColor >>> 0; highlightAlpha = +highlightAlpha; shadowColor = shadowColor >>> 0; shadowAlpha = +shadowAlpha; blurX = +blurX; blurY = +blurY; strength = +strength; quality = quality | 0; type = asCoerceString(type); knockout = !!knockout;
       false && super();
       notImplemented("Dummy Constructor: public flash.filters.BevelFilter");
     }
@@ -158,7 +159,7 @@ module Shumway.AVM2.AS.flash.filters {
       // return this._type;
     }
     set type(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.filters.BevelFilter::set type"); return;
       // this._type = value;
     }

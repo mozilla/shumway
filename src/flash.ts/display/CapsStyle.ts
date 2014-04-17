@@ -16,6 +16,7 @@
 // Class: CapsStyle
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class CapsStyle extends ASNative {
     
     // Called whenever the class is initialized.

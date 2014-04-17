@@ -16,6 +16,7 @@
 // Class: PerspectiveProjection
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class PerspectiveProjection extends ASNative {
     
     // Called whenever the class is initialized.

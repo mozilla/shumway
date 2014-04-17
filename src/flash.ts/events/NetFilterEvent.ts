@@ -16,6 +16,7 @@
 // Class: NetFilterEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetFilterEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
     static bindings: string [] = null; // ["header", "data", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, header: flash.utils.ByteArray = null, data: flash.utils.ByteArray = null) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; header = header; data = data;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; header = header; data = data;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.NetFilterEvent");
     }

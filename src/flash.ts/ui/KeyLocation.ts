@@ -16,6 +16,7 @@
 // Class: KeyLocation
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class KeyLocation extends ASNative {
     
     // Called whenever the class is initialized.

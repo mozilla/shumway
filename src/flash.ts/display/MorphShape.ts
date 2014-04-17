@@ -16,6 +16,7 @@
 // Class: MorphShape
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class MorphShape extends flash.display.DisplayObject {
     
     // Called whenever the class is initialized.

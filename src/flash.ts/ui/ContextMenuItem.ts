@@ -16,6 +16,7 @@
 // Class: ContextMenuItem
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ContextMenuItem extends flash.display.NativeMenuItem {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.ui {
     static bindings: string [] = null; // ["clone"];
     
     constructor (caption: string, separatorBefore: boolean = false, enabled: boolean = true, visible: boolean = true) {
-      caption = "" + caption; separatorBefore = !!separatorBefore; enabled = !!enabled; visible = !!visible;
+      caption = asCoerceString(caption); separatorBefore = !!separatorBefore; enabled = !!enabled; visible = !!visible;
       false && super();
       notImplemented("Dummy Constructor: public flash.ui.ContextMenuItem");
     }
@@ -50,7 +51,7 @@ module Shumway.AVM2.AS.flash.ui {
       // return this._caption;
     }
     set caption(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.ui.ContextMenuItem::set caption"); return;
       // this._caption = value;
     }

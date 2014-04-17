@@ -16,6 +16,7 @@
 // Class: URLVariables
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class URLVariables extends ASNative {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.net {
     static bindings: string [] = null; // ["decode", "toString", "unescape", "escape"];
     
     constructor (source: string = null) {
-      source = "" + source;
+      source = asCoerceString(source);
       false && super();
       notImplemented("Dummy Constructor: public flash.net.URLVariables");
     }

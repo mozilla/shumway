@@ -16,6 +16,7 @@
 // Class: Context3DVertexBufferFormat
 module Shumway.AVM2.AS.flash.display3D {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Context3DVertexBufferFormat extends ASNative {
     
     // Called whenever the class is initialized.

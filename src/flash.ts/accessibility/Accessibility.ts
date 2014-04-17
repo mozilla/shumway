@@ -16,6 +16,7 @@
 // Class: Accessibility
 module Shumway.AVM2.AS.flash.accessibility {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   export class Accessibility extends ASNative {

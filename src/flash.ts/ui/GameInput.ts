@@ -16,6 +16,7 @@
 // Class: GameInput
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GameInput extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.

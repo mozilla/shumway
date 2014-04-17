@@ -16,6 +16,7 @@
 // Class: Multitouch
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Multitouch extends ASNative {
     
     // Called whenever the class is initialized.
@@ -50,7 +51,7 @@ module Shumway.AVM2.AS.flash.ui {
       // return this._inputMode;
     }
     set inputMode(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.ui.Multitouch::set inputMode"); return;
       // this._inputMode = value;
     }

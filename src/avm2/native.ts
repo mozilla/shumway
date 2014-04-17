@@ -36,6 +36,7 @@ module Shumway.AVM2.AS {
   import isPrototypeWriteable = Shumway.ObjectUtilities.isPrototypeWriteable;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   var _notImplemented = notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import createFunction = Shumway.AVM2.Runtime.createFunction;
@@ -1241,7 +1242,7 @@ module Shumway.AVM2.AS {
     }
 
     private static parseCore(text: string): Object {
-      text = "" + text;
+      text = asCoerceString(text);
       return ASJSON.transformJSValueToAS(JSON.parse(text))
     }
 

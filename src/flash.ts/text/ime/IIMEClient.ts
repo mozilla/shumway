@@ -16,6 +16,7 @@
 // Class: IIMEClient
 module Shumway.AVM2.AS.flash.text.ime {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export interface IIMEClient {
     
     // JS -> AS Bindings

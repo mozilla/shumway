@@ -25,6 +25,7 @@
 // Class: DisplayObject
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
 
@@ -337,7 +338,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (direction & Direction.Downward) {
-        if (this instanceof DisplayObjectContainer) {
+        if (DisplayObjectContainer.isType(this)) {
           var children = (<DisplayObjectContainer>this)._children;
           for (var i = 0; i < children.length; i++) {
             var child = children[i];
@@ -605,15 +606,15 @@ module Shumway.AVM2.AS.flash.display {
       if (this._hasFlags(DisplayObjectFlags.InvalidBounds)) {
         rectangle.setEmpty();
         var graphics: Graphics = null;
-        if (this instanceof Shape) {
+        if (Shape.isType(this)) {
           graphics = (<Shape>this)._graphics;
-        } else if (this instanceof Sprite) {
+        } else if (Sprite.isType(this)) {
           graphics = (<Sprite>this)._graphics;
         }
         if (graphics) {
           rectangle.unionWith(graphics.getBounds(includeStrokes));
         }
-        if (this instanceof DisplayObjectContainer) {
+        if (DisplayObjectContainer.isType(this)) {
           var container: DisplayObjectContainer = <DisplayObjectContainer>this;
           var children = container._children;
           for (var i = 0; i < children.length; i++) {
@@ -968,7 +969,7 @@ module Shumway.AVM2.AS.flash.display {
       while (stack.length > 0) {
         displayObject = stack.pop();
         if (visitor(displayObject) === VisitorFlags.Continue) {
-          if (displayObject instanceof DisplayObjectContainer) {
+          if (DisplayObjectContainer.isType(displayObject)) {
             displayObjectContainer = <DisplayObjectContainer>displayObject;
             var children = displayObjectContainer._children;
             var length = children.length;
@@ -1062,7 +1063,7 @@ module Shumway.AVM2.AS.flash.display {
      return this._blendMode;
     }
     set blendMode(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
 
       if (this._blendMode === value) {
         return;

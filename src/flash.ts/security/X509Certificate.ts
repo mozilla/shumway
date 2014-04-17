@@ -16,6 +16,7 @@
 // Class: X509Certificate
 module Shumway.AVM2.AS.flash.security {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class X509Certificate extends ASNative {
     
     // Called whenever the class is initialized.

@@ -16,6 +16,7 @@
 // Class: BitmapFilterType
 module Shumway.AVM2.AS.flash.filters {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class BitmapFilterType extends ASNative {
     
     // Called whenever the class is initialized.

@@ -64,6 +64,7 @@ module Shumway.AVM1 {
   import construct = Shumway.AVM2.Runtime.construct;
   import isNumeric = Shumway.isNumeric;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
 

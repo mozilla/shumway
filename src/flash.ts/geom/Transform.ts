@@ -16,6 +16,7 @@
 // Class: Transform
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import Errors = Shumway.AVM2.Errors;
 
@@ -75,7 +76,7 @@ module Shumway.AVM2.AS.flash.geom {
 
     set matrix3D(m: flash.geom.Matrix3D) {
       //m = m;
-      if (!(m instanceof Matrix3D)) {
+      if (!(Matrix3D.isType(m))) {
         throwError('TypeError', Errors.CheckTypeFailedError, m, 'flash.geom.Matrix3D');
       }
 

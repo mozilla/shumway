@@ -16,6 +16,7 @@
 // Class: SyncEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class SyncEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.events {
     static bindings: string [] = null; // ["_changeList", "changeList", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, changeList: any [] = null) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; changeList = changeList;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; changeList = changeList;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.SyncEvent");
     }

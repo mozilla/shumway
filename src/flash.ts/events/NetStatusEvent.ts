@@ -16,6 +16,7 @@
 // Class: NetStatusEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetStatusEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
