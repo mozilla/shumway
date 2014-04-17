@@ -28,14 +28,14 @@ module Shumway.AVM2.AS.flash.automation {
     // Instance JS -> AS Bindings
     // Instance AS -> JS Bindings
     capture(type: string): void {
-      1 = asCoerceString(1);
+      type = asCoerceString(type);
       notImplemented("public flash.automation.StageCapture::capture"); return;
     }
     cancel(): void {
       notImplemented("public flash.automation.StageCapture::cancel"); return;
     }
     set fileNameBase(value: string) {
-      1 = asCoerceString(1);
+      value = asCoerceString(value);
       notImplemented("public flash.automation.StageCapture::set fileNameBase"); return;
     }
     get fileNameBase(): string {
@@ -52,7 +52,7 @@ module Shumway.AVM2.AS.flash.automation {
       notImplemented("public flash.automation.StageCapture::captureBitmapData"); return;
     }
     set captureSource(value: string) {
-      1 = asCoerceString(1);
+      value = asCoerceString(value);
       notImplemented("public flash.automation.StageCapture::set captureSource"); return;
     }
     get captureSource(): string {

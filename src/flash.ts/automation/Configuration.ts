@@ -29,7 +29,7 @@ module Shumway.AVM2.AS.flash.automation {
       notImplemented("public flash.automation.Configuration::get testAutomationConfiguration"); return;
     }
     set deviceConfiguration(configData: string) {
-      1 = asCoerceString(1);
+      configData = asCoerceString(configData);
       notImplemented("public flash.automation.Configuration::set deviceConfiguration"); return;
     }
     get deviceConfiguration(): string {
