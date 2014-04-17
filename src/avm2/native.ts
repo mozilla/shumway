@@ -398,7 +398,7 @@ module Shumway.AVM2.AS {
         defineNonEnumerableProperty(self.instanceConstructor.prototype, "class", self);
 
         (<any>(self.instanceConstructor)).classInfo = previousConstructor.classInfo;
-        self.instanceConstructor.__proto__ = previousConstructor.__proto__;
+        self.instanceConstructor.__proto__ = previousConstructor;
       }
     }
 

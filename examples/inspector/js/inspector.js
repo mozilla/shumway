@@ -195,6 +195,7 @@ function executeFile(file, buffer, movieParams) {
             });
           }
           loadNextScript(function whenAllScriptsAreLoaded() {
+            initUI();
             console.info("Executing Sanity Test");
             sanityTests.forEach(function (test) {
               test(console, avm2);
@@ -203,6 +204,7 @@ function executeFile(file, buffer, movieParams) {
         });
       } else {
         loadScript(file, function () {
+          initUI();
           sanityTests.forEach(function (test) {
             test(console, avm2);
           });
@@ -417,7 +419,7 @@ Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector
 
 swfController.onStateChange = function onStateChange(newState, oldState) {
   if (oldState === swfController.STATE_INIT) {
-    initUI();
+    initUI(true);
   }
   var pauseButton = document.getElementById("pauseButton");
   var stepButton = document.getElementById("stepButton");
@@ -436,22 +438,28 @@ swfController.onStateChange = function onStateChange(newState, oldState) {
   }
 }
 
-function initUI() {
+function initUI(isExecutingSWF) {
   document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
-  document.getElementById("muteButton").classList.add("active");
-  document.getElementById("pauseButton").classList.add("active");
-  document.getElementById("stepButton").classList.add("active");
 
-  avm2.systemDomain.getClass("flash.media.SoundMixer").native.static._setMasterVolume(state.mute ? 0 : 1);
+  if (isExecutingSWF) {
+    document.getElementById("muteButton").classList.add("active");
+    document.getElementById("pauseButton").classList.add("active");
+    document.getElementById("stepButton").classList.add("active");
 
-  document.getElementById("pauseButton").addEventListener("click", function (event) {
-    swfController.togglePause();
-  });
-  document.getElementById("stepButton").addEventListener("click", function (event) {
-    if (swfController.isPaused()) {
-      swfController.play(1);
+    try {
+      avm2.systemDomain.getClass("flash.media.SoundMixer").native.static._setMasterVolume(state.mute ? 0 : 1);
+    } catch(e) {
     }
-  });
+
+    document.getElementById("pauseButton").addEventListener("click", function (event) {
+      swfController.togglePause();
+    });
+    document.getElementById("stepButton").addEventListener("click", function (event) {
+      if (swfController.isPaused()) {
+        swfController.play(1);
+      }
+    });
+  }
 }
 
 function updateDisplayListTree() {

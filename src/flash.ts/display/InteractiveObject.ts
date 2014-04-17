@@ -16,6 +16,7 @@
 // Class: InteractiveObject
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import DisplayObject = flash.display.DisplayObject;
 
   import Event = flash.events.Event;
 
@@ -46,7 +47,7 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.InteractiveObject");
+      DisplayObject.instanceConstructorNoInitialize.call(this);
     }
     
     // JS -> AS Bindings

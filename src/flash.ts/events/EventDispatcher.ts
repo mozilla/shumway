@@ -15,6 +15,7 @@
  */
 // Class: EventDispatcher
 module Shumway.AVM2.AS.flash.events {
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import notImplemented = Shumway.Debug.notImplemented;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
@@ -26,7 +27,6 @@ module Shumway.AVM2.AS.flash.events {
   import Event = flash.events.Event;
   import IEventDispatcher = flash.events.IEventDispatcher;
   import EventDispatcher = flash.events.EventDispatcher;
-  import DisplayObject = flash.display.DisplayObject;
 
   class EventListenerEntry {
     constructor (
@@ -188,7 +188,8 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     addEventListener(type: string, listener: EventHandler, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false): void {
-      type = "" + type; listener = listener; useCapture = !!useCapture; priority = priority | 0; useWeakReference = !!useWeakReference;
+      assert (type);
+      type = asCoerceString(type); listener = listener; useCapture = !!useCapture; priority = priority | 0; useWeakReference = !!useWeakReference;
       assert (isFunction(listener));
       var listeners = this.getListeners(useCapture);
       var list = listeners[type] || (listeners[type] = new EventListenerList());
@@ -196,7 +197,7 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     removeEventListener(type: string, listener: EventHandler, useCapture: boolean = false): void {
-      type = "" + type; listener = listener; useCapture = !!useCapture;
+      type = asCoerceString(type); listener = listener; useCapture = !!useCapture;
       if (!isFunction(listener)) {
         // TODO: The Player unevals the `listener`. To some extend, we could, too
         throwError("TypeError", Errors.CheckTypeFailedError, listener, "Function");
@@ -212,18 +213,18 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     hasEventListener(type: string): boolean {
-      type = "" + type;
+      type = asCoerceString(type);
       return !!this._targetOrBubblingListeners[type] ||
              !!this._captureListeners[type];
     }
 
     willTrigger(type: string): boolean {
-      type = "" + type;
+      type = asCoerceString(type);
       if (this.hasEventListener(type)) {
         return true;
       }
-      if (this instanceof DisplayObject) {
-        var node: DisplayObject = (<DisplayObject>this)._parent;
+      if (flash.display.DisplayObject.class.isType(this)) {
+        var node: flash.display.DisplayObject = (<flash.display.DisplayObject>this)._parent;
         do {
           if (node.hasEventListener(type)) {
             return true;
@@ -246,10 +247,10 @@ module Shumway.AVM2.AS.flash.events {
        */
 
       var keepPropagating = true;
-      var ancestors: DisplayObject [];
+      var ancestors: flash.display.DisplayObject [] = [];
 
-      if (event.bubbles && this instanceof DisplayObject) {
-        var node: DisplayObject = (<DisplayObject>this)._parent;
+      if (event.bubbles && flash.display.DisplayObject.class.isType(this)) {
+        var node: flash.display.DisplayObject = (<flash.display.DisplayObject>this)._parent;
 
         // Gather all parent display objects that have event listeners for this event type.
         while (node) {

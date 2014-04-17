@@ -15,6 +15,7 @@
  */
 // Class: Event
 module Shumway.AVM2.AS.flash.events {
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
   export class Event extends ASNative {
 
@@ -31,10 +32,10 @@ module Shumway.AVM2.AS.flash.events {
     static bindings: string [] = null; // ["formatToString", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable;
       false && super();
       this._type = type;
-      this._bubbles = false;
+      this._bubbles = bubbles;
       this._cancelable = cancelable;
 
       this._target = null;
