@@ -46,6 +46,7 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null; // [];
     
     constructor () {
+      false && super();
       DisplayObject.instanceConstructorNoInitialize.call(this);
     }
     
