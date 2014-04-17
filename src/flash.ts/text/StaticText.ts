@@ -26,7 +26,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     private _text: string;
-    set text(text: String): void {
+    set text(text: string) {
       this._text = text;
     }
 
