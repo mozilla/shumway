@@ -23,6 +23,7 @@ module Shumway.AVM2.AS.flash.text {
     static bindings: string [] = null;
 
     constructor() {
+      super();
     }
 
     // JS -> AS Bindings

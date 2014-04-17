@@ -18,6 +18,8 @@ module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import TextFieldType = flash.text.TextFieldType;
+  import TextFieldAutosize = flash.text.TextFieldAutoSize;
   export class TextField extends flash.display.InteractiveObject {
 
     static staticBindings: string [] = null;
@@ -28,8 +30,9 @@ module Shumway.AVM2.AS.flash.text {
     static initializer: any = function (symbol: TextField) {
       this._bbox = {xMin: 0, yMin: 0, xMax: 2000, yMax: 2000};
       var initialFormat = this._defaultTextFormat = {
-        align: 'LEFT', face: 'serif', size: 12,
-        letterspacing: 0, kerning: 0, color: 0, leading: 0
+        align: 'LEFT', font: null, face: 'serif', size: 12,
+        letterspacing: 0, kerning: 0, color: 0, leading: 0,
+        bold: false, italic: false
       };
 
       this._type = 'dynamic';
@@ -54,8 +57,8 @@ module Shumway.AVM2.AS.flash.text {
 
       var s = symbol;
       if (!s) {
-        this._currentTransform.tx -= 40;
-        this._currentTransform.ty -= 40;
+        this._matrix.tx -= 40;
+        this._matrix.ty -= 40;
         this._text = '';
         return;
       }
@@ -63,8 +66,8 @@ module Shumway.AVM2.AS.flash.text {
       var tag = s.tag;
 
       var bbox = tag.bbox;
-      this._currentTransform.tx += bbox.xMin;
-      this._currentTransform.ty += bbox.yMin;
+      this._matrix.tx += bbox.xMin;
+      this._matrix.ty += bbox.yMin;
       this._bbox.xMax = bbox.xMax - bbox.xMin;
       this._bbox.yMax = bbox.yMax - bbox.yMin;
 
@@ -81,7 +84,7 @@ module Shumway.AVM2.AS.flash.text {
         initialFormat.color = this._textColor = color;
       }
       if (tag.hasFont) {
-        var font = FontDefinition.getFontBySymbolId(tag.fontId);
+        var font = Font.getFontBySymbolId(tag.fontId);
         initialFormat.font = font;
         initialFormat.face = font._fontName;
         initialFormat.bold = font.symbol.bold;
@@ -121,14 +124,13 @@ module Shumway.AVM2.AS.flash.text {
     };
 
     constructor() {
-      false && super();
+      super();
       notImplemented("Dummy Constructor: public flash.text.TextField");
     }
 
     private invalidateDimensions() {
-      this._invalidate();
       this._invalidateBounds();
-      this._invalidateRenderable();
+      this._invalidatePaint();
       this._dimensionsValid = false;
     }
 
@@ -171,8 +173,8 @@ module Shumway.AVM2.AS.flash.text {
         }
       } else {
         if (diffX) {
-          this._invalidateTransform();
-          this._currentTransform.tx += diffX * 20 | 0;
+          this._invalidatePosition();
+          this._matrix.tx += diffX * 20 | 0;
           bounds.xMax = (this._textWidth * 20 | 0) + 80;
         }
         bounds.yMax = (this._textHeight * 20 | 0) + 80;
@@ -520,7 +522,7 @@ module Shumway.AVM2.AS.flash.text {
         return;
       }
       this._textColor = value;
-      this._invalidate();
+      this._invalidatePaint();
     }
 
     get textHeight(): number {
