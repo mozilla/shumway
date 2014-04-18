@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
   export class Timer extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -32,7 +33,7 @@ module Shumway.AVM2.AS.flash.utils {
     static bindings: string [] = null; // ["_delay", "_repeatCount", "_iteration", "delay", "delay", "repeatCount", "repeatCount", "currentCount", "reset", "start", "tick"];
     
     constructor (delay: number, repeatCount: number /*int*/ = 0) {
-      delay = +delay; repeatCount = repeatCount | 0;
+      this._delay = +delay; this._repeatCount = repeatCount | 0;  this._running = false;
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.utils.Timer");
     }
@@ -42,32 +43,33 @@ module Shumway.AVM2.AS.flash.utils {
     _delay: number;
     _repeatCount: number /*int*/;
     _iteration: number /*int*/;
-    delay: number;
-    repeatCount: number /*int*/;
-    currentCount: number /*int*/;
+    _running: boolean;
     reset: () => void;
     start: () => void;
     tick: () => void;
     
     // AS -> JS Bindings
-    
-    // _running: boolean;
+
     // _delay: number;
     // _repeatCount: number /*int*/;
     // _currentCount: number /*int*/;
     get running(): boolean {
-      notImplemented("public flash.utils.Timer::get running"); return;
-      // return this._running;
+      return this._running;
     }
     stop(): void {
-      notImplemented("public flash.utils.Timer::stop"); return;
+      this._running = false;
+      clearInterval(this.interval);
     }
     _start(delay: number, closure: ASFunction): void {
-      delay = +delay; closure = closure;
-      notImplemented("public flash.utils.Timer::_start"); return;
+      _delay = +delay;
+      this._running = true;
+      this.interval = setInterval(closure, delay);
     }
     _tick(): void {
-      notImplemented("public flash.utils.Timer::_tick"); return;
+      if (!this._running) {
+        return;
+      }
+      this.dispatchEvent(new flash.events.TimerEvent("timer", true, false));
     }
   }
 }
