@@ -37,6 +37,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super(undefined);
+      notImplemented("Dummy Constructor: public flash.net.LocalConnection");
     }
     
     // JS -> AS Bindings

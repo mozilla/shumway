@@ -35,6 +35,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor () {
       false && super();
+      notImplemented("Dummy Constructor: public flash.media.SoundMixer");
     }
 
     private static _masterVolume = 1;

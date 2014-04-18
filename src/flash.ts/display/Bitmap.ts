@@ -54,7 +54,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set pixelSnapping(value: string) {
-      this._pixelSnapping = "" + value;
+      this._pixelSnapping = asCoerceString(value);
     }
 
     get smoothing(): boolean {

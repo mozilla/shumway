@@ -15,6 +15,8 @@
  */
 // Class: ID3Info
 module Shumway.AVM2.AS.flash.media {
+  import notImplemented = Shumway.Debug.notImplemented;
+
   export class ID3Info extends ASNative {
     
     // Called whenever the class is initialized.
@@ -31,6 +33,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor () {
       false && super();
+      notImplemented("Dummy Constructor: public flash.media.ID3Info");
     }
     
     // JS -> AS Bindings

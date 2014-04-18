@@ -15,6 +15,7 @@
  */
 // Class: URLRequest
 module Shumway.AVM2.AS.flash.net {
+  import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
 
@@ -24,7 +25,15 @@ module Shumway.AVM2.AS.flash.net {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
+    static initializer: any = function () {
+      this._url = null;
+      this._method = 'GET';
+      this._data = null;
+      this._digest = null;
+      this._contentType = 'application/x-www-form-urlencoded';
+      this._requestHeaders = null;
+      this._checkPolicyFile = true;
+    };
     
     // List of static symbols to link.
     static staticBindings: string [] = null; // [];
@@ -35,13 +44,7 @@ module Shumway.AVM2.AS.flash.net {
     constructor (url: string = null) {
       url = asCoerceString(url);
       false && super();
-      this._url = null;
-      this._method = 'GET';
-      this._data = null;
-      this._digest = null;
-      this._contentType = 'application/x-www-form-urlencoded';
-      this._requestHeaders = null;
-      this._checkPolicyFile = true;
+      notImplemented("Dummy Constructor: public flash.net.URLRequest");
     }
 
     _checkPolicyFile: boolean;

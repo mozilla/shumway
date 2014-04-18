@@ -63,25 +63,36 @@ module Shumway.AVM2.AS.flash.media {
     
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol1: Sound) {
-      notImplemented("public flash.media.Sound::initializer");
-      var symbol: any = symbol1;
-      var soundData = new SoundData();
-      if (symbol.pcm) {
-        soundData.sampleRate = symbol.sampleRate;
-        soundData.channels = symbol.channels;
-        soundData.pcm = symbol.pcm;
-        soundData.end = symbol.pcm.length;
+      this._playQueue = [];
+      this._url = null;
+      this._length = 0;
+      this._bytesTotal = 0;
+      this._bytesLoaded = 0;
+      this._id3 = new ID3Info();
+
+      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SOUND_FEATURE});
+
+      if (symbol1) {
+        notImplemented("public flash.media.Sound::initializer");
+        var symbol:any = symbol1;
+        var soundData = new SoundData();
+        if (symbol.pcm) {
+          soundData.sampleRate = symbol.sampleRate;
+          soundData.channels = symbol.channels;
+          soundData.pcm = symbol.pcm;
+          soundData.end = symbol.pcm.length;
+        }
+        soundData.completed = true;
+        if (symbol.packaged) {
+          soundData.data = symbol.packaged.data.buffer;
+          soundData.mimeType = symbol.packaged.mimeType;
+        }
+        var _this = this;
+        getAudioDescription(soundData, function (description) {
+          _this._length = description.duration;
+        });
+        this._soundData = soundData;
       }
-      soundData.completed = true;
-      if (symbol.packaged) {
-        soundData.data = symbol.packaged.data.buffer;
-        soundData.mimeType = symbol.packaged.mimeType;
-      }
-      var _this = this;
-      getAudioDescription(soundData, function (description) {
-        _this._length = description.duration;
-      });
-      this._soundData = soundData;
     };
     
     // List of static symbols to link.
@@ -92,14 +103,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor (stream: flash.net.URLRequest = null, context: flash.media.SoundLoaderContext = null) {
       false && super(undefined);
-      this._playQueue = [];
-      this._url = null;
-      this._length = 0;
-      this._bytesTotal = 0;
-      this._bytesLoaded = 0;
-      this._id3 = new ID3Info();
-
-      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SOUND_FEATURE});
+      notImplemented("Dummy Constructor: public flash.media.Sound");
     }
 
     private _playQueue: any[];
