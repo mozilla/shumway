@@ -251,7 +251,7 @@ module Shumway {
     private _style = null;
     constructor(w, h) {
       this._bounds = new Rectangle(0, 0, w, h);
-      this._style = randomStyle();
+      this._style = ColorStyle.randomStyle();
     }
     getBounds (): Rectangle {
       return this._bounds;
@@ -306,7 +306,7 @@ module Shumway {
       // context.strokeStyle = randomStyle();
       // context.strokeRect(0, 0, bounds.w, bounds.h);
       var p = bounds.w / 2;
-      context.fillStyle = randomStyle();
+      context.fillStyle = ColorStyle.randomStyle();
       this.renderStar(context, p, p, bounds.w / 2, Math.random() * 16 | 0, 0.1 + Math.random() * 0.5);
       // context.fillRect(0, 0, this._bounds.w, this._bounds.h);
       // context.fillStyle = "black";

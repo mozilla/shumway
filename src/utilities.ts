@@ -1322,6 +1322,53 @@ module Shumway {
     static LightOrange = "#d99b28";
     static Green = "#70bf53";
     static BlueGrey = "#5e88b0";
+
+    private static _randomStyleCache;
+    private static _nextStyle = 0;
+
+    static randomStyle() {
+      if (!ColorStyle._randomStyleCache) {
+        ColorStyle._randomStyleCache = [
+          "#ff5e3a",
+          "#ff9500",
+          "#ffdb4c",
+          "#87fc70",
+          "#52edc7",
+          "#1ad6fd",
+          "#c644fc",
+          "#ef4db6",
+          "#4a4a4a",
+          "#dbddde",
+          "#ff3b30",
+          "#ff9500",
+          "#ffcc00",
+          "#4cd964",
+          "#34aadc",
+          "#007aff",
+          "#5856d6",
+          "#ff2d55",
+          "#8e8e93",
+          "#c7c7cc",
+          "#5ad427",
+          "#c86edf",
+          "#d1eefc",
+          "#e0f8d8",
+          "#fb2b69",
+          "#f7f7f7",
+          "#1d77ef",
+          "#d6cec3",
+          "#55efcb",
+          "#ff4981",
+          "#ffd3e0",
+          "#f7f7f7",
+          "#ff1300",
+          "#1f1f21",
+          "#bdbec2",
+          "#ff3a2d"
+        ];
+      }
+      return ColorStyle._randomStyleCache[(ColorStyle._nextStyle ++) % ColorStyle._randomStyleCache.length];
+    }
   }
 
   export class Color {
