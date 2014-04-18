@@ -14,6 +14,7 @@
   var Random = Shumway.Random;
   var Matrix = flash.geom.Matrix;
   var Rectangle = flash.geom.Rectangle;
+  var Point = flash.geom.Point;
   var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectFlags = flash.display.DisplayObjectFlags;
   var InteractiveObject = flash.display.InteractiveObject;
@@ -261,6 +262,32 @@
     }
     eqFloat(s.width, 10, "Width should eventually become 10: " + s.width);
     eqFloat(s.height, 10, "Height should eventually become 10: " + s.height);
+  });
+
+  sanityTests.push(function runInspectorSanityTests(console) {
+    Random.seed(0x12343);
+    var s = new Shape();
+    var c = new DisplayObjectContainer();
+    c.addChild(s);
+    s.x = 200;
+    s.y = 200;
+    s._getContentBounds = function () {
+      return new Rectangle(0, 0, 100 * 20, 100 * 20);
+    }
+
+    eqFloat(s.globalToLocal(new Point(300, 0)).x, 100);
+    eqFloat(s.localToGlobal(new Point(100, 0)).x, 300);
+
+    // Some random points.
+    for (var i = 0; i < 10; i++) {
+      var p = new Point(Math.random() * 10, Math.random() * 10);
+      s.rotation = i;
+      var q = s.globalToLocal(p);
+      var r = s.localToGlobal(q);
+      eqFloat(p.x, r.x);
+      eqFloat(p.y, r.y);
+    }
+
   });
 
 

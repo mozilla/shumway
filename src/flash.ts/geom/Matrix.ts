@@ -219,10 +219,10 @@ module Shumway.AVM2.AS.flash.geom {
       return new Point(this.a * point.x + this.c * point.y + this.tx, this.b * point.x + this.d * point.y + this.ty);
     }
 
-    public transformCoords(x: number, y: number, toTwips: boolean = false): Point {
+    public transformCoords(x: number, y: number, inPixels: boolean = false): Point {
       x = +x;
       y = +y;
-      if (toTwips) {
+      if (inPixels) {
         x = (x * 20) | 0;
         y = (y * 20) | 0;
       }

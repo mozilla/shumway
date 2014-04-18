@@ -899,14 +899,14 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Walks up the tree to find this display object's stage. The stage is identified
-     * if its _stage property points to itself.
+     * Walks up the tree to find this display object's stage, the first object whose
+     * |_stage| property points to itself.
      */
     get stage(): flash.display.Stage {
       var node = this;
       do {
         if (node._stage === node) {
-          assert(flash.display.Stage.class.isType(node));
+          assert(flash.display.Stage.isType(node));
           return node;
         }
         node = node._parent;
@@ -919,7 +919,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set name(value: string) {
-      this._name = "" + value;
+      this._name = asCoerceString(value);
     }
 
     get parent(): DisplayObjectContainer {
@@ -958,6 +958,23 @@ module Shumway.AVM2.AS.flash.display {
 
     getRect(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
       return this._getTransformedBounds(targetCoordinateSpace, false).toPixels();
+    }
+
+    /**
+     * Converts a point from the global coordinate space into the local coordinate space.
+     */
+    globalToLocal(point: flash.geom.Point): flash.geom.Point {
+      var m = this._getConcatenatedMatrix(null).clone();
+      m.invert();
+      return m.transformCoords(point.x, point.y, true).toPixels();
+    }
+
+    /**
+     * Converts a point form the local coordinate sapce into the global coordinate space.
+     */
+    localToGlobal(point: flash.geom.Point): flash.geom.Point {
+      var m = this._getConcatenatedMatrix(null);
+      return m.transformCoords(point.x, point.y, true).toPixels();
     }
 
     public visit(visitor: (DisplayObject) => VisitorFlags, visitorFlags: VisitorFlags) {
@@ -1099,21 +1116,6 @@ module Shumway.AVM2.AS.flash.display {
       value = value;
       notImplemented("public DisplayObject::set blendShader"); return;
       // this._blendShader = value;
-    }
-    globalToLocal(point: flash.geom.Point): flash.geom.Point {
-      //point = point;
-      var m = this._getConcatenatedMatrix(null).clone();
-      m.invert();
-      var p = m.transformCoords(point.x, point.y, true);
-      p.toPixels();
-      return p;
-    }
-    localToGlobal(point: flash.geom.Point): flash.geom.Point {
-      //point = point;
-      var m = this._getConcatenatedMatrix(null);
-      var p = m.transformCoords(point.x, point.y, true);
-      p.toPixels();
-      return p;
     }
     globalToLocal3D(point: flash.geom.Point): flash.geom.Vector3D {
       point = point;
