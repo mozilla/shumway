@@ -17,8 +17,8 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import FileLoadingService = Shumway.FileLoadingService;
 
-  declare var FileLoadingService;
   declare var Stream;
 
   export class URLStream extends flash.events.EventDispatcher implements flash.utils.IDataInput {
@@ -104,7 +104,7 @@ module Shumway.AVM2.AS.flash.net {
       // return this._length;
     }
     load(request: flash.net.URLRequest): void {
-      var session = FileLoadingService.createSession();
+      var session = FileLoadingService.instance.createSession();
       var self = this;
       var initStream = true;
       session.onprogress = function (data, progressState) {

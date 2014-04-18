@@ -1394,11 +1394,49 @@ module Shumway {
       NETCONNECTION_FEATURE = 6
     }
 
-    declare var TelemetryService;
+    export enum ErrorTypes {
+      AVM1_ERROR = 1,
+      AMV2_ERROR = 2
+    }
+
+    export var instance: ITelemetryService;
 
     export function reportTelemetry(data) {
-      TelemetryService.reportTelemetry(data);
+      instance.reportTelemetry(data);
     }
+  }
+
+  export interface ITelemetryService {
+    reportTelemetry(data: any);
+  }
+
+  export interface FileLoadingRequest {
+    url: string;
+    data: any;
+  }
+
+  export interface FileLoadingProgress {
+    bytesLoaded: number;
+    bytesTotal: number;
+  }
+
+  export interface FileLoadingSession {
+    onopen?: () => void;
+    onclose?: () => void;
+    onprogress?: (data: any, progressStatus: FileLoadingProgress) => void;
+    onhttpstatus?: () => void;
+    onerror?: (e) => void;
+    open(request: FileLoadingRequest);
+  }
+
+  export interface IFileLoadingService {
+    createSession(): FileLoadingSession;
+    setBaseUrl(url: string);
+    resolveUrl(url: string): string;
+  }
+
+  export module FileLoadingService {
+    export var instance: IFileLoadingService;
   }
 
 }

@@ -68,7 +68,7 @@ function getPluginParams() {
 
 function runViewer() {
   var flashParams = getPluginParams();
-  FileLoadingService.setBaseUrl(flashParams.baseUrl);
+  Shumway.FileLoadingService.instance.setBaseUrl(flashParams.baseUrl);
 
   movieUrl = flashParams.url;
   if (!movieUrl) {
@@ -84,16 +84,16 @@ function runViewer() {
 
 var movieUrl, movieParams, objectParams;
 
-var TelemetryService = {
+Shumway.Telemetry.instance = {
   reportTelemetry: function (data) {}
 };
 
-var FileLoadingService = {
+Shumway.FileLoadingService.instance = {
   createSession: function () {
     return {
       open: function (request) {
         var self = this;
-        var path = FileLoadingService.resolveUrl(request.url);
+        var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path);
         new BinaryFileReader(path).readAsync(
           function (data, progress) {
@@ -110,13 +110,13 @@ var FileLoadingService = {
     a.href = url || '#';
     a.setAttribute('style', 'display: none;');
     document.body.appendChild(a);
-    FileLoadingService.baseUrl = a.href;
+    Shumway.FileLoadingService.instance.baseUrl = a.href;
     document.body.removeChild(a);
   },
   resolveUrl: function (url) {
     if (url.indexOf('://') >= 0) return url;
 
-    var base = FileLoadingService.baseUrl;
+    var base = Shumway.FileLoadingService.instance.baseUrl;
     base = base.split(/[#?]/)[0];
     base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
     if (url.indexOf('/') === 0) {

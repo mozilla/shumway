@@ -182,7 +182,7 @@ function executeFile(file, buffer, movieParams) {
   } else if (filename.endsWith(".swf")) {
     createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
-        var swfURL = FileLoadingService.resolveUrl(file);
+        var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
         var loaderURL = getQueryVariable("loaderURL") || swfURL;
         SWF.embed(buffer || file, document, document.getElementById('stage'), {
           onComplete: swfController.completeCallback.bind(swfController),
@@ -195,10 +195,10 @@ function executeFile(file, buffer, movieParams) {
         });
       }
       if (!buffer && asyncLoading) {
-        FileLoadingService.setBaseUrl(file);
+        Shumway.FileLoadingService.instance.setBaseUrl(file);
         runSWF(file);
       } else if (!buffer) {
-        FileLoadingService.setBaseUrl(file);
+        Shumway.FileLoadingService.instance.setBaseUrl(file);
         new BinaryFileReader(file).readAll(null, function(buffer, error) {
           if (!buffer) {
             throw "Unable to open the file " + file + ": " + error;
@@ -254,11 +254,11 @@ function executeFile(file, buffer, movieParams) {
   }
 })();
 
-var TelemetryService = {
+Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
 };
 
-var FileLoadingService = {
+Shumway.FileLoadingService.instance = {
   createSession: function () {
     return {
       open: function (request) {
@@ -272,7 +272,7 @@ var FileLoadingService = {
         }
 
         var self = this;
-        var path = FileLoadingService.resolveUrl(request.url);
+        var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
         new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
           function (data, progress) {
@@ -290,7 +290,7 @@ var FileLoadingService = {
     a.href = url || '#';
     a.setAttribute('style', 'display: none;');
     document.body.appendChild(a);
-    FileLoadingService.baseUrl = a.href;
+    Shumway.FileLoadingService.instance.baseUrl = a.href;
     document.body.removeChild(a);
   },
   resolveUrl: function (url) {
@@ -298,7 +298,7 @@ var FileLoadingService = {
       return url;
     }
 
-    var base = FileLoadingService.baseUrl || '';
+    var base = Shumway.FileLoadingService.instance.baseUrl || '';
     base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
     if (url.indexOf('/') === 0) {
       var m = /^[^:]+:\/\/[^\/]+/.exec(base);

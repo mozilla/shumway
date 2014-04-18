@@ -64,7 +64,7 @@ function loadMovie(path, reportFrames) {
       }
     }
 
-    FileLoadingService.baseUrl = path;
+    Shumway.FileLoadingService.instance.baseUrl = path;
     new BinaryFileReader(path).readAll(null, function(buffer) {
       if (!buffer) {
         throw "Unable to open the file " + SWF_PATH + ": " + error;
@@ -127,16 +127,16 @@ function runSanityTests(tests) {
   });
 }
 
-var TelemetryService = {
+Shumway.Telemetry.instance = {
   reportTelemetry: function (data) {}
 };
 
-var FileLoadingService = {
+Shumway.FileLoadingService.instance = {
   createSession: function () {
     return {
       open: function (request) {
         var self = this;
-        var base = FileLoadingService.baseUrl || '';
+        var base = Shumway.FileLoadingService.instance.baseUrl || '';
         base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
         var path = base ? base + request.url : request.url;
         console.log('FileLoadingService: loading ' + path);
