@@ -180,7 +180,6 @@ module Shumway.AVM2.AS {
   declare var escape;
   declare var unescape;
   declare var AMFUtils;
-  declare var FileLoadingService;
   declare var window;
 
   registerNativeFunction('FlashUtilScript::escapeMultiByte', escape);
@@ -204,7 +203,7 @@ module Shumway.AVM2.AS {
     }
     // TODO handle other methods than GET
     var targetWindow = window_ || '_parent'; // using parent as default target
-    window.open(FileLoadingService.resolveUrl(url), targetWindow);
+    window.open(FileLoadingService.instance.resolveUrl(url), targetWindow);
   });
 
   registerNativeFunction('FlashNetScript::sendToURL', function sendToURL(request) {
@@ -216,7 +215,7 @@ module Shumway.AVM2.AS {
       throwError('TypeError', Errors.CheckTypeFailedError, request,
         'flash.net.URLRequest');
     }
-    var session = FileLoadingService.createSession();
+    var session = FileLoadingService.instance.createSession();
     session.onprogress = function () {};
     session.open(request);
   });

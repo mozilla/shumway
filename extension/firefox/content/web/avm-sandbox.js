@@ -87,7 +87,7 @@ var playerglobalInfo = {
 
 function runViewer() {
   var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
-  FileLoadingService.setBaseUrl(flashParams.baseUrl);
+  Shumway.FileLoadingService.instance.setBaseUrl(flashParams.baseUrl);
 
   movieUrl = flashParams.url;
   if (!movieUrl) {
@@ -201,13 +201,13 @@ window.addEventListener("message", function handlerMessage(e) {
   }
 }, true);
 
-var TelemetryService = {
+Shumway.Telemetry.instance = {
   reportTelemetry: function (data) {
     FirefoxCom.request('reportTelemetry', data, null);
   }
 };
 
-var FileLoadingService = {
+Shumway.FileLoadingService.instance = {
   get baseUrl() { return movieUrl; },
   nextSessionId: 1, // 0 - is reserved
   sessions: [],
@@ -304,7 +304,7 @@ function frame(e) {
     // marking that movie is started
     document.body.classList.add("started");
 
-    TelemetryService.reportTelemetry({topic: "firstFrame"});
+    Shumway.Telemetry.reportTelemetry({topic: "firstFrame"});
 
     // skipping frame 0
     initializeFrameControl = false;

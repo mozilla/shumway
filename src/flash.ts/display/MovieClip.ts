@@ -19,6 +19,7 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
+  import Telemetry = Shumway.Telemetry;
 
   export class MovieClip extends flash.display.Sprite {
     
@@ -209,8 +210,7 @@ module Shumway.AVM2.AS.flash.display {
             scripts[i].call(this);
           }
         } catch (e) {
-          //var AVM2_ERROR_TYPE = 2;
-          //TelemetryService.reportTelemetry({topic: 'error', error: AVM2_ERROR_TYPE});
+          Telemetry.reportTelemetry({topic: 'error', error: Telemetry.ErrorTypes.AVM2_ERROR});
 
           //if ($DEBUG) {
           //  console.error('error ' + e + ', stack: \n' + e.stack);
