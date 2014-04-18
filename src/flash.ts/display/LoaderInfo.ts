@@ -17,22 +17,15 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import EventDispatcher = flash.events.EventDispatcher;
   export class LoaderInfo extends flash.events.EventDispatcher {
-    
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["parameters", "uncaughtErrorEvents", "dispatchEvent"];
-    
     constructor () {
       false && super(undefined);
+      EventDispatcher.instanceConstructorNoInitialize.call(this);
       var self: LoaderInfo = this;
       this._loaderURL = '';
       this._url = '';
@@ -61,11 +54,11 @@ module Shumway.AVM2.AS.flash.display {
     
     // JS -> AS Bindings
     
-    parameters: ASObject;
+    parameters: Object;
     uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
     // AS -> JS Bindings
-    static getLoaderInfoByDefinition(object: ASObject): flash.display.LoaderInfo {
+    static getLoaderInfoByDefinition(object: Object): flash.display.LoaderInfo {
       object = object;
       notImplemented("public flash.display.LoaderInfo::static getLoaderInfoByDefinition"); return;
     }
@@ -79,13 +72,13 @@ module Shumway.AVM2.AS.flash.display {
     _swfVersion: number /*uint*/;
     _actionScriptVersion: number /*uint*/;
     _frameRate: number;
-    _parameters: ASObject;
+    _parameters: Object;
     _width: number /*int*/;
     _height: number /*int*/;
     _contentType: string;
     _sharedEvents: flash.events.EventDispatcher;
-    _parentSandboxBridge: ASObject;
-    _childSandboxBridge: ASObject;
+    _parentSandboxBridge: Object;
+    _childSandboxBridge: Object;
     _sameDomain: boolean;
     _childAllowsParent: boolean;
     _parentAllowsChild: boolean;
@@ -95,71 +88,56 @@ module Shumway.AVM2.AS.flash.display {
     _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
     get loaderURL(): string {
-      notImplemented("public flash.display.LoaderInfo::get loaderURL"); return;
-      // return this._loaderURL;
+      return this._loaderURL;
     }
     get url(): string {
-      notImplemented("public flash.display.LoaderInfo::get url"); return;
-      // return this._url;
+      return this._url;
     }
     get isURLInaccessible(): boolean {
-      notImplemented("public flash.display.LoaderInfo::get isURLInaccessible"); return;
-      // return this._isURLInaccessible;
+      return this._isURLInaccessible;
     }
     get bytesLoaded(): number /*uint*/ {
-      notImplemented("public flash.display.LoaderInfo::get bytesLoaded"); return;
-      // return this._bytesLoaded;
+      return this._bytesLoaded;
     }
     get bytesTotal(): number /*uint*/ {
-      notImplemented("public flash.display.LoaderInfo::get bytesTotal"); return;
-      // return this._bytesTotal;
+      return this._bytesTotal;
     }
     get applicationDomain(): flash.system.ApplicationDomain {
-      notImplemented("public flash.display.LoaderInfo::get applicationDomain"); return;
-      // return this._applicationDomain;
+      return this._applicationDomain;
     }
     get swfVersion(): number /*uint*/ {
-      notImplemented("public flash.display.LoaderInfo::get swfVersion"); return;
-      // return this._swfVersion;
+      return this._swfVersion;
     }
     get actionScriptVersion(): number /*uint*/ {
-      notImplemented("public flash.display.LoaderInfo::get actionScriptVersion"); return;
-      // return this._actionScriptVersion;
+      return this._actionScriptVersion;
     }
     get frameRate(): number {
-      notImplemented("public flash.display.LoaderInfo::get frameRate"); return;
-      // return this._frameRate;
+      return this._frameRate;
     }
     get width(): number /*int*/ {
-      notImplemented("public flash.display.LoaderInfo::get width"); return;
-      // return this._width;
+      return this._width;
     }
     get height(): number /*int*/ {
-      notImplemented("public flash.display.LoaderInfo::get height"); return;
-      // return this._height;
+      return this._height;
     }
     get contentType(): string {
-      notImplemented("public flash.display.LoaderInfo::get contentType"); return;
-      // return this._contentType;
+      return this._contentType;
     }
     get sharedEvents(): flash.events.EventDispatcher {
-      notImplemented("public flash.display.LoaderInfo::get sharedEvents"); return;
-      // return this._sharedEvents;
+      return this._sharedEvents;
     }
-    get parentSandboxBridge(): ASObject {
-      notImplemented("public flash.display.LoaderInfo::get parentSandboxBridge"); return;
-      // return this._parentSandboxBridge;
+    get parentSandboxBridge(): Object {
+      return this._parentSandboxBridge;
     }
-    set parentSandboxBridge(door: ASObject) {
+    set parentSandboxBridge(door: Object) {
       door = door;
       notImplemented("public flash.display.LoaderInfo::set parentSandboxBridge"); return;
       // this._parentSandboxBridge = door;
     }
-    get childSandboxBridge(): ASObject {
-      notImplemented("public flash.display.LoaderInfo::get childSandboxBridge"); return;
-      // return this._childSandboxBridge;
+    get childSandboxBridge(): Object {
+      return this._childSandboxBridge;
     }
-    set childSandboxBridge(door: ASObject) {
+    set childSandboxBridge(door: Object) {
       door = door;
       notImplemented("public flash.display.LoaderInfo::set childSandboxBridge"); return;
       // this._childSandboxBridge = door;
@@ -188,7 +166,7 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.LoaderInfo::get bytes"); return;
       // return this._bytes;
     }
-    _getArgs(): ASObject {
+    _getArgs(): Object {
       notImplemented("public flash.display.LoaderInfo::_getArgs"); return;
     }
     _getUncaughtErrorEvents(): flash.events.UncaughtErrorEvents {
