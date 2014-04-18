@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["quantization", "colorSpace", "trimFlexBits"];
+    static instanceSymbols: string [] = null; // ["quantization", "colorSpace", "trimFlexBits"];
     
     constructor (quantization: number /*uint*/ = 20, colorSpace: string = "auto", trimFlexBits: number /*uint*/ = 0) {
       quantization = quantization >>> 0; colorSpace = asCoerceString(colorSpace); trimFlexBits = trimFlexBits >>> 0;

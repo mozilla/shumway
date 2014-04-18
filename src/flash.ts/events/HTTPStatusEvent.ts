@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_status", "_responseURL", "_responseHeaders", "status", "responseURL", "responseURL", "responseHeaders", "responseHeaders", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_status", "_responseURL", "_responseHeaders", "status", "responseURL", "responseURL", "responseHeaders", "responseHeaders", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, status: number /*int*/ = 0) {
       type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; status = status | 0;

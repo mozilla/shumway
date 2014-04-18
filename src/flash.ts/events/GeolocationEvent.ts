@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_latitude", "_longitude", "_altitude", "_hAccuracy", "_vAccuracy", "_speed", "_heading", "_timestamp", "latitude", "latitude", "longitude", "longitude", "altitude", "altitude", "hAccuracy", "hAccuracy", "vAccuracy", "vAccuracy", "speed", "speed", "heading", "heading", "timestamp", "timestamp", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_latitude", "_longitude", "_altitude", "_hAccuracy", "_vAccuracy", "_speed", "_heading", "_timestamp", "latitude", "latitude", "longitude", "longitude", "altitude", "altitude", "hAccuracy", "hAccuracy", "vAccuracy", "vAccuracy", "speed", "speed", "heading", "heading", "timestamp", "timestamp", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, latitude: number = 0, longitude: number = 0, altitude: number = 0, hAccuracy: number = 0, vAccuracy: number = 0, speed: number = 0, heading: number = 0, timestamp: number = 0) {
       type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; latitude = +latitude; longitude = +longitude; altitude = +altitude; hAccuracy = +hAccuracy; vAccuracy = +vAccuracy; speed = +speed; heading = +heading; timestamp = +timestamp;

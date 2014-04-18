@@ -258,7 +258,7 @@ module Shumway.AVM2 {
 
         writer.writeLn();
         writer.writeComment("List of static symbols to link.");
-        writer.writeLn("static staticBindings: string [] = null; // [" + getBindingNames(ci.traits).map(x => "\"" + x.name + "\"").join(", ") + "];");
+        writer.writeLn("static classSymbols: string [] = null; // [" + getBindingNames(ci.traits).map(x => "\"" + x.name + "\"").join(", ") + "];");
 
         writer.writeLn();
         writer.writeComment("List of instance symbols to link.");

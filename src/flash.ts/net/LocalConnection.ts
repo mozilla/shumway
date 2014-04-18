@@ -30,10 +30,10 @@ module Shumway.AVM2.AS.flash.net {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // ["isSupported"];
+    static classSymbols: string [] = null; // ["isSupported"];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super(undefined);

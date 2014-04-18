@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.ui {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_save", "_zoom", "_quality", "_play", "_loop", "_rewind", "_forwardAndBack", "_print", "save", "save", "zoom", "zoom", "quality", "quality", "play", "play", "loop", "loop", "rewind", "rewind", "forwardAndBack", "forwardAndBack", "print", "print", "clone"];
+    static instanceSymbols: string [] = null; // ["_save", "_zoom", "_quality", "_play", "_loop", "_rewind", "_forwardAndBack", "_print", "save", "save", "zoom", "zoom", "quality", "quality", "play", "play", "loop", "loop", "rewind", "rewind", "forwardAndBack", "forwardAndBack", "print", "print", "clone"];
     
     constructor () {
       false && super();

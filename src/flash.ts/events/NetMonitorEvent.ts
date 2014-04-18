@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_netStream", "netStream", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_netStream", "netStream", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, netStream: flash.net.NetStream = null) {
       type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; netStream = netStream;

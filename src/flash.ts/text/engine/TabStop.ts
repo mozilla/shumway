@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.text.engine {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor (alignment: string = "start", position: number = 0, decimalAlignmentToken: string = "") {
       alignment = asCoerceString(alignment); position = +position; decimalAlignmentToken = asCoerceString(decimalAlignmentToken);

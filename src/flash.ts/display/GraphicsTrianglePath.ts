@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["indices", "vertices", "uvtData", "_culling", "culling", "culling"];
+    static instanceSymbols: string [] = null; // ["indices", "vertices", "uvtData", "_culling", "culling", "culling"];
     
     constructor (vertices: ASVector<number> = null, indices: ASVector<number /*int*/> = null, uvtData: ASVector<number> = null, culling: string = "none") {
       vertices = vertices; indices = indices; uvtData = uvtData; culling = asCoerceString(culling);

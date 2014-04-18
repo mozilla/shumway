@@ -27,10 +27,10 @@ module Shumway.AVM2.AS.flash.utils {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_delay", "_repeatCount", "_iteration", "delay", "delay", "repeatCount", "repeatCount", "currentCount", "reset", "start", "tick"];
+    static instanceSymbols: string [] = null; // ["_delay", "_repeatCount", "_iteration", "delay", "delay", "repeatCount", "repeatCount", "currentCount", "reset", "start", "tick"];
     
     constructor (delay: number, repeatCount: number /*int*/ = 0) {
       this._delay = +delay; this._repeatCount = repeatCount | 0;  this._running = false;

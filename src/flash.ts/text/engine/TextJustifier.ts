@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.text.engine {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // ["getJustifierForLocale"];
+    static classSymbols: string [] = null; // ["getJustifierForLocale"];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (locale: string, lineJustification: string) {
       locale = asCoerceString(locale); lineJustification = asCoerceString(lineJustification);

@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.text {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["x", "width", "height", "ascent", "descent", "leading"];
+    static instanceSymbols: string [] = null; // ["x", "width", "height", "ascent", "descent", "leading"];
     
     constructor (x: number, width: number, height: number, ascent: number, descent: number, leading: number) {
       x = +x; width = +width; height = +height; ascent = +ascent; descent = +descent; leading = +leading;

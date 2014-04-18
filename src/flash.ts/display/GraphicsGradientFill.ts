@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["colors", "alphas", "ratios", "matrix", "focalPointRatio", "_type", "_spreadMethod", "_interpolationMethod", "type", "type", "spreadMethod", "spreadMethod", "interpolationMethod", "interpolationMethod"];
+    static instanceSymbols: string [] = null; // ["colors", "alphas", "ratios", "matrix", "focalPointRatio", "_type", "_spreadMethod", "_interpolationMethod", "type", "type", "spreadMethod", "spreadMethod", "interpolationMethod", "interpolationMethod"];
     
     constructor (type: string = "linear", colors: any [] = null, alphas: any [] = null, ratios: any [] = null, matrix: any = null, spreadMethod: any = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0) {
       false && super();

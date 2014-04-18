@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["commands", "data", "_winding", "winding", "winding", "moveTo", "lineTo", "curveTo", "cubicCurveTo", "wideLineTo", "wideMoveTo", "ensureLists"];
+    static instanceSymbols: string [] = null; // ["commands", "data", "_winding", "winding", "winding", "moveTo", "lineTo", "curveTo", "cubicCurveTo", "wideLineTo", "wideMoveTo", "ensureLists"];
     
     constructor (commands: ASVector<number /*int*/> = null, data: ASVector<number> = null, winding: string = "evenOdd") {
       false && super();

@@ -27,10 +27,10 @@ module Shumway.AVM2.AS.flash.text {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor (font: string = null, size: ASObject = null, color: ASObject = null, bold: ASObject = null, italic: ASObject = null, underline: ASObject = null, url: string = null, target: string = null, align: string = null, leftMargin: ASObject = null, rightMargin: ASObject = null, indent: ASObject = null, leading: ASObject = null) {
       font = asCoerceString(font); size = size; color = color; bold = bold; italic = italic; underline = underline; url = asCoerceString(url); target = asCoerceString(target); align = asCoerceString(align); leftMargin = leftMargin; rightMargin = rightMargin; indent = indent; leading = leading;

@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_device", "device"];
+    static instanceSymbols: string [] = null; // ["_device", "device"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, device: flash.ui.GameInputDevice = null) {
       type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; device = device;

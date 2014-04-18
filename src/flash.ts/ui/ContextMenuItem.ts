@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.ui {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (caption: string, separatorBefore: boolean = false, enabled: boolean = true, visible: boolean = true) {
       caption = asCoerceString(caption); separatorBefore = !!separatorBefore; enabled = !!enabled; visible = !!visible;

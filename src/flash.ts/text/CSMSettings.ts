@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.text {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["fontSize", "insideCutoff", "outsideCutoff"];
+    static instanceSymbols: string [] = null; // ["fontSize", "insideCutoff", "outsideCutoff"];
     
     constructor (fontSize: number, insideCutoff: number, outsideCutoff: number) {
       fontSize = +fontSize; insideCutoff = +insideCutoff; outsideCutoff = +outsideCutoff;

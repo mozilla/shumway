@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.text.engine {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["emBox", "strikethroughOffset", "strikethroughThickness", "underlineOffset", "underlineThickness", "subscriptOffset", "subscriptScale", "superscriptOffset", "superscriptScale", "lineGap"];
+    static instanceSymbols: string [] = null; // ["emBox", "strikethroughOffset", "strikethroughThickness", "underlineOffset", "underlineThickness", "subscriptOffset", "subscriptScale", "superscriptOffset", "superscriptScale", "lineGap"];
     
     constructor (emBox: flash.geom.Rectangle, strikethroughOffset: number, strikethroughThickness: number, underlineOffset: number, underlineThickness: number, subscriptOffset: number, subscriptScale: number, superscriptOffset: number, superscriptScale: number, lineGap: number = 0) {
       emBox = emBox; strikethroughOffset = +strikethroughOffset; strikethroughThickness = +strikethroughThickness; underlineOffset = +underlineOffset; underlineThickness = +underlineThickness; subscriptOffset = +subscriptOffset; subscriptScale = +subscriptScale; superscriptOffset = +superscriptOffset; superscriptScale = +superscriptScale; lineGap = +lineGap;

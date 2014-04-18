@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.media {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = ["songName", "artist", "album", "year", "comment", "genre", "track"];
+    static instanceSymbols: string [] = ["songName", "artist", "album", "year", "comment", "genre", "track"];
     
     constructor () {
       false && super();

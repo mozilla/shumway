@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.errors {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor (message: string = "", id: number /*int*/ = 0) {
       message = asCoerceString(message); id = id | 0;

@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.text.engine {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (fontDescription: flash.text.engine.FontDescription = null, fontSize: number = 12, color: number /*uint*/ = 0, alpha: number = 1, textRotation: string = "auto", dominantBaseline: string = "roman", alignmentBaseline: string = "useDominantBaseline", baselineShift: number = 0, kerning: string = "on", trackingRight: number = 0, trackingLeft: number = 0, locale: string = "en", breakOpportunity: string = "auto", digitCase: string = "default", digitWidth: string = "default", ligatureLevel: string = "common", typographicCase: string = "default") {
       fontDescription = fontDescription; fontSize = +fontSize; color = color >>> 0; alpha = +alpha; textRotation = asCoerceString(textRotation); dominantBaseline = asCoerceString(dominantBaseline); alignmentBaseline = asCoerceString(alignmentBaseline); baselineShift = +baselineShift; kerning = asCoerceString(kerning); trackingRight = +trackingRight; trackingLeft = +trackingLeft; locale = asCoerceString(locale); breakOpportunity = asCoerceString(breakOpportunity); digitCase = asCoerceString(digitCase); digitWidth = asCoerceString(digitWidth); ligatureLevel = asCoerceString(ligatureLevel); typographicCase = asCoerceString(typographicCase);

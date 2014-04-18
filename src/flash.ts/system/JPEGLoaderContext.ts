@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.system {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["deblockingFilter"];
+    static instanceSymbols: string [] = null; // ["deblockingFilter"];
     
     constructor (deblockingFilter: number = 0, checkPolicyFile: boolean = false, applicationDomain: flash.system.ApplicationDomain = null, securityDomain: flash.system.SecurityDomain = null) {
       deblockingFilter = +deblockingFilter; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain;

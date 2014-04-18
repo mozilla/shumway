@@ -37,10 +37,10 @@ module Shumway.AVM2.AS.flash.external {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // ["marshallExceptions", "ensureInitialized", "addCallback", "convertToXML", "convertToXMLString", "convertFromXML", "convertToJSString", "call"];
+    static classSymbols: string [] = null; // ["marshallExceptions", "ensureInitialized", "addCallback", "convertToXML", "convertToXMLString", "convertFromXML", "convertToJSString", "call"];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super();

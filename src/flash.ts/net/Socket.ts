@@ -30,10 +30,10 @@ module Shumway.AVM2.AS.flash.net {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["timeout", "timeout", "connect", "close"];
+    static instanceSymbols: string [] = null; // ["timeout", "timeout", "connect", "close"];
     
     constructor (host: string = null, port: number /*int*/ = 0) {
       host = asCoerceString(host); port = port | 0;

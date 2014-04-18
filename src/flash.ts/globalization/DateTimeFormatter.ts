@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.globalization {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["format", "formatUTC"];
+    static instanceSymbols: string [] = null; // ["format", "formatUTC"];
     
     constructor (requestedLocaleIDName: string, dateStyle: string = "long", timeStyle: string = "long") {
       requestedLocaleIDName = asCoerceString(requestedLocaleIDName); dateStyle = asCoerceString(dateStyle); timeStyle = asCoerceString(timeStyle);

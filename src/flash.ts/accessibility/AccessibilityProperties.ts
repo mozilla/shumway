@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.accessibility {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["name", "description", "shortcut", "silent", "forceSimple", "noAutoLabeling"];
+    static instanceSymbols: string [] = null; // ["name", "description", "shortcut", "silent", "forceSimple", "noAutoLabeling"];
     
     constructor () {
       false && super();

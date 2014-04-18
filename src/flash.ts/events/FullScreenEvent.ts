@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_fullScreen", "_interactive", "fullScreen", "interactive", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_fullScreen", "_interactive", "fullScreen", "interactive", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, fullScreen: boolean = false, interactive: boolean = false) {
       type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; fullScreen = !!fullScreen; interactive = !!interactive;
