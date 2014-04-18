@@ -210,7 +210,7 @@ module Shumway.AVM2.AS.flash.display {
       index = index | 0;
 
       var children = this._children;
-      if (index < 0 || index > children.length) {
+      if (index < 0 || index >= children.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
@@ -221,24 +221,14 @@ module Shumway.AVM2.AS.flash.display {
       return child;
     }
 
-    getChildForDepth(depth: number /*int*/): flash.display.DisplayObject {
+    getChildAtDepth(depth: number /*int*/): flash.display.DisplayObject {
       depth = depth | 0;
 
       var children = this._children;
-      var result = null;
       for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        if (child._depth <= depth) {
-          result = child;
-          if (child._depth === depth) {
-            break;
-          }
-        } else if (!result) {
-          result = child;
-          break;
-        }
+        var child = child
       }
-      return result;
+      return null;
     }
 
     getChildByName(name: string): DisplayObject {
@@ -291,8 +281,8 @@ module Shumway.AVM2.AS.flash.display {
       index1 = index1 | 0; index2 = index2 | 0;
 
       var children = this._children;
-      if (index1 < 0 || index1 > children.length ||
-          index2 < 0 || index2 > children.length) {
+      if (index1 < 0 || index1 >= children.length ||
+          index2 < 0 || index2 >= children.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
@@ -321,7 +311,7 @@ module Shumway.AVM2.AS.flash.display {
     removeChildren(beginIndex: number = 0, endIndex: number = 2147483647): void {
       beginIndex = beginIndex | 0; endIndex = endIndex | 0;
 
-      if (beginIndex < 0 || endIndex < 0 || endIndex < beginIndex || endIndex > this._children.length - 1) {
+      if (beginIndex < 0 || endIndex < 0 || endIndex < beginIndex || endIndex >= this._children.length) {
         throwError('RangeError', Errors.ParamRangeError);
       }
 
