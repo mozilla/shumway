@@ -23,32 +23,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
-      var self: LoaderInfo = this;
-      self._loaderURL = '';
-      self._url = '';
-      self._isURLInaccessible = false;
-      self._bytesLoaded = 0;
-      self._bytesTotal = 0;
-      self._applicationDomain = null;
-      self._swfVersion = 0;
-      self._actionScriptVersion = 0;
-      self._frameRate = 24;
-      self._parameters = null;
-      self._width = 0;
-      self._height = 0;
-      self._contentType = '';
-      self._sharedEvents = null;
-      self._parentSandboxBridge = null;
-      self._childSandboxBridge = null;
-      self._sameDomain = false;
-      self._childAllowsParent = false;
-      self._parentAllowsChild = false;
-      self._loader = null;
-      self._content = null;
-      self._bytes = null;
-      self._uncaughtErrorEvents = null;
-    };
+    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -58,7 +33,30 @@ module Shumway.AVM2.AS.flash.display {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.display.LoaderInfo");
+      var self: LoaderInfo = this;
+      this._loaderURL = '';
+      this._url = '';
+      this._isURLInaccessible = false;
+      this._bytesLoaded = 0;
+      this._bytesTotal = 0;
+      this._applicationDomain = null;
+      this._swfVersion = 0;
+      this._actionScriptVersion = 0;
+      this._frameRate = 24;
+      this._parameters = null;
+      this._width = 0;
+      this._height = 0;
+      this._contentType = '';
+      this._sharedEvents = null;
+      this._parentSandboxBridge = null;
+      this._childSandboxBridge = null;
+      this._sameDomain = false;
+      this._childAllowsParent = false;
+      this._parentAllowsChild = false;
+      this._loader = null;
+      this._content = null;
+      this._bytes = null;
+      this._uncaughtErrorEvents = null;
     }
     
     // JS -> AS Bindings

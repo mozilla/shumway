@@ -117,7 +117,7 @@ module Shumway.AVM2.AS {
     // M("flash.system.System", "SystemClass", SystemDefinition),
     M("flash.system.Security", "SecurityClass", flash.system.Security),
     // M("flash.system.SecurityDomain", "SecurityDomainClass", SecurityDomainDefinition),
-    // M("flash.system.ApplicationDomain", "ApplicationDomainClass", ApplicationDomainDefinition),
+    M("flash.system.ApplicationDomain", "ApplicationDomainClass", flash.system.ApplicationDomain),
 
     M("flash.accessibility.Accessibility", "AccessibilityClass", flash.accessibility.Accessibility),
     // M("flash.utils.Timer", "TimerClass", TimerDefinition),

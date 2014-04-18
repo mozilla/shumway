@@ -16,7 +16,11 @@
 // Class: Loader
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import Event = flash.events.Event;
+  import DisplayObject = flash.display.DisplayObject;
+  import DisplayObjectContainer = flash.display.DisplayObjectContainer;
   export class Loader extends flash.display.DisplayObjectContainer {
     
     // Called whenever the class is initialized.
@@ -29,11 +33,13 @@ module Shumway.AVM2.AS.flash.display {
     static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
+    // static instanceSymbols: string [] = ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
+    static instanceSymbols: string [] = ["load"];
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.Loader");
+      DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
+      this._contentLoaderInfo = new flash.display.LoaderInfo();
     }
     
     // JS -> AS Bindings
@@ -55,15 +61,14 @@ module Shumway.AVM2.AS.flash.display {
     // AS -> JS Bindings
     
     // _content: flash.display.DisplayObject;
-    // _contentLoaderInfo: flash.display.LoaderInfo;
+    _contentLoaderInfo: flash.display.LoaderInfo;
     // _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
+
     get content(): flash.display.DisplayObject {
-      notImplemented("public flash.display.Loader::get content"); return;
-      // return this._content;
+      return this._content;
     }
     get contentLoaderInfo(): flash.display.LoaderInfo {
-      notImplemented("public flash.display.Loader::get contentLoaderInfo"); return;
-      // return this._contentLoaderInfo;
+      return this._contentLoaderInfo;
     }
     _close(): void {
       notImplemented("public flash.display.Loader::_close"); return;
@@ -74,7 +79,8 @@ module Shumway.AVM2.AS.flash.display {
     }
     _getJPEGLoaderContextdeblockingfilter(context: flash.system.LoaderContext): number {
       context = context;
-      notImplemented("public flash.display.Loader::_getJPEGLoaderContextdeblockingfilter"); return;
+      somewhatImplemented("public flash.display.Loader::_getJPEGLoaderContextdeblockingfilter"); return;
+      return 0;
     }
     _getUncaughtErrorEvents(): flash.events.UncaughtErrorEvents {
       notImplemented("public flash.display.Loader::_getUncaughtErrorEvents"); return;
@@ -85,7 +91,15 @@ module Shumway.AVM2.AS.flash.display {
     }
     _load(request: flash.net.URLRequest, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {
       request = request; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain; requestedContentParent = requestedContentParent; parameters = parameters; deblockingFilter = +deblockingFilter; allowCodeExecution = !!allowCodeExecution; imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
-      notImplemented("public flash.display.Loader::_load"); return;
+      // TODO: Start parsing and we wait untill the first frame is parsed and thats it.
+
+      this._content = new DisplayObject();
+      this.addChild(this._content);
+      assert (this._content, "Content should be available by now.");
+      this._contentLoaderInfo.dispatchEvent(new Event(Event.INIT, false, false));
+      // TODO: Process the rest of the file.
+      this._contentLoaderInfo.dispatchEvent(new Event(Event.COMPLETE, false, false));
+      somewhatImplemented("public flash.display.Loader::_load"); return;
     }
     _loadBytes(bytes: flash.utils.ByteArray, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {
       bytes = bytes; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain; requestedContentParent = requestedContentParent; parameters = parameters; deblockingFilter = +deblockingFilter; allowCodeExecution = !!allowCodeExecution; imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
