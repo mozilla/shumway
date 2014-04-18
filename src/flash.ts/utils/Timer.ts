@@ -22,7 +22,7 @@ module Shumway.AVM2.AS.flash.utils {
     static classInitializer: any = null;
     static initializer: any = null;
     static classSymbols: string [] = null; // [];
-    static instanceSymbols: string [] = null; // ["_delay", "_repeatCount", "_iteration", "delay", "delay", "repeatCount", "repeatCount", "currentCount", "reset", "start", "tick"];
+    static instanceSymbols: string [] = ["start"]; // ["_delay", "_repeatCount", "_iteration", "delay", "delay", "repeatCount", "repeatCount", "currentCount", "reset", "start", "tick"];
     
     constructor (delay: number, repeatCount: number /*int*/ = 0) {
       false && super(undefined);
@@ -42,18 +42,18 @@ module Shumway.AVM2.AS.flash.utils {
     _interval: number;
     
     // AS -> JS Bindings
-
+        
     get running(): boolean {
       return this._running;
     }
     stop(): void {
       this._running = false;
-      clearInterval(this._interval);
+      clearInterval(this.interval);
     }
-    _start(delay: number, closure: Function): void {
-      this._delay = +delay;
+    _start(delay: number, closure: ASFunction): void {
+      _delay = +delay;
       this._running = true;
-      this._interval = setInterval(closure, delay);
+      this.interval = setInterval(closure, delay);
     }
     _tick(): void {
       if (!this._running) {
