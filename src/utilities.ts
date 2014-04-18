@@ -1472,7 +1472,7 @@ module Shumway {
     onopen?: () => void;
     onclose?: () => void;
     onprogress?: (data: any, progressStatus: FileLoadingProgress) => void;
-    onhttpstatus?: () => void;
+    onhttpstatus?: (location: string, httpStatus: number, httpHeaders: any) => void;
     onerror?: (e) => void;
     open(request: FileLoadingRequest);
   }
