@@ -29,7 +29,6 @@ build: ensureoutputdir \
 	mkdir $(BUILD_DIR)/src/swf
 	cp $(SHUMWAY_ROOT)/src/swf/*.js $(BUILD_DIR)/src/swf/
 	mkdir $(BUILD_DIR)/src/flash
-	cp $(SHUMWAY_ROOT)/src/flash/stubs.js $(BUILD_DIR)/src/flash/
 	cp $(SHUMWAY_ROOT)/src/flash/util.js $(BUILD_DIR)/src/flash/
 	mkdir $(BUILD_DIR)/src/avm1lib
 	cp $(SHUMWAY_ROOT)/src/avm1lib/*.js $(BUILD_DIR)/src/avm1lib/
