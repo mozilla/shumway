@@ -34,7 +34,7 @@ module Shumway.AVM2.AS.flash.display {
     
     // List of instance symbols to link.
     // static instanceSymbols: string [] = ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
-    static instanceSymbols: string [] = ["load"];
+    static instanceSymbols: string [] = ["load!"];
     
     constructor () {
       false && super();

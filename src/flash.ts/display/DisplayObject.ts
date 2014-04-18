@@ -588,7 +588,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Computes the bounding box for all of this display object's content, its graphics and all of its children.
      */
-   private _getContentBounds(includeStrokes: boolean = true): Rectangle {
+    private _getContentBounds(includeStrokes: boolean = true): Rectangle {
       // Tobias: What about filters?
       var rectangle = includeStrokes ? this._bounds : this._rect;
       if (this._hasFlags(DisplayObjectFlags.InvalidBounds)) {
