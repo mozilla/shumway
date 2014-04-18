@@ -27,7 +27,11 @@ module Shumway.AVM2.AS.flash.net {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
+    static initializer: any = function () {
+      this._stream = null;
+      this._connected = false;
+      this._littleEndian = false;
+    };
     
     // List of static symbols to link.
     static staticBindings: string [] = null; // [];
@@ -37,10 +41,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super(undefined);
-
-      this._stream = null;
-      this._connected = false;
-      this._littleEndian = false;
+      notImplemented("Dummy Constructor: public flash.net.URLStream");
     }
 
     private _stream;

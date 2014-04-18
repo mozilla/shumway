@@ -623,7 +623,7 @@ module Shumway.Geometry {
       this.c  = cos * c  - sin * d;
       this.d  = sin * c  + cos * d;
       this.tx = cos * tx - sin * ty;
-      this.ty * sin * tx + cos * ty;
+      this.ty = sin * tx + cos * ty;
       return this;
     }
 

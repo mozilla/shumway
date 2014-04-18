@@ -33,6 +33,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor (request: flash.net.URLRequest = null) {
       false && super(undefined);
+      notImplemented("Dummy Constructor: public flash.net.URLLoader");
     }
     
     // JS -> AS Bindings

@@ -44,20 +44,20 @@ module Shumway.AVM2.AS.flash.media {
   }
   class AudioResampler {
     ondatarequested: (e: AudioResamplerData)=>void;
-    private sourceRate: number;
-    private targetRate: number;
-    private tail: any[];
-    private sourceOffset: number;
+    private _sourceRate: number;
+    private _targetRate: number;
+    private _tail: any[];
+    private _sourceOffset: number;
     constructor(sourceRate: number, targetRate: number) {
-      this.sourceRate = sourceRate;
-      this.targetRate = targetRate;
-      this.tail = [];
-      this.sourceOffset = 0;
+      this._sourceRate = sourceRate;
+      this._targetRate = targetRate;
+      this._tail = [];
+      this._sourceOffset = 0;
     }
     getData(channelsData, count: number) {
-      var k = this.sourceRate / this.targetRate;
+      var k = this._sourceRate / this._targetRate;
 
-      var offset = this.sourceOffset;
+      var offset = this._sourceOffset;
       var needed = Math.ceil((count - 1) * k + offset) + 1;
       var sourceData = [];
       for (var channel = 0; channel < channelsData.length; channel++)
@@ -70,7 +70,7 @@ module Shumway.AVM2.AS.flash.media {
         for (var j = 0; j < count; j++) {
           var i = j * k + offset;
           var i1 = i|0, i2 = Math.ceil(i)|0;
-          var source_i1 = i1 < 0 ? this.tail[channel] : source[i1];
+          var source_i1 = i1 < 0 ? this._tail[channel] : source[i1];
           if (i1 === i2) {
             data[j] = source_i1;
           } else {
@@ -78,64 +78,64 @@ module Shumway.AVM2.AS.flash.media {
             data[j] = source_i1 * (1 - alpha) + source[i2] * alpha;
           }
         }
-        this.tail[channel] = source[needed - 1];
+        this._tail[channel] = source[needed - 1];
       }
-      this.sourceOffset = ((count - 1) * k + offset) - (needed - 1);
+      this._sourceOffset = ((count - 1) * k + offset) - (needed - 1);
     }
   }
 
   class WebAudioChannel {
-    static cachedContext: AudioContext;
-    private contextSampleRate: number;
-    private context: AudioContext;
-    private resampler: AudioResampler;
-    private channels: number;
-    private sampleRate: number;
-    private source;
+    private static _cachedContext: AudioContext;
+    private _contextSampleRate: number;
+    private _context: AudioContext;
+    private _resampler: AudioResampler;
+    private _channels: number;
+    private _sampleRate: number;
+    private _source;
     ondatarequested: (e)=>void;
 
     constructor(sampleRate, channels) {
-      var context = WebAudioChannel.cachedContext;
+      var context = WebAudioChannel._cachedContext;
       if (!context) {
         context = new AudioContext();
-        WebAudioChannel.cachedContext = context;
+        WebAudioChannel._cachedContext = context;
       }
-      this.context = context;
-      this.contextSampleRate = context.sampleRate || 44100;
+      this._context = context;
+      this._contextSampleRate = context.sampleRate || 44100;
 
-      this.channels = channels;
-      this.sampleRate = sampleRate;
-      if (this.contextSampleRate != sampleRate) {
-        this.resampler = new AudioResampler(sampleRate, this.contextSampleRate);
-        this.resampler.ondatarequested = function (e: AudioResamplerData) {
+      this._channels = channels;
+      this._sampleRate = sampleRate;
+      if (this._contextSampleRate != sampleRate) {
+        this._resampler = new AudioResampler(sampleRate, this._contextSampleRate);
+        this._resampler.ondatarequested = function (e: AudioResamplerData) {
           this.requestData(e.data, e.count);
         }.bind(this);
       }
     }
 
     start() {
-      var source = this.context.createScriptProcessor(2048, 0, this.channels);
+      var source = this._context.createScriptProcessor(2048, 0, this._channels);
       var self = this;
       source.onaudioprocess = function(e) {
         var channelsData = [];
-        for (var i = 0; i < self.channels; i++)
+        for (var i = 0; i < self._channels; i++)
           channelsData.push(e.outputBuffer.getChannelData(i));
         var count = channelsData[0].length;
-        if (self.resampler) {
-          self.resampler.getData(channelsData, count);
+        if (self._resampler) {
+          self._resampler.getData(channelsData, count);
         } else {
           self.requestData(channelsData, count);
         }
       };
 
-      source.connect(this.context.destination);
-      this.source = source;
+      source.connect(this._context.destination);
+      this._source = source;
     }
     stop() {
-      this.source.disconnect(this.context.destination);
+      this._source.disconnect(this._context.destination);
     }
     requestData(channelsData: any[], count: number) {
-      var channels = this.channels;
+      var channels = this._channels;
       var buffer = new Float32Array(count * channels);
       var e = { data: buffer, count: buffer.length };
       this.ondatarequested(e);
@@ -157,6 +157,13 @@ module Shumway.AVM2.AS.flash.media {
     
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: SoundChannel) {
+      this._element = null;
+      this._position = 0;
+      this._leftPeak = 0;
+      this._rightPeak = 0;
+      this._pcmData = null;
+      this._soundTransform = new flash.media.SoundTransform();
+
       this._element = symbol._element || null;
       if (this._element) {
         this._registerWithSoundMixer();
@@ -171,12 +178,7 @@ module Shumway.AVM2.AS.flash.media {
     
     constructor () {
       false && super(undefined);
-      this._element = null;
-      this._position = 0;
-      this._leftPeak = 0;
-      this._rightPeak = 0;
-      this._pcmData = null;
-      this._soundTransform = new flash.media.SoundTransform();
+      notImplemented("Dummy Constructor: public flash.media.SoundChannel");
     }
 
     _element;

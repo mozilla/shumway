@@ -46,8 +46,9 @@ module Shumway.AVM2.AS.flash.net {
     static bindings: string [] = null; // ["attach", "close", "attachAudio", "attachCamera", "send", "bufferTime", "bufferTime", "maxPauseBufferTime", "maxPauseBufferTime", "backBufferTime", "backBufferTime", "inBufferSeek", "inBufferSeek", "backBufferLength", "step", "bufferTimeMax", "bufferTimeMax", "receiveAudio", "receiveVideo", "receiveVideoFPS", "pause", "resume", "togglePause", "seek", "publish", "time", "currentFPS", "bufferLength", "liveDelay", "bytesLoaded", "bytesTotal", "decodedFrames", "videoCodec", "audioCodec", "onPeerConnect", "call"];
     
     constructor (connection: flash.net.NetConnection, peerID: string = "connectToFMS") {
-      connection = connection; peerID = asCoerceString(peerID);
+      peerID = asCoerceString(peerID);
       false && super(undefined);
+      notImplemented("Dummy Constructor: public flash.net.NetStream");
     }
 
     private _videoElement;

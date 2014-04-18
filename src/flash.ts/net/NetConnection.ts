@@ -38,7 +38,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super(undefined);
-      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.NETCONNECTION_FEATURE});
+      notImplemented("Dummy Constructor: public flash.net.FileFilter");
     }
     
     // JS -> AS Bindings
@@ -163,6 +163,8 @@ module Shumway.AVM2.AS.flash.net {
       this._proxyType = 'none';
       this._objectEncoding = NetConnection.defaultObjectEncoding;
       this._usingTLS = false;
+
+      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.NETCONNECTION_FEATURE});
     }
     invoke(index: number /*uint*/): any {
       index = index >>> 0;

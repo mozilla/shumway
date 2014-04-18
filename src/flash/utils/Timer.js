@@ -17,38 +17,10 @@
  */
 
 var TimerDefinition = (function () {
-  var def = {
+  return {
     __class__: 'flash.utils.Timer',
-    initialize: function () {
-      this._running = false;
+    __glue__: {
+      script: { instance: Glue.ALL }
     }
   };
-
-  def.__glue__ = {
-    native: {
-      instance: {
-        running: {
-          get: function () {
-            return this._running;
-          }
-        },
-        _start: function (delay, closure) {
-          this._running = true;
-          this.interval = setInterval(closure, delay);
-        },
-        stop: function () {
-          this._running = false;
-          clearInterval(this.interval);
-        },
-        _tick: function () {
-          if (!this._running) {
-            return;
-          }
-          this._dispatchEvent(new flash.events.TimerEvent("timer", true, false));
-        }
-      }
-    }
-  };
-
-  return def;
 }).call(this);
