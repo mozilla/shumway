@@ -222,14 +222,10 @@ module Shumway.AVM2.AS.flash.display {
       self._ratio = 0;
       self._graphics = null;
       self._hitTarget = null;
-      self._index = -1;
       self._maskedObject = null;
 
       self._rect = new Rectangle();
       self._bounds = new Rectangle();
-
-      // TODO get this via loaderInfo
-      self._loader = null;
 
       self._removeFlags (
         DisplayObjectFlags.AnimatedByTimeline    |
@@ -243,19 +239,12 @@ module Shumway.AVM2.AS.flash.display {
       // TODO move to InteractiveObject
       self._mouseOver = false;
 
-      // TODO not sure if needed anymore
-      self._level = -1;
-
       if (symbol) {
         self._name        = symbol._name      || self._name;
         self._parent      = symbol._parent    || self._parent;
         self._clipDepth   = symbol._clipDepth || self._clipDepth;
         self._blendMode   = symbol._blendMode || self._blendMode;
         self._depth       = symbol._depth     || self._depth;
-        self._loader      = symbol._loader    || self._loader;
-
-        self._index       = isNaN(symbol._index) ? self._index : symbol._index;
-        self._level       = isNaN(symbol._level) ? self._level : symbol._level;
 
         if (symbol._scale9Grid) {
           self._scale9Grid = symbol._scale9Grid.clone();
@@ -426,15 +415,11 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Index of this display object within its container's children
      */
-    _index: number;
     _isContainer: boolean;
-    _level: number;
-    _loader: flash.display.Loader;
     _maskedObject: DisplayObject;
     _mouseChildren: boolean;
     _mouseDown: boolean;
     _mouseOver: boolean;
-    _zindex: number;
 
     /**
      * Finds the furthest ancestor with a given set of flags.
@@ -692,7 +677,6 @@ module Shumway.AVM2.AS.flash.display {
 
     set scaleX(value: number) {
       value = +value;
-
       this._stopTimelineAnimation();
       if (value === this._scaleX) {
         return;
@@ -708,7 +692,6 @@ module Shumway.AVM2.AS.flash.display {
 
     set scaleY(value: number) {
       value = +value;
-
       this._stopTimelineAnimation();
       if (value === this._scaleY) {
         return;
@@ -734,7 +717,6 @@ module Shumway.AVM2.AS.flash.display {
 
     set rotation(value: number) {
       value = +value;
-
       this._stopTimelineAnimation();
       value = DisplayObject._clampRotation(value);
       if (value === this._rotation) {

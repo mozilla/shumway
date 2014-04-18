@@ -26,101 +26,36 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super();
       this._frameRate = 24;
-      this._scaleMode = flash.display.StageScaleMode.SHOW_ALL;
+      this._scaleMode = StageScaleMode.SHOW_ALL;
       this._align = "";
-      this._stageWidth = this._stageHeight = 0;
-      this._quality = flash.display.StageQuality.HIGH;
-      this._color = 0xFFFFFFFF;
-      this._stage = this;
+      this._stageWidth = 0;
+      this._stageHeight = 0;
+      this._showDefaultContextMenu = true;
       this._focus = null;
-      this._colorCorrection = flash.display.ColorCorrection.DEFAULT;
+      this._colorCorrection = ColorCorrection.DEFAULT;
+      this._colorCorrectionSupport = ColorCorrectionSupport.DEFAULT_OFF;
       this._stageFocusRect = true;
+      this._quality = StageQuality.HIGH;
+      this._displayState = null;
       this._fullScreenSourceRect = null;
+      this._mouseLock = false;
+      this._stageVideos = null; // TODO
+      this._stage3Ds = null; // TODO
+      this._color = 0xFFFFFFFF;
+      this._fullScreenWidth = 0;
+      this._fullScreenHeight = 0;
       this._wmodeGPU = false;
-
-      // TOOD Add all the other defaults.
+      this._softKeyboardRect = new flash.geom.Rectangle();
+      this._allowsFullScreen = false;
+      this._allowsFullScreenInteractive = false;
+      this._contentsScaleFactor = 1;
+      this._displayContextInfo = null;
     }
     
     // JS -> AS Bindings
-    
-    name: string;
-    mask: flash.display.DisplayObject;
-    visible: boolean;
-    x: number;
-    y: number;
-    z: number;
-    scaleX: number;
-    scaleY: number;
-    scaleZ: number;
-    rotation: number;
-    rotationX: number;
-    rotationY: number;
-    rotationZ: number;
-    alpha: number;
-    cacheAsBitmap: boolean;
-    opaqueBackground: ASObject;
-    scrollRect: flash.geom.Rectangle;
-    filters: any [];
-    blendMode: string;
-    transform: flash.geom.Transform;
-    accessibilityProperties: flash.accessibility.AccessibilityProperties;
-    scale9Grid: flash.geom.Rectangle;
-    tabEnabled: boolean;
-    tabIndex: number /*int*/;
-    focusRect: ASObject;
-    mouseEnabled: boolean;
-    accessibilityImplementation: flash.accessibility.AccessibilityImplementation;
-    width: number;
-    height: number;
-    textSnapshot: flash.text.TextSnapshot;
-    mouseChildren: boolean;
-    numChildren: number /*int*/;
-    tabChildren: boolean;
-    contextMenu: flash.ui.ContextMenu;
-    // addChild: (child: flash.display.DisplayObject) => flash.display.DisplayObject;
-    // addChildAt: (child: flash.display.DisplayObject, index: number /*int*/) => flash.display.DisplayObject;
-    // setChildIndex: (child: flash.display.DisplayObject, index: number /*int*/) => void;
-    // addEventListener: (type: string, listener: ASFunction, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false) => void;
-    // hasEventListener: (type: string) => boolean;
-    // willTrigger: (type: string) => boolean;
-    // dispatchEvent: (event: flash.events.Event) => boolean;
+
     
     // AS -> JS Bindings
-    
-    // _name: string;
-    // _mask: flash.display.DisplayObject;
-    // _visible: boolean;
-    // _x: number;
-    // _y: number;
-    // _z: number;
-    // _scaleX: number;
-    // _scaleY: number;
-    // _scaleZ: number;
-    // _rotation: number;
-    // _rotationX: number;
-    // _rotationY: number;
-    // _rotationZ: number;
-    // _alpha: number;
-    // _cacheAsBitmap: boolean;
-    // _opaqueBackground: ASObject;
-    // _scrollRect: flash.geom.Rectangle;
-    // _filters: any [];
-    // _blendMode: string;
-    // _transform: flash.geom.Transform;
-    // _accessibilityProperties: flash.accessibility.AccessibilityProperties;
-    // _scale9Grid: flash.geom.Rectangle;
-    // _tabEnabled: boolean;
-    // _tabIndex: number /*int*/;
-    // _focusRect: ASObject;
-    // _mouseEnabled: boolean;
-    // _accessibilityImplementation: flash.accessibility.AccessibilityImplementation;
-    // _width: number;
-    // _height: number;
-    // _textSnapshot: flash.text.TextSnapshot;
-    // _mouseChildren: boolean;
-    // _numChildren: number /*int*/;
-    // _tabChildren: boolean;
-    // _contextMenu: flash.ui.ContextMenu;
 
     private _frameRate: number;
     private _scaleMode: string;
@@ -151,15 +86,18 @@ module Shumway.AVM2.AS.flash.display {
     get frameRate(): number {
       return this._frameRate;
     }
+
     set frameRate(value: number) {
       this._frameRate = +value;
     }
+
     get scaleMode(): string {
       return this._scaleMode;
     }
+
     set scaleMode(value: string) {
       value = asCoerceString(value);
-      this._scaleMode = value;
+      //this._scaleMode = value;
       notImplemented("public flash.display.Stage::set scaleMode"); return;
     }
     get align(): string {
@@ -167,119 +105,150 @@ module Shumway.AVM2.AS.flash.display {
       return this._align;
     }
     set align(value: string) {
-      this._align = asCoerceString(value);
+      //this._align = asCoerceString(value);
       notImplemented("public flash.display.Stage::set align"); return;
     }
+
     get stageWidth(): number /*int*/ {
       return this._stageWidth;
     }
+
     set stageWidth(value: number /*int*/) {
       this._stageWidth = value | 0;
-      notImplemented("public flash.display.Stage::set stageWidth"); return;
     }
+
     get stageHeight(): number /*int*/ {
       return this._stageHeight;
     }
+
     set stageHeight(value: number /*int*/) {
       this._stageHeight = value | 0;
-      notImplemented("public flash.display.Stage::set stageHeight"); return;
     }
+
     get showDefaultContextMenu(): boolean {
       return this._showDefaultContextMenu;
     }
+
     set showDefaultContextMenu(value: boolean) {
       // this._showDefaultContextMenu = !!value;
       notImplemented("public flash.display.Stage::set showDefaultContextMenu"); return;
     }
+
     get focus(): flash.display.InteractiveObject {
       return this._focus;
     }
+
     set focus(newFocus: flash.display.InteractiveObject) {
-      this._focus = newFocus;
+      //this._focus = newFocus;
       notImplemented("public flash.display.Stage::set focus"); return;
     }
+
     get colorCorrection(): string {
       return this._colorCorrection;
     }
+
     set colorCorrection(value: string) {
-      this._colorCorrection = asCoerceString(value);
+      //this._colorCorrection = asCoerceString(value);
       notImplemented("public flash.display.Stage::set colorCorrection"); return;
     }
+
     get colorCorrectionSupport(): string {
       return this._colorCorrectionSupport;
     }
+
     get stageFocusRect(): boolean {
       return this._stageFocusRect;
     }
+
     set stageFocusRect(on: boolean) {
-      this._stageFocusRect = !!on;
+      //this._stageFocusRect = !!on;
       notImplemented("public flash.display.Stage::set stageFocusRect"); return;
     }
+
     get quality(): string {
       return this._quality;
     }
+
     set quality(value: string) {
-      this._quality = asCoerceString(value);
+      //this._quality = asCoerceString(value);
       notImplemented("public flash.display.Stage::set quality"); return;
     }
+
     get displayState(): string {
       return this._displayState;
     }
+
     set displayState(value: string) {
-      this._displayState = asCoerceString(value);
+      //this._displayState = asCoerceString(value);
       notImplemented("public flash.display.Stage::set displayState"); return;
     }
+
     get fullScreenSourceRect(): flash.geom.Rectangle {
       return this._fullScreenSourceRect;
     }
+
     set fullScreenSourceRect(value: flash.geom.Rectangle) {
-      this._fullScreenSourceRect = value;
+      //this._fullScreenSourceRect = value;
       notImplemented("public flash.display.Stage::set fullScreenSourceRect"); return;
     }
+
     get mouseLock(): boolean {
       return this._mouseLock;
     }
+
     set mouseLock(value: boolean) {
       this._mouseLock = !!value;
     }
+
     get stageVideos(): any {
       notImplemented("public flash.display.Stage::get stageVideos"); return;
-      return this._stageVideos;
+      // return this._stageVideos;
     }
     get stage3Ds(): ASVector<any> {
       notImplemented("public flash.display.Stage::get stage3Ds"); return;
       // return this._stage3Ds;
     }
+
     get color(): number /*uint*/ {
       return this._color;
     }
+
     set color(color: number /*uint*/) {
-      notImplemented("public flash.display.Stage::set color"); return;
+      this._color = color >>> 0;
     }
+
     get fullScreenWidth(): number /*uint*/ {
       return this._fullScreenWidth;
     }
+
     get fullScreenHeight(): number /*uint*/ {
       return this._fullScreenHeight;
     }
+
     get wmodeGPU(): boolean {
       return this._wmodeGPU;
     }
+
     get softKeyboardRect(): flash.geom.Rectangle {
       return this._softKeyboardRect;
     }
+
     get allowsFullScreen(): boolean {
       return this._allowsFullScreen;
     }
+
     get allowsFullScreenInteractive(): boolean {
       return this._allowsFullScreenInteractive;
     }
+
     get contentsScaleFactor(): number {
       return this._contentsScaleFactor;
     }
+
     get displayContextInfo(): string {
       return this._displayContextInfo;
     }
+
     removeChildAt(index: number /*int*/): flash.display.DisplayObject {
       index = index | 0;
       notImplemented("public flash.display.Stage::removeChildAt"); return;

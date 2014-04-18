@@ -87,7 +87,7 @@ module Shumway.AVM2.AS.flash.display {
     beginGradientFill(type: string, colors: any [], alphas: any [], ratios: any [], matrix: flash.geom.Matrix = null, spreadMethod: string = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
       // colors = colors; alphas = alphas; ratios = ratios; matrix = matrix;
       this._closePath();
-      this._graphicsData.push(new GraphicsGradientFill("" + type, colors, alphas, ratios, matrix, "" + spreadMethod, "" + interpolationMethod, +focalPointRatio));
+      this._graphicsData.push(new GraphicsGradientFill(asCoerceString(type), colors, alphas, ratios, matrix, asCoerceString(spreadMethod), asCoerceString(interpolationMethod), +focalPointRatio));
     }
 
     beginBitmapFill(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null, repeat: boolean = true, smooth: boolean = false): void {
@@ -104,14 +104,14 @@ module Shumway.AVM2.AS.flash.display {
     lineGradientStyle(type: string, colors: any [], alphas: any [], ratios: any [], matrix: flash.geom.Matrix = null, spreadMethod: string = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
       // colors = colors; alphas = alphas; ratios = ratios; matrix = matrix;
       this._closePath();
-      var fill = new GraphicsGradientFill("" + type, colors, alphas, ratios, matrix, "" + spreadMethod, "" + interpolationMethod, +focalPointRatio);
+      var fill = new GraphicsGradientFill(asCoerceString(type), colors, alphas, ratios, matrix, asCoerceString(spreadMethod), asCoerceString(interpolationMethod), +focalPointRatio);
       // TODO
     }
 
     lineStyle(thickness: number, color: number /*uint*/ = 0, alpha: number = 1, pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = null, joints: string = null, miterLimit: number = 3): void {
       this._closePath();
       var fill = new GraphicsSolidFill(color >>> 0, +alpha);
-      this._graphicsData.push(new GraphicsStroke(+thickness, !!pixelHinting, "" + scaleMode, "" + caps, "" + joints, +miterLimit, fill));
+      this._graphicsData.push(new GraphicsStroke(+thickness, !!pixelHinting, asCoerceString(scaleMode), asCoerceString(caps), asCoerceString(joints), +miterLimit, fill));
     }
 
     drawRect(x: number, y: number, width: number, height: number): void {
