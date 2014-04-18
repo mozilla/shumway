@@ -42,7 +42,7 @@ module Shumway.AVM2.AS.flash.utils {
     _interval: number;
     
     // AS -> JS Bindings
-
+        
     get running(): boolean {
       return this._running;
     }
