@@ -120,7 +120,7 @@ module Shumway.AVM2.AS {
     M("flash.system.ApplicationDomain", "ApplicationDomainClass", flash.system.ApplicationDomain),
 
     M("flash.accessibility.Accessibility", "AccessibilityClass", flash.accessibility.Accessibility),
-    // M("flash.utils.Timer", "TimerClass", TimerDefinition),
+    M("flash.utils.Timer", "TimerClass", flash.utils.Timer),
 
     M("avm1lib.AS2Utils", "AS2Utils", avm1lib.AS2Utils),
     M("avm1lib.AS2Broadcaster"),
@@ -243,6 +243,8 @@ module Shumway.AVM2.AS {
     }
     return classObject;
   });
+
+  registerNativeFunction('isFinite', isFinite);
 
   jsGlobal["flash"] = Shumway.AVM2.AS.flash;
 }

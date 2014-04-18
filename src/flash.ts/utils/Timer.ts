@@ -42,18 +42,18 @@ module Shumway.AVM2.AS.flash.utils {
     _interval: number;
     
     // AS -> JS Bindings
-        
+
     get running(): boolean {
       return this._running;
     }
     stop(): void {
       this._running = false;
-      clearInterval(this.interval);
+      clearInterval(this._interval);
     }
     _start(delay: number, closure: ASFunction): void {
-      _delay = +delay;
+      this._delay = +delay;
       this._running = true;
-      this.interval = setInterval(closure, delay);
+      this._interval = setInterval(closure, delay);
     }
     _tick(): void {
       if (!this._running) {
