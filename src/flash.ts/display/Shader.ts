@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["byteCode"];
+    static instanceSymbols: string [] = null; // ["byteCode"];
     
     constructor (code: flash.utils.ByteArray = null) {
       code = code;

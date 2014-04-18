@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.media {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = ["pan"];
+    static instanceSymbols: string [] = ["pan"];
     
     constructor (vol: number = 1, panning: number = 0) {
       vol = +vol; panning = +panning;

@@ -28,10 +28,10 @@ module Shumway.AVM2.AS.avm1lib {
     static initializer: any = null;
 
     // List of static symbols to link.
-    static staticBindings: string [] = null;
+    static classSymbols: string [] = null;
 
     // List of instance symbols to link.
-    static bindings: string [] = ["loadClip", "unloadClip", "getProgress", "openHandler", "progressHandler", "ioErrorHandler", "completeHandler", "initHandler"];
+    static instanceSymbols: string [] = ["loadClip", "unloadClip", "getProgress", "openHandler", "progressHandler", "ioErrorHandler", "completeHandler", "initHandler"];
 
     constructor () {
       false && super();

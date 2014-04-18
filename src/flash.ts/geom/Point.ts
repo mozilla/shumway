@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.geom {
     static initializer: any = null;
 
     // List of static symbols to link.
-    static staticBindings: string [] = null; // ["interpolate", "distance", "polar"];
+    static classSymbols: string [] = null; // ["interpolate", "distance", "polar"];
 
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["x", "y", "length", "clone", "offset", "equals", "subtract", "add", "normalize", "copyFrom", "setTo", "toString"];
+    static instanceSymbols: string [] = null; // ["x", "y", "length", "clone", "offset", "equals", "subtract", "add", "normalize", "copyFrom", "setTo", "toString"];
 
     constructor(x: number = 0, y: number = 0) {
       false && super();

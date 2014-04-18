@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.printing {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // ["isSupported"];
+    static classSymbols: string [] = null; // ["isSupported"];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["paperHeight", "paperWidth", "pageHeight", "pageWidth", "orientation", "start", "send", "addPage"];
+    static instanceSymbols: string [] = null; // ["paperHeight", "paperWidth", "pageHeight", "pageWidth", "orientation", "start", "send", "addPage"];
     
     constructor () {
       false && super(undefined);

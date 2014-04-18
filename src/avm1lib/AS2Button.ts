@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.avm1lib {
     static initializer: any = null;
 
     // List of static symbols to link.
-    static staticBindings: string [] = null;
+    static classSymbols: string [] = null;
 
     // List of instance symbols to link.
-    static bindings: string [] = ["_alpha", "_alpha", "blendMode", "blendMode", "cacheAsBitmap", "cacheAsBitmap", "enabled", "enabled", "filters", "filters", "_focusrect", "_focusrect", "getDepth", "_height", "_height", "_highquality", "_highquality", "menu", "menu", "_name", "_name", "_parent", "_parent", "_quality", "_quality", "_rotation", "_rotation", "scale9Grid", "scale9Grid", "_soundbuftime", "_soundbuftime", "tabEnabled", "tabEnabled", "tabIndex", "tabIndex", "_target", "trackAsMenu", "trackAsMenu", "_url", "useHandCursor", "useHandCursor", "_visible", "_visible", "_width", "_width", "_x", "_x", "_xmouse", "_xscale", "_xscale", "_y", "_y", "_ymouse", "_yscale", "_yscale"];
+    static instanceSymbols: string [] = ["_alpha", "_alpha", "blendMode", "blendMode", "cacheAsBitmap", "cacheAsBitmap", "enabled", "enabled", "filters", "filters", "_focusrect", "_focusrect", "getDepth", "_height", "_height", "_highquality", "_highquality", "menu", "menu", "_name", "_name", "_parent", "_parent", "_quality", "_quality", "_rotation", "_rotation", "scale9Grid", "scale9Grid", "_soundbuftime", "_soundbuftime", "tabEnabled", "tabEnabled", "tabIndex", "tabIndex", "_target", "trackAsMenu", "trackAsMenu", "_url", "useHandCursor", "useHandCursor", "_visible", "_visible", "_width", "_width", "_x", "_x", "_xmouse", "_xscale", "_xscale", "_y", "_y", "_ymouse", "_yscale", "_yscale"];
 
     constructor (nativeButton: SimpleButton) {
       false && super();

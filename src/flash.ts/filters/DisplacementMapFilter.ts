@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.filters {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (mapBitmap: flash.display.BitmapData = null, mapPoint: flash.geom.Point = null, componentX: number /*uint*/ = 0, componentY: number /*uint*/ = 0, scaleX: number = 0, scaleY: number = 0, mode: string = "wrap", color: number /*uint*/ = 0, alpha: number = 0) {
       mapBitmap = mapBitmap; mapPoint = mapPoint; componentX = componentX >>> 0; componentY = componentY >>> 0; scaleX = +scaleX; scaleY = +scaleY; mode = asCoerceString(mode); color = color >>> 0; alpha = +alpha;

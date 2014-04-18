@@ -25,7 +25,7 @@ module Shumway.AVM2.AS.flash.display {
 
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
     static bindings: string [] = null;
-    static staticBindings: string [] = null;
+    static classSymbols: string [] = null;
     static classInitializer: any = null;
     static initializer: any = null;
 

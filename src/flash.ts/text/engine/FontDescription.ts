@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.text.engine {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (fontName: string = "_serif", fontWeight: string = "normal", fontPosture: string = "normal", fontLookup: string = "device", renderingMode: string = "cff", cffHinting: string = "horizontalStem") {
       fontName = asCoerceString(fontName); fontWeight = asCoerceString(fontWeight); fontPosture = asCoerceString(fontPosture); fontLookup = asCoerceString(fontLookup); renderingMode = asCoerceString(renderingMode); cffHinting = asCoerceString(cffHinting);

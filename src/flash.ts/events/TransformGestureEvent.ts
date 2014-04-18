@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_scaleX", "_scaleY", "_rotation", "_offsetX", "_offsetY", "scaleX", "scaleX", "scaleY", "scaleY", "rotation", "rotation", "offsetX", "offsetX", "offsetY", "offsetY", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_scaleX", "_scaleY", "_rotation", "_offsetX", "_offsetY", "scaleX", "scaleX", "scaleY", "scaleY", "rotation", "rotation", "offsetX", "offsetX", "offsetY", "offsetY", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = true, cancelable: boolean = false, phase: string = null, localX: number = 0, localY: number = 0, scaleX: number = 1, scaleY: number = 1, rotation: number = 0, offsetX: number = 0, offsetY: number = 0, ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
       type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; phase = asCoerceString(phase); localX = +localX; localY = +localY; scaleX = +scaleX; scaleY = +scaleY; rotation = +rotation; offsetX = +offsetX; offsetY = +offsetY; ctrlKey = !!ctrlKey; altKey = !!altKey; shiftKey = !!shiftKey;

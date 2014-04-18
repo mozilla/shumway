@@ -23,8 +23,8 @@ module Shumway.AVM2.AS.flash.geom {
   export class Transform extends ASNative {
     static classInitializer: any = null;
     static initializer: any = null;
-    static staticBindings: string [] = null; // [];
-    static bindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
 
     private _displayObject: flash.display.DisplayObject;
 

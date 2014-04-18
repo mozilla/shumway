@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.ui {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // ["isSupported"];
+    static classSymbols: string [] = null; // ["isSupported"];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["hideBuiltInItems", "clone"];
+    static instanceSymbols: string [] = null; // ["hideBuiltInItems", "clone"];
     
     constructor () {
       false && super();

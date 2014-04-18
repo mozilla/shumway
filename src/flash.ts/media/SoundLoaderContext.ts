@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.media {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["bufferTime", "checkPolicyFile"];
+    static instanceSymbols: string [] = null; // ["bufferTime", "checkPolicyFile"];
     
     constructor (bufferTime: number = 1000, checkPolicyFile: boolean = false) {
       bufferTime = +bufferTime; checkPolicyFile = !!checkPolicyFile;

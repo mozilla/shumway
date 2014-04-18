@@ -26,10 +26,10 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_relatedObjectVal", "_triggerTypeVal", "triggerType", "relatedObjectVal", "relatedObjectVal", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_relatedObjectVal", "_triggerTypeVal", "triggerType", "relatedObjectVal", "relatedObjectVal", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean, cancelable: boolean, relatedObjectVal: flash.display.InteractiveObject, triggerTypeVal: string) {
       type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; relatedObjectVal = relatedObjectVal; triggerTypeVal = asCoerceString(triggerTypeVal);
