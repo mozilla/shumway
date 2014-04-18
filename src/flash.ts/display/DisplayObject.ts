@@ -183,7 +183,7 @@ module Shumway.AVM2.AS.flash.display {
       var self: DisplayObject = this;
       var instanceName = DisplayObject.register(self);
 
-      self._flags = DisplayObjectFlags.None;
+      self._flags = DisplayObjectFlags.Visible;
       self._root = null;
       self._stage = null;
       self._name = instanceName;
@@ -702,7 +702,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get scaleZ(): number {
-      notImplemented("public DisplayObject::get scaleZ"); return;
       return this._scaleZ;
     }
 
@@ -728,9 +727,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get rotationX(): number {
-      notImplemented("public DisplayObject::get rotationX"); return;
       return this._rotationX;
-
     }
 
     set rotationX(value: number) {
@@ -748,7 +745,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get rotationZ(): number {
-      notImplemented("public DisplayObject::get rotationZ"); return;
       return this._rotationZ;
     }
 
@@ -863,6 +859,7 @@ module Shumway.AVM2.AS.flash.display {
     private destroy(): void {
       this._setFlags(DisplayObjectFlags.Destroyed);
     }
+
     /**
      * Walks up the tree to find this display object's root. An object is classified
      * as a root if its _root property points to itself. Root objects are the Stage,
@@ -909,6 +906,22 @@ module Shumway.AVM2.AS.flash.display {
 
     get visible(): boolean {
       return this._hasFlags(DisplayObjectFlags.Visible);
+    }
+
+    get alpha(): number {
+      return this._alpha;
+    }
+
+    set alpha(value: number) {
+      this._stopTimelineAnimation();
+      value = +value;
+
+      if (value === this._alpha) {
+        return;
+      }
+
+      this._alpha = value;
+      this._invalidatePaint();
     }
 
     /**
@@ -991,7 +1004,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       return null;
     }
-    
+
     // ---------------------------------------------------------------------------------------------------------------------------------------------
     // -- Stuff below we still need to port.                                                                                                      --
     // ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -1004,20 +1017,7 @@ module Shumway.AVM2.AS.flash.display {
     get mouseY(): number {
       return this._mouseY / 20;
     }
-    get alpha(): number {
-      return this._alpha;
-    }
-    set alpha(value: number) {
-      value = +value;
 
-      if (value === this._alpha) {
-        return;
-      }
-
-      this._alpha = value;
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      this._invalidate();
-    }
 
     get cacheAsBitmap(): boolean {
       return this._filters.length > 0 || this._hasFlags(DisplayObjectFlags.CacheAsBitmap);

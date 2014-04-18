@@ -25,6 +25,7 @@ module Shumway.AVM2.AS.flash.display {
 
     constructor () {
       false && super();
+      DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
       this._frameRate = 24;
       this._scaleMode = StageScaleMode.SHOW_ALL;
       this._align = "";
@@ -97,15 +98,14 @@ module Shumway.AVM2.AS.flash.display {
 
     set scaleMode(value: string) {
       value = asCoerceString(value);
-      //this._scaleMode = value;
+      // this._scaleMode = value;
       notImplemented("public flash.display.Stage::set scaleMode"); return;
     }
     get align(): string {
-      notImplemented("public flash.display.Stage::get align"); return;
       return this._align;
     }
     set align(value: string) {
-      //this._align = asCoerceString(value);
+      // this._align = asCoerceString(value);
       notImplemented("public flash.display.Stage::set align"); return;
     }
 

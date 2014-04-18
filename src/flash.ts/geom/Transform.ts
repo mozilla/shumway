@@ -91,6 +91,8 @@ module Shumway.AVM2.AS.flash.geom {
         raw.asGetPublicProperty(13)
       );
       // this.matrix will reset this._target._matrix3D
+      // TODO: Must make sure to also deal with the _rotateXYZ properties.
+      notImplemented("public flash.geom.Transform::set matrix3D"); return;
       this._displayObject._matrix3D = m;
     }
 
