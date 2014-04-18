@@ -885,7 +885,7 @@ module Shumway.AVM2.AS.flash.display {
       do {
         if (node._stage === node) {
           assert(flash.display.Stage.isType(node));
-          return node;
+          return <flash.display.Stage>node;
         }
         node = node._parent;
       } while (node);

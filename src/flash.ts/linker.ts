@@ -170,7 +170,7 @@ module Shumway.AVM2.AS {
     registerNativeClass(s.nativeName, s.cls);
   });
 
-  registerNativeFunction('FlashUtilScript::getDefinitionByName', Shumway.AVM2.AS.getDefinitionByName);
+  registerNativeFunction('FlashUtilScript::getDefinitionByName', Shumway.AVM2.AS.Natives.getDefinitionByName);
 
   var start = Date.now();
   registerNativeFunction('FlashUtilScript ::getTimer', function getTimer() {

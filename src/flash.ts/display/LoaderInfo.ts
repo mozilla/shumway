@@ -40,8 +40,7 @@ module Shumway.AVM2.AS.flash.display {
     
     parameters: ASObject;
     uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
-    dispatchEvent: (event: flash.events.Event) => boolean;
-    
+
     // AS -> JS Bindings
     static getLoaderInfoByDefinition(object: ASObject): flash.display.LoaderInfo {
       object = object;
