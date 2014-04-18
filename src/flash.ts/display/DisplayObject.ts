@@ -222,6 +222,7 @@ module Shumway.AVM2.AS.flash.display {
       self._ratio = 0;
       self._graphics = null;
       self._hitTarget = null;
+      self._index = -1;
       self._maskedObject = null;
 
       self._rect = new Rectangle();
@@ -415,6 +416,8 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Index of this display object within its container's children
      */
+    _index: number;
+
     _isContainer: boolean;
     _maskedObject: DisplayObject;
     _mouseChildren: boolean;
