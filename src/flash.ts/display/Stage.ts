@@ -17,6 +17,12 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  import StageScaleMode = flash.display.StageScaleMode;
+  import ColorCorrection = flash.display.ColorCorrection;
+  import ColorCorrectionSupport = flash.display.ColorCorrectionSupport;
+  import StageQuality = flash.display.StageQuality;
+
   export class Stage extends flash.display.DisplayObjectContainer {
     static classInitializer: any = null;
     static classSymbols: string [] = null; // [];
