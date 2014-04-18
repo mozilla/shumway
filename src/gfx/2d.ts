@@ -534,7 +534,7 @@ module Shumway.GFX.Layers {
               shape.source.render(context, clip);
             }
             if (options.paintFlashing) {
-              context.fillStyle = randomStyle();
+              context.fillStyle = ColorStyle.randomStyle();
               context.globalAlpha = 0.5;
               context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
             }
