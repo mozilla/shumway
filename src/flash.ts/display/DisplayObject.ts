@@ -474,12 +474,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Tests if the given display object is an ancestor of this display object.
+     * Tests if this display object is an ancestor of the specified display object.
      */
-    private _isAncestor(ancestor: DisplayObject): boolean {
-      var node = this;
+    _isAncestor(child: DisplayObject): boolean {
+      var node = child;
       while (node) {
-        if (node === ancestor) {
+        if (node === this) {
           return true;
         }
         node = node._parent;
@@ -881,7 +881,6 @@ module Shumway.AVM2.AS.flash.display {
     private destroy(): void {
       this._setFlags(DisplayObjectFlags.Destroyed);
     }
-
     /**
      * Walks up the tree to find this display object's root. An object is classified
      * as a root if its _root property points to itself. Root objects are the Stage,
@@ -964,7 +963,7 @@ module Shumway.AVM2.AS.flash.display {
      * Converts a point from the global coordinate space into the local coordinate space.
      */
     globalToLocal(point: flash.geom.Point): flash.geom.Point {
-      var m = this._getConcatenatedMatrix(null).clone();
+      var m = this._getConcatenatedMatrix().clone();
       m.invert();
       return m.transformCoords(point.x, point.y, true).toPixels();
     }
@@ -973,7 +972,7 @@ module Shumway.AVM2.AS.flash.display {
      * Converts a point form the local coordinate sapce into the global coordinate space.
      */
     localToGlobal(point: flash.geom.Point): flash.geom.Point {
-      var m = this._getConcatenatedMatrix(null);
+      var m = this._getConcatenatedMatrix();
       return m.transformCoords(point.x, point.y, true).toPixels();
     }
 

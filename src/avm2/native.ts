@@ -1410,10 +1410,16 @@ module Shumway.AVM2.AS {
 
 
   var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
+  var nativeFunctions: Shumway.Map<Function> = Shumway.ObjectUtilities.createMap<Function>();
 
   export function registerNativeClass(name: string, cls: ASClass) {
     assert (!nativeClasses[name], "Native class: " + name + " is already registered.");
     nativeClasses[name] = cls;
+  }
+
+  export function registerNativeFunction(name: string, fn: Function) {
+    assert (!nativeFunctions[name], "Native function: " + name + " is already registered.");
+    nativeFunctions[name] = fn;
   }
 
   export function createInterface(classInfo: ClassInfo) {
@@ -1844,6 +1850,10 @@ module Shumway.AVM2.AS {
     var v = Natives;
     for (var i = 0, j = chain.length; i < j; i++) {
       v = v && v[chain[i]];
+    }
+
+    if (!v) {
+      v = <any>nativeFunctions[path];
     }
 
     release || assert(v, "getNative(" + path + ") not found.");

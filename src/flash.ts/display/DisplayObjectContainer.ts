@@ -284,14 +284,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     contains(child: DisplayObject): boolean {
-      var node = child;
-      while (node) {
-        if (node === this) {
-          return true;
-        }
-        node = node._parent;
-      }
-      return false;
+      return this._isAncestor(child);
     }
 
     swapChildrenAt(index1: number /*int*/, index2: number /*int*/): void {

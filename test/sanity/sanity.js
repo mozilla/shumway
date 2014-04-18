@@ -3,7 +3,7 @@ sanityTests.push(function runInspectorSanityTests(console, avm2) {
     console.info(message);
   }
 
-  check (flash.events.Event.class.ADDED === "added", "Static Class Property");
+  check (flash.events.Event.ADDED === "added", "Static Class Property");
 
   (function checkRectangle() {
     log("--- flash.geom.Rectangle ---");
@@ -13,23 +13,6 @@ sanityTests.push(function runInspectorSanityTests(console, avm2) {
     check (o.x === 5 && o.width === 35, "Setters");
     check (o.equals(new flash.geom.Rectangle(5, 20, 35, 40)), "Equals");
     check (!o.equals(new flash.geom.Rectangle(5, 20, 35, 45)), "Equals");
-  })();
-
-  (function loadStubs() {
-    function loadStubFor(className) {
-      if (className.indexOf('avm1lib.') === 0) {
-        return; // skipping avm1lib classes
-      }
-      eval(className);
-    }
-    log("--- Load all defined stubs ---");
-    check (Stubs, "Has Stubs");
-    avm2.systemDomain.onMessage.register('classCreated', function (eventType, cls) {
-      console.info("Loaded: " + cls);
-    });
-    Stubs.getClassNames().forEach(loadStubFor);
-    log("--- Shouldn't reload stubs past this point ---");
-    Stubs.getClassNames().forEach(loadStubFor);
   })();
 
   (function URLVariables() {
