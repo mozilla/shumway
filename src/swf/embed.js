@@ -21,6 +21,9 @@
 MessageCenter.subscribe('load', function (data) {
   var file = data.file;
 
+  var MouseEvent = Shumway.AVM2.AS.flash.events.MouseEvent;
+  var Event = Shumway.AVM2.AS.flash.events.Event;
+
   var stage = new flash.display.Stage();
   var loader = new flash.display.Loader();
   var loaderInfo = loader._contentLoaderInfo;
@@ -38,25 +41,25 @@ MessageCenter.subscribe('load', function (data) {
     stage._contentsScaleFactor = data.pixelRatio || 1;
   //}
 
-  loaderInfo._addEventListener('init', function () {
+  loaderInfo.addEventListener('init', function () {
     var bgcolor = loaderInfo._backgroundColor;
     stage._color = bgcolor;
 
     var root = loader._content;
 
-    root._dispatchEvent("added", undefined, true);
-    root._dispatchEvent("addedToStage");
+    root.dispatchEvent(new Event(Event.ADDED, true));
+    root.dispatchEvent(new Event(Event.ADDED_TO_STAGE));
 
     MessageCenter.post('init', { frameRate: stage._frameRate });
 
     stage._enterEventLoop();
   });
 
-  loaderInfo._addEventListener('parsed', function () {
+  loaderInfo.addEventListener('parsed', function () {
     MessageCenter.post('parsed');
   });
 
-  loaderInfo._addEventListener('complete', function () {
+  loaderInfo.addEventListener('complete', function () {
     MessageCenter.post('complete');
   });
 
@@ -67,11 +70,11 @@ MessageCenter.subscribe('load', function (data) {
     case 'click':
       ShumwayKeyboardListener.focus = stage;
 
-      stage._mouseTarget._dispatchEvent('click');
+      stage._mouseTarget.dispatchEvent(new MouseEvent(MouseEvent.CLICK));
       break;
     case 'dblclick':
       if (stage._mouseTarget._doubleClickEnabled) {
-        stage._mouseTarget._dispatchEvent('doubleClick');
+        stage._mouseTarget.dispatchEvent(new MouseEvent(MouseEvent.DOUBLE_CLICK));
       }
       break;
     case 'mousedown':
