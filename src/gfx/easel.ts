@@ -114,6 +114,7 @@ module Shumway.GFX.Layers {
       this._startMatrix = startMatrix;
     }
     onMouseMove(easel: Easel, event: MouseEvent) {
+      event.preventDefault();
       var p = easel.getMousePosition(event, null);
       p.sub(this._startPosition);
       this._target.matrix = this._startMatrix.clone().translate(p.x, p.y);
@@ -272,27 +273,22 @@ module Shumway.GFX.Layers {
         var p = self.getMousePosition(event, self._world);
         self._mousePositionLabel.text = "x: " + p.x + ", y: " + p.y;
         self._state.onMouseMove(self, event);
-        self._render();
       }, false);
 
       canvas.addEventListener("mousedown", function (event) {
         self._state.onMouseDown(self, event);
-        self._render();
       }, false);
 
       window.addEventListener("keydown", function (event) {
         self._state.onKeyDown(self, event);
-        self._render();
       }, false);
 
       window.addEventListener("keypress", function (event) {
         self._state.onKeyPress(self, event);
-        self._render();
       }, false);
 
       window.addEventListener("keyup", function (event) {
         self._state.onKeyUp(self, event);
-        self._render();
       }, false);
 
 
