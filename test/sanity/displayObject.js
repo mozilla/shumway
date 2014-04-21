@@ -46,7 +46,7 @@
     check(o.transform.matrix.ty === 10);
   });
 
-  function createDisplayObjectTree(depth, width, height) {
+  function createDisplayObjectTree(depth, branch, width, height) {
     var nodes = [];
     Random.seed(0x12343);
     function make(parent, count, depth) {
@@ -68,13 +68,13 @@
       }
     }
     var container = new DisplayObjectContainer();
-    make(container, 2, depth);
+    make(container, branch, depth);
     return container;
   }
 
   sanityTests.push(function runInspectorSanityTests(console) {
     var VisitorFlags = Shumway.AVM2.AS.flash.display.VisitorFlags;
-    var r = createDisplayObjectTree(10, 64, 64);
+    var r = createDisplayObjectTree(10, 2, 64, 64);
     var containers = [];
     var leafs = [];
     r.visit(function (o) {
@@ -418,10 +418,9 @@
   });
 
   sanityTests.push(function runInspectorSanityTests(console) {
-    return;
     Random.seed(0x12343);
 
-    var r = createDisplayObjectTree(3, 128, 128);
+    var r = createDisplayObjectTree(3, 4, 128, 128);
 
     var x = 100;
     r.visit(function (node) {
@@ -461,7 +460,7 @@
 
       k ++;
       easel.render();
-    }, 50);
+    }, 16);
   });
 
 })();

@@ -171,8 +171,12 @@ module Shumway.AVM2.AS.flash.display {
 
   export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable {
 
-    private static _instances: DisplayObject [];
+    /**
+     * Every displayObject is assigned an unique integer ID.
+     */
     private static _nextID = 0;
+    private static _instances: DisplayObject [];
+
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
@@ -578,7 +582,7 @@ module Shumway.AVM2.AS.flash.display {
     private _getContentBounds(includeStrokes: boolean = true): Rectangle {
       // Tobias: What about filters?
       var rectangle = includeStrokes ? this._bounds : this._rect;
-      if (true || this._hasFlags(DisplayObjectFlags.InvalidBounds)) {
+      if (this._hasFlags(DisplayObjectFlags.InvalidBounds)) {
         rectangle.setEmpty();
         var graphics: Graphics = this._getGraphics();
         if (graphics) {
@@ -596,6 +600,12 @@ module Shumway.AVM2.AS.flash.display {
       return rectangle;
     }
 
+    /**
+     * Gets the bounds of this display object relative to another coordinate space. The transformation
+     * matrix from the local coordinate space to the target coordinate space is computed using:
+     *
+     *   this.concatenatedMatrix * inverse(target.concatenatedMatrix)
+     */
     private _getTransformedBounds(targetCoordinateSpace: DisplayObject, includeStroke: boolean = true) {
       var bounds = this._getContentBounds(includeStroke).clone();
       if (!targetCoordinateSpace || targetCoordinateSpace === this || bounds.isEmpty()) {
