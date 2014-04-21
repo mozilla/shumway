@@ -538,6 +538,10 @@ module Shumway.GFX.Layers {
               context.globalAlpha = 0.5;
               context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
             }
+          } else if (options.paintBounds && frame instanceof FrameContainer) {
+            var bounds = frame.getBounds().clone();
+            context.strokeStyle = ColorStyle.LightOrange;
+            context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
           }
         }
 

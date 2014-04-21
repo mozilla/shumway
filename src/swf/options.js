@@ -67,4 +67,5 @@ var canvas2DOptions = stageOptions.register(new OptionSet("Canvas2D Options"));
   var clipCanvas = canvas2DOptions.register(new Option("", "clipCanvas", "boolean", true, "Clip Regions."));
   var cull = canvas2DOptions.register(new Option("", "cull", "boolean", true, "Enable culling."));
   var paintFlashing = canvas2DOptions.register(new Option("", "paintFlashing", "boolean", false, "Flash redrawn regions."));
+  var paintBounds = canvas2DOptions.register(new Option("", "paintBounds", "boolean", false, "Draw frame container bounding boxes."));
   var compositeMask = canvas2DOptions.register(new Option("", "compositeMask", "boolean", true, "Composite Mask."));

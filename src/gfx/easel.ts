@@ -209,6 +209,7 @@ module Shumway.GFX.Layers {
     _canvas: HTMLCanvasElement;
     private _context: CanvasRenderingContext2D;
     private _renderer: Canvas2DStageRenderer;
+    private _options: Object = {};
     private _state: State = new StartState();
 
     private _selection: FrameContainer;
@@ -303,11 +304,7 @@ module Shumway.GFX.Layers {
 
     private _render() {
       timeline && timeline.enter("Render");
-      this._renderer.render(this._stage, {
-        // paintFlashing: true,
-        // clipCanvas: true,
-        // clipDirtyRegions: true
-      });
+      this._renderer.render(this._stage, this._options);
       timeline && timeline.leave("Render");
     }
 
@@ -329,6 +326,10 @@ module Shumway.GFX.Layers {
 
     get stage(): FrameContainer {
       return this._stage;
+    }
+
+    get options(): Object {
+      return this._options;
     }
 
     private _resizeHandler() {
