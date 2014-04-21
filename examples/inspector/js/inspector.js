@@ -190,35 +190,7 @@ function executeFile(file, buffer, movieParams) {
     });
   } else if (filename.endsWith(".js") || filename.endsWith("/")) {
     createAVM2(builtinPath, playerglobalInfo, null, sysMode, appMode, function (avm2) {
-      if (file.endsWith("/")) {
-        readDirectoryListing(file, function (files) {
-          function loadNextScript(done) {
-            if (!files.length) {
-              done();
-              return;
-            }
-            var unitTest = files.pop();
-            console.info("Loading Unit Test: " + unitTest);
-            loadScript(unitTest, function () {
-              loadNextScript(done);
-            });
-          }
-          loadNextScript(function whenAllScriptsAreLoaded() {
-            initUI();
-            console.info("Executing Unit Test");
-            unitTests.forEach(function (test) {
-              test(console, avm2);
-            });
-          });
-        });
-      } else {
-        loadScript(file, function () {
-          initUI();
-          unitTests.forEach(function (test) {
-            test(console, avm2);
-          });
-        });
-      }
+      executeUnitTests(file, avm2);
     });
   }
 }

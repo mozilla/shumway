@@ -27,3 +27,11 @@ unitTests.push(function runInspectorSanityTests(console, avm2) {
     check (f.toString() === "x=123");
   })();
 });
+
+
+unitTests.push(function runInspectorAsyncTest(console) {
+  console.info('Testing async test');
+  return new Promise(function (resolve) {
+    setTimeout(resolve);
+  });
+});
