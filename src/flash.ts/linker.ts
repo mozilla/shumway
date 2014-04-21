@@ -64,7 +64,7 @@ module Shumway.AVM2.AS {
     M("flash.events.MouseEvent", "MouseEventClass", flash.events.MouseEvent),
     M("flash.events.TextEvent", "TextEventClass", flash.events.TextEvent),
     M("flash.events.TimerEvent", "TimerEventClass", flash.events.TimerEvent),
-    M("flash.events.ProgressEvent"),
+    M("flash.events.ProgressEvent", "ProgressEventClass", flash.events.ProgressEvent),
     M("flash.events.NetStatusEvent"),
 
     M("flash.external.ExternalInterface", "ExternalInterfaceClass", flash.external.ExternalInterface),
