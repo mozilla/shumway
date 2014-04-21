@@ -140,6 +140,11 @@ module Shumway.AVM2.AS.flash.display {
    */
   export enum VisitorFlags {
     /**
+     * None
+     */
+    None         = 0,
+
+    /**
      * Continue with normal traversal.
      */
     Continue     = 0,
@@ -1006,7 +1011,7 @@ module Shumway.AVM2.AS.flash.display {
      * Gets the graphics object of this object. Only Shapes, Sprites, and MorphShapes can have
      * graphics.
      */
-    private _getGraphics(displayObject: DisplayObject): flash.display.Graphics {
+    private _getGraphics(): flash.display.Graphics {
       if (flash.display.Shape.isType(this)) {
         return (<flash.display.Shape>this)._graphics;
       } else if (flash.display.Shape.isType(this)) {
@@ -1062,7 +1067,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       var graphics = this._getGraphics();
       if (graphics) {
-        return graphics._containsPoint(point.x, point.y);
+        return graphics._containsPoint(point);
       }
       return false;
     }

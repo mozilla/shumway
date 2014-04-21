@@ -149,6 +149,10 @@ module Shumway.AVM2.AS.flash.geom {
       this.alphaOffset += second.alphaOffset;
     }
 
+    public preMultiply(second:ColorTransform): void {
+      this.concat(second); // ColorTransform is Commutative.
+    }
+
     public copyFrom(sourceColorTransform: ColorTransform): void {
       this.redMultiplier = sourceColorTransform.redMultiplier;
       this.greenMultiplier = sourceColorTransform.greenMultiplier;
