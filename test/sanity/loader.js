@@ -10,7 +10,7 @@
     console.info(message);
   }
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests(console) {
     var r = new URLRequest("../as3_tiger/tiger.swf");
     var l = new Loader();
     var s = new Stage();
@@ -32,7 +32,7 @@
     check(completeEventCalled, "Check contentLoaderInfo completeEventCalled");
   });
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests(console) {
     var r = new URLRequest("../as3_tiger/tiger.swf");
     var l = new Loader();
     var s = new Stage();
@@ -49,7 +49,6 @@
     });
 
     l.load(r);
-
 
   });
 

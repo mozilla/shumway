@@ -29,7 +29,7 @@
     };
   }
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests(console) {
     log("Check Defaults")
     var o = new Stage();
     check(o.root === o, "root");
@@ -97,12 +97,12 @@
     check(o.parent === null, "parent");
   });
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests(console) {
     var s = new Stage();
     check(s.stage === s);
   });
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests(console) {
     var r = createDisplayObjectTree(10, 1024, 1024);
 
     for (var i = 0; i < 1024; i++) {

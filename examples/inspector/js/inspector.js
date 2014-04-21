@@ -34,28 +34,7 @@ function timeAllocation(C, count) {
   console.info("Took: " + (Date.now() - s) + " " + C);
 }
 
-function eqFloat(a, b, test) {
-  test = test ? ": " + test : " #" + testNumber;
-  if (Math.abs(a -b) < 0.1) {
-    console.info("PASS" + test)
-  } else {
-    console.error("FAIL" + test)
-  }
-  testNumber ++;
-}
 
-function check(condition, test) {
-  test = test ? ": " + test : " #" + testNumber;
-  if (condition) {
-    console.info("PASS" + test)
-  } else {
-    console.error("FAIL" + test)
-  }
-  testNumber ++;
-}
-
-/** Global sanityTests array, sanity tests add themselves to this */
-var sanityTests = [];
 
 // avm2 must be global.
 var avm2;
@@ -218,16 +197,16 @@ function executeFile(file, buffer, movieParams) {
               done();
               return;
             }
-            var sanityTest = files.pop();
-            console.info("Loading Sanity Test: " + sanityTest);
-            loadScript(sanityTest, function () {
+            var unitTest = files.pop();
+            console.info("Loading Unit Test: " + unitTest);
+            loadScript(unitTest, function () {
               loadNextScript(done);
             });
           }
           loadNextScript(function whenAllScriptsAreLoaded() {
             initUI();
-            console.info("Executing Sanity Test");
-            sanityTests.forEach(function (test) {
+            console.info("Executing Unit Test");
+            unitTests.forEach(function (test) {
               test(console, avm2);
             });
           });
@@ -235,7 +214,7 @@ function executeFile(file, buffer, movieParams) {
       } else {
         loadScript(file, function () {
           initUI();
-          sanityTests.forEach(function (test) {
+          unitTests.forEach(function (test) {
             test(console, avm2);
           });
         });
