@@ -558,10 +558,10 @@ module Shumway.Geometry {
     }
 
     transformRectangleAABB (rectangle: Rectangle) {
-      var a = this.a;
-      var b = this.b;
-      var c = this.c;
-      var d = this.d;
+      var a  = this.a;
+      var b  = this.b;
+      var c  = this.c;
+      var d  = this.d;
       var tx = this.tx;
       var ty = this.ty;
 
@@ -570,12 +570,23 @@ module Shumway.Geometry {
       var w = rectangle.w;
       var h = rectangle.h;
 
+      /*
+
+       0---1
+       | / |
+       3---2
+
+       */
+
       var x0 = a * x + c * y + tx;
       var y0 = b * x + d * y + ty;
+
       var x1 = a * (x + w) + c * y + tx;
       var y1 = b * (x + w) + d * y + ty;
+
       var x2 = a * (x + w) + c * (y + h) + tx;
       var y2 = b * (x + w) + d * (y + h) + ty;
+
       var x3 = a * x + c * (y + h) + tx;
       var y3 = b * x + d * (y + h) + ty;
 
@@ -628,10 +639,10 @@ module Shumway.Geometry {
     }
 
     concat (other: Matrix) {
-      var a = this.a * other.a;
-      var b = 0.0;
-      var c = 0.0;
-      var d = this.d * other.d;
+      var a  = this.a * other.a;
+      var b  = 0.0;
+      var c  = 0.0;
+      var d  = this.d  * other.d;
       var tx = this.tx * other.a + other.tx;
       var ty = this.ty * other.d + other.ty;
 
@@ -652,6 +663,34 @@ module Shumway.Geometry {
       this.ty = ty;
     }
 
+    /**
+     * this = other * this
+     */
+    public preMultiply(other: Matrix): void {
+      var a  = other.a * this.a;
+      var b  = 0.0;
+      var c  = 0.0;
+      var d  = other.d  * this.d;
+      var tx = other.tx * this.a + this.tx;
+      var ty = other.ty * this.d + this.ty;
+
+      if (other.b !== 0.0 || other.c !== 0.0 || this.b !== 0.0 || this.c !== 0.0) {
+        a  += other.b  * this.c;
+        d  += other.c  * this.b;
+        b  += other.a  * this.b + other.b * this.d;
+        c  += other.c  * this.a + other.d * this.c;
+        tx += other.ty * this.c;
+        ty += other.tx * this.b;
+      }
+
+      this.a  = a;
+      this.b  = b;
+      this.c  = c;
+      this.d  = d;
+      this.tx = tx;
+      this.ty = ty;
+    }
+
     translate (x: number, y: number): Matrix {
       this.tx += x;
       this.ty += y;
@@ -659,10 +698,10 @@ module Shumway.Geometry {
     }
 
     setIdentity () {
-      this.a = 1;
-      this.b = 0;
-      this.c = 0;
-      this.d = 1;
+      this.a  = 1;
+      this.b  = 0;
+      this.c  = 0;
+      this.d  = 1;
       this.tx = 0;
       this.ty = 0;
     }
@@ -695,11 +734,11 @@ module Shumway.Geometry {
       var dx  = this.tx;
       var dy  = this.ty;
       if (m12 === 0.0 && m21 === 0.0) {
-        m11 = 1.0 / m11;
-        m22 = 1.0 / m22;
-        m12 = m21 = 0.0;
-        dx = -m11 * dx;
-        dy = -m22 * dy;
+        m11 =  1.0 / m11;
+        m22 =  1.0 / m22;
+        m12 =  m21 = 0.0;
+        dx  = -m11 * dx;
+        dy  = -m22 * dy;
       } else {
         var a = m11, b = m12, c = m21, d = m22;
         var determinant = a * d - b * c;
@@ -712,13 +751,13 @@ module Shumway.Geometry {
         m21 = -c * determinant;
         m22 =  a * determinant;
         var ty = -(m12 * dx + m22 * dy);
-        dx = -(m11 * dx + m21 * dy);
-        dy = ty;
+        dx  = -(m11 * dx + m21 * dy);
+        dy  = ty;
       }
-      result.a = m11;
-      result.b = m12;
-      result.c = m21;
-      result.d = m22;
+      result.a  = m11;
+      result.b  = m12;
+      result.c  = m21;
+      result.d  = m22;
       result.tx = dx;
       result.ty = dy;
     }
@@ -761,10 +800,10 @@ module Shumway.Geometry {
 
     toString (): string {
       return "{" +
-        this.a + ", " +
-        this.b + ", " +
-        this.c + ", " +
-        this.d + ", " +
+        this.a  + ", " +
+        this.b  + ", " +
+        this.c  + ", " +
+        this.d  + ", " +
         this.tx + ", " +
         this.ty + "}";
     }
@@ -776,7 +815,13 @@ module Shumway.Geometry {
     }
 
     public toCSSTransform(): String {
-      return "matrix(" + this.a + ", " + this.b + ", " + this.c + ", " + this.d + ", " + this.tx + ", " + this.ty + ")";
+      return "matrix(" +
+        this.a  + ", " +
+        this.b  + ", " +
+        this.c  + ", " +
+        this.d  + ", " +
+        this.tx + ", " +
+        this.ty + ")";
     }
 
     public static createIdentity() {

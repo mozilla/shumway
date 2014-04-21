@@ -1,4 +1,9 @@
 (function displayTests() {
+  var GFXShape = Shumway.GFX.Layers.Shape;
+  var Renderable = Shumway.GFX.Layers.Renderable;
+  var FrameContainer = Shumway.GFX.Layers.FrameContainer;
+  var Geometry = Shumway.Geometry;
+
   function timeAllocation(C) {
     var s = Date.now();
     for (var i = 0; i < 10000; i++) {
@@ -16,6 +21,8 @@
   var Rectangle = flash.geom.Rectangle;
   var Point = flash.geom.Point;
   var DisplayObject = flash.display.DisplayObject;
+  var VisitorFlags = flash.display.VisitorFlags;
+
   var DisplayObjectFlags = flash.display.DisplayObjectFlags;
   var InteractiveObject = flash.display.InteractiveObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
@@ -51,7 +58,13 @@
           make(o, count, depth - 1);
         }
       } else {
-        parent.addChild(new DisplayObject());
+        var o = new Shape();
+        o._getContentBounds = function () {
+          var w = width * 20;
+          var h = height * 20;
+          return new Rectangle(- w / 2, - h / 2, w, h);
+        }
+        parent.addChild(o);
       }
     }
     var container = new DisplayObjectContainer();
@@ -61,7 +74,7 @@
 
   sanityTests.push(function runInspectorSanityTests(console) {
     var VisitorFlags = Shumway.AVM2.AS.flash.display.VisitorFlags;
-    var r = createDisplayObjectTree(10, 1024, 1024);
+    var r = createDisplayObjectTree(10, 64, 64);
     var containers = [];
     var leafs = [];
     r.visit(function (o) {
@@ -287,8 +300,168 @@
       eqFloat(p.x, r.x);
       eqFloat(p.y, r.y);
     }
-
   });
 
+  sanityTests.push(function runInspectorSanityTests(console) {
+    Random.seed(0x12343);
+    var c = new DisplayObjectContainer();
+
+    var a = new Shape();
+    a._getContentBounds = function () {
+      return new Rectangle(0, 0, 100 * 20, 100 * 20);
+    }
+
+    var b = new Shape();
+    b._getContentBounds = function () {
+      return new Rectangle(0, 0, 100 * 20, 100 * 20);
+    }
+
+    check(a.hitTestObject(b));
+    b.x = 90;
+    check(a.hitTestObject(b));
+    b.x = 110;
+    check(!a.hitTestObject(b));
+    b.rotation = 45;
+    check(a.hitTestObject(b));
+    b.rotation = 0;
+    b.x = 0;
+    check(a.hitTestObject(b));
+    c.addChild(a);
+    c.x = -200;
+    check(!a.hitTestObject(b));
+  });
+
+
+  var frameMap = {};
+
+  function makeFrameTree(easel, root) {
+    function makeFrame(node) {
+      var frame = null
+      if (DisplayObjectContainer.isType(node)) {
+        frame = new FrameContainer();
+        var children = node._children;
+        for (var i = 0; i < children.length; i++) {
+          frame.addChild(makeFrame(children[i]));
+        }
+        var r = new Renderable(Geometry.Rectangle.createSquare(1024), function (context) {
+          context.save();
+          var m = node._getConcatenatedMatrix();
+          context.transform(m.a, m.b, m.c, m.d, m.tx / 20, m.ty / 20);
+          context.beginPath();
+          context.lineWidth = 2;
+          context.strokeStyle = Shumway.ColorStyle.Red;
+          if (m.ty > 1000) {
+            m = node._getConcatenatedMatrix();
+          }
+          var b = node.getBounds(null);
+          if (node.style) {
+            context.strokeStyle = node.style;
+          } else {
+            context.strokeStyle = Shumway.ColorStyle.LightOrange;
+          }
+          context.strokeRect(b.x, b.y, b.width, b.height);
+          context.closePath();
+          context.restore();
+        });
+        easel.worldOverlay.addChild(new GFXShape(r));
+      } else {
+        var b = node.getBounds(null);
+        var bounds = new Geometry.Rectangle(b.x, b.y, b.width, b.height);
+        var renderable = new Renderable(bounds, function (context) {
+          context.save();
+          context.beginPath();
+          context.lineWidth = 2;
+          context.strokeStyle = Shumway.ColorStyle.BlueGrey;
+          context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          context.restore();
+        });
+        frame = new GFXShape(renderable);
+      }
+      var m = node.transform.matrix;
+      frame.matrix = new Geometry.Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
+      frameMap[node._id] = frame;
+      return frame;
+    }
+
+    easel.world.addChild(makeFrame(root));
+  }
+
+
+  sanityTests.push(function runInspectorSanityTests(console) {
+    return;
+    var c0 = new DisplayObjectContainer(); c0.x = 200;
+    var c1 = new DisplayObjectContainer(); c1.x = 200;
+    var s = new Shape();
+    s._getContentBounds = function () {
+      var w = 100 * 20;
+      var h = 50 * 20;
+      return new Rectangle(- w / 2, - h / 2, w, h);
+    }
+    c0.addChild(c1);
+    c1.addChild(s);
+    var easel = createEasel();
+    makeFrameTree(easel, c0);
+
+    setInterval(function tick() {
+      s.rotation += 1;
+      c1.rotation += 1;
+
+      c0.visit(function (node) {
+        var f = frameMap[node._id];
+        var m = node._getMatrix();
+        f.matrix = new Geometry.Matrix(m.a, m.b, m.c, m.d, m.tx / 20, m.ty / 20);
+        return VisitorFlags.Continue;
+      });
+
+      easel.render();
+    }, 33);
+  });
+
+  sanityTests.push(function runInspectorSanityTests(console) {
+    return;
+    Random.seed(0x12343);
+
+    var r = createDisplayObjectTree(3, 128, 128);
+
+    var x = 100;
+    r.visit(function (node) {
+      if (r === node) {
+        return VisitorFlags.Continue;
+      }
+      node.speed = Math.random();
+      node.x = (Math.random()) * 128;
+      node.y = (Math.random()) * 128;
+      return VisitorFlags.Continue;
+    });
+
+    var easel = createEasel();
+    makeFrameTree(easel, r);
+
+    var k = 0;
+    setInterval(function tick() {
+
+      r.visit(function (node) {
+        node._invalidatePosition();
+
+        if (r === node) {
+          return VisitorFlags.Continue;
+        }
+        if (node.speed) {
+          node.rotation += node.speed;
+        }
+        return VisitorFlags.Continue;
+      });
+
+      r.visit(function (node) {
+        var f = frameMap[node._id];
+        var m = node.transform.matrix;
+        f.matrix = new Geometry.Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
+        return VisitorFlags.Continue;
+      });
+
+      k ++;
+      easel.render();
+    }, 50);
+  });
 
 })();

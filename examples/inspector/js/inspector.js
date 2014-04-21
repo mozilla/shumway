@@ -514,11 +514,10 @@ HTMLCanvasElement.prototype.getContext = function getContext(contextId, args) {
 var Stage = Shumway.GFX.Layers.Stage;
 var Easel = Shumway.GFX.Layers.Easel;
 var Canvas2DStageRenderer = Shumway.GFX.Layers.Canvas2DStageRenderer;
-var easel = null
 
 function createEasel() {
   var canvas = document.createElement("canvas");
   canvas.style.backgroundColor = "#14171a";
   document.getElementById("stageContainer").appendChild(canvas);
-  easel = new Easel(canvas);
+  return new Easel(canvas);
 }

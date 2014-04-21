@@ -247,7 +247,11 @@ module Shumway.AVM2.AS.flash.display {
       return null;
     }
 
-    getObjectsUnderPoint(point: flash.geom.Point): DisplayObject [] {
+    /**
+     * TODO: This can potentially be very expesive since we might need to traverse
+     * the display object's children n^2 times. We need to do one pass here.
+     */
+    getObjectsUnderPoint(globalPoint: flash.geom.Point): DisplayObject [] {
       var children = this._children;
       var objectsUnderPoint = [];
       for (var i = 0; i < children.length; i++) {
@@ -255,17 +259,33 @@ module Shumway.AVM2.AS.flash.display {
         if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
           continue;
         }
-        // TODO exclude inaccessible objects
-        if (child._hitTest(true, point.x, point.y, true, null)) {
+        // TODO: Exclude inaccessible objects, not sure what these are.
+        if (child.hitTestPoint(globalPoint.x, globalPoint.y, true)) {
           objectsUnderPoint.push(child);
         }
         if (DisplayObjectContainer.isType(child)) {
           objectsUnderPoint = objectsUnderPoint.concat(
-            (<DisplayObjectContainer>child).getObjectsUnderPoint(point)
+            (<DisplayObjectContainer>child).getObjectsUnderPoint(globalPoint)
           );
         }
       }
       return objectsUnderPoint;
+    }
+
+    /**
+     * Gets the objects under the specified point by walking the children of
+     * this display list. If a child's bounds doesn't include the given
+     * point then we skip it and all of its children.
+     */
+    getObjectsUnderPoint(globalPoint: flash.geom.Point): DisplayObject [] {
+      var objectsUnderPoint: DisplayObject [] = [];
+      this.visit(function (displayObject: DisplayObject) {
+        if (!displayObject.hitTestPoint(globalPoint)) {
+          return VisitorFlags.Skip;
+        } else {
+          objectsUnderPoint.push(displayObject);
+        }
+      });
     }
 
     areInaccessibleObjectsUnderPoint(point: flash.geom.Point): boolean {

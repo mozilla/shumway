@@ -55,7 +55,7 @@ module Shumway.GFX.Layers {
     private _keyCodes: boolean [] = [];
     onMouseDown(easel: Easel, event: MouseEvent) {
       if (this._keyCodes[32]) {
-        easel.state = new DragState(easel.world, easel.getMousePosition(event, null), easel.world.matrix.clone());
+        easel.state = new DragState(easel.worldView, easel.getMousePosition(event, null), easel.worldView.matrix.clone());
       } else {
         easel.state = new MouseDownState();
       }
@@ -204,6 +204,8 @@ module Shumway.GFX.Layers {
   export class Easel {
     private _stage: Stage;
     private _world: FrameContainer;
+    private _worldView: FrameContainer;
+    private _worldViewOverlay: FrameContainer;
     _canvas: HTMLCanvasElement;
     private _context: CanvasRenderingContext2D;
     private _renderer: Canvas2DStageRenderer;
@@ -232,14 +234,18 @@ module Shumway.GFX.Layers {
 
     constructor(canvas: HTMLCanvasElement) {
       this._stage = new Stage(canvas.width, canvas.height, true);
+      this._worldView = new FrameContainer();
+      this._worldViewOverlay = new FrameContainer();
       this._world = new FrameContainer();
-      this._stage.addChild(this._world);
-      this._world.addChild(new Shape(new Grid())).removeCapability(FrameCapabilityFlags.AllowMatrixWrite);
-      var overlay = new FrameContainer();
-      overlay.addChild(this._createToolbar());
-      this._stage.addChild(overlay);
+      this._stage.addChild(this._worldView);
+      this._worldView.addChild(new Shape(new Grid())).removeCapability(FrameCapabilityFlags.AllowMatrixWrite);
+      this._worldView.addChild(this._world);
+      this._worldView.addChild(this._worldViewOverlay);
+      var screenOverlay = new FrameContainer();
+      screenOverlay.addChild(this._createToolbar());
+      this._stage.addChild(screenOverlay);
 
-      this._selection = <FrameContainer>overlay.addChild(new FrameContainer());
+      this._selection = <FrameContainer>screenOverlay.addChild(new FrameContainer());
       this._selection._setFlags(FrameFlags.IgnoreQuery);
 
       this._canvas = canvas;
@@ -305,8 +311,20 @@ module Shumway.GFX.Layers {
       timeline && timeline.leave("Render");
     }
 
+    public render() {
+      this._render();
+    }
+
     get world(): FrameContainer {
       return this._world;
+    }
+
+    get worldView(): FrameContainer {
+      return this._worldView;
+    }
+
+    get worldOverlay(): FrameContainer {
+      return this._worldViewOverlay;
     }
 
     get stage(): FrameContainer {
@@ -356,17 +374,17 @@ module Shumway.GFX.Layers {
       if (frame && frame.hasCapability(FrameCapabilityFlags.AllowMatrixWrite)) {
         this._selectedFrames.push(frame);
         this._selection.matrix = frame.getConcatenatedMatrix();
-        var bounds = frame.getBounds();
-        bounds.snap();
-        bounds.expand(4, 4);
-        var selection = this._selection.addChild(new Shape(new Renderable(bounds, function (context: CanvasRenderingContext2D) {
-          context.save();
-          context.beginPath();
-          context.lineWidth = 2;
-          context.strokeStyle = ColorStyle.LightOrange;
-          context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
-          context.restore();
-        })));
+//        var bounds = frame.getBounds();
+//        bounds.snap();
+//        bounds.expand(4, 4);
+//        var selection = this._selection.addChild(new Shape(new Renderable(bounds, function (context: CanvasRenderingContext2D) {
+//          context.save();
+//          context.beginPath();
+//          context.lineWidth = 2;
+//          context.strokeStyle = ColorStyle.LightOrange;
+//          context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
+//          context.restore();
+//        })));
         if (!this._frameInspectorProxy) {
           this._frameInspectorProxy = new FrameInspectorProxy(frame);
         } else {
