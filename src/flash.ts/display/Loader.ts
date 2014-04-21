@@ -17,8 +17,8 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import FileLoadingService = Shumway.FileLoadingService.instance;
-  import Telemetry = Shumway.Telemetry.instance;
+  import FileLoadingService = Shumway.FileLoadingService;
+  import Telemetry = Shumway.Telemetry;
 
   import Event = flash.events.Event;
   import IOErrorEvent = flash.events.IOErrorEvent;
@@ -38,11 +38,11 @@ module Shumway.AVM2.AS.flash.display {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
+    static instanceSymbols: string [] = ["load"]; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
 
     static RELEASE = false;
     static WORKERS_ENABLED = true;
-    static SHUMWAY_ROOT = '';
+    static SHUMWAY_ROOT = '../../src/';
     static LOADER_PATH = Loader.RELEASE ? 'shumway-worker.js' : 'swf/resourceloader.js';
 
     constructor () {
@@ -53,8 +53,6 @@ module Shumway.AVM2.AS.flash.display {
 
       this._dictionary = Object.create(null);
       this._worker = null;
-
-      var self = this;
       this._startPromise = Promise.resolve();
       this._lastPromise = this._startPromise;
     }
@@ -84,22 +82,23 @@ module Shumway.AVM2.AS.flash.display {
     _dictionary: any;
     _worker: Worker;
     _startPromise: any;
-    _resolve: any;
     _lastPromise: any;
 
     private _commitData(data: any): void {
       var loaderInfo = this._contentLoaderInfo;
-      switch (data.command) {
+      var command = data.command;
+      var result = data.result;
+      switch (command) {
         case 'init':
-          loaderInfo._swfVersion = data.swfVersion;
-          loaderInfo._frameRate = data.frameRate;
-          var bbox = data.bbox;
+          loaderInfo._swfVersion = result.swfVersion;
+          loaderInfo._frameRate = result.frameRate;
+          var bbox = result.bbox;
           loaderInfo._width = bbox.xMax - bbox.xMin;
           loaderInfo._height = bbox.yMax - bbox.yMin;
           break;
         case 'progress':
-          loaderInfo._bytesLoaded = data.bytesLoaded || 0;
-          loaderInfo._bytesTotal = data.bytesTotal || 0;
+          loaderInfo._bytesLoaded = result.bytesLoaded || 0;
+          loaderInfo._bytesTotal = result.bytesTotal || 0;
           var event = new ProgressEvent(
             ProgressEvent.PROGRESS,
             false,
@@ -115,7 +114,7 @@ module Shumway.AVM2.AS.flash.display {
           });
 
           if (data.stats) {
-            Telemetry.reportTelemetry(data.stats);
+            Telemetry.instance.reportTelemetry(result.stats);
           }
 
           this._worker && this._worker.terminate();
@@ -128,14 +127,16 @@ module Shumway.AVM2.AS.flash.display {
           break;
         default:
           //TODO: fix special-casing. Might have to move document class out of dictionary[0]
-          if (data.id === 0)
+          if (result.id === 0) {
             break;
-          if (data.isSymbol)
-            this._commitSymbol(data);
-          else if (data.type === 'frame')
-            this._commitFrame(data);
-          else if (data.type === 'image')
-            this._commitImage(data);
+          }
+          if (result.isSymbol) {
+            this._commitSymbol(result);
+          } else if (data.type === 'frame') {
+            this._commitFrame(result);
+          } else if (data.type === 'image') {
+            this._commitImage(result);
+          }
           break;
       }
     }
@@ -150,7 +151,9 @@ module Shumway.AVM2.AS.flash.display {
       var root = this._content;
       if (!root) {
         root = new flash.display.MovieClip();
+        root._root = root;
         root._name = 'root1';
+
         this._content = root;
         this._children[0] = root;
 
@@ -180,6 +183,8 @@ module Shumway.AVM2.AS.flash.display {
       return this._contentLoaderInfo;
     }
 
+    load: (request: flash.net.URLRequest, context: flash.system.LoaderContext = null) => void;
+
     _close(): void {
       notImplemented("public flash.display.Loader::_close"); return;
     }
@@ -187,10 +192,14 @@ module Shumway.AVM2.AS.flash.display {
       stopExecution = !!stopExecution; gc = !!gc;
       notImplemented("public flash.display.Loader::_unload"); return;
     }
+
     _getJPEGLoaderContextdeblockingfilter(context: flash.system.LoaderContext): number {
-      context = context;
-      notImplemented("public flash.display.Loader::_getJPEGLoaderContextdeblockingfilter"); return;
+      if (flash.system.JPEGLoaderContext.isType(context)) {
+        return context.deblockingFilter;
+      }
+      return 0.0;
     }
+
     _getUncaughtErrorEvents(): flash.events.UncaughtErrorEvents {
       notImplemented("public flash.display.Loader::_getUncaughtErrorEvents"); return;
     }
@@ -221,7 +230,7 @@ module Shumway.AVM2.AS.flash.display {
         }
       };
       //if (flash.net.URLRequest.class.isInstanceOf(request)) {
-        var session = FileLoadingService.createSession();
+        var session = FileLoadingService.instance.createSession();
         session.onprogress = function (data, progress) {
           worker.postMessage({ data: data, progress: progress });
         };
