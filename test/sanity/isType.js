@@ -12,7 +12,7 @@
     console.info("Took: " + (Date.now() - s));
   }
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests(console) {
     var d = new DisplayObjectContainer();
     timeIt(function () {
       for (var i = 0; i < 1000000; i++) {

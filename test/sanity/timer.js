@@ -14,7 +14,7 @@
   var Random = Shumway.Random;
   var Timer = flash.utils.Timer;
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests(console) {
     var t = new Timer(1000,1); // 1 second
     t.start();
     //check(t.running() === true);

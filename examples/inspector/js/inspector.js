@@ -34,28 +34,7 @@ function timeAllocation(C, count) {
   console.info("Took: " + (Date.now() - s) + " " + C);
 }
 
-function eqFloat(a, b, test) {
-  test = test ? ": " + test : " #" + testNumber;
-  if (Math.abs(a -b) < 0.1) {
-    console.info("PASS" + test)
-  } else {
-    console.error("FAIL" + test)
-  }
-  testNumber ++;
-}
 
-function check(condition, test) {
-  test = test ? ": " + test : " #" + testNumber;
-  if (condition) {
-    console.info("PASS" + test)
-  } else {
-    console.error("FAIL" + test)
-  }
-  testNumber ++;
-}
-
-/** Global sanityTests array, sanity tests add themselves to this */
-var sanityTests = [];
 
 // avm2 must be global.
 var avm2;
@@ -211,35 +190,7 @@ function executeFile(file, buffer, movieParams) {
     });
   } else if (filename.endsWith(".js") || filename.endsWith("/")) {
     createAVM2(builtinPath, playerglobalInfo, null, sysMode, appMode, function (avm2) {
-      if (file.endsWith("/")) {
-        readDirectoryListing(file, function (files) {
-          function loadNextScript(done) {
-            if (!files.length) {
-              done();
-              return;
-            }
-            var sanityTest = files.pop();
-            console.info("Loading Sanity Test: " + sanityTest);
-            loadScript(sanityTest, function () {
-              loadNextScript(done);
-            });
-          }
-          loadNextScript(function whenAllScriptsAreLoaded() {
-            initUI();
-            console.info("Executing Sanity Test");
-            sanityTests.forEach(function (test) {
-              test(console, avm2);
-            });
-          });
-        });
-      } else {
-        loadScript(file, function () {
-          initUI();
-          sanityTests.forEach(function (test) {
-            test(console, avm2);
-          });
-        });
-      }
+      executeUnitTests(file, avm2);
     });
   }
 }
