@@ -21,8 +21,6 @@ load("../avm2Util.js");
 var options = new OptionSet("option(s)");
 var disassemble = options.register(new Option("disassemble", "d", false, "disassemble"));
 
-load("../../../lib/DataView.js/DataView.js");
-
 load("../constants.js");
 load("../opcodes.js");
 load("../parser.js");

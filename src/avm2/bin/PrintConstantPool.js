@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-load("../../../lib/DataView.js/DataView.js");
-
 load("../constants.js");
 load("../parser.js");
 try {
