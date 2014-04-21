@@ -26,9 +26,6 @@
  *
  */
 
-load($SHUMWAY_ROOT + "lib/DataView.js/DataView.js");
-load($SHUMWAY_ROOT + "lib/ByteArray.js");
-
 load($SHUMWAY_ROOT + "src/global.js");
 load($SHUMWAY_ROOT + "src/utilities.js");
 load($SHUMWAY_ROOT + "src/options.js");

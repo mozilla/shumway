@@ -19,8 +19,6 @@
 // This script is used to generate 'playerglobal.js'.
 // (based on src/avm2/bin/dumpabc.js)
 
-load("../../lib/DataView.js/DataView.js");
-
 this.self = this;
 load("../../src/swf/swf.js");
 load("../../src/flash/util.js");

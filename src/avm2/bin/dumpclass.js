@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-load("../../../lib/DataView.js/DataView.js");
-
 var SWF = {};
 load("../avm2Util.js");
 load("../../swf/types.js");
