@@ -107,23 +107,31 @@ function loadScripts(files) {
 function runSanityTests(tests) {
   createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
     sendResponse();
-    for (var i = 0; i < tests.length; i++) {
-      var failed = false;
-      try {
-        tests[i]({
-          info: function (m) {
-            console.info(m);
-          },
-          error: function (m) {
-            console.error(m);
-            failed = true;
-          }
-        }, avm2);
-      } catch (ex) {
-        failed = true;
-      }
-      sendResponse({index: i, failure: failed});
-    }
+    var lastTestPromise = Promise.resolve();
+    tests.forEach(function (test) {
+      lastTestPromise = lastTestPromise.then(function () {
+        var failed = false;
+        var promise;
+        try {
+          promise = Promise.cast(test({
+            info: function (m) {
+              console.info(m);
+            },
+            error: function (m) {
+              console.error(m);
+              failed = true;
+            }
+          }, avm2));
+        } catch (e) {
+          promise = Promise.reject(e);
+        }
+        promise.then(function () {
+          sendResponse({index: i, failure: failed});
+        }, function () {
+          sendResponse({index: i, failure: true});
+        });
+      });
+    });
   });
 }
 
