@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+///<reference path='../lib.d.ts' />
+
 ///<reference path='../avm2/references.ts' />
 
 ///<reference path='accessibility/Accessibility.ts' />
