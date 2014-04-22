@@ -1,4 +1,4 @@
-unitTests.push(function runInspectorSanityTests(console, avm2) {
+unitTests.push(function runInspectorSanityTests(avm2) {
   function log(message) {
     console.info(message);
   }

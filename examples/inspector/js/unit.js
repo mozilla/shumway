@@ -1,34 +1,34 @@
 function eqFloat(a, b, test) {
   test = test ? ": " + test : " #" + testNumber;
-  if (Math.abs(a -b) < 0.1) {
-    console.info("PASS" + test)
-  } else {
-    console.error("FAIL" + test)
+  if (Math.abs(a -b) >= 0.1) {
+    throw new Error("FAIL " + test);
   }
+  console.info("PASS" + test);
   testNumber ++;
 }
 
 function check(condition, test) {
   test = test ? ": " + test : " #" + testNumber;
-  if (condition) {
-    console.info("PASS" + test)
-  } else {
-    console.error("FAIL" + test)
+  if (!condition) {
+    throw new Error("FAIL " + test);
   }
+  console.info("PASS" + test);
   testNumber ++;
 }
 
 /** Global unitTests array, unit tests add themselves to this */
 var unitTests = [];
 
+var testNumber = 0;
+
 function readDirectoryListing(path, next) {
   assert (path.endsWith("/"));
   var files = [];
   var directories = [];
   var xhr = new XMLHttpRequest({mozSystem:true});
-  xhr.open("GET", path, true);
+  xhr.open("GET", path + '?all', true);
   xhr.onload = function() {
-    var re = /<a href="([^"]+)/g, m;
+    var re = /<a href=["']([^"']+)/g, m;
     while ((m = re.exec(xhr.response))) {
       var file = m[1];
       if (file.endsWith("/")) {
@@ -36,7 +36,7 @@ function readDirectoryListing(path, next) {
           directories.push(file);
         }
       } else {
-        files.push(path + file);
+        files.push(file[0] === '/' ? file : path + file);
       }
     }
 
@@ -64,13 +64,13 @@ function executeUnitTests(file, avm2) {
     var lastTestPromise = Promise.resolve();
     unitTests.forEach(function (test) {
       lastTestPromise = lastTestPromise.then(function () {
-        return test(console, avm2);
+        return test(avm2);
       });
     });
     lastTestPromise.then(function () {
       console.info("Unit Tests is Completed");
     }, function (e) {
-      console.error("Unit Tests Error: " + e);
+      console.error("Unit Tests Error: " + e.toString());
     });
   }
   if (file.endsWith("/")) {

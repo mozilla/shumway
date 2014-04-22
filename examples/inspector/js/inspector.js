@@ -24,8 +24,6 @@ var yt = getQueryVariable('yt');
 
 var swfController = new SWFController(timeline, pauseExecution);
 
-var testNumber = 0;
-
 function timeAllocation(C, count) {
   var s = Date.now();
   for (var i = 0; i < count; i++) {
