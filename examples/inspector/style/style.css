@@ -89,7 +89,7 @@ body.simple #stageContainer {
   top: 32px;
   right: 500px;
   left: 0;
-  height: 150px;
+  height: 100px;
   background-color: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid #666;
 }

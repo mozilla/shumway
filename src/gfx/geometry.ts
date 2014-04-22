@@ -727,40 +727,71 @@ module Shumway.Geometry {
     }
 
     inverse (result: Matrix) {
-      var m11 = this.a;
-      var m12 = this.b;
-      var m21 = this.c;
-      var m22 = this.d;
-      var dx  = this.tx;
-      var dy  = this.ty;
-      if (m12 === 0.0 && m21 === 0.0) {
-        m11 =  1.0 / m11;
-        m22 =  1.0 / m22;
-        m12 =  m21 = 0.0;
-        dx  = -m11 * dx;
-        dy  = -m22 * dy;
+      var b  = this.b;
+      var c  = this.c;
+      var tx = this.tx;
+      var ty = this.ty;
+      if (b === 0 && c === 0) {
+        var a = result.a = 1 / this.a;
+        var d = result.d = 1 / this.d;
+        result.b = 0;
+        result.c = 0;
+        result.tx = -a * tx;
+        result.ty = -d * ty;
       } else {
-        var a = m11, b = m12, c = m21, d = m22;
+        var a = this.a;
+        var d = this.d;
         var determinant = a * d - b * c;
-        if (determinant === 0.0) {
+        if (determinant === 0) {
+          result.setIdentity();
           return;
         }
-        determinant = 1.0 / determinant;
-        m11 =  d * determinant;
-        m12 = -b * determinant;
-        m21 = -c * determinant;
-        m22 =  a * determinant;
-        var ty = -(m12 * dx + m22 * dy);
-        dx  = -(m11 * dx + m21 * dy);
-        dy  = ty;
+        determinant  = 1 / determinant;
+        result.a = d * determinant;
+        b = result.b = -b * determinant;
+        c = result.c = -c * determinant;
+        d = result.d =  a * determinant;
+        result.tx = -(result.a * tx + c * ty);
+        result.ty = -(b * tx + d * ty);
       }
-      result.a  = m11;
-      result.b  = m12;
-      result.c  = m21;
-      result.d  = m22;
-      result.tx = dx;
-      result.ty = dy;
+      return;
     }
+
+//    inverse (result: Matrix) {
+//      var m11 = this.a;
+//      var m12 = this.b;
+//      var m21 = this.c;
+//      var m22 = this.d;
+//      var dx  = this.tx;
+//      var dy  = this.ty;
+//      if (m12 === 0.0 && m21 === 0.0) {
+//        m11 =  1.0 / m11;
+//        m22 =  1.0 / m22;
+//        m12 =  m21 = 0.0;
+//        dx  = -m11 * dx;
+//        dy  = -m22 * dy;
+//      } else {
+//        var a = m11, b = m12, c = m21, d = m22;
+//        var determinant = a * d - b * c;
+//        if (determinant === 0.0) {
+//          return;
+//        }
+//        determinant = 1.0 / determinant;
+//        m11 =  d * determinant;
+//        m12 = -b * determinant;
+//        m21 = -c * determinant;
+//        m22 =  a * determinant;
+//        var ty = -(m12 * dx + m22 * dy);
+//        dx  = -(m11 * dx + m21 * dy);
+//        dy  = ty;
+//      }
+//      result.a  = m11;
+//      result.b  = m12;
+//      result.c  = m21;
+//      result.d  = m22;
+//      result.tx = dx;
+//      result.ty = dy;
+//    }
 
     getTranslateX(): number {
       return this.tx;

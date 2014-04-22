@@ -68,8 +68,8 @@
       } else {
         var o = new Shape();
         o._getContentBounds = function () {
-          var w = (width * 20 * (0.5 + Math.random())) | 0;
-          var h = (height * 20 * (0.5 + Math.random())) | 0;
+          var w = (width * 20) | 0;
+          var h = (height * 20) | 0;
           return new Rectangle(- w / 2, - h / 2, w, h);
         }
         o.fillStyle = Shumway.ColorStyle.randomStyle();
@@ -120,6 +120,10 @@
           context.lineWidth = 2;
           context.fillStyle = node.fillStyle;
           context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          if (node.over) {
+            context.fillStyle = Shumway.ColorStyle.Pink;
+            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          }
           context.restore();
         });
         frame = new GFXShape(renderable);
@@ -134,58 +138,53 @@
   }
 
   unitTests.push(function runInspectorSanityTests(console) {
-    return;
-    var c0 = new DisplayObjectContainer(); c0.x = 200;
-    var c1 = new DisplayObjectContainer(); c1.x = 200;
-    var s = new Shape();
-    s._getContentBounds = function () {
-      var w = 50 * 20;
-      var h = 50 * 20;
-      return new Rectangle(- w / 2, - h / 2, w, h);
-    }
-    c0.addChild(c1);
-    c1.addChild(s);
-    var easel = createEasel();
-    makeFrameTree(easel, c0);
-
-    setInterval(function tick() {
-      s.rotation += 1;
-      c1.rotation += 1;
-
-      c0.visit(function (node) {
-        var f = frameMap[node._id];
-        var m = node._getMatrix();
-        f.matrix = new Geometry.Matrix(m.a, m.b, m.c, m.d, m.tx / 20, m.ty / 20);
-        return VisitorFlags.Continue;
-      });
-
-      easel.render();
-    }, 33);
-  });
-
-  unitTests.push(function runInspectorSanityTests(console) {
     Random.seed(0x12343);
 
     var r = createDisplayObjectTree(3, 8, 32, 32);
+    // var r = createDisplayObjectTree(0, 1, 128, 128);
+
+    // var r = new DisplayObjectContainer();
+    // var c0 = new DisplayObjectContainer(); c0.x = 200;
+    // var c1 = new DisplayObjectContainer(); c1.x = 200;
+
+    // r.addChild(c0);
+    // c0.addChild(c1);
+
+//    for (var i = 0; i < 20; i++) {
+//      var s = new Shape();
+//      s._getContentBounds = function () {
+//        var w = 10 * 20;
+//        var h = 10 * 20;
+//        return new Rectangle(- w / 2, - h / 2, w, h);
+//      }
+//      s.scaleX = 8;
+//      s.scaleY = 8;
+//      s.fillStyle = Shumway.ColorStyle.randomStyle();
+//      r.addChild(s);
+//    }
 
     r.visit(function (node) {
       if (r === node) {
         return VisitorFlags.Continue;
       }
-      node.speed = Math.random() / 2;
+      node.speed = Math.random() / 10;
       node.scaleSpeed = (Math.random() - 0.5) / 500;
       node.x = (Math.random()) * 512;
       node.y = (Math.random()) * 512;
+      // node.scaleX = 2;
+      // node.scaleY = 2;
       return VisitorFlags.Continue;
     });
 
     var easel = createEasel();
     makeFrameTree(easel, r);
 
+    var mousePoint = null;
     var k = 0;
     setInterval(function tick() {
       r.visit(function (node) {
-        node._invalidatePosition();
+        node.over = false;
+        // node._invalidatePosition();
 
         if (r === node) {
           return VisitorFlags.Continue;
@@ -194,8 +193,8 @@
           node.rotation += node.speed;
         }
         if (node.scaleSpeed) {
-          node.scaleX += node.scaleSpeed;
-          node.scaleY += node.scaleSpeed;
+          // node.scaleX += node.scaleSpeed;
+          // node.scaleY += node.scaleSpeed;
         }
         return VisitorFlags.Continue;
       });
@@ -207,10 +206,23 @@
         return VisitorFlags.Continue;
       });
 
+      if (mousePoint) {
+        var objects = r.getObjectsUnderPoint(mousePoint);
+        for (var i = 0; i < objects.length; i++) {
+          objects[i].over = true;
+        }
+      }
+
+
       k ++;
       syncOptions(easel.options);
       easel.render();
     }, 16);
+
+    window.addEventListener("mousemove", function (event) {
+      mousePoint = easel.getMousePosition(event, easel.world);
+    }, false);
+
   });
 
 })();

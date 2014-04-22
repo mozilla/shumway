@@ -260,8 +260,11 @@ module Shumway.AVM2.AS.flash.display {
           return VisitorFlags.Skip;
         } else {
           // TODO: Exclude inaccessible objects, not sure what these are.
-          objectsUnderPoint.push(displayObject);
+          if (true || !DisplayObjectContainer.isType(displayObject)) {
+            objectsUnderPoint.push(displayObject);
+          }
         }
+        return VisitorFlags.Continue;
       }, VisitorFlags.None);
       return objectsUnderPoint;
     }

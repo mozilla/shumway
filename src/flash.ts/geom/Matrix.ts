@@ -162,19 +162,31 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public invert(): Matrix {
-      var det: number = this.a * this.d - this.b * this.c;
-      if (det == 0) {
-        this.identity();
-        return this;
+      var b  = this.b;
+      var c  = this.c;
+      var tx = this.tx;
+      var ty = this.ty;
+      if (b === 0 && c === 0) {
+        var a = this.a = 1 / this.a;
+        var d = this.d = 1 / this.d;
+        this.tx = -a * tx;
+        this.ty = -d * ty;
+      } else {
+        var a = this.a;
+        var d = this.d;
+        var determinant = a * d - b * c;
+        if (determinant === 0) {
+          this.identity();
+          return this;
+        }
+        determinant = 1 / determinant;
+        this.a = d * determinant;
+        b = this.b = -b * determinant;
+        c = this.c = -c * determinant;
+        d = this.d =  a * determinant;
+        this.tx = -(this.a * tx + c * ty);
+        this.ty = -(b * tx + d * ty);
       }
-      this.a =  this.d / det;
-      this.b = -this.b / det;
-      this.c = -this.c / det;
-      this.d =  this.a / det;
-      var ttx: number = this.tx;
-      var tty: number = this.ty;
-      this.tx = -(this.a * ttx + this.c * tty);
-      this.ty = -(this.b * ttx + this.d * tty);
       return this;
     }
 
