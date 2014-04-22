@@ -17,6 +17,9 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  import ActionScriptVersion = flash.display.ActionScriptVersion;
+
   export class LoaderInfo extends flash.events.EventDispatcher {
 
     // Called whenever the class is initialized.
@@ -40,8 +43,8 @@ module Shumway.AVM2.AS.flash.display {
       this._bytesLoaded = 0;
       this._bytesTotal = 0;
       this._applicationDomain = null;
-      this._swfVersion = 0;
-      this._actionScriptVersion = 0;
+      this._swfVersion = 9;
+      this._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT3;
       this._frameRate = 24;
       this._parameters = null;
       this._width = 0;
@@ -132,11 +135,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get width(): number /*int*/ {
-      return this._width;
+      return this._width / 20;
     }
 
     get height(): number /*int*/ {
-      return this._height;
+      return this._height / 20;
     }
 
     get contentType(): string {

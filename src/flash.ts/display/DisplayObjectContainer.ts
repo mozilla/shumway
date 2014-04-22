@@ -27,7 +27,13 @@ module Shumway.AVM2.AS.flash.display {
     static bindings: string [] = null;
     static classSymbols: string [] = null;
     static classInitializer: any = null;
-    static initializer: any = null;
+
+    static initializer: any = function () {
+      var self: DisplayObjectContainer = this;
+      self._tabChildren = true;
+      self._mouseChildren = true;
+      self._children = [];
+    };
 
     _tabChildren: boolean;
     _mouseChildren: boolean;
@@ -36,9 +42,6 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super();
       InteractiveObject.instanceConstructorNoInitialize.call(this);
-      this._tabChildren = true;
-      this._mouseChildren = true;
-      this._children = [];
     }
 
     /**
@@ -86,7 +89,7 @@ module Shumway.AVM2.AS.flash.display {
     addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
       index = index | 0;
 
-      assert(child._hasFlags(DisplayObjectFlags.Constructed));
+      assert (child._hasFlags(DisplayObjectFlags.Constructed));
       if (child === this) {
         throwError('ArgumentError', Errors.CantAddSelfError);
       }
