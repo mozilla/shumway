@@ -98,7 +98,7 @@ var Trait = Shumway.AVM2.ABC.Trait;
 var MethodInfo = Shumway.AVM2.ABC.MethodInfo;
 var Multiname = Shumway.AVM2.ABC.Multiname;
 var ASNamespace = Shumway.AVM2.ABC.Namespace;
-var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
+var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
 
 // var ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
 var SecurityDomain = Shumway.AVM2.Runtime.SecurityDomain;

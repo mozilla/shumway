@@ -17,15 +17,31 @@
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import AVM2 = Shumway.AVM2.Runtime.AVM2;
+  import ExecutionMode = Shumway.AVM2.Runtime.ExecutionMode;
+  import RuntimeApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
+
   export class ApplicationDomain extends ASNative {
     static classInitializer: any = null;
     static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
-    
-    constructor (parentDomain: flash.system.ApplicationDomain = null) {
+
+    private _runtimeDomain: RuntimeApplicationDomain;
+
+    constructor (parentDomainOrRuntimeDomain: any = null) {
       false && super();
-      this._parentDomain = parentDomain;
+      if (parentDomainOrRuntimeDomain instanceof RuntimeApplicationDomain) {
+        this._runtimeDomain = parentDomainOrRuntimeDomain;
+        return;
+      }
+      var parentRuntimeDomain: RuntimeApplicationDomain;
+      if (parentDomainOrRuntimeDomain) {
+        parentRuntimeDomain = parentDomainOrRuntimeDomain._runtimeDomain;
+      } else {
+        parentRuntimeDomain = AVM2.currentDomain().system;
+      }
+      this._runtimeDomain = new RuntimeApplicationDomain(parentRuntimeDomain.vm, parentRuntimeDomain, ExecutionMode.COMPILE, false);
     }
     
     // JS -> AS Bindings
@@ -33,11 +49,10 @@ module Shumway.AVM2.AS.flash.system {
     // AS -> JS Bindings
     // static _currentDomain: flash.system.ApplicationDomain;
     // static _MIN_DOMAIN_MEMORY_LENGTH: number /*uint*/;
-    get currentDomain(): flash.system.ApplicationDomain {
-      notImplemented("public flash.system.ApplicationDomain::get currentDomain"); return;
-      // return this._currentDomain;
+    static get currentDomain(): flash.system.ApplicationDomain {
+      return new ApplicationDomain(AVM2.currentDomain());
     }
-    get MIN_DOMAIN_MEMORY_LENGTH(): number /*uint*/ {
+    static get MIN_DOMAIN_MEMORY_LENGTH(): number /*uint*/ {
       notImplemented("public flash.system.ApplicationDomain::get MIN_DOMAIN_MEMORY_LENGTH"); return;
       // return this._MIN_DOMAIN_MEMORY_LENGTH;
     }
@@ -45,8 +60,10 @@ module Shumway.AVM2.AS.flash.system {
     // _parentDomain: flash.system.ApplicationDomain;
     // _domainMemory: flash.utils.ByteArray;
     get parentDomain(): flash.system.ApplicationDomain {
-      notImplemented("public flash.system.ApplicationDomain::get parentDomain"); return;
-      // return this._parentDomain;
+      if (this._runtimeDomain.base) {
+        return new ApplicationDomain(this._runtimeDomain.base);
+      }
+      return null;
     }
     get domainMemory(): flash.utils.ByteArray {
       notImplemented("public flash.system.ApplicationDomain::get domainMemory"); return;
@@ -57,13 +74,21 @@ module Shumway.AVM2.AS.flash.system {
       notImplemented("public flash.system.ApplicationDomain::set domainMemory"); return;
       // this._domainMemory = mem;
     }
-    getDefinition(name: string): ASObject {
+    getDefinition(name: string): Object {
       name = asCoerceString(name);
-      notImplemented("public flash.system.ApplicationDomain::getDefinition"); return;
+      if (name) {
+        var simpleName = name.replace("::", ".");
+        return this._runtimeDomain.getProperty(Multiname.fromSimpleName(simpleName), true, true);
+      }
+      return null;
     }
     hasDefinition(name: string): boolean {
       name = asCoerceString(name);
-      notImplemented("public flash.system.ApplicationDomain::hasDefinition"); return;
+      if (name) {
+        var simpleName = name.replace("::", ".");
+        return !!this._runtimeDomain.findDomainProperty(Multiname.fromSimpleName(simpleName), false, false);
+      }
+      return false;
     }
     getQualifiedDefinitionNames(): ASVector<any> {
       notImplemented("public flash.system.ApplicationDomain::getQualifiedDefinitionNames"); return;
