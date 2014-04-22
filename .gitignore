@@ -25,3 +25,4 @@ node_modules/
 
 build/
 src/flash.ts/**/*.js
+*.js.map

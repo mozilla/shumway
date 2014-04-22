@@ -1,12 +1,12 @@
 /**
- * Copyright 2013 Mozilla Foundation
- * 
+ * Copyright 2014 Mozilla Foundation
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,58 +15,88 @@
  */
 // Class: Font
 module Shumway.AVM2.AS.flash.text {
-  import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Font extends ASNative {
-    
-    // Called whenever the class is initialized.
+
     static classInitializer: any = null;
-    
+
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
-    constructor () {
-      false && super();
-      notImplemented("Dummy Constructor: public flash.text.Font");
+    static initializer: any = function (symbol) {
+      var s = symbol;
+      if (s) {
+        this._fontId = s.renderableId;
+        this._fontName = s.name || null;
+        if (s.bold) {
+          if (s.italic) {
+            this._fontStyle = 'boldItalic';
+          } else {
+            this._fontStyle = 'bold';
+          }
+        } else if (s.italic) {
+          this._fontStyle = 'italic';
+        } else {
+          this._fontStyle = 'regular';
+        }
+        this._fontType = 'embedded';
+        Font.fonts.push(this);
+        Font.fontsBySymbolId[s.id] = this;
+      }
+    };
+
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = null;
+
+    constructor() {
+      super();
     }
-    
+
+    private static fonts: Font[] = [];
+    private static fontsBySymbolId = Object.create(null);
+
+    static getFontBySymbolId(id) {
+      return this.fontsBySymbolId[id];
+    }
+
+    ascent: number;
+    descent: number;
+    leading: number;
+
+    private _fontId: string;
+    private _fontName: string;
+    private _fontStyle: string;
+    private _fontType: string;
+
     // JS -> AS Bindings
-    
-    
+
+
     // AS -> JS Bindings
     static enumerateFonts(enumerateDeviceFonts: boolean = false): any [] {
-      enumerateDeviceFonts = !!enumerateDeviceFonts;
-      notImplemented("public flash.text.Font::static enumerateFonts"); return;
+      //TODO: support iterating device fonts, perhaps?
+      somewhatImplemented("public flash.text.Font::static enumerateFonts");
+      return Font.fonts.slice();
     }
+
     static registerFont(font: ASClass): void {
-      font = font;
-      notImplemented("public flash.text.Font::static registerFont"); return;
+      somewhatImplemented('Font.registerFont');
     }
-    
-    // _fontName: string;
-    // _fontStyle: string;
-    // _fontType: string;
+
     get fontName(): string {
-      notImplemented("public flash.text.Font::get fontName"); return;
-      // return this._fontName;
+      return this._fontName;
     }
+
     get fontStyle(): string {
-      notImplemented("public flash.text.Font::get fontStyle"); return;
-      // return this._fontStyle;
+      return this._fontStyle;
     }
+
     get fontType(): string {
-      notImplemented("public flash.text.Font::get fontType"); return;
-      // return this._fontType;
+      return this._fontType;
     }
+
     hasGlyphs(str: string): boolean {
       str = asCoerceString(str);
-      notImplemented("public flash.text.Font::hasGlyphs"); return;
+      somewhatImplemented('Font#hasGlyphs');
+      return true;
     }
   }
 }
