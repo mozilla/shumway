@@ -42,6 +42,27 @@ module Shumway.AVM2.AS.flash.display {
     
     
     // AS -> JS Bindings
-    
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+          return InterpolationMethod.RGB;
+        case 1:
+          return InterpolationMethod.LINEAR_RGB;
+        default:
+          return null;
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case InterpolationMethod.RGB:
+          return 0;
+        case InterpolationMethod.LINEAR_RGB:
+          return 1;
+        default:
+          return -1;
+      }
+    }
   }
 }

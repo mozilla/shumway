@@ -43,6 +43,31 @@ module Shumway.AVM2.AS.flash.display {
     
     
     // AS -> JS Bindings
-    
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+          return CapsStyle.ROUND;
+        case 1:
+          return CapsStyle.NONE;
+        case 2:
+          return CapsStyle.SQUARE;
+        default:
+          return null;
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case CapsStyle.ROUND:
+          return 0;
+        case CapsStyle.NONE:
+          return 1;
+        case CapsStyle.SQUARE:
+          return 2;
+        default:
+          return -1;
+      }
+    }
   }
 }
