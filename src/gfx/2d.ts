@@ -312,6 +312,9 @@ module Shumway.GFX.Layers {
     }
 
     public render(stage: Stage, options: any) {
+      if (options.disable) {
+        return;
+      }
       var context = this.context;
       context.save();
 
@@ -534,10 +537,14 @@ module Shumway.GFX.Layers {
               shape.source.render(context, clip);
             }
             if (options.paintFlashing) {
-              context.fillStyle = randomStyle();
+              context.fillStyle = ColorStyle.randomStyle();
               context.globalAlpha = 0.5;
               context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
             }
+          } else if (options.paintBounds && frame instanceof FrameContainer) {
+            var bounds = frame.getBounds().clone();
+            context.strokeStyle = ColorStyle.LightOrange;
+            context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
           }
         }
 

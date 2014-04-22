@@ -29,7 +29,7 @@ module Shumway.AVM2.AS.flash.net {
     static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["decode", "unescape", "escape"]; // "toString"
+    static instanceSymbols: string [] = ["decode"]; // "toString"
     
     constructor (source: string = null) {
       source = asCoerceString(source);

@@ -24,9 +24,6 @@ body.simple #stageContainer {
   display: block;
 
 }
-body.simple #xstats {
-  display: none;
-}
 
 .muteButton { background-image: url(images/mute-button.png); }
 
@@ -92,7 +89,7 @@ body.simple #xstats {
   top: 32px;
   right: 500px;
   left: 0;
-  height: 150px;
+  height: 100px;
   background-color: rgba(0, 0, 0, 0.2);
   border-bottom: 1px solid #666;
 }
@@ -257,13 +254,6 @@ body.simple #xstats {
   display: inline-block;
 }
 
-#xstats {
-  position: absolute;
-  top: 133px;
-  right: 500px;
-  z-index: 1;
-}
-
 .debugPanel {
   font-family: Consolas, Lucida Grande, sans-serif;
   color: white;
@@ -282,11 +272,11 @@ body.simple #xstats {
 
 @media only screen and (max-width: 1024px) {
   #stageContainer { right: 354px; }
-  #topToolbar, #xstats, #fpsPanelContainer { right: 350px; }
+  #topToolbar, #fpsPanelContainer { right: 350px; }
   #debugInfoToolbar, #debugInfoContainer, #displayListContainer { width: 350px; }
 }
 
 @media only screen and (max-width: 768px) {
-  #stageContainer, #topToolbar, #xstats, #fpsPanelContainer { right: 0; }
+  #stageContainer, #topToolbar, #fpsPanelContainer { right: 0; }
   #debugInfoToolbar, #debugInfoContainer, #displayListContainer { display: none !important; }
 }

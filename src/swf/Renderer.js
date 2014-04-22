@@ -515,8 +515,11 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
     sceneOptions.cull = cull.value;
     sceneOptions.disableMasking = disableMasking.value;
     sceneOptions.debug = debugStage.value;
+    sceneOptions.disable = disableStage.value;
     sceneOptions.compositeMask = compositeMask.value;
     sceneOptions.disableTextureUploads = disableTextureUploads.value;
+    sceneOptions.disableTextureUploads = disableTextureUploads.value;
+
 
     if (perspectiveCameraAngleRotate.value) {
       sceneOptions.perspectiveCameraAngle = Math.sin(Date.now() / 1000) * 100;

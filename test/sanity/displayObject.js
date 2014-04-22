@@ -1,4 +1,9 @@
 (function displayTests() {
+  var GFXShape = Shumway.GFX.Layers.Shape;
+  var Renderable = Shumway.GFX.Layers.Renderable;
+  var FrameContainer = Shumway.GFX.Layers.FrameContainer;
+  var Geometry = Shumway.Geometry;
+
   function timeAllocation(C) {
     var s = Date.now();
     for (var i = 0; i < 10000; i++) {
@@ -16,6 +21,8 @@
   var Rectangle = flash.geom.Rectangle;
   var Point = flash.geom.Point;
   var DisplayObject = flash.display.DisplayObject;
+  var VisitorFlags = flash.display.VisitorFlags;
+
   var DisplayObjectFlags = flash.display.DisplayObjectFlags;
   var InteractiveObject = flash.display.InteractiveObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
@@ -26,7 +33,7 @@
   var scaleBy5 = new Matrix(); scaleBy5.scale(5, 5);
 
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests(console) {
     var o = new DisplayObject();
     check(o.transform.matrix.equals(identity), "Should be the identity.");
     check(o.transform.concatenatedMatrix.equals(scaleBy5), "Should be the scaleBy5.");
@@ -39,7 +46,7 @@
     check(o.transform.matrix.ty === 10);
   });
 
-  function createDisplayObjectTree(depth, width, height) {
+  function createDisplayObjectTree(depth, branch, width, height) {
     var nodes = [];
     Random.seed(0x12343);
     function make(parent, count, depth) {
@@ -51,17 +58,23 @@
           make(o, count, depth - 1);
         }
       } else {
-        parent.addChild(new DisplayObject());
+        var o = new Shape();
+        o._getContentBounds = function () {
+          var w = width * 20;
+          var h = height * 20;
+          return new Rectangle(- w / 2, - h / 2, w, h);
+        }
+        parent.addChild(o);
       }
     }
     var container = new DisplayObjectContainer();
-    make(container, 2, depth);
+    make(container, branch, depth);
     return container;
   }
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests(console) {
     var VisitorFlags = Shumway.AVM2.AS.flash.display.VisitorFlags;
-    var r = createDisplayObjectTree(10, 1024, 1024);
+    var r = createDisplayObjectTree(10, 2, 64, 64);
     var containers = [];
     var leafs = [];
     r.visit(function (o) {
@@ -92,7 +105,7 @@
     console.info("Made: " + containers.length);
   });
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var o = new DisplayObject();
     var p = ["x", "y"];
@@ -121,7 +134,7 @@
     }
   });
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     var s = new Shape();
     var c = new DisplayObjectContainer();
     c.addChild(s);
@@ -135,7 +148,7 @@
   });
 
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -178,7 +191,7 @@
     eqFloat(s.scaleY, 0.373, "ScaleY: " + s.scaleY);
   });
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -222,7 +235,7 @@
   });
 
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -244,7 +257,7 @@
     eqFloat(s.width, 141.4, "Width: " + s.width);
   });
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -264,7 +277,7 @@
     eqFloat(s.height, 10, "Height should eventually become 10: " + s.height);
   });
 
-  sanityTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -287,8 +300,35 @@
       eqFloat(p.x, r.x);
       eqFloat(p.y, r.y);
     }
-
   });
 
+  unitTests.push(function runInspectorSanityTests() {
+    Random.seed(0x12343);
+    var c = new DisplayObjectContainer();
+
+    var a = new Shape();
+    a._getContentBounds = function () {
+      return new Rectangle(0, 0, 100 * 20, 100 * 20);
+    }
+
+    var b = new Shape();
+    b._getContentBounds = function () {
+      return new Rectangle(0, 0, 100 * 20, 100 * 20);
+    }
+
+    check(a.hitTestObject(b));
+    b.x = 90;
+    check(a.hitTestObject(b));
+    b.x = 110;
+    check(!a.hitTestObject(b));
+    b.rotation = 45;
+    check(a.hitTestObject(b));
+    b.rotation = 0;
+    b.x = 0;
+    check(a.hitTestObject(b));
+    c.addChild(a);
+    c.x = -200;
+    check(!a.hitTestObject(b));
+  });
 
 })();

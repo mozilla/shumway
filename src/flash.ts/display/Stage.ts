@@ -17,6 +17,12 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  import StageScaleMode = flash.display.StageScaleMode;
+  import ColorCorrection = flash.display.ColorCorrection;
+  import ColorCorrectionSupport = flash.display.ColorCorrectionSupport;
+  import StageQuality = flash.display.StageQuality;
+
   export class Stage extends flash.display.DisplayObjectContainer {
     static classInitializer: any = null;
     static classSymbols: string [] = null; // [];
@@ -110,19 +116,19 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get stageWidth(): number /*int*/ {
-      return this._stageWidth;
+      return this._stageWidth / 20;
     }
 
     set stageWidth(value: number /*int*/) {
-      this._stageWidth = value | 0;
+      this._stageWidth = (value * 20) | 0;
     }
 
     get stageHeight(): number /*int*/ {
-      return this._stageHeight;
+      return (this._stageHeight * 0.05) | 0;
     }
 
     set stageHeight(value: number /*int*/) {
-      this._stageHeight = value | 0;
+      this._stageHeight = (value * 20) | 0;
     }
 
     get showDefaultContextMenu(): boolean {

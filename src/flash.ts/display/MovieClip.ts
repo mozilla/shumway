@@ -19,11 +19,16 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
+  import Telemetry = Shumway.Telemetry;
+
+  var Scene: typeof flash.display.Scene;
 
   export class MovieClip extends flash.display.Sprite {
     
     // Called whenever the class is initialized.
-    static classInitializer: any = null;
+    static classInitializer: any = function () {
+      Scene = flash.display.Scene;
+    };
     
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: MovieClip) {
@@ -33,7 +38,7 @@ module Shumway.AVM2.AS.flash.display {
       self._framesLoaded = 1;
       self._totalFrames = 1;
       self._trackAsMenu = false;
-      self._scenes = [];
+      self._scenes = [new Scene("Scene 1", [], self._totalFrames)];
       self._currentLabel = null;
       self._currentFrameLabel = null;
       self._enabled = true;
@@ -209,8 +214,7 @@ module Shumway.AVM2.AS.flash.display {
             scripts[i].call(this);
           }
         } catch (e) {
-          //var AVM2_ERROR_TYPE = 2;
-          //TelemetryService.reportTelemetry({topic: 'error', error: AVM2_ERROR_TYPE});
+          Telemetry.reportTelemetry({topic: 'error', error: Telemetry.ErrorTypes.AVM2_ERROR});
 
           //if ($DEBUG) {
           //  console.error('error ' + e + ', stack: \n' + e.stack);

@@ -20,6 +20,7 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
 
   import Rectangle = flash.geom.Rectangle;
+  import Point = flash.geom.Point; assert (Point);
 
   export class Graphics extends ASNative {
     
@@ -69,7 +70,8 @@ module Shumway.AVM2.AS.flash.display {
       this._currentPath = null;
     }
 
-    getBounds(includeStrokes: boolean = true): Rectangle {
+    _getContentBounds(includeStrokes: boolean = true): Rectangle {
+      notImplemented("public flash.display.Graphics::_getContentBounds");
       return new Rectangle();
     }
 
@@ -306,6 +308,33 @@ module Shumway.AVM2.AS.flash.display {
     drawGraphicsData(graphicsData: ASVector<any>): void {
       graphicsData = graphicsData;
       notImplemented("public flash.display.Graphics::drawGraphicsData"); return;
+    }
+
+    /**
+     * Tests if the specified point is within this graphics path.
+     */
+    _containsPoint(point: Point, includeStrokes: boolean = false): boolean {
+      notImplemented("public flash.display.Graphics::_containsPoint");
+      return false;
+//      var paths = this._paths;
+//      for (var i = 0; i < paths.length; i++) {
+//        var path = paths[i];
+//        if (path.isPointInPath(point.x, point.y)) {
+//          return true;
+//        }
+//
+//        if (path.strokeStyle) {
+//          var strokePath = path._strokePath;
+//          if (!strokePath) {
+//            strokePath = path.strokePath(path.drawingStyles);
+//            path._strokePath = strokePath;
+//          }
+//
+//          if (strokePath.isPointInPath(point.x, point.y)) {
+//            return true;
+//          }
+//        }
+//      }
     }
   }
 }

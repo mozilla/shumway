@@ -23,10 +23,10 @@ module Shumway.AVM2.AS.flash.net {
   import URLRequest = Shumway.AVM2.AS.flash.net.URLRequest;
   import URLStream = Shumway.AVM2.AS.flash.net.URLStream;
   import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
+  import FileLoadingService = Shumway.FileLoadingService;
 
   var USE_MEDIASOURCE_API = false;
   declare var MediaSource;
-  declare var FileLoadingService;
   declare var URL;
   declare var Promise;
   declare var window;
@@ -149,7 +149,7 @@ module Shumway.AVM2.AS.flash.net {
       }
       if (!isMediaSourceEnabled) {
         somewhatImplemented("public flash.net.NetStream::play");
-        this._createVideoElement(FileLoadingService.resolveUrl(url));
+        this._createVideoElement(FileLoadingService.instance.resolveUrl(url));
         return;
       }
 

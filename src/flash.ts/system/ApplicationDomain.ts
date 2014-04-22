@@ -18,28 +18,18 @@ module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ApplicationDomain extends ASNative {
-    
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
     
     constructor (parentDomain: flash.system.ApplicationDomain = null) {
-      parentDomain = parentDomain;
       false && super();
-      notImplemented("Dummy Constructor: public flash.system.ApplicationDomain");
+      this._parentDomain = parentDomain;
     }
     
     // JS -> AS Bindings
-    
-    
+
     // AS -> JS Bindings
     // static _currentDomain: flash.system.ApplicationDomain;
     // static _MIN_DOMAIN_MEMORY_LENGTH: number /*uint*/;
@@ -77,10 +67,6 @@ module Shumway.AVM2.AS.flash.system {
     }
     getQualifiedDefinitionNames(): ASVector<any> {
       notImplemented("public flash.system.ApplicationDomain::getQualifiedDefinitionNames"); return;
-    }
-    ctor(parentDomain: flash.system.ApplicationDomain): void {
-      parentDomain = parentDomain;
-      notImplemented("public flash.system.ApplicationDomain::ctor"); return;
     }
   }
 }

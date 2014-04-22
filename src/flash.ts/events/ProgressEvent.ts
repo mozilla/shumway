@@ -41,10 +41,10 @@ module Shumway.AVM2.AS.flash.events {
     static PROGRESS: string = "progress";
     static SOCKET_DATA: string = "socketData";
     
-    _bytesLoaded: any;
-    _bytesTotal: any;
-    bytesLoaded: number;
-    bytesTotal: number;
+    // _bytesLoaded: any;
+    // _bytesTotal: any;
+    // bytesLoaded: number;
+    // bytesTotal: number;
     clone: () => flash.events.Event;
     
     // AS -> JS Bindings

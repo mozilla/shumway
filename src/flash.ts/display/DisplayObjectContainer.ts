@@ -20,14 +20,21 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
 
-  import Event = flash.events.Event;
-  import InteractiveObject = flash.display.InteractiveObject;
+  var Event: typeof flash.events.Event;
 
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
     static bindings: string [] = null;
     static classSymbols: string [] = null;
-    static classInitializer: any = null;
-    static initializer: any = null;
+    static classInitializer: any = function () {
+      Event = flash.events.Event;
+    };
+
+    static initializer: any = function () {
+      var self: DisplayObjectContainer = this;
+      self._tabChildren = true;
+      self._mouseChildren = true;
+      self._children = [];
+    };
 
     _tabChildren: boolean;
     _mouseChildren: boolean;
@@ -36,9 +43,6 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super();
       InteractiveObject.instanceConstructorNoInitialize.call(this);
-      this._tabChildren = true;
-      this._mouseChildren = true;
-      this._children = [];
     }
 
     /**
@@ -86,7 +90,7 @@ module Shumway.AVM2.AS.flash.display {
     addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
       index = index | 0;
 
-      assert(child._hasFlags(DisplayObjectFlags.Constructed));
+      assert (child._hasFlags(DisplayObjectFlags.Constructed));
       if (child === this) {
         throwError('ArgumentError', Errors.CantAddSelfError);
       }
@@ -247,24 +251,24 @@ module Shumway.AVM2.AS.flash.display {
       return null;
     }
 
-    getObjectsUnderPoint(point: flash.geom.Point): DisplayObject [] {
-      var children = this._children;
-      var objectsUnderPoint = [];
-      for (var i = 0; i < children.length; i++) {
-        var child = children[0];
-        if (!child._hasFlags(DisplayObjectFlags.Constructed)) {
-          continue;
+    /**
+     * Gets the objects under the specified point by walking the children of
+     * this display list. If a child's bounds doesn't include the given
+     * point then we skip it and all of its children.
+     */
+    getObjectsUnderPoint(globalPoint: flash.geom.Point): DisplayObject [] {
+      var objectsUnderPoint: DisplayObject [] = [];
+      this.visit(function (displayObject: DisplayObject): VisitorFlags {
+        if (!displayObject.hitTestPoint(globalPoint.x, globalPoint.y)) {
+          return VisitorFlags.Skip;
+        } else {
+          // TODO: Exclude inaccessible objects, not sure what these are.
+          if (true || !DisplayObjectContainer.isType(displayObject)) {
+            objectsUnderPoint.push(displayObject);
+          }
         }
-        // TODO exclude inaccessible objects
-        if (child._hitTest(true, point.x, point.y, true, null)) {
-          objectsUnderPoint.push(child);
-        }
-        if (DisplayObjectContainer.isType(child)) {
-          objectsUnderPoint = objectsUnderPoint.concat(
-            (<DisplayObjectContainer>child).getObjectsUnderPoint(point)
-          );
-        }
-      }
+        return VisitorFlags.Continue;
+      }, VisitorFlags.None);
       return objectsUnderPoint;
     }
 

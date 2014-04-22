@@ -29,7 +29,6 @@ build: ensureoutputdir \
 	mkdir $(BUILD_DIR)/src/swf
 	cp $(SHUMWAY_ROOT)/src/swf/*.js $(BUILD_DIR)/src/swf/
 	mkdir $(BUILD_DIR)/src/flash
-	cp $(SHUMWAY_ROOT)/src/flash/stubs.js $(BUILD_DIR)/src/flash/
 	cp $(SHUMWAY_ROOT)/src/flash/util.js $(BUILD_DIR)/src/flash/
 	mkdir $(BUILD_DIR)/src/avm1lib
 	cp $(SHUMWAY_ROOT)/src/avm1lib/*.js $(BUILD_DIR)/src/avm1lib/
@@ -76,9 +75,6 @@ build: ensureoutputdir \
 	mkdir -p $(BUILD_DIR)/src/avm2/generated/avm1lib
 	cp $(SHUMWAY_ROOT)/src/avm2/generated/avm1lib/avm1lib.abc $(BUILD_DIR)/src/avm2/generated/avm1lib/
 	mkdir $(BUILD_DIR)/lib
-	cp $(SHUMWAY_ROOT)/lib/ByteArray.js $(BUILD_DIR)/lib/
-	mkdir $(BUILD_DIR)/lib/DataView.js
-	cp $(SHUMWAY_ROOT)/lib/DataView.js/* $(BUILD_DIR)/lib/DataView.js/
 	mkdir $(BUILD_DIR)/lib/mp3
 	cp $(SHUMWAY_ROOT)/lib/mp3/* $(BUILD_DIR)/lib/mp3/
 	mkdir $(BUILD_DIR)/lib/stats

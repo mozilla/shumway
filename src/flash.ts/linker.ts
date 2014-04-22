@@ -64,7 +64,7 @@ module Shumway.AVM2.AS {
     M("flash.events.MouseEvent", "MouseEventClass", flash.events.MouseEvent),
     M("flash.events.TextEvent", "TextEventClass", flash.events.TextEvent),
     M("flash.events.TimerEvent", "TimerEventClass", flash.events.TimerEvent),
-    M("flash.events.ProgressEvent"),
+    M("flash.events.ProgressEvent", "ProgressEventClass", flash.events.ProgressEvent),
     M("flash.events.NetStatusEvent"),
 
     M("flash.external.ExternalInterface", "ExternalInterfaceClass", flash.external.ExternalInterface),
@@ -117,10 +117,11 @@ module Shumway.AVM2.AS {
     // M("flash.system.System", "SystemClass", SystemDefinition),
     M("flash.system.Security", "SecurityClass", flash.system.Security),
     // M("flash.system.SecurityDomain", "SecurityDomainClass", SecurityDomainDefinition),
-    // M("flash.system.ApplicationDomain", "ApplicationDomainClass", ApplicationDomainDefinition),
+    M("flash.system.ApplicationDomain", "ApplicationDomainClass", flash.system.ApplicationDomain),
+    M("flash.system.JPEGLoaderContext", "JPEGLoaderContextClass", flash.system.JPEGLoaderContext),
 
     M("flash.accessibility.Accessibility", "AccessibilityClass", flash.accessibility.Accessibility),
-    // M("flash.utils.Timer", "TimerClass", TimerDefinition),
+    M("flash.utils.Timer", "TimerClass", flash.utils.Timer),
 
     M("avm1lib.AS2Utils", "AS2Utils", avm1lib.AS2Utils),
     M("avm1lib.AS2Broadcaster"),
@@ -180,7 +181,6 @@ module Shumway.AVM2.AS {
   declare var escape;
   declare var unescape;
   declare var AMFUtils;
-  declare var FileLoadingService;
   declare var window;
 
   registerNativeFunction('FlashUtilScript::escapeMultiByte', escape);
@@ -204,7 +204,7 @@ module Shumway.AVM2.AS {
     }
     // TODO handle other methods than GET
     var targetWindow = window_ || '_parent'; // using parent as default target
-    window.open(FileLoadingService.resolveUrl(url), targetWindow);
+    window.open(FileLoadingService.instance.resolveUrl(url), targetWindow);
   });
 
   registerNativeFunction('FlashNetScript::sendToURL', function sendToURL(request) {
@@ -216,7 +216,7 @@ module Shumway.AVM2.AS {
       throwError('TypeError', Errors.CheckTypeFailedError, request,
         'flash.net.URLRequest');
     }
-    var session = FileLoadingService.createSession();
+    var session = FileLoadingService.instance.createSession();
     session.onprogress = function () {};
     session.open(request);
   });
@@ -244,6 +244,8 @@ module Shumway.AVM2.AS {
     }
     return classObject;
   });
+
+  registerNativeFunction('isFinite', isFinite);
 
   jsGlobal["flash"] = Shumway.AVM2.AS.flash;
 }

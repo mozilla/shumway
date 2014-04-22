@@ -25,7 +25,7 @@ import flash.utils.ByteArray;
 [native(cls='LoaderInfoClass')]
 public class LoaderInfo extends EventDispatcher {
   public static native function getLoaderInfoByDefinition(object:Object):LoaderInfo;
-  public function LoaderInfo() {}
+  public native function LoaderInfo()
   public native function get loaderURL():String;
   public native function get url():String;
   public native function get isURLInaccessible():Boolean;

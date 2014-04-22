@@ -153,7 +153,8 @@ module Shumway.AVM2.AS.flash.geom {
     public contains(x: number, y: number): boolean {
       x = +x;
       y = +y;
-      return this.x <= x && x <= this.right && this.y <= y && y <= this.bottom;
+      return x >= this.x && x <= this.right &&
+             y >= this.y && y <= this.bottom;
     }
 
     public containsPoint(point: Point): boolean {

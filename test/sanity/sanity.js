@@ -1,4 +1,4 @@
-sanityTests.push(function runInspectorSanityTests(console, avm2) {
+unitTests.push(function runInspectorSanityTests(avm2) {
   function log(message) {
     console.info(message);
   }
@@ -26,4 +26,12 @@ sanityTests.push(function runInspectorSanityTests(console, avm2) {
     f[Multiname.getPublicQualifiedName("x")] = 123;
     check (f.toString() === "x=123");
   })();
+});
+
+
+unitTests.push(function runInspectorAsyncTest(avm2) {
+  console.info('Testing async test');
+  return new Promise(function (resolve) {
+    setTimeout(resolve);
+  });
 });

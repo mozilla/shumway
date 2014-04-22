@@ -17,8 +17,12 @@
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import FileLoadingService = Shumway.FileLoadingService;
+  import Event = flash.events.Event;
+  import IOErrorEvent = flash.events.IOErrorEvent;
+  import ProgressEvent = flash.events.ProgressEvent;
+  import HTTPStatusEvent = flash.events.HTTPStatusEvent;
 
-  declare var FileLoadingService;
   declare var Stream;
 
   export class URLStream extends flash.events.EventDispatcher implements flash.utils.IDataInput {
@@ -104,7 +108,7 @@ module Shumway.AVM2.AS.flash.net {
       // return this._length;
     }
     load(request: flash.net.URLRequest): void {
-      var session = FileLoadingService.createSession();
+      var session = FileLoadingService.instance.createSession();
       var self = this;
       var initStream = true;
       session.onprogress = function (data, progressState) {
@@ -123,7 +127,7 @@ module Shumway.AVM2.AS.flash.net {
           self._stream = newStream;
         }
         self._stream.push(data);
-        self.dispatchEvent(new flash.events.ProgressEvent("progress",
+        self.dispatchEvent(new ProgressEvent(ProgressEvent.PROGRESS,
           false, false, progressState.bytesLoaded, progressState.bytesTotal));
       };
       session.onerror = function (error) {
@@ -132,15 +136,14 @@ module Shumway.AVM2.AS.flash.net {
           // We need to have something to return in data
           self._stream = new Stream(new ArrayBuffer(0), 0, 0, 0);
         }
-        self.dispatchEvent(new flash.events.IOErrorEvent(
-          flash.events.IOErrorEvent.IO_ERROR, false, false, error));
+        self.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR, false, false, error));
       };
       session.onopen = function () {
         self._connected = true;
-        self.dispatchEvent(new flash.events.Event("open", false, false));
+        self.dispatchEvent(new Event(Event.OPEN, false, false));
       };
-      session.onhttpstatus = function (location, httpStatus, httpHeaders) {
-        var httpStatusEvent = new flash.events.HTTPStatusEvent('httpStatus', false, false, httpStatus);
+      session.onhttpstatus = function (location: string, httpStatus: number, httpHeaders: any) {
+        var httpStatusEvent = new HTTPStatusEvent(HTTPStatusEvent.HTTP_STATUS, false, false, httpStatus);
         var headers = [];
         httpHeaders.split(/(?:\n|\r?\n)/g).forEach(function (h) {
           var m = /^([^:]+): (.*)$/.exec(h);
@@ -162,7 +165,7 @@ module Shumway.AVM2.AS.flash.net {
           self._stream = new Stream(new ArrayBuffer(0), 0, 0, 0);
         }
 
-        self.dispatchEvent(new flash.events.Event("complete", false, false));
+        self.dispatchEvent(new Event(Event.COMPLETE, false, false));
       };
       session.open(request._toFileRequest());
       this._session = session;

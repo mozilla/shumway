@@ -1,6 +1,6 @@
-createEasel();
-
 (function displayTests() {
+  var easel = createEasel();
+
   var Grid = Shumway.GFX.Layers.Grid;
   var Shape = Shumway.GFX.Layers.Shape;
   var FrameContainer = Shumway.GFX.Layers.FrameContainer;

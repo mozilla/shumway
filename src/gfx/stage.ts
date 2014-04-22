@@ -410,7 +410,7 @@ module Shumway.GFX.Layers {
               stack.push(child);
               if (calculateTransform) {
                 var t = transform.clone();
-                Matrix.multiply(t, child.matrix);
+                t.preMultiply(child.matrix);
                 transformStack.push(t);
               }
               flagsStack.push(flags);
@@ -758,13 +758,13 @@ module Shumway.GFX.Layers {
       }
 
       context.beginPath();
-      gridPath(50);
+      gridPath(100);
       context.lineWidth = 1;
       context.strokeStyle = ColorStyle.Dark;
       context.stroke();
 
       context.beginPath();
-      gridPath(200);
+      gridPath(500);
       context.lineWidth = 1;
       context.strokeStyle = ColorStyle.TabToolbar;
       context.stroke();

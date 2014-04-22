@@ -15,6 +15,7 @@
  */
 
 package flash.events {
+[native(cls='ProgressEventClass')]
 public class ProgressEvent extends Event {
   public static const PROGRESS:String = "progress";
   public static const SOCKET_DATA:String = "socketData";

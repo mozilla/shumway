@@ -54,7 +54,6 @@ load(homePath + "src/avm2/compiler/builder.js");
 Timer.stop();
 
 Timer.start("Loading Runtime");
-load(homePath + "lib/ByteArray.js");
 load(homePath + "src/avm2/trampoline.js");
 load(homePath + "src/avm2/bindings.js");
 load(homePath + "src/avm2/scope.js");

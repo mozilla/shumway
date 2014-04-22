@@ -33,10 +33,10 @@ module Shumway.AVM2.AS.flash.geom {
 
     constructor (a: number = 1, b: number = 0, c: number = 0, d: number = 1, tx: number = 0, ty: number = 0) {
       false && super();
-      this.a = +a;
-      this.b = +b;
-      this.c = +c;
-      this.d = +d;
+      this.a  = +a;
+      this.b  = +b;
+      this.c  = +c;
+      this.d  = +d;
       this.tx = +tx;
       this.ty = +ty;
     }
@@ -97,14 +97,17 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public Matrix(a: number = 1, b: number = 0, c: number = 0, d: number = 1, tx: number = 0, ty: number = 0) {
-      this.a = a;
-      this.b = b;
-      this.c = c;
-      this.d = d;
+      this.a  = a;
+      this.b  = b;
+      this.c  = c;
+      this.d  = d;
       this.tx = tx;
       this.ty = ty;
     }
 
+    /**
+     * this = this * m
+     */
     public concat(m: Matrix): void {
       var a =  this.a * m.a;
       var b =  0.0;
@@ -130,20 +133,61 @@ module Shumway.AVM2.AS.flash.geom {
       this.ty = ty;
     }
 
-    public invert(): void {
-      var det: number = this.a * this.d - this.b * this.c;
-      if (det == 0) {
-        this.identity();
-        return;
+    /**
+     * this = m * this
+     */
+    public preMultiply(m: Matrix): void {
+      var a =  m.a * this.a;
+      var b =  0.0;
+      var c =  0.0;
+      var d =  m.d * this.d;
+      var tx = m.tx * this.a + this.tx;
+      var ty = m.ty * this.d + this.ty;
+
+      if (m.b !== 0.0 || m.c !== 0.0 || this.b !== 0.0 || this.c !== 0.0) {
+        a  += m.b  * this.c;
+        d  += m.c  * this.b;
+        b  += m.a  * this.b + m.b * this.d;
+        c  += m.c  * this.a + m.d * this.c;
+        tx += m.ty * this.c;
+        ty += m.tx * this.b;
       }
-      this.a = this.d / det;
-      this.b = -this.b / det;
-      this.c = -this.c / det;
-      this.d = this.a / det;
-      var ttx: number = this.tx;
-      var tty: number = this.ty;
-      this.tx = -(this.a * ttx + this.c * tty);
-      this.ty = -(this.b * ttx + this.d * tty);
+
+      this.a  = a;
+      this.b  = b;
+      this.c  = c;
+      this.d  = d;
+      this.tx = tx;
+      this.ty = ty;
+    }
+
+    public invert(): Matrix {
+      var b  = this.b;
+      var c  = this.c;
+      var tx = this.tx;
+      var ty = this.ty;
+      if (b === 0 && c === 0) {
+        var a = this.a = 1 / this.a;
+        var d = this.d = 1 / this.d;
+        this.tx = -a * tx;
+        this.ty = -d * ty;
+      } else {
+        var a = this.a;
+        var d = this.d;
+        var determinant = a * d - b * c;
+        if (determinant === 0) {
+          this.identity();
+          return this;
+        }
+        determinant = 1 / determinant;
+        this.a = d * determinant;
+        b = this.b = -b * determinant;
+        c = this.c = -c * determinant;
+        d = this.d =  a * determinant;
+        this.tx = -(this.a * tx + c * ty);
+        this.ty = -(b * tx + d * ty);
+      }
+      return this;
     }
 
     public identity(): void {
@@ -155,10 +199,10 @@ module Shumway.AVM2.AS.flash.geom {
       if (rotation != 0) {
         var u: number = Math.cos(rotation);
         var v: number = Math.sin(rotation);
-        this.a = u * scaleX;
-        this.b = v * scaleY;
+        this.a =  u * scaleX;
+        this.b =  v * scaleY;
         this.c = -v * scaleX;
-        this.d = u * scaleY;
+        this.d =  u * scaleY;
       } else {
         this.a = scaleX;
         this.b = 0;
@@ -176,18 +220,18 @@ module Shumway.AVM2.AS.flash.geom {
     public rotate(angle: number): void {
       angle = +angle;
       if (angle != 0) {
-        var u: number = Math.cos(angle);
-        var v: number = Math.sin(angle);
-        var ta: number = this.a;
-        var tb: number = this.b;
-        var tc: number = this.c;
-        var td: number = this.d;
+        var u: number   = Math.cos(angle);
+        var v: number   = Math.sin(angle);
+        var ta: number  = this.a;
+        var tb: number  = this.b;
+        var tc: number  = this.c;
+        var td: number  = this.d;
         var ttx: number = this.tx;
         var tty: number = this.ty;
-        this.a = ta * u - tb * v;
-        this.b = ta * v + tb * u;
-        this.c = tc * u - td * v;
-        this.d = tc * v + td * u;
+        this.a =  ta  * u - tb  * v;
+        this.b =  ta  * v + tb  * u;
+        this.c =  tc  * u - td  * v;
+        this.d =  tc  * v + td  * u;
         this.tx = ttx * u - tty * v;
         this.ty = ttx * v + tty * u;
       }
@@ -200,13 +244,13 @@ module Shumway.AVM2.AS.flash.geom {
 
     public scale(sx: number, sy: number): void {
       if (sx !== 1) {
-        this.a *= sx;
-        this.c *= sx;
+        this.a  *= sx;
+        this.c  *= sx;
         this.tx *= sx;
       }
       if (sy !== 1) {
-        this.b *= sy;
-        this.d *= sy;
+        this.b  *= sy;
+        this.d  *= sy;
         this.ty *= sy;
       }
     }
@@ -233,10 +277,10 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     transformRectAABB (rectangle: Rectangle): Rectangle {
-      var a = this.a;
-      var b = this.b;
-      var c = this.c;
-      var d = this.d;
+      var a  = this.a;
+      var b  = this.b;
+      var c  = this.c;
+      var d  = this.d;
       var tx = this.tx;
       var ty = this.ty;
 
@@ -308,21 +352,21 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public copyFrom(sourceMatrix: Matrix): void {
-      this.a = sourceMatrix.a;
-      this.b = sourceMatrix.b;
-      this.c = sourceMatrix.c;
-      this.d = sourceMatrix.d;
+      this.a  = sourceMatrix.a;
+      this.b  = sourceMatrix.b;
+      this.c  = sourceMatrix.c;
+      this.d  = sourceMatrix.d;
       this.tx = sourceMatrix.tx;
       this.ty = sourceMatrix.ty;
     }
 
-    public setTo(aa: number, ba: number, ca: number, da: number, txa: number, tya: number): void {
-      this.a = +aa;
-      this.b = +ba;
-      this.c = +ca;
-      this.d = +da;
-      this.tx = +txa;
-      this.ty = +tya;
+    public setTo(a: number, b: number, c: number, d: number, tx: number, ty: number): void {
+      this.a  = +a;
+      this.b  = +b;
+      this.c  = +c;
+      this.d  = +d;
+      this.tx = +tx;
+      this.ty = +ty;
     }
 
     public toTwips(): Matrix {
@@ -374,12 +418,12 @@ module Shumway.AVM2.AS.flash.geom {
     public copyRowFrom(row: number, vector3D: Vector3D): void {
       row = row >>> 0;
       if (row == 0) {
-        this.a = vector3D.x;
-        this.c = vector3D.y;
+        this.a  = vector3D.x;
+        this.c  = vector3D.y;
         this.tx = vector3D.z;
       } else if (row == 1) {
-        this.b = vector3D.x;
-        this.d = vector3D.y;
+        this.b  = vector3D.x;
+        this.d  = vector3D.y;
         this.ty = vector3D.z;
       }
     }
@@ -387,12 +431,12 @@ module Shumway.AVM2.AS.flash.geom {
     public copyColumnFrom(column: number, vector3D: Vector3D): void {
       column = column >>> 0;
       if (column == 0) {
-        this.a = vector3D.x;
-        this.c = vector3D.y;
+        this.a  = vector3D.x;
+        this.c  = vector3D.y;
         this.tx = vector3D.z;
       } else if (column == 1) {
-        this.b = vector3D.x;
-        this.d = vector3D.y;
+        this.b  = vector3D.x;
+        this.d  = vector3D.y;
         this.ty = vector3D.z;
       }
     }
@@ -429,8 +473,8 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public equals(other: Matrix): boolean {
-      return this.a === other.a   && this.b === other.b &&
-             this.c === other.c   && this.d === other.d &&
+      return this.a  === other.a  && this.b  === other.b &&
+             this.c  === other.c  && this.d  === other.d &&
              this.tx === other.tx && this.ty === other.ty;
     }
 

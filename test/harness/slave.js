@@ -64,7 +64,7 @@ function loadMovie(path, reportFrames) {
       }
     }
 
-    FileLoadingService.baseUrl = path;
+    Shumway.FileLoadingService.instance.baseUrl = path;
     new BinaryFileReader(path).readAll(null, function(buffer) {
       if (!buffer) {
         throw "Unable to open the file " + SWF_PATH + ": " + error;
@@ -107,36 +107,36 @@ function loadScripts(files) {
 function runSanityTests(tests) {
   createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
     sendResponse();
-    for (var i = 0; i < tests.length; i++) {
-      var failed = false;
-      try {
-        tests[i]({
-          info: function (m) {
-            console.info(m);
-          },
-          error: function (m) {
-            console.error(m);
-            failed = true;
-          }
-        }, avm2);
-      } catch (ex) {
-        failed = true;
-      }
-      sendResponse({index: i, failure: failed});
-    }
+    var lastTestPromise = Promise.resolve();
+    tests.forEach(function (test) {
+      lastTestPromise = lastTestPromise.then(function () {
+        var failed = false;
+        var promise;
+        try {
+          promise = Promise.cast(test(avm2));
+        } catch (e) {
+          promise = Promise.reject(e);
+        }
+        promise.then(function () {
+          sendResponse({index: i, failure: failed});
+        }, function () {
+          sendResponse({index: i, failure: true});
+        });
+      });
+    });
   });
 }
 
-var TelemetryService = {
+Shumway.Telemetry.instance = {
   reportTelemetry: function (data) {}
 };
 
-var FileLoadingService = {
+Shumway.FileLoadingService.instance = {
   createSession: function () {
     return {
       open: function (request) {
         var self = this;
-        var base = FileLoadingService.baseUrl || '';
+        var base = Shumway.FileLoadingService.instance.baseUrl || '';
         base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
         var path = base ? base + request.url : request.url;
         console.log('FileLoadingService: loading ' + path);

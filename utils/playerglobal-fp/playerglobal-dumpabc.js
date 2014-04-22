@@ -17,7 +17,6 @@
  */
 
 // based on src/avm2/bin/dumpabc.js
-load("../../lib/DataView.js/DataView.js");
 
 this.self = this;
 load("../../src/swf/swf.js");

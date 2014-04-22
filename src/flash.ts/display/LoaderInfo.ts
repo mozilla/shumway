@@ -17,52 +17,53 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  import ActionScriptVersion = flash.display.ActionScriptVersion;
+
   export class LoaderInfo extends flash.events.EventDispatcher {
-    
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
+
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
-      var self: LoaderInfo = this;
-      self._loaderURL = '';
-      self._url = '';
-      self._isURLInaccessible = false;
-      self._bytesLoaded = 0;
-      self._bytesTotal = 0;
-      self._applicationDomain = null;
-      self._swfVersion = 0;
-      self._actionScriptVersion = 0;
-      self._frameRate = 24;
-      self._parameters = null;
-      self._width = 0;
-      self._height = 0;
-      self._contentType = '';
-      self._sharedEvents = null;
-      self._parentSandboxBridge = null;
-      self._childSandboxBridge = null;
-      self._sameDomain = false;
-      self._childAllowsParent = false;
-      self._parentAllowsChild = false;
-      self._loader = null;
-      self._content = null;
-      self._bytes = null;
-      self._uncaughtErrorEvents = null;
-    };
-    
+    static initializer: any = null;
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
+
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["parameters", "uncaughtErrorEvents", "dispatchEvent"];
-    
+
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.display.LoaderInfo");
+      flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      this._loaderURL = '';
+      this._url = '';
+      this._isURLInaccessible = false;
+      this._bytesLoaded = 0;
+      this._bytesTotal = 0;
+      this._applicationDomain = null;
+      this._swfVersion = 9;
+      this._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT3;
+      this._frameRate = 24;
+      this._parameters = null;
+      this._width = 0;
+      this._height = 0;
+      this._contentType = '';
+      this._sharedEvents = null;
+      this._parentSandboxBridge = null;
+      this._childSandboxBridge = null;
+      this._sameDomain = false;
+      this._childAllowsParent = false;
+      this._parentAllowsChild = false;
+      this._loader = null;
+      this._content = null;
+      this._bytes = null;
+      this._uncaughtErrorEvents = null;
     }
-    
+
     // JS -> AS Bindings
-    
+
     parameters: ASObject;
     uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
@@ -97,53 +98,54 @@ module Shumway.AVM2.AS.flash.display {
     _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
     get loaderURL(): string {
-      notImplemented("public flash.display.LoaderInfo::get loaderURL"); return;
-      // return this._loaderURL;
+      return this._loaderURL;
     }
+
     get url(): string {
-      notImplemented("public flash.display.LoaderInfo::get url"); return;
-      // return this._url;
+      return this._url;
     }
+
     get isURLInaccessible(): boolean {
-      notImplemented("public flash.display.LoaderInfo::get isURLInaccessible"); return;
-      // return this._isURLInaccessible;
+      return this._isURLInaccessible;
     }
+
     get bytesLoaded(): number /*uint*/ {
-      notImplemented("public flash.display.LoaderInfo::get bytesLoaded"); return;
-      // return this._bytesLoaded;
+      return this._bytesLoaded;
     }
+
     get bytesTotal(): number /*uint*/ {
-      notImplemented("public flash.display.LoaderInfo::get bytesTotal"); return;
-      // return this._bytesTotal;
+      return this._bytesTotal;
     }
+
     get applicationDomain(): flash.system.ApplicationDomain {
       notImplemented("public flash.display.LoaderInfo::get applicationDomain"); return;
       // return this._applicationDomain;
     }
+
     get swfVersion(): number /*uint*/ {
-      notImplemented("public flash.display.LoaderInfo::get swfVersion"); return;
-      // return this._swfVersion;
+      return this._swfVersion;
     }
+
     get actionScriptVersion(): number /*uint*/ {
-      notImplemented("public flash.display.LoaderInfo::get actionScriptVersion"); return;
-      // return this._actionScriptVersion;
+      return this._actionScriptVersion;
     }
+
     get frameRate(): number {
-      notImplemented("public flash.display.LoaderInfo::get frameRate"); return;
-      // return this._frameRate;
+      return this._frameRate;
     }
+
     get width(): number /*int*/ {
-      notImplemented("public flash.display.LoaderInfo::get width"); return;
-      // return this._width;
+      return (this._width * 0.05) | 0;
     }
+
     get height(): number /*int*/ {
-      notImplemented("public flash.display.LoaderInfo::get height"); return;
-      // return this._height;
+      return (this._height * 0.05) | 0;
     }
+
     get contentType(): string {
-      notImplemented("public flash.display.LoaderInfo::get contentType"); return;
-      // return this._contentType;
+      return this._contentType;
     }
+
     get sharedEvents(): flash.events.EventDispatcher {
       notImplemented("public flash.display.LoaderInfo::get sharedEvents"); return;
       // return this._sharedEvents;
@@ -178,14 +180,15 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.LoaderInfo::get parentAllowsChild"); return;
       // return this._parentAllowsChild;
     }
+
     get loader(): flash.display.Loader {
-      notImplemented("public flash.display.LoaderInfo::get loader"); return;
-      // return this._loader;
+      return this._loader;
     }
+
     get content(): flash.display.DisplayObject {
-      notImplemented("public flash.display.LoaderInfo::get content"); return;
-      // return this._content;
+      return this._content;
     }
+
     get bytes(): flash.utils.ByteArray {
       notImplemented("public flash.display.LoaderInfo::get bytes"); return;
       // return this._bytes;

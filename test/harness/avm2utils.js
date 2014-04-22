@@ -103,7 +103,6 @@ var BinaryFileReader = (function binaryFileReader() {
 
 // avm2 must be global.
 var avm2;
-var sanityTests = [];
 
 function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
   assert (builtinPath);

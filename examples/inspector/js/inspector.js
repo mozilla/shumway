@@ -24,8 +24,6 @@ var yt = getQueryVariable('yt');
 
 var swfController = new SWFController(timeline, pauseExecution);
 
-var testNumber = 0;
-
 function timeAllocation(C, count) {
   var s = Date.now();
   for (var i = 0; i < count; i++) {
@@ -34,28 +32,7 @@ function timeAllocation(C, count) {
   console.info("Took: " + (Date.now() - s) + " " + C);
 }
 
-function eqFloat(a, b, test) {
-  test = test ? ": " + test : " #" + testNumber;
-  if (Math.abs(a -b) < 0.1) {
-    console.info("PASS" + test)
-  } else {
-    console.error("FAIL" + test)
-  }
-  testNumber ++;
-}
 
-function check(condition, test) {
-  test = test ? ": " + test : " #" + testNumber;
-  if (condition) {
-    console.info("PASS" + test)
-  } else {
-    console.error("FAIL" + test)
-  }
-  testNumber ++;
-}
-
-/** Global sanityTests array, sanity tests add themselves to this */
-var sanityTests = [];
 
 // avm2 must be global.
 var avm2;
@@ -182,7 +159,7 @@ function executeFile(file, buffer, movieParams) {
   } else if (filename.endsWith(".swf")) {
     createAVM2(builtinPath, playerglobalInfo, avm1Path, sysMode, appMode, function (avm2) {
       function runSWF(file, buffer) {
-        var swfURL = FileLoadingService.resolveUrl(file);
+        var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
         var loaderURL = getQueryVariable("loaderURL") || swfURL;
         SWF.embed(buffer || file, document, document.getElementById('stage'), {
           onComplete: swfController.completeCallback.bind(swfController),
@@ -195,10 +172,10 @@ function executeFile(file, buffer, movieParams) {
         });
       }
       if (!buffer && asyncLoading) {
-        FileLoadingService.setBaseUrl(file);
+        Shumway.FileLoadingService.instance.setBaseUrl(file);
         runSWF(file);
       } else if (!buffer) {
-        FileLoadingService.setBaseUrl(file);
+        Shumway.FileLoadingService.instance.setBaseUrl(file);
         new BinaryFileReader(file).readAll(null, function(buffer, error) {
           if (!buffer) {
             throw "Unable to open the file " + file + ": " + error;
@@ -211,35 +188,7 @@ function executeFile(file, buffer, movieParams) {
     });
   } else if (filename.endsWith(".js") || filename.endsWith("/")) {
     createAVM2(builtinPath, playerglobalInfo, null, sysMode, appMode, function (avm2) {
-      if (file.endsWith("/")) {
-        readDirectoryListing(file, function (files) {
-          function loadNextScript(done) {
-            if (!files.length) {
-              done();
-              return;
-            }
-            var sanityTest = files.pop();
-            console.info("Loading Sanity Test: " + sanityTest);
-            loadScript(sanityTest, function () {
-              loadNextScript(done);
-            });
-          }
-          loadNextScript(function whenAllScriptsAreLoaded() {
-            initUI();
-            console.info("Executing Sanity Test");
-            sanityTests.forEach(function (test) {
-              test(console, avm2);
-            });
-          });
-        });
-      } else {
-        loadScript(file, function () {
-          initUI();
-          sanityTests.forEach(function (test) {
-            test(console, avm2);
-          });
-        });
-      }
+      executeUnitTests(file, avm2);
     });
   }
 }
@@ -254,11 +203,11 @@ function executeFile(file, buffer, movieParams) {
   }
 })();
 
-var TelemetryService = {
+Shumway.Telemetry.instance = {
   reportTelemetry: function (data) { }
 };
 
-var FileLoadingService = {
+Shumway.FileLoadingService.instance = {
   createSession: function () {
     return {
       open: function (request) {
@@ -272,7 +221,7 @@ var FileLoadingService = {
         }
 
         var self = this;
-        var path = FileLoadingService.resolveUrl(request.url);
+        var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path + ", data: " + request.data);
         new BinaryFileReader(path, request.method, request.mimeType, request.data).readAsync(
           function (data, progress) {
@@ -290,7 +239,7 @@ var FileLoadingService = {
     a.href = url || '#';
     a.setAttribute('style', 'display: none;');
     document.body.appendChild(a);
-    FileLoadingService.baseUrl = a.href;
+    Shumway.FileLoadingService.instance.baseUrl = a.href;
     document.body.removeChild(a);
   },
   resolveUrl: function (url) {
@@ -298,7 +247,7 @@ var FileLoadingService = {
       return url;
     }
 
-    var base = FileLoadingService.baseUrl || '';
+    var base = Shumway.FileLoadingService.instance.baseUrl || '';
     base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
     if (url.indexOf('/') === 0) {
       var m = /^[^:]+:\/\/[^\/]+/.exec(base);
@@ -514,11 +463,10 @@ HTMLCanvasElement.prototype.getContext = function getContext(contextId, args) {
 var Stage = Shumway.GFX.Layers.Stage;
 var Easel = Shumway.GFX.Layers.Easel;
 var Canvas2DStageRenderer = Shumway.GFX.Layers.Canvas2DStageRenderer;
-var easel = null
 
 function createEasel() {
   var canvas = document.createElement("canvas");
   canvas.style.backgroundColor = "#14171a";
   document.getElementById("stageContainer").appendChild(canvas);
-  easel = new Easel(canvas);
+  return new Easel(canvas);
 }

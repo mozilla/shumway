@@ -67,14 +67,10 @@ module Shumway.AVM1 {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
-
+  import Telemetry = Shumway.Telemetry;
 
   declare var avm2;
   declare var Proxy;
-
-  declare class TelemetryService {
-    static reportTelemetry(data);
-  }
 
   declare class Error {
     constructor(obj: string);
@@ -1850,8 +1846,7 @@ module Shumway.AVM1 {
             throw e;
           }
 
-          var AVM1_ERROR_TYPE = 1;
-          TelemetryService.reportTelemetry({topic: 'error', error: AVM1_ERROR_TYPE});
+          Telemetry.reportTelemetry({topic: 'error', error: Telemetry.ErrorTypes.AVM1_ERROR});
 
           if (!executionContext.recoveringFromError) {
             if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
@@ -2327,8 +2322,7 @@ module Shumway.AVM1 {
           throw e;
         }
 
-        var AVM1_ERROR_TYPE = 1;
-        TelemetryService.reportTelemetry({topic: 'error', error: AVM1_ERROR_TYPE});
+        Telemetry.reportTelemetry({topic: 'error', error: Telemetry.ErrorTypes.AVM1_ERROR});
 
         if (!executionContext.recoveringFromError) {
           if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {

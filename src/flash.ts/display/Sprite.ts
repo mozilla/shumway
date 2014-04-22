@@ -31,6 +31,8 @@ module Shumway.AVM2.AS.flash.display {
       self._hitArea = null;
       self._useHandCursor = true;
 
+      self._snapshots = [];
+
       if (symbol) {
         self._snapshots = symbol._snapshots || self._snapshots;
       }
@@ -132,6 +134,9 @@ module Shumway.AVM2.AS.flash.display {
 
     initChildren(): void {
       var snapshot = this._snapshots[0];
+      if (!snapshot) {
+        return;
+      }
       var diff = snapshot.diff(null);
       var states = diff.place;
       for (var i = 0; i < states.length; i++) {
