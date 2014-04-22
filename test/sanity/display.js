@@ -193,8 +193,8 @@
           node.rotation += node.speed;
         }
         if (node.scaleSpeed) {
-          // node.scaleX += node.scaleSpeed;
-          // node.scaleY += node.scaleSpeed;
+          node.scaleX += node.scaleSpeed;
+          node.scaleY += node.scaleSpeed;
         }
         return VisitorFlags.Continue;
       });
