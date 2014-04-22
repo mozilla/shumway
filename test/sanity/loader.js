@@ -1,4 +1,4 @@
-(function displayTests() {
+(function displayLoaderTests() {
   var Event = flash.events.Event;
   var Stage = flash.display.Stage;
   var Loader = flash.display.Loader;
@@ -10,29 +10,47 @@
     console.info(message);
   }
 
-  unitTests.push(function runInspectorSanityTests(console) {
-    var r = new URLRequest("../as3_tiger/tiger.swf");
-    var l = new Loader();
-    var s = new Stage();
+  unitTests.push(function runInspectorSanityTests() {
+    return new Promise(function (resolve, reject) {
+      var r = new URLRequest("../as3_tiger/tiger.swf");
+      var l = new Loader();
+      var s = new Stage();
 
-    var initEventCalled = false;
-    var completeEventCalled = false;
+      var initEventCalled = false;
+      var completeEventCalled = false;
+      var initEventPromise = new Promise(function (resolve) {
+        l.contentLoaderInfo.addEventListener(Event.INIT, function (event) {
+          initEventCalled = true;
+          resolve();
+        });
+      });
 
-    l.contentLoaderInfo.addEventListener(Event.INIT, function (event) {
-      initEventCalled = true;
+      var completeEventPromise = new Promise(function (resolve) {
+        l.contentLoaderInfo.addEventListener(Event.COMPLETE, function (event) {
+          completeEventCalled = true;
+          resolve();
+        });
+      });
+
+      l.load(r);
+
+      var checkEvents = function () {
+        check(initEventCalled, "Check contentLoaderInfo initEventCalled");
+        check(completeEventCalled, "Check contentLoaderInfo completeEventCalled");
+      };
+
+      var timeout = setTimeout(function () {
+        reject('timeout');
+      }, 1000);
+
+      Promise.all([initEventPromise, completeEventPromise]).then(function () {
+        clearTimeout(timeout);
+        checkEvents();
+      });
     });
-
-    l.contentLoaderInfo.addEventListener(Event.COMPLETE, function (event) {
-      completeEventCalled = true;
-    });
-
-    l.load(r);
-
-    check(initEventCalled, "Check contentLoaderInfo initEventCalled");
-    check(completeEventCalled, "Check contentLoaderInfo completeEventCalled");
   });
 
-  unitTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     var r = new URLRequest("../as3_tiger/tiger.swf");
     var l = new Loader();
     var s = new Stage();

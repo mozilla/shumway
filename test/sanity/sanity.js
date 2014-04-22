@@ -1,4 +1,4 @@
-unitTests.push(function runInspectorSanityTests(console, avm2) {
+unitTests.push(function runInspectorSanityTests(avm2) {
   function log(message) {
     console.info(message);
   }
@@ -29,7 +29,7 @@ unitTests.push(function runInspectorSanityTests(console, avm2) {
 });
 
 
-unitTests.push(function runInspectorAsyncTest(console) {
+unitTests.push(function runInspectorAsyncTest(avm2) {
   console.info('Testing async test');
   return new Promise(function (resolve) {
     setTimeout(resolve);

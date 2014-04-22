@@ -246,11 +246,12 @@ function createParsingContext(commitData) {
             break;
           case SWF_TAG_CODE_DO_ABC:
           case SWF_TAG_CODE_DO_ABC_:
-            var abcBlocks = frame.abcBlocks;
-            if (abcBlocks)
-              abcBlocks.push({data: tag.data, flags: tag.flags});
-            else
-              frame.abcBlocks = [{data: tag.data, flags: tag.flags}];
+            commitData({
+              type: 'abc',
+              flags: tag.flags,
+              name: tag.name,
+              data: tag.data
+            });
             break;
           case SWF_TAG_CODE_DO_ACTION:
             var actionBlocks = frame.actionBlocks;

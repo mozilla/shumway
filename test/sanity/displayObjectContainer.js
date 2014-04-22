@@ -10,7 +10,7 @@
   var Shape = flash.display.Shape;
   var Sprite = flash.display.Sprite;
 
-  unitTests.push(function (console) {
+  unitTests.push(function () {
     Random.seed(0x12343);
 
     var s = new Shape();

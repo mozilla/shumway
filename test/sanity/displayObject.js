@@ -105,7 +105,7 @@
     console.info("Made: " + containers.length);
   });
 
-  unitTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var o = new DisplayObject();
     var p = ["x", "y"];
@@ -134,7 +134,7 @@
     }
   });
 
-  unitTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     var s = new Shape();
     var c = new DisplayObjectContainer();
     c.addChild(s);
@@ -148,7 +148,7 @@
   });
 
 
-  unitTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -191,7 +191,7 @@
     eqFloat(s.scaleY, 0.373, "ScaleY: " + s.scaleY);
   });
 
-  unitTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -235,7 +235,7 @@
   });
 
 
-  unitTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -257,7 +257,7 @@
     eqFloat(s.width, 141.4, "Width: " + s.width);
   });
 
-  unitTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -277,7 +277,7 @@
     eqFloat(s.height, 10, "Height should eventually become 10: " + s.height);
   });
 
-  unitTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -302,7 +302,7 @@
     }
   });
 
-  unitTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     Random.seed(0x12343);
     var c = new DisplayObjectContainer();
 
@@ -330,6 +330,5 @@
     c.x = -200;
     check(!a.hitTestObject(b));
   });
-
 
 })();

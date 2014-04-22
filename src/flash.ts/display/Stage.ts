@@ -116,19 +116,19 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get stageWidth(): number /*int*/ {
-      return this._stageWidth;
+      return this._stageWidth / 20;
     }
 
     set stageWidth(value: number /*int*/) {
-      this._stageWidth = value | 0;
+      this._stageWidth = (value * 20) | 0;
     }
 
     get stageHeight(): number /*int*/ {
-      return this._stageHeight;
+      return this._stageHeight / 20;
     }
 
     set stageHeight(value: number /*int*/) {
-      this._stageHeight = value | 0;
+      this._stageHeight = (value * 20) | 0;
     }
 
     get showDefaultContextMenu(): boolean {

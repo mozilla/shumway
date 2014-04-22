@@ -113,15 +113,7 @@ function runSanityTests(tests) {
         var failed = false;
         var promise;
         try {
-          promise = Promise.cast(test({
-            info: function (m) {
-              console.info(m);
-            },
-            error: function (m) {
-              console.error(m);
-              failed = true;
-            }
-          }, avm2));
+          promise = Promise.cast(test(avm2));
         } catch (e) {
           promise = Promise.reject(e);
         }
