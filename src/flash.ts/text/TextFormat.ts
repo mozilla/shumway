@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import asCoerceObject = Shumway.AVM2.Runtime.asCoerceObject;
 
   export class TextFormat extends ASNative {
 
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.text {
                 leftMargin: ASObject = null, rightMargin: ASObject = null, indent: ASObject = null,
                 leading: ASObject = null)
     {
-      font = "" + font;
+      font = asCoerceString(font);
       size = size;
       color = color;
       bold = bold;
@@ -71,48 +72,42 @@ module Shumway.AVM2.AS.flash.text {
     private _url: string;
 
 
-    fromObject(obj: any): TextFormat {
-      if (!obj) {
-        return this;
-      }
-      this._font = obj.face || null;
-      this._size = typeof obj.size === 'number' ? obj.size : null;
-      this._color = typeof obj.color === 'number' ? obj.color : null;
-      this._bold = typeof obj.bold === 'boolean' ? obj.bold : null;
-      this._italic = typeof obj.italic === 'boolean' ? obj.italic : null;
-      this._underline = typeof obj.underline === 'boolean'
-        ? obj.underline
-        : null;
-      this._url = obj.url || null;
-      this._target = obj.target || null;
-      this._align = obj.align || null;
-      this._leftMargin = typeof obj.leftMargin === 'number'
-        ? obj.leftMargin
-        : null;
-      this._rightMargin = typeof obj.rightMargin === 'number'
-        ? obj.rightMargin
-        : null;
-      this._indent = typeof obj.indent === 'number' ? obj.indent : null;
-      this._leading = typeof obj.leading === 'number' ? obj.leading : null;
+    fromNative(nativeFormat: NativeTextFormat): TextFormat {
+      this._font = nativeFormat.face;
+      this._size = asCoerceObject(nativeFormat.size);
+      this._color = asCoerceObject(nativeFormat.color);
+      this._bold = asCoerceObject(nativeFormat.bold);
+      this._italic = asCoerceObject(nativeFormat.italic);
+      this._underline = asCoerceObject(nativeFormat.underline);
+      this._url = nativeFormat.url;
+      this._target = nativeFormat.target;
+      this._align = nativeFormat.align;
+      this._leftMargin = asCoerceObject(nativeFormat.leftMargin);
+      this._rightMargin = asCoerceObject(nativeFormat.rightMargin);
+      this._indent = asCoerceObject(nativeFormat.indent);
+      this._leading = asCoerceObject(nativeFormat.leading);
+      this._letterSpacing = asCoerceObject(nativeFormat.letterSpacing);
+      this._kerning = asCoerceObject(nativeFormat.kerning);
       return this;
     }
 
-    toObject(): Object {
-      return {
-        face: this._font || 'serif',
-        size: this._size || 12,
-        color: this._color || 0x0,
-        bold: this._bold || false,
-        italic: this._italic || false,
-        underline: this._underline || false,
-        url: this._url,
-        target: this._target,
-        align: this._align || 'left',
-        leftMargin: this._leftMargin || 0,
-        rightMargin: this._rightMargin || 0,
-        indent: this._indent || 0,
-        leading: this._leading || 0
-      };
+    toNative(): NativeTextFormat {
+      var format: NativeTextFormat = new NativeTextFormat();
+      format.face = this._font + '' || 'serif';
+      format.size = isNaN(+this._size) ? 12 : +this._size;
+      format.color = +this._color | 0;
+      format.bold = !!this._bold;
+      format.italic = !!this._italic;
+      format.underline = !!this._underline;
+      format.url = this._url + '';
+      format.target = this._target + '';
+      var align: string = (this._align + '').toUpperCase();
+      format.align = align in TextFormatAlign ? align : 'LEFT';
+      format.leftMargin = +this._leftMargin;
+      format.rightMargin = +this._rightMargin;
+      format.indent = isNaN(+this._indent) ? 0 : +this._indent;
+      format.leading = isNaN(+this._leading) ? 0 : +this._indent;
+      return format;
     }
 
     as2GetTextExtent(text: string, width: number/* optional */) {
@@ -294,5 +289,24 @@ module Shumway.AVM2.AS.flash.text {
     set url(value: string) {
       this._url = asCoerceString(value);
     }
+  }
+
+  export class NativeTextFormat {
+    face: string;
+    fontObj: Font;
+    size: number;
+    color: number;
+    bold: boolean;
+    italic: boolean;
+    underline: boolean;
+    url: string;
+    target: string;
+    align: string;
+    leftMargin: number;
+    rightMargin: number;
+    indent: number;
+    leading: number;
+    letterSpacing: number;
+    kerning: number;
   }
 }

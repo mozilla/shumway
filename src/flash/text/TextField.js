@@ -339,8 +339,7 @@ var TextFieldDefinition = (function () {
       var descent = font.descent * size + 0.49999 | 0;
       var leading = font.leading * size + 0.49999 + line.leading | 0;
       // TODO: check if metrics values can be floats for embedded fonts
-      return new flash.text.TextLineMetrics(line.x + 2, line.width,
-                                            line.height,
+      return new flash.text.TextLineMetrics(line.x + 2, line.width, line.height,
                                             ascent, descent, leading);
     },
     getCharBoundaries: function getCharBoundaries(index) {

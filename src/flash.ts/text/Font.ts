@@ -58,6 +58,10 @@ module Shumway.AVM2.AS.flash.text {
       return this.fontsBySymbolId[id];
     }
 
+    ascent: number;
+    descent: number;
+    leading: number;
+
     private _fontId: string;
     private _fontName: string;
     private _fontStyle: string;

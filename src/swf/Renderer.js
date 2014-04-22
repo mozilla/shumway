@@ -729,7 +729,7 @@ Renderer.prototype.resolveFont = function(format, embedded) {
   }
   var font = this.getFont(face, embedded);
   assert(font);
-  format.font = font;
+  format.fontObj = font;
 };
 
 var RenderableNoop = {
@@ -1110,7 +1110,7 @@ function RenderableText(data, renderer, resolve) {
   var wordWrap = !!data[p++];
   var multiline = !!data[p++];
   var leading = data[p++];
-  var letterspacing = data[p++];
+  var letterSpacing = data[p++];
   var kerning = data[p++];
   var isHtml = data[p++];
   var condenseWhite = data[p++];
@@ -1120,14 +1120,14 @@ function RenderableText(data, renderer, resolve) {
   var text = String.fromCharCode.apply(null, data.subarray(p, p + n));
 
   var format = { align: ALIGN_TYPES[align],
-                 font: null,
+                 fontObj: null,
                  bold: bold,
                  italic: italic,
                  // TODO: support device fonts
                  face: 'serif',
                  font: null,
                  size: size,
-                 letterSpacing: letterspacing,
+                 letterSpacing: letterSpacing,
                  kerning: kerning,
                  color: color >>> 0,
                  leading: leading };
@@ -1900,9 +1900,9 @@ function makeFormatString(format) {
   if (format.bold) {
     boldItalic += ' bold';
   }
-  // We don't use format.face because format.font contains the resolved name.
+  // We don't use format.face because format.fontObj contains the resolved name.
   return boldItalic + ' ' + format.size + 'px ' +
-          (format.font.uniqueName || format.font.name);
+          (format.fontObj.uniqueName || format.fontObj.name);
 }
 
 var htmlParser = document.createElement('p');
@@ -2308,14 +2308,14 @@ TextFieldContent.prototype = {
     if (line.runs.length === 0) {
       if (forceNewline) {
         var format = state.currentFormat;
-        state.line.y += format.font.height * format.size +
+        state.line.y += format.fontObj.height * format.size +
                         format.leading|0;
       }
       return;
     }
     var runs = line.runs;
     var format = line.largestFormat;
-    var baselinePos = line.y + format.font.ascent * format.size;
+    var baselinePos = line.y + format.fontObj.ascent * format.size;
     for (var i = runs.length; i--;) {
       runs[i].y = baselinePos;
     }
@@ -2335,7 +2335,7 @@ TextFieldContent.prototype = {
         runs[i].x += offset;
       }
     }
-    line.height = format.font.height * format.size + line.leading|0;
+    line.height = format.fontObj.height * format.size + line.leading|0;
     state.maxLineWidth = Math.max(state.maxLineWidth, line.width);
     this.lines.push(line);
     state.line = new TextFieldContent.TextLine(line.y + line.height);
@@ -2371,11 +2371,11 @@ TextFieldContent.prototype = {
           format.size = parseFloat(attributes.SIZE);
         }
         if (attributes.LETTERSPACING !== undefined) {
-          format.letterspacing = parseFloat(attributes.LETTERSPACING);
+          format.letterSpacing = parseFloat(attributes.LETTERSPACING);
         }
         if (attributes.KERNING !== undefined) {
           // TODO: properly parse this in extractAttributes
-          format.kerning = attributes.KERNING && true;
+          format.kerning = parseFloat(attributes.KERNING);
         }
       /* falls through */
       case 'TEXTFORMAT':

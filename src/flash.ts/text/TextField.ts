@@ -30,11 +30,17 @@ module Shumway.AVM2.AS.flash.text {
 
     static initializer: any = function (symbol: TextField) {
       this._bbox = {xMin: 0, yMin: 0, xMax: 2000, yMax: 2000};
-      var initialFormat = this._defaultTextFormat = {
-        align: 'LEFT', font: null, face: 'serif', size: 12,
-        letterspacing: 0, kerning: 0, color: 0, leading: 0,
-        bold: false, italic: false
-      };
+      var initialFormat = this._defaultTextFormat = new NativeTextFormat();
+      initialFormat.align = 'LEFT';
+      initialFormat.fontObj = null;
+      initialFormat.face = 'serif';
+      initialFormat.size = 12;
+      initialFormat.letterSpacing = 0;
+      initialFormat.kerning = 0;
+      initialFormat.color = 0;
+      initialFormat.leading = 0;
+      initialFormat.bold = false;
+      initialFormat.italic = false;
 
       this._type = 'dynamic';
       this._embedFonts = false;
@@ -86,7 +92,7 @@ module Shumway.AVM2.AS.flash.text {
       }
       if (tag.hasFont) {
         var font = Font.getFontBySymbolId(tag.fontId);
-        initialFormat.font = font;
+        initialFormat.fontObj = font;
         initialFormat.face = font._fontName;
         initialFormat.bold = font.symbol.bold;
         initialFormat.italic = font.symbol.italic;
@@ -211,7 +217,7 @@ module Shumway.AVM2.AS.flash.text {
     _bottomScrollV: number /*int*/ = 0;
     // _caretIndex: number /*int*/;
     _condenseWhite: boolean;
-    _defaultTextFormat: any; // TODO: probably introduce strongly-typed JS obj
+    _defaultTextFormat: NativeTextFormat;
     _embedFonts: boolean;
     _gridFitType: string;
     _textInteractionMode: string;
@@ -335,11 +341,11 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     get defaultTextFormat(): flash.text.TextFormat {
-      return new flash.text.TextFormat().fromObject(this._defaultTextFormat);
+      return new flash.text.TextFormat().fromNative(this._defaultTextFormat);
     }
 
     set defaultTextFormat(format: flash.text.TextFormat) {
-      this._defaultTextFormat = format && format.toObject();
+      this._defaultTextFormat = format && format.toNative();
       this.invalidateDimensions();
     }
 
@@ -628,7 +634,7 @@ module Shumway.AVM2.AS.flash.text {
       }
       var line = this._lines[lineIndex];
       var format = line.largestFormat;
-      var font = format.font;
+      var font: Font = format.fontObj;
       var size = format.size;
       // Rounding for metrics seems to be screwy. A descent of 3.5 gets
       // rounded to 3, but an ascent of 12.8338 gets rounded to 13.
