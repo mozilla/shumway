@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,19 @@
  */
 // Class: TextColorType
 module Shumway.AVM2.AS.flash.text {
-  import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextColorType extends ASNative {
-    
-    // Called whenever the class is initialized.
+
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-    
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = null;
+
     constructor () {
-      false && super();
-      notImplemented("Dummy Constructor: public flash.text.TextColorType");
+      super();
     }
     
     // JS -> AS Bindings
     static DARK_COLOR: string = "dark";
     static LIGHT_COLOR: string = "light";
-    
-    
-    // AS -> JS Bindings
-    
   }
 }

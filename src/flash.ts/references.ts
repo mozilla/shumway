@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -311,23 +311,23 @@
 ///<reference path='system/SystemUpdaterType.ts' />
 ///<reference path='system/TouchscreenType.ts' />
 
-// ///<reference path='text/AntiAliasType.ts' />
+///<reference path='text/AntiAliasType.ts' />
 // ///<reference path='text/CSMSettings.ts' />
 ///<reference path='text/Font.ts' />
-// ///<reference path='text/FontStyle.ts' />
-// ///<reference path='text/FontType.ts' />
-// ///<reference path='text/GridFitType.ts' />
+///<reference path='text/FontStyle.ts' />
+///<reference path='text/FontType.ts' />
+///<reference path='text/GridFitType.ts' />
 ///<reference path='text/StaticText.ts' />
 ///<reference path='text/StyleSheet.ts' />
 // ///<reference path='text/TextColorType.ts' />
-// ///<reference path='text/TextDisplayMode.ts' />
+///<reference path='text/TextDisplayMode.ts' />
 // ///<reference path='text/TextExtent.ts' />
 ///<reference path='text/TextField.ts' />
-// ///<reference path='text/TextFieldAutoSize.ts' />
-// ///<reference path='text/TextFieldType.ts' />
+///<reference path='text/TextFieldAutoSize.ts' />
+///<reference path='text/TextFieldType.ts' />
 ///<reference path='text/TextFormat.ts' />
-// ///<reference path='text/TextFormatAlign.ts' />
-// ///<reference path='text/TextFormatDisplay.ts' />
+///<reference path='text/TextFormatAlign.ts' />
+///<reference path='text/TextFormatDisplay.ts' />
 // ///<reference path='text/TextInteractionMode.ts' />
 ///<reference path='text/TextLineMetrics.ts' />
 // ///<reference path='text/TextRenderer.ts' />
