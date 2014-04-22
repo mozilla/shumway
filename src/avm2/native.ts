@@ -794,6 +794,9 @@ module Shumway.AVM2.AS {
 
   var ASClassPrototype = ASClass.prototype;
 
+  (<any>ASClassPrototype).call = Function.prototype.call;
+  (<any>ASClassPrototype).apply = Function.prototype.apply;
+
   export class ASFunction extends ASObject {
     public static baseClass: typeof ASClass = null;
     public static classInfo: ClassInfo;
