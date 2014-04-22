@@ -16,6 +16,7 @@
 // Class: CurrencyParseResult
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class CurrencyParseResult extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.globalization {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor (value: number = NaN, symbol: string = "") {
-      value = +value; symbol = "" + symbol;
+      value = +value; symbol = asCoerceString(symbol);
       false && super();
       notImplemented("Dummy Constructor: public flash.globalization.CurrencyParseResult");
     }
@@ -52,7 +53,7 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._currencyString;
     }
     ctor(value: number, symbol: string): void {
-      value = +value; symbol = "" + symbol;
+      value = +value; symbol = asCoerceString(symbol);
       notImplemented("public flash.globalization.CurrencyParseResult::ctor"); return;
     }
   }

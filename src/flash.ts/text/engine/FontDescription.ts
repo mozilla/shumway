@@ -16,6 +16,7 @@
 // Class: FontDescription
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class FontDescription extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.text.engine {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (fontName: string = "_serif", fontWeight: string = "normal", fontPosture: string = "normal", fontLookup: string = "device", renderingMode: string = "cff", cffHinting: string = "horizontalStem") {
-      fontName = "" + fontName; fontWeight = "" + fontWeight; fontPosture = "" + fontPosture; fontLookup = "" + fontLookup; renderingMode = "" + renderingMode; cffHinting = "" + cffHinting;
+      fontName = asCoerceString(fontName); fontWeight = asCoerceString(fontWeight); fontPosture = asCoerceString(fontPosture); fontLookup = asCoerceString(fontLookup); renderingMode = asCoerceString(renderingMode); cffHinting = asCoerceString(cffHinting);
       false && super();
       notImplemented("Dummy Constructor: public flash.text.engine.FontDescription");
     }
@@ -42,11 +43,11 @@ module Shumway.AVM2.AS.flash.text.engine {
     
     // AS -> JS Bindings
     static isFontCompatible(fontName: string, fontWeight: string, fontPosture: string): boolean {
-      fontName = "" + fontName; fontWeight = "" + fontWeight; fontPosture = "" + fontPosture;
+      fontName = asCoerceString(fontName); fontWeight = asCoerceString(fontWeight); fontPosture = asCoerceString(fontPosture);
       notImplemented("public flash.text.engine.FontDescription::static isFontCompatible"); return;
     }
     static isDeviceFontCompatible(fontName: string, fontWeight: string, fontPosture: string): boolean {
-      fontName = "" + fontName; fontWeight = "" + fontWeight; fontPosture = "" + fontPosture;
+      fontName = asCoerceString(fontName); fontWeight = asCoerceString(fontWeight); fontPosture = asCoerceString(fontPosture);
       notImplemented("public flash.text.engine.FontDescription::static isDeviceFontCompatible"); return;
     }
     
@@ -62,7 +63,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._renderingMode;
     }
     set renderingMode(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.FontDescription::set renderingMode"); return;
       // this._renderingMode = value;
     }
@@ -71,7 +72,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._fontLookup;
     }
     set fontLookup(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.FontDescription::set fontLookup"); return;
       // this._fontLookup = value;
     }
@@ -80,7 +81,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._fontName;
     }
     set fontName(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.FontDescription::set fontName"); return;
       // this._fontName = value;
     }
@@ -89,7 +90,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._fontPosture;
     }
     set fontPosture(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.FontDescription::set fontPosture"); return;
       // this._fontPosture = value;
     }
@@ -98,7 +99,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._fontWeight;
     }
     set fontWeight(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.FontDescription::set fontWeight"); return;
       // this._fontWeight = value;
     }
@@ -107,7 +108,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._cffHinting;
     }
     set cffHinting(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.FontDescription::set cffHinting"); return;
       // this._cffHinting = value;
     }

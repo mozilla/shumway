@@ -16,6 +16,7 @@
 // Class: Event
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Event extends ASNative {
 
     // Called whenever the class is initialized.
@@ -25,16 +26,16 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["formatToString", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["formatToString", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable;
       false && super();
       this._type = type;
-      this._bubbles = false;
+      this._bubbles = bubbles;
       this._cancelable = cancelable;
 
       this._target = null;

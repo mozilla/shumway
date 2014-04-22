@@ -15,7 +15,9 @@
  */
 // Class: Stage3D
 module Shumway.AVM2.AS.flash.display {
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Stage3D extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -25,10 +27,10 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super(undefined);
@@ -76,7 +78,7 @@ module Shumway.AVM2.AS.flash.display {
       // this._visible = value;
     }
     requestContext3D(context3DRenderMode: string = "auto", profile: string = "baseline"): void {
-      context3DRenderMode = "" + context3DRenderMode; profile = "" + profile;
+      context3DRenderMode = asCoerceString(context3DRenderMode); profile = asCoerceString(profile);
       notImplemented("public flash.display.Stage3D::requestContext3D"); return;
     }
   }

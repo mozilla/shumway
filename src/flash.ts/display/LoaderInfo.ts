@@ -16,19 +16,45 @@
 // Class: LoaderInfo
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class LoaderInfo extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
+    static initializer: any = function () {
+      var self: LoaderInfo = this;
+      self._loaderURL = '';
+      self._url = '';
+      self._isURLInaccessible = false;
+      self._bytesLoaded = 0;
+      self._bytesTotal = 0;
+      self._applicationDomain = null;
+      self._swfVersion = 0;
+      self._actionScriptVersion = 0;
+      self._frameRate = 24;
+      self._parameters = null;
+      self._width = 0;
+      self._height = 0;
+      self._contentType = '';
+      self._sharedEvents = null;
+      self._parentSandboxBridge = null;
+      self._childSandboxBridge = null;
+      self._sameDomain = false;
+      self._childAllowsParent = false;
+      self._parentAllowsChild = false;
+      self._loader = null;
+      self._content = null;
+      self._bytes = null;
+      self._uncaughtErrorEvents = null;
+    };
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["parameters", "uncaughtErrorEvents", "dispatchEvent"];
+    static instanceSymbols: string [] = null; // ["parameters", "uncaughtErrorEvents", "dispatchEvent"];
     
     constructor () {
       false && super(undefined);
@@ -39,37 +65,37 @@ module Shumway.AVM2.AS.flash.display {
     
     parameters: ASObject;
     uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
-    dispatchEvent: (event: flash.events.Event) => boolean;
-    
+
     // AS -> JS Bindings
     static getLoaderInfoByDefinition(object: ASObject): flash.display.LoaderInfo {
       object = object;
       notImplemented("public flash.display.LoaderInfo::static getLoaderInfoByDefinition"); return;
     }
-    
-    // _loaderURL: string;
-    // _url: string;
-    // _isURLInaccessible: boolean;
-    // _bytesLoaded: number /*uint*/;
-    // _bytesTotal: number /*uint*/;
-    // _applicationDomain: flash.system.ApplicationDomain;
-    // _swfVersion: number /*uint*/;
-    // _actionScriptVersion: number /*uint*/;
-    // _frameRate: number;
-    // _parameters: ASObject;
-    // _width: number /*int*/;
-    // _height: number /*int*/;
-    // _contentType: string;
-    // _sharedEvents: flash.events.EventDispatcher;
-    // _parentSandboxBridge: ASObject;
-    // _childSandboxBridge: ASObject;
-    // _sameDomain: boolean;
-    // _childAllowsParent: boolean;
-    // _parentAllowsChild: boolean;
-    // _loader: flash.display.Loader;
-    // _content: flash.display.DisplayObject;
-    // _bytes: flash.utils.ByteArray;
-    // _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
+
+    _loaderURL: string;
+    _url: string;
+    _isURLInaccessible: boolean;
+    _bytesLoaded: number /*uint*/;
+    _bytesTotal: number /*uint*/;
+    _applicationDomain: flash.system.ApplicationDomain;
+    _swfVersion: number /*uint*/;
+    _actionScriptVersion: number /*uint*/;
+    _frameRate: number;
+    _parameters: ASObject;
+    _width: number /*int*/;
+    _height: number /*int*/;
+    _contentType: string;
+    _sharedEvents: flash.events.EventDispatcher;
+    _parentSandboxBridge: ASObject;
+    _childSandboxBridge: ASObject;
+    _sameDomain: boolean;
+    _childAllowsParent: boolean;
+    _parentAllowsChild: boolean;
+    _loader: flash.display.Loader;
+    _content: flash.display.DisplayObject;
+    _bytes: flash.utils.ByteArray;
+    _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
+
     get loaderURL(): string {
       notImplemented("public flash.display.LoaderInfo::get loaderURL"); return;
       // return this._loaderURL;

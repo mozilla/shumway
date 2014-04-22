@@ -16,6 +16,7 @@
 // Class: TextJustifier
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextJustifier extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.text.engine {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // ["getJustifierForLocale"];
+    static classSymbols: string [] = null; // ["getJustifierForLocale"];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = null; // ["clone"];
     
     constructor (locale: string, lineJustification: string) {
-      locale = "" + locale; lineJustification = "" + lineJustification;
+      locale = asCoerceString(locale); lineJustification = asCoerceString(lineJustification);
       false && super();
       notImplemented("Dummy Constructor: public flash.text.engine.TextJustifier");
     }
@@ -54,12 +55,12 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._lineJustification;
     }
     set lineJustification(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.TextJustifier::set lineJustification"); return;
       // this._lineJustification = value;
     }
     setLocale(value: string): void {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.TextJustifier::setLocale"); return;
     }
   }

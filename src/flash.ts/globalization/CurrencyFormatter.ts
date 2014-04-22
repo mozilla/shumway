@@ -16,6 +16,7 @@
 // Class: CurrencyFormatter
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class CurrencyFormatter extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.globalization {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["format"];
+    static instanceSymbols: string [] = null; // ["format"];
     
     constructor (requestedLocaleIDName: string) {
-      requestedLocaleIDName = "" + requestedLocaleIDName;
+      requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
       false && super();
       notImplemented("Dummy Constructor: public flash.globalization.CurrencyFormatter");
     }
@@ -104,7 +105,7 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._groupingPattern;
     }
     set groupingPattern(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.globalization.CurrencyFormatter::set groupingPattern"); return;
       // this._groupingPattern = value;
     }
@@ -122,7 +123,7 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._decimalSeparator;
     }
     set decimalSeparator(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.globalization.CurrencyFormatter::set decimalSeparator"); return;
       // this._decimalSeparator = value;
     }
@@ -131,7 +132,7 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._groupingSeparator;
     }
     set groupingSeparator(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.globalization.CurrencyFormatter::set groupingSeparator"); return;
       // this._groupingSeparator = value;
     }
@@ -140,7 +141,7 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._negativeSymbol;
     }
     set negativeSymbol(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.globalization.CurrencyFormatter::set negativeSymbol"); return;
       // this._negativeSymbol = value;
     }
@@ -181,19 +182,19 @@ module Shumway.AVM2.AS.flash.globalization {
       // this._trailingZeros = value;
     }
     setCurrency(currencyISOCode: string, currencySymbol: string): void {
-      currencyISOCode = "" + currencyISOCode; currencySymbol = "" + currencySymbol;
+      currencyISOCode = asCoerceString(currencyISOCode); currencySymbol = asCoerceString(currencySymbol);
       notImplemented("public flash.globalization.CurrencyFormatter::setCurrency"); return;
     }
     formattingWithCurrencySymbolIsSafe(requestedISOCode: string): boolean {
-      requestedISOCode = "" + requestedISOCode;
+      requestedISOCode = asCoerceString(requestedISOCode);
       notImplemented("public flash.globalization.CurrencyFormatter::formattingWithCurrencySymbolIsSafe"); return;
     }
     parse(inputString: string): flash.globalization.CurrencyParseResult {
-      inputString = "" + inputString;
+      inputString = asCoerceString(inputString);
       notImplemented("public flash.globalization.CurrencyFormatter::parse"); return;
     }
     ctor(requestedLocaleIDName: string): void {
-      requestedLocaleIDName = "" + requestedLocaleIDName;
+      requestedLocaleIDName = asCoerceString(requestedLocaleIDName);
       notImplemented("public flash.globalization.CurrencyFormatter::ctor"); return;
     }
     formatImplementation(value: number, withCurrencySymbol: boolean): string {

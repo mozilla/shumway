@@ -16,6 +16,7 @@
 // Class: CompositionAttributeRange
 module Shumway.AVM2.AS.flash.text.ime {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class CompositionAttributeRange extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.text.ime {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["relativeStart", "relativeEnd", "selected", "converted"];
+    static instanceSymbols: string [] = null; // ["relativeStart", "relativeEnd", "selected", "converted"];
     
     constructor (relativeStart: number /*int*/, relativeEnd: number /*int*/, selected: boolean, converted: boolean) {
       relativeStart = relativeStart | 0; relativeEnd = relativeEnd | 0; selected = !!selected; converted = !!converted;

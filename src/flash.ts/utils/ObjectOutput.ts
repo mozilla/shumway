@@ -16,6 +16,7 @@
 // Class: ObjectOutput
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ObjectOutput extends ASNative implements flash.utils.IDataOutput {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.utils {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super();
@@ -56,7 +57,7 @@ module Shumway.AVM2.AS.flash.utils {
       // return this._endian;
     }
     set endian(type: string) {
-      type = "" + type;
+      type = asCoerceString(type);
       notImplemented("packageInternal flash.utils.ObjectOutput::set endian"); return;
       // this._endian = type;
     }
@@ -93,15 +94,15 @@ module Shumway.AVM2.AS.flash.utils {
       notImplemented("packageInternal flash.utils.ObjectOutput::writeDouble"); return;
     }
     writeMultiByte(value: string, charSet: string): void {
-      value = "" + value; charSet = "" + charSet;
+      value = asCoerceString(value); charSet = asCoerceString(charSet);
       notImplemented("packageInternal flash.utils.ObjectOutput::writeMultiByte"); return;
     }
     writeUTF(value: string): void {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("packageInternal flash.utils.ObjectOutput::writeUTF"); return;
     }
     writeUTFBytes(value: string): void {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("packageInternal flash.utils.ObjectOutput::writeUTFBytes"); return;
     }
     writeObject(object: any): void {

@@ -16,6 +16,7 @@
 // Class: AccelerometerEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class AccelerometerEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_timestamp", "_accelerationX", "_accelerationY", "_accelerationZ", "timestamp", "timestamp", "accelerationX", "accelerationX", "accelerationY", "accelerationY", "accelerationZ", "accelerationZ", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_timestamp", "_accelerationX", "_accelerationY", "_accelerationZ", "timestamp", "timestamp", "accelerationX", "accelerationX", "accelerationY", "accelerationY", "accelerationZ", "accelerationZ", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, timestamp: number = 0, accelerationX: number = 0, accelerationY: number = 0, accelerationZ: number = 0) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; timestamp = +timestamp; accelerationX = +accelerationX; accelerationY = +accelerationY; accelerationZ = +accelerationZ;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; timestamp = +timestamp; accelerationX = +accelerationX; accelerationY = +accelerationY; accelerationZ = +accelerationZ;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.AccelerometerEvent");
     }

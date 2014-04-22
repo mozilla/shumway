@@ -18,12 +18,13 @@ module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import TextFieldType = flash.text.TextFieldType;
   import TextFieldAutosize = flash.text.TextFieldAutoSize;
   export class TextField extends flash.display.InteractiveObject {
 
-    static staticBindings: string [] = null;
-    static bindings: string [] = null;
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = null;
 
     static classInitializer: any = null;
 
@@ -187,6 +188,8 @@ module Shumway.AVM2.AS.flash.text {
 
     // AS -> JS Bindings
     static isFontCompatible(fontName: string, fontStyle: string): boolean {
+      fontName = asCoerceString(fontName);
+      fontStyle = asCoerceString(fontStyle);
       somewhatImplemented("flash.text.TextField.isFontCompatible");
       return true;
     }
@@ -252,7 +255,7 @@ module Shumway.AVM2.AS.flash.text {
 
     set antiAliasType(antiAliasType: string) {
       somewhatImplemented("public flash.text.TextField::set antiAliasType");
-      this._antiAliasType = antiAliasType === 'advanced' ? 'advanced' : 'normal';
+      this._antiAliasType = asCoerceString(antiAliasType) === 'advanced' ? 'advanced' : 'normal';
     }
 
     get autoSize(): string {
@@ -260,10 +263,11 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set autoSize(value: string) {
+      value = asCoerceString(value);
       if (!TextFieldAutoSize.validValues[value]) {
         throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
       }
-      this._autoSize = value + '';
+      this._autoSize = value;
     }
 
     get background(): boolean {
@@ -354,6 +358,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set gridFitType(gridFitType: string) {
+      gridFitType = asCoerceString(gridFitType);
       somewhatImplemented("public flash.text.TextField::set gridFitType");
       this._gridFitType = "" + gridFitType;
     }
@@ -364,7 +369,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set htmlText(value: string) {
-      this._htmlText = value + '';
+      this._htmlText = asCoerceString(value);
       this._text = '';
       this.invalidateDimensions();
     }
@@ -436,7 +441,7 @@ module Shumway.AVM2.AS.flash.text {
 
     set restrict(value: string) {
       somewhatImplemented("public flash.text.TextField::set restrict");
-      this._restrict = "" + value;
+      this._restrict = asCoerceString(value);
     }
 
     get scrollH(): number /*int*/ {
@@ -507,7 +512,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set text(value: string) {
-      this._text = value + "";
+      this._text = asCoerceString(value);
       this._htmlText = '';
       this.invalidateDimensions();
     }
@@ -551,7 +556,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set type(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       if (value !== TextFieldType.DYNAMIC && value !== TextFieldType.INPUT) {
         throwError("ArgumentError", Errors.InvalidParamError, "type");
       }
@@ -676,7 +681,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     replaceSelectedText(value: string): void {
-      value = "" + value;
+      value = asCoerceString(value);
       somewhatImplemented("public flash.text.TextField::replaceSelectedText");
       var text = this._text;
       this.text = text.substring(0, this._selectionBeginIndex) + value +
@@ -712,9 +717,9 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     getImageReference(id: string): flash.display.DisplayObject {
-      id = "" + id;
+      id = asCoerceString(id);
       notImplemented("public flash.text.TextField::getImageReference");
-      return;
+      return null;
     }
   }
 }

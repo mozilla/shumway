@@ -16,6 +16,7 @@
 // Class: NetStatusEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NetStatusEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_info", "info", "info", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_info", "info", "info", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, info: ASObject = null) {
       type = '' + type; bubbles = !!bubbles; cancelable = !!cancelable;

@@ -3,8 +3,9 @@
  */
 
 module Shumway.AVM2.AS {
-
+  import throwError = Shumway.AVM2.Runtime.throwError;
   import flash = Shumway.AVM2.AS.flash;
+
 
   function M(classSimpleName: string, nativeName?: string, cls?: ASClass ) {
     return {
@@ -109,7 +110,7 @@ module Shumway.AVM2.AS {
     M("flash.net.ObjectEncoding", "ObjectEncodingClass", flash.net.ObjectEncoding),
     M("flash.net.LocalConnection", "LocalConnectionClass", flash.net.LocalConnection),
     M("flash.net.Socket", "SocketClass", flash.net.Socket),
-    M("flash.net.URLVariables"),
+    M("flash.net.URLVariables", "URLVariablesClass", flash.net.URLVariables),
 
     M("packageInternal flash.system.FSCommand", "FSCommandClass", flash.system.FSCommand),
     M("flash.system.Capabilities", "CapabilitiesClass", flash.system.Capabilities),
@@ -167,6 +168,81 @@ module Shumway.AVM2.AS {
     }
     makeStub(container, s.classSimpleName, path[path.length - 1]);
     registerNativeClass(s.nativeName, s.cls);
+  });
+
+  registerNativeFunction('FlashUtilScript::getDefinitionByName', Shumway.AVM2.AS.Natives.getDefinitionByName);
+
+  var start = Date.now();
+  registerNativeFunction('FlashUtilScript ::getTimer', function getTimer() {
+    return Date.now() - start;
+  });
+
+  declare var escape;
+  declare var unescape;
+  declare var AMFUtils;
+  declare var FileLoadingService;
+  declare var window;
+
+  registerNativeFunction('FlashUtilScript::escapeMultiByte', escape);
+  registerNativeFunction('FlashUtilScript::unescapeMultiByte', unescape);
+
+  registerNativeFunction('FlashNetScript::navigateToURL', function navigateToURL(request, window_) {
+    if (request === null || request === undefined) {
+      throwError('TypeError', Errors.NullPointerError, 'request');
+    }
+    var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
+    if (!RequestClass.isInstanceOf(request)) {
+      throwError('TypeError', Errors.CheckTypeFailedError, request,
+        'flash.net.URLRequest');
+    }
+    var url = request.url;
+    if (/^fscommand:/i.test(url)) {
+      var fscommand = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain.getProperty(
+        Multiname.fromSimpleName('flash.system.fscommand'), true, true);
+      fscommand.call(null, url.substring('fscommand:'.length), window_);
+      return;
+    }
+    // TODO handle other methods than GET
+    var targetWindow = window_ || '_parent'; // using parent as default target
+    window.open(FileLoadingService.resolveUrl(url), targetWindow);
+  });
+
+  registerNativeFunction('FlashNetScript::sendToURL', function sendToURL(request) {
+    if (request === null || request === undefined) {
+      throwError('TypeError', Errors.NullPointerError, 'request');
+    }
+    var RequestClass = Shumway.AVM2.Runtime.AVM2.instance.systemDomain.getClass("flash.net.URLRequest");
+    if (!RequestClass.isInstanceOf(request)) {
+      throwError('TypeError', Errors.CheckTypeFailedError, request,
+        'flash.net.URLRequest');
+    }
+    var session = FileLoadingService.createSession();
+    session.onprogress = function () {};
+    session.open(request);
+  });
+
+  registerNativeFunction('Toplevel::registerClassAlias', function registerClassAlias(aliasName, classObject) {
+    if (!aliasName) {
+      throwError('TypeError', Errors.NullPointerError, 'aliasName');
+    }
+    if (!classObject) {
+      throwError('TypeError', Errors.NullPointerError, 'classObject');
+    }
+
+    AMFUtils.aliasesCache.classes.set(classObject, aliasName);
+    AMFUtils.aliasesCache.names[aliasName] = classObject;
+  });
+
+  registerNativeFunction('Toplevel::getClassByAlias', function getClassByAlias(aliasName) {
+    if (!aliasName) {
+      throwError('TypeError', Errors.NullPointerError, 'aliasName');
+    }
+
+    var classObject = AMFUtils.aliasesCache.names[aliasName];
+    if (!classObject) {
+      throwError('ReferenceError', Errors.ClassNotFoundError, aliasName);
+    }
+    return classObject;
   });
 
   jsGlobal["flash"] = Shumway.AVM2.AS.flash;

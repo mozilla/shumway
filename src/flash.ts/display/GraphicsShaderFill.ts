@@ -16,6 +16,7 @@
 // Class: GraphicsShaderFill
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GraphicsShaderFill extends ASNative implements IGraphicsFill, IGraphicsData {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["shader", "matrix"];
+    static instanceSymbols: string [] = null; // ["shader", "matrix"];
     
     constructor (shader: flash.display.Shader = null, matrix: flash.geom.Matrix = null) {
       shader = shader; matrix = matrix;

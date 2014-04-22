@@ -16,6 +16,7 @@
 // Class: GraphicsStroke
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GraphicsStroke extends ASNative implements IGraphicsStroke, IGraphicsData {
     
     // Called whenever the class is initialized.
@@ -25,18 +26,18 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["thickness", "pixelHinting", "miterLimit", "fill", "_scaleMode", "_caps", "_joints", "scaleMode", "scaleMode", "caps", "caps", "joints", "joints"];
+    static instanceSymbols: string [] = null; // ["thickness", "pixelHinting", "miterLimit", "fill", "_scaleMode", "_caps", "_joints", "scaleMode", "scaleMode", "caps", "caps", "joints", "joints"];
     
     constructor (thickness: number = NaN, pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = "none", joints: string = "round", miterLimit: number = 3, fill: flash.display.IGraphicsFill = null) {
       false && super();
       this.thickness = +thickness;
       this.pixelHinting = !!pixelHinting;
-      this.scaleMode = "" + scaleMode;
-      this.caps = "" + caps;
-      this.joints = "" + joints;
+      this.scaleMode = asCoerceString(scaleMode);
+      this.caps = asCoerceString(caps);
+      this.joints = asCoerceString(joints);
       this.miterLimit = +miterLimit;
       this.fill = fill;
     }

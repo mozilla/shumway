@@ -16,6 +16,7 @@
 // Class: URLLoader
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class URLLoader extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,14 @@ module Shumway.AVM2.AS.flash.net {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = ["data", "dataFormat", "bytesLoaded", "bytesTotal", "addEventListener", "load", "close", "_stream", "_httpResponseEventBound", "complete", "onStreamOpen", "onStreamComplete", "onStreamProgress", "onStreamIOError", "onStreamHTTPStatus", "onStreamHTTPResponseStatus", "onStreamSecurityError"];
+    static instanceSymbols: string [] = ["data", "dataFormat", "bytesLoaded", "bytesTotal", "addEventListener", "load", "close", "_stream", "_httpResponseEventBound", "complete", "onStreamOpen", "onStreamComplete", "onStreamProgress", "onStreamIOError", "onStreamHTTPStatus", "onStreamHTTPResponseStatus", "onStreamSecurityError"];
     
     constructor (request: flash.net.URLRequest = null) {
       false && super(undefined);
+      notImplemented("Dummy Constructor: public flash.net.URLLoader");
     }
     
     // JS -> AS Bindings

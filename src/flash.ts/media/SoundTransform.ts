@@ -16,6 +16,7 @@
 // Class: SoundTransform
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   export class SoundTransform extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.media {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["pan", "pan"];
+    static instanceSymbols: string [] = ["pan"];
     
     constructor (vol: number = 1, panning: number = 0) {
       vol = +vol; panning = +panning;
@@ -42,56 +43,55 @@ module Shumway.AVM2.AS.flash.media {
     
     // AS -> JS Bindings
     
-    // _volume: number;
-    // _leftToLeft: number;
-    // _leftToRight: number;
-    // _rightToRight: number;
-    // _rightToLeft: number;
-    // _pan: number;
+    private _volume: number;
+    private _leftToLeft: number;
+    private _leftToRight: number;
+    private _rightToRight: number;
+    private _rightToLeft: number;
+    private _pan: number;
     get volume(): number {
-      notImplemented("public flash.media.SoundTransform::get volume"); return;
-      // return this._volume;
+      return this._volume;
     }
     set volume(volume: number) {
       volume = +volume;
-      notImplemented("public flash.media.SoundTransform::set volume"); return;
-      // this._volume = volume;
+      this._volume = volume;
+      this._updateTransform();
     }
     get leftToLeft(): number {
-      notImplemented("public flash.media.SoundTransform::get leftToLeft"); return;
-      // return this._leftToLeft;
+      return this._leftToLeft;
     }
     set leftToLeft(leftToLeft: number) {
       leftToLeft = +leftToLeft;
-      notImplemented("public flash.media.SoundTransform::set leftToLeft"); return;
-      // this._leftToLeft = leftToLeft;
+      this._leftToLeft = leftToLeft;
+      this._updateTransform();
     }
     get leftToRight(): number {
-      notImplemented("public flash.media.SoundTransform::get leftToRight"); return;
-      // return this._leftToRight;
+      return this._leftToRight;
     }
     set leftToRight(leftToRight: number) {
       leftToRight = +leftToRight;
-      notImplemented("public flash.media.SoundTransform::set leftToRight"); return;
-      // this._leftToRight = leftToRight;
+      this._leftToRight = leftToRight;
+      this._updateTransform();
     }
     get rightToRight(): number {
-      notImplemented("public flash.media.SoundTransform::get rightToRight"); return;
-      // return this._rightToRight;
+      return this._rightToRight;
     }
     set rightToRight(rightToRight: number) {
       rightToRight = +rightToRight;
-      notImplemented("public flash.media.SoundTransform::set rightToRight"); return;
-      // this._rightToRight = rightToRight;
+      this._rightToRight = rightToRight;
+      this._updateTransform();
     }
     get rightToLeft(): number {
-      notImplemented("public flash.media.SoundTransform::get rightToLeft"); return;
-      // return this._rightToLeft;
+      return this._rightToLeft;
     }
     set rightToLeft(rightToLeft: number) {
       rightToLeft = +rightToLeft;
-      notImplemented("public flash.media.SoundTransform::set rightToLeft"); return;
-      // this._rightToLeft = rightToLeft;
+      this._rightToLeft = rightToLeft;
+      this._updateTransform();
+    }
+    _updateTransform() {
+      somewhatImplemented("public flash.media.SoundTransform::_updateTransform");
+      // TODO dispatch updates to the current audio destinations?
     }
   }
 }

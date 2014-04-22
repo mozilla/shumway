@@ -16,6 +16,7 @@
 // Class: IGraphicsData
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export interface IGraphicsData {
     
     // JS -> AS Bindings

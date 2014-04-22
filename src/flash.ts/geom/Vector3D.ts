@@ -16,6 +16,7 @@
 // Class: Vector3D
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Vector3D extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.geom {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // ["angleBetween", "distance"];
+    static classSymbols: string [] = null; // ["angleBetween", "distance"];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["x", "y", "z", "w", "length", "lengthSquared", "dotProduct", "crossProduct", "normalize", "scaleBy", "incrementBy", "decrementBy", "add", "subtract", "negate", "equals", "nearEquals", "project", "copyFrom", "setTo", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["x", "y", "z", "w", "length", "lengthSquared", "dotProduct", "crossProduct", "normalize", "scaleBy", "incrementBy", "decrementBy", "add", "subtract", "negate", "equals", "nearEquals", "project", "copyFrom", "setTo", "clone", "toString"];
     
     constructor (x: number = 0, y: number = 0, z: number = 0, w: number = 0) {
       x = +x; y = +y; z = +z; w = +w;

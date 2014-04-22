@@ -16,6 +16,7 @@
 // Class: FrameLabel
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class FrameLabel extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -25,14 +26,14 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor (name: string, frame: number /*int*/) {
       false && super(undefined);
-      this._name = "" + name;
+      this._name = asCoerceString(name);
       this._frame = frame | 0;
     }
     

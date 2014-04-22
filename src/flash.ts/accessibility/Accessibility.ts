@@ -16,6 +16,7 @@
 // Class: Accessibility
 module Shumway.AVM2.AS.flash.accessibility {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
 
   export class Accessibility extends ASNative {
@@ -27,10 +28,10 @@ module Shumway.AVM2.AS.flash.accessibility {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super();

@@ -36,6 +36,7 @@ module Shumway.AVM2.AS {
   import isPrototypeWriteable = Shumway.ObjectUtilities.isPrototypeWriteable;
   import getOwnPropertyDescriptor = Shumway.ObjectUtilities.getOwnPropertyDescriptor;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   var _notImplemented = notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import createFunction = Shumway.AVM2.Runtime.createFunction;
@@ -398,7 +399,7 @@ module Shumway.AVM2.AS {
         defineNonEnumerableProperty(self.instanceConstructor.prototype, "class", self);
 
         (<any>(self.instanceConstructor)).classInfo = previousConstructor.classInfo;
-        self.instanceConstructor.__proto__ = previousConstructor.__proto__;
+        self.instanceConstructor.__proto__ = previousConstructor;
       }
     }
 
@@ -1241,7 +1242,7 @@ module Shumway.AVM2.AS {
     }
 
     private static parseCore(text: string): Object {
-      text = "" + text;
+      text = asCoerceString(text);
       return ASJSON.transformJSValueToAS(JSON.parse(text))
     }
 
@@ -1409,10 +1410,16 @@ module Shumway.AVM2.AS {
 
 
   var nativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
+  var nativeFunctions: Shumway.Map<Function> = Shumway.ObjectUtilities.createMap<Function>();
 
   export function registerNativeClass(name: string, cls: ASClass) {
     assert (!nativeClasses[name], "Native class: " + name + " is already registered.");
     nativeClasses[name] = cls;
+  }
+
+  export function registerNativeFunction(name: string, fn: Function) {
+    assert (!nativeFunctions[name], "Native function: " + name + " is already registered.");
+    nativeFunctions[name] = fn;
   }
 
   export function createInterface(classInfo: ClassInfo) {
@@ -1843,6 +1850,10 @@ module Shumway.AVM2.AS {
     var v = Natives;
     for (var i = 0, j = chain.length; i < j; i++) {
       v = v && v[chain[i]];
+    }
+
+    if (!v) {
+      v = <any>nativeFunctions[path];
     }
 
     release || assert(v, "getNative(" + path + ") not found.");

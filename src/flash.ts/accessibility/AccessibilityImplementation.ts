@@ -16,6 +16,7 @@
 // Class: AccessibilityImplementation
 module Shumway.AVM2.AS.flash.accessibility {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class AccessibilityImplementation extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.accessibility {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["stub", "errno", "get_accRole", "get_accName", "get_accValue", "get_accState", "get_accDefaultAction", "accDoDefaultAction", "isLabeledBy", "getChildIDArray", "accLocation", "get_accSelection", "get_accFocus", "accSelect", "get_selectionAnchorIndex", "get_selectionActiveIndex"];
+    static instanceSymbols: string [] = null; // ["stub", "errno", "get_accRole", "get_accName", "get_accValue", "get_accState", "get_accDefaultAction", "accDoDefaultAction", "isLabeledBy", "getChildIDArray", "accLocation", "get_accSelection", "get_accFocus", "accSelect", "get_selectionAnchorIndex", "get_selectionActiveIndex"];
     
     constructor () {
       false && super();

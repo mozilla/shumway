@@ -16,9 +16,9 @@
 // Class: NetConnection
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import wrapJSObject = Shumway.AVM2.Runtime.wrapJSObject;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Telemetry = Shumway.Telemetry;
   import NetStatusEvent = Shumway.AVM2.AS.flash.events.NetStatusEvent;
 
@@ -31,14 +31,14 @@ module Shumway.AVM2.AS.flash.net {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = ["close", "addHeader", "call"];
+    static instanceSymbols: string [] = ["close", "addHeader", "call"];
     
     constructor () {
       false && super(undefined);
-      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.NETCONNECTION_FEATURE});
+      notImplemented("Dummy Constructor: public flash.net.FileFilter");
     }
     
     // JS -> AS Bindings
@@ -163,6 +163,8 @@ module Shumway.AVM2.AS.flash.net {
       this._proxyType = 'none';
       this._objectEncoding = NetConnection.defaultObjectEncoding;
       this._usingTLS = false;
+
+      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.NETCONNECTION_FEATURE});
     }
     invoke(index: number /*uint*/): any {
       index = index >>> 0;

@@ -16,6 +16,7 @@
 // Class: Camera
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Camera extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.media {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super(undefined);
@@ -50,7 +51,7 @@ module Shumway.AVM2.AS.flash.media {
       // return this._isSupported;
     }
     static getCamera(name: string = null): flash.media.Camera {
-      name = "" + name;
+      name = asCoerceString(name);
       notImplemented("public flash.media.Camera::static getCamera"); return;
     }
     static _scanHardware(): void {

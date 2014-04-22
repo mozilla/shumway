@@ -30,12 +30,12 @@ interface JSGlobal {
 }
 
 
-declare var print;
-declare var console;
-declare var performance;
-declare var XMLHttpRequest;
-declare var document;
-declare var getComputedStyle;
+// declare var print;
+// declare var console;
+// declare var performance;
+// declare var XMLHttpRequest;
+// declare var document;
+// declare var getComputedStyle;
 
 /** @const */ var release: boolean = false;
 /** @const */ var debug: boolean = !release;

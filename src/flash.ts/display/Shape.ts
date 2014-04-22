@@ -16,9 +16,11 @@
 // Class: Shape
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import DisplayObject = flash.display.DisplayObject;
   export class Shape extends flash.display.DisplayObject {
-    static staticBindings: string [] = null; // [];
-    static bindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
 
     static classInitializer: any = null;
     static initializer: any = function (symbol: Shape) {
@@ -28,6 +30,7 @@ module Shumway.AVM2.AS.flash.display {
 
     constructor () {
       false && super();
+      DisplayObject.instanceConstructorNoInitialize.call(this);
     }
 
     _graphics: flash.display.Graphics;

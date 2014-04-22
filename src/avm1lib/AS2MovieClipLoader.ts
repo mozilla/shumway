@@ -16,6 +16,7 @@
 // Class: AS2MovieClipLoader
 module Shumway.AVM2.AS.avm1lib {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Loader = Shumway.AVM2.AS.flash.display.Loader;
 
   export class AS2MovieClipLoader extends ASNative {
@@ -27,10 +28,10 @@ module Shumway.AVM2.AS.avm1lib {
     static initializer: any = null;
 
     // List of static symbols to link.
-    static staticBindings: string [] = null;
+    static classSymbols: string [] = null;
 
     // List of instance symbols to link.
-    static bindings: string [] = ["loadClip", "unloadClip", "getProgress", "openHandler", "progressHandler", "ioErrorHandler", "completeHandler", "initHandler"];
+    static instanceSymbols: string [] = ["loadClip", "unloadClip", "getProgress", "openHandler", "progressHandler", "ioErrorHandler", "completeHandler", "initHandler"];
 
     constructor () {
       false && super();

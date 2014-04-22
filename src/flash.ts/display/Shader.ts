@@ -16,6 +16,7 @@
 // Class: Shader
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Shader extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["byteCode"];
+    static instanceSymbols: string [] = null; // ["byteCode"];
     
     constructor (code: flash.utils.ByteArray = null) {
       code = code;
@@ -59,7 +60,7 @@ module Shumway.AVM2.AS.flash.display {
       // return this._precisionHint;
     }
     set precisionHint(p: string) {
-      p = "" + p;
+      p = asCoerceString(p);
       notImplemented("public flash.display.Shader::set precisionHint"); return;
       // this._precisionHint = p;
     }

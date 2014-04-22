@@ -16,6 +16,7 @@
 // Class: XMLTag
 module Shumway.AVM2.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class XMLTag extends ASNative {
     static initializer: any = null;
     constructor () {
@@ -44,7 +45,7 @@ module Shumway.AVM2.AS.flash.xml {
       notImplemented("packageInternal flash.xml.XMLTag::get value"); return;
     }
     set value(v: string) {
-      v = "" + v;
+      v = asCoerceString(v);
       notImplemented("packageInternal flash.xml.XMLTag::set value"); return;
     }
     get attrs(): ASObject {

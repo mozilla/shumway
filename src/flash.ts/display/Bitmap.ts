@@ -16,6 +16,7 @@
 // Class: Bitmap
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Bitmap extends flash.display.DisplayObject {
     
     // Called whenever the class is initialized.
@@ -25,17 +26,17 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor (bitmapData: flash.display.BitmapData = null, pixelSnapping: string = "auto", smoothing: boolean = false) {
       //bitmapData = bitmapData;
       false && super();
       DisplayObject.instanceConstructorNoInitialize.call(this);
       this._bitmapData = bitmapData;
-      this._pixelSnapping = "" + pixelSnapping;
+      this._pixelSnapping = asCoerceString(pixelSnapping);
       this._smoothing = !!smoothing;
     }
     
@@ -53,7 +54,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set pixelSnapping(value: string) {
-      this._pixelSnapping = "" + value;
+      this._pixelSnapping = asCoerceString(value);
     }
 
     get smoothing(): boolean {

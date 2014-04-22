@@ -25,8 +25,7 @@ import flash.utils.ByteArray;
 
 [native(cls='LoaderClass')]
 public class Loader extends DisplayObjectContainer {
-  public function Loader() {
-  }
+  public native function Loader();
   public native function get content():DisplayObject;
   public native function get contentLoaderInfo():LoaderInfo;
   public function get uncaughtErrorEvents():UncaughtErrorEvents {

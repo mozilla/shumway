@@ -16,6 +16,7 @@
 // Class: AVM1Movie
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class AVM1Movie extends flash.display.DisplayObject {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["call", "addCallback"];
+    static instanceSymbols: string [] = null; // ["call", "addCallback"];
     
     constructor () {
       false && super();

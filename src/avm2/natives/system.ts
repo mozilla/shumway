@@ -18,6 +18,7 @@
 module Shumway.AVM2.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export module flash.system {
     export class IME extends ASNative /* flash.events.EventDispatcher */ {
@@ -35,11 +36,11 @@ module Shumway.AVM2.AS {
         notImplemented("public flash.system.IME::get conversionMode"); return;
       }
       set conversionMode(mode: string) {
-        mode = "" + mode;
+        mode = asCoerceString(mode);
         notImplemented("public flash.system.IME::set conversionMode"); return;
       }
       static setCompositionString(composition: string): void {
-        composition = "" + composition;
+        composition = asCoerceString(composition);
         notImplemented("public flash.system.IME::static setCompositionString"); return;
       }
       static doConversion(): void {
@@ -63,7 +64,7 @@ module Shumway.AVM2.AS {
       }
 
       static setClipboard(string: string): void {
-        string = "" + string;
+        string = asCoerceString(string);
         notImplemented("public flash.system.System::static setClipboard"); return;
       }
 

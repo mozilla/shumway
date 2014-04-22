@@ -16,6 +16,7 @@
 // Class: GraphicsSolidFill
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GraphicsSolidFill extends ASNative implements IGraphicsFill, IGraphicsData {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["color", "alpha"];
+    static instanceSymbols: string [] = null; // ["color", "alpha"];
     
     constructor (color: number /*uint*/ = 0, alpha: number = 1) {
       false && super();

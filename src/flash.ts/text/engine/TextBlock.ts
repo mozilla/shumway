@@ -16,6 +16,7 @@
 // Class: TextBlock
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextBlock extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.text.engine {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["userData", "textJustifier", "textJustifier", "tabStops", "tabStops", "createTextLine", "recreateTextLine"];
+    static instanceSymbols: string [] = null; // ["userData", "textJustifier", "textJustifier", "tabStops", "tabStops", "createTextLine", "recreateTextLine"];
     
     constructor (content: flash.text.engine.ContentElement = null, tabStops: ASVector<any /* flash.text.engine.TabStop */> = null, textJustifier: flash.text.engine.TextJustifier = null, lineRotation: string = "rotate0", baselineZero: string = "roman", bidiLevel: number /*int*/ = 0, applyNonLinearFontScaling: boolean = true, baselineFontDescription: flash.text.engine.FontDescription = null, baselineFontSize: number = 12) {
-      content = content; tabStops = tabStops; textJustifier = textJustifier; lineRotation = "" + lineRotation; baselineZero = "" + baselineZero; bidiLevel = bidiLevel | 0; applyNonLinearFontScaling = !!applyNonLinearFontScaling; baselineFontDescription = baselineFontDescription; baselineFontSize = +baselineFontSize;
+      content = content; tabStops = tabStops; textJustifier = textJustifier; lineRotation = asCoerceString(lineRotation); baselineZero = asCoerceString(baselineZero); bidiLevel = bidiLevel | 0; applyNonLinearFontScaling = !!applyNonLinearFontScaling; baselineFontDescription = baselineFontDescription; baselineFontSize = +baselineFontSize;
       false && super();
       notImplemented("Dummy Constructor: public flash.text.engine.TextBlock");
     }
@@ -91,7 +92,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._baselineZero;
     }
     set baselineZero(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.TextBlock::set baselineZero"); return;
       // this._baselineZero = value;
     }
@@ -134,7 +135,7 @@ module Shumway.AVM2.AS.flash.text.engine {
       // return this._lineRotation;
     }
     set lineRotation(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.text.engine.TextBlock::set lineRotation"); return;
       // this._lineRotation = value;
     }

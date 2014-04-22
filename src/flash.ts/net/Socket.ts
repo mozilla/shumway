@@ -16,10 +16,10 @@
 // Class: Socket
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import Errors = Shumway.AVM2.Errors;
   import throwError = Shumway.AVM2.Runtime.throwError;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export class Socket extends flash.events.EventDispatcher implements flash.utils.IDataInput, flash.utils.IDataOutput {
     
@@ -30,13 +30,13 @@ module Shumway.AVM2.AS.flash.net {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["timeout", "timeout", "connect", "close"];
+    static instanceSymbols: string [] = null; // ["timeout", "timeout", "connect", "close"];
     
     constructor (host: string = null, port: number /*int*/ = 0) {
-      host = "" + host; port = port | 0;
+      host = asCoerceString(host); port = port | 0;
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.net.Socket");
     }
@@ -77,7 +77,7 @@ module Shumway.AVM2.AS.flash.net {
       // return this._endian;
     }
     set endian(type: string) {
-      type = "" + type;
+      type = asCoerceString(type);
       notImplemented("public flash.net.Socket::set endian"); return;
       // this._endian = type;
     }
@@ -122,15 +122,15 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.Socket::writeDouble"); return;
     }
     writeMultiByte(value: string, charSet: string): void {
-      value = "" + value; charSet = "" + charSet;
+      value = asCoerceString(value); charSet = asCoerceString(charSet);
       notImplemented("public flash.net.Socket::writeMultiByte"); return;
     }
     writeUTF(value: string): void {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.net.Socket::writeUTF"); return;
     }
     writeUTFBytes(value: string): void {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.net.Socket::writeUTFBytes"); return;
     }
     readBoolean(): boolean {
@@ -161,7 +161,7 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.Socket::readDouble"); return;
     }
     readMultiByte(length: number /*uint*/, charSet: string): string {
-      length = length >>> 0; charSet = "" + charSet;
+      length = length >>> 0; charSet = asCoerceString(charSet);
       notImplemented("public flash.net.Socket::readMultiByte"); return;
     }
     readUTF(): string {

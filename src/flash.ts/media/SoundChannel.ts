@@ -16,57 +16,313 @@
 // Class: SoundChannel
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import error = Shumway.Debug.error;
+
+  declare var URL;
+  declare var Blob;
+  declare class AudioContext {
+    constructor();
+    sampleRate: number;
+    destination: any;
+    createScriptProcessor(a, b, c);
+  }
+
+  function createAudioChannel(sampleRate, channels) {
+    if (WebAudioChannel.isSupported)
+      return new WebAudioChannel(sampleRate, channels);
+    else
+      error('PCM data playback is not supported by the browser');
+  }
+
+  // Resample sound using linear interpolation for Web Audio due to
+  // http://code.google.com/p/chromium/issues/detail?id=73062
+  interface AudioResamplerData {
+    data: any[];
+    count: number;
+  }
+  class AudioResampler {
+    ondatarequested: (e: AudioResamplerData)=>void;
+    private _sourceRate: number;
+    private _targetRate: number;
+    private _tail: any[];
+    private _sourceOffset: number;
+    constructor(sourceRate: number, targetRate: number) {
+      this._sourceRate = sourceRate;
+      this._targetRate = targetRate;
+      this._tail = [];
+      this._sourceOffset = 0;
+    }
+    getData(channelsData, count: number) {
+      var k = this._sourceRate / this._targetRate;
+
+      var offset = this._sourceOffset;
+      var needed = Math.ceil((count - 1) * k + offset) + 1;
+      var sourceData = [];
+      for (var channel = 0; channel < channelsData.length; channel++)
+        sourceData.push(new Float32Array(needed));
+      var e = { data: sourceData, count: needed };
+      this.ondatarequested(e);
+      for (var channel = 0; channel < channelsData.length; channel++) {
+        var data = channelsData[channel];
+        var source = sourceData[channel];
+        for (var j = 0; j < count; j++) {
+          var i = j * k + offset;
+          var i1 = i|0, i2 = Math.ceil(i)|0;
+          var source_i1 = i1 < 0 ? this._tail[channel] : source[i1];
+          if (i1 === i2) {
+            data[j] = source_i1;
+          } else {
+            var alpha = i - i1;
+            data[j] = source_i1 * (1 - alpha) + source[i2] * alpha;
+          }
+        }
+        this._tail[channel] = source[needed - 1];
+      }
+      this._sourceOffset = ((count - 1) * k + offset) - (needed - 1);
+    }
+  }
+
+  class WebAudioChannel {
+    private static _cachedContext: AudioContext;
+    private _contextSampleRate: number;
+    private _context: AudioContext;
+    private _resampler: AudioResampler;
+    private _channels: number;
+    private _sampleRate: number;
+    private _source;
+    ondatarequested: (e)=>void;
+
+    constructor(sampleRate, channels) {
+      var context = WebAudioChannel._cachedContext;
+      if (!context) {
+        context = new AudioContext();
+        WebAudioChannel._cachedContext = context;
+      }
+      this._context = context;
+      this._contextSampleRate = context.sampleRate || 44100;
+
+      this._channels = channels;
+      this._sampleRate = sampleRate;
+      if (this._contextSampleRate != sampleRate) {
+        this._resampler = new AudioResampler(sampleRate, this._contextSampleRate);
+        this._resampler.ondatarequested = function (e: AudioResamplerData) {
+          this.requestData(e.data, e.count);
+        }.bind(this);
+      }
+    }
+
+    start() {
+      var source = this._context.createScriptProcessor(2048, 0, this._channels);
+      var self = this;
+      source.onaudioprocess = function(e) {
+        var channelsData = [];
+        for (var i = 0; i < self._channels; i++)
+          channelsData.push(e.outputBuffer.getChannelData(i));
+        var count = channelsData[0].length;
+        if (self._resampler) {
+          self._resampler.getData(channelsData, count);
+        } else {
+          self.requestData(channelsData, count);
+        }
+      };
+
+      source.connect(this._context.destination);
+      this._source = source;
+    }
+    stop() {
+      this._source.disconnect(this._context.destination);
+    }
+    requestData(channelsData: any[], count: number) {
+      var channels = this._channels;
+      var buffer = new Float32Array(count * channels);
+      var e = { data: buffer, count: buffer.length };
+      this.ondatarequested(e);
+
+      for (var j = 0, p = 0; j < count; j++) {
+        for (var i = 0; i < channels; i++)
+          channelsData[i][j] = buffer[p++];
+      }
+    }
+    static isSupported() {
+      return typeof AudioContext !== 'undefined';
+    }
+  }
+
   export class SoundChannel extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
+    static initializer: any = function (symbol: SoundChannel) {
+      this._element = null;
+      this._position = 0;
+      this._leftPeak = 0;
+      this._rightPeak = 0;
+      this._pcmData = null;
+      this._soundTransform = new flash.media.SoundTransform();
+
+      this._element = symbol._element || null;
+      if (this._element) {
+        this._registerWithSoundMixer();
+      }
+    };
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.media.SoundChannel");
     }
-    
+
+    _element;
+    _sound: flash.media.Sound;
+    private _audioChannel;
+    private _pcmData;
+
     // JS -> AS Bindings
     
     
     // AS -> JS Bindings
     
-    // _position: number;
-    // _soundTransform: flash.media.SoundTransform;
-    // _leftPeak: number;
-    // _rightPeak: number;
+    private _position: number;
+    _soundTransform: flash.media.SoundTransform;
+    private _leftPeak: number;
+    private _rightPeak: number;
     get position(): number {
-      notImplemented("public flash.media.SoundChannel::get position"); return;
-      // return this._position;
+      return this._position;
     }
     get soundTransform(): flash.media.SoundTransform {
-      notImplemented("public flash.media.SoundChannel::get soundTransform"); return;
-      // return this._soundTransform;
+      return this._soundTransform;
     }
     set soundTransform(sndTransform: flash.media.SoundTransform) {
-      sndTransform = sndTransform;
-      notImplemented("public flash.media.SoundChannel::set soundTransform"); return;
-      // this._soundTransform = sndTransform;
+      somewhatImplemented("public flash.media.SoundChannel::set soundTransform");
+      this._soundTransform = isNullOrUndefined(sndTransform) ?
+        new flash.media.SoundTransform() : sndTransform;
     }
     get leftPeak(): number {
-      notImplemented("public flash.media.SoundChannel::get leftPeak"); return;
-      // return this._leftPeak;
+      return this._leftPeak;
     }
     get rightPeak(): number {
-      notImplemented("public flash.media.SoundChannel::get rightPeak"); return;
-      // return this._rightPeak;
+      return this._rightPeak;
     }
     stop(): void {
-      notImplemented("public flash.media.SoundChannel::stop"); return;
+      if (this._element) {
+        this._unregisterWithSoundMixer();
+        this._element.pause();
+      }
+      if (this._audioChannel) {
+        this._unregisterWithSoundMixer();
+        this._audioChannel.stop();
+      }
+    }
+    _playSoundDataViaAudio(soundData, startTime, loops) {
+      if (!soundData.mimeType)
+        return;
+
+      this._registerWithSoundMixer();
+      this._position = startTime;
+      var self = this;
+      var lastCurrentTime = 0;
+      var element = document.createElement('audio');
+      if (!element.canPlayType(soundData.mimeType)) {
+        console.error('ERROR: \"' + soundData.mimeType +'\" ' +
+          'type playback is not supported by the browser');
+        return;
+      }
+      element.preload = 'metadata'; // for mobile devices
+      element.loop = loops > 0; // starts loop played if at least one is specified
+      var blob = new Blob([soundData.data], {type: soundData.mimeType});
+      element.src = URL.createObjectURL(blob);
+      element.addEventListener("loadeddata", function loaded() {
+        element.currentTime = startTime / 1000;
+        element.play();
+      });
+      element.addEventListener("timeupdate", function timeupdate() {
+        var currentTime = element.currentTime;
+        if (loops && lastCurrentTime > currentTime) {
+          --loops;
+          if (!loops) // checks if we need to stop looping
+            element.loop = false;
+          if (currentTime < startTime / 1000)
+            element.currentTime = startTime / 1000;
+        }
+        self._position = (lastCurrentTime = currentTime) * 1000;
+      });
+      element.addEventListener("ended", function ended() {
+        self._unregisterWithSoundMixer();
+        self.dispatchEvent(new flash.events.Event("soundComplete", false, false));
+        self._element = null;
+      });
+      this._element = element;
+      this._applySoundTransform();
+    }
+    _playSoundDataViaChannel(soundData, startTime, loops) {
+      assert(soundData.pcm, 'no pcm data found');
+
+      this._registerWithSoundMixer();
+      var self = this;
+      var startPosition = Math.round(startTime / 1000 * soundData.sampleRate) *
+        soundData.channels;
+      var position = startPosition;
+      this._position = startTime;
+      this._audioChannel = createAudioChannel(soundData.sampleRate, soundData.channels);
+      this._audioChannel.ondatarequested = function (e) {
+        var end = soundData.end;
+        if (position >= end && soundData.completed) {
+          // end of buffer
+          self._unregisterWithSoundMixer();
+          self._audioChannel.stop();
+          self.dispatchEvent(new flash.events.Event("soundComplete", false, false));
+          return;
+        }
+
+        var left = e.count;
+        var data = e.data;
+        var source = soundData.pcm;
+        do {
+          var count = Math.min(end - position, left);
+          for (var j = 0; j < count; j++) {
+            data[j] = source[position++];
+          }
+          left -= count;
+          if (position >= end) {
+            if (!loops) break;
+            loops--;
+            position = startPosition;
+          }
+        } while (left > 0);
+
+        self._position = position / soundData.sampleRate / soundData.channels * 1000;
+      };
+      this._audioChannel.start();
+      this._applySoundTransform();
+    }
+    _applySoundTransform() {
+      // TODO: apply pan
+      var volume = this._soundTransform.volume;
+      if (SoundMixer._soundTransform) {
+        volume *= SoundMixer._soundTransform.volume;
+      }
+      volume *= SoundMixer._getMasterVolume();
+      if (this._element) {
+        this._element.volume = volume <= 0 ? 0 : volume >= 1.0 ? 1.0 : volume;
+      }
+      if (this._audioChannel) {
+        // TODO
+      }
+    }
+    _registerWithSoundMixer() {
+      SoundMixer._registerChannel(this);
+    }
+    _unregisterWithSoundMixer() {
+      SoundMixer._unregisterChannel(this);
     }
   }
 }

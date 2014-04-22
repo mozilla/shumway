@@ -16,6 +16,7 @@
 // Class: TextSnapshot
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class TextSnapshot extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.text {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super();
@@ -46,7 +47,7 @@ module Shumway.AVM2.AS.flash.text {
       // return this._charCount;
     }
     findText(beginIndex: number /*int*/, textToFind: string, caseSensitive: boolean): number /*int*/ {
-      beginIndex = beginIndex | 0; textToFind = "" + textToFind; caseSensitive = !!caseSensitive;
+      beginIndex = beginIndex | 0; textToFind = asCoerceString(textToFind); caseSensitive = !!caseSensitive;
       notImplemented("public flash.text.TextSnapshot::findText"); return;
     }
     getSelected(beginIndex: number /*int*/, endIndex: number /*int*/): boolean {

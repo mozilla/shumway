@@ -16,17 +16,18 @@
 // Class: XMLNode
 module Shumway.AVM2.AS.flash.xml {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class XMLNode extends ASNative {
     static initializer: any = null;
     constructor (type: number /*uint*/, value: string) {
-      type = type >>> 0; value = "" + value;
+      type = type >>> 0; value = asCoerceString(value);
       false && super();
       notImplemented("Dummy Constructor: public flash.xml.XMLNode");
     }
     // Static   JS -> AS Bindings
     // Static   AS -> JS Bindings
     static escapeXML(value: string): string {
-      value = "" + value;
+      value = asCoerceString(value);
       notImplemented("public flash.xml.XMLNode::static escapeXML"); return;
     }
     // Instance JS -> AS Bindings

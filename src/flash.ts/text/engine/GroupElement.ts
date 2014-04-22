@@ -16,6 +16,7 @@
 // Class: GroupElement
 module Shumway.AVM2.AS.flash.text.engine {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GroupElement extends flash.text.engine.ContentElement {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.text.engine {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["getElementIndex"];
+    static instanceSymbols: string [] = null; // ["getElementIndex"];
     
     constructor (elements: ASVector<any> = null, elementFormat: flash.text.engine.ElementFormat = null, eventMirror: flash.events.EventDispatcher = null, textRotation: string = "rotate0") {
-      elements = elements; elementFormat = elementFormat; eventMirror = eventMirror; textRotation = "" + textRotation;
+      elements = elements; elementFormat = elementFormat; eventMirror = eventMirror; textRotation = asCoerceString(textRotation);
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.text.engine.GroupElement");
     }

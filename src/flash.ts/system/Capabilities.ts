@@ -16,6 +16,7 @@
 // Class: Capabilities
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import toKeyValueArray = Shumway.ObjectUtilities.toKeyValueArray;
 
@@ -30,10 +31,10 @@ module Shumway.AVM2.AS.flash.system {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = ['os', 'version'];
+    static classSymbols: string [] = ['os', 'version'];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super();
@@ -229,7 +230,7 @@ module Shumway.AVM2.AS.flash.system {
       // return Capabilities.__internal;
     }
     static hasMultiChannelAudio(type: string): boolean {
-      type = "" + type;
+      type = asCoerceString(type);
       notImplemented("public flash.system.Capabilities::static hasMultiChannelAudio"); return;
     }
     

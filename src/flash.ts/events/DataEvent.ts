@@ -16,6 +16,7 @@
 // Class: DataEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class DataEvent extends flash.events.TextEvent {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_data", "data", "data", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_data", "data", "data", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, data: string = "") {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; data = "" + data;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; data = asCoerceString(data);
       false && super(undefined, undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.DataEvent");
     }

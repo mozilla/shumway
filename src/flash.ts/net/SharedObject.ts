@@ -16,9 +16,9 @@
 // Class: SharedObject
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   declare var sessionStorage;
 
@@ -31,19 +31,15 @@ module Shumway.AVM2.AS.flash.net {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["connect", "close", "flush", "size", "fps", "send", "clear", "setProperty"];
+    static instanceSymbols: string [] = null; // ["connect", "close", "flush", "size", "fps", "send", "clear", "setProperty"];
     
     constructor () {
       false && super(undefined);
-
-      this._path = null;
-      this._data = null;
-      this._objectEncoding = SharedObject._defaultObjectEncoding;
-
-      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SHAREDOBJECT_FEATURE});
+      // Called from the _create()
+      // notImplemented("Dummy Constructor: public flash.net.SharedObject");
     }
 
     static _sharedObjects: any = createEmptyObject();
@@ -71,16 +67,23 @@ module Shumway.AVM2.AS.flash.net {
       url = asCoerceString(url);
       notImplemented("public flash.net.SharedObject::static getDiskUsage"); return;
     }
+    static _create(path: string, data: any): SharedObject {
+      var obj = new SharedObject();
+      obj._path = null;
+      obj._data = null;
+      obj._objectEncoding = SharedObject._defaultObjectEncoding;
+
+      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SHAREDOBJECT_FEATURE});
+      return obj;
+    }
     static getLocal(name: string, localPath: string = null, secure: boolean = false): flash.net.SharedObject {
       name = asCoerceString(name); localPath = asCoerceString(localPath); secure = !!secure;
       var path = (localPath || '') + '/' + name;
       if (SharedObject._sharedObjects[path]) {
         return SharedObject._sharedObjects[path];
       }
-      var so = new SharedObject();
-      so._path = path;
       var data = sessionStorage.getItem(path);
-      so._data = data ? JSON.parse(data) : {};
+      var so = SharedObject._create(path, data ? JSON.parse(data) : {});
       // so._data[Multiname.getPublicQualifiedName("cookie")] = {};
       // so._data[Multiname.getPublicQualifiedName("cookie")][Multiname.getPublicQualifiedName("lc")] = 32;
       // so._data[Multiname.getPublicQualifiedName("levelCompleted")] = 32;

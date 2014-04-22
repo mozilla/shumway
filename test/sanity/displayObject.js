@@ -1,6 +1,4 @@
 (function displayTests() {
-
-
   function timeAllocation(C) {
     var s = Date.now();
     for (var i = 0; i < 10000; i++) {
@@ -13,32 +11,10 @@
     console.info(message);
   }
 
-  var testNumber = 0;
-
-  function eqFloat(a, b, test) {
-    test = test ? ": " + test : " #" + testNumber;
-    if (Math.abs(a -b) < 0.1) {
-      console.info("PASS" + test)
-    } else {
-      console.error("FAIL" + test)
-    }
-    testNumber ++;
-  }
-
-  function check(condition, test) {
-    test = test ? ": " + test : " #" + testNumber;
-    if (condition) {
-      console.info("PASS" + test)
-    } else {
-      console.error("FAIL" + test)
-    }
-    testNumber ++;
-  }
-
-
   var Random = Shumway.Random;
   var Matrix = flash.geom.Matrix;
   var Rectangle = flash.geom.Rectangle;
+  var Point = flash.geom.Point;
   var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectFlags = flash.display.DisplayObjectFlags;
   var InteractiveObject = flash.display.InteractiveObject;
@@ -65,9 +41,7 @@
 
   function createDisplayObjectTree(depth, width, height) {
     var nodes = [];
-
     Random.seed(0x12343);
-
     function make(parent, count, depth) {
       if (depth > 0) {
         for (var i = 0; i < count; i++) {
@@ -80,7 +54,6 @@
         parent.addChild(new DisplayObject());
       }
     }
-
     var container = new DisplayObjectContainer();
     make(container, 2, depth);
     return container;
@@ -149,11 +122,6 @@
   });
 
   sanityTests.push(function runInspectorSanityTests(console) {
-    // var folder = GUI.addFolder("TEST");
-
-    // ctx.strokeStyle = "green";
-    // ctx.fillStyle = "red";
-
     var s = new Shape();
     var c = new DisplayObjectContainer();
     c.addChild(s);
@@ -164,31 +132,10 @@
     }
 
     var options = ["x", "y", "rotation", "scaleX", "scaleY", "width"];
-//    options.forEach(function (n) {
-//      var p = folder.add(s, n);
-//      p.onChange(function() {
-//        ctx.save();
-//        ctx.clearRect(0, 0, canvas.width, canvas.height);
-//        var t = s.transform.concatenatedMatrix;
-//        ctx.save();
-//        ctx.setTransform(t.a, t.b, t.c, t.d, t.tx, t.ty);
-//        ctx.scale(1/20, 1/20);
-//        var b = s.getBounds(null);
-//        ctx.fillRect(b.x, b.y, b.width, b.height);
-//        ctx.restore();
-//        ctx.strokeRect(b.x, b.y, b.width, b.height);
-//        ctx.restore();
-//      });
-//    })
   });
 
 
   sanityTests.push(function runInspectorSanityTests(console) {
-
-//    var folder = GUI.addFolder("TEST2");
-
-    // ctx.fillStyle = "red";
-    // ctx.fillRect(0, 0, 10, 10);
     Random.seed(0x12343);
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -200,25 +147,148 @@
     }
 
     check(s.getBounds().width === 100 && s.getBounds().height === 100);
-    log(s.getBounds(null));
-    log(s.getBounds(s.parent));
+
     s.rotation = 45;
-    log("After Rotation: " + s.getBounds(s.parent));
-    log(s.transform.matrix);
     check(s.x === 200, "Position should not change.");
     eqFloat(s.width, 141.4, "Should also affect the width: " + s.width);
     eqFloat(s.height, 141.4, "Should also affect the height: " + s.height);
 
     s.width = 50;
-    log(s.transform.matrix);
-
-    eqFloat(s.width, 95.7, "Setting width: " + s.width);
-    eqFloat(s.scaleX, 0.353, "ScaleX is also set: " + s.scaleX);
-    eqFloat(s.scaleY, 1, "ScaleY is also set: " + s.scaleY);
+    eqFloat(s.width, 95.7, "Width: " + s.width);
+    eqFloat(s.height, 95.7, "Height: " + s.height);
+    eqFloat(s.scaleX, 0.353, "ScaleX: " + s.scaleX);
+    eqFloat(s.scaleY, 1, "ScaleY: " + s.scaleY);
 
     s.width = 10;
-    log(s.transform.matrix);
-    log("After Second Set: " + s.getBounds(s.parent));
-    eqFloat(s.width, 72.85, "Setting width again: " + s.width);
+    eqFloat(s.width, 52.85, "Width: " + s.width);
+    eqFloat(s.height, 52.85, "Height: " + s.height);
+    eqFloat(s.scaleX, 0.070, "ScaleX: " + s.scaleX);
+    eqFloat(s.scaleY, 0.676, "ScaleY: " + s.scaleY);
+
+    s.width = 10;
+    eqFloat(s.width, 31.45, "Width: " + s.width);
+    eqFloat(s.height, 31.45, "Height: " + s.height);
+    eqFloat(s.scaleX, 0.070, "ScaleX: " + s.scaleX);
+    eqFloat(s.scaleY, 0.373, "ScaleY: " + s.scaleY);
+
+    s.rotation = 0;
+    eqFloat(s.width, 7.05, "Width: " + s.width);
+    eqFloat(s.height, 37.35, "Height: " + s.height);
+    eqFloat(s.scaleX, 0.070, "ScaleX: " + s.scaleX);
+    eqFloat(s.scaleY, 0.373, "ScaleY: " + s.scaleY);
   });
+
+  sanityTests.push(function runInspectorSanityTests(console) {
+    Random.seed(0x12343);
+    var s = new Shape();
+    var c = new DisplayObjectContainer();
+    c.addChild(s);
+    s.x = 200;
+    s.y = 200;
+    s._getContentBounds = function () {
+      return new Rectangle(0, 0, 100 * 20, 100 * 20);
+    }
+
+    check(s.getBounds().width === 100 && s.getBounds().height === 100);
+
+    s.rotation = 45;
+    check(s.x === 200, "Position should not change.");
+    eqFloat(s.width, 141.4, "Should also affect the width: " + s.width);
+    eqFloat(s.height, 141.4, "Should also affect the height: " + s.height);
+
+    s.height = 50;
+    eqFloat(s.width, 95.7, "Width: " + s.width);
+    eqFloat(s.height, 95.7, "Height: " + s.height);
+    eqFloat(s.scaleX, 1, "ScaleX: " + s.scaleX);
+    eqFloat(s.scaleY, 0.353, "ScaleY: " + s.scaleY);
+
+    s.height = 10;
+    eqFloat(s.width, 52.85, "Width: " + s.width);
+    eqFloat(s.height, 52.85, "Height: " + s.height);
+    eqFloat(s.scaleX, 0.676, "ScaleX: " + s.scaleX);
+    eqFloat(s.scaleY, 0.070, "ScaleY: " + s.scaleY);
+
+    s.height = 10;
+    eqFloat(s.width, 31.45, "Width: " + s.width);
+    eqFloat(s.height, 31.45, "Height: " + s.height);
+    eqFloat(s.scaleX, 0.373, "ScaleX: " + s.scaleX);
+    eqFloat(s.scaleY, 0.070, "ScaleY: " + s.scaleY);
+
+    s.rotation = 0;
+    eqFloat(s.width, 37.35, "Width: " + s.width);
+    eqFloat(s.height, 7.05, "Height: " + s.height);
+    eqFloat(s.scaleX, 0.373, "ScaleX: " + s.scaleX);
+    eqFloat(s.scaleY, 0.070, "ScaleY: " + s.scaleY);
+  });
+
+
+  sanityTests.push(function runInspectorSanityTests(console) {
+    Random.seed(0x12343);
+    var s = new Shape();
+    var c = new DisplayObjectContainer();
+    c.addChild(s);
+    s.x = 200;
+    s.y = 200;
+    s._getContentBounds = function () {
+      return new Rectangle(0, 0, 100 * 20, 100 * 20);
+    }
+
+    check(s.getBounds().width === 100 && s.getBounds().height === 100);
+
+    s.rotation = 45;
+    var m = s.transform.matrix;
+    m.b = 2;
+    s.transform.matrix = m;
+    eqFloat(s.transform.matrix.b, 2, "matrix.b: " + s.transform.matrix.b);
+    eqFloat(s.rotation, 70.52, "rotation: " + s.rotation);
+    eqFloat(s.width, 141.4, "Width: " + s.width);
+  });
+
+  sanityTests.push(function runInspectorSanityTests(console) {
+    Random.seed(0x12343);
+    var s = new Shape();
+    var c = new DisplayObjectContainer();
+    c.addChild(s);
+    s.x = 200;
+    s.y = 200;
+    s._getContentBounds = function () {
+      return new Rectangle(0, 0, 100 * 20, 100 * 20);
+    }
+
+    check(s.getBounds().width === 100 && s.getBounds().height === 100);
+    s.rotation = 45;
+    for (var i = 0; i < 100; i ++) {
+      s.width = 10;
+    }
+    eqFloat(s.width, 10, "Width should eventually become 10: " + s.width);
+    eqFloat(s.height, 10, "Height should eventually become 10: " + s.height);
+  });
+
+  sanityTests.push(function runInspectorSanityTests(console) {
+    Random.seed(0x12343);
+    var s = new Shape();
+    var c = new DisplayObjectContainer();
+    c.addChild(s);
+    s.x = 200;
+    s.y = 200;
+    s._getContentBounds = function () {
+      return new Rectangle(0, 0, 100 * 20, 100 * 20);
+    }
+
+    eqFloat(s.globalToLocal(new Point(300, 0)).x, 100);
+    eqFloat(s.localToGlobal(new Point(100, 0)).x, 300);
+
+    // Some random points.
+    for (var i = 0; i < 10; i++) {
+      var p = new Point(Math.random() * 10, Math.random() * 10);
+      s.rotation = i;
+      var q = s.globalToLocal(p);
+      var r = s.localToGlobal(q);
+      eqFloat(p.x, r.x);
+      eqFloat(p.y, r.y);
+    }
+
+  });
+
+
 })();

@@ -16,14 +16,15 @@
 // Class: Transform
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import Errors = Shumway.AVM2.Errors;
 
   export class Transform extends ASNative {
     static classInitializer: any = null;
     static initializer: any = null;
-    static staticBindings: string [] = null; // [];
-    static bindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
 
     private _displayObject: flash.display.DisplayObject;
 
@@ -75,7 +76,7 @@ module Shumway.AVM2.AS.flash.geom {
 
     set matrix3D(m: flash.geom.Matrix3D) {
       //m = m;
-      if (!(m instanceof Matrix3D)) {
+      if (!(Matrix3D.isType(m))) {
         throwError('TypeError', Errors.CheckTypeFailedError, m, 'flash.geom.Matrix3D');
       }
 
@@ -90,6 +91,8 @@ module Shumway.AVM2.AS.flash.geom {
         raw.asGetPublicProperty(13)
       );
       // this.matrix will reset this._target._matrix3D
+      // TODO: Must make sure to also deal with the _rotateXYZ properties.
+      notImplemented("public flash.geom.Transform::set matrix3D"); return;
       this._displayObject._matrix3D = m;
     }
 

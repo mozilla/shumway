@@ -16,6 +16,7 @@
 // Class: ExternalInterface
 module Shumway.AVM2.AS.flash.external {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Telemetry = Shumway.Telemetry;
   import ASObject = Shumway.AVM2.AS.ASObject;
@@ -36,10 +37,10 @@ module Shumway.AVM2.AS.flash.external {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // ["marshallExceptions", "ensureInitialized", "addCallback", "convertToXML", "convertToXMLString", "convertFromXML", "convertToJSString", "call"];
+    static classSymbols: string [] = null; // ["marshallExceptions", "ensureInitialized", "addCallback", "convertToXML", "convertToXMLString", "convertFromXML", "convertToJSString", "call"];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super();
@@ -96,7 +97,7 @@ module Shumway.AVM2.AS.flash.external {
     }
 
     static _evalJS(expression: string): string {
-      expression = "" + expression;
+      expression = asCoerceString(expression);
       return FirefoxCom.requestSync('externalCom', {action: 'eval', expression: expression});
     }
 

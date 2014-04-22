@@ -16,6 +16,7 @@
 // Class: URLStream
 module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   declare var FileLoadingService;
   declare var Stream;
@@ -26,20 +27,21 @@ module Shumway.AVM2.AS.flash.net {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static bindings: string [] = null; // [];
-    
-    constructor () {
-      false && super(undefined);
-
+    static initializer: any = function () {
       this._stream = null;
       this._connected = false;
       this._littleEndian = false;
+    };
+    
+    // List of static symbols to link.
+    static classSymbols: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static instanceSymbols: string [] = null; // [];
+    
+    constructor () {
+      false && super(undefined);
+      notImplemented("Dummy Constructor: public flash.net.URLStream");
     }
 
     private _stream;
@@ -80,7 +82,7 @@ module Shumway.AVM2.AS.flash.net {
       // return this._endian;
     }
     set endian(type: string) {
-      type = "" + type;
+      type = asCoerceString(type);
       notImplemented("public flash.net.URLStream::set endian"); return;
       // this._endian = type;
     }
@@ -197,7 +199,7 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.URLStream::readDouble"); return;
     }
     readMultiByte(length: number /*uint*/, charSet: string): string {
-      length = length >>> 0; charSet = "" + charSet;
+      length = length >>> 0; charSet = asCoerceString(charSet);
       notImplemented("public flash.net.URLStream::readMultiByte"); return;
     }
     readUTF(): string {

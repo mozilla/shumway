@@ -16,13 +16,14 @@
 // Class: TextFormat
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export class TextFormat extends ASNative {
 
     static classInitializer: any = null;
     static initializer: any = null;
-    static staticBindings: string [] = null; // [];
-    static bindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
 
     constructor(font: string = null, size: ASObject = null, color: ASObject = null,
                 bold: ASObject = null, italic: ASObject = null, underline: ASObject = null,
@@ -149,7 +150,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set align(value: string) {
-      this._align = value + '';
+      this._align = asCoerceString(value);
     }
 
     get blockIndent(): ASObject {
@@ -189,7 +190,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set display(value: string) {
-      this._display = value + '';
+      this._display = asCoerceString(value);
     }
 
     get font(): string {
@@ -197,7 +198,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set font(value: string) {
-      this._font = value + '';
+      this._font = asCoerceString(value);
     }
 
     get indent(): ASObject {
@@ -277,7 +278,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set target(value: string) {
-      this._target = value + '';
+      this._target = asCoerceString(value);
     }
 
     get underline(): ASObject {
@@ -293,7 +294,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set url(value: string) {
-      this._url = value + '';
+      this._url = asCoerceString(value);
     }
   }
 }

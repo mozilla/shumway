@@ -20,8 +20,8 @@ module Shumway.AVM2.AS.flash.text {
 
     static classInitializer: any = null;
     static initializer: any = null;
-    static staticBindings: string [] = null;
-    static bindings: string [] = null; // ["x", "width", "height", "ascent", "descent", "leading"];
+    static classSymbols: string [] = null;
+    static instanceSymbolså: string [] = null; // ["x", "width", "height", "ascent", "descent", "leading"];
 
     constructor(x: number, width: number, height: number, ascent: number, descent: number,
                 leading: number)

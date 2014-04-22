@@ -16,6 +16,7 @@
 // Class: BitmapData
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
 
   import argbToRgba = Shumway.ColorUtilities.argbToRgba;
@@ -30,10 +31,10 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["rect"];
+    static instanceSymbols: string [] = null; // ["rect"];
 
     static MAXIMUM_WIDTH = 8191;
     static MAXIMUM_HEIGHT = 8191;
@@ -196,11 +197,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     draw(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
-      source = source; matrix = matrix; colorTransform = colorTransform; blendMode = "" + blendMode; clipRect = clipRect; smoothing = !!smoothing;
+      source = source; matrix = matrix; colorTransform = colorTransform; blendMode = asCoerceString(blendMode); clipRect = clipRect; smoothing = !!smoothing;
       notImplemented("public flash.display.BitmapData::draw"); return;
     }
     drawWithQuality(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false, quality: string = null): void {
-      source = source; matrix = matrix; colorTransform = colorTransform; blendMode = "" + blendMode; clipRect = clipRect; smoothing = !!smoothing; quality = "" + quality;
+      source = source; matrix = matrix; colorTransform = colorTransform; blendMode = asCoerceString(blendMode); clipRect = clipRect; smoothing = !!smoothing; quality = asCoerceString(quality);
       notImplemented("public flash.display.BitmapData::drawWithQuality"); return;
     }
 
@@ -306,7 +307,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     threshold(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, operation: string, threshold: number /*uint*/, color: number /*uint*/ = 0, mask: number /*uint*/ = 4294967295, copySource: boolean = false): number /*uint*/ {
-      sourceBitmapData = sourceBitmapData; sourceRect = sourceRect; destPoint = destPoint; operation = "" + operation; threshold = threshold >>> 0; color = color >>> 0; mask = mask >>> 0; copySource = !!copySource;
+      sourceBitmapData = sourceBitmapData; sourceRect = sourceRect; destPoint = destPoint; operation = asCoerceString(operation); threshold = threshold >>> 0; color = color >>> 0; mask = mask >>> 0; copySource = !!copySource;
       notImplemented("public flash.display.BitmapData::threshold"); return;
     }
 

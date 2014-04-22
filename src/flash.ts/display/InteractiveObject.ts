@@ -16,6 +16,8 @@
 // Class: InteractiveObject
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import DisplayObject = flash.display.DisplayObject;
 
   import Event = flash.events.Event;
 
@@ -39,14 +41,14 @@ module Shumway.AVM2.AS.flash.display {
     };
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.InteractiveObject");
+      DisplayObject.instanceConstructorNoInitialize.call(this);
     }
     
     // JS -> AS Bindings

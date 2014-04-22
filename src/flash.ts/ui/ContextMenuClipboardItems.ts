@@ -16,6 +16,7 @@
 // Class: ContextMenuClipboardItems
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ContextMenuClipboardItems extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.ui {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["cut", "cut", "copy", "copy", "paste", "paste", "clear", "clear", "selectAll", "selectAll", "clone"];
+    static instanceSymbols: string [] = null; // ["cut", "cut", "copy", "copy", "paste", "paste", "clear", "clear", "selectAll", "selectAll", "clone"];
     
     constructor () {
       false && super();

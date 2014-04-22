@@ -16,6 +16,7 @@
 // Class: MouseEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class MouseEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_relatedObject", "_ctrlKey", "_altKey", "_shiftKey", "_buttonDown", "_delta", "_isRelatedObjectInaccessible", "relatedObject", "relatedObject", "ctrlKey", "ctrlKey", "altKey", "altKey", "shiftKey", "shiftKey", "buttonDown", "buttonDown", "delta", "delta", "stageX", "stageY", "isRelatedObjectInaccessible", "isRelatedObjectInaccessible", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_relatedObject", "_ctrlKey", "_altKey", "_shiftKey", "_buttonDown", "_delta", "_isRelatedObjectInaccessible", "relatedObject", "relatedObject", "ctrlKey", "ctrlKey", "altKey", "altKey", "shiftKey", "shiftKey", "buttonDown", "buttonDown", "delta", "delta", "stageX", "stageY", "isRelatedObjectInaccessible", "isRelatedObjectInaccessible", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = true, cancelable: boolean = false, localX: number = undefined, localY: number = undefined, relatedObject: flash.display.InteractiveObject = null, ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false, buttonDown: boolean = false, delta: number /*int*/ = 0) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; localX = +localX; localY = +localY; relatedObject = relatedObject; ctrlKey = !!ctrlKey; altKey = !!altKey; shiftKey = !!shiftKey; buttonDown = !!buttonDown; delta = delta | 0;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; localX = +localX; localY = +localY; relatedObject = relatedObject; ctrlKey = !!ctrlKey; altKey = !!altKey; shiftKey = !!shiftKey; buttonDown = !!buttonDown; delta = delta | 0;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.MouseEvent");
     }

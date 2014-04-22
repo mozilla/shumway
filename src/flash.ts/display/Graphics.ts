@@ -16,6 +16,7 @@
 // Class: Graphics
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
 
   import Rectangle = flash.geom.Rectangle;
@@ -34,10 +35,10 @@ module Shumway.AVM2.AS.flash.display {
     };
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super();
@@ -86,7 +87,7 @@ module Shumway.AVM2.AS.flash.display {
     beginGradientFill(type: string, colors: any [], alphas: any [], ratios: any [], matrix: flash.geom.Matrix = null, spreadMethod: string = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
       // colors = colors; alphas = alphas; ratios = ratios; matrix = matrix;
       this._closePath();
-      this._graphicsData.push(new GraphicsGradientFill("" + type, colors, alphas, ratios, matrix, "" + spreadMethod, "" + interpolationMethod, +focalPointRatio));
+      this._graphicsData.push(new GraphicsGradientFill(asCoerceString(type), colors, alphas, ratios, matrix, asCoerceString(spreadMethod), asCoerceString(interpolationMethod), +focalPointRatio));
     }
 
     beginBitmapFill(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null, repeat: boolean = true, smooth: boolean = false): void {
@@ -103,14 +104,14 @@ module Shumway.AVM2.AS.flash.display {
     lineGradientStyle(type: string, colors: any [], alphas: any [], ratios: any [], matrix: flash.geom.Matrix = null, spreadMethod: string = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
       // colors = colors; alphas = alphas; ratios = ratios; matrix = matrix;
       this._closePath();
-      var fill = new GraphicsGradientFill("" + type, colors, alphas, ratios, matrix, "" + spreadMethod, "" + interpolationMethod, +focalPointRatio);
+      var fill = new GraphicsGradientFill(asCoerceString(type), colors, alphas, ratios, matrix, asCoerceString(spreadMethod), asCoerceString(interpolationMethod), +focalPointRatio);
       // TODO
     }
 
     lineStyle(thickness: number, color: number /*uint*/ = 0, alpha: number = 1, pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = null, joints: string = null, miterLimit: number = 3): void {
       this._closePath();
       var fill = new GraphicsSolidFill(color >>> 0, +alpha);
-      this._graphicsData.push(new GraphicsStroke(+thickness, !!pixelHinting, "" + scaleMode, "" + caps, "" + joints, +miterLimit, fill));
+      this._graphicsData.push(new GraphicsStroke(+thickness, !!pixelHinting, asCoerceString(scaleMode), asCoerceString(caps), asCoerceString(joints), +miterLimit, fill));
     }
 
     drawRect(x: number, y: number, width: number, height: number): void {
@@ -295,11 +296,11 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.Graphics::lineShaderStyle"); return;
     }
     drawPath(commands: ASVector<any>, data: ASVector<any>, winding: string = "evenOdd"): void {
-      commands = commands; data = data, winding = "" + winding;
+      commands = commands; data = data, winding = asCoerceString(winding);
       notImplemented("public flash.display.Graphics::drawPath"); return;
     }
     drawTriangles(vertices: ASVector<any>, indices: ASVector<any> = null, uvtData: ASVector<any> = null, culling: string = "none"): void {
-      vertices = vertices; indices = indices; uvtData = uvtData, culling = "" + culling;
+      vertices = vertices; indices = indices; uvtData = uvtData, culling = asCoerceString(culling);
       notImplemented("public flash.display.Graphics::drawTriangles"); return;
     }
     drawGraphicsData(graphicsData: ASVector<any>): void {

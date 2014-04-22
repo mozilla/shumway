@@ -16,6 +16,7 @@
 // Class: FocusEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class FocusEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_relatedObject", "_shiftKey", "_keyCode", "_isRelatedObjectInaccessible", "relatedObject", "relatedObject", "shiftKey", "shiftKey", "keyCode", "keyCode", "isRelatedObjectInaccessible", "isRelatedObjectInaccessible", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_relatedObject", "_shiftKey", "_keyCode", "_isRelatedObjectInaccessible", "relatedObject", "relatedObject", "shiftKey", "shiftKey", "keyCode", "keyCode", "isRelatedObjectInaccessible", "isRelatedObjectInaccessible", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = true, cancelable: boolean = false, relatedObject: flash.display.InteractiveObject = null, shiftKey: boolean = false, keyCode: number /*uint*/ = 0) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; relatedObject = relatedObject; shiftKey = !!shiftKey; keyCode = keyCode >>> 0;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; relatedObject = relatedObject; shiftKey = !!shiftKey; keyCode = keyCode >>> 0;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.FocusEvent");
     }

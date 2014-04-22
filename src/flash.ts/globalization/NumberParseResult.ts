@@ -16,6 +16,7 @@
 // Class: NumberParseResult
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class NumberParseResult extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.globalization {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor (value: number = NaN, startIndex: number /*int*/ = 2147483647, endIndex: number /*int*/ = 2147483647) {
       value = +value; startIndex = startIndex | 0; endIndex = endIndex | 0;

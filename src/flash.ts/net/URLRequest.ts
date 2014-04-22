@@ -15,6 +15,7 @@
  */
 // Class: URLRequest
 module Shumway.AVM2.AS.flash.net {
+  import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
 
@@ -24,17 +25,7 @@ module Shumway.AVM2.AS.flash.net {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
-    
-    // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static bindings: string [] = null;
-    
-    constructor (url: string = null) {
-      url = asCoerceString(url);
-      false && super();
+    static initializer: any = function () {
       this._url = null;
       this._method = 'GET';
       this._data = null;
@@ -42,6 +33,18 @@ module Shumway.AVM2.AS.flash.net {
       this._contentType = 'application/x-www-form-urlencoded';
       this._requestHeaders = null;
       this._checkPolicyFile = true;
+    };
+    
+    // List of static symbols to link.
+    static classSymbols: string [] = null; // [];
+    
+    // List of instance symbols to link.
+    static bindings: string [] = null;
+    
+    constructor (url: string = null) {
+      url = asCoerceString(url);
+      false && super();
+      notImplemented("Dummy Constructor: public flash.net.URLRequest");
     }
 
     _checkPolicyFile: boolean;
@@ -105,7 +108,7 @@ module Shumway.AVM2.AS.flash.net {
       obj.checkPolicyFile = this._checkPolicyFile;
       if (this._data) {
         obj.mimeType = this._contentType;
-        if (this._data instanceof ByteArray) {
+        if (ByteArray.isType(this._data)) {
           obj.data = <ASObject><any>
             new Uint8Array((<any> this._data)._buffer, 0, (<any> this._data).length);
         } else {

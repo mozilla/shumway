@@ -16,6 +16,7 @@
 // Class: LocaleID
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class LocaleID extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.globalization {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor (name: string) {
-      name = "" + name;
+      name = asCoerceString(name);
       false && super();
       notImplemented("Dummy Constructor: public flash.globalization.LocaleID");
     }
@@ -42,7 +43,7 @@ module Shumway.AVM2.AS.flash.globalization {
     
     // AS -> JS Bindings
     static determinePreferredLocales(want: ASVector<any>, have: ASVector<any>, keyword: string = "userinterface"): ASVector<any> {
-      want = want; have = have; keyword = "" + keyword;
+      want = want; have = have; keyword = asCoerceString(keyword);
       notImplemented("public flash.globalization.LocaleID::static determinePreferredLocales"); return;
     }
     
@@ -75,7 +76,7 @@ module Shumway.AVM2.AS.flash.globalization {
       notImplemented("public flash.globalization.LocaleID::isRightToLeft"); return;
     }
     ctor(name: string): void {
-      name = "" + name;
+      name = asCoerceString(name);
       notImplemented("public flash.globalization.LocaleID::ctor"); return;
     }
   }

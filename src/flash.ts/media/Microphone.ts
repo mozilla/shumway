@@ -16,6 +16,7 @@
 // Class: Microphone
 module Shumway.AVM2.AS.flash.media {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Microphone extends flash.events.EventDispatcher {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.media {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super(undefined);
@@ -88,7 +89,7 @@ module Shumway.AVM2.AS.flash.media {
       // return this._codec;
     }
     set codec(codec: string) {
-      codec = "" + codec;
+      codec = asCoerceString(codec);
       notImplemented("public flash.media.Microphone::set codec"); return;
       // this._codec = codec;
     }

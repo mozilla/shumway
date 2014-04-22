@@ -16,6 +16,7 @@
 // Class: DateTimeFormatter
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class DateTimeFormatter extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.globalization {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["format", "formatUTC"];
+    static instanceSymbols: string [] = null; // ["format", "formatUTC"];
     
     constructor (requestedLocaleIDName: string, dateStyle: string = "long", timeStyle: string = "long") {
-      requestedLocaleIDName = "" + requestedLocaleIDName; dateStyle = "" + dateStyle; timeStyle = "" + timeStyle;
+      requestedLocaleIDName = asCoerceString(requestedLocaleIDName); dateStyle = asCoerceString(dateStyle); timeStyle = asCoerceString(timeStyle);
       false && super();
       notImplemented("Dummy Constructor: public flash.globalization.DateTimeFormatter");
     }
@@ -62,7 +63,7 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._actualLocaleIDName;
     }
     setDateTimeStyles(dateStyle: string, timeStyle: string): void {
-      dateStyle = "" + dateStyle; timeStyle = "" + timeStyle;
+      dateStyle = asCoerceString(dateStyle); timeStyle = asCoerceString(timeStyle);
       notImplemented("public flash.globalization.DateTimeFormatter::setDateTimeStyles"); return;
     }
     getTimeStyle(): string {
@@ -72,11 +73,11 @@ module Shumway.AVM2.AS.flash.globalization {
       notImplemented("public flash.globalization.DateTimeFormatter::getDateStyle"); return;
     }
     getMonthNames(nameStyle: string = "full", context: string = "standalone"): ASVector<any> {
-      nameStyle = "" + nameStyle; context = "" + context;
+      nameStyle = asCoerceString(nameStyle); context = asCoerceString(context);
       notImplemented("public flash.globalization.DateTimeFormatter::getMonthNames"); return;
     }
     getWeekdayNames(nameStyle: string = "full", context: string = "standalone"): ASVector<any> {
-      nameStyle = "" + nameStyle; context = "" + context;
+      nameStyle = asCoerceString(nameStyle); context = asCoerceString(context);
       notImplemented("public flash.globalization.DateTimeFormatter::getWeekdayNames"); return;
     }
     getFirstWeekday(): number /*int*/ {
@@ -86,11 +87,11 @@ module Shumway.AVM2.AS.flash.globalization {
       notImplemented("public flash.globalization.DateTimeFormatter::getDateTimePattern"); return;
     }
     setDateTimePattern(pattern: string): void {
-      pattern = "" + pattern;
+      pattern = asCoerceString(pattern);
       notImplemented("public flash.globalization.DateTimeFormatter::setDateTimePattern"); return;
     }
     ctor(requestedLocaleIDName: string, dateStyle: string, timeStyle: string): void {
-      requestedLocaleIDName = "" + requestedLocaleIDName; dateStyle = "" + dateStyle; timeStyle = "" + timeStyle;
+      requestedLocaleIDName = asCoerceString(requestedLocaleIDName); dateStyle = asCoerceString(dateStyle); timeStyle = asCoerceString(timeStyle);
       notImplemented("public flash.globalization.DateTimeFormatter::ctor"); return;
     }
     formatImplementation(dateTime: ASDate, utc: boolean): string {

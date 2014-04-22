@@ -16,6 +16,7 @@
 // Class: Collator
 module Shumway.AVM2.AS.flash.globalization {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Collator extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.globalization {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor (requestedLocaleIDName: string, initialMode: string = "sorting") {
-      requestedLocaleIDName = "" + requestedLocaleIDName; initialMode = "" + initialMode;
+      requestedLocaleIDName = asCoerceString(requestedLocaleIDName); initialMode = asCoerceString(initialMode);
       false && super();
       notImplemented("Dummy Constructor: public flash.globalization.Collator");
     }
@@ -120,15 +121,15 @@ module Shumway.AVM2.AS.flash.globalization {
       // return this._requestedLocaleIDName;
     }
     compare(string1: string, string2: string): number /*int*/ {
-      string1 = "" + string1; string2 = "" + string2;
+      string1 = asCoerceString(string1); string2 = asCoerceString(string2);
       notImplemented("public flash.globalization.Collator::compare"); return;
     }
     equals(string1: string, string2: string): boolean {
-      string1 = "" + string1; string2 = "" + string2;
+      string1 = asCoerceString(string1); string2 = asCoerceString(string2);
       notImplemented("public flash.globalization.Collator::equals"); return;
     }
     ctor(requestedLocaleIDName: string, initialMode: string): void {
-      requestedLocaleIDName = "" + requestedLocaleIDName; initialMode = "" + initialMode;
+      requestedLocaleIDName = asCoerceString(requestedLocaleIDName); initialMode = asCoerceString(initialMode);
       notImplemented("public flash.globalization.Collator::ctor"); return;
     }
   }

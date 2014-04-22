@@ -19,8 +19,8 @@ module Shumway.AVM2.AS.flash.text {
 
     static classInitializer: any = null;
     static initializer: any = null;
-    static staticBindings: string [] = null;
-    static bindings: string [] = null;
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = null;
 
     constructor () {
       super();

@@ -16,6 +16,7 @@
 // Class: OutputProgressEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class OutputProgressEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_bytesPending", "_bytesTotal", "bytesPending", "bytesPending", "bytesTotal", "bytesTotal", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_bytesPending", "_bytesTotal", "bytesPending", "bytesPending", "bytesTotal", "bytesTotal", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, bytesPending: number = 0, bytesTotal: number = 0) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; bytesPending = +bytesPending; bytesTotal = +bytesTotal;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; bytesPending = +bytesPending; bytesTotal = +bytesTotal;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.OutputProgressEvent");
     }

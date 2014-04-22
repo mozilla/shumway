@@ -25,6 +25,7 @@
 // Class: DisplayObject
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
 
@@ -33,6 +34,7 @@ module Shumway.AVM2.AS.flash.display {
   import Matrix = flash.geom.Matrix; assert (Matrix);
   import Point = flash.geom.Point; assert (Point);
   import Rectangle = flash.geom.Rectangle; assert (Rectangle);
+  import EventDispatcher = flash.events.EventDispatcher; assert (EventDispatcher);
 
   export enum Direction {
     Upward     = 1,
@@ -101,7 +103,8 @@ module Shumway.AVM2.AS.flash.display {
     InvalidPaint                              = 0x0040,
 
     /**
-     * The display object's constructor has executed.
+     * The display object's constructor has been executed or any of the derived class constructors have executed. It may be
+     * that the derived class doesn't call super, in such cases this flag must be set manually elsewhere.
      */
     Constructed                               = 0x0080,
 
@@ -180,7 +183,7 @@ module Shumway.AVM2.AS.flash.display {
       var self: DisplayObject = this;
       var instanceName = DisplayObject.register(self);
 
-      self._flags = DisplayObjectFlags.None;
+      self._flags = DisplayObjectFlags.Visible;
       self._root = null;
       self._stage = null;
       self._name = instanceName;
@@ -225,9 +228,6 @@ module Shumway.AVM2.AS.flash.display {
       self._rect = new Rectangle();
       self._bounds = new Rectangle();
 
-      // TODO get this via loaderInfo
-      self._loader = null;
-
       self._removeFlags (
         DisplayObjectFlags.AnimatedByTimeline    |
         DisplayObjectFlags.InvalidBounds         |
@@ -240,21 +240,12 @@ module Shumway.AVM2.AS.flash.display {
       // TODO move to InteractiveObject
       self._mouseOver = false;
 
-      // TODO not sure if needed anymore
-      self._level = -1;
-
       if (symbol) {
-        self._root        = symbol._root      || self._root;
-        self._stage       = symbol._stage     || self._stage;
         self._name        = symbol._name      || self._name;
         self._parent      = symbol._parent    || self._parent;
         self._clipDepth   = symbol._clipDepth || self._clipDepth;
         self._blendMode   = symbol._blendMode || self._blendMode;
         self._depth       = symbol._depth     || self._depth;
-        self._loader      = symbol._loader    || self._loader;
-
-        self._index       = isNaN(symbol._index) ? self._index : symbol._index;
-        self._level       = isNaN(symbol._level) ? self._level : symbol._level;
 
         if (symbol._scale9Grid) {
           self._scale9Grid = symbol._scale9Grid.clone();
@@ -284,14 +275,15 @@ module Shumway.AVM2.AS.flash.display {
     };
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["hitTestObject", "hitTestPoint"];
+    static instanceSymbols: string [] = null; // ["hitTestObject", "hitTestPoint"];
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public DisplayObject");
+      EventDispatcher.instanceConstructorNoInitialize();
+      this._setFlags(DisplayObjectFlags.Constructed);
     }
 
     _setFlags(flags: DisplayObjectFlags) {
@@ -336,7 +328,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       if (direction & Direction.Downward) {
-        if (this instanceof DisplayObjectContainer) {
+        if (DisplayObjectContainer.isType(this)) {
           var children = (<DisplayObjectContainer>this)._children;
           for (var i = 0; i < children.length; i++) {
             var child = children[i];
@@ -373,6 +365,7 @@ module Shumway.AVM2.AS.flash.display {
     _scaleZ: number;
 
     _rotation: number;
+
     _rotationX: number;
     _rotationY: number;
     _rotationZ: number;
@@ -424,14 +417,12 @@ module Shumway.AVM2.AS.flash.display {
      * Index of this display object within its container's children
      */
     _index: number;
+
     _isContainer: boolean;
-    _level: number;
-    _loader: flash.display.Loader;
     _maskedObject: DisplayObject;
     _mouseChildren: boolean;
     _mouseDown: boolean;
     _mouseOver: boolean;
-    _zindex: number;
 
     /**
      * Finds the furthest ancestor with a given set of flags.
@@ -471,12 +462,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Tests if the given display object is an ancestor of this display object.
+     * Tests if this display object is an ancestor of the specified display object.
      */
-    private _isAncestor(ancestor: DisplayObject): boolean {
-      var node = this;
+    _isAncestor(child: DisplayObject): boolean {
+      var node = child;
       while (node) {
-        if (node === ancestor) {
+        if (node === this) {
           return true;
         }
         node = node._parent;
@@ -603,15 +594,15 @@ module Shumway.AVM2.AS.flash.display {
       if (this._hasFlags(DisplayObjectFlags.InvalidBounds)) {
         rectangle.setEmpty();
         var graphics: Graphics = null;
-        if (this instanceof Shape) {
+        if (Shape.isType(this)) {
           graphics = (<Shape>this)._graphics;
-        } else if (this instanceof Sprite) {
+        } else if (Sprite.isType(this)) {
           graphics = (<Sprite>this)._graphics;
         }
         if (graphics) {
           rectangle.unionWith(graphics.getBounds(includeStrokes));
         }
-        if (this instanceof DisplayObjectContainer) {
+        if (DisplayObjectContainer.isType(this)) {
           var container: DisplayObjectContainer = <DisplayObjectContainer>this;
           var children = container._children;
           for (var i = 0; i < children.length; i++) {
@@ -689,7 +680,6 @@ module Shumway.AVM2.AS.flash.display {
 
     set scaleX(value: number) {
       value = +value;
-
       this._stopTimelineAnimation();
       if (value === this._scaleX) {
         return;
@@ -705,7 +695,6 @@ module Shumway.AVM2.AS.flash.display {
 
     set scaleY(value: number) {
       value = +value;
-
       this._stopTimelineAnimation();
       if (value === this._scaleY) {
         return;
@@ -715,13 +704,21 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidatePosition();
     }
 
+    get scaleZ(): number {
+      return this._scaleZ;
+    }
+
+    set scaleZ(value: number) {
+      value = +value;
+      notImplemented("public DisplayObject::set scaleZ"); return;
+    }
+
     get rotation(): number {
       return this._rotation;
     }
 
     set rotation(value: number) {
       value = +value;
-
       this._stopTimelineAnimation();
       value = DisplayObject._clampRotation(value);
       if (value === this._rotation) {
@@ -732,14 +729,46 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidatePosition();
     }
 
+    get rotationX(): number {
+      return this._rotationX;
+    }
+
+    set rotationX(value: number) {
+      value = +value;
+      notImplemented("public DisplayObject::set rotationX"); return;
+    }
+
+    get rotationY(): number {
+      return this._rotationY;
+    }
+
+    set rotationY(value: number) {
+      value = +value;
+      notImplemented("public DisplayObject::set rotationY"); return;
+    }
+
+    get rotationZ(): number {
+      return this._rotationZ;
+    }
+
+    set rotationZ(value: number) {
+      value = +value;
+      notImplemented("public DisplayObject::set rotationZ"); return;
+    }
+
     /**
-     *
+     * The width of this display object in its parent coordinate space.
      */
     get width(): number {
       var bounds = this._getTransformedBounds(this._parent, true);
       return bounds.width / 20;
     }
 
+    /**
+     * Attempts to change the width of this display object by changing its scaleX / scaleY
+     * properties. The scaleX property is set to the specified |width| value / baseWidth
+     * of the object in its parent cooridnate space with rotation applied.
+     */
     set width(value: number) {
       value = (value * 20) | 0;
       this._stopTimelineAnimation();
@@ -754,17 +783,25 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       var baseHeight = contentBounds.getBaseHeight(angle);
-      this._scaleY = this.height / baseHeight;
+      this._scaleY = bounds.height / baseHeight;
       this._scaleX = value / baseWidth;
       this._setFlags(DisplayObjectFlags.InvalidMatrix);
       this._invalidatePosition();
     }
 
+    /**
+     * The height of this display object in its parent coordinate space.
+     */
     get height(): number {
       var bounds = this._getTransformedBounds(this._parent, true);
       return bounds.height / 20;
     }
 
+    /**
+     * Attempts to change the height of this display object by changing its scaleY / scaleX
+     * properties. The scaleY property is set to the specified |height| value / baseHeight
+     * of the object in its parent cooridnate space with rotation applied.
+     */
     set height(value: number) {
       value = (value * 20) | 0;
       this._stopTimelineAnimation();
@@ -772,11 +809,15 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       var bounds = this._getTransformedBounds(this._parent, true);
-      if (!bounds.height || bounds.height === value) {
+      var contentBounds = this._getContentBounds(true);
+      var angle = this._rotation / 180 * Math.PI;
+      var baseHeight = contentBounds.getBaseWidth(angle);
+      if (!baseHeight) {
         return;
       }
-      this._scaleX = this._getMatrix().getScaleX();
-      this._scaleY = value / bounds.height;
+      var baseWidth = contentBounds.getBaseWidth(angle);
+      this._scaleY = value / baseHeight;
+      this._scaleX = bounds.width / baseWidth;
       this._setFlags(DisplayObjectFlags.InvalidMatrix);
       this._invalidatePosition();
     }
@@ -822,12 +863,36 @@ module Shumway.AVM2.AS.flash.display {
       this._setFlags(DisplayObjectFlags.Destroyed);
     }
 
+    /**
+     * Walks up the tree to find this display object's root. An object is classified
+     * as a root if its _root property points to itself. Root objects are the Stage,
+     * the main timeline object and a Loader's content.
+     */
     get root(): DisplayObject {
-      return this._root;
+      var node = this;
+      do {
+        if (node._root === node) {
+          return node;
+        }
+        node = node._parent;
+      } while (node);
+      return null;
     }
 
+    /**
+     * Walks up the tree to find this display object's stage, the first object whose
+     * |_stage| property points to itself.
+     */
     get stage(): flash.display.Stage {
-      return this._stage;
+      var node = this;
+      do {
+        if (node._stage === node) {
+          assert(flash.display.Stage.isType(node));
+          return <flash.display.Stage>node;
+        }
+        node = node._parent;
+      } while (node);
+      return null;
     }
 
     get name(): string {
@@ -835,7 +900,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set name(value: string) {
-      this._name = "" + value;
+      this._name = asCoerceString(value);
     }
 
     get parent(): DisplayObjectContainer {
@@ -844,6 +909,22 @@ module Shumway.AVM2.AS.flash.display {
 
     get visible(): boolean {
       return this._hasFlags(DisplayObjectFlags.Visible);
+    }
+
+    get alpha(): number {
+      return this._alpha;
+    }
+
+    set alpha(value: number) {
+      this._stopTimelineAnimation();
+      value = +value;
+
+      if (value === this._alpha) {
+        return;
+      }
+
+      this._alpha = value;
+      this._invalidatePaint();
     }
 
     /**
@@ -856,7 +937,6 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       this._setFlags(DisplayObjectFlags.Visible);
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
     }
 
     get z(): number {
@@ -877,6 +957,23 @@ module Shumway.AVM2.AS.flash.display {
       return this._getTransformedBounds(targetCoordinateSpace, false).toPixels();
     }
 
+    /**
+     * Converts a point from the global coordinate space into the local coordinate space.
+     */
+    globalToLocal(point: flash.geom.Point): flash.geom.Point {
+      var m = this._getConcatenatedMatrix().clone();
+      m.invert();
+      return m.transformCoords(point.x, point.y, true).toPixels();
+    }
+
+    /**
+     * Converts a point form the local coordinate sapce into the global coordinate space.
+     */
+    localToGlobal(point: flash.geom.Point): flash.geom.Point {
+      var m = this._getConcatenatedMatrix();
+      return m.transformCoords(point.x, point.y, true).toPixels();
+    }
+
     public visit(visitor: (DisplayObject) => VisitorFlags, visitorFlags: VisitorFlags) {
       var stack: DisplayObject [];
       var displayObject: DisplayObject;
@@ -886,7 +983,7 @@ module Shumway.AVM2.AS.flash.display {
       while (stack.length > 0) {
         displayObject = stack.pop();
         if (visitor(displayObject) === VisitorFlags.Continue) {
-          if (displayObject instanceof DisplayObjectContainer) {
+          if (DisplayObjectContainer.isType(displayObject)) {
             displayObjectContainer = <DisplayObjectContainer>displayObject;
             var children = displayObjectContainer._children;
             var length = children.length;
@@ -898,146 +995,32 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
     }
-    
+
+    /**
+     * Returns the loader info for this display object's root.
+     */
+    get loaderInfo(): flash.display.LoaderInfo {
+      var root = this.root;
+      if (root) {
+        assert(root._loaderInfo, "No LoaderInfo object found on root.");
+        return root._loaderInfo;
+      }
+      return null;
+    }
+
     // ---------------------------------------------------------------------------------------------------------------------------------------------
     // -- Stuff below we still need to port.                                                                                                      --
     // ---------------------------------------------------------------------------------------------------------------------------------------------
 
     /*
-    get width(): number {
-      notImplemented("public DisplayObject::get width"); return;
-      var bounds = this._getTransformedBounds(this, true);
-      return bounds.width / 20;
-    }
 
-    set width(value: number) {
-      notImplemented("public DisplayObject::set width"); return;
-      value = +value;
-
-      if (value < 0) {
-        return;
-      }
-
-      var u = Math.abs(Math.cos(this._rotation));
-      var v = Math.abs(Math.sin(this._rotation));
-      var bounds = this._getContentBounds();
-      var baseWidth = u * bounds.width + v * bounds.height;
-
-      if (!baseWidth) {
-        return;
-      }
-
-      var baseHeight = v * bounds.width + u * bounds.height;
-      this.scaleY = this.height / baseHeight;
-      this.scaleX = ((value * 20) | 0) / baseWidth;
-    }
-    */
-
-    /*
-    get scaleZ(): number {
-      return this._scaleZ;
-    }
-    set scaleZ(value: number) {
-      value = +value;
-      notImplemented("public DisplayObject::set scaleZ"); return;
-      // this._scaleZ = value;
-    }
     get mouseX(): number {
       return this._mouseX / 20;
     }
     get mouseY(): number {
       return this._mouseY / 20;
     }
-    get rotationX(): number {
-      return this._rotationX;
-    }
-    set rotationX(value: number) {
-      value = +value;
-      notImplemented("public DisplayObject::set rotationX"); return;
-      // this._rotationX = value;
-    }
-    get rotationY(): number {
-      return this._rotationY;
-    }
-    set rotationY(value: number) {
-      value = +value;
-      notImplemented("public DisplayObject::set rotationY"); return;
-      // this._rotationY = value;
-    }
-    get rotationZ(): number {
-      return this._rotationZ;
-    }
-    set rotationZ(value: number) {
-      value = +value;
-      notImplemented("public DisplayObject::set rotationZ"); return;
-      // this._rotationZ = value;
-    }
-    get alpha(): number {
-      return this._alpha;
-    }
-    set alpha(value: number) {
-      value = +value;
 
-      if (value === this._alpha) {
-        return;
-      }
-
-      this._alpha = value;
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      this._invalidate();
-    }
-    get width(): number {
-      var bounds = this._getContentBounds();
-      var m = this._matrix;
-      return (Math.abs(m.a) * bounds.width +
-              Math.abs(m.c) * bounds.height) / 20;
-    }
-    set width(value: number) {
-      value = +value;
-
-      if (value < 0) {
-        return;
-      }
-
-      var u = Math.abs(Math.cos(this._rotation));
-      var v = Math.abs(Math.sin(this._rotation));
-      var bounds = this._getContentBounds();
-      var baseWidth = u * bounds.width + v * bounds.height;
-
-      if (!baseWidth) {
-        return;
-      }
-
-      var baseHeight = v * bounds.width + u * bounds.height;
-      this.scaleY = this.height / baseHeight;
-      this.scaleX = ((value * 20) | 0) / baseWidth;
-    }
-    get height(): number {
-      var bounds = this._getContentBounds();
-      var m = this._matrix;
-      return (Math.abs(m.b) * bounds.width +
-              Math.abs(m.d) * bounds.height) / 20;
-    }
-    set height(value: number) {
-      value = +value;
-
-      if (value < 0) {
-        return;
-      }
-
-      var u = Math.abs(Math.cos(this._rotation));
-      var v = Math.abs(Math.sin(this._rotation));
-      var bounds = this._getContentBounds();
-      var baseHeight = v * bounds.width + u * bounds.height;
-
-      if (!baseHeight) {
-        return;
-      }
-
-      var baseWidth = u * bounds.width + v * bounds.height;
-      this.scaleX = this.width / baseWidth;
-      this.scaleY = ((value * 20) | 0) / baseHeight;
-    }
 
     get cacheAsBitmap(): boolean {
       return this._filters.length > 0 || this._hasFlags(DisplayObjectFlags.CacheAsBitmap);
@@ -1081,7 +1064,7 @@ module Shumway.AVM2.AS.flash.display {
      return this._blendMode;
     }
     set blendMode(value: string) {
-      value = "" + value;
+      value = asCoerceString(value);
 
       if (this._blendMode === value) {
         return;
@@ -1105,10 +1088,6 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public DisplayObject::set scale9Grid"); return;
       // this._scale9Grid = innerRectangle;
     }
-    get loaderInfo(): flash.display.LoaderInfo {
-      return (this._loader && this._loader._contentLoaderInfo) ||
-             (this._parent && this._parent.loaderInfo);
-    }
     get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
       return this._accessibilityProperties;
     }
@@ -1121,21 +1100,6 @@ module Shumway.AVM2.AS.flash.display {
       value = value;
       notImplemented("public DisplayObject::set blendShader"); return;
       // this._blendShader = value;
-    }
-    globalToLocal(point: flash.geom.Point): flash.geom.Point {
-      //point = point;
-      var m = this._getConcatenatedMatrix(null).clone();
-      m.invert();
-      var p = m.transformCoords(point.x, point.y, true);
-      p.toPixels();
-      return p;
-    }
-    localToGlobal(point: flash.geom.Point): flash.geom.Point {
-      //point = point;
-      var m = this._getConcatenatedMatrix(null);
-      var p = m.transformCoords(point.x, point.y, true);
-      p.toPixels();
-      return p;
     }
     globalToLocal3D(point: flash.geom.Point): flash.geom.Vector3D {
       point = point;

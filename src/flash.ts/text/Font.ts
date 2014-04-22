@@ -16,6 +16,7 @@
 // Class: Font
 module Shumway.AVM2.AS.flash.text {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Font extends ASNative {
 
     static classInitializer: any = null;
@@ -43,8 +44,8 @@ module Shumway.AVM2.AS.flash.text {
       }
     };
 
-    static staticBindings: string [] = null;
-    static bindings: string [] = null;
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = null;
 
     constructor() {
       super();
@@ -67,6 +68,8 @@ module Shumway.AVM2.AS.flash.text {
 
     // AS -> JS Bindings
     static enumerateFonts(enumerateDeviceFonts: boolean = false): any [] {
+      //TODO: support iterating device fonts, perhaps?
+      somewhatImplemented("public flash.text.Font::static enumerateFonts");
       return Font.fonts.slice();
     }
 
@@ -87,6 +90,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     hasGlyphs(str: string): boolean {
+      str = asCoerceString(str);
       somewhatImplemented('Font#hasGlyphs');
       return true;
     }

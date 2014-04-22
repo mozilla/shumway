@@ -16,22 +16,15 @@
 // Class: Timer
 module Shumway.AVM2.AS.flash.utils {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
   export class Timer extends flash.events.EventDispatcher {
-    
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static bindings: string [] = null; // ["_delay", "_repeatCount", "_iteration", "delay", "delay", "repeatCount", "repeatCount", "currentCount", "reset", "start", "tick"];
+    static classSymbols: string [] = null; // [];
+    static instanceSymbols: string [] = null; // ["_delay", "_repeatCount", "_iteration", "delay", "delay", "repeatCount", "repeatCount", "currentCount", "reset", "start", "tick"];
     
     constructor (delay: number, repeatCount: number /*int*/ = 0) {
-      delay = +delay; repeatCount = repeatCount | 0;
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.utils.Timer");
     }
@@ -41,32 +34,32 @@ module Shumway.AVM2.AS.flash.utils {
     _delay: number;
     _repeatCount: number /*int*/;
     _iteration: number /*int*/;
-    delay: number;
-    repeatCount: number /*int*/;
-    currentCount: number /*int*/;
+    _running: boolean;
     reset: () => void;
     start: () => void;
     tick: () => void;
+
+    _interval: number;
     
     // AS -> JS Bindings
-    
-    // _running: boolean;
-    // _delay: number;
-    // _repeatCount: number /*int*/;
-    // _currentCount: number /*int*/;
+
     get running(): boolean {
-      notImplemented("public flash.utils.Timer::get running"); return;
-      // return this._running;
+      return this._running;
     }
     stop(): void {
-      notImplemented("public flash.utils.Timer::stop"); return;
+      this._running = false;
+      clearInterval(this._interval);
     }
-    _start(delay: number, closure: ASFunction): void {
-      delay = +delay; closure = closure;
-      notImplemented("public flash.utils.Timer::_start"); return;
+    _start(delay: number, closure: Function): void {
+      this._delay = +delay;
+      this._running = true;
+      this._interval = setInterval(closure, delay);
     }
     _tick(): void {
-      notImplemented("public flash.utils.Timer::_tick"); return;
+      if (!this._running) {
+        return;
+      }
+      this.dispatchEvent(new flash.events.TimerEvent("timer", true, false));
     }
   }
 }

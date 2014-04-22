@@ -18,6 +18,7 @@
 module Shumway.AVM2.AS {
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import Multiname = Shumway.AVM2.ABC.Multiname;
@@ -317,14 +318,14 @@ module Shumway.AVM2.AS {
       }
 
       writeUTF(value: string): void {
-        value = "" + value;
+        value = asCoerceString(value);
         var bytes = utf8decode(value);
         this.writeShort(bytes.length);
         this.writeRawBytes(bytes);
       }
 
       writeUTFBytes(value: string): void {
-        value = "" + value;
+        value = asCoerceString(value);
         var bytes = utf8decode(value);
         this.writeRawBytes(bytes);
       }
@@ -393,7 +394,7 @@ module Shumway.AVM2.AS {
       }
 
       set endian(type: string) {
-        type = "" + type;
+        type = asCoerceString(type);
         this._littleEndian = type === "littleEndian" ;
       }
 
@@ -403,12 +404,12 @@ module Shumway.AVM2.AS {
       }
 
       writeMultiByte(value: string, charSet: string): void {
-        value = "" + value; charSet = "" + charSet;
+        value = asCoerceString(value); charSet = asCoerceString(charSet);
         notImplemented("packageInternal flash.utils.ObjectOutput::writeMultiByte"); return;
       }
 
       readMultiByte(length: number /*uint*/, charSet: string): string {
-        length = length >>> 0; charSet = "" + charSet;
+        length = length >>> 0; charSet = asCoerceString(charSet);
         notImplemented("packageInternal flash.utils.ObjectInput::readMultiByte"); return;
       }
 
@@ -639,7 +640,7 @@ module Shumway.AVM2.AS {
       }
 
       private _compress(algorithm: string): void {
-        algorithm = "" + algorithm;
+        algorithm = asCoerceString(algorithm);
         ByteArray._initializeTables();
 
         this.position = 0;
@@ -687,7 +688,7 @@ module Shumway.AVM2.AS {
       }
 
       private _uncompress(algorithm: string): void {
-        algorithm = "" + algorithm;
+        algorithm = asCoerceString(algorithm);
         ByteArray._initializeTables();
 
         var output = new ByteArray();

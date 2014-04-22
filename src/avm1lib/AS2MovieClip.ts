@@ -16,6 +16,7 @@
 // Class: AS2MovieClip
 module Shumway.AVM2.AS.avm1lib {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import MovieClip = Shumway.AVM2.AS.flash.display.MovieClip;
   import AS2Context = Shumway.AVM1.AS2Context;
 
@@ -29,10 +30,10 @@ module Shumway.AVM2.AS.avm1lib {
     static initializer: any = null;
 
     // List of static symbols to link.
-    static staticBindings: string [] = null;
+    static classSymbols: string [] = null;
 
     // List of instance symbols to link.
-    static bindings: string [] = ["__lookupChild", "__targetPath", "_alpha", "_alpha", "attachAudio", "attachBitmap", "attachMovie", "beginFill", "beginBitmapFill", "beginGradientFill", "blendMode", "blendMode", "cacheAsBitmap", "cacheAsBitmap", "clear", "createEmptyMovieClip", "createTextField", "_currentframe", "curveTo", "_droptarget", "duplicateMovieClip", "enabled", "enabled", "endFill", "filters", "filters", "focusEnabled", "focusEnabled", "_focusrect", "_focusrect", "forceSmoothing", "forceSmoothing", "_framesloaded", "getBounds", "getBytesLoaded", "getBytesTotal", "getDepth", "getInstanceAtDepth", "getNextHighestDepth", "getRect", "getSWFVersion", "getTextSnapshot", "getURL", "globalToLocal", "gotoAndPlay", "gotoAndStop", "_height", "_height", "_highquality", "_highquality", "hitArea", "hitArea", "hitTest", "lineGradientStyle", "lineStyle", "lineTo", "loadMovie", "loadVariables", "localToGlobal", "_lockroot", "_lockroot", "menu", "menu", "moveTo", "_name", "_name", "nextFrame", "opaqueBackground", "opaqueBackground", "_parent", "_parent", "play", "prevFrame", "_quality", "_quality", "removeMovieClip", "_rotation", "_rotation", "scale9Grid", "scale9Grid", "scrollRect", "scrollRect", "setMask", "_soundbuftime", "_soundbuftime", "startDrag", "stop", "stopDrag", "swapDepths", "tabChildren", "tabChildren", "tabEnabled", "tabEnabled", "tabIndex", "tabIndex", "_target", "_totalframes", "trackAsMenu", "trackAsMenu", "transform", "transform", "toString", "unloadMovie", "_url", "useHandCursor", "useHandCursor", "_visible", "_visible", "_width", "_width", "_x", "_x", "_xmouse", "_xscale", "_xscale", "_y", "_y", "_ymouse", "_yscale", "_yscale"];
+    static instanceSymbols: string [] = ["__lookupChild", "__targetPath", "_alpha", "_alpha", "attachAudio", "attachBitmap", "attachMovie", "beginFill", "beginBitmapFill", "beginGradientFill", "blendMode", "blendMode", "cacheAsBitmap", "cacheAsBitmap", "clear", "createEmptyMovieClip", "createTextField", "_currentframe", "curveTo", "_droptarget", "duplicateMovieClip", "enabled", "enabled", "endFill", "filters", "filters", "focusEnabled", "focusEnabled", "_focusrect", "_focusrect", "forceSmoothing", "forceSmoothing", "_framesloaded", "getBounds", "getBytesLoaded", "getBytesTotal", "getDepth", "getInstanceAtDepth", "getNextHighestDepth", "getRect", "getSWFVersion", "getTextSnapshot", "getURL", "globalToLocal", "gotoAndPlay", "gotoAndStop", "_height", "_height", "_highquality", "_highquality", "hitArea", "hitArea", "hitTest", "lineGradientStyle", "lineStyle", "lineTo", "loadMovie", "loadVariables", "localToGlobal", "_lockroot", "_lockroot", "menu", "menu", "moveTo", "_name", "_name", "nextFrame", "opaqueBackground", "opaqueBackground", "_parent", "_parent", "play", "prevFrame", "_quality", "_quality", "removeMovieClip", "_rotation", "_rotation", "scale9Grid", "scale9Grid", "scrollRect", "scrollRect", "setMask", "_soundbuftime", "_soundbuftime", "startDrag", "stop", "stopDrag", "swapDepths", "tabChildren", "tabChildren", "tabEnabled", "tabEnabled", "tabIndex", "tabIndex", "_target", "_totalframes", "trackAsMenu", "trackAsMenu", "transform", "transform", "toString", "unloadMovie", "_url", "useHandCursor", "useHandCursor", "_visible", "_visible", "_width", "_width", "_x", "_x", "_xmouse", "_xscale", "_xscale", "_y", "_y", "_ymouse", "_yscale", "_yscale"];
 
     constructor (nativeMovieClip: MovieClip) {
       false && super();

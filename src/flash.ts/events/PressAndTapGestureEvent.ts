@@ -16,6 +16,7 @@
 // Class: PressAndTapGestureEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class PressAndTapGestureEvent extends flash.events.GestureEvent {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_tapLocalX", "_tapLocalY", "tapLocalX", "tapLocalX", "tapLocalY", "tapLocalY", "tapStageX", "tapStageY", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_tapLocalX", "_tapLocalY", "tapLocalX", "tapLocalX", "tapLocalY", "tapLocalY", "tapStageX", "tapStageY", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = true, cancelable: boolean = false, phase: string = null, localX: number = 0, localY: number = 0, tapLocalX: number = 0, tapLocalY: number = 0, ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; phase = "" + phase; localX = +localX; localY = +localY; tapLocalX = +tapLocalX; tapLocalY = +tapLocalY; ctrlKey = !!ctrlKey; altKey = !!altKey; shiftKey = !!shiftKey;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; phase = asCoerceString(phase); localX = +localX; localY = +localY; tapLocalX = +tapLocalX; tapLocalY = +tapLocalY; ctrlKey = !!ctrlKey; altKey = !!altKey; shiftKey = !!shiftKey;
       false && super(undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.PressAndTapGestureEvent");
     }

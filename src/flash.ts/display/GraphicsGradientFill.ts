@@ -16,6 +16,7 @@
 // Class: GraphicsGradientFill
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GraphicsGradientFill extends ASNative implements IGraphicsFill, IGraphicsData {
     
     // Called whenever the class is initialized.
@@ -25,20 +26,20 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["colors", "alphas", "ratios", "matrix", "focalPointRatio", "_type", "_spreadMethod", "_interpolationMethod", "type", "type", "spreadMethod", "spreadMethod", "interpolationMethod", "interpolationMethod"];
+    static instanceSymbols: string [] = null; // ["colors", "alphas", "ratios", "matrix", "focalPointRatio", "_type", "_spreadMethod", "_interpolationMethod", "type", "type", "spreadMethod", "spreadMethod", "interpolationMethod", "interpolationMethod"];
     
     constructor (type: string = "linear", colors: any [] = null, alphas: any [] = null, ratios: any [] = null, matrix: any = null, spreadMethod: any = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0) {
       false && super();
-      this.type = "" + type;
+      this.type = asCoerceString(type);
       this.colors = colors;
       this.alphas = alphas;
       this.ratios = ratios;
       this.matrix = matrix;
       this.spreadMethod = spreadMethod;
-      this.interpolationMethod = "" + interpolationMethod;
+      this.interpolationMethod = asCoerceString(interpolationMethod);
       this.focalPointRatio = +focalPointRatio;
     }
     

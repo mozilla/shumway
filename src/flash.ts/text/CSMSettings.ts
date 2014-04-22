@@ -16,12 +16,13 @@
 // Class: CSMSettings
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class CSMSettings extends ASNative {
 
     static classInitializer: any = null;
     static initializer: any = null;
-    static staticBindings: string [] = null;
-    static bindings: string [] = null; // ["fontSize", "insideCutoff", "outsideCutoff"];
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = null; // ["fontSize", "insideCutoff", "outsideCutoff"];
 
     constructor(fontSize: number, insideCutoff: number, outsideCutoff: number) {
       fontSize = +fontSize;

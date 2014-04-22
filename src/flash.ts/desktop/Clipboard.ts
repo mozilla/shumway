@@ -15,7 +15,9 @@
  */
 // Class: Clipboard
 module Shumway.AVM2.AS.flash.desktop {
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Clipboard extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,10 +27,10 @@ module Shumway.AVM2.AS.flash.desktop {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["setData", "setDataHandler", "getData", "hasFormat"];
+    static instanceSymbols: string [] = null; // ["setData", "setDataHandler", "getData", "hasFormat"];
     
     constructor () {
       false && super();
@@ -58,7 +60,7 @@ module Shumway.AVM2.AS.flash.desktop {
       notImplemented("public flash.desktop.Clipboard::clear"); return;
     }
     clearData(format: string): void {
-      format = "" + format;
+      format = asCoerceString(format);
       notImplemented("public flash.desktop.Clipboard::clearData"); return;
     }
   }

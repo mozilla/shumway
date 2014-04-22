@@ -16,6 +16,7 @@
 // Class: AsyncErrorEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class AsyncErrorEvent extends flash.events.ErrorEvent {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["error", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["error", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = false, cancelable: boolean = false, text: string = "", error: ASError = null) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; text = "" + text; error = error;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; text = asCoerceString(text); error = error;
       false && super(undefined, undefined, undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.AsyncErrorEvent");
     }

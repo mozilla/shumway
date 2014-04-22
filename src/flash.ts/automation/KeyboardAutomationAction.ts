@@ -16,10 +16,11 @@
 // Class: KeyboardAutomationAction
 module Shumway.AVM2.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class KeyboardAutomationAction extends flash.automation.AutomationAction {
     static initializer: any = null;
     constructor (type: string, keyCode: number /*uint*/ = 0) {
-      type = "" + type; keyCode = keyCode >>> 0;
+      type = asCoerceString(type); keyCode = keyCode >>> 0;
       false && super();
       notImplemented("Dummy Constructor: public flash.automation.KeyboardAutomationAction");
     }

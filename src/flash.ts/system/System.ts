@@ -16,6 +16,7 @@
 // Class: System
 module Shumway.AVM2.AS.flash.system {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class System extends ASNative {
     
     // Called whenever the class is initialized.
@@ -25,10 +26,10 @@ module Shumway.AVM2.AS.flash.system {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // ["totalMemory"];
+    static classSymbols: string [] = null; // ["totalMemory"];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // [];
+    static instanceSymbols: string [] = null; // [];
     
     constructor () {
       false && super();
@@ -82,7 +83,7 @@ module Shumway.AVM2.AS.flash.system {
       // return this._vmVersion;
     }
     static setClipboard(string: string): void {
-      string = "" + string;
+      string = asCoerceString(string);
       notImplemented("public flash.system.System::static setClipboard"); return;
     }
     static pause(): void {

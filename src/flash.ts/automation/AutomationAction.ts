@@ -16,6 +16,7 @@
 // Class: AutomationAction
 module Shumway.AVM2.AS.flash.automation {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class AutomationAction extends ASNative {
     static initializer: any = null;
     constructor () {

@@ -16,6 +16,7 @@
 // Class: KeyboardEvent
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class KeyboardEvent extends flash.events.Event {
     
     // Called whenever the class is initialized.
@@ -25,13 +26,13 @@ module Shumway.AVM2.AS.flash.events {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static staticBindings: string [] = null; // [];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static bindings: string [] = null; // ["_charCode", "_keyCode", "_keyLocation", "_ctrlKey", "_altKey", "_shiftKey", "charCode", "charCode", "keyCode", "keyCode", "keyLocation", "keyLocation", "ctrlKey", "ctrlKey", "altKey", "altKey", "shiftKey", "shiftKey", "clone", "toString"];
+    static instanceSymbols: string [] = null; // ["_charCode", "_keyCode", "_keyLocation", "_ctrlKey", "_altKey", "_shiftKey", "charCode", "charCode", "keyCode", "keyCode", "keyLocation", "keyLocation", "ctrlKey", "ctrlKey", "altKey", "altKey", "shiftKey", "shiftKey", "clone", "toString"];
     
     constructor (type: string, bubbles: boolean = true, cancelable: boolean = false, charCodeValue: number /*uint*/ = 0, keyCodeValue: number /*uint*/ = 0, keyLocationValue: number /*uint*/ = 0, ctrlKeyValue: boolean = false, altKeyValue: boolean = false, shiftKeyValue: boolean = false) {
-      type = "" + type; bubbles = !!bubbles; cancelable = !!cancelable; charCodeValue = charCodeValue >>> 0; keyCodeValue = keyCodeValue >>> 0; keyLocationValue = keyLocationValue >>> 0; ctrlKeyValue = !!ctrlKeyValue; altKeyValue = !!altKeyValue; shiftKeyValue = !!shiftKeyValue;
+      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable; charCodeValue = charCodeValue >>> 0; keyCodeValue = keyCodeValue >>> 0; keyLocationValue = keyLocationValue >>> 0; ctrlKeyValue = !!ctrlKeyValue; altKeyValue = !!altKeyValue; shiftKeyValue = !!shiftKeyValue;
       false && super(undefined, undefined, undefined);
       notImplemented("Dummy Constructor: public flash.events.KeyboardEvent");
     }

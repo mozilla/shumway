@@ -16,6 +16,7 @@
 // Class: AS2Globals
 module Shumway.AVM2.AS.avm1lib {
   import notImplemented = Shumway.Debug.notImplemented;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Loader = Shumway.AVM2.AS.flash.display.Loader;
   import TextFormat = Shumway.AVM2.AS.flash.text.TextFormat;
   import AS2Context = Shumway.AVM1.AS2Context;
@@ -40,10 +41,10 @@ module Shumway.AVM2.AS.avm1lib {
     };
 
     // List of static symbols to link.
-    static staticBindings: string [] = null;
+    static classSymbols: string [] = null;
 
     // List of instance symbols to link.
-    static bindings: string [] = ["_global", "flash", "createFlashObject", "$asfunction", "call", "chr", "clearInterval", "clearTimeout", "duplicateMovieClip", "fscommand", "getAS2Property", "getTimer", "getURL", "getVersion", "gotoAndPlay", "gotoAndStop", "gotoLabel", "ifFrameLoaded", "int", "length", "loadMovie", "loadMovieNum", "loadVariables", "mbchr", "mblength", "mbord", "mbsubstring", "nextFrame", "nextScene", "ord", "play", "prevFrame", "prevScene", "print", "printAsBitmap", "printAsBitmapNum", "printNum", "random", "removeMovieClip", "setInterval", "setAS2Property", "setTimeout", "showRedrawRegions", "startDrag", "stop", "stopAllSounds", "stopDrag", "substring", "targetPath", "toggleHighQuality", "unloadMovie", "unloadMovieNum", "updateAfterEvent", "NaN", "Infinity", "isFinite", "isNaN", "parseFloat", "parseInt", "undefined", "MovieClip", "AsBroadcaster", "System", "Stage", "Button", "TextField", "Color", "Key", "Mouse", "MovieClipLoader", "Sound", "SharedObject", "ContextMenu", "ContextMenuItem", "ColorTransform", "Point", "Rectangle", "TextFormat"];
+    static instanceSymbols: string [] = ["_global", "flash", "createFlashObject", "$asfunction", "call", "chr", "clearInterval", "clearTimeout", "duplicateMovieClip", "fscommand", "getAS2Property", "getTimer", "getURL", "getVersion", "gotoAndPlay", "gotoAndStop", "gotoLabel", "ifFrameLoaded", "int", "length", "loadMovie", "loadMovieNum", "loadVariables", "mbchr", "mblength", "mbord", "mbsubstring", "nextFrame", "nextScene", "ord", "play", "prevFrame", "prevScene", "print", "printAsBitmap", "printAsBitmapNum", "printNum", "random", "removeMovieClip", "setInterval", "setAS2Property", "setTimeout", "showRedrawRegions", "startDrag", "stop", "stopAllSounds", "stopDrag", "substring", "targetPath", "toggleHighQuality", "unloadMovie", "unloadMovieNum", "updateAfterEvent", "NaN", "Infinity", "isFinite", "isNaN", "parseFloat", "parseInt", "undefined", "MovieClip", "AsBroadcaster", "System", "Stage", "Button", "TextField", "Color", "Key", "Mouse", "MovieClipLoader", "Sound", "SharedObject", "ContextMenu", "ContextMenuItem", "ColorTransform", "Point", "Rectangle", "TextFormat"];
 
     constructor () {
       false && super();
