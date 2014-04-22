@@ -262,7 +262,7 @@ module Shumway.AVM2.AS.flash.display {
         var i: number = allScenes.length;
         var scenes = root._scenes;
         var scene, labels;
-        for (i--) {
+        while (i--) {
           var sceneInfo = allScenes[i];
           var startFrame = sceneInfo.offset;
           var endFrame = root._totalFrames - 1;

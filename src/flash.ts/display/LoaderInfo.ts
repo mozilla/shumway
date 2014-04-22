@@ -135,11 +135,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get width(): number /*int*/ {
-      return this._width / 20;
+      return (this._width * 0.05) | 0;
     }
 
     get height(): number /*int*/ {
-      return this._height / 20;
+      return (this._height * 0.05) | 0;
     }
 
     get contentType(): string {
