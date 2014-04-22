@@ -129,18 +129,16 @@ module Shumway.AVM2.AS.flash.text {
       }
       measureTextField.defaultTextFormat = this;
       measureTextField.text = text;
-      var result = {};
-      var textWidth = measureTextField.textWidth;
-      var textHeight = measureTextField.textHeight;
+      var result: any = {};
+      var textWidth: number = measureTextField.textWidth;
+      var textHeight: number = measureTextField.textHeight;
       result.asSetPublicProperty('width', textWidth);
       result.asSetPublicProperty('height', textHeight);
       result.asSetPublicProperty('textFieldWidth', textWidth + 4);
       result.asSetPublicProperty('textFieldHeight', textHeight + 4);
-      var metrics = measureTextField.getLineMetrics(0);
-      result.asSetPublicProperty('ascent',
-                                 metrics.asGetPublicProperty('ascent'));
-      result.asSetPublicProperty('descent',
-                                 metrics.asGetPublicProperty('descent'));
+      var metrics: TextLineMetrics = measureTextField.getLineMetrics(0);
+      result.asSetPublicProperty('ascent', metrics.ascent);
+      result.asSetPublicProperty('descent', metrics.descent);
       return result;
     }
 
