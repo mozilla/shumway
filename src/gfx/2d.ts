@@ -312,6 +312,9 @@ module Shumway.GFX.Layers {
     }
 
     public render(stage: Stage, options: any) {
+      if (options.disable) {
+        return;
+      }
       var context = this.context;
       context.save();
 

@@ -37,6 +37,7 @@ var stageOptions = shumwayOptions.register(new OptionSet("Stage Renderer Options
 var ignoreViewport = stageOptions.register(new Option("", "ignoreViewport", "boolean", false, "Cull elements outside of the viewport."));
 var ignoreColorTransform = stageOptions.register(new Option("", "ignoreColorTransform", "boolean", false, "Don't apply color transforms."));
 var debugStage = stageOptions.register(new Option("", "debugStage", "boolean", false, "Debug Stage."));
+var disableStage = stageOptions.register(new Option("", "disableStage", "boolean", false, "Disable Stage."));
 var disableMasking = stageOptions.register(new Option("", "disableMasking", "boolean", false, "Disable masking."));
 
 var backend = stageOptions.register(new Option("t", "backend", "number", 0, "Backends", {

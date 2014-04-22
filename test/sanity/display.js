@@ -22,6 +22,7 @@
     options.cull = cull.value;
     options.disableMasking = disableMasking.value;
     options.debug = debugStage.value;
+    options.disable = disableStage.value;
     options.compositeMask = compositeMask.value;
     options.disableTextureUploads = disableTextureUploads.value;
   }
