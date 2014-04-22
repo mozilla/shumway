@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,31 @@ module Shumway.AVM2.AS.flash.display {
     
     
     // AS -> JS Bindings
-    
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+          return JointStyle.ROUND;
+        case 1:
+          return JointStyle.BEVEL;
+        case 2:
+          return JointStyle.MITER;
+        default:
+          return null;
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case JointStyle.ROUND:
+          return 0;
+        case JointStyle.BEVEL:
+          return 1;
+        case JointStyle.MITER:
+          return 2;
+        default:
+          return -1;
+      }
+    }
   }
 }

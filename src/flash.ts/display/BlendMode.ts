@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,30 +88,43 @@ module Shumway.AVM2.AS.flash.display {
         case 14:
           return BlendMode.HARDLIGHT;
         default:
-          return BlendMode.NORMAL;
+          return null;
       }
     }
 
-    static isMember(value: string): boolean {
+    static toNumber(value: string): number {
       switch (value) {
         case BlendMode.NORMAL:
+          return 1;
         case BlendMode.LAYER:
+          return 2;
         case BlendMode.MULTIPLY:
+          return 3;
         case BlendMode.SCREEN:
+          return 4;
         case BlendMode.LIGHTEN:
+          return 5;
         case BlendMode.DARKEN:
-        case BlendMode.ADD:
-        case BlendMode.SUBTRACT:
+          return 6;
         case BlendMode.DIFFERENCE:
+          return 7;
+        case BlendMode.ADD:
+          return 8;
+        case BlendMode.SUBTRACT:
+          return 9;
         case BlendMode.INVERT:
-        case BlendMode.OVERLAY:
-        case BlendMode.HARDLIGHT:
+          return 10;
         case BlendMode.ALPHA:
+          return 11;
         case BlendMode.ERASE:
-        case BlendMode.SHADER:
-          return true;
+          return 12;
+        case BlendMode.OVERLAY:
+          return 13;
+        case BlendMode.HARDLIGHT:
+          return 14;
+        default:
+          return -1;
       }
-      return false;
     }
   }
 }

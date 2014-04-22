@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
  * http://aaronhardy.com/flex/displayobject-quirks-and-tips/
  * http://blog.anselmbradford.com/2009/02/12/flash-movie-clip-transformational-properties-explorer-x-y-width-height-more/
  * http://gskinner.com/blog/archives/2007/08/annoying_as3_bu.html
+ * http://blog.dennisrobinson.name/getbounds-getrect-unexpected-results/
  *
  */
 // Class: DisplayObject
@@ -1134,7 +1135,7 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
-      if (BlendMode.isMember(value)) {
+      if (BlendMode.toNumber(value) >= 0) {
         this._blendMode = value;
       } else {
         throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");

@@ -1,5 +1,5 @@
 /**
- * Copyright 2013 Mozilla Foundation
+ * Copyright 2014 Mozilla Foundation
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,28 @@ module Shumway.AVM2.AS.flash.display {
     
     
     // AS -> JS Bindings
-    
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0x10:
+          return GradientType.LINEAR;
+        case 0x12:
+        case 0x13:
+          return GradientType.RADIAL;
+        default:
+          return null
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case GradientType.LINEAR:
+          return 0x10;
+        case GradientType.RADIAL:
+          return 0x12;
+        default:
+          return -1;
+      }
+    }
   }
 }
