@@ -15,25 +15,16 @@
  */
 // Class: EventDispatcher
 module Shumway.AVM2.AS.flash.events {
-  import AVM2 = Shumway.AVM2.Runtime.AVM2;
-  import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
-  import isString = Shumway.isString;
   import isFunction = Shumway.isFunction;
 
   import throwError = Shumway.AVM2.Runtime.throwError;
 
-  import Event = flash.events.Event;
-  import IEventDispatcher = flash.events.IEventDispatcher;
-  import EventDispatcher = flash.events.EventDispatcher;
-
   class EventListenerEntry {
-    constructor (
-      public listener: EventHandler,
-      public useCapture: boolean,
-      public priority: number
-    ) { }
+    constructor(public listener: EventHandler, public useCapture: boolean, public priority: number)
+    {
+    }
   }
 
   /**
@@ -75,13 +66,14 @@ module Shumway.AVM2.AS.flash.events {
           break;
         }
       }
-      this.ensureNotAliasedEntries().splice(index, 0, new EventListenerEntry(listener, useCapture, priority));
+      this.ensureNonAliasedEntries().splice(index, 0,
+                                            new EventListenerEntry(listener, useCapture, priority));
     }
 
     /**
      * Make sure we get a fresh list if it's been aliased.
      */
-    private ensureNotAliasedEntries(): EventListenerEntry [] {
+    private ensureNonAliasedEntries(): EventListenerEntry [] {
       var entries = this._entries;
       if (this._aliased) {
         entries = this._entries = entries.slice();
@@ -95,7 +87,7 @@ module Shumway.AVM2.AS.flash.events {
       for (var i = 0; i < entries.length; i++) {
         var item = entries[i];
         if (item.listener === listener) {
-          this.ensureNotAliasedEntries().splice(i, 1);
+          this.ensureNonAliasedEntries().splice(i, 1);
           return;
         }
       }
@@ -120,36 +112,40 @@ module Shumway.AVM2.AS.flash.events {
   }
 
   /**
-   * The EventDispatcher class is the base class for all classes that dispatch events. The EventDispatcher class implements the IEventDispatcher interface and is the base class for the DisplayObject class. The EventDispatcher class allows any object on the display list to be an event target and as such, to use the methods of the IEventDispatcher interface.
+   * The EventDispatcher class is the base class for all classes that dispatch events.
+   * The EventDispatcher class implements the IEventDispatcher interface and is the base class for
+   * the DisplayObject class. The EventDispatcher class allows any object on the display list to be
+   * an event target and as such, to use the methods of the IEventDispatcher interface.
    */
   export class EventDispatcher extends ASNative implements IEventDispatcher {
 
     /**
-     * Dictionary of all mouse events with the event type as key and value specifying if bubbling is enabled.
+     * Dictionary of all mouse events with the event type as key and value specifying if bubbling
+     * is enabled.
      */
     private static _mouseEvents: any;
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       EventDispatcher._mouseEvents = {
-        click:            true,
-        contextMenu:      true,
-        doubleClick:      true,
-        middleClick:      true,
-        middleMouseDown:  true,
-        middleMouseUp:    true,
-        mouseDown:        true,
-        mouseMove:        true,
-        mouseOut:         true,
-        mouseOver:        true,
-        mouseUp:          true,
-        mouseWheel:       true,
-        releaseOutside:   true,
-        rightClick:       true,
-        rightMouseDown:   true,
-        rightMouseUp:     true,
-        rollOut:          false,
-        rollOver:         false
+        click: true,
+        contextMenu: true,
+        doubleClick: true,
+        middleClick: true,
+        middleMouseDown: true,
+        middleMouseUp: true,
+        mouseDown: true,
+        mouseMove: true,
+        mouseOut: true,
+        mouseOver: true,
+        mouseUp: true,
+        mouseWheel: true,
+        releaseOutside: true,
+        rightClick: true,
+        rightMouseDown: true,
+        rightMouseUp: true,
+        rollOut: false,
+        rollOver: false
       };
     };
 
@@ -170,7 +166,7 @@ module Shumway.AVM2.AS.flash.events {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["toString", "dispatchEvent"];
 
-    constructor (target: flash.events.IEventDispatcher = null) {
+    constructor(target: flash.events.IEventDispatcher = null) {
       false && super();
       this._target = target || this;
       this._captureListeners = null;
@@ -184,25 +180,51 @@ module Shumway.AVM2.AS.flash.events {
       if (useCapture) {
         return this._captureListeners || (this._captureListeners = createEmptyObject());
       }
-      return this._targetOrBubblingListeners || (this._targetOrBubblingListeners = createEmptyObject());
+      return this._targetOrBubblingListeners ||
+             (this._targetOrBubblingListeners = createEmptyObject());
     }
 
-    addEventListener(type: string, listener: EventHandler, useCapture: boolean = false, priority: number /*int*/ = 0, useWeakReference: boolean = false): void {
-      assert (type);
-      type = asCoerceString(type); listener = listener; useCapture = !!useCapture; priority = priority | 0; useWeakReference = !!useWeakReference;
-      assert (isFunction(listener));
+    addEventListener(type: string, listener: EventHandler, useCapture: boolean = false,
+                     priority: number /*int*/ = 0, useWeakReference: boolean = false): void
+    {
+      // The error message always says "2", even though up to five arguments are valid.
+      if (arguments.length < 2 || arguments.length > 5) {
+        throwError("ArgumentError", Errors.WrongArgumentCountError,
+                   "flash.events::EventDispatcher/addEventListener()", 2, arguments.length);
+      }
+      // The type of `listener` is checked before that of `type`.
+      if (!isFunction(listener)) {
+        // TODO: The Player unevals the `listener`. To some extend, we could, too.
+        throwError("TypeError", Errors.CheckTypeFailedError, listener, "Function");
+      }
+      if (type === undefined || type === null) {
+        throwError("TypeError", Errors.NullPointerError, "type");
+      }
+      type = asCoerceString(type);
+      useCapture = !!useCapture;
+      priority |= 0;
+      useWeakReference = !!useWeakReference;
       var listeners = this.getListeners(useCapture);
       var list = listeners[type] || (listeners[type] = new EventListenerList());
       list.insert(listener, useCapture, priority);
     }
 
     removeEventListener(type: string, listener: EventHandler, useCapture: boolean = false): void {
-      type = asCoerceString(type); listener = listener; useCapture = !!useCapture;
+      // The error message always says "2", even though 3 arguments are valid.
+      if (arguments.length < 2 || arguments.length > 3) {
+        throwError("ArgumentError", Errors.WrongArgumentCountError,
+                   "flash.events::EventDispatcher/removeEventListener()", 2, arguments.length);
+      }
+      // The type of `listener` is checked before that of `type`.
       if (!isFunction(listener)) {
-        // TODO: The Player unevals the `listener`. To some extend, we could, too
+        // TODO: The Player unevals the `listener`. To some extend, we could, too.
         throwError("TypeError", Errors.CheckTypeFailedError, listener, "Function");
       }
-      var listeners = this.getListeners(useCapture);
+      if (type === undefined || type === null) {
+        throwError("TypeError", Errors.NullPointerError, "type");
+      }
+      type = asCoerceString(type);
+      var listeners = this.getListeners(!!useCapture);
       var list = listeners[type];
       if (list) {
         list.remove(listener);
@@ -213,12 +235,25 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     hasEventListener(type: string): boolean {
+      if (arguments.length !== 1) {
+        throwError("ArgumentError", Errors.WrongArgumentCountError,
+                   "flash.events::EventDispatcher/hasEventListener()", 1, arguments.length);
+      }
+      if (type === undefined || type === null) {
+        throwError("TypeError", Errors.NullPointerError, "type");
+      }
       type = asCoerceString(type);
-      return !!this._targetOrBubblingListeners[type] ||
-             !!this._captureListeners[type];
+      return !!(this._targetOrBubblingListeners[type] || this._captureListeners[type]);
     }
 
     willTrigger(type: string): boolean {
+      if (arguments.length !== 1) {
+        throwError("ArgumentError", Errors.WrongArgumentCountError,
+                   "flash.events::EventDispatcher/hasEventListener()", 1, arguments.length);
+      }
+      if (type === undefined || type === null) {
+        throwError("TypeError", Errors.NullPointerError, "type");
+      }
       type = asCoerceString(type);
       if (this.hasEventListener(type)) {
         return true;
@@ -235,6 +270,10 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     public dispatchEvent(event: Event): boolean {
+      if (arguments.length !== 1) {
+        throwError("ArgumentError", Errors.WrongArgumentCountError,
+                   "flash.events::EventDispatcher/hasEventListener()", 1, arguments.length);
+      }
       if (event._target) {
         event = event.clone();
       }
@@ -263,8 +302,9 @@ module Shumway.AVM2.AS.flash.events {
         for (var i = ancestors.length - 1; i >= 0 && keepPropagating; i--) {
           var ancestor = ancestors[i];
           var list = ancestor.getListeners(true)[type];
-          assert (list);
-          keepPropagating = EventDispatcher.callListeners(list, event, target, ancestor, EventPhase.CAPTURING_PHASE);
+          assert(list);
+          keepPropagating = EventDispatcher.callListeners(list, event, target, ancestor,
+                                                          EventPhase.CAPTURING_PHASE);
         }
       }
 
@@ -275,25 +315,29 @@ module Shumway.AVM2.AS.flash.events {
       if (keepPropagating) {
         var list = this.getListeners(false)[type];
         if (list) {
-          keepPropagating = EventDispatcher.callListeners(this.getListeners(false)[type], event, target, target, EventPhase.AT_TARGET);
+          keepPropagating = EventDispatcher.callListeners(this.getListeners(false)[type], event,
+                                                          target, target, EventPhase.AT_TARGET);
         }
       }
 
       /**
        * 3. Bubbling Phase
        */
-      if (event.bubbles) {
+      if (keepPropagating && event.bubbles) {
         for (var i = 0; i < ancestors.length && keepPropagating; i++) {
           var ancestor = ancestors[i];
           var list = ancestor.getListeners(false)[type];
-          keepPropagating = EventDispatcher.callListeners(list, event, target, ancestor, EventPhase.BUBBLING_PHASE);
+          keepPropagating = EventDispatcher.callListeners(list, event, target, ancestor,
+                                                          EventPhase.BUBBLING_PHASE);
         }
       }
 
       return !event._isDefaultPrevented;
     }
 
-    private static callListeners(list: EventListenerList, event: Event, target: IEventDispatcher, currentTarget: IEventDispatcher, eventPhase: number) {
+    private static callListeners(list: EventListenerList, event: Event, target: IEventDispatcher,
+                                 currentTarget: IEventDispatcher, eventPhase: number)
+    {
       var snapshot = list.snapshot();
       for (var i = 0; i < snapshot.length; i++) {
         var entry = snapshot[i];
