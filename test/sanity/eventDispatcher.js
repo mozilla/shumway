@@ -50,4 +50,21 @@
     }
   });
 
+  // Test that listener list snapshotting works as expected.
+  unitTests.push(function testEventListenerListSnapshotting() {
+    var nestedDispatchTriggered = false;
+    var ed = new EventDispatcher();
+    ed.addEventListener('event', function() {
+      if (!nestedDispatchTriggered) {
+        nestedDispatchTriggered = true;
+        ed.dispatchEvent(new Event('event'));
+        ed.addEventListener('event', function() {
+          check(false, "snapshotting is broken");
+        });
+      }
+    });
+    ed.dispatchEvent(new Event('event'));
+    check(true, "snapshotting works");
+  });
+
 })();
