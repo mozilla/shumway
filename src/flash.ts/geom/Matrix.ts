@@ -179,6 +179,11 @@ module Shumway.AVM2.AS.flash.geom {
           this.identity();
           return this;
         }
+        /**
+         * Multiplying by reciprocal of the |determinant| is only accurate if the reciprocal is
+         * representable without loss of precision. This is usually only the case for powers of
+         * two: 1/2, 1/4 ...
+         */
         determinant = 1 / determinant;
         this.a = d * determinant;
         b = this.b = -b * determinant;
