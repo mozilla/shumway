@@ -19,14 +19,8 @@ module Shumway.AVM2.AS.flash.external {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Telemetry = Shumway.Telemetry;
-  import ASObject = Shumway.AVM2.AS.ASObject;
-  import ASFunction = Shumway.AVM2.AS.ASFunction;
-  import ASNative = Shumway.AVM2.AS.ASNative;
-  import ASXML = Shumway.AVM2.AS.ASXML;
   import forEachPublicProperty = Shumway.AVM2.Runtime.forEachPublicProperty;
-
-  declare var FirefoxCom;
-  declare var $EXTENSION: boolean;
+  import ExternalInterfaceService = Shumway.ExternalInterfaceService;
 
   export class ExternalInterface extends ASNative {
     
@@ -61,7 +55,7 @@ module Shumway.AVM2.AS.flash.external {
     private static registeredCallbacks: Shumway.Map<(request: string, args: any []) => any> = createEmptyObject();
 
     private static _getAvailable(): boolean {
-      return $EXTENSION;
+      return ExternalInterfaceService.instance.enabled;
     }
 
     static _initJS(): void {
@@ -69,7 +63,7 @@ module Shumway.AVM2.AS.flash.external {
         return;
       Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.EXTERNAL_INTERFACE_FEATURE});
       ExternalInterface.initialized = true;
-      FirefoxCom.initJS(ExternalInterface._callIn);
+      ExternalInterfaceService.instance.initJS(ExternalInterface._callIn);
     }
 
     private static _callIn(functionName: string, args: any[]) {
@@ -87,22 +81,23 @@ module Shumway.AVM2.AS.flash.external {
     }
 
     static _addCallback(functionName: string, closure: (request: string, args: any []) => any, hasNullCallback: boolean): void {
-      FirefoxCom.request('externalCom',
-      {action: 'register', functionName: functionName, remove: hasNullCallback});
       if (hasNullCallback) {
+        ExternalInterfaceService.instance.unregisterCallback(functionName);
         delete ExternalInterface.registeredCallbacks[functionName];
       } else {
+        ExternalInterfaceService.instance.registerCallback(functionName);
         ExternalInterface.registeredCallbacks[functionName] = closure;
       }
     }
 
     static _evalJS(expression: string): string {
       expression = asCoerceString(expression);
-      return FirefoxCom.requestSync('externalCom', {action: 'eval', expression: expression});
+      return ExternalInterfaceService.instance.eval(expression);
     }
 
     static _callOut(request: string): string {
-      return FirefoxCom.requestSync('externalCom', {action: 'call', request: request});
+      request = asCoerceString(request);
+      return ExternalInterfaceService.instance.call(request);
     }
 
     static get available(): boolean {
@@ -110,7 +105,7 @@ module Shumway.AVM2.AS.flash.external {
     }
 
     static get objectID(): string {
-      return FirefoxCom.requestSync('externalCom', {action: 'getId'});
+      return ExternalInterfaceService.instance.getId();
     }
 
     static get activeX(): boolean {

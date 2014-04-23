@@ -262,6 +262,28 @@ Shumway.FileLoadingService.instance = {
   }
 };
 
+Shumway.ExternalInterfaceService.instance = {
+  enabled: true,
+  initJS: function (callback) {
+    FirefoxCom.initJS(callback);
+  },
+  registerCallback: function (functionName) {
+    FirefoxCom.request('externalCom', {action: 'register', functionName: functionName, remove: false});
+  },
+  unregisterCallback: function (functionName) {
+    FirefoxCom.request('externalCom', {action: 'register', functionName: functionName, remove: true});
+  },
+  eval: function (expression) {
+    return FirefoxCom.requestSync('externalCom', {action: 'eval', expression: expression});
+  },
+  call: function (request) {
+    return FirefoxCom.requestSync('externalCom', {action: 'call', request: request});
+  },
+  getId: function () {
+    return FirefoxCom.requestSync('externalCom', {action: 'getId'});
+  }
+};
+
 function parseSwf(url, movieParams, objectParams) {
   var enableVerifier = Shumway.AVM2.Runtime.enableVerifier;
   var EXECUTION_MODE = Shumway.AVM2.Runtime.EXECUTION_MODE;
