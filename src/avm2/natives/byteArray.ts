@@ -399,7 +399,6 @@ module Shumway.AVM2.AS {
       }
 
       toString(): string {
-        log("HERE");
         return utf8encode(new Int8Array(this._buffer, 0, this._length));
       }
 

@@ -70,7 +70,7 @@ function executeUnitTests(file, avm2) {
     lastTestPromise.then(function () {
       console.info("Unit Tests is Completed");
     }, function (e) {
-      console.error("Unit Tests Error: " + e.toString());
+      console.info("Unit Tests Failed: " + e);
     });
   }
   if (file.endsWith("/")) {

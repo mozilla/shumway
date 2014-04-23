@@ -1,12 +1,12 @@
 /**
  * Copyright 2014 Mozilla Foundation
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,28 +15,26 @@
  */
 // Class: Event
 module Shumway.AVM2.AS.flash.events {
-  import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Event extends ASNative {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
+
     // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
+
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["formatToString", "clone", "toString"];
-    
-    constructor (type: string, bubbles: boolean = false, cancelable: boolean = false) {
-      type = asCoerceString(type); bubbles = !!bubbles; cancelable = !!cancelable;
+    static instanceSymbols: string [] = ["clone"]; // ["formatToString", "toString"];
+
+    constructor(type: string, bubbles: boolean = false, cancelable: boolean = false) {
       false && super();
-      this._type = type;
-      this._bubbles = bubbles;
-      this._cancelable = cancelable;
+      this._type = asCoerceString(type);
+      this._bubbles = !!bubbles;
+      this._cancelable = !!cancelable;
 
       this._target = null;
       this._currentTarget = null;
@@ -46,7 +44,7 @@ module Shumway.AVM2.AS.flash.events {
       this._stopImmediatePropagation = false;
       this._isDefaultPrevented = false;
     }
-    
+
     // JS -> AS Bindings
     static ACTIVATE: string = "activate";
     static ADDED: string = "added";
@@ -87,15 +85,15 @@ module Shumway.AVM2.AS.flash.events {
     static TEXTURE_READY: string = "textureReady";
     static VIDEO_FRAME: string = "videoFrame";
     static SUSPEND: string = "suspend";
-    static CHANNEL_MESSAGE: string = "channelMessage";
-    static CHANNEL_STATE: string = "channelState";
-    static WORKER_STATE: string = "workerState";
-    
+//    static CHANNEL_MESSAGE: string = "channelMessage";
+//    static CHANNEL_STATE: string = "channelState";
+//    static WORKER_STATE: string = "workerState";
+
     formatToString: (className: string) => string;
     clone: () => flash.events.Event;
 
     // AS -> JS Bindings
-    
+
     _type: string;
     _bubbles: boolean;
     _cancelable: boolean;
@@ -111,32 +109,41 @@ module Shumway.AVM2.AS.flash.events {
     get type(): string {
       return this._type;
     }
+
     get bubbles(): boolean {
       return this._bubbles;
     }
+
     get cancelable(): boolean {
       return this._cancelable;
     }
+
     get target(): Object {
       return this._target;
     }
+
     get currentTarget(): Object {
       return this._currentTarget;
     }
+
     get eventPhase(): number /*uint*/ {
       return this._eventPhase;
     }
+
     stopPropagation(): void {
       this._stopPropagation = true;
     }
+
     stopImmediatePropagation(): void {
       this._stopImmediatePropagation = this._stopPropagation = true;
     }
+
     preventDefault(): void {
       if (this._cancelable) {
         this._isDefaultPrevented = true;
       }
     }
+
     isDefaultPrevented(): boolean {
       return this._isDefaultPrevented;
     }

@@ -17,7 +17,6 @@
 module Shumway.AVM2.AS.flash.text {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import asCoerceObject = Shumway.AVM2.Runtime.asCoerceObject;
 
   export class TextFormat extends ASNative {
 
@@ -26,25 +25,12 @@ module Shumway.AVM2.AS.flash.text {
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];
 
-    constructor(font: string = null, size: ASObject = null, color: ASObject = null,
-                bold: ASObject = null, italic: ASObject = null, underline: ASObject = null,
+    constructor(font: string = null, size: Object = null, color: Object = null,
+                bold: Object = null, italic: Object = null, underline: Object = null,
                 url: string = null, target: string = null, align: string = null,
-                leftMargin: ASObject = null, rightMargin: ASObject = null, indent: ASObject = null,
-                leading: ASObject = null)
+                leftMargin: Object = null, rightMargin: Object = null, indent: Object = null,
+                leading: Object = null)
     {
-      font = asCoerceString(font);
-      size = size;
-      color = color;
-      bold = bold;
-      italic = italic;
-      underline = underline;
-      url = "" + url;
-      target = "" + target;
-      align = "" + align;
-      leftMargin = leftMargin;
-      rightMargin = rightMargin;
-      indent = indent;
-      leading = leading;
       false && super();
       notImplemented("Dummy Constructor: public flash.text.TextFormat");
     }
@@ -52,42 +38,42 @@ module Shumway.AVM2.AS.flash.text {
     private static measureTextField: flash.text.TextField;
 
     private _align: string;
-    private _blockIndent: ASObject;
-    private _bold: ASObject;
-    private _bullet: ASObject;
-    private _color: ASObject;
+    private _blockIndent: Object;
+    private _bold: Object;
+    private _bullet: Object;
+    private _color: Object;
     private _display: string;
     private _font: string;
-    private _indent: ASObject;
-    private _italic: ASObject;
-    private _kerning: ASObject;
-    private _leading: ASObject;
-    private _leftMargin: ASObject;
-    private _letterSpacing: ASObject;
-    private _rightMargin: ASObject;
-    private _size: ASObject;
+    private _indent: Object;
+    private _italic: Object;
+    private _kerning: Object;
+    private _leading: Object;
+    private _leftMargin: Object;
+    private _letterSpacing: Object;
+    private _rightMargin: Object;
+    private _size: Object;
     private _tabStops: any [];
     private _target: string;
-    private _underline: ASObject;
+    private _underline: Object;
     private _url: string;
 
 
     fromNative(nativeFormat: NativeTextFormat): TextFormat {
       this._font = nativeFormat.face;
-      this._size = asCoerceObject(nativeFormat.size);
-      this._color = asCoerceObject(nativeFormat.color);
-      this._bold = asCoerceObject(nativeFormat.bold);
-      this._italic = asCoerceObject(nativeFormat.italic);
-      this._underline = asCoerceObject(nativeFormat.underline);
+      this._size = nativeFormat.size;
+      this._color = nativeFormat.color;
+      this._bold = nativeFormat.bold;
+      this._italic = nativeFormat.italic;
+      this._underline = nativeFormat.underline;
       this._url = nativeFormat.url;
       this._target = nativeFormat.target;
       this._align = nativeFormat.align;
-      this._leftMargin = asCoerceObject(nativeFormat.leftMargin);
-      this._rightMargin = asCoerceObject(nativeFormat.rightMargin);
-      this._indent = asCoerceObject(nativeFormat.indent);
-      this._leading = asCoerceObject(nativeFormat.leading);
-      this._letterSpacing = asCoerceObject(nativeFormat.letterSpacing);
-      this._kerning = asCoerceObject(nativeFormat.kerning);
+      this._leftMargin = nativeFormat.leftMargin;
+      this._rightMargin = nativeFormat.rightMargin;
+      this._indent = nativeFormat.indent;
+      this._leading = nativeFormat.leading;
+      this._letterSpacing = nativeFormat.letterSpacing;
+      this._kerning = nativeFormat.kerning;
       return this;
     }
 
@@ -146,35 +132,35 @@ module Shumway.AVM2.AS.flash.text {
       this._align = asCoerceString(value);
     }
 
-    get blockIndent(): ASObject {
+    get blockIndent(): Object {
       return this._blockIndent;
     }
 
-    set blockIndent(value: ASObject) {
+    set blockIndent(value: Object) {
       this._blockIndent = value;
     }
 
-    get bold(): ASObject {
+    get bold(): Object {
       return this._bold;
     }
 
-    set bold(value: ASObject) {
+    set bold(value: Object) {
       this._bold = value;
     }
 
-    get bullet(): ASObject {
+    get bullet(): Object {
       return this._bullet;
     }
 
-    set bullet(value: ASObject) {
+    set bullet(value: Object) {
       this._bullet = value;
     }
 
-    get color(): ASObject {
+    get color(): Object {
       return this._color;
     }
 
-    set color(value: ASObject) {
+    set color(value: Object) {
       this._color = value;
     }
 
@@ -194,67 +180,67 @@ module Shumway.AVM2.AS.flash.text {
       this._font = asCoerceString(value);
     }
 
-    get indent(): ASObject {
+    get indent(): Object {
       return this._indent;
     }
 
-    set indent(value: ASObject) {
+    set indent(value: Object) {
       this._indent = value;
     }
 
-    get italic(): ASObject {
+    get italic(): Object {
       return this._italic;
     }
 
-    set italic(value: ASObject) {
+    set italic(value: Object) {
       this._italic = value;
     }
 
-    get kerning(): ASObject {
+    get kerning(): Object {
       return this._kerning;
     }
 
-    set kerning(value: ASObject) {
+    set kerning(value: Object) {
       this._kerning = value;
     }
 
-    get leading(): ASObject {
+    get leading(): Object {
       return this._leading;
     }
 
-    set leading(value: ASObject) {
+    set leading(value: Object) {
       this._leading = value;
     }
 
-    get leftMargin(): ASObject {
+    get leftMargin(): Object {
       return this._leftMargin;
     }
 
-    set leftMargin(value: ASObject) {
+    set leftMargin(value: Object) {
       this._leftMargin = value;
     }
 
-    get letterSpacing(): ASObject {
+    get letterSpacing(): Object {
       return this._letterSpacing;
     }
 
-    set letterSpacing(value: ASObject) {
+    set letterSpacing(value: Object) {
       this._letterSpacing = value;
     }
 
-    get rightMargin(): ASObject {
+    get rightMargin(): Object {
       return this._rightMargin;
     }
 
-    set rightMargin(value: ASObject) {
+    set rightMargin(value: Object) {
       this._rightMargin = value;
     }
 
-    get size(): ASObject {
+    get size(): Object {
       return this._size;
     }
 
-    set size(value: ASObject) {
+    set size(value: Object) {
       this._size = value;
     }
 
@@ -274,11 +260,11 @@ module Shumway.AVM2.AS.flash.text {
       this._target = asCoerceString(value);
     }
 
-    get underline(): ASObject {
+    get underline(): Object {
       return this._underline;
     }
 
-    set underline(value: ASObject) {
+    set underline(value: Object) {
       this._underline = value;
     }
 

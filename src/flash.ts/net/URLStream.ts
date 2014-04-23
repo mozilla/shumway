@@ -18,10 +18,7 @@ module Shumway.AVM2.AS.flash.net {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import FileLoadingService = Shumway.FileLoadingService;
-  import Event = flash.events.Event;
-  import IOErrorEvent = flash.events.IOErrorEvent;
-  import ProgressEvent = flash.events.ProgressEvent;
-  import HTTPStatusEvent = flash.events.HTTPStatusEvent;
+  import throwError = Shumway.AVM2.Runtime.throwError;
 
   declare var Stream;
 
@@ -35,6 +32,7 @@ module Shumway.AVM2.AS.flash.net {
       this._stream = null;
       this._connected = false;
       this._littleEndian = false;
+      this._endian = 'bigEndian';
     };
     
     // List of static symbols to link.
@@ -51,26 +49,23 @@ module Shumway.AVM2.AS.flash.net {
     private _stream;
     private _session;
     private _littleEndian: boolean;
-    
+
     // JS -> AS Bindings
     
     
     // AS -> JS Bindings
     
     private _connected: boolean;
-    // _bytesAvailable: number /*uint*/;
     // _objectEncoding: number /*uint*/;
-    // _endian: string;
+    private _endian: string;
     // _diskCacheEnabled: boolean;
     // _position: number;
     // _length: number;
     get connected(): boolean {
-      notImplemented("public flash.net.URLStream::get connected"); return;
-      // return this._connected;
+      return this._connected;
     }
     get bytesAvailable(): number /*uint*/ {
-      notImplemented("public flash.net.URLStream::get bytesAvailable"); return;
-      // return this._bytesAvailable;
+      return this._stream.remaining();
     }
     get objectEncoding(): number /*uint*/ {
       notImplemented("public flash.net.URLStream::get objectEncoding"); return;
@@ -82,13 +77,12 @@ module Shumway.AVM2.AS.flash.net {
       // this._objectEncoding = version;
     }
     get endian(): string {
-      notImplemented("public flash.net.URLStream::get endian"); return;
-      // return this._endian;
+      return this._endian;
     }
     set endian(type: string) {
       type = asCoerceString(type);
-      notImplemented("public flash.net.URLStream::set endian"); return;
-      // this._endian = type;
+      this._endian = type;
+      this._littleEndian = type === 'littleEndian';
     }
     get diskCacheEnabled(): boolean {
       notImplemented("public flash.net.URLStream::get diskCacheEnabled"); return;
@@ -108,6 +102,11 @@ module Shumway.AVM2.AS.flash.net {
       // return this._length;
     }
     load(request: flash.net.URLRequest): void {
+      var Event = flash.events.Event;
+      var IOErrorEvent = flash.events.IOErrorEvent;
+      var ProgressEvent = flash.events.ProgressEvent;
+      var HTTPStatusEvent = flash.events.HTTPStatusEvent;
+
       var session = FileLoadingService.instance.createSession();
       var self = this;
       var initStream = true;
@@ -171,14 +170,29 @@ module Shumway.AVM2.AS.flash.net {
       this._session = session;
     }
     readBytes(bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
-      bytes = bytes; offset = offset >>> 0; length = length >>> 0;
-      notImplemented("public flash.net.URLStream::readBytes"); return;
+      offset = offset >>> 0; length = length >>> 0;
+      if (length < 0) {
+        throwError('ArgumentError', Errors.ArgumentError);
+      }
+
+      var stream = this._stream;
+      if (!length) {
+        length = stream.remaining();
+      } else {
+        stream.ensure(length);
+      }
+      bytes.position = offset;
+      bytes.writeRawBytes(
+        stream.bytes.subarray(stream.pos, stream.pos + length));
+      stream.pos += length;
     }
     readBoolean(): boolean {
       notImplemented("public flash.net.URLStream::readBoolean"); return;
     }
     readByte(): number /*int*/ {
-      notImplemented("public flash.net.URLStream::readByte"); return;
+      var stream = this._stream;
+      stream.ensure(1);
+      return stream.bytes[stream.pos++];
     }
     readUnsignedByte(): number /*uint*/ {
       notImplemented("public flash.net.URLStream::readUnsignedByte"); return;
@@ -187,7 +201,11 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.URLStream::readShort"); return;
     }
     readUnsignedShort(): number /*uint*/ {
-      notImplemented("public flash.net.URLStream::readUnsignedShort"); return;
+      var stream = this._stream;
+      stream.ensure(2);
+      var result = stream.getUint16(stream.pos, this._littleEndian);
+      stream.pos += 2;
+      return result;
     }
     readUnsignedInt(): number /*uint*/ {
       notImplemented("public flash.net.URLStream::readUnsignedInt"); return;
@@ -206,11 +224,20 @@ module Shumway.AVM2.AS.flash.net {
       notImplemented("public flash.net.URLStream::readMultiByte"); return;
     }
     readUTF(): string {
-      notImplemented("public flash.net.URLStream::readUTF"); return;
+      return this.readUTFBytes(this.readUnsignedShort());
     }
     readUTFBytes(length: number /*uint*/): string {
       length = length >>> 0;
-      notImplemented("public flash.net.URLStream::readUTFBytes"); return;
+      if (length < 0) {
+        throwError('ArgumentError', Errors.ArgumentError);
+      }
+
+      var stream = this._stream;
+      stream.ensure(length);
+      var str = Shumway.StringUtilities.utf8encode(
+        stream.bytes.subarray(stream.pos, stream.pos + length));
+      stream.pos += length;
+      return str;
     }
     close(): void {
       this._session.close();

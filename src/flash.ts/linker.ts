@@ -59,13 +59,13 @@ module Shumway.AVM2.AS {
     M("flash.events.EventDispatcher", "EventDispatcherClass", flash.events.EventDispatcher),
     M("flash.events.Event", "EventClass", flash.events.Event),
     M("flash.events.IOErrorEvent"),
-    M("flash.events.NetStatusEvent"),
     M("flash.events.KeyboardEvent", "KeyboardEventClass", flash.events.KeyboardEvent),
     M("flash.events.MouseEvent", "MouseEventClass", flash.events.MouseEvent),
     M("flash.events.TextEvent", "TextEventClass", flash.events.TextEvent),
     M("flash.events.TimerEvent", "TimerEventClass", flash.events.TimerEvent),
     M("flash.events.ProgressEvent", "ProgressEventClass", flash.events.ProgressEvent),
     M("flash.events.NetStatusEvent"),
+    M("flash.events.HTTPStatusEvent"),
 
     M("flash.external.ExternalInterface", "ExternalInterfaceClass", flash.external.ExternalInterface),
 
@@ -104,6 +104,7 @@ module Shumway.AVM2.AS {
     M("flash.net.NetStream", "NetStreamClass", flash.net.NetStream),
     M("flash.net.Responder", "ResponderClass", flash.net.Responder),
     M("flash.net.URLRequest", "URLRequestClass", flash.net.URLRequest),
+    M("flash.net.URLRequestHeader"),
     M("flash.net.URLStream", "URLStreamClass", flash.net.URLStream),
     M("flash.net.URLLoader", "URLLoaderClass", flash.net.URLLoader),
     M("flash.net.SharedObject", "SharedObjectClass", flash.net.SharedObject),
