@@ -1486,6 +1486,69 @@ module Shumway {
   export module FileLoadingService {
     export var instance: IFileLoadingService;
   }
+
+  export class Callback {
+    private _queues: any;
+    constructor () {
+      this._queues = {};
+    }
+
+    public register(type, callback) {
+      assert(type);
+      assert(callback);
+      var queue = this._queues[type];
+      if (queue) {
+        if (queue.indexOf(callback) > -1) {
+          return;
+        }
+      } else {
+        queue = this._queues[type] = [];
+      }
+      queue.push(callback);
+    }
+
+    public unregister(type: string, callback) {
+      assert(type);
+      assert(callback);
+      var queue = this._queues[type];
+      if (!queue) {
+        return;
+      }
+      var i = queue.indexOf(callback);
+      if (i !== -1) {
+        queue.splice(i, 1);
+      }
+      if (queue.length === 0) {
+        this._queues[type] = null;
+      }
+    }
+
+    public notify(type: string, args) {
+      var queue = this._queues[type];
+      if (!queue) {
+        return;
+      }
+      queue = queue.slice();
+      var args = Array.prototype.slice.call(arguments, 0);
+      for (var i = 0; i < queue.length; i++) {
+        var callback = queue[i];
+        callback.apply(null, args);
+      }
+    }
+
+    public notify1(type: string, value) {
+      var queue = this._queues[type];
+      if (!queue) {
+        return;
+      }
+      queue = queue.slice();
+      for (var i = 0; i < queue.length; i++) {
+        var callback = queue[i];
+        callback(type, value);
+      }
+    }
+  }
+
 }
 
 // Polyfill for Promises

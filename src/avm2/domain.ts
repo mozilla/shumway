@@ -25,6 +25,7 @@ module Shumway.AVM2.Runtime {
   import ClassInfo = Shumway.AVM2.ABC.ClassInfo;
   import InstanceInfo = Shumway.AVM2.ABC.InstanceInfo;
   import ScriptInfo = Shumway.AVM2.ABC.ScriptInfo;
+  import Callback = Shumway.Callback;
 
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import IndentingWriter = Shumway.IndentingWriter;
@@ -35,7 +36,6 @@ module Shumway.AVM2.Runtime {
   declare var compileAbc;
   declare var compileAbc;
   declare var Promise;
-  declare var Callback;
   declare var natives;
   declare var Counter: Shumway.Metrics.Counter;
   declare var Type;
@@ -249,7 +249,7 @@ module Shumway.AVM2.Runtime {
     base: ApplicationDomain;
     allowNatives: boolean;
     mode: ExecutionMode;
-    onMessage: any;
+    onMessage: Callback;
     system: any;
     constructor(vm: AVM2, base: ApplicationDomain, mode: ExecutionMode, allowNatives: boolean) {
       release || assert (vm instanceof AVM2);
