@@ -136,7 +136,12 @@ module Shumway.AVM2.AS.flash.events {
     private _targetOrBubblingListeners: Shumway.Map<EventListenerList>;
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = null;
+    static initializer: any = function () {
+      var self: EventDispatcher = this;
+      self._target = this;
+      self._captureListeners = null;
+      self._targetOrBubblingListeners = null;
+    };
 
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -146,9 +151,7 @@ module Shumway.AVM2.AS.flash.events {
 
     constructor(target: flash.events.IEventDispatcher = null) {
       false && super();
-      this._target = target || this;
-      this._captureListeners = null;
-      this._targetOrBubblingListeners = null;
+      this._target = target;
     }
 
     /**

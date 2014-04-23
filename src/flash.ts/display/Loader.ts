@@ -68,7 +68,7 @@ module Shumway.AVM2.AS.flash.display {
       this._content = null;
       this._contentLoaderInfo = new flash.display.LoaderInfo();
 
-      this._dictionary = Object.create(null);
+      this._dictionary = [];
       this._worker = null;
       this._startPromise = Promise.resolve();
       this._lastPromise = this._startPromise;
@@ -96,7 +96,7 @@ module Shumway.AVM2.AS.flash.display {
     _contentLoaderInfo: flash.display.LoaderInfo;
     // _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
-    _dictionary: any;
+    _dictionary: Shumway.SWF.timeline.Symbol [];
     _worker: Worker;
     _startPromise: any;
     _lastPromise: any;
@@ -172,12 +172,49 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
+    /**
+     * WIP
+     */
     private _commitSymbol(data: any): void {
-      var symbol = new flash.display.DisplayObject();
-      // TODO
-      this._dictionary[data.id] = symbol;
+      var symbol;
+      var symbolId = data.id;
+      switch (data.type) {
+        case 'shape':
+          symbol = new Shumway.SWF.timeline.ShapeSymbol(symbolId);
+          symbol.graphics = new flash.display.Graphics();
+          if (data.strokeBbox) {
+            symbol.strokeBounds.fromBbox(data.strokeBbox);
+          }
+          break;
+        case 'image':
+          symbol = new Shumway.SWF.timeline.BitmapSymbol(symbolId);
+          break;
+        case 'label':
+        case 'text':
+          symbol = new Shumway.SWF.timeline.TextSymbol(symbolId);
+          break;
+        case 'button':
+          symbol = new Shumway.SWF.timeline.ButtonSymbol(symbolId);
+          break;
+        case 'sprite':
+          symbol = new Shumway.SWF.timeline.SpriteSymbol(symbolId);
+          break;
+        case 'font':
+          break;
+        case 'sound':
+          break;
+        case 'binary':
+          break;
+      }
+      if (data.bbox) {
+        symbol.bounds.fromBbox(data.bbox);
+      }
+      this._dictionary[symbolId] = symbol;
     }
 
+    /**
+     * WIP
+     */
     private _commitFrame(data: any): void {
       var loaderInfo = this._contentLoaderInfo;
       var documentClass: Shumway.AVM2.AS.ASClass;
@@ -187,11 +224,15 @@ module Shumway.AVM2.AS.flash.display {
         var appDomain = AVM2.instance.applicationDomain;
         for (var i = 0; i < symbolClasses.length; i++) {
           var asset = symbolClasses[i];
-          //var symbolInfo = dictionary[asset.symbolId];
-          //assert (symbolInfo);
           var tag = asset.symbolId;
+          var symbolClass = appDomain.getClass(asset.className);
           if (tag === 0) {
-            documentClass = appDomain.getClass(asset.className);
+            documentClass = symbolClass;
+          } else {
+            var symbol = this._dictionary[asset.symbolId];
+            assert (symbol);
+            symbolClass.defaultInitializerArgument = symbol;
+            symbol.symbolClass = symbolClass;
           }
         }
       }
@@ -218,6 +259,7 @@ module Shumway.AVM2.AS.flash.display {
 
         root._root = root;
         root._name = 'root1';
+        //root._totalFrames = 1;
 
         //if (!loader._isAvm2Enabled) {
         //  var avm1Context = loader._avm1Context;
@@ -269,6 +311,7 @@ module Shumway.AVM2.AS.flash.display {
           var numFrames = endFrame - startFrame;
           if (!scene) {
             scene = scenes[0];
+            assert (scene);
             scene._name = sceneInfo.name;
             scene._numFrames = numFrames;
             labels = scene.labels;
