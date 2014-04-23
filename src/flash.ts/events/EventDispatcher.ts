@@ -18,6 +18,7 @@ module Shumway.AVM2.AS.flash.events {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import isFunction = Shumway.isFunction;
+  import isNullOrUndefined = Shumway.isNullOrUndefined;
 
   import throwError = Shumway.AVM2.Runtime.throwError;
 
@@ -197,7 +198,7 @@ module Shumway.AVM2.AS.flash.events {
         // TODO: The Player unevals the `listener`. To some extend, we could, too.
         throwError("TypeError", Errors.CheckTypeFailedError, listener, "Function");
       }
-      if (type === undefined || type === null) {
+      if (isNullOrUndefined(type)) {
         throwError("TypeError", Errors.NullPointerError, "type");
       }
       type = asCoerceString(type);
@@ -220,7 +221,7 @@ module Shumway.AVM2.AS.flash.events {
         // TODO: The Player unevals the `listener`. To some extend, we could, too.
         throwError("TypeError", Errors.CheckTypeFailedError, listener, "Function");
       }
-      if (type === undefined || type === null) {
+      if (isNullOrUndefined(type)) {
         throwError("TypeError", Errors.NullPointerError, "type");
       }
       type = asCoerceString(type);
@@ -239,7 +240,7 @@ module Shumway.AVM2.AS.flash.events {
         throwError("ArgumentError", Errors.WrongArgumentCountError,
                    "flash.events::EventDispatcher/hasEventListener()", 1, arguments.length);
       }
-      if (type === undefined || type === null) {
+      if (isNullOrUndefined(type)) {
         throwError("TypeError", Errors.NullPointerError, "type");
       }
       type = asCoerceString(type);
@@ -251,7 +252,7 @@ module Shumway.AVM2.AS.flash.events {
         throwError("ArgumentError", Errors.WrongArgumentCountError,
                    "flash.events::EventDispatcher/hasEventListener()", 1, arguments.length);
       }
-      if (type === undefined || type === null) {
+      if (isNullOrUndefined(type)) {
         throwError("TypeError", Errors.NullPointerError, "type");
       }
       type = asCoerceString(type);
