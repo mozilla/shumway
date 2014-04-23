@@ -151,7 +151,7 @@
         try {
           var data = loader.data;
           check(typeof data === 'string');
-          check(data.indexOf('Apache'));
+          check(data.indexOf('Apache') >= 0);
           resolve();
         } catch (e) {
           reject(e);
@@ -167,5 +167,27 @@
       }, 1000);
     });
     return Promise.all([textLoadPromise, binaryLoadPromise]);
+  });
+
+  unitTests.push(function NetConnectionTest() {
+    var NetConnection = Shumway.AVM2.AS.flash.net.NetConnection;
+
+    log("--- flash.net.NetConnection ---");
+    check(NetConnection.defaultObjectEncoding === 3);
+
+    var connection = new NetConnection();
+    check(connection.uri === null);
+    check(connection.connected === false);
+    check(connection.client === null);
+    check(connection.proxyType === 'none');
+    check(connection.objectEncoding === 3);
+
+    NetConnection.defaultObjectEncoding = 0;
+    var connection = new NetConnection('http://example.com/');
+    var client = {};
+    connection.client = client;
+    check(connection.client === client);
+    check(connection.objectEncoding === 0);
+
   });
 })();

@@ -38,7 +38,7 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super(undefined);
-      notImplemented("Dummy Constructor: public flash.net.FileFilter");
+      notImplemented("Dummy Constructor: public flash.net.NetConnection");
     }
     
     // JS -> AS Bindings
