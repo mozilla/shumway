@@ -246,7 +246,7 @@ module Shumway.AVM2.AS.flash.display {
       self._clipDepth = 0;
 
       self._concatenatedMatrix = new Matrix();
-      self._inverseConcatenatedMatrix = new Matrix();
+      self._invertedConcatenatedMatrix = new Matrix();
       self._matrix = new Matrix();
       self._matrix3D = null;
       self._colorTransform = new ColorTransform();
@@ -429,6 +429,7 @@ module Shumway.AVM2.AS.flash.display {
 
 
     _concatenatedMatrix: flash.geom.Matrix;
+    _invertedConcatenatedMatrix: flash.geom.Matrix;
     _colorTransform: flash.geom.ColorTransform;
     _concatenatedColorTransform: flash.geom.ColorTransform;
     _matrix3D: flash.geom.Matrix3D;
@@ -532,11 +533,11 @@ module Shumway.AVM2.AS.flash.display {
 
     _getInvertedConcatenatedMatrix(): Matrix {
       if (this._hasFlags(DisplayObjectFlags.InvalidInvertedConcatenatedMatrix)) {
-        this._concatenatedMatrix.copyFrom(this._getConcatenatedMatrix());
-        this._concatenatedMatrix.invert();
+        this._invertedConcatenatedMatrix.copyFrom(this._getConcatenatedMatrix());
+        this._invertedConcatenatedMatrix.invert();
         this._removeFlags(DisplayObjectFlags.InvalidInvertedConcatenatedMatrix);
       }
-      return this._concatenatedMatrix;
+      return this._invertedConcatenatedMatrix;
     }
 
     _setMatrix(matrix: Matrix, toTwips: boolean): void {
