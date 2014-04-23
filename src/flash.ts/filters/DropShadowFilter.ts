@@ -1,12 +1,12 @@
 /**
  * Copyright 2014 Mozilla Foundation
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,143 +15,154 @@
  */
 // Class: DropShadowFilter
 module Shumway.AVM2.AS.flash.filters {
+
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
   export class DropShadowFilter extends flash.filters.BitmapFilter {
-    
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
+
     // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
+
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["clone"];
-    
+
     constructor (distance: number = 4, angle: number = 45, color: number /*uint*/ = 0, alpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, inner: boolean = false, knockout: boolean = false, hideObject: boolean = false) {
       distance = +distance; angle = +angle; color = color >>> 0; alpha = +alpha; blurX = +blurX; blurY = +blurY; strength = +strength; quality = quality | 0; inner = !!inner; knockout = !!knockout; hideObject = !!hideObject;
       false && super();
       notImplemented("Dummy Constructor: public flash.filters.DropShadowFilter");
     }
-    
+
+    _generateFilterBounds(): any {
+      var bounds: any = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
+      this._updateBlurBounds(bounds, this.blurX, this.blurY, this.quality);
+      if (this._distance !== 0) {
+        var a: number = (this._inner ? this._angle + 180 : this._angle) * Math.PI / 180;
+        var dx: number = Math.cos(a) * this._distance;
+        var dy: number = Math.sin(a) * this._distance;
+        bounds.xMin -= (dx >= 0 ? 0 : Math.floor(dx));
+        bounds.xMax += Math.ceil(Math.abs(dx));
+        bounds.yMin -= (dy >= 0 ? 0 : Math.floor(dy));
+        bounds.yMax += Math.ceil(Math.abs(dy));
+      }
+      return bounds;
+    }
+
+    _serialize(message) {
+      message.ensureAdditionalCapacity(48);
+      message.writeIntUnsafe(0);
+      message.writeFloatUnsafe(this._alpha);
+      message.writeFloatUnsafe(this._angle);
+      message.writeFloatUnsafe(this._blurX);
+      message.writeFloatUnsafe(this._blurY);
+      message.writeIntUnsafe(this._color);
+      message.writeFloatUnsafe(this._distance);
+      message.writeIntUnsafe(this._hideObject);
+      message.writeIntUnsafe(this._inner);
+      message.writeIntUnsafe(this._knockout);
+      message.writeIntUnsafe(this._quality);
+      message.writeFloatUnsafe(this._strength);
+    }
+
     // JS -> AS Bindings
-    
+
     clone: () => flash.filters.BitmapFilter;
-    
+
     // AS -> JS Bindings
-    
-    // _distance: number;
-    // _angle: number;
-    // _color: number /*uint*/;
-    // _alpha: number;
-    // _blurX: number;
-    // _blurY: number;
-    // _hideObject: boolean;
-    // _inner: boolean;
-    // _knockout: boolean;
-    // _quality: number /*int*/;
-    // _strength: number;
+
+    private _distance: number;
+    private _angle: number;
+    private _color: number /*uint*/;
+    private _alpha: number;
+    private _blurX: number;
+    private _blurY: number;
+    private _hideObject: boolean;
+    private _inner: boolean;
+    private _knockout: boolean;
+    private _quality: number /*int*/;
+    private _strength: number;
+
     get distance(): number {
-      notImplemented("public flash.filters.DropShadowFilter::get distance"); return;
-      // return this._distance;
+      return this._distance;
     }
     set distance(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.DropShadowFilter::set distance"); return;
-      // this._distance = value;
+      this._distance = +value;
     }
+
     get angle(): number {
-      notImplemented("public flash.filters.DropShadowFilter::get angle"); return;
-      // return this._angle;
+      return this._angle;
     }
     set angle(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.DropShadowFilter::set angle"); return;
-      // this._angle = value;
+      this._angle = +value % 360;
     }
+
     get color(): number /*uint*/ {
-      notImplemented("public flash.filters.DropShadowFilter::get color"); return;
-      // return this._color;
+      return this._color;
     }
     set color(value: number /*uint*/) {
-      value = value >>> 0;
-      notImplemented("public flash.filters.DropShadowFilter::set color"); return;
-      // this._color = value;
+      this._color = value >>> 0;
     }
+
     get alpha(): number {
-      notImplemented("public flash.filters.DropShadowFilter::get alpha"); return;
-      // return this._alpha;
+      return this._alpha;
     }
     set alpha(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.DropShadowFilter::set alpha"); return;
-      // this._alpha = value;
+      this._alpha = NumberUtilities.clamp(+value, 0, 1);
     }
+
     get blurX(): number {
-      notImplemented("public flash.filters.DropShadowFilter::get blurX"); return;
-      // return this._blurX;
+      return this._blurX;
     }
     set blurX(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.DropShadowFilter::set blurX"); return;
-      // this._blurX = value;
+      this._blurX = NumberUtilities.clamp(+value, 0, 255);
     }
+
     get blurY(): number {
-      notImplemented("public flash.filters.DropShadowFilter::get blurY"); return;
-      // return this._blurY;
+      return this._blurY;
     }
     set blurY(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.DropShadowFilter::set blurY"); return;
-      // this._blurY = value;
+      this._blurY = NumberUtilities.clamp(+value, 0, 255);
     }
+
     get hideObject(): boolean {
-      notImplemented("public flash.filters.DropShadowFilter::get hideObject"); return;
-      // return this._hideObject;
+      return this._hideObject;
     }
     set hideObject(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.filters.DropShadowFilter::set hideObject"); return;
-      // this._hideObject = value;
+      this._hideObject = !!value;
     }
+
     get inner(): boolean {
-      notImplemented("public flash.filters.DropShadowFilter::get inner"); return;
-      // return this._inner;
+      return this._inner;
     }
     set inner(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.filters.DropShadowFilter::set inner"); return;
-      // this._inner = value;
+      this._inner = !!value;
     }
+
     get knockout(): boolean {
-      notImplemented("public flash.filters.DropShadowFilter::get knockout"); return;
-      // return this._knockout;
+      return this._knockout;
     }
     set knockout(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.filters.DropShadowFilter::set knockout"); return;
-      // this._knockout = value;
+      this._knockout = !!value;
     }
+
     get quality(): number /*int*/ {
-      notImplemented("public flash.filters.DropShadowFilter::get quality"); return;
-      // return this._quality;
+      return this._quality;
     }
     set quality(value: number /*int*/) {
-      value = value | 0;
-      notImplemented("public flash.filters.DropShadowFilter::set quality"); return;
-      // this._quality = value;
+      this._quality = NumberUtilities.clamp(value | 0, 0, 255);;
     }
+
     get strength(): number {
-      notImplemented("public flash.filters.DropShadowFilter::get strength"); return;
-      // return this._strength;
+      return this._strength;
     }
     set strength(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.DropShadowFilter::set strength"); return;
-      // this._strength = value;
+      this._strength = NumberUtilities.clamp(+value, 0, 255);
     }
   }
 }
