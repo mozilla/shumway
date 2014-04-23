@@ -93,40 +93,47 @@ module Shumway.AVM2.AS.flash.display {
     InvalidConcatenatedMatrix                 = 0x0010,
 
     /**
+     * Display object has an invalid inverted concatenated matrix because its matrix or one of its ancestor's matrices has been
+     * mutated. We don't always need to compute the inverted matrix. This is why we use a sepearete invalid flag for it and don't
+     * roll it under the |InvalidConcatenatedMatrix| flag.
+     */
+    InvalidInvertedConcatenatedMatrix         = 0x0020,
+
+    /**
      * Display object has an invalid concatenated color transform because its color transform or one of its ancestor's color
      * transforms has been mutated.
      */
-    InvalidConcatenatedColorTransform         = 0x0020,
+    InvalidConcatenatedColorTransform         = 0x0040,
 
     /**
      * Display object has changed since the last time it was drawn.
      */
-    InvalidPaint                              = 0x0040,
+    InvalidPaint                              = 0x0080,
 
     /**
      * The display object's constructor has been executed or any of the derived class constructors have executed. It may be
      * that the derived class doesn't call super, in such cases this flag must be set manually elsewhere.
      */
-    Constructed                               = 0x0080,
+    Constructed                               = 0x0100,
 
     /**
      * Display object has been removed by the timeline but it no longer recieves any event.
      */
-    Destroyed                                 = 0x0100,
+    Destroyed                                 = 0x0200,
 
     /**
      * Display object is owned by the timeline, meaning that it is under the control of the timeline and that a reference
      * to this object has not leaked into AS3 code via the DisplayObjectContainer methods |getChildAt|,  |getChildByName|
      * or through the execution of the symbol class constructor.
      */
-    OwnedByTimeline                           = 0x0200,
+    OwnedByTimeline                           = 0x0400,
 
     /**
      * Display object is animated by the timeline. It may no longer be owned by the timeline (|OwnedByTimeline|) but it
      * is still animated by it. If AS3 code mutates any property on the display object, this flag is cleared and further
      * timeline mutations are ignored.
      */
-    AnimatedByTimeline                        = 0x0400,
+    AnimatedByTimeline                        = 0x0800,
 
     /**
      * Indicates whether this display object should be cached as a bitmap. The display object
@@ -203,9 +210,11 @@ module Shumway.AVM2.AS.flash.display {
       var self: DisplayObject = this;
       var instanceName = DisplayObject.register(self);
 
-      self._flags = DisplayObjectFlags.Visible       |
-                    DisplayObjectFlags.InvalidBounds |
-                    DisplayObjectFlags.InvalidMatrix;
+      self._flags = DisplayObjectFlags.Visible                            |
+                    DisplayObjectFlags.InvalidBounds                      |
+                    DisplayObjectFlags.InvalidMatrix                      |
+                    DisplayObjectFlags.InvalidConcatenatedMatrix          |
+                    DisplayObjectFlags.InvalidInvertedConcatenatedMatrix;
 
       self._root = null;
       self._stage = null;
@@ -237,6 +246,7 @@ module Shumway.AVM2.AS.flash.display {
       self._clipDepth = 0;
 
       self._concatenatedMatrix = new Matrix();
+      self._inverseConcatenatedMatrix = new Matrix();
       self._matrix = new Matrix();
       self._matrix3D = null;
       self._colorTransform = new ColorTransform();
@@ -519,7 +529,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _getInvertedConcatenatedMatrix(): Matrix {
-      return this._getConcatenatedMatrix().clone().invert();
+      if (this._hasFlags(DisplayObjectFlags.InvalidInvertedConcatenatedMatrix)) {
+        this._concatenatedMatrix.copyFrom(this._getConcatenatedMatrix());
+        this._concatenatedMatrix.invert();
+        this._removeFlags(DisplayObjectFlags.InvalidInvertedConcatenatedMatrix);
+      }
+      return this._concatenatedMatrix;
     }
 
     _setMatrix(matrix: Matrix, toTwips: boolean): void {
@@ -638,7 +653,7 @@ module Shumway.AVM2.AS.flash.display {
      * Marks this object as having been moved in its parent display object.
      */
     _invalidatePosition() {
-      this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedMatrix, Direction.Downward);
+      this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedMatrix | DisplayObjectFlags.InvalidInvertedConcatenatedMatrix, Direction.Downward);
       if (this._parent) {
         this._parent._invalidateBounds();
       }
