@@ -1,12 +1,12 @@
 /**
  * Copyright 2014 Mozilla Foundation
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,123 +15,138 @@
  */
 // Class: ConvolutionFilter
 module Shumway.AVM2.AS.flash.filters {
+
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
   export class ConvolutionFilter extends flash.filters.BitmapFilter {
-    
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
+
     // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
+
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["clone"];
-    
+
     constructor (matrixX: number = 0, matrixY: number = 0, matrix: any [] = null, divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true, clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0) {
       matrixX = +matrixX; matrixY = +matrixY; matrix = matrix; divisor = +divisor; bias = +bias; preserveAlpha = !!preserveAlpha; clamp = !!clamp; color = color >>> 0; alpha = +alpha;
       false && super();
       notImplemented("Dummy Constructor: public flash.filters.ConvolutionFilter");
     }
-    
+
+    private expandArray(a: number [], newLen: number /*uint*/) {
+      var i: number = a.length;
+      while (i < newLen) {
+        a[i++] = 0;
+      }
+    }
+
     // JS -> AS Bindings
-    
+
     clone: () => flash.filters.BitmapFilter;
-    
+
     // AS -> JS Bindings
-    
-    // _matrix: any [];
-    // _matrixX: number;
-    // _matrixY: number;
-    // _divisor: number;
-    // _bias: number;
-    // _preserveAlpha: boolean;
-    // _clamp: boolean;
-    // _color: number /*uint*/;
-    // _alpha: number;
+
+    private _matrix: number [];
+    private _matrixX: number;
+    private _matrixY: number;
+    private _divisor: number;
+    private _bias: number;
+    private _preserveAlpha: boolean;
+    private _clamp: boolean;
+    private _color: number /*uint*/;
+    private _alpha: number;
+
     get matrix(): any [] {
-      notImplemented("public flash.filters.ConvolutionFilter::get matrix"); return;
-      // return this._matrix;
+      return this._matrix;
     }
     set matrix(value: any []) {
-      value = value;
-      notImplemented("public flash.filters.ConvolutionFilter::set matrix"); return;
-      // this._matrix = value;
+      if (!isNullOrUndefined(value)) {
+        var actualLen = this._matrixX * this._matrixY;
+        var minLen = Math.min(value.length, actualLen);
+        var matrix = Array(minLen);
+        for (var i = 0; i < minLen; i++) {
+          matrix[i] = toNumber(value[i]);
+        }
+        this.expandArray(matrix, actualLen);
+        this._matrix = matrix;
+      } else {
+        Runtime.throwError("TypeError", Errors.NullPointerError, "matrix");
+      }
     }
+
     get matrixX(): number {
-      notImplemented("public flash.filters.ConvolutionFilter::get matrixX"); return;
-      // return this._matrixX;
+      return this._matrixX;
     }
     set matrixX(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.ConvolutionFilter::set matrixX"); return;
-      // this._matrixX = value;
+      var mx: number = NumberUtilities.clamp(+value, 0, 15);
+      if (this._matrixX !== mx) {
+        this._matrixX = mx;
+        this.expandArray(this._matrix, mx * this._matrixY);
+      }
     }
+
     get matrixY(): number {
-      notImplemented("public flash.filters.ConvolutionFilter::get matrixY"); return;
-      // return this._matrixY;
+      return this._matrixY;
     }
     set matrixY(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.ConvolutionFilter::set matrixY"); return;
-      // this._matrixY = value;
+      var my: number = NumberUtilities.clamp(+value, 0, 15);
+      if (this._matrixY !== my) {
+        this._matrixY = my;
+        this.expandArray(this._matrix, my * this._matrixX);
+      }
     }
     get divisor(): number {
-      notImplemented("public flash.filters.ConvolutionFilter::get divisor"); return;
-      // return this._divisor;
+      return this._divisor;
     }
     set divisor(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.ConvolutionFilter::set divisor"); return;
-      // this._divisor = value;
+      Debug.somewhatImplemented("public flash.filters.ConvolutionFilter::set divisor");
+      this._divisor = +value;
     }
+
     get bias(): number {
-      notImplemented("public flash.filters.ConvolutionFilter::get bias"); return;
-      // return this._bias;
+      return this._bias;
     }
     set bias(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.ConvolutionFilter::set bias"); return;
-      // this._bias = value;
+      Debug.somewhatImplemented("public flash.filters.ConvolutionFilter::set bias");
+      this._bias = +value;
     }
+
     get preserveAlpha(): boolean {
-      notImplemented("public flash.filters.ConvolutionFilter::get preserveAlpha"); return;
-      // return this._preserveAlpha;
+      return this._preserveAlpha;
     }
     set preserveAlpha(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.filters.ConvolutionFilter::set preserveAlpha"); return;
-      // this._preserveAlpha = value;
+      Debug.somewhatImplemented("public flash.filters.ConvolutionFilter::set preserveAlpha");
+      this._preserveAlpha = !!value;
     }
+
     get clamp(): boolean {
-      notImplemented("public flash.filters.ConvolutionFilter::get clamp"); return;
-      // return this._clamp;
+      return this._clamp;
     }
     set clamp(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.filters.ConvolutionFilter::set clamp"); return;
-      // this._clamp = value;
+      Debug.somewhatImplemented("public flash.filters.ConvolutionFilter::set clamp");
+      this._clamp = !!value;
     }
+
     get color(): number /*uint*/ {
-      notImplemented("public flash.filters.ConvolutionFilter::get color"); return;
-      // return this._color;
+      return this._color;
     }
     set color(value: number /*uint*/) {
-      value = value >>> 0;
-      notImplemented("public flash.filters.ConvolutionFilter::set color"); return;
-      // this._color = value;
+      Debug.somewhatImplemented("public flash.filters.ConvolutionFilter::set color");
+      this._color = value >>> 0;
     }
+
     get alpha(): number {
-      notImplemented("public flash.filters.ConvolutionFilter::get alpha"); return;
-      // return this._alpha;
+      return this._alpha;
     }
     set alpha(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.ConvolutionFilter::set alpha"); return;
-      // this._alpha = value;
+      Debug.somewhatImplemented("public flash.filters.ConvolutionFilter::set alpha");
+      this._alpha = NumberUtilities.clamp(+value, 0, 1);
     }
   }
 }
