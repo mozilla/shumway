@@ -1444,14 +1444,10 @@ module Shumway {
 
     export enum ErrorTypes {
       AVM1_ERROR = 1,
-      AMV2_ERROR = 2
+      AVM2_ERROR = 2
     }
 
     export var instance: ITelemetryService;
-
-    export function reportTelemetry(data) {
-      instance.reportTelemetry(data);
-    }
   }
 
   export interface ITelemetryService {

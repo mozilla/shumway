@@ -70,7 +70,7 @@ module Shumway.AVM2.AS.flash.media {
       this._bytesLoaded = 0;
       this._id3 = new ID3Info();
 
-      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SOUND_FEATURE});
+      Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SOUND_FEATURE});
 
       if (symbol1) {
         notImplemented("public flash.media.Sound::initializer");

@@ -214,7 +214,7 @@ module Shumway.AVM2.AS.flash.display {
             scripts[i].call(this);
           }
         } catch (e) {
-          Telemetry.reportTelemetry({topic: 'error', error: Telemetry.ErrorTypes.AVM2_ERROR});
+          Telemetry.instance.reportTelemetry({topic: 'error', error: Telemetry.ErrorTypes.AVM2_ERROR});
 
           //if ($DEBUG) {
           //  console.error('error ' + e + ', stack: \n' + e.stack);

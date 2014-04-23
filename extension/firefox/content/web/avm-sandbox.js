@@ -304,7 +304,7 @@ function frame(e) {
     // marking that movie is started
     document.body.classList.add("started");
 
-    Shumway.Telemetry.reportTelemetry({topic: "firstFrame"});
+    Shumway.Telemetry.instance.reportTelemetry({topic: "firstFrame"});
 
     // skipping frame 0
     initializeFrameControl = false;

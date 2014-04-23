@@ -1846,7 +1846,7 @@ module Shumway.AVM1 {
             throw e;
           }
 
-          Telemetry.reportTelemetry({topic: 'error', error: Telemetry.ErrorTypes.AVM1_ERROR});
+          Telemetry.instance.reportTelemetry({topic: 'error', error: Telemetry.ErrorTypes.AVM1_ERROR});
 
           if (!executionContext.recoveringFromError) {
             if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {
@@ -2322,7 +2322,7 @@ module Shumway.AVM1 {
           throw e;
         }
 
-        Telemetry.reportTelemetry({topic: 'error', error: Telemetry.ErrorTypes.AVM1_ERROR});
+        Telemetry.instance.reportTelemetry({topic: 'error', error: Telemetry.ErrorTypes.AVM1_ERROR});
 
         if (!executionContext.recoveringFromError) {
           if (currentContext.errorsIgnored++ >= MAX_AVM1_ERRORS_LIMIT) {

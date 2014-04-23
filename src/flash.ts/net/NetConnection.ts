@@ -164,7 +164,7 @@ module Shumway.AVM2.AS.flash.net {
       this._objectEncoding = NetConnection.defaultObjectEncoding;
       this._usingTLS = false;
 
-      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.NETCONNECTION_FEATURE});
+      Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.NETCONNECTION_FEATURE});
     }
     invoke(index: number /*uint*/): any {
       index = index >>> 0;

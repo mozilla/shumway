@@ -73,7 +73,7 @@ module Shumway.AVM2.AS.flash.net {
       obj._data = null;
       obj._objectEncoding = SharedObject._defaultObjectEncoding;
 
-      Telemetry.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SHAREDOBJECT_FEATURE});
+      Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SHAREDOBJECT_FEATURE});
       return obj;
     }
     static getLocal(name: string, localPath: string = null, secure: boolean = false): flash.net.SharedObject {
