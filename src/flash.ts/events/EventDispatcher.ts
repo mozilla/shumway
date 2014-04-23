@@ -41,9 +41,9 @@ module Shumway.AVM2.AS.flash.events {
     private _entries: EventListenerEntry [];
 
     /**
-     * Indicates whether the current entry list has been aliased (or snapshotted).
+     * The number of times the current entry list has been aliased (or snapshotted).
      */
-    private _aliased = false;
+    private _aliasCount = 0;
 
     constructor() {
       this._entries = [];
@@ -67,8 +67,8 @@ module Shumway.AVM2.AS.flash.events {
           break;
         }
       }
-      this.ensureNonAliasedEntries().splice(index, 0,
-                                            new EventListenerEntry(listener, useCapture, priority));
+      entries = this.ensureNonAliasedEntries();
+      entries.splice(index, 0, new EventListenerEntry(listener, useCapture, priority));
     }
 
     /**
@@ -76,9 +76,9 @@ module Shumway.AVM2.AS.flash.events {
      */
     private ensureNonAliasedEntries(): EventListenerEntry [] {
       var entries = this._entries;
-      if (this._aliased) {
+      if (this._aliasCount > 0) {
         entries = this._entries = entries.slice();
-        this._aliased = false;
+        this._aliasCount = 0;
       }
       return entries;
     }
@@ -98,7 +98,7 @@ module Shumway.AVM2.AS.flash.events {
      * Get a snapshot of the current entry list.
      */
     snapshot(): EventListenerEntry [] {
-      this._aliased = true;
+      this._aliasCount ++;
       return this._entries;
     }
 
@@ -106,8 +106,12 @@ module Shumway.AVM2.AS.flash.events {
      * Release the snapshot, hopefully no other mutations occured so we can reuse the entry list.
      */
     releaseSnapshot(snapshot) {
-      if (this._aliased && this._entries === snapshot) {
-        this._aliased = false;
+      // We ignore any non current snapshots.
+      if (this._entries !== snapshot) {
+        return;
+      }
+      if (this._aliasCount > 0) {
+        this._aliasCount --;
       }
     }
   }
