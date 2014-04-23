@@ -15,17 +15,6 @@ unitTests.push(function runInspectorSanityTests(avm2) {
     check (!o.equals(new flash.geom.Rectangle(5, 20, 35, 45)), "Equals");
   })();
 
-  (function URLVariables() {
-    log("--- flash.net.URLVariables ---");
-    var f = new flash.net.URLVariables("fn=Gordon&ln=Shumway");
-    check (f.toString() === "fn=Gordon&ln=Shumway");
-    f.decode("fn=Mozilla&ln=Firefox");
-    log(f.toString());
-    check (f.toString() === "fn=Gordon&fn=Mozilla&ln=Shumway&ln=Firefox");
-    f = new flash.net.URLVariables();
-    f[Multiname.getPublicQualifiedName("x")] = 123;
-    check (f.toString() === "x=123");
-  })();
 });
 
 

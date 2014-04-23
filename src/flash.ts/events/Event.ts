@@ -28,7 +28,7 @@ module Shumway.AVM2.AS.flash.events {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["formatToString", "clone", "toString"];
+    static instanceSymbols: string [] = ["clone"]; // ["formatToString", "toString"];
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false) {
       false && super();
