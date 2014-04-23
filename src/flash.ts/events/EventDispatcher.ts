@@ -124,35 +124,8 @@ module Shumway.AVM2.AS.flash.events {
    */
   export class EventDispatcher extends ASNative implements IEventDispatcher {
 
-    /**
-     * Dictionary of all mouse events with the event type as key and value specifying if bubbling
-     * is enabled.
-     */
-    private static _mouseEvents: any;
-
     // Called whenever the class is initialized.
-    static classInitializer: any = function () {
-      EventDispatcher._mouseEvents = {
-        click: true,
-        contextMenu: true,
-        doubleClick: true,
-        middleClick: true,
-        middleMouseDown: true,
-        middleMouseUp: true,
-        mouseDown: true,
-        mouseMove: true,
-        mouseOut: true,
-        mouseOver: true,
-        mouseUp: true,
-        mouseWheel: true,
-        releaseOutside: true,
-        rightClick: true,
-        rightMouseDown: true,
-        rightMouseUp: true,
-        rollOut: false,
-        rollOver: false
-      };
-    };
+    static classInitializer: any = null;
 
     private _target: flash.events.IEventDispatcher;
 
@@ -289,7 +262,6 @@ module Shumway.AVM2.AS.flash.events {
       /**
        * 1. Capturing Phase
        */
-
       var keepPropagating = true;
       var ancestors: flash.display.DisplayObject [] = [];
 
@@ -316,7 +288,6 @@ module Shumway.AVM2.AS.flash.events {
       /**
        * 2. At Target
        */
-
       if (keepPropagating) {
         var list = this.getListeners(false)[type];
         if (list) {
