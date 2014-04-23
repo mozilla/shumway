@@ -337,9 +337,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Propagates flags up and down the the display list.
+     * Propagates flags up and down the the display list. Flags propagation is short-circuited if
+     * if the flags are already set.
      */
     _propagateFlags(flags: DisplayObjectFlags, direction: Direction) {
+      // Multiple flags can be passed here, stop propagation when all the flags are set.
       if (this._hasFlags(flags)) {
         return;
       }
