@@ -761,7 +761,7 @@ module Shumway {
     var _encoding = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$_';
     export function variableLengthEncodeInt32(n) {
       var e = _encoding;
-      var bitCount = (32 - IntegerUtilities.leadingZeros(n));
+      var bitCount = (32 - Math.clz32(n));
       assert (bitCount <= 32, bitCount);
       var l = Math.ceil(bitCount / 6);
       // Encode length followed by six bit chunks.
@@ -945,6 +945,18 @@ module Shumway {
       }
       return value;
     }
+
+    /**
+     * Rounds *.5 to the nearest even number.
+     * See https://en.wikipedia.org/wiki/Rounding#Round_half_to_even for details.
+     */
+    export function roundHalfEven(value: number): number {
+      if (Math.abs(value % 1) === 0.5) {
+        var floor = Math.floor(value);
+        return floor % 2 === 0 ? floor : Math.ceil(value);
+      }
+      return Math.round(value);
+    }
   }
 
   export enum Numbers {
@@ -964,15 +976,6 @@ module Shumway {
       i = i - ((i >> 1) & 0x55555555);
       i = (i & 0x33333333) + ((i >> 2) & 0x33333333);
       return ((i + (i >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
-    }
-
-    export function leadingZeros(i: number): number {
-      i |= (i >> 1);
-      i |= (i >> 2);
-      i |= (i >> 4);
-      i |= (i >> 8);
-      i |= (i >> 16);
-      return 32 - IntegerUtilities.ones(i);
     }
 
     export function trailingZeros(i: number): number {
@@ -1008,6 +1011,19 @@ module Shumway {
         // the shift by 0 fixes the sign on the high part
         // the final |0 converts the unsigned value into a signed value
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+      }
+    }
+    /**
+     * Polyfill clz32.
+     */
+    if (!Math.clz32) {
+      Math.clz32 = function clz32(i: number) {
+        i |= (i >> 1);
+        i |= (i >> 2);
+        i |= (i >> 4);
+        i |= (i >> 8);
+        i |= (i >> 16);
+        return 32 - IntegerUtilities.ones(i);
       }
     }
   }

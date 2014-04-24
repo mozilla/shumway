@@ -15,8 +15,10 @@
  */
 // Class: TextFormat
 module Shumway.AVM2.AS.flash.text {
-  import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import roundHalfEven = Shumway.NumberUtilities.roundHalfEven;
+  import notImplemented = Shumway.Debug.notImplemented;
+  import throwError = Shumway.AVM2.Runtime.throwError;
 
   export class TextFormat extends ASNative {
 
@@ -77,18 +79,24 @@ module Shumway.AVM2.AS.flash.text {
       return this;
     }
 
+    /**
+     * Inside TextField, a native representation of TextFormat is used for efficiency:
+     * The AS3 representation is almost entirely untyped and can contain null values, which are
+     * replaced by defaults for internal calculation purposes. To avoid having to check for them
+     * in all calculations, TextFormat is converted into NativeTextFormat, with the null checks
+     * happening once during the conversion.
+     */
     toNative(): NativeTextFormat {
       var format: NativeTextFormat = new NativeTextFormat();
-      format.face = this._font + '' || 'serif';
+      format.face = this._font || 'serif';
       format.size = isNaN(+this._size) ? 12 : +this._size;
       format.color = +this._color | 0;
       format.bold = !!this._bold;
       format.italic = !!this._italic;
       format.underline = !!this._underline;
-      format.url = this._url + '';
-      format.target = this._target + '';
-      var align: string = (this._align + '').toUpperCase();
-      format.align = align in TextFormatAlign ? align : 'LEFT';
+      format.url = this._url;
+      format.target = this._target;
+      format.align = this._align;
       format.leftMargin = +this._leftMargin;
       format.rightMargin = +this._rightMargin;
       format.indent = isNaN(+this._indent) ? 0 : +this._indent;
@@ -129,7 +137,11 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set align(value: string) {
-      this._align = asCoerceString(value);
+      value = asCoerceString(value);
+      if (!(value in TextFormatAlign.VALID_VALUES)) {
+        throwError("ArgumentError", Errors.InvalidEnumError, "align");
+      }
+      this._align = value;
     }
 
     get blockIndent(): Object {
@@ -137,7 +149,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set blockIndent(value: Object) {
-      this._blockIndent = value;
+      this._blockIndent = TextFormat.coerceNumber(value);
     }
 
     get bold(): Object {
@@ -145,7 +157,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set bold(value: Object) {
-      this._bold = value;
+      this._bold = TextFormat.coerceBoolean(value);
     }
 
     get bullet(): Object {
@@ -153,7 +165,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set bullet(value: Object) {
-      this._bullet = value;
+      this._bullet = TextFormat.coerceBoolean(value);
     }
 
     get color(): Object {
@@ -161,7 +173,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set color(value: Object) {
-      this._color = value;
+      this._color = +value|0;
     }
 
     get display(): string {
@@ -185,7 +197,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set indent(value: Object) {
-      this._indent = value;
+      this._indent = TextFormat.coerceNumber(value);
     }
 
     get italic(): Object {
@@ -193,7 +205,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set italic(value: Object) {
-      this._italic = value;
+      this._italic = TextFormat.coerceBoolean(value);
     }
 
     get kerning(): Object {
@@ -201,7 +213,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set kerning(value: Object) {
-      this._kerning = value;
+      this._kerning = TextFormat.coerceBoolean(value);
     }
 
     get leading(): Object {
@@ -209,7 +221,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set leading(value: Object) {
-      this._leading = value;
+      this._leading = TextFormat.coerceNumber(value);
     }
 
     get leftMargin(): Object {
@@ -217,7 +229,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set leftMargin(value: Object) {
-      this._leftMargin = value;
+      this._leftMargin = TextFormat.coerceNumber(value);
     }
 
     get letterSpacing(): Object {
@@ -225,7 +237,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set letterSpacing(value: Object) {
-      this._letterSpacing = value;
+      this._letterSpacing = TextFormat.coerceBoolean(value);
     }
 
     get rightMargin(): Object {
@@ -233,7 +245,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set rightMargin(value: Object) {
-      this._rightMargin = value;
+      this._rightMargin = TextFormat.coerceNumber(value);
     }
 
     get size(): Object {
@@ -241,7 +253,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set size(value: Object) {
-      this._size = value;
+      this._size = TextFormat.coerceNumber(value);
     }
 
     get tabStops(): any [] {
@@ -249,6 +261,9 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set tabStops(value: any []) {
+      if (!(value instanceof Array)) {
+        throwError("ArgumentError", Errors.CheckTypeFailedError, value, 'Array');
+      }
       this._tabStops = value;
     }
 
@@ -265,7 +280,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     set underline(value: Object) {
-      this._underline = value;
+      this._underline = TextFormat.coerceBoolean(value);
     }
 
     get url(): string {
@@ -274,6 +289,32 @@ module Shumway.AVM2.AS.flash.text {
 
     set url(value: string) {
       this._url = asCoerceString(value);
+    }
+
+    /**
+     * All integer values on TextFormat are typed as Object and coerced to ints using the following
+     * "algorithm":
+     * - if the supplied value is null or undefined, the field is set to null
+     * - else if coercing to number results in NaN or the value is greater than MAX_INT, set to
+     *   -0x80000000
+     * - else, round the coerced value using half-even rounding
+     */
+    private static coerceNumber(value: any): any {
+      if (value == undefined) {
+        return null;
+      }
+      if (isNaN(value) || value > 0xfffffff) {
+        return -0x80000000;
+      }
+      return roundHalfEven(value);
+    }
+
+    /**
+     * Boolean values are only stored as bools if they're not undefined or null. In that case,
+     * they're stored as null.
+     */
+    private static coerceBoolean(value: any): any {
+      return value == undefined ? null : !!value;
     }
   }
 
