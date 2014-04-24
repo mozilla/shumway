@@ -116,6 +116,7 @@ module Shumway.AVM2.AS {
     public static instanceConstructorNoInitialize: any = null;
 
     public static initializer: any = null;
+    public static defaultInitializerArgument: any;
     public static initializers: any = null;
     public static classInitializer: any = null;
 
@@ -347,6 +348,7 @@ module Shumway.AVM2.AS {
      * Calls the initializers of an object in order.
      */
     static runInitializers(self: Object, argument: any) {
+      argument = argument || self.class.defaultInitializerArgument;
       var cls: ASClass = self.class;
       var initializers = cls.initializers;
       if (initializers) {
@@ -499,6 +501,11 @@ module Shumway.AVM2.AS {
      * along the inheritance chain are executed before any constructors are called.
      */
     initializer: (...args) => any;
+
+    /**
+     * The default argument that gets passed to all initializers.
+     */
+    defaultInitializerArgument: any;
 
     /**
      * Native class initializer.

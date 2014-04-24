@@ -18,19 +18,19 @@ module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class MorphShape extends flash.display.DisplayObject {
-    
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
+
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shape) {
+    static initializer: any = function (symbol: Shumway.SWF.timeline.ShapeSymbol) {
       var self: MorphShape = this;
       self._graphics = symbol ? symbol.graphics : new flash.display.Graphics();
     };
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
+
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
     

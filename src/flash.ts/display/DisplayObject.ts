@@ -206,7 +206,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: DisplayObject) {
+    static initializer: any = function (symbol: Shumway.SWF.timeline.Symbol) {
       var self: DisplayObject = this;
       var instanceName = DisplayObject.register(self);
 
@@ -242,7 +242,8 @@ module Shumway.AVM2.AS.flash.display {
       self._loaderInfo = null;
       self._accessibilityProperties = null;
 
-      self._bounds = null;
+      self._rect = new Rectangle();
+      self._bounds = new Rectangle();
       self._clipDepth = 0;
 
       self._concatenatedMatrix = new Matrix();
@@ -258,43 +259,15 @@ module Shumway.AVM2.AS.flash.display {
       self._index = -1;
       self._maskedObject = null;
 
-      self._rect = new Rectangle();
-      self._bounds = new Rectangle();
-
-
-      // TODO move to InteractiveObject
       self._mouseOver = false;
+      self._mouseDown = false;
 
       if (symbol) {
-        self._name        = symbol._name      || self._name;
-        self._parent      = symbol._parent    || self._parent;
-        self._clipDepth   = symbol._clipDepth || self._clipDepth;
-        self._blendMode   = symbol._blendMode || self._blendMode;
-        self._depth       = symbol._depth     || self._depth;
-
-        if (symbol._scale9Grid) {
-          self._scale9Grid = symbol._scale9Grid.clone();
+        if (symbol.bounds) {
+          self._bounds.copyFrom(symbol.bounds);
         }
-
-        if (symbol._hasFlags(DisplayObjectFlags.AnimatedByTimeline)) {
-          self._setFlags(DisplayObjectFlags.AnimatedByTimeline);
-        }
-
-//        if (symbol.bbox) {
-//          var bbox = symbol.bbox;
-//          self._bounds.setTo(bbox.xMin, bbox.yMin, bbox.xMax - bbox.xMin, bbox.yMax - bbox.yMin);
-//        }
-
-        if (symbol._matrix) {
-          this._setMatrix(symbol._matrix, false);
-        }
-
-        if (symbol._colorTransform) {
-          this._setColorTransform(symbol._colorTransform);
-        }
-
-        if (symbol._hasFlags(DisplayObjectFlags.OwnedByTimeline)) {
-          self._setFlags(DisplayObjectFlags.OwnedByTimeline);
+        if (symbol.scale9Grid) {
+          self._scale9Grid = symbol.scale9Grid.clone();
         }
       }
     };
@@ -445,9 +418,8 @@ module Shumway.AVM2.AS.flash.display {
 
     _isContainer: boolean;
     _maskedObject: DisplayObject;
-    _mouseChildren: boolean;
-    _mouseDown: boolean;
     _mouseOver: boolean;
+    _mouseDown: boolean;
 
 
     /**
@@ -660,6 +632,26 @@ module Shumway.AVM2.AS.flash.display {
       if (this._parent) {
         this._parent._invalidateBounds();
       }
+    }
+
+    /**
+     * WIP
+     */
+    _animate(state: Shumway.SWF.timeline.AnimationState): void {
+      this._depth = state.depth;
+      this._setMatrix(state.matrix, false);
+      this._setColorTransform(state.colorTransform);
+      this._ratio = state.ratio;
+      this._name = state.name;
+      this._clipDepth = state.clipDepth;
+      this._filters = state.filters;
+      this._blendMode = state.blendMode;
+      if (state.cacheAsBitmap) {
+        this._setFlags(flash.display.DisplayObjectFlags.CacheAsBitmap);
+      }
+      //info.actions
+      //this._setFlags(DisplayObjectFlags.AnimatedByTimeline);
+      //this._setFlags(DisplayObjectFlags.OwnedByTimeline);
     }
 
     get x(): number {

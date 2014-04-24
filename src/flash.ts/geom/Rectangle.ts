@@ -232,6 +232,14 @@ module Shumway.AVM2.AS.flash.geom {
       this.height = sourceRect.height;
     }
 
+    public fromBbox(bbox: any): Rectangle {
+      this.x = bbox.xMin;
+      this.y = bbox.yMin;
+      this.width = bbox.xMax - bbox.xMin;
+      this.height = bbox.yMax - bbox.yMin;
+      return this;
+    }
+
     public setTo(x: number, y: number, width: number, height: number): void {
       this.x = +x;
       this.y = +y;
