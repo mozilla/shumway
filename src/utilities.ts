@@ -945,6 +945,18 @@ module Shumway {
       }
       return value;
     }
+
+    /**
+     * Rounds *.5 to the nearest even number.
+     * See https://en.wikipedia.org/wiki/Rounding#Round_half_to_even for details.
+     */
+    export function roundHalfEven(value: number): number {
+      if (Math.abs(value % 1) === 0.5) {
+        var floor = Math.floor(value);
+        return floor % 2 === 0 ? floor : Math.ceil(value);
+      }
+      return Math.round(value);
+    }
   }
 
   export enum Numbers {
