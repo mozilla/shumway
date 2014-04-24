@@ -260,6 +260,7 @@ module Shumway.AVM2.AS.flash.display {
         root._root = root;
         root._name = 'root1';
         //root._totalFrames = 1;
+        root._blueprint = new Shumway.SWF.timeline.BluePrint();
 
         //if (!loader._isAvm2Enabled) {
         //  var avm1Context = loader._avm1Context;
@@ -297,6 +298,9 @@ module Shumway.AVM2.AS.flash.display {
         //this._children[0] = root;
         this.addChild(root);
       }
+
+      var blueprint = root._blueprint;
+      blueprint.commands.push.apply(blueprint.commands, data.commands);
 
       if (data.sceneData) {
         var allScenes = data.sceneData.scenes;

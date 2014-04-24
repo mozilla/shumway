@@ -19,12 +19,13 @@ module Shumway.SWF.timeline {
 
   export class Symbol {
     id: number = 0;
-    symbolClass: typeof flash.display.DisplayObject = null;
+    symbolClass: Shumway.AVM2.AS.ASClass = null;
     bounds: flash.geom.Rectangle = null;
     scale9Grid: flash.geom.Rectangle = null;
 
     constructor(id: number) {
       this.id = +id;
+      this.bounds = new flash.geom.Rectangle();
     }
   }
 
@@ -39,6 +40,8 @@ module Shumway.SWF.timeline {
   }
 
   export class BitmapSymbol extends Symbol {
+    bitmapData: flash.display.BitmapData;
+
     constructor(id: number) {
       super(id);
       this.symbolClass = flash.display.Bitmap;
@@ -60,7 +63,7 @@ module Shumway.SWF.timeline {
 
     constructor(id: number) {
       super(id);
-      this.symbolClass = flash.display.SimpleBitmap;
+      this.symbolClass = flash.display.SimpleButton;
     }
   }
 
@@ -131,7 +134,6 @@ module Shumway.SWF.timeline {
   }
 
   export class BluePrint {
-    commandTags: any [];
-    // TODO
+    commands: any [] = [];
   }
 }

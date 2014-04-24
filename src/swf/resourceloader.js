@@ -119,7 +119,7 @@ function defineSymbol(swfTag, symbols) {
       };
       break;
     case SWF_TAG_CODE_DEFINE_SPRITE:
-      var depths = { };
+      var commands = [];
       var frame = { type: 'frame' };
       var frames = [];
       var tags = swfTag.tags;
@@ -161,18 +161,18 @@ function defineSymbol(swfTag, symbols) {
           case SWF_TAG_CODE_PLACE_OBJECT:
           case SWF_TAG_CODE_PLACE_OBJECT2:
           case SWF_TAG_CODE_PLACE_OBJECT3:
-            depths[tag.depth] = tag;
+            commands.push(tag);
             break;
           case SWF_TAG_CODE_REMOVE_OBJECT:
           case SWF_TAG_CODE_REMOVE_OBJECT2:
-            depths[tag.depth] = null;
+            commands.push(tag);
             break;
           case SWF_TAG_CODE_SHOW_FRAME:
             frameIndex += tag.repeat;
             frame.repeat = tag.repeat;
-            frame.depths = depths;
+            frame.commands = commands;
             frames.push(frame);
-            depths = { };
+            commands = [];
             frame = { type: 'frame' };
             break;
         }
@@ -200,7 +200,7 @@ function defineSymbol(swfTag, symbols) {
   return symbol;
 }
 function createParsingContext(commitData) {
-  var depths = {};
+  var commands = [];
   var symbols = {};
   var frame = { type: 'frame' };
   var tagsProcessed = 0;
@@ -306,21 +306,21 @@ function createParsingContext(commitData) {
           case SWF_TAG_CODE_PLACE_OBJECT:
           case SWF_TAG_CODE_PLACE_OBJECT2:
           case SWF_TAG_CODE_PLACE_OBJECT3:
-            depths[tag.depth] = tag;
+            commands.push(tag);
             break;
           case SWF_TAG_CODE_REMOVE_OBJECT:
           case SWF_TAG_CODE_REMOVE_OBJECT2:
-            depths[tag.depth] = null;
+            commands.push(tag);
             break;
           case SWF_TAG_CODE_SET_BACKGROUND_COLOR:
             frame.bgcolor = tag.color;
             break;
           case SWF_TAG_CODE_SHOW_FRAME:
             frame.repeat = tag.repeat;
-            frame.depths = depths;
+            frame.commands = commands;
             frame.complete = !!tag.finalTag;
             commitData(frame);
-            depths = { };
+            commands = [];
             frame = { type: 'frame' };
             break;
         }
