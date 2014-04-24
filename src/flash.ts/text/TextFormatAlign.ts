@@ -26,6 +26,10 @@ module Shumway.AVM2.AS.flash.text {
       super();
     }
 
+    static VALID_VALUES: any = {
+      left: true, center: true, right: true, justify: true, start: true, end: true
+    };
+
     // JS -> AS Bindings
     static LEFT: string = "left";
     static CENTER: string = "center";
