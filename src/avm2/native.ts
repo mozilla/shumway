@@ -321,7 +321,7 @@ module Shumway.AVM2.AS {
         self.callableConstructor = self.instanceConstructor;
       }
 
-      self.initializeFrom = self.instanceConstructor;
+      self.instanceConstructorNoInitialize = self.instanceConstructor;
       self.instanceConstructor.prototype = self.traitsPrototype;
       defineNonEnumerableProperty(self.instanceConstructor.prototype, "class", self);
 
