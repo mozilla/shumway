@@ -761,7 +761,7 @@ module Shumway {
     var _encoding = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789$_';
     export function variableLengthEncodeInt32(n) {
       var e = _encoding;
-      var bitCount = (32 - IntegerUtilities.leadingZeros(n));
+      var bitCount = (32 - Math.clz32(n));
       assert (bitCount <= 32, bitCount);
       var l = Math.ceil(bitCount / 6);
       // Encode length followed by six bit chunks.
@@ -966,15 +966,6 @@ module Shumway {
       return ((i + (i >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
     }
 
-    export function leadingZeros(i: number): number {
-      i |= (i >> 1);
-      i |= (i >> 2);
-      i |= (i >> 4);
-      i |= (i >> 8);
-      i |= (i >> 16);
-      return 32 - IntegerUtilities.ones(i);
-    }
-
     export function trailingZeros(i: number): number {
       return IntegerUtilities.ones((i & -i) - 1);
     }
@@ -1008,6 +999,19 @@ module Shumway {
         // the shift by 0 fixes the sign on the high part
         // the final |0 converts the unsigned value into a signed value
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
+      }
+    }
+    /**
+     * Polyfill clz32.
+     */
+    if (!Math.clz32) {
+      Math.clz32 = function clz32(i: number) {
+        i |= (i >> 1);
+        i |= (i >> 2);
+        i |= (i >> 4);
+        i |= (i >> 8);
+        i |= (i >> 16);
+        return 32 - IntegerUtilities.ones(i);
       }
     }
   }
