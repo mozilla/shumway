@@ -263,9 +263,7 @@ module Shumway.AVM2.AS.flash.display {
       self._mouseDown = false;
 
       if (symbol) {
-        if (symbol.bounds) {
-          self._bounds.copyFrom(symbol.bounds);
-        }
+        self._bounds.copyFrom(symbol.bounds);
         if (symbol.scale9Grid) {
           self._scale9Grid = symbol.scale9Grid.clone();
         }
