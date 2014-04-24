@@ -16,6 +16,23 @@ function eq(a, b, test) {
   testNumber ++;
 }
 
+function eqArray(a, b, test) {
+  test = test ? ": " + test : " #" + testNumber;
+  if (a && b) {
+    throw new Error("FAIL " + test + "Null Arrays");
+  }
+  if (a.length !== b.length) {
+    throw new Error("FAIL " + test + "Array Length Mismatch");
+  }
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] != b[i]) {
+      throw new Error("FAIL " + test + "Array Element " + i);
+    }
+  }
+  console.info("PASS" + test);
+  testNumber ++;
+}
+
 function check(condition, test) {
   test = test ? ": " + test : " #" + testNumber;
   if (!condition) {
@@ -25,7 +42,11 @@ function check(condition, test) {
   testNumber ++;
 }
 
-/** Global unitTests array, unit tests add themselves to this */
+/**
+ * Global unitTests array, unit tests add themselves to this. The list may have
+ * numbers, these indicate the number of times to run the test following it. This
+ * makes it easy to disable test by pushing a zero in front.
+ */
 var unitTests = [];
 
 var testNumber = 0;
@@ -71,11 +92,23 @@ function executeUnitTests(file, avm2) {
     initUI();
     console.info("Executing Unit Tests");
     var lastTestPromise = Promise.resolve();
-    unitTests.forEach(function (test) {
-      lastTestPromise = lastTestPromise.then(function () {
-        return test(avm2);
-      });
-    });
+
+    for (var i = 0; i < unitTests.length; i++) {
+      test = unitTests[i];
+      var repeat = 1;
+      if (typeof unitTests[i] === "number") {
+        repeat = unitTests[i];
+        test = unitTests[++i];
+      }
+      for (var r = 0; r < repeat; r++) {
+        (function (test) {
+          lastTestPromise = lastTestPromise.then(function () {
+            return test(avm2);
+          });
+        })(test);
+      }
+    }
+
     lastTestPromise.then(function () {
       console.info("Unit Tests is Completed");
     }, function (e) {

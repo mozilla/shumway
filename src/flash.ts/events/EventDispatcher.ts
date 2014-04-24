@@ -216,11 +216,11 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     private _hasTargetOrBubblingEventListener(type: string): boolean {
-      return this._targetOrBubblingListeners && this._targetOrBubblingListeners[type];
+      return !!(this._targetOrBubblingListeners && this._targetOrBubblingListeners[type]);
     }
 
     private _hasCaptureEventListener(type: string): boolean {
-      return this._captureListeners && this._captureListeners[type];
+      return !!(this._captureListeners && this._captureListeners[type]);
     }
 
     hasEventListener(type: string): boolean {
