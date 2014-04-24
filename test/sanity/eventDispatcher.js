@@ -67,4 +67,65 @@
     check(true, "snapshotting works");
   });
 
+  unitTests.push(function testEventListenerListSnapshotting() {
+    var a = new DisplayObjectContainer();
+    var b = new DisplayObjectContainer();
+    var c = new DisplayObjectContainer();
+
+    a.addChild(b);
+    b.addChild(c);
+    var s = "";
+
+    a.addEventListener("X", function () { s += "a"; });
+    a.addEventListener("X", function () { s += "A"; }, true);
+
+    b.addEventListener("X", function () { s += "b"; });
+    b.addEventListener("X", function () { s += "B"; }, true);
+
+    c.addEventListener("X", function () { s += "c"; });
+    c.addEventListener("X", function () { s += "C"; }, true);
+
+    c.dispatchEvent(new Event("X"));
+    check(s === "ABc"); s = "";
+
+    c.dispatchEvent(new Event("X", true));
+    check(s === "ABcba"); s = "";
+  });
+
+  unitTests.push(function testEventListenerListSnapshotting() {
+    var a = new DisplayObjectContainer();
+    var b = new DisplayObjectContainer();
+    var c = new DisplayObjectContainer();
+
+    a.addChild(b);
+    b.addChild(c);
+
+    var s = [];
+
+    a.addEventListener("X", function (e) { s.push(e); });
+    a.addEventListener("X", function (e) { s.push(e); }, true);
+
+    b.addEventListener("X", function (e) { s.push(e); });
+    b.addEventListener("X", function (e) { s.push(e); }, true);
+
+    c.addEventListener("X", function (e) { s.push(e); });
+    c.addEventListener("X", function (e) { s.push(e); }, true);
+
+    c.dispatchEvent(new Event("X"));
+    eq(s.join(),
+    ['[Event type="X" bubbles=false cancelable=false eventPhase=2]',
+     '[Event type="X" bubbles=false cancelable=false eventPhase=2]',
+     '[Event type="X" bubbles=false cancelable=false eventPhase=2]'].join());
+    s.length = 0;
+
+    c.dispatchEvent(new Event("X", true));
+    eq(s.join(),
+    ['[Event type="X" bubbles=true cancelable=false eventPhase=3]',
+     '[Event type="X" bubbles=true cancelable=false eventPhase=3]',
+     '[Event type="X" bubbles=true cancelable=false eventPhase=3]',
+     '[Event type="X" bubbles=true cancelable=false eventPhase=3]',
+     '[Event type="X" bubbles=true cancelable=false eventPhase=3]'].join());
+    s.length = 0;
+  });
+
 })();

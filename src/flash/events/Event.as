@@ -92,7 +92,7 @@ public class Event {
   }
 
   public function toString():String {
-    return formatToString('Event', 'bubbles', 'cancelable', 'eventPhase');
+    return formatToString('Event', 'type', 'bubbles', 'cancelable', 'eventPhase');
   }
 
   public native function stopPropagation():void;
