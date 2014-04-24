@@ -396,8 +396,10 @@ module Shumway.AVM2.ABC {
     static parseParameterNames: boolean = false;
 
     private static _getParameterName(i) {
-      release || assert(i < 26);
-      return String.fromCharCode("A".charCodeAt(0) + i);
+      if (i < 26) {
+        return String.fromCharCode("A".charCodeAt(0) + i);
+      }
+      return "P" + (i - 26);
     }
 
     constructor(abc: AbcFile, index: number, stream: AbcStream) {

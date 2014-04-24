@@ -31,10 +31,11 @@ module Shumway.SWF.timeline {
 
   export class ShapeSymbol extends Symbol {
     graphics: flash.display.Graphics = null;
-    strokeBounds: flash.geom.Rectangle = null;
+    strokeBounds: flash.geom.Rectangle;
 
     constructor(id: number) {
       super(id);
+      this.strokeBounds = new flash.geom.Rectangle();
       this.symbolClass = flash.display.Shape;
     }
   }
@@ -103,17 +104,17 @@ module Shumway.SWF.timeline {
                 cacheAsBitmap: boolean,
                 actions: any [])
     {
-      symbol = symbol;
-      depth = depth;
-      matrix = matrix;
-      colorTransform = colorTransform;
-      ratio = ratio;
-      name = name;
-      clipDepth = clipDepth;
-      filters = filters;
-      blendMode = blendMode;
-      cacheAsBitmap = cacheAsBitmap;
-      actions = actions;
+      this.symbol = symbol;
+      this.depth = depth;
+      this.matrix = matrix;
+      this.colorTransform = colorTransform;
+      this.ratio = ratio;
+      this.name = name;
+      this.clipDepth = clipDepth;
+      this.filters = filters;
+      this.blendMode = blendMode;
+      this.cacheAsBitmap = cacheAsBitmap;
+      this.actions = actions;
     }
 
     clone(): AnimationState {
