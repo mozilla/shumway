@@ -153,8 +153,8 @@ module Shumway.AVM2.AS.flash.geom {
     public contains(x: number, y: number): boolean {
       x = +x;
       y = +y;
-      return x >= this.x && x <= this.right &&
-             y >= this.y && y <= this.bottom;
+      return x >= this.x && x < this.right &&
+             y >= this.y && y < this.bottom;
     }
 
     public containsPoint(point: Point): boolean {
@@ -162,16 +162,27 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public containsRect(rect: Rectangle): boolean {
-      return this.containsPoint(rect.topLeft) && this.containsPoint(rect.bottomRight);
+      var r1 = rect.x + rect.width;
+      var b1 = rect.y + rect.height;
+      var r2 = this.x + this.width;
+      var b2 = this.y + this.height;
+      return (rect.x >= this.x) &&
+             (rect.x < r2)      &&
+             (rect.y >= this.y) &&
+             (rect.y < b2)      &&
+             (r1 > this.x)      &&
+             (r1 <= r2)         &&
+             (b1 > this.y)      &&
+             (b1 <= b2);
     }
 
     public intersection(toIntersect: Rectangle): Rectangle {
       var l: number = Math.max(this.x, toIntersect.x);
       var r: number = Math.min(this.right, toIntersect.right);
-      if (l <= r) {
+      if (l < r) {
         var t: number = Math.max(this.y, toIntersect.y);
         var b: number = Math.min(this.bottom, toIntersect.bottom);
-        if (t <= b) {
+        if (t < b) {
           return new Rectangle(l, t, r - l, b - t);
         }
       }
