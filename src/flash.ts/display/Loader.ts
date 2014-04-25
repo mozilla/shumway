@@ -460,7 +460,7 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = 0; i < commands.length; i++) {
         var cmd = commands[i];
         var depth = cmd.depth;
-        switch (cmd.type) {
+        switch (cmd.code) {
           case 5: // SWF_TAG_CODE_REMOVE_OBJECT
           case 28: // SWF_TAG_CODE_REMOVE_OBJECT2
             frame.stateAtDepth[depth] = null;
