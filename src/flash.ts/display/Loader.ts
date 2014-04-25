@@ -245,6 +245,10 @@ module Shumway.AVM2.AS.flash.display {
             while (repeat--) {
               symbol.frames.push(frame);
             }
+            if (frameInfo.labelName) {
+              var frameNum = i + 1;
+              symbol.labels.push(new FrameLabel(frameInfo.labelName, frameNum));
+            }
 
             //if (frame.startSounds) {
             //  startSoundRegistrations[frameNum] = frame.startSounds;
