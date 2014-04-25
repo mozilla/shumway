@@ -31,7 +31,7 @@ module Shumway.AVM2.AS.flash.display {
     };
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.SWF.timeline.SpriteSymbol) {
+    static initializer: any = function (symbol: Shumway.SWF.Timeline.SpriteSymbol) {
       var self: MovieClip = this;
 
       self._currentFrame = 0;
@@ -85,7 +85,7 @@ module Shumway.AVM2.AS.flash.display {
     _enabled: boolean;
     _isPlaying: boolean;
 
-    _frames: Shumway.SWF.timeline.Frame [];
+    _frames: Shumway.SWF.Timeline.Frame [];
     _sceneIndex: number;
     _frameScripts: any;
     _lastFrameAbs: number;

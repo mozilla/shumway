@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import Timeline = Shumway.SWF.Timeline;
 
   var DisplayObjectContainer: typeof flash.display.DisplayObjectContainer;
 
@@ -28,7 +29,7 @@ module Shumway.AVM2.AS.flash.display {
     };
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.SWF.timeline.SpriteSymbol) {
+    static initializer: any = function (symbol: Timeline.SpriteSymbol) {
       var self: Sprite = this;
       self._buttonMode = false;
       self._dropTarget = null;
@@ -131,13 +132,13 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.Sprite::stopTouchDrag"); return;
     }
 
-    _initializeChildren(frame: Shumway.SWF.timeline.Frame): void {
+    _initializeChildren(frame: Timeline.Frame): void {
       for (var depth in frame.stateAtDepth) {
         this.placeCharacter(frame.stateAtDepth[depth]);
       }
     }
 
-    placeCharacter(state: Shumway.SWF.timeline.AnimationState): void {
+    placeCharacter(state: Timeline.AnimationState): void {
       var symbol = state.symbol;
       var symbolClass = symbol.symbolClass;
       var instance = symbolClass.initializeFrom(symbol);

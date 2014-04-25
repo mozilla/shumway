@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-module Shumway.SWF.timeline {
+module Shumway.SWF.Timeline {
   import flash = Shumway.AVM2.AS.flash;
 
   export class Symbol {

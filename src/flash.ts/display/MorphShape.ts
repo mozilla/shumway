@@ -23,7 +23,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.SWF.timeline.ShapeSymbol) {
+    static initializer: any = function (symbol: Shumway.SWF.Timeline.ShapeSymbol) {
       var self: MorphShape = this;
       self._graphics = symbol ? symbol.graphics : new flash.display.Graphics();
     };

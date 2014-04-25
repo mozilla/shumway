@@ -23,7 +23,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.SWF.timeline.ButtonSymbol) {
+    static initializer: any = function (symbol: Shumway.SWF.Timeline.ButtonSymbol) {
       var self: SimpleButton = this;
 
       self._useHandCursor = true;

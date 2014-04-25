@@ -206,7 +206,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.SWF.timeline.Symbol) {
+    static initializer: any = function (symbol: Shumway.SWF.Timeline.Symbol) {
       var self: DisplayObject = this;
       var instanceName = DisplayObject.register(self);
 
@@ -635,7 +635,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * WIP
      */
-    _animate(state: Shumway.SWF.timeline.AnimationState): void {
+    _animate(state: Shumway.SWF.Timeline.AnimationState): void {
       this._depth = state.depth;
       if (state.matrix) {
         this._setMatrix(state.matrix, false);

@@ -23,7 +23,7 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
 
     static classInitializer: any = null;
-    static initializer: any = function (symbol: Shumway.SWF.timeline.ShapeSymbol) {
+    static initializer: any = function (symbol: Shumway.SWF.Timeline.ShapeSymbol) {
       var self: Shape = this;
       self._graphics = symbol ? symbol.graphics : new flash.display.Graphics();
     };

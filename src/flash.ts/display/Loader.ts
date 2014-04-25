@@ -23,6 +23,7 @@ module Shumway.AVM2.AS.flash.display {
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
 
+  import Timeline = Shumway.SWF.Timeline;
   import ActionScriptVersion = flash.display.ActionScriptVersion;
 
   var Event: typeof flash.events.Event;
@@ -96,7 +97,7 @@ module Shumway.AVM2.AS.flash.display {
     _contentLoaderInfo: flash.display.LoaderInfo;
     // _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
-    _dictionary: Shumway.SWF.timeline.Symbol [];
+    _dictionary: Timeline.Symbol [];
     _worker: Worker;
     _startPromise: any;
     _lastPromise: any;
@@ -180,7 +181,7 @@ module Shumway.AVM2.AS.flash.display {
       var symbolId = data.id;
       switch (data.type) {
         case 'shape':
-          symbol = new Shumway.SWF.timeline.ShapeSymbol(symbolId);
+          symbol = new Timeline.ShapeSymbol(symbolId);
           symbol.graphics = new flash.display.Graphics();
           if (data.strokeBbox) {
             symbol.strokeBounds = new flash.geom.Rectangle();
@@ -188,14 +189,14 @@ module Shumway.AVM2.AS.flash.display {
           }
           break;
         case 'image':
-          symbol = new Shumway.SWF.timeline.BitmapSymbol(symbolId);
+          symbol = new Timeline.BitmapSymbol(symbolId);
           break;
         case 'label':
         case 'text':
-          symbol = new Shumway.SWF.timeline.TextSymbol(symbolId);
+          symbol = new Timeline.TextSymbol(symbolId);
           break;
         case 'button':
-          symbol = new Shumway.SWF.timeline.ButtonSymbol(symbolId);
+          symbol = new Timeline.ButtonSymbol(symbolId);
           var states = data.states;
           for (var stateName in states) {
             var entry = states[stateName];
@@ -203,7 +204,7 @@ module Shumway.AVM2.AS.flash.display {
           }
           break;
         case 'sprite':
-          symbol = new Shumway.SWF.timeline.SpriteSymbol(symbolId);
+          symbol = new Timeline.SpriteSymbol(symbolId);
           symbol.numFrames = data.frameCount;
           var frames = data.frames;
           for (var i = 0; i < frames.length; i++) {
@@ -449,8 +450,8 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * WIP
      */
-    private _buildFrame(commands: any []): Shumway.SWF.timeline.Frame {
-      var frame = new Shumway.SWF.timeline.Frame();
+    private _buildFrame(commands: any []): Timeline.Frame {
+      var frame = new Timeline.Frame();
       for (var i = 0; i < commands.length; i++) {
         var cmd = commands[i];
         var depth = cmd.depth;
@@ -472,7 +473,7 @@ module Shumway.AVM2.AS.flash.display {
               // TODO
               colorTransform = null;
             }
-            frame.stateAtDepth[depth] = new Shumway.SWF.timeline.AnimationState(
+            frame.stateAtDepth[depth] = new Timeline.AnimationState(
               symbol,
               depth,
               matrix,
