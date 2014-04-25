@@ -133,7 +133,7 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = maxIndex; i >= 0; i--) {
         var current = children[i];
         if (current._depth && current._depth < depth) {
-          index = i;
+          index = i + 1;
           break;
         }
       }
