@@ -36,9 +36,9 @@ module Shumway.AVM2.AS.flash.display {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["rect"];
 
-    static MAXIMUM_WIDTH = 8191;
-    static MAXIMUM_HEIGHT = 8191;
-    static MAXIMUM_DIMENSION = 16777215;
+    static MAXIMUM_WIDTH: number = 8191;
+    static MAXIMUM_HEIGHT: number = 8191;
+    static MAXIMUM_DIMENSION: number = 16777215;
 
     constructor (width: number /*int*/, height: number /*int*/, transparent: boolean = true, fillColor: number /*uint*/ = 4294967295) {
       width = width | 0; height = height | 0;

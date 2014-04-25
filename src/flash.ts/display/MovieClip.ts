@@ -22,12 +22,14 @@ module Shumway.AVM2.AS.flash.display {
   import Telemetry = Shumway.Telemetry;
 
   var Scene: typeof flash.display.Scene;
+  var FrameLabel: typeof flash.display.FrameLabel;
 
   export class MovieClip extends flash.display.Sprite {
     
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       Scene = flash.display.Scene;
+      FrameLabel = flash.display.FrameLabel;
     };
     
     // Called whenever an instance of the class is initialized.
@@ -52,9 +54,9 @@ module Shumway.AVM2.AS.flash.display {
 
       if (symbol) {
         self._totalFrames = symbol.numFrames;
-        this._scenes.push(new Scene('Scene 1', symbol.labels, self._totalFrames));
+        this.addScene('Scene 1', symbol.labels, self._totalFrames);
       } else {
-        this._scenes.push(new Scene('Scene 1', [], self._totalFrames));
+        this.addScene('Scene 1', [], self._totalFrames);
       }
     };
     
@@ -296,7 +298,7 @@ module Shumway.AVM2.AS.flash.display {
       this.gotoFrame(frame, asCoerceString(scene));
     }
 
-    addFrameScript(): void {
+    addFrameScript(...args): void {
       // arguments are pairs of frameIndex and script/function
       // frameIndex is in range 0..totalFrames-1
       var frameScripts = this._frameScripts;
@@ -312,6 +314,33 @@ module Shumway.AVM2.AS.flash.display {
           scripts.push(fn);
         } else {
           frameScripts[frameNum] = [fn];
+        }
+      }
+    }
+
+    addScene(name: string, labels: any [], numFrames: number): void {
+      this._scenes.push(name, labels, numFrames);
+    }
+
+    addFrameLabel(...args): void {
+      for (var i = 0; i < arguments.length; i += 2) {
+        var frameNum = arguments[i] + 1;
+        var labelName = arguments[i + 1];
+        var scenes = this._scenes;
+        var offset = 0;
+        findScene: for (var i = 0; i < scenes.length; i++) {
+          var scene = scenes[i];
+          var labels = scene.labels;
+          for (var j = 0; j < labels.length; j++) {
+            var label = labels[j];
+            if (label.name === labelName) {
+              return;
+            }
+          }
+          if (frameNum > offset && frameNum <= offset + scene.numFrames) {
+            labels.push(new FrameLabel(labelName, frameNum - offset));
+          }
+          offset += scene.numFrames;
         }
       }
     }
