@@ -206,6 +206,8 @@ module Shumway.AVM2.AS.flash.display {
           break;
         case 'image':
           symbol = new Timeline.BitmapSymbol(symbolId);
+          symbol.width = symbolInfo.width;
+          symbol.height = symbolInfo.height;
           break;
         case 'label':
         case 'text':

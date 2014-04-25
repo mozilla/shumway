@@ -41,6 +41,8 @@ module Shumway.SWF.Timeline {
 
   export class BitmapSymbol extends Symbol {
     bitmapData: flash.display.BitmapData;
+    width: number = 0;
+    height: number = 0;
 
     constructor(id: number) {
       super(id, flash.display.Bitmap);
