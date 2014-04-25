@@ -16,24 +16,31 @@
 // Class: Loader
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import FileLoadingService = Shumway.FileLoadingService;
   import Telemetry = Shumway.Telemetry;
 
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
+  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   import Timeline = Shumway.SWF.Timeline;
+
+  import Rectangle = flash.geom.Rectangle;
+  import Matrix = flash.geom.Matrix;
+  import ColorTransform = flash.geom.ColorTransform;
+
   import ActionScriptVersion = flash.display.ActionScriptVersion;
 
   var Event: typeof flash.events.Event;
   var IOErrorEvent: typeof flash.events.IOErrorEvent;
   var ProgressEvent: typeof flash.events.ProgressEvent;
-  var MovieClip: typeof MovieClip;
+  var LoaderInfo: typeof flash.display.LoaderInfo;
+  var MovieClip: typeof flash.display.MovieClip;
   var Scene: typeof flash.display.Scene;
   var FrameLabel: typeof flash.display.FrameLabel;
   var Bitmap: typeof flash.display.Bitmap;
   var BitmapData: typeof flash.display.BitmapData;
+  var Graphics: typeof flash.display.Graphics;
 
   export class Loader extends flash.display.DisplayObjectContainer {
 
@@ -42,11 +49,13 @@ module Shumway.AVM2.AS.flash.display {
       Event = flash.events.Event;
       IOErrorEvent = flash.events.IOErrorEvent;
       ProgressEvent = flash.events.ProgressEvent;
+      LoaderInfo = flash.display.LoaderInfo;
       MovieClip = flash.display.MovieClip;
       Scene = flash.display.Scene;
       FrameLabel = flash.display.FrameLabel;
       Bitmap = flash.display.Bitmap;
       BitmapData = flash.display.BitmapData;
+      Graphics = flash.display.Graphics;
     };
 
     // Called whenever an instance of the class is initialized.
@@ -67,12 +76,14 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
       this._content = null;
-      this._contentLoaderInfo = new flash.display.LoaderInfo();
+      this._contentLoaderInfo = new LoaderInfo();
 
       this._dictionary = [];
       this._worker = null;
       this._startPromise = Promise.resolve();
       this._lastPromise = this._startPromise;
+
+      this._dictionary[0] = new Timeline.SpriteSymbol(0);
     }
 
     // JS -> AS Bindings
@@ -107,15 +118,19 @@ module Shumway.AVM2.AS.flash.display {
       var command = data.command;
       switch (command) {
         case 'init':
-          var result = data.result;
-          loaderInfo._swfVersion = result.swfVersion;
-          if (!result.fileAttributes || !result.fileAttributes.doAbc) {
+          var info = data.result;
+
+          loaderInfo._swfVersion = info.swfVersion;
+          if (!info.fileAttributes || !info.fileAttributes.doAbc) {
             loaderInfo._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT2;
           }
-          loaderInfo._frameRate = result.frameRate;
-          var bbox = result.bbox;
+          loaderInfo._frameRate = info.frameRate;
+          var bbox = info.bbox;
           loaderInfo._width = bbox.xMax - bbox.xMin;
           loaderInfo._height = bbox.yMax - bbox.yMin;
+
+          var rootSymbol = <Timeline.SpriteSymbol>this._dictionary[0];
+          rootSymbol.numFrames = info.frameCount;
           break;
         case 'progress':
           var result = data.result;
@@ -176,16 +191,16 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * WIP
      */
-    private _commitSymbol(data: any): void {
+    private _commitSymbol(symbolInfo: any): void {
       var symbol;
-      var symbolId = data.id;
-      switch (data.type) {
+      var symbolId = symbolInfo.id;
+      switch (symbolInfo.type) {
         case 'shape':
           symbol = new Timeline.ShapeSymbol(symbolId);
-          symbol.graphics = new flash.display.Graphics();
-          if (data.strokeBbox) {
-            symbol.strokeBounds = new flash.geom.Rectangle();
-            symbol.strokeBounds.fromBbox(data.strokeBbox);
+          symbol.graphics = new Graphics();
+          if (symbolInfo.strokeBbox) {
+            symbol.strokeBounds = new Rectangle();
+            symbol.strokeBounds.fromBbox(symbolInfo.strokeBbox);
           }
           break;
         case 'image':
@@ -197,7 +212,7 @@ module Shumway.AVM2.AS.flash.display {
           break;
         case 'button':
           symbol = new Timeline.ButtonSymbol(symbolId);
-          var states = data.states;
+          var states = symbolInfo.states;
           for (var stateName in states) {
             var entry = states[stateName];
             // TODO
@@ -205,13 +220,14 @@ module Shumway.AVM2.AS.flash.display {
           break;
         case 'sprite':
           symbol = new Timeline.SpriteSymbol(symbolId);
-          symbol.numFrames = data.frameCount;
-          var frames = data.frames;
+          symbol.numFrames = symbolInfo.frameCount;
+          var frames = symbolInfo.frames;
           for (var i = 0; i < frames.length; i++) {
-            var frame = frames[i];
-            var repeat = frame.repeat;
+            var frameInfo = frames[i];
+            var frame = this._buildFrame(frameInfo.commands);
+            var repeat = frameInfo.repeat;
             while (repeat--) {
-              symbol.frames.push(this._buildFrame(frame.commands));
+              symbol.frames.push(frame);
             }
 
             //if (frame.startSounds) {
@@ -249,8 +265,8 @@ module Shumway.AVM2.AS.flash.display {
         case 'binary':
           break;
       }
-      if (data.bbox) {
-        symbol.bounds.fromBbox(data.bbox);
+      if (symbolInfo.bbox) {
+        symbol.bounds.fromBbox(symbolInfo.bbox);
       }
       this._dictionary[symbolId] = symbol;
     }
@@ -258,25 +274,20 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * WIP
      */
-    private _commitFrame(data: any): void {
+    private _commitFrame(frameInfo: any): void {
       var loaderInfo = this._contentLoaderInfo;
-      var documentClass: Shumway.AVM2.AS.ASClass;
 
-      if (data.symbolClasses) {
-        var symbolClasses = data.symbolClasses;
+      if (frameInfo.symbolClasses) {
+        var symbolClasses = frameInfo.symbolClasses;
         var appDomain = AVM2.instance.applicationDomain;
         for (var i = 0; i < symbolClasses.length; i++) {
           var asset = symbolClasses[i];
           var tag = asset.symbolId;
           var symbolClass = appDomain.getClass(asset.className);
-          if (tag === 0) {
-            documentClass = symbolClass;
-          } else {
-            var symbol = this._dictionary[asset.symbolId];
-            assert (symbol);
-            symbolClass.defaultInitializerArgument = symbol;
-            symbol.symbolClass = symbolClass;
-          }
+          var symbol = this._dictionary[asset.symbolId];
+          assert (symbol);
+          symbolClass.defaultInitializerArgument = symbol;
+          symbol.symbolClass = symbolClass;
         }
       }
 
@@ -290,16 +301,22 @@ module Shumway.AVM2.AS.flash.display {
       //  }
       //}
 
-      var root = <MovieClip>this._content;
-      if (!root) {
-        if (!documentClass) {
-          documentClass = MovieClip;
-        }
+      var rootSymbol = <Timeline.SpriteSymbol>this._dictionary[0];
+      var documentClass = rootSymbol.symbolClass;
+      var frames = rootSymbol.frames;
+      var frameIndex = frames.length;
 
-        root = documentClass.initializeFrom(null);
+      var frame = this._buildFrame(frameInfo.commands);
+      var repeat = frameInfo.repeat;
+      while (repeat--) {
+        frames.push(frame);
+      }
+
+      var root = this._content;
+      if (!root) {
+        root = documentClass.initializeFrom(rootSymbol);
         root._root = root;
         root._name = 'root1';
-        //root._totalFrames = 1;
 
         //if (!loader._isAvm2Enabled) {
         //  var avm1Context = loader._avm1Context;
@@ -338,65 +355,31 @@ module Shumway.AVM2.AS.flash.display {
         //this.addChild(root);
       }
 
-      var frames = root._frames;
-      var frameNum = frames.length + 1;
+      if (MovieClip.isType(root)) {
+        var mc = <MovieClip>root;
+        mc._framesLoaded = frames.length;
 
-      var frame = this._buildFrame(data.commands);
-      var repeat = data.repeat;
-      while (repeat--) {
-        frames.push(frame);
-      }
-      root._framesLoaded = frames.length;
-
-      if (data.sceneData) {
-        var allScenes = data.sceneData.scenes;
-        var allLabels = data.sceneData.labels;
-        var i: number = allScenes.length;
-        var scenes = root._scenes;
-        var scene, labels;
-        while (i--) {
-          var sceneInfo = allScenes[i];
-          var startFrame = sceneInfo.offset;
-          var endFrame = root._totalFrames - 1;
-          var numFrames = endFrame - startFrame;
-          if (!scene) {
-            scene = scenes[0];
-            assert (scene);
-            scene._name = sceneInfo.name;
-            scene._numFrames = numFrames;
-            labels = scene.labels;
-          } else {
-            labels = [];
-            scene = new Scene(sceneInfo.name, labels, numFrames);
-            scenes.unshift(scene);
-          }
-          for (var j = 0; j < allLabels.length; j++) {
-            var labelInfo = allLabels[j];
-            var frameIndex = labelInfo.frame - startFrame;
-            if (frameIndex >= 0 && frameIndex < endFrame) {
-              labels.push(new FrameLabel(labelInfo.name, frameIndex + 1));
+        if (frameInfo.sceneData) {
+          var scenes = frameInfo.sceneData.scenes;
+          var allLabels = frameInfo.sceneData.labels;
+          for (var i = 0, n = scenes.length; i < n; i++) {
+            var sceneInfo = scenes[i];
+            var startFrame = sceneInfo.offset;
+            var endFrame = i < n - 1 ? scenes[i + 1].offset : mc._totalFrames;
+            var labels = [];
+            for (var j = 0; j < allLabels.length; j++) {
+              var labelInfo = allLabels[j];
+              var frameIndex = labelInfo.frame - startFrame;
+              if (frameIndex >= 0 && frameIndex < endFrame) {
+                labels.push(new FrameLabel(labelInfo.name, frameIndex + 1));
+              }
             }
+            mc.addScene(sceneInfo.name, labels, endFrame - startFrame);
           }
         }
-      }
 
-      if (data.labelName) {
-        var labelName = data.labelName;
-        var scenes = root._scenes;
-        var offset = 0;
-        findScene: for (var i = 0; i < scenes.length; i++) {
-          var scene = scenes[i];
-          var labels = scene.labels;
-          for (var j = 0; j < labels.length; j++) {
-            var label = labels[j];
-            if (label.name === labelName) {
-              break findScene;
-            }
-          }
-          if (frameNum > offset && frameNum < offset + scene.numFrames) {
-            labels.push(new FrameLabel(labelName, frameNum - offset));
-          }
-          offset += scene.numFrames;
+        if (frameInfo.labelName) {
+          mc.addFrameLabel(frameIndex, frameInfo.labelName);
         }
       }
 
@@ -441,7 +424,7 @@ module Shumway.AVM2.AS.flash.display {
       //  }
       //}
 
-      if (frameNum === 1) {
+      if (frameIndex === 0) {
         documentClass.instanceConstructorNoInitialize.call(root);
         loaderInfo.dispatchEvent(new Event(Event.INIT));
       }
@@ -450,7 +433,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * WIP
      */
-    private _buildFrame(commands: any []): Timeline.Frame {
+    private _buildFrame(commands: any []): Frame {
       var frame = new Timeline.Frame();
       for (var i = 0; i < commands.length; i++) {
         var cmd = commands[i];
@@ -467,7 +450,7 @@ module Shumway.AVM2.AS.flash.display {
             var colorTransform = null;
             if (cmd.hasMatrix) {
               var m = cmd.matrix;
-              matrix = new flash.geom.Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
+              matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
             }
             if (cmd.hasCxform) {
               // TODO
@@ -481,10 +464,10 @@ module Shumway.AVM2.AS.flash.display {
               cmd.ratio,
               cmd.name,
               cmd.clipDepth,
-              [],
+              [], // TODO filters
               cmd.blendMode, // TODO
               cmd.cache,
-              []
+              [] // TODO actions
             );
             break;
         }
@@ -551,12 +534,15 @@ module Shumway.AVM2.AS.flash.display {
       }
       var loader = this;
       //loader._worker = worker;
-      worker.onmessage = function (evt) {
-        if (evt.data.type === 'exception') {
-          //avm2.exceptions.push({source: 'parser', message: evt.data.message,
-          //  stack: evt.data.stack});
+      worker.onmessage = function (e) {
+        if (e.data.type === 'exception') {
+          AVM2.exceptions.push({
+            source: 'parser',
+            message: e.data.message,
+            stack: e.data.stack
+          });
         } else {
-          loader._commitData(evt.data);
+          loader._commitData(e.data);
         }
       };
       //if (flash.net.URLRequest.class.isInstanceOf(request)) {
