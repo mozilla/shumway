@@ -16,6 +16,21 @@
  * limitations under the License.
  */
 
+var FrameCounter = new Shumway.Metrics.Counter(true);
+var CanvasCounter = new Shumway.Metrics.Counter(true);
+
+document.createElement = (function () {
+  var nativeCreateElement = document.createElement;
+  return function (x) {
+    Counter.count("createElement: " + x);
+    return nativeCreateElement.call(document, x);
+  };
+})();
+
+var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
+var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
+var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
+
 var asyncLoading = getQueryVariable("async") === "true";
 var simpleMode = getQueryVariable("simpleMode") === "true";
 var pauseExecution = getQueryVariable("paused") === "true";
