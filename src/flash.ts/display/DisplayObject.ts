@@ -935,6 +935,23 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidatePaint();
     }
 
+    get blendMode(): string {
+      return this._blendMode;
+    }
+
+    set blendMode(value: string) {
+      this._stopTimelineAnimation();
+      value = asCoerceString(value);
+      if (value === this._blendMode) {
+        return;
+      }
+      if (BlendMode.toNumber(value) < 0) {
+        throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
+      }
+      this._blendMode = value;
+      this._invalidatePaint();
+    }
+
     /**
      * Marks this display object as visible / invisible. This does not affect the bounds.
      */
@@ -1135,25 +1152,7 @@ module Shumway.AVM2.AS.flash.display {
       this._filters = value;
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
     }
-    get blendMode(): string {
-     return this._blendMode;
-    }
-    set blendMode(value: string) {
-      value = asCoerceString(value);
 
-      if (this._blendMode === value) {
-        return;
-      }
-
-      if (BlendMode.toNumber(value) >= 0) {
-        this._blendMode = value;
-      } else {
-        throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");
-      }
-
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-      this._invalidate();
-    }
 
     get scale9Grid(): flash.geom.Rectangle {
       return this._scale9Grid;
