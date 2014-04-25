@@ -212,6 +212,7 @@ module Shumway.AVM2.AS.flash.display {
         case 'label':
         case 'text':
           symbol = new Timeline.TextSymbol(symbolId);
+          symbol.tag = symbolInfo.tag || { };
           break;
         case 'button':
           symbol = new Timeline.ButtonSymbol(symbolId);
@@ -281,7 +282,11 @@ module Shumway.AVM2.AS.flash.display {
           }
           break;
         case 'font':
-          break;
+          var font = flash.text.Font.createEmbeddedFont(
+            symbolInfo.name, symbolInfo.bold, symbolInfo.italic
+          );
+          //flash.text.Font.registerFont(font);
+          return;
         case 'sound':
           break;
         case 'binary':

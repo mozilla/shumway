@@ -50,6 +50,8 @@ module Shumway.SWF.Timeline {
   }
 
   export class TextSymbol extends Symbol {
+    tag: any = null;
+
     constructor(id: number) {
       super(id, flash.text.TextField);
     }

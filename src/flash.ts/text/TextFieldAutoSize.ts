@@ -22,8 +22,6 @@ module Shumway.AVM2.AS.flash.text {
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    static validValues: any = {'none': true, 'left': true, 'center': true, 'right': true};
-
     constructor() {
       super();
     }
@@ -33,5 +31,35 @@ module Shumway.AVM2.AS.flash.text {
     static LEFT: string = "left";
     static CENTER: string = "center";
     static RIGHT: string = "right";
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+          return TextFieldAutoSize.NONE;
+        case 1:
+          return TextFieldAutoSize.CENTER;
+        case 2:
+          return TextFieldAutoSize.LEFT;
+        case 3:
+          return TextFieldAutoSize.RIGHT;
+        default:
+          return null;
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case TextFieldAutoSize.NONE:
+          return 0;
+        case TextFieldAutoSize.CENTER:
+          return 1;
+        case TextFieldAutoSize.LEFT:
+          return 2;
+        case TextFieldAutoSize.RIGHT:
+          return 3;
+        default:
+          return -1;
+      }
+    }
   }
 }
