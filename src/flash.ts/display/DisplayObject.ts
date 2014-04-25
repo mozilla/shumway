@@ -637,8 +637,12 @@ module Shumway.AVM2.AS.flash.display {
      */
     _animate(state: Shumway.SWF.timeline.AnimationState): void {
       this._depth = state.depth;
-      this._setMatrix(state.matrix, false);
-      this._setColorTransform(state.colorTransform);
+      if (state.matrix) {
+        this._setMatrix(state.matrix, false);
+      }
+      if (state.colorTransform) {
+        this._setColorTransform(state.colorTransform);
+      }
       this._ratio = state.ratio;
       this._name = state.name;
       this._clipDepth = state.clipDepth;
@@ -648,8 +652,6 @@ module Shumway.AVM2.AS.flash.display {
         this._setFlags(flash.display.DisplayObjectFlags.CacheAsBitmap);
       }
       //info.actions
-      //this._setFlags(DisplayObjectFlags.AnimatedByTimeline);
-      //this._setFlags(DisplayObjectFlags.OwnedByTimeline);
     }
 
     get x(): number {
