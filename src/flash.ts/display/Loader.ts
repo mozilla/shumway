@@ -201,7 +201,7 @@ module Shumway.AVM2.AS.flash.display {
           symbol.graphics = new Graphics();
           if (symbolInfo.strokeBbox) {
             symbol.strokeBounds = new Rectangle();
-            symbol.strokeBounds.fromBbox(symbolInfo.strokeBbox);
+            symbol.strokeBounds.copyFromBbox(symbolInfo.strokeBbox);
           }
           break;
         case 'image':
@@ -282,7 +282,7 @@ module Shumway.AVM2.AS.flash.display {
           break;
       }
       if (symbolInfo.bbox) {
-        symbol.bounds.fromBbox(symbolInfo.bbox);
+        symbol.bounds.copyFromBbox(symbolInfo.bbox);
       }
       this._dictionary[symbolId] = symbol;
     }
