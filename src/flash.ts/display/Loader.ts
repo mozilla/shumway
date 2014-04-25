@@ -454,17 +454,7 @@ module Shumway.AVM2.AS.flash.display {
               matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
             }
             if (cmd.hasCxform) {
-              var c = cmd.cxform;
-              colorTransform = new ColorTransform(
-                c.redMultiplier / 256,
-                c.greenMultiplier / 256,
-                c.blueMultiplier / 256,
-                c.alphaMultiplier / 256,
-                c.redOffset,
-                c.greenOffset,
-                c.blueOffset,
-                c.alphaOffset
-              );
+              colorTransform = ColorTransform.fromCXForm(cmd.cxform);
             }
             frame.stateAtDepth[depth] = new Timeline.AnimationState(
               symbol,

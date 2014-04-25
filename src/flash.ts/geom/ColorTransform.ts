@@ -43,6 +43,19 @@ module Shumway.AVM2.AS.flash.geom {
       this.alphaOffset = +alphaOffset;
     }
 
+    public static fromCXForm(cxform) {
+      return new ColorTransform(
+        cxform.redMultiplier / 256,
+        cxform.greenMultiplier / 256,
+        cxform.blueMultiplier / 256,
+        cxform.alphaMultiplier / 256,
+        cxform.redOffset,
+        cxform.greenOffset,
+        cxform.blueOffset,
+        cxform.alphaOffset
+      );
+    }
+
     public redMultiplier: number;
     public greenMultiplier: number;
     public blueMultiplier: number;
