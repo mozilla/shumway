@@ -568,6 +568,11 @@ module Shumway.AVM2.AS.flash.display {
      * Invalidates the bounds of this display object along with all of its ancestors.
      */
     _invalidateBounds(): void {
+      /**
+       * TODO: We should only propagate this bit if the bounds are actually changed. We can do the
+       * bounds computation eagerly if the number of children is low. If there are no changes in the
+       * bounds we don't need to propagate the bit.
+       */
       this._propagateFlags(DisplayObjectFlags.InvalidBounds, Direction.Upward);
     }
 
