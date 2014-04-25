@@ -20,10 +20,10 @@
 function defineButton(tag, dictionary) {
   var characters = tag.characters;
   var states = {
-    up: {},
-    over: {},
-    down: {},
-    hitTest: {}
+    up: [],
+    over: [],
+    down: [],
+    hitTest: []
   };
   var i = 0, character;
   while ((character = characters[i++])) {
@@ -31,19 +31,20 @@ function defineButton(tag, dictionary) {
       break;
     var characterItem = dictionary[character.symbolId];
     assert(characterItem, 'undefined character', 'button');
-    var entry = {
+    var cmd = {
       symbolId: characterItem.id,
+      depth: character.depth,
       hasMatrix: !!character.matrix,
       matrix: character.matrix
     };
     if (character.stateUp)
-      states.up[character.depth] = entry;
+      states.up.push(entry);
     if (character.stateOver)
-      states.over[character.depth] = entry;
+      states.over.push(entry);
     if (character.stateDown)
-      states.down[character.depth] = entry;
+      states.down.push(entry);
     if (character.stateHitTest)
-      states.hitTest[character.depth] = entry;
+      states.hitTest.push(entry);
   }
   var button = {
     type: 'button',

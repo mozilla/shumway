@@ -214,9 +214,24 @@ module Shumway.AVM2.AS.flash.display {
         case 'button':
           symbol = new Timeline.ButtonSymbol(symbolId);
           var states = symbolInfo.states;
+          var character, matrix, colorTransform;
           for (var stateName in states) {
-            var entry = states[stateName];
-            // TODO
+            var commands = states[stateName];
+            var state;
+            if (commands.length === 1) {
+              var cmd = commands[0];
+              character = this._dictionary[cmd.symbolId];
+              var m = cmd.matrix;
+              matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
+              if (cmd.cxform) {
+                colorTransform = ColorTransform.fromCXForm(cmd.cxform);
+              }
+            } else {
+              character = new Timeline.SpriteSymbol(-1);
+              character.frames.push(this._buildFrame(commands));
+            }
+            symbol[stateName + 'State'] =
+              new Timeline.AnimationState(character, 0, matrix, colorTransform);
           }
           break;
         case 'sprite':
