@@ -30,6 +30,7 @@ module Shumway.AVM2.AS.flash.display {
   import ColorTransform = flash.geom.ColorTransform;
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
+  import BlendMode = flash.display.BlendMode;
 
   var Event: typeof flash.events.Event;
   var IOErrorEvent: typeof flash.events.IOErrorEvent;
@@ -433,7 +434,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * WIP
      */
-    private _buildFrame(commands: any []): Frame {
+    private _buildFrame(commands: any []): Timeline.Frame {
       var frame = new Timeline.Frame();
       for (var i = 0; i < commands.length; i++) {
         var cmd = commands[i];
@@ -453,8 +454,17 @@ module Shumway.AVM2.AS.flash.display {
               matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
             }
             if (cmd.hasCxform) {
-              // TODO
-              colorTransform = null;
+              var c = cmd.cxform;
+              colorTransform = new ColorTransform(
+                c.redMultiplier / 256,
+                c.greenMultiplier / 256,
+                c.blueMultiplier / 256,
+                c.alphaMultiplier / 256,
+                c.redOffset,
+                c.greenOffset,
+                c.blueOffset,
+                c.alphaOffset
+              );
             }
             frame.stateAtDepth[depth] = new Timeline.AnimationState(
               symbol,
@@ -465,7 +475,7 @@ module Shumway.AVM2.AS.flash.display {
               cmd.name,
               cmd.clipDepth,
               [], // TODO filters
-              cmd.blendMode, // TODO
+              BlendMode.fromNumber(cmd.blendMode),
               cmd.cache,
               [] // TODO actions
             );
