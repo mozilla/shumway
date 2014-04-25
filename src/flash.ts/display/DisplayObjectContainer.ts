@@ -118,6 +118,7 @@ module Shumway.AVM2.AS.flash.display {
       children.splice(index, 0, child);
       child._index = index;
       child._parent = this;
+      child._invalidatePosition();
       child.dispatchEvent(new Event(Event.ADDED, true));
       this._invalidateChildren();
       return child;
@@ -146,6 +147,7 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
       child._parent = this;
+      child._invalidatePosition();
     }
 
     removeChild(child: DisplayObject): DisplayObject {
@@ -174,6 +176,7 @@ module Shumway.AVM2.AS.flash.display {
       children.splice(index, 1);
       child._index = -1;
       child._parent = null;
+      child._invalidatePosition();
       this._invalidateChildren();
       return child;
     }

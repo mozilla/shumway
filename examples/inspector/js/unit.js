@@ -7,6 +7,15 @@ function eqFloat(a, b, test) {
   testNumber ++;
 }
 
+function neq(a, b, test) {
+  test = test ? ": " + test : " #" + testNumber;
+  if (a === b) {
+    throw new Error("FAIL " + test);
+  }
+  console.info("PASS" + test);
+  testNumber ++;
+}
+
 function eq(a, b, test) {
   test = test ? ": " + test : " #" + testNumber;
   if (a !== b) {

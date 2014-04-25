@@ -33,7 +33,7 @@
   var scaleBy5 = new Matrix(); scaleBy5.scale(5, 5);
 
 
-  unitTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     var o = new DisplayObject();
     check(o.transform.matrix.equals(identity), "Should be the identity.");
     check(o.transform.concatenatedMatrix.equals(scaleBy5), "Should be the scaleBy5.");
@@ -72,7 +72,7 @@
     return container;
   }
 
-  unitTests.push(function runInspectorSanityTests(console) {
+  unitTests.push(function runInspectorSanityTests() {
     var VisitorFlags = Shumway.AVM2.AS.flash.display.VisitorFlags;
     var r = createDisplayObjectTree(10, 2, 64, 64);
     var containers = [];
@@ -102,7 +102,7 @@
         "Should have cached concatenatedMatrix when setting: " + p[i]);
     }
 
-    console.info("Made: " + containers.length);
+    log("Made: " + containers.length);
   });
 
   unitTests.push(function runInspectorSanityTests() {
@@ -112,7 +112,7 @@
     for (var i = 0; i < p.length; i++) {
       var v = Random.next() * 100;
       o[p[i]] = v;
-      check(o[p[i]] === ((v * 20) | 0) / 20,
+      eqFloat(o[p[i]], ((v * 20) | 0) / 20,
         "Should have converted to twips and back to pixels: " + p[i]);
     }
 
@@ -120,7 +120,7 @@
     for (var i = 0; i < p.length; i++) {
       var v = Random.next() * 100;
       o[p[i]] = v;
-      check(o[p[i]] === v,
+      eqFloat(o[p[i]], v,
         "No loss of precision when writing / reading: " + p[i]);
     }
 
@@ -329,6 +329,23 @@
     c.addChild(a);
     c.x = -200;
     check(!a.hitTestObject(b));
+  });
+
+  unitTests.push(function checkFiltersGetterAndSetter() {
+    var o = new DisplayObject();
+    eq(o.filters.length, 0);
+    var a = [];
+    o.filters = a;
+    neq(o.filters, a);
+    var D = new flash.filters.DropShadowFilter ();
+    o.filters = [D]
+    D.distance = 10;
+    eq(o.filters[0].distance, 4);
+    o.filters[0].distance = 19;
+    eq(o.filters[0].distance, 4);
+    neq(o.filters[0], o.filters[0]);
+    o.filters = null;
+    eq(o.filters.length, 0);
   });
 
 })();

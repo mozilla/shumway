@@ -26,6 +26,7 @@
 // Class: DisplayObject
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import isNullOrUndefined = Shumway.isNullOrUndefined;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
@@ -136,9 +137,9 @@ module Shumway.AVM2.AS.flash.display {
     AnimatedByTimeline                        = 0x0800,
 
     /**
-     * Indicates whether this display object should be cached as a bitmap. The display object
-     * may be cached as bitmap even if this flag is not set, depending on whether any filters
-     * are applied or if the bitmap is too large or we've run out of memory.
+     * Indicates whether this display object should be cached as a bitmap. The display object may be cached as bitmap even
+     * if this flag is not set, depending on whether any filters are applied or if the bitmap is too large or we've run out
+     * of memory.
      */
     CacheAsBitmap                             = 0x1000
   }
@@ -952,6 +953,51 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidatePaint();
     }
 
+    get scale9Grid(): Rectangle {
+      return this._scale9Grid;
+    }
+
+    set scale9Grid(innerRectangle: flash.geom.Rectangle) {
+      this._stopTimelineAnimation();
+      this._scale9Grid = innerRectangle;
+      // VERIFY: Can we get away with only invalidating paint? Can mutating this property ever change the bounds?
+      this._invalidatePaint();
+    }
+
+    get cacheAsBitmap(): boolean {
+      return this._filters.length > 0 || this._hasFlags(DisplayObjectFlags.CacheAsBitmap);
+    }
+
+    set cacheAsBitmap(value: boolean) {
+      this._toggleFlags(DisplayObjectFlags.CacheAsBitmap, !!value);
+      // VERIFY: Can we get away with only invalidating paint? Can mutating this property ever change the bounds,
+      // maybe because of pixel snapping?
+      this._invalidatePaint();
+    }
+
+    /*
+     * References to the internal |_filters| array and its BitmapFilter objects are never leaked outside of this
+     * class. The get/set filters accessors always return deep clones of this array.
+     */
+
+    get filters(): flash.filters.BitmapFilter [] {
+      return this._filters.map(function (x: flash.filters.BitmapFilter) {
+        return x.clone();
+      });
+    }
+
+    set filters(value: flash.filters.BitmapFilter []) {
+      this._invalidatePaint();
+      if (isNullOrUndefined(value)) {
+        this._filters.length = 0;
+      } else {
+        this._filters = value.map(function (x: flash.filters.BitmapFilter) {
+          assert (flash.filters.BitmapFilter.isType(x));
+          return x.clone();
+        });
+      }
+    }
+
     /**
      * Marks this display object as visible / invisible. This does not affect the bounds.
      */
@@ -1113,19 +1159,6 @@ module Shumway.AVM2.AS.flash.display {
       return this._mouseY / 20;
     }
 
-
-    get cacheAsBitmap(): boolean {
-      return this._filters.length > 0 || this._hasFlags(DisplayObjectFlags.CacheAsBitmap);
-    }
-
-    set cacheAsBitmap(value: boolean) {
-      value = !!value;
-      if (!this._filters.length) {
-        this._toggleFlags(DisplayObjectFlags.CacheAsBitmap, value);
-      }
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-    }
-
     get opaqueBackground(): Object {
       return this._opaqueBackground;
     }
@@ -1142,26 +1175,7 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public DisplayObject::set scrollRect"); return;
       // this._scrollRect = value;
     }
-    get filters(): any [] {
-      return this._filters;
-    }
-    set filters(value: any []) {
-      //value = value;
 
-      this._invalidate();
-      this._filters = value;
-      this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
-    }
-
-
-    get scale9Grid(): flash.geom.Rectangle {
-      return this._scale9Grid;
-    }
-    set scale9Grid(innerRectangle: flash.geom.Rectangle) {
-      innerRectangle = innerRectangle;
-      notImplemented("public DisplayObject::set scale9Grid"); return;
-      // this._scale9Grid = innerRectangle;
-    }
     get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
       return this._accessibilityProperties;
     }
@@ -1174,71 +1188,6 @@ module Shumway.AVM2.AS.flash.display {
       value = value;
       notImplemented("public DisplayObject::set blendShader"); return;
       // this._blendShader = value;
-    }
-    globalToLocal3D(point: flash.geom.Point): flash.geom.Vector3D {
-      point = point;
-      notImplemented("public DisplayObject::globalToLocal3D"); return;
-    }
-    local3DToGlobal(point3d: flash.geom.Vector3D): flash.geom.Point {
-      point3d = point3d;
-      notImplemented("public DisplayObject::local3DToGlobal"); return;
-    }
-    _hitTest(use_xy: boolean, x: number, y: number, useShape: boolean, hitTestObject: DisplayObject): boolean {
-      use_xy = !!use_xy; x = +x; y = +y; useShape = !!useShape;
-      //hitTestObject = hitTestObject;
-
-      if (use_xy) {
-        var m = this._getConcatenatedMatrix(null).clone();
-        m.invert();
-        var point = m.transformCoords(x, y);
-
-        var b = this._getContentBounds();
-        if (!b.containsPoint(point)) {
-          return false;
-        }
-
-        if (!useShape || !this._graphics) {
-          return true;
-        }
-
-        // TODO move into Graphics
-        if (this._graphics) {
-          var paths = this._graphics._paths;
-          for (var i = 0; i < paths.length; i++) {
-            var path = paths[i];
-
-            if (path.isPointInPath(point.x, point.y)) {
-              return true;
-            }
-
-            if (path.strokeStyle) {
-              var strokePath = path._strokePath;
-              if (!strokePath) {
-                strokePath = path.strokePath(path.drawingStyles);
-                path._strokePath = strokePath;
-              }
-
-              if (strokePath.isPointInPath(point.x, point.y)) {
-                return true;
-              }
-            }
-          }
-        }
-
-        var children = this._children;
-        for (var i = 0; i < children.length; i++) {
-          var child = children[i];
-          if (child._hitTest(true, x, y, true, null)) {
-            return true;
-          }
-        }
-
-        return false;
-      }
-
-      var b1 = this.getBounds(this._stage);
-      var b2 = hitTestObject.getBounds(hitTestObject._stage);
-      return b1.intersects(b2);
     }
    */
   }

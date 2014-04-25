@@ -262,6 +262,11 @@ module Shumway {
       }
     }
 
+    export function copyFrom(dst: any [], src: any []) {
+      dst.length = 0;
+      ArrayUtilities.pushMany(dst, src);
+    }
+
     export class ArrayWriter {
       u8: Uint8Array;
       u16: Uint16Array;
@@ -1013,6 +1018,7 @@ module Shumway {
         return ((al * bl) + (((ah * bl + al * bh) << 16) >>> 0) | 0);
       }
     }
+
     /**
      * Polyfill clz32.
      */
