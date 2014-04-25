@@ -183,6 +183,7 @@ module Shumway.AVM2.AS.flash.display {
           symbol = new Shumway.SWF.timeline.ShapeSymbol(symbolId);
           symbol.graphics = new flash.display.Graphics();
           if (data.strokeBbox) {
+            symbol.strokeBounds = new flash.geom.Rectangle();
             symbol.strokeBounds.fromBbox(data.strokeBbox);
           }
           break;
@@ -195,9 +196,50 @@ module Shumway.AVM2.AS.flash.display {
           break;
         case 'button':
           symbol = new Shumway.SWF.timeline.ButtonSymbol(symbolId);
+          var states = data.states;
+          for (var stateName in states) {
+            var entry = states[stateName];
+            // TODO
+          }
           break;
         case 'sprite':
           symbol = new Shumway.SWF.timeline.SpriteSymbol(symbolId);
+          symbol.numFrames = data.frameCount;
+          var frames = data.frames;
+          for (var i = 0; i < frames.length; i++) {
+            var frame = frames[i];
+            var repeat = frame.repeat;
+            while (repeat--) {
+              symbol.frames.push(this._buildFrame(frame.commands));
+            }
+
+            //if (frame.startSounds) {
+            //  startSoundRegistrations[frameNum] = frame.startSounds;
+            //}
+
+            //var frameScripts = { };
+            //if (!this._isAvm2Enabled) {
+            //  if (symbol.frameScripts) {
+            //    var data = symbol.frameScripts;
+            //    for (var i = 0; i < data.length; i += 2) {
+            //      var frameNum = data[i] + 1;
+            //      var actionsData = new AS2ActionsData(data[i + 1],
+            //        's' + symbol.id + 'f' + frameNum + 'i' +
+            //          (frameScripts[frameNum] ? frameScripts[frameNum].length : 0));
+            //      var script = (function(actionsData, loader) {
+            //        return function () {
+            //          var avm1Context = loader._avm1Context;
+            //          return executeActions(actionsData, avm1Context, this._getAS2Object());
+            //        };
+            //      })(actionsData, this);
+            //      if (!frameScripts[frameNum])
+            //        frameScripts[frameNum] = [script];
+            //      else
+            //        frameScripts[frameNum].push(script);
+            //    }
+            //  }
+            //}
+          }
           break;
         case 'font':
           break;
@@ -248,19 +290,15 @@ module Shumway.AVM2.AS.flash.display {
       //}
 
       var root = <MovieClip>this._content;
-      var frameNum = 1;
-
       if (!root) {
-        if (documentClass) {
-          root = new documentClass.instanceConstructor();
-        } else {
-          root = new MovieClip();
+        if (!documentClass) {
+          documentClass = MovieClip;
         }
 
+        root = documentClass.initializeFrom(null);
         root._root = root;
         root._name = 'root1';
         //root._totalFrames = 1;
-        root._blueprint = new Shumway.SWF.timeline.BluePrint();
 
         //if (!loader._isAvm2Enabled) {
         //  var avm1Context = loader._avm1Context;
@@ -295,12 +333,19 @@ module Shumway.AVM2.AS.flash.display {
         //}
 
         this._content = root;
-        //this._children[0] = root;
-        this.addChild(root);
+        this._children[0] = root;
+        //this.addChild(root);
       }
 
-      var blueprint = root._blueprint;
-      blueprint.commands.push.apply(blueprint.commands, data.commands);
+      var frames = root._frames;
+      var frameNum = frames.length + 1;
+
+      var frame = this._buildFrame(data.commands);
+      var repeat = data.repeat;
+      while (repeat--) {
+        frames.push(frame);
+      }
+      root._framesLoaded = frames.length;
 
       if (data.sceneData) {
         var allScenes = data.sceneData.scenes;
@@ -326,9 +371,9 @@ module Shumway.AVM2.AS.flash.display {
           }
           for (var j = 0; j < allLabels.length; j++) {
             var labelInfo = allLabels[j];
-            var frame = labelInfo.frame - startFrame;
-            if (frame >= 0 && frame < endFrame) {
-              labels.push(new FrameLabel(labelInfo.name, frame + 1));
+            var frameIndex = labelInfo.frame - startFrame;
+            if (frameIndex >= 0 && frameIndex < endFrame) {
+              labels.push(new FrameLabel(labelInfo.name, frameIndex + 1));
             }
           }
         }
@@ -396,8 +441,54 @@ module Shumway.AVM2.AS.flash.display {
       //}
 
       if (frameNum === 1) {
+        documentClass.instanceConstructorNoInitialize.call(root);
         loaderInfo.dispatchEvent(new Event(Event.INIT));
       }
+    }
+
+    /**
+     * WIP
+     */
+    private _buildFrame(commands: any []): Shumway.SWF.timeline.Frame {
+      var frame = new Shumway.SWF.timeline.Frame();
+      for (var i = 0; i < commands.length; i++) {
+        var cmd = commands[i];
+        var depth = cmd.depth;
+        switch (cmd.type) {
+          case 5: // SWF_TAG_CODE_REMOVE_OBJECT
+          case 28: // SWF_TAG_CODE_REMOVE_OBJECT2
+            frame.stateAtDepth[depth] = null;
+            break;
+          default:
+            var symbol = this._dictionary[cmd.symbolId];
+            assert (symbol);
+            var matrix = null;
+            var colorTransform = null;
+            if (cmd.hasMatrix) {
+              var m = cmd.matrix;
+              matrix = new flash.geom.Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
+            }
+            if (cmd.hasCxform) {
+              // TODO
+              colorTransform = null;
+            }
+            frame.stateAtDepth[depth] = new Shumway.SWF.timeline.AnimationState(
+              symbol,
+              depth,
+              matrix,
+              colorTransform,
+              cmd.ratio,
+              cmd.name,
+              cmd.clipDepth,
+              [],
+              cmd.blendMode, // TODO
+              cmd.cache,
+              []
+            );
+            break;
+        }
+      }
+      return frame;
     }
 
     private _commitImage(data: any): void {

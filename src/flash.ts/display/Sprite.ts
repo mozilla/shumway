@@ -35,11 +35,8 @@ module Shumway.AVM2.AS.flash.display {
       self._hitArea = null;
       self._useHandCursor = true;
 
-      self._blueprint = null;
-
-      if (symbol) {
-        this._blueprint = symbol.blueprint;
-        this._initializeChildren();
+      if (symbol && symbol.frames.length) {
+        this._initializeChildren(symbol.frames[0]);
       }
     };
     
@@ -65,8 +62,6 @@ module Shumway.AVM2.AS.flash.display {
     _dropTarget: flash.display.DisplayObject;
     _hitArea: flash.display.Sprite;
     _useHandCursor: boolean;
-
-    _blueprint: Shumway.SWF.timeline.BluePrint;
 
     get graphics(): flash.display.Graphics {
       return this._graphics;
@@ -136,8 +131,20 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.Sprite::stopTouchDrag"); return;
     }
 
-    initializeChildren(): void {
-      // TODO
+    _initializeChildren(frame: Shumway.SWF.timeline.Frame): void {
+      for (var depth in frame.stateAtDepth) {
+        this.placeCharacter(frame.stateAtDepth[depth]);
+      }
+    }
+
+    placeCharacter(state: Shumway.SWF.timeline.AnimationState): void {
+      var symbol = state.symbol;
+      var symbolClass = symbol.symbolClass;
+      var instance = symbolClass.initializeFrom(symbol);
+      instance._setFlags(DisplayObjectFlags.AnimatedByTimeline);
+      instance._setFlags(DisplayObjectFlags.OwnedByTimeline);
+      this.addChildAtDepth(instance, state.depth);
+      instance._animate(state);
     }
 
     constructChildren(): void {
@@ -147,7 +154,7 @@ module Shumway.AVM2.AS.flash.display {
         if (child._hasFlags(DisplayObjectFlags.Constructed)) {
           continue;
         }
-        child.instanceConstructorNoInitialize();
+        child.class.instanceConstructorNoInitialize.call(child);
         if (child.name) {
           this[Multiname.getPublicQualifiedName(name)] = child;
         }

@@ -23,20 +23,19 @@ module Shumway.SWF.timeline {
     bounds: flash.geom.Rectangle = null;
     scale9Grid: flash.geom.Rectangle = null;
 
-    constructor(id: number) {
+    constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
       this.id = +id;
+      this.symbolClass = symbolClass;
       this.bounds = new flash.geom.Rectangle();
     }
   }
 
   export class ShapeSymbol extends Symbol {
     graphics: flash.display.Graphics = null;
-    strokeBounds: flash.geom.Rectangle;
+    strokeBounds: flash.geom.Rectangle = null;
 
     constructor(id: number) {
-      super(id);
-      this.strokeBounds = new flash.geom.Rectangle();
-      this.symbolClass = flash.display.Shape;
+      super(id, flash.display.Shape);
     }
   }
 
@@ -44,15 +43,13 @@ module Shumway.SWF.timeline {
     bitmapData: flash.display.BitmapData;
 
     constructor(id: number) {
-      super(id);
-      this.symbolClass = flash.display.Bitmap;
+      super(id, flash.display.Bitmap);
     }
   }
 
   export class TextSymbol extends Symbol {
     constructor(id: number) {
-      super(id);
-      this.symbolClass = flash.text.TextField;
+      super(id, flash.text.TextField);
     }
   }
 
@@ -63,58 +60,32 @@ module Shumway.SWF.timeline {
     hitTestState: flash.display.DisplayObject = null;
 
     constructor(id: number) {
-      super(id);
-      this.symbolClass = flash.display.SimpleButton;
+      super(id, flash.display.SimpleButton);
     }
   }
 
   export class SpriteSymbol extends Symbol {
-    numFrames: number = 0;
-    blueprint: BluePrint;
+    numFrames: number = 1;
+    frames: Frame [] = [];
     labels: flash.display.FrameLabel [] = [];
 
     constructor(id: number) {
-      super(id);
-      this.symbolClass = flash.display.MovieClip;
+      super(id, flash.display.MovieClip);
     }
   }
 
   export class AnimationState {
-    symbol: Symbol = null;
-    depth: number = 0;
-    matrix: flash.geom.Matrix = null;
-    colorTransform: flash.geom.ColorTransform = null;
-    ratio: number = 0;
-    name: string = null;
-    clipDepth: number = null;
-    filters: any [] = null;
-    blendMode: string = null;
-    cacheAsBitmap: boolean = false;
-    actions: any [] = null;
-
-    constructor(symbol: Symbol,
-                depth: number,
-                matrix: flash.geom.Matrix,
-                colorTransform: flash.geom.ColorTransform,
-                ratio: number,
-                name: string,
-                clipDepth: number,
-                filters: any [],
-                blendMode: string,
-                cacheAsBitmap: boolean,
-                actions: any [])
-    {
-      this.symbol = symbol;
-      this.depth = depth;
-      this.matrix = matrix;
-      this.colorTransform = colorTransform;
-      this.ratio = ratio;
-      this.name = name;
-      this.clipDepth = clipDepth;
-      this.filters = filters;
-      this.blendMode = blendMode;
-      this.cacheAsBitmap = cacheAsBitmap;
-      this.actions = actions;
+    constructor(public symbol: Symbol = null,
+                public depth: number = 0,
+                public matrix: flash.geom.Matrix = null,
+                public colorTransform: flash.geom.ColorTransform = null,
+                public ratio: number = 0,
+                public name: string = null,
+                public clipDepth: number = null,
+                public filters: any [] = null,
+                public blendMode: string = null,
+                public cacheAsBitmap: boolean = false,
+                public actions: any [] = null) {
     }
 
     clone(): AnimationState {
@@ -134,7 +105,11 @@ module Shumway.SWF.timeline {
     }
   }
 
-  export class BluePrint {
-    commands: any [] = [];
+  export class Frame {
+    stateAtDepth: Shumway.Map<AnimationState>;
+
+    constructor() {
+      this.stateAtDepth = Shumway.ObjectUtilities.createMap<AnimationState>();
+    }
   }
 }

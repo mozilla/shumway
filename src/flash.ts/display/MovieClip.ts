@@ -44,6 +44,7 @@ module Shumway.AVM2.AS.flash.display {
       self._enabled = true;
       self._isPlaying = false;
 
+      self._frames = [];
       self._sceneIndex = 0;
       self._frameScripts = [];
       self._lastFrameAbs = 0;
@@ -84,6 +85,7 @@ module Shumway.AVM2.AS.flash.display {
     _enabled: boolean;
     _isPlaying: boolean;
 
+    _frames: Shumway.SWF.timeline.Frame [];
     _sceneIndex: number;
     _frameScripts: any;
     _lastFrameAbs: number;
@@ -302,6 +304,7 @@ module Shumway.AVM2.AS.flash.display {
         var frameNum = arguments[i] + 1;
         var fn = arguments[i + 1];
         if (!fn) {
+          // TODO
           throwError('ArgumentError', Errors.TooFewArgumentsError, i, i + 1);
         }
         var scripts = frameScripts[frameNum];
