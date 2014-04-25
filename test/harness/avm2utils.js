@@ -16,7 +16,11 @@
  * limitations under the License.
  */
 
-Shumway.AVM2.Runtime.enableVerifier.value = true;
+var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
+var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
+var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
+
+//Shumway.AVM2.Runtime.enableVerifier.value = true;
 release = true;
 
 var avm2Root = SHUMWAY_ROOT + "avm2/";
@@ -106,15 +110,24 @@ var avm2;
 
 function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
   assert (builtinPath);
-  avm2 = new AVM2(sysMode, appMode, loadAVM1);
   var builtinAbc, avm1Abc;
 
-  AVM2.loadPlayerglobal(libraryPath.abcs, libraryPath.catalog).then(function () {
-    new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
-      builtinAbc = new AbcFile(new Uint8Array(buffer), "builtin.abc");
-      executeAbc();
+  new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
+    AVM2.initialize(sysMode, appMode, avm1Path && loadAVM1);
+    avm2 = AVM2.instance;
+    avm2.loadedAbcs = {};
+
+    var builtinAbc = new AbcFile(new Uint8Array(buffer), "builtin.abc");
+    avm2.builtinsLoaded = false;
+    // avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
+    avm2.systemDomain.executeAbc(builtinAbc);
+    avm2.builtinsLoaded = true;
+
+    AVM2.loadPlayerglobal(libraryPath.abcs, libraryPath.catalog).then(function () {
+      next(avm2);
     });
   });
+
 
   function loadAVM1(next) {
     new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
@@ -122,13 +135,5 @@ function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) 
       avm2.systemDomain.executeAbc(avm1Abc);
       next();
     });
-  }
-  function executeAbc() {
-    assert (builtinAbc);
-    avm2.builtinsLoaded = false;
-    avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
-    avm2.systemDomain.executeAbc(builtinAbc);
-    avm2.builtinsLoaded = true;
-    next(avm2);
   }
 }
