@@ -52,10 +52,12 @@ module Shumway.AVM2.AS.flash.display {
     static ALPHA: string = "alpha";
     static ERASE: string = "erase";
     static SHADER: string = "shader";
-    
-    
-    // AS -> JS Bindings
-    
+
+
+    /**
+     * Returns the blend mode string from the numeric value that appears in the
+     * swf file.
+     */
     static fromNumber(n: number): string {
       switch (n) {
         case 0:
