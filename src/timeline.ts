@@ -18,7 +18,7 @@ module Shumway.SWF.Timeline {
   import flash = Shumway.AVM2.AS.flash;
 
   export class Symbol {
-    id: number = 0;
+    id: number = -1;
     symbolClass: Shumway.AVM2.AS.ASClass = null;
     bounds: flash.geom.Rectangle = null;
     scale9Grid: flash.geom.Rectangle = null;

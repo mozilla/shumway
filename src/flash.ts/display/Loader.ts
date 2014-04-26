@@ -224,8 +224,7 @@ module Shumway.AVM2.AS.flash.display {
             if (commands.length === 1) {
               var cmd = commands[0];
               character = this._dictionary[cmd.symbolId];
-              var m = cmd.matrix;
-              matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
+              matrix = Matrix.fromAny(cmd.matrix);
               if (cmd.cxform) {
                 colorTransform = ColorTransform.fromCXForm(cmd.cxform);
               }
@@ -288,9 +287,11 @@ module Shumway.AVM2.AS.flash.display {
           //flash.text.Font.registerFont(font);
           return;
         case 'sound':
-          break;
+          // TODO
+          return;
         case 'binary':
-          break;
+          // TODO
+          return;
       }
       if (symbolInfo.bbox) {
         symbol.bounds.copyFromBbox(symbolInfo.bbox);
@@ -476,8 +477,7 @@ module Shumway.AVM2.AS.flash.display {
             var matrix = null;
             var colorTransform = null;
             if (cmd.hasMatrix) {
-              var m = cmd.matrix;
-              matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
+              matrix = Matrix.fromAny(cmd.matrix);
             }
             if (cmd.hasCxform) {
               colorTransform = ColorTransform.fromCXForm(cmd.cxform);
