@@ -6,6 +6,7 @@ module Shumway.GFX {
 
   import Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
   import WebGLStageRenderer = Shumway.GFX.GL.WebGLStageRenderer;
+  import WebGLStageRendererOptions = Shumway.GFX.GL.WebGLStageRendererOptions;
   import WebGLContext = Shumway.GFX.GL.WebGLContext;
 
   declare var GUI;
@@ -210,8 +211,8 @@ module Shumway.GFX {
     private _worldView: FrameContainer;
     private _worldViewOverlay: FrameContainer;
     _canvas: HTMLCanvasElement;
-    private _renderer: any;
-    private _options: StageRendererOptions = {};
+    private _renderer: StageRenderer;
+    private _options: StageRendererOptions = new WebGLStageRendererOptions();
     private _state: State = new StartState();
 
     private _selection: FrameContainer;
@@ -227,6 +228,7 @@ module Shumway.GFX {
       toolbar.addChild(new Shape(new Renderable(new Rectangle(0, 0, 1024, 32), function (context: CanvasRenderingContext2D) {
         context.fillStyle = ColorStyle.Toolbars;
         context.fillRect(0, 0, self._stage.w, 32);
+        this.isInvalid = false;
       })));
       var mousePositionLabelShape = toolbar.addChild(new Shape(this._mousePositionLabel));
       mousePositionLabelShape.x = 4;
@@ -235,7 +237,7 @@ module Shumway.GFX {
       return toolbar;
     }
 
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement, backend: Backend) {
       this._stage = new Stage(canvas.width, canvas.height, true);
       this._worldView = new FrameContainer();
       this._worldViewOverlay = new FrameContainer();
@@ -253,15 +255,19 @@ module Shumway.GFX {
 
       this._canvas = canvas;
 
-      if (true) {
-        canvas.getContext('2d');
-        window.addEventListener('resize', this._resizeHandler.bind(this), false);
-        this._resizeHandler();
-        this._renderer = new Canvas2DStageRenderer(canvas, this._stage, <any>this._options);
-      } else {
-        // this._renderer = new WebGLStageRenderer(new WebGLContext(this._canvas, {}), this._canvas.width, this._canvas.height);
-        this._renderer = new WebGLStageRenderer(canvas, this._stage, this._options);
+      window.addEventListener('resize', this._resizeHandler.bind(this), false);
+      this._resizeHandler();
+      switch (backend) {
+        case Backend.Canvas2D:
+          this._options = new Canvas2DStageRendererOptions();
+          this._renderer = new Canvas2DStageRenderer(canvas, this._stage, <any>this._options);
+          break;
+        case Backend.WebGL:
+          this._options = new WebGLStageRendererOptions();
+          this._renderer = new WebGLStageRenderer(canvas, this._stage, <any>this._options);
+          break;
       }
+
       this._onMouseUp = this._onMouseUp.bind(this)
       this._onMouseDown = this._onMouseDown.bind(this);
       this._onMouseMove = this._onMouseMove.bind(this);
@@ -339,6 +345,7 @@ module Shumway.GFX {
       var ch = parent.offsetHeight - 1;
 
       var devicePixelRatio = window.devicePixelRatio || 1;
+      // devicePixelRatio = 1;
 
 //      var context = <any>this._context
       var backingStoreRatio = 1;
@@ -419,7 +426,7 @@ module Shumway.GFX {
     }
 
     private _onMouseDown(event) {
-      this._renderer.render(this._stage, { });
+      this._renderer.render();
     }
 
     private _onMouseUp(event) {

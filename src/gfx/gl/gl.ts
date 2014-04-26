@@ -60,10 +60,12 @@ module Shumway.GFX.GL {
   import clamp = Shumway.NumberUtilities.clamp;
   import pow2 = Shumway.NumberUtilities.pow2;
 
+  /**
+   * Gets the bounds at the origin.
+   */
   function getAbsoluteSourceBounds(source: IRenderable): Rectangle {
-    var bounds = source.getBounds().clone();
-    bounds.offset(-bounds.x, -bounds.y);
-    return bounds;
+    var bounds = source.getBounds()
+    return new Rectangle(0, 0, bounds.w, bounds.h);
   }
 
   export class Vertex extends Shumway.Geometry.Point3D {
@@ -154,11 +156,25 @@ module Shumway.GFX.GL {
   }
 
   export class WebGLStageRendererOptions extends StageRendererOptions {
-
+    maxTextures: number = 8;
+    maxTextureSize: number = 2048;
+    perspectiveCamera: boolean;
+    perspectiveCameraDistance: number;
+    perspectiveCameraFOV: number;
+    perspectiveCameraAngle: number;
+    ignoreViewport: boolean;
+    disableTextureUploads: boolean;
+    frameSpacing: number = 0.01;
+    ignoreColorMatrix: boolean;
+    drawTiles: boolean;
+    drawElements: boolean = true;
+    drawTextures: boolean = true;
+    drawTexture: number = -1;
   }
 
   export class WebGLStageRenderer extends StageRenderer {
     context: WebGLContext;
+    private _options: WebGLStageRendererOptions;
     private _viewport: Rectangle;
 
     private _brush: WebGLCombinedBrush;
@@ -179,9 +195,13 @@ module Shumway.GFX.GL {
     constructor(canvas: HTMLCanvasElement, stage: Stage,
                 options: WebGLStageRendererOptions = new WebGLStageRendererOptions()) {
       super(canvas, stage);
-      var context = this.context = null; // context;
-      var w  = 0, h = 0;
-      this._viewport = new Rectangle(0, 0, w, h);
+
+      this._options = options;
+      var context = this.context = new WebGLContext(this._canvas, options);
+
+      canvas.addEventListener('resize', this.resize.bind(this), false);
+      this.resize();
+
       this._brushGeometry = new WebGLGeometry(context);
       this._brush = new WebGLCombinedBrush(context, this._brushGeometry);
 
@@ -212,7 +232,13 @@ module Shumway.GFX.GL {
 
     private _cachedTiles = [];
 
-    public render(stage: Stage, options: any) {
+    private resize() {
+      this._viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
+    }
+
+    public render() {
+      var stage = this._stage;
+      var options = this._options;
 
       // TODO: Only set the camera once, not every frame.
       if (options.perspectiveCamera) {
@@ -324,7 +350,8 @@ module Shumway.GFX.GL {
           brush.fillRectangle(frame.getBounds(), Color.parseColor((<SolidRectangle>frame).fillStyle), transform, depth);
         } else if (frame instanceof Shape) {
           var shape = <Shape>frame;
-          var bounds = getAbsoluteSourceBounds(shape.source);
+          // var bounds = getAbsoluteSourceBounds(shape.source);
+          var bounds = shape.source.getBounds();
           if (!bounds.isEmpty()) {
             var source = shape.source;
             var tileCache: RenderableTileCache = source.properties["tileCache"];
@@ -336,7 +363,7 @@ module Shumway.GFX.GL {
             for (var i = 0; i < tiles.length; i++) {
               var tile = tiles[i];
               tileTransform.setIdentity();
-              tileTransform.translate(tile.bounds.x, tile.bounds.y);
+              tileTransform.translate(tile.bounds.x + bounds.x, tile.bounds.y + bounds.y);
               tileTransform.scale(1 / tile.scale, 1 / tile.scale);
               tileTransform.concat(transform);
               var src = <WebGLTextureRegion>(tile.cachedTextureRegion);
@@ -493,6 +520,9 @@ module Shumway.GFX.GL {
       scratchContext.setTransform(1, 0, 0, 1, 0, 0);
       scratchContext.clearRect(0, 0, scratchBounds.w, scratchBounds.h);
       scratchContext.translate(-uncachedTileBounds.x, -uncachedTileBounds.y);
+      // Translate so that the source is drawn at the origin.
+      var sourceBounds = this.source.getBounds();
+      scratchContext.translate(-sourceBounds.x, -sourceBounds.y);
       scratchContext.scale(uncachedTiles[0].scale, uncachedTiles[0].scale);
       timeline && timeline.enter("renderTiles");
       traceLevel >= TraceLevel.Verbose && writer.writeLn("Rendering Tiles: " + uncachedTileBounds);

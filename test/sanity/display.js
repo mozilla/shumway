@@ -127,6 +127,7 @@
             context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
           }
           context.restore();
+          this.isInvalid = false;
         });
         frame = new GFXShape(renderable);
       }
@@ -143,17 +144,18 @@
     Random.seed(0x12343);
 
     // var r = createDisplayObjectTree(6, 4, 16, 16);
-    var r = createDisplayObjectTree(2, 4, 16, 16);
+    // var r = createDisplayObjectTree(1, 4, 128, 128);
+    var r = createDisplayObjectTree(5, 4, 32, 32);
 
 
     r.visit(function (node) {
       if (r === node) {
         return VisitorFlags.Continue;
       }
-      node.speed = Math.random() / 10;
-      node.scaleSpeed = (Math.random() - 0.5) / 5000;
-      node.x = (Math.random()) * 512;
-      node.y = (Math.random()) * 512;
+      node.speed = Math.random() / 1;
+      // node.scaleSpeed = (Math.random() - 0.5) / 500;
+      node.x = (Math.random()) * 256;
+      node.y = (Math.random()) * 256;
       return VisitorFlags.Continue;
     });
 
@@ -187,7 +189,7 @@
         return VisitorFlags.Continue;
       });
 
-      if (mousePoint) {
+      if (false && mousePoint) {
         timeline && timeline.enter("getObjectsUnderPoint");
         for (var i = 0; i < 10; i++) {
           var objects = r.getObjectsUnderPoint(mousePoint);
@@ -197,7 +199,6 @@
           objects[i].over = true;
         }
       }
-
 
       k ++;
       syncOptions(easel.options);

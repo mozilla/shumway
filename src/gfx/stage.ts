@@ -102,12 +102,22 @@ module Shumway.GFX {
 
   }
 
+  export enum Backend {
+    Canvas2D = 0,
+    WebGL = 1,
+    DOM = 2,
+    SVG = 3
+  }
+
   export class StageRenderer {
     _canvas: HTMLCanvasElement;
     _stage: Stage;
     constructor(canvas: HTMLCanvasElement, stage: Stage) {
       this._canvas = canvas;
       this._stage = stage;
+    }
+    public render() {
+
     }
   }
 
@@ -709,7 +719,7 @@ module Shumway.GFX {
     }
 
     isDynamic: boolean = true;
-    isInvalid: boolean = true;
+    isInvalid: boolean = false;
     isScalable: boolean = true;
     isTileable: boolean = false;
     constructor(w: number, h: number) {

@@ -483,5 +483,5 @@ function createEasel() {
   var canvas = document.createElement("canvas");
   canvas.style.backgroundColor = "#14171a";
   document.getElementById("stageContainer").appendChild(canvas);
-  return new Easel(canvas);
+  return new Easel(canvas, 0);
 }
