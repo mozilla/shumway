@@ -16,6 +16,7 @@
 // Class: Stage
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   import StageScaleMode = flash.display.StageScaleMode;
@@ -23,8 +24,16 @@ module Shumway.AVM2.AS.flash.display {
   import ColorCorrectionSupport = flash.display.ColorCorrectionSupport;
   import StageQuality = flash.display.StageQuality;
 
+  var DisplayObject: typeof flash.display.DisplayObject;
+  var Event: typeof flash.events.Event;
+
   export class Stage extends flash.display.DisplayObjectContainer {
-    static classInitializer: any = null;
+
+    static classInitializer: any = function () {
+      DisplayObject = flash.display.DisplayObject;
+      Event = flash.events.Event;
+    };
+
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // ["name", "mask", "visible", "x", "y", "z", "scaleX", "scaleY", "scaleZ", "rotation", "rotationX", "rotationY", "rotationZ", "alpha", "cacheAsBitmap", "opaqueBackground", "scrollRect", "filters", "blendMode", "transform", "accessibilityProperties", "scale9Grid", "tabEnabled", "tabIndex", "focusRect", "mouseEnabled", "accessibilityImplementation", "width", "width", "height", "height", "textSnapshot", "mouseChildren", "mouseChildren", "numChildren", "tabChildren", "tabChildren", "contextMenu", "constructor", "constructor", "addChild", "addChildAt", "setChildIndex", "addEventListener", "hasEventListener", "willTrigger", "dispatchEvent"];
     static initializer: any = null;
@@ -32,6 +41,9 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super();
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
+      this._root = this;
+      this._stage = this;
+
       this._frameRate = 24;
       this._scaleMode = StageScaleMode.SHOW_ALL;
       this._align = "";
@@ -57,6 +69,8 @@ module Shumway.AVM2.AS.flash.display {
       this._allowsFullScreenInteractive = false;
       this._contentsScaleFactor = 1;
       this._displayContextInfo = null;
+
+      this._invalid = false;
     }
     
     // JS -> AS Bindings
@@ -89,6 +103,8 @@ module Shumway.AVM2.AS.flash.display {
     private _allowsFullScreenInteractive: boolean;
     private _contentsScaleFactor: number;
     private _displayContextInfo: string;
+
+    private _invalid: boolean;
 
     get frameRate(): number {
       return this._frameRate;
@@ -264,13 +280,41 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.Stage::swapChildrenAt"); return;
     }
     invalidate(): void {
-      notImplemented("public flash.display.Stage::invalidate"); return;
+      this._invalid = true;
     }
     isFocusInaccessible(): boolean {
       notImplemented("public flash.display.Stage::isFocusInaccessible"); return;
     }
     requireOwnerPermissions(): void {
-      notImplemented("public flash.display.Stage::requireOwnerPermissions"); return;
+      somewhatImplemented("public flash.display.Stage::requireOwnerPermissions"); return;
+    }
+
+    enterEventLoop(): void {
+      var stage = this;
+      var firstRun = true;
+
+      (function tick() {
+        setTimeout(tick, 1000 / stage._frameRate);
+
+        if (firstRun) {
+          firstRun = false;
+        } else {
+          // advance frames
+          DisplayObject.broadcastEvent(new Event(Event.ENTER_FRAME));
+          // construct children
+        }
+
+        DisplayObject.broadcastEvent(new Event(Event.FRAME_CONSTRUCTED));
+        // execute frame scripts
+        DisplayObject.broadcastEvent(new Event(Event.EXIT_FRAME));
+
+        if (this._invalid) {
+          DisplayObject.broadcastEvent(new Event(Event.RENDER));
+          this._invalid = false;
+        }
+
+        // handle input
+      })();
     }
   }
 }

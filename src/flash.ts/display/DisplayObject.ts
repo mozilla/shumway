@@ -290,6 +290,14 @@ module Shumway.AVM2.AS.flash.display {
       return instance;
     }
 
+    static broadcastEvent(event: flash.event.Event) {
+      var instances = DisplayObject._instances;
+      for (var i = 0; i < instances.length; i++) {
+        var instance = instances[i];
+        instance.dispatchEvent(event);
+      }
+    }
+
     constructor () {
       false && super(undefined);
       EventDispatcher.instanceConstructorNoInitialize();
