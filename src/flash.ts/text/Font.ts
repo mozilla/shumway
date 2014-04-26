@@ -17,38 +17,39 @@
 module Shumway.AVM2.AS.flash.text {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  import FontStyle = flash.text.FontStyle;
+  import FontType = flash.text.FontType;
+
   export class Font extends ASNative {
 
     static classInitializer: any = null;
-
-    // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol) {
-      var s = symbol;
-      if (s) {
-        this._fontId = s.renderableId;
-        this._fontName = s.name || null;
-        if (s.bold) {
-          if (s.italic) {
-            this._fontStyle = 'boldItalic';
-          } else {
-            this._fontStyle = 'bold';
-          }
-        } else if (s.italic) {
-          this._fontStyle = 'italic';
-        } else {
-          this._fontStyle = 'regular';
-        }
-        this._fontType = 'embedded';
-        Font.fonts.push(this);
-        Font.fontsBySymbolId[s.id] = this;
-      }
-    };
-
+    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
+    static createEmbeddedFont(fontName: string, bold: boolean = false, italic: boolean = false) {
+      var font = new Font();
+      if (bold) {
+        if (italic) {
+          font._fontStyle = FontStyle.BOLD_ITALIC;
+        } else {
+          font._fontStyle = FontStyle.BOLD;
+        }
+      } else if (italic) {
+        font._fontStyle = FontStyle.ITALIC;
+      } else {
+        font._fontStyle = FontStyle.REGULAR;
+      }
+      font._fontType = FontType.EMBEDDED;
+      return font;
+    }
+
     constructor() {
       super();
+      this._fontName = null;
+      this._fontStyle = null;
+      this._fontType = null;
     }
 
     private static fonts: Font[] = [];

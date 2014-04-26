@@ -28,7 +28,7 @@ module Shumway.AVM2.AS.flash.text {
 
     static classInitializer: any = null;
 
-    static initializer: any = function (symbol: TextField) {
+    static initializer: any = function (symbol: Shumway.SWF.Timeline.TextSymbol) {
       this._bbox = {xMin: 0, yMin: 0, xMax: 2000, yMax: 2000};
       var initialFormat = this._defaultTextFormat = new NativeTextFormat();
       initialFormat.align = 'LEFT';
@@ -73,10 +73,12 @@ module Shumway.AVM2.AS.flash.text {
       var tag = s.tag;
 
       var bbox = tag.bbox;
-      this._matrix.tx += bbox.xMin;
-      this._matrix.ty += bbox.yMin;
-      this._bbox.xMax = bbox.xMax - bbox.xMin;
-      this._bbox.yMax = bbox.yMax - bbox.yMin;
+      if (bbox) {
+        this._matrix.tx += bbox.xMin;
+        this._matrix.ty += bbox.yMin;
+        this._bbox.xMax = bbox.xMax - bbox.xMin;
+        this._bbox.yMax = bbox.yMax - bbox.yMin;
+      }
 
       if (tag.hasLayout) {
         initialFormat.size = tag.fontHeight / 20;
@@ -92,10 +94,12 @@ module Shumway.AVM2.AS.flash.text {
       }
       if (tag.hasFont) {
         var font = Font.getFontBySymbolId(tag.fontId);
-        initialFormat.fontObj = font;
-        initialFormat.face = font._fontName;
-        initialFormat.bold = font.symbol.bold;
-        initialFormat.italic = font.symbol.italic;
+        if (font) {
+          initialFormat.fontObj = font;
+          initialFormat.face = font._fontName;
+          initialFormat.bold = font.symbol.bold;
+          initialFormat.italic = font.symbol.italic;
+        }
       }
 
       this._multiline = !!tag.multiline;
@@ -270,7 +274,7 @@ module Shumway.AVM2.AS.flash.text {
 
     set autoSize(value: string) {
       value = asCoerceString(value);
-      if (!TextFieldAutoSize.validValues[value]) {
+      if (TextFieldAutoSize.toNumber(value) < 0) {
         throwError("ArgumentError", Errors.InvalidParamError, "autoSize");
       }
       this._autoSize = value;

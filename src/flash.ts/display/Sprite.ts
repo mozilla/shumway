@@ -19,12 +19,14 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import Timeline = Shumway.SWF.Timeline;
 
+  var DisplayObject: typeof flash.display.DisplayObject;
   var DisplayObjectContainer: typeof flash.display.DisplayObjectContainer;
 
   export class Sprite extends flash.display.DisplayObjectContainer {
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
+      DisplayObject = flash.display.DisplayObject;
       DisplayObjectContainer = flash.display.DisplayObjectContainer;
     };
     
@@ -134,18 +136,10 @@ module Shumway.AVM2.AS.flash.display {
 
     _initializeChildren(frame: Timeline.Frame): void {
       for (var depth in frame.stateAtDepth) {
-        this.placeCharacter(frame.stateAtDepth[depth]);
+        var state = frame.stateAtDepth[depth];
+        var character = DisplayObject.createAnimatedDisplayObject(state, false);
+        this.addChildAtDepth(character, state.depth);
       }
-    }
-
-    placeCharacter(state: Timeline.AnimationState): void {
-      var symbol = state.symbol;
-      var symbolClass = symbol.symbolClass;
-      var instance = symbolClass.initializeFrom(symbol);
-      instance._setFlags(DisplayObjectFlags.AnimatedByTimeline);
-      instance._setFlags(DisplayObjectFlags.OwnedByTimeline);
-      this.addChildAtDepth(instance, state.depth);
-      instance._animate(state);
     }
 
     constructChildren(): void {
@@ -157,7 +151,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         child.class.instanceConstructorNoInitialize.call(child);
         if (child.name) {
-          this[Multiname.getPublicQualifiedName(name)] = child;
+          this[Multiname.getPublicQualifiedName(child.name)] = child;
         }
         child._setFlags(DisplayObjectFlags.Constructed);
         // TODO dispatch added/addedToStage events
