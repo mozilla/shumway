@@ -80,48 +80,55 @@ function loadMovie(path, reportFrames) {
   });
 }
 
-var sanityTests = {
-  tests: [],
-  push: function () {
-    this.tests.push.apply(this.tests, arguments);
-    this.onload();
-  },
-  onload: null
-};
+var unitTests = [];
 
 function loadScripts(files) {
-  sanityTests.onload = next;
+  function mergeTests(tests) {
+    return function (avm2) {
+      var lastTest = Promise.resolve();
+      tests.forEach(function (test) {
+        lastTest = lastTest.then(function () {
+          test(avm2);
+        });
+      });
+      return lastTest;
+    };
+  }
 
-  var i = 0;
   function next() {
+    if (unitTests.length < i) {
+      unitTests.push(function () {
+        throw new Error('Test was not found');
+      });
+    }
+    if (unitTests.length > i) {
+      unitTests.push(mergeTests(unitTests.splice(i - 1, unitTests.length - i + 1)));
+    }
     if (i >= files.length) {
-      return runSanityTests(sanityTests.tests);
+      return runSanityTests(unitTests);
     }
     var script = document.createElement('script');
     script.src = files[i++];
+    script.onload = next;
     document.getElementsByTagName('head')[0].appendChild(script);
   }
+
+  var i = 0;
   next();
 }
 
 function runSanityTests(tests) {
-  createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+  createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.COMPILE, EXECUTION_MODE.COMPILE, function (avm2) {
     sendResponse();
     var lastTestPromise = Promise.resolve();
+    var i = 0;
     tests.forEach(function (test) {
       lastTestPromise = lastTestPromise.then(function () {
-        var failed = false;
-        var promise;
-        try {
-          promise = Promise.cast(test(avm2));
-        } catch (e) {
-          promise = Promise.reject(e);
-        }
-        promise.then(function () {
-          sendResponse({index: i, failure: failed});
-        }, function () {
-          sendResponse({index: i, failure: true});
-        });
+        test(avm2);
+      }).then(function () {
+        sendResponse({index: i++, failure: false});
+      }, function () {
+        sendResponse({index: i++, failure: true});
       });
     });
   });
@@ -153,7 +160,7 @@ Shumway.FileLoadingService.instance = {
 };
 
 var traceMessages = '';
-natives.print = function() {
+window.print = function() {
    return function(s) {
      traceMessages += s + '\n';
    };
