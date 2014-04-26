@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 /// <reference path='../utilities.ts' />
 /// <reference path='utilities.ts' />
 /// <reference path='shapes.ts'/>
 /// <reference path='geometry.ts'/>
 /// <reference path='stage.ts'/>
 /// <reference path='filters.ts'/>
-/// <reference path='gl.ts'/>
+/// <reference path="WebGL.d.ts" />
+/// <reference path='gl/glContext.ts'/>
+/// <reference path='gl/gl.ts'/>
 /// <reference path='gl/core.ts'/>
-/// <reference path='dom.ts'/>
-/// <reference path='2d.ts'/>
+/// <reference path='dom/dom.ts'/>
+/// <reference path='2d/2d.ts'/>
 /// <reference path='bench.ts'/>
 /// <reference path='easel.ts'/>
 
@@ -97,5 +98,20 @@ module Shumway {
      * Whether the source's content should be tiled.
      */
     isTileable: boolean;
+  }
+}
+
+module Shumway.GFX {
+  export enum TraceLevel {
+    None,
+    Brief,
+    Verbose,
+  }
+
+  export var traceLevel = TraceLevel.Verbose;
+
+  export function count(name) {
+    Counter.count(name);
+    FrameCounter.count(name);
   }
 }

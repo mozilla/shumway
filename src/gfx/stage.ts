@@ -1,10 +1,10 @@
 /// <reference path='references.ts'/>
-module Shumway.GFX.Layers {
+module Shumway.GFX {
   import Rectangle = Shumway.Geometry.Rectangle;
   import Point = Shumway.Geometry.Point;
   import Matrix = Shumway.Geometry.Matrix;
   import DirtyRegion = Shumway.Geometry.DirtyRegion;
-  import Filter = Shumway.GFX.Layers.Filter;
+  import Filter = Shumway.GFX.Filter;
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
@@ -96,6 +96,19 @@ module Shumway.GFX.Layers {
 
   function getRandomIntInclusive(min: number, max: number): number {
     return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  export class StageRendererOptions {
+
+  }
+
+  export class StageRenderer {
+    _canvas: HTMLCanvasElement;
+    _stage: Stage;
+    constructor(canvas: HTMLCanvasElement, stage: Stage) {
+      this._canvas = canvas;
+      this._stage = stage;
+    }
   }
 
   export class Frame {

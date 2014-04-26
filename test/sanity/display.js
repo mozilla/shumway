@@ -1,8 +1,10 @@
 (function displayTests() {
-  var GFXShape = Shumway.GFX.Layers.Shape;
-  var Renderable = Shumway.GFX.Layers.Renderable;
-  var FrameContainer = Shumway.GFX.Layers.FrameContainer;
+  var GFXShape = Shumway.GFX.Shape;
+  var Renderable = Shumway.GFX.Renderable;
+  var FrameContainer = Shumway.GFX.FrameContainer;
   var Geometry = Shumway.Geometry;
+
+  Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/shaders/";
 
   function syncOptions(options) {
     options.perspectiveCamera = perspectiveCamera.value;
@@ -140,39 +142,18 @@
   unitTests.push(function runInspectorSanityTests(console) {
     Random.seed(0x12343);
 
-    var r = createDisplayObjectTree(3, 8, 32, 32);
-    // var r = createDisplayObjectTree(0, 1, 128, 128);
+    // var r = createDisplayObjectTree(6, 4, 16, 16);
+    var r = createDisplayObjectTree(2, 4, 16, 16);
 
-    // var r = new DisplayObjectContainer();
-    // var c0 = new DisplayObjectContainer(); c0.x = 200;
-    // var c1 = new DisplayObjectContainer(); c1.x = 200;
-
-    // r.addChild(c0);
-    // c0.addChild(c1);
-
-//    for (var i = 0; i < 20; i++) {
-//      var s = new Shape();
-//      s._getContentBounds = function () {
-//        var w = 10 * 20;
-//        var h = 10 * 20;
-//        return new Rectangle(- w / 2, - h / 2, w, h);
-//      }
-//      s.scaleX = 8;
-//      s.scaleY = 8;
-//      s.fillStyle = Shumway.ColorStyle.randomStyle();
-//      r.addChild(s);
-//    }
 
     r.visit(function (node) {
       if (r === node) {
         return VisitorFlags.Continue;
       }
       node.speed = Math.random() / 10;
-      node.scaleSpeed = (Math.random() - 0.5) / 500;
+      node.scaleSpeed = (Math.random() - 0.5) / 5000;
       node.x = (Math.random()) * 512;
       node.y = (Math.random()) * 512;
-      // node.scaleX = 2;
-      // node.scaleY = 2;
       return VisitorFlags.Continue;
     });
 
@@ -207,7 +188,11 @@
       });
 
       if (mousePoint) {
-        var objects = r.getObjectsUnderPoint(mousePoint);
+        timeline && timeline.enter("getObjectsUnderPoint");
+        for (var i = 0; i < 10; i++) {
+          var objects = r.getObjectsUnderPoint(mousePoint);
+        }
+        timeline && timeline.leave("getObjectsUnderPoint");
         for (var i = 0; i < objects.length; i++) {
           objects[i].over = true;
         }

@@ -1623,7 +1623,7 @@ module Shumway.Geometry {
     index: number;
     scale: number;
     bounds: Rectangle;
-    cachedTextureRegion: Shumway.GFX.Layers.ITextureRegion;
+    cachedTextureRegion: Shumway.GFX.ITextureRegion;
     color: Shumway.Color;
     private _obb: OBB;
     private static corners = Point.createEmptyPoints(4);

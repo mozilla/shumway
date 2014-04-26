@@ -1,9 +1,9 @@
 (function displayTests() {
   var easel = createEasel();
 
-  var Grid = Shumway.GFX.Layers.Grid;
-  var Shape = Shumway.GFX.Layers.Shape;
-  var FrameContainer = Shumway.GFX.Layers.FrameContainer;
+  var Grid = Shumway.GFX.Grid;
+  var Shape = Shumway.GFX.Shape;
+  var FrameContainer = Shumway.GFX.FrameContainer;
 
   var c = new FrameContainer();
   for (var i = 0; i < 2; i++) {

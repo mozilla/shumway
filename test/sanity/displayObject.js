@@ -1,7 +1,7 @@
 (function displayTests() {
-  var GFXShape = Shumway.GFX.Layers.Shape;
-  var Renderable = Shumway.GFX.Layers.Renderable;
-  var FrameContainer = Shumway.GFX.Layers.FrameContainer;
+  var GFXShape = Shumway.GFX.Shape;
+  var Renderable = Shumway.GFX.Renderable;
+  var FrameContainer = Shumway.GFX.FrameContainer;
   var Geometry = Shumway.Geometry;
 
   function timeAllocation(C) {

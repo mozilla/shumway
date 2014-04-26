@@ -475,9 +475,9 @@ HTMLCanvasElement.prototype.getContext = function getContext(contextId, args) {
 };
 
 
-var Stage = Shumway.GFX.Layers.Stage;
-var Easel = Shumway.GFX.Layers.Easel;
-var Canvas2DStageRenderer = Shumway.GFX.Layers.Canvas2DStageRenderer;
+var Stage = Shumway.GFX.Stage;
+var Easel = Shumway.GFX.Easel;
+var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
 
 function createEasel() {
   var canvas = document.createElement("canvas");

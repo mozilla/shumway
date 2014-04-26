@@ -1,11 +1,23 @@
-/// <reference path='references.ts'/>
-/// <reference path="WebGL.d.ts" />
+/**
+ * Copyright 2014 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 module Shumway.GFX.GL {
   import Color = Shumway.Color;
-  var traceLevel = 2;
   var SCRATCH_CANVAS_SIZE = 1024 * 2;
-  var TILE_SIZE = 256;
+  export var TILE_SIZE = 256;
   var MIN_UNTILED_SIZE = 512;
 
   function getTileSize(bounds: Rectangle): number {
@@ -15,14 +27,9 @@ module Shumway.GFX.GL {
     return TILE_SIZE;
   }
 
-  var MIN_CACHE_LEVELS = 4;
-  var MAX_CACHE_LEVELS = 4;
+  var MIN_CACHE_LEVELS = 6;
+  var MAX_CACHE_LEVELS = 6;
 
-  enum TraceLevel {
-    None,
-    Brief,
-    Verbose,
-  }
   var release = true;
   export var writer: IndentingWriter = null;
   export var timeline: Timeline = null;
@@ -34,19 +41,18 @@ module Shumway.GFX.GL {
   import Rectangle = Shumway.Geometry.Rectangle;
   import RegionAllocator = Shumway.Geometry.RegionAllocator;
 
-  import Frame = Shumway.GFX.Layers.Frame;
-  import Stage = Shumway.GFX.Layers.Stage;
-  import Shape = Shumway.GFX.Layers.Shape;
-  import SolidRectangle = Shumway.GFX.Layers.SolidRectangle;
-  import Filter = Shumway.GFX.Layers.Filter;
-  import BlurFilter = Shumway.GFX.Layers.BlurFilter;
-  import ColorMatrix = Shumway.GFX.Layers.ColorMatrix;
-  import VisitorFlags = Shumway.GFX.Layers.VisitorFlags;
+  import Frame = Shumway.GFX.Frame;
+  import Stage = Shumway.GFX.Stage;
+  import Shape = Shumway.GFX.Shape;
+  import SolidRectangle = Shumway.GFX.SolidRectangle;
+  import Filter = Shumway.GFX.Filter;
+  import BlurFilter = Shumway.GFX.BlurFilter;
+  import ColorMatrix = Shumway.GFX.ColorMatrix;
+  import VisitorFlags = Shumway.GFX.VisitorFlags;
 
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
-
 
   import radianToDegrees = Shumway.Geometry.radianToDegrees;
   import degreesToRadian = Shumway.Geometry.degreesToRadian;
@@ -54,15 +60,10 @@ module Shumway.GFX.GL {
   import clamp = Shumway.NumberUtilities.clamp;
   import pow2 = Shumway.NumberUtilities.pow2;
 
-  function count(name) {
-    Counter.count(name);
-    FrameCounter.count(name);
-  }
-
-  export var SHADER_ROOT = "shaders/";
-
-  function endsWith(str, end) {
-    return str.indexOf(end, this.length - end.length) !== -1;
+  function getAbsoluteSourceBounds(source: IRenderable): Rectangle {
+    var bounds = source.getBounds().clone();
+    bounds.offset(-bounds.x, -bounds.y);
+    return bounds;
   }
 
   export class Vertex extends Shumway.Geometry.Point3D {
@@ -152,367 +153,11 @@ module Shumway.GFX.GL {
     }
   }
 
-  export class WebGLContext {
-    private static MAX_TEXTURES = 8;
+  export class WebGLStageRendererOptions extends StageRendererOptions {
 
-    public gl: WebGLRenderingContext;
-    private _canvas: HTMLCanvasElement;
-    private _w: number;
-    private _h: number;
-    private _programCache: {};
-    private _maxTextures: number;
-    private _maxTextureSize: number;
-    public _backgroundColor: Color;
-
-    private _geometry: WebGLGeometry;
-    private _tmpVertices: Vertex [];
-    private _fillColor: Color = Color.Red;
-
-    private _textures: WebGLTexture [];
-    textureRegionCache: any = new LRUList<WebGLTextureRegion>();
-
-    private _isTextureMemoryAvailable:boolean = true;
-
-    public modelViewProjectionMatrix: Matrix3D = Matrix3D.createIdentity();
-
-    public isTextureMemoryAvailable() {
-      return this._isTextureMemoryAvailable;
-    }
-
-    getTextures(): WebGLTexture [] {
-      return this._textures;
-    }
-
-    scratch: WebGLTexture [];
-
-    get width(): number {
-      return this._w;
-    }
-
-    set width(value: number) {
-      this._w = value;
-      this.updateViewport();
-    }
-
-    get height(): number {
-      return this._h;
-    }
-
-    set height(value: number) {
-      this._h = value;
-      this.updateViewport();
-    }
-
-    set fillStyle(value: any) {
-      this._fillColor.set(Color.parseColor(value));
-    }
-
-    constructor (canvas: HTMLCanvasElement, options: any) {
-      this._canvas = canvas;
-
-      this.gl = <WebGLRenderingContext> (
-        canvas.getContext("experimental-webgl", {
-          preserveDrawingBuffer: true,
-          antialias: true,
-          stencil: true,
-          premultipliedAlpha: false
-        })
-      );
-      assert (this.gl, "Cannot create WebGL context.");
-      this._programCache = Object.create(null);
-      this.gl.viewport(0, 0, this._w, this._h);
-      this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.gl.ONE);
-      this._w = canvas.width;
-      this._h = canvas.height;
-      this.updateViewport();
-      // this._backgroundColor = Shumway.Util.Color.parseColor(this._canvas.style.backgroundColor);
-      this._backgroundColor = Color.Black;
-
-      this._geometry = new WebGLGeometry(this);
-      this._tmpVertices = Vertex.createEmptyVertices(Vertex, 64);
-
-      this._textures = [];
-      this._maxTextures = options ? options.maxTextures : 8;
-      this._maxTextureSize = options ? options.maxTextureSize : 1024;
-
-      // this.gl.blendFunc(this.gl.SRC_ALPHA, this.gl.ONE_MINUS_SRC_ALPHA);
-      this.gl.blendFunc(this.gl.ONE, this.gl.ONE_MINUS_SRC_ALPHA);
-      this.gl.enable(this.gl.BLEND);
-      // this.gl.enable(this.gl.DEPTH_TEST);
-      this.modelViewProjectionMatrix = Matrix3D.create2DProjection(this._w, this._h, 2000);
-    }
-
-    public create2DProjectionMatrix(): Matrix3D {
-      return Matrix3D.create2DProjection(this._w, this._h, -this._w);
-    }
-
-    public createPerspectiveMatrix(cameraDistance: number, fov: number, angle: number): Matrix3D {
-      var cameraAngleRadians = degreesToRadian(angle);
-
-      // Compute the projection matrix
-      var projectionMatrix = Matrix3D.createPerspective(degreesToRadian(fov), 1, 0.1, 5000);
-
-      var up = new Point3D(0, 1, 0);
-      var target = new Point3D(0, 0, 0);
-      var camera = new Point3D(0, 0, cameraDistance);
-      var cameraMatrix = Matrix3D.createCameraLookAt(camera, target, up);
-      var viewMatrix = Matrix3D.createInverse(cameraMatrix);
-
-      var matrix = Matrix3D.createIdentity();
-      matrix = Matrix3D.createMultiply(matrix, Matrix3D.createTranslation(-this.width / 2, -this.height / 2, 0));
-      matrix = Matrix3D.createMultiply(matrix, Matrix3D.createScale(1 / this.width, -1 / this.height, 1 / 100));
-      matrix = Matrix3D.createMultiply(matrix, Matrix3D.createYRotation(cameraAngleRadians));
-      matrix = Matrix3D.createMultiply(matrix, viewMatrix);
-      matrix = Matrix3D.createMultiply(matrix, projectionMatrix);
-      return matrix;
-    }
-
-    private discardCachedImages() {
-      traceLevel >= TraceLevel.Verbose && writer.writeLn("Discard Cache");
-      var count = this.textureRegionCache.count / 2 | 0;
-      for (var i = 0; i < count; i++) {
-        var textureRegion = this.textureRegionCache.pop();
-        traceLevel >= TraceLevel.Verbose && writer.writeLn("Discard: " + textureRegion);
-        textureRegion.texture.atlas.remove(textureRegion.region);
-        textureRegion.texture = null;
-      }
-    }
-
-    public cacheImage(image: any): WebGLTextureRegion {
-      var w = image.width;
-      var h = image.height;
-      var textureRegion = this.allocateTextureRegion(w, h);
-      traceLevel >= TraceLevel.Verbose && writer.writeLn("Uploading Image: @ " + textureRegion.region);
-      this.textureRegionCache.put(textureRegion);
-      this.updateTextureRegion(image, textureRegion);
-      return textureRegion;
-    }
-
-    public allocateTextureRegion(w: number, h: number, discardCache: boolean = true): WebGLTextureRegion {
-      var imageIsTileSized = (w === h) && (w === TILE_SIZE);
-      var texture, region;
-      for (var i = 0; i < this._textures.length; i++) {
-        texture = this._textures[i];
-        if (imageIsTileSized && texture.atlas.compact) {
-          continue;
-        }
-        region = texture.atlas.add(null, w, h);
-        if (region) {
-          break;
-        }
-      }
-      if (!region) {
-        if (w >= this._maxTextureSize || h >= this._maxTextureSize) {
-          // Region cannot possibly fit in the standard texture atlas.
-          texture = this.createTexture(w, h, !imageIsTileSized);
-        } else if (this._textures.length === this._maxTextures) {
-          if (discardCache) {
-            this.discardCachedImages();
-            return this.allocateTextureRegion(w, h, false);
-          }
-          return null;
-        } else {
-          texture = this.createTexture(this._maxTextureSize, this._maxTextureSize, !imageIsTileSized);
-        }
-        this._textures.push(texture);
-        region = texture.atlas.add(null, w, h);
-        assert (region);
-      }
-      return new WebGLTextureRegion(texture, region);
-    }
-
-    public updateTextureRegion(image: any, textureRegion: WebGLTextureRegion) {
-      var gl = this.gl;
-      gl.bindTexture(gl.TEXTURE_2D, textureRegion.texture);
-      timeline && timeline.enter("texSubImage2D");
-      gl.texSubImage2D(gl.TEXTURE_2D, 0, textureRegion.region.x, textureRegion.region.y, gl.RGBA, gl.UNSIGNED_BYTE, image);
-      timeline && timeline.leave("texSubImage2D");
-    }
-
-    /**
-     * Find a texture with available space.
-     */
-    private recycleTexture(): WebGLTexture {
-      traceLevel >= TraceLevel.Verbose && writer.writeLn("Recycling Texture");
-      // var texture: WebGLTexture = this._textures.shift();
-      var texture: WebGLTexture = this._textures.splice(Math.random() * this._textures.length | 0, 1)[0];
-      var regions = texture.regions;
-      for (var i = 0; i < regions.length; i++) {
-        regions[i].texture = null;
-      }
-      texture.atlas.reset();
-      count("evictTexture");
-      return texture;
-    }
-
-    private updateViewport() {
-      var gl = this.gl;
-      gl.viewport(0, 0, this._w, this._h);
-
-      for (var k in this._programCache) {
-        this.initializeProgram(this._programCache[k]);
-      }
-    }
-
-    private initializeProgram(program: WebGLProgram) {
-      var gl = this.gl;
-      gl.useProgram(program);
-      // gl.uniform2f(program.uniforms.uResolution.location, this._w, this._h);
-    }
-
-    private createShaderFromFile(file: string) {
-      var path = SHADER_ROOT + file;
-      var gl = this.gl;
-      var request = new XMLHttpRequest();
-      request.open("GET", path, false);
-      request.send();
-      assert (request.status === 200, "File : " + path + " not found.");
-      var shaderType;
-      if (endsWith(path, ".vert")) {
-        shaderType = gl.VERTEX_SHADER;
-      } else if (endsWith(path, ".frag")) {
-        shaderType = gl.FRAGMENT_SHADER;
-      } else {
-        throw "Shader Type: not supported.";
-      }
-      return this.createShader(shaderType, request.responseText);
-    }
-
-    public createProgramFromFiles(vertex: string, fragment: string) {
-      var key = vertex + "-" + fragment;
-      var program = this._programCache[key];
-      if (!program) {
-        program = this.createProgram([
-          this.createShaderFromFile(vertex),
-          this.createShaderFromFile(fragment)
-        ]);
-        this.queryProgramAttributesAndUniforms(program);
-        this.initializeProgram(program);
-        this._programCache[key] = program;
-
-      }
-      return program;
-    }
-
-    private createProgram(shaders): WebGLProgram {
-      var gl = this.gl;
-      var program = gl.createProgram();
-      shaders.forEach(function (shader) {
-        gl.attachShader(program, shader);
-      });
-      gl.linkProgram(program);
-      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        var lastError = gl.getProgramInfoLog(program);
-        unexpected("Cannot link program: " + lastError);
-        gl.deleteProgram(program);
-      }
-      return program;
-    }
-
-    private createShader(shaderType, shaderSource): WebGLShader {
-      var gl = this.gl;
-      var shader = gl.createShader(shaderType);
-      gl.shaderSource(shader, shaderSource);
-      gl.compileShader(shader);
-      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        var lastError = gl.getShaderInfoLog(shader);
-        unexpected("Cannot compile shader: " + lastError);
-        gl.deleteShader(shader);
-        return null;
-      }
-      return shader;
-    }
-
-    createTexture(w: number, h: number, compact: boolean): WebGLTexture {
-      var gl = this.gl;
-      var texture = gl.createTexture();
-      gl.bindTexture(gl.TEXTURE_2D, texture);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, w, h, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-      texture.w = w;
-      texture.h = h;
-      texture.atlas = new WebGLTextureAtlas(this, texture, w, h, compact);
-      texture.framebuffer = this.createFramebuffer(texture);
-      texture.regions = [];
-      return texture;
-    }
-
-    createFramebuffer(texture: WebGLTexture): WebGLFramebuffer {
-      var gl = this.gl;
-      var framebuffer: WebGLFramebuffer = gl.createFramebuffer();
-      gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-      gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
-      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-      return framebuffer;
-    }
-
-    private queryProgramAttributesAndUniforms(program) {
-      program.uniforms = {};
-      program.attributes = {};
-
-      var gl = this.gl;
-      for (var i = 0, j = gl.getProgramParameter(program, gl.ACTIVE_ATTRIBUTES); i < j; i++) {
-        var attribute = gl.getActiveAttrib(program, i);
-        program.attributes[attribute.name] = attribute;
-        attribute.location = gl.getAttribLocation(program, attribute.name);
-      }
-      for (var i = 0, j = gl.getProgramParameter(program, gl.ACTIVE_UNIFORMS); i < j; i++) {
-        var uniform = gl.getActiveUniform(program, i);
-        program.uniforms[uniform.name] = uniform;
-        uniform.location = gl.getUniformLocation(program, uniform.name);
-      }
-    }
-
-    public setTarget(target: WebGLTexture) {
-      var gl = this.gl;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, target ? target.framebuffer : null);
-    }
-
-    public clear(color: Color = Color.None) {
-      var gl = this.gl;
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
-    }
-
-    public sizeOf(type): number {
-      var gl = this.gl;
-      switch (type) {
-        case gl.UNSIGNED_BYTE:
-          return 1;
-        case gl.UNSIGNED_SHORT:
-          return 2;
-        case this.gl.INT:
-        case this.gl.FLOAT:
-          return 4;
-        default:
-          notImplemented(type);
-      }
-    }
-
-    public beginPath() {
-
-    }
-
-    public closePath() {
-
-    }
-
-    public stroke() {
-
-    }
-
-    public rect() {
-
-    }
   }
 
-  export class WebGLStageRenderer {
+  export class WebGLStageRenderer extends StageRenderer {
     context: WebGLContext;
     private _viewport: Rectangle;
 
@@ -531,8 +176,11 @@ module Shumway.GFX.GL {
     private _uploadCanvas: HTMLCanvasElement;
     private _uploadCanvasContext: CanvasRenderingContext2D;
 
-    constructor(context: WebGLContext, w: number, h: number) {
-      this.context = context;
+    constructor(canvas: HTMLCanvasElement, stage: Stage,
+                options: WebGLStageRendererOptions = new WebGLStageRendererOptions()) {
+      super(canvas, stage);
+      var context = this.context = null; // context;
+      var w  = 0, h = 0;
       this._viewport = new Rectangle(0, 0, w, h);
       this._brushGeometry = new WebGLGeometry(context);
       this._brush = new WebGLCombinedBrush(context, this._brushGeometry);
@@ -676,7 +324,7 @@ module Shumway.GFX.GL {
           brush.fillRectangle(frame.getBounds(), Color.parseColor((<SolidRectangle>frame).fillStyle), transform, depth);
         } else if (frame instanceof Shape) {
           var shape = <Shape>frame;
-          var bounds = shape.source.getBounds();
+          var bounds = getAbsoluteSourceBounds(shape.source);
           if (!bounds.isEmpty()) {
             var source = shape.source;
             var tileCache: RenderableTileCache = source.properties["tileCache"];
@@ -761,7 +409,7 @@ module Shumway.GFX.GL {
         // .. so try a lower scale level until it fits.
         while (true) {
           scale = pow2(level);
-          if (scratchBounds.contains(this.source.getBounds().clone().scale(scale, scale))) {
+          if (scratchBounds.contains(getAbsoluteSourceBounds(this.source).clone().scale(scale, scale))) {
             break;
           }
           level --;
@@ -777,7 +425,7 @@ module Shumway.GFX.GL {
       var levelIndex = MIN_CACHE_LEVELS + level;
       var cache = this.cacheLevels[levelIndex];
       if (!cache) {
-        var bounds = this.source.getBounds();
+        var bounds = getAbsoluteSourceBounds(this.source);
         var scaledBounds = bounds.clone().scale(scale, scale);
         var tileW, tileH;
         if (this.source.isDynamic || !this.source.isTileable || Math.max(scaledBounds.w, scaledBounds.h) <= MIN_UNTILED_SIZE) {

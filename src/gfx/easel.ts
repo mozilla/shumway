@@ -1,10 +1,12 @@
 /// <reference path='references.ts'/>
-module Shumway.GFX.Layers {
+module Shumway.GFX {
   import Point = Shumway.Geometry.Point;
   import Matrix = Shumway.Geometry.Matrix;
   import Rectangle = Shumway.Geometry.Rectangle;
 
-  import Canvas2DStageRenderer = Shumway.GFX.Layers.Canvas2DStageRenderer;
+  import Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
+  import WebGLStageRenderer = Shumway.GFX.GL.WebGLStageRenderer;
+  import WebGLContext = Shumway.GFX.GL.WebGLContext;
 
   declare var GUI;
   declare var timeline;
@@ -208,9 +210,8 @@ module Shumway.GFX.Layers {
     private _worldView: FrameContainer;
     private _worldViewOverlay: FrameContainer;
     _canvas: HTMLCanvasElement;
-    private _context: CanvasRenderingContext2D;
-    private _renderer: Canvas2DStageRenderer;
-    private _options: Object = {};
+    private _renderer: any;
+    private _options: StageRendererOptions = {};
     private _state: State = new StartState();
 
     private _selection: FrameContainer;
@@ -251,12 +252,16 @@ module Shumway.GFX.Layers {
       this._selection._setFlags(FrameFlags.IgnoreQuery);
 
       this._canvas = canvas;
-      this._context = canvas.getContext('2d');
-      window.addEventListener('resize', this._resizeHandler.bind(this), false);
-      this._resizeHandler();
-      this._renderer = new Canvas2DStageRenderer(this._context);
-      this._renderer.render(this._stage, { });
 
+      if (true) {
+        canvas.getContext('2d');
+        window.addEventListener('resize', this._resizeHandler.bind(this), false);
+        this._resizeHandler();
+        this._renderer = new Canvas2DStageRenderer(canvas, this._stage, <any>this._options);
+      } else {
+        // this._renderer = new WebGLStageRenderer(new WebGLContext(this._canvas, {}), this._canvas.width, this._canvas.height);
+        this._renderer = new WebGLStageRenderer(canvas, this._stage, this._options);
+      }
       this._onMouseUp = this._onMouseUp.bind(this)
       this._onMouseDown = this._onMouseDown.bind(this);
       this._onMouseMove = this._onMouseMove.bind(this);
@@ -300,7 +305,7 @@ module Shumway.GFX.Layers {
 
     private _render() {
       timeline && timeline.enter("Render");
-      this._renderer.render(this._stage, this._options);
+      this._renderer.render();
       timeline && timeline.leave("Render");
     }
 
@@ -334,13 +339,14 @@ module Shumway.GFX.Layers {
       var ch = parent.offsetHeight - 1;
 
       var devicePixelRatio = window.devicePixelRatio || 1;
-      var context = <any>this._context
-      var backingStoreRatio =
-        context.webkitBackingStorePixelRatio ||
-        context.mozBackingStorePixelRatio    ||
-        context.msBackingStorePixelRatio     ||
-        context.oBackingStorePixelRatio      ||
-        context.backingStorePixelRatio       || 1;
+
+//      var context = <any>this._context
+      var backingStoreRatio = 1;
+//        context.webkitBackingStorePixelRatio ||
+//        context.mozBackingStorePixelRatio    ||
+//        context.msBackingStorePixelRatio     ||
+//        context.oBackingStorePixelRatio      ||
+//        context.backingStorePixelRatio       || 1;
 
       if (devicePixelRatio !== backingStoreRatio) {
         var ratio = devicePixelRatio / backingStoreRatio;
@@ -348,15 +354,15 @@ module Shumway.GFX.Layers {
         this._canvas.height = ch * ratio;
         this._canvas.style.width = cw + 'px';
         this._canvas.style.height = ch + 'px';
-        // this._context.scale(ratio, ratio);
       } else {
         this._canvas.width = cw;
         this._canvas.height = ch;
-        this._context.scale(1 / 2, 1 / 2);
+        // this._context.scale(1 / 2, 1 / 2);
       }
       this._stage.w = this._canvas.width;
       this._stage.h = this._canvas.height;
-      this._context.font = 14 + 'px Consolas, "Liberation Mono", Courier, monospace';
+
+      // this._context.font = 14 + 'px Consolas, "Liberation Mono", Courier, monospace';
       // this._viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
     }
 

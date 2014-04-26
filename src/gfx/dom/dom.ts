@@ -1,11 +1,11 @@
-/// <reference path='references.ts'/>
-module Shumway.GFX.Layers {
+/// <reference path='../references.ts'/>
+module Shumway.GFX {
   import Rectangle = Shumway.Geometry.Rectangle;
   import Point = Shumway.Geometry.Point;
   import Matrix = Shumway.Geometry.Matrix;
   import DirtyRegion = Shumway.Geometry.DirtyRegion;
-  import Filter = Shumway.GFX.Layers.Filter;
-  import VisitorFlags = Shumway.GFX.Layers.VisitorFlags;
+  import Filter = Shumway.GFX.Filter;
+  import VisitorFlags = Shumway.GFX.VisitorFlags;
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;

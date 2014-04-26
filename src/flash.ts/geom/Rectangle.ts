@@ -265,20 +265,6 @@ module Shumway.AVM2.AS.flash.geom {
       return this;
     }
 
-    /**
-     * Snaps the rectangle to pixel boundaries. The computed rectangle covers
-     * the original rectangle.
-     */
-    public snap(): Rectangle {
-      var x1 = Math.ceil(this.x + this.width);
-      var y1 = Math.ceil(this.y + this.height);
-      this.x |= 0;
-      this.y |= 0;
-      this.width = x1 - this.x;
-      this.height = y1 - this.y;
-      return this;
-    }
-
     public getBaseWidth(angle: number) {
       var u = Math.abs(Math.cos(angle));
       var v = Math.abs(Math.sin(angle));

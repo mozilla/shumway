@@ -1,5 +1,5 @@
 /// <reference path='references.ts'/>
-module Shumway.GFX.Layers {
+module Shumway.GFX {
   import Rectangle = Shumway.Geometry.Rectangle;
   import Point = Shumway.Geometry.Point;
   import Matrix = Shumway.Geometry.Matrix;

@@ -1,10 +1,10 @@
-/// <reference path='references.ts'/>
+/// <reference path='../references.ts'/>
 
 interface CanvasRenderingContext2D {
   stackDepth: number;
 }
 
-module Shumway.GFX.Layers {
+module Shumway.GFX {
 
   declare var FILTERS;
 
@@ -12,8 +12,8 @@ module Shumway.GFX.Layers {
   import Point = Shumway.Geometry.Point;
   import Matrix = Shumway.Geometry.Matrix;
   import DirtyRegion = Shumway.Geometry.DirtyRegion;
-  import Filter = Shumway.GFX.Layers.Filter;
-  import BlendMode = Shumway.GFX.Layers.BlendMode;
+  import Filter = Shumway.GFX.Filter;
+  import BlendMode = Shumway.GFX.BlendMode;
   import TileCache = Shumway.Geometry.TileCache;
   import Tile = Shumway.Geometry.Tile;
   import OBB = Shumway.Geometry.OBB;
@@ -258,8 +258,16 @@ module Shumway.GFX.Layers {
     return -1;
   }
 
-  export class Canvas2DStageRenderer {
+  export class Canvas2DStageRendererOptions extends StageRendererOptions {
+    disable: boolean;
+    clipDirtyRegions: boolean;
+    clipCanvas: boolean;
+    cull: boolean;
+    drawLayers: boolean
+  }
 
+  export class Canvas2DStageRenderer extends StageRenderer {
+    private _options: Canvas2DStageRendererOptions;
     private _viewport: Rectangle;
     private _fillRule: string;
     private canvasCache: CanvasCache;
@@ -267,8 +275,13 @@ module Shumway.GFX.Layers {
     context: CanvasRenderingContext2D;
     count = 0;
 
-    constructor(context: CanvasRenderingContext2D, fillRule: FillRule = FillRule.NONZERO) {
-      this.context = context;
+    constructor(canvas: HTMLCanvasElement,
+                stage: Stage,
+                options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
+      super(canvas, stage);
+      this._options = options;
+      var fillRule: FillRule = FillRule.NONZERO
+      var context = this.context = canvas.getContext("2d");
       this.canvasCache = new CanvasCache(512);
       this._viewport = new Rectangle(0, 0, context.canvas.width, context.canvas.height);
       this._fillRule = fillRule === FillRule.EVENODD ? 'evenodd' : 'nonzero';
@@ -311,7 +324,9 @@ module Shumway.GFX.Layers {
       }, transform, FrameFlags.Empty, VisitorFlags.VisibleOnly | VisitorFlags.FrontToBack);
     }
 
-    public render(stage: Stage, options: any) {
+    public render() {
+      var stage = this._stage;
+      var options = this._options;
       if (options.disable) {
         return;
       }
