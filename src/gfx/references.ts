@@ -15,6 +15,7 @@
  */
 
 /// <reference path='../utilities.ts' />
+/// <reference path='utilities.ts' />
 /// <reference path='shapes.ts'/>
 /// <reference path='geometry.ts'/>
 /// <reference path='stage.ts'/>
