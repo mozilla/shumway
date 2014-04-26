@@ -138,7 +138,7 @@ module Shumway.AVM2.AS.flash.text {
 
     set align(value: string) {
       value = asCoerceString(value);
-      if (!(value in TextFormatAlign.VALID_VALUES)) {
+      if (TextFormatAlign.toNumber(value) < 0) {
         throwError("ArgumentError", Errors.InvalidEnumError, "align");
       }
       this._align = value;

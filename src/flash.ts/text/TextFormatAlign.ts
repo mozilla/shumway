@@ -26,10 +26,6 @@ module Shumway.AVM2.AS.flash.text {
       super();
     }
 
-    static VALID_VALUES: any = {
-      left: true, center: true, right: true, justify: true, start: true, end: true
-    };
-
     // JS -> AS Bindings
     static LEFT: string = "left";
     static CENTER: string = "center";
@@ -37,5 +33,43 @@ module Shumway.AVM2.AS.flash.text {
     static JUSTIFY: string = "justify";
     static START: string = "start";
     static END: string = "end";
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+          return TextFormatAlign.LEFT;
+        case 1:
+          return TextFormatAlign.RIGHT;
+        case 2:
+          return TextFormatAlign.CENTER;
+        case 3:
+          return TextFormatAlign.JUSTIFY;
+        case 4:
+          return TextFormatAlign.START;
+        case 5:
+          return TextFormatAlign.END;
+        default:
+          return null;
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case TextFormatAlign.LEFT:
+          return 0;
+        case TextFormatAlign.RIGHT:
+          return 1;
+        case TextFormatAlign.CENTER:
+          return 2;
+        case TextFormatAlign.JUSTIFY:
+          return 3;
+        case TextFormatAlign.START:
+          return 4;
+        case TextFormatAlign.END:
+          return 5;
+        default:
+          return -1;
+      }
+    }
   }
 }

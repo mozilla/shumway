@@ -201,22 +201,40 @@ module Shumway.AVM2.AS.flash.display {
           symbol.graphics = new Graphics();
           if (symbolInfo.strokeBbox) {
             symbol.strokeBounds = new Rectangle();
-            symbol.strokeBounds.fromBbox(symbolInfo.strokeBbox);
+            symbol.strokeBounds.copyFromBbox(symbolInfo.strokeBbox);
           }
           break;
         case 'image':
           symbol = new Timeline.BitmapSymbol(symbolId);
+          symbol.width = symbolInfo.width;
+          symbol.height = symbolInfo.height;
           break;
         case 'label':
         case 'text':
           symbol = new Timeline.TextSymbol(symbolId);
+          symbol.tag = symbolInfo.tag || { };
           break;
         case 'button':
           symbol = new Timeline.ButtonSymbol(symbolId);
           var states = symbolInfo.states;
+          var character, matrix, colorTransform;
           for (var stateName in states) {
-            var entry = states[stateName];
-            // TODO
+            var commands = states[stateName];
+            var state;
+            if (commands.length === 1) {
+              var cmd = commands[0];
+              character = this._dictionary[cmd.symbolId];
+              var m = cmd.matrix;
+              matrix = new Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
+              if (cmd.cxform) {
+                colorTransform = ColorTransform.fromCXForm(cmd.cxform);
+              }
+            } else {
+              character = new Timeline.SpriteSymbol(-1);
+              character.frames.push(this._buildFrame(commands));
+            }
+            symbol[stateName + 'State'] =
+              new Timeline.AnimationState(character, 0, matrix, colorTransform);
           }
           break;
         case 'sprite':
@@ -229,6 +247,10 @@ module Shumway.AVM2.AS.flash.display {
             var repeat = frameInfo.repeat;
             while (repeat--) {
               symbol.frames.push(frame);
+            }
+            if (frameInfo.labelName) {
+              var frameNum = i + 1;
+              symbol.labels.push(new FrameLabel(frameInfo.labelName, frameNum));
             }
 
             //if (frame.startSounds) {
@@ -260,14 +282,18 @@ module Shumway.AVM2.AS.flash.display {
           }
           break;
         case 'font':
-          break;
+          var font = flash.text.Font.createEmbeddedFont(
+            symbolInfo.name, symbolInfo.bold, symbolInfo.italic
+          );
+          //flash.text.Font.registerFont(font);
+          return;
         case 'sound':
           break;
         case 'binary':
           break;
       }
       if (symbolInfo.bbox) {
-        symbol.bounds.fromBbox(symbolInfo.bbox);
+        symbol.bounds.copyFromBbox(symbolInfo.bbox);
       }
       this._dictionary[symbolId] = symbol;
     }
@@ -439,7 +465,7 @@ module Shumway.AVM2.AS.flash.display {
       for (var i = 0; i < commands.length; i++) {
         var cmd = commands[i];
         var depth = cmd.depth;
-        switch (cmd.type) {
+        switch (cmd.code) {
           case 5: // SWF_TAG_CODE_REMOVE_OBJECT
           case 28: // SWF_TAG_CODE_REMOVE_OBJECT2
             frame.stateAtDepth[depth] = null;

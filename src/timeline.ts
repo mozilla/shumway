@@ -41,6 +41,8 @@ module Shumway.SWF.Timeline {
 
   export class BitmapSymbol extends Symbol {
     bitmapData: flash.display.BitmapData;
+    width: number = 0;
+    height: number = 0;
 
     constructor(id: number) {
       super(id, flash.display.Bitmap);
@@ -48,16 +50,18 @@ module Shumway.SWF.Timeline {
   }
 
   export class TextSymbol extends Symbol {
+    tag: any = null;
+
     constructor(id: number) {
       super(id, flash.text.TextField);
     }
   }
 
   export class ButtonSymbol extends Symbol {
-    upState: flash.display.DisplayObject = null;
-    overState: flash.display.DisplayObject = null;
-    downState: flash.display.DisplayObject = null;
-    hitTestState: flash.display.DisplayObject = null;
+    upState: AnimationState = null;
+    overState: AnimationState = null;
+    downState: AnimationState = null;
+    hitTestState: AnimationState = null;
 
     constructor(id: number) {
       super(id, flash.display.SimpleButton);

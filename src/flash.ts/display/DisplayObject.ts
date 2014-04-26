@@ -276,7 +276,20 @@ module Shumway.AVM2.AS.flash.display {
     
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["hitTestObject", "hitTestPoint"];
-    
+
+    static createAnimatedDisplayObject(state: Shumway.SWF.Timeline.AnimationState, callConstructor: boolean = true): DisplayObject {
+      var symbol = state.symbol;
+      var symbolClass = symbol.symbolClass;
+      var instance = symbolClass.initializeFrom(symbol);
+      instance._setFlags(DisplayObjectFlags.AnimatedByTimeline);
+      instance._setFlags(DisplayObjectFlags.OwnedByTimeline);
+      instance._animate(state);
+      if (callConstructor) {
+        symbolClass.instanceConstructorNoInitialize.call(instance);
+      }
+      return instance;
+    }
+
     constructor () {
       false && super(undefined);
       EventDispatcher.instanceConstructorNoInitialize();
@@ -656,6 +669,7 @@ module Shumway.AVM2.AS.flash.display {
         this._setFlags(flash.display.DisplayObjectFlags.CacheAsBitmap);
       }
       //info.actions
+      this._invalidatePaint();
     }
 
     get x(): number {

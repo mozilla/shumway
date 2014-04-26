@@ -17,10 +17,15 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  var DisplayObject: typeof flash.display.DisplayObject;
+
   export class SimpleButton extends flash.display.InteractiveObject {
 
     // Called whenever the class is initialized.
-    static classInitializer: any = null;
+    static classInitializer: any = function () {
+      DisplayObject = flash.display.DisplayObject;
+    };
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.SWF.Timeline.ButtonSymbol) {
@@ -37,10 +42,18 @@ module Shumway.AVM2.AS.flash.display {
       self._currentState = null;
 
       if (symbol) {
-        self._upState = symbol.upState;
-        self._overState = symbol.overState;
-        self._downState = symbol.downState;
-        self._hitTestState = symbol.hitTestState;
+        if (symbol.upState) {
+          self._upState = DisplayObject.createAnimatedDisplayObject(symbol.upState);
+        }
+        if (symbol.overState) {
+          self._overState = DisplayObject.createAnimatedDisplayObject(symbol.overState);
+        }
+        if (symbol.downState) {
+          self._downState = DisplayObject.createAnimatedDisplayObject(symbol.downState);
+        }
+        if (symbol.hitTestState) {
+          self._hitTestState = DisplayObject.createAnimatedDisplayObject(symbol.hitTestState);
+        }
       }
     };
 
