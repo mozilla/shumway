@@ -16,9 +16,9 @@
 
 module Shumway.GFX.GL {
   import Color = Shumway.Color;
-  var SCRATCH_CANVAS_SIZE = 1024 * 2;
+  var SCRATCH_CANVAS_SIZE = 1024;
   export var TILE_SIZE = 256;
-  var MIN_UNTILED_SIZE = 512;
+  var MIN_UNTILED_SIZE = 256;
 
   function getTileSize(bounds: Rectangle): number {
     if (bounds.w < TILE_SIZE || bounds.h < TILE_SIZE) {
@@ -27,8 +27,8 @@ module Shumway.GFX.GL {
     return TILE_SIZE;
   }
 
-  var MIN_CACHE_LEVELS = 6;
-  var MAX_CACHE_LEVELS = 6;
+  var MIN_CACHE_LEVELS = 5;
+  var MAX_CACHE_LEVELS = 3;
 
   var release = true;
   export var writer: IndentingWriter = null;
@@ -226,8 +226,8 @@ module Shumway.GFX.GL {
         willReadFrequently: true
       });
 
-      // document.getElementById("debugContainer").appendChild(this._uploadCanvas);
-      // document.getElementById("debugContainer").appendChild(this._scratchCanvas);
+//      document.getElementById("stageContainer").appendChild(this._uploadCanvas);
+//      document.getElementById("stageContainer").appendChild(this._scratchCanvas);
     }
 
     private _cachedTiles = [];
@@ -363,8 +363,9 @@ module Shumway.GFX.GL {
             for (var i = 0; i < tiles.length; i++) {
               var tile = tiles[i];
               tileTransform.setIdentity();
-              tileTransform.translate(tile.bounds.x + bounds.x, tile.bounds.y + bounds.y);
+              tileTransform.translate(tile.bounds.x, tile.bounds.y);
               tileTransform.scale(1 / tile.scale, 1 / tile.scale);
+              tileTransform.translate(bounds.x, bounds.y);
               tileTransform.concat(transform);
               var src = <WebGLTextureRegion>(tile.cachedTextureRegion);
               if (src && src.texture) {
@@ -376,7 +377,7 @@ module Shumway.GFX.GL {
               if (options.drawTiles) {
                 var srcBounds = tile.bounds.clone();
                 if (!tile.color) {
-                  tile.color = Color.randomColor(0.2);
+                  tile.color = Color.randomColor(0.4);
                 }
                 brush.fillRectangle(new Rectangle(0, 0, srcBounds.w, srcBounds.h), tile.color, tileTransform, depth);
               }
@@ -422,7 +423,7 @@ module Shumway.GFX.GL {
     /**
      * Gets the tiles covered by the specified |query| rectangle and transformed by the given |transform| matrix.
      */
-    private getTiles(query: Rectangle, transform: Matrix, scratchBounds: Rectangle): Tile [] {
+    private _getTilesAtScale(query: Rectangle, transform: Matrix, scratchBounds: Rectangle): Tile [] {
       var transformScale = Math.max(transform.getAbsoluteScaleX(), transform.getAbsoluteScaleY());
       // Use log2(1 / transformScale) to figure out the tile level.
       var level = 0;
@@ -472,7 +473,7 @@ module Shumway.GFX.GL {
       scratchContext: CanvasRenderingContext2D,
       cacheImageCallback: (old: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion): Tile []  {
       var scratchBounds = new Rectangle(0, 0, scratchContext.canvas.width, scratchContext.canvas.height);
-      var tiles = this.getTiles(query, transform, scratchBounds);
+      var tiles = this._getTilesAtScale(query, transform, scratchBounds);
       var uncachedTiles: Tile [];
       var source = this.source;
       for (var i = 0; i < tiles.length; i++) {
@@ -519,11 +520,12 @@ module Shumway.GFX.GL {
       scratchContext.save();
       scratchContext.setTransform(1, 0, 0, 1, 0, 0);
       scratchContext.clearRect(0, 0, scratchBounds.w, scratchBounds.h);
-      scratchContext.translate(-uncachedTileBounds.x, -uncachedTileBounds.y);
+      scratchContext.scale(uncachedTiles[0].scale, uncachedTiles[0].scale);
       // Translate so that the source is drawn at the origin.
       var sourceBounds = this.source.getBounds();
       scratchContext.translate(-sourceBounds.x, -sourceBounds.y);
-      scratchContext.scale(uncachedTiles[0].scale, uncachedTiles[0].scale);
+      scratchContext.translate(-uncachedTileBounds.x, -uncachedTileBounds.y);
+
       timeline && timeline.enter("renderTiles");
       traceLevel >= TraceLevel.Verbose && writer.writeLn("Rendering Tiles: " + uncachedTileBounds);
       this.source.render(scratchContext);
