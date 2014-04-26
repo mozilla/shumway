@@ -568,11 +568,9 @@ module Shumway.AVM2.AS.flash.display {
      * Invalidates the bounds of this display object along with all of its ancestors.
      */
     _invalidateBounds(): void {
-      /**
-       * TODO: We should only propagate this bit if the bounds are actually changed. We can do the
+      /* TODO: We should only propagate this bit if the bounds are actually changed. We can do the
        * bounds computation eagerly if the number of children is low. If there are no changes in the
-       * bounds we don't need to propagate the bit.
-       */
+       * bounds we don't need to propagate the bit. */
       this._propagateFlags(DisplayObjectFlags.InvalidBounds, Direction.Upward);
     }
 
@@ -1132,10 +1130,9 @@ module Shumway.AVM2.AS.flash.display {
       if (!shapeFlag) {
         return true;
       }
-      // TODO: Figure out if we need to test against the graphics path first
-      // and exit early instead of going down the children list. Testing the
-      // path can be more expensive sometimes, more so than testing the
-      // children.
+      /* TODO: Figure out if we need to test against the graphics path first and exit early instead of
+       * going down the children list. Testing the path can be more expensive sometimes, more so than
+       * testing the children. */
       if (DisplayObjectContainer.isType(this)) {
         var children = (<DisplayObjectContainer>this)._children;
         for (var i = 0; i < children.length; i++) {
@@ -1149,6 +1146,19 @@ module Shumway.AVM2.AS.flash.display {
         return graphics._containsPoint(point);
       }
       return false;
+    }
+
+    get scrollRect(): flash.geom.Rectangle {
+      return this._scrollRect.clone();
+    }
+
+    set scrollRect(value: flash.geom.Rectangle) {
+      value = value;
+      this._scrollRect = value ? value.clone() : null;
+      /* TODO: Figure out how to deal with the bounds and hit testing when scroll rects are applied.
+       * The Flash implementation appears to be broken. */
+      notImplemented("public DisplayObject::set scrollRect");
+      return;
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -1172,28 +1182,21 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public DisplayObject::set opaqueBackground"); return;
       // this._opaqueBackground = value;
     }
-    get scrollRect(): flash.geom.Rectangle {
-      return this._scrollRect;
-    }
-    set scrollRect(value: flash.geom.Rectangle) {
-      value = value;
-      notImplemented("public DisplayObject::set scrollRect"); return;
-      // this._scrollRect = value;
-    }
-
-    get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
-      return this._accessibilityProperties;
-    }
-    set accessibilityProperties(value: flash.accessibility.AccessibilityProperties) {
-      value = value;
-      notImplemented("public DisplayObject::set accessibilityProperties"); return;
-      // this._accessibilityProperties = value;
-    }
     set blendShader(value: flash.display.Shader) {
       value = value;
       notImplemented("public DisplayObject::set blendShader"); return;
       // this._blendShader = value;
     }
+
+     get accessibilityProperties(): flash.accessibility.AccessibilityProperties {
+     return this._accessibilityProperties;
+     }
+
+     set accessibilityProperties(value: flash.accessibility.AccessibilityProperties) {
+     value = value;
+     notImplemented("public DisplayObject::set accessibilityProperties"); return;
+     // this._accessibilityProperties = value;
+     }
    */
   }
 }
