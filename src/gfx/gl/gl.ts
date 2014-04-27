@@ -358,6 +358,7 @@ module Shumway.GFX.GL {
             if (!tileCache) {
               tileCache = source.properties["tileCache"] = new RenderableTileCache(source);
             }
+            transform.translate(bounds.x, bounds.y);
             transform.inverse(inverseTransform);
             var tiles = tileCache.fetchTiles(viewport, inverseTransform, that._scratchCanvasContext, cacheImageCallback);
             for (var i = 0; i < tiles.length; i++) {
@@ -365,7 +366,6 @@ module Shumway.GFX.GL {
               tileTransform.setIdentity();
               tileTransform.translate(tile.bounds.x, tile.bounds.y);
               tileTransform.scale(1 / tile.scale, 1 / tile.scale);
-              tileTransform.translate(bounds.x, bounds.y);
               tileTransform.concat(transform);
               var src = <WebGLTextureRegion>(tile.cachedTextureRegion);
               if (src && src.texture) {
