@@ -17,7 +17,7 @@ module Shumway.GFX {
   import TileCache = Shumway.GFX.Geometry.TileCache;
   import Tile = Shumway.GFX.Geometry.Tile;
   import OBB = Shumway.GFX.Geometry.OBB;
-  // import Grid = Shumway.GFX.Geometry.RegionAllocator.Grid;
+  import Grid = Shumway.GFX.Geometry.RegionAllocator.Grid;
   import Region = Shumway.GFX.Geometry.RegionAllocator.Region;
   import IRegionAllocator = Shumway.GFX.Geometry.RegionAllocator.IRegionAllocator;
 
@@ -56,18 +56,50 @@ module Shumway.GFX {
     }
   }
 
+  class CanvasGridSimple implements IRegionAllocator {
+    private _context: CanvasRenderingContext2D;
+    private _cell: Grid.Cell = null;
+
+    constructor(w:number, h:number) {
+      var canvas = document.createElement("canvas");
+      canvas.width = w | 0;
+      canvas.height = h | 0;
+      this._context = canvas.getContext("2d", { willReadFrequently: true });
+    }
+
+    get context():CanvasRenderingContext2D {
+      return this._context;
+    }
+
+    allocate(w:number, h:number):Region {
+      if (this._cell == null && w <= this._context.canvas.width && h <= this._context.canvas.height) {
+        this._cell = new Grid.Cell(0, 0, w, h);
+        return this._cell;
+      }
+      return null;
+    }
+
+    free(region: Region) {
+      var cell = <Grid.Cell>region;
+      assert (cell.allocator === this);
+      this._cell = null;
+    }
+  }
+
   class CanvasCache {
     private canvasSize: number;
     private gridSizes: number[];
     private allocators: IRegionAllocator[][];
+    private allocatorsNoFit: IRegionAllocator[];
 
     maxCanvasCount: number = 0;
 
-    constructor(canvasSize: number = 2048, gridSizes: number[] = [128, 256, 512]) {
+    constructor(canvasSize: number = 512, gridSizes: number[] = [128, 256, 512]) {
       gridSizes.sort();
       this.canvasSize = canvasSize;
       this.gridSizes = gridSizes;
       this.allocators = [];
+      this.allocatorsNoFit = [];
       var gridSize: number;
       for (var i = 0; i < this.gridSizes.length; i++) {
         gridSize = this.gridSizes[i];
@@ -85,21 +117,21 @@ module Shumway.GFX {
       if (i == -1) {
         i = this.getOptimalGridSizeIndex(w, h);
       }
-      if (i != -1) {
-        var allocators: IRegionAllocator[] = this.allocators[i];
-        var region: Region = null;
-        for (var j = 0; j < allocators.length && region == null; j++) {
-          region = allocators[j].allocate(w, h);
-        }
-        if (region == null && (this.maxCanvasCount == 0 || this.maxCanvasCount > allocators.length)) {
-          var allocator: IRegionAllocator = allocators[j++] = new CanvasGrid(this.canvasSize, this.gridSizes[i]);
-          region = allocator.allocate(w, h);
-        }
-        //console.log("allocate", region.w.toFixed(2), region.h.toFixed(2), i, j-1);
-        return region;
+      var allocators: IRegionAllocator[] = (i != -1) ? this.allocators[i] : this.allocatorsNoFit;
+      var region: Region = null;
+      var j: number = 0;
+      while (j < allocators.length && region == null) {
+        region = allocators[j++].allocate(w, h);
       }
-      //console.log("allocate failed");
-      return null;
+      if (region == null && (this.maxCanvasCount == 0 || this.maxCanvasCount > allocators.length)) {
+        var allocator: IRegionAllocator = allocators[j] =
+          (i != -1)
+            ? new CanvasGrid(this.canvasSize, this.gridSizes[i])
+            : new CanvasGridSimple(w, h);
+        region = allocator.allocate(w, h);
+      }
+      //console.log("allocate", region.w.toFixed(2), region.h.toFixed(2), i, j-1);
+      return region;
     }
 
     free(region: Region) {
@@ -114,11 +146,7 @@ module Shumway.GFX {
           var newIndex: number = this.getOptimalGridSizeIndex(w, h);
           if (oldIndex != newIndex) {
             this.free(region);
-            if (newIndex != -1) {
-              region = this.allocate(w, h, newIndex);
-            } else {
-              region = null;
-            }
+            region = this.allocate(w, h, newIndex);
           } else {
             region.w = w;
             region.h = h;
@@ -346,7 +374,7 @@ module Shumway.GFX {
           if (options.clipCanvas) {
             context.beginPath();
             /**
-             * If we have overlapping clippling regions we don't want to use even-odd fill rules.
+             * If we have overlapping clipping regions we don't want to use even-odd fill rules.
              */
             var savedFillRule = context.mozFillRule;
             context.fillRule = context.mozFillRule = 'nonzero';
@@ -413,7 +441,7 @@ module Shumway.GFX {
         }
 
         var hasFilters: boolean = (frame.filters.length > 0 && !(target & RenderTarget.Filters));
-        var hasColorMatrix: boolean = (frame.colorMatrix && !(target & RenderTarget.ColorMatrix));
+        var hasColorMatrix: boolean = (!frame.colorMatrix.isIdentity() && !(target & RenderTarget.ColorMatrix));
         var hasBlendMode: boolean = (frame.blendMode > 0 && !(target & RenderTarget.BlendMode));
 
         if (hasFilters || hasColorMatrix || hasBlendMode) {
