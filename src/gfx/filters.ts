@@ -78,9 +78,18 @@ module Shumway.GFX {
 
   export class ColorMatrix {
     private _m: Float32Array;
-    constructor (m: number []) {
+
+    constructor (m: any) {
       assert (m.length === 20);
       this._m = new Float32Array(m);
+    }
+
+    public clone(): ColorMatrix {
+      return new ColorMatrix(this._m);
+    }
+
+    public set(other: ColorMatrix) {
+      this._m.set(other._m);
     }
 
     public toWebGLMatrix(): Float32Array {

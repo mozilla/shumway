@@ -16,12 +16,40 @@ module Shumway.GFX {
   }
 
   export enum FrameFlags {
-    Empty           = 0,
-    Dirty           = 1,
-    IsMask          = 4,
-    Culled          = 8,
-    IgnoreMask      = 16,
-    IgnoreQuery     = 32
+    Empty                                     = 0x0000,
+    Dirty                                     = 0x0001,
+    IsMask                                    = 0x0002,
+    Culled                                    = 0x0004,
+    IgnoreMask                                = 0x0008,
+    IgnoreQuery                               = 0x0010,
+
+    /**
+     * Frame has invalid bounds.
+     */
+    InvalidBounds                             = 0x0020,
+
+    /**
+     * Frame has an invalid concatenated matrix because its matrix or one of its ancestor's matrices has been mutated.
+     */
+    InvalidConcatenatedMatrix                 = 0x0040,
+
+    /**
+     * Frame has an invalid inverted concatenated matrix because its matrix or one of its ancestor's matrices has been
+     * mutated. We don't always need to compute the inverted matrix. This is why we use a sepearete invalid flag for it and don't
+     * roll it under the |InvalidConcatenatedMatrix| flag.
+     */
+    InvalidInvertedConcatenatedMatrix         = 0x0080,
+
+    /**
+     * Frame has an invalid concatenated color transform because its color transform or one of its ancestor's color
+     * transforms has been mutated.
+     */
+    InvalidConcatenatedColorMatrix            = 0x0100,
+
+    /**
+     * Frame has changed since the last time it was drawn.
+     */
+    InvalidPaint                              = 0x0200
   }
 
   /**
@@ -45,24 +73,68 @@ module Shumway.GFX {
   }
 
   export class Frame {
+    /**
+     * Used as a temporary array to avoid allocations.
+     */
     private static _path: Frame[] = [];
 
-    private _alpha: number = 1;
-    private _blendMode: BlendMode = BlendMode.Default;
+    /**
+     * Return's a list of ancestors excluding the |last|, the return list is reused.
+     */
+    private static _getAncestors(node: Frame, last: Frame = null): Frame [] {
+      var path = Frame._path;
+      path.length = 0;
+      while (node && node !== last) {
+        path.push(node);
+        node = node._parent;
+      }
+      assert (node === last, "Last ancestor is not an ancestor.");
+      return path;
+    }
+
+    private _alpha: number;
+    private _blendMode: BlendMode;
     private _matrix: Matrix;
-    private _filters: Filter[] = [];
+    private _concatenatedMatrix: Matrix;
+    private _invertedConcatenatedMatrix: Matrix;
+    private _filters: Filter[];
     private _colorMatrix: ColorMatrix;
-    private _isTransformInvalid: boolean = true;
+    private _concatenatedColorMatrix: ColorMatrix;
     private _properties: {[name: string]: any};
     private _mask: Frame;
-    private _flags: FrameFlags = FrameFlags.Empty;
-    private _capability: FrameCapabilityFlags = FrameCapabilityFlags.AllowAllWrite;
+    private _flags: FrameFlags;
+    private _capability: FrameCapabilityFlags;
 
     /**
      * Stage location where the frame was previously drawn. This is used to compute dirty regions and
      * is updated every time the frame is rendered.
      */
     _previouslyRenderedAABB: Rectangle;
+
+    _parent: Frame;
+
+    public ignoreMaskAlpha: boolean;
+
+    constructor () {
+      this._flags = FrameFlags.InvalidPaint                       |
+                    FrameFlags.InvalidBounds                      |
+                    FrameFlags.InvalidConcatenatedMatrix          |
+                    FrameFlags.InvalidInvertedConcatenatedMatrix  |
+                    FrameFlags.InvalidConcatenatedMatrix          |
+                    FrameFlags.InvalidConcatenatedColorMatrix;
+
+      this._capability = FrameCapabilityFlags.AllowAllWrite;
+      this._parent = null;
+      this._alpha = 1;
+      this._blendMode = BlendMode.Default;
+      this._filters = [];
+      this._mask = null;
+      this._matrix = Matrix.createIdentity();
+      this._concatenatedMatrix = Matrix.createIdentity();
+      this._invertedConcatenatedMatrix = null;
+      this._colorMatrix = ColorMatrix.createIdentity();
+      this._concatenatedColorMatrix = ColorMatrix.createIdentity();
+    }
 
     _setFlags(flags: FrameFlags) {
       this._flags |= flags;
@@ -78,6 +150,34 @@ module Shumway.GFX {
 
     _hasAnyFlags(flags: FrameFlags): boolean {
       return !!(this._flags & flags);
+    }
+
+    /**
+     * Finds the closest ancestor with a given set of flags that are either turned on or off.
+     */
+    private _findClosestAncestor(flags: FrameFlags, on: boolean): Frame {
+      var node = this;
+      while (node) {
+        if (node._hasFlags(flags) === on) {
+          return node;
+        }
+        node = node._parent;
+      }
+      return null;
+    }
+
+    /**
+     * Tests if this frame is an ancestor of the specified frame.
+     */
+    _isAncestor(child: Frame): boolean {
+      var node = child;
+      while (node) {
+        if (node === this) {
+          return true;
+        }
+        node = node._parent;
+      }
+      return false;
     }
 
     /**
@@ -116,7 +216,11 @@ module Shumway.GFX {
       }
     }
 
+    /**
+     * Propagates flags up and down the frame tree. Flags propagation stops if the flags are already set.
+     */
     _propagateFlags(flags: FrameFlags, direction: Direction) {
+      // Multiple flags can be passed here, stop propagation when all the flags are set.
       if (this._hasFlags(flags)) {
         return;
       }
@@ -143,6 +247,37 @@ module Shumway.GFX {
       }
     }
 
+    /**
+     * Marks this object as having been moved in its parent frame.
+     */
+    private _invalidatePosition() {
+      this._propagateFlags(FrameFlags.InvalidConcatenatedMatrix | FrameFlags.InvalidInvertedConcatenatedMatrix, Direction.Downward);
+      if (this._parent) {
+        this._parent._invalidateBounds();
+      }
+      this._invalidateParentPaint();
+    }
+
+    /**
+     * Marks this object as needing to be repainted.
+     */
+    private _invalidatePaint() {
+      this._propagateFlags(FrameFlags.InvalidPaint, Direction.Upward);
+    }
+
+    private _invalidateParentPaint() {
+      if (this._parent) {
+        this._parent._propagateFlags(FrameFlags.InvalidPaint, Direction.Upward);
+      }
+    }
+
+    private _invalidateBounds(): void {
+      /* TODO: We should only propagate this bit if the bounds are actually changed. We can do the
+       * bounds computation eagerly if the number of children is low. If there are no changes in the
+       * bounds we don't need to propagate the bit. */
+      this._propagateFlags(FrameFlags.InvalidBounds, Direction.Upward);
+    }
+
     get properties(): {[name: string]: any} {
       return this._properties || (this._properties = Object.create(null));
     }
@@ -154,6 +289,7 @@ module Shumway.GFX {
     set x(value: number) {
       this.checkCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._matrix.tx = value;
+      this._invalidatePosition();
     }
 
     get y(): number {
@@ -163,6 +299,7 @@ module Shumway.GFX {
     set y(value: number) {
       this.checkCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._matrix.ty = value;
+      this._invalidatePosition();
     }
 
     get matrix(): Matrix {
@@ -172,6 +309,7 @@ module Shumway.GFX {
     set matrix(value: Matrix) {
       this.checkCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._matrix = value;
+      this._invalidatePosition();
     }
 
     get alpha(): number {
@@ -182,7 +320,7 @@ module Shumway.GFX {
       value = value | 0;
       this.checkCapability(FrameCapabilityFlags.AllowBlendModeWrite);
       this._blendMode = value;
-      this.invalidate();
+      this._invalidateParentPaint();
     }
 
     get blendMode() {
@@ -192,7 +330,7 @@ module Shumway.GFX {
     set filters(value: Filter[]) {
       this.checkCapability(FrameCapabilityFlags.AllowFiltersWrite);
       this._filters = value;
-      this.invalidate();
+      this._invalidateParentPaint();
     }
 
     get filters(): Filter[] {
@@ -202,7 +340,8 @@ module Shumway.GFX {
     set colorMatrix(value: ColorMatrix) {
       this.checkCapability(FrameCapabilityFlags.AllowColorMatrixWrite);
       this._colorMatrix = value;
-      this.invalidate();
+      this._propagateFlags(FrameFlags.InvalidConcatenatedColorMatrix, Direction.Downward);
+      this._invalidateParentPaint();
     }
 
     get colorMatrix(): ColorMatrix {
@@ -248,29 +387,25 @@ module Shumway.GFX {
       });
     }
 
-    getPathInto(stack: Frame[]) {
-      stack.length = 0;
-      stack.push(this);
-      var frame = this;
-      while (frame._parent) {
-        frame = frame._parent;
-        stack.push(frame);
-      }
-    }
-
     getConcatenatedColorMatrix(): ColorMatrix {
-      var path = Frame._path;
-      this.getPathInto(path);
-      var colorMatrix = null;
-      for (var i = path.length - 1; i >= 0; i--) {
-        if (path[i]._colorMatrix) {
-          if (!colorMatrix) {
-            colorMatrix = ColorMatrix.createIdentity();
-          }
-          colorMatrix.multiply(path[i]._colorMatrix);
+      if (!this._parent) {
+        return this._colorMatrix;
+      }
+      // Compute the concatenated color transforms for this node and all of its ancestors.
+      if (this._hasFlags(FrameFlags.InvalidConcatenatedColorMatrix)) {
+        var ancestor = this._findClosestAncestor(FrameFlags.InvalidConcatenatedColorMatrix, false);
+        var path = Frame._getAncestors(this, ancestor);
+        var m = ancestor ? ancestor._concatenatedColorMatrix.clone() : ColorMatrix.createIdentity();
+        for (var i = path.length - 1; i >= 0; i--) {
+          var ancestor = path[i];
+          assert (ancestor._hasFlags(FrameFlags.InvalidConcatenatedColorMatrix));
+          // TODO: Premultiply here.
+          m.multiply(ancestor._colorMatrix);
+          ancestor._concatenatedColorMatrix.set(m);
+          ancestor._removeFlags(FrameFlags.InvalidConcatenatedColorMatrix);
         }
       }
-      return colorMatrix;
+      return this._concatenatedColorMatrix;
     }
 
     getConcatenatedAlpha(): number {
@@ -288,15 +423,6 @@ module Shumway.GFX {
       this.invalidate();
     }
 
-    _parent: Frame;
-
-    public ignoreMaskAlpha: boolean;
-
-    constructor () {
-      this._parent = null;
-      this.matrix = Matrix.createIdentity();
-    }
-
     get stage(): Stage {
       var frame = this;
       while (frame._parent) {
@@ -309,13 +435,32 @@ module Shumway.GFX {
     }
 
     public getConcatenatedMatrix(): Matrix {
-      var frame = this;
-      var t = Matrix.createIdentity();
-      while (frame) {
-        t.concat(frame.matrix);
-        frame = frame._parent;
+      // Compute the concatenated transforms for this node and all of its ancestors.
+      if (this._hasFlags(FrameFlags.InvalidConcatenatedMatrix)) {
+        var ancestor = this._findClosestAncestor(FrameFlags.InvalidConcatenatedMatrix, false);
+        var path = Frame._getAncestors(this, ancestor);
+        var m = ancestor ? ancestor._concatenatedMatrix.clone() : Matrix.createIdentity();
+        for (var i = path.length - 1; i >= 0; i--) {
+          var ancestor = path[i];
+          assert (ancestor._hasFlags(FrameFlags.InvalidConcatenatedMatrix));
+          m.preMultiply(ancestor._matrix);
+          ancestor._concatenatedMatrix.set(m);
+          ancestor._removeFlags(FrameFlags.InvalidConcatenatedMatrix);
+        }
       }
-      return t;
+      return this._concatenatedMatrix;
+    }
+
+    public getInvertedConcatenatedMatrix(): Matrix {
+      if (this._hasFlags(FrameFlags.InvalidInvertedConcatenatedMatrix)) {
+        if (!this._invertedConcatenatedMatrix) {
+          this._invertedConcatenatedMatrix = Matrix.createIdentity();
+        }
+        this._invertedConcatenatedMatrix.set(this.getConcatenatedMatrix());
+        this._invertedConcatenatedMatrix.inverse(this._invertedConcatenatedMatrix);
+        this._removeFlags(FrameFlags.InvalidInvertedConcatenatedMatrix);
+      }
+      return this._invertedConcatenatedMatrix;
     }
 
     invalidate() {

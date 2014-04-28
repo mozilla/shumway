@@ -1,6 +1,7 @@
 (function displayTests() {
   var GFXShape = Shumway.GFX.Shape;
   var Renderable = Shumway.GFX.Renderable;
+  var ColorMatrix = Shumway.GFX.ColorMatrix;
   var FrameContainer = Shumway.GFX.FrameContainer;
   var Geometry = Shumway.Geometry;
 
@@ -9,7 +10,9 @@
   function syncOptions(options) {
     options.perspectiveCamera = perspectiveCamera.value;
     options.perspectiveCameraFOV = perspectiveCameraFOV.value;
+    options.perspectiveCameraAngle = perspectiveCameraAngle.value;
     options.perspectiveCameraDistance = perspectiveCameraDistance.value;
+
     options.drawTiles = drawTiles.value;
     options.drawTextures = drawTextures.value;
     options.drawTexture = drawTexture.value;
@@ -56,6 +59,7 @@
 
   var frameMap = {};
 
+  var s = Shumway.getRandomShape();
   function createDisplayObjectTree(depth, branch, width, height) {
     var nodes = [];
     Random.seed(0x12343);
@@ -69,10 +73,14 @@
         }
       } else {
         var o = new Shape();
+//        o._getContentBounds = function () {
+//          var w = (width * 20) | 0;
+//          var h = (height * 20) | 0;
+//          return new Rectangle(- w / 2, - h / 2, w, h);
+//        }
         o._getContentBounds = function () {
-          var w = (width * 20) | 0;
-          var h = (height * 20) | 0;
-          return new Rectangle(- w / 2, - h / 2, w, h);
+          var b = s.getBounds();
+          return new Rectangle(b.x, b.y, b.w * 20, b.h * 20);
         }
         o.fillStyle = Shumway.ColorStyle.randomStyle();
         parent.addChild(o);
@@ -129,10 +137,15 @@
           context.restore();
           this.isInvalid = false;
         });
-        frame = new GFXShape(renderable);
+        // frame = new GFXShape(renderable);
+        frame = new GFXShape(s);
       }
       var m = node.transform.matrix;
       frame.matrix = new Geometry.Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
+      frame.colorMatrix = ColorMatrix.fromMultipliersAndOffsets (
+        0.5 + Math.random(), 0.5 + Math.random(), 0.5 + Math.random(), 1,
+        0, 0, 0, 0
+      );
       frameMap[node._id] = frame;
       return frame;
     }
@@ -145,17 +158,25 @@
 
     // var r = createDisplayObjectTree(6, 4, 16, 16);
     // var r = createDisplayObjectTree(1, 4, 128, 128);
-    var r = createDisplayObjectTree(5, 4, 32, 32);
+    var r = createDisplayObjectTree(3, 2, 32, 32);
 
 
     r.visit(function (node) {
       if (r === node) {
         return VisitorFlags.Continue;
       }
-      node.speed = Math.random() / 1;
-      // node.scaleSpeed = (Math.random() - 0.5) / 500;
+      node.rotationSpeed = (Math.random() - 0.5) / 10;
+      // node.scaleSpeed = Math.random() / 1000;
+      node.scale = 0.5 + Math.random() / 2;
+      node.scaleSpeed = Math.random() / 500;
+      // node.scaleX = node.scaleY = 1.5;
+
       node.x = (Math.random()) * 256;
       node.y = (Math.random()) * 256;
+
+//      node.x = 0;
+//      node.y = 0;
+
       return VisitorFlags.Continue;
     });
 
@@ -172,12 +193,17 @@
         if (r === node) {
           return VisitorFlags.Continue;
         }
-        if (node.speed) {
-          node.rotation += node.speed;
+        if (node.rotationSpeed) {
+          node.rotation += node.rotationSpeed;
         }
         if (node.scaleSpeed) {
-          node.scaleX += node.scaleSpeed;
-          node.scaleY += node.scaleSpeed;
+          node.scale += node.scaleSpeed;
+//          node.scaleX = Math.min(Math.abs(node.scaleX + node.scaleSpeed), 1.2);
+//          node.scaleY = Math.min(Math.abs(node.scaleY + node.scaleSpeed), 1.2);
+          node.scaleX = Math.abs(Math.sin(node.scale) * 1.5);
+          node.scaleY = Math.abs(Math.sin(node.scale) * 1.5);
+//          node.scaleX += node.scaleSpeed;
+//          node.scaleY += node.scaleSpeed;
         }
         return VisitorFlags.Continue;
       });
@@ -186,6 +212,7 @@
         var f = frameMap[node._id];
         var m = node.transform.matrix;
         f.matrix = new Geometry.Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
+        f.blendMode = 8;
         return VisitorFlags.Continue;
       });
 

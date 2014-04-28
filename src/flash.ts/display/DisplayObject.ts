@@ -330,8 +330,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Propagates flags up and down the the display list. Flags propagation is short-circuited if
-     * if the flags are already set.
+     * Propagates flags up and down the the display list. Flags propagation stops if the flags are
+     * already set.
      */
     _propagateFlags(flags: DisplayObjectFlags, direction: Direction) {
       // Multiple flags can be passed here, stop propagation when all the flags are set.
@@ -560,7 +560,7 @@ module Shumway.AVM2.AS.flash.display {
      * Computes the combined transformation color matrixes of this display object and all of its ancestors.
      */
     _getConcatenatedColorTransform(): ColorTransform {
-      if (ancestor === this._parent) {
+      if (!this._parent) {
         return this._colorTransform;
       }
       // Compute the concatenated color transforms for this node and all of its ancestors.
