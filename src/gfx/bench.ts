@@ -1,5 +1,4 @@
 /// <reference path='references.ts'/>
-/// <reference path="WebGL.d.ts" />
 
 module Shumway.Bench {
 //  import WebGLContext = Shumway.GFX.GL.WebGLContext;

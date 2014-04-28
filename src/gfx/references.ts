@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/// <reference path='../lib.d.ts' />
 /// <reference path='../utilities.ts' />
 /// <reference path='utilities.ts' />
 /// <reference path='shapes.ts'/>
@@ -21,7 +22,6 @@
 /// <reference path='frame.ts'/>
 /// <reference path='frameContainer.ts'/>
 /// <reference path='filters.ts'/>
-/// <reference path="WebGL.d.ts" />
 /// <reference path='gl/glContext.ts'/>
 /// <reference path='gl/gl.ts'/>
 /// <reference path='gl/core.ts'/>
@@ -63,6 +63,15 @@ interface WebGLTexture {
   atlas: Shumway.GFX.GL.WebGLTextureAtlas;
   framebuffer: WebGLFramebuffer;
   regions: Shumway.GFX.GL.WebGLTextureRegion [];
+}
+
+interface WebGLActiveInfo {
+  location: any;
+}
+
+interface WebGLProgram extends WebGLObject {
+  uniforms: any;
+  attributes: any;
 }
 
 interface CanvasRenderingContext2D {
