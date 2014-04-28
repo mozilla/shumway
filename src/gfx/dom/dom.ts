@@ -1,14 +1,14 @@
 /// <reference path='../references.ts'/>
 module Shumway.GFX {
-  import Rectangle = Shumway.Geometry.Rectangle;
-  import Point = Shumway.Geometry.Point;
-  import Matrix = Shumway.Geometry.Matrix;
-  import DirtyRegion = Shumway.Geometry.DirtyRegion;
+  import Rectangle = Shumway.GFX.Geometry.Rectangle;
+  import Point = Shumway.GFX.Geometry.Point;
+  import Matrix = Shumway.GFX.Geometry.Matrix;
+  import DirtyRegion = Shumway.GFX.Geometry.DirtyRegion;
   import Filter = Shumway.GFX.Filter;
   import VisitorFlags = Shumway.GFX.VisitorFlags;
-  import TileCache = Shumway.Geometry.TileCache;
-  import Tile = Shumway.Geometry.Tile;
-  import OBB = Shumway.Geometry.OBB;
+  import TileCache = Shumway.GFX.Geometry.TileCache;
+  import Tile = Shumway.GFX.Geometry.Tile;
+  import OBB = Shumway.GFX.Geometry.OBB;
 
   export class DOMStageRenderer {
     container: HTMLElement;

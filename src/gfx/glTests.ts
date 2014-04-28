@@ -47,7 +47,7 @@ module Shumway.GFX.GL.Tests {
   }
 
   function runCompact(writer: IndentingWriter): boolean {
-    var x = new Shumway.Geometry.RegionAllocator.Compact(1024, 1024, 0);
+    var x = new Shumway.GFX.Geometry.RegionAllocator.Compact(1024, 1024, 0);
     var a = [];
     var c = 100;
     for (var k = 0; k < c; k++) {

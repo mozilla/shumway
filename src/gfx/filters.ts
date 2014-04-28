@@ -1,9 +1,9 @@
 /// <reference path='references.ts'/>
 module Shumway.GFX {
-  import Rectangle = Shumway.Geometry.Rectangle;
-  import Point = Shumway.Geometry.Point;
-  import Matrix = Shumway.Geometry.Matrix;
-  import DirtyRegion = Shumway.Geometry.DirtyRegion;
+  import Rectangle = Geometry.Rectangle;
+  import Point = Geometry.Point;
+  import Matrix = Geometry.Matrix;
+  import DirtyRegion = Geometry.DirtyRegion;
 
   export class Filter {
 

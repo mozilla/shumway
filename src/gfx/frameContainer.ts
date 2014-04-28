@@ -1,13 +1,13 @@
 /// <reference path='references.ts'/>
 module Shumway.GFX {
-  import Rectangle = Shumway.Geometry.Rectangle;
-  import Point = Shumway.Geometry.Point;
-  import Matrix = Shumway.Geometry.Matrix;
-  import DirtyRegion = Shumway.Geometry.DirtyRegion;
+  import Rectangle = Geometry.Rectangle;
+  import Point = Geometry.Point;
+  import Matrix = Geometry.Matrix;
+  import DirtyRegion = Geometry.DirtyRegion;
   import Filter = Shumway.GFX.Filter;
-  import TileCache = Shumway.Geometry.TileCache;
-  import Tile = Shumway.Geometry.Tile;
-  import OBB = Shumway.Geometry.OBB;
+  import TileCache = Geometry.TileCache;
+  import Tile = Geometry.Tile;
+  import OBB = Geometry.OBB;
 
   export class FrameContainer extends Frame {
     _children: Frame [];

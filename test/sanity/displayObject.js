@@ -2,7 +2,7 @@
   var GFXShape = Shumway.GFX.Shape;
   var Renderable = Shumway.GFX.Renderable;
   var FrameContainer = Shumway.GFX.FrameContainer;
-  var Geometry = Shumway.Geometry;
+  var Geometry = Shumway.GFX.Geometry;
 
   function timeAllocation(C) {
     var s = Date.now();

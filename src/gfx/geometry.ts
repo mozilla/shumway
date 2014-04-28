@@ -1,7 +1,8 @@
 /// <reference path='references.ts'/>
-module Shumway.Geometry {
+module Shumway.GFX.Geometry {
 
   import clamp = Shumway.NumberUtilities.clamp;
+  import pow2 = Shumway.NumberUtilities.pow2;
 
   export function radianToDegrees(r) {
     return r * 180 / Math.PI;
@@ -365,6 +366,10 @@ module Shumway.Geometry {
 
     getCenter(): Point {
       return new Point(this.x + this.w / 2, this.y + this.h / 2);
+    }
+
+    getAbsoluteBounds(): Rectangle {
+      return new Rectangle(0, 0, this.w, this.h);
     }
 
     toString(): string {
@@ -1410,211 +1415,10 @@ module Shumway.Geometry {
     }
   }
 
-  export module Path {
-    var CURVE_RECURSION_LIMIT = 32;
-    var CURVE_COLLINEARITY_EPSILON = 1e-30;
-    var CURVE_DISTANCE_EPSILON = 1e-30;
-    var CURVE_ANGLE_TOLERANCE_EPSILON = 0.01;
-    var ANGLE_TOLERANCE = 0;
-    var DISTANCE_TOLERANCE_SQUARE = 0.5 * 0.5;
 
-    /**
-     * De Casteljau Algorithm for Quadratic Curve Subdivision (Anti-Grain Geometry Implementation)
-     */
-    export function createQuadraticCurveVertices(vertices, index, x0, y0, x1, y1, x2, y2, level) {
-      if (level > CURVE_RECURSION_LIMIT) {
-        return 0;
-      }
-      // Find Mid-Points
-      var x01 = (x0 + x1) / 2;
-      var y01 = (y0 + y1) / 2;
-      var x12 = (x1 + x2) / 2;
-      var y12 = (y1 + y2) / 2;
-      var x012 = (x01 + x12) / 2;
-      var y012 = (y01 + y12) / 2;
-
-      var dx = x2 - x0;
-      var dy = y2 - y0;
-      var d = Math.abs((x1 - x2) * dy - (y1 - y2) * dx);
-
-      if (d > CURVE_COLLINEARITY_EPSILON) {
-        // Regular Case
-        if (d * d <= DISTANCE_TOLERANCE_SQUARE * (dx * dx + dy * dy)) {
-          if (ANGLE_TOLERANCE < CURVE_ANGLE_TOLERANCE_EPSILON) {
-            vertices[index + 0] = x012;
-            vertices[index + 1] = y012;
-            return index + 2;
-          }
-          // Angle & Cusp Condition
-          var da = Math.abs(Math.atan2(y2 - y1, x2 - x1) - Math.atan2(y1 - y0, x1 - x0));
-          if (da >= Math.PI) {
-            da = 2 * Math.PI - da;
-          }
-          if (da < ANGLE_TOLERANCE) {
-            vertices[index + 0] = x012;
-            vertices[index + 1] = y012;
-            return index + 2;
-          }
-        }
-      } else {
-        notImplemented("Collinear Case");
-      }
-      // Recursively Subdivide Curve
-      index = createQuadraticCurveVertices(vertices, index, x0, y0, x01, y01, x012, y012, level + 1);
-      index = createQuadraticCurveVertices(vertices, index, x012, y012, x12, y12, x2, y2, level + 1);
-      return index;
-    }
-
-    /*
-    var Path = (function () {
-      var MOVE_TO             = 0x01;
-      var LINE_TO             = 0x02;
-      var QUADRATIC_CURVE_TO  = 0x03;
-      var ARC_TO              = 0x04;
-      var RECT                = 0x05;
-      var ARC                 = 0x06;
-      var ELLIPSE             = 0x07;
-      function path() {
-        this._buffer = new Shumway.Util.ByteArray(1024);
-        this._x = 0;
-        this._y = 0;
-      }
-      path.prototype.hash = function () {
-        return this._buffer.hashWords(0, 0, this._buffer.offset >> 2);
-      };
-      path.prototype.clone = function () {
-        var path = new Path();
-        this.visit(path);
-        return path;
-      };
-      path.prototype.reset = function () {
-        this._x = 0;
-        this._y = 0;
-        this._buffer.reset();
-      };
-      path.prototype._bufferCommand = function (command, a, b, c, d, e, f, g, h) {
-        var buffer = this._buffer;
-        var offset = this._buffer.offset;
-        var bytesToWrite = arguments.length * 4;
-        buffer.ensureCapacity(offset + bytesToWrite);
-        buffer.writeIntUnsafe(command);
-        switch (command) {
-          case MOVE_TO:
-          case LINE_TO:
-            buffer.writeVertexUnsafe(a, b);
-            break;
-          case RECT:
-            buffer.writeVertexUnsafe(a, b);
-            buffer.writeFloatUnsafe(c);
-            buffer.writeFloatUnsafe(d);
-            break;
-          case QUADRATIC_CURVE_TO:
-            buffer.writeVertexUnsafe(a, b);
-            buffer.writeVertexUnsafe(c, d);
-            break;
-          default:
-            notImplemented(command);
-        }
-      };
-      path.prototype.closePath = function () {
-        notImplemented("closePath");
-      };
-      path.prototype.moveTo = function (x, y) {
-        this._bufferCommand(MOVE_TO, x, y);
-        this._x = x;
-        this._y = y;
-      };
-      path.prototype.lineTo = function (x, y) {
-        this._bufferCommand(LINE_TO, x, y);
-        this._x = x;
-        this._y = y;
-      };
-      path.prototype.quadraticCurveTo = function (cpx, cpy, x, y) {
-        this._bufferCommand(QUADRATIC_CURVE_TO, cpx, cpy, x, y);
-        this._x = x;
-        this._y = y;
-      };
-      path.prototype.bezierCurveTo = function (cbx, cp1y, ccx, ccy, x, y) {
-        notImplemented("bezierCurveTo");
-      };
-      path.prototype.arcTo = function (x1, y1, x2, y2, radius) {
-        notImplemented("arcTo");
-      };
-      path.prototype.rect = function (x, y, w, h) {
-        this._bufferCommand(RECT, x, y, w, h);
-      };
-      path.prototype.arc = function (x, y, radius, startAngle, endAngle, anticlockwise) {
-        notImplemented("arc");
-      };
-      path.prototype.ellipse = function (x, y, radiusX, radiusY,  rotation, startAngle, endAngle, anticlockwise) {
-        notImplemented("ellipse");
-      };
-      path.prototype.trace = function (writer) {
-        this.visit({
-          moveTo: function (x, y) {
-            writer.writeLn("MOVE_TO: x: " + x + ", y: " + y);
-          },
-          lineTo: function (x, y) {
-            writer.writeLn("LINE_TO: x: " + x + ", y: " + y);
-          },
-          rect: function (x, y, w, h) {
-            writer.writeLn("RECT: x: " + x + ", y: " + y + ", w: " + w + ", h: " + h);
-          },
-          quadraticCurveTo: function (cpx, cpy, x, y) {
-            writer.writeLn("QUADRATIC_CURVE_TO: cpx: " + cpx + ", cpy: " + cpy + ", x: " + x + ", y: " + y);
-          }
-        });
-      };
-      path.prototype.visit = function (visitor) {
-        var i32 = this._buffer.i32;
-        var f32 = this._buffer.f32;
-        var i = 0;
-        var j = this._buffer.offset >> 2;
-        while (i < j) {
-          switch (i32[i++]) {
-            case MOVE_TO:
-              visitor.moveTo(f32[i++], f32[i++]);
-              break;
-            case LINE_TO:
-              visitor.lineTo(f32[i++], f32[i++]);
-              break;
-            case RECT:
-              visitor.rect(f32[i++], f32[i++], f32[i++], f32[i++]);
-              break;
-            case QUADRATIC_CURVE_TO:
-              visitor.quadraticCurveTo(f32[i++], f32[i++], f32[i++], f32[i++]);
-              break;
-            default:
-              notImplemented("");
-              break;
-          }
-        }
-      };
-      return path;
-    })();
-    */
-
-    /**
-     * A path made up of only MOVE_TO, LINE_TO commands.
-     */
-    /*
-    var SimplePath = (function () {
-      // TODO: Hope this is large enough.
-      var tmp = new Float32Array(1024);
-      function simplePath() {
-        Path.call(this);
-      }
-      simplePath.prototype = Object.create(Path.prototype);
-      simplePath.prototype.quadraticCurveTo = function (cpx, cpy, x, y) {
-        var index = createQuadraticCurveVertices(tmp, 0, this._x, this._y, cpx, cpy, x, y, 0);
-        for (var i = 0; i < index; i += 2) {
-          this.lineTo(tmp[i], tmp[i + 1]);
-        }
-        this.lineTo(x, y);
-      };
-      return simplePath;
-    })();
-    */
+  export interface ITextureRegion {
+    texture: any;
+    region: Rectangle;
   }
 
   export class Tile {
@@ -1623,7 +1427,7 @@ module Shumway.Geometry {
     index: number;
     scale: number;
     bounds: Rectangle;
-    cachedTextureRegion: Shumway.GFX.ITextureRegion;
+    cachedTextureRegion: ITextureRegion;
     color: Shumway.Color;
     private _obb: OBB;
     private static corners = Point.createEmptyPoints(4);
@@ -1842,4 +1646,160 @@ module Shumway.Geometry {
     }
     */
   }
+
+  var MIN_CACHE_LEVELS = 5;
+  var MAX_CACHE_LEVELS = 3;
+
+  export class RenderableTileCache {
+    cache: TileCache;
+    source: IRenderable;
+    cacheLevels: TileCache [] = [];
+    tileSize: number
+    minUntiledSize: number
+    constructor(source: IRenderable, tileSize: number, minUntiledSize: number) {
+      this.source = source;
+      this.tileSize = tileSize;
+      this.minUntiledSize = minUntiledSize;
+    }
+
+    /**
+     * Gets the tiles covered by the specified |query| rectangle and transformed by the given |transform| matrix.
+     */
+    private _getTilesAtScale(query: Rectangle, transform: Matrix, scratchBounds: Rectangle): Tile [] {
+      var transformScale = Math.max(transform.getAbsoluteScaleX(), transform.getAbsoluteScaleY());
+      // Use log2(1 / transformScale) to figure out the tile level.
+      var level = 0;
+      if (transformScale !== 1) {
+        level = clamp(Math.round(Math.log(1 / transformScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
+      }
+      var scale = pow2(level);
+      // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our texture caches ...
+
+      if (this.source.isDynamic) {
+        // .. so try a lower scale level until it fits.
+        while (true) {
+          scale = pow2(level);
+          if (scratchBounds.contains(this.source.getBounds().getAbsoluteBounds().clone().scale(scale, scale))) {
+            break;
+          }
+          level --;
+          assert (level >= -MIN_CACHE_LEVELS);
+        }
+      }
+      // If the source is not scalable don't cache any tiles at a higher scale factor. However, it may still make
+      // sense to cache at a lower scale factor in case we need to evict larger cached images.
+      if (!this.source.isScalable) {
+        level = clamp(level, -MIN_CACHE_LEVELS, 0);
+      }
+      var scale = pow2(level);
+      var levelIndex = MIN_CACHE_LEVELS + level;
+      var cache = this.cacheLevels[levelIndex];
+      if (!cache) {
+        var bounds = this.source.getBounds().getAbsoluteBounds();
+        var scaledBounds = bounds.clone().scale(scale, scale);
+        var tileW, tileH;
+        if (this.source.isDynamic || !this.source.isTileable || Math.max(scaledBounds.w, scaledBounds.h) <= this.minUntiledSize) {
+          tileW = scaledBounds.w;
+          tileH = scaledBounds.h;
+        } else {
+          tileW = tileH = this.tileSize;
+        }
+        cache = this.cacheLevels[levelIndex] = new TileCache(scaledBounds.w, scaledBounds.h, tileW, tileH, scale);
+      }
+      return cache.getTiles(query, transform.scaleClone(scale, scale));
+    }
+
+    fetchTiles (
+      query: Rectangle,
+      transform: Matrix,
+      scratchContext: CanvasRenderingContext2D,
+      cacheImageCallback: (old: ITextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => ITextureRegion): Tile []  {
+      var scratchBounds = new Rectangle(0, 0, scratchContext.canvas.width, scratchContext.canvas.height);
+      var tiles = this._getTilesAtScale(query, transform, scratchBounds);
+      var uncachedTiles: Tile [];
+      var source = this.source;
+      for (var i = 0; i < tiles.length; i++) {
+        var tile = tiles[i];
+        if (!tile.cachedTextureRegion || !tile.cachedTextureRegion.texture || (source.isDynamic && source.isInvalid)) {
+          if (!uncachedTiles) {
+            uncachedTiles = [];
+          }
+          uncachedTiles.push(tile);
+        }
+      }
+      if (uncachedTiles) {
+        this.cacheTiles(scratchContext, uncachedTiles, cacheImageCallback, scratchBounds);
+      }
+      return tiles;
+    }
+
+    private getTileBounds(tiles: Tile []): Rectangle {
+      var bounds = Rectangle.createEmpty();
+      for (var i = 0; i < tiles.length; i++) {
+        bounds.union(tiles[i].bounds);
+      }
+      return bounds;
+    }
+
+    /**
+     * This caches raster versions of the specified |uncachedTiles| in GPU textures. The tiles are generated
+     * using a scratch canvas2D context (|scratchContext|) and then uploaded to the GPU via |cacheImageCallback|.
+     * Ideally, we want to render all tiles in one go, but they may not fit in the |scratchContext| in which case
+     * we need to render the source shape several times.
+     *
+     * TODO: Find a good algorithm to do this since it's quite important that we don't repaint too many times.
+     * Spending some time trying to figure out the *optimal* solution may pay-off since painting is soo expensive.
+     */
+
+    private cacheTiles (
+      scratchContext: CanvasRenderingContext2D,
+      uncachedTiles: Tile [],
+      cacheImageCallback: (old: ITextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => ITextureRegion,
+      scratchBounds: Rectangle,
+      maxRecursionDepth: number = 4) {
+      assert (maxRecursionDepth > 0, "Infinite recursion is likely.");
+      var uncachedTileBounds = this.getTileBounds(uncachedTiles);
+      scratchContext.save();
+      scratchContext.setTransform(1, 0, 0, 1, 0, 0);
+      scratchContext.clearRect(0, 0, scratchBounds.w, scratchBounds.h);
+      scratchContext.scale(uncachedTiles[0].scale, uncachedTiles[0].scale);
+      // Translate so that the source is drawn at the origin.
+      var sourceBounds = this.source.getBounds();
+      scratchContext.translate(-sourceBounds.x, -sourceBounds.y);
+      scratchContext.translate(-uncachedTileBounds.x, -uncachedTileBounds.y);
+
+      timeline && timeline.enter("renderTiles");
+      traceLevel >= TraceLevel.Verbose && writer.writeLn("Rendering Tiles: " + uncachedTileBounds);
+      this.source.render(scratchContext);
+      scratchContext.restore();
+      timeline && timeline.leave("renderTiles");
+
+      var remainingUncachedTiles = null;
+      for (var i = 0; i < uncachedTiles.length; i++) {
+        var tile = uncachedTiles[i];
+        var region = tile.bounds.clone();
+        region.x -= uncachedTileBounds.x;
+        region.y -= uncachedTileBounds.y;
+        if (!scratchBounds.contains(region)) {
+          if (!remainingUncachedTiles) {
+            remainingUncachedTiles = [];
+          }
+          remainingUncachedTiles.push(tile);
+        }
+        tile.cachedTextureRegion = cacheImageCallback(tile.cachedTextureRegion, scratchContext, region);
+      }
+      if (remainingUncachedTiles) {
+        // This is really dumb at the moment; if we have some tiles left over, partition the tile set in half and recurse.
+        if (remainingUncachedTiles.length >= 2) {
+          var a = remainingUncachedTiles.slice(0, remainingUncachedTiles.length / 2 | 0);
+          var b = remainingUncachedTiles.slice(a.length);
+          this.cacheTiles(scratchContext, a, cacheImageCallback, scratchBounds, maxRecursionDepth - 1);
+          this.cacheTiles(scratchContext, b, cacheImageCallback, scratchBounds, maxRecursionDepth - 1);
+        } else {
+          this.cacheTiles(scratchContext, remainingUncachedTiles, cacheImageCallback, scratchBounds, maxRecursionDepth - 1);
+        }
+      }
+    }
+  }
+
 }

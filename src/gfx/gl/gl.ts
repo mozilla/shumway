@@ -17,8 +17,9 @@
 module Shumway.GFX.GL {
   import Color = Shumway.Color;
   var SCRATCH_CANVAS_SIZE = 1024;
+
   export var TILE_SIZE = 256;
-  var MIN_UNTILED_SIZE = 256;
+  export var MIN_UNTILED_SIZE = 256;
 
   function getTileSize(bounds: Rectangle): number {
     if (bounds.w < TILE_SIZE || bounds.h < TILE_SIZE) {
@@ -27,19 +28,13 @@ module Shumway.GFX.GL {
     return TILE_SIZE;
   }
 
-  var MIN_CACHE_LEVELS = 5;
-  var MAX_CACHE_LEVELS = 3;
-
-  var release = true;
-  export var writer: IndentingWriter = null;
-  export var timeline: Timeline = null;
-
-  import Point = Shumway.Geometry.Point;
-  import Point3D = Shumway.Geometry.Point3D;
-  import Matrix = Shumway.Geometry.Matrix;
-  import Matrix3D = Shumway.Geometry.Matrix3D;
-  import Rectangle = Shumway.Geometry.Rectangle;
-  import RegionAllocator = Shumway.Geometry.RegionAllocator;
+  import Point = Geometry.Point;
+  import Point3D = Geometry.Point3D;
+  import Matrix = Geometry.Matrix;
+  import Matrix3D = Geometry.Matrix3D;
+  import Rectangle = Geometry.Rectangle;
+  import RegionAllocator = Geometry.RegionAllocator;
+  import RenderableTileCache = Geometry.RenderableTileCache;
 
   import Frame = Shumway.GFX.Frame;
   import Stage = Shumway.GFX.Stage;
@@ -50,25 +45,14 @@ module Shumway.GFX.GL {
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import VisitorFlags = Shumway.GFX.VisitorFlags;
 
-  import TileCache = Shumway.Geometry.TileCache;
-  import Tile = Shumway.Geometry.Tile;
-  import OBB = Shumway.Geometry.OBB;
+  import TileCache = Geometry.TileCache;
+  import Tile = Geometry.Tile;
+  import OBB = Geometry.OBB;
 
-  import radianToDegrees = Shumway.Geometry.radianToDegrees;
-  import degreesToRadian = Shumway.Geometry.degreesToRadian;
+  import radianToDegrees = Geometry.radianToDegrees;
+  import degreesToRadian = Geometry.degreesToRadian;
 
-  import clamp = Shumway.NumberUtilities.clamp;
-  import pow2 = Shumway.NumberUtilities.pow2;
-
-  /**
-   * Gets the bounds at the origin.
-   */
-  function getAbsoluteSourceBounds(source: IRenderable): Rectangle {
-    var bounds = source.getBounds()
-    return new Rectangle(0, 0, bounds.w, bounds.h);
-  }
-
-  export class Vertex extends Shumway.Geometry.Point3D {
+  export class Vertex extends Geometry.Point3D {
     constructor (x: number, y: number, z: number) {
       super(x, y, z);
     }
@@ -358,7 +342,7 @@ module Shumway.GFX.GL {
             var source = shape.source;
             var tileCache: RenderableTileCache = source.properties["tileCache"];
             if (!tileCache) {
-              tileCache = source.properties["tileCache"] = new RenderableTileCache(source);
+              tileCache = source.properties["tileCache"] = new RenderableTileCache(source, TILE_SIZE, MIN_UNTILED_SIZE);
             }
             transform.translate(bounds.x, bounds.y);
             transform.inverse(inverseTransform);
@@ -410,154 +394,6 @@ module Shumway.GFX.GL {
           }
         }
         brush.flush(options.drawElements);
-      }
-    }
-  }
-
-  export class RenderableTileCache {
-    cache: TileCache;
-    source: IRenderable;
-    cacheLevels: TileCache [] = [];
-    constructor(source: IRenderable) {
-      this.source = source;
-    }
-
-    /**
-     * Gets the tiles covered by the specified |query| rectangle and transformed by the given |transform| matrix.
-     */
-    private _getTilesAtScale(query: Rectangle, transform: Matrix, scratchBounds: Rectangle): Tile [] {
-      var transformScale = Math.max(transform.getAbsoluteScaleX(), transform.getAbsoluteScaleY());
-      // Use log2(1 / transformScale) to figure out the tile level.
-      var level = 0;
-      if (transformScale !== 1) {
-        level = clamp(Math.round(Math.log(1 / transformScale) / Math.LN2), -MIN_CACHE_LEVELS, MAX_CACHE_LEVELS);
-      }
-      var scale = pow2(level);
-      // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our texture caches ...
-
-      if (this.source.isDynamic) {
-        // .. so try a lower scale level until it fits.
-        while (true) {
-          scale = pow2(level);
-          if (scratchBounds.contains(getAbsoluteSourceBounds(this.source).clone().scale(scale, scale))) {
-            break;
-          }
-          level --;
-          assert (level >= -MIN_CACHE_LEVELS);
-        }
-      }
-      // If the source is not scalable don't cache any tiles at a higher scale factor. However, it may still make
-      // sense to cache at a lower scale factor in case we need to evict larger cached images.
-      if (!this.source.isScalable) {
-        level = clamp(level, -MIN_CACHE_LEVELS, 0);
-      }
-      var scale = pow2(level);
-      var levelIndex = MIN_CACHE_LEVELS + level;
-      var cache = this.cacheLevels[levelIndex];
-      if (!cache) {
-        var bounds = getAbsoluteSourceBounds(this.source);
-        var scaledBounds = bounds.clone().scale(scale, scale);
-        var tileW, tileH;
-        if (this.source.isDynamic || !this.source.isTileable || Math.max(scaledBounds.w, scaledBounds.h) <= MIN_UNTILED_SIZE) {
-          tileW = scaledBounds.w;
-          tileH = scaledBounds.h;
-        } else {
-          tileW = tileH = TILE_SIZE;
-        }
-        cache = this.cacheLevels[levelIndex] = new TileCache(scaledBounds.w, scaledBounds.h, tileW, tileH, scale);
-      }
-      return cache.getTiles(query, transform.scaleClone(scale, scale));
-    }
-
-    fetchTiles (
-      query: Rectangle,
-      transform: Matrix,
-      scratchContext: CanvasRenderingContext2D,
-      cacheImageCallback: (old: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion): Tile []  {
-      var scratchBounds = new Rectangle(0, 0, scratchContext.canvas.width, scratchContext.canvas.height);
-      var tiles = this._getTilesAtScale(query, transform, scratchBounds);
-      var uncachedTiles: Tile [];
-      var source = this.source;
-      for (var i = 0; i < tiles.length; i++) {
-        var tile = tiles[i];
-        if (!tile.cachedTextureRegion || !tile.cachedTextureRegion.texture || (source.isDynamic && source.isInvalid)) {
-          if (!uncachedTiles) {
-            uncachedTiles = [];
-          }
-          uncachedTiles.push(tile);
-        }
-      }
-      if (uncachedTiles) {
-        this.cacheTiles(scratchContext, uncachedTiles, cacheImageCallback, scratchBounds);
-      }
-      return tiles;
-    }
-
-    private getTileBounds(tiles: Tile []): Rectangle {
-      var bounds = Rectangle.createEmpty();
-      for (var i = 0; i < tiles.length; i++) {
-        bounds.union(tiles[i].bounds);
-      }
-      return bounds;
-    }
-
-    /**
-     * This caches raster versions of the specified |uncachedTiles| in GPU textures. The tiles are generated
-     * using a scratch canvas2D context (|scratchContext|) and then uploaded to the GPU via |cacheImageCallback|.
-     * Ideally, we want to render all tiles in one go, but they may not fit in the |scratchContext| in which case
-     * we need to render the source shape several times.
-     *
-     * TODO: Find a good algorithm to do this since it's quite important that we don't repaint too many times.
-     * Spending some time trying to figure out the *optimal* solution may pay-off since painting is soo expensive.
-     */
-
-    private cacheTiles (
-      scratchContext: CanvasRenderingContext2D,
-      uncachedTiles: Tile [],
-      cacheImageCallback: (old: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle) => WebGLTextureRegion,
-      scratchBounds: Rectangle,
-      maxRecursionDepth: number = 4) {
-      assert (maxRecursionDepth > 0, "Infinite recursion is likely.");
-      var uncachedTileBounds = this.getTileBounds(uncachedTiles);
-      scratchContext.save();
-      scratchContext.setTransform(1, 0, 0, 1, 0, 0);
-      scratchContext.clearRect(0, 0, scratchBounds.w, scratchBounds.h);
-      scratchContext.scale(uncachedTiles[0].scale, uncachedTiles[0].scale);
-      // Translate so that the source is drawn at the origin.
-      var sourceBounds = this.source.getBounds();
-      scratchContext.translate(-sourceBounds.x, -sourceBounds.y);
-      scratchContext.translate(-uncachedTileBounds.x, -uncachedTileBounds.y);
-
-      timeline && timeline.enter("renderTiles");
-      traceLevel >= TraceLevel.Verbose && writer.writeLn("Rendering Tiles: " + uncachedTileBounds);
-      this.source.render(scratchContext);
-      scratchContext.restore();
-      timeline && timeline.leave("renderTiles");
-
-      var remainingUncachedTiles = null;
-      for (var i = 0; i < uncachedTiles.length; i++) {
-        var tile = uncachedTiles[i];
-        var region = tile.bounds.clone();
-        region.x -= uncachedTileBounds.x;
-        region.y -= uncachedTileBounds.y;
-        if (!scratchBounds.contains(region)) {
-          if (!remainingUncachedTiles) {
-            remainingUncachedTiles = [];
-          }
-          remainingUncachedTiles.push(tile);
-        }
-        tile.cachedTextureRegion = cacheImageCallback(<WebGLTextureRegion>tile.cachedTextureRegion, scratchContext, region);
-      }
-      if (remainingUncachedTiles) {
-        // This is really dumb at the moment; if we have some tiles left over, partition the tile set in half and recurse.
-        if (remainingUncachedTiles.length >= 2) {
-          var a = remainingUncachedTiles.slice(0, remainingUncachedTiles.length / 2 | 0);
-          var b = remainingUncachedTiles.slice(a.length);
-          this.cacheTiles(scratchContext, a, cacheImageCallback, scratchBounds, maxRecursionDepth - 1);
-          this.cacheTiles(scratchContext, b, cacheImageCallback, scratchBounds, maxRecursionDepth - 1);
-        } else {
-          this.cacheTiles(scratchContext, remainingUncachedTiles, cacheImageCallback, scratchBounds, maxRecursionDepth - 1);
-        }
       }
     }
   }

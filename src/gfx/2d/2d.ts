@@ -8,18 +8,18 @@ module Shumway.GFX {
 
   declare var FILTERS;
 
-  import Rectangle = Shumway.Geometry.Rectangle;
-  import Point = Shumway.Geometry.Point;
-  import Matrix = Shumway.Geometry.Matrix;
-  import DirtyRegion = Shumway.Geometry.DirtyRegion;
+  import Rectangle = Shumway.GFX.Geometry.Rectangle;
+  import Point = Shumway.GFX.Geometry.Point;
+  import Matrix = Shumway.GFX.Geometry.Matrix;
+  import DirtyRegion = Shumway.GFX.Geometry.DirtyRegion;
   import Filter = Shumway.GFX.Filter;
   import BlendMode = Shumway.GFX.BlendMode;
-  import TileCache = Shumway.Geometry.TileCache;
-  import Tile = Shumway.Geometry.Tile;
-  import OBB = Shumway.Geometry.OBB;
-  // import Grid = Shumway.Geometry.RegionAllocator.Grid;
-  import Region = Shumway.Geometry.RegionAllocator.Region;
-  import IRegionAllocator = Shumway.Geometry.RegionAllocator.IRegionAllocator;
+  import TileCache = Shumway.GFX.Geometry.TileCache;
+  import Tile = Shumway.GFX.Geometry.Tile;
+  import OBB = Shumway.GFX.Geometry.OBB;
+  // import Grid = Shumway.GFX.Geometry.RegionAllocator.Grid;
+  import Region = Shumway.GFX.Geometry.RegionAllocator.Region;
+  import IRegionAllocator = Shumway.GFX.Geometry.RegionAllocator.IRegionAllocator;
 
   export enum FillRule {
     NONZERO,
@@ -39,7 +39,7 @@ module Shumway.GFX {
   var originalRestore = CanvasRenderingContext2D.prototype.restore;
 
 
-  class CanvasGrid extends Shumway.Geometry.RegionAllocator.Grid {
+  class CanvasGrid extends Shumway.GFX.Geometry.RegionAllocator.Grid {
     private _context: CanvasRenderingContext2D;
 
     constructor(canvasSize: number, gridSize: number) {

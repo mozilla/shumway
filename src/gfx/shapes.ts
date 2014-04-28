@@ -1,6 +1,6 @@
 module Shumway {
   import IRenderable = Shumway.IRenderable;
-  import Rectangle = Shumway.Geometry.Rectangle;
+  import Rectangle = Shumway.GFX.Geometry.Rectangle;
 
   var SHAPE_ROOT = "../../src/gfx/assets/shapes/";
 

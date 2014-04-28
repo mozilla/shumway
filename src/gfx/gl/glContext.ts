@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 module Shumway.GFX.GL {
-  import Point = Shumway.Geometry.Point;
-  import Point3D = Shumway.Geometry.Point3D;
-  import Matrix = Shumway.Geometry.Matrix;
-  import Matrix3D = Shumway.Geometry.Matrix3D;
-  import Rectangle = Shumway.Geometry.Rectangle;
-  import RegionAllocator = Shumway.Geometry.RegionAllocator;
+  import Point = Geometry.Point;
+  import Point3D = Geometry.Point3D;
+  import Matrix = Geometry.Matrix;
+  import Matrix3D = Geometry.Matrix3D;
+  import Rectangle = Geometry.Rectangle;
+  import RegionAllocator = Geometry.RegionAllocator;
 
-  import radianToDegrees = Shumway.Geometry.radianToDegrees;
-  import degreesToRadian = Shumway.Geometry.degreesToRadian;
+  import radianToDegrees = Geometry.radianToDegrees;
+  import degreesToRadian = Geometry.degreesToRadian;
 
   export var SHADER_ROOT = "shaders/";
 

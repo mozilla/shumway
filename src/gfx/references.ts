@@ -30,7 +30,7 @@
 /// <reference path='bench.ts'/>
 /// <reference path='easel.ts'/>
 
-import Rectangle = Shumway.Geometry.Rectangle;
+import Rectangle = Shumway.GFX.Geometry.Rectangle;
 declare function randomStyle(): string;
 declare function assert(...args : any[]);
 declare function unexpected(...args : any[]);
@@ -111,6 +111,9 @@ module Shumway.GFX {
   }
 
   export var traceLevel = TraceLevel.Verbose;
+  export var release = true;
+  export var writer: IndentingWriter = null;
+  export var timeline: Timeline = null;
 
   export function count(name) {
     Counter.count(name);

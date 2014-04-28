@@ -184,7 +184,7 @@ function handleRenderMessages(renderer, layers, i32, sync) {
         width * contentsScaleFactor, height * contentsScaleFactor
       );
       stage.transform =
-        new Shumway.Geometry.Matrix.createIdentity()
+        new Shumway.GFX.Geometry.Matrix.createIdentity()
                                    .scale(contentsScaleFactor, contentsScaleFactor);
       layers[0] = stage;
 
@@ -198,7 +198,7 @@ function handleRenderMessages(renderer, layers, i32, sync) {
       var renderableId = i32[p++];
       var renderable = renderer._renderables[renderableId];
 
-      var transform = new Shumway.Geometry.Matrix(
+      var transform = new Shumway.GFX.Geometry.Matrix(
         f32[p++], f32[p++], f32[p++], f32[p++], f32[p++], f32[p++]
       );
       var alpha = f32[p++];
@@ -313,7 +313,7 @@ function handleRenderMessages(renderer, layers, i32, sync) {
           target = layer.children[0];
           if (!target) {
             target = new Shumway.Layers.Shape(renderable);
-            target.origin = new Shumway.Geometry.Point(
+            target.origin = new Shumway.GFX.Geometry.Point(
               -renderable.rect.x, -renderable.rect.y
             );
             layer.addChild(target);
@@ -338,13 +338,13 @@ function handleRenderMessages(renderer, layers, i32, sync) {
         if (isContainer) {
           layer = new Shumway.Layers.FrameContainer();
           var child = new Shumway.Layers.Shape(renderable);
-          child.origin = new Shumway.Geometry.Point(
+          child.origin = new Shumway.GFX.Geometry.Point(
             -renderable.rect.x, -renderable.rect.y
           );
           layer.addChild(child);
         } else {
           layer = new Shumway.Layers.Shape(renderable);
-          layer.origin = new Shumway.Geometry.Point(
+          layer.origin = new Shumway.GFX.Geometry.Point(
             renderable.rect.x, renderable.rect.y
           );
         }
@@ -736,7 +736,7 @@ Renderer.prototype.resolveFont = function(format, embedded) {
 };
 
 var RenderableNoop = {
-  rect: new Shumway.Geometry.Rectangle(0, 0, 0, 0),
+  rect: new Shumway.GFX.Geometry.Rectangle(0, 0, 0, 0),
   getBounds: function () {
     return this.rect;
   },
@@ -749,7 +749,7 @@ function RenderableShape(data, renderer, resolve) {
   var xMax = data[1] / 20;
   var yMin = data[2] / 20;
   var yMax = data[3] / 20;
-  this.rect = new Shumway.Geometry.Rectangle(xMin, yMin, xMax - xMin, yMax - yMin);
+  this.rect = new Shumway.GFX.Geometry.Rectangle(xMin, yMin, xMax - xMin, yMax - yMin);
 
   if (!this.properties) {
     this.properties = { };
@@ -990,7 +990,7 @@ function RenderableBitmap(data, renderer, resolve) {
   var width = data[0];
   var height = data[1];
 
-  this.rect = new Shumway.Geometry.Rectangle(0, 0, width, height);
+  this.rect = new Shumway.GFX.Geometry.Rectangle(0, 0, width, height);
 
   var type = data[2];
   var len = data[3];
@@ -1066,7 +1066,7 @@ function RenderableLabel(data, renderer, resolve) {
   var xMax = data[1] / 20;
   var yMin = data[2] / 20;
   var yMax = data[3] / 20;
-  this.rect = new Shumway.Geometry.Rectangle(xMin, yMin, xMax - xMin, yMax - yMin);
+  this.rect = new Shumway.GFX.Geometry.Rectangle(xMin, yMin, xMax - xMin, yMax - yMin);
 
   var n = data[4];
   var code = String.fromCharCode.apply(null, data.subarray(5, 5 + n));
@@ -1181,7 +1181,7 @@ function RenderableText(data, renderer, resolve) {
     htmlText: content._htmlText
   };
 
-  this.rect = new Shumway.Geometry.Rectangle(0, 0, width, height);
+  this.rect = new Shumway.GFX.Geometry.Rectangle(0, 0, width, height);
 
   if (this.properties) {
     this.isInvalid = true;
