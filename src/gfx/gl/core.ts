@@ -1,5 +1,4 @@
 /// <reference path='../references.ts'/>
-/// <reference path="../WebGL.d.ts" />
 
 module Shumway.GFX.GL {
   var release = false;
