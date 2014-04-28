@@ -27,15 +27,20 @@ function eq(a, b, test) {
 
 function eqArray(a, b, test) {
   test = test ? ": " + test : " #" + testNumber;
+  if (a == undefined && b) {
+    throw new Error("FAIL" + test + " Null Array: a");
+  }
+  if (a && b == undefined) {
+    throw new Error("FAIL" + test + " Null Array: b");
+  }
   if (a && b) {
-    throw new Error("FAIL " + test + "Null Arrays");
-  }
-  if (a.length !== b.length) {
-    throw new Error("FAIL " + test + "Array Length Mismatch");
-  }
-  for (var i = 0; i < a.length; i++) {
-    if (a[i] != b[i]) {
-      throw new Error("FAIL " + test + "Array Element " + i);
+    if (a.length !== b.length) {
+      throw new Error("FAIL" + test + " Array Length Mismatch");
+    }
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) {
+        throw new Error("FAIL" + test + " Array Element " + i);
+      }
     }
   }
   console.info("PASS" + test);
