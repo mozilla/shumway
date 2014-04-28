@@ -220,9 +220,71 @@ module Shumway.GFX.GL {
       this._viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
     }
 
+    private _cacheImageCallback(oldTextureRegion: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {
+      /*
+       * To avoid seeming caused by linear texture sampling we need to pad each atlased image with a 1 pixel border that duplicates
+       * edge pixels, similar to CLAMP_TO_EDGE
+       *
+       * See the discussion here: http://gamedev.stackexchange.com/questions/61796/sprite-sheet-textures-picking-up-edges-of-adjacent-texture
+       *
+       * For the image:
+       *
+       *    +---+
+       *    |123|
+       *    |456|
+       *    |789|
+       *    +---+
+       *
+       * We instead create:
+       *
+       *  +-------+
+       *  |? 123 ?|
+       *  | +---+ |
+       *  |1|123|3|
+       *  |4|456|6|
+       *  |7|789|9|
+       *  | +---+ |
+       *  |? 789 ?|
+       *  +-------+
+       *
+       *  I don't know what to do about corners yet. Might not be a problem, I don't see any artifacts if they are left empty.
+       */
+
+      var w  = srcBounds.w;
+      var h  = srcBounds.h;
+      var sx = srcBounds.x;
+      var sy = srcBounds.y;
+
+      this._uploadCanvas.width  = w + 2;
+      this._uploadCanvas.height = h + 2;
+
+      // Draw Image
+      this._uploadCanvasContext.drawImage(src.canvas, sx, sy,         w, h, 1, 1,     w, h);
+
+      // Top & Bottom Margins
+      this._uploadCanvasContext.drawImage(src.canvas, sx, sy,         w, 1, 1, 0,     w, 1);
+      this._uploadCanvasContext.drawImage(src.canvas, sx, sy + h - 1, w, 1, 1, h + 1, w, 1);
+
+      // Left & Right Margins
+      this._uploadCanvasContext.drawImage(src.canvas, sx,         sy, 1, h, 0,     1, 1, h);
+      this._uploadCanvasContext.drawImage(src.canvas, sx + w - 1, sy, 1, h, w + 1, 1, 1, h);
+
+      if (!oldTextureRegion) {
+        return this.context.cacheImage(this._uploadCanvas);
+      } else {
+        if (!options.disableTextureUploads) {
+          this.context.updateTextureRegion(this._uploadCanvas, oldTextureRegion);
+        }
+        return oldTextureRegion;
+      }
+    }
+
     public render() {
+      var self = this;
       var stage = this._stage;
       var options = this._options;
+      var context = this.context;
+      var gl = context.gl;
 
       if (options.disable) {
         return;
@@ -239,9 +301,6 @@ module Shumway.GFX.GL {
         this.context.modelViewProjectionMatrix = this.context.create2DProjectionMatrix();
       }
 
-      var that = this;
-      var context = this.context;
-
       var brush = this._brush;
 
       var viewport = this._viewport;
@@ -249,69 +308,7 @@ module Shumway.GFX.GL {
         viewport = Rectangle.createSquare(1024 * 1024);
       }
 
-      var self = this;
       var inverseTransform = Matrix.createIdentity();
-
-      function cacheImageCallback(oldTextureRegion: WebGLTextureRegion, src: CanvasRenderingContext2D, srcBounds: Rectangle): WebGLTextureRegion {
-        /*
-         * To avoid seeming caused by linear texture sampling we need to pad each atlased image with a 1 pixel border that duplicates
-         * edge pixels, similar to CLAMP_TO_EDGE
-         *
-         * See the discussion here: http://gamedev.stackexchange.com/questions/61796/sprite-sheet-textures-picking-up-edges-of-adjacent-texture
-         *
-         * For the image:
-         *
-         *    +---+
-         *    |123|
-         *    |456|
-         *    |789|
-         *    +---+
-         *
-         * We instead create:
-         *
-         *  +-------+
-         *  |? 123 ?|
-         *  | +---+ |
-         *  |1|123|3|
-         *  |4|456|6|
-         *  |7|789|9|
-         *  | +---+ |
-         *  |? 789 ?|
-         *  +-------+
-         *
-         *  I don't know what to do about corners yet. Might not be a problem, I don't see any artifacts if they are left empty.
-         */
-
-        var w  = srcBounds.w;
-        var h  = srcBounds.h;
-        var sx = srcBounds.x;
-        var sy = srcBounds.y;
-
-        self._uploadCanvas.width  = w + 2;
-        self._uploadCanvas.height = h + 2;
-
-        // Draw Image
-        self._uploadCanvasContext.drawImage(src.canvas, sx, sy,         w, h, 1, 1,     w, h);
-
-        // Top & Bottom Margins
-        self._uploadCanvasContext.drawImage(src.canvas, sx, sy,         w, 1, 1, 0,     w, 1);
-        self._uploadCanvasContext.drawImage(src.canvas, sx, sy + h - 1, w, 1, 1, h + 1, w, 1);
-
-        // Left & Right Margins
-        self._uploadCanvasContext.drawImage(src.canvas, sx,         sy, 1, h, 0,     1, 1, h);
-        self._uploadCanvasContext.drawImage(src.canvas, sx + w - 1, sy, 1, h, w + 1, 1, 1, h);
-
-        if (!oldTextureRegion) {
-          return context.cacheImage(self._uploadCanvas);
-        } else {
-          if (!options.disableTextureUploads) {
-            context.updateTextureRegion(self._uploadCanvas, oldTextureRegion);
-          }
-          return oldTextureRegion;
-        }
-      }
-
-      var gl = context.gl;
 
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -323,6 +320,8 @@ module Shumway.GFX.GL {
       var parent = null;
       var tileTransform = Matrix.createIdentity();
       var colorTransform = ColorMatrix.createIdentity();
+      var cacheImageCallback = this._cacheImageCallback.bind(this);
+
       stage.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
         if (frame._parent !== parent) {
           parent = frame._parent;
@@ -346,7 +345,7 @@ module Shumway.GFX.GL {
             }
             transform.translate(bounds.x, bounds.y);
             transform.inverse(inverseTransform);
-            var tiles = tileCache.fetchTiles(viewport, inverseTransform, that._scratchCanvasContext, cacheImageCallback);
+            var tiles = tileCache.fetchTiles(viewport, inverseTransform, self._scratchCanvasContext, cacheImageCallback);
             for (var i = 0; i < tiles.length; i++) {
               var tile = tiles[i];
               tileTransform.setIdentity();

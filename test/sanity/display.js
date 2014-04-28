@@ -3,7 +3,7 @@
   var Renderable = Shumway.GFX.Renderable;
   var ColorMatrix = Shumway.GFX.ColorMatrix;
   var FrameContainer = Shumway.GFX.FrameContainer;
-  var Geometry = Shumway.Geometry;
+  var Geometry = Shumway.GFX.Geometry;
 
   Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/shaders/";
 
