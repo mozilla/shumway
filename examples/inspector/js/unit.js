@@ -38,8 +38,8 @@ function eqArray(a, b, test) {
       throw new Error("FAIL" + test + " Array Length Mismatch");
     }
     for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i]) {
-        throw new Error("FAIL" + test + " Array Element " + i);
+      if (a[i] != b[i] && !isNaN(a[i]) && !isNaN(b[i])) {
+        throw new Error("FAIL" + test + " Array Element " + i + ": " + a[i] + " != " + b[i]);
       }
     }
   }

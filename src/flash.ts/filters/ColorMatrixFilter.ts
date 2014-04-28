@@ -57,7 +57,16 @@ module Shumway.AVM2.AS.flash.filters {
     private _matrix: number [];
 
     get matrix(): any [] {
-      return this._matrix;
+      if (this._matrix) {
+        return this._matrix;
+      } else {
+        return [
+          1, 0, 0, 0, 0,
+          0, 1, 0, 0, 0,
+          0, 0, 1, 0, 0,
+          0, 0, 0, 1, 0
+        ];
+      }
     }
     set matrix(value: any []) {
       if (!isNullOrUndefined(value)) {
