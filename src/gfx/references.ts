@@ -18,6 +18,8 @@
 /// <reference path='shapes.ts'/>
 /// <reference path='geometry.ts'/>
 /// <reference path='stage.ts'/>
+/// <reference path='frame.ts'/>
+/// <reference path='frameContainer.ts'/>
 /// <reference path='filters.ts'/>
 /// <reference path="WebGL.d.ts" />
 /// <reference path='gl/glContext.ts'/>

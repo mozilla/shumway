@@ -240,6 +240,10 @@ module Shumway.GFX.GL {
       var stage = this._stage;
       var options = this._options;
 
+      if (options.disable) {
+        return;
+      }
+
       // TODO: Only set the camera once, not every frame.
       if (options.perspectiveCamera) {
         this.context.modelViewProjectionMatrix = this.context.createPerspectiveMatrix (
@@ -345,12 +349,10 @@ module Shumway.GFX.GL {
         if (!options.ignoreColorMatrix) {
           colorTransform = frame.getConcatenatedColorMatrix();
         }
-        // that.context.setTransform(transform);
         if (frame instanceof SolidRectangle) {
           brush.fillRectangle(frame.getBounds(), Color.parseColor((<SolidRectangle>frame).fillStyle), transform, depth);
         } else if (frame instanceof Shape) {
           var shape = <Shape>frame;
-          // var bounds = getAbsoluteSourceBounds(shape.source);
           var bounds = shape.source.getBounds();
           if (!bounds.isEmpty()) {
             var source = shape.source;
@@ -371,7 +373,7 @@ module Shumway.GFX.GL {
               if (src && src.texture) {
                 context.textureRegionCache.put(src);
               }
-              if (!brush.drawImage(src, new Rectangle(0, 0, tile.bounds.w, tile.bounds.h), new Color(1, 1, 1, alpha), colorTransform, tileTransform, depth)) {
+              if (!brush.drawImage(src, new Rectangle(0, 0, tile.bounds.w, tile.bounds.h), new Color(1, 1, 1, alpha), colorTransform, tileTransform, depth, frame.blendMode)) {
                 unexpected();
               }
               if (options.drawTiles) {
@@ -615,6 +617,7 @@ module Shumway.GFX.GL {
     private _program: WebGLProgram;
     private _textures: WebGLTexture [];
     private _colorTransform: ColorMatrix;
+    private _blendMode: BlendMode = BlendMode.Default;
     private static _depth: number = 1;
     constructor(context: WebGLContext, geometry: WebGLGeometry) {
       super(context, geometry);
@@ -628,7 +631,14 @@ module Shumway.GFX.GL {
       this.geometry.reset();
     }
 
-    public drawImage(src: WebGLTextureRegion, dstRectangle: Rectangle, color: Color, colorTransform: ColorMatrix, transform: Matrix, depth: number = 0): boolean {
+    public drawImage(src: WebGLTextureRegion,
+                     dstRectangle: Rectangle,
+                     color: Color,
+                     colorTransform: ColorMatrix,
+                     transform: Matrix,
+                     depth: number = 0,
+                     blendMode: BlendMode = BlendMode.Normal): boolean {
+
       if (!src || !src.texture) {
         return true;
       }
@@ -639,6 +649,10 @@ module Shumway.GFX.GL {
         }
       }
       this._colorTransform = colorTransform;
+      if (this._blendMode !== blendMode) {
+        this.flush();
+        this._blendMode = blendMode;
+      }
       var sampler = this._textures.indexOf(src.texture);
       if (sampler < 0) {
         if (this._textures.length === 8) {
@@ -730,6 +744,9 @@ module Shumway.GFX.GL {
         gl.enableVertexAttribArray(position);
         gl.vertexAttribPointer(position, attribute.size, attribute.type, attribute.normalized, size, attribute.offset);
       }
+
+      this.context.blendMode = this._blendMode;
+
       // Bind elements buffer.
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.elementBuffer);
       if (drawElements) {
