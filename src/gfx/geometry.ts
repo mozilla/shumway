@@ -1767,12 +1767,11 @@ module Shumway.GFX.Geometry {
       scratchContext.save();
       scratchContext.setTransform(1, 0, 0, 1, 0, 0);
       scratchContext.clearRect(0, 0, scratchBounds.w, scratchBounds.h);
+      scratchContext.translate(-uncachedTileBounds.x, -uncachedTileBounds.y);
       scratchContext.scale(uncachedTiles[0].scale, uncachedTiles[0].scale);
       // Translate so that the source is drawn at the origin.
       var sourceBounds = this._source.getBounds();
       scratchContext.translate(-sourceBounds.x, -sourceBounds.y);
-      scratchContext.translate(-uncachedTileBounds.x, -uncachedTileBounds.y);
-
       timeline && timeline.enter("renderTiles");
       traceLevel >= TraceLevel.Verbose && writer.writeLn("Rendering Tiles: " + uncachedTileBounds);
       this._source.render(scratchContext);

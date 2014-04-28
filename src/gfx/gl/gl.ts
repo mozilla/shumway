@@ -146,7 +146,17 @@ module Shumway.GFX.GL {
     perspectiveCameraDistance: number;
     perspectiveCameraFOV: number;
     perspectiveCameraAngle: number;
+
+    /**
+     * Ignores viewport clipping, this is useful to check of viewport culling is working
+     * corectly.
+     */
     ignoreViewport: boolean;
+
+    /**
+     * Sometimes it's useful to temporarily disable texture uploads to see if rendering
+     * is texture upload bound.
+     */
     disableTextureUploads: boolean;
     frameSpacing: number = 0.01;
     ignoreColorMatrix: boolean;
@@ -272,7 +282,7 @@ module Shumway.GFX.GL {
       if (!oldTextureRegion) {
         return this.context.cacheImage(this._uploadCanvas);
       } else {
-        if (!options.disableTextureUploads) {
+        if (!this._options.disableTextureUploads) {
           this.context.updateTextureRegion(this._uploadCanvas, oldTextureRegion);
         }
         return oldTextureRegion;
