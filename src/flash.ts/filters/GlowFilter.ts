@@ -31,7 +31,7 @@ module Shumway.AVM2.AS.flash.filters {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = ["clone"];
 
     constructor (color: number /*uint*/ = 16711680, alpha: number = 1, blurX: number = 6, blurY: number = 6, strength: number = 2, quality: number /*int*/ = 1, inner: boolean = false, knockout: boolean = false) {
       color = color >>> 0; alpha = +alpha; blurX = +blurX; blurY = +blurY; strength = +strength; quality = quality | 0; inner = !!inner; knockout = !!knockout;
@@ -119,7 +119,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._quality;
     }
     set quality(value: number /*int*/) {
-      this._quality = NumberUtilities.clamp(value | 0, 0, 255);;
+      this._quality = NumberUtilities.clamp(value | 0, 0, 15);
     }
 
     get strength(): number {
