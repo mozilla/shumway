@@ -218,4 +218,23 @@ module Shumway.GFX.GL {
       this.reset();
     }
   }
+
+  export class WebGLFilterBrush extends WebGLBrush {
+    private static _tmpVertices: WebGLCombinedBrushVertex [] = Vertex.createEmptyVertices(WebGLCombinedBrushVertex, 4);
+    private _program: WebGLProgram;
+    private _textures: WebGLTexture [];
+    constructor(context: WebGLContext, geometry: WebGLGeometry, target: WebGLTexture = null) {
+      super(context, geometry, target);
+      this._program = context.createProgramFromFiles("combined.vert", "combined.frag");
+      WebGLCombinedBrushVertex.initializeAttributeList(this._context);
+    }
+
+    public reset() {
+      this._geometry.reset();
+    }
+
+    public flush(drawElements: boolean = true) {
+
+    }
+  }
 }

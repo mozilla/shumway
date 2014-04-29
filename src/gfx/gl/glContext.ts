@@ -122,6 +122,22 @@ module Shumway.GFX.GL {
       }
     }
 
+    /**
+     * Whether the blend mode can be performed using |blendFunc|.
+     */
+    public static glSupportedBlendMode(value: BlendMode) {
+      switch (value) {
+        case BlendMode.Add:
+        case BlendMode.Multiply:
+        case BlendMode.Screen:
+        case BlendMode.Normal:
+        case BlendMode.Default:
+          return true;
+        default:
+          return false;
+      }
+    }
+
     public create2DProjectionMatrix(): Matrix3D {
       return Matrix3D.create2DProjection(this._w, this._h, -this._w);
     }

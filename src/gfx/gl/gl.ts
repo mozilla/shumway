@@ -172,10 +172,8 @@ module Shumway.GFX.GL {
     private _viewport: Rectangle;
 
     private _brush: WebGLCombinedBrush;
-    private _brushGeometry: WebGLGeometry;
-
+    private _filterBrush: WebGLFilterBrush;
     private _stencilBrush: WebGLCombinedBrush;
-    private _stencilBrushGeometry: WebGLGeometry;
 
     private _tmpVertices: Vertex [] = Vertex.createEmptyVertices(Vertex, 64);
 
@@ -196,11 +194,8 @@ module Shumway.GFX.GL {
       canvas.addEventListener('resize', this.resize.bind(this), false);
       this.resize();
 
-      this._brushGeometry = new WebGLGeometry(context);
-      this._brush = new WebGLCombinedBrush(context, this._brushGeometry);
-
-      this._stencilBrushGeometry = new WebGLGeometry(context);
-      this._stencilBrush = new WebGLCombinedBrush(context, this._stencilBrushGeometry);
+      this._brush = new WebGLCombinedBrush(context, new WebGLGeometry(context));
+      this._stencilBrush = new WebGLCombinedBrush(context, new WebGLGeometry(context));
 
       this._scratchCanvas = document.createElement("canvas");
       this._scratchCanvas.width = this._scratchCanvas.height = SCRATCH_CANVAS_SIZE;
@@ -289,60 +284,28 @@ module Shumway.GFX.GL {
       }
     }
 
-    public render() {
+    private _renderFrame(root: Frame, transform: Matrix, brush: WebGLCombinedBrush) {
       var self = this;
-      var stage = this._stage;
+      var depth = 0;
       var options = this._options;
       var context = this.context;
-      var gl = context.gl;
-
-      if (options.disable) {
-        return;
-      }
-
-      // TODO: Only set the camera once, not every frame.
-      if (options.perspectiveCamera) {
-        this.context.modelViewProjectionMatrix = this.context.createPerspectiveMatrix (
-          options.perspectiveCameraDistance,
-          options.perspectiveCameraFOV,
-          options.perspectiveCameraAngle
-        );
-      } else {
-        this.context.modelViewProjectionMatrix = this.context.create2DProjectionMatrix();
-      }
-
-      var brush = this._brush;
-
-      var viewport = this._viewport;
-      if (options.ignoreViewport) {
-        viewport = Rectangle.createSquare(1024 * 1024);
-      }
-
-      var inverseTransform = Matrix.createIdentity();
-
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-      var depth = 0;
-
-      brush.reset();
-
-      var parent = null;
+      var cacheImageCallback = this._cacheImageCallback.bind(this);
       var tileTransform = Matrix.createIdentity();
       var colorTransform = ColorMatrix.createIdentity();
-      var cacheImageCallback = this._cacheImageCallback.bind(this);
-
-      stage.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
-        if (frame._parent !== parent) {
-          parent = frame._parent;
-          depth += options.frameSpacing;
-        }
+      var inverseTransform = Matrix.createIdentity();
+      var viewport = this._viewport;
+      root.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
+        depth += options.frameSpacing;
 
         var alpha = frame.getConcatenatedAlpha();
         if (!options.ignoreColorMatrix) {
           colorTransform = frame.getConcatenatedColorMatrix();
         }
         if (frame instanceof Shape) {
+          if (!WebGLContext.glSupportedBlendMode(frame.blendMode)) {
+            // Now we need to render the frame into a texture.
+            return VisitorFlags.Skip;
+          }
           var shape = <Shape>frame;
           var bounds = shape.source.getBounds();
           if (!bounds.isEmpty()) {
@@ -378,10 +341,13 @@ module Shumway.GFX.GL {
           }
         }
         return VisitorFlags.Continue;
-      }, stage.matrix);
+      }, transform);
+    }
 
-      brush.flush(options.drawElements);
-
+    private _renderTextures(brush: WebGLCombinedBrush) {
+      var options = this._options;
+      var context = this.context;
+      var viewport = this._viewport;
       if (options.drawTextures) {
         var textures = context.getTextures();
         var transform = Matrix.createIdentity();
@@ -402,6 +368,44 @@ module Shumway.GFX.GL {
         }
         brush.flush(options.drawElements);
       }
+    }
+
+    public render() {
+      var self = this;
+      var stage = this._stage;
+      var options = this._options;
+      var context = this.context;
+      var gl = context.gl;
+
+      if (options.disable) {
+        return;
+      }
+
+      // TODO: Only set the camera once, not every frame.
+      if (options.perspectiveCamera) {
+        this.context.modelViewProjectionMatrix = this.context.createPerspectiveMatrix (
+          options.perspectiveCameraDistance,
+          options.perspectiveCameraFOV,
+          options.perspectiveCameraAngle
+        );
+      } else {
+        this.context.modelViewProjectionMatrix = this.context.create2DProjectionMatrix();
+      }
+
+      var brush = this._brush;
+      var viewport = this._viewport;
+      if (options.ignoreViewport) {
+        viewport = Rectangle.createSquare(1024 * 1024);
+      }
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+      brush.reset();
+      this._renderFrame(stage, stage.matrix, brush);
+
+      brush.flush(options.drawElements);
+
+      this._renderTextures(brush);
     }
   }
 

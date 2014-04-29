@@ -323,7 +323,7 @@ module Shumway.GFX {
       this._invalidateParentPaint();
     }
 
-    get blendMode() {
+    get blendMode(): BlendMode {
       return this._blendMode;
     }
 
