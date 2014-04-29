@@ -31,7 +31,7 @@ module Shumway.AVM2.AS.flash.filters {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = ["clone"];
 
     constructor (blurX: number = 4, blurY: number = 4, quality: number /*int*/ = 1) {
       blurX = +blurX; blurY = +blurY; quality = quality | 0;
