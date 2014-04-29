@@ -31,7 +31,7 @@ module Shumway.AVM2.AS.flash.filters {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = ["clone"];
 
     constructor (matrix: any [] = null) {
       matrix = matrix;
@@ -57,7 +57,16 @@ module Shumway.AVM2.AS.flash.filters {
     private _matrix: number [];
 
     get matrix(): any [] {
-      return this._matrix;
+      if (this._matrix) {
+        return this._matrix.concat();
+      } else {
+        return [
+          1, 0, 0, 0, 0,
+          0, 1, 0, 0, 0,
+          0, 0, 1, 0, 0,
+          0, 0, 0, 1, 0
+        ];
+      }
     }
     set matrix(value: any []) {
       if (!isNullOrUndefined(value)) {
