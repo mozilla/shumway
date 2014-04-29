@@ -31,7 +31,7 @@ module Shumway.AVM2.AS.flash.filters {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = ["clone"];
 
     constructor (matrixX: number = 0, matrixY: number = 0, matrix: any [] = null, divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true, clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0) {
       matrixX = +matrixX; matrixY = +matrixY; matrix = matrix; divisor = +divisor; bias = +bias; preserveAlpha = !!preserveAlpha; clamp = !!clamp; color = color >>> 0; alpha = +alpha;
@@ -40,9 +40,11 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     private expandArray(a: number [], newLen: number /*uint*/) {
-      var i: number = a.length;
-      while (i < newLen) {
-        a[i++] = 0;
+      if (a) {
+        var i: number = a.length;
+        while (i < newLen) {
+          a[i++] = 0;
+        }
       }
     }
 
@@ -63,7 +65,11 @@ module Shumway.AVM2.AS.flash.filters {
     private _alpha: number;
 
     get matrix(): any [] {
-      return this._matrix;
+      if (this._matrix) {
+        return this._matrix.slice(0, this._matrixX * this._matrixY);
+      } else {
+        return this._matrix = Array(this._matrixX * this._matrixY);
+      }
     }
     set matrix(value: any []) {
       if (!isNullOrUndefined(value)) {
@@ -84,7 +90,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._matrixX;
     }
     set matrixX(value: number) {
-      var mx: number = NumberUtilities.clamp(+value, 0, 15);
+      var mx: number = NumberUtilities.clamp(+value, 0, 15) | 0;
       if (this._matrixX !== mx) {
         this._matrixX = mx;
         this.expandArray(this._matrix, mx * this._matrixY);
@@ -95,7 +101,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._matrixY;
     }
     set matrixY(value: number) {
-      var my: number = NumberUtilities.clamp(+value, 0, 15);
+      var my: number = NumberUtilities.clamp(+value, 0, 15) | 0;
       if (this._matrixY !== my) {
         this._matrixY = my;
         this.expandArray(this._matrix, my * this._matrixX);
@@ -105,7 +111,6 @@ module Shumway.AVM2.AS.flash.filters {
       return this._divisor;
     }
     set divisor(value: number) {
-      Debug.somewhatImplemented("public flash.filters.ConvolutionFilter::set divisor");
       this._divisor = +value;
     }
 
@@ -113,7 +118,6 @@ module Shumway.AVM2.AS.flash.filters {
       return this._bias;
     }
     set bias(value: number) {
-      Debug.somewhatImplemented("public flash.filters.ConvolutionFilter::set bias");
       this._bias = +value;
     }
 
@@ -121,7 +125,6 @@ module Shumway.AVM2.AS.flash.filters {
       return this._preserveAlpha;
     }
     set preserveAlpha(value: boolean) {
-      Debug.somewhatImplemented("public flash.filters.ConvolutionFilter::set preserveAlpha");
       this._preserveAlpha = !!value;
     }
 
@@ -129,7 +132,6 @@ module Shumway.AVM2.AS.flash.filters {
       return this._clamp;
     }
     set clamp(value: boolean) {
-      Debug.somewhatImplemented("public flash.filters.ConvolutionFilter::set clamp");
       this._clamp = !!value;
     }
 
@@ -137,7 +139,6 @@ module Shumway.AVM2.AS.flash.filters {
       return this._color;
     }
     set color(value: number /*uint*/) {
-      Debug.somewhatImplemented("public flash.filters.ConvolutionFilter::set color");
       this._color = value >>> 0;
     }
 
@@ -145,7 +146,6 @@ module Shumway.AVM2.AS.flash.filters {
       return this._alpha;
     }
     set alpha(value: number) {
-      Debug.somewhatImplemented("public flash.filters.ConvolutionFilter::set alpha");
       this._alpha = NumberUtilities.clamp(+value, 0, 1);
     }
   }
