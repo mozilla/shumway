@@ -236,7 +236,7 @@ module Shumway.AVM2.AS.flash.display {
           if (tag.hasText) {
             symbol.initialText = tag.initialText;
           }
-          symbol.html = !!tag.symbol;
+          symbol.html = !!tag.html;
           symbol.displayAsPassword = !!tag.password;
           symbol.type = tag.readonly ? flash.text.TextFieldType.DYNAMIC :
                                        flash.text.TextFieldType.INPUT;
