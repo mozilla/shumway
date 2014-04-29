@@ -500,15 +500,27 @@ module Shumway.AVM2.AS.flash.display {
             frame.remove(depth);
             break;
           default:
-            var symbol = this._dictionary[cmd.symbolId];
-            assert (symbol);
+            var symbol = null;
             var matrix = null;
             var colorTransform = null;
+            var filters = null;
+            var events = null;
+            if (cmd.symbolId) {
+              symbol = this._dictionary[cmd.symbolId];
+              assert (symbol);
+            }
             if (cmd.hasMatrix) {
               matrix = Matrix.fromAny(cmd.matrix);
             }
             if (cmd.hasCxform) {
               colorTransform = ColorTransform.fromCXForm(cmd.cxform);
+            }
+            if (cmd.hasFilters) {
+              filters = [];
+              // TODO
+            }
+            if (cmd.hasEvents) {
+              // TODO
             }
             var state = new Timeline.AnimationState(
               symbol,
@@ -518,10 +530,10 @@ module Shumway.AVM2.AS.flash.display {
               cmd.ratio,
               cmd.name,
               cmd.clipDepth,
-              [], // TODO filters
+              filters,
               BlendMode.fromNumber(cmd.blendMode),
               cmd.cache,
-              [] // TODO actions
+              events
             );
             frame.place(depth, state);
             break;

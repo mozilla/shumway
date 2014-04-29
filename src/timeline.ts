@@ -111,11 +111,12 @@ module Shumway.SWF.Timeline {
                 public filters: any [] = null,
                 public blendMode: string = null,
                 public cacheAsBitmap: boolean = false,
-                public actions: any [] = null) {
+                public events: any [] = null) {
     }
 
-    isTarget(displayObject: flash.display.DisplayObject): boolean {
-      return displayObject._symbol === this.symbol && displayObject._ratio === this.ratio;
+    canBeAnimated(displayObject: flash.display.DisplayObject): boolean {
+      return (!this.symbol || displayObject._symbol === this.symbol) &&
+        displayObject._ratio === this.ratio;
     }
   }
 

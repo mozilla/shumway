@@ -201,7 +201,7 @@ module Shumway.AVM2.AS.flash.display {
       var offset = 0;
       var frameNum = 1;
 
-      if (sceneName === null) {
+      if (sceneName !== null) {
         for (var i = 0; i < scenes.length; i++) {
           var scene = scenes[i];
           if (scene.name === sceneName) {
@@ -308,7 +308,7 @@ module Shumway.AVM2.AS.flash.display {
           var child = children[i];
           if (child._depth) {
             var state = stateAtDepth[child._depth];
-            if (!state || !state.isTarget(child)) {
+            if (!state || !state.canBeAnimated(child)) {
               this.removeChildAt(i);
             }
           }
@@ -323,7 +323,7 @@ module Shumway.AVM2.AS.flash.display {
           var state = stateAtDepth[depth];
           if (child) {
             // TODO handle replacing graphics
-            if (state && state.isTarget(child)) {
+            if (state && state.canBeAnimated(child)) {
               child._animate(state);
               continue;
             }
