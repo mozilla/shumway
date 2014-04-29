@@ -58,7 +58,7 @@ module Shumway.AVM2.AS.flash.filters {
 
     get matrix(): any [] {
       if (this._matrix) {
-        return this._matrix;
+        return this._matrix.concat();
       } else {
         return [
           1, 0, 0, 0, 0,

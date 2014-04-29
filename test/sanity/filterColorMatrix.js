@@ -24,5 +24,10 @@
     var o = new flash.filters.ColorMatrixFilter(m);
     eqArray(o.matrix, [1, 2, 3, 4, 5, 6, 7, 8, 9, NaN, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
 
+    var o = new flash.filters.ColorMatrixFilter([1]);
+    neq(o.matrix, o.matrix);
+    o.matrix[0] = 123;
+    eq(o.matrix[0], 1);
+
   });
 })();
