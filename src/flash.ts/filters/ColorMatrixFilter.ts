@@ -60,7 +60,7 @@ module Shumway.AVM2.AS.flash.filters {
       if (this._matrix) {
         return this._matrix.concat();
       } else {
-        return [
+        return this._matrix = [
           1, 0, 0, 0, 0,
           0, 1, 0, 0, 0,
           0, 0, 1, 0, 0,
