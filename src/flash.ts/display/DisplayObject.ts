@@ -189,21 +189,21 @@ module Shumway.AVM2.AS.flash.display {
      * Every displayObject is assigned an unique integer ID.
      */
     private static _nextID = 0;
-    private static _instances: DisplayObject [];
+    static instances: DisplayObject [];
 
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
-      DisplayObject._instances = [];
+      DisplayObject.instances = [];
     };
 
     /**
      * All display objects in the world need to be notified of certain events, here we keep track
      * of all the display objects that were ever constructed.
      */
-    static register(object: DisplayObject) {
-      DisplayObject._instances.push(object);
-      return 'instance' + DisplayObject._instances.length;
+    static register(object: DisplayObject): string {
+      DisplayObject.instances.push(object);
+      return 'instance' + DisplayObject.instances.length;
     }
 
     // Called whenever an instance of the class is initialized.
@@ -263,11 +263,14 @@ module Shumway.AVM2.AS.flash.display {
       self._mouseOver = false;
       self._mouseDown = false;
 
+      self._symbol = null;
+
       if (symbol) {
         self._bounds.copyFrom(symbol.bounds);
         if (symbol.scale9Grid) {
           self._scale9Grid = symbol.scale9Grid.clone();
         }
+        self._symbol = symbol;
       }
     };
     
@@ -290,8 +293,8 @@ module Shumway.AVM2.AS.flash.display {
       return instance;
     }
 
-    static broadcastEvent(event: flash.event.Event) {
-      var instances = DisplayObject._instances;
+    static broadcastEvent(event: flash.events.Event): void {
+      var instances = DisplayObject.instances;
       for (var i = 0; i < instances.length; i++) {
         var instance = instances[i];
         instance.dispatchEvent(event);
@@ -440,6 +443,8 @@ module Shumway.AVM2.AS.flash.display {
     _maskedObject: DisplayObject;
     _mouseOver: boolean;
     _mouseDown: boolean;
+
+    _symbol: Shumway.SWF.Timeline.Symbol;
 
 
     /**

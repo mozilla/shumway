@@ -25,16 +25,25 @@ module Shumway.AVM2.AS.flash.display {
   var FrameLabel: typeof flash.display.FrameLabel;
 
   export class MovieClip extends flash.display.Sprite {
-    
+
+    static instances: MovieClip [];
+
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       Scene = flash.display.Scene;
       FrameLabel = flash.display.FrameLabel;
+
+      MovieClip.instances = [];
     };
+
+    static registerMovieClip(object: MovieClip): void {
+      MovieClip.instances.push(object);
+    }
     
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.SWF.Timeline.SpriteSymbol) {
       var self: MovieClip = this;
+      MovieClip.registerMovieClip(self);
 
       self._currentFrame = 0;
       self._framesLoaded = 1;
@@ -49,12 +58,15 @@ module Shumway.AVM2.AS.flash.display {
       self._frames = [];
       self._sceneIndex = 0;
       self._frameScripts = [];
-      self._lastFrameAbs = 0;
-      self._nextFrameAbs = 1;
+      self._currentFrameAbs = 1;
+      self._nextFrameAbs = 2;
+      self._hasNewFrame = true;
+      self._stopped = false;
 
       if (symbol) {
         self._framesLoaded = symbol.frames.length;
         self._totalFrames = symbol.numFrames;
+        self._currentFrame = 1;
         if (!symbol.isRoot) {
           this.addScene('', symbol.labels, symbol.numFrames);
         }
@@ -69,7 +81,24 @@ module Shumway.AVM2.AS.flash.display {
     
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["currentLabels"];
-    
+
+    static initFrame(): void {
+      var instances = MovieClip.instances;
+      for (var i = 0; i < instances.length; i++) {
+        instances[i].advanceFrame();
+      }
+    }
+
+    static executeFrame(): void {
+      var instances = MovieClip.instances;
+      for (var i = 0; i < instances.length; i++) {
+        var instance = instances[i];
+        if (instance._hasNewFrame) {
+          instance.callFrame(instance._currentFrameAbs);
+        }
+      }
+    }
+
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.MovieClip");
@@ -94,8 +123,10 @@ module Shumway.AVM2.AS.flash.display {
     _frames: Shumway.SWF.Timeline.Frame [];
     _sceneIndex: number;
     _frameScripts: any;
-    _lastFrameAbs: number;
+    _currentFrameAbs: number;
     _nextFrameAbs: number;
+    _hasNewFrame: boolean;
+    _stopped: boolean;
 
     get currentFrame(): number /*int*/ {
       return this._currentFrame;
@@ -150,11 +181,18 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     play(): void {
-      this._isPlaying = true;
+      if (this._totalFrames > 1) {
+        this._isPlaying = true;
+      }
+      if (this._stopped && this._currentFrameAbs === this._nextFrameAbs) {
+        this._nextFrameAbs++;
+        this._stopped = false;
+      }
     }
 
     stop(): void {
       this._isPlaying = false;
+      this._stopped = true;
     }
 
     gotoFrame(frame: any, sceneName: string = null) {
@@ -227,9 +265,9 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * WIP
      */
-    advanceFrame() {
+    advanceFrame():void {
       var scenes = this._scenes;
-      var lastFrame = this._lastFrameAbs;
+      var lastFrame = this._currentFrameAbs;
       var nextFrame = this._nextFrameAbs;
 
       if (nextFrame > this._totalFrames) {
@@ -254,34 +292,77 @@ module Shumway.AVM2.AS.flash.display {
       //}
 
       if (nextFrame === lastFrame) {
+        this._hasNewFrame = false;
         return;
       }
 
       if (nextFrame > this._framesLoaded) {
         // TODO
+        return;
+      }
+
+      var frames = this._frames;
+
+      if (nextFrame < lastFrame) {
+        var stateAtDepth = frame.stateAtDepth;
+        var children = this._children;
+        for (var i = 0; i < children.length; i++) {
+          var child = children[i];
+          if (child._depth) {
+            this.removeChildAt(i);
+          }
+        }
+        this._initializeChildren(frames[0]);
+        lastFrame = 1;
+      }
+
+      for (var i = lastFrame; i < nextFrame; i++) {
+        var frame = frames[i];
+        var stateAtDepth = frame.stateAtDepth;
+        for (var depth in stateAtDepth) {
+          var child = this.getChildAtDepth(depth);
+          var state = stateAtDepth[depth];
+          if (child) {
+            if (state) {
+              // TODO handle graphics update
+              if (child._symbol !== state.symbol) {
+                child._animate(state);
+                continue;
+              }
+            }
+            this.removeChild(child);
+            if (!state) {
+              continue;
+            }
+          }
+          if (state) {
+            var character = DisplayObject.createAnimatedDisplayObject(state, false);
+            this.addChildAtDepth(character, state.depth);
+          }
+        }
       }
 
       var currentFrame = nextFrame;
       var sceneIndex = 0;
 
+      var offset = 0;
       while (sceneIndex < scenes.length) {
         var scene = scenes[sceneIndex];
         if (currentFrame < scene.offset) {
           break;
         }
+        currentFrame -= offset;
         sceneIndex++;
-        currentFrame -= scene.offset;
+        offset += scene.numFrames;
       }
-
-      // TODO
 
       this._currentFrame = currentFrame;
       this._sceneIndex = sceneIndex;
-      this._lastFrameAbs = nextFrame;
-      if (this._isPlaying) {
-        nextFrame++;
+      this._currentFrameAbs = nextFrame;
+      if (!this._stopped) {
+        this._nextFrameAbs = nextFrame + 1;
       }
-      this._nextFrameAbs = nextFrame;
+      this._hasNewFrame = true;
     }
 
     nextFrame(): void {

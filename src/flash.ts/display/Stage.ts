@@ -24,14 +24,28 @@ module Shumway.AVM2.AS.flash.display {
   import ColorCorrectionSupport = flash.display.ColorCorrectionSupport;
   import StageQuality = flash.display.StageQuality;
 
-  var DisplayObject: typeof flash.display.DisplayObject;
   var Event: typeof flash.events.Event;
+  var DisplayObject: typeof flash.display.DisplayObject;
+  var Sprite: typeof flash.display.Sprite;
+  var MovieClip: typeof flash.display.MovieClip;
+
+  var enterFrameEvent: flash.events.Event;
+  var frameConstructedEvent: flash.events.Event;
+  var exitFrameEvent: flash.events.Event;
+  var renderEvent: flash.events.Event;
 
   export class Stage extends flash.display.DisplayObjectContainer {
 
     static classInitializer: any = function () {
-      DisplayObject = flash.display.DisplayObject;
       Event = flash.events.Event;
+      DisplayObject = flash.display.DisplayObject;
+      Sprite = flash.display.Sprite;
+      MovieClip = flash.display.MovieClip;
+
+      enterFrameEvent = new flash.events.Event(Event.ENTER_FRAME);
+      frameConstructedEvent = new flash.events.Event(Event.FRAME_CONSTRUCTED);
+      exitFrameEvent = new flash.events.Event(Event.EXIT_FRAME);
+      renderEvent = new flash.events.Event(Event.RENDER);
     };
 
     static classSymbols: string [] = null; // [];
@@ -70,6 +84,7 @@ module Shumway.AVM2.AS.flash.display {
       this._contentsScaleFactor = 1;
       this._displayContextInfo = null;
 
+      this._timeoutID = -1;
       this._invalid = false;
     }
     
@@ -104,6 +119,7 @@ module Shumway.AVM2.AS.flash.display {
     private _contentsScaleFactor: number;
     private _displayContextInfo: string;
 
+    private _timeoutID: number;
     private _invalid: boolean;
 
     get frameRate(): number {
@@ -294,27 +310,32 @@ module Shumway.AVM2.AS.flash.display {
       var firstRun = true;
 
       (function tick() {
-        setTimeout(tick, 1000 / stage._frameRate);
+        stage._timeoutID = setTimeout(tick, 1000 / stage._frameRate);
 
-        if (firstRun) {
-          firstRun = false;
-        } else {
-          // advance frames
-          DisplayObject.broadcastEvent(new Event(Event.ENTER_FRAME));
-          // construct children
+        if (!firstRun) {
+          MovieClip.initFrame();
+          DisplayObject.broadcastEvent(enterFrameEvent);
+          Sprite.constructFrame();
         }
 
-        DisplayObject.broadcastEvent(new Event(Event.FRAME_CONSTRUCTED));
-        // execute frame scripts
-        DisplayObject.broadcastEvent(new Event(Event.EXIT_FRAME));
+        DisplayObject.broadcastEvent(frameConstructedEvent);
+        MovieClip.executeFrame();
+        DisplayObject.broadcastEvent(exitFrameEvent);
 
-        if (this._invalid) {
-          DisplayObject.broadcastEvent(new Event(Event.RENDER));
-          this._invalid = false;
+        if (stage._invalid && !firstRun) {
+          DisplayObject.broadcastEvent(renderEvent);
+          stage._invalid = false;
         }
 
         // handle input
+
+        firstRun = false;
       })();
+    }
+
+    leaveEventLoop(): void {
+      assert (this._timeoutID > -1);
+      clearInterval(this._timeoutID);
     }
   }
 }

@@ -233,7 +233,10 @@ module Shumway.AVM2.AS.flash.display {
 
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
-        var child = child[i];
+        var child = children[i];
+        if (child._depth > depth) {
+          break;
+        }
         if (child._depth === depth) {
           return child;
         }
