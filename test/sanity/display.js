@@ -5,7 +5,7 @@
   var FrameContainer = Shumway.GFX.FrameContainer;
   var Geometry = Shumway.GFX.Geometry;
 
-  Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/shaders/";
+  Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
 
   function syncOptions(options) {
     options.perspectiveCamera = perspectiveCamera.value;
@@ -138,6 +138,7 @@
           this.isInvalid = false;
         });
         // frame = new GFXShape(renderable);
+        // frame = new GFXShape(Shumway.getRandomShape());
         frame = new GFXShape(s);
       }
       var m = node.transform.matrix;
@@ -146,6 +147,14 @@
         0.5 + Math.random(), 0.5 + Math.random(), 0.5 + Math.random(), 1,
         0, 0, 0, 0
       );
+      var blendModes = [
+        Shumway.GFX.BlendMode.Multiply,
+        Shumway.GFX.BlendMode.Screen,
+        Shumway.GFX.BlendMode.Normal,
+        Shumway.GFX.BlendMode.Add
+      ];
+      frame.blendMode = blendModes[(Math.random() * blendModes.length) | 0];
+      frame.blendMode = Shumway.GFX.BlendMode.Screen;
       frameMap[node._id] = frame;
       return frame;
     }
@@ -158,15 +167,15 @@
 
     // var r = createDisplayObjectTree(6, 4, 16, 16);
     // var r = createDisplayObjectTree(1, 4, 128, 128);
-    var r = createDisplayObjectTree(3, 2, 32, 32);
+    var r = createDisplayObjectTree(4, 4, 32, 32);
 
 
     r.visit(function (node) {
       if (r === node) {
         return VisitorFlags.Continue;
       }
-      node.rotationSpeed = (Math.random() - 0.5) / 10;
-      // node.scaleSpeed = Math.random() / 1000;
+      node.rotationSpeed = (Math.random() - 0.5) / 2;
+      node.scaleSpeed = Math.random() / 1000;
       node.scale = 0.5 + Math.random() / 2;
       node.scaleSpeed = Math.random() / 500;
       // node.scaleX = node.scaleY = 1.5;
@@ -200,8 +209,8 @@
           node.scale += node.scaleSpeed;
 //          node.scaleX = Math.min(Math.abs(node.scaleX + node.scaleSpeed), 1.2);
 //          node.scaleY = Math.min(Math.abs(node.scaleY + node.scaleSpeed), 1.2);
-          node.scaleX = Math.abs(Math.sin(node.scale) * 1.5);
-          node.scaleY = Math.abs(Math.sin(node.scale) * 1.5);
+          node.scaleX = Math.abs(Math.sin(node.scale) * 1.2);
+          node.scaleY = Math.abs(Math.sin(node.scale) * 1.2);
 //          node.scaleX += node.scaleSpeed;
 //          node.scaleY += node.scaleSpeed;
         }
@@ -212,7 +221,6 @@
         var f = frameMap[node._id];
         var m = node.transform.matrix;
         f.matrix = new Geometry.Matrix(m.a, m.b, m.c, m.d, m.tx, m.ty);
-        f.blendMode = 8;
         return VisitorFlags.Continue;
       });
 

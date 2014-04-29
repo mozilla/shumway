@@ -113,10 +113,12 @@ module Shumway.GFX.GL {
         case BlendMode.Screen:
           gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
           break;
+        case BlendMode.Normal:
         case BlendMode.Default:
-        default:
           gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
           break;
+        default:
+          notImplemented("Blend Mode: " + value);
       }
     }
 
