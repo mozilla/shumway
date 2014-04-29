@@ -34,19 +34,19 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (matrixX: number = 0, matrixY: number = 0, matrix: any [] = null, divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true, clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0) {
-      this.matrixX = +matrixX;
-      this.matrixY = +matrixY;
+      this.matrixX = matrixX;
+      this.matrixY = matrixY;
       if (matrix) {
         this.matrix = matrix;
       } else {
         this._matrix = Array(this._matrixX * this._matrixY);
       }
-      this.divisor = +divisor;
-      this.bias = +bias;
-      this.preserveAlpha = !!preserveAlpha;
-      this.clamp = !!clamp;
-      this.color = color >>> 0;
-      this.alpha = +alpha;
+      this.divisor = divisor;
+      this.bias = bias;
+      this.preserveAlpha = preserveAlpha;
+      this.clamp = clamp;
+      this.color = color;
+      this.alpha = alpha;
       super();
     }
 
@@ -155,7 +155,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return super.clone() || new ConvolutionFilter(
+      return new ConvolutionFilter(
         this._matrixX,
         this._matrixY,
         this.matrix,

@@ -1,12 +1,12 @@
 /**
  * Copyright 2014 Mozilla Foundation
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -36,17 +36,17 @@ module Shumway.AVM2.AS.flash.filters {
 
     constructor (distance: number = 4, angle: number = 45, colors: any [] = null, alphas: any [] = null, ratios: any [] = null, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
       somewhatImplemented("public flash.filters.GradientGlowFilter ctor");
-      this.distance = +distance;
-      this.angle = +angle;
+      this.distance = distance;
+      this.angle = angle;
       this.colors = colors;
       this.alphas = alphas;
       this.ratios = ratios;
-      this.blurX = +blurX;
-      this.blurY = +blurY;
-      this.strength = +strength;
-      this.quality = quality | 0;
-      this.type = asCoerceString(type);
-      this.knockout = !!knockout;
+      this.blurX = blurX;
+      this.blurY = blurY;
+      this.strength = strength;
+      this.quality = quality;
+      this.type = type;
+      this.knockout = knockout;
       super();
     }
 
@@ -155,7 +155,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return super.clone() || new GradientGlowFilter(
+      return new GradientGlowFilter(
         this._distance,
         this._angle,
         this.colors,

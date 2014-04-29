@@ -83,7 +83,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return super.clone() || new ColorMatrixFilter(this.matrix);
+      return new ColorMatrixFilter(this.matrix);
     }
   }
 }

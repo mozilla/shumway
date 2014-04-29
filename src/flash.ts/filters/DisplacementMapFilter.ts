@@ -36,13 +36,13 @@ module Shumway.AVM2.AS.flash.filters {
     constructor (mapBitmap: flash.display.BitmapData = null, mapPoint: flash.geom.Point = null, componentX: number /*uint*/ = 0, componentY: number /*uint*/ = 0, scaleX: number = 0, scaleY: number = 0, mode: string = "wrap", color: number /*uint*/ = 0, alpha: number = 0) {
       this.mapBitmap = mapBitmap;
       this.mapPoint = mapPoint;
-      this.componentX = componentX >>> 0;
-      this.componentY = componentY >>> 0;
-      this.scaleX = +scaleX;
-      this.scaleY = +scaleY;
-      this.mode = asCoerceString(mode);
-      this.color = color >>> 0;
-      this.alpha = +alpha;
+      this.componentX = componentX;
+      this.componentY = componentY;
+      this.scaleX = scaleX;
+      this.scaleY = scaleY;
+      this.mode = mode;
+      this.color = color;
+      this.alpha = alpha;
       super();
     }
 
@@ -115,7 +115,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
     set mode(value: string) {
       Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::set mode");
-      this._mode = "" + value;
+      this._mode = asCoerceString(value);
     }
 
     get color(): number /*uint*/ {
@@ -135,7 +135,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return super.clone() || new DisplacementMapFilter(
+      return new DisplacementMapFilter(
         this._mapBitmap,
         this._mapPoint,
         this._componentX,

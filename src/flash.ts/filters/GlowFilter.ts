@@ -34,14 +34,14 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (color: number /*uint*/ = 16711680, alpha: number = 1, blurX: number = 6, blurY: number = 6, strength: number = 2, quality: number /*int*/ = 1, inner: boolean = false, knockout: boolean = false) {
-      this.color = color >>> 0;
-      this.alpha = +alpha;
-      this.blurX = +blurX;
-      this.blurY = +blurY;
-      this.strength = +strength;
-      this.quality = quality | 0;
-      this.inner = !!inner;
-      this.knockout = !!knockout;
+      this.color = color;
+      this.alpha = alpha;
+      this.blurX = blurX;
+      this.blurY = blurY;
+      this.strength = strength;
+      this.quality = quality;
+      this.inner = inner;
+      this.knockout = knockout;
       super();
     }
 
@@ -134,7 +134,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return super.clone() || new GlowFilter(
+      return new GlowFilter(
         this._color,
         this._alpha,
         this._blurX,

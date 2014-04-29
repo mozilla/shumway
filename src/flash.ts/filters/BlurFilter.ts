@@ -34,9 +34,9 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (blurX: number = 4, blurY: number = 4, quality: number /*int*/ = 1) {
-      this.blurX = +blurX;
-      this.blurY = +blurY;
-      this.quality = quality | 0;
+      this.blurX = blurX;
+      this.blurY = blurY;
+      this.quality = quality;
       super();
     }
 
@@ -94,7 +94,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     clone(): BitmapFilter {
-      return super.clone() || new BlurFilter(this._blurX, this._blurY, this._quality);
+      return new BlurFilter(this._blurX, this._blurY, this._quality);
     }
   }
 }

@@ -34,16 +34,16 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (distance: number = 4, angle: number = 45, highlightColor: number /*uint*/ = 16777215, highlightAlpha: number = 1, shadowColor: number /*uint*/ = 0, shadowAlpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
-      this.distance = +distance;
-      this.angle = +angle;
-      this.highlightColor = highlightColor >>> 0;
-      this.highlightAlpha = +highlightAlpha;
-      this.shadowColor = shadowColor >>> 0;
-      this.shadowAlpha = +shadowAlpha;
-      this.blurX = +blurX;
-      this.blurY = +blurY;
-      this.strength = +strength;
-      this.quality = quality | 0;
+      this.distance = distance;
+      this.angle = angle;
+      this.highlightColor = highlightColor;
+      this.highlightAlpha = highlightAlpha;
+      this.shadowColor = shadowColor;
+      this.shadowAlpha = shadowAlpha;
+      this.blurX = blurX;
+      this.blurY = blurY;
+      this.strength = strength;
+      this.quality = quality;
       this.type = asCoerceString(type);
       this.knockout = !!knockout;
       super();
@@ -166,20 +166,20 @@ module Shumway.AVM2.AS.flash.filters {
       return this._type;
     }
     set type(value: string) {
-      value = "" + value;
-      if (isString(value)) {
+      value = asCoerceString(value);
+      if (value === null) {
+        Runtime.throwError("TypeError", Errors.NullPointerError, "type");
+      } else {
         if (value === BitmapFilterType.INNER || value === BitmapFilterType.OUTER) {
           this._type = value;
         } else {
           this._type = BitmapFilterType.FULL;
         }
-      } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "type");
       }
     }
 
     clone(): BitmapFilter {
-      return super.clone() || new BevelFilter(
+      return new BevelFilter(
         this._distance,
         this._angle,
         this._highlightColor,
