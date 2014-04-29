@@ -84,7 +84,7 @@ module Shumway.AVM2.AS.flash.display {
       this._startPromise = Promise.resolve();
       this._lastPromise = this._startPromise;
 
-      this._dictionary[0] = new Timeline.SpriteSymbol(0);
+      this._dictionary[0] = new Timeline.SpriteSymbol(0, true);
     }
 
     // JS -> AS Bindings
@@ -169,7 +169,7 @@ module Shumway.AVM2.AS.flash.display {
             break;
           }
           if (data.isSymbol) {
-            this._commitSymbol(data);
+            this._commitAsset(data);
           } else if (data.type === 'frame') {
             this._commitFrame(data);
           } else if (data.type === 'image') {
@@ -192,31 +192,31 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * WIP
      */
-    private _commitSymbol(symbolInfo: any): void {
+    private _commitAsset(data: any): void {
       var symbol;
-      var symbolId = symbolInfo.id;
-      switch (symbolInfo.type) {
+      var symbolId = data.id;
+      switch (data.type) {
         case 'shape':
           symbol = new Timeline.ShapeSymbol(symbolId);
           symbol.graphics = new Graphics();
-          if (symbolInfo.strokeBbox) {
+          if (data.strokeBbox) {
             symbol.strokeBounds = new Rectangle();
-            symbol.strokeBounds.copyFromBbox(symbolInfo.strokeBbox);
+            symbol.strokeBounds.copyFromBbox(data.strokeBbox);
           }
           break;
         case 'image':
           symbol = new Timeline.BitmapSymbol(symbolId);
-          symbol.width = symbolInfo.width;
-          symbol.height = symbolInfo.height;
+          symbol.width = data.width;
+          symbol.height = data.height;
           break;
         case 'label':
         case 'text':
           symbol = new Timeline.TextSymbol(symbolId);
-          symbol.tag = symbolInfo.tag || { };
+          symbol.tag = data.tag || { };
           break;
         case 'button':
           symbol = new Timeline.ButtonSymbol(symbolId);
-          var states = symbolInfo.states;
+          var states = data.states;
           var character, matrix, colorTransform;
           for (var stateName in states) {
             var commands = states[stateName];
@@ -238,8 +238,8 @@ module Shumway.AVM2.AS.flash.display {
           break;
         case 'sprite':
           symbol = new Timeline.SpriteSymbol(symbolId);
-          symbol.numFrames = symbolInfo.frameCount;
-          var frames = symbolInfo.frames;
+          symbol.numFrames = data.frameCount;
+          var frames = data.frames;
           for (var i = 0; i < frames.length; i++) {
             var frameInfo = frames[i];
             var frame = this._buildFrame(frameInfo.commands);
@@ -282,7 +282,7 @@ module Shumway.AVM2.AS.flash.display {
           break;
         case 'font':
           var font = flash.text.Font.createEmbeddedFont(
-            symbolInfo.name, symbolInfo.bold, symbolInfo.italic
+            data.name, data.bold, data.italic
           );
           //flash.text.Font.registerFont(font);
           return;
@@ -293,8 +293,8 @@ module Shumway.AVM2.AS.flash.display {
           // TODO
           return;
       }
-      if (symbolInfo.bbox) {
-        symbol.bounds.copyFromBbox(symbolInfo.bbox);
+      if (data.bbox) {
+        symbol.bounds.copyFromBbox(data.bbox);
       }
       this._dictionary[symbolId] = symbol;
     }
@@ -302,11 +302,11 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * WIP
      */
-    private _commitFrame(frameInfo: any): void {
+    private _commitFrame(data: any): void {
       var loaderInfo = this._contentLoaderInfo;
 
-      if (frameInfo.symbolClasses) {
-        var symbolClasses = frameInfo.symbolClasses;
+      if (data.symbolClasses) {
+        var symbolClasses = data.symbolClasses;
         var appDomain = AVM2.instance.applicationDomain;
         for (var i = 0; i < symbolClasses.length; i++) {
           var asset = symbolClasses[i];
@@ -334,8 +334,8 @@ module Shumway.AVM2.AS.flash.display {
       var frames = rootSymbol.frames;
       var frameIndex = frames.length;
 
-      var frame = this._buildFrame(frameInfo.commands);
-      var repeat = frameInfo.repeat;
+      var frame = this._buildFrame(data.commands);
+      var repeat = data.repeat;
       while (repeat--) {
         frames.push(frame);
       }
@@ -343,8 +343,6 @@ module Shumway.AVM2.AS.flash.display {
       var root = this._content;
       if (!root) {
         root = documentClass.initializeFrom(rootSymbol);
-        root._root = root;
-        root._name = 'root1';
 
         //if (!loader._isAvm2Enabled) {
         //  var avm1Context = loader._avm1Context;
@@ -383,13 +381,13 @@ module Shumway.AVM2.AS.flash.display {
         //this.addChild(root);
       }
 
-      if (MovieClip.isType(root)) {
+      if (flash.display.MovieClip.isType(root)) {
         var mc = <MovieClip>root;
         mc._framesLoaded = frames.length;
 
-        if (frameInfo.sceneData) {
-          var scenes = frameInfo.sceneData.scenes;
-          var allLabels = frameInfo.sceneData.labels;
+        if (data.sceneData) {
+          var scenes = data.sceneData.scenes;
+          var allLabels = data.sceneData.labels;
           for (var i = 0, n = scenes.length; i < n; i++) {
             var sceneInfo = scenes[i];
             var startFrame = sceneInfo.offset;
@@ -404,10 +402,12 @@ module Shumway.AVM2.AS.flash.display {
             }
             mc.addScene(sceneInfo.name, labels, endFrame - startFrame);
           }
+        } else {
+          mc.addScene('Scene 1', [], rootSymbol.numFrames);
         }
 
-        if (frameInfo.labelName) {
-          mc.addFrameLabel(frameIndex, frameInfo.labelName);
+        if (data.labelName) {
+          mc.addFrameLabel(frameIndex, data.labelName);
         }
       }
 

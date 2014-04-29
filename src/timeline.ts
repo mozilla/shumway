@@ -72,9 +72,11 @@ module Shumway.SWF.Timeline {
     numFrames: number = 1;
     frames: Frame [] = [];
     labels: flash.display.FrameLabel [] = [];
+    isRoot: boolean;
 
-    constructor(id: number) {
+    constructor(id: number, isRoot: boolean = false) {
       super(id, flash.display.MovieClip);
+      this.isRoot = isRoot;
     }
   }
 

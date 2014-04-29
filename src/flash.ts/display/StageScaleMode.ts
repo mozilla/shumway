@@ -44,6 +44,35 @@ module Shumway.AVM2.AS.flash.display {
     
     
     // AS -> JS Bindings
-    
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+          return StageScaleMode.SHOW_ALL;
+        case 1:
+          return StageScaleMode.EXACT_FIT;
+        case 2:
+          return StageScaleMode.NO_BORDER;
+        case 4:
+          return StageScaleMode.NO_SCALE;
+        default:
+          return null;
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case StageScaleMode.SHOW_ALL:
+          return 0;
+        case StageScaleMode.EXACT_FIT:
+          return 1;
+        case StageScaleMode.NO_BORDER:
+          return 2;
+        case StageScaleMode.NO_SCALE:
+          return 3;
+        default:
+          return -1;
+      }
+    }
   }
 }

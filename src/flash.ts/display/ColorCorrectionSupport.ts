@@ -43,6 +43,31 @@ module Shumway.AVM2.AS.flash.display {
     
     
     // AS -> JS Bindings
-    
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+          return ColorCorrectionSupport.UNSUPPORTED;
+        case 1:
+          return ColorCorrectionSupport.DEFAULT_ON;
+        case 2:
+          return ColorCorrectionSupport.DEFAULT_OFF;
+        default:
+          return null;
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case ColorCorrectionSupport.UNSUPPORTED:
+          return 0;
+        case ColorCorrectionSupport.DEFAULT_ON:
+          return 1;
+        case ColorCorrectionSupport.DEFAULT_OFF:
+          return 2;
+        default:
+          return -1;
+      }
+    }
   }
 }

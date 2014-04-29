@@ -48,6 +48,55 @@ module Shumway.AVM2.AS.flash.display {
     
     
     // AS -> JS Bindings
-    
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+          return '';
+        case 1:
+          return StageAlign.TOP;
+        case 2:
+          return StageAlign.LEFT;
+        case 3:
+          return StageAlign.BOTTOM;
+        case 4:
+          return StageAlign.RIGHT;
+        case 5:
+          return StageAlign.TOP_LEFT;
+        case 6:
+          return StageAlign.TOP_RIGHT;
+        case 7:
+          return StageAlign.BOTTOM_LEFT;
+        case 8:
+          return StageAlign.BOTTOM_RIGHT;
+        default:
+          return null;
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case '':
+          return 0;
+        case StageAlign.TOP:
+          return 1;
+        case StageAlign.LEFT:
+          return 2;
+        case StageAlign.BOTTOM:
+          return 3;
+        case StageAlign.RIGHT:
+          return 4;
+        case StageAlign.TOP_LEFT:
+          return 5;
+        case StageAlign.TOP_RIGHT:
+          return 6;
+        case StageAlign.BOTTOM_LEFT:
+          return 7;
+        case StageAlign.BOTTOM_RIGHT:
+          return 8;
+        default:
+          return -1;
+      }
+    }
   }
 }

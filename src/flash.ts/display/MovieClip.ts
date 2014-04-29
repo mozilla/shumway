@@ -53,10 +53,14 @@ module Shumway.AVM2.AS.flash.display {
       self._nextFrameAbs = 1;
 
       if (symbol) {
+        self._framesLoaded = symbol.frames.length;
         self._totalFrames = symbol.numFrames;
-        this.addScene('Scene 1', symbol.labels, self._totalFrames);
+        if (!symbol.isRoot) {
+          this.addScene('', symbol.labels, symbol.numFrames);
+        }
+        self._frames = symbol.frames;
       } else {
-        this.addScene('Scene 1', [], self._totalFrames);
+        this.addScene('', [], self._totalFrames);
       }
     };
     
@@ -159,7 +163,7 @@ module Shumway.AVM2.AS.flash.display {
       var offset = 0;
       var frameNum = 1;
 
-      if (sceneName) {
+      if (sceneName === null) {
         for (var i = 0; i < scenes.length; i++) {
           var scene = scenes[i];
           if (scene.name === sceneName) {
@@ -319,7 +323,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     addScene(name: string, labels: any [], numFrames: number): void {
-      this._scenes.push(name, labels, numFrames);
+      this._scenes.push(new Scene(name, labels, numFrames));
     }
 
     addFrameLabel(...args): void {

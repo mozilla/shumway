@@ -40,9 +40,34 @@ module Shumway.AVM2.AS.flash.display {
     static DEFAULT: string = "default";
     static ON: string = "on";
     static OFF: string = "off";
-    
-    
+
+
     // AS -> JS Bindings
-    
+
+    static fromNumber(n: number): string {
+      switch (n) {
+        case 0:
+          return ColorCorrection.DEFAULT;
+        case 1:
+          return ColorCorrection.ON;
+        case 2:
+          return ColorCorrection.OFF;
+        default:
+          return null;
+      }
+    }
+
+    static toNumber(value: string): number {
+      switch (value) {
+        case ColorCorrection.DEFAULT:
+          return 0;
+        case ColorCorrection.ON:
+          return 1;
+        case ColorCorrection.OFF:
+          return 2;
+        default:
+          return -1;
+      }
+    }
   }
 }

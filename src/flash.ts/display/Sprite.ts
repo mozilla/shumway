@@ -38,8 +38,16 @@ module Shumway.AVM2.AS.flash.display {
       self._hitArea = null;
       self._useHandCursor = true;
 
-      if (symbol && symbol.frames.length) {
-        this._initializeChildren(symbol.frames[0]);
+      if (symbol) {
+        if (symbol.isRoot) {
+          self._root = self;
+          self._name = self._name.replace('instance', 'root');
+        }
+        if (symbol.numFrames) {
+          var frame = symbol.frames[0];
+          assert (frame);
+          self._initializeChildren(frame);
+        }
       }
     };
     
