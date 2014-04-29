@@ -155,7 +155,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._quality;
     }
     set quality(value: number /*int*/) {
-      this._quality = NumberUtilities.clamp(value | 0, 0, 255);;
+      this._quality = NumberUtilities.clamp(value | 0, 0, 15);;
     }
 
     get strength(): number {
