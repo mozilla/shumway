@@ -29,5 +29,10 @@
     o.matrix[0] = 123;
     eq(o.matrix[0], 1);
 
+    var o1 = new flash.filters.ColorMatrixFilter();
+    var o2 = o1.clone();
+    neq(o1.matrix, o2.matrix);
+    eqArray(o1.matrix, o2.matrix);
+
   });
 })();
