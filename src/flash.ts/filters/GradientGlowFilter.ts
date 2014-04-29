@@ -15,143 +15,159 @@
  */
 // Class: GradientGlowFilter
 module Shumway.AVM2.AS.flash.filters {
+
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
   export class GradientGlowFilter extends flash.filters.BitmapFilter {
-    
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
+
     // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
+
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
+
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["clone"];
-    
+    static instanceSymbols: string [] = null;
+
     constructor (distance: number = 4, angle: number = 45, colors: any [] = null, alphas: any [] = null, ratios: any [] = null, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
-      distance = +distance; angle = +angle; colors = colors; alphas = alphas; ratios = ratios; blurX = +blurX; blurY = +blurY; strength = +strength; quality = quality | 0; type = asCoerceString(type); knockout = !!knockout;
-      false && super();
-      notImplemented("Dummy Constructor: public flash.filters.GradientGlowFilter");
+      somewhatImplemented("public flash.filters.GradientGlowFilter ctor");
+      this.distance = +distance;
+      this.angle = +angle;
+      this.colors = colors;
+      this.alphas = alphas;
+      this.ratios = ratios;
+      this.blurX = +blurX;
+      this.blurY = +blurY;
+      this.strength = +strength;
+      this.quality = quality | 0;
+      this.type = asCoerceString(type);
+      this.knockout = !!knockout;
+      super();
     }
-    
+
     // JS -> AS Bindings
-    
-    clone: () => flash.filters.BitmapFilter;
-    
+
     // AS -> JS Bindings
-    
-    // _angle: number;
-    // _alphas: any [];
-    // _blurX: number;
-    // _blurY: number;
-    // _colors: any [];
-    // _distance: number;
-    // _knockout: boolean;
-    // _quality: number /*int*/;
-    // _ratios: any [];
-    // _strength: number;
-    // _type: string;
-    get angle(): number {
-      notImplemented("public flash.filters.GradientGlowFilter::get angle"); return;
-      // return this._angle;
-    }
-    set angle(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.GradientGlowFilter::set angle"); return;
-      // this._angle = value;
-    }
-    get alphas(): any [] {
-      notImplemented("public flash.filters.GradientGlowFilter::get alphas"); return;
-      // return this._alphas;
-    }
-    set alphas(value: any []) {
-      value = value;
-      notImplemented("public flash.filters.GradientGlowFilter::set alphas"); return;
-      // this._alphas = value;
-    }
-    get blurX(): number {
-      notImplemented("public flash.filters.GradientGlowFilter::get blurX"); return;
-      // return this._blurX;
-    }
-    set blurX(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.GradientGlowFilter::set blurX"); return;
-      // this._blurX = value;
-    }
-    get blurY(): number {
-      notImplemented("public flash.filters.GradientGlowFilter::get blurY"); return;
-      // return this._blurY;
-    }
-    set blurY(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.GradientGlowFilter::set blurY"); return;
-      // this._blurY = value;
-    }
-    get colors(): any [] {
-      notImplemented("public flash.filters.GradientGlowFilter::get colors"); return;
-      // return this._colors;
-    }
-    set colors(value: any []) {
-      value = value;
-      notImplemented("public flash.filters.GradientGlowFilter::set colors"); return;
-      // this._colors = value;
-    }
+
+    private _angle: number;
+    private _alphas: any [];
+    private _blurX: number;
+    private _blurY: number;
+    private _colors: any [];
+    private _distance: number;
+    private _knockout: boolean;
+    private _quality: number /*int*/;
+    private _ratios: any [];
+    private _strength: number;
+    private _type: string;
+
     get distance(): number {
-      notImplemented("public flash.filters.GradientGlowFilter::get distance"); return;
-      // return this._distance;
+      return this._distance;
     }
     set distance(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.GradientGlowFilter::set distance"); return;
-      // this._distance = value;
+      somewhatImplemented("public flash.filters.GradientGlowFilter::set distance");
+      this._distance = +value;
     }
-    get knockout(): boolean {
-      notImplemented("public flash.filters.GradientGlowFilter::get knockout"); return;
-      // return this._knockout;
+
+    get angle(): number {
+      return this._angle;
     }
-    set knockout(value: boolean) {
-      value = !!value;
-      notImplemented("public flash.filters.GradientGlowFilter::set knockout"); return;
-      // this._knockout = value;
+    set angle(value: number) {
+      somewhatImplemented("public flash.filters.GradientGlowFilter::set angle");
+      this._angle = +value;
     }
-    get quality(): number /*int*/ {
-      notImplemented("public flash.filters.GradientGlowFilter::get quality"); return;
-      // return this._quality;
+
+    get colors(): any [] {
+      return this._colors;
     }
-    set quality(value: number /*int*/) {
-      value = value | 0;
-      notImplemented("public flash.filters.GradientGlowFilter::set quality"); return;
-      // this._quality = value;
+    set colors(value: any []) {
+      somewhatImplemented("public flash.filters.GradientGlowFilter::set colors");
+      this._colors = value;
     }
+
+    get alphas(): any [] {
+      return this._alphas;
+    }
+    set alphas(value: any []) {
+      somewhatImplemented("public flash.filters.GradientGlowFilter::set alphas");
+      this._alphas = value;
+    }
+
     get ratios(): any [] {
-      notImplemented("public flash.filters.GradientGlowFilter::get ratios"); return;
-      // return this._ratios;
+      return this._ratios;
     }
     set ratios(value: any []) {
-      value = value;
-      notImplemented("public flash.filters.GradientGlowFilter::set ratios"); return;
-      // this._ratios = value;
+      somewhatImplemented("public flash.filters.GradientGlowFilter::set ratios");
+      this._ratios = value;
     }
+
+    get blurX(): number {
+      return this._blurX;
+    }
+    set blurX(value: number) {
+      somewhatImplemented("public flash.filters.GradientGlowFilter::set blurX");
+      this._blurX = +value;
+    }
+
+    get blurY(): number {
+      return this._blurY;
+    }
+    set blurY(value: number) {
+      somewhatImplemented("public flash.filters.GradientGlowFilter::set blurY");
+      this._blurY = +value;
+    }
+
     get strength(): number {
-      notImplemented("public flash.filters.GradientGlowFilter::get strength"); return;
-      // return this._strength;
+      return this._strength;
     }
     set strength(value: number) {
-      value = +value;
-      notImplemented("public flash.filters.GradientGlowFilter::set strength"); return;
-      // this._strength = value;
+      somewhatImplemented("public flash.filters.GradientGlowFilter::set strength");
+      this._strength = +value;
     }
+
+    get quality(): number /*int*/ {
+      return this._quality;
+    }
+    set quality(value: number /*int*/) {
+      somewhatImplemented("public flash.filters.GradientGlowFilter::set quality");
+      this._quality = value | 0;
+    }
+
     get type(): string {
-      notImplemented("public flash.filters.GradientGlowFilter::get type"); return;
-      // return this._type;
+      return this._type;
     }
     set type(value: string) {
-      value = asCoerceString(value);
-      notImplemented("public flash.filters.GradientGlowFilter::set type"); return;
-      // this._type = value;
+      somewhatImplemented("public flash.filters.GradientGlowFilter::set type");
+      this._type = asCoerceString(value);
+    }
+
+    get knockout(): boolean {
+      return this._knockout;
+    }
+    set knockout(value: boolean) {
+      somewhatImplemented("public flash.filters.GradientGlowFilter::set knockout");
+      this._knockout = !!value;
+    }
+
+    clone(): BitmapFilter {
+      return super.clone() || new GradientGlowFilter(
+        this._distance,
+        this._angle,
+        this.colors,
+        this.alphas,
+        this.ratios,
+        this._blurX,
+        this._blurY,
+        this._strength,
+        this._quality,
+        this._type,
+        this._knockout
+      )
     }
   }
 }

@@ -31,12 +31,23 @@ module Shumway.AVM2.AS.flash.filters {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["clone"];
+    static instanceSymbols: string [] = null;
 
     constructor (matrixX: number = 0, matrixY: number = 0, matrix: any [] = null, divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true, clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0) {
-      matrixX = +matrixX; matrixY = +matrixY; matrix = matrix; divisor = +divisor; bias = +bias; preserveAlpha = !!preserveAlpha; clamp = !!clamp; color = color >>> 0; alpha = +alpha;
-      false && super();
-      notImplemented("Dummy Constructor: public flash.filters.ConvolutionFilter");
+      this.matrixX = +matrixX;
+      this.matrixY = +matrixY;
+      if (matrix) {
+        this.matrix = matrix;
+      } else {
+        this._matrix = Array(this._matrixX * this._matrixY);
+      }
+      this.divisor = +divisor;
+      this.bias = +bias;
+      this.preserveAlpha = !!preserveAlpha;
+      this.clamp = !!clamp;
+      this.color = color >>> 0;
+      this.alpha = +alpha;
+      super();
     }
 
     private expandArray(a: number [], newLen: number /*uint*/) {
@@ -49,8 +60,6 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     // JS -> AS Bindings
-
-    clone: () => flash.filters.BitmapFilter;
 
     // AS -> JS Bindings
 
@@ -65,11 +74,7 @@ module Shumway.AVM2.AS.flash.filters {
     private _alpha: number;
 
     get matrix(): any [] {
-      if (this._matrix) {
-        return this._matrix.slice(0, this._matrixX * this._matrixY);
-      } else {
-        return this._matrix = Array(this._matrixX * this._matrixY);
-      }
+      return this._matrix.slice(0, this._matrixX * this._matrixY);
     }
     set matrix(value: any []) {
       if (!isNullOrUndefined(value)) {
@@ -147,6 +152,20 @@ module Shumway.AVM2.AS.flash.filters {
     }
     set alpha(value: number) {
       this._alpha = NumberUtilities.clamp(+value, 0, 1);
+    }
+
+    clone(): BitmapFilter {
+      return super.clone() || new ConvolutionFilter(
+        this._matrixX,
+        this._matrixY,
+        this.matrix,
+        this._divisor,
+        this._bias,
+        this._preserveAlpha,
+        this._clamp,
+        this._color,
+        this._alpha
+      );
     }
   }
 }

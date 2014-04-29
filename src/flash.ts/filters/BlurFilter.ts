@@ -31,12 +31,13 @@ module Shumway.AVM2.AS.flash.filters {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["clone"];
+    static instanceSymbols: string [] = null;
 
     constructor (blurX: number = 4, blurY: number = 4, quality: number /*int*/ = 1) {
-      blurX = +blurX; blurY = +blurY; quality = quality | 0;
-      false && super();
-      notImplemented("Dummy Constructor: public flash.filters.BlurFilter");
+      this.blurX = +blurX;
+      this.blurY = +blurY;
+      this.quality = quality | 0;
+      super();
     }
 
     _generateFilterBounds(): any {
@@ -65,8 +66,6 @@ module Shumway.AVM2.AS.flash.filters {
 
     // JS -> AS Bindings
 
-    clone: () => flash.filters.BitmapFilter;
-
     // AS -> JS Bindings
 
     private _blurX: number;
@@ -92,6 +91,10 @@ module Shumway.AVM2.AS.flash.filters {
     }
     set quality(value: number /*int*/) {
       this._quality = NumberUtilities.clamp(value | 0, 0, 15);
+    }
+
+    clone(): BitmapFilter {
+      return super.clone() || new BlurFilter(this._blurX, this._blurY, this._quality);
     }
   }
 }

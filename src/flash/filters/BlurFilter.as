@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package flash.filters {
-
-[native(cls='BlurFilterClass')]
-public final class BlurFilter extends BitmapFilter {
-  public function BlurFilter(blurX: Number = 4, blurY: Number = 4, quality: int = 1) {
-    this.blurX = blurX;
-    this.blurY = blurY;
-    this.quality = quality;
+package flash.filters
+{
+  [native(cls='BlurFilterClass')]
+  public final class BlurFilter extends BitmapFilter
+  {
+    public native function BlurFilter(blurX: Number = 4, blurY: Number = 4, quality: int = 1);
+    public native function get blurX(): Number;
+    public native function set blurX(value: Number): void;
+    public native function get blurY(): Number;
+    public native function set blurY(value: Number): void;
+    public native function get quality(): int;
+    public native function set quality(value: int): void;
+    public native override function clone(): BitmapFilter;
   }
-  public native function get blurX(): Number;
-  public native function set blurX(value: Number): void;
-  public native function get blurY(): Number;
-  public native function set blurY(value: Number): void;
-  public native function get quality(): int;
-  public native function set quality(value: int): void;
-  public override function clone(): BitmapFilter {
-    return new BlurFilter(blurX, blurY, quality);
-  }
-}
 }

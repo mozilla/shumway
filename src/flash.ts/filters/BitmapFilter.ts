@@ -31,7 +31,7 @@ module Shumway.AVM2.AS.flash.filters {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = null;
 
     private static EPS: number = 0.000000001;
 
@@ -59,8 +59,7 @@ module Shumway.AVM2.AS.flash.filters {
     ];
 
     constructor () {
-      false && super();
-      notImplemented("Dummy Constructor: public flash.filters.BitmapFilter");
+      super();
     }
 
     _updateBlurBounds(bounds: any, blurX: number, blurY: number, quality: number /*int*/, isBlurFilter: boolean = false) {
@@ -110,9 +109,11 @@ module Shumway.AVM2.AS.flash.filters {
 
     // JS -> AS Bindings
 
-    clone: () => flash.filters.BitmapFilter;
-
     // AS -> JS Bindings
+
+    clone(): BitmapFilter {
+      return null;
+    }
 
   }
 }
