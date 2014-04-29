@@ -94,20 +94,8 @@ module Shumway.SWF.Timeline {
                 public actions: any [] = null) {
     }
 
-    clone(): AnimationState {
-      return new AnimationState(
-        this.symbol,
-        this.depth,
-        this.matrix,
-        this.colorTransform,
-        this.ratio,
-        this.name,
-        this.clipDepth,
-        this.filters,
-        this.blendMode,
-        this.cacheAsBitmap,
-        this.actions
-      );
+    isTarget(displayObject: flash.display.DisplayObject): boolean {
+      return displayObject._symbol === this.symbol && displayObject._ratio === this.ratio;
     }
   }
 
@@ -116,6 +104,14 @@ module Shumway.SWF.Timeline {
 
     constructor() {
       this.stateAtDepth = Shumway.ObjectUtilities.createMap<AnimationState>();
+    }
+
+    place(depth: number, state: AnimationState): void {
+      this.stateAtDepth[depth] = state;
+    }
+
+    remove(depth: number): void {
+      this.stateAtDepth[depth] = null;
     }
   }
 }

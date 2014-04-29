@@ -24,18 +24,18 @@ module Shumway.AVM2.AS.flash.display {
 
   export class Sprite extends flash.display.DisplayObjectContainer {
 
-    static instances: Sprite [];
+    private static _instances: Sprite [];
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       DisplayObject = flash.display.DisplayObject;
       DisplayObjectContainer = flash.display.DisplayObjectContainer;
 
-      Sprite.instances = [];
+      Sprite._instances = [];
     };
 
     static registerSprite(object: Sprite): void {
-      Sprite.instances.push(object);
+      Sprite._instances.push(object);
     }
     
     // Called whenever an instance of the class is initialized.
@@ -68,7 +68,7 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
 
     static constructFrame(): void {
-      var instances = Sprite.instances;
+      var instances = Sprite._instances;
       for (var i = 0; i < instances.length; i++) {
         instances[i].constructChildren();
       }

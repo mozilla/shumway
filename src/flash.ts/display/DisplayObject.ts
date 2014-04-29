@@ -189,12 +189,12 @@ module Shumway.AVM2.AS.flash.display {
      * Every displayObject is assigned an unique integer ID.
      */
     private static _nextID = 0;
-    static instances: DisplayObject [];
+    private static _instances: DisplayObject [];
 
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
-      DisplayObject.instances = [];
+      DisplayObject._instances = [];
     };
 
     /**
@@ -202,8 +202,8 @@ module Shumway.AVM2.AS.flash.display {
      * of all the display objects that were ever constructed.
      */
     static register(object: DisplayObject): string {
-      DisplayObject.instances.push(object);
-      return 'instance' + DisplayObject.instances.length;
+      DisplayObject._instances.push(object);
+      return 'instance' + DisplayObject._instances.length;
     }
 
     // Called whenever an instance of the class is initialized.
@@ -294,7 +294,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     static broadcastEvent(event: flash.events.Event): void {
-      var instances = DisplayObject.instances;
+      var instances = DisplayObject._instances;
       for (var i = 0; i < instances.length; i++) {
         var instance = instances[i];
         instance.dispatchEvent(event);

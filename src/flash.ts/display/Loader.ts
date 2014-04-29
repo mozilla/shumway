@@ -189,9 +189,6 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
-    /**
-     * WIP
-     */
     private _commitAsset(data: any): void {
       var symbol;
       var symbolId = data.id;
@@ -299,9 +296,6 @@ module Shumway.AVM2.AS.flash.display {
       this._dictionary[symbolId] = symbol;
     }
 
-    /**
-     * WIP
-     */
     private _commitFrame(data: any): void {
       var loaderInfo = this._contentLoaderInfo;
 
@@ -375,6 +369,8 @@ module Shumway.AVM2.AS.flash.display {
         //    }
         //  }
         //}
+
+        root._loaderInfo = this._contentLoaderInfo;
 
         this._content = root;
         this._children[0] = root;
@@ -458,9 +454,6 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
-    /**
-     * WIP
-     */
     private _buildFrame(commands: any []): Timeline.Frame {
       var frame = new Timeline.Frame();
       for (var i = 0; i < commands.length; i++) {
@@ -469,7 +462,7 @@ module Shumway.AVM2.AS.flash.display {
         switch (cmd.code) {
           case 5: // SWF_TAG_CODE_REMOVE_OBJECT
           case 28: // SWF_TAG_CODE_REMOVE_OBJECT2
-            frame.stateAtDepth[depth] = null;
+            frame.remove(depth);
             break;
           default:
             var symbol = this._dictionary[cmd.symbolId];
@@ -482,7 +475,7 @@ module Shumway.AVM2.AS.flash.display {
             if (cmd.hasCxform) {
               colorTransform = ColorTransform.fromCXForm(cmd.cxform);
             }
-            frame.stateAtDepth[depth] = new Timeline.AnimationState(
+            var state = new Timeline.AnimationState(
               symbol,
               depth,
               matrix,
@@ -495,6 +488,7 @@ module Shumway.AVM2.AS.flash.display {
               cmd.cache,
               [] // TODO actions
             );
+            frame.place(depth, state);
             break;
         }
       }

@@ -26,18 +26,18 @@ module Shumway.AVM2.AS.flash.display {
 
   export class MovieClip extends flash.display.Sprite {
 
-    static instances: MovieClip [];
+    private static _instances: MovieClip [];
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       Scene = flash.display.Scene;
       FrameLabel = flash.display.FrameLabel;
 
-      MovieClip.instances = [];
+      MovieClip._instances = [];
     };
 
     static registerMovieClip(object: MovieClip): void {
-      MovieClip.instances.push(object);
+      MovieClip._instances.push(object);
     }
     
     // Called whenever an instance of the class is initialized.
@@ -83,14 +83,14 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // ["currentLabels"];
 
     static initFrame(): void {
-      var instances = MovieClip.instances;
+      var instances = MovieClip._instances;
       for (var i = 0; i < instances.length; i++) {
         instances[i].advanceFrame();
       }
     }
 
     static executeFrame(): void {
-      var instances = MovieClip.instances;
+      var instances = MovieClip._instances;
       for (var i = 0; i < instances.length; i++) {
         var instance = instances[i];
         if (instance._hasNewFrame) {
@@ -195,7 +195,7 @@ module Shumway.AVM2.AS.flash.display {
       this._stopped = true;
     }
 
-    gotoFrame(frame: any, sceneName: string = null) {
+    gotoFrame(frame: any, sceneName: string = null): void {
       var scenes = this._scenes;
       var sceneIndex = -1;
       var offset = 0;
@@ -241,7 +241,7 @@ module Shumway.AVM2.AS.flash.display {
       this._nextFrameAbs = offset + frameNum;
     }
 
-    callFrame(frame: number) {
+    callFrame(frame: number): void {
       frame = frame | 0;
       if (frame in this._frameScripts) {
         var scripts = this._frameScripts[frame];
@@ -262,10 +262,7 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
-    /**
-     * WIP
-     */
-    advanceFrame():void {
+    advanceFrame(): void {
       var scenes = this._scenes;
       var lastFrame = this._currentFrameAbs;
       var nextFrame = this._nextFrameAbs;
@@ -302,38 +299,35 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       var frames = this._frames;
-
+      var startFrame = lastFrame;
       if (nextFrame < lastFrame) {
+        var frame = frames[0];
         var stateAtDepth = frame.stateAtDepth;
-        var children = this._children;
+        var children = this._children.slice();
         for (var i = 0; i < children.length; i++) {
           var child = children[i];
           if (child._depth) {
-            this.removeChildAt(i);
+            var state = stateAtDepth[child._depth];
+            if (!state || !state.isTarget(child)) {
+              this.removeChildAt(i);
+            }
           }
         }
-        this._initializeChildren(frames[0]);
-        lastFrame = 1;
+        startFrame = 0;
       }
-
-      for (var i = lastFrame; i < nextFrame; i++) {
+      for (var i = startFrame; i < nextFrame; i++) {
         var frame = frames[i];
         var stateAtDepth = frame.stateAtDepth;
         for (var depth in stateAtDepth) {
           var child = this.getChildAtDepth(depth);
           var state = stateAtDepth[depth];
           if (child) {
-            if (state) {
-              // TODO handle graphics update
-              if (child._symbol !== state.symbol) {
-                child._animate(state);
-                continue;
-              }
-            }
-            this.removeChild(child);
-            if (!state) {
+            // TODO handle replacing graphics
+            if (state && state.isTarget(child)) {
+              child._animate(state);
               continue;
             }
+            this.removeChild(child);
           }
           if (state) {
             var character = DisplayObject.createAnimatedDisplayObject(state, false);
