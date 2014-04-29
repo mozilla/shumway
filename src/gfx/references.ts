@@ -23,6 +23,7 @@
 /// <reference path='frameContainer.ts'/>
 /// <reference path='filters.ts'/>
 /// <reference path='gl/glContext.ts'/>
+/// <reference path='gl/brush.ts'/>
 /// <reference path='gl/gl.ts'/>
 /// <reference path='gl/core.ts'/>
 /// <reference path='dom/dom.ts'/>

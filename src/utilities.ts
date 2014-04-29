@@ -223,6 +223,10 @@ module Shumway {
       release || Debug.assert(false, "Not Implemented " + message);
     }
 
+    export function abstractMethod(message: string) {
+      Debug.assert(false, "Abstract Method " + message);
+    }
+
     export function somewhatImplemented(message: string) {
       Debug.warning("somewhatImplemented: " + message);
     }
