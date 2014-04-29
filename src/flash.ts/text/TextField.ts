@@ -70,68 +70,66 @@ module Shumway.AVM2.AS.flash.text {
         return;
       }
 
-      var tag = s.tag;
+      //var bbox = tag.bbox;
+      //if (bbox) {
+      //  this._matrix.tx += bbox.xMin;
+      //  this._matrix.ty += bbox.yMin;
+      //  this._bbox.xMax = bbox.xMax - bbox.xMin;
+      //  this._bbox.yMax = bbox.yMax - bbox.yMin;
+      //}
 
-      var bbox = tag.bbox;
-      if (bbox) {
-        this._matrix.tx += bbox.xMin;
-        this._matrix.ty += bbox.yMin;
-        this._bbox.xMax = bbox.xMax - bbox.xMin;
-        this._bbox.yMax = bbox.yMax - bbox.yMin;
-      }
+      //if (tag.hasLayout) {
+      //  initialFormat.size = tag.fontHeight / 20;
+      //  initialFormat.leading = (tag.leading | 0) / 20;
+      //}
+      //if (tag.hasColor) {
+      //  var colorObj = tag.color;
+      //  var color = (colorObj.red << 24) |
+      //              (colorObj.green << 16) |
+      //              (colorObj.blue << 8) |
+      //              colorObj.alpha;
+      //  initialFormat.color = this._textColor = color;
+      //}
+      //if (tag.hasFont) {
+      //  var font = Font.getFontBySymbolId(tag.fontId);
+      //  if (font) {
+      //    initialFormat.fontObj = font;
+      //    initialFormat.face = font._fontName;
+      //    initialFormat.bold = font.symbol.bold;
+      //    initialFormat.italic = font.symbol.italic;
+      //  }
+      //}
 
-      if (tag.hasLayout) {
-        initialFormat.size = tag.fontHeight / 20;
-        initialFormat.leading = (tag.leading | 0) / 20;
-      }
-      if (tag.hasColor) {
-        var colorObj = tag.color;
-        var color = (colorObj.red << 24) |
-                    (colorObj.green << 16) |
-                    (colorObj.blue << 8) |
-                    colorObj.alpha;
-        initialFormat.color = this._textColor = color;
-      }
-      if (tag.hasFont) {
-        var font = Font.getFontBySymbolId(tag.fontId);
-        if (font) {
-          initialFormat.fontObj = font;
-          initialFormat.face = font._fontName;
-          initialFormat.bold = font.symbol.bold;
-          initialFormat.italic = font.symbol.italic;
-        }
-      }
+      //this._multiline = !!tag.multiline;
+      //this._wordWrap = !!tag.wordWrap;
 
-      this._multiline = !!tag.multiline;
-      this._wordWrap = !!tag.wordWrap;
+      //this._embedFonts = !!tag.useOutlines;
+      //this._selectable = !tag.noSelect;
+      //// TODO: Find out how the IDE causes textfields to have a background
+      //this._border = !!tag.border;
 
-      this._embedFonts = !!tag.useOutlines;
-      this._selectable = !tag.noSelect;
-      // TODO: Find out how the IDE causes textfields to have a background
-      this._border = !!tag.border;
+      //switch (tag.align) {
+      //  case 1:
+      //    initialFormat.align = 'RIGHT';
+      //    break;
+      //  case 2:
+      //    initialFormat.align = 'CENTER';
+      //    break;
+      //  case 3:
+      //    initialFormat.align = 'JUSTIFIED';
+      //    break;
+      //  default: // 'left' is pre-set
+      //}
 
-      switch (tag.align) {
-        case 1:
-          initialFormat.align = 'RIGHT';
-          break;
-        case 2:
-          initialFormat.align = 'CENTER';
-          break;
-        case 3:
-          initialFormat.align = 'JUSTIFIED';
-          break;
-        default: // 'left' is pre-set
-      }
-
-      if (tag.initialText) {
-        if (tag.html) {
-          this._htmlText = tag.initialText;
-        } else {
-          this._text = tag.initialText;
-        }
-      } else {
-        this._text = '';
-      }
+      //if (tag.initialText) {
+      //  if (tag.html) {
+      //    this._htmlText = tag.initialText;
+      //  } else {
+      //    this._text = tag.initialText;
+      //  }
+      //} else {
+      //  this._text = '';
+      //}
     };
 
     constructor() {

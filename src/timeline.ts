@@ -50,7 +50,27 @@ module Shumway.SWF.Timeline {
   }
 
   export class TextSymbol extends Symbol {
-    tag: any = null;
+    textColor: number = 0;
+    textHeight: number = 0;
+    font: flash.text.Font = null;
+    fontClass: flash.text.Font = null;
+    align: string = flash.text.TextFormatAlign.LEFT;
+    leftMargin: number = 0;
+    rightMargin: number = 0;
+    indent: number = 0;
+    leading: number = 0;
+    multiline: boolean = false;
+    wordWrap: boolean = false;
+    embedFonts: boolean = false;
+    selectable: boolean = true;
+    border: boolean = false;
+    initialText: string = "";
+    html: boolean = false;
+    displayAsPassword: boolean = false;
+    type: string = flash.text.TextFieldType.DYNAMIC;
+    maxChars: number = 0;
+    autoSize: string = flash.text.TextFieldAutoSize.NONE;
+    variableName: string = null;
 
     constructor(id: number) {
       super(id, flash.text.TextField);
