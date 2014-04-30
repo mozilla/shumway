@@ -31,17 +31,22 @@ module Shumway.AVM2.AS.flash.filters {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["clone"];
+    static instanceSymbols: string [] = null;
 
     constructor (mapBitmap: flash.display.BitmapData = null, mapPoint: flash.geom.Point = null, componentX: number /*uint*/ = 0, componentY: number /*uint*/ = 0, scaleX: number = 0, scaleY: number = 0, mode: string = "wrap", color: number /*uint*/ = 0, alpha: number = 0) {
-      mapBitmap = mapBitmap; mapPoint = mapPoint; componentX = componentX >>> 0; componentY = componentY >>> 0; scaleX = +scaleX; scaleY = +scaleY; mode = asCoerceString(mode); color = color >>> 0; alpha = +alpha;
-      false && super();
-      notImplemented("Dummy Constructor: public flash.filters.DisplacementMapFilter");
+      this.mapBitmap = mapBitmap;
+      this.mapPoint = mapPoint;
+      this.componentX = componentX;
+      this.componentY = componentY;
+      this.scaleX = scaleX;
+      this.scaleY = scaleY;
+      this.mode = mode;
+      this.color = color;
+      this.alpha = alpha;
+      super();
     }
 
     // JS -> AS Bindings
-
-    clone: () => flash.filters.BitmapFilter;
 
     // AS -> JS Bindings
 
@@ -110,7 +115,7 @@ module Shumway.AVM2.AS.flash.filters {
     }
     set mode(value: string) {
       Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::set mode");
-      this._mode = "" + value;
+      this._mode = asCoerceString(value);
     }
 
     get color(): number /*uint*/ {
@@ -127,6 +132,20 @@ module Shumway.AVM2.AS.flash.filters {
     set alpha(value: number) {
       Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::set alpha");
       this._alpha = +value;
+    }
+
+    clone(): BitmapFilter {
+      return new DisplacementMapFilter(
+        this._mapBitmap,
+        this._mapPoint,
+        this._componentX,
+        this._componentY,
+        this._scaleX,
+        this._scaleY,
+        this._mode,
+        this._color,
+        this._alpha
+      )
     }
   }
 }

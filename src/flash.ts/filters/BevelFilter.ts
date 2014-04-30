@@ -31,12 +31,22 @@ module Shumway.AVM2.AS.flash.filters {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["clone"];
+    static instanceSymbols: string [] = null;
 
     constructor (distance: number = 4, angle: number = 45, highlightColor: number /*uint*/ = 16777215, highlightAlpha: number = 1, shadowColor: number /*uint*/ = 0, shadowAlpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
-      distance = +distance; angle = +angle; highlightColor = highlightColor >>> 0; highlightAlpha = +highlightAlpha; shadowColor = shadowColor >>> 0; shadowAlpha = +shadowAlpha; blurX = +blurX; blurY = +blurY; strength = +strength; quality = quality | 0; type = asCoerceString(type); knockout = !!knockout;
-      false && super();
-      notImplemented("Dummy Constructor: public flash.filters.BevelFilter");
+      this.distance = distance;
+      this.angle = angle;
+      this.highlightColor = highlightColor;
+      this.highlightAlpha = highlightAlpha;
+      this.shadowColor = shadowColor;
+      this.shadowAlpha = shadowAlpha;
+      this.blurX = blurX;
+      this.blurY = blurY;
+      this.strength = strength;
+      this.quality = quality;
+      this.type = asCoerceString(type);
+      this.knockout = !!knockout;
+      super();
     }
 
     _generateFilterBounds(): any {
@@ -59,8 +69,6 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     // JS -> AS Bindings
-
-    clone: () => flash.filters.BitmapFilter;
 
     // AS -> JS Bindings
 
@@ -158,16 +166,33 @@ module Shumway.AVM2.AS.flash.filters {
       return this._type;
     }
     set type(value: string) {
-      value = "" + value;
-      if (isString(value)) {
+      value = asCoerceString(value);
+      if (value === null) {
+        Runtime.throwError("TypeError", Errors.NullPointerError, "type");
+      } else {
         if (value === BitmapFilterType.INNER || value === BitmapFilterType.OUTER) {
           this._type = value;
         } else {
           this._type = BitmapFilterType.FULL;
         }
-      } else {
-        Runtime.throwError("TypeError", Errors.NullPointerError, "type");
       }
+    }
+
+    clone(): BitmapFilter {
+      return new BevelFilter(
+        this._distance,
+        this._angle,
+        this._highlightColor,
+        this._highlightAlpha,
+        this._shadowColor,
+        this._shadowAlpha,
+        this._blurX,
+        this._blurY,
+        this._strength,
+        this._quality,
+        this._type,
+        this._knockout
+      );
     }
   }
 }

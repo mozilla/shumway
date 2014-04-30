@@ -31,12 +31,21 @@ module Shumway.AVM2.AS.flash.filters {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["clone!"];
+    static instanceSymbols: string [] = null;
 
     constructor (distance: number = 4, angle: number = 45, color: number /*uint*/ = 0, alpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, inner: boolean = false, knockout: boolean = false, hideObject: boolean = false) {
-      distance = +distance; angle = +angle; color = color >>> 0; alpha = +alpha; blurX = +blurX; blurY = +blurY; strength = +strength; quality = quality | 0; inner = !!inner; knockout = !!knockout; hideObject = !!hideObject;
-      false && super();
-      notImplemented("Dummy Constructor: public flash.filters.DropShadowFilter");
+      this.distance = distance;
+      this.angle = angle;
+      this.color = color;
+      this.alpha = alpha;
+      this.blurX = blurX;
+      this.blurY = blurY;
+      this.strength = strength;
+      this.quality = quality;
+      this.inner = inner;
+      this.knockout = knockout;
+      this.hideObject = hideObject;
+      super();
     }
 
     _generateFilterBounds(): any {
@@ -71,8 +80,6 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     // JS -> AS Bindings
-
-    clone: () => flash.filters.BitmapFilter;
 
     // AS -> JS Bindings
 
@@ -163,6 +170,22 @@ module Shumway.AVM2.AS.flash.filters {
     }
     set strength(value: number) {
       this._strength = NumberUtilities.clamp(+value, 0, 255);
+    }
+
+    clone(): BitmapFilter {
+      return new DropShadowFilter(
+        this._distance,
+        this._angle,
+        this._color,
+        this._alpha,
+        this._blurX,
+        this._blurY,
+        this._strength,
+        this._quality,
+        this._inner,
+        this._knockout,
+        this._hideObject
+      )
     }
   }
 }

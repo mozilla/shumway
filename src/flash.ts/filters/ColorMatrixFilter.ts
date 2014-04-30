@@ -31,12 +31,20 @@ module Shumway.AVM2.AS.flash.filters {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["clone"];
+    static instanceSymbols: string [] = null;
 
     constructor (matrix: any [] = null) {
-      matrix = matrix;
-      false && super();
-      notImplemented("Dummy Constructor: public flash.filters.ColorMatrixFilter");
+      if (matrix) {
+        this.matrix = matrix;
+      } else {
+        this._matrix = [
+          1, 0, 0, 0, 0,
+          0, 1, 0, 0, 0,
+          0, 0, 1, 0, 0,
+          0, 0, 0, 1, 0
+        ]
+      }
+      super();
     }
 
     _serialize(message) {
@@ -50,23 +58,12 @@ module Shumway.AVM2.AS.flash.filters {
 
     // JS -> AS Bindings
 
-    clone: () => flash.filters.BitmapFilter;
-
     // AS -> JS Bindings
 
     private _matrix: number [];
 
     get matrix(): any [] {
-      if (this._matrix) {
-        return this._matrix.concat();
-      } else {
-        return [
-          1, 0, 0, 0, 0,
-          0, 1, 0, 0, 0,
-          0, 0, 1, 0, 0,
-          0, 0, 0, 1, 0
-        ];
-      }
+      return this._matrix.concat();
     }
     set matrix(value: any []) {
       if (!isNullOrUndefined(value)) {
@@ -83,6 +80,10 @@ module Shumway.AVM2.AS.flash.filters {
       } else {
         Runtime.throwError("TypeError", Errors.NullPointerError, "matrix");
       }
+    }
+
+    clone(): BitmapFilter {
+      return new ColorMatrixFilter(this.matrix);
     }
   }
 }

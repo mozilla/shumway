@@ -209,7 +209,42 @@ module Shumway.AVM2.AS.flash.display {
         case 'label':
         case 'text':
           symbol = new Timeline.TextSymbol(symbolId);
-          symbol.tag = data.tag || { };
+          var tag = data.tag;
+          if (tag.hasColor) {
+            symbol.textColor = tag.color;
+          }
+          if (tag.hasFont) {
+            symbol.textHeight = tag.fontHeight;
+            symbol.font = null;
+            if (tag.fontClass) {
+              var appDomain = AVM2.instance.applicationDomain;
+              symbol.fontClass = appDomain.getClass(tag.fontClass);
+            }
+          }
+          if (tag.hasLayout) {
+            symbol.align = flash.text.TextFormatAlign.fromNumber(tag.align);
+            symbol.leftMargin = tag.leftMargin;
+            symbol.rightMargin = tag.rightMargin;
+            symbol.indent = tag.indent;
+            symbol.leading = tag.leading;
+          }
+          symbol.multiline = !!tag.multiline;
+          symbol.wordWrap = !!tag.wordWrap;
+          symbol.embedFonts = !!tag.useOutlines;
+          symbol.selectable = !tag.noSelect;
+          symbol.border = !!tag.border;
+          if (tag.hasText) {
+            symbol.initialText = tag.initialText;
+          }
+          symbol.html = !!tag.html;
+          symbol.displayAsPassword = !!tag.password;
+          symbol.type = tag.readonly ? flash.text.TextFieldType.DYNAMIC :
+                                       flash.text.TextFieldType.INPUT;
+          if (tag.hasMaxLength) {
+            symbol.maxChars = tag.maxLength;
+          }
+          symbol.autoSize = flash.text.TextFieldAutoSize.fromNumber(tag.autoSize);
+          symbol.variableName = tag.variableName;
           break;
         case 'button':
           symbol = new Timeline.ButtonSymbol(symbolId);
@@ -465,20 +500,27 @@ module Shumway.AVM2.AS.flash.display {
             frame.remove(depth);
             break;
           default:
-            var symbol;
-            if (!cmd.symbolId) {
-              symbol = null;
-            } else {
+            var symbol = null;
+            var matrix = null;
+            var colorTransform = null;
+            var filters = null;
+            var events = null;
+            if (cmd.symbolId) {
               symbol = this._dictionary[cmd.symbolId];
               assert (symbol);
             }
-            var matrix = null;
-            var colorTransform = null;
             if (cmd.hasMatrix) {
               matrix = Matrix.fromAny(cmd.matrix);
             }
             if (cmd.hasCxform) {
               colorTransform = ColorTransform.fromCXForm(cmd.cxform);
+            }
+            if (cmd.hasFilters) {
+              filters = [];
+              // TODO
+            }
+            if (cmd.hasEvents) {
+              // TODO
             }
             var state = new Timeline.AnimationState(
               symbol,
@@ -488,10 +530,10 @@ module Shumway.AVM2.AS.flash.display {
               cmd.ratio,
               cmd.name,
               cmd.clipDepth,
-              [], // TODO filters
+              filters,
               BlendMode.fromNumber(cmd.blendMode),
               cmd.cache,
-              [] // TODO actions
+              events
             );
             frame.place(depth, state);
             break;

@@ -31,12 +31,18 @@ module Shumway.AVM2.AS.flash.filters {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["clone"];
+    static instanceSymbols: string [] = null;
 
     constructor (color: number /*uint*/ = 16711680, alpha: number = 1, blurX: number = 6, blurY: number = 6, strength: number = 2, quality: number /*int*/ = 1, inner: boolean = false, knockout: boolean = false) {
-      color = color >>> 0; alpha = +alpha; blurX = +blurX; blurY = +blurY; strength = +strength; quality = quality | 0; inner = !!inner; knockout = !!knockout;
-      false && super();
-      notImplemented("Dummy Constructor: public flash.filters.GlowFilter");
+      this.color = color;
+      this.alpha = alpha;
+      this.blurX = blurX;
+      this.blurY = blurY;
+      this.strength = strength;
+      this.quality = quality;
+      this.inner = inner;
+      this.knockout = knockout;
+      super();
     }
 
     _generateFilterBounds(): any {
@@ -59,8 +65,6 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
     // JS -> AS Bindings
-
-    clone: () => flash.filters.BitmapFilter;
 
     // AS -> JS Bindings
 
@@ -127,6 +131,19 @@ module Shumway.AVM2.AS.flash.filters {
     }
     set strength(value: number) {
       this._strength = NumberUtilities.clamp(+value, 0, 255);
+    }
+
+    clone(): BitmapFilter {
+      return new GlowFilter(
+        this._color,
+        this._alpha,
+        this._blurX,
+        this._blurY,
+        this._strength,
+        this._quality,
+        this._inner,
+        this._knockout
+      );
     }
   }
 }
