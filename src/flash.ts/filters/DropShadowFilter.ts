@@ -16,9 +16,6 @@
 // Class: DropShadowFilter
 module Shumway.AVM2.AS.flash.filters {
 
-  import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-
   export class DropShadowFilter extends flash.filters.BitmapFilter {
 
     // Called whenever the class is initialized.
@@ -34,6 +31,7 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (distance: number = 4, angle: number = 45, color: number /*uint*/ = 0, alpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, inner: boolean = false, knockout: boolean = false, hideObject: boolean = false) {
+      false && super();
       this.distance = distance;
       this.angle = angle;
       this.color = color;
@@ -45,7 +43,6 @@ module Shumway.AVM2.AS.flash.filters {
       this.inner = inner;
       this.knockout = knockout;
       this.hideObject = hideObject;
-      super();
     }
 
     _generateFilterBounds(): any {
@@ -113,7 +110,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._color;
     }
     set color(value: number /*uint*/) {
-      this._color = value >>> 0;
+      this._color = (value >>> 0) & 0xffffff;
     }
 
     get alpha(): number {

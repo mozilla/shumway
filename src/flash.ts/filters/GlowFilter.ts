@@ -16,9 +16,6 @@
 // Class: GlowFilter
 module Shumway.AVM2.AS.flash.filters {
 
-  import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-
   export class GlowFilter extends flash.filters.BitmapFilter {
 
     // Called whenever the class is initialized.
@@ -34,6 +31,7 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (color: number /*uint*/ = 16711680, alpha: number = 1, blurX: number = 6, blurY: number = 6, strength: number = 2, quality: number /*int*/ = 1, inner: boolean = false, knockout: boolean = false) {
+      false && super();
       this.color = color;
       this.alpha = alpha;
       this.blurX = blurX;
@@ -42,7 +40,6 @@ module Shumway.AVM2.AS.flash.filters {
       this.quality = quality;
       this.inner = inner;
       this.knockout = knockout;
-      super();
     }
 
     _generateFilterBounds(): any {
@@ -81,7 +78,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._color;
     }
     set color(value: number /*uint*/) {
-      this._color = value >>> 0;
+      this._color = (value >>> 0) & 0xffffff;
     }
 
     get alpha(): number {

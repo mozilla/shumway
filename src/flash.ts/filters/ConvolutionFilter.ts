@@ -16,9 +16,6 @@
 // Class: ConvolutionFilter
 module Shumway.AVM2.AS.flash.filters {
 
-  import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-
   export class ConvolutionFilter extends flash.filters.BitmapFilter {
 
     // Called whenever the class is initialized.
@@ -34,12 +31,13 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (matrixX: number = 0, matrixY: number = 0, matrix: any [] = null, divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true, clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0) {
+      false && super();
       this.matrixX = matrixX;
       this.matrixY = matrixY;
       if (matrix) {
         this.matrix = matrix;
       } else {
-        this._matrix = this.expandArray([], this._matrixX * this._matrixY);
+        this._matrix = this._expandArray([], this._matrixX * this._matrixY);
       }
       this.divisor = divisor;
       this.bias = bias;
@@ -47,10 +45,9 @@ module Shumway.AVM2.AS.flash.filters {
       this.clamp = clamp;
       this.color = color;
       this.alpha = alpha;
-      super();
     }
 
-    private expandArray(a: number [], newLen: number /*uint*/, value: number = 0): number [] {
+    private _expandArray(a: number [], newLen: number /*uint*/, value: number = 0): number [] {
       if (a) {
         var i: number = a.length;
         while (i < newLen) {
@@ -85,7 +82,7 @@ module Shumway.AVM2.AS.flash.filters {
         for (var i = 0; i < minLen; i++) {
           matrix[i] = toNumber(value[i]);
         }
-        this.expandArray(matrix, actualLen);
+        this._expandArray(matrix, actualLen);
         this._matrix = matrix;
       } else {
         Runtime.throwError("TypeError", Errors.NullPointerError, "matrix");
@@ -99,7 +96,7 @@ module Shumway.AVM2.AS.flash.filters {
       var mx: number = NumberUtilities.clamp(+value, 0, 15) | 0;
       if (this._matrixX !== mx) {
         this._matrixX = mx;
-        this.expandArray(this._matrix, mx * this._matrixY);
+        this._expandArray(this._matrix, mx * this._matrixY);
       }
     }
 
@@ -110,7 +107,7 @@ module Shumway.AVM2.AS.flash.filters {
       var my: number = NumberUtilities.clamp(+value, 0, 15) | 0;
       if (this._matrixY !== my) {
         this._matrixY = my;
-        this.expandArray(this._matrix, my * this._matrixX);
+        this._expandArray(this._matrix, my * this._matrixX);
       }
     }
     get divisor(): number {

@@ -16,9 +16,6 @@
 // Class: BitmapFilter
 module Shumway.AVM2.AS.flash.filters {
 
-  import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-
   export class BitmapFilter extends ASNative {
 
     // Called whenever the class is initialized.
@@ -42,24 +39,24 @@ module Shumway.AVM2.AS.flash.filters {
     // the border width increments at blurX = 2, 4, 6, ...
     private static blurFilterStepWidths: number[] = [
       2,
-        1 / 1.05,
-        1 / 1.35,
-        1 / 1.55,
-        1 / 1.75,
-        1 / 1.9,
-        1 / 2,
-        1 / 2.1,
-        1 / 2.2,
-        1 / 2.3,
-        1 / 2.5,
-        1 / 3,
-        1 / 3,
-        1 / 3.5,
-        1 / 3.5
+      1 / 1.05,
+      1 / 1.35,
+      1 / 1.55,
+      1 / 1.75,
+      1 / 1.9,
+      1 / 2,
+      1 / 2.1,
+      1 / 2.2,
+      1 / 2.3,
+      1 / 2.5,
+      1 / 3,
+      1 / 3,
+      1 / 3.5,
+      1 / 3.5
     ];
 
     constructor () {
-      super();
+      false && super();
     }
 
     _updateBlurBounds(bounds: any, blurX: number, blurY: number, quality: number /*int*/, isBlurFilter: boolean = false) {
