@@ -39,7 +39,7 @@ module Shumway.AVM2.AS.flash.filters {
       if (matrix) {
         this.matrix = matrix;
       } else {
-        this._matrix = Array(this._matrixX * this._matrixY);
+        this._matrix = this.expandArray([], this._matrixX * this._matrixY);
       }
       this.divisor = divisor;
       this.bias = bias;
@@ -50,13 +50,14 @@ module Shumway.AVM2.AS.flash.filters {
       super();
     }
 
-    private expandArray(a: number [], newLen: number /*uint*/) {
+    private expandArray(a: number [], newLen: number /*uint*/, value: number = 0): number [] {
       if (a) {
         var i: number = a.length;
         while (i < newLen) {
           a[i++] = 0;
         }
       }
+      return a;
     }
 
     // JS -> AS Bindings
