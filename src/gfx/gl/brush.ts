@@ -208,7 +208,7 @@ module Shumway.GFX.GL {
         gl.vertexAttribPointer(position, attribute.size, attribute.type, attribute.normalized, size, attribute.offset);
       }
 
-      this._context.blendMode = this._blendMode;
+      this._context.setBlendMode(this._blendMode);
 
       // Bind elements buffer.
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.elementBuffer);

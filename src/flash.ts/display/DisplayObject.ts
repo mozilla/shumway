@@ -31,6 +31,10 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
 
+  import MessageTag = Shumway.Remoting.MessageTag;
+  import UpdateFrameTagBits = Shumway.Remoting.UpdateFrameTagBits;
+  import MessageWriter = Shumway.Remoting.MessageWriter;
+
   import BlendMode = flash.display.BlendMode; assert (BlendMode);
   import ColorTransform = flash.geom.ColorTransform; assert (ColorTransform);
   import Matrix = flash.geom.Matrix; assert (Matrix);
@@ -69,6 +73,11 @@ module Shumway.AVM2.AS.flash.display {
    * Suppose we mark A as invalid, this causes nodes B, C, D, and E to become invalid. We then compute a path dependent property
    * on E, causing A, and C to become valid. If we mark A as invalid again, A and C become invalid again. We don't need to mark
    * parts of the tree that are already invalid.
+   *
+   *
+   * Dirty Bits:
+   *
+   * These are used to mark properties as having been changed.
    */
   export enum DisplayObjectFlags {
     None                                      = 0x0000,
@@ -141,7 +150,30 @@ module Shumway.AVM2.AS.flash.display {
      * if this flag is not set, depending on whether any filters are applied or if the bitmap is too large or we've run out
      * of memory.
      */
-    CacheAsBitmap                             = 0x1000
+    CacheAsBitmap                             = 0x1000,
+
+    /**
+     * Indicates whether this display object's matrix has changed since the last time it was synchronized
+     */
+    DirtyMatrix                               = 0x100000,
+
+    /**
+     * Indicates whether this display object's children list has changed since the last time it was synchronized
+     */
+    DirtyChildren                             = 0x200000,
+
+    /**
+     * Indicates whether this display object's has dirty descendents. If this flag is not set then the subtree does not
+     * need to be synchronized.
+     */
+    DirtyChild                                = 0x400000,
+
+    DirtyBounds                               = 0x800000,
+
+    /**
+     * All synchronizable properties are dirty.
+     */
+    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyBounds
   }
 
   /**
@@ -215,7 +247,8 @@ module Shumway.AVM2.AS.flash.display {
                     DisplayObjectFlags.InvalidBounds                      |
                     DisplayObjectFlags.InvalidMatrix                      |
                     DisplayObjectFlags.InvalidConcatenatedMatrix          |
-                    DisplayObjectFlags.InvalidInvertedConcatenatedMatrix;
+                    DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
+                    DisplayObjectFlags.DirtyMatrix;
 
       self._root = null;
       self._stage = null;
@@ -267,6 +300,7 @@ module Shumway.AVM2.AS.flash.display {
 
       if (symbol) {
         self._bounds.copyFrom(symbol.bounds);
+        this._removeFlags(DisplayObjectFlags.InvalidBounds);
         if (symbol.scale9Grid) {
           self._scale9Grid = symbol.scale9Grid.clone();
         }
@@ -310,6 +344,14 @@ module Shumway.AVM2.AS.flash.display {
 
     _setFlags(flags: DisplayObjectFlags) {
       this._flags |= flags;
+    }
+
+    /**
+     * Use this to set dirty flags so that we can also propagate the dirty child bit.
+     */
+    _setDirtyFlags(flags: DisplayObjectFlags) {
+      this._flags |= flags;
+      this._dirty();
     }
 
     _toggleFlags(flags: DisplayObjectFlags, on: boolean) {
@@ -441,7 +483,6 @@ module Shumway.AVM2.AS.flash.display {
 
     _isContainer: boolean;
     _maskedObject: DisplayObject;
-    _mouseOver: boolean;
     _mouseDown: boolean;
 
     _symbol: Shumway.SWF.Timeline.Symbol;
@@ -547,6 +588,7 @@ module Shumway.AVM2.AS.flash.display {
       this._scaleY = m.getScaleY();
       this._rotation = DisplayObject._clampRotation(matrix.getRotation() * 180 / Math.PI);
       this._removeFlags(DisplayObjectFlags.InvalidMatrix);
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
       this._invalidatePosition();
     }
 
@@ -653,12 +695,29 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
+     * Marks this object as having its matrix changed.
+     */
+    private _invalidateMatrix() {
+      this._setFlags(DisplayObjectFlags.DirtyMatrix);
+      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      if (this._parent) {
+        this._parent._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
+      }
+    }
+    
+    /**
      * Marks this object as having been moved in its parent display object.
      */
     _invalidatePosition() {
       this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedMatrix | DisplayObjectFlags.InvalidInvertedConcatenatedMatrix, Direction.Downward);
       if (this._parent) {
         this._parent._invalidateBounds();
+      }
+    }
+
+    _dirty() {
+      if (this._parent) {
+        this._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
       }
     }
 
@@ -724,7 +783,7 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       this._scaleX = value;
-      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidateMatrix();
       this._invalidatePosition();
     }
 
@@ -739,7 +798,7 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       this._scaleY = value;
-      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidateMatrix();
       this._invalidatePosition();
     }
 
@@ -764,7 +823,7 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       this._rotation = value;
-      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidateMatrix();
       this._invalidatePosition();
     }
 
@@ -824,7 +883,7 @@ module Shumway.AVM2.AS.flash.display {
       var baseHeight = contentBounds.getBaseHeight(angle);
       this._scaleY = bounds.height / baseHeight;
       this._scaleX = value / baseWidth;
-      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidateMatrix();
       this._invalidatePosition();
     }
 
@@ -857,7 +916,7 @@ module Shumway.AVM2.AS.flash.display {
       var baseWidth = contentBounds.getBaseWidth(angle);
       this._scaleY = value / baseHeight;
       this._scaleX = bounds.width / baseWidth;
-      this._setFlags(DisplayObjectFlags.InvalidMatrix);
+      this._invalidateMatrix();
       this._invalidatePosition();
     }
 
@@ -1186,6 +1245,38 @@ module Shumway.AVM2.AS.flash.display {
        * The Flash implementation appears to be broken. */
       notImplemented("public DisplayObject::set scrollRect");
       return;
+    }
+
+    serialize(writer: MessageWriter, writeReferences: boolean = false, clearDirtyBits: boolean = false) {
+      writer.enter(MessageTag.UpdateFrame);
+      writer.writeInt(this._id);
+      writer.writeInt(DisplayObjectContainer.isType(this) ? 1 : 0);
+      var hasMatrix = this._hasFlags(DisplayObjectFlags.DirtyMatrix);
+      var hasBounds = this._hasFlags(DisplayObjectFlags.DirtyBounds);
+      var hasChildren = writeReferences && this._hasFlags(DisplayObjectFlags.DirtyChildren);
+      var hasBits = 0;
+      hasBits |= hasMatrix   ? UpdateFrameTagBits.HasMatrix   : 0;
+      hasBits |= hasBounds   ? UpdateFrameTagBits.HasBounds   : 0;
+      hasBits |= hasChildren ? UpdateFrameTagBits.HasChildren : 0;
+      writer.writeInt(hasBits);
+      if (hasMatrix) {
+        this._matrix.serialize(writer);
+      }
+      if (hasBounds) {
+        this._getContentBounds().serialize(writer);
+      }
+      if (hasChildren) {
+        assert (DisplayObjectContainer.isType(this));
+        var children = (<DisplayObjectContainer>this)._children;
+        writer.writeInt(children.length);
+        for (var i = 0; i < children.length; i++) {
+          writer.writeInt(children[i]._id);
+        }
+      }
+      writer.leave(MessageTag.UpdateFrame);
+      if (clearDirtyBits) {
+        this._removeFlags(DisplayObjectFlags.Dirty);
+      }
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------

@@ -201,7 +201,7 @@ module Shumway.AVM2.AS.flash.display {
       var offset = 0;
       var frameNum = 1;
 
-      if (sceneName === null) {
+      if (sceneName !== null) {
         for (var i = 0; i < scenes.length; i++) {
           var scene = scenes[i];
           if (scene.name === sceneName) {

@@ -26,11 +26,13 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = function (symbol: Shumway.SWF.Timeline.ShapeSymbol) {
       var self: Shape = this;
       self._graphics = symbol ? symbol.graphics : new flash.display.Graphics();
+
     };
 
     constructor () {
       false && super();
       DisplayObject.instanceConstructorNoInitialize.call(this);
+      this._setFlags(DisplayObjectFlags.DirtyBounds);
     }
 
     _graphics: flash.display.Graphics;

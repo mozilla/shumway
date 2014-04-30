@@ -178,7 +178,6 @@ module Shumway.GFX {
     source: IRenderable;
     constructor(source: IRenderable) {
       super();
-      assert(source);
       this.source = source;
     }
 

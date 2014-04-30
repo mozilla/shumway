@@ -465,8 +465,13 @@ module Shumway.AVM2.AS.flash.display {
             frame.remove(depth);
             break;
           default:
-            var symbol = this._dictionary[cmd.symbolId];
-            assert (symbol);
+            var symbol;
+            if (!cmd.symbolId) {
+              symbol = null;
+            } else {
+              symbol = this._dictionary[cmd.symbolId];
+              assert (symbol);
+            }
             var matrix = null;
             var colorTransform = null;
             if (cmd.hasMatrix) {

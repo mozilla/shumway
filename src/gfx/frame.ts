@@ -308,7 +308,7 @@ module Shumway.GFX {
 
     set matrix(value: Matrix) {
       this.checkCapability(FrameCapabilityFlags.AllowMatrixWrite);
-      this._matrix = value;
+      this._matrix.set(value);
       this._invalidatePosition();
     }
 

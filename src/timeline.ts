@@ -95,7 +95,8 @@ module Shumway.SWF.Timeline {
     }
 
     isTarget(displayObject: flash.display.DisplayObject): boolean {
-      return displayObject._symbol === this.symbol && displayObject._ratio === this.ratio;
+      return this.symbol === null ||
+        (displayObject._symbol === this.symbol && displayObject._ratio === this.ratio);
     }
   }
 

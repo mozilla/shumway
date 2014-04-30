@@ -248,7 +248,7 @@ module Shumway.GFX {
       this._worldView.addChild(this._worldViewOverlay);
       var screenOverlay = new FrameContainer();
       screenOverlay.addChild(this._createToolbar());
-      this._stage.addChild(screenOverlay);
+      // this._stage.addChild(screenOverlay);
 
       this._selection = <FrameContainer>screenOverlay.addChild(new FrameContainer());
       this._selection._setFlags(FrameFlags.IgnoreQuery);

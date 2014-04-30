@@ -272,110 +272,187 @@ module Shumway {
     }
 
     export class ArrayWriter {
-      u8: Uint8Array;
-      u16: Uint16Array;
-      i32: Int32Array;
-      f32: Float32Array;
-      u32: Uint32Array;
-      offset: number;
+      _u8: Uint8Array;
+      _u16: Uint16Array;
+      _i32: Int32Array;
+      _f32: Float32Array;
+      _u32: Uint32Array;
+      _offset: number;
 
-      constructor(initialCapacity) {
-        this.u8 = null;
-        this.u16 = null;
-        this.i32 = null;
-        this.f32 = null;
-        this.offset = 0;
+      constructor(initialCapacity: number = 16) {
+        this._u8 = null;
+        this._u16 = null;
+        this._i32 = null;
+        this._f32 = null;
+        this._offset = 0;
         this.ensureCapacity(initialCapacity);
       }
 
       public reset() {
-        this.offset = 0;
+        this._offset = 0;
       }
 
-      getIndex(size) {
+      public get offset (): number {
+        return this._offset;
+      }
+
+      getIndex(size: number) {
         release || assert (size === 1 || size === 2 || size === 4 || size === 8 || size === 16);
-        var index = this.offset / size;
+        var index = this._offset / size;
         release || assert ((index | 0) === index);
         return index;
       }
 
       ensureAdditionalCapacity(size) {
-        this.ensureCapacity(this.offset + size);
+        this.ensureCapacity(this._offset + size);
       }
 
       ensureCapacity(minCapacity: number) {
-        if (!this.u8) {
-          this.u8 = new Uint8Array(minCapacity);
-        } else if (this.u8.length > minCapacity) {
+        if (!this._u8) {
+          this._u8 = new Uint8Array(minCapacity);
+        } else if (this._u8.length > minCapacity) {
           return;
         }
-        var oldCapacity = this.u8.length;
+        var oldCapacity = this._u8.length;
         // var newCapacity = (((oldCapacity * 3) >> 1) + 8) & ~0x7;
         var newCapacity = oldCapacity * 2;
         if (newCapacity < minCapacity) {
           newCapacity = minCapacity;
         }
         var u8 = new Uint8Array(newCapacity);
-        u8.set(this.u8, 0);
-        this.u8 = u8;
-        this.u16 = new Uint16Array(u8.buffer);
-        this.i32 = new Int32Array(u8.buffer);
-        this.f32 = new Float32Array(u8.buffer);
+        u8.set(this._u8, 0);
+        this._u8 = u8;
+        this._u16 = new Uint16Array(u8.buffer);
+        this._i32 = new Int32Array(u8.buffer);
+        this._f32 = new Float32Array(u8.buffer);
       }
 
       writeInt(v: number) {
-        release || assert ((this.offset & 0x3) === 0);
-        this.ensureCapacity(this.offset + 4);
+        release || assert ((this._offset & 0x3) === 0);
+        this.ensureCapacity(this._offset + 4);
         this.writeIntUnsafe(v);
       }
 
+      writeIntAt(v: number, offset: number) {
+        release || assert (offset >= 0 && offset <= this._offset);
+        release || assert ((offset & 0x3) === 0);
+        this.ensureCapacity(offset + 4);
+        var index = offset >> 2;
+        this._i32[index] = v;
+      }
+
       writeIntUnsafe(v: number) {
-        var index = this.offset >> 2;
-        this.i32[index] = v;
-        this.offset += 4;
+        var index = this._offset >> 2;
+        this._i32[index] = v;
+        this._offset += 4;
       }
 
       writeFloat(v: number) {
-        release || assert ((this.offset & 0x3) === 0);
-        this.ensureCapacity(this.offset + 4);
+        release || assert ((this._offset & 0x3) === 0);
+        this.ensureCapacity(this._offset + 4);
         this.writeFloatUnsafe(v);
       }
 
+      write4Floats(a: number, b: number, c: number, d: number) {
+        release || assert ((this._offset & 0x3) === 0);
+        this.ensureCapacity(this._offset + 16);
+        var index = this._offset >> 2;
+        this._f32[index + 0] = a;
+        this._f32[index + 1] = b;
+        this._f32[index + 2] = c;
+        this._f32[index + 3] = d;
+        this._offset += 16;
+      }
+
+      write6Floats(a: number, b: number, c: number, d: number, e: number, f: number) {
+        release || assert ((this._offset & 0x3) === 0);
+        this.ensureCapacity(this._offset + 24);
+        var index = this._offset >> 2;
+        this._f32[index + 0] = a;
+        this._f32[index + 1] = b;
+        this._f32[index + 2] = c;
+        this._f32[index + 3] = d;
+        this._f32[index + 4] = e;
+        this._f32[index + 5] = f;
+        this._offset += 24;
+      }
+
       writeFloatUnsafe(v: number) {
-        var index = this.offset >> 2;
-        this.f32[index] = v;
-        this.offset += 4;
+        var index = this._offset >> 2;
+        this._f32[index] = v;
+        this._offset += 4;
       }
 
       subF32View(): Float32Array {
-        return this.f32.subarray(0, this.offset >> 2);
+        return this._f32.subarray(0, this._offset >> 2);
       }
 
       subI32View(): Int32Array {
-        return this.i32.subarray(0, this.offset >> 2);
+        return this._i32.subarray(0, this._offset >> 2);
       }
 
       subU16View(): Uint16Array {
-        return this.u16.subarray(0, this.offset >> 1);
+        return this._u16.subarray(0, this._offset >> 1);
       }
 
       subU8View(): Uint8Array {
-        return this.u8.subarray(0, this.offset);
+        return this._u8.subarray(0, this._offset);
       }
 
       hashWords(hash: number, offset: number, length: number) {
-        var i32 = this.i32;
+        var i32 = this._i32;
         for (var i = 0; i < length; i++) {
           hash = (((31 * hash) | 0) + i32[i]) | 0;
         }
         return hash;
       }
 
-      reserve(size) {
+      reserve(size: number) {
         size = (size + 3) & ~0x3; // Round up to multiple of 4.
-        this.ensureCapacity(this.offset + size);
-        this.offset += size;
+        this.ensureCapacity(this._offset + size);
+        this._offset += size;
       }
+    }
+  }
+
+  export class ArrayReader {
+    _u8: Uint8Array;
+    _u16: Uint16Array;
+    _i32: Int32Array;
+    _f32: Float32Array;
+    _u32: Uint32Array;
+    _offset: number;
+
+    constructor(buffer: ArrayBuffer) {
+      this._u8 = new Uint8Array(buffer);
+      this._u16 = new Uint16Array(buffer);
+      this._i32 = new Int32Array(buffer);
+      this._f32 = new Float32Array(buffer);
+      this._offset = 0;
+    }
+
+    public get offset (): number {
+      return this._offset;
+    }
+
+    public isEmpty (): boolean {
+      return this._offset === this._u8.length;
+    }
+
+    readInt(): number {
+      release || assert ((this._offset & 0x3) === 0);
+      release || assert (this._offset <= this._u8.length - 4);
+      var v = this._i32[this._offset >> 2];
+      this._offset += 4;
+      return v;
+    }
+
+    readFloat(): number {
+      release || assert ((this._offset & 0x3) === 0);
+      release || assert (this._offset <= this._u8.length - 4);
+      var v = this._f32[this._offset >> 2];
+      this._offset += 4;
+      return v;
     }
   }
 

@@ -101,7 +101,7 @@ module Shumway.GFX.GL {
       this.modelViewProjectionMatrix = Matrix3D.create2DProjection(this._w, this._h, 2000);
     }
 
-    public set blendMode (value: BlendMode) {
+    public setBlendMode (value: BlendMode) {
       var gl = this.gl;
       switch (value) {
         case BlendMode.Add:

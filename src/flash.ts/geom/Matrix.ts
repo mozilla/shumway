@@ -17,6 +17,8 @@
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
+
   export class Matrix extends ASNative {
     
     // Called whenever the class is initialized.
@@ -491,5 +493,8 @@ module Shumway.AVM2.AS.flash.geom {
       return "(a=" + this.a + ", b=" + this.b + ", c=" + this.c + ", d=" + this.d + ", tx=" + this.tx + ", ty=" +this.ty + ")";
     }
 
+    public serialize(writer: ArrayWriter) {
+      writer.write6Floats(this.a, this.b, this.c, this.d, this.tx / 20, this.ty / 20);
+    }
   }
 }

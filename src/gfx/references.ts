@@ -16,6 +16,7 @@
 /// <reference path='../lib.d.ts' />
 /// <reference path='../utilities.ts' />
 /// <reference path='utilities.ts' />
+/// <reference path='../remoting.ts' />
 /// <reference path='shapes.ts'/>
 /// <reference path='geometry.ts'/>
 /// <reference path='stage.ts'/>

@@ -17,6 +17,7 @@
 ///<reference path='../lib.d.ts' />
 
 ///<reference path='../avm2/references.ts' />
+///<reference path='../gfx/references.ts' />
 
 ///<reference path='accessibility/Accessibility.ts' />
 ///<reference path='accessibility/AccessibilityImplementation.ts' />
@@ -410,6 +411,7 @@
 ///<reference path='xml/XMLTag.ts' />
 
 ///<reference path='../timeline.ts' />
+///<reference path='../remoting.ts' />
 
 ///<reference path='../avm1lib/references.ts' />
 

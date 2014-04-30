@@ -17,6 +17,8 @@
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
+
   export class Rectangle extends ASNative {
 
     // Called whenever the class is initialized.
@@ -287,6 +289,10 @@ module Shumway.AVM2.AS.flash.geom {
 
     public toString(): String {
       return "(x=" + this.x + ", y=" + this.y + ", w=" + this.width + ", h=" + this.height + ")";
+    }
+
+    public serialize(writer: ArrayWriter) {
+      writer.write4Floats(this.x / 20, this.y / 20, this.width / 20, this.height / 20);
     }
   }
 }

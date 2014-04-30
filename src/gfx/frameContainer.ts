@@ -57,7 +57,7 @@ module Shumway.GFX {
       if (!child) {
         return;
       }
-      child.gatherPreviousDirtyRegions();
+      // child.gatherPreviousDirtyRegions();
       child._parent = undefined;
       child.invalidate();
     }
@@ -67,7 +67,7 @@ module Shumway.GFX {
       for (var i = 0; i < this._children.length; i++) {
         var child = this._children[i];
         if (child) {
-          child.gatherPreviousDirtyRegions();
+          // child.gatherPreviousDirtyRegions();
         }
       }
       this._children.length = 0;
