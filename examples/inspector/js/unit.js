@@ -35,11 +35,13 @@ function eqArray(a, b, test) {
   }
   if (a && b) {
     if (a.length !== b.length) {
-      throw new Error("FAIL" + test + " Array Length Mismatch");
+      throw new Error("FAIL" + test + " Array Length Mismatch, got " + a.length + ", expected " + b.length);
     }
     for (var i = 0; i < a.length; i++) {
-      if (a[i] != b[i] && !isNaN(a[i]) && !isNaN(b[i])) {
-        throw new Error("FAIL" + test + " Array Element " + i + ": " + a[i] + " != " + b[i]);
+      if (a[i] !== b[i]) {
+        if (!(typeof a[i] == "number" && typeof b[i] == "number" && isNaN(a[i]) && isNaN(b[i]))) {
+          throw new Error("FAIL" + test + " Array Element " + i + ": got " + a[i] + ", expected " + b[i]);
+        }
       }
     }
   }
