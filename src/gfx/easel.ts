@@ -243,7 +243,7 @@ module Shumway.GFX {
       this._worldViewOverlay = new FrameContainer();
       this._world = new FrameContainer();
       this._stage.addChild(this._worldView);
-      // this._worldView.addChild(new Shape(new Grid())).removeCapability(FrameCapabilityFlags.AllowMatrixWrite);
+      this._worldView.addChild(new Shape(new Grid())).removeCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._worldView.addChild(this._world);
       this._worldView.addChild(this._worldViewOverlay);
       var screenOverlay = new FrameContainer();

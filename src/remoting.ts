@@ -22,7 +22,8 @@ module Shumway.Remoting {
 
   import Matrix = Shumway.GFX.Geometry.Matrix;
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
-
+  import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
+  import IDataOutput = Shumway.AVM2.AS.flash.utils.IDataOutput;
 
   export enum UpdateFrameTagBits {
     HasMatrix     = 0x0001,
@@ -35,39 +36,29 @@ module Shumway.Remoting {
     UpdateFrame   = 1
   }
 
-  export class MessageReader extends ArrayReader {
-    private _tagStack: MessageTag [];
-    private _tagStart: number [];
-
-    constructor(buffer: Uint8Array) {
-      super(buffer);
-    }
-
-    readMatrix(): Matrix {
-      return new Matrix (
-        this.readFloat(),
-        this.readFloat(),
-        this.readFloat(),
-        this.readFloat(),
-        this.readFloat(),
-        this.readFloat()
-      );
-    }
-
-    readRectangle(): Rectangle {
-      return new Rectangle (
-        this.readFloat(),
-        this.readFloat(),
-        this.readFloat(),
-        this.readFloat()
-      );
-    }
-  }
-
   export interface IChannelVisitor {
     visitDisplayObject(obj);
   }
 
+  function readMatrix(reader: IDataInput): Matrix {
+    return new Matrix (
+      reader.readFloat(),
+      reader.readFloat(),
+      reader.readFloat(),
+      reader.readFloat(),
+      reader.readFloat() / 20,
+      reader.readFloat() / 20
+    );
+  }
+
+  function readRectangle(reader: IDataInput): Rectangle {
+    return new Rectangle (
+      reader.readFloat() / 20,
+      reader.readFloat() / 20,
+      reader.readFloat() / 20,
+      reader.readFloat() / 20
+    );
+  }
 
   export class Server {
     private _root: FrameContainer;
@@ -78,10 +69,10 @@ module Shumway.Remoting {
       this._frames = [];
     }
 
-    public recieve(reader: MessageReader) {
+    public recieve(reader: IDataInput) {
       var tag = 0;
       var length = 0;
-      while (!reader.isEmpty()) {
+      while (reader.bytesAvailable > 0) {
         tag = reader.readInt();
         switch (tag) {
           case MessageTag.EOF:
@@ -96,7 +87,7 @@ module Shumway.Remoting {
       }
     }
 
-    private _parseUpdateFrame(reader: MessageReader) {
+    private _parseUpdateFrame(reader: IDataInput) {
       var id = reader.readInt();
       var isContainer = !!reader.readInt();
       var firstFrame = this._frames.length === 0;
@@ -109,10 +100,10 @@ module Shumway.Remoting {
       }
       var hasBits = reader.readInt();
       if (hasBits & UpdateFrameTagBits.HasMatrix) {
-        frame.matrix = reader.readMatrix();
+        frame.matrix = readMatrix(reader);
       }
       if (hasBits & UpdateFrameTagBits.HasBounds) {
-        var bounds = reader.readRectangle();
+        var bounds = readRectangle(reader);
         var shape = (<Shape>frame);
         if (!shape.source) {
           var renderable = new Renderable(bounds, function (context) {

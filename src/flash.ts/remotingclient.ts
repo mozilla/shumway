@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 module Shumway.Remoting.Client {
-  import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
   import MessageTag = Shumway.Remoting.MessageTag;
   import UpdateFrameTagBits = Shumway.Remoting.UpdateFrameTagBits;
 
@@ -22,18 +21,14 @@ module Shumway.Remoting.Client {
   import DisplayObjectFlags = Shumway.AVM2.AS.flash.display.DisplayObjectFlags;
   import DisplayObjectContainer = Shumway.AVM2.AS.flash.display.DisplayObjectContainer;
 
+  import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
+  import IDataOutput = Shumway.AVM2.AS.flash.utils.IDataOutput;
+
   export class ClientVisitor implements IChannelVisitor {
-    public writer: ArrayWriter;
+    public writer: IDataOutput;
+
     public writeReferences: boolean = false;
     public clearDirtyBits: boolean = false;
-
-    public serializeMatrix(m: Shumway.AVM2.AS.flash.geom.Matrix) {
-      this.writer.write6Floats(m.a, m.b, m.c, m.d, m.tx / 20, m.ty / 20);
-    }
-
-    public serializeRactangle(r: Shumway.AVM2.AS.flash.geom.Rectangle) {
-      this.writer.write4Floats(r.x / 20, r.y / 20, r.width / 20, r.height / 20);
-    }
 
     visitDisplayObject(obj) {
       var dispObj : DisplayObject = obj;
@@ -51,10 +46,10 @@ module Shumway.Remoting.Client {
       hasBits |= hasChildren ? UpdateFrameTagBits.HasChildren : 0;
       this.writer.writeInt(hasBits);
       if (hasMatrix) {
-        this.serializeMatrix(dispObj._matrix);
+        dispObj._matrix.writeExternal(this.writer);
       }
       if (hasBounds) {
-        this.serializeRactangle(dispObj._getContentBounds());
+        dispObj._getContentBounds().writeExternal(this.writer);
       }
       if (hasChildren) {
         assert (DisplayObjectContainer.isType(dispObj));

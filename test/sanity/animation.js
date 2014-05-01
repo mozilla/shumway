@@ -1,4 +1,5 @@
 (function displayLoaderTests() {
+  var ByteArray = flash.utils.ByteArray;
   var Event = flash.events.Event;
   var Stage = flash.display.Stage;
   var Loader = flash.display.Loader;
@@ -101,9 +102,9 @@
     });
 
     s.addEventListener(Event.ENTER_FRAME, function (event) {
-      var writer = new Shumway.ArrayUtilities.ArrayWriter(16);
+      var byteArray = new ByteArray();
       var visitor = new Shumway.Remoting.Client.ClientVisitor();
-      visitor.writer = writer;
+      visitor.writer = byteArray;
 
       s.visit(function (displayObject) {
         visitor.writeReferences = false;
@@ -119,10 +120,9 @@
         return VisitorFlags.Continue;
       }, flash.display.VisitorFlags.None);
 
-      writer.writeInt(Shumway.Remoting.MessageTag.EOF);
-
-      var reader = new Remoting.MessageReader(writer.subU8View().buffer);
-      server.recieve(reader);
+      byteArray.writeInt(Shumway.Remoting.MessageTag.EOF);
+      byteArray.position = 0;
+      server.recieve(byteArray);
       syncOptions(easel.options);
       easel.render();
     });
