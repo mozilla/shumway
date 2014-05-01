@@ -1071,10 +1071,6 @@ module Shumway {
       return ((i & 0xFF) << 8) | ((i >> 8) & 0xFF);
     }
 
-    export function swap16(i: number) {
-      return ((i & 0xFF) << 8) | ((i >> 8) & 0xFF);
-    }
-
     export function swap32(i: number) {
       return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF);
     }

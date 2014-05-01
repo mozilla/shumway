@@ -411,7 +411,7 @@
 ///<reference path='../timeline.ts' />
 ///<reference path='../remoting.ts' />
 
-///<reference path='remotingclient.ts' />
+///<reference path='remotingClient.ts' />
 
 ///<reference path='../avm1lib/references.ts' />
 
