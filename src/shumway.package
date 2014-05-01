@@ -11,14 +11,17 @@ src/swf/Timeline.js
 
 src/gfx/filters/filters.js
 src/gfx/filters/filters_cxform.js
-src/gfx/util.js
+src/gfx/utilities.js
 src/gfx/geometry.js
+src/gfx/frame.js
+src/gfx/frameContainer.js
 src/gfx/stage.js
-src/gfx/elements.js
 src/gfx/filters.js
-src/gfx/gl.js
+src/gfx/gl/glContext.js
+src/gfx/gl/gl.js
+src/gfx/gl/brush.js
 src/gfx/gl/core.js
-src/gfx/2d.js
+src/gfx/2d/2d.js
 src/gfx/easel.js
 src/gfx/shapes.js
 #src/gfx/glTests.js
@@ -128,6 +131,7 @@ src/avm1/interpreter.js
 #src/avm2/bin/candy.as.js
 #!inline console.timeEnd("Load Compiled Code Cache");
 
+src/remoting.js
 src/timeline.js
 
 ## Load Flash TS Dependencies
@@ -234,7 +238,7 @@ src/flash.ts/ui/Mouse.js
 src/flash.ts/xml/XMLParser.js
 #src/flash.ts/net/NetGroupInfo.js
 #src/flash.ts/display/ShaderJob.js
-#src/flash.ts/text/FontStyle.js
+src/flash.ts/text/FontStyle.js
 #src/flash.ts/accessibility/ISearchableText.js
 src/flash.ts/display/GraphicsShaderFill.js
 src/flash.ts/net/NetStream.js
@@ -309,7 +313,7 @@ src/flash.ts/events/TimerEvent.js
 #src/flash.ts/ui/GameInputHand.js
 #src/flash.ts/events/DRMAuthenticateEvent.js
 #src/flash.ts/media/H264Level.js
-#src/flash.ts/text/FontType.js
+src/flash.ts/text/FontType.js
 src/flash.ts/display/NativeMenuItem.js
 src/flash.ts/net/FileFilter.js
 src/flash.ts/text/Font.js
@@ -543,6 +547,7 @@ src/flash.ts/text/engine/SpaceJustifier.js
 src/flash.ts/text/TextLineMetrics.js
 #!inline console.timeEnd("Load Flash TS Dependencies");
 
+src/flash.ts/remotingclient.js
 
 #!inline console.time("Load avm1lib Dependencies");
 src/avm1lib/AS2Button.js

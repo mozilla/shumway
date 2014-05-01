@@ -492,9 +492,5 @@ module Shumway.AVM2.AS.flash.geom {
     public toString(): String {
       return "(a=" + this.a + ", b=" + this.b + ", c=" + this.c + ", d=" + this.d + ", tx=" + this.tx + ", ty=" +this.ty + ")";
     }
-
-    public serialize(writer: ArrayWriter) {
-      writer.write6Floats(this.a, this.b, this.c, this.d, this.tx / 20, this.ty / 20);
-    }
   }
 }

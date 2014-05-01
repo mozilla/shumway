@@ -101,17 +101,25 @@
     });
 
     s.addEventListener(Event.ENTER_FRAME, function (event) {
-      var writer = new Remoting.MessageWriter();
+      var writer = new Shumway.ArrayUtilities.ArrayWriter(16);
+      var visitor = new Shumway.Remoting.Client.ClientVisitor();
+      visitor.writer = writer;
 
       s.visit(function (displayObject) {
-        displayObject.serialize(writer, false, false);
+        visitor.writeReferences = false;
+        visitor.clearDirtyBits = false;
+        visitor.visitDisplayObject(displayObject);
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
 
       s.visit(function (displayObject) {
-        displayObject.serialize(writer, true, true);
+        visitor.writeReferences = true;
+        visitor.clearDirtyBits = true;
+        visitor.visitDisplayObject(displayObject);
         return VisitorFlags.Continue;
       }, flash.display.VisitorFlags.None);
+
+      writer.writeInt(Shumway.Remoting.MessageTag.EOF);
 
       var reader = new Remoting.MessageReader(writer.subU8View().buffer);
       server.recieve(reader);
