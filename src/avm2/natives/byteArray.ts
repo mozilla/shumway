@@ -491,7 +491,11 @@ module Shumway.AVM2.AS {
 
       set endian(type: string) {
         type = asCoerceString(type);
-        this._littleEndian = type === "littleEndian";
+        if (type === "auto") {
+          this._littleEndian = ByteArray._nativeLittleEndian;
+        } else {
+          this._littleEndian = type === "littleEndian";
+        }
       }
 
       toString(): string {
