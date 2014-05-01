@@ -19,7 +19,7 @@ module Shumway.AVM2.AS.flash.geom {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
 
-  export class Rectangle extends ASNative {
+  export class Rectangle extends ASNative implements flash.utils.IExternalizable {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -289,6 +289,20 @@ module Shumway.AVM2.AS.flash.geom {
 
     public toString(): String {
       return "(x=" + this.x + ", y=" + this.y + ", w=" + this.width + ", h=" + this.height + ")";
+    }
+
+    public writeExternal(output: flash.utils.IDataOutput) {
+      output.writeFloat(this.x);
+      output.writeFloat(this.y);
+      output.writeFloat(this.width);
+      output.writeFloat(this.height);
+    }
+
+    public readExternal(input: flash.utils.IDataInput) {
+      this.x = input.readFloat();
+      this.y = input.readFloat();
+      this.width = input.readFloat();
+      this.height = input.readFloat();
     }
   }
 }

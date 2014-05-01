@@ -19,7 +19,7 @@ module Shumway.AVM2.AS.flash.geom {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
 
-  export class Matrix extends ASNative {
+  export class Matrix extends ASNative implements flash.utils.IExternalizable {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -491,6 +491,24 @@ module Shumway.AVM2.AS.flash.geom {
 
     public toString(): String {
       return "(a=" + this.a + ", b=" + this.b + ", c=" + this.c + ", d=" + this.d + ", tx=" + this.tx + ", ty=" +this.ty + ")";
+    }
+
+    public writeExternal(output: flash.utils.IDataOutput) {
+      output.writeFloat(this.a);
+      output.writeFloat(this.b);
+      output.writeFloat(this.c);
+      output.writeFloat(this.d);
+      output.writeFloat(this.tx);
+      output.writeFloat(this.ty);
+    }
+
+    public readExternal(input: flash.utils.IDataInput) {
+      this.a = input.readFloat();
+      this.b = input.readFloat();
+      this.c = input.readFloat();
+      this.d = input.readFloat();
+      this.tx = input.readFloat();
+      this.ty = input.readFloat();
     }
   }
 }
