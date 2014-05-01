@@ -16,8 +16,6 @@
 // Class: GradientBevelFilter
 module Shumway.AVM2.AS.flash.filters {
 
-  import notImplemented = Shumway.Debug.notImplemented;
-  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export class GradientBevelFilter extends flash.filters.BitmapFilter {
@@ -35,19 +33,93 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (distance: number = 4, angle: number = 45, colors: any [] = null, alphas: any [] = null, ratios: any [] = null, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
-      somewhatImplemented("public flash.filters.GradientBevelFilter ctor");
+      false && super();
       this.distance = distance;
       this.angle = angle;
-      this.colors = colors;
-      this.alphas = alphas;
-      this.ratios = ratios;
+      this._applyArrays(colors, alphas, ratios);
       this.blurX = blurX;
       this.blurY = blurY;
       this.strength = strength;
       this.quality = quality;
       this.type = type;
       this.knockout = knockout;
-      super();
+    }
+
+    // colors null or empty - all empty
+    // ratios empty - all empty
+    // ratios null and alphas null - length: colors, alphas set to 0, ratios set to 0
+    // ratios null and alphas != null - length: colors, alphas filled with 1, ratios set to 0
+    // ratios not empty and alphas null - length: min(colors,ratios), alphas set to 0
+    // ratios not empty and alphas != null - length: min(colors,ratios), alphas filled with 1
+    private _applyArrays(colors: any [], alphas: any [], ratios: any []) {
+      var len;
+      if (isNullOrUndefined(colors) || colors.length == 0) {
+        this._colors = [];
+        this._alphas = [];
+        this._ratios = [];
+      } else {
+        if (isNullOrUndefined(ratios)) {
+          len = colors.length;
+          this._colors = this._sanitizeColors(colors);
+          this._ratios = this._expandArray([], len, 0);
+          if (isNullOrUndefined(alphas)) {
+            this._alphas = this._expandArray([], len, 0);
+          } else {
+            this._alphas = this._sanitizeAlphas(this._expandArray(alphas.slice(0, len), len, 1));
+          }
+        } else {
+          if (ratios.length == 0) {
+            this._colors = [];
+            this._alphas = [];
+            this._ratios = [];
+          } else {
+            len = Math.min(colors.length, ratios.length);
+            if (isNullOrUndefined(alphas)) {
+              this._colors = this._sanitizeColors(colors.slice(0, len));
+              this._ratios = this._sanitizeRatios(ratios.slice(0, len));
+              this._alphas = this._expandArray([], len, 0);
+            } else {
+              this._colors = this._sanitizeColors(colors.slice(0, len));
+              this._ratios = this._sanitizeRatios(ratios.slice(0, len));
+              this._alphas = this._sanitizeAlphas(this._expandArray(alphas.slice(0, len), len, 1));
+            }
+          }
+        }
+      }
+    }
+
+    private _sanitizeColors(colors: any []): number [] {
+      var arr: number [] = [];
+      for (var i = 0, n = Math.min(colors.length, 16); i < n; i++) {
+        arr[i] = (colors[i] >>> 0) & 0xffffff;
+      }
+      return arr;
+    }
+
+    private _sanitizeAlphas(alphas: any []): number [] {
+      var arr: number [] = [];
+      for (var i = 0, n = Math.min(alphas.length, 16); i < n; i++) {
+        arr[i] = NumberUtilities.clamp(+alphas[i], 0, 1);
+      }
+      return arr;
+    }
+
+    private _sanitizeRatios(ratios: any []): number [] {
+      var arr: number [] = [];
+      for (var i = 0, n = Math.min(ratios.length, 16); i < n; i++) {
+        arr[i] = NumberUtilities.clamp(+ratios[i], 0, 255);
+      }
+      return arr;
+    }
+
+    private _expandArray(a: number [], newLen: number /*uint*/, value: number = 0): number [] {
+      if (a) {
+        var i: number = a.length;
+        while (i < newLen) {
+          a[i++] = value;
+        }
+      }
+      return a;
     }
 
     // JS -> AS Bindings
@@ -70,7 +142,6 @@ module Shumway.AVM2.AS.flash.filters {
       return this._distance;
     }
     set distance(value: number) {
-      somewhatImplemented("public flash.filters.GradientBevelFilter::set distance");
       this._distance = +value;
     }
 
@@ -78,55 +149,63 @@ module Shumway.AVM2.AS.flash.filters {
       return this._angle;
     }
     set angle(value: number) {
-      somewhatImplemented("public flash.filters.GradientBevelFilter::set angle");
-      this._angle = +value;
+      this._angle = +value % 360;
     }
 
     get colors(): any [] {
-      return this._colors;
+      return this._colors.concat();
     }
     set colors(value: any []) {
-      somewhatImplemented("public flash.filters.GradientBevelFilter::set colors");
-      this._colors = value;
+      if (!isNullOrUndefined(value)) {
+        this._colors = this._sanitizeColors(value);
+        var len: number = this._colors.length;
+        this._alphas = this._expandArray(this._alphas.slice(0, len), len, 0);
+        this._ratios = this._expandArray(this._ratios.slice(0, len), len, 0);
+      } else {
+        Runtime.throwError("TypeError", Errors.NullPointerError, "colors");
+      }
     }
 
     get alphas(): any [] {
-      return this._alphas;
+      return this._alphas.concat();
     }
     set alphas(value: any []) {
-      somewhatImplemented("public flash.filters.GradientBevelFilter::set alphas");
-      this._alphas = value;
+      if (!isNullOrUndefined(value)) {
+        this._applyArrays(this._colors, value, this._ratios);
+      } else {
+        Runtime.throwError("TypeError", Errors.NullPointerError, "alphas");
+      }
     }
 
     get ratios(): any [] {
-      return this._ratios;
+      return this._ratios.concat();
     }
     set ratios(value: any []) {
-      somewhatImplemented("public flash.filters.GradientBevelFilter::set ratios");
-      this._ratios = value;
+      if (!isNullOrUndefined(value)) {
+        this._applyArrays(this._colors, this._alphas, value);
+      } else {
+        Runtime.throwError("TypeError", Errors.NullPointerError, "ratios");
+      }
     }
 
     get blurX(): number {
       return this._blurX;
     }
     set blurX(value: number) {
-      somewhatImplemented("public flash.filters.GradientBevelFilter::set blurX");
-      this._blurX = +value;
+      this._blurX = NumberUtilities.clamp(+value, 0, 255);
     }
 
     get blurY(): number {
       return this._blurY;
     }
     set blurY(value: number) {
-      somewhatImplemented("public flash.filters.GradientBevelFilter::set blurY");
-      this._blurY = +value;
+      this._blurY = NumberUtilities.clamp(+value, 0, 255);
     }
 
     get knockout(): boolean {
       return this._knockout;
     }
     set knockout(value: boolean) {
-      somewhatImplemented("public flash.filters.GradientBevelFilter::set knockout");
       this._knockout = !!value;
     }
 
@@ -134,24 +213,30 @@ module Shumway.AVM2.AS.flash.filters {
       return this._quality;
     }
     set quality(value: number /*int*/) {
-      somewhatImplemented("public flash.filters.GradientBevelFilter::set quality");
-      this._quality = value | 0;
+      this._quality = NumberUtilities.clamp(value | 0, 0, 15);
     }
 
     get strength(): number {
       return this._strength;
     }
     set strength(value: number) {
-      somewhatImplemented("public flash.filters.GradientBevelFilter::set strength");
-      this._strength = +value;
+      this._strength = NumberUtilities.clamp(+value, 0, 255);
     }
 
     get type(): string {
       return this._type;
     }
     set type(value: string) {
-      somewhatImplemented("public flash.filters.GradientBevelFilter::set type");
-      this._type = asCoerceString(value);
+      value = asCoerceString(value);
+      if (value === null) {
+        Runtime.throwError("TypeError", Errors.NullPointerError, "type");
+      } else {
+        if (value === BitmapFilterType.INNER || value === BitmapFilterType.OUTER) {
+          this._type = value;
+        } else {
+          this._type = BitmapFilterType.FULL;
+        }
+      }
     }
 
     clone(): BitmapFilter {

@@ -16,7 +16,6 @@
 // Class: BevelFilter
 module Shumway.AVM2.AS.flash.filters {
 
-  import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export class BevelFilter extends flash.filters.BitmapFilter {
@@ -34,6 +33,7 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (distance: number = 4, angle: number = 45, highlightColor: number /*uint*/ = 16777215, highlightAlpha: number = 1, shadowColor: number /*uint*/ = 0, shadowAlpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
+      false && super();
       this.distance = distance;
       this.angle = angle;
       this.highlightColor = highlightColor;
@@ -44,9 +44,8 @@ module Shumway.AVM2.AS.flash.filters {
       this.blurY = blurY;
       this.strength = strength;
       this.quality = quality;
-      this.type = asCoerceString(type);
-      this.knockout = !!knockout;
-      super();
+      this.type = type;
+      this.knockout = knockout;
     }
 
     _generateFilterBounds(): any {
@@ -103,7 +102,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._highlightColor;
     }
     set highlightColor(value: number /*uint*/) {
-      this._highlightColor = value >>> 0;
+      this._highlightColor = (value >>> 0) & 0xffffff;
     }
 
     get highlightAlpha(): number {
@@ -117,7 +116,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._shadowColor;
     }
     set shadowColor(value: number /*uint*/) {
-      this._shadowColor = value >>> 0;
+      this._shadowColor = (value >>> 0) & 0xffffff;
     }
 
     get shadowAlpha(): number {

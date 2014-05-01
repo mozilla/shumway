@@ -16,7 +16,7 @@
 // Class: DisplacementMapFilter
 module Shumway.AVM2.AS.flash.filters {
 
-  import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export class DisplacementMapFilter extends flash.filters.BitmapFilter {
@@ -34,6 +34,7 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (mapBitmap: flash.display.BitmapData = null, mapPoint: flash.geom.Point = null, componentX: number /*uint*/ = 0, componentY: number /*uint*/ = 0, scaleX: number = 0, scaleY: number = 0, mode: string = "wrap", color: number /*uint*/ = 0, alpha: number = 0) {
+      false && super();
       this.mapBitmap = mapBitmap;
       this.mapPoint = mapPoint;
       this.componentX = componentX;
@@ -43,7 +44,6 @@ module Shumway.AVM2.AS.flash.filters {
       this.mode = mode;
       this.color = color;
       this.alpha = alpha;
-      super();
     }
 
     // JS -> AS Bindings
@@ -61,20 +61,20 @@ module Shumway.AVM2.AS.flash.filters {
     private _alpha: number;
 
     get mapBitmap(): flash.display.BitmapData {
-      Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::get mapBitmap");
+      somewhatImplemented("public flash.filters.DisplacementMapFilter::get mapBitmap");
       return this._mapBitmap;
     }
     set mapBitmap(value: flash.display.BitmapData) {
-      Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::set mapBitmap");
+      somewhatImplemented("public flash.filters.DisplacementMapFilter::set mapBitmap");
       this._mapBitmap = value;
     }
 
     get mapPoint(): flash.geom.Point {
-      Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::get mapPoint");
+      somewhatImplemented("public flash.filters.DisplacementMapFilter::get mapPoint");
       return this._mapPoint;
     }
     set mapPoint(value: flash.geom.Point) {
-      Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::set mapPoint");
+      somewhatImplemented("public flash.filters.DisplacementMapFilter::set mapPoint");
       this._mapPoint = value;
     }
 
@@ -82,7 +82,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._componentX;
     }
     set componentX(value: number /*uint*/) {
-      Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::set componentX");
+      somewhatImplemented("public flash.filters.DisplacementMapFilter::set componentX");
       this._componentX = value >>> 0;
     }
 
@@ -90,7 +90,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._componentY;
     }
     set componentY(value: number /*uint*/) {
-      Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::set componentY");
+      somewhatImplemented("public flash.filters.DisplacementMapFilter::set componentY");
       this._componentY = value >>> 0;
     }
 
@@ -98,7 +98,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._scaleX;
     }
     set scaleX(value: number) {
-      Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::set scaleX");
+      somewhatImplemented("public flash.filters.DisplacementMapFilter::set scaleX");
       this._scaleX = +value;
     }
 
@@ -106,7 +106,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._scaleY;
     }
     set scaleY(value: number) {
-      Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::set scaleY");
+      somewhatImplemented("public flash.filters.DisplacementMapFilter::set scaleY");
       this._scaleY = +value;
     }
 
@@ -114,7 +114,7 @@ module Shumway.AVM2.AS.flash.filters {
       return this._mode;
     }
     set mode(value: string) {
-      Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::set mode");
+      somewhatImplemented("public flash.filters.DisplacementMapFilter::set mode");
       this._mode = asCoerceString(value);
     }
 
@@ -122,15 +122,15 @@ module Shumway.AVM2.AS.flash.filters {
       return this._color;
     }
     set color(value: number /*uint*/) {
-      Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::set color");
-      this._color = value >>> 0;
+      somewhatImplemented("public flash.filters.DisplacementMapFilter::set color");
+      this._color = (value >>> 0) & 0xffffff;
     }
 
     get alpha(): number {
       return this._alpha;
     }
     set alpha(value: number) {
-      Debug.somewhatImplemented("public flash.filters.DisplacementMapFilter::set alpha");
+      somewhatImplemented("public flash.filters.DisplacementMapFilter::set alpha");
       this._alpha = +value;
     }
 

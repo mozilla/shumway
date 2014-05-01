@@ -16,9 +16,6 @@
 // Class: BlurFilter
 module Shumway.AVM2.AS.flash.filters {
 
-  import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-
   export class BlurFilter extends flash.filters.BitmapFilter {
 
     // Called whenever the class is initialized.
@@ -34,10 +31,10 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (blurX: number = 4, blurY: number = 4, quality: number /*int*/ = 1) {
+      false && super();
       this.blurX = blurX;
       this.blurY = blurY;
       this.quality = quality;
-      super();
     }
 
     _generateFilterBounds(): any {

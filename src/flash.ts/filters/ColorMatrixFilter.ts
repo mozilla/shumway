@@ -16,9 +16,6 @@
 // Class: ColorMatrixFilter
 module Shumway.AVM2.AS.flash.filters {
 
-  import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-
   export class ColorMatrixFilter extends flash.filters.BitmapFilter {
 
     // Called whenever the class is initialized.
@@ -34,6 +31,7 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (matrix: any [] = null) {
+      false && super();
       if (matrix) {
         this.matrix = matrix;
       } else {
@@ -44,7 +42,6 @@ module Shumway.AVM2.AS.flash.filters {
           0, 0, 0, 1, 0
         ]
       }
-      super();
     }
 
     _serialize(message) {
