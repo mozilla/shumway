@@ -27,6 +27,10 @@ module Shumway.AVM2.AS {
   import utf8decode = Shumway.StringUtilities.utf8decode;
   import utf8encode = Shumway.StringUtilities.utf8encode;
   import clamp = Shumway.NumberUtilities.clamp;
+  import swap16 = Shumway.IntegerUtilities.swap16;
+  import swap32 = Shumway.IntegerUtilities.swap32;
+  import floatToInt32 = Shumway.IntegerUtilities.floatToInt32;
+  import int32ToFloat = Shumway.IntegerUtilities.int32ToFloat;
 
   function throwEOFError() {
     notImplemented("throwEOFError");
@@ -71,8 +75,44 @@ module Shumway.AVM2.AS {
     var _asHasTraitProperty = Object.prototype.asHasTraitProperty;
     var _asDeleteProperty = Object.prototype.asDeleteProperty;
 
+    export interface IDataInput {
+      readBytes: (bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0) => void;
+      readBoolean: () => boolean;
+      readByte: () => number /*int*/;
+      readUnsignedByte: () => number /*uint*/;
+      readShort: () => number /*int*/;
+      readUnsignedShort: () => number /*uint*/;
+      readInt: () => number /*int*/;
+      readUnsignedInt: () => number /*uint*/;
+      readFloat: () => number;
+      readDouble: () => number;
+      readMultiByte: (length: number /*uint*/, charSet: string) => string;
+      readUTF: () => string;
+      readUTFBytes: (length: number /*uint*/) => string;
+      bytesAvailable: number /*uint*/;
+      readObject: () => any;
+      objectEncoding: number /*uint*/;
+      endian: string;
+    }
 
-    export class ByteArray extends ASNative {
+    export interface IDataOutput {
+      writeBytes: (bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0) => void;
+      writeBoolean: (value: boolean) => void;
+      writeByte: (value: number /*int*/) => void;
+      writeShort: (value: number /*int*/) => void;
+      writeInt: (value: number /*int*/) => void;
+      writeUnsignedInt: (value: number /*uint*/) => void;
+      writeFloat: (value: number) => void;
+      writeDouble: (value: number) => void;
+      writeMultiByte: (value: string, charSet: string) => void;
+      writeUTF: (value: string) => void;
+      writeUTFBytes: (value: string) => void;
+      writeObject: (object: any) => void;
+      objectEncoding: number /*uint*/;
+      endian: string;
+    }
+
+    export class ByteArray extends ASNative implements IDataInput, IDataOutput {
 
       static instanceConstructor = ByteArray;
       static protocol: IProtocol = ByteArray.prototype;
@@ -91,16 +131,18 @@ module Shumway.AVM2.AS {
         this._defaultObjectEncoding = version;
       }
 
-      private static _nativeLittleEndian = new Int8Array(new Int32Array([]).buffer)[0] === 1;
+      private static _nativeLittleEndian = new Int8Array(new Int32Array([1]).buffer)[0] === 1;
 
       private _buffer: ArrayBuffer;
       private _length: number;
       private _position: number;
-      private _nativeLittleEndian: boolean;
       private _littleEndian: boolean;
       private _objectEncoding: number;
       private _i8View: Int8Array;
       private _u8View: Uint8Array;
+      private _i32View: Int32Array;
+      private _f32View: Float32Array;
+      private _f64View: Float64Array;
       private _dataView: DataView;
 
       private _bitBuffer: number;
@@ -111,61 +153,63 @@ module Shumway.AVM2.AS {
         this._buffer = new ArrayBuffer(ByteArray.INITIAL_SIZE);
         this._length = 0;
         this._position = 0;
-        this.cacheViews();
-        this._nativeLittleEndian = ByteArray._nativeLittleEndian;
+        this._cacheViews();
         this._objectEncoding = ByteArray.defaultObjectEncoding;
-        
+        this._littleEndian = false; // AS3 is bigEndian by default.
         this._bitBuffer = 0;
         this._bitLength = 0;
       }
 
       private _get(m: string, size: number) {
-        if (this.position + size > this._length) {
+        if (this._position + size > this._length) {
           throwEOFError();
         }
-        var v = this._dataView[m](this.position, this._littleEndian);
-        this.position += size;
+        var v = this._dataView[m](this._position, this._littleEndian);
+        this._position += size;
         return v;
       }
 
       private _set(m: string, size: number, v: any) {
-        var len = this.position + size;
-        this.ensureCapacity(len);
-        this._dataView[m](this.position, v, this._littleEndian);
-        this.position = len;
-        if (len > this._length) {
-          this._length = len;
+        var length = this._position + size;
+        this._ensureCapacity(length);
+        this._dataView[m](this._position, v, this._littleEndian);
+        this._position = length;
+        if (length > this._length) {
+          this._length = length;
         }
       }
 
-      cacheViews() {
-        this._i8View  = new Int8Array(this._buffer);
+      _cacheViews() {
+        this._i8View = new Int8Array(this._buffer);
         this._u8View = new Uint8Array(this._buffer);
-        this._dataView   = new DataView(this._buffer);
+        this._i32View = new Int32Array(this._buffer);
+        this._f32View = new Float32Array(this._buffer);
+        this._f64View = new Float64Array(this._buffer);
+        this._dataView = new DataView(this._buffer);
       }
 
       getBytes(): Uint8Array {
         return new Uint8Array(this._buffer, 0, this._length);
       }
 
-      ensureCapacity(size) {
-        var origa = this._buffer;
-        if (origa.byteLength < size) {
-          var newSize = origa.byteLength;
-          while (newSize < size) {
-            newSize *= 2;
+      _ensureCapacity(length: number) {
+        var currentBuffer = this._buffer;
+        if (currentBuffer.byteLength < length) {
+          var newLength = currentBuffer.byteLength;
+          while (newLength < length) {
+            newLength *= 2;
           }
-          var copya = new ArrayBuffer(newSize);
-          var origv = this._i8View;
-          this._buffer = copya;
-          this.cacheViews();
-          this._i8View.set(origv);
+          var newBuffer = new ArrayBuffer(newLength);
+          var curentView = this._i8View;
+          this._buffer = newBuffer;
+          this._cacheViews();
+          this._i8View.set(curentView);
         }
       }
 
       clear() {
         this._length = 0;
-        this.position = 0;
+        this._position = 0;
       }
 
       /**
@@ -174,28 +218,28 @@ module Shumway.AVM2.AS {
        */
 
       readBoolean(): boolean {
-        if (this.position + 1 > this._length) {
+        if (this._position + 1 > this._length) {
           throwEOFError();
         }
-        return this._i8View[this.position++] !== 0;
+        return this._i8View[this._position++] !== 0;
       }
 
       readByte(): number /*int*/ {
-        if (this.position + 1 > this._length) {
+        if (this._position + 1 > this._length) {
           throwEOFError();
         }
-        return this._i8View[this.position++];
+        return this._i8View[this._position++];
       }
 
       readUnsignedByte(): number /*uint*/ {
-        if (this.position + 1 > this._length) {
+        if (this._position + 1 > this._length) {
           throwEOFError();
         }
-        return this._u8View[this.position++];
+        return this._u8View[this._position++];
       }
 
       readBytes(bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
-        var pos = this.position;
+        var pos = this._position;
         if (!offset) {
           offset = 0;
         }
@@ -206,27 +250,11 @@ module Shumway.AVM2.AS {
           throwEOFError();
         }
         if (bytes.length < offset + length) {
-          bytes.ensureCapacity(offset + length);
+          bytes._ensureCapacity(offset + length);
           bytes.length = offset + length;
         }
         bytes._i8View.set(new Int8Array(this._buffer, pos, length), offset);
-        this.position += length;
-      }
-
-      readDouble(): number {
-        return this._get('getFloat64', 8);
-      }
-
-      readFloat(): number {
-        return this._get('getFloat32', 4);
-      }
-
-      readInt(): number /*int*/ {
-        return this._get('getInt32', 4);
-      }
-
-      readUnsignedInt(): number /*uint*/ {
-        return this._get('getUint32', 4);
+        this._position += length;
       }
 
       readShort(): number /*int*/ {
@@ -237,45 +265,83 @@ module Shumway.AVM2.AS {
         return this._get('getUint16', 2);
       }
 
+      readInt(): number /*int*/ {
+        if ((this._position & 0x3) === 0) {
+          if (this._position + 4 > this._length) {
+            throwEOFError();
+          }
+          var value = this._i32View[this._position >> 2];
+          this._position += 4;
+          if (this._littleEndian !== ByteArray._nativeLittleEndian) {
+            value = swap32(value);
+          }
+          return value;
+        } else {
+          return this._get('getInt32', 4);
+        }
+      }
+
+      readUnsignedInt(): number /*uint*/ {
+        return this._get('getUint32', 4);
+      }
+
+      readFloat(): number {
+        if ((this._position & 0x3) === 0) {
+          if (this._position + 4 > this._length) {
+            throwEOFError();
+          }
+          var bytes = this._i32View[this._position >> 2];
+          if (this._littleEndian !== ByteArray._nativeLittleEndian) {
+            bytes = swap32(bytes);
+          }
+          var value = int32ToFloat(bytes);
+          this._position += 4;
+          return value;
+        } else {
+          return this._get('getFloat32', 4);
+        }
+      }
+
+      readDouble(): number {
+        return this._get('getFloat64', 8);
+      }
+
       writeBoolean(value: boolean): void {
-        var len = this.position + 1;
-        this.ensureCapacity(len);
-        this._i8View[this.position++] = value ? 1 : 0;
-        if (len > this._length) {
-          this._length = len;
+        value = !!value;
+        var length = this._position + 1;
+        this._ensureCapacity(length);
+        this._i8View[this._position++] = value ? 1 : 0;
+        if (length > this._length) {
+          this._length = length;
         }
       }
 
       writeByte(value: number /*int*/): void {
-        var len = this.position + 1;
-        this.ensureCapacity(len);
-        this._i8View[this.position++] = value;
-        if (len > this._length) {
-          this._length = len;
+        var length = this._position + 1;
+        this._ensureCapacity(length);
+        this._i8View[this._position++] = value;
+        if (length > this._length) {
+          this._length = length;
         }
       }
 
       writeUnsignedByte(value: number /*uint*/): void {
-        var len = this.position + 1;
-        this.ensureCapacity(len);
-        this._u8View[this.position++] = value;
-        if (len > this._length) {
-          this._length = len;
+        var length = this._position + 1;
+        this._ensureCapacity(length);
+        this._u8View[this._position++] = value;
+        if (length > this._length) {
+          this._length = length;
         }
       }
 
       writeRawBytes(bytes: Uint8Array): void {
-        var len = this.position + bytes.length;
-        this.ensureCapacity(len);
-        this._i8View.set(bytes, this.position);
-        this.position = len;
-        if (len > this._length) {
-          this._length = len;
+        var length = this._position + bytes.length;
+        this._ensureCapacity(length);
+        this._i8View.set(bytes, this._position);
+        this._position = length;
+        if (length > this._length) {
+          this._length = length;
         }
-      }
-
-      readRawBytes() {
-        return new Int8Array(this._buffer, 0, this._length);
       }
 
       writeBytes(bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0): void {
@@ -293,28 +359,59 @@ module Shumway.AVM2.AS {
         this.writeRawBytes(new Int8Array(bytes._buffer, offset, length));
       }
 
-      writeDouble(value: number): void {
-        this._set('setFloat64', 8, value);
+      writeShort(value: number /*int*/): void {
+        this._set('setInt16', 2, value);
       }
 
-      writeFloat(value: number): void {
-        this._set('setFloat32', 4, value);
+      writeUnsignedShort(value: number /*uint*/): void {
+        this._set('setUint16', 2, value);
       }
 
       writeInt(value: number /*int*/): void {
-        this._set('setInt32', 4, value);
-      }
-
-      writeShort(value: number /*int*/): void {
-        this._set('setInt16', 2, value);
+        if ((this._position & 0x3) === 0) {
+          if (this._littleEndian !== ByteArray._nativeLittleEndian) {
+            value = swap32(value);
+          }
+          var length = this._position + 4;
+          this._ensureCapacity(length);
+          this._i32View[this._position >> 2] = value;
+          this._position += 4;
+          if (length > this._length) {
+            this._length = length;
+          }
+        } else {
+          this._set('setInt32', 4, value);
+        }
       }
 
       writeUnsignedInt(value: number /*uint*/): void {
         this._set('setUint32', 4, value);
       }
 
-      writeUnsignedShort(value: number /*uint*/): void {
-        this._set('setUint16', 2, value);
+      writeFloat(value: number): void {
+        if ((this._position & 0x3) === 0) {
+          var length = this._position + 4;
+          this._ensureCapacity(length);
+          var bytes = floatToInt32(value);
+          if (this._littleEndian !== ByteArray._nativeLittleEndian) {
+            bytes = swap32(bytes);
+          }
+          this._i32View[this._position >> 2] = bytes;
+          this._position += 4;
+          if (length > this._length) {
+            this._length = length;
+          }
+        } else {
+          this._set('setFloat32', 4, value);
+        }
+      }
+
+      writeDouble(value: number): void {
+        this._set('setFloat64', 8, value);
+      }
+
+      readRawBytes() {
+        return new Int8Array(this._buffer, 0, this._length);
       }
 
       writeUTF(value: string): void {
@@ -336,11 +433,11 @@ module Shumway.AVM2.AS {
 
       readUTFBytes(length: number /*uint*/): string {
         length = length >>> 0;
-        var pos = this.position;
+        var pos = this._position;
         if (pos + length > this._length) {
           throwEOFError();
         }
-        this.position += length;
+        this._position += length;
         return utf8encode(new Int8Array(this._buffer, pos, length));
       }
 
@@ -353,10 +450,10 @@ module Shumway.AVM2.AS {
         var capacity = this._buffer.byteLength;
         /* XXX: Do we need to zero the difference if length <= cap? */
         if (value > capacity) {
-          this.ensureCapacity(value);
+          this._ensureCapacity(value);
         }
         this._length = value;
-        this.position = clamp(this.position, 0, this._length);
+        this._position = clamp(this._position, 0, this._length);
       }
 
       writeObject(object: any): void {
@@ -368,16 +465,15 @@ module Shumway.AVM2.AS {
       }
 
       get bytesAvailable(): number /*uint*/ {
-        return this._length - this.position;
+        return this._length - this._position;
       }
 
       get position(): number /*uint*/ {
         return this._position;
       }
 
-      set position(offset: number /*uint*/) {
-        offset = offset >>> 0;
-        this._position = offset;
+      set position(position: number /*uint*/) {
+        this._position = position >>> 0;
       }
 
       get objectEncoding(): number /*uint*/ {
@@ -395,7 +491,7 @@ module Shumway.AVM2.AS {
 
       set endian(type: string) {
         type = asCoerceString(type);
-        this._littleEndian = type === "littleEndian" ;
+        this._littleEndian = type === "littleEndian";
       }
 
       toString(): string {
@@ -423,7 +519,7 @@ module Shumway.AVM2.AS {
       asSetNumericProperty(name: number, value: any) {
         name = name | 0;
         var length = name + 1;
-        this.ensureCapacity(length);
+        this._ensureCapacity(length);
         this._u8View[name] = value;
         if (length > this._length) {
           this._length = length;
@@ -642,7 +738,7 @@ module Shumway.AVM2.AS {
         algorithm = asCoerceString(algorithm);
         ByteArray._initializeTables();
 
-        this.position = 0;
+        this._position = 0;
         var output = new ByteArray();
         switch (algorithm) {
           case 'zlib':
@@ -653,15 +749,15 @@ module Shumway.AVM2.AS {
 
             var len = this.length;
 
-            output.ensureCapacity(len + Math.ceil(len / 0xFFFF) * 5 + 4);
+            output._ensureCapacity(len + Math.ceil(len / 0xFFFF) * 5 + 4);
 
             while (len > 0xFFFF) {
               output.writeUnsignedByte(0x00);
               output.writeUnsignedShort(0xFFFF);
               output.writeUnsignedShort(0x0000);
 
-              output.writeBytes(this, this.position, 0xFFFF);
-              this.position += 0xFFFF;
+              output.writeBytes(this, this._position, 0xFFFF);
+              this._position += 0xFFFF;
 
               len -= 0xFFFF;
             }
@@ -670,7 +766,7 @@ module Shumway.AVM2.AS {
             output.writeUnsignedShort(len);
             output.writeUnsignedShort(~len & 0xffff);
 
-            output.writeBytes(this, this.position, len);
+            output.writeBytes(this, this._position, len);
 
             if (algorithm === 'zlib') {
               output.writeUnsignedInt(ByteArray.adler32(this._u8View, 0, this.length));
@@ -680,10 +776,10 @@ module Shumway.AVM2.AS {
             return;
         }
 
-        this.ensureCapacity(output._u8View.length);
+        this._ensureCapacity(output._u8View.length);
         this._u8View.set(output._u8View);
         this.length = output.length;
-        this.position = 0;
+        this._position = 0;
       }
 
       private _uncompress(algorithm: string): void {
@@ -702,7 +798,7 @@ module Shumway.AVM2.AS {
           case 'deflate':
             var littleEndian = this._littleEndian;
             this._littleEndian = true;
-            while (this.position < this.length - 6) {
+            while (this._position < this.length - 6) {
               ByteArray.inflateBlock(this, output);
             }
             this._littleEndian = littleEndian;
@@ -711,10 +807,10 @@ module Shumway.AVM2.AS {
             return;
         }
 
-        this.ensureCapacity(output._u8View.length);
+        this._ensureCapacity(output._u8View.length);
         this._u8View.set(output._u8View);
         this.length = output.length;
-        this.position = 0;
+        this._position = 0;
       }
 
 

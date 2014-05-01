@@ -1052,6 +1052,33 @@ module Shumway {
   }
 
   export module IntegerUtilities {
+    var sharedBuffer = new ArrayBuffer(8);
+    var i8 = new Int8Array(sharedBuffer);
+    var i32 = new Int32Array(sharedBuffer);
+    var f32 = new Float32Array(sharedBuffer);
+    var f64 = new Float64Array(sharedBuffer);
+    var nativeLittleEndian = new Int8Array(new Int32Array([1]).buffer)[0] === 1;
+
+    export function floatToInt32(v: number) {
+      f32[0] = v; return i32[0];
+    }
+
+    export function int32ToFloat(i: number) {
+      i32[0] = i; return f32[0];
+    }
+
+    export function swap16(i: number) {
+      return ((i & 0xFF) << 8) | ((i >> 8) & 0xFF);
+    }
+
+    export function swap16(i: number) {
+      return ((i & 0xFF) << 8) | ((i >> 8) & 0xFF);
+    }
+
+    export function swap32(i: number) {
+      return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF);
+    }
+
     export function bitCount(i: number): number {
       i = i - ((i >> 1) & 0x55555555);
       i = (i & 0x33333333) + ((i >> 2) & 0x33333333);

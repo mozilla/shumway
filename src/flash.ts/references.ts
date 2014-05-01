@@ -394,9 +394,7 @@
 
 // ///<reference path='utils/CompressionAlgorithm.ts' />
 ///<reference path='utils/Endian.ts' />
-///<reference path='utils/IDataInput.ts' />
 ///<reference path='utils/IDataInput2.ts' />
-///<reference path='utils/IDataOutput.ts' />
 ///<reference path='utils/IDataOutput2.ts' />
 ///<reference path='utils/IExternalizable.ts' />
 ///<reference path='utils/ObjectInput.ts' />
