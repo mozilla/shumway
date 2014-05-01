@@ -128,7 +128,7 @@ module Shumway.AVM2.AS.flash.filters {
     // ratios not empty and alphas != null - length: min(colors,ratios), alphas filled with 1
     static sanitize(colors: any [], alphas: any [], ratios: any []) {
       var len;
-      if (isNullOrUndefined(colors) || colors.length == 0) {
+      if (isNullOrUndefined(colors) || colors.length === 0) {
         this.colors = [];
         this.alphas = [];
         this.ratios = [];
@@ -143,7 +143,7 @@ module Shumway.AVM2.AS.flash.filters {
             this.alphas = this.sanitizeAlphas(alphas, len, len, 1);
           }
         } else {
-          if (ratios.length == 0) {
+          if (ratios.length === 0) {
             this.colors = [];
             this.alphas = [];
             this.ratios = [];
