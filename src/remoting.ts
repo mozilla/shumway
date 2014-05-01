@@ -23,6 +23,7 @@ module Shumway.Remoting {
   import Matrix = Shumway.GFX.Geometry.Matrix;
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
 
+
   export enum UpdateFrameTagBits {
     HasMatrix     = 0x0001,
     HasBounds     = 0x0002,
@@ -30,33 +31,8 @@ module Shumway.Remoting {
   }
 
   export enum MessageTag {
+    EOF = 0,
     UpdateFrame   = 1
-  }
-
-  export class MessageWriter extends ArrayWriter {
-    private _tagStack: MessageTag [];
-    private _tagStart: number [];
-
-    constructor(initialCapacity: number) {
-      super(initialCapacity);
-      this._tagStack = [];
-      this._tagStart = [];
-    }
-
-    public enter(tag: MessageTag) {
-      this._tagStack.push(tag);
-      this.writeInt(tag);
-      this._tagStart.push(this.offset);
-      this.writeInt(0xDEADBEEF);
-    }
-
-    public leave(tag: MessageTag) {
-      var top = this._tagStack.pop();
-      assert (top === tag);
-      var offset = this._tagStart.pop();
-      var length = this.offset - offset;
-      this.writeIntAt(length, offset);
-    }
   }
 
   export class MessageReader extends ArrayReader {
@@ -88,6 +64,11 @@ module Shumway.Remoting {
     }
   }
 
+  export interface IChannelVisitor {
+    visitDisplayObject(obj);
+  }
+
+
   export class Server {
     private _root: FrameContainer;
     private _frames: Frame [];
@@ -102,10 +83,14 @@ module Shumway.Remoting {
       var length = 0;
       while (!reader.isEmpty()) {
         tag = reader.readInt();
-        length = reader.readInt();
         switch (tag) {
+          case MessageTag.EOF:
+            return;
           case MessageTag.UpdateFrame:
             this._parseUpdateFrame(reader);
+            break;
+          default:
+            assert(false, 'Unknown MessageReader tag: ' + tag);
             break;
         }
       }
