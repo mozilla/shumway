@@ -175,9 +175,9 @@ module Shumway.AVM2.AS.flash.filters {
       return new GradientBevelFilter(
         this._distance,
         this._angle,
-        this.colors,
-        this.alphas,
-        this.ratios,
+        this._colors,
+        this._alphas,
+        this._ratios,
         this._blurX,
         this._blurY,
         this._strength,
