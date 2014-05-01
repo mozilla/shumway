@@ -36,90 +36,16 @@ module Shumway.AVM2.AS.flash.filters {
       false && super();
       this.distance = distance;
       this.angle = angle;
-      this._applyArrays(colors, alphas, ratios);
+      GradientArrays.sanitize(colors, alphas, ratios);
+      this._colors = GradientArrays.colors;
+      this._alphas = GradientArrays.alphas;
+      this._ratios = GradientArrays.ratios;
       this.blurX = blurX;
       this.blurY = blurY;
       this.strength = strength;
       this.quality = quality;
       this.type = type;
       this.knockout = knockout;
-    }
-
-    // colors null or empty - all empty
-    // ratios empty - all empty
-    // ratios null and alphas null - length: colors, alphas set to 0, ratios set to 0
-    // ratios null and alphas != null - length: colors, alphas filled with 1, ratios set to 0
-    // ratios not empty and alphas null - length: min(colors,ratios), alphas set to 0
-    // ratios not empty and alphas != null - length: min(colors,ratios), alphas filled with 1
-    private _applyArrays(colors: any [], alphas: any [], ratios: any []) {
-      var len;
-      if (isNullOrUndefined(colors) || colors.length == 0) {
-        this._colors = [];
-        this._alphas = [];
-        this._ratios = [];
-      } else {
-        if (isNullOrUndefined(ratios)) {
-          len = colors.length;
-          this._colors = this._sanitizeColors(colors);
-          this._ratios = this._expandArray([], len, 0);
-          if (isNullOrUndefined(alphas)) {
-            this._alphas = this._expandArray([], len, 0);
-          } else {
-            this._alphas = this._sanitizeAlphas(this._expandArray(alphas.slice(0, len), len, 1));
-          }
-        } else {
-          if (ratios.length == 0) {
-            this._colors = [];
-            this._alphas = [];
-            this._ratios = [];
-          } else {
-            len = Math.min(colors.length, ratios.length);
-            if (isNullOrUndefined(alphas)) {
-              this._colors = this._sanitizeColors(colors.slice(0, len));
-              this._ratios = this._sanitizeRatios(ratios.slice(0, len));
-              this._alphas = this._expandArray([], len, 0);
-            } else {
-              this._colors = this._sanitizeColors(colors.slice(0, len));
-              this._ratios = this._sanitizeRatios(ratios.slice(0, len));
-              this._alphas = this._sanitizeAlphas(this._expandArray(alphas.slice(0, len), len, 1));
-            }
-          }
-        }
-      }
-    }
-
-    private _sanitizeColors(colors: any []): number [] {
-      var arr: number [] = [];
-      for (var i = 0, n = Math.min(colors.length, 16); i < n; i++) {
-        arr[i] = (colors[i] >>> 0) & 0xffffff;
-      }
-      return arr;
-    }
-
-    private _sanitizeAlphas(alphas: any []): number [] {
-      var arr: number [] = [];
-      for (var i = 0, n = Math.min(alphas.length, 16); i < n; i++) {
-        arr[i] = NumberUtilities.clamp(+alphas[i], 0, 1);
-      }
-      return arr;
-    }
-
-    private _sanitizeRatios(ratios: any []): number [] {
-      var arr: number [] = [];
-      for (var i = 0, n = Math.min(ratios.length, 16); i < n; i++) {
-        arr[i] = NumberUtilities.clamp(+ratios[i], 0, 255);
-      }
-      return arr;
-    }
-
-    private _expandArray(a: number [], newLen: number /*uint*/, value: number = 0): number [] {
-      if (a) {
-        var i: number = a.length;
-        while (i < newLen) {
-          a[i++] = value;
-        }
-      }
-      return a;
     }
 
     // JS -> AS Bindings
@@ -157,10 +83,10 @@ module Shumway.AVM2.AS.flash.filters {
     }
     set colors(value: any []) {
       if (!isNullOrUndefined(value)) {
-        this._colors = this._sanitizeColors(value);
+        this._colors = GradientArrays.sanitizeColors(value);
         var len: number = this._colors.length;
-        this._alphas = this._expandArray(this._alphas.slice(0, len), len, 0);
-        this._ratios = this._expandArray(this._ratios.slice(0, len), len, 0);
+        this._alphas = GradientArrays.sanitizeAlphas(this._alphas, len, len);
+        this._ratios = GradientArrays.sanitizeRatios(this._ratios, len, len);
       } else {
         Runtime.throwError("TypeError", Errors.NullPointerError, "colors");
       }
@@ -171,7 +97,10 @@ module Shumway.AVM2.AS.flash.filters {
     }
     set alphas(value: any []) {
       if (!isNullOrUndefined(value)) {
-        this._applyArrays(this._colors, value, this._ratios);
+        GradientArrays.sanitize(this._colors, value, this._ratios);
+        this._colors = GradientArrays.colors;
+        this._alphas = GradientArrays.alphas;
+        this._ratios = GradientArrays.ratios;
       } else {
         Runtime.throwError("TypeError", Errors.NullPointerError, "alphas");
       }
@@ -182,7 +111,10 @@ module Shumway.AVM2.AS.flash.filters {
     }
     set ratios(value: any []) {
       if (!isNullOrUndefined(value)) {
-        this._applyArrays(this._colors, this._alphas, value);
+        GradientArrays.sanitize(this._colors, this._alphas, value);
+        this._colors = GradientArrays.colors;
+        this._alphas = GradientArrays.alphas;
+        this._ratios = GradientArrays.ratios;
       } else {
         Runtime.throwError("TypeError", Errors.NullPointerError, "ratios");
       }
