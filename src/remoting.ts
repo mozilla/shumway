@@ -40,23 +40,23 @@ module Shumway.Remoting {
     visitDisplayObject(obj);
   }
 
-  function readMatrix(reader: IDataInput): Matrix {
+  function readMatrix(input: IDataInput): Matrix {
     return new Matrix (
-      reader.readFloat(),
-      reader.readFloat(),
-      reader.readFloat(),
-      reader.readFloat(),
-      reader.readFloat() / 20,
-      reader.readFloat() / 20
+      input.readFloat(),
+      input.readFloat(),
+      input.readFloat(),
+      input.readFloat(),
+      input.readFloat() / 20,
+      input.readFloat() / 20
     );
   }
 
-  function readRectangle(reader: IDataInput): Rectangle {
+  function readRectangle(input: IDataInput): Rectangle {
     return new Rectangle (
-      reader.readFloat() / 20,
-      reader.readFloat() / 20,
-      reader.readFloat() / 20,
-      reader.readFloat() / 20
+      input.readFloat() / 20,
+      input.readFloat() / 20,
+      input.readFloat() / 20,
+      input.readFloat() / 20
     );
   }
 
@@ -69,16 +69,16 @@ module Shumway.Remoting {
       this._frames = [];
     }
 
-    public recieve(reader: IDataInput) {
+    public recieve(input: IDataInput) {
       var tag = 0;
       var length = 0;
-      while (reader.bytesAvailable > 0) {
-        tag = reader.readInt();
+      while (input.bytesAvailable > 0) {
+        tag = input.readInt();
         switch (tag) {
           case MessageTag.EOF:
             return;
           case MessageTag.UpdateFrame:
-            this._parseUpdateFrame(reader);
+            this._parseUpdateFrame(input);
             break;
           default:
             assert(false, 'Unknown MessageReader tag: ' + tag);
@@ -87,9 +87,9 @@ module Shumway.Remoting {
       }
     }
 
-    private _parseUpdateFrame(reader: IDataInput) {
-      var id = reader.readInt();
-      var isContainer = !!reader.readInt();
+    private _parseUpdateFrame(input: IDataInput) {
+      var id = input.readInt();
+      var isContainer = !!input.readInt();
       var firstFrame = this._frames.length === 0;
       var frame = this._frames[id];
       if (!frame) {
@@ -98,12 +98,12 @@ module Shumway.Remoting {
       if (firstFrame) {
         this._root.addChild(frame);
       }
-      var hasBits = reader.readInt();
+      var hasBits = input.readInt();
       if (hasBits & UpdateFrameTagBits.HasMatrix) {
-        frame.matrix = readMatrix(reader);
+        frame.matrix = readMatrix(input);
       }
       if (hasBits & UpdateFrameTagBits.HasBounds) {
-        var bounds = readRectangle(reader);
+        var bounds = readRectangle(input);
         var shape = (<Shape>frame);
         if (!shape.source) {
           var renderable = new Renderable(bounds, function (context) {
@@ -122,11 +122,11 @@ module Shumway.Remoting {
         }
       }
       if (hasBits & UpdateFrameTagBits.HasChildren) {
-        var count = reader.readInt();
+        var count = input.readInt();
         var container = <FrameContainer>frame;
         container.clearChildren();
         for (var i = 0; i < count; i++) {
-          var id = reader.readInt();
+          var id = input.readInt();
           var child = this._frames[id];
           assert (child);
           container.addChild(child);

@@ -25,7 +25,7 @@ module Shumway.Remoting.Client {
   import IDataOutput = Shumway.AVM2.AS.flash.utils.IDataOutput;
 
   export class ClientVisitor implements IChannelVisitor {
-    public writer: IDataOutput;
+    public output: IDataOutput;
 
     public writeReferences: boolean = false;
     public clearDirtyBits: boolean = false;
@@ -33,30 +33,30 @@ module Shumway.Remoting.Client {
     visitDisplayObject(obj) {
       var dispObj : DisplayObject = obj;
 
-      this.writer.writeInt(MessageTag.UpdateFrame);
-      this.writer.writeInt(dispObj._id);
+      this.output.writeInt(MessageTag.UpdateFrame);
+      this.output.writeInt(dispObj._id);
       // TODO create visitDisplayObjectContainer
-      this.writer.writeInt(DisplayObjectContainer.isType(dispObj) ? 1 : 0);
+      this.output.writeInt(DisplayObjectContainer.isType(dispObj) ? 1 : 0);
       var hasMatrix = dispObj._hasFlags(DisplayObjectFlags.DirtyMatrix);
       var hasBounds = dispObj._hasFlags(DisplayObjectFlags.DirtyBounds);
-      var hasChildren = this.writeReferences && dispObj._hasFlags(DisplayObjectFlags.DirtyChildren);
+      var hasChildren = this.outputeferences && dispObj._hasFlags(DisplayObjectFlags.DirtyChildren);
       var hasBits = 0;
       hasBits |= hasMatrix   ? UpdateFrameTagBits.HasMatrix   : 0;
       hasBits |= hasBounds   ? UpdateFrameTagBits.HasBounds   : 0;
       hasBits |= hasChildren ? UpdateFrameTagBits.HasChildren : 0;
-      this.writer.writeInt(hasBits);
+      this.output.writeInt(hasBits);
       if (hasMatrix) {
-        dispObj._matrix.writeExternal(this.writer);
+        dispObj._matrix.writeExternal(this.output);
       }
       if (hasBounds) {
-        dispObj._getContentBounds().writeExternal(this.writer);
+        dispObj._getContentBounds().writeExternal(this.output);
       }
       if (hasChildren) {
         assert (DisplayObjectContainer.isType(dispObj));
         var children = (<DisplayObjectContainer>dispObj)._children;
-        this.writer.writeInt(children.length);
+        this.output.writeInt(children.length);
         for (var i = 0; i < children.length; i++) {
-          this.writer.writeInt(children[i]._id);
+          this.output.writeInt(children[i]._id);
         }
       }
       if (this.clearDirtyBits) {
