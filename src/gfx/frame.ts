@@ -528,7 +528,7 @@ module Shumway.GFX {
      * are returned front to back. By default, only the first frame that intersects
      * the query point is returned, unless the |multiple| argument is specified.
      */
-    public queryFramesByPoint(query: Point, multiple?: boolean): Frame [] {
+    public queryFramesByPoint(query: Point, multiple: boolean = false, includeFrameContainers: boolean = false): Frame [] {
       var inverseTransform: Matrix = Matrix.createIdentity();
       var local = Point.createEmpty();
       var frames = [];
@@ -541,6 +541,12 @@ module Shumway.GFX {
         inverseTransform.transformPoint(local);
         if (frame.getBounds().containsPoint(local)) {
           if (frame instanceof FrameContainer) {
+            if (includeFrameContainers) {
+              frames.push(frame);
+              if (!multiple) {
+                return VisitorFlags.Stop;
+              }
+            }
             return VisitorFlags.Continue;
           } else {
             frames.push(frame);
@@ -552,7 +558,26 @@ module Shumway.GFX {
         } else {
           return VisitorFlags.Skip;
         }
-      }, Matrix.createIdentity(), FrameFlags.Empty, VisitorFlags.FrontToBack);
+      }, Matrix.createIdentity(), FrameFlags.Empty);
+
+      /*
+       *  We can't simply do a back to front traversal here because the order in which we
+       *  visit frame containers would make it hard to compute the correct front-to-back
+       *  horder.
+       *
+       *       A
+       *      / \
+       *     /   \
+       *    B     E
+       *   / \   / \
+       *  C   D F   G
+       *
+       *  The front-to-back order is [A, E, G, F, B, D, C], if G and D are both hit, then the hit order
+       *  would be computed as [A, E, G, B, D] when clearly it should be [G, E, D, B, A]. If we walk
+       *  the tree in back-to-front order [A, B, C, D, E, F, G] the hit order becomes [A, B, D, E, G]
+       *  which we can simply reverse.
+       */
+      frames.reverse();
       return frames;
     }
   }

@@ -374,7 +374,7 @@ module Shumway.GFX {
     }
 
     queryFrameUnderMouse(event: MouseEvent) {
-      var frames = this.stage.queryFramesByPoint(this.getMousePosition(event, null));
+      var frames = this.stage.queryFramesByPoint(this.getMousePosition(event, null), true, true);
       return frames.length > 0 ? frames[0] : null;
     }
 
