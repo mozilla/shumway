@@ -31,9 +31,7 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
 
-  import MessageTag = Shumway.Remoting.MessageTag;
-  import UpdateFrameTagBits = Shumway.Remoting.UpdateFrameTagBits;
-  import MessageWriter = Shumway.Remoting.MessageWriter;
+  import IChannelVisitor = Shumway.Remoting.IChannelVisitor;
 
   import BlendMode = flash.display.BlendMode; assert (BlendMode);
   import ColorTransform = flash.geom.ColorTransform; assert (ColorTransform);
@@ -408,7 +406,7 @@ module Shumway.AVM2.AS.flash.display {
 
     // AS -> JS Bindings
 
-    private _id: number;
+    _id: number;
     private _flags: number;
 
     _root: DisplayObject;
@@ -645,7 +643,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Computes the bounding box for all of this display object's content, its graphics and all of its children.
      */
-    private _getContentBounds(includeStrokes: boolean = true): Rectangle {
+    _getContentBounds(includeStrokes: boolean = true): Rectangle {
       // Tobias: What about filters?
       var rectangle = includeStrokes ? this._bounds : this._rect;
       if (this._hasFlags(DisplayObjectFlags.InvalidBounds)) {
@@ -1244,36 +1242,8 @@ module Shumway.AVM2.AS.flash.display {
       return;
     }
 
-    serialize(writer: MessageWriter, writeReferences: boolean = false, clearDirtyBits: boolean = false) {
-      writer.enter(MessageTag.UpdateFrame);
-      writer.writeInt(this._id);
-      writer.writeInt(DisplayObjectContainer.isType(this) ? 1 : 0);
-      var hasMatrix = this._hasFlags(DisplayObjectFlags.DirtyMatrix);
-      var hasBounds = this._hasFlags(DisplayObjectFlags.DirtyBounds);
-      var hasChildren = writeReferences && this._hasFlags(DisplayObjectFlags.DirtyChildren);
-      var hasBits = 0;
-      hasBits |= hasMatrix   ? UpdateFrameTagBits.HasMatrix   : 0;
-      hasBits |= hasBounds   ? UpdateFrameTagBits.HasBounds   : 0;
-      hasBits |= hasChildren ? UpdateFrameTagBits.HasChildren : 0;
-      writer.writeInt(hasBits);
-      if (hasMatrix) {
-        this._matrix.serialize(writer);
-      }
-      if (hasBounds) {
-        this._getContentBounds().serialize(writer);
-      }
-      if (hasChildren) {
-        assert (DisplayObjectContainer.isType(this));
-        var children = (<DisplayObjectContainer>this)._children;
-        writer.writeInt(children.length);
-        for (var i = 0; i < children.length; i++) {
-          writer.writeInt(children[i]._id);
-        }
-      }
-      writer.leave(MessageTag.UpdateFrame);
-      if (clearDirtyBits) {
-        this._removeFlags(DisplayObjectFlags.Dirty);
-      }
+    _acceptChannelVisitor(visitor: IChannelVisitor) {
+      visitor.visitDisplayObject(this);
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------
