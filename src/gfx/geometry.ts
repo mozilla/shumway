@@ -1,3 +1,19 @@
+/**
+ * Copyright 2014 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 /// <reference path='references.ts'/>
 module Shumway.GFX.Geometry {
 
@@ -1252,169 +1268,6 @@ module Shumway.GFX.Geometry {
       }
     }
   }
-
-  export module RegionAllocator {
-    export class Region extends Rectangle {
-      allocator: IRegionAllocator;
-    }
-
-    export interface IRegionAllocator {
-      allocate(w: number, h: number): Region;
-      free(region: Region);
-    }
-
-    /**
-     * Simple 2D bin-packing algorithm that recursively partitions space along the x and y axis. The binary tree
-     * can get quite deep so watch out of deep recursive calls. This algorithm works best when inserting items
-     * that are sorted by width and height, from largest to smallest.
-     */
-    export class Compact implements IRegionAllocator {
-      /**
-       * Try out randomizing the orientation of each subdivision, sometimes this can lead to better results.
-       */
-      static RANDOM_ORIENTATION: boolean = true;
-      static MAX_DEPTH: number = 256;
-      private _root: Compact.Cell;
-      private _allocations: Compact.Cell [] = [];
-      constructor(w: number, h: number) {
-        this._root = new Compact.Cell(0, 0, w, h, false);
-      }
-
-      allocate(w: number, h: number): Region {
-        var result = this._root.insert(w, h);
-        if (result) {
-          result.allocator = this;
-        }
-        return result;
-      }
-
-      free(region: Region) {
-        var cell = <Compact.Cell>region;
-        assert (cell.allocator === this);
-        cell.clear();
-      }
-    }
-
-    export module Compact {
-      export class Cell extends RegionAllocator.Region {
-        private _children: Cell [];
-        private _horizontal: boolean;
-        private _empty: boolean;
-        constructor(x: number, y: number, w: number, h: number, horizontal: boolean) {
-          super(x, y, w, h);
-          this._children = null;
-          this._horizontal = horizontal;
-          this._empty = true;
-        }
-        clear() {
-          this._children = null;
-          this._empty = true;
-        }
-        insert(w: number, h: number): Cell {
-          return this._insert(w, h, 0);
-        }
-        private _insert(w: number, h: number, depth: number): Cell {
-          if (depth > Compact.MAX_DEPTH) {
-            return;
-          }
-          if (!this._empty) {
-            return;
-          }
-          if (this.w < w || this.h < h) {
-            return;
-          }
-          if (!this._children) {
-            var orientation = !this._horizontal;
-            if (Compact.RANDOM_ORIENTATION) {
-              orientation = Math.random() >= 0.5;
-            }
-            if (this._horizontal) {
-              this._children = [
-                new Cell(this.x, this.y, this.w, h, false),
-                new Cell(this.x, this.y + h, this.w, this.h - h, orientation),
-              ];
-            } else {
-              this._children = [
-                new Cell(this.x, this.y, w, this.h, true),
-                new Cell(this.x + w, this.y, this.w - w, this.h, orientation),
-              ];
-            }
-            var first = this._children[0];
-            if (first.w === w && first.h === h) {
-              first._empty = false;
-              return first;
-            }
-            return this._insert(w, h, depth + 1);
-          } else {
-            var result;
-            result = this._children[0]._insert(w, h, depth + 1);
-            if (result) {
-              return result;
-            }
-            result = this._children[1]._insert(w, h, depth + 1);
-            if (result) {
-              return result;
-            }
-          }
-        }
-      }
-    }
-
-    export class Grid implements IRegionAllocator {
-      private _size: number;
-      private _rows: number;
-      private _columns: number;
-      private _cells: Grid.Cell [];
-      constructor(w: number, h: number, size: number) {
-        this._columns = w / size | 0;
-        this._rows = h / size | 0;
-        this._size = size;
-        this._cells = [];
-        for (var y = 0; y < this._rows; y++) {
-          for (var x = 0; x < this._columns; x++) {
-            this._cells.push(null);
-          }
-        }
-      }
-
-      allocate(w: number, h: number): Region {
-        var size = this._size;
-        if (w > size || h > size) {
-          return null;
-        }
-        for (var y = 0; y < this._rows; y++) {
-          for (var x = 0; x < this._columns; x++) {
-            var index = y * this._columns + x;
-            if (!this._cells[index]) {
-              var cell = new Grid.Cell(x * size, y * size, w, h);
-              cell.index = index;
-              cell.allocator = this;
-              this._cells[index] = cell;
-              return cell;
-            }
-          }
-        }
-        return null;
-      }
-
-      free(region: Region) {
-        var cell = <Grid.Cell>region;
-        assert (cell.allocator === this);
-        assert (this._cells[cell.index] === region);
-        this._cells[cell.index] = null;
-      }
-    }
-
-    export module Grid {
-      export class Cell extends RegionAllocator.Region {
-        index: number = -1;
-        constructor(x: number, y: number, w: number, h: number) {
-          super(x, y, w, h);
-        }
-      }
-    }
-  }
-
 
   export interface ITextureRegion {
     texture: any;

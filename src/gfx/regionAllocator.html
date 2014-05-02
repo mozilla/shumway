@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title></title>
+  <style>
+    body {
+      color: white;
+      font: 12px Consolas, "Liberation Mono", Courier, monospace;
+    }
+  </style>
+</head>
+<body style="background-color: #333333;">
+  <script src="../utilities.js"></script>
+  <script src="geometry.js"></script>
+  <script src="regionAllocator.js"></script>
+  <table>
+    <tr>
+      <td>
+        Compact Allocator
+      </td>
+      <td>
+        Grid Allocator
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <canvas id="a" width="1024" height="1024"></canvas>
+      </td>
+      <td>
+        <canvas id="b" width="1024" height="1024"></canvas>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <div id="aResults"></div>
+      </td>
+      <td>
+        <div id="bResults"></div>
+      </td>
+    </tr>
+  </table>
+
+
+  <script>
+    var Geometry = Shumway.GFX.Geometry;
+    var a = document.getElementById("a").getContext("2d");
+    var b = document.getElementById("b").getContext("2d");
+
+    var aResults = document.getElementById("aResults");
+    var bResults = document.getElementById("bResults");
+
+    var W = 1024, H = 1024;
+
+  </script>
+  <script>
+    function testA() {
+      var compact = new Geometry.RegionAllocator.Compact(W, H);
+      var grid = new Geometry.RegionAllocator.Grid(W, H, 64);
+
+      var cRegions = [];
+      var gRegions = [];
+
+      setInterval(function () {
+        var s = Date.now();
+        for (var i = 0; i < 64; i++) {
+          var w = (Math.random() * 16) | 0;
+          var h = (Math.random() * 16) | 0;
+          var c = compact.allocate(w, h);
+          if (!c) {
+            compact = new Geometry.RegionAllocator.Compact(W, H);
+            c = compact.allocate(w, h);
+            cRegions.length = 0;
+            a.clearRect(0, 0, a.canvas.width, a.canvas.height);
+          }
+          cRegions.push(c);
+          a.fillStyle = Shumway.ColorStyle.randomStyle();
+          a.fillRect(c.x, c.y, c.w, c.h);
+        }
+        aResults.innerHTML = "Total Regions: " + cRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
+
+        var s = Date.now();
+        for (var i = 0; i < 64; i++) {
+          var w = (Math.random() * 16) | 0;
+          var h = (Math.random() * 16) | 0;
+          var g = grid.allocate(w, h);
+          if (!g) {
+            grid = new Geometry.RegionAllocator.Grid(W, H, 16);
+            g = grid.allocate(w, h);
+            gRegions.length = 0;
+            b.clearRect(0, 0, b.canvas.width, b.canvas.height);
+          }
+          gRegions.push(g);
+          b.fillStyle = Shumway.ColorStyle.randomStyle();
+          b.fillRect(g.x, g.y, g.w, g.h);
+        }
+        bResults.innerHTML = "Total Regions: " + gRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
+      }, 16);
+    }
+
+    function testB() {
+      var compact = new Geometry.RegionAllocator.Compact(W, H);
+      var grid = new Geometry.RegionAllocator.Grid(W, H, 16);
+
+      var cRegions = [];
+      var gRegions = [];
+
+      setInterval(function () {
+        var s = Date.now();
+        for (var i = 0; i < 64; i++) {
+          var w = (Math.random() * 16) | 0;
+          var h = (Math.random() * 16) | 0;
+          var c = compact.allocate(w, h);
+          if (!c) {
+            var count = (cRegions.length / 2) | 0;
+            for (var i = 0; i < count; i++) {
+              compact.free(cRegions[i]);
+            }
+            cRegions = cRegions.slice(count);
+            c = compact.allocate(w, h);
+          }
+          if (!c) {
+            compact = new Geometry.RegionAllocator.Compact(W, H);
+            c = compact.allocate(w, h);
+            a.clearRect(0, 0, a.canvas.width, a.canvas.height);
+            cRegions.length = 0;
+          }
+          cRegions.push(c);
+          a.fillStyle = Shumway.ColorStyle.randomStyle();
+          a.fillRect(c.x, c.y, c.w, c.h);
+        }
+        aResults.innerHTML = "Total Regions: " + cRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
+
+        var s = Date.now();
+        for (var i = 0; i < 64; i++) {
+          var w = (Math.random() * 16) | 0;
+          var h = (Math.random() * 16) | 0;
+          var g = grid.allocate(w, h);
+          if (!g) {
+            var count = (gRegions.length / 2) | 0;
+            for (var i = 0; i < count; i++) {
+              grid.free(gRegions[i]);
+            }
+            gRegions = gRegions.slice(count);
+            g = grid.allocate(w, h);
+          }
+          gRegions.push(g);
+          b.fillStyle = Shumway.ColorStyle.randomStyle();
+          b.fillRect(g.x, g.y, g.w, g.h);
+        }
+        bResults.innerHTML = "Total Regions: " + gRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
+      }, 16);
+    }
+
+    function testC() {
+      var compact = new Geometry.RegionAllocator.Compact(W, H);
+      var grid = new Geometry.RegionAllocator.Grid(W, H, 16);
+
+      var cRegions = [];
+      var gRegions = [];
+
+      setInterval(function () {
+        var s = Date.now();
+        for (var i = 0; i < 64; i++) {
+          var size = (64 - i);
+          var w = (Math.random() * size) | 0;
+          var h = (Math.random() * size) | 0;
+          var c = compact.allocate(w, h);
+          if (!c) {
+            var count = (cRegions.length / 2) | 0;
+            for (var i = 0; i < count; i++) {
+              compact.free(cRegions[i]);
+            }
+            cRegions = cRegions.slice(count);
+            c = compact.allocate(w, h);
+          }
+          if (!c) {
+            compact = new Geometry.RegionAllocator.Compact(W, H);
+            c = compact.allocate(w, h);
+            a.clearRect(0, 0, a.canvas.width, a.canvas.height);
+            cRegions.length = 0;
+          }
+          cRegions.push(c);
+          a.fillStyle = Shumway.ColorStyle.randomStyle();
+          a.fillRect(c.x, c.y, c.w, c.h);
+        }
+        aResults.innerHTML = "Total Regions: " + cRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
+      }, 16);
+    }
+  </script>
+  <br>
+  <button onclick="testA()">Allocate Until Full & Reset</button>
+  <button onclick="testB()">Allocate Until Full & Remove Half Regions</button>
+  <button onclick="testC()">Allocate Until Full & Remove Half Regions - Non Uniform</button>
+</body>
+</html>

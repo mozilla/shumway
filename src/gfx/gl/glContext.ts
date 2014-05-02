@@ -113,8 +113,9 @@ module Shumway.GFX.GL {
         case BlendMode.Screen:
           gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
           break;
-        case BlendMode.Normal:
         case BlendMode.Default:
+        case BlendMode.Layer:
+        case BlendMode.Normal:
           gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
           break;
         default:
@@ -320,7 +321,7 @@ module Shumway.GFX.GL {
       return shader;
     }
 
-    createTexture(w: number, h: number, compact: boolean): WebGLTexture {
+    public createTexture(w: number, h: number, compact: boolean): WebGLTexture {
       var gl = this.gl;
       var texture = gl.createTexture();
       gl.bindTexture(gl.TEXTURE_2D, texture);
@@ -375,6 +376,17 @@ module Shumway.GFX.GL {
       var gl = this.gl;
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT);
+    }
+
+    public clearTextureRegion(textureRegion: WebGLTextureRegion) {
+      var gl = this.gl;
+      var region = textureRegion.region;
+      gl.bindFramebuffer(gl.FRAMEBUFFER, textureRegion.texture.framebuffer);
+      gl.enable(gl.SCISSOR_TEST);
+      gl.scissor(region.x, region.y, region.w, region.h);
+      gl.clearColor(0, 0, 0, 0);
+      gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+      gl.disable(gl.SCISSOR_TEST);
     }
 
     public sizeOf(type): number {

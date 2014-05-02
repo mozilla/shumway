@@ -408,10 +408,10 @@ module Shumway.GFX {
       return this._concatenatedColorMatrix;
     }
 
-    getConcatenatedAlpha(): number {
+    getConcatenatedAlpha(ancestor: Frame = null): number {
       var frame = this;
       var alpha = 1;
-      while (frame) {
+      while (frame && frame !== ancestor) {
         alpha *= frame._alpha;
         frame = frame._parent;
       }

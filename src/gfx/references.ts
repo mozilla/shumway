@@ -19,6 +19,7 @@
 /// <reference path='../remoting.ts' />
 /// <reference path='shapes.ts'/>
 /// <reference path='geometry.ts'/>
+/// <reference path='regionAllocator.ts'/>
 /// <reference path='stage.ts'/>
 /// <reference path='frame.ts'/>
 /// <reference path='frameContainer.ts'/>

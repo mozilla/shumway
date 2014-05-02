@@ -18,6 +18,7 @@ module Shumway.GFX.GL {
   import Color = Shumway.Color;
   import Point = Geometry.Point;
   import Matrix = Geometry.Matrix;
+  import Matrix3D = Geometry.Matrix3D;
 
   export class WebGLBrush {
     _target: WebGLTexture;
@@ -185,7 +186,11 @@ module Shumway.GFX.GL {
 
       g.uploadBuffers();
       gl.useProgram(p);
-      gl.uniformMatrix4fv(p.uniforms.uTransformMatrix3D.location, false, this._context.modelViewProjectionMatrix.asWebGLMatrix());
+      var matrix = this._context.modelViewProjectionMatrix;
+      if (this._target) {
+        matrix = Matrix3D.createMultiply(matrix, Matrix3D.createScale(1, -1, 1));
+      }
+      gl.uniformMatrix4fv(p.uniforms.uTransformMatrix3D.location, false, matrix.asWebGLMatrix());
       if (this._colorTransform) {
         gl.uniformMatrix4fv(p.uniforms.uColorMatrix.location, false, this._colorTransform.asWebGLMatrix());
         gl.uniform4fv(p.uniforms.uColorVector.location, this._colorTransform.asWebGLVector());
@@ -210,8 +215,12 @@ module Shumway.GFX.GL {
 
       this._context.setBlendMode(this._blendMode);
 
+      // Bind target.
+      this._context.setTarget(this._target);
+
       // Bind elements buffer.
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.elementBuffer);
+
       if (drawElements) {
         gl.drawElements(gl.TRIANGLES, g.triangleCount * 3, gl.UNSIGNED_SHORT, 0);
       }

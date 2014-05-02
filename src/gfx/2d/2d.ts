@@ -18,6 +18,7 @@ module Shumway.GFX {
   import Tile = Shumway.GFX.Geometry.Tile;
   import OBB = Shumway.GFX.Geometry.OBB;
   import Grid = Shumway.GFX.Geometry.RegionAllocator.Grid;
+  import GridCell = Shumway.GFX.Geometry.RegionAllocator.GridCell;
   import Region = Shumway.GFX.Geometry.RegionAllocator.Region;
   import IRegionAllocator = Shumway.GFX.Geometry.RegionAllocator.IRegionAllocator;
 
@@ -58,7 +59,7 @@ module Shumway.GFX {
 
   class CanvasGridSimple implements IRegionAllocator {
     private _context: CanvasRenderingContext2D;
-    private _cell: Grid.Cell = null;
+    private _cell: GridCell = null;
 
     constructor(w:number, h:number) {
       var canvas = document.createElement("canvas");
@@ -73,14 +74,14 @@ module Shumway.GFX {
 
     allocate(w:number, h:number):Region {
       if (this._cell == null && w <= this._context.canvas.width && h <= this._context.canvas.height) {
-        this._cell = new Grid.Cell(0, 0, w, h);
+        this._cell = new GridCell(0, 0, w, h);
         return this._cell;
       }
       return null;
     }
 
     free(region: Region) {
-      var cell = <Grid.Cell>region;
+      var cell = <GridCell>region;
       assert (cell.allocator === this);
       this._cell = null;
     }

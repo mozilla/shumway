@@ -16,7 +16,7 @@
 
 module Shumway.GFX.GL {
   import Color = Shumway.Color;
-  var SCRATCH_CANVAS_SIZE = 1024;
+  var SCRATCH_CANVAS_SIZE = 1024 * 2;
 
   export var TILE_SIZE = 256;
   export var MIN_UNTILED_SIZE = 256;
@@ -161,6 +161,7 @@ module Shumway.GFX.GL {
     frameSpacing: number = 0.01;
     ignoreColorMatrix: boolean;
     drawTiles: boolean;
+    paintBounds: boolean;
     drawElements: boolean = true;
     drawTextures: boolean = true;
     drawTexture: number = -1;
@@ -183,7 +184,7 @@ module Shumway.GFX.GL {
     private _dynamicScratchCanvasContext: CanvasRenderingContext2D;
     private _uploadCanvas: HTMLCanvasElement;
     private _uploadCanvasContext: CanvasRenderingContext2D;
-
+    
     constructor(canvas: HTMLCanvasElement, stage: Stage,
                 options: WebGLStageRendererOptions = new WebGLStageRendererOptions()) {
       super(canvas, stage);
@@ -274,7 +275,7 @@ module Shumway.GFX.GL {
       this._uploadCanvasContext.drawImage(src.canvas, sx,         sy, 1, h, 0,     1, 1, h);
       this._uploadCanvasContext.drawImage(src.canvas, sx + w - 1, sy, 1, h, w + 1, 1, 1, h);
 
-      if (!oldTextureRegion) {
+      if (!oldTextureRegion || !oldTextureRegion.texture) {
         return this.context.cacheImage(this._uploadCanvas);
       } else {
         if (!this._options.disableTextureUploads) {
@@ -284,11 +285,50 @@ module Shumway.GFX.GL {
       }
     }
 
-    private _renderFrame(root: Frame, transform: Matrix, brush: WebGLCombinedBrush) {
+
+    private _renderFrameIntoTextureRegion(frame: Frame, transform: Matrix): WebGLTextureRegion {
+      var context = this.context;
+      var bounds = frame.getBounds().clone();
+      transform.transformRectangleAABB(bounds);
+      bounds.snap();
+      var textureRegion = context.allocateTextureRegion(bounds.w, bounds.h);
+      context.clearTextureRegion(textureRegion);
+      var brush = new WebGLCombinedBrush(context, new WebGLGeometry(context), textureRegion.texture);
+      this._renderFrame(frame, transform, brush);
+      brush.flush();
+      return textureRegion;
+
+//      context.clearTextureRegion(self._layerTextureRegion);
+//      var bounds = frame.getBounds();
+//      var frameBoundsAABB = bounds.clone();
+//      transform.transformRectangleAABB(frameBoundsAABB);
+//      context.setTarget(self._layerTextureRegion.texture);
+//      var layerBrush = new WebGLCombinedBrush(context, new WebGLGeometry(context), self._layerTextureRegion.texture);
+//      self._renderFrame(frame, transform, layerBrush, 0);
+//      layerBrush.flush();
+//      // var m = Matrix.createIdentity().translate(frameBoundsAABB.x, frameBoundsAABB.y);
+//      var m = Matrix.createIdentity();
+//      var src = new WebGLTextureRegion(self._layerTextureRegion.texture, <RegionAllocator.Region>frameBoundsAABB);
+//      if (!brush.drawImage(src, frameBoundsAABB, new Color(1, 1, 1, alpha), colorTransform, m, depth, frame.blendMode)) {
+//        unexpected();
+//      }
+//
+    }
+
+    private _renderFrameLayer(frame: Frame, transform: Matrix, brush: WebGLCombinedBrush) {
+      var textureRegion = this._renderFrameIntoTextureRegion(frame, transform);
+      var m = Matrix.createIdentity();
+      var colorTransform = frame.getConcatenatedColorMatrix();
+      if (!brush.drawImage(textureRegion, textureRegion.region, new Color(1, 1, 1, alpha), colorTransform, m, 0, frame.blendMode)) {
+        unexpected();
+      }
+    }
+
+    private _renderFrame(root: Frame, transform: Matrix, brush: WebGLCombinedBrush, depth: number = 0) {
       var self = this;
-      var depth = 0;
       var options = this._options;
       var context = this.context;
+      var gl = context.gl;
       var cacheImageCallback = this._cacheImageCallback.bind(this);
       var tileTransform = Matrix.createIdentity();
       var colorTransform = ColorMatrix.createIdentity();
@@ -297,13 +337,29 @@ module Shumway.GFX.GL {
       root.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
         depth += options.frameSpacing;
 
-        var alpha = frame.getConcatenatedAlpha();
+        var alpha = frame.getConcatenatedAlpha(root);
         if (!options.ignoreColorMatrix) {
           colorTransform = frame.getConcatenatedColorMatrix();
         }
-        if (frame instanceof Shape) {
-          if (!WebGLContext.glSupportedBlendMode(frame.blendMode)) {
-            // Now we need to render the frame into a texture.
+        if (frame instanceof FrameContainer) {
+          if (options.paintBounds) {
+            var bounds = frame.getBounds();
+            if (!frame.color) {
+              frame.color = Color.randomColor(0.3);
+            }
+            brush.fillRectangle(new Rectangle(bounds.x, bounds.y, bounds.w, bounds.h), frame.color, transform, depth);
+          }
+          if (frame !== root && frame.blendMode !== BlendMode.Default) {
+            self._renderFrameIntoTextureRegion(frame, transform);
+            return VisitorFlags.Skip;
+          }
+        } else if (frame instanceof Shape) {
+          if (frame.blendMode !== BlendMode.Default) {
+            if (!WebGLContext.glSupportedBlendMode(frame.blendMode)) {
+              // gl.TEXTURE_2D
+              gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 4, 4, 16, 16);
+              // Now we need to render the frame into a texture.
+            }
             return VisitorFlags.Skip;
           }
           var shape = <Shape>frame;
@@ -401,7 +457,7 @@ module Shumway.GFX.GL {
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
       brush.reset();
-      this._renderFrame(stage, stage.matrix, brush);
+      this._renderFrame(stage, stage.matrix, brush, 0);
 
       brush.flush(options.drawElements);
 

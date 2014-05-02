@@ -39,6 +39,7 @@ var ignoreColorTransform = stageOptions.register(new Option("", "ignoreColorTran
 var debugStage = stageOptions.register(new Option("", "debugStage", "boolean", false, "Debug Stage."));
 var disableStage = stageOptions.register(new Option("", "disableStage", "boolean", false, "Disable Stage."));
 var disableMasking = stageOptions.register(new Option("", "disableMasking", "boolean", false, "Disable masking."));
+var paintBounds = stageOptions.register(new Option("", "paintBounds", "boolean", false, "Draw frame container bounding boxes."));
 
 var backend = stageOptions.register(new Option("t", "backend", "number", 0, "Backends", {
   choices: {
@@ -58,6 +59,7 @@ var webGLOptions = stageOptions.register(new OptionSet("WebGL Options"));
   var perspectiveCameraSpacingInflate = webGLOptions.register(new Option("", "pcInflate", "boolean", false, "Rotate Use perspective camera."));
 
   var drawTiles = webGLOptions.register(new Option("", "drawTiles", "boolean", false, "Draw WebGL Tiles"));
+
   var drawTextures = webGLOptions.register(new Option("", "drawTextures", "boolean", false, "Draw WebGL Textures."));
   var drawTexture = webGLOptions.register(new Option("", "drawTexture", "number", -1, "Draw WebGL Texture #"));
   var drawElements = webGLOptions.register(new Option("", "drawElements", "boolean", true, "Actually call gl.drawElements. This is useful to test if the GPU is the bottleneck."));
@@ -68,5 +70,5 @@ var canvas2DOptions = stageOptions.register(new OptionSet("Canvas2D Options"));
   var clipCanvas = canvas2DOptions.register(new Option("", "clipCanvas", "boolean", true, "Clip Regions."));
   var cull = canvas2DOptions.register(new Option("", "cull", "boolean", true, "Enable culling."));
   var paintFlashing = canvas2DOptions.register(new Option("", "paintFlashing", "boolean", false, "Flash redrawn regions."));
-  var paintBounds = canvas2DOptions.register(new Option("", "paintBounds", "boolean", false, "Draw frame container bounding boxes."));
+
   var compositeMask = canvas2DOptions.register(new Option("", "compositeMask", "boolean", true, "Composite Mask."));
