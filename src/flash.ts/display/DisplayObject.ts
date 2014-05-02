@@ -481,6 +481,7 @@ module Shumway.AVM2.AS.flash.display {
 
     _isContainer: boolean;
     _maskedObject: DisplayObject;
+    _mouseOver: boolean;
     _mouseDown: boolean;
 
     _symbol: Shumway.SWF.Timeline.Symbol;
@@ -737,6 +738,13 @@ module Shumway.AVM2.AS.flash.display {
       }
       // TODO state.events;
       this._invalidatePaint();
+    }
+
+    _propagateEvent(event: flash.events.Event): void {
+      this.visit(function (node) {
+        node.dispatchEvent(event);
+        return VisitorFlags.Continue;
+      }, VisitorFlags.None);
     }
 
     get x(): number {
