@@ -16,8 +16,6 @@
 // Class: GradientGlowFilter
 module Shumway.AVM2.AS.flash.filters {
 
-  import notImplemented = Shumway.Debug.notImplemented;
-  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export class GradientGlowFilter extends flash.filters.BitmapFilter {
@@ -35,34 +33,34 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     constructor (distance: number = 4, angle: number = 45, colors: any [] = null, alphas: any [] = null, ratios: any [] = null, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
-      somewhatImplemented("public flash.filters.GradientGlowFilter ctor");
+      false && super();
       this.distance = distance;
       this.angle = angle;
-      this.colors = colors;
-      this.alphas = alphas;
-      this.ratios = ratios;
+      GradientArrays.sanitize(colors, alphas, ratios);
+      this._colors = GradientArrays.colors;
+      this._alphas = GradientArrays.alphas;
+      this._ratios = GradientArrays.ratios;
       this.blurX = blurX;
       this.blurY = blurY;
       this.strength = strength;
       this.quality = quality;
       this.type = type;
       this.knockout = knockout;
-      super();
     }
 
     // JS -> AS Bindings
 
     // AS -> JS Bindings
 
+    private _distance: number;
     private _angle: number;
+    private _colors: any [];
     private _alphas: any [];
+    private _ratios: any [];
     private _blurX: number;
     private _blurY: number;
-    private _colors: any [];
-    private _distance: number;
     private _knockout: boolean;
     private _quality: number /*int*/;
-    private _ratios: any [];
     private _strength: number;
     private _type: string;
 
@@ -70,7 +68,6 @@ module Shumway.AVM2.AS.flash.filters {
       return this._distance;
     }
     set distance(value: number) {
-      somewhatImplemented("public flash.filters.GradientGlowFilter::set distance");
       this._distance = +value;
     }
 
@@ -78,89 +75,109 @@ module Shumway.AVM2.AS.flash.filters {
       return this._angle;
     }
     set angle(value: number) {
-      somewhatImplemented("public flash.filters.GradientGlowFilter::set angle");
-      this._angle = +value;
+      this._angle = +value % 360;
     }
 
     get colors(): any [] {
-      return this._colors;
+      return this._colors.concat();
     }
     set colors(value: any []) {
-      somewhatImplemented("public flash.filters.GradientGlowFilter::set colors");
-      this._colors = value;
+      if (!isNullOrUndefined(value)) {
+        this._colors = GradientArrays.sanitizeColors(value);
+        var len: number = this._colors.length;
+        this._alphas = GradientArrays.sanitizeAlphas(this._alphas, len, len);
+        this._ratios = GradientArrays.sanitizeRatios(this._ratios, len, len);
+      } else {
+        Runtime.throwError("TypeError", Errors.NullPointerError, "colors");
+      }
     }
 
     get alphas(): any [] {
-      return this._alphas;
+      return this._alphas.concat();
     }
     set alphas(value: any []) {
-      somewhatImplemented("public flash.filters.GradientGlowFilter::set alphas");
-      this._alphas = value;
+      if (!isNullOrUndefined(value)) {
+        GradientArrays.sanitize(this._colors, value, this._ratios);
+        this._colors = GradientArrays.colors;
+        this._alphas = GradientArrays.alphas;
+        this._ratios = GradientArrays.ratios;
+      } else {
+        Runtime.throwError("TypeError", Errors.NullPointerError, "alphas");
+      }
     }
 
     get ratios(): any [] {
-      return this._ratios;
+      return this._ratios.concat();
     }
     set ratios(value: any []) {
-      somewhatImplemented("public flash.filters.GradientGlowFilter::set ratios");
-      this._ratios = value;
+      if (!isNullOrUndefined(value)) {
+        GradientArrays.sanitize(this._colors, this._alphas, value);
+        this._colors = GradientArrays.colors;
+        this._alphas = GradientArrays.alphas;
+        this._ratios = GradientArrays.ratios;
+      } else {
+        Runtime.throwError("TypeError", Errors.NullPointerError, "ratios");
+      }
     }
 
     get blurX(): number {
       return this._blurX;
     }
     set blurX(value: number) {
-      somewhatImplemented("public flash.filters.GradientGlowFilter::set blurX");
-      this._blurX = +value;
+      this._blurX = NumberUtilities.clamp(+value, 0, 255);
     }
 
     get blurY(): number {
       return this._blurY;
     }
     set blurY(value: number) {
-      somewhatImplemented("public flash.filters.GradientGlowFilter::set blurY");
-      this._blurY = +value;
-    }
-
-    get strength(): number {
-      return this._strength;
-    }
-    set strength(value: number) {
-      somewhatImplemented("public flash.filters.GradientGlowFilter::set strength");
-      this._strength = +value;
-    }
-
-    get quality(): number /*int*/ {
-      return this._quality;
-    }
-    set quality(value: number /*int*/) {
-      somewhatImplemented("public flash.filters.GradientGlowFilter::set quality");
-      this._quality = value | 0;
-    }
-
-    get type(): string {
-      return this._type;
-    }
-    set type(value: string) {
-      somewhatImplemented("public flash.filters.GradientGlowFilter::set type");
-      this._type = asCoerceString(value);
+      this._blurY = NumberUtilities.clamp(+value, 0, 255);
     }
 
     get knockout(): boolean {
       return this._knockout;
     }
     set knockout(value: boolean) {
-      somewhatImplemented("public flash.filters.GradientGlowFilter::set knockout");
       this._knockout = !!value;
+    }
+
+    get quality(): number /*int*/ {
+      return this._quality;
+    }
+    set quality(value: number /*int*/) {
+      this._quality = NumberUtilities.clamp(value | 0, 0, 15);
+    }
+
+    get strength(): number {
+      return this._strength;
+    }
+    set strength(value: number) {
+      this._strength = NumberUtilities.clamp(+value, 0, 255);
+    }
+
+    get type(): string {
+      return this._type;
+    }
+    set type(value: string) {
+      value = asCoerceString(value);
+      if (value === null) {
+        Runtime.throwError("TypeError", Errors.NullPointerError, "type");
+      } else {
+        if (value === BitmapFilterType.INNER || value === BitmapFilterType.OUTER) {
+          this._type = value;
+        } else {
+          this._type = BitmapFilterType.FULL;
+        }
+      }
     }
 
     clone(): BitmapFilter {
       return new GradientGlowFilter(
         this._distance,
         this._angle,
-        this.colors,
-        this.alphas,
-        this.ratios,
+        this._colors,
+        this._alphas,
+        this._ratios,
         this._blurX,
         this._blurY,
         this._strength,

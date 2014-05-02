@@ -113,4 +113,90 @@ module Shumway.AVM2.AS.flash.filters {
     }
 
   }
+
+  export class GradientArrays {
+
+    static colors: any [];
+    static alphas: any [];
+    static ratios: any [];
+
+    // colors null or empty - all empty
+    // ratios empty - all empty
+    // ratios null and alphas null - length: colors, alphas set to 0, ratios set to 0
+    // ratios null and alphas != null - length: colors, alphas filled with 1, ratios set to 0
+    // ratios not empty and alphas null - length: min(colors,ratios), alphas set to 0
+    // ratios not empty and alphas != null - length: min(colors,ratios), alphas filled with 1
+    static sanitize(colors: any [], alphas: any [], ratios: any []) {
+      var len;
+      if (isNullOrUndefined(colors) || colors.length === 0) {
+        this.colors = [];
+        this.alphas = [];
+        this.ratios = [];
+      } else {
+        if (isNullOrUndefined(ratios)) {
+          this.colors = this.sanitizeColors(colors);
+          len = this.colors.length;
+          this.ratios = this.initArray(len);
+          if (isNullOrUndefined(alphas)) {
+            this.alphas = this.initArray(len);
+          } else {
+            this.alphas = this.sanitizeAlphas(alphas, len, len, 1);
+          }
+        } else {
+          if (ratios.length === 0) {
+            this.colors = [];
+            this.alphas = [];
+            this.ratios = [];
+          } else {
+            len = Math.min(colors.length, ratios.length);
+            this.colors = this.sanitizeColors(colors, len);
+            this.ratios = this.sanitizeRatios(ratios, len);
+            if (isNullOrUndefined(alphas)) {
+              this.alphas = this.initArray(len);
+            } else {
+              this.alphas = this.sanitizeAlphas(alphas, len, len, 1);
+            }
+          }
+        }
+      }
+    }
+
+    static sanitizeColors(colors: number [], maxLen:number = 16): number [] {
+      var arr: number [] = [];
+      for (var i = 0, n = Math.min(colors.length, maxLen); i < n; i++) {
+        arr[i] = (colors[i] >>> 0) & 0xffffff;
+      }
+      return arr;
+    }
+
+    static sanitizeAlphas(alphas: number [], maxLen:number = 16, minLen: number = 0, value: number = 0): number [] {
+      var arr: number [] = [];
+      for (var i = 0, n = Math.min(alphas.length, maxLen); i < n; i++) {
+        arr[i] = NumberUtilities.clamp(+alphas[i], 0, 1);
+      }
+      while(i < minLen) {
+        arr[i++] = value;
+      }
+      return arr;
+    }
+
+    static sanitizeRatios(ratios: number [], maxLen:number = 16, minLen: number = 0, value: number = 0): number [] {
+      var arr: number [] = [];
+      for (var i = 0, n = Math.min(ratios.length, maxLen); i < n; i++) {
+        arr[i] = NumberUtilities.clamp(+ratios[i], 0, 255);
+      }
+      while(i < minLen) {
+        arr[i++] = value;
+      }
+      return arr;
+    }
+
+    static initArray(len: number, value: number = 0): number [] {
+      var arr: number [] = Array(len);
+      for (var i = 0; i < len; i++) {
+        arr[i] = value;
+      }
+      return arr;
+    }
+  }
 }
