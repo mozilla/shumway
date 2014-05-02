@@ -21,19 +21,14 @@ module Shumway.AVM2.AS.flash.events {
 
     static _instances: Shumway.Map<Event>;
 
-    // Called whenever the class is initialized.
     static classInitializer: any = function () {
       Event._instances = Shumway.ObjectUtilities.createMap<Event>();
     };
 
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
 
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = ["clone"]; // ["formatToString", "toString"];
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = ["clone"];
 
     static getInstance(type: string, bubbles: boolean = false, cancelable: boolean = false) {
       var instance = Event._instances[type];

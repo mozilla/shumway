@@ -16,23 +16,16 @@
 // Class: EventPhase
 module Shumway.AVM2.AS.flash.events {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class EventPhase extends ASNative {
-    
-    // Called whenever the class is initialized.
+
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
+
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = null;
     
     constructor () {
-      false && super();
+      super();
       notImplemented("Dummy Constructor: public flash.events.EventPhase");
     }
     
@@ -40,9 +33,5 @@ module Shumway.AVM2.AS.flash.events {
     static CAPTURING_PHASE: number /*uint*/ = 1;
     static AT_TARGET: number /*uint*/ = 2;
     static BUBBLING_PHASE: number /*uint*/ = 3;
-    
-    
-    // AS -> JS Bindings
-    
   }
 }
