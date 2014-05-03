@@ -17,7 +17,7 @@ module Shumway.GFX {
   import TileCache = Shumway.GFX.Geometry.TileCache;
   import Tile = Shumway.GFX.Geometry.Tile;
   import OBB = Shumway.GFX.Geometry.OBB;
-  import Grid = Shumway.GFX.Geometry.RegionAllocator.Grid;
+  import GridAllocator = Shumway.GFX.Geometry.RegionAllocator.GridAllocator;
   import GridCell = Shumway.GFX.Geometry.RegionAllocator.GridCell;
   import Region = Shumway.GFX.Geometry.RegionAllocator.Region;
   import IRegionAllocator = Shumway.GFX.Geometry.RegionAllocator.IRegionAllocator;
@@ -40,7 +40,7 @@ module Shumway.GFX {
   var originalRestore = CanvasRenderingContext2D.prototype.restore;
 
 
-  class CanvasGrid extends Shumway.GFX.Geometry.RegionAllocator.Grid {
+  class CanvasGrid extends Shumway.GFX.Geometry.RegionAllocator.GridAllocator {
     private _context: CanvasRenderingContext2D;
 
     constructor(canvasSize: number, gridSize: number) {

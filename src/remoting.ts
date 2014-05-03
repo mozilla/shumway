@@ -26,9 +26,10 @@ module Shumway.Remoting {
   import IDataOutput = Shumway.AVM2.AS.flash.utils.IDataOutput;
 
   export enum UpdateFrameTagBits {
-    HasMatrix     = 0x0001,
-    HasBounds     = 0x0002,
-    HasChildren   = 0x0004
+    HasMatrix                   = 0x0001,
+    HasBounds                   = 0x0002,
+    HasChildren                 = 0x0004,
+    HasMiscellaneousProperties  = 0x0008
   }
 
   export enum MessageTag {
@@ -131,6 +132,10 @@ module Shumway.Remoting {
           assert (child);
           container.addChild(child);
         }
+      }
+      if (hasBits & UpdateFrameTagBits.HasMiscellaneousProperties) {
+        frame.blendMode = input.readInt();
+        frame.alpha = input.readFloat();
       }
     }
   }

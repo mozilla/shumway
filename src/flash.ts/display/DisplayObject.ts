@@ -168,10 +168,12 @@ module Shumway.AVM2.AS.flash.display {
 
     DirtyBounds                               = 0x800000,
 
+    DirtyMiscellaneousProperties              = 0x1000000,
+
     /**
      * All synchronizable properties are dirty.
      */
-    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyBounds
+    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyBounds | DirtyMiscellaneousProperties
   }
 
   /**
@@ -246,7 +248,8 @@ module Shumway.AVM2.AS.flash.display {
                     DisplayObjectFlags.InvalidMatrix                      |
                     DisplayObjectFlags.InvalidConcatenatedMatrix          |
                     DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
-                    DisplayObjectFlags.DirtyMatrix;
+                    DisplayObjectFlags.DirtyMatrix                        |
+                    DisplayObjectFlags.DirtyMiscellaneousProperties;
 
       self._root = null;
       self._stage = null;
@@ -270,6 +273,7 @@ module Shumway.AVM2.AS.flash.display {
       self._scrollRect = null;
       self._filters = [];
       self._blendMode = BlendMode.NORMAL;
+      assert (self._blendMode);
       self._scale9Grid = null;
       self._loaderInfo = null;
       self._accessibilityProperties = null;
@@ -731,8 +735,9 @@ module Shumway.AVM2.AS.flash.display {
       this._ratio = state.ratio;
       this._name = state.name;
       this._clipDepth = state.clipDepth;
-      // TODO state.filters;
-      this._blendMode = state.blendMode;
+      if (state.blendMode) {
+        this._blendMode = state.blendMode;
+      }
       if (state.cacheAsBitmap) {
         this._setFlags(flash.display.DisplayObjectFlags.CacheAsBitmap);
       }
@@ -1019,13 +1024,12 @@ module Shumway.AVM2.AS.flash.display {
     set alpha(value: number) {
       this._stopTimelineAnimation();
       value = +value;
-
       if (value === this._alpha) {
         return;
       }
-
       this._alpha = value;
       this._invalidatePaint();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
 
     get blendMode(): string {
@@ -1043,6 +1047,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._blendMode = value;
       this._invalidatePaint();
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
 
     get scale9Grid(): Rectangle {

@@ -96,7 +96,7 @@ module Shumway.GFX.GL {
     private _program: WebGLProgram;
     private _textures: WebGLTexture [];
     private _colorTransform: ColorMatrix;
-    private _blendMode: BlendMode = BlendMode.Default;
+    private _blendMode: BlendMode = BlendMode.Normal;
     private static _depth: number = 1;
     constructor(context: WebGLContext, geometry: WebGLGeometry, target: WebGLTexture = null) {
       super(context, geometry, target);

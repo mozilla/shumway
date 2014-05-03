@@ -126,7 +126,7 @@ module Shumway.GFX {
       this._capability = FrameCapabilityFlags.AllowAllWrite;
       this._parent = null;
       this._alpha = 1;
-      this._blendMode = BlendMode.Default;
+      this._blendMode = BlendMode.Normal;
       this._filters = [];
       this._mask = null;
       this._matrix = Matrix.createIdentity();

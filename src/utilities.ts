@@ -1104,8 +1104,19 @@ module Shumway {
       return str.trim();
     }
 
-    export function isPowerOfTwo(x) {
+    export function isPowerOfTwo(x: number) {
       return x && ((x & (x - 1)) === 0);
+    }
+
+    export function nearestPowerOfTwo(x: number) {
+      x --;
+      x |= x >> 1;
+      x |= x >> 2;
+      x |= x >> 4;
+      x |= x >> 8;
+      x |= x >> 16;
+      x ++;
+      return x;
     }
 
     /**

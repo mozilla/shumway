@@ -281,13 +281,13 @@ module Shumway.GFX.GL {
             }
             brush.fillRectangle(new Rectangle(bounds.x, bounds.y, bounds.w, bounds.h), frame.color, transform, depth);
           }
-          if (frame !== root && frame.blendMode !== BlendMode.Default) {
+          if (frame !== root && frame.blendMode !== BlendMode.Normal) {
             self._renderFrameLayer(frame, transform, brush);
             // self._renderFrameIntoTextureRegion(frame, transform);
             return VisitorFlags.Skip;
           }
         } else if (frame instanceof Shape) {
-          if (frame.blendMode !== BlendMode.Default) {
+          if (frame.blendMode !== BlendMode.Normal) {
             if (!WebGLContext.glSupportedBlendMode(frame.blendMode)) {
               // gl.TEXTURE_2D
               // gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 4, 4, 16, 16);

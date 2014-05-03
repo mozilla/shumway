@@ -136,6 +136,8 @@ module Shumway.AVM2.AS.flash.display {
       child._parent = this;
       child._invalidatePosition();
       child.dispatchEvent(addedEvent);
+      // ADDED event handlers may remove the child from the stage, in such cases
+      // we should not dispatch the ADDED_TO_STAGE event.
       if (child.stage) {
         child._propagateEvent(addedToStageEvent);
       }
@@ -222,7 +224,7 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       if (index === currentIndex + 1 || index === currentIndex - 1) {
-        // We can't call |swapChildrenAt| here because we don't want to affect the depth value
+        // We can't call |swapChildrenAt| here because we don't want to affect the depth value.
         this._swapChildrenAt(currentIndex, index);
       } else {
         children.splice(currentIndex, 1);

@@ -265,9 +265,9 @@ module Shumway.GFX.GL {
 
     reset() {
       if (this._compact) {
-        this._regionAllocator = new RegionAllocator.Compact(this._w, this._h);
+        this._regionAllocator = new RegionAllocator.CompactAllocator(this._w, this._h);
       } else {
-        this._regionAllocator = new RegionAllocator.Grid(this._w, this._h, TILE_SIZE);
+        this._regionAllocator = new RegionAllocator.GridAllocator(this._w, this._h, TILE_SIZE);
       }
     }
   }

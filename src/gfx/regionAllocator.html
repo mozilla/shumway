@@ -7,11 +7,16 @@
       color: white;
       font: 12px Consolas, "Liberation Mono", Courier, monospace;
     }
+
+    canvas {
+      background-color: #1a2633;
+    }
   </style>
 </head>
 <body style="background-color: #333333;">
   <script src="../utilities.js"></script>
   <script src="geometry.js"></script>
+  <script src="references.js"></script>
   <script src="regionAllocator.js"></script>
   <table>
     <tr>
@@ -54,8 +59,8 @@
   </script>
   <script>
     function testA() {
-      var compact = new Geometry.RegionAllocator.Compact(W, H);
-      var grid = new Geometry.RegionAllocator.Grid(W, H, 64);
+      var compact = new Geometry.RegionAllocator.CompactAllocator(W, H);
+      var grid = new Geometry.RegionAllocator.GridAllocator(W, H, 64);
 
       var cRegions = [];
       var gRegions = [];
@@ -67,7 +72,7 @@
           var h = (Math.random() * 16) | 0;
           var c = compact.allocate(w, h);
           if (!c) {
-            compact = new Geometry.RegionAllocator.Compact(W, H);
+            compact = new Geometry.RegionAllocator.CompactAllocator(W, H);
             c = compact.allocate(w, h);
             cRegions.length = 0;
             a.clearRect(0, 0, a.canvas.width, a.canvas.height);
@@ -84,7 +89,7 @@
           var h = (Math.random() * 16) | 0;
           var g = grid.allocate(w, h);
           if (!g) {
-            grid = new Geometry.RegionAllocator.Grid(W, H, 16);
+            grid = new Geometry.RegionAllocator.GridAllocator(W, H, 16);
             g = grid.allocate(w, h);
             gRegions.length = 0;
             b.clearRect(0, 0, b.canvas.width, b.canvas.height);
@@ -98,8 +103,8 @@
     }
 
     function testB() {
-      var compact = new Geometry.RegionAllocator.Compact(W, H);
-      var grid = new Geometry.RegionAllocator.Grid(W, H, 16);
+      var compact = new Geometry.RegionAllocator.CompactAllocator(W, H);
+      var grid = new Geometry.RegionAllocator.GridAllocator(W, H, 16);
 
       var cRegions = [];
       var gRegions = [];
@@ -119,7 +124,7 @@
             c = compact.allocate(w, h);
           }
           if (!c) {
-            compact = new Geometry.RegionAllocator.Compact(W, H);
+            compact = new Geometry.RegionAllocator.CompactAllocator(W, H);
             c = compact.allocate(w, h);
             a.clearRect(0, 0, a.canvas.width, a.canvas.height);
             cRegions.length = 0;
@@ -152,8 +157,8 @@
     }
 
     function testC() {
-      var compact = new Geometry.RegionAllocator.Compact(W, H);
-      var grid = new Geometry.RegionAllocator.Grid(W, H, 16);
+      var compact = new Geometry.RegionAllocator.CompactAllocator(W, H);
+      var grid = new Geometry.RegionAllocator.GridAllocator(W, H, 16);
 
       var cRegions = [];
       var gRegions = [];
@@ -174,7 +179,7 @@
             c = compact.allocate(w, h);
           }
           if (!c) {
-            compact = new Geometry.RegionAllocator.Compact(W, H);
+            compact = new Geometry.RegionAllocator.CompactAllocator(W, H);
             c = compact.allocate(w, h);
             a.clearRect(0, 0, a.canvas.width, a.canvas.height);
             cRegions.length = 0;
@@ -186,10 +191,66 @@
         aResults.innerHTML = "Total Regions: " + cRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
       }, 16);
     }
+
+    function testD() {
+      var bucketAllocator = new Geometry.RegionAllocator.BucketAllocator(W, H);
+      var bRegions = [];
+
+      setInterval(function () {
+        var s = Date.now();
+        for (var i = 0; i < 64; i++) {
+          var size = (64 - i);
+          var w = (Math.random() * size) | 0;
+          var h = (Math.random() * size) | 0;
+          // debugger;
+          // w = h = i;
+          var c = bucketAllocator.allocate(w, h);
+          if (!c) {
+            bucketAllocator = new Geometry.RegionAllocator.BucketAllocator(W, H);
+            c = bucketAllocator.allocate(w, h);
+            a.clearRect(0, 0, a.canvas.width, a.canvas.height);
+            bRegions.length = 0;
+          }
+          bRegions.push(c);
+          a.fillStyle = Shumway.ColorStyle.randomStyle();
+          a.fillRect(c.x, c.y, c.w, c.h);
+        }
+        aResults.innerHTML = "Total Regions: " + bRegions.length + " Amortized Allocation Time: " + (Date.now() - s) + " ms";
+      }, 16);
+    }
+
+    function testE() {
+      var bucketAllocator = new Geometry.RegionAllocator.BucketAllocator(W, H);
+
+      setInterval(function () {
+        var t = Date.now();
+        for (var i = 0; i < 32; i++) {
+          var stack = [];
+          for (var s = 0; s < 500; s++) {
+            var size = (32 - i);
+            var w = (Math.random() * size) | 0;
+            var h = (Math.random() * size) | 0;
+
+            var c = bucketAllocator.allocate(w, h);
+            stack.push(c);
+            a.fillStyle = Shumway.ColorStyle.randomStyle();
+            a.fillRect(c.x, c.y, c.w, c.h);
+          }
+          while (stack.length) {
+            var r = stack.pop()
+            bucketAllocator.free(r);
+          }
+        }
+        aResults.innerHTML = "Amortized Stack Allocation Time: " + (Date.now() - t) + " ms";
+      }, 16);
+    }
+
   </script>
   <br>
   <button onclick="testA()">Allocate Until Full & Reset</button>
   <button onclick="testB()">Allocate Until Full & Remove Half Regions</button>
   <button onclick="testC()">Allocate Until Full & Remove Half Regions - Non Uniform</button>
+  <button onclick="testD()">Bucket Allocate Until Full & Remove Half Regions - Non Uniform</button>
+  <button onclick="testE()">Bucket Stack Allocate Non Uniform</button>
 </body>
 </html>

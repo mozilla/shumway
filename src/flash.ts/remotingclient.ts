@@ -20,6 +20,7 @@ module Shumway.Remoting.Client {
   import DisplayObject = Shumway.AVM2.AS.flash.display.DisplayObject;
   import DisplayObjectFlags = Shumway.AVM2.AS.flash.display.DisplayObjectFlags;
   import DisplayObjectContainer = Shumway.AVM2.AS.flash.display.DisplayObjectContainer;
+  import BlendMode = Shumway.AVM2.AS.flash.display.BlendMode;
 
   import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
   import IDataOutput = Shumway.AVM2.AS.flash.utils.IDataOutput;
@@ -30,37 +31,43 @@ module Shumway.Remoting.Client {
     public writeReferences: boolean = false;
     public clearDirtyBits: boolean = false;
 
-    visitDisplayObject(obj) {
-      var dispObj : DisplayObject = obj;
-
+    visitDisplayObject(displayObject: DisplayObject) {
       this.output.writeInt(MessageTag.UpdateFrame);
-      this.output.writeInt(dispObj._id);
+      this.output.writeInt(displayObject._id);
       // TODO create visitDisplayObjectContainer
-      this.output.writeInt(DisplayObjectContainer.isType(dispObj) ? 1 : 0);
-      var hasMatrix = dispObj._hasFlags(DisplayObjectFlags.DirtyMatrix);
-      var hasBounds = dispObj._hasFlags(DisplayObjectFlags.DirtyBounds);
-      var hasChildren = this.outputeferences && dispObj._hasFlags(DisplayObjectFlags.DirtyChildren);
+      this.output.writeInt(DisplayObjectContainer.isType(displayObject) ? 1 : 0);
+      var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
+      var hasBounds = displayObject._hasFlags(DisplayObjectFlags.DirtyBounds);
+      var hasChildren = this.writeReferences && displayObject._hasFlags(DisplayObjectFlags.DirtyChildren);
+      var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+
       var hasBits = 0;
       hasBits |= hasMatrix   ? UpdateFrameTagBits.HasMatrix   : 0;
       hasBits |= hasBounds   ? UpdateFrameTagBits.HasBounds   : 0;
       hasBits |= hasChildren ? UpdateFrameTagBits.HasChildren : 0;
+      hasBits |= hasMiscellaneousProperties ? UpdateFrameTagBits.HasMiscellaneousProperties : 0;
+
       this.output.writeInt(hasBits);
       if (hasMatrix) {
-        dispObj._matrix.writeExternal(this.output);
+        displayObject._matrix.writeExternal(this.output);
       }
       if (hasBounds) {
-        dispObj._getContentBounds().writeExternal(this.output);
+        displayObject._getContentBounds().writeExternal(this.output);
       }
       if (hasChildren) {
-        assert (DisplayObjectContainer.isType(dispObj));
-        var children = (<DisplayObjectContainer>dispObj)._children;
+        assert (DisplayObjectContainer.isType(displayObject));
+        var children = (<DisplayObjectContainer>displayObject)._children;
         this.output.writeInt(children.length);
         for (var i = 0; i < children.length; i++) {
           this.output.writeInt(children[i]._id);
         }
       }
+      if (hasMiscellaneousProperties) {
+        this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
+        this.output.writeFloat(displayObject._alpha);
+      }
       if (this.clearDirtyBits) {
-        dispObj._removeFlags(DisplayObjectFlags.Dirty);
+        displayObject._removeFlags(DisplayObjectFlags.Dirty);
       }
     }
   }

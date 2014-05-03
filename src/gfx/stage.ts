@@ -10,7 +10,6 @@ module Shumway.GFX {
   import OBB = Geometry.OBB;
 
   export enum BlendMode {
-    Default    = 0,
     Normal     = 1,
     Layer      = 2,
     Multiply   = 3,
