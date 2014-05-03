@@ -76,7 +76,7 @@ module Shumway.AVM2.AS.flash.display {
       this._contentsScaleFactor = 1;
       this._displayContextInfo = null;
 
-      this._timeoutID = -1;
+      this._timeout = -1;
       this._invalid = false;
     }
     
@@ -111,7 +111,7 @@ module Shumway.AVM2.AS.flash.display {
     private _contentsScaleFactor: number;
     private _displayContextInfo: string;
 
-    private _timeoutID: number;
+    private _timeout: number;
     private _invalid: boolean;
 
     get frameRate(): number {
@@ -302,7 +302,7 @@ module Shumway.AVM2.AS.flash.display {
       var firstRun = true;
 
       (function tick() {
-        stage._timeoutID = setTimeout(tick, 1000 / stage._frameRate);
+        stage._timeout = setTimeout(tick, 1000 / stage._frameRate);
 
         if (!firstRun) {
           MovieClip.initFrame();
@@ -326,8 +326,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     leaveEventLoop(): void {
-      assert (this._timeoutID > -1);
-      clearInterval(this._timeoutID);
+      assert (this._timeout > -1);
+      clearInterval(this._timeout);
     }
   }
 }
