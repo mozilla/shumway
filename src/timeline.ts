@@ -71,6 +71,7 @@ module Shumway.SWF.Timeline {
     maxChars: number = 0;
     autoSize: string = flash.text.TextFieldAutoSize.NONE;
     variableName: string = null;
+    data: any = null;
 
     constructor(id: number) {
       super(id, flash.text.TextField);

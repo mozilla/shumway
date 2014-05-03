@@ -23,10 +23,10 @@ function defineLabel(tag, dictionary) {
   var bbox = tag.bbox;
 
   // expand bbox to match browser text metrices
-  bbox.xMin -= 40;
-  bbox.xMax += 40;
-  bbox.yMin -= 40;
-  bbox.yMax += 40;
+  //bbox.xMin -= 40;
+  //bbox.xMax += 40;
+  //bbox.yMin -= 40;
+  //bbox.yMax += 40;
 
   var tx = ((m.tx - bbox.xMin) / 20) | 0;
   var ty = ((m.ty - bbox.yMin) / 20) | 0;
