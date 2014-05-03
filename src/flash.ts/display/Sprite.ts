@@ -21,6 +21,10 @@ module Shumway.AVM2.AS.flash.display {
 
   var DisplayObject: typeof flash.display.DisplayObject;
   var DisplayObjectContainer: typeof flash.display.DisplayObjectContainer;
+  var Event: typeof flash.events.Event;
+
+  var addedEvent: flash.events.Event;
+  var addedToStageEvent: flash.events.Event;
 
   export class Sprite extends flash.display.DisplayObjectContainer {
 
@@ -30,6 +34,10 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = function () {
       DisplayObject = flash.display.DisplayObject;
       DisplayObjectContainer = flash.display.DisplayObjectContainer;
+      Event = flash.events.Event;
+
+      addedEvent = new Event(Event.ADDED, true);
+      addedToStageEvent = new Event(Event.ADDED_TO_STAGE);
 
       Sprite._instances = [];
     };
@@ -179,7 +187,10 @@ module Shumway.AVM2.AS.flash.display {
           this[Multiname.getPublicQualifiedName(child.name)] = child;
         }
         child._setFlags(DisplayObjectFlags.Constructed);
-        // TODO dispatch added/addedToStage events
+        child.dispatchEvent(addedEvent);
+        if (this.stage) {
+          child.dispatchEvent(addedToStageEvent);
+        }
       }
     }
   }

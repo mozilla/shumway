@@ -9,6 +9,7 @@
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
   var Shape = flash.display.Shape;
   var Sprite = flash.display.Sprite;
+  var Stage = flash.display.Stage;
 
   unitTests.push(function () {
     Random.seed(0x12343);
@@ -22,6 +23,22 @@
     });
     c.addChild(s);
     check(addedEventWasTriggered);
+  });
+
+  unitTests.push(function () {
+    Random.seed(0x12343);
+
+    var stage = new Stage();
+    var s = new Shape();
+    var c = new DisplayObjectContainer();
+
+    var addedToStageEventWasTriggered = false;
+    s.addEventListener(Event.ADDED_TO_STAGE, function () {
+      addedToStageEventWasTriggered = true;
+    });
+    c.addChild(s);
+    stage.addChild(c);
+    check(addedToStageEventWasTriggered);
   });
 
 })();

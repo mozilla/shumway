@@ -408,8 +408,6 @@ module Shumway.AVM2.AS.flash.display {
         root._loaderInfo = this._contentLoaderInfo;
 
         this._content = root;
-        this._children[0] = root;
-        //this.addChild(root);
       }
 
       if (flash.display.MovieClip.isType(root)) {
@@ -485,6 +483,7 @@ module Shumway.AVM2.AS.flash.display {
 
       if (frameIndex === 0) {
         documentClass.instanceConstructorNoInitialize.call(root);
+        this.addChild(root);
         loaderInfo.dispatchEvent(new Event(Event.INIT));
       }
     }
