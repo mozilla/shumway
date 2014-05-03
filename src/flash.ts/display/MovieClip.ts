@@ -259,9 +259,10 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._hasNewFrame) {
         return;
       }
+      var currentPhase = this._framePhase;
       this._framePhase = FramePhase.Execute;
       this.callFrame(this._currentFrameAbs);
-      this._framePhase = FramePhase.Idle;
+      this._framePhase = currentPhase;
       this._hasNewFrame = false;
     }
 

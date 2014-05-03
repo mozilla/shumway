@@ -346,9 +346,10 @@ module Shumway.AVM2.AS.flash.display {
       var instances = DisplayObject._instances;
       for (var i = 0; i < instances.length; i++) {
         var instance = instances[i];
+        var currentPhase = instance._framePhase;
         instance._framePhase = framePhase;
         instance.dispatchEvent(event);
-        instance._framePhase = FramePhase.Idle;
+        instance._framePhase = currentPhase;
       }
     }
 

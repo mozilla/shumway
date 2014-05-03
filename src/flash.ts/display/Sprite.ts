@@ -179,6 +179,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _constructChildren(): void {
+      var currentPhase = this._framePhase;
       this._framePhase = FramePhase.Construct;
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
@@ -196,7 +197,7 @@ module Shumway.AVM2.AS.flash.display {
           child.dispatchEvent(Event.getInstance(Event.ADDED_TO_STAGE));
         }
       }
-      this._framePhase = FramePhase.Idle;
+      this._framePhase = currentPhase;
     }
   }
 }
