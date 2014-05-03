@@ -35,6 +35,7 @@
     options.clipCanvas = clipCanvas.value;
     options.paintFlashing = paintFlashing.value;
     options.paintBounds = paintBounds.value;
+    // options.paintBounds = paintBounds.value;
 
     options.cull = cull.value;
     options.disableMasking = disableMasking.value;

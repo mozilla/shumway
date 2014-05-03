@@ -3,6 +3,13 @@
 module Shumway.GFX.GL {
   var release = false;
 
+  import Rectangle = Geometry.Rectangle;
+  import RegionAllocator = Geometry.RegionAllocator;
+  import RenderableTileCache = Geometry.RenderableTileCache;
+
+  /**
+   * Utility class to help when writing to GL buffers.
+   */
   export class BufferWriter extends Shumway.ArrayUtilities.ArrayWriter {
     ensureVertexCapacity(count: number) {
       release || assert ((this._offset & 0x3) === 0);
@@ -85,35 +92,21 @@ module Shumway.GFX.GL {
     }
   }
 
-  export class WebGLGeometryPosition {
-    color: number;
-    element : number;
-    vertex : number;
-    coordinate: number;
-    triangles: number;
-    constructor(triangles, element, vertex, coordinate, color) {
-      this.triangles = triangles;
-      this.element = element;
-      this.vertex = vertex;
-      this.coordinate = coordinate;
-      this.color = color;
-    }
-    toString() {
-      return "{" +
-        "triangles: " + this.triangles + ", " +
-        "element: " + this.element + ", " +
-        "vertex: " + this.vertex + ", " +
-        "coordinate: " + this.coordinate + ", " +
-        "color: " + this.color + "}";
+  export class WebGLAttribute {
+    name: string;
+    size: number;
+    type: number;
+    normalized: boolean;
+    offset: number;
+
+    constructor (name: string, size: number, type: number, normalized: boolean = false) {
+      this.name = name;
+      this.size = size;
+      this.type = type;
+      this.normalized = normalized;
     }
   }
 
-  export enum WebGLGeometryAttributeType {
-    Vertex,
-    Color,
-    Index,
-    I32,
-  }
 
   export class WebGLAttributeList {
     attributes: WebGLAttribute [];
@@ -128,21 +121,6 @@ module Shumway.GFX.GL {
         offset += context.sizeOf(this.attributes[i].type) * this.attributes[i].size;
       }
       this.size = offset;
-    }
-  }
-
-  export class WebGLAttribute {
-    name: string;
-    size: number;
-    type: number;
-    normalized: boolean;
-    offset: number;
-
-    constructor (name: string, size: number, type: number, normalized: boolean = false) {
-      this.name = name;
-      this.size = size;
-      this.type = type;
-      this.normalized = normalized;
     }
   }
 
@@ -196,6 +174,101 @@ module Shumway.GFX.GL {
       gl.bufferData(gl.ARRAY_BUFFER, this.array.subU8View(), gl.DYNAMIC_DRAW);
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.elementBuffer);
       gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.elementArray.subU8View(), gl.DYNAMIC_DRAW);
+    }
+  }
+
+
+  export class Vertex extends Geometry.Point3D {
+    constructor (x: number, y: number, z: number) {
+      super(x, y, z);
+    }
+    static createEmptyVertices<T extends Vertex>(type: new (x: number, y: number, z: number) => T, count: number): T [] {
+      var result = [];
+      for (var i = 0; i < count; i++) {
+        result.push(new type(0, 0, 0));
+      }
+      return result;
+    }
+  }
+
+  /**
+   * A (region, texture) pair. These objects can appear in linked lists hence the next and previous pointers. Regions
+   * don't necessarily need to have a texture reference. Setting the texture reference to null is a way to indicate
+   * that the region no longer points to valid texture data.
+   */
+  export class WebGLTextureRegion implements ILinkedListNode<WebGLTextureRegion> {
+    region: Rectangle;
+    texture: WebGLTexture;
+    next: WebGLTextureRegion;
+    previous: WebGLTextureRegion;
+    constructor(texture: WebGLTexture, region: Rectangle) {
+      this.texture = texture;
+      this.region = region;
+      this.texture.regions.push(this);
+      this.next = this.previous = null;
+    }
+  }
+
+  /**
+   * Wraps around a texture and a region allocator to implement texture atlasing.
+   */
+  export class WebGLTextureAtlas {
+    texture: WebGLTexture;
+
+    private _context: WebGLContext;
+    private _regionAllocator: RegionAllocator.IRegionAllocator;
+    private _w: number;
+    private _h: number;
+    private _compact: boolean;
+
+    get compact(): boolean {
+      return this._compact;
+    }
+
+    get w(): number {
+      return this._w;
+    }
+
+    get h(): number {
+      return this._h;
+    }
+
+    constructor(context: WebGLContext, texture: WebGLTexture, w: number, h: number, compact: boolean) {
+      this._context = context;
+      this.texture = texture;
+      this._w = w;
+      this._h = h;
+      this._compact = compact;
+      this.reset();
+    }
+
+    add(image: any, w: number, h: number): RegionAllocator.Region {
+      var gl = this._context.gl;
+      var region = this._regionAllocator.allocate(w, h);
+      if (!region) {
+        return;
+      }
+      if (image) {
+        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        timeline && timeline.enter("texSubImage2D");
+        gl.texSubImage2D(gl.TEXTURE_2D, 0, region.x, region.y, gl.RGBA, gl.UNSIGNED_BYTE, image);
+        traceLevel >= TraceLevel.Verbose && writer.writeLn("texSubImage2D: " + region);
+        timeline && timeline.leave("texSubImage2D");
+        count("texSubImage2D");
+      }
+      return region;
+    }
+
+    remove(region: RegionAllocator.Region) {
+      this._regionAllocator.free(region);
+    }
+
+    reset() {
+      if (this._compact) {
+        this._regionAllocator = new RegionAllocator.Compact(this._w, this._h);
+      } else {
+        this._regionAllocator = new RegionAllocator.Grid(this._w, this._h, TILE_SIZE);
+      }
     }
   }
 }

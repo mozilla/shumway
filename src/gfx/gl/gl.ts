@@ -52,96 +52,9 @@ module Shumway.GFX.GL {
   import radianToDegrees = Geometry.radianToDegrees;
   import degreesToRadian = Geometry.degreesToRadian;
 
-  export class Vertex extends Geometry.Point3D {
-    constructor (x: number, y: number, z: number) {
-      super(x, y, z);
-    }
-    static createEmptyVertices<T extends Vertex>(type: new (x: number, y: number, z: number) => T, count: number): T [] {
-      var result = [];
-      for (var i = 0; i < count; i++) {
-        result.push(new type(0, 0, 0));
-      }
-      return result;
-    }
-  }
-
-  export class WebGLTextureRegion implements ILinkedListNode<WebGLTextureRegion> {
-    texture: WebGLTexture;
-    region: RegionAllocator.Region;
-    uses: number = 0;
-    next: WebGLTextureRegion;
-    previous: WebGLTextureRegion;
-    constructor(texture: WebGLTexture, region: RegionAllocator.Region) {
-      this.texture = texture;
-      this.region = region;
-      this.texture.regions.push(this);
-      this.next = this.previous = null;
-    }
-  }
-
-  export class WebGLTextureAtlas {
-    texture: WebGLTexture;
-
-    private _context: WebGLContext;
-    private _regionAllocator: RegionAllocator.IRegionAllocator;
-    private _w: number;
-    private _h: number;
-    private _compact: boolean;
-
-    get compact(): boolean {
-      return this._compact;
-    }
-
-    get w(): number {
-      return this._w;
-    }
-
-    get h(): number {
-      return this._h;
-    }
-
-    constructor(context: WebGLContext, texture: WebGLTexture, w: number, h: number, compact: boolean) {
-      this._context = context;
-      this.texture = texture;
-      this._w = w;
-      this._h = h;
-      this._compact = compact;
-      this.reset();
-    }
-
-    add(image: any, w: number, h: number): RegionAllocator.Region {
-      var gl = this._context.gl;
-      var region = this._regionAllocator.allocate(w, h);
-      if (!region) {
-        return;
-      }
-      if (image) {
-        gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        timeline && timeline.enter("texSubImage2D");
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, region.x, region.y, gl.RGBA, gl.UNSIGNED_BYTE, image);
-        traceLevel >= TraceLevel.Verbose && writer.writeLn("texSubImage2D: " + region);
-        timeline && timeline.leave("texSubImage2D");
-        count("texSubImage2D");
-      }
-      return region;
-    }
-
-    remove(region: RegionAllocator.Region) {
-      this._regionAllocator.free(region);
-    }
-
-    reset() {
-      if (this._compact) {
-        this._regionAllocator = new RegionAllocator.Compact(this._w, this._h);
-      } else {
-        this._regionAllocator = new RegionAllocator.Grid(this._w, this._h, TILE_SIZE);
-      }
-    }
-  }
-
   export class WebGLStageRendererOptions extends StageRendererOptions {
-    maxTextures: number = 8;
-    maxTextureSize: number = 2048;
+    maxTextures: number = 1;
+    maxTextureSize: number = 2048 * 2;
     perspectiveCamera: boolean;
     perspectiveCameraDistance: number;
     perspectiveCameraFOV: number;
@@ -184,7 +97,7 @@ module Shumway.GFX.GL {
     private _dynamicScratchCanvasContext: CanvasRenderingContext2D;
     private _uploadCanvas: HTMLCanvasElement;
     private _uploadCanvasContext: CanvasRenderingContext2D;
-    
+
     constructor(canvas: HTMLCanvasElement, stage: Stage,
                 options: WebGLStageRendererOptions = new WebGLStageRendererOptions()) {
       super(canvas, stage);
@@ -285,16 +198,29 @@ module Shumway.GFX.GL {
       }
     }
 
-
     private _renderFrameIntoTextureRegion(frame: Frame, transform: Matrix): WebGLTextureRegion {
       var context = this.context;
       var bounds = frame.getBounds().clone();
       transform.transformRectangleAABB(bounds);
       bounds.snap();
-      var textureRegion = context.allocateTextureRegion(bounds.w, bounds.h);
-      context.clearTextureRegion(textureRegion);
+      var textureRegion = context.allocateTextureRegion(Math.ceil(bounds.w), Math.ceil(bounds.h));
+      if (!textureRegion) {
+        debugger;
+        textureRegion = context.allocateTextureRegion(bounds.w, bounds.h);
+      }
+      // context.clearTextureRegion(textureRegion, Color.randomColor(0.5));
+      context.clearTextureRegion(textureRegion, Color.None);
       var brush = new WebGLCombinedBrush(context, new WebGLGeometry(context), textureRegion.texture);
-      this._renderFrame(frame, transform, brush);
+      var region = textureRegion.region;
+      transform = transform.clone();
+      transform.translate(region.x - bounds.x, region.y - bounds.y);
+//
+//      var transform = Matrix.createIdentity();
+//      var v = Math.abs(Math.sin(Date.now() / 1000) * (1024 * 4));
+//      transform.translate(v, v);
+      // transform.translate(Math.sin(Date.now() / 10000) * 100, 0);
+      var r = Rectangle.createSquare(1024 * 8);
+      this._renderFrame(frame, transform, brush, r);
       brush.flush();
       return textureRegion;
 
@@ -317,14 +243,21 @@ module Shumway.GFX.GL {
 
     private _renderFrameLayer(frame: Frame, transform: Matrix, brush: WebGLCombinedBrush) {
       var textureRegion = this._renderFrameIntoTextureRegion(frame, transform);
+
+      var bounds = frame.getBounds().clone();
+      transform.transformRectangleAABB(bounds);
+      bounds.snap();
+
       var m = Matrix.createIdentity();
+      var alpha = frame.getConcatenatedAlpha();
       var colorTransform = frame.getConcatenatedColorMatrix();
-      if (!brush.drawImage(textureRegion, textureRegion.region, new Color(1, 1, 1, alpha), colorTransform, m, 0, frame.blendMode)) {
+      if (!brush.drawImage(textureRegion, bounds, new Color(1, 1, 1, alpha), colorTransform, m, 0, frame.blendMode)) {
         unexpected();
       }
+      this.context.freeTextureRegion(textureRegion);
     }
 
-    private _renderFrame(root: Frame, transform: Matrix, brush: WebGLCombinedBrush, depth: number = 0) {
+    private _renderFrame(root: Frame, transform: Matrix, brush: WebGLCombinedBrush, viewport: Rectangle, depth: number = 0) {
       var self = this;
       var options = this._options;
       var context = this.context;
@@ -333,7 +266,6 @@ module Shumway.GFX.GL {
       var tileTransform = Matrix.createIdentity();
       var colorTransform = ColorMatrix.createIdentity();
       var inverseTransform = Matrix.createIdentity();
-      var viewport = this._viewport;
       root.visit(function (frame: Frame, transform?: Matrix): VisitorFlags {
         depth += options.frameSpacing;
 
@@ -350,14 +282,15 @@ module Shumway.GFX.GL {
             brush.fillRectangle(new Rectangle(bounds.x, bounds.y, bounds.w, bounds.h), frame.color, transform, depth);
           }
           if (frame !== root && frame.blendMode !== BlendMode.Default) {
-            self._renderFrameIntoTextureRegion(frame, transform);
+            self._renderFrameLayer(frame, transform, brush);
+            // self._renderFrameIntoTextureRegion(frame, transform);
             return VisitorFlags.Skip;
           }
         } else if (frame instanceof Shape) {
           if (frame.blendMode !== BlendMode.Default) {
             if (!WebGLContext.glSupportedBlendMode(frame.blendMode)) {
               // gl.TEXTURE_2D
-              gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 4, 4, 16, 16);
+              // gl.copyTexSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 4, 4, 16, 16);
               // Now we need to render the frame into a texture.
             }
             return VisitorFlags.Skip;
@@ -381,7 +314,7 @@ module Shumway.GFX.GL {
               tileTransform.concat(transform);
               var src = <WebGLTextureRegion>(tile.cachedTextureRegion);
               if (src && src.texture) {
-                context.textureRegionCache.put(src);
+                context.textureRegionCache.use(src);
               }
               if (!brush.drawImage(src, new Rectangle(0, 0, tile.bounds.w, tile.bounds.h), new Color(1, 1, 1, alpha), colorTransform, tileTransform, depth, frame.blendMode)) {
                 unexpected();
@@ -409,7 +342,12 @@ module Shumway.GFX.GL {
         var transform = Matrix.createIdentity();
         if (options.drawTexture >= 0 && options.drawTexture < textures.length) {
           var texture = textures[options.drawTexture | 0];
-          brush.drawImage(new WebGLTextureRegion(texture, <RegionAllocator.Region>new Rectangle(0, 0, texture.w, texture.h)), viewport, Color.White, null, transform, 0.2);
+          var src = new Rectangle(0, 0, texture.w, texture.h);
+          var dst = src.clone();
+          while(dst.w > viewport.w) {
+            dst.scale(0.5, 0.5);
+          }
+          brush.drawImage(new WebGLTextureRegion(texture, src), dst, Color.White, null, transform, 0.2);
         } else {
           var textureWindowSize = viewport.w / 5;
           if (textureWindowSize > viewport.h / textures.length) {
@@ -449,15 +387,18 @@ module Shumway.GFX.GL {
       }
 
       var brush = this._brush;
-      var viewport = this._viewport;
-      if (options.ignoreViewport) {
-        viewport = Rectangle.createSquare(1024 * 1024);
-      }
+
       gl.clearColor(0, 0, 0, 0);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
       brush.reset();
-      this._renderFrame(stage, stage.matrix, brush, 0);
+
+      var viewport = this._viewport;
+      if (options.ignoreViewport) {
+        viewport = Rectangle.createSquare(1024 * 4);
+      }
+
+      this._renderFrame(stage, stage.matrix, brush, viewport, 0);
 
       brush.flush(options.drawElements);
 
