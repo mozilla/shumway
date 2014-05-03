@@ -17,7 +17,9 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
   import Timeline = Shumway.SWF.Timeline;
+  import FramePhase = Shumway.SWF.Timeline.FramePhase;
 
   var DisplayObject: typeof flash.display.DisplayObject;
   var DisplayObjectContainer: typeof flash.display.DisplayObjectContainer;
@@ -78,14 +80,15 @@ module Shumway.AVM2.AS.flash.display {
     static constructFrame(): void {
       var instances = Sprite._instances;
       for (var i = 0; i < instances.length; i++) {
-        instances[i].constructChildren();
+        var instance = instances[i];
+        instances[i]._constructChildren();
       }
     }
 
     constructor () {
       false && super();
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
-      this.constructChildren();
+      this._constructChildren();
     }
     
     // JS -> AS Bindings
@@ -175,7 +178,9 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
-    constructChildren(): void {
+    _constructChildren(): void {
+      var currentPhase = this._framePhase;
+      this._framePhase = FramePhase.Construct;
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
@@ -187,11 +192,12 @@ module Shumway.AVM2.AS.flash.display {
           this[Multiname.getPublicQualifiedName(child.name)] = child;
         }
         child._setFlags(DisplayObjectFlags.Constructed);
-        child.dispatchEvent(addedEvent);
+        child.dispatchEvent(Event.getInstance(Event.ADDED, true));
         if (this.stage) {
-          child.dispatchEvent(addedToStageEvent);
+          child.dispatchEvent(Event.getInstance(Event.ADDED_TO_STAGE));
         }
       }
+      this._framePhase = currentPhase;
     }
   }
 }

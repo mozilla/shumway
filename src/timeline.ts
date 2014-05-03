@@ -71,6 +71,7 @@ module Shumway.SWF.Timeline {
     maxChars: number = 0;
     autoSize: string = flash.text.TextFieldAutoSize.NONE;
     variableName: string = null;
+    data: any = null;
 
     constructor(id: number) {
       super(id, flash.text.TextField);
@@ -134,5 +135,14 @@ module Shumway.SWF.Timeline {
     remove(depth: number): void {
       this.stateAtDepth[depth] = null;
     }
+  }
+
+  export enum FramePhase {
+    Enter       = 1,
+    Construct   = 2,
+    Constructed = 3,
+    Execute     = 4,
+    Exit        = 5,
+    Idle        = 6
   }
 }

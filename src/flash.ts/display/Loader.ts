@@ -207,6 +207,10 @@ module Shumway.AVM2.AS.flash.display {
           symbol.height = data.height;
           break;
         case 'label':
+          symbol = new Timeline.TextSymbol(symbolId);
+          symbol.symbolClass = flash.text.StaticText;
+          symbol.data = data.data;
+          break;
         case 'text':
           symbol = new Timeline.TextSymbol(symbolId);
           var tag = data.tag;
