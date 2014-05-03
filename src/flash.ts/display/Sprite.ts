@@ -187,9 +187,9 @@ module Shumway.AVM2.AS.flash.display {
           this[Multiname.getPublicQualifiedName(child.name)] = child;
         }
         child._setFlags(DisplayObjectFlags.Constructed);
-        child.dispatchEvent(addedEvent);
+        child.dispatchEvent(Event.getInstance(Event.ADDED, true));
         if (this.stage) {
-          child.dispatchEvent(addedToStageEvent);
+          child.dispatchEvent(Event.getInstance(Event.ADDED_TO_STAGE));
         }
       }
     }

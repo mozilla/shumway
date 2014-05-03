@@ -18,8 +18,12 @@ module Shumway.AVM2.AS.flash.events {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Event extends ASNative {
 
+    static _instances: Shumway.Map<Event>;
+
     // Called whenever the class is initialized.
-    static classInitializer: any = null;
+    static classInitializer: any = function () {
+      Event._instances = Shumway.ObjectUtilities.createMap<Event>();
+    };
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = null;
@@ -29,6 +33,17 @@ module Shumway.AVM2.AS.flash.events {
 
     // List of instance symbols to link.
     static instanceSymbols: string [] = ["clone"]; // ["formatToString", "toString"];
+
+    static getInstance(type: string, bubbles: boolean = false, cancelable: boolean = false) {
+      var instance = Event._instances[type];
+      if (!instance) {
+        instance = new Event(type, bubbles, cancelable);
+        Event._instances[type] = instance;
+      }
+      instance._bubbles = bubbles;
+      instance._cancelable = cancelable;
+      return instance;
+    }
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false) {
       false && super();
