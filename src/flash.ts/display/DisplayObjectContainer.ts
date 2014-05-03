@@ -20,6 +20,8 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
 
+  import VisitorFlags = flash.display.VisitorFlags;
+
   var Event: typeof flash.events.Event;
 
   var addedEvent: flash.events.Event;
@@ -216,7 +218,7 @@ module Shumway.AVM2.AS.flash.display {
         throwError('RangeError', Errors.ParamRangeError);
       }
       var currentIndex = this.getChildIndex(child);
-      if (currentIndex === index) {
+      if (children.length === 1 || currentIndex === index) {
         return;
       }
       if (index === currentIndex + 1 || index === currentIndex - 1) {
