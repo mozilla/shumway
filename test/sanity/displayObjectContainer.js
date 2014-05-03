@@ -41,8 +41,9 @@
     check(addedToStageEventWasTriggered);
   });
 
-  unitTests.push(0, function () {
+  unitTests.push(function () {
     Random.seed(0x12343);
+
     var stage = new Stage();
     var s = new Shape();
     var c = new DisplayObjectContainer();
@@ -118,4 +119,30 @@
     stage.addChild(c);
     eq(r, "A");
   });
+
+  unitTests.push(function () {
+    Random.seed(0x12343);
+    var stage = new Stage();
+    var s = new Shape();
+    var c1 = new DisplayObjectContainer();
+    var c2 = new DisplayObjectContainer();
+    var r = "";
+
+    s.addEventListener(Event.ADDED, function () {
+      c2.addChild(s);
+    });
+    s.addEventListener(Event.ADDED_TO_STAGE, function () {
+      r += "A";
+    });
+
+    stage.addChild(c1);
+    c1.addChild(s);
+    eq(r, "");
+
+    c2.removeChild(s);
+    stage.addChild(c2);
+    c1.addChild(s);
+    eq(r, "AA");
+  });
+
 })();

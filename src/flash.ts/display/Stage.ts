@@ -323,7 +323,7 @@ module Shumway.AVM2.AS.flash.display {
         DisplayObject.broadcastEvent(exitFrameEvent);
 
         if (stage._invalid && !firstRun) {
-          DisplayObject.broadcastEvent(renderEvent);
+          stage._propagateEvent(renderEvent);
           stage._invalid = false;
         }
 
