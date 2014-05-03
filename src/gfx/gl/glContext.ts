@@ -72,7 +72,8 @@ module Shumway.GFX.GL {
 
       this.gl = <WebGLRenderingContext> (
         canvas.getContext("experimental-webgl", {
-          preserveDrawingBuffer: true,
+          // preserveDrawingBuffer: true,
+          preserveDrawingBuffer: false,
           antialias: true,
           stencil: true,
           premultipliedAlpha: false
@@ -180,7 +181,7 @@ module Shumway.GFX.GL {
       var h = image.height;
       var textureRegion = this.allocateTextureRegion(w, h);
       traceLevel >= TraceLevel.Verbose && writer.writeLn("Uploading Image: @ " + textureRegion.region);
-      this.textureRegionCache.put(textureRegion);
+      this.textureRegionCache.use(textureRegion);
       this.updateTextureRegion(image, textureRegion);
       return textureRegion;
     }
@@ -216,6 +217,13 @@ module Shumway.GFX.GL {
         assert (region);
       }
       return new WebGLTextureRegion(texture, region);
+    }
+
+    public freeTextureRegion(textureRegion: WebGLTextureRegion) {
+      if (textureRegion.region instanceof RegionAllocator.Region) {
+        var region = <RegionAllocator.Region>textureRegion.region;
+        textureRegion.texture.atlas.remove(region);
+      }
     }
 
     public updateTextureRegion(image: any, textureRegion: WebGLTextureRegion) {
@@ -367,9 +375,15 @@ module Shumway.GFX.GL {
       }
     }
 
-    public setTarget(target: WebGLTexture) {
+    public set target(target: WebGLTexture) {
       var gl = this.gl;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, target ? target.framebuffer : null);
+      if (target) {
+        gl.viewport(0, 0, target.w, target.h);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
+      } else {
+        gl.viewport(0, 0, this._w, this._h);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      }
     }
 
     public clear(color: Color = Color.None) {
@@ -378,13 +392,13 @@ module Shumway.GFX.GL {
       gl.clear(gl.COLOR_BUFFER_BIT);
     }
 
-    public clearTextureRegion(textureRegion: WebGLTextureRegion) {
+    public clearTextureRegion(textureRegion: WebGLTextureRegion, color: Color = Color.None) {
       var gl = this.gl;
       var region = textureRegion.region;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, textureRegion.texture.framebuffer);
+      this.target = textureRegion.texture;
       gl.enable(gl.SCISSOR_TEST);
       gl.scissor(region.x, region.y, region.w, region.h);
-      gl.clearColor(0, 0, 0, 0);
+      gl.clearColor(color.r, color.g, color.b, color.a);
       gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
       gl.disable(gl.SCISSOR_TEST);
     }

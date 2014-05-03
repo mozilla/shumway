@@ -79,7 +79,7 @@ module Shumway {
     /**
      * Adds or moves a node to the front of the list.
      */
-    put(node: T) {
+    use(node: T) {
       if (this._head === node) {
         return;
       }

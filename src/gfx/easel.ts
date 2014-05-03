@@ -87,6 +87,30 @@ module Shumway.GFX {
     }
   }
 
+  class PersistentState extends State {
+    private _keyCodes: boolean [] = [];
+    onMouseDown(easel: Easel, event: MouseEvent) {
+    }
+
+    onMouseClick(easel: Easel, event: MouseEvent) {
+
+    }
+
+    onKeyDown(easel: Easel, event: KeyboardEvent) {
+      this._keyCodes[event.keyCode] = true;
+      this._update(easel);
+    }
+
+    onKeyUp(easel: Easel, event: KeyboardEvent) {
+      this._keyCodes[event.keyCode] = false;
+      this._update(easel);
+    }
+
+    private _update(easel: Easel) {
+      easel._options.paintBounds = this._keyCodes[66];
+    }
+  }
+
   class MouseDownState extends State {
     private _startTime: number = Date.now();
 
@@ -214,6 +238,7 @@ module Shumway.GFX {
     private _renderer: StageRenderer;
     private _options: StageRendererOptions = new WebGLStageRendererOptions();
     private _state: State = new StartState();
+    private _persistentState: State = new PersistentState();
 
     private _selection: FrameContainer;
     private _selectedFrames: Frame [] = [];
@@ -243,7 +268,7 @@ module Shumway.GFX {
       this._worldViewOverlay = new FrameContainer();
       this._world = new FrameContainer();
       this._stage.addChild(this._worldView);
-      this._worldView.addChild(new Shape(new Grid())).removeCapability(FrameCapabilityFlags.AllowMatrixWrite);
+      // this._worldView.addChild(new Shape(new Grid())).removeCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._worldView.addChild(this._world);
       this._worldView.addChild(this._worldViewOverlay);
       var screenOverlay = new FrameContainer();
@@ -292,6 +317,7 @@ module Shumway.GFX {
 
       window.addEventListener("keydown", function (event) {
         self._state.onKeyDown(self, event);
+        self._persistentState.onKeyDown(self, event);
       }, false);
 
       window.addEventListener("keypress", function (event) {
@@ -300,9 +326,8 @@ module Shumway.GFX {
 
       window.addEventListener("keyup", function (event) {
         self._state.onKeyUp(self, event);
+        self._persistentState.onKeyUp(self, event);
       }, false);
-
-
     }
 
     set state(state: State) {

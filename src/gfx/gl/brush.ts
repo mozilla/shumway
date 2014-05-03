@@ -38,6 +38,17 @@ module Shumway.GFX.GL {
     public flush() {
       Shumway.Debug.abstractMethod("flush");
     }
+
+    public set target(target: WebGLTexture) {
+      if (this._target !== target) {
+        this.flush();
+      }
+      this._target = target;
+    }
+
+    public get target(): WebGLTexture {
+      return this._target;
+    }
   }
 
   export enum WebGLCombinedBrushKind {
@@ -183,12 +194,15 @@ module Shumway.GFX.GL {
       var g = this._geometry;
       var p = this._program;
       var gl = this._context.gl;
+      var matrix;
 
       g.uploadBuffers();
       gl.useProgram(p);
-      var matrix = this._context.modelViewProjectionMatrix;
       if (this._target) {
+        matrix = Matrix3D.create2DProjection(this._target.w, this._target.h, 2000)
         matrix = Matrix3D.createMultiply(matrix, Matrix3D.createScale(1, -1, 1));
+      } else {
+        matrix = this._context.modelViewProjectionMatrix
       }
       gl.uniformMatrix4fv(p.uniforms.uTransformMatrix3D.location, false, matrix.asWebGLMatrix());
       if (this._colorTransform) {
@@ -216,7 +230,7 @@ module Shumway.GFX.GL {
       this._context.setBlendMode(this._blendMode);
 
       // Bind target.
-      this._context.setTarget(this._target);
+      this._context.target = this._target;
 
       // Bind elements buffer.
       gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, g.elementBuffer);

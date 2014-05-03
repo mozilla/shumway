@@ -55,7 +55,6 @@ module Shumway.GFX.Geometry {
       static RANDOM_ORIENTATION: boolean = true;
       static MAX_DEPTH: number = 256;
       private _root: CompactCell;
-      private _allocations: CompactCell [] = [];
       constructor(w: number, h: number) {
         this._root = new CompactCell(0, 0, w, h, false);
       }
