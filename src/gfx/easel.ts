@@ -107,7 +107,7 @@ module Shumway.GFX {
     }
 
     private _update(easel: Easel) {
-      easel._options.paintBounds = this._keyCodes[66];
+      easel.options.paintBounds = this._keyCodes[66];
     }
   }
 
@@ -360,7 +360,7 @@ module Shumway.GFX {
       return this._stage;
     }
 
-    get options(): Object {
+    get options(): StageRendererOptions {
       return this._options;
     }
 

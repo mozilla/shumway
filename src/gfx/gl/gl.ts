@@ -53,7 +53,7 @@ module Shumway.GFX.GL {
   import degreesToRadian = Geometry.degreesToRadian;
 
   export class WebGLStageRendererOptions extends StageRendererOptions {
-    maxTextures: number = 1;
+    maxTextures: number = 8;
     maxTextureSize: number = 2048 * 2;
     perspectiveCamera: boolean;
     perspectiveCameraDistance: number;
@@ -74,7 +74,6 @@ module Shumway.GFX.GL {
     frameSpacing: number = 0.01;
     ignoreColorMatrix: boolean;
     drawTiles: boolean;
-    paintBounds: boolean;
     drawElements: boolean = true;
     drawTextures: boolean = true;
     drawTexture: number = -1;

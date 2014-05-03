@@ -74,6 +74,12 @@ module Shumway.GFX {
 
   export class Frame {
     /**
+     * For debugging only.
+     */
+    public color: Color;
+
+
+    /**
      * Used as a temporary array to avoid allocations.
      */
     private static _path: Frame[] = [];
