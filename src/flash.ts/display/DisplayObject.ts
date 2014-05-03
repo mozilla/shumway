@@ -31,6 +31,7 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
 
+  import FramePhase = Shumway.SWF.Timeline.FramePhase;
   import IChannelVisitor = Shumway.Remoting.IChannelVisitor;
 
   import BlendMode = flash.display.BlendMode; assert (BlendMode);
@@ -38,6 +39,7 @@ module Shumway.AVM2.AS.flash.display {
   import Matrix = flash.geom.Matrix; assert (Matrix);
   import Point = flash.geom.Point; assert (Point);
   import Rectangle = flash.geom.Rectangle; assert (Rectangle);
+  import Event = flash.events.Event; assert (Event);
   import EventDispatcher = flash.events.EventDispatcher; assert (EventDispatcher);
 
   export enum Direction {
@@ -295,6 +297,7 @@ module Shumway.AVM2.AS.flash.display {
       self._mouseDown = false;
 
       self._symbol = null;
+      self._framePhase = Shumway.SWF.Timeline.FramePhase.Idle;
 
       if (symbol) {
         self._bounds.copyFrom(symbol.bounds);
@@ -325,11 +328,27 @@ module Shumway.AVM2.AS.flash.display {
       return instance;
     }
 
-    static broadcastEvent(event: flash.events.Event): void {
+    static broadcastFrameEvent(framePhase: FramePhase = FramePhase.Idle): void {
+      var event: flash.events.Event;
+      switch (framePhase) {
+        case FramePhase.Enter:
+          event = Event.getInstance(Event.ENTER_FRAME);
+          break;
+        case FramePhase.Constructed:
+          event = Event.getInstance(Event.FRAME_CONSTRUCTED);
+          break;
+        case FramePhase.Exit:
+          event = Event.getInstance(Event.EXIT_FRAME);
+          break;
+        default:
+          return;
+      }
       var instances = DisplayObject._instances;
       for (var i = 0; i < instances.length; i++) {
         var instance = instances[i];
+        instance._framePhase = framePhase;
         instance.dispatchEvent(event);
+        instance._framePhase = FramePhase.Idle;
       }
     }
 
@@ -485,6 +504,7 @@ module Shumway.AVM2.AS.flash.display {
     _mouseDown: boolean;
 
     _symbol: Shumway.SWF.Timeline.Symbol;
+    _framePhase: Shumway.SWF.Timeline.FramePhase;
 
 
     /**

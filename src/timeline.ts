@@ -135,4 +135,13 @@ module Shumway.SWF.Timeline {
       this.stateAtDepth[depth] = null;
     }
   }
+
+  export enum FramePhase {
+    Enter       = 1,
+    Construct   = 2,
+    Constructed = 3,
+    Execute     = 4,
+    Exit        = 5,
+    Idle        = 6
+  }
 }

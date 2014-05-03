@@ -21,6 +21,8 @@ module Shumway.AVM2.AS.flash.display {
   import clamp = Shumway.NumberUtilities.clamp;
   import Telemetry = Shumway.Telemetry;
 
+  import FramePhase = Shumway.SWF.Timeline.FramePhase;
+
   var Scene: typeof flash.display.Scene;
   var FrameLabel: typeof flash.display.FrameLabel;
 
@@ -85,17 +87,14 @@ module Shumway.AVM2.AS.flash.display {
     static initFrame(): void {
       var instances = MovieClip._instances;
       for (var i = 0; i < instances.length; i++) {
-        instances[i].advanceFrame();
+        instances[i]._advanceFrame();
       }
     }
 
     static executeFrame(): void {
       var instances = MovieClip._instances;
       for (var i = 0; i < instances.length; i++) {
-        var instance = instances[i];
-        if (instance._hasNewFrame) {
-          instance.callFrame(instance._currentFrameAbs);
-        }
+        instances[i]._callNewFrame();
       }
     }
 
@@ -239,6 +238,31 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       this._nextFrameAbs = offset + frameNum;
+
+      if (this._framePhase !== FramePhase.Execute) { // TODO: skip if ActionScriptVersion < 3
+        this._advanceFrame(); // recursive?
+        this._constructChildren();
+        // TODO test inter-frame navigation behaviour for SWF versions < 10
+        DisplayObject.broadcastFrameEvent(FramePhase.Constructed);
+        var instances = MovieClip._instances;
+        var snapshotLen = instances.length;
+        this._callNewFrame();
+        var i = instances.length;
+        while (i-- > snapshotLen) {
+          instances[i]._callNewFrame();
+        }
+        DisplayObject.broadcastFrameEvent(FramePhase.Exit);
+      }
+    }
+
+    private _callNewFrame(): void {
+      if (!this._hasNewFrame) {
+        return;
+      }
+      this._framePhase = FramePhase.Execute;
+      this.callFrame(this._currentFrameAbs);
+      this._framePhase = FramePhase.Idle;
+      this._hasNewFrame = false;
     }
 
     callFrame(frame: number): void {
@@ -262,7 +286,7 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
-    advanceFrame(): void {
+    private _advanceFrame(): void {
       var scenes = this._scenes;
       var lastFrame = this._currentFrameAbs;
       var nextFrame = this._nextFrameAbs;

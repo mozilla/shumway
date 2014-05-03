@@ -19,6 +19,8 @@ module Shumway.AVM2.AS.flash.display {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
+  import FramePhase = Shumway.SWF.Timeline.FramePhase;
+
   import StageScaleMode = flash.display.StageScaleMode;
   import ColorCorrection = flash.display.ColorCorrection;
   import ColorCorrectionSupport = flash.display.ColorCorrectionSupport;
@@ -29,11 +31,6 @@ module Shumway.AVM2.AS.flash.display {
   var Sprite: typeof flash.display.Sprite;
   var MovieClip: typeof flash.display.MovieClip;
 
-  var enterFrameEvent: flash.events.Event;
-  var frameConstructedEvent: flash.events.Event;
-  var exitFrameEvent: flash.events.Event;
-  var renderEvent: flash.events.Event;
-
   export class Stage extends flash.display.DisplayObjectContainer {
 
     static classInitializer: any = function () {
@@ -41,11 +38,6 @@ module Shumway.AVM2.AS.flash.display {
       DisplayObject = flash.display.DisplayObject;
       Sprite = flash.display.Sprite;
       MovieClip = flash.display.MovieClip;
-
-      enterFrameEvent = new flash.events.Event(Event.ENTER_FRAME);
-      frameConstructedEvent = new flash.events.Event(Event.FRAME_CONSTRUCTED);
-      exitFrameEvent = new flash.events.Event(Event.EXIT_FRAME);
-      renderEvent = new flash.events.Event(Event.RENDER);
     };
 
     static classSymbols: string [] = null; // [];
@@ -314,16 +306,16 @@ module Shumway.AVM2.AS.flash.display {
 
         if (!firstRun) {
           MovieClip.initFrame();
-          DisplayObject.broadcastEvent(enterFrameEvent);
+          DisplayObject.broadcastFrameEvent(FramePhase.Enter);
           Sprite.constructFrame();
         }
 
-        DisplayObject.broadcastEvent(frameConstructedEvent);
+        DisplayObject.broadcastFrameEvent(FramePhase.Constructed);
         MovieClip.executeFrame();
-        DisplayObject.broadcastEvent(exitFrameEvent);
+        DisplayObject.broadcastFrameEvent(FramePhase.Exit);
 
         if (stage._invalid && !firstRun) {
-          stage._propagateEvent(renderEvent);
+          stage._propagateEvent(Event.getInstance(Event.RENDER));
           stage._invalid = false;
         }
 
