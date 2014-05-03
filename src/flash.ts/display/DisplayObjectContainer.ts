@@ -136,7 +136,7 @@ module Shumway.AVM2.AS.flash.display {
       child._parent = this;
       child._invalidatePosition();
       child.dispatchEvent(addedEvent);
-      if (this.stage) {
+      if (child.stage) {
         child._propagateEvent(addedToStageEvent);
       }
       this._invalidateChildren();
