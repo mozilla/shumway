@@ -45,6 +45,9 @@ module.exports = function(grunt) {
       build_flash_ts: {
         cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/flash.ts/references.ts'
       },
+      build_player_ts: {
+        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/player/references.ts'
+      },
       build_avm1_ts: {
         cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/avm1/references.ts'
       },
@@ -108,7 +111,12 @@ module.exports = function(grunt) {
       avm1_ts: {
         files: ['src/avm1/*.ts'],
         tasks: ['exec:build_avm1_ts']
-      }
+      },
+      player_ts: {
+        files: ['src/flash.ts/**/*.ts', 
+        		'src/player/**/*.ts'],
+        tasks: ['exec:build_player_ts']
+      },
     }
   });
 
@@ -150,6 +158,7 @@ module.exports = function(grunt) {
   grunt.registerTask('watch-avm1lib', ['exec:build_avm1lib', 'watch:avm1lib']);
   grunt.registerTask('watch-avm2', ['exec:build_avm2_ts', 'watch:avm2_ts']);
   grunt.registerTask('watch-flash', ['exec:build_flash_ts', 'watch:flash_ts']);
+  grunt.registerTask('watch-player', ['exec:build_player_ts', 'watch:player_ts']);
   grunt.registerTask('watch-gfx', ['exec:build_gfx_ts', 'watch:gfx_ts']);
 
   // temporary make/python calls based on grunt-exec
@@ -161,6 +170,7 @@ module.exports = function(grunt) {
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('avm1lib', ['exec:build_avm1lib']);
   grunt.registerTask('flash', ['exec:build_flash_ts']);
+  grunt.registerTask('player', ['exec:build_player_ts']);
   grunt.registerTask('avm2', ['exec:build_avm2_ts']);
   grunt.registerTask('gfx', ['exec:build_gfx_ts']);
   grunt.registerTask('avm1', ['exec:build_avm1_ts']);
@@ -168,6 +178,7 @@ module.exports = function(grunt) {
     'exec:build_avm1_ts',
     'exec:build_avm2_ts',
     'exec:build_gfx_ts',
-    'exec:build_flash_ts'
+    'exec:build_flash_ts',
+    'exec:build_player_ts'
   ]);
 };
