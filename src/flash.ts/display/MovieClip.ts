@@ -21,7 +21,7 @@ module Shumway.AVM2.AS.flash.display {
   import clamp = Shumway.NumberUtilities.clamp;
   import Telemetry = Shumway.Telemetry;
 
-  import FramePhase = Shumway.SWF.Timeline.FramePhase;
+  import FramePhase = Shumway.Timeline.FramePhase;
 
   var Scene: typeof flash.display.Scene;
   var FrameLabel: typeof flash.display.FrameLabel;
@@ -43,7 +43,7 @@ module Shumway.AVM2.AS.flash.display {
     }
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.SWF.Timeline.SpriteSymbol) {
+    static initializer: any = function (symbol: Shumway.Timeline.SpriteSymbol) {
       var self: MovieClip = this;
       MovieClip.registerMovieClip(self);
 
@@ -119,7 +119,7 @@ module Shumway.AVM2.AS.flash.display {
     _enabled: boolean;
     _isPlaying: boolean;
 
-    _frames: Shumway.SWF.Timeline.Frame [];
+    _frames: Shumway.Timeline.Frame [];
     _sceneIndex: number;
     _frameScripts: any;
     _currentFrameAbs: number;

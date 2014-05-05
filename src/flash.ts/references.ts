@@ -406,7 +406,7 @@
 ///<reference path='xml/XMLParser.ts' />
 ///<reference path='xml/XMLTag.ts' />
 
-///<reference path='../timeline.ts' />
+///<reference path='../player/timeline.ts' />
 ///<reference path='../remoting.ts' />
 
 ///<reference path='remotingClient.ts' />

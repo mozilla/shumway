@@ -19,7 +19,7 @@ module Shumway.AVM2.AS.flash.display {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
-  import FramePhase = Shumway.SWF.Timeline.FramePhase;
+  import FramePhase = Shumway.Timeline.FramePhase;
 
   import StageScaleMode = flash.display.StageScaleMode;
   import ColorCorrection = flash.display.ColorCorrection;

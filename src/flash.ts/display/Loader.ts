@@ -23,7 +23,7 @@ module Shumway.AVM2.AS.flash.display {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
-  import Timeline = Shumway.SWF.Timeline;
+  import Timeline = Shumway.Timeline;
 
   import Rectangle = flash.geom.Rectangle;
   import Matrix = flash.geom.Matrix;

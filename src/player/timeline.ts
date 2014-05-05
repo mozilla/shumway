@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-module Shumway.SWF.Timeline {
+module Shumway.Timeline {
   import flash = Shumway.AVM2.AS.flash;
 
   export class Symbol {
@@ -143,6 +143,7 @@ module Shumway.SWF.Timeline {
     Constructed = 3,
     Execute     = 4,
     Exit        = 5,
-    Idle        = 6
+    Render      = 6,
+    Idle        = 7
   }
 }
