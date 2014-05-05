@@ -29,10 +29,10 @@
     </tr>
     <tr>
       <td>
-        <canvas id="a" width="1024" height="1024"></canvas>
+        <canvas id="a" width="1024" height="512"></canvas>
       </td>
       <td>
-        <canvas id="b" width="1024" height="1024"></canvas>
+        <canvas id="b" width="512" height="512"></canvas>
       </td>
     </tr>
     <tr>
@@ -54,7 +54,7 @@
     var aResults = document.getElementById("aResults");
     var bResults = document.getElementById("bResults");
 
-    var W = 1024, H = 1024;
+    var W = 1024, H = 512;
 
   </script>
   <script>
@@ -222,19 +222,27 @@
     function testE() {
       var bucketAllocator = new Geometry.RegionAllocator.BucketAllocator(W, H);
 
+      var tick = 0;
       setInterval(function () {
         var t = Date.now();
-        for (var i = 0; i < 32; i++) {
+        for (var i = 1; i < 32; i++) {
           var stack = [];
-          for (var s = 0; s < 500; s++) {
+          for (var s = 0; s < 100; s++) {
+            tick += 0.001;
             var size = (32 - i);
             var w = (Math.random() * size) | 0;
             var h = (Math.random() * size) | 0;
-
+            w = h;
+            w = h = i;
+            w = h = 1 + ((Math.sin(tick) + 1) * 16) | 0;
             var c = bucketAllocator.allocate(w, h);
-            stack.push(c);
-            a.fillStyle = Shumway.ColorStyle.randomStyle();
-            a.fillRect(c.x, c.y, c.w, c.h);
+            if (!c) {
+              break;
+            } else {
+              stack.push(c);
+              a.fillStyle = Shumway.ColorStyle.randomStyle();
+              a.fillRect(c.x, c.y, c.w, c.h);
+            }
           }
           while (stack.length) {
             var r = stack.pop()

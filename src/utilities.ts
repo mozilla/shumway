@@ -1119,6 +1119,11 @@ module Shumway {
       return x;
     }
 
+    export function roundToMultipleOfPowerOfTwo(i: number, powerOfTwo: number) {
+      var x = (1 << powerOfTwo) - 1;
+      return (i + x) & ~x; // Round up to multiple of power of two.
+    }
+
     /**
      * Polyfill imul.
      */

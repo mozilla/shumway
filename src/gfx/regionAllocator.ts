@@ -16,8 +16,26 @@
 
 /// <reference path='references.ts'/>
 module Shumway.GFX.Geometry {
+  import roundToMultipleOfPowerOfTwo = IntegerUtilities.roundToMultipleOfPowerOfTwo;
 
-  import nearestPowerOfTwo = Shumway.IntegerUtilities.nearestPowerOfTwo;
+  /**
+   * Various 2D rectangular region allocators. These are used to manage
+   * areas of textures, 2D Canvases or WebGL textures. Each allocator
+   * implements the |IRegionAllocator| interface and must provied two
+   * methods to allocate and free regions.
+   *
+   * CompactAllocator: Good for tightly packed texture atlases but becomes
+   * fragmented easily. Allocation / freeing cost is high and should only
+   * be used for long lived regions.
+   *
+   * GridAllocator: Very fast at allocation and freeing but is not very
+   * tightly packed. Space is initially partitioned in equally sized grid
+   * cells which may be much larger than the allocated regions. This should
+   * be used for fixed size allocation regions.
+   *
+   * BucketAllocator: Manages a list of GridAllocators with different grid
+   * sizes.
+   */
 
   export module RegionAllocator {
 
@@ -64,6 +82,7 @@ module Shumway.GFX.Geometry {
 
       allocate(w: number, h: number): Region {
         w = Math.ceil(w); h = Math.ceil(h);
+        release || assert (w > 0 && h > 0);
         var result = this._root.insert(w, h);
         if (result) {
           result.allocator = this;
@@ -163,6 +182,8 @@ module Shumway.GFX.Geometry {
       }
 
       allocate(w: number, h: number): Region {
+        w = Math.ceil(w); h = Math.ceil(h);
+        release || assert (w > 0 && h > 0);
         var size = this._size;
         if (w > size || h > size) {
           return null;
@@ -219,48 +240,67 @@ module Shumway.GFX.Geometry {
     }
 
     export class BucketAllocator implements IRegionAllocator {
+      private _w: number;
+      private _h: number;
+      private _filled: number;
       private _buckets: Bucket [];
       constructor(w: number, h: number) {
+        release || assert (w > 0 && h > 0);
         this._buckets = [];
-        var bucketCount = 10;
-        var averageBucketHeight = (h / bucketCount) | 0;
-        var bucketHeightOffset = 0;
-
-        for (var i = 1; i < 10; i++) {
-          var size = i * 8;
-          if (size > (h - bucketHeightOffset)) {
-            break;
-          }
-          var bucketHeight = ((averageBucketHeight / size) | 0) * size;
-          var last = i === 9;
-          if (last) {
-            bucketHeight = h - bucketHeightOffset;
-          }
-          var region = new Rectangle(0, bucketHeightOffset, w, bucketHeight);
-          this._buckets.push (
-            new Bucket(size, region, new GridAllocator(region.w, region.h, size))
-          );
-          bucketHeightOffset += bucketHeight;
-        }
+        this._w = w | 0;
+        this._h = h | 0;
+        this._filled = 0;
       }
 
+      /**
+       * Finds the first bucket that is large enough to hold the requested region. If no
+       * such bucket exists, then allocates a new bucket if there is room otherwise
+       * returns null;
+       */
       allocate(w: number, h: number): Region {
+        w = Math.ceil(w); h = Math.ceil(h);
+        assert (w > 0 && h > 0);
         var size = Math.max(w, h);
-        var bucket;
-        var buckets = this._buckets;
-        var region;
-        for (var i = 0; i < buckets.length; i++) {
-          if (buckets[i].size >= size) {
-            bucket = buckets[i];
-            region = bucket.allocator.allocate(w, h);
-            if (region) {
-              break;
-            }
-          }
-        }
-        if (!region) {
+        if (w > this._w || h > this._h) {
+          // Too big, cannot allocate this.
           return null;
         }
+        var region = null;
+        var bucket;
+        var buckets = this._buckets;
+        do {
+          for (var i = 0; i < buckets.length; i++) {
+            if (buckets[i].size >= size) {
+              bucket = buckets[i];
+              region = bucket.allocator.allocate(w, h);
+              if (region) {
+                break;
+              }
+            }
+          }
+          if (!region) {
+            var remainingSpace = this._h - this._filled;
+            if (remainingSpace < h) {
+              // Couldn't allocate region and there is no more vertical space to allocate
+              // a new bucket that can fit the requested size. So give up.
+              return null;
+            }
+            var gridSize = roundToMultipleOfPowerOfTwo(size, 2);
+            var bucketHeight = gridSize * 2;
+            if (bucketHeight > remainingSpace) {
+              bucketHeight = remainingSpace;
+            }
+            if (bucketHeight < gridSize) {
+              return null;
+            }
+            var bucketRegion = new Rectangle(0, this._filled, this._w, bucketHeight);
+            this._buckets.push (
+              new Bucket(gridSize, bucketRegion, new GridAllocator(bucketRegion.w, bucketRegion.h, gridSize))
+            );
+            this._filled += bucketHeight;
+          }
+        } while (!region);
+
         return new BucketCell(bucket.region.x + region.x, bucket.region.y + region.y, region.w, region.h, region);
       }
 
