@@ -15,6 +15,8 @@
  */
 
 module Shumway.Player {
+  import flash = Shumway.AVM2.AS.flash;
+
   export function embed(swfURL: string) {
     var stage = new flash.display.Stage();
     var loader = new flash.display.Loader();
