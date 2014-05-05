@@ -31,7 +31,7 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
 
-  import FramePhase = Shumway.SWF.Timeline.FramePhase;
+  import FramePhase = Shumway.Timeline.FramePhase;
   import IChannelVisitor = Shumway.Remoting.IChannelVisitor;
 
   import BlendMode = flash.display.BlendMode; assert (BlendMode);
@@ -241,7 +241,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.SWF.Timeline.Symbol) {
+    static initializer: any = function (symbol: Shumway.Timeline.Symbol) {
       var self: DisplayObject = this;
       var instanceName = DisplayObject.register(self);
 
@@ -301,7 +301,7 @@ module Shumway.AVM2.AS.flash.display {
       self._mouseDown = false;
 
       self._symbol = null;
-      self._framePhase = Shumway.SWF.Timeline.FramePhase.Idle;
+      self._framePhase = Shumway.Timeline.FramePhase.Idle;
 
       if (symbol) {
         self._bounds.copyFrom(symbol.bounds);
@@ -319,7 +319,7 @@ module Shumway.AVM2.AS.flash.display {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["hitTestObject", "hitTestPoint"];
 
-    static createAnimatedDisplayObject(state: Shumway.SWF.Timeline.AnimationState, callConstructor: boolean = true): DisplayObject {
+    static createAnimatedDisplayObject(state: Shumway.Timeline.AnimationState, callConstructor: boolean = true): DisplayObject {
       var symbol = state.symbol;
       var symbolClass = symbol.symbolClass;
       var instance = symbolClass.initializeFrom(symbol);
@@ -508,8 +508,8 @@ module Shumway.AVM2.AS.flash.display {
     _mouseOver: boolean;
     _mouseDown: boolean;
 
-    _symbol: Shumway.SWF.Timeline.Symbol;
-    _framePhase: Shumway.SWF.Timeline.FramePhase;
+    _symbol: Shumway.Timeline.Symbol;
+    _framePhase: Shumway.Timeline.FramePhase;
 
 
     /**
@@ -745,7 +745,7 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
-    _animate(state: Shumway.SWF.Timeline.AnimationState): void {
+    _animate(state: Shumway.Timeline.AnimationState): void {
       this._depth = state.depth;
       if (state.matrix) {
         this._setMatrix(state.matrix, false);

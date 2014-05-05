@@ -28,7 +28,7 @@ module Shumway.AVM2.AS.flash.text {
 
     static classInitializer: any = null;
 
-    static initializer: any = function (symbol: Shumway.SWF.Timeline.TextSymbol) {
+    static initializer: any = function (symbol: Shumway.Timeline.TextSymbol) {
       this._bbox = {xMin: 0, yMin: 0, xMax: 2000, yMax: 2000};
       var initialFormat = this._defaultTextFormat = new NativeTextFormat();
       initialFormat.align = 'LEFT';

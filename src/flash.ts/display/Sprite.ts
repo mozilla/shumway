@@ -18,8 +18,8 @@ module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
-  import Timeline = Shumway.SWF.Timeline;
-  import FramePhase = Shumway.SWF.Timeline.FramePhase;
+  import Timeline = Shumway.Timeline;
+  import FramePhase = Shumway.Timeline.FramePhase;
 
   var DisplayObject: typeof flash.display.DisplayObject;
   var DisplayObjectContainer: typeof flash.display.DisplayObjectContainer;

@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/// <reference path='../lib.d.ts' />
+
 /// <reference path='../utilities.ts' />
 /// <reference path='utilities.ts' />
-/// <reference path='../remoting.ts' />
 /// <reference path='shapes.ts'/>
 /// <reference path='geometry.ts'/>
 /// <reference path='regionAllocator.ts'/>
@@ -34,13 +33,12 @@
 /// <reference path='easel.ts'/>
 
 import Rectangle = Shumway.GFX.Geometry.Rectangle;
+
 declare function randomStyle(): string;
 declare function assert(...args : any[]);
 declare function unexpected(...args : any[]);
 declare function notImplemented(...args : any[]);
 declare var release: boolean;
-declare var Counter: any;
-declare var FrameCounter: any;
 
 declare class IndentingWriter {
   writeLn(str: string);
@@ -121,6 +119,9 @@ module Shumway.GFX {
     Brief,
     Verbose,
   }
+
+  declare var Counter: any;
+  declare var FrameCounter: any;
 
   export var traceLevel = TraceLevel.Verbose;
   export var release = true;

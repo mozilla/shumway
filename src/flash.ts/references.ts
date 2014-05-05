@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-///<reference path='../lib.d.ts' />
-
 ///<reference path='../avm2/references.ts' />
 ///<reference path='../gfx/references.ts' />
 
@@ -408,7 +406,7 @@
 ///<reference path='xml/XMLParser.ts' />
 ///<reference path='xml/XMLTag.ts' />
 
-///<reference path='../timeline.ts' />
+///<reference path='../player/timeline.ts' />
 ///<reference path='../remoting.ts' />
 
 ///<reference path='remotingClient.ts' />
