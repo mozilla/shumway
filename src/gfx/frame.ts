@@ -154,6 +154,14 @@ module Shumway.GFX {
       return (this._flags & flags) === flags;
     }
 
+    _toggleFlags(flags: FrameFlags, on: boolean) {
+      if (on) {
+        this._flags |= flags;
+      } else {
+        this._flags &= ~flags;
+      }
+    }
+
     _hasAnyFlags(flags: FrameFlags): boolean {
       return !!(this._flags & flags);
     }

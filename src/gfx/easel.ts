@@ -107,7 +107,8 @@ module Shumway.GFX {
     }
 
     private _update(easel: Easel) {
-      easel.options.paintBounds = this._keyCodes[66];
+      easel.options.paintBounds = this._keyCodes[66]; // B
+      easel.options.paintFlashing = this._keyCodes[70]; // F
     }
   }
 
@@ -245,6 +246,7 @@ module Shumway.GFX {
 
     private _mousePositionLabel: Label;
     private _frameInspectorProxy: FrameInspectorProxy;
+
     private _createToolbar(): Frame {
       var toolbar = new FrameContainer();
       this._mousePositionLabel = new Label(256, 16);
@@ -268,7 +270,7 @@ module Shumway.GFX {
       this._worldViewOverlay = new FrameContainer();
       this._world = new FrameContainer();
       this._stage.addChild(this._worldView);
-      // this._worldView.addChild(new Shape(new Grid())).removeCapability(FrameCapabilityFlags.AllowMatrixWrite);
+      this._worldView.addChild(new Shape(new Grid())).removeCapability(FrameCapabilityFlags.AllowMatrixWrite);
       this._worldView.addChild(this._world);
       this._worldView.addChild(this._worldViewOverlay);
       var screenOverlay = new FrameContainer();
@@ -328,8 +330,18 @@ module Shumway.GFX {
         self._state.onKeyUp(self, event);
         self._persistentState.onKeyUp(self, event);
       }, false);
+
+      this._enterRenderLoop();
     }
 
+    private _enterRenderLoop() {
+      var self = this;
+      requestAnimationFrame(function tick() {
+        self.render();
+        requestAnimationFrame(tick);
+      });
+
+    }
     set state(state: State) {
       this._state = state;
     }

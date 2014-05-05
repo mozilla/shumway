@@ -269,6 +269,7 @@ module Shumway.GFX.GL {
       } else {
         this._regionAllocator = new RegionAllocator.GridAllocator(this._w, this._h, TILE_SIZE);
       }
+//      this._regionAllocator = new RegionAllocator.BucketAllocator(this._w, this._h);
     }
   }
 }

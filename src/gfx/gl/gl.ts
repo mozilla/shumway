@@ -315,7 +315,11 @@ module Shumway.GFX.GL {
               if (src && src.texture) {
                 context.textureRegionCache.use(src);
               }
-              if (!brush.drawImage(src, new Rectangle(0, 0, tile.bounds.w, tile.bounds.h), new Color(1, 1, 1, alpha), colorTransform, tileTransform, depth, frame.blendMode)) {
+              var color = new Color(1, 1, 1, alpha);
+              if (options.paintFlashing) {
+                color = Color.randomColor(1);
+              }
+              if (!brush.drawImage(src, new Rectangle(0, 0, tile.bounds.w, tile.bounds.h), color, colorTransform, tileTransform, depth, frame.blendMode)) {
                 unexpected();
               }
               if (options.drawTiles) {
@@ -369,6 +373,19 @@ module Shumway.GFX.GL {
       var options = this._options;
       var context = this.context;
       var gl = context.gl;
+
+      if (!stage._hasFlags(FrameFlags.InvalidPaint)) {
+        return;
+      } else {
+        stage.visit(function (frame: Frame): VisitorFlags {
+          if (frame._hasFlags(FrameFlags.InvalidPaint)) {
+            frame._toggleFlags(FrameFlags.InvalidPaint, false);
+            return VisitorFlags.Continue;
+          } else {
+            return VisitorFlags.Skip;
+          }
+        });
+      }
 
       if (options.disable) {
         return;
