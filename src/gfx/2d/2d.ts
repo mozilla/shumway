@@ -443,7 +443,7 @@ module Shumway.GFX {
 
         var hasFilters: boolean = (frame.filters.length > 0 && !(target & RenderTarget.Filters));
         var hasColorMatrix: boolean = (!frame.colorMatrix.isIdentity() && !(target & RenderTarget.ColorMatrix));
-        var hasBlendMode: boolean = (frame.blendMode > 0 && !(target & RenderTarget.BlendMode));
+        var hasBlendMode: boolean = (frame.blendMode > 1 && !(target & RenderTarget.BlendMode));
 
         if (hasFilters || hasColorMatrix || hasBlendMode) {
           var boundsAABB = frame.getBounds().clone();

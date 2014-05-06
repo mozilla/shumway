@@ -520,7 +520,6 @@ Renderer.prototype.enterRenderingLoop = function enterRenderingLoop() {
     sceneOptions.disableTextureUploads = disableTextureUploads.value;
     sceneOptions.disableTextureUploads = disableTextureUploads.value;
 
-
     if (perspectiveCameraAngleRotate.value) {
       sceneOptions.perspectiveCameraAngle = Math.sin(Date.now() / 1000) * 100;
     } else {

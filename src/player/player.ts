@@ -40,6 +40,22 @@ module Shumway {
     private static _syncFrameRate = 60;
     private _server: Remoting.Server;
 
+    private static _mouseEvents = [
+      'click',
+      'dblclick',
+      'mousedown',
+      'mousemove',
+      'mouseup',
+      'mouseover',
+      'mouseout'
+    ];
+
+    private static _keyEvents = [
+      'keydown',
+      'keypress',
+      'keyup'
+    ];
+
     constructor(frameContainer: FrameContainer) {
       this._frameContainer = frameContainer;
       this._server = new Remoting.Server(this._frameContainer);
@@ -66,6 +82,27 @@ module Shumway {
       });
 
       this._loader.load(new flash.net.URLRequest(url));
+    }
+
+    private _mouseListener(event: MouseEvent) {
+
+    }
+
+    private _keyListener(event: KeyboardEvent) {
+
+    }
+
+    private _addEventListeners() {
+      var mouseListener = this._mouseListener.bind(this);
+      var keyListener = this._keyListener.bind(this);
+      var mouseEvents = Player._mouseEvents;
+      for (var i = 0; i < mouseEvents.length; i++) {
+        window.addEventListener(mouseEvents[i], mouseListener);
+      }
+      var keyEvents = Player._keyEvents;
+      for (var i = 0; i < keyEvents.length; i++) {
+        window.addEventListener(keyEvents[i], keyListener);
+      }
     }
 
     private _enterLoops(): void {

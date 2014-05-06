@@ -16,7 +16,7 @@
 
 ///<reference path='../lib.d.ts' />
 ///<reference path='frameScheduler.ts' />
-///<reference path='embed.ts' />
+///<reference path='player.ts' />
 ///<reference path='timeline.ts' />
 ///<reference path='remoting.ts' />
 ///<reference path='remotingClient.ts' />
