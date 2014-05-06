@@ -32,6 +32,7 @@ var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", 
 var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
 
 var asyncLoading = getQueryVariable("async") === "true";
+asyncLoading = true;
 var simpleMode = getQueryVariable("simpleMode") === "true";
 var pauseExecution = getQueryVariable("paused") === "true";
 var remoteFile = getQueryVariable("rfile");
@@ -176,15 +177,39 @@ function executeFile(file, buffer, movieParams) {
       function runSWF(file, buffer) {
         var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
         var loaderURL = getQueryVariable("loaderURL") || swfURL;
-        SWF.embed(buffer || file, document, document.getElementById('stage'), {
-          onComplete: swfController.completeCallback.bind(swfController),
-          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
-          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
-          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
-          url: swfURL,
-          loaderURL: loaderURL,
-          movieParams: movieParams || {},
-        });
+
+        var easel = createEasel();
+
+        setInterval(function () {
+          syncGFXOptions(easel.options);
+          easel.stage.invalidatePaint();
+        }, 1000);
+
+        var player = new Shumway.Player(easel.world);
+        player.load(file);
+
+        // embedding.loader
+
+//        SWF.embed(buffer || file, document, document.getElementById('stage'), {
+//          onComplete: swfController.completeCallback.bind(swfController),
+//          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
+//          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
+//          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
+//          url: swfURL,
+//          loaderURL: loaderURL,
+//          movieParams: movieParams || {},
+//        });
+
+//        SWF.embed(buffer || file, document, document.getElementById('stage'), {
+//          onComplete: swfController.completeCallback.bind(swfController),
+//          onBeforeFrame: swfController.beforeFrameCallback.bind(swfController),
+//          onAfterFrame: swfController.afterFrameCallback.bind(swfController),
+//          onStageInitialized: swfController.stageInitializedCallback.bind(swfController),
+//          url: swfURL,
+//          loaderURL: loaderURL,
+//          movieParams: movieParams || {},
+//        });
+
       }
       if (!buffer && asyncLoading) {
         Shumway.FileLoadingService.instance.setBaseUrl(file);
@@ -480,8 +505,9 @@ var Easel = Shumway.GFX.Easel;
 var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
 
 function createEasel() {
+  Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   var canvas = document.createElement("canvas");
   canvas.style.backgroundColor = "#14171a";
   document.getElementById("stageContainer").appendChild(canvas);
-  return new Easel(canvas, 0);
+  return new Easel(canvas, 1);
 }

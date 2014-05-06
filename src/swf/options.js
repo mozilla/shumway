@@ -40,6 +40,7 @@ var debugStage = stageOptions.register(new Option("", "debugStage", "boolean", f
 var disableStage = stageOptions.register(new Option("", "disableStage", "boolean", false, "Disable Stage."));
 var disableMasking = stageOptions.register(new Option("", "disableMasking", "boolean", false, "Disable masking."));
 var paintBounds = stageOptions.register(new Option("", "paintBounds", "boolean", false, "Draw frame container bounding boxes."));
+var paintFlashing = stageOptions.register(new Option("", "paintFlashing", "boolean", false, "Flash redrawn regions."));
 
 var backend = stageOptions.register(new Option("t", "backend", "number", 0, "Backends", {
   choices: {
@@ -69,6 +70,5 @@ var canvas2DOptions = stageOptions.register(new OptionSet("Canvas2D Options"));
   var clipDirtyRegions = canvas2DOptions.register(new Option("", "clipDirtyRegions", "boolean", true, "Clip dirty regions."));
   var clipCanvas = canvas2DOptions.register(new Option("", "clipCanvas", "boolean", true, "Clip Regions."));
   var cull = canvas2DOptions.register(new Option("", "cull", "boolean", true, "Enable culling."));
-  var paintFlashing = canvas2DOptions.register(new Option("", "paintFlashing", "boolean", false, "Flash redrawn regions."));
 
   var compositeMask = canvas2DOptions.register(new Option("", "compositeMask", "boolean", true, "Composite Mask."));

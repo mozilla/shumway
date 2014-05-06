@@ -53,10 +53,10 @@ limitations under the License.
     <script src="../../src/gfx/frameContainer.js"></script>
     <script src="../../src/gfx/stage.js"></script>
     <script src="../../src/gfx/filters.js"></script>
+    <script src="../../src/gfx/gl/core.js"></script>
     <script src="../../src/gfx/gl/glContext.js"></script>
     <script src="../../src/gfx/gl/gl.js"></script>
     <script src="../../src/gfx/gl/brush.js"></script>
-    <script src="../../src/gfx/gl/core.js"></script>
     <script src="../../src/gfx/2d/2d.js"></script>
     <script src="../../src/gfx/easel.js"></script>
     <script src="../../src/gfx/shapes.js"></script>
@@ -80,11 +80,6 @@ limitations under the License.
     <script src="../../src/swf/sound.js"></script>
     <script src="../../src/swf/text.js"></script>
     <script src="../../src/swf/mp3worker.js"></script>
-    <script src="../../src/swf/MessageCenter.js"></script>
-    <script src="../../src/swf/embed.js"></script>
-    <script src="../../src/swf/_renderer.js"></script>
-    <script src="../../src/swf/Renderer.js"></script>
-    <script src="../../src/player/frameScheduler.js"></script>
     <script> console.timeEnd("Load SWF Dependencies"); </script>
 
     <script> console.time("Load SWF Parser"); </script>
@@ -167,7 +162,6 @@ limitations under the License.
     <!--<script src="../../src/avm2/bin/candy.as.js"></script>-->
     <script> console.timeEnd("Load Compiled Code Cache"); </script>
 
-    <script src="../../src/remoting.js"></script>
     <script src="../../src/player/timeline.js"></script>
 
     <!-- Load Flash TS Dependencies -->
@@ -192,11 +186,11 @@ limitations under the License.
     <!--<script src="../../src/flash.ts/text/engine/CFFHinting.js"></script>-->
     <script src="../../src/flash.ts/display/IDrawCommand.js"></script>
     <script src="../../src/flash.ts/net/Responder.js"></script>
-    <script src="../../src/flash.ts/utils/IDataInput.js"></script>
     <script src="../../src/flash.ts/utils/ObjectInput.js"></script>
     <script src="../../src/flash.ts/events/EventPhase.js"></script>
     <!--<script src="../../src/flash.ts/net/URLLoaderDataFormat.js"></script>-->
     <!--<script src="../../src/flash.ts/net/IDynamicPropertyWriter.js"></script>-->
+    <script src="../../src/flash.ts/events/Event.js"></script>
     <script src="../../src/flash.ts/events/IEventDispatcher.js"></script>
     <script src="../../src/flash.ts/events/EventDispatcher.js"></script>
     <!--<script src="../../src/flash.ts/display/Stage3D.js"></script>-->
@@ -230,7 +224,6 @@ limitations under the License.
     <script src="../../src/flash.ts/external/ExternalInterface.js"></script>
     <script src="../../src/flash.ts/security/CertificateStatus.js"></script>
     <script src="../../src/flash.ts/system/Security.js"></script>
-    <script src="../../src/flash.ts/events/Event.js"></script>
     <script src="../../src/flash.ts/events/KeyboardEvent.js"></script>
     <!--<script src="../../src/flash.ts/events/SoftKeyboardTrigger.js"></script>-->
     <!--<script src="../../src/flash.ts/display3D/Context3DRenderMode.js"></script>-->
@@ -306,7 +299,6 @@ limitations under the License.
     <script src="../../src/flash.ts/net/URLLoader.js"></script>
     <!--<script src="../../src/flash.ts/accessibility/ISimpleTextSelection.js"></script>-->
     <script src="../../src/flash.ts/display/Sprite.js"></script>
-    <script src="../../src/flash.ts/utils/IDataOutput.js"></script>
     <script src="../../src/flash.ts/net/Socket.js"></script>
     <!--<script src="../../src/flash.ts/net/SecureSocket.js"></script>-->
     <!--<script src="../../src/flash.ts/text/engine/TypographicCase.js"></script>-->
@@ -334,7 +326,7 @@ limitations under the License.
     <script src="../../src/flash.ts/events/ErrorEvent.js"></script>
     <script src="../../src/flash.ts/events/IOErrorEvent.js"></script>
     <!--<script src="../../src/flash.ts/ui/MultitouchInputMode.js"></script>-->
-    <!--<script src="../../src/flash.ts/text/TextFormatAlign.js"></script>-->
+    <script src="../../src/flash.ts/text/TextFormatAlign.js"></script>
     <!--<script src="../../src/flash.ts/text/engine/Kerning.js"></script>-->
     <!--<script src="../../src/flash.ts/net/NetStreamAppendBytesAction.js"></script>-->
     <script src="../../src/flash.ts/display/IGraphicsStroke.js"></script>
@@ -387,7 +379,6 @@ limitations under the License.
     <!--<script src="../../src/flash.ts/utils/CompressionAlgorithm.js"></script>-->
     <script src="../../src/flash.ts/utils/IDataInput2.js"></script>
     <script src="../../src/flash.ts/utils/IDataOutput2.js"></script>
-    <script src="../../src/flash.ts/utils/ByteArray.js"></script>
     <script src="../../src/flash.ts/display/FrameLabel.js"></script>
     <!--<script src="../../src/flash.ts/events/GameInputEvent.js"></script>-->
     <script src="../../src/flash.ts/net/ObjectEncoding.js"></script>
@@ -416,7 +407,7 @@ limitations under the License.
     <!--<script src="../../src/flash.ts/net/XMLSocket.js"></script>-->
     <script src="../../src/flash.ts/utils/Dictionary.js"></script>
     <!--<script src="../../src/flash.ts/display3D/Context3DCompareMode.js"></script>-->
-    <!--<script src="../../src/flash.ts/text/TextFieldAutoSize.js"></script>-->
+    <script src="../../src/flash.ts/text/TextFieldAutoSize.js"></script>
     <script src="../../src/flash.ts/text/engine/GroupElement.js"></script>
     <!--<script src="../../src/flash.ts/automation/AutomationAction.js"></script>-->
     <!--<script src="../../src/flash.ts/automation/KeyboardAutomationAction.js"></script>-->
@@ -453,7 +444,7 @@ limitations under the License.
     <script src="../../src/flash.ts/system/Capabilities.js"></script>
     <script src="../../src/flash.ts/system/ApplicationDomain.js"></script>
     <script src="../../src/flash.ts/display/StageAlign.js"></script>
-    <!--<script src="../../src/flash.ts/text/TextFieldType.js"></script>-->
+    <script src="../../src/flash.ts/text/TextFieldType.js"></script>
     <script src="../../src/flash.ts/display/GraphicsStroke.js"></script>
     <!--<script src="../../src/flash.ts/globalization/DateTimeStyle.js"></script>-->
     <!--<script src="../../src/flash.ts/events/DRMAuthenticationErrorEvent.js"></script>-->
@@ -583,7 +574,6 @@ limitations under the License.
     <script src="../../src/flash.ts/text/TextLineMetrics.js"></script>
     <script> console.timeEnd("Load Flash TS Dependencies"); </script>
 
-    <script src="../../src/flash.ts/remotingClient.js"></script>
 
     <script> console.time("Load avm1lib Dependencies"); </script>
     <script src="../../src/avm1lib/AS2Button.js"></script>
@@ -595,9 +585,21 @@ limitations under the License.
     <script src="../../src/avm1lib/AS2Utils.js"></script>
     <script> console.timeEnd("Load avm1lib Dependencies"); </script>
 
+    <script> console.time("Load Player Dependencies"); </script>
+
+    <script src="../../src/player/remotingClient.js"></script>
+    <script src="../../src/player/remoting.js"></script>
+    <script src="../../src/player/embed.js"></script>
+
+    <script> console.timeEnd("Load Player Dependencies"); </script>
+
     <script> console.timeEnd("Load"); </script>
 
     <script src="../../src/flash.ts/linker.js"></script>
+
+
+
+
 
 
 

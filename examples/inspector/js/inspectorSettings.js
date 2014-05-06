@@ -119,3 +119,31 @@ var GUI;
   document.getElementById("settingsContainer").appendChild(gui.domElement);
 
 })();
+
+function syncGFXOptions(options) {
+  options.perspectiveCamera = perspectiveCamera.value;
+  options.perspectiveCameraFOV = perspectiveCameraFOV.value;
+  options.perspectiveCameraAngle = perspectiveCameraAngle.value;
+  options.perspectiveCameraDistance = perspectiveCameraDistance.value;
+
+  options.drawTiles = drawTiles.value;
+  options.drawTextures = drawTextures.value;
+  options.drawTexture = drawTexture.value;
+  options.drawElements = drawElements.value;
+  options.ignoreViewport = ignoreViewport.value;
+  options.ignoreColorTransform = ignoreColorTransform.value;
+  options.clipDirtyRegions = clipDirtyRegions.value;
+  options.clipCanvas = clipCanvas.value;
+
+  // These are set by holding down F and B in the easel, we don't want to
+  // override them here.
+  // options.paintFlashing = paintFlashing.value;
+  // options.paintBounds = paintBounds.value;
+
+  options.cull = cull.value;
+  options.disableMasking = disableMasking.value;
+  options.debug = debugStage.value;
+  options.disable = disableStage.value;
+  options.compositeMask = compositeMask.value;
+  options.disableTextureUploads = disableTextureUploads.value;
+}

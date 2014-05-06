@@ -71,7 +71,7 @@ var Timeline = (function () {
     if (this.kinds[name] === undefined) {
       this.kinds[name] = this.kindCount ++;
       if (this.kindCount > this.fillStyles.length) {
-        this.fillStyles.push(ColorStyle.randomStyle());
+        this.fillStyles.push(Shumway.ColorStyle.randomStyle());
       }
     }
     return this.kinds[name];

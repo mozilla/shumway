@@ -374,12 +374,12 @@ module Shumway.GFX.GL {
       var context = this.context;
       var gl = context.gl;
 
-      if (!stage._hasFlags(FrameFlags.InvalidPaint)) {
+      if (!stage._hasFlags(FrameFlags.DirtyPaint)) {
         return;
       } else {
         stage.visit(function (frame: Frame): VisitorFlags {
-          if (frame._hasFlags(FrameFlags.InvalidPaint)) {
-            frame._toggleFlags(FrameFlags.InvalidPaint, false);
+          if (frame._hasFlags(FrameFlags.DirtyPaint)) {
+            frame._toggleFlags(FrameFlags.DirtyPaint, false);
             return VisitorFlags.Continue;
           } else {
             return VisitorFlags.Skip;

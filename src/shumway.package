@@ -13,14 +13,15 @@ src/gfx/filters/filters.js
 src/gfx/filters/filters_cxform.js
 src/gfx/utilities.js
 src/gfx/geometry.js
+src/gfx/regionAllocator.js
 src/gfx/frame.js
 src/gfx/frameContainer.js
 src/gfx/stage.js
 src/gfx/filters.js
+src/gfx/gl/core.js
 src/gfx/gl/glContext.js
 src/gfx/gl/gl.js
 src/gfx/gl/brush.js
-src/gfx/gl/core.js
 src/gfx/2d/2d.js
 src/gfx/easel.js
 src/gfx/shapes.js
@@ -44,11 +45,6 @@ src/swf/shape.js
 src/swf/sound.js
 src/swf/text.js
 src/swf/mp3worker.js
-src/swf/MessageCenter.js
-src/swf/embed.js
-src/swf/_renderer.js
-src/swf/Renderer.js
-src/swf/FrameScheduler.js
 #!inline console.timeEnd("Load SWF Dependencies");
 
 #!inline console.time("Load SWF Parser");
@@ -131,8 +127,7 @@ src/avm1/interpreter.js
 #src/avm2/bin/candy.as.js
 #!inline console.timeEnd("Load Compiled Code Cache");
 
-src/remoting.js
-src/timeline.js
+src/player/timeline.js
 
 ## Load Flash TS Dependencies
 #!inline console.time("Load Flash TS Dependencies");
@@ -156,11 +151,11 @@ src/flash.ts/net/NetStreamInfo.js
 #src/flash.ts/text/engine/CFFHinting.js
 src/flash.ts/display/IDrawCommand.js
 src/flash.ts/net/Responder.js
-src/flash.ts/utils/IDataInput.js
 src/flash.ts/utils/ObjectInput.js
 src/flash.ts/events/EventPhase.js
 #src/flash.ts/net/URLLoaderDataFormat.js
 #src/flash.ts/net/IDynamicPropertyWriter.js
+src/flash.ts/events/Event.js
 src/flash.ts/events/IEventDispatcher.js
 src/flash.ts/events/EventDispatcher.js
 #src/flash.ts/display/Stage3D.js
@@ -194,7 +189,6 @@ src/flash.ts/system/FSCommand.js
 src/flash.ts/external/ExternalInterface.js
 src/flash.ts/security/CertificateStatus.js
 src/flash.ts/system/Security.js
-src/flash.ts/events/Event.js
 src/flash.ts/events/KeyboardEvent.js
 #src/flash.ts/events/SoftKeyboardTrigger.js
 #src/flash.ts/display3D/Context3DRenderMode.js
@@ -270,7 +264,6 @@ src/flash.ts/display/JPEGEncoderOptions.js
 src/flash.ts/net/URLLoader.js
 #src/flash.ts/accessibility/ISimpleTextSelection.js
 src/flash.ts/display/Sprite.js
-src/flash.ts/utils/IDataOutput.js
 src/flash.ts/net/Socket.js
 #src/flash.ts/net/SecureSocket.js
 #src/flash.ts/text/engine/TypographicCase.js
@@ -298,7 +291,7 @@ src/flash.ts/media/Camera.js
 src/flash.ts/events/ErrorEvent.js
 src/flash.ts/events/IOErrorEvent.js
 #src/flash.ts/ui/MultitouchInputMode.js
-#src/flash.ts/text/TextFormatAlign.js
+src/flash.ts/text/TextFormatAlign.js
 #src/flash.ts/text/engine/Kerning.js
 #src/flash.ts/net/NetStreamAppendBytesAction.js
 src/flash.ts/display/IGraphicsStroke.js
@@ -351,7 +344,6 @@ src/flash.ts/text/engine/TextLine.js
 #src/flash.ts/utils/CompressionAlgorithm.js
 src/flash.ts/utils/IDataInput2.js
 src/flash.ts/utils/IDataOutput2.js
-src/flash.ts/utils/ByteArray.js
 src/flash.ts/display/FrameLabel.js
 #src/flash.ts/events/GameInputEvent.js
 src/flash.ts/net/ObjectEncoding.js
@@ -380,7 +372,7 @@ src/flash.ts/accessibility/AccessibilityImplementation.js
 #src/flash.ts/net/XMLSocket.js
 src/flash.ts/utils/Dictionary.js
 #src/flash.ts/display3D/Context3DCompareMode.js
-#src/flash.ts/text/TextFieldAutoSize.js
+src/flash.ts/text/TextFieldAutoSize.js
 src/flash.ts/text/engine/GroupElement.js
 #src/flash.ts/automation/AutomationAction.js
 #src/flash.ts/automation/KeyboardAutomationAction.js
@@ -417,7 +409,7 @@ src/flash.ts/filters/BlurFilter.js
 src/flash.ts/system/Capabilities.js
 src/flash.ts/system/ApplicationDomain.js
 src/flash.ts/display/StageAlign.js
-#src/flash.ts/text/TextFieldType.js
+src/flash.ts/text/TextFieldType.js
 src/flash.ts/display/GraphicsStroke.js
 #src/flash.ts/globalization/DateTimeStyle.js
 #src/flash.ts/events/DRMAuthenticationErrorEvent.js
@@ -547,7 +539,6 @@ src/flash.ts/text/engine/SpaceJustifier.js
 src/flash.ts/text/TextLineMetrics.js
 #!inline console.timeEnd("Load Flash TS Dependencies");
 
-src/flash.ts/remotingClient.js
 
 #!inline console.time("Load avm1lib Dependencies");
 src/avm1lib/AS2Button.js
@@ -562,3 +553,11 @@ src/avm1lib/AS2Utils.js
 #!inline console.timeEnd("Load");
 
 src/flash.ts/linker.js
+
+#!inline console.time("Load Player Dependencies");
+
+src/player/remotingClient.js
+src/player/remoting.js
+src/player/embed.js
+
+#!inline console.timeEnd("Load Player Dependencies");

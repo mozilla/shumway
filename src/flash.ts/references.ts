@@ -407,9 +407,8 @@
 ///<reference path='xml/XMLTag.ts' />
 
 ///<reference path='../player/timeline.ts' />
-///<reference path='../remoting.ts' />
-
-///<reference path='remotingClient.ts' />
+///<reference path='../player/remoting.ts' />
+///<reference path='../player/remotingClient.ts' />
 
 ///<reference path='../avm1lib/references.ts' />
 

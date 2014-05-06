@@ -116,11 +116,6 @@ module Shumway.AVM2.AS.flash.display {
     InvalidConcatenatedColorTransform         = 0x0040,
 
     /**
-     * Display object has changed since the last time it was drawn.
-     */
-    InvalidPaint                              = 0x0080,
-
-    /**
      * The display object's constructor has been executed or any of the derived class constructors have executed. It may be
      * that the derived class doesn't call super, in such cases this flag must be set manually elsewhere.
      */
@@ -171,6 +166,11 @@ module Shumway.AVM2.AS.flash.display {
     DirtyBounds                               = 0x800000,
 
     DirtyMiscellaneousProperties              = 0x1000000,
+
+    /**
+     * Display object has changed since the last time it was drawn.
+     */
+    DirtyPaint                              = 0x0080,
 
     /**
      * All synchronizable properties are dirty.
@@ -711,7 +711,7 @@ module Shumway.AVM2.AS.flash.display {
      * Marks this object as needing to be repainted.
      */
     _invalidatePaint() {
-      this._propagateFlags(DisplayObjectFlags.InvalidPaint, Direction.Upward);
+      this._propagateFlags(DisplayObjectFlags.DirtyPaint, Direction.Upward);
     }
 
     private _stopTimelineAnimation() {

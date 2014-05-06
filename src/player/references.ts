@@ -18,6 +18,8 @@
 ///<reference path='frameScheduler.ts' />
 ///<reference path='embed.ts' />
 ///<reference path='timeline.ts' />
+///<reference path='remoting.ts' />
+///<reference path='remotingClient.ts' />
 ///<reference path='../avm2/references.ts' />
 ///<reference path='../gfx/references.ts' />
 ///<reference path='../flash.ts/references.ts' />

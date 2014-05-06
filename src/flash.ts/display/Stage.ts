@@ -77,6 +77,9 @@ module Shumway.AVM2.AS.flash.display {
       this._displayContextInfo = null;
 
       this._timeout = -1;
+      /**
+       * Invalidate
+       */
       this._invalid = false;
     }
     
@@ -112,6 +115,11 @@ module Shumway.AVM2.AS.flash.display {
     private _displayContextInfo: string;
 
     private _timeout: number;
+
+    /**
+     * The |invalidate| function was called on the stage. This flag indicates that
+     * the |RENDER| event gets fired right before the stage is rendered.
+     */
     private _invalid: boolean;
 
     get frameRate(): number {
@@ -283,51 +291,27 @@ module Shumway.AVM2.AS.flash.display {
       index = index | 0;
       notImplemented("public flash.display.Stage::removeChildAt"); return;
     }
+
     swapChildrenAt(index1: number /*int*/, index2: number /*int*/): void {
       index1 = index1 | 0; index2 = index2 | 0;
       notImplemented("public flash.display.Stage::swapChildrenAt"); return;
     }
+
     invalidate(): void {
       this._invalid = true;
     }
+
     isFocusInaccessible(): boolean {
       notImplemented("public flash.display.Stage::isFocusInaccessible"); return;
     }
+
     requireOwnerPermissions(): void {
       somewhatImplemented("public flash.display.Stage::requireOwnerPermissions"); return;
     }
 
-    enterEventLoop(): void {
-      var stage = this;
-      var firstRun = true;
-
-      (function tick() {
-        stage._timeout = setTimeout(tick, 1000 / stage._frameRate);
-
-        if (!firstRun) {
-          MovieClip.initFrame();
-          DisplayObject.broadcastFrameEvent(FramePhase.Enter);
-          Sprite.constructFrame();
-        }
-
-        DisplayObject.broadcastFrameEvent(FramePhase.Constructed);
-        MovieClip.executeFrame();
-        DisplayObject.broadcastFrameEvent(FramePhase.Exit);
-
-        if (stage._invalid && !firstRun) {
-          stage._propagateEvent(Event.getInstance(Event.RENDER));
-          stage._invalid = false;
-        }
-
-        // handle input
-
-        firstRun = false;
-      })();
-    }
-
-    leaveEventLoop(): void {
-      assert (this._timeout > -1);
-      clearInterval(this._timeout);
+    public broadcastRenderEvent() {
+      this._propagateEvent(Event.getInstance(Event.RENDER));
+      this._invalid = false;
     }
   }
 }

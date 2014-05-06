@@ -49,7 +49,7 @@ module Shumway.GFX {
     /**
      * Frame has changed since the last time it was drawn.
      */
-    InvalidPaint                              = 0x0200
+    DirtyPaint                                = 0x0200
   }
 
   /**
@@ -122,7 +122,7 @@ module Shumway.GFX {
     public ignoreMaskAlpha: boolean;
 
     constructor () {
-      this._flags = FrameFlags.InvalidPaint                       |
+      this._flags = FrameFlags.DirtyPaint                         |
                     FrameFlags.InvalidBounds                      |
                     FrameFlags.InvalidConcatenatedMatrix          |
                     FrameFlags.InvalidInvertedConcatenatedMatrix  |
@@ -264,7 +264,7 @@ module Shumway.GFX {
     /**
      * Marks this object as having been moved in its parent frame.
      */
-    private _invalidatePosition() {
+    _invalidatePosition() {
       this._propagateFlags(FrameFlags.InvalidConcatenatedMatrix | FrameFlags.InvalidInvertedConcatenatedMatrix, Direction.Downward);
       if (this._parent) {
         this._parent._invalidateBounds();
@@ -275,13 +275,13 @@ module Shumway.GFX {
     /**
      * Marks this object as needing to be repainted.
      */
-    private _invalidatePaint() {
-      this._propagateFlags(FrameFlags.InvalidPaint, Direction.Upward);
+    public invalidatePaint() {
+      this._propagateFlags(FrameFlags.DirtyPaint, Direction.Upward);
     }
 
     private _invalidateParentPaint() {
       if (this._parent) {
-        this._parent._propagateFlags(FrameFlags.InvalidPaint, Direction.Upward);
+        this._parent._propagateFlags(FrameFlags.DirtyPaint, Direction.Upward);
       }
     }
 
@@ -493,7 +493,7 @@ module Shumway.GFX {
       var transformStack: Matrix [];
       var calculateTransform = !!transform;
       if (calculateTransform) {
-        transformStack = [transform];
+        transformStack = [transform.clone()];
       }
       var flagsStack: FrameFlags [] = [flags];
       while (stack.length > 0) {

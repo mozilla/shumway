@@ -20,7 +20,7 @@ module Shumway.GFX {
       this.checkCapability(FrameCapabilityFlags.AllowChildrenWrite);
       if (child) {
         child._parent = this;
-        child.invalidate();
+        child._invalidatePosition();
       }
       this._children.push(child);
       return child;
@@ -36,7 +36,7 @@ module Shumway.GFX {
       }
       if (child) {
         child._parent = this;
-        child.invalidate();
+        child._invalidatePosition();
       }
       return child;
     }
@@ -57,9 +57,8 @@ module Shumway.GFX {
       if (!child) {
         return;
       }
-      // child.gatherPreviousDirtyRegions();
       child._parent = undefined;
-      child.invalidate();
+      child._invalidatePosition();
     }
 
     public clearChildren() {
