@@ -185,7 +185,7 @@ function executeFile(file, buffer, movieParams) {
           easel.stage.invalidatePaint();
         }, 1000);
 
-        var player = new Shumway.Player(easel.world);
+        var player = new Shumway.EaselEmbedding(easel).embed();
         player.load(file);
 
         // embedding.loader

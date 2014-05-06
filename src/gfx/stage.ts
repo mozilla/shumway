@@ -67,6 +67,7 @@ module Shumway.GFX {
     disable: boolean = false;
     paintBounds: boolean = false;
     paintFlashing: boolean = false;
+    paintViewport: boolean = false;
   }
 
   export enum Backend {

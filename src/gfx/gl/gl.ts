@@ -418,6 +418,11 @@ module Shumway.GFX.GL {
 
       brush.flush(options.drawElements);
 
+      if (options.paintViewport) {
+        brush.fillRectangle(viewport, new Color(1, 0, 0, 0.25), Matrix.createIdentity(), 0);
+        brush.flush();
+      }
+
       this._renderTextures(brush);
     }
   }

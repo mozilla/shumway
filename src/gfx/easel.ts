@@ -89,11 +89,20 @@ module Shumway.GFX {
 
   class PersistentState extends State {
     private _keyCodes: boolean [] = [];
+    private _paused: boolean = false;
     onMouseDown(easel: Easel, event: MouseEvent) {
+
     }
 
     onMouseClick(easel: Easel, event: MouseEvent) {
 
+    }
+
+    onKeyPress(easel: Easel, event: KeyboardEvent) {
+      if (event.keyCode === 112) { // P
+        this._paused = !this._paused;
+      }
+      this._update(easel);
     }
 
     onKeyDown(easel: Easel, event: KeyboardEvent) {
@@ -109,6 +118,8 @@ module Shumway.GFX {
     private _update(easel: Easel) {
       easel.options.paintBounds = this._keyCodes[66]; // B
       easel.options.paintFlashing = this._keyCodes[70]; // F
+      easel.options.paintViewport = this._keyCodes[86]; // V
+      easel.paused = this._paused;
     }
   }
 
@@ -241,6 +252,7 @@ module Shumway.GFX {
     private _state: State = new StartState();
     private _persistentState: State = new PersistentState();
 
+    public paused: boolean = false;
     private _selection: FrameContainer;
     private _selectedFrames: Frame [] = [];
 
@@ -324,6 +336,7 @@ module Shumway.GFX {
 
       window.addEventListener("keypress", function (event) {
         self._state.onKeyPress(self, event);
+        self._persistentState.onKeyPress(self, event);
       }, false);
 
       window.addEventListener("keyup", function (event) {
@@ -347,6 +360,9 @@ module Shumway.GFX {
     }
 
     private _render() {
+      if (this.paused) {
+        return;
+      }
       timeline && timeline.enter("Render");
       this._renderer.render();
       timeline && timeline.leave("Render");
@@ -421,17 +437,6 @@ module Shumway.GFX {
       if (frame && frame.hasCapability(FrameCapabilityFlags.AllowMatrixWrite)) {
         this._selectedFrames.push(frame);
         this._selection.matrix = frame.getConcatenatedMatrix();
-//        var bounds = frame.getBounds();
-//        bounds.snap();
-//        bounds.expand(4, 4);
-//        var selection = this._selection.addChild(new Shape(new Renderable(bounds, function (context: CanvasRenderingContext2D) {
-//          context.save();
-//          context.beginPath();
-//          context.lineWidth = 2;
-//          context.strokeStyle = ColorStyle.LightOrange;
-//          context.strokeRect(bounds.x, bounds.y, bounds.w, bounds.h);
-//          context.restore();
-//        })));
         if (!this._frameInspectorProxy) {
           this._frameInspectorProxy = new FrameInspectorProxy(frame);
         } else {
@@ -447,7 +452,7 @@ module Shumway.GFX {
       this._render();
     }
 
-    getMousePosition(event: MouseEvent, coordinateSpace: Frame) {
+    getMousePosition(event: MouseEvent, coordinateSpace: Frame): Point {
       var canvas = this._canvas;
       var bRect = canvas.getBoundingClientRect();
       var x = (event.clientX - bRect.left) * (canvas.width / bRect.width);
@@ -460,6 +465,10 @@ module Shumway.GFX {
       coordinateSpace.getConcatenatedMatrix().inverse(m);
       m.transformPoint(p);
       return p;
+    }
+
+    getMouseWorldPosition(event: MouseEvent): Point {
+      return this.getMousePosition(event, this._world);
     }
 
     private _onMouseDown(event) {

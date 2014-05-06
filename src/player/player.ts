@@ -17,7 +17,9 @@
 module Shumway {
   import assert = Shumway.Debug.assert;
   import flash = Shumway.AVM2.AS.flash;
+  import Point = Shumway.AVM2.AS.flash.geom.Point;
   import FrameContainer = Shumway.GFX.FrameContainer;
+  import Easel = Shumway.GFX.Easel;
 
   import FramePhase = Shumway.Timeline.FramePhase;
 
@@ -28,7 +30,12 @@ module Shumway {
   import DisplayObject = flash.display.DisplayObject;
   import VisitorFlags = flash.display.VisitorFlags;
 
-
+  /**
+   * Shumway Player
+   *
+   * This class brings everything together. Load the swf, runs the event loop and
+   * synchronizes the frame tree with the display list.
+   */
   export class Player {
     private _stage: flash.display.Stage;
     private _loader: flash.display.Loader;
@@ -39,22 +46,6 @@ module Shumway {
 
     private static _syncFrameRate = 60;
     private _server: Remoting.Server;
-
-    private static _mouseEvents = [
-      'click',
-      'dblclick',
-      'mousedown',
-      'mousemove',
-      'mouseup',
-      'mouseover',
-      'mouseout'
-    ];
-
-    private static _keyEvents = [
-      'keydown',
-      'keypress',
-      'keyup'
-    ];
 
     constructor(frameContainer: FrameContainer) {
       this._frameContainer = frameContainer;
@@ -84,25 +75,30 @@ module Shumway {
       this._loader.load(new flash.net.URLRequest(url));
     }
 
-    private _mouseListener(event: MouseEvent) {
-
+    public dispatchMouseEvent(event: MouseEvent, point: Point) {
+      if (event.type !== "click") {
+        return;
+      }
+//      console.log(point.toString());
+//      var o = this._stage.getObjectsUnderPoint(point);
+//      console.info(o);
+//      for (var i = 0; i < o.length; i++) {
+//        o[i].rotation ++;
+//      }
+//
+//      var o = this._stage.getObjectsUnderPoint(point);
+//      if (o && o.length) {
+//        var t = o[o.length - 1];
+//        (function (v) {
+//          setInterval(function () {
+//            v.rotation += 6;
+//          }, 16);
+//        })(t);
+//      }
     }
 
-    private _keyListener(event: KeyboardEvent) {
+    public dispatchKeyboardEvent(event: KeyboardEvent) {
 
-    }
-
-    private _addEventListeners() {
-      var mouseListener = this._mouseListener.bind(this);
-      var keyListener = this._keyListener.bind(this);
-      var mouseEvents = Player._mouseEvents;
-      for (var i = 0; i < mouseEvents.length; i++) {
-        window.addEventListener(mouseEvents[i], mouseListener);
-      }
-      var keyEvents = Player._keyEvents;
-      for (var i = 0; i < keyEvents.length; i++) {
-        window.addEventListener(keyEvents[i], keyListener);
-      }
     }
 
     private _enterLoops(): void {
@@ -184,6 +180,60 @@ module Shumway {
     private _leaveEventLoop(): void {
       assert (this._frameTimeout > -1);
       clearInterval(this._frameTimeout);
+    }
+  }
+
+  export class EaselEmbedding {
+    private static _mouseEvents = [
+      'click',
+      'dblclick',
+      'mousedown',
+      'mousemove',
+      'mouseup',
+      'mouseover',
+      'mouseout'
+    ];
+
+    private static _keyboardEvents = [
+      'keydown',
+      'keypress',
+      'keyup'
+    ];
+
+    private _mouseEventListener(event: MouseEvent) {
+      var position = this._easel.getMouseWorldPosition(event);
+      var point = new Point(position.x, position.y);
+      this._player.dispatchMouseEvent(event, point);
+    }
+
+    private _keyboardEventListener(event: KeyboardEvent) {
+      this._player.dispatchKeyboardEvent(event);
+    }
+
+    private _addEventListeners() {
+      var mouseEventListener = this._mouseEventListener.bind(this);
+      var keyboardEventListener = this._keyboardEventListener.bind(this);
+      var mouseEvents = EaselEmbedding._mouseEvents;
+      for (var i = 0; i < mouseEvents.length; i++) {
+        window.addEventListener(mouseEvents[i], mouseEventListener);
+      }
+      var keyboardEvents = EaselEmbedding._keyboardEvents;
+      for (var i = 0; i < keyboardEvents.length; i++) {
+        window.addEventListener(keyboardEvents[i], keyboardEventListener);
+      }
+    }
+
+    private _easel: Easel;
+    private _player: Player;
+
+    constructor(easel: Easel, player: Player) {
+      this._easel = easel;
+      this._player = player;
+      this._addEventListeners();
+    }
+
+    public embed(): Player {
+      return this._player = new Shumway.Player(this._easel.world);
     }
   }
 }
