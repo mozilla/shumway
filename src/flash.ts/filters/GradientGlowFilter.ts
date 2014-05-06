@@ -16,6 +16,7 @@
 // Class: GradientGlowFilter
 module Shumway.AVM2.AS.flash.filters {
 
+  import Rectangle = flash.geom.Rectangle;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export class GradientGlowFilter extends flash.filters.BitmapFilter {
@@ -32,6 +33,22 @@ module Shumway.AVM2.AS.flash.filters {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
 
+    public static fromAny(obj: any) {
+      return new GradientGlowFilter(
+        obj.distance,
+        obj.angle,
+        obj.colors,
+        obj.alphas,
+        obj.ratios,
+        obj.blurX,
+        obj.blurY,
+        obj.strength,
+        obj.quality,
+        obj.type,
+        obj.knockout
+      );
+    }
+
     constructor (distance: number = 4, angle: number = 45, colors: any [] = null, alphas: any [] = null, ratios: any [] = null, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
       false && super();
       this.distance = distance;
@@ -46,6 +63,19 @@ module Shumway.AVM2.AS.flash.filters {
       this.quality = quality;
       this.type = type;
       this.knockout = knockout;
+    }
+
+    _updateFilterBounds(bounds: Rectangle) {
+      if (this.type !== BitmapFilterType.INNER) {
+        BitmapFilter._updateBlurBounds(bounds, this._blurX, this._blurY, this._quality);
+        if (this._distance !== 0) {
+          var a: number = this._angle * Math.PI / 180;
+          bounds.x += Math.floor(Math.cos(a) * this._distance);
+          bounds.y += Math.floor(Math.sin(a) * this._distance);
+          if (bounds.left > 0) { bounds.left = 0; }
+          if (bounds.top > 0) { bounds.top = 0; }
+        }
+      }
     }
 
     // JS -> AS Bindings
@@ -184,7 +214,7 @@ module Shumway.AVM2.AS.flash.filters {
         this._quality,
         this._type,
         this._knockout
-      )
+      );
     }
   }
 }

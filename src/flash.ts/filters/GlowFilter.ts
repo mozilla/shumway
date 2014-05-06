@@ -16,6 +16,8 @@
 // Class: GlowFilter
 module Shumway.AVM2.AS.flash.filters {
 
+  import Rectangle = flash.geom.Rectangle;
+
   export class GlowFilter extends flash.filters.BitmapFilter {
 
     // Called whenever the class is initialized.
@@ -30,6 +32,19 @@ module Shumway.AVM2.AS.flash.filters {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
 
+    public static fromAny(obj: any) {
+      return new GlowFilter(
+        obj.color,
+        obj.alpha,
+        obj.blurX,
+        obj.blurY,
+        obj.strength,
+        obj.quality,
+        obj.inner,
+        obj.knockout
+      );
+    }
+
     constructor (color: number /*uint*/ = 16711680, alpha: number = 1, blurX: number = 6, blurY: number = 6, strength: number = 2, quality: number /*int*/ = 1, inner: boolean = false, knockout: boolean = false) {
       false && super();
       this.color = color;
@@ -42,10 +57,8 @@ module Shumway.AVM2.AS.flash.filters {
       this.knockout = knockout;
     }
 
-    _generateFilterBounds(): any {
-      var bounds: any = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
-      this._updateBlurBounds(bounds, this.blurX, this.blurY, this.quality);
-      return bounds;
+    _updateFilterBounds(bounds: Rectangle) {
+      BitmapFilter._updateBlurBounds(bounds, this._blurX, this._blurY, this._quality);
     }
 
     _serialize(message) {

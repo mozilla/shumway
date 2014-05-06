@@ -16,6 +16,8 @@
 // Class: BlurFilter
 module Shumway.AVM2.AS.flash.filters {
 
+  import Rectangle = flash.geom.Rectangle;
+
   export class BlurFilter extends flash.filters.BitmapFilter {
 
     // Called whenever the class is initialized.
@@ -30,6 +32,10 @@ module Shumway.AVM2.AS.flash.filters {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
 
+    public static fromAny(obj: any) {
+      return new BlurFilter(obj.blurX, obj.blurY, obj.quality);
+    }
+
     constructor (blurX: number = 4, blurY: number = 4, quality: number /*int*/ = 1) {
       false && super();
       this.blurX = blurX;
@@ -37,20 +43,8 @@ module Shumway.AVM2.AS.flash.filters {
       this.quality = quality;
     }
 
-    _generateFilterBounds(): any {
-      var bounds: any = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
-      this._updateBlurBounds(bounds, this.blurX, this.blurY, this.quality, true);
-      return bounds;
-    }
-
-    _updateFilterBounds(bounds: any) {
-      var b: any = this._generateFilterBounds();
-      if (b) {
-        bounds.xMin += b.xMin * 20;
-        bounds.xMax += b.xMax * 20;
-        bounds.yMin += b.yMin * 20;
-        bounds.yMax += b.yMax * 20;
-      }
+    _updateFilterBounds(bounds: Rectangle) {
+      BitmapFilter._updateBlurBounds(bounds, this._blurX, this._blurY, this._quality, true);
     }
 
     _serialize(message: any) {

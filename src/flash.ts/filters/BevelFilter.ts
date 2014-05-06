@@ -16,6 +16,7 @@
 // Class: BevelFilter
 module Shumway.AVM2.AS.flash.filters {
 
+  import Rectangle = flash.geom.Rectangle;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   export class BevelFilter extends flash.filters.BitmapFilter {
@@ -31,6 +32,23 @@ module Shumway.AVM2.AS.flash.filters {
 
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
+
+    public static fromAny(obj: any) {
+      return new BevelFilter(
+        obj.distance,
+        obj.angle,
+        obj.highlightColor,
+        obj.highlightAlpha,
+        obj.shadowColor,
+        obj.shadowAlpha,
+        obj.blurX,
+        obj.blurY,
+        obj.strength,
+        obj.quality,
+        obj.type,
+        obj.knockout
+      );
+    }
 
     constructor (distance: number = 4, angle: number = 45, highlightColor: number /*uint*/ = 16777215, highlightAlpha: number = 1, shadowColor: number /*uint*/ = 0, shadowAlpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, type: string = "inner", knockout: boolean = false) {
       false && super();
@@ -48,22 +66,16 @@ module Shumway.AVM2.AS.flash.filters {
       this.knockout = knockout;
     }
 
-    _generateFilterBounds(): any {
-      if (this.type === BitmapFilterType.INNER) {
-        return null;
-      } else {
-        var bounds: any = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
-        this._updateBlurBounds(bounds, this.blurX, this.blurY, this.quality);
+    _updateFilterBounds(bounds: Rectangle) {
+      if (this.type !== BitmapFilterType.INNER) {
+        BitmapFilter._updateBlurBounds(bounds, this._blurX, this._blurY, this._quality);
         if (this._distance !== 0) {
           var a: number = this._angle * Math.PI / 180;
-          var dx: number = Math.cos(a) * this._distance;
-          var dy: number = Math.sin(a) * this._distance;
-          bounds.xMin -= (dx >= 0 ? 0 : Math.floor(dx));
-          bounds.xMax += Math.ceil(Math.abs(dx));
-          bounds.yMin -= (dy >= 0 ? 0 : Math.floor(dy));
-          bounds.yMax += Math.ceil(Math.abs(dy));
+          bounds.x += Math.floor(Math.cos(a) * this._distance);
+          bounds.y += Math.floor(Math.sin(a) * this._distance);
+          if (bounds.left > 0) { bounds.left = 0; }
+          if (bounds.top > 0) { bounds.top = 0; }
         }
-        return bounds;
       }
     }
 

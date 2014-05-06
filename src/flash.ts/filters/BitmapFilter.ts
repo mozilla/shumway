@@ -16,6 +16,8 @@
 // Class: BitmapFilter
 module Shumway.AVM2.AS.flash.filters {
 
+  import Rectangle = flash.geom.Rectangle;
+
   export class BitmapFilter extends ASNative {
 
     // Called whenever the class is initialized.
@@ -37,29 +39,9 @@ module Shumway.AVM2.AS.flash.filters {
     // blurX (or blurY) value, the step width is the amount of blurX
     // that adds one pixel to the border width. I.e. for quality = 1,
     // the border width increments at blurX = 2, 4, 6, ...
-    private static blurFilterStepWidths: number[] = [
-      2,
-      1 / 1.05,
-      1 / 1.35,
-      1 / 1.55,
-      1 / 1.75,
-      1 / 1.9,
-      1 / 2,
-      1 / 2.1,
-      1 / 2.2,
-      1 / 2.3,
-      1 / 2.5,
-      1 / 3,
-      1 / 3,
-      1 / 3.5,
-      1 / 3.5
-    ];
+    private static blurFilterStepWidths: number[] = [0.5, 1.05, 1.35, 1.55, 1.75, 1.9, 2, 2.1, 2.2, 2.3, 2.5, 3, 3, 3.5, 3.5];
 
-    constructor () {
-      false && super();
-    }
-
-    _updateBlurBounds(bounds: any, blurX: number, blurY: number, quality: number /*int*/, isBlurFilter: boolean = false) {
+    static _updateBlurBounds(bounds: Rectangle, blurX: number, blurY: number, quality: number /*int*/, isBlurFilter: boolean = false) {
       // Approximation of BitmapData.generateFilterRect()
       var stepWidth: number = BitmapFilter.blurFilterStepWidths[quality - 1];
       if (isBlurFilter) {
@@ -75,26 +57,16 @@ module Shumway.AVM2.AS.flash.filters {
       // blurX/blurY values <= 1 are always rounded up to 1,
       // which means that generateFilterRect always expands the source rect,
       // even when blurX/blurY is 0.
-      var bh: number = Math.ceil((blurX < 1 ? 1 : blurX) / (stepWidth - BitmapFilter.EPS));
-      var bv: number = Math.ceil((blurY < 1 ? 1 : blurY) / (stepWidth - BitmapFilter.EPS));
-      bounds.xMin -= bh;
-      bounds.xMax += bh;
-      bounds.yMin -= bv;
-      bounds.yMax += bv;
+      var bh: number = Math.ceil((blurX < 1 ? 1 : blurX) * stepWidth);
+      var bv: number = Math.ceil((blurY < 1 ? 1 : blurY) * stepWidth);
+      bounds.inflate(bh, bv);
     }
 
-    _generateFilterBounds(): any {
-      return null;
+    constructor () {
+      false && super();
     }
 
-    _updateFilterBounds(bounds : any) {
-      var b: any = this._generateFilterBounds();
-      if (b) {
-        bounds.xMin += b.xMin * 20;
-        bounds.xMax += b.xMax * 20;
-        bounds.yMin += b.yMin * 20;
-        bounds.yMax += b.yMax * 20;
-      }
+    _updateFilterBounds(bounds: Rectangle) {
     }
 
     _serialize(message: any) {
@@ -127,12 +99,12 @@ module Shumway.AVM2.AS.flash.filters {
     // ratios not empty and alphas null - length: min(colors,ratios), alphas set to 0
     // ratios not empty and alphas != null - length: min(colors,ratios), alphas filled with 1
     static sanitize(colors: any [], alphas: any [], ratios: any []) {
-      var len;
       if (isNullOrUndefined(colors) || colors.length === 0) {
         this.colors = [];
         this.alphas = [];
         this.ratios = [];
       } else {
+        var len: number;
         if (isNullOrUndefined(ratios)) {
           this.colors = this.sanitizeColors(colors);
           len = this.colors.length;
@@ -148,7 +120,7 @@ module Shumway.AVM2.AS.flash.filters {
             this.alphas = [];
             this.ratios = [];
           } else {
-            len = Math.min(colors.length, ratios.length);
+            len = Math.min(colors.length, ratios.length, 16);
             this.colors = this.sanitizeColors(colors, len);
             this.ratios = this.sanitizeRatios(ratios, len);
             if (isNullOrUndefined(alphas)) {

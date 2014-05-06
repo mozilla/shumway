@@ -33,6 +33,20 @@ module Shumway.AVM2.AS.flash.filters {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
 
+    public static fromAny(obj: any) {
+      return new DisplacementMapFilter(
+        obj.mapBitmap,
+        obj.mapPoint,
+        obj.componentX,
+        obj.componentY,
+        obj.scaleX,
+        obj.scaleY,
+        obj.mode,
+        obj.color,
+        obj.alpha
+      );
+    }
+
     constructor (mapBitmap: flash.display.BitmapData = null, mapPoint: flash.geom.Point = null, componentX: number /*uint*/ = 0, componentY: number /*uint*/ = 0, scaleX: number = 0, scaleY: number = 0, mode: string = "wrap", color: number /*uint*/ = 0, alpha: number = 0) {
       false && super();
       this.mapBitmap = mapBitmap;
@@ -145,7 +159,7 @@ module Shumway.AVM2.AS.flash.filters {
         this._mode,
         this._color,
         this._alpha
-      )
+      );
     }
   }
 }
