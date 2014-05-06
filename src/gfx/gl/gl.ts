@@ -71,7 +71,7 @@ module Shumway.GFX.GL {
      * is texture upload bound.
      */
     disableTextureUploads: boolean;
-    frameSpacing: number = 0.01;
+    frameSpacing: number = 0.0001;
     ignoreColorMatrix: boolean;
     drawTiles: boolean;
     drawElements: boolean = true;
@@ -302,14 +302,16 @@ module Shumway.GFX.GL {
             if (!tileCache) {
               tileCache = source.properties["tileCache"] = new RenderableTileCache(source, TILE_SIZE, MIN_UNTILED_SIZE);
             }
-            transform.translate(bounds.x, bounds.y);
-            transform.inverse(inverseTransform);
+            var t = Matrix.createIdentity().translate(bounds.x, bounds.y);
+            t.concat(transform);
+            t.inverse(inverseTransform);
             var tiles = tileCache.fetchTiles(viewport, inverseTransform, self._scratchCanvasContext, cacheImageCallback);
             for (var i = 0; i < tiles.length; i++) {
               var tile = tiles[i];
               tileTransform.setIdentity();
               tileTransform.translate(tile.bounds.x, tile.bounds.y);
               tileTransform.scale(1 / tile.scale, 1 / tile.scale);
+              tileTransform.translate(bounds.x, bounds.y);
               tileTransform.concat(transform);
               var src = <WebGLTextureRegion>(tile.cachedTextureRegion);
               if (src && src.texture) {
@@ -411,7 +413,7 @@ module Shumway.GFX.GL {
 
       var viewport = this._viewport;
       if (options.ignoreViewport) {
-        viewport = Rectangle.createSquare(1024 * 4);
+        viewport = Rectangle.createSquare(1024 * 8);
       }
 
       this._renderFrame(stage, stage.matrix, brush, viewport, 0);

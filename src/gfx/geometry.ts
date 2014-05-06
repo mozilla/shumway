@@ -1336,7 +1336,8 @@ module Shumway.GFX.Geometry {
       if (true || tileCount < 40) {
         // If we have only a few tiles we're better off using the dumber algorithm.
         // TODO: Fine-tune these heuristics.
-        return this.getFewTiles(query, transform, tileCount > 10);
+        // return this.getFewTiles(query, transform, tileCount > 10);
+        return this.getFewTiles(query, transform, true);
       } else {
         // return this.getManyTiles(query, transform);
       }
