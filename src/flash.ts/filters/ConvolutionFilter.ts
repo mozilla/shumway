@@ -30,6 +30,20 @@ module Shumway.AVM2.AS.flash.filters {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
 
+    public static fromAny(obj: any) {
+      return new ConvolutionFilter(
+        obj.matrixX,
+        obj.matrixY,
+        obj.matrix,
+        obj.divisor,
+        obj.bias,
+        obj.preserveAlpha,
+        obj.clamp,
+        obj.color,
+        obj.alpha
+      );
+    }
+
     constructor (matrixX: number = 0, matrixY: number = 0, matrix: any [] = null, divisor: number = 1, bias: number = 0, preserveAlpha: boolean = true, clamp: boolean = true, color: number /*uint*/ = 0, alpha: number = 0) {
       false && super();
       this.matrixX = matrixX;

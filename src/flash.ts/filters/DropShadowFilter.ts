@@ -16,6 +16,8 @@
 // Class: DropShadowFilter
 module Shumway.AVM2.AS.flash.filters {
 
+  import Rectangle = flash.geom.Rectangle;
+
   export class DropShadowFilter extends flash.filters.BitmapFilter {
 
     // Called whenever the class is initialized.
@@ -29,6 +31,22 @@ module Shumway.AVM2.AS.flash.filters {
 
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
+
+    public static fromAny(obj: any) {
+      return new DropShadowFilter(
+        obj.distance,
+        obj.angle,
+        obj.color,
+        obj.alpha,
+        obj.blurX,
+        obj.blurY,
+        obj.strength,
+        obj.quality,
+        obj.inner,
+        obj.knockout,
+        obj.hideObject
+      );
+    }
 
     constructor (distance: number = 4, angle: number = 45, color: number /*uint*/ = 0, alpha: number = 1, blurX: number = 4, blurY: number = 4, strength: number = 1, quality: number /*int*/ = 1, inner: boolean = false, knockout: boolean = false, hideObject: boolean = false) {
       false && super();
@@ -45,19 +63,17 @@ module Shumway.AVM2.AS.flash.filters {
       this.hideObject = hideObject;
     }
 
-    _generateFilterBounds(): any {
-      var bounds: any = { xMin: 0, yMin: 0, xMax: 0, yMax: 0 };
-      this._updateBlurBounds(bounds, this.blurX, this.blurY, this.quality);
-      if (this._distance !== 0) {
-        var a: number = (this._inner ? this._angle + 180 : this._angle) * Math.PI / 180;
-        var dx: number = Math.cos(a) * this._distance;
-        var dy: number = Math.sin(a) * this._distance;
-        bounds.xMin -= (dx >= 0 ? 0 : Math.floor(dx));
-        bounds.xMax += Math.ceil(Math.abs(dx));
-        bounds.yMin -= (dy >= 0 ? 0 : Math.floor(dy));
-        bounds.yMax += Math.ceil(Math.abs(dy));
+    _updateFilterBounds(bounds: Rectangle) {
+      if (!this.inner) {
+        BitmapFilter._updateBlurBounds(bounds, this._blurX, this._blurY, this._quality);
+        if (this._distance !== 0) {
+          var a: number = this._angle * Math.PI / 180;
+          bounds.x += Math.floor(Math.cos(a) * this._distance);
+          bounds.y += Math.floor(Math.sin(a) * this._distance);
+          if (bounds.left > 0) { bounds.left = 0; }
+          if (bounds.top > 0) { bounds.top = 0; }
+        }
       }
-      return bounds;
     }
 
     _serialize(message) {
@@ -182,7 +198,7 @@ module Shumway.AVM2.AS.flash.filters {
         this._inner,
         this._knockout,
         this._hideObject
-      )
+      );
     }
   }
 }
