@@ -217,97 +217,14 @@ module Shumway.AVM2.AS.flash.display {
    * since that's what the AS3 specifies.
    */
 
-  /**
-   * Broadcast Events
-   *
-   * The logic here is pretty much copied from: http://www.senocular.com/flash/tutorials/orderofoperations/
-   */
-  class BroadcastEventDispatchQueue {
-    /**
-     * The queues start off compact but can have null values if event targets are removed. Periodically we
-     * compact them if too many null values exist.
-     */
-    private _queues: Shumway.Map<EventDispatcher []>;
-
-    constructor() {
-      this.reset();
-    }
-
-    reset() {
-      this._queues = Shumway.ObjectUtilities.createEmptyObject();
-    }
-
-    add(type: string, target: EventDispatcher) {
-      assert (Event.isBroadcastEventType(type), "Can only register broadcast events.");
-      var queue = this._queues[type] || (this._queues[type] = []);
-      if (queue.indexOf(target) >= 0) {
-        return;
-      }
-      queue.push(target);
-    }
-
-    remove(type: string, target: EventDispatcher) {
-      assert (Event.isBroadcastEventType(type), "Can only unregister broadcast events.");
-      var queue = this._queues[type];
-      assert (queue, "Ther should already be a queue for this.");
-      var index = queue.indexOf(target);
-      assert (index >= 0, "Target should be somewhere in this queue.");
-      queue[index] = null;
-      assert (queue.indexOf(target) < 0, "Target shouldn't be in this queue anymore.");
-    }
-
-    dispatchEvent(event: flash.events.Event, framePhase: FramePhase) {
-      assert (event.isBroadcastEvent(), "Cannot dispatch non-broadcast events.");
-      var queue = this._queues[event.type];
-      if (!queue) {
-        return;
-      }
-      timeline && timeline.enter(FramePhase[framePhase]);
-      var nullCount = 0;
-      for (var i = 0; i < queue.length; i++) {
-        var target = queue[i];
-        if (target === null) {
-          nullCount ++
-        } else {
-          var currentPhase = target._framePhase;
-          target._framePhase = framePhase;
-          target.dispatchEvent(event);
-          target._framePhase = currentPhase;
-        }
-      }
-
-      // Compact the queue if there are too many holes in it.
-      if (nullCount > 16 && nullCount > (queue.length >> 1)) {
-        var compactedQueue = [];
-        for (var i = 0; i < queue.length; i++) {
-          if (queue[i]) {
-            compactedQueue.push(queue[i]);
-          }
-        }
-        this._queues[event.type] = compactedQueue;
-      }
-      timeline && timeline.leave(FramePhase[framePhase]);
-    }
-
-    getQueueLength(type: string) {
-      return this._queues[type] ? this._queues[type].length : 0;
-    }
-  }
-
   export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable {
 
     /**
      * Every displayObject is assigned an unique integer ID.
      */
     private static _nextID = 0;
-    public static broadcastEventDispatchQueue: BroadcastEventDispatchQueue;
-
 
     // Called whenever the class is initialized.
-    static classInitializer: any = function () {
-      DisplayObject.broadcastEventDispatchQueue = new BroadcastEventDispatchQueue();
-    };
-
     /**
      * All display objects in the world need to be notified of certain events, here we keep track
      * of all the display objects that were ever constructed.
@@ -377,7 +294,6 @@ module Shumway.AVM2.AS.flash.display {
       self._mouseDown = false;
 
       self._symbol = null;
-      self._framePhase = Shumway.Timeline.FramePhase.Idle;
 
       if (symbol) {
         self._bounds.copyFrom(symbol.bounds);
@@ -408,22 +324,29 @@ module Shumway.AVM2.AS.flash.display {
       return instance;
     }
 
-    static broadcastFrameEvent(framePhase: FramePhase = FramePhase.Idle): void {
-      var event: flash.events.Event;
+    /*
+     * TODO
+     */
+    static _broadcastFrameEvent(framePhase: FramePhase = FramePhase.Idle): void {
+      var eventType;
       switch (framePhase) {
         case FramePhase.Enter:
-          event = Event.getBroadcastInstance(Event.ENTER_FRAME);
+          eventType = Event.ENTER_FRAME;
           break;
         case FramePhase.Constructed:
-          event = Event.getBroadcastInstance(Event.FRAME_CONSTRUCTED);
+          eventType = Event.FRAME_CONSTRUCTED;
           break;
         case FramePhase.Exit:
-          event = Event.getBroadcastInstance(Event.EXIT_FRAME);
+          eventType = Event.EXIT_FRAME;
           break;
-        default:
-          return;
+        case FramePhase.Render:
+          eventType = Event.RENDER;
+          break;
       }
-      DisplayObject.broadcastEventDispatchQueue.dispatchEvent(event, framePhase);
+      assert (eventType, "Invalid frame event.");
+      EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(
+        Event.getBroadcastInstance(eventType), framePhase
+      );
     }
 
     constructor () {
@@ -578,7 +501,6 @@ module Shumway.AVM2.AS.flash.display {
     _mouseDown: boolean;
 
     _symbol: Shumway.Timeline.Symbol;
-    _framePhase: Shumway.Timeline.FramePhase;
 
 
     /**

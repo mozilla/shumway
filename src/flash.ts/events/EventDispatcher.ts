@@ -117,6 +117,83 @@ module Shumway.AVM2.AS.flash.events {
   }
 
   /**
+   * Broadcast Events
+   *
+   * The logic here is pretty much copied from: http://www.senocular.com/flash/tutorials/orderofoperations/
+   */
+  class BroadcastEventDispatchQueue {
+    /**
+     * The queues start off compact but can have null values if event targets are removed. Periodically we
+     * compact them if too many null values exist.
+     */
+    private _queues: Shumway.Map<EventDispatcher []>;
+
+    constructor() {
+      this.reset();
+    }
+
+    reset() {
+      this._queues = Shumway.ObjectUtilities.createEmptyObject();
+    }
+
+    add(type: string, target: EventDispatcher) {
+      assert (Event.isBroadcastEventType(type), "Can only register broadcast events.");
+      var queue = this._queues[type] || (this._queues[type] = []);
+      if (queue.indexOf(target) >= 0) {
+        return;
+      }
+      queue.push(target);
+    }
+
+    remove(type: string, target: EventDispatcher) {
+      assert (Event.isBroadcastEventType(type), "Can only unregister broadcast events.");
+      var queue = this._queues[type];
+      assert (queue, "There should already be a queue for this.");
+      var index = queue.indexOf(target);
+      assert (index >= 0, "Target should be somewhere in this queue.");
+      queue[index] = null;
+      assert (queue.indexOf(target) < 0, "Target shouldn't be in this queue anymore.");
+    }
+
+    dispatchEvent(event: flash.events.Event, framePhase: Shumway.Timeline.FramePhase) {
+      assert (event.isBroadcastEvent(), "Cannot dispatch non-broadcast events.");
+      var queue = this._queues[event.type];
+      if (!queue) {
+        return;
+      }
+      timeline && timeline.enter(Shumway.Timeline.FramePhase[framePhase]);
+      var nullCount = 0;
+      for (var i = 0; i < queue.length; i++) {
+        var target = queue[i];
+        if (target === null) {
+          nullCount++;
+        } else {
+          var currentPhase = target._framePhase;
+          target._framePhase = framePhase;
+          target.dispatchEvent(event);
+          target._framePhase = currentPhase;
+        }
+      }
+
+      // Compact the queue if there are too many holes in it.
+      if (nullCount > 16 && nullCount > (queue.length >> 1)) {
+        var compactedQueue = [];
+        for (var i = 0; i < queue.length; i++) {
+          if (queue[i]) {
+            compactedQueue.push(queue[i]);
+          }
+        }
+        this._queues[event.type] = compactedQueue;
+      }
+      timeline && timeline.leave(Shumway.Timeline.FramePhase[framePhase]);
+    }
+
+    getQueueLength(type: string) {
+      return this._queues[type] ? this._queues[type].length : 0;
+    }
+  }
+
+  /**
    * The EventDispatcher class is the base class for all classes that dispatch events.
    * The EventDispatcher class implements the IEventDispatcher interface and is the base class for
    * the DisplayObject class. The EventDispatcher class allows any object on the display list to be
@@ -124,8 +201,12 @@ module Shumway.AVM2.AS.flash.events {
    */
   export class EventDispatcher extends ASNative implements IEventDispatcher {
 
+    public static broadcastEventDispatchQueue: BroadcastEventDispatchQueue;
+
     // Called whenever the class is initialized.
-    static classInitializer: any = null;
+    static classInitializer: any = function () {
+      EventDispatcher.broadcastEventDispatchQueue = new BroadcastEventDispatchQueue();
+    };
 
     private _target: flash.events.IEventDispatcher;
 
@@ -135,12 +216,17 @@ module Shumway.AVM2.AS.flash.events {
     private _captureListeners: Shumway.Map<EventListenerList>;
     private _targetOrBubblingListeners: Shumway.Map<EventListenerList>;
 
+    _framePhase: Shumway.Timeline.FramePhase;
+
     // Called whenever an instance of the class is initialized.
     static initializer: any = function () {
       var self: EventDispatcher = this;
+
       self._target = this;
       self._captureListeners = null;
       self._targetOrBubblingListeners = null;
+
+      self._framePhase = Shumway.Timeline.FramePhase.Idle;
     };
 
     // List of static symbols to link.
@@ -203,7 +289,7 @@ module Shumway.AVM2.AS.flash.events {
       // Notify the broadcast event queue. If |useCapture| is set then the Flash player
       // doesn't seem to register this target.
       if (!useCapture && Event.isBroadcastEventType(type)) {
-        flash.display.DisplayObject.broadcastEventDispatchQueue.add(type, this);
+        EventDispatcher.broadcastEventDispatchQueue.add(type, this);
       }
     }
 
@@ -229,7 +315,7 @@ module Shumway.AVM2.AS.flash.events {
         if (list.isEmpty()) {
           // Notify the broadcast event queue of the removal.
           if (!useCapture && Event.isBroadcastEventType(type)) {
-            flash.display.DisplayObject.broadcastEventDispatchQueue.remove(type, this);
+            EventDispatcher.broadcastEventDispatchQueue.remove(type, this);
           }
           listeners[type] = null;
         }
