@@ -59,12 +59,12 @@ module Shumway {
       var loader = this._loader = new flash.display.Loader();
       var loaderInfo = this._loaderInfo = loader.contentLoaderInfo;
 
-      loaderInfo.addEventListener(flash.events.Event.INIT, function onProgress() {
+      loaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, function onProgress() {
         var root = loader.content;
         if (!root) {
           return;
         }
-        loaderInfo.removeEventListener(flash.events.Event.INIT, onProgress);
+        loaderInfo.removeEventListener(flash.events.ProgressEvent.PROGRESS, onProgress);
         stage.frameRate = loaderInfo.frameRate;
         stage.stageWidth = loaderInfo.width;
         stage.stageHeight = loaderInfo.height;

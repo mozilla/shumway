@@ -116,6 +116,10 @@ module Shumway.AVM2.AS.flash.display {
 
     private _commitData(data: any): void {
       var loaderInfo = this._contentLoaderInfo;
+
+      // TODO test at what frequence progress events need to be fired
+      loaderInfo.dispatchEvent(new ProgressEvent(ProgressEvent.PROGRESS), false, false, 0, 0));
+
       var command = data.command;
       switch (command) {
         case 'init':
@@ -133,19 +137,19 @@ module Shumway.AVM2.AS.flash.display {
           var rootSymbol = <Timeline.SpriteSymbol>this._dictionary[0];
           rootSymbol.numFrames = info.frameCount;
           break;
-        case 'progress':
-          var result = data.result;
-          loaderInfo._bytesLoaded = result.bytesLoaded || 0;
-          loaderInfo._bytesTotal = result.bytesTotal || 0;
-          var event = new ProgressEvent(
-            ProgressEvent.PROGRESS,
-            false,
-            false,
-            loaderInfo._bytesLoaded,
-            loaderInfo._bytesTotal
-          );
-          loaderInfo.dispatchEvent(event);
-          break;
+        //case 'progress':
+        //  var result = data.result;
+        //  loaderInfo._bytesLoaded = result.bytesLoaded || 0;
+        //  loaderInfo._bytesTotal = result.bytesTotal || 0;
+        //  var event = new ProgressEvent(
+        //    ProgressEvent.PROGRESS,
+        //    false,
+        //    false,
+        //    loaderInfo._bytesLoaded,
+        //    loaderInfo._bytesTotal
+        //  );
+        //  loaderInfo.dispatchEvent(event);
+        //  break;
         case 'complete':
           this._lastPromise.then(function () {
             loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
