@@ -439,7 +439,7 @@ module Shumway.AVM2.AS.flash.display {
             }
             mc.addScene(sceneInfo.name, labels, endFrame - startFrame);
           }
-        } else {
+        } else if (!mc._scenes.length) {
           mc.addScene('Scene 1', [], rootSymbol.numFrames);
         }
 
