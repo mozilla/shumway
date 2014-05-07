@@ -737,7 +737,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _animate(state: Shumway.Timeline.AnimationState): void {
-      this._depth = state.depth;
       if (state.matrix) {
         this._setMatrix(state.matrix, false);
       }

@@ -143,21 +143,25 @@ module Shumway.AVM2.AS.flash.display {
       var index = maxIndex + 1;
       for (var i = maxIndex; i >= 0; i--) {
         var current = children[i];
-        if (current._depth && current._depth < depth) {
-          index = i + 1;
-          break;
+        if (current._depth) {
+          if (current._depth < depth) {
+            index = i + 1;
+            break;
+          }
+          index = i;
         }
       }
       if (index > maxIndex) {
         children.push(child);
         child._index = index;
       } else {
-        children.splice(i, 1, child);
+        children.splice(index, 0, child);
         for (var i = index; i <= maxIndex; i++) {
           children[i]._index = i;
         }
       }
       child._parent = this;
+      child._depth = depth;
       child._invalidatePosition();
     }
 

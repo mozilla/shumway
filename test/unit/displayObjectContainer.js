@@ -145,4 +145,17 @@
     eq(r, "AA");
   });
 
+  unitTests.push(function () {
+    Random.seed(0x12343);
+    var s1 = new Shape();
+    var s2 = new Shape();
+    var s3 = new Shape();
+    var c = new DisplayObjectContainer();
+
+    c.addChildAtDepth(s2, 2);
+    c.addChildAtDepth(s3, 3);
+    c.addChildAtDepth(s1, 1);
+    eq(c.getChildIndex(s1), 0);
+  });
+
 })();
