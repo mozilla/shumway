@@ -45,11 +45,11 @@ module Shumway {
     private _frameContainer: FrameContainer;
 
     private static _syncFrameRate = 60;
-    private _server: Remoting.Server;
+    private _context: Remoting.Server.ChannelDeserializerContext;
 
     constructor(frameContainer: FrameContainer) {
       this._frameContainer = frameContainer;
-      this._server = new Remoting.Server(this._frameContainer);
+      this._context = new Shumway.Remoting.Server.ChannelDeserializerContext(this._frameContainer);
     }
 
     public load(url: string) {
@@ -107,29 +107,25 @@ module Shumway {
     }
 
     private _pumpDisplayListUpdates(): void {
-      var stage = this._stage;
       var byteArray = new ByteArray();
-      var visitor = new Shumway.Remoting.Client.ClientVisitor();
+      var serializer = new Shumway.Remoting.Client.ChannelSerializer();
+      serializer.output = byteArray;
 
-      visitor.output = byteArray;
+      serializer.writeReferences = false;
+      serializer.clearDirtyBits = false;
+      serializer.writeStage(this._stage);
 
-      stage.visit(function (displayObject) {
-        visitor.writeReferences = false;
-        visitor.clearDirtyBits = false;
-        visitor.visitDisplayObject(displayObject);
-        return VisitorFlags.Continue;
-      }, VisitorFlags.None);
-
-      stage.visit(function (displayObject) {
-        visitor.writeReferences = true;
-        visitor.clearDirtyBits = true;
-        visitor.visitDisplayObject(displayObject);
-        return VisitorFlags.Continue;
-      }, flash.display.VisitorFlags.None);
+      serializer.writeReferences = true;
+      serializer.clearDirtyBits = true;
+      serializer.writeStage(this._stage);
 
       byteArray.writeInt(Shumway.Remoting.MessageTag.EOF);
       byteArray.position = 0;
-      this._server.recieve(byteArray);
+
+      var deserializer = new Remoting.Server.ChannelDeserializer();
+      deserializer.input = byteArray;
+      deserializer.context = this._context;
+      deserializer.read();
     }
 
     /**
