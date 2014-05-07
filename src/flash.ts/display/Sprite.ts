@@ -34,9 +34,6 @@ module Shumway.AVM2.AS.flash.display {
       DisplayObject = flash.display.DisplayObject;
       DisplayObjectContainer = flash.display.DisplayObjectContainer;
       Event = flash.events.Event;
-
-      addedEvent = new Event(Event.ADDED, true);
-      addedToStageEvent = new Event(Event.ADDED_TO_STAGE);
     };
     
     // Called whenever an instance of the class is initialized.
@@ -84,6 +81,9 @@ module Shumway.AVM2.AS.flash.display {
     _hitArea: flash.display.Sprite;
     _useHandCursor: boolean;
 
+    /*
+     * TODO
+     */
     private _initializeChildren(frame: Timeline.Frame): void {
       for (var depth in frame.stateAtDepth) {
         var state = frame.stateAtDepth[depth];
