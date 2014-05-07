@@ -1,12 +1,12 @@
 /**
  * Copyright 2014 Mozilla Foundation
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ module Shumway.AVM2.AS.flash.display {
   import utils = flash.utils;
 
   export class Graphics extends ASNative {
-    
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
@@ -41,7 +41,7 @@ module Shumway.AVM2.AS.flash.display {
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
+
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
 
@@ -63,10 +63,10 @@ module Shumway.AVM2.AS.flash.display {
       this._bounds = new geom.Rectangle();
       this._parent = null;
     }
-    
+
     // JS -> AS Bindings
     _id: number;
-    
+
     // AS -> JS Bindings
 
     _graphicsData: utils.ByteArray;
@@ -115,12 +115,15 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     beginFill(color: number /*uint*/, alpha: number = 1): void {
-      color = color >>> 0; alpha = +alpha;
+      color = color >>> 0;
+      alpha = clamp(+alpha, 0, 1);
       this._graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_BEGIN_FILL);
       this._graphicsData.writeUnsignedInt((color << 8) | (alpha * 255));
     }
 
-    beginGradientFill(type: string, colors: any [], alphas: any [], ratios: any [], matrix: flash.geom.Matrix = null, spreadMethod: string = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
+    beginGradientFill(type: string, colors: any [], alphas: any [], ratios: any [],
+                      matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
+                      interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
       // colors = colors; alphas = alphas; ratios = ratios; matrix = matrix;
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_BEGIN_GRADIENT_FILL);
@@ -145,14 +148,15 @@ module Shumway.AVM2.AS.flash.display {
       graphicsData.writeFloat(clamp(focalPointRatio, -1, 1));
     }
 
-    beginBitmapFill(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null, repeat: boolean = true, smooth: boolean = false): void {
+    beginBitmapFill(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
+                    repeat: boolean = true, smooth: boolean = false): void {
       //bitmap = bitmap; matrix = matrix;
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_BEGIN_BITMAP_FILL);
       // bitmap
       // matrix
-      graphicsData.writeUnsignedByte(repeat ? 1 : 0);
-      graphicsData.writeUnsignedByte(smooth ? 1 : 0);
+      graphicsData.writeUnsignedByte(Number(repeat));
+      graphicsData.writeUnsignedByte(Number(smooth));
     }
 
 //    beginShaderFill(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
@@ -160,18 +164,23 @@ module Shumway.AVM2.AS.flash.display {
 //      notImplemented("public flash.display.Graphics::beginShaderFill"); return;
 //    }
 
-    lineGradientStyle(type: string, colors: any [], alphas: any [], ratios: any [], matrix: flash.geom.Matrix = null, spreadMethod: string = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
+    lineGradientStyle(type: string, colors: any [], alphas: any [], ratios: any [],
+                      matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
+                      interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
       // colors = colors; alphas = alphas; ratios = ratios; matrix = matrix;
       //this._closePath();
       //var fill = new GraphicsGradientFill(asCoerceString(type), colors, alphas, ratios, matrix, asCoerceString(spreadMethod), asCoerceString(interpolationMethod), +focalPointRatio);
       // TODO
     }
 
-    lineStyle(thickness: number, color: number /*uint*/ = 0, alpha: number = 1, pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = null, joints: string = null, miterLimit: number = 3): void {
+    lineStyle(thickness: number, color: number /*uint*/ = 0, alpha: number = 1,
+              pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = null,
+              joints: string = null, miterLimit: number = 3): void {
       //this._closePath();
       //var fill = new GraphicsSolidFill(color >>> 0, +alpha);
       //this._graphicsData.push(new GraphicsStroke(+thickness, !!pixelHinting, asCoerceString(scaleMode), asCoerceString(caps), asCoerceString(joints), +miterLimit, fill));
-      color = color >>> 0; alpha = +alpha;
+      color = color >>> 0;
+      alpha = clamp(+alpha, 0, 1);
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_LINE_STYLE);
       graphicsData.writeUnsignedInt((color << 8) | (alpha * 255));
@@ -211,7 +220,8 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidateParent();
     }
 
-    drawRoundRect(x: number, y: number, width: number, height: number, ellipseWidth: number, ellipseHeight: number): void {
+    drawRoundRect(x: number, y: number, width: number, height: number, ellipseWidth: number,
+                  ellipseHeight: number): void {
       //x = +x; y = +y; width = +width; height = +height; ellipseWidth = +ellipseWidth; ellipseHeight = +ellipseHeight;
 
       if (!ellipseHeight || !ellipseWidth) {
@@ -263,7 +273,9 @@ module Shumway.AVM2.AS.flash.display {
       this.lineTo(right, ybw);
     }
 
-    drawRoundRectComplex(x: number, y: number, width: number, height: number, topLeftRadius: number, topRightRadius: number, bottomLeftRadius: number, bottomRightRadius: number): void {
+    drawRoundRectComplex(x: number, y: number, width: number, height: number, topLeftRadius: number,
+                         topRightRadius: number, bottomLeftRadius: number,
+                         bottomRightRadius: number): void {
       //x = +x; y = +y; width = +width; height = +height; topLeftRadius = +topLeftRadius; topRightRadius = +topRightRadius; bottomLeftRadius = +bottomLeftRadius; bottomRightRadius = +bottomRightRadius;
 
       if (!topLeftRadius && !topRightRadius && !bottomLeftRadius && !bottomRightRadius) {
@@ -290,7 +302,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     drawEllipse(x: number, y: number, width: number, height: number): void {
-      x = +x; y = +y; width = +width; height = +height;
+      x = +x;
+      y = +y;
+      width = +width;
+      height = +height;
 
       var rx = width / 2;
       var ry = height / 2;
@@ -355,7 +370,8 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidateParent();
     }
 
-    cubicCurveTo(controlX1: number, controlY1: number, controlX2: number, controlY2: number, anchorX: number, anchorY: number): void {
+    cubicCurveTo(controlX1: number, controlY1: number, controlX2: number, controlY2: number,
+                 anchorX: number, anchorY: number): void {
       //controlX1 = +controlX1; controlY1 = +controlY1; controlX2 = +controlX2; controlY2 = +controlY2; anchorX = +anchorX; anchorY = +anchorY;
 
       var graphicsData = this._graphicsData;
@@ -380,7 +396,8 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidateParent();
     }
 
-    lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null, repeat: boolean = true, smooth: boolean = false): void {
+    lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
+                    repeat: boolean = true, smooth: boolean = false): void {
       //bitmap = bitmap; matrix = matrix;
       //this._closePath();
       //var fill = this._graphicsData.push(new GraphicsBitmapFill(bitmap, matrix, !!repeat, !!smooth));
@@ -392,16 +409,27 @@ module Shumway.AVM2.AS.flash.display {
 //      notImplemented("public flash.display.Graphics::lineShaderStyle"); return;
 //    }
     drawPath(commands: ASVector<any>, data: ASVector<any>, winding: string = "evenOdd"): void {
-      commands = commands; data = data, winding = asCoerceString(winding);
-      notImplemented("public flash.display.Graphics::drawPath"); return;
+      commands = commands;
+      data = data;
+      winding = asCoerceString(winding);
+      notImplemented("public flash.display.Graphics::drawPath");
+      return;
     }
-    drawTriangles(vertices: ASVector<any>, indices: ASVector<any> = null, uvtData: ASVector<any> = null, culling: string = "none"): void {
-      vertices = vertices; indices = indices; uvtData = uvtData, culling = asCoerceString(culling);
-      notImplemented("public flash.display.Graphics::drawTriangles"); return;
+
+    drawTriangles(vertices: ASVector<any>, indices: ASVector<any> = null,
+                  uvtData: ASVector<any> = null, culling: string = "none"): void {
+      vertices = vertices;
+      indices = indices;
+      uvtData = uvtData;
+      culling = asCoerceString(culling);
+      notImplemented("public flash.display.Graphics::drawTriangles");
+      return;
     }
+
     drawGraphicsData(graphicsData: ASVector<any>): void {
       graphicsData = graphicsData;
-      notImplemented("public flash.display.Graphics::drawGraphicsData"); return;
+      notImplemented("public flash.display.Graphics::drawGraphicsData");
+      return;
     }
 
     /**
