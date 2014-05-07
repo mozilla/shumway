@@ -119,7 +119,7 @@ module Shumway.AVM2.AS.flash.display {
       var loaderInfo = this._contentLoaderInfo;
 
       // TODO test at what frequence progress events need to be fired
-      loaderInfo.dispatchEvent(new ProgressEvent(ProgressEvent.PROGRESS), false, false, 0, 0));
+      loaderInfo.dispatchEvent(new ProgressEvent(ProgressEvent.PROGRESS, false, false, 0, 0));
 
       var command = data.command;
       switch (command) {
