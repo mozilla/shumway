@@ -225,19 +225,13 @@ module Shumway.AVM2.AS.flash.display {
     private static _nextID = 0;
 
     // Called whenever the class is initialized.
-    /**
-     * All display objects in the world need to be notified of certain events, here we keep track
-     * of all the display objects that were ever constructed.
-     */
-    static register(object: DisplayObject): string {
-      return 'instance' + DisplayObject._nextID;
-    }
+    static classInitializer: any = null;
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.Timeline.Symbol) {
       var self: DisplayObject = this;
-      var instanceName = DisplayObject.register(self);
 
+      self._id = DisplayObject._nextID++;
       self._displayObjectFlags = DisplayObjectFlags.Visible                            |
                                  DisplayObjectFlags.InvalidBounds                      |
                                  DisplayObjectFlags.InvalidMatrix                      |
@@ -248,7 +242,7 @@ module Shumway.AVM2.AS.flash.display {
 
       self._root = null;
       self._stage = null;
-      self._name = instanceName;
+      self._name = 'instance' + self._id;
       self._parent = null;
       self._mask = null;
 
@@ -353,7 +347,6 @@ module Shumway.AVM2.AS.flash.display {
       false && super(undefined);
       EventDispatcher.instanceConstructorNoInitialize();
       this._setFlags(DisplayObjectFlags.Constructed);
-      this._id = DisplayObject._nextID ++;
     }
 
     _setFlags(flags: DisplayObjectFlags) {
