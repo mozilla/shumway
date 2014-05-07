@@ -17,43 +17,40 @@
 package flash.events {
 [native(cls='ProgressEventClass')]
 public class ProgressEvent extends Event {
-  public static const PROGRESS:String = "progress";
-  public static const SOCKET_DATA:String = "socketData";
+  public static const PROGRESS: String = "progress";
+  public static const SOCKET_DATA: String = "socketData";
 
-  public function ProgressEvent(type:String, bubbles:Boolean = false, cancelable:Boolean = false,
-                                bytesLoaded:Number = 0, bytesTotal:Number = 0)
+  public function ProgressEvent(type: String, bubbles: Boolean = false, cancelable: Boolean = false,
+                                bytesLoaded: Number = 0, bytesTotal: Number = 0)
   {
     super(type, bubbles, cancelable);
     _bytesLoaded = bytesLoaded;
     _bytesTotal = bytesTotal;
   }
 
-  private var _bytesLoaded;
-  private var _bytesTotal;
-
-  public function get bytesLoaded():Number {
+  private var _bytesLoaded: Number;
+  public function get bytesLoaded(): Number {
     return _bytesLoaded;
   }
-
-  public function set bytesLoaded(value:Number):void {
+  public function set bytesLoaded(value: Number): void {
     _bytesLoaded = value;
   }
-
-  public function get bytesTotal():Number {
+  private var _bytesTotal: Number;
+  public function get bytesTotal(): Number {
     return _bytesLoaded;
   }
 
-  public function set bytesTotal(value:Number):void {
+  public function set bytesTotal(value: Number): void {
     _bytesTotal = value;
   }
 
-  public override function clone():Event {
+  public override function clone(): Event {
     return new ProgressEvent(type, bubbles, cancelable, bytesLoaded, bytesTotal);
   }
 
-  public override function toString():String {
-    return formatToString('ProgressEvent', 'bubbles', 'cancelable', 'eventPhase',
-                          'bytesLoaded', 'bytesTotal');
+  public override function toString(): String {
+    return formatToString('ProgressEvent', 'bubbles', 'cancelable', 'eventPhase', 'bytesLoaded',
+                          'bytesTotal');
   }
 }
 }
