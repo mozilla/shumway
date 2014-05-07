@@ -17,21 +17,30 @@ module Shumway.Remoting.Client {
   import MessageTag = Shumway.Remoting.MessageTag;
   import UpdateFrameTagBits = Shumway.Remoting.UpdateFrameTagBits;
 
+  import Stage = Shumway.AVM2.AS.flash.display.Stage;
   import DisplayObject = Shumway.AVM2.AS.flash.display.DisplayObject;
   import DisplayObjectFlags = Shumway.AVM2.AS.flash.display.DisplayObjectFlags;
   import DisplayObjectContainer = Shumway.AVM2.AS.flash.display.DisplayObjectContainer;
   import BlendMode = Shumway.AVM2.AS.flash.display.BlendMode;
+  import VisitorFlags = Shumway.AVM2.AS.flash.display.VisitorFlags;
 
-  import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
   import IDataOutput = Shumway.AVM2.AS.flash.utils.IDataOutput;
 
-  export class ClientVisitor implements IChannelVisitor {
+  export class ChannelSerializer {
     public output: IDataOutput;
 
     public writeReferences: boolean = false;
     public clearDirtyBits: boolean = false;
 
-    visitDisplayObject(displayObject: DisplayObject) {
+    writeStage(stage: Stage) {
+      var serializer = this;
+      stage.visit(function (displayObject) {
+        serializer.writeDisplayObject(displayObject);
+        return VisitorFlags.Continue;
+      }, VisitorFlags.None);
+    }
+
+    writeDisplayObject(displayObject: DisplayObject) {
       this.output.writeInt(MessageTag.UpdateFrame);
       this.output.writeInt(displayObject._id);
       // TODO create visitDisplayObjectContainer
@@ -49,10 +58,10 @@ module Shumway.Remoting.Client {
 
       this.output.writeInt(hasBits);
       if (hasMatrix) {
-        displayObject._getMatrix().writeExternal(this.output);
+        this.writeMatrix(displayObject._getMatrix());
       }
       if (hasBounds) {
-        displayObject._getContentBounds().writeExternal(this.output);
+        this.writeRectangle(displayObject._getContentBounds());
       }
       if (hasChildren) {
         assert (DisplayObjectContainer.isType(displayObject));
@@ -69,6 +78,24 @@ module Shumway.Remoting.Client {
       if (this.clearDirtyBits) {
         displayObject._removeFlags(DisplayObjectFlags.Dirty);
       }
+    }
+
+    writeMatrix(matrix: Shumway.AVM2.AS.flash.geom.Matrix) {
+      var output = this.output;
+      output.writeFloat(matrix.a);
+      output.writeFloat(matrix.b);
+      output.writeFloat(matrix.c);
+      output.writeFloat(matrix.d);
+      output.writeFloat(matrix.tx);
+      output.writeFloat(matrix.ty);
+    }
+
+    writeRectangle(rect: Shumway.AVM2.AS.flash.geom.Rectangle) {
+      var output = this.output;
+      output.writeFloat(rect.x);
+      output.writeFloat(rect.y);
+      output.writeFloat(rect.width);
+      output.writeFloat(rect.height);
     }
   }
 

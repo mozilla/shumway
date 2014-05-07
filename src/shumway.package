@@ -554,8 +554,9 @@ src/avm1lib/AS2Utils.js
 
 #!inline console.time("Load Player Dependencies");
 
-src/player/remotingClient.js
 src/player/remoting.js
+src/player/remotingClient.js
+src/player/remotingServer.js
 src/player/player.js
 
 #!inline console.timeEnd("Load Player Dependencies");
