@@ -103,5 +103,16 @@ module Shumway.AVM2.AS.flash.events {
       somewhatImplemented("public flash.events.GestureEvent::updateAfterEvent");
       return;
     }
+
+    private NativeCtor(phase: string = null, localX: number = 0, localY: number = 0,
+                       ctrlKey: boolean = false, altKey: boolean = false, shiftKey: boolean = false)
+    {
+      this._phase = asCoerceString(phase);
+      this._localX = +localX;
+      this._localY = +localY;
+      this._ctrlKey = !!ctrlKey;
+      this._altKey = !!altKey;
+      this._shiftKey = !!shiftKey;
+    }
   }
 }
