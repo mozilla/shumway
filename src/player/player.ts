@@ -177,6 +177,7 @@ module Shumway {
     private _leaveEventLoop(): void {
       assert (this._frameTimeout > -1);
       clearInterval(this._frameTimeout);
+      this._frameTimeout = -1;
     }
   }
 

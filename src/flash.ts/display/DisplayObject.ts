@@ -170,7 +170,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Display object has changed since the last time it was drawn.
      */
-    DirtyPaint                              = 0x0080,
+    DirtyPaint                                = 0x0080,
 
     /**
      * All synchronizable properties are dirty.

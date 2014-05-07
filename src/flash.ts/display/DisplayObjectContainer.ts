@@ -128,7 +128,7 @@ module Shumway.AVM2.AS.flash.display {
       var old = this._tabChildren;
       this._tabChildren = enable;
       if (old !== enable) {
-        this.dispatchEvent(new Event(Event.TAB_CHILDREN_CHANGE, true));
+        this.dispatchEvent(Event.getInstance(Event.TAB_CHILDREN_CHANGE, true));
       }
     }
 
@@ -147,7 +147,7 @@ module Shumway.AVM2.AS.flash.display {
     addChildAt(child: DisplayObject, index: number /*int*/): DisplayObject {
       index = index | 0;
 
-      assert (child._hasFlags(DisplayObjectFlags.Constructed));
+      assert (child._hasFlags(DisplayObjectFlags.Constructed), "Child is not fully constructed.");
       if (child === this) {
         throwError('ArgumentError', Errors.CantAddSelfError);
       }

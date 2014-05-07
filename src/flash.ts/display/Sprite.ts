@@ -55,7 +55,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         if (symbol.numFrames) {
           var frame = symbol.frames[0];
-          assert (frame);
+          assert (frame, "Initial frame is not defined.");
           self._initializeChildren(frame);
         }
       }
@@ -83,6 +83,14 @@ module Shumway.AVM2.AS.flash.display {
     _dropTarget: flash.display.DisplayObject;
     _hitArea: flash.display.Sprite;
     _useHandCursor: boolean;
+
+    private _initializeChildren(frame: Timeline.Frame): void {
+      for (var depth in frame.stateAtDepth) {
+        var state = frame.stateAtDepth[depth];
+        var character = DisplayObject.createAnimatedDisplayObject(state, false);
+        this.addChildAtDepth(character, state.depth);
+      }
+    }
 
     get graphics(): flash.display.Graphics {
       return this._graphics;
@@ -150,14 +158,6 @@ module Shumway.AVM2.AS.flash.display {
     stopTouchDrag(touchPointID: number /*int*/): void {
       touchPointID = touchPointID | 0;
       notImplemented("public flash.display.Sprite::stopTouchDrag"); return;
-    }
-
-    _initializeChildren(frame: Timeline.Frame): void {
-      for (var depth in frame.stateAtDepth) {
-        var state = frame.stateAtDepth[depth];
-        var character = DisplayObject.createAnimatedDisplayObject(state, false);
-        this.addChildAtDepth(character, state.depth);
-      }
     }
   }
 }
