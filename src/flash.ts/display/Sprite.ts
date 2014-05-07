@@ -19,7 +19,6 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   import Timeline = Shumway.Timeline;
-  import FramePhase = Shumway.Timeline.FramePhase;
 
   var DisplayObject: typeof flash.display.DisplayObject;
   var DisplayObjectContainer: typeof flash.display.DisplayObjectContainer;
@@ -30,8 +29,6 @@ module Shumway.AVM2.AS.flash.display {
 
   export class Sprite extends flash.display.DisplayObjectContainer {
 
-    private static _instances: Sprite [];
-
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       DisplayObject = flash.display.DisplayObject;
@@ -40,18 +37,11 @@ module Shumway.AVM2.AS.flash.display {
 
       addedEvent = new Event(Event.ADDED, true);
       addedToStageEvent = new Event(Event.ADDED_TO_STAGE);
-
-      Sprite._instances = [];
     };
-
-    static registerSprite(object: Sprite): void {
-      Sprite._instances.push(object);
-    }
     
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Timeline.SpriteSymbol) {
       var self: Sprite = this;
-      Sprite.registerSprite(self);
 
       self._buttonMode = false;
       self._dropTarget = null;
@@ -76,14 +66,6 @@ module Shumway.AVM2.AS.flash.display {
     
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
-
-    static constructFrame(): void {
-      var instances = Sprite._instances;
-      for (var i = 0; i < instances.length; i++) {
-        var instance = instances[i];
-        instances[i]._constructChildren();
-      }
-    }
 
     constructor () {
       false && super();
@@ -176,28 +158,6 @@ module Shumway.AVM2.AS.flash.display {
         var character = DisplayObject.createAnimatedDisplayObject(state, false);
         this.addChildAtDepth(character, state.depth);
       }
-    }
-
-    _constructChildren(): void {
-      var currentPhase = this._framePhase;
-      this._framePhase = FramePhase.Construct;
-      var children = this._children;
-      for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        if (child._hasFlags(DisplayObjectFlags.Constructed)) {
-          continue;
-        }
-        child.class.instanceConstructorNoInitialize.call(child);
-        if (child.name) {
-          this[Multiname.getPublicQualifiedName(child.name)] = child;
-        }
-        child._setFlags(DisplayObjectFlags.Constructed);
-        child.dispatchEvent(Event.getInstance(Event.ADDED, true));
-        if (this.stage) {
-          child.dispatchEvent(Event.getInstance(Event.ADDED_TO_STAGE));
-        }
-      }
-      this._framePhase = currentPhase;
     }
   }
 }

@@ -165,6 +165,7 @@ module Shumway {
         }
 
         DisplayObject.broadcastFrameEvent(FramePhase.Constructed);
+        DisplayObjectContainer.constructFrame();
         MovieClip.executeFrame();
         DisplayObject.broadcastFrameEvent(FramePhase.Exit);
 

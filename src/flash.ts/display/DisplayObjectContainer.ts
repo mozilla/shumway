@@ -20,6 +20,7 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
 
+  import FramePhase = Shumway.Timeline.FramePhase;
   import VisitorFlags = flash.display.VisitorFlags;
 
   var Event: typeof flash.events.Event;
@@ -27,26 +28,46 @@ module Shumway.AVM2.AS.flash.display {
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
     static bindings: string [] = null;
     static classSymbols: string [] = null;
+    private static _instances: DisplayObjectContainer [];
+
     static classInitializer: any = function () {
       Event = flash.events.Event;
+
+      DisplayObjectContainer._instances = [];
     };
 
     static initializer: any = function () {
       var self: DisplayObjectContainer = this;
+      DisplayObjectContainer._instances.push(self);
       self._tabChildren = true;
       self._mouseChildren = true;
       self._children = [];
     };
 
-    _tabChildren: boolean;
-    _mouseChildren: boolean;
-    _children: DisplayObject [];
+    /*
+     * TODO
+     */
+    static constructFrame(): void {
+      var instances = DisplayObjectContainer._instances;
+      for (var i = 0; i < instances.length; i++) {
+        var instance = instances[i];
+        var currentPhase = instance._framePhase;
+        instance._framePhase = FramePhase.Construct;
+        instance._constructChildren();
+        instance._framePhase = currentPhase;
+      }
+      DisplayObject._broadcastFrameEvent(FramePhase.Constructed);
+    }
 
     constructor () {
       false && super();
       InteractiveObject.instanceConstructorNoInitialize.call(this);
       this._setFlags(DisplayObjectFlags.DirtyChildren);
     }
+
+    _tabChildren: boolean;
+    _mouseChildren: boolean;
+    _children: DisplayObject [];
 
     /**
      * This object's children have changed.
@@ -55,6 +76,36 @@ module Shumway.AVM2.AS.flash.display {
       this._setFlags(DisplayObjectFlags.DirtyChildren);
       if (this._parent) {
         this._parent._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
+      }
+    }
+
+    _constructChildren(): void {
+      var children = this._children;
+      for (var i = 0; i < children.length; i++) {
+        var child = children[i];
+        if (child._hasFlags(DisplayObjectFlags.Constructed)) {
+          continue;
+        }
+        child.class.instanceConstructorNoInitialize.call(child);
+        if (child.name) {
+          this[Multiname.getPublicQualifiedName(child.name)] = child;
+        }
+        child._setFlags(DisplayObjectFlags.Constructed);
+
+        //if (!loader._isAvm2Enabled) {
+        //  this._initAvm1Bindings(instance, name, displayListItem.events,
+        //    's' + props.symbolId + 'c');
+        //  instance._dispatchEvent("init");
+        //  instance._dispatchEvent("construct");
+        //  instance._needLoadEvent = true;
+        //} else {
+        //  instance._dispatchEvent("load");
+        //}
+
+        child.dispatchEvent(Event.getInstance(Event.ADDED, true));
+        if (this.stage) {
+          child.dispatchEvent(Event.getInstance(Event.ADDED_TO_STAGE));
+        }
       }
     }
 

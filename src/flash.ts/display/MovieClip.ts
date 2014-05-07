@@ -243,15 +243,9 @@ module Shumway.AVM2.AS.flash.display {
         this._advanceFrame(); // recursive?
         this._constructChildren();
         // TODO test inter-frame navigation behaviour for SWF versions < 10
-        DisplayObject.broadcastFrameEvent(FramePhase.Constructed);
-        var instances = MovieClip._instances;
-        var snapshotLen = instances.length;
-        this._callNewFrame();
-        var i = instances.length;
-        while (i-- > snapshotLen) {
-          instances[i]._callNewFrame();
-        }
-        DisplayObject.broadcastFrameEvent(FramePhase.Exit);
+        this._advanceFrame();
+        DisplayObjectContainer.constructFrame();
+        MovieClip.executeFrame();
       }
     }
 
