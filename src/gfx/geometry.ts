@@ -28,6 +28,12 @@ module Shumway.GFX.Geometry {
     return d * Math.PI / 180;
   }
 
+  var E = 0.0001;
+
+  function eqFloat(a, b) {
+    return Math.abs(a - b) < E;
+  }
+
   export class Point {
     x: number;
     y: number;
@@ -814,6 +820,10 @@ module Shumway.GFX.Geometry {
       return Math.atan(this.b / this.a) * 180 / Math.PI;
     }
 
+    isScaleOrRotation(): boolean {
+      return eqFloat(this.a * this.c + this.b * this.d, 0);
+    }
+
     toString (): string {
       return "{" +
         this.a  + ", " +
@@ -1331,18 +1341,24 @@ module Shumway.GFX.Geometry {
       }
     }
 
+    /**
+     * Query tiles using a transformed rectangle.
+     * TODO: Fine-tune these heuristics.
+     */
     getTiles(query: Rectangle, transform: Matrix): Tile [] {
       var tileCount = this.columns * this.rows;
-      if (true || tileCount < 40) {
-        // If we have only a few tiles we're better off using the dumber algorithm.
-        // TODO: Fine-tune these heuristics.
-        // return this.getFewTiles(query, transform, tileCount > 10);
-        return this.getFewTiles(query, transform, true);
+      // The |getFewTiles| algorithm works better for a few tiles but it can't handle skew transforms.
+      if (tileCount < 40 && transform.isScaleOrRotation()) {
+        var precise = true || tileCount > 10;
+        return this.getFewTiles(query, transform, precise);
       } else {
-        // return this.getManyTiles(query, transform);
+        return this.getManyTiles(query, transform);
       }
     }
 
+    /**
+     * Precise indicates that we want to do an exact OBB intersection.
+     */
     private getFewTiles(query: Rectangle, transform: Matrix, precise: boolean = true): Tile [] {
       if (transform.isTranslationOnly() && this.tiles.length === 1) {
         if (this.tiles[0].bounds.intersectsTranslated(query, transform.tx, transform.ty)) {
@@ -1354,7 +1370,6 @@ module Shumway.GFX.Geometry {
       var queryOBB;
       var queryBounds = new Rectangle(0, 0, this.w, this.h);
       if (precise) {
-        // Precise indicates that we want to do an exact OBB intersection.
         queryOBB = new OBB(TileCache._points);
       }
       queryBounds.intersect(OBB.getBounds(TileCache._points));
@@ -1385,7 +1400,6 @@ module Shumway.GFX.Geometry {
       return tiles;
     }
 
-    /*
     private getManyTiles(query: Rectangle, transform: Matrix): Tile [] {
       function intersectX(x: number, p1: Point, p2: Point): number {
         // (x - x1) * (y2 - y1) = (y - y1) * (x2 - x1)
@@ -1403,7 +1417,7 @@ module Shumway.GFX.Geometry {
         }
       }
 
-      var rectPoints: Point[] = TileCache.points;
+      var rectPoints: Point[] = TileCache._points;
       transform.transformRectangle(query, rectPoints);
 
       // finding minimal-x point, placing at first (and last)
@@ -1423,14 +1437,14 @@ module Shumway.GFX.Geometry {
       var tiles = [];
 
       var lastY1, lastY2;
-      var i = Math.floor(lines[0].x / this.size);
-      var nextX = (i + 1) * this.size;
+      var i = Math.floor(lines[0].x / this.tileW);
+      var nextX = (i + 1) * this.tileW;
       if (lines[2].x < nextX) {
         // edge case: all fits into one column
         lastY1 = Math.min(lines[0].y, lines[1].y, lines[2].y, lines[3].y);
         lastY2 = Math.max(lines[0].y, lines[1].y, lines[2].y, lines[3].y);
-        var j1 = Math.floor(lastY1 / this.size);
-        var j2 = Math.floor(lastY2 / this.size);
+        var j1 = Math.floor(lastY1 / this.tileH);
+        var j2 = Math.floor(lastY2 / this.tileH);
         appendTiles(tiles, this, i, j1, j2);
         return tiles;
       }
@@ -1450,8 +1464,8 @@ module Shumway.GFX.Geometry {
         lastY1 = intersectX(nextX, lines[line1], lines[line1 + 1]);
         lastY2 = intersectX(nextX, lines[line2], lines[line2 - 1]);
 
-        var j1 = Math.floor(lines[line1].y / this.size);
-        var j2 = Math.floor(lines[line2].y / this.size);
+        var j1 = Math.floor(lines[line1].y / this.tileH);
+        var j2 = Math.floor(lines[line2].y / this.tileH);
         appendTiles(tiles, this, i, j1, j2);
         i++;
       }
@@ -1474,8 +1488,8 @@ module Shumway.GFX.Geometry {
           nextSegment2 = false;
         }
 
-        var j1 = Math.floor((lines[line1].y < lines[line1 + 1].y ? lastY1 : nextY1) / this.size);
-        var j2 = Math.floor((lines[line2].y > lines[line2 - 1].y ? lastY2 : nextY2) / this.size);
+        var j1 = Math.floor((lines[line1].y < lines[line1 + 1].y ? lastY1 : nextY1) / this.tileH);
+        var j2 = Math.floor((lines[line2].y > lines[line2 - 1].y ? lastY2 : nextY2) / this.tileH);
         appendTiles(tiles, this, i, j1, j2);
 
         if (nextSegment1 && lastSegment1) {
@@ -1497,11 +1511,10 @@ module Shumway.GFX.Geometry {
           lastY2 = nextY2;
         }
         i++;
-        nextX = (i + 1) * this.size;
+        nextX = (i + 1) * this.tileW;
       } while (line1 < line2);
       return tiles;
     }
-    */
   }
 
   var MIN_CACHE_LEVELS = 5;

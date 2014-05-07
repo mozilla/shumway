@@ -41,6 +41,7 @@
     var Geometry = Shumway.GFX.Geometry;
     var Matrix = Geometry.Matrix;
     var Point = Geometry.Point;
+    var OBB = Geometry.OBB;
     var RenderableTileCache = Geometry.RenderableTileCache;
     var TileCache = Geometry.TileCache;
 
@@ -55,6 +56,16 @@
 
     var points = Point.createEmptyPoints(4);
 
+    function strokeLines(ctx, points) {
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (var i = 1; i < 4; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+
     function strokeQuery(ctx, query, t, cache) {
       t.transformRectangle(query, points);
       ctx.beginPath();
@@ -68,7 +79,7 @@
     }
 
     function testA() {
-      var cache = new TileCache(512, 512, 8, 8, 1);
+      var cache = new TileCache(512, 512, 16, 16, 1);
       cache.tiles.forEach(function (t) {
         t.fillStyle = Shumway.ColorStyle.randomStyle();
       });
@@ -81,14 +92,14 @@
 
 
       setInterval(function () {
-        t += 0.01;
+        t += 0.02;
         a.clearRect(0, 0, 1024, 1024);
 
         var transform = Matrix.createIdentity();
         transform.translate(-256, -256);
         transform.rotate(t);
         transform.scale(Math.sin(t), Math.sin(t));
-        transform.translate(400, 300);
+        transform.translate(300, 300);
         var T = Matrix.createIdentity();
         transform.inverse(T);
         var tiles = cache.getTiles(query, T);
@@ -152,7 +163,7 @@
         t.fillStyle = Shumway.ColorStyle.randomStyle();
       });
 
-      var query = new Rectangle(100, 100, 850, 128);
+      var query = new Rectangle(100, 100, 400, 128);
 
       var transform = Matrix.createIdentity();
 
@@ -167,7 +178,10 @@
         // transform.rotate(Math.sin(t) / 2);
         var T = Matrix.createIdentity();
         transform.inverse(T);
+
         var tiles = cache.getTiles(query, T);
+        // var tiles = cache.tiles;
+
         a.strokeStyle = "white";
         a.strokeRect(query.x, query.y, query.w, query.h);
 
@@ -185,10 +199,57 @@
       }, 16);
     }
 
+    function testD() {
+      var cache = new TileCache(512, 512, 8, 8, 1);
+      cache.tiles.forEach(function (t) {
+        t.fillStyle = Shumway.ColorStyle.randomStyle();
+      });
+
+      var query = new Rectangle(100, 100, 850, 128);
+
+      var transform = Matrix.createIdentity();
+
+      var t = 0;
+      setInterval(function () {
+        t += 0.02;
+
+        var r = new Rectangle(0, 0, 100, 100);
+        var A = Point.createEmptyPoints(4);
+        var B = Point.createEmptyPoints(4);
+
+        var t0 = Matrix.createIdentity();
+        t0.translate(200, 200);
+        t0.transformRectangle(r, A);
+
+        var t1 = Matrix.createIdentity();
+        t1.c = Math.sin(t);
+        t1.b = Math.sin(t);
+        t1.translate((Math.sin(t) + 1) * 80, (Math.sin(t) + 1) * 80);
+        t1.transformRectangle(r, B);
+
+        var oA = new OBB(A);
+        var oB = new OBB(B);
+
+        if (oA.intersects(oB)) {
+          a.strokeStyle = "red";
+        } else {
+          a.strokeStyle = "white";
+        }
+
+        a.clearRect(0, 0, 1024, 1024);
+        a.save();
+
+        strokeLines(a, A);
+        strokeLines(a, B);
+        a.restore();
+      }, 16);
+    }
+
   </script>
   <br>
   <button onclick="testA()">Scale & Rotate</button>
   <button onclick="testB()">Translate & Rotate</button>
   <button onclick="testC()">Skew</button>
+  <button onclick="testD()">OOB Check</button>
 </body>
 </html>
