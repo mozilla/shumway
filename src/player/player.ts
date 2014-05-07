@@ -22,12 +22,13 @@ module Shumway {
   import Easel = Shumway.GFX.Easel;
 
   import FramePhase = Shumway.Timeline.FramePhase;
+  import LoadStatus = flash.display.LoadStatus;
 
   import ByteArray = flash.utils.ByteArray;
   import Event = flash.events.Event;
-  import Sprite = flash.display.Sprite;
-  import MovieClip = flash.display.MovieClip;
   import DisplayObject = flash.display.DisplayObject;
+  import DisplayObjectContainer = flash.display.DisplayObjectContainer;
+  import MovieClip = flash.display.MovieClip;
   import VisitorFlags = flash.display.VisitorFlags;
 
   /**
@@ -68,7 +69,7 @@ module Shumway {
         stage.frameRate = loaderInfo.frameRate;
         stage.stageWidth = loaderInfo.width;
         stage.stageHeight = loaderInfo.height;
-        stage.addChild(root);
+        stage.addChildAtDepth(root, 0);
         self._enterLoops();
       });
 
@@ -153,27 +154,22 @@ module Shumway {
     private _enterEventLoop(): void {
       var self = this;
       var stage = this._stage;
-      var firstRun = true;
+      var needsInit = true;
       (function tick() {
-        timeline && timeline.enter("eventLoop");
         self._frameTimeout = setTimeout(tick, 1000 / stage.frameRate);
+        timeline && timeline.enter("eventLoop");
 
-        if (!firstRun) {
-          MovieClip.initFrame();
-          DisplayObject.broadcastFrameEvent(FramePhase.Enter);
-          Sprite.constructFrame();
-        }
-
-        DisplayObject.broadcastFrameEvent(FramePhase.Constructed);
+        MovieClip.initFrame();
         DisplayObjectContainer.constructFrame();
         MovieClip.executeFrame();
-        DisplayObject.broadcastFrameEvent(FramePhase.Exit);
 
-        if (stage._invalid && !firstRun) {
-          stage.broadcastRenderEvent();
+        if (needsInit) {
+          self._loaderInfo.loadStatus = LoadStatus.Initialized;
+          needsInit = false;
+        } else {
+          stage.render();
         }
 
-        firstRun = false;
         timeline && timeline.leave("eventLoop");
       })();
     }

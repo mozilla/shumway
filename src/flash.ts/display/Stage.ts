@@ -26,18 +26,12 @@ module Shumway.AVM2.AS.flash.display {
   import ColorCorrectionSupport = flash.display.ColorCorrectionSupport;
   import StageQuality = flash.display.StageQuality;
 
-  var Event: typeof flash.events.Event;
   var DisplayObject: typeof flash.display.DisplayObject;
-  var Sprite: typeof flash.display.Sprite;
-  var MovieClip: typeof flash.display.MovieClip;
 
   export class Stage extends flash.display.DisplayObjectContainer {
 
     static classInitializer: any = function () {
-      Event = flash.events.Event;
       DisplayObject = flash.display.DisplayObject;
-      Sprite = flash.display.Sprite;
-      MovieClip = flash.display.MovieClip;
     };
 
     static classSymbols: string [] = null; // [];
@@ -77,10 +71,11 @@ module Shumway.AVM2.AS.flash.display {
       this._displayContextInfo = null;
 
       this._timeout = -1;
+
       /**
-       * Invalidate
+       * Indicates if a Render event was requested by calling the |invalid| function.
        */
-      this._invalid = false;
+      this._invalidated = false;
     }
     
     // JS -> AS Bindings
@@ -120,7 +115,7 @@ module Shumway.AVM2.AS.flash.display {
      * The |invalidate| function was called on the stage. This flag indicates that
      * the |RENDER| event gets fired right before the stage is rendered.
      */
-    private _invalid: boolean;
+    private _invalidated: boolean;
 
     get frameRate(): number {
       return this._frameRate;
@@ -291,27 +286,35 @@ module Shumway.AVM2.AS.flash.display {
       index = index | 0;
       notImplemented("public flash.display.Stage::removeChildAt"); return;
     }
-
     swapChildrenAt(index1: number /*int*/, index2: number /*int*/): void {
       index1 = index1 | 0; index2 = index2 | 0;
       notImplemented("public flash.display.Stage::swapChildrenAt"); return;
     }
 
     invalidate(): void {
-      this._invalid = true;
+      this._invalidated = true;
+    }
+
+    isInvalidated(): boolean {
+      return this._invalidated;
     }
 
     isFocusInaccessible(): boolean {
       notImplemented("public flash.display.Stage::isFocusInaccessible"); return;
     }
-
     requireOwnerPermissions(): void {
       somewhatImplemented("public flash.display.Stage::requireOwnerPermissions"); return;
     }
 
-    public broadcastRenderEvent() {
-      this._propagateEvent(Event.getInstance(Event.RENDER));
-      this._invalid = false;
+    /*
+     * TODO
+     */
+    public render() {
+      if (!this._invalidated) {
+        return;
+      }
+      DisplayObject._broadcastFrameEvent(FramePhase.Render);
+      this._invalidated = false;
     }
   }
 }

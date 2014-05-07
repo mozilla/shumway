@@ -30,22 +30,21 @@ module Shumway.AVM2.AS.flash.display {
 
     private static _instances: MovieClip [];
 
+    private static _execute: boolean;
+
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       Scene = flash.display.Scene;
       FrameLabel = flash.display.FrameLabel;
 
       MovieClip._instances = [];
+      MovieClip._execute = false;
     };
-
-    static registerMovieClip(object: MovieClip): void {
-      MovieClip._instances.push(object);
-    }
     
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.Timeline.SpriteSymbol) {
       var self: MovieClip = this;
-      MovieClip.registerMovieClip(self);
+      MovieClip._instances.push(self);
 
       self._currentFrame = 0;
       self._framesLoaded = 1;
@@ -62,7 +61,7 @@ module Shumway.AVM2.AS.flash.display {
       self._frameScripts = [];
       self._currentFrameAbs = 1;
       self._nextFrameAbs = 2;
-      self._hasNewFrame = true;
+      self._execute = true;
       self._stopped = false;
 
       if (symbol) {
@@ -87,22 +86,50 @@ module Shumway.AVM2.AS.flash.display {
     static initFrame(): void {
       var instances = MovieClip._instances;
       for (var i = 0; i < instances.length; i++) {
-        instances[i]._advanceFrame();
+        var instance = instances[i];
+        if (instance._hasFlags(DisplayObjectFlags.Constructed)) {
+          instance._advanceFrame();
+        }
       }
+      DisplayObject._broadcastFrameEvent(FramePhase.Enter);
     }
 
+    /*
+     * TODO
+     */
     static executeFrame(): void {
-      var instances = MovieClip._instances;
-      for (var i = 0; i < instances.length; i++) {
-        instances[i]._callNewFrame();
+      while (MovieClip._execute) {
+        MovieClip._execute = false;
+
+        var instances = MovieClip._instances;
+        for (var i = 0; i < instances.length; i++) {
+          var instance = instances[i];
+          if (instance._execute) {
+            instance._execute = false;
+
+            var currentPhase = instance._framePhase;
+            instance._framePhase = FramePhase.Execute;
+            instance.callFrame(instance._currentFrameAbs);
+            instance._framePhase = currentPhase;
+
+            if (!instance._currentFrameAbs) {
+              instance._advanceFrame();
+              instance._constructChildren();
+              i--;
+              continue;
+            }
+          }
+        }
       }
+
+      DisplayObject._broadcastFrameEvent(FramePhase.Exit);
     }
 
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.MovieClip");
     }
-    
+
     // JS -> AS Bindings
     
     currentLabels: any [];
@@ -124,7 +151,7 @@ module Shumway.AVM2.AS.flash.display {
     _frameScripts: any;
     _currentFrameAbs: number;
     _nextFrameAbs: number;
-    _hasNewFrame: boolean;
+    _execute: boolean;
     _stopped: boolean;
 
     get currentFrame(): number /*int*/ {
@@ -238,10 +265,9 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       this._nextFrameAbs = offset + frameNum;
+      this._currentFrameAbs = 0;
 
-      if (this._framePhase !== FramePhase.Execute) { // TODO: skip if ActionScriptVersion < 3
-        this._advanceFrame(); // recursive?
-        this._constructChildren();
+      if (this._framePhase !== FramePhase.Execute) { // TODO: also check if ActionScriptVersion < 3
         // TODO test inter-frame navigation behaviour for SWF versions < 10
         this._advanceFrame();
         DisplayObjectContainer.constructFrame();
@@ -249,39 +275,14 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
-    private _callNewFrame(): void {
-      if (!this._hasNewFrame) {
+    /*
+     * TODO
+     */
+    private _advanceFrame(): void {
+      if (this._stopped) {
         return;
       }
-      var currentPhase = this._framePhase;
-      this._framePhase = FramePhase.Execute;
-      this.callFrame(this._currentFrameAbs);
-      this._framePhase = currentPhase;
-      this._hasNewFrame = false;
-    }
 
-    callFrame(frame: number): void {
-      frame = frame | 0;
-      if (frame in this._frameScripts) {
-        var scripts = this._frameScripts[frame];
-        try {
-          for (var i = 0; i < scripts.length; i++) {
-            scripts[i].call(this);
-          }
-        } catch (e) {
-          Telemetry.instance.reportTelemetry({topic: 'error', error: Telemetry.ErrorTypes.AVM2_ERROR});
-
-          //if ($DEBUG) {
-          //  console.error('error ' + e + ', stack: \n' + e.stack);
-          //}
-
-          this.stop();
-          throw e;
-        }
-      }
-    }
-
-    private _advanceFrame(): void {
       var scenes = this._scenes;
       var lastFrame = this._currentFrameAbs;
       var nextFrame = this._nextFrameAbs;
@@ -308,7 +309,7 @@ module Shumway.AVM2.AS.flash.display {
       //}
 
       if (nextFrame === lastFrame) {
-        this._hasNewFrame = false;
+        this._execute = false;
         return;
       }
 
@@ -374,8 +375,27 @@ module Shumway.AVM2.AS.flash.display {
       this._currentFrameAbs = nextFrame;
       if (!this._stopped) {
         this._nextFrameAbs = nextFrame + 1;
+      this._execute = MovieClip._execute = true;
+    }
+
+    callFrame(frame: number): void {
+      frame = frame | 0;
+      var frameScript = this._frameScripts[frame];
+      if (!frameScript) {
+        return;
       }
-      this._hasNewFrame = true;
+      try {
+        frameScript.call(this);
+      } catch (e) {
+        Telemetry.instance.reportTelemetry({ topic: 'error', error: Telemetry.ErrorTypes.AVM2_ERROR });
+
+        //if ($DEBUG) {
+        //  console.error('error ' + e + ', stack: \n' + e.stack);
+        //}
+
+        this.stop();
+        throw e;
+      }
     }
 
     nextFrame(): void {
@@ -397,21 +417,22 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     addFrameScript(...args): void {
+      if (!this._currentFrame) {
+        return;
+      }
       // arguments are pairs of frameIndex and script/function
       // frameIndex is in range 0..totalFrames-1
+      var numArgs = arguments.length;
+      if (numArgs & 1) {
+        throwError('ArgumentError', Errors.TooFewArgumentsError, numArgs, numArgs + 1);
+      }
       var frameScripts = this._frameScripts;
-      for (var i = 0; i < arguments.length; i += 2) {
+      for (var i = 0; i < numArgs; i += 2) {
         var frameNum = arguments[i] + 1;
         var fn = arguments[i + 1];
-        if (!fn) {
-          // TODO
-          throwError('ArgumentError', Errors.TooFewArgumentsError, i, i + 1);
-        }
-        var scripts = frameScripts[frameNum];
-        if (scripts) {
-          scripts.push(fn);
-        } else {
-          frameScripts[frameNum] = [fn];
+        frameScripts[frameNum] = fn;
+        if (frameNum === this._currentFrameAbs) {
+          MovieClip._execute = true;
         }
       }
     }

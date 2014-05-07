@@ -29,6 +29,7 @@ module Shumway.AVM2.AS.flash.display {
   import Matrix = flash.geom.Matrix;
   import ColorTransform = flash.geom.ColorTransform;
 
+  import LoadStatus = flash.display.LoadStatus;
   import ActionScriptVersion = flash.display.ActionScriptVersion;
   import BlendMode = flash.display.BlendMode;
 
@@ -152,7 +153,7 @@ module Shumway.AVM2.AS.flash.display {
         //  break;
         case 'complete':
           this._lastPromise.then(function () {
-            loaderInfo.dispatchEvent(new Event(Event.COMPLETE));
+            loaderInfo.loadStatus = LoadStatus.Complete;
           });
 
           if (data.stats) {
@@ -414,8 +415,8 @@ module Shumway.AVM2.AS.flash.display {
         //}
 
         root._loaderInfo = this._contentLoaderInfo;
-
         this._content = root;
+        this._children[0] = root;
       }
 
       if (flash.display.MovieClip.isType(root)) {
@@ -489,11 +490,11 @@ module Shumway.AVM2.AS.flash.display {
       //  }
       //}
 
-      if (frameIndex === 0) {
-        documentClass.instanceConstructorNoInitialize.call(root);
-        this.addChild(root);
-        loaderInfo.dispatchEvent(new Event(Event.INIT));
-      }
+      //if (frameIndex === 0) {
+      //  documentClass.instanceConstructorNoInitialize.call(root);
+      //  this.addChild(root);
+      //  loaderInfo.dispatchEvent(new Event(Event.INIT));
+      //}
     }
 
     private _buildFrame(commands: any []): Timeline.Frame {
@@ -514,7 +515,7 @@ module Shumway.AVM2.AS.flash.display {
             var events = null;
             if (cmd.symbolId) {
               symbol = this._dictionary[cmd.symbolId];
-              assert (symbol);
+              assert (symbol, "Symbol is not defined.");
             }
             if (cmd.hasMatrix) {
               matrix = Matrix.fromAny(cmd.matrix);
@@ -596,6 +597,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _load(request: flash.net.URLRequest, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {
+      var loaderInfo = this._contentLoaderInfo;
       //request = request; checkPolicyFile = !!checkPolicyFile; applicationDomain = applicationDomain; securityDomain = securityDomain; requestedContentParent = requestedContentParent; parameters = parameters; deblockingFilter = +deblockingFilter; allowCodeExecution = !!allowCodeExecution; imageDecodingPolicy = asCoerceString(imageDecodingPolicy);
       //if (flash.net.URLRequest.isType(request)) {
         this._contentLoaderInfo._url = request.url;
@@ -637,6 +639,7 @@ module Shumway.AVM2.AS.flash.display {
       //} else {
       //  worker.postMessage(request);
       //}
+      loaderInfo.loadStatus = LoadStatus.Started;
     }
 
     _loadBytes(bytes: flash.utils.ByteArray, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {

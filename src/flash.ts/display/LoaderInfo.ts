@@ -20,10 +20,24 @@ module Shumway.AVM2.AS.flash.display {
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
 
+  var Event: typeof flash.events.Event;
+
+  /**
+   * TODO
+   */
+  export enum LoadStatus {
+    None        = 0,
+    Started     = 1,
+    Initialized = 2,
+    Complete    = 3
+  }
+
   export class LoaderInfo extends flash.events.EventDispatcher {
 
     // Called whenever the class is initialized.
-    static classInitializer: any = null;
+    static classInitializer: any = function () {
+      Event = flash.events.Event;
+    };
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = null;
@@ -60,6 +74,8 @@ module Shumway.AVM2.AS.flash.display {
       this._content = null;
       this._bytes = null;
       this._uncaughtErrorEvents = null;
+
+      this._loadStatus = LoadStatus.None;
     }
 
     // JS -> AS Bindings
@@ -96,6 +112,8 @@ module Shumway.AVM2.AS.flash.display {
     _content: flash.display.DisplayObject;
     _bytes: flash.utils.ByteArray;
     _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
+
+    _loadStatus: LoadStatus;
 
     get loaderURL(): string {
       return this._loaderURL;
@@ -202,6 +220,32 @@ module Shumway.AVM2.AS.flash.display {
     _setUncaughtErrorEvents(value: flash.events.UncaughtErrorEvents): void {
       value = value;
       notImplemented("public flash.display.LoaderInfo::_setUncaughtErrorEvents"); return;
+    }
+
+    get loadStatus() {
+      return this._loadStatus;
+    }
+
+    set loadStatus(value: LoadStatus) {
+      switch (value) {
+        case LoadStatus.Started:
+          this.dispatchEvent(Event.getInstance(Event.OPEN));
+          break;
+        case LoadStatus.Initialized:
+          this.dispatchEvent(Event.getInstance(Event.INIT));
+          if (this._loadStatus !== LoadStatus.Complete) {
+            // TODO loadStatus shouldn't be overriden
+            break;
+          }
+        case LoadStatus.Complete:
+          if (this._loadStatus === LoadStatus.Initialized) {
+            this.dispatchEvent(Event.getInstance(Event.COMPLETE));
+          }
+          break;
+        default:
+          return;
+      }
+      this._loadStatus = value;
     }
   }
 }
