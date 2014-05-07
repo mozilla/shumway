@@ -18,11 +18,15 @@ package flash.events {
 [native(cls='GestureEventClass')]
 public class GestureEvent extends Event {
   public static const GESTURE_TWO_FINGER_TAP: String = "gestureTwoFingerTap";
-  public native function GestureEvent(type: String, bubbles: Boolean = true,
+  public function GestureEvent(type: String, bubbles: Boolean = true,
                                       cancelable: Boolean = false, phase: String = null,
                                       localX: Number = 0, localY: Number = 0,
                                       ctrlKey: Boolean = false, altKey: Boolean = false,
-                                      shiftKey: Boolean = false);
+                                      shiftKey: Boolean = false)
+  {
+    super(type, bubbles, cancelable);
+    NativeCtor(phase, localX, localY, ctrlKey, altKey, shiftKey);
+  }
 
   public native function get localX(): Number;
   public native function set localX(value: Number): void;
@@ -51,5 +55,10 @@ public class GestureEvent extends Event {
                           'localY', 'ctrlKey', 'altKey', 'shiftKey');
   }
   public native function updateAfterEvent(): void;
+
+  private native function NativeCtor(phase: String = null,
+                                     localX: Number = 0, localY: Number = 0,
+                                     ctrlKey: Boolean = false, altKey: Boolean = false,
+                                     shiftKey: Boolean = false): void;
 }
 }
