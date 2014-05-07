@@ -38,13 +38,13 @@ function defineButton(tag, dictionary) {
       matrix: character.matrix
     };
     if (character.stateUp)
-      states.up.push(entry);
+      states.up.push(cmd);
     if (character.stateOver)
-      states.over.push(entry);
+      states.over.push(cmd);
     if (character.stateDown)
-      states.down.push(entry);
+      states.down.push(cmd);
     if (character.stateHitTest)
-      states.hitTest.push(entry);
+      states.hitTest.push(cmd);
   }
   var button = {
     type: 'button',
