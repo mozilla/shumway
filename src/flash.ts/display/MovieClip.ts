@@ -210,10 +210,7 @@ module Shumway.AVM2.AS.flash.display {
       if (this._totalFrames > 1) {
         this._isPlaying = true;
       }
-      if (this._stopped && this._currentFrameAbs === this._nextFrameAbs) {
-        this._nextFrameAbs++;
-        this._stopped = false;
-      }
+      this._stopped = false;
     }
 
     stop(): void {
@@ -251,6 +248,7 @@ module Shumway.AVM2.AS.flash.display {
           var label = labels[i];
           if (label.name === frame) {
             labelFound = label;
+            frameNum = label.frame;
             break;
           }
         }
@@ -373,8 +371,7 @@ module Shumway.AVM2.AS.flash.display {
       this._currentFrame = currentFrame;
       this._sceneIndex = sceneIndex;
       this._currentFrameAbs = nextFrame;
-      if (!this._stopped) {
-        this._nextFrameAbs = nextFrame + 1;
+      this._nextFrameAbs = nextFrame + 1;
       this._execute = MovieClip._execute = true;
     }
 
@@ -399,11 +396,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     nextFrame(): void {
-      this.gotoAndStop(this._currentFrame + 1);
+      this.gotoAndStop(this._currentFrameAbs + 1);
     }
 
     prevFrame(): void {
-      this.gotoAndStop(this._currentFrame - 1);
+      this.gotoAndStop(this._currentFrameAbs - 1);
     }
 
     gotoAndPlay(frame: any, scene: string = null): void {
