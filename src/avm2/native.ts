@@ -1380,6 +1380,7 @@ module Shumway.AVM2.AS {
   export class ASDate extends ASNative {
     public static staticNatives: any [] = [Date];
     public static instanceNatives: any [] = [Date.prototype];
+    public static instanceConstructor: any = Date;
   }
 
   var builtinNativeClasses: Shumway.Map<ASClass> = Shumway.ObjectUtilities.createMap<ASClass>();
@@ -1595,6 +1596,7 @@ module Shumway.AVM2.AS {
     export var Function = jsGlobal.Function;
     export var Boolean = jsGlobal.Boolean;
     export var Number = jsGlobal.Number;
+    export var Date = jsGlobal.Date;
 
     export function print(...args: any []) {
       jsGlobal.print.apply(null, args);
