@@ -217,18 +217,54 @@ module Shumway.AVM2.AS.flash.display {
    * since that's what the AS3 specifies.
    */
 
+  /**
+   * Broadcast Events
+   *
+   * http://www.senocular.com/flash/tutorials/orderofoperations/
+   */
+  class BroadcastEventDispatchQueue {
+    private _queues: Shumway.Map<EventDispatcher []>;
+
+    constructor() {
+      this._queues = Shumway.ObjectUtilities.createEmptyObject();
+    }
+
+    register(type: string, target: EventDispatcher) {
+      assert (Event.isBroadcastEventType(type), "Can only register broadcast events.");
+      var queue = this._queues[type] || (this._queues[type] = []);
+      assert (queue.indexOf(target) < 0, "Figure out what to do if a target registers itself twice for a broadcast event.");
+      queue.push(target);
+    }
+
+    dispatchEvent(event: flash.events.Event, framePhase: FramePhase) {
+      var queue = this._queues[event.type];
+      if (!queue) {
+        return;
+      }
+      timeline && timeline.enter(FramePhase[framePhase]);
+      for (var i = 0; i < queue.length; i++) {
+        var target = queue[i];
+        var currentPhase = target._framePhase;
+        target._framePhase = framePhase;
+        target.dispatchEvent(event);
+        target._framePhase = currentPhase;
+      }
+      timeline && timeline.leave(FramePhase[framePhase]);
+    }
+  }
+
   export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable {
 
     /**
      * Every displayObject is assigned an unique integer ID.
      */
     private static _nextID = 0;
-    private static _instances: DisplayObject [];
+    public static broadcastEventDispatchQueue: BroadcastEventDispatchQueue;
 
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
-      DisplayObject._instances = [];
+      DisplayObject.broadcastEventDispatchQueue = new BroadcastEventDispatchQueue();
     };
 
     /**
@@ -236,8 +272,7 @@ module Shumway.AVM2.AS.flash.display {
      * of all the display objects that were ever constructed.
      */
     static register(object: DisplayObject): string {
-      DisplayObject._instances.push(object);
-      return 'instance' + DisplayObject._instances.length;
+      return 'instance' + DisplayObject._nextID;
     }
 
     // Called whenever an instance of the class is initialized.
@@ -245,13 +280,13 @@ module Shumway.AVM2.AS.flash.display {
       var self: DisplayObject = this;
       var instanceName = DisplayObject.register(self);
 
-      self._flags = DisplayObjectFlags.Visible                            |
-                    DisplayObjectFlags.InvalidBounds                      |
-                    DisplayObjectFlags.InvalidMatrix                      |
-                    DisplayObjectFlags.InvalidConcatenatedMatrix          |
-                    DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
-                    DisplayObjectFlags.DirtyMatrix                        |
-                    DisplayObjectFlags.DirtyMiscellaneousProperties;
+      self._displayObjectFlags = DisplayObjectFlags.Visible                            |
+                                 DisplayObjectFlags.InvalidBounds                      |
+                                 DisplayObjectFlags.InvalidMatrix                      |
+                                 DisplayObjectFlags.InvalidConcatenatedMatrix          |
+                                 DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
+                                 DisplayObjectFlags.DirtyMatrix                        |
+                                 DisplayObjectFlags.DirtyMiscellaneousProperties;
 
       self._root = null;
       self._stage = null;
@@ -336,25 +371,18 @@ module Shumway.AVM2.AS.flash.display {
       var event: flash.events.Event;
       switch (framePhase) {
         case FramePhase.Enter:
-          event = Event.getInstance(Event.ENTER_FRAME);
+          event = Event.getBroadcastInstance(Event.ENTER_FRAME);
           break;
         case FramePhase.Constructed:
-          event = Event.getInstance(Event.FRAME_CONSTRUCTED);
+          event = Event.getBroadcastInstance(Event.FRAME_CONSTRUCTED);
           break;
         case FramePhase.Exit:
-          event = Event.getInstance(Event.EXIT_FRAME);
+          event = Event.getBroadcastInstance(Event.EXIT_FRAME);
           break;
         default:
           return;
       }
-      var instances = DisplayObject._instances;
-      for (var i = 0; i < instances.length; i++) {
-        var instance = instances[i];
-        var currentPhase = instance._framePhase;
-        instance._framePhase = framePhase;
-        instance.dispatchEvent(event);
-        instance._framePhase = currentPhase;
-      }
+      DisplayObject.broadcastEventDispatchQueue.dispatchEvent(event, framePhase);
     }
 
     constructor () {
@@ -365,35 +393,35 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _setFlags(flags: DisplayObjectFlags) {
-      this._flags |= flags;
+      this._displayObjectFlags |= flags;
     }
 
     /**
      * Use this to set dirty flags so that we can also propagate the dirty child bit.
      */
     _setDirtyFlags(flags: DisplayObjectFlags) {
-      this._flags |= flags;
+      this._displayObjectFlags |= flags;
       this._dirty();
     }
 
     _toggleFlags(flags: DisplayObjectFlags, on: boolean) {
       if (on) {
-        this._flags |= flags;
+        this._displayObjectFlags |= flags;
       } else {
-        this._flags &= ~flags;
+        this._displayObjectFlags &= ~flags;
       }
     }
 
     _removeFlags(flags: DisplayObjectFlags) {
-      this._flags &= ~flags;
+      this._displayObjectFlags &= ~flags;
     }
 
     _hasFlags(flags: DisplayObjectFlags): boolean {
-      return (this._flags & flags) === flags;
+      return (this._displayObjectFlags & flags) === flags;
     }
 
     _hasAnyFlags(flags: DisplayObjectFlags): boolean {
-      return !!(this._flags & flags);
+      return !!(this._displayObjectFlags & flags);
     }
 
     /**
@@ -431,7 +459,7 @@ module Shumway.AVM2.AS.flash.display {
     // AS -> JS Bindings
 
     _id: number;
-    private _flags: number;
+    private _displayObjectFlags: number;
 
     _root: DisplayObject;
     _stage: flash.display.Stage;
@@ -1264,7 +1292,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get scrollRect(): flash.geom.Rectangle {
-      return this._scrollRect.clone();
+      return this._scrollRect ? this._scrollRect.clone() : null;
     }
 
     set scrollRect(value: flash.geom.Rectangle) {

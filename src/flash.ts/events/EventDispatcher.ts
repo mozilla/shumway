@@ -155,14 +155,25 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     /**
+     * Don't lazily construct listener lists if all we're doing is looking for listener types that
+     * don't exist yet.
+     */
+    private _getListenersForType(useCapture: boolean, type: string) {
+      var listeners = useCapture ? this._captureListeners : this._targetOrBubblingListeners;
+      if (listeners) {
+        return listeners[type];
+      }
+      return null;
+    }
+
+    /**
      * Lazily construct listeners lists to avoid object allocation.
      */
-    private getListeners(useCapture: boolean): Shumway.Map<EventListenerList> {
+    private _getListeners(useCapture: boolean): Shumway.Map<EventListenerList> {
       if (useCapture) {
         return this._captureListeners || (this._captureListeners = createEmptyObject());
       }
-      return this._targetOrBubblingListeners ||
-             (this._targetOrBubblingListeners = createEmptyObject());
+      return this._targetOrBubblingListeners || (this._targetOrBubblingListeners = createEmptyObject());
     }
 
     addEventListener(type: string, listener: EventHandler, useCapture: boolean = false,
@@ -185,9 +196,14 @@ module Shumway.AVM2.AS.flash.events {
       useCapture = !!useCapture;
       priority |= 0;
       useWeakReference = !!useWeakReference;
-      var listeners = this.getListeners(useCapture);
+      var listeners = this._getListeners(useCapture);
       var list = listeners[type] || (listeners[type] = new EventListenerList());
       list.insert(listener, useCapture, priority);
+
+      // Notify the broadcast event queue.
+      if (Event.isBroadcastEventType(type)) {
+        flash.display.DisplayObject.broadcastEventDispatchQueue.register(type, this);
+      }
     }
 
     removeEventListener(type: string, listener: EventHandler, useCapture: boolean = false): void {
@@ -205,7 +221,7 @@ module Shumway.AVM2.AS.flash.events {
         throwError("TypeError", Errors.NullPointerError, "type");
       }
       type = asCoerceString(type);
-      var listeners = this.getListeners(!!useCapture);
+      var listeners = this._getListeners(!!useCapture);
       var list = listeners[type];
       if (list) {
         list.remove(listener);
@@ -276,7 +292,7 @@ module Shumway.AVM2.AS.flash.events {
       var keepPropagating = true;
       var ancestors: flash.display.DisplayObject [] = [];
 
-      if (flash.display.DisplayObject.isType(this)) {
+      if (!event.isBroadcastEvent() && flash.display.DisplayObject.isType(this)) {
         var node: flash.display.DisplayObject = (<flash.display.DisplayObject>this)._parent;
 
         // Gather all parent display objects that have event listeners for this event type.
@@ -292,7 +308,7 @@ module Shumway.AVM2.AS.flash.events {
           if (!ancestor._hasCaptureEventListener(type)) {
             continue;
           }
-          var list = ancestor.getListeners(true)[type];
+          var list = ancestor._getListenersForType(true, type);
           assert(list);
           keepPropagating = EventDispatcher.callListeners(list, event, target, ancestor,
                                                           EventPhase.CAPTURING_PHASE);
@@ -303,9 +319,9 @@ module Shumway.AVM2.AS.flash.events {
        * 2. At Target
        */
       if (keepPropagating) {
-        var list = this.getListeners(false)[type];
+        var list = this._getListenersForType(false, type);
         if (list) {
-          keepPropagating = EventDispatcher.callListeners(this.getListeners(false)[type], event,
+          keepPropagating = EventDispatcher.callListeners(this._getListeners(false)[type], event,
                                                           target, target, EventPhase.AT_TARGET);
         }
       }
@@ -313,13 +329,13 @@ module Shumway.AVM2.AS.flash.events {
       /**
        * 3. Bubbling Phase
        */
-      if (keepPropagating && event.bubbles) {
+      if (!event.isBroadcastEvent() && keepPropagating && event.bubbles) {
         for (var i = 0; i < ancestors.length && keepPropagating; i++) {
           var ancestor = ancestors[i];
           if (!ancestor._hasTargetOrBubblingEventListener(type)) {
             continue;
           }
-          var list = ancestor.getListeners(false)[type];
+          var list = ancestor._getListenersForType(false, type);
           keepPropagating = EventDispatcher.callListeners(list, event, target, ancestor,
                                                           EventPhase.BUBBLING_PHASE);
         }

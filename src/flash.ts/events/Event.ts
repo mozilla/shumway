@@ -15,6 +15,7 @@
  */
 // Class: Event
 module Shumway.AVM2.AS.flash.events {
+  import unexpected = Shumway.Debug.unexpected;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class Event extends ASNative {
 
@@ -44,6 +45,38 @@ module Shumway.AVM2.AS.flash.events {
       instance._cancelable = cancelable;
       return instance;
     }
+
+    static getBroadcastInstance(type: string, bubbles: boolean = false, cancelable: boolean = false) {
+      var instance = Event._instances[type];
+      if (!instance) {
+        instance = new Event(type, bubbles, cancelable);
+        Event._instances[type] = instance;
+        // Some events are documented as broadcast event in the AS3 docs. We can't set |_isBroadcastEvent| flag in the
+        // constructor because if you create custom events with these types they do capture and bubble.
+        assert (Event.isBroadcastEventType(type));
+      }
+      instance._isBroadcastEvent = true;
+      instance._bubbles = bubbles;
+      instance._cancelable = cancelable;
+      return instance;
+    }
+
+    /**
+     * http://stackoverflow.com/questions/16900176/as3enterframe-event-propagation-understanding-issue
+     */
+    public static isBroadcastEventType(type: string) {
+      switch (type) {
+        case Event.ENTER_FRAME:
+        case Event.EXIT_FRAME:
+        case Event.FRAME_CONSTRUCTED:
+        case Event.RENDER:
+        case Event.ACTIVATE:
+        case Event.DEACTIVATE:
+          return true;
+      }
+      return false;
+    }
+
 
     constructor(type: string, bubbles: boolean = false, cancelable: boolean = false) {
       false && super();
@@ -121,6 +154,11 @@ module Shumway.AVM2.AS.flash.events {
     _stopImmediatePropagation: boolean;
     _isDefaultPrevented: boolean;
 
+    /**
+     * Some events don't participate in the normal capturing and bubbling phase.
+     */
+    private _isBroadcastEvent: boolean;
+
     get type(): string {
       return this._type;
     }
@@ -161,6 +199,10 @@ module Shumway.AVM2.AS.flash.events {
 
     isDefaultPrevented(): boolean {
       return this._isDefaultPrevented;
+    }
+
+    isBroadcastEvent(): boolean {
+      return !!this._isBroadcastEvent;
     }
   }
 }

@@ -44,7 +44,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public static fromAny(obj) {
-      return new Matrix(obj.a, obj.b, obj.c, obj.d, obj.tx, obj.ty);
+      return new flash.geom.Matrix(obj.a, obj.b, obj.c, obj.d, obj.tx, obj.ty);
     }
 
     public a: number;
@@ -480,7 +480,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public clone(): Matrix {
-      return new Matrix(this.a, this.b, this.c, this.d, this.tx, this.ty);
+      return new flash.geom.Matrix(this.a, this.b, this.c, this.d, this.tx, this.ty);
     }
 
     public equals(other: Matrix): boolean {

@@ -821,7 +821,7 @@ module Shumway.GFX.Geometry {
     }
 
     isScaleOrRotation(): boolean {
-      return eqFloat(this.a * this.c + this.b * this.d, 0);
+      return Math.abs(this.a * this.c + this.b * this.d) < 0.01;
     }
 
     toString (): string {

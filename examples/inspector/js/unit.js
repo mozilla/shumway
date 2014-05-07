@@ -1,7 +1,12 @@
+function fail(message) {
+  // console.error(message);
+  throw new Error(message);
+}
+
 function eqFloat(a, b, test) {
   test = test ? ": " + test : " #" + testNumber;
   if (Math.abs(a -b) >= 0.1) {
-    throw new Error("FAIL " + test);
+    return fail("FAIL " + test);
   }
   console.info("PASS" + test);
   testNumber ++;
@@ -10,7 +15,7 @@ function eqFloat(a, b, test) {
 function neq(a, b, test) {
   test = test ? ": " + test : " #" + testNumber;
   if (a === b) {
-    throw new Error("FAIL " + test);
+    return fail("FAIL " + test);
   }
   console.info("PASS" + test);
   testNumber ++;
@@ -19,7 +24,7 @@ function neq(a, b, test) {
 function eq(a, b, test) {
   test = test ? ": " + test : " #" + testNumber;
   if (a !== b) {
-    throw new Error("FAIL " + test);
+    return fail("FAIL " + test);
   }
   console.info("PASS" + test);
   testNumber ++;
@@ -28,19 +33,19 @@ function eq(a, b, test) {
 function eqArray(a, b, test) {
   test = test ? ": " + test : " #" + testNumber;
   if (a == undefined && b) {
-    throw new Error("FAIL" + test + " Null Array: a");
+    return fail("FAIL" + test + " Null Array: a");
   }
   if (a && b == undefined) {
-    throw new Error("FAIL" + test + " Null Array: b");
+    return fail("FAIL" + test + " Null Array: b");
   }
   if (a && b) {
     if (a.length !== b.length) {
-      throw new Error("FAIL" + test + " Array Length Mismatch, got " + a.length + ", expected " + b.length);
+      return fail("FAIL" + test + " Array Length Mismatch, got " + a.length + ", expected " + b.length);
     }
     for (var i = 0; i < a.length; i++) {
       if (a[i] !== b[i]) {
         if (!(typeof a[i] == "number" && typeof b[i] == "number" && isNaN(a[i]) && isNaN(b[i]))) {
-          throw new Error("FAIL" + test + " Array Element " + i + ": got " + a[i] + ", expected " + b[i]);
+          return fail("FAIL" + test + " Array Element " + i + ": got " + a[i] + ", expected " + b[i]);
         }
       }
     }
@@ -52,7 +57,7 @@ function eqArray(a, b, test) {
 function check(condition, test) {
   test = test ? ": " + test : " #" + testNumber;
   if (!condition) {
-    throw new Error("FAIL " + test);
+    return fail("FAIL " + test);
   }
   console.info("PASS" + test);
   testNumber ++;
