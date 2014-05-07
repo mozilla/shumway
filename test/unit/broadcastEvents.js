@@ -6,7 +6,6 @@
   var Stage = flash.display.Stage;
   var Loader = flash.display.Loader;
   var URLRequest = flash.net.URLRequest;
-  var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
 
   function log(message) {
@@ -14,7 +13,7 @@
   }
 
   unitTests.push(function () {
-    DisplayObject.broadcastEventDispatchQueue.reset();
+    EventDispatcher.broadcastEventDispatchQueue.reset();
     var a = new DisplayObjectContainer();
     var b = new DisplayObjectContainer();
     var c = new DisplayObjectContainer();
@@ -47,7 +46,7 @@
     }, true);
 
     // Broadcast events don't bubble or capture.
-    DisplayObject.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ENTER_FRAME));
+    EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ENTER_FRAME));
     check(s === "abc"); s = "";
 
     // You can make your own custom events with the same name and they don't behave like the internals ones.
@@ -60,7 +59,7 @@
   });
 
   unitTests.push(function () {
-    DisplayObject.broadcastEventDispatchQueue.reset();
+    EventDispatcher.broadcastEventDispatchQueue.reset();
     var s = "";
     var a = new DisplayObjectContainer();
     a.addEventListener(Event.ENTER_FRAME, function () {
@@ -73,12 +72,12 @@
     a.addEventListener(Event.ENTER_FRAME, function () {
       s += "y";
     });
-    DisplayObject.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ENTER_FRAME));
+    EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ENTER_FRAME));
     check(s === "xyb", "Check enter frame order.");
   });
 
   unitTests.push(function () {
-    DisplayObject.broadcastEventDispatchQueue.reset();
+    EventDispatcher.broadcastEventDispatchQueue.reset();
     var list = [];
     var handlers = [];
     var s = 0;
@@ -92,16 +91,16 @@
       handlers.push(h);
     }
     for (var i = 0; i < 10; i++) {
-      DisplayObject.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ENTER_FRAME));
+      EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ENTER_FRAME));
     }
     check(s === 1000, "Called a bunch of enter frame events"); s = 0;
     for (var i = 0; i < 100; i++) {
       list[i].removeEventListener(Event.ENTER_FRAME, handlers[i]);
     }
     for (var i = 0; i < 10; i++) {
-      DisplayObject.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ENTER_FRAME));
+      EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ENTER_FRAME));
     }
     check(s === 0, "Should not dispatch enter frame events"); s = 0;
-    check(DisplayObject.broadcastEventDispatchQueue.getQueueLength(Event.ENTER_FRAME) < 1000, "We should have compacted the dispatch list.");
+    check(EventDispatcher.broadcastEventDispatchQueue.getQueueLength(Event.ENTER_FRAME) < 1000, "We should have compacted the dispatch list.");
   });
 })();
