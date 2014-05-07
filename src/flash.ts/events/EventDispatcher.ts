@@ -200,8 +200,9 @@ module Shumway.AVM2.AS.flash.events {
       var list = listeners[type] || (listeners[type] = new EventListenerList());
       list.insert(listener, useCapture, priority);
 
-      // Notify the broadcast event queue.
-      if (Event.isBroadcastEventType(type)) {
+      // Notify the broadcast event queue. If |useCapture| is set then the Flash player
+      // doesn't seem to register this target.
+      if (!useCapture && Event.isBroadcastEventType(type)) {
         flash.display.DisplayObject.broadcastEventDispatchQueue.register(type, this);
       }
     }
@@ -279,7 +280,8 @@ module Shumway.AVM2.AS.flash.events {
         throwError("ArgumentError", Errors.WrongArgumentCountError,
                    "flash.events::EventDispatcher/hasEventListener()", 1, arguments.length);
       }
-      if (event._target) {
+
+      if (!event.isBroadcastEvent() && event._target) {
         event = event.clone();
       }
 

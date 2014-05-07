@@ -226,6 +226,10 @@ module Shumway.AVM2.AS.flash.display {
     private _queues: Shumway.Map<EventDispatcher []>;
 
     constructor() {
+      this.reset();
+    }
+
+    reset() {
       this._queues = Shumway.ObjectUtilities.createEmptyObject();
     }
 
@@ -237,6 +241,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     dispatchEvent(event: flash.events.Event, framePhase: FramePhase) {
+      assert (event.isBroadcastEvent(), "Cannot dispatch non-broadcast events.");
       var queue = this._queues[event.type];
       if (!queue) {
         return;
