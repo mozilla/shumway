@@ -220,9 +220,13 @@ module Shumway.AVM2.AS.flash.display {
   /**
    * Broadcast Events
    *
-   * http://www.senocular.com/flash/tutorials/orderofoperations/
+   * The logic here is pretty much copied from: http://www.senocular.com/flash/tutorials/orderofoperations/
    */
   class BroadcastEventDispatchQueue {
+    /**
+     * The queues start off compact but can have null values if event targets are removed. Periodically we
+     * compact them if too many null values exist.
+     */
     private _queues: Shumway.Map<EventDispatcher []>;
 
     constructor() {
@@ -233,11 +237,23 @@ module Shumway.AVM2.AS.flash.display {
       this._queues = Shumway.ObjectUtilities.createEmptyObject();
     }
 
-    register(type: string, target: EventDispatcher) {
+    add(type: string, target: EventDispatcher) {
       assert (Event.isBroadcastEventType(type), "Can only register broadcast events.");
       var queue = this._queues[type] || (this._queues[type] = []);
-      assert (queue.indexOf(target) < 0, "Figure out what to do if a target registers itself twice for a broadcast event.");
+      if (queue.indexOf(target) >= 0) {
+        return;
+      }
       queue.push(target);
+    }
+
+    remove(type: string, target: EventDispatcher) {
+      assert (Event.isBroadcastEventType(type), "Can only unregister broadcast events.");
+      var queue = this._queues[type];
+      assert (queue, "Ther should already be a queue for this.");
+      var index = queue.indexOf(target);
+      assert (index >= 0, "Target should be somewhere in this queue.");
+      queue[index] = null;
+      assert (queue.indexOf(target) < 0, "Target shouldn't be in this queue anymore.");
     }
 
     dispatchEvent(event: flash.events.Event, framePhase: FramePhase) {
@@ -247,14 +263,34 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       timeline && timeline.enter(FramePhase[framePhase]);
+      var nullCount = 0;
       for (var i = 0; i < queue.length; i++) {
         var target = queue[i];
-        var currentPhase = target._framePhase;
-        target._framePhase = framePhase;
-        target.dispatchEvent(event);
-        target._framePhase = currentPhase;
+        if (target === null) {
+          nullCount ++
+        } else {
+          var currentPhase = target._framePhase;
+          target._framePhase = framePhase;
+          target.dispatchEvent(event);
+          target._framePhase = currentPhase;
+        }
+      }
+
+      // Compact the queue if there are too many holes in it.
+      if (nullCount > 16 && nullCount > (queue.length >> 1)) {
+        var compactedQueue = [];
+        for (var i = 0; i < queue.length; i++) {
+          if (queue[i]) {
+            compactedQueue.push(queue[i]);
+          }
+        }
+        this._queues[event.type] = compactedQueue;
       }
       timeline && timeline.leave(FramePhase[framePhase]);
+    }
+
+    getQueueLength(type: string) {
+      return this._queues[type] ? this._queues[type].length : 0;
     }
   }
 

@@ -203,7 +203,7 @@ module Shumway.AVM2.AS.flash.events {
       // Notify the broadcast event queue. If |useCapture| is set then the Flash player
       // doesn't seem to register this target.
       if (!useCapture && Event.isBroadcastEventType(type)) {
-        flash.display.DisplayObject.broadcastEventDispatchQueue.register(type, this);
+        flash.display.DisplayObject.broadcastEventDispatchQueue.add(type, this);
       }
     }
 
@@ -227,6 +227,10 @@ module Shumway.AVM2.AS.flash.events {
       if (list) {
         list.remove(listener);
         if (list.isEmpty()) {
+          // Notify the broadcast event queue of the removal.
+          if (!useCapture && Event.isBroadcastEventType(type)) {
+            flash.display.DisplayObject.broadcastEventDispatchQueue.remove(type, this);
+          }
           listeners[type] = null;
         }
       }

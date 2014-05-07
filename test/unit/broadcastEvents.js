@@ -58,4 +58,50 @@
     c.dispatchEvent(new Event(Event.ENTER_FRAME, true));
     check(s === "ABcba"); s = "";
   });
+
+  unitTests.push(function () {
+    DisplayObject.broadcastEventDispatchQueue.reset();
+    var s = "";
+    var a = new DisplayObjectContainer();
+    a.addEventListener(Event.ENTER_FRAME, function () {
+      s += "x";
+    });
+    var b = new DisplayObjectContainer();
+    b.addEventListener(Event.ENTER_FRAME, function () {
+      s += "b";
+    });
+    a.addEventListener(Event.ENTER_FRAME, function () {
+      s += "y";
+    });
+    DisplayObject.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ENTER_FRAME));
+    check(s === "xyb", "Check enter frame order.");
+  });
+
+  unitTests.push(function () {
+    DisplayObject.broadcastEventDispatchQueue.reset();
+    var list = [];
+    var handlers = [];
+    var s = 0;
+    for (var i = 0; i < 100; i++) {
+      var o = new DisplayObjectContainer();
+      var h = function () {
+        s ++;
+      };
+      o.addEventListener(Event.ENTER_FRAME, h);
+      list.push(o);
+      handlers.push(h);
+    }
+    for (var i = 0; i < 10; i++) {
+      DisplayObject.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ENTER_FRAME));
+    }
+    check(s === 1000, "Called a bunch of enter frame events"); s = 0;
+    for (var i = 0; i < 100; i++) {
+      list[i].removeEventListener(Event.ENTER_FRAME, handlers[i]);
+    }
+    for (var i = 0; i < 10; i++) {
+      DisplayObject.broadcastEventDispatchQueue.dispatchEvent(Event.getBroadcastInstance(Event.ENTER_FRAME));
+    }
+    check(s === 0, "Should not dispatch enter frame events"); s = 0;
+    check(DisplayObject.broadcastEventDispatchQueue.getQueueLength(Event.ENTER_FRAME) < 1000, "We should have compacted the dispatch list.");
+  });
 })();
