@@ -81,21 +81,21 @@ module Shumway.AVM2.AS.flash.events {
       return this._ctrlKey;
     }
 
-    set ctrlKey(value: boolean): void {
+    set ctrlKey(value: boolean) {
       this._ctrlKey = !!value;
     }
     get altKey(): boolean {
       return this._altKey;
     }
 
-    set altKey(value: boolean): void {
+    set altKey(value: boolean) {
       this._altKey = !!value;
     }
     get shiftKey(): boolean {
       return this._shiftKey;
     }
 
-    set shiftKey(value: boolean): void {
+    set shiftKey(value: boolean) {
       this._shiftKey = !!value;
     }
 
