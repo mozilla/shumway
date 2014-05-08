@@ -176,6 +176,7 @@ module Shumway.AVM2.AS.flash.display {
 
     get scenes(): any [] {
       var result = this._scenes.slice();
+      assert (result.length, "There are no scenes defined.");
       for (var i = 0; i < result.length; i++) {
         result[i] = result[i].clone();
       }
@@ -183,7 +184,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get currentScene(): flash.display.Scene {
-      return this._scenes[this._sceneIndex].clone();
+      var scene = this._scenes[this._sceneIndex];
+      assert (scene, "Scene is not defined.");
+      return scene.clone();
     }
 
     get currentLabel(): string {
@@ -220,6 +223,7 @@ module Shumway.AVM2.AS.flash.display {
 
     gotoFrame(frame: any, sceneName: string = null): void {
       var scenes = this._scenes;
+      assert (scenes.length, "There should be at least one scene defined.");
       var sceneIndex = -1;
       var offset = 0;
       var frameNum = 1;
@@ -282,6 +286,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       var scenes = this._scenes;
+      assert (scenes.length, "There should be at least one scene defined.");
       var lastFrame = this._currentFrameAbs;
       var nextFrame = this._nextFrameAbs;
 
@@ -320,6 +325,7 @@ module Shumway.AVM2.AS.flash.display {
       var startFrame = lastFrame;
       if (nextFrame < lastFrame) {
         var frame = frames[0];
+        assert (frame, "Frame is not defined.");
         var stateAtDepth = frame.stateAtDepth;
         var children = this._children.slice();
         for (var i = 0; i < children.length; i++) {
@@ -335,6 +341,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       for (var i = startFrame; i < nextFrame; i++) {
         var frame = frames[i];
+        assert (frame, "Frame is not defined.");
         var stateAtDepth = frame.stateAtDepth;
         for (var depth in stateAtDepth) {
           var child = this.getChildAtDepth(depth);
@@ -357,15 +364,13 @@ module Shumway.AVM2.AS.flash.display {
       var currentFrame = nextFrame;
       var sceneIndex = 0;
 
-      var offset = 0;
       while (sceneIndex < scenes.length) {
         var scene = scenes[sceneIndex];
-        if (currentFrame < scene.offset) {
+        if (currentFrame < scene.numFrames) {
           break;
         }
-        currentFrame -= offset;
+        currentFrame -= scene.numFrames;
         sceneIndex++;
-        offset += scene.numFrames;
       }
 
       this._currentFrame = currentFrame;
@@ -426,6 +431,7 @@ module Shumway.AVM2.AS.flash.display {
       var frameScripts = this._frameScripts;
       for (var i = 0; i < numArgs; i += 2) {
         var frameNum = arguments[i] + 1;
+        assert (frameNum > 0 && frameNum <= this._totalFrames, "Invalid frame number.");
         var fn = arguments[i + 1];
         frameScripts[frameNum] = fn;
         if (frameNum === this._currentFrameAbs) {
@@ -443,6 +449,7 @@ module Shumway.AVM2.AS.flash.display {
         var frameNum = arguments[i] + 1;
         var labelName = arguments[i + 1];
         var scenes = this._scenes;
+        assert (scenes.length, "There should be at least one scene defined.");
         var offset = 0;
         findScene: for (var i = 0; i < scenes.length; i++) {
           var scene = scenes[i];
@@ -458,6 +465,7 @@ module Shumway.AVM2.AS.flash.display {
           }
           offset += scene.numFrames;
         }
+        assert (false, "This point should never be reached.");
       }
     }
 
@@ -467,11 +475,13 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       var prevScene = this._scenes[index - 1];
+      assert (prevScene, "Scene is not defined.");
       this.gotoFrame(1, prevScene.name);
     }
 
     nextScene(): void {
       var currentScene = this._scenes[this._sceneIndex];
+      assert (currentScene, "Scene is not defined.");
       this.gotoFrame(currentScene.numFrames + 1);
     }
   }
