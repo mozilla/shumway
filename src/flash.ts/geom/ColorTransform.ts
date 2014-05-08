@@ -163,7 +163,14 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public preMultiply(second:ColorTransform): void {
-      this.concat(second); // ColorTransform is Commutative.
+      this.redOffset += second.redOffset * this.redMultiplier;
+      this.greenOffset += second.greenOffset * this.greenMultiplier;
+      this.blueOffset += second.blueOffset * this.blueMultiplier;
+      this.alphaOffset += second.alphaOffset * this.alphaMultiplier;
+      this.redMultiplier *= second.redMultiplier;
+      this.greenMultiplier *= second.greenMultiplier;
+      this.blueMultiplier *= second.blueMultiplier;
+      this.alphaMultiplier *= second.alphaMultiplier;
     }
 
     public copyFrom(sourceColorTransform: ColorTransform): void {
@@ -199,6 +206,26 @@ module Shumway.AVM2.AS.flash.geom {
         this.blueOffset,
         this.alphaOffset
       );
+    }
+
+    public convertToFixedPoint(): ColorTransform {
+      function fp_si8_ui8(value: number): number {
+        // convert number to si8.ui8 fixed point
+        return (((value << 24) >>> 0) >> 24) + ((value * 256) & 0xff) / 256;
+      }
+      function fp_si16(value: number): number {
+        // convert number point to si16
+        return ((value << 16) >>> 0) >> 16;
+      }
+      this.redMultiplier = fp_si8_ui8(this.redMultiplier);
+      this.greenMultiplier = fp_si8_ui8(this.greenMultiplier);
+      this.blueMultiplier = fp_si8_ui8(this.blueMultiplier);
+      this.alphaMultiplier = fp_si8_ui8(this.alphaMultiplier);
+      this.redOffset = fp_si16(this.redOffset);
+      this.greenOffset = fp_si16(this.greenOffset);
+      this.blueOffset = fp_si16(this.blueOffset);
+      this.alphaOffset = fp_si16(this.alphaOffset);
+      return this;
     }
 
     public toString():String {

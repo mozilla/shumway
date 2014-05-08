@@ -277,6 +277,7 @@ module Shumway.AVM2.AS.flash.display {
       self._matrix = new Matrix();
       self._matrix3D = null;
       self._colorTransform = new ColorTransform();
+      self._concatenatedColorTransform = new ColorTransform();
 
       self._depth = 0;
       self._ratio = 0;
@@ -616,18 +617,24 @@ module Shumway.AVM2.AS.flash.display {
      * Computes the combined transformation color matrixes of this display object and all of its ancestors.
      */
     _getConcatenatedColorTransform(): ColorTransform {
-      if (!this._parent) {
-        return this._colorTransform;
+      if (!this.stage) {
+        return this._colorTransform.clone();
       }
       // Compute the concatenated color transforms for this node and all of its ancestors.
       if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform)) {
         var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedColorTransform, false);
         var path = DisplayObject._getAncestors(this, ancestor);
-        var m = ancestor ? ancestor._concatenatedColorTransform.clone() : new ColorTransform();
-        for (var i = path.length - 1; i >= 0; i--) {
-          var ancestor = path[i];
+        var i = path.length - 1;
+        if (flash.display.Stage.isType(path[i])) {
+          i--;
+        }
+        var m = ancestor && !flash.display.Stage.isType(ancestor) ? ancestor._concatenatedColorTransform.clone()
+                                                                  : new ColorTransform();
+        while (i >= 0) {
+          ancestor = path[i--];
           assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
           m.preMultiply(ancestor._colorTransform);
+          m.convertToFixedPoint();
           ancestor._concatenatedColorTransform.copyFrom(m);
           ancestor._removeFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform);
         }
@@ -637,6 +644,7 @@ module Shumway.AVM2.AS.flash.display {
 
     _setColorTransform(colorTransform: flash.geom.ColorTransform) {
       this._colorTransform.copyFrom(colorTransform);
+      this._colorTransform.convertToFixedPoint();
       this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform, Direction.Downward);
       this._invalidatePaint();
     }
@@ -720,7 +728,7 @@ module Shumway.AVM2.AS.flash.display {
         this._parent._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
       }
     }
-    
+
     /**
      * Marks this object as having been moved in its parent display object.
      */
@@ -1032,16 +1040,18 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get alpha(): number {
-      return this._alpha;
+      return this._colorTransform.alphaMultiplier;
     }
 
     set alpha(value: number) {
       this._stopTimelineAnimation();
       value = +value;
-      if (value === this._alpha) {
+      if (value === this._colorTransform.alphaMultiplier) {
         return;
       }
-      this._alpha = value;
+      this._colorTransform.alphaMultiplier = value;
+      this._colorTransform.convertToFixedPoint();
+      this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform, Direction.Downward);
       this._invalidatePaint();
       this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
