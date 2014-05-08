@@ -240,7 +240,7 @@ module Shumway.AVM2 {
   //  InvalidSoundError                                         : { code: 2068, message: "Invalid sound."},
   //  InvalidLoaderMethodError                                  : { code: 2069, message: "The Loader class does not implement this method."},
   //  StageOwnerSecurityError                                   : { code: 2070, message: "Security sandbox violation: caller %1 cannot access Stage owned by %2."},
-  //  InvalidStageMethodError                                   : { code: 2071, message: "The Stage class does not implement this property or method."},
+    InvalidStageMethodError                                   : { code: 2071, message: "The Stage class does not implement this property or method."},
   //  ProductManagerDiskError                                   : { code: 2073, message: "There was a problem saving the application to disk."},
   //  ProductManagerStageError                                  : { code: 2074, message: "The stage is too small to fit the download ui."},
   //  ProductManagerVerifyError                                 : { code: 2075, message: "The downloaded file is invalid."},

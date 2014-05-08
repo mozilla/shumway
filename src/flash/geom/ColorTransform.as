@@ -16,6 +16,7 @@
 
 package flash.geom {
 
+  [native(cls='ColorTransformClass')]
   public class ColorTransform {
 
     public native function set redMultiplier(redMultiplier:Number);
