@@ -139,7 +139,7 @@
 // ///<reference path='events/FullScreenEvent.ts' />
 // ///<reference path='events/GameInputEvent.ts' />
 // ///<reference path='events/GeolocationEvent.ts' />
-// ///<reference path='events/GestureEvent.ts' />
+///<reference path='events/GestureEvent.ts' />
 // ///<reference path='events/GesturePhase.ts' />
 ///<reference path='events/HTTPStatusEvent.ts' />
 ///<reference path='events/IEventDispatcher.ts' />
