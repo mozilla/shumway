@@ -1272,6 +1272,19 @@ module Shumway.AVM2.AS.flash.display {
       visitor.visitDisplayObject(this);
     }
 
+    get opaqueBackground(): any {
+      return this._opaqueBackground;
+    }
+
+    /**
+     * Sets the opaque background color. By default this is |null|, which indicates that no opaque color is set.
+     * Otherwise this is an unsinged number.
+     */
+    set opaqueBackground(value: any) {
+      assert (value === null || Shumway.isInteger(value));
+      this._opaqueBackground = value;
+    }
+
     // ---------------------------------------------------------------------------------------------------------------------------------------------
     // -- Stuff below we still need to port.                                                                                                      --
     // ---------------------------------------------------------------------------------------------------------------------------------------------
@@ -1285,14 +1298,7 @@ module Shumway.AVM2.AS.flash.display {
       return this._mouseY / 20;
     }
 
-    get opaqueBackground(): Object {
-      return this._opaqueBackground;
-    }
-    set opaqueBackground(value: Object) {
-      value = value;
-      notImplemented("public DisplayObject::set opaqueBackground"); return;
-      // this._opaqueBackground = value;
-    }
+
     set blendShader(value: flash.display.Shader) {
       value = value;
       notImplemented("public DisplayObject::set blendShader"); return;
