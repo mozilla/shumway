@@ -354,9 +354,19 @@ module Shumway {
         this.writeFloatUnsafe(v);
       }
 
+      writeFloatUnsafe(v: number) {
+        var index = this._offset >> 2;
+        this._f32[index] = v;
+        this._offset += 4;
+      }
+
       write4Floats(a: number, b: number, c: number, d: number) {
         release || assert ((this._offset & 0x3) === 0);
         this.ensureCapacity(this._offset + 16);
+        this.write4FloatsUnsafe(a, b, c, d);
+      }
+
+      write4FloatsUnsafe(a: number, b: number, c: number, d: number) {
         var index = this._offset >> 2;
         this._f32[index + 0] = a;
         this._f32[index + 1] = b;
@@ -368,6 +378,10 @@ module Shumway {
       write6Floats(a: number, b: number, c: number, d: number, e: number, f: number) {
         release || assert ((this._offset & 0x3) === 0);
         this.ensureCapacity(this._offset + 24);
+        this.write6FloatsUnsafe(a, b, c, d, e, f);
+      }
+
+      write6FloatsUnsafe(a: number, b: number, c: number, d: number, e: number, f: number) {
         var index = this._offset >> 2;
         this._f32[index + 0] = a;
         this._f32[index + 1] = b;
@@ -376,12 +390,6 @@ module Shumway {
         this._f32[index + 4] = e;
         this._f32[index + 5] = f;
         this._offset += 24;
-      }
-
-      writeFloatUnsafe(v: number) {
-        var index = this._offset >> 2;
-        this._f32[index] = v;
-        this._offset += 4;
       }
 
       subF32View(): Float32Array {
