@@ -62,6 +62,7 @@ function readTags(context, stream, swfVersion, final, onprogress, onexception) {
         }
         tags.push(tag);
         if (onprogress && tag.id !== undefined) {
+          context.bytesLoaded = (context.bytesTotal * stream.pos / stream.end) | 0;
           onprogress(context);
         }
         tag = null;
@@ -93,6 +94,7 @@ function readTags(context, stream, swfVersion, final, onprogress, onexception) {
       tag.finalTag = true; // note: 'eot' is reserved by handlers
       tags.push(tag);
       if (onprogress) {
+        context.bytesLoaded = context.bytesTotal;
         onprogress(context);
       }
     } else {

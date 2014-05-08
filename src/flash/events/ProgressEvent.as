@@ -37,7 +37,7 @@ public class ProgressEvent extends Event {
   }
   private var _bytesTotal: Number;
   public function get bytesTotal(): Number {
-    return _bytesLoaded;
+    return _bytesTotal;
   }
 
   public function set bytesTotal(value: Number): void {

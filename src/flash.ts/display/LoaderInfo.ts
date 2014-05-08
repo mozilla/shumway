@@ -21,10 +21,8 @@ module Shumway.AVM2.AS.flash.display {
   import ActionScriptVersion = flash.display.ActionScriptVersion;
 
   var Event: typeof flash.events.Event;
+  var ProgressEvent: typeof flash.events.ProgressEvent;
 
-  /**
-   * TODO
-   */
   export enum LoadStatus {
     None        = 0,
     Started     = 1,
@@ -37,6 +35,7 @@ module Shumway.AVM2.AS.flash.display {
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       Event = flash.events.Event;
+      ProgressEvent = flash.events.ProgressEvent;
     };
 
     // Called whenever an instance of the class is initialized.
@@ -222,6 +221,16 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.LoaderInfo::_setUncaughtErrorEvents"); return;
     }
 
+    progress(bytesLoaded: number = 0, bytesTotal: number = 0): void {
+      this._bytesLoaded = bytesLoaded;
+      this._bytesTotal = bytesTotal;
+      var event = new ProgressEvent(ProgressEvent.PROGRESS, false, false, bytesLoaded, bytesTotal);
+      this.dispatchEvent(event);
+      if (this._bytesLoaded >= this._bytesTotal) {
+        this.loadStatus = LoadStatus.Complete;
+      }
+    }
+
     get loadStatus() {
       return this._loadStatus;
     }
@@ -234,7 +243,6 @@ module Shumway.AVM2.AS.flash.display {
         case LoadStatus.Initialized:
           this.dispatchEvent(Event.getInstance(Event.INIT));
           if (this._loadStatus !== LoadStatus.Complete) {
-            // TODO loadStatus shouldn't be overriden
             break;
           }
         case LoadStatus.Complete:

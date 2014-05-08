@@ -205,22 +205,13 @@ function createParsingContext(commitData) {
   var frame = { type: 'frame' };
   var tagsProcessed = 0;
   var soundStream = null;
-  //var lastProgressSent = 0;
+  var bytesLoaded = 0;
 
   return {
     onstart: function(result) {
       commitData({command: 'init', result: result});
     },
     onprogress: function(result) {
-      //if (Date.now() - lastProgressSent > 1000 / 24 ||
-      //    result.bytesLoaded === result.bytesTotal) {
-      //  commitData({command: 'progress', result: {
-      //    bytesLoaded: result.bytesLoaded,
-      //    bytesTotal: result.bytesTotal
-      //  }});
-      //  lastProgressSent = Date.now();
-      //}
-
       var tags = result.tags;
       for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
         var tag = tags[tagsProcessed];
@@ -323,6 +314,21 @@ function createParsingContext(commitData) {
             commands = [];
             frame = { type: 'frame' };
             break;
+        }
+      }
+
+      if (result.bytesLoaded === result.bytesTotal) {
+        commitData({command: 'progress', result: {
+          bytesLoaded: result.bytesLoaded,
+          bytesTotal: result.bytesTotal
+        }});
+      } else if (result.bytesLoaded - bytesLoaded >= 65536) {
+        while (bytesLoaded < result.bytesLoaded) {
+          commitData({command: 'progress', result: {
+            bytesLoaded: bytesLoaded,
+            bytesTotal: result.bytesTotal
+          }});
+          bytesLoaded += 65536;
         }
       }
     },
