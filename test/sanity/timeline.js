@@ -55,6 +55,32 @@
 
     MovieClip.initFrame();
     eq(mc.currentFrame, 4);
+
+    var r = '';
+    mc.addFrameScript(2, function () {
+      r += '3';
+      mc.stop();
+    });
+    mc.addFrameScript(3, function () {
+      r += '4';
+      mc.gotoAndPlay(3);
+      r += mc.currentFrame;
+    });
+    MovieClip.executeFrame();
+    eq(r, '443');
+
+    MovieClip.initFrame();
+    eq(mc.currentFrame, 3);
+    eq(r, '443');
+
+    mc.play();
+    MovieClip.initFrame();
+    eq(mc.currentFrame, 4);
+  });
+
+  unitTests.push(function runInspectorSanityTests() {
+    var player = new Player();
+    player.load("../ats/gotoLastGotoInFrame.swf");
   });
 
 })();
