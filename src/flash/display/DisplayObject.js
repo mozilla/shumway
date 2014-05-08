@@ -574,16 +574,13 @@ var DisplayObjectDefinition = (function () {
     },
 
     _serialize: function (message) {
-      message.ensureAdditionalCapacity(53);
+      var cxform = this._cxform;
+      message.ensureAdditionalCapacity(53 + (cxform ? 32 : 0));
 
       var m = this._currentTransform;
-      message.writeFloatUnsafe(m.a);
-      message.writeFloatUnsafe(m.b);
-      message.writeFloatUnsafe(m.c);
-      message.writeFloatUnsafe(m.d);
-      message.writeFloatUnsafe(m.tx / 20);
-      message.writeFloatUnsafe(m.ty / 20);
+      message.write6FloatsUnsafe(m.a, m.b, m.c, m.d, m.tx / 20, m.ty / 20);
 
+      // TODO: Serialize alpha as byte.
       message.writeFloatUnsafe(this._alpha);
       message.writeIntUnsafe(!this._invisible);
 
@@ -604,18 +601,14 @@ var DisplayObjectDefinition = (function () {
         message.writeIntUnsafe(0);
       }
 
-      var cxform = this._cxform;
       if (cxform) {
         message.writeIntUnsafe(1);
-        message.ensureAdditionalCapacity(32);
-        message.writeFloatUnsafe(cxform.redMultiplier / 256);
-        message.writeFloatUnsafe(cxform.greenMultiplier / 256);
-        message.writeFloatUnsafe(cxform.blueMultiplier / 256);
-        message.writeFloatUnsafe(cxform.alphaMultiplier / 256);
-        message.writeFloatUnsafe(cxform.redOffset / 255);
-        message.writeFloatUnsafe(cxform.greenOffset / 255);
-        message.writeFloatUnsafe(cxform.blueOffset / 255);
-        message.writeFloatUnsafe(cxform.alphaOffset / 255);
+        // TODO: Serialize all these as bytes.
+        message.write4FloatsUnsafe(cxform.redMultiplier / 256, cxform.greenMultiplier / 256,
+                                   cxform.blueMultiplier / 256,
+                                   cxform.alphaMultiplier / 256);
+        message.write4FloatsUnsafe(cxform.redOffset / 255, cxform.greenOffset / 255,
+                                   cxform.blueOffset / 255, cxform.alphaOffset / 255);
       } else {
         message.writeIntUnsafe(0);
       }
@@ -626,6 +619,7 @@ var DisplayObjectDefinition = (function () {
         filters[i]._serialize(message);
       }
 
+      // TODO: Comment what's going on here.
       if (this._updateRenderable) {
         var p = message.getIndex(4);
         message.reserve(4);
