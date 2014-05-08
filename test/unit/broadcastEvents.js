@@ -6,7 +6,6 @@
   var Stage = flash.display.Stage;
   var Loader = flash.display.Loader;
   var URLRequest = flash.net.URLRequest;
-  var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
 
   function log(message) {
