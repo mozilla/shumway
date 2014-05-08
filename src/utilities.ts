@@ -1163,12 +1163,13 @@ module Shumway {
      * http://geomalgorithms.com/a03-_inclusion.html
      */
     export function pointInPolygon(x: number, y: number, polygon: Float32Array): boolean {
-      assert (((polygon.length & 1) === 0) && polygon.length >= 8);
-      assert (polygon[0] === polygon[polygon.length - 2] &&
-              polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
+      // assert (((polygon.length & 1) === 0) && polygon.length >= 8);
+      // assert (polygon[0] === polygon[polygon.length - 2] &&
+      //        polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
       var crosses = 0;
       var n = polygon.length - 2;
       var p = polygon;
+
       for (var i = 0; i < n; i += 2) {
         var x0 = p[i + 0];
         var y0 = p[i + 1];
@@ -1198,6 +1199,32 @@ module Shumway {
 
     export function clockwise(x0: number, y0: number, x1: number, y1: number, x2: number, y2: number): boolean {
       return signedArea(x0, y0, x1, y1, x2, y2) < 0;
+    }
+
+    export function pointInPolygonInt32(x: number, y: number, polygon: Int32Array): boolean {
+      // assert (((polygon.length & 1) === 0) && polygon.length >= 8);
+      // assert (polygon[0] === polygon[polygon.length - 2] &&
+      //        polygon[1] === polygon[polygon.length - 1], "First and last points should be equal.");
+      x = x | 0;
+      y = y | 0;
+      var crosses = 0;
+      var n = polygon.length - 2;
+      var p = polygon;
+
+      for (var i = 0; i < n; i += 2) {
+        var x0 = p[i + 0];
+        var y0 = p[i + 1];
+        var x1 = p[i + 2];
+        var y1 = p[i + 3];
+        if (((y0 <= y) && (y1 > y)) || ((y0 > y) && (y1 <= y))) {
+          var t = (y  - y0) / (y1 - y0);
+          if (x < x0 + t * (x1 - x0)) {
+            crosses ++;
+          }
+
+        }
+      }
+      return (crosses & 1) === 1;
     }
   }
 
