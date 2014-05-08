@@ -101,6 +101,12 @@ module Shumway.Timeline {
     }
   }
 
+  export class SoundSymbol extends Symbol {
+    constructor(id: number) {
+      super(id, flash.media.Sound);
+    }
+  }
+
   export class AnimationState {
     constructor(public symbol: Symbol = null,
                 public depth: number = 0,

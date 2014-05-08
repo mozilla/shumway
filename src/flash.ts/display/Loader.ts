@@ -328,8 +328,8 @@ module Shumway.AVM2.AS.flash.display {
           //flash.text.Font.registerFont(font);
           return;
         case 'sound':
-          // TODO
-          return;
+          symbol = new Timeline.SoundSymbol(symbolId);
+          break;
         case 'binary':
           // TODO
           return;
