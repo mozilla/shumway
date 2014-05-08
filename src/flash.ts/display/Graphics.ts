@@ -16,6 +16,7 @@
 // Class: Graphics
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
@@ -377,7 +378,7 @@ module Shumway.AVM2.AS.flash.display {
      * Tests if the specified point is within this graphics path.
      */
     _containsPoint(point: flash.geom.Point, includeStrokes: boolean = false): boolean {
-      notImplemented("public flash.display.Graphics::_containsPoint");
+      // TODO: Implement this in a smart way.
       return false;
 //      var paths = this._paths;
 //      for (var i = 0; i < paths.length; i++) {

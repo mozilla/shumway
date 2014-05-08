@@ -31,6 +31,8 @@ module Shumway {
   import MovieClip = flash.display.MovieClip;
   import VisitorFlags = flash.display.VisitorFlags;
 
+  import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
+
   /**
    * Shumway Player
    *
@@ -48,9 +50,12 @@ module Shumway {
     private static _syncFrameRate = 60;
     private _server: Remoting.Server;
 
+    private _keyboardEventDispatcher: KeyboardEventDispatcher;
+
     constructor(frameContainer: FrameContainer) {
       this._frameContainer = frameContainer;
       this._server = new Remoting.Server(this._frameContainer);
+      this._keyboardEventDispatcher = new KeyboardEventDispatcher();
     }
 
     public load(url: string) {
@@ -99,7 +104,8 @@ module Shumway {
     }
 
     public dispatchKeyboardEvent(event: KeyboardEvent) {
-
+      this._keyboardEventDispatcher.focus = this._stage;
+      this._keyboardEventDispatcher.dispatchKeyboardEvent(event);
     }
 
     private _enterLoops(): void {

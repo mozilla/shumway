@@ -17,6 +17,57 @@
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+
+  /**
+   * Dispatches AS3 keyboard events to the focus event dispatcher.
+   */
+  export class KeyboardEventDispatcher {
+    private _lastKeyCode = 0;
+    private _captureKeyPress = false;
+    private _charCodeMap: any [] = [];
+    private focus: flash.events.EventDispatcher;
+
+    /**
+     * Converts JS keyboard event into AS3 keyboard events.
+     */
+    public dispatchKeyboardEvent(event: KeyboardEvent) {
+      var keyCode = event.keyCode;
+      if (event.type === 'keydown') {
+        this._lastKeyCode = keyCode;
+        // Trying to capture charCode for ASCII keys.
+        this._captureKeyPress = keyCode === 8 || keyCode === 9 ||
+          keyCode === 13 || keyCode === 32 || (keyCode >= 48 && keyCode <= 90) ||
+          keyCode > 145;
+        if (this._captureKeyPress) {
+          return; // skipping keydown, waiting for keypress
+        }
+        this._charCodeMap[keyCode] = 0;
+      } else if (event.type === 'keypress') {
+        if (this._captureKeyPress) {
+          keyCode = this._lastKeyCode;
+          this._charCodeMap[keyCode] = event.charCode;
+        } else {
+          return;
+        }
+      }
+
+      if (this.focus) {
+        var isKeyUp = event.type === 'keyup';
+        this.focus.dispatchEvent(new flash.events.KeyboardEvent (
+          isKeyUp ? 'keyUp' : 'keyDown',
+          true,
+          false,
+          isKeyUp ? this._charCodeMap[keyCode] : event.charCode,
+          isKeyUp ? event.keyCode : this._lastKeyCode,
+          event.location,
+          event.ctrlKey,
+          event.altKey,
+          event.shiftKey
+        ));
+      }
+    }
+  }
+
   export class Keyboard extends ASNative {
     
     // Called whenever the class is initialized.
@@ -35,7 +86,8 @@ module Shumway.AVM2.AS.flash.ui {
       false && super();
       notImplemented("Dummy Constructor: public flash.ui.Keyboard");
     }
-    
+
+
     // JS -> AS Bindings
     static KEYNAME_UPARROW: string = "Up";
     static KEYNAME_DOWNARROW: string = "Down";
