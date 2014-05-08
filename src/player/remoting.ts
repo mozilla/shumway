@@ -88,6 +88,25 @@ module Shumway.Remoting {
       }
     }
 
+    private _createTemporaryRenderable(bounds: Rectangle) {
+      var renderable = new Renderable(bounds, function (context) {
+        if (!this.fillStyle) {
+          this.fillStyle = Shumway.ColorStyle.randomStyle();
+        }
+        context.save();
+        context.beginPath();
+        context.lineWidth = 2;
+        context.fillStyle = this.fillStyle;
+        context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+        context.restore();
+      });
+      renderable.isInvalid = false;
+      renderable.isScaleable = true;
+      renderable.isTileable = true;
+      renderable.isDynamic = false;
+      return renderable;
+    }
+
     private _parseUpdateFrame(input: IDataInput) {
       var id = input.readInt();
       var isContainer = !!input.readInt();
@@ -106,24 +125,7 @@ module Shumway.Remoting {
       if (hasBits & UpdateFrameTagBits.HasBounds) {
         var bounds = readRectangle(input);
         var shape = (<Shape>frame);
-        if (!shape.source) {
-          var renderable = new Renderable(bounds, function (context) {
-            if (!this.fillStyle) {
-              this.fillStyle = Shumway.ColorStyle.randomStyle();
-            }
-            context.save();
-            context.beginPath();
-            context.lineWidth = 2;
-            context.fillStyle = this.fillStyle;
-            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-            context.restore();
-          });
-          renderable.isInvalid = false;
-          renderable.isScaleable = true;
-          renderable.isTileable = true;
-          renderable.isDynamic = false;
-          shape.source = renderable;
-        }
+        shape.source = this._createTemporaryRenderable(bounds);
       }
       if (hasBits & UpdateFrameTagBits.HasChildren) {
         var count = input.readInt();

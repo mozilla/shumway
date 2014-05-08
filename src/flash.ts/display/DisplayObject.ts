@@ -238,6 +238,7 @@ module Shumway.AVM2.AS.flash.display {
                                  DisplayObjectFlags.InvalidConcatenatedMatrix          |
                                  DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
                                  DisplayObjectFlags.DirtyMatrix                        |
+                                 DisplayObjectFlags.DirtyBounds                        |
                                  DisplayObjectFlags.DirtyMiscellaneousProperties;
 
       self._root = null;

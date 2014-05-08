@@ -32,7 +32,6 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super();
       DisplayObject.instanceConstructorNoInitialize.call(this);
-      this._setFlags(DisplayObjectFlags.DirtyBounds);
     }
 
     _graphics: flash.display.Graphics;
