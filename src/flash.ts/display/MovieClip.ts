@@ -281,10 +281,6 @@ module Shumway.AVM2.AS.flash.display {
      * TODO
      */
     private _advanceFrame(): void {
-      if (this._stopped) {
-        return;
-      }
-
       var scenes = this._scenes;
       assert (scenes.length, "There should be at least one scene defined.");
       var lastFrame = this._currentFrameAbs;
@@ -310,6 +306,11 @@ module Shumway.AVM2.AS.flash.display {
       //    }
       //  }
       //}
+
+      this._currentFrameAbs = nextFrame;
+      if (!this._stopped) {
+        this._nextFrameAbs = nextFrame + 1;
+      }
 
       if (nextFrame === lastFrame) {
         this._execute = false;
@@ -363,20 +364,16 @@ module Shumway.AVM2.AS.flash.display {
 
       var currentFrame = nextFrame;
       var sceneIndex = 0;
-
       while (sceneIndex < scenes.length) {
         var scene = scenes[sceneIndex];
-        if (currentFrame < scene.numFrames) {
+        if (currentFrame <= scene.numFrames) {
           break;
         }
         currentFrame -= scene.numFrames;
         sceneIndex++;
       }
-
       this._currentFrame = currentFrame;
       this._sceneIndex = sceneIndex;
-      this._currentFrameAbs = nextFrame;
-      this._nextFrameAbs = nextFrame + 1;
       this._execute = MovieClip._execute = true;
     }
 
