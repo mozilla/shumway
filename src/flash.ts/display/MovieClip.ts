@@ -28,7 +28,7 @@ module Shumway.AVM2.AS.flash.display {
   export class MovieClip extends flash.display.Sprite {
 
     private static _instances: MovieClip [];
-    private static _executables: MovieClip [];
+    private static _callQueue: MovieClip [];
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
@@ -37,7 +37,7 @@ module Shumway.AVM2.AS.flash.display {
       Event = flash.events.Event;
 
       MovieClip._instances = [];
-      MovieClip._executables = [];
+      MovieClip._callQueue = [];
     };
     
     // Called whenever an instance of the class is initialized.
@@ -60,7 +60,6 @@ module Shumway.AVM2.AS.flash.display {
       self._frameScripts = [];
       self._currentFrameAbs = 1;
       self._nextFrameAbs = 1;
-      self._hasNewFrame = false;
       self._stopped = false;
       self._allowFrameNavigation = true;
 
@@ -87,7 +86,10 @@ module Shumway.AVM2.AS.flash.display {
       var instances = MovieClip._instances;
       for (var i = 0; i < instances.length; i++) {
         var instance = instances[i];
-        if (instance._hasFlags(DisplayObjectFlags.Constructed)) {
+        if (instance._totalFrames > 1 && instance._hasFlags(DisplayObjectFlags.Constructed)) {
+          if (!instance._stopped) {
+            instance._nextFrameAbs++;
+          }
           instance._advanceFrame();
         }
       }
@@ -97,13 +99,13 @@ module Shumway.AVM2.AS.flash.display {
     static constructFrame() {
       DisplayObjectContainer.constructChildren();
       DisplayObject._broadcastFrameEvent(Event.FRAME_CONSTRUCTED);
-      var queue = MovieClip._executables;
+      var queue = MovieClip._callQueue;
       while (queue.length) {
         var instance = queue.shift();
         instance._allowFrameNavigation = false;
         instance.callFrame(instance._currentFrameAbs);
         instance._allowFrameNavigation = true;
-        if (instance._hasNewFrame) {
+        if (instance._nextFrameAbs !== instance._currentFrameAbs) {
           instance._advanceFrame();
           instance._constructChildren();
         }
@@ -137,7 +139,6 @@ module Shumway.AVM2.AS.flash.display {
     _frameScripts: any;
     _currentFrameAbs: number;
     _nextFrameAbs: number;
-    _hasNewFrame: boolean;
     _stopped: boolean;
     _allowFrameNavigation: boolean;
 
@@ -205,9 +206,6 @@ module Shumway.AVM2.AS.flash.display {
 
     stop(): void {
       this._isPlaying = false;
-      if (!this._hasNewFrame) {
-        this._nextFrameAbs = this._currentFrameAbs;
-      }
       this._stopped = true;
     }
 
@@ -266,7 +264,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       this._nextFrameAbs = frameNumAbs;
-      this._hasNewFrame = true;
+
       if (this._allowFrameNavigation) { // TODO: also check if ActionScriptVersion < 3
         // TODO test inter-frame navigation behaviour for SWF versions < 10
         this._advanceFrame();
@@ -275,24 +273,17 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _advanceFrame(): void {
-      if (this._totalFrames === 1) {
-        return;
-      }
-
       var scenes = this._scenes;
       assert (scenes.length, "There should be at least one scene defined.");
       var currentFrameAbs = this._currentFrameAbs;
       var nextFrameAbs = this._nextFrameAbs;
 
-      if (currentFrameAbs === nextFrameAbs) {
-        if (this._stopped) {
-          return;
-        }
-        nextFrameAbs++;
-      }
-
       if (nextFrameAbs > this._totalFrames) {
         nextFrameAbs = 1;
+      }
+
+      if (currentFrameAbs === nextFrameAbs) {
+        return;
       }
 
       //if (this._buttonMode && this._enabled) {
@@ -375,12 +366,11 @@ module Shumway.AVM2.AS.flash.display {
       this._sceneIndex = sceneIndex;
 
       if (this._frameScripts[nextFrameAbs]) {
-        MovieClip._executables.push(this);
+        MovieClip._callQueue.push(this);
       }
 
       this._currentFrameAbs = nextFrameAbs;
       this._nextFrameAbs = nextFrameAbs;
-      this._hasNewFrame = false;
     }
 
     callFrame(frame: number): void {
@@ -427,18 +417,18 @@ module Shumway.AVM2.AS.flash.display {
       }
       // arguments are pairs of frameIndex and script/function
       // frameIndex is in range 0..totalFrames-1
-      var numArgs = arguments.length;
+      var numArgs = args.length;
       if (numArgs & 1) {
         throwError('ArgumentError', Errors.TooFewArgumentsError, numArgs, numArgs + 1);
       }
       var frameScripts = this._frameScripts;
       for (var i = 0; i < numArgs; i += 2) {
-        var frameNum = arguments[i] + 1;
+        var frameNum = args[i] + 1;
         assert (frameNum > 0 && frameNum <= this._totalFrames, "Invalid frame number.");
-        var fn = arguments[i + 1];
+        var fn = args[i + 1];
         frameScripts[frameNum] = fn;
         if (frameNum === this._currentFrameAbs) {
-          MovieClip._executables.push(this);
+          MovieClip._callQueue.push(this);
         }
       }
     }
@@ -448,9 +438,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     addFrameLabel(...args): void {
-      for (var i = 0; i < arguments.length; i += 2) {
-        var frameNum = arguments[i] + 1;
-        var labelName = arguments[i + 1];
+      for (var i = 0; i < args.length; i += 2) {
+        var frameNum = args[i] + 1;
+        var labelName = args[i + 1];
         var scenes = this._scenes;
         assert (scenes.length, "There should be at least one scene defined.");
         var offset = 0;
