@@ -72,31 +72,35 @@ module Shumway {
   /* @const */ export var UINT32_MAX_DIV_10 = 0x19999999; // UINT32_MAX / 10;
   /* @const */ export var UINT32_MAX_MOD_10 = 0x5; // UINT32_MAX % 10
 
-  export function isString(value) {
+  export function isString(value): boolean {
     return typeof value === "string";
   }
 
-  export function isFunction(value) {
+  export function isFunction(value): boolean {
     return typeof value === "function";
   }
 
-  export function isNumber(value) {
+  export function isNumber(value): boolean {
     return typeof value === "number";
   }
 
-  export function isArray(value) {
+  export function isInteger(value): boolean {
+    return (value | 0) === value;
+  }
+
+  export function isArray(value): boolean {
     return value instanceof Array;
   }
 
-  export function isNumberOrString(value) {
+  export function isNumberOrString(value): boolean {
     return typeof value === "number" || typeof value === "string";
   }
 
-  export function isObject(value) {
+  export function isObject(value): boolean {
     return typeof value === "object" || typeof value === 'function';
   }
 
-  export function toNumber(x) {
+  export function toNumber(x): number {
     return +x;
   }
 
