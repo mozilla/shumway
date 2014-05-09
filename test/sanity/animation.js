@@ -88,46 +88,9 @@
   }
 
   unitTests.push(function runInspectorSanityTests() {
-    var r = new URLRequest("../../ex~/paralax/w.swf");
-    var l = new Loader();
-    var s = new Stage();
-
     var easel = createEasel();
-    var server = new Remoting.Server(easel.world);
-
-    s.frameRate = 60;
-
-    l.contentLoaderInfo.addEventListener(Event.INIT, function (event) {
-      s.addChild(l.content);
-      s.enterEventLoop();
-    });
-
-    s.addEventListener(Event.ENTER_FRAME, function (event) {
-      var byteArray = new ByteArray();
-      var visitor = new Shumway.Remoting.Client.ClientVisitor();
-      visitor.writer = byteArray;
-
-      s.visit(function (displayObject) {
-        visitor.writeReferences = false;
-        visitor.clearDirtyBits = false;
-        visitor.visitDisplayObject(displayObject);
-        return VisitorFlags.Continue;
-      }, VisitorFlags.None);
-
-      s.visit(function (displayObject) {
-        visitor.writeReferences = true;
-        visitor.clearDirtyBits = true;
-        visitor.visitDisplayObject(displayObject);
-        return VisitorFlags.Continue;
-      }, flash.display.VisitorFlags.None);
-
-      byteArray.writeInt(Shumway.Remoting.MessageTag.EOF);
-      byteArray.position = 0;
-      server.recieve(byteArray);
-      syncOptions(easel.options);
-      easel.render();
-    });
-    l.load(r);
+    var p = new Shumway.Player(easel.world);
+    p.load("../../ex~/paralax/w.swf");
   });
 
 })();

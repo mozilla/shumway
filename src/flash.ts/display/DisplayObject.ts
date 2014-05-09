@@ -30,7 +30,6 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
-  import IChannelVisitor = Shumway.Remoting.IChannelVisitor;
 
   import BlendMode = flash.display.BlendMode; assert (BlendMode);
   import ColorTransform = flash.geom.ColorTransform; assert (ColorTransform);
@@ -1266,10 +1265,6 @@ module Shumway.AVM2.AS.flash.display {
        * The Flash implementation appears to be broken. */
       notImplemented("public DisplayObject::set scrollRect");
       return;
-    }
-
-    _acceptChannelVisitor(visitor: IChannelVisitor) {
-      visitor.visitDisplayObject(this);
     }
 
     get opaqueBackground(): any {
