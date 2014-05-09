@@ -31,7 +31,7 @@ module Shumway.AVM2.AS.flash.system {
     static initializer: any = null;
     
     // List of static symbols to link.
-    static classSymbols: string [] = ['os', 'version'];
+    static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];

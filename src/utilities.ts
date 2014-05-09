@@ -505,6 +505,11 @@ module Shumway {
       return !!(d && d.get);
     }
 
+    export function getOwnGetter(object: Object, name: string): () => any {
+      var d = Object.getOwnPropertyDescriptor(object, name);
+      return d ? d.get : null;
+    }
+
     export function hasOwnSetter(object: Object, name: string): boolean {
       var d = Object.getOwnPropertyDescriptor(object, name);
       return !!(d && !!d.set);

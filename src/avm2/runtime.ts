@@ -879,26 +879,8 @@ module Shumway.AVM2.Runtime {
     return asCoerce(domain.getType(multiname), value);
   }
 
-  export function asCoerce(type, value) {
-    if (type.coerce) {
-      return type.coerce(value);
-    }
-
-    if (isNullOrUndefined(value)) {
-      return null;
-    }
-
-    if (type.isType(value)) {
-      return value;
-    } else {
-      // FIXME throwErrorFromVM needs to be called from within the runtime
-      // because it needs access to the domain or the domain has to be
-      // aquired through some other mechanism.
-      // throwErrorFromVM("TypeError", "Cannot coerce " + obj + " to type " + type);
-
-      // For now just assert false to print the message.
-      release || assert(false, "Cannot coerce " + value + " to type " + type);
-    }
+  export function asCoerce(type: Shumway.AVM2.AS.ASClass, value) {
+    return type.coerce(value);
   }
 
   /**

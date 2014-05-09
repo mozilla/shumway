@@ -29,6 +29,8 @@ module Shumway.AVM2.AS {
   import ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
   import Scope = Shumway.AVM2.Runtime.Scope;
   import hasOwnProperty = Shumway.ObjectUtilities.hasOwnProperty;
+  import hasOwnGetter = Shumway.ObjectUtilities.hasOwnGetter;
+  import getOwnGetter = Shumway.ObjectUtilities.getOwnGetter;
   import defineNonEnumerableProperty = Shumway.ObjectUtilities.defineNonEnumerableProperty;
   import isNumber = Shumway.isNumber;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
@@ -317,8 +319,11 @@ module Shumway.AVM2.AS {
         writer && writer.warnLn("Ignoring AS3 instanceConstructor.");
       }
 
+      /**
+       * If no |callableConstructor| exists then we insert a coercing
+       */
       if (!self.callableConstructor) {
-        self.callableConstructor = self.instanceConstructor;
+        self.callableConstructor = self.coerce.bind(self);
       }
 
       self.instanceConstructorNoInitialize = self.instanceConstructor;
@@ -439,7 +444,7 @@ module Shumway.AVM2.AS {
         return false;
       }
 
-      function link(symbols, traits, obj) {
+      function link(symbols, traits, object) {
         for (var i = 0; i < traits.length; i++) {
           var trait = traits[i];
           if (!containsSymbol(symbols, trait.name.name)) {
@@ -453,14 +458,19 @@ module Shumway.AVM2.AS {
           var name = trait.name.name;
           var qn = Multiname.getQualifiedName(trait.name);
           if (trait.isSlot()) {
-            Object.defineProperty(obj, name, {
+            Object.defineProperty(object, name, {
               get: <() => any>new Function("", "return this." + qn),
               set: <(any) => void>new Function("v", "this." + qn + " = v")
             });
           } else if (trait.isMethod()) {
-            assert (!obj[name], "Symbol should not already exist.")
-            assert (obj.asOpenMethods[qn], "There should be an open method for this symbol.");
-            obj[name] = obj.asOpenMethods[qn];
+            assert (!object[name], "Symbol should not already exist.")
+            assert (object.asOpenMethods[qn], "There should be an open method for this symbol.");
+            object[name] = object.asOpenMethods[qn];
+          } else if (trait.isGetter()) {
+            assert (hasOwnGetter(object, qn), "There should be an getter method for this symbol.");
+            Object.defineProperty(object, name, {
+              get: <() => any>new Function("", "return this." + qn),
+            });
           } else {
             notImplemented(trait);
           }
@@ -608,11 +618,11 @@ module Shumway.AVM2.AS {
     }
 
     public asCall(self: any, ...argArray: any[]): any {
-      return Runtime.asCoerce(this, argArray[0])
+      return this.coerce(argArray[0])
     }
 
     public asApply(self: any, argArray?: any): any {
-      return Runtime.asCoerce(this, argArray[0])
+      return this.coerce(argArray[0])
     }
 
     public applyType(type: ASClass): ASClass {
