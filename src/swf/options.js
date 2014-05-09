@@ -67,8 +67,7 @@ var webGLOptions = stageOptions.register(new OptionSet("WebGL Options"));
   var disableTextureUploads = webGLOptions.register(new Option("", "disableTextureUploads", "boolean", false, "Disable texture uploads."));
 
 var canvas2DOptions = stageOptions.register(new OptionSet("Canvas2D Options"));
-  var clipDirtyRegions = canvas2DOptions.register(new Option("", "clipDirtyRegions", "boolean", true, "Clip dirty regions."));
-  var clipCanvas = canvas2DOptions.register(new Option("", "clipCanvas", "boolean", true, "Clip Regions."));
-  var cull = canvas2DOptions.register(new Option("", "cull", "boolean", true, "Enable culling."));
-
-  var compositeMask = canvas2DOptions.register(new Option("", "compositeMask", "boolean", true, "Composite Mask."));
+  var clipDirtyRegions = canvas2DOptions.register(new Option("", "clipDirtyRegions", "boolean", false, "Clip dirty regions."));
+  var clipCanvas = canvas2DOptions.register(new Option("", "clipCanvas", "boolean", false, "Clip Regions."));
+  var cull = canvas2DOptions.register(new Option("", "cull", "boolean", false, "Enable culling."));
+  var compositeMask = canvas2DOptions.register(new Option("", "compositeMask", "boolean", false, "Composite Mask."));
