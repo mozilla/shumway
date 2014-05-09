@@ -50,7 +50,7 @@
       mc.prevFrame();
       mc.gotoAndStop(4);
     });
-    MovieClip.executeFrame();
+    MovieClip.constructFrame();
     check(frameScriptWasCalled);
 
     MovieClip.initFrame();
@@ -66,7 +66,7 @@
       mc.gotoAndPlay(3);
       r += mc.currentFrame;
     });
-    MovieClip.executeFrame();
+    MovieClip.constructFrame();
     eq(r, '443');
 
     MovieClip.initFrame();

@@ -21,7 +21,6 @@ module Shumway {
   import FrameContainer = Shumway.GFX.FrameContainer;
   import Easel = Shumway.GFX.Easel;
 
-  import FramePhase = Shumway.Timeline.FramePhase;
   import LoadStatus = flash.display.LoadStatus;
 
   import ByteArray = flash.utils.ByteArray;
@@ -166,8 +165,7 @@ module Shumway {
         timeline && timeline.enter("eventLoop");
 
         MovieClip.initFrame();
-        DisplayObjectContainer.constructFrame();
-        MovieClip.executeFrame();
+        MovieClip.constructFrame();
 
         if (needsInit) {
           self._loaderInfo.loadStatus = LoadStatus.Initialized;

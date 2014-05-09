@@ -21,10 +21,9 @@ module Shumway.AVM2.AS.flash.display {
   import clamp = Shumway.NumberUtilities.clamp;
   import Telemetry = Shumway.Telemetry;
 
-  import FramePhase = Shumway.Timeline.FramePhase;
-
   var Scene: typeof flash.display.Scene;
   var FrameLabel: typeof flash.display.FrameLabel;
+  var Event: typeof flash.events.Event;
 
   export class MovieClip extends flash.display.Sprite {
 
@@ -35,6 +34,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = function () {
       Scene = flash.display.Scene;
       FrameLabel = flash.display.FrameLabel;
+      Event = flash.events.Event;
 
       MovieClip._instances = [];
       MovieClip._executables = [];
@@ -62,6 +62,7 @@ module Shumway.AVM2.AS.flash.display {
       self._nextFrameAbs = 1;
       self._hasNewFrame = false;
       self._stopped = false;
+      self._allowFrameNavigation = true;
 
       if (symbol) {
         self._framesLoaded = symbol.frames.length;
@@ -90,27 +91,26 @@ module Shumway.AVM2.AS.flash.display {
           instance._advanceFrame();
         }
       }
-      DisplayObject._broadcastFrameEvent(FramePhase.Enter);
+      DisplayObject._broadcastFrameEvent(Event.ENTER_FRAME);
     }
 
-    static executeFrame(): void {
+    static constructFrame() {
+      DisplayObjectContainer.constructChildren();
+      DisplayObject._broadcastFrameEvent(Event.FRAME_CONSTRUCTED);
       var queue = MovieClip._executables;
       while (queue.length) {
         var instance = queue.shift();
-
-        var currentPhase = instance._framePhase;
-        instance._framePhase = FramePhase.Execute;
+        instance._allowFrameNavigation = false;
         instance.callFrame(instance._currentFrameAbs);
-        instance._framePhase = currentPhase;
-
+        instance._allowFrameNavigation = true;
         if (instance._hasNewFrame) {
           instance._advanceFrame();
           instance._constructChildren();
         }
       }
-
-      DisplayObject._broadcastFrameEvent(FramePhase.Exit);
+      DisplayObject._broadcastFrameEvent(Event.EXIT_FRAME);
     }
+
     constructor () {
       false && super();
       notImplemented("Dummy Constructor: public flash.display.MovieClip");
@@ -139,6 +139,7 @@ module Shumway.AVM2.AS.flash.display {
     _nextFrameAbs: number;
     _hasNewFrame: boolean;
     _stopped: boolean;
+    _allowFrameNavigation: boolean;
 
     get currentFrame(): number /*int*/ {
       return this._currentFrame;
@@ -204,6 +205,9 @@ module Shumway.AVM2.AS.flash.display {
 
     stop(): void {
       this._isPlaying = false;
+      if (!this._hasNewFrame) {
+        this._nextFrameAbs = this._currentFrameAbs;
+      }
       this._stopped = true;
     }
 
@@ -211,7 +215,7 @@ module Shumway.AVM2.AS.flash.display {
       var scenes = this._scenes;
       assert (scenes.length, "There should be at least one scene defined.");
       var sceneIndex = -1;
-      var offset = 0;
+      var sceneOffset = 0;
       var frameNum = 1;
 
       if (sceneName !== null) {
@@ -221,7 +225,7 @@ module Shumway.AVM2.AS.flash.display {
             sceneIndex = i;
             break;
           }
-          offset += scene.numFrames;
+          sceneOffset += scene.numFrames;
         }
         if (sceneIndex < 0) {
           throwError('ArgumentError', Errors.SceneNotFoundError, sceneName);
@@ -247,26 +251,26 @@ module Shumway.AVM2.AS.flash.display {
           throwError('ArgumentError', Errors.FrameLabelNotFoundError, frame, sceneName);
         }
       } else {
+        if (!frame) {
+          // TODO
+        }
         frameNum = frame;
         if (frameNum < 1) {
           frameNum = 1;
         }
       }
 
-      var nextFrame = offset + frameNum;
-
-      if (nextFrame === this._nextFrameAbs) {
+      var frameNumAbs = sceneOffset + frameNum;
+      if (frameNumAbs === this._nextFrameAbs) {
         return;
       }
 
-      this._nextFrameAbs = nextFrame;
+      this._nextFrameAbs = frameNumAbs;
       this._hasNewFrame = true;
-
-      if (this._framePhase !== FramePhase.Execute) { // TODO: also check if ActionScriptVersion < 3
+      if (this._allowFrameNavigation) { // TODO: also check if ActionScriptVersion < 3
         // TODO test inter-frame navigation behaviour for SWF versions < 10
         this._advanceFrame();
-        DisplayObjectContainer.constructFrame();
-        MovieClip.executeFrame();
+        MovieClip.constructFrame();
       }
     }
 
@@ -277,18 +281,18 @@ module Shumway.AVM2.AS.flash.display {
 
       var scenes = this._scenes;
       assert (scenes.length, "There should be at least one scene defined.");
-      var lastFrame = this._currentFrameAbs;
-      var nextFrame = this._nextFrameAbs;
+      var currentFrameAbs = this._currentFrameAbs;
+      var nextFrameAbs = this._nextFrameAbs;
 
-      if (!this._hasNewFrame) {
+      if (currentFrameAbs === nextFrameAbs) {
         if (this._stopped) {
           return;
         }
-        nextFrame++;
+        nextFrameAbs++;
       }
 
-      if (nextFrame > this._totalFrames) {
-        nextFrame = 1;
+      if (nextFrameAbs > this._totalFrames) {
+        nextFrameAbs = 1;
       }
 
       //if (this._buttonMode && this._enabled) {
@@ -308,7 +312,7 @@ module Shumway.AVM2.AS.flash.display {
       //  }
       //}
 
-      if (nextFrame > this._framesLoaded) {
+      if (nextFrameAbs > this._framesLoaded) {
         // TODO
         return;
       }
@@ -316,8 +320,8 @@ module Shumway.AVM2.AS.flash.display {
       // TODO fast path if navigated within current scene
 
       var frames = this._frames;
-      var startFrame = lastFrame;
-      if (nextFrame < lastFrame) {
+      var startIndex = currentFrameAbs;
+      if (nextFrameAbs < currentFrameAbs) {
         var frame = frames[0];
         assert (frame, "Frame is not defined.");
         var stateAtDepth = frame.stateAtDepth;
@@ -331,9 +335,9 @@ module Shumway.AVM2.AS.flash.display {
             }
           }
         }
-        startFrame = 0;
+        startIndex = 0;
       }
-      for (var i = startFrame; i < nextFrame; i++) {
+      for (var i = startIndex; i < nextFrameAbs; i++) {
         var frame = frames[i];
         assert (frame, "Frame is not defined.");
         var stateAtDepth = frame.stateAtDepth;
@@ -355,7 +359,7 @@ module Shumway.AVM2.AS.flash.display {
         }
       }
 
-      var currentFrame = nextFrame;
+      var currentFrame = nextFrameAbs;
       var sceneIndex = 0;
       while (sceneIndex < scenes.length) {
         var scene = scenes[sceneIndex];
@@ -370,12 +374,12 @@ module Shumway.AVM2.AS.flash.display {
       this._currentFrame = currentFrame;
       this._sceneIndex = sceneIndex;
 
-      if (this._frameScripts[nextFrame]) {
+      if (this._frameScripts[nextFrameAbs]) {
         MovieClip._executables.push(this);
       }
 
-      this._currentFrameAbs = nextFrame;
-      this._nextFrameAbs = nextFrame;
+      this._currentFrameAbs = nextFrameAbs;
+      this._nextFrameAbs = nextFrameAbs;
       this._hasNewFrame = false;
     }
 

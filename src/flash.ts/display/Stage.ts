@@ -19,19 +19,19 @@ module Shumway.AVM2.AS.flash.display {
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
-  import FramePhase = Shumway.Timeline.FramePhase;
-
   import StageScaleMode = flash.display.StageScaleMode;
   import ColorCorrection = flash.display.ColorCorrection;
   import ColorCorrectionSupport = flash.display.ColorCorrectionSupport;
   import StageQuality = flash.display.StageQuality;
 
   var DisplayObject: typeof flash.display.DisplayObject;
+  var Event: typeof flash.events.Event;
 
   export class Stage extends flash.display.DisplayObjectContainer {
 
     static classInitializer: any = function () {
       DisplayObject = flash.display.DisplayObject;
+      Event = flash.events.Event;
     };
 
     static classSymbols: string [] = null; // [];
@@ -313,7 +313,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._invalidated) {
         return;
       }
-      DisplayObject._broadcastFrameEvent(FramePhase.Render);
+      DisplayObject._broadcastFrameEvent(flash.events.Event.RENDER);
       this._invalidated = false;
     }
   }

@@ -142,14 +142,4 @@ module Shumway.Timeline {
       this.stateAtDepth[depth] = null;
     }
   }
-
-  export enum FramePhase {
-    Enter       = 1,
-    Construct   = 2,
-    Constructed = 3,
-    Execute     = 4,
-    Exit        = 5,
-    Render      = 6,
-    Idle        = 7
-  }
 }

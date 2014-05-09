@@ -20,7 +20,6 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
 
-  import FramePhase = Shumway.Timeline.FramePhase;
   import VisitorFlags = flash.display.VisitorFlags;
 
   var Event: typeof flash.events.Event;
@@ -44,19 +43,11 @@ module Shumway.AVM2.AS.flash.display {
       self._children = [];
     };
 
-    /*
-     * TODO
-     */
-    static constructFrame(): void {
+    static constructChildren(): void {
       var instances = DisplayObjectContainer._instances;
       for (var i = 0; i < instances.length; i++) {
-        var instance = instances[i];
-        var currentPhase = instance._framePhase;
-        instance._framePhase = FramePhase.Construct;
-        instance._constructChildren();
-        instance._framePhase = currentPhase;
+        instances[i]._constructChildren();
       }
-      DisplayObject._broadcastFrameEvent(FramePhase.Constructed);
     }
 
     constructor () {

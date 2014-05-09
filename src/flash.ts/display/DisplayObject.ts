@@ -30,8 +30,6 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
-
-  import FramePhase = Shumway.Timeline.FramePhase;
   import IChannelVisitor = Shumway.Remoting.IChannelVisitor;
 
   import BlendMode = flash.display.BlendMode; assert (BlendMode);
@@ -320,29 +318,17 @@ module Shumway.AVM2.AS.flash.display {
       return instance;
     }
 
-    /*
-     * TODO
-     */
-    static _broadcastFrameEvent(framePhase: FramePhase = FramePhase.Idle): void {
-      var eventType;
-      switch (framePhase) {
-        case FramePhase.Enter:
-          eventType = Event.ENTER_FRAME;
-          break;
-        case FramePhase.Constructed:
-          eventType = Event.FRAME_CONSTRUCTED;
-          break;
-        case FramePhase.Exit:
-          eventType = Event.EXIT_FRAME;
-          break;
-        case FramePhase.Render:
-          eventType = Event.RENDER;
-          break;
+    static _broadcastFrameEvent(type: string): void {
+      var event;
+      switch (type) {
+        case Event.ENTER_FRAME:
+        case Event.FRAME_CONSTRUCTED:
+        case Event.EXIT_FRAME:
+        case Event.RENDER:
+          event = Event.getBroadcastInstance(type);
       }
-      assert (eventType, "Invalid frame event.");
-      EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(
-        Event.getBroadcastInstance(eventType), framePhase
-      );
+      assert (event, "Invalid frame event.");
+      EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(event);
     }
 
     constructor () {

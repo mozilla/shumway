@@ -155,23 +155,20 @@ module Shumway.AVM2.AS.flash.events {
       assert (queue.indexOf(target) < 0, "Target shouldn't be in this queue anymore.");
     }
 
-    dispatchEvent(event: flash.events.Event, framePhase: Shumway.Timeline.FramePhase) {
+    dispatchEvent(event: flash.events.Event) {
       assert (event.isBroadcastEvent(), "Cannot dispatch non-broadcast events.");
       var queue = this._queues[event.type];
       if (!queue) {
         return;
       }
-      timeline && timeline.enter(Shumway.Timeline.FramePhase[framePhase]);
+      //timeline && timeline.enter(Shumway.Timeline.FramePhase[framePhase]);
       var nullCount = 0;
       for (var i = 0; i < queue.length; i++) {
         var target = queue[i];
         if (target === null) {
           nullCount++;
         } else {
-          var currentPhase = target._framePhase;
-          target._framePhase = framePhase;
           target.dispatchEvent(event);
-          target._framePhase = currentPhase;
         }
       }
 
@@ -185,7 +182,7 @@ module Shumway.AVM2.AS.flash.events {
         }
         this._queues[event.type] = compactedQueue;
       }
-      timeline && timeline.leave(Shumway.Timeline.FramePhase[framePhase]);
+      //timeline && timeline.leave(Shumway.Timeline.FramePhase[framePhase]);
     }
 
     getQueueLength(type: string) {
@@ -216,8 +213,6 @@ module Shumway.AVM2.AS.flash.events {
     private _captureListeners: Shumway.Map<EventListenerList>;
     private _targetOrBubblingListeners: Shumway.Map<EventListenerList>;
 
-    _framePhase: Shumway.Timeline.FramePhase;
-
     // Called whenever an instance of the class is initialized.
     static initializer: any = function () {
       var self: EventDispatcher = this;
@@ -225,8 +220,6 @@ module Shumway.AVM2.AS.flash.events {
       self._target = this;
       self._captureListeners = null;
       self._targetOrBubblingListeners = null;
-
-      self._framePhase = Shumway.Timeline.FramePhase.Idle;
     };
 
     // List of static symbols to link.
