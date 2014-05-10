@@ -160,8 +160,8 @@ module Shumway.AVM2.AS.flash.display {
         // The children list could have been mutated as a result of |removeChild|.
         index = clamp(index, 0, children.length)
       }
-      for (var i = children.length; i > index; i--) {
-        children[i - 1]._index++;
+      for (var i = children.length - 1; i >= index; i--) {
+        children[i]._index++;
       }
       children.splice(index, 0, child);
       child._index = index;
@@ -198,7 +198,7 @@ module Shumway.AVM2.AS.flash.display {
         child._index = index;
       } else {
         children.splice(index, 0, child);
-        for (var i = index; i <= maxIndex; i++) {
+        for (var i = index; i < children.length; i++) {
           children[i]._index = i;
         }
       }
@@ -230,10 +230,10 @@ module Shumway.AVM2.AS.flash.display {
         // we may need to operate on the new index of the child.
         index = this.getChildIndex(child);
       }
-      for (var i = children.length; i > index; i--) {
-        children[i - 1]._index--;
-      }
       children.splice(index, 1);
+      for (var i = children.length - 1; i >= index; i--) {
+        children[i]._index--;
+      }
       child._index = -1;
       child._parent = null;
       child._invalidatePosition();
