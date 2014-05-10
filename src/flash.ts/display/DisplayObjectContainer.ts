@@ -78,8 +78,8 @@ module Shumway.AVM2.AS.flash.display {
           continue;
         }
         child.class.instanceConstructorNoInitialize.call(child);
-        if (child.name) {
-          this[Multiname.getPublicQualifiedName(child.name)] = child;
+        if (child._name) {
+          this[Multiname.getPublicQualifiedName(child._name)] = child;
         }
         child._setFlags(DisplayObjectFlags.Constructed);
 

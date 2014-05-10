@@ -240,7 +240,7 @@ module Shumway.AVM2.AS.flash.display {
 
       self._root = null;
       self._stage = null;
-      self._name = 'instance' + self._id;
+      self._name = null;
       self._parent = null;
       self._mask = null;
 

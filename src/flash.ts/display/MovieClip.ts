@@ -322,7 +322,7 @@ module Shumway.AVM2.AS.flash.display {
           if (child._depth) {
             var state = stateAtDepth[child._depth];
             if (!state || !state.canBeAnimated(child)) {
-              this.removeChildAt(i);
+              this._removeAnimatedChild(child);
             }
           }
         }
@@ -341,7 +341,7 @@ module Shumway.AVM2.AS.flash.display {
               child._animate(state);
               continue;
             }
-            this.removeChild(child);
+            this._removeAnimatedChild(child);
           }
           if (state) {
             var character = DisplayObject.createAnimatedDisplayObject(state, false);
@@ -371,6 +371,16 @@ module Shumway.AVM2.AS.flash.display {
 
       this._currentFrameAbs = nextFrameAbs;
       this._nextFrameAbs = nextFrameAbs;
+    }
+
+    private _removeAnimatedChild(child: flash.display.DisplayObject) {
+      this.removeChild(child);
+      if (child._name) {
+        var mn = Multiname.getPublicQualifiedName(child._name);
+        if (this[mn] === child) {
+          this[mn] = null;
+        }
+      }
     }
 
     callFrame(frame: number): void {
