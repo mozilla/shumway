@@ -343,7 +343,7 @@ module Shumway.AVM2.AS.flash.display {
             }
             this._removeAnimatedChild(child);
           }
-          if (state) {
+          if (state && state.symbol) {
             var character = DisplayObject.createAnimatedDisplayObject(state, false);
             this.addChildAtDepth(character, state.depth);
           }

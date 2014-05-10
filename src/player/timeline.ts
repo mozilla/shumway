@@ -121,9 +121,12 @@ module Shumway.Timeline {
                 public events: any [] = null) {
     }
 
-    canBeAnimated(displayObject: flash.display.DisplayObject): boolean {
-      return (!this.symbol || displayObject._symbol === this.symbol) &&
-        displayObject._ratio === this.ratio;
+    canBeAnimated(object: flash.display.DisplayObject): boolean {
+      return object._hasFlags(flash.display.DisplayObjectFlags.AnimatedByTimeline) &&
+        (!this.symbol || object._symbol === this.symbol ||
+        (this.symbol instanceof ShapeSymbol && object._symbol instanceof ShapeSymbol)) &&
+        (this.depth === object._depth) &&
+        (this.ratio === object._ratio);
     }
   }
 

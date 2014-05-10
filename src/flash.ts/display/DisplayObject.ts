@@ -731,6 +731,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _animate(state: Shumway.Timeline.AnimationState): void {
+      if (state.symbol) {
+        if (state.symbol instanceof Shumway.Timeline.ShapeSymbol) {
+          this._graphics = (<Shumway.Timeline.ShapeSymbol>state.symbol).graphics;
+        }
+        // TODO handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/
+      }
       if (state.matrix) {
         this._setMatrix(state.matrix, false);
       }
