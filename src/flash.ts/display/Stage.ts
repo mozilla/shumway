@@ -43,7 +43,6 @@ module Shumway.AVM2.AS.flash.display {
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
       this._root = this;
       this._stage = this;
-
       this._frameRate = 24;
       this._scaleMode = StageScaleMode.SHOW_ALL;
       this._align = "";

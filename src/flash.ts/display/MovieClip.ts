@@ -308,8 +308,6 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
 
-      // TODO fast path if navigated within current scene
-
       var frames = this._frames;
       var startIndex = currentFrameAbs;
       if (nextFrameAbs < currentFrameAbs) {
@@ -328,6 +326,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         startIndex = 0;
       }
+
       for (var i = startIndex; i < nextFrameAbs; i++) {
         var frame = frames[i];
         assert (frame, "Frame is not defined.");
