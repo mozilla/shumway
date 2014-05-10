@@ -352,18 +352,25 @@ module Shumway.AVM2.AS.flash.display {
 
       var currentFrame = nextFrameAbs;
       var sceneIndex = 0;
+      var currentLabel = null;
       while (sceneIndex < scenes.length) {
         var scene = scenes[sceneIndex];
         if (currentFrame <= scene.numFrames) {
-          // TODO set currentLabel
+          var labels = scene.labels;
+          for (var i = 0; i < labels; i++) {
+            var label = labels[i];
+            if (label.frame === currentFrame) {
+              currentLabel = label;
+            }
+          }
           break;
         }
         currentFrame -= scene.numFrames;
         sceneIndex++;
       }
-
       this._currentFrame = currentFrame;
       this._sceneIndex = sceneIndex;
+      this._currentLabel = currentLabel;
 
       if (this._frameScripts[nextFrameAbs]) {
         MovieClip._callQueue.push(this);
