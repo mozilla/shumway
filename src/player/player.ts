@@ -21,13 +21,12 @@ module Shumway {
   import FrameContainer = Shumway.GFX.FrameContainer;
   import Easel = Shumway.GFX.Easel;
 
-  import LoadStatus = flash.display.LoadStatus;
-
   import ByteArray = flash.utils.ByteArray;
   import Event = flash.events.Event;
   import DisplayObject = flash.display.DisplayObject;
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
   import MovieClip = flash.display.MovieClip;
+  import Loader = flash.display.Loader;
   import VisitorFlags = flash.display.VisitorFlags;
 
   import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
@@ -61,7 +60,7 @@ module Shumway {
       assert (!this._loader, "Can't load twice.");
       var self = this;
       var stage = this._stage = new flash.display.Stage();
-      var loader = this._loader = new flash.display.Loader();
+      var loader = this._loader = flash.display.Loader.getRootLoader();
       var loaderInfo = this._loaderInfo = loader.contentLoaderInfo;
 
       loaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, function onProgress() {
@@ -155,19 +154,19 @@ module Shumway {
     private _enterEventLoop(): void {
       var self = this;
       var stage = this._stage;
-      var needsInit = true;
+      var rootInitialized = false;
       (function tick() {
         self._frameTimeout = setTimeout(tick, 1000 / stage.frameRate);
         timeline && timeline.enter("eventLoop");
 
         MovieClip.initFrame();
         MovieClip.constructFrame();
+        Loader.progress();
 
-        if (needsInit) {
-          self._loaderInfo.loadStatus = LoadStatus.Initialized;
-          needsInit = false;
-        } else {
+        if (rootInitialized) {
           stage.render();
+        } else {
+          rootInitialized = true;
         }
 
         timeline && timeline.leave("eventLoop");

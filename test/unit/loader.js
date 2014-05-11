@@ -13,9 +13,9 @@
   for (var i = 0; i < 75; i++) {
     unitTests.push(function runInspectorSanityTests() {
       return new Promise(function (resolve, reject) {
-        var r = new URLRequest("../as3_tiger/tiger.swf");
-        var l = new Loader();
         var s = new Stage();
+        var l = Loader.getRootLoader();
+        var r = new URLRequest("../as3_tiger/tiger.swf");
 
         var initEventCalled = false;
         var completeEventCalled = false;
@@ -53,9 +53,9 @@
   }
 
   unitTests.push(function runInspectorSanityTests() {
-    var r = new URLRequest("../as3_tiger/tiger.swf");
-    var l = new Loader();
     var s = new Stage();
+    var l = Loader.getRootLoader();
+    var r = new URLRequest("../as3_tiger/tiger.swf");
 
     l.contentLoaderInfo.addEventListener(Event.INIT, function (event) {
       check(l.content, "We should have some content here.");

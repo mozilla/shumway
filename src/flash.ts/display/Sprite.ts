@@ -43,7 +43,6 @@ module Shumway.AVM2.AS.flash.display {
       if (symbol) {
         if (symbol.isRoot) {
           self._root = self;
-          //self._name = self._name.replace('instance', 'root');
         }
         if (symbol.numFrames) {
           var frame = symbol.frames[0];

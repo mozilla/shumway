@@ -212,6 +212,18 @@ function createParsingContext(commitData) {
       commitData({command: 'init', result: result});
     },
     onprogress: function(result) {
+      if (result.bytesLoaded - bytesLoaded >= 65536) {
+        while (bytesLoaded < result.bytesLoaded) {
+          if (bytesLoaded) {
+            commitData({command: 'progress', result: {
+              bytesLoaded: bytesLoaded,
+              bytesTotal: result.bytesTotal
+            }});
+          }
+          bytesLoaded += 65536;
+        }
+      }
+
       var tags = result.tags;
       for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
         var tag = tags[tagsProcessed];
@@ -322,14 +334,6 @@ function createParsingContext(commitData) {
           bytesLoaded: result.bytesLoaded,
           bytesTotal: result.bytesTotal
         }});
-      } else if (result.bytesLoaded - bytesLoaded >= 65536) {
-        while (bytesLoaded < result.bytesLoaded) {
-          commitData({command: 'progress', result: {
-            bytesLoaded: bytesLoaded,
-            bytesTotal: result.bytesTotal
-          }});
-          bytesLoaded += 65536;
-        }
       }
     },
     oncomplete: function(result) {

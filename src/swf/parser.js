@@ -231,6 +231,14 @@ BodyParser.prototype = {
     var buffer = this.buffer;
     var options = this.options;
     var stream;
+
+    var finalBlock = false;
+    if (progressInfo) {
+      swf.bytesLoaded = progressInfo.bytesLoaded;
+      swf.bytesTotal = progressInfo.bytesTotal;
+      finalBlock = progressInfo.bytesLoaded >= progressInfo.bytesTotal;
+    }
+
     if (this.initialize) {
       var PREFETCH_SIZE = 17 /* RECT */ +
                           4  /* Frames rate and count */ +
@@ -266,13 +274,6 @@ BodyParser.prototype = {
     } else {
       buffer.push(data);
       stream = buffer.createStream();
-    }
-
-    var finalBlock = false;
-    if (progressInfo) {
-      swf.bytesLoaded = progressInfo.bytesLoaded;
-      swf.bytesTotal = progressInfo.bytesTotal;
-      finalBlock = progressInfo.bytesLoaded >= progressInfo.bytesTotal;
     }
 
     var readStartTime = performance.now();
