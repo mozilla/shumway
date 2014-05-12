@@ -1663,6 +1663,10 @@ module Shumway {
     export function rgbaToArgb(color: number): number {
       return ((color >> 8) | (color << 24)) >>> 0;
     }
+
+    export function componentsToRgb(components: any): number {
+      return ((components.red << 16) | (components.green << 8) | components.blue) >>> 0;
+    }
   }
 
   export module Telemetry {
