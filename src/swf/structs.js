@@ -161,7 +161,7 @@ var FILTER_GLOW = {
     $: RGBA,
     count: 'count'
   },
-  higlightColor: ['type===3', [RGBA]],
+  highlightColor: ['type===3', [RGBA]],
   $0: ['type===4||type===7', [{
     ratios: {
       $: UI8,
