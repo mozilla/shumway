@@ -1104,28 +1104,28 @@ var tagHandler=(function (global) {
     $.compositeSource = readUb($bytes, $stream, 1);
     if (type === 3 || type === 4 || type === 7) {
       $.onTop = readUb($bytes, $stream, 1);
-      $.passes = readUb($bytes, $stream, 4);
+      $.quality = readUb($bytes, $stream, 4);
     } else {
-      $.passes = readUb($bytes, $stream, 5);
+      $.quality = readUb($bytes, $stream, 5);
     }
   }
   function filterBlur($bytes, $stream, $, swfVersion, tagCode) {
     $.blurX = readFixed($bytes, $stream);
     $.blurY = readFixed($bytes, $stream);
-    $.passes = readUb($bytes, $stream, 5);
+    $.quality = readUb($bytes, $stream, 5);
     var reserved = readUb($bytes, $stream, 3);
   }
   function filterConvolution($bytes, $stream, $, swfVersion, tagCode) {
-    var columns = $.columns = readUi8($bytes, $stream);
-    var rows = $.rows = readUi8($bytes, $stream);
+    var matrixX = $.matrixX = readUi8($bytes, $stream);
+    var matrixY = $.matrixY = readUi8($bytes, $stream);
     $.divisor = readFloat($bytes, $stream);
     $.bias = readFloat($bytes, $stream);
-    var $17 = $.weights = [];
-    var $18 = columns * rows;
+    var $17 = $.matrix = [];
+    var $18 = matrixX * matrixY;
     while ($18--) {
       $17.push(readFloat($bytes, $stream));
     }
-    var $19 = $.defaultColor = {};
+    var $19 = $.color = {};
     rgba($bytes, $stream, $19, swfVersion, tagCode);
     var reserved = readUb($bytes, $stream, 6);
     $.clamp = readUb($bytes, $stream, 1);
