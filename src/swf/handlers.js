@@ -1099,7 +1099,7 @@ var tagHandler=(function (global) {
       $.distance = readFixed($bytes, $stream);
     }
     $.strength = readFixed8($bytes, $stream);
-    $.innerShadow = readUb($bytes, $stream, 1);
+    $.inner = readUb($bytes, $stream, 1);
     $.knockout = readUb($bytes, $stream, 1);
     $.compositeSource = readUb($bytes, $stream, 1);
     if (type === 3 || type === 4 || type === 7) {

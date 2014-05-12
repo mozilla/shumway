@@ -44,12 +44,12 @@ module Shumway.AVM2.AS.flash.filters {
       var shadowAlpha: number = (obj.colors[0].alpha & 0xff) / 255;
       // type is derived from obj.onTop and obj.innerShadow
       // obj.onTop true: type is FULL
-      // obj.innerShadow true: type is INNER
+      // obj.inner true: type is INNER
       // neither true: type is OUTER
       var type: string = flash.filters.BitmapFilterType.OUTER;
       if (!!obj.onTop) {
         type = flash.filters.BitmapFilterType.FULL;
-      } else if (!!obj.innerShadow) {
+      } else if (!!obj.inner) {
         type = flash.filters.BitmapFilterType.INNER;
       }
       // obj.angle is represented in radians, the api needs degrees

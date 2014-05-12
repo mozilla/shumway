@@ -175,7 +175,7 @@ var FILTER_GLOW = {
     distance: FIXED
   }]],
   strength: FIXED8,
-  innerShadow: UB(1),
+  inner: UB(1),
   knockout: UB(1),
   compositeSource: UB(1),
   $3: ['type===3', [
