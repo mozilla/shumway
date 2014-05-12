@@ -348,4 +348,11 @@
     eq(o.filters.length, 0);
   });
 
+  unitTests.push(function runInspectorSanityTests() {
+    Random.seed(0x12343);
+    var s = new Shape();
+    s.transform.matrix = new Matrix(-1, 0, 0, -1, 0, 0);
+    eq(s.rotation, 180);
+  });
+
 })();
