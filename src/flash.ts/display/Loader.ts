@@ -591,6 +591,7 @@ module Shumway.AVM2.AS.flash.display {
                 var filter: flash.filters.BitmapFilter;
                 switch (obj.type) {
                   case 0: filter = flash.filters.DropShadowFilter.fromAny(obj); break;
+                  case 1: filter = flash.filters.BlurFilter.fromAny(obj); break;
                   case 2: filter = flash.filters.GlowFilter.fromAny(obj); break;
                   case 3: filter = flash.filters.BevelFilter.fromAny(obj); break;
                   case 4: filter = flash.filters.GradientGlowFilter.fromAny(obj); break;
