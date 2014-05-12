@@ -240,7 +240,7 @@ module Shumway.AVM2.AS.flash.display {
 
       self._root = null;
       self._stage = null;
-      self._name = 'instance' + self._id;
+      self._name = null;
       self._parent = null;
       self._mask = null;
 
@@ -318,7 +318,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     static _broadcastFrameEvent(type: string): void {
-      var event;
+      var event: flash.events.Event;
       switch (type) {
         case Event.ENTER_FRAME:
         case Event.FRAME_CONSTRUCTED:
@@ -731,6 +731,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _animate(state: Shumway.Timeline.AnimationState): void {
+      if (state.symbol) {
+        if (state.symbol instanceof Shumway.Timeline.ShapeSymbol) {
+          this._graphics = (<Shumway.Timeline.ShapeSymbol>state.symbol).graphics;
+        }
+        // TODO handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/
+      }
       if (state.matrix) {
         this._setMatrix(state.matrix, false);
       }
@@ -740,6 +746,7 @@ module Shumway.AVM2.AS.flash.display {
       this._ratio = state.ratio;
       this._name = state.name;
       this._clipDepth = state.clipDepth;
+      this._filters = state.filters;
       if (state.blendMode) {
         this._blendMode = state.blendMode;
       }

@@ -214,7 +214,7 @@ var FILTER_COLORMATRIX = {
   }
 };
 var ANY_FILTER = {
-  $type: UI8,
+  type: UI8,
   $0: ['type', {
     0: FILTER_GLOW,
     1: FILTER_BLUR,

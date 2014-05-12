@@ -9,7 +9,19 @@
   var URLRequest = flash.net.URLRequest;
   var Player = Shumway.Player;
 
-  unitTests.push(function runInspectorSanityTests() {
+  function createMovieClipFromSymbol(numFrames) {
+    var symbol = new SpriteSymbol(0);
+    symbol.numFrames = numFrames;
+    var frame = new Frame();
+    for (var i = 0; i < numFrames; i++) {
+      symbol.frames.push(frame);
+    }
+    mc = MovieClip.initializeFrom(symbol);
+    mc.class.instanceConstructorNoInitialize.call(mc);
+    return mc;
+  }
+
+  unitTests.push(0, function runInspectorSanityTests() {
     var stage = new Stage();
     var mc = new MovieClip();
 
@@ -21,15 +33,17 @@
     mc.play();
     check(!mc.isPlaying);
 
-    var symbol = new SpriteSymbol(0);
-    var frame = new Frame();
-    symbol.numFrames = 5;
-    symbol.frames.push(frame, frame, frame, frame, frame);
-    mc = MovieClip.initializeFrom(symbol);
-    mc.class.instanceConstructorNoInitialize.call(mc);
+    var mc = createMovieClipFromSymbol(5);
     eq(mc.currentFrame, 1);
     eq(mc.framesLoaded, 5);
     eq(mc.totalFrames, 5);
+
+    MovieClip.initFrame();
+    eq(mc.currentFrame, 2);
+  });
+
+  unitTests.push(0, function runInspectorSanityTests() {
+    var mc = createMovieClipFromSymbol(5);
 
     MovieClip.initFrame();
     eq(mc.currentFrame, 2);
@@ -78,9 +92,14 @@
     eq(mc.currentFrame, 4);
   });
 
+  unitTests.push(0, function runInspectorSanityTests() {
+    var mc = createMovieClipFromSymbol();
+
+  });
+
   unitTests.push(function runInspectorSanityTests() {
     var player = new Player();
-    player.load("../ats/gotoLastGotoInFrame.swf");
+    player.load("../ats/timelineEventOrder.swf");
   });
 
 })();

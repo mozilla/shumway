@@ -332,8 +332,7 @@ module Shumway.AVM2.AS.flash.geom {
       if (this.a === 1 && this.b === 0) {
         return 1;
       }
-      var result = Math.sqrt(this.a * this.a + this.b * this.b);
-      return this.a > 0 ? result : -result;
+      return Math.sqrt(this.a * this.a + this.b * this.b);
     }
 
     getScaleY(): number {
@@ -341,7 +340,8 @@ module Shumway.AVM2.AS.flash.geom {
         return 1;
       }
       var result = Math.sqrt(this.c * this.c + this.d * this.d);
-      return this.d > 0 ? result : -result;
+      var det = this.a * this.d - this.b * this.c;
+      return det < 0 ? -result : result;
     }
 
     getAbsoluteScaleX(): number {
@@ -353,13 +353,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public getRotation(): number {
-      if (this.a) {
-        return Math.atan(this.b / this.a);
-      }
-      if (this.b > 0) {
-        return Math.PI / 2;
-      }
-      return -Math.PI / 2
+      return Math.atan2(this.b, this.a);
     }
 
     public copyFrom(sourceMatrix: Matrix): void {

@@ -29,11 +29,11 @@ module Shumway.AVM2.AS.flash.display {
   import Matrix = flash.geom.Matrix;
   import ColorTransform = flash.geom.ColorTransform;
 
-  import LoadStatus = flash.display.LoadStatus;
   import ActionScriptVersion = flash.display.ActionScriptVersion;
   import BlendMode = flash.display.BlendMode;
 
   var Event: typeof flash.events.Event;
+  var ProgressEvent: typeof flash.events.ProgressEvent;
   var IOErrorEvent: typeof flash.events.IOErrorEvent;
   var LoaderInfo: typeof flash.display.LoaderInfo;
   var MovieClip: typeof flash.display.MovieClip;
@@ -43,11 +43,33 @@ module Shumway.AVM2.AS.flash.display {
   var BitmapData: typeof flash.display.BitmapData;
   var Graphics: typeof flash.display.Graphics;
 
+  enum LoadStatus {
+    Unloaded    = 0,
+    Opened      = 1,
+    Initialized = 2,
+    Complete    = 3
+  }
+
   export class Loader extends flash.display.DisplayObjectContainer {
+
+    private static _rootLoader: Loader;
+    private static _loadQueue: Loader [];
+
+    static getRootLoader(): Loader {
+      if (Loader._rootLoader) {
+        return Loader._rootLoader;
+      }
+      var loader = new Loader();
+      loader._contentLoaderInfo._loader = null;
+      loader._loadStatus = LoadStatus.Opened;
+      Loader._rootLoader = loader;
+      return loader;
+    }
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
       Event = flash.events.Event;
+      ProgressEvent = flash.events.ProgressEvent;
       IOErrorEvent = flash.events.IOErrorEvent;
       LoaderInfo = flash.display.LoaderInfo;
       MovieClip = flash.display.MovieClip;
@@ -56,6 +78,9 @@ module Shumway.AVM2.AS.flash.display {
       Bitmap = flash.display.Bitmap;
       BitmapData = flash.display.BitmapData;
       Graphics = flash.display.Graphics;
+
+      Loader._rootLoader = null;
+      Loader._loadQueue = [];
     };
 
     // Called whenever an instance of the class is initialized.
@@ -72,16 +97,61 @@ module Shumway.AVM2.AS.flash.display {
     static SHUMWAY_ROOT = '../../src/';
     static LOADER_PATH = Loader.RELEASE ? 'shumway-worker.js' : 'swf/resourceloader.js';
 
+    static progress() {
+      var queue = Loader._loadQueue;
+      for (var i = 0; i < queue.length; i++) {
+        var instance = queue[i];
+        var loaderInfo = instance._contentLoaderInfo;
+        var bytesLoaded = loaderInfo._bytesLoaded;
+        var bytesTotal = loaderInfo._bytesTotal;
+        switch (instance._loadStatus) {
+          case LoadStatus.Unloaded:
+            if (bytesTotal) {
+              loaderInfo.dispatchEvent(Event.getInstance(Event.OPEN));
+              loaderInfo.dispatchEvent(
+                new ProgressEvent(ProgressEvent.PROGRESS, false, false, 0, bytesTotal)
+              );
+              if (instance._content) {
+                instance.addChildAtDepth(instance._content, 0);
+              }
+              instance._loadStatus = LoadStatus.Opened;
+            } else {
+              break;
+            }
+          case LoadStatus.Opened:
+            if (instance._content && instance._content._hasFlags(DisplayObjectFlags.Constructed)) {
+              instance._loadStatus = LoadStatus.Initialized;
+              loaderInfo.dispatchEvent(Event.getInstance(Event.INIT));
+            } else {
+              break;
+            }
+          case LoadStatus.Initialized:
+            if (bytesLoaded === bytesTotal) {
+              instance._loadStatus = LoadStatus.Complete;
+              loaderInfo.dispatchEvent(
+                new ProgressEvent(ProgressEvent.PROGRESS, false, false, bytesLoaded, bytesTotal)
+              );
+              loaderInfo.dispatchEvent(Event.getInstance(Event.COMPLETE));
+              queue.shift();
+              i--;
+            }
+            break;
+        }
+      }
+    }
+
     constructor () {
       false && super();
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
       this._content = null;
       this._contentLoaderInfo = new LoaderInfo();
+      this._contentLoaderInfo._loader = this;
 
       this._dictionary = [];
       this._worker = null;
       this._startPromise = Promise.resolve();
       this._lastPromise = this._startPromise;
+      this._loadStatus = LoadStatus.Unloaded;
 
       this._dictionary[0] = new Timeline.SpriteSymbol(0, true);
     }
@@ -104,14 +174,15 @@ module Shumway.AVM2.AS.flash.display {
 
     // AS -> JS Bindings
 
-    _content: flash.display.DisplayObject;
-    _contentLoaderInfo: flash.display.LoaderInfo;
+    private _content: flash.display.DisplayObject;
+    private _contentLoaderInfo: flash.display.LoaderInfo;
     // _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
-    _dictionary: Timeline.Symbol [];
-    _worker: Worker;
-    _startPromise: any;
-    _lastPromise: any;
+    private _dictionary: Timeline.Symbol [];
+    private _worker: Worker;
+    private _startPromise: any;
+    private _lastPromise: any;
+    private _loadStatus: LoadStatus;
 
     private _commitData(data: any): void {
       var loaderInfo = this._contentLoaderInfo;
@@ -120,6 +191,8 @@ module Shumway.AVM2.AS.flash.display {
         case 'init':
           var info = data.result;
 
+          loaderInfo._bytesLoaded = info.bytesLoaded;
+          loaderInfo._bytesTotal = info.bytesTotal;
           loaderInfo._swfVersion = info.swfVersion;
           if (!info.fileAttributes || !info.fileAttributes.doAbc) {
             loaderInfo._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT2;
@@ -133,14 +206,23 @@ module Shumway.AVM2.AS.flash.display {
           rootSymbol.numFrames = info.frameCount;
           break;
         case 'progress':
-          var result = data.result;
-          loaderInfo.progress(result.bytesLoaded, result.bytesTotal);
+          var info = data.result;
+          var bytesLoaded = info.bytesLoaded;
+          var bytesTotal = info.bytesTotal;
+          assert (bytesLoaded <= bytesTotal, "Loaded bytes should not exceed total bytes.");
+          loaderInfo._bytesLoaded = bytesLoaded;
+          if (!loaderInfo._bytesTotal) {
+            loaderInfo._bytesTotal = bytesTotal;
+          } else {
+            assert (loaderInfo._bytesTotal === bytesTotal, "Total bytes should not change.");
+          }
+          if (this._loadStatus !== LoadStatus.Unloaded) {
+            loaderInfo.dispatchEvent(
+              new ProgressEvent(ProgressEvent.PROGRESS, false, false, bytesLoaded, bytesTotal)
+            );
+          }
           break;
         case 'complete':
-          //this._lastPromise.then(function () {
-          //  loaderInfo.loadStatus = LoadStatus.Complete;
-          //});
-
           if (data.stats) {
             Telemetry.instance.reportTelemetry(data.stats);
           }
@@ -367,6 +449,30 @@ module Shumway.AVM2.AS.flash.display {
       if (!root) {
         root = documentClass.initializeFrom(rootSymbol);
 
+        if (MovieClip.isType(root)) {
+          var mc = <MovieClip>root;
+          if (data.sceneData) {
+            var scenes = data.sceneData.scenes;
+            var allLabels = data.sceneData.labels;
+            for (var i = 0, n = scenes.length; i < n; i++) {
+              var sceneInfo = scenes[i];
+              var startFrame = sceneInfo.offset;
+              var endFrame = i < n - 1 ? scenes[i + 1].offset : rootSymbol.numFrames;
+              var labels = [];
+              for (var j = 0; j < allLabels.length; j++) {
+                var labelInfo = allLabels[j];
+                var frameIndex = labelInfo.frame - startFrame;
+                if (frameIndex >= 0 && frameIndex < endFrame) {
+                  labels.push(new FrameLabel(labelInfo.name, frameIndex + 1));
+                }
+              }
+              mc.addScene(sceneInfo.name, labels, endFrame - startFrame);
+            }
+          } else {
+            mc.addScene('Scene 1', [], rootSymbol.numFrames);
+          }
+        }
+
         //if (!loader._isAvm2Enabled) {
         //  var avm1Context = loader._avm1Context;
 
@@ -401,37 +507,43 @@ module Shumway.AVM2.AS.flash.display {
 
         root._loaderInfo = this._contentLoaderInfo;
         this._content = root;
-        this._children[0] = root;
       }
 
-      if (flash.display.MovieClip.isType(root)) {
-        var mc = <MovieClip>root;
-        mc._framesLoaded = frames.length;
-
-        if (data.sceneData) {
-          var scenes = data.sceneData.scenes;
-          var allLabels = data.sceneData.labels;
-          for (var i = 0, n = scenes.length; i < n; i++) {
-            var sceneInfo = scenes[i];
-            var startFrame = sceneInfo.offset;
-            var endFrame = i < n - 1 ? scenes[i + 1].offset : mc._totalFrames;
-            var labels = [];
-            for (var j = 0; j < allLabels.length; j++) {
-              var labelInfo = allLabels[j];
-              var frameIndex = labelInfo.frame - startFrame;
-              if (frameIndex >= 0 && frameIndex < endFrame) {
-                labels.push(new FrameLabel(labelInfo.name, frameIndex + 1));
-              }
-            }
-            mc.addScene(sceneInfo.name, labels, endFrame - startFrame);
-          }
-        } else if (!mc._scenes.length) {
-          mc.addScene('Scene 1', [], rootSymbol.numFrames);
-        }
-
+      if (MovieClip.isType(root)) {
         if (data.labelName) {
-          mc.addFrameLabel(frameIndex, data.labelName);
+          (<MovieClip>root).addFrameLabel(frameIndex, data.labelName);
         }
+
+        //if (!loader._isAvm2Enabled) {
+        //  var avm1Context = loader._avm1Context;
+
+        //  if (initActionBlocks) {
+        //    // HACK using symbol init actions as regular action blocks, the spec has a note
+        //    // "DoAction tag is not the same as specifying them in a DoInitAction tag"
+        //    for (var i = 0; i < initActionBlocks.length; i++) {
+        //      var spriteId = initActionBlocks[i].spriteId;
+        //      var actionsData = new AS2ActionsData(initActionBlocks[i].actionsData,
+        //        'f' + frameNum + 's' + spriteId + 'i' + i);
+        //      root.addFrameScript(frameNum - 1, function(actionsData, spriteId, state) {
+        //        if (state.executed) return;
+        //        state.executed = true;
+        //        return executeActions(actionsData, avm1Context, this._getAS2Object());
+        //      }.bind(root, actionsData, spriteId, {executed: false}));
+        //    }
+        //  }
+
+        //  if (actionBlocks) {
+        //    for (var i = 0; i < actionBlocks.length; i++) {
+        //      var actionsData = new AS2ActionsData(actionBlocks[i],
+        //        'f' + frameNum + 'i' + i);
+        //      root.addFrameScript(frameNum - 1, (function(actionsData) {
+        //        return function () {
+        //          return executeActions(actionsData, avm1Context, this._getAS2Object());
+        //        };
+        //      })(actionsData));
+        //    }
+        //  }
+        //}
       }
 
       //if (frame.startSounds) {
@@ -442,43 +554,6 @@ module Shumway.AVM2.AS.flash.display {
       //}
       //if (frame.soundStreamBlock) {
       //  root._addSoundStreamBlock(frameNum, frame.soundStreamBlock);
-      //}
-
-      //if (!loader._isAvm2Enabled) {
-      //  var avm1Context = loader._avm1Context;
-
-      //  if (initActionBlocks) {
-      //    // HACK using symbol init actions as regular action blocks, the spec has a note
-      //    // "DoAction tag is not the same as specifying them in a DoInitAction tag"
-      //    for (var i = 0; i < initActionBlocks.length; i++) {
-      //      var spriteId = initActionBlocks[i].spriteId;
-      //      var actionsData = new AS2ActionsData(initActionBlocks[i].actionsData,
-      //        'f' + frameNum + 's' + spriteId + 'i' + i);
-      //      root.addFrameScript(frameNum - 1, function(actionsData, spriteId, state) {
-      //        if (state.executed) return;
-      //        state.executed = true;
-      //        return executeActions(actionsData, avm1Context, this._getAS2Object());
-      //      }.bind(root, actionsData, spriteId, {executed: false}));
-      //    }
-      //  }
-
-      //  if (actionBlocks) {
-      //    for (var i = 0; i < actionBlocks.length; i++) {
-      //      var actionsData = new AS2ActionsData(actionBlocks[i],
-      //        'f' + frameNum + 'i' + i);
-      //      root.addFrameScript(frameNum - 1, (function(actionsData) {
-      //        return function () {
-      //          return executeActions(actionsData, avm1Context, this._getAS2Object());
-      //        };
-      //      })(actionsData));
-      //    }
-      //  }
-      //}
-
-      //if (frameIndex === 0) {
-      //  documentClass.instanceConstructorNoInitialize.call(root);
-      //  this.addChild(root);
-      //  loaderInfo.dispatchEvent(new Event(Event.INIT));
       //}
     }
 
@@ -510,7 +585,22 @@ module Shumway.AVM2.AS.flash.display {
             }
             if (cmd.hasFilters) {
               filters = [];
-              // TODO
+              var swfFilters = cmd.filters;
+              for (var j = 0; j < swfFilters.length; j++) {
+                var obj = swfFilters[j];
+                var filter: flash.filters.BitmapFilter;
+                switch (obj.type) {
+                  case 0: filter = flash.filters.DropShadowFilter.fromAny(obj); break;
+                  case 2: filter = flash.filters.GlowFilter.fromAny(obj); break;
+                  case 3: filter = flash.filters.BevelFilter.fromAny(obj); break;
+                  case 4: filter = flash.filters.GradientGlowFilter.fromAny(obj); break;
+                  case 5: filter = flash.filters.ConvolutionFilter.fromAny(obj); break;
+                  case 6: filter = flash.filters.ColorMatrixFilter.fromAny(obj); break;
+                  case 7: filter = flash.filters.GradientBevelFilter.fromAny(obj); break;
+                }
+                assert (filter, "Unknown filter type.");
+                filters.push(filter);
+              }
             }
             if (cmd.hasEvents) {
               // TODO
@@ -536,19 +626,18 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _commitImage(data: any): void {
-      var bd = new BitmapData(data.width, data.height);
-      var b = new Bitmap(bd);
-      this._content = b;
-      this._children[0] = b;
+      var b = new BitmapData(data.width, data.height);
+      this._content = new Bitmap(b);
 
       var loaderInfo = this._contentLoaderInfo;
       loaderInfo._width = data.width;
       loaderInfo._height = data.height;
-
-      loaderInfo.dispatchEvent(new Event(Event.INIT));
     }
 
     get content(): flash.display.DisplayObject {
+      if (this._loadStatus === LoadStatus.Unloaded) {
+        return null;
+      }
       return this._content;
     }
 
@@ -624,7 +713,7 @@ module Shumway.AVM2.AS.flash.display {
       //} else {
       //  worker.postMessage(request);
       //}
-      loaderInfo.loadStatus = LoadStatus.Started;
+      Loader._loadQueue.push(this);
     }
 
     _loadBytes(bytes: flash.utils.ByteArray, checkPolicyFile: boolean, applicationDomain: flash.system.ApplicationDomain, securityDomain: flash.system.SecurityDomain, requestedContentParent: flash.display.DisplayObjectContainer, parameters: ASObject, deblockingFilter: number, allowCodeExecution: boolean, imageDecodingPolicy: string): void {

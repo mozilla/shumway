@@ -43,7 +43,6 @@ module Shumway.AVM2.AS.flash.display {
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
       this._root = this;
       this._stage = this;
-
       this._frameRate = 24;
       this._scaleMode = StageScaleMode.SHOW_ALL;
       this._align = "";
@@ -116,6 +115,14 @@ module Shumway.AVM2.AS.flash.display {
      * the |RENDER| event gets fired right before the stage is rendered.
      */
     private _invalidated: boolean;
+
+    public render() {
+      if (!this._invalidated) {
+        return;
+      }
+      DisplayObject._broadcastFrameEvent(flash.events.Event.RENDER);
+      this._invalidated = false;
+    }
 
     get frameRate(): number {
       return this._frameRate;
@@ -304,17 +311,6 @@ module Shumway.AVM2.AS.flash.display {
     }
     requireOwnerPermissions(): void {
       somewhatImplemented("public flash.display.Stage::requireOwnerPermissions"); return;
-    }
-
-    /*
-     * TODO
-     */
-    public render() {
-      if (!this._invalidated) {
-        return;
-      }
-      DisplayObject._broadcastFrameEvent(flash.events.Event.RENDER);
-      this._invalidated = false;
     }
   }
 }
