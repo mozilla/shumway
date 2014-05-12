@@ -746,6 +746,7 @@ module Shumway.AVM2.AS.flash.display {
       this._ratio = state.ratio;
       this._name = state.name;
       this._clipDepth = state.clipDepth;
+      this._filters = state.filters;
       if (state.blendMode) {
         this._blendMode = state.blendMode;
       }

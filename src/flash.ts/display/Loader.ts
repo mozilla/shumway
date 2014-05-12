@@ -585,7 +585,22 @@ module Shumway.AVM2.AS.flash.display {
             }
             if (cmd.hasFilters) {
               filters = [];
-              // TODO
+              var swfFilters = cmd.filters;
+              for (var j = 0; j < swfFilters.length; j++) {
+                var obj = swfFilters[j];
+                var filter: flash.filters.BitmapFilter;
+                switch (obj.type) {
+                  case 0: filter = flash.filters.DropShadowFilter.fromAny(obj); break;
+                  case 2: filter = flash.filters.GlowFilter.fromAny(obj); break;
+                  case 3: filter = flash.filters.BevelFilter.fromAny(obj); break;
+                  case 4: filter = flash.filters.GradientGlowFilter.fromAny(obj); break;
+                  case 5: filter = flash.filters.ConvolutionFilter.fromAny(obj); break;
+                  case 6: filter = flash.filters.ColorMatrixFilter.fromAny(obj); break;
+                  case 7: filter = flash.filters.GradientBevelFilter.fromAny(obj); break;
+                }
+                assert (filter, "Unknown filter type.");
+                filters.push(filter);
+              }
             }
             if (cmd.hasEvents) {
               // TODO
