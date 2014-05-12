@@ -318,7 +318,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     static _broadcastFrameEvent(type: string): void {
-      var event;
+      var event: flash.events.Event;
       switch (type) {
         case Event.ENTER_FRAME:
         case Event.FRAME_CONSTRUCTED:

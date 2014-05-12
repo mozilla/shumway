@@ -35,6 +35,7 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = function (symbol: Timeline.SpriteSymbol) {
       var self: Sprite = this;
 
+      self._graphics = new flash.display.Graphics();
       self._buttonMode = false;
       self._dropTarget = null;
       self._hitArea = null;
@@ -69,7 +70,7 @@ module Shumway.AVM2.AS.flash.display {
     
     // AS -> JS Bindings
     
-    // _graphics: flash.display.Graphics;
+    _graphics: flash.display.Graphics;
     _buttonMode: boolean;
     _dropTarget: flash.display.DisplayObject;
     _hitArea: flash.display.Sprite;

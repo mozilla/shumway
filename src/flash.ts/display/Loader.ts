@@ -449,6 +449,30 @@ module Shumway.AVM2.AS.flash.display {
       if (!root) {
         root = documentClass.initializeFrom(rootSymbol);
 
+        if (MovieClip.isType(root)) {
+          var mc = <MovieClip>root;
+          if (data.sceneData) {
+            var scenes = data.sceneData.scenes;
+            var allLabels = data.sceneData.labels;
+            for (var i = 0, n = scenes.length; i < n; i++) {
+              var sceneInfo = scenes[i];
+              var startFrame = sceneInfo.offset;
+              var endFrame = i < n - 1 ? scenes[i + 1].offset : rootSymbol.numFrames;
+              var labels = [];
+              for (var j = 0; j < allLabels.length; j++) {
+                var labelInfo = allLabels[j];
+                var frameIndex = labelInfo.frame - startFrame;
+                if (frameIndex >= 0 && frameIndex < endFrame) {
+                  labels.push(new FrameLabel(labelInfo.name, frameIndex + 1));
+                }
+              }
+              mc.addScene(sceneInfo.name, labels, endFrame - startFrame);
+            }
+          } else {
+            mc.addScene('Scene 1', [], rootSymbol.numFrames);
+          }
+        }
+
         //if (!loader._isAvm2Enabled) {
         //  var avm1Context = loader._avm1Context;
 
@@ -485,34 +509,41 @@ module Shumway.AVM2.AS.flash.display {
         this._content = root;
       }
 
-      if (flash.display.MovieClip.isType(root)) {
-        var mc = <MovieClip>root;
-        mc._framesLoaded = frames.length;
-
-        if (data.sceneData) {
-          var scenes = data.sceneData.scenes;
-          var allLabels = data.sceneData.labels;
-          for (var i = 0, n = scenes.length; i < n; i++) {
-            var sceneInfo = scenes[i];
-            var startFrame = sceneInfo.offset;
-            var endFrame = i < n - 1 ? scenes[i + 1].offset : mc._totalFrames;
-            var labels = [];
-            for (var j = 0; j < allLabels.length; j++) {
-              var labelInfo = allLabels[j];
-              var frameIndex = labelInfo.frame - startFrame;
-              if (frameIndex >= 0 && frameIndex < endFrame) {
-                labels.push(new FrameLabel(labelInfo.name, frameIndex + 1));
-              }
-            }
-            mc.addScene(sceneInfo.name, labels, endFrame - startFrame);
-          }
-        } else if (!mc._scenes.length) {
-          mc.addScene('Scene 1', [], rootSymbol.numFrames);
-        }
-
+      if (MovieClip.isType(root)) {
         if (data.labelName) {
-          mc.addFrameLabel(frameIndex, data.labelName);
+          (<MovieClip>root).addFrameLabel(frameIndex, data.labelName);
         }
+
+        //if (!loader._isAvm2Enabled) {
+        //  var avm1Context = loader._avm1Context;
+
+        //  if (initActionBlocks) {
+        //    // HACK using symbol init actions as regular action blocks, the spec has a note
+        //    // "DoAction tag is not the same as specifying them in a DoInitAction tag"
+        //    for (var i = 0; i < initActionBlocks.length; i++) {
+        //      var spriteId = initActionBlocks[i].spriteId;
+        //      var actionsData = new AS2ActionsData(initActionBlocks[i].actionsData,
+        //        'f' + frameNum + 's' + spriteId + 'i' + i);
+        //      root.addFrameScript(frameNum - 1, function(actionsData, spriteId, state) {
+        //        if (state.executed) return;
+        //        state.executed = true;
+        //        return executeActions(actionsData, avm1Context, this._getAS2Object());
+        //      }.bind(root, actionsData, spriteId, {executed: false}));
+        //    }
+        //  }
+
+        //  if (actionBlocks) {
+        //    for (var i = 0; i < actionBlocks.length; i++) {
+        //      var actionsData = new AS2ActionsData(actionBlocks[i],
+        //        'f' + frameNum + 'i' + i);
+        //      root.addFrameScript(frameNum - 1, (function(actionsData) {
+        //        return function () {
+        //          return executeActions(actionsData, avm1Context, this._getAS2Object());
+        //        };
+        //      })(actionsData));
+        //    }
+        //  }
+        //}
       }
 
       //if (frame.startSounds) {
@@ -523,37 +554,6 @@ module Shumway.AVM2.AS.flash.display {
       //}
       //if (frame.soundStreamBlock) {
       //  root._addSoundStreamBlock(frameNum, frame.soundStreamBlock);
-      //}
-
-      //if (!loader._isAvm2Enabled) {
-      //  var avm1Context = loader._avm1Context;
-
-      //  if (initActionBlocks) {
-      //    // HACK using symbol init actions as regular action blocks, the spec has a note
-      //    // "DoAction tag is not the same as specifying them in a DoInitAction tag"
-      //    for (var i = 0; i < initActionBlocks.length; i++) {
-      //      var spriteId = initActionBlocks[i].spriteId;
-      //      var actionsData = new AS2ActionsData(initActionBlocks[i].actionsData,
-      //        'f' + frameNum + 's' + spriteId + 'i' + i);
-      //      root.addFrameScript(frameNum - 1, function(actionsData, spriteId, state) {
-      //        if (state.executed) return;
-      //        state.executed = true;
-      //        return executeActions(actionsData, avm1Context, this._getAS2Object());
-      //      }.bind(root, actionsData, spriteId, {executed: false}));
-      //    }
-      //  }
-
-      //  if (actionBlocks) {
-      //    for (var i = 0; i < actionBlocks.length; i++) {
-      //      var actionsData = new AS2ActionsData(actionBlocks[i],
-      //        'f' + frameNum + 'i' + i);
-      //      root.addFrameScript(frameNum - 1, (function(actionsData) {
-      //        return function () {
-      //          return executeActions(actionsData, avm1Context, this._getAS2Object());
-      //        };
-      //      })(actionsData));
-      //    }
-      //  }
       //}
     }
 
@@ -626,9 +626,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _commitImage(data: any): void {
-      var bd = new BitmapData(data.width, data.height);
-      var b = new Bitmap(bd);
-      this._content = b;
+      var b = new BitmapData(data.width, data.height);
+      this._content = new Bitmap(b);
 
       var loaderInfo = this._contentLoaderInfo;
       loaderInfo._width = data.width;

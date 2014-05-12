@@ -46,7 +46,6 @@ module Shumway.AVM2.AS.flash.display {
       MovieClip._instances.push(self);
 
       self._currentFrame = 0;
-      self._framesLoaded = 1;
       self._totalFrames = 1;
       self._trackAsMenu = false;
       self._scenes = [];
@@ -64,7 +63,6 @@ module Shumway.AVM2.AS.flash.display {
       self._allowFrameNavigation = true;
 
       if (symbol) {
-        self._framesLoaded = symbol.frames.length;
         self._totalFrames = symbol.numFrames;
         self._currentFrame = 1;
         if (!symbol.isRoot) {
@@ -119,35 +117,33 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     // JS -> AS Bindings
-    
-    currentLabels: any [];
+
     
     // AS -> JS Bindings
     
-    _currentFrame: number;
-    _framesLoaded: number;
-    _totalFrames: number;
-    _trackAsMenu: boolean;
-    _scenes: any [];
-    _currentLabel: string;
-    _currentFrameLabel: string;
-    _enabled: boolean;
-    _isPlaying: boolean;
+    private _currentFrame: number;
+    private _totalFrames: number;
+    private _trackAsMenu: boolean;
+    private _scenes: any [];
+    private _currentLabel: string;
+    private _currentFrameLabel: string;
+    private _enabled: boolean;
+    private _isPlaying: boolean;
 
-    _frames: Shumway.Timeline.Frame [];
-    _sceneIndex: number;
-    _frameScripts: any;
-    _currentFrameAbs: number;
-    _nextFrameAbs: number;
-    _stopped: boolean;
-    _allowFrameNavigation: boolean;
+    private _frames: Shumway.Timeline.Frame [];
+    private _sceneIndex: number;
+    private _frameScripts: any;
+    private _currentFrameAbs: number;
+    private _nextFrameAbs: number;
+    private _stopped: boolean;
+    private _allowFrameNavigation: boolean;
 
     get currentFrame(): number /*int*/ {
       return this._currentFrame;
     }
 
     get framesLoaded(): number /*int*/ {
-      return this._framesLoaded;
+      return this._frames.length;
     }
 
     get totalFrames(): number /*int*/ {
@@ -163,12 +159,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get scenes(): any [] {
-      var result = this._scenes.slice();
-      assert (result.length, "There are no scenes defined.");
-      for (var i = 0; i < result.length; i++) {
-        result[i] = result[i].clone();
-      }
-      return result;
+      return this._scenes.map(function (x: Scene) {
+        return x.clone();
+      });
     }
 
     get currentScene(): flash.display.Scene {
@@ -303,7 +296,7 @@ module Shumway.AVM2.AS.flash.display {
       //  }
       //}
 
-      if (nextFrameAbs > this._framesLoaded) {
+      if (nextFrameAbs > this.framesLoaded) {
         // TODO
         return;
       }
@@ -326,7 +319,6 @@ module Shumway.AVM2.AS.flash.display {
         }
         startIndex = 0;
       }
-
       for (var i = startIndex; i < nextFrameAbs; i++) {
         var frame = frames[i];
         assert (frame, "Frame is not defined.");

@@ -59,10 +59,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     clone() {
-      var labels = this._labels.slice();
-      for (var i = 0; i < labels.length; i++) {
-        labels[i] = labels[i].clone();
-      }
+      var labels = this._labels.map(function (x: flash.display.FrameLabel) {
+        return x.clone();
+      });
       return new Scene(this._name, labels, this._numFrames);
     }
   }

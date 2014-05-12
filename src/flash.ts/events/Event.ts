@@ -30,7 +30,7 @@ module Shumway.AVM2.AS.flash.events {
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = ["clone"];
 
-    static getInstance(type: string, bubbles: boolean = false, cancelable: boolean = false) {
+    static getInstance(type: string, bubbles: boolean = false, cancelable: boolean = false): Event {
       var instance = Event._instances[type];
       if (!instance) {
         instance = new Event(type, bubbles, cancelable);
@@ -41,7 +41,7 @@ module Shumway.AVM2.AS.flash.events {
       return instance;
     }
 
-    static getBroadcastInstance(type: string, bubbles: boolean = false, cancelable: boolean = false) {
+    static getBroadcastInstance(type: string, bubbles: boolean = false, cancelable: boolean = false): Event {
       var instance = Event._instances[type];
       if (!instance) {
         instance = new Event(type, bubbles, cancelable);

@@ -56,8 +56,8 @@ module Shumway.AVM2.AS.flash.display {
       this._setFlags(DisplayObjectFlags.DirtyChildren);
     }
 
-    _tabChildren: boolean;
-    _mouseChildren: boolean;
+    private _tabChildren: boolean;
+    private _mouseChildren: boolean;
     _children: DisplayObject [];
 
     /**
