@@ -458,7 +458,7 @@ module Shumway.AVM2.AS.flash.display {
           for (var j = 0; j < labels.length; j++) {
             var label = labels[j];
             if (label.name === labelName) {
-              return;
+              break findScene;
             }
           }
           if (frameNum > offset && frameNum <= offset + scene.numFrames) {
@@ -466,7 +466,6 @@ module Shumway.AVM2.AS.flash.display {
           }
           offset += scene.numFrames;
         }
-        assert (false, "This point should never be reached.");
       }
     }
 
