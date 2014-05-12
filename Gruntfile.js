@@ -48,6 +48,9 @@ module.exports = function(grunt) {
       build_player_ts: {
         cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/player/references.ts'
       },
+      build_tools_ts: {
+        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/tools/references.ts'
+      },
       build_avm1_ts: {
         cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/avm1/references.ts'
       },
@@ -117,6 +120,10 @@ module.exports = function(grunt) {
         		'src/player/**/*.ts'],
         tasks: ['exec:build_player_ts']
       },
+      tools_ts: {
+        files: ['src/tools/**/*.ts'],
+        tasks: ['exec:build_tools_ts']
+      },
     }
   });
 
@@ -171,6 +178,7 @@ module.exports = function(grunt) {
   grunt.registerTask('avm1lib', ['exec:build_avm1lib']);
   grunt.registerTask('flash', ['exec:build_flash_ts']);
   grunt.registerTask('player', ['exec:build_player_ts']);
+  grunt.registerTask('tools', ['exec:build_tools_ts']);
   grunt.registerTask('avm2', ['exec:build_avm2_ts']);
   grunt.registerTask('gfx', ['exec:build_gfx_ts']);
   grunt.registerTask('avm1', ['exec:build_avm1_ts']);
