@@ -59,8 +59,8 @@ module Shumway.AVM2.AS.flash.geom {
     add: (a: flash.geom.Vector3D) => flash.geom.Vector3D;
     subtract: (a: flash.geom.Vector3D) => flash.geom.Vector3D;
     negate: () => void;
-    equals: (toCompare: flash.geom.Vector3D, allFour: boolean = false) => boolean;
-    nearEquals: (toCompare: flash.geom.Vector3D, tolerance: number, allFour: boolean = false) => boolean;
+    equals: (toCompare: flash.geom.Vector3D, allFour?: boolean) => boolean;
+    nearEquals: (toCompare: flash.geom.Vector3D, tolerance: number, allFour?: boolean) => boolean;
     project: () => void;
     copyFrom: (sourceVector3D: flash.geom.Vector3D) => void;
     setTo: (xa: number, ya: number, za: number) => void;

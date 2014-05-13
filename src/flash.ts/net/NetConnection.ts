@@ -44,7 +44,7 @@ module Shumway.AVM2.AS.flash.net {
     // JS -> AS Bindings
     
     close: () => void;
-    addHeader: (operation: string, mustUnderstand: boolean = false, param: ASObject = null) => void;
+    addHeader: (operation: string, mustUnderstand?: boolean, param?: ASObject) => void;
     call: (command: string, responder: flash.net.Responder) => void;
     
     // AS -> JS Bindings
