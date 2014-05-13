@@ -329,6 +329,7 @@ module Shumway.AVM2.AS.flash.display {
       var objectsUnderPoint: DisplayObject [] = [];
       this.visit(function (displayObject: DisplayObject): VisitorFlags {
         if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, true)) {
+          // Only include the objects whose shape is under the specified point.
           if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, true, true)) {
             objectsUnderPoint.push(displayObject);
           }

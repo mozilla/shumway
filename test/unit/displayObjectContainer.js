@@ -192,6 +192,14 @@
 
     eq(objects[0], square2);
     eq(objects[1], square1);
+
+    var square3 = new Sprite();
+    square3.graphics.beginFill(0x00CCFF);
+    square3.graphics.drawRect(200, 0, 10, 10);
+    container.addChild(square3);
+
+    eq(container.hitTestPoint(80, 0), true);
+    eq(container.hitTestPoint(80, 0, true), false);
   });
 
 })();

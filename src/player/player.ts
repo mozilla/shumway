@@ -79,26 +79,17 @@ module Shumway {
       this._loader.load(new flash.net.URLRequest(url));
     }
 
-    public dispatchMouseEvent(event: MouseEvent, point: Point) {
-      if (event.type !== "click") {
+    public dispatchMouseEvent(e: MouseEvent, point: Point) {
+      if (e.type !== "click") {
         return;
       }
-//      console.log(point.toString());
-//      var o = this._stage.getObjectsUnderPoint(point);
-//      console.info(o);
-//      for (var i = 0; i < o.length; i++) {
-//        o[i].rotation ++;
-//      }
-//
-//      var o = this._stage.getObjectsUnderPoint(point);
-//      if (o && o.length) {
-//        var t = o[o.length - 1];
-//        (function (v) {
-//          setInterval(function () {
-//            v.rotation += 6;
-//          }, 16);
-//        })(t);
-//      }
+      var objects = this._stage.getObjectsUnderPoint(point);
+      if (objects.length) {
+        var event = new flash.events.MouseEvent (
+          e.type
+        );
+        objects[objects.length - 1].dispatchEvent(event);
+      }
     }
 
     public dispatchKeyboardEvent(event: KeyboardEvent) {
