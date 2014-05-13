@@ -1239,9 +1239,10 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * The |x| and |y| arguments are in global coordinates. The |shapeFlag| indicates whether
      * the hit test should be on the actual pixels of the object |true| or just its bounding
-     * box |false|.
+     * box |false|. Use the |ignoreChildren| to only test the display object's graphics and
+     * not its children.
      */
-    hitTestPoint(x: number, y: number, shapeFlag: boolean = false): boolean {
+    hitTestPoint(x: number, y: number, shapeFlag: boolean = false, ignoreChildren: boolean = false): boolean {
       x = +x; y = +y; shapeFlag = !!shapeFlag;
       var point = this._getInvertedConcatenatedMatrix().transformCoords(x, y, true);
       if (!this._getContentBounds().containsPoint(point)) {
@@ -1253,7 +1254,7 @@ module Shumway.AVM2.AS.flash.display {
       /* TODO: Figure out if we need to test against the graphics path first and exit early instead of
        * going down the children list. Testing the path can be more expensive sometimes, more so than
        * testing the children. */
-      if (DisplayObjectContainer.isType(this)) {
+      if (!ignoreChildren && DisplayObjectContainer.isType(this)) {
         var children = (<DisplayObjectContainer>this)._children;
         for (var i = 0; i < children.length; i++) {
           if (children[i].hitTestPoint(x, y, shapeFlag)) {

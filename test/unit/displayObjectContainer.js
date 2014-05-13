@@ -1,6 +1,7 @@
 (function displayTests() {
 
   var Random = Shumway.Random;
+  var Point = flash.geom.Point;
   var Rectangle = flash.geom.Rectangle;
   var Event = flash.events.Event;
   var DisplayObject = flash.display.DisplayObject;
@@ -156,6 +157,41 @@
     c.addChildAtDepth(s3, 3);
     c.addChildAtDepth(s1, 1);
     eq(c.getChildIndex(s1), 0);
+  });
+
+  unitTests.push(function getObjectsUnderPoint() {
+    Random.seed(0x12343);
+
+    var container = new Sprite();
+
+    var square1 = new Sprite();
+    square1.graphics.beginFill(0xFFCC00);
+    square1.graphics.drawRect(0, 0, 40, 40);
+
+    var square2 = new Sprite();
+    square2.graphics.beginFill(0x00CCFF);
+    square2.graphics.drawRect(20, 0, 30, 40);
+
+    container.addChild(square1);
+    container.addChild(square2);
+
+    var pt = new Point(10, 20);
+    var objects = container.getObjectsUnderPoint(pt);
+    eq(objects.length, 1);
+
+    pt = new Point(35, 20);
+    objects = container.getObjectsUnderPoint(pt);
+    eq(objects.length, 2);
+
+    eq(objects[0], square1);
+    eq(objects[1], square2);
+
+    container.swapChildrenAt(0, 1);
+    objects = container.getObjectsUnderPoint(pt);
+    eq(objects.length, 2);
+
+    eq(objects[0], square2);
+    eq(objects[1], square1);
   });
 
 })();

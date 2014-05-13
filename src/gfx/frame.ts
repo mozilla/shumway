@@ -577,7 +577,7 @@ module Shumway.GFX {
       /*
        *  We can't simply do a back to front traversal here because the order in which we
        *  visit frame containers would make it hard to compute the correct front-to-back
-       *  horder.
+       *  order.
        *
        *       A
        *      / \

@@ -217,7 +217,7 @@ module Shumway.AVM2.AS.flash.display {
       this.lineTo(x, y + height);
       this.lineTo(x, y);
 
-      this._bounds = new Rectangle(x * 20 | 0, y * 20 | 0, width * 20 | 0, height * 20 | 0);
+      this._strokeBounds = this._bounds = new Rectangle(x * 20 | 0, y * 20 | 0, width * 20 | 0, height * 20 | 0);
       this._invalidateParent();
     }
 
@@ -419,7 +419,8 @@ module Shumway.AVM2.AS.flash.display {
      */
     _containsPoint(point: flash.geom.Point, includeStrokes: boolean = false): boolean {
       // TODO: Implement this in a smart way.
-      return false;
+      return this._bounds.containsPoint(point);
+
 //      var paths = this._paths;
 //      for (var i = 0; i < paths.length; i++) {
 //        var path = paths[i];

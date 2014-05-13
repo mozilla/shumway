@@ -58,6 +58,7 @@ module Shumway.AVM2.AS.flash.display {
 
     private _tabChildren: boolean;
     private _mouseChildren: boolean;
+
     _children: DisplayObject [];
 
     /**
@@ -321,20 +322,19 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Gets the objects under the specified point by walking the children of
-     * this display list. If a child's bounds doesn't include the given
-     * point then we skip it and all of its children.
+     * Gets the objects under the specified point by walking the children of this display list. If a child's
+     * bounds doesn't include the given point then we skip it and all of its children.
      */
     getObjectsUnderPoint(globalPoint: flash.geom.Point): DisplayObject [] {
       var objectsUnderPoint: DisplayObject [] = [];
       this.visit(function (displayObject: DisplayObject): VisitorFlags {
-        if (!displayObject.hitTestPoint(globalPoint.x, globalPoint.y)) {
-          return VisitorFlags.Skip;
-        } else {
-          // TODO: Exclude inaccessible objects, not sure what these are.
-          if (true || !DisplayObjectContainer.isType(displayObject)) {
+        if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, true)) {
+          if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, true, true)) {
             objectsUnderPoint.push(displayObject);
           }
+        } else {
+          // TODO: Exclude inaccessible objects, not sure what these are.
+          return VisitorFlags.Skip;
         }
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
