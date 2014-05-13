@@ -17,7 +17,66 @@
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import InteractiveObject = flash.display.InteractiveObject;
   import Point = flash.geom.Point;
+
+  /**
+   * Dispatches AS3 mouse events.
+   */
+  export class MouseEventDispatcher {
+    stage: flash.display.Stage;
+
+    /**
+     * Finds the interactive object on which the event is dispatched.
+     */
+    private _findTarget(e: MouseEvent, point: Point): InteractiveObject {
+      var objects = this.stage.getObjectsUnderPoint(point);
+      var target: InteractiveObject;
+      for (var i = objects.length - 1; i >= 0; i--) {
+        var object = objects[i];
+        var interactiveObject;
+        if (flash.display.InteractiveObject.isType(object)) {
+          interactiveObject = <InteractiveObject>object;
+        } else {
+          // TODO: Not correct.
+          interactiveObject = object._parent;
+        }
+        assert (interactiveObject);
+        // TODO: This is probably broken because of depth order.
+        var ancestor = interactiveObject.getOldestMouseChildrenAncestor();
+        if (ancestor) {
+          interactiveObject = ancestor;
+        }
+        // Interactive objects that have |mouseEnabled| set to |false| don't receive
+        // mouse events, their children however are unaffected.
+        if (interactiveObject.mouseEnabled) {
+          target = interactiveObject;
+          break;
+        }
+      }
+      return target;
+    }
+
+    /**
+     * Converts JS mouse events into AS3 mouse events.
+     */
+    public dispatchMouseEvent(e: MouseEvent, point: Point) {
+      if (!this.stage) {
+        return;
+      }
+      if (e.type !== "click") {
+        return;
+      }
+      var target = this._findTarget(e, point);
+      if (target) {
+        // TODO: Create proper event objects.
+        var event = new flash.events.MouseEvent (
+          e.type
+        );
+        target.dispatchEvent(event);
+      }
+    }
+  }
 
   export class Mouse extends ASNative {
     

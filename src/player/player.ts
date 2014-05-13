@@ -29,6 +29,8 @@ module Shumway {
   import Loader = flash.display.Loader;
   import VisitorFlags = flash.display.VisitorFlags;
 
+
+  import MouseEventDispatcher = flash.ui.MouseEventDispatcher;
   import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
 
   /**
@@ -48,11 +50,13 @@ module Shumway {
     private static _syncFrameRate = 60;
     private _context: Remoting.Server.ChannelDeserializerContext;
 
+    private _mouseEventDispatcher: MouseEventDispatcher;
     private _keyboardEventDispatcher: KeyboardEventDispatcher;
 
     constructor(frameContainer: FrameContainer) {
       this._frameContainer = frameContainer;
       this._keyboardEventDispatcher = new KeyboardEventDispatcher();
+      this._mouseEventDispatcher = new MouseEventDispatcher();
       this._context = new Shumway.Remoting.Server.ChannelDeserializerContext(this._frameContainer);
     }
 
@@ -79,17 +83,9 @@ module Shumway {
       this._loader.load(new flash.net.URLRequest(url));
     }
 
-    public dispatchMouseEvent(e: MouseEvent, point: Point) {
-      if (e.type !== "click") {
-        return;
-      }
-      var objects = this._stage.getObjectsUnderPoint(point);
-      if (objects.length) {
-        var event = new flash.events.MouseEvent (
-          e.type
-        );
-        objects[objects.length - 1].dispatchEvent(event);
-      }
+    public dispatchMouseEvent(event: MouseEvent, point: Point) {
+      this._mouseEventDispatcher.stage = this._stage;
+      this._mouseEventDispatcher.dispatchMouseEvent(event, point);
     }
 
     public dispatchKeyboardEvent(event: KeyboardEvent) {

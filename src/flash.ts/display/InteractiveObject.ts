@@ -157,6 +157,7 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.InteractiveObject::set contextMenu"); return;
       // this._contextMenu = cm;
     }
+
     requestSoftKeyboard(): boolean {
       notImplemented("public flash.display.InteractiveObject::requestSoftKeyboard"); return;
     }

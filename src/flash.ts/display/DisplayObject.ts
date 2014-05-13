@@ -1295,6 +1295,21 @@ module Shumway.AVM2.AS.flash.display {
       this._opaqueBackground = value;
     }
 
+    /**
+     * Gets the oldest ancestor to have |mouseChildren| set to false.
+     */
+    public getOldestMouseChildrenAncestor(): DisplayObjectContainer {
+      var find = null;
+      var self = this._parent;
+      while (self) {
+        if (!self._mouseChildren) {
+          find = self;
+        }
+        self = self._parent;
+      }
+      return find;
+    }
+
     // ---------------------------------------------------------------------------------------------------------------------------------------------
     // -- Stuff below we still need to port.                                                                                                      --
     // ---------------------------------------------------------------------------------------------------------------------------------------------
