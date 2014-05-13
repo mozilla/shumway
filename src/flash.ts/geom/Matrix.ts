@@ -47,6 +47,8 @@ module Shumway.AVM2.AS.flash.geom {
       return new flash.geom.Matrix(obj.a, obj.b, obj.c, obj.d, obj.tx, obj.ty);
     }
 
+    public static FROZEN_IDENTITY_MATRIX: Matrix = Object.freeze(new Matrix());
+
     public a: number;
     public b: number;
     public c: number;
