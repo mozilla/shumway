@@ -606,11 +606,6 @@ interface Math {
       * @param x A numeric expression that contains an angle measured in radians.
       */
     tan(x: number): number;
-    /**
-     * Returns the number of leading zeros of a number.
-     * @param x A numeric expression.
-     */
-    clz32(x: number): number;
 }
 /** An intrinsic object that provides basic mathematics functionality and constants. */
 declare var Math: Math;

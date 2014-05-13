@@ -47,6 +47,11 @@ interface Array<T> {
 
 interface Math {
   imul(a: number, b: number): number;
+  /**
+   * Returns the number of leading zeros of a number.
+   * @param x A numeric expression.
+   */
+  clz32(x: number): number;
 }
 
 module Shumway {
