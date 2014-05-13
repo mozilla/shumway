@@ -1628,16 +1628,16 @@ module Shumway.AVM2.AS {
       return false;
     }
 
-    export var decodeURI: (encodedURI: string) => string = decodeURI;
-    export var decodeURIComponent: (encodedURIComponent: string) =>  string = decodeURIComponent;
-    export var encodeURI: (uri: string) => string = encodeURI;
-    export var encodeURIComponent: (uriComponent: string) => string = encodeURIComponent;
-    export var isNaN: (number: number) => boolean = isNaN;
-    export var isFinite: (number: number) => boolean = isFinite;
-    export var parseInt: (s: string, radix?: number) => number = parseInt;
-    export var parseFloat: (string: string) => number = parseFloat;
-    export var escape: (x: any) => any = escape;
-    export var unescape: (x: any) => any = unescape;
+    export var decodeURI: (encodedURI: string) => string = jsGlobal.decodeURI;
+    export var decodeURIComponent: (encodedURIComponent: string) =>  string = jsGlobal.decodeURIComponent;
+    export var encodeURI: (uri: string) => string = jsGlobal.encodeURI;
+    export var encodeURIComponent: (uriComponent: string) => string = jsGlobal.encodeURIComponent;
+    export var isNaN: (number: number) => boolean = jsGlobal.isNaN;
+    export var isFinite: (number: number) => boolean = jsGlobal.isFinite;
+    export var parseInt: (s: string, radix?: number) => number = jsGlobal.parseInt;
+    export var parseFloat: (string: string) => number = jsGlobal.parseFloat;
+    export var escape: (x: any) => any = jsGlobal.escape;
+    export var unescape: (x: any) => any = jsGlobal.unescape;
     export var isXMLName: (x: any) => any = typeof (isXMLName) !== "undefined" ? isXMLName : function () {
       notImplemented("Chrome doesn't support isXMLName.");
     }
