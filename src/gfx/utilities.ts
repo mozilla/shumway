@@ -18,15 +18,15 @@ module Shumway {
   /**
    * Things that can be kept in linked lists.
    */
-  export interface ILinkedListNode<T> {
-    next: T;
-    previous: T;
+  export interface ILinkedListNode {
+    next: ILinkedListNode;
+    previous: ILinkedListNode;
   }
 
   /**
    * Maintains a LRU doubly-linked list.
    */
-  export class LRUList<T extends ILinkedListNode<T>> {
+  export class LRUList<T extends ILinkedListNode> {
     private _head: T;
     private _tail: T;
     private _count: number = 0;
@@ -63,10 +63,10 @@ module Shumway {
       if (node === this._head && node === this._tail) {
         this._head = this._tail = null;
       } else if (node === this._head) {
-        this._head = node.next;
+        this._head = <T>(node.next);
         this._head.previous = null;
       } else if (node == this._tail) {
-        this._tail = node.previous;
+        this._tail = <T>(node.previous);
         this._tail.next = null;
       } else {
         node.previous.next = node.next;
@@ -106,12 +106,12 @@ module Shumway {
      * the callback returns |true|;
      */
     visit(callback: (T) => boolean, forward: boolean = true) {
-      var node: ILinkedListNode<T> = (forward ? this._head : this._tail);
+      var node: T = (forward ? this._head : this._tail);
       while (node) {
         if (!callback(node)) {
           break;
         }
-        node = forward ? node.next : node.previous;
+        node = <T>(forward ? node.next : node.previous);
       }
     }
   }

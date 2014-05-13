@@ -196,7 +196,7 @@ module Shumway.GFX.GL {
    * don't necessarily need to have a texture reference. Setting the texture reference to null is a way to indicate
    * that the region no longer points to valid texture data.
    */
-  export class WebGLTextureRegion implements ILinkedListNode<WebGLTextureRegion> {
+  export class WebGLTextureRegion implements ILinkedListNode {
     region: Rectangle;
     texture: WebGLTexture;
     next: WebGLTextureRegion;
