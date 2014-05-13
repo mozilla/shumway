@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-///<reference path='../lib.d.ts' />
 ///<reference path='frameScheduler.ts' />
 ///<reference path='player.ts' />
 ///<reference path='timeline.ts' />

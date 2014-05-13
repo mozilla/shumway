@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-///<reference path='lib.d.ts' />
 ///<reference path='es6-promises.d.ts' />
 var jsGlobal = (function() { return this || (1, eval)('this'); })();
 var inBrowser = typeof console != "undefined";

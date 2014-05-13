@@ -28,6 +28,10 @@ load(homePath + "src/options.js");
 load(homePath + "src/settings.js");
 load(homePath + "src/metrics.js");
 
+var ArgumentParser = Shumway.Options.ArgumentParser;
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
+
 var systemOptions = new OptionSet("System Options");
 var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 var traceWarnings = systemOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
