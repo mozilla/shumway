@@ -34,17 +34,37 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static fromAny(obj: any) {
+      // obj.colors is an array of objects with separate color components
+      // the rgb and alpha components must be separated into colors and alphas arrays
+      var colors = obj.colors.map(function(value) {
+        return ColorUtilities.componentsToRgb(value);
+      });
+      var alphas = obj.colors.map(function(value) {
+        return (value.alpha & 0xff) / 255;
+      });
+      // type is derived from obj.onTop and obj.innerShadow
+      // obj.onTop true: type is FULL
+      // obj.inner true: type is INNER
+      // neither true: type is OUTER
+      var type: string = flash.filters.BitmapFilterType.OUTER;
+      if (!!obj.onTop) {
+        type = flash.filters.BitmapFilterType.FULL;
+      } else if (!!obj.inner) {
+        type = flash.filters.BitmapFilterType.INNER;
+      }
+      // obj.angle is represented in radians, the api needs degrees
+      var angle: number = obj.angle * 180 / Math.PI;
       return new GradientGlowFilter(
         obj.distance,
-        obj.angle,
-        obj.colors,
-        obj.alphas,
+        angle,
+        colors,
+        alphas,
         obj.ratios,
         obj.blurX,
         obj.blurY,
         obj.strength,
         obj.quality,
-        obj.type,
+        type,
         obj.knockout
       );
     }
