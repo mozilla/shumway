@@ -34,18 +34,38 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static fromAny(obj: any) {
+      // obj.highlightColor is an object with separate color components
+      var highlightColor: number = ColorUtilities.componentsToRgb(obj.highlightColor);
+      var highlightAlpha: number = (obj.highlightColor.alpha & 0xff) / 255;
+      // obj.colors is an array of objects with separate color components
+      // here it contains exactly one color object, which maps to shadowColor and shadowAlpha
+      assert(obj.colors && obj.colors.length === 1, "colors must be Array of length 1");
+      var shadowColor: number = ColorUtilities.componentsToRgb(obj.colors[0]);
+      var shadowAlpha: number = (obj.colors[0].alpha & 0xff) / 255;
+      // type is derived from obj.onTop and obj.innerShadow
+      // obj.onTop true: type is FULL
+      // obj.inner true: type is INNER
+      // neither true: type is OUTER
+      var type: string = flash.filters.BitmapFilterType.OUTER;
+      if (!!obj.onTop) {
+        type = flash.filters.BitmapFilterType.FULL;
+      } else if (!!obj.inner) {
+        type = flash.filters.BitmapFilterType.INNER;
+      }
+      // obj.angle is represented in radians, the api needs degrees
+      var angle: number = obj.angle * 180 / Math.PI;
       return new BevelFilter(
         obj.distance,
-        obj.angle,
-        obj.highlightColor,
-        obj.highlightAlpha,
-        obj.shadowColor,
-        obj.shadowAlpha,
+        angle,
+        highlightColor,
+        highlightAlpha,
+        shadowColor,
+        shadowAlpha,
         obj.blurX,
         obj.blurY,
         obj.strength,
         obj.quality,
-        obj.type,
+        type,
         obj.knockout
       );
     }

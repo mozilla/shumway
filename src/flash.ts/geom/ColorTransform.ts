@@ -214,7 +214,7 @@ module Shumway.AVM2.AS.flash.geom {
         return (((value << 24) >>> 0) >> 24) + ((value * 256) & 0xff) / 256;
       }
       function fp_si16(value: number): number {
-        // convert number point to si16
+        // convert number to si16
         return ((value << 16) >>> 0) >> 16;
       }
       this.redMultiplier = fp_si8_ui8(this.redMultiplier);

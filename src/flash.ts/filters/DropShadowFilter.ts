@@ -33,18 +33,27 @@ module Shumway.AVM2.AS.flash.filters {
     static instanceSymbols: string [] = null;
 
     public static fromAny(obj: any) {
+      // obj.colors is an array of objects with separate color components
+      // here it contains exactly one color object, which maps to color and alpha
+      assert(obj.colors && obj.colors.length === 1, "colors must be Array of length 1");
+      var color: number = ColorUtilities.componentsToRgb(obj.colors[0]);
+      var alpha: number = (obj.colors[0].alpha & 0xff) / 255;
+      // obj.angle is represented in radians, the api needs degrees
+      var angle: number = obj.angle * 180 / Math.PI;
+      // obj.compositeSource maps to !hideObject
+      var hideObject: boolean = !obj.compositeSource;
       return new DropShadowFilter(
         obj.distance,
-        obj.angle,
-        obj.color,
-        obj.alpha,
+        angle,
+        color,
+        alpha,
         obj.blurX,
         obj.blurY,
         obj.strength,
         obj.quality,
         obj.inner,
         obj.knockout,
-        obj.hideObject
+        hideObject
       );
     }
 

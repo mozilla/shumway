@@ -161,7 +161,7 @@ var FILTER_GLOW = {
     $: RGBA,
     count: 'count'
   },
-  higlightColor: ['type===3', [RGBA]],
+  highlightColor: ['type===3', [RGBA]],
   $0: ['type===4||type===7', [{
     ratios: {
       $: UI8,
@@ -175,7 +175,7 @@ var FILTER_GLOW = {
     distance: FIXED
   }]],
   strength: FIXED8,
-  innerShadow: UB(1),
+  inner: UB(1),
   knockout: UB(1),
   compositeSource: UB(1),
   $3: ['type===3', [
@@ -183,26 +183,26 @@ var FILTER_GLOW = {
     { $$reserved: UB(1) }
   ]],
   $4: ['type===4||type===7', [
-    { passes: UB(4) },
+    { quality: UB(4) },
     { $$reserved: UB(4) }
   ]]
 };
 var FILTER_BLUR = {
   blurX: FIXED,
   blurY: FIXED,
-  passes: UB(5),
+  quality: UB(5),
   $$reserved: UB(3)
 };
 var FILTER_CONVOLUTION = {
-  columns: UI8,
-  rows: UI8,
+  matrixX: UI8,
+  matrixY: UI8,
   divisor: FLOAT,
   bias: FLOAT,
-  weights: {
+  matrix: {
     $: FLOAT,
-    count: 'columns*rows'
+    count: 'matrixX*matrixY'
   },
-  defaultColor: RGBA,
+  color: RGBA,
   $$reserved: UB(6),
   clamp: UB(1),
   preserveAlpha: UB(1)
