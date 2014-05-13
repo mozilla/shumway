@@ -36,9 +36,9 @@ module Shumway.AVM2.AS {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import clamp = Shumway.NumberUtilities.clamp;
   import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
   import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
-  declare var clamp;
 
   export class Int32Vector {
     static EXTRA_CAPACITY = 4;

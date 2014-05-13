@@ -41,12 +41,17 @@ interface Function {
   boundTo: boolean;
 }
 
-interface Array {
+interface Array<T> {
   runtimeId: number;
 }
 
 interface Math {
   imul(a: number, b: number): number;
+  /**
+   * Returns the number of leading zeros of a number.
+   * @param x A numeric expression.
+   */
+  clz32(x: number): number;
 }
 
 module Shumway {

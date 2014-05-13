@@ -52,10 +52,12 @@ module Shumway.AVM2.AS.avm1lib {
         : null;
     }
 
-    static addProperty(obj: ASObject, propertyName: string, getter: ASFunction, setter: ASFunction, enumerable:boolean = true):any {
-      (<Object> obj).asDefinePublicProperty(propertyName, <PropertyDescriptor> {
-        get: (<Function><any> getter),
-        set: (<Function><any> (setter || undefined)),
+    static addProperty(obj: ASObject, propertyName: string, getter: () => any,
+                       setter: (v:any) => any, enumerable:boolean = true): any
+    {
+      obj.asDefinePublicProperty(propertyName, {
+        get: getter,
+        set: setter || undefined,
         enumerable: enumerable,
         configurable: true
       });

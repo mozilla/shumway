@@ -66,7 +66,7 @@ module Shumway.AVM2.AS.flash.net {
     attach: (connection: flash.net.NetConnection) => void;
     close: () => void;
     attachAudio: (microphone: flash.media.Microphone) => void;
-    attachCamera: (theCamera: flash.media.Camera, snapshotMilliseconds: number /*int*/ = -1) => void;
+    attachCamera: (theCamera: flash.media.Camera, snapshotMilliseconds?: number /*int*/) => void;
     send: (handlerName: string) => void;
     bufferTime: number;
     maxPauseBufferTime: number;
@@ -82,7 +82,7 @@ module Shumway.AVM2.AS.flash.net {
     resume: () => void;
     togglePause: () => void;
     seek: (offset: number) => void;
-    publish: (name: string = null, type: string = null) => void;
+    publish: (name?: string, type?: string) => void;
     time: number;
     currentFPS: number;
     bufferLength: number;

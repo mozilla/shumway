@@ -16,9 +16,7 @@
 ///<reference path='../references.ts' />
 
 module Shumway.AVM2.AS {
-  declare var arraySort;
   declare var checkArguments;
-  declare var clamp;
 
   import assertNotImplemented = Shumway.Debug.assertNotImplemented;
   import notImplemented = Shumway.Debug.notImplemented;
@@ -26,6 +24,7 @@ module Shumway.AVM2.AS {
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import Namespace = Shumway.AVM2.ABC.Namespace;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import clamp = Shumway.NumberUtilities.clamp;
   import asCheckVectorGetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorGetNumericProperty;
   import asCheckVectorSetNumericProperty = Shumway.AVM2.Runtime.asCheckVectorSetNumericProperty;
 

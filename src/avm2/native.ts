@@ -845,8 +845,8 @@ module Shumway.AVM2.AS {
       return this.length;
     }
 
-    asCall: (self = undefined, ...args: any []) => any;
-    asApply: (self = undefined, args: any [] = undefined) => any;
+    asCall: (self?, ...args: any []) => any;
+    asApply: (self?, args?: any []) => any;
   }
 
   export class ASBoolean extends ASObject {

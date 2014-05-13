@@ -483,8 +483,9 @@ module Shumway.AVM2.AS.flash.geom {
              this.tx === other.tx && this.ty === other.ty;
     }
 
-    public toString(): String {
-      return "(a=" + this.a + ", b=" + this.b + ", c=" + this.c + ", d=" + this.d + ", tx=" + this.tx + ", ty=" +this.ty + ")";
+    public toString(): string {
+      return "(a=" + this.a + ", b=" + this.b + ", c=" + this.c + ", d=" + this.d +
+             ", tx=" + this.tx + ", ty=" +this.ty + ")";
     }
 
     public writeExternal(output: flash.utils.IDataOutput) {
