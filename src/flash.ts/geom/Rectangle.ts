@@ -287,7 +287,7 @@ module Shumway.AVM2.AS.flash.geom {
       return this;
     }
 
-    public toString(): String {
+    public toString(): string {
       return "(x=" + this.x + ", y=" + this.y + ", w=" + this.width + ", h=" + this.height + ")";
     }
 
