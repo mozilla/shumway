@@ -75,7 +75,7 @@ module Shumway.AVM2.AS.avm1lib {
     length: (expression: ASObject) => number;
     loadMovie: (url: string, target: ASObject, method: string) => void;
     loadMovieNum: (url: any, level: any, method: any) => any;
-    loadVariables: (url: string, target: ASObject, method: string = "") => void;
+    loadVariables: (url: string, target: ASObject, method?: string) => void;
     mbchr: (number: any) => any;
     mblength: (expression: any) => any;
     mbord: (character: any) => any;

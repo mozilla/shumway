@@ -42,8 +42,10 @@ module Shumway.AVM2.AS.flash.text.engine {
     userData: any;
     textJustifier: flash.text.engine.TextJustifier;
     // tabStops: ASVector<flash.text.engine.TabStop>;
-    createTextLine: (previousLine: flash.text.engine.TextLine = null, width: number = 1000000, lineOffset: number = 0, fitSomething: boolean = false) => flash.text.engine.TextLine;
-    recreateTextLine: (textLine: flash.text.engine.TextLine, previousLine: flash.text.engine.TextLine = null, width: number = 1000000, lineOffset: number = 0, fitSomething: boolean = false) => flash.text.engine.TextLine;
+    createTextLine: (previousLine?: TextLine, width?: number, lineOffset?: number,
+                     fitSomething?: boolean) => TextLine;
+    recreateTextLine: (textLine: TextLine, previousLine?: TextLine, width?: number,
+                       lineOffset?: number, fitSomething?: boolean) => TextLine;
     
     // AS -> JS Bindings
     

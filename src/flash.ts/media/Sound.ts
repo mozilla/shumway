@@ -112,7 +112,7 @@ module Shumway.AVM2.AS.flash.media {
 
     // JS -> AS Bindings
     
-    load: (stream: flash.net.URLRequest, context: flash.media.SoundLoaderContext = null) => void;
+    load: (stream: flash.net.URLRequest, context?: flash.media.SoundLoaderContext) => void;
     
     // AS -> JS Bindings
     

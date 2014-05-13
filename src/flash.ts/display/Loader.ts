@@ -651,7 +651,7 @@ module Shumway.AVM2.AS.flash.display {
       return this._contentLoaderInfo;
     }
 
-    load: (request: flash.net.URLRequest, context: flash.system.LoaderContext = null) => void;
+    load: (request: flash.net.URLRequest, context?: flash.system.LoaderContext) => void;
 
     _close(): void {
       notImplemented("public flash.display.Loader::_close"); return;

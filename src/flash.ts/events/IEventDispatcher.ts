@@ -21,10 +21,9 @@ module Shumway.AVM2.AS.flash.events {
   }
 
   export interface IEventDispatcher {
-    addEventListener: (type: string, listener: EventHandler, useCapture: boolean = false,
-                       priority: number /*int*/ = 0, useWeakReference: boolean = false) => void;
-    removeEventListener: (type: string, listener: EventHandler,
-                          useCapture: boolean = false) => void;
+    addEventListener: (type: string, listener: EventHandler, useCapture?: boolean,
+                       priority?: number /*int*/, useWeakReference?: boolean) => void;
+    removeEventListener: (type: string, listener: EventHandler, useCapture?: boolean) => void;
     hasEventListener: (type: string) => boolean;
     willTrigger: (type: string) => boolean;
     dispatchEvent: (event: flash.events.Event) => boolean;

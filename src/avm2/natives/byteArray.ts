@@ -76,7 +76,7 @@ module Shumway.AVM2.AS {
     var _asDeleteProperty = Object.prototype.asDeleteProperty;
 
     export interface IDataInput {
-      readBytes: (bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0) => void;
+      readBytes: (bytes: flash.utils.ByteArray, offset?: number /*uint*/, length?: number /*uint*/) => void;
       readBoolean: () => boolean;
       readByte: () => number /*int*/;
       readUnsignedByte: () => number /*uint*/;
@@ -96,7 +96,7 @@ module Shumway.AVM2.AS {
     }
 
     export interface IDataOutput {
-      writeBytes: (bytes: flash.utils.ByteArray, offset: number /*uint*/ = 0, length: number /*uint*/ = 0) => void;
+      writeBytes: (bytes: flash.utils.ByteArray, offset?: number /*uint*/, length?: number /*uint*/) => void;
       writeBoolean: (value: boolean) => void;
       writeByte: (value: number /*int*/) => void;
       writeShort: (value: number /*int*/) => void;

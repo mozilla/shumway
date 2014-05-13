@@ -48,14 +48,14 @@ module Shumway.AVM2.AS.flash.net {
 
     // JS -> AS Bindings
     
-    connect: (myConnection: flash.net.NetConnection, params: string = null) => void;
+    connect: (myConnection: flash.net.NetConnection, params?: string) => void;
     close: () => void;
-    flush: (minDiskSpace: number /*int*/ = 0) => string;
+    flush: (minDiskSpace?: number /*int*/) => string;
     size: number /*uint*/;
     fps: number;
     send: () => void;
     clear: () => void;
-    setProperty: (propertyName: string, value: ASObject = null) => void;
+    setProperty: (propertyName: string, value?: ASObject) => void;
     
     // AS -> JS Bindings
     private static _defaultObjectEncoding: number /*uint*/ = 3 /* AMF3 */;
