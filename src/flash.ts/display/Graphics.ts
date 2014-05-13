@@ -21,6 +21,7 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
 
+  import DisplayObject = flash.display.DisplayObject;
   import GradientType = flash.display.GradientType;
   import SpreadMethod = flash.display.SpreadMethod;
   import InterpolationMethod = flash.display.InterpolationMethod;
@@ -66,20 +67,56 @@ module Shumway.AVM2.AS.flash.display {
 
     constructor () {
       false && super();
-      notImplemented("Dummy Constructor: public flash.display.Graphics");
+      this._bounds = new flash.geom.Rectangle();
+      this._strokeBounds = new flash.geom.Rectangle();
+      this._parent = null;
+      this._id = DisplayObject._syncID++;
     }
     
     // JS -> AS Bindings
-    
+    _id: number;
     
     // AS -> JS Bindings
 
     _graphicsData: flash.utils.ByteArray;
     _invalid: boolean;
 
+    private _bounds: flash.geom.Rectangle;
+    private _strokeBounds: flash.geom.Rectangle;
+
+    /**
+     * Sets the bounds.
+     */
+    public setSymbolBounds(bounds: flash.geom.Rectangle, strokeBounds: flash.geom.Rectangle) {
+      this._bounds.copyFrom(bounds);
+      this._strokeBounds.copyFrom(strokeBounds);
+    }
+
+    /**
+     * Back reference to the display object that references this graphics object. This is
+     * needed so that we can propagate invalid / dirty bits whenever the graphics object
+     * changes.
+     */
+    _parent: DisplayObject;
+
+    _setParent(parent: DisplayObject) {
+      assert (!this._parent);
+      this._parent = parent;
+    }
+
+    _invalidateParent() {
+      assert (this._parent, "A parent should already be linked.");
+      this._parent._invalidateBounds();
+    }
+
     _getContentBounds(includeStrokes: boolean = true): flash.geom.Rectangle {
+      if (includeStrokes) {
+        return this._strokeBounds;
+      } else {
+        return this._bounds;
+      }
       notImplemented("public flash.display.Graphics::_getContentBounds");
-      return new Rectangle();
+      return new flash.geom.Rectangle();
     }
 
     clear(): void {
@@ -179,6 +216,9 @@ module Shumway.AVM2.AS.flash.display {
       this.lineTo(x + width, y + height);
       this.lineTo(x, y + height);
       this.lineTo(x, y);
+
+      this._bounds = new Rectangle(x * 20 | 0, y * 20 | 0, width * 20 | 0, height * 20 | 0);
+      this._invalidateParent();
     }
 
     drawRoundRect(x: number, y: number, width: number, height: number, ellipseWidth: number, ellipseHeight: number): void {

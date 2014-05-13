@@ -18,6 +18,7 @@ module Shumway.Remoting.Client {
   import UpdateFrameTagBits = Shumway.Remoting.UpdateFrameTagBits;
 
   import Stage = Shumway.AVM2.AS.flash.display.Stage;
+  import Graphics = Shumway.AVM2.AS.flash.display.Graphics;
   import DisplayObject = Shumway.AVM2.AS.flash.display.DisplayObject;
   import DisplayObjectFlags = Shumway.AVM2.AS.flash.display.DisplayObjectFlags;
   import DisplayObjectContainer = Shumway.AVM2.AS.flash.display.DisplayObjectContainer;
@@ -36,8 +37,21 @@ module Shumway.Remoting.Client {
       var serializer = this;
       stage.visit(function (displayObject) {
         serializer.writeDisplayObject(displayObject);
+        var graphics = displayObject._getGraphics();
+        if (graphics) {
+          serializer.writeGraphics(graphics);
+        }
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
+    }
+
+    writeGraphics(graphics: Graphics) {
+      this.output.writeInt(MessageTag.UpdateFrame);
+      this.output.writeInt(graphics._id);
+      this.output.writeInt(0); // Not a container.
+      var hasBits = UpdateFrameTagBits.HasBounds;
+      this.output.writeInt(hasBits);
+      this.writeRectangle(graphics._getContentBounds());
     }
 
     writeDisplayObject(displayObject: DisplayObject) {
@@ -46,7 +60,7 @@ module Shumway.Remoting.Client {
       // TODO create visitDisplayObjectContainer
       this.output.writeInt(DisplayObjectContainer.isType(displayObject) ? 1 : 0);
       var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
-      var hasBounds = displayObject._hasFlags(DisplayObjectFlags.DirtyBounds);
+      var hasBounds = true;
       var hasChildren = this.writeReferences && displayObject._hasFlags(DisplayObjectFlags.DirtyChildren);
       var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
 
@@ -66,7 +80,15 @@ module Shumway.Remoting.Client {
       if (hasChildren) {
         assert (DisplayObjectContainer.isType(displayObject));
         var children = (<DisplayObjectContainer>displayObject)._children;
-        this.output.writeInt(children.length);
+        var count = children.length;
+        var graphics = displayObject._getGraphics();
+        if (graphics) {
+          count ++;
+        }
+        this.output.writeInt(count);
+        if (graphics) {
+          this.output.writeInt(graphics._id);
+        }
         for (var i = 0; i < children.length; i++) {
           this.output.writeInt(children[i]._id);
         }

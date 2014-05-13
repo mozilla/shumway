@@ -268,10 +268,15 @@ module Shumway.AVM2.AS.flash.display {
         case 'shape':
           symbol = new Timeline.ShapeSymbol(symbolId);
           symbol.graphics = new Graphics();
+          var bounds = new Rectangle();
+          bounds.copyFromBbox(data.bbox);
+          var strokeBounds = new Rectangle();
           if (data.strokeBbox) {
-            symbol.strokeBounds = new Rectangle();
-            symbol.strokeBounds.copyFromBbox(data.strokeBbox);
+            strokeBounds.copyFromBbox(data.strokeBbox);
+          } else {
+            strokeBounds = bounds;
           }
+          symbol.graphics.setSymbolBounds(bounds, strokeBounds);
           break;
         case 'image':
           symbol = new Timeline.BitmapSymbol(symbolId);

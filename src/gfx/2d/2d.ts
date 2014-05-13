@@ -432,6 +432,10 @@ module Shumway.GFX {
 
       root.visit(function visitFrame(frame: Frame, transform?: Matrix, flags?: FrameFlags): VisitorFlags {
 
+        if (frame.getBounds().isEmpty()) {
+          return;
+        }
+
         context.save();
         context.setTransform(transform.a, transform.b, transform.c, transform.d, transform.tx, transform.ty);
         context.globalAlpha = frame.getConcatenatedAlpha();

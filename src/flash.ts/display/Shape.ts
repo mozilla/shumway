@@ -25,8 +25,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
     static initializer: any = function (symbol: Shumway.Timeline.ShapeSymbol) {
       var self: Shape = this;
-      self._graphics = symbol ? symbol.graphics : new flash.display.Graphics();
-
+      self._graphics = symbol ? symbol.graphics : null;
     };
 
     constructor () {
@@ -37,6 +36,11 @@ module Shumway.AVM2.AS.flash.display {
     _graphics: flash.display.Graphics;
 
     get graphics(): flash.display.Graphics {
+      if (this._graphics) {
+        return this._graphics;
+      }
+      this._graphics = new flash.display.Graphics();
+      this._graphics._setParent(this);
       return this._graphics;
     }
   }

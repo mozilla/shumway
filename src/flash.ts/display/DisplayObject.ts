@@ -160,8 +160,6 @@ module Shumway.AVM2.AS.flash.display {
      */
     DirtyChild                                = 0x400000,
 
-    DirtyBounds                               = 0x800000,
-
     DirtyMiscellaneousProperties              = 0x1000000,
 
     /**
@@ -172,7 +170,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * All synchronizable properties are dirty.
      */
-    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyBounds | DirtyMiscellaneousProperties
+    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyMiscellaneousProperties
   }
 
   /**
@@ -219,7 +217,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Every displayObject is assigned an unique integer ID.
      */
-    private static _nextID = 0;
+    static _syncID = 0;
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -228,14 +226,13 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = function (symbol: Shumway.Timeline.Symbol) {
       var self: DisplayObject = this;
 
-      self._id = DisplayObject._nextID++;
+      self._id = DisplayObject._syncID++;
       self._displayObjectFlags = DisplayObjectFlags.Visible                            |
                                  DisplayObjectFlags.InvalidBounds                      |
                                  DisplayObjectFlags.InvalidMatrix                      |
                                  DisplayObjectFlags.InvalidConcatenatedMatrix          |
                                  DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
                                  DisplayObjectFlags.DirtyMatrix                        |
-                                 DisplayObjectFlags.DirtyBounds                        |
                                  DisplayObjectFlags.DirtyMiscellaneousProperties;
 
       self._root = null;
@@ -278,7 +275,6 @@ module Shumway.AVM2.AS.flash.display {
 
       self._depth = 0;
       self._ratio = 0;
-      self._graphics = null;
       self._hitTarget = null;
       self._index = -1;
       self._maskedObject = null;
@@ -289,8 +285,6 @@ module Shumway.AVM2.AS.flash.display {
       self._symbol = null;
 
       if (symbol) {
-        self._bounds.copyFrom(symbol.bounds);
-        this._removeFlags(DisplayObjectFlags.InvalidBounds);
         if (symbol.scale9Grid) {
           self._scale9Grid = symbol.scale9Grid.clone();
         }
@@ -467,7 +461,6 @@ module Shumway.AVM2.AS.flash.display {
     _matrix3D: flash.geom.Matrix3D;
     _depth: number;
     _ratio: number;
-    _graphics: flash.display.Graphics;
     _hitTarget: DisplayObject;
 
     /**
@@ -733,7 +726,7 @@ module Shumway.AVM2.AS.flash.display {
     _animate(state: Shumway.Timeline.AnimationState): void {
       if (state.symbol) {
         if (state.symbol instanceof Shumway.Timeline.ShapeSymbol) {
-          this._graphics = (<Shumway.Timeline.ShapeSymbol>state.symbol).graphics;
+          this._setGraphics((<Shumway.Timeline.ShapeSymbol>state.symbol).graphics);
         }
         // TODO handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/
       }
@@ -1202,14 +1195,28 @@ module Shumway.AVM2.AS.flash.display {
      * graphics.
      */
     private _getGraphics(): flash.display.Graphics {
-      if (flash.display.Shape.isType(this)) {
-        return (<flash.display.Shape>this)._graphics;
-      } else if (flash.display.Shape.isType(this)) {
-        return (<flash.display.Shape>this)._graphics;
-      } else if (flash.display.Shape.isType(this)) {
-        return (<flash.display.Shape>this)._graphics;
+      if (flash.display.Shape.isType(this)  ||
+          flash.display.Sprite.isType(this) ||
+          flash.display.MorphShape.isType(this))
+      {
+        return (<any>this)._graphics;
       }
       return null;
+    }
+
+    /**
+     * This is only ever called from |_animate|.
+     */
+    _setGraphics(graphics: flash.display.Graphics) {
+      if (flash.display.Shape.isType(this)  ||
+          flash.display.Sprite.isType(this) ||
+          flash.display.MorphShape.isType(this))
+      {
+        (<any>this)._graphics = graphics;
+        this._invalidateBounds();
+        return;
+      }
+      unexpected("Cannot set graphics on this type of display object.");
     }
 
     /**

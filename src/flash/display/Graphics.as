@@ -19,7 +19,7 @@ import flash.geom.Matrix;
 
 [native(cls='GraphicsClass')]
 public final class Graphics {
-  public function Graphics() {}
+  public native function Graphics();
   public native function clear():void;
   public native function beginFill(color:uint, alpha:Number = 1):void;
   public native function beginGradientFill(type:String, colors:Array, alphas:Array, ratios:Array,
