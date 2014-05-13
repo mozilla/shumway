@@ -41,7 +41,7 @@ interface Function {
   boundTo: boolean;
 }
 
-interface Array {
+interface Array<T> {
   runtimeId: number;
 }
 
