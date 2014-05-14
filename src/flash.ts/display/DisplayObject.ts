@@ -1313,9 +1313,7 @@ module Shumway.AVM2.AS.flash.display {
      * Gets the oldest interactive ancestor (or self) to receive pointer events for this object.
      */
     public getOldestInteractiveAncestorOrSelf(): InteractiveObject {
-      if (InteractiveObject.isType(this)) {
-        return <InteractiveObject>this;
-      }
+      var find = InteractiveObject.isType(this) ? this : this._parent;
       var self = this._parent;
       var find = self;
       while (self) {
