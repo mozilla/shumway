@@ -138,15 +138,18 @@ module Shumway.AVM2.AS.flash.display {
 
     set scaleMode(value: string) {
       value = asCoerceString(value);
-      // this._scaleMode = value;
-      notImplemented("public flash.display.Stage::set scaleMode"); return;
+      assert (flash.display.StageScaleMode.toNumber(value) >= 0);
+      this._scaleMode = value;
     }
+
     get align(): string {
       return this._align;
     }
+
     set align(value: string) {
-      // this._align = asCoerceString(value);
-      notImplemented("public flash.display.Stage::set align"); return;
+      value = asCoerceString(value);
+      assert (flash.display.StageAlign.toNumber(value) >= 0);
+      this._align = value;
     }
 
     get stageWidth(): number /*int*/ {
@@ -170,8 +173,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set showDefaultContextMenu(value: boolean) {
-      // this._showDefaultContextMenu = !!value;
-      notImplemented("public flash.display.Stage::set showDefaultContextMenu"); return;
+      this._showDefaultContextMenu = !!value;
     }
 
     get focus(): flash.display.InteractiveObject {
