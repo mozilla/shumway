@@ -41,6 +41,8 @@ module Shumway.AVM2.AS.flash.display {
       self._hitArea = null;
       self._useHandCursor = true;
 
+      self._hitTarget = null;
+
       if (symbol) {
         if (symbol.isRoot) {
           self._root = self;
@@ -70,11 +72,13 @@ module Shumway.AVM2.AS.flash.display {
     
     // AS -> JS Bindings
     
-    _graphics: flash.display.Graphics;
-    _buttonMode: boolean;
-    _dropTarget: flash.display.DisplayObject;
-    _hitArea: flash.display.Sprite;
-    _useHandCursor: boolean;
+    private _graphics: flash.display.Graphics;
+    private _buttonMode: boolean;
+    private _dropTarget: flash.display.DisplayObject;
+    private _hitArea: flash.display.Sprite;
+    private _useHandCursor: boolean;
+
+    _hitTarget: flash.display.Sprite;
 
     private _initializeChildren(frame: Timeline.Frame): void {
       for (var depth in frame.stateAtDepth) {

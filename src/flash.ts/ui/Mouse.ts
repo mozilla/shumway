@@ -29,29 +29,34 @@ module Shumway.AVM2.AS.flash.ui {
     /**
      * Finds the interactive object on which the event is dispatched.
      */
-    private _findTarget(e: MouseEvent, point: Point): InteractiveObject {
-      var objects = this.stage.getObjectsUnderPoint(point);
+    private _findTarget(point: Point): InteractiveObject {
+      var objects = this.stage.getObjectsUnderMouse(point);
       var target: InteractiveObject;
-      for (var i = objects.length - 1; i >= 0; i--) {
-        var object = objects[i];
-        var interactiveObject;
-        if (flash.display.InteractiveObject.isType(object)) {
-          interactiveObject = <InteractiveObject>object;
-        } else {
-          // TODO: Not correct.
-          interactiveObject = object._parent;
+      var i = objects.length;
+      while (i--) {
+        var obj = objects[i];
+        if (!flash.display.InteractiveObject.isType(obj)) {
+          var j = i;
+          while (j--) {
+            var sibling = objects[j];
+            if (sibling._parent === obj._parent && InteractiveObject.isType(sibling)) {
+              obj = sibling;
+              i = j;
+            }
+          }
         }
-        assert (interactiveObject);
-        // TODO: This is probably broken because of depth order.
-        var ancestor = interactiveObject.getOldestMouseChildrenAncestor();
-        if (ancestor) {
-          interactiveObject = ancestor;
+        target = obj.getOldestInteractiveAncestorOrSelf();
+        if (!target) {
+          continue;
         }
-        // Interactive objects that have |mouseEnabled| set to |false| don't receive
-        // mouse events, their children however are unaffected.
-        if (interactiveObject.mouseEnabled) {
-          target = interactiveObject;
+        if (target.mouseEnabled) {
           break;
+        }
+        if (flash.display.Sprite.isType(target)) {
+          var hitTarget = (<flash.display.Sprite>target)._hitTarget;
+          if (hitTarget && hitTarget.mouseEnabled) {
+            break;
+          }
         }
       }
       return target;
@@ -67,7 +72,7 @@ module Shumway.AVM2.AS.flash.ui {
       if (e.type !== "click") {
         return;
       }
-      var target = this._findTarget(e, point);
+      var target = this._findTarget(point);
       if (target) {
         // TODO: Create proper event objects.
         var event = new flash.events.MouseEvent (

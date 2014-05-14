@@ -275,7 +275,6 @@ module Shumway.AVM2.AS.flash.display {
 
       self._depth = 0;
       self._ratio = 0;
-      self._hitTarget = null;
       self._index = -1;
       self._maskedObject = null;
 
@@ -461,7 +460,6 @@ module Shumway.AVM2.AS.flash.display {
     _matrix3D: flash.geom.Matrix3D;
     _depth: number;
     _ratio: number;
-    _hitTarget: DisplayObject;
 
     /**
      * Index of this display object within its container's children
@@ -1296,13 +1294,16 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Gets the oldest ancestor to have |mouseChildren| set to false.
+     * Gets the oldest interactive ancestor (or self) to receive pointer events for this object.
      */
-    public getOldestMouseChildrenAncestor(): DisplayObjectContainer {
+    public getOldestInteractiveAncestorOrSelf(): InteractiveObject {
+      if (InteractiveObject.isType(this)) {
+        return <InteractiveObject>this;
+      }
       var find = null;
       var self = this._parent;
       while (self) {
-        if (!self._mouseChildren) {
+        if (!self.mouseChildren) {
           find = self;
         }
         self = self._parent;

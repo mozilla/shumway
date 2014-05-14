@@ -314,5 +314,25 @@ module Shumway.AVM2.AS.flash.display {
     requireOwnerPermissions(): void {
       somewhatImplemented("public flash.display.Stage::requireOwnerPermissions"); return;
     }
+
+    getObjectsUnderMouse(globalPoint: flash.geom.Point): DisplayObject [] {
+      var objectsUnderPoint: DisplayObject [] = [];
+      this.visit(function (dispObj: DisplayObject): VisitorFlags {
+        var isUnderMouse = false;
+        if (SimpleButton.isType(dispObj)) {
+          var hitTestState = (<SimpleButton>dispObj).hitTestState;
+          if (hitTestState && hitTestState.hitTestPoint(globalPoint.x, globalPoint.y, true)) {
+            isUnderMouse = true;
+          }
+        } else {
+          isUnderMouse = dispObj.hitTestPoint(globalPoint.x, globalPoint.y, true, true);
+        }
+        if (isUnderMouse) {
+          objectsUnderPoint.push(dispObj);
+        }
+        return VisitorFlags.Continue;
+      }, VisitorFlags.None);
+      return objectsUnderPoint;
+    }
   }
 }

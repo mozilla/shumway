@@ -663,11 +663,24 @@ module Shumway.AVM2.AS.flash.display {
     load: (request: flash.net.URLRequest, context?: flash.system.LoaderContext) => void;
 
     _close(): void {
-      notImplemented("public flash.display.Loader::_close"); return;
+      if (this._worker && this._loadStatus === LoadStatus.Unloaded) {
+        this._worker.terminate();
+        this._worker = null;
+      }
     }
+
     _unload(stopExecution: boolean, gc: boolean): void {
       stopExecution = !!stopExecution; gc = !!gc;
-      notImplemented("public flash.display.Loader::_unload"); return;
+      if (this._loadStatus < LoadStatus.Initialized) {
+        return;
+      }
+      this._content = null;
+      this._contentLoaderInfo._loader = null;
+      this._dictionary = [];
+      this._worker = null;
+      this._lastPromise = this._startPromise;
+      this._loadStatus = LoadStatus.Unloaded;
+      this.dispatchEvent(Event.getInstance(Event.UNLOAD));
     }
 
     _getJPEGLoaderContextdeblockingfilter(context: flash.system.LoaderContext): number {

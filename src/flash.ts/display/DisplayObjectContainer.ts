@@ -328,7 +328,7 @@ module Shumway.AVM2.AS.flash.display {
     getObjectsUnderPoint(globalPoint: flash.geom.Point): DisplayObject [] {
       var objectsUnderPoint: DisplayObject [] = [];
       this.visit(function (displayObject: DisplayObject): VisitorFlags {
-        if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, true)) {
+        if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, false, true)) {
           // Only include the objects whose shape is under the specified point.
           if (displayObject.hitTestPoint(globalPoint.x, globalPoint.y, true, true)) {
             objectsUnderPoint.push(displayObject);
