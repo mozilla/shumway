@@ -26,11 +26,7 @@ module Shumway.AVM2.AS.flash.text {
     static initializer: any = function (symbol: Shumway.Timeline.TextSymbol) {
       var self: StaticText = this;
       if (symbol) {
-        symbol.bounds && self._bounds.copyFrom(symbol.bounds);
-        symbol.rect && self._rect.copyFrom(symbol.rect);
-        self._removeFlags(DisplayObjectFlags.InvalidBounds);
-        // TODO: Assert that the computed bounds of the graphics object in fact
-        // match those given by the symbol.
+        self._setBoundsFromSymbol(symbol);
       }
     };
 

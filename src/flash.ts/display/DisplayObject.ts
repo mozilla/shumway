@@ -338,6 +338,16 @@ module Shumway.AVM2.AS.flash.display {
       this._setFlags(DisplayObjectFlags.Constructed);
     }
 
+    _setBoundsFromSymbol(symbol: Timeline.DisplaySymbol) {
+      if (symbol.bounds) {
+        this._bounds.copyFrom(symbol.bounds);
+      }
+      if (symbol.rect) {
+        this._rect.copyFrom(symbol.rect);
+      }
+      this._removeFlags(DisplayObjectFlags.InvalidBounds);
+    }
+
     _setFlags(flags: DisplayObjectFlags) {
       this._displayObjectFlags |= flags;
     }

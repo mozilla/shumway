@@ -275,123 +275,22 @@ module Shumway.AVM2.AS.flash.display {
       }
       switch (data.type) {
         case 'shape':
-          symbol = new Timeline.ShapeSymbol(symbolId);
-          symbol.graphics = new flash.display.Graphics();
+          symbol = Timeline.ShapeSymbol.createFromData(data);
           break;
         case 'image':
-          symbol = new Timeline.BitmapSymbol(symbolId);
-          symbol.width = data.width;
-          symbol.height = data.height;
+          symbol = Timeline.BitmapSymbol.createFromData(data);
           break;
         case 'label':
-          symbol = new Timeline.TextSymbol(symbolId);
-          symbol.symbolClass = flash.text.StaticText;
-          symbol.data = data.data;
+          symbol = Timeline.TextSymbol.createFromLabelData(data);
           break;
         case 'text':
-          symbol = new Timeline.TextSymbol(symbolId);
-          var tag = data.tag;
-          if (tag.hasColor) {
-            symbol.textColor = tag.color;
-          }
-          if (tag.hasFont) {
-            symbol.textHeight = tag.fontHeight;
-            symbol.font = null;
-            if (tag.fontClass) {
-              var appDomain = AVM2.instance.applicationDomain;
-              symbol.fontClass = appDomain.getClass(tag.fontClass);
-            }
-          }
-          if (tag.hasLayout) {
-            symbol.align = flash.text.TextFormatAlign.fromNumber(tag.align);
-            symbol.leftMargin = tag.leftMargin;
-            symbol.rightMargin = tag.rightMargin;
-            symbol.indent = tag.indent;
-            symbol.leading = tag.leading;
-          }
-          symbol.multiline = !!tag.multiline;
-          symbol.wordWrap = !!tag.wordWrap;
-          symbol.embedFonts = !!tag.useOutlines;
-          symbol.selectable = !tag.noSelect;
-          symbol.border = !!tag.border;
-          if (tag.hasText) {
-            symbol.initialText = tag.initialText;
-          }
-          symbol.html = !!tag.html;
-          symbol.displayAsPassword = !!tag.password;
-          symbol.type = tag.readonly ? flash.text.TextFieldType.DYNAMIC :
-                                       flash.text.TextFieldType.INPUT;
-          if (tag.hasMaxLength) {
-            symbol.maxChars = tag.maxLength;
-          }
-          symbol.autoSize = flash.text.TextFieldAutoSize.fromNumber(tag.autoSize);
-          symbol.variableName = tag.variableName;
+          symbol = Timeline.TextSymbol.createFromLabelData(data);
           break;
         case 'button':
-          symbol = new Timeline.ButtonSymbol(symbolId);
-          var states = data.states;
-          var character, matrix, colorTransform;
-          for (var stateName in states) {
-            var commands = states[stateName];
-            var state;
-            if (commands.length === 1) {
-              var cmd = commands[0];
-              character = this._dictionary[cmd.symbolId];
-              matrix = Matrix.fromAny(cmd.matrix);
-              if (cmd.cxform) {
-                colorTransform = ColorTransform.fromCXForm(cmd.cxform);
-              }
-            } else {
-              character = new Timeline.SpriteSymbol(-1);
-              character.frames.push(this._buildFrame(commands));
-            }
-            symbol[stateName + 'State'] =
-              new Timeline.AnimationState(character, 0, matrix, colorTransform);
-          }
+          symbol = Timeline.ButtonSymbol.createFromData(data, this);
           break;
         case 'sprite':
-          symbol = new Timeline.SpriteSymbol(symbolId);
-          symbol.numFrames = data.frameCount;
-          var frames = data.frames;
-          for (var i = 0; i < frames.length; i++) {
-            var frameInfo = frames[i];
-            var frame = this._buildFrame(frameInfo.commands);
-            var repeat = frameInfo.repeat;
-            while (repeat--) {
-              symbol.frames.push(frame);
-            }
-            if (frameInfo.labelName) {
-              var frameNum = i + 1;
-              symbol.labels.push(new FrameLabel(frameInfo.labelName, frameNum));
-            }
-
-            //if (frame.startSounds) {
-            //  startSoundRegistrations[frameNum] = frame.startSounds;
-            //}
-
-            //var frameScripts = { };
-            //if (!this._isAvm2Enabled) {
-            //  if (symbol.frameScripts) {
-            //    var data = symbol.frameScripts;
-            //    for (var i = 0; i < data.length; i += 2) {
-            //      var frameNum = data[i] + 1;
-            //      var actionsData = new AS2ActionsData(data[i + 1],
-            //        's' + symbol.id + 'f' + frameNum + 'i' +
-            //          (frameScripts[frameNum] ? frameScripts[frameNum].length : 0));
-            //      var script = (function(actionsData, loader) {
-            //        return function () {
-            //          var avm1Context = loader._avm1Context;
-            //          return executeActions(actionsData, avm1Context, this._getAS2Object());
-            //        };
-            //      })(actionsData, this);
-            //      if (!frameScripts[frameNum])
-            //        frameScripts[frameNum] = [script];
-            //      else
-            //        frameScripts[frameNum].push(script);
-            //    }
-            //  }
-            //}
-          }
+          symbol = Timeline.SpriteSymbol.createFromData(data, this);
           break;
         case 'font':
           var font = flash.text.Font.createEmbeddedFont(
@@ -400,33 +299,11 @@ module Shumway.AVM2.AS.flash.display {
           //flash.text.Font.registerFont(font);
           return;
         case 'sound':
-          symbol = new Timeline.SoundSymbol(symbolId);
+          symbol = Timeline.SoundSymbol.createFromData(data);
           break;
         case 'binary':
           // TODO
           return;
-      }
-
-      switch (data.type) {
-        case 'shape':
-        case 'image':
-        case 'label':
-        case 'text':
-        case 'button':
-        case 'sprite':
-          var displaySymbol = <Timeline.DisplaySymbol>symbol;
-          displaySymbol.rect = data.bbox ? Rectangle.createFromBbox(data.bbox) : null;
-          displaySymbol.bounds = data.strokeBbox ? Rectangle.createFromBbox(data.strokeBbox) : null;
-          if (!displaySymbol.bounds) {
-            displaySymbol.bounds = displaySymbol.rect;
-          }
-
-          // TODO: Remove this hack once we can get bounds of the graphics object.
-          if (data.type === "shape") {
-            symbol.graphics._bounds.copyFrom(symbol.bounds);
-            symbol.graphics._rect.copyFrom(symbol.rect);
-          }
-          break;
       }
       this._dictionary[symbolId] = symbol;
     }
@@ -581,7 +458,7 @@ module Shumway.AVM2.AS.flash.display {
       //}
     }
 
-    private _buildFrame(commands: any []): Timeline.Frame {
+    _buildFrame(commands: any []): Timeline.Frame {
       var frame = new Timeline.Frame();
       for (var i = 0; i < commands.length; i++) {
         var cmd = commands[i];

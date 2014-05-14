@@ -28,10 +28,7 @@ module Shumway.AVM2.AS.flash.display {
       self._graphics = null;
       if (symbol) {
         self._graphics = symbol.graphics ? symbol.graphics : null;
-        // TODO: Graphics object now needs to be filled with shape data.
-        symbol.bounds && self._bounds.copyFrom(symbol.bounds);
-        symbol.rect && self._rect.copyFrom(symbol.rect);
-        self._removeFlags(DisplayObjectFlags.InvalidBounds);
+        self._setBoundsFromSymbol(symbol);
         // TODO: Assert that the computed bounds of the graphics object in fact
         // match those given by the symbol.
       }
