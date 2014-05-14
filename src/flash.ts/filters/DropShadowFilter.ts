@@ -32,7 +32,7 @@ module Shumway.AVM2.AS.flash.filters {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
 
-    public static fromAny(obj: any) {
+    public static createFromAny(obj: any) {
       // obj.colors is an array of objects with separate color components
       // here it contains exactly one color object, which maps to color and alpha
       assert(obj.colors && obj.colors.length === 1, "colors must be Array of length 1");

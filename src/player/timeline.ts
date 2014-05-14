@@ -190,9 +190,9 @@ module Shumway.Timeline {
         if (commands.length === 1) {
           var cmd = commands[0];
           character = loaderInfo.getSymbolById(cmd.symbolId);
-          matrix = flash.geom.Matrix.fromAny(cmd.matrix);
+          matrix = flash.geom.Matrix.createFromAny(cmd.matrix);
           if (cmd.cxform) {
-            colorTransform = flash.geom.ColorTransform.fromCXForm(cmd.cxform);
+            colorTransform = flash.geom.ColorTransform.createFromCXForm(cmd.cxform);
           }
         } else {
           character = new Timeline.SpriteSymbol(-1);
@@ -328,10 +328,10 @@ module Shumway.Timeline {
               assert (symbol, "Symbol is not defined.");
             }
             if (cmd.hasMatrix) {
-              matrix = flash.geom.Matrix.fromAny(cmd.matrix);
+              matrix = flash.geom.Matrix.createFromAny(cmd.matrix);
             }
             if (cmd.hasCxform) {
-              colorTransform = flash.geom.ColorTransform.fromCXForm(cmd.cxform);
+              colorTransform = flash.geom.ColorTransform.createFromCXForm(cmd.cxform);
             }
             if (cmd.hasFilters) {
               filters = [];
@@ -340,14 +340,14 @@ module Shumway.Timeline {
                 var obj = swfFilters[j];
                 var filter: flash.filters.BitmapFilter;
                 switch (obj.type) {
-                  case 0: filter = flash.filters.DropShadowFilter.fromAny(obj); break;
-                  case 1: filter = flash.filters.BlurFilter.fromAny(obj); break;
-                  case 2: filter = flash.filters.GlowFilter.fromAny(obj); break;
-                  case 3: filter = flash.filters.BevelFilter.fromAny(obj); break;
-                  case 4: filter = flash.filters.GradientGlowFilter.fromAny(obj); break;
-                  case 5: filter = flash.filters.ConvolutionFilter.fromAny(obj); break;
-                  case 6: filter = flash.filters.ColorMatrixFilter.fromAny(obj); break;
-                  case 7: filter = flash.filters.GradientBevelFilter.fromAny(obj); break;
+                  case 0: filter = flash.filters.DropShadowFilter.createFromAny(obj); break;
+                  case 1: filter = flash.filters.BlurFilter.createFromAny(obj); break;
+                  case 2: filter = flash.filters.GlowFilter.createFromAny(obj); break;
+                  case 3: filter = flash.filters.BevelFilter.createFromAny(obj); break;
+                  case 4: filter = flash.filters.GradientGlowFilter.createFromAny(obj); break;
+                  case 5: filter = flash.filters.ConvolutionFilter.createFromAny(obj); break;
+                  case 6: filter = flash.filters.ColorMatrixFilter.createFromAny(obj); break;
+                  case 7: filter = flash.filters.GradientBevelFilter.createFromAny(obj); break;
                 }
                 assert (filter, "Unknown filter type.");
                 filters.push(filter);

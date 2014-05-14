@@ -46,6 +46,10 @@ module Shumway.AVM2.AS.flash.geom {
       this.height = +height;
     }
 
+    public static createFromBbox(bbox: any): Rectangle {
+      return new Rectangle(bbox.xMin, bbox.yMin, bbox.xMax - bbox.xMin, bbox.yMax - bbox.yMin);
+    }
+
     public set native_x(x: number) {
       this.x = x;
     }
@@ -276,18 +280,6 @@ module Shumway.AVM2.AS.flash.geom {
       this.width = sourceRect.width;
       this.height = sourceRect.height;
     }
-
-    public copyFromBbox(bbox: any): void {
-      this.x = bbox.xMin;
-      this.y = bbox.yMin;
-      this.width = bbox.xMax - bbox.xMin;
-      this.height = bbox.yMax - bbox.yMin;
-    }
-
-    public static createFromBbox(bbox: any): Rectangle {
-      return new Rectangle(bbox.xMin, bbox.yMin, bbox.xMax - bbox.xMin, bbox.yMax - bbox.yMin);
-    }
-
 
     public setTo(x: number, y: number, width: number, height: number): void {
       this.x = +x;

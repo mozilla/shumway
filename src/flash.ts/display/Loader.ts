@@ -259,8 +259,7 @@ module Shumway.AVM2.AS.flash.display {
         var updates = data.updates;
         symbol = loaderInfo.getSymbolById(symbolId);
         if (updates.scale9Grid) {
-          symbol.scale9Grid = new Rectangle();
-          symbol.scale9Grid.copyFromBbox(updates.scale9Grid);
+          symbol.scale9Grid = Rectangle.createFromBbox(updates.scale9Grid);
         }
         return;
       }

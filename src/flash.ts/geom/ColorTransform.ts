@@ -47,7 +47,7 @@ module Shumway.AVM2.AS.flash.geom {
       this.alphaOffset = +alphaOffset;
     }
 
-    public static fromCXForm(cxform) {
+    public static createFromCXForm(cxform: any): ColorTransform {
       return new ColorTransform(
         cxform.redMultiplier / 256,
         cxform.greenMultiplier / 256,

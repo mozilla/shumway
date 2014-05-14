@@ -30,7 +30,7 @@ module Shumway.AVM2.AS.flash.filters {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
 
-    public static fromAny(obj: any) {
+    public static createFromAny(obj: any) {
       return new ColorMatrixFilter(obj.matrix);
     }
 
