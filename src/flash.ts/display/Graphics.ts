@@ -43,11 +43,7 @@ module Shumway.AVM2.AS.flash.display {
     };
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function () {
-      var self: Graphics = this;
-      self._graphicsData = new ByteArray();
-      self._invalid = false;
-    };
+    static initializer: any = null;
     
     // List of static symbols to link.
     static classSymbols: string [] = null; // [];
@@ -67,10 +63,11 @@ module Shumway.AVM2.AS.flash.display {
 
     constructor () {
       false && super();
+      this._id = DisplayObject._syncID++;
+      this._graphicsData = new ByteArray();
       this._bounds = new flash.geom.Rectangle();
       this._strokeBounds = new flash.geom.Rectangle();
       this._parent = null;
-      this._id = DisplayObject._syncID++;
     }
     
     // JS -> AS Bindings
@@ -79,7 +76,6 @@ module Shumway.AVM2.AS.flash.display {
     // AS -> JS Bindings
 
     _graphicsData: flash.utils.ByteArray;
-    _invalid: boolean;
 
     private _bounds: flash.geom.Rectangle;
     private _strokeBounds: flash.geom.Rectangle;
@@ -122,7 +118,7 @@ module Shumway.AVM2.AS.flash.display {
     clear(): void {
       //this._currentPath = null;
       this._graphicsData.length = 0;
-      this._invalid = true;
+      this._invalidateParent();
     }
 
     beginFill(color: number /*uint*/, alpha: number = 1): void {
@@ -340,7 +336,7 @@ module Shumway.AVM2.AS.flash.display {
       graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_MOVE_TO);
       graphicsData.writeUnsignedInt(x * 20);
       graphicsData.writeUnsignedInt(y * 20);
-      this._invalid = true;
+      this._invalidateParent();
     }
 
     lineTo(x: number, y: number): void {
@@ -350,7 +346,7 @@ module Shumway.AVM2.AS.flash.display {
       graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_LINE_TO);
       graphicsData.writeUnsignedInt(x * 20);
       graphicsData.writeUnsignedInt(y * 20);
-      this._invalid = true;
+      this._invalidateParent();
     }
 
     curveTo(controlX: number, controlY: number, anchorX: number, anchorY: number): void {
@@ -362,7 +358,7 @@ module Shumway.AVM2.AS.flash.display {
       graphicsData.writeUnsignedInt(controlY * 20);
       graphicsData.writeUnsignedInt(anchorX * 20);
       graphicsData.writeUnsignedInt(anchorY * 20);
-      this._invalid = true;
+      this._invalidateParent();
     }
 
     cubicCurveTo(controlX1: number, controlY1: number, controlX2: number, controlY2: number, anchorX: number, anchorY: number): void {
@@ -376,7 +372,7 @@ module Shumway.AVM2.AS.flash.display {
       graphicsData.writeUnsignedInt(controlY2 * 20);
       graphicsData.writeUnsignedInt(anchorX * 20);
       graphicsData.writeUnsignedInt(anchorY * 20);
-      this._invalid = true;
+      this._invalidateParent();
     }
 
     endFill(): void {
@@ -387,7 +383,7 @@ module Shumway.AVM2.AS.flash.display {
       this._graphicsData.position = 0;
       this._graphicsData.length = sourceGraphics._graphicsData.length;
       this._graphicsData.writeBytes(sourceGraphics._graphicsData, 0);
-      this._invalid = true;
+      this._invalidateParent();
     }
 
     lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null, repeat: boolean = true, smooth: boolean = false): void {
@@ -439,7 +435,7 @@ module Shumway.AVM2.AS.flash.display {
 //            return true;
 //          }
 //        }
-//      }2
+//      }
     }
   }
 }
