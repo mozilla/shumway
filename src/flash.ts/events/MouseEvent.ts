@@ -55,6 +55,40 @@ module Shumway.AVM2.AS.flash.events {
     static RIGHT_MOUSE_UP: string = "rightMouseUp";
     static CONTEXT_MENU: string = "contextMenu";
 
+    /**
+     * AS3 mouse event names don't match DOM even names, so map them here.
+     */
+    static typeFromDOMType(name: string): string {
+      switch (name) {
+        case "click":
+          return MouseEvent.CLICK;
+        case "dblclick":
+          return MouseEvent.DOUBLE_CLICK;
+        case "mousedown":
+          return MouseEvent.MOUSE_DOWN;
+        case "mousemove":
+          return MouseEvent.MOUSE_MOVE;
+        case "mouseout":
+          return MouseEvent.MOUSE_OUT;
+        case "mouseover":
+          return MouseEvent.MOUSE_OVER;
+        case "mouseup":
+          return MouseEvent.MOUSE_UP;
+        default:
+          notImplemented(name);
+          // return MouseEvent.RELEASE_OUTSIDE;
+          // return MouseEvent.MOUSE_WHEEL;
+          // return MouseEvent.ROLL_OUT;
+          // return MouseEvent.ROLL_OVER;
+          // return MouseEvent.MIDDLE_CLICK;
+          // return MouseEvent.MIDDLE_MOUSE_DOWN;
+          // return MouseEvent.MIDDLE_MOUSE_UP;
+          // return MouseEvent.RIGHT_CLICK;
+          // return MouseEvent.RIGHT_MOUSE_DOWN;
+          // return MouseEvent.RIGHT_MOUSE_UP;
+          // return MouseEvent.CONTEXT_MENU;
+      }
+    }
     clone: () => flash.events.Event;
 
     // AS -> JS Bindings

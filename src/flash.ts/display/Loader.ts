@@ -284,7 +284,7 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.TextSymbol.createFromLabelData(data);
           break;
         case 'text':
-          symbol = Timeline.TextSymbol.createFromLabelData(data);
+          symbol = Timeline.TextSymbol.createFromTextData(data);
           break;
         case 'button':
           symbol = Timeline.ButtonSymbol.createFromData(data, this);

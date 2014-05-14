@@ -71,12 +71,13 @@ module Shumway.AVM2.AS.flash.ui {
       }
       var target = this._findTarget(point);
       if (target) {
-        if (e.type === "click") {
+        var type = flash.events.MouseEvent.typeFromDOMType(e.type);
+        if (type === "click") {
           target.alpha = target.alpha === 1 ? 0.5 : 1.0;
         }
         // TODO: Create proper event objects.
         var event = new flash.events.MouseEvent (
-          e.type
+          type
         );
         target.dispatchEvent(event);
       }
