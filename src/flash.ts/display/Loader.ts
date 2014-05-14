@@ -178,7 +178,7 @@ module Shumway.AVM2.AS.flash.display {
     private _contentLoaderInfo: flash.display.LoaderInfo;
     // _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
-    private _dictionary: Timeline.Symbol [];
+    _dictionary: Timeline.Symbol [];
     private _worker: Worker;
     private _startPromise: any;
     private _lastPromise: any;

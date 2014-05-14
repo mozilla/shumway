@@ -184,8 +184,8 @@ module Shumway.Timeline {
         var state;
         if (commands.length === 1) {
           var cmd = commands[0];
-          character = this._dictionary[cmd.symbolId];
-          matrix = Matrix.fromAny(cmd.matrix);
+          character = loader._dictionary[cmd.symbolId];
+          matrix = flash.geom.Matrix.fromAny(cmd.matrix);
           if (cmd.cxform) {
             colorTransform = ColorTransform.fromCXForm(cmd.cxform);
           }
