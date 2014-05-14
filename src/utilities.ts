@@ -1081,20 +1081,60 @@ module Shumway {
     var f64 = new Float64Array(sharedBuffer);
     var nativeLittleEndian = new Int8Array(new Int32Array([1]).buffer)[0] === 1;
 
+    /**
+     * Convert a float into 32 bits.
+     */
     export function floatToInt32(v: number) {
       f32[0] = v; return i32[0];
     }
 
+    /**
+     * Convert 32 bits into a float.
+     */
     export function int32ToFloat(i: number) {
       i32[0] = i; return f32[0];
     }
 
+    /**
+     * Swap the bytes of a 16 bit number.
+     */
     export function swap16(i: number) {
       return ((i & 0xFF) << 8) | ((i >> 8) & 0xFF);
     }
 
+    /**
+     * Swap the bytes of a 32 bit number.
+     */
     export function swap32(i: number) {
       return ((i & 0xFF) << 24) | ((i & 0xFF00) << 8) | ((i >> 8) & 0xFF00) | ((i >> 24) & 0xFF);
+    }
+
+    /**
+     * Converts a number to s8.u8 fixed point representation.
+     */
+    export function toS8U8(v: number) {
+      return ((v * 256) << 16) >> 16;
+    }
+
+    /**
+     * Converts a number from s8.u8 fixed point representation.
+     */
+    export function fromS8U8(i: number) {
+      return i / 256;
+    }
+
+    /**
+     * Round trips a number through s8.u8 conversion.
+     */
+    export function clampS8U8(v: number) {
+      return fromS8U8(toS8U8(v));
+    }
+
+    /**
+     * Converts a number to signed 16 bits.
+     */
+    export function toS16(v: number) {
+      return (v << 16) >> 16;
     }
 
     export function bitCount(i: number): number {
