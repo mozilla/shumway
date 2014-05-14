@@ -17,7 +17,7 @@
  */
 package avm1lib {
   public class AS2Broadcaster {
-    public static function initialize(obj) {
+    public static function initialize(obj: Object): void {
       obj._listeners = [];
       obj.broadcastMessage = _broadcastMessage;
       obj.addListener = _addListener;
@@ -26,22 +26,23 @@ package avm1lib {
   }
 }
 
-function _broadcastMessage(eventName) {
-  var args = Array.prototype.slice.call(arguments, 1);
-  for (var i = 0; i < this._listeners.length; i++) {
-    var listener = this._listeners[i];
+function _broadcastMessage(eventName: String): void {
+  var args: Array = Array.prototype.slice.call(arguments, 1);
+  var listeners: Array = this._listeners;
+  for (var i: int = 0; i < listeners.length; i++) {
+    var listener: Object = listeners[i];
     if (!(eventName in listener)) {
       continue;
     }
     listener[eventName].apply(listener, args);
   }
 }
-function _addListener(listener) {
+function _addListener(listener: Object): void {
   if (this._broadcastEventsRegistrationNeeded) {
     this._broadcastEventsRegistrationNeeded = false;
-    for (var i = 0; i < this._broadcastEvents.length; i++) {
-      (function (subject, eventName) {
-        subject[eventName] = function () {
+    for (var i: int = 0; i < this._broadcastEvents.length; i++) {
+      (function (subject: Object, eventName: String): void {
+        subject[eventName] = function handler(): void {
           _broadcastMessage.apply(subject, [eventName].concat(arguments));
         };
       })(this, this._broadcastEvents[i]);
@@ -49,10 +50,11 @@ function _addListener(listener) {
   }
   this._listeners.push(listener);
 }
-function _removeListener(listener) {
-  var i = this._listeners.indexOf(listener);
+function _removeListener(listener: Object): Boolean {
+  var i: int = this._listeners.indexOf(listener);
   if (i < 0) {
-    return;
+    return false;
   }
   this._listeners.splice(i, 1);
+  return true;
 }

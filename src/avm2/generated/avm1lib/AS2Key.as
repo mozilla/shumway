@@ -16,36 +16,38 @@
  * limitations under the License.
  */
 package avm1lib {
-  import avm1lib.AS2Broadcaster;
-  import flash.display.Stage;
+import flash.display.Stage;
+import flash.events.KeyboardEvent;
 
-  public dynamic class AS2Key {
-    public const DOWN: int = 40;
-    public const LEFT: int = 37;
-    public const RIGHT: int = 39;
-    public const UP: int = 38;
+public dynamic class AS2Key {
+  public const DOWN:int = 40;
+  public const LEFT:int = 37;
+  public const RIGHT:int = 39;
+  public const UP:int = 38;
 
-    static var $keyStates: Array = [];
-    static var $lastKeyCode: int = 0;
+  static var $keyStates:Array = [];
+  static var $lastKeyCode:int = 0;
 
-    public static function $bind(stage: flash.display.Stage) {
-      stage.addEventListener('keyDown', function(e) {
-        AS2Key.$lastKeyCode = e.keyCode;
-        AS2Key.$keyStates[e.keyCode] = 1;
-        Object(AS2Key).broadcastMessage('onKeyDown');
-      }, false);
-      stage.addEventListener('keyUp', function(e) {
-        AS2Key.$lastKeyCode = e.keyCode;
-        delete AS2Key.$keyStates[e.keyCode];
-        Object(AS2Key).broadcastMessage('onKeyUp');
-      }, false);
-    }
-
-    public static function isDown(code) {
-      return !!AS2Key.$keyStates[code];
-    }
+  public static function $bind(stage:Stage) {
+    stage.addEventListener('keyDown', function (e:KeyboardEvent) {
+      AS2Key.$lastKeyCode = e.keyCode;
+      AS2Key.$keyStates[e.keyCode] = 1;
+      Object(AS2Key).broadcastMessage('onKeyDown');
+    }, false);
+    stage.addEventListener('keyUp', function (e:KeyboardEvent) {
+      AS2Key.$lastKeyCode = e.keyCode;
+      delete AS2Key.$keyStates[e.keyCode];
+      Object(AS2Key).broadcastMessage('onKeyUp');
+    }, false);
   }
+
+  public static function isDown(code) {
+    return !!AS2Key.$keyStates[code];
+  }
+
   {
     AS2Broadcaster.initialize(Object(AS2Key));
   }
+}
+
 }

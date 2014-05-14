@@ -176,7 +176,7 @@ RenderVisitor.prototype = {
       ctx.save();
 
       if (this.invalidPath && !this.refreshStage && !renderAsWireframe.value) {
-        this.invalidPath.draw(ctx, false, 0, null);
+        this.invalidPath.draw(ctx);
         ctx.clip();
       }
 

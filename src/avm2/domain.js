@@ -322,7 +322,7 @@ var ApplicationDomain = (function () {
       // console.time("Compile ABC: " + abc.name);
       this.loadAbc(abc);
       var writer = new IndentingWriter();
-      writer.enter("var classes = {");
+      writer.enter("window[\"classes\"] = {");
       for (var i = 0; i < abc.scripts.length; i++) {
         compileScript(abc.scripts[i], writer);
       }

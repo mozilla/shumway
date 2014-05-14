@@ -39,6 +39,7 @@ var LoaderInfoDefinition = (function () {
       this._swfVersion = null;
       this._url = null;
       this._width = null;
+      this._uncaughtErrorEvents = null;
     },
     __glue__: {
       native: {
@@ -48,6 +49,8 @@ var LoaderInfoDefinition = (function () {
           }
         },
         instance: {
+          // DO NOT change this method to return the same object every time. LoaderInfo#parameters
+          // relies on it returning clones for security guarantees.
           _getArgs: function _getArgs() { // (void) -> Object
             var params = this._parameters;
             var mangled = {};
@@ -57,10 +60,12 @@ var LoaderInfoDefinition = (function () {
             return mangled;
           },
           _getUncaughtErrorEvents: function _getUncaughtErrorEvents() { // (void) -> UncaughtErrorEvents
-            notImplemented("LoaderInfo._getUncaughtErrorEvents");
+            somewhatImplemented("Loader._getUncaughtErrorEvents");
+            return this._uncaughtErrorEvents;
           },
           _setUncaughtErrorEvents: function _setUncaughtErrorEvents(value) { // (value:UncaughtErrorEvents) -> void
-            notImplemented("LoaderInfo._setUncaughtErrorEvents");
+            somewhatImplemented("Loader._setUncaughtErrorEvents");
+            this._uncaughtErrorEvents = value;
           },
           loaderURL: {
             get: function loaderURL() { // (void) -> String

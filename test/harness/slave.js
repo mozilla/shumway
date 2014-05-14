@@ -43,7 +43,7 @@ function loadMovie(path, reportFrames) {
     };
   }
 
-  createAVM2(builtinPath, playerGlobalPath, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+  createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
     function loaded() { movieReadyResolve(); }
     function terminate() {
       ignoreAdanvances = true;
@@ -101,7 +101,7 @@ function loadScripts(files) {
 }
 
 function runSanityTests(tests) {
-  createAVM2(builtinPath, playerGlobalPath, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
+  createAVM2(builtinPath, playerglobalInfo, avm1Path, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.COMPILE, function (avm2) {
     sendResponse();
     for (var i = 0; i < tests.length; i++) {
       var failed = false;

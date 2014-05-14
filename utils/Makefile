@@ -13,17 +13,20 @@
 # limitations under the License.
 
 UNAME = $(shell uname)
-THREADS = 4
+THREADS ?= 9
 
 JSSHELL_HOME = ./jsshell
 JSSHELL_URL_BASE = http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/2013/06/2013-06-12-03-11-38-mozilla-central
 ifneq ("$(findstring MINGW32, $(UNAME))", "")
 JSSHELL_URL = $(JSSHELL_URL_BASE)/jsshell-win32.zip
+JSSHELL_CACHED = ./jsshell-cached/jsshell-win32.zip
 else
 ifeq ($(UNAME), Darwin)
 JSSHELL_URL = $(JSSHELL_URL_BASE)/jsshell-mac.zip
+JSSHELL_CACHED = ./jsshell-cached/jsshell-mac.zip
 else
 JSSHELL_URL = $(JSSHELL_URL_BASE)/jsshell-linux-i686.zip
+JSSHELL_CACHED = ./jsshell-cached/jsshell-linux.zip
 endif
 endif
 
@@ -34,13 +37,15 @@ CLOSURE_JAR = ./cc.jar
 CLOSURE_URL = http://dl.google.com/closure-compiler/compiler-latest.zip
 
 ASC_JAR = ./asc.jar
-ASC_URL = ftp://ftp.mozilla.org/pub/js/tamarin/builds/asc/latest/asc.jar
 
 FLEX_HOME = ./flex_sdk
 FLEX_URL = http://download.macromedia.com/pub/flex/sdk/flex_sdk_4.6.zip
 
 ifeq ($(UNAME), Darwin)
 DARWING_VER = $(shell uname -a)
+ifneq ("$(filter 13.%, $(DARWING_VER))", "")
+TAMARIN_CONFIG_PARAMS = --mac-sdk=109 --target=x86_64-darwin
+else
 ifneq ("$(filter 12.%, $(DARWING_VER))", "")
 TAMARIN_CONFIG_PARAMS = --mac-sdk=108 --target=x86_64-darwin
 else
@@ -50,9 +55,20 @@ else
 TAMARIN_CONFIG_PARAMS = --mac-sdk=106 --target=x86_64-darwin
 endif
 endif
+endif
 else
 ifeq ($(UNAME), Linux)
 TAMARIN_CONFIG_PARAMS = --target=i686-linux
+endif
+endif
+
+ifeq ($(UNAME), Darwin)
+AVMSHELL_PREBUILD=./avmshell/mac/avmshell
+else
+ifeq ($(UNAME), Linux)
+AVMSHELL_PREBUILD=./avmshell/linux/avmshell
+else
+AVMSHELL_PREBUILD=./avmshell/windows/avmshell.exe
 endif
 endif
 
@@ -67,30 +83,31 @@ AVM2_HOME = ../src/avm2
 AVMSHELL = avmshell
 
 default:
-	@echo "run: make [install-asc|install-closure|install-tamarin|install-js|"
-	@echo "           install-swfdec|install-node-modules|"
+	@echo "run: make [install-avmshell|install-js|download-closure|"
+	@echo "           install-swfdec|install-node-modules|install-tamarin-src|"
 	@echo "           build-tamarin-tests|run-tamarin-tests|build-playerglobal|clean]"
 
-install-asc: $(ASC_JAR)
-
-$(ASC_JAR):
-	wget $(ASC_URL) -O $(ASC_JAR)
-
-install-closure: $(CLOSURE_JAR)
+download-closure: $(CLOSURE_JAR)
 
 $(CLOSURE_JAR):
-	wget $(CLOSURE_URL) -O closure.zip
-	unzip -o closure.zip compiler.jar
-	rm closure.zip
-	mv compiler.jar cc.jar
+	mkdir -p ./closure
+	wget $(CLOSURE_URL) -O ./closure/compiler.zip
+	cd ./closure; unzip -o compiler.zip
+	mv closure/compiler.jar cc.jar
+	mv closure/COPYING cc.jar-COPYING
+	rm -rf ./closure
 
-install-tamarin: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
+install-avmshell:
+	mkdir -p $(TAMARIN_HOME)/bin/shell
+	cp $(AVMSHELL_PREBUILD) $(TAMARIN_HOME)/bin/shell
+
+install-tamarin-src: $(TAMARIN_HOME)/configure.py
 	rm -rf $(TAMARIN_HOME)/bin
 	mkdir $(TAMARIN_HOME)/bin
 	cd $(TAMARIN_HOME)/bin; python ../configure.py $(TAMARIN_CONFIG_PARAMS) --enable-debugger
 	ASC=../../$(ASC_JAR) make -C $(TAMARIN_HOME)/bin
 
-install-tamarin-tests: $(ASC_JAR) $(TAMARIN_HOME)/configure.py
+install-tamarin-tests: $(TAMARIN_HOME)/configure.py
 
 $(TAMARIN_HOME)/configure.py:
 	hg clone $(TAMARIN_URL) $(TAMARIN_HOME)
@@ -120,6 +137,11 @@ run-tamarin-performance: install-tamarin-tests
 install-js:
 	-rm -rf $(JSSHELL_HOME)
 	mkdir -p $(JSSHELL_HOME)
+	unzip $(JSSHELL_CACHED) -d $(JSSHELL_HOME)
+
+download-js:
+	-rm -rf $(JSSHELL_HOME)
+	mkdir -p $(JSSHELL_HOME)
 	wget $(JSSHELL_URL) -O $(JSSHELL_HOME)/jsshell.zip
 	unzip $(JSSHELL_HOME)/jsshell.zip -d $(JSSHELL_HOME)
 ifeq ($(UNAME), Linux)
@@ -143,7 +165,7 @@ $(APPARAT_HOME)/apparat.tar.gz:
 
 install-node-modules:
 	mkdir -p node_modules
-	npm install mocha@1.11.0 expect.js@0.2.0 temp@0.5.0 jshint@2.1.3
+	npm install mocha@1.11.0 expect.js@0.2.0 jshint@2.1.3
 
 install-swfdec:
 	git clone git://anongit.freedesktop.org/swfdec/swfdec
@@ -159,13 +181,15 @@ ifeq ($(UNAME), Darwin)
 endif
 
 build-playerglobal:
-	make -C playerGlobal/ build
+	cd playerglobal-builder; node build -t $(THREADS) $(PLAYERGLOBAL_FLAGS)
+
+build-playerglobal-fp:
+	make -C playerglobal-fp/ build
 
 clean:
-	-rm -rf $(ASC_JAR)
 	-rm -rf $(TAMARIN_HOME)
 	-rm -rf $(JSSHELL_HOME)
-	make -C playerGlobal/ clean
+	make -C playerglobal-fp/ clean
 
 .PHONY: install-tamarin install-js install-swfdec install-flex-sdk \
         install-node-modules build-tamarin-tests build-playerglobal \

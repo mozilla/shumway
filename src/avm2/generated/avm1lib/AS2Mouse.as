@@ -16,52 +16,33 @@
  * limitations under the License.
  */
 package avm1lib {
-  import avm1lib.AS2Broadcaster;
-  import flash.display.Stage;
+import flash.display.Stage;
+import flash.events.MouseEvent;
 
-  public dynamic class AS2Mouse {
-    static var $lastX = 0;
-    static var $lastY = 0;
-    public static function $bind(stage: flash.display.Stage) {
-      function updateMouseState(e) {
-        var state = Object(stage).$canvasState;
-        if (!state) {
-          return;
-        }
-        var mouseX = e.clientX, mouseY = e.clientY;
-        for (var p = state.canvas; p; p = p.offsetParent) {
-          mouseX -= p.offsetLeft;
-          mouseY -= p.offsetTop;
-        }
-        AS2Mouse.$lastX = (mouseX - state.offsetX) / state.scale;
-        AS2Mouse.$lastY = (mouseY - state.offsetY) / state.scale;
-      }
-
-      stage.addEventListener('mousedown', function(e) {
-        updateMouseState(e);
-        Object(AS2Mouse).broadcastMessage('onMouseDown');
-      }, false);
-      stage.addEventListener('mousemove', function(e) {
-        updateMouseState(e);
-        Object(AS2Mouse).broadcastMessage('onMouseMove');
-      }, false);
-      stage.addEventListener('mouseout', function(e) {
-        updateMouseState(e);
-        Object(AS2Mouse).broadcastMessage('onMouseMove');
-      }, false);
-      stage.addEventListener('mouseup', function(e) {
-        updateMouseState(e);
-        Object(AS2Mouse).broadcastMessage('onMouseUp');
-      }, false);
-    }
-    public static function hide() {
-      // TODO hide();
-    }
-    public static function show() {
-      // TODO show();
-    }
-    {
-      AS2Broadcaster.initialize(Object(AS2Mouse));
-    }
+public dynamic class AS2Mouse {
+  public static function $bind(stage:Stage) {
+    stage.addEventListener('mousedown', function (e:flash.events.MouseEvent) {
+      Object(AS2Mouse).broadcastMessage('onMouseDown');
+    }, false);
+    stage.addEventListener('mousemove', function (e) {
+      Object(AS2Mouse).broadcastMessage('onMouseMove');
+    }, false);
+    stage.addEventListener('mouseout', function (e) {
+      Object(AS2Mouse).broadcastMessage('onMouseMove');
+    }, false);
+    stage.addEventListener('mouseup', function (e) {
+      Object(AS2Mouse).broadcastMessage('onMouseUp');
+    }, false);
   }
+  public static function hide() {
+    // TODO hide();
+  }
+  public static function show() {
+    // TODO show();
+  }
+
+  {
+    AS2Broadcaster.initialize(Object(AS2Mouse));
+  }
+}
 }

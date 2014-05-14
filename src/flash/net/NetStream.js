@@ -46,6 +46,12 @@ var NetStreamDefinition = (function () {
             videoElement.currentTime = args[4] / 1000;
           }
           break;
+        case 'seek':
+          simulated = true;
+          if (videoElement && !videoElement.paused) {
+            videoElement.currentTime = args[3] / 1000;
+          }
+          break;
         }
         break;
       case 300: // time

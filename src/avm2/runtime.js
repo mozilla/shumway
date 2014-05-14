@@ -1619,7 +1619,7 @@ function createFunction(mi, scope, hasDynamicScope, breakpoint) {
     mi.freeMethod = createInterpretedFunction(mi, scope, hasDynamicScope);
   } else {
     compiledFunctionCount++;
-    console.info("Compiling: " + mi + " count: " + compiledFunctionCount);
+    // console.info("Compiling: " + mi + " count: " + compiledFunctionCount);
     if (compileOnly.value >= 0 || compileUntil.value >= 0) {
       print("Compiling " + totalFunctionCount);
     }

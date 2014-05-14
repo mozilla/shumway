@@ -190,7 +190,7 @@ var MovieClipDefinition = (function () {
             }
 
             if (nextCmd.blend) {
-              currentChild.blendMode = this._resolveBlendMode(nextCmd.blendMode);
+              currentChild._blendMode = this._resolveBlendMode(nextCmd.blendMode);
             }
           }
 

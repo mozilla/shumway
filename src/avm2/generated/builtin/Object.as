@@ -44,9 +44,6 @@ package
   public dynamic class Object
   {
 
-    public native function get length():uint;
-    public native function set length(newLength:uint);
-
     // Object.length = 1 per ES3
     // E262 {ReadOnly, DontDelete, DontEnum }
     public static const length:int = 1;

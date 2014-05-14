@@ -18,6 +18,24 @@
 /*global QuadTree, RegionCluster, ShapePath, sortByZindex */
 
 var StageDefinition = (function () {
+  function StageClipPath() {
+    this.rects = [];
+  }
+  StageClipPath.prototype = {
+    draw: function (ctx) {
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.beginPath();
+      this.rects.forEach(function(rect) {
+        ctx.rect(rect.x, rect.y, rect.width, rect.height);
+      });
+      ctx.restore();
+    },
+    appendRect: function (xMin, yMin, xMax, yMax) {
+      this.rects.push({x: xMin, y: yMin, width: xMax - xMin, height: yMax - yMin});
+    }
+  };
+
   return {
     // ()
     __class__: "flash.display.Stage",
@@ -196,21 +214,32 @@ var StageDefinition = (function () {
         node._zindex = zindex++;
       }
 
-      var invalidPath = new ShapePath();
+      var invalidPath = new StageClipPath();
+
+      var ctxScaleX = this._concatenatedTransform.a / 20;
+      var ctxScaleY = this._concatenatedTransform.d / 20;
+      var ctxOffsetX = this._concatenatedTransform.tx / 20;
+      var ctxOffsetY = this._concatenatedTransform.ty / 20;
+
       if (refreshStage) {
-        invalidPath.rect(0, 0, this._stageWidth, this._stageHeight);
+        invalidPath.appendRect(
+          Math.floor(ctxOffsetX),
+          Math.floor(ctxOffsetY),
+          Math.ceil(this._stageWidth * ctxScaleX + ctxOffsetX),
+          Math.ceil(this._stageHeight * ctxScaleY + ctxOffsetY));
         invalidRegions.reset();
         return invalidPath;
       }
 
       var redrawRegions = invalidRegions.retrieve();
 
+      var CLIP_PADDING = 3; // at least 1
       for (var i = 0; i < redrawRegions.length; i++) {
         var region = redrawRegions[i];
-        var xMin = region.xMin - region.xMin % 20 - 40;
-        var yMin = region.yMin - region.yMin % 20 - 40;
-        var xMax = region.xMax - region.xMax % 20 + 80;
-        var yMax = region.yMax - region.yMax % 20 + 80;
+        var xMin = region.xMin - 20 * CLIP_PADDING;
+        var yMin = region.yMin - 20 * CLIP_PADDING;
+        var xMax = region.xMax + 20 * CLIP_PADDING;
+        var yMax = region.yMax + 20 * CLIP_PADDING;
 
         var intersectees = qtree.retrieve(xMin, xMax, yMin, yMax);
         for (var j = 0; j < intersectees.length; j++) {
@@ -218,7 +247,11 @@ var StageDefinition = (function () {
           item.obj._invalid = true;
         }
 
-        invalidPath.rect(xMin, yMin, xMax - xMin, yMax - yMin);
+        invalidPath.appendRect(
+          Math.ceil(region.xMin * ctxScaleX + ctxOffsetX - CLIP_PADDING),
+          Math.ceil(region.yMin * ctxScaleY + ctxOffsetY - CLIP_PADDING),
+          Math.floor(region.xMax * ctxScaleX + ctxOffsetX + CLIP_PADDING),
+          Math.floor(region.yMax * ctxScaleY + ctxOffsetY + CLIP_PADDING));
       }
 
       invalidRegions.reset();
@@ -515,6 +548,9 @@ var StageDefinition = (function () {
           displayState: {
             get: function displayState() { // (void) -> String
               return this._displayState;
+            },
+            set: function displayState(value) { // (value:String) -> void
+              this._displayState = value;
             }
           },
           simulatedDisplayState: {
