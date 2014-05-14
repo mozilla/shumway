@@ -18,7 +18,8 @@ module Shumway.Remoting {
     HasMatrix                   = 0x0001,
     HasBounds                   = 0x0002,
     HasChildren                 = 0x0004,
-    HasMiscellaneousProperties  = 0x0008
+    HasColorTransform           = 0x0008,
+    HasMiscellaneousProperties  = 0x0010
   }
 
   export enum MessageTag {

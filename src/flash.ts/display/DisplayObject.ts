@@ -160,6 +160,15 @@ module Shumway.AVM2.AS.flash.display {
      */
     DirtyChild                                = 0x400000,
 
+    /**
+     * Indicates whether this display object's color transform has changed since the last time it was synchronized
+     */
+    DirtyColorTransform                       = 0x800000,
+
+    /**
+     * Indicates whether this display object's other properties have changed. We need to split this up in multiple
+     * bits so we don't serialize as much.
+     */
     DirtyMiscellaneousProperties              = 0x1000000,
 
     /**
@@ -170,7 +179,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * All synchronizable properties are dirty.
      */
-    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyMiscellaneousProperties
+    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyColorTransform | DirtyMiscellaneousProperties
   }
 
   /**
@@ -233,6 +242,7 @@ module Shumway.AVM2.AS.flash.display {
                                  DisplayObjectFlags.InvalidConcatenatedMatrix          |
                                  DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
                                  DisplayObjectFlags.DirtyMatrix                        |
+                                 DisplayObjectFlags.DirtyColorTransform                |
                                  DisplayObjectFlags.DirtyMiscellaneousProperties;
 
       self._root = null;
@@ -250,7 +260,6 @@ module Shumway.AVM2.AS.flash.display {
       self._rotationY = 0;
       self._rotationZ = 0;
 
-      self._alpha = 1;
       self._width = 0;
       self._height = 0;
       self._opaqueBackground = null;
@@ -422,7 +431,6 @@ module Shumway.AVM2.AS.flash.display {
     _mouseX: number;
     _mouseY: number;
 
-    _alpha: number;
     _width: number;
     _height: number;
     _opaqueBackground: ASObject;
@@ -622,6 +630,7 @@ module Shumway.AVM2.AS.flash.display {
       this._colorTransform.copyFrom(colorTransform);
       this._colorTransform.convertToFixedPoint();
       this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform, Direction.Downward);
+      this._dirtyColorTransform();
       this._invalidatePaint();
     }
 
@@ -692,6 +701,13 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _dirtyMatrix() {
       this._setFlags(DisplayObjectFlags.DirtyMatrix);
+    }
+
+    /**
+     * Sets the |DirtyColorTransform| flag.
+     */
+    private _dirtyColorTransform() {
+      this._setFlags(DisplayObjectFlags.DirtyColorTransform);
     }
 
     /**
@@ -1039,7 +1055,7 @@ module Shumway.AVM2.AS.flash.display {
       this._colorTransform.convertToFixedPoint();
       this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform, Direction.Downward);
       this._invalidatePaint();
-      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
     }
 
     get blendMode(): string {

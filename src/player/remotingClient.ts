@@ -62,12 +62,14 @@ module Shumway.Remoting.Client {
       var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
       var hasBounds = true;
       var hasChildren = this.writeReferences && displayObject._hasFlags(DisplayObjectFlags.DirtyChildren);
+      var hasColorTransform = displayObject._hasFlags(DisplayObjectFlags.DirtyColorTransform);
       var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
 
       var hasBits = 0;
-      hasBits |= hasMatrix   ? UpdateFrameTagBits.HasMatrix   : 0;
-      hasBits |= hasBounds   ? UpdateFrameTagBits.HasBounds   : 0;
-      hasBits |= hasChildren ? UpdateFrameTagBits.HasChildren : 0;
+      hasBits |= hasMatrix         ? UpdateFrameTagBits.HasMatrix         : 0;
+      hasBits |= hasBounds         ? UpdateFrameTagBits.HasBounds         : 0;
+      hasBits |= hasChildren       ? UpdateFrameTagBits.HasChildren       : 0;
+      hasBits |= hasColorTransform ? UpdateFrameTagBits.HasColorTransform : 0;
       hasBits |= hasMiscellaneousProperties ? UpdateFrameTagBits.HasMiscellaneousProperties : 0;
 
       this.output.writeInt(hasBits);
@@ -93,9 +95,11 @@ module Shumway.Remoting.Client {
           this.output.writeInt(children[i]._id);
         }
       }
+      if (hasColorTransform) {
+        this.writeColorTransform(displayObject._colorTransform);
+      }
       if (hasMiscellaneousProperties) {
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
-        this.output.writeFloat(displayObject._alpha);
       }
       if (this.clearDirtyBits) {
         displayObject._removeFlags(DisplayObjectFlags.Dirty);
@@ -118,6 +122,18 @@ module Shumway.Remoting.Client {
       output.writeFloat(rect.y);
       output.writeFloat(rect.width);
       output.writeFloat(rect.height);
+    }
+
+    writeColorTransform(colorTransform: Shumway.AVM2.AS.flash.geom.ColorTransform) {
+      var output = this.output;
+      output.writeFloat(colorTransform.redMultiplier);
+      output.writeFloat(colorTransform.greenMultiplier);
+      output.writeFloat(colorTransform.blueMultiplier);
+      output.writeFloat(colorTransform.alphaMultiplier);
+      output.writeInt(colorTransform.redOffset);
+      output.writeInt(colorTransform.greenOffset);
+      output.writeInt(colorTransform.blueOffset);
+      output.writeInt(colorTransform.alphaOffset);
     }
   }
 

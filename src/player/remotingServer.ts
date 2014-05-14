@@ -17,6 +17,7 @@ module Shumway.Remoting.Server {
   import Frame = Shumway.GFX.Frame;
   import Shape = Shumway.GFX.Shape;
   import Renderable = Shumway.GFX.Renderable;
+  import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
   import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
 
@@ -79,6 +80,22 @@ module Shumway.Remoting.Server {
       );
     }
 
+    private _readColorMatrix(): ColorMatrix {
+      var input = this.input;
+      var redMultiplier = input.readFloat();
+      var greenMultiplier = input.readFloat();
+      var blueMultiplier = input.readFloat();
+      var alphaMultiplier = input.readFloat();
+      var redOffset = input.readInt()
+      var greenOffset = input.readInt();
+      var blueOffset = input.readInt();
+      var alphaOffset = input.readInt();
+      return ColorMatrix.fromMultipliersAndOffsets (
+        redMultiplier, greenMultiplier, blueMultiplier, alphaMultiplier,
+        redOffset,     greenOffset,     blueOffset,     alphaOffset
+      );
+    }
+
     private _readUpdateFrame() {
       var context = this.context;
       var input = this.input;
@@ -129,9 +146,11 @@ module Shumway.Remoting.Server {
           container.addChild(child);
         }
       }
+      if (hasBits & UpdateFrameTagBits.HasColorTransform) {
+        frame.colorMatrix = this._readColorMatrix();
+      }
       if (hasBits & UpdateFrameTagBits.HasMiscellaneousProperties) {
         frame.blendMode = input.readInt();
-        frame.alpha = input.readFloat();
       }
     }
   }
