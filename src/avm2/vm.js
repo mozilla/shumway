@@ -17,14 +17,26 @@
  */
 
 var AVM2 = (function () {
+  var playerglobalLoadedPromise;
+  var playerglobal;
+
+  function grabAbc(abcName) {
+    var entry = playerglobal.scripts[abcName];
+    if (!entry) {
+      return null;
+    }
+    var offset = entry.offset;
+    var length = entry.length;
+    return new AbcFile(new Uint8Array(playerglobal.abcs, offset, length), abcName);
+  }
 
   function findDefiningAbc(mn) {
-    if (!avm2.builtinsLoaded) {
+    if (!playerglobal) {
       return null;
     }
     for (var i = 0; i < mn.namespaces.length; i++) {
       var name = mn.namespaces[i].originalURI + ":" + mn.name;
-      var abcName = playerGlobalNames[name];
+      var abcName = playerglobal.map[name];
       if (abcName) {
         break;
       }
@@ -33,6 +45,22 @@ var AVM2 = (function () {
       return grabAbc(abcName);
     }
     return null;
+  }
+
+  function promiseFile(path, responseType) {
+    return new Promise(function (resolve, reject) {
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', path);
+      xhr.responseType = responseType;
+      xhr.onload = function () {
+        if (xhr.response) {
+          resolve(xhr.response);
+        } else {
+          reject('Unable to load ' + path + ': ' + xhr.statusText);
+        }
+      };
+      xhr.send();
+    });
   }
 
   function avm2Ctor(sysMode, appMode, loadAVM1) {
@@ -75,6 +103,40 @@ var AVM2 = (function () {
             "No domain environment was found on the stack, increase STACK_DEPTH or " +
             "make sure that a compiled / interpreted function is on the call stack.");
     return abc.applicationDomain;
+  };
+
+  avm2Ctor.isPlayerglobalLoaded = function () {
+    return !!playerglobal;
+  };
+  avm2Ctor.loadPlayerglobal = function (abcsPath, catalogPath) {
+    if (playerglobalLoadedPromise) {
+      return Promise.reject('Playerglobal is already loaded');
+    }
+    playerglobalLoadedPromise = Promise.all([
+        promiseFile(abcsPath, 'arraybuffer'), promiseFile(catalogPath, 'json')]).
+      then(function (result) {
+        playerglobal = {
+          abcs: result[0],
+          map: Object.create(null),
+          scripts: Object.create(null)
+        };
+        var catalog = result[1];
+        for (var i = 0; i < catalog.length; i++) {
+          var abc = catalog[i];
+          playerglobal.scripts[abc.name] = abc;
+          if (typeof abc.defs === 'string') {
+            playerglobal.map[abc.defs] = abc.name;
+          } else {
+            for (var j = 0; j < abc.defs.length; j++) {
+              var def = abc.defs[j];
+              playerglobal.map[def] = abc.name;
+            }
+          }
+        }
+      }, function (e) {
+        console.error(e);
+      });
+    return playerglobalLoadedPromise;
   };
 
   avm2Ctor.prototype = {

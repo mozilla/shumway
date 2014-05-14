@@ -18,8 +18,8 @@ public dynamic class Array extends Object
   public static const NUMERIC:uint = 16;
 
   // E262 {DontEnum, DontDelete}
-  public override native function get length():uint
-  public override native function set length(newLength:uint)
+  public native function get length():uint
+  public native function set length(newLength:uint)
 
   // Assigns this.length = newLength if latter fits; otherwise
   // throws exception or assigns altLength (SWF version dependent).

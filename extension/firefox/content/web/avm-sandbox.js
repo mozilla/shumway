@@ -80,6 +80,11 @@ function fallback() {
   FirefoxCom.requestSync('fallback', null)
 }
 
+var playerglobalInfo = {
+  abcs: SHUMWAY_ROOT + "playerglobal/playerglobal.abcs",
+  catalog: SHUMWAY_ROOT + "playerglobal/playerglobal.json"
+};
+
 function runViewer() {
   var flashParams = JSON.parse(FirefoxCom.requestSync('getPluginParams', null));
   FileLoadingService.setBaseUrl(flashParams.baseUrl);
@@ -210,7 +215,7 @@ var FileLoadingService = {
     var sessionId = this.nextSessionId++;
     return this.sessions[sessionId] = {
       open: function (request) {
-        var self = this;
+        this.active = true;
         var path = FileLoadingService.resolveUrl(request.url);
         console.log('Session #' + sessionId +': loading ' + path);
         FirefoxCom.requestSync('loadFile', {url: path, method: request.method,
@@ -219,20 +224,35 @@ var FileLoadingService = {
       },
       notify: function (args) {
         switch (args.topic) {
-          case "open": this.onopen(); break;
+          case "open":
+            if (this.active) {
+              this.onopen();
+            }
+            break;
           case "close":
+            if (!this.active) {
+              break;
+            }
+            this.active = false;
             this.onclose();
-            delete FileLoadingService.sessions[sessionId];
+            FileLoadingService.sessions[sessionId] = null;
             console.log('Session #' + sessionId +': closed');
             break;
           case "error":
-            this.onerror && this.onerror(args.error);
+            this.active && this.onerror && this.onerror(args.error);
             break;
           case "progress":
+            if (!this.active) {
+              break;
+            }
             console.log('Session #' + sessionId + ': loaded ' + args.loaded + '/' + args.total);
             this.onprogress && this.onprogress(args.array, {bytesLoaded: args.loaded, bytesTotal: args.total});
             break;
         }
+      },
+      close: function() {
+        // TODO: properly implement aborting sessions, aborting the download and all.
+        this.active = false;
       }
     };
   },
@@ -274,7 +294,7 @@ function parseSwf(url, movieParams, objectParams) {
     FirefoxCom.request('endActivation', null);
   }
 
-  createAVM2(builtinPath, playerGlobalPath, avm1Path,
+  createAVM2(builtinPath, playerglobalInfo, avm1Path,
     compilerSettings.sysCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     compilerSettings.appCompiler ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET,
     function (avm2) {

@@ -22,10 +22,11 @@ build: ensureoutputdir
 	# Coping JavaScript content files
 	mkdir $(BUILD_DIR)/swf
 	cp ../../src/swf/*.js $(BUILD_DIR)/swf/
+	mkdir $(BUILD_DIR)/avm1lib
+	cp ../../src/avm1lib/*.js $(BUILD_DIR)/avm1lib/
 	mkdir $(BUILD_DIR)/flash
-	cp ../../src/flash/*.js $(BUILD_DIR)/flash/
-	cp ../../src/flash/playerglobal.abc $(BUILD_DIR)/flash/
-	# Extract UTF Strings
+	cp ../../src/flash/stubs.js $(BUILD_DIR)/flash/
+	cp ../../src/flash/util.js $(BUILD_DIR)/flash/
 	mkdir $(BUILD_DIR)/flash/display
 	cp ../../src/flash/display/*.js $(BUILD_DIR)/flash/display/
 	mkdir $(BUILD_DIR)/flash/events

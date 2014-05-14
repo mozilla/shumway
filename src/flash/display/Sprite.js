@@ -186,7 +186,7 @@ var SpriteDefinition = (function () {
       for (var i = 0; i < children.length; i++) {
         var instance = children[i];
         if (instance._needLoadEvent) {
-          delete instance._needLoadEvent;
+          instance._needLoadEvent = false;
           instance._dispatchEvent("load");
         }
       }

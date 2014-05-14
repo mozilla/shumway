@@ -1,0 +1,10 @@
+loadVars onLoad triggered. Success: false
+loadVars onLoad triggered. Success: true
+Loaded the following vars:
+varsLoaded=1
+
+escaped=with&amp;amp;
+spacedvalue=multi word
+spaced var=value
+onLoad=[type Function]
+foo=bar

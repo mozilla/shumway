@@ -61,7 +61,6 @@ var isXMLType, isXMLName, XMLParser;
 
 (function () {
   function XMLEncoder(ancestorNamespaces, indentLevel, prettyPrinting) {
-    var indent = "\n  ";
     function visit(node, encode) {
       if (node.isXML) {
         switch (node.kind) {
@@ -139,8 +138,7 @@ var isXMLType, isXMLName, XMLParser;
           return s;
         },
         text: function(text) {
-          return text.value.
-            replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          return escapeAttributeValue(text.value);
         },
         attribute: function(n) {
           return escapeAttributeValue(n.value);
@@ -169,7 +167,7 @@ var isXMLType, isXMLName, XMLParser;
   }
 
   function escapeAttributeValue(v) {
-    return v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return v.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;');
   }
 
   XMLParser = function XMLParser() {
@@ -251,9 +249,9 @@ var isXMLType, isXMLName, XMLParser;
           };
         }
       }
+      var whitespaceMap = {'10': true, '13': true, '9': true, '32': true};
       function isWhitespace(s, index) {
-        var ch = s.charCodeAt(index);
-        return ch == 10 || ch == 13 || ch == 9 || ch == 32;
+        return s.charCodeAt(index) in whitespaceMap;
       }
       function parseContent(s, start) {
         var pos = start, name, attributes = [];
@@ -347,22 +345,24 @@ var isXMLType, isXMLName, XMLParser;
               throw "Unexpected EOF[2]";
             }
             var scope = {namespaces:[]};
-            for (q = 0; q < content.attributes.length; ++q) {
-              if (content.attributes[q].name.substring(0, 6) === "xmlns:") {
-                var prefix = content.attributes[q].name.substring(6);
-                var uri = content.attributes[q].value;
+            var contentAttributes = content.attributes;
+            for (q = 0; q < contentAttributes.length; ++q) {
+              var attribute = contentAttributes[q];
+              var attributeName = attribute.name;
+              if (attributeName.substring(0, 6) === "xmlns:") {
+                var prefix = attributeName.substring(6);
+                var uri = attribute.value;
                 scope.namespaces[prefix] = trim(uri);
                 scope.namespaces.push({uri: uri, prefix: prefix});
-                delete content.attributes[q];
-              } else if (content.attributes[q].name === "xmlns") {
-                var prefix = "";
-                var uri = content.attributes[q].value;
+                delete contentAttributes[q];
+              } else if (attributeName === "xmlns") {
+                var uri = attribute.value;
                 scope.namespaces["xmlns"] = trim(uri);
-                scope.namespaces.push({uri: uri, prefix: prefix});
-                delete content.attributes[q];
-              } else if (content.attributes[q].name.substring(0, 4) === "xml:") {
-                scope[content.attributes[q].name.substring(4)] = trim(content.attributes[q].value);
-              } else if (content.attributes[q].name.substring(0, 3) === "xml") {
+                scope.namespaces.push({uri: uri, prefix: ''});
+                delete contentAttributes[q];
+              } else if (attributeName.substring(0, 4) === "xml:") {
+                scope[attributeName.substring(4)] = trim(attribute.value);
+              } else if (attributeName.substring(0, 3) === "xml") {
                 throw "Invalid xml attribute";
               } else {
                 // skip ordinary attributes until all xmlns have been handled
@@ -370,9 +370,10 @@ var isXMLType, isXMLName, XMLParser;
             }
             scopes.push(scope);
             var attributes = [];
-            for (q = 0; q < content.attributes.length; ++q) {
-              if (content.attributes[q]) {
-                attributes.push({name: getName(content.attributes[q].name, false), value: content.attributes[q].value});
+            for (q = 0; q < contentAttributes.length; ++q) {
+              attribute = contentAttributes[q];
+              if (attribute) {
+                attributes.push({name: getName(attribute.name, false), value: attribute.value});
               }
             }
             sink.beginElement(getName(content.name, true), attributes, scope, isClosed);
@@ -404,13 +405,15 @@ var isXMLType, isXMLName, XMLParser;
           elementsStack.push(parent);
           currentElement = createNode("element", name.namespace, name.localName, name.prefix);
           for (var i = 0; i < attrs.length; ++i) {
-            var attr = createNode("attribute", attrs[i].name.namespace, attrs[i].name.localName, attrs[i].name.prefix);
-            attr.value = attrs[i].value;
+            var rawAttr = attrs[i];
+            var attr = createNode("attribute", rawAttr.name.namespace, rawAttr.name.localName, rawAttr.name.prefix);
+            attr.value = rawAttr.value;
             currentElement.attributes.push(attr);
           }
           var namespaces = scope.namespaces;
           for (var i = 0; i < namespaces.length; ++i) {
-            var ns = ShumwayNamespace.createNamespace(namespaces[i].uri, namespaces[i].prefix);
+            var rawNs = namespaces[i];
+            var ns = ShumwayNamespace.createNamespace(rawNs.uri, rawNs.prefix);
             currentElement.inScopeNamespaces.push(ns);
           }
           parent.insert(parent.length(), currentElement);
