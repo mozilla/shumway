@@ -264,6 +264,15 @@ module Shumway.AVM2.AS.flash.display {
     private _commitAsset(data: any): void {
       var symbol;
       var symbolId = data.id;
+      if (data.updates) {
+        var updates = data.updates;
+        symbol = this._dictionary[symbolId];
+        if (updates.scale9Grid) {
+          symbol.scale9Grid = new Rectangle();
+          symbol.scale9Grid.copyFromBbox(updates.scale9Grid);
+        }
+        return;
+      }
       switch (data.type) {
         case 'shape':
           symbol = new Timeline.ShapeSymbol(symbolId);
