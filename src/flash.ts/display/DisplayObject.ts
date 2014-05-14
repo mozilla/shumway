@@ -1300,8 +1300,8 @@ module Shumway.AVM2.AS.flash.display {
       if (InteractiveObject.isType(this)) {
         return <InteractiveObject>this;
       }
-      var find = null;
       var self = this._parent;
+      var find = self;
       while (self) {
         if (!self.mouseChildren) {
           find = self;
