@@ -1053,9 +1053,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set alpha(value: number) {
-      if (flash.display.Stage.isType(this)) {
-        throwError("Error", Errors.InvalidStageMethodError);
-      }
       this._stopTimelineAnimation();
       value = +value;
       if (value === this._colorTransform.alphaMultiplier) {
