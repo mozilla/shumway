@@ -95,7 +95,7 @@ module Shumway.GFX.GL {
     private static _tmpVertices: WebGLCombinedBrushVertex [] = Vertex.createEmptyVertices(WebGLCombinedBrushVertex, 4);
     private _program: WebGLProgram;
     private _textures: WebGLTexture [];
-    private _colorTransform: ColorMatrix;
+    private _colorMatrix: ColorMatrix;
     private _blendMode: BlendMode = BlendMode.Normal;
     private static _depth: number = 1;
     constructor(context: WebGLContext, geometry: WebGLGeometry, target: WebGLTexture = null) {
@@ -114,8 +114,8 @@ module Shumway.GFX.GL {
       src: WebGLTextureRegion,
       dstRectangle: Rectangle,
       color: Color,
-      colorTransform: ColorMatrix,
-      transform: Matrix,
+      colorMatrix: ColorMatrix,
+      matrix: Matrix,
       depth: number = 0,
       blendMode: BlendMode = BlendMode.Normal): boolean {
 
@@ -123,12 +123,12 @@ module Shumway.GFX.GL {
         return true;
       }
       dstRectangle = dstRectangle.clone();
-      if (this._colorTransform) {
-        if (!colorTransform || !this._colorTransform.equals(colorTransform)) {
+      if (this._colorMatrix) {
+        if (!colorMatrix || !this._colorMatrix.equals(colorMatrix)) {
           this.flush();
         }
       }
-      this._colorTransform = colorTransform;
+      this._colorMatrix = colorMatrix;
       if (this._blendMode !== blendMode) {
         this.flush();
         this._blendMode = blendMode;
@@ -152,7 +152,7 @@ module Shumway.GFX.GL {
       // probably be moved elsewhere.
       srcRectangle.offset(1, 1).resize(-2, -2);
       srcRectangle.scale(1 / src.texture.w, 1 / src.texture.h);
-      transform.transformRectangle(dstRectangle, <Point[]><any>tmpVertices);
+      matrix.transformRectangle(dstRectangle, <Point[]><any>tmpVertices);
       for (var i = 0; i < 4; i++) {
         tmpVertices[i].z = depth;
       }
@@ -167,7 +167,7 @@ module Shumway.GFX.GL {
 
       for (var i = 0; i < 4; i++) {
         var vertex = WebGLCombinedBrush._tmpVertices[i];
-        vertex.kind = colorTransform ?
+        vertex.kind = colorMatrix ?
           WebGLCombinedBrushKind.FillTextureWithColorMatrix :
           WebGLCombinedBrushKind.FillTexture;
         vertex.color.set(color);
@@ -178,8 +178,8 @@ module Shumway.GFX.GL {
       return true;
     }
 
-    public fillRectangle(rectangle: Rectangle, color: Color, transform: Matrix, depth: number = 0) {
-      transform.transformRectangle(rectangle, <Point[]><any>WebGLCombinedBrush._tmpVertices);
+    public fillRectangle(rectangle: Rectangle, color: Color, matrix: Matrix, depth: number = 0) {
+      matrix.transformRectangle(rectangle, <Point[]><any>WebGLCombinedBrush._tmpVertices);
       for (var i = 0; i < 4; i++) {
         var vertex = WebGLCombinedBrush._tmpVertices[i];
         vertex.kind = WebGLCombinedBrushKind.FillColor;
@@ -205,9 +205,9 @@ module Shumway.GFX.GL {
         matrix = this._context.modelViewProjectionMatrix
       }
       gl.uniformMatrix4fv(p.uniforms.uTransformMatrix3D.location, false, matrix.asWebGLMatrix());
-      if (this._colorTransform) {
-        gl.uniformMatrix4fv(p.uniforms.uColorMatrix.location, false, this._colorTransform.asWebGLMatrix());
-        gl.uniform4fv(p.uniforms.uColorVector.location, this._colorTransform.asWebGLVector());
+      if (this._colorMatrix) {
+        gl.uniformMatrix4fv(p.uniforms.uColorMatrix.location, false, this._colorMatrix.asWebGLMatrix());
+        gl.uniform4fv(p.uniforms.uColorVector.location, this._colorMatrix.asWebGLVector());
       }
       // Bind textures.
       for (var i = 0; i < this._textures.length; i++) {
