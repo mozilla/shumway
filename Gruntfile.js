@@ -37,22 +37,22 @@ module.exports = function(grunt) {
         cmd: 'make -C utils/builder build'
       },
       build_gfx_ts: {
-        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/gfx/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 src/gfx/references.ts'
       },
       build_avm2_ts: {
-        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/avm2/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 src/avm2/references.ts'
       },
       build_flash_ts: {
-        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/flash.ts/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 src/flash.ts/references.ts'
       },
       build_player_ts: {
-        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/player/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 src/player/references.ts'
       },
       build_tools_ts: {
-        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/tools/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 src/tools/references.ts'
       },
       build_avm1_ts: {
-        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/avm1/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 src/avm1/references.ts'
       },
       generate_abcs: {
         cmd: 'python generate.py',
@@ -67,7 +67,7 @@ module.exports = function(grunt) {
         cwd: 'utils/'
       },
       build_avm1lib_ts: {
-        cmd: 'node node_modules/typescript/bin/tsc --target ES5 src/avm1lib/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 src/avm1lib/references.ts'
       },
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
