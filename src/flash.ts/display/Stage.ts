@@ -259,6 +259,10 @@ module Shumway.AVM2.AS.flash.display {
       this._color = color >>> 0;
     }
 
+    set alpha(alpha: number) {
+      throwError("Error", Errors.InvalidStageMethodError);
+    }
+
     get fullScreenWidth(): number /*uint*/ {
       return this._fullScreenWidth;
     }
