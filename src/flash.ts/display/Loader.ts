@@ -276,16 +276,7 @@ module Shumway.AVM2.AS.flash.display {
       switch (data.type) {
         case 'shape':
           symbol = new Timeline.ShapeSymbol(symbolId);
-          symbol.graphics = new Graphics();
-          var bounds = new Rectangle();
-          bounds.copyFromBbox(data.bbox);
-          var strokeBounds = new Rectangle();
-          if (data.strokeBbox) {
-            strokeBounds.copyFromBbox(data.strokeBbox);
-          } else {
-            strokeBounds = bounds;
-          }
-          symbol.graphics.setSymbolBounds(bounds, strokeBounds);
+          symbol.graphics = new flash.display.Graphics();
           break;
         case 'image':
           symbol = new Timeline.BitmapSymbol(symbolId);
@@ -415,8 +406,27 @@ module Shumway.AVM2.AS.flash.display {
           // TODO
           return;
       }
-      if (data.bbox) {
-        symbol.bounds.copyFromBbox(data.bbox);
+
+      switch (data.type) {
+        case 'shape':
+        case 'image':
+        case 'label':
+        case 'text':
+        case 'button':
+        case 'sprite':
+          var displaySymbol = <Timeline.DisplaySymbol>symbol;
+          displaySymbol.rect = data.bbox ? Rectangle.createFromBbox(data.bbox) : null;
+          displaySymbol.bounds = data.strokeBbox ? Rectangle.createFromBbox(data.strokeBbox) : null;
+          if (!displaySymbol.bounds) {
+            displaySymbol.bounds = displaySymbol.rect;
+          }
+
+          // TODO: Remove this hack once we can get bounds of the graphics object.
+          if (data.type === "shape") {
+            symbol.graphics._bounds.copyFrom(symbol.bounds);
+            symbol.graphics._rect.copyFrom(symbol.rect);
+          }
+          break;
       }
       this._dictionary[symbolId] = symbol;
     }

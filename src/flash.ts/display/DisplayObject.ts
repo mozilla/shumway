@@ -1167,6 +1167,9 @@ module Shumway.AVM2.AS.flash.display {
       return m.transformCoords(point.x, point.y, true).toPixels();
     }
 
+    /**
+     * Tree visitor that lets you skip nodes or return early.
+     */
     public visit(visitor: (DisplayObject) => VisitorFlags, visitorFlags: VisitorFlags) {
       var stack: DisplayObject [];
       var displayObject: DisplayObject;

@@ -284,6 +284,11 @@ module Shumway.AVM2.AS.flash.geom {
       this.height = bbox.yMax - bbox.yMin;
     }
 
+    public static createFromBbox(bbox: any): Rectangle {
+      return new Rectangle(bbox.xMin, bbox.yMin, bbox.xMax - bbox.xMin, bbox.yMax - bbox.yMin);
+    }
+
+
     public setTo(x: number, y: number, width: number, height: number): void {
       this.x = +x;
       this.y = +y;

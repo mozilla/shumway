@@ -19,37 +19,39 @@ module Shumway.Timeline {
 
   export class Symbol {
     id: number = -1;
-    symbolClass: Shumway.AVM2.AS.ASClass = null;
-    bounds: flash.geom.Rectangle = null;
-    scale9Grid: flash.geom.Rectangle = null;
+    symbolClass: Shumway.AVM2.AS.ASClass;
 
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
       this.id = +id;
       this.symbolClass = symbolClass;
-      this.bounds = new flash.geom.Rectangle();
     }
   }
 
-  export class ShapeSymbol extends Symbol {
+  export class DisplaySymbol extends Symbol {
+    scale9Grid: flash.geom.Rectangle;
+    rect: flash.geom.Rectangle;
+    bounds: flash.geom.Rectangle;
+    constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
+      super(id, symbolClass);
+    }
+  }
+
+  export class ShapeSymbol extends DisplaySymbol {
     graphics: flash.display.Graphics = null;
-    strokeBounds: flash.geom.Rectangle = null;
 
     constructor(id: number) {
       super(id, flash.display.Shape);
     }
   }
 
-  export class BitmapSymbol extends Symbol {
+  export class BitmapSymbol extends DisplaySymbol {
     bitmapData: flash.display.BitmapData;
-    width: number = 0;
-    height: number = 0;
-
     constructor(id: number) {
       super(id, flash.display.Bitmap);
     }
   }
 
-  export class TextSymbol extends Symbol {
+  export class TextSymbol extends DisplaySymbol {
     textColor: number = 0;
     textHeight: number = 0;
     font: flash.text.Font = null;
@@ -78,7 +80,7 @@ module Shumway.Timeline {
     }
   }
 
-  export class ButtonSymbol extends Symbol {
+  export class ButtonSymbol extends DisplaySymbol {
     upState: AnimationState = null;
     overState: AnimationState = null;
     downState: AnimationState = null;
@@ -89,7 +91,7 @@ module Shumway.Timeline {
     }
   }
 
-  export class SpriteSymbol extends Symbol {
+  export class SpriteSymbol extends DisplaySymbol {
     numFrames: number = 1;
     frames: Frame [] = [];
     labels: flash.display.FrameLabel [] = [];

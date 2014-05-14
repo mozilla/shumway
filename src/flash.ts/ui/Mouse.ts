@@ -34,18 +34,18 @@ module Shumway.AVM2.AS.flash.ui {
       var target: InteractiveObject;
       var i = objects.length;
       while (i--) {
-        var obj = objects[i];
-        if (!flash.display.InteractiveObject.isType(obj)) {
+        var object = objects[i];
+        if (!flash.display.InteractiveObject.isType(object)) {
           var j = i;
           while (j--) {
             var sibling = objects[j];
-            if (sibling._parent === obj._parent && InteractiveObject.isType(sibling)) {
-              obj = sibling;
+            if (sibling._parent === object._parent && InteractiveObject.isType(sibling)) {
+              object = sibling;
               i = j;
             }
           }
         }
-        target = obj.getOldestInteractiveAncestorOrSelf();
+        target = object.getOldestInteractiveAncestorOrSelf();
         if (!target) {
           continue;
         }
@@ -69,11 +69,11 @@ module Shumway.AVM2.AS.flash.ui {
       if (!this.stage) {
         return;
       }
-      if (e.type !== "click") {
-        return;
-      }
       var target = this._findTarget(point);
       if (target) {
+        if (e.type === "click") {
+          target.alpha = target.alpha === 1 ? 0.5 : 1.0;
+        }
         // TODO: Create proper event objects.
         var event = new flash.events.MouseEvent (
           e.type

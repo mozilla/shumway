@@ -25,7 +25,16 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
     static initializer: any = function (symbol: Shumway.Timeline.ShapeSymbol) {
       var self: Shape = this;
-      self._graphics = symbol ? symbol.graphics : null;
+      self._graphics = null;
+      if (symbol) {
+        self._graphics = symbol.graphics ? symbol.graphics : null;
+        // TODO: Graphics object now needs to be filled with shape data.
+        symbol.bounds && self._bounds.copyFrom(symbol.bounds);
+        symbol.rect && self._rect.copyFrom(symbol.rect);
+        self._removeFlags(DisplayObjectFlags.InvalidBounds);
+        // TODO: Assert that the computed bounds of the graphics object in fact
+        // match those given by the symbol.
+      }
     };
 
     constructor () {

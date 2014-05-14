@@ -65,8 +65,8 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       this._id = DisplayObject._syncID++;
       this._graphicsData = new ByteArray();
+      this._rect = new flash.geom.Rectangle();
       this._bounds = new flash.geom.Rectangle();
-      this._strokeBounds = new flash.geom.Rectangle();
       this._parent = null;
     }
     
@@ -77,16 +77,15 @@ module Shumway.AVM2.AS.flash.display {
 
     _graphicsData: flash.utils.ByteArray;
 
-    private _bounds: flash.geom.Rectangle;
-    private _strokeBounds: flash.geom.Rectangle;
+    /**
+     * Bounding box excluding strokes.
+     */
+    _rect: flash.geom.Rectangle;
 
     /**
-     * Sets the bounds.
+     * Bounding box including strokes.
      */
-    public setSymbolBounds(bounds: flash.geom.Rectangle, strokeBounds: flash.geom.Rectangle) {
-      this._bounds.copyFrom(bounds);
-      this._strokeBounds.copyFrom(strokeBounds);
-    }
+    _bounds: flash.geom.Rectangle;
 
     /**
      * Back reference to the display object that references this graphics object. This is
@@ -107,9 +106,9 @@ module Shumway.AVM2.AS.flash.display {
 
     _getContentBounds(includeStrokes: boolean = true): flash.geom.Rectangle {
       if (includeStrokes) {
-        return this._strokeBounds;
-      } else {
         return this._bounds;
+      } else {
+        return this._rect;
       }
       notImplemented("public flash.display.Graphics::_getContentBounds");
       return new flash.geom.Rectangle();
@@ -213,7 +212,7 @@ module Shumway.AVM2.AS.flash.display {
       this.lineTo(x, y + height);
       this.lineTo(x, y);
 
-      this._strokeBounds = this._bounds = new Rectangle(x * 20 | 0, y * 20 | 0, width * 20 | 0, height * 20 | 0);
+      this._rect = this._bounds = new Rectangle(x * 20 | 0, y * 20 | 0, width * 20 | 0, height * 20 | 0);
       this._invalidateParent();
     }
 

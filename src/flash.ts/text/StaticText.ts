@@ -15,18 +15,32 @@
  */
 // Class: StaticText
 module Shumway.AVM2.AS.flash.text {
+  import DisplayObjectFlags = flash.display.DisplayObjectFlags;
   export class StaticText extends flash.display.DisplayObject {
 
     static classInitializer: any = null;
     static initializer: any = null;
     static classSymbols: string [] = null;
-    static instanceSymbolså: string [] = null;
+    static instanceSymbols: string [] = null;
 
-    constructor() {
-      super();
+    static initializer: any = function (symbol: Shumway.Timeline.TextSymbol) {
+      var self: StaticText = this;
+      if (symbol) {
+        symbol.bounds && self._bounds.copyFrom(symbol.bounds);
+        symbol.rect && self._rect.copyFrom(symbol.rect);
+        self._removeFlags(DisplayObjectFlags.InvalidBounds);
+        // TODO: Assert that the computed bounds of the graphics object in fact
+        // match those given by the symbol.
+      }
+    };
+
+    constructor () {
+      false && super();
+      DisplayObject.instanceConstructorNoInitialize.call(this);
     }
 
     private _text: string;
+
     set text(text: string) {
       this._text = text;
     }
