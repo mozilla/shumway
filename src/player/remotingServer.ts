@@ -82,17 +82,28 @@ module Shumway.Remoting.Server {
 
     private _readColorMatrix(): ColorMatrix {
       var input = this.input;
-      var redMultiplier = input.readFloat();
-      var greenMultiplier = input.readFloat();
-      var blueMultiplier = input.readFloat();
-      var alphaMultiplier = input.readFloat();
-      var redOffset = input.readInt()
-      var greenOffset = input.readInt();
-      var blueOffset = input.readInt();
-      var alphaOffset = input.readInt();
+      var rm = 1, gm = 1, bm = 1, am = 1;
+      var ro = 0, go = 0, bo = 0, ao = 0;
+      switch (input.readInt()) {
+        case ColorTransformEncoding.Identity:
+          break;
+        case ColorTransformEncoding.AlphaMultiplierOnly:
+          am = input.readFloat();
+          break;
+        case ColorTransformEncoding.All:
+          rm = input.readFloat();
+          gm = input.readFloat();
+          bm = input.readFloat();
+          am = input.readFloat();
+          ro = input.readInt()
+          go = input.readInt();
+          bo = input.readInt();
+          ao = input.readInt();
+          break;
+      }
       return ColorMatrix.fromMultipliersAndOffsets (
-        redMultiplier, greenMultiplier, blueMultiplier, alphaMultiplier,
-        redOffset,     greenOffset,     blueOffset,     alphaOffset
+        rm, gm, bm, am,
+        ro, go, bo, ao
       );
     }
 

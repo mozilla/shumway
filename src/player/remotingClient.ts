@@ -126,14 +126,36 @@ module Shumway.Remoting.Client {
 
     writeColorTransform(colorTransform: Shumway.AVM2.AS.flash.geom.ColorTransform) {
       var output = this.output;
-      output.writeFloat(colorTransform.redMultiplier);
-      output.writeFloat(colorTransform.greenMultiplier);
-      output.writeFloat(colorTransform.blueMultiplier);
-      output.writeFloat(colorTransform.alphaMultiplier);
-      output.writeInt(colorTransform.redOffset);
-      output.writeInt(colorTransform.greenOffset);
-      output.writeInt(colorTransform.blueOffset);
-      output.writeInt(colorTransform.alphaOffset);
+      var rm = colorTransform.redMultiplier;
+      var gm = colorTransform.greenMultiplier;
+      var bm = colorTransform.blueMultiplier;
+      var am = colorTransform.alphaMultiplier;
+      var ro = colorTransform.redOffset;
+      var go = colorTransform.greenOffset;
+      var bo = colorTransform.blueOffset;
+      var ao = colorTransform.alphaOffset;
+
+      var identityOffset          = ro === go && go === bo && bo === ao && ao === 0;
+      var identityColorMultiplier = rm === gm && gm === bm && bm === 1;
+
+      if (identityOffset && identityColorMultiplier) {
+        if (am === 1) {
+          output.writeInt(ColorTransformEncoding.Identity);
+        } else {
+          output.writeInt(ColorTransformEncoding.AlphaMultiplierOnly);
+          output.writeFloat(am);
+        }
+      } else {
+        output.writeInt(ColorTransformEncoding.All);
+        output.writeFloat(rm);
+        output.writeFloat(gm);
+        output.writeFloat(bm);
+        output.writeFloat(am);
+        output.writeInt(ro);
+        output.writeInt(go);
+        output.writeInt(bo);
+        output.writeInt(ao);
+      }
     }
   }
 

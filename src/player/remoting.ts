@@ -26,4 +26,26 @@ module Shumway.Remoting {
     EOF = 0,
     UpdateFrame   = 1
   }
+
+  /**
+   * Dictates how color transforms are encoded. The majority of color transforms are
+   * either identity or only modify the alpha multiplier, so we can encode these more
+   * efficiently.
+   */
+  export enum ColorTransformEncoding {
+    /**
+     * Identity, no need to serialize all the fields.
+     */
+    Identity               = 0,
+
+    /**
+     * Identity w/ AlphaMultiplier, only the alpha multiplier is serialized.
+     */
+    AlphaMultiplierOnly    = 1,
+
+    /**
+     * All fields are serialized.
+     */
+    All                    = 2
+  }
 }
