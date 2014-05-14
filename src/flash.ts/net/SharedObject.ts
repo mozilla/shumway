@@ -38,8 +38,8 @@ module Shumway.AVM2.AS.flash.net {
     
     constructor () {
       false && super(undefined);
-      // Called from the _create()
-      // notImplemented("Dummy Constructor: public flash.net.SharedObject");
+      flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
+      this._data = {};
     }
 
     static _sharedObjects: any = createEmptyObject();
@@ -69,10 +69,9 @@ module Shumway.AVM2.AS.flash.net {
     }
     static _create(path: string, data: any): SharedObject {
       var obj = new SharedObject();
-      obj._path = null;
-      obj._data = null;
+      obj._path = path;
+      obj._data = data;
       obj._objectEncoding = SharedObject._defaultObjectEncoding;
-
       Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SHAREDOBJECT_FEATURE});
       return obj;
     }
@@ -83,6 +82,7 @@ module Shumway.AVM2.AS.flash.net {
         return SharedObject._sharedObjects[path];
       }
       var data = sessionStorage.getItem(path);
+      // TODO: JSON here probably needs to convert things into AS3 objects.
       var so = SharedObject._create(path, data ? JSON.parse(data) : {});
       // so._data[Multiname.getPublicQualifiedName("cookie")] = {};
       // so._data[Multiname.getPublicQualifiedName("cookie")][Multiname.getPublicQualifiedName("lc")] = 32;
@@ -103,12 +103,12 @@ module Shumway.AVM2.AS.flash.net {
       SharedObject._defaultObjectEncoding = version;
     }
     
-    private _data: ASObject;
+    private _data: Object;
     // _size: number /*uint*/;
     // _fps: number;
     private _objectEncoding: number /*uint*/;
     // _client: ASObject;
-    get data(): ASObject {
+    get data(): Object {
       return this._data;
     }
     get objectEncoding(): number /*uint*/ {
@@ -147,7 +147,7 @@ module Shumway.AVM2.AS.flash.net {
           simulated = true;
           break;
         case 6: // clear
-          this._data = <ASObject> {};
+          this._data = {};
           sessionStorage.removeItem(this._path);
           simulated = true;
           break;

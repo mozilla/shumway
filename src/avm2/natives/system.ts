@@ -59,7 +59,7 @@ module Shumway.AVM2.AS {
     }
 
     export class System extends ASNative {
-      get ime(): flash.system.IME {
+      static get ime(): flash.system.IME {
         notImplemented("public flash.system.System::get ime"); return;
       }
 
@@ -68,32 +68,34 @@ module Shumway.AVM2.AS {
         notImplemented("public flash.system.System::static setClipboard"); return;
       }
 
-      get totalMemoryNumber(): number {
-        notImplemented("public flash.system.System::get totalMemoryNumber"); return;
+      static get totalMemoryNumber(): number {
+        // notImplemented("public flash.system.System::get totalMemoryNumber"); return;
+        return 1024 * 1024 * 2;
       }
 
-      get freeMemory(): number {
-        notImplemented("public flash.system.System::get freeMemory"); return;
+      static get freeMemory(): number {
+        // notImplemented("public flash.system.System::get freeMemory"); return;
+        return 1024 * 1024;
       }
 
-      get privateMemory(): number {
+      static get privateMemory(): number {
         notImplemented("public flash.system.System::get privateMemory"); return;
       }
 
-      get processCPUUsage(): number {
+      static get processCPUUsage(): number {
         notImplemented("public flash.system.System::get processCPUUsage"); return;
       }
 
-      get useCodePage(): boolean {
+      static get useCodePage(): boolean {
         notImplemented("public flash.system.System::get useCodePage"); return;
       }
 
-      set useCodePage(value: boolean) {
+      static set useCodePage(value: boolean) {
         value = !!value;
         notImplemented("public flash.system.System::set useCodePage"); return;
       }
 
-      get vmVersion(): string {
+      static get vmVersion(): string {
         return "1.0 Shumway - Mozilla Research";
       }
 

@@ -19,7 +19,6 @@ module Shumway.AVM2.AS.flash.media {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import Telemetry = Shumway.Telemetry;
-  import ID3Info = Shumway.AVM2.AS.flash.media.ID3Info;
 
   var PLAY_USING_AUDIO_TAG = true;
 
@@ -68,7 +67,7 @@ module Shumway.AVM2.AS.flash.media {
       this._length = 0;
       this._bytesTotal = 0;
       this._bytesLoaded = 0;
-      this._id3 = new ID3Info();
+      this._id3 = new flash.media.ID3Info();
 
       Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SOUND_FEATURE});
 

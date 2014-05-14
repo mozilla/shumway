@@ -1686,7 +1686,7 @@ module Shumway.AVM2.Runtime {
       }
       if (!fn) {
         Shumway.Debug.warning("No native method for: " + trait.kindName() + " " +
-          mi.holder.name + "::" + Multiname.getQualifiedName(mi.name));
+          mi.holder + "::" + Multiname.getQualifiedName(mi.name) + ", make sure you've got the static keyword for static methods.");
         return (function (mi) {
           return function () {
             Shumway.Debug.warning("Calling undefined native method: " + trait.kindName() +

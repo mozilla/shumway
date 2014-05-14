@@ -407,7 +407,6 @@ src/flash.ts/display/GraphicsPath.js
 src/flash.ts/events/HTTPStatusEvent.js
 src/flash.ts/geom/Orientation3D.js
 src/flash.ts/text/engine/TextBlock.js
-src/flash.ts/system/System.js
 src/flash.ts/filters/BlurFilter.js
 #src/flash.ts/media/StageVideoAvailability.js
 src/flash.ts/system/Capabilities.js

@@ -29,26 +29,20 @@ module Shumway.AVM2.AS.flash.media {
     static classSymbols: string [] = null; // [];
     
     // List of instance symbols to link.
-    static instanceSymbols: string [] = ["pan"];
+    static instanceSymbols: string [] = null; // [];
     
     constructor (vol: number = 1, panning: number = 0) {
       vol = +vol; panning = +panning;
       false && super();
       notImplemented("Dummy Constructor: public flash.media.SoundTransform");
     }
-    
-    // JS -> AS Bindings
-    
-    pan: number;
-    
-    // AS -> JS Bindings
-    
+
     private _volume: number;
     private _leftToLeft: number;
     private _leftToRight: number;
     private _rightToRight: number;
     private _rightToLeft: number;
-    private _pan: number;
+
     get volume(): number {
       return this._volume;
     }
@@ -89,6 +83,19 @@ module Shumway.AVM2.AS.flash.media {
       this._rightToLeft = rightToLeft;
       this._updateTransform();
     }
+    get pan(): number {
+      if (this._leftToRight === 0 && this._rightToLeft === 0) {
+        return 1 - this._leftToLeft * this._leftToLeft;
+      }
+      return 0;
+    }
+    set pan(panning: number) {
+      this.leftToLeft = Math.sqrt(1 - panning);
+      this.leftToRight = 0;
+      this.rightToRight = Math.sqrt(1 + panning);
+      this.rightToLeft = 0;
+    }
+
     _updateTransform() {
       somewhatImplemented("public flash.media.SoundTransform::_updateTransform");
       // TODO dispatch updates to the current audio destinations?

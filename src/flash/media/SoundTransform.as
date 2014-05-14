@@ -32,17 +32,7 @@ public final class SoundTransform {
   public native function set rightToRight(rightToRight: Number): void;
   public native function get rightToLeft(): Number;
   public native function set rightToLeft(rightToLeft: Number): void;
-  public function get pan(): Number {
-    if (leftToRight == 0 && rightToLeft == 0) {
-      return 1 - leftToLeft * leftToLeft;
-    }
-    return 0;
-  }
-  public function set pan(panning: Number): void {
-    leftToLeft = Math.sqrt(1 - panning);
-    leftToRight = 0;
-    rightToRight = Math.sqrt(1 + panning);
-    rightToLeft = 0;
-  }
+  public native function get pan(): Number;
+  public native function set pan(panning: Number): void;
 }
 }

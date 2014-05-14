@@ -16,6 +16,8 @@
 // Class: LoaderInfo
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
@@ -118,7 +120,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get applicationDomain(): flash.system.ApplicationDomain {
-      notImplemented("public flash.display.LoaderInfo::get applicationDomain"); return;
+      somewhatImplemented("public flash.display.LoaderInfo::get applicationDomain");
+      return flash.system.ApplicationDomain.currentDomain;
       // return this._applicationDomain;
     }
 

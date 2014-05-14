@@ -19,8 +19,7 @@ import flash.events.EventDispatcher;
 
 [native(cls="SharedObjectClass")]
 public class SharedObject extends EventDispatcher {
-  public function SharedObject() {
-  }
+  public native function SharedObject();
   public static native function deleteAll(url:String):int;
   public static native function getDiskUsage(url:String):int;
   public static native function getLocal(name:String, localPath:String = null, secure:Boolean = false):SharedObject;

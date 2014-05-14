@@ -46,6 +46,38 @@ module Shumway.AVM2.AS.flash.geom {
       this.height = +height;
     }
 
+    public set native_x(x: number) {
+      this.x = x;
+    }
+
+    public get native_x(): number {
+      return this.x;
+    }
+
+    public set native_y(y: number) {
+      this.y = y;
+    }
+
+    public get native_y(): number {
+      return this.y;
+    }
+
+    public set native_width(width: number) {
+      this.width = +width;
+    }
+
+    public get native_width(): number {
+      return this.width;
+    }
+
+    public set native_height(height: number) {
+      this.height = +height;
+    }
+
+    public get native_height(): number {
+      return this.height;
+    }
+
     public get left(): number {
       return this.x;
     }
