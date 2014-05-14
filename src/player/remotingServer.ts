@@ -37,6 +37,7 @@ module Shumway.Remoting.Server {
 
   export class ChannelDeserializer {
     input: IDataInput;
+    inputAssets: Array<IDataInput>;
     context: ChannelDeserializerContext;
 
     public read() {
@@ -113,8 +114,18 @@ module Shumway.Remoting.Server {
       if (hasBits & UpdateFrameTagBits.HasMatrix) {
         frame.matrix = this._readMatrix();
       }
+      var bounds: Rectangle;
       if (hasBits & UpdateFrameTagBits.HasBounds) {
-        var bounds = this._readRectangle();
+        bounds = this._readRectangle();
+      }
+      if (hasBits & UpdateFrameTagBits.HasShapeData) {
+        assert(!isContainer);
+        var assetId = input.readInt();
+        var shapeData = this.inputAssets[assetId];
+        this.inputAssets[assetId] = null;
+        var shape = (<Shape>frame);
+        shape.ensureSource(shapeData, bounds);
+      } else if (bounds) {
         var shape = (<Shape>frame);
         if (!shape.source) {
           var renderable = new Renderable(bounds, function (context) {
