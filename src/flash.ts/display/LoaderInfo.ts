@@ -62,6 +62,8 @@ module Shumway.AVM2.AS.flash.display {
       this._content = null;
       this._bytes = null;
       this._uncaughtErrorEvents = null;
+
+      this._dictionary = [];
     }
 
     // JS -> AS Bindings
@@ -98,6 +100,8 @@ module Shumway.AVM2.AS.flash.display {
     _content: flash.display.DisplayObject;
     _bytes: flash.utils.ByteArray;
     _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
+
+    private _dictionary: Shumway.Timeline.Symbol [];
 
     get loaderURL(): string {
       return this._loaderURL;
@@ -205,6 +209,14 @@ module Shumway.AVM2.AS.flash.display {
     _setUncaughtErrorEvents(value: flash.events.UncaughtErrorEvents): void {
       value = value;
       notImplemented("public flash.display.LoaderInfo::_setUncaughtErrorEvents"); return;
+    }
+
+    registerSymbol(symbol: Shumway.Timeline.Symbol): void {
+      this._dictionary[symbol.id] = symbol;
+    }
+
+    getSymbolById(id: number): Shumway.Timeline.Symbol {
+      return this._dictionary[id] || null;
     }
   }
 }

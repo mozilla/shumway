@@ -23,8 +23,6 @@ module Shumway.AVM2.AS.flash.display {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
-  import Timeline = Shumway.Timeline;
-
   import Rectangle = flash.geom.Rectangle;
   import Matrix = flash.geom.Matrix;
   import ColorTransform = flash.geom.ColorTransform;
@@ -37,11 +35,8 @@ module Shumway.AVM2.AS.flash.display {
   var IOErrorEvent: typeof flash.events.IOErrorEvent;
   var LoaderInfo: typeof flash.display.LoaderInfo;
   var MovieClip: typeof flash.display.MovieClip;
-  var Scene: typeof flash.display.Scene;
-  var FrameLabel: typeof flash.display.FrameLabel;
   var Bitmap: typeof flash.display.Bitmap;
   var BitmapData: typeof flash.display.BitmapData;
-  var Graphics: typeof flash.display.Graphics;
 
   enum LoadStatus {
     Unloaded    = 0,
@@ -73,11 +68,8 @@ module Shumway.AVM2.AS.flash.display {
       IOErrorEvent = flash.events.IOErrorEvent;
       LoaderInfo = flash.display.LoaderInfo;
       MovieClip = flash.display.MovieClip;
-      Scene = flash.display.Scene;
-      FrameLabel = flash.display.FrameLabel;
       Bitmap = flash.display.Bitmap;
       BitmapData = flash.display.BitmapData;
-      Graphics = flash.display.Graphics;
 
       Loader._rootLoader = null;
       Loader._loadQueue = [];
@@ -145,15 +137,13 @@ module Shumway.AVM2.AS.flash.display {
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
       this._content = null;
       this._contentLoaderInfo = new LoaderInfo();
-      this._contentLoaderInfo._loader = this;
 
-      this._dictionary = [];
       this._worker = null;
       this._startPromise = Promise.resolve();
       this._lastPromise = this._startPromise;
       this._loadStatus = LoadStatus.Unloaded;
 
-      this._dictionary[0] = new Timeline.SpriteSymbol(0, true);
+      this._contentLoaderInfo._loader = this;
     }
 
     // JS -> AS Bindings
@@ -178,7 +168,6 @@ module Shumway.AVM2.AS.flash.display {
     private _contentLoaderInfo: flash.display.LoaderInfo;
     // _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
-    _dictionary: Timeline.Symbol [];
     private _worker: Worker;
     private _startPromise: any;
     private _lastPromise: any;
@@ -202,8 +191,9 @@ module Shumway.AVM2.AS.flash.display {
           loaderInfo._width = bbox.xMax - bbox.xMin;
           loaderInfo._height = bbox.yMax - bbox.yMin;
 
-          var rootSymbol = <Timeline.SpriteSymbol>this._dictionary[0];
+          var rootSymbol = new Shumway.Timeline.SpriteSymbol(0, true);
           rootSymbol.numFrames = info.frameCount;
+          loaderInfo.registerSymbol(rootSymbol);
           break;
         case 'progress':
           var info = data.result;
@@ -262,11 +252,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _commitAsset(data: any): void {
-      var symbol;
+      var loaderInfo = this._contentLoaderInfo;
       var symbolId = data.id;
+      var symbol;
       if (data.updates) {
         var updates = data.updates;
-        symbol = this._dictionary[symbolId];
+        symbol = loaderInfo.getSymbolById(symbolId);
         if (updates.scale9Grid) {
           symbol.scale9Grid = new Rectangle();
           symbol.scale9Grid.copyFromBbox(updates.scale9Grid);
@@ -275,22 +266,22 @@ module Shumway.AVM2.AS.flash.display {
       }
       switch (data.type) {
         case 'shape':
-          symbol = Timeline.ShapeSymbol.createFromData(data);
+          symbol = Shumway.Timeline.ShapeSymbol.createFromData(data);
           break;
         case 'image':
-          symbol = Timeline.BitmapSymbol.createFromData(data);
+          symbol = Shumway.Timeline.BitmapSymbol.createFromData(data);
           break;
         case 'label':
-          symbol = Timeline.TextSymbol.createFromLabelData(data);
+          symbol = Shumway.Timeline.TextSymbol.createFromLabelData(data);
           break;
         case 'text':
-          symbol = Timeline.TextSymbol.createFromTextData(data);
+          symbol = Shumway.Timeline.TextSymbol.createFromTextData(data);
           break;
         case 'button':
-          symbol = Timeline.ButtonSymbol.createFromData(data, this);
+          symbol = Shumway.Timeline.ButtonSymbol.createFromData(data, loaderInfo);
           break;
         case 'sprite':
-          symbol = Timeline.SpriteSymbol.createFromData(data, this);
+          symbol = Shumway.Timeline.SpriteSymbol.createFromData(data, loaderInfo);
           break;
         case 'font':
           var font = flash.text.Font.createEmbeddedFont(
@@ -299,13 +290,13 @@ module Shumway.AVM2.AS.flash.display {
           //flash.text.Font.registerFont(font);
           return;
         case 'sound':
-          symbol = Timeline.SoundSymbol.createFromData(data);
+          symbol = Shumway.Timeline.SoundSymbol.createFromData(data);
           break;
         case 'binary':
           // TODO
           return;
       }
-      this._dictionary[symbolId] = symbol;
+      loaderInfo.registerSymbol(symbol);
     }
 
     private _commitFrame(data: any): void {
@@ -318,8 +309,8 @@ module Shumway.AVM2.AS.flash.display {
           var asset = symbolClasses[i];
           var tag = asset.symbolId;
           var symbolClass = appDomain.getClass(asset.className);
-          var symbol = this._dictionary[asset.symbolId];
-          assert (symbol);
+          var symbol = loaderInfo.getSymbolById(asset.symbolId);
+          assert (symbol, "Symbol is not defined.");
           symbolClass.defaultInitializerArgument = symbol;
           symbol.symbolClass = symbolClass;
         }
@@ -335,12 +326,12 @@ module Shumway.AVM2.AS.flash.display {
       //  }
       //}
 
-      var rootSymbol = <Timeline.SpriteSymbol>this._dictionary[0];
+      var rootSymbol = <Shumway.Timeline.SpriteSymbol>loaderInfo.getSymbolById(0);
       var documentClass = rootSymbol.symbolClass;
       var frames = rootSymbol.frames;
       var frameIndex = frames.length;
 
-      var frame = this._buildFrame(data.commands);
+      var frame = new Shumway.Timeline.Frame(loaderInfo, data.commands);
       var repeat = data.repeat;
       while (repeat--) {
         frames.push(frame);
@@ -354,20 +345,16 @@ module Shumway.AVM2.AS.flash.display {
           var mc = <MovieClip>root;
           if (data.sceneData) {
             var scenes = data.sceneData.scenes;
-            var allLabels = data.sceneData.labels;
             for (var i = 0, n = scenes.length; i < n; i++) {
               var sceneInfo = scenes[i];
               var startFrame = sceneInfo.offset;
               var endFrame = i < n - 1 ? scenes[i + 1].offset : rootSymbol.numFrames;
-              var labels = [];
-              for (var j = 0; j < allLabels.length; j++) {
-                var labelInfo = allLabels[j];
-                var frameIndex = labelInfo.frame - startFrame;
-                if (frameIndex >= 0 && frameIndex < endFrame) {
-                  labels.push(new FrameLabel(labelInfo.name, frameIndex + 1));
-                }
-              }
-              mc.addScene(sceneInfo.name, labels, endFrame - startFrame);
+              mc.addScene(sceneInfo.name, [], endFrame - startFrame);
+            }
+            var labels = data.sceneData.labels;
+            for (var i = 0; i < labels.length; i++) {
+              var labelInfo = labels[i];
+              mc.addFrameLabel(labelInfo.frame, labelInfo.name);
             }
           } else {
             mc.addScene('Scene 1', [], rootSymbol.numFrames);
@@ -406,7 +393,7 @@ module Shumway.AVM2.AS.flash.display {
         //  }
         //}
 
-        root._loaderInfo = this._contentLoaderInfo;
+        root._loaderInfo = loaderInfo;
         this._content = root;
       }
 
@@ -458,75 +445,6 @@ module Shumway.AVM2.AS.flash.display {
       //}
     }
 
-    _buildFrame(commands: any []): Timeline.Frame {
-      var frame = new Timeline.Frame();
-      for (var i = 0; i < commands.length; i++) {
-        var cmd = commands[i];
-        var depth = cmd.depth;
-        switch (cmd.code) {
-          case 5: // SWF_TAG_CODE_REMOVE_OBJECT
-          case 28: // SWF_TAG_CODE_REMOVE_OBJECT2
-            frame.remove(depth);
-            break;
-          default:
-            var symbol = null;
-            var matrix = null;
-            var colorTransform = null;
-            var filters = null;
-            var events = null;
-            if (cmd.symbolId) {
-              symbol = this._dictionary[cmd.symbolId];
-              assert (symbol, "Symbol is not defined.");
-            }
-            if (cmd.hasMatrix) {
-              matrix = Matrix.fromAny(cmd.matrix);
-            }
-            if (cmd.hasCxform) {
-              colorTransform = ColorTransform.fromCXForm(cmd.cxform);
-            }
-            if (cmd.hasFilters) {
-              filters = [];
-              var swfFilters = cmd.filters;
-              for (var j = 0; j < swfFilters.length; j++) {
-                var obj = swfFilters[j];
-                var filter: flash.filters.BitmapFilter;
-                switch (obj.type) {
-                  case 0: filter = flash.filters.DropShadowFilter.fromAny(obj); break;
-                  case 1: filter = flash.filters.BlurFilter.fromAny(obj); break;
-                  case 2: filter = flash.filters.GlowFilter.fromAny(obj); break;
-                  case 3: filter = flash.filters.BevelFilter.fromAny(obj); break;
-                  case 4: filter = flash.filters.GradientGlowFilter.fromAny(obj); break;
-                  case 5: filter = flash.filters.ConvolutionFilter.fromAny(obj); break;
-                  case 6: filter = flash.filters.ColorMatrixFilter.fromAny(obj); break;
-                  case 7: filter = flash.filters.GradientBevelFilter.fromAny(obj); break;
-                }
-                assert (filter, "Unknown filter type.");
-                filters.push(filter);
-              }
-            }
-            if (cmd.hasEvents) {
-              // TODO
-            }
-            var state = new Timeline.AnimationState(
-              symbol,
-              depth,
-              matrix,
-              colorTransform,
-              cmd.ratio,
-              cmd.name,
-              cmd.clipDepth,
-              filters,
-              BlendMode.fromNumber(cmd.blendMode),
-              cmd.cache,
-              events
-            );
-            frame.place(depth, state);
-            break;
-        }
-      }
-      return frame;
-    }
-
     private _commitImage(data: any): void {
       var b = new BitmapData(data.width, data.height);
       this._content = new Bitmap(b);
@@ -563,7 +481,6 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._content = null;
       this._contentLoaderInfo._loader = null;
-      this._dictionary = [];
       this._worker = null;
       this._lastPromise = this._startPromise;
       this._loadStatus = LoadStatus.Unloaded;

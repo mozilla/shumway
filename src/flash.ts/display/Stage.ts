@@ -116,14 +116,6 @@ module Shumway.AVM2.AS.flash.display {
      */
     private _invalidated: boolean;
 
-    public render() {
-      if (!this._invalidated) {
-        return;
-      }
-      DisplayObject._broadcastFrameEvent(flash.events.Event.RENDER);
-      this._invalidated = false;
-    }
-
     get frameRate(): number {
       return this._frameRate;
     }
@@ -317,6 +309,14 @@ module Shumway.AVM2.AS.flash.display {
     }
     requireOwnerPermissions(): void {
       somewhatImplemented("public flash.display.Stage::requireOwnerPermissions"); return;
+    }
+
+    render() {
+      if (!this._invalidated) {
+        return;
+      }
+      DisplayObject._broadcastFrameEvent(flash.events.Event.RENDER);
+      this._invalidated = false;
     }
 
     getObjectsUnderMouse(globalPoint: flash.geom.Point): DisplayObject [] {

@@ -15,6 +15,8 @@
  */
 
 module Shumway.Timeline {
+  import isInteger = Shumway.isInteger;
+  import assert = Shumway.Debug.assert;
   import abstractMethod = Shumway.Debug.abstractMethod;
   import flash = Shumway.AVM2.AS.flash;
 
@@ -23,7 +25,8 @@ module Shumway.Timeline {
     symbolClass: Shumway.AVM2.AS.ASClass;
 
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
-      this.id = +id;
+      assert (isInteger(id));
+      this.id = id;
       this.symbolClass = symbolClass;
     }
 
@@ -36,9 +39,11 @@ module Shumway.Timeline {
     rect: flash.geom.Rectangle;
     bounds: flash.geom.Rectangle;
     scale9Grid: flash.geom.Rectangle;
+
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
       super(id, symbolClass);
     }
+
     _setBoundsFromData(data: any) {
       this.rect = data.bbox ? flash.geom.Rectangle.createFromBbox(data.bbox) : null;
       this.bounds = data.strokeBbox ? flash.geom.Rectangle.createFromBbox(data.strokeBbox) : null;
@@ -175,7 +180,7 @@ module Shumway.Timeline {
       super(id, flash.display.SimpleButton);
     }
 
-    static createFromData(data: any, loader: flash.display.Loader): ButtonSymbol {
+    static createFromData(data: any, loaderInfo: flash.display.LoaderInfo): ButtonSymbol {
       var symbol = new ButtonSymbol(data.id);
       var states = data.states;
       var character, matrix, colorTransform;
@@ -184,14 +189,14 @@ module Shumway.Timeline {
         var state;
         if (commands.length === 1) {
           var cmd = commands[0];
-          character = loader._dictionary[cmd.symbolId];
+          character = loaderInfo.getSymbolById(cmd.symbolId);
           matrix = flash.geom.Matrix.fromAny(cmd.matrix);
           if (cmd.cxform) {
-            colorTransform = ColorTransform.fromCXForm(cmd.cxform);
+            colorTransform = flash.geom.ColorTransform.fromCXForm(cmd.cxform);
           }
         } else {
           character = new Timeline.SpriteSymbol(-1);
-          character.frames.push(loader._buildFrame(commands));
+          character.frames.push(new Frame(loaderInfo, commands));
         }
         symbol[stateName + 'State'] =
           new Timeline.AnimationState(character, 0, matrix, colorTransform);
@@ -217,14 +222,14 @@ module Shumway.Timeline {
       var frames = data.frames;
       for (var i = 0; i < frames.length; i++) {
         var frameInfo = frames[i];
-        var frame = loader._buildFrame(frameInfo.commands);
+        var frame = new Frame(loader, frameInfo.commands);
         var repeat = frameInfo.repeat;
         while (repeat--) {
           symbol.frames.push(frame);
         }
         if (frameInfo.labelName) {
           var frameNum = i + 1;
-          symbol.labels.push(new FrameLabel(frameInfo.labelName, frameNum));
+          symbol.labels.push(new flash.display.FrameLabel(frameInfo.labelName, frameNum));
         }
 
         //if (frame.startSounds) {
@@ -293,10 +298,81 @@ module Shumway.Timeline {
   }
 
   export class Frame {
+    loaderInfo: flash.display.LoaderInfo;
     stateAtDepth: Shumway.Map<AnimationState>;
 
-    constructor() {
+    constructor(loaderInfo: flash.display.LoaderInfo, commands: any []) {
+      this.loaderInfo = loaderInfo;
       this.stateAtDepth = Shumway.ObjectUtilities.createMap<AnimationState>();
+      this._applyCommands(commands);
+    }
+
+    private _applyCommands(commands: any []): void {
+      var loaderInfo = this.loaderInfo;
+      for (var i = 0; i < commands.length; i++) {
+        var cmd = commands[i];
+        var depth = cmd.depth;
+        switch (cmd.code) {
+          case 5: // SWF_TAG_CODE_REMOVE_OBJECT
+          case 28: // SWF_TAG_CODE_REMOVE_OBJECT2
+            this.remove(depth);
+            break;
+          default:
+            var symbol = null;
+            var matrix = null;
+            var colorTransform = null;
+            var filters = null;
+            var events = null;
+            if (cmd.symbolId) {
+              symbol = loaderInfo.getSymbolById(cmd.symbolId);
+              assert (symbol, "Symbol is not defined.");
+            }
+            if (cmd.hasMatrix) {
+              matrix = flash.geom.Matrix.fromAny(cmd.matrix);
+            }
+            if (cmd.hasCxform) {
+              colorTransform = flash.geom.ColorTransform.fromCXForm(cmd.cxform);
+            }
+            if (cmd.hasFilters) {
+              filters = [];
+              var swfFilters = cmd.filters;
+              for (var j = 0; j < swfFilters.length; j++) {
+                var obj = swfFilters[j];
+                var filter: flash.filters.BitmapFilter;
+                switch (obj.type) {
+                  case 0: filter = flash.filters.DropShadowFilter.fromAny(obj); break;
+                  case 1: filter = flash.filters.BlurFilter.fromAny(obj); break;
+                  case 2: filter = flash.filters.GlowFilter.fromAny(obj); break;
+                  case 3: filter = flash.filters.BevelFilter.fromAny(obj); break;
+                  case 4: filter = flash.filters.GradientGlowFilter.fromAny(obj); break;
+                  case 5: filter = flash.filters.ConvolutionFilter.fromAny(obj); break;
+                  case 6: filter = flash.filters.ColorMatrixFilter.fromAny(obj); break;
+                  case 7: filter = flash.filters.GradientBevelFilter.fromAny(obj); break;
+                }
+                assert (filter, "Unknown filter type.");
+                filters.push(filter);
+              }
+            }
+            if (cmd.hasEvents) {
+              // TODO
+            }
+            var state = new Timeline.AnimationState (
+              symbol,
+              depth,
+              matrix,
+              colorTransform,
+              cmd.ratio,
+              cmd.name,
+              cmd.clipDepth,
+              filters,
+              flash.display.BlendMode.fromNumber(cmd.blendMode),
+              cmd.cache,
+              events
+            );
+            this.place(depth, state);
+            break;
+        }
+      }
     }
 
     place(depth: number, state: AnimationState): void {
