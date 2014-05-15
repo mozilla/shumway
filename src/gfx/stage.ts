@@ -8,6 +8,7 @@ module Shumway.GFX {
   import TileCache = Geometry.TileCache;
   import Tile = Geometry.Tile;
   import OBB = Geometry.OBB;
+  import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
 
   export enum BlendMode {
     Normal     = 1,
@@ -178,6 +179,9 @@ module Shumway.GFX {
 
   export class Shape extends Frame {
     source: IRenderable;
+
+    private fillStyle: ColorStyle;
+    private data: IDataInput;
     constructor(source: IRenderable) {
       super();
       this.source = source;
@@ -185,6 +189,31 @@ module Shumway.GFX {
 
     public getBounds(): Rectangle {
       return this.source.getBounds();
+    }
+
+    public ensureSource(data: IDataInput, bounds: Rectangle): void {
+      if (this.source) {
+        return;
+      }
+      this.data = data;
+      this.source = new Renderable(bounds, this._render.bind(this));
+    }
+
+    private _render(context: CanvasRenderingContext2D): void {
+      if (!this.fillStyle) {
+        this.fillStyle = ColorStyle.randomStyle();
+      }
+      var bounds = this.getBounds();
+      context.save();
+      context.beginPath();
+      context.lineWidth = 2;
+      context.fillStyle = this.fillStyle;
+      context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+      context.restore();
+      this.source.isInvalid = false;
+      this.source.isScalable = true;
+      this.source.isTileable = true;
+      this.source.isDynamic = false;
     }
   }
 

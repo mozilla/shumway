@@ -102,9 +102,11 @@ module Shumway {
     }
 
     private _pumpDisplayListUpdates(): void {
-      var byteArray = new ByteArray();
+      var updates = new ByteArray();
+      var assets = new Array<ByteArray>();
       var serializer = new Shumway.Remoting.Client.ChannelSerializer();
-      serializer.output = byteArray;
+      serializer.output = updates;
+      serializer.outputAssets = assets;
 
       serializer.writeReferences = false;
       serializer.clearDirtyBits = false;
@@ -114,11 +116,12 @@ module Shumway {
       serializer.clearDirtyBits = true;
       serializer.writeStage(this._stage);
 
-      byteArray.writeInt(Shumway.Remoting.MessageTag.EOF);
-      byteArray.position = 0;
+      updates.writeInt(Shumway.Remoting.MessageTag.EOF);
+      updates.position = 0;
 
       var deserializer = new Remoting.Server.ChannelDeserializer();
-      deserializer.input = byteArray;
+      deserializer.input = updates;
+      deserializer.inputAssets = assets;
       deserializer.context = this._context;
       deserializer.read();
     }
