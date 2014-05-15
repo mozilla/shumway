@@ -65,13 +65,13 @@ module Shumway.AVM2.AS.flash.ui {
     /**
      * Converts JS mouse events into AS3 mouse events.
      */
-    public dispatchMouseEvent(e: MouseEvent, point: Point) {
+    public dispatchMouseEvent(data: MouseEventAndPointData) {
       if (!this.stage) {
         return;
       }
-      var target = this._findTarget(point);
+      var target = this._findTarget(data.point);
       if (target) {
-        var type = flash.events.MouseEvent.typeFromDOMType(e.type);
+        var type = flash.events.MouseEvent.typeFromDOMType(data.type);
         // TODO: Create proper event objects.
         var event = new flash.events.MouseEvent (
           type
@@ -79,6 +79,11 @@ module Shumway.AVM2.AS.flash.ui {
         target.dispatchEvent(event);
       }
     }
+  }
+
+  export interface MouseEventAndPointData {
+    point: Point;
+    type: string;
   }
 
   export class Mouse extends ASNative {

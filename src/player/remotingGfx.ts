@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module Shumway.Remoting.Server {
+module Shumway.Remoting.GFX {
   import Frame = Shumway.GFX.Frame;
   import Shape = Shumway.GFX.Shape;
   import Renderable = Shumway.GFX.Renderable;
@@ -21,11 +21,41 @@ module Shumway.Remoting.Server {
   import FrameContainer = Shumway.GFX.FrameContainer;
   import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
 
+  import Point = Shumway.AVM2.AS.flash.geom.Point;
   import Matrix = Shumway.GFX.Geometry.Matrix;
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
   import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
+  import IDataOutput = Shumway.AVM2.AS.flash.utils.IDataOutput;
 
-  export class ChannelDeserializerContext {
+  export class GFXChannelSerializer {
+    output: IDataOutput;
+
+    public writeMouseEvent(event: MouseEvent, point: Point) {
+      var output = this.output;
+      output.writeInt(MessageTag.MouseEvent);
+      output.writeFloat(point.x);
+      output.writeFloat(point.y);
+      var typeId = Shumway.Remoting.MouseEventNames.indexOf(event.type);
+      output.writeInt(typeId);
+    }
+
+    public writeKeyboardEvent(event: KeyboardEvent) {
+      var output = this.output;
+      output.writeInt(MessageTag.KeyboardEvent);
+      var typeId = Shumway.Remoting.KeyboardEventNames.indexOf(event.type);
+      output.writeInt(typeId);
+      output.writeInt(event.keyCode);
+      output.writeInt(event.charCode);
+      output.writeInt(event.location);
+      var flags =
+        (event.ctrlKey ? KeyboardEventFlags.CtrlKey : 0) |
+        (event.altKey ? KeyboardEventFlags.AltKey : 0) |
+        (event.shiftKey ? KeyboardEventFlags.ShiftKey : 0);
+      output.writeInt(flags);
+    }
+  }
+
+  export class GFXChannelDeserializerContext {
     root: FrameContainer;
     _frames: Frame [];
 
@@ -35,10 +65,10 @@ module Shumway.Remoting.Server {
     }
   }
 
-  export class ChannelDeserializer {
+  export class GFXChannelDeserializer {
     input: IDataInput;
     inputAssets: Array<IDataInput>;
-    context: ChannelDeserializerContext;
+    context: GFXChannelDeserializerContext;
 
     public read() {
       var tag = 0;

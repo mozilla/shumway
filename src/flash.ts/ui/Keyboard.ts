@@ -30,7 +30,7 @@ module Shumway.AVM2.AS.flash.ui {
     /**
      * Converts JS keyboard event into AS3 keyboard events.
      */
-    public dispatchKeyboardEvent(event: KeyboardEvent) {
+    public dispatchKeyboardEvent(event: KeyboardEventData) {
       var keyCode = event.keyCode;
       if (event.type === 'keydown') {
         this._lastKeyCode = keyCode;
@@ -66,6 +66,16 @@ module Shumway.AVM2.AS.flash.ui {
         ));
       }
     }
+  }
+
+  export interface KeyboardEventData {
+    type: string;
+    keyCode: number;
+    charCode: number;
+    location: string;
+    ctrlKey: boolean;
+    altKey: boolean;
+    shiftKey: boolean;
   }
 
   export class Keyboard extends ASNative {

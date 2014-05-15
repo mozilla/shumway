@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module Shumway.Remoting.Client {
+module Shumway.Remoting.Player {
   import MessageTag = Shumway.Remoting.MessageTag;
   import UpdateFrameTagBits = Shumway.Remoting.UpdateFrameTagBits;
 
@@ -25,9 +25,14 @@ module Shumway.Remoting.Client {
   import BlendMode = Shumway.AVM2.AS.flash.display.BlendMode;
   import VisitorFlags = Shumway.AVM2.AS.flash.display.VisitorFlags;
 
+  import Point = Shumway.AVM2.AS.flash.geom.Point;
+  import KeyboardEventData = Shumway.AVM2.AS.flash.ui.KeyboardEventData;
+  import MouseEventAndPointData = Shumway.AVM2.AS.flash.ui.MouseEventAndPointData;
+
+  import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
   import IDataOutput = Shumway.AVM2.AS.flash.utils.IDataOutput;
 
-  export class ChannelSerializer {
+  export class PlayerChannelSerializer {
     public output: IDataOutput;
     public outputAssets: Array<IDataOutput>;
 
@@ -163,4 +168,51 @@ module Shumway.Remoting.Client {
     }
   }
 
+  export class PlayerChannelDeserializer {
+    input: IDataInput;
+
+    public readEvent(): any {
+      var input = this.input;
+      var tag = input.readInt();
+      if (tag === MessageTag.MouseEvent) {
+        return this._readMouseEvent();
+      } else if (tag === MessageTag.KeyboardEvent) {
+        return this._readKeyboardEvent();
+      }
+      assert(false, 'Unknown MessageReader tag: ' + tag);
+    }
+
+    private _readMouseEvent(): MouseEventAndPointData {
+      var input = this.input;
+      var px = input.readFloat();
+      var py = input.readFloat();
+      var typeId = input.readInt();
+      var type = Shumway.Remoting.MouseEventNames[typeId];
+      return {
+        isMouseEvent: true,
+        point: new Point(px, py),
+        type: type
+      };
+    }
+
+    private _readKeyboardEvent(): KeyboardEventData {
+      var input = this.input;
+      var typeId = input.readInt();
+      var type = Shumway.Remoting.KeyboardEventNames[typeId];
+      var keyCode = input.readInt();
+      var charCode = input.readInt();
+      var location = input.readInt();
+      var flags = input.readInt();
+      return {
+        isKeyboardEvent: true,
+        type: type,
+        keyCode: keyCode,
+        charCode: charCode,
+        location: location,
+        ctrlKey: !!(flags & KeyboardEventFlags.CtrlKey),
+        altKey: !!(flags & KeyboardEventFlags.AltKey),
+        shiftKey: !!(flags & KeyboardEventFlags.ShiftKey)
+      };
+    }
+  }
 }

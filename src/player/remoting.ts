@@ -24,8 +24,12 @@ module Shumway.Remoting {
   }
 
   export enum MessageTag {
-    EOF = 0,
-    UpdateFrame   = 1
+    EOF           = 0,
+
+    UpdateFrame   = 100,
+
+    MouseEvent    = 200,
+    KeyboardEvent = 201
   }
 
   /**
@@ -48,5 +52,28 @@ module Shumway.Remoting {
      * All fields are serialized.
      */
     All                    = 2
+  }
+
+
+  export var MouseEventNames: string[] = [
+    'click',
+    'dblclick',
+    'mousedown',
+    'mousemove',
+    'mouseup',
+    'mouseover',
+    'mouseout'
+  ];
+
+  export var KeyboardEventNames: string[] = [
+    'keydown',
+    'keypress',
+    'keyup'
+  ];
+
+  export enum KeyboardEventFlags {
+    CtrlKey  = 0x0001,
+    AltKey   = 0x0002,
+    ShiftKey = 0x0004
   }
 }
