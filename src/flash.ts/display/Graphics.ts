@@ -28,19 +28,13 @@ module Shumway.AVM2.AS.flash.display {
   import LineScaleMode = flash.display.LineScaleMode;
   import CapsStyle = flash.display.CapsStyle;
   import JointStyle = flash.display.JointStyle;
-
-  var ByteArray: typeof flash.utils.ByteArray;
-  var Rectangle: typeof flash.geom.Rectangle;
-  var Point: typeof flash.geom.Point;
+  import geom = flash.geom;
+  import utils = flash.utils;
 
   export class Graphics extends ASNative {
     
     // Called whenever the class is initialized.
-    static classInitializer: any = function () {
-      ByteArray = flash.utils.ByteArray;
-      Rectangle = flash.geom.Rectangle;
-      Point = flash.geom.Point; assert (Point);
-    };
+    static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
     static initializer: any = null;
@@ -64,9 +58,9 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super();
       this._id = DisplayObject._syncID++;
-      this._graphicsData = new ByteArray();
-      this._rect = new flash.geom.Rectangle();
-      this._bounds = new flash.geom.Rectangle();
+      this._graphicsData = new utils.ByteArray();
+      this._rect = new geom.Rectangle();
+      this._bounds = new geom.Rectangle();
       this._parent = null;
     }
     
@@ -75,17 +69,17 @@ module Shumway.AVM2.AS.flash.display {
     
     // AS -> JS Bindings
 
-    _graphicsData: flash.utils.ByteArray;
+    _graphicsData: utils.ByteArray;
 
     /**
      * Bounding box excluding strokes.
      */
-    _rect: flash.geom.Rectangle;
+    _rect: geom.Rectangle;
 
     /**
      * Bounding box including strokes.
      */
-    _bounds: flash.geom.Rectangle;
+    _bounds: geom.Rectangle;
 
     /**
      * Back reference to the display object that references this graphics object. This is
@@ -104,14 +98,14 @@ module Shumway.AVM2.AS.flash.display {
       this._parent._invalidateBounds();
     }
 
-    _getContentBounds(includeStrokes: boolean = true): flash.geom.Rectangle {
+    _getContentBounds(includeStrokes: boolean = true): geom.Rectangle {
       if (includeStrokes) {
         return this._bounds;
       } else {
         return this._rect;
       }
       notImplemented("public flash.display.Graphics::_getContentBounds");
-      return new flash.geom.Rectangle();
+      return new geom.Rectangle();
     }
 
     clear(): void {
@@ -212,7 +206,8 @@ module Shumway.AVM2.AS.flash.display {
       this.lineTo(x, y + height);
       this.lineTo(x, y);
 
-      this._rect = this._bounds = new Rectangle(x * 20 | 0, y * 20 | 0, width * 20 | 0, height * 20 | 0);
+      this._rect = this._bounds = new geom.Rectangle(x * 20 | 0, y * 20 | 0,
+                                                     width * 20 | 0, height * 20 | 0);
       this._invalidateParent();
     }
 

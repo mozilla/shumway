@@ -20,16 +20,10 @@ module Shumway.AVM2.AS.flash.display {
 
   import Timeline = Shumway.Timeline;
 
-  var DisplayObject: typeof flash.display.DisplayObject;
-  var DisplayObjectContainer: typeof flash.display.DisplayObjectContainer;
-
   export class Sprite extends flash.display.DisplayObjectContainer {
 
     // Called whenever the class is initialized.
-    static classInitializer: any = function () {
-      DisplayObject = flash.display.DisplayObject;
-      DisplayObjectContainer = flash.display.DisplayObjectContainer;
-    };
+    static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Timeline.SpriteSymbol) {

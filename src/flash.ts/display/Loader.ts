@@ -30,13 +30,7 @@ module Shumway.AVM2.AS.flash.display {
   import ActionScriptVersion = flash.display.ActionScriptVersion;
   import BlendMode = flash.display.BlendMode;
 
-  var Event: typeof flash.events.Event;
-  var ProgressEvent: typeof flash.events.ProgressEvent;
-  var IOErrorEvent: typeof flash.events.IOErrorEvent;
-  var LoaderInfo: typeof flash.display.LoaderInfo;
-  var MovieClip: typeof flash.display.MovieClip;
-  var Bitmap: typeof flash.display.Bitmap;
-  var BitmapData: typeof flash.display.BitmapData;
+  import events = flash.events;
 
   enum LoadStatus {
     Unloaded    = 0,
@@ -63,14 +57,6 @@ module Shumway.AVM2.AS.flash.display {
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
-      Event = flash.events.Event;
-      ProgressEvent = flash.events.ProgressEvent;
-      IOErrorEvent = flash.events.IOErrorEvent;
-      LoaderInfo = flash.display.LoaderInfo;
-      MovieClip = flash.display.MovieClip;
-      Bitmap = flash.display.Bitmap;
-      BitmapData = flash.display.BitmapData;
-
       Loader._rootLoader = null;
       Loader._loadQueue = [];
     };
@@ -99,10 +85,9 @@ module Shumway.AVM2.AS.flash.display {
         switch (instance._loadStatus) {
           case LoadStatus.Unloaded:
             if (bytesTotal) {
-              loaderInfo.dispatchEvent(Event.getInstance(Event.OPEN));
-              loaderInfo.dispatchEvent(
-                new ProgressEvent(ProgressEvent.PROGRESS, false, false, 0, bytesTotal)
-              );
+              loaderInfo.dispatchEvent(events.Event.getInstance(Event.OPEN));
+              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+                                                                false, false, 0, bytesTotal));
               if (instance._content) {
                 instance.addChildAtDepth(instance._content, 0);
               }
@@ -113,17 +98,17 @@ module Shumway.AVM2.AS.flash.display {
           case LoadStatus.Opened:
             if (instance._content && instance._content._hasFlags(DisplayObjectFlags.Constructed)) {
               instance._loadStatus = LoadStatus.Initialized;
-              loaderInfo.dispatchEvent(Event.getInstance(Event.INIT));
+              loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.INIT));
             } else {
               break;
             }
           case LoadStatus.Initialized:
             if (bytesLoaded === bytesTotal) {
               instance._loadStatus = LoadStatus.Complete;
-              loaderInfo.dispatchEvent(
-                new ProgressEvent(ProgressEvent.PROGRESS, false, false, bytesLoaded, bytesTotal)
-              );
-              loaderInfo.dispatchEvent(Event.getInstance(Event.COMPLETE));
+              loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
+                                                                false, false, bytesLoaded,
+                                                                bytesTotal));
+              loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
               queue.shift();
               i--;
             }
@@ -207,9 +192,8 @@ module Shumway.AVM2.AS.flash.display {
             assert (loaderInfo._bytesTotal === bytesTotal, "Total bytes should not change.");
           }
           if (this._loadStatus !== LoadStatus.Unloaded) {
-            loaderInfo.dispatchEvent(
-              new ProgressEvent(ProgressEvent.PROGRESS, false, false, bytesLoaded, bytesTotal)
-            );
+            loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS, false,
+                                                              false, bytesLoaded, bytesTotal));
           }
           break;
         case 'complete':
@@ -223,7 +207,8 @@ module Shumway.AVM2.AS.flash.display {
         //  this._lastPromise = Promise.resolve();
         //  break;
         case 'error':
-          this._contentLoaderInfo.dispatchEvent(new IOErrorEvent(IOErrorEvent.IO_ERROR));
+          this._contentLoaderInfo.dispatchEvent(new events.IOErrorEvent(
+                                                    events.IOErrorEvent.IO_ERROR));
           break;
         default:
           //TODO: fix special-casing. Might have to move document class out of dictionary[0]
@@ -483,7 +468,7 @@ module Shumway.AVM2.AS.flash.display {
       this._worker = null;
       this._lastPromise = this._startPromise;
       this._loadStatus = LoadStatus.Unloaded;
-      this.dispatchEvent(Event.getInstance(Event.UNLOAD));
+      this.dispatchEvent(events.Event.getInstance(events.Event.UNLOAD));
     }
 
     _getJPEGLoaderContextdeblockingfilter(context: flash.system.LoaderContext): number {
@@ -493,10 +478,10 @@ module Shumway.AVM2.AS.flash.display {
       return 0.0;
     }
 
-    _getUncaughtErrorEvents(): flash.events.UncaughtErrorEvents {
+    _getUncaughtErrorEvents(): events.UncaughtErrorEvents {
       notImplemented("public flash.display.Loader::_getUncaughtErrorEvents"); return;
     }
-    _setUncaughtErrorEvents(value: flash.events.UncaughtErrorEvents): void {
+    _setUncaughtErrorEvents(value: events.UncaughtErrorEvents): void {
       value = value;
       notImplemented("public flash.display.Loader::_setUncaughtErrorEvents"); return;
     }

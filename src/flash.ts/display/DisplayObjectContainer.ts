@@ -22,7 +22,7 @@ module Shumway.AVM2.AS.flash.display {
 
   import VisitorFlags = flash.display.VisitorFlags;
 
-  var Event: typeof flash.events.Event;
+  import events = flash.events;
 
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
     static bindings: string [] = null;
@@ -30,8 +30,6 @@ module Shumway.AVM2.AS.flash.display {
     private static _instances: DisplayObjectContainer [];
 
     static classInitializer: any = function () {
-      Event = flash.events.Event;
-
       DisplayObjectContainer._instances = [];
     };
 
@@ -94,9 +92,9 @@ module Shumway.AVM2.AS.flash.display {
         //  instance._dispatchEvent("load");
         //}
 
-        child.dispatchEvent(Event.getInstance(Event.ADDED, true));
+        child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
         if (this.stage) {
-          child.dispatchEvent(Event.getInstance(Event.ADDED_TO_STAGE));
+          child.dispatchEvent(events.Event.getInstance(events.Event.ADDED_TO_STAGE));
         }
       }
     }
@@ -120,7 +118,7 @@ module Shumway.AVM2.AS.flash.display {
       var old = this._tabChildren;
       this._tabChildren = enable;
       if (old !== enable) {
-        this.dispatchEvent(Event.getInstance(Event.TAB_CHILDREN_CHANGE, true));
+        this.dispatchEvent(events.Event.getInstance(events.Event.TAB_CHILDREN_CHANGE, true));
       }
     }
 
@@ -168,11 +166,11 @@ module Shumway.AVM2.AS.flash.display {
       child._index = index;
       child._parent = this;
       child._invalidatePosition();
-      child.dispatchEvent(Event.getInstance(Event.ADDED, true));
+      child.dispatchEvent(events.Event.getInstance(events.Event.ADDED, true));
       // ADDED event handlers may remove the child from the stage, in such cases
       // we should not dispatch the ADDED_TO_STAGE event.
       if (child.stage) {
-        child._propagateEvent(Event.getInstance(Event.ADDED_TO_STAGE));
+        child._propagateEvent(events.Event.getInstance(events.Event.ADDED_TO_STAGE));
       }
       this._invalidateChildren();
       return child;
@@ -223,9 +221,9 @@ module Shumway.AVM2.AS.flash.display {
 
       var child = children[index];
       if (child._hasFlags(DisplayObjectFlags.Constructed)) {
-        child.dispatchEvent(Event.getInstance(Event.REMOVED, true));
+        child.dispatchEvent(events.Event.getInstance(events.Event.REMOVED, true));
         if (this.stage) {
-          child._propagateEvent(Event.getInstance(Event.REMOVED_FROM_STAGE));
+          child._propagateEvent(events.Event.getInstance(events.Event.REMOVED_FROM_STAGE));
         }
         // Children list might have been mutated by the REMOVED or REMOVED_FROM_STAGE event,
         // we may need to operate on the new index of the child.
