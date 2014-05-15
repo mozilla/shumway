@@ -218,13 +218,13 @@ module Shumway.Timeline {
       this.isRoot = isRoot;
     }
 
-    static createFromData(data: any, loader: flash.display.Loader): SpriteSymbol {
+    static createFromData(data: any, loaderInfo: flash.display.LoaderInfo): SpriteSymbol {
       var symbol = new SpriteSymbol(data.id);
       symbol.numFrames = data.frameCount;
       var frames = data.frames;
       for (var i = 0; i < frames.length; i++) {
         var frameInfo = frames[i];
-        var frame = new Frame(loader.loaderInfo, frameInfo.commands);
+        var frame = new Frame(loaderInfo, frameInfo.commands);
         var repeat = frameInfo.repeat;
         while (repeat--) {
           symbol.frames.push(frame);
