@@ -25,16 +25,24 @@
 ///<reference path='../gfx/references.ts' />
 ///<reference path='../flash.ts/references.ts' />
 
-declare var timeline: any;
-declare var shumwayOptions: any;
+// declare var timeline: any;
+// declare var shumwayOptions: any;
 
 module Shumway {
-  export var playerOptions = shumwayOptions.register(new Shumway.Options.OptionSet("Player Options"));
+  import Option = Shumway.Options.Option;
+  import OptionSet = Shumway.Options.OptionSet;
 
-  /**
-   * This provides a way to disable display tree synchronization.
-   */
-  export var enablePumpUpdates = playerOptions.register (
-    new Option("", "enablePumpUpdates", "boolean", true, "Serialize display tree.")
+  export var playerOptions = shumwayOptions.register(new OptionSet("Player Options"));
+
+  export var pumpEnabled = playerOptions.register (
+    new Shumway.Options.Option("", "Enable Pump", "boolean", true, "Enable display tree serialization.")
+  );
+
+  export var pumpRate = playerOptions.register (
+    new Shumway.Options.Option("", "Pump Rate", "number", 60, "Number of times / second that the display list is synchronized.", {range: { min: 0, max: 60, step: 1 }})
+  );
+
+  export var frameRate = playerOptions.register (
+    new Shumway.Options.Option("", "Frame Rate", "number", -1, "Override a movie's frame rate, set to -1 to use the movies default frame rate.", {range: { min: -1, max: 60, step: 1 }})
   );
 }

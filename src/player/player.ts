@@ -143,12 +143,12 @@ module Shumway {
     private _enterSyncLoop(): void {
       var self = this;
       (function tick() {
-        self._syncTimeout = setTimeout(tick, 1000 / Player._syncFrameRate);
-        timeline && timeline.enter("pumpUpdates");
-        if (enablePumpUpdates.value) {
+        self._syncTimeout = setTimeout(tick, 1000 / pumpRate.value);
+        timeline && timeline.enter("pump");
+        if (pumpEnabled.value) {
           self._pumpDisplayListUpdates()
         }
-        timeline && timeline.leave("pumpUpdates");
+        timeline && timeline.leave("pump");
       })();
     }
 
@@ -162,7 +162,8 @@ module Shumway {
       var stage = this._stage;
       var rootInitialized = false;
       (function tick() {
-        self._frameTimeout = setTimeout(tick, 1000 / stage.frameRate);
+        var fps = (frameRate.value >= 0 ? frameRate.value : stage.frameRate)
+        self._frameTimeout = setTimeout(tick, 1000 / fps);
         timeline && timeline.enter("eventLoop");
 
         MovieClip.initFrame();
