@@ -20,10 +20,7 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
   import Telemetry = Shumway.Telemetry;
-
-  var Scene: typeof flash.display.Scene;
-  var FrameLabel: typeof flash.display.FrameLabel;
-  var Event: typeof flash.events.Event;
+  import events = flash.events;
 
   export class MovieClip extends flash.display.Sprite {
 
@@ -32,10 +29,6 @@ module Shumway.AVM2.AS.flash.display {
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
-      Scene = flash.display.Scene;
-      FrameLabel = flash.display.FrameLabel;
-      Event = flash.events.Event;
-
       MovieClip._instances = [];
       MovieClip._callQueue = [];
     };
@@ -91,12 +84,12 @@ module Shumway.AVM2.AS.flash.display {
           instance._advanceFrame();
         }
       }
-      DisplayObject._broadcastFrameEvent(Event.ENTER_FRAME);
+      DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
     }
 
     static constructFrame() {
       DisplayObjectContainer.constructChildren();
-      DisplayObject._broadcastFrameEvent(Event.FRAME_CONSTRUCTED);
+      DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
       var queue = MovieClip._callQueue;
       while (queue.length) {
         var instance = queue.shift();
@@ -108,7 +101,7 @@ module Shumway.AVM2.AS.flash.display {
           instance._constructChildren();
         }
       }
-      DisplayObject._broadcastFrameEvent(Event.EXIT_FRAME);
+      DisplayObject._broadcastFrameEvent(events.Event.EXIT_FRAME);
     }
 
     constructor () {
