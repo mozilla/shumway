@@ -17,20 +17,21 @@ module Shumway.Remoting.Player {
   import MessageTag = Shumway.Remoting.MessageTag;
   import UpdateFrameTagBits = Shumway.Remoting.UpdateFrameTagBits;
 
-  import Stage = Shumway.AVM2.AS.flash.display.Stage;
-  import Graphics = Shumway.AVM2.AS.flash.display.Graphics;
-  import DisplayObject = Shumway.AVM2.AS.flash.display.DisplayObject;
-  import DisplayObjectFlags = Shumway.AVM2.AS.flash.display.DisplayObjectFlags;
-  import DisplayObjectContainer = Shumway.AVM2.AS.flash.display.DisplayObjectContainer;
-  import BlendMode = Shumway.AVM2.AS.flash.display.BlendMode;
-  import VisitorFlags = Shumway.AVM2.AS.flash.display.VisitorFlags;
+  import flash = Shumway.AVM2.AS.flash;
+  import Stage = flash.display.Stage;
+  import Graphics = flash.display.Graphics;
+  import DisplayObject = flash.display.DisplayObject;
+  import DisplayObjectFlags = flash.display.DisplayObjectFlags;
+  import DisplayObjectContainer = flash.display.DisplayObjectContainer;
+  import BlendMode = flash.display.BlendMode;
+  import VisitorFlags = flash.display.VisitorFlags;
 
-  import Point = Shumway.AVM2.AS.flash.geom.Point;
-  import KeyboardEventData = Shumway.AVM2.AS.flash.ui.KeyboardEventData;
-  import MouseEventAndPointData = Shumway.AVM2.AS.flash.ui.MouseEventAndPointData;
+  import Point = flash.geom.Point;
+  import KeyboardEventData = flash.ui.KeyboardEventData;
+  import MouseEventAndPointData = flash.ui.MouseEventAndPointData;
 
-  import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
-  import IDataOutput = Shumway.AVM2.AS.flash.utils.IDataOutput;
+  import IDataInput = flash.utils.IDataInput;
+  import IDataOutput = flash.utils.IDataOutput;
 
   export class PlayerChannelSerializer {
     public output: IDataOutput;
@@ -115,7 +116,7 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeMatrix(matrix: Shumway.AVM2.AS.flash.geom.Matrix) {
+    writeMatrix(matrix: flash.geom.Matrix) {
       var output = this.output;
       output.writeFloat(matrix.a);
       output.writeFloat(matrix.b);
@@ -125,7 +126,7 @@ module Shumway.Remoting.Player {
       output.writeFloat(matrix.ty);
     }
 
-    writeRectangle(rect: Shumway.AVM2.AS.flash.geom.Rectangle) {
+    writeRectangle(rect: flash.geom.Rectangle) {
       var output = this.output;
       output.writeFloat(rect.x);
       output.writeFloat(rect.y);
@@ -133,7 +134,7 @@ module Shumway.Remoting.Player {
       output.writeFloat(rect.height);
     }
 
-    writeColorTransform(colorTransform: Shumway.AVM2.AS.flash.geom.ColorTransform) {
+    writeColorTransform(colorTransform: flash.geom.ColorTransform) {
       var output = this.output;
       var rm = colorTransform.redMultiplier;
       var gm = colorTransform.greenMultiplier;
