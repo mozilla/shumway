@@ -45,9 +45,9 @@ module Shumway.AVM2.AS.flash.display {
       //bitmapData = bitmapData;
       false && super();
       DisplayObject.instanceConstructorNoInitialize.call(this);
-      this._bitmapData = bitmapData;
       this._pixelSnapping = asCoerceString(pixelSnapping);
       this._smoothing = !!smoothing;
+      this.bitmapData = bitmapData;
     }
     
     // JS -> AS Bindings
@@ -81,7 +81,9 @@ module Shumway.AVM2.AS.flash.display {
 
     set bitmapData(value: flash.display.BitmapData) {
       this._bitmapData = value;
-      this._setBoundsFromSymbol(value.width * 20, value.height * 20);
+      if (value) {
+        this._setBoundsFromWidthAndHeight(value.width * 20, value.height * 20);
+      }
       if (this._parent) {
         this._parent._invalidateBounds();
       }
