@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+///<reference path='../options.ts' />
 ///<reference path='frameScheduler.ts' />
 ///<reference path='player.ts' />
 ///<reference path='timeline.ts' />
@@ -23,3 +24,17 @@
 ///<reference path='../avm2/references.ts' />
 ///<reference path='../gfx/references.ts' />
 ///<reference path='../flash.ts/references.ts' />
+
+declare var timeline: any;
+declare var shumwayOptions: any;
+
+module Shumway {
+  export var playerOptions = shumwayOptions.register(new Shumway.Options.OptionSet("Player Options"));
+
+  /**
+   * This provides a way to disable display tree synchronization.
+   */
+  export var enablePumpUpdates = playerOptions.register (
+    new Option("", "enablePumpUpdates", "boolean", true, "Serialize display tree.")
+  );
+}

@@ -131,7 +131,9 @@ module Shumway {
       (function tick() {
         self._syncTimeout = setTimeout(tick, 1000 / Player._syncFrameRate);
         timeline && timeline.enter("pumpUpdates");
-        self._pumpDisplayListUpdates()
+        if (enablePumpUpdates.value) {
+          self._pumpDisplayListUpdates()
+        }
         timeline && timeline.leave("pumpUpdates");
       })();
     }
