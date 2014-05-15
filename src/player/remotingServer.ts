@@ -162,6 +162,8 @@ module Shumway.Remoting.Server {
       }
       if (hasBits & UpdateFrameTagBits.HasMiscellaneousProperties) {
         frame.blendMode = input.readInt();
+        // TODO: Should make a proper flag for this.
+        frame.alpha = input.readBoolean() ? 1 : 0;
       }
     }
   }

@@ -1143,7 +1143,8 @@ module Shumway.AVM2.AS.flash.display {
       if (value === this._hasFlags(DisplayObjectFlags.Visible)) {
         return;
       }
-      this._setFlags(DisplayObjectFlags.Visible);
+      this._toggleFlags(DisplayObjectFlags.Visible, value);
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
 
     get z(): number {

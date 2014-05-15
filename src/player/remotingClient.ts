@@ -100,6 +100,7 @@ module Shumway.Remoting.Client {
       }
       if (hasMiscellaneousProperties) {
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
+        this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
       }
       if (this.clearDirtyBits) {
         displayObject._removeFlags(DisplayObjectFlags.Dirty);
