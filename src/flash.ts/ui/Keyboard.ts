@@ -25,7 +25,7 @@ module Shumway.AVM2.AS.flash.ui {
     private _lastKeyCode = 0;
     private _captureKeyPress = false;
     private _charCodeMap: any [] = [];
-    focus: flash.events.EventDispatcher;
+    target: flash.events.EventDispatcher;
 
     /**
      * Converts JS keyboard event into AS3 keyboard events.
@@ -51,9 +51,9 @@ module Shumway.AVM2.AS.flash.ui {
         }
       }
 
-      if (this.focus) {
+      if (this.target) {
         var isKeyUp = event.type === 'keyup';
-        this.focus.dispatchEvent(new flash.events.KeyboardEvent (
+        this.target.dispatchEvent(new flash.events.KeyboardEvent (
           isKeyUp ? 'keyUp' : 'keyDown',
           true,
           false,

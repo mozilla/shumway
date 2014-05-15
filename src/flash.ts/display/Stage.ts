@@ -173,8 +173,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set focus(newFocus: flash.display.InteractiveObject) {
-      //this._focus = newFocus;
-      notImplemented("public flash.display.Stage::set focus"); return;
+      this._focus = newFocus;
     }
 
     get colorCorrection(): string {

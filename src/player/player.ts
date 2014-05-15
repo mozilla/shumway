@@ -87,9 +87,12 @@ module Shumway {
       this._mouseEventDispatcher.stage = this._stage;
       this._mouseEventDispatcher.dispatchMouseEvent(event, point);
     }
-
+2
     public dispatchKeyboardEvent(event: KeyboardEvent) {
-      this._keyboardEventDispatcher.focus = this._stage;
+      // If the stage doesn't have a focus then dispatch events on the stage
+      // directly.
+      var target = this._stage.focus ? this._stage.focus : this._stage;
+      this._keyboardEventDispatcher.target = target;
       this._keyboardEventDispatcher.dispatchKeyboardEvent(event);
     }
 
