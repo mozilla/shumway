@@ -23,16 +23,11 @@ module Shumway.AVM2.AS.flash.display {
   import ColorCorrection = flash.display.ColorCorrection;
   import ColorCorrectionSupport = flash.display.ColorCorrectionSupport;
   import StageQuality = flash.display.StageQuality;
-
-  var DisplayObject: typeof flash.display.DisplayObject;
-  var Event: typeof flash.events.Event;
+  import Event = flash.events.Event;
 
   export class Stage extends flash.display.DisplayObjectContainer {
 
-    static classInitializer: any = function () {
-      DisplayObject = flash.display.DisplayObject;
-      Event = flash.events.Event;
-    };
+    static classInitializer: any = null;
 
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // ["name", "mask", "visible", "x", "y", "z", "scaleX", "scaleY", "scaleZ", "rotation", "rotationX", "rotationY", "rotationZ", "alpha", "cacheAsBitmap", "opaqueBackground", "scrollRect", "filters", "blendMode", "transform", "accessibilityProperties", "scale9Grid", "tabEnabled", "tabIndex", "focusRect", "mouseEnabled", "accessibilityImplementation", "width", "width", "height", "height", "textSnapshot", "mouseChildren", "mouseChildren", "numChildren", "tabChildren", "tabChildren", "contextMenu", "constructor", "constructor", "addChild", "addChildAt", "setChildIndex", "addEventListener", "hasEventListener", "willTrigger", "dispatchEvent"];

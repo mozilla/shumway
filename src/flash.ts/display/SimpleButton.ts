@@ -18,14 +18,10 @@ module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
-  var DisplayObject: typeof flash.display.DisplayObject;
-
   export class SimpleButton extends flash.display.InteractiveObject {
 
     // Called whenever the class is initialized.
-    static classInitializer: any = function () {
-      DisplayObject = flash.display.DisplayObject;
-    };
+    static classInitializer: any = null;
 
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.Timeline.ButtonSymbol) {

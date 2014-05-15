@@ -29,9 +29,22 @@ module Shumway {
   import Loader = flash.display.Loader;
   import VisitorFlags = flash.display.VisitorFlags;
 
-
   import MouseEventDispatcher = flash.ui.MouseEventDispatcher;
   import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
+
+  declare var timeline: Timeline;
+
+  export interface IPlayerChannel {
+    sendUpdates(updates: ByteArray, assets: Array<ByteArray>);
+    registerForMouseEvents(listener: (event: MouseEvent, point: Point) => void);
+    registerForKeyboardEvents(listener: (event: KeyboardEvent) => void);
+  }
+
+  export interface IGFXChannel {
+    registerForUpdates(listener: (updates: ByteArray, assets: Array<ByteArray>) => void);
+    sendMouseEvent(event: MouseEvent, point: Point);
+    sendKeyboardEvent(event: KeyboardEvent);
+  }
 
   /**
    * Shumway Player
@@ -45,19 +58,21 @@ module Shumway {
     private _loaderInfo: flash.display.LoaderInfo;
     private _syncTimeout: number;
     private _frameTimeout: number;
-    private _frameContainer: FrameContainer;
+    private _channel: IPlayerChannel;
 
     private static _syncFrameRate = 60;
-    private _context: Remoting.Server.ChannelDeserializerContext;
 
     private _mouseEventDispatcher: MouseEventDispatcher;
     private _keyboardEventDispatcher: KeyboardEventDispatcher;
 
-    constructor(frameContainer: FrameContainer) {
-      this._frameContainer = frameContainer;
+    constructor(channel: IPlayerChannel) {
+      this._channel = channel;
+
       this._keyboardEventDispatcher = new KeyboardEventDispatcher();
       this._mouseEventDispatcher = new MouseEventDispatcher();
-      this._context = new Shumway.Remoting.Server.ChannelDeserializerContext(this._frameContainer);
+
+      channel.registerForMouseEvents(this.dispatchMouseEvent.bind(this));
+      channel.registerForKeyboardEvents(this.dispatchKeyboardEvent.bind(this));
     }
 
     public load(url: string) {
@@ -87,7 +102,7 @@ module Shumway {
       this._mouseEventDispatcher.stage = this._stage;
       this._mouseEventDispatcher.dispatchMouseEvent(event, point);
     }
-2
+
     public dispatchKeyboardEvent(event: KeyboardEvent) {
       // If the stage doesn't have a focus then dispatch events on the stage
       // directly.
@@ -102,9 +117,11 @@ module Shumway {
     }
 
     private _pumpDisplayListUpdates(): void {
-      var byteArray = new ByteArray();
+      var updates = new ByteArray();
+      var assets = new Array<ByteArray>();
       var serializer = new Shumway.Remoting.Client.ChannelSerializer();
-      serializer.output = byteArray;
+      serializer.output = updates;
+      serializer.outputAssets = assets;
 
       serializer.writeReferences = false;
       serializer.clearDirtyBits = false;
@@ -114,13 +131,10 @@ module Shumway {
       serializer.clearDirtyBits = true;
       serializer.writeStage(this._stage);
 
-      byteArray.writeInt(Shumway.Remoting.MessageTag.EOF);
-      byteArray.position = 0;
+      updates.writeInt(Shumway.Remoting.MessageTag.EOF);
+      updates.position = 0;
 
-      var deserializer = new Remoting.Server.ChannelDeserializer();
-      deserializer.input = byteArray;
-      deserializer.context = this._context;
-      deserializer.read();
+      this._channel.sendUpdates(updates, assets);
     }
 
     /**
@@ -172,7 +186,7 @@ module Shumway {
     }
   }
 
-  export class EaselEmbedding {
+  class EaselHost {
     private static _mouseEvents = [
       'click',
       'dblclick',
@@ -189,40 +203,95 @@ module Shumway {
       'keyup'
     ];
 
+    private _easel: Easel;
+    private _channel: IGFXChannel;
+    private _frameContainer: FrameContainer;
+    private _context: Remoting.Server.ChannelDeserializerContext;
+
+    constructor(easel: Easel, channel: IGFXChannel) {
+      this._easel = easel;
+      this._channel = channel;
+      var frameContainer = easel.world;
+      this._frameContainer = frameContainer;
+      this._context = new Shumway.Remoting.Server.ChannelDeserializerContext(this._frameContainer);
+
+      channel.registerForUpdates(this.readData.bind(this));
+    }
+
     private _mouseEventListener(event: MouseEvent) {
       var position = this._easel.getMouseWorldPosition(event);
       var point = new Point(position.x, position.y);
-      this._player.dispatchMouseEvent(event, point);
+      this._channel.sendMouseEvent(event, point);
     }
 
     private _keyboardEventListener(event: KeyboardEvent) {
-      this._player.dispatchKeyboardEvent(event);
+      this._channel.sendKeyboardEvent(event);
     }
 
-    private _addEventListeners() {
+    _addEventListeners() {
       var mouseEventListener = this._mouseEventListener.bind(this);
       var keyboardEventListener = this._keyboardEventListener.bind(this);
-      var mouseEvents = EaselEmbedding._mouseEvents;
+      var mouseEvents = EaselHost._mouseEvents;
       for (var i = 0; i < mouseEvents.length; i++) {
         window.addEventListener(mouseEvents[i], mouseEventListener);
       }
-      var keyboardEvents = EaselEmbedding._keyboardEvents;
+      var keyboardEvents = EaselHost._keyboardEvents;
       for (var i = 0; i < keyboardEvents.length; i++) {
         window.addEventListener(keyboardEvents[i], keyboardEventListener);
       }
     }
 
-    private _easel: Easel;
-    private _player: Player;
+    readData(updates: ByteArray, assets: Array<ByteArray>) {
+      var deserializer = new Remoting.Server.ChannelDeserializer();
+      deserializer.input = updates;
+      deserializer.inputAssets = assets;
+      deserializer.context = this._context;
+      deserializer.read();
+    }
+  }
 
-    constructor(easel: Easel, player: Player) {
-      this._easel = easel;
-      this._player = player;
-      this._addEventListeners();
+  export class EaselEmbedding implements IPlayerChannel, IGFXChannel {
+
+    private _player: Player;
+    private _easelHost: EaselHost;
+
+    private _channelMouseEventListener: (event: MouseEvent, point: Point) => void;
+    private _channelKeyboardEventListener: (event: KeyboardEvent) => void;
+    private _channelUpdatesListener: (updates: ByteArray, assets: Array<ByteArray>) => void;
+
+    constructor(easel: Easel) {
+      this._easelHost = new EaselHost(easel, this);
+      this._easelHost._addEventListeners();
+    }
+
+    // IPlayerChannel
+    sendUpdates(updates: ByteArray, assets: Array<ByteArray>) : void {
+      this._channelUpdatesListener(updates, assets);
+    }
+    registerForMouseEvents(listener: (event: MouseEvent, point: Point) => void) : void {
+      this._channelMouseEventListener = listener;
+    }
+    registerForKeyboardEvents (listener: (event: KeyboardEvent) => void) : void {
+      this._channelKeyboardEventListener = listener;
+    }
+
+    // IGFXChannel
+    registerForUpdates(listener: (updates: ByteArray, assets: Array<ByteArray>) => void) {
+      this._channelUpdatesListener = listener;
+    }
+    sendMouseEvent(event: MouseEvent, point: Point) {
+      if (this._channelMouseEventListener) {
+        this._channelMouseEventListener(event, point);
+      }
+    }
+    sendKeyboardEvent(event: KeyboardEvent) {
+      if (this._channelKeyboardEventListener) {
+        this._channelKeyboardEventListener(event);
+      }
     }
 
     public embed(): Player {
-      return this._player = new Shumway.Player(this._easel.world);
+      return this._player = new Shumway.Player(this);
     }
   }
 }

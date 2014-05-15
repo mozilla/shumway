@@ -408,7 +408,7 @@
 
 ///<reference path='../player/timeline.ts' />
 ///<reference path='../player/remoting.ts' />
-///<reference path='../player/remotingClient.ts' />
+///<reference path='../player/remotingPlayer.ts' />
 
 ///<reference path='../avm1lib/references.ts' />
 

@@ -29,6 +29,7 @@ module Shumway.Remoting.Client {
 
   export class ChannelSerializer {
     public output: IDataOutput;
+    public outputAssets: Array<IDataOutput>;
 
     public writeReferences: boolean = false;
     public clearDirtyBits: boolean = false;
@@ -49,9 +50,11 @@ module Shumway.Remoting.Client {
       this.output.writeInt(MessageTag.UpdateFrame);
       this.output.writeInt(graphics._id);
       this.output.writeInt(0); // Not a container.
-      var hasBits = UpdateFrameTagBits.HasBounds;
+      var hasBits = UpdateFrameTagBits.HasBounds | UpdateFrameTagBits.HasShapeData;
       this.output.writeInt(hasBits);
       this.writeRectangle(graphics._getContentBounds());
+      this.output.writeInt(this.outputAssets.length);
+      this.outputAssets.push(graphics._graphicsData);
     }
 
     writeDisplayObject(displayObject: DisplayObject) {

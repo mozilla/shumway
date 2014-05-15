@@ -32,6 +32,7 @@ module Shumway.Timeline {
 
     static createFromData(data: any): Symbol {
       abstractMethod("createFromData");
+      return null;
     }
   }
 
@@ -138,8 +139,9 @@ module Shumway.Timeline {
         symbol.textHeight = tag.fontHeight;
         symbol.font = null;
         if (tag.fontClass) {
-          var appDomain = AVM2.instance.applicationDomain;
-          symbol.fontClass = appDomain.getClass(tag.fontClass);
+          var appDomain = Shumway.AVM2.Runtime.AVM2.instance.applicationDomain;
+          symbol.fontClass = <flash.text.Font><any>
+            appDomain.getClass(tag.fontClass);
         }
       }
       if (tag.hasLayout) {
@@ -216,13 +218,13 @@ module Shumway.Timeline {
       this.isRoot = isRoot;
     }
 
-    static createFromData(data: any, loader: flash.display.Loader): SpriteSymbol {
+    static createFromData(data: any, loaderInfo: flash.display.LoaderInfo): SpriteSymbol {
       var symbol = new SpriteSymbol(data.id);
       symbol.numFrames = data.frameCount;
       var frames = data.frames;
       for (var i = 0; i < frames.length; i++) {
         var frameInfo = frames[i];
-        var frame = new Frame(loader, frameInfo.commands);
+        var frame = new Frame(loaderInfo, frameInfo.commands);
         var repeat = frameInfo.repeat;
         while (repeat--) {
           symbol.frames.push(frame);

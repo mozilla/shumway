@@ -89,7 +89,7 @@
 
   unitTests.push(function runInspectorSanityTests() {
     var easel = createEasel();
-    var p = new Shumway.Player(easel.world);
+    var p = new Shumway.EaselEmbedding(easel).embed();
     p.load("../../ex~/paralax/w.swf");
   });
 

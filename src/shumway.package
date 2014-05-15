@@ -131,8 +131,6 @@ src/avm1/interpreter.js
 #src/avm2/bin/candy.as.js
 #!inline console.timeEnd("Load Compiled Code Cache");
 
-src/player/timeline.js
-
 ## Load Flash TS Dependencies
 #!inline console.time("Load Flash TS Dependencies");
 src/flash.ts/geom/Matrix.js
@@ -559,8 +557,9 @@ src/avm1lib/AS2Utils.js
 
 src/player/references.js
 src/player/remoting.js
-src/player/remotingClient.js
-src/player/remotingServer.js
+src/player/timeline.js
+src/player/remotingPlayer.js
+src/player/remotingGfx.js
 src/player/player.js
 
 #!inline console.timeEnd("Load Player Dependencies");
