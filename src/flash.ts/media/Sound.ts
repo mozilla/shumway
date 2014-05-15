@@ -61,7 +61,7 @@ module Shumway.AVM2.AS.flash.media {
     static classInitializer: any = null;
     
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol1: Sound) {
+    static initializer: any = function (symbol: Sound) {
       this._playQueue = [];
       this._url = null;
       this._length = 0;
@@ -71,27 +71,27 @@ module Shumway.AVM2.AS.flash.media {
 
       Telemetry.instance.reportTelemetry({topic: 'feature', feature: Telemetry.Feature.SOUND_FEATURE});
 
-      if (symbol1) {
-        notImplemented("public flash.media.Sound::initializer");
-        var symbol:any = symbol1;
-        var soundData = new SoundData();
-        if (symbol.pcm) {
-          soundData.sampleRate = symbol.sampleRate;
-          soundData.channels = symbol.channels;
-          soundData.pcm = symbol.pcm;
-          soundData.end = symbol.pcm.length;
-        }
-        soundData.completed = true;
-        if (symbol.packaged) {
-          soundData.data = symbol.packaged.data.buffer;
-          soundData.mimeType = symbol.packaged.mimeType;
-        }
-        var _this = this;
-        getAudioDescription(soundData, function (description) {
-          _this._length = description.duration;
-        });
-        this._soundData = soundData;
-      }
+      //if (symbol1) {
+      //  notImplemented("public flash.media.Sound::initializer");
+      //  var symbol:any = symbol1;
+      //  var soundData = new SoundData();
+      //  if (symbol.pcm) {
+      //    soundData.sampleRate = symbol.sampleRate;
+      //    soundData.channels = symbol.channels;
+      //    soundData.pcm = symbol.pcm;
+      //    soundData.end = symbol.pcm.length;
+      //  }
+      //  soundData.completed = true;
+      //  if (symbol.packaged) {
+      //    soundData.data = symbol.packaged.data.buffer;
+      //    soundData.mimeType = symbol.packaged.mimeType;
+      //  }
+      //  var _this = this;
+      //  getAudioDescription(soundData, function (description) {
+      //    _this._length = description.duration;
+      //  });
+      //  this._soundData = soundData;
+      //}
     };
     
     // List of static symbols to link.

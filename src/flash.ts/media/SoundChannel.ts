@@ -164,10 +164,10 @@ module Shumway.AVM2.AS.flash.media {
       this._pcmData = null;
       this._soundTransform = new flash.media.SoundTransform();
 
-      this._element = symbol._element || null;
-      if (this._element) {
-        this._registerWithSoundMixer();
-      }
+      //this._element = symbol._element || null;
+      //if (this._element) {
+      //  this._registerWithSoundMixer();
+      //}
     };
     
     // List of static symbols to link.
