@@ -29,9 +29,10 @@ module Shumway {
   import Loader = flash.display.Loader;
   import VisitorFlags = flash.display.VisitorFlags;
 
-
   import MouseEventDispatcher = flash.ui.MouseEventDispatcher;
   import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
+
+  declare var timeline: Timeline;
 
   export interface IPlayerChannel {
     sendUpdates(updates: ByteArray, assets: Array<ByteArray>);
