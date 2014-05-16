@@ -51,7 +51,6 @@ load(homePath + "src/avm2/compiler/lljs/src/escodegen.js");
 load(homePath + "src/avm2/compiler/inferrer.js");
 load(homePath + "src/avm2/compiler/c4/ir.js");
 load(homePath + "src/avm2/compiler/c4/looper.js");
-load(homePath + "src/avm2/compiler/c4/transform.js");
 load(homePath + "src/avm2/compiler/c4/backend.js");
 load(homePath + "src/avm2/compiler/aot.js");
 load(homePath + "src/avm2/compiler/builder.js");
