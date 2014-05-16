@@ -90,7 +90,7 @@ function readTags(context, stream, swfVersion, final, onprogress, onexception) {
 
       tag = nextTag;
     }
-    if (tag && final) {
+    if ((tag && final) || (stream.pos >= stream.end)) {
       tag.finalTag = true; // note: 'eot' is reserved by handlers
       tags.push(tag);
       if (onprogress) {
