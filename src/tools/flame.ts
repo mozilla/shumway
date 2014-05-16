@@ -21,11 +21,11 @@ module Shumway.Tools {
    * Inspired by the Chrome flame chart and others.
    */
 
-  export class StackFrame {
-    public children: StackFrame [];
+  export class TimelineFrame {
+    public children: TimelineFrame [];
     public total: number;
     constructor (
-      public parent: StackFrame,
+      public parent: TimelineFrame,
       public kind: number,
       public startTime: number,
       public endTime: number) {
@@ -86,7 +86,7 @@ module Shumway.Tools {
     }
   }
 
-  export class StackBuffer {
+  export class TimelineBuffer {
     static ENTER = 0xBEEF0000 | 0;
     static LEAVE = 0xDEAD0000 | 0;
 
@@ -121,32 +121,32 @@ module Shumway.Tools {
 
     enter(name: string, time?: number) {
       this._depth++;
-      this.marks.write(StackBuffer.ENTER | this.getKind(name));
+      this.marks.write(TimelineBuffer.ENTER | this.getKind(name));
       this.times.write(time || performance.now());
     }
 
     leave(name: string, time?: number) {
-      this.marks.write(StackBuffer.LEAVE | this.getKind(name));
+      this.marks.write(TimelineBuffer.LEAVE | this.getKind(name));
       this.times.write(time || performance.now());
       this._depth--;
     }
 
-    gatherRange(count: number): StackFrame {
-      var range = new StackFrame(null, 0, NaN, NaN);
-      var stack: StackFrame [] = [range];
+    gatherRange(count: number): TimelineFrame {
+      var range = new TimelineFrame(null, 0, NaN, NaN);
+      var stack: TimelineFrame [] = [range];
       var times = this.times;
       var topLevelFrameCount = 0;
       this.marks.forEachInReverse(function (mark, i) {
         var time = times.get(i);
-        if ((mark & 0xFFFF0000) === StackBuffer.LEAVE) {
+        if ((mark & 0xFFFF0000) === TimelineBuffer.LEAVE) {
           if (stack.length === 1) {
             topLevelFrameCount ++;
             if (topLevelFrameCount > count) {
               return true;
             }
           }
-          stack.push(new StackFrame(stack[stack.length - 1], mark & 0xFFFF, NaN, time));
-        } else if ((mark & 0xFFFF0000) === StackBuffer.ENTER) {
+          stack.push(new TimelineFrame(stack[stack.length - 1], mark & 0xFFFF, NaN, time));
+        } else if ((mark & 0xFFFF0000) === TimelineBuffer.ENTER) {
           var node = stack.pop();
           var top = stack[stack.length - 1];
           node.startTime = time;
@@ -173,7 +173,7 @@ module Shumway.Tools {
     private _offsetHeight: number;
 
     private _context: CanvasRenderingContext2D;
-    private _buffer: StackBuffer;
+    private _buffer: TimelineBuffer;
 
     private _overviewHeight = 64;
     private _windowLeft = 0;
@@ -181,14 +181,15 @@ module Shumway.Tools {
     private _timeToPixels = 1;
     private _pixelsToTime = 1;
     private _pixelsToOverviewTime = 1;
-    private _range: StackFrame;
+    private _range: TimelineFrame;
     private _minTime = 1;
     private _kindStyle: Shumway.Map<string>;
 
     private _dragOverview = null;
     private _drag = null;
+    private _ignoreClick = false;
 
-    constructor(container: HTMLElement, buffer: StackBuffer) {
+    constructor(container: HTMLElement, buffer: TimelineBuffer) {
       this._container = container;
       this._canvas = document.createElement("canvas");
       this._canvas.style.display = "block";
@@ -209,6 +210,10 @@ module Shumway.Tools {
     }
 
     private _onClick(event: MouseEvent) {
+      if (this._ignoreClick) {
+        this._ignoreClick = false;
+        return;
+      }
       if (event.offsetY < this._overviewHeight) {
         var window = this._windowRight - this._windowLeft;
         this._windowLeft = this._range.startTime + event.offsetX * this._pixelsToOverviewTime - window / 2;
@@ -220,7 +225,7 @@ module Shumway.Tools {
       if (this._dragOverview || this._drag) {
         this._drag = null;
         this._dragOverview = null;
-        event.preventDefault();
+        this._ignoreClick = true;
       }
     }
 
@@ -313,7 +318,7 @@ module Shumway.Tools {
       return (time - this._windowLeft) * (this._offsetWidth / window);
     }
 
-    private _drawFrame(frame: StackFrame, depth: number) {
+    private _drawFrame(frame: TimelineFrame, depth: number) {
       var context = this._context;
       var start = (frame.startTime - this._windowLeft) * this._timeToPixels;
       var end = (frame.endTime - this._windowLeft) * this._timeToPixels;
