@@ -232,7 +232,7 @@ module Shumway.AVM2.AS.flash.display {
     static classInitializer: any = null;
 
     // Called whenever an instance of the class is initialized.
-    static initializer: any = function (symbol: Shumway.Timeline.Symbol) {
+    static initializer: any = function (symbol: Shumway.Timeline.DisplaySymbol) {
       var self: DisplayObject = this;
 
       self._id = DisplayObject._syncID++;
@@ -1225,7 +1225,7 @@ module Shumway.AVM2.AS.flash.display {
      * Gets the graphics object of this object. Only Shapes, Sprites, and MorphShapes can have
      * graphics.
      */
-    private _getGraphics(): flash.display.Graphics {
+    _getGraphics(): flash.display.Graphics {
       if (flash.display.Shape.isType(this)  ||
           flash.display.Sprite.isType(this) ||
           flash.display.MorphShape.isType(this))
@@ -1330,9 +1330,8 @@ module Shumway.AVM2.AS.flash.display {
      * Gets the oldest interactive ancestor (or self) to receive pointer events for this object.
      */
     public getOldestInteractiveAncestorOrSelf(): InteractiveObject {
-      var find = InteractiveObject.isType(this) ? this : this._parent;
+      var find = InteractiveObject.isType(this) ? <InteractiveObject>this : this._parent;
       var self = this._parent;
-      var find = self;
       while (self) {
         if (!self.mouseChildren) {
           find = self;

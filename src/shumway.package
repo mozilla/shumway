@@ -79,7 +79,6 @@ src/avm2/compiler/inferrer.js
 src/avm2/compiler/c4/ir.js
 src/avm2/compiler/builder.js
 src/avm2/compiler/c4/looper.js
-src/avm2/compiler/c4/transform.js
 src/avm2/compiler/c4/backend.js
 src/avm2/trampoline.js
 src/avm2/bindings.js

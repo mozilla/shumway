@@ -72,7 +72,7 @@ module Shumway.AVM2.AS.flash.ui {
     type: string;
     keyCode: number;
     charCode: number;
-    location: string;
+    location: number;
     ctrlKey: boolean;
     altKey: boolean;
     shiftKey: boolean;

@@ -32,6 +32,8 @@ module Shumway.AVM2.AS.flash.display {
 
   import events = flash.events;
 
+  declare var ResourceLoader;
+
   enum LoadStatus {
     Unloaded    = 0,
     Opened      = 1,
@@ -85,7 +87,7 @@ module Shumway.AVM2.AS.flash.display {
         switch (instance._loadStatus) {
           case LoadStatus.Unloaded:
             if (bytesTotal) {
-              loaderInfo.dispatchEvent(events.Event.getInstance(Event.OPEN));
+              loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.OPEN));
               loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
                                                                 false, false, 0, bytesTotal));
               if (instance._content) {
@@ -502,11 +504,12 @@ module Shumway.AVM2.AS.flash.display {
       //loader._worker = worker;
       worker.onmessage = function (e) {
         if (e.data.type === 'exception') {
-          AVM2.exceptions.push({
-            source: 'parser',
-            message: e.data.message,
-            stack: e.data.stack
-          });
+          notImplemented("exception");
+//          AVM2.exceptions.push({
+//            source: 'parser',
+//            message: e.data.message,
+//            stack: e.data.stack
+//          });
         } else {
           loader._commitData(e.data);
         }
