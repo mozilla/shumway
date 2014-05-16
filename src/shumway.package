@@ -372,7 +372,7 @@ src/flash.ts/accessibility/AccessibilityImplementation.js
 #src/flash.ts/net/NetGroupSendMode.js
 #src/flash.ts/text/TextRun.js
 #src/flash.ts/net/XMLSocket.js
-src/flash.ts/utils/Dictionary.js
+#src/flash.ts/utils/Dictionary.js
 #src/flash.ts/display3D/Context3DCompareMode.js
 src/flash.ts/text/TextFieldAutoSize.js
 src/flash.ts/text/engine/GroupElement.js
