@@ -256,18 +256,49 @@ module Shumway {
     private _player: Player;
     private _easelHost: EaselHost;
 
+    private _worker: Worker;
     private _channelEventUpdatesListener: (updates: ByteArray) => void;
     private _channelUpdatesListener: (updates: ByteArray, assets: Array<ByteArray>) => void;
 
     constructor(easel: Easel) {
       this._easelHost = new EaselHost(easel, this);
       this._easelHost._addEventListeners();
+
+      // TODO this is temporary worker to test postMessage tranfers
+      this._worker = new Worker('../../src/player/fakechannel.js');
+      this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
+    }
+
+    private _onWorkerMessage(e) {
+      var type = e.data.type;
+      switch (type) {
+        case 'player':
+          var updates = ByteArray.fromArrayBuffer(e.data.updates.buffer);
+          var assets = e.data.assets.map(function (assetBytes) {
+            return ByteArray.fromArrayBuffer(assetBytes.buffer);
+          });
+          break;
+        case 'gfx':
+      }
+      if (type === 'player') {
+        this._channelUpdatesListener(updates, assets);
+      } else if (type === 'gfx') {
+        var updates = ByteArray.fromArrayBuffer(e.data.updates.buffer);
+        this._channelEventUpdatesListener(updates);
+      }
     }
 
     // IPlayerChannel
     sendUpdates(updates: ByteArray, assets: Array<ByteArray>) : void {
-      updates.position = 0;
-      this._channelUpdatesListener(updates, assets);
+      var bytes = updates.getBytes();
+      var assetsBytes = assets.map(function (asset) {
+        return asset.getBytes();
+      });
+      this._worker.postMessage({
+          type: 'player',
+          updates: bytes,
+          assets: assetsBytes
+      }, [bytes.buffer]);
     }
     registerForEventUpdates(listener: (updates: ByteArray) => void) : void {
       this._channelEventUpdatesListener = listener;
@@ -278,8 +309,8 @@ module Shumway {
       this._channelUpdatesListener = listener;
     }
     sendEventUpdates(updates: ByteArray) {
-      updates.position = 0;
-      this._channelEventUpdatesListener(updates);
+      var bytes = updates.getBytes();
+      this._worker.postMessage({type: 'gfx', updates: bytes}, [bytes.buffer]);
     }
 
     public embed(): Player {

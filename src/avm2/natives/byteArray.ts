@@ -160,6 +160,19 @@ module Shumway.AVM2.AS {
         this._bitLength = 0;
       }
 
+      static fromArrayBuffer(buffer: ArrayBuffer) : ByteArray {
+        var array = <flash.utils.ByteArray>Object.create(flash.utils.ByteArray.prototype);
+        array._buffer = buffer;
+        array._length = buffer.byteLength;
+        array._position = 0;
+        array._cacheViews();
+        array._objectEncoding = ByteArray.defaultObjectEncoding;
+        array._littleEndian = false; // AS3 is bigEndian by default.
+        array._bitBuffer = 0;
+        array._bitLength = 0;
+        return array;
+      }
+
       private _get(m: string, size: number) {
         if (this._position + size > this._length) {
           throwEOFError();
