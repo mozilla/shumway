@@ -197,6 +197,9 @@ module Shumway.Options {
               case "boolean":
                 option.value = !!this.settings[option.longName];
                 break;
+              case "number":
+                option.value = +this.settings[option.longName];
+                break;
               default:
                 option.value = this.settings[option.longName];
                 break;
