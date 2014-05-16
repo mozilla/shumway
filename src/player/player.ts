@@ -191,7 +191,7 @@ module Shumway {
     }
   }
 
-  class EaselHost {
+  export class EaselHost {
     private static _mouseEvents = Shumway.Remoting.MouseEventNames;
     private static _keyboardEvents = Shumway.Remoting.KeyboardEventNames;
 
@@ -208,6 +208,7 @@ module Shumway {
       this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this._frameContainer);
 
       channel.registerForUpdates(this.readData.bind(this));
+      this._addEventListeners();
     }
 
     private _mouseEventListener(event: MouseEvent) {
@@ -262,7 +263,6 @@ module Shumway {
 
     constructor(easel: Easel) {
       this._easelHost = new EaselHost(easel, this);
-      this._easelHost._addEventListeners();
 
       // TODO this is temporary worker to test postMessage tranfers
       this._worker = new Worker('../../src/player/fakechannel.js');
@@ -277,14 +277,12 @@ module Shumway {
           var assets = e.data.assets.map(function (assetBytes) {
             return ByteArray.fromArrayBuffer(assetBytes.buffer);
           });
+          this._channelUpdatesListener(updates, assets);
           break;
         case 'gfx':
-      }
-      if (type === 'player') {
-        this._channelUpdatesListener(updates, assets);
-      } else if (type === 'gfx') {
-        var updates = ByteArray.fromArrayBuffer(e.data.updates.buffer);
-        this._channelEventUpdatesListener(updates);
+          var updates = ByteArray.fromArrayBuffer(e.data.updates.buffer);
+          this._channelEventUpdatesListener(updates);
+          break;
       }
     }
 

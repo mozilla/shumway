@@ -126,7 +126,9 @@ function parseQueryString(qs) {
  */
 if (remoteFile) {
   document.getElementById('openFile').setAttribute('hidden', true);
-  executeFile(remoteFile, null, parseQueryString(window.location.search));
+  setTimeout(function () {
+    executeFile(remoteFile, null, parseQueryString(window.location.search));
+  });
 }
 
 if (yt) {
@@ -149,6 +151,49 @@ function showMessage(msg) {
   document.getElementById('message').textContent = "(" + msg + ")";
 }
 
+function IFramePlayer(playerWorker) {
+  this._worker = playerWorker;
+}
+IFramePlayer._updatesListener = null;
+IFramePlayer.sendUpdates = function (data) {
+  var ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
+  var updates = ByteArray.fromArrayBuffer(data.updates.buffer);
+  var assets = data.assets.map(function (assetBytes) {
+    return ByteArray.fromArrayBuffer(assetBytes.buffer);
+  });
+  IFramePlayer._updatesListener(updates, assets);
+};
+IFramePlayer.prototype = {
+  sendEventUpdates: function(updates) {
+    var bytes = updates.getBytes();
+    this._worker.postMessage({type: 'gfx', updates: bytes}, '*', [bytes.buffer]);
+  },
+  registerForUpdates: function (listener) {
+    IFramePlayer._updatesListener = listener;
+  }
+};
+
+var easelHost;
+function runIFramePlayer(data) {
+  data.type = 'runSwf';
+  var playerWorkerIFrame = document.getElementById('playerWorker');
+  playerWorkerIFrame.addEventListener('load', function () {
+    var playerWorker = playerWorkerIFrame.contentWindow;
+    playerWorker.postMessage(data, '*');
+    var player = new IFramePlayer(playerWorker);
+    var easel = createEasel();
+    easelHost = new Shumway.EaselHost(easel, player);
+    window.addEventListener('message', function (e) {
+      var data = e.data;
+      if (typeof data === 'object' && data !== null) {
+        if (data.type === 'player') {
+          IFramePlayer.sendUpdates(data);
+        }
+      }
+    });
+  });
+}
+
 function executeFile(file, buffer, movieParams) {
   // All execution paths must now load AVM2.
   if (!appCompiler.value) {
@@ -158,6 +203,17 @@ function executeFile(file, buffer, movieParams) {
   var appMode = appCompiler.value ? EXECUTION_MODE.COMPILE : EXECUTION_MODE.INTERPRET;
 
   var filename = file.split('?')[0].split('#')[0];
+
+  var isFramePlayerEnabled = !!document.getElementById('playerWorker');
+  if (isFramePlayerEnabled && filename.endsWith(".swf")) {
+    Shumway.FileLoadingService.instance.setBaseUrl(file);
+    var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
+    var loaderURL = getQueryVariable("loaderURL") || swfURL;
+    runIFramePlayer({sysMode: sysMode, appMode: appMode, loaderURL: loaderURL,
+      movieParams: movieParams, file: file, asyncLoading: asyncLoading});
+    return;
+  }
+
   if (filename.endsWith(".abc")) {
     libraryScripts = {};
     createAVM2(builtinPath, shellAbcPath, null, sysMode, appMode, function (avm2) {
