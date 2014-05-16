@@ -191,7 +191,7 @@ module Shumway {
     }
   }
 
-  class EaselHost {
+  export class EaselHost {
     private static _mouseEvents = Shumway.Remoting.MouseEventNames;
     private static _keyboardEvents = Shumway.Remoting.KeyboardEventNames;
 
@@ -208,6 +208,7 @@ module Shumway {
       this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this._frameContainer);
 
       channel.registerForUpdates(this.readData.bind(this));
+      this._addEventListeners();
     }
 
     private _mouseEventListener(event: MouseEvent) {
@@ -262,7 +263,6 @@ module Shumway {
 
     constructor(easel: Easel) {
       this._easelHost = new EaselHost(easel, this);
-      this._easelHost._addEventListeners();
 
       // TODO this is temporary worker to test postMessage tranfers
       this._worker = new Worker('../../src/player/fakechannel.js');
