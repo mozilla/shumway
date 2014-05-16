@@ -16,10 +16,10 @@
 // Class: StaticText
 module Shumway.AVM2.AS.flash.text {
   import DisplayObjectFlags = flash.display.DisplayObjectFlags;
+
   export class StaticText extends flash.display.DisplayObject {
 
     static classInitializer: any = null;
-    static initializer: any = null;
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
@@ -32,7 +32,7 @@ module Shumway.AVM2.AS.flash.text {
 
     constructor () {
       false && super();
-      DisplayObject.instanceConstructorNoInitialize.call(this);
+      flash.display.DisplayObject.instanceConstructorNoInitialize.call(this);
     }
 
     private _text: string;

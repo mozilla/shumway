@@ -144,6 +144,8 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     private ensureDimensions() {
+      notImplemented("ensureDimensions");
+      /*
       if (this._dimensionsValid) {
         return;
       }
@@ -151,7 +153,9 @@ module Shumway.AVM2.AS.flash.text {
       var bounds = this._bbox;
       var diffX = 0;
 
+
       var message = new BinaryMessage();
+
       message.syncRenderable(this, function (data) {
         this._lines = data.lines;
         this._textWidth = data.textWidth;
@@ -191,6 +195,7 @@ module Shumway.AVM2.AS.flash.text {
       }
 
       this._dimensionsValid = true;
+      */
     }
 
 

@@ -18,6 +18,7 @@ module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import throwError = Shumway.AVM2.Runtime.throwError;
 
   import StageScaleMode = flash.display.StageScaleMode;
   import ColorCorrection = flash.display.ColorCorrection;

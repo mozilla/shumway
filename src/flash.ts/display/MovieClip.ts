@@ -24,19 +24,19 @@ module Shumway.AVM2.AS.flash.display {
 
   export class MovieClip extends flash.display.Sprite {
 
-    private static _instances: MovieClip [];
+    private static _movieClipInstances: MovieClip [];
     private static _callQueue: MovieClip [];
 
     // Called whenever the class is initialized.
     static classInitializer: any = function () {
-      MovieClip._instances = [];
+      MovieClip._movieClipInstances = [];
       MovieClip._callQueue = [];
     };
     
     // Called whenever an instance of the class is initialized.
     static initializer: any = function (symbol: Shumway.Timeline.SpriteSymbol) {
       var self: MovieClip = this;
-      MovieClip._instances.push(self);
+      MovieClip._movieClipInstances.push(self);
 
       self._currentFrame = 0;
       self._totalFrames = 1;
@@ -74,7 +74,7 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // ["currentLabels"];
 
     static initFrame(): void {
-      var instances = MovieClip._instances;
+      var instances = MovieClip._movieClipInstances;
       for (var i = 0; i < instances.length; i++) {
         var instance = instances[i];
         if (instance._totalFrames > 1 && instance._hasFlags(DisplayObjectFlags.Constructed)) {

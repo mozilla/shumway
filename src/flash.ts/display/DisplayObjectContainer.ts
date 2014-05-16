@@ -27,22 +27,22 @@ module Shumway.AVM2.AS.flash.display {
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
     static bindings: string [] = null;
     static classSymbols: string [] = null;
-    private static _instances: DisplayObjectContainer [];
+    private static _displayObjectContainerInstances: DisplayObjectContainer [];
 
     static classInitializer: any = function () {
-      DisplayObjectContainer._instances = [];
+      DisplayObjectContainer._displayObjectContainerInstances = [];
     };
 
     static initializer: any = function () {
       var self: DisplayObjectContainer = this;
-      DisplayObjectContainer._instances.push(self);
+      DisplayObjectContainer._displayObjectContainerInstances.push(self);
       self._tabChildren = true;
       self._mouseChildren = true;
       self._children = [];
     };
 
     static constructChildren(): void {
-      var instances = DisplayObjectContainer._instances;
+      var instances = DisplayObjectContainer._displayObjectContainerInstances;
       for (var i = 0; i < instances.length; i++) {
         instances[i]._constructChildren();
       }

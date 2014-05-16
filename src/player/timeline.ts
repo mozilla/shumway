@@ -29,11 +29,6 @@ module Shumway.Timeline {
       this.id = id;
       this.symbolClass = symbolClass;
     }
-
-    static createFromData(data: any): Symbol {
-      abstractMethod("createFromData");
-      return null;
-    }
   }
 
   export class DisplaySymbol extends Symbol {

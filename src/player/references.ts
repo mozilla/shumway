@@ -39,7 +39,7 @@ module Shumway {
   );
 
   export var pumpRate = playerOptions.register (
-    new Shumway.Options.Option("", "Pump Rate", "number", 60, "Number of times / second that the display list is synchronized.", {range: { min: 0, max: 60, step: 1 }})
+    new Shumway.Options.Option("", "Pump Rate", "number", 60, "Number of times / second that the display list is synchronized.", {range: { min: 1, max: 60, step: 1 }})
   );
 
   export var frameRate = playerOptions.register (
