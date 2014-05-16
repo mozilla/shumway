@@ -277,14 +277,12 @@ module Shumway {
           var assets = e.data.assets.map(function (assetBytes) {
             return ByteArray.fromArrayBuffer(assetBytes.buffer);
           });
+          this._channelUpdatesListener(updates, assets);
           break;
         case 'gfx':
-      }
-      if (type === 'player') {
-        this._channelUpdatesListener(updates, assets);
-      } else if (type === 'gfx') {
-        var updates = ByteArray.fromArrayBuffer(e.data.updates.buffer);
-        this._channelEventUpdatesListener(updates);
+          var updates = ByteArray.fromArrayBuffer(e.data.updates.buffer);
+          this._channelEventUpdatesListener(updates);
+          break;
       }
     }
 
