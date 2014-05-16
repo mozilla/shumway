@@ -169,7 +169,7 @@
   }
 
   function callCall(callee, object, args) {
-    return call(property(callee, "asCall"), [object].concat(args));
+    return call(property(callee, "call"), [object].concat(args));
   }
 
   function assignment(left, right) {
