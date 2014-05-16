@@ -10,4 +10,9 @@ glTests.js
 references.js
 shapes.js
 stage.js
+frame.js
+frameContainer.js
+regionAllocator.js
 gl/core.js
+gl/brush.js
+gl/glContext.js
