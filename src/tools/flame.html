@@ -1,64 +1,70 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title></title>
+  <title>Flamechart Demo</title>
   <style>
+    html {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+    }
     body {
       color: white;
+      background-color: #333333;
       font: 12px Consolas, "Liberation Mono", Courier, monospace;
+      height: 100%;
+      width: 100%;
+      overflow: auto;
     }
-
+    #container {
+      width: 100%;
+      height: 512px;
+    }
     canvas {
       background-color: #1a2633;
     }
-
-
+    button {
+      margin-top: 10px;
+    }
   </style>
 </head>
-<body style="background-color: #333333;">
-<script src="../utilities.js"></script>
-<script src="../gfx/geometry.js"></script>
-<script src="../tools/flame.js"></script>
-<script src="references.js"></script>
+<body>
+  <div id="container"></div>
+  <script src="../utilities.js"></script>
+  <script src="../gfx/geometry.js"></script>
+  <script src="../tools/flame.js"></script>
+  <script src="references.js"></script>
+  <script>
+    var Geometry = Shumway.GFX.Geometry;
+    var Tools = Shumway.Tools;
+    var container = document.getElementById("container");
+    var buffer = new Tools.TimelineBuffer();
 
-<div id="container" style="width: 100%; height: 512px;"></div>
+    function testA() {
+      var t = 0;
+      function next() {
+        return t += Math.random() / 1;
+      }
+      for (var i = 0; i < 1024; i++) {
+        buffer.enter("A", next());
 
-<script>
-  var Geometry = Shumway.GFX.Geometry;
-  var Tools = Shumway.Tools;
-  var container = document.getElementById("container");
-  var buffer = new Tools.TimelineBuffer();
-
-</script>
-<script>
-  function testA() {
-    var t = 0;
-    function next() {
-      return t += Math.random() / 1;
-    }
-    for (var i = 0; i < 1024; i++) {
-      buffer.enter("A", next());
-
-      for (var z = 0; z < 5; z++) {
-        var k = 1 + (Math.random() * 3) | 0;
-        for (var j = 0; j < k; j++) {
-          buffer.enter(String(z + j), next());
+        for (var z = 0; z < 5; z++) {
+          var k = 1 + (Math.random() * 3) | 0;
+          for (var j = 0; j < k; j++) {
+            buffer.enter(String(z + j), next());
+          }
+          for (var j = 0; j < k; j++) {
+            buffer.leave(String(z + j), next());
+          }
         }
-        for (var j = 0; j < k; j++) {
-          buffer.leave(String(z + j), next());
-        }
+
+        buffer.leave("A", next());
       }
 
-      buffer.leave("A", next());
+      var flameChart = new Tools.FlameChart(container, buffer);
     }
 
-    var flameChart = new Tools.FlameChart(container, buffer);
-    setInterval(function () {
-      flameChart._draw();
-    }, 16);
-  }
-</script>
-<br>
-<button onclick="testA()">Flame</button>
+    testA();
+  </script>
 </body>
 </html>

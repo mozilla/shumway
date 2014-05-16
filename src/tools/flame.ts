@@ -177,16 +177,15 @@ module Shumway.Tools {
 
     private _overviewHeight = 64;
     private _windowLeft = 0;
-    private _windowRight = 0;
+    private _windowRight = Number.MAX_VALUE;
     private _timeToPixels = 1;
     private _pixelsToTime = 1;
     private _pixelsToOverviewTime = 1;
     private _range: TimelineFrame;
-    private _minTime = 1;
+    private _minTime = 5;
     private _kindStyle: Shumway.Map<string>;
 
-    private _dragOverview = null;
-    private _drag = null;
+    private _drag: any = null;
     private _ignoreClick = false;
 
     constructor(container: HTMLElement, buffer: TimelineBuffer) {
@@ -202,6 +201,7 @@ module Shumway.Tools {
       this._resetCanvas();
       window.addEventListener("resize", this._onResize.bind(this));
       this._canvas.addEventListener("mousewheel", this._onMouseWheel.bind(this), false);
+      this._canvas.addEventListener("DOMMouseScroll", this._onMouseWheel.bind(this), false);
       this._canvas.addEventListener("mousedown", this._onMouseDown.bind(this), false);
       window.addEventListener("mouseup", this._onMouseUp.bind(this), true);
       this._canvas.addEventListener("mousemove", this._onMouseMove.bind(this), false);
@@ -214,84 +214,99 @@ module Shumway.Tools {
         this._ignoreClick = false;
         return;
       }
-      if (event.offsetY < this._overviewHeight) {
+      if (event.clientY < this._overviewHeight) {
         var window = this._windowRight - this._windowLeft;
-        this._windowLeft = this._range.startTime + event.offsetX * this._pixelsToOverviewTime - window / 2;
-        this._windowRight = this._range.startTime + event.offsetX * this._pixelsToOverviewTime + window / 2;
+        this._windowLeft = this._range.startTime + event.clientX * this._pixelsToOverviewTime - window / 2;
+        this._windowRight = this._range.startTime + event.clientX * this._pixelsToOverviewTime + window / 2;
+        this._updateUnits();
+        this._draw();
       }
     }
 
     private _onMouseUp(event: MouseEvent) {
-      if (this._dragOverview || this._drag) {
+      if (this._drag) {
         this._drag = null;
-        this._dragOverview = null;
         this._ignoreClick = true;
       }
+      this._updateCursor(event);
     }
 
     private _onMouseDown(event: MouseEvent) {
-      if (event.offsetY < this._overviewHeight) {
-        this._dragOverview = {
-          offsetX: event.offsetX,
-          windowLeft: this._windowLeft,
-          windowRight: this._windowRight,
-        };
+      if (event.clientY < this._overviewHeight) {
+        if (this._isDraggable(event)) {
+          this._drag = {
+            overview: true,
+            offsetX: event.clientX,
+            windowLeft: this._windowLeft,
+            windowRight: this._windowRight,
+          };
+        }
       } else {
         this._drag = {
-          offsetX: event.offsetX,
+          overview: false,
+          offsetX: event.clientX,
           windowLeft: this._windowLeft,
           windowRight: this._windowRight,
         };
       }
+      this._updateCursor(event);
     }
 
     private _onMouseMove(event: MouseEvent) {
-      if (this._dragOverview) {
-        var offset = event.offsetX - this._dragOverview.offsetX;
-        var window = this._windowRight - this._windowLeft;
-        this._windowLeft = this._dragOverview.windowLeft + offset * this._pixelsToOverviewTime;
-        this._windowRight = this._dragOverview.windowRight + offset * this._pixelsToOverviewTime;
-      } else if (this._drag) {
-        var offset = -event.offsetX - this._drag.offsetX;
-        var window = this._windowRight - this._windowLeft;
-        this._windowLeft = this._drag.windowLeft + offset * this._pixelsToTime;
-        this._windowRight = this._drag.windowRight + offset * this._pixelsToTime;
+      if (this._drag) {
+        var offset: number;
+        var mult: number;
+        if (this._drag.overview) {
+          offset = event.clientX - this._drag.offsetX;
+          mult = this._pixelsToOverviewTime;
+        } else {
+          offset = -event.clientX + this._drag.offsetX;
+          mult = this._pixelsToTime;
+        }
+        this._windowLeft = this._drag.windowLeft + offset * mult;
+        this._windowRight = this._drag.windowRight + offset * mult;
+        this._updateUnits();
+        this._draw();
       }
+      this._updateCursor(event);
     }
 
     private _onMouseWheel(event: MouseEvent) {
       event.stopPropagation();
-
-      var range = this._range;
-      var zoomSpeed = 1 / 120;
-      var zoom = Math.pow(1.2, -(event.wheelDeltaY || event.wheelDeltaX) * zoomSpeed) - 1;
-
-      var rangeTotalTime = range.endTime - range.startTime;
-
-      var cursorTime = range.startTime + event.offsetX * (rangeTotalTime / this._offsetWidth);
-      this._windowLeft += (this._windowLeft - cursorTime) * zoom;
-      this._windowRight += (this._windowRight - cursorTime) * zoom;
-
-      var window = this._windowRight - this._windowLeft;
-      if (window < this._minTime) {
-        window = this._minTime;
-        this._windowLeft = this._windowLeft;
-        this._windowLeft -= this._minTime / 2;
-        this._windowRight += this._minTime / 2;
+      if (this._drag === null) {
+        var range = this._range;
+        var delta = clamp(event.detail ? event.detail : -event.wheelDeltaY / 120, -1, 1);
+        var zoom = Math.pow(1.2, delta) - 1;
+        var rangeTotalTime = range.endTime - range.startTime;
+        var cursorTime = range.startTime + event.clientX * (rangeTotalTime / this._offsetWidth);
+        this._windowLeft += (this._windowLeft - cursorTime) * zoom;
+        this._windowRight += (this._windowRight - cursorTime) * zoom;
+        this._updateUnits();
+        this._updateCursor(event);
+        this._draw();
       }
+    }
 
+    private _clampWindow() {
+      var range = this._range;
+      var windowSize = this._windowRight - this._windowLeft;
+      if (windowSize < this._minTime) {
+        windowSize = this._minTime;
+        var center = this._windowLeft + windowSize / 2;
+        this._windowLeft = center - this._minTime / 2;
+        this._windowRight = center + this._minTime / 2;
+      }
       if (this._windowLeft < range.startTime) {
         this._windowLeft = range.startTime;
-        this._windowRight = clamp(this._windowLeft + window, range.startTime, range.endTime);
+        this._windowRight = clamp(this._windowLeft + windowSize, range.startTime, range.endTime);
       } else if (this._windowRight > range.endTime) {
         this._windowRight = range.endTime;
-        this._windowLeft = clamp(this._windowRight - window, range.startTime, range.endTime);
+        this._windowLeft = clamp(this._windowRight - windowSize, range.startTime, range.endTime);
       }
-      this._updateUnits();
-      this._draw();
     }
 
     private _updateUnits() {
+      this._clampWindow();
       this._timeToPixels = this._offsetWidth / (this._windowRight - this._windowLeft);
       this._pixelsToTime = (this._windowRight - this._windowLeft) / this._offsetWidth;
       this._pixelsToOverviewTime = (this._range.endTime - this._range.startTime) / this._offsetWidth;
@@ -386,7 +401,7 @@ module Shumway.Tools {
     }
 
     private _drawFlames() {
-      var a = this._range.getChildRange(this._windowLeft, this._windowRight)
+      var a = this._range.getChildRange(this._windowLeft, this._windowRight);
       var l = a[0];
       var r = a[1];
       if (r < 0 || l < 0) {
@@ -403,10 +418,10 @@ module Shumway.Tools {
 
     private _draw() {
       var context = this._context;
-      context.save();
       var ratio = window.devicePixelRatio;
-      context.scale(ratio, ratio);
 
+      context.save();
+      context.scale(ratio, ratio);
       context.fillStyle = "#181d20";
       context.fillRect(0, 0, this._offsetWidth, this._offsetHeight);
 
@@ -414,6 +429,28 @@ module Shumway.Tools {
       this._drawFlames();
 
       context.restore();
+    }
+
+    private _isDraggable(event: MouseEvent): boolean {
+      var hit = true;
+      if (event.clientY < this._overviewHeight) {
+        var range = this._range;
+        var rangeTotalTime = range.endTime - range.startTime;
+        var windowLeftPixels = ((this._windowLeft - range.startTime) / rangeTotalTime * this._offsetWidth) | 0;
+        var windowRightPixels = ((this._windowRight - range.startTime) / rangeTotalTime * this._offsetWidth) | 0;
+        hit = (event.clientX >= windowLeftPixels && event.clientX <= windowRightPixels);
+      }
+      return hit;
+    }
+
+    private _updateCursor(event: MouseEvent) {
+      var showHandCursor = this._isDraggable(event);
+      var pressed = (this._drag !== null);
+      var value = showHandCursor ? (pressed ? "grabbing" : "grab") : "default";
+      var self = this;
+      ["", "-moz-", "-webkit-"].forEach(function(prefix) {
+        self._canvas.style.cursor = prefix + value;
+      })
     }
   }
 }
