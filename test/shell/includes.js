@@ -8,56 +8,11 @@ load("../../src/utilities.js");
 load("../../src/options.js");
 load("../../src/settings.js");
 
+var ArgumentParser = Shumway.Options.ArgumentParser;
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
+
 load("../../src/swf/Timeline.js");
-
-load("../../src/gfx/filters/filters.js");
-load("../../src/gfx/filters/filters_cxform.js");
-load("../../src/gfx/utilities.js");
-load("../../src/gfx/geometry.js");
-load("../../src/gfx/regionAllocator.js");
-load("../../src/gfx/frame.js");
-load("../../src/gfx/frameContainer.js");
-load("../../src/gfx/stage.js");
-load("../../src/gfx/filters.js");
-load("../../src/gfx/gl/core.js");
-load("../../src/gfx/gl/glContext.js");
-load("../../src/gfx/gl/gl.js");
-load("../../src/gfx/gl/brush.js");
-load("../../src/gfx/2d/2d.js");
-load("../../src/gfx/easel.js");
-load("../../src/gfx/shapes.js");
-//../../src/gfx/glTests.js
-//../../src/gfx/shapes.js
-
-// Load SWF Dependencies
-console.time("Load SWF Dependencies");
-load("../../src/swf/config.js");
-load("../../src/swf/options.js");
-load("../../src/flash/util.js");
-load("../../src/swf/swf.js");
-load("../../src/swf/inflate.js");
-load("../../src/swf/stream.js");
-load("../../src/swf/bitmap.js");
-load("../../src/swf/button.js");
-load("../../src/swf/font.js");
-load("../../src/swf/image.js");
-load("../../src/swf/label.js");
-load("../../src/swf/shape.js");
-load("../../src/swf/sound.js");
-load("../../src/swf/text.js");
-load("../../src/swf/mp3worker.js");
-console.timeEnd("Load SWF Dependencies");
-
-console.time("Load SWF Parser");
-load("../../src/swf/types.js");
-load("../../src/swf/structs.js");
-load("../../src/swf/tags.js");
-load("../../src/swf/templates.js");
-load("../../src/swf/generator.js");
-load("../../src/swf/handlers.js");
-load("../../src/swf/parser.js");
-load("../../src/swf/resourceloader.js");
-console.timeEnd("Load SWF Parser");
 
 // Load AVM2 Dependencies
 console.time("Load AVM2 Dependencies");
@@ -555,7 +510,7 @@ load("../../src/player/references.js");
 load("../../src/player/remoting.js");
 load("../../src/player/timeline.js");
 load("../../src/player/remotingPlayer.js");
-load("../../src/player/remotingGfx.js");
+//../../src/player/remotingGfx.js
 load("../../src/player/player.js");
 
 console.timeEnd("Load Player Dependencies");

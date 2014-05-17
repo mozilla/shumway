@@ -139,7 +139,7 @@ module.exports = function(grunt) {
     updateFlashRefs('test/harness/slave.html', 'src');
     updateFlashRefs('examples/xlsimport/index.html', 'src');
     updateFlashRefs('examples/inspector/inspector.player.html', 'src');
-    updateFlashRefs('test/shell/includes.js', 'src');
+    updateFlashRefs('test/shell/includes.js', 'test/shell');
   });
 
   grunt.registerTask('server', function () {
