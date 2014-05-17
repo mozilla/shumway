@@ -494,9 +494,9 @@ module Shumway.AVM2.AS.flash.display {
 
 
     /**
-     * Finds the closest ancestor with a given set of flags that are either turned on or off.
+     * Finds the nearest ancestor with a given set of flags that are either turned on or off.
      */
-    private _findClosestAncestor(flags: DisplayObjectFlags, on: boolean): DisplayObject {
+    private _findNearestAncestor(flags: DisplayObjectFlags, on: boolean): DisplayObject {
       var node = this;
       while (node) {
         if (node._hasFlags(flags) === on) {
@@ -560,7 +560,7 @@ module Shumway.AVM2.AS.flash.display {
     _getConcatenatedMatrix(): flash.geom.Matrix {
       // Compute the concatenated transforms for this node and all of its ancestors.
       if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix)) {
-        var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedMatrix, false);
+        var ancestor = this._findNearestAncestor(DisplayObjectFlags.InvalidConcatenatedMatrix, false);
         var path = DisplayObject._getAncestors(this, ancestor);
         var m = ancestor ? ancestor._concatenatedMatrix.clone() : new geom.Matrix();
         for (var i = path.length - 1; i >= 0; i--) {
@@ -621,7 +621,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       // Compute the concatenated color transforms for this node and all of its ancestors.
       if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform)) {
-        var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedColorTransform, false);
+        var ancestor = this._findNearestAncestor(DisplayObjectFlags.InvalidConcatenatedColorTransform, false);
         var path = DisplayObject._getAncestors(this, ancestor);
         var i = path.length - 1;
         if (flash.display.Stage.isType(path[i])) {
@@ -1327,9 +1327,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Gets the oldest interactive ancestor (or self) to receive pointer events for this object.
+     * Finds the furthest interactive ancestor (or self) to receive pointer events for this object.
      */
-    public getOldestInteractiveAncestorOrSelf(): InteractiveObject {
+    public findFurthestInteractiveAncestorOrSelf(): InteractiveObject {
       var find = InteractiveObject.isType(this) ? <InteractiveObject>this : this._parent;
       var self = this._parent;
       while (self) {
@@ -1355,9 +1355,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Finds the oldest common ancestor with a given node.
+     * Finds the nearest common ancestor with a given node.
      */
-    findOldestCommonAncestor(node: DisplayObject): DisplayObject {
+    findNearestCommonAncestor(node: DisplayObject): DisplayObject {
       if (!node) {
         return null;
       }
