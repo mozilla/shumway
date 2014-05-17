@@ -1,0 +1,114 @@
+/*
+ * Copyright 2013 Mozilla Foundation
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+load(homePath + "src/avm2/global.js");
+load(homePath + "src/utilities.js");
+
+var homePath;
+var release;
+
+assert(homePath, "Host compartment needs to initialize homePath.");
+
+load(homePath + "src/avm2/settings.js");
+load(homePath + "src/avm2/avm2Util.js");
+load(homePath + "src/options.js");
+load(homePath + "src/settings.js");
+load(homePath + "src/metrics.js");
+
+var ArgumentParser = Shumway.Options.ArgumentParser;
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
+
+var systemOptions = new OptionSet("System Options");
+// var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
+// var traceWarnings = systemOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
+
+Timer.start("Loading VM");
+
+load(homePath + "src/avm2/constants.js");
+load(homePath + "src/avm2/errors.js");
+load(homePath + "src/avm2/opcodes.js");
+load(homePath + "src/avm2/parser.js");
+load(homePath + "src/avm2/disassembler.js");
+load(homePath + "src/avm2/analyze.js");
+
+Timer.start("Loading Compiler");
+load(homePath + "src/avm2/compiler/lljs/src/estransform.js");
+load(homePath + "src/avm2/compiler/lljs/src/escodegen.js");
+load(homePath + "src/avm2/compiler/inferrer.js");
+load(homePath + "src/avm2/compiler/c4/ir.js");
+load(homePath + "src/avm2/compiler/c4/looper.js");
+load(homePath + "src/avm2/compiler/c4/backend.js");
+load(homePath + "src/avm2/compiler/aot.js");
+load(homePath + "src/avm2/compiler/builder.js");
+Timer.stop();
+
+Timer.start("Loading Runtime");
+load(homePath + "src/avm2/trampoline.js");
+load(homePath + "src/avm2/bindings.js");
+load(homePath + "src/avm2/scope.js");
+
+var playerglobalLoadedPromise;
+var playerglobal;
+
+load(homePath + "src/avm2/domain.js");
+load(homePath + "src/avm2/xregexp.js");
+load(homePath + "src/avm2/runtime.js");
+load(homePath + "src/avm2/runtime-exports.js");
+load(homePath + "src/avm2/interpreter.js");
+load(homePath + "src/avm2/viz.js");
+load(homePath + "src/avm2/xml.js");
+
+load(homePath + "src/avm2/natives/int32Vector.js");
+load(homePath + "src/avm2/natives/uint32Vector.js");
+load(homePath + "src/avm2/natives/float64Vector.js");
+load(homePath + "src/avm2/native.js");
+load(homePath + "src/avm2/natives/genericVector.js");
+load(homePath + "src/avm2/natives/dictionary.js");
+load(homePath + "src/avm2/natives/proxy.js");
+load(homePath + "src/avm2/natives/xml.js");
+load(homePath + "src/avm2/natives/system.js");
+load(homePath + "src/avm2/natives/byteArray.js");
+
+Timer.stop();
+Timer.stop();
+
+function grabAbc(fileOrBuffer) {
+  if (isString(fileOrBuffer)) {
+    return new AbcFile(snarf(fileOrBuffer, "binary"), fileOrBuffer);
+  } else {
+    var buffer = new Uint8Array(fileOrBuffer); // Copy into local compartment.
+    return new AbcFile(buffer);
+  }
+}
+
+var console = {
+  time: function () {
+
+  },
+  timeEnd: function () {
+
+  },
+  info: function (x) {
+    print(x);
+  },
+  warn: function (x) {
+    print(x);
+  }
+}
+
+load("includes.js");
+

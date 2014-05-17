@@ -265,7 +265,7 @@ function grabAbcsInCompartment(compartment, abcBuffers) {
 }
 
 function runVM() {
-  var securityDomain = new SecurityDomain();
+  var securityDomain = new SecurityDomain("compartment.js");
   var compartment = securityDomain.compartment;
   var argumentParser = new compartment.ArgumentParser();
   argumentParser.addBoundOptionSet(compartment.systemOptions);

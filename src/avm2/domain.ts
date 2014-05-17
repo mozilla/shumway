@@ -553,11 +553,11 @@ module Shumway.AVM2.Runtime {
     compartment: any;
     systemDomain: ApplicationDomain;
     applicationDomain: ApplicationDomain;
-    constructor () {
+    constructor (compartmentPath: string) {
       this.compartment = createNewCompartment();
       this.compartment.homePath = homePath;
       this.compartment.release = release;
-      this.compartment.eval(snarf("compartment.js"));
+      this.compartment.eval(snarf(compartmentPath));
     }
 
     public initializeShell(sysMode, appMode) {

@@ -13,52 +13,6 @@ src/settings.js
 
 src/swf/Timeline.js
 
-## Load AVM2 Dependencies
-#!inline console.time("Load AVM2 Dependencies");
-src/avm2/avm2Util.js
-src/avm2/settings.js
-src/metrics.js
-
-src/avm2/constants.js
-src/avm2/errors.js
-src/avm2/opcodes.js
-src/avm2/parser.js
-src/avm2/analyze.js
-src/avm2/compiler/lljs/src/estransform.js
-src/avm2/compiler/lljs/src/escodegen.js
-src/avm2/compiler/inferrer.js
-src/avm2/compiler/c4/ir.js
-src/avm2/compiler/builder.js
-src/avm2/compiler/c4/looper.js
-src/avm2/compiler/c4/backend.js
-src/avm2/trampoline.js
-src/avm2/bindings.js
-src/avm2/scope.js
-src/avm2/domain.js
-
-src/avm2/xregexp.js
-src/avm2/runtime.js
-src/avm2/runtime-exports.js
-src/avm2/hacks.js
-#src/avm2/vectors-numeric.js
-#src/avm2/vectors-generic.js
-src/avm2/xml.js
-src/avm2/amf.js
-src/avm2/natives/int32Vector.js
-src/avm2/natives/uint32Vector.js
-src/avm2/natives/float64Vector.js
-src/avm2/native.js
-src/avm2/natives/genericVector.js
-src/avm2/natives/dictionary.js
-src/avm2/natives/proxy.js
-src/avm2/natives/xml.js
-src/avm2/natives/system.js
-src/avm2/natives/byteArray.js
-src/avm2/disassembler.js
-src/avm2/interpreter.js
-#src/avm2/vm.js
-#!inline console.timeEnd("Load AVM2 Dependencies");
-
 ## Load AVM1 Dependencies
 #!inline console.time("Load AVM1 Dependencies");
 src/avm1/stream.js
@@ -66,20 +20,6 @@ src/avm1/parser.js
 src/avm1/analyze.js
 src/avm1/interpreter.js
 #!inline console.timeEnd("Load AVM1 Dependencies");
-
-#!inline console.time("Load Compiled Code Cache");
-#src/avm2/bin/out.js
-#src/avm2/bin/builtin.as.js
-#src/avm2/bin/race3.as.js
-#src/avm2/bin/player.as.js
-#src/avm2/bin/demo.as.js
-#src/avm2/bin/box.as.js
-#src/avm2/bin/box.as.cc.js
-#src/avm2/bin/main.as.js
-#src/avm2/bin/main.as.cc.js
-#src/avm2/bin/truck.as.js
-#src/avm2/bin/candy.as.js
-#!inline console.timeEnd("Load Compiled Code Cache");
 
 ## Load Flash TS Dependencies
 #!inline console.time("Load Flash TS Dependencies");
