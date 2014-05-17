@@ -60,9 +60,9 @@ module Shumway.Remoting {
     'dblclick',
     'mousedown',
     'mousemove',
-    'mouseup',
-    'mouseover',
-    'mouseout'
+    'mouseup'
+    //'mouseover',
+    //'mouseout'
   ];
 
   export var KeyboardEventNames: string[] = [

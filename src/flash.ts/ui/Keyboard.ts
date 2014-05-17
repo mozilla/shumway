@@ -28,7 +28,7 @@ module Shumway.AVM2.AS.flash.ui {
     target: flash.events.EventDispatcher;
 
     /**
-     * Converts JS keyboard event into AS3 keyboard events.
+     * Converts DOM keyboard event data into AS3 keyboard events.
      */
     public dispatchKeyboardEvent(event: KeyboardEventData) {
       var keyCode = event.keyCode;

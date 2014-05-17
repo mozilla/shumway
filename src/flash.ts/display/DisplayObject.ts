@@ -1342,6 +1342,48 @@ module Shumway.AVM2.AS.flash.display {
       return find;
     }
 
+    /**
+     * Returns the distance between this object and a given ancestor.
+     */
+    private _getDistance(ancestor: DisplayObject): number {
+      var d = 0;
+      var node = this;
+      while (node !== ancestor) {
+        d++;
+        node = node._parent;
+      }
+      if (!node) {
+        return -1;
+      }
+      return d;
+    }
+
+    /**
+     * Finds the lowest common ancestor of two display objects.
+     */
+    static findCommonAncestor(root: DisplayObject, a: DisplayObject, b: DisplayObject): DisplayObject {
+      if (!root || !a || !b) {
+        return null;
+      }
+      var d1 = a._getDistance(root);
+      var d2 = b._getDistance(root);
+      if (d1 < 0 || d2 < 0) {
+        return null;
+      }
+      while (d1 > d2) {
+        a = a._parent;
+        d1--;
+      }
+      while (d2 > d1) {
+        b = b._parent;
+        d2--;
+      }
+      if (a._parent === b._parent) {
+        return a._parent;
+      }
+      return null;
+    }
+
     // ---------------------------------------------------------------------------------------------------------------------------------------------
     // -- Stuff below we still need to port.                                                                                                      --
     // ---------------------------------------------------------------------------------------------------------------------------------------------

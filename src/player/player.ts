@@ -112,7 +112,7 @@ module Shumway {
       }
       if (event.isMouseEvent) {
         this._mouseEventDispatcher.stage = this._stage;
-        this._mouseEventDispatcher.dispatchMouseEvent(<MouseEventAndPointData>event);
+        this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>event);
       }
     }
 
