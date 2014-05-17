@@ -166,6 +166,18 @@ module Shumway.Tools {
     }
   }
 
+  interface Kind {
+    bgColor: string;
+    textColor: string;
+  }
+
+  interface DragInfo {
+    overview: boolean;
+    clientX: number;
+    windowLeft: number;
+    windowRight: number;
+  }
+
   export class FlameChart {
     private _container: HTMLElement;
     private _canvas: HTMLCanvasElement;
@@ -183,10 +195,11 @@ module Shumway.Tools {
     private _pixelsToOverviewTime = 1;
     private _range: TimelineFrame;
     private _minTime = 5;
-    private _kindStyle: Shumway.Map<string>;
+    private _kindStyle: Shumway.Map<Kind>;
 
-    private _drag: any = null;
+    private _drag: DragInfo = null;
     private _ignoreClick = false;
+    private _cursor = "default";
 
     constructor(container: HTMLElement, buffer: TimelineBuffer) {
       this._container = container;
@@ -216,10 +229,10 @@ module Shumway.Tools {
       }
       if (event.clientY < this._overviewHeight) {
         var window = this._windowRight - this._windowLeft;
-        this._windowLeft = this._range.startTime + event.clientX * this._pixelsToOverviewTime - window / 2;
-        this._windowRight = this._range.startTime + event.clientX * this._pixelsToOverviewTime + window / 2;
-        this._updateUnits();
-        this._draw();
+        var windowLeft = this._range.startTime + event.clientX * this._pixelsToOverviewTime - window / 2;
+        var windowRight = this._range.startTime + event.clientX * this._pixelsToOverviewTime + window / 2;
+        this._updateWindow(windowLeft, windowRight);
+        this._updateCursor(event);
       }
     }
 
@@ -233,20 +246,20 @@ module Shumway.Tools {
 
     private _onMouseDown(event: MouseEvent) {
       if (event.clientY < this._overviewHeight) {
-        if (this._isDraggable(event)) {
+        if (this._getCursorPosition(event) == 0) {
           this._drag = {
             overview: true,
-            offsetX: event.clientX,
+            clientX: event.clientX,
             windowLeft: this._windowLeft,
-            windowRight: this._windowRight,
+            windowRight: this._windowRight
           };
         }
       } else {
         this._drag = {
           overview: false,
-          offsetX: event.clientX,
+          clientX: event.clientX,
           windowLeft: this._windowLeft,
-          windowRight: this._windowRight,
+          windowRight: this._windowRight
         };
       }
       this._updateCursor(event);
@@ -254,19 +267,18 @@ module Shumway.Tools {
 
     private _onMouseMove(event: MouseEvent) {
       if (this._drag) {
-        var offset: number;
-        var mult: number;
+        var offset:number;
+        var mult:number;
         if (this._drag.overview) {
-          offset = event.clientX - this._drag.offsetX;
+          offset = event.clientX - this._drag.clientX;
           mult = this._pixelsToOverviewTime;
         } else {
-          offset = -event.clientX + this._drag.offsetX;
+          offset = -event.clientX + this._drag.clientX;
           mult = this._pixelsToTime;
         }
-        this._windowLeft = this._drag.windowLeft + offset * mult;
-        this._windowRight = this._drag.windowRight + offset * mult;
-        this._updateUnits();
-        this._draw();
+        var windowLeft = this._drag.windowLeft + offset * mult;
+        var windowRight = this._drag.windowRight + offset * mult;
+        this._updateWindow(windowLeft, windowRight);
       }
       this._updateCursor(event);
     }
@@ -277,13 +289,13 @@ module Shumway.Tools {
         var range = this._range;
         var delta = clamp(event.detail ? event.detail : -event.wheelDeltaY / 120, -1, 1);
         var zoom = Math.pow(1.2, delta) - 1;
-        var rangeTotalTime = range.endTime - range.startTime;
-        var cursorTime = range.startTime + event.clientX * (rangeTotalTime / this._offsetWidth);
-        this._windowLeft += (this._windowLeft - cursorTime) * zoom;
-        this._windowRight += (this._windowRight - cursorTime) * zoom;
-        this._updateUnits();
+        var cursorTime = (event.clientY > this._overviewHeight || this._getCursorPosition(event) !== 0)
+                           ? this._windowLeft + event.clientX * this._pixelsToTime
+                           : range.startTime + event.clientX * this._pixelsToOverviewTime;
+        var windowLeft = this._windowLeft + (this._windowLeft - cursorTime) * zoom;
+        var windowRight = this._windowRight + (this._windowRight - cursorTime) * zoom;
+        this._updateWindow(windowLeft, windowRight);
         this._updateCursor(event);
-        this._draw();
       }
     }
 
@@ -306,16 +318,39 @@ module Shumway.Tools {
     }
 
     private _updateUnits() {
-      this._clampWindow();
       this._timeToPixels = this._offsetWidth / (this._windowRight - this._windowLeft);
       this._pixelsToTime = (this._windowRight - this._windowLeft) / this._offsetWidth;
       this._pixelsToOverviewTime = (this._range.endTime - this._range.startTime) / this._offsetWidth;
+    }
+
+    private _updateWindow(left: number, right: number) {
+      if (this._windowLeft !== left || this._windowRight !== right) {
+        this._windowLeft = left;
+        this._windowRight = right;
+        this._clampWindow();
+        this._updateUnits();
+        this._draw();
+      }
+    }
+
+    private _updateCursor(event: MouseEvent) {
+      var showHandCursor = (this._getCursorPosition(event) == 0);
+      var isDragging = (this._drag !== null);
+      var value = showHandCursor ? (isDragging ? "grabbing" : "grab") : "default";
+      if (this._cursor !== value) {
+        this._cursor = value;
+        var self = this;
+        ["", "-moz-", "-webkit-"].forEach(function(prefix) {
+          self._canvas.style.cursor = prefix + value;
+        });
+      }
     }
 
     private _onResize() {
       this._offsetWidth = this._container.offsetWidth;
       this._offsetHeight = this._container.offsetHeight;
       this._resetCanvas();
+      this._clampWindow();
       this._updateUnits();
       this._draw();
     }
@@ -339,11 +374,15 @@ module Shumway.Tools {
       var end = (frame.endTime - this._windowLeft) * this._timeToPixels;
       var style = this._kindStyle[frame.kind];
       if (!style) {
-        style = this._kindStyle[frame.kind] = ColorStyle.randomStyle();
+        var background = ColorStyle.randomStyle();
+        style = this._kindStyle[frame.kind] = {
+          bgColor: background,
+          textColor: ColorStyle.contrastStyle(background)
+        };
       }
-      context.fillStyle = style;
+      context.fillStyle = style.bgColor;
       context.fillRect(start, depth * 12, end - start, 12);
-      context.fillStyle = "white";
+      context.fillStyle = style.textColor;
       context.textBaseline  = "top";
       var label = this._buffer.getKindName(frame.kind);
       var labelHPadding = 2;
@@ -431,26 +470,20 @@ module Shumway.Tools {
       context.restore();
     }
 
-    private _isDraggable(event: MouseEvent): boolean {
-      var hit = true;
+    private _getCursorPosition(event: MouseEvent): number {
+      var pos = 0;
       if (event.clientY < this._overviewHeight) {
         var range = this._range;
         var rangeTotalTime = range.endTime - range.startTime;
         var windowLeftPixels = ((this._windowLeft - range.startTime) / rangeTotalTime * this._offsetWidth) | 0;
         var windowRightPixels = ((this._windowRight - range.startTime) / rangeTotalTime * this._offsetWidth) | 0;
-        hit = (event.clientX >= windowLeftPixels && event.clientX <= windowRightPixels);
+        if (event.clientX < windowLeftPixels) {
+          pos = -1;
+        } else if (event.clientX > windowRightPixels) {
+          pos = 1;
+        }
       }
-      return hit;
-    }
-
-    private _updateCursor(event: MouseEvent) {
-      var showHandCursor = this._isDraggable(event);
-      var pressed = (this._drag !== null);
-      var value = showHandCursor ? (pressed ? "grabbing" : "grab") : "default";
-      var self = this;
-      ["", "-moz-", "-webkit-"].forEach(function(prefix) {
-        self._canvas.style.cursor = prefix + value;
-      })
+      return pos;
     }
   }
 }
