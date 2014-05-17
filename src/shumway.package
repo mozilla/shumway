@@ -7,10 +7,6 @@ src/utilities.js
 src/options.js
 src/settings.js
 
-#!inline var ArgumentParser = Shumway.Options.ArgumentParser;
-#!inline var Option = Shumway.Options.Option;
-#!inline var OptionSet = Shumway.Options.OptionSet;
-
 src/swf/Timeline.js
 
 src/gfx/filters/filters.js
