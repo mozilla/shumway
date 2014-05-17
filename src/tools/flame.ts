@@ -21,6 +21,10 @@ module Shumway.Tools {
    * Inspired by the Chrome flame chart and others.
    */
 
+  /**
+   * Represents a single timeline frame range and makes it easier to work with the compacted
+   * timeline buffer data.
+   */
   export class TimelineFrame {
     public children: TimelineFrame [];
     public total: number;
@@ -32,7 +36,10 @@ module Shumway.Tools {
       // ...
     }
 
-    public getChildIndex(time: number) {
+    /**
+     * Gets the child index of the first child to overlap the specified time.
+     */
+    public getChildIndex(time: number): number {
       var children = this.children;
       for (var i = 0; i < children.length; i++) {
         var child = children[i];
@@ -43,7 +50,12 @@ module Shumway.Tools {
       return 0;
     }
 
-    public getChildRange(s: number, e: number) {
+    /**
+     * Gets the high and low index of the children that intersect the specified time range.
+     *
+     * TODO: This uses a dumb linear algorithm, we can do much better here by doing a binary search.
+     */
+    public getChildRange(s: number, e: number): number [] {
       var children = this.children;
       var j = -1, k = -1;
       for (var i = 0; i < children.length; i++) {
@@ -59,7 +71,10 @@ module Shumway.Tools {
       return [j, k];
     }
 
-    public query(time: number) {
+    /**
+     * Finds the deepest child that intersects with the specified time.
+     */
+    public query(time: number): TimelineFrame {
       if (time < this.startTime || time > this.endTime) {
         return null;
       }
@@ -75,6 +90,9 @@ module Shumway.Tools {
       return this;
     }
 
+    /**
+     * Gets this frame's distance to the root.
+     */
     public getDepth(): number {
       var depth = 0;
       var self = this;
@@ -86,6 +104,10 @@ module Shumway.Tools {
     }
   }
 
+  /**
+   * Records enter / leave events in two circular buffers. The goal here is to be able to handle
+   * large ammounts of data.
+   */
   export class TimelineBuffer {
     static ENTER = 0xBEEF0000 | 0;
     static LEAVE = 0xDEAD0000 | 0;
@@ -131,6 +153,9 @@ module Shumway.Tools {
       this._depth--;
     }
 
+    /**
+     * Constructs an easier to work with TimelineFrame data structure.
+     */
     gatherRange(count: number): TimelineFrame {
       var range = new TimelineFrame(null, 0, NaN, NaN);
       var stack: TimelineFrame [] = [range];
