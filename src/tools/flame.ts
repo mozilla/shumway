@@ -382,6 +382,7 @@ module Shumway.Tools {
       var context = this._context;
       var start = (frame.startTime - this._windowLeft) * this._timeToPixels;
       var end = (frame.endTime - this._windowLeft) * this._timeToPixels;
+      var width = end - start;
       var style = this._kindStyle[frame.kind];
       if (!style) {
         var background = ColorStyle.randomStyle();
@@ -391,12 +392,12 @@ module Shumway.Tools {
         };
       }
       context.fillStyle = style.bgColor;
-      context.fillRect(start, depth * 12, end - start, 12);
+      context.fillRect(start, depth * 12, width, 12);
       context.fillStyle = style.textColor;
       context.textBaseline  = "top";
       var label = this._buffer.getKindName(frame.kind);
       var labelHPadding = 2;
-      if (context.measureText(label).width + (2 * labelHPadding) < (end - start)) {
+      if (width > 10 && context.measureText(label).width + (2 * labelHPadding) < width) {
         context.fillText(label, start + labelHPadding, depth * 12);
       }
 
