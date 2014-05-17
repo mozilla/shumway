@@ -30,16 +30,13 @@
 ///<reference path='trampoline.ts' />
 ///<reference path='interpreter.ts' />
 ///<reference path='hacks.ts' />
-///<reference path='native.ts' />
-///<reference path='natives/xml.ts' />
-///<reference path='natives/genericVector.ts' />
 ///<reference path='natives/int32Vector.ts' />
 ///<reference path='natives/uint32Vector.ts' />
 ///<reference path='natives/float64Vector.ts' />
+///<reference path='native.ts' />
+///<reference path='natives/genericVector.ts' />
+///<reference path='natives/xml.ts' />
 ///<reference path='natives/dictionary.ts' />
 ///<reference path='natives/proxy.ts' />
 ///<reference path='natives/byteArray.ts' />
 ///<reference path='natives/system.ts' />
-
-///<reference path='stubs.ts' />
-

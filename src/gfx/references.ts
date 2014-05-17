@@ -17,20 +17,18 @@
 /// <reference path='../utilities.ts' />
 /// <reference path='utilities.ts' />
 /// <reference path='../avm2/natives/byteArray.ts' />
-/// <reference path='shapes.ts'/>
 /// <reference path='geometry.ts'/>
 /// <reference path='regionAllocator.ts'/>
-/// <reference path='stage.ts'/>
 /// <reference path='frame.ts'/>
 /// <reference path='frameContainer.ts'/>
+/// <reference path='stage.ts'/>
 /// <reference path='filters.ts'/>
 /// <reference path='gl/glContext.ts'/>
-/// <reference path='gl/brush.ts'/>
-/// <reference path='gl/gl.ts'/>
 /// <reference path='gl/core.ts'/>
-/// <reference path='dom/dom.ts'/>
+/// <reference path='gl/gl.ts'/>
+/// <reference path='gl/brush.ts'/>
 /// <reference path='2d/2d.ts'/>
-/// <reference path='bench.ts'/>
+/// <reference path='dom/dom.ts'/>
 /// <reference path='easel.ts'/>
 
 import Rectangle = Shumway.GFX.Geometry.Rectangle;

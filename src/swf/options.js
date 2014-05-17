@@ -16,6 +16,9 @@
  * limitations under the License.
  */
 
+var Option = Shumway.Options.Option;
+var OptionSet = Shumway.Options.OptionSet;
+
 var rendererOptions = shumwayOptions.register(new OptionSet("Renderer Options"));
 var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));
 var disableRendering = rendererOptions.register(new Option("drv", "disableRendering", "boolean", false, "disable rendering"));
