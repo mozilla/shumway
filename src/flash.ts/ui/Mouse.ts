@@ -253,13 +253,13 @@ module Shumway.AVM2.AS.flash.ui {
       notImplemented("public flash.ui.Mouse::static unregisterCursor"); return;
     }
 
-    private static _currentPosition: Point;
+    private static _currentPosition: flash.geom.Point;
 
-    public static set currentPosition(value: Point) {
+    public static set currentPosition(value: flash.geom.Point) {
       this._currentPosition = value;
     }
 
-    public static get currentPosition(): Point {
+    public static get currentPosition(): flash.geom.Point {
       return this._currentPosition;
     }
   }

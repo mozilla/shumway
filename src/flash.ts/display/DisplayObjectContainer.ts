@@ -20,9 +20,8 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
 
-  import VisitorFlags = flash.display.VisitorFlags;
-
   import events = flash.events;
+  import VisitorFlags = flash.display.VisitorFlags;
 
   export class DisplayObjectContainer extends flash.display.InteractiveObject {
     static bindings: string [] = null;

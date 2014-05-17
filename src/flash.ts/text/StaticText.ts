@@ -15,7 +15,7 @@
  */
 // Class: StaticText
 module Shumway.AVM2.AS.flash.text {
-  import DisplayObjectFlags = flash.display.DisplayObjectFlags;
+  import notImplemented = Shumway.Debug.notImplemented;
 
   export class StaticText extends flash.display.DisplayObject {
 

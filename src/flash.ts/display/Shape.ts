@@ -16,8 +16,7 @@
 // Class: Shape
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import DisplayObject = flash.display.DisplayObject;
+
   export class Shape extends flash.display.DisplayObject {
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = null; // [];

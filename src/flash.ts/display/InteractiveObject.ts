@@ -19,7 +19,7 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import DisplayObject = flash.display.DisplayObject;
 
-  import Event = flash.events.Event;
+  import events = flash.events;
 
   export class InteractiveObject extends flash.display.DisplayObject {
     
@@ -75,7 +75,7 @@ module Shumway.AVM2.AS.flash.display {
       var old = this._tabEnabled;
       this._tabEnabled = enabled;
       if (old !== enabled) {
-        this.dispatchEvent(new Event(Event.TAB_ENABLED_CHANGE, true));
+        this.dispatchEvent(events.Event.getInstance(events.Event.TAB_ENABLED_CHANGE, true));
       }
     }
 
@@ -88,7 +88,7 @@ module Shumway.AVM2.AS.flash.display {
       var old = this._tabIndex;
       this._tabIndex = index;
       if (old !== index) {
-        this.dispatchEvent(new Event(Event.TAB_INDEX_CHANGE, true));
+        this.dispatchEvent(events.Event.getInstance(events.Event.TAB_INDEX_CHANGE, true));
       }
     }
 
