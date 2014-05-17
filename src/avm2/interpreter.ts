@@ -339,7 +339,7 @@ module Shumway.AVM2 {
           case OP.constructsuper:
             popManyInto(stack, bc.argCount, args);
             object = stack.pop();
-            savedScope.object.baseClass.instanceConstructorNoInitialize.asApply(object, args);
+            savedScope.object.baseClass.instanceConstructorNoInitialize.apply(object, args);
             break;
           case OP.constructprop:
             popManyInto(stack, bc.argCount, args);
