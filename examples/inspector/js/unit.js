@@ -1,51 +1,53 @@
 function fail(message) {
-  // console.error(message);
-  throw new Error(message);
+  console.error(message);
 }
 
 function eqFloat(a, b, test) {
-  test = test ? ": " + test : " #" + testNumber;
+  test = description(test);
   if (Math.abs(a -b) >= 0.1) {
-    return fail("FAIL " + test);
+    return fail("FAIL " + test + ". Got " + a + ", expected " + b + failedLocation());
   }
   console.info("PASS" + test);
   testNumber ++;
 }
 
 function neq(a, b, test) {
-  test = test ? ": " + test : " #" + testNumber;
+  test = description(test);
   if (a === b) {
-    return fail("FAIL " + test);
+    return fail("FAIL " + test + ". Got " + a + ", expected different (!==) value" +
+                failedLocation());
   }
   console.info("PASS" + test);
   testNumber ++;
 }
 
 function eq(a, b, test) {
-  test = test ? ": " + test : " #" + testNumber;
+  test = description(test);
   if (a !== b) {
-    return fail("FAIL " + test);
+    return fail("FAIL " + test + ". Got " + a + ", expected " + b + failedLocation());
   }
   console.info("PASS" + test);
   testNumber ++;
 }
 
 function eqArray(a, b, test) {
-  test = test ? ": " + test : " #" + testNumber;
+  test = description(test);
   if (a == undefined && b) {
-    return fail("FAIL" + test + " Null Array: a");
+    return fail("FAIL" + test + " Null Array: a" + failedLocation());
   }
   if (a && b == undefined) {
-    return fail("FAIL" + test + " Null Array: b");
+    return fail("FAIL" + test + " Null Array: b" + failedLocation());
   }
   if (a && b) {
     if (a.length !== b.length) {
-      return fail("FAIL" + test + " Array Length Mismatch, got " + a.length + ", expected " + b.length);
+      return fail("FAIL" + test + " Array Length Mismatch, got " + a.length + ", expected " +
+                  b.length + failedLocation());
     }
     for (var i = 0; i < a.length; i++) {
       if (a[i] !== b[i]) {
         if (!(typeof a[i] == "number" && typeof b[i] == "number" && isNaN(a[i]) && isNaN(b[i]))) {
-          return fail("FAIL" + test + " Array Element " + i + ": got " + a[i] + ", expected " + b[i]);
+          return fail("FAIL" + test + " Array Element " + i + ": got " + a[i] + ", expected " +
+                      b[i] + failedLocation());
         }
       }
     }
@@ -55,12 +57,21 @@ function eqArray(a, b, test) {
 }
 
 function check(condition, test) {
-  test = test ? ": " + test : " #" + testNumber;
+  test = description(test);
   if (!condition) {
-    return fail("FAIL " + test);
+    return fail("FAIL " + test + ". Got " + condition + ", expected truthy value" +
+                failedLocation());
   }
   console.info("PASS" + test);
   testNumber ++;
+}
+
+function description(test) {
+  return test ? ": " + test : " #" + testNumber;
+}
+
+function failedLocation() {
+  return " (" + new Error().stack.split('\n')[2] + ")";
 }
 
 /**
@@ -115,7 +126,7 @@ function executeUnitTests(file, avm2) {
     var lastTestPromise = Promise.resolve();
 
     for (var i = 0; i < unitTests.length; i++) {
-      test = unitTests[i];
+      var test = unitTests[i];
       var repeat = 1;
       if (typeof unitTests[i] === "number") {
         repeat = unitTests[i];

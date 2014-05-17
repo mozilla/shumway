@@ -112,7 +112,7 @@ module Shumway {
       }
       if (event.isMouseEvent) {
         this._mouseEventDispatcher.stage = this._stage;
-        this._mouseEventDispatcher.dispatchMouseEvent(<MouseEventAndPointData>event);
+        this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>event);
       }
     }
 
@@ -166,8 +166,10 @@ module Shumway {
       var stage = this._stage;
       var rootInitialized = false;
       (function tick() {
-        var fps = (frameRate.value >= 0 ? frameRate.value : stage.frameRate)
-        self._frameTimeout = setTimeout(tick, 1000 / fps);
+        if (frameRate.value < 0) {
+          frameRate.value = stage.frameRate;
+        }
+        self._frameTimeout = setTimeout(tick, 1000 / frameRate.value);
         timeline && timeline.enter("eventLoop");
 
         MovieClip.initFrame();

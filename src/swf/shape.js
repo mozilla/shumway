@@ -489,7 +489,7 @@ function processStyle(style, isLineStyle, dictionary, dependencies) {
       }
       break;
     default:
-      fail('invalid fill style', 'shape');
+      assertUnreachable('shape parser encountered invalid fill style');
   }
   if (!style.matrix) {
     return style;
@@ -1580,6 +1580,6 @@ function initStyle(style, dictionary) {
       style.bitmapId = bitmap.props.renderableId;
       break;
     default:
-      fail('invalid fill style', 'shape');
+      assertUnreachable('shape parser encountered invalid fill style');
   }
 }

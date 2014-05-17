@@ -187,6 +187,10 @@ module Shumway.Tools {
     private _context: CanvasRenderingContext2D;
     private _buffer: TimelineBuffer;
 
+    private _canvasOverviewDirty: boolean;
+    private _canvasOverview: HTMLCanvasElement;
+    private _contextOverview: CanvasRenderingContext2D;
+
     private _overviewHeight = 64;
     private _windowLeft = 0;
     private _windowRight = Number.MAX_VALUE;
@@ -208,6 +212,9 @@ module Shumway.Tools {
       this._context = this._canvas.getContext("2d");
       this._context.font = 10 + 'px Consolas, "Liberation Mono", Courier, monospace';
       this._container.appendChild(this._canvas);
+      this._canvasOverviewDirty = true;
+      this._canvasOverview = document.createElement("canvas");
+      this._contextOverview = this._canvasOverview.getContext("2d");
       this._buffer = buffer;
       this._range = this._buffer.gatherRange(512);
       this._kindStyle = createEmptyObject();
@@ -357,10 +364,13 @@ module Shumway.Tools {
 
     private _resetCanvas() {
       var ratio = window.devicePixelRatio;
-      this._canvas.width = this._offsetWidth * ratio;
+      this._canvas.width = this._canvasOverview.width = this._offsetWidth * ratio;
       this._canvas.height = this._offsetHeight * ratio;
-      this._canvas.style.width = this._offsetWidth + "px";
+      this._canvas.style.width = this._canvasOverview.style.width = this._offsetWidth + "px";
       this._canvas.style.height = this._offsetHeight + "px";
+      this._canvasOverview.height = this._overviewHeight * ratio;
+      this._canvasOverview.style.height = this._overviewHeight + "px";
+      this._canvasOverviewDirty = true;
     }
 
     private _pixelTime(time: number): number {
@@ -372,6 +382,7 @@ module Shumway.Tools {
       var context = this._context;
       var start = (frame.startTime - this._windowLeft) * this._timeToPixels;
       var end = (frame.endTime - this._windowLeft) * this._timeToPixels;
+      var width = end - start;
       var style = this._kindStyle[frame.kind];
       if (!style) {
         var background = ColorStyle.randomStyle();
@@ -381,12 +392,12 @@ module Shumway.Tools {
         };
       }
       context.fillStyle = style.bgColor;
-      context.fillRect(start, depth * 12, end - start, 12);
+      context.fillRect(start, depth * 12, width, 12);
       context.fillStyle = style.textColor;
       context.textBaseline  = "top";
       var label = this._buffer.getKindName(frame.kind);
       var labelHPadding = 2;
-      if (context.measureText(label).width + (2 * labelHPadding) < (end - start)) {
+      if (width > 10 && context.measureText(label).width + (2 * labelHPadding) < width) {
         context.fillText(label, start + labelHPadding, depth * 12);
       }
 
@@ -400,43 +411,52 @@ module Shumway.Tools {
 
     private _drawOverview() {
       var context = this._context;
+      var ratio = window.devicePixelRatio;
       var range = this._range;
 
-      var rangeTotalTime = range.endTime - range.startTime;
-      var sampleWidthInPixels = 1;
-      var sampleTimeInterval = rangeTotalTime / (this._offsetWidth / sampleWidthInPixels);
+      if (this._canvasOverviewDirty) {
+        var rangeTotalTime = range.endTime - range.startTime;
+        var sampleWidthInPixels = 1;
+        var sampleTimeInterval = rangeTotalTime / (this._offsetWidth / sampleWidthInPixels);
 
-      var depths = [];
-      var maxDepth = 0;
-      for (var time = range.startTime; time < range.endTime; time += sampleTimeInterval) {
-        var depth = range.query(time).getDepth();
-        maxDepth = Math.max(maxDepth, depth);
-        depths.push(depth);
+        var depths = [];
+        var maxDepth = 0;
+        for (var time = range.startTime; time < range.endTime; time += sampleTimeInterval) {
+          var depth = range.query(time).getDepth();
+          maxDepth = Math.max(maxDepth, depth);
+          depths.push(depth);
+        }
+
+        var depthHeight = this._overviewHeight / maxDepth | 0;
+        var x = 0;
+        var contextOverview = this._contextOverview;
+        contextOverview.save();
+        contextOverview.scale(ratio, ratio);
+        contextOverview.beginPath();
+        contextOverview.moveTo(0, this._overviewHeight);
+        for (var i = 0; i < depths.length; i++) {
+          x += sampleWidthInPixels;
+          var y = depths[i] * depthHeight;
+          contextOverview.lineTo(x, y);
+        }
+        contextOverview.lineTo(x, this._overviewHeight);
+        contextOverview.fillStyle = "#70bf53";
+        contextOverview.fill();
+        contextOverview.restore();
+
+        this._canvasOverviewDirty = false;
       }
 
-      var depthHeight = this._overviewHeight / maxDepth | 0;
-      var x = 0;
-      context.beginPath();
-      context.moveTo(0, this._overviewHeight);
-      for (var i = 0; i < depths.length; i++) {
-        x += sampleWidthInPixels;
-        var y = depths[i] * depthHeight;
-        context.lineTo(x, y);
-      }
-      context.lineTo(x, this._overviewHeight);
-      context.fillStyle = "#70bf53";
-      context.fill();
+      context.drawImage(this._canvasOverview, 0, 0);
 
-      if (!this._windowLeft || !this._windowRight) {
-        this._windowLeft = range.startTime;
-        this._windowRight = range.endTime;
-      }
+      var windowLeftPixels = ((this._windowLeft - range.startTime) / this._pixelsToOverviewTime) | 0;
+      var windowRightPixels = ((this._windowRight - range.startTime) / this._pixelsToOverviewTime) | 0;
 
-      var windowLeftPixels = ((this._windowLeft - range.startTime) / rangeTotalTime * this._offsetWidth) | 0;
-      var windowRightPixels = ((this._windowRight - range.startTime) / rangeTotalTime * this._offsetWidth) | 0;
-
+      context.save();
+      context.scale(ratio, ratio);
       context.fillStyle = "rgba(235, 83, 104, 0.5)";
       context.fillRect(windowLeftPixels, 0, windowRightPixels - windowLeftPixels, this._overviewHeight);
+      context.restore();
     }
 
     private _drawFlames() {
@@ -447,7 +467,9 @@ module Shumway.Tools {
         return;
       }
       var context = this._context;
+      var ratio = window.devicePixelRatio;
       context.save();
+      context.scale(ratio, ratio);
       context.translate(0, this._overviewHeight);
       for (var i = l; i <= r; i++) {
         this._drawFrame(this._range.children[i], 0);
@@ -463,11 +485,10 @@ module Shumway.Tools {
       context.scale(ratio, ratio);
       context.fillStyle = "#181d20";
       context.fillRect(0, 0, this._offsetWidth, this._offsetHeight);
+      context.restore();
 
       this._drawOverview();
       this._drawFlames();
-
-      context.restore();
     }
 
     private _getCursorPosition(event: MouseEvent): number {

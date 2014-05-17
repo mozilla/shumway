@@ -282,6 +282,7 @@ module Shumway.Timeline {
                 public filters: any [] = null,
                 public blendMode: string = null,
                 public cacheAsBitmap: boolean = false,
+                public visible: boolean = true,
                 public events: any [] = null) {
     }
 
@@ -364,6 +365,7 @@ module Shumway.Timeline {
               filters,
               flash.display.BlendMode.fromNumber(cmd.blendMode),
               cmd.cache,
+              cmd.hasVisibility ? !!cmd.visibility : true,
               events
             );
             this.place(depth, state);

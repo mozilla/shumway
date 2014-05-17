@@ -20,12 +20,6 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
 
-  import StageScaleMode = flash.display.StageScaleMode;
-  import ColorCorrection = flash.display.ColorCorrection;
-  import ColorCorrectionSupport = flash.display.ColorCorrectionSupport;
-  import StageQuality = flash.display.StageQuality;
-  import Event = flash.events.Event;
-
   export class Stage extends flash.display.DisplayObjectContainer {
 
     static classInitializer: any = null;
@@ -41,15 +35,19 @@ module Shumway.AVM2.AS.flash.display {
       this._stage = this;
       this._frameRate = 24;
       this._scaleMode = StageScaleMode.SHOW_ALL;
+      assert (this._scaleMode);
       this._align = "";
       this._stageWidth = 0;
       this._stageHeight = 0;
       this._showDefaultContextMenu = true;
       this._focus = null;
       this._colorCorrection = ColorCorrection.DEFAULT;
+      assert (this._colorCorrection);
       this._colorCorrectionSupport = ColorCorrectionSupport.DEFAULT_OFF;
+      assert (this._colorCorrectionSupport);
       this._stageFocusRect = true;
       this._quality = StageQuality.HIGH;
+      assert (this._quality);
       this._displayState = null;
       this._fullScreenSourceRect = null;
       this._mouseLock = false;
@@ -306,7 +304,7 @@ module Shumway.AVM2.AS.flash.display {
       somewhatImplemented("public flash.display.Stage::requireOwnerPermissions"); return;
     }
 
-    render() {
+    render(): void {
       if (!this._invalidated) {
         return;
       }
@@ -314,9 +312,9 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidated = false;
     }
 
-    getObjectsUnderMouse(globalPoint: flash.geom.Point): DisplayObject [] {
-      var objectsUnderPoint: DisplayObject [] = [];
-      this.visit(function (dispObj: DisplayObject): VisitorFlags {
+    getObjectsUnderMouse(globalPoint: flash.geom.Point): flash.display.DisplayObject [] {
+      var objectsUnderPoint: flash.display.DisplayObject [] = [];
+      this.visit(function (dispObj: flash.display.DisplayObject): VisitorFlags {
         var isUnderMouse = false;
         if (SimpleButton.isType(dispObj)) {
           var hitTestState = (<SimpleButton>dispObj).hitTestState;

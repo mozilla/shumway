@@ -33,10 +33,16 @@ module Shumway.Remoting.GFX {
     public writeMouseEvent(event: MouseEvent, point: Point) {
       var output = this.output;
       output.writeInt(MessageTag.MouseEvent);
-      output.writeFloat(point.x);
-      output.writeFloat(point.y);
       var typeId = Shumway.Remoting.MouseEventNames.indexOf(event.type);
       output.writeInt(typeId);
+      output.writeFloat(point.x);
+      output.writeFloat(point.y);
+      output.writeFloat(event.buttons);
+      var flags =
+        (event.ctrlKey ? KeyboardEventFlags.CtrlKey : 0) |
+        (event.altKey ? KeyboardEventFlags.AltKey : 0) |
+        (event.shiftKey ? KeyboardEventFlags.ShiftKey : 0);
+      output.writeInt(flags);
     }
 
     public writeKeyboardEvent(event: KeyboardEvent) {

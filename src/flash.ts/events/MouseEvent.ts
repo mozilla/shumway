@@ -68,10 +68,10 @@ module Shumway.AVM2.AS.flash.events {
           return MouseEvent.MOUSE_DOWN;
         case "mousemove":
           return MouseEvent.MOUSE_MOVE;
-        case "mouseout":
-          return MouseEvent.MOUSE_OUT;
-        case "mouseover":
-          return MouseEvent.MOUSE_OVER;
+        //case "mouseout":
+        //  return MouseEvent.MOUSE_OUT;
+        //case "mouseover":
+        //  return MouseEvent.MOUSE_OVER;
         case "mouseup":
           return MouseEvent.MOUSE_UP;
         default:

@@ -126,7 +126,7 @@ function defineBitmap(tag) {
     }
     break;
   default:
-    fail('invalid format', 'bitmap');
+    assertUnreachable('invalid bitmap format');
   }
 
   return {

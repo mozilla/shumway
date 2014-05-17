@@ -31,13 +31,8 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
 
-  import BlendMode = flash.display.BlendMode; assert (BlendMode);
-  import ColorTransform = flash.geom.ColorTransform; assert (ColorTransform);
-  import Matrix = flash.geom.Matrix; assert (Matrix);
-  import Point = flash.geom.Point; assert (Point);
-  import Rectangle = flash.geom.Rectangle; assert (Rectangle);
-  import Event = flash.events.Event; assert (Event);
-  import EventDispatcher = flash.events.EventDispatcher; assert (EventDispatcher);
+  import geom = flash.geom;
+  import events = flash.events;
 
   export enum Direction {
     Upward     = 1,
@@ -271,16 +266,16 @@ module Shumway.AVM2.AS.flash.display {
       self._loaderInfo = null;
       self._accessibilityProperties = null;
 
-      self._rect = new Rectangle();
-      self._bounds = new Rectangle();
+      self._rect = new geom.Rectangle();
+      self._bounds = new geom.Rectangle();
       self._clipDepth = 0;
 
-      self._concatenatedMatrix = new Matrix();
-      self._invertedConcatenatedMatrix = new Matrix();
-      self._matrix = new Matrix();
+      self._concatenatedMatrix = new geom.Matrix();
+      self._invertedConcatenatedMatrix = new geom.Matrix();
+      self._matrix = new geom.Matrix();
       self._matrix3D = null;
-      self._colorTransform = new ColorTransform();
-      self._concatenatedColorTransform = new ColorTransform();
+      self._colorTransform = new geom.ColorTransform();
+      self._concatenatedColorTransform = new geom.ColorTransform();
 
       self._depth = 0;
       self._ratio = 0;
@@ -322,19 +317,19 @@ module Shumway.AVM2.AS.flash.display {
     static _broadcastFrameEvent(type: string): void {
       var event: flash.events.Event;
       switch (type) {
-        case Event.ENTER_FRAME:
-        case Event.FRAME_CONSTRUCTED:
-        case Event.EXIT_FRAME:
-        case Event.RENDER:
-          event = Event.getBroadcastInstance(type);
+        case events.Event.ENTER_FRAME:
+        case events.Event.FRAME_CONSTRUCTED:
+        case events.Event.EXIT_FRAME:
+        case events.Event.RENDER:
+          event = events.Event.getBroadcastInstance(type);
       }
       assert (event, "Invalid frame event.");
-      EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(event);
+      events.EventDispatcher.broadcastEventDispatchQueue.dispatchEvent(event);
     }
 
     constructor () {
       false && super(undefined);
-      EventDispatcher.instanceConstructorNoInitialize();
+      events.EventDispatcher.instanceConstructorNoInitialize();
       this._setFlags(DisplayObjectFlags.Constructed);
     }
 
@@ -423,11 +418,11 @@ module Shumway.AVM2.AS.flash.display {
     _id: number;
     private _displayObjectFlags: number;
 
-    _root: DisplayObject;
+    _root: flash.display.DisplayObject;
     _stage: flash.display.Stage;
     _name: string;
-    _parent: DisplayObjectContainer;
-    _mask: DisplayObject;
+    _parent: flash.display.DisplayObjectContainer;
+    _mask: flash.display.DisplayObject;
 
     /**
      * These are always the most up to date properties. The |_matrix| is kept in sync with
@@ -491,7 +486,7 @@ module Shumway.AVM2.AS.flash.display {
     _index: number;
 
     _isContainer: boolean;
-    _maskedObject: DisplayObject;
+    _maskedObject: flash.display.DisplayObject;
     _mouseOver: boolean;
     _mouseDown: boolean;
 
@@ -562,12 +557,12 @@ module Shumway.AVM2.AS.flash.display {
      * Computes the combined transformation matrixes of this display object and all of its parents. It is not
      * the same as |transform.concatenatedMatrix|, the latter also includes the screen space matrix.
      */
-    _getConcatenatedMatrix(): Matrix {
+    _getConcatenatedMatrix(): flash.geom.Matrix {
       // Compute the concatenated transforms for this node and all of its ancestors.
       if (this._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix)) {
         var ancestor = this._findClosestAncestor(DisplayObjectFlags.InvalidConcatenatedMatrix, false);
         var path = DisplayObject._getAncestors(this, ancestor);
-        var m = ancestor ? ancestor._concatenatedMatrix.clone() : new Matrix();
+        var m = ancestor ? ancestor._concatenatedMatrix.clone() : new geom.Matrix();
         for (var i = path.length - 1; i >= 0; i--) {
           var ancestor = path[i];
           assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedMatrix));
@@ -579,7 +574,7 @@ module Shumway.AVM2.AS.flash.display {
       return this._concatenatedMatrix;
     }
 
-    _getInvertedConcatenatedMatrix(): Matrix {
+    _getInvertedConcatenatedMatrix(): flash.geom.Matrix {
       if (this._hasFlags(DisplayObjectFlags.InvalidInvertedConcatenatedMatrix)) {
         this._invertedConcatenatedMatrix.copyFrom(this._getConcatenatedMatrix());
         this._invertedConcatenatedMatrix.invert();
@@ -588,7 +583,7 @@ module Shumway.AVM2.AS.flash.display {
       return this._invertedConcatenatedMatrix;
     }
 
-    _setMatrix(matrix: Matrix, toTwips: boolean): void {
+    _setMatrix(matrix: flash.geom.Matrix, toTwips: boolean): void {
       if (!toTwips && this._matrix.equals(matrix)) {
         // No need to dirty the matrix if it's equal to the current matrix.
         return;
@@ -620,7 +615,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Computes the combined transformation color matrixes of this display object and all of its ancestors.
      */
-    _getConcatenatedColorTransform(): ColorTransform {
+    _getConcatenatedColorTransform(): flash.geom.ColorTransform {
       if (!this.stage) {
         return this._colorTransform.clone();
       }
@@ -633,7 +628,7 @@ module Shumway.AVM2.AS.flash.display {
           i--;
         }
         var m = ancestor && !flash.display.Stage.isType(ancestor) ? ancestor._concatenatedColorTransform.clone()
-                                                                  : new ColorTransform();
+                                                                  : new geom.ColorTransform();
         while (i >= 0) {
           ancestor = path[i--];
           assert (ancestor._hasFlags(DisplayObjectFlags.InvalidConcatenatedColorTransform));
@@ -667,7 +662,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Computes the bounding box for all of this display object's content, its graphics and all of its children.
      */
-    _getContentBounds(includeStrokes: boolean = true): Rectangle {
+    _getContentBounds(includeStrokes: boolean = true): flash.geom.Rectangle {
       // Tobias: What about filters?
       var rectangle = includeStrokes ? this._bounds : this._rect;
       if (this._hasFlags(DisplayObjectFlags.InvalidBounds)) {
@@ -780,6 +775,7 @@ module Shumway.AVM2.AS.flash.display {
       if (state.cacheAsBitmap) {
         this._setFlags(flash.display.DisplayObjectFlags.CacheAsBitmap);
       }
+      this._toggleFlags(DisplayObjectFlags.Visible, state.visible);
       // TODO state.events;
       this._invalidatePaint();
     }
@@ -1093,7 +1089,7 @@ module Shumway.AVM2.AS.flash.display {
       this._setDirtyFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
     }
 
-    get scale9Grid(): Rectangle {
+    get scale9Grid(): flash.geom.Rectangle {
       return this._scale9Grid;
     }
 
@@ -1343,6 +1339,48 @@ module Shumway.AVM2.AS.flash.display {
         self = self._parent;
       }
       return find;
+    }
+
+    /**
+     * Returns the distance between this object and a given ancestor.
+     */
+    private _getDistance(ancestor: DisplayObject): number {
+      var d = 0;
+      var node = this;
+      while (node !== ancestor) {
+        d++;
+        node = node._parent;
+      }
+      if (!node) {
+        return -1;
+      }
+      return d;
+    }
+
+    /**
+     * Finds the lowest common ancestor of two display objects.
+     */
+    static findCommonAncestor(root: DisplayObject, a: DisplayObject, b: DisplayObject): DisplayObject {
+      if (!root || !a || !b) {
+        return null;
+      }
+      var d1 = a._getDistance(root);
+      var d2 = b._getDistance(root);
+      if (d1 < 0 || d2 < 0) {
+        return null;
+      }
+      while (d1 > d2) {
+        a = a._parent;
+        d1--;
+      }
+      while (d2 > d1) {
+        b = b._parent;
+        d2--;
+      }
+      if (a._parent === b._parent) {
+        return a._parent;
+      }
+      return null;
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------

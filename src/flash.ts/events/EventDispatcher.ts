@@ -19,7 +19,6 @@ module Shumway.AVM2.AS.flash.events {
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import isFunction = Shumway.isFunction;
   import isNullOrUndefined = Shumway.isNullOrUndefined;
-
   import throwError = Shumway.AVM2.Runtime.throwError;
 
   class EventListenerEntry {

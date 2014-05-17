@@ -17,7 +17,6 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
-
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
   import ActionScriptVersion = flash.display.ActionScriptVersion;
@@ -47,6 +46,7 @@ module Shumway.AVM2.AS.flash.display {
       this._applicationDomain = null;
       this._swfVersion = 9;
       this._actionScriptVersion = ActionScriptVersion.ACTIONSCRIPT3;
+      assert (this._actionScriptVersion);
       this._frameRate = 24;
       this._parameters = null;
       this._width = 0;

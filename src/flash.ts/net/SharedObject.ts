@@ -39,7 +39,7 @@ module Shumway.AVM2.AS.flash.net {
     constructor () {
       false && super(undefined);
       flash.events.EventDispatcher.instanceConstructorNoInitialize.call(this);
-      this._data = {};
+      this._data = createEmptyObject();
     }
 
     static _sharedObjects: any = createEmptyObject();

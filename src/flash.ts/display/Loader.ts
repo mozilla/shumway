@@ -23,15 +23,8 @@ module Shumway.AVM2.AS.flash.display {
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
 
-  import Rectangle = flash.geom.Rectangle;
-  import Matrix = flash.geom.Matrix;
-  import ColorTransform = flash.geom.ColorTransform;
-
-  import ActionScriptVersion = flash.display.ActionScriptVersion;
-  import BlendMode = flash.display.BlendMode;
-
-  import display = flash.display;
   import events = flash.events;
+  import ActionScriptVersion = flash.display.ActionScriptVersion;
 
   declare var ResourceLoader;
 
@@ -51,7 +44,7 @@ module Shumway.AVM2.AS.flash.display {
       if (Loader._rootLoader) {
         return Loader._rootLoader;
       }
-      var loader = new display.Loader();
+      var loader = new flash.display.Loader();
       loader._contentLoaderInfo._loader = null;
       loader._loadStatus = LoadStatus.Opened;
       Loader._rootLoader = loader;
@@ -124,7 +117,7 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
       this._content = null;
-      this._contentLoaderInfo = new display.LoaderInfo();
+      this._contentLoaderInfo = new flash.display.LoaderInfo();
 
       this._worker = null;
       this._startPromise = Promise.resolve();
@@ -179,7 +172,7 @@ module Shumway.AVM2.AS.flash.display {
           loaderInfo._width = bbox.xMax - bbox.xMin;
           loaderInfo._height = bbox.yMax - bbox.yMin;
 
-          var rootSymbol = new Shumway.Timeline.SpriteSymbol(0, true);
+          var rootSymbol = new Timeline.SpriteSymbol(0, true);
           rootSymbol.numFrames = info.frameCount;
           loaderInfo.registerSymbol(rootSymbol);
           break;
@@ -247,28 +240,28 @@ module Shumway.AVM2.AS.flash.display {
         var updates = data.updates;
         symbol = loaderInfo.getSymbolById(symbolId);
         if (updates.scale9Grid) {
-          symbol.scale9Grid = Rectangle.createFromBbox(updates.scale9Grid);
+          symbol.scale9Grid = flash.geom.Rectangle.createFromBbox(updates.scale9Grid);
         }
         return;
       }
       switch (data.type) {
         case 'shape':
-          symbol = Shumway.Timeline.ShapeSymbol.createFromData(data);
+          symbol = Timeline.ShapeSymbol.createFromData(data);
           break;
         case 'image':
-          symbol = Shumway.Timeline.BitmapSymbol.createFromData(data);
+          symbol = Timeline.BitmapSymbol.createFromData(data);
           break;
         case 'label':
-          symbol = Shumway.Timeline.TextSymbol.createFromLabelData(data);
+          symbol = Timeline.TextSymbol.createFromLabelData(data);
           break;
         case 'text':
-          symbol = Shumway.Timeline.TextSymbol.createFromTextData(data);
+          symbol = Timeline.TextSymbol.createFromTextData(data);
           break;
         case 'button':
-          symbol = Shumway.Timeline.ButtonSymbol.createFromData(data, loaderInfo);
+          symbol = Timeline.ButtonSymbol.createFromData(data, loaderInfo);
           break;
         case 'sprite':
-          symbol = Shumway.Timeline.SpriteSymbol.createFromData(data, loaderInfo);
+          symbol = Timeline.SpriteSymbol.createFromData(data, loaderInfo);
           break;
         case 'font':
           var font = flash.text.Font.createEmbeddedFont(
@@ -277,7 +270,7 @@ module Shumway.AVM2.AS.flash.display {
           //flash.text.Font.registerFont(font);
           return;
         case 'sound':
-          symbol = Shumway.Timeline.SoundSymbol.createFromData(data);
+          symbol = Timeline.SoundSymbol.createFromData(data);
           break;
         case 'binary':
           // TODO
@@ -318,7 +311,7 @@ module Shumway.AVM2.AS.flash.display {
       var frames = rootSymbol.frames;
       var frameIndex = frames.length;
 
-      var frame = new Shumway.Timeline.Frame(loaderInfo, data.commands);
+      var frame = new Timeline.Frame(loaderInfo, data.commands);
       var repeat = data.repeat;
       while (repeat--) {
         frames.push(frame);

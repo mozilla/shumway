@@ -185,14 +185,20 @@ module Shumway.Remoting.Player {
 
     private _readMouseEvent(): MouseEventAndPointData {
       var input = this.input;
-      var px = input.readFloat();
-      var py = input.readFloat();
       var typeId = input.readInt();
       var type = Shumway.Remoting.MouseEventNames[typeId];
+      var px = input.readFloat();
+      var py = input.readFloat();
+      var buttons = input.readInt();
+      var flags = input.readInt();
       return {
         isMouseEvent: true,
+        type: type,
         point: new Point(px, py),
-        type: type
+        ctrlKey: !!(flags & KeyboardEventFlags.CtrlKey),
+        altKey: !!(flags & KeyboardEventFlags.AltKey),
+        shiftKey: !!(flags & KeyboardEventFlags.ShiftKey),
+        buttons: buttons
       };
     }
 
