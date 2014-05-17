@@ -776,6 +776,7 @@ module Shumway.AVM2.AS.flash.display {
       if (state.cacheAsBitmap) {
         this._setFlags(flash.display.DisplayObjectFlags.CacheAsBitmap);
       }
+      this._toggleFlags(DisplayObjectFlags.Visible, state.visible);
       // TODO state.events;
       this._invalidatePaint();
     }
