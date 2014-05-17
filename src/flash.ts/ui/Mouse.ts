@@ -21,12 +21,6 @@ module Shumway.AVM2.AS.flash.ui {
 
   import events = flash.events;
 
-  enum MouseButtons {
-    Left    = 0x01,
-    Middle  = 0x02,
-    Right   = 0x04
-  }
-
   /**
    * Dispatches AS3 mouse events.
    */
@@ -78,8 +72,8 @@ module Shumway.AVM2.AS.flash.ui {
       var event = new events.MouseEvent (
         type,
         type !== events.MouseEvent.ROLL_OVER &&
-          type !== events.MouseEvent.ROLL_OUT &&
-          type !== events.MouseEvent.MOUSE_LEAVE,
+        type !== events.MouseEvent.ROLL_OUT &&
+        type !== events.MouseEvent.MOUSE_LEAVE,
         false,
         localPoint.x,
         localPoint.y,
@@ -119,32 +113,32 @@ module Shumway.AVM2.AS.flash.ui {
         //case events.MouseEvent.MOUSE_OUT:
         //  return;
         case events.MouseEvent.MOUSE_DOWN:
-          if ((data.buttons & MouseButtons.Left)) {
-            data.buttons = MouseButtons.Left;
-          } else if (data.buttons & MouseButtons.Middle) {
+          if (data.buttons & MouseButtonFlags.Left) {
+            data.buttons = MouseButtonFlags.Left;
+          } else if (data.buttons & MouseButtonFlags.Middle) {
             type = events.MouseEvent.MIDDLE_MOUSE_DOWN;
-            data.buttons = MouseButtons.Middle;
-          } else if (data.buttons & MouseButtons.Right) {
+            data.buttons = MouseButtonFlags.Middle;
+          } else if (data.buttons & MouseButtonFlags.Right) {
             type = events.MouseEvent.RIGHT_MOUSE_DOWN;
-            data.buttons = MouseButtons.Right;
+            data.buttons = MouseButtonFlags.Right;
           }
           break;
         case events.MouseEvent.MOUSE_UP:
-          if ((data.buttons & MouseButtons.Left)) {
-            data.buttons = MouseButtons.Left;
-          } else if (data.buttons & MouseButtons.Middle) {
+          if (data.buttons & MouseButtonFlags.Left) {
+            data.buttons = MouseButtonFlags.Left;
+          } else if (data.buttons & MouseButtonFlags.Middle) {
             type = events.MouseEvent.MIDDLE_MOUSE_UP;
-            data.buttons = MouseButtons.Middle;
-          } else if (data.buttons & MouseButtons.Right) {
+            data.buttons = MouseButtonFlags.Middle;
+          } else if (data.buttons & MouseButtonFlags.Right) {
             type = events.MouseEvent.RIGHT_MOUSE_UP;
-            data.buttons = MouseButtons.Right;
+            data.buttons = MouseButtonFlags.Right;
           }
           break;
         case events.MouseEvent.CLICK:
-          if (!(data.buttons & MouseButtons.Left)) {
-            if (data.buttons & MouseButtons.Middle) {
+          if (!(data.buttons & MouseButtonFlags.Left)) {
+            if (data.buttons & MouseButtonFlags.Middle) {
               type = events.MouseEvent.MIDDLE_CLICK;
-            } else if (data.buttons & MouseButtons.Right) {
+            } else if (data.buttons & MouseButtonFlags.Right) {
               type = events.MouseEvent.RIGHT_CLICK;
             }
           }
@@ -158,11 +152,11 @@ module Shumway.AVM2.AS.flash.ui {
           break;
         case events.MouseEvent.MOUSE_MOVE:
           this.currentTarget = target;
-          data.buttons &= MouseButtons.Left;
+          data.buttons &= MouseButtonFlags.Left;
           if (target === currentTarget) {
             break;
           }
-          var commonAncestor = flash.display.DisplayObject.findCommonAncestor(stage, currentTarget, target) || stage;
+          var commonAncestor = target.findOldestCommonAncestor(currentTarget) || stage;
           if (currentTarget && currentTarget !== stage) {
             this._dispatchMouseEvent(currentTarget, events.MouseEvent.MOUSE_OUT, data, target);
             var nodeLeft = currentTarget;
@@ -186,13 +180,19 @@ module Shumway.AVM2.AS.flash.ui {
     }
   }
 
+  export enum MouseButtonFlags {
+    Left    = 0x01,
+    Middle  = 0x02,
+    Right   = 0x04
+  }
+
   export interface MouseEventAndPointData {
     type: string;
     point: flash.geom.Point;
     ctrlKey: boolean;
     altKey: boolean;
     shiftKey: boolean;
-    buttons: number;
+    buttons: MouseButtonFlags;
   }
 
   export class Mouse extends ASNative {

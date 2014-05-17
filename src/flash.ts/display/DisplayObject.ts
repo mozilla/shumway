@@ -1351,36 +1351,32 @@ module Shumway.AVM2.AS.flash.display {
         d++;
         node = node._parent;
       }
-      if (!node) {
-        return -1;
-      }
       return d;
     }
 
     /**
-     * Finds the lowest common ancestor of two display objects.
+     * Finds the oldest common ancestor with a given node.
      */
-    static findCommonAncestor(root: DisplayObject, a: DisplayObject, b: DisplayObject): DisplayObject {
-      if (!root || !a || !b) {
+    findOldestCommonAncestor(node: DisplayObject): DisplayObject {
+      if (!node) {
         return null;
       }
-      var d1 = a._getDistance(root);
-      var d2 = b._getDistance(root);
-      if (d1 < 0 || d2 < 0) {
-        return null;
-      }
+      var ancestor = this;
+      var d1 = ancestor._getDistance(null);
+      var d2 = node._getDistance(null);
       while (d1 > d2) {
-        a = a._parent;
+        ancestor = ancestor._parent;
         d1--;
       }
       while (d2 > d1) {
-        b = b._parent;
+        node = node._parent;
         d2--;
       }
-      if (a._parent === b._parent) {
-        return a._parent;
+      while (ancestor !== node) {
+        ancestor = ancestor._parent;
+        node = node._parent;
       }
-      return null;
+      return ancestor;
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------

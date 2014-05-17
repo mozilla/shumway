@@ -37,7 +37,7 @@ module Shumway.Remoting.GFX {
       output.writeInt(typeId);
       output.writeFloat(point.x);
       output.writeFloat(point.y);
-      output.writeFloat(event.buttons);
+      output.writeInt(event.buttons);
       var flags =
         (event.ctrlKey ? KeyboardEventFlags.CtrlKey : 0) |
         (event.altKey ? KeyboardEventFlags.AltKey : 0) |
