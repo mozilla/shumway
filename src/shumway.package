@@ -276,8 +276,8 @@ src/flash.ts/filters/ConvolutionFilter.js
 #src/flash.ts/text/engine/TextLineCreationResult.js
 #src/flash.ts/events/StatusEvent.js
 src/flash.ts/display/ShaderData.js
-src/flash.ts/system/WorkerState.js
-src/flash.ts/system/Worker.js
+#src/flash.ts/system/WorkerState.js
+#src/flash.ts/system/Worker.js
 #src/flash.ts/ui/Multitouch.js
 src/flash.ts/display/SWFVersion.js
 src/flash.ts/events/ProgressEvent.js
@@ -343,7 +343,7 @@ src/flash.ts/utils/IDataInput2.js
 src/flash.ts/utils/IDataOutput2.js
 src/flash.ts/display/FrameLabel.js
 #src/flash.ts/events/GameInputEvent.js
-src/flash.ts/net/ObjectEncoding.js
+#src/flash.ts/net/ObjectEncoding.js
 
 #src/flash.ts/media/H264Profile.js
 src/flash.ts/display/Scene.js
@@ -431,8 +431,8 @@ src/flash.ts/system/IMEConversionMode.js
 #src/flash.ts/text/TextFormatDisplay.js
 #src/flash.ts/events/DRMErrorEvent.js
 src/flash.ts/filters/ColorMatrixFilter.js
-src/flash.ts/system/SystemUpdater.js
-src/flash.ts/system/SystemUpdaterType.js
+#src/flash.ts/system/SystemUpdater.js
+#src/flash.ts/system/SystemUpdaterType.js
 src/flash.ts/media/Video.js
 #src/flash.ts/desktop/ClipboardFormats.js
 #src/flash.ts/desktop/ClipboardTransferMode.js
@@ -445,7 +445,7 @@ src/flash.ts/display/PNGEncoderOptions.js
 #src/flash.ts/globalization/NationalDigitsType.js
 #src/flash.ts/text/TextExtent.js
 #src/flash.ts/text/engine/GraphicElement.js
-src/flash.ts/system/IME.js
+#src/flash.ts/system/IME.js
 src/flash.ts/text/engine/FontMetrics.js
 src/flash.ts/security/X509Certificate.js
 #src/flash.ts/events/TouchEvent.js
@@ -478,7 +478,7 @@ src/flash.ts/system/TouchscreenType.js
 src/flash.ts/events/SecurityErrorEvent.js
 src/flash.ts/system/AuthorizedFeatures.js
 src/flash.ts/media/Sound.js
-src/flash.ts/system/WorkerDomain.js
+#src/flash.ts/system/WorkerDomain.js
 src/flash.ts/net/URLStream.js
 #src/flash.ts/events/OutputProgressEvent.js
 src/flash.ts/display/SimpleButton.js
