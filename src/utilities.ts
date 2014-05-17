@@ -1533,17 +1533,18 @@ module Shumway {
     }
   }
 
-  /** @const */ var CIRCULAR_BUFFER_MASK: number = 0xFFF;
-  /** @const */ var CIRCULAR_BUFFER_SIZE: number = 4096;
-
   export class CircularBuffer {
     index: number;
     start: number;
     array: ArrayBufferView;
-    constructor(Type) {
+    _size: number;
+    _mask: number;
+    constructor(Type, sizeInBits: number = 12) {
       this.index = 0;
       this.start = 0;
-      this.array = new Type(CIRCULAR_BUFFER_SIZE);
+      this._size = 1 << sizeInBits;
+      this._mask = this._size - 1;
+      this.array = new Type(this._size);
     }
     public get (i) {
       return this.array[i];
@@ -1553,25 +1554,25 @@ module Shumway {
       if (this.isEmpty()) {
         return;
       }
-      var i = this.index === 0 ? CIRCULAR_BUFFER_SIZE - 1 : this.index - 1;
+      var i = this.index === 0 ? this._size - 1 : this.index - 1;
       while (i !== this.start) {
         if (visitor(this.array[i], i)) {
           break;
         }
-        i = i === 0 ? CIRCULAR_BUFFER_SIZE - 1 : i - 1;
+        i = i === 0 ? this._size - 1 : i - 1;
       }
     }
 
     public write(value) {
       this.array[this.index] = value;
-      this.index = (this.index + 1) & CIRCULAR_BUFFER_MASK;
+      this.index = (this.index + 1) & this._mask;
       if (this.index === this.start) {
-        this.start = (this.start + 1) & CIRCULAR_BUFFER_MASK;
+        this.start = (this.start + 1) & this._mask;
       }
     }
 
     public isFull(): boolean {
-      return ((this.index + 1) & CIRCULAR_BUFFER_MASK) === this.start;
+      return ((this.index + 1) & this._mask) === this.start;
     }
 
     public isEmpty(): boolean  {

@@ -98,8 +98,8 @@ module Shumway.Tools {
     public kindNames: Shumway.Map<string>;
 
     constructor() {
-      this.marks = new Shumway.CircularBuffer(Int32Array);
-      this.times = new Shumway.CircularBuffer(Float64Array);
+      this.marks = new Shumway.CircularBuffer(Int32Array, 20);
+      this.times = new Shumway.CircularBuffer(Float64Array, 20);
       this.kinds = createEmptyObject();
       this.kindNames = createEmptyObject();
       this._depth = 0;
@@ -205,6 +205,12 @@ module Shumway.Tools {
     private _ignoreClick = false;
     private _cursor = "default";
 
+    /**
+     * Don't paint frames whose width is smaller than this value. This helps a lot when drawing
+     * large ranges. This can be < 1 since antialiasing can look quite nice.
+     */
+    private _minFrameWidthInPixels = 0.2;
+
     constructor(container: HTMLElement, buffer: TimelineBuffer) {
       this._container = container;
       this._canvas = document.createElement("canvas");
@@ -216,7 +222,7 @@ module Shumway.Tools {
       this._canvasOverview = document.createElement("canvas");
       this._contextOverview = this._canvasOverview.getContext("2d");
       this._buffer = buffer;
-      this._range = this._buffer.gatherRange(512);
+      this._range = this._buffer.gatherRange(Number.MAX_VALUE);
       this._kindStyle = createEmptyObject();
       this._resetCanvas();
       window.addEventListener("resize", this._onResize.bind(this));
@@ -383,6 +389,9 @@ module Shumway.Tools {
       var start = (frame.startTime - this._windowLeft) * this._timeToPixels;
       var end = (frame.endTime - this._windowLeft) * this._timeToPixels;
       var width = end - start;
+      if (width < this._minFrameWidthInPixels) {
+        return;
+      }
       var style = this._kindStyle[frame.kind];
       if (!style) {
         var background = ColorStyle.randomStyle();

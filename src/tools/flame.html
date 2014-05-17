@@ -40,16 +40,16 @@
     var container = document.getElementById("container");
     var buffer = new Tools.TimelineBuffer();
 
-    function testA() {
+    function testA(size) {
       var t = 0;
       function next() {
         return t += Math.random() / 1;
       }
-      for (var i = 0; i < 1024; i++) {
+      for (var i = 0; i < size; i++) {
         buffer.enter("A", next());
 
-        for (var z = 0; z < 5; z++) {
-          var k = 1 + (Math.random() * 3) | 0;
+        for (var z = 0; z < 10; z++) {
+          var k = 1 + (Math.random() * 7) | 0;
           for (var j = 0; j < k; j++) {
             buffer.enter(String(z + j), next());
           }
@@ -64,7 +64,7 @@
       var flameChart = new Tools.FlameChart(container, buffer);
     }
 
-    testA();
+    testA(1024 * 8);
   </script>
 </body>
 </html>
