@@ -48,5 +48,5 @@ if (!jsGlobal.performance) {
 }
 
 if (!jsGlobal.performance.now) {
-  jsGlobal.performance.now = dateNow;
+  jsGlobal.performance.now = typeof dateNow !== 'undefined' ? dateNow : Date.now;
 }
