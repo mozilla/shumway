@@ -1646,6 +1646,13 @@ module Shumway {
       }
       return ColorStyle._randomStyleCache[(ColorStyle._nextStyle ++) % ColorStyle._randomStyleCache.length];
     }
+
+    static contrastStyle(rgb: string): string {
+      // http://www.w3.org/TR/AERT#color-contrast
+      var c = parseInt(rgb.substr(1), 16);
+      var yiq = (((c >> 16) * 299) + (((c >> 8) & 0xff) * 587) + ((c & 0xff) * 114)) / 1000;
+      return (yiq >= 128) ? '#000000' : '#ffffff';
+    }
   }
 
   export class Color {

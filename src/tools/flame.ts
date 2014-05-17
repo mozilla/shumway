@@ -166,6 +166,11 @@ module Shumway.Tools {
     }
   }
 
+  interface Kind {
+    bgColor: string;
+    textColor: string;
+  }
+
   export class FlameChart {
     private _container: HTMLElement;
     private _canvas: HTMLCanvasElement;
@@ -183,7 +188,7 @@ module Shumway.Tools {
     private _pixelsToOverviewTime = 1;
     private _range: TimelineFrame;
     private _minTime = 5;
-    private _kindStyle: Shumway.Map<string>;
+    private _kindStyle: Shumway.Map<Kind>;
 
     private _drag: any = null;
     private _ignoreClick = false;
@@ -339,11 +344,15 @@ module Shumway.Tools {
       var end = (frame.endTime - this._windowLeft) * this._timeToPixels;
       var style = this._kindStyle[frame.kind];
       if (!style) {
-        style = this._kindStyle[frame.kind] = ColorStyle.randomStyle();
+        var background = ColorStyle.randomStyle();
+        style = this._kindStyle[frame.kind] = {
+          bgColor: background,
+          textColor: ColorStyle.contrastStyle(background)
+        };
       }
-      context.fillStyle = style;
+      context.fillStyle = style.bgColor;
       context.fillRect(start, depth * 12, end - start, 12);
-      context.fillStyle = "white";
+      context.fillStyle = style.textColor;
       context.textBaseline  = "top";
       var label = this._buffer.getKindName(frame.kind);
       var labelHPadding = 2;
