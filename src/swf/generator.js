@@ -195,7 +195,7 @@ function generateParser(_struct) {
           }
           break;
         default:
-          fail('invalid type', 'generate');
+          assertUnreachable('invalid type encountered in generate');
         }
       }
       push.apply(production, segment);

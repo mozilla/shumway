@@ -30,12 +30,14 @@ var push = Array.prototype.push;
 var slice = Array.prototype.slice;
 var splice = Array.prototype.splice;
 
-function fail(msg, context) {
-  throw new Error((context ? context + ': ' : '') + msg);
+function assertUnreachable(msg) {
+  var location = new Error().stack.split('\n')[1];
+  throw new Error("Reached unreachable location " + location + msg);
 }
 function assert(cond, msg, context) {
-  if (!cond)
-    fail(msg, context);
+  if (!cond) {
+    throw new Error((context ? context + ': ' : '') + msg);
+  }
 }
 
 // e.g. throwError("ArgumentError", Errors.InvalidEnumError, "blendMode");

@@ -171,7 +171,7 @@ function inflateBlock(stream, output, state) {
     state.literalTable = null;
     break;
   default:
-     fail('unknown block type', 'inflate');
+     assertUnreachable('inflate encountered unknown block type');
   }
   state.header = null;
   output.completed = !!(header & 1);
