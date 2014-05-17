@@ -204,6 +204,7 @@ module Shumway.AVM2.AS.flash.display {
       child._parent = this;
       child._depth = depth;
       child._invalidatePosition();
+      this._invalidateChildren();
     }
 
     removeChild(child: DisplayObject): DisplayObject {

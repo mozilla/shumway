@@ -278,7 +278,7 @@ module Shumway.Timeline {
                 public colorTransform: flash.geom.ColorTransform = null,
                 public ratio: number = 0,
                 public name: string = null,
-                public clipDepth: number = null,
+                public clipDepth: number = -1,
                 public filters: any [] = null,
                 public blendMode: string = null,
                 public cacheAsBitmap: boolean = false,

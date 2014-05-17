@@ -192,8 +192,8 @@ module Shumway.Remoting.GFX {
         var container = <FrameContainer>frame;
         container.clearChildren();
         for (var i = 0; i < count; i++) {
-          var id = input.readInt();
-          var child = context._frames[id];
+          var childId = input.readInt();
+          var child = context._frames[childId];
           assert (child);
           container.addChild(child);
         }

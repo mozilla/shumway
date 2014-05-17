@@ -589,6 +589,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _setMatrix(matrix: Matrix, toTwips: boolean): void {
+      if (!toTwips && this._matrix.equals(matrix)) {
+        // No need to dirty the matrix if it's equal to the current matrix.
+        return;
+      }
       var m = this._matrix;
       m.copyFrom(matrix);
       if (toTwips) {

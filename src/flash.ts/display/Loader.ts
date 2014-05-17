@@ -30,6 +30,7 @@ module Shumway.AVM2.AS.flash.display {
   import ActionScriptVersion = flash.display.ActionScriptVersion;
   import BlendMode = flash.display.BlendMode;
 
+  import display = flash.display;
   import events = flash.events;
 
   declare var ResourceLoader;
@@ -50,7 +51,7 @@ module Shumway.AVM2.AS.flash.display {
       if (Loader._rootLoader) {
         return Loader._rootLoader;
       }
-      var loader = new Loader();
+      var loader = new display.Loader();
       loader._contentLoaderInfo._loader = null;
       loader._loadStatus = LoadStatus.Opened;
       Loader._rootLoader = loader;
@@ -123,7 +124,7 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       DisplayObjectContainer.instanceConstructorNoInitialize.call(this);
       this._content = null;
-      this._contentLoaderInfo = new LoaderInfo();
+      this._contentLoaderInfo = new display.LoaderInfo();
 
       this._worker = null;
       this._startPromise = Promise.resolve();
