@@ -24,7 +24,6 @@ public dynamic class Object
   public static const length:int = 1
 
   protected static native function _setPropertyIsEnumerable(o, V:String, enumerable:Boolean):void
-  private static native function _toString(o):String
 
   AS3 native function isPrototypeOf(V=void 0):Boolean;
 
@@ -75,16 +74,9 @@ public dynamic class Object
       return this.AS3::isPrototypeOf(V)
     }
 
-    prototype.toString = prototype.toLocaleString =
-        function():String
-        {
-          return _toString(this)
-        }
+    prototype.toString = prototype.toLocaleString = unsafeJSNative("ASObject._toString");
 
-    prototype.valueOf = function()
-    {
-      return this
-    }
+    prototype.valueOf = function() { return this; }
 
     _dontEnumPrototype(prototype);
   }

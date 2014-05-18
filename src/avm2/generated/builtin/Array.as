@@ -124,11 +124,7 @@ public dynamic class Array extends Object
    Therefore, it cannot be transferred to other kinds of objects for use as a method.
    */
 
-  prototype.toString = function():String
-  {
-    var a:Array = this  // TypeError if not compatible
-    return _join(a, ",");
-  }
+  prototype.toString = unsafeJSNative("Original.Array.prototype.toString");
 
   /**
    15.4.4.3 Array.prototype.toLocaleString ( )

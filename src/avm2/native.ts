@@ -199,13 +199,13 @@ module Shumway.AVM2.AS {
       Object.defineProperty(o, name, descriptor);
     }
 
-    static _toString(o: Object): string {
-      o = boxValue(o);
-      if (o instanceof ASClass) {
-        var cls: ASClass = <any>o;
+    static _toString(): string {
+      var self = boxValue(this);
+      if (self instanceof ASClass) {
+        var cls: ASClass = <any>self;
         return "[class " + cls.classInfo.instanceInfo.name.name + "]";
       }
-      return "[object " + o.class.classInfo.instanceInfo.name.name + "]";
+      return "[object " + self.class.classInfo.instanceInfo.name.name + "]";
     }
 
     // Hack to make the TypeScript compiler find the original Object.defineProperty.
@@ -1607,6 +1607,7 @@ module Shumway.AVM2.AS {
     export var Boolean = jsGlobal.Boolean;
     export var Number = jsGlobal.Number;
     export var Date = jsGlobal.Date;
+    export var ASObject = Shumway.AVM2.AS.ASObject;
 
     function makeOriginalPrototype(constructor: Function) {
       return {
@@ -1622,6 +1623,7 @@ module Shumway.AVM2.AS {
      */
     export var Original = {
       Date: makeOriginalPrototype(Date),
+      Array: makeOriginalPrototype(Array),
       String: makeOriginalPrototype(String),
       Number: makeOriginalPrototype(Number),
       Boolean: makeOriginalPrototype(Boolean)

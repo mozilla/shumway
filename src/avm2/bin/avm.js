@@ -272,7 +272,11 @@ function runVM() {
   argumentParser.parse(originalArgs.slice(0));
   var sysMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
   var appMode = alwaysInterpret.value ? EXECUTION_MODE.INTERPRET : EXECUTION_MODE.COMPILE;
-  securityDomain.initializeShell(sysMode, appMode);
+  try {
+    securityDomain.initializeShell(sysMode, appMode);
+  } catch (x) {
+    print(x.stack);
+  }
   runAbcs(securityDomain, grabAbcsInCompartment(securityDomain.compartment, abcBuffers));
   return securityDomain;
 }
