@@ -175,15 +175,15 @@ module Shumway.AVM2.AS.flash.media {
       notImplemented("public flash.media.Microphone::set soundTransform"); return;
       // this._soundTransform = sndTransform;
     }
-    get enhancedOptions(): flash.media.MicrophoneEnhancedOptions {
-      notImplemented("public flash.media.Microphone::get enhancedOptions"); return;
-      // return this._enhancedOptions;
-    }
-    set enhancedOptions(options: flash.media.MicrophoneEnhancedOptions) {
-      options = options;
-      notImplemented("public flash.media.Microphone::set enhancedOptions"); return;
-      // this._enhancedOptions = options;
-    }
+//    get enhancedOptions(): flash.media.MicrophoneEnhancedOptions {
+//      notImplemented("public flash.media.Microphone::get enhancedOptions"); return;
+//      // return this._enhancedOptions;
+//    }
+//    set enhancedOptions(options: flash.media.MicrophoneEnhancedOptions) {
+//      options = options;
+//      notImplemented("public flash.media.Microphone::set enhancedOptions"); return;
+//      // this._enhancedOptions = options;
+//    }
     setSilenceLevel(silenceLevel: number, timeout: number /*int*/ = -1): void {
       silenceLevel = +silenceLevel; timeout = timeout | 0;
       notImplemented("public flash.media.Microphone::setSilenceLevel"); return;
