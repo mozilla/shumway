@@ -1,0 +1,219 @@
+"use strict";
+
+if (scriptArgs.length === 0) {
+	print('\nUsage:\n' +
+		   '\t' + thisFilename() + ' [path-to-test-in-test-dir]\n' +
+		   '\t' + '(.js file extension is optional.)\n' +
+		   '\t' + 'To see passing tests output, prepend SHU_LOG_LEVEL=4.\n' +
+		   '\nExample:\n' +
+		   '\t' + 'SHU_LOG_LEVEL=4 ' + thisFilename() + ' unit/stage');
+	quit(1);
+}
+var testFile = 'test/' + scriptArgs[0];
+if (testFile.substr(testFile.length - 3) !== '.js') {
+	testFile += '.js';
+}
+
+if (typeof dateNow === 'undefined') {
+	dateNow = Date.now;
+}
+var initStart = dateNow();
+
+var CanvasRenderingContext2D;
+if (!CanvasRenderingContext2D) {
+	CanvasRenderingContext2D = function(){};
+	CanvasRenderingContext2D.prototype = {
+		save: function() {}
+	}
+}
+
+function BinaryFileReader(path) {
+	this.path = path;
+}
+BinaryFileReader.prototype = {
+	readAll: function(something, callback) {
+		var buffer = read(this.path, "binary");
+		try {
+			callback(buffer);
+		} catch (e) {
+			print(e, "\nstack: \n" + e.stack);
+		}
+	}
+}
+
+function fixPath(path) {
+	while (path.indexOf('../') === 0) {
+		path = path.substr(3);
+	}
+	return path;
+}
+
+var self = this;
+self.addEventListener = function(){}
+
+function importScripts(scripts) {
+	if (typeof scripts === 'string') {
+		return load(fixPath(scripts));
+	}
+	scripts.forEach(function (script) {
+		load(fixPath(script));
+	});
+}
+
+function loadScript(path, callback) {
+	load(fixPath(path));
+	callback && callback();
+}
+
+function setTimeout() {}
+
+
+function addLogPrefix(prefix, args) {
+	return [].concat.apply([prefix], args);
+}
+
+var logLevel = parseInt(environment.SHU_LOG_LEVEL)|0;
+var console = {
+	info: function() {
+		if (logLevel > 3) {
+			print.apply(this, addLogPrefix('INFO: ', arguments));
+		}
+	},
+	log: function() {
+		if (logLevel > 2) {
+			print.apply(this, arguments);
+		}
+	},
+	warn: function() {
+		if (logLevel > 1) {
+			print.apply(this, addLogPrefix('WARN: ', arguments));
+		}
+	},
+	error: function() {
+		print.apply(this, addLogPrefix('ERR : ', arguments));
+	},
+	time: function(id) {
+		this.timestamps[id] = dateNow();
+		print(id + ": timer started");
+	},
+	timeEnd: function(id) {
+		if (this.timestamps[id]) {
+			print(id + ": " + (dateNow() - this.timestamps[id]) + 'ms');
+		}
+	},
+	timestamps: {}
+}
+
+function loadEngine() {
+	var sources = read('src/shumway.package').split('\n');
+	sources.forEach(function (path) {
+		path = path.trim();
+		if (path.length === 0 || path[0] === '#') {
+			return;
+		}
+		load(path);
+		// print(path);
+	});
+}
+
+loadEngine();
+
+load('examples/inspector/js/unit.js');
+
+var unitTests = [];
+executeUnitTests = function(path, avm2) {
+	var start = dateNow();
+	load(fixPath(path));
+	unitTests.forEach(test => test(avm2));
+	print(path + ': Complete (' + Math.round((dateNow() - start) * 100) / 100 + 'ms + ' +
+		  initDuration + 'ms startup)');
+}
+
+// Shumway.AVM2.Runtime.traceExecution.value = true;
+Shumway.AVM2.Runtime.globalMultinameAnalysis.value = true;
+
+
+AVM2.loadPlayerglobal = function (abcsPath, catalogPath) {
+    if (playerglobal) {
+        throw new Error('Playerglobal is already loaded');
+    }
+    playerglobal = {
+        abcs: read(abcsPath, 'binary').buffer,
+        map: Object.create(null),
+        scripts: Object.create(null)
+    };
+    var catalog = JSON.parse(read(catalogPath));
+    for (var i = 0; i < catalog.length; i++) {
+        var abc = catalog[i];
+        playerglobal.scripts[abc.name] = abc;
+        if (typeof abc.defs === 'string') {
+            playerglobal.map[abc.defs] = abc.name;
+        print(abc.defs)
+        } else {
+            for (var j = 0; j < abc.defs.length; j++) {
+                var def = abc.defs[j];
+                playerglobal.map[def] = abc.name;
+            }
+        }
+    }
+};
+
+var avm2Root = "src/avm2/";
+var builtinPath = avm2Root + "generated/builtin/builtin.abc";
+var shellAbcPath = avm2Root + "generated/shell/shell.abc";
+var avm1Path = avm2Root + "generated/avm1lib/avm1lib.abc";
+
+// different playerglobals can be used here
+var playerglobalInfo = {
+  abcs: "../../build/playerglobal/playerglobal.abcs",
+  catalog: "../../build/playerglobal/playerglobal.json"
+};
+
+
+var playerglobal;
+var playerglobalLoadedPromise;
+var avm2;
+function createAVM2(builtinPath, libraryPath, avm1Path, sysMode, appMode, next) {
+  function loadAVM1(next) {
+    new BinaryFileReader(avm1Path).readAll(null, function (buffer) {
+      avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "avm1.abc"));
+      next();
+    });
+  }
+
+  assert (builtinPath);
+  new BinaryFileReader(builtinPath).readAll(null, function (buffer) {
+    AVM2.initialize(sysMode, appMode, avm1Path && loadAVM1);
+    avm2 = AVM2.instance;
+    // console.time("Execute builtin.abc");
+    avm2.loadedAbcs = {};
+    // Avoid loading more Abcs while the builtins are loaded
+    avm2.builtinsLoaded = false;
+    // avm2.systemDomain.onMessage.register('classCreated', Stubs.onClassCreated);
+    avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), "builtin.abc"));
+    avm2.builtinsLoaded = true;
+    // console.timeEnd("Execute builtin.abc");
+
+    // If library is shell.abc, then just go ahead and run it now since
+    // it's not worth doing it lazily given that it is so small.
+    if (typeof libraryPath === 'string') {
+      new BinaryFileReader(libraryPath).readAll(null, function (buffer) {
+        avm2.systemDomain.executeAbc(new AbcFile(new Uint8Array(buffer), libraryPath));
+        next(avm2);
+      });
+      return;
+    }
+
+    if (!AVM2.isPlayerglobalLoaded()) {
+      AVM2.loadPlayerglobal(fixPath(libraryPath.abcs), fixPath(libraryPath.catalog));
+      next(avm2);
+    }
+  });
+}
+
+var initDuration = Math.round((dateNow() - initStart) * 100)/100;
+
+createAVM2(builtinPath, playerglobalInfo, null, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET,
+			function (avm2) {
+			  executeUnitTests(testFile, avm2);
+			});
