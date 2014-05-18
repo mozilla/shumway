@@ -292,6 +292,8 @@ src/flash.ts/text/TextFormatAlign.js
 #src/flash.ts/net/NetStreamAppendBytesAction.js
 src/flash.ts/display/IGraphicsStroke.js
 #src/flash.ts/net/NetGroupSendResult.js
+src/flash.ts/display/CapsStyle.js
+src/flash.ts/display/JointStyle.js
 src/flash.ts/display/LineScaleMode.js
 #src/flash.ts/events/AsyncErrorEvent.js
 #src/flash.ts/ui/GameInput.js
@@ -383,6 +385,9 @@ src/flash.ts/xml/XMLNodeType.js
 #src/flash.ts/net/GroupSpecifier.js
 src/flash.ts/system/SecurityPanel.js
 #src/flash.ts/globalization/Collator.js
+src/flash.ts/display/GraphicsPathWinding.js
+src/flash.ts/display/GraphicsPathCommand.js
+src/flash.ts/display/GraphicsPath.js
 src/flash.ts/display/Graphics.js
 src/flash.ts/ui/ContextMenuItem.js
 #src/flash.ts/net/FileReferenceList.js
@@ -395,7 +400,6 @@ src/flash.ts/display/BitmapDataChannel.js
 src/flash.ts/text/StaticText.js
 #src/flash.ts/events/FocusEvent.js
 #src/flash.ts/net/SharedObjectFlushStatus.js
-src/flash.ts/display/GraphicsPath.js
 src/flash.ts/events/HTTPStatusEvent.js
 src/flash.ts/geom/Orientation3D.js
 src/flash.ts/text/engine/TextBlock.js
@@ -462,7 +466,6 @@ src/flash.ts/net/URLRequest.js
 #src/flash.ts/events/SoftKeyboardEvent.js
 #src/flash.ts/errors/DRMManagerError.js
 #src/flash.ts/text/engine/FontPosture.js
-src/flash.ts/display/JointStyle.js
 #src/flash.ts/display/ShaderPrecision.js
 #src/flash.ts/text/engine/LineJustification.js
 #src/flash.ts/globalization/StringTools.js
@@ -505,7 +508,6 @@ src/flash.ts/media/VideoStreamSettings.js
 #src/flash.ts/automation/Configuration.js
 #src/flash.ts/text/engine/JustificationStyle.js
 #src/flash.ts/ui/KeyboardType.js
-src/flash.ts/display/CapsStyle.js
 #src/flash.ts/text/ime/CompositionAttributeRange.js
 #src/flash.ts/text/engine/TabStop.js
 #src/flash.ts/text/engine/FontWeight.js
@@ -515,8 +517,6 @@ src/flash.ts/display/CapsStyle.js
 #src/flash.ts/events/StageVideoEvent.js
 #src/flash.ts/text/engine/DigitWidth.js
 src/flash.ts/system/AuthorizedFeaturesLoader.js
-src/flash.ts/display/GraphicsPathWinding.js
-src/flash.ts/display/GraphicsPathCommand.js
 #src/flash.ts/text/engine/TabAlignment.js
 #src/flash.ts/profiler/Telemetry.js
 src/flash.ts/events/UncaughtErrorEvent.js

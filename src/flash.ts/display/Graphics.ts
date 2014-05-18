@@ -13,6 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/**
+ * Serialization format for graphics path commands:
+ * (canonical, update this instead of anything else!)
+ *
+ * All entries begin with a byte representing the command:
+ * command: byte [1-11] (i.e. one of the PATH_COMMAND_* constants)
+ *
+ * All entries always contain all fields, default values aren't omitted.
+ *
+ * moveTo:
+ * byte command:  PATH_COMMAND_MOVE_TO
+ * uint x:        target x coordinate, in twips
+ * uint y:        target y coordinate, in twips
+ *
+ * lineTo:
+ * byte command:  PATH_COMMAND_LINE_TO
+ * uint x:        target x coordinate, in twips
+ * uint y:        target y coordinate, in twips
+ *
+ * beginFill:
+ * byte command:  PATH_COMMAND_BEGIN_SOLID_FILL
+ * uint color:    [RGBA color]
+ *
+ * lineStyle:
+ * byte command:      PATH_COMMAND_LINE_STYLE_SOLID
+ * byte thickness:    [0-0xff]
+ * uint color:        [RGBA color]
+ * byte pixelHinting: [0,1] (true,false)
+ * byte scaleMode:    [0-3] see LineScaleMode.fromNumber for meaning
+ * byte caps:         [0-2] see CapsStyle.fromNumber for meaning
+ * byte joints:       [0-2] see JointStyle.fromNumber for meaning
+ * byte miterLimit:   [0-0xff]
+ *
+ */
+
 // Class: Graphics
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
@@ -33,27 +69,23 @@ module Shumway.AVM2.AS.flash.display {
 
   export class Graphics extends ASNative {
 
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
     
-    // List of static symbols to link.
-    static classSymbols: string [] = null; // [];
+    static classSymbols: string [] = null;
+    static instanceSymbols: string [] = null;
 
-    // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // [];
-
-    static PATH_COMMAND_BEGIN_FILL = 1;
+    static PATH_COMMAND_BEGIN_SOLID_FILL = 1;
     static PATH_COMMAND_BEGIN_GRADIENT_FILL = 2;
     static PATH_COMMAND_BEGIN_BITMAP_FILL = 3;
     static PATH_COMMAND_END_FILL = 4;
-    static PATH_COMMAND_LINE_STYLE = 5;
-    static PATH_COMMAND_MOVE_TO = 6;
-    static PATH_COMMAND_LINE_TO = 7;
-    static PATH_COMMAND_CURVE_TO = 8;
-    static PATH_COMMAND_CUBIC_CURVE_TO = 9;
+    static PATH_COMMAND_LINE_STYLE_SOLID = 5;
+    static PATH_COMMAND_LINE_STYLE_GRADIENT = 6;
+    static PATH_COMMAND_LINE_STYLE_BITMAP = 7;
+    static PATH_COMMAND_MOVE_TO = 8;
+    static PATH_COMMAND_LINE_TO = 9;
+    static PATH_COMMAND_CURVE_TO = 10;
+    static PATH_COMMAND_CUBIC_CURVE_TO = 11;
 
     constructor () {
       false && super();
@@ -64,12 +96,15 @@ module Shumway.AVM2.AS.flash.display {
       this._parent = null;
     }
 
+    getGraphicsData(): flash.utils.ByteArray {
+      return this._graphicsData;
+    }
+
     // JS -> AS Bindings
     _id: number;
 
     // AS -> JS Bindings
-
-    _graphicsData: utils.ByteArray;
+    private _graphicsData: flash.utils.ByteArray;
 
     /**
      * Bounding box excluding strokes.
@@ -94,8 +129,9 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _invalidateParent() {
-      assert (this._parent, "A parent should already be linked.");
-      this._parent._invalidateBoundsAndRect();
+      if (this._parent) {
+        this._parent._invalidateBoundsAndRect();
+      }
     }
 
     _getContentBounds(includeStrokes: boolean = true): geom.Rectangle {
@@ -109,54 +145,53 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     clear(): void {
-      //this._currentPath = null;
       this._graphicsData.length = 0;
       this._invalidateParent();
     }
 
+    /**
+     * Sets a solid color and opacity as the fill for subsequent drawing commands.
+     *
+     * @see http://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/display/Graphics.html#beginFill%28%29
+     * @param color
+     * @param alpha While any Number is a valid input, the value is clamped to [0,1] and then scaled
+     * to an integer in the interval [0,0xff].
+     */
     beginFill(color: number /*uint*/, alpha: number = 1): void {
       color = color >>> 0;
-      alpha = clamp(+alpha, 0, 1);
-      this._graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_BEGIN_FILL);
-      this._graphicsData.writeUnsignedInt((color << 8) | (alpha * 255));
+      alpha = Math.round(clamp(+alpha, -1, 1) * 0xff);
+      this._graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_BEGIN_SOLID_FILL);
+      this._graphicsData.writeUnsignedInt((color << 8) | alpha);
     }
 
     beginGradientFill(type: string, colors: any [], alphas: any [], ratios: any [],
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
-                      interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
-      // colors = colors; alphas = alphas; ratios = ratios; matrix = matrix;
-      var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_BEGIN_GRADIENT_FILL);
-      var gradientType = GradientType.toNumber(asCoerceString(type));
-      if (gradientType >= 0) {
-        graphicsData.writeUnsignedByte(gradientType);
-      } else {
-        throwError("ArgumentError", Errors.InvalidEnumError, "type");
-      }
-      var spread = SpreadMethod.toNumber(asCoerceString(spreadMethod));
-      if (spread >= 0) {
-        graphicsData.writeUnsignedByte(spread);
-      } else {
-        throwError("ArgumentError", Errors.InvalidEnumError, "spreadMethod");
-      }
-      var interpolation = InterpolationMethod.toNumber(asCoerceString(interpolationMethod));
-      if (interpolation >= 0) {
-        graphicsData.writeUnsignedByte(interpolation);
-      } else {
-        throwError("ArgumentError", Errors.InvalidEnumError, "interpolationMethod");
-      }
-      graphicsData.writeFloat(clamp(focalPointRatio, -1, 1));
+                      interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
+    {
+      this.writeGradientStyle(this._graphicsData, Graphics.PATH_COMMAND_BEGIN_GRADIENT_FILL, type,
+                              colors, alphas, ratios, matrix,
+                              spreadMethod, interpolationMethod, focalPointRatio);
     }
 
     beginBitmapFill(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
-                    repeat: boolean = true, smooth: boolean = false): void {
-      //bitmap = bitmap; matrix = matrix;
+                    repeat: boolean = true, smooth: boolean = false): void
+    {
+      if (bitmap === null || bitmap === undefined) {
+        throwError('TypeError', Errors.NullPointerError, 'bitmap');
+      } else if (!(matrix instanceof flash.geom.Matrix)) {
+        throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap', 'flash.display.BitmapData');
+      }
+      if (matrix === null || matrix === undefined) {
+        matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
+      } else if (!(matrix instanceof flash.geom.Matrix)) {
+        throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
+      }
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_BEGIN_BITMAP_FILL);
       // bitmap
-      // matrix
-      graphicsData.writeUnsignedByte(Number(repeat));
-      graphicsData.writeUnsignedByte(Number(smooth));
+      matrix.writeExternal(graphicsData);
+      graphicsData.writeUnsignedByte(+repeat);
+      graphicsData.writeUnsignedByte(+smooth);
     }
 
 //    beginShaderFill(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
@@ -164,50 +199,71 @@ module Shumway.AVM2.AS.flash.display {
 //      notImplemented("public flash.display.Graphics::beginShaderFill"); return;
 //    }
 
+    lineStyle(thickness: number, color: number /*uint*/ = 0, alpha: number = 1,
+              pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = null,
+              joints: string = null, miterLimit: number = 3): void
+    {
+      thickness = clamp(thickness|0, 0, 0xff);
+      color = color >>> 0;
+      alpha = Math.round(clamp(+alpha, -1, 1) * 0xff);
+      pixelHinting = !!pixelHinting;
+      scaleMode = asCoerceString(scaleMode);
+      caps = asCoerceString(caps);
+      joints = asCoerceString(joints);
+      miterLimit = clamp(+miterLimit|0, 0, 0xff);
+
+      var graphicsData = this._graphicsData;
+      graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_LINE_STYLE_SOLID);
+      graphicsData.writeUnsignedByte(thickness);
+      graphicsData.writeUnsignedInt((color << 8) | alpha);
+      graphicsData.writeUnsignedByte(+pixelHinting);
+
+      // If `scaleMode` is invalid, "normal" is used.
+      var lineScaleMode = LineScaleMode.toNumber(asCoerceString(scaleMode));
+      if (lineScaleMode < 0) {
+        lineScaleMode = LineScaleMode.toNumber(LineScaleMode.NORMAL);
+      }
+      graphicsData.writeUnsignedByte(lineScaleMode);
+
+      // If `caps` is invalid, "normal" is used.
+      var capsStyle = CapsStyle.toNumber(asCoerceString(caps));
+      if (capsStyle < 0) {
+        capsStyle = CapsStyle.toNumber(CapsStyle.ROUND);
+      }
+      graphicsData.writeUnsignedByte(capsStyle);
+
+      // If `joints` is invalid, "normal" is used.
+      var jointStyle = JointStyle.toNumber(asCoerceString(joints));
+      if (jointStyle < 0) {
+        jointStyle = JointStyle.toNumber(JointStyle.ROUND);
+      }
+      graphicsData.writeUnsignedByte(jointStyle);
+
+      graphicsData.writeUnsignedByte(miterLimit);
+    }
+
     lineGradientStyle(type: string, colors: any [], alphas: any [], ratios: any [],
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
-                      interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
-      // colors = colors; alphas = alphas; ratios = ratios; matrix = matrix;
+                      interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
+    {
+      this.writeGradientStyle(this._graphicsData, Graphics.PATH_COMMAND_LINE_STYLE_GRADIENT, type,
+                              colors, alphas, ratios, matrix,
+                              spreadMethod, interpolationMethod, focalPointRatio);
+    }
+
+    lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
+                    repeat: boolean = true, smooth: boolean = false): void {
+      //bitmap = bitmap; matrix = matrix;
       //this._closePath();
-      //var fill = new GraphicsGradientFill(asCoerceString(type), colors, alphas, ratios, matrix, asCoerceString(spreadMethod), asCoerceString(interpolationMethod), +focalPointRatio);
+      //var fill = this._graphicsData.push(new GraphicsBitmapFill(bitmap, matrix, !!repeat, !!smooth));
       // TODO
     }
 
-    lineStyle(thickness: number, color: number /*uint*/ = 0, alpha: number = 1,
-              pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = null,
-              joints: string = null, miterLimit: number = 3): void {
-      //this._closePath();
-      //var fill = new GraphicsSolidFill(color >>> 0, +alpha);
-      //this._graphicsData.push(new GraphicsStroke(+thickness, !!pixelHinting, asCoerceString(scaleMode), asCoerceString(caps), asCoerceString(joints), +miterLimit, fill));
-      color = color >>> 0;
-      alpha = clamp(+alpha, 0, 1);
-      var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_LINE_STYLE);
-      graphicsData.writeUnsignedInt((color << 8) | (alpha * 255));
-      graphicsData.writeUnsignedByte(pixelHinting ? 1 : 0);
-      var lineScaleMode = LineScaleMode.toNumber(asCoerceString(scaleMode));
-      if (lineScaleMode >= 0) {
-        graphicsData.writeUnsignedByte(lineScaleMode);
-      } else {
-        throwError("ArgumentError", Errors.InvalidEnumError, "type");
-      }
-      var capsStyle = CapsStyle.toNumber(asCoerceString(caps));
-      if (capsStyle >= 0) {
-        graphicsData.writeUnsignedByte(capsStyle);
-      } else {
-        throwError("ArgumentError", Errors.InvalidEnumError, "caps");
-      }
-      var jointStyle = JointStyle.toNumber(asCoerceString(joints));
-      if (jointStyle >= 0) {
-        graphicsData.writeUnsignedByte(jointStyle);
-      } else {
-        throwError("ArgumentError", Errors.InvalidEnumError, "joints");
-      }
-      graphicsData.writeUnsignedByte(clamp(+miterLimit, 1, 255));
-    }
-
     drawRect(x: number, y: number, width: number, height: number): void {
-      //x = +x; y = +y; width = +width; height = +height;
+      x = +x;
+      y = +y;
+      width = +width;
+      height = +height;
 
       this.moveTo(x, y);
       this.lineTo(x + width, y);
@@ -221,8 +277,14 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     drawRoundRect(x: number, y: number, width: number, height: number, ellipseWidth: number,
-                  ellipseHeight: number): void {
-      //x = +x; y = +y; width = +width; height = +height; ellipseWidth = +ellipseWidth; ellipseHeight = +ellipseHeight;
+                  ellipseHeight: number): void
+    {
+      x = +x;
+      y = +y;
+      width = +width;
+      height = +height;
+      ellipseWidth = +ellipseWidth;
+      ellipseHeight = +ellipseHeight;
 
       if (!ellipseHeight || !ellipseWidth) {
         this.drawRect(x, y, width, height);
@@ -253,9 +315,8 @@ module Shumway.AVM2.AS.flash.display {
       //  G         D
       //    F-----E
       //
-      // Through some testing, it has been discovered
-      // tha the Flash player starts and stops the pen
-      // at 'D', so we will, too.
+      // Drawing starts and stops at `D`. This is visible when the drawn shape forms part of a
+      // larger shape, with which it is then connected at `D`.
       var right = x + width;
       var bottom = y + height;
       var xlw = x + radiusX;
@@ -273,12 +334,21 @@ module Shumway.AVM2.AS.flash.display {
       this.lineTo(right, ybw);
     }
 
-    drawRoundRectComplex(x: number, y: number, width: number, height: number, topLeftRadius: number,
-                         topRightRadius: number, bottomLeftRadius: number,
-                         bottomRightRadius: number): void {
-      //x = +x; y = +y; width = +width; height = +height; topLeftRadius = +topLeftRadius; topRightRadius = +topRightRadius; bottomLeftRadius = +bottomLeftRadius; bottomRightRadius = +bottomRightRadius;
+    drawRoundRectComplex(x: number, y: number, width: number, height: number,
+                         topLeftRadius: number, topRightRadius: number,
+                         bottomLeftRadius: number,
+                         bottomRightRadius: number): void
+    {
+      x = +x;
+      y = +y;
+      width = +width;
+      height = +height;
+      topLeftRadius = +topLeftRadius;
+      topRightRadius = +topRightRadius;
+      bottomLeftRadius = +bottomLeftRadius;
+      bottomRightRadius = +bottomRightRadius;
 
-      if (!topLeftRadius && !topRightRadius && !bottomLeftRadius && !bottomRightRadius) {
+      if (!(topLeftRadius | topRightRadius | bottomLeftRadius | bottomRightRadius)) {
         this.drawRect(x, y, width, height);
         return;
       }
@@ -339,7 +409,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     moveTo(x: number, y: number): void {
-      //x = +x; y = +y;
+      x = +x;
+      y = +y;
 
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_MOVE_TO);
@@ -349,12 +420,13 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     lineTo(x: number, y: number): void {
-      //x = +x; y = +y;
+      x = +x;
+      y = +y;
 
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_LINE_TO);
-      graphicsData.writeUnsignedInt(x * 20);
-      graphicsData.writeUnsignedInt(y * 20);
+      graphicsData.writeUnsignedInt(x * 20|0);
+      graphicsData.writeUnsignedInt(y * 20|0);
       this._invalidateParent();
     }
 
@@ -363,10 +435,10 @@ module Shumway.AVM2.AS.flash.display {
 
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_CURVE_TO);
-      graphicsData.writeUnsignedInt(controlX * 20);
-      graphicsData.writeUnsignedInt(controlY * 20);
-      graphicsData.writeUnsignedInt(anchorX * 20);
-      graphicsData.writeUnsignedInt(anchorY * 20);
+      graphicsData.writeUnsignedInt(controlX * 20|0);
+      graphicsData.writeUnsignedInt(controlY * 20|0);
+      graphicsData.writeUnsignedInt(anchorX * 20|0);
+      graphicsData.writeUnsignedInt(anchorY * 20|0);
       this._invalidateParent();
     }
 
@@ -376,12 +448,12 @@ module Shumway.AVM2.AS.flash.display {
 
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_CUBIC_CURVE_TO);
-      graphicsData.writeUnsignedInt(controlX1 * 20);
-      graphicsData.writeUnsignedInt(controlY1 * 20);
-      graphicsData.writeUnsignedInt(controlX2 * 20);
-      graphicsData.writeUnsignedInt(controlY2 * 20);
-      graphicsData.writeUnsignedInt(anchorX * 20);
-      graphicsData.writeUnsignedInt(anchorY * 20);
+      graphicsData.writeUnsignedInt(controlX1 * 20|0);
+      graphicsData.writeUnsignedInt(controlY1 * 20|0);
+      graphicsData.writeUnsignedInt(controlX2 * 20|0);
+      graphicsData.writeUnsignedInt(controlY2 * 20|0);
+      graphicsData.writeUnsignedInt(anchorX * 20|0);
+      graphicsData.writeUnsignedInt(anchorY * 20|0);
       this._invalidateParent();
     }
 
@@ -394,14 +466,6 @@ module Shumway.AVM2.AS.flash.display {
       this._graphicsData.length = sourceGraphics._graphicsData.length;
       this._graphicsData.writeBytes(sourceGraphics._graphicsData, 0);
       this._invalidateParent();
-    }
-
-    lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
-                    repeat: boolean = true, smooth: boolean = false): void {
-      //bitmap = bitmap; matrix = matrix;
-      //this._closePath();
-      //var fill = this._graphicsData.push(new GraphicsBitmapFill(bitmap, matrix, !!repeat, !!smooth));
-      // TODO
     }
 
 //    lineShaderStyle(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
@@ -458,6 +522,104 @@ module Shumway.AVM2.AS.flash.display {
 //          }
 //        }
 //      }
+    }
+
+    /**
+     * Gradients are specified the same for fills and strokes, so we only need to serialize them
+     * once. The Parameter `pathCommand` is treated as the actual command to serialize, and must
+     * be one of PATH_COMMAND_BEGIN_GRADIENT_FILL and PATH_COMMAND_LINE_STYLE_GRADIENT.
+     */
+    private writeGradientStyle(output: flash.utils.ByteArray, pathCommand: number, type: string,
+                               colors: any [], alphas: any [], ratios: any [],
+                               matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
+                               interpolationMethod: string = "rgb",
+                               focalPointRatio: number = 0): void
+    {
+      assert(pathCommand === Graphics.PATH_COMMAND_BEGIN_GRADIENT_FILL ||
+             pathCommand === Graphics.PATH_COMMAND_LINE_STYLE_GRADIENT);
+      if (type === null || type === undefined) {
+        throwError('TypeError', Errors.NullPointerError, 'type');
+      }
+      var gradientType = GradientType.toNumber(asCoerceString(type));
+      if (gradientType < 0) {
+        throwError("ArgumentError", Errors.InvalidEnumError, "type");
+      }
+
+      if (colors === null || colors === undefined) {
+        throwError('TypeError', Errors.NullPointerError, 'colors');
+      }
+      if (typeof colors !== 'array') {
+        throwError('TypeError', Errors.CheckTypeFailedError, 'colors', 'Array');
+      }
+
+      if (typeof alphas !== 'array') {
+        throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
+      }
+      if (alphas === null || alphas === undefined) {
+        throwError('TypeError', Errors.NullPointerError, 'alphas');
+      }
+
+      if (typeof ratios !== 'array') {
+        throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
+      }
+      if (ratios === null || ratios === undefined) {
+        throwError('TypeError', Errors.NullPointerError, 'ratios');
+      }
+
+      if (matrix === null || matrix === undefined) {
+        matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
+      } else if (!(matrix instanceof flash.geom.Matrix)) {
+        throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
+      }
+
+      var colorStops = colors.length;
+      var ratiosValid: boolean = true;
+      for (var i = 0; i < colorStops; i++) {
+        if (ratios[i] > 0xff || ratios[i] < 0) {
+          ratiosValid = false;
+          break;
+        }
+      }
+      // If the colors, alphas and ratios arrays don't all have the same length or if any of the
+      // given ratios falls outside [0,0xff], Flash uses a solid white fill.
+      if (colorStops !== alphas.length || colorStops !== ratios.length || !ratiosValid) {
+        if (pathCommand === Graphics.PATH_COMMAND_BEGIN_GRADIENT_FILL) {
+          this.beginFill(0xffffff, 1);
+        } else {
+          this.lineStyle(0xffffff, 1);
+        }
+        return;
+      }
+      output.writeUnsignedByte(pathCommand);
+      output.writeUnsignedByte(gradientType);
+
+      output.writeByte(colorStops);
+      for (var i = 0; i < colorStops; i++) {
+        // Colors are coerced to uint32, with the highest byte stripped.
+        output.writeUnsignedInt(colors[i] >>> 0 & 0xffffff);
+        // Alpha is clamped to [0,1] and scaled to 0xff.
+        output.writeUnsignedByte(clamp(+alphas[i], 0, 1) * 0xff);
+        // Ratio must be valid, otherwise we'd have bailed above.
+        output.writeUnsignedByte(ratios[i]);
+      }
+
+      matrix.writeExternal(output);
+
+      // If `spreadMethod` is invalid, "pad" is used.
+      var spread = SpreadMethod.toNumber(asCoerceString(spreadMethod));
+      if (spread < 0) {
+        spread = SpreadMethod.toNumber(SpreadMethod.PAD);
+      }
+      output.writeUnsignedByte(spread);
+
+      // If `interpolationMethod` is invalid, "rgb" is used.
+      var interpolation = InterpolationMethod.toNumber(asCoerceString(interpolationMethod));
+      if (interpolation < 0) {
+        interpolation = InterpolationMethod.toNumber(InterpolationMethod.RGB);
+      }
+      output.writeUnsignedByte(interpolation);
+
+      output.writeFloat(clamp(+focalPointRatio, -1, 1));
     }
   }
 }

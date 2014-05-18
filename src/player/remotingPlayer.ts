@@ -60,7 +60,7 @@ module Shumway.Remoting.Player {
       this.output.writeInt(hasBits);
       this.writeRectangle(graphics._getContentBounds());
       this.output.writeInt(this.outputAssets.length);
-      this.outputAssets.push(graphics._graphicsData);
+      this.outputAssets.push(graphics.getGraphicsData());
     }
 
     writeDisplayObject(displayObject: DisplayObject) {
