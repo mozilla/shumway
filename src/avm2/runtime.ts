@@ -178,8 +178,6 @@ module Shumway.AVM2.Runtime {
   export var VM_OPEN_SET_METHOD_PREFIX = "s";
   export var VM_OPEN_GET_METHOD_PREFIX = "g";
 
-  export var VM_NATIVE_BUILTIN_ORIGINALS = "asOriginals";
-
   /**
    * Overriden AS3 methods (see hacks.js). This allows you to provide your own JS implementation
    * for AS3 methods.
@@ -308,6 +306,7 @@ module Shumway.AVM2.Runtime {
         { object: openMethods,    name: qn },
         { object: object,         name: VM_OPEN_METHOD_PREFIX + qn }
       ];
+      tryInjectToStringAndValueOfForwarder(object, qn)
     } else if (trait.isGetter() || trait.isSetter()) {
       var trampoline = makeTrampoline(function (self) {
         var fn = getTraitFunction(trait, scope, natives);
@@ -480,6 +479,17 @@ module Shumway.AVM2.Runtime {
     return self.asSetProperty(undefined, name, 0, value);
   }
 
+  var forwardValueOf: () => any = <any>new Function("", "return this." + Multiname.VALUE_OF + "()");
+  var forwardToString: () => string = <any>new Function("", "return this." + Multiname.TO_STRING + "()");
+
+  function tryInjectToStringAndValueOfForwarder(self: Object, resolved: string) {
+    if (resolved === Multiname.VALUE_OF) {
+      self.valueOf = forwardValueOf;
+    } else if (resolved === Multiname.TO_STRING) {
+      self.toString = forwardToString;
+    }
+  }
+
   export function asSetProperty(namespaces: Namespace [], name: any, flags: number, value: any) {
     var self: Object = this;
     if (typeof name === "object") {
@@ -499,6 +509,7 @@ module Shumway.AVM2.Runtime {
         value = type.coerce(value);
       }
     }
+    tryInjectToStringAndValueOfForwarder(self, resolved);
     self[resolved] = value;
   }
 
@@ -735,11 +746,13 @@ module Shumway.AVM2.Runtime {
 
   export function asGetEnumerableKeys(): any [] {
     var self: Object = this;
-    var boxedValue = self.valueOf();
-    // TODO: This is probably broken if the object has overwritten |valueOf|.
-    if (typeof boxedValue === "string" || typeof boxedValue === "number") {
-      return [];
-    }
+
+//    var boxedValue = self.valueOf();
+//    // TODO: This is probably broken if the object has overwritten |valueOf|.
+//    if (typeof boxedValue === "string" || typeof boxedValue === "number") {
+//      return [];
+//    }
+
     var keys = Object.keys(this);
     var result = [];
     for (var i = 0; i < keys.length; i++) {
@@ -1030,44 +1043,6 @@ module Shumway.AVM2.Runtime {
   }
 
   export function initializeGlobalObject(global) {
-    var VM_NATIVE_BUILTIN_SURROGATES = [
-      { name: "Object", methods: ["toString", "valueOf"] },
-      { name: "Function", methods: ["toString", "valueOf"] }
-    ];
-    /**
-     * Surrogates are used to make |toString| and |valueOf| work transparently. For instance, the expression
-     * |a + b| should implicitly expand to |a.$valueOf() + b.$valueOf()|. Since, we don't want to call
-     * |$valueOf| explicitly we instead patch the |valueOf| property in the prototypes of native builtins
-     * to call the |$valueOf| instead.
-     */
-    var originals = global[VM_NATIVE_BUILTIN_ORIGINALS] = createEmptyObject();
-    VM_NATIVE_BUILTIN_SURROGATES.forEach(function (surrogate) {
-      var object = global[surrogate.name];
-      assert (object);
-      originals[surrogate.name] = createEmptyObject();
-      surrogate.methods.forEach(function (originalFunctionName) {
-        assert (originalFunctionName);
-        var originalFunction;
-        if (object.prototype.hasOwnProperty(originalFunctionName)) {
-          originalFunction = object.prototype[originalFunctionName];
-        } else {
-          originalFunction = originals["Object"][originalFunctionName];
-        }
-        // Save the original method in case |getNative| needs it.
-        originals[surrogate.name][originalFunctionName] = originalFunction;
-        var overrideFunctionName = Multiname.getPublicQualifiedName(originalFunctionName);
-        if (useSurrogates) {
-          // Patch the native builtin with a surrogate.
-          global[surrogate.name].prototype[originalFunctionName] = function surrogate() {
-            if (this[overrideFunctionName]) {
-              return this[overrideFunctionName]();
-            }
-            return originalFunction.call(this);
-          };
-        }
-      });
-    });
-
     ["Object", "Number", "Boolean", "String", "Array", "Date", "RegExp"].forEach(function (name) {
       defineReadOnlyProperty(global[name].prototype, VM_NATIVE_PROTOTYPE_FLAG, true);
     });

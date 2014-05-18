@@ -918,7 +918,7 @@ module Shumway.AVM2.AS {
 
     constructor(value: any) {
       false && super();
-      return Object(value | 0);
+      return <any>Number(value | 0);
     }
 
     public static asCall(self: any, ...argArray: any[]): any {
@@ -958,7 +958,7 @@ module Shumway.AVM2.AS {
 
     constructor(value: any) {
       false && super();
-      return Object(value >>> 0);
+      return <any>Number(value >>> 0);
     }
 
     public static asCall(self: any, ...argArray: any[]): any {

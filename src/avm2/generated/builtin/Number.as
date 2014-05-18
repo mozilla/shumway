@@ -100,24 +100,8 @@ public final class Number
   }
   AS3 function valueOf():Number { return this }
 
-  prototype.toLocaleString =
-      prototype.toString = function (radix=10):String
-      {
-        if (this === prototype) return "0"
-
-        if (!(this is Number))
-          Error.throwError( TypeError, 1004 /*kInvokeOnIncompatibleObjectError*/, "Number.prototype.toString" );
-
-        return _numberToString(this, radix)
-      };
-
-  prototype.valueOf = function()
-  {
-    if (this === prototype) return 0
-    if (!(this is Number))
-      Error.throwError( TypeError, 1004 /*kInvokeOnIncompatibleObjectError*/, "Number.prototype.valueOf" );
-    return this;
-  };
+  prototype.toLocaleString = prototype.toString = unsafeJSNative("Number.prototype.toString");
+  prototype.valueOf = unsafeJSNative("Number.prototype.valueOf");
 
   AS3 native function toExponential(p=0):String;
 
@@ -159,24 +143,11 @@ public final class int
   AS3 function toString(radix=10):String {
     return Number(this).AS3::toString(radix)
   }
+
   AS3 function valueOf():int { return this }
 
-  prototype.toLocaleString =
-      prototype.toString = function toString(radix=10):String
-      {
-        if (this === prototype) return "0"
-        if (!(this is int))
-          Error.throwError( TypeError, 1004 /*kInvokeOnIncompatibleObjectError*/, "int.prototype.toString" );
-        return Number(this).toString(radix)
-      }
-
-  prototype.valueOf = function()
-  {
-    if (this === prototype) return 0
-    if (!(this is int))
-      Error.throwError( TypeError, 1004 /*kInvokeOnIncompatibleObjectError*/, "int.prototype.valueOf" );
-    return this
-  }
+  prototype.toLocaleString = prototype.toString = unsafeJSNative("Number.prototype.toString");
+  prototype.valueOf = unsafeJSNative("Number.prototype.valueOf");
 
   AS3 function toExponential(p=0):String
   {
@@ -231,22 +202,8 @@ public final class uint
   }
   AS3 function valueOf():uint { return this }
 
-  prototype.toLocaleString =
-      prototype.toString = function toString(radix=10):String
-      {
-        if (this === prototype) return "0"
-        if (!(this is Number))
-          Error.throwError( TypeError, 1004 /*kInvokeOnIncompatibleObjectError*/, "uint.prototype.toString" );
-        return Number(this).toString(radix)
-      }
-
-  prototype.valueOf = function()
-  {
-    if (this === prototype) return 0
-    if (!(this is uint))
-      Error.throwError( TypeError, 1004 /*kInvokeOnIncompatibleObjectError*/, "uint.prototype.valueOf" );
-    return this
-  }
+  prototype.toLocaleString = prototype.toString = unsafeJSNative("Number.prototype.toString");
+  prototype.valueOf = unsafeJSNative("Number.prototype.valueOf");
 
   AS3 function toExponential(p=0):String
   {

@@ -1505,6 +1505,9 @@ module Shumway.AVM2.ABC {
     public static Function  = Multiname.getPublicQualifiedName("Function");
     public static XML       = Multiname.getPublicQualifiedName("XML");
     public static XMLList   = Multiname.getPublicQualifiedName("XMLList");
+
+    public static TO_STRING = Multiname.getPublicQualifiedName("toString");
+    public static VALUE_OF  = Multiname.getPublicQualifiedName("valueOf");
     public static TEMPORARY = new Multiname([], "");
   }
 

@@ -74,4 +74,54 @@ package {
     var a : A = new A(1);
     trace(a);
   })();
+
+  class B {
+    private var v : int = 0;
+    public function B(v) {
+      this.v = v;
+    }
+    public function toString() {
+      return "public function toString";
+    }
+    AS3 function toString() {
+      return "AS3 function toString";
+    }
+  }
+
+  B.prototype.toString = function () {
+    return "prototype.toString";
+  };
+
+  (function () {
+    trace("--- Test 8 ---");
+    var b : B = new B(1);
+    trace(b);
+    trace(b.toString());
+    function z(o) {
+      trace(o);
+    }
+    z(b);
+  })();
+
+  class C {
+    private var v : int = 0;
+    public function C(v) {
+      this.v = v;
+    }
+    AS3 function toString() {
+      return "AS3 function toString";
+    }
+  }
+
+//  C.prototype.toString = function () {
+//    return "prototype.toString";
+//  };
+
+  (function () {
+    use namespace AS3;
+    trace("--- Test 9 ---");
+    var c : C = new C(1);
+    trace(c);
+    trace(c.toString());
+  })();
 }
