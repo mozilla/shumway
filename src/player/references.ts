@@ -14,16 +14,12 @@
  * limitations under the License.
  */
 
-///<reference path='../options.ts' />
+///<reference path='../flash.ts/references.ts' />
 ///<reference path='frameScheduler.ts' />
-///<reference path='player.ts' />
-///<reference path='timeline.ts' />
 ///<reference path='remoting.ts' />
 ///<reference path='remotingPlayer.ts' />
 ///<reference path='remotingGfx.ts' />
-///<reference path='../avm2/references.ts' />
-///<reference path='../gfx/references.ts' />
-///<reference path='../flash.ts/references.ts' />
+///<reference path='player.ts' />
 
 // declare var timeline: any;
 // declare var shumwayOptions: any;
