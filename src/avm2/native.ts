@@ -918,7 +918,7 @@ module Shumway.AVM2.AS {
 
     constructor(value: any) {
       false && super();
-      return <any>Number(value | 0);
+      return Object(Number(value | 0));
     }
 
     public static asCall(self: any, ...argArray: any[]): any {
@@ -958,7 +958,7 @@ module Shumway.AVM2.AS {
 
     constructor(value: any) {
       false && super();
-      return <any>Number(value >>> 0);
+      return Object(Number(value >>> 0));
     }
 
     public static asCall(self: any, ...argArray: any[]): any {
@@ -1607,6 +1607,25 @@ module Shumway.AVM2.AS {
     export var Boolean = jsGlobal.Boolean;
     export var Number = jsGlobal.Number;
     export var Date = jsGlobal.Date;
+
+    function makeOriginalPrototype(constructor: Function) {
+      return {
+        prototype: {
+          valueOf: constructor.prototype.valueOf, toString: constructor.prototype.toString
+        }
+      };
+    }
+
+    /**
+     * Make a copy of the original prototype functions in case they are patched. This is to
+     * prevent cyycles.
+     */
+    export var Original = {
+      Date: makeOriginalPrototype(Date),
+      String: makeOriginalPrototype(String),
+      Number: makeOriginalPrototype(Number),
+      Boolean: makeOriginalPrototype(Boolean)
+    }
 
     export function print(...args: any []) {
       jsGlobal.print.apply(null, args);

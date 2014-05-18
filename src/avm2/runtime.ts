@@ -479,8 +479,8 @@ module Shumway.AVM2.Runtime {
     return self.asSetProperty(undefined, name, 0, value);
   }
 
-  var forwardValueOf: () => any = <any>new Function("", "return this." + Multiname.VALUE_OF + "()");
-  var forwardToString: () => string = <any>new Function("", "return this." + Multiname.TO_STRING + "()");
+  var forwardValueOf: () => any = <any>new Function("", 'return this.' + Multiname.VALUE_OF + "()");
+  var forwardToString: () => string = <any>new Function("", 'return this.' + Multiname.TO_STRING + "()");
 
   function tryInjectToStringAndValueOfForwarder(self: Object, resolved: string) {
     if (resolved === Multiname.VALUE_OF) {
@@ -752,6 +752,10 @@ module Shumway.AVM2.Runtime {
 //    if (typeof boxedValue === "string" || typeof boxedValue === "number") {
 //      return [];
 //    }
+
+    if (self instanceof String || self instanceof Number) {
+      return [];
+    }
 
     var keys = Object.keys(this);
     var result = [];

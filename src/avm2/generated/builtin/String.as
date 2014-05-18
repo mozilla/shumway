@@ -102,8 +102,8 @@ package
     AS3 native function toString();
     AS3 native function valueOf();
 
-    prototype.toString = unsafeJSNative("String.prototype.toString");
-    prototype.valueOf = unsafeJSNative("String.prototype.valueOf");
+    prototype.toString = unsafeJSNative("Original.String.prototype.toString");
+    prototype.valueOf = unsafeJSNative("Original.String.prototype.valueOf");
 
     // Dummy constructor
     public function String(value = "") {}

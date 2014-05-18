@@ -100,8 +100,8 @@ public final class Number
   }
   AS3 function valueOf():Number { return this }
 
-  prototype.toLocaleString = prototype.toString = unsafeJSNative("Number.prototype.toString");
-  prototype.valueOf = unsafeJSNative("Number.prototype.valueOf");
+  prototype.toLocaleString = prototype.toString = unsafeJSNative("Original.Number.prototype.toString");
+  prototype.valueOf = unsafeJSNative("Original.Number.prototype.valueOf");
 
   AS3 native function toExponential(p=0):String;
 
@@ -146,8 +146,8 @@ public final class int
 
   AS3 function valueOf():int { return this }
 
-  prototype.toLocaleString = prototype.toString = unsafeJSNative("Number.prototype.toString");
-  prototype.valueOf = unsafeJSNative("Number.prototype.valueOf");
+  prototype.toLocaleString = prototype.toString = unsafeJSNative("Original.Number.prototype.toString");
+  prototype.valueOf = unsafeJSNative("Original.Number.prototype.valueOf");
 
   AS3 function toExponential(p=0):String
   {
@@ -202,8 +202,8 @@ public final class uint
   }
   AS3 function valueOf():uint { return this }
 
-  prototype.toLocaleString = prototype.toString = unsafeJSNative("Number.prototype.toString");
-  prototype.valueOf = unsafeJSNative("Number.prototype.valueOf");
+  prototype.toLocaleString = prototype.toString = unsafeJSNative("Original.Number.prototype.toString");
+  prototype.valueOf = unsafeJSNative("Original.Number.prototype.valueOf");
 
   AS3 function toExponential(p=0):String
   {

@@ -59,7 +59,7 @@ package
     AS3 native function setTime(t=void 0):Number;
 
     prototype.setTime = unsafeJSNative("Date.prototype.setTime");
-    prototype.valueOf = unsafeJSNative("Date.prototype.valueOf");
+    prototype.valueOf = unsafeJSNative("Original.Date.prototype.valueOf");
 
     AS3 native function toString():String;
     AS3 native function toDateString():String;
@@ -133,7 +133,7 @@ package
     AS3 native function setUTCSeconds(sec=void 0, ms=void 0):Number;
     AS3 native function setUTCMilliseconds(ms=void 0):Number;
 
-    prototype.toString = unsafeJSNative("Date.prototype.toString");
+    prototype.toString = unsafeJSNative("Original.Date.prototype.toString");
     prototype.toDateString = unsafeJSNative("Date.prototype.toDateString");
     prototype.toTimeString = unsafeJSNative("Date.prototype.toTimeString");
     prototype.toLocaleString = unsafeJSNative("Date.prototype.toLocaleString");

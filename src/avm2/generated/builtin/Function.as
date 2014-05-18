@@ -51,12 +51,10 @@ dynamic public class Function
    //  function in toString() seems to be a bookend to this feature to me, and
    //  thus shouldn't be in the compact specification either. */
 
-  prototype.toLocaleString =
-      prototype.toString = function():String
-      {
-        var f:Function = this
-        return "function Function() {}"
-      }
+  prototype.toLocaleString = prototype.toString = function():String {
+    var f:Function = this
+    return "function Function() {}"
+  }
 
   AS3 native function call(thisArg=void 0, ...args)
   prototype.call = function(thisArg=void 0, ...args)
