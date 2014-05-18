@@ -69,10 +69,10 @@ module Shumway.Remoting.Player {
       // TODO create visitDisplayObjectContainer
       this.output.writeInt(DisplayObjectContainer.isType(displayObject) ? 1 : 0);
       var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
-      var hasBounds = true;
       var hasChildren = this.writeReferences && displayObject._hasFlags(DisplayObjectFlags.DirtyChildren);
       var hasColorTransform = displayObject._hasFlags(DisplayObjectFlags.DirtyColorTransform);
       var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
+      var hasBounds = hasMiscellaneousProperties;
 
       var hasBits = 0;
       hasBits |= hasMatrix         ? UpdateFrameTagBits.HasMatrix         : 0;
