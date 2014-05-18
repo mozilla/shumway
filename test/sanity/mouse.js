@@ -217,7 +217,6 @@
     c1.hitArea = c2;
     fireClickEvent(50, 50);
     eq(r, '');
-    debugger;
     fireClickEvent(175, 50);
     eq(r, 'B');
     c2.mouseEnabled = false;

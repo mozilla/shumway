@@ -318,8 +318,8 @@ module Shumway.AVM2.AS.flash.display {
         var isUnderMouse = false;
         if (SimpleButton.isType(dispObj)) {
           var hitTestState = (<SimpleButton>dispObj).hitTestState;
-          if (hitTestState && hitTestState.hitTestPoint(globalPoint.x, globalPoint.y, true)) {
-            isUnderMouse = true;
+          if (hitTestState) {
+            isUnderMouse = hitTestState.hitTestPoint(globalPoint.x, globalPoint.y, true);
           }
         } else if (!Sprite.isType(dispObj) || !(<Sprite>dispObj).hitArea) {
           isUnderMouse = dispObj.hitTestPoint(globalPoint.x, globalPoint.y, true, true);
