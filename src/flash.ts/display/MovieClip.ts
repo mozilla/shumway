@@ -117,7 +117,7 @@ module Shumway.AVM2.AS.flash.display {
     private _currentFrame: number;
     private _totalFrames: number;
     private _trackAsMenu: boolean;
-    private _scenes: any [];
+    private _scenes: flash.display.Scene [];
     private _currentLabel: string;
     private _currentFrameLabel: string;
     private _enabled: boolean;
@@ -151,7 +151,7 @@ module Shumway.AVM2.AS.flash.display {
       this._trackAsMenu = !!value;
     }
 
-    get scenes(): any [] {
+    get scenes(): flash.display.Scene [] {
       return this._scenes.map(function (x: Scene) {
         return x.clone();
       });
@@ -341,7 +341,7 @@ module Shumway.AVM2.AS.flash.display {
         var scene = scenes[sceneIndex];
         if (currentFrame <= scene.numFrames) {
           var labels = scene.labels;
-          for (var i = 0; i < labels; i++) {
+          for (var i = 0; i < labels.length; i++) {
             var label = labels[i];
             if (label.frame === currentFrame) {
               currentLabel = label;
