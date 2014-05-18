@@ -57,6 +57,7 @@ module Shumway.AVM2.AS.flash.ui {
         if (flash.display.Sprite.isType(target)) {
           var hitTarget = (<flash.display.Sprite>target)._hitTarget;
           if (hitTarget && hitTarget.mouseEnabled) {
+            target = hitTarget;
             break;
           }
         }
