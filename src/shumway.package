@@ -24,7 +24,6 @@ src/gfx/gl/gl.js
 src/gfx/gl/brush.js
 src/gfx/2d/2d.js
 src/gfx/easel.js
-src/gfx/shapes.js
 #src/gfx/glTests.js
 #src/gfx/shapes.js
 

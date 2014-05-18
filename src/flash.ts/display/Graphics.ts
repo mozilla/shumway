@@ -155,10 +155,10 @@ module Shumway.AVM2.AS.flash.display {
       graphicsData.writeUnsignedByte(smooth ? 1 : 0);
     }
 
-    beginShaderFill(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
-      //shader = shader; matrix = matrix;
-      notImplemented("public flash.display.Graphics::beginShaderFill"); return;
-    }
+//    beginShaderFill(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
+//      //shader = shader; matrix = matrix;
+//      notImplemented("public flash.display.Graphics::beginShaderFill"); return;
+//    }
 
     lineGradientStyle(type: string, colors: any [], alphas: any [], ratios: any [], matrix: flash.geom.Matrix = null, spreadMethod: string = "pad", interpolationMethod: string = "rgb", focalPointRatio: number = 0): void {
       // colors = colors; alphas = alphas; ratios = ratios; matrix = matrix;
@@ -387,10 +387,10 @@ module Shumway.AVM2.AS.flash.display {
       // TODO
     }
 
-    lineShaderStyle(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
-      //shader = shader; matrix = matrix;
-      notImplemented("public flash.display.Graphics::lineShaderStyle"); return;
-    }
+//    lineShaderStyle(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
+//      //shader = shader; matrix = matrix;
+//      notImplemented("public flash.display.Graphics::lineShaderStyle"); return;
+//    }
     drawPath(commands: ASVector<any>, data: ASVector<any>, winding: string = "evenOdd"): void {
       commands = commands; data = data, winding = asCoerceString(winding);
       notImplemented("public flash.display.Graphics::drawPath"); return;

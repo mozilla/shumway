@@ -108,7 +108,7 @@
 ///<reference path='display/GraphicsPath.ts' />
 ///<reference path='display/GraphicsPathCommand.ts' />
 ///<reference path='display/GraphicsPathWinding.ts' />
-///<reference path='display/GraphicsShaderFill.ts' />
+// ///<reference path='display/GraphicsShaderFill.ts' />
 ///<reference path='display/GraphicsSolidFill.ts' />
 ///<reference path='display/GraphicsStroke.ts' />
 ///<reference path='display/GraphicsTrianglePath.ts' />
@@ -120,7 +120,7 @@
 ///<reference path='display/IGraphicsStroke.ts' />
 ///<reference path='display/InterpolationMethod.ts' />
 ///<reference path='display/JPEGEncoderOptions.ts' />
-///<reference path='display/JPEGXREncoderOptions.ts' />
+// ///<reference path='display/JPEGXREncoderOptions.ts' />
 ///<reference path='display/JointStyle.ts' />
 ///<reference path='display/LineScaleMode.ts' />
 ///<reference path='display/Loader.ts' />
@@ -132,8 +132,8 @@
 ///<reference path='display/PixelSnapping.ts' />
 ///<reference path='display/SWFVersion.ts' />
 ///<reference path='display/Scene.ts' />
-///<reference path='display/Shader.ts' />
-///<reference path='display/ShaderData.ts' />
+// ///<reference path='display/Shader.ts' />
+// ///<reference path='display/ShaderData.ts' />
 // ///<reference path='display/ShaderInput.ts' />
 // ///<reference path='display/ShaderJob.ts' />
 // ///<reference path='display/ShaderParameter.ts' />
@@ -189,7 +189,7 @@
 ///<reference path='filters/GlowFilter.ts' />
 ///<reference path='filters/GradientBevelFilter.ts' />
 ///<reference path='filters/GradientGlowFilter.ts' />
-///<reference path='filters/ShaderFilter.ts' />
+// ///<reference path='filters/ShaderFilter.ts' />
 ///<reference path='geom/ColorTransform.ts' />
 
 ///<reference path='geom/Matrix.ts' />
@@ -225,7 +225,7 @@
 ///<reference path='media/ID3Info.ts' />
 ///<reference path='media/Microphone.ts' />
 // ///<reference path='media/MicrophoneEnhancedMode.ts' />
-///<reference path='media/MicrophoneEnhancedOptions.ts' />
+// ///<reference path='media/MicrophoneEnhancedOptions.ts' />
 ///<reference path='media/Sound.ts' />
 ///<reference path='media/SoundChannel.ts' />
 // ///<reference path='media/SoundCodec.ts' />
@@ -286,20 +286,20 @@
 // ///<reference path='sampler/Sample.ts' />
 // ///<reference path='sampler/StackFrame.ts' />
 
-///<reference path='security/CertificateStatus.ts' />
-///<reference path='security/X500DistinguishedName.ts' />
-///<reference path='security/X509Certificate.ts' />
+// ///<reference path='security/CertificateStatus.ts' />
+// ///<reference path='security/X500DistinguishedName.ts' />
+// ///<reference path='security/X509Certificate.ts' />
 
 ///<reference path='sensors/Accelerometer.ts' />
 ///<reference path='sensors/Geolocation.ts' />
 ///<reference path='system/ApplicationDomain.ts' />
-///<reference path='system/ApplicationInstaller.ts' />
-///<reference path='system/AuthorizedFeatures.ts' />
-///<reference path='system/AuthorizedFeaturesLoader.ts' />
+// ///<reference path='system/ApplicationInstaller.ts' />
+// ///<reference path='system/AuthorizedFeatures.ts' />
+// ///<reference path='system/AuthorizedFeaturesLoader.ts' />
 ///<reference path='system/Capabilities.ts' />
-///<reference path='system/DomainMemoryWithStage3D.ts' />
+// ///<reference path='system/DomainMemoryWithStage3D.ts' />
 ///<reference path='system/FSCommand.ts' />
-///<reference path='system/IMEConversionMode.ts' />
+// ///<reference path='system/IMEConversionMode.ts' />
 ///<reference path='system/ImageDecodingPolicy.ts' />
 ///<reference path='system/LoaderContext.ts' />
 ///<reference path='system/JPEGLoaderContext.ts' />
@@ -308,7 +308,7 @@
 ///<reference path='system/Security.ts' />
 ///<reference path='system/SecurityDomain.ts' />
 ///<reference path='system/SecurityPanel.ts' />
-///<reference path='system/SystemUpdaterType.ts' />
+// ///<reference path='system/SystemUpdaterType.ts' />
 ///<reference path='system/TouchscreenType.ts' />
 
 ///<reference path='text/AntiAliasType.ts' />
@@ -336,31 +336,31 @@
 
 // ///<reference path='text/engine/BreakOpportunity.ts' />
 // ///<reference path='text/engine/CFFHinting.ts' />
-///<reference path='text/engine/ContentElement.ts' />
+// ///<reference path='text/engine/ContentElement.ts' />
 // ///<reference path='text/engine/DigitCase.ts' />
 // ///<reference path='text/engine/DigitWidth.ts' />
 // ///<reference path='text/engine/EastAsianJustifier.ts' />
-///<reference path='text/engine/ElementFormat.ts' />
-///<reference path='text/engine/FontDescription.ts' />
+// ///<reference path='text/engine/ElementFormat.ts' />
+// ///<reference path='text/engine/FontDescription.ts' />
 // ///<reference path='text/engine/FontLookup.ts' />
-///<reference path='text/engine/FontMetrics.ts' />
+// ///<reference path='text/engine/FontMetrics.ts' />
 // ///<reference path='text/engine/FontPosture.ts' />
 // ///<reference path='text/engine/FontWeight.ts' />
 // ///<reference path='text/engine/GraphicElement.ts' />
-///<reference path='text/engine/GroupElement.ts' />
+// ///<reference path='text/engine/GroupElement.ts' />
 // ///<reference path='text/engine/JustificationStyle.ts' />
 // ///<reference path='text/engine/Kerning.ts' />
 // ///<reference path='text/engine/LigatureLevel.ts' />
 // ///<reference path='text/engine/LineJustification.ts' />
 // ///<reference path='text/engine/RenderingMode.ts' />
-///<reference path='text/engine/TextJustifier.ts' />
-///<reference path='text/engine/SpaceJustifier.ts' />
+// ///<reference path='text/engine/TextJustifier.ts' />
+// ///<reference path='text/engine/SpaceJustifier.ts' />
 // ///<reference path='text/engine/TabAlignment.ts' />
 // ///<reference path='text/engine/TabStop.ts' />
 // ///<reference path='text/engine/TextBaseline.ts' />
-///<reference path='text/engine/TextBlock.ts' />
-///<reference path='text/engine/TextElement.ts' />
-///<reference path='text/engine/TextLine.ts' />
+// ///<reference path='text/engine/TextBlock.ts' />
+// ///<reference path='text/engine/TextElement.ts' />
+// ///<reference path='text/engine/TextLine.ts' />
 // ///<reference path='text/engine/TextLineCreationResult.ts' />
 // ///<reference path='text/engine/TextLineMirrorRegion.ts' />
 // ///<reference path='text/engine/TextLineValidity.ts' />
