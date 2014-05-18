@@ -404,7 +404,9 @@ module Shumway.AVM2.Runtime {
 
   export function resolveMultinameProperty(namespaces: Namespace [], name: string, flags: number) {
     var self: Object = this;
-    if (isNullOrUndefined(name) || typeof name === "object") {
+    if (isNullOrUndefined(name)) {
+      name = String(asCoerceString(name));
+    } else if (typeof name === "object") {
       name = String(name);
     }
     if (isNumeric(name)) {
