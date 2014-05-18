@@ -199,13 +199,14 @@ module Shumway.AVM2.AS {
       Object.defineProperty(o, name, descriptor);
     }
 
-    static _toString(): string {
-      var self = boxValue(this);
-      if (self instanceof ASClass) {
-        var cls: ASClass = <any>self;
-        return "[class " + cls.classInfo.instanceInfo.name.name + "]";
+    static _dontEnumPrototype(o: Object): void {
+      for (var key in o) {
+        if (Multiname.isPublicQualifiedName(key)) {
+          var descriptor = getOwnPropertyDescriptor(o, key);
+          descriptor.enumerable = false;
+          Object.defineProperty(o, key, descriptor);
+        }
       }
-      return "[object " + self.class.classInfo.instanceInfo.name.name + "]";
     }
 
     // Hack to make the TypeScript compiler find the original Object.defineProperty.
@@ -214,6 +215,9 @@ module Shumway.AVM2.AS {
     static native_isPrototypeOf: (V: Object) => boolean;
     static native_hasOwnProperty: (V: string) => boolean;
     static native_propertyIsEnumerable: (V: string) => boolean;
+    static setPropertyIsEnumerable: (V: string, enumerable: boolean) => boolean;
+    static native_toString: () => string;
+
 
     native_isPrototypeOf(V: Object): boolean {
       notImplemented("isPrototypeOf");
@@ -230,6 +234,18 @@ module Shumway.AVM2.AS {
       return self.asPropertyIsEnumerable(null, name, 0);
     }
 
+    setPropertyIsEnumerable(name: string, enumerable: boolean) {
+      ASObject._setPropertyIsEnumerable(this, name, enumerable);
+    }
+
+    native_toString(): string {
+      var self = boxValue(this);
+      if (self instanceof ASClass) {
+        var cls: ASClass = <any>self;
+        return "[class " + cls.classInfo.instanceInfo.name.name + "]";
+      }
+      return "[object " + self.class.classInfo.instanceInfo.name.name + "]";
+    }
   }
 
   /**

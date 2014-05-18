@@ -105,19 +105,13 @@ public final class Number
 
   AS3 native function toExponential(p=0):String;
 
-  prototype.toExponential = function(p=0):String {
-    return this.AS3::toExponential(p);
-  };
+  prototype.toExponential = unsafeJSNative("Number.prototype.toExponential");
 
   AS3 native function toPrecision(p=0):String;
-  prototype.toPrecision = function(p=0):String {
-    return this.AS3::toPrecision(p);
-  };
+  prototype.toPrecision = unsafeJSNative("Number.prototype.toPrecision");
 
   AS3 native function toFixed(p=0):String;
-  prototype.toFixed = function(p=0):String {
-    return this.AS3::toFixed(p);
-  };
+  prototype.toFixed = unsafeJSNative("Number.prototype.toFixed");
 
   // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
   // The code for the actual ctor is in NumberClass::construct in the avmplus
@@ -149,32 +143,20 @@ public final class int
   prototype.toLocaleString = prototype.toString = unsafeJSNative("Original.Number.prototype.toString");
   prototype.valueOf = unsafeJSNative("Original.Number.prototype.valueOf");
 
-  AS3 function toExponential(p=0):String
-  {
+  AS3 function toExponential(p=0):String {
     return Number(this).AS3::toExponential(p)
   }
-  prototype.toExponential = function(p=0):String
-  {
-    return Number(this).AS3::toExponential(p)
-  }
+  prototype.toExponential = unsafeJSNative("Number.prototype.toExponential");
 
-  AS3 function toPrecision(p=0):String
-  {
+  AS3 function toPrecision(p=0):String {
     return Number(this).AS3::toPrecision(p)
   }
-  prototype.toPrecision = function(p=0):String
-  {
-    return Number(this).AS3::toPrecision(p)
-  }
+  prototype.toPrecision = unsafeJSNative("Number.prototype.toPrecision");
 
-  AS3 function toFixed(p=0):String
-  {
+  AS3 function toFixed(p=0):String {
     return Number(this).AS3::toFixed(p)
   }
-  prototype.toFixed = function(p=0):String
-  {
-    return Number(this).AS3::toFixed(p)
-  }
+  prototype.toFixed = unsafeJSNative("Number.prototype.toFixed");
 
   // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
   // The code for the actual ctor is in IntClass::construct in the avmplus
@@ -209,28 +191,19 @@ public final class uint
   {
     return Number(this).AS3::toExponential(p)
   }
-  prototype.toExponential = function(p=0):String
-  {
-    return Number(this).AS3::toExponential(p)
-  }
+  prototype.toExponential = unsafeJSNative("Number.prototype.toExponential");
 
   AS3 function toPrecision(p=0):String
   {
     return Number(this).AS3::toPrecision(p)
   }
-  prototype.toPrecision = function(p=0):String
-  {
-    return Number(this).AS3::toPrecision(p)
-  }
+  prototype.toPrecision = unsafeJSNative("Number.prototype.toPrecision");
 
   AS3 function toFixed(p=0):String
   {
     return Number(this).AS3::toFixed(p)
   }
-  prototype.toFixed = function(p=0):String
-  {
-    return Number(this).AS3::toFixed(p)
-  }
+  prototype.toFixed = unsafeJSNative("Number.prototype.toFixed");
 
   // Dummy constructor function - This is neccessary so the compiler can do arg # checking for the ctor in strict mode
   // The code for the actual ctor is in UIntClass::construct in the avmplus
