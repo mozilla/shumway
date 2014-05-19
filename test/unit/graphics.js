@@ -37,6 +37,7 @@
   unitTests.push(moveTo);
   unitTests.push(lineTo);
   unitTests.push(curveTo);
+  unitTests.push(cubicCurveTo);
   unitTests.push(bounds);
 
   function basics() {
@@ -131,6 +132,20 @@
     eq(bytes.readInt(), 50 * 20, "y is stored correctly");
     eq(bytes.readInt(), 0 * 20, "x is stored correctly");
     eq(bytes.readInt(), 100 * 20, "y is stored correctly");
+    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+  }
+
+  function cubicCurveTo() {
+    var g = new Graphics();
+    g.cubicCurveTo(100, 50, -100, 100, 0, 150);
+    var bytes = cloneData(g.getGraphicsData());
+    eq(bytes.readUnsignedByte(), PathCommand.CurveTo, "command is stored");
+    eq(bytes.readInt(), 100 * 20, "x is stored correctly");
+    eq(bytes.readInt(), 50 * 20, "y is stored correctly");
+    eq(bytes.readInt(), -100 * 20, "x is stored correctly");
+    eq(bytes.readInt(), 100 * 20, "y is stored correctly");
+    eq(bytes.readInt(), 0 * 20, "x is stored correctly");
+    eq(bytes.readInt(), 150 * 20, "y is stored correctly");
     eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
   }
 

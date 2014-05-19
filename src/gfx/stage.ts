@@ -223,6 +223,10 @@ module Shumway.GFX {
           case PathCommand.CurveTo:
             context.quadraticCurveTo(data.readUnsignedInt() / 20, data.readUnsignedInt() / 20,
                                      data.readUnsignedInt() / 20, data.readUnsignedInt() / 20);
+          case PathCommand.CubicCurveTo:
+            context.bezierCurveTo(data.readUnsignedInt() / 20, data.readUnsignedInt() / 20,
+                                  data.readUnsignedInt() / 20, data.readUnsignedInt() / 20,
+                                  data.readUnsignedInt() / 20, data.readUnsignedInt() / 20);
             break;
           case PathCommand.BeginSolidFill:
             if (fillActive) {

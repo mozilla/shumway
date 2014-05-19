@@ -40,6 +40,15 @@
  * uint anchorX:  target x coordinate, in twips
  * uint anchorY:  target y coordinate, in twips
  *
+ * cubicCurveTo:
+ * byte command:   PathCommand.CubicCurveTo
+ * uint controlX1: control point 1 x coordinate, in twips
+ * uint controlY1: control point 1 y coordinate, in twips
+ * uint controlX2: control point 2 x coordinate, in twips
+ * uint controlY2: control point 2 y coordinate, in twips
+ * uint anchorX:   target x coordinate, in twips
+ * uint anchorY:   target y coordinate, in twips
+ *
  * beginFill:
  * byte command:  PathCommand.BeginSolidFill
  * uint color:    [RGBA color]
@@ -474,16 +483,27 @@ module Shumway.AVM2.AS.flash.display {
 
     cubicCurveTo(controlX1: number, controlY1: number, controlX2: number, controlY2: number,
                  anchorX: number, anchorY: number): void {
-      //controlX1 = +controlX1; controlY1 = +controlY1; controlX2 = +controlX2; controlY2 = +controlY2; anchorX = +anchorX; anchorY = +anchorY;
+      controlX1 = controlX1 * 20|0;
+      controlY1 = controlY1 * 20|0;
+      controlX2 = controlX2 * 20|0;
+      controlY2 = controlY2 * 20|0;
+      anchorX = anchorX * 20|0;
+      anchorY = anchorY * 20|0;
 
       var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(PathCommand.CubicCurveTo);
-      graphicsData.writeInt(controlX1 * 20|0);
-      graphicsData.writeInt(controlY1 * 20|0);
-      graphicsData.writeInt(controlX2 * 20|0);
-      graphicsData.writeInt(controlY2 * 20|0);
-      graphicsData.writeInt(anchorX * 20|0);
-      graphicsData.writeInt(anchorY * 20|0);
+      graphicsData.writeUnsignedByte(PathCommand.CurveTo);
+      graphicsData.writeUnsignedInt(controlX1);
+      graphicsData.writeUnsignedInt(controlY1);
+      graphicsData.writeUnsignedInt(controlX2);
+      graphicsData.writeUnsignedInt(controlY2);
+      graphicsData.writeUnsignedInt(anchorX);
+      graphicsData.writeUnsignedInt(anchorY);
+
+      // FIXME: this isn't correct at all ...
+      this._extendBoundsByPoint(controlX1, controlY1, 0);
+      this._extendBoundsByPoint(controlX2, controlY2, 0);
+      this._extendBoundsByPoint(anchorX, anchorY, 0);
+
       this._invalidateParent();
     }
 
