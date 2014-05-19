@@ -84,9 +84,6 @@ module Shumway.AVM2.AS.flash.display {
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.OPEN));
               loaderInfo.dispatchEvent(new events.ProgressEvent(events.ProgressEvent.PROGRESS,
                                                                 false, false, 0, bytesTotal));
-              if (instance._content) {
-                instance.addChildAtDepth(instance._content, 0);
-              }
               instance._loadStatus = LoadStatus.Opened;
             } else {
               break;
@@ -105,8 +102,7 @@ module Shumway.AVM2.AS.flash.display {
                                                                 false, false, bytesLoaded,
                                                                 bytesTotal));
               loaderInfo.dispatchEvent(events.Event.getInstance(events.Event.COMPLETE));
-              queue.shift();
-              i--;
+              queue.splice(i--, 0);
             }
             break;
         }
@@ -375,6 +371,7 @@ module Shumway.AVM2.AS.flash.display {
 
         root._loaderInfo = loaderInfo;
         this._content = root;
+        this.addChildAtDepth(this._content, 0);
       }
 
       if (MovieClip.isType(root)) {
@@ -428,6 +425,7 @@ module Shumway.AVM2.AS.flash.display {
     private _commitImage(data: any): void {
       var b = new BitmapData(data.width, data.height);
       this._content = new Bitmap(b);
+      this.addChildAtDepth(this._content, 0);
 
       var loaderInfo = this._contentLoaderInfo;
       loaderInfo._width = data.width;
