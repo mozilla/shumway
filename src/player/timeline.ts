@@ -284,7 +284,10 @@ module Shumway.Timeline {
     }
 
     static createFromData(data: any): SoundSymbol {
-      var symbol = new SpriteSymbol(data.id);
+      var symbol = new SoundSymbol(data.id);
+      return symbol;
+    }
+  }
       return symbol;
     }
   }
