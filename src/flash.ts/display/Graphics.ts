@@ -430,8 +430,8 @@ module Shumway.AVM2.AS.flash.display {
 
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(PathCommand.MoveTo);
-      graphicsData.writeUnsignedInt(x);
-      graphicsData.writeUnsignedInt(y);
+      graphicsData.writeInt(x);
+      graphicsData.writeInt(y);
 
       this._extendBoundsByPoint(x, y, 0);
 
@@ -444,8 +444,8 @@ module Shumway.AVM2.AS.flash.display {
 
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(PathCommand.LineTo);
-      graphicsData.writeUnsignedInt(x);
-      graphicsData.writeUnsignedInt(y);
+      graphicsData.writeInt(x);
+      graphicsData.writeInt(y);
 
       this._extendBoundsByPoint(x, y, 0);
 
@@ -460,10 +460,10 @@ module Shumway.AVM2.AS.flash.display {
 
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(PathCommand.CurveTo);
-      graphicsData.writeUnsignedInt(controlX);
-      graphicsData.writeUnsignedInt(controlY);
-      graphicsData.writeUnsignedInt(anchorX);
-      graphicsData.writeUnsignedInt(anchorY);
+      graphicsData.writeInt(controlX);
+      graphicsData.writeInt(controlY);
+      graphicsData.writeInt(anchorX);
+      graphicsData.writeInt(anchorY);
 
       // FIXME: this isn't correct at all ...
       this._extendBoundsByPoint(controlX, controlY, 0);
@@ -478,12 +478,12 @@ module Shumway.AVM2.AS.flash.display {
 
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(PathCommand.CubicCurveTo);
-      graphicsData.writeUnsignedInt(controlX1 * 20|0);
-      graphicsData.writeUnsignedInt(controlY1 * 20|0);
-      graphicsData.writeUnsignedInt(controlX2 * 20|0);
-      graphicsData.writeUnsignedInt(controlY2 * 20|0);
-      graphicsData.writeUnsignedInt(anchorX * 20|0);
-      graphicsData.writeUnsignedInt(anchorY * 20|0);
+      graphicsData.writeInt(controlX1 * 20|0);
+      graphicsData.writeInt(controlY1 * 20|0);
+      graphicsData.writeInt(controlX2 * 20|0);
+      graphicsData.writeInt(controlY2 * 20|0);
+      graphicsData.writeInt(anchorX * 20|0);
+      graphicsData.writeInt(anchorY * 20|0);
       this._invalidateParent();
     }
 

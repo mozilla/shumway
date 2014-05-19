@@ -107,8 +107,8 @@
     g.moveTo(100, 50);
     var bytes = cloneData(g.getGraphicsData());
     eq(bytes.readUnsignedByte(), PathCommand.MoveTo, "command is stored");
-    eq(bytes.readUnsignedInt(), 100 * 20, "x is stored correctly");
-    eq(bytes.readUnsignedInt(), 50 * 20, "y is stored correctly");
+    eq(bytes.readInt(), 100 * 20, "x is stored correctly");
+    eq(bytes.readInt(), 50 * 20, "y is stored correctly");
     eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
   }
 
@@ -117,8 +117,8 @@
     g.lineTo(100, 50);
     var bytes = cloneData(g.getGraphicsData());
     eq(bytes.readUnsignedByte(), PathCommand.LineTo, "command is stored");
-    eq(bytes.readUnsignedInt(), 100 * 20, "x is stored correctly");
-    eq(bytes.readUnsignedInt(), 50 * 20, "y is stored correctly");
+    eq(bytes.readInt(), 100 * 20, "x is stored correctly");
+    eq(bytes.readInt(), 50 * 20, "y is stored correctly");
     eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
   }
 
@@ -127,10 +127,10 @@
     g.curveTo(100, 50, 0, 100);
     var bytes = cloneData(g.getGraphicsData());
     eq(bytes.readUnsignedByte(), PathCommand.CurveTo, "command is stored");
-    eq(bytes.readUnsignedInt(), 100 * 20, "x is stored correctly");
-    eq(bytes.readUnsignedInt(), 50 * 20, "y is stored correctly");
-    eq(bytes.readUnsignedInt(), 0 * 20, "x is stored correctly");
-    eq(bytes.readUnsignedInt(), 100 * 20, "y is stored correctly");
+    eq(bytes.readInt(), 100 * 20, "x is stored correctly");
+    eq(bytes.readInt(), 50 * 20, "y is stored correctly");
+    eq(bytes.readInt(), 0 * 20, "x is stored correctly");
+    eq(bytes.readInt(), 100 * 20, "y is stored correctly");
     eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
   }
 
