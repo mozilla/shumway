@@ -184,6 +184,10 @@ module Shumway.Remoting.GFX {
             context.lineWidth = 2;
             context.fillStyle = this.fillStyle;
             context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+            context.textBaseline = "top";
+            context.fillStyle = "white";
+            context.fillText(String(id), bounds.x, bounds.y);
+
             context.restore();
           });
           renderable.isInvalid = false;
