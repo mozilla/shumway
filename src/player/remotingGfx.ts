@@ -176,15 +176,15 @@ module Shumway.Remoting.GFX {
         var shape = (<Shape>frame);
         if (!shape.source) {
           var renderable = new Renderable(bounds, function (context) {
-            if (!this.fillStyle) {
-              this.fillStyle = Shumway.ColorStyle.randomStyle();
-            }
-            context.save();
-            context.beginPath();
-            context.lineWidth = 2;
-            context.fillStyle = this.fillStyle;
-            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-            context.restore();
+//            if (!this.fillStyle) {
+//              this.fillStyle = Shumway.ColorStyle.randomStyle();
+//            }
+//            context.save();
+//            context.beginPath();
+//            context.lineWidth = 2;
+//            context.fillStyle = this.fillStyle;
+//            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+//            context.restore();
           });
           renderable.isInvalid = false;
           renderable.isScalable = true;

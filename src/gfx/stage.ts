@@ -8,7 +8,9 @@ module Shumway.GFX {
   import TileCache = Geometry.TileCache;
   import Tile = Geometry.Tile;
   import OBB = Geometry.OBB;
+  import PathCommand = Geometry.PathCommand;
   import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
+  import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
 
   export enum BlendMode {
     Normal     = 1,
@@ -199,21 +201,69 @@ module Shumway.GFX {
       this.source = new Renderable(bounds, this._render.bind(this));
     }
 
+    private static LINE_CAP_STYLES = ['round', 'butt', 'square'];
+    private static LINE_JOINT_STYLES = ['round', 'bevel', 'miter'];
+
     private _render(context: CanvasRenderingContext2D): void {
-      if (!this.fillStyle) {
-        this.fillStyle = ColorStyle.randomStyle();
-      }
-      var bounds = this.getBounds();
       context.save();
-      context.beginPath();
-      context.lineWidth = 2;
-      context.fillStyle = this.fillStyle;
-      context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+      var data = this.data;
+      var fillActive = false;
+      var strokeActive = false;
+      (<ByteArray>data).position = 0;
+      // Description of serialization format can be found in flash.display.Graphics.
+      while (data.bytesAvailable > 0) {
+        var command = data.readUnsignedByte();
+        switch (command) {
+          case PathCommand.MoveTo:
+            context.moveTo(data.readUnsignedInt() / 20, data.readUnsignedInt() / 20);
+            break;
+          case PathCommand.LineTo:
+            context.lineTo(data.readUnsignedInt() / 20, data.readUnsignedInt() / 20);
+            break;
+          case PathCommand.BeginSolidFill:
+            if (fillActive) {
+              context.fill();
+            }
+            fillActive = true;
+            var color = data.readUnsignedInt();
+            context.fillStyle = ColorUtilities.rgbaToCSSStyle(color);
+            break;
+          case PathCommand.EndFill:
+            if (fillActive) {
+              context.fill();
+            }
+            fillActive = false;
+            context.fillStyle = null;
+            break;
+          case PathCommand.LineStyleSolid:
+            if (strokeActive) {
+              context.stroke();
+            }
+            strokeActive = true;
+            var thickness = data.readUnsignedByte();
+            var color = data.readUnsignedInt();
+            context.lineWidth = thickness;
+            context.strokeStyle = ColorUtilities.rgbaToCSSStyle(color);
+            data.readBoolean(); // Skip pixel hinting.
+            data.readByte(); // Skip scaleMode.
+            context.lineCap = Shape.LINE_CAP_STYLES[data.readByte()];
+            context.lineJoin = Shape.LINE_JOINT_STYLES[data.readByte()];
+            context.miterLimit = data.readByte();
+            break;
+        }
+        if (fillActive) {
+          context.fill();
+        }
+        if (strokeActive) {
+          context.stroke();
+        }
+      }
       context.restore();
-      this.source.isInvalid = false;
-      this.source.isScalable = true;
-      this.source.isTileable = true;
-      this.source.isDynamic = false;
+      var renderable = this.source;
+      renderable.isInvalid = false;
+      renderable.isScalable = true;
+      renderable.isTileable = true;
+      renderable.isDynamic = false;
     }
   }
 
