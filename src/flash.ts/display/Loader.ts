@@ -260,11 +260,8 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.SpriteSymbol.createFromData(data, loaderInfo);
           break;
         case 'font':
-          var font = flash.text.Font.createEmbeddedFont(
-            data.name, data.bold, data.italic
-          );
-          //flash.text.Font.registerFont(font);
-          return;
+          symbol = Timeline.FontSymbol.createFromData(data);
+          break;
         case 'sound':
           symbol = Timeline.SoundSymbol.createFromData(data);
           break;
