@@ -82,7 +82,12 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Display object has invalid bounds.
      */
-    InvalidBounds                             = 0x0004,
+    InvalidBounds                             = 0x0002,
+
+    /**
+     * Display object has invalid rect.
+     */
+    InvalidRect                               = 0x0004,
 
     /**
      * Display object has an invalid matrix because one of its local properties: x, y, scaleX, ... has been mutated.
@@ -233,6 +238,7 @@ module Shumway.AVM2.AS.flash.display {
       self._id = DisplayObject._syncID++;
       self._displayObjectFlags = DisplayObjectFlags.Visible                            |
                                  DisplayObjectFlags.InvalidBounds                      |
+                                 DisplayObjectFlags.InvalidRect                        |
                                  DisplayObjectFlags.InvalidMatrix                      |
                                  DisplayObjectFlags.InvalidConcatenatedMatrix          |
                                  DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
@@ -333,20 +339,22 @@ module Shumway.AVM2.AS.flash.display {
       this._setFlags(DisplayObjectFlags.Constructed);
     }
 
-    _setBoundsFromWidthAndHeight(width: number, height: number) {
+    _setBoundsAndRectFromWidthAndHeight(width: number, height: number) {
       this._rect.setTo(0, 0, width, height);
       this._bounds.setTo(0, 0, width, height);
-      this._removeFlags(DisplayObjectFlags.InvalidBounds);
+      this._removeFlags(DisplayObjectFlags.InvalidBounds | DisplayObjectFlags.InvalidRect);
+      this._invalidateParentBoundsAndRect();
     }
 
-    _setBoundsFromSymbol(symbol: Timeline.DisplaySymbol) {
+    _setBoundsAndRectFromSymbol(symbol: Timeline.DisplaySymbol) {
       if (symbol.bounds) {
         this._bounds.copyFrom(symbol.bounds);
       }
       if (symbol.rect) {
         this._rect.copyFrom(symbol.rect);
       }
-      this._removeFlags(DisplayObjectFlags.InvalidBounds);
+      this._removeFlags(DisplayObjectFlags.InvalidBounds | DisplayObjectFlags.InvalidRect);
+      this._invalidateParentBoundsAndRect();
     }
 
     _setFlags(flags: DisplayObjectFlags) {
@@ -650,13 +658,19 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Invalidates the bounds of this display object along with all of its ancestors.
+     * Invalidates the bounds and rect of this display object along with all of its ancestors.
      */
-    _invalidateBounds(): void {
+    _invalidateBoundsAndRect(): void {
       /* TODO: We should only propagate this bit if the bounds are actually changed. We can do the
        * bounds computation eagerly if the number of children is low. If there are no changes in the
        * bounds we don't need to propagate the bit. */
-      this._propagateFlags(DisplayObjectFlags.InvalidBounds, Direction.Upward);
+      this._propagateFlags(DisplayObjectFlags.InvalidBounds | DisplayObjectFlags.InvalidRect, Direction.Upward);
+    }
+
+    _invalidateParentBoundsAndRect(): void {
+      if (this._parent) {
+        this._parent._invalidateBoundsAndRect();
+      }
     }
 
     /**
@@ -664,8 +678,9 @@ module Shumway.AVM2.AS.flash.display {
      */
     _getContentBounds(includeStrokes: boolean = true): flash.geom.Rectangle {
       // Tobias: What about filters?
+      var invalidFlag = includeStrokes ? DisplayObjectFlags.InvalidBounds : DisplayObjectFlags.InvalidRect;
       var rectangle = includeStrokes ? this._bounds : this._rect;
-      if (this._hasFlags(DisplayObjectFlags.InvalidBounds)) {
+      if (this._hasFlags(invalidFlag)) {
         rectangle.setEmpty();
         var graphics: Graphics = this._getGraphics();
         if (graphics) {
@@ -678,7 +693,7 @@ module Shumway.AVM2.AS.flash.display {
             rectangle.unionWith(children[i]._getTransformedBounds(this, includeStrokes));
           }
         }
-        this._removeFlags(DisplayObjectFlags.InvalidBounds);
+        this._removeFlags(invalidFlag);
       }
       return rectangle;
     }
@@ -741,9 +756,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     _invalidatePosition() {
       this._propagateFlags(DisplayObjectFlags.InvalidConcatenatedMatrix | DisplayObjectFlags.InvalidInvertedConcatenatedMatrix, Direction.Downward);
-      if (this._parent) {
-        this._parent._invalidateBounds();
-      }
+      this._invalidateParentBoundsAndRect();
     }
 
     _dirty() {
@@ -1244,7 +1257,7 @@ module Shumway.AVM2.AS.flash.display {
           flash.display.MorphShape.isType(this))
       {
         (<any>this)._graphics = graphics;
-        this._invalidateBounds();
+        this._invalidateBoundsAndRect();
         return;
       }
       unexpected("Cannot set graphics on this type of display object.");
@@ -1260,8 +1273,8 @@ module Shumway.AVM2.AS.flash.display {
     hitTestObject(other: DisplayObject): boolean {
       release || assert (other && DisplayObject.isType(other));
       var a = this, b = other;
-      var aBounds = a._getContentBounds(false);
-      var bBounds = b._getContentBounds(false);
+      var aBounds = a._getContentBounds(false).clone();
+      var bBounds = b._getContentBounds(false).clone();
       a._getConcatenatedMatrix().transformRectAABB(aBounds);
       b._getConcatenatedMatrix().transformRectAABB(bBounds);
       return aBounds.intersects(bBounds);

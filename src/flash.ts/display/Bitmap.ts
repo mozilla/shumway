@@ -31,7 +31,7 @@ module Shumway.AVM2.AS.flash.display {
 
       if (symbol) {
         self._bitmapData = symbol.bitmapData;
-        self._setBoundsFromWidthAndHeight(symbol.width * 20, symbol.height * 20);
+        self._setBoundsAndRectFromWidthAndHeight(symbol.width * 20, symbol.height * 20);
       }
     };
     
@@ -82,11 +82,9 @@ module Shumway.AVM2.AS.flash.display {
     set bitmapData(value: flash.display.BitmapData) {
       this._bitmapData = value;
       if (value) {
-        this._setBoundsFromWidthAndHeight(value.width * 20, value.height * 20);
+        this._setBoundsAndRectFromWidthAndHeight(value.width * 20, value.height * 20);
       }
-      if (this._parent) {
-        this._parent._invalidateBounds();
-      }
+      this._invalidateParentBoundsAndRect();
       this._invalidatePaint();
     }
   }

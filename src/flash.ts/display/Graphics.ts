@@ -95,7 +95,7 @@ module Shumway.AVM2.AS.flash.display {
 
     _invalidateParent() {
       assert (this._parent, "A parent should already be linked.");
-      this._parent._invalidateBounds();
+      this._parent._invalidateBoundsAndRect();
     }
 
     _getContentBounds(includeStrokes: boolean = true): geom.Rectangle {

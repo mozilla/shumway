@@ -26,7 +26,7 @@ module Shumway.AVM2.AS.flash.text {
     static initializer: any = function (symbol: Shumway.Timeline.TextSymbol) {
       var self: StaticText = this;
       if (symbol) {
-        self._setBoundsFromSymbol(symbol);
+        self._setBoundsAndRectFromSymbol(symbol);
       }
     };
 

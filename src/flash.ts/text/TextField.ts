@@ -138,7 +138,7 @@ module Shumway.AVM2.AS.flash.text {
     }
 
     private invalidateDimensions() {
-      this._invalidateBounds();
+      this._invalidateBoundsAndRect();
       this._invalidatePaint();
       this._dimensionsValid = false;
     }
