@@ -1700,7 +1700,7 @@ module Shumway {
       result.a = m[4] ? parseFloat(m[4]) / 255 : 1;
       return Color.colorCache[color] = result;
     }
-  }
+    }
 
   export module ColorUtilities {
     export function argbToRgba(color: number): number {
@@ -1711,8 +1711,13 @@ module Shumway {
       return ((color >> 8) | (color << 24)) >>> 0;
     }
 
-    export function componentsToRgb(components: any): number {
+    export function componentsToRgb(components: {red: number; green: number; blue: number}): number {
       return ((components.red << 16) | (components.green << 8) | components.blue) >>> 0;
+    }
+
+    export function rgbaToCSSStyle(color: number): string {
+      return 'rgba(' + (color >> 24 & 0xff) + ',' + (color >> 16 & 0xff) + ',' +
+                  (color >> 8 & 0xff) + ',' + ((color & 0xff) / 0xff) + ')';
     }
   }
 
