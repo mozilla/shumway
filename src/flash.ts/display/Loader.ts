@@ -270,6 +270,7 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.BinarySymbol.createFromData(data);
           break;
       }
+      assert (symbol, "Unknown symbol type.");
       loaderInfo.registerSymbol(symbol);
     }
 
