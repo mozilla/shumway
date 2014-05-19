@@ -288,6 +288,14 @@ module Shumway.Timeline {
       return symbol;
     }
   }
+
+  export class BinarySymbol extends Symbol {
+    constructor(id: number) {
+      super(id, flash.utils.ByteArray);
+    }
+
+    static createFromData(data: any): BinarySymbol {
+      var symbol = new BinarySymbol(data.id);
       return symbol;
     }
   }

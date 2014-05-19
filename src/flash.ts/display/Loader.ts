@@ -266,8 +266,9 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.SoundSymbol.createFromData(data);
           break;
         case 'binary':
-          // TODO
-          return;
+          debugger;
+          symbol = Timeline.BinarySymbol.createFromData(data);
+          break;
       }
       loaderInfo.registerSymbol(symbol);
     }
