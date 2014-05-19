@@ -95,6 +95,7 @@ module Shumway.AVM2.AS.flash.ui {
       }
 
       var globalPoint = data.point;
+      Mouse.updateCurrentPosition(globalPoint);
       var currentTarget = this.currentTarget;
 
       if (globalPoint.x < 0 || globalPoint.x > stage.stageWidth ||
@@ -197,9 +198,12 @@ module Shumway.AVM2.AS.flash.ui {
   }
 
   export class Mouse extends ASNative {
-    
+
+
     // Called whenever the class is initialized.
-    static classInitializer: any = null;
+    static classInitializer: any = function () {
+      this._currentPosition = new flash.geom.Point();
+    };
     
     // Called whenever an instance of the class is initialized.
     static initializer: any = null;
@@ -254,14 +258,13 @@ module Shumway.AVM2.AS.flash.ui {
       notImplemented("public flash.ui.Mouse::static unregisterCursor"); return;
     }
 
-    private static _currentPosition: flash.geom.Point;
+    static _currentPosition: flash.geom.Point;
 
-    public static set currentPosition(value: flash.geom.Point) {
-      this._currentPosition = value;
-    }
-
-    public static get currentPosition(): flash.geom.Point {
-      return this._currentPosition;
+    /**
+     * Remembers the current mouse position.
+     */
+    public static updateCurrentPosition(value: flash.geom.Point) {
+      this._currentPosition.copyFrom(value);
     }
   }
 }

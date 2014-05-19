@@ -1379,20 +1379,19 @@ module Shumway.AVM2.AS.flash.display {
       return ancestor;
     }
 
+    get mouseX(): number {
+      return this.globalToLocal(flash.ui.Mouse._currentPosition).x;
+    }
+
+    get mouseY(): number {
+      return this.globalToLocal(flash.ui.Mouse._currentPosition).y;
+    }
+
     // ---------------------------------------------------------------------------------------------------------------------------------------------
     // -- Stuff below we still need to port.                                                                                                      --
     // ---------------------------------------------------------------------------------------------------------------------------------------------
 
     /*
-
-    get mouseX(): number {
-      return this._mouseX / 20;
-    }
-    get mouseY(): number {
-      return this._mouseY / 20;
-    }
-
-
     set blendShader(value: flash.display.Shader) {
       value = value;
       notImplemented("public DisplayObject::set blendShader"); return;
