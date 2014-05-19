@@ -34,8 +34,9 @@
   unitTests.push(beginFill);
   unitTests.push(lineStyle_defaults);
   unitTests.push(lineStyle_allArgs);
-  unitTests.push(lineTo);
   unitTests.push(moveTo);
+  unitTests.push(lineTo);
+  unitTests.push(curveTo);
   unitTests.push(bounds);
 
   function basics() {
@@ -46,9 +47,11 @@
   function clear() {
     var g = new Graphics();
     g.lineStyle(1);
+    g.lineTo(100, 100);
     neq(g.getGraphicsData().length, 0, "Graphics#lineStyle modifies instance's data");
     g.clear();
     eq(g.getGraphicsData().length, 0, "Graphics#clear empties the instance's data");
+    structEq(g._getContentBounds(), {x: 0, width: 0, y: 0, height: 0}, "clear resets bounds");
   }
 
   function beginFill() {
@@ -62,6 +65,7 @@
     var bytes = cloneData(g.getGraphicsData());
     bytes.readUnsignedByte();
     eq(bytes.readUnsignedInt(), 0xaabbcc80, "alpha is stored correctly");
+    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
   }
 
   function lineStyle_defaults() {
@@ -78,6 +82,7 @@
     eq(JointStyle.fromNumber(bytes.readUnsignedByte()), JointStyle.ROUND,
        "defaults to round joints");
     eq(bytes.readUnsignedByte(), 3, "defaults to miterLimit of 3");
+    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
   }
 
   function lineStyle_allArgs() {
@@ -94,15 +99,7 @@
     eq(CapsStyle.fromNumber(bytes.readUnsignedByte()), CapsStyle.SQUARE, "capsStyle is stored");
     eq(JointStyle.fromNumber(bytes.readUnsignedByte()), JointStyle.BEVEL, "jointsStyle is stored");
     eq(bytes.readUnsignedByte(), 10, "miterLimit is stored");
-  }
-
-  function lineTo() {
-    var g = new Graphics();
-    g.lineTo(100, 50);
-    var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), PathCommand.LineTo, "command is stored");
-    eq(bytes.readUnsignedInt(), 100 * 20, "x is stored correctly");
-    eq(bytes.readUnsignedInt(), 50 * 20, "y is stored correctly");
+    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
   }
 
   function moveTo() {
@@ -112,16 +109,43 @@
     eq(bytes.readUnsignedByte(), PathCommand.MoveTo, "command is stored");
     eq(bytes.readUnsignedInt(), 100 * 20, "x is stored correctly");
     eq(bytes.readUnsignedInt(), 50 * 20, "y is stored correctly");
+    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+  }
+
+  function lineTo() {
+    var g = new Graphics();
+    g.lineTo(100, 50);
+    var bytes = cloneData(g.getGraphicsData());
+    eq(bytes.readUnsignedByte(), PathCommand.LineTo, "command is stored");
+    eq(bytes.readUnsignedInt(), 100 * 20, "x is stored correctly");
+    eq(bytes.readUnsignedInt(), 50 * 20, "y is stored correctly");
+    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+  }
+
+  function curveTo() {
+    var g = new Graphics();
+    g.curveTo(100, 50, 0, 100);
+    var bytes = cloneData(g.getGraphicsData());
+    eq(bytes.readUnsignedByte(), PathCommand.CurveTo, "command is stored");
+    eq(bytes.readUnsignedInt(), 100 * 20, "x is stored correctly");
+    eq(bytes.readUnsignedInt(), 50 * 20, "y is stored correctly");
+    eq(bytes.readUnsignedInt(), 0 * 20, "x is stored correctly");
+    eq(bytes.readUnsignedInt(), 100 * 20, "y is stored correctly");
+    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
   }
 
   // Note: these tests aren't really valid, but will do as a first approximation.
   // (empty moves and stroke- and fill-less lines mustn't extend bounds.)
   function bounds() {
     var g = new Graphics();
-    g.lineTo(100, 50);
-    structEq(g._getContentBounds(), {x: 0, width: 2000, y: 0, height: 1000}, "line extends bounds");
     g.moveTo(150, 50);
-    structEq(g._getContentBounds(), {x: 0, width: 3000, y: 0, height: 1000}, "move extends bounds");
+    structEq(g._getContentBounds(), {x: 0, y: 0, width: 3000, height: 1000}, "move extends bounds");
+    g.clear();
+    g.lineTo(100, 50);
+    structEq(g._getContentBounds(), {x: 0, y: 0, width: 2000, height: 1000}, "line extends bounds");
+    g.clear();
+    g.curveTo(100, 50, 0, 100);
+    structEq(g._getContentBounds(), {x: 0, y: 0, width: 2000, height: 2000}, "curve extends bounds");
   }
 
   function cloneData(data) {

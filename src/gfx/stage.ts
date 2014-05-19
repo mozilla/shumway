@@ -220,6 +220,10 @@ module Shumway.GFX {
           case PathCommand.LineTo:
             context.lineTo(data.readUnsignedInt() / 20, data.readUnsignedInt() / 20);
             break;
+          case PathCommand.CurveTo:
+            context.quadraticCurveTo(data.readUnsignedInt() / 20, data.readUnsignedInt() / 20,
+                                     data.readUnsignedInt() / 20, data.readUnsignedInt() / 20);
+            break;
           case PathCommand.BeginSolidFill:
             if (fillActive) {
               context.fill();

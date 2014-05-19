@@ -19,26 +19,33 @@
  * (canonical, update this instead of anything else!)
  *
  * All entries begin with a byte representing the command:
- * command: byte [1-11] (i.e. one of the PATH_COMMAND_* constants)
+ * command: byte [1-11] (i.e. one of the PathCommand enum values)
  *
  * All entries always contain all fields, default values aren't omitted.
  *
  * moveTo:
- * byte command:  PATH_COMMAND_MOVE_TO
+ * byte command:  PathCommand.MoveTo
  * uint x:        target x coordinate, in twips
  * uint y:        target y coordinate, in twips
  *
  * lineTo:
- * byte command:  PATH_COMMAND_LINE_TO
+ * byte command:  PathCommand.LineTo
  * uint x:        target x coordinate, in twips
  * uint y:        target y coordinate, in twips
  *
+ * curveTo:
+ * byte command:  PathCommand.CurveTo
+ * uint controlX: control point x coordinate, in twips
+ * uint controlY: control point y coordinate, in twips
+ * uint anchorX:  target x coordinate, in twips
+ * uint anchorY:  target y coordinate, in twips
+ *
  * beginFill:
- * byte command:  PATH_COMMAND_BEGIN_SOLID_FILL
+ * byte command:  PathCommand.BeginSolidFill
  * uint color:    [RGBA color]
  *
  * lineStyle:
- * byte command:      PATH_COMMAND_LINE_STYLE_SOLID
+ * byte command:      PathCommand.LineStyleSolid
  * byte thickness:    [0-0xff]
  * uint color:        [RGBA color]
  * byte pixelHinting: [0,1] (true,false)
@@ -151,6 +158,10 @@ module Shumway.AVM2.AS.flash.display {
 
     clear(): void {
       this._graphicsData.length = 0;
+      this._innerBounds.x = this._innerBounds.y = this._innerBounds.width =
+                                                  this._innerBounds.height = 0;
+      this._outerBounds.x = this._outerBounds.y = this._outerBounds.width =
+                                                  this._outerBounds.height = 0;
       this._invalidateParent();
     }
 
@@ -442,14 +453,22 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     curveTo(controlX: number, controlY: number, anchorX: number, anchorY: number): void {
-      //controlX = +controlX; controlY = +controlY; anchorX = +anchorX; anchorY = +anchorY;
+      controlX = controlX * 20|0;
+      controlY = controlY * 20|0;
+      anchorX = anchorX * 20|0;
+      anchorY = anchorY * 20|0;
 
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(PathCommand.CurveTo);
-      graphicsData.writeUnsignedInt(controlX * 20|0);
-      graphicsData.writeUnsignedInt(controlY * 20|0);
-      graphicsData.writeUnsignedInt(anchorX * 20|0);
-      graphicsData.writeUnsignedInt(anchorY * 20|0);
+      graphicsData.writeUnsignedInt(controlX);
+      graphicsData.writeUnsignedInt(controlY);
+      graphicsData.writeUnsignedInt(anchorX);
+      graphicsData.writeUnsignedInt(anchorY);
+
+      // FIXME: this isn't correct at all ...
+      this._extendBoundsByPoint(controlX, controlY, 0);
+      this._extendBoundsByPoint(anchorX, anchorY, 0);
+
       this._invalidateParent();
     }
 
