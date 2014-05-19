@@ -95,7 +95,7 @@ module Shumway.AVM2.AS.flash.ui {
       }
 
       var globalPoint = data.point;
-      Mouse.updateCurrentPosition(globalPoint);
+      flash.ui.Mouse.updateCurrentPosition(globalPoint);
       var currentTarget = this.currentTarget;
 
       if (globalPoint.x < 0 || globalPoint.x > stage.stageWidth ||
