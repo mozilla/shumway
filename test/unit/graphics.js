@@ -35,6 +35,7 @@
   unitTests.push(lineStyle_allArgs);
   unitTests.push(lineTo);
   unitTests.push(moveTo);
+  unitTests.push(bounds);
 
   function basics() {
     var g = new Graphics();
@@ -110,6 +111,16 @@
     eq(bytes.readUnsignedByte(), Graphics.PATH_COMMAND_MOVE_TO, "command is stored");
     eq(bytes.readUnsignedInt(), 100 * 20, "x is stored correctly");
     eq(bytes.readUnsignedInt(), 50 * 20, "y is stored correctly");
+  }
+
+  // Note: these tests aren't really valid, but will do as a first approximation.
+  // (empty moves and stroke- and fill-less lines mustn't extend bounds.)
+  function bounds() {
+    var g = new Graphics();
+    g.lineTo(100, 50);
+    structEq(g._getContentBounds(), {x: 0, width: 2000, y: 0, height: 1000}, "line extends bounds");
+    g.moveTo(150, 50);
+    structEq(g._getContentBounds(), {x: 0, width: 3000, y: 0, height: 1000}, "move extends bounds");
   }
 
   function cloneData(data) {

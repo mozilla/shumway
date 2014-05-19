@@ -91,8 +91,8 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       this._id = DisplayObject._syncID++;
       this._graphicsData = new utils.ByteArray();
-      this._rect = new geom.Rectangle();
-      this._bounds = new geom.Rectangle();
+      this._innerBounds = new geom.Rectangle();
+      this._outerBounds = new geom.Rectangle();
       this._parent = null;
     }
 
@@ -109,12 +109,12 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Bounding box excluding strokes.
      */
-    _rect: geom.Rectangle;
+    _innerBounds: geom.Rectangle;
 
     /**
      * Bounding box including strokes.
      */
-    _bounds: geom.Rectangle;
+    _outerBounds: geom.Rectangle;
 
     /**
      * Back reference to the display object that references this graphics object. This is
@@ -136,9 +136,9 @@ module Shumway.AVM2.AS.flash.display {
 
     _getContentBounds(includeStrokes: boolean = true): geom.Rectangle {
       if (includeStrokes) {
-        return this._bounds;
+        return this._outerBounds;
       } else {
-        return this._rect;
+        return this._innerBounds;
       }
       notImplemented("public flash.display.Graphics::_getContentBounds");
       return new geom.Rectangle();
@@ -168,7 +168,7 @@ module Shumway.AVM2.AS.flash.display {
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
-      this.writeGradientStyle(this._graphicsData, Graphics.PATH_COMMAND_BEGIN_GRADIENT_FILL, type,
+      this._writeGradientStyle(this._graphicsData, Graphics.PATH_COMMAND_BEGIN_GRADIENT_FILL, type,
                               colors, alphas, ratios, matrix,
                               spreadMethod, interpolationMethod, focalPointRatio);
     }
@@ -246,7 +246,7 @@ module Shumway.AVM2.AS.flash.display {
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
-      this.writeGradientStyle(this._graphicsData, Graphics.PATH_COMMAND_LINE_STYLE_GRADIENT, type,
+      this._writeGradientStyle(this._graphicsData, Graphics.PATH_COMMAND_LINE_STYLE_GRADIENT, type,
                               colors, alphas, ratios, matrix,
                               spreadMethod, interpolationMethod, focalPointRatio);
     }
@@ -271,7 +271,7 @@ module Shumway.AVM2.AS.flash.display {
       this.lineTo(x, y + height);
       this.lineTo(x, y);
 
-      this._rect = this._bounds = new geom.Rectangle(x * 20 | 0, y * 20 | 0,
+      this._innerBounds = this._outerBounds = new geom.Rectangle(x * 20 | 0, y * 20 | 0,
                                                      width * 20 | 0, height * 20 | 0);
       this._invalidateParent();
     }
@@ -409,24 +409,30 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     moveTo(x: number, y: number): void {
-      x = +x;
-      y = +y;
+      x = x * 20|0;
+      y = y * 20|0;
 
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_MOVE_TO);
-      graphicsData.writeUnsignedInt(x * 20);
-      graphicsData.writeUnsignedInt(y * 20);
+      graphicsData.writeUnsignedInt(x);
+      graphicsData.writeUnsignedInt(y);
+
+      this._extendBoundsByPoint(x, y, 0);
+
       this._invalidateParent();
     }
 
     lineTo(x: number, y: number): void {
-      x = +x;
-      y = +y;
+      x = x * 20|0;
+      y = y * 20|0;
 
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_LINE_TO);
-      graphicsData.writeUnsignedInt(x * 20|0);
-      graphicsData.writeUnsignedInt(y * 20|0);
+      graphicsData.writeUnsignedInt(x);
+      graphicsData.writeUnsignedInt(y);
+
+      this._extendBoundsByPoint(x, y, 0);
+
       this._invalidateParent();
     }
 
@@ -501,7 +507,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     _containsPoint(point: flash.geom.Point, includeStrokes: boolean = false): boolean {
       // TODO: Implement this in a smart way.
-      return this._bounds.containsPoint(point);
+      return this._outerBounds.containsPoint(point);
 
 //      var paths = this._paths;
 //      for (var i = 0; i < paths.length; i++) {
@@ -529,7 +535,7 @@ module Shumway.AVM2.AS.flash.display {
      * once. The Parameter `pathCommand` is treated as the actual command to serialize, and must
      * be one of PATH_COMMAND_BEGIN_GRADIENT_FILL and PATH_COMMAND_LINE_STYLE_GRADIENT.
      */
-    private writeGradientStyle(output: flash.utils.ByteArray, pathCommand: number, type: string,
+    private _writeGradientStyle(output: flash.utils.ByteArray, pathCommand: number, type: string,
                                colors: any [], alphas: any [], ratios: any [],
                                matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                                interpolationMethod: string = "rgb",
@@ -620,6 +626,21 @@ module Shumway.AVM2.AS.flash.display {
       output.writeUnsignedByte(interpolation);
 
       output.writeFloat(clamp(+focalPointRatio, -1, 1));
+    }
+
+    private _extendBoundsByPoint(x: number, y: number, strokeWidth: number): void {
+      var bounds = this._innerBounds;
+      var xMin = bounds.x = Math.min(x, bounds.x);
+      bounds.width = Math.max(x - xMin, bounds.width);
+      var yMin = bounds.y = Math.min(y, bounds.y);
+      bounds.height = Math.max(y - yMin, bounds.height);
+
+      var halfStrokeWidth = strokeWidth / 2|0;
+      bounds = this._outerBounds;
+      var xMin = bounds.x = Math.min(x - halfStrokeWidth, bounds.x);
+      bounds.width = Math.max(x + halfStrokeWidth - xMin, bounds.width);
+      var yMin = bounds.y = Math.min(y - halfStrokeWidth, bounds.y);
+      bounds.height = Math.max(y + halfStrokeWidth - yMin, bounds.height);
     }
   }
 }

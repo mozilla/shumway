@@ -132,7 +132,7 @@ module Shumway.Remoting.GFX {
           gm = input.readFloat();
           bm = input.readFloat();
           am = input.readFloat();
-          ro = input.readInt()
+          ro = input.readInt();
           go = input.readInt();
           bo = input.readInt();
           ao = input.readInt();

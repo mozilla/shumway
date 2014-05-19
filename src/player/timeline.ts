@@ -64,8 +64,8 @@ module Shumway.Timeline {
 
       // TODO: Remove this hack once we can get bounds of the graphics object.
       if (data.type === "shape") {
-        symbol.graphics._bounds.copyFrom(symbol.bounds);
-        symbol.graphics._rect.copyFrom(symbol.rect);
+        symbol.graphics._getContentBounds(true).copyFrom(symbol.bounds);
+        symbol.graphics._getContentBounds(false).copyFrom(symbol.rect);
       }
 
       return symbol;
