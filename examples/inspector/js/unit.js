@@ -38,22 +38,50 @@ function eqArray(a, b, test) {
   if (a && b == undefined) {
     return fail("FAIL" + test + " Null Array: b" + failedLocation());
   }
-  if (a && b) {
-    if (a.length !== b.length) {
-      return fail("FAIL" + test + " Array Length Mismatch, got " + a.length + ", expected " +
-                  b.length + failedLocation());
-    }
-    for (var i = 0; i < a.length; i++) {
-      if (a[i] !== b[i]) {
-        if (!(typeof a[i] == "number" && typeof b[i] == "number" && isNaN(a[i]) && isNaN(b[i]))) {
-          return fail("FAIL" + test + " Array Element " + i + ": got " + a[i] + ", expected " +
-                      b[i] + failedLocation());
-        }
+  if (a.length !== b.length) {
+    return fail("FAIL" + test + " Array Length Mismatch, got " + a.length + ", expected " +
+                b.length + failedLocation());
+  }
+  for (var i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      if (!(typeof a[i] == "number" && typeof b[i] == "number" && isNaN(a[i]) && isNaN(b[i]))) {
+        return fail("FAIL" + test + " Array Element " + i + ": got " + a[i] + ", expected " +
+                    b[i] + failedLocation());
       }
     }
   }
   console.info("PASS" + test);
   testNumber ++;
+}
+
+function structEq(a, b, test) {
+  test = description(test);
+  if (a == undefined && b) {
+    return fail("FAIL" + test + " Expected neither or both objects to be null/undefined, " +
+                "but only `a` was" + failedLocation());
+  }
+  if (a && b == undefined) {
+    return fail("FAIL" + test + " Expected neither or both objects to be null/undefined, " +
+                "but only `b` was" + failedLocation());
+  }
+  var aKeys = Object.keys(a);
+  var bKeys = Object.keys(b);
+  for (var i = 0; i < aKeys.length; i++) {
+    var key = aKeys[i];
+    if (a[key] !== b[key]) {
+      return fail("FAIL" + test + " properties differ. a." + key + " = " + a[key] +
+                  ", b." + key + " = " + b[key] + failedLocation());
+    }
+  }
+  for (i = 0; i < bKeys.length; i++) {
+    key = bKeys[i];
+    if (a[key] !== b[key]) {
+      return fail("FAIL" + test + " properties differ. a." + key + " = " + a[key] +
+                  ", b." + key + " = " + b[key] + failedLocation());
+    }
+  }
+  console.info("PASS" + test);
+  testNumber++;
 }
 
 function check(condition, test) {
