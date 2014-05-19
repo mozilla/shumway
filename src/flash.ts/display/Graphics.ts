@@ -67,25 +67,30 @@ module Shumway.AVM2.AS.flash.display {
   import geom = flash.geom;
   import utils = flash.utils;
 
+  /**
+   * A copy of this exists in gfx.Geometry. Keep in sync!
+   */
+  export enum PathCommand {
+    BeginSolidFill = 1,
+    BeginGradientFill,
+    BeginBitmapFill,
+    EndFill,
+    LineStyleSolid,
+    LineStyleGradient,
+    LineStyleBitmap,
+    MoveTo,
+    LineTo,
+    CurveTo,
+    CubicCurveTo,
+  }
+
   export class Graphics extends ASNative {
 
     static classInitializer: any = null;
     static initializer: any = null;
-    
+
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
-
-    static PATH_COMMAND_BEGIN_SOLID_FILL = 1;
-    static PATH_COMMAND_BEGIN_GRADIENT_FILL = 2;
-    static PATH_COMMAND_BEGIN_BITMAP_FILL = 3;
-    static PATH_COMMAND_END_FILL = 4;
-    static PATH_COMMAND_LINE_STYLE_SOLID = 5;
-    static PATH_COMMAND_LINE_STYLE_GRADIENT = 6;
-    static PATH_COMMAND_LINE_STYLE_BITMAP = 7;
-    static PATH_COMMAND_MOVE_TO = 8;
-    static PATH_COMMAND_LINE_TO = 9;
-    static PATH_COMMAND_CURVE_TO = 10;
-    static PATH_COMMAND_CUBIC_CURVE_TO = 11;
 
     constructor () {
       false && super();
@@ -160,7 +165,7 @@ module Shumway.AVM2.AS.flash.display {
     beginFill(color: number /*uint*/, alpha: number = 1): void {
       color = color >>> 0;
       alpha = Math.round(clamp(+alpha, -1, 1) * 0xff);
-      this._graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_BEGIN_SOLID_FILL);
+      this._graphicsData.writeUnsignedByte(PathCommand.BeginSolidFill);
       this._graphicsData.writeUnsignedInt((color << 8) | alpha);
     }
 
@@ -168,7 +173,7 @@ module Shumway.AVM2.AS.flash.display {
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
-      this._writeGradientStyle(this._graphicsData, Graphics.PATH_COMMAND_BEGIN_GRADIENT_FILL, type,
+      this._writeGradientStyle(this._graphicsData, PathCommand.BeginGradientFill, type,
                               colors, alphas, ratios, matrix,
                               spreadMethod, interpolationMethod, focalPointRatio);
     }
@@ -187,7 +192,7 @@ module Shumway.AVM2.AS.flash.display {
         throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
       }
       var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_BEGIN_BITMAP_FILL);
+      graphicsData.writeUnsignedByte(PathCommand.BeginBitmapFill);
       // bitmap
       matrix.writeExternal(graphicsData);
       graphicsData.writeUnsignedByte(+repeat);
@@ -213,7 +218,7 @@ module Shumway.AVM2.AS.flash.display {
       miterLimit = clamp(+miterLimit|0, 0, 0xff);
 
       var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_LINE_STYLE_SOLID);
+      graphicsData.writeUnsignedByte(PathCommand.LineStyleSolid);
       graphicsData.writeUnsignedByte(thickness);
       graphicsData.writeUnsignedInt((color << 8) | alpha);
       graphicsData.writeUnsignedByte(+pixelHinting);
@@ -246,7 +251,7 @@ module Shumway.AVM2.AS.flash.display {
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
-      this._writeGradientStyle(this._graphicsData, Graphics.PATH_COMMAND_LINE_STYLE_GRADIENT, type,
+      this._writeGradientStyle(this._graphicsData, PathCommand.LineStyleGradient, type,
                               colors, alphas, ratios, matrix,
                               spreadMethod, interpolationMethod, focalPointRatio);
     }
@@ -413,7 +418,7 @@ module Shumway.AVM2.AS.flash.display {
       y = y * 20|0;
 
       var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_MOVE_TO);
+      graphicsData.writeUnsignedByte(PathCommand.MoveTo);
       graphicsData.writeUnsignedInt(x);
       graphicsData.writeUnsignedInt(y);
 
@@ -427,7 +432,7 @@ module Shumway.AVM2.AS.flash.display {
       y = y * 20|0;
 
       var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_LINE_TO);
+      graphicsData.writeUnsignedByte(PathCommand.LineTo);
       graphicsData.writeUnsignedInt(x);
       graphicsData.writeUnsignedInt(y);
 
@@ -440,7 +445,7 @@ module Shumway.AVM2.AS.flash.display {
       //controlX = +controlX; controlY = +controlY; anchorX = +anchorX; anchorY = +anchorY;
 
       var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_CURVE_TO);
+      graphicsData.writeUnsignedByte(PathCommand.CurveTo);
       graphicsData.writeUnsignedInt(controlX * 20|0);
       graphicsData.writeUnsignedInt(controlY * 20|0);
       graphicsData.writeUnsignedInt(anchorX * 20|0);
@@ -453,7 +458,7 @@ module Shumway.AVM2.AS.flash.display {
       //controlX1 = +controlX1; controlY1 = +controlY1; controlX2 = +controlX2; controlY2 = +controlY2; anchorX = +anchorX; anchorY = +anchorY;
 
       var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_CUBIC_CURVE_TO);
+      graphicsData.writeUnsignedByte(PathCommand.CubicCurveTo);
       graphicsData.writeUnsignedInt(controlX1 * 20|0);
       graphicsData.writeUnsignedInt(controlY1 * 20|0);
       graphicsData.writeUnsignedInt(controlX2 * 20|0);
@@ -464,7 +469,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     endFill(): void {
-      this._graphicsData.writeUnsignedByte(Graphics.PATH_COMMAND_END_FILL);
+      this._graphicsData.writeUnsignedByte(PathCommand.EndFill);
     }
 
     copyFrom(sourceGraphics: flash.display.Graphics): void {
@@ -541,8 +546,8 @@ module Shumway.AVM2.AS.flash.display {
                                interpolationMethod: string = "rgb",
                                focalPointRatio: number = 0): void
     {
-      assert(pathCommand === Graphics.PATH_COMMAND_BEGIN_GRADIENT_FILL ||
-             pathCommand === Graphics.PATH_COMMAND_LINE_STYLE_GRADIENT);
+      assert(pathCommand === PathCommand.BeginGradientFill ||
+             pathCommand === PathCommand.LineStyleGradient);
       if (type === null || type === undefined) {
         throwError('TypeError', Errors.NullPointerError, 'type');
       }
@@ -589,7 +594,7 @@ module Shumway.AVM2.AS.flash.display {
       // If the colors, alphas and ratios arrays don't all have the same length or if any of the
       // given ratios falls outside [0,0xff], Flash uses a solid white fill.
       if (colorStops !== alphas.length || colorStops !== ratios.length || !ratiosValid) {
-        if (pathCommand === Graphics.PATH_COMMAND_BEGIN_GRADIENT_FILL) {
+        if (pathCommand === PathCommand.BeginGradientFill) {
           this.beginFill(0xffffff, 1);
         } else {
           this.lineStyle(0xffffff, 1);

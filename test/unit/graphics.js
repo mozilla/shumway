@@ -21,6 +21,7 @@
   }
 
   var Graphics = flash.display.Graphics;
+  var PathCommand = flash.display.PathCommand;
 
   var ByteArray = flash.utils.ByteArray;
 
@@ -54,7 +55,7 @@
     var g = new Graphics();
     g.beginFill(0xaabbcc);
     var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), Graphics.PATH_COMMAND_BEGIN_SOLID_FILL, "fill is stored");
+    eq(bytes.readUnsignedByte(), PathCommand.BeginSolidFill, "fill is stored");
     eq(bytes.readUnsignedInt(), 0xaabbccff, "beginFill stores given color and default alpha");
     var g = new Graphics();
     g.beginFill(0xaabbcc, 0.5);
@@ -67,10 +68,10 @@
     var g = new Graphics();
     g.lineStyle(1);
     var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), Graphics.PATH_COMMAND_LINE_STYLE_SOLID, "style is stored");
+    eq(bytes.readUnsignedByte(), PathCommand.LineStyleSolid, "style is stored");
     eq(bytes.readUnsignedByte(), 1, "given thickness is stored");
     eq(bytes.readUnsignedInt(), 0xff, "default color is full-opacity black");
-    eq(!!bytes.readUnsignedByte(), false, "defaults to no pixel hinting");
+    eq(bytes.readBoolean(), false, "defaults to no pixel hinting");
     eq(LineScaleMode.fromNumber(bytes.readUnsignedByte()), LineScaleMode.NORMAL,
        "defaults to normal scaling");
     eq(CapsStyle.fromNumber(bytes.readUnsignedByte()), CapsStyle.ROUND, "defaults to round caps");
@@ -84,10 +85,10 @@
     g.lineStyle(10, 0xaabbcc, 0.5, true, LineScaleMode.HORIZONTAL, CapsStyle.SQUARE,
                 JointStyle.BEVEL, 10);
     var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), Graphics.PATH_COMMAND_LINE_STYLE_SOLID, "style is stored");
+    eq(bytes.readUnsignedByte(), PathCommand.LineStyleSolid, "style is stored");
     eq(bytes.readUnsignedByte(), 10, "given thickness is stored");
     eq(bytes.readUnsignedInt(), 0xaabbcc80, "alpha is stored correctly");
-    eq(!!bytes.readUnsignedByte(), true, "pixel hinting is stored");
+    eq(bytes.readBoolean(), true, "pixel hinting is stored");
     eq(LineScaleMode.fromNumber(bytes.readUnsignedByte()), LineScaleMode.HORIZONTAL,
        "lineScaleMode is stored");
     eq(CapsStyle.fromNumber(bytes.readUnsignedByte()), CapsStyle.SQUARE, "capsStyle is stored");
@@ -99,7 +100,7 @@
     var g = new Graphics();
     g.lineTo(100, 50);
     var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), Graphics.PATH_COMMAND_LINE_TO, "command is stored");
+    eq(bytes.readUnsignedByte(), PathCommand.LineTo, "command is stored");
     eq(bytes.readUnsignedInt(), 100 * 20, "x is stored correctly");
     eq(bytes.readUnsignedInt(), 50 * 20, "y is stored correctly");
   }
@@ -108,7 +109,7 @@
     var g = new Graphics();
     g.moveTo(100, 50);
     var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), Graphics.PATH_COMMAND_MOVE_TO, "command is stored");
+    eq(bytes.readUnsignedByte(), PathCommand.MoveTo, "command is stored");
     eq(bytes.readUnsignedInt(), 100 * 20, "x is stored correctly");
     eq(bytes.readUnsignedInt(), 50 * 20, "y is stored correctly");
   }

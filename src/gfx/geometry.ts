@@ -1521,6 +1521,23 @@ module Shumway.GFX.Geometry {
   var MAX_CACHE_LEVELS = 3;
 
   /**
+   * Copy of flash.display.PathCommand, defined in flash.display.Graphics. Keep in sync!
+   */
+  export enum PathCommand {
+    BeginSolidFill = 1,
+    BeginGradientFill,
+    BeginBitmapFill,
+    EndFill,
+    LineStyleSolid,
+    LineStyleGradient,
+    LineStyleBitmap,
+    MoveTo,
+    LineTo,
+    CurveTo,
+    CubicCurveTo,
+  }
+
+  /**
    * Manages tile caches at different scales.
    */
   export class RenderableTileCache {
