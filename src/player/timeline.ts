@@ -260,13 +260,42 @@ module Shumway.Timeline {
     }
   }
 
+  export class FontSymbol extends Symbol {
+    name: string = "";
+    bold: boolean = false;
+    italic: boolean = false;
+
+    constructor(id: number) {
+      super(id, flash.text.Font);
+    }
+
+    static createFromData(data: any): FontSymbol {
+      var symbol = new FontSymbol(data.id);
+      symbol.name = data.name;
+      symbol.bold = data.bold;
+      symbol.italic = data.italic;
+      return symbol;
+    }
+  }
+
   export class SoundSymbol extends Symbol {
     constructor(id: number) {
       super(id, flash.media.Sound);
     }
 
     static createFromData(data: any): SoundSymbol {
-      var symbol = new SpriteSymbol(data.id);
+      var symbol = new SoundSymbol(data.id);
+      return symbol;
+    }
+  }
+
+  export class BinarySymbol extends Symbol {
+    constructor(id: number) {
+      super(id, flash.utils.ByteArray);
+    }
+
+    static createFromData(data: any): BinarySymbol {
+      var symbol = new BinarySymbol(data.id);
       return symbol;
     }
   }
