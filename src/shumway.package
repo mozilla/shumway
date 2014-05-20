@@ -555,6 +555,7 @@ src/player/timeline.js
 src/player/remotingPlayer.js
 src/player/remotingGfx.js
 src/player/player.js
+src/player/easel.js
 
 #!inline console.timeEnd("Load Player Dependencies");
 

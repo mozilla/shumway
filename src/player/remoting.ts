@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 module Shumway.Remoting {
+  import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
+
   export enum UpdateFrameTagBits {
     HasMatrix                   = 0x0001,
     HasBounds                   = 0x0002,
@@ -80,5 +82,15 @@ module Shumway.Remoting {
     CtrlKey  = 0x0001,
     AltKey   = 0x0002,
     ShiftKey = 0x0004
+  }
+
+  export interface IPlayerChannel {
+    sendUpdates(updates: ByteArray, assets: Array<ByteArray>);
+    registerForEventUpdates(listener: (updates: ByteArray) => void);
+  }
+
+  export interface IGFXChannel {
+    sendEventUpdates(update: ByteArray);
+    registerForUpdates(listener: (updates: ByteArray, assets: Array<ByteArray>) => void);
   }
 }
