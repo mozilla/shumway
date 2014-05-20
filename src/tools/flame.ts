@@ -206,17 +206,18 @@ module Shumway.Tools {
   export class FlameChart {
     private _container: HTMLElement;
     private _canvas: HTMLCanvasElement;
+    private _context: CanvasRenderingContext2D;
+
+    private _overviewHeight = 64;
+    private _overviewCanvasDirty = true;
+    private _overviewCanvas: HTMLCanvasElement;
+    private _overviewContext: CanvasRenderingContext2D;
+
     private _offsetWidth: number;
     private _offsetHeight: number;
 
-    private _context: CanvasRenderingContext2D;
     private _buffer: TimelineBuffer;
 
-    private _canvasOverviewDirty: boolean;
-    private _canvasOverview: HTMLCanvasElement;
-    private _contextOverview: CanvasRenderingContext2D;
-
-    private _overviewHeight = 64;
     private _windowLeft = 0;
     private _windowRight = Number.MAX_VALUE;
     private _timeToPixels = 1;
@@ -243,9 +244,8 @@ module Shumway.Tools {
       this._context = this._canvas.getContext("2d");
       this._context.font = 10 + 'px Consolas, "Liberation Mono", Courier, monospace';
       this._container.appendChild(this._canvas);
-      this._canvasOverviewDirty = true;
-      this._canvasOverview = document.createElement("canvas");
-      this._contextOverview = this._canvasOverview.getContext("2d");
+      this._overviewCanvas = document.createElement("canvas");
+      this._overviewContext = this._overviewCanvas.getContext("2d");
       this._buffer = buffer;
       this._range = this._buffer.gatherRange(Number.MAX_VALUE);
       this._kindStyle = createEmptyObject();
@@ -395,13 +395,13 @@ module Shumway.Tools {
 
     private _resetCanvas() {
       var ratio = window.devicePixelRatio;
-      this._canvas.width = this._canvasOverview.width = this._offsetWidth * ratio;
+      this._canvas.width = this._overviewCanvas.width = this._offsetWidth * ratio;
       this._canvas.height = this._offsetHeight * ratio;
-      this._canvas.style.width = this._canvasOverview.style.width = this._offsetWidth + "px";
+      this._canvas.style.width = this._overviewCanvas.style.width = this._offsetWidth + "px";
       this._canvas.style.height = this._offsetHeight + "px";
-      this._canvasOverview.height = this._overviewHeight * ratio;
-      this._canvasOverview.style.height = this._overviewHeight + "px";
-      this._canvasOverviewDirty = true;
+      this._overviewCanvas.height = this._overviewHeight * ratio;
+      this._overviewCanvas.style.height = this._overviewHeight + "px";
+      this._overviewCanvasDirty = true;
     }
 
     private _pixelTime(time: number): number {
@@ -448,7 +448,7 @@ module Shumway.Tools {
       var ratio = window.devicePixelRatio;
       var range = this._range;
 
-      if (this._canvasOverviewDirty) {
+      if (this._overviewCanvasDirty) {
         var rangeTotalTime = range.endTime - range.startTime;
         var sampleWidthInPixels = 1;
         var sampleTimeInterval = rangeTotalTime / (this._offsetWidth / sampleWidthInPixels);
@@ -463,7 +463,7 @@ module Shumway.Tools {
 
         var depthHeight = this._overviewHeight / maxDepth | 0;
         var x = 0;
-        var contextOverview = this._contextOverview;
+        var contextOverview = this._overviewContext;
         contextOverview.save();
         contextOverview.scale(ratio, ratio);
         contextOverview.beginPath();
@@ -478,10 +478,10 @@ module Shumway.Tools {
         contextOverview.fill();
         contextOverview.restore();
 
-        this._canvasOverviewDirty = false;
+        this._overviewCanvasDirty = false;
       }
 
-      context.drawImage(this._canvasOverview, 0, 0);
+      context.drawImage(this._overviewCanvas, 0, 0);
 
       var windowLeftPixels = ((this._windowLeft - range.startTime) / this._pixelsToOverviewTime) | 0;
       var windowRightPixels = ((this._windowRight - range.startTime) / this._pixelsToOverviewTime) | 0;
