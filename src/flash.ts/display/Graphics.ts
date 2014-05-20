@@ -83,6 +83,7 @@ module Shumway.AVM2.AS.flash.display {
   import geom = flash.geom;
   import utils = flash.utils;
   import PathCommand = Shumway.GFX.Geometry.PathCommand;
+  import quadraticBezierExtreme = Shumway.GFX.Geometry.quadraticBezierExtreme;
 
   export class Graphics extends ASNative {
 
@@ -462,9 +463,14 @@ module Shumway.AVM2.AS.flash.display {
       graphicsData.writeInt(anchorY);
 
       // FIXME: this isn't correct at all ...
-      this._extendBoundsByPoint(controlX, controlY, 0);
       this._extendBoundsByPoint(anchorX, anchorY, 0);
       this._setLastCoordinate(anchorX, anchorY);
+      if (controlX < this._lastX || controlX > anchorX) {
+        this._extendBoundsByX(quadraticBezierExtreme(this._lastX, controlX, anchorX), 0);
+      }
+      if (controlY < this._lastY || controlY > anchorY) {
+        this._extendBoundsByY(quadraticBezierExtreme(this._lastY, controlY, anchorY), 0);
+      }
 
       this._invalidateParent();
     }
@@ -674,6 +680,28 @@ module Shumway.AVM2.AS.flash.display {
       bounds = this._outerBounds;
       var xMin = bounds.x = Math.min(x - halfStrokeWidth, bounds.x);
       bounds.width = Math.max(x + halfStrokeWidth - xMin, bounds.width);
+      var yMin = bounds.y = Math.min(y - halfStrokeWidth, bounds.y);
+      bounds.height = Math.max(y + halfStrokeWidth - yMin, bounds.height);
+    }
+
+    private _extendBoundsByX(x: number, strokeWidth: number): void {
+      var bounds = this._innerBounds;
+      var xMin = bounds.x = Math.min(x, bounds.x);
+      bounds.width = Math.max(x - xMin, bounds.width);
+
+      var halfStrokeWidth = strokeWidth / 2|0;
+      bounds = this._outerBounds;
+      var xMin = bounds.x = Math.min(x - halfStrokeWidth, bounds.x);
+      bounds.width = Math.max(x + halfStrokeWidth - xMin, bounds.width);
+    }
+
+    private _extendBoundsByY(y: number, strokeWidth: number): void {
+      var bounds = this._innerBounds;
+      var yMin = bounds.y = Math.min(y, bounds.y);
+      bounds.height = Math.max(y - yMin, bounds.height);
+
+      var halfStrokeWidth = strokeWidth / 2|0;
+      bounds = this._outerBounds;
       var yMin = bounds.y = Math.min(y - halfStrokeWidth, bounds.y);
       bounds.height = Math.max(y + halfStrokeWidth - yMin, bounds.height);
     }

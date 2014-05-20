@@ -28,6 +28,22 @@ module Shumway.GFX.Geometry {
     return d * Math.PI / 180;
   }
 
+  export function quadraticBezier(from: number, cp: number, to: number, t: number): number {
+    var inverseT = 1 - t;
+    return from * inverseT * inverseT + 2 * cp * inverseT * t + to * t * t;
+  }
+
+  export function quadraticBezierExtreme(from: number, cp: number, to: number): number {
+    var t = (from - cp) / (from - 2 * cp + to);
+    if (t < 0) {
+      return from;
+    }
+    if (t > 1) {
+      return to;
+    }
+    return quadraticBezier(from, cp, to, t);
+  }
+
   var E = 0.0001;
 
   function eqFloat(a, b) {

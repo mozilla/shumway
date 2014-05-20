@@ -151,7 +151,8 @@
   }
 
   // Note: these tests aren't really valid, but will do as a first approximation.
-  // (empty moves and stroke- and fill-less lines mustn't extend bounds.)
+  // Note: amazingly, Flash happily extends bounds for drawing operations without strokes and fills.
+  // The only exception are multiple moveTo operations.
   function bounds() {
     var g = createGraphics();
     g.moveTo(150, 50);
@@ -160,8 +161,9 @@
     g.lineTo(100, 50);
     structEq(g._getContentBounds(), {x: 0, y: 0, width: 2000, height: 1000}, "line extends bounds");
     g.clear();
-    g.curveTo(100, 50, 0, 100);
-    structEq(g._getContentBounds(), {x: 0, y: 0, width: 2000, height: 2000}, "curve extends bounds");
+    g.curveTo(100, 100, 0, 100);
+    structEq(g._getContentBounds(), {x: 0, y: 0, width: 1000, height: 2000},
+             "curve extends bounds");
   }
 
   function createGraphics() {
