@@ -1521,7 +1521,7 @@ module Shumway.GFX.Geometry {
   var MAX_CACHE_LEVELS = 3;
 
   /**
-   * Copy of flash.display.PathCommand, defined in flash.display.Graphics. Keep in sync!
+   * Used for (de-)serializing Graphics path data in flash.display.Graphics and the renderer.
    */
   export enum PathCommand {
     BeginSolidFill = 1,
@@ -1543,8 +1543,8 @@ module Shumway.GFX.Geometry {
   export class RenderableTileCache {
     private _source: IRenderable;
     private _cacheLevels: TileCache [] = [];
-    private _tileSize: number
-    private _minUntiledSize: number
+    private _tileSize: number;
+    private _minUntiledSize: number;
     constructor(source: IRenderable, tileSize: number, minUntiledSize: number) {
       this._source = source;
       this._tileSize = tileSize;

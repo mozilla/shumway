@@ -82,23 +82,7 @@ module Shumway.AVM2.AS.flash.display {
   import JointStyle = flash.display.JointStyle;
   import geom = flash.geom;
   import utils = flash.utils;
-
-  /**
-   * A copy of this exists in gfx.Geometry. Keep in sync!
-   */
-  export enum PathCommand {
-    BeginSolidFill = 1,
-    BeginGradientFill,
-    BeginBitmapFill,
-    EndFill,
-    LineStyleSolid,
-    LineStyleGradient,
-    LineStyleBitmap,
-    MoveTo,
-    LineTo,
-    CurveTo,
-    CubicCurveTo,
-  }
+  import PathCommand = Shumway.GFX.Geometry.PathCommand;
 
   export class Graphics extends ASNative {
 
@@ -150,9 +134,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _invalidateParent() {
-      if (this._parent) {
-        this._parent._invalidateBoundsAndRect();
-      }
+      assert (this._parent, "Graphics instances must have a parent.");
+      this._parent._invalidateBoundsAndRect();
     }
 
     _getContentBounds(includeStrokes: boolean = true): geom.Rectangle {
@@ -167,10 +150,8 @@ module Shumway.AVM2.AS.flash.display {
 
     clear(): void {
       this._graphicsData.length = 0;
-      this._innerBounds.x = this._innerBounds.y = this._innerBounds.width =
-                                                  this._innerBounds.height = 0;
-      this._outerBounds.x = this._outerBounds.y = this._outerBounds.width =
-                                                  this._outerBounds.height = 0;
+      this._innerBounds.setEmpty();
+      this._outerBounds.setEmpty();
       this._invalidateParent();
     }
 
@@ -201,12 +182,12 @@ module Shumway.AVM2.AS.flash.display {
     beginBitmapFill(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
                     repeat: boolean = true, smooth: boolean = false): void
     {
-      if (bitmap === null || bitmap === undefined) {
+      if (isNullOrUndefined(bitmap)) {
         throwError('TypeError', Errors.NullPointerError, 'bitmap');
       } else if (!(matrix instanceof flash.geom.Matrix)) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap', 'flash.display.BitmapData');
       }
-      if (matrix === null || matrix === undefined) {
+      if (isNullOrUndefined(matrix)) {
         matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
       } else if (!(matrix instanceof flash.geom.Matrix)) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
@@ -623,7 +604,7 @@ module Shumway.AVM2.AS.flash.display {
       }
 
       var colorStops = colors.length;
-      var ratiosValid: boolean = true;
+      var ratiosValid = true;
       for (var i = 0; i < colorStops; i++) {
         if (ratios[i] > 0xff || ratios[i] < 0) {
           ratiosValid = false;
