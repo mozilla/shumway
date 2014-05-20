@@ -52,23 +52,60 @@ module Shumway.Tools {
 
     /**
      * Gets the high and low index of the children that intersect the specified time range.
-     *
-     * TODO: This uses a dumb linear algorithm, we can do much better here by doing a binary search.
      */
-    public getChildRange(s: number, e: number): number [] {
+    public getChildRange(startTime: number, endTime: number): number [] {
+      if (startTime > this.endTime || endTime < this.startTime || endTime < startTime) {
+        return null;
+      } else {
+        return [
+          this.getNearestChild(startTime),
+          this.getNearestChildReverse(endTime)
+        ];
+      }
+    }
+
+    public getNearestChild(time: number): number {
       var children = this.children;
-      var j = -1, k = -1;
-      for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        var l = child.startTime, r = child.endTime;
-        if (l <= e && s <= r) { // Segments Overlap
-          if (j < 0) {
-            j = i;
-          }
-          k = i;
+      if (time <= children[0].endTime) {
+        return 0;
+      }
+      var imid;
+      var imin = 0;
+      var imax = children.length - 1;
+      while (imax > imin) {
+        imid = ((imin + imax) / 2) | 0;
+        var child = children[imid];
+        if (time >= child.startTime && time <= child.endTime) {
+          return imid;
+        } else if (time > child.endTime) {
+          imin = imid + 1;
+        } else {
+          imax = imid;
         }
       }
-      return [j, k];
+      return Math.ceil((imin + imax) / 2);
+    }
+
+    public getNearestChildReverse(time: number): number {
+      var children = this.children;
+      var imax = children.length - 1;
+      if (time >= children[imax].startTime) {
+        return imax;
+      }
+      var imid;
+      var imin = 0;
+      while (imax > imin) {
+        imid = Math.ceil((imin + imax) / 2);
+        var child = children[imid];
+        if (time >= child.startTime && time <= child.endTime) {
+          return imid;
+        } else if (time > child.endTime) {
+          imin = imid;
+        } else {
+          imax = imid - 1;
+        }
+      }
+      return ((imin + imax) / 2) | 0;
     }
 
     /**
@@ -206,17 +243,18 @@ module Shumway.Tools {
   export class FlameChart {
     private _container: HTMLElement;
     private _canvas: HTMLCanvasElement;
+    private _context: CanvasRenderingContext2D;
+
+    private _overviewHeight = 64;
+    private _overviewCanvasDirty = true;
+    private _overviewCanvas: HTMLCanvasElement;
+    private _overviewContext: CanvasRenderingContext2D;
+
     private _offsetWidth: number;
     private _offsetHeight: number;
 
-    private _context: CanvasRenderingContext2D;
     private _buffer: TimelineBuffer;
 
-    private _canvasOverviewDirty: boolean;
-    private _canvasOverview: HTMLCanvasElement;
-    private _contextOverview: CanvasRenderingContext2D;
-
-    private _overviewHeight = 64;
     private _windowLeft = 0;
     private _windowRight = Number.MAX_VALUE;
     private _timeToPixels = 1;
@@ -243,9 +281,8 @@ module Shumway.Tools {
       this._context = this._canvas.getContext("2d");
       this._context.font = 10 + 'px Consolas, "Liberation Mono", Courier, monospace';
       this._container.appendChild(this._canvas);
-      this._canvasOverviewDirty = true;
-      this._canvasOverview = document.createElement("canvas");
-      this._contextOverview = this._canvasOverview.getContext("2d");
+      this._overviewCanvas = document.createElement("canvas");
+      this._overviewContext = this._overviewCanvas.getContext("2d");
       this._buffer = buffer;
       this._range = this._buffer.gatherRange(Number.MAX_VALUE);
       this._kindStyle = createEmptyObject();
@@ -395,13 +432,13 @@ module Shumway.Tools {
 
     private _resetCanvas() {
       var ratio = window.devicePixelRatio;
-      this._canvas.width = this._canvasOverview.width = this._offsetWidth * ratio;
+      this._canvas.width = this._overviewCanvas.width = this._offsetWidth * ratio;
       this._canvas.height = this._offsetHeight * ratio;
-      this._canvas.style.width = this._canvasOverview.style.width = this._offsetWidth + "px";
+      this._canvas.style.width = this._overviewCanvas.style.width = this._offsetWidth + "px";
       this._canvas.style.height = this._offsetHeight + "px";
-      this._canvasOverview.height = this._overviewHeight * ratio;
-      this._canvasOverview.style.height = this._overviewHeight + "px";
-      this._canvasOverviewDirty = true;
+      this._overviewCanvas.height = this._overviewHeight * ratio;
+      this._overviewCanvas.style.height = this._overviewHeight + "px";
+      this._overviewCanvasDirty = true;
     }
 
     private _pixelTime(time: number): number {
@@ -448,7 +485,7 @@ module Shumway.Tools {
       var ratio = window.devicePixelRatio;
       var range = this._range;
 
-      if (this._canvasOverviewDirty) {
+      if (this._overviewCanvasDirty) {
         var rangeTotalTime = range.endTime - range.startTime;
         var sampleWidthInPixels = 1;
         var sampleTimeInterval = rangeTotalTime / (this._offsetWidth / sampleWidthInPixels);
@@ -456,32 +493,33 @@ module Shumway.Tools {
         var depths = [];
         var maxDepth = 0;
         for (var time = range.startTime; time < range.endTime; time += sampleTimeInterval) {
-          var depth = range.query(time).getDepth();
+          var depth = range.query(time).getDepth() - 1;
           maxDepth = Math.max(maxDepth, depth);
           depths.push(depth);
         }
 
-        var depthHeight = this._overviewHeight / maxDepth | 0;
+        var height = this._overviewHeight;
+        var depthHeight = height / maxDepth | 0;
         var x = 0;
-        var contextOverview = this._contextOverview;
+        var contextOverview = this._overviewContext;
         contextOverview.save();
-        contextOverview.scale(ratio, ratio);
+        contextOverview.translate(0, ratio * height);
+        contextOverview.scale(ratio, ratio * depthHeight);
         contextOverview.beginPath();
         contextOverview.moveTo(0, this._overviewHeight);
         for (var i = 0; i < depths.length; i++) {
           x += sampleWidthInPixels;
-          var y = depths[i] * depthHeight;
-          contextOverview.lineTo(x, y);
+          contextOverview.lineTo(x, -depths[i]);
         }
         contextOverview.lineTo(x, this._overviewHeight);
         contextOverview.fillStyle = "#70bf53";
         contextOverview.fill();
         contextOverview.restore();
 
-        this._canvasOverviewDirty = false;
+        this._overviewCanvasDirty = false;
       }
 
-      context.drawImage(this._canvasOverview, 0, 0);
+      context.drawImage(this._overviewCanvas, 0, 0);
 
       var windowLeftPixels = ((this._windowLeft - range.startTime) / this._pixelsToOverviewTime) | 0;
       var windowRightPixels = ((this._windowRight - range.startTime) / this._pixelsToOverviewTime) | 0;
@@ -495,11 +533,11 @@ module Shumway.Tools {
 
     private _drawFlames() {
       var a = this._range.getChildRange(this._windowLeft, this._windowRight);
-      var l = a[0];
-      var r = a[1];
-      if (r < 0 || l < 0) {
+      if (a == null) {
         return;
       }
+      var l = a[0];
+      var r = a[1];
       var context = this._context;
       var ratio = window.devicePixelRatio;
       context.save();

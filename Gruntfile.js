@@ -116,7 +116,7 @@ module.exports = function(grunt) {
         tasks: ['exec:build_avm1_ts']
       },
       player_ts: {
-        files: ['src/flash.ts/**/*.ts', 
+        files: ['src/flash.ts/**/*.ts',
         		'src/player/**/*.ts'],
         tasks: ['exec:build_player_ts']
       },
@@ -169,6 +169,7 @@ module.exports = function(grunt) {
   grunt.registerTask('watch-flash', ['exec:build_flash_ts', 'watch:flash_ts']);
   grunt.registerTask('watch-player', ['exec:build_player_ts', 'watch:player_ts']);
   grunt.registerTask('watch-gfx', ['exec:build_gfx_ts', 'watch:gfx_ts']);
+  grunt.registerTask('watch-tools', ['exec:build_tools_ts', 'watch:tools_ts']);
 
   // temporary make/python calls based on grunt-exec
   grunt.registerTask('build-web', ['exec:build_avm2_ts', 'exec:build_bundle', 'exec:build_extension', 'exec:build_web']);
