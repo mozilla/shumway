@@ -63,9 +63,9 @@ var Type = (function () {
     else if (x instanceof MethodInfo) {
       return new MethodType(x);
     }
-//    else if (domain && (x instanceof (Class))) {
-//      return type.from(x.classInfo, domain);
-//    }
+    else if (domain && (x instanceof Shumway.AVM2.AS.ASClass)) {
+      return type.from(x.classInfo, domain);
+    }
     return Type.Any;
   };
 

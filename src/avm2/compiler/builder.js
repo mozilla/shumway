@@ -750,7 +750,7 @@ var createName = function createName(namespaces, name) {
                 return constructor(args[0]);
               }
               var qn = Multiname.getQualifiedName(ti.trait.name);
-              return store(new IR.CallProperty(region, state.store, object, constant(qn), args, 0));
+              return store(new IR.CallProperty(region, state.store, object, constant(qn), args, IR.Flags.AS_CALL));
             }
           } else if (ti && ti.propertyQName) {
             return store(new IR.CallProperty(region, state.store, object, constant(ti.propertyQName), args, IR.Flags.PRISTINE));
@@ -854,8 +854,8 @@ var createName = function createName(namespaces, name) {
           return store(new Call(region, state.store, callee, object, args, IR.Flags.PRISTINE));
         }
 
-        function callCall(callee, object, args, pristine) {
-          return store(new Call(region, state.store, callee, object, args, pristine ? IR.Flags.PRISTINE : 0));
+        function callCall(callee, object, args) {
+          return store(new Call(region, state.store, callee, object, args, IR.Flags.AS_CALL));
         }
 
         function truthyCondition(operator) {

@@ -168,6 +168,10 @@
     return new CallExpression(callee, args);
   }
 
+  function callAsCall(callee, object, args) {
+    return call(property(callee, "asCall"), [object].concat(args));
+  }
+
   function callCall(callee, object, args) {
     return call(property(callee, "call"), [object].concat(args));
   }
@@ -495,7 +499,9 @@
     var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
-    if (this.flags & IR.Flags.PRISTINE) {
+    if (this.flags & IR.Flags.AS_CALL) {
+      return callAsCall(callee, object, args);
+    } else if (this.flags & IR.Flags.PRISTINE) {
       return call(callee, args);
     } else {
       return callCall(callee, object, args);
