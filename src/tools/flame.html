@@ -22,7 +22,7 @@
     }
     #container {
       width: 100%;
-      height: 250px;
+      height: 500px;
       display: relative;
     }
     canvas {
@@ -47,9 +47,43 @@
     var buffer = new Tools.TimelineBuffer();
 
     getJSON("data/CPU-20140520T092003.json", function(result) {
-      console.log(result.timestamps.length + " samples");
+    //getJSON("data/Profile 1.json", function(result) {
       readChromeCPUProfile(result);
+      //readFirefoxCPUProfile(result.profile.threads[0].samples);
     });
+
+    function readFirefoxCPUProfile(samples) {
+      var startTime = samples[0].time;
+      var currentStack = [];
+      var sample;
+      for (var i = 0; i < samples.length; i++) {
+        sample = samples[i];
+        var time = sample.time   - startTime;
+        var stack = sample.frames;
+        for (var j = 0; j < Math.min(stack.length, currentStack.length); j++) {
+          if (stack[j].location !== currentStack[j].location) {
+            break;
+          }
+        }
+        var leaveCount = currentStack.length - j;
+        for (var k = 0; k < leaveCount; k++) {
+          sample = currentStack.pop();
+          buffer.leave(sample.location, time);
+        }
+        for (; j < stack.length; j++) {
+          sample = stack[j];
+          buffer.enter(sample.location, time);
+        }
+        currentStack = stack;
+      }
+      while (sample = currentStack.pop()) {
+        if(currentStack.length) {
+          buffer.leave(sample.location, time);
+        }
+      }
+
+      var flameChart = new Tools.FlameChart(container, buffer);
+    }
 
     function readChromeCPUProfile(profile) {
       var startTime = profile.timestamps[0] / 1000;
