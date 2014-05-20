@@ -96,6 +96,8 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       this._id = DisplayObject._syncID++;
       this._graphicsData = new utils.ByteArray();
+      this._lastX = 0;
+      this._lastY = 0;
       this._innerBounds = new geom.Rectangle();
       this._outerBounds = new geom.Rectangle();
       this._parent = null;
@@ -110,6 +112,8 @@ module Shumway.AVM2.AS.flash.display {
 
     // AS -> JS Bindings
     private _graphicsData: flash.utils.ByteArray;
+    private _lastX: number;
+    private _lastY: number;
 
     /**
      * Bounding box excluding strokes.
@@ -424,6 +428,7 @@ module Shumway.AVM2.AS.flash.display {
       graphicsData.writeInt(y);
 
       this._extendBoundsByPoint(x, y, 0);
+      this._setLastCoordinate(x, y);
 
       this._invalidateParent();
     }
@@ -438,6 +443,7 @@ module Shumway.AVM2.AS.flash.display {
       graphicsData.writeInt(y);
 
       this._extendBoundsByPoint(x, y, 0);
+      this._setLastCoordinate(x, y);
 
       this._invalidateParent();
     }
@@ -458,12 +464,14 @@ module Shumway.AVM2.AS.flash.display {
       // FIXME: this isn't correct at all ...
       this._extendBoundsByPoint(controlX, controlY, 0);
       this._extendBoundsByPoint(anchorX, anchorY, 0);
+      this._setLastCoordinate(anchorX, anchorY);
 
       this._invalidateParent();
     }
 
     cubicCurveTo(controlX1: number, controlY1: number, controlX2: number, controlY2: number,
-                 anchorX: number, anchorY: number): void {
+                 anchorX: number, anchorY: number): void
+    {
       controlX1 = controlX1 * 20|0;
       controlY1 = controlY1 * 20|0;
       controlX2 = controlX2 * 20|0;
@@ -485,6 +493,7 @@ module Shumway.AVM2.AS.flash.display {
       this._extendBoundsByPoint(controlX1, controlY1, 0);
       this._extendBoundsByPoint(controlX2, controlY2, 0);
       this._extendBoundsByPoint(anchorX, anchorY, 0);
+      this._setLastCoordinate(anchorX, anchorY);
 
       this._invalidateParent();
     }
@@ -667,6 +676,11 @@ module Shumway.AVM2.AS.flash.display {
       bounds.width = Math.max(x + halfStrokeWidth - xMin, bounds.width);
       var yMin = bounds.y = Math.min(y - halfStrokeWidth, bounds.y);
       bounds.height = Math.max(y + halfStrokeWidth - yMin, bounds.height);
+    }
+
+    private _setLastCoordinate(x: number, y: number): void {
+      this._lastX = x;
+      this._lastY = y;
     }
   }
 }
