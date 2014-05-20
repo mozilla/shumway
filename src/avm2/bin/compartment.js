@@ -50,6 +50,7 @@ Timer.start("Loading Compiler");
 load(homePath + "src/avm2/compiler/lljs/src/estransform.js");
 load(homePath + "src/avm2/compiler/lljs/src/escodegen.js");
 load(homePath + "src/avm2/compiler/inferrer.js");
+load(homePath + "src/avm2/compiler/verifier.js");
 load(homePath + "src/avm2/compiler/c4/ir.js");
 load(homePath + "src/avm2/compiler/c4/looper.js");
 load(homePath + "src/avm2/compiler/c4/backend.js");

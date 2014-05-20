@@ -1531,7 +1531,9 @@ var createName = function createName(namespaces, name) {
     if (Shumway.AVM2.Verifier.enabled.value) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?
       Timer.start("Verify");
-      verifier.verifyMethod(methodInfo, scope);
+      // verifier.verifyMethod(methodInfo, scope);
+
+      new Shumway.AVM2.Verifier.Verifier().verifyMethod(methodInfo, scope);
       Timer.stop();
     }
 

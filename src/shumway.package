@@ -71,6 +71,7 @@ src/avm2/analyze.js
 src/avm2/compiler/lljs/src/estransform.js
 src/avm2/compiler/lljs/src/escodegen.js
 src/avm2/compiler/inferrer.js
+src/avm2/compiler/verifier.js
 src/avm2/compiler/c4/ir.js
 src/avm2/compiler/builder.js
 src/avm2/compiler/c4/looper.js

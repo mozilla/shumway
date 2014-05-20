@@ -41,3 +41,4 @@
 ///<reference path='natives/proxy.ts' />
 ///<reference path='natives/byteArray.ts' />
 ///<reference path='natives/system.ts' />
+///<reference path='compiler/verifier.ts' />

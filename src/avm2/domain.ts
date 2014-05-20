@@ -513,6 +513,7 @@ module Shumway.AVM2.Runtime {
       if (!this.base) {
         AS.initialize(this);
         Type.initializeTypes(this);
+        Shumway.AVM2.Verifier.Type.initializeTypes(this);
       }
     }
 

@@ -376,7 +376,7 @@ module Shumway.AVM2.ABC {
     debugName: string;
     parameters: Parameter[];
     returnType: Multiname;
-    holder: any;
+    holder: Info;
     hasBody: boolean;
     maxStack: number;
     localCount: number;
@@ -393,6 +393,7 @@ module Shumway.AVM2.ABC {
       boundMethod: Function;
     };
     activationPrototype: Object;
+    analysis: any;
     static parseParameterNames: boolean = false;
 
     private static _getParameterName(i) {
@@ -521,6 +522,8 @@ module Shumway.AVM2.ABC {
     public hasExceptions() {
       return this.exceptions.length > 0;
     }
+
+    public trace: (writer: IndentingWriter) => void;
   }
 
   export class InstanceInfo extends Info {
