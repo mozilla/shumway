@@ -498,17 +498,18 @@ module Shumway.Tools {
           depths.push(depth);
         }
 
-        var depthHeight = this._overviewHeight / maxDepth | 0;
+        var height = this._overviewHeight;
+        var depthHeight = height / maxDepth | 0;
         var x = 0;
         var contextOverview = this._overviewContext;
         contextOverview.save();
-        contextOverview.scale(ratio, ratio);
+        contextOverview.translate(0, ratio * height);
+        contextOverview.scale(ratio, ratio * depthHeight);
         contextOverview.beginPath();
         contextOverview.moveTo(0, this._overviewHeight);
         for (var i = 0; i < depths.length; i++) {
           x += sampleWidthInPixels;
-          var y = this._overviewHeight - depths[i] * depthHeight;
-          contextOverview.lineTo(x, y);
+          contextOverview.lineTo(x, -depths[i]);
         }
         contextOverview.lineTo(x, this._overviewHeight);
         contextOverview.fillStyle = "#70bf53";
