@@ -215,20 +215,26 @@ module Shumway.GFX {
         var command = data.readUnsignedByte();
         switch (command) {
           case PathCommand.MoveTo:
-            context.moveTo(data.readUnsignedInt() / 20, data.readUnsignedInt() / 20);
+            assert(data.bytesAvailable >= 8);
+            context.moveTo(data.readInt() / 20, data.readInt() / 20);
             break;
           case PathCommand.LineTo:
-            context.lineTo(data.readUnsignedInt() / 20, data.readUnsignedInt() / 20);
+            assert(data.bytesAvailable >= 8);
+            context.lineTo(data.readInt() / 20, data.readInt() / 20);
             break;
           case PathCommand.CurveTo:
-            context.quadraticCurveTo(data.readUnsignedInt() / 20, data.readUnsignedInt() / 20,
-                                     data.readUnsignedInt() / 20, data.readUnsignedInt() / 20);
+            assert(data.bytesAvailable >= 16);
+            context.quadraticCurveTo(data.readInt() / 20, data.readInt() / 20,
+                                     data.readInt() / 20, data.readInt() / 20);
+            break;
           case PathCommand.CubicCurveTo:
-            context.bezierCurveTo(data.readUnsignedInt() / 20, data.readUnsignedInt() / 20,
-                                  data.readUnsignedInt() / 20, data.readUnsignedInt() / 20,
-                                  data.readUnsignedInt() / 20, data.readUnsignedInt() / 20);
+            assert(data.bytesAvailable >= 24);
+            context.bezierCurveTo(data.readInt() / 20, data.readInt() / 20,
+                                  data.readInt() / 20, data.readInt() / 20,
+                                  data.readInt() / 20, data.readInt() / 20);
             break;
           case PathCommand.BeginSolidFill:
+            assert(data.bytesAvailable >= 4);
             if (fillActive) {
               context.fill();
             }

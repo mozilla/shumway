@@ -222,7 +222,7 @@ module Shumway.AVM2.AS.flash.display {
       graphicsData.writeUnsignedByte(PathCommand.LineStyleSolid);
       graphicsData.writeUnsignedByte(thickness);
       graphicsData.writeUnsignedInt((color << 8) | alpha);
-      graphicsData.writeUnsignedByte(+pixelHinting);
+      graphicsData.writeBoolean(pixelHinting);
 
       // If `scaleMode` is invalid, "normal" is used.
       var lineScaleMode = LineScaleMode.toNumber(asCoerceString(scaleMode));
@@ -471,14 +471,15 @@ module Shumway.AVM2.AS.flash.display {
       anchorX = anchorX * 20|0;
       anchorY = anchorY * 20|0;
 
+
       var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(PathCommand.CurveTo);
-      graphicsData.writeUnsignedInt(controlX1);
-      graphicsData.writeUnsignedInt(controlY1);
-      graphicsData.writeUnsignedInt(controlX2);
-      graphicsData.writeUnsignedInt(controlY2);
-      graphicsData.writeUnsignedInt(anchorX);
-      graphicsData.writeUnsignedInt(anchorY);
+      graphicsData.writeUnsignedByte(PathCommand.CubicCurveTo);
+      graphicsData.writeInt(controlX1);
+      graphicsData.writeInt(controlY1);
+      graphicsData.writeInt(controlX2);
+      graphicsData.writeInt(controlY2);
+      graphicsData.writeInt(anchorX);
+      graphicsData.writeInt(anchorY);
 
       // FIXME: this isn't correct at all ...
       this._extendBoundsByPoint(controlX1, controlY1, 0);
