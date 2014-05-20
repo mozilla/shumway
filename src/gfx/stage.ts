@@ -237,7 +237,9 @@ module Shumway.GFX {
             assert(data.bytesAvailable >= 4);
             if (fillActive) {
               context.fill();
+              context.closePath();
             }
+            context.beginPath();
             fillActive = true;
             var color = data.readUnsignedInt();
             context.fillStyle = ColorUtilities.rgbaToCSSStyle(color);
@@ -252,7 +254,9 @@ module Shumway.GFX {
           case PathCommand.LineStyleSolid:
             if (strokeActive) {
               context.stroke();
+              context.closePath();
             }
+            context.beginPath();
             strokeActive = true;
             var thickness = data.readUnsignedByte();
             var color = data.readUnsignedInt();
