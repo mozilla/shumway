@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
   <title>Flamechart Demo</title>
   <style>
     html, body {
@@ -101,13 +102,13 @@
 
     function getJSON(url, callback) {
       var req = new XMLHttpRequest();
+      req.open("get", url, true);
       req.responseType = "json";
       req.onreadystatechange = function() {
         if (this.readyState == 4) {
           callback(req.response);
         }
       };
-      req.open("get", url, true);
       req.send(null);
     }
 
