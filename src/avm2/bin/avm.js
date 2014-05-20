@@ -47,8 +47,6 @@ console = {
  * Load Bare AVM2 Dependencies
  */
 
-load(homePath + "src/avm2/settings.js");
-
 load(homePath + "src/avm2/global.js");
 load(homePath + "src/utilities.js");
 load(homePath + "src/options.js");
@@ -67,10 +65,13 @@ var OptionSet = Shumway.Options.OptionSet;
 var argumentParser = new ArgumentParser();
 
 var systemOptions = new OptionSet("System Options");
+var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
+
+load(homePath + "src/avm2/options.js");
+
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var disassemble = shellOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
 var stubs = shellOptions.register(new Option("s", "stubs", "boolean", false, "stubs"));
-var traceLevel = shellOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
 var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 var execute = shellOptions.register(new Option("x", "execute", "boolean", false, "execute"));
 var compile = shellOptions.register(new Option("c", "compile", "boolean", false, "compile"));
@@ -80,6 +81,7 @@ var alwaysInterpret = shellOptions.register(new Option("i", "alwaysInterpret", "
 var help = shellOptions.register(new Option("h", "help", "boolean", false, "prints help"));
 var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boolean", false, "prints collected metrics"));
 var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", false, "run in release mode (!release is the default)"));
+
 
 load(homePath + "src/metrics.js");
 load(homePath + "src/avm2/constants.js");
@@ -276,7 +278,7 @@ function runVM() {
     securityDomain.initializeShell(sysMode, appMode);
   } catch (x) {
     print(x.stack);
-  }
+  };
   runAbcs(securityDomain, grabAbcsInCompartment(securityDomain.compartment, abcBuffers));
   return securityDomain;
 }
@@ -316,6 +318,7 @@ function runAbcs(securityDomain, abcArrays) {
   compileQueue.forEach(function (abc) {
     writer.writeLn("// " + abc.name);
     writer.enter("CC[" + abc.hash + "] = ");
+    securityDomain.applicationDomain.loadAbc(abc, writer);
     securityDomain.applicationDomain.compileAbc(abc, writer);
     writer.leave(";");
   });

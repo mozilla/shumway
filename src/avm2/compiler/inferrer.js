@@ -18,8 +18,6 @@
 
 "use strict";
 
-var verifierTraceLevel = new Option("tv", "tv", "number", 0, "Verifier Trace Level");
-
 var Type = (function () {
   function type () {
     unexpected("Type is Abstract");
@@ -58,13 +56,16 @@ var Type = (function () {
       return new TraitsType(x.methodInfo);
     } else if (x instanceof Global) {
       return new TraitsType(x.scriptInfo);
-    } else if (x instanceof Interface) {
-      return new TraitsType(x.classInfo, domain);
-    } else if (x instanceof MethodInfo) {
-      return new MethodType(x);
-    } else if (domain && (x instanceof (Class))) {
-      return type.from(x.classInfo, domain);
     }
+//    else if (x instanceof Interface) {
+//      return new TraitsType(x.classInfo, domain);
+//    }
+    else if (x instanceof MethodInfo) {
+      return new MethodType(x);
+    }
+//    else if (domain && (x instanceof (Class))) {
+//      return type.from(x.classInfo, domain);
+//    }
     return Type.Any;
   };
 
@@ -582,7 +583,7 @@ var Verifier = (function() {
 
     verification.prototype.verify = function verify() {
       var mi = this.methodInfo;
-      var writer = verifierTraceLevel.value ? this.writer : null;
+      var writer = Shumway.AVM2.Verifier.traceLevel.value ? this.writer : null;
       var blocks = mi.analysis.blocks;
 
       blocks.forEach(function (x) {
@@ -711,7 +712,7 @@ var Verifier = (function() {
       var stack = state.stack;
       var scope = state.scope;
 
-      var writer = verifierTraceLevel.value ? this.writer : null;
+      var writer = Shumway.AVM2.Verifier.traceLevel.value ? this.writer : null;
       var bytecodes = this.methodInfo.analysis.bytecodes;
 
       var domain = this.domain;
@@ -911,7 +912,7 @@ var Verifier = (function() {
         bc = bytecodes[bci];
         var op = bc.op;
 
-        if (writer && verifierTraceLevel.value > 1) {
+        if (writer && Shumway.AVM2.Verifier.traceLevel.value > 1) {
           writer.writeLn(("stateBefore: " + state.toString() + " $$[" + savedScope.join(", ") + "]").padRight(' ', 100) + " : " + bci + ", " + bc.toString(mi.abc));
         }
 

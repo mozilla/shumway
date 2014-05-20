@@ -22,7 +22,6 @@ var release;
 
 assert(homePath, "Host compartment needs to initialize homePath.");
 
-load(homePath + "src/avm2/settings.js");
 load(homePath + "src/avm2/avm2Util.js");
 load(homePath + "src/options.js");
 load(homePath + "src/settings.js");
@@ -33,8 +32,10 @@ var Option = Shumway.Options.Option;
 var OptionSet = Shumway.Options.OptionSet;
 
 var systemOptions = new OptionSet("System Options");
-var traceLevel = systemOptions.register(new Option("t", "traceLevel", "number", 0, "trace level"));
-var traceWarnings = systemOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
+var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
+load(homePath + "src/avm2/options.js");
+var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
+var traceWarnings = shellOptions.register(new Option("tw", "traceWarnings", "boolean", false, "prints warnings"));
 
 Timer.start("Loading VM");
 
@@ -69,8 +70,6 @@ load(homePath + "src/avm2/xregexp.js");
 load(homePath + "src/avm2/runtime.js");
 load(homePath + "src/avm2/runtime-exports.js");
 load(homePath + "src/avm2/interpreter.js");
-load(homePath + "src/avm2/viz.js");
-load(homePath + "src/avm2/xml.js");
 
 load(homePath + "src/avm2/natives/int32Vector.js");
 load(homePath + "src/avm2/natives/uint32Vector.js");

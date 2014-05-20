@@ -671,7 +671,7 @@
     return escodegen.generate(node, {base: "", indent: "  ", comment: true, format: { compact: false }});
   }
 
-  function generate(cfg, useRegisterAllocator) {
+  function generate(cfg) {
     Timer.start("Looper");
     var root = Looper.analyze(cfg);
     Timer.stop();
@@ -702,22 +702,6 @@
 
     var node = new FunctionDeclaration(id("fn"), parameters, code);
 
-    if (useRegisterAllocator) {
-      if (c4TraceLevel.value > 0) {
-        writer.writeLn("=== BEFORE ===============================");
-        writer.writeLn(generateSource(node));
-        writer.writeLn("=== TRANSFORMING =========================");
-      }
-      Transform.transform(node);
-      if (c4TraceLevel.value > 0) {
-        writer.writeLn("=== AFTER ================================");
-        writer.writeLn(generateSource(node));
-        writer.writeLn("==========================================");
-      }
-      var body = generateSource(code);
-      // body = " { debugger; " + body + " }";
-      return {parameters: parameters.map(function (p) { return p.name; }), body: body};
-    }
     Timer.start("Serialize AST");
     var source = generateSource(code);
     Timer.stop();

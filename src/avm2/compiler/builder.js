@@ -16,10 +16,7 @@
  * limitations under the License.
  */
 
-var c4Options = new OptionSet("C4");
-var enableC4 = c4Options.register(new Option("c4", "c4", "boolean", false, "Enable the C4 compiler."));
-var c4TraceLevel = c4Options.register(new Option("tc4", "tc4", "number", 0, "Compiler Trace Level"));
-var enableRegisterAllocator = c4Options.register(new Option("ra", "ra", "boolean", false, "Enable register allocator."));
+
 
 /**
  * Helper functions used by the compiler.
@@ -33,6 +30,18 @@ var createName = function createName(namespaces, name) {
 };
 
 (function (exports) {
+  /**
+   * Coerce non-primitive parameters. We can "safely" ignore non-primitive coercions because AS3
+   * programs with invalid coercions would throw runtime exceptions.
+   */
+  var c4CoerceNonPrimitiveParameters = false;
+
+  /**
+   * Coerce non-primitive values. Same logic as above.
+   */
+  var c4CoerceNonPrimitive = false;
+
+  var c4AsTypeLate = true;
 
   var Node = IR.Node;
   var Start = IR.Start;
@@ -438,7 +447,7 @@ var createName = function createName(namespaces, name) {
       var multinames = this.abc.constantPool.multinames;
       var domain = new Constant(this.abc.applicationDomain);
 
-      var traceBuilder = c4TraceLevel.value > 2;
+      var traceBuilder = Shumway.AVM2.Compiler.traceLevel.value > 2;
 
       var stopPoints = [];
 
@@ -1519,15 +1528,15 @@ var createName = function createName(namespaces, name) {
     methodInfo.analysis.markLoops();
     Timer.stop();
 
-    if (Shumway.AVM2.Runtime.enableVerifier.value) {
+    if (Shumway.AVM2.Verifier.enabled.value) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?
       Timer.start("Verify");
       verifier.verifyMethod(methodInfo, scope);
       Timer.stop();
     }
 
-    var traceSource = c4TraceLevel.value > 0;
-    var traceIR = c4TraceLevel.value > 1;
+    var traceSource = Shumway.AVM2.Compiler.traceLevel.value > 0;
+    var traceIR = Shumway.AVM2.Compiler.traceLevel.value > 1;
 
     Timer.start("Build IR");
     Node.startNumbering();
@@ -1561,7 +1570,7 @@ var createName = function createName(namespaces, name) {
     Timer.stop();
 
     Timer.start("Generate Source");
-    var result = Backend.generate(cfg, enableRegisterAllocator.value);
+    var result = Backend.generate(cfg);
     Timer.stop();
     traceSource && writer.writeLn(result.body);
     Node.stopNumbering();
