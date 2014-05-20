@@ -20,8 +20,9 @@
     console.info(message);
   }
 
+  var Shape = flash.display.Shape;
   var Graphics = flash.display.Graphics;
-  var PathCommand = flash.display.PathCommand;
+  var PathCommand = Shumway.GFX.Geometry.PathCommand;
 
   var ByteArray = flash.utils.ByteArray;
 
@@ -41,12 +42,12 @@
   unitTests.push(bounds);
 
   function basics() {
-    var g = new Graphics();
+    var g = createGraphics();
     eq(g.getGraphicsData().length, 0, "Graphics instances start out empty");
   }
 
   function clear() {
-    var g = new Graphics();
+    var g = createGraphics();
     g.lineStyle(1);
     g.lineTo(100, 100);
     neq(g.getGraphicsData().length, 0, "Graphics#lineStyle modifies instance's data");
@@ -56,12 +57,12 @@
   }
 
   function beginFill() {
-    var g = new Graphics();
+    var g = createGraphics();
     g.beginFill(0xaabbcc);
     var bytes = cloneData(g.getGraphicsData());
     eq(bytes.readUnsignedByte(), PathCommand.BeginSolidFill, "fill is stored");
     eq(bytes.readUnsignedInt(), 0xaabbccff, "beginFill stores given color and default alpha");
-    var g = new Graphics();
+    var g = createGraphics();
     g.beginFill(0xaabbcc, 0.5);
     var bytes = cloneData(g.getGraphicsData());
     bytes.readUnsignedByte();
@@ -70,7 +71,7 @@
   }
 
   function lineStyle_defaults() {
-    var g = new Graphics();
+    var g = createGraphics();
     g.lineStyle(1);
     var bytes = cloneData(g.getGraphicsData());
     eq(bytes.readUnsignedByte(), PathCommand.LineStyleSolid, "style is stored");
@@ -87,7 +88,7 @@
   }
 
   function lineStyle_allArgs() {
-    var g = new Graphics();
+    var g = createGraphics();
     g.lineStyle(10, 0xaabbcc, 0.5, true, LineScaleMode.HORIZONTAL, CapsStyle.SQUARE,
                 JointStyle.BEVEL, 10);
     var bytes = cloneData(g.getGraphicsData());
@@ -104,7 +105,7 @@
   }
 
   function moveTo() {
-    var g = new Graphics();
+    var g = createGraphics();
     g.moveTo(100, 50);
     var bytes = cloneData(g.getGraphicsData());
     eq(bytes.readUnsignedByte(), PathCommand.MoveTo, "command is stored");
@@ -114,7 +115,7 @@
   }
 
   function lineTo() {
-    var g = new Graphics();
+    var g = createGraphics();
     g.lineTo(100, 50);
     var bytes = cloneData(g.getGraphicsData());
     eq(bytes.readUnsignedByte(), PathCommand.LineTo, "command is stored");
@@ -124,7 +125,7 @@
   }
 
   function curveTo() {
-    var g = new Graphics();
+    var g = createGraphics();
     g.curveTo(100, 50, 0, 100);
     var bytes = cloneData(g.getGraphicsData());
     eq(bytes.readUnsignedByte(), PathCommand.CurveTo, "command is stored");
@@ -136,10 +137,10 @@
   }
 
   function cubicCurveTo() {
-    var g = new Graphics();
+    var g = createGraphics();
     g.cubicCurveTo(100, 50, -100, 100, 0, 150);
     var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), PathCommand.CurveTo, "command is stored");
+    eq(bytes.readUnsignedByte(), PathCommand.CubicCurveTo, "command is stored");
     eq(bytes.readInt(), 100 * 20, "x is stored correctly");
     eq(bytes.readInt(), 50 * 20, "y is stored correctly");
     eq(bytes.readInt(), -100 * 20, "x is stored correctly");
@@ -152,7 +153,7 @@
   // Note: these tests aren't really valid, but will do as a first approximation.
   // (empty moves and stroke- and fill-less lines mustn't extend bounds.)
   function bounds() {
-    var g = new Graphics();
+    var g = createGraphics();
     g.moveTo(150, 50);
     structEq(g._getContentBounds(), {x: 0, y: 0, width: 3000, height: 1000}, "move extends bounds");
     g.clear();
@@ -161,6 +162,10 @@
     g.clear();
     g.curveTo(100, 50, 0, 100);
     structEq(g._getContentBounds(), {x: 0, y: 0, width: 2000, height: 2000}, "curve extends bounds");
+  }
+
+  function createGraphics() {
+    return new Shape().graphics;
   }
 
   function cloneData(data) {
