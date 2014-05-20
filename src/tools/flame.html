@@ -21,7 +21,7 @@
     }
     #container {
       width: 100%;
-      height: 512px;
+      height: 250px;
       display: relative;
     }
     canvas {
@@ -36,14 +36,82 @@
   <div id="container"></div>
   <script src="../utilities.js"></script>
   <script src="../gfx/geometry.js"></script>
-  <script src="../tools/flame.js"></script>
+  <script src="flame.js"></script>
   <script src="references.js"></script>
   <script>
+
     var Geometry = Shumway.GFX.Geometry;
     var Tools = Shumway.Tools;
     var container = document.getElementById("container");
     var buffer = new Tools.TimelineBuffer();
 
+    getJSON("data/CPU-20140520T092003.json", function(result) {
+      console.log(result.timestamps.length + " samples");
+      readChromeCPUProfile(result);
+    });
+
+    function readChromeCPUProfile(profile) {
+      var startTime = profile.timestamps[0] / 1000;
+      var currentStack = [];
+      var idMap = {};
+      var sample;
+      resolveIds(profile.head, idMap);
+      for (var i = 0; i < profile.timestamps.length; i++) {
+        var time = profile.timestamps[i] / 1000 - startTime;
+        var stack = [];
+        sample = idMap[profile.samples[i]];
+        while (sample) {
+          stack.unshift(sample);
+          sample = sample.parent;
+        }
+        for (var j = 0; j < Math.min(stack.length, currentStack.length); j++) {
+          if (stack[j] !== currentStack[j]) {
+            break;
+          }
+        }
+        var leaveCount = currentStack.length - j;
+        for (var k = 0; k < leaveCount; k++) {
+          sample = currentStack.pop();
+          buffer.leave(sample.functionName, time);
+        }
+        for (; j < stack.length; j++) {
+          sample = stack[j];
+          buffer.enter(sample.functionName, time);
+        }
+        currentStack = stack;
+      }
+      while (sample = currentStack.pop()) {
+        if(currentStack.length) {
+          buffer.leave(sample.functionName, time);
+        }
+      }
+
+      var flameChart = new Tools.FlameChart(container, buffer);
+    }
+
+    function resolveIds(parent, idMap) {
+      idMap[parent.id] = parent;
+      if (parent.children) {
+        for (var i = 0; i < parent.children.length; i++) {
+          parent.children[i].parent = parent;
+          resolveIds(parent.children[i], idMap);
+        }
+      }
+    }
+
+    function getJSON(url, callback) {
+      var req = new XMLHttpRequest();
+      req.responseType = "json";
+      req.onreadystatechange = function() {
+        if (this.readyState == 4) {
+          callback(req.response);
+        }
+      };
+      req.open("get", url, true);
+      req.send(null);
+    }
+
+    /*
     function testA(size) {
       var t = 0;
       function next() {
@@ -69,6 +137,8 @@
     }
 
     testA(1000);
+    */
+
   </script>
 </body>
 </html>
