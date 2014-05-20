@@ -493,7 +493,7 @@ module Shumway.Tools {
         var depths = [];
         var maxDepth = 0;
         for (var time = range.startTime; time < range.endTime; time += sampleTimeInterval) {
-          var depth = range.query(time).getDepth();
+          var depth = range.query(time).getDepth() - 1;
           maxDepth = Math.max(maxDepth, depth);
           depths.push(depth);
         }
@@ -507,7 +507,7 @@ module Shumway.Tools {
         contextOverview.moveTo(0, this._overviewHeight);
         for (var i = 0; i < depths.length; i++) {
           x += sampleWidthInPixels;
-          var y = depths[i] * depthHeight;
+          var y = this._overviewHeight - depths[i] * depthHeight;
           contextOverview.lineTo(x, y);
         }
         contextOverview.lineTo(x, this._overviewHeight);
