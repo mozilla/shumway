@@ -3,6 +3,9 @@
 <head>
   <title>Flamechart Demo</title>
   <style>
+    html, body {
+      margin: 0;
+    }
     html {
       height: 100%;
       width: 100%;
@@ -19,6 +22,7 @@
     #container {
       width: 100%;
       height: 512px;
+      display: relative;
     }
     canvas {
       background-color: #1a2633;
@@ -64,7 +68,7 @@
       var flameChart = new Tools.FlameChart(container, buffer);
     }
 
-    testA(1024 * 8);
+    testA(1000);
   </script>
 </body>
 </html>

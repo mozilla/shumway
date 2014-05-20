@@ -52,23 +52,60 @@ module Shumway.Tools {
 
     /**
      * Gets the high and low index of the children that intersect the specified time range.
-     *
-     * TODO: This uses a dumb linear algorithm, we can do much better here by doing a binary search.
      */
-    public getChildRange(s: number, e: number): number [] {
+    public getChildRange(startTime: number, endTime: number): number [] {
+      if (startTime > this.endTime || endTime < this.startTime || endTime < startTime) {
+        return null;
+      } else {
+        return [
+          this.getNearestChild(startTime),
+          this.getNearestChildReverse(endTime)
+        ];
+      }
+    }
+
+    public getNearestChild(time: number): number {
       var children = this.children;
-      var j = -1, k = -1;
-      for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        var l = child.startTime, r = child.endTime;
-        if (l <= e && s <= r) { // Segments Overlap
-          if (j < 0) {
-            j = i;
-          }
-          k = i;
+      if (time <= children[0].endTime) {
+        return 0;
+      }
+      var imid;
+      var imin = 0;
+      var imax = children.length - 1;
+      while (imax > imin) {
+        imid = ((imin + imax) / 2) | 0;
+        var child = children[imid];
+        if (time >= child.startTime && time <= child.endTime) {
+          return imid;
+        } else if (time > child.endTime) {
+          imin = imid + 1;
+        } else {
+          imax = imid;
         }
       }
-      return [j, k];
+      return Math.ceil((imin + imax) / 2);
+    }
+
+    public getNearestChildReverse(time: number): number {
+      var children = this.children;
+      var imax = children.length - 1;
+      if (time >= children[imax].startTime) {
+        return imax;
+      }
+      var imid;
+      var imin = 0;
+      while (imax > imin) {
+        imid = Math.ceil((imin + imax) / 2);
+        var child = children[imid];
+        if (time >= child.startTime && time <= child.endTime) {
+          return imid;
+        } else if (time > child.endTime) {
+          imin = imid;
+        } else {
+          imax = imid - 1;
+        }
+      }
+      return ((imin + imax) / 2) | 0;
     }
 
     /**
@@ -495,11 +532,11 @@ module Shumway.Tools {
 
     private _drawFlames() {
       var a = this._range.getChildRange(this._windowLeft, this._windowRight);
-      var l = a[0];
-      var r = a[1];
-      if (r < 0 || l < 0) {
+      if (a == null) {
         return;
       }
+      var l = a[0];
+      var r = a[1];
       var context = this._context;
       var ratio = window.devicePixelRatio;
       context.save();
