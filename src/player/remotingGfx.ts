@@ -64,10 +64,21 @@ module Shumway.Remoting.GFX {
   export class GFXChannelDeserializerContext {
     root: FrameContainer;
     _frames: Frame [];
+    _assets: IRenderable [];
 
     constructor(root: FrameContainer) {
       this.root = root;
       this._frames = [];
+      this._assets = [];
+    }
+
+    _makeFrame(id: number): Frame {
+      if (id & IDMask.Asset) {
+        id &= ~IDMask.Asset;
+        return new Shape(this._assets[id]);
+      } else {
+        return this._frames[id];
+      }
     }
   }
 
@@ -85,6 +96,9 @@ module Shumway.Remoting.GFX {
         switch (tag) {
           case MessageTag.EOF:
             return;
+          case MessageTag.UpdateGraphics:
+            this._readUpdateGraphics();
+            break;
           case MessageTag.UpdateFrame:
             this._readUpdateFrame();
             break;
@@ -144,15 +158,43 @@ module Shumway.Remoting.GFX {
       );
     }
 
-    private _readUpdateFrame() {
-      var context = this.context;
+    private _readUpdateGraphics() {
       var input = this.input;
+      var context = this.context;
       var id = input.readInt();
-      var isContainer = !!input.readInt();
+      var asset = context._assets[id];
+      var bounds: Rectangle = this._readRectangle();
+      if (!asset) {
+        // TODO: Create a real renderable.
+        asset = context._assets[id] = new Renderable(bounds, function (context) {
+          if (!this.fillStyle) {
+            this.fillStyle = Shumway.ColorStyle.randomStyle();
+          }
+          context.save();
+          context.beginPath();
+          context.lineWidth = 2;
+          context.fillStyle = this.fillStyle;
+          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+          context.textBaseline = "top";
+          context.fillStyle = "white";
+          context.fillText(String(id), bounds.x, bounds.y);
+          context.restore();
+        });
+        asset.isInvalid = false;
+        asset.isScalable = true;
+        asset.isTileable = true;
+        asset.isDynamic = false;
+      }
+    }
+
+    private _readUpdateFrame() {
+      var input = this.input;
+      var context = this.context;
+      var id = input.readInt();
       var firstFrame = context._frames.length === 0;
       var frame = context._frames[id];
       if (!frame) {
-        frame = context._frames[id] = isContainer ? new FrameContainer() : new Shape(null);
+        frame = context._frames[id] = new FrameContainer()
       }
       if (firstFrame) {
         context.root.addChild(frame);
@@ -161,49 +203,13 @@ module Shumway.Remoting.GFX {
       if (hasBits & UpdateFrameTagBits.HasMatrix) {
         frame.matrix = this._readMatrix();
       }
-      var bounds: Rectangle;
-      if (hasBits & UpdateFrameTagBits.HasBounds) {
-        bounds = this._readRectangle();
-      }
-      if (hasBits & UpdateFrameTagBits.HasShapeData) {
-        assert(!isContainer);
-        var assetId = input.readInt();
-        var shapeData = this.inputAssets[assetId];
-        this.inputAssets[assetId] = null;
-        var shape = (<Shape>frame);
-        shape.ensureSource(shapeData, bounds);
-      } else if (bounds) {
-        var shape = (<Shape>frame);
-        if (!shape.source) {
-          var renderable = new Renderable(bounds, function (context) {
-            if (!this.fillStyle) {
-              this.fillStyle = Shumway.ColorStyle.randomStyle();
-            }
-            context.save();
-            context.beginPath();
-            context.lineWidth = 2;
-            context.fillStyle = this.fillStyle;
-            context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-            context.textBaseline = "top";
-            context.fillStyle = "white";
-            context.fillText(String(id), bounds.x, bounds.y);
-
-            context.restore();
-          });
-          renderable.isInvalid = false;
-          renderable.isScalable = true;
-          renderable.isTileable = true;
-          renderable.isDynamic = false;
-          shape.source = renderable;
-        }
-      }
       if (hasBits & UpdateFrameTagBits.HasChildren) {
         var count = input.readInt();
         var container = <FrameContainer>frame;
         container.clearChildren();
         for (var i = 0; i < count; i++) {
           var childId = input.readInt();
-          var child = context._frames[childId];
+          var child = context._makeFrame(childId);
           assert (child);
           container.addChild(child);
         }
@@ -214,7 +220,8 @@ module Shumway.Remoting.GFX {
       if (hasBits & UpdateFrameTagBits.HasMiscellaneousProperties) {
         frame.blendMode = input.readInt();
         // TODO: Should make a proper flag for this.
-        frame.alpha = input.readBoolean() ? 1 : 0;
+        input.readBoolean(); // Visibility
+        // frame.alpha = input.readBoolean() ? 1 : 0;
       }
     }
   }

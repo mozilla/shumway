@@ -145,31 +145,36 @@ module Shumway.AVM2.AS.flash.display {
     CacheAsBitmap                             = 0x1000,
 
     /**
-     * Indicates whether this display object's matrix has changed since the last time it was synchronized
+     * Indicates whether this display object's matrix has changed since the last time it was synchronized.
      */
     DirtyMatrix                               = 0x100000,
 
     /**
-     * Indicates whether this display object's children list has changed since the last time it was synchronized
+     * Indicates whether this display object's children list has changed since the last time it was synchronized.
      */
     DirtyChildren                             = 0x200000,
+
+    /**
+     * Indicates whether this display object's graphics has changed since the last time it was synchronized.
+     */
+    DirtyGraphics                             = 0x400000,
 
     /**
      * Indicates whether this display object's has dirty descendents. If this flag is not set then the subtree does not
      * need to be synchronized.
      */
-    DirtyChild                                = 0x400000,
+    DirtyChild                                = 0x800000,
 
     /**
      * Indicates whether this display object's color transform has changed since the last time it was synchronized
      */
-    DirtyColorTransform                       = 0x800000,
+    DirtyColorTransform                       = 0x1000000,
 
     /**
      * Indicates whether this display object's other properties have changed. We need to split this up in multiple
      * bits so we don't serialize as much.
      */
-    DirtyMiscellaneousProperties              = 0x1000000,
+    DirtyMiscellaneousProperties              = 0x2000000,
 
     /**
      * Display object has changed since the last time it was drawn.
@@ -179,7 +184,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * All synchronizable properties are dirty.
      */
-    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyColorTransform | DirtyMiscellaneousProperties
+    Dirty                                     = DirtyMatrix | DirtyChildren | DirtyChild | DirtyGraphics | DirtyColorTransform | DirtyMiscellaneousProperties
   }
 
   /**
@@ -242,6 +247,7 @@ module Shumway.AVM2.AS.flash.display {
                                  DisplayObjectFlags.InvalidMatrix                      |
                                  DisplayObjectFlags.InvalidConcatenatedMatrix          |
                                  DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
+                                 DisplayObjectFlags.DirtyGraphics                      |
                                  DisplayObjectFlags.DirtyMatrix                        |
                                  DisplayObjectFlags.DirtyColorTransform                |
                                  DisplayObjectFlags.DirtyMiscellaneousProperties;
@@ -499,6 +505,7 @@ module Shumway.AVM2.AS.flash.display {
     _mouseDown: boolean;
 
     _symbol: Shumway.Timeline.Symbol;
+    _graphics: flash.display.Graphics;
 
 
     /**
@@ -1235,29 +1242,48 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
+     * Only these objects can have graphics.
+     */
+    _canHaveGraphics(): boolean {
+      return flash.display.Shape.isType(this) ||
+             flash.display.Sprite.isType(this) ||
+             flash.display.MorphShape.isType(this);
+    }
+
+    /**
      * Gets the graphics object of this object. Only Shapes, Sprites, and MorphShapes can have
      * graphics.
      */
     _getGraphics(): flash.display.Graphics {
-      if (flash.display.Shape.isType(this)  ||
-          flash.display.Sprite.isType(this) ||
-          flash.display.MorphShape.isType(this))
-      {
+      if (this._canHaveGraphics()) {
         return (<any>this)._graphics;
       }
       return null;
     }
 
     /**
-     * This is only ever called from |_animate|.
+     * Lazily construct a graphics object.
+     */
+    _ensureGraphics(): flash.display.Graphics {
+      release || assert (this._canHaveGraphics());
+      if (this._graphics) {
+        return this._graphics;
+      }
+      this._graphics = new flash.display.Graphics();
+      this._graphics._setParent(this);
+      this._invalidateBoundsAndRect();
+      this._setFlags(DisplayObjectFlags.DirtyGraphics);
+      return this._graphics;
+    }
+
+    /**
+     * This is only ever called from |_animate|. Thes graphics objects cannot be modified so they don't need a back reference.
      */
     _setGraphics(graphics: flash.display.Graphics) {
-      if (flash.display.Shape.isType(this)  ||
-          flash.display.Sprite.isType(this) ||
-          flash.display.MorphShape.isType(this))
-      {
-        (<any>this)._graphics = graphics;
+      if (this._canHaveGraphics()) {
+        this._graphics = graphics;
         this._invalidateBoundsAndRect();
+        this._setFlags(DisplayObjectFlags.DirtyGraphics);
         return;
       }
       unexpected("Cannot set graphics on this type of display object.");

@@ -32,7 +32,12 @@ module Shumway.AVM2.AS.flash.display {
   import utils = flash.utils;
 
   export class Graphics extends ASNative {
-    
+
+    /**
+     * Every graphics is assigned an unique integer ID.
+     */
+    static _syncID = 0;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
@@ -57,7 +62,7 @@ module Shumway.AVM2.AS.flash.display {
 
     constructor () {
       false && super();
-      this._id = DisplayObject._syncID++;
+      this._id = Graphics._syncID++;
       this._graphicsData = new utils.ByteArray();
       this._rect = new geom.Rectangle();
       this._bounds = new geom.Rectangle();

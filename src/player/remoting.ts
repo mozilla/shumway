@@ -19,17 +19,22 @@ module Shumway.Remoting {
     HasBounds                   = 0x0002,
     HasChildren                 = 0x0004,
     HasColorTransform           = 0x0008,
-    HasMiscellaneousProperties  = 0x0010,
-    HasShapeData                = 0x0020
+    HasMiscellaneousProperties  = 0x0010
+  }
+
+  export enum IDMask {
+    None                        = 0x00000000,
+    Asset                       = 0x80000000
   }
 
   export enum MessageTag {
-    EOF           = 0,
+    EOF                         = 0,
 
-    UpdateFrame   = 100,
+    UpdateFrame                 = 100,
+    UpdateGraphics              = 101,
 
-    MouseEvent    = 200,
-    KeyboardEvent = 201
+    MouseEvent                  = 200,
+    KeyboardEvent               = 201
   }
 
   /**
