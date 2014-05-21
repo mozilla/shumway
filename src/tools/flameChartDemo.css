@@ -1,10 +1,10 @@
 html, body {
     margin: 0;
+    overflow: hidden;
 }
 html {
     height: 100%;
     width: 100%;
-    overflow: hidden;
 }
 body {
     color: white;
@@ -12,7 +12,6 @@ body {
     font: 12px Consolas, "Liberation Mono", Courier, monospace;
     height: 100%;
     width: 100%;
-    overflow: auto;
 }
 #container {
     width: 100%;
