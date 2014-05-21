@@ -15,13 +15,35 @@
  */
 
 module Shumway.AVM2.Verifier {
+
   import OP = Shumway.AVM2.ABC.OP;
+  import AbcFile = Shumway.AVM2.ABC.AbcFile;
+  import Trait = Shumway.AVM2.ABC.Trait;
   import Info = Shumway.AVM2.ABC.Info;
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
   import notImplemented = Shumway.Debug.notImplemented;
+  import popManyIntoVoid = Shumway.ArrayUtilities.popManyIntoVoid;
+
+  import Scope = Shumway.AVM2.Runtime.Scope;
+
+  declare var LazyInitializer;
+
+  export class VerifierError {
+    name: string;
+    constructor(public message: string = "") {
+      this.name = "VerifierError";
+    }
+  }
 
   export class TypeInformation {
     type: Type;
+    baseClass: any;
+    object: any;
+    scopeDepth: number;
+    trait: Trait;
+    noCoercionNeeded: boolean;
+    noCallSuperNeeded: boolean;
+    propertyQName: string;
   }
 
   export class Type {
@@ -49,6 +71,7 @@ module Shumway.AVM2.Verifier {
     };
 
     static from(info: Info, domain: ApplicationDomain): Type {
+      assert (info.hash);
       var type = Type._cache[info.hash];
       if (!type) {
         type = Type._cache[info.hash] = new TraitsType(info, domain);
@@ -111,18 +134,31 @@ module Shumway.AVM2.Verifier {
     }
 
     equals(other: Type): boolean {
-      return false;
+      return this === other;
     }
 
     merge(other: Type): Type {
-      return null;
+      return Type.Any;
     }
 
     instanceType(): Type {
-      return null;
+      return Type.Any;
+    }
+
+    classType(): Type {
+      return Type.Any;
     }
 
     super(): Type {
+      Shumway.Debug.abstractMethod("super");
+      return null;
+    }
+
+    applyType(parameter: Type) {
+      return null;
+    }
+
+    getTrait(mn: Type, isSetter: boolean, followSuperType: boolean): Trait {
       return null;
     }
 
@@ -132,6 +168,79 @@ module Shumway.AVM2.Verifier {
 
     isString(): boolean {
       return this === Type.String;
+    }
+
+    isScriptInfo(): boolean {
+      return false;
+    }
+
+    isClassInfo(): boolean {
+      return false;
+    }
+
+    isInstanceInfo(): boolean {
+      return false;
+    }
+
+    isTraitsType(): boolean {
+      return this instanceof TraitsType;
+    }
+
+    isParameterizedType(): boolean {
+      return this instanceof ParameterizedType;
+    }
+
+    isMethodType(): boolean {
+      return this instanceof MethodType;
+    }
+
+    isMultinameType(): boolean {
+      return this instanceof MultinameType;
+    }
+
+    isConstantType(): boolean {
+      return this instanceof ConstantType;
+    }
+
+    isSubtypeOf(other: Type) {
+      if (this === other || this.equals(other)) {
+        return true;
+      }
+      return this.merge(other) === this;
+    }
+
+    asTraitsType(): TraitsType {
+      assert (this.isTraitsType());
+      return <TraitsType>this;
+    }
+
+    asMethodType(): MethodType {
+      assert (this.isMethodType());
+      return <MethodType>this;
+    }
+
+    asMultinameType(): MultinameType {
+      assert (this.isMultinameType());
+      return <MultinameType>this;
+    }
+
+    asConstantType(): ConstantType {
+      assert (this.isConstantType());
+      return <ConstantType>this;
+    }
+
+    getConstantValue(): any {
+      assert (this.isConstantType());
+      return (<ConstantType>this).value;
+    }
+
+    asParameterizedType(): ParameterizedType {
+      assert (this.isParameterizedType());
+      return <ParameterizedType>this;
+    }
+
+    isDirectlyReadable() {
+      return this === Type.Array;
     }
   }
 
@@ -144,6 +253,15 @@ module Shumway.AVM2.Verifier {
     }
     instanceType(): Type {
       return Type.Any;
+    }
+  }
+
+  export class MethodType extends Type {
+    constructor(public methodInfo: MethodInfo) {
+      super();
+    }
+    toString(): string {
+      return "MT " + this.methodInfo;
     }
   }
 
@@ -179,6 +297,115 @@ module Shumway.AVM2.Verifier {
       return null;
     }
 
+    findTraitByName(traits: Trait [], mn: any, isSetter: boolean) {
+      var isGetter = !isSetter;
+      var trait;
+      if (!Multiname.isQName(mn)) {
+        release || assert(mn instanceof Multiname);
+        var multiname = <Multiname>mn;
+        var dy;
+        for (var i = 0; i < multiname.namespaces.length; i++) {
+          var qname = multiname.getQName(i);
+          if (mn.namespaces[i].isDynamic()) {
+            dy = qname;
+          } else {
+            if ((trait = this.findTraitByName(traits, qname, isSetter))) {
+              return trait;
+            }
+          }
+        }
+        if (dy) {
+          return this.findTraitByName(traits, dy, isSetter);
+        }
+      } else {
+        var qn = Multiname.getQualifiedName(mn);
+        for (var i = 0; i < traits.length; i++) {
+          trait = traits[i];
+          if (Multiname.getQualifiedName(trait.name) === qn) {
+            if (isSetter && trait.isGetter() || isGetter && trait.isSetter()) {
+              continue;
+            }
+            return trait;
+          }
+        }
+      }
+    }
+
+    getTrait(mn: Type, isSetter: boolean, followSuperType: boolean): Trait {
+      if (mn.isMultinameType()) {
+        return null;
+      }
+      var mnValue = mn.getConstantValue();
+      if (mnValue.isAttribute()) {
+        return null;
+      }
+      if (followSuperType && (this.isInstanceInfo() || this.isClassInfo())) {
+        var node = this;
+        do {
+          var trait = node.getTrait(mn, isSetter, false);
+          if (!trait) {
+            node = node.super();
+          }
+        } while (!trait && node);
+        return trait;
+      } else {
+        return this.findTraitByName(this.info.traits, mnValue, isSetter);
+      }
+    }
+
+    equals(other: Type): boolean {
+      if (other.isTraitsType()) {
+        return this.info.traits === (<TraitsType>other).info.traits;
+      }
+      return false;
+    }
+
+    merge(other: Type): Type {
+      if (other.isTraitsType()) {
+        if (this.equals(<TraitsType>other)) {
+          return this;
+        }
+        if (this.isNumeric() && other.isNumeric()) {
+          return Type.Number;
+        }
+        if (this.isInstanceInfo() && other.isInstanceInfo()) {
+          var path = [];
+          for (var curr = this; curr; curr = curr.super()) {
+            path.push(curr);
+          }
+          for (var curr = <TraitsType>other; curr; curr = curr.super()) {
+            for (var i = 0; i < path.length; i++) {
+              if (path[i].equals(curr)) {
+                return curr;
+              }
+            }
+          }
+          return Type.Object;
+        }
+      }
+      return Type.Any;
+    }
+
+    isScriptInfo(): boolean {
+      return this.info instanceof ScriptInfo;
+    }
+
+    isClassInfo(): boolean {
+      return this.info instanceof ClassInfo;
+    }
+
+    isInstanceInfo(): boolean {
+      return this.info instanceof InstanceInfo;
+    }
+
+    isInstanceOrClassInfo(): boolean {
+      return this.isInstanceInfo() || this.isClassInfo();
+    }
+
+    applyType(parameter: Type) {
+      return new ParameterizedType(this, parameter);
+    }
+
     private _getInfoName() {
       if (this.info instanceof ScriptInfo) {
         return "SI";
@@ -212,9 +439,33 @@ module Shumway.AVM2.Verifier {
     }
   }
 
+  export class MultinameType extends Type {
+    constructor(public namespaces: Type [], public name: Type, public flags: number) {
+      super();
+    }
+    toString(): string {
+      return "MN";
+    }
+  }
+
   export class ParameterizedType extends TraitsType {
     constructor(public type: TraitsType, public parameter: Type) {
       super(type.info, type.domain);
+    }
+  }
+
+  export class ConstantType extends Type {
+    constructor(public value: any) {
+      super();
+    }
+    toString(): string {
+      return String(this.value);
+    }
+    static from(value: any): ConstantType {
+      return new ConstantType(value);
+    }
+    static fromArray(array: any []): ConstantType [] {
+      return array.map(value => new ConstantType(value));
     }
   }
 
@@ -318,23 +569,26 @@ module Shumway.AVM2.Verifier {
     index: number;
     ti: TypeInformation;
     op: number;
+    argCount: number;
+    toString: (abc: AbcFile) => string;
   }
 
   class Verification {
     writer = new IndentingWriter();
     thisType: Type;
     returnType: Type;
-
-    private _multinames: Multiname [];
-
+    multinames: Multiname [];
+    pushCount: number = 0;
+    pushAnyCount: number = 0;
     constructor (
       public methodInfo: MethodInfo,
       public domain: ApplicationDomain,
-      public savedScope: Info []
+      public savedScope: Type []
     ) {
       // ...
       this.writer = Shumway.AVM2.Verifier.traceLevel.value ? new IndentingWriter() : null;
-      this._multinames = methodInfo.abc.constantPool.multinames;
+      this.multinames = methodInfo.abc.constantPool.multinames;
+      this.returnType = Type.Undefined;
     }
 
     verify() {
@@ -379,6 +633,7 @@ module Shumway.AVM2.Verifier {
 
     private _verifyBlocks(entryState: State) {
       var writer = this.writer;
+
       var blocks: Block [] = (<any>this.methodInfo).analysis.blocks;
       blocks.forEach(function (x: Block) {
         x.entryState = x.exitState = null;
@@ -457,6 +712,7 @@ module Shumway.AVM2.Verifier {
 
       if (writer) {
         writer.writeLn("Inferred return type: " + this.returnType);
+        writer.writeLn("Quality pushCount: " + this.pushCount + ", pushAnyCount: " + this.pushAnyCount);
       }
       (<any>this.methodInfo).inferredReturnType = this.returnType;
     }
@@ -480,9 +736,13 @@ module Shumway.AVM2.Verifier {
         release || assert(x);
         ti().type = x;
         stack.push(x);
+        self.pushCount ++;
+        if (x === Type.Any) {
+          self.pushAnyCount ++;
+        }
       }
 
-      function pop() {
+      function pop(expectedType?: Type) {
         return stack.pop();
       }
 
@@ -490,46 +750,162 @@ module Shumway.AVM2.Verifier {
         notImplemented(String(bc));
       }
 
-      function popMultiname() {
-        var mn = this._multinames[bc.index];
+      function popMultiname(): Type {
+        var mn = self.multinames[bc.index];
         if (mn.isRuntime()) {
-          var namespaces = mn.namespaces;
-          var name = mn.name;
+          var name: Type;
           if (mn.isRuntimeName()) {
             name = pop();
+          } else {
+            name = ConstantType.from(mn.name);
           }
+          var namespaces: Type [];
           if (mn.isRuntimeNamespace()) {
             namespaces = [pop()];
+          } else {
+            namespaces = ConstantType.fromArray(mn.namespaces);
           }
           return new MultinameType(namespaces, name, mn.flags);
         }
-        return mn;
+        return ConstantType.from(mn);
       }
 
-      function getProperty(object: Type, mn) {
-
+      function isNumericMultiname(mn: Type) {
+        if (mn.isMultinameType() && mn.asMultinameType().name.isNumeric()) {
+          return true;
+        }
+        if (mn.isConstantType() && Multiname.isNumeric(mn.getConstantValue())) {
+          return true;
+        }
+        return false;
       }
 
-      function setProperty(object: Type, mn, value: Type) {
-
+      function getProperty(object: Type, mn: Type): Type {
+        if (object.isTraitsType() || object.isParameterizedType()) {
+          var traitsType = <TraitsType>object;
+          var trait = traitsType.getTrait(mn, false, true);
+          if (trait) {
+            writer && writer.debugLn("getProperty(" + mn + ") -> " + trait);
+            ti().trait = trait;
+            if (trait.isSlot() || trait.isConst()) {
+              return Type.fromName(trait.typeName, self.domain).instanceType();
+            } else if (trait.isGetter()) {
+              return Type.fromName(trait.methodInfo.returnType, self.domain).instanceType();
+            } else if (trait.isClass()) {
+              return Type.from(trait.classInfo, self.domain);
+            } else if (trait.isMethod()) {
+              return Type.from(trait.methodInfo, self.domain);
+            }
+          } else if (isNumericMultiname(mn) && traitsType.isParameterizedType()) {
+            var parameter = traitsType.asParameterizedType().parameter;
+            writer && writer.debugLn("getProperty(" + mn + ") -> " + parameter);
+            return parameter;
+          } else if (traitsType === Type.Array) {
+            // Can't do much about Arrays unfortunately.
+          } else {
+            writer && writer.redLn("WARNING: getProperty(" + mn + ")");
+          }
+        }
+        return Type.Any;
       }
 
-      function findProperty(mn, strict: boolean) {
-
+      function setProperty(object: Type, mn: Type, value: Type) {
+        if (object.isTraitsType() || object.isParameterizedType()) {
+          var traitsType = <TraitsType>object;
+          var trait = traitsType.getTrait(mn, true, true);
+          if (trait) {
+            writer && writer.debugLn("setProperty(" + mn + ") -> " + trait);
+            ti().trait = trait;
+          } else if (isNumericMultiname(mn) && traitsType.isParameterizedType()) {
+            // We can optimize these.
+          } else if (traitsType === Type.Array) {
+            // We can optimize these.
+          } else {
+            writer && writer.redLn("WARNING: setProperty(" + mn + ")");
+          }
+        }
       }
 
-      function accessSlot(object: Type) {
+      function findProperty(mn: Type, strict: boolean): Type {
+        if (mn.isMultinameType()) {
+          return Type.Any;
+        }
 
+        var savedScope = self.savedScope;
+
+        /**
+         * Try to find the property in the scope stack. For instance methods the scope
+         * stack should already have the instance object.
+         */
+        for (var i = scope.length - 1; i >= -savedScope.length; i--) {
+          var type = i >= 0 ? scope[i] : savedScope[savedScope.length + i];
+          if (type.isTraitsType()) {
+            var traitsType = <TraitsType>type;
+            // TODO: Should we be looking for getter / setter traits?
+            var trait = traitsType.getTrait(mn, false, true);
+            if (trait) {
+              ti().scopeDepth = scope.length - i - 1;
+              if (traitsType.isClassInfo() || traitsType.isScriptInfo()) {
+                ti().object = LazyInitializer.create(traitsType.info);
+              }
+              writer && writer.debugLn("findProperty(" + mn + ") -> " + traitsType);
+              return traitsType;
+            }
+          } else {
+            writer && writer.redLn("WARNING: findProperty(" + mn + ")");
+            return Type.Any;
+          }
+        }
+
+        var resolved = self.domain.findDefiningScript(mn.getConstantValue(), false);
+        if (resolved) {
+          var type = Type.from(resolved.script, self.domain);
+          writer && writer.debugLn("findProperty(" + mn + ") -> " + type);
+          return type;
+        }
+
+        if (mn.isConstantType()) {
+          if (mn.getConstantValue().name === "unsafeJSNative") {
+            return Type.Any;
+          }
+        }
+
+        writer && writer.redLn("WARNING: findProperty(" + mn + ")");
+        return Type.Any;
       }
 
-      var value: Type, object: Type, a: Type, b: Type, object: Type, mn: Type, type: Type;
+      function accessSlot(object: Type): Type {
+        return Type.Any;
+      }
+
+      function construct(object: Type): Type {
+        if (object.isTraitsType() || object.isParameterizedType()) {
+          if (object === Type.Function || object === Type.Class || object === Type.Object) {
+            return Type.Object;
+          }
+          return object.instanceType();
+        } else {
+          writer && writer.redLn("WARNING: construct(" + object + ")");
+          return Type.Any;
+        }
+      }
+
+      var globalScope = this.savedScope[0];
+      var value: Type, object: Type, a: Type, b: Type, object: Type, mn: Type, type: Type, returnType: Type;
       
       for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
         bc = bytecodes[bci];
         var op = bc.op;
 
+        /**
+         * Skip debug ops.
+         */
+        if (op === OP.debugline || op === OP.debugfile) {
+          continue;
+        }
+
         if (writer && Shumway.AVM2.Verifier.traceLevel.value > 1) {
-          writer.writeLn(("stateBefore: " + state.toString() + " $$[" + savedScope.join(", ") + "]").padRight(' ', 100) + " : " + bci + ", " + bc.toString(methodInfo.abc));
+          writer.writeLn(("stateBefore: " + state.toString() + " $$[" + this.savedScope.join(", ") + "]").padRight(' ', 100) + " : " + bci + ", " + bc.toString(methodInfo.abc));
         }
 
         switch (op) {
@@ -543,7 +919,7 @@ module Shumway.AVM2.Verifier {
             mn = popMultiname();
             object = pop();
             release || assert(object.super());
-            ti().baseClass = LazyInitializer.create(this.thisType.super().classType().object);
+            ti().baseClass = LazyInitializer.create(this.thisType.asTraitsType().super().classType().info);
             push(getProperty(object.super(), mn));
             break;
           case OP.setsuper:
@@ -551,7 +927,7 @@ module Shumway.AVM2.Verifier {
             mn = popMultiname();
             object = pop();
             release || assert(object.super());
-            ti().baseClass = LazyInitializer.create(this.thisType.super().classType().object);
+            ti().baseClass = LazyInitializer.create(this.thisType.asTraitsType().super().classType().info);
             setProperty(object.super(), mn, value);
             break;
           case OP.dxns:
@@ -693,9 +1069,9 @@ module Shumway.AVM2.Verifier {
             push(Type.Function);
             break;
           case OP.call:
-            stack.popMany(bc.argCount);
+            popManyIntoVoid(stack, bc.argCount);
             object = pop();
-            fn = pop();
+            pop();
             push(Type.Any);
             break;
           case OP.callmethod:
@@ -710,20 +1086,20 @@ module Shumway.AVM2.Verifier {
           case OP.callpropvoid:
           case OP.callproperty:
           case OP.callproplex:
-            stack.popMany(bc.argCount);
+            popManyIntoVoid(stack, bc.argCount);
             mn = popMultiname();
             object = pop();
             if (op === OP.callsuper || op === OP.callsupervoid) {
               object = this.thisType.super();
-              ti().baseClass = LazyInitializer.create(this.thisType.super().classType().object);
+              ti().baseClass = LazyInitializer.create(this.thisType.asTraitsType().super().classType().info);
             }
             type = getProperty(object, mn);
             if (op === OP.callpropvoid || op === OP.callsupervoid) {
               break;
             }
             if (type instanceof MethodType) {
-              returnType = Type.fromName(type.methodInfo.returnType, domain).instanceType();
-            } else if (type instanceof TraitsType && type.isClassInfo()) {
+              returnType = Type.fromName(type.asMethodType().methodInfo.returnType, this.domain).instanceType();
+            } else if (type.isTraitsType() && type.isClassInfo()) {
               returnType = type.instanceType();
             } else {
               returnType = Type.Any;
@@ -743,20 +1119,20 @@ module Shumway.AVM2.Verifier {
             }
             break;
           case OP.constructsuper:
-            stack.popMany(bc.argCount);
+            popManyIntoVoid(stack, bc.argCount);
             stack.pop();
             if (this.thisType.isInstanceInfo() && this.thisType.super() === Type.Object) {
               ti().noCallSuperNeeded = true;
             } else {
-              ti().baseClass = LazyInitializer.create(this.thisType.super().classType().object);
+              ti().baseClass = LazyInitializer.create(this.thisType.asTraitsType().super().classType().info);
             }
             break;
           case OP.construct:
-            stack.popMany(bc.argCount);
+            popManyIntoVoid(stack, bc.argCount);
             push(construct(pop()));
             break;
           case OP.constructprop:
-            stack.popMany(bc.argCount);
+            popManyIntoVoid(stack, bc.argCount);
             mn = popMultiname();
             push(construct(getProperty(stack.pop(), mn)));
             break;
@@ -785,17 +1161,15 @@ module Shumway.AVM2.Verifier {
             notImplementedBC();
             break;
           case OP.newobject:
-            stack.popMany(bc.argCount * 2);
+            popManyIntoVoid(stack, bc.argCount * 2);
             push(Type.Object);
             break;
           case OP.newarray:
-            // Pops values, pushes result.
-            stack.popMany(bc.argCount);
+            popManyIntoVoid(stack, bc.argCount);
             push(Type.Array);
             break;
           case OP.newactivation:
-            // push(Type.fromReference(new ActivationInfo(this.methodInfo)));
-            push(Type.from(new ActivationInfo(this.methodInfo)));
+            push(Type.from(this.methodInfo, this.domain));
             break;
           case OP.newclass:
             // The newclass bytecode is not supported because it needs
@@ -831,7 +1205,7 @@ module Shumway.AVM2.Verifier {
             value = pop();
             mn = popMultiname();
             object = pop();
-            setProperty(object, mn, value, bc);
+            setProperty(object, mn, value);
             break;
           case OP.getlocal:
             push(local[bc.index]);
@@ -841,7 +1215,7 @@ module Shumway.AVM2.Verifier {
             break;
           case OP.getglobalscope:
             push(globalScope);
-            ti().object = LazyInitializer.create(globalScope.object);
+            ti().object = LazyInitializer.create(globalScope.asTraitsType().info);
             break;
           case OP.getscopeobject:
             push(scope[bc.index]);
@@ -930,7 +1304,7 @@ module Shumway.AVM2.Verifier {
           case OP.coerce:
             // print("<<< " + multinames[bc.index] + " >>>");
             type = pop();
-            var coerceType = Type.fromName(multinames[bc.index], this.domain).instanceType();
+            var coerceType = Type.fromName(this.multinames[bc.index], this.domain).instanceType();
             if (coerceType.isSubtypeOf(type)) {
               ti().noCoercionNeeded = true;
             }
@@ -949,7 +1323,7 @@ module Shumway.AVM2.Verifier {
           case OP.astypelate:
             type = pop();
             pop();
-            if (type instanceof TraitsType) {
+            if (type.isTraitsType()) {
               push(type.instanceType());
             } else {
               push(Type.Any);
@@ -1062,12 +1436,6 @@ module Shumway.AVM2.Verifier {
           case OP.debug:
             // Nop.
             break;
-          case OP.debugline:
-            // Nop.
-            break;
-          case OP.debugfile:
-            // Nop.
-            break;
           case OP.bkptline:
             // Nop.
             break;
@@ -1082,8 +1450,32 @@ module Shumway.AVM2.Verifier {
   }
 
   export class Verifier {
-    verifyMethod(methodInfo: MethodInfo, scope: Info []) {
-      new Verification(methodInfo, methodInfo.abc.applicationDomain, scope).verify();
+    private _prepareScopeObjects(methodInfo: MethodInfo, scope: Scope): Type [] {
+      var domain = methodInfo.abc.applicationDomain;
+      var scopeObjects = scope.getScopeObjects();
+      return scopeObjects.map(function (object) {
+        if (object instanceof Info) {
+          return Type.from(object, domain);
+        }
+        if (object instanceof Shumway.AVM2.Runtime.Global) {
+          return Type.from(object.scriptInfo, domain);
+        }
+        if (object instanceof Shumway.AVM2.AS.ASClass) {
+          return Type.from((<Shumway.AVM2.AS.ASClass>object).classInfo, domain);
+        }
+        if (object instanceof Shumway.AVM2.Runtime.ActivationInfo) {
+          return Type.from(object.methodInfo, domain);
+        }
+        if (object.class) {
+          return Type.from(object.class.classInfo.instanceInfo, domain);
+        }
+        assert (false, object.toString());
+        return Type.Any;
+      });
+    }
+    verifyMethod(methodInfo: MethodInfo, scope: Scope) {
+      var scopeTypes = this._prepareScopeObjects(methodInfo, scope);
+      new Verification(methodInfo, methodInfo.abc.applicationDomain, scopeTypes).verify();
     }
   }
 }

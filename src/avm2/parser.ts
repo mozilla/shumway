@@ -364,9 +364,10 @@ module Shumway.AVM2.ABC {
     index: number;
     hash: number;
     traits: any[];
-    constructor(abc: AbcFile, index: number) {
+    constructor(abc: AbcFile, index: number, hashMask: number) {
       this.abc = abc;
       this.index = index;
+      this.hash = abc.hash + hashMask + index;
     }
   }
 
@@ -404,7 +405,7 @@ module Shumway.AVM2.ABC {
     }
 
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
-      super(abc, index);
+      super(abc, index, HashMasks.MethodInfo);
       var constantPool = abc.constantPool;
       var parameterCount = stream.readU30();
       this.returnType = constantPool.multinames[stream.readU30()];
@@ -502,7 +503,6 @@ module Shumway.AVM2.ABC {
       var mi = methods[index];
       mi.index = index;
       mi.hasBody = true;
-      mi.hash = abc.hash + 0x030000 + index;
       release || assert(!mi.isNative());
       mi.maxStack = stream.readU30();
       mi.localCount = stream.readU30();
@@ -538,7 +538,7 @@ module Shumway.AVM2.ABC {
     traits: Trait [];
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
-      super(abc, index);
+      super(abc, index, HashMasks.InstanceInfo);
       this.runtimeId = InstanceInfo.nextID ++;
       var constantPool = abc.constantPool;
       var methods = abc.methods;
@@ -576,6 +576,13 @@ module Shumway.AVM2.ABC {
     public isInterface(): boolean { return !!(this.flags & CONSTANT.ClassInterface); }
   }
 
+  enum HashMasks {
+    ClassInfo       = 0x10000,
+    InstanceInfo    = 0x20000,
+    MethodInfo      = 0x30000,
+    ScriptInfo      = 0x40000
+  }
+
   export class ClassInfo extends Info {
     metadata: any;
     runtimeId: number;
@@ -586,11 +593,8 @@ module Shumway.AVM2.ABC {
     classObject: Shumway.AVM2.AS.ASClass;
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
-      super(abc, index);
+      super(abc, index, HashMasks.ClassInfo);
       this.runtimeId = ClassInfo.nextID ++;
-      this.abc = abc;
-      this.hash = abc.hash + 0x010000 + index;
-      this.index = index;
       this.init = abc.methods[stream.readU30()];
       this.init.isClassInitializer = true;
       AbcFile.attachHolder(this.init, this);
@@ -630,9 +634,8 @@ module Shumway.AVM2.ABC {
     executing: boolean;
     static nextID: number = 1;
     constructor(abc: AbcFile, index: number, stream: AbcStream) {
-      super(abc, index);
+      super(abc, index, HashMasks.ScriptInfo);
       this.runtimeId = ClassInfo.nextID ++;
-      this.hash = abc.hash + 0x020000 + index;
       this.name = abc.name + "$script" + index;
       this.init = abc.methods[stream.readU30()];
       this.init.isScriptInitializer = true;

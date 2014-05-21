@@ -269,6 +269,14 @@ module Shumway {
       dst.length = count;
     }
 
+    /**
+     * Just deletes several array elements from the end of the list.
+     */
+    export function popManyIntoVoid(array: any [], count: number) {
+      release || assert(array.length >= count);
+      array.length = array.length - count;
+    }
+
     export function pushMany(dst: any [], src: any []) {
       for (var i = 0; i < src.length; i++) {
         dst.push(src[i]);

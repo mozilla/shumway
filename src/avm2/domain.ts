@@ -38,7 +38,6 @@ module Shumway.AVM2.Runtime {
   declare var Promise;
   declare var natives;
   declare var Counter: Shumway.Metrics.Counter;
-  declare var Type;
   declare var GlobalMultinameResolver;
   declare var avm2;
   declare var homePath;
@@ -512,7 +511,6 @@ module Shumway.AVM2.Runtime {
 
       if (!this.base) {
         AS.initialize(this);
-        Type.initializeTypes(this);
         Shumway.AVM2.Verifier.Type.initializeTypes(this);
       }
     }

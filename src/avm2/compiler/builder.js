@@ -255,7 +255,7 @@ var createName = function createName(namespaces, name) {
 
   function binary(operator, left, right) {
     var node = new Binary(operator, left, right);
-    if (left.ty && left.ty !== Type.Any && left.ty === right.ty) {
+    if (left.ty && left.ty !== Shumway.AVM2.Verifier.Type.Any && left.ty === right.ty) {
       if (operator === Operator.EQ) {
         node.operator = Operator.SEQ;
       } else if (operator === Operator.NE) {
@@ -1528,12 +1528,11 @@ var createName = function createName(namespaces, name) {
     methodInfo.analysis.markLoops();
     Timer.stop();
 
+
     if (Shumway.AVM2.Verifier.enabled.value) {
       // TODO: Can we verify even if |hadDynamicScope| is |true|?
       Timer.start("Verify");
-      // verifier.verifyMethod(methodInfo, scope);
-
-      new Shumway.AVM2.Verifier.Verifier().verifyMethod(methodInfo, scope);
+      verifier.verifyMethod(methodInfo, scope);
       Timer.stop();
     }
 
@@ -1590,7 +1589,7 @@ var createName = function createName(namespaces, name) {
  */
 var Compiler = new ((function () {
   function constructor() {
-    this.verifier = new Verifier();
+    this.verifier = new Shumway.AVM2.Verifier.Verifier();
   }
   constructor.prototype.compileMethod = function (methodInfo, scope, hasDynamicScope) {
     return Builder.buildMethod(this.verifier, methodInfo, scope, hasDynamicScope);
