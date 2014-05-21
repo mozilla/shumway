@@ -19,6 +19,7 @@
 ///<reference path='../metrics.ts' />
 ///<reference path='../options.ts' />
 ///<reference path='../settings.ts' />
+///<reference path='../dataBuffer.ts' />
 
 ///<reference path='errors.ts' />
 ///<reference path='opcodes.ts' />

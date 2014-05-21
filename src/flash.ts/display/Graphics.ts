@@ -28,6 +28,7 @@ module Shumway.AVM2.AS.flash.display {
   import LineScaleMode = flash.display.LineScaleMode;
   import CapsStyle = flash.display.CapsStyle;
   import JointStyle = flash.display.JointStyle;
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import geom = flash.geom;
   import utils = flash.utils;
 
@@ -63,7 +64,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super();
       this._id = Graphics._syncID++;
-      this._graphicsData = new utils.ByteArray();
+      this._graphicsData = new DataBuffer();
       this._rect = new geom.Rectangle();
       this._bounds = new geom.Rectangle();
       this._parent = null;
@@ -74,7 +75,7 @@ module Shumway.AVM2.AS.flash.display {
     
     // AS -> JS Bindings
 
-    _graphicsData: utils.ByteArray;
+    _graphicsData: DataBuffer;
 
     /**
      * Bounding box excluding strokes.

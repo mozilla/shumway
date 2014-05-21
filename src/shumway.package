@@ -4,6 +4,7 @@ lib/jpgjs/jpg.js
 
 src/avm2/global.js
 src/utilities.js
+src/dataBuffer.js
 src/options.js
 src/settings.js
 
