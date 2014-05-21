@@ -18,98 +18,14 @@
     var container = document.getElementById("container");
 
     getJSON("data/CPU-20140520T215105.json", function(result) {
-      var buffer = readChromeCPUProfile(result);
+      var buffer = Profiler.TimelineBuffer.createFromChromeProfile(result);
       new Profiler.FlameChart(container, buffer);
     });
 
     //getJSON("data/Profile 1.json", function(result) {
-    //  var buffer = readFirefoxCPUProfile(result.profile.threads[0].samples);
+    //  var buffer = Profiler.TimelineBuffer.createFromFirefoxProfile(result);
     //  new Profiler.FlameChart(container, buffer);
     //});
-
-    function readFirefoxCPUProfile(samples) {
-      var buffer = new Profiler.TimelineBuffer();
-      var startTime = samples[0].time;
-      var currentStack = [];
-      var sample;
-      for (var i = 0; i < samples.length; i++) {
-        sample = samples[i];
-        var time = sample.time   - startTime;
-        var stack = sample.frames;
-        for (var j = 0; j < Math.min(stack.length, currentStack.length); j++) {
-          if (stack[j].location !== currentStack[j].location) {
-            break;
-          }
-        }
-        var leaveCount = currentStack.length - j;
-        for (var k = 0; k < leaveCount; k++) {
-          sample = currentStack.pop();
-          buffer.leave(sample.location, time);
-        }
-        while (j < stack.length) {
-          sample = stack[j++];
-          buffer.enter(sample.location, time);
-        }
-        currentStack = stack;
-      }
-      while (sample = currentStack.pop()) {
-        if(currentStack.length) {
-          buffer.leave(sample.location, time);
-        }
-      }
-      return buffer;
-    }
-
-    function readChromeCPUProfile(profile) {
-      var buffer = new Profiler.TimelineBuffer();
-      var timestamps = profile.timestamps;
-      var samples = profile.samples;
-      var startTime = timestamps[0] / 1000;
-      var currentStack = [];
-      var idMap = {};
-      var sample;
-      resolveIds(profile.head, idMap);
-      for (var i = 0; i < timestamps.length; i++) {
-        var time = timestamps[i] / 1000 - startTime;
-        var stack = [];
-        sample = idMap[samples[i]];
-        while (sample) {
-          stack.unshift(sample);
-          sample = sample.parent;
-        }
-        for (var j = 0; j < Math.min(stack.length, currentStack.length); j++) {
-          if (stack[j] !== currentStack[j]) {
-            break;
-          }
-        }
-        var leaveCount = currentStack.length - j;
-        for (var k = 0; k < leaveCount; k++) {
-          sample = currentStack.pop();
-          buffer.leave(sample.functionName, time);
-        }
-        while (j < stack.length) {
-          sample = stack[j++];
-          buffer.enter(sample.functionName, time);
-        }
-        currentStack = stack;
-      }
-      while (sample = currentStack.pop()) {
-        if(currentStack.length) {
-          buffer.leave(sample.functionName, time);
-        }
-      }
-      return buffer;
-    }
-
-    function resolveIds(parent, idMap) {
-      idMap[parent.id] = parent;
-      if (parent.children) {
-        for (var i = 0; i < parent.children.length; i++) {
-          parent.children[i].parent = parent;
-          resolveIds(parent.children[i], idMap);
-        }
-      }
-    }
 
     function getJSON(url, callback) {
       var req = new XMLHttpRequest();

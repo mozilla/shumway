@@ -101,6 +101,91 @@ module Shumway.Tools.Profiler {
       range.endTime = range.children[range.children.length - 1].endTime;
       return range;
     }
+
+    static createFromFirefoxProfile(profile) {
+      var samples = profile.profile.threads[0].samples;
+      var buffer = new TimelineBuffer();
+      var startTime = samples[0].time;
+      var currentStack = [];
+      var sample;
+      for (var i = 0; i < samples.length; i++) {
+        sample = samples[i];
+        var time = sample.time - startTime;
+        var stack = sample.frames;
+        var j = 0;
+        var minStackLen = Math.min(stack.length, currentStack.length);
+        while (j < minStackLen && stack[j].location === currentStack[j].location) {
+          j++;
+        }
+        var leaveCount = currentStack.length - j;
+        for (var k = 0; k < leaveCount; k++) {
+          sample = currentStack.pop();
+          buffer.leave(sample.location, time);
+        }
+        while (j < stack.length) {
+          sample = stack[j++];
+          buffer.enter(sample.location, time);
+        }
+        currentStack = stack;
+      }
+      while (sample = currentStack.pop()) {
+        if(currentStack.length) {
+          buffer.leave(sample.location, time);
+        }
+      }
+      return buffer;
+    }
+
+    static createFromChromeProfile(profile) {
+      var buffer = new TimelineBuffer();
+      var timestamps = profile.timestamps;
+      var samples = profile.samples;
+      var startTime = timestamps[0] / 1000;
+      var currentStack = [];
+      var idMap = {};
+      var sample;
+      TimelineBuffer._resolveIds(profile.head, idMap);
+      for (var i = 0; i < timestamps.length; i++) {
+        var time = timestamps[i] / 1000 - startTime;
+        var stack = [];
+        sample = idMap[samples[i]];
+        while (sample) {
+          stack.unshift(sample);
+          sample = sample.parent;
+        }
+        var j = 0;
+        var minStackLen = Math.min(stack.length, currentStack.length);
+        while (j < minStackLen && stack[j] === currentStack[j]) {
+          j++;
+        }
+        var leaveCount = currentStack.length - j;
+        for (var k = 0; k < leaveCount; k++) {
+          sample = currentStack.pop();
+          buffer.leave(sample.functionName, time);
+        }
+        while (j < stack.length) {
+          sample = stack[j++];
+          buffer.enter(sample.functionName, time);
+        }
+        currentStack = stack;
+      }
+      while (sample = currentStack.pop()) {
+        if(currentStack.length) {
+          buffer.leave(sample.functionName, time);
+        }
+      }
+      return buffer;
+    }
+
+    private static _resolveIds(parent, idMap) {
+      idMap[parent.id] = parent;
+      if (parent.children) {
+        for (var i = 0; i < parent.children.length; i++) {
+          parent.children[i].parent = parent;
+          TimelineBuffer._resolveIds(parent.children[i], idMap);
+        }
+      }
+    }
   }
 
 }
