@@ -15,16 +15,17 @@
   <script>
 
     var Profiler = Shumway.Tools.Profiler;
-    var container = document.getElementById("container");
-    var buffer = new Profiler.TimelineBuffer();
 
     getJSON("data/CPU-20140520T215105.json", function(result) {
     //getJSON("data/Profile 1.json", function(result) {
-      readChromeCPUProfile(result);
-      //readFirefoxCPUProfile(result.profile.threads[0].samples);
+      var buffer = readChromeCPUProfile(result);
+      // var buffer = readFirefoxCPUProfile(result.profile.threads[0].samples);
+      var container = document.getElementById("container");
+      new Profiler.FlameChart(container, buffer);
     });
 
     function readFirefoxCPUProfile(samples) {
+      var buffer = new Profiler.TimelineBuffer();
       var startTime = samples[0].time;
       var currentStack = [];
       var sample;
@@ -53,20 +54,22 @@
           buffer.leave(sample.location, time);
         }
       }
-
-      var flameChart = new Profiler.FlameChart(container, buffer);
+      return buffer;
     }
 
     function readChromeCPUProfile(profile) {
-      var startTime = profile.timestamps[0] / 1000;
+      var buffer = new Profiler.TimelineBuffer();
+      var timestamps = profile.timestamps;
+      var samples = profile.samples;
+      var startTime = timestamps[0] / 1000;
       var currentStack = [];
       var idMap = {};
       var sample;
       resolveIds(profile.head, idMap);
-      for (var i = 0; i < profile.timestamps.length; i++) {
-        var time = profile.timestamps[i] / 1000 - startTime;
+      for (var i = 0; i < timestamps.length; i++) {
+        var time = timestamps[i] / 1000 - startTime;
         var stack = [];
-        sample = idMap[profile.samples[i]];
+        sample = idMap[samples[i]];
         while (sample) {
           stack.unshift(sample);
           sample = sample.parent;
@@ -92,8 +95,7 @@
           buffer.leave(sample.functionName, time);
         }
       }
-
-      var flameChart = new Profiler.FlameChart(container, buffer);
+      return buffer;
     }
 
     function resolveIds(parent, idMap) {
