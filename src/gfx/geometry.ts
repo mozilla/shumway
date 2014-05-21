@@ -203,6 +203,95 @@ module Shumway.GFX.Geometry {
     }
   }
 
+  export interface UntypedBoundingBox {
+    xMin: number;
+    yMin: number;
+    xMax: number;
+    yMax: number;
+  }
+  export interface ASRectangle {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
+
+  export class BoundingBox {
+    private _xMin: number;
+    private _yMin: number;
+    private _xMax: number;
+    private _yMax: number;
+
+    constructor (xMin: number, yMin: number, xMax: number, yMax: number) {
+      this.setElements(xMin, yMin, xMax, yMax);
+    }
+
+    static FromUntyped (source: UntypedBoundingBox): BoundingBox {
+      return new BoundingBox(source.xMin, source.yMin, source.xMax, source.yMax);
+    }
+
+    static FromRectangle (source: ASRectangle): BoundingBox {
+      return new BoundingBox(source.x * 20|0, source.y * 20|0, (source.x + source.width) * 20|0,
+                             (source.y + source.height) * 20|0);
+    }
+
+    setElements (xMin: number, yMin: number, xMax: number, yMax: number): void {
+      this.xMin = xMin;
+      this.yMin = yMin;
+      this.xMax = xMax;
+      this.yMax = yMax;
+    }
+
+    set xMin(value: number) {
+      assert(isInteger(value));
+      this._xMin = value;
+    }
+
+    get xMin(): number {
+      return this._xMin;
+    }
+
+    set yMin(value: number) {
+      assert(isInteger(value));
+      this._yMin = value|0;
+    }
+
+    get yMin(): number {
+      return this._yMin;
+    }
+
+    set xMax(value: number) {
+      assert(isInteger(value));
+      this._xMax = value|0;
+    }
+
+    get xMax(): number {
+      return this._xMax;
+    }
+
+    set yMax(value: number) {
+      assert(isInteger(value));
+      this._yMax = value|0;
+    }
+
+    get yMax(): number {
+      return this._yMax;
+    }
+
+    setEmpty (): void {
+      this._xMin = this._yMin = this._xMax = this._yMax = 0;
+    }
+
+    toString(): string {
+      return "{ " +
+             "xMin: " + this._xMin + ", " +
+             "xMin: " + this._yMin + ", " +
+             "xMax: " + this._xMax + ", " +
+             "xMax: " + this._yMax +
+             " }";
+    }
+  }
+
   export class Rectangle {
     x: number;
     y: number;

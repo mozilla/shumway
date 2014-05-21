@@ -18,6 +18,7 @@ module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
+  import BoundingBox = Shumway.GFX.Geometry.BoundingBox;
 
   export class Rectangle extends ASNative implements flash.utils.IExternalizable {
 
@@ -31,7 +32,7 @@ module Shumway.AVM2.AS.flash.geom {
     static classSymbols: string [] = null; // [];
 
     // List of instance symbols to link.
-    static instanceSymbols: string [] = null; // ["x", "y", "width", "height", "left", "left", "right", "right", "top", "top", "bottom", "bottom", "topLeft", "topLeft", "bottomRight", "bottomRight", "size", "size", "clone", "isEmpty", "setEmpty", "inflate", "inflatePoint", "offset", "offsetPoint", "contains", "containsPoint", "containsRect", "intersection", "intersects", "union", "equals", "copyFrom", "setTo", "toString"];
+    static instanceSymbols: string [] = null;
 
     public x: number;
     public y: number;
@@ -40,14 +41,20 @@ module Shumway.AVM2.AS.flash.geom {
 
     constructor(x: number = 0, y: number = 0, width: number = 0, height: number = 0) {
       false && super();
-      this.x = +x;
-      this.y = +y;
-      this.width = +width;
-      this.height = +height;
+      x = +x;
+      y = +y;
+      width = +width;
+      height = +height;
+      this.x = x;
+      this.y = y;
+      this.width = width;
+      this.height = height;
     }
 
-    public static createFromBbox(bbox: any): Rectangle {
-      return new Rectangle(bbox.xMin, bbox.yMin, bbox.xMax - bbox.xMin, bbox.yMax - bbox.yMin);
+    public static createFromBbox(bbox: BoundingBox): Rectangle {
+      var xMin = bbox.xMin;
+      var yMin = bbox.yMin;
+      return new Rectangle(xMin / 20, yMin / 20, (bbox.xMax - xMin) / 20, (bbox.yMax - yMin) / 20);
     }
 
     public set native_x(x: number) {
