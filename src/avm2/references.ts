@@ -42,3 +42,7 @@
 ///<reference path='natives/byteArray.ts' />
 ///<reference path='natives/system.ts' />
 ///<reference path='compiler/verifier.ts' />
+///<reference path='compiler/c4/ast.ts' />
+///<reference path='compiler/c4/nodes.ts' />
+///<reference path='compiler/c4/as.nodes.ts' />
+///<reference path='compiler/c4/opt.ts' />

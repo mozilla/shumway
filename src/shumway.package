@@ -72,6 +72,10 @@ src/avm2/compiler/lljs/src/estransform.js
 src/avm2/compiler/lljs/src/escodegen.js
 src/avm2/compiler/verifier.js
 src/avm2/compiler/c4/ir.js
+src/avm2/compiler/c4/ast.js
+src/avm2/compiler/c4/nodes.js
+src/avm2/compiler/c4/as.nodes.js
+src/avm2/compiler/c4/opt.js
 src/avm2/compiler/builder.js
 src/avm2/compiler/c4/looper.js
 src/avm2/compiler/c4/backend.js

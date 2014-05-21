@@ -283,6 +283,10 @@ module Shumway {
       }
     }
 
+    export function top(array: any []) {
+      return array.length && array[array.length - 1]
+    }
+
     export function copyFrom(dst: any [], src: any []) {
       dst.length = 0;
       ArrayUtilities.pushMany(dst, src);
