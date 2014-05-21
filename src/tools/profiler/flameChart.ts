@@ -170,7 +170,7 @@ module Shumway.Tools.Profiler {
       var windowSize = this._windowRight - this._windowLeft;
       if (windowSize < this._minTime) {
         windowSize = this._minTime;
-        var center = this._windowLeft + windowSize / 2;
+        var center = this._windowLeft + (this._windowRight - this._windowLeft) / 2;
         this._windowLeft = center - this._minTime / 2;
         this._windowRight = center + this._minTime / 2;
       }
