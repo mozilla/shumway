@@ -253,8 +253,9 @@ module Shumway.Tools.Profiler {
           textColor: ColorStyle.contrastStyle(background)
         };
       }
+      var frameHPadding = 1;
       context.fillStyle = style.bgColor;
-      context.fillRect(start, depth * 12, width, 12);
+      context.fillRect(start, depth * (12 + frameHPadding), width, 12);
       if (width > 12) {
         var label = this._buffer.getKindName(frame.kind);
         if (label && label.length) {
@@ -263,7 +264,7 @@ module Shumway.Tools.Profiler {
           if (label.length) {
             context.fillStyle = style.textColor;
             context.textBaseline = "top";
-            context.fillText(label, (start + labelHPadding), depth * 12);
+            context.fillText(label, (start + labelHPadding), depth * (12 + frameHPadding));
           }
         }
       }
