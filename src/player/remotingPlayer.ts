@@ -27,7 +27,7 @@ module Shumway.Remoting.Player {
   import VisitorFlags = flash.display.VisitorFlags;
 
   import Point = flash.geom.Point;
-  import BoundingBox = Shumway.GFX.Geometry.BoundingBox;
+  import Bounds = Shumway.Bounds;
   import KeyboardEventData = flash.ui.KeyboardEventData;
   import MouseEventAndPointData = flash.ui.MouseEventAndPointData;
 
@@ -120,12 +120,13 @@ module Shumway.Remoting.Player {
       output.writeFloat(matrix.ty);
     }
 
-    writeRectangle(rect: BoundingBox) {
+    writeRectangle(bounds: Bounds) {
       var output = this.output;
-      output.writeInt(rect.xMin);
-      output.writeInt(rect.yMin);
-      output.writeInt(rect.width);
-      output.writeInt(rect.height);
+      // TODO: check if we should write bounds instead. Depends on what's more useful in GFX-land.
+      output.writeInt(bounds.xMin);
+      output.writeInt(bounds.yMin);
+      output.writeInt(bounds.width);
+      output.writeInt(bounds.height);
     }
 
     writeColorTransform(colorTransform: flash.geom.ColorTransform) {

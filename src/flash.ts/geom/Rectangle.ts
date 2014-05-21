@@ -18,7 +18,7 @@ module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
-  import BoundingBox = Shumway.GFX.Geometry.BoundingBox;
+  import Bounds = Shumway.Bounds;
 
   export class Rectangle extends ASNative implements flash.utils.IExternalizable {
 
@@ -51,7 +51,7 @@ module Shumway.AVM2.AS.flash.geom {
       this.height = height;
     }
 
-    public static createFromBbox(bbox: BoundingBox): Rectangle {
+    public static createFromBbox(bbox: Bounds): Rectangle {
       var xMin = bbox.xMin;
       var yMin = bbox.yMin;
       return new Rectangle(xMin / 20, yMin / 20, (bbox.xMax - xMin) / 20, (bbox.yMax - yMin) / 20);

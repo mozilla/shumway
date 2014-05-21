@@ -20,7 +20,7 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
-  import BoundingBox = Shumway.GFX.Geometry.BoundingBox;
+  import Bounds = Shumway.Bounds;
 
   import DisplayObject = flash.display.DisplayObject;
   import GradientType = flash.display.GradientType;
@@ -65,8 +65,8 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       this._id = Graphics._syncID++;
       this._graphicsData = new utils.ByteArray();
-      this._fillBounds = new BoundingBox(0, 0, 0, 0);
-      this._lineBounds = new BoundingBox(0, 0, 0, 0);
+      this._fillBounds = new Bounds(0, 0, 0, 0);
+      this._lineBounds = new Bounds(0, 0, 0, 0);
       this._parent = null;
     }
     
@@ -80,12 +80,12 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Bounding box excluding strokes.
      */
-    _fillBounds: BoundingBox;
+    _fillBounds: Bounds;
 
     /**
      * Bounding box including strokes.
      */
-    _lineBounds: BoundingBox;
+    _lineBounds: Bounds;
 
     /**
      * Back reference to the display object that references this graphics object. This is
@@ -104,7 +104,7 @@ module Shumway.AVM2.AS.flash.display {
       this._parent._invalidateFillAndLineBounds();
     }
 
-    _getContentBounds(includeStrokes: boolean = true): BoundingBox {
+    _getContentBounds(includeStrokes: boolean = true): Bounds {
       return includeStrokes ? this._lineBounds : this._fillBounds;
     }
 
@@ -212,8 +212,8 @@ module Shumway.AVM2.AS.flash.display {
       // Temporary hack until proper bounds calculations land.
       x = x * 20|0;
       y = y * 20|0;
-      this._fillBounds = this._lineBounds = new BoundingBox(x, y, x + width * 20 | 0,
-                                                            y + height * 20 | 0);
+      this._fillBounds = this._lineBounds = new Bounds(x, y, x + width * 20 | 0,
+                                                       y + height * 20 | 0);
       this._invalidateParent();
     }
 

@@ -18,7 +18,7 @@ module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
-  import BoundingBox = Shumway.GFX.Geometry.BoundingBox;
+  import Bounds = Shumway.Bounds;
 
   export class Matrix extends ASNative implements flash.utils.IExternalizable {
     
@@ -329,7 +329,7 @@ module Shumway.AVM2.AS.flash.geom {
       return rectangle;
     }
 
-    transformBoundingBox(bounds: BoundingBox): void {
+    transformBounds(bounds: Bounds): void {
       var a  = this.a;
       var b  = this.b;
       var c  = this.c;

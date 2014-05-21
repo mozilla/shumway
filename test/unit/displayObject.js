@@ -18,7 +18,7 @@
 
   var Random = Shumway.Random;
   var Matrix = flash.geom.Matrix;
-  var BoundingBox = Shumway.GFX.Geometry.BoundingBox;
+  var Bounds = Shumway.Bounds;
   var Point = flash.geom.Point;
   var DisplayObject = flash.display.DisplayObject;
   var VisitorFlags = flash.display.VisitorFlags;
@@ -64,7 +64,7 @@
           var h = height * 20;
           var x = -w / 2;
           var y = -h / 2;
-          return new BoundingBox(x, y, x + width, y + width);
+          return new Bounds(x, y, x + width, y + width);
         }
         parent.addChild(o);
       }
@@ -143,7 +143,7 @@
     s.x = 200;
     s.y = 200;
     s._getContentBounds = function () {
-      return new BoundingBox(0, 0, 100 * 20, 100 * 20);
+      return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
     var options = ["x", "y", "rotation", "scaleX", "scaleY", "width"];
@@ -158,7 +158,7 @@
     s.x = 200;
     s.y = 200;
     s._getContentBounds = function () {
-      return new BoundingBox(0, 0, 100 * 20, 100 * 20);
+      return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
     check(s.getBounds().width === 100 && s.getBounds().height === 100);
@@ -201,7 +201,7 @@
     s.x = 200;
     s.y = 200;
     s._getContentBounds = function () {
-      return new BoundingBox(0, 0, 100 * 20, 100 * 20);
+      return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
     check(s.getBounds().width === 100 && s.getBounds().height === 100);
@@ -245,7 +245,7 @@
     s.x = 200;
     s.y = 200;
     s._getContentBounds = function () {
-      return new BoundingBox(0, 0, 100 * 20, 100 * 20);
+      return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
     check(s.getBounds().width === 100 && s.getBounds().height === 100);
@@ -267,7 +267,7 @@
     s.x = 200;
     s.y = 200;
     s._getContentBounds = function () {
-      return new BoundingBox(0, 0, 100 * 20, 100 * 20);
+      return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
     check(s.getBounds().width === 100 && s.getBounds().height === 100);
@@ -287,7 +287,7 @@
     s.x = 200;
     s.y = 200;
     s._getContentBounds = function () {
-      return new BoundingBox(0, 0, 100 * 20, 100 * 20);
+      return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
     eqFloat(s.globalToLocal(new Point(300, 0)).x, 100);
@@ -310,12 +310,12 @@
 
     var a = new Shape();
     a._getContentBounds = function () {
-      return new BoundingBox(0, 0, 100 * 20, 100 * 20);
+      return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
     var b = new Shape();
     b._getContentBounds = function () {
-      return new BoundingBox(0, 0, 100 * 20, 100 * 20);
+      return new Bounds(0, 0, 100 * 20, 100 * 20);
     }
 
     check(a.hitTestObject(b));

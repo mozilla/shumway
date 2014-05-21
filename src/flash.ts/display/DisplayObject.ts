@@ -31,7 +31,7 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
 
-  import BoundingBox = Shumway.GFX.Geometry.BoundingBox;
+  import Bounds = Shumway.Bounds;
   import geom = flash.geom;
   import events = flash.events;
 
@@ -279,8 +279,8 @@ module Shumway.AVM2.AS.flash.display {
       self._loaderInfo = null;
       self._accessibilityProperties = null;
 
-      self._fillBounds = new BoundingBox(0, 0, 0, 0);
-      self._lineBounds = new BoundingBox(0, 0, 0, 0);
+      self._fillBounds = new Bounds(0, 0, 0, 0);
+      self._lineBounds = new Bounds(0, 0, 0, 0);
       self._clipDepth = 0;
 
       self._concatenatedMatrix = new geom.Matrix();
@@ -472,19 +472,19 @@ module Shumway.AVM2.AS.flash.display {
     _scrollRect: flash.geom.Rectangle;
     _filters: any [];
     _blendMode: string;
-    _scale9Grid: BoundingBox;
+    _scale9Grid: Bounds;
     _loaderInfo: flash.display.LoaderInfo;
     _accessibilityProperties: flash.accessibility.AccessibilityProperties;
 
     /**
      * Bounding box excluding strokes.
      */
-    _fillBounds: BoundingBox;
+    _fillBounds: Bounds;
 
     /**
      * Bounding box including strokes.
      */
-    _lineBounds: BoundingBox;
+    _lineBounds: Bounds;
 
     _clipDepth: number;
 
@@ -694,10 +694,10 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Computes the bounding box for all of this display object's content, its graphics and all of its children.
      */
-    _getContentBounds(includeStrokes: boolean = true): BoundingBox {
+    _getContentBounds(includeStrokes: boolean = true): Bounds {
       // Tobias: What about filters?
       var invalidFlag: number;
-      var bounds: BoundingBox;
+      var bounds: Bounds;
       if (includeStrokes) {
         invalidFlag = DisplayObjectFlags.InvalidLineBounds;
         bounds = this._lineBounds;
@@ -731,7 +731,7 @@ module Shumway.AVM2.AS.flash.display {
      *   this.concatenatedMatrix * inverse(target.concatenatedMatrix)
      */
     private _getTransformedBounds(targetCoordinateSpace: DisplayObject,
-                                  includeStroke: boolean = true): BoundingBox
+                                  includeStroke: boolean = true): Bounds
     {
       var bounds = this._getContentBounds(includeStroke).clone();
       if (!targetCoordinateSpace || targetCoordinateSpace === this || bounds.isEmpty()) {
@@ -740,7 +740,7 @@ module Shumway.AVM2.AS.flash.display {
       var m = targetCoordinateSpace._getConcatenatedMatrix().clone();
       m.invert();
       m.preMultiply(this._getConcatenatedMatrix());
-      m.transformBoundingBox(bounds);
+      m.transformBounds(bounds);
       return bounds;
     }
 
@@ -1149,7 +1149,7 @@ module Shumway.AVM2.AS.flash.display {
 
     set scale9Grid(innerRectangle: flash.geom.Rectangle) {
       this._stopTimelineAnimation();
-      this._scale9Grid = BoundingBox.FromRectangle(innerRectangle);
+      this._scale9Grid = Bounds.FromRectangle(innerRectangle);
       // VERIFY: Can we get away with only invalidating paint? Can mutating this property ever change the bounds?
       this._invalidatePaint();
     }
@@ -1335,8 +1335,8 @@ module Shumway.AVM2.AS.flash.display {
       var a = this, b = other;
       var aBounds = a._getContentBounds(false).clone();
       var bBounds = b._getContentBounds(false).clone();
-      a._getConcatenatedMatrix().transformBoundingBox(aBounds);
-      b._getConcatenatedMatrix().transformBoundingBox(bBounds);
+      a._getConcatenatedMatrix().transformBounds(aBounds);
+      b._getConcatenatedMatrix().transformBounds(bBounds);
       return aBounds.intersects(bBounds);
     }
 

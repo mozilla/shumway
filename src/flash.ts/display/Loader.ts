@@ -26,7 +26,7 @@ module Shumway.AVM2.AS.flash.display {
   import events = flash.events;
   import ActionScriptVersion = flash.display.ActionScriptVersion;
 
-  import BoundingBox = Shumway.GFX.Geometry.BoundingBox;
+  import Bounds = Shumway.Bounds;
 
   declare var ResourceLoader;
 
@@ -238,7 +238,7 @@ module Shumway.AVM2.AS.flash.display {
         var updates = data.updates;
         symbol = loaderInfo.getSymbolById(symbolId);
         if (updates.scale9Grid) {
-          symbol.scale9Grid = BoundingBox.FromUntyped(updates.scale9Grid);
+          symbol.scale9Grid = Bounds.FromUntyped(updates.scale9Grid);
         }
         return;
       }

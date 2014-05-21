@@ -19,7 +19,7 @@ module Shumway.Timeline {
   import assert = Shumway.Debug.assert;
   import abstractMethod = Shumway.Debug.abstractMethod;
   import flash = Shumway.AVM2.AS.flash;
-  import BoundingBox = Shumway.GFX.Geometry.BoundingBox;
+  import Bounds = Shumway.Bounds;
 
   export class Symbol {
     id: number = -1;
@@ -33,17 +33,17 @@ module Shumway.Timeline {
   }
 
   export class DisplaySymbol extends Symbol {
-    fillBounds: BoundingBox;
-    lineBounds: BoundingBox;
-    scale9Grid: BoundingBox;
+    fillBounds: Bounds;
+    lineBounds: Bounds;
+    scale9Grid: Bounds;
 
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
       super(id, symbolClass);
     }
 
     _setBoundsFromData(data: any) {
-      this.fillBounds = data.bbox ? BoundingBox.FromUntyped(data.bbox) : null;
-      this.lineBounds = data.strokeBbox ? BoundingBox.FromUntyped(data.strokeBbox) : null;
+      this.fillBounds = data.bbox ? Bounds.FromUntyped(data.bbox) : null;
+      this.lineBounds = data.strokeBbox ? Bounds.FromUntyped(data.strokeBbox) : null;
       if (!this.lineBounds) {
         this.lineBounds = this.fillBounds.clone();
       }
