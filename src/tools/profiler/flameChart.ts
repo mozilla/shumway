@@ -153,7 +153,7 @@ module Shumway.Tools.Profiler {
       event.stopPropagation();
       if (this._drag === null) {
         var range = this._range;
-        var delta = clamp(event.detail ? event.detail : -event.wheelDeltaY / 120, -1, 1);
+        var delta = clamp(event.detail ? event.detail / 8 : -event.wheelDeltaY / 120, -1, 1);
         var zoom = Math.pow(1.2, delta) - 1;
         var cursorTime = (event.clientY > this._overviewHeight || this._getCursorPosition(event) !== 0)
           ? this._windowLeft + event.clientX * this._pixelsToTime
