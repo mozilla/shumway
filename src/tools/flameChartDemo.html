@@ -15,14 +15,17 @@
   <script>
 
     var Profiler = Shumway.Tools.Profiler;
+    var container = document.getElementById("container");
 
     getJSON("data/CPU-20140520T215105.json", function(result) {
-    //getJSON("data/Profile 1.json", function(result) {
       var buffer = readChromeCPUProfile(result);
-      // var buffer = readFirefoxCPUProfile(result.profile.threads[0].samples);
-      var container = document.getElementById("container");
       new Profiler.FlameChart(container, buffer);
     });
+
+    //getJSON("data/Profile 1.json", function(result) {
+    //  var buffer = readFirefoxCPUProfile(result.profile.threads[0].samples);
+    //  new Profiler.FlameChart(container, buffer);
+    //});
 
     function readFirefoxCPUProfile(samples) {
       var buffer = new Profiler.TimelineBuffer();
@@ -43,8 +46,8 @@
           sample = currentStack.pop();
           buffer.leave(sample.location, time);
         }
-        for (; j < stack.length; j++) {
-          sample = stack[j];
+        while (j < stack.length) {
+          sample = stack[j++];
           buffer.enter(sample.location, time);
         }
         currentStack = stack;
@@ -84,8 +87,8 @@
           sample = currentStack.pop();
           buffer.leave(sample.functionName, time);
         }
-        for (; j < stack.length; j++) {
-          sample = stack[j];
+        while (j < stack.length) {
+          sample = stack[j++];
           buffer.enter(sample.functionName, time);
         }
         currentStack = stack;
