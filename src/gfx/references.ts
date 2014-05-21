@@ -16,6 +16,7 @@
 
 /// <reference path='../utilities.ts' />
 /// <reference path='utilities.ts' />
+/// <reference path='../dataBuffer.ts' />
 /// <reference path='../avm2/natives/byteArray.ts' />
 /// <reference path='geometry.ts'/>
 /// <reference path='regionAllocator.ts'/>

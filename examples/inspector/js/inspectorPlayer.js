@@ -149,7 +149,7 @@ function onWindowMessage(e) {
 function IFramePlayerChannel() { }
 IFramePlayerChannel._eventUpdatesListener = null;
 IFramePlayerChannel.sendEventUpdates = function (data) {
-  var ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
+  var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   var updates = ByteArray.fromArrayBuffer(data.updates.buffer);
   IFramePlayerChannel._eventUpdatesListener(updates);
 };

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Flamechart Demo</title>
+  <link rel="stylesheet" href="flameChartDemo.css">
+</head>
+<body>
+  <div id="container"></div>
+  <script src="../utilities.js"></script>
+  <script src="profiler/timelineFrame.js"></script>
+  <script src="profiler/timelineBuffer.js"></script>
+  <script src="profiler/flameChart.js"></script>
+  <script src="profiler/references.js"></script>
+  <script>
+
+    var Profiler = Shumway.Tools.Profiler;
+    var container = document.getElementById("container");
+
+    getJSON("data/CPU-20140520T215105.json", function(result) {
+      var buffer = Profiler.TimelineBuffer.createFromChromeProfile(result);
+      new Profiler.FlameChart(container, buffer);
+    });
+
+    //getJSON("data/Profile 1.json", function(result) {
+    //  var buffer = Profiler.TimelineBuffer.createFromFirefoxProfile(result);
+    //  new Profiler.FlameChart(container, buffer);
+    //});
+
+    function getJSON(url, callback) {
+      var req = new XMLHttpRequest();
+      req.open("get", url, true);
+      req.responseType = "json";
+      req.onreadystatechange = function() {
+        if (this.readyState == 4) {
+          callback(req.response);
+        }
+      };
+      req.send(null);
+    }
+
+    /*
+    function testA(size) {
+      var t = 0;
+      function next() {
+        return t += Math.random() / 1;
+      }
+      for (var i = 0; i < size; i++) {
+        buffer.enter("A", next());
+
+        for (var z = 0; z < 10; z++) {
+          var k = 1 + (Math.random() * 7) | 0;
+          for (var j = 0; j < k; j++) {
+            buffer.enter(String(z + j), next());
+          }
+          for (var j = 0; j < k; j++) {
+            buffer.leave(String(z + j), next());
+          }
+        }
+
+        buffer.leave("A", next());
+      }
+
+      var flameChart = new Profiler.FlameChart(container, buffer);
+    }
+
+    testA(1000);
+    */
+
+  </script>
+</body>
+</html>

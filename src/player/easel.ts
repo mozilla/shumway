@@ -21,7 +21,7 @@ module Shumway {
   import FrameContainer = Shumway.GFX.FrameContainer;
   import Point = Shumway.GFX.Geometry.Point;
 
-  import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   export class EaselHost {
     private static _mouseEvents = Shumway.Remoting.MouseEventNames;
@@ -47,7 +47,7 @@ module Shumway {
       var position = this._easel.getMouseWorldPosition(event);
       var point = new Point(position.x, position.y);
 
-      var buffer = new ByteArray();
+      var buffer = new DataBuffer();
       var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
       serializer.output = buffer;
       serializer.writeMouseEvent(event, point);
@@ -55,7 +55,7 @@ module Shumway {
     }
 
     private _keyboardEventListener(event: KeyboardEvent) {
-      var buffer = new ByteArray();
+      var buffer = new DataBuffer();
       var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
       serializer.output = buffer;
       serializer.writeKeyboardEvent(event);
@@ -75,7 +75,7 @@ module Shumway {
       }
     }
 
-    readData(updates: ByteArray, assets: Array<ByteArray>) {
+    readData(updates: DataBuffer, assets: Array<DataBuffer>) {
       var deserializer = new Shumway.Remoting.GFX.GFXChannelDeserializer();
       deserializer.input = updates;
       deserializer.inputAssets = assets;

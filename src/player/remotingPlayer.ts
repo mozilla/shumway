@@ -31,8 +31,8 @@ module Shumway.Remoting.Player {
   import KeyboardEventData = flash.ui.KeyboardEventData;
   import MouseEventAndPointData = flash.ui.MouseEventAndPointData;
 
-  import IDataInput = flash.utils.IDataInput;
-  import IDataOutput = flash.utils.IDataOutput;
+  import IDataInput = Shumway.ArrayUtilities.IDataInput;
+  import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
 
   export class PlayerChannelSerializer {
     public output: IDataOutput;
