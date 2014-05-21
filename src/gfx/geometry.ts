@@ -223,7 +223,15 @@ module Shumway.GFX.Geometry {
     private _yMax: number;
 
     constructor (xMin: number, yMin: number, xMax: number, yMax: number) {
-      this.setElements(xMin, yMin, xMax, yMax);
+      assert(isInteger(xMin));
+      assert(isInteger(yMin));
+      assert(isInteger(xMax));
+      assert(isInteger(yMax));
+      this._xMin = xMin|0;
+      this._yMin = yMin|0;
+      this._xMax = xMax|0;
+      this._yMax = yMax|0;
+      this.assertValid();
     }
 
     static FromUntyped (source: UntypedBoundingBox): BoundingBox {
@@ -242,9 +250,35 @@ module Shumway.GFX.Geometry {
       this.yMax = yMax;
     }
 
+    copyFrom (source: BoundingBox): void {
+      this.setElements(source.xMin, source.yMin, source.xMax, source.yMax);
+    }
+
+    contains (x: number, y: number): boolean {
+      return x < this.xMin !== x < this.xMax &&
+             y < this.yMin !== y < this.yMax;
+    }
+
+    unionWith (other: BoundingBox): void {
+      this._xMin = Math.min(this._xMin, other._xMin);
+      this._yMin = Math.min(this._yMin, other._yMin);
+      this._xMax = Math.max(this._xMax, other._xMax);
+      this._yMax = Math.max(this._yMax, other._yMax);
+    }
+
+    public intersects(toIntersect: BoundingBox): boolean {
+      return this.contains(toIntersect._xMin, toIntersect._yMin) ||
+             this.contains(toIntersect._xMax, toIntersect._yMax);
+    }
+
+    isEmpty (): boolean {
+      return this._xMax <= this._xMin || this._yMax <= this._yMin;
+    }
+
     set xMin(value: number) {
       assert(isInteger(value));
       this._xMin = value;
+      this.assertValid();
     }
 
     get xMin(): number {
@@ -254,6 +288,7 @@ module Shumway.GFX.Geometry {
     set yMin(value: number) {
       assert(isInteger(value));
       this._yMin = value|0;
+      this.assertValid();
     }
 
     get yMin(): number {
@@ -263,23 +298,49 @@ module Shumway.GFX.Geometry {
     set xMax(value: number) {
       assert(isInteger(value));
       this._xMax = value|0;
+      this.assertValid();
     }
 
     get xMax(): number {
       return this._xMax;
     }
 
+    get width(): number {
+      return this._xMax - this._xMin;
+    }
+
     set yMax(value: number) {
       assert(isInteger(value));
       this._yMax = value|0;
+      this.assertValid();
     }
 
     get yMax(): number {
       return this._yMax;
     }
 
+    get height(): number {
+      return this._yMax - this._yMin;
+    }
+
+    public getBaseWidth(angle: number): number {
+      var u = Math.abs(Math.cos(angle));
+      var v = Math.abs(Math.sin(angle));
+      return u * (this._xMax - this._xMin) + v * (this._yMax - this._yMin);
+    }
+
+    public getBaseHeight(angle: number): number {
+      var u = Math.abs(Math.cos(angle));
+      var v = Math.abs(Math.sin(angle));
+      return v * (this._xMax - this._xMin) + u * (this._yMax - this._yMin);
+    }
+
     setEmpty (): void {
       this._xMin = this._yMin = this._xMax = this._yMax = 0;
+    }
+
+    clone (): BoundingBox {
+      return new BoundingBox(this.xMin, this.yMin, this.xMax, this.yMax);
     }
 
     toString(): string {
@@ -289,6 +350,11 @@ module Shumway.GFX.Geometry {
              "xMax: " + this._xMax + ", " +
              "xMax: " + this._yMax +
              " }";
+    }
+
+    private assertValid(): void {
+//      assert(this._xMax >= this._xMin);
+//      assert(this._yMax >= this._yMin);
     }
   }
 

@@ -124,10 +124,10 @@ module Shumway.Remoting.GFX {
     private _readRectangle(): Rectangle {
       var input = this.input;
       return new Rectangle (
-        input.readFloat() / 20,
-        input.readFloat() / 20,
-        input.readFloat() / 20,
-        input.readFloat() / 20
+        input.readInt() / 20,
+        input.readInt() / 20,
+        input.readInt() / 20,
+        input.readInt() / 20
       );
     }
 

@@ -83,12 +83,12 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Display object has invalid bounds.
      */
-    InvalidBounds                             = 0x0002,
+    InvalidLineBounds                         = 0x0002,
 
     /**
      * Display object has invalid rect.
      */
-    InvalidRect                               = 0x0004,
+    InvalidFillBounds                         = 0x0004,
 
     /**
      * Display object has an invalid matrix because one of its local properties: x, y, scaleX, ... has been mutated.
@@ -243,8 +243,8 @@ module Shumway.AVM2.AS.flash.display {
 
       self._id = DisplayObject._syncID++;
       self._displayObjectFlags = DisplayObjectFlags.Visible                            |
-                                 DisplayObjectFlags.InvalidBounds                      |
-                                 DisplayObjectFlags.InvalidRect                        |
+                                 DisplayObjectFlags.InvalidLineBounds                  |
+                                 DisplayObjectFlags.InvalidFillBounds                  |
                                  DisplayObjectFlags.InvalidMatrix                      |
                                  DisplayObjectFlags.InvalidConcatenatedMatrix          |
                                  DisplayObjectFlags.InvalidInvertedConcatenatedMatrix  |
@@ -279,8 +279,8 @@ module Shumway.AVM2.AS.flash.display {
       self._loaderInfo = null;
       self._accessibilityProperties = null;
 
-      self._rect = new geom.Rectangle();
-      self._bounds = new geom.Rectangle();
+      self._fillBounds = new BoundingBox(0, 0, 0, 0);
+      self._lineBounds = new BoundingBox(0, 0, 0, 0);
       self._clipDepth = 0;
 
       self._concatenatedMatrix = new geom.Matrix();
@@ -356,20 +356,20 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _setBoundsAndRectFromWidthAndHeight(width: number, height: number) {
-      this._rect.setTo(0, 0, width, height);
-      this._bounds.setTo(0, 0, width, height);
-      this._removeFlags(DisplayObjectFlags.InvalidBounds | DisplayObjectFlags.InvalidRect);
+      this._fillBounds.setElements(0, 0, width, height);
+      this._lineBounds.setElements(0, 0, width, height);
+      this._removeFlags(DisplayObjectFlags.InvalidLineBounds | DisplayObjectFlags.InvalidFillBounds);
       this._invalidateParentBoundsAndRect();
     }
 
     _setBoundsAndRectFromSymbol(symbol: Timeline.DisplaySymbol) {
-      if (symbol.bounds) {
-        this._bounds.copyFrom(symbol.bounds);
+      if (symbol.fillBounds) {
+        this._fillBounds.copyFrom(symbol.fillBounds);
       }
-      if (symbol.rect) {
-        this._rect.copyFrom(symbol.rect);
+      if (symbol.lineBounds) {
+        this._lineBounds.copyFrom(symbol.lineBounds);
       }
-      this._removeFlags(DisplayObjectFlags.InvalidBounds | DisplayObjectFlags.InvalidRect);
+      this._removeFlags(DisplayObjectFlags.InvalidLineBounds | DisplayObjectFlags.InvalidFillBounds);
       this._invalidateParentBoundsAndRect();
     }
 
@@ -479,12 +479,12 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Bounding box excluding strokes.
      */
-    _rect: flash.geom.Rectangle;
+    _fillBounds: BoundingBox;
 
     /**
      * Bounding box including strokes.
      */
-    _bounds: flash.geom.Rectangle;
+    _lineBounds: BoundingBox;
 
     _clipDepth: number;
 
@@ -675,13 +675,13 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     /**
-     * Invalidates the bounds and rect of this display object along with all of its ancestors.
+     * Invalidates the fill- and lineBounds of this display object along with all of its ancestors.
      */
     _invalidateBoundsAndRect(): void {
       /* TODO: We should only propagate this bit if the bounds are actually changed. We can do the
        * bounds computation eagerly if the number of children is low. If there are no changes in the
        * bounds we don't need to propagate the bit. */
-      this._propagateFlags(DisplayObjectFlags.InvalidBounds | DisplayObjectFlags.InvalidRect, Direction.Upward);
+      this._propagateFlags(DisplayObjectFlags.InvalidLineBounds | DisplayObjectFlags.InvalidFillBounds, Direction.Upward);
     }
 
     _invalidateParentBoundsAndRect(): void {
@@ -693,15 +693,23 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Computes the bounding box for all of this display object's content, its graphics and all of its children.
      */
-    _getContentBounds(includeStrokes: boolean = true): flash.geom.Rectangle {
+    _getContentBounds(includeStrokes: boolean = true): BoundingBox {
       // Tobias: What about filters?
-      var invalidFlag = includeStrokes ? DisplayObjectFlags.InvalidBounds : DisplayObjectFlags.InvalidRect;
-      var rectangle = includeStrokes ? this._bounds : this._rect;
+      var invalidFlag: number;
+      var rectangle: BoundingBox;
+      if (includeStrokes) {
+        invalidFlag = DisplayObjectFlags.InvalidLineBounds;
+        rectangle = this._lineBounds;
+      } else {
+        invalidFlag = DisplayObjectFlags.InvalidFillBounds;
+        rectangle = this._fillBounds;
+      }
       if (this._hasFlags(invalidFlag)) {
-        rectangle.setEmpty();
         var graphics: Graphics = this._getGraphics();
         if (graphics) {
-          rectangle.unionWith(graphics._getContentBounds(includeStrokes));
+          rectangle.copyFrom(graphics._getContentBounds(includeStrokes));
+        } else {
+          rectangle.setEmpty();
         }
         if (DisplayObjectContainer.isType(this)) {
           var container: DisplayObjectContainer = <DisplayObjectContainer>this;
@@ -721,7 +729,9 @@ module Shumway.AVM2.AS.flash.display {
      *
      *   this.concatenatedMatrix * inverse(target.concatenatedMatrix)
      */
-    private _getTransformedBounds(targetCoordinateSpace: DisplayObject, includeStroke: boolean = true) {
+    private _getTransformedBounds(targetCoordinateSpace: DisplayObject,
+                                  includeStroke: boolean = true): BoundingBox
+    {
       var bounds = this._getContentBounds(includeStroke).clone();
       if (!targetCoordinateSpace || targetCoordinateSpace === this || bounds.isEmpty()) {
         return bounds;
@@ -729,7 +739,8 @@ module Shumway.AVM2.AS.flash.display {
       var m = targetCoordinateSpace._getConcatenatedMatrix().clone();
       m.invert();
       m.preMultiply(this._getConcatenatedMatrix());
-      return m.transformRectAABB(bounds);
+      m.transformBoundingBox(bounds);
+      return bounds;
     }
 
     /**
@@ -1130,7 +1141,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get scale9Grid(): flash.geom.Rectangle {
-      return flash.geom.Rectangle.createFromBbox(this._scale9Grid);
+      return this._scale9Grid ? flash.geom.Rectangle.createFromBbox(this._scale9Grid) : null;
     }
 
     set scale9Grid(innerRectangle: flash.geom.Rectangle) {
@@ -1198,11 +1209,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     getBounds(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
-      return this._getTransformedBounds(targetCoordinateSpace, true).toPixels();
+      return geom.Rectangle.createFromBbox(this._getTransformedBounds(targetCoordinateSpace, true));
     }
 
     getRect(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
-      return this._getTransformedBounds(targetCoordinateSpace, false).toPixels();
+      return geom.Rectangle.createFromBbox(this._getTransformedBounds(targetCoordinateSpace, false));
     }
 
     /**
@@ -1321,8 +1332,8 @@ module Shumway.AVM2.AS.flash.display {
       var a = this, b = other;
       var aBounds = a._getContentBounds(false).clone();
       var bBounds = b._getContentBounds(false).clone();
-      a._getConcatenatedMatrix().transformRectAABB(aBounds);
-      b._getConcatenatedMatrix().transformRectAABB(bBounds);
+      a._getConcatenatedMatrix().transformBoundingBox(aBounds);
+      b._getConcatenatedMatrix().transformBoundingBox(bBounds);
       return aBounds.intersects(bBounds);
     }
 
@@ -1332,10 +1343,14 @@ module Shumway.AVM2.AS.flash.display {
      * box |false|. Use the |ignoreChildren| to only test the display object's graphics and
      * not its children.
      */
-    hitTestPoint(x: number, y: number, shapeFlag: boolean = false, ignoreChildren: boolean = false): boolean {
-      x = +x; y = +y; shapeFlag = !!shapeFlag;
+    hitTestPoint(x: number, y: number, shapeFlag: boolean = false,
+                 ignoreChildren: boolean = false): boolean
+    {
+      x = +x;
+      y = +y;
+      shapeFlag = !!shapeFlag;
       var point = this._getInvertedConcatenatedMatrix().transformCoords(x, y, true);
-      if (!this._getContentBounds().containsPoint(point)) {
+      if (!this._getContentBounds().contains(point.x, point.y)) {
         return false;
       }
       if (!shapeFlag) {
