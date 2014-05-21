@@ -20,6 +20,7 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import clamp = Shumway.NumberUtilities.clamp;
+  import Bounds = Shumway.Bounds;
 
   import DisplayObject = flash.display.DisplayObject;
   import GradientType = flash.display.GradientType;
@@ -65,8 +66,8 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       this._id = Graphics._syncID++;
       this._graphicsData = new DataBuffer();
-      this._rect = new geom.Rectangle();
-      this._bounds = new geom.Rectangle();
+      this._fillBounds = new Bounds(0, 0, 0, 0);
+      this._lineBounds = new Bounds(0, 0, 0, 0);
       this._parent = null;
     }
     
@@ -80,12 +81,12 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Bounding box excluding strokes.
      */
-    _rect: geom.Rectangle;
+    _fillBounds: Bounds;
 
     /**
      * Bounding box including strokes.
      */
-    _bounds: geom.Rectangle;
+    _lineBounds: Bounds;
 
     /**
      * Back reference to the display object that references this graphics object. This is
@@ -101,17 +102,11 @@ module Shumway.AVM2.AS.flash.display {
 
     _invalidateParent() {
       assert (this._parent, "A parent should already be linked.");
-      this._parent._invalidateBoundsAndRect();
+      this._parent._invalidateFillAndLineBounds();
     }
 
-    _getContentBounds(includeStrokes: boolean = true): geom.Rectangle {
-      if (includeStrokes) {
-        return this._bounds;
-      } else {
-        return this._rect;
-      }
-      notImplemented("public flash.display.Graphics::_getContentBounds");
-      return new geom.Rectangle();
+    _getContentBounds(includeStrokes: boolean = true): Bounds {
+      return includeStrokes ? this._lineBounds : this._fillBounds;
     }
 
     clear(): void {
@@ -204,7 +199,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     drawRect(x: number, y: number, width: number, height: number): void {
-      //x = +x; y = +y; width = +width; height = +height;
+      x = +x;
+      y = +y;
+      width = +width;
+      height = +height;
 
       this.moveTo(x, y);
       this.lineTo(x + width, y);
@@ -212,8 +210,11 @@ module Shumway.AVM2.AS.flash.display {
       this.lineTo(x, y + height);
       this.lineTo(x, y);
 
-      this._rect = this._bounds = new geom.Rectangle(x * 20 | 0, y * 20 | 0,
-                                                     width * 20 | 0, height * 20 | 0);
+      // Temporary hack until proper bounds calculations land.
+      x = x * 20|0;
+      y = y * 20|0;
+      this._fillBounds = this._lineBounds = new Bounds(x, y, x + width * 20 | 0,
+                                                       y + height * 20 | 0);
       this._invalidateParent();
     }
 
@@ -415,7 +416,7 @@ module Shumway.AVM2.AS.flash.display {
      */
     _containsPoint(point: flash.geom.Point, includeStrokes: boolean = false): boolean {
       // TODO: Implement this in a smart way.
-      return this._bounds.containsPoint(point);
+      return this._lineBounds.contains(point.x, point.y);
 
 //      var paths = this._paths;
 //      for (var i = 0; i < paths.length; i++) {

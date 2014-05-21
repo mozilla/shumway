@@ -18,6 +18,7 @@ module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
+  import Bounds = Shumway.Bounds;
 
   export class Matrix extends ASNative implements flash.utils.IExternalizable {
     
@@ -326,6 +327,46 @@ module Shumway.AVM2.AS.flash.geom {
       rectangle.y = y0 < y2 ? y0 : y2;
       rectangle.height = (y1 > y3 ? y1 : y3) - rectangle.y;
       return rectangle;
+    }
+
+    transformBounds(bounds: Bounds): void {
+      var a  = this.a;
+      var b  = this.b;
+      var c  = this.c;
+      var d  = this.d;
+      var tx = this.tx;
+      var ty = this.ty;
+
+      var x = bounds.xMin;
+      var y = bounds.yMin;
+      var w = bounds.width;
+      var h = bounds.height;
+
+      var x0 = (a * x + c * y + tx)|0;
+      var y0 = (b * x + d * y + ty)|0;
+      var x1 = (a * (x + w) + c * y + tx)|0;
+      var y1 = (b * (x + w) + d * y + ty)|0;
+      var x2 = (a * (x + w) + c * (y + h) + tx)|0;
+      var y2 = (b * (x + w) + d * (y + h) + ty)|0;
+      var x3 = (a * x + c * (y + h) + tx)|0;
+      var y3 = (b * x + d * (y + h) + ty)|0;
+
+      var tmp = 0;
+
+      // Manual Min/Max is a lot faster than calling Math.min/max
+      // X Min-Max
+      if (x0 > x1) { tmp = x0; x0 = x1; x1 = tmp; }
+      if (x2 > x3) { tmp = x2; x2 = x3; x3 = tmp; }
+
+      bounds.xMin = x0 < x2 ? x0 : x2;
+      bounds.xMax = x1 > x3 ? x1 : x3;
+
+      // Y Min-Max
+      if (y0 > y1) { tmp = y0; y0 = y1; y1 = tmp; }
+      if (y2 > y3) { tmp = y2; y2 = y3; y3 = tmp; }
+
+      bounds.yMin = y0 < y2 ? y0 : y2;
+      bounds.yMax = y1 > y3 ? y1 : y3;
     }
 
     getScaleX(): number {

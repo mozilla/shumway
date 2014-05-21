@@ -19,6 +19,7 @@ module Shumway.Timeline {
   import assert = Shumway.Debug.assert;
   import abstractMethod = Shumway.Debug.abstractMethod;
   import flash = Shumway.AVM2.AS.flash;
+  import Bounds = Shumway.Bounds;
 
   export class Symbol {
     id: number = -1;
@@ -32,19 +33,19 @@ module Shumway.Timeline {
   }
 
   export class DisplaySymbol extends Symbol {
-    rect: flash.geom.Rectangle;
-    bounds: flash.geom.Rectangle;
-    scale9Grid: flash.geom.Rectangle;
+    fillBounds: Bounds;
+    lineBounds: Bounds;
+    scale9Grid: Bounds;
 
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
       super(id, symbolClass);
     }
 
     _setBoundsFromData(data: any) {
-      this.rect = data.bbox ? flash.geom.Rectangle.createFromBbox(data.bbox) : null;
-      this.bounds = data.strokeBbox ? flash.geom.Rectangle.createFromBbox(data.strokeBbox) : null;
-      if (!this.bounds) {
-        this.bounds = this.rect;
+      this.fillBounds = data.bbox ? Bounds.FromUntyped(data.bbox) : null;
+      this.lineBounds = data.strokeBbox ? Bounds.FromUntyped(data.strokeBbox) : null;
+      if (!this.lineBounds) {
+        this.lineBounds = this.fillBounds.clone();
       }
     }
   }
@@ -64,8 +65,8 @@ module Shumway.Timeline {
 
       // TODO: Remove this hack once we can get bounds of the graphics object.
       if (data.type === "shape") {
-        symbol.graphics._bounds.copyFrom(symbol.bounds);
-        symbol.graphics._rect.copyFrom(symbol.rect);
+        symbol.graphics._getContentBounds(true).copyFrom(symbol.lineBounds);
+        symbol.graphics._getContentBounds(false).copyFrom(symbol.fillBounds);
       }
 
       return symbol;
