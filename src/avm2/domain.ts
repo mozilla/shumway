@@ -1,5 +1,3 @@
-/* -*- Mode: js; js-indent-level: 2; indent-tabs-mode: nil; tab-width: 2 -*- */
-/* vim: set shiftwidth=2 tabstop=2 autoindent cindent expandtab: */
 /*
  * Copyright 2014 Mozilla Foundation
  *
@@ -38,7 +36,6 @@ module Shumway.AVM2.Runtime {
   declare var Promise;
   declare var natives;
   declare var Counter: Shumway.Metrics.Counter;
-  declare var Type;
   declare var GlobalMultinameResolver;
   declare var avm2;
   declare var homePath;
@@ -512,7 +509,7 @@ module Shumway.AVM2.Runtime {
 
       if (!this.base) {
         AS.initialize(this);
-        Type.initializeTypes(this);
+        Shumway.AVM2.Verifier.Type.initializeTypes(this);
       }
     }
 

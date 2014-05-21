@@ -313,6 +313,10 @@ module Shumway.AVM2.AS.flash.display {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null; // ["hitTestObject", "hitTestPoint"];
 
+    /**
+     * Creates a new display object from a symbol and initializes its animated display properties.
+     * Calling its constructor is optional at this point, since that can happen in a later frame phase.
+     */
     static createAnimatedDisplayObject(state: Shumway.Timeline.AnimationState, callConstructor: boolean = true): DisplayObject {
       var symbol = state.symbol;
       var symbolClass = symbol.symbolClass;
@@ -326,6 +330,9 @@ module Shumway.AVM2.AS.flash.display {
       return instance;
     }
 
+    /**
+     * Dispatches a frame event on all instances of DisplayObjects.
+     */
     static _broadcastFrameEvent(type: string): void {
       var event: flash.events.Event;
       switch (type) {
@@ -333,6 +340,7 @@ module Shumway.AVM2.AS.flash.display {
         case events.Event.FRAME_CONSTRUCTED:
         case events.Event.EXIT_FRAME:
         case events.Event.RENDER:
+          // TODO: Fire RENDER events only for objects on the display list.
           event = events.Event.getBroadcastInstance(type);
       }
       assert (event, "Invalid frame event.");
@@ -729,6 +737,10 @@ module Shumway.AVM2.AS.flash.display {
       this._propagateFlags(DisplayObjectFlags.DirtyPaint, Direction.Upward);
     }
 
+    /**
+     * Detaches this object from being animated by the timeline. This happens whenever a display
+     * property of this object is changed by user code.
+     */
     private _stopTimelineAnimation() {
       this._removeFlags(DisplayObjectFlags.AnimatedByTimeline);
     }
@@ -772,12 +784,15 @@ module Shumway.AVM2.AS.flash.display {
       }
     }
 
+    /**
+     * Animates this object's display properties.
+     */
     _animate(state: Shumway.Timeline.AnimationState): void {
       if (state.symbol) {
         if (state.symbol instanceof Shumway.Timeline.ShapeSymbol) {
           this._setGraphics((<Shumway.Timeline.ShapeSymbol>state.symbol).graphics);
         }
-        // TODO handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/
+        // TODO: Handle http://wahlers.com.br/claus/blog/hacking-swf-2-placeobject-and-ratio/.
       }
       if (state.matrix) {
         this._setMatrix(state.matrix, false);
@@ -796,10 +811,13 @@ module Shumway.AVM2.AS.flash.display {
         this._setFlags(flash.display.DisplayObjectFlags.CacheAsBitmap);
       }
       this._toggleFlags(DisplayObjectFlags.Visible, state.visible);
-      // TODO state.events;
+      // TODO: state.events
       this._invalidatePaint();
     }
 
+    /**
+     * Dispatches an event on this object and all its descendants.
+     */
     _propagateEvent(event: flash.events.Event): void {
       this.visit(function (node) {
         node.dispatchEvent(event);

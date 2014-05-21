@@ -269,10 +269,22 @@ module Shumway {
       dst.length = count;
     }
 
+    /**
+     * Just deletes several array elements from the end of the list.
+     */
+    export function popManyIntoVoid(array: any [], count: number) {
+      release || assert(array.length >= count);
+      array.length = array.length - count;
+    }
+
     export function pushMany(dst: any [], src: any []) {
       for (var i = 0; i < src.length; i++) {
         dst.push(src[i]);
       }
+    }
+
+    export function top(array: any []) {
+      return array.length && array[array.length - 1]
     }
 
     export function copyFrom(dst: any [], src: any []) {
@@ -911,6 +923,15 @@ module Shumway {
         n |= StringUtilities.fromEncoding(s[1 + i]) << offset;
       }
       return n;
+    }
+
+    export function trimMiddle(s: string, maxLength: number): string {
+      if (s.length <= maxLength) {
+        return s;
+      }
+      var leftHalf = maxLength >> 1;
+      var rightHalf = maxLength - leftHalf - 1;
+      return s.substr(0, leftHalf) + "\u2026" + s.substr(s.length - rightHalf, rightHalf);
     }
   }
 

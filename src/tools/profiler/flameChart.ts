@@ -13,220 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-module Shumway.Tools {
+module Shumway.Tools.Profiler {
   import clamp = NumberUtilities.clamp;
+  import trimMiddle = StringUtilities.trimMiddle;
   import createEmptyObject = ObjectUtilities.createEmptyObject;
-
-  /**
-   * Inspired by the Chrome flame chart and others.
-   */
-
-  /**
-   * Represents a single timeline frame range and makes it easier to work with the compacted
-   * timeline buffer data.
-   */
-  export class TimelineFrame {
-    public children: TimelineFrame [];
-    public total: number;
-    constructor (
-      public parent: TimelineFrame,
-      public kind: number,
-      public startTime: number,
-      public endTime: number) {
-      // ...
-    }
-
-    /**
-     * Gets the child index of the first child to overlap the specified time.
-     */
-    public getChildIndex(time: number): number {
-      var children = this.children;
-      for (var i = 0; i < children.length; i++) {
-        var child = children[i];
-        if (child.endTime > time) {
-          return i;
-        }
-      }
-      return 0;
-    }
-
-    /**
-     * Gets the high and low index of the children that intersect the specified time range.
-     */
-    public getChildRange(startTime: number, endTime: number): number [] {
-      if (startTime > this.endTime || endTime < this.startTime || endTime < startTime) {
-        return null;
-      } else {
-        return [
-          this.getNearestChild(startTime),
-          this.getNearestChildReverse(endTime)
-        ];
-      }
-    }
-
-    public getNearestChild(time: number): number {
-      var children = this.children;
-      if (time <= children[0].endTime) {
-        return 0;
-      }
-      var imid;
-      var imin = 0;
-      var imax = children.length - 1;
-      while (imax > imin) {
-        imid = ((imin + imax) / 2) | 0;
-        var child = children[imid];
-        if (time >= child.startTime && time <= child.endTime) {
-          return imid;
-        } else if (time > child.endTime) {
-          imin = imid + 1;
-        } else {
-          imax = imid;
-        }
-      }
-      return Math.ceil((imin + imax) / 2);
-    }
-
-    public getNearestChildReverse(time: number): number {
-      var children = this.children;
-      var imax = children.length - 1;
-      if (time >= children[imax].startTime) {
-        return imax;
-      }
-      var imid;
-      var imin = 0;
-      while (imax > imin) {
-        imid = Math.ceil((imin + imax) / 2);
-        var child = children[imid];
-        if (time >= child.startTime && time <= child.endTime) {
-          return imid;
-        } else if (time > child.endTime) {
-          imin = imid;
-        } else {
-          imax = imid - 1;
-        }
-      }
-      return ((imin + imax) / 2) | 0;
-    }
-
-    /**
-     * Finds the deepest child that intersects with the specified time.
-     */
-    public query(time: number): TimelineFrame {
-      if (time < this.startTime || time > this.endTime) {
-        return null;
-      }
-      var children = this.children;
-      if (children) {
-        for (var i = 0; i < children.length; i++) {
-          var child = children[i];
-          if (time >= child.startTime && time <= child.endTime) {
-            return child.query(time);
-          }
-        }
-      }
-      return this;
-    }
-
-    /**
-     * Gets this frame's distance to the root.
-     */
-    public getDepth(): number {
-      var depth = 0;
-      var self = this;
-      while (self) {
-        depth ++;
-        self = self.parent;
-      }
-      return depth;
-    }
-  }
-
-  /**
-   * Records enter / leave events in two circular buffers. The goal here is to be able to handle
-   * large ammounts of data.
-   */
-  export class TimelineBuffer {
-    static ENTER = 0xBEEF0000 | 0;
-    static LEAVE = 0xDEAD0000 | 0;
-
-    private _depth: number;
-    private _kindCount: number;
-    public marks: Shumway.CircularBuffer;
-    public times: Shumway.CircularBuffer;
-    public kinds: Shumway.Map<number>;
-    public kindNames: Shumway.Map<string>;
-
-    constructor() {
-      this.marks = new Shumway.CircularBuffer(Int32Array, 20);
-      this.times = new Shumway.CircularBuffer(Float64Array, 20);
-      this.kinds = createEmptyObject();
-      this.kindNames = createEmptyObject();
-      this._depth = 0;
-      this._kindCount = 0;
-    }
-
-    getKindName(kind: number): string {
-      return this.kindNames[kind];
-    }
-
-    getKind(name: string): number {
-      if (this.kinds[name] === undefined) {
-        var kind = this._kindCount ++;
-        this.kinds[name] = kind;
-        this.kindNames[kind] = name;
-      }
-      return this.kinds[name];
-    }
-
-    enter(name: string, time?: number) {
-      this._depth++;
-      this.marks.write(TimelineBuffer.ENTER | this.getKind(name));
-      this.times.write(time || performance.now());
-    }
-
-    leave(name: string, time?: number) {
-      this.marks.write(TimelineBuffer.LEAVE | this.getKind(name));
-      this.times.write(time || performance.now());
-      this._depth--;
-    }
-
-    /**
-     * Constructs an easier to work with TimelineFrame data structure.
-     */
-    gatherRange(count: number): TimelineFrame {
-      var range = new TimelineFrame(null, 0, NaN, NaN);
-      var stack: TimelineFrame [] = [range];
-      var times = this.times;
-      var topLevelFrameCount = 0;
-      this.marks.forEachInReverse(function (mark, i) {
-        var time = times.get(i);
-        if ((mark & 0xFFFF0000) === TimelineBuffer.LEAVE) {
-          if (stack.length === 1) {
-            topLevelFrameCount ++;
-            if (topLevelFrameCount > count) {
-              return true;
-            }
-          }
-          stack.push(new TimelineFrame(stack[stack.length - 1], mark & 0xFFFF, NaN, time));
-        } else if ((mark & 0xFFFF0000) === TimelineBuffer.ENTER) {
-          var node = stack.pop();
-          var top = stack[stack.length - 1];
-          node.startTime = time;
-          if (!top.children) {
-            top.children = [node];
-          } else {
-            top.children.unshift(node);
-          }
-        }
-      });
-      if (!range.children || !range.children.length) {
-        return null;
-      }
-      range.startTime = range.children[0].startTime;
-      range.endTime = range.children[range.children.length - 1].endTime;
-      return range;
-    }
-  }
 
   interface Kind {
     bgColor: string;
@@ -241,40 +31,41 @@ module Shumway.Tools {
   }
 
   export class FlameChart {
-    private _container: HTMLElement;
-    private _canvas: HTMLCanvasElement;
-    private _context: CanvasRenderingContext2D;
+    private _container:HTMLElement;
+    private _canvas:HTMLCanvasElement;
+    private _context:CanvasRenderingContext2D;
 
     private _overviewHeight = 64;
     private _overviewCanvasDirty = true;
-    private _overviewCanvas: HTMLCanvasElement;
-    private _overviewContext: CanvasRenderingContext2D;
+    private _overviewCanvas:HTMLCanvasElement;
+    private _overviewContext:CanvasRenderingContext2D;
 
-    private _offsetWidth: number;
-    private _offsetHeight: number;
+    private _offsetWidth:number;
+    private _offsetHeight:number;
 
-    private _buffer: TimelineBuffer;
+    private _buffer:TimelineBuffer;
 
     private _windowLeft = 0;
     private _windowRight = Number.MAX_VALUE;
     private _timeToPixels = 1;
     private _pixelsToTime = 1;
     private _pixelsToOverviewTime = 1;
-    private _range: TimelineFrame;
+    private _range:TimelineFrame;
     private _minTime = 5;
-    private _kindStyle: Shumway.Map<Kind>;
+    private _kindStyle:Shumway.Map<Kind>;
 
-    private _drag: DragInfo = null;
+    private _drag:DragInfo = null;
     private _ignoreClick = false;
     private _cursor = "default";
+    private _textWidth = {};
 
     /**
      * Don't paint frames whose width is smaller than this value. This helps a lot when drawing
-     * large ranges. This can be < 1 since antialiasing can look quite nice.
+     * large ranges. This can be < 1 since anti-aliasing can look quite nice.
      */
     private _minFrameWidthInPixels = 0.2;
 
-    constructor(container: HTMLElement, buffer: TimelineBuffer) {
+    constructor(container:HTMLElement, buffer:TimelineBuffer) {
       this._container = container;
       this._canvas = document.createElement("canvas");
       this._canvas.style.display = "block";
@@ -297,7 +88,7 @@ module Shumway.Tools {
       this._onResize();
     }
 
-    private _onClick(event: MouseEvent) {
+    private _onClick(event:MouseEvent) {
       if (this._ignoreClick) {
         this._ignoreClick = false;
         return;
@@ -311,7 +102,7 @@ module Shumway.Tools {
       }
     }
 
-    private _onMouseUp(event: MouseEvent) {
+    private _onMouseUp(event:MouseEvent) {
       if (this._drag) {
         this._drag = null;
         this._ignoreClick = true;
@@ -319,7 +110,7 @@ module Shumway.Tools {
       this._updateCursor(event);
     }
 
-    private _onMouseDown(event: MouseEvent) {
+    private _onMouseDown(event:MouseEvent) {
       if (event.clientY < this._overviewHeight) {
         if (this._getCursorPosition(event) == 0) {
           this._drag = {
@@ -340,7 +131,7 @@ module Shumway.Tools {
       this._updateCursor(event);
     }
 
-    private _onMouseMove(event: MouseEvent) {
+    private _onMouseMove(event:MouseEvent) {
       if (this._drag) {
         var offset:number;
         var mult:number;
@@ -358,15 +149,15 @@ module Shumway.Tools {
       this._updateCursor(event);
     }
 
-    private _onMouseWheel(event: MouseEvent) {
+    private _onMouseWheel(event:MouseEvent) {
       event.stopPropagation();
       if (this._drag === null) {
         var range = this._range;
         var delta = clamp(event.detail ? event.detail : -event.wheelDeltaY / 120, -1, 1);
         var zoom = Math.pow(1.2, delta) - 1;
         var cursorTime = (event.clientY > this._overviewHeight || this._getCursorPosition(event) !== 0)
-                           ? this._windowLeft + event.clientX * this._pixelsToTime
-                           : range.startTime + event.clientX * this._pixelsToOverviewTime;
+          ? this._windowLeft + event.clientX * this._pixelsToTime
+          : range.startTime + event.clientX * this._pixelsToOverviewTime;
         var windowLeft = this._windowLeft + (this._windowLeft - cursorTime) * zoom;
         var windowRight = this._windowRight + (this._windowRight - cursorTime) * zoom;
         this._updateWindow(windowLeft, windowRight);
@@ -398,7 +189,7 @@ module Shumway.Tools {
       this._pixelsToOverviewTime = (this._range.endTime - this._range.startTime) / this._offsetWidth;
     }
 
-    private _updateWindow(left: number, right: number) {
+    private _updateWindow(left:number, right:number) {
       if (this._windowLeft !== left || this._windowRight !== right) {
         this._windowLeft = left;
         this._windowRight = right;
@@ -408,14 +199,14 @@ module Shumway.Tools {
       }
     }
 
-    private _updateCursor(event: MouseEvent) {
+    private _updateCursor(event:MouseEvent) {
       var showHandCursor = (this._getCursorPosition(event) == 0);
       var isDragging = (this._drag !== null);
       var value = showHandCursor ? (isDragging ? "grabbing" : "grab") : "default";
       if (this._cursor !== value) {
         this._cursor = value;
         var self = this;
-        ["", "-moz-", "-webkit-"].forEach(function(prefix) {
+        ["", "-moz-", "-webkit-"].forEach(function (prefix) {
           self._canvas.style.cursor = prefix + value;
         });
       }
@@ -441,12 +232,12 @@ module Shumway.Tools {
       this._overviewCanvasDirty = true;
     }
 
-    private _pixelTime(time: number): number {
+    private _pixelTime(time:number):number {
       var window = this._windowRight - this._windowLeft;
       return (time - this._windowLeft) * (this._offsetWidth / window);
     }
 
-    private _drawFrame(frame: TimelineFrame, depth: number) {
+    private _drawFrame(frame:TimelineFrame, depth:number) {
       var context = this._context;
       var start = (frame.startTime - this._windowLeft) * this._timeToPixels;
       var end = (frame.endTime - this._windowLeft) * this._timeToPixels;
@@ -462,22 +253,59 @@ module Shumway.Tools {
           textColor: ColorStyle.contrastStyle(background)
         };
       }
+      var frameHPadding = 1;
       context.fillStyle = style.bgColor;
-      context.fillRect(start, depth * 12, width, 12);
-      context.fillStyle = style.textColor;
-      context.textBaseline  = "top";
-      var label = this._buffer.getKindName(frame.kind);
-      var labelHPadding = 2;
-      if (width > 10 && context.measureText(label).width + (2 * labelHPadding) < width) {
-        context.fillText(label, start + labelHPadding, depth * 12);
+      context.fillRect(start, depth * (12 + frameHPadding), width, 12);
+      if (width > 12) {
+        var label = this._buffer.getKindName(frame.kind);
+        if (label && label.length) {
+          var labelHPadding = 2;
+          label = this._prepareText(context, label, width - labelHPadding * 2);
+          if (label.length) {
+            context.fillStyle = style.textColor;
+            context.textBaseline = "top";
+            context.fillText(label, (start + labelHPadding), depth * (12 + frameHPadding));
+          }
+        }
       }
-
       var children = frame.children;
       if (children) {
         for (var i = 0; i < children.length; i++) {
           this._drawFrame(children[i], depth + 1);
         }
       }
+    }
+
+    private _prepareText(context, title, maxSize):string {
+      var titleWidth = this._measureWidth(context, title);
+      if (maxSize > titleWidth) {
+        return title;
+      }
+      var l = 3;
+      var r = title.length;
+      while (l < r) {
+        var m = (l + r) >> 1;
+        if (this._measureWidth(context, trimMiddle(title, m)) < maxSize) {
+          l = m + 1;
+        } else {
+          r = m;
+        }
+      }
+      title = trimMiddle(title, r - 1);
+      titleWidth = this._measureWidth(context, title);
+      if (titleWidth <= maxSize) {
+        return title;
+      }
+      return "";
+    }
+
+    private _measureWidth(context, text):number {
+      var width = this._textWidth[text];
+      if (!width) {
+        width = context.measureText(text).width;
+        this._textWidth[text] = width;
+      }
+      return width;
     }
 
     private _drawOverview() {
@@ -563,7 +391,7 @@ module Shumway.Tools {
       this._drawFlames();
     }
 
-    private _getCursorPosition(event: MouseEvent): number {
+    private _getCursorPosition(event:MouseEvent):number {
       var pos = 0;
       if (event.clientY < this._overviewHeight) {
         var range = this._range;
@@ -579,4 +407,5 @@ module Shumway.Tools {
       return pos;
     }
   }
+
 }

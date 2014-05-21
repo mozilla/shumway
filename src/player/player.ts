@@ -140,9 +140,9 @@ module Shumway {
     private _enterSyncLoop(): void {
       var self = this;
       (function tick() {
-        self._syncTimeout = setTimeout(tick, 1000 / pumpRate.value);
+        self._syncTimeout = setTimeout(tick, 1000 / pumpRateOption.value);
         timeline && timeline.enter("pump");
-        if (pumpEnabled.value) {
+        if (pumpEnabledOption.value) {
           self._pumpDisplayListUpdates()
         }
         timeline && timeline.leave("pump");
@@ -158,24 +158,24 @@ module Shumway {
       var self = this;
       var stage = this._stage;
       var rootInitialized = false;
+      frameRateOption.value = stage.frameRate;
       (function tick() {
-        if (frameRate.value < 0) {
-          frameRate.value = stage.frameRate;
+        self._frameTimeout = setTimeout(tick, 1000 / frameRateOption.value);
+        if (!frameEnabledOption.value) {
+          return;
         }
-        self._frameTimeout = setTimeout(tick, 1000 / frameRate.value);
-        timeline && timeline.enter("eventLoop");
-
-        MovieClip.initFrame();
-        MovieClip.constructFrame();
-        Loader.progress();
-
-        if (rootInitialized) {
-          stage.render();
-        } else {
-          rootInitialized = true;
+        for (var i = 0; i < frameRateMultiplierOption.value; i++) {
+          timeline && timeline.enter("eventLoop");
+          MovieClip.initFrame();
+          MovieClip.constructFrame();
+          Loader.progress();
+          if (rootInitialized) {
+            stage.render();
+          } else {
+            rootInitialized = true;
+          }
+          timeline && timeline.leave("eventLoop");
         }
-
-        timeline && timeline.leave("eventLoop");
       })();
     }
 

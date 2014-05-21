@@ -61,7 +61,7 @@ src/swf/resourceloader.js
 ## Load AVM2 Dependencies
 #!inline console.time("Load AVM2 Dependencies");
 src/avm2/avm2Util.js
-src/avm2/settings.js
+src/avm2/options.js
 src/metrics.js
 
 src/avm2/constants.js
@@ -71,8 +71,12 @@ src/avm2/parser.js
 src/avm2/analyze.js
 src/avm2/compiler/lljs/src/estransform.js
 src/avm2/compiler/lljs/src/escodegen.js
-src/avm2/compiler/inferrer.js
+src/avm2/compiler/verifier.js
 src/avm2/compiler/c4/ir.js
+src/avm2/compiler/c4/ast.js
+src/avm2/compiler/c4/nodes.js
+src/avm2/compiler/c4/as.nodes.js
+src/avm2/compiler/c4/opt.js
 src/avm2/compiler/builder.js
 src/avm2/compiler/c4/looper.js
 src/avm2/compiler/c4/backend.js
@@ -87,7 +91,6 @@ src/avm2/runtime-exports.js
 src/avm2/hacks.js
 #src/avm2/vectors-numeric.js
 #src/avm2/vectors-generic.js
-src/avm2/xml.js
 src/avm2/amf.js
 src/avm2/natives/int32Vector.js
 src/avm2/natives/uint32Vector.js
