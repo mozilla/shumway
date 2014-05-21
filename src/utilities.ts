@@ -924,6 +924,15 @@ module Shumway {
       }
       return n;
     }
+
+    export function trimMiddle(s: string, maxLength: number): string {
+      if (s.length <= maxLength) {
+        return s;
+      }
+      var leftHalf = maxLength >> 1;
+      var rightHalf = maxLength - leftHalf - 1;
+      return s.substr(0, leftHalf) + "\u2026" + s.substr(s.length - rightHalf, rightHalf);
+    }
   }
 
   export module HashUtilities {

@@ -21,7 +21,7 @@ module Shumway.Remoting.GFX {
   import FrameContainer = Shumway.GFX.FrameContainer;
   import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
 
-  import Point = Shumway.AVM2.AS.flash.geom.Point;
+  import Point = Shumway.GFX.Geometry.Point;
   import Matrix = Shumway.GFX.Geometry.Matrix;
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
   import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;

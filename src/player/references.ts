@@ -20,6 +20,8 @@
 ///<reference path='remotingPlayer.ts' />
 ///<reference path='remotingGfx.ts' />
 ///<reference path='player.ts' />
+///<reference path='easel.ts' />
+///<reference path='embed.ts' />
 
 // declare var timeline: any;
 // declare var shumwayOptions: any;

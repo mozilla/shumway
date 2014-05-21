@@ -40,6 +40,10 @@ module Shumway.AVM2.AS.flash.display {
       self._children = [];
     };
 
+    /**
+     * Notifies all instances of DisplayObjectContainer to call the constructors of new timeline
+     * children that were created in an earlier frame phase.
+     */
     static constructChildren(): void {
       var instances = DisplayObjectContainer._displayObjectContainerInstances;
       for (var i = 0; i < instances.length; i++) {
@@ -69,6 +73,9 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidateBoundsAndRect();
     }
 
+    /**
+     * Calls the constructors of new children placed by timeline commands.
+     */
     _constructChildren(): void {
       var children = this._children;
       for (var i = 0; i < children.length; i++) {
@@ -176,6 +183,11 @@ module Shumway.AVM2.AS.flash.display {
       return child;
     }
 
+    /**
+     * Adds a timeline object to this container. The new child is added after the last object that
+     * exists at a smaller depth, or before the first object that exists at a greater depth. If no
+     * other timeline object is found, the new child is added to the front(top) of all other children.
+     */
     addChildAtDepth(child: flash.display.DisplayObject, depth: number /*int*/) {
       depth = depth | 0;
 
@@ -288,6 +300,9 @@ module Shumway.AVM2.AS.flash.display {
       return child;
     }
 
+    /**
+     * Returns the timeline object that exists at the specified depth.
+     */
     getChildAtDepth(depth: number /*int*/): flash.display.DisplayObject {
       depth = depth | 0;
 
