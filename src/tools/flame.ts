@@ -16,6 +16,7 @@
 module Shumway.Tools {
   import clamp = NumberUtilities.clamp;
   import createEmptyObject = ObjectUtilities.createEmptyObject;
+  import StringUtilities = Shumway.StringUtilities;
 
   /**
    * Inspired by the Chrome flame chart and others.
@@ -267,6 +268,7 @@ module Shumway.Tools {
     private _drag: DragInfo = null;
     private _ignoreClick = false;
     private _cursor = "default";
+    private _textWidth = {};
 
     /**
      * Don't paint frames whose width is smaller than this value. This helps a lot when drawing
@@ -464,20 +466,56 @@ module Shumway.Tools {
       }
       context.fillStyle = style.bgColor;
       context.fillRect(start, depth * 12, width, 12);
-      context.fillStyle = style.textColor;
-      context.textBaseline  = "top";
-      var label = this._buffer.getKindName(frame.kind);
-      var labelHPadding = 2;
-      if (width > 10 && context.measureText(label).width + (2 * labelHPadding) < width) {
-        context.fillText(label, start + labelHPadding, depth * 12);
+      if (width > 12) {
+        var label = this._buffer.getKindName(frame.kind);
+        if (label && label.length) {
+          var labelHPadding = 2;
+          label = this._prepareText(context, label, width - labelHPadding * 2);
+          if (label.length) {
+            context.fillStyle = style.textColor;
+            context.textBaseline  = "top";
+            context.fillText(label, start + labelHPadding, depth * 12);
+          }
+        }
       }
-
       var children = frame.children;
       if (children) {
         for (var i = 0; i < children.length; i++) {
           this._drawFrame(children[i], depth + 1);
         }
       }
+    }
+
+    private _prepareText(context, title, maxSize): string {
+      var titleWidth = this._measureWidth(context, title);
+      if (maxSize > titleWidth) {
+        return title;
+      }
+      var l = 3;
+      var r = title.length;
+      while (l < r) {
+        var m = (l + r) >> 1;
+        if (this._measureWidth(context, StringUtilities.trimMiddle(title, m)) < maxSize) {
+          l = m + 1;
+        } else {
+          r = m;
+        }
+      }
+      title = StringUtilities.trimMiddle(title, r - 1);
+      titleWidth = this._measureWidth(context, title);
+      if (titleWidth <= maxSize) {
+        return title;
+      }
+      return "";
+    }
+
+    private _measureWidth(context, text): number {
+      var width = this._textWidth[text];
+      if (!width) {
+        width = context.measureText(text).width;
+        this._textWidth[text] = width;
+      }
+      return width;
     }
 
     private _drawOverview() {
