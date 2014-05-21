@@ -70,7 +70,7 @@ module Shumway.AVM2.AS.flash.display {
       if (this._parent) {
         this._parent._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
       }
-      this._invalidateBoundsAndRect();
+      this._invalidateFillAndLineBounds();
     }
 
     /**

@@ -101,7 +101,7 @@ module Shumway.AVM2.AS.flash.display {
 
     _invalidateParent() {
       assert (this._parent, "A parent should already be linked.");
-      this._parent._invalidateBoundsAndRect();
+      this._parent._invalidateFillAndLineBounds();
     }
 
     _getContentBounds(includeStrokes: boolean = true): BoundingBox {
