@@ -51,7 +51,7 @@ module Shumway.Tools.Profiler {
     private _pixelsToTime = 1;
     private _pixelsToOverviewTime = 1;
     private _range:TimelineFrame;
-    private _minTime = 5;
+    private _minTime = 1;
     private _kindStyle:Shumway.Map<Kind>;
 
     private _drag:DragInfo = null;
