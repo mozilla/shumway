@@ -84,6 +84,7 @@ module Shumway.AVM2.AS.flash.display {
   import utils = flash.utils;
   import PathCommand = Shumway.GFX.Geometry.PathCommand;
   import quadraticBezierExtreme = Shumway.GFX.Geometry.quadraticBezierExtreme;
+  import cubicBezierExtremes = Shumway.GFX.Geometry.cubicBezierExtremes;
 
   export class Graphics extends ASNative {
 
@@ -462,14 +463,13 @@ module Shumway.AVM2.AS.flash.display {
       graphicsData.writeInt(anchorX);
       graphicsData.writeInt(anchorY);
 
-      // FIXME: this isn't correct at all ...
       this._extendBoundsByPoint(anchorX, anchorY, 0);
       this._setLastCoordinate(anchorX, anchorY);
       if (controlX < this._lastX || controlX > anchorX) {
-        this._extendBoundsByX(quadraticBezierExtreme(this._lastX, controlX, anchorX), 0);
+        this._extendBoundsByX(quadraticBezierExtreme(this._lastX, controlX, anchorX)|0, 0);
       }
       if (controlY < this._lastY || controlY > anchorY) {
-        this._extendBoundsByY(quadraticBezierExtreme(this._lastY, controlY, anchorY), 0);
+        this._extendBoundsByY(quadraticBezierExtreme(this._lastY, controlY, anchorY)|0, 0);
       }
 
       this._invalidateParent();
@@ -495,11 +495,24 @@ module Shumway.AVM2.AS.flash.display {
       graphicsData.writeInt(anchorX);
       graphicsData.writeInt(anchorY);
 
-      // FIXME: this isn't correct at all ...
-      this._extendBoundsByPoint(controlX1, controlY1, 0);
-      this._extendBoundsByPoint(controlX2, controlY2, 0);
       this._extendBoundsByPoint(anchorX, anchorY, 0);
       this._setLastCoordinate(anchorX, anchorY);
+      var extremes;
+      var i;
+      var fromX = this._lastX;
+      var fromY = this._lastY;
+      if (controlX1 < fromX || controlX2 < fromX || controlX1 > anchorX || controlX2 > anchorX) {
+        extremes = cubicBezierExtremes(fromX, controlX1, controlX2, anchorX);
+        for (i = extremes.length; i--;) {
+          this._extendBoundsByX(extremes[i]|0, 0);
+        }
+      }
+      if (controlY1 < fromY || controlY2 < fromY || controlY1 > anchorY || controlY2 > anchorY) {
+        extremes = cubicBezierExtremes(fromY, controlY1, controlY2, anchorY);
+        for (i = extremes.length; i--;) {
+          this._extendBoundsByY(extremes[i]|0, 0);
+        }
+      }
 
       this._invalidateParent();
     }
@@ -687,12 +700,12 @@ module Shumway.AVM2.AS.flash.display {
     private _extendBoundsByX(x: number, strokeWidth: number): void {
       var bounds = this._innerBounds;
       var xMin = bounds.x = Math.min(x, bounds.x);
-      bounds.width = Math.max(x - xMin, bounds.width);
+      bounds.width = Math.max(Math.abs(Math.abs(x)-xMin), bounds.width);
 
       var halfStrokeWidth = strokeWidth / 2|0;
       bounds = this._outerBounds;
       var xMin = bounds.x = Math.min(x - halfStrokeWidth, bounds.x);
-      bounds.width = Math.max(x + halfStrokeWidth - xMin, bounds.width);
+      bounds.width = Math.max(Math.abs(Math.abs(x + halfStrokeWidth)-xMin), bounds.width);
     }
 
     private _extendBoundsByY(y: number, strokeWidth: number): void {
@@ -703,7 +716,7 @@ module Shumway.AVM2.AS.flash.display {
       var halfStrokeWidth = strokeWidth / 2|0;
       bounds = this._outerBounds;
       var yMin = bounds.y = Math.min(y - halfStrokeWidth, bounds.y);
-      bounds.height = Math.max(y + halfStrokeWidth - yMin, bounds.height);
+      bounds.height = Math.max(Math.abs(Math.abs(y + halfStrokeWidth)-yMin), bounds.height);
     }
 
     private _setLastCoordinate(x: number, y: number): void {

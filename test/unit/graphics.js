@@ -164,6 +164,10 @@
     g.curveTo(100, 100, 0, 100);
     structEq(g._getContentBounds(), {x: 0, y: 0, width: 1000, height: 2000},
              "curve extends bounds");
+    g.clear();
+    g.cubicCurveTo(100, 50, -100, 100, 0, 150);
+    structEq(g._getContentBounds(), {x: -577, y: 0, width: 1154, height: 3000},
+             "cubic curve extends bounds");
   }
 
   function createGraphics() {
