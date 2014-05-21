@@ -31,6 +31,7 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import assert = Shumway.Debug.assert;
 
+  import BoundingBox = Shumway.GFX.Geometry.BoundingBox;
   import geom = flash.geom;
   import events = flash.events;
 
@@ -301,7 +302,8 @@ module Shumway.AVM2.AS.flash.display {
 
       if (symbol) {
         if (symbol.scale9Grid) {
-          self._scale9Grid = symbol.scale9Grid.clone();
+          // No need to take ownership: scale9Grid is never changed.
+          self._scale9Grid = symbol.scale9Grid;
         }
         self._symbol = symbol;
       }
@@ -470,7 +472,7 @@ module Shumway.AVM2.AS.flash.display {
     _scrollRect: flash.geom.Rectangle;
     _filters: any [];
     _blendMode: string;
-    _scale9Grid: flash.geom.Rectangle;
+    _scale9Grid: BoundingBox;
     _loaderInfo: flash.display.LoaderInfo;
     _accessibilityProperties: flash.accessibility.AccessibilityProperties;
 
@@ -1128,12 +1130,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get scale9Grid(): flash.geom.Rectangle {
-      return this._scale9Grid;
+      return flash.geom.Rectangle.createFromBbox(this._scale9Grid);
     }
 
     set scale9Grid(innerRectangle: flash.geom.Rectangle) {
       this._stopTimelineAnimation();
-      this._scale9Grid = innerRectangle;
+      this._scale9Grid = BoundingBox.FromRectangle(innerRectangle);
       // VERIFY: Can we get away with only invalidating paint? Can mutating this property ever change the bounds?
       this._invalidatePaint();
     }

@@ -19,6 +19,7 @@ module Shumway.Timeline {
   import assert = Shumway.Debug.assert;
   import abstractMethod = Shumway.Debug.abstractMethod;
   import flash = Shumway.AVM2.AS.flash;
+  import BoundingBox = Shumway.GFX.Geometry.BoundingBox;
 
   export class Symbol {
     id: number = -1;
@@ -34,7 +35,7 @@ module Shumway.Timeline {
   export class DisplaySymbol extends Symbol {
     rect: flash.geom.Rectangle;
     bounds: flash.geom.Rectangle;
-    scale9Grid: flash.geom.Rectangle;
+    scale9Grid: BoundingBox;
 
     constructor(id: number, symbolClass: Shumway.AVM2.AS.ASClass) {
       super(id, symbolClass);
