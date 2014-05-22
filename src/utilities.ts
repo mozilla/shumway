@@ -287,6 +287,11 @@ module Shumway {
       return array.length && array[array.length - 1]
     }
 
+    export function peek(array: any []) {
+      release || assert(array.length > 0);
+      return array[array.length - 1];
+    }
+
     export function copyFrom(dst: any [], src: any []) {
       dst.length = 0;
       ArrayUtilities.pushMany(dst, src);

@@ -69,7 +69,6 @@ src/avm2/errors.js
 src/avm2/opcodes.js
 src/avm2/parser.js
 src/avm2/bytecode.js
-src/avm2/analyze.js
 src/avm2/compiler/lljs/src/estransform.js
 src/avm2/compiler/lljs/src/escodegen.js
 src/avm2/compiler/verifier.js

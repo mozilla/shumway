@@ -176,6 +176,7 @@ module Shumway.AVM2.ABC {
     type: Multiname;
     value: any;
     optional: boolean;
+    isUsed: boolean;
     constructor(name: string, type: Multiname, value: any, optional: boolean = false) {
       this.name = name;
       this.type = type;
@@ -395,6 +396,7 @@ module Shumway.AVM2.ABC {
     };
     activationPrototype: Object;
     analysis: any;
+    hasLookupSwitches: boolean;
     static parseParameterNames: boolean = false;
 
     private static _getParameterName(i) {
