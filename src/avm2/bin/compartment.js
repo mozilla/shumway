@@ -44,6 +44,7 @@ load(homePath + "src/avm2/constants.js");
 load(homePath + "src/avm2/errors.js");
 load(homePath + "src/avm2/opcodes.js");
 load(homePath + "src/avm2/parser.js");
+load(homePath + "src/avm2/bytecode.js");
 load(homePath + "src/avm2/disassembler.js");
 load(homePath + "src/avm2/analyze.js");
 
