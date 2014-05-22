@@ -149,6 +149,9 @@ function onWindowMessage(e) {
 function IFramePlayerChannel() { }
 IFramePlayerChannel._eventUpdatesListener = null;
 IFramePlayerChannel.sendEventUpdates = function (data) {
+  if (!IFramePlayerChannel._eventUpdatesListener) {
+    return;
+  }
   var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   var updates = DataBuffer.fromArrayBuffer(data.updates.buffer);
   IFramePlayerChannel._eventUpdatesListener(updates);
