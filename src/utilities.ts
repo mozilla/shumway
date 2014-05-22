@@ -1691,7 +1691,104 @@ module Shumway {
     height: number;
   }
 
+  /**
+   * Faster release version of bounds.
+   */
   export class Bounds {
+    xMin: number;
+    yMin: number;
+    xMax: number;
+    yMax: number;
+    constructor (xMin: number, yMin: number, xMax: number, yMax: number) {
+      this.xMin = xMin|0;
+      this.yMin = yMin|0;
+      this.xMax = xMax|0;
+      this.yMax = yMax|0;
+    }
+
+    static FromUntyped (source: UntypedBounds): Bounds {
+      return new Bounds(source.xMin, source.yMin, source.xMax, source.yMax);
+    }
+
+    static FromRectangle (source: ASRectangle): Bounds {
+      return new Bounds(source.x * 20|0, source.y * 20|0, (source.x + source.width) * 20|0,
+        (source.y + source.height) * 20|0);
+    }
+
+    setElements (xMin: number, yMin: number, xMax: number, yMax: number): void {
+      this.xMin = xMin;
+      this.yMin = yMin;
+      this.xMax = xMax;
+      this.yMax = yMax;
+    }
+
+    copyFrom (source: Bounds): void {
+      this.setElements(source.xMin, source.yMin, source.xMax, source.yMax);
+    }
+
+    contains (x: number, y: number): boolean {
+      return x < this.xMin !== x < this.xMax &&
+        y < this.yMin !== y < this.yMax;
+    }
+
+    unionWith (other: Bounds): void {
+      this.xMin = Math.min(this.xMin, other.xMin);
+      this.yMin = Math.min(this.yMin, other.yMin);
+      this.xMax = Math.max(this.xMax, other.xMax);
+      this.yMax = Math.max(this.yMax, other.yMax);
+    }
+
+    public intersects(toIntersect: Bounds): boolean {
+      return this.contains(toIntersect.xMin, toIntersect.yMin) ||
+        this.contains(toIntersect.xMax, toIntersect.yMax);
+    }
+
+    isEmpty (): boolean {
+      return this.xMax <= this.xMin || this.yMax <= this.yMin;
+    }
+
+    get width(): number {
+      return this.xMax - this.xMin;
+    }
+
+    get height(): number {
+      return this.yMax - this.yMin;
+    }
+
+    public getBaseWidth(angle: number): number {
+      var u = Math.abs(Math.cos(angle));
+      var v = Math.abs(Math.sin(angle));
+      return u * (this.xMax - this.xMin) + v * (this.yMax - this.yMin);
+    }
+
+    public getBaseHeight(angle: number): number {
+      var u = Math.abs(Math.cos(angle));
+      var v = Math.abs(Math.sin(angle));
+      return v * (this.xMax - this.xMin) + u * (this.yMax - this.yMin);
+    }
+
+    setEmpty (): void {
+      this.xMin = this.yMin = this.xMax = this.yMax = 0;
+    }
+
+    clone (): Bounds {
+      return new Bounds(this.xMin, this.yMin, this.xMax, this.yMax);
+    }
+
+    toString(): string {
+      return "{ " +
+        "xMin: " + this.xMin + ", " +
+        "xMin: " + this.yMin + ", " +
+        "xMax: " + this.xMax + ", " +
+        "xMax: " + this.yMax +
+        " }";
+    }
+  }
+
+  /**
+   * Slower debug version of bounds, makes sure that all points have integer coordinates.
+   */
+  export class DebugBounds {
     private _xMin: number;
     private _yMin: number;
     private _xMax: number;
@@ -1709,12 +1806,12 @@ module Shumway {
       this.assertValid();
     }
 
-    static FromUntyped (source: UntypedBounds): Bounds {
-      return new Bounds(source.xMin, source.yMin, source.xMax, source.yMax);
+    static FromUntyped (source: UntypedBounds): DebugBounds {
+      return new DebugBounds(source.xMin, source.yMin, source.xMax, source.yMax);
     }
 
-    static FromRectangle (source: ASRectangle): Bounds {
-      return new Bounds(source.x * 20|0, source.y * 20|0, (source.x + source.width) * 20|0,
+    static FromRectangle (source: ASRectangle): DebugBounds {
+      return new DebugBounds(source.x * 20|0, source.y * 20|0, (source.x + source.width) * 20|0,
                         (source.y + source.height) * 20|0);
     }
 
@@ -1725,7 +1822,7 @@ module Shumway {
       this.yMax = yMax;
     }
 
-    copyFrom (source: Bounds): void {
+    copyFrom (source: DebugBounds): void {
       this.setElements(source.xMin, source.yMin, source.xMax, source.yMax);
     }
 
@@ -1734,14 +1831,14 @@ module Shumway {
              y < this.yMin !== y < this.yMax;
     }
 
-    unionWith (other: Bounds): void {
+    unionWith (other: DebugBounds): void {
       this._xMin = Math.min(this._xMin, other._xMin);
       this._yMin = Math.min(this._yMin, other._yMin);
       this._xMax = Math.max(this._xMax, other._xMax);
       this._yMax = Math.max(this._yMax, other._yMax);
     }
 
-    public intersects(toIntersect: Bounds): boolean {
+    public intersects(toIntersect: DebugBounds): boolean {
       return this.contains(toIntersect._xMin, toIntersect._yMin) ||
              this.contains(toIntersect._xMax, toIntersect._yMax);
     }
@@ -1814,8 +1911,8 @@ module Shumway {
       this._xMin = this._yMin = this._xMax = this._yMax = 0;
     }
 
-    clone (): Bounds {
-      return new Bounds(this.xMin, this.yMin, this.xMax, this.yMax);
+    clone (): DebugBounds {
+      return new DebugBounds(this.xMin, this.yMin, this.xMax, this.yMax);
     }
 
     toString(): string {
@@ -1832,6 +1929,11 @@ module Shumway {
 //      assert(this._yMax >= this._yMin);
     }
   }
+
+  /**
+   * Override Bounds with a slower by safer version, don't do this in release mode.
+   */
+  Shumway.Bounds = DebugBounds;
 
   export class Color {
     public r: number;
