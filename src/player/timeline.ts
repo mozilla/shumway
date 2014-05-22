@@ -57,7 +57,7 @@ module Shumway.Timeline {
       super(id, flash.display.Shape);
     }
 
-    static createFromData(data: any): ShapeSymbol {
+    static FromData(data: any): ShapeSymbol {
       var symbol = new ShapeSymbol(data.id);
       symbol._setBoundsFromData(data);
       // TODO: Fill graphics object with shape data.
@@ -81,7 +81,7 @@ module Shumway.Timeline {
       super(id, flash.display.Bitmap);
     }
 
-    static createFromData(data: any): BitmapSymbol {
+    static FromData(data: any): BitmapSymbol {
       var symbol = new BitmapSymbol(data.id);
       symbol.width = data.width;
       symbol.height = data.height;
@@ -117,7 +117,7 @@ module Shumway.Timeline {
       super(id, flash.text.TextField);
     }
 
-    static createFromLabelData(data: any): TextSymbol {
+    static FromLabelData(data: any): TextSymbol {
       var symbol = new TextSymbol(data.id);
       symbol._setBoundsFromData(data);
       symbol.symbolClass = flash.text.StaticText;
@@ -125,7 +125,7 @@ module Shumway.Timeline {
       return symbol;
     }
 
-    static createFromTextData(data: any): TextSymbol {
+    static FromTextData(data: any): TextSymbol {
       var symbol = new TextSymbol(data.id);
       var tag = data.tag;
       if (tag.hasColor) {
@@ -178,7 +178,7 @@ module Shumway.Timeline {
       super(id, flash.display.SimpleButton);
     }
 
-    static createFromData(data: any, loaderInfo: flash.display.LoaderInfo): ButtonSymbol {
+    static FromData(data: any, loaderInfo: flash.display.LoaderInfo): ButtonSymbol {
       var symbol = new ButtonSymbol(data.id);
       var states = data.states;
       var character, matrix, colorTransform;
@@ -188,9 +188,9 @@ module Shumway.Timeline {
         if (commands.length === 1) {
           var cmd = commands[0];
           character = loaderInfo.getSymbolById(cmd.symbolId);
-          matrix = flash.geom.Matrix.createFromAny(cmd.matrix);
+          matrix = flash.geom.Matrix.FromAny(cmd.matrix);
           if (cmd.cxform) {
-            colorTransform = flash.geom.ColorTransform.createFromCXForm(cmd.cxform);
+            colorTransform = flash.geom.ColorTransform.FromCXForm(cmd.cxform);
           }
         } else {
           character = new Timeline.SpriteSymbol(-1);
@@ -214,7 +214,7 @@ module Shumway.Timeline {
       this.isRoot = isRoot;
     }
 
-    static createFromData(data: any, loaderInfo: flash.display.LoaderInfo): SpriteSymbol {
+    static FromData(data: any, loaderInfo: flash.display.LoaderInfo): SpriteSymbol {
       var symbol = new SpriteSymbol(data.id);
       symbol.numFrames = data.frameCount;
       var frames = data.frames;
@@ -270,7 +270,7 @@ module Shumway.Timeline {
       super(id, flash.text.Font);
     }
 
-    static createFromData(data: any): FontSymbol {
+    static FromData(data: any): FontSymbol {
       var symbol = new FontSymbol(data.id);
       symbol.name = data.name;
       symbol.bold = data.bold;
@@ -284,7 +284,7 @@ module Shumway.Timeline {
       super(id, flash.media.Sound);
     }
 
-    static createFromData(data: any): SoundSymbol {
+    static FromData(data: any): SoundSymbol {
       var symbol = new SoundSymbol(data.id);
       return symbol;
     }
@@ -295,7 +295,7 @@ module Shumway.Timeline {
       super(id, flash.utils.ByteArray);
     }
 
-    static createFromData(data: any): BinarySymbol {
+    static FromData(data: any): BinarySymbol {
       var symbol = new BinarySymbol(data.id);
       return symbol;
     }
@@ -356,10 +356,10 @@ module Shumway.Timeline {
               assert (symbol, "Symbol is not defined.");
             }
             if (cmd.hasMatrix) {
-              matrix = flash.geom.Matrix.createFromAny(cmd.matrix);
+              matrix = flash.geom.Matrix.FromAny(cmd.matrix);
             }
             if (cmd.hasCxform) {
-              colorTransform = flash.geom.ColorTransform.createFromCXForm(cmd.cxform);
+              colorTransform = flash.geom.ColorTransform.FromCXForm(cmd.cxform);
             }
             if (cmd.hasFilters) {
               filters = [];
@@ -368,14 +368,14 @@ module Shumway.Timeline {
                 var obj = swfFilters[j];
                 var filter: flash.filters.BitmapFilter;
                 switch (obj.type) {
-                  case 0: filter = flash.filters.DropShadowFilter.createFromAny(obj); break;
-                  case 1: filter = flash.filters.BlurFilter.createFromAny(obj); break;
-                  case 2: filter = flash.filters.GlowFilter.createFromAny(obj); break;
-                  case 3: filter = flash.filters.BevelFilter.createFromAny(obj); break;
-                  case 4: filter = flash.filters.GradientGlowFilter.createFromAny(obj); break;
-                  case 5: filter = flash.filters.ConvolutionFilter.createFromAny(obj); break;
-                  case 6: filter = flash.filters.ColorMatrixFilter.createFromAny(obj); break;
-                  case 7: filter = flash.filters.GradientBevelFilter.createFromAny(obj); break;
+                  case 0: filter = flash.filters.DropShadowFilter.FromAny(obj); break;
+                  case 1: filter = flash.filters.BlurFilter.FromAny(obj); break;
+                  case 2: filter = flash.filters.GlowFilter.FromAny(obj); break;
+                  case 3: filter = flash.filters.BevelFilter.FromAny(obj); break;
+                  case 4: filter = flash.filters.GradientGlowFilter.FromAny(obj); break;
+                  case 5: filter = flash.filters.ConvolutionFilter.FromAny(obj); break;
+                  case 6: filter = flash.filters.ColorMatrixFilter.FromAny(obj); break;
+                  case 7: filter = flash.filters.GradientBevelFilter.FromAny(obj); break;
                 }
                 assert (filter, "Unknown filter type.");
                 filters.push(filter);

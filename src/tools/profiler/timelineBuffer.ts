@@ -121,7 +121,7 @@ module Shumway.Tools.Profiler {
       return range;
     }
 
-    static createFromFirefoxProfile(profile) {
+    static FromFirefoxProfile(profile) {
       var samples = profile.profile.threads[0].samples;
       var buffer = new TimelineBuffer();
       var startTime = samples[0].time;
@@ -155,7 +155,7 @@ module Shumway.Tools.Profiler {
       return buffer;
     }
 
-    static createFromChromeProfile(profile) {
+    static FromChromeProfile(profile) {
       var buffer = new TimelineBuffer();
       var timestamps = profile.timestamps;
       var samples = profile.samples;

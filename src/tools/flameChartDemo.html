@@ -21,12 +21,12 @@
     if (!jsGlobal.performance.now) { jsGlobal.performance.now = Date.now; }
 
     getJSON("data/CPU-20140520T215105.json", function(result) {
-      var buffer = Profiler.TimelineBuffer.createFromChromeProfile(result);
+      var buffer = Profiler.TimelineBuffer.FromChromeProfile(result);
       new Profiler.FlameChart(container, buffer);
     });
 
     //getJSON("data/Profile 1.json", function(result) {
-    //  var buffer = Profiler.TimelineBuffer.createFromFirefoxProfile(result);
+    //  var buffer = Profiler.TimelineBuffer.FromFirefoxProfile(result);
     //  new Profiler.FlameChart(container, buffer);
     //});
 

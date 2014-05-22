@@ -32,7 +32,7 @@ module Shumway.AVM2.AS.flash.filters {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
 
-    public static createFromAny(obj: any) {
+    public static FromAny(obj: any) {
       return new BlurFilter(obj.blurX, obj.blurY, obj.quality);
     }
 
