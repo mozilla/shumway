@@ -49,6 +49,7 @@ console = {
 
 load(homePath + "src/avm2/global.js");
 load(homePath + "src/utilities.js");
+load(homePath + "src/dataBuffer.js");
 load(homePath + "src/options.js");
 load(homePath + "src/settings.js");
 

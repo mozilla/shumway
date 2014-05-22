@@ -23,6 +23,7 @@ var release;
 assert(homePath, "Host compartment needs to initialize homePath.");
 
 load(homePath + "src/avm2/avm2Util.js");
+load(homePath + "src/dataBuffer.js");
 load(homePath + "src/options.js");
 load(homePath + "src/settings.js");
 load(homePath + "src/metrics.js");

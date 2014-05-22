@@ -89,8 +89,6 @@ src/avm2/xregexp.js
 src/avm2/runtime.js
 src/avm2/runtime-exports.js
 src/avm2/hacks.js
-#src/avm2/vectors-numeric.js
-#src/avm2/vectors-generic.js
 src/avm2/amf.js
 src/avm2/natives/int32Vector.js
 src/avm2/natives/uint32Vector.js
