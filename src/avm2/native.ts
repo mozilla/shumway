@@ -1439,7 +1439,7 @@ module Shumway.AVM2.AS {
     builtinNativeClasses["XMLListClass"]             = ASXMLList;
     builtinNativeClasses["QNameClass"]               = ASQName;
 
-    builtinNativeClasses["ProxyClass"]               = flash.utils.Proxy;
+
 
     // Errors
     builtinNativeClasses["ErrorClass"]               = ASError;
@@ -1460,12 +1460,19 @@ module Shumway.AVM2.AS {
 
     builtinNativeClasses["RegExpClass"]              = ASRegExp;
 
-    // flash.utils
-    builtinNativeClasses["DictionaryClass"]          = flash.utils.Dictionary;
-    builtinNativeClasses["ByteArrayClass"]           = flash.utils.ByteArray;
+    /**
+     * If the Linker links against flash.* classes then we end up in a cycle. A reference to
+     * |flash.utils.ByteArray| for instance would cause us to initialize the |ByteArray| class,
+     * when we're not fully initialized ourselves. To get around this we make sure we don't refer
+     * to possibly linked classes by prefixing their names with "Original".
+     */
 
+    // flash.utils
+    builtinNativeClasses["ProxyClass"]               = flash.utils.OriginalProxy;
+    builtinNativeClasses["DictionaryClass"]          = flash.utils.OriginalDictionary;
+    builtinNativeClasses["ByteArrayClass"]           = flash.utils.OriginalByteArray;
     // flash.system
-    builtinNativeClasses["SystemClass"]              = flash.system.System;
+    builtinNativeClasses["SystemClass"]              = flash.system.OriginalSystem;
 
     isInitialized = true;
   }

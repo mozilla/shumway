@@ -102,6 +102,6 @@ module Shumway.AVM2.AS {
       }
     }
 
+    export var OriginalProxy = Proxy;
   }
-
 }

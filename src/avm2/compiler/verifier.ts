@@ -586,6 +586,7 @@ module Shumway.AVM2.Verifier {
       public savedScope: Type []
     ) {
       // ...
+      Type.initializeTypes(domain);
       this.writer = Shumway.AVM2.Verifier.traceLevel.value ? new IndentingWriter() : null;
       this.multinames = methodInfo.abc.constantPool.multinames;
       this.returnType = Type.Undefined;

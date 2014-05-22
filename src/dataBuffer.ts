@@ -385,7 +385,7 @@ module Shumway.ArrayUtilities {
       this._set('setFloat64', 8, value);
     }
 
-    readRawBytes() {
+    readRawBytes(): Int8Array {
       return new Int8Array(this._buffer, 0, this._length);
     }
 
@@ -479,6 +479,23 @@ module Shumway.ArrayUtilities {
       notImplemented("packageInternal flash.utils.ObjectInput::readMultiByte"); return;
     }
 
+    getValue(name: number): any {
+      name = name | 0;
+      if (name >= this._length) {
+        return undefined;
+      }
+      return this._u8View[name];
+    }
+
+    setValue(name: number, value: any) {
+      name = name | 0;
+      var length = name + 1;
+      this._ensureCapacity(length);
+      this._u8View[name] = value;
+      if (length > this._length) {
+        this._length = length;
+      }
+    }
 
     /*
      * Inflate / Deflate Support
