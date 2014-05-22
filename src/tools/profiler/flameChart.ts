@@ -18,7 +18,7 @@ module Shumway.Tools.Profiler {
   import trimMiddle = StringUtilities.trimMiddle;
   import createEmptyObject = ObjectUtilities.createEmptyObject;
 
-  interface Kind {
+  interface KindStyle {
     bgColor: string;
     textColor: string;
   }
@@ -51,8 +51,8 @@ module Shumway.Tools.Profiler {
     private _pixelsToTime = 1;
     private _pixelsToOverviewTime = 1;
     private _range:TimelineFrame;
-    private _minTime = 5;
-    private _kindStyle:Shumway.Map<Kind>;
+    private _minTime = 1;
+    private _kindStyle:Shumway.Map<KindStyle>;
 
     private _drag:DragInfo = null;
     private _ignoreClick = false;
@@ -153,7 +153,7 @@ module Shumway.Tools.Profiler {
       event.stopPropagation();
       if (this._drag === null) {
         var range = this._range;
-        var delta = clamp(event.detail ? event.detail : -event.wheelDeltaY / 120, -1, 1);
+        var delta = clamp(event.detail ? event.detail / 8 : -event.wheelDeltaY / 120, -1, 1);
         var zoom = Math.pow(1.2, delta) - 1;
         var cursorTime = (event.clientY > this._overviewHeight || this._getCursorPosition(event) !== 0)
           ? this._windowLeft + event.clientX * this._pixelsToTime
@@ -170,7 +170,7 @@ module Shumway.Tools.Profiler {
       var windowSize = this._windowRight - this._windowLeft;
       if (windowSize < this._minTime) {
         windowSize = this._minTime;
-        var center = this._windowLeft + windowSize / 2;
+        var center = this._windowLeft + (this._windowRight - this._windowLeft) / 2;
         this._windowLeft = center - this._minTime / 2;
         this._windowRight = center + this._minTime / 2;
       }
@@ -245,19 +245,19 @@ module Shumway.Tools.Profiler {
       if (width < this._minFrameWidthInPixels) {
         return;
       }
-      var style = this._kindStyle[frame.kind];
+      var style = this._kindStyle[frame.kind.id];
       if (!style) {
         var background = ColorStyle.randomStyle();
-        style = this._kindStyle[frame.kind] = {
+        style = this._kindStyle[frame.kind.id] = {
           bgColor: background,
           textColor: ColorStyle.contrastStyle(background)
         };
       }
-      var frameHPadding = 1;
+      var frameHPadding = 0.5;
       context.fillStyle = style.bgColor;
       context.fillRect(start, depth * (12 + frameHPadding), width, 12);
       if (width > 12) {
-        var label = this._buffer.getKindName(frame.kind);
+        var label = frame.kind.name;
         if (label && label.length) {
           var labelHPadding = 2;
           label = this._prepareText(context, label, width - labelHPadding * 2);
