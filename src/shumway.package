@@ -164,19 +164,8 @@ build/ts/flash/sensors/Geolocation.js
 #build/ts/flash/errors/EOFError.js
 #build/ts/flash/text/engine/ContentElement.js
 #build/ts/flash/text/engine/TextElement.js
-#build/ts/flash/concurrent/Mutex.js
-#build/ts/flash/concurrent/Condition.js
 build/ts/flash/display/NativeMenu.js
 build/ts/flash/ui/ContextMenu.js
-#build/ts/flash/net/drm/DRMManagerSession.js
-#build/ts/flash/net/drm/DRMPlaybackTimeWindow.js
-#build/ts/flash/net/drm/DRMVoucher.js
-#build/ts/flash/net/drm/DRMManager.js
-#build/ts/flash/net/drm/DRMModuleCycleProvider.js
-#build/ts/flash/net/drm/DRMURLDownloadContext.js
-#build/ts/flash/net/drm/DRMAuthenticationContext.js
-#build/ts/flash/net/drm/DRMVoucherDownloadContext.js
-#build/ts/flash/net/drm/DRMVoucherStoreContext.js
 build/ts/flash/display/IBitmapDrawable.js
 build/ts/flash/display/BlendMode.js
 build/ts/flash/display/DisplayObject.js
@@ -195,9 +184,6 @@ build/ts/flash/events/KeyboardEvent.js
 #build/ts/flash/text/TextInteractionMode.js
 build/ts/flash/filters/DisplacementMapFilterMode.js
 
-#build/ts/flash/net/drm/AuthenticationMethod.js
-#build/ts/flash/net/drm/LoadVoucherSetting.js
-#build/ts/flash/net/drm/AddToDeviceGroupSetting.js
 build/ts/flash/utils/Timer.js
 build/ts/flash/utils/SetIntervalTimer.js
 #build/ts/flash/text/engine/TextJustifier.js
@@ -205,7 +191,6 @@ build/ts/flash/media/Microphone.js
 build/ts/flash/sensors/Accelerometer.js
 #build/ts/flash/display3D/textures/TextureBase.js
 #build/ts/flash/display3D/textures/Texture.js
-#build/ts/flash/net/drm/DRMDeviceGroup.js
 build/ts/flash/display/InteractiveObject.js
 build/ts/flash/display/DisplayObjectContainer.js
 build/ts/flash/display/FocusDirection.js
@@ -273,12 +258,9 @@ build/ts/flash/display/Shape.js
 build/ts/flash/media/SoundMixer.js
 build/ts/flash/filters/ConvolutionFilter.js
 #build/ts/flash/net/NetGroupReceiveMode.js
-#build/ts/flash/events/DRMDeviceGroupEvent.js
 #build/ts/flash/text/engine/TextLineCreationResult.js
 #build/ts/flash/events/StatusEvent.js
 #build/ts/flash/display/ShaderData.js
-#build/ts/flash/system/WorkerState.js
-#build/ts/flash/system/Worker.js
 #build/ts/flash/ui/Multitouch.js
 build/ts/flash/display/SWFVersion.js
 build/ts/flash/events/ProgressEvent.js
@@ -302,7 +284,6 @@ build/ts/flash/display/BitmapData.js
 #build/ts/flash/events/ShaderEvent.js
 build/ts/flash/events/TimerEvent.js
 #build/ts/flash/ui/GameInputHand.js
-#build/ts/flash/events/DRMAuthenticateEvent.js
 #build/ts/flash/media/H264Level.js
 build/ts/flash/text/FontType.js
 build/ts/flash/display/NativeMenuItem.js
@@ -317,8 +298,6 @@ build/ts/flash/media/SoundLoaderContext.js
 #build/ts/flash/display/ShaderParameter.js
 build/ts/flash/ui/ContextMenuClipboardItems.js
 #build/ts/flash/media/SoundCodec.js
-#build/ts/flash/events/DRMCustomProperties.js
-#build/ts/flash/events/DRMStatusEvent.js
 #build/ts/flash/automation/ActionGenerator.js
 build/ts/flash/text/TextFormat.js
 build/ts/flash/events/NetStatusEvent.js
@@ -363,7 +342,6 @@ build/ts/flash/media/SoundChannel.js
 #build/ts/flash/text/engine/EastAsianJustifier.js
 build/ts/flash/accessibility/AccessibilityImplementation.js
 #build/ts/flash/text/CSMSettings.js
-#build/ts/flash/net/drm/DRMContentData.js
 #build/ts/flash/events/StageVideoAvailabilityEvent.js
 #build/ts/flash/net/NetGroupSendMode.js
 #build/ts/flash/text/TextRun.js
@@ -409,7 +387,6 @@ build/ts/flash/display/StageAlign.js
 build/ts/flash/text/TextFieldType.js
 build/ts/flash/display/GraphicsStroke.js
 #build/ts/flash/globalization/DateTimeStyle.js
-#build/ts/flash/events/DRMAuthenticationErrorEvent.js
 #build/ts/flash/net/NetGroupReplicationStrategy.js
 #build/ts/flash/events/NetFilterEvent.js
 build/ts/flash/geom/Vector3D.js
@@ -430,7 +407,6 @@ build/ts/flash/xml/XMLNode.js
 build/ts/flash/trace/Trace.js
 #build/ts/flash/system/IMEConversionMode.js
 #build/ts/flash/text/TextFormatDisplay.js
-#build/ts/flash/events/DRMErrorEvent.js
 build/ts/flash/filters/ColorMatrixFilter.js
 #build/ts/flash/system/SystemUpdater.js
 #build/ts/flash/system/SystemUpdaterType.js
@@ -460,9 +436,7 @@ build/ts/flash/xml/XMLDocument.js
 build/ts/flash/net/URLRequest.js
 #build/ts/flash/automation/StageCapture.js
 #build/ts/flash/media/StageVideo.js
-#build/ts/flash/events/DRMDeviceGroupErrorEvent.js
 #build/ts/flash/events/SoftKeyboardEvent.js
-#build/ts/flash/errors/DRMManagerError.js
 #build/ts/flash/text/engine/FontPosture.js
 build/ts/flash/display/JointStyle.js
 #build/ts/flash/display/ShaderPrecision.js
@@ -475,7 +449,6 @@ build/ts/flash/display/BitmapEncodingColorSpace.js
 build/ts/flash/display/InterpolationMethod.js
 build/ts/flash/media/ID3Info.js
 build/ts/flash/system/TouchscreenType.js
-#build/ts/flash/events/DRMAuthenticationCompleteEvent.js
 build/ts/flash/events/SecurityErrorEvent.js
 #build/ts/flash/system/AuthorizedFeatures.js
 build/ts/flash/media/Sound.js
@@ -530,7 +503,6 @@ build/ts/flash/ui/Keyboard.js
 build/ts/flash/filters/GlowFilter.js
 build/ts/flash/display/MovieClip.js
 #build/ts/flash/text/engine/SpaceJustifier.js
-#build/ts/flash/net/drm/VoucherAccessInfo.js
 #build/ts/flash/events/ContextMenuEvent.js
 #build/ts/flash/display3D/textures/CubeTexture.js
 build/ts/flash/text/TextLineMetrics.js
