@@ -51,10 +51,9 @@ module Shumway.Tools.Profiler {
       if (startTime > this.endTime || endTime < this.startTime || endTime < startTime) {
         return null;
       } else {
-        return [
-          this.getNearestChild(startTime),
-          this.getNearestChildReverse(endTime)
-        ];
+        var startIdx = this.getNearestChild(startTime);
+        var endIdx = this.getNearestChildReverse(endTime);
+        return (startIdx <= endIdx) ? [startIdx, endIdx] : null;
       }
     }
 
