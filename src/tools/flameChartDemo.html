@@ -17,6 +17,9 @@
     var Profiler = Shumway.Tools.Profiler;
     var container = document.getElementById("container");
 
+    if (!jsGlobal.performance) { jsGlobal.performance = {}; }
+    if (!jsGlobal.performance.now) { jsGlobal.performance.now = Date.now; }
+
     getJSON("data/CPU-20140520T215105.json", function(result) {
       var buffer = Profiler.TimelineBuffer.createFromChromeProfile(result);
       new Profiler.FlameChart(container, buffer);
