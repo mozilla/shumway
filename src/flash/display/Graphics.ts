@@ -159,6 +159,7 @@ module Shumway.AVM2.AS.flash.display {
       this._graphicsData.length = 0;
       this._fillBounds.setEmpty();
       this._lineBounds.setEmpty();
+      this._setLastCoordinates(0, 0);
       this._invalidateParent();
     }
 
@@ -205,6 +206,10 @@ module Shumway.AVM2.AS.flash.display {
       matrix.writeExternal(graphicsData);
       graphicsData.writeUnsignedByte(+repeat);
       graphicsData.writeUnsignedByte(+smooth);
+    }
+
+    endFill(): void {
+      this._graphicsData.writeUnsignedByte(PathCommand.EndFill);
     }
 
 //    beginShaderFill(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
@@ -273,22 +278,28 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     drawRect(x: number, y: number, width: number, height: number): void {
-      x = +x;
-      y = +y;
-      width = +width;
-      height = +height;
-
-      this.moveTo(x, y);
-      this.lineTo(x + width, y);
-      this.lineTo(x + width, y + height);
-      this.lineTo(x, y + height);
-      this.lineTo(x, y);
-
-      // Temporary hack until proper bounds calculations land.
       x = x * 20|0;
       y = y * 20|0;
-      this._fillBounds = this._lineBounds = new Bounds(x, y, x + width * 20 | 0,
-                                                       y + height * 20 | 0);
+      var x2 = x + (width * 20|0);
+      var y2 = y + (height * 20|0);
+
+      if (x !== this._lastX || y !== this._lastY) {
+        this._graphicsData.writeUnsignedByte(PathCommand.MoveTo);
+        this._writeCoordinates(x, y);
+      }
+      this._graphicsData.writeUnsignedByte(PathCommand.LineTo);
+      this._writeCoordinates(x2, y);
+      this._graphicsData.writeUnsignedByte(PathCommand.LineTo);
+      this._writeCoordinates(x2, y2);
+      this._graphicsData.writeUnsignedByte(PathCommand.LineTo);
+      this._writeCoordinates(x, y2);
+      this._graphicsData.writeUnsignedByte(PathCommand.LineTo);
+      this._writeCoordinates(x, y);
+      this._setLastCoordinates(x, y);
+
+      this._extendBoundsByPoint(x, y);
+      this._extendBoundsByPoint(x2, y2);
+
       this._invalidateParent();
     }
 
@@ -428,13 +439,11 @@ module Shumway.AVM2.AS.flash.display {
       x = x * 20|0;
       y = y * 20|0;
 
-      var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(PathCommand.MoveTo);
-      graphicsData.writeInt(x);
-      graphicsData.writeInt(y);
+      this._graphicsData.writeUnsignedByte(PathCommand.MoveTo);
+      this._writeCoordinates(x, y);
+      this._setLastCoordinates(x, y);
 
-      this._extendBoundsByPoint(x, y, 0);
-      this._setLastCoordinate(x, y);
+      this._extendBoundsByPoint(x, y);
 
       this._invalidateParent();
     }
@@ -443,13 +452,11 @@ module Shumway.AVM2.AS.flash.display {
       x = x * 20|0;
       y = y * 20|0;
 
-      var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(PathCommand.LineTo);
-      graphicsData.writeInt(x);
-      graphicsData.writeInt(y);
+      this._graphicsData.writeUnsignedByte(PathCommand.LineTo);
+      this._writeCoordinates(x, y);
+      this._setLastCoordinates(x, y);
 
-      this._extendBoundsByPoint(x, y, 0);
-      this._setLastCoordinate(x, y);
+      this._extendBoundsByPoint(x, y);
 
       this._invalidateParent();
     }
@@ -460,20 +467,17 @@ module Shumway.AVM2.AS.flash.display {
       anchorX = anchorX * 20|0;
       anchorY = anchorY * 20|0;
 
-      var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(PathCommand.CurveTo);
-      graphicsData.writeInt(controlX);
-      graphicsData.writeInt(controlY);
-      graphicsData.writeInt(anchorX);
-      graphicsData.writeInt(anchorY);
+      this._graphicsData.writeUnsignedByte(PathCommand.CurveTo);
+      this._writeCoordinates(controlX, controlY);
+      this._writeCoordinates(anchorX, anchorY);
+      this._setLastCoordinates(anchorX, anchorY);
 
-      this._extendBoundsByPoint(anchorX, anchorY, 0);
-      this._setLastCoordinate(anchorX, anchorY);
+      this._extendBoundsByPoint(anchorX, anchorY);
       if (controlX < this._lastX || controlX > anchorX) {
-        this._extendBoundsByX(quadraticBezierExtreme(this._lastX, controlX, anchorX)|0, 0);
+        this._extendBoundsByX(quadraticBezierExtreme(this._lastX, controlX, anchorX)|0);
       }
       if (controlY < this._lastY || controlY > anchorY) {
-        this._extendBoundsByY(quadraticBezierExtreme(this._lastY, controlY, anchorY)|0, 0);
+        this._extendBoundsByY(quadraticBezierExtreme(this._lastY, controlY, anchorY)|0);
       }
 
       this._invalidateParent();
@@ -490,17 +494,14 @@ module Shumway.AVM2.AS.flash.display {
       anchorY = anchorY * 20|0;
 
 
-      var graphicsData = this._graphicsData;
-      graphicsData.writeUnsignedByte(PathCommand.CubicCurveTo);
-      graphicsData.writeInt(controlX1);
-      graphicsData.writeInt(controlY1);
-      graphicsData.writeInt(controlX2);
-      graphicsData.writeInt(controlY2);
-      graphicsData.writeInt(anchorX);
-      graphicsData.writeInt(anchorY);
 
-      this._extendBoundsByPoint(anchorX, anchorY, 0);
-      this._setLastCoordinate(anchorX, anchorY);
+      this._graphicsData.writeUnsignedByte(PathCommand.CubicCurveTo);
+      this._writeCoordinates(controlX1, controlY1);
+      this._writeCoordinates(controlX2, controlY2);
+      this._writeCoordinates(anchorX, anchorY);
+      this._setLastCoordinates(anchorX, anchorY);
+
+      this._extendBoundsByPoint(anchorX, anchorY);
       var extremes;
       var i;
       var fromX = this._lastX;
@@ -508,27 +509,24 @@ module Shumway.AVM2.AS.flash.display {
       if (controlX1 < fromX || controlX2 < fromX || controlX1 > anchorX || controlX2 > anchorX) {
         extremes = cubicBezierExtremes(fromX, controlX1, controlX2, anchorX);
         for (i = extremes.length; i--;) {
-          this._extendBoundsByX(extremes[i]|0, 0);
+          this._extendBoundsByX(extremes[i]|0);
         }
       }
       if (controlY1 < fromY || controlY2 < fromY || controlY1 > anchorY || controlY2 > anchorY) {
         extremes = cubicBezierExtremes(fromY, controlY1, controlY2, anchorY);
         for (i = extremes.length; i--;) {
-          this._extendBoundsByY(extremes[i]|0, 0);
+          this._extendBoundsByY(extremes[i]|0);
         }
       }
 
       this._invalidateParent();
     }
 
-    endFill(): void {
-      this._graphicsData.writeUnsignedByte(PathCommand.EndFill);
-    }
-
     copyFrom(sourceGraphics: flash.display.Graphics): void {
-      this._graphicsData.position = 0;
-      this._graphicsData.length = sourceGraphics._graphicsData.length;
-      this._graphicsData.writeBytes(sourceGraphics._graphicsData, 0);
+      var graphicsData = this._graphicsData;
+      graphicsData.position = 0;
+      graphicsData.length = sourceGraphics._graphicsData.length;
+      graphicsData.writeBytes(sourceGraphics._graphicsData, 0);
       this._invalidateParent();
     }
 
@@ -686,7 +684,8 @@ module Shumway.AVM2.AS.flash.display {
       output.writeFloat(clamp(+focalPointRatio, -1, 1));
     }
 
-    private _extendBoundsByPoint(x: number, y: number, strokeWidth: number): void {
+    private _extendBoundsByPoint(x: number, y: number): void {
+      var strokeWidth: number = 0;
       var bounds = this._fillBounds;
       bounds.extendByPoint(x, y);
 
@@ -698,7 +697,8 @@ module Shumway.AVM2.AS.flash.display {
       bounds.yMax = Math.max(y + halfStrokeWidth, bounds.yMax);
     }
 
-    private _extendBoundsByX(x: number, strokeWidth: number): void {
+    private _extendBoundsByX(x: number): void {
+      var strokeWidth: number = 0;
       var bounds = this._fillBounds;
       bounds.extendByX(x);
 
@@ -708,7 +708,8 @@ module Shumway.AVM2.AS.flash.display {
       bounds.xMax = Math.max(x + halfStrokeWidth, bounds.xMax);
     }
 
-    private _extendBoundsByY(y: number, strokeWidth: number): void {
+    private _extendBoundsByY(y: number): void {
+      var strokeWidth: number = 0;
       var bounds = this._fillBounds;
       bounds.extendByY(y);
 
@@ -718,9 +719,15 @@ module Shumway.AVM2.AS.flash.display {
       bounds.yMax = Math.max(y + halfStrokeWidth, bounds.yMax);
     }
 
-    private _setLastCoordinate(x: number, y: number): void {
+    private _setLastCoordinates(x: number, y: number): void {
       this._lastX = x;
       this._lastY = y;
+    }
+
+    private _writeCoordinates(x: number, y: number): void {
+      var graphicsData = this._graphicsData;
+      graphicsData.writeInt(x);
+      graphicsData.writeInt(y);
     }
   }
 }

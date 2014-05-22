@@ -34,6 +34,7 @@
   unitTests.push(lineTo);
   unitTests.push(curveTo);
   unitTests.push(cubicCurveTo);
+  unitTests.push(drawRect);
   unitTests.push(bounds);
 
   function basics() {
@@ -143,6 +144,35 @@
     eq(bytes.readInt(), 0 * 20, "x is stored correctly");
     eq(bytes.readInt(), 150 * 20, "y is stored correctly");
     eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+  }
+
+  function drawRect() {
+    var g = createGraphics();
+    g.drawRect(0, 0, 100, 100);
+    var bytes = cloneData(g.getGraphicsData());
+    eq(bytes.readUnsignedByte(), PathCommand.LineTo, "1. lineTo command is stored");
+    eq(bytes.readInt(), 100 * 20, "x is stored correctly");
+    eq(bytes.readInt(), 0 * 20, "y is stored correctly");
+    eq(bytes.readUnsignedByte(), PathCommand.LineTo, "2. lineTo command is stored");
+    eq(bytes.readInt(), 100 * 20, "x is stored correctly");
+    eq(bytes.readInt(), 100 * 20, "y is stored correctly");
+    eq(bytes.readUnsignedByte(), PathCommand.LineTo, "3. lineTo command is stored");
+    eq(bytes.readInt(), 0 * 20, "x is stored correctly");
+    eq(bytes.readInt(), 100 * 20, "y is stored correctly");
+    eq(bytes.readUnsignedByte(), PathCommand.LineTo, "4. lineTo command is stored");
+    eq(bytes.readInt(), 0 * 20, "x is stored correctly");
+    eq(bytes.readInt(), 0 * 20, "y is stored correctly");
+    var rectBytesCount = bytes.position;
+    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    g.drawRect(200, 200, 100, 100);
+    bytes = cloneData(g.getGraphicsData());
+    bytes.position = rectBytesCount;
+    eq(bytes.readUnsignedByte(), PathCommand.MoveTo, "moveTo command is stored if rect doesn't " +
+                                                     "start at previous cursor coordinates");
+    eq(bytes.readInt(), 200 * 20, "x is stored correctly");
+    eq(bytes.readInt(), 200 * 20, "y is stored correctly");
+    eq(bytes.bytesAvailable, rectBytesCount, "instructions didn't write more bytes than expected");
+    g.drawRect(200, 200, 100, 100);
   }
 
   // Note: these tests aren't really valid, but will do as a first approximation.
