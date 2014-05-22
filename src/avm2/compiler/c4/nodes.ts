@@ -286,7 +286,7 @@ module Shumway.AVM2.Compiler {
   New.prototype.nodeName = "New";
 
   export class GetProperty extends StoreDependent {
-    constructor(control, store, public object: Value, public name: Value) {
+    constructor(control: Control, store: Store, public object: Value, public name: Value) {
       super(control, store);
     }
     visitInputs(visitor: NodeVisitor) {
@@ -301,7 +301,7 @@ module Shumway.AVM2.Compiler {
   GetProperty.prototype.nodeName = "GetProperty";
 
   export class SetProperty extends StoreDependent {
-    constructor(control, store, public object: Value, public name: Value, public value: Value) {
+    constructor(control: Control, store: Store, public object: Value, public name: Value, public value: Value) {
       super(control, store);
     }
     visitInputs(visitor: NodeVisitor) {
@@ -330,6 +330,22 @@ module Shumway.AVM2.Compiler {
   }
 
   DeleteProperty.prototype.nodeName = "DeleteProperty";
+
+  export class CallProperty extends StoreDependent {
+    constructor(control: Control, store: Store, public object: Value, public name: Value, public args: Value [], public flags: number) {
+      super(control, store);
+    }
+    visitInputs(visitor: NodeVisitor) {
+      this.control && visitor(this.control);
+      this.store && visitor(this.store);
+      this.loads && visitArrayInputs(this.loads, visitor);
+      visitor(this.object);
+      visitor(this.name);
+      visitArrayInputs(this.args, visitor);
+    }
+  }
+
+  CallProperty.prototype.nodeName = "CallProperty";
 
   export class Phi extends Value {
     sealed: boolean;
