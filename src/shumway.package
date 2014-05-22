@@ -558,6 +558,7 @@ build/ts/player/remotingPlayer.js
 build/ts/player/remotingGfx.js
 build/ts/player/player.js
 build/ts/player/easel.js
+build/ts/player/embed.js
 
 #!inline console.timeEnd("Load Player Dependencies");
 

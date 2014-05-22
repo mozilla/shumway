@@ -181,8 +181,6 @@ module Shumway.GFX {
   export class Shape extends Frame {
     source: IRenderable;
 
-    private fillStyle: ColorStyle;
-    private data: DataBuffer;
     constructor(source: IRenderable) {
       super();
       this.source = source;
@@ -191,21 +189,55 @@ module Shumway.GFX {
     public getBounds(): Rectangle {
       return this.source.getBounds();
     }
+  }
 
-    public ensureSource(data: DataBuffer, bounds: Rectangle): void {
-      if (this.source) {
-        return;
-      }
-      this.data = data;
-      this.source = new Renderable(bounds, this._render.bind(this));
+  export class Renderable implements IRenderable {
+    private _bounds: Rectangle;
+    properties: {[name: string]: any} = {};
+    render: (context: CanvasRenderingContext2D, clipBounds?: Rectangle) => void;
+    isDynamic: boolean = true;
+    isInvalid: boolean = true;
+    isScalable: boolean = true;
+    isTileable: boolean = false;
+    constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, clipBounds?: Rectangle) => void) {
+      this.render = render;
+      this._bounds = bounds.clone();
     }
+    getBounds (): Rectangle {
+      return this._bounds;
+    }
+  }
+
+  export class ShapeGraphics implements IRenderable {
+    properties: {[name: string]: any} = {};
+    isDynamic: boolean = false;
+    isInvalid: boolean = true;
+    isScalable: boolean = true;
+    isTileable: boolean = true;
+
+    private fillStyle: ColorStyle;
+    private _pathData: DataBuffer;
+    private _bounds: Rectangle;
 
     private static LINE_CAP_STYLES = ['round', 'butt', 'square'];
     private static LINE_JOINT_STYLES = ['round', 'bevel', 'miter'];
 
-    private _render(context: CanvasRenderingContext2D): void {
+    constructor(pathData: DataBuffer, bounds: Rectangle) {
+      this._pathData = pathData;
+      this._bounds = bounds;
+    }
+
+    getBounds(): Shumway.GFX.Geometry.Rectangle {
+      return this._bounds;
+    }
+
+    render(context: CanvasRenderingContext2D, clipBounds: Shumway.GFX.Geometry.Rectangle): void {
       context.save();
-      var data = this.data;
+      var data = this._pathData;
+      if (!data || data.length === 0) {
+        this._renderFallback(context);
+        return;
+      }
       var fillActive = false;
       var strokeActive = false;
       data.position = 0;
@@ -263,8 +295,8 @@ module Shumway.GFX {
             context.strokeStyle = ColorUtilities.rgbaToCSSStyle(color);
             data.readBoolean(); // Skip pixel hinting.
             data.readByte(); // Skip scaleMode.
-            context.lineCap = Shape.LINE_CAP_STYLES[data.readByte()];
-            context.lineJoin = Shape.LINE_JOINT_STYLES[data.readByte()];
+            context.lineCap = ShapeGraphics.LINE_CAP_STYLES[data.readByte()];
+            context.lineJoin = ShapeGraphics.LINE_JOINT_STYLES[data.readByte()];
             context.miterLimit = data.readByte();
             break;
         }
@@ -276,29 +308,25 @@ module Shumway.GFX {
         }
       }
       context.restore();
-      var renderable = this.source;
-      renderable.isInvalid = false;
-      renderable.isScalable = true;
-      renderable.isTileable = true;
-      renderable.isDynamic = false;
+      this.isInvalid = false;
     }
-  }
 
-  export class Renderable implements IRenderable {
-    private _bounds: Rectangle;
-    properties: {[name: string]: any} = {};
-    render: (context: CanvasRenderingContext2D, clipBounds?: Rectangle) => void;
-    isDynamic: boolean = true;
-    isInvalid: boolean = true;
-    isScalable: boolean = true;
-    isTileable: boolean = false;
-    constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, clipBounds?: Rectangle) => void) {
-      this.render = render;
-      this._bounds = bounds.clone();
+    private _renderFallback(context: CanvasRenderingContext2D) {
+      if (!this.fillStyle) {
+        this.fillStyle = Shumway.ColorStyle.randomStyle();
+      }
+      var bounds = this._bounds;
+      context.save();
+      context.beginPath();
+      context.lineWidth = 2;
+      context.fillStyle = this.fillStyle;
+      context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+//      context.textBaseline = "top";
+//      context.fillStyle = "white";
+//      context.fillText(String(id), bounds.x, bounds.y);
+      context.restore();
     }
-    getBounds (): Rectangle {
-      return this._bounds;
-    }
+
   }
 
   export class Label implements IRenderable {

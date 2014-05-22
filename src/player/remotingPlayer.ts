@@ -54,30 +54,26 @@ module Shumway.Remoting.Player {
     }
 
     writeGraphics(graphics: Graphics) {
-      this.output.writeInt(MessageTag.UpdateFrame);
+      this.output.writeInt(MessageTag.UpdateGraphics);
       this.output.writeInt(graphics._id);
-      this.output.writeInt(0); // Not a container.
-      var hasBits = UpdateFrameTagBits.HasBounds | UpdateFrameTagBits.HasShapeData;
-      this.output.writeInt(hasBits);
-      this.writeRectangle(graphics._getContentBounds(true));
+      this.writeRectangle(graphics._getContentBounds());
       this.output.writeInt(this.outputAssets.length);
       this.outputAssets.push(graphics.getGraphicsData());
     }
 
     writeDisplayObject(displayObject: DisplayObject) {
+      var graphics = displayObject._getGraphics();
+
       this.output.writeInt(MessageTag.UpdateFrame);
       this.output.writeInt(displayObject._id);
-      // TODO create visitDisplayObjectContainer
-      this.output.writeInt(DisplayObjectContainer.isType(displayObject) ? 1 : 0);
       var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
-      var hasChildren = this.writeReferences && displayObject._hasFlags(DisplayObjectFlags.DirtyChildren);
+
+      var hasChildren = this.writeReferences && displayObject._hasAnyFlags(DisplayObjectFlags.DirtyChildren | DisplayObjectFlags.DirtyGraphics);
       var hasColorTransform = displayObject._hasFlags(DisplayObjectFlags.DirtyColorTransform);
       var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
-      var hasBounds = hasMiscellaneousProperties;
 
       var hasBits = 0;
       hasBits |= hasMatrix         ? UpdateFrameTagBits.HasMatrix         : 0;
-      hasBits |= hasBounds         ? UpdateFrameTagBits.HasBounds         : 0;
       hasBits |= hasChildren       ? UpdateFrameTagBits.HasChildren       : 0;
       hasBits |= hasColorTransform ? UpdateFrameTagBits.HasColorTransform : 0;
       hasBits |= hasMiscellaneousProperties ? UpdateFrameTagBits.HasMiscellaneousProperties : 0;
@@ -86,23 +82,20 @@ module Shumway.Remoting.Player {
       if (hasMatrix) {
         this.writeMatrix(displayObject._getMatrix());
       }
-      if (hasBounds) {
-        this.writeRectangle(displayObject._getContentBounds());
-      }
       if (hasChildren) {
-        assert (DisplayObjectContainer.isType(displayObject));
-        var children = (<DisplayObjectContainer>displayObject)._children;
-        var count = children.length;
-        var graphics = displayObject._getGraphics();
-        if (graphics) {
-          count ++;
+        var count = graphics ? 1 : 0;
+        var children = DisplayObjectContainer.isType(displayObject) ? (<DisplayObjectContainer>displayObject)._children : null;
+        if (children) {
+          count += children.length;
         }
         this.output.writeInt(count);
         if (graphics) {
-          this.output.writeInt(graphics._id);
+          this.output.writeInt(IDMask.Asset | graphics._id);
         }
+        if (children) {
         for (var i = 0; i < children.length; i++) {
           this.output.writeInt(children[i]._id);
+          }
         }
       }
       if (hasColorTransform) {
