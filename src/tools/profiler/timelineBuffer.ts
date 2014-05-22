@@ -16,6 +16,12 @@
 module Shumway.Tools.Profiler {
   import createEmptyObject = ObjectUtilities.createEmptyObject;
 
+  export interface TimelineItemKind {
+    id: number;
+    name: string;
+    visible: boolean;
+  }
+
   /**
    * Records enter / leave events in two circular buffers.
    * The goal here is to be able to handle large amounts of data.
@@ -26,42 +32,50 @@ module Shumway.Tools.Profiler {
 
     private _depth:number;
     private _kindCount:number;
-    public marks:Shumway.CircularBuffer;
-    public times:Shumway.CircularBuffer;
-    public kinds:Shumway.Map<number>;
-    public kindNames:Shumway.Map<string>;
+    private _kinds:TimelineItemKind[];
+    private _kindNameMap:Shumway.Map<TimelineItemKind>;
+    private _marks:Shumway.CircularBuffer;
+    private _times:Shumway.CircularBuffer;
 
     constructor() {
-      this.marks = new Shumway.CircularBuffer(Int32Array, 20);
-      this.times = new Shumway.CircularBuffer(Float64Array, 20);
-      this.kinds = createEmptyObject();
-      this.kindNames = createEmptyObject();
       this._depth = 0;
       this._kindCount = 0;
+      this._kinds = [];
+      this._kindNameMap = createEmptyObject();
+      this._marks = new Shumway.CircularBuffer(Int32Array, 20);
+      this._times = new Shumway.CircularBuffer(Float64Array, 20);
     }
 
-    getKindName(kind:number):string {
-      return this.kindNames[kind];
+    getKind(kind:number):TimelineItemKind {
+      return this._kinds[kind];
     }
 
-    getKind(name:string):number {
-      if (this.kinds[name] === undefined) {
-        var kind = this._kindCount++;
-        this.kinds[name] = kind;
-        this.kindNames[kind] = name;
+    get kinds():TimelineItemKind[] {
+      return this._kinds.concat();
+    }
+
+    private _getKindId(name:string):number {
+      if (this._kindNameMap[name] === undefined) {
+        var kind:TimelineItemKind = <TimelineItemKind>{
+          id: this._kinds.length,
+          name: name,
+          visible: true
+        };
+        this._kinds.push(kind);
+        this._kindNameMap[name] = kind;
       }
-      return this.kinds[name];
+      return this._kindNameMap[name].id;
     }
 
     enter(name:string, time?:number) {
       this._depth++;
-      this.marks.write(TimelineBuffer.ENTER | this.getKind(name));
-      this.times.write(time || performance.now());
+      this._marks.write(TimelineBuffer.ENTER | this._getKindId(name));
+      this._times.write(time || performance.now());
     }
 
     leave(name:string, time?:number) {
-      this.marks.write(TimelineBuffer.LEAVE | this.getKind(name));
-      this.times.write(time || performance.now());
+      this._marks.write(TimelineBuffer.LEAVE | this._getKindId(name));
+      this._times.write(time || performance.now());
       this._depth--;
     }
 
@@ -69,28 +83,33 @@ module Shumway.Tools.Profiler {
      * Constructs an easier to work with TimelineFrame data structure.
      */
     gatherRange(count:number):TimelineFrame {
-      var range = new TimelineFrame(null, 0, NaN, NaN);
+      var range = new TimelineFrame(null, null, NaN, NaN);
       var stack:TimelineFrame [] = [range];
-      var times = this.times;
+      var times = this._times;
       var topLevelFrameCount = 0;
-      this.marks.forEachInReverse(function (mark, i) {
-        var time = times.get(i);
-        if ((mark & 0xFFFF0000) === TimelineBuffer.LEAVE) {
-          if (stack.length === 1) {
-            topLevelFrameCount++;
-            if (topLevelFrameCount > count) {
-              return true;
+      var self = this;
+      this._marks.forEachInReverse(function (mark, i) {
+        var action = mark & 0xFFFF0000;
+        var kind = self._kinds[mark & 0xFFFF];
+        if (kind.visible) {
+          var time = times.get(i);
+          if (action === TimelineBuffer.LEAVE) {
+            if (stack.length === 1) {
+              topLevelFrameCount++;
+              if (topLevelFrameCount > count) {
+                return true;
+              }
             }
-          }
-          stack.push(new TimelineFrame(stack[stack.length - 1], mark & 0xFFFF, NaN, time));
-        } else if ((mark & 0xFFFF0000) === TimelineBuffer.ENTER) {
-          var node = stack.pop();
-          var top = stack[stack.length - 1];
-          node.startTime = time;
-          if (!top.children) {
-            top.children = [node];
-          } else {
-            top.children.unshift(node);
+            stack.push(new TimelineFrame(stack[stack.length - 1], kind, NaN, time));
+          } else if (action === TimelineBuffer.ENTER) {
+            var node = stack.pop();
+            var top = stack[stack.length - 1];
+            node.startTime = time;
+            if (!top.children) {
+              top.children = [node];
+            } else {
+              top.children.unshift(node);
+            }
           }
         }
       });

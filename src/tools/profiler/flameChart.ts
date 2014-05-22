@@ -18,7 +18,7 @@ module Shumway.Tools.Profiler {
   import trimMiddle = StringUtilities.trimMiddle;
   import createEmptyObject = ObjectUtilities.createEmptyObject;
 
-  interface Kind {
+  interface KindStyle {
     bgColor: string;
     textColor: string;
   }
@@ -52,7 +52,7 @@ module Shumway.Tools.Profiler {
     private _pixelsToOverviewTime = 1;
     private _range:TimelineFrame;
     private _minTime = 1;
-    private _kindStyle:Shumway.Map<Kind>;
+    private _kindStyle:Shumway.Map<KindStyle>;
 
     private _drag:DragInfo = null;
     private _ignoreClick = false;
@@ -245,10 +245,10 @@ module Shumway.Tools.Profiler {
       if (width < this._minFrameWidthInPixels) {
         return;
       }
-      var style = this._kindStyle[frame.kind];
+      var style = this._kindStyle[frame.kind.id];
       if (!style) {
         var background = ColorStyle.randomStyle();
-        style = this._kindStyle[frame.kind] = {
+        style = this._kindStyle[frame.kind.id] = {
           bgColor: background,
           textColor: ColorStyle.contrastStyle(background)
         };
@@ -257,7 +257,7 @@ module Shumway.Tools.Profiler {
       context.fillStyle = style.bgColor;
       context.fillRect(start, depth * (12 + frameHPadding), width, 12);
       if (width > 12) {
-        var label = this._buffer.getKindName(frame.kind);
+        var label = frame.kind.name;
         if (label && label.length) {
           var labelHPadding = 2;
           label = this._prepareText(context, label, width - labelHPadding * 2);

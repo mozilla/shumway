@@ -24,7 +24,7 @@ module Shumway.Tools.Profiler {
     public total: number;
     constructor (
       public parent: TimelineFrame,
-      public kind: number,
+      public kind: TimelineItemKind,
       public startTime: number,
       public endTime: number) {
       // ...
