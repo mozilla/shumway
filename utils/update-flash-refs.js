@@ -109,19 +109,18 @@ function endsWith(string, value) {
   return string.substring(string.length - value.length, string.length) === value;
 }
 
+var packageFilesBase = path.join(__dirname, '../src/');
+
 function updateFlashRefs(filePath, srcDir, includes) {
-  if (endsWith(filePath, ".js")) {
-    updateJSLibRefs(filePath, srcDir + '/shumway.package', 'shared');
-  } else {
-    if (includes.shared) {
-      updateLibRefs(filePath, srcDir + '/shumway.package', 'shared');
-    }
-    if (includes.gfx) {
-      updateLibRefs(filePath, srcDir + '/shumway.gfx.package', 'gfx');
-    }
-    if (includes.player) {
-      updateLibRefs(filePath, srcDir + '/shumway.player.package', 'player');
-    }
+  var updateFn = endsWith(filePath, ".js") ? updateJSLibRefs : updateLibRefs;
+  if (includes.shared) {
+    updateFn(filePath, path.join(packageFilesBase, '/shumway.package'), 'shared');
+  }
+  if (includes.gfx) {
+    updateFn(filePath, path.join(packageFilesBase, '/shumway.gfx.package'), 'gfx');
+  }
+  if (includes.player) {
+    updateFn(filePath, path.join(packageFilesBase, '/shumway.player.package'), 'player');
   }
 }
 

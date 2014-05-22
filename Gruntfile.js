@@ -139,6 +139,7 @@ module.exports = function(grunt) {
     updateFlashRefs('test/harness/slave.html', 'src', {shared: true, gfx: true, player: true});
     updateFlashRefs('examples/xlsimport/index.html', 'src', {shared: true, gfx: true, player: true});
     updateFlashRefs('examples/inspector/inspector.player.html', 'src', {shared: true, player: true});
+    updateFlashRefs('examples/shell/run.js', 'src', {shared: true, player: true});
   });
 
   grunt.registerTask('server', function () {

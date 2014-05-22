@@ -69,7 +69,7 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = ["load"]; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
 
     static RELEASE = false;
-    static WORKERS_ENABLED = true;
+    static WORKERS_ENABLED = typeof Worker !== 'undefined';
     static SHUMWAY_ROOT = '../../src/';
     static LOADER_PATH = Loader.RELEASE ? 'shumway-worker.js' : 'swf/resourceloader.js';
 
