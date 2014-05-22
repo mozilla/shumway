@@ -8,7 +8,8 @@ module Shumway.GFX {
   import TileCache = Geometry.TileCache;
   import Tile = Geometry.Tile;
   import OBB = Geometry.OBB;
-  import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
+  import PathCommand = Geometry.PathCommand;
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   export enum BlendMode {
     Normal     = 1,
@@ -180,8 +181,6 @@ module Shumway.GFX {
   export class Shape extends Frame {
     source: IRenderable;
 
-    private fillStyle: ColorStyle;
-    private data: IDataInput;
     constructor(source: IRenderable) {
       super();
       this.source = source;
@@ -189,31 +188,6 @@ module Shumway.GFX {
 
     public getBounds(): Rectangle {
       return this.source.getBounds();
-    }
-
-    public ensureSource(data: IDataInput, bounds: Rectangle): void {
-      if (this.source) {
-        return;
-      }
-      this.data = data;
-      this.source = new Renderable(bounds, this._render.bind(this));
-    }
-
-    private _render(context: CanvasRenderingContext2D): void {
-      if (!this.fillStyle) {
-        this.fillStyle = ColorStyle.randomStyle();
-      }
-      var bounds = this.getBounds();
-      context.save();
-      context.beginPath();
-      context.lineWidth = 2;
-      context.fillStyle = this.fillStyle;
-      context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-      context.restore();
-      this.source.isInvalid = false;
-      this.source.isScalable = true;
-      this.source.isTileable = true;
-      this.source.isDynamic = false;
     }
   }
 
@@ -232,6 +206,127 @@ module Shumway.GFX {
     getBounds (): Rectangle {
       return this._bounds;
     }
+  }
+
+  export class ShapeGraphics implements IRenderable {
+    properties: {[name: string]: any} = {};
+    isDynamic: boolean = false;
+    isInvalid: boolean = true;
+    isScalable: boolean = true;
+    isTileable: boolean = true;
+
+    private fillStyle: ColorStyle;
+    private _pathData: DataBuffer;
+    private _bounds: Rectangle;
+
+    private static LINE_CAP_STYLES = ['round', 'butt', 'square'];
+    private static LINE_JOINT_STYLES = ['round', 'bevel', 'miter'];
+
+    constructor(pathData: DataBuffer, bounds: Rectangle) {
+      this._pathData = pathData;
+      this._bounds = bounds;
+    }
+
+    getBounds(): Shumway.GFX.Geometry.Rectangle {
+      return this._bounds;
+    }
+
+    render(context: CanvasRenderingContext2D, clipBounds: Shumway.GFX.Geometry.Rectangle): void {
+      context.save();
+      var data = this._pathData;
+      if (!data || data.length === 0) {
+        this._renderFallback(context);
+        return;
+      }
+      var fillActive = false;
+      var strokeActive = false;
+      data.position = 0;
+      // Description of serialization format can be found in flash.display.Graphics.
+      while (data.bytesAvailable > 0) {
+        var command = data.readUnsignedByte();
+        switch (command) {
+          case PathCommand.MoveTo:
+            assert(data.bytesAvailable >= 8);
+            context.moveTo(data.readInt() / 20, data.readInt() / 20);
+            break;
+          case PathCommand.LineTo:
+            assert(data.bytesAvailable >= 8);
+            context.lineTo(data.readInt() / 20, data.readInt() / 20);
+            break;
+          case PathCommand.CurveTo:
+            assert(data.bytesAvailable >= 16);
+            context.quadraticCurveTo(data.readInt() / 20, data.readInt() / 20,
+                                     data.readInt() / 20, data.readInt() / 20);
+            break;
+          case PathCommand.CubicCurveTo:
+            assert(data.bytesAvailable >= 24);
+            context.bezierCurveTo(data.readInt() / 20, data.readInt() / 20,
+                                  data.readInt() / 20, data.readInt() / 20,
+                                  data.readInt() / 20, data.readInt() / 20);
+            break;
+          case PathCommand.BeginSolidFill:
+            assert(data.bytesAvailable >= 4);
+            if (fillActive) {
+              context.fill();
+              context.closePath();
+            }
+            context.beginPath();
+            fillActive = true;
+            var color = data.readUnsignedInt();
+            context.fillStyle = ColorUtilities.rgbaToCSSStyle(color);
+            break;
+          case PathCommand.EndFill:
+            if (fillActive) {
+              context.fill();
+            }
+            fillActive = false;
+            context.fillStyle = null;
+            break;
+          case PathCommand.LineStyleSolid:
+            if (strokeActive) {
+              context.stroke();
+              context.closePath();
+            }
+            context.beginPath();
+            strokeActive = true;
+            var thickness = data.readUnsignedByte();
+            var color = data.readUnsignedInt();
+            context.lineWidth = thickness;
+            context.strokeStyle = ColorUtilities.rgbaToCSSStyle(color);
+            data.readBoolean(); // Skip pixel hinting.
+            data.readByte(); // Skip scaleMode.
+            context.lineCap = ShapeGraphics.LINE_CAP_STYLES[data.readByte()];
+            context.lineJoin = ShapeGraphics.LINE_JOINT_STYLES[data.readByte()];
+            context.miterLimit = data.readByte();
+            break;
+        }
+        if (fillActive) {
+          context.fill();
+        }
+        if (strokeActive) {
+          context.stroke();
+        }
+      }
+      context.restore();
+      this.isInvalid = false;
+    }
+
+    private _renderFallback(context: CanvasRenderingContext2D) {
+      if (!this.fillStyle) {
+        this.fillStyle = Shumway.ColorStyle.randomStyle();
+      }
+      var bounds = this._bounds;
+      context.save();
+      context.beginPath();
+      context.lineWidth = 2;
+      context.fillStyle = this.fillStyle;
+      context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+//      context.textBaseline = "top";
+//      context.fillStyle = "white";
+//      context.fillText(String(id), bounds.x, bounds.y);
+      context.restore();
+    }
+
   }
 
   export class Label implements IRenderable {

@@ -28,6 +28,56 @@ module Shumway.GFX.Geometry {
     return d * Math.PI / 180;
   }
 
+  export function quadraticBezier(from: number, cp: number, to: number, t: number): number {
+    var inverseT = 1 - t;
+    return from * inverseT * inverseT + 2 * cp * inverseT * t + to * t * t;
+  }
+
+  export function quadraticBezierExtreme(from: number, cp: number, to: number): number {
+    var t = (from - cp) / (from - 2 * cp + to);
+    if (t < 0) {
+      return from;
+    }
+    if (t > 1) {
+      return to;
+    }
+    return quadraticBezier(from, cp, to, t);
+  }
+
+  export function cubicBezier(from: number, cp: number, cp2: number, to: number, t): number {
+    var tSq = t * t;
+    var inverseT = 1 - t;
+    var inverseTSq = inverseT * inverseT;
+    return from * inverseT * inverseTSq + 3 * cp * t * inverseTSq +
+           3 * cp2 * inverseT * tSq + to * t * tSq;
+  }
+
+  export function cubicBezierExtremes(from: number, cp: number, cp2: number, to): number[] {
+    var d1 = cp - from;
+    var d2 = cp2 - cp;
+    // We only ever need d2 * 2
+    d2 *= 2;
+    var d3 = to - cp2;
+    // Prevent division by zero by very slightly changing d3 if that would happen
+    if (d1 + d3 === d2) {
+      d3 *= 1.0001;
+    }
+    var fHead = 2 * d1 - d2;
+    var part1 = d2 - 2 * d1;
+    var fCenter = Math.sqrt(part1 * part1 - 4 * d1 * (d1 - d2 + d3));
+    var fTail = 2 * (d1 - d2 + d3);
+    var t1 = (fHead + fCenter) / fTail;
+    var t2 = (fHead - fCenter ) / fTail;
+    var result = [];
+    if (t1 >= 0 && t1 <= 1) {
+      result.push(cubicBezier(from, cp, cp2, to, t1));
+    }
+    if (t2 >= 0 && t2 <= 1) {
+      result.push(cubicBezier(from, cp, cp2, to, t2));
+    }
+    return result;
+  }
+
   var E = 0.0001;
 
   function eqFloat(a, b) {
@@ -1521,13 +1571,30 @@ module Shumway.GFX.Geometry {
   var MAX_CACHE_LEVELS = 3;
 
   /**
+   * Used for (de-)serializing Graphics path data in flash.display.Graphics and the renderer.
+   */
+  export enum PathCommand {
+    BeginSolidFill = 1,
+    BeginGradientFill,
+    BeginBitmapFill,
+    EndFill,
+    LineStyleSolid,
+    LineStyleGradient,
+    LineStyleBitmap,
+    MoveTo,
+    LineTo,
+    CurveTo,
+    CubicCurveTo,
+  }
+
+  /**
    * Manages tile caches at different scales.
    */
   export class RenderableTileCache {
     private _source: IRenderable;
     private _cacheLevels: TileCache [] = [];
-    private _tileSize: number
-    private _minUntiledSize: number
+    private _tileSize: number;
+    private _minUntiledSize: number;
     constructor(source: IRenderable, tileSize: number, minUntiledSize: number) {
       this._source = source;
       this._tileSize = tileSize;

@@ -17,10 +17,10 @@
 module Shumway.AVM2.AS.flash.geom {
   import notImplemented = Shumway.Debug.notImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
-  import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Bounds = Shumway.Bounds;
 
-  export class Matrix extends ASNative implements flash.utils.IExternalizable {
+  export class Matrix extends ASNative {
     
     // Called whenever the class is initialized.
     static classInitializer: any = null;
@@ -47,6 +47,8 @@ module Shumway.AVM2.AS.flash.geom {
     public static FromAny(obj: any): Matrix {
       return new flash.geom.Matrix(obj.a, obj.b, obj.c, obj.d, obj.tx, obj.ty);
     }
+
+    public static FROZEN_IDENTITY_MATRIX: Matrix = Object.freeze(new Matrix());
 
     public a: number;
     public b: number;
@@ -529,7 +531,7 @@ module Shumway.AVM2.AS.flash.geom {
              ", tx=" + this.tx + ", ty=" +this.ty + ")";
     }
 
-    public writeExternal(output: flash.utils.IDataOutput) {
+    public writeExternal(output: DataBuffer) {
       output.writeFloat(this.a);
       output.writeFloat(this.b);
       output.writeFloat(this.c);
@@ -538,7 +540,7 @@ module Shumway.AVM2.AS.flash.geom {
       output.writeFloat(this.ty);
     }
 
-    public readExternal(input: flash.utils.IDataInput) {
+    public readExternal(input: DataBuffer) {
       this.a = input.readFloat();
       this.b = input.readFloat();
       this.c = input.readFloat();

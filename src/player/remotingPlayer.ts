@@ -57,8 +57,8 @@ module Shumway.Remoting.Player {
       this.output.writeInt(MessageTag.UpdateGraphics);
       this.output.writeInt(graphics._id);
       this.writeRectangle(graphics._getContentBounds());
-//      this.output.writeInt(this.outputAssets.length);
-//      this.outputAssets.push(graphics._graphicsData);
+      this.output.writeInt(this.outputAssets.length);
+      this.outputAssets.push(graphics.getGraphicsData());
     }
 
     writeDisplayObject(displayObject: DisplayObject) {
@@ -93,8 +93,8 @@ module Shumway.Remoting.Player {
           this.output.writeInt(IDMask.Asset | graphics._id);
         }
         if (children) {
-          for (var i = 0; i < children.length; i++) {
-            this.output.writeInt(children[i]._id);
+        for (var i = 0; i < children.length; i++) {
+          this.output.writeInt(children[i]._id);
           }
         }
       }

@@ -281,22 +281,19 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     removeChildAt(index: number /*int*/): flash.display.DisplayObject {
-      // TODO: Security
-      // somewhatImplemented("public flash.display.Stage::removeChildAt");
-      return super.removeChildAt.call(this, index);
+      index = index | 0;
+      notImplemented("public flash.display.Stage::removeChildAt"); return;
     }
-
     swapChildrenAt(index1: number /*int*/, index2: number /*int*/): void {
-      // TODO: Security
-      // somewhatImplemented("public flash.display.Stage::swapChildrenAt");
-      return super.swapChildrenAt.call(this, index1, index2);
+      index1 = index1 | 0; index2 = index2 | 0;
+      notImplemented("public flash.display.Stage::swapChildrenAt"); return;
     }
 
     invalidate(): void {
       this._invalidated = true;
     }
 
-      isInvalidated(): boolean {
+    isInvalidated(): boolean {
       return this._invalidated;
     }
 
@@ -304,8 +301,7 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.Stage::isFocusInaccessible"); return;
     }
     requireOwnerPermissions(): void {
-      // TODO: Security
-      // somewhatImplemented("public flash.display.Stage::requireOwnerPermissions"); return;
+      somewhatImplemented("public flash.display.Stage::requireOwnerPermissions"); return;
     }
 
     render(): void {

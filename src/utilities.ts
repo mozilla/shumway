@@ -1099,12 +1099,7 @@ module Shumway {
     }
 
     export function clamp(value: number, min: number, max: number) {
-      if (value < min) {
-        return min;
-      } else if (value > max) {
-        return max;
-      }
-      return value;
+      return Math.max(min, Math.min(max, value));
     }
 
     /**
@@ -2187,6 +2182,21 @@ module Shumway {
       this.yMax = Math.max(this.yMax, other.yMax);
     }
 
+    extendByPoint (x: number, y: number): void {
+      this.extendByX(x);
+      this.extendByY(y);
+    }
+
+    extendByX (x: number): void {
+      this.xMin = Math.min(this.xMin, x);
+      this.xMax = Math.max(this.xMax, x);
+    }
+
+    extendByY (y: number): void {
+      this.yMin = Math.min(this.yMin, y);
+      this.yMax = Math.max(this.yMax, y);
+    }
+
     public intersects(toIntersect: Bounds): boolean {
       return this.contains(toIntersect.xMin, toIntersect.yMin) ||
         this.contains(toIntersect.xMax, toIntersect.yMax);
@@ -2285,6 +2295,21 @@ module Shumway {
       this._yMin = Math.min(this._yMin, other._yMin);
       this._xMax = Math.max(this._xMax, other._xMax);
       this._yMax = Math.max(this._yMax, other._yMax);
+    }
+
+    extendByPoint (x: number, y: number): void {
+      this.extendByX(x);
+      this.extendByY(y);
+    }
+
+    extendByX (x: number): void {
+      this.xMin = Math.min(this.xMin, x);
+      this.xMax = Math.max(this.xMax, x);
+    }
+
+    extendByY (y: number): void {
+      this.yMin = Math.min(this.yMin, y);
+      this.yMax = Math.max(this.yMax, y);
     }
 
     public intersects(toIntersect: DebugBounds): boolean {
@@ -2433,7 +2458,7 @@ module Shumway {
       result.a = m[4] ? parseFloat(m[4]) / 255 : 1;
       return Color.colorCache[color] = result;
     }
-  }
+    }
 
   export module ColorUtilities {
     export function argbToRgba(color: number): number {
@@ -2444,8 +2469,13 @@ module Shumway {
       return ((color >> 8) | (color << 24)) >>> 0;
     }
 
-    export function componentsToRgb(components: any): number {
+    export function componentsToRgb(components: {red: number; green: number; blue: number}): number {
       return ((components.red << 16) | (components.green << 8) | components.blue) >>> 0;
+    }
+
+    export function rgbaToCSSStyle(color: number): string {
+      return 'rgba(' + (color >> 24 & 0xff) + ',' + (color >> 16 & 0xff) + ',' +
+                  (color >> 8 & 0xff) + ',' + ((color & 0xff) / 0xff) + ')';
     }
   }
 

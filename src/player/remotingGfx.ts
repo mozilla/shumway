@@ -16,10 +16,11 @@
 module Shumway.Remoting.GFX {
   import Frame = Shumway.GFX.Frame;
   import Shape = Shumway.GFX.Shape;
+  import ShapeGraphics = Shumway.GFX.ShapeGraphics;
   import Renderable = Shumway.GFX.Renderable;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
-  import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   import Point = Shumway.GFX.Geometry.Point;
   import Matrix = Shumway.GFX.Geometry.Matrix;
@@ -85,7 +86,7 @@ module Shumway.Remoting.GFX {
 
   export class GFXChannelDeserializer {
     input: IDataInput;
-    inputAssets: Array<IDataInput>;
+    inputAssets: Array<DataBuffer>;
     context: GFXChannelDeserializerContext;
 
     public read() {
@@ -147,7 +148,7 @@ module Shumway.Remoting.GFX {
           gm = input.readFloat();
           bm = input.readFloat();
           am = input.readFloat();
-          ro = input.readInt()
+          ro = input.readInt();
           go = input.readInt();
           bo = input.readInt();
           ao = input.readInt();
@@ -164,27 +165,12 @@ module Shumway.Remoting.GFX {
       var context = this.context;
       var id = input.readInt();
       var asset = context._assets[id];
-      var bounds: Rectangle = this._readRectangle();
+      var bounds = this._readRectangle();
+      var assetId = input.readInt();
+      var pathData = this.inputAssets[assetId];
+      this.inputAssets[assetId] = null;
       if (!asset) {
-        // TODO: Create a real renderable.
-        asset = context._assets[id] = new Renderable(bounds, function (context) {
-          if (!this.fillStyle) {
-            this.fillStyle = Shumway.ColorStyle.randomStyle();
-          }
-          context.save();
-          context.beginPath();
-          context.lineWidth = 2;
-          context.fillStyle = this.fillStyle;
-          context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
-          context.textBaseline = "top";
-          context.fillStyle = "white";
-          context.fillText(String(id), bounds.x, bounds.y);
-          context.restore();
-        });
-        asset.isInvalid = false;
-        asset.isScalable = true;
-        asset.isTileable = true;
-        asset.isDynamic = false;
+        context._assets[id] = new ShapeGraphics(pathData, bounds);
       }
     }
 

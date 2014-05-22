@@ -123,10 +123,10 @@ module Shumway.ArrayUtilities {
       this._bitLength = 0;
     }
 
-    static fromArrayBuffer(buffer: ArrayBuffer) : DataBuffer {
+    static fromArrayBuffer(buffer: ArrayBuffer, length: number = -1) : DataBuffer {
       var dataBuffer: DataBuffer = Object.create(DataBuffer.prototype);
       dataBuffer._buffer = buffer;
-      dataBuffer._length = buffer.byteLength;
+      dataBuffer._length = length === -1 ? buffer.byteLength : length;
       dataBuffer._position = 0;
       dataBuffer._cacheViews();
       dataBuffer._littleEndian = false; // AS3 is bigEndian by default.

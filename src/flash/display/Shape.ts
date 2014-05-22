@@ -38,8 +38,15 @@ module Shumway.AVM2.AS.flash.display {
       DisplayObject.instanceConstructorNoInitialize.call(this);
     }
 
+    _graphics: flash.display.Graphics;
+
     get graphics(): flash.display.Graphics {
-      return this._ensureGraphics();
+      if (this._graphics) {
+        return this._graphics;
+      }
+      this._graphics = new flash.display.Graphics();
+      this._graphics._setParent(this);
+      return this._graphics;
     }
   }
 }

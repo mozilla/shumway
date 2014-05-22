@@ -247,6 +247,8 @@ build/ts/flash/text/TextFormatAlign.js
 #build/ts/flash/net/NetStreamAppendBytesAction.js
 build/ts/flash/display/IGraphicsStroke.js
 #build/ts/flash/net/NetGroupSendResult.js
+build/ts/flash/display/CapsStyle.js
+build/ts/flash/display/JointStyle.js
 build/ts/flash/display/LineScaleMode.js
 #build/ts/flash/events/AsyncErrorEvent.js
 #build/ts/flash/ui/GameInput.js
@@ -334,6 +336,9 @@ build/ts/flash/xml/XMLNodeType.js
 #build/ts/flash/net/GroupSpecifier.js
 build/ts/flash/system/SecurityPanel.js
 #build/ts/flash/globalization/Collator.js
+build/ts/flash/display/GraphicsPathWinding.js
+build/ts/flash/display/GraphicsPathCommand.js
+build/ts/flash/display/GraphicsPath.js
 build/ts/flash/display/Graphics.js
 build/ts/flash/ui/ContextMenuItem.js
 #build/ts/flash/net/FileReferenceList.js
@@ -346,7 +351,6 @@ build/ts/flash/display/BitmapDataChannel.js
 build/ts/flash/text/StaticText.js
 #build/ts/flash/events/FocusEvent.js
 #build/ts/flash/net/SharedObjectFlushStatus.js
-build/ts/flash/display/GraphicsPath.js
 build/ts/flash/events/HTTPStatusEvent.js
 build/ts/flash/geom/Orientation3D.js
 #build/ts/flash/text/engine/TextBlock.js
@@ -409,7 +413,6 @@ build/ts/flash/net/URLRequest.js
 #build/ts/flash/media/StageVideo.js
 #build/ts/flash/events/SoftKeyboardEvent.js
 #build/ts/flash/text/engine/FontPosture.js
-build/ts/flash/display/JointStyle.js
 #build/ts/flash/display/ShaderPrecision.js
 #build/ts/flash/text/engine/LineJustification.js
 #build/ts/flash/globalization/StringTools.js
@@ -451,7 +454,6 @@ build/ts/flash/media/VideoStreamSettings.js
 #build/ts/flash/automation/Configuration.js
 #build/ts/flash/text/engine/JustificationStyle.js
 #build/ts/flash/ui/KeyboardType.js
-build/ts/flash/display/CapsStyle.js
 #build/ts/flash/text/ime/CompositionAttributeRange.js
 #build/ts/flash/text/engine/TabStop.js
 #build/ts/flash/text/engine/FontWeight.js
@@ -461,8 +463,6 @@ build/ts/flash/display/CapsStyle.js
 #build/ts/flash/events/StageVideoEvent.js
 #build/ts/flash/text/engine/DigitWidth.js
 #build/ts/flash/system/AuthorizedFeaturesLoader.js
-build/ts/flash/display/GraphicsPathWinding.js
-build/ts/flash/display/GraphicsPathCommand.js
 #build/ts/flash/text/engine/TabAlignment.js
 #build/ts/flash/profiler/Telemetry.js
 build/ts/flash/events/UncaughtErrorEvent.js

@@ -116,7 +116,7 @@ module Shumway {
 
     private _pumpDisplayListUpdates(): void {
       var updates = new DataBuffer();
-      var assets = new Array<DataBuffer>();
+      var assets = [];
       var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
       serializer.output = updates;
       serializer.outputAssets = assets;
