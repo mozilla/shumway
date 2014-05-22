@@ -27,11 +27,12 @@ module Shumway.Remoting.Player {
   import VisitorFlags = flash.display.VisitorFlags;
 
   import Point = flash.geom.Point;
+  import Bounds = Shumway.Bounds;
   import KeyboardEventData = flash.ui.KeyboardEventData;
   import MouseEventAndPointData = flash.ui.MouseEventAndPointData;
 
-  import IDataInput = flash.utils.IDataInput;
-  import IDataOutput = flash.utils.IDataOutput;
+  import IDataInput = Shumway.ArrayUtilities.IDataInput;
+  import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
 
   export class PlayerChannelSerializer {
     public output: IDataOutput;
@@ -119,12 +120,13 @@ module Shumway.Remoting.Player {
       output.writeFloat(matrix.ty);
     }
 
-    writeRectangle(rect: flash.geom.Rectangle) {
+    writeRectangle(bounds: Bounds) {
       var output = this.output;
-      output.writeFloat(rect.x);
-      output.writeFloat(rect.y);
-      output.writeFloat(rect.width);
-      output.writeFloat(rect.height);
+      // TODO: check if we should write bounds instead. Depends on what's more useful in GFX-land.
+      output.writeInt(bounds.xMin);
+      output.writeInt(bounds.yMin);
+      output.writeInt(bounds.width);
+      output.writeInt(bounds.height);
     }
 
     writeColorTransform(colorTransform: flash.geom.ColorTransform) {

@@ -20,7 +20,7 @@ module Shumway {
 
   import Easel = Shumway.GFX.Easel;
 
-  import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   export class EaselEmbedding implements IPlayerChannel, IGFXChannel {
 
@@ -28,8 +28,8 @@ module Shumway {
     private _easelHost: EaselHost;
 
     private _worker: Worker;
-    private _channelEventUpdatesListener: (updates: ByteArray) => void;
-    private _channelUpdatesListener: (updates: ByteArray, assets: Array<ByteArray>) => void;
+    private _channelEventUpdatesListener: (updates: DataBuffer) => void;
+    private _channelUpdatesListener: (updates: DataBuffer, assets: Array<DataBuffer>) => void;
 
     constructor(easel: Easel) {
       this._easelHost = new EaselHost(easel, this);
@@ -43,21 +43,21 @@ module Shumway {
       var type = e.data.type;
       switch (type) {
         case 'player':
-          var updates = ByteArray.fromArrayBuffer(e.data.updates.buffer);
+          var updates = DataBuffer.fromArrayBuffer(e.data.updates.buffer);
           var assets = e.data.assets.map(function (assetBytes) {
-            return ByteArray.fromArrayBuffer(assetBytes.buffer);
+            return DataBuffer.fromArrayBuffer(assetBytes.buffer);
           });
           this._channelUpdatesListener(updates, assets);
           break;
         case 'gfx':
-          var updates = ByteArray.fromArrayBuffer(e.data.updates.buffer);
+          var updates = DataBuffer.fromArrayBuffer(e.data.updates.buffer);
           this._channelEventUpdatesListener(updates);
           break;
       }
     }
 
     // IPlayerChannel
-    sendUpdates(updates: ByteArray, assets: Array<ByteArray>) : void {
+    sendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) : void {
       var bytes = updates.getBytes();
       var assetsBytes = assets.map(function (asset) {
         return asset.getBytes();
@@ -68,15 +68,15 @@ module Shumway {
         assets: assetsBytes
       }, [bytes.buffer]);
     }
-    registerForEventUpdates(listener: (updates: ByteArray) => void) : void {
+    registerForEventUpdates(listener: (updates: DataBuffer) => void) : void {
       this._channelEventUpdatesListener = listener;
     }
 
     // IGFXChannel
-    registerForUpdates(listener: (updates: ByteArray, assets: Array<ByteArray>) => void) {
+    registerForUpdates(listener: (updates: DataBuffer, assets: Array<DataBuffer>) => void) {
       this._channelUpdatesListener = listener;
     }
-    sendEventUpdates(updates: ByteArray) {
+    sendEventUpdates(updates: DataBuffer) {
       var bytes = updates.getBytes();
       this._worker.postMessage({type: 'gfx', updates: bytes}, [bytes.buffer]);
     }

@@ -47,7 +47,7 @@ var isWorker = typeof window === 'undefined';
 if (isWorker && !$RELEASE) {
   importScripts.apply(null, [
     '../../lib/jpgjs/jpg.js',
-    '../flash/util.js',
+    '../swf/util.js',
     'config.js',
     'swf.js',
     'types.js',

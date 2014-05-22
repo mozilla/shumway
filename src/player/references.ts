@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-///<reference path='../flash.ts/references.ts' />
+///<reference path='../flash/references.ts' />
 ///<reference path='frameScheduler.ts' />
 ///<reference path='remoting.ts' />
 ///<reference path='remotingPlayer.ts' />

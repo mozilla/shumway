@@ -24,8 +24,9 @@ module Shumway.Remoting.GFX {
   import Point = Shumway.GFX.Geometry.Point;
   import Matrix = Shumway.GFX.Geometry.Matrix;
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
-  import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
-  import IDataOutput = Shumway.AVM2.AS.flash.utils.IDataOutput;
+
+  import IDataInput = Shumway.ArrayUtilities.IDataInput;
+  import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
 
   export class GFXChannelSerializer {
     output: IDataOutput;
@@ -124,10 +125,10 @@ module Shumway.Remoting.GFX {
     private _readRectangle(): Rectangle {
       var input = this.input;
       return new Rectangle (
-        input.readFloat() / 20,
-        input.readFloat() / 20,
-        input.readFloat() / 20,
-        input.readFloat() / 20
+        input.readInt() / 20,
+        input.readInt() / 20,
+        input.readInt() / 20,
+        input.readInt() / 20
       );
     }
 

@@ -43,7 +43,7 @@ module.exports = function(grunt) {
         cmd: 'node utils/typescript/tsc --target ES5 src/avm2/references.ts'
       },
       build_flash_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 src/flash.ts/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 src/flash/references.ts'
       },
       build_player_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 src/player/references.ts'
@@ -84,7 +84,7 @@ module.exports = function(grunt) {
       },
       avm1lib_ts: {
         files: ['src/avm2/**/*.ts',
-                'src/flash.ts/**/*.ts',
+                'src/flash/**/*.ts',
                 'src/avm1lib/*.ts'],
         tasks: ['exec:build_avm1lib_ts']
       },
@@ -100,7 +100,7 @@ module.exports = function(grunt) {
       },
       flash_ts: {
         files: ['src/avm2/**/*.ts',
-                'src/flash.ts/**/*.ts'],
+                'src/flash/**/*.ts'],
         tasks: ['exec:build_flash_ts']
       },
       gfx_ts: {
@@ -116,7 +116,7 @@ module.exports = function(grunt) {
         tasks: ['exec:build_avm1_ts']
       },
       player_ts: {
-        files: ['src/flash.ts/**/*.ts',
+        files: ['src/flash/**/*.ts',
         		'src/player/**/*.ts'],
         tasks: ['exec:build_player_ts']
       },

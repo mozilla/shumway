@@ -4,3 +4,4 @@ options.js
 settings.js
 metrics.js
 timeline.js
+dataBuffer.js

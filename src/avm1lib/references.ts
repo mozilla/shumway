@@ -1,4 +1,4 @@
-///<reference path='../flash.ts/references.ts' />
+///<reference path='../flash/references.ts' />
 ///<reference path='../avm1/references.ts' />
 
 ///<reference path='AS2Button.ts' />

@@ -21,7 +21,8 @@ module Shumway {
   import FrameContainer = Shumway.GFX.FrameContainer;
   import Easel = Shumway.GFX.Easel;
 
-  import ByteArray = flash.utils.ByteArray;
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
+
   import Event = flash.events.Event;
   import DisplayObject = flash.display.DisplayObject;
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
@@ -89,7 +90,7 @@ module Shumway {
       this._loader.load(new flash.net.URLRequest(url));
     }
 
-    private _processEventUpdates(updates: ByteArray) {
+    private _processEventUpdates(updates: DataBuffer) {
       var deserializer = new Shumway.Remoting.Player.PlayerChannelDeserializer();
       deserializer.input = updates;
 
@@ -114,8 +115,8 @@ module Shumway {
     }
 
     private _pumpDisplayListUpdates(): void {
-      var updates = new ByteArray();
-      var assets = new Array<ByteArray>();
+      var updates = new DataBuffer();
+      var assets = new Array<DataBuffer>();
       var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
       serializer.output = updates;
       serializer.outputAssets = assets;
