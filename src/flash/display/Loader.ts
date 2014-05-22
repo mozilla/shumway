@@ -244,32 +244,32 @@ module Shumway.AVM2.AS.flash.display {
       }
       switch (data.type) {
         case 'shape':
-          symbol = Timeline.ShapeSymbol.createFromData(data);
+          symbol = Timeline.ShapeSymbol.FromData(data);
           break;
         case 'image':
-          symbol = Timeline.BitmapSymbol.createFromData(data);
+          symbol = Timeline.BitmapSymbol.FromData(data);
           break;
         case 'label':
-          symbol = Timeline.TextSymbol.createFromLabelData(data);
+          symbol = Timeline.TextSymbol.FromLabelData(data);
           break;
         case 'text':
-          symbol = Timeline.TextSymbol.createFromTextData(data);
+          symbol = Timeline.TextSymbol.FromTextData(data);
           break;
         case 'button':
-          symbol = Timeline.ButtonSymbol.createFromData(data, loaderInfo);
+          symbol = Timeline.ButtonSymbol.FromData(data, loaderInfo);
           break;
         case 'sprite':
-          symbol = Timeline.SpriteSymbol.createFromData(data, loaderInfo);
+          symbol = Timeline.SpriteSymbol.FromData(data, loaderInfo);
           break;
         case 'font':
-          symbol = Timeline.FontSymbol.createFromData(data);
+          symbol = Timeline.FontSymbol.FromData(data);
           break;
         case 'sound':
-          symbol = Timeline.SoundSymbol.createFromData(data);
+          symbol = Timeline.SoundSymbol.FromData(data);
           break;
         case 'binary':
           debugger;
-          symbol = Timeline.BinarySymbol.createFromData(data);
+          symbol = Timeline.BinarySymbol.FromData(data);
           break;
       }
       assert (symbol, "Unknown symbol type.");

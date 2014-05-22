@@ -33,7 +33,7 @@ module Shumway.AVM2.AS.flash.filters {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
 
-    public static createFromAny(obj: any) {
+    public static FromAny(obj: any) {
       // obj.highlightColor is an object with separate color components
       var highlightColor: number = ColorUtilities.componentsToRgb(obj.highlightColor);
       var highlightAlpha: number = (obj.highlightColor.alpha & 0xff) / 255;

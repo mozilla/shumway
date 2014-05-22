@@ -1144,7 +1144,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get scale9Grid(): flash.geom.Rectangle {
-      return this._scale9Grid ? flash.geom.Rectangle.createFromBbox(this._scale9Grid) : null;
+      return this._scale9Grid ? flash.geom.Rectangle.FromBounds(this._scale9Grid) : null;
     }
 
     set scale9Grid(innerRectangle: flash.geom.Rectangle) {
@@ -1212,11 +1212,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     getBounds(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
-      return geom.Rectangle.createFromBbox(this._getTransformedBounds(targetCoordinateSpace, true));
+      return geom.Rectangle.FromBounds(this._getTransformedBounds(targetCoordinateSpace, true));
     }
 
     getRect(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
-      return geom.Rectangle.createFromBbox(this._getTransformedBounds(targetCoordinateSpace, false));
+      return geom.Rectangle.FromBounds(this._getTransformedBounds(targetCoordinateSpace, false));
     }
 
     /**

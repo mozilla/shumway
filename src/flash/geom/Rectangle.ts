@@ -51,10 +51,11 @@ module Shumway.AVM2.AS.flash.geom {
       this.height = height;
     }
 
-    public static createFromBbox(bbox: Bounds): Rectangle {
-      var xMin = bbox.xMin;
-      var yMin = bbox.yMin;
-      return new Rectangle(xMin / 20, yMin / 20, (bbox.xMax - xMin) / 20, (bbox.yMax - yMin) / 20);
+    public static FromBounds(bounds: Bounds): Rectangle {
+      var xMin = bounds.xMin;
+      var yMin = bounds.yMin;
+      return new Rectangle(xMin / 20, yMin / 20, (bounds.xMax - xMin) / 20,
+                           (bounds.yMax - yMin) / 20);
     }
 
     public set native_x(x: number) {
