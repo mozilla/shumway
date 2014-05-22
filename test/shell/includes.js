@@ -14,52 +14,6 @@ var OptionSet = Shumway.Options.OptionSet;
 
 load("../../src/swf/Timeline.js");
 
-// Load AVM2 Dependencies
-console.time("Load AVM2 Dependencies");
-load("../../src/avm2/avm2Util.js");
-load("../../src/avm2/settings.js");
-load("../../src/metrics.js");
-
-load("../../src/avm2/constants.js");
-load("../../src/avm2/errors.js");
-load("../../src/avm2/opcodes.js");
-load("../../src/avm2/parser.js");
-load("../../src/avm2/analyze.js");
-load("../../src/avm2/compiler/lljs/src/estransform.js");
-load("../../src/avm2/compiler/lljs/src/escodegen.js");
-load("../../src/avm2/compiler/inferrer.js");
-load("../../src/avm2/compiler/c4/ir.js");
-load("../../src/avm2/compiler/builder.js");
-load("../../src/avm2/compiler/c4/looper.js");
-load("../../src/avm2/compiler/c4/backend.js");
-load("../../src/avm2/trampoline.js");
-load("../../src/avm2/bindings.js");
-load("../../src/avm2/scope.js");
-load("../../src/avm2/domain.js");
-
-load("../../src/avm2/xregexp.js");
-load("../../src/avm2/runtime.js");
-load("../../src/avm2/runtime-exports.js");
-load("../../src/avm2/hacks.js");
-//../../src/avm2/vectors-numeric.js
-//../../src/avm2/vectors-generic.js
-load("../../src/avm2/xml.js");
-load("../../src/avm2/amf.js");
-load("../../src/avm2/natives/int32Vector.js");
-load("../../src/avm2/natives/uint32Vector.js");
-load("../../src/avm2/natives/float64Vector.js");
-load("../../src/avm2/native.js");
-load("../../src/avm2/natives/genericVector.js");
-load("../../src/avm2/natives/dictionary.js");
-load("../../src/avm2/natives/proxy.js");
-load("../../src/avm2/natives/xml.js");
-load("../../src/avm2/natives/system.js");
-load("../../src/avm2/natives/byteArray.js");
-load("../../src/avm2/disassembler.js");
-load("../../src/avm2/interpreter.js");
-//../../src/avm2/vm.js
-console.timeEnd("Load AVM2 Dependencies");
-
 // Load AVM1 Dependencies
 console.time("Load AVM1 Dependencies");
 load("../../src/avm1/stream.js");
@@ -67,20 +21,6 @@ load("../../src/avm1/parser.js");
 load("../../src/avm1/analyze.js");
 load("../../src/avm1/interpreter.js");
 console.timeEnd("Load AVM1 Dependencies");
-
-console.time("Load Compiled Code Cache");
-//../../src/avm2/bin/out.js
-//../../src/avm2/bin/builtin.as.js
-//../../src/avm2/bin/race3.as.js
-//../../src/avm2/bin/player.as.js
-//../../src/avm2/bin/demo.as.js
-//../../src/avm2/bin/box.as.js
-//../../src/avm2/bin/box.as.cc.js
-//../../src/avm2/bin/main.as.js
-//../../src/avm2/bin/main.as.cc.js
-//../../src/avm2/bin/truck.as.js
-//../../src/avm2/bin/candy.as.js
-console.timeEnd("Load Compiled Code Cache");
 
 // Load Flash TS Dependencies
 console.time("Load Flash TS Dependencies");
