@@ -1,0 +1,26 @@
+#!inline console.time("Load GFX Dependencies");
+
+src/swf/Timeline.js
+
+src/gfx/filters/filters.js
+src/gfx/filters/filters_cxform.js
+build/ts/gfx/utilities.js
+build/ts/gfx/geometry.js
+build/ts/gfx/regionAllocator.js
+build/ts/gfx/frame.js
+build/ts/gfx/frameContainer.js
+build/ts/gfx/stage.js
+build/ts/gfx/filters.js
+build/ts/gfx/gl/core.js
+build/ts/gfx/gl/glContext.js
+build/ts/gfx/gl/gl.js
+build/ts/gfx/gl/brush.js
+build/ts/gfx/2d/2d.js
+build/ts/gfx/easel.js
+#build/ts/gfx/glTests.js
+#build/ts/gfx/shapes.js
+
+build/ts/player/remotingGfx.js
+build/ts/player/easel.js
+
+#!inline console.timeEnd("Load GFX Dependencies");

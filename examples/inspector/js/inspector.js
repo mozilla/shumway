@@ -19,6 +19,8 @@
 var FrameCounter = new Shumway.Metrics.Counter(true);
 var CanvasCounter = new Shumway.Metrics.Counter(true);
 
+var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
+
 document.createElement = (function () {
   var nativeCreateElement = document.createElement;
   return function (x) {
