@@ -193,7 +193,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get content(): flash.display.DisplayObject {
-      return this._content;
+      return this._loader && this._loader.content;
     }
 
     get bytes(): flash.utils.ByteArray {

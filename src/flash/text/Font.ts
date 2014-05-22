@@ -23,37 +23,45 @@ module Shumway.AVM2.AS.flash.text {
 
   export class Font extends ASNative {
 
-    static classInitializer: any = null;
-    static initializer: any = null;
+    private static fonts: Font[];
+    private static fontsBySymbolId: Shumway.Map<Font>;
+
+    static classInitializer: any = function () {
+      Font.fonts = [];
+      Font.fontsBySymbolId = Shumway.ObjectUtilities.createMap<Font>();
+    };
+
     static classSymbols: string [] = null;
     static instanceSymbols: string [] = null;
 
-    static createEmbeddedFont(fontName: string, bold: boolean = false, italic: boolean = false) {
-      var font = new Font();
-      if (bold) {
-        if (italic) {
-          font._fontStyle = FontStyle.BOLD_ITALIC;
+    static initializer: any = function (symbol: Shumway.Timeline.FontSymbol) {
+      var self: Font = this;
+
+      self._fontName = null;
+      self._fontStyle = null;
+      self._fontType = null;
+
+      if (symbol) {
+        self._fontName = symbol.name;
+        if (symbol.bold) {
+          if (symbol.italic) {
+            self._fontStyle = FontStyle.BOLD_ITALIC;
         } else {
-          font._fontStyle = FontStyle.BOLD;
+            self._fontStyle = FontStyle.BOLD;
         }
-      } else if (italic) {
-        font._fontStyle = FontStyle.ITALIC;
+        } else if (symbol.italic) {
+          self._fontStyle = FontStyle.ITALIC;
       } else {
-        font._fontStyle = FontStyle.REGULAR;
+          self._fontStyle = FontStyle.REGULAR;
       }
-      font._fontType = FontType.EMBEDDED;
-      return font;
+        self._fontType = FontType.EMBEDDED;
+        Font.fontsBySymbolId[symbol.id] = self;
     }
+    };
 
     constructor() {
-      super();
-      this._fontName = null;
-      this._fontStyle = null;
-      this._fontType = null;
+      false && super();
     }
-
-    private static fonts: Font[] = [];
-    private static fontsBySymbolId = Object.create(null);
 
     static getFontBySymbolId(id) {
       return this.fontsBySymbolId[id];
@@ -63,7 +71,7 @@ module Shumway.AVM2.AS.flash.text {
     descent: number;
     leading: number;
 
-    private _fontId: string;
+    //private _fontId: string;
     private _fontName: string;
     private _fontStyle: string;
     private _fontType: string;
