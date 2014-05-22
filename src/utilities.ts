@@ -669,7 +669,6 @@ module Shumway {
       release || assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
       ObjectUtilities.defineNonEnumerableProperty(obj, name, value);
     }
-
   }
 
   export module FunctionUtilities {
@@ -1054,6 +1053,34 @@ module Shumway {
   Math.random = function random(): number {
     return Random.next();
   };
+
+  function polyfillWeakMap() {
+    if (typeof jsGlobal.WeakMap === 'function') {
+      return; // weak map is supported
+    }
+    var id = 0;
+    function WeakMap() {
+      this.id = '$weakmap' + (id++);
+    };
+    WeakMap.prototype = {
+      has: function(obj) {
+        return obj.hasOwnProperty(this.id);
+      },
+      get: function(obj, defaultValue) {
+        return obj.hasOwnProperty(this.id) ? obj[this.id] : defaultValue;
+      },
+      set: function(obj, value) {
+        Object.defineProperty(obj, this.id, {
+          value: value,
+          enumerable: false,
+          configurable: true
+        });
+      }
+    };
+    jsGlobal.WeakMap = WeakMap;
+  }
+
+  polyfillWeakMap();
 
   export module NumberUtilities {
     export function pow2(exponent: number): number {
@@ -1933,7 +1960,7 @@ module Shumway {
   /**
    * Override Bounds with a slower by safer version, don't do this in release mode.
    */
-  Shumway.Bounds = DebugBounds;
+  // Shumway.Bounds = DebugBounds;
 
   export class Color {
     public r: number;

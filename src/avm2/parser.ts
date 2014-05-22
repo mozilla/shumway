@@ -1655,7 +1655,7 @@ module Shumway.AVM2.ABC {
     popscope           = 0x1D,
     nextname           = 0x1E,
     hasnext            = 0x1F,
-    pushnull           = 0x20,c,
+    pushnull           = 0x20,
     pushundefined      = 0x21,
     pushfloat          = 0x22,
     nextvalue          = 0x23,

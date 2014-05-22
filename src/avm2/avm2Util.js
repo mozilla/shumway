@@ -705,46 +705,6 @@ var Map = (function() {
 })();
 
 
-
-(function checkWeakMap() {
-  if (typeof this.WeakMap === 'function')
-    return; // weak map is supported
-
-  var id = 0;
-  function WeakMap() {
-    this.id = '$weakmap' + (id++);
-  };
-  WeakMap.prototype = {
-    has: function(obj) {
-      return obj.hasOwnProperty(this.id);
-    },
-    get: function(obj, defaultValue) {
-      return obj.hasOwnProperty(this.id) ? obj[this.id] : defaultValue;
-    },
-    set: function(obj, value) {
-      Object.defineProperty(obj, this.id, {
-        value: value,
-        enumerable: false,
-        configurable: true
-      });
-    }
-  };
-  this.WeakMap = WeakMap;
-})();
-
-function lazyClass(holder, name, initialize) {
-  Object.defineProperty(holder, name, {
-    get: function () {
-      var start = performance.now();
-      var value = initialize();
-      print("Initialized Class: " + name + " " + (performance.now() - start).toFixed(4));
-      assert (value);
-      Object.defineProperty(holder, name, { value: value, writable: true });
-      return value;
-    }, configurable: true
-  });
-}
-
 var hashBytesTo32BitsAdler = Shumway.HashUtilities.hashBytesTo32BitsAdler;
 var hashBytesTo32BitsMD5 = Shumway.HashUtilities.hashBytesTo32BitsMD5;
 
