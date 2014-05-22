@@ -30,12 +30,12 @@ module Shumway.Tools.Profiler {
     static ENTER = 0xBEEF0000 | 0;
     static LEAVE = 0xDEAD0000 | 0;
 
-    private _depth:number;
-    private _kindCount:number;
-    private _kinds:TimelineItemKind[];
-    private _kindNameMap:Shumway.Map<TimelineItemKind>;
-    private _marks:Shumway.CircularBuffer;
-    private _times:Shumway.CircularBuffer;
+    private _depth: number;
+    private _kindCount: number;
+    private _kinds: TimelineItemKind [];
+    private _kindNameMap: Shumway.Map<TimelineItemKind>;
+    private _marks: Shumway.CircularBuffer;
+    private _times: Shumway.CircularBuffer;
 
     constructor() {
       this._depth = 0;
@@ -46,17 +46,17 @@ module Shumway.Tools.Profiler {
       this._times = new Shumway.CircularBuffer(Float64Array, 20);
     }
 
-    getKind(kind:number):TimelineItemKind {
+    getKind(kind: number): TimelineItemKind {
       return this._kinds[kind];
     }
 
-    get kinds():TimelineItemKind[] {
+    get kinds(): TimelineItemKind [] {
       return this._kinds.concat();
     }
 
-    private _getKindId(name:string):number {
+    private _getKindId(name: string):number {
       if (this._kindNameMap[name] === undefined) {
-        var kind:TimelineItemKind = <TimelineItemKind>{
+        var kind: TimelineItemKind = <TimelineItemKind>{
           id: this._kinds.length,
           name: name,
           visible: true
@@ -67,13 +67,13 @@ module Shumway.Tools.Profiler {
       return this._kindNameMap[name].id;
     }
 
-    enter(name:string, time?:number) {
+    enter(name: string, time?: number) {
       this._depth++;
       this._marks.write(TimelineBuffer.ENTER | this._getKindId(name));
       this._times.write(time || performance.now());
     }
 
-    leave(name:string, time?:number) {
+    leave(name: string, time?: number) {
       this._marks.write(TimelineBuffer.LEAVE | this._getKindId(name));
       this._times.write(time || performance.now());
       this._depth--;
@@ -82,16 +82,16 @@ module Shumway.Tools.Profiler {
     /**
      * Constructs an easier to work with TimelineFrame data structure.
      */
-    gatherRange(count:number):TimelineFrame {
+    gatherRange(count: number): TimelineFrame {
       var range = new TimelineFrame(null, null, NaN, NaN);
-      var stack:TimelineFrame [] = [range];
+      var stack: TimelineFrame [] = [range];
       var times = this._times;
       var topLevelFrameCount = 0;
       var self = this;
       this._marks.forEachInReverse(function (mark, i) {
-        var action = mark & 0xFFFF0000;
         var kind = self._kinds[mark & 0xFFFF];
         if (kind.visible) {
+          var action = mark & 0xFFFF0000;
           var time = times.get(i);
           if (action === TimelineBuffer.LEAVE) {
             if (stack.length === 1) {

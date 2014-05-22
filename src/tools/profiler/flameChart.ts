@@ -31,28 +31,28 @@ module Shumway.Tools.Profiler {
   }
 
   export class FlameChart {
-    private _container:HTMLElement;
-    private _canvas:HTMLCanvasElement;
-    private _context:CanvasRenderingContext2D;
+    private _container: HTMLElement;
+    private _canvas: HTMLCanvasElement;
+    private _context: CanvasRenderingContext2D;
 
     private _overviewHeight = 64;
     private _overviewCanvasDirty = true;
-    private _overviewCanvas:HTMLCanvasElement;
-    private _overviewContext:CanvasRenderingContext2D;
+    private _overviewCanvas: HTMLCanvasElement;
+    private _overviewContext: CanvasRenderingContext2D;
 
-    private _offsetWidth:number;
-    private _offsetHeight:number;
+    private _offsetWidth: number;
+    private _offsetHeight: number;
 
-    private _buffer:TimelineBuffer;
+    private _buffer: TimelineBuffer;
 
     private _windowLeft = 0;
     private _windowRight = Number.MAX_VALUE;
     private _timeToPixels = 1;
     private _pixelsToTime = 1;
     private _pixelsToOverviewTime = 1;
-    private _range:TimelineFrame;
+    private _range: TimelineFrame;
     private _minTime = 1;
-    private _kindStyle:Shumway.Map<KindStyle>;
+    private _kindStyle: Shumway.Map<KindStyle>;
 
     private _drag:DragInfo = null;
     private _ignoreClick = false;
@@ -65,7 +65,7 @@ module Shumway.Tools.Profiler {
      */
     private _minFrameWidthInPixels = 0.2;
 
-    constructor(container:HTMLElement, buffer:TimelineBuffer) {
+    constructor(container: HTMLElement, buffer: TimelineBuffer) {
       this._container = container;
       this._canvas = document.createElement("canvas");
       this._canvas.style.display = "block";
@@ -88,7 +88,7 @@ module Shumway.Tools.Profiler {
       this._onResize();
     }
 
-    private _onClick(event:MouseEvent) {
+    private _onClick(event: MouseEvent) {
       if (this._ignoreClick) {
         this._ignoreClick = false;
         return;
@@ -102,7 +102,7 @@ module Shumway.Tools.Profiler {
       }
     }
 
-    private _onMouseUp(event:MouseEvent) {
+    private _onMouseUp(event: MouseEvent) {
       if (this._drag) {
         this._drag = null;
         this._ignoreClick = true;
@@ -110,7 +110,7 @@ module Shumway.Tools.Profiler {
       this._updateCursor(event);
     }
 
-    private _onMouseDown(event:MouseEvent) {
+    private _onMouseDown(event: MouseEvent) {
       if (event.clientY < this._overviewHeight) {
         if (this._getCursorPosition(event) == 0) {
           this._drag = {
@@ -131,10 +131,10 @@ module Shumway.Tools.Profiler {
       this._updateCursor(event);
     }
 
-    private _onMouseMove(event:MouseEvent) {
+    private _onMouseMove(event: MouseEvent) {
       if (this._drag) {
-        var offset:number;
-        var mult:number;
+        var offset: number;
+        var mult: number;
         if (this._drag.overview) {
           offset = event.clientX - this._drag.clientX;
           mult = this._pixelsToOverviewTime;
@@ -149,7 +149,7 @@ module Shumway.Tools.Profiler {
       this._updateCursor(event);
     }
 
-    private _onMouseWheel(event:MouseEvent) {
+    private _onMouseWheel(event: MouseEvent) {
       event.stopPropagation();
       if (this._drag === null) {
         var range = this._range;
@@ -189,7 +189,7 @@ module Shumway.Tools.Profiler {
       this._pixelsToOverviewTime = (this._range.endTime - this._range.startTime) / this._offsetWidth;
     }
 
-    private _updateWindow(left:number, right:number) {
+    private _updateWindow(left: number, right: number) {
       if (this._windowLeft !== left || this._windowRight !== right) {
         this._windowLeft = left;
         this._windowRight = right;
@@ -199,7 +199,7 @@ module Shumway.Tools.Profiler {
       }
     }
 
-    private _updateCursor(event:MouseEvent) {
+    private _updateCursor(event: MouseEvent) {
       var showHandCursor = (this._getCursorPosition(event) == 0);
       var isDragging = (this._drag !== null);
       var value = showHandCursor ? (isDragging ? "grabbing" : "grab") : "default";
@@ -232,12 +232,12 @@ module Shumway.Tools.Profiler {
       this._overviewCanvasDirty = true;
     }
 
-    private _pixelTime(time:number):number {
+    private _pixelTime(time: number): number {
       var window = this._windowRight - this._windowLeft;
       return (time - this._windowLeft) * (this._offsetWidth / window);
     }
 
-    private _drawFrame(frame:TimelineFrame, depth:number) {
+    private _drawFrame(frame: TimelineFrame, depth: number) {
       var context = this._context;
       var start = (frame.startTime - this._windowLeft) * this._timeToPixels;
       var end = (frame.endTime - this._windowLeft) * this._timeToPixels;
@@ -276,7 +276,7 @@ module Shumway.Tools.Profiler {
       }
     }
 
-    private _prepareText(context, title, maxSize):string {
+    private _prepareText(context: CanvasRenderingContext2D, title: string, maxSize: number):string {
       var titleWidth = this._measureWidth(context, title);
       if (maxSize > titleWidth) {
         return title;
@@ -299,7 +299,7 @@ module Shumway.Tools.Profiler {
       return "";
     }
 
-    private _measureWidth(context, text):number {
+    private _measureWidth(context: CanvasRenderingContext2D, text: string): number {
       var width = this._textWidth[text];
       if (!width) {
         width = context.measureText(text).width;
@@ -391,7 +391,7 @@ module Shumway.Tools.Profiler {
       this._drawFlames();
     }
 
-    private _getCursorPosition(event:MouseEvent):number {
+    private _getCursorPosition(event: MouseEvent): number {
       var pos = 0;
       if (event.clientY < this._overviewHeight) {
         var range = this._range;
