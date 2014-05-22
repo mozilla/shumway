@@ -253,7 +253,7 @@ module Shumway.Tools.Profiler {
           textColor: ColorStyle.contrastStyle(background)
         };
       }
-      var frameHPadding = 1;
+      var frameHPadding = 0.5;
       context.fillStyle = style.bgColor;
       context.fillRect(start, depth * (12 + frameHPadding), width, 12);
       if (width > 12) {
