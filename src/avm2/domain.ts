@@ -42,12 +42,6 @@ module Shumway.AVM2.Runtime {
   declare var snarf;
   declare var newGlobal;
 
-  export enum ExecutionMode {
-    INTERPRET   = 0x1,
-    COMPILE     = 0x2
-  }
-
-
   function createNewCompartment() {
     return newGlobal('new-compartment');
   }

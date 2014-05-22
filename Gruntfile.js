@@ -135,10 +135,10 @@ module.exports = function(grunt) {
 
   grunt.registerTask('update-flash-refs', function  () {
     var updateFlashRefs = require('./utils/update-flash-refs.js');
-    updateFlashRefs('examples/inspector/inspector.html', 'src');
-    updateFlashRefs('test/harness/slave.html', 'src');
-    updateFlashRefs('examples/xlsimport/index.html', 'src');
-    updateFlashRefs('examples/inspector/inspector.player.html', 'src');
+    updateFlashRefs('examples/inspector/inspector.html', 'src', {shared: true, gfx: true, player: true});
+    updateFlashRefs('test/harness/slave.html', 'src', {shared: true, gfx: true, player: true});
+    updateFlashRefs('examples/xlsimport/index.html', 'src', {shared: true, gfx: true, player: true});
+    updateFlashRefs('examples/inspector/inspector.player.html', 'src', {shared: true, player: true});
   });
 
   grunt.registerTask('server', function () {
