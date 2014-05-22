@@ -15,16 +15,11 @@
  */
 
 (function graphicsTests() {
-
-  function log(message) {
-    console.info(message);
-  }
-
   var Shape = flash.display.Shape;
   var Graphics = flash.display.Graphics;
   var PathCommand = Shumway.GFX.Geometry.PathCommand;
 
-  var ByteArray = flash.utils.ByteArray;
+  var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   var LineScaleMode = flash.display.LineScaleMode;
   var CapsStyle = flash.display.CapsStyle;
@@ -53,7 +48,7 @@
     neq(g.getGraphicsData().length, 0, "Graphics#lineStyle modifies instance's data");
     g.clear();
     eq(g.getGraphicsData().length, 0, "Graphics#clear empties the instance's data");
-    structEq(g._getContentBounds(), {x: 0, width: 0, y: 0, height: 0}, "clear resets bounds");
+    structEq(g._getContentBounds(), {xMin: 0, xMax: 0, yMin: 0, yMax: 0}, "clear resets bounds");
   }
 
   function beginFill() {
@@ -62,9 +57,9 @@
     var bytes = cloneData(g.getGraphicsData());
     eq(bytes.readUnsignedByte(), PathCommand.BeginSolidFill, "fill is stored");
     eq(bytes.readUnsignedInt(), 0xaabbccff, "beginFill stores given color and default alpha");
-    var g = createGraphics();
+    g = createGraphics();
     g.beginFill(0xaabbcc, 0.5);
-    var bytes = cloneData(g.getGraphicsData());
+    bytes = cloneData(g.getGraphicsData());
     bytes.readUnsignedByte();
     eq(bytes.readUnsignedInt(), 0xaabbcc80, "alpha is stored correctly");
     eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
@@ -156,17 +151,19 @@
   function bounds() {
     var g = createGraphics();
     g.moveTo(150, 50);
-    structEq(g._getContentBounds(), {x: 0, y: 0, width: 3000, height: 1000}, "move extends bounds");
+    structEq(g._getContentBounds(), {xMin: 0, xMax: 3000, yMin: 0, yMax: 1000},
+             "move extends bounds");
     g.clear();
     g.lineTo(100, 50);
-    structEq(g._getContentBounds(), {x: 0, y: 0, width: 2000, height: 1000}, "line extends bounds");
+    structEq(g._getContentBounds(), {xMin: 0, xMax: 2000, yMin: 0, yMax: 1000},
+             "line extends bounds");
     g.clear();
     g.curveTo(100, 100, 0, 100);
-    structEq(g._getContentBounds(), {x: 0, y: 0, width: 1000, height: 2000},
+    structEq(g._getContentBounds(), {xMin: 0, xMax: 1000, yMin: 0, yMax: 2000},
              "curve extends bounds");
     g.clear();
     g.cubicCurveTo(100, 50, -100, 100, 0, 150);
-    structEq(g._getContentBounds(), {x: -577, y: 0, width: 1154, height: 3000},
+    structEq(g._getContentBounds(), {xMin: -577, xMax: 577, yMin: 0, yMax: 3000},
              "cubic curve extends bounds");
   }
 
@@ -177,7 +174,7 @@
   function cloneData(data) {
     var position = data.position;
     data.position = 0;
-    var clone = new ByteArray();
+    var clone = new DataBuffer();
     data.readBytes(clone);
     data.position = position;
     return clone;

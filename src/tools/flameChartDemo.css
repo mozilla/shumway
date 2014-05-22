@@ -1,0 +1,26 @@
+html, body {
+    margin: 0;
+    overflow: hidden;
+}
+html {
+    height: 100%;
+    width: 100%;
+}
+body {
+    color: white;
+    background-color: #333333;
+    font: 12px Consolas, "Liberation Mono", Courier, monospace;
+    height: 100%;
+    width: 100%;
+}
+#container {
+    width: 100%;
+    height: 500px;
+    position: relative;
+}
+canvas {
+    background-color: #1a2633;
+}
+button {
+    margin-top: 10px;
+}

@@ -1642,7 +1642,8 @@
     INDEXED: 0x01,
     RESOLVED: 0x02,
     PRISTINE: 0x04,
-    IS_METHOD: 0x08
+    IS_METHOD: 0x08,
+    AS_CALL: 0x10
   };
 
   var Operator = (function () {

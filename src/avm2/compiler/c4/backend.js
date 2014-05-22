@@ -168,6 +168,10 @@
     return new CallExpression(callee, args);
   }
 
+  function callAsCall(callee, object, args) {
+    return call(property(callee, "asCall"), [object].concat(args));
+  }
+
   function callCall(callee, object, args) {
     return call(property(callee, "call"), [object].concat(args));
   }
@@ -495,7 +499,9 @@
     var args = this.args.map(function (arg) {
       return compileValue(arg, cx);
     });
-    if (this.flags & IR.Flags.PRISTINE) {
+    if (this.flags & IR.Flags.AS_CALL) {
+      return callAsCall(callee, object, args);
+    } else if (this.flags & IR.Flags.PRISTINE) {
       return call(callee, args);
     } else {
       return callCall(callee, object, args);
@@ -671,7 +677,7 @@
     return escodegen.generate(node, {base: "", indent: "  ", comment: true, format: { compact: false }});
   }
 
-  function generate(cfg, useRegisterAllocator) {
+  function generate(cfg) {
     Timer.start("Looper");
     var root = Looper.analyze(cfg);
     Timer.stop();
@@ -702,22 +708,6 @@
 
     var node = new FunctionDeclaration(id("fn"), parameters, code);
 
-    if (useRegisterAllocator) {
-      if (c4TraceLevel.value > 0) {
-        writer.writeLn("=== BEFORE ===============================");
-        writer.writeLn(generateSource(node));
-        writer.writeLn("=== TRANSFORMING =========================");
-      }
-      Transform.transform(node);
-      if (c4TraceLevel.value > 0) {
-        writer.writeLn("=== AFTER ================================");
-        writer.writeLn(generateSource(node));
-        writer.writeLn("==========================================");
-      }
-      var body = generateSource(code);
-      // body = " { debugger; " + body + " }";
-      return {parameters: parameters.map(function (p) { return p.name; }), body: body};
-    }
     Timer.start("Serialize AST");
     var source = generateSource(code);
     Timer.stop();

@@ -9,8 +9,7 @@ module Shumway.GFX {
   import Tile = Geometry.Tile;
   import OBB = Geometry.OBB;
   import PathCommand = Geometry.PathCommand;
-  import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
-  import ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   export enum BlendMode {
     Normal     = 1,
@@ -183,7 +182,7 @@ module Shumway.GFX {
     source: IRenderable;
 
     private fillStyle: ColorStyle;
-    private data: IDataInput;
+    private data: DataBuffer;
     constructor(source: IRenderable) {
       super();
       this.source = source;
@@ -193,7 +192,7 @@ module Shumway.GFX {
       return this.source.getBounds();
     }
 
-    public ensureSource(data: IDataInput, bounds: Rectangle): void {
+    public ensureSource(data: DataBuffer, bounds: Rectangle): void {
       if (this.source) {
         return;
       }
@@ -209,7 +208,7 @@ module Shumway.GFX {
       var data = this.data;
       var fillActive = false;
       var strokeActive = false;
-      (<ByteArray>data).position = 0;
+      data.position = 0;
       // Description of serialization format can be found in flash.display.Graphics.
       while (data.bytesAvailable > 0) {
         var command = data.readUnsignedByte();

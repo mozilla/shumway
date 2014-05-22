@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 module Shumway.Remoting {
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
+
   export enum UpdateFrameTagBits {
     HasMatrix                   = 0x0001,
     HasBounds                   = 0x0002,
@@ -75,5 +77,15 @@ module Shumway.Remoting {
     CtrlKey  = 0x0001,
     AltKey   = 0x0002,
     ShiftKey = 0x0004
+  }
+
+  export interface IPlayerChannel {
+    sendUpdates(updates: DataBuffer, assets: Array<DataBuffer>);
+    registerForEventUpdates(listener: (updates: DataBuffer) => void);
+  }
+
+  export interface IGFXChannel {
+    sendEventUpdates(update: DataBuffer);
+    registerForUpdates(listener: (updates: DataBuffer, assets: Array<DataBuffer>) => void);
   }
 }

@@ -21,7 +21,8 @@ module Shumway {
   import FrameContainer = Shumway.GFX.FrameContainer;
   import Easel = Shumway.GFX.Easel;
 
-  import ByteArray = flash.utils.ByteArray;
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
+
   import Event = flash.events.Event;
   import DisplayObject = flash.display.DisplayObject;
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
@@ -34,17 +35,9 @@ module Shumway {
   import KeyboardEventData = Shumway.AVM2.AS.flash.ui.KeyboardEventData;
   import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
 
+  import IPlayerChannel = Shumway.Remoting.IPlayerChannel;
+
   declare var timeline: Timeline;
-
-  export interface IPlayerChannel {
-    sendUpdates(updates: ByteArray, assets: Array<ByteArray>);
-    registerForEventUpdates(listener: (updates: ByteArray) => void);
-  }
-
-  export interface IGFXChannel {
-    sendEventUpdates(update: ByteArray);
-    registerForUpdates(listener: (updates: ByteArray, assets: Array<ByteArray>) => void);
-  }
 
   /**
    * Shumway Player
@@ -97,7 +90,7 @@ module Shumway {
       this._loader.load(new flash.net.URLRequest(url));
     }
 
-    private _processEventUpdates(updates: ByteArray) {
+    private _processEventUpdates(updates: DataBuffer) {
       var deserializer = new Shumway.Remoting.Player.PlayerChannelDeserializer();
       deserializer.input = updates;
 
@@ -122,8 +115,8 @@ module Shumway {
     }
 
     private _pumpDisplayListUpdates(): void {
-      var updates = new ByteArray();
-      var assets = new Array<ByteArray>();
+      var updates = new DataBuffer();
+      var assets = new Array<DataBuffer>();
       var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
       serializer.output = updates;
       serializer.outputAssets = assets;
@@ -147,9 +140,9 @@ module Shumway {
     private _enterSyncLoop(): void {
       var self = this;
       (function tick() {
-        self._syncTimeout = setTimeout(tick, 1000 / pumpRate.value);
+        self._syncTimeout = setTimeout(tick, 1000 / pumpRateOption.value);
         timeline && timeline.enter("pump");
-        if (pumpEnabled.value) {
+        if (pumpEnabledOption.value) {
           self._pumpDisplayListUpdates()
         }
         timeline && timeline.leave("pump");
@@ -165,24 +158,24 @@ module Shumway {
       var self = this;
       var stage = this._stage;
       var rootInitialized = false;
+      frameRateOption.value = stage.frameRate;
       (function tick() {
-        if (frameRate.value < 0) {
-          frameRate.value = stage.frameRate;
+        self._frameTimeout = setTimeout(tick, 1000 / frameRateOption.value);
+        if (!frameEnabledOption.value) {
+          return;
         }
-        self._frameTimeout = setTimeout(tick, 1000 / frameRate.value);
-        timeline && timeline.enter("eventLoop");
-
-        MovieClip.initFrame();
-        MovieClip.constructFrame();
-        Loader.progress();
-
-        if (rootInitialized) {
-          stage.render();
-        } else {
-          rootInitialized = true;
+        for (var i = 0; i < frameRateMultiplierOption.value; i++) {
+          timeline && timeline.enter("eventLoop");
+          MovieClip.initFrame();
+          MovieClip.constructFrame();
+          Loader.progress();
+          if (rootInitialized) {
+            stage.render();
+          } else {
+            rootInitialized = true;
+          }
+          timeline && timeline.leave("eventLoop");
         }
-
-        timeline && timeline.leave("eventLoop");
       })();
     }
 
@@ -190,131 +183,6 @@ module Shumway {
       assert (this._frameTimeout > -1);
       clearInterval(this._frameTimeout);
       this._frameTimeout = -1;
-    }
-  }
-
-  export class EaselHost {
-    private static _mouseEvents = Shumway.Remoting.MouseEventNames;
-    private static _keyboardEvents = Shumway.Remoting.KeyboardEventNames;
-
-    private _easel: Easel;
-    private _channel: IGFXChannel;
-    private _frameContainer: FrameContainer;
-    private _context: Shumway.Remoting.GFX.GFXChannelDeserializerContext;
-
-    constructor(easel: Easel, channel: IGFXChannel) {
-      this._easel = easel;
-      this._channel = channel;
-      var frameContainer = easel.world;
-      this._frameContainer = frameContainer;
-      this._context = new Shumway.Remoting.GFX.GFXChannelDeserializerContext(this._frameContainer);
-
-      channel.registerForUpdates(this.readData.bind(this));
-      this._addEventListeners();
-    }
-
-    private _mouseEventListener(event: MouseEvent) {
-      var position = this._easel.getMouseWorldPosition(event);
-      var point = new Point(position.x, position.y);
-
-      var buffer = new ByteArray();
-      var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
-      serializer.output = buffer;
-      serializer.writeMouseEvent(event, point);
-      this._channel.sendEventUpdates(buffer);
-    }
-
-    private _keyboardEventListener(event: KeyboardEvent) {
-      var buffer = new ByteArray();
-      var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
-      serializer.output = buffer;
-      serializer.writeKeyboardEvent(event);
-      this._channel.sendEventUpdates(buffer);
-    }
-
-    _addEventListeners() {
-      var mouseEventListener = this._mouseEventListener.bind(this);
-      var keyboardEventListener = this._keyboardEventListener.bind(this);
-      var mouseEvents = EaselHost._mouseEvents;
-      for (var i = 0; i < mouseEvents.length; i++) {
-        window.addEventListener(mouseEvents[i], mouseEventListener);
-      }
-      var keyboardEvents = EaselHost._keyboardEvents;
-      for (var i = 0; i < keyboardEvents.length; i++) {
-        window.addEventListener(keyboardEvents[i], keyboardEventListener);
-      }
-    }
-
-    readData(updates: ByteArray, assets: Array<ByteArray>) {
-      var deserializer = new Shumway.Remoting.GFX.GFXChannelDeserializer();
-      deserializer.input = updates;
-      deserializer.inputAssets = assets;
-      deserializer.context = this._context;
-      deserializer.read();
-    }
-  }
-
-  export class EaselEmbedding implements IPlayerChannel, IGFXChannel {
-
-    private _player: Player;
-    private _easelHost: EaselHost;
-
-    private _worker: Worker;
-    private _channelEventUpdatesListener: (updates: ByteArray) => void;
-    private _channelUpdatesListener: (updates: ByteArray, assets: Array<ByteArray>) => void;
-
-    constructor(easel: Easel) {
-      this._easelHost = new EaselHost(easel, this);
-
-      // TODO this is temporary worker to test postMessage tranfers
-      this._worker = new Worker('../../src/player/fakechannel.js');
-      this._worker.addEventListener('message', this._onWorkerMessage.bind(this));
-    }
-
-    private _onWorkerMessage(e) {
-      var type = e.data.type;
-      switch (type) {
-        case 'player':
-          var updates = ByteArray.fromArrayBuffer(e.data.updates.buffer);
-          var assets = e.data.assets.map(function (assetBytes) {
-            return ByteArray.fromArrayBuffer(assetBytes.buffer);
-          });
-          this._channelUpdatesListener(updates, assets);
-          break;
-        case 'gfx':
-          var updates = ByteArray.fromArrayBuffer(e.data.updates.buffer);
-          this._channelEventUpdatesListener(updates);
-          break;
-      }
-    }
-
-    // IPlayerChannel
-    sendUpdates(updates: ByteArray, assets: Array<ByteArray>) : void {
-      var bytes = updates.getBytes();
-      var assetsBytes = assets.map(function (asset) {
-        return asset.getBytes();
-      });
-      this._worker.postMessage({
-          type: 'player',
-          updates: bytes,
-          assets: assetsBytes
-      }, [bytes.buffer]);
-    }
-    registerForEventUpdates(listener: (updates: ByteArray) => void) : void {
-      this._channelEventUpdatesListener = listener;
-    }
-
-    // IGFXChannel
-    registerForUpdates(listener: (updates: ByteArray, assets: Array<ByteArray>) => void) {
-      this._channelUpdatesListener = listener;
-    }
-    sendEventUpdates(updates: ByteArray) {
-      var bytes = updates.getBytes();
-      this._worker.postMessage({type: 'gfx', updates: bytes}, [bytes.buffer]);
-    }
-
-    public embed(): Player {
-      return this._player = new Shumway.Player(this);
     }
   }
 }

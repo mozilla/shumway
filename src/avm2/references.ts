@@ -19,10 +19,13 @@
 ///<reference path='../metrics.ts' />
 ///<reference path='../options.ts' />
 ///<reference path='../settings.ts' />
+///<reference path='../dataBuffer.ts' />
 
 ///<reference path='errors.ts' />
 ///<reference path='opcodes.ts' />
 ///<reference path='parser.ts' />
+///<reference path='bytecode.ts' />
+///<reference path='options.ts' />
 ///<reference path='runtime.ts' />
 ///<reference path='domain.ts' />
 ///<reference path='scope.ts' />
@@ -40,3 +43,8 @@
 ///<reference path='natives/proxy.ts' />
 ///<reference path='natives/byteArray.ts' />
 ///<reference path='natives/system.ts' />
+///<reference path='compiler/verifier.ts' />
+///<reference path='compiler/c4/ast.ts' />
+///<reference path='compiler/c4/nodes.ts' />
+///<reference path='compiler/c4/as.nodes.ts' />
+///<reference path='compiler/c4/opt.ts' />

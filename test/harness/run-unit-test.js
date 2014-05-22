@@ -1,5 +1,9 @@
 "use strict";
 
+if (typeof scriptArgs === 'undefined') {
+	var scriptArgs = arguments;
+}
+
 if (scriptArgs.length === 0) {
 	print('\nUsage:\n' +
 		   '\t' + thisFilename() + ' [path-to-test-in-test-dir]\n' +
@@ -8,10 +12,6 @@ if (scriptArgs.length === 0) {
 		   '\nExample:\n' +
 		   '\t' + 'SHU_LOG_LEVEL=4 ' + thisFilename() + ' unit/stage');
 	quit(1);
-}
-var testFile = 'test/' + scriptArgs[0];
-if (testFile.substr(testFile.length - 3) !== '.js') {
-	testFile += '.js';
 }
 
 if (typeof dateNow === 'undefined') {
@@ -120,13 +120,27 @@ loadEngine();
 
 load('examples/inspector/js/unit.js');
 
-var unitTests = [];
-executeUnitTests = function(path, avm2) {
+var unitTests;
+executeUnitTests = function(avm2) {
 	var start = dateNow();
-	load(fixPath(path));
-	unitTests.forEach(test => test(avm2));
-	print(path + ': Complete (' + Math.round((dateNow() - start) * 100) / 100 + 'ms + ' +
-		  initDuration + 'ms startup)');
+	for (var i = 0; i < scriptArgs.length; i++) {
+		var testFile = scriptArgs[i];
+		if (testFile.substr(testFile.length - 3) !== '.js') {
+			testFile += '.js';
+		}
+		unitTests = [];
+		print('\nRunning tests in file ' + testFile);
+		try {
+			load(fixPath(testFile));
+			unitTests.forEach(test => test(avm2));
+		} catch (e) {
+			print('Exception encountered while running ' + testFile + ':');
+			print(e);
+			print('stack:\n', e.stack);
+		}
+		print(testFile + ': Complete (' + Math.round((dateNow() - start) * 100) / 100 + 'ms + ' +
+			  initDuration + 'ms startup)');
+	}
 }
 
 // Shumway.AVM2.Runtime.traceExecution.value = true;
@@ -215,5 +229,5 @@ var initDuration = Math.round((dateNow() - initStart) * 100)/100;
 
 createAVM2(builtinPath, playerglobalInfo, null, EXECUTION_MODE.INTERPRET, EXECUTION_MODE.INTERPRET,
 			function (avm2) {
-			  executeUnitTests(testFile, avm2);
+			  executeUnitTests(avm2);
 			});

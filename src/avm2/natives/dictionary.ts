@@ -150,5 +150,7 @@ module Shumway.AVM2.AS {
         return primitiveMapKeys.concat(this.keys);
       }
     }
+
+    export var OriginalDictionary = Dictionary;
   }
 }

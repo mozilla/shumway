@@ -156,10 +156,10 @@ function IFramePlayer(playerWorker) {
 }
 IFramePlayer._updatesListener = null;
 IFramePlayer.sendUpdates = function (data) {
-  var ByteArray = Shumway.AVM2.AS.flash.utils.ByteArray;
-  var updates = ByteArray.fromArrayBuffer(data.updates.buffer);
+  var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
+  var updates = DataBuffer.fromArrayBuffer(data.updates.buffer);
   var assets = data.assets.map(function (assetBytes) {
-    return ByteArray.fromArrayBuffer(assetBytes.buffer);
+    return DataBuffer.fromArrayBuffer(assetBytes.buffer);
   });
   IFramePlayer._updatesListener(updates, assets);
 };

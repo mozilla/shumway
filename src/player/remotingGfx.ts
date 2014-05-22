@@ -19,13 +19,14 @@ module Shumway.Remoting.GFX {
   import Renderable = Shumway.GFX.Renderable;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
-  import ArrayWriter = Shumway.ArrayUtilities.ArrayWriter;
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
-  import Point = Shumway.AVM2.AS.flash.geom.Point;
+  import Point = Shumway.GFX.Geometry.Point;
   import Matrix = Shumway.GFX.Geometry.Matrix;
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
-  import IDataInput = Shumway.AVM2.AS.flash.utils.IDataInput;
-  import IDataOutput = Shumway.AVM2.AS.flash.utils.IDataOutput;
+
+  import IDataInput = Shumway.ArrayUtilities.IDataInput;
+  import IDataOutput = Shumway.ArrayUtilities.IDataOutput;
 
   export class GFXChannelSerializer {
     output: IDataOutput;
@@ -73,7 +74,7 @@ module Shumway.Remoting.GFX {
 
   export class GFXChannelDeserializer {
     input: IDataInput;
-    inputAssets: Array<IDataInput>;
+    inputAssets: Array<DataBuffer>;
     context: GFXChannelDeserializerContext;
 
     public read() {
@@ -110,10 +111,10 @@ module Shumway.Remoting.GFX {
     private _readRectangle(): Rectangle {
       var input = this.input;
       return new Rectangle (
-        input.readFloat() / 20,
-        input.readFloat() / 20,
-        input.readFloat() / 20,
-        input.readFloat() / 20
+        input.readInt() / 20,
+        input.readInt() / 20,
+        input.readInt() / 20,
+        input.readInt() / 20
       );
     }
 

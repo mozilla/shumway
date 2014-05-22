@@ -37,22 +37,22 @@ module.exports = function(grunt) {
         cmd: 'make -C utils/builder build'
       },
       build_gfx_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 src/gfx/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/gfx/references.ts'
       },
       build_avm2_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 src/avm2/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm2/references.ts'
       },
       build_flash_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 src/flash.ts/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/flash/references.ts'
       },
       build_player_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 src/player/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/player/references.ts'
       },
-      build_tools_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 src/tools/references.ts'
+      build_profiler_ts: {
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/tools/profiler/references.ts'
       },
       build_avm1_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 src/avm1/references.ts'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm1/references.ts'
       },
       generate_abcs: {
         cmd: 'python generate.py',
@@ -67,7 +67,7 @@ module.exports = function(grunt) {
         cwd: 'utils/'
       },
       build_avm1lib_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 src/avm1lib/references.ts'
+        cmd: 'node utils/typescript/tsc --target --outDir build/ts ES5 src/avm1lib/references.ts'
       },
       lint_success: {
         cmd: 'echo "SUCCESS: no lint errors"'
@@ -84,7 +84,7 @@ module.exports = function(grunt) {
       },
       avm1lib_ts: {
         files: ['src/avm2/**/*.ts',
-                'src/flash.ts/**/*.ts',
+                'src/flash/**/*.ts',
                 'src/avm1lib/*.ts'],
         tasks: ['exec:build_avm1lib_ts']
       },
@@ -100,7 +100,7 @@ module.exports = function(grunt) {
       },
       flash_ts: {
         files: ['src/avm2/**/*.ts',
-                'src/flash.ts/**/*.ts'],
+                'src/flash/**/*.ts'],
         tasks: ['exec:build_flash_ts']
       },
       gfx_ts: {
@@ -116,13 +116,13 @@ module.exports = function(grunt) {
         tasks: ['exec:build_avm1_ts']
       },
       player_ts: {
-        files: ['src/flash.ts/**/*.ts', 
+        files: ['src/flash/**/*.ts',
         		'src/player/**/*.ts'],
         tasks: ['exec:build_player_ts']
       },
-      tools_ts: {
-        files: ['src/tools/**/*.ts'],
-        tasks: ['exec:build_tools_ts']
+      profiler_ts: {
+        files: ['src/tools/profiler/**/*.ts'],
+        tasks: ['exec:build_profiler_ts']
       },
     }
   });
@@ -169,6 +169,7 @@ module.exports = function(grunt) {
   grunt.registerTask('watch-flash', ['exec:build_flash_ts', 'watch:flash_ts']);
   grunt.registerTask('watch-player', ['exec:build_player_ts', 'watch:player_ts']);
   grunt.registerTask('watch-gfx', ['exec:build_gfx_ts', 'watch:gfx_ts']);
+  grunt.registerTask('watch-profiler', ['exec:build_profiler_ts', 'watch:profiler_ts']);
 
   // temporary make/python calls based on grunt-exec
   grunt.registerTask('build-web', ['exec:build_avm2_ts', 'exec:build_bundle', 'exec:build_extension', 'exec:build_web']);
@@ -180,7 +181,7 @@ module.exports = function(grunt) {
   grunt.registerTask('avm1lib', ['exec:build_avm1lib']);
   grunt.registerTask('flash', ['exec:build_flash_ts']);
   grunt.registerTask('player', ['exec:build_player_ts']);
-  grunt.registerTask('tools', ['exec:build_tools_ts']);
+  grunt.registerTask('profiler', ['exec:build_profiler_ts']);
   grunt.registerTask('avm2', ['exec:build_avm2_ts']);
   grunt.registerTask('gfx', ['exec:build_gfx_ts']);
   grunt.registerTask('avm1', ['exec:build_avm1_ts']);

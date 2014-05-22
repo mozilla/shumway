@@ -291,14 +291,6 @@
       var BITS_PER_WORD = BlockSet.BITS_PER_WORD;
       var BIT_INDEX_MASK = BlockSet.BIT_INDEX_MASK;
 
-      BlockSet.singleton = function singleton(b) {
-        var bs = new BlockSet();
-        bs.set(b.id);
-        bs.count = 1;
-        bs.dirty = 0;
-        return bs;
-      };
-
       BlockSet.fromBlocks = function fromArray(other) {
         var bs = new BlockSet();
         bs.setBlocks(other);

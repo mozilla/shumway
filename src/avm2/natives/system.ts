@@ -142,5 +142,6 @@ module Shumway.AVM2.AS {
         return "mixed";
       }
     }
+    export var OriginalSystem = System;
   }
 }

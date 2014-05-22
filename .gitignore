@@ -24,5 +24,3 @@ src/flash/playerglobal-new.abc
 node_modules/
 
 build/
-src/flash.ts/**/*.js
-*.js.map

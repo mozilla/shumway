@@ -269,10 +269,27 @@ module Shumway {
       dst.length = count;
     }
 
+    /**
+     * Just deletes several array elements from the end of the list.
+     */
+    export function popManyIntoVoid(array: any [], count: number) {
+      release || assert(array.length >= count);
+      array.length = array.length - count;
+    }
+
     export function pushMany(dst: any [], src: any []) {
       for (var i = 0; i < src.length; i++) {
         dst.push(src[i]);
       }
+    }
+
+    export function top(array: any []) {
+      return array.length && array[array.length - 1]
+    }
+
+    export function peek(array: any []) {
+      release || assert(array.length > 0);
+      return array[array.length - 1];
     }
 
     export function copyFrom(dst: any [], src: any []) {
@@ -657,7 +674,6 @@ module Shumway {
       release || assert (!Object.prototype.hasOwnProperty.call(obj, name), "Property: " + name + " already exits.");
       ObjectUtilities.defineNonEnumerableProperty(obj, name, value);
     }
-
   }
 
   export module FunctionUtilities {
@@ -912,6 +928,15 @@ module Shumway {
       }
       return n;
     }
+
+    export function trimMiddle(s: string, maxLength: number): string {
+      if (s.length <= maxLength) {
+        return s;
+      }
+      var leftHalf = maxLength >> 1;
+      var rightHalf = maxLength - leftHalf - 1;
+      return s.substr(0, leftHalf) + "\u2026" + s.substr(s.length - rightHalf, rightHalf);
+    }
   }
 
   export module HashUtilities {
@@ -1033,6 +1058,34 @@ module Shumway {
   Math.random = function random(): number {
     return Random.next();
   };
+
+  function polyfillWeakMap() {
+    if (typeof jsGlobal.WeakMap === 'function') {
+      return; // weak map is supported
+    }
+    var id = 0;
+    function WeakMap() {
+      this.id = '$weakmap' + (id++);
+    };
+    WeakMap.prototype = {
+      has: function(obj) {
+        return obj.hasOwnProperty(this.id);
+      },
+      get: function(obj, defaultValue) {
+        return obj.hasOwnProperty(this.id) ? obj[this.id] : defaultValue;
+      },
+      set: function(obj, value) {
+        Object.defineProperty(obj, this.id, {
+          value: value,
+          enumerable: false,
+          configurable: true
+        });
+      }
+    };
+    jsGlobal.WeakMap = WeakMap;
+  }
+
+  polyfillWeakMap();
 
   export module NumberUtilities {
     export function pow2(exponent: number): number {
@@ -1575,6 +1628,423 @@ module Shumway {
     }
   }
 
+  export module BitSets {
+    export var ADDRESS_BITS_PER_WORD = 5;
+    export var BITS_PER_WORD = 1 << ADDRESS_BITS_PER_WORD;
+    export var BIT_INDEX_MASK = BITS_PER_WORD - 1;
+
+    function getSize(length): number {
+      return ((length + (BITS_PER_WORD - 1)) >> ADDRESS_BITS_PER_WORD) << ADDRESS_BITS_PER_WORD;
+    }
+
+    export interface BitSet {
+      set: (i) => void;
+      setAll: () => void;
+      assign: (set: BitSet) => void;
+      clear: (i: number) => void;
+      get: (i: number) => boolean;
+      clearAll: () => void;
+      intersect: (other: BitSet) => void;
+      subtract: (other: BitSet) => void;
+      negate: () => void;
+      forEach: (fn) => void;
+      toArray: () => boolean [];
+      equals: (other: BitSet) => boolean;
+      contains: (other: BitSet) => boolean;
+      isEmpty: () => boolean;
+      clone: () => BitSet;
+      recount: () => void;
+      toString: (names: string []) => string;
+      toBitString: (on: string, off: string) => string;
+    }
+
+    function toBitString(on: string, off: string) {
+      var self: BitSet = this;
+      on = on || "1";
+      off = off || "0";
+      var str = "";
+      for (var i = 0; i < length; i++) {
+        str += self.get(i) ? on : off;
+      }
+      return str;
+    }
+
+    function toString(names: string []) {
+      var self: BitSet = this;
+      var set = [];
+      for (var i = 0; i < length; i++) {
+        if (self.get(i)) {
+          set.push(names ? names[i] : i);
+        }
+      }
+      return set.join(", ");
+    }
+
+    export class Uint32ArrayBitSet implements BitSet {
+      size: number;
+      bits: Uint32Array;
+      count: number;
+      dirty: number;
+      length: number;
+
+      constructor(length: number) {
+        this.size = getSize(length);
+        this.count = 0;
+        this.dirty = 0;
+        this.length = length;
+        this.bits = new Uint32Array(this.size >> ADDRESS_BITS_PER_WORD);
+      }
+
+      recount() {
+        if (!this.dirty) {
+          return;
+        }
+
+        var bits = this.bits;
+        var c = 0;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          var v = bits[i];
+          v = v - ((v >> 1) & 0x55555555);
+          v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+          c += ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+        }
+
+        this.count = c;
+        this.dirty = 0;
+      }
+
+      set(i) {
+        var n = i >> ADDRESS_BITS_PER_WORD;
+        var old = this.bits[n];
+        var b = old | (1 << (i & BIT_INDEX_MASK));
+        this.bits[n] = b;
+        this.dirty |= old ^ b;
+      }
+
+      setAll() {
+        var bits = this.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          bits[i] = 0xFFFFFFFF;
+        }
+        this.count = this.size;
+        this.dirty = 0;
+      }
+
+      assign(set) {
+        this.count = set.count;
+        this.dirty = set.dirty;
+        this.size = set.size;
+        for (var i = 0, j = this.bits.length; i < j; i++) {
+          this.bits[i] = set.bits[i];
+        }
+      }
+
+      clear(i) {
+        var n = i >> ADDRESS_BITS_PER_WORD;
+        var old = this.bits[n];
+        var b = old & ~(1 << (i & BIT_INDEX_MASK));
+        this.bits[n] = b;
+        this.dirty |= old ^ b;
+      }
+
+      get(i): boolean {
+        var word = this.bits[i >> ADDRESS_BITS_PER_WORD];
+        return ((word & 1 << (i & BIT_INDEX_MASK))) !== 0;
+      }
+
+      clearAll() {
+        var bits = this.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          bits[i] = 0;
+        }
+        this.count = 0;
+        this.dirty = 0;
+      }
+
+      private _union(other: Uint32ArrayBitSet) {
+        var dirty = this.dirty;
+        var bits = this.bits;
+        var otherBits = other.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          var old = bits[i];
+          var b = old | otherBits[i];
+          bits[i] = b;
+          dirty |= old ^ b;
+        }
+        this.dirty = dirty;
+      }
+
+      intersect(other: Uint32ArrayBitSet) {
+        var dirty = this.dirty;
+        var bits = this.bits;
+        var otherBits = other.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          var old = bits[i];
+          var b = old & otherBits[i];
+          bits[i] = b;
+          dirty |= old ^ b;
+        }
+        this.dirty = dirty;
+      }
+
+      subtract(other: Uint32ArrayBitSet) {
+        var dirty = this.dirty;
+        var bits = this.bits;
+        var otherBits = other.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          var old = bits[i];
+          var b = old & ~otherBits[i];
+          bits[i] = b;
+          dirty |= old ^ b;
+        }
+        this.dirty = dirty;
+      }
+
+      negate() {
+        var dirty = this.dirty;
+        var bits = this.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          var old = bits[i];
+          var b = ~old;
+          bits[i] = b;
+          dirty |= old ^ b;
+        }
+        this.dirty = dirty;
+      }
+
+      forEach(fn) {
+        release || assert(fn);
+        var bits = this.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          var word = bits[i];
+          if (word) {
+            for (var k = 0; k < BITS_PER_WORD; k++) {
+              if (word & (1 << k)) {
+                fn(i * BITS_PER_WORD + k);
+              }
+            }
+          }
+        }
+      }
+
+      toArray() {
+        var set = [];
+        var bits = this.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          var word = bits[i];
+          if (word) {
+            for (var k = 0; k < BITS_PER_WORD; k++) {
+              if (word & (1 << k)) {
+                set.push(i * BITS_PER_WORD + k);
+              }
+            }
+          }
+        }
+        return set;
+      }
+
+      equals(other: Uint32ArrayBitSet) {
+        if (this.size !== other.size) {
+          return false;
+        }
+        var bits = this.bits;
+        var otherBits = other.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          if (bits[i] !== otherBits[i]) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      contains(other: Uint32ArrayBitSet) {
+        if (this.size !== other.size) {
+          return false;
+        }
+        var bits = this.bits;
+        var otherBits = other.bits;
+        for (var i = 0, j = bits.length; i < j; i++) {
+          if ((bits[i] | otherBits[i]) !== bits[i]) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      toBitString: (on: string, off: string) => string;
+      toString: (names: string []) => string;
+
+      isEmpty(): boolean {
+        this.recount();
+        return this.count === 0;
+      }
+
+      clone(): Uint32ArrayBitSet {
+        var set = new Uint32ArrayBitSet(this.length);
+        set._union(this);
+        return set;
+      }
+    }
+
+    export class Uint32BitSet implements BitSet {
+      size: number;
+      bits: number;
+      count: number;
+      dirty: number;
+      singleWord: boolean;
+      length: number;
+      constructor(length: number) {
+        this.count = 0;
+        this.dirty = 0;
+        this.size = getSize(length);
+        this.bits = 0;
+        this.singleWord = true;
+        this.length = length;
+      }
+
+      recount() {
+        if (!this.dirty) {
+          return;
+        }
+
+        var c = 0;
+        var v = this.bits;
+        v = v - ((v >> 1) & 0x55555555);
+        v = (v & 0x33333333) + ((v >> 2) & 0x33333333);
+        c += ((v + (v >> 4) & 0xF0F0F0F) * 0x1010101) >> 24;
+
+        this.count = c;
+        this.dirty = 0;
+      }
+
+      set(i) {
+        var old = this.bits;
+        var b = old | (1 << (i & BIT_INDEX_MASK));
+        this.bits = b;
+        this.dirty |= old ^ b;
+      }
+
+      setAll() {
+        this.bits = 0xFFFFFFFF;
+        this.count = this.size;
+        this.dirty = 0;
+      }
+
+      assign(set: Uint32BitSet) {
+        this.count = set.count;
+        this.dirty = set.dirty;
+        this.size = set.size;
+        this.bits = set.bits;
+      }
+
+      clear(i: number) {
+        var old = this.bits;
+        var b = old & ~(1 << (i & BIT_INDEX_MASK));
+        this.bits = b;
+        this.dirty |= old ^ b;
+      }
+
+      get(i: number): boolean {
+        return ((this.bits & 1 << (i & BIT_INDEX_MASK))) !== 0;
+      }
+
+      clearAll() {
+        this.bits = 0;
+        this.count = 0;
+        this.dirty = 0;
+      }
+
+      private _union(other: Uint32BitSet) {
+        var old = this.bits;
+        var b = old | other.bits;
+        this.bits = b;
+        this.dirty = old ^ b;
+      }
+
+      intersect(other: Uint32BitSet) {
+        var old = this.bits;
+        var b = old & other.bits;
+        this.bits = b;
+        this.dirty = old ^ b;
+      }
+
+      subtract(other: Uint32BitSet) {
+        var old = this.bits;
+        var b = old & ~other.bits;
+        this.bits = b;
+        this.dirty = old ^ b;
+      }
+
+      negate() {
+        var old = this.bits;
+        var b = ~old;
+        this.bits = b;
+        this.dirty = old ^ b;
+      }
+
+      forEach(fn) {
+        release || assert(fn);
+        var word = this.bits;
+        if (word) {
+          for (var k = 0; k < BITS_PER_WORD; k++) {
+            if (word & (1 << k)) {
+              fn(k);
+            }
+          }
+        }
+      }
+
+      toArray(): boolean [] {
+        var set = [];
+        var word = this.bits;
+        if (word) {
+          for (var k = 0; k < BITS_PER_WORD; k++) {
+            if (word & (1 << k)) {
+              set.push(k);
+            }
+          }
+        }
+        return set;
+      }
+
+      equals(other: Uint32BitSet) {
+        return this.bits === other.bits;
+      }
+
+      contains(other: Uint32BitSet) {
+        var bits = this.bits;
+        return (bits | other.bits) === bits;
+      }
+
+      toBitString: (on: string, off: string) => string;
+      toString: (names: string []) => string;
+
+      isEmpty(): boolean {
+        this.recount();
+        return this.count === 0;
+      }
+
+      clone(): Uint32BitSet {
+        var set = new Uint32BitSet(this.length);
+        set._union(this);
+        return set;
+      }
+    }
+
+    Uint32BitSet.prototype.toString = toString;
+    Uint32BitSet.prototype.toBitString = toBitString;
+    Uint32ArrayBitSet.prototype.toString = toString;
+    Uint32ArrayBitSet.prototype.toBitString = toBitString;
+
+    export function BitSetFunctor(length: number) {
+      var shouldUseSingleWord = (getSize(length) >> ADDRESS_BITS_PER_WORD) === 1;
+      var type = (shouldUseSingleWord ? <any>Uint32BitSet : <any>Uint32ArrayBitSet);
+      return function () {
+        return new type(length);
+      }
+    }
+  }
+
   export class ColorStyle {
     static TabToolbar = "#252c33";
     static Toolbars = "#343c45";
@@ -1650,6 +2120,294 @@ module Shumway {
       return (yiq >= 128) ? '#000000' : '#ffffff';
     }
   }
+
+  export interface UntypedBounds {
+    xMin: number;
+    yMin: number;
+    xMax: number;
+    yMax: number;
+  }
+
+  export interface ASRectangle {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
+
+  /**
+   * Faster release version of bounds.
+   */
+  export class Bounds {
+    xMin: number;
+    yMin: number;
+    xMax: number;
+    yMax: number;
+    constructor (xMin: number, yMin: number, xMax: number, yMax: number) {
+      this.xMin = xMin|0;
+      this.yMin = yMin|0;
+      this.xMax = xMax|0;
+      this.yMax = yMax|0;
+    }
+
+    static FromUntyped (source: UntypedBounds): Bounds {
+      return new Bounds(source.xMin, source.yMin, source.xMax, source.yMax);
+    }
+
+    static FromRectangle (source: ASRectangle): Bounds {
+      return new Bounds(source.x * 20|0, source.y * 20|0, (source.x + source.width) * 20|0,
+        (source.y + source.height) * 20|0);
+    }
+
+    setElements (xMin: number, yMin: number, xMax: number, yMax: number): void {
+      this.xMin = xMin;
+      this.yMin = yMin;
+      this.xMax = xMax;
+      this.yMax = yMax;
+    }
+
+    copyFrom (source: Bounds): void {
+      this.setElements(source.xMin, source.yMin, source.xMax, source.yMax);
+    }
+
+    contains (x: number, y: number): boolean {
+      return x < this.xMin !== x < this.xMax &&
+        y < this.yMin !== y < this.yMax;
+    }
+
+    unionWith (other: Bounds): void {
+      this.xMin = Math.min(this.xMin, other.xMin);
+      this.yMin = Math.min(this.yMin, other.yMin);
+      this.xMax = Math.max(this.xMax, other.xMax);
+      this.yMax = Math.max(this.yMax, other.yMax);
+    }
+
+    extendByPoint (x: number, y: number): void {
+      this.extendByX(x);
+      this.extendByY(y);
+    }
+
+    extendByX (x: number): void {
+      this.xMin = Math.min(this.xMin, x);
+      this.xMax = Math.max(this.xMax, x);
+    }
+
+    extendByY (y: number): void {
+      this.yMin = Math.min(this.yMin, y);
+      this.yMax = Math.max(this.yMax, y);
+    }
+
+    public intersects(toIntersect: Bounds): boolean {
+      return this.contains(toIntersect.xMin, toIntersect.yMin) ||
+        this.contains(toIntersect.xMax, toIntersect.yMax);
+    }
+
+    isEmpty (): boolean {
+      return this.xMax <= this.xMin || this.yMax <= this.yMin;
+    }
+
+    get width(): number {
+      return this.xMax - this.xMin;
+    }
+
+    get height(): number {
+      return this.yMax - this.yMin;
+    }
+
+    public getBaseWidth(angle: number): number {
+      var u = Math.abs(Math.cos(angle));
+      var v = Math.abs(Math.sin(angle));
+      return u * (this.xMax - this.xMin) + v * (this.yMax - this.yMin);
+    }
+
+    public getBaseHeight(angle: number): number {
+      var u = Math.abs(Math.cos(angle));
+      var v = Math.abs(Math.sin(angle));
+      return v * (this.xMax - this.xMin) + u * (this.yMax - this.yMin);
+    }
+
+    setEmpty (): void {
+      this.xMin = this.yMin = this.xMax = this.yMax = 0;
+    }
+
+    clone (): Bounds {
+      return new Bounds(this.xMin, this.yMin, this.xMax, this.yMax);
+    }
+
+    toString(): string {
+      return "{ " +
+        "xMin: " + this.xMin + ", " +
+        "xMin: " + this.yMin + ", " +
+        "xMax: " + this.xMax + ", " +
+        "xMax: " + this.yMax +
+        " }";
+    }
+  }
+
+  /**
+   * Slower debug version of bounds, makes sure that all points have integer coordinates.
+   */
+  export class DebugBounds {
+    private _xMin: number;
+    private _yMin: number;
+    private _xMax: number;
+    private _yMax: number;
+
+    constructor (xMin: number, yMin: number, xMax: number, yMax: number) {
+      assert(isInteger(xMin));
+      assert(isInteger(yMin));
+      assert(isInteger(xMax));
+      assert(isInteger(yMax));
+      this._xMin = xMin|0;
+      this._yMin = yMin|0;
+      this._xMax = xMax|0;
+      this._yMax = yMax|0;
+      this.assertValid();
+    }
+
+    static FromUntyped (source: UntypedBounds): DebugBounds {
+      return new DebugBounds(source.xMin, source.yMin, source.xMax, source.yMax);
+    }
+
+    static FromRectangle (source: ASRectangle): DebugBounds {
+      return new DebugBounds(source.x * 20|0, source.y * 20|0, (source.x + source.width) * 20|0,
+                        (source.y + source.height) * 20|0);
+    }
+
+    setElements (xMin: number, yMin: number, xMax: number, yMax: number): void {
+      this.xMin = xMin;
+      this.yMin = yMin;
+      this.xMax = xMax;
+      this.yMax = yMax;
+    }
+
+    copyFrom (source: DebugBounds): void {
+      this.setElements(source.xMin, source.yMin, source.xMax, source.yMax);
+    }
+
+    contains (x: number, y: number): boolean {
+      return x < this.xMin !== x < this.xMax &&
+             y < this.yMin !== y < this.yMax;
+    }
+
+    unionWith (other: DebugBounds): void {
+      this._xMin = Math.min(this._xMin, other._xMin);
+      this._yMin = Math.min(this._yMin, other._yMin);
+      this._xMax = Math.max(this._xMax, other._xMax);
+      this._yMax = Math.max(this._yMax, other._yMax);
+    }
+
+    extendByPoint (x: number, y: number): void {
+      this.extendByX(x);
+      this.extendByY(y);
+    }
+
+    extendByX (x: number): void {
+      this.xMin = Math.min(this.xMin, x);
+      this.xMax = Math.max(this.xMax, x);
+    }
+
+    extendByY (y: number): void {
+      this.yMin = Math.min(this.yMin, y);
+      this.yMax = Math.max(this.yMax, y);
+    }
+
+    public intersects(toIntersect: DebugBounds): boolean {
+      return this.contains(toIntersect._xMin, toIntersect._yMin) ||
+             this.contains(toIntersect._xMax, toIntersect._yMax);
+    }
+
+    isEmpty (): boolean {
+      return this._xMax <= this._xMin || this._yMax <= this._yMin;
+    }
+
+    set xMin(value: number) {
+      assert(isInteger(value));
+      this._xMin = value;
+      this.assertValid();
+    }
+
+    get xMin(): number {
+      return this._xMin;
+    }
+
+    set yMin(value: number) {
+      assert(isInteger(value));
+      this._yMin = value|0;
+      this.assertValid();
+    }
+
+    get yMin(): number {
+      return this._yMin;
+    }
+
+    set xMax(value: number) {
+      assert(isInteger(value));
+      this._xMax = value|0;
+      this.assertValid();
+    }
+
+    get xMax(): number {
+      return this._xMax;
+    }
+
+    get width(): number {
+      return this._xMax - this._xMin;
+    }
+
+    set yMax(value: number) {
+      assert(isInteger(value));
+      this._yMax = value|0;
+      this.assertValid();
+    }
+
+    get yMax(): number {
+      return this._yMax;
+    }
+
+    get height(): number {
+      return this._yMax - this._yMin;
+    }
+
+    public getBaseWidth(angle: number): number {
+      var u = Math.abs(Math.cos(angle));
+      var v = Math.abs(Math.sin(angle));
+      return u * (this._xMax - this._xMin) + v * (this._yMax - this._yMin);
+    }
+
+    public getBaseHeight(angle: number): number {
+      var u = Math.abs(Math.cos(angle));
+      var v = Math.abs(Math.sin(angle));
+      return v * (this._xMax - this._xMin) + u * (this._yMax - this._yMin);
+    }
+
+    setEmpty (): void {
+      this._xMin = this._yMin = this._xMax = this._yMax = 0;
+    }
+
+    clone (): DebugBounds {
+      return new DebugBounds(this.xMin, this.yMin, this.xMax, this.yMax);
+    }
+
+    toString(): string {
+      return "{ " +
+             "xMin: " + this._xMin + ", " +
+             "xMin: " + this._yMin + ", " +
+             "xMax: " + this._xMax + ", " +
+             "xMax: " + this._yMax +
+             " }";
+    }
+
+    private assertValid(): void {
+//      assert(this._xMax >= this._xMin);
+//      assert(this._yMax >= this._yMin);
+    }
+  }
+
+  /**
+   * Override Bounds with a slower by safer version, don't do this in release mode.
+   */
+  // Shumway.Bounds = DebugBounds;
 
   export class Color {
     public r: number;

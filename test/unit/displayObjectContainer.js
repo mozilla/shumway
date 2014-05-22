@@ -2,7 +2,6 @@
 
   var Random = Shumway.Random;
   var Point = flash.geom.Point;
-  var Rectangle = flash.geom.Rectangle;
   var Event = flash.events.Event;
   var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectFlags = flash.display.DisplayObjectFlags;

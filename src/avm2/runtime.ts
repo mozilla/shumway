@@ -81,35 +81,8 @@ interface Function {
 
 module Shumway.AVM2.Runtime {
 
-  declare var shumwayOptions: OptionSet;
-
   declare var XML;
   declare var XMLList;
-
-  import Option = Shumway.Options.Option;
-  import OptionSet = Shumway.Options.OptionSet;
-
-  var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
-  var runtimeOptions = avm2Options.register(new OptionSet("Runtime"));
-  export var traceExecution = runtimeOptions.register(new Option("tx", "traceExecution", "number", 0, "trace script execution", { choices: { "off":0, "normal":2, "verbose":3 } }));
-  export var traceCallExecution = runtimeOptions.register(new Option("txc", "traceCallExecution", "number", 0, "trace call execution", { choices: { "off":0, "normal":1, "verbose":2 } }));
-  var traceFunctions = runtimeOptions.register(new Option("t", "traceFunctions", "number", 0, "trace functions", { choices: { "off":0, "compiled":1, "compiled & abc":2 } }));
-  export var traceClasses = runtimeOptions.register(new Option("tc", "traceClasses", "boolean", false, "trace class creation"));
-  export var traceDomain = runtimeOptions.register(new Option("td", "traceDomain", "boolean", false, "trace domain property access"));
-  export var debuggerMode = runtimeOptions.register(new Option("db", "debuggerMode", "boolean", true, "enable debugger mode"));
-
-
-  var functionBreak = new Option("fb", "functionBreak", "number", -1, "Inserts a debugBreak at function index #");
-  var compileOnly = new Option("co", "compileOnly", "number", -1, "Compiles only function number");
-  var compileUntil = new Option("cu", "compileUntil", "number", -1, "Compiles only until a function number");
-
-  export var enableVerifier = runtimeOptions.register(new Option("verifier", "verifier", "boolean", false, "Enable verifier."));
-
-  export var globalMultinameAnalysis = runtimeOptions.register(new Option("ga", "globalMultinameAnalysis", "boolean", false, "Global multiname analysis."));
-  export var codeCaching = runtimeOptions.register(new Option("cc", "codeCaching", "boolean", false, "Enable code caching."));
-
-  var compilerEnableExceptions = runtimeOptions.register(new Option("cex", "exceptions", "boolean", false, "Compile functions with catch blocks."));
-  var compilerMaximumMethodSize = runtimeOptions.register(new Option("cmms", "maximumMethodSize", "number", 4 * 1024, "Compiler maximum method size."));
 
   declare var Analysis;
 
@@ -483,6 +456,7 @@ module Shumway.AVM2.Runtime {
 
   var forwardValueOf: () => any = <any>new Function("", 'return this.' + Multiname.VALUE_OF + "()");
   var forwardToString: () => string = <any>new Function("", 'return this.' + Multiname.TO_STRING + "()");
+
 
   function tryInjectToStringAndValueOfForwarder(self: Object, resolved: string) {
     if (resolved === Multiname.VALUE_OF) {
