@@ -229,7 +229,7 @@ module Shumway.AVM2.AS.flash.events {
 
     constructor(target: flash.events.IEventDispatcher = null) {
       false && super();
-      this._target = target;
+      this._target = target || this;
     }
 
     /**
@@ -363,10 +363,6 @@ module Shumway.AVM2.AS.flash.events {
                    "flash.events::EventDispatcher/hasEventListener()", 1, arguments.length);
       }
 
-      if (!event.isBroadcastEvent() && event._target) {
-        event = event.clone();
-      }
-
       var type = event._type;
       var target = this._target;
 
@@ -429,8 +425,18 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     private static callListeners(list: EventListenerList, event: Event, target: IEventDispatcher,
-                                 currentTarget: IEventDispatcher, eventPhase: number)
+                                 currentTarget: IEventDispatcher, eventPhase: number): boolean
     {
+      if (list.isEmpty()) {
+        return true;
+      }
+      /**
+       * If the target is already set then we must clone the event. We can reuse the event object for
+       * all listener callbacks but not when bubbling.
+       */
+      if (event._target) {
+        event = event.clone();
+      }
       var snapshot = list.snapshot();
       for (var i = 0; i < snapshot.length; i++) {
         var entry = snapshot[i];

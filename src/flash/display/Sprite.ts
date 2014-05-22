@@ -82,12 +82,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     get graphics(): flash.display.Graphics {
-      if (this._graphics) {
-        return this._graphics;
-      }
-      this._graphics = new flash.display.Graphics();
-      this._graphics._setParent(this);
-      return this._graphics;
+      return this._ensureGraphics();
     }
 
     get buttonMode(): boolean {
