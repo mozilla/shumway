@@ -36,7 +36,12 @@
       req.responseType = "json";
       req.onreadystatechange = function() {
         if (this.readyState == 4) {
-          callback(req.response);
+          var json = req.response;
+          if (typeof json === "string") {
+            try { json = JSON.parse(json); }
+            catch (e) { callback(null); }
+          }
+          callback(json);
         }
       };
       req.send(null);
