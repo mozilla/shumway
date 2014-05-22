@@ -110,7 +110,7 @@ module Shumway.Tools.Profiler {
       var sample;
       for (var i = 0; i < samples.length; i++) {
         sample = samples[i];
-        var time = sample.time - startTime;
+        var time = (sample.time - startTime) || 0.000000001;
         var stack = sample.frames;
         var j = 0;
         var minStackLen = Math.min(stack.length, currentStack.length);
@@ -146,7 +146,7 @@ module Shumway.Tools.Profiler {
       var sample;
       TimelineBuffer._resolveIds(profile.head, idMap);
       for (var i = 0; i < timestamps.length; i++) {
-        var time = timestamps[i] / 1000 - startTime;
+        var time = (timestamps[i] / 1000 - startTime) || 0.000000001;
         var stack = [];
         sample = idMap[samples[i]];
         while (sample) {
