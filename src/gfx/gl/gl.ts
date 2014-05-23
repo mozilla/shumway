@@ -376,7 +376,7 @@ module Shumway.GFX.GL {
       var context = this.context;
       var gl = context.gl;
 
-      if (!stage._hasFlags(FrameFlags.DirtyPaint)) {
+      if (!options.forcePaint && !stage._hasFlags(FrameFlags.DirtyPaint)) {
         return;
       } else {
         stage.visit(function (frame: Frame): VisitorFlags {
@@ -389,7 +389,7 @@ module Shumway.GFX.GL {
         });
       }
 
-      if (options.disable) {
+      if (!options.forcePaint && options.disable) {
         return;
       }
 

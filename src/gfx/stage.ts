@@ -67,6 +67,7 @@ module Shumway.GFX {
   export class StageRendererOptions {
     debug: boolean = false;
     disable: boolean = false;
+    forcePaint: boolean = false;
     paintBounds: boolean = false;
     paintFlashing: boolean = false;
     paintViewport: boolean = false;

@@ -1399,7 +1399,7 @@ module Shumway.GFX.Geometry {
       var tileCount = this.columns * this.rows;
       // The |getFewTiles| algorithm works better for a few tiles but it can't handle skew transforms.
       if (tileCount < 40 && transform.isScaleOrRotation()) {
-        var precise = true || tileCount > 10;
+        var precise = tileCount > 10;
         return this.getFewTiles(query, transform, precise);
       } else {
         return this.getManyTiles(query, transform);

@@ -42,6 +42,7 @@ var ignoreColorTransform = stageOptions.register(new Option("", "ignoreColorTran
 var debugStage = stageOptions.register(new Option("", "debugStage", "boolean", false, "Debug Stage."));
 var disableStage = stageOptions.register(new Option("", "disableStage", "boolean", false, "Disable Stage."));
 var disableMasking = stageOptions.register(new Option("", "disableMasking", "boolean", false, "Disable masking."));
+var forcePaint = stageOptions.register(new Option("", "forcePaint", "boolean", false, "Force repainting."));
 var paintBounds = stageOptions.register(new Option("", "paintBounds", "boolean", false, "Draw frame container bounding boxes."));
 var paintFlashing = stageOptions.register(new Option("", "paintFlashing", "boolean", false, "Flash redrawn regions."));
 
