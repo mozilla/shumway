@@ -22,7 +22,6 @@
 ///<reference path='../dataBuffer.ts' />
 
 ///<reference path='errors.ts' />
-///<reference path='opcodes.ts' />
 ///<reference path='parser.ts' />
 ///<reference path='bytecode.ts' />
 ///<reference path='options.ts' />

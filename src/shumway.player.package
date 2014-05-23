@@ -6,7 +6,6 @@ lib/jpgjs/jpg.js
 #!inline console.time("Load AVM2 Dependencies");
 src/avm2/constants.js
 build/ts/avm2/errors.js
-build/ts/avm2/opcodes.js
 build/ts/avm2/parser.js
 build/ts/avm2/bytecode.js
 src/avm2/compiler/lljs/src/estransform.js

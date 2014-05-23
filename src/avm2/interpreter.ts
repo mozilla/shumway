@@ -17,7 +17,6 @@
 
 module Shumway.AVM2 {
 
-  import OP = Shumway.AVM2.ABC.OP;
   import Scope = Shumway.AVM2.Runtime.Scope;
   import asCoerceByMultiname = Shumway.AVM2.Runtime.asCoerceByMultiname;
   import asGetSlot = Shumway.AVM2.Runtime.asGetSlot;
@@ -629,7 +628,7 @@ module Shumway.AVM2 {
           case OP.debugfile:
             break;
           default:
-            Shumway.Debug.notImplemented(opcodeName(op));
+            Shumway.Debug.notImplemented(Shumway.AVM2.opcodeName(op));
           }
           pc++;
         } catch (e) {

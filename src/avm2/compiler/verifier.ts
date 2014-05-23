@@ -16,7 +16,6 @@
 
 module Shumway.AVM2.Verifier {
 
-  import OP = Shumway.AVM2.ABC.OP;
   import AbcFile = Shumway.AVM2.ABC.AbcFile;
   import Trait = Shumway.AVM2.ABC.Trait;
   import Info = Shumway.AVM2.ABC.Info;

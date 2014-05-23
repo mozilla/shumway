@@ -197,7 +197,7 @@ MethodInfo.prototype.trace = function trace(writer) {
   writer.enter("code {");
   while (code.remaining() > 0) {
     var bc = code.readU8();
-    var opcode = opcodeTable[bc];
+    var opcode = Shumway.AVM2.opcodeTable[bc];
     var str, defaultOffset, offset, count;
     str = ("" + code.position).padRight(' ', 6);
     switch (bc) {
@@ -708,7 +708,7 @@ function traceStatistics(writer, abc) {
     var code = new AbcStream(m.code);
     while (code.remaining() > 0) {
       var bc = code.readU8();
-      var op = opcodeTable[bc];
+      var op = Shumway.AVM2.opcodeTable[bc];
       var operands = null;
       if (op) {
         opCounter.count(op.name);

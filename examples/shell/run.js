@@ -55,7 +55,6 @@ load("../../lib/jpgjs/jpg.js");
 console.time("Load AVM2 Dependencies");
 load("../../src/avm2/constants.js");
 load("../../build/ts/avm2/errors.js");
-load("../../build/ts/avm2/opcodes.js");
 load("../../build/ts/avm2/parser.js");
 load("../../build/ts/avm2/bytecode.js");
 load("../../src/avm2/compiler/lljs/src/estransform.js");
