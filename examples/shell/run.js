@@ -57,8 +57,6 @@ load("../../src/avm2/constants.js");
 load("../../build/ts/avm2/errors.js");
 load("../../build/ts/avm2/parser.js");
 load("../../build/ts/avm2/bytecode.js");
-load("../../src/avm2/compiler/lljs/src/estransform.js");
-load("../../src/avm2/compiler/lljs/src/escodegen.js");
 load("../../build/ts/avm2/compiler/verifier.js");
 load("../../src/avm2/compiler/c4/ir.js");
 load("../../build/ts/avm2/compiler/c4/ast.js");

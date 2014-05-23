@@ -106,6 +106,9 @@ module Shumway.AVM2.Compiler {
     successors: Block [];
     predecessors: Block [];
 
+    /**
+     * This is stuff added on by the looper which needs to be really cleaned up.
+     */
     dominatees: Block [];
     npredecessors: number;
     level: number;

@@ -343,7 +343,7 @@ module Shumway.AVM2.Compiler.AST {
       super();
     }
     toSource(precedence: number) : string {
-      return "{" + nodesToSource(this.body, precedence) + "}";
+      return "{\n" + nodesToSource(this.body, precedence) + "}";
     }
   }
 
@@ -352,7 +352,7 @@ module Shumway.AVM2.Compiler.AST {
       super();
     }
     toSource(precedence: number) : string {
-      return this.expression.toSource(Precedence.Sequence) + ";";
+      return this.expression.toSource(Precedence.Sequence) + ";\n";
     }
   }
 
@@ -425,7 +425,7 @@ module Shumway.AVM2.Compiler.AST {
       if (this.argument) {
         result += this.argument.toSource(Precedence.Sequence);
       }
-      return result + ";";
+      return result + ";\n";
     }
   }
 
@@ -434,7 +434,7 @@ module Shumway.AVM2.Compiler.AST {
       super();
     }
     toSource(precedence: number) : string {
-      return "throw " + this.argument.toSource(Precedence.Sequence) + ";";
+      return "throw " + this.argument.toSource(Precedence.Sequence) + ";\n";
     }
   }
 
@@ -488,7 +488,7 @@ module Shumway.AVM2.Compiler.AST {
       super();
     }
     toSource(precedence: number) : string {
-      return this.kind + " " + nodesToSource(this.declarations, precedence, ",") + ";";
+      return this.kind + " " + nodesToSource(this.declarations, precedence, ",") + ";\n";
     }
   }
 

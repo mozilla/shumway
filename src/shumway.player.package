@@ -8,8 +8,6 @@ src/avm2/constants.js
 build/ts/avm2/errors.js
 build/ts/avm2/parser.js
 build/ts/avm2/bytecode.js
-src/avm2/compiler/lljs/src/estransform.js
-src/avm2/compiler/lljs/src/escodegen.js
 build/ts/avm2/compiler/verifier.js
 src/avm2/compiler/c4/ir.js
 build/ts/avm2/compiler/c4/ast.js

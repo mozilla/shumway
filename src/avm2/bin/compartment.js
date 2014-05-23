@@ -52,8 +52,7 @@ load(tsBuildPath + "avm2/bytecode.js");
 load(jsBuildPath + "avm2/disassembler.js");
 
 Timer.start("Loading Compiler");
-load(jsBuildPath + "avm2/compiler/lljs/src/estransform.js");
-load(jsBuildPath + "avm2/compiler/lljs/src/escodegen.js");
+load(tsBuildPath + "avm2/compiler/c4/ast.js");
 load(tsBuildPath + "avm2/compiler/verifier.js");
 load(jsBuildPath + "avm2/compiler/c4/ir.js");
 load(tsBuildPath + "avm2/compiler/c4/looper.js");
