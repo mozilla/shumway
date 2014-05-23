@@ -50,6 +50,7 @@
   var Operator = IR.Operator;
   var Projection = IR.Projection;
   var Start = IR.Start;
+  var Looper = Shumway.AVM2.Compiler.Looper;
   var Control = Looper.Control;
   var Variable = IR.Variable;
 

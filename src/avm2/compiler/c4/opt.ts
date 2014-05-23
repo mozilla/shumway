@@ -105,6 +105,12 @@ module Shumway.AVM2.Compiler {
     dominator: Block;
     successors: Block [];
     predecessors: Block [];
+
+    dominatees: Block [];
+    npredecessors: number;
+    level: number;
+    frontier: any;
+
     constructor(id: number, start?: Region, end?: Node) {
       this.id = id;
       this.nodes = [start, end];
