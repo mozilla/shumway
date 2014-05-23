@@ -104,16 +104,20 @@ var console = {
 	timestamps: {}
 }
 
+function loadPackage(id) {
+  var sources = read('src/shumway' + id + '.package').split('\n');
+  sources.forEach(function (path) {
+    path = path.trim();
+    if (path.length === 0 || path[0] === '#') {
+      return;
+    }
+    load(path);
+    // print(path);
+  });
+}
 function loadEngine() {
-	var sources = read('src/shumway.package').split('\n');
-	sources.forEach(function (path) {
-		path = path.trim();
-		if (path.length === 0 || path[0] === '#') {
-			return;
-		}
-		load(path);
-		// print(path);
-	});
+  loadPackage('');
+  loadPackage('.player');
 }
 
 loadEngine();
