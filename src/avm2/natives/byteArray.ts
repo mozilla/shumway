@@ -121,6 +121,43 @@ module Shumway.AVM2.AS {
       public static instanceNatives: any [] = [DataBuffer.prototype];
       public static callableConstructor: any = null;
 
+      static initializer = function (source: any) {
+        var self: ByteArray = this;
+        var align = false;
+        var buffer, length;
+        if (source) {
+          length = 'byteLength' in source ? source.byteLength : source.length;
+          align = (length & 0x7) !== 0;
+          if (source instanceof ArrayBuffer) {
+            buffer = source;
+          } else if ('buffer' in source && source.buffer instanceof ArrayBuffer) {
+            buffer = align ? source.buffer : source.buffer.slice();
+          } else if (Array.isArray) {
+            buffer = align ? source : (new Uint8Array(source)).buffer;
+          }
+          // We have to make sure that the length of the buffer is a multiple of 8 or else
+          // constructing 64 bit views will fail.
+          if (align) {
+            length = (length + 7) & ~0x7;
+            var tmp = new ArrayBuffer(length);
+            // Copy into new buffer.
+            (new Uint8Array(tmp)).set(new Uint8Array(buffer));
+            buffer = tmp;
+          }
+        } else {
+          buffer = new ArrayBuffer(ByteArray.INITIAL_SIZE);
+          length = 0;
+        }
+        self._buffer = buffer;
+        self._length = length;
+        self._position = 0;
+        self._cacheViews();
+        self._objectEncoding = ByteArray.defaultObjectEncoding;
+        self._littleEndian = false; // AS3 is bigEndian by default.
+        self._bitBuffer = 0;
+        self._bitLength = 0;
+      }
+
       static protocol: IProtocol = ByteArray.prototype;
 
       /* The initial size of the backing, in bytes. Doubled every OOM. */
@@ -140,6 +177,17 @@ module Shumway.AVM2.AS {
       constructor() {
         false && super();
       }
+
+      private _buffer: ArrayBuffer;
+      private _length: number;
+      private _position: number;
+      private _littleEndian: boolean;
+      private _objectEncoding: number;
+
+      private _bitBuffer: number;
+      private _bitLength: number;
+
+      private _cacheViews: () => void;
 
       asGetNumericProperty: (name: number) => number;
       asSetNumericProperty: (name: number, value: number) => void;

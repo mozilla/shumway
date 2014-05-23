@@ -413,7 +413,7 @@ module Shumway.AVM2.AS {
 
       if (self.initializers) {
         assert (self.instanceConstructorNoInitialize === self.instanceConstructor);
-        var previousConstructor: any = self.instanceConstructor;
+        var previousConstructor: any = self;
         self.instanceConstructor = <any>function (...args) {
           ASClass.runInitializers(this, undefined);
           return self.instanceConstructorNoInitialize.apply(this, arguments);
