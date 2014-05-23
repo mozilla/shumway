@@ -17,7 +17,7 @@
 (function graphicsTests() {
   var Shape = flash.display.Shape;
   var Graphics = flash.display.Graphics;
-  var PathCommand = Shumway.GFX.Geometry.PathCommand;
+  var PathCommand = flash.display.PathCommand;
 
   var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
