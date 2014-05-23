@@ -174,6 +174,8 @@ module Shumway.AVM2.AS.flash.display {
       this._lastX = 0;
       this._lastY = 0;
       this._parent = null;
+
+      this._currentStrokeWidth = 0;
     }
 
     getGraphicsData(): DataBuffer {
@@ -187,6 +189,11 @@ module Shumway.AVM2.AS.flash.display {
     private _graphicsData: DataBuffer;
     private _lastX: number;
     private _lastY: number;
+
+    /**
+     * Fill and line state variables, in twips.
+     */
+    private _currentStrokeWidth: number;
 
     /**
      * Bounding box excluding strokes.
@@ -293,6 +300,8 @@ module Shumway.AVM2.AS.flash.display {
       caps = asCoerceString(caps);
       joints = asCoerceString(joints);
       miterLimit = clamp(+miterLimit|0, 0, 0xff);
+
+      this._currentStrokeWidth = thickness * 20|0;
 
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(PathCommand.LineStyleSolid);
@@ -749,7 +758,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _extendBoundsByPoint(x: number, y: number): void {
-      var strokeWidth: number = 0;
+      var strokeWidth: number = this._currentStrokeWidth;
       var bounds = this._fillBounds;
       bounds.extendByPoint(x, y);
 
