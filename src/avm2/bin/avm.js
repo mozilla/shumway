@@ -17,6 +17,8 @@
  */
 
 var homePath = "../../../";
+var jsBuildPath = homePath + "src/";
+var tsBuildPath = homePath + "build/ts/";
 
 if (environment.SHUMWAY_HOME) {
   homePath = environment.SHUMWAY_HOME.trim();
@@ -47,13 +49,13 @@ console = {
  * Load Bare AVM2 Dependencies
  */
 
-load(homePath + "src/avm2/global.js");
-load(homePath + "src/utilities.js");
-load(homePath + "src/dataBuffer.js");
-load(homePath + "src/options.js");
-load(homePath + "src/settings.js");
+load(tsBuildPath + "avm2/global.js");
+load(tsBuildPath + "/utilities.js");
+load(tsBuildPath + "/dataBuffer.js");
+load(tsBuildPath + "/options.js");
+load(tsBuildPath + "/settings.js");
 
-load(homePath + "src/avm2/avm2Util.js");
+load(jsBuildPath + "avm2/avm2Util.js");
 
 var IndentingWriter = Shumway.IndentingWriter;
 
@@ -68,7 +70,7 @@ var argumentParser = new ArgumentParser();
 var systemOptions = new OptionSet("System Options");
 var shumwayOptions = systemOptions.register(new OptionSet("Shumway Options"));
 
-load(homePath + "src/avm2/options.js");
+load(tsBuildPath + "avm2/options.js");
 
 var shellOptions = systemOptions.register(new OptionSet("AVM2 Shell Options"));
 var disassemble = shellOptions.register(new Option("d", "disassemble", "boolean", false, "disassemble"));
@@ -84,11 +86,11 @@ var traceMetrics = shellOptions.register(new Option("tm", "traceMetrics", "boole
 var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", false, "run in release mode (!release is the default)"));
 
 
-load(homePath + "src/metrics.js");
-load(homePath + "src/avm2/constants.js");
-load(homePath + "src/avm2/opcodes.js");
-load(homePath + "src/avm2/parser.js");
-load(homePath + "src/avm2/domain.js");
+load(tsBuildPath + "metrics.js");
+load(jsBuildPath + "avm2/constants.js");
+load(tsBuildPath + "avm2/opcodes.js");
+load(tsBuildPath + "avm2/parser.js");
+load(tsBuildPath + "avm2/domain.js");
 
 var AbcFile = Shumway.AVM2.ABC.AbcFile;
 var AbcStream = Shumway.AVM2.ABC.AbcStream;
@@ -106,8 +108,8 @@ var EXECUTION_MODE = Shumway.AVM2.Runtime.ExecutionMode;
 // var ApplicationDomain = Shumway.AVM2.Runtime.ApplicationDomain;
 var SecurityDomain = Shumway.AVM2.Runtime.SecurityDomain;
 
-load(homePath + "src/avm2/disassembler.js");
-load(homePath + "src/avm2/stubs.js");
+load(jsBuildPath + "avm2/disassembler.js");
+// load(tsBuildPath + "avm2/stubs.js");
 
 var Timer = Shumway.Metrics.Timer;
 var Counter = new Shumway.Metrics.Counter();

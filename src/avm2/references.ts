@@ -46,4 +46,5 @@
 ///<reference path='compiler/c4/ast.ts' />
 ///<reference path='compiler/c4/nodes.ts' />
 ///<reference path='compiler/c4/as.nodes.ts' />
+///<reference path='compiler/c4/loop.ts' />
 ///<reference path='compiler/c4/opt.ts' />
