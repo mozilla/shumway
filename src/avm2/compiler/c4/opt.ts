@@ -15,7 +15,7 @@
  */
 ///<reference path='../../references.ts' />
 
-module Shumway.AVM2.Compiler {
+module Shumway.AVM2.Compiler.IR {
   import unexpected = Shumway.Debug.unexpected;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
   import top = Shumway.ArrayUtilities.top;

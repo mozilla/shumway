@@ -339,6 +339,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class BlockStatement extends Statement {
+    end: IR.Node;
     constructor (public body: Statement []) {
       super();
     }
@@ -493,7 +494,7 @@ module Shumway.AVM2.Compiler.AST {
   }
 
   export class VariableDeclarator extends Node {
-    constructor (public id: Node, public init: Node) {
+    constructor (public id: Node, public init?: Node) {
       super();
     }
     toSource(precedence: number) : string {

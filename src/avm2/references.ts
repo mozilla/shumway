@@ -48,3 +48,4 @@
 ///<reference path='compiler/c4/as.nodes.ts' />
 ///<reference path='compiler/c4/looper.ts' />
 ///<reference path='compiler/c4/opt.ts' />
+///<reference path='compiler/c4/back.ts' />

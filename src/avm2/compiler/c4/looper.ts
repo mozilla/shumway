@@ -19,6 +19,10 @@ module Shumway.AVM2.Compiler.Looper {
   import top = Shumway.ArrayUtilities.top;
   import peek = Shumway.ArrayUtilities.peek;
 
+  import CFG = Compiler.IR.CFG;
+  import Block = Compiler.IR.Block;
+  import BlockVisitor = Compiler.IR.BlockVisitor;
+
   export module Control {
     export enum Kind {
       SEQ = 1,
@@ -39,6 +43,8 @@ module Shumway.AVM2.Compiler.Looper {
       constructor(public kind: Kind) {
 
       }
+
+      compile: (cx, state) => Compiler.AST.Node;
     }
 
     export class Seq extends ControlNode {

@@ -15,7 +15,7 @@
  */
 ///<reference path='../../references.ts' />
 
-module Shumway.AVM2.Compiler {
+module Shumway.AVM2.Compiler.IR {
   export class ASScope extends Value {
     constructor(public parent: Node, public object: Node, public isWith: boolean) {
       super();

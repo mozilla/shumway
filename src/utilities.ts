@@ -292,6 +292,15 @@ module Shumway {
       return array[array.length - 1];
     }
 
+    export function pushUnique(array: any [], value: any) {
+      for (var i = 0, j = array.length; i < j; i++) {
+        if (array[i] === value) {
+          return;
+        }
+      }
+      array.push(value);
+    }
+
     export function copyFrom(dst: any [], src: any []) {
       dst.length = 0;
       ArrayUtilities.pushMany(dst, src);

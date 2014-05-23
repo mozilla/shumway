@@ -51,7 +51,7 @@
  *
  */
 
-module Shumway.AVM2.Compiler {
+module Shumway.AVM2.Compiler.IR {
   import unexpected = Shumway.Debug.unexpected;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
 
@@ -69,6 +69,15 @@ module Shumway.AVM2.Compiler {
     }
   }
 
+  // Clean this up.
+  export enum Flags {
+    INDEXED = 0x01,
+    RESOLVED = 0x02,
+    PRISTINE = 0x04,
+    IS_METHOD = 0x08,
+    AS_CALL = 0x10
+  }
+
   export class Node {
     private static _nextID: number [];
     static nextID(): number {
@@ -82,6 +91,9 @@ module Shumway.AVM2.Compiler {
     constructor() {
       this.id = Node.nextID();
     }
+
+    compile: (cx) => void;
+
     visitInputs(visitor: NodeVisitor) {
 
     }
@@ -471,6 +483,12 @@ module Shumway.AVM2.Compiler {
 
     static TYPE_OF     = new Operator("typeof", (a) => typeof a,  false);
     static BITWISE_NOT = new Operator("~", (a) => ~a,             false);
+    static AS_ADD      = new Operator("+", function (l, r) {
+      if (typeof l === "string" || typeof r === "string") {
+        return String(l) + String(r);
+      }
+      return l + r;
+    }, true);
 
     static linkOpposites(a: Operator, b: Operator) {
       a.not = b;
