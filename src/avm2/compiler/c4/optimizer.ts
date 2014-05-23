@@ -23,6 +23,7 @@ module Shumway.AVM2.Compiler.IR {
   import IndentingWriter = Shumway.IndentingWriter;
 
   declare var BitSetFunctor;
+  var debug = false;
 
   function toID(node) {
     return node.id;
@@ -105,6 +106,11 @@ module Shumway.AVM2.Compiler.IR {
     dominator: Block;
     successors: Block [];
     predecessors: Block [];
+
+    /**
+     * This is added by the codegen.
+     */
+    compile: (cx, state) => void;
 
     /**
      * This is stuff added on by the looper which needs to be really cleaned up.
@@ -1228,6 +1234,47 @@ module Shumway.AVM2.Compiler.IR {
 
       writer.leave("}");
       writer.writeLn("");
+    }
+  }
+
+  /**
+   * Peephole optimizations:
+   */
+  export class PeepholeOptimizer {
+    foldUnary(node, truthy) {
+      release || assert (node instanceof Unary);
+      if (isConstant(node.argument)) {
+        return new Constant(node.operator.evaluate(node.argument.value));
+      }
+      if (truthy) {
+        var argument = this.fold(node.argument, true);
+        if (node.operator === Operator.TRUE) {
+          return argument;
+        }
+        if (argument instanceof Unary) {
+          if (node.operator === Operator.FALSE && argument.operator === Operator.FALSE) {
+            return argument.argument;
+          }
+        } else {
+          return new Unary(node.operator, argument);
+        }
+      }
+      return node;
+    }
+    foldBinary(node, truthy) {
+      release || assert (node instanceof Binary);
+      if (isConstant(node.left) && isConstant(node.right)) {
+        return new Constant(node.operator.evaluate(node.left.value, node.right.value));
+      }
+      return node;
+    }
+    fold(node, truthy) {
+      if (node instanceof Unary) {
+        return this.foldUnary(node, truthy);
+      } else if (node instanceof Binary) {
+        return this.foldBinary(node, truthy);
+      }
+      return node;
     }
   }
 }

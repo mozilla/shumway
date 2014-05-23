@@ -249,7 +249,7 @@ module Shumway.AVM2.AS {
   }
 
   /**
-   * Inherit from this if you don't want to inherit the junk from ASObject
+   * Inherit from this if you don't want to inherit the static junk from ASObject
    */
   export class ASNative extends ASObject {
     public static baseClass: typeof ASClass = null;

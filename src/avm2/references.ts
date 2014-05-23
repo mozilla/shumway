@@ -42,10 +42,11 @@
 ///<reference path='natives/proxy.ts' />
 ///<reference path='natives/byteArray.ts' />
 ///<reference path='natives/system.ts' />
+
 ///<reference path='compiler/verifier.ts' />
 ///<reference path='compiler/c4/ast.ts' />
-///<reference path='compiler/c4/nodes.ts' />
-///<reference path='compiler/c4/as.nodes.ts' />
+///<reference path='compiler/c4/ir.ts' />
+///<reference path='compiler/c4/as.ir.ts' />
 ///<reference path='compiler/c4/looper.ts' />
-///<reference path='compiler/c4/opt.ts' />
-///<reference path='compiler/c4/back.ts' />
+///<reference path='compiler/c4/optimizer.ts' />
+///<reference path='compiler/c4/backend.ts' />

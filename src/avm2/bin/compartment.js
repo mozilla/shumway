@@ -52,13 +52,15 @@ load(tsBuildPath + "avm2/bytecode.js");
 load(jsBuildPath + "avm2/disassembler.js");
 
 Timer.start("Loading Compiler");
-load(tsBuildPath + "avm2/compiler/c4/ast.js");
 load(tsBuildPath + "avm2/compiler/verifier.js");
-load(jsBuildPath + "avm2/compiler/c4/ir.js");
+load(tsBuildPath + "avm2/compiler/c4/ir.js");
+load(tsBuildPath + "avm2/compiler/c4/as.ir.js");
+load(tsBuildPath + "avm2/compiler/c4/ast.js");
+load(tsBuildPath + "avm2/compiler/c4/optimizer.js");
 load(tsBuildPath + "avm2/compiler/c4/looper.js");
-load(jsBuildPath + "avm2/compiler/c4/backend.js");
-load(jsBuildPath + "avm2/compiler/aot.js");
+load(tsBuildPath + "avm2/compiler/c4/backend.js");
 load(jsBuildPath + "avm2/compiler/builder.js");
+load(jsBuildPath + "avm2/compiler/aot.js");
 Timer.stop();
 
 Timer.start("Loading Runtime");

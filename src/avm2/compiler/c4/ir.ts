@@ -79,17 +79,20 @@ module Shumway.AVM2.Compiler.IR {
   }
 
   export class Node {
-    private static _nextID: number [];
-    static nextID(): number {
-      return Node.nextID[Node.nextID.length - 1] += 1
+    private static _nextID: number [] = [];
+
+    static getNextID(): number {
+      return Node._nextID[Node._nextID.length - 1] += 1
     }
+
     id: number;
+    control: Control;
     nodeName: string;
     variable: Variable;
-
     mustFloat: boolean;
+
     constructor() {
-      this.id = Node.nextID();
+      this.id = Node.getNextID();
     }
 
     compile: (cx) => void;
@@ -172,8 +175,9 @@ module Shumway.AVM2.Compiler.IR {
   export class Start extends Region {
     scope: Node;
     domain: Node;
-    constructor(control: Control) {
-      super(control);
+    constructor() {
+      super(null);
+      this.control = this;
     }
     visitInputs(visitor: NodeVisitor) {
       visitArrayInputs(this.predecessors, visitor);

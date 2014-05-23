@@ -43,12 +43,14 @@ var createName = function createName(namespaces, name) {
 
   var c4AsTypeLate = true;
 
+  var IR = Shumway.AVM2.Compiler.IR;
   var Node = IR.Node;
   var Start = IR.Start;
   var Null = IR.Null;
   var Undefined = IR.Undefined;
   var This = IR.This;
   var Projection = IR.Projection;
+  var ProjectionType = IR.ProjectionType;
   var Region = IR.Region;
   var Binary = IR.Binary;
   var Unary = IR.Unary;
@@ -248,7 +250,7 @@ var createName = function createName(namespaces, name) {
   function unary(operator, argument) {
     var node = new Unary(operator, argument);
     if (peepholeOptimizer) {
-      node = peepholeOptimizer.tryFold(node);
+      node = peepholeOptimizer.fold(node);
     }
     return node;
   }
@@ -263,7 +265,7 @@ var createName = function createName(namespaces, name) {
       }
     }
     if (peepholeOptimizer) {
-      node = peepholeOptimizer.tryFold(node);
+      node = peepholeOptimizer.fold(node);
     }
     return node;
   }
@@ -386,13 +388,13 @@ var createName = function createName(namespaces, name) {
         state.local.push(Undefined);
       }
 
-      state.store = new Projection(start, Projection.Type.STORE);
+      state.store = new Projection(start, ProjectionType.STORE);
       if (this.hasDynamicScope) {
         start.scope = new Parameter(start, 0, SAVED_SCOPE_NAME);
       } else {
         start.scope = new Constant(this.scope);
       }
-      state.saved = new Projection(start, Projection.Type.SCOPE);
+      state.saved = new Projection(start, ProjectionType.SCOPE);
       start.domain = new Constant(this.domain);
 
       var args = new IR.Arguments(start);
@@ -659,7 +661,7 @@ var createName = function createName(namespaces, name) {
          * previous active store node.
          */
         function store(node) {
-          state.store = new Projection(node, Projection.Type.STORE);
+          state.store = new Projection(node, ProjectionType.STORE);
           node.loads = state.loads.slice(0);
           state.loads.length = 0;
           return node;
@@ -860,7 +862,7 @@ var createName = function createName(namespaces, name) {
 
         function truthyCondition(operator) {
           var right;
-          if (operator.isBinary()) {
+          if (operator.isBinary) {
             right = pop();
           }
           var left = pop();
@@ -871,7 +873,7 @@ var createName = function createName(namespaces, name) {
             node = unary(operator, left);
           }
           if (peepholeOptimizer) {
-            node = peepholeOptimizer.tryFold(node, true);
+            node = peepholeOptimizer.fold(node, true);
           }
           return node;
         }
@@ -879,14 +881,14 @@ var createName = function createName(namespaces, name) {
         function negatedTruthyCondition(operator) {
           var node = unary(Operator.FALSE, truthyCondition(operator));
           if (peepholeOptimizer) {
-            node = peepholeOptimizer.tryFold(node, true);
+            node = peepholeOptimizer.fold(node, true);
           }
           return node;
         }
 
         function pushExpression(operator, toInt) {
           var left, right;
-          if (operator.isBinary()) {
+          if (operator.isBinary) {
             right = pop();
             left = pop();
             if (toInt) {
@@ -909,11 +911,11 @@ var createName = function createName(namespaces, name) {
           release || assert (!stops);
           var _if = new IR.If(region, predicate);
           stops = [{
-            control: new Projection(_if, Projection.Type.FALSE),
+            control: new Projection(_if, ProjectionType.FALSE),
             target: bytecodes[bc.position + 1],
             state: state
           }, {
-            control: new Projection(_if, Projection.Type.TRUE),
+            control: new Projection(_if, ProjectionType.TRUE),
             target: bc.target,
             state: state
           }];
@@ -945,7 +947,7 @@ var createName = function createName(namespaces, name) {
             var _switch = new IR.Switch(region, determinant);
             for (var i = 0; i < bc.targets.length; i++) {
               stops.push({
-                control: new Projection(_switch, Projection.Type.CASE, constant(i)),
+                control: new Projection(_switch, ProjectionType.CASE, constant(i)),
                 target: bc.targets[i],
                 state: state
               });
@@ -955,11 +957,11 @@ var createName = function createName(namespaces, name) {
             var predicate = binary(Operator.SEQ, determinant, constant(0));
             var _if = new IR.If(region, predicate);
             stops = [{
-              control: new Projection(_if, Projection.Type.FALSE),
+              control: new Projection(_if, ProjectionType.FALSE),
               target: bc.targets[1],
               state: state
             }, {
-              control: new Projection(_if, Projection.Type.TRUE),
+              control: new Projection(_if, ProjectionType.TRUE),
               target: bc.targets[0],
               state: state
             }];
@@ -1571,7 +1573,7 @@ var createName = function createName(namespaces, name) {
     Timer.stop();
 
     Timer.start("Generate Source");
-    var result = Backend.generate(cfg);
+    var result = Shumway.AVM2.Compiler.generate(cfg);
     Timer.stop();
     traceSource && writer.writeLn(result.body);
     Node.stopNumbering();
