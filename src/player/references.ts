@@ -36,12 +36,16 @@ module Shumway {
     new Shumway.Options.Option("", "Enable Frame Execution", "boolean", true, "Enable frame execution.")
   );
 
+  export var timerEnabledOption = playerOptions.register (
+    new Shumway.Options.Option("", "Enable Timers", "boolean", true, "Enable timer events.")
+  );
+
   export var pumpEnabledOption = playerOptions.register (
     new Shumway.Options.Option("", "Enable Pump", "boolean", true, "Enable display tree serialization.")
   );
 
   export var pumpRateOption = playerOptions.register (
-    new Shumway.Options.Option("", "Pump Rate", "number", 60, "Number of times / second that the display list is synchronized.", {range: { min: 1, max: 60, step: 1 }})
+    new Shumway.Options.Option("", "Pump Rate", "number", 80, "Number of times / second that the display list is synchronized.", {range: { min: 1, max: 120, step: 1 }})
   );
 
   export var frameRateOption = playerOptions.register (

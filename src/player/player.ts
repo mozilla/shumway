@@ -58,6 +58,22 @@ module Shumway {
     private _mouseEventDispatcher: MouseEventDispatcher;
     private _keyboardEventDispatcher: KeyboardEventDispatcher;
 
+
+    /**
+     * Time since the last time we've synchronized the display list.
+     */
+    private _lastPumpTime = 0;
+
+    /**
+     * Page Visibility API visible state.
+     */
+    private _isPageVisible = true;
+
+    /**
+     * Page focus state.
+     */
+    private _hasFocus = true;
+
     constructor(channel: IPlayerChannel) {
       this._channel = channel;
 
@@ -65,6 +81,44 @@ module Shumway {
       this._mouseEventDispatcher = new MouseEventDispatcher();
 
       channel.registerForEventUpdates(this._processEventUpdates.bind(this));
+
+      this._addEventListeners();
+    }
+
+    private _addEventListeners() {
+      this._addVisibilityChangeListener();
+      this._addFocusBlurListener();
+    }
+
+    private _addVisibilityChangeListener() {
+      var self = this;
+      document.addEventListener('visibilitychange', function(event) {
+        self._isPageVisible = !document.hidden;
+      });
+    }
+
+    private _addFocusBlurListener() {
+      var self = this;
+      window.addEventListener('focus', function(event) {
+        self._hasFocus = true;
+      });
+      window.addEventListener('blur', function(event) {
+        self._hasFocus = false;
+      });
+    }
+
+    /**
+     * Whether we can get away with rendering at a lower rate.
+     */
+    private _shouldThrottleDownRendering() {
+      return !this._isPageVisible || !this._hasFocus;
+    }
+
+    /**
+     * Whether we can get away with executing frames at a lower rate.
+     */
+    private _shouldThrottleDownFrameExecution() {
+      return !this._isPageVisible || !this._hasFocus;
     }
 
     public load(url: string) {
@@ -110,7 +164,6 @@ module Shumway {
     }
 
     private _enterLoops(): void {
-      this._enterSyncLoop();
       this._enterEventLoop();
     }
 
@@ -137,16 +190,20 @@ module Shumway {
     /**
      * Update the frame container with the latest changes from the display list.
      */
-    private _enterSyncLoop(): void {
-      var self = this;
-      (function tick() {
-        self._syncTimeout = setTimeout(tick, 1000 / pumpRateOption.value);
-        timeline && timeline.enter("pump");
-        if (pumpEnabledOption.value) {
-          self._pumpDisplayListUpdates()
-        }
-        timeline && timeline.leave("pump");
-      })();
+    private _pumpUpdates() {
+      if (this._shouldThrottleDownRendering()) {
+        return;
+      }
+      var timeSinceLastPump = performance.now() - this._lastPumpTime;
+      if (timeSinceLastPump < (1000 / pumpRateOption.value)) {
+        return;
+      }
+      timeline && timeline.enter("pump");
+      if (pumpEnabledOption.value) {
+        this._pumpDisplayListUpdates();
+        this._lastPumpTime = performance.now();
+      }
+      timeline && timeline.leave("pump");
     }
 
     private _leaveSyncLoop(): void {
@@ -161,7 +218,7 @@ module Shumway {
       frameRateOption.value = stage.frameRate;
       (function tick() {
         self._frameTimeout = setTimeout(tick, 1000 / frameRateOption.value);
-        if (!frameEnabledOption.value) {
+        if (!frameEnabledOption.value || self._shouldThrottleDownFrameExecution()) {
           return;
         }
         for (var i = 0; i < frameRateMultiplierOption.value; i++) {
@@ -169,13 +226,14 @@ module Shumway {
           MovieClip.initFrame();
           MovieClip.constructFrame();
           Loader.progress();
-          if (rootInitialized) {
-            stage.render();
-          } else {
-            rootInitialized = true;
-          }
           timeline && timeline.leave("eventLoop");
         }
+        if (rootInitialized) {
+          stage.render();
+        } else {
+          rootInitialized = true;
+        }
+        self._pumpUpdates();
       })();
     }
 

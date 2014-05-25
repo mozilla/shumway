@@ -23,7 +23,13 @@ module Shumway.AVM2.AS.flash.utils {
     static initializer: any = null;
     static classSymbols: string [] = null; // [];
     static instanceSymbols: string [] = ["start"]; // ["_delay", "_repeatCount", "_iteration", "delay", "delay", "repeatCount", "repeatCount", "currentCount", "reset", "start", "tick"];
-    
+
+    /**
+     * This lets you toggle timer event dispatching which is useful when trying to profile other
+     * parts of the system.
+     */
+    public static dispatchingEnabled = true;
+
     constructor (delay: number, repeatCount: number /*int*/ = 0) {
       false && super(undefined);
       notImplemented("Dummy Constructor: public flash.utils.Timer");
@@ -59,7 +65,9 @@ module Shumway.AVM2.AS.flash.utils {
       if (!this._running) {
         return;
       }
-      this.dispatchEvent(new flash.events.TimerEvent("timer", true, false));
+      if (flash.utils.Timer.dispatchingEnabled) {
+        this.dispatchEvent(new flash.events.TimerEvent("timer", true, false));
+      }
     }
   }
 }
