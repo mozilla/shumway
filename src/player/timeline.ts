@@ -291,12 +291,17 @@ module Shumway.Timeline {
   }
 
   export class BinarySymbol extends Symbol {
+    buffer: Uint8Array;
+    byteLength: number;
+
     constructor(id: number) {
       super(id, flash.utils.ByteArray);
     }
 
     static FromData(data: any): BinarySymbol {
       var symbol = new BinarySymbol(data.id);
+      symbol.buffer = data.data;
+      symbol.byteLength = data.data.byteLength;
       return symbol;
     }
   }

@@ -268,7 +268,6 @@ module Shumway.AVM2.AS.flash.display {
           symbol = Timeline.SoundSymbol.FromData(data);
           break;
         case 'binary':
-          debugger;
           symbol = Timeline.BinarySymbol.FromData(data);
           break;
       }

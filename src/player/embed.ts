@@ -43,15 +43,15 @@ module Shumway {
       var type = e.data.type;
       switch (type) {
         case 'player':
-          var updates = DataBuffer.fromArrayBuffer(e.data.updates.buffer);
+          var updates = DataBuffer.FromArrayBuffer(e.data.updates.buffer);
           var assetLengths = e.data.assetLengths;
           var assets = e.data.assets.map(function (assetBytes, index) {
-            return DataBuffer.fromArrayBuffer(assetBytes.buffer, assetLengths[index]);
+            return DataBuffer.FromArrayBuffer(assetBytes.buffer, assetLengths[index]);
           });
           this._channelUpdatesListener(updates, assets);
           break;
         case 'gfx':
-          var updates = DataBuffer.fromArrayBuffer(e.data.updates.buffer);
+          var updates = DataBuffer.FromArrayBuffer(e.data.updates.buffer);
           this._channelEventUpdatesListener(updates);
           break;
       }
