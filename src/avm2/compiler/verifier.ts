@@ -859,6 +859,7 @@ module Shumway.AVM2.Verifier {
 
         var resolved = self.domain.findDefiningScript(mn.getConstantValue(), false);
         if (resolved) {
+          ti().object = LazyInitializer.create(resolved.script);
           var type = Type.from(resolved.script, self.domain);
           writer && writer.debugLn("findProperty(" + mn + ") -> " + type);
           return type;
