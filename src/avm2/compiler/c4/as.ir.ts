@@ -36,7 +36,8 @@ module Shumway.AVM2.Compiler.IR {
       visitor(this.name);
     }
   }
-  ASScope.prototype.nodeName = "ASMultiname";
+  ASMultiname.prototype.mustFloat = true;
+  ASMultiname.prototype.nodeName = "ASMultiname";
 
   export class ASCallProperty extends CallProperty {
     constructor(control: Control, store: Store, object: Value, name: Value, args: Value [], flags: number, public isLex: boolean) {

@@ -626,6 +626,7 @@ module Shumway.AVM2.Compiler.IR {
     }
   }
 
+  KeyValuePair.prototype.mustFloat = true;
   KeyValuePair.prototype.nodeName = "KeyValuePair";
 
   export function nameOf(node) {
