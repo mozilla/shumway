@@ -405,7 +405,7 @@ module Shumway.AVM2.AS.flash.display {
         if (radiusX === radiusY) {
           this.drawCircle(x + radiusX, y + radiusY, radiusX);
         } else {
-          this.drawEllipse(x + radiusX, y + radiusY, radiusX, radiusY);
+          this.drawEllipse(x, y, radiusX * 2, radiusY * 2);
         }
         return;
       }
@@ -468,41 +468,66 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     drawCircle(x: number, y: number, radius: number): void {
-      this.drawEllipse(+x, +y, +radius, +radius);
+      // TODO: Implement these using arcs not ellipses. The latter is not
+      // visually correct when the stroke is very thick and the circle is
+      // very small.
+      radius = +radius;
+      this.drawEllipse(+x - radius, +y - radius, radius * 2, radius * 2);
     }
 
+    /**
+     * Here x and y are the top-left coordinates of the bounding box of the
+     * ellipse not the center as is the case for circles.
+     */
     drawEllipse(x: number, y: number, width: number, height: number): void {
       x = +x;
       y = +y;
       width = +width;
       height = +height;
 
+      /*
+       *          , - ~ 3 ~ - ,
+       *      , '               ' ,
+       *    ,                       ,
+       *   ,                         ,
+       *  ,                           ,
+       *  2             o             0
+       *  ,                           ,
+       *   ,                         ,
+       *    ,                       ,
+       *      ,                  , '
+       *        ' - , _ 1 _ ,  '
+       */
+
       var rx = width / 2;
       var ry = height / 2;
+      // Move x, y to the middle of the ellipse.
+      x += rx;
+      y += ry;
       var currentX = x + rx;
       var currentY = y;
-      this.lineTo(currentX * width, currentY * height);
+      this.moveTo(currentX, currentY); // 0
       var startAngle = 0;
       var u = 1;
       var v = 0;
       for (var i = 0; i < 4; i++) {
         var endAngle = startAngle + Math.PI / 2;
         var kappa = (4 / 3) * Math.tan((endAngle - startAngle) / 4);
-        var cp1x = currentX - v * kappa;
-        var cp1y = currentY + u * kappa;
+        var cp1x = currentX - v * kappa * rx;
+        var cp1y = currentY + u * kappa * ry;
         u = Math.cos(endAngle);
         v = Math.sin(endAngle);
-        currentX = x + u;
-        currentY = y + v;
-        var cp2x = currentX + v * kappa;
-        var cp2y = currentY - u * kappa;
+        currentX = x + u * rx;
+        currentY = y + v * ry;
+        var cp2x = currentX + v * kappa * rx;
+        var cp2y = currentY - u * kappa * ry;
         this.cubicCurveTo(
-          cp1x * rx,
-          cp1y * ry,
-          cp2x * rx,
-          cp2y * ry,
-          currentX * rx,
-          currentY * ry
+          cp1x,
+          cp1y,
+          cp2x,
+          cp2y,
+          currentX,
+          currentY
         );
         startAngle = endAngle;
       }
