@@ -87,7 +87,7 @@ body.simple #stageContainer {
 #fpsPanelContainer {
   position: absolute;
   top: 32px;
-  right: 500px;
+  right: 300px;
   left: 0;
   height: 100px;
   background-color: rgba(0, 0, 0, 0.2);
@@ -122,7 +122,7 @@ body.simple #stageContainer {
   top: 32px;
   bottom: 0;
   right: 0;
-  width: 500px;
+  width: 300px;
   overflow-y: auto;
   overflow-x: hidden;
   background-color: rgba(0, 0, 0, 0.2);
@@ -137,7 +137,7 @@ body.simple #stageContainer {
 }
 
 #settingsContainer > .dg.main {
-  width: 499px !important;
+  width: 299px !important;
 }
 #settingsContainer > .dg .property-name {
   width: 50%;
@@ -230,7 +230,7 @@ body.simple #stageContainer {
   top: 133px;
   bottom: 0;
   left: 0;
-  right: 500px;
+  right: 300px;
   overflow: auto;
   display: -webkit-box;
   display: -moz-box;
