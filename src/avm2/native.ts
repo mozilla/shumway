@@ -1344,37 +1344,45 @@ module Shumway.AVM2.AS {
     public static staticNatives: any [] = [XRegExp];
     public static instanceNatives: any [] = [XRegExp.prototype];
 
-    get source(): string {
-      return this.source;
+    get native_source(): string {
+      var self: any = this;
+      return self.source;
     }
 
-    get global(): boolean {
-      return this.global;
+    get native_global(): boolean {
+      var self: any = this;
+      return self.global;
     }
 
-    get ignoreCase(): boolean {
-      return this.ignoreCase;
+    get native_ignoreCase(): boolean {
+      var self: any = this;
+      return self.ignoreCase;
     }
 
-    get multiline(): boolean {
-      return this.multiline;
+    get native_multiline(): boolean {
+      var self: any = this;
+      return self.multiline;
     }
 
-    get lastIndex(): number /*int*/ {
-      return this.lastIndex;
+    get native_lastIndex(): number /*int*/ {
+      var self: any = this;
+      return self.lastIndex;
     }
 
-    set lastIndex(i: number /*int*/) {
+    set native_lastIndex(i: number /*int*/) {
+      var self: any = this;
       i = i | 0;
-      this.lastIndex = i;
+      self.lastIndex = i;
     }
 
-    get dotall(): boolean {
-      return this.dotall;
+    get native_dotall(): boolean {
+      var self: any = this;
+      return self.dotall;
     }
 
-    get extended(): boolean {
-      return this.extended;
+    get native_extended(): boolean {
+      var self: any = this;
+      return self.extended;
     }
 
     exec(s: string = ""): any {
