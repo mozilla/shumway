@@ -188,7 +188,7 @@ for (var f = 0; f < files.length; f++) {
        */
       SWF = {};
       load(homePath + "src/swf/swf.js");
-      load(homePath + "src/flash/util.js");
+      load(homePath + "src/swf/util.js");
       load(homePath + "src/swf/types.js");
       load(homePath + "src/swf/structs.js");
       load(homePath + "src/swf/tags.js");
