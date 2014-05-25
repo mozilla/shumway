@@ -575,6 +575,29 @@ module Shumway.GFX.Geometry {
       this.ty = other.ty;
     }
 
+    /**
+     * Whether the transformed query rectangle is empty after this transform is applied to it.
+     */
+    emptyArea(query: Rectangle): boolean {
+      // TODO: Work out the details here.
+      if (this.a === 0 || this.d === 0) {
+         return true;
+      }
+      return false;
+    }
+
+    /**
+     * Whether the area of transformed query rectangle is infinite after this transform is applied to it.
+     */
+    infiniteArea(query: Rectangle): boolean {
+      // TODO: Work out the details here.
+      if (Math.abs(this.a) === Infinity ||
+          Math.abs(this.d) === Infinity) {
+        return true;
+      }
+      return false;
+    }
+
     isEqual (other: Matrix) {
       return this.a  === other.a  &&
              this.b  === other.b  &&
@@ -1396,6 +1419,11 @@ module Shumway.GFX.Geometry {
      * TODO: Fine-tune these heuristics.
      */
     getTiles(query: Rectangle, transform: Matrix): Tile [] {
+      if (transform.emptyArea(query)) {
+        return [];
+      } else if (transform.infiniteArea(query)) {
+        return this.tiles;
+      }
       var tileCount = this.columns * this.rows;
       // The |getFewTiles| algorithm works better for a few tiles but it can't handle skew transforms.
       if (tileCount < 40 && transform.isScaleOrRotation()) {
@@ -1739,5 +1767,4 @@ module Shumway.GFX.Geometry {
       }
     }
   }
-
 }
