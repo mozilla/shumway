@@ -453,7 +453,7 @@ module Shumway.GFX {
         var hasColorMatrix: boolean = (!frame.colorMatrix.isIdentity() && !(target & RenderTarget.ColorMatrix));
         var hasBlendMode: boolean = (frame.blendMode > 1 && !(target & RenderTarget.BlendMode));
 
-        if (hasFilters || hasColorMatrix || hasBlendMode) {
+        if (false && (hasFilters || hasColorMatrix || hasBlendMode)) {
           var boundsAABB = frame.getBounds().clone();
           transform.transformRectangleAABB(boundsAABB);
           var tx = boundsAABB.x;
