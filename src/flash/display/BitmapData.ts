@@ -17,6 +17,7 @@
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
@@ -25,7 +26,12 @@ module Shumway.AVM2.AS.flash.display {
   import rgbaToArgb = Shumway.ColorUtilities.rgbaToArgb;
 
   export class BitmapData extends ASNative implements IBitmapDrawable {
-    
+
+    /**
+     * Every bitmap data is assigned an unique integer ID.
+     */
+    static _syncID = 0;
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
@@ -44,8 +50,8 @@ module Shumway.AVM2.AS.flash.display {
 
     constructor (width: number /*int*/, height: number /*int*/, transparent: boolean = true, fillColor: number /*uint*/ = 4294967295) {
       width = width | 0; height = height | 0;
-
       false && super();
+      this._id = BitmapData._syncID++;
       if (width > BitmapData.MAXIMUM_WIDTH ||
         height > BitmapData.MAXIMUM_HEIGHT ||
         width * height > BitmapData.MAXIMUM_DIMENSION) {
@@ -57,14 +63,12 @@ module Shumway.AVM2.AS.flash.display {
       this._transparent = !!transparent;
       this._fillColor = fillColor >>> 0;
       this._pixelData = new Uint32Array(width * height);
+      this._dataBuffer = DataBuffer.FromArrayBuffer(this._pixelData.buffer);
+      this._isDirty = true;
       this.fillRect(this.rect, this._fillColor);
     }
     
-    // JS -> AS Bindings
-
-
-    // AS -> JS Bindings
-    
+    _id: number;
     _width: number /*int*/;
     _height: number /*int*/;
     _transparent: boolean;
@@ -73,6 +77,16 @@ module Shumway.AVM2.AS.flash.display {
     _fillColor: number;
     _locked: boolean;
     _pixelData: Uint32Array;
+    _dataBuffer: DataBuffer;
+    _isDirty: boolean;
+
+    getDataBuffer(): DataBuffer {
+      return this._dataBuffer;
+    }
+
+    _getContentBounds(): Bounds {
+      return new Bounds(0, 0, this._width * 20, this._height * 20);
+    }
 
     private _getPixelData(rect: flash.geom.Rectangle): Uint32Array {
       if (rect.x < 0 || rect.y < 0 ||

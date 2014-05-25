@@ -16,6 +16,7 @@
 module Shumway.Remoting.GFX {
   import Frame = Shumway.GFX.Frame;
   import Shape = Shumway.GFX.Shape;
+  import Bitmap = Shumway.GFX.Bitmap;
   import ShapeGraphics = Shumway.GFX.ShapeGraphics;
   import Renderable = Shumway.GFX.Renderable;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
@@ -101,6 +102,9 @@ module Shumway.Remoting.GFX {
           case MessageTag.UpdateGraphics:
             this._readUpdateGraphics();
             break;
+          case MessageTag.UpdateBitmapData:
+            this._readUpdateBitmapData();
+            break;
           case MessageTag.UpdateFrame:
             this._readUpdateFrame();
             break;
@@ -171,6 +175,20 @@ module Shumway.Remoting.GFX {
       this.inputAssets[assetId] = null;
       if (!asset) {
         context._assets[id] = new ShapeGraphics(pathData, bounds);
+      }
+    }
+
+    private _readUpdateBitmapData() {
+      var input = this.input;
+      var context = this.context;
+      var id = input.readInt();
+      var asset = context._assets[id];
+      var bounds = this._readRectangle();
+      var assetId = input.readInt();
+      var dataBuffer = this.inputAssets[assetId];
+      this.inputAssets[assetId] = null;
+      if (!asset) {
+        context._assets[id] = new Bitmap(dataBuffer, bounds);
       }
     }
 

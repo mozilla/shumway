@@ -34,6 +34,7 @@ module Shumway.Remoting {
 
     UpdateFrame                 = 100,
     UpdateGraphics              = 101,
+    UpdateBitmapData            = 102,
 
     MouseEvent                  = 200,
     KeyboardEvent               = 201

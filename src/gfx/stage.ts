@@ -209,6 +209,44 @@ module Shumway.GFX {
     }
   }
 
+  export class Bitmap implements IRenderable {
+    properties: {[name: string]: any} = {};
+    isDynamic: boolean = false;
+    isInvalid: boolean = false;
+    isScalable: boolean = false;
+    isTileable: boolean = false;
+
+    private _bounds: Rectangle;
+    private _dataBuffer: DataBuffer;
+    private fillStyle: ColorStyle;
+
+    getBounds (): Rectangle {
+      return this._bounds;
+    }
+
+    constructor(dataBuffer: DataBuffer, bounds: Rectangle) {
+      this._bounds = bounds;
+      this._dataBuffer = dataBuffer;
+    }
+
+    render(context: CanvasRenderingContext2D, clipBounds: Shumway.GFX.Geometry.Rectangle): void {
+      this._renderFallback(context);
+    }
+
+    private _renderFallback(context: CanvasRenderingContext2D) {
+      if (!this.fillStyle) {
+        this.fillStyle = Shumway.ColorStyle.randomStyle();
+      }
+      var bounds = this._bounds;
+      context.save();
+      context.beginPath();
+      context.lineWidth = 2;
+      context.fillStyle = this.fillStyle;
+      context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
+      context.restore();
+    }
+  }
+
   export class ShapeGraphics implements IRenderable {
     properties: {[name: string]: any} = {};
     isDynamic: boolean = false;
