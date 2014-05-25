@@ -272,6 +272,8 @@ module Shumway.GFX {
 
     render(context: CanvasRenderingContext2D, clipBounds: Shumway.GFX.Geometry.Rectangle): void {
       context.save();
+      context.fillRule = context.mozFillRule = "evenodd";
+
       var data = this._pathData;
       if (!data || data.length === 0) {
         this._renderFallback(context);
@@ -317,6 +319,7 @@ module Shumway.GFX {
           case PathCommand.EndFill:
             if (fillActive) {
               context.fill();
+              context.closePath();
             }
             fillActive = false;
             context.fillStyle = null;
@@ -339,12 +342,12 @@ module Shumway.GFX {
             context.miterLimit = data.readByte();
             break;
         }
-        if (fillActive) {
-          context.fill();
-        }
-        if (strokeActive) {
-          context.stroke();
-        }
+      }
+      if (fillActive) {
+        context.fill();
+      }
+      if (strokeActive) {
+        context.stroke();
       }
       context.restore();
       this.isInvalid = false;
