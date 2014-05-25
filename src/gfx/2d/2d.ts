@@ -360,6 +360,10 @@ module Shumway.GFX {
         return;
       }
       var context = this.context;
+
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.clearRect(0, 0, context.canvas.width, context.canvas.height);
+
       context.save();
 
       var lastDirtyRectangles: Rectangle[] = [];
