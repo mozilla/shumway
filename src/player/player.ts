@@ -111,14 +111,14 @@ module Shumway {
      * Whether we can get away with rendering at a lower rate.
      */
     private _shouldThrottleDownRendering() {
-      return !this._isPageVisible || !this._hasFocus;
+      return !this._isPageVisible;
     }
 
     /**
      * Whether we can get away with executing frames at a lower rate.
      */
     private _shouldThrottleDownFrameExecution() {
-      return !this._isPageVisible || !this._hasFocus;
+      return !this._isPageVisible;
     }
 
     public load(url: string) {
