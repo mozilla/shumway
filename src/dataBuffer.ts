@@ -107,7 +107,6 @@ module Shumway.ArrayUtilities {
     private _u8View: Uint8Array;
     private _i32View: Int32Array;
     private _f32View: Float32Array;
-    private _f64View: Float64Array;
     private _dataView: DataView;
 
     private _bitBuffer: number;
@@ -159,7 +158,6 @@ module Shumway.ArrayUtilities {
       this._u8View = new Uint8Array(this._buffer);
       this._i32View = new Int32Array(this._buffer);
       this._f32View = new Float32Array(this._buffer);
-      this._f64View = new Float64Array(this._buffer);
       this._dataView = new DataView(this._buffer);
     }
 
