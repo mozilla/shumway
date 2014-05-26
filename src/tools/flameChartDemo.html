@@ -8,25 +8,42 @@
 <body>
   <div id="container"></div>
   <script src="../utilities.js"></script>
+  <script src="profiler/profile.js"></script>
   <script src="profiler/timelineFrame.js"></script>
   <script src="profiler/timelineBuffer.js"></script>
-  <script src="profiler/flameChart.js"></script>
+  <script src="profiler/controller.js"></script>
+  <script src="profiler/mouseController.js"></script>
+  <!--<script src="profiler/flameChart.js"></script>-->
+  <script src="profiler/flameChartHeader.js"></script>
+  <script src="profiler/flameChartOverview.js"></script>
   <script src="profiler/references.js"></script>
   <script>
 
-    var Profiler = Shumway.Tools.Profiler;
     var container = document.getElementById("container");
+
+    var Profiler = Shumway.Tools.Profiler;
 
     if (!jsGlobal.performance) { jsGlobal.performance = {}; }
     if (!jsGlobal.performance.now) { jsGlobal.performance.now = Date.now; }
 
-    getJSON("data/CPU-20140520T215105.json", function(result) {
-      var buffer = Profiler.TimelineBuffer.FromChromeProfile(result);
-      new Profiler.FlameChart(container, buffer);
+    getJSON("data/CPU-20140520T215105.json", function(profile1) {
+      getJSON("data/CPU-20140520T092003.json", function(profile2) {
+
+        var buffer1 = Profiler.TimelineBuffer.createFromChromeProfile(profile1);
+        var buffer2 = Profiler.TimelineBuffer.createFromChromeProfile(profile2);
+
+        var profile = new Profiler.Profile();
+        profile.addBuffer(buffer1, "Thread 1");
+        profile.addBuffer(buffer2, "Thread 2");
+
+        var controller = new Profiler.Controller(profile, container);
+        controller.createSnapshot();
+
+      });
     });
 
     //getJSON("data/Profile 1.json", function(result) {
-    //  var buffer = Profiler.TimelineBuffer.FromFirefoxProfile(result);
+    //  var buffer = Profiler.TimelineBuffer.createFromFirefoxProfile(result);
     //  new Profiler.FlameChart(container, buffer);
     //});
 

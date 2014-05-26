@@ -31,19 +31,23 @@ module Shumway.Tools.Profiler {
     static LEAVE = 0xDEAD0000 | 0;
 
     private _depth: number;
+    private _maxDepth: number;
     private _kindCount: number;
     private _kinds: TimelineItemKind [];
     private _kindNameMap: Shumway.Map<TimelineItemKind>;
     private _marks: Shumway.CircularBuffer;
     private _times: Shumway.CircularBuffer;
+    private _snapshot: TimelineFrame;
 
     constructor() {
       this._depth = 0;
+      this._maxDepth = 0;
       this._kindCount = 0;
       this._kinds = [];
       this._kindNameMap = createEmptyObject();
       this._marks = new Shumway.CircularBuffer(Int32Array, 20);
       this._times = new Shumway.CircularBuffer(Float64Array, 20);
+      this._snapshot = null;
     }
 
     getKind(kind: number): TimelineItemKind {
@@ -52,6 +56,14 @@ module Shumway.Tools.Profiler {
 
     get kinds(): TimelineItemKind [] {
       return this._kinds.concat();
+    }
+
+    get snapshot(): TimelineFrame {
+      return this._snapshot;
+    }
+
+    get maxDepth(): number {
+      return this._maxDepth;
     }
 
     private _getKindId(name: string):number {
@@ -82,25 +94,30 @@ module Shumway.Tools.Profiler {
     /**
      * Constructs an easier to work with TimelineFrame data structure.
      */
-    gatherRange(count: number): TimelineFrame {
+    createSnapshot(count: number = Number.MAX_VALUE) {
+      var times = this._times;
+      var kinds = this._kinds;
       var range = new TimelineFrame(null, null, NaN, NaN);
       var stack: TimelineFrame [] = [range];
-      var times = this._times;
       var topLevelFrameCount = 0;
-      var self = this;
+      var maxDepth = 0;
       this._marks.forEachInReverse(function (mark, i) {
-        var kind = self._kinds[mark & 0xFFFF];
+        var kind = kinds[mark & 0xFFFF];
         if (kind.visible) {
           var action = mark & 0xFFFF0000;
           var time = times.get(i);
+          var stackLength = stack.length;
           if (action === TimelineBuffer.LEAVE) {
-            if (stack.length === 1) {
+            if (stackLength === 1) {
               topLevelFrameCount++;
               if (topLevelFrameCount > count) {
                 return true;
               }
             }
-            stack.push(new TimelineFrame(stack[stack.length - 1], kind, NaN, time));
+            stack.push(new TimelineFrame(stack[stackLength - 1], kind, NaN, time));
+            if (maxDepth < stackLength + 1) {
+              maxDepth = stackLength + 1;
+            }
           } else if (action === TimelineBuffer.ENTER) {
             var node = stack.pop();
             var top = stack[stack.length - 1];
@@ -113,12 +130,15 @@ module Shumway.Tools.Profiler {
           }
         }
       });
-      if (!range.children || !range.children.length) {
-        return null;
+      if (range.children && range.children.length) {
+        range.startTime = range.children[0].startTime;
+        range.endTime = range.children[range.children.length - 1].endTime;
+        this._snapshot = range;
+        this._maxDepth = maxDepth;
+      } else {
+        this._snapshot = null;
+        this._maxDepth = 0;
       }
-      range.startTime = range.children[0].startTime;
-      range.endTime = range.children[range.children.length - 1].endTime;
-      return range;
     }
 
     static FromFirefoxProfile(profile) {
