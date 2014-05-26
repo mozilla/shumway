@@ -23,6 +23,7 @@ module Shumway.AVM2.Compiler {
   import MethodInfo = Shumway.AVM2.ABC.MethodInfo;
   import notImplemented = Shumway.Debug.notImplemented;
   import popManyIntoVoid = Shumway.ArrayUtilities.popManyIntoVoid;
+  import top = Shumway.ArrayUtilities.top;
   import unique = Shumway.ArrayUtilities.unique;
   import Scope = Shumway.AVM2.Runtime.Scope;
   import createEmptyObject = Shumway.ObjectUtilities.createEmptyObject;
@@ -578,7 +579,7 @@ module Shumway.AVM2.Compiler {
       return new IR.ASMultiname(namespaces, name, flags);
     }
 
-    buildIfStops(predicate) {
+    buildIfStops(predicate: Value) {
       var blockState = this.blockState;
       release || assert (!blockState.stops);
       var _if = new IR.If(blockState.region, predicate);
@@ -615,7 +616,7 @@ module Shumway.AVM2.Compiler {
       blockState.stops = [];
     }
 
-    buildSwitchStops(determinant) {
+    buildSwitchStops(determinant: Value) {
       var blockState = this.blockState;
       release || assert (!blockState.stops);
       if (blockState.bc.targets.length > 2) {
@@ -644,6 +645,66 @@ module Shumway.AVM2.Compiler {
       }
     }
 
+    savedScope(): Value {
+      return this.blockState.state.saved;
+    }
+
+    topScope(depth?: number) {
+      var scope = this.blockState.state.scope;
+      if (depth !== undefined) {
+        if (depth < scope.length) {
+          return scope[scope.length - 1 - depth];
+        } else if (depth === scope.length) {
+          return this.savedScope();
+        } else {
+          var s = this.savedScope();
+          var savedScopeDepth = depth - scope.length;
+          for (var i = 0; i < savedScopeDepth; i ++) {
+            s = getJSPropertyWithState(this.blockState.state, s, "parent");
+          }
+          return s;
+        }
+      }
+      if (scope.length > 0) {
+        return top(scope);
+      }
+      return this.savedScope();
+    }
+
+    getGlobalScope(ti): Value {
+      if (ti && ti.object) {
+        return constant(ti.object);
+      }
+      return new IR.ASGlobal(null, this.savedScope());
+    }
+
+    getScopeObject(scope): Value {
+      if (scope instanceof IR.ASScope) {
+        return scope.object;
+      }
+      return getJSPropertyWithState(this.blockState.state, scope, "object");
+    }
+
+    findProperty(multiname, strict, ti?): Value {
+      var blockState = this.blockState;
+      var slowPath = new IR.ASFindProperty(blockState.region, blockState.state.store, this.topScope(), multiname, this.domain, strict);
+      if (ti) {
+        if (ti.object) {
+          if (ti.object instanceof Shumway.AVM2.Runtime.Global && !ti.object.isExecuting()) {
+            // If we find the property in a global whose script hasn't been executed yet
+            // we have to emit the slow path so it gets executed.
+            warn("Can't optimize findProperty " + multiname + ", global object is not yet executed or executing.");
+            return slowPath;
+          }
+          return constant(ti.object);
+        } else if (ti.scopeDepth !== undefined) {
+          return this.getScopeObject(this.topScope(ti.scopeDepth));
+        }
+      }
+      warn("Can't optimize findProperty " + multiname);
+      return slowPath;
+    }
+
     buildBlock(region: Region, block, state) {
       release || assert (region && block && state);
       state.optimize();
@@ -669,31 +730,6 @@ module Shumway.AVM2.Compiler {
       var domain = this.domain;
 
       var bytecodes = this.bytecodes;
-
-      function savedScope() {
-        return state.saved;
-      }
-
-      function topScope(depth?: number) {
-        if (depth !== undefined) {
-          if (depth < scope.length) {
-            return scope[scope.length - 1 - depth];
-          } else if (depth === scope.length) {
-            return savedScope();
-          } else {
-            var s = savedScope();
-            var savedScopeDepth = depth - scope.length;
-            for (var i = 0; i < savedScopeDepth; i ++) {
-              s = getJSProperty(s, "parent");
-            }
-            return s;
-          }
-        }
-        if (scope.length > 0) {
-          return scope.top();
-        }
-        return savedScope();
-      }
 
       var object, receiver, index, callee, value, multiname, type, args, pristine, left, right, operator;
 
@@ -732,32 +768,6 @@ module Shumway.AVM2.Compiler {
         return name;
       }
 
-      function getGlobalScope(ti): Value {
-        if (ti && ti.object) {
-          return constant(ti.object);
-        }
-        return new IR.ASGlobal(null, savedScope());
-      }
-
-      function findProperty(multiname, strict, ti?) {
-        var slowPath = new IR.ASFindProperty(region, state.store, topScope(), multiname, domain, strict);
-        if (ti) {
-          if (ti.object) {
-            if (ti.object instanceof Shumway.AVM2.Runtime.Global && !ti.object.isExecuting()) {
-              // If we find the property in a global whose script hasn't been executed yet
-              // we have to emit the slow path so it gets executed.
-              warn("Can't optimize findProperty " + multiname + ", global object is not yet executed or executing.");
-              return slowPath;
-            }
-            return constant(ti.object);
-          } else if (ti.scopeDepth !== undefined) {
-            return getScopeObject(topScope(ti.scopeDepth));
-          }
-        }
-        warn("Can't optimize findProperty " + multiname);
-        return slowPath;
-      }
-
       function getJSProperty(object, path) {
         return getJSPropertyWithState(state, object, path);
       }
@@ -777,13 +787,6 @@ module Shumway.AVM2.Compiler {
           return call(globalProperty("asCoerceByMultiname"), null, [domain, constant(multiname), value]);
         }
         return value;
-      }
-
-      function getScopeObject(scope) {
-        if (scope instanceof IR.ASScope) {
-          return scope.object;
-        }
-        return getJSProperty(scope, "object");
       }
 
       /**
@@ -1076,25 +1079,25 @@ module Shumway.AVM2.Compiler {
             popLocal(op - OP.setlocal0);
             break;
           case OP.pushwith:
-            scope.push(new IR.ASScope(topScope(), pop(), true));
+            scope.push(new IR.ASScope(this.topScope(), pop(), true));
             break;
           case OP.pushscope:
-            scope.push(new IR.ASScope(topScope(), pop(), false));
+            scope.push(new IR.ASScope(this.topScope(), pop(), false));
             break;
           case OP.popscope:
             scope.pop();
             break;
           case OP.getglobalscope:
-            push(getGlobalScope(bc.ti));
+            push(this.getGlobalScope(bc.ti));
             break;
           case OP.getscopeobject:
-            push(getScopeObject(state.scope[bc.index]));
+            push(this.getScopeObject(state.scope[bc.index]));
             break;
           case OP.findpropstrict:
-            push(findProperty(this.buildMultiname(region, state, bc.index), true, bc.ti));
+            push(this.findProperty(this.buildMultiname(region, state, bc.index), true, bc.ti));
             break;
           case OP.findproperty:
-            push(findProperty(this.buildMultiname(region, state, bc.index), false, bc.ti));
+            push(this.findProperty(this.buildMultiname(region, state, bc.index), false, bc.ti));
             break;
           case OP.getproperty:
             multiname = this.buildMultiname(region, state, bc.index);
@@ -1108,7 +1111,7 @@ module Shumway.AVM2.Compiler {
             break;
           case OP.getlex:
             multiname = this.buildMultiname(region, state, bc.index);
-            push(getProperty(findProperty(multiname, true, bc.ti), multiname, bc.ti, false));
+            push(getProperty(this.findProperty(multiname, true, bc.ti), multiname, bc.ti, false));
             break;
           case OP.initproperty:
           case OP.setproperty:
@@ -1134,19 +1137,19 @@ module Shumway.AVM2.Compiler {
           case OP.getsuper:
             multiname = this.buildMultiname(region, state, bc.index);
             object = pop();
-            push(getSuper(savedScope(), object, multiname, bc.ti));
+            push(getSuper(this.savedScope(), object, multiname, bc.ti));
             break;
           case OP.setsuper:
             value = pop();
             multiname = this.buildMultiname(region, state, bc.index);
             object = pop();
-            setSuper(savedScope(), object, multiname, value, bc.ti);
+            setSuper(this.savedScope(), object, multiname, value, bc.ti);
             break;
           case OP.debugfile:
           case OP.debugline:
             break;
           case OP.newfunction:
-            push(callPure(this.createFunctionCallee, null, [constant(this.abc.methods[bc.index]), topScope(), constant(true)]));
+            push(callPure(this.createFunctionCallee, null, [constant(this.abc.methods[bc.index]), this.topScope(), constant(true)]));
             break;
           case OP.call:
             args = popMany(bc.argCount);
@@ -1170,7 +1173,7 @@ module Shumway.AVM2.Compiler {
             multiname = this.buildMultiname(region, state, bc.index);
             args = popMany(bc.argCount);
             object = pop();
-            value = callSuper(savedScope(), object, multiname, args, bc.ti);
+            value = callSuper(this.savedScope(), object, multiname, args, bc.ti);
             if (op !== OP.callsupervoid) {
               push(value);
             }
@@ -1183,7 +1186,7 @@ module Shumway.AVM2.Compiler {
           case OP.constructsuper:
             args = popMany(bc.argCount);
             object = pop();
-            constructSuper(savedScope(), object, args, bc.ti);
+            constructSuper(this.savedScope(), object, args, bc.ti);
             break;
           case OP.constructprop:
             args = popMany(bc.argCount);
@@ -1487,7 +1490,7 @@ module Shumway.AVM2.Compiler {
           case OP.istype:
             value = pop();
             multiname = this.buildMultiname(region, state, bc.index);
-            type = getProperty(findProperty(multiname, false), multiname);
+            type = getProperty(this.findProperty(multiname, false), multiname);
             push(call(globalProperty("asIsType"), null, [type, value]));
             break;
           case OP.istypelate:
@@ -1534,7 +1537,7 @@ module Shumway.AVM2.Compiler {
             break;
           case OP.newclass:
             callee = globalProperty("createClass");
-            push(call(callee, null, [constant(this.abc.classes[bc.index]), pop(), topScope()]));
+            push(call(callee, null, [constant(this.abc.classes[bc.index]), pop(), this.topScope()]));
             break;
           default:
             notImplemented(String(bc));
