@@ -44,6 +44,7 @@
 ///<reference path='natives/system.ts' />
 
 ///<reference path='compiler/verifier.ts' />
+///<reference path='compiler/builder.ts' />
 ///<reference path='compiler/c4/ast.ts' />
 ///<reference path='compiler/c4/ir.ts' />
 ///<reference path='compiler/c4/as.ir.ts' />

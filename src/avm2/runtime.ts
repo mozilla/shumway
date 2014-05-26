@@ -105,7 +105,6 @@ module Shumway.AVM2.Runtime {
   var callCounter = new Shumway.Metrics.Counter(true);
 
   declare var Counter: Shumway.Metrics.Counter;
-  declare var Compiler;
 
   import Map = Shumway.Map;
   import Multiname = Shumway.AVM2.ABC.Multiname;
@@ -1295,7 +1294,7 @@ module Shumway.AVM2.Runtime {
       }
     }
 
-    public static resolveMultiname(multiname) {
+    public static resolveMultiname(multiname): Multiname {
       var name = multiname.name;
       if (GlobalMultinameResolver.hasNonDynamicNamespaces[name]) {
         return;
@@ -1493,7 +1492,8 @@ module Shumway.AVM2.Runtime {
       fnName += "$V";
     }
     if (!breakpoint) {
-      if (fnName.indexOf(Shumway.AVM2.Compiler.breakAt.value) >= 0) {
+      var breakAt = Shumway.AVM2.Compiler.breakAt.value;
+      if (breakAt && fnName.search(breakAt) >= 0) {
         breakpoint = true;
       }
     }

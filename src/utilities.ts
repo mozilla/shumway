@@ -292,13 +292,21 @@ module Shumway {
       return array[array.length - 1];
     }
 
-    export function pushUnique(array: any [], value: any) {
+    export function pushUnique<T>(array: T [], value: T) {
       for (var i = 0, j = array.length; i < j; i++) {
         if (array[i] === value) {
           return;
         }
       }
       array.push(value);
+    }
+
+    export function unique<T>(array: T []): T [] {
+      var result = [];
+      for (var i = 0; i < array.length; i++) {
+        pushUnique(result, array[i]);
+      }
+      return result;
     }
 
     export function copyFrom(dst: any [], src: any []) {
@@ -1505,7 +1513,7 @@ module Shumway {
       this._length = 0;
     }
 
-    public push(value) {
+    public push(value: T) {
       release || assert(value !== undefined);
       this._length ++;
       if (!this._head) {
@@ -1562,7 +1570,7 @@ module Shumway {
       return !this._head;
     }
 
-    public pop() {
+    public pop(): T {
       if (!this._head) {
         return undefined;
       }
@@ -1572,7 +1580,7 @@ module Shumway {
       return ret.value;
     }
 
-    public contains(value: T) {
+    public contains(value: T): boolean {
       var curr = this._head;
       while (curr) {
         if (curr.value === value) {
@@ -1583,7 +1591,7 @@ module Shumway {
       return false;
     }
 
-    public toString() {
+    public toString(): string {
       var str = "[";
       var curr = this._head;
       while (curr) {

@@ -64,7 +64,7 @@ load("../../build/ts/avm2/compiler/c4/ast.js");
 load("../../build/ts/avm2/compiler/c4/optimizer.js");
 load("../../build/ts/avm2/compiler/c4/looper.js");
 load("../../build/ts/avm2/compiler/c4/backend.js");
-load("../../src/avm2/compiler/builder.js");
+load("../../build/ts/avm2/compiler/builder.js");
 load("../../build/ts/avm2/trampoline.js");
 load("../../build/ts/avm2/bindings.js");
 load("../../build/ts/avm2/scope.js");

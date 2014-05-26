@@ -15,7 +15,7 @@ build/ts/avm2/compiler/c4/ast.js
 build/ts/avm2/compiler/c4/optimizer.js
 build/ts/avm2/compiler/c4/looper.js
 build/ts/avm2/compiler/c4/backend.js
-src/avm2/compiler/builder.js
+build/ts/avm2/compiler/builder.js
 build/ts/avm2/trampoline.js
 build/ts/avm2/bindings.js
 build/ts/avm2/scope.js

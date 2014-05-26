@@ -79,6 +79,8 @@ module Shumway.AVM2.Compiler.IR {
   }
 
   export class Node {
+    abstract: boolean; // TODO: No idea what this is for.
+
     private static _nextID: number [] = [];
 
     static getNextID(): number {
@@ -90,6 +92,8 @@ module Shumway.AVM2.Compiler.IR {
     nodeName: string;
     variable: Variable;
     mustFloat: boolean;
+    shouldFloat: boolean;
+    shouldNotFloat: boolean;
 
     constructor() {
       this.id = Node.getNextID();
@@ -161,6 +165,7 @@ module Shumway.AVM2.Compiler.IR {
   Control.prototype.nodeName = "Control";
 
   export class Region extends Control {
+    entryState: any;
     predecessors: Control [];
     constructor(control: Control) {
       super();
@@ -242,7 +247,7 @@ module Shumway.AVM2.Compiler.IR {
   Jump.prototype.nodeName = "Jump";
 
   export class Value extends Node {
-    abstract: boolean; // TODO: No idea what this is for.
+    ty: Shumway.AVM2.Verifier.Type;
     constructor() {
       super();
     }
@@ -364,6 +369,7 @@ module Shumway.AVM2.Compiler.IR {
   CallProperty.prototype.nodeName = "CallProperty";
 
   export class Phi extends Value {
+    isLoop: boolean;
     sealed: boolean;
     args: Value [];
     constructor(public control: Control, value: Value) {
@@ -426,7 +432,7 @@ module Shumway.AVM2.Compiler.IR {
   }
 
   export class Projection extends Value {
-    constructor(public argument: Node, public type: ProjectionType, public selector?: number) {
+    constructor(public argument: Node, public type: ProjectionType, public selector?: Constant) {
       super();
     }
     visitInputs(visitor: NodeVisitor) {
@@ -571,7 +577,7 @@ module Shumway.AVM2.Compiler.IR {
   Throw.prototype.nodeName = "Throw";
 
   export class Arguments extends Value {
-    constructor(public control: Value) {
+    constructor(public control: Control) {
       super();
     }
     visitInputs(visitor: NodeVisitor) {

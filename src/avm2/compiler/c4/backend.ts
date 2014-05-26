@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-module Shumway.AVM2.Compiler {
+module Shumway.AVM2.Compiler.Backend {
   import unexpected = Shumway.Debug.unexpected;
   import pushUnique = Shumway.ArrayUtilities.pushUnique;
 

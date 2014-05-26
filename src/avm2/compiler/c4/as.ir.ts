@@ -164,7 +164,7 @@ module Shumway.AVM2.Compiler.IR {
   ASGlobal.prototype.nodeName = "ASGlobal";
 
   export class ASNewActivation extends Value {
-    constructor(public methodInfo: MethodInfo) {
+    constructor(public methodInfo: Constant) {
       super();
     }
   }

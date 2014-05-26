@@ -113,6 +113,11 @@ module Shumway.AVM2.Compiler.IR {
     compile: (cx, state) => void;
 
     /**
+     * This is added by the builder.
+     */
+    blockDominatorOrder: number;
+
+    /**
      * This is stuff added on by the looper which needs to be really cleaned up.
      */
     dominatees: Block [];
@@ -1241,7 +1246,7 @@ module Shumway.AVM2.Compiler.IR {
    * Peephole optimizations:
    */
   export class PeepholeOptimizer {
-    foldUnary(node, truthy) {
+    foldUnary(node, truthy?) {
       release || assert (node instanceof Unary);
       if (isConstant(node.argument)) {
         return new Constant(node.operator.evaluate(node.argument.value));
@@ -1261,14 +1266,14 @@ module Shumway.AVM2.Compiler.IR {
       }
       return node;
     }
-    foldBinary(node, truthy) {
+    foldBinary(node, truthy?) {
       release || assert (node instanceof Binary);
       if (isConstant(node.left) && isConstant(node.right)) {
         return new Constant(node.operator.evaluate(node.left.value, node.right.value));
       }
       return node;
     }
-    fold(node, truthy) {
+    fold(node, truthy?) {
       if (node instanceof Unary) {
         return this.foldUnary(node, truthy);
       } else if (node instanceof Binary) {
