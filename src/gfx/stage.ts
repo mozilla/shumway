@@ -282,28 +282,45 @@ module Shumway.GFX {
       var fillActive = false;
       var strokeActive = false;
       data.position = 0;
+      // We have to alway store the last position because Flash keeps the drawing cursor where it
+      // was when changing fill or line style, whereas Canvas forgets it on beginning a new path.
+      var x = 0;
+      var y = 0;
+      var cpX: number;
+      var cpY: number;
       // Description of serialization format can be found in flash.display.Graphics.
       while (data.bytesAvailable > 0) {
         var command = data.readUnsignedByte();
         switch (command) {
           case PathCommand.MoveTo:
             assert(data.bytesAvailable >= 8);
-            context.moveTo(data.readInt() / 20, data.readInt() / 20);
+            x = data.readInt() / 20;
+            y = data.readInt() / 20;
+            context.moveTo(x, y);
             break;
           case PathCommand.LineTo:
             assert(data.bytesAvailable >= 8);
-            context.lineTo(data.readInt() / 20, data.readInt() / 20);
+            x = data.readInt() / 20;
+            y = data.readInt() / 20;
+            context.lineTo(x, y);
             break;
           case PathCommand.CurveTo:
             assert(data.bytesAvailable >= 16);
-            context.quadraticCurveTo(data.readInt() / 20, data.readInt() / 20,
-                                     data.readInt() / 20, data.readInt() / 20);
+            cpX = data.readInt() / 20;
+            cpY = data.readInt() / 20;
+            x = data.readInt() / 20;
+            y = data.readInt() / 20;
+            context.quadraticCurveTo(cpX, cpY, x, y);
             break;
           case PathCommand.CubicCurveTo:
             assert(data.bytesAvailable >= 24);
-            context.bezierCurveTo(data.readInt() / 20, data.readInt() / 20,
-                                  data.readInt() / 20, data.readInt() / 20,
-                                  data.readInt() / 20, data.readInt() / 20);
+            cpX = data.readInt() / 20;
+            cpY = data.readInt() / 20;
+            var cpX2 = data.readInt() / 20;
+            var cpY2 = data.readInt() / 20;
+            x = data.readInt() / 20;
+            y = data.readInt() / 20;
+            context.bezierCurveTo(cpX, cpY, cpX2, cpY2, x, y);
             break;
           case PathCommand.BeginSolidFill:
             assert(data.bytesAvailable >= 4);
@@ -312,6 +329,7 @@ module Shumway.GFX {
               context.closePath();
             }
             context.beginPath();
+            context.moveTo(x, y);
             fillActive = true;
             var color = data.readUnsignedInt();
             context.fillStyle = ColorUtilities.rgbaToCSSStyle(color);
@@ -330,6 +348,7 @@ module Shumway.GFX {
               context.closePath();
             }
             context.beginPath();
+            context.moveTo(x, y);
             strokeActive = true;
             var thickness = data.readUnsignedByte();
             var color = data.readUnsignedInt();
