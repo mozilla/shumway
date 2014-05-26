@@ -1492,10 +1492,14 @@ module Shumway.AVM2.Runtime {
     if (mi.verified) {
       fnName += "$V";
     }
+    if (!breakpoint) {
+      if (fnName.indexOf(Shumway.AVM2.Compiler.breakAt.value) >= 0) {
+        breakpoint = true;
+      }
+    }
     if (compiledFunctionCount == functionBreak.value || breakpoint) {
       body = "{ debugger; \n" + body + "}";
     }
-
     if (!cached) {
       var fnSource = "function " + fnName + " (" + parameters.join(", ") + ") " + body;
     }

@@ -34,6 +34,7 @@ module Shumway.AVM2 {
   export module Compiler {
     export var options = avm2Options.register(new OptionSet("Compiler"));
     export var traceLevel = options.register(new Option("tc4", "tc4", "number", 0, "Compiler Trace Level"));
+    export var breakAt = options.register(new Option("", "breakAt", "string", "", "Set a break point at methods whose qualified name matches this string."));
   }
 
   export module Verifier {
