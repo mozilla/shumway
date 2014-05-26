@@ -29,6 +29,7 @@
   unitTests.push(clear);
   unitTests.push(beginFill);
   unitTests.push(lineStyle_defaults);
+  unitTests.push(lineStyle_invalidWidth);
   unitTests.push(lineStyle_allArgs);
   unitTests.push(moveTo);
   unitTests.push(lineTo);
@@ -80,6 +81,14 @@
     eq(JointStyle.fromNumber(bytes.readUnsignedByte()), JointStyle.ROUND,
        "defaults to round joints");
     eq(bytes.readUnsignedByte(), 3, "defaults to miterLimit of 3");
+    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+  }
+
+  function lineStyle_invalidWidth() {
+    var g = createGraphics();
+    g.lineStyle(NaN);
+    var bytes = cloneData(g.getGraphicsData());
+    eq(bytes.readUnsignedByte(), PathCommand.LineEnd, "style is stored");
     eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
   }
 

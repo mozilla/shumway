@@ -1609,6 +1609,7 @@ module Shumway.GFX.Geometry {
     LineStyleSolid,
     LineStyleGradient,
     LineStyleBitmap,
+    LineEnd,
     MoveTo,
     LineTo,
     CurveTo,
