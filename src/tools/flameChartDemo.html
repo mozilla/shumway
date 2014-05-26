@@ -29,8 +29,8 @@
     getJSON("data/CPU-20140520T215105.json", function(profile1) {
       getJSON("data/CPU-20140520T092003.json", function(profile2) {
 
-        var buffer1 = Profiler.TimelineBuffer.createFromChromeProfile(profile1);
-        var buffer2 = Profiler.TimelineBuffer.createFromChromeProfile(profile2);
+        var buffer1 = Profiler.TimelineBuffer.FromChromeProfile(profile1);
+        var buffer2 = Profiler.TimelineBuffer.FromChromeProfile(profile2);
 
         var profile = new Profiler.Profile();
         profile.addBuffer(buffer1, "Thread 1");
@@ -43,7 +43,7 @@
     });
 
     //getJSON("data/Profile 1.json", function(result) {
-    //  var buffer = Profiler.TimelineBuffer.createFromFirefoxProfile(result);
+    //  var buffer = Profiler.TimelineBuffer.FromFirefoxProfile(result);
     //  new Profiler.FlameChart(container, buffer);
     //});
 
