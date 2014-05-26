@@ -16,6 +16,7 @@
 // Class: InteractiveObject
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import DisplayObject = flash.display.DisplayObject;
 
@@ -154,8 +155,8 @@ module Shumway.AVM2.AS.flash.display {
 
     set contextMenu(cm: flash.ui.ContextMenu) {
       cm = cm;
-      notImplemented("public flash.display.InteractiveObject::set contextMenu"); return;
-      // this._contextMenu = cm;
+      somewhatImplemented("public flash.display.InteractiveObject::set contextMenu");
+      this._contextMenu = cm;
     }
 
     requestSoftKeyboard(): boolean {

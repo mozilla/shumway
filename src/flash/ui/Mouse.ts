@@ -16,6 +16,8 @@
 // Class: Mouse
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
+
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import InteractiveObject = flash.display.InteractiveObject;
 
@@ -244,10 +246,10 @@ module Shumway.AVM2.AS.flash.ui {
       // return this._supportsNativeCursor;
     }
     static hide(): void {
-      notImplemented("public flash.ui.Mouse::static hide"); return;
+      somewhatImplemented("public flash.ui.Mouse::static hide"); return;
     }
     static show(): void {
-      notImplemented("public flash.ui.Mouse::static show"); return;
+      somewhatImplemented("public flash.ui.Mouse::static show"); return;
     }
     static registerCursor(name: string, cursor: flash.ui.MouseCursorData): void {
       name = asCoerceString(name); cursor = cursor;

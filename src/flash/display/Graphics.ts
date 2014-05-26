@@ -167,7 +167,7 @@ module Shumway.AVM2.AS.flash.display {
 
     constructor () {
       false && super();
-      this._id = Graphics._syncID++;
+      this._id = flash.display.DisplayObject.getNextSyncID();
       this._graphicsData = new DataBuffer();
       this._fillBounds = new Bounds(0, 0, 0, 0);
       this._lineBounds = new Bounds(0, 0, 0, 0);
@@ -263,12 +263,12 @@ module Shumway.AVM2.AS.flash.display {
     {
       if (isNullOrUndefined(bitmap)) {
         throwError('TypeError', Errors.NullPointerError, 'bitmap');
-      } else if (!(matrix instanceof flash.geom.Matrix)) {
+      } else if (!(flash.display.BitmapData.isType(bitmap))) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'bitmap', 'flash.display.BitmapData');
       }
       if (isNullOrUndefined(matrix)) {
         matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
-      } else if (!(matrix instanceof flash.geom.Matrix)) {
+      } else if (!(flash.geom.Matrix.isType(matrix))) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
       }
       var graphicsData = this._graphicsData;
@@ -697,7 +697,7 @@ module Shumway.AVM2.AS.flash.display {
     {
       assert(pathCommand === PathCommand.BeginGradientFill ||
              pathCommand === PathCommand.LineStyleGradient);
-      if (type === null || type === undefined) {
+      if (isNullOrUndefined(type)) {
         throwError('TypeError', Errors.NullPointerError, 'type');
       }
       var gradientType = GradientType.toNumber(asCoerceString(type));
@@ -705,7 +705,7 @@ module Shumway.AVM2.AS.flash.display {
         throwError("ArgumentError", Errors.InvalidEnumError, "type");
       }
 
-      if (colors === null || colors === undefined) {
+      if (isNullOrUndefined(colors)) {
         throwError('TypeError', Errors.NullPointerError, 'colors');
       }
       if (typeof colors !== 'array') {
@@ -715,20 +715,20 @@ module Shumway.AVM2.AS.flash.display {
       if (typeof alphas !== 'array') {
         throwError('TypeError', Errors.CheckTypeFailedError, 'alphas', 'Array');
       }
-      if (alphas === null || alphas === undefined) {
+      if (isNullOrUndefined(alphas)) {
         throwError('TypeError', Errors.NullPointerError, 'alphas');
       }
 
       if (typeof ratios !== 'array') {
         throwError('TypeError', Errors.CheckTypeFailedError, 'ratios', 'Array');
       }
-      if (ratios === null || ratios === undefined) {
+      if (isNullOrUndefined(ratios)) {
         throwError('TypeError', Errors.NullPointerError, 'ratios');
       }
 
-      if (matrix === null || matrix === undefined) {
+      if (isNullOrUndefined(matrix)) {
         matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
-      } else if (!(matrix instanceof flash.geom.Matrix)) {
+      } else if (!(flash.geom.Matrix.isType(matrix))) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
       }
 

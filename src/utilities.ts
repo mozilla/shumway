@@ -946,6 +946,14 @@ module Shumway {
       var rightHalf = maxLength - leftHalf - 1;
       return s.substr(0, leftHalf) + "\u2026" + s.substr(s.length - rightHalf, rightHalf);
     }
+
+    export function multiple(s: string, count: number): string {
+      var o = "";
+      for (var i = 0; i < count; i++) {
+        o += s;
+      }
+      return o;
+    }
   }
 
   export module HashUtilities {

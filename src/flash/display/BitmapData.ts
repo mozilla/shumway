@@ -27,11 +27,6 @@ module Shumway.AVM2.AS.flash.display {
 
   export class BitmapData extends ASNative implements IBitmapDrawable {
 
-    /**
-     * Every bitmap data is assigned an unique integer ID.
-     */
-    static _syncID = 0;
-
     // Called whenever the class is initialized.
     static classInitializer: any = null;
     
@@ -51,7 +46,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor (width: number /*int*/, height: number /*int*/, transparent: boolean = true, fillColor: number /*uint*/ = 4294967295) {
       width = width | 0; height = height | 0;
       false && super();
-      this._id = BitmapData._syncID++;
+      this._id = flash.display.DisplayObject.getNextSyncID();
       if (width > BitmapData.MAXIMUM_WIDTH ||
         height > BitmapData.MAXIMUM_HEIGHT ||
         width * height > BitmapData.MAXIMUM_DIMENSION) {
@@ -190,7 +185,8 @@ module Shumway.AVM2.AS.flash.display {
     }
     colorTransform(rect: flash.geom.Rectangle, colorTransform: flash.geom.ColorTransform): void {
       rect = rect; colorTransform = colorTransform;
-      notImplemented("public flash.display.BitmapData::colorTransform"); return;
+      somewhatImplemented("public flash.display.BitmapData::colorTransform");
+      return;
     }
     compare(otherBitmapData: flash.display.BitmapData): ASObject {
       otherBitmapData = otherBitmapData;

@@ -16,6 +16,7 @@
 // Class: ContextMenu
 module Shumway.AVM2.AS.flash.ui {
   import notImplemented = Shumway.Debug.notImplemented;
+  import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class ContextMenu extends flash.display.NativeMenu {
     
@@ -45,28 +46,32 @@ module Shumway.AVM2.AS.flash.ui {
     // AS -> JS Bindings
     // static _isSupported: boolean;
     
-    // _builtInItems: flash.ui.ContextMenuBuiltInItems;
-    // _customItems: any [];
+    _builtInItems: flash.ui.ContextMenuBuiltInItems;
+    _customItems: any [];
     // _link: flash.net.URLRequest;
     // _clipboardMenu: boolean;
     // _clipboardItems: flash.ui.ContextMenuClipboardItems;
     get builtInItems(): flash.ui.ContextMenuBuiltInItems {
-      notImplemented("public flash.ui.ContextMenu::get builtInItems"); return;
-      // return this._builtInItems;
+      // TODO: Should clone here probably.
+      somewhatImplemented("public flash.ui.ContextMenu::get builtInItems");
+      return this._builtInItems;
     }
     set builtInItems(value: flash.ui.ContextMenuBuiltInItems) {
+      // TODO: Should clone here probably.
       value = value;
-      notImplemented("public flash.ui.ContextMenu::set builtInItems"); return;
-      // this._builtInItems = value;
+      somewhatImplemented("public flash.ui.ContextMenu::set builtInItems");
+      this._builtInItems = value;
     }
     get customItems(): any [] {
-      notImplemented("public flash.ui.ContextMenu::get customItems"); return;
-      // return this._customItems;
+      // TODO: Should clone here probably.
+      somewhatImplemented("public flash.ui.ContextMenu::get customItems");
+      return this._customItems;
     }
     set customItems(value: any []) {
+      // TODO: Should clone here probably.
       value = value;
-      notImplemented("public flash.ui.ContextMenu::set customItems"); return;
-      // this._customItems = value;
+      somewhatImplemented("public flash.ui.ContextMenu::set customItems");
+      this._customItems = value;
     }
     get link(): flash.net.URLRequest {
       notImplemented("public flash.ui.ContextMenu::get link"); return;

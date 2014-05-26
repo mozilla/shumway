@@ -197,8 +197,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set quality(value: string) {
-      //this._quality = asCoerceString(value);
-      notImplemented("public flash.display.Stage::set quality"); return;
+      assert (flash.display.StageQuality.toNumber(value) >= 0);
+      this._quality = asCoerceString(value);
     }
 
     get displayState(): string {

@@ -53,7 +53,9 @@ module Shumway.Remoting.Player {
           serializer.writeGraphics(graphics);
         } else if (display.Bitmap.isType(displayObject)) {
           var bitmap = <Bitmap>displayObject;
-          serializer.writeBitmap(bitmap.bitmapData);
+          if (bitmap.bitmapData) {
+            serializer.writeBitmapData(bitmap.bitmapData);
+          }
         }
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
@@ -67,7 +69,7 @@ module Shumway.Remoting.Player {
       this.outputAssets.push(graphics.getGraphicsData());
     }
 
-    writeBitmap(bitmapData: BitmapData) {
+    writeBitmapData(bitmapData: BitmapData) {
       if (bitmapData._isDirty) {
         this.output.writeInt(MessageTag.UpdateBitmapData);
         this.output.writeInt(bitmapData._id);

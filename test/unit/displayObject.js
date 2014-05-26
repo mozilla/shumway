@@ -357,4 +357,13 @@
     eq(s.rotation, 180);
   });
 
+  unitTests.push(function runInspectorSanityTests() {
+    Random.seed(0x12343);
+    var s = new Shape();
+    neq(s.transform.matrix, null, "Make sure matrix is not null when no Z value is set.");
+    eq(s.transform.matrix3D, null, "Matrix 3D should be null by default.");
+    // s.z = 1;
+    // eq(s.transform.matrix, null, "Make sure matrix is not null when no Z value is set.");
+  });
+
 })();

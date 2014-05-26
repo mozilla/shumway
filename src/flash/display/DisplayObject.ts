@@ -239,6 +239,10 @@ module Shumway.AVM2.AS.flash.display {
      */
     static _syncID = 0;
 
+    static getNextSyncID() {
+      return this._syncID++
+    }
+
     // Called whenever the class is initialized.
     static classInitializer: any = null;
 
@@ -246,7 +250,7 @@ module Shumway.AVM2.AS.flash.display {
     static initializer: any = function (symbol: Shumway.Timeline.DisplaySymbol) {
       var self: DisplayObject = this;
 
-      self._id = DisplayObject._syncID++;
+      self._id = flash.display.DisplayObject.getNextSyncID();
       self._displayObjectFlags = DisplayObjectFlags.Visible                            |
                                  DisplayObjectFlags.InvalidLineBounds                  |
                                  DisplayObjectFlags.InvalidFillBounds                  |
@@ -455,13 +459,13 @@ module Shumway.AVM2.AS.flash.display {
 
     /**
      * These are always the most up to date properties. The |_matrix| is kept in sync with
-     * these values.
+     * these values. This is only true when |_matrix3D| is null.
      */
-    _z: number;
     _scaleX: number;
     _scaleY: number;
-    _scaleZ: number;
 
+    _z: number;
+    _scaleZ: number;
     _rotation: number;
 
     _rotationX: number;
@@ -1468,6 +1472,17 @@ module Shumway.AVM2.AS.flash.display {
 
     get mouseY(): number {
       return this.globalToLocal(flash.ui.Mouse._currentPosition).y;
+    }
+
+    public debugTrace() {
+      var self = this;
+      var writer = new IndentingWriter();
+      this.visit(function (node) {
+        var distance = node._getDistance(self);
+        var prefix = Shumway.StringUtilities.multiple(" ", distance);
+        writer.writeLn(prefix + node._id + ": " + node);
+        return VisitorFlags.Continue;
+      }, VisitorFlags.None);
     }
 
     // ---------------------------------------------------------------------------------------------------------------------------------------------
