@@ -29,8 +29,8 @@ module Shumway.Tools.Profiler {
   }
 
   interface DragInfo {
-    windowLeftInitial: number;
-    windowRightInitial: number;
+    windowStartInitial: number;
+    windowEndInitial: number;
     target: DragTarget;
   }
 
@@ -123,18 +123,18 @@ module Shumway.Tools.Profiler {
           var right = this._toPixels(this._windowEnd);
           context.fillStyle = "#14171a";
           context.fillRect(left, 0, right - left, height);
-          this._drawLabels(this._rangeStart, this._rangeEnd);
+          this._drawLabels(this._rangeStart, this._rangeEnd, this._width);
           this._drawDragHandle(left);
           this._drawDragHandle(right);
         } else {
-          this._drawLabels(this._windowStart, this._windowEnd);
+          this._drawLabels(this._windowStart, this._windowEnd, this._width + FlameChartHeader.TICK_MAX_WIDTH);
         }
       }
 
       context.restore();
     }
 
-    private _drawLabels(rangeStart: number, rangeEnd: number) {
+    private _drawLabels(rangeStart: number, rangeEnd: number, maxWidth: number) {
       var context = this._context;
       var tickInterval = this._calculateTickInterval(rangeStart, rangeEnd);
       var tick = Math.ceil(rangeStart / tickInterval) * tickInterval;
@@ -144,7 +144,6 @@ module Shumway.Tools.Profiler {
       var unit = showSeconds ? "s" : "ms";
       var x = this._toPixels(tick - rangeStart);
       var y = this._height / 2;
-      var maxWidth = (this._type == FlameChartHeaderType.OVERVIEW) ? this._width : this._width + FlameChartHeader.TICK_MAX_WIDTH;
       context.lineWidth = 1;
       context.strokeStyle = "rgba(95, 115, 135, 0.5)";
       context.fillStyle = "rgba(95, 115, 135, 0.8)";
@@ -217,22 +216,32 @@ module Shumway.Tools.Profiler {
       }
     }
 
+    private _toTime(px: number): number {
+      if (this._type === FlameChartHeaderType.OVERVIEW) {
+        return px * (this._rangeEnd - this._rangeStart) / this._width;
+      } else {
+        return px * (this._windowEnd - this._windowStart) / this._width;
+      }
+    }
+
     private _decimalPlaces(value: number): number {
       return ((+value).toFixed(10)).replace(/^-?\d*\.?|0+$/g, '').length;
     }
 
     private _getDragTargetUnderCursor(x: number): DragTarget {
-      var left = this._toPixels(this._windowStart);
-      var right = this._toPixels(this._windowEnd);
-      var radius = 2 + (FlameChartHeader.DRAGHANDLE_WIDTH) / 2;
-      var leftHandle = (x >= left - radius && x <= left + radius);
-      var rightHandle = (x >= right - radius && x <= right + radius);
-      if (leftHandle && rightHandle) {
-        return DragTarget.HANDLE_BOTH;
-      } else if (leftHandle) {
-        return DragTarget.HANDLE_LEFT;
-      } else if (rightHandle) {
-        return DragTarget.HANDLE_RIGHT;
+      if (this._type === FlameChartHeaderType.OVERVIEW) {
+        var left = this._toPixels(this._windowStart);
+        var right = this._toPixels(this._windowEnd);
+        var radius = 2 + (FlameChartHeader.DRAGHANDLE_WIDTH) / 2;
+        var leftHandle = (x >= left - radius && x <= left + radius);
+        var rightHandle = (x >= right - radius && x <= right + radius);
+        if (leftHandle && rightHandle) {
+          return DragTarget.HANDLE_BOTH;
+        } else if (leftHandle) {
+          return DragTarget.HANDLE_LEFT;
+        } else if (rightHandle) {
+          return DragTarget.HANDLE_RIGHT;
+        }
       }
       return DragTarget.WINDOW;
     }
@@ -243,8 +252,8 @@ module Shumway.Tools.Profiler {
         MouseController.updateCursor(this._canvas, MouseCursor.GRABBING);
       }
       this._dragInfo = <DragInfo>{
-        windowLeftInitial: this._toPixels(this._windowStart),
-        windowRightInitial: this._toPixels(this._windowEnd),
+        windowStartInitial: this._windowStart,
+        windowEndInitial: this._windowEnd,
         target: dragTarget
       };
     }
@@ -278,33 +287,36 @@ module Shumway.Tools.Profiler {
           return;
         }
       }
-      var left = this._toPixels(this._windowStart);
-      var right = this._toPixels(this._windowEnd);
-      var width = right - left;
+      var windowStart = this._windowStart;
+      var windowEnd = this._windowEnd;
+      var windowLength = windowEnd - windowStart;
+      var rangeStart = this._rangeStart;
+      var rangeEnd = this._rangeEnd;
+      var rangeLength = rangeEnd - rangeStart;
+      var mult = (this._type === FlameChartHeaderType.OVERVIEW) ? 1 : -1;
+      var delta = this._toTime(deltaX);
       switch (dragInfo.target) {
         case DragTarget.WINDOW:
-          left = dragInfo.windowLeftInitial + deltaX;
-          right = dragInfo.windowRightInitial + deltaX;
-          if (left < 0) {
-            left = 0;
-            right = width;
-          } else if (right > this._width) {
-            left = this._width - width;
-            right = this._width;
+          windowStart = dragInfo.windowStartInitial + mult * delta;
+          windowEnd = dragInfo.windowEndInitial + mult * delta;
+          if (windowStart < rangeStart) {
+            windowStart = rangeStart;
+            windowEnd = windowLength;
+          } else if (windowEnd > rangeEnd) {
+            windowStart = rangeEnd - windowLength;
+            windowEnd = rangeEnd;
           }
           break;
         case DragTarget.HANDLE_LEFT:
-          left = clamp(dragInfo.windowLeftInitial + deltaX, 0, right);
+          windowStart = clamp(dragInfo.windowStartInitial + delta, rangeStart, windowEnd - 20);
           break;
         case DragTarget.HANDLE_RIGHT:
-          right = clamp(dragInfo.windowRightInitial + deltaX, left, this._width);
+          windowEnd = clamp(dragInfo.windowEndInitial + delta, windowStart + 20, rangeEnd);
           break;
         default:
           return;
       }
-      var start = left / this._width;
-      var end = right / this._width;
-      this._controller.onWindowChange(start, end);
+      this._controller.onWindowChange(windowStart / rangeLength, windowEnd / rangeLength);
     }
 
     onDragEnd(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
