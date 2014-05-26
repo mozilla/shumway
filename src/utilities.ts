@@ -269,6 +269,14 @@ module Shumway {
       dst.length = count;
     }
 
+    export function popMany<T>(array: T [], count: number): T [] {
+      release || assert(array.length >= count);
+      var start = array.length - count;
+      var result = array.slice(start, this.length);
+      array.splice(start, count);
+      return result;
+    }
+
     /**
      * Just deletes several array elements from the end of the list.
      */

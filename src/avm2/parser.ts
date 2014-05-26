@@ -395,7 +395,7 @@ module Shumway.AVM2.ABC {
       boundMethod: Function;
     };
     activationPrototype: Object;
-    analysis: any;
+    analysis: Analysis;
     hasLookupSwitches: boolean;
     static parseParameterNames: boolean = false;
 

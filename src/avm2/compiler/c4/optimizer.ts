@@ -113,11 +113,6 @@ module Shumway.AVM2.Compiler.IR {
     compile: (cx, state) => void;
 
     /**
-     * This is added by the builder.
-     */
-    blockDominatorOrder: number;
-
-    /**
      * This is stuff added on by the looper which needs to be really cleaned up.
      */
     dominatees: Block [];

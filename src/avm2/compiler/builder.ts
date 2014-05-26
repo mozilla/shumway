@@ -52,7 +52,7 @@ module Shumway.AVM2.Compiler {
   import NewArray = IR.NewArray;
   import NewObject = IR.NewObject;
   import KeyValuePair = IR.KeyValuePair;
-  import Block = IR.Block;
+  // import Block = IR.Block;
   import isConstant = IR.isConstant;
 
 
@@ -381,187 +381,28 @@ module Shumway.AVM2.Compiler {
 
   interface WorklistItem {
     region: Region;
-    block: Block;
+    block: Bytecode;
   }
 
   /**
    * All the state needed when building blocks.
    */
-  class BlockState {
+  class BlockBuilder {
     bc: Bytecode;
-    stops: any [];
-    constructor(public region: Region, public state: State) {
-
-    }
-  }
-
-  class Builder {
     abc: AbcFile;
-    scope: Scope;
-    domain: Constant;
-    methodInfo: MethodInfo;
-    hasDynamicScope: boolean;
-    traceBuilder: boolean;
-    constantPool: ConstantPool;
-    createFunctionCallee: Value;
     bytecodes: Bytecode [];
-    stopPoints: any [];
-    blockState: BlockState;
-    constructor(methodInfo, scope, hasDynamicScope) {
-      release || assert (methodInfo && methodInfo.abc && scope);
-      this.abc = methodInfo.abc;
-      this.domain = new Constant(methodInfo.abc.applicationDomain);
-      this.scope = scope;
-      this.methodInfo = methodInfo;
-      this.hasDynamicScope = hasDynamicScope;
-      this.traceBuilder = Shumway.AVM2.Compiler.traceLevel.value > 2;
-      this.constantPool = this.abc.constantPool;
-      this.createFunctionCallee = globalProperty("createFunction");
-      this.bytecodes = this.methodInfo.analysis.bytecodes;
-      this.stopPoints = [];
-    }
-
-    buildStart(start: Start) {
-      var mi = this.methodInfo;
-      var state = start.entryState = new State(0);
-
-      /**
-       * [dynamicScope] this parameters ... [arguments|rest] locals
-       */
-
-      /* First local is the |this| reference. */
-      state.local.push(new This(start));
-
-      var parameterIndexOffset = this.hasDynamicScope ? 1 : 0;
-      var parameterCount = mi.parameters.length;
-
-      /* Create the method's parameters. */
-      for (var i = 0; i < parameterCount; i++) {
-        state.local.push(new Parameter(start, parameterIndexOffset + i, mi.parameters[i].name));
-      }
-
-      /* Wipe out the method's remaining locals. */
-      for (var i = parameterCount; i < mi.localCount; i++) {
-        state.local.push(Undefined);
-      }
-
-      state.store = new Projection(start, ProjectionType.STORE);
-      if (this.hasDynamicScope) {
-        start.scope = new Parameter(start, 0, SAVED_SCOPE_NAME);
-      } else {
-        start.scope = new Constant(this.scope);
-      }
-      state.saved = new Projection(start, ProjectionType.SCOPE);
-      start.domain = this.domain;
-
-      var args = new IR.Arguments(start);
-
-      if (mi.needsRest() || mi.needsArguments()) {
-        var offset = constant(parameterIndexOffset + (mi.needsRest() ? parameterCount : 0));
-        state.local[parameterCount + 1] =
-          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset], IR.Flags.PRISTINE);
-      }
-
-      var argumentsLength = getJSPropertyWithState(state, args, "length");
-
-      for (var i = 0; i < parameterCount; i++) {
-        var parameter = mi.parameters[i];
-        var index = i + 1;
-        var local = state.local[index];
-        if (parameter.value !== undefined) {
-          var condition: Value;
-          if (useTypeOfForDefaultArgumentChecking) {
-            condition = new IR.Binary(Operator.SEQ, new IR.Unary(Operator.TYPE_OF, local), constant("undefined"));
-          } else {
-            condition = new IR.Binary(Operator.LT, argumentsLength, constant(parameterIndexOffset + i + 1));
-          }
-          local = new IR.Latch(null, condition, constant(parameter.value), local);
-        }
-        if (parameter.type && !parameter.type.isAnyName()) {
-          var coercer = getCoercerForType(parameter.type);
-          if (coercer) {
-            local = coercer(local);
-          } else if (emitCoerceNonPrimitiveParameters) {
-            local = new Call(start, state.store, globalProperty("asCoerceByMultiname"), null, [this.domain, constant(parameter.type), local], 0);
-          }
-        }
-        state.local[index] = local;
-      }
-
-      return start;
-    }
-
-    buildGraph() {
-      var analysis = this.methodInfo.analysis;
-      var blocks = analysis.blocks;
-      var methodInfo = this.methodInfo;
-
-      var traceBuilder = this.traceBuilder;
-
-      for (var i = 0; i < blocks.length; i++) {
-        blocks[i].blockDominatorOrder = i;
-      }
-
-      var worklist = new Shumway.SortedList<WorklistItem>(function compare(a: WorklistItem, b: WorklistItem) {
-        return a.block.blockDominatorOrder - b.block.blockDominatorOrder;
-      });
-
-      var start = new Start();
-      this.buildStart(start);
-
-      worklist.push({region: start, block: blocks[0]});
-
-      var next;
-      while ((next = worklist.pop())) {
-        this.buildBlock(next.region, next.block, next.region.entryState.clone()).forEach(function (stop) {
-          var target = stop.target;
-          var region = target.region;
-          if (region) {
-            traceBuilder && writer.enter("Merging into region: " + region + " @ " + target.position + ", block " + target.bid + " {");
-            traceBuilder && writer.writeLn("  R " + region.entryState);
-            traceBuilder && writer.writeLn("+ I " + stop.state);
-
-            region.entryState.merge(region, stop.state);
-            region.predecessors.push(stop.control);
-
-            traceBuilder && writer.writeLn("  = " + region.entryState);
-            traceBuilder && writer.leave("}");
-          } else {
-            region = target.region = new Region(stop.control);
-            if (target.loop) {
-              traceBuilder && writer.writeLn("Adding PHIs to loop region.");
-            }
-            region.entryState = target.loop ? stop.state.makeLoopPhis(region) : stop.state.clone(target.position);
-            traceBuilder && writer.writeLn("Adding new region: " + region + " @ " + target.position + " to worklist.");
-            worklist.push({region: region, block: target});
-          }
-        });
-
-        traceBuilder && writer.enter("Worklist: {");
-        worklist.forEach(function (item) {
-          traceBuilder && writer.writeLn(item.region + " " + item.block.blockDominatorOrder + " " + item.region.entryState);
-        });
-        traceBuilder && writer.leave("}");
-      }
-
-      traceBuilder && writer.writeLn("Done");
-
-      var stop;
-      if (this.stopPoints.length > 1) {
-        var stopRegion = new Region(null);
-        var stopValuePhi = new Phi(stopRegion, null);
-        var stopStorePhi = new Phi(stopRegion, null);
-        this.stopPoints.forEach(function (stopPoint) {
-          stopRegion.predecessors.push(stopPoint.region);
-          stopValuePhi.pushValue(stopPoint.value);
-          stopStorePhi.pushValue(stopPoint.store);
-        });
-        stop = new Stop(stopRegion, stopStorePhi, stopValuePhi);
-      } else {
-        stop = new Stop(this.stopPoints[0].region, this.stopPoints[0].store, this.stopPoints[0].value);
-      }
-
-      return new IR.DFG(stop);
+    stops: any [];
+    constantPool: ConstantPool;
+    domain: Constant;
+    traceBuilder: boolean;
+    methodInfo: MethodInfo;
+    constructor(public builder: Builder, public region: Region, public block: Bytecode, public state: State) {
+      this.abc = builder.abc;
+      this.domain = builder.domain;
+      this.bytecodes = builder.methodInfo.analysis.bytecodes;
+      this.constantPool = builder.abc.constantPool;
+      this.traceBuilder = builder.traceBuilder;
+      this.methodInfo = builder.methodInfo;
     }
 
     buildMultiname(region: Region, state: State, index: number) {
@@ -581,77 +422,72 @@ module Shumway.AVM2.Compiler {
     }
 
     buildIfStops(predicate: Value) {
-      var blockState = this.blockState;
-      release || assert (!blockState.stops);
-      var _if = new IR.If(blockState.region, predicate);
-      blockState.stops = [{
+      release || assert (!this.stops);
+      var _if = new IR.If(this.region, predicate);
+      this.stops = [{
         control: new Projection(_if, ProjectionType.FALSE),
-        target: this.bytecodes[blockState.bc.position + 1],
-        state: blockState.state
+        target: this.bytecodes[this.bc.position + 1],
+        state: this.state
       }, {
         control: new Projection(_if, ProjectionType.TRUE),
-        target: blockState.bc.target,
-        state: blockState.state
+        target: this.bc.target,
+        state: this.state
       }];
     }
 
     buildJumpStop() {
-      var blockState = this.blockState;
-      release || assert (!blockState.stops);
-      blockState.stops = [{
-        control: blockState.region,
-        target: blockState.bc.target,
-        state: blockState.state
+      release || assert (!this.stops);
+      this.stops = [{
+        control: this.region,
+        target: this.bc.target,
+        state: this.state
       }];
     }
 
     buildThrowStop() {
-      var blockState = this.blockState;
-      release || assert (!blockState.stops);
-      blockState.stops = [];
+      release || assert (!this.stops);
+      this.stops = [];
     }
 
     buildReturnStop() {
-      var blockState = this.blockState;
-      release || assert (!blockState.stops);
-      blockState.stops = [];
+      release || assert (!this.stops);
+      this.stops = [];
     }
 
     buildSwitchStops(determinant: Value) {
-      var blockState = this.blockState;
-      release || assert (!blockState.stops);
-      if (blockState.bc.targets.length > 2) {
-        blockState.stops = [];
-        var _switch = new IR.Switch(blockState.region, determinant);
-        for (var i = 0; i < blockState.bc.targets.length; i++) {
-          blockState.stops.push({
+      release || assert (!this.stops);
+      if (this.bc.targets.length > 2) {
+        this.stops = [];
+        var _switch = new IR.Switch(this.region, determinant);
+        for (var i = 0; i < this.bc.targets.length; i++) {
+          this.stops.push({
             control: new Projection(_switch, ProjectionType.CASE, constant(i)),
-            target: blockState.bc.targets[i],
-            state: blockState.state
+            target: this.bc.targets[i],
+            state: this.state
           });
         }
       } else {
-        release || assert (blockState.bc.targets.length === 2);
+        release || assert (this.bc.targets.length === 2);
         var predicate = binary(Operator.SEQ, determinant, constant(0));
-        var _if = new IR.If(blockState.region, predicate);
-        blockState.stops = [{
+        var _if = new IR.If(this.region, predicate);
+        this.stops = [{
           control: new Projection(_if, ProjectionType.FALSE),
-          target: blockState.bc.targets[1],
-          state: blockState.state
+          target: this.bc.targets[1],
+          state: this.state
         }, {
           control: new Projection(_if, ProjectionType.TRUE),
-          target: blockState.bc.targets[0],
-          state: blockState.state
+          target: this.bc.targets[0],
+          state: this.state
         }];
       }
     }
 
     savedScope(): Value {
-      return this.blockState.state.saved;
+      return this.state.saved;
     }
 
     topScope(depth?: number) {
-      var scope = this.blockState.state.scope;
+      var scope = this.state.scope;
       if (depth !== undefined) {
         if (depth < scope.length) {
           return scope[scope.length - 1 - depth];
@@ -661,7 +497,7 @@ module Shumway.AVM2.Compiler {
           var s = this.savedScope();
           var savedScopeDepth = depth - scope.length;
           for (var i = 0; i < savedScopeDepth; i ++) {
-            s = getJSPropertyWithState(this.blockState.state, s, "parent");
+            s = getJSPropertyWithState(this.state, s, "parent");
           }
           return s;
         }
@@ -683,12 +519,11 @@ module Shumway.AVM2.Compiler {
       if (scope instanceof IR.ASScope) {
         return scope.object;
       }
-      return getJSPropertyWithState(this.blockState.state, scope, "object");
+      return getJSPropertyWithState(this.state, scope, "object");
     }
 
     findProperty(multiname, strict, ti?): Value {
-      var blockState = this.blockState;
-      var slowPath = new IR.ASFindProperty(blockState.region, blockState.state.store, this.topScope(), multiname, this.domain, strict);
+      var slowPath = new IR.ASFindProperty(this.region, this.state.store, this.topScope(), multiname, this.domain, strict);
       if (ti) {
         if (ti.object) {
           if (ti.object instanceof Shumway.AVM2.Runtime.Global && !ti.object.isExecuting()) {
@@ -728,7 +563,7 @@ module Shumway.AVM2.Compiler {
      * previous active store node.
      */
     store(node: any): Value {
-      var state = this.blockState.state;
+      var state = this.state;
       state.store = new Projection(node, ProjectionType.STORE);
       node.loads = state.loads.slice(0);
       state.loads.length = 0;
@@ -739,25 +574,22 @@ module Shumway.AVM2.Compiler {
      * Keeps track of the current set of loads.
      */
     load(node): Value {
-      var state = this.blockState.state;
+      var state = this.state;
       state.loads.push(node);
       return node;
     }
 
     call(callee: Value, object: Value, args: Value []): Value {
-      var blockState = this.blockState;
-      return this.store(new Call(blockState.region, blockState.state.store, callee, object, args, IR.Flags.PRISTINE));
+      return this.store(new Call(this.region, this.state.store, callee, object, args, IR.Flags.PRISTINE));
     }
 
     callCall(callee: Value, object: Value, args: Value []) {
-      var blockState = this.blockState;
-      return this.store(new Call(blockState.region, blockState.state.store, callee, object, args, IR.Flags.AS_CALL));
+      return this.store(new Call(this.region, this.state.store, callee, object, args, IR.Flags.AS_CALL));
     }
 
     callProperty(object, multiname, args, isLex, ti) {
-      var blockState = this.blockState;
-      var region = blockState.region;
-      var state = blockState.state;
+      var region = this.region;
+      var state = this.state;
       if (ti && ti.trait) {
         if (ti.trait.isMethod()) {
           var openQn;
@@ -788,9 +620,8 @@ module Shumway.AVM2.Compiler {
     }
 
     getProperty(object, multiname, ti?, getOpenMethod?) {
-      var blockState = this.blockState;
-      var region = blockState.region;
-      var state = blockState.state;
+      var region = this.region;
+      var state = this.state;
       release || assert (multiname instanceof IR.ASMultiname);
       getOpenMethod = !!getOpenMethod;
       if (ti) {
@@ -819,9 +650,8 @@ module Shumway.AVM2.Compiler {
     }
 
     setProperty(object, multiname, value, ti) {
-      var blockState = this.blockState;
-      var region = blockState.region;
-      var state = blockState.state;
+      var region = this.region;
+      var state = this.state;
       release || assert (multiname instanceof IR.ASMultiname);
       if (ti) {
         if (ti.trait) {
@@ -849,9 +679,8 @@ module Shumway.AVM2.Compiler {
     }
 
     callSuper(scope, object, multiname, args, ti) {
-      var blockState = this.blockState;
-      var region = blockState.region;
-      var state = blockState.state;
+      var region = this.region;
+      var state = this.state;
       if (ti && ti.trait && ti.trait.isMethod() && ti.baseClass) {
         var qn = VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
         var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
@@ -861,9 +690,8 @@ module Shumway.AVM2.Compiler {
     }
 
     getSuper(scope, object, multiname, ti) {
-      var blockState = this.blockState;
-      var region = blockState.region;
-      var state = blockState.state;
+      var region = this.region;
+      var state = this.state;
       if (ti && ti.trait && ti.trait.isGetter() && ti.baseClass) {
         var qn = VM_OPEN_GET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
         var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
@@ -873,9 +701,8 @@ module Shumway.AVM2.Compiler {
     }
 
     setSuper(scope, object, multiname, value, ti) {
-      var blockState = this.blockState;
-      var region = blockState.region;
-      var state = blockState.state;
+      var region = this.region;
+      var state = this.state;
       if (ti && ti.trait && ti.trait.isSetter() && ti.baseClass) {
         var qn = VM_OPEN_SET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
         var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
@@ -885,9 +712,8 @@ module Shumway.AVM2.Compiler {
     }
 
     constructSuper(scope, object, args, ti) {
-      var blockState = this.blockState;
-      var region = blockState.region;
-      var state = blockState.state;
+      var region = this.region;
+      var state = this.state;
       if (ti) {
         if (ti.noCallSuperNeeded) {
           return;
@@ -903,9 +729,8 @@ module Shumway.AVM2.Compiler {
     }
 
     getSlot(object, index, ti) {
-      var blockState = this.blockState;
-      var region = blockState.region;
-      var state = blockState.state;
+      var region = this.region;
+      var state = this.state;
       if (ti) {
         var trait = ti.trait;
         if (trait) {
@@ -921,9 +746,8 @@ module Shumway.AVM2.Compiler {
     }
 
     setSlot(object, index, value, ti) {
-      var blockState = this.blockState;
-      var region = blockState.region;
-      var state = blockState.state;
+      var region = this.region;
+      var state = this.state;
       if (ti) {
         var trait = ti.trait;
         if (trait) {
@@ -954,7 +778,7 @@ module Shumway.AVM2.Compiler {
     }
 
     getJSProperty(object: Value, path: string): Value {
-      return getJSPropertyWithState(this.blockState.state, object, path);
+      return getJSPropertyWithState(this.state, object, path);
     }
 
     simplifyName(name): Value {
@@ -965,15 +789,15 @@ module Shumway.AVM2.Compiler {
     }
 
     getDescendants(object: Value, name, ti) {
-      var blockState = this.blockState;
-      var region = blockState.region;
-      var state = blockState.state;
+
+      var region = this.region;
+      var state = this.state;
       name = this.simplifyName(name);
       return new IR.ASGetDescendants(region, state.store, object, name);
     }
 
     truthyCondition(operator: IR.Operator): Value {
-      var stack = this.blockState.state.stack;
+      var stack = this.state.stack;
       var right;
       if (operator.isBinary) {
         right = stack.pop();
@@ -1000,7 +824,7 @@ module Shumway.AVM2.Compiler {
     }
 
     pushExpression(operator: IR.Operator, toInt?) {
-      var stack = this.blockState.state.stack;
+      var stack = this.state.stack;
       var left, right;
       if (operator.isBinary) {
         right = stack.pop();
@@ -1020,8 +844,7 @@ module Shumway.AVM2.Compiler {
     }
 
     push(x: Value) {
-      var blockState = this.blockState;
-      var bc = blockState.bc;
+      var bc = this.bc;
       release || assert (x instanceof IR.Node);
       if (bc.ti) {
         if (x.ty) {
@@ -1030,58 +853,41 @@ module Shumway.AVM2.Compiler {
           x.ty = bc.ti.type;
         }
       }
-      blockState.state.stack.push(x);
+      this.state.stack.push(x);
     }
 
     pushLocal(index: number) {
-      var local = this.blockState.state.local;
+      var local = this.state.local;
       this.push(local[index]);
     }
 
     popLocal(index) {
-      var state = this.blockState.state;
+      var state = this.state;
       state.local[index] = shouldNotFloat(state.stack.pop());
     }
 
-    buildBlock(region: Region, block, state) {
-      release || assert (region && block && state);
-      state.optimize();
-      var typeState = block.entryState;
-      if (typeState) {
-        this.traceBuilder && writer.writeLn("Type State: " + typeState);
-        for (var i = 0; i < typeState.local.length; i++) {
-          var type = typeState.local[i];
-          var local = state.local[i];
-          if (local.ty) {
-            // assert (type.isSubtypeOf(local.ty), local + " " + local.ty + " !== " + type + " " + type.merge(local.ty));
-          } else {
-            local.ty = type;
-          }
-        }
-      }
-
-      this.blockState = new BlockState(region, state);
-
-      var local = state.local;
-      var stack = state.stack;
-      var scope = state.scope;
-      var domain = this.domain;
-
+    build() {
+      var block = this.block;
+      var state = this.state;
+      var local = this.state.local;
+      var stack = this.state.stack;
+      var scope = this.state.scope;
+      var region = this.region;
       var bytecodes = this.bytecodes;
 
-      var object, receiver, index, callee, value, multiname, type, args, pristine, left, right, operator;
+      var object, receiver, index, callee, value: Value, multiname, type, args, pristine, left, right, operator;
 
       var push = this.push.bind(this);
 
-      function pop() {
+      function pop(): Value {
         return stack.pop();
       }
 
       function popMany(count) {
-        return stack.popMany(count);
+        return Shumway.ArrayUtilities.popMany(stack, count);
       }
 
-      this.blockState.stops = null;
+      this.stops = null;
 
       if (this.traceBuilder) {
         writer.writeLn("Processing Region: " + region + ", Block: " + block.bid);
@@ -1090,13 +896,13 @@ module Shumway.AVM2.Compiler {
 
       var bc;
       for (var bci = block.position, end = block.end.position; bci <= end; bci++) {
-        this.blockState.bc = bc = bytecodes[bci];
+        this.bc = bc = bytecodes[bci];
         var op = bc.op;
         state.index = bci;
         switch (op) {
           case OP.throw:
             this.store(new IR.Throw(region, pop()));
-            this.stopPoints.push({
+            this.builder.stopPoints.push({
               region: region,
               store: state.store,
               value: Undefined
@@ -1192,7 +998,7 @@ module Shumway.AVM2.Compiler {
           case OP.debugline:
             break;
           case OP.newfunction:
-            push(callPure(this.createFunctionCallee, null, [constant(this.abc.methods[bc.index]), this.topScope(), constant(true)]));
+            push(callPure(this.builder.createFunctionCallee, null, [constant(this.abc.methods[bc.index]), this.topScope(), constant(true)]));
             break;
           case OP.call:
             args = popMany(bc.argCount);
@@ -1293,7 +1099,7 @@ module Shumway.AVM2.Compiler {
                 }
               }
             }
-            this.stopPoints.push({
+            this.builder.stopPoints.push({
               region: region,
               store: state.store,
               value: value
@@ -1558,7 +1364,7 @@ module Shumway.AVM2.Compiler {
             args = popMany(bc.argCount);
             type = pop();
             callee = globalProperty("applyType");
-            push(this.call(callee, null, [domain, type, new NewArray(region, args)]));
+            push(this.call(callee, null, [this.domain, type, new NewArray(region, args)]));
             break;
           case OP.newarray:
             args = popMany(bc.argCount);
@@ -1569,8 +1375,8 @@ module Shumway.AVM2.Compiler {
             for (var i = 0; i < bc.argCount; i++) {
               var value = pop();
               var key = pop();
-              release || assert (isConstant(key) && isString(key.value));
-              key = constant(Multiname.getPublicQualifiedName(key.value));
+              release || assert (isConstant(key) && isString((<Constant>key).value));
+              key = constant(Multiname.getPublicQualifiedName((<Constant>key).value));
               properties.push(new KeyValuePair(key, value));
             }
             push(new NewObject(region, properties));
@@ -1585,7 +1391,6 @@ module Shumway.AVM2.Compiler {
           default:
             notImplemented(String(bc));
         }
-
         if (op === OP.debug || op === OP.debugfile || op === OP.debugline) {
           continue;
         }
@@ -1596,14 +1401,204 @@ module Shumway.AVM2.Compiler {
       if (this.traceBuilder) {
         writer.leave(("< state: " + state.toString()).padRight(' ', 100));
       }
+    }
+  }
 
-      var stops = this.blockState.stops;
+  class Builder {
+    abc: AbcFile;
+    scope: Scope;
+    domain: Constant;
+    methodInfo: MethodInfo;
+    hasDynamicScope: boolean;
+    traceBuilder: boolean;
+    createFunctionCallee: Value;
+    stopPoints: any [];
+    bytecodes;
+    constructor(methodInfo, scope, hasDynamicScope) {
+      release || assert (methodInfo && methodInfo.abc && scope);
+      this.abc = methodInfo.abc;
+      this.domain = new Constant(methodInfo.abc.applicationDomain);
+      this.scope = scope;
+      this.methodInfo = methodInfo;
+      this.hasDynamicScope = hasDynamicScope;
+      this.traceBuilder = Shumway.AVM2.Compiler.traceLevel.value > 2;
+      this.createFunctionCallee = globalProperty("createFunction");
+      this.stopPoints = [];
+      this.bytecodes = this.methodInfo.analysis.bytecodes;
+    }
+
+    buildStart(start: Start) {
+      var mi = this.methodInfo;
+      var state = start.entryState = new State(0);
+
+      /**
+       * [dynamicScope] this parameters ... [arguments|rest] locals
+       */
+
+      /* First local is the |this| reference. */
+      state.local.push(new This(start));
+
+      var parameterIndexOffset = this.hasDynamicScope ? 1 : 0;
+      var parameterCount = mi.parameters.length;
+
+      /* Create the method's parameters. */
+      for (var i = 0; i < parameterCount; i++) {
+        state.local.push(new Parameter(start, parameterIndexOffset + i, mi.parameters[i].name));
+      }
+
+      /* Wipe out the method's remaining locals. */
+      for (var i = parameterCount; i < mi.localCount; i++) {
+        state.local.push(Undefined);
+      }
+
+      state.store = new Projection(start, ProjectionType.STORE);
+      if (this.hasDynamicScope) {
+        start.scope = new Parameter(start, 0, SAVED_SCOPE_NAME);
+      } else {
+        start.scope = new Constant(this.scope);
+      }
+      state.saved = new Projection(start, ProjectionType.SCOPE);
+      start.domain = this.domain;
+
+      var args = new IR.Arguments(start);
+
+      if (mi.needsRest() || mi.needsArguments()) {
+        var offset = constant(parameterIndexOffset + (mi.needsRest() ? parameterCount : 0));
+        state.local[parameterCount + 1] =
+          new Call(start, state.store, globalProperty("sliceArguments"), null, [args, offset], IR.Flags.PRISTINE);
+      }
+
+      var argumentsLength = getJSPropertyWithState(state, args, "length");
+
+      for (var i = 0; i < parameterCount; i++) {
+        var parameter = mi.parameters[i];
+        var index = i + 1;
+        var local = state.local[index];
+        if (parameter.value !== undefined) {
+          var condition: Value;
+          if (useTypeOfForDefaultArgumentChecking) {
+            condition = new IR.Binary(Operator.SEQ, new IR.Unary(Operator.TYPE_OF, local), constant("undefined"));
+          } else {
+            condition = new IR.Binary(Operator.LT, argumentsLength, constant(parameterIndexOffset + i + 1));
+          }
+          local = new IR.Latch(null, condition, constant(parameter.value), local);
+        }
+        if (parameter.type && !parameter.type.isAnyName()) {
+          var coercer = getCoercerForType(parameter.type);
+          if (coercer) {
+            local = coercer(local);
+          } else if (emitCoerceNonPrimitiveParameters) {
+            local = new Call(start, state.store, globalProperty("asCoerceByMultiname"), null, [this.domain, constant(parameter.type), local], 0);
+          }
+        }
+        state.local[index] = local;
+      }
+
+      return start;
+    }
+
+    buildGraph() {
+      var analysis = this.methodInfo.analysis;
+      var blocks = analysis.blocks;
+      var methodInfo = this.methodInfo;
+
+      var traceBuilder = this.traceBuilder;
+
+      for (var i = 0; i < blocks.length; i++) {
+        blocks[i].bdo = i;
+      }
+
+      var worklist = new Shumway.SortedList<WorklistItem>(function compare(a: WorklistItem, b: WorklistItem) {
+        return a.block.bdo - b.block.bdo;
+      });
+
+      var start = new Start();
+      this.buildStart(start);
+
+      worklist.push({region: start, block: blocks[0]});
+
+      var next;
+      while ((next = worklist.pop())) {
+        this.buildBlock(next.region, next.block, next.region.entryState.clone()).forEach(function (stop) {
+          var target = stop.target;
+          var region = target.region;
+          if (region) {
+            traceBuilder && writer.enter("Merging into region: " + region + " @ " + target.position + ", block " + target.bid + " {");
+            traceBuilder && writer.writeLn("  R " + region.entryState);
+            traceBuilder && writer.writeLn("+ I " + stop.state);
+
+            region.entryState.merge(region, stop.state);
+            region.predecessors.push(stop.control);
+
+            traceBuilder && writer.writeLn("  = " + region.entryState);
+            traceBuilder && writer.leave("}");
+          } else {
+            region = target.region = new Region(stop.control);
+            if (target.loop) {
+              traceBuilder && writer.writeLn("Adding PHIs to loop region.");
+            }
+            region.entryState = target.loop ? stop.state.makeLoopPhis(region) : stop.state.clone(target.position);
+            traceBuilder && writer.writeLn("Adding new region: " + region + " @ " + target.position + " to worklist.");
+            worklist.push({region: region, block: target});
+          }
+        });
+
+        traceBuilder && writer.enter("Worklist: {");
+        worklist.forEach(function (item) {
+          traceBuilder && writer.writeLn(item.region + " " + item.block.bdo + " " + item.region.entryState);
+        });
+        traceBuilder && writer.leave("}");
+      }
+
+      traceBuilder && writer.writeLn("Done");
+
+      var stop;
+      if (this.stopPoints.length > 1) {
+        var stopRegion = new Region(null);
+        var stopValuePhi = new Phi(stopRegion, null);
+        var stopStorePhi = new Phi(stopRegion, null);
+        this.stopPoints.forEach(function (stopPoint) {
+          stopRegion.predecessors.push(stopPoint.region);
+          stopValuePhi.pushValue(stopPoint.value);
+          stopStorePhi.pushValue(stopPoint.store);
+        });
+        stop = new Stop(stopRegion, stopStorePhi, stopValuePhi);
+      } else {
+        stop = new Stop(this.stopPoints[0].region, this.stopPoints[0].store, this.stopPoints[0].value);
+      }
+
+      return new IR.DFG(stop);
+    }
+
+    
+
+    buildBlock(region: Region, block, state) {
+      release || assert (region && block && state);
+      state.optimize();
+      var typeState = block.entryState;
+      if (typeState) {
+        this.traceBuilder && writer.writeLn("Type State: " + typeState);
+        for (var i = 0; i < typeState.local.length; i++) {
+          var type = typeState.local[i];
+          var local = state.local[i];
+          if (local.ty) {
+            // assert (type.isSubtypeOf(local.ty), local + " " + local.ty + " !== " + type + " " + type.merge(local.ty));
+          } else {
+            local.ty = type;
+          }
+        }
+      }
+
+      var blockBuilder = new BlockBuilder(this, region, block, state);
+      blockBuilder.build();
+
+      var stops = blockBuilder.stops;
       if (!stops) {
         stops = [];
-        if (bc.position + 1 <= bytecodes.length) {
+        if (blockBuilder.bc.position + 1 <= this.bytecodes.length) {
           stops.push({
             control: region,
-            target: this.bytecodes[bc.position + 1],
+            target: this.bytecodes[blockBuilder.bc.position + 1],
             state: state
           });
         }

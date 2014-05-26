@@ -528,6 +528,12 @@ module Shumway.AVM2 {
     level: number;
     hasCatches: boolean;
     spbacks: BlockSet;
+    bdo: number;
+    index: number;
+    argCount: number;
+
+    verifierEntryState: Verifier.State;
+    verifierExitState: Verifier.State;
 
     constructor(code) {
       var op = code.readU8();

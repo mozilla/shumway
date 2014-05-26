@@ -471,7 +471,7 @@ module Shumway.AVM2.Verifier {
   /**
    * Abstract Program State
    */
-  class State {
+  export class State {
     static id = 0;
     id: number;
     originalId: number;
@@ -553,24 +553,24 @@ module Shumway.AVM2.Verifier {
     }
   }
 
-  interface Block {
-    entryState: State;
-    exitState: State;
-    bdo: number;
-    bid: number;
-    succs: Block [];
-    position: number;
-    end: Bytecode;
-  }
+//  interface Block {
+//    entryState: State;
+//    exitState: State;
+//    bdo: number;
+//    bid: number;
+//    succs: Block [];
+//    position: number;
+//    end: Bytecode;
+//  }
 
-  interface Bytecode {
-    position: number;
-    index: number;
-    ti: TypeInformation;
-    op: number;
-    argCount: number;
-    toString: (abc: AbcFile) => string;
-  }
+//  interface Bytecode {
+//    position: number;
+//    index: number;
+//    ti: TypeInformation;
+//    op: number;
+//    argCount: number;
+//    toString: (abc: AbcFile) => string;
+//  }
 
   class Verification {
     writer = new IndentingWriter();
@@ -634,9 +634,9 @@ module Shumway.AVM2.Verifier {
     private _verifyBlocks(entryState: State) {
       var writer = this.writer;
 
-      var blocks: Block [] = (<any>this.methodInfo).analysis.blocks;
-      blocks.forEach(function (x: Block) {
-        x.entryState = x.exitState = null;
+      var blocks: Bytecode [] = (<any>this.methodInfo).analysis.blocks;
+      blocks.forEach(function (x: Bytecode) {
+        x.verifierEntryState = x.verifierExitState = null;
       });
 
       /**
@@ -657,55 +657,55 @@ module Shumway.AVM2.Verifier {
        * list and uses a liniar search to find the right insertion position and keep the list
        * sorted. The push operation takes O(n), the pull operations takes O(1).
        */
-      var worklist = new Shumway.SortedList<Block>(function compare(a: Block, b: Block) {
+      var worklist = new Shumway.SortedList<Bytecode>(function compare(a: Bytecode, b: Bytecode) {
         return a.bdo - b.bdo;
       });
 
 
-      blocks[0].entryState = entryState;
+      blocks[0].verifierEntryState = entryState;
       worklist.push(blocks[0]);
 
       while (!worklist.isEmpty()) {
 
         var block = worklist.pop();
-        var exitState = block.exitState = block.entryState.clone();
+        var exitState = block.verifierExitState = block.verifierEntryState.clone();
 
         this._verifyBlock(block, exitState);
 
-        block.succs.forEach(function (successor: Block) {
+        block.succs.forEach(function (successor: Bytecode) {
           if (worklist.contains(successor)) {
             if (writer) {
               writer.writeLn("Forward Merged Block: " + successor.bid + " " +
-                exitState.toString() + " with " + successor.entryState.toString());
+                exitState.toString() + " with " + successor.verifierEntryState.toString());
             }
             // merge existing item entry state with current block exit state
-            successor.entryState.merge(exitState);
+            successor.verifierEntryState.merge(exitState);
             if (writer) {
-              writer.writeLn("Merged State: " + successor.entryState);
+              writer.writeLn("Merged State: " + successor.verifierEntryState);
             }
             return;
           }
 
-          if (successor.entryState) {
-            if (!successor.entryState.isSubset(exitState)) {
+          if (successor.verifierEntryState) {
+            if (!successor.verifierEntryState.isSubset(exitState)) {
               if (writer) {
                 writer.writeLn("Backward Merged Block: " + block.bid + " with " + successor.bid + " " +
-                  exitState.toString() + " with " + successor.entryState.toString());
+                  exitState.toString() + " with " + successor.verifierEntryState.toString());
               }
-              successor.entryState.merge(exitState);
+              successor.verifierEntryState.merge(exitState);
               worklist.push(successor);
               if (writer) {
-                writer.writeLn("Merged State: " + successor.entryState);
+                writer.writeLn("Merged State: " + successor.verifierEntryState);
               }
             }
             return;
           }
 
-          successor.entryState = exitState.clone();
+          successor.verifierEntryState = exitState.clone();
           worklist.push(successor);
           if (writer) {
             writer.writeLn("Added Block: " + successor.bid +
-              " to worklist: " + successor.entryState.toString());
+              " to worklist: " + successor.verifierEntryState.toString());
           }
         });
       }
@@ -717,7 +717,7 @@ module Shumway.AVM2.Verifier {
       (<any>this.methodInfo).inferredReturnType = this.returnType;
     }
 
-    private _verifyBlock(block: Block, state: State) {
+    private _verifyBlock(block: Bytecode, state: State) {
       var self = this;
       var writer = this.writer;
       var methodInfo = this.methodInfo;
