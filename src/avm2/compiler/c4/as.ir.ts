@@ -47,8 +47,8 @@ module Shumway.AVM2.Compiler.IR {
   ASCallProperty.prototype.nodeName = "ASCallProperty";
 
   export class ASCallSuper extends CallProperty {
-    constructor(control: Control, store: Store, object: Value, name: Value, args: Value [], public scope: ASScope) {
-      super(control, store, object, name, args, 0);
+    constructor(control: Control, store: Store, object: Value, name: Value, args: Value [], flags: number, public scope: ASScope) {
+      super(control, store, object, name, args, flags);
     }
     visitInputs(visitor: NodeVisitor) {
       super.visitInputs(visitor);
