@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 module Shumway.Tools.Profiler {
+
   import clamp = NumberUtilities.clamp;
   import trimMiddle = StringUtilities.trimMiddle;
   import createEmptyObject = ObjectUtilities.createEmptyObject;
@@ -30,33 +31,30 @@ module Shumway.Tools.Profiler {
     windowRight: number;
   }
 
-  export class FlameChart {
-    private _container: HTMLElement;
+  export class FlameChart implements MouseControllerTarget {
+
+    private _controller: Controller;
+    private _buffer: TimelineBuffer;
+
     private _canvas: HTMLCanvasElement;
     private _context: CanvasRenderingContext2D;
 
-    private _overviewHeight = 64;
-    private _overviewCanvasDirty = true;
-    private _overviewCanvas: HTMLCanvasElement;
-    private _overviewContext: CanvasRenderingContext2D;
+    private _mouseController: MouseController;
 
-    private _offsetWidth: number;
-    private _offsetHeight: number;
+    private _width: number;
+    private _height: number;
 
-    private _buffer: TimelineBuffer;
+    private _windowStart: number;
+    private _windowEnd: number;
+    private _rangeStart: number;
+    private _rangeEnd: number;
+    private _maxDepth: number;
 
-    private _windowLeft = 0;
-    private _windowRight = Number.MAX_VALUE;
-    private _timeToPixels = 1;
-    private _pixelsToTime = 1;
-    private _pixelsToOverviewTime = 1;
-    private _range: TimelineFrame;
-    private _minTime = 1;
     private _kindStyle: Shumway.Map<KindStyle>;
 
-    private _drag:DragInfo = null;
-    private _ignoreClick = false;
-    private _cursor = "default";
+    private _initialized: boolean;
+    private _type: FlameChartHeaderType;
+    private _dragInfo: DragInfo;
     private _textWidth = {};
 
     /**
@@ -65,29 +63,202 @@ module Shumway.Tools.Profiler {
      */
     private _minFrameWidthInPixels = 0.2;
 
-    constructor(container: HTMLElement, buffer: TimelineBuffer) {
-      this._container = container;
-      this._canvas = document.createElement("canvas");
-      this._canvas.style.display = "block";
-      this._context = this._canvas.getContext("2d");
-      this._context.font = 10 + 'px Consolas, "Liberation Mono", Courier, monospace';
-      this._container.appendChild(this._canvas);
-      this._overviewCanvas = document.createElement("canvas");
-      this._overviewContext = this._overviewCanvas.getContext("2d");
+    constructor(controller: Controller, buffer: TimelineBuffer) {
+      this._controller = controller;
       this._buffer = buffer;
-      this._range = this._buffer.gatherRange(Number.MAX_VALUE);
+      this._initialized = false;
       this._kindStyle = createEmptyObject();
-      this._resetCanvas();
-      window.addEventListener("resize", this._onResize.bind(this));
-      this._canvas.addEventListener("mousewheel", this._onMouseWheel.bind(this), false);
-      this._canvas.addEventListener("DOMMouseScroll", this._onMouseWheel.bind(this), false);
-      this._canvas.addEventListener("mousedown", this._onMouseDown.bind(this), false);
-      window.addEventListener("mouseup", this._onMouseUp.bind(this), true);
-      this._canvas.addEventListener("mousemove", this._onMouseMove.bind(this), false);
-      this._canvas.addEventListener("click", this._onClick.bind(this), false);
-      this._onResize();
+      this._canvas = document.createElement("canvas");
+      this._context = this._canvas.getContext("2d");
+      this._mouseController = new MouseController(this, this._canvas);
+      var container = controller.container;
+      container.appendChild(this._canvas);
+      var rect = container.getBoundingClientRect();
+      this.setSize(rect.width);
     }
 
+    setSize(width: number, height: number = 100) {
+      this._width = width;
+      this._height = height;
+      this._resetCanvas();
+      this._draw();
+    }
+
+    initialize(rangeStart: number, rangeEnd: number) {
+      this._initialized = true;
+      this._maxDepth = this._buffer.maxDepth;
+      this._rangeStart = rangeStart;
+      this._rangeEnd = rangeEnd;
+      this._windowStart = rangeStart;
+      this._windowEnd = rangeEnd;
+      this.setSize(this._width, this._maxDepth * 12);
+    }
+
+    setWindow(windowStart: number, windowEnd: number) {
+      this._windowStart = windowStart;
+      this._windowEnd = windowEnd;
+      this._draw();
+    }
+
+    destroy() {
+      this._mouseController.destroy();
+      this._mouseController = null;
+      this._controller = null;
+      this._buffer = null;
+    }
+
+    private _resetCanvas() {
+      var ratio = window.devicePixelRatio;
+      var canvas = this._canvas;
+      canvas.width = this._width * ratio;
+      canvas.height = this._height * ratio;
+      canvas.style.width = this._width + "px";
+      canvas.style.height = this._height + "px";
+    }
+
+    private _draw() {
+      var context = this._context;
+      var ratio = window.devicePixelRatio;
+
+      context.save();
+      context.scale(ratio, ratio);
+      context.fillStyle = "#181d20";
+      context.fillRect(0, 0, this._width, this._height);
+      context.restore();
+
+      if (this._initialized) {
+        this._drawFlames();
+      }
+    }
+
+    private _drawFlames() {
+      var snapshot = this._buffer.snapshot;
+      var a = snapshot.getChildRange(this._windowStart, this._windowEnd);
+      if (a == null) {
+        return;
+      }
+      var l = a[0];
+      var r = a[1];
+      var context = this._context;
+      var ratio = window.devicePixelRatio;
+      context.save();
+      context.scale(ratio, ratio);
+      for (var i = l; i <= r; i++) {
+        this._drawFrame(snapshot.children[i], 0);
+      }
+      context.restore();
+    }
+
+    private _drawFrame(frame: TimelineFrame, depth: number) {
+      var context = this._context;
+      var start = this._toPixels(frame.startTime - this._windowStart);
+      var end = this._toPixels(frame.endTime - this._windowStart);
+      var width = end - start;
+      if (width < this._minFrameWidthInPixels) {
+        return;
+      }
+      var style = this._kindStyle[frame.kind.id];
+      if (!style) {
+        var background = ColorStyle.randomStyle();
+        style = this._kindStyle[frame.kind.id] = {
+          bgColor: background,
+          textColor: ColorStyle.contrastStyle(background)
+        };
+      }
+      var frameHPadding = 0.5;
+      context.fillStyle = style.bgColor;
+      context.fillRect(start, depth * (12 + frameHPadding), width, 12);
+      //if (depth == 0) {
+        //console.log(start, depth * (12 + frameHPadding), width, 12)
+      //}
+      if (width > 12) {
+        var label = frame.kind.name;
+        if (label && label.length) {
+          var labelHPadding = 2;
+          label = this._prepareText(context, label, width - labelHPadding * 2);
+          if (label.length) {
+            context.fillStyle = style.textColor;
+            context.textBaseline = "top";
+            context.fillText(label, (start + labelHPadding), depth * (12 + frameHPadding));
+          }
+        }
+      }
+      var children = frame.children;
+      if (children) {
+        for (var i = 0; i < children.length; i++) {
+          this._drawFrame(children[i], depth + 1);
+        }
+      }
+    }
+
+    private _prepareText(context: CanvasRenderingContext2D, title: string, maxSize: number):string {
+      var titleWidth = this._measureWidth(context, title);
+      if (maxSize > titleWidth) {
+        return title;
+      }
+      var l = 3;
+      var r = title.length;
+      while (l < r) {
+        var m = (l + r) >> 1;
+        if (this._measureWidth(context, trimMiddle(title, m)) < maxSize) {
+          l = m + 1;
+        } else {
+          r = m;
+        }
+      }
+      title = trimMiddle(title, r - 1);
+      titleWidth = this._measureWidth(context, title);
+      if (titleWidth <= maxSize) {
+        return title;
+      }
+      return "";
+    }
+
+    private _measureWidth(context: CanvasRenderingContext2D, text: string): number {
+      var width = this._textWidth[text];
+      if (!width) {
+        width = context.measureText(text).width;
+        this._textWidth[text] = width;
+      }
+      return width;
+    }
+
+    private _toPixels(time: number): number {
+      return time * this._width / (this._windowEnd - this._windowStart);
+    }
+
+    private _toTime(px: number): number {
+      return px * (this._windowEnd - this._windowStart) / this._width;
+    }
+
+    onMouseDown(x: number, y: number) {
+    }
+
+    onMouseMove(x: number, y: number) {
+    }
+
+    onMouseOver(x: number, y: number) {
+    }
+
+    onMouseOut() {
+    }
+
+    onMouseWheel(x: number, y: number, delta: number) {
+    }
+
+    onDrag(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
+    }
+
+    onDragEnd(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
+    }
+
+    onClick(x: number, y: number) {
+    }
+
+    onHoverStart(x: number, y: number) {}
+    onHoverEnd() {}
+
+    /*
     private _onClick(event: MouseEvent) {
       if (this._ignoreClick) {
         this._ignoreClick = false;
@@ -237,77 +408,6 @@ module Shumway.Tools.Profiler {
       return (time - this._windowLeft) * (this._offsetWidth / window);
     }
 
-    private _drawFrame(frame: TimelineFrame, depth: number) {
-      var context = this._context;
-      var start = (frame.startTime - this._windowLeft) * this._timeToPixels;
-      var end = (frame.endTime - this._windowLeft) * this._timeToPixels;
-      var width = end - start;
-      if (width < this._minFrameWidthInPixels) {
-        return;
-      }
-      var style = this._kindStyle[frame.kind.id];
-      if (!style) {
-        var background = ColorStyle.randomStyle();
-        style = this._kindStyle[frame.kind.id] = {
-          bgColor: background,
-          textColor: ColorStyle.contrastStyle(background)
-        };
-      }
-      var frameHPadding = 0.5;
-      context.fillStyle = style.bgColor;
-      context.fillRect(start, depth * (12 + frameHPadding), width, 12);
-      if (width > 12) {
-        var label = frame.kind.name;
-        if (label && label.length) {
-          var labelHPadding = 2;
-          label = this._prepareText(context, label, width - labelHPadding * 2);
-          if (label.length) {
-            context.fillStyle = style.textColor;
-            context.textBaseline = "top";
-            context.fillText(label, (start + labelHPadding), depth * (12 + frameHPadding));
-          }
-        }
-      }
-      var children = frame.children;
-      if (children) {
-        for (var i = 0; i < children.length; i++) {
-          this._drawFrame(children[i], depth + 1);
-        }
-      }
-    }
-
-    private _prepareText(context: CanvasRenderingContext2D, title: string, maxSize: number):string {
-      var titleWidth = this._measureWidth(context, title);
-      if (maxSize > titleWidth) {
-        return title;
-      }
-      var l = 3;
-      var r = title.length;
-      while (l < r) {
-        var m = (l + r) >> 1;
-        if (this._measureWidth(context, trimMiddle(title, m)) < maxSize) {
-          l = m + 1;
-        } else {
-          r = m;
-        }
-      }
-      title = trimMiddle(title, r - 1);
-      titleWidth = this._measureWidth(context, title);
-      if (titleWidth <= maxSize) {
-        return title;
-      }
-      return "";
-    }
-
-    private _measureWidth(context: CanvasRenderingContext2D, text: string): number {
-      var width = this._textWidth[text];
-      if (!width) {
-        width = context.measureText(text).width;
-        this._textWidth[text] = width;
-      }
-      return width;
-    }
-
     private _drawOverview() {
       var context = this._context;
       var ratio = window.devicePixelRatio;
@@ -359,38 +459,6 @@ module Shumway.Tools.Profiler {
       context.restore();
     }
 
-    private _drawFlames() {
-      var a = this._range.getChildRange(this._windowLeft, this._windowRight);
-      if (a == null) {
-        return;
-      }
-      var l = a[0];
-      var r = a[1];
-      var context = this._context;
-      var ratio = window.devicePixelRatio;
-      context.save();
-      context.scale(ratio, ratio);
-      context.translate(0, this._overviewHeight);
-      for (var i = l; i <= r; i++) {
-        this._drawFrame(this._range.children[i], 0);
-      }
-      context.restore();
-    }
-
-    private _draw() {
-      var context = this._context;
-      var ratio = window.devicePixelRatio;
-
-      context.save();
-      context.scale(ratio, ratio);
-      context.fillStyle = "#181d20";
-      context.fillRect(0, 0, this._offsetWidth, this._offsetHeight);
-      context.restore();
-
-      this._drawOverview();
-      this._drawFlames();
-    }
-
     private _getCursorPosition(event: MouseEvent): number {
       var pos = 0;
       if (event.clientY < this._overviewHeight) {
@@ -406,6 +474,7 @@ module Shumway.Tools.Profiler {
       }
       return pos;
     }
-  }
+    */
 
+  }
 }

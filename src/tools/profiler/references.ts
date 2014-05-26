@@ -5,7 +5,7 @@
 /// <reference path='timelineBuffer.ts' />
 /// <reference path='controller.ts' />
 /// <reference path='mouseController.ts' />
-// /// <reference path='flameChart.ts' />
+/// <reference path='flameChart.ts' />
 /// <reference path='flameChartOverview.ts' />
 /// <reference path='flameChartHeader.ts' />
 

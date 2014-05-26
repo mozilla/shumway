@@ -123,18 +123,18 @@ module Shumway.Tools.Profiler {
           var right = this._toPixels(this._windowEnd);
           context.fillStyle = "#14171a";
           context.fillRect(left, 0, right - left, height);
-          this._drawLabels(this._rangeStart, this._rangeEnd);
+          this._drawLabels(this._rangeStart, this._rangeEnd, this._width);
           this._drawDragHandle(left);
           this._drawDragHandle(right);
         } else {
-          this._drawLabels(this._windowStart, this._windowEnd);
+          this._drawLabels(this._windowStart, this._windowEnd, this._width + FlameChartHeader.TICK_MAX_WIDTH);
         }
       }
 
       context.restore();
     }
 
-    private _drawLabels(rangeStart: number, rangeEnd: number) {
+    private _drawLabels(rangeStart: number, rangeEnd: number, maxWidth: number) {
       var context = this._context;
       var tickInterval = this._calculateTickInterval(rangeStart, rangeEnd);
       var tick = Math.ceil(rangeStart / tickInterval) * tickInterval;
@@ -144,7 +144,6 @@ module Shumway.Tools.Profiler {
       var unit = showSeconds ? "s" : "ms";
       var x = this._toPixels(tick - rangeStart);
       var y = this._height / 2;
-      var maxWidth = (this._type == FlameChartHeaderType.OVERVIEW) ? this._width : this._width + FlameChartHeader.TICK_MAX_WIDTH;
       context.lineWidth = 1;
       context.strokeStyle = "rgba(95, 115, 135, 0.5)";
       context.fillStyle = "rgba(95, 115, 135, 0.8)";

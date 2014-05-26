@@ -22,12 +22,14 @@ module Shumway.Tools.Profiler {
 
     private _overviewHeader: FlameChartHeader;
     private _overview: FlameChartOverview;
-    private _chartHeader: FlameChartHeader;
-    //private _charts: FlameChart [];
+    private _headers: FlameChartHeader [];
+    private _charts: FlameChart [];
 
     constructor(profile:Profile, container:HTMLElement) {
       this._profile = profile;
       this._container = container;
+      this._headers = [];
+      this._charts = [];
       this._createViews();
     }
 
@@ -47,7 +49,10 @@ module Shumway.Tools.Profiler {
     private _createViews() {
       this._overviewHeader = new Profiler.FlameChartHeader(this, FlameChartHeaderType.OVERVIEW);
       this._overview = new Profiler.FlameChartOverview(this);
-      this._chartHeader = new Profiler.FlameChartHeader(this, FlameChartHeaderType.CHART);
+      for (var i = 0, n = this._profile.bufferCount; i < n; i++) {
+        this._headers.push(new Profiler.FlameChartHeader(this, FlameChartHeaderType.CHART));
+        this._charts.push(new Profiler.FlameChart(this, this._profile.getBufferAt(i)));
+      }
       window.addEventListener("resize", this._onResize.bind(this));
     }
 
@@ -56,14 +61,20 @@ module Shumway.Tools.Profiler {
       var endTime = this._profile.endTime;
       this._overviewHeader.initialize(startTime, endTime);
       this._overview.initialize(startTime, endTime);
-      this._chartHeader.initialize(startTime, endTime);
+      for (var i = 0, n = this._profile.bufferCount; i < n; i++) {
+        this._headers[i].initialize(startTime, endTime);
+        this._charts[i].initialize(startTime, endTime);
+      }
     }
 
     private _onResize() {
       var width = this._container.offsetWidth;
       this._overviewHeader.setSize(width);
       this._overview.setSize(width);
-      this._chartHeader.setSize(width);
+      for (var i = 0, n = this._profile.bufferCount; i < n; i++) {
+        this._headers[i].setSize(width);
+        this._charts[i].setSize(width);
+      }
     }
 
     public onWindowChange(startTime: number, endTime: number) {
@@ -76,7 +87,10 @@ module Shumway.Tools.Profiler {
       }
       this._overviewHeader.setWindow(startTime, endTime);
       this._overview.setWindow(startTime, endTime);
-      this._chartHeader.setWindow(startTime, endTime);
+      for (var i = 0, n = this._profile.bufferCount; i < n; i++) {
+        this._headers[i].setWindow(startTime, endTime);
+        this._charts[i].setWindow(startTime, endTime);
+      }
     }
 
     private _relToAbsTime(relTime: number): number {
