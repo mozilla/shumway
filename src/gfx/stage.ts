@@ -279,75 +279,107 @@ module Shumway.GFX {
         this._renderFallback(context);
         return;
       }
-      var fillActive = false;
-      var strokeActive = false;
+      // TODO: Optimize path handling to use only one path if possible.
+      // If both line and fill style are set at the same time, we don't need to duplicate the
+      // geometry.
+      // TODO: correctly handle style changes.
+      // Flash allows switching line and fill styles at arbitrary points, so you can have a
+      // shape with a single fill but varying line styles. In that case, it's necessary to
+      // delay stroking of the lines until the fill is finished. Probably by pushing all
+      // stroke paths onto a stack.
+      var fillPath = null;
+      var strokePath = null;
       data.position = 0;
+      // We have to alway store the last position because Flash keeps the drawing cursor where it
+      // was when changing fill or line style, whereas Canvas forgets it on beginning a new path.
+      var x = 0;
+      var y = 0;
+      var cpX: number;
+      var cpY: number;
       // Description of serialization format can be found in flash.display.Graphics.
       while (data.bytesAvailable > 0) {
         var command = data.readUnsignedByte();
         switch (command) {
           case PathCommand.MoveTo:
             assert(data.bytesAvailable >= 8);
-            context.moveTo(data.readInt() / 20, data.readInt() / 20);
+            x = data.readInt() / 20;
+            y = data.readInt() / 20;
+            fillPath && fillPath.moveTo(x, y);
+            strokePath && strokePath.moveTo(x, y);
             break;
           case PathCommand.LineTo:
             assert(data.bytesAvailable >= 8);
-            context.lineTo(data.readInt() / 20, data.readInt() / 20);
+            x = data.readInt() / 20;
+            y = data.readInt() / 20;
+            fillPath && fillPath.lineTo(x, y);
+            strokePath && strokePath.lineTo(x, y);
             break;
           case PathCommand.CurveTo:
             assert(data.bytesAvailable >= 16);
-            context.quadraticCurveTo(data.readInt() / 20, data.readInt() / 20,
-                                     data.readInt() / 20, data.readInt() / 20);
+            cpX = data.readInt() / 20;
+            cpY = data.readInt() / 20;
+            x = data.readInt() / 20;
+            y = data.readInt() / 20;
+            fillPath && fillPath.quadraticCurveTo(cpX, cpY, x, y);
+            strokePath && strokePath.quadraticCurveTo(cpX, cpY, x, y);
             break;
           case PathCommand.CubicCurveTo:
             assert(data.bytesAvailable >= 24);
-            context.bezierCurveTo(data.readInt() / 20, data.readInt() / 20,
-                                  data.readInt() / 20, data.readInt() / 20,
-                                  data.readInt() / 20, data.readInt() / 20);
+            cpX = data.readInt() / 20;
+            cpY = data.readInt() / 20;
+            var cpX2 = data.readInt() / 20;
+            var cpY2 = data.readInt() / 20;
+            x = data.readInt() / 20;
+            y = data.readInt() / 20;
+            fillPath && fillPath.bezierCurveTo(cpX, cpY, cpX2, cpY2, x, y);
+            strokePath && strokePath.bezierCurveTo(cpX, cpY, cpX2, cpY2, x, y);
             break;
           case PathCommand.BeginSolidFill:
             assert(data.bytesAvailable >= 4);
-            if (fillActive) {
-              context.fill();
-              context.closePath();
+            if (fillPath) {
+              context.fill(fillPath);
             }
-            context.beginPath();
-            fillActive = true;
+            fillPath = new Path2D();
+            fillPath.moveTo(x, y);
             var color = data.readUnsignedInt();
             context.fillStyle = ColorUtilities.rgbaToCSSStyle(color);
             break;
           case PathCommand.EndFill:
-            if (fillActive) {
-              context.fill();
-              context.closePath();
+            if (fillPath) {
+              context.fill(fillPath);
+              context.fillStyle = null;
+              fillPath = null;
             }
-            fillActive = false;
-            context.fillStyle = null;
             break;
           case PathCommand.LineStyleSolid:
-            if (strokeActive) {
-              context.stroke();
-              context.closePath();
+            if (strokePath) {
+              context.stroke(strokePath);
             }
-            context.beginPath();
-            strokeActive = true;
-            var thickness = data.readUnsignedByte();
-            var color = data.readUnsignedInt();
-            context.lineWidth = thickness;
-            context.strokeStyle = ColorUtilities.rgbaToCSSStyle(color);
+            strokePath = new Path2D();
+            strokePath.moveTo(x, y);
+            context.lineWidth = data.readUnsignedByte();
+            context.strokeStyle = ColorUtilities.rgbaToCSSStyle(data.readUnsignedInt());
             data.readBoolean(); // Skip pixel hinting.
             data.readByte(); // Skip scaleMode.
             context.lineCap = ShapeGraphics.LINE_CAP_STYLES[data.readByte()];
             context.lineJoin = ShapeGraphics.LINE_JOINT_STYLES[data.readByte()];
             context.miterLimit = data.readByte();
             break;
+          case PathCommand.LineEnd:
+            if (strokePath) {
+              context.stroke(strokePath);
+              context.strokeStyle = null;
+              strokePath = null;
+            }
         }
       }
-      if (fillActive) {
-        context.fill();
+      if (fillPath) {
+        context.fill(fillPath);
+        context.fillStyle = null;
       }
-      if (strokeActive) {
-        context.stroke();
+      if (strokePath) {
+        context.stroke(strokePath);
+        context.strokeStyle = null;
       }
       context.restore();
       this.isInvalid = false;

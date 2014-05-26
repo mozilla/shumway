@@ -29,6 +29,7 @@
   unitTests.push(clear);
   unitTests.push(beginFill);
   unitTests.push(lineStyle_defaults);
+  unitTests.push(lineStyle_invalidWidth);
   unitTests.push(lineStyle_allArgs);
   unitTests.push(moveTo);
   unitTests.push(lineTo);
@@ -80,6 +81,34 @@
     eq(JointStyle.fromNumber(bytes.readUnsignedByte()), JointStyle.ROUND,
        "defaults to round joints");
     eq(bytes.readUnsignedByte(), 3, "defaults to miterLimit of 3");
+    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    g.clear();
+    g.lineStyle(0.4);
+    bytes = cloneData(g.getGraphicsData());
+    bytes.readUnsignedByte();
+    eq(bytes.readUnsignedByte(), 0, "thickness is correctly rounded");
+    g.clear();
+    g.lineStyle(0.6);
+    bytes = cloneData(g.getGraphicsData());
+    bytes.readUnsignedByte();
+    eq(bytes.readUnsignedByte(), 1, "thickness is correctly rounded");
+    g.clear();
+    g.lineStyle(1.1);
+    bytes = cloneData(g.getGraphicsData());
+    bytes.readUnsignedByte();
+    eq(bytes.readUnsignedByte(), 1, "thickness is correctly rounded");
+    g.clear();
+    g.lineStyle(1.5);
+    bytes = cloneData(g.getGraphicsData());
+    bytes.readUnsignedByte();
+    eq(bytes.readUnsignedByte(), 2, "thickness is correctly rounded");
+  }
+
+  function lineStyle_invalidWidth() {
+    var g = createGraphics();
+    g.lineStyle(NaN);
+    var bytes = cloneData(g.getGraphicsData());
+    eq(bytes.readUnsignedByte(), PathCommand.LineEnd, "style is stored");
     eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
   }
 

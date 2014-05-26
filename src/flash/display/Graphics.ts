@@ -54,7 +54,8 @@
  * uint color:    [RGBA color]
  *
  * lineStyle:
- * byte command:      PathCommand.LineStyleSolid
+ * byte command:      PathCommand.LineStyleSolid OR PathCommand.LineEnd
+ * The following values are only emitted if the command is PathCommand.LineStyleSolid:
  * byte thickness:    [0-0xff]
  * uint color:        [RGBA color]
  * byte pixelHinting: [0,1] (true,false)
@@ -98,6 +99,7 @@ module Shumway.AVM2.AS.flash.display {
     LineStyleSolid,
     LineStyleGradient,
     LineStyleBitmap,
+    LineEnd,
     MoveTo,
     LineTo,
     CurveTo,
@@ -292,7 +294,7 @@ module Shumway.AVM2.AS.flash.display {
               pixelHinting: boolean = false, scaleMode: string = "normal", caps: string = null,
               joints: string = null, miterLimit: number = 3): void
     {
-      thickness = clamp(thickness|0, 0, 0xff);
+      thickness = +thickness;
       color = color >>> 0;
       alpha = Math.round(clamp(+alpha, -1, 1) * 0xff);
       pixelHinting = !!pixelHinting;
@@ -301,9 +303,19 @@ module Shumway.AVM2.AS.flash.display {
       joints = asCoerceString(joints);
       miterLimit = clamp(+miterLimit|0, 0, 0xff);
 
+      var graphicsData = this._graphicsData;
+
+      // Flash stops drawing strokes whenever a thickness is supplied that can't be coerced to a
+      // number.
+      if (isNaN(thickness)) {
+        this._currentStrokeWidth = 0;
+        graphicsData.writeUnsignedByte(PathCommand.LineEnd);
+        return;
+      }
+      // thickness is rounded to the nearest pixel value.
+      thickness = clamp(Math.round(thickness)|0, 0, 0xff)|0;
       this._currentStrokeWidth = thickness * 20|0;
 
-      var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(PathCommand.LineStyleSolid);
       graphicsData.writeUnsignedByte(thickness);
       graphicsData.writeUnsignedInt((color << 8) | alpha);
