@@ -312,7 +312,8 @@ module Shumway.AVM2.AS.flash.display {
         graphicsData.writeUnsignedByte(PathCommand.LineEnd);
         return;
       }
-      thickness = clamp(thickness|0, 0, 0xff);
+      // thickness is rounded to the nearest pixel value.
+      thickness = clamp(Math.round(thickness)|0, 0, 0xff)|0;
       this._currentStrokeWidth = thickness * 20|0;
 
       graphicsData.writeUnsignedByte(PathCommand.LineStyleSolid);
