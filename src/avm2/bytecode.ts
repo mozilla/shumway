@@ -511,6 +511,7 @@ module Shumway.AVM2 {
    * A normalized AS3 bytecode, or BasicBlock.
    */
   export class Bytecode {
+    ti: Verifier.TypeInformation;
     op: number;
     position: number;
     originalPosition: number;

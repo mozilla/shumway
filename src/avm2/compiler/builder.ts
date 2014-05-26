@@ -33,6 +33,7 @@ module Shumway.AVM2.Compiler {
   import Node = IR.Node;
   import Control = IR.Control;
   import Value = IR.Value;
+  import StoreDependent = IR.StoreDependent;
   import Start = IR.Start;
   import Region = IR.Region;
   import Null = IR.Null;
@@ -260,7 +261,7 @@ module Shumway.AVM2.Compiler {
     return node;
   }
 
-  function globalProperty(name: string) {
+  function globalProperty(name: string): Value {
     var node = new IR.GlobalProperty(name);
     node.mustFloat = true;
     return node;
@@ -705,6 +706,343 @@ module Shumway.AVM2.Compiler {
       return slowPath;
     }
 
+    coerce(multiname: Multiname, value: Value): Value {
+      // TODO: Try to do the coercion of constant values without causing classes to be
+      // loaded, as is the case when calling |asCoerceByMultiname|.
+      if (false && isConstant(value)) {
+        return constant(asCoerceByMultiname(this.domain.value, multiname, (<Constant>value).value));
+      } else {
+        var coercer = getCoercerForType(multiname);
+        if (coercer) {
+          return coercer(value);
+        }
+      }
+      if (emitCoerceNonPrimitive) {
+        return this.call(globalProperty("asCoerceByMultiname"), null, [this.domain, constant(multiname), value]);
+      }
+      return value;
+    }
+
+    /**
+     * Marks the |node| as the active store node, with dependencies on all loads appearing after the
+     * previous active store node.
+     */
+    store(node: any): Value {
+      var state = this.blockState.state;
+      state.store = new Projection(node, ProjectionType.STORE);
+      node.loads = state.loads.slice(0);
+      state.loads.length = 0;
+      return node;
+    }
+
+    /**
+     * Keeps track of the current set of loads.
+     */
+    load(node): Value {
+      var state = this.blockState.state;
+      state.loads.push(node);
+      return node;
+    }
+
+    call(callee: Value, object: Value, args: Value []): Value {
+      var blockState = this.blockState;
+      return this.store(new Call(blockState.region, blockState.state.store, callee, object, args, IR.Flags.PRISTINE));
+    }
+
+    callCall(callee: Value, object: Value, args: Value []) {
+      var blockState = this.blockState;
+      return this.store(new Call(blockState.region, blockState.state.store, callee, object, args, IR.Flags.AS_CALL));
+    }
+
+    callProperty(object, multiname, args, isLex, ti) {
+      var blockState = this.blockState;
+      var region = blockState.region;
+      var state = blockState.state;
+      if (ti && ti.trait) {
+        if (ti.trait.isMethod()) {
+          var openQn;
+          if (ti.trait.holder instanceof InstanceInfo &&
+            ti.trait.holder.isInterface()) {
+            openQn = Multiname.getPublicQualifiedName(Multiname.getName(ti.trait.name));
+          } else {
+            openQn = Multiname.getQualifiedName(ti.trait.name);
+          }
+          openQn = VM_OPEN_METHOD_PREFIX + openQn;
+          return this.store(new IR.CallProperty(region, state.store, object, constant(openQn), args, IR.Flags.PRISTINE));
+        } else if (ti.trait.isClass()) {
+          var constructor = getCallableConstructorForType(ti.trait.name);
+          if (constructor) {
+            return constructor(args[0]);
+          }
+          var qn = Multiname.getQualifiedName(ti.trait.name);
+          return this.store(new IR.CallProperty(region, state.store, object, constant(qn), args, IR.Flags.AS_CALL));
+        }
+      } else if (ti && ti.propertyQName) {
+        return this.store(new IR.CallProperty(region, state.store, object, constant(ti.propertyQName), args, IR.Flags.PRISTINE));
+      }
+      var mn = this.resolveMultinameGlobally(multiname);
+      if (mn) {
+        return this.store(new IR.ASCallProperty(region, state.store, object, constant(Multiname.getQualifiedName(mn)), args, IR.Flags.PRISTINE | IR.Flags.RESOLVED, isLex));
+      }
+      return this.store(new IR.ASCallProperty(region, state.store, object, multiname, args, IR.Flags.PRISTINE, isLex));
+    }
+
+    getProperty(object, multiname, ti?, getOpenMethod?) {
+      var blockState = this.blockState;
+      var region = blockState.region;
+      var state = blockState.state;
+      release || assert (multiname instanceof IR.ASMultiname);
+      getOpenMethod = !!getOpenMethod;
+      if (ti) {
+        if (ti.trait) {
+          if (ti.trait.isConst() && ti.trait.hasDefaultValue) {
+            return constant(ti.trait.value);
+          }
+          var get = new IR.GetProperty(region, state.store, object, qualifiedNameConstant(ti.trait.name));
+          return ti.trait.isGetter() ? this.store(get) : this.load(get);
+        }
+        if (ti.propertyQName) {
+          return this.store(new IR.GetProperty(region, state.store, object, constant(ti.propertyQName)));
+        } else if (ti.isDirectlyReadable) {
+          return this.store(new IR.GetProperty(region, state.store, object, multiname.name));
+        } else if (ti.isIndexedReadable) {
+          return this.store(new IR.ASGetProperty(region, state.store, object, multiname, IR.Flags.INDEXED | (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
+        }
+      }
+      warn("Can't optimize getProperty " + multiname);
+      var qn = this.resolveMultinameGlobally(multiname);
+      if (qn) {
+        return this.store(new IR.ASGetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), IR.Flags.RESOLVED | (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
+      }
+      Counter.count("Compiler: Slow ASGetProperty");
+      return this.store(new IR.ASGetProperty(region, state.store, object, multiname, (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
+    }
+
+    setProperty(object, multiname, value, ti) {
+      var blockState = this.blockState;
+      var region = blockState.region;
+      var state = blockState.state;
+      release || assert (multiname instanceof IR.ASMultiname);
+      if (ti) {
+        if (ti.trait) {
+          var coercer = ti.trait.typeName ? getCoercerForType(ti.trait.typeName) : null;
+          if (coercer) {
+            value = coercer(value);
+          }
+          this.store(new IR.SetProperty(region, state.store, object, qualifiedNameConstant(ti.trait.name), value));
+          return;
+        }
+        if (ti.propertyQName) {
+          return this.store(new IR.SetProperty(region, state.store, object, constant(ti.propertyQName), value));
+        } else if (ti.isDirectlyWriteable) {
+          return this.store(new IR.SetProperty(region, state.store, object, multiname.name, value));
+        } else if (ti.isIndexedWriteable) {
+          return this.store(new IR.ASSetProperty(region, state.store, object, multiname, value, IR.Flags.INDEXED));
+        }
+      }
+      warn("Can't optimize setProperty " + multiname);
+      var qn = this.resolveMultinameGlobally(multiname);
+      if (qn) {
+        // TODO: return store(new IR.SetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), value));
+      }
+      return this.store(new IR.ASSetProperty(region, state.store, object, multiname, value, 0));
+    }
+
+    callSuper(scope, object, multiname, args, ti) {
+      var blockState = this.blockState;
+      var region = blockState.region;
+      var state = blockState.state;
+      if (ti && ti.trait && ti.trait.isMethod() && ti.baseClass) {
+        var qn = VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+        var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
+        return this.call(callee, object, args);
+      }
+      return this.store(new IR.ASCallSuper(region, state.store, object, multiname, args, IR.Flags.PRISTINE, scope));
+    }
+
+    getSuper(scope, object, multiname, ti) {
+      var blockState = this.blockState;
+      var region = blockState.region;
+      var state = blockState.state;
+      if (ti && ti.trait && ti.trait.isGetter() && ti.baseClass) {
+        var qn = VM_OPEN_GET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+        var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
+        return this.call(callee, object, []);
+      }
+      return this.store(new IR.ASGetSuper(region, state.store, object, multiname, scope));
+    }
+
+    setSuper(scope, object, multiname, value, ti) {
+      var blockState = this.blockState;
+      var region = blockState.region;
+      var state = blockState.state;
+      if (ti && ti.trait && ti.trait.isSetter() && ti.baseClass) {
+        var qn = VM_OPEN_SET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
+        var callee = this.getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
+        return this.call(callee, object, [value]);
+      }
+      return this.store(new IR.ASSetSuper(region, state.store, object, multiname, value, scope));
+    }
+
+    constructSuper(scope, object, args, ti) {
+      var blockState = this.blockState;
+      var region = blockState.region;
+      var state = blockState.state;
+      if (ti) {
+        if (ti.noCallSuperNeeded) {
+          return;
+        } else if (ti.baseClass) {
+          var callee = this.getJSProperty(constant(ti.baseClass), "instanceConstructorNoInitialize");
+          this.call(callee, object, args);
+          return;
+        }
+      }
+      callee = this.getJSProperty(scope, "object.baseClass.instanceConstructorNoInitialize");
+      this.call(callee, object, args);
+      return;
+    }
+
+    getSlot(object, index, ti) {
+      var blockState = this.blockState;
+      var region = blockState.region;
+      var state = blockState.state;
+      if (ti) {
+        var trait = ti.trait;
+        if (trait) {
+          if (trait.isConst() && ti.trait.hasDefaultValue) {
+            return constant(trait.value);
+          }
+          var slotQn = Multiname.getQualifiedName(trait.name);
+          return this.store(new IR.GetProperty(region, state.store, object, constant(slotQn)));
+        }
+      }
+      warn("Can't optimize getSlot " + index);
+      return this.store(new IR.ASGetSlot(null, state.store, object, index));
+    }
+
+    setSlot(object, index, value, ti) {
+      var blockState = this.blockState;
+      var region = blockState.region;
+      var state = blockState.state;
+      if (ti) {
+        var trait = ti.trait;
+        if (trait) {
+          var slotQn = Multiname.getQualifiedName(trait.name);
+          this.store(new IR.SetProperty(region, state.store, object, constant(slotQn), value));
+          return;
+        }
+      }
+      warn("Can't optimize setSlot " + index);
+      this.store(new IR.ASSetSlot(region, state.store, object, index, value));
+    }
+
+    resolveMultinameGlobally(multiname): Multiname {
+      var namespaces = multiname.namespaces;
+      var name = multiname.name;
+      if (!Shumway.AVM2.Runtime.globalMultinameAnalysis.value) {
+        return;
+      }
+      if (!isConstant(namespaces) || !isConstant(name) || multiname.isAttribute()) {
+        Counter.count("GlobalMultinameResolver: Cannot resolve runtime multiname or attribute.");
+        return;
+      }
+      if (isNumeric(name.value) || !isString(name.value) || !name.value) {
+        Counter.count("GlobalMultinameResolver: Cannot resolve numeric or any names.");
+        return;
+      }
+      return GlobalMultinameResolver.resolveMultiname(new Multiname(namespaces.value, name.value, multiname.flags));
+    }
+
+    getJSProperty(object: Value, path: string): Value {
+      return getJSPropertyWithState(this.blockState.state, object, path);
+    }
+
+    simplifyName(name): Value {
+      if (isMultinameConstant(name) && Multiname.isQName(name.value)) {
+        return constant(Multiname.getQualifiedName(name.value));
+      }
+      return name;
+    }
+
+    getDescendants(object: Value, name, ti) {
+      var blockState = this.blockState;
+      var region = blockState.region;
+      var state = blockState.state;
+      name = this.simplifyName(name);
+      return new IR.ASGetDescendants(region, state.store, object, name);
+    }
+
+    truthyCondition(operator: IR.Operator): Value {
+      var stack = this.blockState.state.stack;
+      var right;
+      if (operator.isBinary) {
+        right = stack.pop();
+      }
+      var left = stack.pop();
+      var node;
+      if (right) {
+        node = binary(operator, left, right);
+      } else {
+        node = unary(operator, left);
+      }
+      if (peepholeOptimizer) {
+        node = peepholeOptimizer.fold(node, true);
+      }
+      return node;
+    }
+
+    negatedTruthyCondition(operator: IR.Operator) {
+      var node = unary(Operator.FALSE, this.truthyCondition(operator));
+      if (peepholeOptimizer) {
+        node = peepholeOptimizer.fold(node, true);
+      }
+      return node;
+    }
+
+    pushExpression(operator: IR.Operator, toInt?) {
+      var stack = this.blockState.state.stack;
+      var left, right;
+      if (operator.isBinary) {
+        right = stack.pop();
+        left = stack.pop();
+        if (toInt) {
+          right = coerceInt(right);
+          left = coerceInt(left);
+        }
+        this.push(binary(operator, left, right));
+      } else {
+        left = stack.pop();
+        if (toInt) {
+          left = coerceInt(left);
+        }
+        this.push(unary(operator, left));
+      }
+    }
+
+    push(x: Value) {
+      var blockState = this.blockState;
+      var bc = blockState.bc;
+      release || assert (x instanceof IR.Node);
+      if (bc.ti) {
+        if (x.ty) {
+          // assert (x.ty == bc.ti.type);
+        } else {
+          x.ty = bc.ti.type;
+        }
+      }
+      blockState.state.stack.push(x);
+    }
+
+    pushLocal(index: number) {
+      var local = this.blockState.state.local;
+      this.push(local[index]);
+    }
+
+    popLocal(index) {
+      var state = this.blockState.state;
+      state.local[index] = shouldNotFloat(state.stack.pop());
+    }
+
     buildBlock(region: Region, block, state) {
       release || assert (region && block && state);
       state.optimize();
@@ -733,17 +1071,7 @@ module Shumway.AVM2.Compiler {
 
       var object, receiver, index, callee, value, multiname, type, args, pristine, left, right, operator;
 
-      function push(x) {
-        release || assert (x instanceof IR.Node);
-        if (bc.ti) {
-          if (x.ty) {
-            // assert (x.ty == bc.ti.type);
-          } else {
-            x.ty = bc.ti.type;
-          }
-        }
-        stack.push(x);
-      }
+      var push = this.push.bind(this);
 
       function pop() {
         return stack.pop();
@@ -751,291 +1079,6 @@ module Shumway.AVM2.Compiler {
 
       function popMany(count) {
         return stack.popMany(count);
-      }
-
-      function pushLocal(index) {
-        push(local[index]);
-      }
-
-      function popLocal(index) {
-        local[index] = shouldNotFloat(pop());
-      }
-
-      function simplifyName(name) {
-        if (isMultinameConstant(name) && Multiname.isQName(name.value)) {
-          return constant(Multiname.getQualifiedName(name.value));
-        }
-        return name;
-      }
-
-      function getJSProperty(object, path) {
-        return getJSPropertyWithState(state, object, path);
-      }
-
-      function coerce(multiname, value) {
-        // TODO: Try to do the coercion of constant values without causing classes to be
-        // loaded, as is the case when calling |asCoerceByMultiname|.
-        if (false && isConstant(value)) {
-          return constant(asCoerceByMultiname(domain.value, multiname, value.value));
-        } else {
-          var coercer = getCoercerForType(multiname);
-          if (coercer) {
-            return coercer(value);
-          }
-        }
-        if (emitCoerceNonPrimitive) {
-          return call(globalProperty("asCoerceByMultiname"), null, [domain, constant(multiname), value]);
-        }
-        return value;
-      }
-
-      /**
-       * Marks the |node| as the active store node, with dependencies on all loads appearing after the
-       * previous active store node.
-       */
-      function store(node) {
-        state.store = new Projection(node, ProjectionType.STORE);
-        node.loads = state.loads.slice(0);
-        state.loads.length = 0;
-        return node;
-      }
-
-      /**
-       * Keeps track of the current set of loads.
-       */
-      function load(node) {
-        state.loads.push(node);
-        return node;
-      }
-
-      function resolveMultinameGlobally(multiname): Multiname {
-        var namespaces = multiname.namespaces;
-        var name = multiname.name;
-        if (!Shumway.AVM2.Runtime.globalMultinameAnalysis.value) {
-          return;
-        }
-        if (!isConstant(namespaces) || !isConstant(name) || multiname.isAttribute()) {
-          Counter.count("GlobalMultinameResolver: Cannot resolve runtime multiname or attribute.");
-          return;
-        }
-        if (isNumeric(name.value) || !isString(name.value) || !name.value) {
-          Counter.count("GlobalMultinameResolver: Cannot resolve numeric or any names.");
-          return;
-        }
-        return GlobalMultinameResolver.resolveMultiname(new Multiname(namespaces.value, name.value, multiname.flags));
-      }
-
-      function callSuper(scope, object, multiname, args, ti) {
-        if (ti && ti.trait && ti.trait.isMethod() && ti.baseClass) {
-          var qn = VM_OPEN_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
-          var callee = getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
-          return call(callee, object, args);
-        }
-        return store(new IR.ASCallSuper(region, state.store, object, multiname, args, IR.Flags.PRISTINE, scope));
-      }
-
-      function getSuper(scope, object, multiname, ti) {
-        if (ti && ti.trait && ti.trait.isGetter() && ti.baseClass) {
-          var qn = VM_OPEN_GET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
-          var callee = getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
-          return call(callee, object, []);
-        }
-        return store(new IR.ASGetSuper(region, state.store, object, multiname, scope));
-      }
-
-      function setSuper(scope, object, multiname, value, ti) {
-        if (ti && ti.trait && ti.trait.isSetter() && ti.baseClass) {
-          var qn = VM_OPEN_SET_METHOD_PREFIX + Multiname.getQualifiedName(ti.trait.name);
-          var callee = getJSProperty(constant(ti.baseClass), "traitsPrototype." + qn);
-          return call(callee, object, [value]);
-        }
-        return store(new IR.ASSetSuper(region, state.store, object, multiname, value, scope));
-      }
-
-      function constructSuper(scope, object, args, ti) {
-        if (ti) {
-          if (ti.noCallSuperNeeded) {
-            return;
-          } else if (ti.baseClass) {
-            var callee = getJSProperty(constant(ti.baseClass), "instanceConstructorNoInitialize");
-            call(callee, object, args);
-            return;
-          }
-        }
-        callee = getJSProperty(scope, "object.baseClass.instanceConstructorNoInitialize");
-        call(callee, object, args);
-        return;
-      }
-
-      function callProperty(object, multiname, args, isLex, ti) {
-        if (ti && ti.trait) {
-          if (ti.trait.isMethod()) {
-            var openQn;
-            if (ti.trait.holder instanceof InstanceInfo &&
-              ti.trait.holder.isInterface()) {
-              openQn = Multiname.getPublicQualifiedName(Multiname.getName(ti.trait.name));
-            } else {
-              openQn = Multiname.getQualifiedName(ti.trait.name);
-            }
-            openQn = VM_OPEN_METHOD_PREFIX + openQn;
-            return store(new IR.CallProperty(region, state.store, object, constant(openQn), args, IR.Flags.PRISTINE));
-          } else if (ti.trait.isClass()) {
-            var constructor = getCallableConstructorForType(ti.trait.name);
-            if (constructor) {
-              return constructor(args[0]);
-            }
-            var qn = Multiname.getQualifiedName(ti.trait.name);
-            return store(new IR.CallProperty(region, state.store, object, constant(qn), args, IR.Flags.AS_CALL));
-          }
-        } else if (ti && ti.propertyQName) {
-          return store(new IR.CallProperty(region, state.store, object, constant(ti.propertyQName), args, IR.Flags.PRISTINE));
-        }
-        var mn = resolveMultinameGlobally(multiname);
-        if (mn) {
-          return store(new IR.ASCallProperty(region, state.store, object, constant(Multiname.getQualifiedName(mn)), args, IR.Flags.PRISTINE | IR.Flags.RESOLVED, isLex));
-        }
-        return store(new IR.ASCallProperty(region, state.store, object, multiname, args, IR.Flags.PRISTINE, isLex));
-      }
-
-      function getProperty(object, multiname, ti?, getOpenMethod?) {
-        release || assert (multiname instanceof IR.ASMultiname);
-        getOpenMethod = !!getOpenMethod;
-        if (ti) {
-          if (ti.trait) {
-            if (ti.trait.isConst() && ti.trait.hasDefaultValue) {
-              return constant(ti.trait.value);
-            }
-            var get = new IR.GetProperty(region, state.store, object, qualifiedNameConstant(ti.trait.name));
-            return ti.trait.isGetter() ? store(get) : load(get);
-          }
-          if (ti.propertyQName) {
-            return store(new IR.GetProperty(region, state.store, object, constant(ti.propertyQName)));
-          } else if (ti.isDirectlyReadable) {
-            return store(new IR.GetProperty(region, state.store, object, multiname.name));
-          } else if (ti.isIndexedReadable) {
-            return store(new IR.ASGetProperty(region, state.store, object, multiname, IR.Flags.INDEXED | (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
-          }
-        }
-        warn("Can't optimize getProperty " + multiname);
-        var qn = resolveMultinameGlobally(multiname);
-        if (qn) {
-          return store(new IR.ASGetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), IR.Flags.RESOLVED | (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
-        }
-        Counter.count("Compiler: Slow ASGetProperty");
-        return store(new IR.ASGetProperty(region, state.store, object, multiname, (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
-      }
-
-      function setProperty(object, multiname, value, ti) {
-        release || assert (multiname instanceof IR.ASMultiname);
-        if (ti) {
-          if (ti.trait) {
-            var coercer = ti.trait.typeName ? getCoercerForType(ti.trait.typeName) : null;
-            if (coercer) {
-              value = coercer(value);
-            }
-            store(new IR.SetProperty(region, state.store, object, qualifiedNameConstant(ti.trait.name), value));
-            return;
-          }
-          if (ti.propertyQName) {
-            return store(new IR.SetProperty(region, state.store, object, constant(ti.propertyQName), value));
-          } else if (ti.isDirectlyWriteable) {
-            return store(new IR.SetProperty(region, state.store, object, multiname.name, value));
-          } else if (ti.isIndexedWriteable) {
-            return store(new IR.ASSetProperty(region, state.store, object, multiname, value, IR.Flags.INDEXED));
-          }
-        }
-        warn("Can't optimize setProperty " + multiname);
-        var qn = resolveMultinameGlobally(multiname);
-        if (qn) {
-          // TODO: return store(new IR.SetProperty(region, state.store, object, constant(Multiname.getQualifiedName(qn)), value));
-        }
-        return store(new IR.ASSetProperty(region, state.store, object, multiname, value, 0));
-      }
-
-      function getDescendants(object, name, ti) {
-        name = simplifyName(name);
-        return new IR.ASGetDescendants(region, state.store, object, name);
-      }
-
-      function getSlot(object, index, ti) {
-        if (ti) {
-          var trait = ti.trait;
-          if (trait) {
-            if (trait.isConst() && ti.trait.hasDefaultValue) {
-              return constant(trait.value);
-            }
-            var slotQn = Multiname.getQualifiedName(trait.name);
-            return store(new IR.GetProperty(region, state.store, object, constant(slotQn)));
-          }
-        }
-        warn("Can't optimize getSlot " + index);
-        return store(new IR.ASGetSlot(null, state.store, object, index));
-      }
-
-      function setSlot(object, index, value, ti) {
-        if (ti) {
-          var trait = ti.trait;
-          if (trait) {
-            var slotQn = Multiname.getQualifiedName(trait.name);
-            store(new IR.SetProperty(region, state.store, object, constant(slotQn), value));
-            return;
-          }
-        }
-        warn("Can't optimize setSlot " + index);
-        store(new IR.ASSetSlot(region, state.store, object, index, value));
-      }
-
-      function call(callee: Value, object: Value, args: Value []) {
-        return store(new Call(region, state.store, callee, object, args, IR.Flags.PRISTINE));
-      }
-
-      function callCall(callee: Value, object: Value, args: Value []) {
-        return store(new Call(region, state.store, callee, object, args, IR.Flags.AS_CALL));
-      }
-
-      function truthyCondition(operator: IR.Operator) {
-        var right;
-        if (operator.isBinary) {
-          right = pop();
-        }
-        var left = pop();
-        var node;
-        if (right) {
-          node = binary(operator, left, right);
-        } else {
-          node = unary(operator, left);
-        }
-        if (peepholeOptimizer) {
-          node = peepholeOptimizer.fold(node, true);
-        }
-        return node;
-      }
-
-      function negatedTruthyCondition(operator) {
-        var node = unary(Operator.FALSE, truthyCondition(operator));
-        if (peepholeOptimizer) {
-          node = peepholeOptimizer.fold(node, true);
-        }
-        return node;
-      }
-
-      function pushExpression(operator, toInt?) {
-        var left, right;
-        if (operator.isBinary) {
-          right = pop();
-          left = pop();
-          if (toInt) {
-            right = coerceInt(right);
-            left = coerceInt(left);
-          }
-          push(binary(operator, left, right));
-        } else {
-          left = pop();
-          if (toInt) {
-            left = coerceInt(left);
-          }
-          push(unary(operator, left));
-        }
       }
 
       this.blockState.stops = null;
@@ -1052,7 +1095,7 @@ module Shumway.AVM2.Compiler {
         state.index = bci;
         switch (op) {
           case OP.throw:
-            store(new IR.Throw(region, pop()));
+            this.store(new IR.Throw(region, pop()));
             this.stopPoints.push({
               region: region,
               store: state.store,
@@ -1061,22 +1104,22 @@ module Shumway.AVM2.Compiler {
             this.buildThrowStop();
             break;
           case OP.getlocal:
-            pushLocal(bc.index);
+            this.pushLocal(bc.index);
             break;
           case OP.getlocal0:
           case OP.getlocal1:
           case OP.getlocal2:
           case OP.getlocal3:
-            pushLocal(op - OP.getlocal0);
+            this.pushLocal(op - OP.getlocal0);
             break;
           case OP.setlocal:
-            popLocal(bc.index);
+            this.popLocal(bc.index);
             break;
           case OP.setlocal0:
           case OP.setlocal1:
           case OP.setlocal2:
           case OP.setlocal3:
-            popLocal(op - OP.setlocal0);
+            this.popLocal(op - OP.setlocal0);
             break;
           case OP.pushwith:
             scope.push(new IR.ASScope(this.topScope(), pop(), true));
@@ -1102,48 +1145,48 @@ module Shumway.AVM2.Compiler {
           case OP.getproperty:
             multiname = this.buildMultiname(region, state, bc.index);
             object = pop();
-            push(getProperty(object, multiname, bc.ti, false));
+            push(this.getProperty(object, multiname, bc.ti, false));
             break;
           case OP.getdescendants:
             multiname = this.buildMultiname(region, state, bc.index);
             object = pop();
-            push(getDescendants(object, multiname, bc.ti));
+            push(this.getDescendants(object, multiname, bc.ti));
             break;
           case OP.getlex:
             multiname = this.buildMultiname(region, state, bc.index);
-            push(getProperty(this.findProperty(multiname, true, bc.ti), multiname, bc.ti, false));
+            push(this.getProperty(this.findProperty(multiname, true, bc.ti), multiname, bc.ti, false));
             break;
           case OP.initproperty:
           case OP.setproperty:
             value = pop();
             multiname = this.buildMultiname(region, state, bc.index);
             object = pop();
-            setProperty(object, multiname, value, bc.ti);
+            this.setProperty(object, multiname, value, bc.ti);
             break;
           case OP.deleteproperty:
             multiname = this.buildMultiname(region, state, bc.index);
             object = pop();
-            push(store(new IR.ASDeleteProperty(region, state.store, object, multiname)));
+            push(this.store(new IR.ASDeleteProperty(region, state.store, object, multiname)));
             break;
           case OP.getslot:
             object = pop();
-            push(getSlot(object, constant(bc.index), bc.ti));
+            push(this.getSlot(object, constant(bc.index), bc.ti));
             break;
           case OP.setslot:
             value = pop();
             object = pop();
-            setSlot(object, constant(bc.index), value, bc.ti);
+            this.setSlot(object, constant(bc.index), value, bc.ti);
             break;
           case OP.getsuper:
             multiname = this.buildMultiname(region, state, bc.index);
             object = pop();
-            push(getSuper(this.savedScope(), object, multiname, bc.ti));
+            push(this.getSuper(this.savedScope(), object, multiname, bc.ti));
             break;
           case OP.setsuper:
             value = pop();
             multiname = this.buildMultiname(region, state, bc.index);
             object = pop();
-            setSuper(this.savedScope(), object, multiname, value, bc.ti);
+            this.setSuper(this.savedScope(), object, multiname, value, bc.ti);
             break;
           case OP.debugfile:
           case OP.debugline:
@@ -1155,7 +1198,7 @@ module Shumway.AVM2.Compiler {
             args = popMany(bc.argCount);
             object = pop();
             callee = pop();
-            push(callCall(callee, object, args));
+            push(this.callCall(callee, object, args));
             break;
           case OP.callproperty:
           case OP.callpropvoid:
@@ -1163,7 +1206,7 @@ module Shumway.AVM2.Compiler {
             args = popMany(bc.argCount);
             multiname = this.buildMultiname(region, state, bc.index);
             object = pop();
-            value = callProperty(object, multiname, args, op === OP.callproplex, bc.ti);
+            value = this.callProperty(object, multiname, args, op === OP.callproplex, bc.ti);
             if (op !== OP.callpropvoid) {
               push(value);
             }
@@ -1173,7 +1216,7 @@ module Shumway.AVM2.Compiler {
             multiname = this.buildMultiname(region, state, bc.index);
             args = popMany(bc.argCount);
             object = pop();
-            value = callSuper(this.savedScope(), object, multiname, args, bc.ti);
+            value = this.callSuper(this.savedScope(), object, multiname, args, bc.ti);
             if (op !== OP.callsupervoid) {
               push(value);
             }
@@ -1181,19 +1224,19 @@ module Shumway.AVM2.Compiler {
           case OP.construct:
             args = popMany(bc.argCount);
             object = pop();
-            push(store(new IR.ASNew(region, state.store, object, args)));
+            push(this.store(new IR.ASNew(region, state.store, object, args)));
             break;
           case OP.constructsuper:
             args = popMany(bc.argCount);
             object = pop();
-            constructSuper(this.savedScope(), object, args, bc.ti);
+            this.constructSuper(this.savedScope(), object, args, bc.ti);
             break;
           case OP.constructprop:
             args = popMany(bc.argCount);
             multiname = this.buildMultiname(region, state, bc.index);
             object = pop();
-            callee = getProperty(object, multiname, bc.ti, false);
-            push(store(new IR.ASNew(region, state.store, callee, args)));
+            callee = this.getProperty(object, multiname, bc.ti, false);
+            push(this.store(new IR.ASNew(region, state.store, callee, args)));
             break;
           case OP.coerce:
             if (bc.ti && bc.ti.noCoercionNeeded) {
@@ -1203,7 +1246,7 @@ module Shumway.AVM2.Compiler {
               Counter.count("Compiler: CoercionNeeded");
             }
             value = pop();
-            push(coerce(this.constantPool.multinames[bc.index], value));
+            push(this.coerce(this.constantPool.multinames[bc.index], value));
             break;
           case OP.coerce_i:
           case OP.convert_i:
@@ -1222,7 +1265,7 @@ module Shumway.AVM2.Compiler {
             push(coerceBoolean(pop()));
             break;
           case OP.checkfilter:
-            push(call(globalProperty("checkFilter"), null, [pop()]));
+            push(this.call(globalProperty("checkFilter"), null, [pop()]));
             break;
           case OP.coerce_a:
             /* NOP */ break;
@@ -1236,7 +1279,7 @@ module Shumway.AVM2.Compiler {
             type = pop();
             if (emitAsTypeLate) {
               value = pop();
-              push(call(globalProperty("asAsType"), null, [type, value]));
+              push(this.call(globalProperty("asAsType"), null, [type, value]));
             }
             break;
           case OP.returnvalue:
@@ -1246,7 +1289,7 @@ module Shumway.AVM2.Compiler {
               value = pop();
               if (this.methodInfo.returnType) {
                 if (!(bc.ti && bc.ti.noCoercionNeeded)) {
-                  value = coerce(this.methodInfo.returnType, value);
+                  value = this.coerce(this.methodInfo.returnType, value);
                 }
               }
             }
@@ -1268,9 +1311,9 @@ module Shumway.AVM2.Compiler {
             );
             break;
           case OP.hasnext2:
-            var temp = call(globalProperty("asHasNext2"), null, [local[bc.object], local[bc.index]]);
-            local[bc.object] = getJSProperty(temp, "object");
-            push(local[bc.index] = getJSProperty(temp, "index"));
+            var temp = this.call(globalProperty("asHasNext2"), null, [local[bc.object], local[bc.index]]);
+            local[bc.object] = this.getJSProperty(temp, "object");
+            push(local[bc.index] = this.getJSProperty(temp, "index"));
             break;
           case OP.pushnull:
             push(Null);
@@ -1321,58 +1364,58 @@ module Shumway.AVM2.Compiler {
           case OP.debugfile:
             break;
           case OP.ifnlt:
-            this.buildIfStops(negatedTruthyCondition(Operator.LT));
+            this.buildIfStops(this.negatedTruthyCondition(Operator.LT));
             break;
           case OP.ifge:
-            this.buildIfStops(truthyCondition(Operator.GE));
+            this.buildIfStops(this.truthyCondition(Operator.GE));
             break;
           case OP.ifnle:
-            this.buildIfStops(negatedTruthyCondition(Operator.LE));
+            this.buildIfStops(this.negatedTruthyCondition(Operator.LE));
             break;
           case OP.ifgt:
-            this.buildIfStops(truthyCondition(Operator.GT));
+            this.buildIfStops(this.truthyCondition(Operator.GT));
             break;
           case OP.ifngt:
-            this.buildIfStops(negatedTruthyCondition(Operator.GT));
+            this.buildIfStops(this.negatedTruthyCondition(Operator.GT));
             break;
           case OP.ifle:
-            this.buildIfStops(truthyCondition(Operator.LE));
+            this.buildIfStops(this.truthyCondition(Operator.LE));
             break;
           case OP.ifnge:
-            this.buildIfStops(negatedTruthyCondition(Operator.GE));
+            this.buildIfStops(this.negatedTruthyCondition(Operator.GE));
             break;
           case OP.iflt:
-            this.buildIfStops(truthyCondition(Operator.LT));
+            this.buildIfStops(this.truthyCondition(Operator.LT));
             break;
           case OP.jump:
             this.buildJumpStop();
             break;
           case OP.iftrue:
-            this.buildIfStops(truthyCondition(Operator.TRUE));
+            this.buildIfStops(this.truthyCondition(Operator.TRUE));
             break;
           case OP.iffalse:
-            this.buildIfStops(truthyCondition(Operator.FALSE));
+            this.buildIfStops(this.truthyCondition(Operator.FALSE));
             break;
           case OP.ifeq:
-            this.buildIfStops(truthyCondition(Operator.EQ));
+            this.buildIfStops(this.truthyCondition(Operator.EQ));
             break;
           case OP.ifne:
-            this.buildIfStops(truthyCondition(Operator.NE));
+            this.buildIfStops(this.truthyCondition(Operator.NE));
             break;
           case OP.ifstricteq:
-            this.buildIfStops(truthyCondition(Operator.SEQ));
+            this.buildIfStops(this.truthyCondition(Operator.SEQ));
             break;
           case OP.ifstrictne:
-            this.buildIfStops(truthyCondition(Operator.SNE));
+            this.buildIfStops(this.truthyCondition(Operator.SNE));
             break;
           case OP.lookupswitch:
             this.buildSwitchStops(pop());
             break;
           case OP.not:
-            pushExpression(Operator.FALSE);
+            this.pushExpression(Operator.FALSE);
             break;
           case OP.bitnot:
-            pushExpression(Operator.BITWISE_NOT);
+            this.pushExpression(Operator.BITWISE_NOT);
             break;
           case OP.add:
             right = pop();
@@ -1387,67 +1430,67 @@ module Shumway.AVM2.Compiler {
             push(binary(operator, left, right));
             break;
           case OP.add_i:
-            pushExpression(Operator.ADD, true);
+            this.pushExpression(Operator.ADD, true);
             break;
           case OP.subtract:
-            pushExpression(Operator.SUB);
+            this.pushExpression(Operator.SUB);
             break;
           case OP.subtract_i:
-            pushExpression(Operator.SUB, true);
+            this.pushExpression(Operator.SUB, true);
             break;
           case OP.multiply:
-            pushExpression(Operator.MUL);
+            this.pushExpression(Operator.MUL);
             break;
           case OP.multiply_i:
-            pushExpression(Operator.MUL, true);
+            this.pushExpression(Operator.MUL, true);
             break;
           case OP.divide:
-            pushExpression(Operator.DIV);
+            this.pushExpression(Operator.DIV);
             break;
           case OP.modulo:
-            pushExpression(Operator.MOD);
+            this.pushExpression(Operator.MOD);
             break;
           case OP.lshift:
-            pushExpression(Operator.LSH);
+            this.pushExpression(Operator.LSH);
             break;
           case OP.rshift:
-            pushExpression(Operator.RSH);
+            this.pushExpression(Operator.RSH);
             break;
           case OP.urshift:
-            pushExpression(Operator.URSH);
+            this.pushExpression(Operator.URSH);
             break;
           case OP.bitand:
-            pushExpression(Operator.AND);
+            this.pushExpression(Operator.AND);
             break;
           case OP.bitor:
-            pushExpression(Operator.OR);
+            this.pushExpression(Operator.OR);
             break;
           case OP.bitxor:
-            pushExpression(Operator.XOR);
+            this.pushExpression(Operator.XOR);
             break;
           case OP.equals:
-            pushExpression(Operator.EQ);
+            this.pushExpression(Operator.EQ);
             break;
           case OP.strictequals:
-            pushExpression(Operator.SEQ);
+            this.pushExpression(Operator.SEQ);
             break;
           case OP.lessthan:
-            pushExpression(Operator.LT);
+            this.pushExpression(Operator.LT);
             break;
           case OP.lessequals:
-            pushExpression(Operator.LE);
+            this.pushExpression(Operator.LE);
             break;
           case OP.greaterthan:
-            pushExpression(Operator.GT);
+            this.pushExpression(Operator.GT);
             break;
           case OP.greaterequals:
-            pushExpression(Operator.GE);
+            this.pushExpression(Operator.GE);
             break;
           case OP.negate:
-            pushExpression(Operator.NEG);
+            this.pushExpression(Operator.NEG);
             break;
           case OP.negate_i:
-            pushExpression(Operator.NEG, true);
+            this.pushExpression(Operator.NEG, true);
             break;
           case OP.increment:
           case OP.increment_i:
@@ -1460,9 +1503,9 @@ module Shumway.AVM2.Compiler {
               push(coerceInt(pop()));
             }
             if (op === OP.increment || op === OP.increment_i) {
-              pushExpression(Operator.ADD);
+              this.pushExpression(Operator.ADD);
             } else {
-              pushExpression(Operator.SUB);
+              this.pushExpression(Operator.SUB);
             }
             break;
           case OP.inclocal:
@@ -1476,46 +1519,46 @@ module Shumway.AVM2.Compiler {
               push(coerceInt(local[bc.index]));
             }
             if (op === OP.inclocal || op === OP.inclocal_i) {
-              pushExpression(Operator.ADD);
+              this.pushExpression(Operator.ADD);
             } else {
-              pushExpression(Operator.SUB);
+              this.pushExpression(Operator.SUB);
             }
-            popLocal(bc.index);
+            this.popLocal(bc.index);
             break;
           case OP.instanceof:
             type = pop();
             value = pop();
-            push(call(getJSProperty(type, "isInstanceOf"), null, [value]));
+            push(this.call(this.getJSProperty(type, "isInstanceOf"), null, [value]));
             break;
           case OP.istype:
             value = pop();
             multiname = this.buildMultiname(region, state, bc.index);
-            type = getProperty(this.findProperty(multiname, false), multiname);
-            push(call(globalProperty("asIsType"), null, [type, value]));
+            type = this.getProperty(this.findProperty(multiname, false), multiname);
+            push(this.call(globalProperty("asIsType"), null, [type, value]));
             break;
           case OP.istypelate:
             type = pop();
             value = pop();
-            push(call(globalProperty("asIsType"), null, [type, value]));
+            push(this.call(globalProperty("asIsType"), null, [type, value]));
             break;
           case OP.in:
             object = pop();
             value = pop();
             multiname = new IR.ASMultiname(Undefined, value, 0);
-            push(store(new IR.ASHasProperty(region, state.store, object, multiname)));
+            push(this.store(new IR.ASHasProperty(region, state.store, object, multiname)));
             break;
           case OP.typeof:
-            push(call(globalProperty("asTypeOf"), null, [pop()]));
+            push(this.call(globalProperty("asTypeOf"), null, [pop()]));
             break;
           case OP.kill:
             push(Undefined);
-            popLocal(bc.index);
+            this.popLocal(bc.index);
             break;
           case OP.applytype:
             args = popMany(bc.argCount);
             type = pop();
             callee = globalProperty("applyType");
-            push(call(callee, null, [domain, type, new NewArray(region, args)]));
+            push(this.call(callee, null, [domain, type, new NewArray(region, args)]));
             break;
           case OP.newarray:
             args = popMany(bc.argCount);
@@ -1537,7 +1580,7 @@ module Shumway.AVM2.Compiler {
             break;
           case OP.newclass:
             callee = globalProperty("createClass");
-            push(call(callee, null, [constant(this.abc.classes[bc.index]), pop(), this.topScope()]));
+            push(this.call(callee, null, [constant(this.abc.classes[bc.index]), pop(), this.topScope()]));
             break;
           default:
             notImplemented(String(bc));
