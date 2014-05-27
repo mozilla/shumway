@@ -225,6 +225,15 @@ module Shumway.Tools.Profiler {
       }
     }
 
+    private _almostEq(a: number, b: number, precision: number = 10): boolean {
+      var pow10 = Math.pow(10, precision);
+      return Math.abs(a - b) < (1 / pow10);
+    }
+
+    private _windowEqRange(): boolean {
+      return (this._almostEq(this._windowStart, this._rangeStart) && this._almostEq(this._windowEnd, this._rangeEnd));
+    }
+
     private _decimalPlaces(value: number): number {
       return ((+value).toFixed(10)).replace(/^-?\d*\.?|0+$/g, '').length;
     }
@@ -243,12 +252,14 @@ module Shumway.Tools.Profiler {
             return DragTarget.HANDLE_LEFT;
           } else if (rightHandle) {
             return DragTarget.HANDLE_RIGHT;
+          } else if (!this._windowEqRange()) {
+            return DragTarget.WINDOW;
           }
+        } else if (!this._windowEqRange()) {
+          return DragTarget.WINDOW;
         }
-        return DragTarget.WINDOW;
-      } else {
-        return DragTarget.NONE;
       }
+      return DragTarget.NONE;
     }
 
     onMouseDown(x: number, y: number) {
@@ -264,12 +275,15 @@ module Shumway.Tools.Profiler {
     }
 
     onMouseMove(x: number, y: number) {
+      var cursor = MouseCursor.DEFAULT;
       var dragTarget = this._getDragTargetUnderCursor(x, y);
-      var cursor = (dragTarget === DragTarget.NONE)
-                    ? MouseCursor.DEFAULT
-                    : (dragTarget === DragTarget.WINDOW)
-                      ? MouseCursor.GRAB
-                      : MouseCursor.EW_RESIZE;
+      if (dragTarget !== DragTarget.NONE) {
+        if (dragTarget !== DragTarget.WINDOW) {
+          cursor = MouseCursor.EW_RESIZE;
+        } else if (dragTarget === DragTarget.WINDOW && !this._windowEqRange()) {
+          cursor = MouseCursor.GRAB;
+        }
+      }
       this._mouseController.updateCursor(cursor);
     }
 

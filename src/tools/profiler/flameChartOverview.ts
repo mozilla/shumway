@@ -219,6 +219,15 @@ module Shumway.Tools.Profiler {
       return px * (this._rangeEnd - this._rangeStart) / this._width;
     }
 
+    private _almostEq(a: number, b: number, precision: number = 10): boolean {
+      var pow10 = Math.pow(10, precision);
+      return Math.abs(a - b) < (1 / pow10);
+    }
+
+    private _windowEqRange(): boolean {
+      return (this._almostEq(this._windowStart, this._rangeStart) && this._almostEq(this._windowEnd, this._rangeEnd));
+    }
+
     private _getDragTargetUnderCursor(x: number, y:number): DragTarget {
       if (y >= 0 && y < this._height) {
         var left = this._toPixels(this._windowStart);
@@ -232,7 +241,7 @@ module Shumway.Tools.Profiler {
           return DragTarget.HANDLE_LEFT;
         } else if (rightHandle) {
           return DragTarget.HANDLE_RIGHT;
-        } else if (x > left + radius && x < right - radius) {
+        } else if (!this._windowEqRange() && x > left + radius && x < right - radius) {
           return DragTarget.WINDOW;
         }
       }
@@ -257,12 +266,11 @@ module Shumway.Tools.Profiler {
     }
 
     onMouseMove(x: number, y: number) {
+      var cursor = MouseCursor.DEFAULT;
       var dragTarget = this._getDragTargetUnderCursor(x, y);
-      var cursor = (dragTarget === DragTarget.NONE || this._selection)
-                    ? MouseCursor.DEFAULT
-                    : (dragTarget === DragTarget.WINDOW)
-                      ? MouseCursor.GRAB
-                      : MouseCursor.EW_RESIZE;
+      if (dragTarget !== DragTarget.NONE && !this._selection) {
+        cursor = (dragTarget === DragTarget.WINDOW) ? MouseCursor.GRAB : MouseCursor.EW_RESIZE;
+      }
       this._mouseController.updateCursor(cursor);
     }
 
