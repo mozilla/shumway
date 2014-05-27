@@ -2548,12 +2548,12 @@ module Shumway {
     }
 
   export module ColorUtilities {
-    export function argbToRgba(color: number): number {
-      return ((color << 8) | (color >> 24)) >>> 0;
+    export function argbToRgba(argb: number): number {
+      return (argb << 8) | ((argb >> 24) & 0xFF);
     }
 
-    export function rgbaToArgb(color: number): number {
-      return ((color >> 8) | (color << 24)) >>> 0;
+    export function rgbaToArgb(rgba: number): number {
+      return ((rgba >> 8) & 0xFFFFFF) | (rgba << 24);
     }
 
     export function componentsToRgb(components: {red: number; green: number; blue: number}): number {
