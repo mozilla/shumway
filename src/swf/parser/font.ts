@@ -42,7 +42,7 @@ module Shumway.SWF.Parser {
     return toString16(val >> 16) + toString16(val);
   }
 
-  function defineFont(tag, dictionary) {
+  export function defineFont(tag, dictionary) {
     // Ignoring "['glyf'] is better written in dot notation"
     /*jshint -W069 */
 
