@@ -58,7 +58,8 @@ if (isWorker && !$RELEASE) {
     'generator.js',
     'handlers.js',
     'parser.js',
-    build + 'bitmap.js',
+    build + '../utilities.js',
+    build + 'parser/bitmap.js',
     'button.js',
     'font.js',
     'image.js',
@@ -83,7 +84,7 @@ function defineSymbol(swfTag, symbols) {
       break;
     case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS:
     case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2:
-      symbol = Shumway.SWF.defineBitmap(swfTag);
+      symbol = Shumway.SWF.Parser.defineBitmap(swfTag);
       break;
     case SWF_TAG_CODE_DEFINE_BUTTON:
     case SWF_TAG_CODE_DEFINE_BUTTON2:

@@ -22,7 +22,8 @@
 
 load($SHUMWAY_ROOT + "src/flash/util.js");
 load($SHUMWAY_ROOT + "src/swf/swf.js");
-load($SHUMWAY_ROOT + "build/ts/swf/bitmap.js");
+load($SHUMWAY_ROOT + "build/ts/utilities.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/bitmap.js");
 load($SHUMWAY_ROOT + "src/swf/button.js");
 load($SHUMWAY_ROOT + "src/swf/font.js");
 load($SHUMWAY_ROOT + "src/swf/image.js");

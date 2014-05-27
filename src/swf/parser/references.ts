@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-///<reference path='../utilities.ts' />
-///<reference path='parser/references.ts' />
+///<reference path='../references.ts' />
+///<reference path='bitmap.ts' />
 
 declare function createInflatedStream(bytes: ArrayBuffer, outputLength: number): any;

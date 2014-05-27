@@ -3030,5 +3030,4 @@ module Shumway {
 })();
 
 import assert = Shumway.Debug.assert;
-import assertUnreachable = Shumway.Debug.assertUnreachable;
 import IndentingWriter = Shumway.IndentingWriter;
