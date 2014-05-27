@@ -153,7 +153,7 @@ module Shumway.Tools.Profiler {
       var divisor = showSeconds ? 1000 : 1;
       var precision = this._decimalPlaces(tickInterval / divisor);
       var unit = showSeconds ? "s" : "ms";
-      var x = this._toPixels(tick - rangeStart);
+      var x = this._toPixels(tick);
       var y = this._height / 2;
       context.lineWidth = 1;
       context.strokeStyle = "rgba(95, 115, 135, 0.5)";
@@ -170,7 +170,7 @@ module Shumway.Tools.Profiler {
         context.closePath();
         context.stroke();
         tick += tickInterval;
-        x = this._toPixels(tick - rangeStart);
+        x = this._toPixels(tick);
       }
     }
 
@@ -219,20 +219,28 @@ module Shumway.Tools.Profiler {
       }
     }
 
+    private _toPixelsRelative(time: number): number {
+      var range = (this._type === FlameChartHeaderType.OVERVIEW)
+                    ? this._rangeEnd - this._rangeStart
+                    : this._windowEnd - this._windowStart;
+      return time * this._width / range;
+    }
+
     private _toPixels(time: number): number {
-      if (this._type === FlameChartHeaderType.OVERVIEW) {
-        return time * this._width / (this._rangeEnd - this._rangeStart);
-      } else {
-        return time * this._width / (this._windowEnd - this._windowStart);
-      }
+      var start = (this._type === FlameChartHeaderType.OVERVIEW) ? this._rangeStart : this._windowStart;
+      return this._toPixelsRelative(time - start);
+    }
+
+    private _toTimeRelative(px: number): number {
+      var range = (this._type === FlameChartHeaderType.OVERVIEW)
+                    ? this._rangeEnd - this._rangeStart
+                    : this._windowEnd - this._windowStart;
+      return px * range / this._width;
     }
 
     private _toTime(px: number): number {
-      if (this._type === FlameChartHeaderType.OVERVIEW) {
-        return px * (this._rangeEnd - this._rangeStart) / this._width;
-      } else {
-        return px * (this._windowEnd - this._windowStart) / this._width;
-      }
+      var start = (this._type === FlameChartHeaderType.OVERVIEW) ? this._rangeStart : this._windowStart;
+      return this._toTimeRelative(px) + start;
     }
 
     private _almostEq(a: number, b: number, precision: number = 10): boolean {
@@ -320,7 +328,7 @@ module Shumway.Tools.Profiler {
       }
       var windowStart = this._windowStart;
       var windowEnd = this._windowEnd;
-      var delta = this._toTime(deltaX);
+      var delta = this._toTimeRelative(deltaX);
       switch (dragInfo.target) {
         case DragTarget.WINDOW:
           var mult = (this._type === FlameChartHeaderType.OVERVIEW) ? 1 : -1;

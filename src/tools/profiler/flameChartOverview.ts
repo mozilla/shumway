@@ -167,29 +167,23 @@ module Shumway.Tools.Profiler {
       var left = this._selection ? this._selection.left : this._toPixels(this._windowStart);
       var right = this._selection ? this._selection.right : this._toPixels(this._windowEnd);
 
-      if (left > right) {
-        var temp = left;
-        left = right;
-        right = temp;
-      }
-
       context.save();
       context.scale(ratio, ratio);
+
+      // Draw fills
       if (this._selection) {
-        var left = this._selection.left;
-        var right = this._selection.right;
         context.fillStyle = "rgba(245, 247, 250, 0.15)";
         context.fillRect(left, 1, right - left, height - 1);
         context.fillStyle = "rgba(133, 0, 0, 1)";
         context.fillRect(left + 0.5, 0, right - left - 1, 4);
         context.fillRect(left + 0.5, height - 4, right - left - 1, 4);
       } else {
-        var left = this._toPixels(this._windowStart);
-        var right = this._toPixels(this._windowEnd);
         context.fillStyle = "rgba(17, 19, 21, 0.4)";
         context.fillRect(0, 1, left, height - 1);
         context.fillRect(right, 1, this._width, height - 1);
       }
+
+      // Draw border lines
       context.beginPath();
       context.moveTo(left, 0);
       context.lineTo(left, height);
@@ -199,14 +193,18 @@ module Shumway.Tools.Profiler {
       context.strokeStyle = "rgba(245, 247, 250, 1)";
       context.stroke();
 
+      // Draw info labels
+      var start = this._selection ? this._toTime(this._selection.left) : this._windowStart;
+      var end = this._selection ? this._toTime(this._selection.right) : this._windowEnd;
+      var time = Math.abs(end - start);
       context.fillStyle = "rgba(255, 255, 255, 0.5)";
       context.font = '8px sans-serif';
       context.textBaseline = "alphabetic";
       context.textAlign = "end";
       // Selection Range in MS
-      context.fillText(Math.abs(right - left).toFixed(2), Math.min(left, right) - 4, 10);
+      context.fillText(time.toFixed(2), Math.min(left, right) - 4, 10);
       // Selection Range in Frames
-      context.fillText((Math.abs(right - left) / 60).toFixed(2), Math.min(left, right) - 4, 20);
+      context.fillText((time / 60).toFixed(2), Math.min(left, right) - 4, 20);
       context.restore();
     }
 
@@ -256,12 +254,20 @@ module Shumway.Tools.Profiler {
       contextOverview.restore();
     }
 
-    private _toPixels(time: number): number {
+    private _toPixelsRelative(time: number): number {
       return time * this._width / (this._rangeEnd - this._rangeStart);
     }
 
-    private _toTime(px: number): number {
+    private _toPixels(time: number): number {
+      return this._toPixelsRelative(time - this._rangeStart);
+    }
+
+    private _toTimeRelative(px: number): number {
       return px * (this._rangeEnd - this._rangeStart) / this._width;
+    }
+
+    private _toTime(px: number): number {
+      return this._toTimeRelative(px) + this._rangeStart;
     }
 
     private _almostEq(a: number, b: number, precision: number = 10): boolean {
@@ -342,7 +348,7 @@ module Shumway.Tools.Profiler {
         }
         var windowStart = this._windowStart;
         var windowEnd = this._windowEnd;
-        var delta = this._toTime(deltaX);
+        var delta = this._toTimeRelative(deltaX);
         switch (dragInfo.target) {
           case DragTarget.WINDOW:
             windowStart = dragInfo.windowStartInitial + delta;

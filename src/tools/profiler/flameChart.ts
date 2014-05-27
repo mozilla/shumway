@@ -138,11 +138,11 @@ module Shumway.Tools.Profiler {
       context.restore();
 
       if (this._initialized) {
-        this._drawFlames();
+        this._drawFrames();
       }
     }
 
-    private _drawFlames() {
+    private _drawFrames() {
       var snapshot = this._buffer.snapshot;
       var a = snapshot.getChildRange(this._windowStart, this._windowEnd);
       if (a == null) {
@@ -162,8 +162,8 @@ module Shumway.Tools.Profiler {
 
     private _drawFrame(frame: TimelineFrame, depth: number) {
       var context = this._context;
-      var start = this._toPixels(frame.startTime - this._windowStart);
-      var end = this._toPixels(frame.endTime - this._windowStart);
+      var start = this._toPixels(frame.startTime);
+      var end = this._toPixels(frame.endTime);
       var width = end - start;
       if (width < this._minFrameWidthInPixels) {
         return;
@@ -236,12 +236,20 @@ module Shumway.Tools.Profiler {
       return width;
     }
 
-    private _toPixels(time: number): number {
+    private _toPixelsRelative(time: number): number {
       return time * this._width / (this._windowEnd - this._windowStart);
     }
 
+    private _toPixels(time: number): number {
+      return this._toPixelsRelative(time - this._windowStart);
+    }
+
+    private _toTimeRelative(px: number): number {
+      return px * (this._windowEnd - this._windowStart) / this._width;
+    }
+
     private _toTime(px: number): number {
-      return this._windowStart + px * (this._windowEnd - this._windowStart) / this._width;
+      return this._toTimeRelative(px) + this._windowStart;
     }
 
     private _getFrameAtPosition(x: number, y: number): TimelineFrame {
