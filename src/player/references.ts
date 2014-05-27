@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+///<reference path='../tools/profiler/references.ts' />
 ///<reference path='../flash/references.ts' />
 ///<reference path='frameScheduler.ts' />
 ///<reference path='remoting.ts' />

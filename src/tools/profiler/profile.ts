@@ -87,5 +87,12 @@ module Shumway.Tools.Profiler {
       this._hasSnapshot = true;
     }
 
+    reset() {
+      for (var i = 0; i < this._buffers.length; i++) {
+        var buffer: TimelineBuffer = this._buffers[i];
+        buffer.reset();
+      }
+      this._hasSnapshot = false;
+    }
   }
 }

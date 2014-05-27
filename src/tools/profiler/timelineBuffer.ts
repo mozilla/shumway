@@ -141,6 +141,14 @@ module Shumway.Tools.Profiler {
       }
     }
 
+    reset() {
+      this._depth = 0;
+      this._maxDepth = 0;
+      this._marks.reset();
+      this._times.reset();
+      this._snapshot = null;
+    }
+
     static FromFirefoxProfile(profile) {
       var samples = profile.profile.threads[0].samples;
       var buffer = new TimelineBuffer();

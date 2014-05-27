@@ -90,8 +90,17 @@ body.simple #stageContainer {
   right: 300px;
   left: 0;
   height: 100px;
-  background-color: rgba(0, 0, 0, 0.2);
+  background-color: black;
   border-bottom: 1px solid #666;
+}
+
+#profilePanelContainer {
+    position: absolute;
+    top: 82px;
+    right: 300px;
+    left: 0;
+    background-color: black;
+    border-bottom: 1px solid #666;
 }
 
 #debugInfoToolbar > .toolbarButtonBar {

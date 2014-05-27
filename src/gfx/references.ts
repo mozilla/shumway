@@ -15,6 +15,7 @@
  */
 
 /// <reference path='../utilities.ts' />
+/// <reference path='../tools/profiler/references.ts' />
 /// <reference path='utilities.ts' />
 /// <reference path='../dataBuffer.ts' />
 /// <reference path='../avm2/natives/byteArray.ts' />
@@ -31,8 +32,6 @@
 /// <reference path='2d/2d.ts'/>
 /// <reference path='dom/dom.ts'/>
 /// <reference path='easel.ts'/>
-
-import Rectangle = Shumway.GFX.Geometry.Rectangle;
 
 declare function randomStyle(): string;
 declare function assert(...args : any[]);
@@ -85,7 +84,7 @@ module Shumway {
     /**
      * Bounds of the source content. This should never change.
      */
-    getBounds(): Rectangle;
+    getBounds(): Shumway.GFX.Geometry.Rectangle;
     /**
      * Property bag used to attach dynamic properties to this object.
      */
@@ -93,7 +92,7 @@ module Shumway {
     /**
      * Render source content.
      */
-    render (context: CanvasRenderingContext2D, clipBounds?: Rectangle, options? : any);
+    render (context: CanvasRenderingContext2D, clipBounds?: Shumway.GFX.Geometry.Rectangle, options? : any);
     /**
      * Whether source has dynamic content.
      */
@@ -131,5 +130,17 @@ module Shumway.GFX {
   export function count(name) {
     Counter.count(name);
     FrameCounter.count(name);
+  }
+
+  import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
+
+  export var timelineBuffer = new TimelineBuffer();
+
+  export function enterTimeline(name: string) {
+    timelineBuffer && timelineBuffer.enter(name);
+  }
+
+  export function leaveTimeline(name: string) {
+    timelineBuffer && timelineBuffer.leave(name);
   }
 }

@@ -10,7 +10,6 @@ module Shumway.GFX {
   import WebGLContext = Shumway.GFX.GL.WebGLContext;
 
   declare var GUI;
-  declare var timeline;
 
   export interface IState {
     onMouseUp(easel: Easel, event: MouseEvent);
@@ -363,9 +362,9 @@ module Shumway.GFX {
       if (this.paused) {
         return;
       }
-      timeline && timeline.enter("Render");
+      enterTimeline("Render");
       this._renderer.render();
-      timeline && timeline.leave("Render");
+      leaveTimeline("Render");
     }
 
     public render() {

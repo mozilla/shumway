@@ -19,6 +19,7 @@ module Shumway.GFX.GL {
   import Point = Geometry.Point;
   import Matrix = Geometry.Matrix;
   import Matrix3D = Geometry.Matrix3D;
+  import Rectangle = Geometry.Rectangle;
 
   export class WebGLBrush {
     _target: WebGLTexture;

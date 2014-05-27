@@ -279,6 +279,7 @@ module Shumway.GFX {
         this._renderFallback(context);
         return;
       }
+      enterTimeline("ShapeGraphics.render");
       // TODO: Optimize path handling to use only one path if possible.
       // If both line and fill style are set at the same time, we don't need to duplicate the
       // geometry.
@@ -383,6 +384,7 @@ module Shumway.GFX {
       }
       context.restore();
       this.isInvalid = false;
+      leaveTimeline("ShapeGraphics.render");
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {

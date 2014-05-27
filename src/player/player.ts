@@ -37,7 +37,17 @@ module Shumway {
 
   import IPlayerChannel = Shumway.Remoting.IPlayerChannel;
 
-  declare var timeline: Timeline;
+  import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
+
+  export var playerTimelineBuffer = new TimelineBuffer();
+
+  function enterPlayerTimeline(name: string) {
+    playerTimelineBuffer && playerTimelineBuffer.enter(name);
+  }
+
+  function leavePlayerTimeline(name: string) {
+    playerTimelineBuffer && playerTimelineBuffer.leave(name);
+  }
 
   /**
    * Shumway Player
@@ -176,15 +186,21 @@ module Shumway {
 
       serializer.writeReferences = false;
       serializer.clearDirtyBits = false;
+      enterPlayerTimeline("writeStage");
       serializer.writeStage(this._stage);
+      leavePlayerTimeline("writeStage");
 
       serializer.writeReferences = true;
       serializer.clearDirtyBits = true;
+      enterPlayerTimeline("writeStage 2");
       serializer.writeStage(this._stage);
+      leavePlayerTimeline("writeStage 2");
 
       updates.writeInt(Shumway.Remoting.MessageTag.EOF);
 
+      enterPlayerTimeline("sendUpdates");
       this._channel.sendUpdates(updates, assets);
+      leavePlayerTimeline("sendUpdates");
     }
 
     /**
@@ -198,12 +214,12 @@ module Shumway {
       if (timeSinceLastPump < (1000 / pumpRateOption.value)) {
         return;
       }
-      timeline && timeline.enter("pump");
+      enterPlayerTimeline("pump");
       if (pumpEnabledOption.value) {
         this._pumpDisplayListUpdates();
         this._lastPumpTime = performance.now();
       }
-      timeline && timeline.leave("pump");
+      leavePlayerTimeline("pump");
     }
 
     private _leaveSyncLoop(): void {
@@ -222,11 +238,15 @@ module Shumway {
           return;
         }
         for (var i = 0; i < frameRateMultiplierOption.value; i++) {
-          timeline && timeline.enter("eventLoop");
+          enterPlayerTimeline("eventLoop");
+          enterPlayerTimeline("initFrame");
           MovieClip.initFrame();
+          leavePlayerTimeline("initFrame");
+          enterPlayerTimeline("constructFrame");
           MovieClip.constructFrame();
+          leavePlayerTimeline("constructFrame");
           Loader.progress();
-          timeline && timeline.leave("eventLoop");
+          leavePlayerTimeline("eventLoop");
         }
         if (rootInitialized) {
           stage.render();

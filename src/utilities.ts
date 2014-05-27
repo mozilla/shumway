@@ -1659,6 +1659,11 @@ module Shumway {
     public isEmpty(): boolean  {
       return this.index === this.start;
     }
+
+    public reset() {
+      this.index = 0;
+      this.start = 0;
+    }
   }
 
   export module BitSets {

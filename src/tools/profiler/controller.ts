@@ -46,6 +46,10 @@ module Shumway.Tools.Profiler {
       this._initializeViews();
     }
 
+    reset() {
+      this._profile.reset();
+    }
+
     private _createViews() {
       this._overviewHeader = new Profiler.FlameChartHeader(this, FlameChartHeaderType.OVERVIEW);
       this._overview = new Profiler.FlameChartOverview(this);

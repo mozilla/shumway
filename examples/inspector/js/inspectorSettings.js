@@ -44,6 +44,27 @@ var GUI;
     }
   }, "Reset Options");
 
+  gui.add({
+    "View Profile": function () {
+      var Profiler = Shumway.Tools.Profiler;
+      var profile = new Profiler.Profile();
+      if (Shumway.playerTimelineBuffer) {
+        profile.addBuffer(Shumway.playerTimelineBuffer, "Player");
+      }
+      if (Shumway.GFX.timelineBuffer) {
+        profile.addBuffer(Shumway.GFX.timelineBuffer, "GFX");
+      }
+      var profileController = new Profiler.Controller(profile, document.getElementById("profilePanelContainer"));
+      profileController.createSnapshot();
+    }
+  }, "View Profile");
+
+  gui.add({
+    "Start / Stop Profiling": function () {
+      alert("Not Implemented");
+    }
+  }, "Start / Stop Profiling");
+
   gui.domElement.addEventListener("click", function(e) {
     if (e.target.nodeName.toLowerCase() == "li" && e.target.classList.contains("title")) {
       var option = findOptionSetByName(e.target.textContent, shumwayOptions);
