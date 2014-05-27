@@ -100,7 +100,7 @@ load("../../src/swf/swf.js");
 load("../../src/swf/inflate.js");
 load("../../src/swf/stream.js");
 load("../../build/ts/swf/parser/bitmap.js");
-load("../../src/swf/button.js");
+load("../../build/ts/swf/parser/button.js");
 load("../../src/swf/font.js");
 load("../../src/swf/image.js");
 load("../../src/swf/label.js");

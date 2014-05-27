@@ -16,5 +16,6 @@
 
 ///<reference path='../references.ts' />
 ///<reference path='bitmap.ts' />
+///<reference path='button.ts' />
 
 declare function createInflatedStream(bytes: ArrayBuffer, outputLength: number): any;

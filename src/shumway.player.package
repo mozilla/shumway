@@ -49,7 +49,7 @@ src/swf/swf.js
 src/swf/inflate.js
 src/swf/stream.js
 build/ts/swf/parser/bitmap.js
-src/swf/button.js
+build/ts/swf/parser/button.js
 src/swf/font.js
 src/swf/image.js
 src/swf/label.js
