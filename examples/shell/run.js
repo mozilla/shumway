@@ -99,7 +99,7 @@ load("../../src/swf/util.js");
 load("../../src/swf/swf.js");
 load("../../src/swf/inflate.js");
 load("../../src/swf/stream.js");
-load("../../src/swf/bitmap.js");
+load("../../build/ts/swf/bitmap.js");
 load("../../src/swf/button.js");
 load("../../src/swf/font.js");
 load("../../src/swf/image.js");

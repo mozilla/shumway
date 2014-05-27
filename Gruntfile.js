@@ -42,6 +42,9 @@ module.exports = function(grunt) {
       build_avm2_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm2/references.ts'
       },
+      build_swf_ts: {
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/swf/references.ts'
+      },
       build_flash_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/flash/references.ts'
       },
@@ -97,6 +100,10 @@ module.exports = function(grunt) {
         files: ['src/flash/**/*.as',
                 'utils/playerglobal-builder/manifest.json'],
         tasks: ['exec:build_playerglobal']
+      },
+      swf_ts: {
+        files: ['src/swf/**/*.ts'],
+        tasks: ['exec:build_swf_ts']
       },
       flash_ts: {
         files: ['src/avm2/**/*.ts',
@@ -168,6 +175,7 @@ module.exports = function(grunt) {
   grunt.registerTask('watch-playerglobal', ['exec:build_playerglobal', 'watch:playerglobal']);
   grunt.registerTask('watch-avm1lib', ['exec:build_avm1lib', 'watch:avm1lib']);
   grunt.registerTask('watch-avm2', ['exec:build_avm2_ts', 'watch:avm2_ts']);
+  grunt.registerTask('watch-swf', ['exec:build_swf_ts', 'watch:swf_ts']);
   grunt.registerTask('watch-flash', ['exec:build_flash_ts', 'watch:flash_ts']);
   grunt.registerTask('watch-player', ['exec:build_player_ts', 'watch:player_ts']);
   grunt.registerTask('watch-gfx', ['exec:build_gfx_ts', 'watch:gfx_ts']);
@@ -181,6 +189,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('playerglobal', ['exec:build_playerglobal']);
   grunt.registerTask('avm1lib', ['exec:build_avm1lib']);
+  grunt.registerTask('swf', ['exec:build_swf_ts']);
   grunt.registerTask('flash', ['exec:build_flash_ts']);
   grunt.registerTask('player', ['exec:build_player_ts']);
   grunt.registerTask('profiler', ['exec:build_profiler_ts']);
@@ -191,6 +200,7 @@ module.exports = function(grunt) {
     'exec:build_avm1_ts',
     'exec:build_avm2_ts',
     'exec:build_gfx_ts',
+    'exec:build_swf_ts',
     'exec:build_flash_ts',
     'exec:build_player_ts'
   ]);
