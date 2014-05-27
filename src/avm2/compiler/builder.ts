@@ -925,7 +925,10 @@ module Shumway.AVM2.Compiler {
       var region = this.region;
       var bytecodes = this.bytecodes;
 
-      var object, receiver, index, callee, value: Value, multiname: Value, type, args, pristine, left, right, operator;
+      var left: Value, right: Value, index: Value;
+      var value: Value, object: Value, callee: Value;
+      var multiname: Value, type: Value, args: Value [];
+      var operator: Operator;
 
       var push = this.push.bind(this);
 
