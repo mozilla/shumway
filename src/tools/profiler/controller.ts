@@ -50,12 +50,24 @@ module Shumway.Tools.Profiler {
       this._profile.reset();
     }
 
+    showTooltip(bufferIndex: number, frame: TimelineFrame) {
+      //console.log("show tooltip", frame);
+    }
+
+    hideTooltip() {
+      //console.log("hide tooltip");
+    }
+
+    getBufferAt(index: number): TimelineBuffer {
+      return this._profile.getBufferAt(index);
+    }
+
     private _createViews() {
       this._overviewHeader = new Profiler.FlameChartHeader(this, FlameChartHeaderType.OVERVIEW);
-      this._overview = new Profiler.FlameChartOverview(this);
+      this._overview = new Profiler.FlameChartOverview(this, FlameChartOverviewMode.OVERLAY);
       for (var i = 0, n = this._profile.bufferCount; i < n; i++) {
         this._headers.push(new Profiler.FlameChartHeader(this, FlameChartHeaderType.CHART));
-        this._charts.push(new Profiler.FlameChart(this, this._profile.getBufferAt(i)));
+        this._charts.push(new Profiler.FlameChart(this, i));
       }
       window.addEventListener("resize", this._onResize.bind(this));
     }

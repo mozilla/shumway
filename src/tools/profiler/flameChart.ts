@@ -34,6 +34,7 @@ module Shumway.Tools.Profiler {
   export class FlameChart implements MouseControllerTarget {
 
     private _controller: Controller;
+    private _bufferIndex: number;
     private _buffer: TimelineBuffer;
 
     private _canvas: HTMLCanvasElement;
@@ -56,6 +57,7 @@ module Shumway.Tools.Profiler {
     private _type: FlameChartHeaderType;
     private _dragInfo: DragInfo;
     private _textWidth = {};
+    private _hoveredFrame:TimelineFrame;
 
     /**
      * Don't paint frames whose width is smaller than this value. This helps a lot when drawing
@@ -63,9 +65,10 @@ module Shumway.Tools.Profiler {
      */
     private _minFrameWidthInPixels = 0.2;
 
-    constructor(controller: Controller, buffer: TimelineBuffer) {
+    constructor(controller: Controller, bufferIndex: number) {
       this._controller = controller;
-      this._buffer = buffer;
+      this._bufferIndex = bufferIndex;
+      this._buffer = controller.getBufferAt(bufferIndex);
       this._initialized = false;
       this._kindStyle = createEmptyObject();
       this._canvas = document.createElement("canvas");
@@ -174,11 +177,12 @@ module Shumway.Tools.Profiler {
         };
       }
       var frameHPadding = 0.5;
+      context.save();
+      if (this._hoveredFrame && this._hoveredFrame.kind !== frame.kind) {
+        context.globalAlpha = 0.4;
+      }
       context.fillStyle = style.bgColor;
       context.fillRect(start, depth * (12 + frameHPadding), width, 12);
-      //if (depth == 0) {
-        //console.log(start, depth * (12 + frameHPadding), width, 12)
-      //}
       if (width > 12) {
         var label = frame.kind.name;
         if (label && label.length) {
@@ -191,6 +195,7 @@ module Shumway.Tools.Profiler {
           }
         }
       }
+      context.restore();
       var children = frame.children;
       if (children) {
         for (var i = 0; i < children.length; i++) {
@@ -236,7 +241,7 @@ module Shumway.Tools.Profiler {
     }
 
     private _toTime(px: number): number {
-      return px * (this._windowEnd - this._windowStart) / this._width;
+      return this._windowStart + px * (this._windowEnd - this._windowStart) / this._width;
     }
 
     onMouseDown(x: number, y: number) {
@@ -263,8 +268,32 @@ module Shumway.Tools.Profiler {
     onClick(x: number, y: number) {
     }
 
-    onHoverStart(x: number, y: number) {}
-    onHoverEnd() {}
+    onHoverStart(x: number, y: number) {
+      var time = this._toTime(x);
+      var depth = (y / 12 + 2) | 0;
+      var snapshot = this._buffer.snapshot;
+      var frame = snapshot.query(time);
+      if (frame) {
+        var frameDepth = frame.getDepth();
+        if (frameDepth >= depth) {
+          while (frame && frameDepth > depth) {
+            frame = frame.parent;
+            frameDepth--;
+          }
+          this._hoveredFrame = frame;
+          this._controller.showTooltip(this._bufferIndex, frame);
+          this._draw();
+        }
+      }
+    }
+
+    onHoverEnd() {
+      if (this._hoveredFrame) {
+        this._hoveredFrame = null;
+        this._controller.hideTooltip();
+        this._draw();
+      }
+    }
 
     /*
     private _onClick(event: MouseEvent) {
