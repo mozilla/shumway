@@ -125,18 +125,35 @@ module Shumway.Tools.Profiler {
       var left = this._selection.left;
       var right = this._selection.right;
 
+      if (left > right) {
+        var temp = left;
+        left = right;
+        right = temp;
+      }
+
       context.save();
       context.scale(ratio, ratio);
-      context.fillStyle = "rgba(245, 247, 250, 0.15)";
-      context.fillRect(left, 1, right - left, height - 1);
+      context.fillStyle = "rgba(133, 0, 0, 1)";
+      context.fillRect(left + 0.5, 0, right - left - 1, 4);
+      context.fillRect(left + 0.5, height - 4, right - left - 1, 4);
+
       context.beginPath();
-      context.moveTo(left, 1);
+      context.moveTo(left, 0);
       context.lineTo(left, height);
-      context.moveTo(right, 1);
+      context.moveTo(right, 0);
       context.lineTo(right, height);
       context.lineWidth = 0.5;
       context.strokeStyle = "rgba(245, 247, 250, 1)";
       context.stroke();
+
+      context.fillStyle = "rgba(255, 255, 255, 0.5)";
+      context.font = '8px sans-serif';
+      context.textBaseline = "alphabetic";
+      context.textAlign = "end";
+      // Selection Range in MS
+      context.fillText(Math.abs(right - left).toFixed(2), Math.min(left, right) - 4, 10);
+      // Selection Range in Frames
+      context.fillText((Math.abs(right - left) / 60).toFixed(2), Math.min(left, right) - 4, 20);
       context.restore();
     }
 
