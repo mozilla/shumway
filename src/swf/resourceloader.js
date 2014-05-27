@@ -84,11 +84,11 @@ function defineSymbol(swfTag, symbols) {
       break;
     case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS:
     case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2:
-      symbol = Shumway.SWF.parser.defineBitmap(swfTag);
+      symbol = Shumway.SWF.Parser.defineBitmap(swfTag);
       break;
     case SWF_TAG_CODE_DEFINE_BUTTON:
     case SWF_TAG_CODE_DEFINE_BUTTON2:
-      symbol = Shumway.SWF.parser.defineButton(swfTag, symbols);
+      symbol = Shumway.SWF.Parser.defineButton(swfTag, symbols);
       break;
     case SWF_TAG_CODE_DEFINE_EDIT_TEXT:
       symbol = defineText(swfTag, symbols);

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-/// <reference path='../references.ts'/>
-module Shumway.SWF {
+/// <reference path='references.ts'/>
+module Shumway.SWF.Parser {
   export function defineButton(tag: any, dictionary: any): any {
     var characters = tag.characters;
     var states = {

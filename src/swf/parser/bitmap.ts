@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-/// <reference path='../references.ts'/>
-module Shumway.SWF {
+/// <reference path='references.ts'/>
+module Shumway.SWF.Parser {
   import assertUnreachable = Shumway.Debug.assertUnreachable;
 
   /** @const */ var FORMAT_COLORMAPPED  = 3;
