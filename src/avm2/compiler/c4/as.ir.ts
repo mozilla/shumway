@@ -17,7 +17,7 @@
 
 module Shumway.AVM2.Compiler.IR {
   export class ASScope extends Value {
-    constructor(public parent: Node, public object: Value, public isWith: boolean) {
+    constructor(public parent: ASScope, public object: Value, public isWith: boolean) {
       super();
     }
     visitInputs(visitor: NodeVisitor) {

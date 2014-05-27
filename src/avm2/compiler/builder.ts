@@ -56,6 +56,8 @@ module Shumway.AVM2.Compiler {
   import KeyValuePair = IR.KeyValuePair;
   import isConstant = IR.isConstant;
 
+  import ASScope = IR.ASScope;
+
   import TypeInformation = Verifier.TypeInformation;
   var writer = new IndentingWriter();
   var peepholeOptimizer = new IR.PeepholeOptimizer();
@@ -523,22 +525,22 @@ module Shumway.AVM2.Compiler {
       }
     }
 
-    savedScope(): Value {
-      return this.state.saved;
+    savedScope(): ASScope {
+      return <ASScope>this.state.saved;
     }
 
-    topScope(depth?: number) {
+    topScope(depth?: number): ASScope {
       var scope = this.state.scope;
       if (depth !== undefined) {
         if (depth < scope.length) {
-          return scope[scope.length - 1 - depth];
+          return <ASScope>scope[scope.length - 1 - depth];
         } else if (depth === scope.length) {
           return this.savedScope();
         } else {
           var s = this.savedScope();
           var savedScopeDepth = depth - scope.length;
           for (var i = 0; i < savedScopeDepth; i ++) {
-            s = getJSPropertyWithState(this.state, s, "parent");
+            s = <ASScope>getJSPropertyWithState(this.state, s, "parent");
           }
           return s;
         }
@@ -564,7 +566,7 @@ module Shumway.AVM2.Compiler {
       return getJSPropertyWithState(this.state, scope, "object");
     }
 
-    findProperty(multiname, strict): Value {
+    findProperty(multiname: Value, strict: boolean): Value {
       var ti = this.bc.ti;
       var slowPath = new IR.ASFindProperty(this.region, this.state.store, this.topScope(), multiname, this.domain, strict);
       if (ti) {
@@ -663,7 +665,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new IR.ASCallProperty(region, state.store, object, multiname, args, IR.Flags.PRISTINE, isLex));
     }
 
-    getProperty(object, multiname, getOpenMethod?) {
+    getProperty(object: Value, multiname: Value, getOpenMethod?: boolean) {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -679,8 +681,6 @@ module Shumway.AVM2.Compiler {
         }
         if (ti.propertyQName) {
           return this.store(new IR.GetProperty(region, state.store, object, constant(ti.propertyQName)));
-        } else if (ti.isDirectlyReadable) {
-          return this.store(new IR.GetProperty(region, state.store, object, multiname.name));
         } else if (ti.isIndexedReadable) {
           return this.store(new IR.ASGetProperty(region, state.store, object, multiname, IR.Flags.INDEXED | (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
         }
@@ -694,7 +694,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new IR.ASGetProperty(region, state.store, object, multiname, (getOpenMethod ? IR.Flags.IS_METHOD : 0)));
     }
 
-    setProperty(object, multiname, value) {
+    setProperty(object: Value, multiname: Value, value: Value) {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -710,8 +710,6 @@ module Shumway.AVM2.Compiler {
         }
         if (ti.propertyQName) {
           return this.store(new IR.SetProperty(region, state.store, object, constant(ti.propertyQName), value));
-        } else if (ti.isDirectlyWriteable) {
-          return this.store(new IR.SetProperty(region, state.store, object, multiname.name, value));
         } else if (ti.isIndexedWriteable) {
           return this.store(new IR.ASSetProperty(region, state.store, object, multiname, value, IR.Flags.INDEXED));
         }
@@ -724,7 +722,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new IR.ASSetProperty(region, state.store, object, multiname, value, 0));
     }
 
-    callSuper(scope, object, multiname, args) {
+    callSuper(scope: ASScope, object: Value, multiname: Value, args: Value []): Value {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -736,7 +734,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new IR.ASCallSuper(region, state.store, object, multiname, args, IR.Flags.PRISTINE, scope));
     }
 
-    getSuper(scope, object, multiname) {
+    getSuper(scope: ASScope, object: Value, multiname: Value): Value {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -748,7 +746,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new IR.ASGetSuper(region, state.store, object, multiname, scope));
     }
 
-    setSuper(scope, object, multiname, value) {
+    setSuper(scope: ASScope, object: Value, multiname: Value, value: Value) {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -760,7 +758,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new IR.ASSetSuper(region, state.store, object, multiname, value, scope));
     }
 
-    constructSuper(scope, object, args) {
+    constructSuper(scope: Value, object: Value, args: Value []) {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -778,7 +776,7 @@ module Shumway.AVM2.Compiler {
       return;
     }
 
-    getSlot(object, index) {
+    getSlot(object: Value, index: Value): Value {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -796,7 +794,7 @@ module Shumway.AVM2.Compiler {
       return this.store(new IR.ASGetSlot(null, state.store, object, index));
     }
 
-    setSlot(object, index, value) {
+    setSlot(object: Value, index: Value, value: Value) {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -840,7 +838,7 @@ module Shumway.AVM2.Compiler {
       return name;
     }
 
-    getDescendants(object: Value, name) {
+    getDescendants(object: Value, name): Value {
       var ti = this.bc.ti;
       var region = this.region;
       var state = this.state;
@@ -875,7 +873,7 @@ module Shumway.AVM2.Compiler {
       return node;
     }
 
-    pushExpression(operator: IR.Operator, toInt?) {
+    pushExpression(operator: IR.Operator, toInt?: boolean) {
       var stack = this.state.stack;
       var left, right;
       if (operator.isBinary) {
@@ -913,7 +911,7 @@ module Shumway.AVM2.Compiler {
       this.push(local[index]);
     }
 
-    popLocal(index) {
+    popLocal(index: number) {
       var state = this.state;
       state.local[index] = shouldNotFloat(state.stack.pop());
     }
