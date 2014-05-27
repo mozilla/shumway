@@ -446,16 +446,16 @@ module Shumway.AVM2.Compiler {
       this.methodInfo = builder.methodInfo;
     }
 
-    buildMultiname(region: Region, state: State, index: number): Value {
-      var multiname = this.constantPool.multinames[index];
+    popMultiname(): Value {
+      var multiname = this.constantPool.multinames[this.bc.index];
       var namespaces, name, flags = multiname.flags;
       if (multiname.isRuntimeName()) {
-        name = state.stack.pop();
+        name = this.state.stack.pop();
       } else {
         name = constant(multiname.name);
       }
       if (multiname.isRuntimeNamespace()) {
-        namespaces = shouldFloat(new NewArray(region, [state.stack.pop()]));
+        namespaces = shouldFloat(new NewArray(this.region, [this.state.stack.pop()]));
       } else {
         namespaces = constant(multiname.namespaces);
       }
@@ -916,7 +916,7 @@ module Shumway.AVM2.Compiler {
       var region = this.region;
       var bytecodes = this.bytecodes;
 
-      var object, receiver, index, callee, value: Value, multiname, type, args, pristine, left, right, operator;
+      var object, receiver, index, callee, value: Value, multiname: Value, type, args, pristine, left, right, operator;
 
       var push = this.push.bind(this);
 
@@ -983,31 +983,31 @@ module Shumway.AVM2.Compiler {
             break;
           case OP.findproperty:
           case OP.findpropstrict:
-            push(this.findProperty(this.buildMultiname(region, state, bc.index), op === OP.findpropstrict, bc.ti));
+            push(this.findProperty(this.popMultiname(), op === OP.findpropstrict, bc.ti));
             break;
           case OP.getproperty:
-            multiname = this.buildMultiname(region, state, bc.index);
+            multiname = this.popMultiname();
             object = pop();
             push(this.getProperty(object, multiname, bc.ti, false));
             break;
           case OP.getdescendants:
-            multiname = this.buildMultiname(region, state, bc.index);
+            multiname = this.popMultiname();
             object = pop();
             push(this.getDescendants(object, multiname, bc.ti));
             break;
           case OP.getlex:
-            multiname = this.buildMultiname(region, state, bc.index);
+            multiname = this.popMultiname();
             push(this.getProperty(this.findProperty(multiname, true, bc.ti), multiname, bc.ti, false));
             break;
           case OP.initproperty:
           case OP.setproperty:
             value = pop();
-            multiname = this.buildMultiname(region, state, bc.index);
+            multiname = this.popMultiname();
             object = pop();
             this.setProperty(object, multiname, value, bc.ti);
             break;
           case OP.deleteproperty:
-            multiname = this.buildMultiname(region, state, bc.index);
+            multiname = this.popMultiname();
             object = pop();
             push(this.store(new IR.ASDeleteProperty(region, state.store, object, multiname)));
             break;
@@ -1021,13 +1021,13 @@ module Shumway.AVM2.Compiler {
             this.setSlot(object, constant(bc.index), value, bc.ti);
             break;
           case OP.getsuper:
-            multiname = this.buildMultiname(region, state, bc.index);
+            multiname = this.popMultiname();
             object = pop();
             push(this.getSuper(this.savedScope(), object, multiname, bc.ti));
             break;
           case OP.setsuper:
             value = pop();
-            multiname = this.buildMultiname(region, state, bc.index);
+            multiname = this.popMultiname();
             object = pop();
             this.setSuper(this.savedScope(), object, multiname, value, bc.ti);
             break;
@@ -1047,7 +1047,7 @@ module Shumway.AVM2.Compiler {
           case OP.callpropvoid:
           case OP.callproplex:
             args = popMany(bc.argCount);
-            multiname = this.buildMultiname(region, state, bc.index);
+            multiname = this.popMultiname();
             object = pop();
             value = this.callProperty(object, multiname, args, op === OP.callproplex, bc.ti);
             if (op !== OP.callpropvoid) {
@@ -1056,7 +1056,7 @@ module Shumway.AVM2.Compiler {
             break;
           case OP.callsuper:
           case OP.callsupervoid:
-            multiname = this.buildMultiname(region, state, bc.index);
+            multiname = this.popMultiname();
             args = popMany(bc.argCount);
             object = pop();
             value = this.callSuper(this.savedScope(), object, multiname, args, bc.ti);
@@ -1076,7 +1076,7 @@ module Shumway.AVM2.Compiler {
             break;
           case OP.constructprop:
             args = popMany(bc.argCount);
-            multiname = this.buildMultiname(region, state, bc.index);
+            multiname = this.popMultiname();
             object = pop();
             callee = this.getProperty(object, multiname, bc.ti, false);
             push(this.store(new IR.ASNew(region, state.store, callee, args)));
@@ -1315,7 +1315,7 @@ module Shumway.AVM2.Compiler {
             break;
           case OP.istype:
             value = pop();
-            multiname = this.buildMultiname(region, state, bc.index);
+            multiname = this.popMultiname();
             type = this.getProperty(this.findProperty(multiname, false), multiname);
             push(this.call(globalProperty("asIsType"), null, [type, value]));
             break;
