@@ -17,6 +17,12 @@ module Shumway.Tools.Profiler {
 
   import clamp = NumberUtilities.clamp;
 
+  export enum FlameChartOverviewMode {
+    OVERLAY,
+    STACK,
+    UNION
+  }
+
   enum DragTarget {
     NONE,
     WINDOW,
@@ -60,13 +66,15 @@ module Shumway.Tools.Profiler {
     private _initialized: boolean;
     private _selection: Selection;
     private _dragInfo: DragInfo;
+    private _mode: FlameChartOverviewMode;
 
     private static DRAGHANDLE_WIDTH = 4;
 
-    constructor(controller: Controller) {
+    constructor(controller: Controller, mode: FlameChartOverviewMode = FlameChartOverviewMode.STACK) {
       this._overviewCanvasDirty = true;
       this._controller = controller;
       this._initialized = false;
+      this._mode = mode;
       this._canvas = document.createElement("canvas");
       this._context = this._canvas.getContext("2d");
       this._overviewCanvas = document.createElement("canvas");
@@ -112,6 +120,11 @@ module Shumway.Tools.Profiler {
       this._mouseController.destroy();
       this._mouseController = null;
       this._controller = null;
+    }
+
+    set mode(value: FlameChartOverviewMode) {
+      this._mode = value;
+      this._draw();
     }
 
     private _resetCanvas() {
@@ -212,7 +225,9 @@ module Shumway.Tools.Profiler {
       var yScale = -ratio * height / (profile.maxDepth - 1);
       contextOverview.scale(ratio / samplesPerPixel, yScale);
       contextOverview.clearRect(0, 0, samplesCount, profile.maxDepth - 1);
-      contextOverview.scale(1, 1 / profile.bufferCount);
+      if (this._mode == FlameChartOverviewMode.STACK) {
+        contextOverview.scale(1, 1 / profile.bufferCount);
+      }
       var bufferCount = profile.bufferCount;
       for (var i = 0; i < bufferCount; i++) {
         var buffer = profile.getBufferAt(i);
@@ -233,7 +248,9 @@ module Shumway.Tools.Profiler {
         contextOverview.lineTo(x, 0);
         contextOverview.fillStyle = "#46afe3";
         contextOverview.fill();
-        contextOverview.translate(0, -height * ratio / yScale);
+        if (this._mode == FlameChartOverviewMode.STACK) {
+          contextOverview.translate(0, -height * ratio / yScale);
+        }
       }
 
       contextOverview.restore();
