@@ -284,7 +284,7 @@ function colorFilter(buffer, w, h, matrix) {
 }
 
 var WebGLFilters = (function () {
-  var shaderRoot = SHUMWAY_ROOT + "/swf/filters/shaders/";
+  var shaderRoot = "shaders/";
 
   function colorVector(color) {
     return [color[0] / 255, color[1] / 255, color[2] / 255, color[3] / 255];
