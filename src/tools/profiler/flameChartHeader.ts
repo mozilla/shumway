@@ -22,6 +22,7 @@ module Shumway.Tools.Profiler {
   }
 
   enum DragTarget {
+    NONE,
     WINDOW,
     HANDLE_LEFT,
     HANDLE_RIGHT,
@@ -228,28 +229,32 @@ module Shumway.Tools.Profiler {
       return ((+value).toFixed(10)).replace(/^-?\d*\.?|0+$/g, '').length;
     }
 
-    private _getDragTargetUnderCursor(x: number): DragTarget {
-      if (this._type === FlameChartHeaderType.OVERVIEW) {
-        var left = this._toPixels(this._windowStart);
-        var right = this._toPixels(this._windowEnd);
-        var radius = 2 + (FlameChartHeader.DRAGHANDLE_WIDTH) / 2;
-        var leftHandle = (x >= left - radius && x <= left + radius);
-        var rightHandle = (x >= right - radius && x <= right + radius);
-        if (leftHandle && rightHandle) {
-          return DragTarget.HANDLE_BOTH;
-        } else if (leftHandle) {
-          return DragTarget.HANDLE_LEFT;
-        } else if (rightHandle) {
-          return DragTarget.HANDLE_RIGHT;
+    private _getDragTargetUnderCursor(x: number, y:number): DragTarget {
+      if (y >= 0 && y < this._height) {
+        if (this._type === FlameChartHeaderType.OVERVIEW) {
+          var left = this._toPixels(this._windowStart);
+          var right = this._toPixels(this._windowEnd);
+          var radius = 2 + (FlameChartHeader.DRAGHANDLE_WIDTH) / 2;
+          var leftHandle = (x >= left - radius && x <= left + radius);
+          var rightHandle = (x >= right - radius && x <= right + radius);
+          if (leftHandle && rightHandle) {
+            return DragTarget.HANDLE_BOTH;
+          } else if (leftHandle) {
+            return DragTarget.HANDLE_LEFT;
+          } else if (rightHandle) {
+            return DragTarget.HANDLE_RIGHT;
+          }
         }
+        return DragTarget.WINDOW;
+      } else {
+        return DragTarget.NONE;
       }
-      return DragTarget.WINDOW;
     }
 
     onMouseDown(x: number, y: number) {
-      var dragTarget = this._getDragTargetUnderCursor(x);
+      var dragTarget = this._getDragTargetUnderCursor(x, y);
       if (dragTarget === DragTarget.WINDOW) {
-        MouseController.updateCursor(this._canvas, MouseCursor.GRABBING);
+        this._mouseController.updateCursor(MouseCursor.GRABBING);
       }
       this._dragInfo = <DragInfo>{
         windowStartInitial: this._windowStart,
@@ -259,23 +264,25 @@ module Shumway.Tools.Profiler {
     }
 
     onMouseMove(x: number, y: number) {
-      var dragTarget = this._getDragTargetUnderCursor(x);
-      var cursor = (dragTarget === DragTarget.WINDOW) ? MouseCursor.GRAB : MouseCursor.EW_RESIZE;
-      MouseController.updateCursor(this._canvas, cursor);
+      var dragTarget = this._getDragTargetUnderCursor(x, y);
+      var cursor = (dragTarget === DragTarget.NONE)
+                   ? MouseCursor.DEFAULT
+                   : (dragTarget === DragTarget.WINDOW)
+                     ? MouseCursor.GRAB
+                     : MouseCursor.EW_RESIZE;
+      this._mouseController.updateCursor(cursor);
     }
 
     onMouseOver(x: number, y: number) {
-      var dragTarget = this._getDragTargetUnderCursor(x);
-      var cursor = (dragTarget === DragTarget.WINDOW) ? MouseCursor.GRAB : MouseCursor.EW_RESIZE;
-      MouseController.updateCursor(this._canvas, cursor);
+      this.onMouseMove(x, y);
     }
 
     onMouseOut() {
-      MouseController.updateCursor(this._canvas, MouseCursor.DEFAULT);
+      this._mouseController.updateCursor(MouseCursor.DEFAULT);
     }
 
     onMouseWheel(x: number, y: number, delta: number) {
-      console.log(x, y, delta);
+      //console.log(x, y, delta);
     }
 
     onDrag(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
@@ -320,14 +327,13 @@ module Shumway.Tools.Profiler {
     }
 
     onDragEnd(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
-      if (this._dragInfo.target === DragTarget.WINDOW) {
-        MouseController.updateCursor(this._canvas, MouseCursor.GRAB);
-      }
+      this.onMouseMove(currentX, currentY);
+      this._dragInfo = null;
     }
 
     onClick(x: number, y: number) {
       if (this._dragInfo.target === DragTarget.WINDOW) {
-        MouseController.updateCursor(this._canvas, MouseCursor.GRAB);
+        this._mouseController.updateCursor(MouseCursor.GRAB);
       }
     }
 
