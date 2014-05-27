@@ -553,25 +553,6 @@ module Shumway.AVM2.Verifier {
     }
   }
 
-//  interface Block {
-//    entryState: State;
-//    exitState: State;
-//    bdo: number;
-//    bid: number;
-//    succs: Block [];
-//    position: number;
-//    end: Bytecode;
-//  }
-
-//  interface Bytecode {
-//    position: number;
-//    index: number;
-//    ti: TypeInformation;
-//    op: number;
-//    argCount: number;
-//    toString: (abc: AbcFile) => string;
-//  }
-
   class Verification {
     writer = new IndentingWriter();
     thisType: Type;
@@ -634,7 +615,7 @@ module Shumway.AVM2.Verifier {
     private _verifyBlocks(entryState: State) {
       var writer = this.writer;
 
-      var blocks: Bytecode [] = (<any>this.methodInfo).analysis.blocks;
+      var blocks: Bytecode [] = this.methodInfo.analysis.blocks;
       blocks.forEach(function (x: Bytecode) {
         x.verifierEntryState = x.verifierExitState = null;
       });

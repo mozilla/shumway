@@ -52,10 +52,9 @@ module Shumway.AVM2.Compiler {
   import NewArray = IR.NewArray;
   import NewObject = IR.NewObject;
   import KeyValuePair = IR.KeyValuePair;
-  // import Block = IR.Block;
   import isConstant = IR.isConstant;
 
-
+  import TypeInformation = Verifier.TypeInformation;
   var writer = new IndentingWriter();
   var peepholeOptimizer = new IR.PeepholeOptimizer();
 
@@ -249,6 +248,44 @@ module Shumway.AVM2.Compiler {
     return constant(Multiname.getQualifiedName(name));
   }
 
+  function operatorFromOP(op: OP): IR.Operator {
+    switch (op) {
+      case OP.subtract:       return Operator.SUB;
+      case OP.multiply:       return Operator.MUL;
+      case OP.divide:         return Operator.DIV;
+      case OP.modulo:         return Operator.MOD;
+      case OP.lshift:         return Operator.LSH;
+      case OP.rshift:         return Operator.RSH;
+      case OP.urshift:        return Operator.URSH;
+      case OP.bitand:         return Operator.AND;
+      case OP.bitor:          return Operator.OR;
+      case OP.bitxor:         return Operator.XOR;
+      case OP.ifne:           return Operator.NE;
+      case OP.ifstrictne:     return Operator.SNE;
+      case OP.ifeq:
+      case OP.equals:         return Operator.EQ;
+      case OP.ifstricteq:
+      case OP.strictequals:   return Operator.SEQ;
+      case OP.iflt:
+      case OP.lessthan:       return Operator.LT;
+      case OP.ifle:
+      case OP.lessequals:     return Operator.LE;
+      case OP.ifgt:
+      case OP.greaterthan:    return Operator.GT;
+      case OP.ifge:
+      case OP.greaterequals:  return Operator.GE;
+      case OP.negate:         return Operator.NEG;
+      case OP.negate_i:       return Operator.NEG;
+      case OP.add_i:          return Operator.ADD;
+      case OP.subtract_i:     return Operator.SUB;
+      case OP.multiply_i:     return Operator.MUL;
+      case OP.iftrue:         return Operator.TRUE;
+      case OP.iffalse:        return Operator.FALSE;
+      default:
+        notImplemented(String(op));
+    }
+  }
+
   function getJSPropertyWithState(state: State, object: Value, path: string) {
     release || assert (isString(path));
     var names = path.split(".");
@@ -405,7 +442,7 @@ module Shumway.AVM2.Compiler {
       this.methodInfo = builder.methodInfo;
     }
 
-    buildMultiname(region: Region, state: State, index: number) {
+    buildMultiname(region: Region, state: State, index: number): Value {
       var multiname = this.constantPool.multinames[index];
       var namespaces, name, flags = multiname.flags;
       if (multiname.isRuntimeName()) {
@@ -421,7 +458,7 @@ module Shumway.AVM2.Compiler {
       return new IR.ASMultiname(namespaces, name, flags);
     }
 
-    buildIfStops(predicate: Value) {
+    setIfStops(predicate: Value) {
       release || assert (!this.stops);
       var _if = new IR.If(this.region, predicate);
       this.stops = [{
@@ -435,7 +472,7 @@ module Shumway.AVM2.Compiler {
       }];
     }
 
-    buildJumpStop() {
+    setJumpStop() {
       release || assert (!this.stops);
       this.stops = [{
         control: this.region,
@@ -444,17 +481,17 @@ module Shumway.AVM2.Compiler {
       }];
     }
 
-    buildThrowStop() {
+    setThrowStop() {
       release || assert (!this.stops);
       this.stops = [];
     }
 
-    buildReturnStop() {
+    setReturnStop() {
       release || assert (!this.stops);
       this.stops = [];
     }
 
-    buildSwitchStops(determinant: Value) {
+    setSwitchStops(determinant: Value) {
       release || assert (!this.stops);
       if (this.bc.targets.length > 2) {
         this.stops = [];
@@ -508,16 +545,16 @@ module Shumway.AVM2.Compiler {
       return this.savedScope();
     }
 
-    getGlobalScope(ti): Value {
+    getGlobalScope(ti: TypeInformation): Value {
       if (ti && ti.object) {
         return constant(ti.object);
       }
       return new IR.ASGlobal(null, this.savedScope());
     }
 
-    getScopeObject(scope): Value {
+    getScopeObject(scope: Value): Value {
       if (scope instanceof IR.ASScope) {
-        return scope.object;
+        return (<IR.ASScope>scope).object;
       }
       return getJSPropertyWithState(this.state, scope, "object");
     }
@@ -587,14 +624,14 @@ module Shumway.AVM2.Compiler {
       return this.store(new Call(this.region, this.state.store, callee, object, args, IR.Flags.AS_CALL));
     }
 
-    callProperty(object, multiname, args, isLex, ti) {
+    callProperty(object: Value, multiname: Value, args: Value [], isLex: boolean, ti: TypeInformation) {
       var region = this.region;
       var state = this.state;
       if (ti && ti.trait) {
         if (ti.trait.isMethod()) {
           var openQn;
           if (ti.trait.holder instanceof InstanceInfo &&
-            ti.trait.holder.isInterface()) {
+            (<InstanceInfo>ti.trait.holder).isInterface()) {
             openQn = Multiname.getPublicQualifiedName(Multiname.getName(ti.trait.name));
           } else {
             openQn = Multiname.getQualifiedName(ti.trait.name);
@@ -907,7 +944,7 @@ module Shumway.AVM2.Compiler {
               store: state.store,
               value: Undefined
             });
-            this.buildThrowStop();
+            this.setThrowStop();
             break;
           case OP.getlocal:
             this.pushLocal(bc.index);
@@ -1104,7 +1141,7 @@ module Shumway.AVM2.Compiler {
               store: state.store,
               value: value
             });
-            this.buildReturnStop();
+            this.setReturnStop();
             break;
           case OP.nextname:
           case OP.nextvalue:
@@ -1169,53 +1206,35 @@ module Shumway.AVM2.Compiler {
           case OP.debugline:
           case OP.debugfile:
             break;
+          case OP.jump:
+            this.setJumpStop();
+            break;
           case OP.ifnlt:
-            this.buildIfStops(this.negatedTruthyCondition(Operator.LT));
-            break;
-          case OP.ifge:
-            this.buildIfStops(this.truthyCondition(Operator.GE));
-            break;
-          case OP.ifnle:
-            this.buildIfStops(this.negatedTruthyCondition(Operator.LE));
-            break;
-          case OP.ifgt:
-            this.buildIfStops(this.truthyCondition(Operator.GT));
-            break;
-          case OP.ifngt:
-            this.buildIfStops(this.negatedTruthyCondition(Operator.GT));
-            break;
-          case OP.ifle:
-            this.buildIfStops(this.truthyCondition(Operator.LE));
+            this.setIfStops(this.negatedTruthyCondition(Operator.LT));
             break;
           case OP.ifnge:
-            this.buildIfStops(this.negatedTruthyCondition(Operator.GE));
+            this.setIfStops(this.negatedTruthyCondition(Operator.GE));
             break;
+          case OP.ifngt:
+            this.setIfStops(this.negatedTruthyCondition(Operator.GT));
+            break;
+          case OP.ifnle:
+            this.setIfStops(this.negatedTruthyCondition(Operator.LE));
+            break;
+          case OP.ifge:
+          case OP.ifgt:
+          case OP.ifle:
           case OP.iflt:
-            this.buildIfStops(this.truthyCondition(Operator.LT));
-            break;
-          case OP.jump:
-            this.buildJumpStop();
-            break;
           case OP.iftrue:
-            this.buildIfStops(this.truthyCondition(Operator.TRUE));
-            break;
           case OP.iffalse:
-            this.buildIfStops(this.truthyCondition(Operator.FALSE));
-            break;
           case OP.ifeq:
-            this.buildIfStops(this.truthyCondition(Operator.EQ));
-            break;
           case OP.ifne:
-            this.buildIfStops(this.truthyCondition(Operator.NE));
-            break;
           case OP.ifstricteq:
-            this.buildIfStops(this.truthyCondition(Operator.SEQ));
-            break;
           case OP.ifstrictne:
-            this.buildIfStops(this.truthyCondition(Operator.SNE));
+            this.setIfStops(this.truthyCondition(operatorFromOP(op)));
             break;
           case OP.lookupswitch:
-            this.buildSwitchStops(pop());
+            this.setSwitchStops(pop());
             break;
           case OP.not:
             this.pushExpression(Operator.FALSE);
@@ -1235,68 +1254,30 @@ module Shumway.AVM2.Compiler {
             }
             push(binary(operator, left, right));
             break;
-          case OP.add_i:
-            this.pushExpression(Operator.ADD, true);
-            break;
           case OP.subtract:
-            this.pushExpression(Operator.SUB);
-            break;
-          case OP.subtract_i:
-            this.pushExpression(Operator.SUB, true);
-            break;
           case OP.multiply:
-            this.pushExpression(Operator.MUL);
-            break;
-          case OP.multiply_i:
-            this.pushExpression(Operator.MUL, true);
-            break;
           case OP.divide:
-            this.pushExpression(Operator.DIV);
-            break;
           case OP.modulo:
-            this.pushExpression(Operator.MOD);
-            break;
           case OP.lshift:
-            this.pushExpression(Operator.LSH);
-            break;
           case OP.rshift:
-            this.pushExpression(Operator.RSH);
-            break;
           case OP.urshift:
-            this.pushExpression(Operator.URSH);
-            break;
           case OP.bitand:
-            this.pushExpression(Operator.AND);
-            break;
           case OP.bitor:
-            this.pushExpression(Operator.OR);
-            break;
           case OP.bitxor:
-            this.pushExpression(Operator.XOR);
-            break;
           case OP.equals:
-            this.pushExpression(Operator.EQ);
-            break;
           case OP.strictequals:
-            this.pushExpression(Operator.SEQ);
-            break;
           case OP.lessthan:
-            this.pushExpression(Operator.LT);
-            break;
           case OP.lessequals:
-            this.pushExpression(Operator.LE);
-            break;
           case OP.greaterthan:
-            this.pushExpression(Operator.GT);
-            break;
           case OP.greaterequals:
-            this.pushExpression(Operator.GE);
-            break;
           case OP.negate:
-            this.pushExpression(Operator.NEG);
+            this.pushExpression(operatorFromOP(op));
             break;
           case OP.negate_i:
-            this.pushExpression(Operator.NEG, true);
+          case OP.add_i:
+          case OP.subtract_i:
+          case OP.multiply_i:
+            this.pushExpression(operatorFromOP(op), true);
             break;
           case OP.increment:
           case OP.increment_i:
@@ -1413,7 +1394,7 @@ module Shumway.AVM2.Compiler {
     traceBuilder: boolean;
     createFunctionCallee: Value;
     stopPoints: any [];
-    bytecodes;
+    bytecodes: Bytecode [];
     constructor(methodInfo, scope, hasDynamicScope) {
       release || assert (methodInfo && methodInfo.abc && scope);
       this.abc = methodInfo.abc;
@@ -1501,7 +1482,6 @@ module Shumway.AVM2.Compiler {
       var analysis = this.methodInfo.analysis;
       var blocks = analysis.blocks;
       var methodInfo = this.methodInfo;
-
       var traceBuilder = this.traceBuilder;
 
       for (var i = 0; i < blocks.length; i++) {
@@ -1570,7 +1550,6 @@ module Shumway.AVM2.Compiler {
       return new IR.DFG(stop);
     }
 
-    
 
     buildBlock(region: Region, block, state) {
       release || assert (region && block && state);
@@ -1607,7 +1586,7 @@ module Shumway.AVM2.Compiler {
       return stops;
     }
 
-    static buildMethod(verifier, methodInfo, scope, hasDynamicScope) {
+    static buildMethod(verifier: Verifier.Verifier, methodInfo: MethodInfo, scope: Scope, hasDynamicScope: boolean) {
       release || assert (scope);
       release || assert (methodInfo.analysis);
       release || assert (!methodInfo.hasExceptions());
@@ -1648,8 +1627,6 @@ module Shumway.AVM2.Compiler {
       Timer.start("Schedule Nodes");
       cfg.scheduleEarly();
       Timer.stop();
-
-      // traceIR && dfg.trace(writer);
 
       traceIR && cfg.trace(writer);
 
