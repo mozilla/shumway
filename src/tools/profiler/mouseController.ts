@@ -109,6 +109,7 @@ module Shumway.Tools.Profiler {
     private static HOVER_TIMEOUT = 500;
 
     private static _cursor = MouseCursor.DEFAULT;
+    private static _cursorOwner: MouseControllerTarget;
 
     constructor(target: MouseControllerTarget, eventTarget: EventTarget) {
       this._target = target;
@@ -127,16 +128,6 @@ module Shumway.Tools.Profiler {
       eventTarget.addEventListener("DOMMouseScroll", this._boundOnMouseWheel, false);
     }
 
-    static updateCursor(el: HTMLElement, cursor: MouseCursor) {
-      if (this._cursor !== cursor) {
-        this._cursor = cursor;
-        var self = this;
-        ["", "-moz-", "-webkit-"].forEach(function (prefix) {
-          el.style.cursor = prefix + cursor;
-        });
-      }
-    }
-
     destroy() {
       var eventTarget = this._eventTarget;
       eventTarget.removeEventListener("mousedown", this._boundOnMouseDown);
@@ -147,6 +138,24 @@ module Shumway.Tools.Profiler {
       this._killHoverCheck();
       this._eventTarget = null;
       this._target = null;
+    }
+
+    updateCursor(cursor: MouseCursor) {
+      if (!MouseController._cursorOwner || MouseController._cursorOwner === this._target) {
+        var el: HTMLElement = <HTMLElement>(<any>this._eventTarget).parentElement;
+        if (MouseController._cursor !== cursor) {
+          MouseController._cursor = cursor;
+          var self = this;
+          ["", "-moz-", "-webkit-"].forEach(function (prefix) {
+            el.style.cursor = prefix + cursor;
+          });
+        }
+        if (MouseController._cursor === MouseCursor.DEFAULT) {
+          MouseController._cursorOwner = null;
+        } else {
+          MouseController._cursorOwner = this._target;
+        }
+      }
     }
 
     private _onMouseDown(event: MouseEvent) {
