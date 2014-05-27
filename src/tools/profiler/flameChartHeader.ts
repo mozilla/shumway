@@ -81,15 +81,25 @@ module Shumway.Tools.Profiler {
 
     initialize(rangeStart: number, rangeEnd: number) {
       this._initialized = true;
-      this._rangeStart = rangeStart;
-      this._rangeEnd = rangeEnd;
-      this.setWindow(rangeStart, rangeEnd);
+      this.setRange(rangeStart, rangeEnd, false);
+      this.setWindow(rangeStart, rangeEnd, false);
+      this._draw();
     }
 
-    setWindow(windowStart: number, windowEnd: number) {
-      this._windowStart = windowStart;
-      this._windowEnd = windowEnd;
-      this._draw();
+    setWindow(start: number, end: number, draw: boolean = true) {
+      this._windowStart = start;
+      this._windowEnd = end;
+      if (draw) {
+        this._draw();
+      }
+    }
+
+    setRange(start: number, end: number, draw: boolean = true) {
+      this._rangeStart = start;
+      this._rangeEnd = end;
+      if (draw) {
+        this._draw();
+      }
     }
 
     destroy() {
@@ -310,39 +320,28 @@ module Shumway.Tools.Profiler {
       }
       var windowStart = this._windowStart;
       var windowEnd = this._windowEnd;
-      var windowLength = windowEnd - windowStart;
-      var rangeStart = this._rangeStart;
-      var rangeEnd = this._rangeEnd;
-      var rangeLength = rangeEnd - rangeStart;
-      var mult = (this._type === FlameChartHeaderType.OVERVIEW) ? 1 : -1;
       var delta = this._toTime(deltaX);
       switch (dragInfo.target) {
         case DragTarget.WINDOW:
+          var mult = (this._type === FlameChartHeaderType.OVERVIEW) ? 1 : -1;
           windowStart = dragInfo.windowStartInitial + mult * delta;
           windowEnd = dragInfo.windowEndInitial + mult * delta;
-          if (windowStart < rangeStart) {
-            windowStart = rangeStart;
-            windowEnd = windowLength;
-          } else if (windowEnd > rangeEnd) {
-            windowStart = rangeEnd - windowLength;
-            windowEnd = rangeEnd;
-          }
           break;
         case DragTarget.HANDLE_LEFT:
-          windowStart = clamp(dragInfo.windowStartInitial + delta, rangeStart, windowEnd - 20);
+          windowStart = clamp(dragInfo.windowStartInitial + delta, this._rangeStart, windowEnd - 20);
           break;
         case DragTarget.HANDLE_RIGHT:
-          windowEnd = clamp(dragInfo.windowEndInitial + delta, windowStart + 20, rangeEnd);
+          windowEnd = clamp(dragInfo.windowEndInitial + delta, windowStart + 20, this._rangeEnd);
           break;
         default:
           return;
       }
-      this._controller.onWindowChange(windowStart / rangeLength, windowEnd / rangeLength);
+      this._controller.setWindow(windowStart, windowEnd);
     }
 
     onDragEnd(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
-      this.onMouseMove(currentX, currentY);
       this._dragInfo = null;
+      this.onMouseMove(currentX, currentY);
     }
 
     onClick(x: number, y: number) {

@@ -21,6 +21,8 @@ module Shumway.Tools.Profiler {
     private _bufferNames: string [];
     private _startTime: number;
     private _endTime: number;
+    private _windowStart: number;
+    private _windowEnd: number;
     private _maxDepth: number;
     private _hasSnapshot: boolean;
 
@@ -60,7 +62,19 @@ module Shumway.Tools.Profiler {
       return this.endTime - this.startTime;
     }
 
-    get maxDepth(): number {
+    get windowStart(): number {
+      return this._windowStart;
+    }
+
+    get windowEnd(): number {
+      return this._windowEnd;
+    }
+
+    get windowLength(): number {
+      return this.windowEnd - this.windowStart;
+    }
+
+      get maxDepth(): number {
       return this._maxDepth;
     }
 
@@ -83,8 +97,32 @@ module Shumway.Tools.Profiler {
       }
       this._startTime = startTime;
       this._endTime = endTime;
+      this._windowStart = startTime;
+      this._windowEnd = endTime;
       this._maxDepth = maxDepth;
       this._hasSnapshot = true;
+    }
+
+    setWindow(start: number, end: number) {
+      if (start > end) {
+        var tmp = start;
+        start = end;
+        end = tmp;
+      }
+      var length = end - start;
+      if (start < this._startTime) {
+        start = this._startTime;
+        end = length;
+      } else if (end > this._endTime) {
+        start = this._endTime - length;
+        end = this._endTime;
+      }
+      this._windowStart = start;
+      this._windowEnd = end;
+    }
+
+    moveWindowTo(time: number) {
+      this.setWindow(time - this.windowLength / 2, time + this.windowLength / 2);
     }
 
     reset() {

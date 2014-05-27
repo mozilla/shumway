@@ -87,17 +87,25 @@ module Shumway.Tools.Profiler {
     initialize(rangeStart: number, rangeEnd: number) {
       this._initialized = true;
       this._maxDepth = this._buffer.maxDepth;
-      this._rangeStart = rangeStart;
-      this._rangeEnd = rangeEnd;
-      this._windowStart = rangeStart;
-      this._windowEnd = rangeEnd;
+      this.setRange(rangeStart, rangeEnd, false);
+      this.setWindow(rangeStart, rangeEnd, false);
       this.setSize(this._width, this._maxDepth * 12);
     }
 
-    setWindow(windowStart: number, windowEnd: number) {
-      this._windowStart = windowStart;
-      this._windowEnd = windowEnd;
-      this._draw();
+    setWindow(start: number, end: number, draw: boolean = true) {
+      this._windowStart = start;
+      this._windowEnd = end;
+      if (draw) {
+        this._draw();
+      }
+    }
+
+    setRange(start: number, end: number, draw: boolean = true) {
+      this._rangeStart = start;
+      this._rangeEnd = end;
+      if (draw) {
+        this._draw();
+      }
     }
 
     destroy() {

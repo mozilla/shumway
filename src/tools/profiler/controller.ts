@@ -81,24 +81,25 @@ module Shumway.Tools.Profiler {
       }
     }
 
-    public onWindowChange(startTime: number, endTime: number) {
-      startTime = this._relToAbsTime(startTime);
-      endTime = this._relToAbsTime(endTime);
-      if (startTime > endTime) {
-        var tmp = startTime;
-        startTime = endTime;
-        endTime = tmp;
-      }
-      this._overviewHeader.setWindow(startTime, endTime);
-      this._overview.setWindow(startTime, endTime);
+    private _updateViews() {
+      var start = this._profile.windowStart;
+      var end = this._profile.windowEnd;
+      this._overviewHeader.setWindow(start, end);
+      this._overview.setWindow(start, end);
       for (var i = 0, n = this._profile.bufferCount; i < n; i++) {
-        this._headers[i].setWindow(startTime, endTime);
-        this._charts[i].setWindow(startTime, endTime);
+        this._headers[i].setWindow(start, end);
+        this._charts[i].setWindow(start, end);
       }
     }
 
-    private _relToAbsTime(relTime: number): number {
-      return relTime * this._profile.totalTime;
+    public setWindow(start: number, end: number) {
+      this._profile.setWindow(start, end);
+      this._updateViews();
+    }
+
+    public moveWindowTo(time: number) {
+      this._profile.moveWindowTo(time);
+      this._updateViews();
     }
 
   }
