@@ -61,7 +61,7 @@ if (isWorker && !$RELEASE) {
     build + '../utilities.js',
     build + 'parser/bitmap.js',
     build + 'parser/button.js',
-    'font.js',
+    build + 'parser/font.js',
     'image.js',
     'label.js',
     'shape.js',
@@ -97,7 +97,7 @@ function defineSymbol(swfTag, symbols) {
     case SWF_TAG_CODE_DEFINE_FONT2:
     case SWF_TAG_CODE_DEFINE_FONT3:
     case SWF_TAG_CODE_DEFINE_FONT4:
-      symbol = defineFont(swfTag, symbols);
+      symbol = Shumway.SWF.Parser.defineFont(swfTag, symbols);
       break;
     case SWF_TAG_CODE_DEFINE_MORPH_SHAPE:
     case SWF_TAG_CODE_DEFINE_MORPH_SHAPE2:

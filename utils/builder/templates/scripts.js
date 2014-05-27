@@ -40,7 +40,7 @@ load($SHUMWAY_ROOT + "src/swf/stream.js");
 load($SHUMWAY_ROOT + "build/ts/swf/utilities.js");
 load($SHUMWAY_ROOT + "build/ts/swf/parser/bitmap.js");
 load($SHUMWAY_ROOT + "build/ts/swf/parser/button.js");
-load($SHUMWAY_ROOT + "src/swf/font.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/font.js");
 
 load($SHUMWAY_ROOT + "src/swf/image.js");
 load($SHUMWAY_ROOT + "src/swf/label.js");

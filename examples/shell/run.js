@@ -101,7 +101,7 @@ load("../../src/swf/inflate.js");
 load("../../src/swf/stream.js");
 load("../../build/ts/swf/parser/bitmap.js");
 load("../../build/ts/swf/parser/button.js");
-load("../../src/swf/font.js");
+load("../../build/ts/swf/parser/font.js");
 load("../../src/swf/image.js");
 load("../../src/swf/label.js");
 load("../../src/swf/shape.js");
