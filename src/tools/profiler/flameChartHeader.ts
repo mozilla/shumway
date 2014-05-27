@@ -147,7 +147,7 @@ module Shumway.Tools.Profiler {
       var y = this._height / 2;
       context.lineWidth = 1;
       context.strokeStyle = "rgba(95, 115, 135, 0.5)";
-      context.fillStyle = "rgba(95, 115, 135, 0.8)";
+      context.fillStyle = "rgba(95, 115, 135, 1)";
       context.textAlign = "right";
       context.textBaseline = "middle";
       context.font = '11px sans-serif';
@@ -266,10 +266,10 @@ module Shumway.Tools.Profiler {
     onMouseMove(x: number, y: number) {
       var dragTarget = this._getDragTargetUnderCursor(x, y);
       var cursor = (dragTarget === DragTarget.NONE)
-                   ? MouseCursor.DEFAULT
-                   : (dragTarget === DragTarget.WINDOW)
-                     ? MouseCursor.GRAB
-                     : MouseCursor.EW_RESIZE;
+                    ? MouseCursor.DEFAULT
+                    : (dragTarget === DragTarget.WINDOW)
+                      ? MouseCursor.GRAB
+                      : MouseCursor.EW_RESIZE;
       this._mouseController.updateCursor(cursor);
     }
 
