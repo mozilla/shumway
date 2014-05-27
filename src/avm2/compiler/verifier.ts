@@ -43,6 +43,11 @@ module Shumway.AVM2.Verifier {
     noCoercionNeeded: boolean;
     noCallSuperNeeded: boolean;
     propertyQName: string;
+
+    isDirectlyReadable: boolean;
+    isIndexedReadable: boolean;
+    isDirectlyWriteable: boolean;
+    isIndexedWriteable: boolean;
   }
 
   export class Type {
