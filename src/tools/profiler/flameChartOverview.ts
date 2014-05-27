@@ -89,6 +89,8 @@ module Shumway.Tools.Profiler {
       this._initialized = true;
       this._rangeStart = rangeStart;
       this._rangeEnd = rangeEnd;
+      this._windowStart = rangeStart;
+      this._windowEnd = rangeEnd;
       this._draw();
     }
 

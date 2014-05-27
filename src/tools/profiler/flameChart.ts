@@ -77,9 +77,9 @@ module Shumway.Tools.Profiler {
       this.setSize(rect.width);
     }
 
-    setSize(width: number, height: number = 100) {
+    setSize(width: number, height?: number) {
       this._width = width;
-      this._height = height;
+      this._height = height || this._initialized ? this._maxDepth * 12 : 100;
       this._resetCanvas();
       this._draw();
     }
