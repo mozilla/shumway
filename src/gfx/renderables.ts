@@ -36,7 +36,7 @@ module Shumway.GFX {
     }
   }
 
-  export class Bitmap implements IRenderable {
+  export class RenderableBitmap implements IRenderable {
     properties: {[name: string]: any} = {};
     isDynamic: boolean = false;
     isInvalid: boolean = false;
@@ -44,20 +44,38 @@ module Shumway.GFX {
     isTileable: boolean = false;
 
     private _bounds: Rectangle;
-    private _dataBuffer: DataBuffer;
+    private _image: HTMLElement;
     private fillStyle: ColorStyle;
 
     getBounds (): Rectangle {
       return this._bounds;
     }
 
-    constructor(dataBuffer: DataBuffer, bounds: Rectangle) {
+    public static FromDataBuffer(dataBuffer: DataBuffer, bounds: Rectangle): RenderableBitmap {
+      var canvas = document.createElement("canvas");
+      canvas.width = bounds.w;
+      canvas.height = bounds.h;
+      var context = canvas.getContext("2d");
+      var imageData: ImageData = context.createImageData(bounds.w, bounds.h);
+      imageData.data.set(dataBuffer.bytes);
+      context.putImageData(imageData, 0, 0);
+      return new RenderableBitmap(canvas, bounds);
+    }
+
+    constructor(image: HTMLElement, bounds: Rectangle) {
+      this._image = image;
       this._bounds = bounds;
-      this._dataBuffer = dataBuffer;
     }
 
     render(context: CanvasRenderingContext2D, clipBounds: Shumway.GFX.Geometry.Rectangle): void {
-      this._renderFallback(context);
+      context.save();
+      if (this._image) {
+        context.drawImage(this._image, 0, 0);
+      } else {
+        this._renderFallback(context);
+      }
+      context.restore();
+
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {
@@ -74,7 +92,7 @@ module Shumway.GFX {
     }
   }
 
-  export class ShapeGraphics implements IRenderable {
+  export class RenderableShape implements IRenderable {
     properties: {[name: string]: any} = {};
     isDynamic: boolean = false;
     isInvalid: boolean = true;
@@ -106,7 +124,7 @@ module Shumway.GFX {
         this._renderFallback(context);
         return;
       }
-      enterTimeline("ShapeGraphics.render");
+      enterTimeline("RenderableShape.render");
       // TODO: Optimize path handling to use only one path if possible.
       // If both line and fill style are set at the same time, we don't need to duplicate the
       // geometry.
@@ -189,8 +207,8 @@ module Shumway.GFX {
             context.strokeStyle = ColorUtilities.rgbaToCSSStyle(data.readUnsignedInt());
             data.readBoolean(); // Skip pixel hinting.
             data.readByte(); // Skip scaleMode.
-            context.lineCap = ShapeGraphics.LINE_CAP_STYLES[data.readByte()];
-            context.lineJoin = ShapeGraphics.LINE_JOINT_STYLES[data.readByte()];
+            context.lineCap = RenderableShape.LINE_CAP_STYLES[data.readByte()];
+            context.lineJoin = RenderableShape.LINE_JOINT_STYLES[data.readByte()];
             context.miterLimit = data.readByte();
             break;
           case PathCommand.LineEnd:
@@ -211,7 +229,7 @@ module Shumway.GFX {
       }
       context.restore();
       this.isInvalid = false;
-      leaveTimeline("ShapeGraphics.render");
+      leaveTimeline("RenderableShape.render");
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {

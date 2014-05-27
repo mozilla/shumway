@@ -437,6 +437,14 @@ module Shumway.ArrayUtilities {
       return this._position;
     }
 
+    get buffer(): ArrayBuffer {
+      return this._buffer;
+    }
+
+    get bytes(): Uint8Array {
+      return this._u8View;
+    }
+
     set position(position: number /*uint*/) {
       this._position = position >>> 0;
     }

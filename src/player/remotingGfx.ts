@@ -16,8 +16,8 @@
 module Shumway.Remoting.GFX {
   import Frame = Shumway.GFX.Frame;
   import Shape = Shumway.GFX.Shape;
-  import Bitmap = Shumway.GFX.Bitmap;
-  import ShapeGraphics = Shumway.GFX.ShapeGraphics;
+  import RenderableShape = Shumway.GFX.RenderableShape;
+  import RenderableBitmap = Shumway.GFX.RenderableBitmap;
   import Renderable = Shumway.GFX.Renderable;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
@@ -174,7 +174,7 @@ module Shumway.Remoting.GFX {
       var pathData = this.inputAssets[assetId];
       this.inputAssets[assetId] = null;
       if (!asset) {
-        context._assets[id] = new ShapeGraphics(pathData, bounds);
+        context._assets[id] = new RenderableShape(pathData, bounds);
       }
     }
 
@@ -188,7 +188,7 @@ module Shumway.Remoting.GFX {
       var dataBuffer = this.inputAssets[assetId];
       this.inputAssets[assetId] = null;
       if (!asset) {
-        context._assets[id] = new Bitmap(dataBuffer, bounds);
+        context._assets[id] = new RenderableBitmap.FromDataBuffer(dataBuffer, bounds);
       }
     }
 
