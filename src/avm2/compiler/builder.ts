@@ -38,6 +38,8 @@ module Shumway.AVM2.Compiler {
   import Region = IR.Region;
   import Null = IR.Null;
   import Undefined = IR.Undefined;
+  import True = IR.True;
+  import False = IR.False;
   import This = IR.This;
   import Projection = IR.Projection;
   import ProjectionType = IR.ProjectionType;
@@ -281,6 +283,8 @@ module Shumway.AVM2.Compiler {
       case OP.multiply_i:     return Operator.MUL;
       case OP.iftrue:         return Operator.TRUE;
       case OP.iffalse:        return Operator.FALSE;
+      case OP.not:            return Operator.FALSE;
+      case OP.bitnot:         return Operator.BITWISE_NOT;
       default:
         notImplemented(String(op));
     }
@@ -965,10 +969,8 @@ module Shumway.AVM2.Compiler {
             this.popLocal(op - OP.setlocal0);
             break;
           case OP.pushwith:
-            scope.push(new IR.ASScope(this.topScope(), pop(), true));
-            break;
           case OP.pushscope:
-            scope.push(new IR.ASScope(this.topScope(), pop(), false));
+            scope.push(new IR.ASScope(this.topScope(), pop(), op === OP.pushwith));
             break;
           case OP.popscope:
             scope.pop();
@@ -979,11 +981,9 @@ module Shumway.AVM2.Compiler {
           case OP.getscopeobject:
             push(this.getScopeObject(state.scope[bc.index]));
             break;
-          case OP.findpropstrict:
-            push(this.findProperty(this.buildMultiname(region, state, bc.index), true, bc.ti));
-            break;
           case OP.findproperty:
-            push(this.findProperty(this.buildMultiname(region, state, bc.index), false, bc.ti));
+          case OP.findpropstrict:
+            push(this.findProperty(this.buildMultiname(region, state, bc.index), op === OP.findpropstrict, bc.ti));
             break;
           case OP.getproperty:
             multiname = this.buildMultiname(region, state, bc.index);
@@ -1111,7 +1111,8 @@ module Shumway.AVM2.Compiler {
             push(this.call(globalProperty("checkFilter"), null, [pop()]));
             break;
           case OP.coerce_a:
-            /* NOP */ break;
+            /* NOP */
+            break;
           case OP.coerce_s:
             push(coerceString(pop()));
             break;
@@ -1164,12 +1165,19 @@ module Shumway.AVM2.Compiler {
           case OP.pushundefined:
             push(Undefined);
             break;
+          case OP.pushtrue:
+            push(True);
+            break;
+          case OP.pushfalse:
+            push(False);
+            break;
+          case OP.pushnan:
+            push(constant(NaN));
+            break;
           case OP.pushfloat:
             notImplemented(String(bc));
             break;
           case OP.pushbyte:
-            push(constant(bc.value));
-            break;
           case OP.pushshort:
             push(constant(bc.value));
             break;
@@ -1185,17 +1193,9 @@ module Shumway.AVM2.Compiler {
           case OP.pushdouble:
             push(constant(this.constantPool.doubles[bc.index]));
             break;
-          case OP.pushtrue:
-            push(constant(true));
-            break;
-          case OP.pushfalse:
-            push(constant(false));
-            break;
-          case OP.pushnan:
-            push(constant(NaN));
-            break;
           case OP.pop:
-            pop(); break;
+            pop();
+            break;
           case OP.dup:
             value = shouldNotFloat(pop()); push(value); push(value);
             break;
@@ -1236,12 +1236,6 @@ module Shumway.AVM2.Compiler {
           case OP.lookupswitch:
             this.setSwitchStops(pop());
             break;
-          case OP.not:
-            this.pushExpression(Operator.FALSE);
-            break;
-          case OP.bitnot:
-            this.pushExpression(Operator.BITWISE_NOT);
-            break;
           case OP.add:
             right = pop();
             left = pop();
@@ -1271,6 +1265,8 @@ module Shumway.AVM2.Compiler {
           case OP.greaterthan:
           case OP.greaterequals:
           case OP.negate:
+          case OP.not:
+          case OP.bitnot:
             this.pushExpression(operatorFromOP(op));
             break;
           case OP.negate_i:

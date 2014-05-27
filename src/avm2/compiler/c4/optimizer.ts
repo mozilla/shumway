@@ -95,6 +95,8 @@ module Shumway.AVM2.Compiler.IR {
 
   export var Null = new Constant(null);
   export var Undefined = new Constant(undefined);
+  export var True = new Constant(true);
+  export var False = new Constant(false);
 
   export class Block {
     id: number;
