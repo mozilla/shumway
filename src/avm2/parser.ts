@@ -896,7 +896,8 @@ module Shumway.AVM2.ABC {
           return <CONSTANT>kind;
         }
       }
-      return release || assert(false, "Cannot find kind " + str);
+      release || assert(false, "Cannot find kind " + str);
+      return NaN;
     }
 
     public static createNamespace(uri: string, prefix: string = undefined) {

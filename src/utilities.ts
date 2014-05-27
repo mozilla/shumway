@@ -18,6 +18,26 @@
 var jsGlobal = (function() { return this || (1, eval)('this'); })();
 var inBrowser = typeof console != "undefined";
 
+// declare var print;
+// declare var console;
+// declare var performance;
+// declare var XMLHttpRequest;
+// declare var document;
+// declare var getComputedStyle;
+
+/** @const */ var release: boolean = false;
+/** @const */ var debug: boolean = !release;
+
+declare var dateNow: () => number;
+
+if (!jsGlobal.performance) {
+  jsGlobal.performance = {};
+}
+
+if (!jsGlobal.performance.now) {
+  jsGlobal.performance.now = typeof dateNow !== 'undefined' ? dateNow : Date.now;
+}
+
 function log(message?: any, ...optionalParams: any[]): void {
   jsGlobal.print(message);
 }
@@ -51,6 +71,10 @@ interface Math {
    * @param x A numeric expression.
    */
   clz32(x: number): number;
+}
+
+interface Error {
+  stack: string;
 }
 
 module Shumway {
@@ -211,6 +235,11 @@ module Shumway {
         message.shift();
         Debug.error(message.join(""));
       }
+    }
+
+    export function assertUnreachable(msg: string): void {
+      var location = new Error().stack.split('\n')[1];
+      throw new Error("Reached unreachable location " + location + msg);
     }
 
     export function assertNotImplemented(condition: boolean, message: string) {
@@ -2981,4 +3010,5 @@ module Shumway {
 })();
 
 import assert = Shumway.Debug.assert;
+import assertUnreachable = Shumway.Debug.assertUnreachable;
 import IndentingWriter = Shumway.IndentingWriter;
