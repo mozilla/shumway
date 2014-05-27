@@ -162,12 +162,17 @@ module Shumway.Tools.Profiler {
 
     private _drawFrame(frame: TimelineFrame, depth: number) {
       var context = this._context;
-      var start = this._toPixels(frame.startTime);
-      var end = this._toPixels(frame.endTime);
-      var width = end - start;
+      var left = this._toPixels(frame.startTime);
+      var right = this._toPixels(frame.endTime);
+      var width = right - left;
       if (width < this._minFrameWidthInPixels) {
         return;
       }
+      if (left < 0) {
+        right = width + left;
+        left = 0;
+      }
+      var adjustedWidth = right - left;
       var style = this._kindStyle[frame.kind.id];
       if (!style) {
         var background = ColorStyle.randomStyle();
@@ -182,16 +187,16 @@ module Shumway.Tools.Profiler {
         context.globalAlpha = 0.4;
       }
       context.fillStyle = style.bgColor;
-      context.fillRect(start, depth * (12 + frameHPadding), width, 12);
+      context.fillRect(left, depth * (12 + frameHPadding), adjustedWidth, 12);
       if (width > 12) {
         var label = frame.kind.name;
         if (label && label.length) {
           var labelHPadding = 2;
-          label = this._prepareText(context, label, width - labelHPadding * 2);
+          label = this._prepareText(context, label, adjustedWidth - labelHPadding * 2);
           if (label.length) {
             context.fillStyle = style.textColor;
             context.textBaseline = "top";
-            context.fillText(label, (start + labelHPadding), depth * (12 + frameHPadding));
+            context.fillText(label, (left + labelHPadding), depth * (12 + frameHPadding));
           }
         }
       }
