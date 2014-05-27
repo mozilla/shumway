@@ -17,7 +17,7 @@
  */
 /*global SWF, MOVIE_HEADER, SWF_TAG_CODE_FILE_ATTRIBUTES, tagHandler, Stream,
          readUi32, readUi16, Blob, StreamNoDataError, parseJpegChunks,
-         generateParser, inflateBlock, verifyDeflateHeader, InflateNoDataError,
+         inflateBlock, verifyDeflateHeader, InflateNoDataError,
          readHeader */
 /*jshint -W069 */
 

@@ -48,11 +48,11 @@ src/swf/util.js
 src/swf/swf.js
 src/swf/inflate.js
 src/swf/stream.js
-build/ts/swf/bitmap.js
-src/swf/button.js
-src/swf/font.js
+build/ts/swf/parser/bitmap.js
+build/ts/swf/parser/button.js
+build/ts/swf/parser/font.js
 src/swf/image.js
-src/swf/label.js
+build/ts/swf/parser/label.js
 src/swf/shape.js
 src/swf/sound.js
 src/swf/text.js
@@ -64,7 +64,6 @@ src/swf/types.js
 src/swf/structs.js
 src/swf/tags.js
 src/swf/templates.js
-src/swf/generator.js
 src/swf/handlers.js
 src/swf/parser.js
 src/swf/resourceloader.js

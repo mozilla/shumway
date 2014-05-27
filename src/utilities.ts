@@ -2564,6 +2564,11 @@ module Shumway {
       return 'rgba(' + (color >> 24 & 0xff) + ',' + (color >> 16 & 0xff) + ',' +
                   (color >> 8 & 0xff) + ',' + ((color & 0xff) / 0xff) + ')';
     }
+
+    export function rgbaObjToCSSStyle(color: {red: number; green: number; blue: number; alpha: number}): string {
+      return 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' +
+             color.alpha / 255 + ')';
+    }
   }
 
   export module Telemetry {
@@ -3030,5 +3035,4 @@ module Shumway {
 })();
 
 import assert = Shumway.Debug.assert;
-import assertUnreachable = Shumway.Debug.assertUnreachable;
 import IndentingWriter = Shumway.IndentingWriter;

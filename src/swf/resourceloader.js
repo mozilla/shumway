@@ -55,14 +55,14 @@ if (isWorker && !$RELEASE) {
     'inflate.js',
     'stream.js',
     'templates.js',
-    'generator.js',
     'handlers.js',
     'parser.js',
-    build + 'bitmap.js',
-    'button.js',
-    'font.js',
+    build + '../utilities.js',
+    build + 'parser/bitmap.js',
+    build + 'parser/button.js',
+    build + 'parser/font.js',
     'image.js',
-    'label.js',
+    build + 'parser/label.js',
     'shape.js',
     'sound.js',
     'text.js'
@@ -83,11 +83,11 @@ function defineSymbol(swfTag, symbols) {
       break;
     case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS:
     case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2:
-      symbol = Shumway.SWF.defineBitmap(swfTag);
+      symbol = Shumway.SWF.Parser.defineBitmap(swfTag);
       break;
     case SWF_TAG_CODE_DEFINE_BUTTON:
     case SWF_TAG_CODE_DEFINE_BUTTON2:
-      symbol = defineButton(swfTag, symbols);
+      symbol = Shumway.SWF.Parser.defineButton(swfTag, symbols);
       break;
     case SWF_TAG_CODE_DEFINE_EDIT_TEXT:
       symbol = defineText(swfTag, symbols);
@@ -96,7 +96,7 @@ function defineSymbol(swfTag, symbols) {
     case SWF_TAG_CODE_DEFINE_FONT2:
     case SWF_TAG_CODE_DEFINE_FONT3:
     case SWF_TAG_CODE_DEFINE_FONT4:
-      symbol = defineFont(swfTag, symbols);
+      symbol = Shumway.SWF.Parser.defineFont(swfTag, symbols);
       break;
     case SWF_TAG_CODE_DEFINE_MORPH_SHAPE:
     case SWF_TAG_CODE_DEFINE_MORPH_SHAPE2:
@@ -186,7 +186,7 @@ function defineSymbol(swfTag, symbols) {
       break;
     case SWF_TAG_CODE_DEFINE_TEXT:
     case SWF_TAG_CODE_DEFINE_TEXT2:
-      symbol = defineLabel(swfTag, symbols);
+      symbol = Shumway.SWF.Parser.defineLabel(swfTag, symbols);
       break;
   }
 
