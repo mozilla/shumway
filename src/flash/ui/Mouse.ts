@@ -89,7 +89,6 @@ module Shumway.AVM2.AS.flash.ui {
       target.dispatchEvent(event);
     }
 
-    // TODO: handle MOUSE_WHEEL and MOUSE_RELEASE_OUTSIDE
     public handleMouseEvent(data: MouseEventAndPointData) {
       var stage = this.stage;
       if (!stage) {
@@ -180,6 +179,7 @@ module Shumway.AVM2.AS.flash.ui {
           this._dispatchMouseEvent(target, events.MouseEvent.MOUSE_OVER, data, currentTarget);
           return;
       }
+      // TODO: handle MOUSE_WHEEL and MOUSE_RELEASE_OUTSIDE
       this._dispatchMouseEvent(target, type, data);
     }
   }

@@ -312,6 +312,11 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidated = false;
     }
 
+    /**
+     * Gets the objects under the current mouse position. The main difference to DisplayObjectObjectContainer's
+     * getObjectsUnderPoint is that it reroutes the hit test to a Button's hitTestState or a Sprite's
+     * hitArea, if specified.
+     */
     getObjectsUnderMouse(globalPoint: flash.geom.Point): flash.display.DisplayObject [] {
       var objectsUnderPoint: flash.display.DisplayObject [] = [];
       this.visit(function (dispObj: flash.display.DisplayObject): VisitorFlags {

@@ -42,6 +42,10 @@ module Shumway.AVM2.AS.flash.display {
     private static _rootLoader: Loader;
     private static _loadQueue: Loader [];
 
+    /**
+     * Creates or returns the root Loader instance. The loader property of that instances LoaderInfo
+     * object is always null. Also, no OPEN event ever gets dispatched.
+     */
     static getRootLoader(): Loader {
       if (Loader._rootLoader) {
         return Loader._rootLoader;
@@ -73,6 +77,10 @@ module Shumway.AVM2.AS.flash.display {
     static SHUMWAY_ROOT = '../../src/';
     static LOADER_PATH = Loader.RELEASE ? 'shumway-worker.js' : 'swf/resourceloader.js';
 
+    /**
+     * Handles the load status and dispatches progress events. This gets manually triggered in the
+     * event loop to ensure the correct order of operations.
+     */
     static progress() {
       var queue = Loader._loadQueue;
       for (var i = 0; i < queue.length; i++) {
@@ -205,7 +213,7 @@ module Shumway.AVM2.AS.flash.display {
                                                     events.IOErrorEvent.IO_ERROR));
           break;
         default:
-          //TODO: fix special-casing. Might have to move document class out of dictionary[0]
+          //TODO: fix special-casing. Might have to move document class out of dictionary[0].
           if (data.id === 0) {
             break;
           }
