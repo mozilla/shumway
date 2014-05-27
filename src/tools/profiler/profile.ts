@@ -74,7 +74,7 @@ module Shumway.Tools.Profiler {
       return this.windowEnd - this.windowStart;
     }
 
-      get maxDepth(): number {
+    get maxDepth(): number {
       return this._maxDepth;
     }
 

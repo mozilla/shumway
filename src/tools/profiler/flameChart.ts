@@ -244,6 +244,24 @@ module Shumway.Tools.Profiler {
       return this._windowStart + px * (this._windowEnd - this._windowStart) / this._width;
     }
 
+    private _getFrameAtPosition(x: number, y: number): TimelineFrame {
+      var time = this._toTime(x);
+      var depth = (y / 12 + 2) | 0;
+      var snapshot = this._buffer.snapshot;
+      var frame = snapshot.query(time);
+      if (frame) {
+        var frameDepth = frame.getDepth();
+        if (frameDepth >= depth) {
+          while (frame && frameDepth > depth) {
+            frame = frame.parent;
+            frameDepth--;
+          }
+          return frame;
+        }
+      }
+      return null;
+    }
+
     onMouseDown(x: number, y: number) {
     }
 
@@ -269,21 +287,11 @@ module Shumway.Tools.Profiler {
     }
 
     onHoverStart(x: number, y: number) {
-      var time = this._toTime(x);
-      var depth = (y / 12 + 2) | 0;
-      var snapshot = this._buffer.snapshot;
-      var frame = snapshot.query(time);
+      var frame = this._getFrameAtPosition(x, y);
       if (frame) {
-        var frameDepth = frame.getDepth();
-        if (frameDepth >= depth) {
-          while (frame && frameDepth > depth) {
-            frame = frame.parent;
-            frameDepth--;
-          }
-          this._hoveredFrame = frame;
-          this._controller.showTooltip(this._bufferIndex, frame);
-          this._draw();
-        }
+        this._hoveredFrame = frame;
+        this._controller.showTooltip(this._bufferIndex, frame);
+        //this._draw();
       }
     }
 
@@ -291,7 +299,7 @@ module Shumway.Tools.Profiler {
       if (this._hoveredFrame) {
         this._hoveredFrame = null;
         this._controller.hideTooltip();
-        this._draw();
+        //this._draw();
       }
     }
 
