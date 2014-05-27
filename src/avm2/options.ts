@@ -39,7 +39,7 @@ module Shumway.AVM2 {
 
   export module Verifier {
     export var options = avm2Options.register(new OptionSet("Verifier"));
-    export var enabled = options.register(new Option("verifier", "verifier", "boolean", false, "Enable verifier."));
+    export var enabled = options.register(new Option("verifier", "verifier", "boolean", true, "Enable verifier."));
     export var traceLevel = options.register(new Option("tv", "tv", "number", 0, "Verifier Trace Level"));
   }
 }

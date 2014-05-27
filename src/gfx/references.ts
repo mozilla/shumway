@@ -24,6 +24,7 @@
 /// <reference path='frame.ts'/>
 /// <reference path='frameContainer.ts'/>
 /// <reference path='stage.ts'/>
+/// <reference path='renderables.ts'/>
 /// <reference path='filters.ts'/>
 /// <reference path='gl/glContext.ts'/>
 /// <reference path='gl/core.ts'/>

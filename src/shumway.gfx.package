@@ -11,6 +11,7 @@ build/ts/gfx/regionAllocator.js
 build/ts/gfx/frame.js
 build/ts/gfx/frameContainer.js
 build/ts/gfx/stage.js
+build/ts/gfx/renderables.js
 build/ts/gfx/filters.js
 build/ts/gfx/gl/core.js
 build/ts/gfx/gl/glContext.js
