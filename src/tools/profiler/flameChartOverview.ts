@@ -169,9 +169,10 @@ module Shumway.Tools.Profiler {
 
       contextOverview.save();
       contextOverview.translate(0, ratio * height);
-      contextOverview.scale(ratio / samplesPerPixel, -ratio * height / (profile.maxDepth - 1));
+      var yScale = -ratio * height / (profile.maxDepth - 1);
+      contextOverview.scale(ratio / samplesPerPixel, yScale);
       contextOverview.clearRect(0, 0, samplesCount, profile.maxDepth - 1);
-
+      contextOverview.scale(1, 1 / profile.bufferCount);
       var bufferCount = profile.bufferCount;
       for (var i = 0; i < bufferCount; i++) {
         var buffer = profile.getBufferAt(i);
@@ -192,6 +193,7 @@ module Shumway.Tools.Profiler {
         contextOverview.lineTo(x, 0);
         contextOverview.fillStyle = "#46afe3";
         contextOverview.fill();
+        contextOverview.translate(0, -height * ratio / yScale);
       }
 
       contextOverview.restore();
