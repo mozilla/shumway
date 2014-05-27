@@ -96,7 +96,6 @@ console.timeEnd("Load AVM2 Dependencies");
 
 // Load SWF Dependencies
 console.time("Load SWF Dependencies");
-load("../../src/swf/config.js");
 load("../../src/swf/util.js");
 load("../../src/swf/swf.js");
 load("../../src/swf/inflate.js");

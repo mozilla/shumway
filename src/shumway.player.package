@@ -44,7 +44,6 @@ build/ts/avm2/interpreter.js
 
 ## Load SWF Dependencies
 #!inline console.time("Load SWF Dependencies");
-src/swf/config.js
 src/swf/util.js
 src/swf/swf.js
 src/swf/inflate.js
