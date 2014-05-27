@@ -1,6 +1,5 @@
 #!inline console.time("Load Shared Dependencies");
 
-build/ts/avm2/global.js
 build/ts/utilities.js
 build/ts/dataBuffer.js
 build/ts/options.js

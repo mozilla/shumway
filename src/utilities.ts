@@ -18,6 +18,26 @@
 var jsGlobal = (function() { return this || (1, eval)('this'); })();
 var inBrowser = typeof console != "undefined";
 
+// declare var print;
+// declare var console;
+// declare var performance;
+// declare var XMLHttpRequest;
+// declare var document;
+// declare var getComputedStyle;
+
+/** @const */ var release: boolean = false;
+/** @const */ var debug: boolean = !release;
+
+declare var dateNow: () => number;
+
+if (!jsGlobal.performance) {
+  jsGlobal.performance = {};
+}
+
+if (!jsGlobal.performance.now) {
+  jsGlobal.performance.now = typeof dateNow !== 'undefined' ? dateNow : Date.now;
+}
+
 function log(message?: any, ...optionalParams: any[]): void {
   jsGlobal.print(message);
 }
@@ -51,6 +71,30 @@ interface Math {
    * @param x A numeric expression.
    */
   clz32(x: number): number;
+}
+
+interface Error {
+  stack: string;
+}
+
+interface Uint8ClampedArray extends ArrayBufferView {
+  BYTES_PER_ELEMENT: number;
+  length: number;
+  [index: number]: number;
+  get(index: number): number;
+  set(index: number, value: number): void;
+  set(array: Uint8Array, offset?: number): void;
+  set(array: number[], offset?: number): void;
+  subarray(begin: number, end?: number): Uint8ClampedArray;
+}
+
+declare var Uint8ClampedArray: {
+  prototype: Uint8ClampedArray;
+  new (length: number): Uint8ClampedArray;
+  new (array: Uint8Array): Uint8ClampedArray;
+  new (array: number[]): Uint8ClampedArray;
+  new (buffer: ArrayBuffer, byteOffset?: number, length?: number): Uint8ClampedArray;
+  BYTES_PER_ELEMENT: number;
 }
 
 module Shumway {
@@ -211,6 +255,11 @@ module Shumway {
         message.shift();
         Debug.error(message.join(""));
       }
+    }
+
+    export function assertUnreachable(msg: string): void {
+      var location = new Error().stack.split('\n')[1];
+      throw new Error("Reached unreachable location " + location + msg);
     }
 
     export function assertNotImplemented(condition: boolean, message: string) {
@@ -2981,4 +3030,5 @@ module Shumway {
 })();
 
 import assert = Shumway.Debug.assert;
+import assertUnreachable = Shumway.Debug.assertUnreachable;
 import IndentingWriter = Shumway.IndentingWriter;

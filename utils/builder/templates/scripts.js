@@ -37,7 +37,7 @@ load($SHUMWAY_ROOT + "src/swf/swf.js");
 load($SHUMWAY_ROOT + "src/swf/inflate.js");
 load($SHUMWAY_ROOT + "src/swf/stream.js");
 
-load($SHUMWAY_ROOT + "src/swf/bitmap.js");
+load($SHUMWAY_ROOT + "build/ts/swf/bitmap.js");
 load($SHUMWAY_ROOT + "src/swf/button.js");
 load($SHUMWAY_ROOT + "src/swf/font.js");
 

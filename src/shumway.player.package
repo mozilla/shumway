@@ -44,12 +44,11 @@ build/ts/avm2/interpreter.js
 
 ## Load SWF Dependencies
 #!inline console.time("Load SWF Dependencies");
-src/swf/config.js
 src/swf/util.js
 src/swf/swf.js
 src/swf/inflate.js
 src/swf/stream.js
-src/swf/bitmap.js
+build/ts/swf/bitmap.js
 src/swf/button.js
 src/swf/font.js
 src/swf/image.js

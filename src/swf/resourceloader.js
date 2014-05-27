@@ -43,12 +43,11 @@
 
 var $RELEASE = false;
 var isWorker = typeof window === 'undefined';
-
 if (isWorker && !$RELEASE) {
+  var build = '../../build/ts/swf/';
   importScripts.apply(null, [
     '../../lib/jpgjs/jpg.js',
     '../swf/util.js',
-    'config.js',
     'swf.js',
     'types.js',
     'structs.js',
@@ -59,7 +58,7 @@ if (isWorker && !$RELEASE) {
     'generator.js',
     'handlers.js',
     'parser.js',
-    'bitmap.js',
+    build + 'bitmap.js',
     'button.js',
     'font.js',
     'image.js',
@@ -84,7 +83,7 @@ function defineSymbol(swfTag, symbols) {
       break;
     case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS:
     case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2:
-      symbol = defineBitmap(swfTag);
+      symbol = Shumway.SWF.defineBitmap(swfTag);
       break;
     case SWF_TAG_CODE_DEFINE_BUTTON:
     case SWF_TAG_CODE_DEFINE_BUTTON2:
