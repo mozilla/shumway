@@ -55,7 +55,6 @@ if (isWorker && !$RELEASE) {
     'inflate.js',
     'stream.js',
     'templates.js',
-    'generator.js',
     'handlers.js',
     'parser.js',
     build + '../utilities.js',

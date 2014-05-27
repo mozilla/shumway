@@ -64,7 +64,6 @@ src/swf/types.js
 src/swf/structs.js
 src/swf/tags.js
 src/swf/templates.js
-src/swf/generator.js
 src/swf/handlers.js
 src/swf/parser.js
 src/swf/resourceloader.js
