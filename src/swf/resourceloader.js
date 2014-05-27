@@ -62,7 +62,7 @@ if (isWorker && !$RELEASE) {
     build + 'parser/button.js',
     build + 'parser/font.js',
     'image.js',
-    'label.js',
+    build + 'parser/label.js',
     'shape.js',
     'sound.js',
     'text.js'
@@ -186,7 +186,7 @@ function defineSymbol(swfTag, symbols) {
       break;
     case SWF_TAG_CODE_DEFINE_TEXT:
     case SWF_TAG_CODE_DEFINE_TEXT2:
-      symbol = defineLabel(swfTag, symbols);
+      symbol = Shumway.SWF.Parser.defineLabel(swfTag, symbols);
       break;
   }
 

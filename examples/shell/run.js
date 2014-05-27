@@ -103,7 +103,7 @@ load("../../build/ts/swf/parser/bitmap.js");
 load("../../build/ts/swf/parser/button.js");
 load("../../build/ts/swf/parser/font.js");
 load("../../src/swf/image.js");
-load("../../src/swf/label.js");
+load("../../build/ts/swf/parser/label.js");
 load("../../src/swf/shape.js");
 load("../../src/swf/sound.js");
 load("../../src/swf/text.js");

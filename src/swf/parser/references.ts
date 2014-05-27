@@ -18,5 +18,6 @@
 ///<reference path='bitmap.ts' />
 ///<reference path='button.ts' />
 ///<reference path='font.ts' />
+///<reference path='label.ts' />
 
 declare function createInflatedStream(bytes: ArrayBuffer, outputLength: number): any;
