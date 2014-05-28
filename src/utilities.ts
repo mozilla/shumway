@@ -2269,19 +2269,6 @@ module Shumway {
       this.yMax = Math.max(this.yMax, other.yMax);
     }
 
-    clip(clipRect: any): Bounds {
-      var l: number = Math.max(this.xMin, clipRect.x);
-      var r: number = Math.min(this.xMax, clipRect.right);
-      if (l <= r) {
-        var t: number = Math.max(this.yMin, clipRect.y);
-        var b: number = Math.min(this.yMax, clipRect.bottom);
-        if (t <= b) {
-          this.setElements(l, t, r - l, b - t);
-        }
-      }
-      return this;
-    }
-
     extendByPoint (x: number, y: number): void {
       this.extendByX(x);
       this.extendByY(y);
@@ -2312,10 +2299,6 @@ module Shumway {
 
     get height(): number {
       return this.yMax - this.yMin;
-    }
-
-    public get area(): number {
-      return this.width * this.height;
     }
 
     public getBaseWidth(angle: number): number {
@@ -2401,19 +2384,6 @@ module Shumway {
       this._yMax = Math.max(this._yMax, other._yMax);
     }
 
-    clip(clipRect: any): Bounds {
-      var l: number = Math.max(this.xMin, clipRect.x);
-      var r: number = Math.min(this.xMax, clipRect.right);
-      if (l <= r) {
-        var t: number = Math.max(this.yMin, clipRect.y);
-        var b: number = Math.min(this.yMax, clipRect.bottom);
-        if (t <= b) {
-          this.setElements(l, t, r - l, b - t);
-        }
-      }
-      return this;
-    }
-
     extendByPoint (x: number, y: number): void {
       this.extendByX(x);
       this.extendByY(y);
@@ -2484,10 +2454,6 @@ module Shumway {
 
     get height(): number {
       return this._yMax - this._yMin;
-    }
-
-    public get area(): number {
-      return this.width * this.height;
     }
 
     public getBaseWidth(angle: number): number {
