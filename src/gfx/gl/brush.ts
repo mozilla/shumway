@@ -192,6 +192,7 @@ module Shumway.GFX.GL {
     }
 
     public flush(drawElements: boolean = true) {
+      enterTimeline("WebGLCombinedBrush.flush");
       var g = this._geometry;
       var p = this._program;
       var gl = this._context.gl;
@@ -240,6 +241,7 @@ module Shumway.GFX.GL {
         gl.drawElements(gl.TRIANGLES, g.triangleCount * 3, gl.UNSIGNED_SHORT, 0);
       }
       this.reset();
+      leaveTimeline("WebGLCombinedBrush.flush");
     }
   }
 

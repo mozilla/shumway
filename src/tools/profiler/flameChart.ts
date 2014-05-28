@@ -59,7 +59,7 @@ module Shumway.Tools.Profiler {
     private _textWidth = {};
     private _hoveredFrame:TimelineFrame;
 
-    private static MIN_WINDOW_LEN = 10;
+    private static MIN_WINDOW_LEN = 1;
 
     /**
      * Don't paint frames whose width is smaller than this value. This helps a lot when drawing

@@ -41,11 +41,11 @@ module Shumway {
 
   export var playerTimelineBuffer = new TimelineBuffer();
 
-  function enterPlayerTimeline(name: string) {
+  export function enterPlayerTimeline(name: string) {
     playerTimelineBuffer && playerTimelineBuffer.enter(name);
   }
 
-  function leavePlayerTimeline(name: string) {
+  export function leavePlayerTimeline(name: string) {
     playerTimelineBuffer && playerTimelineBuffer.leave(name);
   }
 

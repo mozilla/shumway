@@ -16,6 +16,7 @@
 module Shumway.Remoting.GFX {
   import Frame = Shumway.GFX.Frame;
   import Shape = Shumway.GFX.Shape;
+  import Renderable = Shumway.GFX.Renderable;
   import RenderableShape = Shumway.GFX.RenderableShape;
   import RenderableBitmap = Shumway.GFX.RenderableBitmap;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
@@ -93,10 +94,12 @@ module Shumway.Remoting.GFX {
       var tag = 0;
       var input = this.input;
 
+      enterPlayerTimeline("GFXChannelDeserializer.read");
       while (input.bytesAvailable > 0) {
         tag = input.readInt();
         switch (tag) {
           case MessageTag.EOF:
+            leavePlayerTimeline("GFXChannelDeserializer.read");
             return;
           case MessageTag.UpdateGraphics:
             this._readUpdateGraphics();
@@ -112,6 +115,7 @@ module Shumway.Remoting.GFX {
             break;
         }
       }
+      leavePlayerTimeline("GFXChannelDeserializer.read");
     }
 
     private _readMatrix(): Matrix {
