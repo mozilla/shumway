@@ -25,6 +25,8 @@ module Shumway.AVM2.AS.flash.display {
   import argbToRgba = Shumway.ColorUtilities.argbToRgba;
   import rgbaToArgb = Shumway.ColorUtilities.rgbaToArgb;
 
+  import Bounds = Shumway.Bounds;
+
   export class BitmapData extends ASNative implements IBitmapDrawable {
 
     // Called whenever the class is initialized.
@@ -53,8 +55,7 @@ module Shumway.AVM2.AS.flash.display {
         throwError('ArgumentError', Errors.ArgumentError);
       }
 
-      this._width = width;
-      this._height = height;
+      this._bounds = new Bounds(0, 0, width, height);
       this._transparent = !!transparent;
       this._fillColor = fillColor >>> 0;
       this._pixelData = new Uint32Array(width * height);
@@ -63,12 +64,10 @@ module Shumway.AVM2.AS.flash.display {
       this.fillRect(this.rect, this._fillColor);
     }
     
-    _id: number;
-    _width: number /*int*/;
-    _height: number /*int*/;
     _transparent: boolean;
 
-    _disposed: boolean;
+    _id: number;
+    _bounds: Shumway.Bounds;
     _fillColor: number;
     _locked: boolean;
     _pixelData: Uint32Array;
@@ -80,65 +79,50 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     _getContentBounds(): Bounds {
-      return new Bounds(0, 0, this._width * 20, this._height * 20);
+      return this._bounds.clone();
     }
 
     private _getPixelData(rect: flash.geom.Rectangle): Uint32Array {
-      if (rect.x < 0 || rect.y < 0 ||
-          rect.x > this._width || rect.y > this._width)
-      {
-        return null;
-      }
-
-      var output = new Uint32Array(rect.area);
-      var r = this.rect.clip(rect);
-      var xMin = r.x;
-      var xMax = r.x + r.width;
-      var yMin = r.y;
-      var yMax = r.y + r.height;
-      var width = this._width;
+      var b = Bounds.FromRectangle(rect).clip(this._bounds);
+      var width = this._bounds.width;
       var data = this._pixelData;
+      var output = new Uint32Array(b.area);
       var i = 0;
-      for (var y = yMin; y < yMax; y++) {
-        var rowOffset = width * y;
-        for (var x = xMin; x < xMax; x++) {
-          output[i++] = rgbaToArgb(data[rowOffset + x]);
+      for (var y = b.yMin; y < b.yMax; y++) {
+        var offset = width * y;
+        for (var x = b.xMin; x < b.xMax; x++) {
+          output[i++] = rgbaToArgb(data[offset + x]);
         }
       }
       return output;
     }
 
     private _putPixelData(rect: flash.geom.Rectangle, input: Uint32Array): void {
-      var r = this.rect.clip(rect);
-      var xMin = r.x;
-      var xMax = r.x + r.width;
-      var yMin = r.y;
-      var yMax = r.x + r.width;
-      var padding = rect.width - r.width;
-
-      var width = this._width;
+      var b = Bounds.FromRectangle(rect).clip(this._bounds);
+      var width = this._bounds.width;
       var data = this._pixelData;
+      var padding = rect.width - b.width;
       var alphaMask = this._transparent ? 0xff : 0x00;
-      var i = (rect.width * rect.height - r.height) + (xMin - rect.x);
-      for (var y = yMin; y < yMax; y++) {
-        var rowOffset = width * y;
-        for (var x = xMin; x < xMax; x++) {
-          data[rowOffset + x] = input[i++] | alphaMask;
+      var i = (rect.width * rect.height - b.height) + (b.xMin - rect.x);
+      for (var y = b.yMin; y < b.yMax; y++) {
+        var offset = width * y;
+        for (var x = b.xMin; x < b.xMax; x++) {
+          data[offset + x] = (input[i++] << 8) | alphaMask;
         }
         i += padding;
       }
     }
 
     get width(): number /*int*/ {
-      return this._width;
+      return this._bounds.width;
     }
 
     get height(): number /*int*/ {
-      return this._height;
+      return this._bounds.height;
     }
 
     get rect(): flash.geom.Rectangle {
-      return new flash.geom.Rectangle(0, 0, this._width, this._height);
+      return flash.geom.Rectangle.FromBounds(this._bounds);
     }
 
     get transparent(): boolean {
@@ -146,37 +130,47 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     clone(): flash.display.BitmapData {
-      var bd = new BitmapData(this._width, this._height, this._transparent, this._fillColor);
+      var bd = new BitmapData(this._bounds.width, this._bounds.height, this._transparent, this._fillColor);
       bd._pixelData.set(this._pixelData);
       return bd;
     }
 
     getPixel(x: number /*int*/, y: number /*int*/): number /*uint*/ {
       x = x | 0; y = y | 0;
-      return this._pixelData[this._width * y + x] >> 8;
+      if (!this._bounds.contains(x, y)) {
+        return 0;
+      }
+      return this._pixelData[this._bounds.width * y + x] >>> 8;
     }
 
     getPixel32(x: number /*int*/, y: number /*int*/): number /*uint*/ {
       x = x | 0; y = y | 0;
-      return rgbaToArgb(this._pixelData[this._width * y + x]);
+      if (!this._bounds.contains(x, y)) {
+        return 0;
+      }
+      return rgbaToArgb(this._pixelData[this._bounds.width * y + x]) >>> 0;
     }
 
     setPixel(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
       x = x | 0; y = y | 0; color = color >>> 0;
-
-      var i = this._width * y + x;
+      if (!this._bounds.contains(x, y)) {
+        return;
+      }
+      var i = this._bounds.width * y + x;
       var alpha = this._transparent ? this._pixelData[i] & 0xff : 0xff;
       this._pixelData[i] = (color << 8) | alpha;
     }
 
     setPixel32(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
       x = x | 0; y = y | 0;
-
+      if (!this._bounds.contains(x, y)) {
+        return;
+      }
       color = rgbaToArgb(color >>> 0);
       if (!this._transparent) {
         color |= 0xff;
       }
-      this._pixelData[this._width * y + x] = color;
+      this._pixelData[this._bounds.width * y + x] = color;
     }
 
     applyFilter(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, filter: flash.filters.BitmapFilter): void {
@@ -198,19 +192,19 @@ module Shumway.AVM2.AS.flash.display {
     }
     copyPixels(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, alphaBitmapData: flash.display.BitmapData = null, alphaPoint: flash.geom.Point = null, mergeAlpha: boolean = false): void {
       sourceBitmapData = sourceBitmapData; sourceRect = sourceRect; destPoint = destPoint; alphaBitmapData = alphaBitmapData; alphaPoint = alphaPoint; mergeAlpha = !!mergeAlpha;
-      // notImplemented("public flash.display.BitmapData::copyPixels"); return;
+      notImplemented("public flash.display.BitmapData::copyPixels"); return;
     }
 
     dispose(): void {
-      this._width = 0;
-      this._height = 0;
+      this._bounds.setEmpty();
       this._pixelData = null;
-      this._disposed = true;
     }
 
     draw(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
       source = source; matrix = matrix; colorTransform = colorTransform; blendMode = asCoerceString(blendMode); clipRect = clipRect; smoothing = !!smoothing;
-      somewhatImplemented("public flash.display.BitmapData::draw"); return;
+
+
+
     }
     drawWithQuality(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false, quality: string = null): void {
       source = source; matrix = matrix; colorTransform = colorTransform; blendMode = asCoerceString(blendMode); clipRect = clipRect; smoothing = !!smoothing; quality = asCoerceString(quality);
@@ -218,21 +212,15 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     fillRect(rect: flash.geom.Rectangle, color: number /*uint*/): void {
-      //rect = rect;
       color = argbToRgba(color >>> 0);
       if (!this._transparent) {
         color |= 0xff;
       }
-
-      var r = this.rect.clip(rect);
-      var xMin = r.x;
-      var xMax = r.right;
-      var yMin = r.y;
-      var yMax = r.bottom;
-      var width = this._width;
+      var b = Bounds.FromRectangle(rect).clip(this._bounds);
+      var width = this._bounds.width;
       var data = this._pixelData;
-      for (var y = yMin; y < yMax; y++) {
-        for (var x = xMin; x < xMax; x++) {
+      for (var y = b.yMin; y < b.yMax; y++) {
+        for (var x = b.xMin; x < b.xMax; x++) {
           data[width * y + x] = color;
         }
       }
@@ -252,14 +240,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     getPixels(rect: flash.geom.Rectangle): flash.utils.ByteArray {
-      //rect = rect;
       var outputByteArray = new flash.utils.ByteArray();
       this.copyPixelsToByteArray(rect, outputByteArray);
       return outputByteArray;
     }
 
     copyPixelsToByteArray(rect: flash.geom.Rectangle, data: flash.utils.ByteArray): void {
-      //rect = rect; data = data;
       var pixelData = this._getPixelData(rect);
       if (!pixelData) {
         return;
@@ -268,7 +254,6 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     getVector(rect: flash.geom.Rectangle): Uint32Vector {
-      //rect = rect;
       var outputVector = new Uint32Vector(pixelData.length);
       var pixelData = this._getPixelData(rect);
       if (!pixelData) {
@@ -309,12 +294,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     setPixels(rect: flash.geom.Rectangle, inputByteArray: flash.utils.ByteArray): void {
-      //rect = rect; inputByteArray = inputByteArray;
       this._putPixelData(rect, new Uint32Array(inputByteArray.readRawBytes()));
     }
 
     setVector(rect: flash.geom.Rectangle, inputVector: Uint32Vector): void {
-      //rect = rect; inputVector = inputVector;
       this._putPixelData(rect, inputVector._view());
     }
 
