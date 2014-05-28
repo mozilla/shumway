@@ -2269,6 +2269,19 @@ module Shumway {
       this.yMax = Math.max(this.yMax, other.yMax);
     }
 
+    clip(clipRect: any): Bounds {
+      var l: number = Math.max(this.xMin, clipRect.x);
+      var r: number = Math.min(this.xMax, clipRect.right);
+      if (l <= r) {
+        var t: number = Math.max(this.yMin, clipRect.y);
+        var b: number = Math.min(this.yMax, clipRect.bottom);
+        if (t <= b) {
+          this.setElements(l, t, r - l, b - t);
+        }
+      }
+      return this;
+    }
+
     extendByPoint (x: number, y: number): void {
       this.extendByX(x);
       this.extendByY(y);
@@ -2299,6 +2312,10 @@ module Shumway {
 
     get height(): number {
       return this.yMax - this.yMin;
+    }
+
+    public get area(): number {
+      return this.width * this.height;
     }
 
     public getBaseWidth(angle: number): number {
@@ -2384,6 +2401,19 @@ module Shumway {
       this._yMax = Math.max(this._yMax, other._yMax);
     }
 
+    clip(clipRect: any): Bounds {
+      var l: number = Math.max(this.xMin, clipRect.x);
+      var r: number = Math.min(this.xMax, clipRect.right);
+      if (l <= r) {
+        var t: number = Math.max(this.yMin, clipRect.y);
+        var b: number = Math.min(this.yMax, clipRect.bottom);
+        if (t <= b) {
+          this.setElements(l, t, r - l, b - t);
+        }
+      }
+      return this;
+    }
+
     extendByPoint (x: number, y: number): void {
       this.extendByX(x);
       this.extendByY(y);
@@ -2454,6 +2484,10 @@ module Shumway {
 
     get height(): number {
       return this._yMax - this._yMin;
+    }
+
+    public get area(): number {
+      return this.width * this.height;
     }
 
     public getBaseWidth(angle: number): number {
@@ -2548,14 +2582,6 @@ module Shumway {
     }
 
   export module ColorUtilities {
-    export function argbToRgba(argb: number): number {
-      return (argb << 8) | ((argb >> 24) & 0xFF);
-    }
-
-    export function rgbaToArgb(rgba: number): number {
-      return ((rgba >> 8) & 0xFFFFFF) | (rgba << 24);
-    }
-
     export function componentsToRgb(components: {red: number; green: number; blue: number}): number {
       return ((components.red << 16) | (components.green << 8) | components.blue) >>> 0;
     }

@@ -22,9 +22,6 @@ module Shumway.AVM2.AS.flash.display {
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
 
-  import argbToRgba = Shumway.ColorUtilities.argbToRgba;
-  import rgbaToArgb = Shumway.ColorUtilities.rgbaToArgb;
-
   import Bounds = Shumway.Bounds;
 
   export class BitmapData extends ASNative implements IBitmapDrawable {
@@ -57,7 +54,7 @@ module Shumway.AVM2.AS.flash.display {
 
       this._bounds = new Bounds(0, 0, width, height);
       this._transparent = !!transparent;
-      this._fillColor = fillColor >>> 0;
+      this._fillColor = fillColor;
       this._pixelData = new Uint32Array(width * height);
       this._dataBuffer = DataBuffer.FromArrayBuffer(this._pixelData.buffer);
       this._isDirty = true;
@@ -82,16 +79,35 @@ module Shumway.AVM2.AS.flash.display {
       return this._bounds.clone();
     }
 
+    private _getPixelUnsafe(x, y): number {
+      var pixelData = this._pixelData;
+      var color = pixelData[y * this._bounds.width + x];
+      var alpha = color & 0xff;
+      var a = 0xff / alpha;
+      var red = ((color >> 24) & 0xff) * a;
+      var green = ((color >> 16) & 0xff) * a;
+      var blue = ((color >> 8) & 0xff) * a;
+      return (alpha << 24) | (red << 16) | (green << 8) | blue;
+    }
+
+    private _setPixelUnsafe(x, y, color, ignoreAlpha: boolean = false): void {
+      var pixelData = this._pixelData;
+      var i = y * this._bounds.width + x;
+      var alpha = (ignoreAlpha ? this._pixelData[i] : color >> 24) & 0xff;
+      var a = alpha / 0xff;
+      var red = ((color >> 16) & 0xff) * a;
+      var green = ((color >> 8) & 0xff) * a;
+      var blue = (color & 0xff) * a;
+      pixelData[i] = (red << 24) | (green << 16) | (blue << 8) | alpha;
+    }
+
     private _getPixelData(rect: flash.geom.Rectangle): Uint32Array {
       var b = Bounds.FromRectangle(rect).clip(this._bounds);
-      var width = this._bounds.width;
-      var data = this._pixelData;
       var output = new Uint32Array(b.area);
-      var i = 0;
+      var p = 0;
       for (var y = b.yMin; y < b.yMax; y++) {
-        var offset = width * y;
         for (var x = b.xMin; x < b.xMax; x++) {
-          output[i++] = rgbaToArgb(data[offset + x]);
+          output[p++] = this._getPixelUnsafe(x, y);
         }
       }
       return output;
@@ -99,17 +115,14 @@ module Shumway.AVM2.AS.flash.display {
 
     private _putPixelData(rect: flash.geom.Rectangle, input: Uint32Array): void {
       var b = Bounds.FromRectangle(rect).clip(this._bounds);
-      var width = this._bounds.width;
-      var data = this._pixelData;
       var padding = rect.width - b.width;
-      var alphaMask = this._transparent ? 0xff : 0x00;
-      var i = (rect.width * rect.height - b.height) + (b.xMin - rect.x);
+      var p = (rect.width * rect.height - b.height) + (b.xMin - rect.x);
       for (var y = b.yMin; y < b.yMax; y++) {
-        var offset = width * y;
         for (var x = b.xMin; x < b.xMax; x++) {
-          data[offset + x] = (input[i++] << 8) | alphaMask;
+          var color = input[p++];
+          this._setPixelUnsafe(x, y, color);
         }
-        i += padding;
+        p += padding;
       }
     }
 
@@ -140,7 +153,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._bounds.contains(x, y)) {
         return 0;
       }
-      return this._pixelData[this._bounds.width * y + x] >>> 8;
+      return this._getPixelUnsafe(x, y) & 0x00ffffff;
     }
 
     getPixel32(x: number /*int*/, y: number /*int*/): number /*uint*/ {
@@ -148,7 +161,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._bounds.contains(x, y)) {
         return 0;
       }
-      return rgbaToArgb(this._pixelData[this._bounds.width * y + x]) >>> 0;
+      return this._getPixelUnsafe(x, y) >>> 0;
     }
 
     setPixel(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
@@ -156,9 +169,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._bounds.contains(x, y)) {
         return;
       }
-      var i = this._bounds.width * y + x;
-      var alpha = this._transparent ? this._pixelData[i] & 0xff : 0xff;
-      this._pixelData[i] = (color << 8) | alpha;
+      this._setPixelUnsafe(x, y, color, true);
     }
 
     setPixel32(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
@@ -166,11 +177,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._bounds.contains(x, y)) {
         return;
       }
-      color = rgbaToArgb(color >>> 0);
-      if (!this._transparent) {
-        color |= 0xff;
-      }
-      this._pixelData[this._bounds.width * y + x] = color;
+      this._setPixelUnsafe(x, y, color);
     }
 
     applyFilter(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, filter: flash.filters.BitmapFilter): void {
@@ -202,9 +209,6 @@ module Shumway.AVM2.AS.flash.display {
 
     draw(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
       source = source; matrix = matrix; colorTransform = colorTransform; blendMode = asCoerceString(blendMode); clipRect = clipRect; smoothing = !!smoothing;
-
-
-
     }
     drawWithQuality(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false, quality: string = null): void {
       source = source; matrix = matrix; colorTransform = colorTransform; blendMode = asCoerceString(blendMode); clipRect = clipRect; smoothing = !!smoothing; quality = asCoerceString(quality);
@@ -212,16 +216,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     fillRect(rect: flash.geom.Rectangle, color: number /*uint*/): void {
-      color = argbToRgba(color >>> 0);
-      if (!this._transparent) {
-        color |= 0xff;
-      }
+      color = color >>> 0;
       var b = Bounds.FromRectangle(rect).clip(this._bounds);
-      var width = this._bounds.width;
-      var data = this._pixelData;
       for (var y = b.yMin; y < b.yMax; y++) {
         for (var x = b.xMin; x < b.xMax; x++) {
-          data[width * y + x] = color;
+          this._setPixelUnsafe(x, y, color);
         }
       }
     }
