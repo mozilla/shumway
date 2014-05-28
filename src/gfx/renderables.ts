@@ -44,7 +44,7 @@ module Shumway.GFX {
     isTileable: boolean = false;
 
     private _bounds: Rectangle;
-    private _image: HTMLElement;
+    private _canvas: HTMLCanvasElement;
     private fillStyle: ColorStyle;
 
     getBounds (): Rectangle {
@@ -62,15 +62,22 @@ module Shumway.GFX {
       return new RenderableBitmap(canvas, bounds);
     }
 
-    constructor(image: HTMLElement, bounds: Rectangle) {
-      this._image = image;
+    public updateFromDataBuffer(dataBuffer: DataBuffer) {
+      var context = this._canvas.getContext("2d");
+      var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
+      imageData.data.set(dataBuffer.bytes);
+      context.putImageData(imageData, 0, 0);
+    }
+
+    constructor(canvas: HTMLCanvasElement, bounds: Rectangle) {
+      this._canvas = canvas;
       this._bounds = bounds;
     }
 
     render(context: CanvasRenderingContext2D, clipBounds: Shumway.GFX.Geometry.Rectangle): void {
       context.save();
-      if (this._image) {
-        context.drawImage(this._image, 0, 0);
+      if (this._canvas) {
+        context.drawImage(this._canvas, 0, 0);
       } else {
         this._renderFallback(context);
       }

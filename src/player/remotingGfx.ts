@@ -189,6 +189,9 @@ module Shumway.Remoting.GFX {
       this.inputAssets[assetId] = null;
       if (!asset) {
         context._assets[id] = RenderableBitmap.FromDataBuffer(dataBuffer, bounds);
+      } else {
+        var renderableBitmap = <RenderableBitmap>context._assets[id];
+        renderableBitmap.updateFromDataBuffer(dataBuffer);
       }
     }
 

@@ -57,8 +57,8 @@ module Shumway.AVM2.AS.flash.display {
       this._fillColor = fillColor;
       this._pixelData = new Uint32Array(width * height);
       this._dataBuffer = DataBuffer.FromArrayBuffer(this._pixelData.buffer);
-      this._isDirty = true;
       this.fillRect(this.rect, this._fillColor);
+      this._isDirty = true;
     }
     
     _transparent: boolean;
@@ -69,6 +69,10 @@ module Shumway.AVM2.AS.flash.display {
     _locked: boolean;
     _pixelData: Uint32Array;
     _dataBuffer: DataBuffer;
+
+    /**
+     * Indicates whether this bitmap data's data buffer has changed since the last time it was synchronized.
+     */
     _isDirty: boolean;
 
     getDataBuffer(): DataBuffer {
@@ -120,6 +124,7 @@ module Shumway.AVM2.AS.flash.display {
         }
         p += padding;
       }
+      this._isDirty = true;
     }
 
     get width(): number /*int*/ {
@@ -167,6 +172,7 @@ module Shumway.AVM2.AS.flash.display {
       var i = y * this._rect.width + x;
       var alpha = this._pixelData[i] & 0xff;
       this._pixelData[i] = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
+      this._isDirty = true;
     }
 
     setPixel32(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
@@ -176,6 +182,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       var alpha = color >>> 24;
       this._pixelData[y * this._rect.width + x] = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
+      this._isDirty = true;
     }
 
     applyFilter(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, filter: flash.filters.BitmapFilter): void {
@@ -203,6 +210,7 @@ module Shumway.AVM2.AS.flash.display {
     dispose(): void {
       this._rect.setEmpty();
       this._pixelData = null;
+      this._isDirty = true;
     }
 
     draw(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
@@ -229,6 +237,7 @@ module Shumway.AVM2.AS.flash.display {
           pixelData[offset + x] = color;
         }
       }
+      this._isDirty = true;
     }
 
     floodFill(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
