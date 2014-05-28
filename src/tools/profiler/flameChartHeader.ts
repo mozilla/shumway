@@ -58,6 +58,7 @@ module Shumway.Tools.Profiler {
 
     private static DRAGHANDLE_WIDTH = 4;
     private static TICK_MAX_WIDTH = 75;
+    private static MIN_WINDOW_LEN = 10;
 
     constructor(controller: Controller, type: FlameChartHeaderType) {
       this._controller = controller;
@@ -314,7 +315,23 @@ module Shumway.Tools.Profiler {
     }
 
     onMouseWheel(x: number, y: number, delta: number) {
-      //console.log(x, y, delta);
+      var time = this._toTime(x);
+      var windowStart = this._windowStart;
+      var windowEnd = this._windowEnd;
+      var windowLen = windowEnd - windowStart;
+      /*
+       * Find maximum allowed delta
+       * (windowEnd + (windowEnd - time) * delta) - (windowStart + (windowStart - time) * delta) = LEN
+       * (windowEnd - windowStart) + ((windowEnd - time) * delta) - ((windowStart - time) * delta) = LEN
+       * (windowEnd - windowStart) + ((windowEnd - time) - (windowStart - time)) * delta = LEN
+       * (windowEnd - windowStart) + (windowEnd - windowStart) * delta = LEN
+       * (windowEnd - windowStart) * delta = LEN - (windowEnd - windowStart)
+       * delta = (LEN - (windowEnd - windowStart)) / (windowEnd - windowStart)
+       */
+      var maxDelta = Math.max((FlameChartHeader.MIN_WINDOW_LEN - windowLen) / windowLen, delta);
+      var start = windowStart + (windowStart - time) * maxDelta;
+      var end = windowEnd + (windowEnd - time) * maxDelta;
+      this._controller.setWindow(start, end);
     }
 
     onDrag(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {

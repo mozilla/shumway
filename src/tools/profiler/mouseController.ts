@@ -231,7 +231,7 @@ module Shumway.Tools.Profiler {
         var pos = this._getTargetMousePos(event, <HTMLElement>(event.target));
         var delta = clamp(event.detail ? event.detail / 8 : -event.wheelDeltaY / 120, -1, 1);
         var zoom = Math.pow(1.2, delta) - 1;
-        this._target.onMouseWheel(pos.x, pos.y, zoom)
+        this._target.onMouseWheel(pos.x, pos.y, zoom);
       }
     }
 

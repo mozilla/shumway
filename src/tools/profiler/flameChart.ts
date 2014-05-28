@@ -59,6 +59,8 @@ module Shumway.Tools.Profiler {
     private _textWidth = {};
     private _hoveredFrame:TimelineFrame;
 
+    private static MIN_WINDOW_LEN = 10;
+
     /**
      * Don't paint frames whose width is smaller than this value. This helps a lot when drawing
      * large ranges. This can be < 1 since anti-aliasing can look quite nice.
@@ -183,9 +185,9 @@ module Shumway.Tools.Profiler {
       }
       var frameHPadding = 0.5;
       context.save();
-      if (this._hoveredFrame && this._hoveredFrame.kind !== frame.kind) {
-        context.globalAlpha = 0.4;
-      }
+      //if (this._hoveredFrame && this._hoveredFrame.kind !== frame.kind) {
+      //  context.globalAlpha = 0.4;
+      //}
       context.fillStyle = style.bgColor;
       context.fillRect(left, depth * (12 + frameHPadding), adjustedWidth, 12);
       if (width > 12) {
@@ -288,6 +290,23 @@ module Shumway.Tools.Profiler {
     }
 
     onMouseWheel(x: number, y: number, delta: number) {
+      var time = this._toTime(x);
+      var windowStart = this._windowStart;
+      var windowEnd = this._windowEnd;
+      var windowLen = windowEnd - windowStart;
+      /*
+       * Find maximum allowed delta
+       * (windowEnd + (windowEnd - time) * delta) - (windowStart + (windowStart - time) * delta) = LEN
+       * (windowEnd - windowStart) + ((windowEnd - time) * delta) - ((windowStart - time) * delta) = LEN
+       * (windowEnd - windowStart) + ((windowEnd - time) - (windowStart - time)) * delta = LEN
+       * (windowEnd - windowStart) + (windowEnd - windowStart) * delta = LEN
+       * (windowEnd - windowStart) * delta = LEN - (windowEnd - windowStart)
+       * delta = (LEN - (windowEnd - windowStart)) / (windowEnd - windowStart)
+       */
+      var maxDelta = Math.max((FlameChart.MIN_WINDOW_LEN - windowLen) / windowLen, delta);
+      var start = windowStart + (windowStart - time) * maxDelta;
+      var end = windowEnd + (windowEnd - time) * maxDelta;
+      this._controller.setWindow(start, end);
     }
 
     onDrag(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {

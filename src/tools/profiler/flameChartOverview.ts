@@ -69,6 +69,7 @@ module Shumway.Tools.Profiler {
     private _mode: FlameChartOverviewMode;
 
     private static DRAGHANDLE_WIDTH = 4;
+    private static MIN_WINDOW_LEN = 10;
 
     constructor(controller: Controller, mode: FlameChartOverviewMode = FlameChartOverviewMode.STACK) {
       this._overviewCanvasDirty = true;
@@ -333,6 +334,26 @@ module Shumway.Tools.Profiler {
       this._mouseController.updateCursor(MouseCursor.DEFAULT);
     }
 
+    onMouseWheel(x: number, y: number, delta: number) {
+      var time = this._toTime(x);
+      var windowStart = this._windowStart;
+      var windowEnd = this._windowEnd;
+      var windowLen = windowEnd - windowStart;
+      /*
+       * Find maximum allowed delta
+       * (windowEnd + (windowEnd - time) * delta) - (windowStart + (windowStart - time) * delta) = LEN
+       * (windowEnd - windowStart) + ((windowEnd - time) * delta) - ((windowStart - time) * delta) = LEN
+       * (windowEnd - windowStart) + ((windowEnd - time) - (windowStart - time)) * delta = LEN
+       * (windowEnd - windowStart) + (windowEnd - windowStart) * delta = LEN
+       * (windowEnd - windowStart) * delta = LEN - (windowEnd - windowStart)
+       * delta = (LEN - (windowEnd - windowStart)) / (windowEnd - windowStart)
+       */
+      var maxDelta = Math.max((FlameChartOverview.MIN_WINDOW_LEN - windowLen) / windowLen, delta);
+      var start = windowStart + (windowStart - time) * maxDelta;
+      var end = windowEnd + (windowEnd - time) * maxDelta;
+      this._controller.setWindow(start, end);
+    }
+
     onDrag(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
       if (this._selection) {
         this._selection = { left: startX, right: clamp(currentX, 0, this._width - 1) };
@@ -391,7 +412,6 @@ module Shumway.Tools.Profiler {
 
     onHoverStart(x: number, y: number) {}
     onHoverEnd() {}
-    onMouseWheel(x: number, y: number, delt: number) {}
 
   }
 }
