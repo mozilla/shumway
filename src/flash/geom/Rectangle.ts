@@ -248,8 +248,10 @@ module Shumway.AVM2.AS.flash.geom {
         var b: number = Math.min(this.bottom, clipRect.bottom);
         if (t <= b) {
           this.setTo(l, t, r - l, b - t);
+          return this;
         }
       }
+      this.width = this.height = 0;
       return this;
     }
 
