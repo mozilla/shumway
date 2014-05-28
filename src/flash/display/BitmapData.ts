@@ -153,12 +153,12 @@ module Shumway.AVM2.AS.flash.display {
 
     getPixel(x: number /*int*/, y: number /*int*/): number /*uint*/ {
       x = x | 0; y = y | 0;
-      return this._pixelData[this._width * y + x] >> 8;
+      return this._pixelData[this._width * y + x] >>> 8;
     }
 
     getPixel32(x: number /*int*/, y: number /*int*/): number /*uint*/ {
       x = x | 0; y = y | 0;
-      return rgbaToArgb(this._pixelData[this._width * y + x]);
+      return rgbaToArgb(this._pixelData[this._width * y + x]) >>> 0;
     }
 
     setPixel(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
