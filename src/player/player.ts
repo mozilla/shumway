@@ -20,7 +20,6 @@ module Shumway {
   import Point = Shumway.AVM2.AS.flash.geom.Point;
   import FrameContainer = Shumway.GFX.FrameContainer;
   import Easel = Shumway.GFX.Easel;
-
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   import Event = flash.events.Event;
@@ -35,7 +34,8 @@ module Shumway {
   import KeyboardEventData = Shumway.AVM2.AS.flash.ui.KeyboardEventData;
   import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
 
-  import IPlayerChannel = Shumway.Remoting.IPlayerChannel;
+  import Remoting = Shumway.Remoting;
+  import IPlayerChannel = Remoting.IPlayerChannel;
 
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
 
@@ -155,7 +155,7 @@ module Shumway {
     }
 
     private _processEventUpdates(updates: DataBuffer) {
-      var deserializer = new Shumway.Remoting.Player.PlayerChannelDeserializer();
+      var deserializer = new Remoting.Player.PlayerChannelDeserializer();
       deserializer.input = updates;
 
       var event = deserializer.readEvent();
@@ -180,23 +180,21 @@ module Shumway {
     private _pumpDisplayListUpdates(): void {
       var updates = new DataBuffer();
       var assets = [];
-      var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
+      var serializer = new Remoting.Player.PlayerChannelSerializer();
       serializer.output = updates;
       serializer.outputAssets = assets;
 
-      serializer.writeReferences = false;
-      serializer.clearDirtyBits = false;
+      serializer.phase = Remoting.RemotingPhase.Objects;
       enterPlayerTimeline("writeStage");
       serializer.writeStage(this._stage);
       leavePlayerTimeline("writeStage");
 
-      serializer.writeReferences = true;
-      serializer.clearDirtyBits = true;
+      serializer.phase = Remoting.RemotingPhase.References;
       enterPlayerTimeline("writeStage 2");
       serializer.writeStage(this._stage);
       leavePlayerTimeline("writeStage 2");
 
-      updates.writeInt(Shumway.Remoting.MessageTag.EOF);
+      updates.writeInt(Remoting.MessageTag.EOF);
 
       enterPlayerTimeline("sendUpdates");
       this._channel.sendUpdates(updates, assets);

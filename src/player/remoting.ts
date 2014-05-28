@@ -16,6 +16,24 @@
 module Shumway.Remoting {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
+  /**
+   * Remoting phases.
+   */
+  export enum RemotingPhase {
+    /**
+     * Objects are serialized. During this phase all reachable remotable objects (all objects
+     * reachable from a root set) that are dirty are remoted. This includes all dirty object
+     * properties except for dirty references.
+     */
+    Objects,
+
+    /**
+     * Object references are serialized. All objects that are referred to have already been
+     * remoted at this point.
+     */
+    References
+  }
+
   export enum UpdateFrameTagBits {
     HasMatrix                   = 0x0001,
     HasBounds                   = 0x0002,

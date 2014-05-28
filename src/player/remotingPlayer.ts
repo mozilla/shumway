@@ -41,8 +41,7 @@ module Shumway.Remoting.Player {
     public output: IDataOutput;
     public outputAssets: Array<IDataOutput>;
 
-    public writeReferences: boolean = false;
-    public clearDirtyBits: boolean = false;
+    public phase: RemotingPhase = RemotingPhase.Objects;
 
     writeStage(stage: Stage) {
       var serializer = this;
@@ -93,7 +92,7 @@ module Shumway.Remoting.Player {
       this.output.writeInt(displayObject._id);
       var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
 
-      var hasChildren = this.writeReferences && displayObject._hasAnyFlags(DisplayObjectFlags.DirtyChildren | DisplayObjectFlags.DirtyGraphics | DisplayObjectFlags.DirtyBitmapData);
+      var hasChildren = this.phase === RemotingPhase.References && displayObject._hasAnyFlags(DisplayObjectFlags.DirtyChildren | DisplayObjectFlags.DirtyGraphics | DisplayObjectFlags.DirtyBitmapData);
       var hasColorTransform = displayObject._hasFlags(DisplayObjectFlags.DirtyColorTransform);
       var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
 
@@ -132,7 +131,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
       }
-      if (this.clearDirtyBits) {
+      if (this.phase === RemotingPhase.References) {
         displayObject._removeFlags(DisplayObjectFlags.Dirty);
       }
     }
