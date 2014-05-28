@@ -35,89 +35,19 @@ module Shumway.Tools.Profiler {
     target: DragTarget;
   }
 
-  export class FlameChartHeader implements MouseControllerTarget {
+  export class FlameChartHeader extends FlameChartBase implements MouseControllerTarget {
 
-    private _controller: Controller;
-
-    private _canvas: HTMLCanvasElement;
-    private _context: CanvasRenderingContext2D;
-
-    private _mouseController: MouseController;
-
-    private _width: number;
-    private _height: number;
-
-    private _windowStart: number;
-    private _windowEnd: number;
-    private _rangeStart: number;
-    private _rangeEnd: number;
-
-    private _initialized: boolean;
     private _type: FlameChartHeaderType;
     private _dragInfo: DragInfo;
 
-    private static DRAGHANDLE_WIDTH = 4;
     private static TICK_MAX_WIDTH = 75;
 
     constructor(controller: Controller, type: FlameChartHeaderType) {
-      this._controller = controller;
       this._type = type;
-      this._initialized = false;
-      this._canvas = document.createElement("canvas");
-      this._context = this._canvas.getContext("2d");
-      this._mouseController = new MouseController(this, this._canvas);
-      var container = controller.container;
-      container.appendChild(this._canvas);
-      var rect = container.getBoundingClientRect();
-      this.setSize(rect.width);
+      super(controller);
     }
 
-    setSize(width: number, height: number = 20) {
-      this._width = width;
-      this._height = height;
-      this._resetCanvas();
-      this._draw();
-    }
-
-    initialize(rangeStart: number, rangeEnd: number) {
-      this._initialized = true;
-      this.setRange(rangeStart, rangeEnd, false);
-      this.setWindow(rangeStart, rangeEnd, false);
-      this._draw();
-    }
-
-    setWindow(start: number, end: number, draw: boolean = true) {
-      this._windowStart = start;
-      this._windowEnd = end;
-      if (draw) {
-        this._draw();
-      }
-    }
-
-    setRange(start: number, end: number, draw: boolean = true) {
-      this._rangeStart = start;
-      this._rangeEnd = end;
-      if (draw) {
-        this._draw();
-      }
-    }
-
-    destroy() {
-      this._mouseController.destroy();
-      this._mouseController = null;
-      this._controller = null;
-    }
-
-    private _resetCanvas() {
-      var ratio = window.devicePixelRatio;
-      var canvas = this._canvas;
-      canvas.width = this._width * ratio;
-      canvas.height = this._height * ratio;
-      canvas.style.width = this._width + "px";
-      canvas.style.height = this._height + "px";
-    }
-
-    private _draw() {
+    _draw() {
       var context = this._context;
       var ratio = window.devicePixelRatio;
       var width = this._width;
@@ -134,18 +64,18 @@ module Shumway.Tools.Profiler {
           var right = this._toPixels(this._windowEnd);
           context.fillStyle = "#14171a";
           context.fillRect(left, 0, right - left, height);
-          this._drawLabels(this._rangeStart, this._rangeEnd, this._width);
+          this._drawLabels(this._rangeStart, this._rangeEnd);
           this._drawDragHandle(left);
           this._drawDragHandle(right);
         } else {
-          this._drawLabels(this._windowStart, this._windowEnd, this._width + FlameChartHeader.TICK_MAX_WIDTH);
+          this._drawLabels(this._windowStart, this._windowEnd);
         }
       }
 
       context.restore();
     }
 
-    private _drawLabels(rangeStart: number, rangeEnd: number, maxWidth: number) {
+    private _drawLabels(rangeStart: number, rangeEnd: number) {
       var context = this._context;
       var tickInterval = this._calculateTickInterval(rangeStart, rangeEnd);
       var tick = Math.ceil(rangeStart / tickInterval) * tickInterval;
@@ -161,6 +91,7 @@ module Shumway.Tools.Profiler {
       context.textAlign = "right";
       context.textBaseline = "middle";
       context.font = '11px sans-serif';
+      var maxWidth = this._width + FlameChartHeader.TICK_MAX_WIDTH;
       while (x < maxWidth) {
         var tickStr = (tick / divisor).toFixed(precision) + " " + unit;
         context.fillText(tickStr, x - 7, y + 1);
@@ -196,7 +127,7 @@ module Shumway.Tools.Profiler {
       context.lineWidth = 2;
       context.strokeStyle = "#14171a";
       context.fillStyle = "rgba(182, 186, 191, 0.7)";
-      this._drawRoundedRect(context, pos - FlameChartHeader.DRAGHANDLE_WIDTH / 2, 1, FlameChartHeader.DRAGHANDLE_WIDTH, this._height - 2, 2, true);
+      this._drawRoundedRect(context, pos - FlameChartBase.DRAGHANDLE_WIDTH / 2, 1, FlameChartBase.DRAGHANDLE_WIDTH, this._height - 2, 2, true);
     }
 
     private _drawRoundedRect(context: CanvasRenderingContext2D, x: number, y: number, width: number, height: number, radius: number, stroke: boolean = true, fill: boolean = true) {
@@ -261,7 +192,7 @@ module Shumway.Tools.Profiler {
         if (this._type === FlameChartHeaderType.OVERVIEW) {
           var left = this._toPixels(this._windowStart);
           var right = this._toPixels(this._windowEnd);
-          var radius = 2 + (FlameChartHeader.DRAGHANDLE_WIDTH) / 2;
+          var radius = 2 + (FlameChartBase.DRAGHANDLE_WIDTH) / 2;
           var leftHandle = (x >= left - radius && x <= left + radius);
           var rightHandle = (x >= right - radius && x <= right + radius);
           if (leftHandle && rightHandle) {
@@ -314,7 +245,23 @@ module Shumway.Tools.Profiler {
     }
 
     onMouseWheel(x: number, y: number, delta: number) {
-      //console.log(x, y, delta);
+      var time = this._toTime(x);
+      var windowStart = this._windowStart;
+      var windowEnd = this._windowEnd;
+      var windowLen = windowEnd - windowStart;
+      /*
+       * Find maximum allowed delta
+       * (windowEnd + (windowEnd - time) * delta) - (windowStart + (windowStart - time) * delta) = LEN
+       * (windowEnd - windowStart) + ((windowEnd - time) * delta) - ((windowStart - time) * delta) = LEN
+       * (windowEnd - windowStart) + ((windowEnd - time) - (windowStart - time)) * delta = LEN
+       * (windowEnd - windowStart) + (windowEnd - windowStart) * delta = LEN
+       * (windowEnd - windowStart) * delta = LEN - (windowEnd - windowStart)
+       * delta = (LEN - (windowEnd - windowStart)) / (windowEnd - windowStart)
+       */
+      var maxDelta = Math.max((FlameChartBase.MIN_WINDOW_LEN - windowLen) / windowLen, delta);
+      var start = windowStart + (windowStart - time) * maxDelta;
+      var end = windowEnd + (windowEnd - time) * maxDelta;
+      this._controller.setWindow(start, end);
     }
 
     onDrag(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {

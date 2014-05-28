@@ -52,7 +52,7 @@ module.exports = function(grunt) {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/player/references.ts'
       },
       build_profiler_ts: {
-        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/tools/profiler/references.ts && cp src/tools/*.{html,css} build/ts/tools/ && cp -r src/tools/data build/ts/tools/'
+        cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/tools/profiler/references.ts'
       },
       build_avm1_ts: {
         cmd: 'node utils/typescript/tsc --target ES5 --sourcemap --outDir build/ts src/avm1/references.ts'
@@ -128,9 +128,7 @@ module.exports = function(grunt) {
         tasks: ['exec:build_player_ts']
       },
       profiler_ts: {
-        files: ['src/tools/profiler/**/*.ts',
-                'src/tools/*.html',
-                'src/tools/*.css'],
+        files: ['src/tools/profiler/**/*.ts'],
         tasks: ['exec:build_profiler_ts']
       },
     }

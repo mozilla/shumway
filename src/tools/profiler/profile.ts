@@ -109,7 +109,7 @@ module Shumway.Tools.Profiler {
         start = end;
         end = tmp;
       }
-      var length = end - start;
+      var length = Math.min(end - start, this.totalTime);
       if (start < this._startTime) {
         start = this._startTime;
         end = this._startTime + length;

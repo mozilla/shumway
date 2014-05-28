@@ -42,84 +42,22 @@ module Shumway.Tools.Profiler {
     right: number;
   }
 
-  export class FlameChartOverview implements MouseControllerTarget {
-
-    private _controller: Controller;
-
-    private _canvas: HTMLCanvasElement;
-    private _context: CanvasRenderingContext2D;
+  export class FlameChartOverview extends FlameChartBase implements MouseControllerTarget {
 
     private _overviewCanvasDirty: boolean;
     private _overviewCanvas: HTMLCanvasElement;
     private _overviewContext: CanvasRenderingContext2D;
 
-    private _mouseController: MouseController;
-
-    private _width: number;
-    private _height: number;
-
-    private _windowStart: number;
-    private _windowEnd: number;
-    private _rangeStart: number;
-    private _rangeEnd: number;
-
-    private _initialized: boolean;
     private _selection: Selection;
     private _dragInfo: DragInfo;
     private _mode: FlameChartOverviewMode;
 
-    private static DRAGHANDLE_WIDTH = 4;
-
     constructor(controller: Controller, mode: FlameChartOverviewMode = FlameChartOverviewMode.STACK) {
-      this._overviewCanvasDirty = true;
-      this._controller = controller;
-      this._initialized = false;
       this._mode = mode;
-      this._canvas = document.createElement("canvas");
-      this._context = this._canvas.getContext("2d");
+      this._overviewCanvasDirty = true;
       this._overviewCanvas = document.createElement("canvas");
       this._overviewContext = this._overviewCanvas.getContext("2d");
-      this._mouseController = new Profiler.MouseController(this, this._canvas);
-      var container = controller.container;
-      container.appendChild(this._canvas);
-      var rect = container.getBoundingClientRect();
-      this.setSize(rect.width);
-    }
-
-    setSize(width: number, height: number = 64) {
-      this._width = width;
-      this._height = height;
-      this._resetCanvas();
-      this._draw();
-    }
-
-    initialize(rangeStart: number, rangeEnd: number) {
-      this._initialized = true;
-      this.setRange(rangeStart, rangeEnd, false);
-      this.setWindow(rangeStart, rangeEnd, false);
-      this._draw();
-    }
-
-    setWindow(start: number, end: number, draw: boolean = true) {
-      this._windowStart = start;
-      this._windowEnd = end;
-      if (draw) {
-        this._draw();
-      }
-    }
-
-    setRange(start: number, end: number, draw: boolean = true) {
-      this._rangeStart = start;
-      this._rangeEnd = end;
-      if (draw) {
-        this._draw();
-      }
-    }
-
-    destroy() {
-      this._mouseController.destroy();
-      this._mouseController = null;
-      this._controller = null;
+      super(controller);
     }
 
     set mode(value: FlameChartOverviewMode) {
@@ -127,18 +65,14 @@ module Shumway.Tools.Profiler {
       this._draw();
     }
 
-    private _resetCanvas() {
-      var ratio = window.devicePixelRatio;
-      var canvas = this._canvas;
-      var canvasOverview = this._overviewCanvas;
-      canvas.width = canvasOverview.width = this._width * ratio;
-      canvas.height = canvasOverview.height = this._height * ratio;
-      canvas.style.width = this._width + "px";
-      canvas.style.height = this._height + "px";
+    _resetCanvas() {
+      super._resetCanvas();
+      this._overviewCanvas.width = this._canvas.width;
+      this._overviewCanvas.height = this._canvas.height;
       this._overviewCanvasDirty = true;
     }
 
-    private _draw() {
+    _draw() {
       var context = this._context;
       var ratio = window.devicePixelRatio;
       var width = this._width;
@@ -283,7 +217,7 @@ module Shumway.Tools.Profiler {
       if (y >= 0 && y < this._height) {
         var left = this._toPixels(this._windowStart);
         var right = this._toPixels(this._windowEnd);
-        var radius = 2 + (FlameChartOverview.DRAGHANDLE_WIDTH) / 2;
+        var radius = 2 + (FlameChartBase.DRAGHANDLE_WIDTH) / 2;
         var leftHandle = (x >= left - radius && x <= left + radius);
         var rightHandle = (x >= right - radius && x <= right + radius);
         if (leftHandle && rightHandle) {
@@ -331,6 +265,26 @@ module Shumway.Tools.Profiler {
 
     onMouseOut() {
       this._mouseController.updateCursor(MouseCursor.DEFAULT);
+    }
+
+    onMouseWheel(x: number, y: number, delta: number) {
+      var time = this._toTime(x);
+      var windowStart = this._windowStart;
+      var windowEnd = this._windowEnd;
+      var windowLen = windowEnd - windowStart;
+      /*
+       * Find maximum allowed delta
+       * (windowEnd + (windowEnd - time) * delta) - (windowStart + (windowStart - time) * delta) = LEN
+       * (windowEnd - windowStart) + ((windowEnd - time) * delta) - ((windowStart - time) * delta) = LEN
+       * (windowEnd - windowStart) + ((windowEnd - time) - (windowStart - time)) * delta = LEN
+       * (windowEnd - windowStart) + (windowEnd - windowStart) * delta = LEN
+       * (windowEnd - windowStart) * delta = LEN - (windowEnd - windowStart)
+       * delta = (LEN - (windowEnd - windowStart)) / (windowEnd - windowStart)
+       */
+      var maxDelta = Math.max((FlameChartBase.MIN_WINDOW_LEN - windowLen) / windowLen, delta);
+      var start = windowStart + (windowStart - time) * maxDelta;
+      var end = windowEnd + (windowEnd - time) * maxDelta;
+      this._controller.setWindow(start, end);
     }
 
     onDrag(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
@@ -391,7 +345,6 @@ module Shumway.Tools.Profiler {
 
     onHoverStart(x: number, y: number) {}
     onHoverEnd() {}
-    onMouseWheel(x: number, y: number, delt: number) {}
 
   }
 }
