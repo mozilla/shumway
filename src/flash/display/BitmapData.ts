@@ -85,6 +85,9 @@ module Shumway.AVM2.AS.flash.display {
 
     private _getPixelData(rect: flash.geom.Rectangle): Uint32Array {
       var r = this.rect.intersectInPlace(rect);
+      if (r.isEmpty()) {
+        return;
+      }
       var xMin = r.x;
       var xMax = r.x + r.width;
       var yMin = r.y;
@@ -106,6 +109,9 @@ module Shumway.AVM2.AS.flash.display {
 
     private _putPixelData(rect: flash.geom.Rectangle, input: Uint32Array): void {
       var r = this.rect.intersectInPlace(rect);
+      if (r.isEmpty()) {
+        return;
+      }
       var xMin = r.x;
       var xMax = r.x + r.width;
       var yMin = r.y;
@@ -225,6 +231,9 @@ module Shumway.AVM2.AS.flash.display {
       var alpha = (color >> 24) & 0xff;
       color = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
       var r = this.rect.intersectInPlace(rect);
+      if (r.isEmpty()) {
+        return;
+      }
       var xMin = r.x;
       var xMax = r.x + r.width;
       var yMin = r.y;
