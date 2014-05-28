@@ -23,10 +23,7 @@ module Shumway.GFX {
     private _bounds: Rectangle;
     properties: {[name: string]: any} = {};
     render: (context: CanvasRenderingContext2D, clipBounds?: Rectangle) => void;
-    isDynamic: boolean = true;
-    isInvalid: boolean = true;
-    isScalable: boolean = true;
-    isTileable: boolean = false;
+    flags: IRenderableFlags = IRenderableFlags.None;
     constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, clipBounds?: Rectangle) => void) {
       this.render = render;
       this._bounds = bounds.clone();
@@ -37,11 +34,8 @@ module Shumway.GFX {
   }
 
   export class RenderableBitmap implements IRenderable {
+    flags = IRenderableFlags.Dynamic | IRenderableFlags.Invalid;
     properties: {[name: string]: any} = {};
-    isDynamic: boolean = false;
-    isInvalid: boolean = false;
-    isScalable: boolean = false;
-    isTileable: boolean = false;
 
     private _bounds: Rectangle;
     private _canvas: HTMLCanvasElement;
@@ -52,6 +46,7 @@ module Shumway.GFX {
     }
 
     public static FromDataBuffer(dataBuffer: DataBuffer, bounds: Rectangle): RenderableBitmap {
+      enterTimeline("RenderableBitmap.FromDataBuffer");
       var canvas = document.createElement("canvas");
       canvas.width = bounds.w;
       canvas.height = bounds.h;
@@ -59,14 +54,19 @@ module Shumway.GFX {
       var imageData: ImageData = context.createImageData(bounds.w, bounds.h);
       imageData.data.set(dataBuffer.bytes);
       context.putImageData(imageData, 0, 0);
-      return new RenderableBitmap(canvas, bounds);
+      var renderableBitmap = new RenderableBitmap(canvas, bounds);
+      leaveTimeline("RenderableBitmap.FromDataBuffer");
+      return renderableBitmap;
     }
 
     public updateFromDataBuffer(dataBuffer: DataBuffer) {
+      enterTimeline("RenderableBitmap.updateFromDataBuffer");
       var context = this._canvas.getContext("2d");
       var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
       imageData.data.set(dataBuffer.bytes);
       context.putImageData(imageData, 0, 0);
+      this.flags != IRenderableFlags.Invalid;
+      leaveTimeline("RenderableBitmap.updateFromDataBuffer");
     }
 
     constructor(canvas: HTMLCanvasElement, bounds: Rectangle) {
@@ -100,11 +100,8 @@ module Shumway.GFX {
   }
 
   export class RenderableShape implements IRenderable {
+    flags: IRenderableFlags = IRenderableFlags.Invalid | IRenderableFlags.Scalable | IRenderableFlags.Tileable;
     properties: {[name: string]: any} = {};
-    isDynamic: boolean = false;
-    isInvalid: boolean = true;
-    isScalable: boolean = true;
-    isTileable: boolean = true;
 
     private fillStyle: ColorStyle;
     private _pathData: DataBuffer;
@@ -235,7 +232,6 @@ module Shumway.GFX {
         context.strokeStyle = null;
       }
       context.restore();
-      this.isInvalid = false;
       leaveTimeline("RenderableShape.render");
     }
 
@@ -258,7 +254,9 @@ module Shumway.GFX {
   }
 
   export class Label implements IRenderable {
+    flags: IRenderableFlags = IRenderableFlags.Dynamic | IRenderableFlags.Scalable;
     properties: {[name: string]: any} = {};
+
     private _text: string;
     private _bounds: Rectangle;
 
@@ -270,10 +268,6 @@ module Shumway.GFX {
       this._text = value;
     }
 
-    isDynamic: boolean = true;
-    isInvalid: boolean = false;
-    isScalable: boolean = true;
-    isTileable: boolean = false;
     constructor(w: number, h: number) {
       this._bounds = new Rectangle(0, 0, w, h);
     }
@@ -290,11 +284,8 @@ module Shumway.GFX {
   }
 
   export class Grid implements IRenderable {
+    flags: IRenderableFlags = IRenderableFlags.Invalid | IRenderableFlags.Scalable | IRenderableFlags.Tileable;
     properties: {[name: string]: any} = {};
-    isDynamic: boolean = false;
-    isInvalid: boolean = true;
-    isScalable: boolean = true;
-    isTileable: boolean = true;
 
     private _maxBounds = Rectangle.createMaxI16();
 

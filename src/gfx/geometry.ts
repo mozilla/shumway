@@ -1643,7 +1643,7 @@ module Shumway.GFX.Geometry {
       var scale = pow2(level);
       // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our texture caches ...
 
-      if (this._source.isDynamic) {
+      if (this._source.flags & IRenderableFlags.Dynamic) {
         // .. so try a lower scale level until it fits.
         while (true) {
           scale = pow2(level);
@@ -1656,7 +1656,7 @@ module Shumway.GFX.Geometry {
       }
       // If the source is not scalable don't cache any tiles at a higher scale factor. However, it may still make
       // sense to cache at a lower scale factor in case we need to evict larger cached images.
-      if (!this._source.isScalable) {
+      if (!(this._source.flags & IRenderableFlags.Scalable)) {
         level = clamp(level, -MIN_CACHE_LEVELS, 0);
       }
       var scale = pow2(level);
@@ -1666,7 +1666,8 @@ module Shumway.GFX.Geometry {
         var bounds = this._source.getBounds().getAbsoluteBounds();
         var scaledBounds = bounds.clone().scale(scale, scale);
         var tileW, tileH;
-        if (this._source.isDynamic || !this._source.isTileable || Math.max(scaledBounds.w, scaledBounds.h) <= this._minUntiledSize) {
+        if (this._source.flags & IRenderableFlags.Dynamic ||
+            !(this._source.flags & IRenderableFlags.Tileable) || Math.max(scaledBounds.w, scaledBounds.h) <= this._minUntiledSize) {
           tileW = scaledBounds.w;
           tileH = scaledBounds.h;
         } else {
@@ -1688,7 +1689,7 @@ module Shumway.GFX.Geometry {
       var source = this._source;
       for (var i = 0; i < tiles.length; i++) {
         var tile = tiles[i];
-        if (!tile.cachedTextureRegion || !tile.cachedTextureRegion.texture || (source.isDynamic && source.isInvalid)) {
+        if (!tile.cachedTextureRegion || !tile.cachedTextureRegion.texture || (source.flags & IRenderableFlags.Dynamic && source.flags & IRenderableFlags.Invalid)) {
           if (!uncachedTiles) {
             uncachedTiles = [];
           }

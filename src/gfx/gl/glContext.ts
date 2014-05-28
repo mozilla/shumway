@@ -227,9 +227,9 @@ module Shumway.GFX.GL {
     public updateTextureRegion(image: any, textureRegion: WebGLTextureRegion) {
       var gl = this.gl;
       gl.bindTexture(gl.TEXTURE_2D, textureRegion.texture);
-      timeline && timeline.enter("texSubImage2D");
+      enterTimeline("texSubImage2D");
       gl.texSubImage2D(gl.TEXTURE_2D, 0, textureRegion.region.x, textureRegion.region.y, gl.RGBA, gl.UNSIGNED_BYTE, image);
-      timeline && timeline.leave("texSubImage2D");
+      leaveTimeline("texSubImage2D");
     }
 
     /**

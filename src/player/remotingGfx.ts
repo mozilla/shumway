@@ -18,7 +18,6 @@ module Shumway.Remoting.GFX {
   import Shape = Shumway.GFX.Shape;
   import RenderableShape = Shumway.GFX.RenderableShape;
   import RenderableBitmap = Shumway.GFX.RenderableBitmap;
-  import Renderable = Shumway.GFX.Renderable;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
