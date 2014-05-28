@@ -17,7 +17,10 @@
 (function graphicsTests() {
   var Shape = flash.display.Shape;
   var Graphics = flash.display.Graphics;
+  var Matrix = flash.geom.Matrix;
+  var BitmapData = flash.display.BitmapData;
   var PathCommand = flash.display.PathCommand;
+  var assertUnreachable = Shumway.Debug.assertUnreachable;
 
   var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
@@ -28,6 +31,7 @@
   unitTests.push(basics);
   unitTests.push(clear);
   unitTests.push(beginFill);
+  unitTests.push(beginBitmapFill);
   unitTests.push(lineStyle_defaults);
   unitTests.push(lineStyle_invalidWidth);
   unitTests.push(lineStyle_allArgs);
@@ -64,6 +68,45 @@
     bytes = cloneData(g.getGraphicsData());
     bytes.readUnsignedByte();
     eq(bytes.readUnsignedInt(), 0xaabbcc80, "alpha is stored correctly");
+    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+  }
+
+  function beginBitmapFill() {
+    var g = createGraphics();
+    var bitmap = new BitmapData(100, 100);
+    g.beginBitmapFill(bitmap);
+    var bytes = cloneData(g.getGraphicsData());
+    eq(bytes.readUnsignedByte(), PathCommand.BeginBitmapFill, "fill is stored");
+    eq(bytes.readUnsignedInt(), bitmap._id, "beginBitmapFill stores given bitmap's id");
+    structEq(Matrix.FromDataBuffer(bytes), Matrix.FROZEN_IDENTITY_MATRIX,
+             "default matrix is serialized if none is provided");
+    eq(bytes.readBoolean(), true, "defaults to repeat");
+    eq(bytes.readBoolean(), false, "defaults to no smooting");
+    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+
+    g = createGraphics();
+    try {
+      g.beginBitmapFill({});
+      assertUnreachable("beginBitmapFill without bitmap argument throws");
+    } catch (e) {
+    }
+    try {
+      g.beginBitmapFill(bitmap, {});
+      assertUnreachable("beginBitmapFill with non-matrix 2nd argument throws");
+    } catch (e) {
+    }
+    bytes = cloneData(g.getGraphicsData());
+    eq(bytes.bytesAvailable, 0, "invalid beginBitmapFill calls don't write data");
+
+    var matrix = new Matrix(1, 2, 3, 4, 5, 6);
+    g.beginBitmapFill(bitmap, matrix, false, true);
+    bytes = cloneData(g.getGraphicsData());
+    bytes.readUnsignedByte(); // skip command
+    bytes.readUnsignedInt(); // skip bitmap id
+    structEq(Matrix.FromDataBuffer(bytes), matrix,
+             "serialized matrix is identical to input matrix");
+    eq(bytes.readBoolean(), false, "repeat flag is written correctly");
+    eq(bytes.readBoolean(), true, "smooth flag is written correctly");
     eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
   }
 

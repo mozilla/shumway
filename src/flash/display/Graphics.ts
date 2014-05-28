@@ -53,12 +53,20 @@
  * byte command:  PathCommand.BeginSolidFill
  * uint color:    [RGBA color]
  *
+ * beginBitmapFill:
+ * byte command:  PathCommand.BeginBitmapFill
+ * uint bitmapId: Id of the bitmapData object being used as the fill's texture
+ * matrix matrix: transform matrix (see Matrix#writeExternal for details)
+ * bool repeat
+ * bool smooth
+ *
+ *
  * lineStyle:
  * byte command:      PathCommand.LineStyleSolid OR PathCommand.LineEnd
  * The following values are only emitted if the command is PathCommand.LineStyleSolid:
  * byte thickness:    [0-0xff]
  * uint color:        [RGBA color]
- * byte pixelHinting: [0,1] (true,false)
+ * bool pixelHinting
  * byte scaleMode:    [0-3] see LineScaleMode.fromNumber for meaning
  * byte caps:         [0-2] see CapsStyle.fromNumber for meaning
  * byte joints:       [0-2] see JointStyle.fromNumber for meaning
@@ -156,11 +164,6 @@ module Shumway.AVM2.AS.flash.display {
 
   export class Graphics extends ASNative {
 
-    /**
-     * Every graphics is assigned an unique integer ID.
-     */
-    static _syncID = 0;
-
     static classInitializer: any = null;
     static initializer: any = null;
 
@@ -171,6 +174,7 @@ module Shumway.AVM2.AS.flash.display {
       false && super();
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._graphicsData = new DataBuffer();
+      this._textures = [];
       this._fillBounds = new Bounds(0, 0, 0, 0);
       this._lineBounds = new Bounds(0, 0, 0, 0);
       this._lastX = 0;
@@ -184,11 +188,16 @@ module Shumway.AVM2.AS.flash.display {
       return this._graphicsData;
     }
 
+    getUsedTextures(): BitmapData[] {
+      return this._textures;
+    }
+
     // JS -> AS Bindings
     _id: number;
 
     // AS -> JS Bindings
     private _graphicsData: DataBuffer;
+    private _textures: BitmapData[];
     private _lastX: number;
     private _lastY: number;
 
@@ -230,6 +239,7 @@ module Shumway.AVM2.AS.flash.display {
 
     clear(): void {
       this._graphicsData.length = 0;
+      this._textures.length = 0;
       this._fillBounds.setEmpty();
       this._lineBounds.setEmpty();
       this._setLastCoordinates(0, 0);
@@ -273,12 +283,15 @@ module Shumway.AVM2.AS.flash.display {
       } else if (!(flash.geom.Matrix.isType(matrix))) {
         throwError('TypeError', Errors.CheckTypeFailedError, 'matrix', 'flash.geom.Matrix');
       }
+      repeat = !!repeat;
+      smooth = !!smooth;
       var graphicsData = this._graphicsData;
       graphicsData.writeUnsignedByte(PathCommand.BeginBitmapFill);
-      // bitmap
+      graphicsData.writeUnsignedInt(bitmap._id);
+      this._textures.push(bitmap);
       matrix.writeExternal(graphicsData);
-      graphicsData.writeUnsignedByte(+repeat);
-      graphicsData.writeUnsignedByte(+smooth);
+      graphicsData.writeBoolean(repeat);
+      graphicsData.writeBoolean(smooth);
     }
 
     endFill(): void {
