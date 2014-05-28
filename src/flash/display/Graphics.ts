@@ -90,29 +90,15 @@ module Shumway.AVM2.AS.flash.display {
   import LineScaleMode = flash.display.LineScaleMode;
   import CapsStyle = flash.display.CapsStyle;
   import JointStyle = flash.display.JointStyle;
+  import PathCommand = Shumway.PathCommand;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import geom = flash.geom;
   import utils = flash.utils;
 
   // TODO duplicate refactor to remove duplication code from GFX geometry.ts
-  //import PathCommand = Shumway.GFX.Geometry.PathCommand;
   //import quadraticBezierExtreme = Shumway.GFX.Geometry.quadraticBezierExtreme;
   //import cubicBezierExtremes = Shumway.GFX.Geometry.cubicBezierExtremes;
 
-  export enum PathCommand {
-    BeginSolidFill = 1,
-    BeginGradientFill,
-    BeginBitmapFill,
-    EndFill,
-    LineStyleSolid,
-    LineStyleGradient,
-    LineStyleBitmap,
-    LineEnd,
-    MoveTo,
-    LineTo,
-    CurveTo,
-    CubicCurveTo,
-  }
   function quadraticBezier(from: number, cp: number, to: number, t: number): number {
     var inverseT = 1 - t;
     return from * inverseT * inverseT + 2 * cp * inverseT * t + to * t * t;

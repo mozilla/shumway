@@ -2510,6 +2510,25 @@ module Shumway {
    */
   // Shumway.Bounds = DebugBounds;
 
+  /**
+   * Used for (de-)serializing Graphics path data in defineShape, flash.display.Graphics
+   * and the renderer.
+   */
+  export enum PathCommand {
+    BeginSolidFill = 1,
+    BeginGradientFill,
+    BeginBitmapFill,
+    EndFill,
+    LineStyleSolid,
+    LineStyleGradient,
+    LineStyleBitmap,
+    LineEnd,
+    MoveTo,
+    LineTo,
+    CurveTo,
+    CubicCurveTo,
+  }
+
   export class Color {
     public r: number;
     public g: number;

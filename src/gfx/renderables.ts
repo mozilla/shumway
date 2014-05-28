@@ -16,7 +16,7 @@
 module Shumway.GFX {
   import Point = Geometry.Point;
   import Rectangle = Geometry.Rectangle;
-  import PathCommand = Geometry.PathCommand;
+  import PathCommand = Shumway.PathCommand;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import swap32 = Shumway.IntegerUtilities.swap32;
   import memorySizeToString = Shumway.StringUtilities.memorySizeToString;
