@@ -213,7 +213,7 @@ module Shumway.GFX {
       });
     }
 
-    public createOpaqueRegion(source: IRenderable) {
+    public createOpaqueRegion(source: Renderable) {
       if (source.getBounds().isEmpty()) {
         return new OpaqueRegion(Rectangle.createEmpty(), Rectangle.createEmpty(), null);
       }

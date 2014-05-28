@@ -1,6 +1,5 @@
 (function displayTests() {
   var GFXShape = Shumway.GFX.Shape;
-  var Renderable = Shumway.GFX.Renderable;
   var ColorMatrix = Shumway.GFX.ColorMatrix;
   var FrameContainer = Shumway.GFX.FrameContainer;
   var Geometry = Shumway.GFX.Geometry;

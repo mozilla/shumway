@@ -66,7 +66,7 @@ module Shumway.Remoting.GFX {
   export class GFXChannelDeserializerContext {
     root: FrameContainer;
     _frames: Frame [];
-    _assets: IRenderable [];
+    _assets: Renderable [];
 
     constructor(root: FrameContainer) {
       this.root = root;

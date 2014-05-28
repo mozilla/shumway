@@ -19,31 +19,89 @@ module Shumway.GFX {
   import PathCommand = Geometry.PathCommand;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
-  export class Renderable implements IRenderable {
-    private _bounds: Rectangle;
+  export enum RenderableFlags {
+    None          = 0,
+
+    /**
+     * Whether source has dynamic content.
+     */
+    Dynamic       = 1,
+
+    /**
+     * Whether the source's dynamic content has changed. This is only defined if |isDynamic| is true.
+     */
+    Dirty         = 2,
+
+    /**
+     * Whether the source's content can be scaled and drawn at a higher resolution.
+     */
+    Scalable      = 4,
+
+    /**
+     * Whether the source's content should be tiled.
+     */
+    Tileable      = 8
+  }
+
+  /**
+   * Represents some source renderable content.
+   */
+  export class Renderable {
+    /**
+     * Flags
+     */
+    _flags: RenderableFlags = RenderableFlags.None;
+
+    setFlags(flags: RenderableFlags) {
+      this._flags |= flags;
+    }
+
+    hasFlags(flags: RenderableFlags): boolean {
+      return (this._flags & flags) === flags;
+    }
+
+    removeFlags(flags: RenderableFlags) {
+      this._flags &= ~flags;
+    }
+
+    /**
+     * Property bag used to attach dynamic properties to this object.
+     */
     properties: {[name: string]: any} = {};
-    render: (context: CanvasRenderingContext2D, clipBounds?: Rectangle) => void;
-    flags: IRenderableFlags = IRenderableFlags.None;
-    constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, clipBounds?: Rectangle) => void) {
-      this.render = render;
+
+    _bounds: Rectangle;
+
+    constructor(bounds: Rectangle) {
       this._bounds = bounds.clone();
     }
+
+    /**
+     * Bounds of the source content. This should never change.
+     */
     getBounds (): Rectangle {
       return this._bounds;
+    }
+
+    /**
+     * Render source content.
+     */
+    render(context: CanvasRenderingContext2D, clipBounds?: Shumway.GFX.Geometry.Rectangle): void {
+
     }
   }
 
-  export class RenderableBitmap implements IRenderable {
-    flags = IRenderableFlags.Dynamic | IRenderableFlags.Invalid;
-    properties: {[name: string]: any} = {};
+  export class CustomRenderable extends Renderable {
+    constructor(bounds: Rectangle, render: (context: CanvasRenderingContext2D, clipBounds: Shumway.GFX.Geometry.Rectangle) => void) {
+      super(bounds);
+      this.render = render;
+    }
+  }
 
-    private _bounds: Rectangle;
+  export class RenderableBitmap extends Renderable {
+    _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
+    properties: {[name: string]: any} = {};
     private _canvas: HTMLCanvasElement;
     private fillStyle: ColorStyle;
-
-    getBounds (): Rectangle {
-      return this._bounds;
-    }
 
     public static FromDataBuffer(dataBuffer: DataBuffer, bounds: Rectangle): RenderableBitmap {
       enterTimeline("RenderableBitmap.FromDataBuffer");
@@ -65,13 +123,13 @@ module Shumway.GFX {
       var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
       imageData.data.set(dataBuffer.bytes);
       context.putImageData(imageData, 0, 0);
-      this.flags != IRenderableFlags.Invalid;
+      this.setFlags(RenderableFlags.Dirty);
       leaveTimeline("RenderableBitmap.updateFromDataBuffer");
     }
 
     constructor(canvas: HTMLCanvasElement, bounds: Rectangle) {
+      super(bounds);
       this._canvas = canvas;
-      this._bounds = bounds;
     }
 
     render(context: CanvasRenderingContext2D, clipBounds: Shumway.GFX.Geometry.Rectangle): void {
@@ -82,7 +140,6 @@ module Shumway.GFX {
         this._renderFallback(context);
       }
       context.restore();
-
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {
@@ -99,20 +156,19 @@ module Shumway.GFX {
     }
   }
 
-  export class RenderableShape implements IRenderable {
-    flags: IRenderableFlags = IRenderableFlags.Invalid | IRenderableFlags.Scalable | IRenderableFlags.Tileable;
+  export class RenderableShape extends Renderable {
+    _flags: RenderableFlags = RenderableFlags.Dirty | RenderableFlags.Scalable | RenderableFlags.Tileable;
     properties: {[name: string]: any} = {};
 
     private fillStyle: ColorStyle;
     private _pathData: DataBuffer;
-    private _bounds: Rectangle;
 
     private static LINE_CAP_STYLES = ['round', 'butt', 'square'];
     private static LINE_JOINT_STYLES = ['round', 'bevel', 'miter'];
 
     constructor(pathData: DataBuffer, bounds: Rectangle) {
+      super(bounds);
       this._pathData = pathData;
-      this._bounds = bounds;
     }
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {
@@ -253,12 +309,10 @@ module Shumway.GFX {
 
   }
 
-  export class Label implements IRenderable {
-    flags: IRenderableFlags = IRenderableFlags.Dynamic | IRenderableFlags.Scalable;
+  export class Label extends Renderable {
+    _flags: RenderableFlags = RenderableFlags.Dynamic | RenderableFlags.Scalable;
     properties: {[name: string]: any} = {};
-
     private _text: string;
-    private _bounds: Rectangle;
 
     get text (): string {
       return this._text;
@@ -269,11 +323,9 @@ module Shumway.GFX {
     }
 
     constructor(w: number, h: number) {
-      this._bounds = new Rectangle(0, 0, w, h);
+      super(new Rectangle(0, 0, w, h));
     }
-    getBounds (): Rectangle {
-      return this._bounds;
-    }
+
     render (context: CanvasRenderingContext2D, clipBounds?: Rectangle) {
       context.save();
       context.textBaseline = "top";
@@ -283,18 +335,12 @@ module Shumway.GFX {
     }
   }
 
-  export class Grid implements IRenderable {
-    flags: IRenderableFlags = IRenderableFlags.Invalid | IRenderableFlags.Scalable | IRenderableFlags.Tileable;
+  export class Grid extends Renderable {
+    _flags: RenderableFlags = RenderableFlags.Dirty | RenderableFlags.Scalable | RenderableFlags.Tileable;
     properties: {[name: string]: any} = {};
 
-    private _maxBounds = Rectangle.createMaxI16();
-
     constructor() {
-
-    }
-
-    getBounds (): Rectangle {
-      return this._maxBounds;
+      super(Rectangle.createMaxI16());
     }
 
     render (context: CanvasRenderingContext2D, clipBounds?: Rectangle) {

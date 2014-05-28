@@ -1620,11 +1620,11 @@ module Shumway.GFX.Geometry {
    * Manages tile caches at different scales.
    */
   export class RenderableTileCache {
-    private _source: IRenderable;
+    private _source: Renderable;
     private _cacheLevels: TileCache [] = [];
     private _tileSize: number;
     private _minUntiledSize: number;
-    constructor(source: IRenderable, tileSize: number, minUntiledSize: number) {
+    constructor(source: Renderable, tileSize: number, minUntiledSize: number) {
       this._source = source;
       this._tileSize = tileSize;
       this._minUntiledSize = minUntiledSize;
@@ -1643,7 +1643,7 @@ module Shumway.GFX.Geometry {
       var scale = pow2(level);
       // Since we use a single tile for dynamic sources, we've got to make sure that it fits in our texture caches ...
 
-      if (this._source.flags & IRenderableFlags.Dynamic) {
+      if (this._source.hasFlags(RenderableFlags.Dynamic)) {
         // .. so try a lower scale level until it fits.
         while (true) {
           scale = pow2(level);
@@ -1656,7 +1656,7 @@ module Shumway.GFX.Geometry {
       }
       // If the source is not scalable don't cache any tiles at a higher scale factor. However, it may still make
       // sense to cache at a lower scale factor in case we need to evict larger cached images.
-      if (!(this._source.flags & IRenderableFlags.Scalable)) {
+      if (!(this._source.hasFlags(RenderableFlags.Scalable))) {
         level = clamp(level, -MIN_CACHE_LEVELS, 0);
       }
       var scale = pow2(level);
@@ -1666,8 +1666,8 @@ module Shumway.GFX.Geometry {
         var bounds = this._source.getBounds().getAbsoluteBounds();
         var scaledBounds = bounds.clone().scale(scale, scale);
         var tileW, tileH;
-        if (this._source.flags & IRenderableFlags.Dynamic ||
-            !(this._source.flags & IRenderableFlags.Tileable) || Math.max(scaledBounds.w, scaledBounds.h) <= this._minUntiledSize) {
+        if (this._source.hasFlags(RenderableFlags.Dynamic) ||
+            !this._source.hasFlags(RenderableFlags.Tileable) || Math.max(scaledBounds.w, scaledBounds.h) <= this._minUntiledSize) {
           tileW = scaledBounds.w;
           tileH = scaledBounds.h;
         } else {
@@ -1689,7 +1689,7 @@ module Shumway.GFX.Geometry {
       var source = this._source;
       for (var i = 0; i < tiles.length; i++) {
         var tile = tiles[i];
-        if (!tile.cachedTextureRegion || !tile.cachedTextureRegion.texture || (source.flags & IRenderableFlags.Dynamic && source.flags & IRenderableFlags.Invalid)) {
+        if (!tile.cachedTextureRegion || !tile.cachedTextureRegion.texture || (source.hasFlags(RenderableFlags.Dynamic | RenderableFlags.Dirty))) {
           if (!uncachedTiles) {
             uncachedTiles = [];
           }
@@ -1699,6 +1699,7 @@ module Shumway.GFX.Geometry {
       if (uncachedTiles) {
         this._cacheTiles(scratchContext, uncachedTiles, cacheImageCallback, scratchBounds);
       }
+      source.removeFlags(RenderableFlags.Dirty);
       return tiles;
     }
 

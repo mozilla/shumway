@@ -1,5 +1,5 @@
 module Shumway {
-  import IRenderable = Shumway.IRenderable;
+  import Renderable = Shumway.Renderable;
   import Rectangle = Shumway.GFX.Geometry.Rectangle;
 
   var SHAPE_ROOT = "../../src/gfx/assets/shapes/";
@@ -21,7 +21,7 @@ module Shumway {
 
   }
 
-  export class VectorShape implements IRenderable {
+  export class VectorShape implements Renderable {
     private _data: any;
     constructor(data) {
       this._data = data;
@@ -70,7 +70,7 @@ module Shumway {
     }
   }
 
-  export class CheckerShape implements IRenderable {
+  export class CheckerShape implements Renderable {
     w: number;
     h: number;
     size: number;
@@ -106,7 +106,7 @@ module Shumway {
     }
   }
 
-  export var Shapes: IRenderable [] = [
+  export var Shapes: Renderable [] = [
 //    new VectorShape(loadShape("sword.json")),
 //    new VectorShape(loadShape("decorate.json")),
 //    new VectorShape(loadShape("guy.json")),
@@ -134,7 +134,7 @@ module Shumway {
     return Shapes[Math.random() * Shapes.length | 0];
   }
 
-  export class ImageShape implements IRenderable {
+  export class ImageShape implements Renderable {
     private _image: HTMLImageElement;
     isDynamic: boolean = false;
     isInvalid: boolean = false;
@@ -162,7 +162,7 @@ module Shumway {
   var scratchCanvas = document.createElement("canvas");
   var scratchCanvasContext = scratchCanvas.getContext("2d");
 
-  export class TimeShape implements IRenderable {
+  export class TimeShape implements Renderable {
     private _bounds: Rectangle;
     properties: {[name: string]: any} = Object.create(null);
     isDynamic: boolean = true;
@@ -189,7 +189,7 @@ module Shumway {
     }
   }
 
-  export class TextShape implements IRenderable {
+  export class TextShape implements Renderable {
     _text: string;
     _bounds: Rectangle;
     _lines: string [][];
@@ -241,7 +241,7 @@ module Shumway {
     }
   }
 
-  export class RectangleShape implements IRenderable {
+  export class RectangleShape implements Renderable {
     private _bounds: Rectangle;
     properties: {[name: string]: any} = {};
     isDynamic: boolean = false;
@@ -268,7 +268,7 @@ module Shumway {
     }
   }
 
-  export class SpriteShape implements IRenderable {
+  export class SpriteShape implements Renderable {
     private _index: number;
     private _bounds: Rectangle;
     constructor(index) {

@@ -194,9 +194,9 @@ module Shumway.GFX {
   }
 
   export class Shape extends Frame {
-    source: IRenderable;
+    source: Renderable;
 
-    constructor(source: IRenderable) {
+    constructor(source: Renderable) {
       super();
       this.source = source;
     }

@@ -80,55 +80,6 @@ interface CanvasRenderingContext2D {
   mozFillRule: string;
 }
 
-module Shumway {
-
-  export enum IRenderableFlags {
-    None          = 0,
-
-    /**
-     * Whether source has dynamic content.
-     */
-    Dynamic       = 1,
-
-    /**
-     * Whether the source's dynamic content has changed. This is only defined if |isDynamic| is true.
-     */
-    Invalid       = 2,
-
-    /**
-     * Whether the source's content can be scaled and drawn at a higher resolution.
-     */
-    Scalable      = 4,
-
-    /**
-     * Whether the source's content should be tiled.
-     */
-    Tileable      = 8
-  }
-
-  export interface IRenderable {
-    /**
-     * Bounds of the source content. This should never change.
-     */
-    getBounds(): Shumway.GFX.Geometry.Rectangle;
-
-    /**
-     * Property bag used to attach dynamic properties to this object.
-     */
-    properties: {[name: string]: any};
-
-    /**
-     * Render source content.
-     */
-    render (context: CanvasRenderingContext2D, clipBounds?: Shumway.GFX.Geometry.Rectangle, options? : any);
-
-    /**
-     * Flags
-     */
-    flags: IRenderableFlags;
-  }
-}
-
 module Shumway.GFX {
   export enum TraceLevel {
     None,

@@ -263,7 +263,7 @@ module Shumway.GFX {
       this._mousePositionLabel = new Label(256, 16);
       this._mousePositionLabel.text = "Hello World";
       var self = this;
-      toolbar.addChild(new Shape(new Renderable(new Rectangle(0, 0, 1024, 32), function (context: CanvasRenderingContext2D) {
+      toolbar.addChild(new Shape(new CustomRenderable(new Rectangle(0, 0, 1024, 32), function (context: CanvasRenderingContext2D) {
         context.fillStyle = ColorStyle.Toolbars;
         context.fillRect(0, 0, self._stage.w, 32);
         this.isInvalid = false;
