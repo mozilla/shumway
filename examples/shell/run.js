@@ -30,6 +30,7 @@ console.time("Load Shared Dependencies");
 
 load("../../build/ts/utilities.js");
 load("../../build/ts/dataBuffer.js");
+load("../../build/ts/ShapeData.js");
 load("../../build/ts/options.js");
 load("../../build/ts/settings.js");
 
