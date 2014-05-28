@@ -240,7 +240,7 @@ module Shumway.AVM2.AS.flash.geom {
         && Math.max(this.y, toIntersect.y) <= Math.min(this.bottom, toIntersect.bottom);
     }
 
-    public clip(clipRect: Rectangle): Rectangle {
+    public intersectInPlace(clipRect: Rectangle): Rectangle {
       var l: number = Math.max(this.x, clipRect.x);
       var r: number = Math.min(this.right, clipRect.right);
       if (l <= r) {
@@ -248,18 +248,20 @@ module Shumway.AVM2.AS.flash.geom {
         var b: number = Math.min(this.bottom, clipRect.bottom);
         if (t <= b) {
           this.setTo(l, t, r - l, b - t);
+          return this;
         }
       }
+      this.width = this.height = 0;
       return this;
     }
 
     public union(toUnion: Rectangle): Rectangle {
       var rect = this.clone();
-      rect.unionWith(toUnion);
+      rect.unionInPlace(toUnion);
       return rect;
     }
 
-    public unionWith(toUnion: Rectangle): Rectangle {
+    public unionInPlace(toUnion: Rectangle): Rectangle {
       if (toUnion.isEmpty()) {
         return;
       }
