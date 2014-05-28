@@ -79,39 +79,22 @@ module Shumway.AVM2.AS.flash.display {
       return Shumway.Bounds.FromRectangle(this._rect);
     }
 
-    private _getPixelUnsafe(x, y): number {
-      var pixelData = this._pixelData;
-      var color = pixelData[y * this._rect.width + x];
-      var alpha = color & 0xff;
-      var a = 0xff / alpha;
-      var red = ((color >> 24) & 0xff) * a;
-      var green = ((color >> 16) & 0xff) * a;
-      var blue = ((color >> 8) & 0xff) * a;
-      return (alpha << 24) | (red << 16) | (green << 8) | blue;
-    }
-
-    private _setPixelUnsafe(x, y, color): void {
-      var pixelData = this._pixelData;
-      var i = y * this._rect.width + x;
-      var alpha = (color >> 24) & 0xff;
-      var a = alpha / 0xff;
-      var red = ((color >> 16) & 0xff) * a;
-      var green = ((color >> 8) & 0xff) * a;
-      var blue = (color & 0xff) * a;
-      pixelData[i] = (red << 24) | (green << 16) | (blue << 8) | alpha;
-    }
-
     private _getPixelData(rect: flash.geom.Rectangle): Uint32Array {
       var r = this.rect.clip(rect);
-      var output = new Uint32Array(r.area);
-      var p = 0;
       var xMin = r.x;
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
+      var pixelData = this._pixelData;
+      var width = this._rect.width;
+      var output = new Uint32Array(r.area);
+      var p = 0;
       for (var y = yMin; y < yMax; y++) {
+        var offset = y * width;
         for (var x = xMin; x < xMax; x++) {
-          output[p++] = this._getPixelUnsafe(x, y);
+          var color = pixelData[offset + x];
+          var alpha = color & 0xff;
+          output[p++] = ((255 * (color >> 8)) / alpha) | (alpha << 24);
         }
       }
       return output;
@@ -123,12 +106,17 @@ module Shumway.AVM2.AS.flash.display {
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
+      var pixelData = this._pixelData;
+      var width = this._rect.width;
       var p = (rect.width * rect.height - r.height) + (xMin - rect.x);
       var padding = rect.width - r.width;
       for (var y = yMin; y < yMax; y++) {
+        var offset = y * width;
         for (var x = xMin; x < xMax; x++) {
           var color = input[p++];
-          this._setPixelUnsafe(x, y, color);
+          var alpha = (color >> 24) & 0xff;
+          pixelData[offset + x] = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
+
         }
         p += padding;
       }
@@ -158,10 +146,7 @@ module Shumway.AVM2.AS.flash.display {
 
     getPixel(x: number /*int*/, y: number /*int*/): number /*uint*/ {
       x = x | 0; y = y | 0;
-      if (!this._rect.contains(x, y)) {
-        return 0;
-      }
-      return this._getPixelUnsafe(x, y) & 0x00ffffff;
+      return this.getPixel32(x, y) & 0x00ffffff;
     }
 
     getPixel32(x: number /*int*/, y: number /*int*/): number /*uint*/ {
@@ -169,7 +154,9 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return 0;
       }
-      return this._getPixelUnsafe(x, y) >>> 0;
+      var color = this._pixelData[y * this._rect.width + x];
+      var alpha = color & 0xff;
+      return (((255 * (color >> 8)) / alpha) | (alpha << 24)) >>> 0;
     }
 
     setPixel(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
@@ -177,8 +164,9 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return;
       }
-      color |= this._pixelData[y * this._rect.width + x] << 24;
-      this._setPixelUnsafe(x, y, color);
+      var i = y * this._rect.width + x;
+      var alpha = this._pixelData[i] & 0xff;
+      this._pixelData[i] = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
     }
 
     setPixel32(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
@@ -186,7 +174,8 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return;
       }
-      this._setPixelUnsafe(x, y, color);
+      var alpha = color >>> 24;
+      this._pixelData[y * this._rect.width + x] = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
     }
 
     applyFilter(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, filter: flash.filters.BitmapFilter): void {
@@ -225,15 +214,19 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     fillRect(rect: flash.geom.Rectangle, color: number /*uint*/): void {
-      color = color >>> 0;
+      var alpha = (color >> 24) & 0xff;
+      color = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
       var r = this.rect.clip(rect);
       var xMin = r.x;
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
+      var pixelData = this._pixelData;
+      var width = this._rect.width;
       for (var y = yMin; y < yMax; y++) {
+        var offset = y * width;
         for (var x = xMin; x < xMax; x++) {
-          this._setPixelUnsafe(x, y, color);
+          pixelData[offset + x] = color;
         }
       }
     }
