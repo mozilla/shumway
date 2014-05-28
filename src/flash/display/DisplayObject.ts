@@ -725,7 +725,7 @@ module Shumway.AVM2.AS.flash.display {
           var container: DisplayObjectContainer = <DisplayObjectContainer>this;
           var children = container._children;
           for (var i = 0; i < children.length; i++) {
-            bounds.unionWith(children[i]._getTransformedBounds(this, includeStrokes));
+            bounds.unionInPlace(children[i]._getTransformedBounds(this, includeStrokes));
           }
         }
         this._removeFlags(invalidFlag);

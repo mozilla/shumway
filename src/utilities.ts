@@ -2262,7 +2262,7 @@ module Shumway {
         y < this.yMin !== y < this.yMax;
     }
 
-    unionWith (other: Bounds): void {
+    unionInPlace (other: Bounds): void {
       this.xMin = Math.min(this.xMin, other.xMin);
       this.yMin = Math.min(this.yMin, other.yMin);
       this.xMax = Math.max(this.xMax, other.xMax);
