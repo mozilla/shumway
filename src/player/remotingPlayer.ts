@@ -67,6 +67,11 @@ module Shumway.Remoting.Player {
       this.writeRectangle(graphics._getContentBounds());
       this.output.writeInt(this.outputAssets.length);
       this.outputAssets.push(graphics.getGraphicsData());
+      var textures = graphics.getUsedTextures();
+      for (var i = 0; i < textures.length; i++) {
+        this.writeBitmapData(textures[i]);
+      }
+      textures.length = 0;
     }
 
     writeBitmapData(bitmapData: BitmapData) {

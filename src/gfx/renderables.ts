@@ -100,7 +100,7 @@ module Shumway.GFX {
   export class RenderableBitmap extends Renderable {
     _flags = RenderableFlags.Dynamic | RenderableFlags.Dirty;
     properties: {[name: string]: any} = {};
-    private _canvas: HTMLCanvasElement;
+    _canvas: HTMLCanvasElement;
     private fillStyle: ColorStyle;
 
     public static FromDataBuffer(dataBuffer: DataBuffer, bounds: Rectangle): RenderableBitmap {
@@ -132,7 +132,7 @@ module Shumway.GFX {
       this._canvas = canvas;
     }
 
-    render(context: CanvasRenderingContext2D, clipBounds: Shumway.GFX.Geometry.Rectangle): void {
+    render(context: CanvasRenderingContext2D, clipBounds: Rectangle): void {
       context.save();
       if (this._canvas) {
         context.drawImage(this._canvas, 0, 0);
@@ -162,20 +162,22 @@ module Shumway.GFX {
 
     private fillStyle: ColorStyle;
     private _pathData: DataBuffer;
+    private _assets: Renderable[];
 
     private static LINE_CAP_STYLES = ['round', 'butt', 'square'];
     private static LINE_JOINT_STYLES = ['round', 'bevel', 'miter'];
 
-    constructor(pathData: DataBuffer, bounds: Rectangle) {
+    constructor(pathData: DataBuffer, assets: Renderable[], bounds: Rectangle) {
       super(bounds);
       this._pathData = pathData;
+      this._assets = assets;
     }
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {
       return this._bounds;
     }
 
-    render(context: CanvasRenderingContext2D, clipBounds: Shumway.GFX.Geometry.Rectangle): void {
+    render(context: CanvasRenderingContext2D, clipBounds: Rectangle): void {
       context.save();
       context.fillRule = context.mozFillRule = "evenodd";
 
@@ -249,6 +251,27 @@ module Shumway.GFX {
             fillPath.moveTo(x, y);
             var color = data.readUnsignedInt();
             context.fillStyle = ColorUtilities.rgbaToCSSStyle(color);
+            break;
+          case PathCommand.BeginBitmapFill:
+            assert(data.bytesAvailable >= 6 + 6 * 8 /* matrix fields as floats */ + 1 + 1);
+            if (fillPath) {
+              context.fill(fillPath);
+            }
+            fillPath = new Path2D();
+            fillPath.moveTo(x, y);
+            var textureId = data.readUnsignedInt();
+            // Skip matrix for now.
+            data.readFloat();
+            data.readFloat();
+            data.readFloat();
+            data.readFloat();
+            data.readFloat();
+            data.readFloat();
+            var repeat = data.readBoolean() ? 'repeat' : 'no-repeat';
+            var smooth = data.readBoolean();
+            var texture = <RenderableBitmap>this._assets[textureId];
+            assert(texture._canvas);
+            context.fillStyle = context.createPattern(texture._canvas, repeat);
             break;
           case PathCommand.EndFill:
             if (fillPath) {

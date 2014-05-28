@@ -48,6 +48,12 @@ module Shumway.AVM2.AS.flash.geom {
       return new flash.geom.Matrix(obj.a, obj.b, obj.c, obj.d, obj.tx, obj.ty);
     }
 
+    // Keep in sync with writeExternal below!
+    public static FromDataBuffer(input: DataBuffer) {
+      return new flash.geom.Matrix(input.readFloat(), input.readFloat(), input.readFloat(),
+                                   input.readFloat(), input.readFloat(), input.readFloat());
+    }
+
     public static FROZEN_IDENTITY_MATRIX: Matrix = Object.freeze(new Matrix());
 
     public a: number;
@@ -531,6 +537,7 @@ module Shumway.AVM2.AS.flash.geom {
              ", tx=" + this.tx + ", ty=" +this.ty + ")";
     }
 
+    // Keep in sync with static FromDataBuffer above!
     public writeExternal(output: DataBuffer) {
       output.writeFloat(this.a);
       output.writeFloat(this.b);
@@ -538,15 +545,6 @@ module Shumway.AVM2.AS.flash.geom {
       output.writeFloat(this.d);
       output.writeFloat(this.tx);
       output.writeFloat(this.ty);
-    }
-
-    public readExternal(input: DataBuffer) {
-      this.a = input.readFloat();
-      this.b = input.readFloat();
-      this.c = input.readFloat();
-      this.d = input.readFloat();
-      this.tx = input.readFloat();
-      this.ty = input.readFloat();
     }
   }
 }

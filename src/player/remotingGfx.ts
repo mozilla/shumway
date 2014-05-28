@@ -177,7 +177,7 @@ module Shumway.Remoting.GFX {
       var pathData = this.inputAssets[assetId];
       this.inputAssets[assetId] = null;
       if (!asset) {
-        context._assets[id] = new RenderableShape(pathData, bounds);
+        context._assets[id] = new RenderableShape(pathData, context._assets, bounds);
       }
     }
 
