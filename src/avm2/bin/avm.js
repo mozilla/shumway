@@ -49,7 +49,6 @@ console = {
  * Load Bare AVM2 Dependencies
  */
 
-load(tsBuildPath + "avm2/global.js");
 load(tsBuildPath + "/utilities.js");
 load(tsBuildPath + "/dataBuffer.js");
 load(tsBuildPath + "/options.js");
@@ -88,7 +87,6 @@ var releaseMode = shellOptions.register(new Option("rel", "release", "boolean", 
 
 load(tsBuildPath + "metrics.js");
 load(jsBuildPath + "avm2/constants.js");
-load(tsBuildPath + "avm2/opcodes.js");
 load(tsBuildPath + "avm2/parser.js");
 load(tsBuildPath + "avm2/domain.js");
 
