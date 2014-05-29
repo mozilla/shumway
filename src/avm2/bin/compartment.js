@@ -20,7 +20,6 @@ var release;
 var jsBuildPath = homePath + "src/";
 var tsBuildPath = homePath + "build/ts/";
 
-load(tsBuildPath + "avm2/global.js");
 load(tsBuildPath + "utilities.js");
 
 
@@ -46,7 +45,6 @@ Timer.start("Loading VM");
 
 load(jsBuildPath + "avm2/constants.js");
 load(tsBuildPath + "avm2/errors.js");
-load(tsBuildPath + "avm2/opcodes.js");
 load(tsBuildPath + "avm2/parser.js");
 load(tsBuildPath + "avm2/bytecode.js");
 load(jsBuildPath + "avm2/disassembler.js");
