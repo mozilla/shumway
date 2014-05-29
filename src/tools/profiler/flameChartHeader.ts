@@ -283,10 +283,10 @@ module Shumway.Tools.Profiler {
           windowEnd = dragInfo.windowEndInitial + mult * delta;
           break;
         case DragTarget.HANDLE_LEFT:
-          windowStart = clamp(dragInfo.windowStartInitial + delta, this._rangeStart, windowEnd - 20);
+          windowStart = clamp(dragInfo.windowStartInitial + delta, this._rangeStart, windowEnd - FlameChartBase.MIN_WINDOW_LEN);
           break;
         case DragTarget.HANDLE_RIGHT:
-          windowEnd = clamp(dragInfo.windowEndInitial + delta, windowStart + 20, this._rangeEnd);
+          windowEnd = clamp(dragInfo.windowEndInitial + delta, windowStart + FlameChartBase.MIN_WINDOW_LEN, this._rangeEnd);
           break;
         default:
           return;

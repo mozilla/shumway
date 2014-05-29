@@ -34,7 +34,7 @@ module Shumway.Tools.Profiler {
     _initialized: boolean;
 
     static DRAGHANDLE_WIDTH = 4;
-    static MIN_WINDOW_LEN = 10;
+    static MIN_WINDOW_LEN = 0.1;
 
     constructor(controller: Controller) {
       this._controller = controller;

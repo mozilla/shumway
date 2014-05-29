@@ -24,13 +24,14 @@ module Shumway.Tools.Profiler {
     private _windowStart: number;
     private _windowEnd: number;
     private _maxDepth: number;
-    private _hasSnapshot: boolean;
+    private _snapshotCount: number;
 
     constructor() {
+      this._controller = null;
       this._buffers = [];
       this._bufferNames = [];
-      this._controller = null;
-      this._hasSnapshot = false;
+      this._maxDepth = 0;
+      this._snapshotCount = 0;
     }
 
     get bufferCount(): number {
@@ -46,8 +47,12 @@ module Shumway.Tools.Profiler {
       this._bufferNames.push(name);
     }
 
-    get hasSnapshot(): boolean {
-      return this._hasSnapshot;
+    get hasSnapshots(): boolean {
+      return (this._snapshotCount > 0);
+    }
+
+    get snapshotCount(): number {
+      return this._snapshotCount;
     }
 
     get startTime(): number {
@@ -78,21 +83,41 @@ module Shumway.Tools.Profiler {
       return this._maxDepth;
     }
 
-    createSnapshot() {
+    forEachBuffer(visitor: (buffer: TimelineBuffer, index: number) => void) {
+      for (var i = 0, n = this.bufferCount; i < n; i++) {
+        visitor(this._buffers[i], i);
+      }
+    }
+
+    forEachSnapshot(visitor: (snapshot: TimelineFrame, bufferIndex: number) => void) {
+      if (!this.hasSnapshots) { return; }
+      for (var i = 0, n = this.bufferCount; i < n; i++) {
+        var buffer = this._buffers[i];
+        if (buffer && buffer.snapshot) {
+          visitor(buffer.snapshot, i);
+        }
+      }
+    }
+
+    createSnapshots() {
       var startTime = Number.MAX_VALUE;
       var endTime = Number.MIN_VALUE;
       var maxDepth = 0;
+      this._snapshotCount = 0;
       for (var i = 0; i < this._buffers.length; i++) {
         var buffer: TimelineBuffer = this._buffers[i];
         buffer.createSnapshot();
-        if (startTime > buffer.snapshot.startTime) {
-          startTime = buffer.snapshot.startTime;
-        }
-        if (endTime < buffer.snapshot.endTime) {
-          endTime = buffer.snapshot.endTime;
-        }
-        if (maxDepth < buffer.maxDepth) {
-          maxDepth = buffer.maxDepth
+        if (buffer.snapshot) {
+          if (startTime > buffer.snapshot.startTime) {
+            startTime = buffer.snapshot.startTime;
+          }
+          if (endTime < buffer.snapshot.endTime) {
+            endTime = buffer.snapshot.endTime;
+          }
+          if (maxDepth < buffer.maxDepth) {
+            maxDepth = buffer.maxDepth;
+          }
+          this._snapshotCount++;
         }
       }
       this._startTime = startTime;
@@ -100,7 +125,6 @@ module Shumway.Tools.Profiler {
       this._windowStart = startTime;
       this._windowEnd = endTime;
       this._maxDepth = maxDepth;
-      this._hasSnapshot = true;
     }
 
     setWindow(start: number, end: number) {
@@ -130,7 +154,7 @@ module Shumway.Tools.Profiler {
         var buffer: TimelineBuffer = this._buffers[i];
         buffer.reset();
       }
-      this._hasSnapshot = false;
+      this._snapshotCount = 0;
     }
   }
 }

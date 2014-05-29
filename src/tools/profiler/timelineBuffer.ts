@@ -19,6 +19,8 @@ module Shumway.Tools.Profiler {
   export interface TimelineItemKind {
     id: number;
     name: string;
+    bgColor: string;
+    textColor: string;
     visible: boolean;
   }
 
@@ -66,6 +68,10 @@ module Shumway.Tools.Profiler {
       return this._maxDepth;
     }
 
+    get depth(): number {
+      return this._depth;
+    }
+
     private _getKindId(name: string):number {
       if (this._kindNameMap[name] === undefined) {
         var kind: TimelineItemKind = <TimelineItemKind>{
@@ -97,10 +103,12 @@ module Shumway.Tools.Profiler {
     createSnapshot(count: number = Number.MAX_VALUE) {
       var times = this._times;
       var kinds = this._kinds;
-      var range = new TimelineFrame(null, null, NaN, NaN);
+      var range = new TimelineFrame(null, null, NaN, NaN, 0);
       var stack: TimelineFrame [] = [range];
       var topLevelFrameCount = 0;
       var maxDepth = 0;
+      var currentDepth = 0;
+
       this._marks.forEachInReverse(function (mark, i) {
         var kind = kinds[mark & 0xFFFF];
         if (kind.visible) {
@@ -114,14 +122,16 @@ module Shumway.Tools.Profiler {
                 return true;
               }
             }
-            stack.push(new TimelineFrame(stack[stackLength - 1], kind, NaN, time));
-            if (maxDepth < stackLength + 1) {
-              maxDepth = stackLength + 1;
+            stack.push(new TimelineFrame(stack[stackLength - 1], kind, NaN, time, currentDepth));
+            currentDepth++;
+            if (maxDepth < currentDepth) {
+              maxDepth = currentDepth;
             }
           } else if (action === TimelineBuffer.ENTER) {
+            currentDepth--;
             var node = stack.pop();
-            var top = stack[stack.length - 1];
             node.startTime = time;
+            var top = stack[stack.length - 1];
             if (!top.children) {
               top.children = [node];
             } else {
@@ -130,6 +140,7 @@ module Shumway.Tools.Profiler {
           }
         }
       });
+
       if (range.children && range.children.length) {
         range.startTime = range.children[0].startTime;
         range.endTime = range.children[range.children.length - 1].endTime;
