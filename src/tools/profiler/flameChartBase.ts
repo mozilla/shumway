@@ -77,6 +77,7 @@ module Shumway.Tools.Profiler {
     public destroy() {
       this._mouseController.destroy();
       this._mouseController = null;
+      this._controller.container.removeChild(this._canvas);
       this._controller = null;
     }
 
