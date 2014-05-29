@@ -101,7 +101,7 @@ module Shumway.AVM2.AS.flash.display {
         for (var x = xMin; x < xMax; x++) {
           var color = pixelData[offset + x];
           var alpha = color & 0xff;
-          output[p++] = ((255 * (color >> 8)) / alpha) | (alpha << 24);
+          output[p++] = ((255 * (color >>> 8)) / alpha) | (alpha << 24);
         }
       }
       return output;
@@ -120,13 +120,13 @@ module Shumway.AVM2.AS.flash.display {
       var width = this._rect.width;
       var p = (rect.width * rect.height - r.height) + (xMin - rect.x);
       var padding = rect.width - r.width;
+      var alphaMask = this._transparent ? 0x00 : 0xff;
       for (var y = yMin; y < yMax; y++) {
         var offset = y * width;
         for (var x = xMin; x < xMax; x++) {
           var color = input[p++];
-          var alpha = (color >> 24) & 0xff;
+          var alpha = (color >> 24) & alphaMask;
           pixelData[offset + x] = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
-
         }
         p += padding;
       }
@@ -167,7 +167,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       var color = this._pixelData[y * this._rect.width + x];
       var alpha = color & 0xff;
-      return (((255 * (color >> 8)) / alpha) | (alpha << 24)) >>> 0;
+      return (((255 * (color >>> 8)) / alpha) | (alpha << 24)) >>> 0;
     }
 
     setPixel(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
@@ -186,8 +186,13 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return;
       }
-      var alpha = color >>> 24;
-      this._pixelData[y * this._rect.width + x] = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
+      if (this._transparent) {
+        var alpha = color >>> 24;
+        color = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
+      } else {
+        color = (color << 8) | 0xff;
+      }
+      this._pixelData[y * this._rect.width + x] = color;
       this._isDirty = true;
     }
 
@@ -228,8 +233,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     fillRect(rect: flash.geom.Rectangle, color: number /*uint*/): void {
-      var alpha = (color >> 24) & 0xff;
-      color = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
+      if (this._transparent) {
+        var alpha = color >>> 24;
+        color = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
+      } else {
+        color = (color << 8) | 0xff;
+      }
       var r = this.rect.intersectInPlace(rect);
       if (r.isEmpty()) {
         return;

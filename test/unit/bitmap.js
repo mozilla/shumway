@@ -25,4 +25,11 @@
     eq(bd.getPixel32(75, 75), 0xff000000);
   });
 
+  unitTests.push(function () {
+    var bd = new BitmapData(100, 100, false, 0xff0033);
+    eq(bd.getPixel32(0, 0), 0xffff0033);
+    bd.setPixel32(0, 0, 0x11ff0033);
+    eq(bd.getPixel32(0, 0), 0xffff0033);
+  });
+
 })();
