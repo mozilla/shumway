@@ -162,7 +162,7 @@ module Shumway.AVM2.AS.flash.display {
   }
   // end of GFX geometry.ts
 
-  export class Graphics extends ASNative {
+  export class Graphics extends ASNative implements Shumway.Remoting.IRemotable {
 
     static classInitializer: any = null;
     static initializer: any = null;

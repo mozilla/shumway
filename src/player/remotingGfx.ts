@@ -214,6 +214,15 @@ module Shumway.Remoting.GFX {
       if (hasBits & UpdateFrameTagBits.HasMatrix) {
         frame.matrix = this._readMatrix();
       }
+      if (hasBits & UpdateFrameTagBits.HasColorTransform) {
+        frame.colorMatrix = this._readColorMatrix();
+      }
+      if (hasBits & UpdateFrameTagBits.HasMiscellaneousProperties) {
+        frame.blendMode = input.readInt();
+        // TODO: Should make a proper flag for this.
+        input.readBoolean(); // Visibility
+        // frame.alpha = input.readBoolean() ? 1 : 0;
+      }
       if (hasBits & UpdateFrameTagBits.HasChildren) {
         var count = input.readInt();
         var container = <FrameContainer>frame;
@@ -224,15 +233,6 @@ module Shumway.Remoting.GFX {
           assert (child);
           container.addChild(child);
         }
-      }
-      if (hasBits & UpdateFrameTagBits.HasColorTransform) {
-        frame.colorMatrix = this._readColorMatrix();
-      }
-      if (hasBits & UpdateFrameTagBits.HasMiscellaneousProperties) {
-        frame.blendMode = input.readInt();
-        // TODO: Should make a proper flag for this.
-        input.readBoolean(); // Visibility
-        // frame.alpha = input.readBoolean() ? 1 : 0;
       }
     }
   }

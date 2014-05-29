@@ -232,7 +232,7 @@ module Shumway.AVM2.AS.flash.display {
    * since that's what the AS3 specifies.
    */
 
-  export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable {
+  export class DisplayObject extends flash.events.EventDispatcher implements IBitmapDrawable, Shumway.Remoting.IRemotable {
 
     /**
      * Every displayObject is assigned an unique integer ID.

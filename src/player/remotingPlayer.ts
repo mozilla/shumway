@@ -47,15 +47,6 @@ module Shumway.Remoting.Player {
       var serializer = this;
       stage.visit(function (displayObject) {
         serializer.writeDisplayObject(displayObject);
-        var graphics = displayObject._getGraphics();
-        if (graphics) {
-          serializer.writeGraphics(graphics);
-        } else if (display.Bitmap.isType(displayObject)) {
-          var bitmap = <Bitmap>displayObject;
-          if (bitmap.bitmapData) {
-            serializer.writeBitmapData(bitmap.bitmapData);
-          }
-        }
         return VisitorFlags.Continue;
       }, VisitorFlags.None);
     }
@@ -85,44 +76,35 @@ module Shumway.Remoting.Player {
     }
 
     writeDisplayObject(displayObject: DisplayObject) {
-      var graphics = displayObject._getGraphics();
-      var bitmapData = display.Bitmap.isType(displayObject) && (<Bitmap>displayObject).bitmapData;
-
+      // Write Header
       this.output.writeInt(MessageTag.UpdateFrame);
       this.output.writeInt(displayObject._id);
-      var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
 
-      var hasChildren = this.phase === RemotingPhase.References && displayObject._hasAnyFlags(DisplayObjectFlags.DirtyChildren | DisplayObjectFlags.DirtyGraphics | DisplayObjectFlags.DirtyBitmapData);
+      var hasMatrix = displayObject._hasFlags(DisplayObjectFlags.DirtyMatrix);
       var hasColorTransform = displayObject._hasFlags(DisplayObjectFlags.DirtyColorTransform);
       var hasMiscellaneousProperties = displayObject._hasFlags(DisplayObjectFlags.DirtyMiscellaneousProperties);
 
-      var hasBits = 0;
-      hasBits |= hasMatrix         ? UpdateFrameTagBits.HasMatrix         : 0;
-      hasBits |= hasChildren       ? UpdateFrameTagBits.HasChildren       : 0;
-      hasBits |= hasColorTransform ? UpdateFrameTagBits.HasColorTransform : 0;
-      hasBits |= hasMiscellaneousProperties ? UpdateFrameTagBits.HasMiscellaneousProperties : 0;
+      // Check if any children need to be written. These are remoting children, not just display object children.
+      var hasRemotableChildren = false;
+      if (this.phase === RemotingPhase.References) {
+        hasRemotableChildren = displayObject._hasAnyFlags (
+          DisplayObjectFlags.DirtyChildren     |
+          DisplayObjectFlags.DirtyGraphics     |
+          DisplayObjectFlags.DirtyBitmapData
+        );
+      }
 
+      // Write Has Bits
+      var hasBits = 0;
+      hasBits |= hasMatrix                  ? UpdateFrameTagBits.HasMatrix         : 0;
+      hasBits |= hasColorTransform          ? UpdateFrameTagBits.HasColorTransform : 0;
+      hasBits |= hasMiscellaneousProperties ? UpdateFrameTagBits.HasMiscellaneousProperties : 0;
+      hasBits |= hasRemotableChildren       ? UpdateFrameTagBits.HasChildren       : 0;
       this.output.writeInt(hasBits);
+
+      // Write Properties
       if (hasMatrix) {
         this.writeMatrix(displayObject._getMatrix());
-      }
-      if (hasChildren) {
-        var count = (graphics || bitmapData) ? 1 : 0;
-        var children = DisplayObjectContainer.isType(displayObject) ? (<DisplayObjectContainer>displayObject)._children : null;
-        if (children) {
-          count += children.length;
-        }
-        this.output.writeInt(count);
-        if (graphics) {
-          this.output.writeInt(IDMask.Asset | graphics._id);
-        } else if (bitmapData) {
-          this.output.writeInt(IDMask.Asset | bitmapData._id);
-        }
-        if (children) {
-          for (var i = 0; i < children.length; i++) {
-            this.output.writeInt(children[i]._id);
-          }
-        }
       }
       if (hasColorTransform) {
         this.writeColorTransform(displayObject._colorTransform);
@@ -131,8 +113,47 @@ module Shumway.Remoting.Player {
         this.output.writeInt(BlendMode.toNumber(displayObject._blendMode));
         this.output.writeBoolean(displayObject._hasFlags(DisplayObjectFlags.Visible));
       }
+
+      var bitmap: Bitmap = null;
+      if (display.Bitmap.isType(displayObject)) {
+        bitmap = <Bitmap>displayObject;
+      }
+      var graphics = displayObject._getGraphics();
+      if (hasRemotableChildren) {
+        if (bitmap) {
+          this.output.writeInt(1);
+          this.output.writeInt(IDMask.Asset | bitmap.bitmapData._id);
+        } else {
+          // Check if we have a graphics object and write that as a child first.
+          var count = graphics ? 1 : 0;
+          var children = null;
+          if (DisplayObjectContainer.isType(displayObject)) {
+            children = (<DisplayObjectContainer>displayObject)._children;
+            count += children.length;
+          }
+          this.output.writeInt(count);
+          if (graphics) {
+            this.output.writeInt(IDMask.Asset | graphics._id);
+          }
+          // Write all the display object children.
+          if (children) {
+            for (var i = 0; i < children.length; i++) {
+              this.output.writeInt(children[i]._id);
+            }
+          }
+        }
+      }
       if (this.phase === RemotingPhase.References) {
         displayObject._removeFlags(DisplayObjectFlags.Dirty);
+      }
+
+      // Visit remotable child objects that are not otherwise visited.
+      if (graphics) {
+        this.writeGraphics(graphics);
+      } else if (bitmap) {
+        if (bitmap.bitmapData) {
+          this.writeBitmapData(bitmap.bitmapData);
+        }
       }
     }
 

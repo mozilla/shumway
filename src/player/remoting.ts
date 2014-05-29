@@ -16,6 +16,10 @@
 module Shumway.Remoting {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
+  export interface IRemotable {
+    _id: number;
+  }
+
   /**
    * Remoting phases.
    */

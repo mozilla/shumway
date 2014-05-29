@@ -24,7 +24,7 @@ module Shumway.AVM2.AS.flash.display {
 
   import Rectangle = flash.geom.Rectangle;
 
-  export class BitmapData extends ASNative implements IBitmapDrawable {
+  export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
