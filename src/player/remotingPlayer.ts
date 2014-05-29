@@ -15,7 +15,7 @@
  */
 module Shumway.Remoting.Player {
   import MessageTag = Shumway.Remoting.MessageTag;
-  import UpdateFrameTagBits = Shumway.Remoting.UpdateFrameTagBits;
+  import MessageBits = Shumway.Remoting.MessageBits;
 
   import flash = Shumway.AVM2.AS.flash;
   import Stage = flash.display.Stage;
@@ -167,9 +167,9 @@ module Shumway.Remoting.Player {
       }
 
       var hasBits = 0;
-      hasBits |= matrix ? UpdateFrameTagBits.HasMatrix : 0;
-      hasBits |= UpdateFrameTagBits.HasChildren;
+      hasBits |= matrix         ? UpdateFrameTagBits.HasMatrix : 0;
       hasBits |= colorTransform ? UpdateFrameTagBits.HasColorTransform : 0;
+      hasBits |= clipRect       ? UpdateFrameTagBits.HasScrollRect : 0;
 
       this.output.writeInt(hasBits);
       if (matrix) {
@@ -177,6 +177,9 @@ module Shumway.Remoting.Player {
       }
       if (colorTransform) {
         this.writeColorTransform(colorTransform);
+      }
+      if (clipRect) {
+        this.writeRectangle(Bounds.FromRectangle(clipRect));
       }
       this.output.writeInt(BlendMode.toNumber(blendMode));
       this.output.writeBoolean(smoothing);

@@ -170,6 +170,10 @@ module Shumway.GFX {
       context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
       context.restore();
     }
+
+    public getContext(): CanvasRenderingContext2D {
+      return this._canvas.getContext('2d');
+    }
   }
 
   export class RenderableShape extends Renderable {

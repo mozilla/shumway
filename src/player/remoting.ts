@@ -38,12 +38,13 @@ module Shumway.Remoting {
     References
   }
 
-  export enum UpdateFrameTagBits {
+  export enum MessageBits {
     HasMatrix                   = 0x0001,
     HasBounds                   = 0x0002,
     HasChildren                 = 0x0004,
     HasColorTransform           = 0x0008,
-    HasMiscellaneousProperties  = 0x0010
+    HasScrollRect               = 0x0010,
+    HasMiscellaneousProperties  = 0x0020
   }
 
   export enum IDMask {

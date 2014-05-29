@@ -216,19 +216,19 @@ module Shumway.Remoting.GFX {
         context.root.addChild(frame);
       }
       var hasBits = input.readInt();
-      if (hasBits & UpdateFrameTagBits.HasMatrix) {
+      if (hasBits & MessageBits.HasMatrix) {
         frame.matrix = this._readMatrix();
       }
-      if (hasBits & UpdateFrameTagBits.HasColorTransform) {
+      if (hasBits & MessageBits.HasColorTransform) {
         frame.colorMatrix = this._readColorMatrix();
       }
-      if (hasBits & UpdateFrameTagBits.HasMiscellaneousProperties) {
+      if (hasBits & MessageBits.HasMiscellaneousProperties) {
         frame.blendMode = input.readInt();
         // TODO: Should make a proper flag for this.
         input.readBoolean(); // Visibility
         // frame.alpha = input.readBoolean() ? 1 : 0;
       }
-      if (hasBits & UpdateFrameTagBits.HasChildren) {
+      if (hasBits & MessageBits.HasChildren) {
         var count = input.readInt();
         var container = <FrameContainer>frame;
         container.clearChildren();
@@ -249,37 +249,35 @@ module Shumway.Remoting.GFX {
       var hasBits = input.readInt();
       var matrix;
       var colorMatrix;
-      if (hasBits & UpdateFrameTagBits.HasMatrix) {
+      var clipRect;
+      if (hasBits & MessageBits.HasMatrix) {
         matrix = this._readMatrix();
       }
-      if (hasBits & UpdateFrameTagBits.HasColorTransform) {
+      if (hasBits & MessageBits.HasColorTransform) {
         colorMatrix = this._readColorMatrix();
+      }
+      if (hasBits & MessageBits.HasScrollRect) {
+        clipRect = this._readRectangle();
       }
       var blendMode = input.readInt();
       input.readBoolean(); // Smoothing
-      var bitmap = context._assets[bitmapDataId];
+      var target = context._assets[bitmapDataId];
       var source = context._frames[sourceId];
-      this._cacheAsBitmap(source, matrix, colorMatrix, blendMode);
+      var bitmap = this._cacheAsBitmap(source);
+      var ctx = (<RenderableBitmap>target).getContext();
+      ctx.drawImage(bitmap._canvas, 0, 0);
     }
 
-    private _cacheAsBitmap(source: Frame, matrix: Matrix, colorMatrix: ColorMatrix, blendMode: number) {
-      var frame = new FrameContainer;
-      if (matrix) {
-        frame.matrix = matrix;
-      }
-      if (colorMatrix) {
-        frame.colorMatrix = colorMatrix;
-      }
-      frame.blendMode = blendMode;
-      frame._children[0] = source;
+    private _cacheAsBitmap(source: Frame): RenderableBitmap {
       var canvas = document.createElement('canvas');
-      var bounds = frame.getBounds();
+      var bounds = source.getBounds();
       canvas.width = bounds.w;
       canvas.height = bounds.h;
       var stage = new Stage(bounds.w, bounds.h);
-      stage.addChild(frame);
+      stage._children[0] = source;
       var renderer = new Canvas2DStageRenderer(canvas, stage);
       renderer.render();
+      return new RenderableBitmap(canvas, bounds);
     }
   }
 }
