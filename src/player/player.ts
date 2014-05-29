@@ -35,6 +35,7 @@ module Shumway {
   import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
 
   import Remoting = Shumway.Remoting;
+  import RemotingPhase = Remoting.RemotingPhase;
   import IPlayerChannel = Remoting.IPlayerChannel;
 
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
@@ -190,15 +191,15 @@ module Shumway {
       serializer.output = updates;
       serializer.outputAssets = assets;
 
-      serializer.phase = Remoting.RemotingPhase.Objects;
-      enterPlayerTimeline("writeStage");
+      serializer.phase = RemotingPhase.Objects;
+      enterPlayerTimeline("write objects");
       serializer.writeStage(this._stage);
-      leavePlayerTimeline("writeStage");
+      leavePlayerTimeline("write objects");
 
-      serializer.phase = Remoting.RemotingPhase.References;
-      enterPlayerTimeline("writeStage 2");
+      serializer.phase = RemotingPhase.References;
+      enterPlayerTimeline("write references");
       serializer.writeStage(this._stage);
-      leavePlayerTimeline("writeStage 2");
+      leavePlayerTimeline("write references");
 
       updates.writeInt(Remoting.MessageTag.EOF);
 

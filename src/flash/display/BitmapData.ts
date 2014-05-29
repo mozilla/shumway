@@ -26,7 +26,7 @@ module Shumway.AVM2.AS.flash.display {
 
   import Remoting = Shumway.Remoting;
 
-  export class BitmapData extends ASNative implements IBitmapDrawable {
+  export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
 
     // Called whenever the class is initialized.
     static classInitializer: any = null;
