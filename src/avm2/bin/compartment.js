@@ -79,7 +79,7 @@ load(tsBuildPath + "avm2/natives/int32Vector.js");
 load(tsBuildPath + "avm2/natives/uint32Vector.js");
 load(tsBuildPath + "avm2/natives/float64Vector.js");
 load(tsBuildPath + "avm2/native.js");
-load(tsBuildPath + "avm2/natives/genericVector.js");
+load(tsBuildPath + "avm2/natives/GenericVector.js");
 load(tsBuildPath + "avm2/natives/dictionary.js");
 load(tsBuildPath + "avm2/natives/proxy.js");
 load(tsBuildPath + "avm2/natives/xml.js");
