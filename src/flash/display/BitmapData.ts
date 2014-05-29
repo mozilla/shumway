@@ -232,14 +232,10 @@ module Shumway.AVM2.AS.flash.display {
 
       //serializer.writeBitmapData(this);
 
-      serializer.writeReferences = false;
-      serializer.clearDirtyBits = false;
       enterPlayerTimeline("cacheAsBitmap");
       serializer.writeStage(<flash.display.DisplayObject>source);
       leavePlayerTimeline("cacheAsBitmap");
 
-      serializer.writeReferences = true;
-      serializer.clearDirtyBits = true;
       enterPlayerTimeline("cacheAsBitmap 2");
       serializer.writeStage(<flash.display.DisplayObject>source);
       leavePlayerTimeline("cacheAsBitmap 2");
