@@ -43,7 +43,7 @@ module Shumway.Remoting.Player {
 
     public phase: RemotingPhase = RemotingPhase.Objects;
 
-    writeStage(stage: Stage) {
+    writeStage(stage: DisplayObject) {
       var serializer = this;
       stage.visit(function (displayObject) {
         serializer.writeDisplayObject(displayObject);
@@ -154,6 +154,33 @@ module Shumway.Remoting.Player {
         if (bitmap.bitmapData) {
           this.writeBitmapData(bitmap.bitmapData);
         }
+      }
+    }
+
+    writeBitmapCacheEntry(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, smoothing: boolean = false) {
+      this.output.writeInt(MessageTag.UpdateFrame);
+      this.output.writeInt(IDMask.Cache | bitmapData._id);
+
+      var hasBits = 0;
+      hasBits |= matrix ? UpdateFrameTagBits.HasMatrix : 0;
+      hasBits |= UpdateFrameTagBits.HasChildren;
+      hasBits |= colorTransform ? UpdateFrameTagBits.HasColorTransform : 0;
+      hasBits |= UpdateFrameTagBits.HasMiscellaneousProperties;
+
+      this.output.writeInt(hasBits);
+      if (matrix) {
+        this.writeMatrix(matrix);
+      }
+      this.output.writeInt(1);
+      //this.output.writeInt(IDMask.Asset | bitmapData._id);
+      this.output.writeInt(source._id);
+      if (colorTransform) {
+        this.writeColorTransform(colorTransform);
+      }
+      this.output.writeInt(BlendMode.toNumber(blendMode));
+      this.output.writeBoolean(true);
+      if (this.clearDirtyBits) {
+        source._removeFlags(DisplayObjectFlags.Dirty);
       }
     }
 

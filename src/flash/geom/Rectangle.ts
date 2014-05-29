@@ -223,16 +223,7 @@ module Shumway.AVM2.AS.flash.geom {
     }
 
     public intersection(toIntersect: Rectangle): Rectangle {
-      var l: number = Math.max(this.x, toIntersect.x);
-      var r: number = Math.min(this.right, toIntersect.right);
-      if (l < r) {
-        var t: number = Math.max(this.y, toIntersect.y);
-        var b: number = Math.min(this.bottom, toIntersect.bottom);
-        if (t < b) {
-          return new Rectangle(l, t, r - l, b - t);
-        }
-      }
-      return new Rectangle();
+      return this.clone().intersectInPlace(toIntersect);
     }
 
     public intersects(toIntersect: Rectangle): boolean {
@@ -251,14 +242,12 @@ module Shumway.AVM2.AS.flash.geom {
           return this;
         }
       }
-      this.width = this.height = 0;
+      this.setEmpty();
       return this;
     }
 
     public union(toUnion: Rectangle): Rectangle {
-      var rect = this.clone();
-      rect.unionInPlace(toUnion);
-      return rect;
+      return this.clone().unionInPlace(toUnion);
     }
 
     public unionInPlace(toUnion: Rectangle): Rectangle {
