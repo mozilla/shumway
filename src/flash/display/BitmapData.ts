@@ -24,6 +24,8 @@ module Shumway.AVM2.AS.flash.display {
 
   import Rectangle = flash.geom.Rectangle;
 
+  import Remoting = Shumway.Remoting;
+
   export class BitmapData extends ASNative implements IBitmapDrawable {
 
     // Called whenever the class is initialized.
@@ -232,10 +234,12 @@ module Shumway.AVM2.AS.flash.display {
 
       //serializer.writeBitmapData(this);
 
+      serializer.phase = Remoting.RemotingPhase.Objects;
       enterPlayerTimeline("cacheAsBitmap");
       serializer.writeStage(<flash.display.DisplayObject>source);
       leavePlayerTimeline("cacheAsBitmap");
 
+      serializer.phase = Remoting.RemotingPhase.References;
       enterPlayerTimeline("cacheAsBitmap 2");
       serializer.writeStage(<flash.display.DisplayObject>source);
       leavePlayerTimeline("cacheAsBitmap 2");
