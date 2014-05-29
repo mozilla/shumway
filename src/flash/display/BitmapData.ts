@@ -21,6 +21,7 @@ module Shumway.AVM2.AS.flash.display {
 
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
+  import AVM2 = Shumway.AVM2.Runtime.AVM2;
 
   import Rectangle = flash.geom.Rectangle;
 
@@ -233,7 +234,8 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     draw(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
-      Shumway.Player.currentPlayer.bitmapDataDraw(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
+      var serializer : IBitmapDataSerializer = AVM2.instance.globals['Shumway.Player.Utils'];
+      serializer.bitmapDataDraw(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
     }
     drawWithQuality(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false, quality: string = null): void {
       source = source; matrix = matrix; colorTransform = colorTransform; blendMode = asCoerceString(blendMode); clipRect = clipRect; smoothing = !!smoothing; quality = asCoerceString(quality);
@@ -363,5 +365,9 @@ module Shumway.AVM2.AS.flash.display {
       rect = rect; compressor = compressor; byteArray = byteArray;
       notImplemented("public flash.display.BitmapData::encode"); return;
     }
+  }
+
+  export interface IBitmapDataSerializer {
+    bitmapDataDraw(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix, colorTransform: flash.geom.ColorTransform, blendMode: string, clipRect: flash.geom.Rectangle, smoothing: boolean);
   }
 }

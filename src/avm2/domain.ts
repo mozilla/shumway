@@ -135,6 +135,8 @@ module Shumway.AVM2.Runtime {
     public isAVM1Loaded: boolean;
     public exception: any;
     public exceptions: any [];
+    public globals: Map<any>;
+
 
     public static instance: AVM2;
     public static initialize(sysMode: ExecutionMode, appMode: ExecutionMode, loadAVM1: boolean) {
@@ -156,6 +158,8 @@ module Shumway.AVM2.Runtime {
        */
       this.exception = { value: undefined };
       this.exceptions = [];
+
+      this.globals = createEmptyObject();
     }
 
     // We sometimes need to know where we came from, such as in

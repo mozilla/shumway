@@ -21,6 +21,7 @@ module Shumway {
   import FrameContainer = Shumway.GFX.FrameContainer;
   import Easel = Shumway.GFX.Easel;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
+  import AVM2 = Shumway.AVM2.Runtime.AVM2;
 
   import Event = flash.events.Event;
   import DisplayObject = flash.display.DisplayObject;
@@ -33,6 +34,8 @@ module Shumway {
   import MouseEventDispatcher = flash.ui.MouseEventDispatcher;
   import KeyboardEventData = Shumway.AVM2.AS.flash.ui.KeyboardEventData;
   import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
+
+  import IBitmapDataSerializer = flash.display.IBitmapDataSerializer;
 
   import Remoting = Shumway.Remoting;
   import IPlayerChannel = Remoting.IPlayerChannel;
@@ -55,7 +58,7 @@ module Shumway {
    * This class brings everything together. Load the swf, runs the event loop and
    * synchronizes the frame tree with the display list.
    */
-  export class Player {
+  export class Player implements IBitmapDataSerializer {
     private _stage: flash.display.Stage;
     private _loader: flash.display.Loader;
     private _loaderInfo: flash.display.LoaderInfo;
@@ -67,8 +70,6 @@ module Shumway {
 
     private _mouseEventDispatcher: MouseEventDispatcher;
     private _keyboardEventDispatcher: KeyboardEventDispatcher;
-
-    static currentPlayer: Player = null;
 
     /**
      * Time since the last time we've synchronized the display list.
@@ -95,7 +96,7 @@ module Shumway {
 
       this._addEventListeners();
 
-      Player.currentPlayer = this;
+      AVM2.instance.globals['Shumway.Player.Utils'] = this;
     }
 
     private _addEventListeners() {
