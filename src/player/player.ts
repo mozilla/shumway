@@ -61,7 +61,9 @@ module Shumway {
     private _loaderInfo: flash.display.LoaderInfo;
     private _syncTimeout: number;
     private _frameTimeout: number;
-    private _channel: IPlayerChannel;
+
+    /* Make this temporarily protected */
+    _channel: IPlayerChannel;
 
     private static _syncFrameRate = 60;
 

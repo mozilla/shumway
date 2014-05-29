@@ -152,14 +152,14 @@ module Shumway.Remoting.Player {
       }
       this.output.writeInt(1);
       //this.output.writeInt(IDMask.Asset | bitmapData._id);
-      this.output.writeInt(source._id);
+      this.output.writeInt((<flash.display.DisplayObject>source)._id);
       if (colorTransform) {
         this.writeColorTransform(colorTransform);
       }
       this.output.writeInt(BlendMode.toNumber(blendMode));
       this.output.writeBoolean(true);
-      if (this.clearDirtyBits) {
-        source._removeFlags(DisplayObjectFlags.Dirty);
+      if (this.phase === RemotingPhase.References) {
+        (<flash.display.DisplayObject>source)._removeFlags(DisplayObjectFlags.Dirty);
       }
     }
 

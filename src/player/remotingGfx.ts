@@ -245,14 +245,15 @@ module Shumway.Remoting.GFX {
       }
     }
 
-    private _cacheAsBitmap(frame) {
+    private _cacheAsBitmap(frame: Shumway.GFX.Frame) {
       var canvas = document.createElement('canvas');
       var bounds = frame.getBounds();
       canvas.width = bounds.w;
       canvas.height = bounds.h;
-      var stage = new Stage(bounds.w, bounds.h);
+      var stage = new Shumway.GFX.Stage(bounds.w, bounds.h);
       stage.addChild(frame);
-      var renderer = new Canvas2DStageRenderer(canvas, stage);
+      var renderer = new Shumway.GFX.Canvas2DStageRenderer(canvas, stage);
+      debugger;
       renderer.render();
     }
   }
