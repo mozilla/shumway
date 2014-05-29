@@ -68,6 +68,7 @@ module Shumway {
     private _mouseEventDispatcher: MouseEventDispatcher;
     private _keyboardEventDispatcher: KeyboardEventDispatcher;
 
+    static currentPlayer: Player = null;
 
     /**
      * Time since the last time we've synchronized the display list.
@@ -93,6 +94,8 @@ module Shumway {
       channel.registerForEventUpdates(this._processEventUpdates.bind(this));
 
       this._addEventListeners();
+
+      Player.currentPlayer = this;
     }
 
     private _addEventListeners() {
@@ -148,6 +151,7 @@ module Shumway {
         stage.stageWidth = loaderInfo.width;
         stage.stageHeight = loaderInfo.height;
         stage.addChildAtDepth(root, 0);
+        self._pumpUpdates();
         self._enterLoops();
       });
 

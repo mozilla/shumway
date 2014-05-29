@@ -202,13 +202,19 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var context = this.context;
       var id = input.readInt();
-      var firstFrame = context._frames.length === 0;
-      var frame = context._frames[id];
-      if (!frame) {
-        frame = context._frames[id] = new FrameContainer()
-      }
-      if (firstFrame) {
-        context.root.addChild(frame);
+      var cacheAsBitmap = id & IDMask.Cache;
+      var frame;
+      if (cacheAsBitmap) {
+        frame = new FrameContainer();
+      } else {
+        var firstFrame = context._frames.length === 0;
+        frame = context._frames[id];
+        if (!frame) {
+          frame = context._frames[id] = new FrameContainer();
+        }
+        if (firstFrame) {
+          context.root.addChild(frame);
+        }
       }
       var hasBits = input.readInt();
       if (hasBits & UpdateFrameTagBits.HasMatrix) {
@@ -234,6 +240,20 @@ module Shumway.Remoting.GFX {
         input.readBoolean(); // Visibility
         // frame.alpha = input.readBoolean() ? 1 : 0;
       }
+      if (cacheAsBitmap) {
+        this._cacheAsBitmap(frame);
+      }
+    }
+
+    private _cacheAsBitmap(frame) {
+      var canvas = document.createElement('canvas');
+      var bounds = frame.getBounds();
+      canvas.width = bounds.w;
+      canvas.height = bounds.h;
+      var stage = new Stage(bounds.w, bounds.h);
+      stage.addChild(frame);
+      var renderer = new Canvas2DStageRenderer(canvas, stage);
+      renderer.render();
     }
   }
 }

@@ -221,6 +221,36 @@ module Shumway.AVM2.AS.flash.display {
 
     draw(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
       source = source; matrix = matrix; colorTransform = colorTransform; blendMode = asCoerceString(blendMode); clipRect = clipRect; smoothing = !!smoothing;
+
+      var player = Shumway.Player.currentPlayer;
+
+      var updates = new DataBuffer();
+      var assets = [];
+      var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
+      serializer.output = updates;
+      serializer.outputAssets = assets;
+
+      //serializer.writeBitmapData(this);
+
+      serializer.writeReferences = false;
+      serializer.clearDirtyBits = false;
+      enterPlayerTimeline("cacheAsBitmap");
+      serializer.writeStage(<flash.display.DisplayObject>source);
+      leavePlayerTimeline("cacheAsBitmap");
+
+      serializer.writeReferences = true;
+      serializer.clearDirtyBits = true;
+      enterPlayerTimeline("cacheAsBitmap 2");
+      serializer.writeStage(<flash.display.DisplayObject>source);
+      leavePlayerTimeline("cacheAsBitmap 2");
+
+      serializer.writeBitmapCacheEntry(this, source, matrix, colorTransform, blendMode, smoothing);
+
+      updates.writeInt(Shumway.Remoting.MessageTag.EOF);
+
+      enterPlayerTimeline("sendUpdates");
+      player._channel.sendUpdates(updates, assets);
+      leavePlayerTimeline("sendUpdates");
     }
     drawWithQuality(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false, quality: string = null): void {
       source = source; matrix = matrix; colorTransform = colorTransform; blendMode = asCoerceString(blendMode); clipRect = clipRect; smoothing = !!smoothing; quality = asCoerceString(quality);

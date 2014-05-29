@@ -44,7 +44,8 @@ module Shumway.Remoting {
 
   export enum IDMask {
     None                        = 0x00000000,
-    Asset                       = 0x80000000
+    Asset                       = 0x40000000,
+    Cache                       = 0x80000000
   }
 
   export enum MessageTag {
