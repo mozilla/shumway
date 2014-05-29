@@ -96,10 +96,10 @@ module Shumway.Remoting.Player {
 
       // Write Has Bits
       var hasBits = 0;
-      hasBits |= hasMatrix                  ? UpdateFrameTagBits.HasMatrix         : 0;
-      hasBits |= hasColorTransform          ? UpdateFrameTagBits.HasColorTransform : 0;
-      hasBits |= hasMiscellaneousProperties ? UpdateFrameTagBits.HasMiscellaneousProperties : 0;
-      hasBits |= hasRemotableChildren       ? UpdateFrameTagBits.HasChildren       : 0;
+      hasBits |= hasMatrix                  ? MessageBits.HasMatrix         : 0;
+      hasBits |= hasColorTransform          ? MessageBits.HasColorTransform : 0;
+      hasBits |= hasMiscellaneousProperties ? MessageBits.HasMiscellaneousProperties : 0;
+      hasBits |= hasRemotableChildren       ? MessageBits.HasChildren       : 0;
       this.output.writeInt(hasBits);
 
       // Write Properties
@@ -167,9 +167,9 @@ module Shumway.Remoting.Player {
       }
 
       var hasBits = 0;
-      hasBits |= matrix         ? UpdateFrameTagBits.HasMatrix : 0;
-      hasBits |= colorTransform ? UpdateFrameTagBits.HasColorTransform : 0;
-      hasBits |= clipRect       ? UpdateFrameTagBits.HasScrollRect : 0;
+      hasBits |= matrix         ? MessageBits.HasMatrix : 0;
+      hasBits |= colorTransform ? MessageBits.HasColorTransform : 0;
+      hasBits |= clipRect       ? MessageBits.HasScrollRect : 0;
 
       this.output.writeInt(hasBits);
       if (matrix) {
