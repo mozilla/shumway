@@ -67,7 +67,15 @@ module Shumway.AVM2.AS.flash.display {
     _id: number;
     _fillColor: number;
     _locked: boolean;
+
+    /**
+     * Pixel data is specifed as being ARGB in the Flash docs, 32-bit integer values containing
+     * four 8-bit channel values, where A is the most significant byte. They are assuming big
+     * endian when claiming ARGB. Canvas's putImageData expects RGBA (byte order) which
+     * is really ABGR when dealing with ints on little endian machines.
+     */
     _pixelData: Uint32Array;
+
     _dataBuffer: DataBuffer;
 
     /**
