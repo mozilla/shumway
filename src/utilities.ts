@@ -1685,7 +1685,8 @@ module Shumway {
         return;
       }
       var i = this.index === 0 ? this._size - 1 : this.index - 1;
-      while (i !== this.start) {
+      var end = (this.start - 1) & this._mask;
+      while (i !== end) {
         if (visitor(this.array[i], i)) {
           break;
         }
