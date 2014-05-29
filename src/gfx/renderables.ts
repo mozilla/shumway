@@ -110,6 +110,14 @@ module Shumway.GFX {
       canvas.height = bounds.h;
       var context = canvas.getContext("2d");
       var imageData: ImageData = context.createImageData(bounds.w, bounds.h);
+
+      // Temporary Hack: RGBA -> AGBR
+      var swap32 = Shumway.IntegerUtilities.swap32;
+      var hack = new Uint32Array(dataBuffer.bytes.buffer);
+      for (var i = 0; i < hack.length; i++) {
+        hack[i] = swap32(hack[i]);
+      }
+
       imageData.data.set(dataBuffer.bytes);
       context.putImageData(imageData, 0, 0);
       var renderableBitmap = new RenderableBitmap(canvas, bounds);
@@ -121,6 +129,14 @@ module Shumway.GFX {
       enterTimeline("RenderableBitmap.updateFromDataBuffer");
       var context = this._canvas.getContext("2d");
       var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
+
+      // Temporary Hack: RGBA -> AGBR
+      var swap32 = Shumway.IntegerUtilities.swap32;
+      var hack = new Uint32Array(dataBuffer.bytes.buffer);
+      for (var i = 0; i < hack.length; i++) {
+        hack[i] = swap32(hack[i]);
+      }
+
       imageData.data.set(dataBuffer.bytes);
       context.putImageData(imageData, 0, 0);
       this.setFlags(RenderableFlags.Dirty);
