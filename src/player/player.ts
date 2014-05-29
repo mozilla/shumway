@@ -35,7 +35,6 @@ module Shumway {
   import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
 
   import Remoting = Shumway.Remoting;
-  import RemotingPhase = Remoting.RemotingPhase;
   import IPlayerChannel = Remoting.IPlayerChannel;
 
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
@@ -62,9 +61,7 @@ module Shumway {
     private _loaderInfo: flash.display.LoaderInfo;
     private _syncTimeout: number;
     private _frameTimeout: number;
-
-    /* Make this temporarily protected */
-    _channel: IPlayerChannel;
+    private _channel: IPlayerChannel;
 
     private static _syncFrameRate = 60;
 
@@ -191,17 +188,51 @@ module Shumway {
       serializer.output = updates;
       serializer.outputAssets = assets;
 
-      serializer.phase = RemotingPhase.Objects;
-      enterPlayerTimeline("write objects");
+      serializer.phase = Remoting.RemotingPhase.Objects;
+      enterPlayerTimeline("writeStage");
       serializer.writeStage(this._stage);
-      leavePlayerTimeline("write objects");
+      leavePlayerTimeline("writeStage");
 
-      serializer.phase = RemotingPhase.References;
-      enterPlayerTimeline("write references");
+      serializer.phase = Remoting.RemotingPhase.References;
+      enterPlayerTimeline("writeStage 2");
       serializer.writeStage(this._stage);
-      leavePlayerTimeline("write references");
+      leavePlayerTimeline("writeStage 2");
 
       updates.writeInt(Remoting.MessageTag.EOF);
+
+      enterPlayerTimeline("sendUpdates");
+      this._channel.sendUpdates(updates, assets);
+      leavePlayerTimeline("sendUpdates");
+    }
+
+    public bitmapDataDraw(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
+      var updates = new DataBuffer();
+      var assets = [];
+      var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
+      serializer.output = updates;
+      serializer.outputAssets = assets;
+
+      serializer.writeBitmapData(bitmapData);
+
+      if (flash.display.BitmapData.isType(source)) {
+        serializer.writeBitmapData(<flash.display.BitmapData>source);
+      } else {
+        var displayObject = <flash.display.DisplayObject>source;
+
+        serializer.phase = Remoting.RemotingPhase.Objects;
+        enterPlayerTimeline("cacheAsBitmap");
+        serializer.writeStage(displayObject);
+        leavePlayerTimeline("cacheAsBitmap");
+
+        serializer.phase = Remoting.RemotingPhase.References;
+        enterPlayerTimeline("cacheAsBitmap 2");
+        serializer.writeStage(displayObject);
+        leavePlayerTimeline("cacheAsBitmap 2");
+      }
+
+      serializer.writeBitmapDataDraw(bitmapData, source, matrix, colorTransform, blendMode, clipRect, smoothing);
+
+      updates.writeInt(Shumway.Remoting.MessageTag.EOF);
 
       enterPlayerTimeline("sendUpdates");
       this._channel.sendUpdates(updates, assets);

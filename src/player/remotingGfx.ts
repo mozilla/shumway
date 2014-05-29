@@ -22,6 +22,8 @@ module Shumway.Remoting.GFX {
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
+  import Stage = Shumway.GFX.Stage;
+  import Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
 
   import Point = Shumway.GFX.Geometry.Point;
   import Matrix = Shumway.GFX.Geometry.Matrix;
@@ -109,6 +111,9 @@ module Shumway.Remoting.GFX {
             break;
           case MessageTag.UpdateFrame:
             this._readUpdateFrame();
+            break;
+          case MessageTag.BitmapDataDraw:
+            this._bitmapDataDraw();
             break;
           default:
             assert(false, 'Unknown MessageReader tag: ' + tag);
@@ -202,19 +207,13 @@ module Shumway.Remoting.GFX {
       var input = this.input;
       var context = this.context;
       var id = input.readInt();
-      var cacheAsBitmap = id & IDMask.Cache;
-      var frame;
-      if (cacheAsBitmap) {
-        frame = new FrameContainer();
-      } else {
-        var firstFrame = context._frames.length === 0;
-        frame = context._frames[id];
-        if (!frame) {
-          frame = context._frames[id] = new FrameContainer();
-        }
-        if (firstFrame) {
-          context.root.addChild(frame);
-        }
+      var firstFrame = context._frames.length === 0;
+      var frame = context._frames[id];
+      if (!frame) {
+        frame = context._frames[id] = new FrameContainer();
+      }
+      if (firstFrame) {
+        context.root.addChild(frame);
       }
       var hasBits = input.readInt();
       if (hasBits & UpdateFrameTagBits.HasMatrix) {
@@ -240,20 +239,46 @@ module Shumway.Remoting.GFX {
           container.addChild(child);
         }
       }
-      if (cacheAsBitmap) {
-        this._cacheAsBitmap(frame);
-      }
     }
 
-    private _cacheAsBitmap(frame: Shumway.GFX.Frame) {
+    private _bitmapDataDraw() {
+      var input = this.input;
+      var context = this.context;
+      var bitmapDataId = input.readInt();
+      var sourceId = input.readInt();
+      var hasBits = input.readInt();
+      var matrix;
+      var colorMatrix;
+      if (hasBits & UpdateFrameTagBits.HasMatrix) {
+        matrix = this._readMatrix();
+      }
+      if (hasBits & UpdateFrameTagBits.HasColorTransform) {
+        colorMatrix = this._readColorMatrix();
+      }
+      var blendMode = input.readInt();
+      input.readBoolean(); // Smoothing
+      var bitmap = context._assets[bitmapDataId];
+      var source = context._frames[sourceId];
+      this._cacheAsBitmap(source, matrix, colorMatrix, blendMode);
+    }
+
+    private _cacheAsBitmap(source: Frame, matrix: Matrix, colorMatrix: ColorMatrix, blendMode: number) {
+      var frame = new FrameContainer;
+      if (matrix) {
+        frame.matrix = matrix;
+      }
+      if (colorMatrix) {
+        frame.colorMatrix = colorMatrix;
+      }
+      frame.blendMode = blendMode;
+      frame._children[0] = source;
       var canvas = document.createElement('canvas');
       var bounds = frame.getBounds();
       canvas.width = bounds.w;
       canvas.height = bounds.h;
-      var stage = new Shumway.GFX.Stage(bounds.w, bounds.h);
+      var stage = new Stage(bounds.w, bounds.h);
       stage.addChild(frame);
-      var renderer = new Shumway.GFX.Canvas2DStageRenderer(canvas, stage);
-      debugger;
+      var renderer = new Canvas2DStageRenderer(canvas, stage);
       renderer.render();
     }
   }

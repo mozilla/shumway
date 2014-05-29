@@ -48,8 +48,7 @@ module Shumway.Remoting {
 
   export enum IDMask {
     None                        = 0x00000000,
-    Asset                       = 0x40000000,
-    Cache                       = 0x80000000
+    Asset                       = 0x80000000
   }
 
   export enum MessageTag {
@@ -59,8 +58,10 @@ module Shumway.Remoting {
     UpdateGraphics              = 101,
     UpdateBitmapData            = 102,
 
-    MouseEvent                  = 200,
-    KeyboardEvent               = 201
+    BitmapDataDraw              = 200,
+
+    MouseEvent                  = 300,
+    KeyboardEvent               = 301
   }
 
   /**

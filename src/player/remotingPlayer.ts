@@ -157,31 +157,29 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeBitmapCacheEntry(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, smoothing: boolean = false) {
-      this.output.writeInt(MessageTag.UpdateFrame);
-      this.output.writeInt(IDMask.Cache | bitmapData._id);
+    writeBitmapDataDraw(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
+      this.output.writeInt(MessageTag.BitmapDataDraw);
+      this.output.writeInt(bitmapData._id);
+      if (BitmapData.isType(source)) {
+        this.output.writeInt(IDMask.Asset | source._id);
+      } else {
+        this.output.writeInt(source._id);
+      }
 
       var hasBits = 0;
       hasBits |= matrix ? UpdateFrameTagBits.HasMatrix : 0;
       hasBits |= UpdateFrameTagBits.HasChildren;
       hasBits |= colorTransform ? UpdateFrameTagBits.HasColorTransform : 0;
-      hasBits |= UpdateFrameTagBits.HasMiscellaneousProperties;
 
       this.output.writeInt(hasBits);
       if (matrix) {
         this.writeMatrix(matrix);
       }
-      this.output.writeInt(1);
-      //this.output.writeInt(IDMask.Asset | bitmapData._id);
-      this.output.writeInt((<flash.display.DisplayObject>source)._id);
       if (colorTransform) {
         this.writeColorTransform(colorTransform);
       }
       this.output.writeInt(BlendMode.toNumber(blendMode));
-      this.output.writeBoolean(true);
-      if (this.phase === RemotingPhase.References) {
-        (<flash.display.DisplayObject>source)._removeFlags(DisplayObjectFlags.Dirty);
-      }
+      this.output.writeBoolean(smoothing);
     }
 
     writeMatrix(matrix: flash.geom.Matrix) {
