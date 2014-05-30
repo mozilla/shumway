@@ -20,6 +20,28 @@ module Shumway.Remoting {
     _id: number;
   }
 
+
+  export enum ImageType {
+    /**
+     * Premultiplied RGBA (byte-order).
+     */
+    PremultipliedAlphaRGBA,
+
+    /**
+     * Unpremultiplied RGBA (byte-order).
+     */
+    StraightAlphaRGBA,
+
+    /**
+     * JPEGs with alpha are decoded in the worker to RGBA. All others are
+     * exported as JPEG data.
+     */
+    JPEG,
+    PNG,
+    GIF
+  }
+
+
   /**
    * Remoting phases.
    */

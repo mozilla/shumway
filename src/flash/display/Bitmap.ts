@@ -30,7 +30,7 @@ module Shumway.AVM2.AS.flash.display {
       self._smoothing = null;
 
       if (symbol) {
-        self._bitmapData = symbol.bitmapData;
+        self._bitmapData = symbol.symbolClass.initializeFrom(symbol);
         self._setFillAndLineBoundsFromWidthAndHeight(symbol.width * 20|0, symbol.height * 20|0);
       }
     };
@@ -42,12 +42,15 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = null; // [];
     
     constructor (bitmapData: flash.display.BitmapData = null, pixelSnapping: string = "auto", smoothing: boolean = false) {
-      //bitmapData = bitmapData;
       false && super();
       DisplayObject.instanceConstructorNoInitialize.call(this);
+      if (this._symbol) {
+        this._symbol.symbolClass.instanceConstructorNoInitialize.call(this._bitmapData);
+      } else {
+        this.bitmapData = bitmapData;
+      }
       this._pixelSnapping = asCoerceString(pixelSnapping);
       this._smoothing = !!smoothing;
-      this.bitmapData = bitmapData;
     }
     
     // JS -> AS Bindings

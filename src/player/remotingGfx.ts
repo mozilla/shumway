@@ -113,7 +113,7 @@ module Shumway.Remoting.GFX {
             this._readUpdateFrame();
             break;
           case MessageTag.BitmapDataDraw:
-            this._bitmapDataDraw();
+            this._readBitmapDataDraw();
             break;
           default:
             assert(false, 'Unknown MessageReader tag: ' + tag);
@@ -192,6 +192,7 @@ module Shumway.Remoting.GFX {
       var id = input.readInt();
       var asset = context._assets[id];
       var bounds = this._readRectangle();
+      var type: ImageType = input.readInt();
       var assetId = input.readInt();
       var dataBuffer = this.inputAssets[assetId];
       this.inputAssets[assetId] = null;
@@ -241,7 +242,7 @@ module Shumway.Remoting.GFX {
       }
     }
 
-    private _bitmapDataDraw() {
+    private _readBitmapDataDraw() {
       var input = this.input;
       var context = this.context;
       var bitmapDataId = input.readInt();

@@ -171,6 +171,7 @@ module Shumway.AVM2.AS {
 
     public static isInstanceOf: (value: any) => boolean;
     public static isType: (value: any) => boolean;
+    public static isSubtypeOf: (value: ASClass) => boolean;
 
     public static asCall(self: any, ...argArray: any[]): any {
       return this.callableConstructor.apply(self, argArray);
@@ -676,6 +677,20 @@ module Shumway.AVM2.AS {
       }
 
       return this.dynamicPrototype.isPrototypeOf(value);
+    }
+
+    /**
+     * Checks if this class derives from the specified class.
+     */
+    public isSubtypeOf(value: ASClass) {
+      var that = this;
+      while (that) {
+        if (that.traitsPrototype === value.traitsPrototype) {
+          return true;
+        }
+        that = that.baseClass;
+      }
+      return false;
     }
 
     public coerce(value: any): any {

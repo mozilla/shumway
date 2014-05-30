@@ -69,6 +69,7 @@ module Shumway.Remoting.Player {
         this.output.writeInt(MessageTag.UpdateBitmapData);
         this.output.writeInt(bitmapData._id);
         this.writeRectangle(bitmapData._getContentBounds());
+        this.output.writeInt(bitmapData._type);
         this.output.writeInt(this.outputAssets.length);
         this.outputAssets.push(bitmapData.getDataBuffer());
         bitmapData._isDirty = false;

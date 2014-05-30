@@ -331,7 +331,12 @@ module Shumway.AVM2.AS.flash.display {
     static createAnimatedDisplayObject(state: Shumway.Timeline.AnimationState, callConstructor: boolean = true): DisplayObject {
       var symbol = state.symbol;
       var symbolClass = symbol.symbolClass;
-      var instance = symbolClass.initializeFrom(symbol);
+      var instance: DisplayObject;
+      if (symbolClass.isSubtypeOf(flash.display.BitmapData)) {
+        instance = flash.display.Bitmap.initializeFrom(symbol);
+      } else {
+        instance = symbolClass.initializeFrom(symbol);
+      }
       instance._setFlags(DisplayObjectFlags.AnimatedByTimeline);
       instance._setFlags(DisplayObjectFlags.OwnedByTimeline);
       instance._animate(state);

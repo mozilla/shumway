@@ -152,7 +152,7 @@ module Shumway {
         stage.stageWidth = loaderInfo.width;
         stage.stageHeight = loaderInfo.height;
         stage.addChildAtDepth(root, 0);
-        self._pumpUpdates();
+        // self._pumpUpdates();
         self._enterLoops();
       });
 

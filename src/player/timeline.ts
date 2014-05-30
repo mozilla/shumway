@@ -20,6 +20,7 @@ module Shumway.Timeline {
   import abstractMethod = Shumway.Debug.abstractMethod;
   import flash = Shumway.AVM2.AS.flash;
   import Bounds = Shumway.Bounds;
+  import ImageType = Shumway.Remoting.ImageType;
 
   export class Symbol {
     id: number = -1;
@@ -74,17 +75,35 @@ module Shumway.Timeline {
   }
 
   export class BitmapSymbol extends DisplaySymbol {
-    bitmapData: flash.display.BitmapData;
     width: number;
     height: number;
+    data: Uint8ClampedArray;
+    type: ImageType;
     constructor(id: number) {
-      super(id, flash.display.Bitmap);
+      super(id, flash.display.BitmapData);
     }
 
     static FromData(data: any): BitmapSymbol {
       var symbol = new BitmapSymbol(data.id);
       symbol.width = data.width;
       symbol.height = data.height;
+      symbol.data = data.data;
+      switch (data.mimeType) {
+        case "application/octet-stream":
+          symbol.type = ImageType.StraightAlphaRGBA;
+          break;
+        case "image/jpeg":
+          symbol.type = ImageType.JPEG;
+          break;
+        case "image/png":
+          symbol.type = ImageType.PNG;
+          break;
+        case "image/gif":
+          symbol.type = ImageType.GIF;
+          break;
+        default:
+          notImplemented(data.mimeType);
+      }
       return symbol;
     }
   }
