@@ -84,7 +84,7 @@ module Shumway.Tools.Profiler {
     private _drawChildren(parent: TimelineFrame, depth: number = 0) {
       var range = parent.getChildRange(this._windowStart, this._windowEnd);
       if (range) {
-        for (var i = range.start; i <= range.end; i++) {
+        for (var i = range.startIndex; i <= range.endIndex; i++) {
           var child = parent.children[i];
           if (this._drawFrame(child, depth)) {
             this._drawChildren(child, depth + 1);

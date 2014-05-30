@@ -15,36 +15,65 @@
  */
 module Shumway.Tools.Profiler.TraceLogger {
 
+  export class TraceLoggerProgressInfo {
+    constructor (
+      public pageLoaded: boolean,
+      public threadsTotal: number,
+      public threadsLoaded: number,
+      public threadFilesTotal: number,
+      public threadFilesLoaded: number
+    ) {}
+    toString(): string {
+      return "[" + ["pageLoaded","threadsTotal","threadsLoaded","threadFilesTotal","threadFilesLoaded"].map(function(value, i, arr) {
+        return value + ":" + this[value];
+      }, this).join(", ") + "]";
+    }
+  }
+
   export class TraceLogger {
 
     private _baseUrl: string;
     private _threads: Thread [];
     private _pageLoadCallback: (err: any, result: any []) => void;
+    private _pageLoadProgressCallback: (info: TraceLoggerProgressInfo) => void;
+    private _progressInfo: TraceLoggerProgressInfo;
 
     constructor(baseUrl: string) {
       this._baseUrl = baseUrl;
       this._threads = [];
+      this._progressInfo = null;
     }
 
-    loadPage(url: string, callback: (err: any, result: any []) => void) {
+    loadPage(url: string, callback: (err: any, result: any []) => void, progress?: (info: TraceLoggerProgressInfo) => void) {
       this._threads = [];
       this._pageLoadCallback = callback;
+      this._pageLoadProgressCallback = progress;
+      this._progressInfo = new TraceLoggerProgressInfo(false, 0, 0, 0, 0);
       this._loadData([url], this._onLoadPage.bind(this));
+    }
+
+    private _onProgress() {
+      if (this._pageLoadProgressCallback) {
+        this._pageLoadProgressCallback(this._progressInfo);
+      }
     }
 
     private _onLoadPage(result: any []) {
       if (result && result.length == 1) {
         var self = this;
         var count = 0;
-        var threadsData = result[0];
-        var threadCount = threadsData.length;
+        var threads = result[0];
+        var threadCount = threads.length;
         this._threads = Array(threadCount);
-        for (var i = 0; i < threadsData.length; i++) {
-          var threadData = threadsData[i];
-          var urls = [threadData.dict, threadData.tree];
-          if (threadData.corrections) {
-            urls.push(threadData.corrections);
+        this._progressInfo.pageLoaded = true;
+        this._progressInfo.threadsTotal = threadCount;
+        for (var i = 0; i < threads.length; i++) {
+          var thread = threads[i];
+          var urls = [thread.dict, thread.tree];
+          if (thread.corrections) {
+            urls.push(thread.corrections);
           }
+          this._progressInfo.threadFilesTotal += urls.length;
           this._loadData(
             urls,
             (function(index: number) {
@@ -52,19 +81,27 @@ module Shumway.Tools.Profiler.TraceLogger {
                 if (result) {
                   self._threads[index] = new Thread(result);
                 }
-                if (++count == threadCount) {
+                count++;
+                self._progressInfo.threadsLoaded++;
+                self._onProgress();
+                if (count === threadCount) {
                   self._pageLoadCallback(null, self._threads);
                 }
               };
-            })(i)
+            })(i),
+            function(count) {
+              self._progressInfo.threadFilesLoaded++;
+              self._onProgress();
+            }
           );
         }
+        this._onProgress();
       } else {
         this._pageLoadCallback("Error loading page.", null);
       }
     }
 
-    private _loadData(urls: string [], callback: (result: any []) => void) {
+    private _loadData(urls: string [], callback: (result: any []) => void, progress?: (count: number) => void) {
       var count = 0;
       var errors = 0;
       var expected = urls.length;
@@ -95,7 +132,11 @@ module Shumway.Tools.Profiler.TraceLogger {
             } else {
               received[index] = this.response;
             }
-            if (++count == expected) {
+            ++count;
+            if (progress) {
+              progress(count);
+            }
+            if (count === expected) {
               callback(received);
             }
           };
