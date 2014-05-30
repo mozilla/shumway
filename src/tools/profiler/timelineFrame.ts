@@ -15,6 +15,14 @@
  */
 module Shumway.Tools.Profiler {
 
+  export interface TimelineFrameRange {
+    start: number;
+    end: number;
+    startTime: number;
+    endTime: number;
+    totalTime: number;
+  }
+
   /**
    * Represents a single timeline frame range and makes it easier to work with the compacted
    * timeline buffer data.
@@ -26,7 +34,8 @@ module Shumway.Tools.Profiler {
       public parent: TimelineFrame,
       public kind: TimelineItemKind,
       public startTime: number,
-      public endTime: number) {
+      public endTime: number,
+      public depth: number) {
       // ...
     }
 
@@ -47,14 +56,23 @@ module Shumway.Tools.Profiler {
     /**
      * Gets the high and low index of the children that intersect the specified time range.
      */
-    public getChildRange(startTime: number, endTime: number): number [] {
-      if (!this.children || startTime > this.endTime || endTime < this.startTime || endTime < startTime) {
-        return null;
-      } else {
+    public getChildRange(startTime: number, endTime: number): TimelineFrameRange {
+      if (this.children && startTime <= this.endTime && endTime >= this.startTime && endTime >= startTime) {
         var startIdx = this._getNearestChild(startTime);
         var endIdx = this._getNearestChildReverse(endTime);
-        return (startIdx <= endIdx) ? [startIdx, endIdx] : null;
+        if (startIdx <= endIdx) {
+          var startTime = this.children[startIdx].startTime;
+          var endTime = this.children[endIdx].endTime;
+          return {
+            start: startIdx,
+            end: endIdx,
+            startTime: startTime,
+            endTime: endTime,
+            totalTime: endTime - startTime
+          };
+        }
       }
+      return null;
     }
 
     private _getNearestChild(time: number): number {

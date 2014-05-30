@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>TraceLogger Demo</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <div id="container"></div>
+  <script src="../../build/ts/utilities.js"></script>
+  <script src="../../build/ts/tools/profiler/references.js"></script>
+  <script src="../../build/ts/tools/profiler/profile.js"></script>
+  <script src="../../build/ts/tools/profiler/controller.js"></script>
+  <script src="../../build/ts/tools/profiler/mouseController.js"></script>
+  <script src="../../build/ts/tools/profiler/flameChartBase.js"></script>
+  <script src="../../build/ts/tools/profiler/flameChart.js"></script>
+  <script src="../../build/ts/tools/profiler/flameChartHeader.js"></script>
+  <script src="../../build/ts/tools/profiler/flameChartOverview.js"></script>
+  <script src="../../build/ts/tools/profiler/timelineFrame.js"></script>
+  <script src="../../build/ts/tools/profiler/timelineBuffer.js"></script>
+  <script src="../../build/ts/tools/profiler/tracelogger/traceLogger.js"></script>
+  <script src="../../build/ts/tools/profiler/tracelogger/thread.js"></script>
+  <script>
+
+    var container = document.getElementById("container");
+
+    var Profiler = Shumway.Tools.Profiler;
+    var TraceLogger = Shumway.Tools.Profiler.TraceLogger;
+
+    if (!jsGlobal.performance) { jsGlobal.performance = {}; }
+    if (!jsGlobal.performance.now) { jsGlobal.performance.now = Date.now; }
+
+    var traceLogger = new TraceLogger.TraceLogger("data/tracelogger/");
+
+    traceLogger.loadPage("data-Octane-x86-code-load.json", function(err, threads) {
+    //traceLogger.loadPage("data-Sunspider-x86-crypto-aes.json", function(err, threads) {
+
+      var profile = new Profiler.Profile();
+      var threadCount = threads.length;
+      for (var i = 0; i < threadCount; i++) {
+        profile.addBuffer(threads[i].buffer, "Thread " + i);
+      }
+
+      var controller = new Profiler.Controller(profile, container);
+      controller.createSnapshot();
+
+    });
+
+    /*
+    getJSON("data/CPU-20140520T215105.json", function(profile1) {
+      getJSON("data/CPU-20140520T092003.json", function(profile2) {
+
+        var buffer1 = Profiler.TimelineBuffer.FromChromeProfile(profile1);
+        var buffer2 = Profiler.TimelineBuffer.FromChromeProfile(profile2);
+
+        var profile = new Profiler.Profile();
+        profile.addBuffer(buffer1, "Thread 1");
+        profile.addBuffer(buffer2, "Thread 2");
+
+        var controller = new Profiler.Controller(profile, container);
+        controller.createSnapshot();
+
+      });
+    });
+    */
+
+  </script>
+</body>
+</html>

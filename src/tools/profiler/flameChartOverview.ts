@@ -60,6 +60,10 @@ module Shumway.Tools.Profiler {
       super(controller);
     }
 
+    setSize(width: number, height?: number) {
+      super.setSize(width, height || 64);
+    }
+
     set mode(value: FlameChartOverviewMode) {
       this._mode = value;
       this._draw();
@@ -158,30 +162,32 @@ module Shumway.Tools.Profiler {
       contextOverview.scale(ratio / samplesPerPixel, yScale);
       contextOverview.clearRect(0, 0, samplesCount, profile.maxDepth - 1);
       if (this._mode == FlameChartOverviewMode.STACK) {
-        contextOverview.scale(1, 1 / profile.bufferCount);
+        contextOverview.scale(1, 1 / profile.snapshotCount);
       }
       var bufferCount = profile.bufferCount;
       for (var i = 0; i < bufferCount; i++) {
         var buffer = profile.getBufferAt(i);
-        var deepestFrame = null;
-        var depth = 0;
-        contextOverview.beginPath();
-        contextOverview.moveTo(0, 0);
-        for (var x = 0; x < samplesCount; x++) {
-          var time = profile.startTime + x * sampleTimeInterval;
-          if (!deepestFrame) {
-            deepestFrame = buffer.snapshot.query(time);
-          } else {
-            deepestFrame = deepestFrame.queryNext(time);
+        if (buffer.snapshot) {
+          var deepestFrame = null;
+          var depth = 0;
+          contextOverview.beginPath();
+          contextOverview.moveTo(0, 0);
+          for (var x = 0; x < samplesCount; x++) {
+            var time = profile.startTime + x * sampleTimeInterval;
+            if (!deepestFrame) {
+              deepestFrame = buffer.snapshot.query(time);
+            } else {
+              deepestFrame = deepestFrame.queryNext(time);
+            }
+            depth = deepestFrame ? deepestFrame.getDepth() - 1 : 0;
+            contextOverview.lineTo(x, depth);
           }
-          depth = deepestFrame ? deepestFrame.getDepth() - 1 : 0;
-          contextOverview.lineTo(x, depth);
-        }
-        contextOverview.lineTo(x, 0);
-        contextOverview.fillStyle = "#46afe3";
-        contextOverview.fill();
-        if (this._mode == FlameChartOverviewMode.STACK) {
-          contextOverview.translate(0, -height * ratio / yScale);
+          contextOverview.lineTo(x, 0);
+          contextOverview.fillStyle = "#46afe3";
+          contextOverview.fill();
+          if (this._mode == FlameChartOverviewMode.STACK) {
+            contextOverview.translate(0, -height * ratio / yScale);
+          }
         }
       }
 

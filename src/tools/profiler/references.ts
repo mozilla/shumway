@@ -9,6 +9,8 @@
 /// <reference path='flameChart.ts' />
 /// <reference path='flameChartOverview.ts' />
 /// <reference path='flameChartHeader.ts' />
+/// <reference path='tracelogger/traceLogger.ts' />
+/// <reference path='tracelogger/thread.ts' />
 
 declare var release: boolean;
 
