@@ -105,6 +105,7 @@ module Shumway.Tools.Profiler {
     private _boundOnDrag:EventListener;
     private _dragInfo: DragInfo;
     private _hoverInfo: HoverInfo;
+    private _wheelDisabled: boolean;
 
     private static HOVER_TIMEOUT = 400;
 
@@ -114,6 +115,7 @@ module Shumway.Tools.Profiler {
     constructor(target: MouseControllerTarget, eventTarget: EventTarget) {
       this._target = target;
       this._eventTarget = eventTarget;
+      this._wheelDisabled = false;
       this._boundOnMouseDown = this._onMouseDown.bind(this);
       this._boundOnMouseUp = this._onMouseUp.bind(this);
       this._boundOnMouseOver = this._onMouseOver.bind(this);
@@ -191,6 +193,7 @@ module Shumway.Tools.Profiler {
     private _onMouseUp(event: MouseEvent) {
       window.removeEventListener("mousemove", this._boundOnDrag);
       window.removeEventListener("mouseup", this._boundOnMouseUp);
+      var self = this;
       var dragInfo = this._dragInfo;
       if (dragInfo.hasMoved) {
         this._target.onDragEnd(dragInfo.start.x, dragInfo.start.y, dragInfo.current.x, dragInfo.current.y, dragInfo.delta.x, dragInfo.delta.y);
@@ -198,6 +201,8 @@ module Shumway.Tools.Profiler {
         this._target.onClick(dragInfo.current.x, dragInfo.current.y);
       }
       this._dragInfo = null;
+      this._wheelDisabled = true;
+      setTimeout(function() { self._wheelDisabled = false; }, 500);
     }
 
     private _onMouseOver(event: MouseEvent) {
@@ -229,7 +234,7 @@ module Shumway.Tools.Profiler {
     private _onMouseWheel(event: MouseWheelEvent) {
       if (!event.altKey && !event.metaKey && !event.ctrlKey && !event.shiftKey) {
         event.preventDefault();
-        if (!this._dragInfo) {
+        if (!this._dragInfo && !this._wheelDisabled) {
           var pos = this._getTargetMousePos(event, <HTMLElement>(event.target));
           var delta = clamp((typeof event.deltaY !== "undefined") ? event.deltaY / 16 : -event.wheelDelta / 40, -1, 1);
           var zoom = Math.pow(1.2, delta) - 1;
@@ -265,8 +270,8 @@ module Shumway.Tools.Profiler {
     private _getTargetMousePos(event: MouseEvent, target: HTMLElement): Point {
       var rect = target.getBoundingClientRect();
       return {
-        x: event.clientX - rect.left - window.pageXOffset,
-        y: event.clientY - rect.top - window.pageYOffset
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top
       };
     }
 
