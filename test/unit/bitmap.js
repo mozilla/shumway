@@ -4,6 +4,12 @@
   var Rectangle = flash.geom.Rectangle;
 
   unitTests.push(function () {
+    var bd = new BitmapData(10, 10, true, 0xFFAABBCC);
+    eq(bd.getPixel(0, 0), 0xAABBCC);
+    eq(bd.getPixel32(0, 0), 0xFFAABBCC, "Filled");
+  });
+
+  unitTests.push(function () {
     var bd = new BitmapData(100, 100, true, 0x11000000);
     bd.setPixel(0, 0, 0xff0000);
     eq(bd.getPixel(0, 0), 0xff0000);

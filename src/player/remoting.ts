@@ -23,14 +23,14 @@ module Shumway.Remoting {
 
   export enum ImageType {
     /**
-     * Premultiplied RGBA (byte-order).
+     * Premultiplied ARGB (byte-order).
      */
-    PremultipliedAlphaRGBA,
+    PremultipliedAlphaARGB,
 
     /**
-     * Unpremultiplied RGBA (byte-order).
+     * Unpremultiplied ARGB (byte-order).
      */
-    StraightAlphaRGBA,
+    StraightAlphaARGB,
 
     /**
      * JPEGs with alpha are decoded in the worker to RGBA. All others are

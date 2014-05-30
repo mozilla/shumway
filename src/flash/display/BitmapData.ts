@@ -16,15 +16,22 @@
 // Class: BitmapData
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
+  import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import ImageType = Shumway.Remoting.ImageType;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
+  import swap32 = Shumway.IntegerUtilities.swap32;
 
   import Rectangle = flash.geom.Rectangle;
 
+  /**
+   * Holds blobs of bitmap data in various formats and lets you do basic pixel operations. When data is
+   * unpacked, it is stored as premultiplied ARGB since it's what the SWF encodes bitmaps as.  This way
+   * we don't have to do unecessary byte conversions.
+   */
   export class BitmapData extends ASNative implements IBitmapDrawable, Shumway.Remoting.IRemotable {
     static classInitializer: any = null;
 
@@ -40,8 +47,8 @@ module Shumway.AVM2.AS.flash.display {
     static MAXIMUM_HEIGHT: number = 8191;
     static MAXIMUM_DIMENSION: number = 16777215;
 
-    constructor (width: number /*int*/, height: number /*int*/, transparent: boolean = true, fillColor: number /*uint*/ = 4294967295) {
-      width = width | 0; height = height | 0;
+    constructor (width: number /*int*/, height: number /*int*/, transparent: boolean = true, fillColorARGB: number /*uint*/ = 4294967295) {
+      width = width | 0; height = height | 0; fillColorARGB = fillColorARGB | 0;
       false && super();
       this._id = flash.display.DisplayObject.getNextSyncID();
       if (this._symbol) {
@@ -55,21 +62,22 @@ module Shumway.AVM2.AS.flash.display {
       }
       this._transparent = !!transparent;
       this._rect = new Rectangle(0, 0, width, height);
-      this._fillColor = fillColor;
+      this._fillColorBGRA = swap32(fillColorARGB); // Specified as ARGB but stored as BGRA.
       if (this._symbol) {
         this._data = new Uint8Array(this._symbol.data.buffer);
         this._type = this._symbol.type;
-        if (this._type === ImageType.PremultipliedAlphaRGBA) {
-          this._rgba = new Uint32Array(this._symbol.data.buffer);
+        if (this._type === ImageType.PremultipliedAlphaARGB) {
+          this._view = new Uint32Array(this._symbol.data.buffer);
         }
       } else {
         this._data = new Uint8Array(width * height * 4);
-        this._rgba = new Uint32Array(this._data.buffer);
-        this._type = ImageType.PremultipliedAlphaRGBA;
-        if (fillColor && transparent) {
-          // No need to fill.
+        this._view = new Uint32Array(this._data.buffer);
+        this._type = ImageType.PremultipliedAlphaARGB;
+        var alpha = fillColorARGB >> 24;
+        if (alpha === 0 && transparent) {
+          // No need to do an initial fill since this would all be zeros anyway.
         } else {
-          this.fillRect(this.rect, this._fillColor);
+          this.fillRect(this.rect, fillColorARGB);
         }
       }
       this._dataBuffer = DataBuffer.FromArrayBuffer(this._data.buffer);
@@ -80,20 +88,30 @@ module Shumway.AVM2.AS.flash.display {
     _rect: flash.geom.Rectangle;
 
     _id: number;
-    _fillColor: number;
+    _fillColorBGRA: number;
     _locked: boolean;
 
     /**
-     * Pixel data is specifed as being ARGB in the Flash docs, 32-bit integer values containing
-     * four 8-bit channel values, where A is the most significant byte. They are assuming big
-     * endian when claiming ARGB. Canvas's putImageData expects RGBA (byte order) which
-     * is really ABGR when dealing with ints on little endian machines.
+     * Image format stored in the |_data| buffer.
      */
-    _data: Uint8Array;
-    _rgba: Uint32Array;
     _type: ImageType;
 
+    /**
+     * Actual image bytes, this may be raw pixel data or compressed JPEG, PNG, GIF.
+     */
+    _data: Uint8Array;
+
+    /**
+     * Data buffer wrapped around the |_data| buffer.
+     */
     _dataBuffer: DataBuffer;
+
+    /**
+     * Uint32Array view on |_data| useful when working with 4 bytes at a time. Endianess is
+     * important here, so if |_type| is PremultipliedAlphaARGB as is usually the case for
+     * bitmap data, then |_view| values are actually BGRA (on little-endian machines).
+     */
+    _view: Uint32Array;
 
     /**
      * Indicates whether this bitmap data's data buffer has changed since the last time it was synchronized.
@@ -108,6 +126,9 @@ module Shumway.AVM2.AS.flash.display {
       return Shumway.Bounds.FromRectangle(this._rect);
     }
 
+    /**
+     * TODO: Not tested.
+     */
     private _getPixelData(rect: flash.geom.Rectangle): Uint32Array {
       var r = this.rect.intersectInPlace(rect);
       if (r.isEmpty()) {
@@ -117,21 +138,26 @@ module Shumway.AVM2.AS.flash.display {
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
-      var pixelData = this._rgba;
+      var view = this._view;
       var width = this._rect.width;
       var output = new Uint32Array(r.area);
       var p = 0;
       for (var y = yMin; y < yMax; y++) {
         var offset = y * width;
         for (var x = xMin; x < xMax; x++) {
-          var color = pixelData[offset + x];
-          var alpha = color & 0xff;
-          output[p++] = ((255 * (color >>> 8)) / alpha) | (alpha << 24);
+          var colorBGRA = view[offset + x];
+          var alpha = colorBGRA & 0xff;
+          var colorBGR = colorBGRA >>> 8;
+          colorBGRA = ((255 * colorBGR) / alpha) << 8 | alpha;
+          output[p++] = colorBGRA;
         }
       }
       return output;
     }
 
+    /**
+     * TODO: Not tested.
+     */
     private _putPixelData(rect: flash.geom.Rectangle, input: Uint32Array): void {
       var r = this.rect.intersectInPlace(rect);
       if (r.isEmpty()) {
@@ -141,7 +167,7 @@ module Shumway.AVM2.AS.flash.display {
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
-      var pixelData = this._rgba;
+      var view = this._view;
       var width = this._rect.width;
       var p = (rect.width * rect.height - r.height) + (xMin - rect.x);
       var padding = rect.width - r.width;
@@ -149,9 +175,10 @@ module Shumway.AVM2.AS.flash.display {
       for (var y = yMin; y < yMax; y++) {
         var offset = y * width;
         for (var x = xMin; x < xMax; x++) {
-          var color = input[p++];
-          var alpha = (color >> 24) & alphaMask;
-          pixelData[offset + x] = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
+          var colorBGRA = input[p++];
+          var alpha = colorBGRA & alphaMask;
+          var colorBGR = colorBGRA >>> 8;
+          view[offset + x] = (((colorBGR * alpha + 254) / 255) & 0x00ffffff) << 8 | alpha;
         }
         p += padding;
       }
@@ -175,49 +202,61 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     clone(): flash.display.BitmapData {
-      var bd = new BitmapData(this._rect.width, this._rect.height, this._transparent, this._fillColor);
-      bd._rgba.set(this._rgba);
+      var bd = new BitmapData(this._rect.width, this._rect.height, this._transparent, this._fillColorBGRA);
+      bd._view.set(this._view);
       return bd;
     }
 
+    /**
+     * Returns an straight alpha RGB pixel value 0x00RRGGBB.
+     */
     getPixel(x: number /*int*/, y: number /*int*/): number /*uint*/ {
       x = x | 0; y = y | 0;
       return this.getPixel32(x, y) & 0x00ffffff;
     }
 
+    /**
+     * Returns an straight alpha ARGB pixel value 0xAARRGGBB.
+     */
     getPixel32(x: number /*int*/, y: number /*int*/): number /*uint*/ {
       x = x | 0; y = y | 0;
       if (!this._rect.contains(x, y)) {
         return 0;
       }
-      var color = this._rgba[y * this._rect.width + x];
-      var alpha = color & 0xff;
-      return (((255 * (color >>> 8)) / alpha) | (alpha << 24)) >>> 0;
+      var colorBGRA = this._view[y * this._rect.width + x];
+      release || assert (this._type === ImageType.PremultipliedAlphaARGB);
+      var alpha = colorBGRA & 0xff;
+      var colorBGR = colorBGRA >>> 8;
+      colorBGRA = ((255 * colorBGR) / alpha) << 8 | alpha;
+      return swap32(colorBGRA) >>> 0;
     }
 
-    setPixel(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
-      x = x | 0; y = y | 0; color = color >>> 0;
+    setPixel(x: number /*int*/, y: number /*int*/, colorARGB: number /*uint*/): void {
+      x = x | 0; y = y | 0; colorARGB = colorARGB | 0;
       if (!this._rect.contains(x, y)) {
         return;
       }
       var i = y * this._rect.width + x;
-      var alpha = this._rgba[i] & 0xff;
-      this._rgba[i] = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
+      var alpha = this._view[i] & 0xff;
+      var colorRGB = colorARGB & 0x00ffffff;
+      colorARGB = (((colorRGB * alpha + 254) / 255) & 0x00ffffff) | (alpha << 24);
+      this._view[i] = swap32(colorARGB);
       this._isDirty = true;
     }
 
-    setPixel32(x: number /*int*/, y: number /*int*/, color: number /*uint*/): void {
+    setPixel32(x: number /*int*/, y: number /*int*/, colorARGB: number /*uint*/): void {
       x = x | 0; y = y | 0;
       if (!this._rect.contains(x, y)) {
         return;
       }
+      var alpha = colorARGB >>> 24;
+      var colorRGB = colorARGB & 0x00ffffff;
       if (this._transparent) {
-        var alpha = color >>> 24;
-        color = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
+        colorARGB = (((colorRGB * alpha + 254) / 255) & 0x00ffffff) | (alpha << 24);
       } else {
-        color = (color << 8) | 0xff;
+        colorARGB = colorRGB | 0xff000000;
       }
-      this._rgba[y * this._rect.width + x] = color;
+      this._view[y * this._rect.width + x] = swap32(colorARGB);
       this._isDirty = true;
     }
 
@@ -245,7 +284,7 @@ module Shumway.AVM2.AS.flash.display {
 
     dispose(): void {
       this._rect.setEmpty();
-      this._rgba = null;
+      this._view = null;
       this._isDirty = true;
     }
 
@@ -258,13 +297,16 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.BitmapData::drawWithQuality"); return;
     }
 
-    fillRect(rect: flash.geom.Rectangle, color: number /*uint*/): void {
+    fillRect(rect: flash.geom.Rectangle, colorARGB: number /*uint*/): void {
       if (this._transparent) {
-        var alpha = color >>> 24;
-        color = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
+        var alpha = colorARGB >>> 24;
+        var colorRGB = colorARGB & 0x00ffffff;
+        colorARGB = (((colorRGB * alpha + 254) / 255) & 0x00ffffff) | (alpha << 24);
       } else {
-        color = (color << 8) | 0xff;
+        colorARGB |= 0xff000000;
       }
+      release || assert (this._type === ImageType.PremultipliedAlphaARGB);
+      var colorBGRA = swap32(colorARGB);
       var r = this.rect.intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
@@ -273,12 +315,12 @@ module Shumway.AVM2.AS.flash.display {
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
-      var pixelData = this._rgba;
+      var pixelData = this._view;
       var width = this._rect.width;
       for (var y = yMin; y < yMax; y++) {
         var offset = y * width;
         for (var x = xMin; x < xMax; x++) {
-          pixelData[offset + x] = color;
+          pixelData[offset + x] = colorBGRA;
         }
       }
       this._isDirty = true;

@@ -90,7 +90,7 @@ module Shumway.Timeline {
       symbol.data = data.data;
       switch (data.mimeType) {
         case "application/octet-stream":
-          symbol.type = ImageType.StraightAlphaRGBA;
+          symbol.type = ImageType.StraightAlphaARGB;
           break;
         case "image/jpeg":
           symbol.type = ImageType.JPEG;
