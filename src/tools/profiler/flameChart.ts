@@ -129,8 +129,8 @@ module Shumway.Tools.Profiler {
           label = this._prepareText(context, label, adjustedWidth - labelHPadding * 2);
           if (label.length) {
             context.fillStyle = style.textColor;
-            context.textBaseline = "top";
-            context.fillText(label, (left + labelHPadding), depth * (12 + frameHPadding));
+            context.textBaseline = "bottom";
+            context.fillText(label, left + labelHPadding, (depth + 1) * (12 + frameHPadding) - 1);
           }
         }
       }
