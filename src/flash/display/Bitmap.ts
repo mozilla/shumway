@@ -90,5 +90,12 @@ module Shumway.AVM2.AS.flash.display {
       this._invalidateParentFillAndLineBounds();
       this._invalidatePaint();
     }
+
+    _getContentBounds(includeStrokes: boolean = true): Bounds {
+      if (this._bitmapData) {
+        return this._bitmapData._getContentBounds();
+      }
+      return new Bounds(0, 0, 0, 0);
+    }
   }
 }

@@ -743,17 +743,24 @@ module Shumway.AVM2.AS.flash.display {
      * matrix from the local coordinate space to the target coordinate space is computed using:
      *
      *   this.concatenatedMatrix * inverse(target.concatenatedMatrix)
+     *
+     * If the |targetCoordinateSpace| is |null| then assume the identity coordinate space.
      */
     private _getTransformedBounds(targetCoordinateSpace: DisplayObject,
                                   includeStroke: boolean = true): Bounds
     {
       var bounds = this._getContentBounds(includeStroke).clone();
-      if (!targetCoordinateSpace || targetCoordinateSpace === this || bounds.isEmpty()) {
+      if (targetCoordinateSpace === this || bounds.isEmpty()) {
         return bounds;
       }
-      var m = targetCoordinateSpace._getConcatenatedMatrix().clone();
-      m.invert();
-      m.preMultiply(this._getConcatenatedMatrix());
+      var m;
+      if (targetCoordinateSpace) {
+        m = targetCoordinateSpace._getConcatenatedMatrix().clone();
+        m.invert();
+        m.preMultiply(this._getConcatenatedMatrix());
+      } else {
+        m = this._getConcatenatedMatrix();
+      }
       m.transformBounds(bounds);
       return bounds;
     }
@@ -1227,10 +1234,12 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     getBounds(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
+      targetCoordinateSpace = targetCoordinateSpace || this;
       return geom.Rectangle.FromBounds(this._getTransformedBounds(targetCoordinateSpace, true));
     }
 
     getRect(targetCoordinateSpace: DisplayObject): flash.geom.Rectangle {
+      targetCoordinateSpace = targetCoordinateSpace || this;
       return geom.Rectangle.FromBounds(this._getTransformedBounds(targetCoordinateSpace, false));
     }
 

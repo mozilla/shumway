@@ -57,14 +57,18 @@ module Shumway.AVM2.AS.flash.display {
       this._rect = new Rectangle(0, 0, width, height);
       this._fillColor = fillColor;
       if (this._symbol) {
-        this._data = this._symbol.data;
+        this._data = new Uint32Array(this._symbol.data.buffer);
         this._type = this._symbol.type;
       } else {
         this._data = new Uint32Array(width * height);
         this._type = ImageType.PremultipliedAlphaRGBA;
+        if (fillColor && transparent) {
+          // No need to fill.
+        } else {
+          this.fillRect(this.rect, this._fillColor);
+        }
       }
       this._dataBuffer = DataBuffer.FromArrayBuffer(this._data.buffer);
-      this.fillRect(this.rect, this._fillColor);
       this._isDirty = true;
     }
     

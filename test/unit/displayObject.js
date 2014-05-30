@@ -365,4 +365,13 @@
     // eq(s.transform.matrix, null, "Make sure matrix is not null when no Z value is set.");
   });
 
+  unitTests.push(function () {
+    var s = new Shape();
+    s._getContentBounds = function () {
+      return new Bounds(0, 0, 100 * 20, 100 * 20);
+    }
+    s.width = 50;
+    eq(s.width, 50, "Setting the width when the object is not added to a parent.");
+  });
+
 })();
