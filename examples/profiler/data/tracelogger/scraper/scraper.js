@@ -1,25 +1,39 @@
 var fs = require('fs');
 var request = require('request');
-var TLData = require("./data/TLData");
-
 var urls = [];
-for (var i = 0; i < TLData.engines.length; i++) {
-  var engine = TLData.engines[i];
-  for (var j = 0; j < TLData.suites.length; j++) {
-    var suite = TLData.suites[j];
-    for (var k = 0; k < suite.scripts.length; k++) {
-      var script = suite.scripts[k];
-      var url = "data-" + suite.name + "-" + engine.name + "-" + script.name + ".json";
-      urls.push(url);
-    }
-  }
-}
 
-(function scrapeJSON() {
+(function scrapeCatalog() {
+  var url = "https://tl-beta.paas.allizom.org/data/front.js";
+  console.log("Loading " + url);
+  downloadAndSave(url, "../data.js", false, function(content) {
+    var jsonMatch = content.match(/( *var [\w]+ *= *)?({.*});?/i);
+    try {
+      var json = JSON.parse(jsonMatch[2]);
+      for (var i = 0; i < json.engines.length; i++) {
+        var engine = json.engines[i];
+        for (var j = 0; j < json.suites.length; j++) {
+          var suite = json.suites[j];
+          for (var k = 0; k < suite.scripts.length; k++) {
+            var script = suite.scripts[k];
+            var url = "data-" + suite.name + "-" + engine.name + "-" + script.name + ".json";
+            urls.push(url);
+          }
+        }
+      }
+      scrapeJSON();
+    }
+    catch(e) {
+      console.log("ERROR");
+      console.log(e);
+    }
+  });
+})();
+
+function scrapeJSON() {
   var url = urls.pop();
   if (url) {
     var base = "https://tl-uploader.paas.allizom.org/";
-    console.log(url);
+    console.log("Loading " + url);
     downloadAndSave(base + url, "../" + url, false, function(content) {
       var json = JSON.parse(content);
       for (var i = 0; i < json.length; i++) {
@@ -34,7 +48,7 @@ for (var i = 0; i < TLData.engines.length; i++) {
   } else {
     console.log("DONE");
   }
-})();
+}
 
 function downloadAndSave(url, filename, binary, callback) {
   var options = binary ? { encoding: null } : {};
