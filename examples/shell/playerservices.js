@@ -116,6 +116,7 @@ Shumway.FileLoadingService.instance = {
   },
   setBaseUrl: function (url) {
     Shumway.FileLoadingService.instance.baseUrl = url;
+    return url;
   },
   resolveUrl: function (url) {
     if (url.indexOf('://') >= 0) {
