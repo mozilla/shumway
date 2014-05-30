@@ -449,10 +449,6 @@ function panelToggleButtonClickHandler(event) {
       } else {
         updateDisplayListTree();
       }
-      document.getElementById("ctrlLogToConsole").classList.remove("active");
-      break;
-    default:
-      document.getElementById("ctrlLogToConsole").classList.add("active");
       break;
   }
 }
@@ -462,37 +458,6 @@ Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector
     element.click();
   }
 });
-
-// Log To Browser Console checkbox
-(function() {
-  var chkLogToConsole = document.getElementById("chkLogToConsole")
-  chkLogToConsole.checked = state.logToConsole || false;
-  chkLogToConsole.addEventListener("click", function (event) {
-    state.logToConsole = event.target.checked;
-    saveInspectorState();
-  });
-})();
-
-// Mute button
-(function() {
-  var muteButton = document.getElementById("muteButton");
-  function setElementState() {
-    if (state.mute) {
-      muteButton.classList.remove("icon-volume-up");
-      muteButton.classList.add("icon-volume-off");
-    } else {
-      muteButton.classList.add("icon-volume-up");
-      muteButton.classList.remove("icon-volume-off");
-    }
-  }
-  muteButton.addEventListener("click", function (event) {
-    state.mute = !state.mute;
-    avm2.systemDomain.getClass("flash.media.SoundMixer").native.static._setMasterVolume(state.mute ? 0 : 1);
-    setElementState();
-    saveInspectorState();
-  });
-  setElementState();
-})();
 
 swfController.onStateChange = function onStateChange(newState, oldState) {
   if (oldState === swfController.STATE_INIT) {
@@ -519,7 +484,6 @@ function initUI(isExecutingSWF) {
   document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
 
   if (isExecutingSWF) {
-    document.getElementById("muteButton").classList.add("active");
     document.getElementById("pauseButton").classList.add("active");
     document.getElementById("stepButton").classList.add("active");
 

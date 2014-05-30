@@ -25,8 +25,6 @@ body.simple #stageContainer {
 
 }
 
-.muteButton { background-image: url(images/mute-button.png); }
-
 .toolbarBox {
   position: absolute;
   width: auto;
@@ -74,9 +72,6 @@ body.simple #stageContainer {
   display: inline-block;
 }
 
-#muteButton {
-  margin-right: 8px;
-}
 #pauseButton {
   font-size: 10px;
 }
@@ -110,17 +105,6 @@ body.simple #stageContainer {
   font-size: 0;
 }
 #debugInfoToolbar > .toolbarButtonBar.active {
-  display: inline-block;
-}
-
-#ctrlLogToConsole {
-  display: none;
-  float: right;
-  font: 12px Lucida Grande, sans-serif;
-  color: hsl(210,30%,85%);
-  padding-top: 3px;
-}
-#ctrlLogToConsole.active {
   display: inline-block;
 }
 
