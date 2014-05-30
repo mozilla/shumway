@@ -23,20 +23,6 @@ module Shumway.Tools.Profiler {
     UNION
   }
 
-  enum DragTarget {
-    NONE,
-    WINDOW,
-    HANDLE_LEFT,
-    HANDLE_RIGHT,
-    HANDLE_BOTH
-  }
-
-  interface DragInfo {
-    windowStartInitial: number;
-    windowEndInitial: number;
-    target: DragTarget;
-  }
-
   interface Selection {
     left: number;
     right: number;
@@ -49,7 +35,6 @@ module Shumway.Tools.Profiler {
     private _overviewContext: CanvasRenderingContext2D;
 
     private _selection: Selection;
-    private _dragInfo: DragInfo;
     private _mode: FlameChartOverviewMode;
 
     constructor(controller: Controller, mode: FlameChartOverviewMode = FlameChartOverviewMode.STACK) {
@@ -194,32 +179,23 @@ module Shumway.Tools.Profiler {
       contextOverview.restore();
     }
 
-    private _toPixelsRelative(time: number): number {
+    _toPixelsRelative(time: number): number {
       return time * this._width / (this._rangeEnd - this._rangeStart);
     }
 
-    private _toPixels(time: number): number {
+    _toPixels(time: number): number {
       return this._toPixelsRelative(time - this._rangeStart);
     }
 
-    private _toTimeRelative(px: number): number {
+    _toTimeRelative(px: number): number {
       return px * (this._rangeEnd - this._rangeStart) / this._width;
     }
 
-    private _toTime(px: number): number {
+    _toTime(px: number): number {
       return this._toTimeRelative(px) + this._rangeStart;
     }
 
-    private _almostEq(a: number, b: number, precision: number = 10): boolean {
-      var pow10 = Math.pow(10, precision);
-      return Math.abs(a - b) < (1 / pow10);
-    }
-
-    private _windowEqRange(): boolean {
-      return (this._almostEq(this._windowStart, this._rangeStart) && this._almostEq(this._windowEnd, this._rangeEnd));
-    }
-
-    private _getDragTargetUnderCursor(x: number, y:number): DragTarget {
+    private _getDragTargetUnderCursor(x: number, y:number): FlameChartDragTarget {
       if (y >= 0 && y < this._height) {
         var left = this._toPixels(this._windowStart);
         var right = this._toPixels(this._windowEnd);
@@ -227,28 +203,28 @@ module Shumway.Tools.Profiler {
         var leftHandle = (x >= left - radius && x <= left + radius);
         var rightHandle = (x >= right - radius && x <= right + radius);
         if (leftHandle && rightHandle) {
-          return DragTarget.HANDLE_BOTH;
+          return FlameChartDragTarget.HANDLE_BOTH;
         } else if (leftHandle) {
-          return DragTarget.HANDLE_LEFT;
+          return FlameChartDragTarget.HANDLE_LEFT;
         } else if (rightHandle) {
-          return DragTarget.HANDLE_RIGHT;
+          return FlameChartDragTarget.HANDLE_RIGHT;
         } else if (!this._windowEqRange() && x > left + radius && x < right - radius) {
-          return DragTarget.WINDOW;
+          return FlameChartDragTarget.WINDOW;
         }
       }
-      return DragTarget.NONE;
+      return FlameChartDragTarget.NONE;
     }
 
     onMouseDown(x: number, y: number) {
       var dragTarget = this._getDragTargetUnderCursor(x, y);
-      if (dragTarget === DragTarget.NONE) {
+      if (dragTarget === FlameChartDragTarget.NONE) {
         this._selection = { left: x, right: x };
         this._draw();
       } else {
-        if (dragTarget === DragTarget.WINDOW) {
+        if (dragTarget === FlameChartDragTarget.WINDOW) {
           this._mouseController.updateCursor(MouseCursor.GRABBING);
         }
-        this._dragInfo = <DragInfo>{
+        this._dragInfo = <FlameChartDragInfo>{
           windowStartInitial: this._windowStart,
           windowEndInitial: this._windowEnd,
           target: dragTarget
@@ -259,8 +235,8 @@ module Shumway.Tools.Profiler {
     onMouseMove(x: number, y: number) {
       var cursor = MouseCursor.DEFAULT;
       var dragTarget = this._getDragTargetUnderCursor(x, y);
-      if (dragTarget !== DragTarget.NONE && !this._selection) {
-        cursor = (dragTarget === DragTarget.WINDOW) ? MouseCursor.GRAB : MouseCursor.EW_RESIZE;
+      if (dragTarget !== FlameChartDragTarget.NONE && !this._selection) {
+        cursor = (dragTarget === FlameChartDragTarget.WINDOW) ? MouseCursor.GRAB : MouseCursor.EW_RESIZE;
       }
       this._mouseController.updateCursor(cursor);
     }
@@ -273,35 +249,15 @@ module Shumway.Tools.Profiler {
       this._mouseController.updateCursor(MouseCursor.DEFAULT);
     }
 
-    onMouseWheel(x: number, y: number, delta: number) {
-      var time = this._toTime(x);
-      var windowStart = this._windowStart;
-      var windowEnd = this._windowEnd;
-      var windowLen = windowEnd - windowStart;
-      /*
-       * Find maximum allowed delta
-       * (windowEnd + (windowEnd - time) * delta) - (windowStart + (windowStart - time) * delta) = LEN
-       * (windowEnd - windowStart) + ((windowEnd - time) * delta) - ((windowStart - time) * delta) = LEN
-       * (windowEnd - windowStart) + ((windowEnd - time) - (windowStart - time)) * delta = LEN
-       * (windowEnd - windowStart) + (windowEnd - windowStart) * delta = LEN
-       * (windowEnd - windowStart) * delta = LEN - (windowEnd - windowStart)
-       * delta = (LEN - (windowEnd - windowStart)) / (windowEnd - windowStart)
-       */
-      var maxDelta = Math.max((FlameChartBase.MIN_WINDOW_LEN - windowLen) / windowLen, delta);
-      var start = windowStart + (windowStart - time) * maxDelta;
-      var end = windowEnd + (windowEnd - time) * maxDelta;
-      this._controller.setWindow(start, end);
-    }
-
     onDrag(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
       if (this._selection) {
         this._selection = { left: startX, right: clamp(currentX, 0, this._width - 1) };
         this._draw();
       } else {
         var dragInfo = this._dragInfo;
-        if (dragInfo.target === DragTarget.HANDLE_BOTH) {
+        if (dragInfo.target === FlameChartDragTarget.HANDLE_BOTH) {
           if (deltaX !== 0) {
-            dragInfo.target = (deltaX < 0) ? DragTarget.HANDLE_LEFT : DragTarget.HANDLE_RIGHT;
+            dragInfo.target = (deltaX < 0) ? FlameChartDragTarget.HANDLE_LEFT : FlameChartDragTarget.HANDLE_RIGHT;
           } else {
             return;
           }
@@ -310,14 +266,14 @@ module Shumway.Tools.Profiler {
         var windowEnd = this._windowEnd;
         var delta = this._toTimeRelative(deltaX);
         switch (dragInfo.target) {
-          case DragTarget.WINDOW:
+          case FlameChartDragTarget.WINDOW:
             windowStart = dragInfo.windowStartInitial + delta;
             windowEnd = dragInfo.windowEndInitial + delta;
             break;
-          case DragTarget.HANDLE_LEFT:
+          case FlameChartDragTarget.HANDLE_LEFT:
             windowStart = clamp(dragInfo.windowStartInitial + delta, this._rangeStart, windowEnd - 20);
             break;
-          case DragTarget.HANDLE_RIGHT:
+          case FlameChartDragTarget.HANDLE_RIGHT:
             windowEnd = clamp(dragInfo.windowEndInitial + delta, windowStart + 20, this._rangeEnd);
             break;
           default:
@@ -341,7 +297,7 @@ module Shumway.Tools.Profiler {
       this._selection = null;
       if (!this._windowEqRange()) {
         var dragTarget = this._getDragTargetUnderCursor(x, y);
-        if (dragTarget === DragTarget.NONE) {
+        if (dragTarget === FlameChartDragTarget.NONE) {
           this._controller.moveWindowTo(this._toTime(x));
         }
         this.onMouseMove(x, y);
@@ -354,117 +310,3 @@ module Shumway.Tools.Profiler {
 
   }
 }
-
-
-/*
-    private _onClick(event: MouseEvent) {
-    if (this._ignoreClick) {
-    this._ignoreClick = false;
-    return;
-    }
-    if (event.clientY < this._overviewHeight) {
-    var window = this._windowRight - this._windowLeft;
-    var windowLeft = this._range.startTime + event.clientX * this._pixelsToOverviewTime - window / 2;
-    var windowRight = this._range.startTime + event.clientX * this._pixelsToOverviewTime + window / 2;
-    this._updateWindow(windowLeft, windowRight);
-    this._updateCursor(event);
-    }
-    }
-
-    private _onMouseUp(event: MouseEvent) {
-    if (this._drag) {
-    this._drag = null;
-    this._ignoreClick = true;
-    }
-    this._updateCursor(event);
-    }
-
-    private _onMouseDown(event: MouseEvent) {
-    if (event.clientY < this._overviewHeight) {
-    if (this._getCursorPosition(event) == 0) {
-    this._drag = {
-    overview: true,
-    clientX: event.clientX,
-    windowLeft: this._windowLeft,
-    windowRight: this._windowRight
-    };
-    }
-    } else {
-    this._drag = {
-    overview: false,
-    clientX: event.clientX,
-    windowLeft: this._windowLeft,
-    windowRight: this._windowRight
-    };
-    }
-    this._updateCursor(event);
-    }
-
-    private _onMouseMove(event: MouseEvent) {
-    if (this._drag) {
-    var offset: number;
-    var mult: number;
-    if (this._drag.overview) {
-    offset = event.clientX - this._drag.clientX;
-    mult = this._pixelsToOverviewTime;
-    } else {
-    offset = -event.clientX + this._drag.clientX;
-    mult = this._pixelsToTime;
-    }
-    var windowLeft = this._drag.windowLeft + offset * mult;
-    var windowRight = this._drag.windowRight + offset * mult;
-    this._updateWindow(windowLeft, windowRight);
-    }
-    this._updateCursor(event);
-    }
-
-    private _onMouseWheel(event: MouseEvent) {
-    event.stopPropagation();
-    if (this._drag === null) {
-    var range = this._range;
-    var delta = clamp(event.detail ? event.detail / 8 : -event.wheelDeltaY / 120, -1, 1);
-    var zoom = Math.pow(1.2, delta) - 1;
-    var cursorTime = (event.clientY > this._overviewHeight || this._getCursorPosition(event) !== 0)
-    ? this._windowLeft + event.clientX * this._pixelsToTime
-    : range.startTime + event.clientX * this._pixelsToOverviewTime;
-    var windowLeft = this._windowLeft + (this._windowLeft - cursorTime) * zoom;
-    var windowRight = this._windowRight + (this._windowRight - cursorTime) * zoom;
-    this._updateWindow(windowLeft, windowRight);
-    this._updateCursor(event);
-    }
-    }
-
-    private _clampWindow() {
-    var range = this._range;
-    var windowSize = this._windowRight - this._windowLeft;
-    if (windowSize < this._minTime) {
-    windowSize = this._minTime;
-    var center = this._windowLeft + (this._windowRight - this._windowLeft) / 2;
-    this._windowLeft = center - this._minTime / 2;
-    this._windowRight = center + this._minTime / 2;
-    }
-    if (this._windowLeft < range.startTime) {
-    this._windowLeft = range.startTime;
-    this._windowRight = clamp(this._windowLeft + windowSize, range.startTime, range.endTime);
-    } else if (this._windowRight > range.endTime) {
-    this._windowRight = range.endTime;
-    this._windowLeft = clamp(this._windowRight - windowSize, range.startTime, range.endTime);
-    }
-    }
-
-    private _updateUnits() {
-    this._timeToPixels = this._width / (this._windowRight - this._windowLeft);
-    this._pixelsToTime = (this._windowRight - this._windowLeft) / this._width;
-    this._pixelsToOverviewTime = (this._profile.endTime - this._profile.startTime) / this._width;
-    }
-
-    private _updateWindow(left: number, right: number) {
-    if (this._windowLeft !== left || this._windowRight !== right) {
-    this._windowLeft = left;
-    this._windowRight = right;
-    this._clampWindow();
-    this._updateUnits();
-    this._draw();
-    }
-    }
-*/

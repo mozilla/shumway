@@ -170,19 +170,19 @@ module Shumway.Tools.Profiler {
       return width;
     }
 
-    private _toPixelsRelative(time: number): number {
+    _toPixelsRelative(time: number): number {
       return time * this._width / (this._windowEnd - this._windowStart);
     }
 
-    private _toPixels(time: number): number {
+    _toPixels(time: number): number {
       return this._toPixelsRelative(time - this._windowStart);
     }
 
-    private _toTimeRelative(px: number): number {
+    _toTimeRelative(px: number): number {
       return px * (this._windowEnd - this._windowStart) / this._width;
     }
 
-    private _toTime(px: number): number {
+    _toTime(px: number): number {
       return this._toTimeRelative(px) + this._windowStart;
     }
 
@@ -201,44 +201,38 @@ module Shumway.Tools.Profiler {
     }
 
     onMouseDown(x: number, y: number) {
+      if (!this._windowEqRange()) {
+        this._mouseController.updateCursor(MouseCursor.ALL_SCROLL);
+        this._dragInfo = <FlameChartDragInfo>{
+          windowStartInitial: this._windowStart,
+          windowEndInitial: this._windowEnd,
+          target: FlameChartDragTarget.WINDOW
+        };
+      }
     }
 
-    onMouseMove(x: number, y: number) {
-    }
-
-    onMouseOver(x: number, y: number) {
-    }
-
-    onMouseOut() {
-    }
-
-    onMouseWheel(x: number, y: number, delta: number) {
-      var time = this._toTime(x);
-      var windowStart = this._windowStart;
-      var windowEnd = this._windowEnd;
-      var windowLen = windowEnd - windowStart;
-      /*
-       * Find maximum allowed delta
-       * (windowEnd + (windowEnd - time) * delta) - (windowStart + (windowStart - time) * delta) = LEN
-       * (windowEnd - windowStart) + ((windowEnd - time) * delta) - ((windowStart - time) * delta) = LEN
-       * (windowEnd - windowStart) + ((windowEnd - time) - (windowStart - time)) * delta = LEN
-       * (windowEnd - windowStart) + (windowEnd - windowStart) * delta = LEN
-       * (windowEnd - windowStart) * delta = LEN - (windowEnd - windowStart)
-       * delta = (LEN - (windowEnd - windowStart)) / (windowEnd - windowStart)
-       */
-      var maxDelta = Math.max((FlameChartBase.MIN_WINDOW_LEN - windowLen) / windowLen, delta);
-      var start = windowStart + (windowStart - time) * maxDelta;
-      var end = windowEnd + (windowEnd - time) * maxDelta;
-      this._controller.setWindow(start, end);
-    }
+    onMouseMove(x: number, y: number) {}
+    onMouseOver(x: number, y: number) {}
+    onMouseOut() {}
 
     onDrag(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
+      var dragInfo = this._dragInfo;
+      if (dragInfo) {
+        var delta = this._toTimeRelative(-deltaX);
+        var windowStart = dragInfo.windowStartInitial + delta;
+        var windowEnd = dragInfo.windowEndInitial + delta;
+        this._controller.setWindow(windowStart, windowEnd);
+      }
     }
 
     onDragEnd(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
+      this._dragInfo = null;
+      this._mouseController.updateCursor(MouseCursor.DEFAULT);
     }
 
     onClick(x: number, y: number) {
+      this._dragInfo = null;
+      this._mouseController.updateCursor(MouseCursor.DEFAULT);
     }
 
     onHoverStart(x: number, y: number) {
