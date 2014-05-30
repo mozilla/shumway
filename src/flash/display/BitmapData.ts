@@ -57,10 +57,14 @@ module Shumway.AVM2.AS.flash.display {
       this._rect = new Rectangle(0, 0, width, height);
       this._fillColor = fillColor;
       if (this._symbol) {
-        this._data = new Uint32Array(this._symbol.data.buffer);
+        this._data = new Uint8Array(this._symbol.data.buffer);
         this._type = this._symbol.type;
+        if (this._type === ImageType.PremultipliedAlphaRGBA) {
+          this._rgba = new Uint32Array(this._symbol.data.buffer);
+        }
       } else {
-        this._data = new Uint32Array(width * height);
+        this._data = new Uint8Array(width * height * 4);
+        this._rgba = new Uint32Array(this._data.buffer);
         this._type = ImageType.PremultipliedAlphaRGBA;
         if (fillColor && transparent) {
           // No need to fill.
@@ -85,7 +89,8 @@ module Shumway.AVM2.AS.flash.display {
      * endian when claiming ARGB. Canvas's putImageData expects RGBA (byte order) which
      * is really ABGR when dealing with ints on little endian machines.
      */
-    _data: Uint32Array;
+    _data: Uint8Array;
+    _rgba: Uint32Array;
     _type: ImageType;
 
     _dataBuffer: DataBuffer;
@@ -112,7 +117,7 @@ module Shumway.AVM2.AS.flash.display {
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
-      var pixelData = this._data;
+      var pixelData = this._rgba;
       var width = this._rect.width;
       var output = new Uint32Array(r.area);
       var p = 0;
@@ -136,7 +141,7 @@ module Shumway.AVM2.AS.flash.display {
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
-      var pixelData = this._data;
+      var pixelData = this._rgba;
       var width = this._rect.width;
       var p = (rect.width * rect.height - r.height) + (xMin - rect.x);
       var padding = rect.width - r.width;
@@ -171,7 +176,7 @@ module Shumway.AVM2.AS.flash.display {
 
     clone(): flash.display.BitmapData {
       var bd = new BitmapData(this._rect.width, this._rect.height, this._transparent, this._fillColor);
-      bd._data.set(this._data);
+      bd._rgba.set(this._rgba);
       return bd;
     }
 
@@ -185,7 +190,7 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return 0;
       }
-      var color = this._data[y * this._rect.width + x];
+      var color = this._rgba[y * this._rect.width + x];
       var alpha = color & 0xff;
       return (((255 * (color >>> 8)) / alpha) | (alpha << 24)) >>> 0;
     }
@@ -196,8 +201,8 @@ module Shumway.AVM2.AS.flash.display {
         return;
       }
       var i = y * this._rect.width + x;
-      var alpha = this._data[i] & 0xff;
-      this._data[i] = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
+      var alpha = this._rgba[i] & 0xff;
+      this._rgba[i] = ((((color & 0x00ffffff) * alpha + 254) / 255) << 8) | alpha;
       this._isDirty = true;
     }
 
@@ -212,7 +217,7 @@ module Shumway.AVM2.AS.flash.display {
       } else {
         color = (color << 8) | 0xff;
       }
-      this._data[y * this._rect.width + x] = color;
+      this._rgba[y * this._rect.width + x] = color;
       this._isDirty = true;
     }
 
@@ -240,7 +245,7 @@ module Shumway.AVM2.AS.flash.display {
 
     dispose(): void {
       this._rect.setEmpty();
-      this._data = null;
+      this._rgba = null;
       this._isDirty = true;
     }
 
@@ -268,7 +273,7 @@ module Shumway.AVM2.AS.flash.display {
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
-      var pixelData = this._data;
+      var pixelData = this._rgba;
       var width = this._rect.width;
       for (var y = yMin; y < yMax; y++) {
         var offset = y * width;

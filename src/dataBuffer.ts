@@ -106,7 +106,6 @@ module Shumway.ArrayUtilities {
     private _i8View: Int8Array;
     private _u8View: Uint8Array;
     private _i32View: Int32Array;
-    private _f32View: Float32Array;
     private _dataView: DataView;
 
     private _bitBuffer: number;
@@ -156,8 +155,9 @@ module Shumway.ArrayUtilities {
     _cacheViews() {
       this._i8View = new Int8Array(this._buffer);
       this._u8View = new Uint8Array(this._buffer);
-      this._i32View = new Int32Array(this._buffer);
-      this._f32View = new Float32Array(this._buffer);
+      if ((this._buffer.byteLength & 0x3) === 0) {
+        this._i32View = new Int32Array(this._buffer);
+      }
       this._dataView = new DataView(this._buffer);
     }
 
@@ -239,7 +239,7 @@ module Shumway.ArrayUtilities {
     }
 
     readInt(): number /*int*/ {
-      if ((this._position & 0x3) === 0) {
+      if ((this._position & 0x3) === 0 && this._i32View) {
         if (this._position + 4 > this._length) {
           throwEOFError();
         }
@@ -259,7 +259,7 @@ module Shumway.ArrayUtilities {
     }
 
     readFloat(): number {
-      if ((this._position & 0x3) === 0) {
+      if ((this._position & 0x3) === 0 && this._i32View) {
         if (this._position + 4 > this._length) {
           throwEOFError();
         }
@@ -341,7 +341,7 @@ module Shumway.ArrayUtilities {
     }
 
     writeInt(value: number /*int*/): void {
-      if ((this._position & 0x3) === 0) {
+      if ((this._position & 0x3) === 0 && this._i32View) {
         if (this._littleEndian !== DataBuffer._nativeLittleEndian) {
           value = swap32(value);
         }
@@ -362,7 +362,7 @@ module Shumway.ArrayUtilities {
     }
 
     writeFloat(value: number): void {
-      if ((this._position & 0x3) === 0) {
+      if ((this._position & 0x3) === 0 && this._i32View) {
         var length = this._position + 4;
         this._ensureCapacity(length);
         var bytes = floatToInt32(value);
