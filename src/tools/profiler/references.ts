@@ -14,7 +14,8 @@
 
 declare var release: boolean;
 
-interface MouseEvent extends UIEvent {
-  wheelDeltaY: number;
-  wheelDeltaX: number;
+interface MouseWheelEvent extends MouseEvent {
+  deltaX: number;
+  deltaY: number;
+  deltaZ: number;
 }

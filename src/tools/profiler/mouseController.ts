@@ -124,8 +124,7 @@ module Shumway.Tools.Profiler {
       eventTarget.addEventListener("mousedown", this._boundOnMouseDown, false);
       eventTarget.addEventListener("mouseover", this._boundOnMouseOver, false);
       eventTarget.addEventListener("mouseout", this._boundOnMouseOut, false);
-      eventTarget.addEventListener("mousewheel", this._boundOnMouseWheel, false);
-      eventTarget.addEventListener("DOMMouseScroll", this._boundOnMouseWheel, false);
+      eventTarget.addEventListener(("onwheel" in document ? "wheel" : "mousewheel"), this._boundOnMouseWheel, false);
     }
 
     destroy() {
@@ -133,6 +132,7 @@ module Shumway.Tools.Profiler {
       eventTarget.removeEventListener("mousedown", this._boundOnMouseDown);
       eventTarget.removeEventListener("mouseover", this._boundOnMouseOver);
       eventTarget.removeEventListener("mouseout", this._boundOnMouseOut);
+      eventTarget.removeEventListener(("onwheel" in document ? "wheel" : "mousewheel"), this._boundOnMouseWheel);
       window.removeEventListener("mousemove", this._boundOnDrag);
       window.removeEventListener("mouseup", this._boundOnMouseUp);
       this._killHoverCheck();
@@ -226,12 +226,15 @@ module Shumway.Tools.Profiler {
       }
     }
 
-    private _onMouseWheel(event: MouseEvent) {
-      if (!this._dragInfo) {
-        var pos = this._getTargetMousePos(event, <HTMLElement>(event.target));
-        var delta = clamp(event.detail ? event.detail / 8 : -event.wheelDeltaY / 120, -1, 1);
-        var zoom = Math.pow(1.2, delta) - 1;
-        this._target.onMouseWheel(pos.x, pos.y, zoom);
+    private _onMouseWheel(event: MouseWheelEvent) {
+      if (!event.altKey && !event.metaKey && !event.ctrlKey && !event.shiftKey) {
+        event.preventDefault();
+        if (!this._dragInfo) {
+          var pos = this._getTargetMousePos(event, <HTMLElement>(event.target));
+          var delta = clamp((typeof event.deltaY !== "undefined") ? event.deltaY / 16 : -event.wheelDelta / 40, -1, 1);
+          var zoom = Math.pow(1.2, delta) - 1;
+          this._target.onMouseWheel(pos.x, pos.y, zoom);
+        }
       }
     }
 
