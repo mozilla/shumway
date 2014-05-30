@@ -16,19 +16,12 @@
 // Class: InterpolationMethod
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import GradientInterpolationMethod = Shumway.GradientInterpolationMethod;
   export class InterpolationMethod extends ASNative {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
@@ -45,9 +38,9 @@ module Shumway.AVM2.AS.flash.display {
 
     static fromNumber(n: number): string {
       switch (n) {
-        case 0:
+        case GradientInterpolationMethod.RGB:
           return InterpolationMethod.RGB;
-        case 1:
+        case GradientInterpolationMethod.LinearRGB:
           return InterpolationMethod.LINEAR_RGB;
         default:
           return null;
@@ -57,9 +50,9 @@ module Shumway.AVM2.AS.flash.display {
     static toNumber(value: string): number {
       switch (value) {
         case InterpolationMethod.RGB:
-          return 0;
+          return GradientInterpolationMethod.RGB;
         case InterpolationMethod.LINEAR_RGB:
-          return 1;
+          return GradientInterpolationMethod.LinearRGB;
         default:
           return -1;
       }

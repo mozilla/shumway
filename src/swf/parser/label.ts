@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/// <reference path='../references.ts'/>
+/// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
   import rgbaObjToCSSStyle = Shumway.ColorUtilities.rgbaObjToCSSStyle;
   var fromCharCode = String.fromCharCode;

@@ -16,7 +16,6 @@
 
 ///<reference path='dataBuffer.ts' />
 module Shumway {
-  import clamp = NumberUtilities.clamp;
   /**
    * Used for (de-)serializing Graphics path data in defineShape, flash.display.Graphics
    * and the renderer.
@@ -34,6 +33,31 @@ module Shumway {
     LineTo,
     CurveTo,
     CubicCurveTo,
+  }
+
+  export enum GradientType {
+    Linear = 0x10,
+    Radial = 0x12
+  }
+
+  export enum GradientSpreadMethod {
+    Pad = 0,
+    Reflect = 1,
+    Repeat = 2
+  }
+
+  export enum GradientInterpolationMethod {
+    RGB = 0,
+    LinearRGB = 1
+  }
+
+  export interface ShapeMatrix {
+    a: number;
+    b: number;
+    c: number;
+    d: number;
+    tx: number;
+    ty: number;
   }
 
   /**
@@ -75,6 +99,19 @@ module Shumway {
    * byte command:  PathCommand.BeginSolidFill
    * uint color:    [RGBA color]
    *
+   * beginGradientFill:
+   * Note: these fields are ordered this way to optimize performance in the rendering backend
+   * byte command:        PathCommand.BeginGradientFill
+   * byte gradientType:   GradientType.{LINEAR,RADIAL}
+   * i8   focalPoint:     [-128,127]
+   * matrix matrix:       transform matrix (see Matrix#writeExternal for details)
+   * byte colorStops:     Number of color stop records that follow
+   * list of byte,uint pairs:
+   *      byte ratio:     [0-0xff]
+   *      uint color:     [RGBA color]
+   * byte spread:         SpreadMethod.{PAD,REFLECT,REPEAT}
+   * byte interpolation:  InterpolationMethod.{RGB,LINEAR_RGB}
+   *
    * beginBitmapFill:
    * byte command:  PathCommand.BeginBitmapFill
    * uint bitmapId: Id of the bitmapData object being used as the fill's texture
@@ -96,6 +133,11 @@ module Shumway {
    *
    */
   export class ShapeData extends ArrayUtilities.DataBuffer {
+
+    constructor() {
+      super();
+      this.endian = 'auto';
+    }
 
     moveTo(x: number, y: number): void {
       this.writeUnsignedByte(PathCommand.MoveTo);
@@ -128,27 +170,28 @@ module Shumway {
       this.writeInt(anchorY);
     }
 
-    beginFill(color: number, alpha: number): void {
+    beginFill(color: number): void {
       this.writeUnsignedByte(PathCommand.BeginSolidFill);
-      this.writeUnsignedInt((color << 8) | alpha);
+      this.writeUnsignedInt(color);
     }
 
-    beginBitmapFill(bitmapId: number, matrix: {writeExternal: (DataBuffer) => void},
+    beginBitmapFill(bitmapId: number,
+                    matrix: {a: number; b: number; c: number; d: number; tx: number; ty: number},
                     repeat: boolean, smooth: boolean): void
     {
       this.writeUnsignedByte(PathCommand.BeginBitmapFill);
       this.writeUnsignedInt(bitmapId);
-      matrix.writeExternal(this);
+      this._writeMatrix(matrix);
       this.writeBoolean(repeat);
       this.writeBoolean(smooth);
     }
 
-    lineStyle(thickness: number, color: number, alpha: number, pixelHinting: boolean,
+    lineStyle(thickness: number, color: number, pixelHinting: boolean,
               scaleMode: number, caps: number, joints: number, miterLimit: number): void
     {
       this.writeUnsignedByte(PathCommand.LineStyleSolid);
       this.writeUnsignedByte(thickness);
-      this.writeUnsignedInt((color << 8) | alpha);
+      this.writeUnsignedInt(color);
       this.writeBoolean(pixelHinting);
       this.writeUnsignedByte(scaleMode);
       this.writeUnsignedByte(caps);
@@ -161,31 +204,39 @@ module Shumway {
      * once. The Parameter `pathCommand` is treated as the actual command to serialize, and must
      * be one of BeginGradientFill and LineStyleGradient.
      */
-    beginGradient(pathCommand: PathCommand, colors, ratios, alphas, gradientType: number,
-                  matrix: {writeExternal: (DataBuffer) => void},
+    beginGradient(pathCommand: PathCommand, colors: number[], ratios: number[],
+                  gradientType: number, matrix: ShapeMatrix,
                   spread: number, interpolation: number, focalPointRatio: number)
     {
       assert(pathCommand === PathCommand.BeginGradientFill ||
              pathCommand === PathCommand.LineStyleGradient);
       this.writeUnsignedByte(pathCommand);
       this.writeUnsignedByte(gradientType);
+      this.writeByte(focalPointRatio);
+
+      this._writeMatrix(matrix);
 
       var colorStops = colors.length;
       this.writeByte(colorStops);
       for (var i = 0; i < colorStops; i++) {
-        // Colors are coerced to uint32, with the highest byte stripped.
-        this.writeUnsignedInt(colors[i] >>> 0 & 0xffffff);
-        // Alpha is clamped to [0,1] and scaled to 0xff.
-        this.writeUnsignedByte(clamp(+alphas[i], 0, 1) * 0xff);
         // Ratio must be valid, otherwise we'd have bailed above.
         this.writeUnsignedByte(ratios[i]);
+        // Colors are coerced to uint32, with the highest byte stripped.
+        this.writeUnsignedInt(colors[i]);
       }
 
-      matrix.writeExternal(this);
       this.writeUnsignedByte(spread);
       this.writeUnsignedByte(interpolation);
+    }
 
-      this.writeFloat(clamp(+focalPointRatio, -1, 1));
+    private _writeMatrix(matrix: ShapeMatrix)
+    {
+      this.writeFloat(matrix.a);
+      this.writeFloat(matrix.b);
+      this.writeFloat(matrix.c);
+      this.writeFloat(matrix.d);
+      this.writeFloat(matrix.tx);
+      this.writeFloat(matrix.ty);
     }
   }
 }

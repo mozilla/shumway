@@ -445,6 +445,10 @@ module Shumway.ArrayUtilities {
       return this._u8View;
     }
 
+    get ints(): Int32Array {
+      return this._i32View;
+    }
+
     set position(position: number /*uint*/) {
       this._position = position >>> 0;
     }

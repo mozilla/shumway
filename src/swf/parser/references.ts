@@ -19,5 +19,6 @@
 ///<reference path='button.ts' />
 ///<reference path='font.ts' />
 ///<reference path='label.ts' />
+///<reference path='shape.ts' />
 
 declare function createInflatedStream(bytes: Uint8Array, outputLength: number): any;

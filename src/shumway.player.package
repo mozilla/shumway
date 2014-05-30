@@ -53,7 +53,7 @@ build/ts/swf/parser/button.js
 build/ts/swf/parser/font.js
 src/swf/image.js
 build/ts/swf/parser/label.js
-src/swf/shape.js
+build/ts/swf/parser/shape.js
 src/swf/sound.js
 src/swf/text.js
 src/swf/mp3worker.js

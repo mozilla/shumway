@@ -114,6 +114,10 @@ module Shumway.AVM2.AS.flash.display {
       return this._graphicsData;
     }
 
+    setGraphicsData(data: ShapeData) {
+      this._graphicsData = data;
+    }
+
     getUsedTextures(): BitmapData[] {
       return this._textures;
     }
@@ -181,9 +185,9 @@ module Shumway.AVM2.AS.flash.display {
      * to an integer in the interval [0,0xff].
      */
     beginFill(color: number /*uint*/, alpha: number = 1): void {
-      color = color >>> 0;
+      color = color >>> 0 & 0xffffff;
       alpha = Math.round(clamp(+alpha, -1, 1) * 0xff)|0;
-      this._graphicsData.beginFill(color, alpha);
+      this._graphicsData.beginFill((color << 8) | alpha);
     }
 
     beginGradientFill(type: string, colors: number[], alphas: number[], ratios: number[],
@@ -227,7 +231,7 @@ module Shumway.AVM2.AS.flash.display {
               joints: string = null, miterLimit: number = 3): void
     {
       thickness = +thickness;
-      color = color >>> 0;
+      color = color >>> 0 & 0xffffff;
       alpha = Math.round(clamp(+alpha, -1, 1) * 0xff);
       pixelHinting = !!pixelHinting;
       scaleMode = asCoerceString(scaleMode);
@@ -264,7 +268,7 @@ module Shumway.AVM2.AS.flash.display {
         jointStyle = JointStyle.toNumber(JointStyle.ROUND);
       }
 
-      this._graphicsData.lineStyle(thickness, color, alpha, pixelHinting,
+      this._graphicsData.lineStyle(thickness, (color << 8) | alpha, pixelHinting,
                                    lineScaleMode, capsStyle, jointStyle, miterLimit);
     }
 
@@ -606,30 +610,10 @@ module Shumway.AVM2.AS.flash.display {
      * be one of PATH_COMMAND_BEGIN_GRADIENT_FILL and PATH_COMMAND_LINE_STYLE_GRADIENT.
      */
     private _writeGradientStyle(pathCommand: PathCommand, type: string,
-                               colors: number[], alphas: number[], ratios: number[],
-                               matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
-                               interpolationMethod: string = "rgb",
-                               focalPointRatio: number = 0): void
+                                colors: number[], alphas: number[], ratios: number[],
+                                matrix: geom.Matrix, spreadMethod: string,
+                                interpolationMethod: string, focalPointRatio: number): void
     {
-      var ratiosValid = true;
-      var colorStops = colors.length;
-      for (var i = 0; i < colorStops; i++) {
-        if (ratios[i] > 0xff || ratios[i] < 0) {
-          ratiosValid = false;
-          break;
-        }
-      }
-      // If the colors, alphas and ratios arrays don't all have the same length or if any of the
-      // given ratios falls outside [0,0xff], Flash uses a solid white fill.
-      if (colorStops !== alphas.length || colorStops !== ratios.length || !ratiosValid) {
-        if (pathCommand === PathCommand.BeginGradientFill) {
-          this.beginFill(0xffffff, 1);
-        } else {
-          this.lineStyle(0xffffff, 1);
-        }
-        return;
-      }
-
       if (isNullOrUndefined(type)) {
         throwError('TypeError', Errors.NullPointerError, 'type');
       }
@@ -659,6 +643,32 @@ module Shumway.AVM2.AS.flash.display {
         throwError('TypeError', Errors.NullPointerError, 'ratios');
       }
 
+      var colorsRGBA: number[] = [];
+      var coercedRatios: number[] = [];
+      var colorStops = colors.length;
+      var recordsValid = colorStops === alphas.length && colorStops === ratios.length;
+      if (recordsValid) {
+        for (var i = 0; i < colorStops; i++) {
+          var ratio: number = +ratios[i];
+          if (ratio > 0xff || ratio < 0) {
+            recordsValid = false;
+            break;
+          }
+          colorsRGBA[i] = (colors[i] << 8 & 0xffffff00) | clamp(+alphas[i], 0, 1) * 0xff;
+          coercedRatios[i] = ratio;
+        }
+      }
+      // If the colors, alphas and ratios arrays don't all have the same length or if any of the
+      // given ratios falls outside [0,0xff], Flash uses a solid white fill.
+      if (!recordsValid) {
+        if (pathCommand === PathCommand.BeginGradientFill) {
+          this.beginFill(0xffffff, 1);
+        } else {
+          this.lineStyle(0xffffff, 1);
+        }
+        return;
+      }
+
       if (isNullOrUndefined(matrix)) {
         matrix = flash.geom.Matrix.FROZEN_IDENTITY_MATRIX;
       } else if (!(flash.geom.Matrix.isType(matrix))) {
@@ -676,7 +686,9 @@ module Shumway.AVM2.AS.flash.display {
       if (interpolation < 0) {
         interpolation = InterpolationMethod.toNumber(InterpolationMethod.RGB);
       }
-      this._graphicsData.beginGradient(pathCommand, colors, ratios, alphas, gradientType,
+      // Focal point is stored as a signed byte.
+      focalPointRatio = clamp(+focalPointRatio, -1, 1) / 2 * 0xff|0;
+      this._graphicsData.beginGradient(pathCommand, colorsRGBA, coercedRatios, gradientType,
                                        matrix, spread, interpolation, focalPointRatio);
     }
 
