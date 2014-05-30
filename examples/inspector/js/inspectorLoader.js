@@ -58,7 +58,7 @@ document.body.addEventListener("drop", function(event) {
 document.getElementById("files").addEventListener("change", function(event) {
   var file = event.target.files[0];
   readFile(file);
-  document.getElementById('openFile').setAttribute('hidden', true);
+  showOpenFileButton(false);
 });
 
 document.getElementById("openFile").addEventListener("click", function () {

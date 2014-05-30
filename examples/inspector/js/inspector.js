@@ -40,7 +40,7 @@ var pauseExecution = getQueryVariable("paused") === "true";
 var remoteFile = getQueryVariable("rfile");
 var yt = getQueryVariable('yt');
 
-var swfController = new SWFController(timeline, pauseExecution);
+//var swfController = new SWFController(timeline, pauseExecution);
 
 function timeAllocation(C, count) {
   var s = Date.now();
@@ -49,8 +49,6 @@ function timeAllocation(C, count) {
   }
   console.info("Took: " + (Date.now() - s) + " " + C);
 }
-
-
 
 // avm2 must be global.
 var avm2;
@@ -126,19 +124,17 @@ function parseQueryString(qs) {
  * You can also specify a remote file as a query string parameters, ?rfile=... to load it automatically
  * when the page loads.
  */
+showOpenFileButton(true);
 if (remoteFile) {
-  document.getElementById('openFile').setAttribute('hidden', true);
+  showOpenFileButton(false);
   setTimeout(function () {
     executeFile(remoteFile, null, parseQueryString(window.location.search));
   });
 }
-
 if (yt) {
   requestYT(yt).then(function (config) {
-    var swf = config.url;
-
-    document.getElementById('openFile').setAttribute('hidden', true);
-    executeFile(swf, null, config.args);
+    showOpenFileButton(false);
+    executeFile(config.url, null, config.args);
   });
 }
 if (remoteFile) {
@@ -146,11 +142,15 @@ if (remoteFile) {
 }
 
 if (simpleMode) {
-  document.body.setAttribute('class', 'simple');
+  document.body.classList.add("simple");
 }
 
 function showMessage(msg) {
   document.getElementById('message').textContent = "(" + msg + ")";
+}
+function showOpenFileButton(show) {
+  document.getElementById('openFile').classList.toggle('active', show);
+  document.getElementById('debugInfoToolbarTabs').classList.toggle('active', !show);
 }
 
 function IFramePlayer(playerWorker) {
@@ -413,44 +413,16 @@ Shumway.FileLoadingService.instance = {
   }, 500);
 })();
 
-// toggle button states in button bars
-Array.prototype.forEach.call(document.querySelectorAll(".toolbarButtonBar > .toolbarButton"), function (element) {
-  element.addEventListener("click", function (event) {
-    Array.prototype.forEach.call(event.target.parentElement.children, function (button) {
-      if (button == event.target) {
-        button.classList.add("pressedState");
-      } else {
-        button.classList.remove("pressedState");
-      }
-    });
-  });
-});
-
-// toggle info panels (debug info, display list, settings)
-var panelToggleButtonSelector = "#debugInfoToolbar > .toolbarButtonBar > .toolbarButton";
+// toggle info panels (debug info, display list, settings, none)
+var panelToggleButtonSelector = "#topToolbar > .toolbarButtonBar > .toolbarButton";
 function panelToggleButtonClickHandler(event) {
-  Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
-    var panelId = element.dataset.panelid;
-    var panel = document.getElementById(panelId);
-    if (event.target == element) {
-      panel.classList.add("active");
-    } else {
-      panel.classList.remove("active");
-    }
+  Array.prototype.forEach.call(event.target.parentElement.children, function (button) {
+    var isActive = (button == event.target);
+    button.classList.toggle("pressedState", isActive);
+    togglePanelVisibility(button.dataset.panelid, isActive);
   });
   state.debugPanelId = event.target.dataset.panelid;
   saveInspectorState();
-  switch (state.debugPanelId) {
-    case "displayListContainer":
-      if (swfController.isPlaying() || swfController.isInitializing()) {
-        swfController.pause(function() {
-          updateDisplayListTree();
-        });
-      } else {
-        updateDisplayListTree();
-      }
-      break;
-  }
 }
 Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector), function (element) {
   element.addEventListener("click", panelToggleButtonClickHandler);
@@ -458,54 +430,22 @@ Array.prototype.forEach.call(document.querySelectorAll(panelToggleButtonSelector
     element.click();
   }
 });
-
-swfController.onStateChange = function onStateChange(newState, oldState) {
-  if (oldState === swfController.STATE_INIT) {
-    initUI(true);
+function togglePanelVisibility(id, visible) {
+  if (id !== "none") {
+    var panel = document.getElementById(id);
+    panel.classList.toggle("active", visible);
+  } else {
+    document.body.classList.toggle("hideDebugInfoPanels", visible);
   }
-  var pauseButton = document.getElementById("pauseButton");
-  var stepButton = document.getElementById("stepButton");
-  switch (newState) {
-    case swfController.STATE_PLAYING:
-      pauseButton.classList.remove("icon-play");
-      pauseButton.classList.add("icon-pause");
-      stepButton.classList.add("disabled");
-      break;
-    case swfController.STATE_PAUSED:
-      pauseButton.classList.add("icon-play");
-      pauseButton.classList.remove("icon-pause");
-      stepButton.classList.remove("disabled");
-      updateDisplayListTree();
-      break;
+  if (_easel) {
+    _easel.resize();
   }
 }
 
-function initUI(isExecutingSWF) {
-  document.querySelector("#debugInfoToolbar > .toolbarButtonBar").classList.add("active");
-
-  if (isExecutingSWF) {
-    document.getElementById("pauseButton").classList.add("active");
-    document.getElementById("stepButton").classList.add("active");
-
-    try {
-      avm2.systemDomain.getClass("flash.media.SoundMixer").native.static._setMasterVolume(state.mute ? 0 : 1);
-    } catch(e) {
-    }
-
-    document.getElementById("pauseButton").addEventListener("click", function (event) {
-      swfController.togglePause();
-    });
-    document.getElementById("stepButton").addEventListener("click", function (event) {
-      if (swfController.isPaused()) {
-        swfController.play(1);
-      }
-    });
-  }
-}
-
+// TODO:
 function updateDisplayListTree() {
-  var displayList = new DisplayListTree();
-  displayList.update(swfController.stage, document.getElementById("displayListContainer"));
+  //var displayList = new DisplayListTree();
+  //displayList.update(swfController.stage, document.getElementById("displayListContainer"));
 }
 
 var nativeGetContext = HTMLCanvasElement.prototype.getContext;
@@ -525,11 +465,13 @@ HTMLCanvasElement.prototype.getContext = function getContext(contextId, args) {
 var Stage = Shumway.GFX.Stage;
 var Easel = Shumway.GFX.Easel;
 var Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
+var _easel;
 
 function createEasel() {
   Shumway.GFX.GL.SHADER_ROOT = "../../src/gfx/gl/shaders/";
   var canvas = document.createElement("canvas");
   canvas.style.backgroundColor = "#14171a";
   document.getElementById("stageContainer").appendChild(canvas);
-  return new Easel(canvas, backend.value|0);
+  _easel = new Easel(canvas, backend.value|0);
+  return _easel;
 }
