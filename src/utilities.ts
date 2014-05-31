@@ -2575,6 +2575,34 @@ module Shumway {
       return 'rgba(' + color.red + ',' + color.green + ',' + color.blue + ',' +
              color.alpha / 255 + ')';
     }
+
+    /**
+     * Unpremultiplies the given |pARGB| color value.
+     */
+    export function unpremultiplyARGB(pARGB: number) {
+      var b = (pARGB >>  0) & 0xff;
+      var g = (pARGB >>  8) & 0xff;
+      var r = (pARGB >> 16) & 0xff;
+      var a = (pARGB >> 24) & 0xff;
+      r = Math.imul(255, r) / a & 0xff;
+      g = Math.imul(255, g) / a & 0xff;
+      b = Math.imul(255, b) / a & 0xff;
+      return a << 24 | r << 16 | g << 8 | b;
+    }
+
+    /**
+     * Premultiplies the given |pARGB| color value.
+     */
+    export function premultiplyARGB(uARGB: number) {
+      var b = (uARGB >>  0) & 0xff;
+      var g = (uARGB >>  8) & 0xff;
+      var r = (uARGB >> 16) & 0xff;
+      var a = (uARGB >> 24) & 0xff;
+      r = ((Math.imul(r, a) + 127) / 255) | 0;
+      g = ((Math.imul(g, a) + 127) / 255) | 0;
+      b = ((Math.imul(b, a) + 127) / 255) | 0;
+      return a << 24 | r << 16 | g << 8 | b;
+    }
   }
 
   export module Telemetry {

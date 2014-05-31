@@ -23,6 +23,8 @@ module Shumway.AVM2.AS.flash.display {
   import throwError = Shumway.AVM2.Runtime.throwError;
   import AVM2 = Shumway.AVM2.Runtime.AVM2;
   import swap32 = Shumway.IntegerUtilities.swap32;
+  import premultiplyARGB = Shumway.ColorUtilities.premultiplyARGB;
+  import unpremultiplyARGB = Shumway.ColorUtilities.unpremultiplyARGB;
 
   import Rectangle = flash.geom.Rectangle;
 
@@ -222,40 +224,39 @@ module Shumway.AVM2.AS.flash.display {
       if (!this._rect.contains(x, y)) {
         return 0;
       }
-      var colorBGRA = this._view[y * this._rect.width + x];
       release || assert (this._type === ImageType.PremultipliedAlphaARGB);
-      var alpha = colorBGRA & 0xff;
-      var colorBGR = colorBGRA >>> 8;
-      colorBGRA = ((255 * colorBGR) / alpha) << 8 | alpha;
-      return swap32(colorBGRA) >>> 0;
+      var pARGB = swap32(this._view[y * this._rect.width + x]);
+      var uARGB = unpremultiplyARGB(pARGB);
+      return uARGB >>> 0;
     }
 
-    setPixel(x: number /*int*/, y: number /*int*/, colorARGB: number /*uint*/): void {
-      x = x | 0; y = y | 0; colorARGB = colorARGB | 0;
+    setPixel(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
+      x = x | 0; y = y | 0; pARGB = pARGB | 0;
       if (!this._rect.contains(x, y)) {
         return;
       }
       var i = y * this._rect.width + x;
-      var alpha = this._view[i] & 0xff;
-      var colorRGB = colorARGB & 0x00ffffff;
-      colorARGB = (((colorRGB * alpha + 254) / 255) & 0x00ffffff) | (alpha << 24);
-      this._view[i] = swap32(colorARGB);
+      var a = this._view[i] & 0xff;
+      uARGB =  uARGB & 0x00ffffff | a << 24;
+      var pARGB = premultiplyARGB(uARGB);
+      this._view[i] = swap32(pARGB);
       this._isDirty = true;
     }
 
-    setPixel32(x: number /*int*/, y: number /*int*/, colorARGB: number /*uint*/): void {
+    setPixel32(x: number /*int*/, y: number /*int*/, uARGB: number /*uint*/): void {
       x = x | 0; y = y | 0;
       if (!this._rect.contains(x, y)) {
         return;
       }
-      var alpha = colorARGB >>> 24;
-      var colorRGB = colorARGB & 0x00ffffff;
+      var a = uARGB >>> 24;
+      var uRGB = uARGB & 0x00ffffff;
       if (this._transparent) {
-        colorARGB = (((colorRGB * alpha + 254) / 255) & 0x00ffffff) | (alpha << 24);
+        var uARGB = uRGB | a << 24;
+        var pARGB = premultiplyARGB(uARGB);
       } else {
-        colorARGB = colorRGB | 0xff000000;
+        var pARGB = uRGB | 0xff000000;
       }
-      this._view[y * this._rect.width + x] = swap32(colorARGB);
+      this._view[y * this._rect.width + x] = swap32(pARGB);
       this._isDirty = true;
     }
 
@@ -296,16 +297,14 @@ module Shumway.AVM2.AS.flash.display {
       notImplemented("public flash.display.BitmapData::drawWithQuality"); return;
     }
 
-    fillRect(rect: flash.geom.Rectangle, colorARGB: number /*uint*/): void {
+    fillRect(rect: flash.geom.Rectangle, uARGB: number /*uint*/): void {
       if (this._transparent) {
-        var alpha = colorARGB >>> 24;
-        var colorRGB = colorARGB & 0x00ffffff;
-        colorARGB = (((colorRGB * alpha + 254) / 255) & 0x00ffffff) | (alpha << 24);
+        var pARGB = premultiplyARGB(uARGB);
       } else {
-        colorARGB |= 0xff000000;
+        var pARGB = uARGB | 0xff000000;
       }
       release || assert (this._type === ImageType.PremultipliedAlphaARGB);
-      var colorBGRA = swap32(colorARGB);
+      var pBGRA = swap32(pARGB);
       var r = this.rect.intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
@@ -314,12 +313,12 @@ module Shumway.AVM2.AS.flash.display {
       var xMax = r.x + r.width;
       var yMin = r.y;
       var yMax = r.y + r.height;
-      var pixelData = this._view;
+      var view = this._view;
       var width = this._rect.width;
       for (var y = yMin; y < yMax; y++) {
         var offset = y * width;
         for (var x = xMin; x < xMax; x++) {
-          pixelData[offset + x] = colorBGRA;
+          view[offset + x] = pBGRA;
         }
       }
       this._isDirty = true;

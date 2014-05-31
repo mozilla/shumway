@@ -116,8 +116,8 @@ module Shumway.GFX {
         var length = buffer.length;
         for (var i = 0; i < length; i++) {
           var bgra = buffer[i];
-          var a = bgra & 0xff;
-          var r = (bgra >> 8) & 0xff;
+          var a = (bgra >>  0) & 0xff;
+          var r = (bgra >>  8) & 0xff;
           var g = (bgra >> 16) & 0xff;
           var b = (bgra >> 24) & 0xff;
           if (a > 0) {
