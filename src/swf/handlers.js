@@ -776,9 +776,9 @@ var tagHandler=(function (global) {
       $130.push($132);
     }
     if (type === 19) {
-      $.focalPoint = readFixed8($bytes, $stream);
+      $.focalPoint = readSi8($bytes, $stream);
       if (isMorph) {
-        $.focalPointMorph = readFixed8($bytes, $stream);
+        $.focalPointMorph = readSi8($bytes, $stream);
       }
     }
   }
@@ -1017,16 +1017,16 @@ var tagHandler=(function (global) {
     }
     if (hasStrokes) {
       align($bytes, $stream);
-      $.startCapStyle = readUb($bytes, $stream, 2);
-      var joinStyle = $.joinStyle = readUb($bytes, $stream, 2);
+      $.startCapsStyle = readUb($bytes, $stream, 2);
+      var jointStyle = $.jointStyle = readUb($bytes, $stream, 2);
       var hasFill = $.hasFill = readUb($bytes, $stream, 1);
       $.noHscale = readUb($bytes, $stream, 1);
       $.noVscale = readUb($bytes, $stream, 1);
       $.pixelHinting = readUb($bytes, $stream, 1);
       var reserved = readUb($bytes, $stream, 5);
       $.noClose = readUb($bytes, $stream, 1);
-      $.endCapStyle = readUb($bytes, $stream, 2);
-      if (joinStyle === 2) {
+      $.endCapsStyle = readUb($bytes, $stream, 2);
+      if (jointStyle === 2) {
         $.miterLimitFactor = readFixed8($bytes, $stream);
       }
       if (hasFill) {

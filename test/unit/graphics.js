@@ -19,7 +19,7 @@
   var Graphics = flash.display.Graphics;
   var Matrix = flash.geom.Matrix;
   var BitmapData = flash.display.BitmapData;
-  var PathCommand = flash.display.PathCommand;
+  var PathCommand = Shumway.PathCommand;
   var assertUnreachable = Shumway.Debug.assertUnreachable;
 
   var DataBuffer = Shumway.ArrayUtilities.DataBuffer;

@@ -242,12 +242,19 @@ Shumway.FileLoadingService.instance = {
     };
   },
   setBaseUrl: function (url) {
-    var a = document.createElement('a');
-    a.href = url || '#';
-    a.setAttribute('style', 'display: none;');
-    document.body.appendChild(a);
-    FileLoadingService.baseUrl = a.href;
-    document.body.removeChild(a);
+    var baseUrl;
+    if (typeof URL !== 'undefined') {
+      baseUrl = new URL(url, document.location.href).href;
+    } else {
+      var a = document.createElement('a');
+      a.href = url || '#';
+      a.setAttribute('style', 'display: none;');
+      document.body.appendChild(a);
+      baseUrl = a.href;
+      document.body.removeChild(a);
+    }
+    FileLoadingService.baseUrl = baseUrl;
+    return baseUrl;
   },
   resolveUrl: function (url) {
     if (url.indexOf('://') >= 0) return url;

@@ -58,12 +58,14 @@ if (isWorker && !$RELEASE) {
     'handlers.js',
     'parser.js',
     build + '../utilities.js',
+    build + '../dataBuffer.js',
+    build + '../ShapeData.js',
     build + 'parser/bitmap.js',
     build + 'parser/button.js',
     build + 'parser/font.js',
     'image.js',
     build + 'parser/label.js',
-    'shape.js',
+    build + 'parser/shape.js',
     'sound.js',
     'text.js'
   ]);
@@ -104,7 +106,7 @@ function defineSymbol(swfTag, symbols) {
     case SWF_TAG_CODE_DEFINE_SHAPE2:
     case SWF_TAG_CODE_DEFINE_SHAPE3:
     case SWF_TAG_CODE_DEFINE_SHAPE4:
-      symbol = defineShape(swfTag, symbols);
+      symbol = Shumway.SWF.Parser.defineShape(swfTag, symbols);
       break;
     case SWF_TAG_CODE_DEFINE_SOUND:
       symbol = defineSound(swfTag, symbols);

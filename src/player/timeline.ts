@@ -42,9 +42,9 @@ module Shumway.Timeline {
     }
 
     _setBoundsFromData(data: any) {
-      this.fillBounds = data.bbox ? Bounds.FromUntyped(data.bbox) : null;
-      this.lineBounds = data.strokeBbox ? Bounds.FromUntyped(data.strokeBbox) : null;
-      if (!this.lineBounds) {
+      this.fillBounds = data.fillBounds ? Bounds.FromUntyped(data.fillBounds) : null;
+      this.lineBounds = data.lineBounds ? Bounds.FromUntyped(data.lineBounds) : null;
+      if (!this.lineBounds && this.fillBounds) {
         this.lineBounds = this.fillBounds.clone();
       }
     }
@@ -62,6 +62,7 @@ module Shumway.Timeline {
       symbol._setBoundsFromData(data);
       // TODO: Fill graphics object with shape data.
       symbol.graphics = new flash.display.Graphics();
+      symbol.graphics.setGraphicsData(data.shape);
 
       // TODO: Remove this hack once we can get bounds of the graphics object.
       if (data.type === "shape") {

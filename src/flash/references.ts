@@ -16,6 +16,7 @@
 
 ///<reference path='../avm2/references.ts' />
 ///<reference path='../gfx/references.ts' />
+///<reference path='../ShapeData.ts' />
 
 ///<reference path='../player/remoting.ts' />
 

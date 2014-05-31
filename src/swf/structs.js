@@ -294,16 +294,16 @@ var LINE_STYLE = {
   $0: ['hasStrokes', [
     {
       $$: ALIGN,
-      startCapStyle: UB(2),
-      $joinStyle: UB(2),
+      startCapsStyle: UB(2),
+      $jointStyle: UB(2),
       $hasFill: UB(1),
       noHscale: UB(1),
       noVscale: UB(1),
       pixelHinting: UB(1),
       $$reserved: UB(5),
       noClose: UB(1),
-      endCapStyle: UB(2),
-      miterLimitFactor: ['joinStyle===2', [FIXED8]],
+      endCapsStyle: UB(2),
+      miterLimitFactor: ['jointStyle===2', [FIXED8]],
       $1: ['hasFill', [
         { fillStyle: FILL_STYLE },
         {

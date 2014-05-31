@@ -1599,24 +1599,6 @@ module Shumway.GFX.Geometry {
   var MAX_CACHE_LEVELS = 3;
 
   /**
-   * Used for (de-)serializing Graphics path data in flash.display.Graphics and the renderer.
-   */
-  export enum PathCommand {
-    BeginSolidFill = 1,
-    BeginGradientFill,
-    BeginBitmapFill,
-    EndFill,
-    LineStyleSolid,
-    LineStyleGradient,
-    LineStyleBitmap,
-    LineEnd,
-    MoveTo,
-    LineTo,
-    CurveTo,
-    CubicCurveTo,
-  }
-
-  /**
    * Manages tile caches at different scales.
    */
   export class RenderableTileCache {

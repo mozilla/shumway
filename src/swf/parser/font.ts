@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-/// <reference path='../references.ts'/>
+/// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
   var pow = Math.pow;
   var min = Math.min;

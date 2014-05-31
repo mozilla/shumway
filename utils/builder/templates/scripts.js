@@ -44,7 +44,7 @@ load($SHUMWAY_ROOT + "build/ts/swf/parser/font.js");
 
 load($SHUMWAY_ROOT + "src/swf/image.js");
 load($SHUMWAY_ROOT + "build/ts/swf/parser/label.js");
-load($SHUMWAY_ROOT + "src/swf/shape.js");
+load($SHUMWAY_ROOT + "build/ts/swf/parser/shape.js");
 load($SHUMWAY_ROOT + "src/swf/sound.js");
 load($SHUMWAY_ROOT + "src/swf/text.js");
 load($SHUMWAY_ROOT + "src/swf/mp3worker.js");

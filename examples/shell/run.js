@@ -30,6 +30,7 @@ console.time("Load Shared Dependencies");
 
 load("../../build/ts/utilities.js");
 load("../../build/ts/dataBuffer.js");
+load("../../build/ts/ShapeData.js");
 load("../../build/ts/options.js");
 load("../../build/ts/settings.js");
 
@@ -104,7 +105,7 @@ load("../../build/ts/swf/parser/button.js");
 load("../../build/ts/swf/parser/font.js");
 load("../../src/swf/image.js");
 load("../../build/ts/swf/parser/label.js");
-load("../../src/swf/shape.js");
+load("../../build/ts/swf/parser/shape.js");
 load("../../src/swf/sound.js");
 load("../../src/swf/text.js");
 load("../../src/swf/mp3worker.js");
