@@ -244,7 +244,7 @@ module Shumway.GFX {
 
     render(context: CanvasRenderingContext2D, clipBounds: Rectangle): void {
       context.save();
-      context.fillRule = context.mozFillRule = "evenodd";
+      context.fillStyle = context.strokeStyle = 'transparent';
 
       var data = this._pathData;
       data.endian = 'auto'; // TODO: do this for all internal data buffers.
@@ -272,14 +272,22 @@ module Shumway.GFX {
       var y = 0;
       var cpX: number;
       var cpY: number;
+      var formOpen = false;
+      var formOpenX = 0;
+      var formOpenY = 0;
       // Description of serialization format can be found in flash.display.Graphics.
       while (data.bytesAvailable > 0) {
         var command = data.readUnsignedByte();
         switch (command) {
           case PathCommand.MoveTo:
             assert(data.bytesAvailable >= 8);
-            x = data.readInt() / 20;
-            y = data.readInt() / 20;
+            if (formOpen && fillPath) {
+              fillPath.lineTo(formOpenX, formOpenY);
+              strokePath && strokePath.lineTo(formOpenX, formOpenY);
+            }
+            formOpen = true;
+            x = formOpenX = data.readInt() / 20;
+            y = formOpenY = data.readInt() / 20;
             fillPath && fillPath.moveTo(x, y);
             strokePath && strokePath.moveTo(x, y);
             break;
@@ -313,7 +321,7 @@ module Shumway.GFX {
           case PathCommand.BeginSolidFill:
             assert(data.bytesAvailable >= 4);
             if (fillPath) {
-              context.fill(fillPath);
+              context.fill(fillPath, 'evenodd');
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
@@ -322,7 +330,7 @@ module Shumway.GFX {
           case PathCommand.BeginBitmapFill:
             assert(data.bytesAvailable >= 6 + 6 * 8 /* matrix fields as floats */ + 1 + 1);
             if (fillPath) {
-              context.fill(fillPath);
+              context.fill(fillPath, 'evenodd');
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
@@ -340,7 +348,7 @@ module Shumway.GFX {
             // Assert at least one color stop.
             assert(data.bytesAvailable >= 4 + 4 + 6 * 8 /* matrix fields as floats */ + 1 + 1 + 8);
             if (fillPath) {
-              context.fill(fillPath);
+              context.fill(fillPath, 'evenodd');
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
@@ -371,7 +379,7 @@ module Shumway.GFX {
             break;
           case PathCommand.EndFill:
             if (fillPath) {
-              context.fill(fillPath);
+              context.fill(fillPath, 'evenodd');
               context.fillStyle = null;
               fillPath = null;
             }
@@ -402,8 +410,12 @@ module Shumway.GFX {
                               (data.position - 1) + ' of ' + data.length);
         }
       }
+      if (formOpen && fillPath) {
+        fillPath.lineTo(formOpenX, formOpenY);
+        strokePath && strokePath.lineTo(formOpenX, formOpenY);
+      }
       if (fillPath) {
-        context.fill(fillPath);
+        context.fill(fillPath, 'evenodd');
         context.fillStyle = null;
       }
       if (strokePath) {
