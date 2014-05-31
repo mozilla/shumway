@@ -20,6 +20,7 @@
   <script src="../../build/ts/tools/profiler/timelineBuffer.js"></script>
   <script src="../../build/ts/tools/profiler/tracelogger/traceLogger.js"></script>
   <script src="../../build/ts/tools/profiler/tracelogger/thread.js"></script>
+  <script src="data/tracelogger/data.js"></script>
   <script>
 
     var container = document.getElementById("container");
@@ -32,37 +33,22 @@
 
     var traceLogger = new TraceLogger.TraceLogger("data/tracelogger/");
 
-    traceLogger.loadPage("data-Octane-x86-code-load.json", function(err, threads) {
-    //traceLogger.loadPage("data-Sunspider-x86-crypto-aes.json", function(err, threads) {
+    traceLogger.loadPage("data-Octane-x86-code-load.json", onLoad, onProgress);
+    //traceLogger.loadPage("data-Sunspider-x86-crypto-aes.json", onLoad, onProgress);
 
+    function onLoad(err, threads) {
       var profile = new Profiler.Profile();
       var threadCount = threads.length;
       for (var i = 0; i < threadCount; i++) {
         profile.addBuffer(threads[i].buffer, "Thread " + i);
       }
-
       var controller = new Profiler.Controller(profile, container);
       controller.createSnapshot();
+    }
 
-    });
-
-    /*
-    getJSON("data/CPU-20140520T215105.json", function(profile1) {
-      getJSON("data/CPU-20140520T092003.json", function(profile2) {
-
-        var buffer1 = Profiler.TimelineBuffer.FromChromeProfile(profile1);
-        var buffer2 = Profiler.TimelineBuffer.FromChromeProfile(profile2);
-
-        var profile = new Profiler.Profile();
-        profile.addBuffer(buffer1, "Thread 1");
-        profile.addBuffer(buffer2, "Thread 2");
-
-        var controller = new Profiler.Controller(profile, container);
-        controller.createSnapshot();
-
-      });
-    });
-    */
+    function onProgress(info) {
+      console.log(info);
+    }
 
   </script>
 </body>

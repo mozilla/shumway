@@ -21,24 +21,9 @@ module Shumway.Tools.Profiler {
     CHART
   }
 
-  enum DragTarget {
-    NONE,
-    WINDOW,
-    HANDLE_LEFT,
-    HANDLE_RIGHT,
-    HANDLE_BOTH
-  }
-
-  interface DragInfo {
-    windowStartInitial: number;
-    windowEndInitial: number;
-    target: DragTarget;
-  }
-
   export class FlameChartHeader extends FlameChartBase implements MouseControllerTarget {
 
     private _type: FlameChartHeaderType;
-    private _dragInfo: DragInfo;
 
     private static TICK_MAX_WIDTH = 75;
 
@@ -150,44 +135,31 @@ module Shumway.Tools.Profiler {
       }
     }
 
-    private _toPixelsRelative(time: number): number {
+    _toPixelsRelative(time: number): number {
       var range = (this._type === FlameChartHeaderType.OVERVIEW)
                     ? this._rangeEnd - this._rangeStart
                     : this._windowEnd - this._windowStart;
       return time * this._width / range;
     }
 
-    private _toPixels(time: number): number {
+    _toPixels(time: number): number {
       var start = (this._type === FlameChartHeaderType.OVERVIEW) ? this._rangeStart : this._windowStart;
       return this._toPixelsRelative(time - start);
     }
 
-    private _toTimeRelative(px: number): number {
+    _toTimeRelative(px: number): number {
       var range = (this._type === FlameChartHeaderType.OVERVIEW)
                     ? this._rangeEnd - this._rangeStart
                     : this._windowEnd - this._windowStart;
       return px * range / this._width;
     }
 
-    private _toTime(px: number): number {
+    _toTime(px: number): number {
       var start = (this._type === FlameChartHeaderType.OVERVIEW) ? this._rangeStart : this._windowStart;
       return this._toTimeRelative(px) + start;
     }
 
-    private _almostEq(a: number, b: number, precision: number = 10): boolean {
-      var pow10 = Math.pow(10, precision);
-      return Math.abs(a - b) < (1 / pow10);
-    }
-
-    private _windowEqRange(): boolean {
-      return (this._almostEq(this._windowStart, this._rangeStart) && this._almostEq(this._windowEnd, this._rangeEnd));
-    }
-
-    private _decimalPlaces(value: number): number {
-      return ((+value).toFixed(10)).replace(/^-?\d*\.?|0+$/g, '').length;
-    }
-
-    private _getDragTargetUnderCursor(x: number, y:number): DragTarget {
+    private _getDragTargetUnderCursor(x: number, y:number): FlameChartDragTarget {
       if (y >= 0 && y < this._height) {
         if (this._type === FlameChartHeaderType.OVERVIEW) {
           var left = this._toPixels(this._windowStart);
@@ -196,27 +168,27 @@ module Shumway.Tools.Profiler {
           var leftHandle = (x >= left - radius && x <= left + radius);
           var rightHandle = (x >= right - radius && x <= right + radius);
           if (leftHandle && rightHandle) {
-            return DragTarget.HANDLE_BOTH;
+            return FlameChartDragTarget.HANDLE_BOTH;
           } else if (leftHandle) {
-            return DragTarget.HANDLE_LEFT;
+            return FlameChartDragTarget.HANDLE_LEFT;
           } else if (rightHandle) {
-            return DragTarget.HANDLE_RIGHT;
+            return FlameChartDragTarget.HANDLE_RIGHT;
           } else if (!this._windowEqRange()) {
-            return DragTarget.WINDOW;
+            return FlameChartDragTarget.WINDOW;
           }
         } else if (!this._windowEqRange()) {
-          return DragTarget.WINDOW;
+          return FlameChartDragTarget.WINDOW;
         }
       }
-      return DragTarget.NONE;
+      return FlameChartDragTarget.NONE;
     }
 
     onMouseDown(x: number, y: number) {
       var dragTarget = this._getDragTargetUnderCursor(x, y);
-      if (dragTarget === DragTarget.WINDOW) {
+      if (dragTarget === FlameChartDragTarget.WINDOW) {
         this._mouseController.updateCursor(MouseCursor.GRABBING);
       }
-      this._dragInfo = <DragInfo>{
+      this._dragInfo = <FlameChartDragInfo>{
         windowStartInitial: this._windowStart,
         windowEndInitial: this._windowEnd,
         target: dragTarget
@@ -226,10 +198,10 @@ module Shumway.Tools.Profiler {
     onMouseMove(x: number, y: number) {
       var cursor = MouseCursor.DEFAULT;
       var dragTarget = this._getDragTargetUnderCursor(x, y);
-      if (dragTarget !== DragTarget.NONE) {
-        if (dragTarget !== DragTarget.WINDOW) {
+      if (dragTarget !== FlameChartDragTarget.NONE) {
+        if (dragTarget !== FlameChartDragTarget.WINDOW) {
           cursor = MouseCursor.EW_RESIZE;
-        } else if (dragTarget === DragTarget.WINDOW && !this._windowEqRange()) {
+        } else if (dragTarget === FlameChartDragTarget.WINDOW && !this._windowEqRange()) {
           cursor = MouseCursor.GRAB;
         }
       }
@@ -244,31 +216,11 @@ module Shumway.Tools.Profiler {
       this._mouseController.updateCursor(MouseCursor.DEFAULT);
     }
 
-    onMouseWheel(x: number, y: number, delta: number) {
-      var time = this._toTime(x);
-      var windowStart = this._windowStart;
-      var windowEnd = this._windowEnd;
-      var windowLen = windowEnd - windowStart;
-      /*
-       * Find maximum allowed delta
-       * (windowEnd + (windowEnd - time) * delta) - (windowStart + (windowStart - time) * delta) = LEN
-       * (windowEnd - windowStart) + ((windowEnd - time) * delta) - ((windowStart - time) * delta) = LEN
-       * (windowEnd - windowStart) + ((windowEnd - time) - (windowStart - time)) * delta = LEN
-       * (windowEnd - windowStart) + (windowEnd - windowStart) * delta = LEN
-       * (windowEnd - windowStart) * delta = LEN - (windowEnd - windowStart)
-       * delta = (LEN - (windowEnd - windowStart)) / (windowEnd - windowStart)
-       */
-      var maxDelta = Math.max((FlameChartBase.MIN_WINDOW_LEN - windowLen) / windowLen, delta);
-      var start = windowStart + (windowStart - time) * maxDelta;
-      var end = windowEnd + (windowEnd - time) * maxDelta;
-      this._controller.setWindow(start, end);
-    }
-
     onDrag(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
       var dragInfo = this._dragInfo;
-      if (dragInfo.target === DragTarget.HANDLE_BOTH) {
+      if (dragInfo.target === FlameChartDragTarget.HANDLE_BOTH) {
         if (deltaX !== 0) {
-          dragInfo.target = (deltaX < 0) ? DragTarget.HANDLE_LEFT : DragTarget.HANDLE_RIGHT;
+          dragInfo.target = (deltaX < 0) ? FlameChartDragTarget.HANDLE_LEFT : FlameChartDragTarget.HANDLE_RIGHT;
         } else {
           return;
         }
@@ -277,15 +229,15 @@ module Shumway.Tools.Profiler {
       var windowEnd = this._windowEnd;
       var delta = this._toTimeRelative(deltaX);
       switch (dragInfo.target) {
-        case DragTarget.WINDOW:
+        case FlameChartDragTarget.WINDOW:
           var mult = (this._type === FlameChartHeaderType.OVERVIEW) ? 1 : -1;
           windowStart = dragInfo.windowStartInitial + mult * delta;
           windowEnd = dragInfo.windowEndInitial + mult * delta;
           break;
-        case DragTarget.HANDLE_LEFT:
+        case FlameChartDragTarget.HANDLE_LEFT:
           windowStart = clamp(dragInfo.windowStartInitial + delta, this._rangeStart, windowEnd - FlameChartBase.MIN_WINDOW_LEN);
           break;
-        case DragTarget.HANDLE_RIGHT:
+        case FlameChartDragTarget.HANDLE_RIGHT:
           windowEnd = clamp(dragInfo.windowEndInitial + delta, windowStart + FlameChartBase.MIN_WINDOW_LEN, this._rangeEnd);
           break;
         default:
@@ -300,7 +252,7 @@ module Shumway.Tools.Profiler {
     }
 
     onClick(x: number, y: number) {
-      if (this._dragInfo.target === DragTarget.WINDOW) {
+      if (this._dragInfo.target === FlameChartDragTarget.WINDOW) {
         this._mouseController.updateCursor(MouseCursor.GRAB);
       }
     }

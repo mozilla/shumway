@@ -22,10 +22,7 @@ body.simple > div {
 }
 body.simple #stageContainer {
   display: block;
-
 }
-
-.muteButton { background-image: url(images/mute-button.png); }
 
 .toolbarBox {
   position: absolute;
@@ -36,55 +33,33 @@ body.simple #stageContainer {
 
 #topToolbar {
   top: 0;
-  right: 500px;
-  left: 0;
-}
-#debugInfoToolbar {
-  top: 0;
-  right: 0;
-  width: 500px;
-  padding-left: 0;
-}
-#bottomToolbar {
-  bottom: 0;
   right: 0;
   left: 0;
-  white-space: nowrap;
-  overflow: hidden;
 }
-
 #message {
   padding-left: 6px;
   opacity: 0.7;
 }
-#openFile {
-  float: right;
-}
-#timerInfo {
-  line-height: 1.6em;
-  padding: 3px;
-}
 
-#topToolbar > .iconButton {
+#topToolbar > .toolbarButtonBar {
   display: none;
+  font-size: 0;
   float: right;
-  padding: 0 2px;
 }
-#topToolbar > .iconButton.active {
+#topToolbar > .toolbarButtonBar.active {
   display: inline-block;
 }
 
-#muteButton {
-  margin-right: 8px;
+#openFile {
+  display: none;
+  float: right;
 }
-#pauseButton {
-  font-size: 10px;
-}
-#stepButton {
-  font-size: 12px;
+#openFile.active {
+  display: inline-block;
 }
 
 #fpsPanelContainer {
+  display: none;
   position: absolute;
   top: 32px;
   right: 300px;
@@ -95,31 +70,13 @@ body.simple #stageContainer {
 }
 
 #profilePanelContainer {
-    position: absolute;
-    top: 82px;
-    right: 300px;
-    left: 0;
-    background-color: black;
-    border-bottom: 1px solid #666;
-}
-
-#debugInfoToolbar > .toolbarButtonBar {
   display: none;
-  font-size: 0;
-}
-#debugInfoToolbar > .toolbarButtonBar.active {
-  display: inline-block;
-}
-
-#ctrlLogToConsole {
-  display: none;
-  float: right;
-  font: 12px Lucida Grande, sans-serif;
-  color: hsl(210,30%,85%);
-  padding-top: 3px;
-}
-#ctrlLogToConsole.active {
-  display: inline-block;
+  position: absolute;
+  top: 82px;
+  right: 300px;
+  left: 0;
+  background-color: black;
+  border-bottom: 1px solid #666;
 }
 
 #debugInfoContainer.active, #displayListContainer.active, #settingsContainer.active {
@@ -143,6 +100,10 @@ body.simple #stageContainer {
 #debugInfoContainer > canvas {
   padding-bottom: 4px;
   border-bottom: 1px solid #666;
+}
+#timerInfo {
+  line-height: 1.6em;
+  padding: 3px;
 }
 
 #settingsContainer > .dg.main {
@@ -236,7 +197,8 @@ body.simple #stageContainer {
 
 #stageContainer {
   position: absolute;
-  top: 133px;
+  /*top: 133px;*/
+  top: 33px;
   bottom: 0;
   left: 0;
   right: 300px;
@@ -286,6 +248,13 @@ body.simple #stageContainer {
   display: block;
 }
 
+body.hideDebugInfoPanels #debugInfoContainer {
+  display: none;
+}
+body.hideDebugInfoPanels #stageContainer {
+  right: 0;
+}
+
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   body {
     background-color: #1a2633;
@@ -295,10 +264,10 @@ body.simple #stageContainer {
 @media only screen and (max-width: 1024px) {
   #stageContainer { right: 354px; }
   #topToolbar, #fpsPanelContainer { right: 350px; }
-  #debugInfoToolbar, #debugInfoContainer, #displayListContainer { width: 350px; }
+  #debugInfoContainer, #displayListContainer { width: 350px; }
 }
 
 @media only screen and (max-width: 768px) {
   #stageContainer, #topToolbar, #fpsPanelContainer { right: 0; }
-  #debugInfoToolbar, #debugInfoContainer, #displayListContainer { display: none !important; }
+  #debugInfoContainer, #displayListContainer { display: none !important; }
 }

@@ -20,8 +20,9 @@ var LC_KEY_INSPECTOR_SETTINGS = "Inspector Options";
 
 var state = Shumway.Settings.load(LC_KEY_INSPECTOR_SETTINGS);
 
-if (Shumway.isNullOrUndefined(state)) {
+if (Object.keys(state).length === 0) {
   state = {
+    folderOpen: true,
     debugPanelId: "settingsContainer",
     logToConsole: false,
     mute: false
@@ -32,48 +33,71 @@ function saveInspectorState() {
   Shumway.Settings.save(state, LC_KEY_INSPECTOR_SETTINGS);
 }
 
-var GUI;
+var GUI = (function () {
 
-(function () {
+  var gui = new dat.GUI({ autoPlace: false, width: 300 });
 
-  var gui = GUI = new dat.GUI({ autoPlace: false, width: 300 });
+  gui.add({ "Reset Options": resetOptions }, "Reset Options");
+  //gui.add({ "View Profile": viewProfile }, "View Profile");
+  //gui.add({ "Start/Stop Profiling": toggleProfile }, "Start/Stop Profiling");
 
-  gui.add({
-    "Reset Options": function () {
-      delete window.localStorage[Shumway.Settings.ROOT];
-    }
-  }, "Reset Options");
-
-  gui.add({
-    "View Profile": function () {
-      var Profiler = Shumway.Tools.Profiler;
-      var profile = new Profiler.Profile();
-      if (Shumway.playerTimelineBuffer) {
-        profile.addBuffer(Shumway.playerTimelineBuffer, "Player");
-      }
-      if (Shumway.GFX.timelineBuffer) {
-        profile.addBuffer(Shumway.GFX.timelineBuffer, "GFX");
-      }
-      var profileController = new Profiler.Controller(profile, document.getElementById("profilePanelContainer"));
-      profileController.createSnapshot();
-    }
-  }, "View Profile");
-
-  gui.add({
-    "Start / Stop Profiling": function () {
-      alert("Not Implemented");
-    }
-  }, "Start / Stop Profiling");
+  var inspectorOptions = gui.addFolder("Inspector Options");
+  inspectorOptions.add(state, "logToConsole").onChange(setLogToConsole);
+  //inspectorOptions.add(state, "mute").onChange(setMute);
+  if (state.folderOpen) {
+    inspectorOptions.open();
+  }
 
   gui.domElement.addEventListener("click", function(e) {
     if (e.target.nodeName.toLowerCase() == "li" && e.target.classList.contains("title")) {
+      var isOpen = !e.target.parentElement.classList.contains("closed");
       var option = findOptionSetByName(e.target.textContent, shumwayOptions);
       if (option) {
-        option.open = !e.target.parentElement.classList.contains("closed");
+        option.open = isOpen;
         Shumway.Settings.save();
+      } else {
+        if (e.target.textContent === "Inspector Options") {
+          state.folderOpen = isOpen;
+          saveInspectorState();
+        }
       }
     }
   });
+
+  function resetOptions() {
+    delete window.localStorage[Shumway.Settings.ROOT];
+    delete window.localStorage[LC_KEY_INSPECTOR_SETTINGS];
+  }
+
+  function setMute(value) {
+    state.mute = value;
+    saveInspectorState();
+  }
+
+  function setLogToConsole(value) {
+    state.logToConsole = value;
+    saveInspectorState();
+  }
+
+  function viewProfile() {
+    alert("Not Implemented");
+    /*
+    var Profiler = Shumway.Tools.Profiler;
+    var profile = new Profiler.Profile();
+    if (Shumway.playerTimelineBuffer) {
+      profile.addBuffer(Shumway.playerTimelineBuffer, "Player");
+    }
+    if (Shumway.GFX.timelineBuffer) {
+      profile.addBuffer(Shumway.GFX.timelineBuffer, "GFX");
+    }
+    var profileController = new Profiler.Controller(profile, document.getElementById("profilePanelContainer"));
+    profileController.createSnapshot();
+    */
+  }
+
+  function toggleProfile() {
+    alert("Not Implemented");
+  }
 
   function findOptionSetByName(name, optionSet) {
     for (var i = 0, n = optionSet.options.length; i < n; i++) {
@@ -138,6 +162,8 @@ var GUI;
   addOptionSet(gui, shumwayOptions);
 
   document.getElementById("settingsContainer").appendChild(gui.domElement);
+
+  return gui;
 
 })();
 

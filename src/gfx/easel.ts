@@ -425,6 +425,10 @@ module Shumway.GFX {
       // this._viewport = new Rectangle(0, 0, this._canvas.width, this._canvas.height);
     }
 
+    resize() {
+      this._resizeHandler();
+    }
+
     queryFrameUnderMouse(event: MouseEvent) {
       var frames = this.stage.queryFramesByPoint(this.getMousePosition(event, null), true, true);
       return frames.length > 0 ? frames[0] : null;

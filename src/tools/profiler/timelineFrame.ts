@@ -16,8 +16,8 @@
 module Shumway.Tools.Profiler {
 
   export interface TimelineFrameRange {
-    start: number;
-    end: number;
+    startIndex: number;
+    endIndex: number;
     startTime: number;
     endTime: number;
     totalTime: number;
@@ -64,8 +64,8 @@ module Shumway.Tools.Profiler {
           var startTime = this.children[startIdx].startTime;
           var endTime = this.children[endIdx].endTime;
           return {
-            start: startIdx,
-            end: endIdx,
+            startIndex: startIdx,
+            endIndex: endIdx,
             startTime: startTime,
             endTime: endTime,
             totalTime: endTime - startTime

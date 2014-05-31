@@ -15,6 +15,20 @@
  */
 module Shumway.Tools.Profiler {
 
+  export enum FlameChartDragTarget {
+    NONE,
+    WINDOW,
+    HANDLE_LEFT,
+    HANDLE_RIGHT,
+    HANDLE_BOTH
+  }
+
+  export interface FlameChartDragInfo {
+    windowStartInitial: number;
+    windowEndInitial: number;
+    target: FlameChartDragTarget;
+  }
+
   export class FlameChartBase implements MouseControllerTarget {
 
     _controller: Controller;
@@ -32,6 +46,8 @@ module Shumway.Tools.Profiler {
     _rangeEnd: number;
 
     _initialized: boolean;
+
+    _dragInfo: FlameChartDragInfo;
 
     static DRAGHANDLE_WIDTH = 4;
     static MIN_WINDOW_LEN = 0.1;
@@ -92,11 +108,48 @@ module Shumway.Tools.Profiler {
 
     _draw() {}
 
+    _almostEq(a: number, b: number, precision: number = 10): boolean {
+      var pow10 = Math.pow(10, precision);
+      return Math.abs(a - b) < (1 / pow10);
+    }
+
+    _windowEqRange(): boolean {
+      return (this._almostEq(this._windowStart, this._rangeStart) && this._almostEq(this._windowEnd, this._rangeEnd));
+    }
+
+    _decimalPlaces(value: number): number {
+      return ((+value).toFixed(10)).replace(/^-?\d*\.?|0+$/g, '').length;
+    }
+
+    _toPixelsRelative(time: number): number { return 0; }
+    _toPixels(time: number): number { return 0; }
+    _toTimeRelative(px: number): number { return 0; }
+    _toTime(px: number): number { return 0; }
+
+    onMouseWheel(x: number, y: number, delta: number) {
+      var time = this._toTime(x);
+      var windowStart = this._windowStart;
+      var windowEnd = this._windowEnd;
+      var windowLen = windowEnd - windowStart;
+      /*
+       * Find maximum allowed delta
+       * (windowEnd + (windowEnd - time) * delta) - (windowStart + (windowStart - time) * delta) = LEN
+       * (windowEnd - windowStart) + ((windowEnd - time) * delta) - ((windowStart - time) * delta) = LEN
+       * (windowEnd - windowStart) + ((windowEnd - time) - (windowStart - time)) * delta = LEN
+       * (windowEnd - windowStart) + (windowEnd - windowStart) * delta = LEN
+       * (windowEnd - windowStart) * delta = LEN - (windowEnd - windowStart)
+       * delta = (LEN - (windowEnd - windowStart)) / (windowEnd - windowStart)
+       */
+      var maxDelta = Math.max((FlameChartBase.MIN_WINDOW_LEN - windowLen) / windowLen, delta);
+      var start = windowStart + (windowStart - time) * maxDelta;
+      var end = windowEnd + (windowEnd - time) * maxDelta;
+      this._controller.setWindow(start, end);
+    }
+
     onMouseDown(x:number, y:number):void {}
     onMouseMove(x:number, y:number):void {}
     onMouseOver(x:number, y:number):void {}
     onMouseOut():void {}
-    onMouseWheel(x:number, y:number, delta:number):void {}
     onDrag(startX:number, startY:number, currentX:number, currentY:number, deltaX:number, deltaY:number):void {}
     onDragEnd(startX:number, startY:number, currentX:number, currentY:number, deltaX:number, deltaY:number):void {}
     onClick(x:number, y:number):void {}
