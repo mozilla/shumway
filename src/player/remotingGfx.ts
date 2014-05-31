@@ -197,10 +197,10 @@ module Shumway.Remoting.GFX {
       var dataBuffer = this.inputAssets[assetId];
       this.inputAssets[assetId] = null;
       if (!asset) {
-        context._assets[id] = RenderableBitmap.FromDataBuffer(dataBuffer, bounds);
+        context._assets[id] = RenderableBitmap.FromDataBuffer(type, dataBuffer, bounds);
       } else {
         var renderableBitmap = <RenderableBitmap>context._assets[id];
-        renderableBitmap.updateFromDataBuffer(dataBuffer);
+        renderableBitmap.updateFromDataBuffer(type, dataBuffer);
       }
     }
 
@@ -224,7 +224,8 @@ module Shumway.Remoting.GFX {
         frame.colorMatrix = this._readColorMatrix();
       }
       if (hasBits & MessageBits.HasMiscellaneousProperties) {
-        frame.blendMode = input.readInt();
+        input.readInt();
+        // frame.blendMode = input.readInt();
         // TODO: Should make a proper flag for this.
         input.readBoolean(); // Visibility
         // frame.alpha = input.readBoolean() ? 1 : 0;

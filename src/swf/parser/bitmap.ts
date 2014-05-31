@@ -18,54 +18,132 @@
 module Shumway.SWF.Parser {
   import assertUnreachable = Shumway.Debug.assertUnreachable;
 
-  /** @const */ var FORMAT_COLORMAPPED  = 3;
-  /** @const */ var FORMAT_15BPP        = 4;
-  /** @const */ var FORMAT_24BPP        = 5;
-  /** @const */ var FACTOR_5BBP         = 255 / 31;
+  export enum BitmapFormat {
+    FORMAT_COLORMAPPED  = 3,
+    FORMAT_15BPP        = 4,
+    FORMAT_24BPP        = 5
+  }
+
+  /** @const */ var FACTOR_5BBP = 255 / 31;
+
+  interface DefineBitsLosslessTag {
+    width: number;
+    height: number;
+    hasAlpha: boolean;
+
+    /**
+     * Number of color table entries - 1, not size in bytes.
+     */
+    colorTableSize: number;
+    bmpData: Uint8Array;
+  }
+
+  /*
+   * Returns a Uint8Array of ARGB values. The source image is color mapped meaning
+   * that the buffer is first prefixed with a color table:
+   *
+   * +--------------|--------------------------------------------------+
+   * | Color Table  |  Image Data (byte indices into the color table)  |
+   * +--------------|--------------------------------------------------+
+   *
+   * Color Table entries are either in RGB or RGBA format.
+   *
+   * There are two variations of these file formats, with or without alpha.
+   */
+  function parseColorMapped(tag: DefineBitsLosslessTag): Uint8Array {
+    var width = tag.width, height = tag.height;
+    var hasAlpha = tag.hasAlpha;
+
+    var rowSize = (width + 3) & ~3; // Round up to multiple of 4.
+
+    var colorTableLength = tag.colorTableSize + 1;
+    var colorTableEntrySize = hasAlpha ? 4 : 3;
+    var colorTableSize = colorTableLength * colorTableEntrySize;
+
+    var dataSize = colorTableSize + (rowSize * height);
+    var stream = createInflatedStream(tag.bmpData, dataSize);
+    var bytes: Uint8Array = stream.bytes;
+
+    var view = new Uint32Array(width * height);
+
+    // Make sure we've deflated enough bytes.
+    stream.ensure(dataSize);
+
+    var p = colorTableSize, i = 0, offset = 0;
+    if (hasAlpha) {
+      for (var y = 0; y < height; y++) {
+        for (var x = 0; x < width; x++) {
+          offset = bytes[p++] << 2;
+          var a = bytes[offset + 3]; // A
+          var r = bytes[offset + 0]; // R
+          var g = bytes[offset + 1]; // G
+          var b = bytes[offset + 2]; // B
+          view[i++] = b << 24 | g << 16 | r << 8 | a;
+        }
+        p = (p + 3) & ~3; // Round up.
+      }
+    } else {
+      for (var y = 0; y < height; y++) {
+        for (var x = 0; x < width; x++) {
+          offset = bytes[p++] * colorTableEntrySize;
+          var a = 0xff; // A
+          var r = bytes[offset + 0]; // R
+          var g = bytes[offset + 1]; // G
+          var b = bytes[offset + 2]; // B
+          view[i++] = b << 24 | g << 16 | r << 8 | a;
+        }
+        p = (p + 3) & ~3; // Round up.
+      }
+    }
+    release || assert (p === dataSize, "We should be at the end of the data buffer now.");
+    release || assert (i === width * height, "Should have filled the entire image.");
+    return new Uint8Array(view.buffer);
+  }
+
+  /**
+   * Returns a Uint8Array of ARGB values. The data is already sotred in premultiplied ARGB
+   * so there's not much to do unless there's no alpha in which case we expand it here.
+   */
+  function parse24BPP(tag: DefineBitsLosslessTag): Uint8Array {
+    var width = tag.width, height = tag.height;
+    var hasAlpha = tag.hasAlpha;
+    var rowSize = width * (hasAlpha ? 4 : 3);
+    var dataSize = rowSize * height;
+    var stream = createInflatedStream(tag.bmpData, dataSize);
+    // Make sure we've deflated enough bytes.
+    stream.ensure(dataSize);
+    var bytes: Uint8Array = stream.bytes;
+    if (hasAlpha) {
+      return bytes;
+    }
+    var view = new Uint32Array(width * height);
+
+    var length = width * height, p = 0;
+    for (var i = 0; i < length; i++) {
+      var r = bytes[p ++];
+      var g = bytes[p ++];
+      var b = bytes[p ++];
+      view[i] = b << 24 | g << 16 | r << 8 | 0xff;
+    }
+    release || assert (p === dataSize, "We should be at the end of the data buffer now.");
+    return new Uint8Array(view.buffer);
+  }
 
   export function defineBitmap(tag: any) {
-    var width = tag.width;
-    var height = tag.height;
-    var hasAlpha = tag.hasAlpha;
-    var data = new Uint8ClampedArray(width * height * 4);
-
     var bmpData = tag.bmpData;
+    var data: Uint32Array;
+    var type = ImageType.None;
     switch (tag.format) {
-      case FORMAT_COLORMAPPED:
-        var bytesPerLine = (width + 3) & ~3;
-        var colorTableSize = tag.colorTableSize + 1;
-        var paletteSize = colorTableSize * (hasAlpha ? 4 : 3);
-        var datalen = paletteSize + (bytesPerLine * height);
-        var stream = createInflatedStream(bmpData, datalen);
-        var bytes = stream.bytes;
-        var pos = paletteSize;
-
-        stream.ensure(paletteSize);
-        stream.pos = pos;
-
-        for (var y = 0, i = 0; y < height; ++y) {
-          stream.ensure(bytesPerLine);
-          var index;
-          if (hasAlpha) {
-            for (var x = 0; x < width; ++x, i += 4) {
-              index = bytes[pos++] * 4;
-              data[i] = bytes[index];
-              data[i + 1] = bytes[index + 1];
-              data[i + 2] = bytes[index + 2];
-              data[i + 3] = bytes[index + 3];
-            }
-          } else {
-            for (var x = 0; x < width; ++x, i += 4) {
-              index = bytes[pos++] * 3;
-              data[i] = bytes[index];
-              data[i + 1] = bytes[index + 1];
-              data[i + 2] = bytes[index + 2];
-              data[i + 3] = 255;
-            }
-          }
-          pos = stream.pos += bytesPerLine;
-        }
+      case BitmapFormat.FORMAT_COLORMAPPED:
+        data = parseColorMapped(tag);
+        type = ImageType.PremultipliedAlphaARGB;
         break;
+      case BitmapFormat.FORMAT_24BPP:
+        data = parse24BPP(tag);
+        type = ImageType.PremultipliedAlphaARGB;
+        break;
+
+      /*
       case FORMAT_15BPP:
         var colorType = 0x02;
         var bytesPerLine = ((width * 2) + 3) & ~3;
@@ -87,45 +165,7 @@ module Shumway.SWF.Parser {
           pos = stream.pos += bytesPerLine;
         }
         break;
-      case FORMAT_24BPP:
-        var padding;
-        if (hasAlpha) {
-          padding = 0;
-        } else {
-          padding = 1;
-        }
-        var bytesPerLine = width * 4;
-        var stream = createInflatedStream(bmpData, bytesPerLine * height);
-        var bytes = stream.bytes;
-        var pos = 0;
-
-        for (var y = 0, i = 0; y < height; ++y) {
-          stream.ensure(bytesPerLine);
-          for (var x = 0; x < width; ++x, i += 4) {
-            pos += padding;
-
-            if (hasAlpha) {
-              var alpha = bytes[pos];
-              if (alpha) {
-                var opacity = alpha / 0xff;
-                // RGB values are alpha pre-multiplied (per SWF spec).
-                data[i] = 0 | (bytes[pos + 1] / opacity);
-                data[i + 1] = 0 | (bytes[pos + 2] / opacity);
-                data[i + 2] = 0 | (bytes[pos + 3] / opacity);
-                data[i + 3] = alpha;
-              }
-            } else {
-              data[i] = bytes[pos];
-              data[i + 1] = bytes[pos + 1];
-              data[i + 2] = bytes[pos + 2];
-              data[i + 3] = 255;
-            }
-
-            pos += 4 - padding;
-          }
-          stream.pos = pos;
-        }
-        break;
+      */
       default:
         assertUnreachable('invalid bitmap format');
     }
@@ -133,10 +173,11 @@ module Shumway.SWF.Parser {
     return {
       type: 'image',
       id: tag.id,
-      width: width,
-      height: height,
+      width: tag.width,
+      height: tag.height,
       mimeType: 'application/octet-stream',
-      data: data
+      data: data,
+      dataType: type
     };
   }
 }

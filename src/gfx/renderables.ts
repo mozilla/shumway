@@ -18,6 +18,8 @@ module Shumway.GFX {
   import Rectangle = Geometry.Rectangle;
   import PathCommand = Geometry.PathCommand;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
+  import swap32 = Shumway.IntegerUtilities.swap32;
+  import memorySizeToString = Shumway.StringUtilities.memorySizeToString;
 
   export enum RenderableFlags {
     None          = 0,
@@ -103,7 +105,41 @@ module Shumway.GFX {
     _canvas: HTMLCanvasElement;
     private fillStyle: ColorStyle;
 
-    public static FromDataBuffer(dataBuffer: DataBuffer, bounds: Rectangle): RenderableBitmap {
+    public static convertImage(sourceFormat: ImageType, targetFormat: ImageType, buffer: Uint32Array) {
+      if (sourceFormat === targetFormat) {
+        return;
+      }
+      var timelineDetails = "convertImage: " + ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(buffer.length) + ")";
+      enterTimeline(timelineDetails);
+      if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
+          targetFormat === ImageType.StraightAlphaRGBA) {
+        var length = buffer.length;
+        for (var i = 0; i < length; i++) {
+          var bgra = buffer[i];
+          var a = bgra & 0xff;
+          var r = (bgra >> 8) & 0xff;
+          var g = (bgra >> 16) & 0xff;
+          var b = (bgra >> 24) & 0xff;
+          if (a > 0) {
+            r = Math.imul(255, r) / a & 0xff;
+            g = Math.imul(255, g) / a & 0xff;
+            b = Math.imul(255, b) / a & 0xff;
+          }
+          var abgr = a << 24 | b << 16 | g << 8 | r;
+          buffer[i] = abgr;
+        }
+      } else if (sourceFormat === ImageType.StraightAlphaARGB &&
+                 targetFormat === ImageType.StraightAlphaRGBA) {
+        for (var i = 0; i < length; i++) {
+          buffer[i] = swap32(buffer[i]);
+        }
+      } else {
+        notImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
+      }
+      leaveTimeline(timelineDetails);
+    }
+
+    public static FromDataBuffer(type: ImageType, dataBuffer: DataBuffer, bounds: Rectangle): RenderableBitmap {
       enterTimeline("RenderableBitmap.FromDataBuffer");
       var canvas = document.createElement("canvas");
       canvas.width = bounds.w;
@@ -111,31 +147,36 @@ module Shumway.GFX {
       var context = canvas.getContext("2d");
       var imageData: ImageData = context.createImageData(bounds.w, bounds.h);
 
-      // Temporary Hack: RGBA -> AGBR
-      var swap32 = Shumway.IntegerUtilities.swap32;
-      var hack = new Uint32Array(dataBuffer.bytes.buffer);
-      for (var i = 0; i < hack.length; i++) {
-        hack[i] = swap32(hack[i]);
-      }
+      RenderableBitmap.convertImage (
+        type,
+        ImageType.StraightAlphaRGBA,
+        new Uint32Array(dataBuffer.buffer)
+      );
 
+      // TODO: Pass this buffer to convert image, no need to create a new one temporarily.
+      enterTimeline("setData");
       imageData.data.set(dataBuffer.bytes);
+      leaveTimeline("setData");
+
+      enterTimeline("putImageData");
       context.putImageData(imageData, 0, 0);
+      leaveTimeline("putImageData");
+
       var renderableBitmap = new RenderableBitmap(canvas, bounds);
       leaveTimeline("RenderableBitmap.FromDataBuffer");
       return renderableBitmap;
     }
 
-    public updateFromDataBuffer(dataBuffer: DataBuffer) {
+    public updateFromDataBuffer(type: ImageType, dataBuffer: DataBuffer) {
       enterTimeline("RenderableBitmap.updateFromDataBuffer");
       var context = this._canvas.getContext("2d");
       var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
 
-      // Temporary Hack: RGBA -> AGBR
-      var swap32 = Shumway.IntegerUtilities.swap32;
-      var hack = new Uint32Array(dataBuffer.bytes.buffer);
-      for (var i = 0; i < hack.length; i++) {
-        hack[i] = swap32(hack[i]);
-      }
+      RenderableBitmap.convertImage (
+        type,
+        ImageType.StraightAlphaRGBA,
+        new Uint32Array(dataBuffer.buffer)
+      );
 
       imageData.data.set(dataBuffer.bytes);
       context.putImageData(imageData, 0, 0);

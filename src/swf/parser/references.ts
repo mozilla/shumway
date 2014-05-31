@@ -20,4 +20,4 @@
 ///<reference path='font.ts' />
 ///<reference path='label.ts' />
 
-declare function createInflatedStream(bytes: ArrayBuffer, outputLength: number): any;
+declare function createInflatedStream(bytes: Uint8Array, outputLength: number): any;

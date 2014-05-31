@@ -19,7 +19,6 @@ module Shumway.AVM2.AS.flash.display {
   import assert = Shumway.Debug.assert;
   import somewhatImplemented = Shumway.Debug.somewhatImplemented;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  import ImageType = Shumway.Remoting.ImageType;
   import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   import throwError = Shumway.AVM2.Runtime.throwError;
   import AVM2 = Shumway.AVM2.Runtime.AVM2;

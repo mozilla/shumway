@@ -772,6 +772,19 @@ module Shumway {
   }
 
   export module StringUtilities {
+    export function memorySizeToString(value: number) {
+      value |= 0;
+      var K = 1024;
+      var M = K * K;
+      if (value < K) {
+        return value + " B";
+      } else if (value < M) {
+        return (value / K).toFixed(2) + "KB";
+      } else {
+        return (value / M).toFixed(2) + "MB";
+      }
+    }
+
     export function toSafeString(value) {
       if (typeof value === "string") {
         return "\"" + value + "\"";
@@ -2699,6 +2712,28 @@ module Shumway {
     }
   }
 
+  export enum ImageType {
+    None,
+
+    /**
+     * Premultiplied ARGB (byte-order).
+     */
+    PremultipliedAlphaARGB,
+
+    /**
+     * Unpremultiplied ARGB (byte-order).
+     */
+    StraightAlphaARGB,
+
+    /**
+     * Unpremultiplied RGBA (byte-order), this is what putImageData expects.
+     */
+    StraightAlphaRGBA,
+
+    JPEG,
+    PNG,
+    GIF
+  }
 }
 
 // Polyfill for Promises
