@@ -247,7 +247,6 @@ module Shumway.GFX {
       context.fillRule = context.mozFillRule = "evenodd";
 
       var data = this._pathData;
-      var commands: string[] = [];
       data.endian = 'auto'; // TODO: do this for all internal data buffers.
       if (!data || data.length === 0) {
         this._renderFallback(context);
@@ -341,13 +340,10 @@ module Shumway.GFX {
             // Assert at least one color stop.
             assert(data.bytesAvailable >= 4 + 4 + 6 * 8 /* matrix fields as floats */ + 1 + 1 + 8);
             if (fillPath) {
-              commands.push('context.fill(fillPath);');
               context.fill(fillPath);
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
-            commands.push('var fillPath = new Path2D();');
-            commands.push('fillPath.moveTo(' + x + ', ' + y + ');');
             var gradientType = data.readUnsignedByte();
             var focalPoint = data.readByte() * 2 / 0xff;
             assert(focalPoint >= -1 && focalPoint <= 1);
@@ -382,7 +378,7 @@ module Shumway.GFX {
             break;
           case PathCommand.LineStyleSolid:
             if (strokePath) {
-              context.stroke(strokePath);
+              this._strokePath(context, strokePath);
             }
             strokePath = new Path2D();
             strokePath.moveTo(x, y);
@@ -396,7 +392,7 @@ module Shumway.GFX {
             break;
           case PathCommand.LineEnd:
             if (strokePath) {
-              context.stroke(strokePath);
+              this._strokePath(context, strokePath);
               context.strokeStyle = null;
               strokePath = null;
             }
@@ -411,11 +407,31 @@ module Shumway.GFX {
         context.fillStyle = null;
       }
       if (strokePath) {
-        context.stroke(strokePath);
+        this._strokePath(context, strokePath);
         context.strokeStyle = null;
       }
       context.restore();
       leaveTimeline("RenderableShape.render");
+    }
+
+    // Special-cases 1px and 3px lines by moving the drawing position down/right by 0.5px.
+    // Flash apparently does this to create sharp, non-aliased lines in the normal case of thin
+    // lines drawn on round pixel values.
+    // Our handling doesn't always create the same results: for drawing coordinates with
+    // fractional values, Flash draws blurry lines. We do, too, but we still move the line
+    // down/right. Flash does something slightly different, with the result that a line drawn
+    // on coordinates slightly below round pixels (0.8, say) will be moved up/left.
+    // Properly fixing this would probably have to happen in the rasterizer. Or when replaying
+    // all the drawing commands, which seems expensive.
+    private _strokePath(context: CanvasRenderingContext2D, path: Path2D): void {
+      var lineWidth = context.lineWidth;
+      if (lineWidth === 1 || lineWidth === 3) {
+        context.translate(0.5, 0.5);
+      }
+      context.stroke(path);
+      if (lineWidth === 1 || lineWidth === 3) {
+        context.translate(-0.5, -0.5);
+      }
     }
 
     private _readMatrix(data: DataBuffer): Matrix
