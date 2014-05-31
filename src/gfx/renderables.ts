@@ -13,13 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+/// <reference path='references.ts'/>
 module Shumway.GFX {
   import Point = Geometry.Point;
   import Rectangle = Geometry.Rectangle;
-  import PathCommand = Geometry.PathCommand;
+  import PathCommand = Shumway.PathCommand;
+  import Matrix = Shumway.ShapeMatrix;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import swap32 = Shumway.IntegerUtilities.swap32;
   import memorySizeToString = Shumway.StringUtilities.memorySizeToString;
+  import assertUnreachable = Shumway.Debug.assertUnreachable;
 
   export enum RenderableFlags {
     None          = 0,
@@ -240,9 +244,10 @@ module Shumway.GFX {
 
     render(context: CanvasRenderingContext2D, clipBounds: Rectangle): void {
       context.save();
-      context.fillRule = context.mozFillRule = "evenodd";
+      context.fillStyle = context.strokeStyle = 'transparent';
 
       var data = this._pathData;
+      data.endian = 'auto'; // TODO: do this for all internal data buffers.
       if (!data || data.length === 0) {
         this._renderFallback(context);
         return;
@@ -256,8 +261,10 @@ module Shumway.GFX {
       // shape with a single fill but varying line styles. In that case, it's necessary to
       // delay stroking of the lines until the fill is finished. Probably by pushing all
       // stroke paths onto a stack.
-      var fillPath = null;
-      var strokePath = null;
+      var fillPath: Path2D = null;
+      var strokePath: Path2D = null;
+      var fillTransform: Matrix = null;
+      var strokeTransform: Matrix = null;
       data.position = 0;
       // We have to alway store the last position because Flash keeps the drawing cursor where it
       // was when changing fill or line style, whereas Canvas forgets it on beginning a new path.
@@ -265,14 +272,22 @@ module Shumway.GFX {
       var y = 0;
       var cpX: number;
       var cpY: number;
+      var formOpen = false;
+      var formOpenX = 0;
+      var formOpenY = 0;
       // Description of serialization format can be found in flash.display.Graphics.
       while (data.bytesAvailable > 0) {
         var command = data.readUnsignedByte();
         switch (command) {
           case PathCommand.MoveTo:
             assert(data.bytesAvailable >= 8);
-            x = data.readInt() / 20;
-            y = data.readInt() / 20;
+            if (formOpen && fillPath) {
+              fillPath.lineTo(formOpenX, formOpenY);
+              strokePath && strokePath.lineTo(formOpenX, formOpenY);
+            }
+            formOpen = true;
+            x = formOpenX = data.readInt() / 20;
+            y = formOpenY = data.readInt() / 20;
             fillPath && fillPath.moveTo(x, y);
             strokePath && strokePath.moveTo(x, y);
             break;
@@ -306,44 +321,72 @@ module Shumway.GFX {
           case PathCommand.BeginSolidFill:
             assert(data.bytesAvailable >= 4);
             if (fillPath) {
-              context.fill(fillPath);
+              context.fill(fillPath, 'evenodd');
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
-            var color = data.readUnsignedInt();
-            context.fillStyle = ColorUtilities.rgbaToCSSStyle(color);
+            context.fillStyle = ColorUtilities.rgbaToCSSStyle(data.readUnsignedInt());
             break;
           case PathCommand.BeginBitmapFill:
             assert(data.bytesAvailable >= 6 + 6 * 8 /* matrix fields as floats */ + 1 + 1);
             if (fillPath) {
-              context.fill(fillPath);
+              context.fill(fillPath, 'evenodd');
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
             var textureId = data.readUnsignedInt();
-            // Skip matrix for now.
-            data.readFloat();
-            data.readFloat();
-            data.readFloat();
-            data.readFloat();
-            data.readFloat();
-            data.readFloat();
+            fillTransform = this._readMatrix(data);
             var repeat = data.readBoolean() ? 'repeat' : 'no-repeat';
             var smooth = data.readBoolean();
             var texture = <RenderableBitmap>this._assets[textureId];
             assert(texture._canvas);
             context.fillStyle = context.createPattern(texture._canvas, repeat);
+            context.msImageSmoothingEnabled = context.msImageSmoothingEnabled =
+                                              context['imageSmoothingEnabled'] = smooth;
+            break;
+          case PathCommand.BeginGradientFill:
+            // Assert at least one color stop.
+            assert(data.bytesAvailable >= 4 + 4 + 6 * 8 /* matrix fields as floats */ + 1 + 1 + 8);
+            if (fillPath) {
+              context.fill(fillPath, 'evenodd');
+            }
+            fillPath = new Path2D();
+            fillPath.moveTo(x, y);
+            var gradientType = data.readUnsignedByte();
+            var focalPoint = data.readByte() * 2 / 0xff;
+            assert(focalPoint >= -1 && focalPoint <= 1);
+            fillTransform = this._readMatrix(data);
+            // This effectively applies the matrix to the line the gradient is drawn along:
+            var x1 = fillTransform.tx - fillTransform.a;
+            var y1 = fillTransform.ty - fillTransform.b;
+            var x2 = fillTransform.tx + fillTransform.a;
+            var y2 = fillTransform.ty + fillTransform.b;
+
+            var gradient = gradientType === GradientType.Linear ?
+                           context.createLinearGradient(x1, y1, x2, y2) :
+                           context.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
+            var colorStopsCount = data.readUnsignedByte();
+            for (var i = 0; i < colorStopsCount; i++) {
+              var ratio = data.readUnsignedByte() / 0xff;
+              var cssColor = ColorUtilities.rgbaToCSSStyle(data.readUnsignedInt());
+              gradient.addColorStop(ratio, cssColor);
+            }
+            context.fillStyle = gradient;
+
+            // Skip spread and interpolation modes for now.
+            data.readUnsignedByte();
+            data.readUnsignedByte();
             break;
           case PathCommand.EndFill:
             if (fillPath) {
-              context.fill(fillPath);
+              context.fill(fillPath, 'evenodd');
               context.fillStyle = null;
               fillPath = null;
             }
             break;
           case PathCommand.LineStyleSolid:
             if (strokePath) {
-              context.stroke(strokePath);
+              this._strokePath(context, strokePath);
             }
             strokePath = new Path2D();
             strokePath.moveTo(x, y);
@@ -357,22 +400,56 @@ module Shumway.GFX {
             break;
           case PathCommand.LineEnd:
             if (strokePath) {
-              context.stroke(strokePath);
+              this._strokePath(context, strokePath);
               context.strokeStyle = null;
               strokePath = null;
             }
+            break;
+          default:
+            assertUnreachable('Invalid command ' + command + ' encountered at position' +
+                              (data.position - 1) + ' of ' + data.length);
         }
       }
+      if (formOpen && fillPath) {
+        fillPath.lineTo(formOpenX, formOpenY);
+        strokePath && strokePath.lineTo(formOpenX, formOpenY);
+      }
       if (fillPath) {
-        context.fill(fillPath);
+        context.fill(fillPath, 'evenodd');
         context.fillStyle = null;
       }
       if (strokePath) {
-        context.stroke(strokePath);
+        this._strokePath(context, strokePath);
         context.strokeStyle = null;
       }
       context.restore();
       leaveTimeline("RenderableShape.render");
+    }
+
+    // Special-cases 1px and 3px lines by moving the drawing position down/right by 0.5px.
+    // Flash apparently does this to create sharp, non-aliased lines in the normal case of thin
+    // lines drawn on round pixel values.
+    // Our handling doesn't always create the same results: for drawing coordinates with
+    // fractional values, Flash draws blurry lines. We do, too, but we still move the line
+    // down/right. Flash does something slightly different, with the result that a line drawn
+    // on coordinates slightly below round pixels (0.8, say) will be moved up/left.
+    // Properly fixing this would probably have to happen in the rasterizer. Or when replaying
+    // all the drawing commands, which seems expensive.
+    private _strokePath(context: CanvasRenderingContext2D, path: Path2D): void {
+      var lineWidth = context.lineWidth;
+      if (lineWidth === 1 || lineWidth === 3) {
+        context.translate(0.5, 0.5);
+      }
+      context.stroke(path);
+      if (lineWidth === 1 || lineWidth === 3) {
+        context.translate(-0.5, -0.5);
+      }
+    }
+
+    private _readMatrix(data: DataBuffer): Matrix
+    {
+      return {a: data.readFloat(), b: data.readFloat(), c: data.readFloat(), d: data.readFloat(),
+              tx: data.readFloat(), ty: data.readFloat()};
     }
 
     private _renderFallback(context: CanvasRenderingContext2D) {

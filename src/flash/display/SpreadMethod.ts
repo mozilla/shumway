@@ -16,19 +16,12 @@
 // Class: SpreadMethod
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
+  import GradientSpreadMethod = Shumway.GradientSpreadMethod;
   export class SpreadMethod extends ASNative {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
@@ -46,11 +39,11 @@ module Shumway.AVM2.AS.flash.display {
 
     static fromNumber(n: number): string {
       switch (n) {
-        case 0:
+        case GradientSpreadMethod.Pad:
           return SpreadMethod.PAD;
-        case 1:
+        case GradientSpreadMethod.Reflect:
           return SpreadMethod.REFLECT;
-        case 2:
+        case GradientSpreadMethod.Repeat:
           return SpreadMethod.REPEAT;
         default:
           return null;
@@ -60,11 +53,11 @@ module Shumway.AVM2.AS.flash.display {
     static toNumber(value: string): number {
       switch (value) {
         case SpreadMethod.PAD:
-          return 0;
+          return GradientSpreadMethod.Pad;
         case SpreadMethod.REFLECT:
-          return 1;
+          return GradientSpreadMethod.Reflect;
         case SpreadMethod.REPEAT:
-          return 2;
+          return GradientSpreadMethod.Repeat;
         default:
           return -1;
       }

@@ -73,7 +73,7 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = ["load"]; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
 
     static RELEASE = false;
-    static WORKERS_ENABLED = typeof Worker !== 'undefined';
+    static WORKERS_ENABLED = false && typeof Worker !== 'undefined';
     static SHUMWAY_ROOT = '../../src/';
     static LOADER_PATH = Loader.RELEASE ? 'shumway-worker.js' : 'swf/resourceloader.js';
 
@@ -505,6 +505,7 @@ module Shumway.AVM2.AS.flash.display {
       worker.onmessage = function (e) {
         if (e.data.type === 'exception') {
           notImplemented("exception");
+          console.log('error in parser: \n' + e.data.stack);
 //          AVM2.exceptions.push({
 //            source: 'parser',
 //            message: e.data.message,

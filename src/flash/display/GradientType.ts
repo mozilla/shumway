@@ -16,19 +16,11 @@
 // Class: GradientType
 module Shumway.AVM2.AS.flash.display {
   import notImplemented = Shumway.Debug.notImplemented;
-  import asCoerceString = Shumway.AVM2.Runtime.asCoerceString;
   export class GradientType extends ASNative {
     
-    // Called whenever the class is initialized.
     static classInitializer: any = null;
-    
-    // Called whenever an instance of the class is initialized.
     static initializer: any = null;
-    
-    // List of static symbols to link.
     static classSymbols: string [] = null; // [];
-    
-    // List of instance symbols to link.
     static instanceSymbols: string [] = null; // [];
     
     constructor () {
@@ -45,10 +37,9 @@ module Shumway.AVM2.AS.flash.display {
 
     static fromNumber(n: number): string {
       switch (n) {
-        case 0x10:
+        case Shumway.GradientType.Linear:
           return GradientType.LINEAR;
-        case 0x12:
-        case 0x13:
+        case Shumway.GradientType.Radial:
           return GradientType.RADIAL;
         default:
           return null
@@ -58,9 +49,9 @@ module Shumway.AVM2.AS.flash.display {
     static toNumber(value: string): number {
       switch (value) {
         case GradientType.LINEAR:
-          return 0x10;
+          return Shumway.GradientType.Linear;
         case GradientType.RADIAL:
-          return 0x12;
+          return Shumway.GradientType.Radial;
         default:
           return -1;
       }

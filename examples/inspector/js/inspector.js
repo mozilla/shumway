@@ -208,8 +208,7 @@ function executeFile(file, buffer, movieParams) {
 
   var isFramePlayerEnabled = !!document.getElementById('playerWorker');
   if (isFramePlayerEnabled && filename.endsWith(".swf")) {
-    Shumway.FileLoadingService.instance.setBaseUrl(file);
-    var swfURL = Shumway.FileLoadingService.instance.resolveUrl(file);
+    var swfURL = Shumway.FileLoadingService.instance.setBaseUrl(file);
     var loaderURL = getQueryVariable("loaderURL") || swfURL;
     runIFramePlayer({sysMode: sysMode, appMode: appMode, loaderURL: loaderURL,
       movieParams: movieParams, file: file, asyncLoading: asyncLoading});
@@ -269,11 +268,10 @@ function executeFile(file, buffer, movieParams) {
 //        });
 
       }
+      file = Shumway.FileLoadingService.instance.setBaseUrl(file);
       if (!buffer && asyncLoading) {
-        Shumway.FileLoadingService.instance.setBaseUrl(file);
         runSWF(file);
       } else if (!buffer) {
-        Shumway.FileLoadingService.instance.setBaseUrl(file);
         new BinaryFileReader(file).readAll(null, function(buffer, error) {
           if (!buffer) {
             throw "Unable to open the file " + file + ": " + error;
@@ -333,19 +331,30 @@ Shumway.FileLoadingService.instance = {
     };
   },
   setBaseUrl: function (url) {
-    var a = document.createElement('a');
-    a.href = url || '#';
-    a.setAttribute('style', 'display: none;');
-    document.body.appendChild(a);
-    Shumway.FileLoadingService.instance.baseUrl = a.href;
-    document.body.removeChild(a);
+    var baseUrl;
+    if (typeof URL !== 'undefined') {
+      baseUrl = new URL(url, document.location.href).href;
+    } else {
+      var a = document.createElement('a');
+      a.href = url || '#';
+      a.setAttribute('style', 'display: none;');
+      document.body.appendChild(a);
+      baseUrl = a.href;
+      document.body.removeChild(a);
+    }
+    Shumway.FileLoadingService.instance.baseUrl = baseUrl;
+    return baseUrl;
   },
   resolveUrl: function (url) {
+    var base = Shumway.FileLoadingService.instance.baseUrl || '';
+    if (typeof URL !== 'undefined') {
+      return new URL(url, base).href;
+    }
+
     if (url.indexOf('://') >= 0) {
       return url;
     }
 
-    var base = Shumway.FileLoadingService.instance.baseUrl || '';
     base = base.lastIndexOf('/') >= 0 ? base.substring(0, base.lastIndexOf('/') + 1) : '';
     if (url.indexOf('/') === 0) {
       var m = /^[^:]+:\/\/[^\/]+/.exec(base);
