@@ -83,9 +83,7 @@ module Shumway.GFX.GL {
       this._programCache = Object.create(null);
       canvas.addEventListener('resize', this.resize.bind(this), false);
       this.resize();
-      this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, this.gl.ONE);
-
-      // this._backgroundColor = Shumway.Util.Color.parseColor(this._canvas.style.backgroundColor);
+      this.gl.pixelStorei(this.gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, options.unpackPremultiplyAlpha ? this.gl.ONE : this.gl.ZERO);
       this._backgroundColor = Color.Black;
 
       this._geometry = new WebGLGeometry(this);

@@ -156,6 +156,9 @@ function syncGFXOptions(options) {
   options.clipDirtyRegions = clipDirtyRegions.value;
   options.clipCanvas = clipCanvas.value;
 
+  options.premultipliedAlpha = premultipliedAlpha.value;
+  options.unpackPremultiplyAlpha = unpackPremultiplyAlpha.value;
+
   // These are set by holding down F and B in the easel, we don't want to
   // override them here.
   // options.paintFlashing = paintFlashing.value;

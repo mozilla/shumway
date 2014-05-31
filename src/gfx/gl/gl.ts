@@ -77,6 +77,9 @@ module Shumway.GFX.GL {
     drawElements: boolean = true;
     drawTextures: boolean = true;
     drawTexture: number = -1;
+
+    premultipliedAlpha: boolean = false;
+    unpackPremultiplyAlpha: boolean = true;
   }
 
   export class WebGLStageRenderer extends StageRenderer {
