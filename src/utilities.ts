@@ -292,6 +292,10 @@ module Shumway {
     export function unexpected(message?: any) {
       Debug.assert(false, "Unexpected: " + message);
     }
+
+    export function untested(message?: any) {
+      Debug.warning(false, "Congratulations, you've found a code path for which we haven't found a test case. Please submit the test case: " + message);
+    }
   }
 
   export function getTicks(): number {

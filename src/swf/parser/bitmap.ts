@@ -19,8 +19,19 @@ module Shumway.SWF.Parser {
   import assertUnreachable = Shumway.Debug.assertUnreachable;
 
   export enum BitmapFormat {
+    /**
+     * 8-bit color mapped image.
+     */
     FORMAT_COLORMAPPED  = 3,
+
+    /**
+     * 15-bit RGB image.
+     */
     FORMAT_15BPP        = 4,
+
+    /**
+     * 24-bit RGB image, however stored as 4 byte value 0x00RRGGBB.
+     */
     FORMAT_24BPP        = 5
   }
 
@@ -101,14 +112,15 @@ module Shumway.SWF.Parser {
   }
 
   /**
-   * Returns a Uint8Array of ARGB values. The data is already sotred in premultiplied ARGB
+   * Returns a Uint8Array of ARGB values. The data is already stored in premultiplied ARGB
    * so there's not much to do unless there's no alpha in which case we expand it here.
    */
   function parse24BPP(tag: DefineBitsLosslessTag): Uint8Array {
     var width = tag.width, height = tag.height;
     var hasAlpha = tag.hasAlpha;
-    var rowSize = width * (hasAlpha ? 4 : 3);
-    var dataSize = rowSize * height;
+
+    // Even without alpha, 24BPP is stored as 4 bytes, probably for alignment reasons.
+    var dataSize = height * width * 4;
     var stream = createInflatedStream(tag.bmpData, dataSize);
     // Make sure we've deflated enough bytes.
     stream.ensure(dataSize);
@@ -117,33 +129,24 @@ module Shumway.SWF.Parser {
       return bytes;
     }
     var view = new Uint32Array(width * height);
-
     var length = width * height, p = 0;
+    // TODO: Looks like we can probably get away with just setting alpha to 0xff instead of
+    // reading the entire buffer.
     for (var i = 0; i < length; i++) {
+      p ++; // Reserved, always zero.
       var r = bytes[p ++];
       var g = bytes[p ++];
       var b = bytes[p ++];
       view[i] = b << 24 | g << 16 | r << 8 | 0xff;
     }
     release || assert (p === dataSize, "We should be at the end of the data buffer now.");
+    Shumway.Debug.untested("parse24BPP w/o alpha.");
     return new Uint8Array(view.buffer);
   }
 
-  export function defineBitmap(tag: any) {
-    var bmpData = tag.bmpData;
-    var data: Uint32Array;
-    var type = ImageType.None;
-    switch (tag.format) {
-      case BitmapFormat.FORMAT_COLORMAPPED:
-        data = parseColorMapped(tag);
-        type = ImageType.PremultipliedAlphaARGB;
-        break;
-      case BitmapFormat.FORMAT_24BPP:
-        data = parse24BPP(tag);
-        type = ImageType.PremultipliedAlphaARGB;
-        break;
-
-      /*
+  function parse15BPP(tag: DefineBitsLosslessTag): Uint8Array {
+    Shumway.Debug.notImplemented("parse15BPP");
+    /*
       case FORMAT_15BPP:
         var colorType = 0x02;
         var bytesPerLine = ((width * 2) + 3) & ~3;
@@ -166,6 +169,26 @@ module Shumway.SWF.Parser {
         }
         break;
       */
+    return null;
+  }
+
+  export function defineBitmap(tag: any) {
+    var bmpData = tag.bmpData;
+    var data: Uint32Array;
+    var type = ImageType.None;
+    switch (tag.format) {
+      case BitmapFormat.FORMAT_COLORMAPPED:
+        data = parseColorMapped(tag);
+        type = ImageType.PremultipliedAlphaARGB;
+        break;
+      case BitmapFormat.FORMAT_24BPP:
+        data = parse24BPP(tag);
+        type = ImageType.PremultipliedAlphaARGB;
+        break;
+      case BitmapFormat.FORMAT_15BPP:
+        data = parse15BPP(tag);
+        type = ImageType.PremultipliedAlphaARGB;
+        break;
       default:
         assertUnreachable('invalid bitmap format');
     }
