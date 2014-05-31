@@ -107,7 +107,7 @@ module Shumway.AVM2.AS.flash.display {
       this._lastY = 0;
       this._parent = null;
 
-      this._currentStrokeWidth = 0;
+      this._topLeftStrokeWidth = this._bottomRightStrokeWidth = 0;
     }
 
     getGraphicsData(): ShapeData {
@@ -132,9 +132,32 @@ module Shumway.AVM2.AS.flash.display {
     private _lastY: number;
 
     /**
-     * Fill and line state variables, in twips.
+     * Determine by how much the lineBounds are larger than the fillBounds.
      */
-    private _currentStrokeWidth: number;
+    private _topLeftStrokeWidth: number;
+    private _bottomRightStrokeWidth: number;
+
+    /**
+     * Flash special-cases lines that are 1px and 3px wide.
+     * They're offset by 0.5px to the bottom-right.
+     */
+    private _setStrokeWidth(width: number) {
+      switch (width) {
+        case 1:
+          this._topLeftStrokeWidth = 0;
+          this._bottomRightStrokeWidth = 1;
+          break;
+        case 3:
+          this._topLeftStrokeWidth = 1;
+          this._bottomRightStrokeWidth = 2;
+          break;
+        default:
+          var half = Math.ceil(width * 0.5)|0;
+          this._topLeftStrokeWidth = half;
+          this._bottomRightStrokeWidth = half;
+          break;
+      }
+    }
 
     /**
      * Bounding box excluding strokes.
@@ -242,13 +265,14 @@ module Shumway.AVM2.AS.flash.display {
       // Flash stops drawing strokes whenever a thickness is supplied that can't be coerced to a
       // number.
       if (isNaN(thickness)) {
-        this._currentStrokeWidth = 0;
+
+        this._setStrokeWidth(0);
         this._graphicsData.writeUnsignedByte(PathCommand.LineEnd);
         return;
       }
       // thickness is rounded to the nearest pixel value.
       thickness = clamp(Math.round(thickness)|0, 0, 0xff)|0;
-      this._currentStrokeWidth = thickness * 20|0;
+      this._setStrokeWidth(thickness * 20|0);
 
       // If `scaleMode` is invalid, "normal" is used.
       var lineScaleMode = LineScaleMode.toNumber(asCoerceString(scaleMode));
@@ -693,38 +717,31 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _extendBoundsByPoint(x: number, y: number): void {
-      var strokeWidth: number = this._currentStrokeWidth;
-      var bounds = this._fillBounds;
-      bounds.extendByPoint(x, y);
+      this._fillBounds.extendByPoint(x, y);
 
-      var halfStrokeWidth = strokeWidth / 2|0;
-      bounds = this._lineBounds;
-      bounds.xMin = Math.min(x - halfStrokeWidth, bounds.xMin);
-      bounds.xMax = Math.max(x + halfStrokeWidth, bounds.xMax);
-      bounds.yMin = Math.min(y - halfStrokeWidth, bounds.yMin);
-      bounds.yMax = Math.max(y + halfStrokeWidth, bounds.yMax);
+      var topLeftStrokeWidth = this._topLeftStrokeWidth;
+      var bottomRightStrokeWidth = this._bottomRightStrokeWidth;
+      var bounds = this._lineBounds;
+      bounds.xMin = Math.min(x - topLeftStrokeWidth, bounds.xMin);
+      bounds.xMax = Math.max(x + bottomRightStrokeWidth, bounds.xMax);
+      bounds.yMin = Math.min(y - topLeftStrokeWidth, bounds.yMin);
+      bounds.yMax = Math.max(y + bottomRightStrokeWidth, bounds.yMax);
     }
 
     private _extendBoundsByX(x: number): void {
-      var strokeWidth: number = 0;
-      var bounds = this._fillBounds;
-      bounds.extendByX(x);
+      this._fillBounds.extendByX(x);
 
-      var halfStrokeWidth = strokeWidth / 2|0;
-      bounds = this._lineBounds;
-      bounds.xMin = Math.min(x - halfStrokeWidth, bounds.xMin);
-      bounds.xMax = Math.max(x + halfStrokeWidth, bounds.xMax);
+      var bounds = this._lineBounds;
+      bounds.xMin = Math.min(x - this._topLeftStrokeWidth, bounds.xMin);
+      bounds.xMax = Math.max(x + this._bottomRightStrokeWidth, bounds.xMax);
     }
 
     private _extendBoundsByY(y: number): void {
-      var strokeWidth: number = 0;
-      var bounds = this._fillBounds;
-      bounds.extendByY(y);
+      this._fillBounds.extendByY(y);
 
-      var halfStrokeWidth = strokeWidth / 2|0;
-      bounds = this._lineBounds;
-      bounds.yMin = Math.min(y - halfStrokeWidth, bounds.yMin);
-      bounds.yMax = Math.max(y + halfStrokeWidth, bounds.yMax);
+      var bounds = this._lineBounds;
+      bounds.yMin = Math.min(y - this._topLeftStrokeWidth, bounds.yMin);
+      bounds.yMax = Math.max(y + this._bottomRightStrokeWidth, bounds.yMax);
     }
 
     private _setLastCoordinates(x: number, y: number): void {
