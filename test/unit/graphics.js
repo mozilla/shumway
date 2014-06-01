@@ -22,7 +22,7 @@
   var PathCommand = Shumway.PathCommand;
   var assertUnreachable = Shumway.Debug.assertUnreachable;
 
-  var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
+  var ShapeData = Shumway.ShapeData;
 
   var LineScaleMode = flash.display.LineScaleMode;
   var CapsStyle = flash.display.CapsStyle;
@@ -276,7 +276,7 @@
   function cloneData(data) {
     var position = data.position;
     data.position = 0;
-    var clone = new DataBuffer();
+    var clone = new ShapeData();
     data.readBytes(clone);
     data.position = position;
     return clone;
