@@ -101,10 +101,11 @@ module Shumway.AVM2.AS.flash.display {
       this._id = flash.display.DisplayObject.getNextSyncID();
       this._graphicsData = new ShapeData();
       this._textures = [];
-      this._fillBounds = new Bounds(0, 0, 0, 0);
-      this._lineBounds = new Bounds(0, 0, 0, 0);
+      this._fillBounds = new Bounds(0x8000000, 0x8000000, 0x8000000, 0x8000000);
+      this._lineBounds = new Bounds(0x8000000, 0x8000000, 0x8000000, 0x8000000);
       this._lastX = 0;
       this._lastY = 0;
+      this._boundsIncludeLastCoordinates = false;
       this._parent = null;
 
       this._topLeftStrokeWidth = this._bottomRightStrokeWidth = 0;
@@ -130,6 +131,7 @@ module Shumway.AVM2.AS.flash.display {
     private _textures: BitmapData[];
     private _lastX: number;
     private _lastY: number;
+    private _boundsIncludeLastCoordinates: boolean;
 
     /**
      * Determine by how much the lineBounds are larger than the fillBounds.
@@ -195,7 +197,7 @@ module Shumway.AVM2.AS.flash.display {
       this._textures.length = 0;
       this._fillBounds.setEmpty();
       this._lineBounds.setEmpty();
-      this._setLastCoordinates(0, 0);
+      this._applyLastCoordinates(0, 0);
       this._invalidateParent();
     }
 
@@ -325,10 +327,9 @@ module Shumway.AVM2.AS.flash.display {
       this._graphicsData.lineTo(x2, y2);
       this._graphicsData.lineTo(x, y2);
       this._graphicsData.lineTo(x, y);
-      this._setLastCoordinates(x, y);
 
-      this._extendBoundsByPoint(x, y);
       this._extendBoundsByPoint(x2, y2);
+      this._applyLastCoordinates(x, y);
 
       this._invalidateParent();
     }
@@ -495,9 +496,10 @@ module Shumway.AVM2.AS.flash.display {
       y = y * 20|0;
 
       this._graphicsData.moveTo(x, y);
-      this._setLastCoordinates(x, y);
-      this._extendBoundsByPoint(x, y);
-      this._invalidateParent();
+      // Don't use _applyLastCoordinates because that extends the bounds objects, too.
+      this._lastX = x;
+      this._lastY = y;
+      this._boundsIncludeLastCoordinates = false;
     }
 
     lineTo(x: number, y: number): void {
@@ -505,8 +507,7 @@ module Shumway.AVM2.AS.flash.display {
       y = y * 20|0;
 
       this._graphicsData.lineTo(x, y);
-      this._setLastCoordinates(x, y);
-      this._extendBoundsByPoint(x, y);
+      this._applyLastCoordinates(x, y);
       this._invalidateParent();
     }
 
@@ -517,15 +518,14 @@ module Shumway.AVM2.AS.flash.display {
       anchorY = anchorY * 20|0;
 
       this._graphicsData.curveTo(controlX, controlY, anchorX, anchorY);
-      this._setLastCoordinates(anchorX, anchorY);
 
-      this._extendBoundsByPoint(anchorX, anchorY);
       if (controlX < this._lastX || controlX > anchorX) {
         this._extendBoundsByX(quadraticBezierExtreme(this._lastX, controlX, anchorX)|0);
       }
       if (controlY < this._lastY || controlY > anchorY) {
         this._extendBoundsByY(quadraticBezierExtreme(this._lastY, controlY, anchorY)|0);
       }
+      this._applyLastCoordinates(anchorX, anchorY);
 
       this._invalidateParent();
     }
@@ -541,9 +541,7 @@ module Shumway.AVM2.AS.flash.display {
       anchorY = anchorY * 20|0;
 
       this._graphicsData.cubicCurveTo(controlX1, controlY1, controlX2, controlY2, anchorX, anchorY);
-      this._setLastCoordinates(anchorX, anchorY);
 
-      this._extendBoundsByPoint(anchorX, anchorY);
       var extremes;
       var i;
       var fromX = this._lastX;
@@ -560,6 +558,7 @@ module Shumway.AVM2.AS.flash.display {
           this._extendBoundsByY(extremes[i]|0);
         }
       }
+      this._applyLastCoordinates(anchorX, anchorY);
 
       this._invalidateParent();
     }
@@ -717,36 +716,44 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     private _extendBoundsByPoint(x: number, y: number): void {
-      this._fillBounds.extendByPoint(x, y);
-
-      var topLeftStrokeWidth = this._topLeftStrokeWidth;
-      var bottomRightStrokeWidth = this._bottomRightStrokeWidth;
-      var bounds = this._lineBounds;
-      bounds.xMin = Math.min(x - topLeftStrokeWidth, bounds.xMin);
-      bounds.xMax = Math.max(x + bottomRightStrokeWidth, bounds.xMax);
-      bounds.yMin = Math.min(y - topLeftStrokeWidth, bounds.yMin);
-      bounds.yMax = Math.max(y + bottomRightStrokeWidth, bounds.yMax);
+      this._extendBoundsByX(x);
+      this._extendBoundsByY(y);
     }
 
     private _extendBoundsByX(x: number): void {
       this._fillBounds.extendByX(x);
 
       var bounds = this._lineBounds;
-      bounds.xMin = Math.min(x - this._topLeftStrokeWidth, bounds.xMin);
-      bounds.xMax = Math.max(x + this._bottomRightStrokeWidth, bounds.xMax);
+      if (bounds.xMin === 0x8000000) {
+        bounds.xMin = x - this._topLeftStrokeWidth;
+        bounds.xMax = x + this._bottomRightStrokeWidth;
+      } else {
+        bounds.xMin = Math.min(x - this._topLeftStrokeWidth, bounds.xMin);
+        bounds.xMax = Math.max(x + this._bottomRightStrokeWidth, bounds.xMax);
+      }
     }
 
     private _extendBoundsByY(y: number): void {
       this._fillBounds.extendByY(y);
 
       var bounds = this._lineBounds;
-      bounds.yMin = Math.min(y - this._topLeftStrokeWidth, bounds.yMin);
-      bounds.yMax = Math.max(y + this._bottomRightStrokeWidth, bounds.yMax);
+      if (bounds.yMin === 0x8000000) {
+        bounds.yMin = y - this._topLeftStrokeWidth;
+        bounds.yMax = y + this._bottomRightStrokeWidth;
+      } else {
+        bounds.yMin = Math.min(y - this._topLeftStrokeWidth, bounds.yMin);
+        bounds.yMax = Math.max(y + this._bottomRightStrokeWidth, bounds.yMax);
+      }
     }
 
-    private _setLastCoordinates(x: number, y: number): void {
+    private _applyLastCoordinates(x: number, y: number): void {
+      if (!this._boundsIncludeLastCoordinates) {
+        this._extendBoundsByPoint(this._lastX, this._lastY);
+      }
+      this._boundsIncludeLastCoordinates = true;
       this._lastX = x;
       this._lastY = y;
+      this._extendBoundsByPoint(x, y);
     }
   }
 }
