@@ -109,7 +109,7 @@ module Shumway.GFX {
     _canvas: HTMLCanvasElement;
     private fillStyle: ColorStyle;
 
-    public static convertImage(sourceFormat: ImageType, targetFormat: ImageType, buffer: Uint32Array) {
+    public static convertImage(sourceFormat: ImageType, targetFormat: ImageType, buffer: Int32Array) {
       if (sourceFormat === targetFormat) {
         return;
       }
@@ -154,7 +154,7 @@ module Shumway.GFX {
       RenderableBitmap.convertImage (
         type,
         ImageType.StraightAlphaRGBA,
-        new Uint32Array(dataBuffer.buffer)
+        new Int32Array(dataBuffer.buffer)
       );
 
       // TODO: Pass this buffer to convert image, no need to create a new one temporarily.
@@ -179,7 +179,7 @@ module Shumway.GFX {
       RenderableBitmap.convertImage (
         type,
         ImageType.StraightAlphaRGBA,
-        new Uint32Array(dataBuffer.buffer)
+        new Int32Array(dataBuffer.buffer)
       );
 
       imageData.data.set(dataBuffer.bytes);

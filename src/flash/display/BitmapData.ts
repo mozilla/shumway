@@ -68,11 +68,11 @@ module Shumway.AVM2.AS.flash.display {
         this._data = new Uint8Array(this._symbol.data.buffer);
         this._type = this._symbol.type;
         if (this._type === ImageType.PremultipliedAlphaARGB) {
-          this._view = new Uint32Array(this._symbol.data.buffer);
+          this._view = new Int32Array(this._symbol.data.buffer);
         }
       } else {
         this._data = new Uint8Array(width * height * 4);
-        this._view = new Uint32Array(this._data.buffer);
+        this._view = new Int32Array(this._data.buffer);
         this._type = ImageType.PremultipliedAlphaARGB;
         var alpha = fillColorARGB >> 24;
         if (alpha === 0 && transparent) {
@@ -108,11 +108,11 @@ module Shumway.AVM2.AS.flash.display {
     _dataBuffer: DataBuffer;
 
     /**
-     * Uint32Array view on |_data| useful when working with 4 bytes at a time. Endianess is
+     * Int32Array view on |_data| useful when working with 4 bytes at a time. Endianess is
      * important here, so if |_type| is PremultipliedAlphaARGB as is usually the case for
      * bitmap data, then |_view| values are actually BGRA (on little-endian machines).
      */
-    _view: Uint32Array;
+    _view: Int32Array;
 
     /**
      * Indicates whether this bitmap data's data buffer has changed since the last time it was synchronized.
@@ -130,7 +130,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * TODO: Not tested.
      */
-    private _getPixelData(rect: flash.geom.Rectangle): Uint32Array {
+    private _getPixelData(rect: flash.geom.Rectangle): Int32Array {
       var r = this.rect.intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
@@ -141,7 +141,7 @@ module Shumway.AVM2.AS.flash.display {
       var yMax = r.y + r.height;
       var view = this._view;
       var width = this._rect.width;
-      var output = new Uint32Array(r.area);
+      var output = new Int32Array(r.area);
       var p = 0;
       for (var y = yMin; y < yMax; y++) {
         var offset = y * width;
@@ -159,7 +159,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * TODO: Not tested.
      */
-    private _putPixelData(rect: flash.geom.Rectangle, input: Uint32Array): void {
+    private _putPixelData(rect: flash.geom.Rectangle, input: Int32Array): void {
       var r = this.rect.intersectInPlace(rect);
       if (r.isEmpty()) {
         return;
@@ -392,7 +392,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     setPixels(rect: flash.geom.Rectangle, inputByteArray: flash.utils.ByteArray): void {
-      this._putPixelData(rect, new Uint32Array(inputByteArray.readRawBytes()));
+      this._putPixelData(rect, new Int32Array(inputByteArray.readRawBytes()));
     }
 
     setVector(rect: flash.geom.Rectangle, inputVector: Uint32Vector): void {
