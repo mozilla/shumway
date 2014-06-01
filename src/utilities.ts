@@ -2293,11 +2293,21 @@ module Shumway {
     }
 
     extendByX (x: number): void {
+      // Exclude default values.
+      if (this.xMin === 0x8000000) {
+        this.xMin = this.xMax = x;
+        return;
+      }
       this.xMin = Math.min(this.xMin, x);
       this.xMax = Math.max(this.xMax, x);
     }
 
     extendByY (y: number): void {
+      // Exclude default values.
+      if (this.yMin === 0x8000000) {
+        this.yMin = this.yMax = y;
+        return;
+      }
       this.yMin = Math.min(this.yMin, y);
       this.yMax = Math.max(this.yMax, y);
     }
@@ -2408,11 +2418,19 @@ module Shumway {
     }
 
     extendByX (x: number): void {
+      if (this.xMin === 0x8000000) {
+        this.xMin = this.xMax = x;
+        return;
+      }
       this.xMin = Math.min(this.xMin, x);
       this.xMax = Math.max(this.xMax, x);
     }
 
     extendByY (y: number): void {
+      if (this.yMin === 0x8000000) {
+        this.yMin = this.yMax = y;
+        return;
+      }
       this.yMin = Math.min(this.yMin, y);
       this.yMax = Math.max(this.yMax, y);
     }
