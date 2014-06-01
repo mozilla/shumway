@@ -294,7 +294,7 @@ module Shumway {
     }
 
     export function untested(message?: any) {
-      Debug.warning(false, "Congratulations, you've found a code path for which we haven't found a test case. Please submit the test case: " + message);
+      Debug.warning("Congratulations, you've found a code path for which we haven't found a test case. Please submit the test case: " + message);
     }
   }
 
