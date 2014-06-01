@@ -71,29 +71,29 @@ module Shumway {
    *
    * moveTo:
    * byte command:  PathCommand.MoveTo
-   * uint x:        target x coordinate, in twips
-   * uint y:        target y coordinate, in twips
+   * int x:         target x coordinate, in twips
+   * int y:         target y coordinate, in twips
    *
    * lineTo:
    * byte command:  PathCommand.LineTo
-   * uint x:        target x coordinate, in twips
-   * uint y:        target y coordinate, in twips
+   * int x:         target x coordinate, in twips
+   * int y:         target y coordinate, in twips
    *
    * curveTo:
    * byte command:  PathCommand.CurveTo
-   * uint controlX: control point x coordinate, in twips
-   * uint controlY: control point y coordinate, in twips
-   * uint anchorX:  target x coordinate, in twips
-   * uint anchorY:  target y coordinate, in twips
+   * int  controlX: control point x coordinate, in twips
+   * int  controlY: control point y coordinate, in twips
+   * int  anchorX:  target x coordinate, in twips
+   * int  anchorY:  target y coordinate, in twips
    *
    * cubicCurveTo:
    * byte command:   PathCommand.CubicCurveTo
-   * uint controlX1: control point 1 x coordinate, in twips
-   * uint controlY1: control point 1 y coordinate, in twips
-   * uint controlX2: control point 2 x coordinate, in twips
-   * uint controlY2: control point 2 y coordinate, in twips
-   * uint anchorX:   target x coordinate, in twips
-   * uint anchorY:   target y coordinate, in twips
+   * int controlX1:  control point 1 x coordinate, in twips
+   * int controlY1:  control point 1 y coordinate, in twips
+   * int controlX2:  control point 2 x coordinate, in twips
+   * int controlY2:  control point 2 y coordinate, in twips
+   * int anchorX:    target x coordinate, in twips
+   * int anchorY:    target y coordinate, in twips
    *
    * beginFill:
    * byte command:  PathCommand.BeginSolidFill
