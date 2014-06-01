@@ -24,6 +24,8 @@ module Shumway.GFX {
   import swap32 = Shumway.IntegerUtilities.swap32;
   import memorySizeToString = Shumway.StringUtilities.memorySizeToString;
   import assertUnreachable = Shumway.Debug.assertUnreachable;
+  import unpremultiplyARGB = Shumway.ColorUtilities.unpremultiplyARGB;
+  import tableLookupUnpremultiplyARGB = Shumway.ColorUtilities.tableLookupUnpremultiplyARGB;
 
   export enum RenderableFlags {
     None          = 0,
@@ -117,20 +119,16 @@ module Shumway.GFX {
       enterTimeline(timelineDetails);
       if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
           targetFormat === ImageType.StraightAlphaRGBA) {
+        Shumway.ColorUtilities.ensureUnpremultiplyTable();
         var length = buffer.length;
         for (var i = 0; i < length; i++) {
-          var bgra = buffer[i];
-          var a = (bgra >>  0) & 0xff;
-          var r = (bgra >>  8) & 0xff;
-          var g = (bgra >> 16) & 0xff;
-          var b = (bgra >> 24) & 0xff;
-          if (a > 0) {
-            r = Math.imul(255, r) / a & 0xff;
-            g = Math.imul(255, g) / a & 0xff;
-            b = Math.imul(255, b) / a & 0xff;
-          }
-          var abgr = a << 24 | b << 16 | g << 8 | r;
-          buffer[i] = abgr;
+          var pARGB = swap32(buffer[i]);
+          // TODO: Make sure this is inlined!
+          var uARGB = tableLookupUnpremultiplyARGB(pARGB);
+          var uABGR = (uARGB & 0xFF00FF00)  | // A_G_
+                      (uARGB >> 16) & 0xff  | // A_GR
+                      (uARGB & 0xff) << 16;   // ABGR
+          buffer[i] = uABGR;
         }
       } else if (sourceFormat === ImageType.StraightAlphaARGB &&
                  targetFormat === ImageType.StraightAlphaRGBA) {

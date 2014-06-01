@@ -2607,6 +2607,52 @@ module Shumway {
       b = ((Math.imul(b, a) + 127) / 255) | 0;
       return a << 24 | r << 16 | g << 8 | b;
     }
+
+    var premultiplyTable: Uint8Array;
+
+    /**
+     * All possible alpha values and colors 256 * 256 = 65536 entries. Experiments
+     * indicate that doing unpremultiplication this way is roughly 5x faster.
+     *
+     * To lookup a color |c| in the table at a given alpha value |a| use:
+     * |(a << 8) + c| to compute the index. This layout order was chosen to make
+     * table lookups cache friendly, it actually makes a difference.
+     *
+     * TODO: Figure out if memory / speed tradeoff is worth it.
+     */
+    var unpremultiplyTable: Uint8Array;
+
+    /**
+     * Make sure to call this before using the |unpremultiplyARGBUsingTableLookup| or
+     * |premultiplyARGBUsingTableLookup| functions. We want to execute this lazily so
+     * we don't incur any startup overhead.
+     */
+    export function ensureUnpremultiplyTable() {
+      if (!unpremultiplyTable) {
+        unpremultiplyTable = new Uint8Array(256 * 256);
+        for (var c = 0; c < 256; c++) {
+          for (var a = 0; a < 256; a++) {
+            unpremultiplyTable[(a << 8) + c] = Math.imul(255, c) / a;
+          }
+        }
+      }
+    }
+
+    export function tableLookupUnpremultiplyARGB(pARGB) {
+      pARGB = pARGB | 0;
+      var a = (pARGB >> 24) & 0xff;
+      if (a === 0) {
+        return 0;
+      }
+      var b = (pARGB >>  0) & 0xff;
+      var g = (pARGB >>  8) & 0xff;
+      var r = (pARGB >> 16) & 0xff;
+      var o = a << 8;
+      r = unpremultiplyTable[o + r];
+      g = unpremultiplyTable[o + g];
+      b = unpremultiplyTable[o + b];
+      return a << 24 | r << 16 | g << 8 | b;
+    }
   }
 
   export module Telemetry {

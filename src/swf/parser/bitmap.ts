@@ -140,7 +140,6 @@ module Shumway.SWF.Parser {
       view[i] = b << 24 | g << 16 | r << 8 | 0xff;
     }
     release || assert (p === dataSize, "We should be at the end of the data buffer now.");
-    Shumway.Debug.untested("parse24BPP w/o alpha.");
     return new Uint8Array(view.buffer);
   }
 
