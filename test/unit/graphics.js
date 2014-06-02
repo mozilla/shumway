@@ -283,11 +283,12 @@
     structEq(g._getContentBounds(true), {xMin: 477, xMax: 2610, yMin: 477, yMax: 2610},
              "curve extends line bounds correctly");
 
+    // Disabled because we return a yMax value of 2548. Will investigate later.
 //    g.clear();
 //    g.lineStyle(1);
 //    g.moveTo(30, 50);
 //    g.cubicCurveTo(60, -10, 180, 200, 150, 100);
-//    structEq(g._getContentBounds(false), {xMin: 7423, xMax: 8577, yMin: 400, yMax: 3400},
+//    structEq(g._getContentBounds(false), {xMin: 600, xMax: 3095, yMin: 780, yMax: 2549},
 //             "cubic curve extends fill bounds correctly");
   }
 
