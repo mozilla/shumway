@@ -64,6 +64,12 @@ module Shumway.Remoting.GFX {
         (event.shiftKey ? KeyboardEventFlags.ShiftKey : 0);
       output.writeInt(flags);
     }
+
+    public writeFocusEvent(type: FocusEventType) {
+      var output = this.output;
+      output.writeInt(MessageTag.FocusEvent);
+      output.writeInt(type);
+    }
   }
 
   export class GFXChannelDeserializerContext {

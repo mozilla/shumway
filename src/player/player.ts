@@ -34,6 +34,7 @@ module Shumway {
   import MouseEventDispatcher = flash.ui.MouseEventDispatcher;
   import KeyboardEventData = Shumway.AVM2.AS.flash.ui.KeyboardEventData;
   import KeyboardEventDispatcher = flash.ui.KeyboardEventDispatcher;
+  import FocusEventData = Shumway.Remoting.Player.FocusEventData;
 
   import IBitmapDataSerializer = flash.display.IBitmapDataSerializer;
 
@@ -94,31 +95,7 @@ module Shumway {
 
       channel.registerForEventUpdates(this._processEventUpdates.bind(this));
 
-      this._addEventListeners();
-
       AVM2.instance.globals['Shumway.Player.Utils'] = this;
-    }
-
-    private _addEventListeners() {
-      this._addVisibilityChangeListener();
-      this._addFocusBlurListener();
-    }
-
-    private _addVisibilityChangeListener() {
-      var self = this;
-      document.addEventListener('visibilitychange', function(event) {
-        self._isPageVisible = !document.hidden;
-      });
-    }
-
-    private _addFocusBlurListener() {
-      var self = this;
-      window.addEventListener('focus', function(event) {
-        self._hasFocus = true;
-      });
-      window.addEventListener('blur', function(event) {
-        self._hasFocus = false;
-      });
     }
 
     /**
@@ -161,20 +138,41 @@ module Shumway {
 
     private _processEventUpdates(updates: DataBuffer) {
       var deserializer = new Remoting.Player.PlayerChannelDeserializer();
+      var EventKind = Remoting.Player.EventKind;
+      var FocusEventType = Remoting.FocusEventType;
+
       deserializer.input = updates;
 
       var event = deserializer.readEvent();
-
-      if (event.isKeyboardEvent) {
-        // If the stage doesn't have a focus then dispatch events on the stage
-        // directly.
-        var target = this._stage.focus ? this._stage.focus : this._stage;
-        this._keyboardEventDispatcher.target = target;
-        this._keyboardEventDispatcher.dispatchKeyboardEvent(<KeyboardEventData>event);
-      }
-      if (event.isMouseEvent) {
-        this._mouseEventDispatcher.stage = this._stage;
-        this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>event);
+      switch (<Remoting.Player.EventKind>(event.kind)) {
+        case EventKind.Keyboard:
+          // If the stage doesn't have a focus then dispatch events on the stage
+          // directly.
+          var target = this._stage.focus ? this._stage.focus : this._stage;
+          this._keyboardEventDispatcher.target = target;
+          this._keyboardEventDispatcher.dispatchKeyboardEvent(<KeyboardEventData>event);
+          break;
+        case EventKind.Mouse:
+          this._mouseEventDispatcher.stage = this._stage;
+          this._mouseEventDispatcher.handleMouseEvent(<MouseEventAndPointData>event);
+          break;
+        case EventKind.Focus:
+          var focusType = (<FocusEventData>event).type;
+          switch (focusType) {
+            case FocusEventType.DocumentHidden:
+              this._isPageVisible = false;
+              break;
+            case FocusEventType.DocumentVisible:
+              this._isPageVisible = true;
+              break;
+            case FocusEventType.WindowBlur:
+              this._hasFocus = false;
+              break;
+            case FocusEventType.WindowFocus:
+              this._hasFocus = true;
+              break;
+          }
+          break;
       }
     }
 
