@@ -291,6 +291,7 @@ module Shumway.SWF.Parser {
         style.records = fillStyle.records;
         style.focalPoint = fillStyle.focalPoint;
         style.bitmapId = fillStyle.bitmapId;
+        style.bitmapIndex = -1;
         style.repeat = fillStyle.repeat;
         style.fillStyle = null;
         return style;
@@ -329,8 +330,11 @@ module Shumway.SWF.Parser {
         style.repeat = style.type !== FillType.ClippedBitmap &&
                        style.type !== FillType.NonsmoothedClippedBitmap;
         if (dictionary[style.bitmapId]) {
-          dependencies.push(dictionary[style.bitmapId].id);
+          style.bitmapIndex = dependencies.length;
+          dependencies.push(style.bitmapId);
           scale = 0.05;
+        } else {
+          style.bitmapIndex = -1;
         }
         break;
       default:
@@ -732,7 +736,8 @@ module Shumway.SWF.Parser {
           case FillType.RepeatingBitmap:
           case FillType.NonsmoothedClippedBitmap:
           case FillType.NonsmoothedRepeatingBitmap:
-            shape.beginBitmapFill(fillStyle.bitmapId, fillStyle.transform,
+            assert(fillStyle.bitmapIndex > -1);
+            shape.beginBitmapFill(fillStyle.bitmapIndex, fillStyle.transform,
                                   fillStyle.repeat, fillStyle.smooth);
             break;
           default:

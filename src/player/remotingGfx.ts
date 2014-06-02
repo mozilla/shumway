@@ -181,8 +181,14 @@ module Shumway.Remoting.GFX {
       var assetId = input.readInt();
       var pathData = this.inputAssets[assetId];
       this.inputAssets[assetId] = null;
+      var numTextures = input.readInt();
+      var textures = [];
+      for (var i = 0; i < numTextures; i++) {
+        var bitmapId = input.readInt();
+        textures.push(context._assets[bitmapId]);
+      }
       if (!asset) {
-        context._assets[id] = new RenderableShape(pathData, context._assets, bounds);
+        context._assets[id] = new RenderableShape(pathData, textures, bounds);
       }
     }
 

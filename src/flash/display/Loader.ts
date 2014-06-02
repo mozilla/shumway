@@ -252,7 +252,7 @@ module Shumway.AVM2.AS.flash.display {
       }
       switch (data.type) {
         case 'shape':
-          symbol = Timeline.ShapeSymbol.FromData(data);
+          symbol = Timeline.ShapeSymbol.FromData(data, loaderInfo);
           break;
         case 'image':
           symbol = Timeline.BitmapSymbol.FromData(data);

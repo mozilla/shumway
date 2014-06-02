@@ -58,7 +58,7 @@ module Shumway.Timeline {
       super(id, flash.display.Shape);
     }
 
-    static FromData(data: any): ShapeSymbol {
+    static FromData(data: any, loaderInfo: flash.display.LoaderInfo): ShapeSymbol {
       var symbol = new ShapeSymbol(data.id);
       symbol._setBoundsFromData(data);
       // TODO: Fill graphics object with shape data.
@@ -70,6 +70,16 @@ module Shumway.Timeline {
       if (data.type === "shape") {
         symbol.graphics._getContentBounds(true).copyFrom(symbol.lineBounds);
         symbol.graphics._getContentBounds(false).copyFrom(symbol.fillBounds);
+      }
+
+      var dependencies = data.require;
+      var textures = symbol.graphics.getUsedTextures();
+      for (var i = 0; i < dependencies.length; i++) {
+        var bitmap = <BitmapSymbol>loaderInfo.getSymbolById(dependencies[i]);
+        assert (bitmap, "Bitmap symbol is not defined.");
+        var bitmapData = bitmap.symbolClass.initializeFrom(bitmap);
+        bitmap.symbolClass.instanceConstructorNoInitialize.call(bitmapData);
+        textures.push(bitmapData);
       }
 
       return symbol;

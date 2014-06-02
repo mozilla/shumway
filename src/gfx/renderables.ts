@@ -221,15 +221,15 @@ module Shumway.GFX {
 
     private fillStyle: ColorStyle;
     private _pathData: DataBuffer;
-    private _assets: Renderable[];
+    private _textures: RenderableBitmap[];
 
     private static LINE_CAP_STYLES = ['round', 'butt', 'square'];
     private static LINE_JOINT_STYLES = ['round', 'bevel', 'miter'];
 
-    constructor(pathData: DataBuffer, assets: Renderable[], bounds: Rectangle) {
+    constructor(pathData: DataBuffer, textures: RenderableBitmap[], bounds: Rectangle) {
       super(bounds);
       this._pathData = pathData;
-      this._assets = assets;
+      this._textures = textures;
     }
 
     getBounds(): Shumway.GFX.Geometry.Rectangle {
@@ -332,11 +332,11 @@ module Shumway.GFX {
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
-            var textureId = data.readUnsignedInt();
+            var textureIndex = data.readUnsignedInt();
             fillTransform = this._readMatrix(data);
             var repeat = data.readBoolean() ? 'repeat' : 'no-repeat';
             var smooth = data.readBoolean();
-            var texture = <RenderableBitmap>this._assets[textureId];
+            var texture = this._textures[textureIndex];
             assert(texture._canvas);
             context.fillStyle = context.createPattern(texture._canvas, repeat);
             context.msImageSmoothingEnabled = context.msImageSmoothingEnabled =

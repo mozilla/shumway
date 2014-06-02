@@ -242,8 +242,9 @@ module Shumway.AVM2.AS.flash.display {
       }
       repeat = !!repeat;
       smooth = !!smooth;
+      var index = this._textures.length;
       this._textures.push(bitmap);
-      this._graphicsData.beginBitmapFill(bitmap._id, matrix, repeat, smooth);
+      this._graphicsData.beginBitmapFill(index, matrix, repeat, smooth);
     }
 
     endFill(): void {

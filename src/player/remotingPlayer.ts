@@ -52,16 +52,20 @@ module Shumway.Remoting.Player {
     }
 
     writeGraphics(graphics: Graphics) {
+      var textures = graphics.getUsedTextures();
+      var numTextures = textures.length;
+      for (var i = 0; i < numTextures; i++) {
+        this.writeBitmapData(textures[i]);
+      }
       this.output.writeInt(MessageTag.UpdateGraphics);
       this.output.writeInt(graphics._id);
       this.writeRectangle(graphics._getContentBounds());
       this.output.writeInt(this.outputAssets.length);
       this.outputAssets.push(graphics.getGraphicsData());
-      var textures = graphics.getUsedTextures();
-      for (var i = 0; i < textures.length; i++) {
-        this.writeBitmapData(textures[i]);
+      this.output.writeInt(numTextures);
+      for (var i = 0; i < numTextures; i++) {
+        this.output.writeInt(textures[i]._id);
       }
-      textures.length = 0;
     }
 
     writeBitmapData(bitmapData: BitmapData) {
