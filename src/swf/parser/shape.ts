@@ -400,7 +400,7 @@ module Shumway.SWF.Parser {
       lineBoundsMorph: tag.strokeBboxMorph,
       fillBoundsMorph: tag.bboxMorph,
       isMorph: tag.isMorph,
-      shape: shape,
+      shape: shape.getBytes(),
       require: dependencies.length ? dependencies : null
     };
   }

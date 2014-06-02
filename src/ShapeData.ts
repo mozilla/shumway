@@ -238,5 +238,18 @@ module Shumway {
       this.writeFloat(matrix.tx);
       this.writeFloat(matrix.ty);
     }
+
+    static FromArrayBuffer(buffer: ArrayBuffer, length: number = -1) : ShapeData {
+      // HACK
+      var dataBuffer: any = Object.create(ShapeData.prototype);
+      dataBuffer._buffer = buffer;
+      dataBuffer._length = length === -1 ? buffer.byteLength : length;
+      dataBuffer._position = dataBuffer._length;
+      dataBuffer._cacheViews();
+      dataBuffer._littleEndian = false; // AS3 is bigEndian by default.
+      dataBuffer._bitBuffer = 0;
+      dataBuffer._bitLength = 0;
+      return dataBuffer;
+    }
   }
 }
