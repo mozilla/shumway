@@ -95,12 +95,43 @@ module Shumway.GFX {
   }
 
   export class StageRenderer {
+    _options: StageRendererOptions;
     _canvas: HTMLCanvasElement;
     _stage: Stage;
-    constructor(canvas: HTMLCanvasElement, stage: Stage) {
+    constructor(canvas: HTMLCanvasElement, stage: Stage, options: StageRendererOptions) {
       this._canvas = canvas;
       this._stage = stage;
+      this._options = options;
     }
+
+    /**
+     * Cheks to see if we should render and if so, clears any relevant dirty flags. Returns
+     * true if rendering should commence.
+     */
+    _prepareForRendering(): boolean {
+      var options = this._options;
+      if (options.disable) {
+        return false;
+      }
+      var stage = this._stage;
+      if (!options.forcePaint && !stage._hasFlags(FrameFlags.DirtyPaint)) {
+        return false;
+      } else {
+        stage.visit(function (frame: Frame): VisitorFlags {
+          if (frame._hasFlags(FrameFlags.DirtyPaint)) {
+            frame._toggleFlags(FrameFlags.DirtyPaint, false);
+            return VisitorFlags.Continue;
+          } else {
+            return VisitorFlags.Skip;
+          }
+        });
+      }
+      if (!options.forcePaint && options.disable) {
+        return false;
+      }
+      return true;
+    }
+
     public render() {
 
     }

@@ -315,9 +315,10 @@ module Shumway.GFX {
   }
 
   export class Canvas2DStageRenderer extends StageRenderer {
-    private _options: Canvas2DStageRendererOptions;
+    _options: Canvas2DStageRendererOptions;
     private _viewport: Rectangle;
     private _fillRule: string;
+
     private canvasCache: CanvasCache;
 
     context: CanvasRenderingContext2D;
@@ -326,8 +327,7 @@ module Shumway.GFX {
     constructor(canvas: HTMLCanvasElement,
                 stage: Stage,
                 options: Canvas2DStageRendererOptions = new Canvas2DStageRendererOptions()) {
-      super(canvas, stage);
-      this._options = options;
+      super(canvas, stage, options);
       var fillRule: FillRule = FillRule.NONZERO
       var context = this.context = canvas.getContext("2d");
       this.canvasCache = new CanvasCache(512);
@@ -373,17 +373,19 @@ module Shumway.GFX {
     }
 
     public render() {
-      var stage = this._stage;
-      var options = this._options;
-      if (options.disable) {
+      if (!this._prepareForRendering()) {
         return;
       }
+      var stage = this._stage;
       var context = this.context;
 
       context.setTransform(1, 0, 0, 1, 0, 0);
       context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
       context.save();
+
+
+      var options = this._options;
 
       var lastDirtyRectangles: Rectangle[] = [];
       if (stage.trackDirtyRegions) {

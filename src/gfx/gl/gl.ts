@@ -83,8 +83,8 @@ module Shumway.GFX.GL {
   }
 
   export class WebGLStageRenderer extends StageRenderer {
+    _options: WebGLStageRendererOptions;
     context: WebGLContext;
-    private _options: WebGLStageRendererOptions;
     private _viewport: Rectangle;
 
     private _brush: WebGLCombinedBrush;
@@ -102,9 +102,8 @@ module Shumway.GFX.GL {
 
     constructor(canvas: HTMLCanvasElement, stage: Stage,
                 options: WebGLStageRendererOptions = new WebGLStageRendererOptions()) {
-      super(canvas, stage);
+      super(canvas, stage, options);
 
-      this._options = options;
       var context = this.context = new WebGLContext(this._canvas, options);
 
       canvas.addEventListener('resize', this.resize.bind(this), false);
@@ -373,28 +372,15 @@ module Shumway.GFX.GL {
     }
 
     public render() {
+      if (!this._prepareForRendering()) {
+        return;
+      }
+
       var self = this;
       var stage = this._stage;
       var options = this._options;
       var context = this.context;
       var gl = context.gl;
-
-      if (!options.forcePaint && !stage._hasFlags(FrameFlags.DirtyPaint)) {
-        return;
-      } else {
-        stage.visit(function (frame: Frame): VisitorFlags {
-          if (frame._hasFlags(FrameFlags.DirtyPaint)) {
-            frame._toggleFlags(FrameFlags.DirtyPaint, false);
-            return VisitorFlags.Continue;
-          } else {
-            return VisitorFlags.Skip;
-          }
-        });
-      }
-
-      if (!options.forcePaint && options.disable) {
-        return;
-      }
 
       // TODO: Only set the camera once, not every frame.
       if (options.perspectiveCamera) {
