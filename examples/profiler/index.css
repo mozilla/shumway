@@ -1,20 +1,32 @@
 html, body {
     /*overflow: hidden;*/
+    height: 100%;
+    width: 100%;
     margin: 0;
 }
 html {
-    height: 100%;
-    width: 100%;
 }
 body {
     color: white;
-    background-color: #444444;
-    font: 12px Consolas, "Liberation Mono", Courier, monospace;
-    height: 100%;
-    width: 100%;
+    background-color: #444;
+}
+#progress-bar {
+    margin-bottom: 0;
+}
+.row-fluid {
+    text-align: right;
+    margin: 10px;
+}
+#form {
+    text-align: left;
+    display: inline-block;
+    margin: 0;
+}
+#form > div {
+    margin-bottom: 0;
 }
 #container {
-    margin: 20px;
+    margin: 0 10px 10px 10px;
 }
 canvas {
     display: block;
