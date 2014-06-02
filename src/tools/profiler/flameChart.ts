@@ -65,13 +65,13 @@ module Shumway.Tools.Profiler {
       this._buffer = null;
     }
 
-    _draw() {
+    draw() {
       var context = this._context;
       var ratio = window.devicePixelRatio;
 
       context.save();
       context.scale(ratio, ratio);
-      context.fillStyle = "#181d20";
+      context.fillStyle = this._controller.theme.sidebarBackground(1); //"#181d20";
       context.fillRect(0, 0, this._width, this._height);
 
       if (this._initialized) {

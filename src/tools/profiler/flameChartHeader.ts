@@ -32,7 +32,7 @@ module Shumway.Tools.Profiler {
       super(controller);
     }
 
-    _draw() {
+    draw() {
       var context = this._context;
       var ratio = window.devicePixelRatio;
       var width = this._width;
@@ -40,14 +40,14 @@ module Shumway.Tools.Profiler {
 
       context.save();
       context.scale(ratio, ratio);
-      context.fillStyle = "#252c33";
+      context.fillStyle = this._controller.theme.tabToolbar(1); //"#252c33";
       context.fillRect(0, 0, width, height);
 
       if (this._initialized) {
         if (this._type == FlameChartHeaderType.OVERVIEW) {
           var left = this._toPixels(this._windowStart);
           var right = this._toPixels(this._windowEnd);
-          context.fillStyle = "#14171a";
+          context.fillStyle = this._controller.theme.bodyBackground(1); //"#14171a";
           context.fillRect(left, 0, right - left, height);
           this._drawLabels(this._rangeStart, this._rangeEnd);
           this._drawDragHandle(left);
@@ -70,9 +70,10 @@ module Shumway.Tools.Profiler {
       var unit = showSeconds ? "s" : "ms";
       var x = this._toPixels(tick);
       var y = this._height / 2;
+      var theme = this._controller.theme;
       context.lineWidth = 1;
-      context.strokeStyle = "rgba(95, 115, 135, 0.5)";
-      context.fillStyle = "rgba(95, 115, 135, 1)";
+      context.strokeStyle = theme.contentTextDarkGrey(0.5); //"rgba(95, 115, 135, 0.5)";
+      context.fillStyle = theme.contentTextDarkGrey(1); //"rgba(95, 115, 135, 1)";
       context.textAlign = "right";
       context.textBaseline = "middle";
       context.font = '11px sans-serif';
@@ -110,8 +111,8 @@ module Shumway.Tools.Profiler {
     private _drawDragHandle(pos: number) {
       var context = this._context;
       context.lineWidth = 2;
-      context.strokeStyle = "#14171a";
-      context.fillStyle = "rgba(182, 186, 191, 0.7)";
+      context.strokeStyle = this._controller.theme.bodyBackground(1); //"#14171a";
+      context.fillStyle = this._controller.theme.foregroundTextGrey(0.7); //"rgba(182, 186, 191, 0.7)";
       this._drawRoundedRect(context, pos - FlameChartBase.DRAGHANDLE_WIDTH / 2, 1, FlameChartBase.DRAGHANDLE_WIDTH, this._height - 2, 2, true);
     }
 

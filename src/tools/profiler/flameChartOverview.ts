@@ -51,7 +51,7 @@ module Shumway.Tools.Profiler {
 
     set mode(value: FlameChartOverviewMode) {
       this._mode = value;
-      this._draw();
+      this.draw();
     }
 
     _resetCanvas() {
@@ -61,7 +61,7 @@ module Shumway.Tools.Profiler {
       this._overviewCanvasDirty = true;
     }
 
-    _draw() {
+    draw() {
       var context = this._context;
       var ratio = window.devicePixelRatio;
       var width = this._width;
@@ -69,7 +69,7 @@ module Shumway.Tools.Profiler {
 
       context.save();
       context.scale(ratio, ratio);
-      context.fillStyle = "rgba(17, 19, 21, 1)";
+      context.fillStyle = this._controller.theme.bodyBackground(1); //"rgba(17, 19, 21, 1)";
       context.fillRect(0, 0, width, height);
       context.restore();
 
@@ -89,19 +89,20 @@ module Shumway.Tools.Profiler {
       var ratio = window.devicePixelRatio;
       var left = this._selection ? this._selection.left : this._toPixels(this._windowStart);
       var right = this._selection ? this._selection.right : this._toPixels(this._windowEnd);
+      var theme = this._controller.theme;
 
       context.save();
       context.scale(ratio, ratio);
 
       // Draw fills
       if (this._selection) {
-        context.fillStyle = "rgba(245, 247, 250, 0.15)";
+        context.fillStyle = theme.selectionText(0.15); //"rgba(245, 247, 250, 0.15)";
         context.fillRect(left, 1, right - left, height - 1);
         context.fillStyle = "rgba(133, 0, 0, 1)";
         context.fillRect(left + 0.5, 0, right - left - 1, 4);
         context.fillRect(left + 0.5, height - 4, right - left - 1, 4);
       } else {
-        context.fillStyle = "rgba(17, 19, 21, 0.4)";
+        context.fillStyle = theme.bodyBackground(0.4); //"rgba(17, 19, 21, 0.4)";
         context.fillRect(0, 1, left, height - 1);
         context.fillRect(right, 1, this._width, height - 1);
       }
@@ -113,14 +114,14 @@ module Shumway.Tools.Profiler {
       context.moveTo(right, 0);
       context.lineTo(right, height);
       context.lineWidth = 0.5;
-      context.strokeStyle = "rgba(245, 247, 250, 1)";
+      context.strokeStyle = theme.foregroundTextGrey(1); //"rgba(245, 247, 250, 1)";
       context.stroke();
 
       // Draw info labels
       var start = this._selection ? this._toTime(this._selection.left) : this._windowStart;
       var end = this._selection ? this._toTime(this._selection.right) : this._windowEnd;
       var time = Math.abs(end - start);
-      context.fillStyle = "rgba(255, 255, 255, 0.5)";
+      context.fillStyle = theme.selectionText(0.5); //"rgba(255, 255, 255, 0.5)";
       context.font = '8px sans-serif';
       context.textBaseline = "alphabetic";
       context.textAlign = "end";
@@ -140,6 +141,7 @@ module Shumway.Tools.Profiler {
       var samplesCount = width * samplesPerPixel;
       var sampleTimeInterval = profile.totalTime / samplesCount;
       var contextOverview = this._overviewContext;
+      var overviewChartColor: string = this._controller.theme.blueHighlight(1);
 
       contextOverview.save();
       contextOverview.translate(0, ratio * height);
@@ -168,7 +170,7 @@ module Shumway.Tools.Profiler {
             contextOverview.lineTo(x, depth);
           }
           contextOverview.lineTo(x, 0);
-          contextOverview.fillStyle = "#46afe3";
+          contextOverview.fillStyle = overviewChartColor;
           contextOverview.fill();
           if (this._mode == FlameChartOverviewMode.STACK) {
             contextOverview.translate(0, -height * ratio / yScale);
@@ -219,7 +221,7 @@ module Shumway.Tools.Profiler {
       var dragTarget = this._getDragTargetUnderCursor(x, y);
       if (dragTarget === FlameChartDragTarget.NONE) {
         this._selection = { left: x, right: x };
-        this._draw();
+        this.draw();
       } else {
         if (dragTarget === FlameChartDragTarget.WINDOW) {
           this._mouseController.updateCursor(MouseCursor.GRABBING);
@@ -252,7 +254,7 @@ module Shumway.Tools.Profiler {
     onDrag(startX: number, startY: number, currentX: number, currentY: number, deltaX: number, deltaY: number) {
       if (this._selection) {
         this._selection = { left: startX, right: clamp(currentX, 0, this._width - 1) };
-        this._draw();
+        this.draw();
       } else {
         var dragInfo = this._dragInfo;
         if (dragInfo.target === FlameChartDragTarget.HANDLE_BOTH) {
@@ -302,7 +304,7 @@ module Shumway.Tools.Profiler {
         }
         this.onMouseMove(x, y);
       }
-      this._draw();
+      this.draw();
     }
 
     onHoverStart(x: number, y: number) {}

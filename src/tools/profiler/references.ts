@@ -11,6 +11,7 @@
 /// <reference path='flameChartHeader.ts' />
 /// <reference path='tracelogger/traceLogger.ts' />
 /// <reference path='tracelogger/thread.ts' />
+/// <reference path='theme/ui.ts' />
 
 declare var release: boolean;
 

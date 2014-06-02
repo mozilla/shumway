@@ -68,26 +68,26 @@ module Shumway.Tools.Profiler {
       this._width = width;
       this._height = height;
       this._resetCanvas();
-      this._draw();
+      this.draw();
     }
 
     public initialize(rangeStart: number, rangeEnd: number) {
       this._initialized = true;
       this.setRange(rangeStart, rangeEnd, false);
       this.setWindow(rangeStart, rangeEnd, false);
-      this._draw();
+      this.draw();
     }
 
     public setWindow(start: number, end: number, draw: boolean = true) {
       this._windowStart = start;
       this._windowEnd = end;
-      !draw || this._draw();
+      !draw || this.draw();
     }
 
     public setRange(start: number, end: number, draw: boolean = true) {
       this._rangeStart = start;
       this._rangeEnd = end;
-      !draw || this._draw();
+      !draw || this.draw();
     }
 
     public destroy() {
@@ -106,7 +106,7 @@ module Shumway.Tools.Profiler {
       canvas.style.height = this._height + "px";
     }
 
-    _draw() {}
+    draw() {}
 
     _almostEq(a: number, b: number, precision: number = 10): boolean {
       var pow10 = Math.pow(10, precision);

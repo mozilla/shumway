@@ -15,6 +15,11 @@
  */
 module Shumway.Tools.Profiler {
 
+  export enum UIThemeType {
+    DARK,
+    LIGHT
+  }
+
   export class Controller {
 
     private _container: HTMLElement;
@@ -24,12 +29,15 @@ module Shumway.Tools.Profiler {
     private _overview: FlameChartOverview;
     private _headers: FlameChartHeader [];
     private _charts: FlameChart [];
+    private _themeType: UIThemeType;
+    private _theme: Theme.UITheme;
 
-    constructor(profile:Profile, container:HTMLElement) {
+    constructor(profile:Profile, container:HTMLElement, themeType: UIThemeType = UIThemeType.DARK) {
       this._profile = profile;
       this._container = container;
       this._headers = [];
       this._charts = [];
+      this.themeType = themeType;
       this._createViews();
     }
 
@@ -39,6 +47,24 @@ module Shumway.Tools.Profiler {
 
     get profile(): Profile {
       return this._profile;
+    }
+
+    set themeType(value: UIThemeType) {
+      switch (value) {
+        case UIThemeType.DARK:
+          this._theme = new Theme.UIThemeDark();
+          break;
+        case UIThemeType.LIGHT:
+          this._theme = new Theme.UIThemeLight();
+          break;
+      }
+    }
+    get themeType(): UIThemeType {
+      return this._themeType;
+    }
+
+    get theme(): Theme.UITheme {
+      return this._theme;
     }
 
     createSnapshot() {
@@ -67,12 +93,8 @@ module Shumway.Tools.Profiler {
     }
 
     private _destroyViews() {
-      if (this._overviewHeader) {
-        this._overviewHeader.destroy();
-      }
-      if (this._overview) {
-        this._overview.destroy();
-      }
+      if (this._overviewHeader) { this._overviewHeader.destroy(); }
+      if (this._overview) { this._overview.destroy(); }
       while (this._headers.length) {
         this._headers.pop().destroy();
       }
@@ -115,6 +137,18 @@ module Shumway.Tools.Profiler {
         self._headers[index].setWindow(start, end);
         self._charts[index].setWindow(start, end);
       });
+    }
+
+    private _drawViews() {
+      var self = this;
+      this._overviewHeader.draw();
+      /*
+      this._overview.setWindow(start, end);
+      this._profile.forEachBuffer(function(buffer: TimelineBuffer, index: number) {
+        self._headers[index].setWindow(start, end);
+        self._charts[index].setWindow(start, end);
+      });
+      */
     }
 
     /**
