@@ -72,14 +72,16 @@ module Shumway.Timeline {
         symbol.graphics._getContentBounds(false).copyFrom(symbol.fillBounds);
       }
 
-      var dependencies = data.require;
-      var textures = symbol.graphics.getUsedTextures();
-      for (var i = 0; i < dependencies.length; i++) {
-        var bitmap = <BitmapSymbol>loaderInfo.getSymbolById(dependencies[i]);
-        assert (bitmap, "Bitmap symbol is not defined.");
-        var bitmapData = bitmap.symbolClass.initializeFrom(bitmap);
-        bitmap.symbolClass.instanceConstructorNoInitialize.call(bitmapData);
-        textures.push(bitmapData);
+      if (data.require) {
+        var dependencies = data.require;
+        var textures = symbol.graphics.getUsedTextures();
+        for (var i = 0; i < dependencies.length; i++) {
+          var bitmap = <BitmapSymbol>loaderInfo.getSymbolById(dependencies[i]);
+          assert (bitmap, "Bitmap symbol is not defined.");
+          var bitmapData = bitmap.symbolClass.initializeFrom(bitmap);
+          bitmap.symbolClass.instanceConstructorNoInitialize.call(bitmapData);
+          textures.push(bitmapData);
+        }
       }
 
       return symbol;
