@@ -73,9 +73,9 @@ module Shumway.AVM2.AS.flash.display {
     static instanceSymbols: string [] = ["load"]; // ["uncaughtErrorEvents", "addChild", "addChildAt", "removeChild", "removeChildAt", "setChildIndex", "load", "sanitizeContext", "loadBytes", "close", "unload", "unloadAndStop", "cloneObject"];
 
     static RELEASE = false;
-    static WORKERS_ENABLED = false && typeof Worker !== 'undefined';
+    static WORKERS_ENABLED = typeof Worker !== 'undefined';
     static SHUMWAY_ROOT = '../../src/';
-    static LOADER_PATH = Loader.RELEASE ? 'shumway-worker.js' : 'swf/resourceloader.js';
+    static LOADER_PATH = Loader.RELEASE ? 'shumway-worker.js' : 'swf/worker.js';
 
     /**
      * Handles the load status and dispatches progress events. This gets manually triggered in the
@@ -498,7 +498,7 @@ module Shumway.AVM2.AS.flash.display {
       if (Loader.WORKERS_ENABLED) {
         worker = new Worker(Loader.SHUMWAY_ROOT + Loader.LOADER_PATH);
       } else {
-        worker = new ResourceLoader(window);
+        worker = new ResourceLoader(window, false);
       }
       var loader = this;
       //loader._worker = worker;
