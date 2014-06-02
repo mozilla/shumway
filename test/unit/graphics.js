@@ -28,23 +28,26 @@
   var CapsStyle = flash.display.CapsStyle;
   var JointStyle = flash.display.JointStyle;
 
-//  unitTests.push(basics);
-//  unitTests.push(clear);
-//  unitTests.push(beginFill);
-//  unitTests.push(beginBitmapFill);
-//  unitTests.push(lineStyle_defaults);
-//  unitTests.push(lineStyle_invalidWidth);
-//  unitTests.push(lineStyle_allArgs);
-//  unitTests.push(moveTo);
-//  unitTests.push(lineTo);
-//  unitTests.push(curveTo);
-//  unitTests.push(cubicCurveTo);
-//  unitTests.push(drawRect);
+  unitTests.push(basics);
+  unitTests.push(clear);
+  unitTests.push(beginFill);
+  unitTests.push(beginBitmapFill);
+  unitTests.push(lineStyle_defaults);
+  unitTests.push(lineStyle_invalidWidth);
+  unitTests.push(lineStyle_allArgs);
+  unitTests.push(moveTo);
+  unitTests.push(lineTo);
+  unitTests.push(curveTo);
+  unitTests.push(cubicCurveTo);
+  unitTests.push(drawRect);
   unitTests.push(bounds);
 
   function basics() {
     var g = createGraphics();
     eq(g.getGraphicsData().length, 0, "Graphics instances start out empty");
+    structEq(g._getContentBounds(),
+             {xMin: 0x8000000, xMax: 0x8000000, yMin: 0x8000000, yMax: 0x8000000},
+             "graphics instances initially have sentinel bounds");
   }
 
   function clear() {
@@ -54,7 +57,9 @@
     neq(g.getGraphicsData().length, 0, "Graphics#lineStyle modifies instance's data");
     g.clear();
     eq(g.getGraphicsData().length, 0, "Graphics#clear empties the instance's data");
-    structEq(g._getContentBounds(), {xMin: 0, xMax: 0, yMin: 0, yMax: 0}, "clear resets bounds");
+    structEq(g._getContentBounds(),
+             {xMin: 0x8000000, xMax: 0x8000000, yMin: 0x8000000, yMax: 0x8000000},
+             "clear resets bounds");
   }
 
   function beginFill() {
@@ -252,29 +257,38 @@
   // The only exception are multiple moveTo operations.
   function bounds() {
     var g = createGraphics();
-//    g.moveTo(150, 50);
-//    structEq(g._getContentBounds(), {xMin: 0, xMax: 3000, yMin: 0, yMax: 1000},
-//             "move extends bounds");
-//    g.clear();
-//    g.lineTo(100, 50);
-//    structEq(g._getContentBounds(), {xMin: 0, xMax: 2000, yMin: 0, yMax: 1000},
-//             "line extends bounds");
-//    g.clear();
-//    g.curveTo(100, 100, 0, 100);
-//    structEq(g._getContentBounds(), {xMin: 0, xMax: 1000, yMin: 0, yMax: 2000},
-//             "curve extends bounds");
-//    g.clear();
+    structEq(g._getContentBounds(false),
+             {xMin: 0x8000000, xMax: 0x8000000, yMin: 0x8000000, yMax: 0x8000000},
+             "bounds are initialized with sentinel values.");
+    g.moveTo(150, 50);
+    structEq(g._getContentBounds(),
+             {xMin: 0x8000000, xMax: 0x8000000, yMin: 0x8000000, yMax: 0x8000000},
+             "empty move doesn't change bounds");
+
+    g.clear();
+    g.lineTo(100, 50);
+    structEq(g._getContentBounds(), {xMin: 0, xMax: 2000, yMin: 0, yMax: 1000},
+             "line extends bounds");
+
+    g.clear();
+    g.curveTo(100, 100, 0, 100);
+    structEq(g._getContentBounds(), {xMin: 0, xMax: 1000, yMin: 0, yMax: 2000},
+             "curve extends bounds correctly");
+    g.clear();
     g.moveTo(30, 130);
     g.lineStyle(1);
     g.curveTo(0, 0, 130, 30);
     structEq(g._getContentBounds(false), {xMin: 487, xMax: 2600, yMin: 487, yMax: 2600},
-             "curve extends bounds");
+             "curve extends fill bounds correctly");
     structEq(g._getContentBounds(true), {xMin: 477, xMax: 2610, yMin: 477, yMax: 2610},
-             "curve extends bounds");
+             "curve extends line bounds correctly");
+
 //    g.clear();
-//    g.cubicCurveTo(100, 50, -100, 100, 0, 150);
-//    structEq(g._getContentBounds(), {xMin: -577, xMax: 577, yMin: 0, yMax: 3000},
-//             "cubic curve extends bounds");
+//    g.lineStyle(1);
+//    g.moveTo(30, 50);
+//    g.cubicCurveTo(60, -10, 180, 200, 150, 100);
+//    structEq(g._getContentBounds(false), {xMin: 7423, xMax: 8577, yMin: 400, yMax: 3400},
+//             "cubic curve extends fill bounds correctly");
   }
 
   function createGraphics() {

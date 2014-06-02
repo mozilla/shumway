@@ -193,11 +193,15 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     clear(): void {
+      if (this._graphicsData.length === 0) {
+        return;
+      }
       this._graphicsData.length = 0;
       this._textures.length = 0;
-      this._fillBounds.setEmpty();
-      this._lineBounds.setEmpty();
-      this._applyLastCoordinates(0, 0);
+      this._fillBounds.setToSentinels();
+      this._lineBounds.setToSentinels();
+      this._lastX = this._lastY = 0;
+      this._boundsIncludeLastCoordinates = false;
       this._invalidateParent();
     }
 

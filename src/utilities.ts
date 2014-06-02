@@ -2345,6 +2345,17 @@ module Shumway {
       this.xMin = this.yMin = this.xMax = this.yMax = 0;
     }
 
+    /**
+     * Set all fields to the sentinel value 0x8000000.
+     *
+     * This is what Flash uses to indicate uninitialized bounds. Important for bounds calculation
+     * in `Graphics` instances, which start out with empty bounds but must not just extend them
+     * from an 0,0 origin.
+     */
+    setToSentinels (): void {
+      this.xMin = this.yMin = this.xMax = this.yMax = 0x8000000;
+    }
+
     clone (): Bounds {
       return new Bounds(this.xMin, this.yMin, this.xMax, this.yMax);
     }
