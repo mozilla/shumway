@@ -149,7 +149,6 @@ function readDirectoryListing(path, next) {
 
 function executeUnitTests(file, avm2) {
   function runTests() {
-    initUI();
     console.info("Executing Unit Tests");
     var lastTestPromise = Promise.resolve();
 

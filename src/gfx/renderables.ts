@@ -254,9 +254,13 @@ module Shumway.GFX {
       // TODO: Optimize path handling to use only one path if possible.
       // If both line and fill style are set at the same time, we don't need to duplicate the
       // geometry.
+      // TODO: cache Path2D and style objects.
+      // We really only need to process the shape data once, and can then cache the results and
+      // discard the original buffer. That should vastly improve performance of subsequent
+      // renderings of the same shape.
       // TODO: correctly handle style changes.
       // Flash allows switching line and fill styles at arbitrary points, so you can have a
-      // shape with a single fill but varying line styles. In that case, it's necessary to
+      // shape with a single fill but varying line styles. We support that, but don't yet
       // delay stroking of the lines until the fill is finished. Probably by pushing all
       // stroke paths onto a stack.
       var fillPath: Path2D = null;
