@@ -111,29 +111,39 @@ module Shumway.GFX {
     _canvas: HTMLCanvasElement;
     private fillStyle: ColorStyle;
 
-    public static convertImage(sourceFormat: ImageType, targetFormat: ImageType, buffer: Int32Array) {
+    private static _convertImage(sourceFormat: ImageType, targetFormat: ImageType, source: Int32Array, target: Int32Array) {
+      if (source !== target) {
+        release || assert (source.buffer !== target.buffer, "Can't handle overlapping views.");
+      }
       if (sourceFormat === targetFormat) {
+        if (source === target) {
+          return;
+        }
+        var length = source.length;
+        for (var i = 0; i < length; i++) {
+          target[i] = source[i];
+        }
         return;
       }
-      var timelineDetails = "convertImage: " + ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(buffer.length) + ")";
+      var timelineDetails = "convertImage: " + ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length) + ")";
       enterTimeline(timelineDetails);
       if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
           targetFormat === ImageType.StraightAlphaRGBA) {
         Shumway.ColorUtilities.ensureUnpremultiplyTable();
-        var length = buffer.length;
+        var length = source.length;
         for (var i = 0; i < length; i++) {
-          var pARGB = swap32(buffer[i]);
+          var pARGB = swap32(source[i]);
           // TODO: Make sure this is inlined!
           var uARGB = tableLookupUnpremultiplyARGB(pARGB);
           var uABGR = (uARGB & 0xFF00FF00)  | // A_G_
                       (uARGB >> 16) & 0xff  | // A_GR
                       (uARGB & 0xff) << 16;   // ABGR
-          buffer[i] = uABGR;
+          target[i] = uABGR;
         }
       } else if (sourceFormat === ImageType.StraightAlphaARGB &&
                  targetFormat === ImageType.StraightAlphaRGBA) {
         for (var i = 0; i < length; i++) {
-          buffer[i] = swap32(buffer[i]);
+          target[i] = swap32(source[i]);
         }
       } else {
         notImplemented("Image Format Conversion: " + ImageType[sourceFormat] + " -> " + ImageType[targetFormat]);
@@ -146,25 +156,8 @@ module Shumway.GFX {
       var canvas = document.createElement("canvas");
       canvas.width = bounds.w;
       canvas.height = bounds.h;
-      var context = canvas.getContext("2d");
-      var imageData: ImageData = context.createImageData(bounds.w, bounds.h);
-
-      RenderableBitmap.convertImage (
-        type,
-        ImageType.StraightAlphaRGBA,
-        new Int32Array(dataBuffer.buffer)
-      );
-
-      // TODO: Pass this buffer to convert image, no need to create a new one temporarily.
-      enterTimeline("setData");
-      imageData.data.set(dataBuffer.bytes);
-      leaveTimeline("setData");
-
-      enterTimeline("putImageData");
-      context.putImageData(imageData, 0, 0);
-      leaveTimeline("putImageData");
-
       var renderableBitmap = new RenderableBitmap(canvas, bounds);
+      renderableBitmap.updateFromDataBuffer(type, dataBuffer);
       leaveTimeline("RenderableBitmap.FromDataBuffer");
       return renderableBitmap;
     }
@@ -174,14 +167,17 @@ module Shumway.GFX {
       var context = this._canvas.getContext("2d");
       var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
 
-      RenderableBitmap.convertImage (
+      RenderableBitmap._convertImage (
         type,
         ImageType.StraightAlphaRGBA,
-        new Int32Array(dataBuffer.buffer)
+        new Int32Array(dataBuffer.buffer),
+        new Int32Array(imageData.data.buffer)
       );
 
-      imageData.data.set(dataBuffer.bytes);
+      enterTimeline("putImageData");
       context.putImageData(imageData, 0, 0);
+      leaveTimeline("putImageData");
+
       this.setFlags(RenderableFlags.Dirty);
       leaveTimeline("RenderableBitmap.updateFromDataBuffer");
     }
