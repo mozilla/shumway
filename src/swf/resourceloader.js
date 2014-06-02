@@ -41,37 +41,6 @@
  SWF_TAG_CODE_START_SOUND, SWF_TAG_CODE_SYMBOL_CLASS,
  SWF_TAG_CODE_DEFINE_BINARY_DATA, SWF_TAG_CODE_EXPORT_ASSETS */
 
-var $RELEASE = false;
-var isWorker = typeof window === 'undefined';
-if (isWorker && !$RELEASE) {
-  var build = '../../build/ts/swf/';
-  importScripts.apply(null, [
-    '../../lib/jpgjs/jpg.js',
-    '../swf/util.js',
-    'swf.js',
-    'types.js',
-    'structs.js',
-    'tags.js',
-    'inflate.js',
-    'stream.js',
-    'templates.js',
-    'handlers.js',
-    'parser.js',
-    build + '../utilities.js',
-    build + '../dataBuffer.js',
-    build + '../ShapeData.js',
-    build + 'parser/bitmap.js',
-    build + 'parser/button.js',
-    build + 'parser/font.js',
-    'image.js',
-    build + 'parser/label.js',
-    build + 'parser/shape.js',
-    'sound.js',
-    'text.js'
-  ]);
-}
-
-
 function defineSymbol(swfTag, symbols) {
   var symbol;
 
@@ -367,7 +336,7 @@ function parseBytes(bytes, commitData) {
   SWF.parse(bytes, createParsingContext(commitData));
 }
 
-function ResourceLoader(scope) {
+function ResourceLoader(scope, isWorker) {
   this.subscription = null;
 
   var self = this;
@@ -451,7 +420,3 @@ ResourceLoader.prototype = {
     }
   }
 };
-
-if (isWorker) {
-  var loader = new ResourceLoader(this);
-}

@@ -1,7 +1,5 @@
 #!inline console.time("Load Player Dependencies");
 
-lib/jpgjs/jpg.js
-
 ## Load AVM2 Dependencies
 #!inline console.time("Load AVM2 Dependencies");
 src/avm2/constants.js
@@ -40,35 +38,6 @@ src/avm2/disassembler.js
 build/ts/avm2/interpreter.js
 #build/ts/avm2/vm.js
 #!inline console.timeEnd("Load AVM2 Dependencies");
-
-
-## Load SWF Dependencies
-#!inline console.time("Load SWF Dependencies");
-src/swf/util.js
-src/swf/swf.js
-src/swf/inflate.js
-src/swf/stream.js
-build/ts/swf/parser/bitmap.js
-build/ts/swf/parser/button.js
-build/ts/swf/parser/font.js
-src/swf/image.js
-build/ts/swf/parser/label.js
-build/ts/swf/parser/shape.js
-src/swf/sound.js
-src/swf/text.js
-src/swf/mp3worker.js
-#!inline console.timeEnd("Load SWF Dependencies");
-
-#!inline console.time("Load SWF Parser");
-src/swf/types.js
-src/swf/structs.js
-src/swf/tags.js
-src/swf/templates.js
-src/swf/handlers.js
-src/swf/parser.js
-src/swf/resourceloader.js
-#!inline console.timeEnd("Load SWF Parser");
-
 
 ## Load AVM1 Dependencies
 #!inline console.time("Load AVM1 Dependencies");
