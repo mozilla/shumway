@@ -289,7 +289,11 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     draw(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false): void {
+      somewhatImplemented("public flash.display.BitmapData::draw");
       var serializer : IBitmapDataSerializer = AVM2.instance.globals['Shumway.Player.Utils'];
+      if (matrix) {
+        matrix = matrix.clone().toTwips();
+      }
       serializer.bitmapDataDraw(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
     }
     drawWithQuality(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false, quality: string = null): void {

@@ -126,8 +126,10 @@ module Shumway.Remoting.Player {
       var graphics = displayObject._getGraphics();
       if (hasRemotableChildren) {
         if (bitmap) {
-          this.output.writeInt(1);
-          this.output.writeInt(IDMask.Asset | bitmap.bitmapData._id);
+          if (bitmap.bitmapData) {
+            this.output.writeInt(1);
+            this.output.writeInt(IDMask.Asset | bitmap.bitmapData._id);
+          }
         } else {
           // Check if we have a graphics object and write that as a child first.
           var count = graphics ? 1 : 0;
@@ -162,7 +164,7 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeBitmapDataDraw(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
+    writeBitmapDataDraw(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
       this.output.writeInt(MessageTag.BitmapDataDraw);
       this.output.writeInt(bitmapData._id);
       if (BitmapData.isType(source)) {
@@ -174,7 +176,7 @@ module Shumway.Remoting.Player {
       var hasBits = 0;
       hasBits |= matrix         ? MessageBits.HasMatrix : 0;
       hasBits |= colorTransform ? MessageBits.HasColorTransform : 0;
-      hasBits |= clipRect       ? MessageBits.HasScrollRect : 0;
+      hasBits |= clipRect       ? MessageBits.HasClipRect : 0;
 
       this.output.writeInt(hasBits);
       if (matrix) {

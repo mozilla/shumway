@@ -206,7 +206,7 @@ module Shumway {
       leavePlayerTimeline("sendUpdates");
     }
 
-    public bitmapDataDraw(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
+    public bitmapDataDraw(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
       var updates = new DataBuffer();
       var assets = [];
       var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();

@@ -23,8 +23,6 @@ module Shumway.AVM2.AS.flash.display {
     
     
     // AS -> JS Bindings
-
-    _id: number;
     
   }
 }

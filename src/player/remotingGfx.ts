@@ -264,27 +264,39 @@ module Shumway.Remoting.GFX {
       if (hasBits & MessageBits.HasColorTransform) {
         colorMatrix = this._readColorMatrix();
       }
-      if (hasBits & MessageBits.HasScrollRect) {
+      if (hasBits & MessageBits.HasClipRect) {
         clipRect = this._readRectangle();
       }
       var blendMode = input.readInt();
       input.readBoolean(); // Smoothing
       var target = context._assets[bitmapDataId];
-      var source = context._frames[sourceId];
-      var bitmap = this._cacheAsBitmap(source);
+      var source: RenderableBitmap;
+      if (sourceId & IDMask.Asset) {
+        source = <RenderableBitmap>context._assets[sourceId];
+      } else {
+        var frame = context._frames[sourceId];
+        source = this._cacheAsBitmap(frame);
+      }
       var ctx = (<RenderableBitmap>target).getContext();
-      ctx.drawImage(bitmap._canvas, 0, 0);
+      ctx.save();
+      if (clipRect) {
+        ctx.rect(clipRect.x, clipRect.y, clipRect.w, clipRect.h);
+        ctx.clip();
+      }
+      if (matrix) {
+        ctx.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+      }
+      ctx.drawImage(source._canvas, 0, 0);
+      ctx.restore();
     }
 
-    private _cacheAsBitmap(source: Frame): RenderableBitmap {
+    private _cacheAsBitmap(frame: Frame): RenderableBitmap {
       var canvas = document.createElement('canvas');
-      var bounds = source.getBounds();
+      var bounds = frame.getBounds();
       canvas.width = bounds.w;
       canvas.height = bounds.h;
-      var stage = new Stage(bounds.w, bounds.h);
-      stage._children[0] = source;
-      var renderer = new Canvas2DStageRenderer(canvas, stage);
-      renderer.render();
+      var renderer = new Canvas2DStageRenderer(canvas, null);
+      renderer.renderFrame(renderer.context, frame, Matrix.createIdentity(), null, null, 0, new Shumway.GFX.Canvas2DStageRendererOptions());
       return new RenderableBitmap(canvas, bounds);
     }
   }
