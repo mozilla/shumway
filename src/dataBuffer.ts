@@ -111,8 +111,8 @@ module Shumway.ArrayUtilities {
     private _bitBuffer: number;
     private _bitLength: number;
 
-    constructor() {
-      this._buffer = new ArrayBuffer(DataBuffer.INITIAL_SIZE);
+    constructor(initialSize: number = DataBuffer.INITIAL_SIZE) {
+      this._buffer = new ArrayBuffer(initialSize);
       this._length = 0;
       this._position = 0;
       this._cacheViews();
