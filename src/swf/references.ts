@@ -20,3 +20,4 @@
 ///<reference path='stream.ts' />
 ///<reference path='inflate.ts' />
 ///<reference path='image.ts' />
+///<reference path='resourceLoader.ts' />

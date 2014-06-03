@@ -79,7 +79,7 @@ load("../../build/ts/swf/parser/handlers.js");
 load("../../build/ts/swf/parser/parser.js");
 console.timeEnd("Load SWF Parser");
 
-load("../../src/swf/resourceloader.js");
+load("../../build/ts/swf/resourceLoader.js");
 
 console.timeEnd("Load Parser Dependencies");
 

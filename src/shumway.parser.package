@@ -27,6 +27,6 @@ build/ts/swf/parser/handlers.js
 build/ts/swf/parser/parser.js
 #!inline console.timeEnd("Load SWF Parser");
 
-src/swf/resourceloader.js
+build/ts/swf/resourceLoader.js
 
 #!inline console.timeEnd("Load Parser Dependencies");
