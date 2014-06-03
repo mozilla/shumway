@@ -490,9 +490,5 @@ module Shumway.SWF.Parser {
     pipe.push(bytes, progressInfo);
     pipe.close();
   }
-
-  // TODO remove
-  (<any>self).SWF.parseAsync = Shumway.SWF.Parser.parseAsync;
-  (<any>self).SWF.parse = Shumway.SWF.Parser.parse;
 }
 

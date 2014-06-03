@@ -333,7 +333,7 @@ function createParsingContext(commitData) {
   };
 }
 function parseBytes(bytes, commitData) {
-  SWF.parse(bytes, createParsingContext(commitData));
+  Shumway.SWF.Parser.parse(bytes, createParsingContext(commitData));
 }
 
 function ResourceLoader(scope, isWorker) {
@@ -399,7 +399,7 @@ ResourceLoader.prototype = {
     if (request instanceof ArrayBuffer) {
       parseBytes(request, commitData);
     } else if ('subscribe' in request) {
-      var pipe = SWF.parseAsync(createParsingContext(commitData));
+      var pipe = Shumway.SWF.Parser.parseAsync(createParsingContext(commitData));
       request.subscribe(function (data, progress) {
         if (data) {
           pipe.push(data, progress);
