@@ -70,7 +70,7 @@ body.simple #stageContainer {
 }
 
 #profilePanelContainer {
-  display: none;
+  display: block;
   position: absolute;
   top: 82px;
   right: 300px;
