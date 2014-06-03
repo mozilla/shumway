@@ -19,12 +19,12 @@ src/swf/text.js
 #!inline console.timeEnd("Load SWF Dependencies");
 
 #!inline console.time("Load SWF Parser");
-src/swf/types.js
-src/swf/structs.js
-src/swf/tags.js
-src/swf/templates.js
-src/swf/handlers.js
-src/swf/parser.js
+#src/swf/parser/types.js
+#src/swf/parser/structs.js
+#src/swf/parser/tags.js
+src/swf/parser/templates.js
+src/swf/parser/handlers.js
+src/swf/parser/parser.js
 #!inline console.timeEnd("Load SWF Parser");
 
 src/swf/resourceloader.js

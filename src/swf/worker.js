@@ -72,12 +72,12 @@ load("../../src/swf/text.js");
 console.timeEnd("Load SWF Dependencies");
 
 console.time("Load SWF Parser");
-load("../../src/swf/types.js");
-load("../../src/swf/structs.js");
-load("../../src/swf/tags.js");
-load("../../src/swf/templates.js");
-load("../../src/swf/handlers.js");
-load("../../src/swf/parser.js");
+//../../src/swf/parser/types.js
+//../../src/swf/parser/structs.js
+//../../src/swf/parser/tags.js
+load("../../src/swf/parser/templates.js");
+load("../../src/swf/parser/handlers.js");
+load("../../src/swf/parser/parser.js");
 console.timeEnd("Load SWF Parser");
 
 load("../../src/swf/resourceloader.js");
