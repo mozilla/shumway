@@ -20,5 +20,3 @@
 ///<reference path='stream.ts' />
 ///<reference path='inflate.ts' />
 ///<reference path='image.ts' />
-
-declare function createInflatedStream(bytes: ArrayBuffer, outputLength: number): any;
