@@ -75,9 +75,10 @@ console.time("Load SWF Parser");
 //../../src/swf/parser/types.js
 //../../src/swf/parser/structs.js
 //../../src/swf/parser/tags.js
+load("../../build/ts/swf/parser/swfTag.js");
 load("../../src/swf/parser/templates.js");
 load("../../src/swf/parser/handlers.js");
-load("../../src/swf/parser/parser.js");
+load("../../build/ts/swf/parser/parser.js");
 console.timeEnd("Load SWF Parser");
 
 load("../../src/swf/resourceloader.js");

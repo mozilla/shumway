@@ -22,9 +22,10 @@ src/swf/text.js
 #src/swf/parser/types.js
 #src/swf/parser/structs.js
 #src/swf/parser/tags.js
+build/ts/swf/parser/swfTag.js
 src/swf/parser/templates.js
 src/swf/parser/handlers.js
-src/swf/parser/parser.js
+build/ts/swf/parser/parser.js
 #!inline console.timeEnd("Load SWF Parser");
 
 src/swf/resourceloader.js
