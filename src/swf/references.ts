@@ -18,5 +18,6 @@
 ///<reference path='../ShapeData.ts' />
 ///<reference path='parser/references.ts' />
 ///<reference path='stream.ts' />
+///<reference path='inflate.ts' />
 
 declare function createInflatedStream(bytes: ArrayBuffer, outputLength: number): any;

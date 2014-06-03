@@ -6,7 +6,7 @@ lib/jpgjs/jpg.js
 #!inline console.time("Load SWF Dependencies");
 src/swf/util.js
 src/swf/swf.js
-src/swf/inflate.js
+build/ts/swf/inflate.js
 build/ts/swf/stream.js
 build/ts/swf/parser/bitmap.js
 build/ts/swf/parser/button.js

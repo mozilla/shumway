@@ -66,6 +66,9 @@ module Shumway.SWF {
     substream: (begin: number, end: number) => Stream;
     push: (data) => void;
 
+    // derived from DataView
+    getUint16: (offset: number, le: boolean) => number;
+
     constructor(buffer, offset?: number, length?: number, maxLength?: number) {
       if (offset === undefined)
         offset = 0;

@@ -19,18 +19,6 @@
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
   declare function parseJpegChunks(props, buffer);
-  declare function verifyDeflateHeader(bytes);
-  declare function inflateBlock(stream, output, state: CompressionState);
-  declare var InflateNoDataError;
-
-  interface CompressionState {
-    header: any;
-    distanceTable: any;
-    literalTable: any;
-    sym: any;
-    len: any;
-    sym2: any;
-  }
 
   function readTags(context, stream, swfVersion, final, onprogress, onexception) {
     var tags = context.tags;
@@ -208,7 +196,7 @@ module Shumway.SWF.Parser {
     private _initialize: boolean;
     private _buffer: HeadTailBuffer;
     private _state: CompressedPipeState;
-    private _output: any;
+    private _output: CompressionOutput;
 
     constructor (target, length: number) {
       this._target = target;
