@@ -62,7 +62,7 @@ load("../../build/ts/swf/stream.js");
 load("../../build/ts/swf/parser/bitmap.js");
 load("../../build/ts/swf/parser/button.js");
 load("../../build/ts/swf/parser/font.js");
-load("../../src/swf/image.js");
+load("../../build/ts/swf/image.js");
 load("../../build/ts/swf/parser/label.js");
 load("../../build/ts/swf/parser/shape.js");
 load("../../src/swf/sound.js");

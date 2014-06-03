@@ -15,9 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/* global importScripts, FileReader, FileReaderSync, SWF,
- defineBitmap, defineImage, defineFont, defineShape, defineSound,
- defineLabel, defineButton, defineText, createSoundStream */
+/* global FileReader, FileReaderSync, defineSound, defineText,
+   createSoundStream */
 
 function defineSymbol(swfTag, symbols) {
   var symbol;
@@ -29,7 +28,7 @@ function defineSymbol(swfTag, symbols) {
     case SwfTag.CODE_DEFINE_BITS_JPEG3:
     case SwfTag.CODE_DEFINE_BITS_JPEG4:
     case SwfTag.CODE_JPEG_TABLES:
-      symbol = defineImage(swfTag, symbols);
+      symbol = Shumway.SWF.Parser.defineImage(swfTag, symbols);
       break;
     case SwfTag.CODE_DEFINE_BITS_LOSSLESS:
     case SwfTag.CODE_DEFINE_BITS_LOSSLESS2:
