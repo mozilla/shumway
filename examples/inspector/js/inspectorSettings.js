@@ -185,6 +185,9 @@ function syncGFXOptions(options) {
   options.premultipliedAlpha = premultipliedAlpha.value;
   options.unpackPremultiplyAlpha = unpackPremultiplyAlpha.value;
 
+  options.sourceBlendFactor = sourceBlendFactor.value;
+  options.destinationBlendFactor = destinationBlendFactor.value;
+
   // These are set by holding down F and B in the easel, we don't want to
   // override them here.
   // options.paintFlashing = paintFlashing.value;

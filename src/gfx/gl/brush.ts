@@ -229,7 +229,8 @@ module Shumway.GFX.GL {
         gl.vertexAttribPointer(position, attribute.size, attribute.type, attribute.normalized, size, attribute.offset);
       }
 
-      this._context.setBlendMode(this._blendMode);
+      // this._context.setBlendMode(this._blendMode);
+      this._context.setBlendOptions();
 
       // Bind target.
       this._context.target = this._target;

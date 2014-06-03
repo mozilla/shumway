@@ -35,6 +35,7 @@ module Shumway.GFX.GL {
 
     public gl: WebGLRenderingContext;
     private _canvas: HTMLCanvasElement;
+    private _options: WebGLStageRendererOptions;
     private _w: number;
     private _h: number;
     private _programCache: {};
@@ -69,7 +70,7 @@ module Shumway.GFX.GL {
 
     constructor (canvas: HTMLCanvasElement, options: WebGLStageRendererOptions) {
       this._canvas = canvas;
-
+      this._options = options;
       this.gl = <WebGLRenderingContext> (
         canvas.getContext("experimental-webgl", {
           // preserveDrawingBuffer: true,
@@ -119,6 +120,10 @@ module Shumway.GFX.GL {
         default:
           notImplemented("Blend Mode: " + value);
       }
+    }
+
+    public setBlendOptions() {
+      this.gl.blendFunc(this._options.sourceBlendFactor, this._options.destinationBlendFactor);
     }
 
     /**

@@ -38,6 +38,6 @@ void main() {
   } else {
     color = vec4(1.0, 0.0, 0.0, 1.0);
   }
-  color.rgb *= color.a;
+  // color.rgb *= color.a;
   gl_FragColor = color;
 }
