@@ -103,11 +103,9 @@ module Shumway.Tools.Profiler {
     createSnapshot(count: number = Number.MAX_VALUE) {
       var times = this._times;
       var kinds = this._kinds;
-      var range = new TimelineFrame(null, null, NaN, NaN, 0);
+      var range = new TimelineFrame(null, null, NaN, NaN);
       var stack: TimelineFrame [] = [range];
       var topLevelFrameCount = 0;
-      var maxDepth = 0;
-      var currentDepth = 0;
 
       this._marks.forEachInReverse(function (mark, i) {
         var kind = kinds[mark & 0xFFFF];
@@ -122,20 +120,25 @@ module Shumway.Tools.Profiler {
                 return true;
               }
             }
-            stack.push(new TimelineFrame(stack[stackLength - 1], kind, NaN, time, currentDepth));
-            currentDepth++;
-            if (maxDepth < currentDepth) {
-              maxDepth = currentDepth;
-            }
+            stack.push(new TimelineFrame(stack[stackLength - 1], kind, NaN, time));
           } else if (action === TimelineBuffer.ENTER) {
-            currentDepth--;
             var node = stack.pop();
-            node.startTime = time;
             var top = stack[stack.length - 1];
             if (!top.children) {
               top.children = [node];
             } else {
               top.children.unshift(node);
+            }
+            var currentDepth = stack.length;
+            node.depth = currentDepth;
+            node.startTime = time;
+            while (node) {
+              if (node.maxDepth < currentDepth) {
+                node.maxDepth = currentDepth;
+                node = node.parent;
+              } else {
+                break;
+              }
             }
           }
         }
@@ -144,11 +147,11 @@ module Shumway.Tools.Profiler {
       if (range.children && range.children.length) {
         range.startTime = range.children[0].startTime;
         range.endTime = range.children[range.children.length - 1].endTime;
+        this._maxDepth = range.maxDepth;
         this._snapshot = range;
-        this._maxDepth = maxDepth;
       } else {
-        this._snapshot = null;
         this._maxDepth = 0;
+        this._snapshot = null;
       }
     }
 

@@ -73,6 +73,30 @@ module Shumway {
       for (var i = 0; i < keyboardEvents.length; i++) {
         window.addEventListener(keyboardEvents[i], keyboardEventListener);
       }
+      this._addFocusEventListeners();
+    }
+
+    private _sendFocusEvent(type: Shumway.Remoting.FocusEventType) {
+      var buffer = new DataBuffer();
+      var serializer = new Shumway.Remoting.GFX.GFXChannelSerializer();
+      serializer.output = buffer;
+      serializer.writeFocusEvent(type);
+      this._channel.sendEventUpdates(buffer);
+    }
+
+    private _addFocusEventListeners() {
+      var self = this;
+      document.addEventListener('visibilitychange', function(event) {
+        self._sendFocusEvent(document.hidden ?
+          Shumway.Remoting.FocusEventType.DocumentHidden :
+          Shumway.Remoting.FocusEventType.DocumentVisible);
+      });
+      window.addEventListener('focus', function(event) {
+        self._sendFocusEvent(Shumway.Remoting.FocusEventType.WindowFocus);
+      });
+      window.addEventListener('blur', function(event) {
+        self._sendFocusEvent(Shumway.Remoting.FocusEventType.WindowFocus);
+      });
     }
 
     readData(updates: DataBuffer, assets: Array<DataBuffer>) {

@@ -30,13 +30,14 @@ module Shumway.Tools.Profiler {
   export class TimelineFrame {
     public children: TimelineFrame [];
     public total: number;
+    public maxDepth: number;
+    public depth: number;
     constructor (
       public parent: TimelineFrame,
       public kind: TimelineItemKind,
       public startTime: number,
-      public endTime: number,
-      public depth: number) {
-      // ...
+      public endTime: number) {
+      this.maxDepth = 0;
     }
 
     /**

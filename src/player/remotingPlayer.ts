@@ -246,18 +246,40 @@ module Shumway.Remoting.Player {
     }
   }
 
+  export enum EventKind {
+    Focus,
+    Mouse,
+    Keyboard
+  }
+
+  export interface FocusEventData {
+    type: FocusEventType
+  }
+
   export class PlayerChannelDeserializer {
     input: IDataInput;
 
     public readEvent(): any {
       var input = this.input;
       var tag = input.readInt();
-      if (tag === MessageTag.MouseEvent) {
-        return this._readMouseEvent();
-      } else if (tag === MessageTag.KeyboardEvent) {
-        return this._readKeyboardEvent();
+      switch (<MessageTag>tag) {
+        case MessageTag.MouseEvent:
+          return this._readMouseEvent();
+        case MessageTag.KeyboardEvent:
+          return this._readKeyboardEvent();
+        case MessageTag.FocusEvent:
+          return this._readFocusEvent();
       }
       assert(false, 'Unknown MessageReader tag: ' + tag);
+    }
+
+    private _readFocusEvent(): FocusEventData {
+      var input = this.input;
+      var typeId = input.readInt();
+      return {
+        kind: EventKind.Focus,
+        type: <FocusEventType>typeId
+      }
     }
 
     private _readMouseEvent(): MouseEventAndPointData {
@@ -269,7 +291,7 @@ module Shumway.Remoting.Player {
       var buttons = input.readInt();
       var flags = input.readInt();
       return {
-        isMouseEvent: true,
+        kind: EventKind.Mouse,
         type: type,
         point: new Point(px, py),
         ctrlKey: !!(flags & KeyboardEventFlags.CtrlKey),
@@ -288,7 +310,7 @@ module Shumway.Remoting.Player {
       var location = input.readInt();
       var flags = input.readInt();
       return {
-        isKeyboardEvent: true,
+        kind: EventKind.Keyboard,
         type: type,
         keyCode: keyCode,
         charCode: charCode,

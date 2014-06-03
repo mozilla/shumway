@@ -62,7 +62,8 @@ module Shumway.Remoting {
     BitmapDataDraw              = 200,
 
     MouseEvent                  = 300,
-    KeyboardEvent               = 301
+    KeyboardEvent               = 301,
+    FocusEvent                  = 302
   }
 
   /**
@@ -108,6 +109,13 @@ module Shumway.Remoting {
     CtrlKey  = 0x0001,
     AltKey   = 0x0002,
     ShiftKey = 0x0004
+  }
+
+  export enum FocusEventType {
+    DocumentHidden,
+    DocumentVisible,
+    WindowBlur,
+    WindowFocus
   }
 
   export interface IPlayerChannel {
