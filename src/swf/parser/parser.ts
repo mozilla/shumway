@@ -21,15 +21,7 @@ module Shumway.SWF.Parser {
   declare function parseJpegChunks(props, buffer);
   declare function verifyDeflateHeader(bytes);
   declare function inflateBlock(stream, output, state: CompressionState);
-  declare var StreamNoDataError;
   declare var InflateNoDataError;
-
-  declare class Stream {
-    constructor(buffer, offset, length);
-    pos: number;
-    bitBuffer: number;
-    bitLength: number;
-  }
 
   interface CompressionState {
     header: any;

@@ -7,7 +7,7 @@ lib/jpgjs/jpg.js
 src/swf/util.js
 src/swf/swf.js
 src/swf/inflate.js
-src/swf/stream.js
+build/ts/swf/stream.js
 build/ts/swf/parser/bitmap.js
 build/ts/swf/parser/button.js
 build/ts/swf/parser/font.js
