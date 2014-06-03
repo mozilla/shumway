@@ -289,20 +289,29 @@ module Shumway.Remoting.GFX {
         ctx.rect(clipRect.x, clipRect.y, clipRect.w, clipRect.h);
         ctx.clip();
       }
+      var bounds = frame.getBounds();
+      if (bounds.x || bounds.y) {
+        matrix.translate(bounds.x, bounds.y);
+      }
       if (matrix) {
-        ctx.setTransform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+        ctx.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
       }
       ctx.drawImage(source._canvas, 0, 0);
       ctx.restore();
     }
 
     private _cacheAsBitmap(frame: Frame): RenderableBitmap {
+      Shumway.GFX.enterTimeline("cacheAsBitmap");
       var canvas = document.createElement('canvas');
       var bounds = frame.getBounds();
+      var matrix = Matrix.createIdentity();
+      if (bounds.x || bounds.y) {
+        matrix.translate(-bounds.x, -bounds.y);
+      }
       canvas.width = bounds.w;
       canvas.height = bounds.h;
       var renderer = new Canvas2DStageRenderer(canvas, null);
-      renderer.renderFrame(renderer.context, frame, Matrix.createIdentity(), null, null, 0, new Shumway.GFX.Canvas2DStageRendererOptions());
+      renderer.renderFrame(renderer.context, frame, matrix, null, null, 0, new Shumway.GFX.Canvas2DStageRendererOptions());
       return new RenderableBitmap(canvas, bounds);
     }
   }
