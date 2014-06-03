@@ -39,7 +39,7 @@ module Shumway.Tools.Profiler {
      * Don't paint frames whose width is smaller than this value. This helps a lot when drawing
      * large ranges. This can be < 1 since anti-aliasing can look quite nice.
      */
-    private _minFrameWidthInPixels = 0.5;
+    private _minFrameWidthInPixels = 1;
 
     constructor(controller: Controller, bufferIndex: number) {
       super(controller);
@@ -95,10 +95,13 @@ module Shumway.Tools.Profiler {
 
     private _drawFrame(frame: TimelineFrame, depth: number): boolean {
       var context = this._context;
+      var frameHPadding = 0.5;
       var left = this._toPixels(frame.startTime);
       var right = this._toPixels(frame.endTime);
       var width = right - left;
-      if (width < this._minFrameWidthInPixels) {
+      if (width <= this._minFrameWidthInPixels) {
+        context.fillStyle = this._controller.theme.tabToolbar(1);
+        context.fillRect(left, depth * (12 + frameHPadding), 1, 12 + (frame.maxDepth - frame.depth) * 12.5);
         return false;
       }
       if (left < 0) {
@@ -114,7 +117,6 @@ module Shumway.Tools.Profiler {
           textColor: ColorStyle.contrastStyle(background)
         };
       }
-      var frameHPadding = 0.5;
       context.save();
       //if (this._hoveredFrame && this._hoveredFrame.kind !== frame.kind) {
       //  context.globalAlpha = 0.4;
