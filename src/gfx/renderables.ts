@@ -220,13 +220,13 @@ module Shumway.GFX {
     properties: {[name: string]: any} = {};
 
     private fillStyle: ColorStyle;
-    private _pathData: DataBuffer;
+    private _pathData: ShapeData;
     private _textures: RenderableBitmap[];
 
     private static LINE_CAP_STYLES = ['round', 'butt', 'square'];
     private static LINE_JOINT_STYLES = ['round', 'bevel', 'miter'];
 
-    constructor(pathData: DataBuffer, textures: RenderableBitmap[], bounds: Rectangle) {
+    constructor(pathData: ShapeData, textures: RenderableBitmap[], bounds: Rectangle) {
       super(bounds);
       this._pathData = pathData;
       this._textures = textures;
@@ -241,8 +241,7 @@ module Shumway.GFX {
       context.fillStyle = context.strokeStyle = 'transparent';
 
       var data = this._pathData;
-      data.endian = 'auto'; // TODO: do this for all internal data buffers.
-      if (!data || data.length === 0) {
+      if (!data || data.commandsPosition === 0) {
         this._renderFallback(context);
         return;
       }
@@ -263,7 +262,6 @@ module Shumway.GFX {
       var strokePath: Path2D = null;
       var fillTransform: Matrix = null;
       var strokeTransform: Matrix = null;
-      data.position = 0;
       // We have to alway store the last position because Flash keeps the drawing cursor where it
       // was when changing fill or line style, whereas Canvas forgets it on beginning a new path.
       var x = 0;
@@ -273,69 +271,76 @@ module Shumway.GFX {
       var formOpen = false;
       var formOpenX = 0;
       var formOpenY = 0;
+      var commands = data.commands;
+      var coordinates = data.coordinates;
+      var styles = data.styles;
+      styles.position = 0;
+      var commandIndex = 0;
+      var coordinatesIndex = 0;
+      var commandsCount = data.commandsPosition;
       // Description of serialization format can be found in flash.display.Graphics.
-      while (data.bytesAvailable > 0) {
-        var command = data.readUnsignedByte();
+      while (commandIndex < commandsCount) {
+        var command = commands[commandIndex++];
         switch (command) {
           case PathCommand.MoveTo:
-            assert(data.bytesAvailable >= 8);
+            assert(coordinatesIndex <= data.coordinatesPosition - 2);
             if (formOpen && fillPath) {
               fillPath.lineTo(formOpenX, formOpenY);
               strokePath && strokePath.lineTo(formOpenX, formOpenY);
             }
             formOpen = true;
-            x = formOpenX = data.readInt() / 20;
-            y = formOpenY = data.readInt() / 20;
+            x = formOpenX = coordinates[coordinatesIndex++] / 20;
+            y = formOpenY = coordinates[coordinatesIndex++] / 20;
             fillPath && fillPath.moveTo(x, y);
             strokePath && strokePath.moveTo(x, y);
             break;
           case PathCommand.LineTo:
-            assert(data.bytesAvailable >= 8);
-            x = data.readInt() / 20;
-            y = data.readInt() / 20;
+            assert(coordinatesIndex <= data.coordinatesPosition - 2);
+            x = coordinates[coordinatesIndex++] / 20;
+            y = coordinates[coordinatesIndex++] / 20;
             fillPath && fillPath.lineTo(x, y);
             strokePath && strokePath.lineTo(x, y);
             break;
           case PathCommand.CurveTo:
-            assert(data.bytesAvailable >= 16);
-            cpX = data.readInt() / 20;
-            cpY = data.readInt() / 20;
-            x = data.readInt() / 20;
-            y = data.readInt() / 20;
+            assert(coordinatesIndex <= data.coordinatesPosition - 4);
+            cpX = coordinates[coordinatesIndex++] / 20;
+            cpY = coordinates[coordinatesIndex++] / 20;
+            x = coordinates[coordinatesIndex++] / 20;
+            y = coordinates[coordinatesIndex++] / 20;
             fillPath && fillPath.quadraticCurveTo(cpX, cpY, x, y);
             strokePath && strokePath.quadraticCurveTo(cpX, cpY, x, y);
             break;
           case PathCommand.CubicCurveTo:
-            assert(data.bytesAvailable >= 24);
-            cpX = data.readInt() / 20;
-            cpY = data.readInt() / 20;
-            var cpX2 = data.readInt() / 20;
-            var cpY2 = data.readInt() / 20;
-            x = data.readInt() / 20;
-            y = data.readInt() / 20;
+            assert(coordinatesIndex <= data.coordinatesPosition - 6);
+            cpX = coordinates[coordinatesIndex++] / 20;
+            cpY = coordinates[coordinatesIndex++] / 20;
+            var cpX2 = coordinates[coordinatesIndex++] / 20;
+            var cpY2 = coordinates[coordinatesIndex++] / 20;
+            x = coordinates[coordinatesIndex++] / 20;
+            y = coordinates[coordinatesIndex++] / 20;
             fillPath && fillPath.bezierCurveTo(cpX, cpY, cpX2, cpY2, x, y);
             strokePath && strokePath.bezierCurveTo(cpX, cpY, cpX2, cpY2, x, y);
             break;
           case PathCommand.BeginSolidFill:
-            assert(data.bytesAvailable >= 4);
+            assert(styles.bytesAvailable >= 4);
             if (fillPath) {
               context.fill(fillPath, 'evenodd');
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
-            context.fillStyle = ColorUtilities.rgbaToCSSStyle(data.readUnsignedInt());
+            context.fillStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
             break;
           case PathCommand.BeginBitmapFill:
-            assert(data.bytesAvailable >= 6 + 6 * 8 /* matrix fields as floats */ + 1 + 1);
+            assert(styles.bytesAvailable >= 6 + 6 * 8 /* matrix fields as floats */ + 1 + 1);
             if (fillPath) {
               context.fill(fillPath, 'evenodd');
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
-            var textureIndex = data.readUnsignedInt();
-            fillTransform = this._readMatrix(data);
-            var repeat = data.readBoolean() ? 'repeat' : 'no-repeat';
-            var smooth = data.readBoolean();
+            var textureIndex = styles.readUnsignedInt();
+            fillTransform = this._readMatrix(styles);
+            var repeat = styles.readBoolean() ? 'repeat' : 'no-repeat';
+            var smooth = styles.readBoolean();
             var texture = this._textures[textureIndex];
             assert(texture._canvas);
             context.fillStyle = context.createPattern(texture._canvas, repeat);
@@ -344,16 +349,17 @@ module Shumway.GFX {
             break;
           case PathCommand.BeginGradientFill:
             // Assert at least one color stop.
-            assert(data.bytesAvailable >= 4 + 4 + 6 * 8 /* matrix fields as floats */ + 1 + 1 + 8);
+            assert(styles.bytesAvailable >= 1 + 1 + 6 * 8 /* matrix fields as floats */ +
+                                            1 + 1 + 4 + 1 + 1);
             if (fillPath) {
               context.fill(fillPath, 'evenodd');
             }
             fillPath = new Path2D();
             fillPath.moveTo(x, y);
-            var gradientType = data.readUnsignedByte();
-            var focalPoint = data.readByte() * 2 / 0xff;
+            var gradientType = styles.readUnsignedByte();
+            var focalPoint = styles.readByte() * 2 / 0xff;
             assert(focalPoint >= -1 && focalPoint <= 1);
-            fillTransform = this._readMatrix(data);
+            fillTransform = this._readMatrix(styles);
             // This effectively applies the matrix to the line the gradient is drawn along:
             var x1 = fillTransform.tx - fillTransform.a;
             var y1 = fillTransform.ty - fillTransform.b;
@@ -363,17 +369,16 @@ module Shumway.GFX {
             var gradient = gradientType === GradientType.Linear ?
                            context.createLinearGradient(x1, y1, x2, y2) :
                            context.createRadialGradient(focalPoint, 0, 0, 0, 0, 1);
-            var colorStopsCount = data.readUnsignedByte();
+            var colorStopsCount = styles.readUnsignedByte();
             for (var i = 0; i < colorStopsCount; i++) {
-              var ratio = data.readUnsignedByte() / 0xff;
-              var cssColor = ColorUtilities.rgbaToCSSStyle(data.readUnsignedInt());
+              var ratio = styles.readUnsignedByte() / 0xff;
+              var cssColor = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
               gradient.addColorStop(ratio, cssColor);
             }
             context.fillStyle = gradient;
 
             // Skip spread and interpolation modes for now.
-            data.readUnsignedByte();
-            data.readUnsignedByte();
+            styles.position += 2;
             break;
           case PathCommand.EndFill:
             if (fillPath) {
@@ -388,13 +393,13 @@ module Shumway.GFX {
             }
             strokePath = new Path2D();
             strokePath.moveTo(x, y);
-            context.lineWidth = data.readUnsignedByte();
-            context.strokeStyle = ColorUtilities.rgbaToCSSStyle(data.readUnsignedInt());
-            data.readBoolean(); // Skip pixel hinting.
-            data.readByte(); // Skip scaleMode.
-            context.lineCap = RenderableShape.LINE_CAP_STYLES[data.readByte()];
-            context.lineJoin = RenderableShape.LINE_JOINT_STYLES[data.readByte()];
-            context.miterLimit = data.readByte();
+            context.lineWidth = styles.readUnsignedByte();
+            context.strokeStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
+            // Skip pixel hinting and scale mode for now.
+            styles.position += 2;
+            context.lineCap = RenderableShape.LINE_CAP_STYLES[styles.readByte()];
+            context.lineJoin = RenderableShape.LINE_JOINT_STYLES[styles.readByte()];
+            context.miterLimit = styles.readByte();
             break;
           case PathCommand.LineEnd:
             if (strokePath) {
@@ -405,7 +410,7 @@ module Shumway.GFX {
             break;
           default:
             assertUnreachable('Invalid command ' + command + ' encountered at position' +
-                              (data.position - 1) + ' of ' + data.length);
+                              (commandIndex - 1) + ' of ' + commandsCount);
         }
       }
       if (formOpen && fillPath) {

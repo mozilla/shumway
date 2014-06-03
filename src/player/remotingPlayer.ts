@@ -39,7 +39,7 @@ module Shumway.Remoting.Player {
 
   export class PlayerChannelSerializer {
     public output: IDataOutput;
-    public outputAssets: Array<IDataOutput>;
+    public outputAssets: any[];
 
     public phase: RemotingPhase = RemotingPhase.Objects;
 
@@ -61,7 +61,7 @@ module Shumway.Remoting.Player {
       this.output.writeInt(graphics._id);
       this.writeRectangle(graphics._getContentBounds());
       this.output.writeInt(this.outputAssets.length);
-      this.outputAssets.push(graphics.getGraphicsData());
+      this.outputAssets.push(graphics.getGraphicsData().toPlainObject());
       this.output.writeInt(numTextures);
       for (var i = 0; i < numTextures; i++) {
         this.output.writeInt(textures[i]._id);
@@ -75,7 +75,7 @@ module Shumway.Remoting.Player {
         this.writeRectangle(bitmapData._getContentBounds());
         this.output.writeInt(bitmapData._type);
         this.output.writeInt(this.outputAssets.length);
-        this.outputAssets.push(bitmapData.getDataBuffer());
+        this.outputAssets.push(bitmapData.getDataBuffer().toPlainObject());
         bitmapData._isDirty = false;
       }
     }

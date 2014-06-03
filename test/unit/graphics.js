@@ -22,8 +22,6 @@
   var PathCommand = Shumway.PathCommand;
   var assertUnreachable = Shumway.Debug.assertUnreachable;
 
-  var ShapeData = Shumway.ShapeData;
-
   var LineScaleMode = flash.display.LineScaleMode;
   var CapsStyle = flash.display.CapsStyle;
   var JointStyle = flash.display.JointStyle;
@@ -44,7 +42,11 @@
 
   function basics() {
     var g = createGraphics();
-    eq(g.getGraphicsData().length, 0, "Graphics instances start out empty");
+    var shape = g.getGraphicsData();
+
+    eq(shape.commandsPosition, 0, "Graphics instances start out empty");
+    eq(shape.coordinatesPosition, 0, "Graphics instances start out empty");
+    eq(shape.styles.length, 0, "Graphics instances start out empty");
     structEq(g._getContentBounds(),
              {xMin: 0x8000000, xMax: 0x8000000, yMin: 0x8000000, yMax: 0x8000000},
              "graphics instances initially have sentinel bounds");
@@ -52,11 +54,18 @@
 
   function clear() {
     var g = createGraphics();
+    var shape = g.getGraphicsData();
+
     g.lineStyle(1);
+    neq(shape.commandsPosition, 0, "lineStyle writes command");
+    neq(shape.styles.length, 0, "lineStyle writes style data");
     g.lineTo(100, 100);
-    neq(g.getGraphicsData().length, 0, "Graphics#lineStyle modifies instance's data");
+    neq(shape.coordinatesPosition, 0, "lineTo writes coordinates");
+
     g.clear();
-    eq(g.getGraphicsData().length, 0, "Graphics#clear empties the instance's data");
+    eq(shape.commandsPosition, 0, "clear empties the instance's data");
+    eq(shape.coordinatesPosition, 0, "clear empties the instance's data");
+    eq(shape.styles.length, 0, "clear empties the instance's data");
     structEq(g._getContentBounds(),
              {xMin: 0x8000000, xMax: 0x8000000, yMin: 0x8000000, yMax: 0x8000000},
              "clear resets bounds");
@@ -64,35 +73,46 @@
 
   function beginFill() {
     var g = createGraphics();
+    var shape = g.getGraphicsData();
+
     g.beginFill(0xaabbcc);
-    var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), PathCommand.BeginSolidFill, "fill is stored");
-    eq(bytes.readUnsignedInt(), 0xaabbccff, "beginFill stores given color and default alpha");
-    g = createGraphics();
+    shape.styles.position = 0;
+    eq(shape.commands[0], PathCommand.BeginSolidFill, "fill is stored");
+    eq(shape.coordinatesPosition, 0, "fills don't write coordinates");
+    eq(shape.styles.readUnsignedInt(), 0xaabbccff,
+       "beginFill stores given color and default alpha");
+    g.clear();
+
     g.beginFill(0xaabbcc, 0.5);
-    bytes = cloneData(g.getGraphicsData());
-    bytes.readUnsignedByte();
-    eq(bytes.readUnsignedInt(), 0xaabbcc80, "alpha is stored correctly");
-    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    shape.styles.position = 0;
+    eq(shape.styles.readUnsignedInt(), 0xaabbcc80, "alpha is stored correctly");
+    eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
+    eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
   }
 
   function beginBitmapFill() {
     var g = createGraphics();
+    var shape = g.getGraphicsData();
+
     var bitmap = new BitmapData(100, 100);
     g.beginBitmapFill(bitmap);
-    var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), PathCommand.BeginBitmapFill, "fill is stored");
-    eq(bytes.readUnsignedInt(), bitmap._id, "beginBitmapFill stores given bitmap's id");
-    structEq(Matrix.FromDataBuffer(bytes), Matrix.FROZEN_IDENTITY_MATRIX,
+    shape.styles.position = 0;
+    eq(shape.commands[0], PathCommand.BeginBitmapFill, "fill is stored");
+    eq(shape.coordinatesPosition, 0, "fills don't write coordinates");
+    var index = shape.styles.readUnsignedInt();
+    eq(index, 0, "beginBitmapFill stores given bitmap's id");
+    eq(g.getUsedTextures()[index], bitmap, "beginBitmapFill stores given bitmap's id");
+    structEq(Matrix.FromDataBuffer(shape.styles), Matrix.FROZEN_IDENTITY_MATRIX,
              "default matrix is serialized if none is provided");
-    eq(bytes.readBoolean(), true, "defaults to repeat");
-    eq(bytes.readBoolean(), false, "defaults to no smooting");
-    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    eq(shape.styles.readBoolean(), true, "defaults to repeat");
+    eq(shape.styles.readBoolean(), false, "defaults to no smooting");
+    eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
+    eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
+    g.clear();
 
-    g = createGraphics();
     try {
       g.beginBitmapFill({});
-      assertUnreachable("beginBitmapFill without bitmap argument throws");
+      assertUnreachable("beginBitmapFill with invalid bitmap argument throws");
     } catch (e) {
     }
     try {
@@ -100,156 +120,180 @@
       assertUnreachable("beginBitmapFill with non-matrix 2nd argument throws");
     } catch (e) {
     }
-    bytes = cloneData(g.getGraphicsData());
-    eq(bytes.bytesAvailable, 0, "invalid beginBitmapFill calls don't write data");
+    eq(shape.commandsPosition, 0, "invalid beginBitmapFill calls don't write a command");
+    eq(shape.styles.length, 0, "invalid beginBitmapFill calls don't write style data");
 
     var matrix = new Matrix(1, 2, 3, 4, 5, 6);
     g.beginBitmapFill(bitmap, matrix, false, true);
-    bytes = cloneData(g.getGraphicsData());
-    bytes.readUnsignedByte(); // skip command
-    bytes.readUnsignedInt(); // skip bitmap id
-    structEq(Matrix.FromDataBuffer(bytes), matrix,
+    shape.styles.position = 0;
+    shape.styles.readUnsignedInt(); // skip bitmap id
+    structEq(Matrix.FromDataBuffer(shape.styles), matrix,
              "serialized matrix is identical to input matrix");
-    eq(bytes.readBoolean(), false, "repeat flag is written correctly");
-    eq(bytes.readBoolean(), true, "smooth flag is written correctly");
-    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    eq(shape.styles.readBoolean(), false, "repeat flag is written correctly");
+    eq(shape.styles.readBoolean(), true, "smooth flag is written correctly");
+    eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
   }
 
   function lineStyle_defaults() {
     var g = createGraphics();
+    var shape = g.getGraphicsData();
+
     g.lineStyle(1);
-    var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), PathCommand.LineStyleSolid, "style is stored");
-    eq(bytes.readUnsignedByte(), 1, "given thickness is stored");
-    eq(bytes.readUnsignedInt(), 0xff, "default color is full-opacity black");
-    eq(bytes.readBoolean(), false, "defaults to no pixel hinting");
-    eq(LineScaleMode.fromNumber(bytes.readUnsignedByte()), LineScaleMode.NORMAL,
+    shape.styles.position = 0;
+    eq(shape.commands[0], PathCommand.LineStyleSolid, "style is stored");
+    eq(shape.coordinatesPosition, 0, "styles don't write coordinates");
+    eq(shape.styles.readUnsignedByte(), 1, "given thickness is stored");
+    eq(shape.styles.readUnsignedInt(), 0xff, "default color is full-opacity black");
+    eq(shape.styles.readBoolean(), false, "defaults to no pixel hinting");
+    eq(LineScaleMode.fromNumber(shape.styles.readUnsignedByte()), LineScaleMode.NORMAL,
        "defaults to normal scaling");
-    eq(CapsStyle.fromNumber(bytes.readUnsignedByte()), CapsStyle.ROUND, "defaults to round caps");
-    eq(JointStyle.fromNumber(bytes.readUnsignedByte()), JointStyle.ROUND,
+    eq(CapsStyle.fromNumber(shape.styles.readUnsignedByte()), CapsStyle.ROUND,
+       "defaults to round caps");
+    eq(JointStyle.fromNumber(shape.styles.readUnsignedByte()), JointStyle.ROUND,
        "defaults to round joints");
-    eq(bytes.readUnsignedByte(), 3, "defaults to miterLimit of 3");
-    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    eq(shape.styles.readUnsignedByte(), 3, "defaults to miterLimit of 3");
+    eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
     g.clear();
+
     g.lineStyle(0.4);
-    bytes = cloneData(g.getGraphicsData());
-    bytes.readUnsignedByte();
-    eq(bytes.readUnsignedByte(), 0, "thickness is correctly rounded");
+    shape.styles.position = 0;
+    eq(shape.styles.readUnsignedByte(), 0, "thickness is correctly rounded");
     g.clear();
+
     g.lineStyle(0.6);
-    bytes = cloneData(g.getGraphicsData());
-    bytes.readUnsignedByte();
-    eq(bytes.readUnsignedByte(), 1, "thickness is correctly rounded");
+    shape.styles.position = 0;
+    eq(shape.styles.readUnsignedByte(), 1, "thickness is correctly rounded");
     g.clear();
+
     g.lineStyle(1.1);
-    bytes = cloneData(g.getGraphicsData());
-    bytes.readUnsignedByte();
-    eq(bytes.readUnsignedByte(), 1, "thickness is correctly rounded");
+    shape.styles.position = 0;
+    eq(shape.styles.readUnsignedByte(), 1, "thickness is correctly rounded");
     g.clear();
+
     g.lineStyle(1.5);
-    bytes = cloneData(g.getGraphicsData());
-    bytes.readUnsignedByte();
-    eq(bytes.readUnsignedByte(), 2, "thickness is correctly rounded");
+    shape.styles.position = 0;
+    eq(shape.styles.readUnsignedByte(), 2, "thickness is correctly rounded");
   }
 
   function lineStyle_invalidWidth() {
     var g = createGraphics();
+    var shape = g.getGraphicsData();
+
     g.lineStyle(NaN);
-    var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), PathCommand.LineEnd, "style is stored");
-    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    eq(shape.commands[0], PathCommand.LineEnd, "style is stored");
+    eq(shape.coordinatesPosition, 0, "styles don't write coordinates");
+    eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
+    eq(shape.styles.bytesAvailable, 0, "LineEnd doesn't write style data");
   }
 
   function lineStyle_allArgs() {
     var g = createGraphics();
+    var shape = g.getGraphicsData();
+
     g.lineStyle(10, 0xaabbcc, 0.5, true, LineScaleMode.HORIZONTAL, CapsStyle.SQUARE,
                 JointStyle.BEVEL, 10);
-    var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), PathCommand.LineStyleSolid, "style is stored");
-    eq(bytes.readUnsignedByte(), 10, "given thickness is stored");
-    eq(bytes.readUnsignedInt(), 0xaabbcc80, "alpha is stored correctly");
-    eq(bytes.readBoolean(), true, "pixel hinting is stored");
-    eq(LineScaleMode.fromNumber(bytes.readUnsignedByte()), LineScaleMode.HORIZONTAL,
+    shape.styles.position = 0;
+    eq(shape.commands[0], PathCommand.LineStyleSolid, "style is stored");
+    eq(shape.coordinatesPosition, 0, "styles don't write coordinates");
+    eq(shape.styles.readUnsignedByte(), 10, "given thickness is stored");
+    eq(shape.styles.readUnsignedInt(), 0xaabbcc80, "alpha is stored correctly");
+    eq(shape.styles.readBoolean(), true, "pixel hinting is stored");
+    eq(LineScaleMode.fromNumber(shape.styles.readUnsignedByte()), LineScaleMode.HORIZONTAL,
        "lineScaleMode is stored");
-    eq(CapsStyle.fromNumber(bytes.readUnsignedByte()), CapsStyle.SQUARE, "capsStyle is stored");
-    eq(JointStyle.fromNumber(bytes.readUnsignedByte()), JointStyle.BEVEL, "jointsStyle is stored");
-    eq(bytes.readUnsignedByte(), 10, "miterLimit is stored");
-    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    eq(CapsStyle.fromNumber(shape.styles.readUnsignedByte()), CapsStyle.SQUARE, "capsStyle is stored");
+    eq(JointStyle.fromNumber(shape.styles.readUnsignedByte()), JointStyle.BEVEL, "jointsStyle is stored");
+    eq(shape.styles.readUnsignedByte(), 10, "miterLimit is stored");
+    eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
+    eq(shape.styles.bytesAvailable, 0, "instructions didn't write more data than expected");
   }
 
   function moveTo() {
     var g = createGraphics();
+    var shape = g.getGraphicsData();
+
     g.moveTo(100, 50);
-    var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), PathCommand.MoveTo, "command is stored");
-    eq(bytes.readInt(), 100 * 20, "x is stored correctly");
-    eq(bytes.readInt(), 50 * 20, "y is stored correctly");
-    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    shape.styles.position = 0;
+    eq(shape.styles.length, 0, "path commands don't write style data");
+    eq(shape.commands[0], PathCommand.MoveTo, "command is stored");
+    eq(shape.coordinates[0], 100 * 20, "x is stored correctly");
+    eq(shape.coordinates[1], 50 * 20, "y is stored correctly");
+    eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
+    eq(shape.coordinatesPosition, 2, "instructions didn't write more data than expected");
   }
 
   function lineTo() {
     var g = createGraphics();
+    var shape = g.getGraphicsData();
+
     g.lineTo(100, 50);
-    var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), PathCommand.LineTo, "command is stored");
-    eq(bytes.readInt(), 100 * 20, "x is stored correctly");
-    eq(bytes.readInt(), 50 * 20, "y is stored correctly");
-    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    eq(shape.styles.length, 0, "path commands don't write style data");
+    eq(shape.commands[0], PathCommand.LineTo, "command is stored");
+    eq(shape.coordinates[0], 100 * 20, "x is stored correctly");
+    eq(shape.coordinates[1], 50 * 20, "y is stored correctly");
+    eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
+    eq(shape.coordinatesPosition, 2, "instructions didn't write more data than expected");
   }
 
   function curveTo() {
     var g = createGraphics();
+    var shape = g.getGraphicsData();
+
     g.curveTo(100, 50, 0, 100);
-    var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), PathCommand.CurveTo, "command is stored");
-    eq(bytes.readInt(), 100 * 20, "x is stored correctly");
-    eq(bytes.readInt(), 50 * 20, "y is stored correctly");
-    eq(bytes.readInt(), 0 * 20, "x is stored correctly");
-    eq(bytes.readInt(), 100 * 20, "y is stored correctly");
-    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    eq(shape.commands[0], PathCommand.CurveTo, "command is stored");
+    eq(shape.styles.length, 0, "path commands don't write style data");
+    eq(shape.coordinates[0], 100 * 20, "cpx is stored correctly");
+    eq(shape.coordinates[1], 50 * 20, "cpy is stored correctly");
+    eq(shape.coordinates[2], 0 * 20, "x is stored correctly");
+    eq(shape.coordinates[3], 100 * 20, "y is stored correctly");
+    eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
+    eq(shape.coordinatesPosition, 4, "instructions didn't write more data than expected");
   }
 
   function cubicCurveTo() {
     var g = createGraphics();
+    var shape = g.getGraphicsData();
+
     g.cubicCurveTo(100, 50, -100, 100, 0, 150);
-    var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), PathCommand.CubicCurveTo, "command is stored");
-    eq(bytes.readInt(), 100 * 20, "x is stored correctly");
-    eq(bytes.readInt(), 50 * 20, "y is stored correctly");
-    eq(bytes.readInt(), -100 * 20, "x is stored correctly");
-    eq(bytes.readInt(), 100 * 20, "y is stored correctly");
-    eq(bytes.readInt(), 0 * 20, "x is stored correctly");
-    eq(bytes.readInt(), 150 * 20, "y is stored correctly");
-    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    eq(shape.styles.length, 0, "path commands don't write style data");
+    eq(shape.commands[0], PathCommand.CubicCurveTo, "command is stored");
+    eq(shape.coordinates[0], 100 * 20, "cpx1 is stored correctly");
+    eq(shape.coordinates[1], 50 * 20, "cpy1 is stored correctly");
+    eq(shape.coordinates[2], -100 * 20, "cpx2 is stored correctly");
+    eq(shape.coordinates[3], 100 * 20, "cpy2 is stored correctly");
+    eq(shape.coordinates[4], 0 * 20, "x is stored correctly");
+    eq(shape.coordinates[5], 150 * 20, "y is stored correctly");
+    eq(shape.commandsPosition, 1, "instructions didn't write more data than expected");
+    eq(shape.coordinatesPosition, 6, "instructions didn't write more data than expected");
   }
 
   function drawRect() {
     var g = createGraphics();
+    var shape = g.getGraphicsData();
+
     g.drawRect(0, 0, 100, 100);
-    var bytes = cloneData(g.getGraphicsData());
-    eq(bytes.readUnsignedByte(), PathCommand.LineTo, "1. lineTo command is stored");
-    eq(bytes.readInt(), 100 * 20, "x is stored correctly");
-    eq(bytes.readInt(), 0 * 20, "y is stored correctly");
-    eq(bytes.readUnsignedByte(), PathCommand.LineTo, "2. lineTo command is stored");
-    eq(bytes.readInt(), 100 * 20, "x is stored correctly");
-    eq(bytes.readInt(), 100 * 20, "y is stored correctly");
-    eq(bytes.readUnsignedByte(), PathCommand.LineTo, "3. lineTo command is stored");
-    eq(bytes.readInt(), 0 * 20, "x is stored correctly");
-    eq(bytes.readInt(), 100 * 20, "y is stored correctly");
-    eq(bytes.readUnsignedByte(), PathCommand.LineTo, "4. lineTo command is stored");
-    eq(bytes.readInt(), 0 * 20, "x is stored correctly");
-    eq(bytes.readInt(), 0 * 20, "y is stored correctly");
-    var rectBytesCount = bytes.position;
-    eq(bytes.bytesAvailable, 0, "instructions didn't write more bytes than expected");
+    eq(shape.styles.length, 0, "path commands don't write style data");
+    eq(shape.commands[0], PathCommand.LineTo, "1. lineTo command is stored");
+    eq(shape.coordinates[0], 100 * 20, "x is stored correctly");
+    eq(shape.coordinates[1], 0 * 20, "y is stored correctly");
+    eq(shape.commands[0], PathCommand.LineTo, "2. lineTo command is stored");
+    eq(shape.coordinates[2], 100 * 20, "x is stored correctly");
+    eq(shape.coordinates[3], 100 * 20, "y is stored correctly");
+    eq(shape.commands[0], PathCommand.LineTo, "3. lineTo command is stored");
+    eq(shape.coordinates[4], 0 * 20, "x is stored correctly");
+    eq(shape.coordinates[5], 100 * 20, "y is stored correctly");
+    eq(shape.commands[0], PathCommand.LineTo, "4. lineTo command is stored");
+    eq(shape.coordinates[6], 0 * 20, "x is stored correctly");
+    eq(shape.coordinates[7], 0 * 20, "y is stored correctly");
+    eq(shape.commandsPosition, 4, "instructions didn't write more data than expected");
+    eq(shape.coordinatesPosition, 8, "instructions didn't write more data than expected");
+    
     g.drawRect(200, 200, 100, 100);
-    bytes = cloneData(g.getGraphicsData());
-    bytes.position = rectBytesCount;
-    eq(bytes.readUnsignedByte(), PathCommand.MoveTo, "moveTo command is stored if rect doesn't " +
-                                                     "start at previous cursor coordinates");
-    eq(bytes.readInt(), 200 * 20, "x is stored correctly");
-    eq(bytes.readInt(), 200 * 20, "y is stored correctly");
-    eq(bytes.bytesAvailable, rectBytesCount, "instructions didn't write more bytes than expected");
-    g.drawRect(200, 200, 100, 100);
+    eq(shape.commands[4], PathCommand.MoveTo, "moveTo command is stored if rect doesn't " +
+                                              "start at previous cursor coordinates");
+    eq(shape.coordinates[8], 200 * 20, "x is stored correctly");
+    eq(shape.coordinates[9], 200 * 20, "y is stored correctly");
+    eq(shape.commandsPosition, 9, "instructions didn't write more data than expected");
+    eq(shape.coordinatesPosition, 18, "instructions didn't write more data than expected");
   }
 
   // Note: these tests aren't really valid, but will do as a first approximation.
@@ -257,6 +301,7 @@
   // The only exception are multiple moveTo operations.
   function bounds() {
     var g = createGraphics();
+
     structEq(g._getContentBounds(false),
              {xMin: 0x8000000, xMax: 0x8000000, yMin: 0x8000000, yMax: 0x8000000},
              "bounds are initialized with sentinel values.");
@@ -294,15 +339,6 @@
 
   function createGraphics() {
     return new Shape().graphics;
-  }
-
-  function cloneData(data) {
-    var position = data.position;
-    data.position = 0;
-    var clone = new ShapeData();
-    data.readBytes(clone);
-    data.position = position;
-    return clone;
   }
 
 })();

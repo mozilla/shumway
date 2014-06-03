@@ -20,7 +20,6 @@ module Shumway.Timeline {
   import abstractMethod = Shumway.Debug.abstractMethod;
   import flash = Shumway.AVM2.AS.flash;
   import Bounds = Shumway.Bounds;
-  import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
 
   export class Symbol {
     id: number = -1;
@@ -61,12 +60,9 @@ module Shumway.Timeline {
     static FromData(data: any, loaderInfo: flash.display.LoaderInfo): ShapeSymbol {
       var symbol = new ShapeSymbol(data.id);
       symbol._setBoundsFromData(data);
-      // TODO: Fill graphics object with shape data.
       symbol.graphics = new flash.display.Graphics();
-      var shape = ShapeData.FromArrayBuffer(data.shape.buffer, data.shape.length);
-      symbol.graphics.setGraphicsData(shape);
+      symbol.graphics.setGraphicsData(ShapeData.FromPlainObject(data.shape));
 
-      // TODO: Remove this hack once we can get bounds of the graphics object.
       if (data.type === "shape") {
         symbol.graphics._getContentBounds(true).copyFrom(symbol.lineBounds);
         symbol.graphics._getContentBounds(false).copyFrom(symbol.fillBounds);
