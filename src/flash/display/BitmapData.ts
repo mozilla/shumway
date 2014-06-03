@@ -58,7 +58,8 @@ module Shumway.AVM2.AS.flash.display {
       }
       if (width > BitmapData.MAXIMUM_WIDTH ||
           height > BitmapData.MAXIMUM_HEIGHT ||
-          width * height > BitmapData.MAXIMUM_DIMENSION) {
+          width * height > BitmapData.MAXIMUM_DIMENSION)
+      {
         throwError('ArgumentError', Errors.ArgumentError);
       }
       this._transparent = !!transparent;
@@ -294,7 +295,7 @@ module Shumway.AVM2.AS.flash.display {
       if (matrix) {
         matrix = matrix.clone().toTwips();
       }
-      serializer.bitmapDataDraw(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
+      serializer.cacheAsBitmap(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
     }
     drawWithQuality(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false, quality: string = null): void {
       source = source; matrix = matrix; colorTransform = colorTransform; blendMode = asCoerceString(blendMode); clipRect = clipRect; smoothing = !!smoothing; quality = asCoerceString(quality);
@@ -428,6 +429,6 @@ module Shumway.AVM2.AS.flash.display {
   }
 
   export interface IBitmapDataSerializer {
-    bitmapDataDraw(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix, colorTransform: flash.geom.ColorTransform, blendMode: string, clipRect: flash.geom.Rectangle, smoothing: boolean);
+    cacheAsBitmap(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix, colorTransform: flash.geom.ColorTransform, blendMode: string, clipRect: flash.geom.Rectangle, smoothing: boolean);
   }
 }

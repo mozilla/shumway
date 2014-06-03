@@ -101,7 +101,7 @@ module Shumway.Tools.Profiler {
       var width = right - left;
       if (width <= this._minFrameWidthInPixels) {
         context.fillStyle = this._controller.theme.tabToolbar(1);
-        context.fillRect(left, depth * (12 + frameHPadding), 1, 12 + (frame.maxDepth - frame.depth) * 12.5);
+        context.fillRect(left, depth * (12 + frameHPadding), this._minFrameWidthInPixels, 12 + (frame.maxDepth - frame.depth) * 12.5);
         return false;
       }
       if (left < 0) {

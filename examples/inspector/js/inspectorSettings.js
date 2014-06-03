@@ -38,7 +38,7 @@ var GUI = (function () {
   var gui = new dat.GUI({ autoPlace: false, width: 300 });
 
   gui.add({ "Reset Options": resetOptions }, "Reset Options");
-  //gui.add({ "View Profile": viewProfile }, "View Profile");
+  gui.add({ "View Profile": viewProfile }, "View Profile");
   //gui.add({ "Start/Stop Profiling": toggleProfile }, "Start/Stop Profiling");
 
   var inspectorOptions = gui.addFolder("Inspector Options");
@@ -80,8 +80,7 @@ var GUI = (function () {
   }
 
   function viewProfile() {
-    alert("Not Implemented");
-    /*
+    //alert("Not Implemented");
     var Profiler = Shumway.Tools.Profiler;
     var profile = new Profiler.Profile();
     if (Shumway.playerTimelineBuffer) {
@@ -92,7 +91,6 @@ var GUI = (function () {
     }
     var profileController = new Profiler.Controller(profile, document.getElementById("profilePanelContainer"));
     profileController.createSnapshot();
-    */
   }
 
   function toggleProfile() {

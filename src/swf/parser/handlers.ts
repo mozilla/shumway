@@ -15,11 +15,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-/*global readUi16, readUb, readUi32, readUi8, readString, readFixed8, readFixed,
-         readSb, readFloat, readBinary, align, readSi16, readEncodedU32, readFb
-*/
 
-var tagHandler=(function (global) {
+/// <reference path='references.ts'/>
+module Shumway.SWF.Parser {
   function defineShape($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
@@ -51,6 +49,7 @@ var tagHandler=(function (global) {
     }
     return $;
   }
+
   function placeObject($bytes, $stream, $, swfVersion, tagCode) {
     var flags, hasEvents, clip, hasName, hasRatio, hasCxform, hasMatrix, place;
     var move, hasBackgroundColor, hasVisibility, hasImage, hasClassName, cache;
@@ -125,7 +124,7 @@ var tagHandler=(function (global) {
       }
       if (hasEvents) {
         var reserved = readUi16($bytes, $stream);
-        if (swfVersion  >= 6) {
+        if (swfVersion >= 6) {
           var allFlags = readUi32($bytes, $stream);
         }
         else {
@@ -161,14 +160,16 @@ var tagHandler=(function (global) {
     }
     return $;
   }
+
   function removeObject($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     if (tagCode === 5) {
-      $.symbolId = readUi16($bytes,$stream);
+      $.symbolId = readUi16($bytes, $stream);
     }
-    $.depth = readUi16($bytes,$stream);
+    $.depth = readUi16($bytes, $stream);
     return $;
   }
+
   function defineImage($bytes, $stream, $, swfVersion, tagCode) {
     var imgData;
     $ || ($ = {});
@@ -184,27 +185,28 @@ var tagHandler=(function (global) {
     else {
       imgData = $.imgData = readBinary($bytes, $stream, 0);
     }
-    switch(imgData[0]<<8|imgData[1]) {
-    case 65496:
-    case 65497:
-      $.mimeType = "image/jpeg";
-      break;
-    case 35152:
-      $.mimeType = "image/png";
-      break;
-    case 18249:
-      $.mimeType = "image/gif";
-      break;
-    default:
-      $.mimeType = "application/octet-stream";
+    switch (imgData[0] << 8 | imgData[1]) {
+      case 65496:
+      case 65497:
+        $.mimeType = "image/jpeg";
+        break;
+      case 35152:
+        $.mimeType = "image/png";
+        break;
+      case 18249:
+        $.mimeType = "image/gif";
+        break;
+      default:
+        $.mimeType = "application/octet-stream";
     }
     if (tagCode === 6) {
       $.incomplete = 1;
     }
     return $;
   }
+
   function defineButton($bytes, $stream, $, swfVersion, tagCode) {
-    var eob, hasFilters, count, blend;
+    var eob: boolean, hasFilters, count, blend;
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
     if (tagCode == 7) {
@@ -223,10 +225,10 @@ var tagHandler=(function (global) {
       var actionOffset = readUi16($bytes, $stream);
       var $28 = $.characters = [];
       do {
-        var $29 = {};
+        var $29: any = {};
         var flags = readUi8($bytes, $stream);
         var eob = $29.eob = !flags;
-        if (swfVersion  >= 8) {
+        if (swfVersion >= 8) {
           blend = $29.blend = flags >> 5 & 1;
           hasFilters = $29.hasFilters = flags >> 4 & 1;
         }
@@ -269,11 +271,12 @@ var tagHandler=(function (global) {
           var $57 = {};
           buttonCondAction($bytes, $stream, $57, swfVersion, tagCode);
           $56.push($57);
-        } while ($stream.remaining()  >  0);
+        } while ($stream.remaining() > 0);
       }
     }
     return $;
   }
+
   function defineJPEGTables($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.id = 0;
@@ -281,12 +284,14 @@ var tagHandler=(function (global) {
     $.mimeType = "application/octet-stream";
     return $;
   }
+
   function setBackgroundColor($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     var $0 = $.color = {};
     rgb($bytes, $stream, $0, swfVersion, tagCode);
     return $;
   }
+
   function defineBinaryData($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
@@ -294,13 +299,14 @@ var tagHandler=(function (global) {
     $.data = readBinary($bytes, $stream, 0);
     return $;
   }
+
   function defineFont($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
     var firstOffset = readUi16($bytes, $stream);
     var glyphCount = $.glyphCount = firstOffset / 2;
     var restOffsets = [];
-    var $0 = glyphCount-1;
+    var $0 = glyphCount - 1;
     while ($0--) {
       restOffsets.push(readUi16($bytes, $stream));
     }
@@ -314,6 +320,7 @@ var tagHandler=(function (global) {
     }
     return $;
   }
+
   function defineLabel($bytes, $stream, $, swfVersion, tagCode) {
     var eot;
     $ || ($ = {});
@@ -333,6 +340,7 @@ var tagHandler=(function (global) {
     } while (!eot);
     return $;
   }
+
   function doAction($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     if (tagCode === 59) {
@@ -341,6 +349,7 @@ var tagHandler=(function (global) {
     $.actionsData = readBinary($bytes, $stream, 0);
     return $;
   }
+
   function defineSound($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
@@ -353,6 +362,7 @@ var tagHandler=(function (global) {
     $.soundData = readBinary($bytes, $stream, 0);
     return $;
   }
+
   function startSound($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     if (tagCode == 15) {
@@ -365,6 +375,7 @@ var tagHandler=(function (global) {
     soundInfo($bytes, $stream, $0, swfVersion, tagCode);
     return $;
   }
+
   function soundStreamHead($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     var playbackFlags = readUi8($bytes, $stream);
@@ -382,11 +393,13 @@ var tagHandler=(function (global) {
     }
     return $;
   }
+
   function soundStreamBlock($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.data = readBinary($bytes, $stream, 0);
     return $;
   }
+
   function defineBitmap($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
@@ -400,6 +413,7 @@ var tagHandler=(function (global) {
     $.bmpData = readBinary($bytes, $stream, 0);
     return $;
   }
+
   function defineText($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
@@ -451,20 +465,22 @@ var tagHandler=(function (global) {
     }
     return $;
   }
+
   function frameLabel($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.name = readString($bytes, $stream, 0);
     return $;
   }
+
   function defineFont2($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.id = readUi16($bytes, $stream);
     var hasLayout = $.hasLayout = readUb($bytes, $stream, 1);
+    var reserved: any;
     if (swfVersion > 5) {
       $.shiftJis = readUb($bytes, $stream, 1);
-    }
-    else {
-      var reserved = readUb($bytes, $stream, 1);
+    } else {
+      reserved = readUb($bytes, $stream, 1);
     }
     $.smallText = readUb($bytes, $stream, 1);
     $.ansi = readUb($bytes, $stream, 1);
@@ -474,9 +490,8 @@ var tagHandler=(function (global) {
     $.bold = readUb($bytes, $stream, 1);
     if (swfVersion > 5) {
       $.language = readUi8($bytes, $stream);
-    }
-    else {
-      var reserved = readUi8($bytes, $stream);
+    } else {
+      reserved = readUi8($bytes, $stream);
       $.language = 0;
     }
     var nameLength = readUi8($bytes, $stream);
@@ -492,8 +507,7 @@ var tagHandler=(function (global) {
         $0.push(readUi32($bytes, $stream));
       }
       $.mapOffset = readUi32($bytes, $stream);
-    }
-    else {
+    } else {
       var $2 = $.offsets = [];
       var $3 = glyphCount;
       while ($3--) {
@@ -514,8 +528,7 @@ var tagHandler=(function (global) {
       while ($48--) {
         $47.push(readUi16($bytes, $stream));
       }
-    }
-    else {
+    } else {
       var $49 = $.codes = [];
       var $50 = glyphCount;
       while ($50--) {
@@ -549,6 +562,7 @@ var tagHandler=(function (global) {
     }
     return $;
   }
+
   function fileAttributes($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     var reserved = readUb($bytes, $stream, 1);
@@ -562,6 +576,7 @@ var tagHandler=(function (global) {
     var pad = readUb($bytes, $stream, 24);
     return $;
   }
+
   function doABC($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     if (tagCode === 82) {
@@ -579,32 +594,35 @@ var tagHandler=(function (global) {
     $.data = readBinary($bytes, $stream, 0);
     return $;
   }
+
   function exportAssets($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     var exportsCount = readUi16($bytes, $stream);
     var $0 = $.exports = [];
     var $1 = exportsCount;
     while ($1--) {
-      var $2 = {};
+      var $2: any = {};
       $2.symbolId = readUi16($bytes, $stream);
       $2.className = readString($bytes, $stream, 0);
       $0.push($2);
     }
     return $;
   }
+
   function symbolClass($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     var symbolCount = readUi16($bytes, $stream);
     var $0 = $.exports = [];
     var $1 = symbolCount;
     while ($1--) {
-      var $2 = {};
+      var $2: any = {};
       $2.symbolId = readUi16($bytes, $stream);
       $2.className = readString($bytes, $stream, 0);
       $0.push($2);
     }
     return $;
   }
+
   function defineScalingGrid($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     $.symbolId = readUi16($bytes, $stream);
@@ -612,13 +630,14 @@ var tagHandler=(function (global) {
     bbox($bytes, $stream, $0, swfVersion, tagCode);
     return $;
   }
+
   function defineScene($bytes, $stream, $, swfVersion, tagCode) {
     $ || ($ = {});
     var sceneCount = readEncodedU32($bytes, $stream);
     var $0 = $.scenes = [];
     var $1 = sceneCount;
     while ($1--) {
-      var $2 = {};
+      var $2: any = {};
       $2.offset = readEncodedU32($bytes, $stream);
       $2.name = readString($bytes, $stream, 0);
       $0.push($2);
@@ -627,13 +646,14 @@ var tagHandler=(function (global) {
     var $3 = $.labels = [];
     var $4 = labelCount;
     while ($4--) {
-      var $5 = {};
+      var $5: any = {};
       $5.frame = readEncodedU32($bytes, $stream);
       $5.name = readString($bytes, $stream, 0);
       $3.push($5);
     }
     return $;
   }
+
   function bbox($bytes, $stream, $, swfVersion, tagCode) {
     align($bytes, $stream);
     var bits = readUb($bytes, $stream, 5);
@@ -647,6 +667,7 @@ var tagHandler=(function (global) {
     $.yMax = yMax;
     align($bytes, $stream);
   }
+
   function rgb($bytes, $stream, $, swfVersion, tagCode) {
     $.red = readUi8($bytes, $stream);
     $.green = readUi8($bytes, $stream);
@@ -654,6 +675,7 @@ var tagHandler=(function (global) {
     $.alpha = 255;
     return;
   }
+
   function rgba($bytes, $stream, $, swfVersion, tagCode) {
     $.red = readUi8($bytes, $stream);
     $.green = readUi8($bytes, $stream);
@@ -661,12 +683,14 @@ var tagHandler=(function (global) {
     $.alpha = readUi8($bytes, $stream);
     return;
   }
+
   function argb($bytes, $stream, $, swfVersion, tagCode) {
     $.alpha = readUi8($bytes, $stream);
     $.red = readUi8($bytes, $stream);
     $.green = readUi8($bytes, $stream);
     $.blue = readUi8($bytes, $stream);
   }
+
   function fillSolid($bytes, $stream, $, swfVersion, tagCode, isMorph) {
     if (tagCode > 22 || isMorph) {
       var $125 = $.color = {};
@@ -682,35 +706,37 @@ var tagHandler=(function (global) {
     }
     return;
   }
+
   function matrix($bytes, $stream, $, swfVersion, tagCode) {
-    align($bytes,$stream);
-    var hasScale = readUb($bytes,$stream,1);
+    align($bytes, $stream);
+    var hasScale = readUb($bytes, $stream, 1);
     if (hasScale) {
-      var bits = readUb($bytes,$stream,5);
-      $.a = readFb($bytes,$stream,bits);
-      $.d = readFb($bytes,$stream,bits);
+      var bits = readUb($bytes, $stream, 5);
+      $.a = readFb($bytes, $stream, bits);
+      $.d = readFb($bytes, $stream, bits);
     }
     else {
       $.a = 1;
       $.d = 1;
     }
-    var hasRotate = readUb($bytes,$stream,1);
+    var hasRotate = readUb($bytes, $stream, 1);
     if (hasRotate) {
-      var bits = readUb($bytes,$stream,5);
-      $.b = readFb($bytes,$stream,bits);
-      $.c = readFb($bytes,$stream,bits);
+      var bits = readUb($bytes, $stream, 5);
+      $.b = readFb($bytes, $stream, bits);
+      $.c = readFb($bytes, $stream, bits);
     }
     else {
       $.b = 0;
       $.c = 0;
     }
-    var bits = readUb($bytes,$stream,5);
-    var e = readSb($bytes,$stream,bits);
-    var f = readSb($bytes,$stream,bits);
+    var bits = readUb($bytes, $stream, 5);
+    var e = readSb($bytes, $stream, bits);
+    var f = readSb($bytes, $stream, bits);
     $.tx = e;
     $.ty = f;
-    align($bytes,$stream);
+    align($bytes, $stream);
   }
+
   function cxform($bytes, $stream, $, swfVersion, tagCode) {
     align($bytes, $stream);
     var hasOffsets = readUb($bytes, $stream, 1);
@@ -750,6 +776,7 @@ var tagHandler=(function (global) {
     }
     align($bytes, $stream);
   }
+
   function fillGradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type) {
     var $128 = $.matrix = {};
     matrix($bytes, $stream, $128, swfVersion, tagCode);
@@ -759,6 +786,7 @@ var tagHandler=(function (global) {
     }
     gradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
   }
+
   function gradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type) {
     if (tagCode === 83) {
       $.spreadMode = readUb($bytes, $stream, 2);
@@ -782,6 +810,7 @@ var tagHandler=(function (global) {
       }
     }
   }
+
   function gradientRecord($bytes, $stream, $, swfVersion, tagCode, isMorph) {
     $.ratio = readUi8($bytes, $stream);
     if (tagCode > 22) {
@@ -798,32 +827,33 @@ var tagHandler=(function (global) {
       rgba($bytes, $stream, $135, swfVersion, tagCode);
     }
   }
+
   function morphShapeWithStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
-    var eos, bits;
-    var temp = styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
+    var eos: boolean, bits: number, temp: any;
+    temp = styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
     var lineBits = temp.lineBits;
     var fillBits = temp.fillBits;
     var $160 = $.records = [];
     do {
       var $161 = {};
-      var temp = shapeRecord($bytes, $stream, $161, swfVersion, tagCode, isMorph,
-                             fillBits, lineBits, hasStrokes, bits);
-      var eos = temp.eos;
+      temp = shapeRecord($bytes, $stream, $161, swfVersion, tagCode, isMorph,
+        fillBits, lineBits, hasStrokes, bits);
+      eos = temp.eos;
       var flags = temp.flags;
       var type = temp.type;
       var fillBits = temp.fillBits;
       var lineBits = temp.lineBits;
-      var bits = temp.bits;
+      bits = temp.bits;
       $160.push($161);
     } while (!eos);
-    var temp = styleBits($bytes, $stream, $, swfVersion, tagCode);
+    temp = styleBits($bytes, $stream, $, swfVersion, tagCode);
     var fillBits = temp.fillBits;
     var lineBits = temp.lineBits;
     var $162 = $.recordsMorph = [];
     do {
       var $163 = {};
-      var temp = shapeRecord($bytes, $stream, $163, swfVersion, tagCode, isMorph,
-                             fillBits, lineBits, hasStrokes, bits);
+      temp = shapeRecord($bytes, $stream, $163, swfVersion, tagCode, isMorph,
+        fillBits, lineBits, hasStrokes, bits);
       eos = temp.eos;
       var flags = temp.flags;
       var type = temp.type;
@@ -833,39 +863,41 @@ var tagHandler=(function (global) {
       $162.push($163);
     } while (!eos);
   }
+
   function shapeWithStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
-    var eos;
-    var temp = styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
+    var eos: boolean, bits: number, temp: any;
+    temp = styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
     var fillBits = temp.fillBits;
     var lineBits = temp.lineBits;
     var $160 = $.records = [];
     do {
       var $161 = {};
-      var temp = shapeRecord($bytes, $stream, $161, swfVersion, tagCode, isMorph,
-                             fillBits, lineBits, hasStrokes, bits);
+      temp = shapeRecord($bytes, $stream, $161, swfVersion, tagCode, isMorph,
+        fillBits, lineBits, hasStrokes, bits);
       eos = temp.eos;
       var flags = temp.flags;
       var type = temp.type;
       var fillBits = temp.fillBits;
       var lineBits = temp.lineBits;
-      var bits = temp.bits;
+      bits = temp.bits;
       $160.push($161);
     } while (!eos);
   }
-  function shapeRecord($bytes, $stream, $, swfVersion, tagCode, isMorph,
-                       fillBits, lineBits, hasStrokes, bits) {
+
+  function shapeRecord($bytes, $stream, $, swfVersion, tagCode, isMorph, fillBits, lineBits, hasStrokes, bits: number) {
+    var eos: boolean, temp: any;
     var type = $.type = readUb($bytes, $stream, 1);
     var flags = readUb($bytes, $stream, 5);
-    var eos = $.eos = !(type  ||  flags);
+    eos = $.eos = !(type || flags);
     if (type) {
-      var temp = shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags, bits);
-      var bits = temp.bits;
+      temp = shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags, bits);
+      bits = temp.bits;
     } else {
-      var temp = shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph,
-                                  fillBits, lineBits, hasStrokes, bits);
+      temp = shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph,
+        fillBits, lineBits, hasStrokes, bits);
       var fillBits = temp.fillBits;
       var lineBits = temp.lineBits;
-      var bits = temp.bits;
+      bits = temp.bits;
     }
     return {
       type: type,
@@ -876,7 +908,8 @@ var tagHandler=(function (global) {
       bits: bits
     };
   }
-  function shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags, bits) {
+
+  function shapeRecordEdge($bytes, $stream, $, swfVersion, tagCode, flags, bits: number) {
     var isStraight = 0, tmp = 0, bits = 0, isGeneral = 0, isVertical = 0;
     isStraight = $.isStraight = flags >> 4;
     tmp = flags & 0x0f;
@@ -902,11 +935,11 @@ var tagHandler=(function (global) {
     }
     return {bits: bits};
   }
-  function shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph,
-                            fillBits, lineBits, hasStrokes, bits) {
+
+  function shapeRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags, isMorph, fillBits: number, lineBits: number, hasStrokes, bits: number) {
     var hasNewStyles = 0, hasLineStyle = 0, hasFillStyle1 = 0;
     var hasFillStyle0 = 0, move = 0;
-    if (tagCode  >  2) {
+    if (tagCode > 2) {
       hasNewStyles = $.hasNewStyles = flags >> 4;
     } else {
       hasNewStyles = $.hasNewStyles = 0;
@@ -931,8 +964,8 @@ var tagHandler=(function (global) {
     }
     if (hasNewStyles) {
       var temp = styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
-      var lineBits = temp.lineBits;
-      var fillBits = temp.fillBits;
+      lineBits = temp.lineBits;
+      fillBits = temp.fillBits;
     }
     return {
       lineBits: lineBits,
@@ -940,6 +973,7 @@ var tagHandler=(function (global) {
       bits: bits
     };
   }
+
   function styles($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
     fillStyleArray($bytes, $stream, $, swfVersion, tagCode, isMorph);
     lineStyleArray($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes);
@@ -948,10 +982,11 @@ var tagHandler=(function (global) {
     var lineBits = temp.lineBits;
     return {fillBits: fillBits, lineBits: lineBits};
   }
+
   function fillStyleArray($bytes, $stream, $, swfVersion, tagCode, isMorph) {
     var count;
     var tmp = readUi8($bytes, $stream);
-    if (tagCode  >  2  &&  tmp === 255) {
+    if (tagCode > 2 && tmp === 255) {
       count = readUi16($bytes, $stream);
     }
     else {
@@ -965,10 +1000,11 @@ var tagHandler=(function (global) {
       $4.push($6);
     }
   }
+
   function lineStyleArray($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
     var count;
     var tmp = readUi8($bytes, $stream);
-    if (tagCode  >  2  &&  tmp === 255) {
+    if (tagCode > 2 && tmp === 255) {
       count = readUi16($bytes, $stream);
     } else {
       count = tmp;
@@ -981,6 +1017,7 @@ var tagHandler=(function (global) {
       $138.push($140);
     }
   }
+
   function styleBits($bytes, $stream, $, swfVersion, tagCode) {
     align($bytes, $stream);
     var fillBits = readUb($bytes, $stream, 4);
@@ -990,26 +1027,28 @@ var tagHandler=(function (global) {
       lineBits: lineBits
     };
   }
+
   function fillStyle($bytes, $stream, $, swfVersion, tagCode, isMorph) {
     var type = $.type = readUi8($bytes, $stream);
     switch (type) {
-    case 0:
-      fillSolid($bytes, $stream, $, swfVersion, tagCode, isMorph);
-      break;
-    case 16:
-    case 18:
-    case 19:
-      fillGradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
-      break;
-    case 64:
-    case 65:
-    case 66:
-    case 67:
-      fillBitmap($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
-      break;
-    default:
+      case 0:
+        fillSolid($bytes, $stream, $, swfVersion, tagCode, isMorph);
+        break;
+      case 16:
+      case 18:
+      case 19:
+        fillGradient($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
+        break;
+      case 64:
+      case 65:
+      case 66:
+      case 67:
+        fillBitmap($bytes, $stream, $, swfVersion, tagCode, isMorph, type);
+        break;
+      default:
     }
   }
+
   function lineStyle($bytes, $stream, $, swfVersion, tagCode, isMorph, hasStrokes) {
     $.width = readUi16($bytes, $stream);
     if (isMorph) {
@@ -1066,6 +1105,7 @@ var tagHandler=(function (global) {
     }
     $.condition = type === 64 || type === 67;
   }
+
   function filterGlow($bytes, $stream, $, swfVersion, tagCode, type) {
     var count;
     if (type === 4 || type === 7) {
@@ -1109,12 +1149,14 @@ var tagHandler=(function (global) {
       $.quality = readUb($bytes, $stream, 5);
     }
   }
+
   function filterBlur($bytes, $stream, $, swfVersion, tagCode) {
     $.blurX = readFixed($bytes, $stream);
     $.blurY = readFixed($bytes, $stream);
     $.quality = readUb($bytes, $stream, 5);
     var reserved = readUb($bytes, $stream, 3);
   }
+
   function filterConvolution($bytes, $stream, $, swfVersion, tagCode) {
     var matrixX = $.matrixX = readUi8($bytes, $stream);
     var matrixY = $.matrixY = readUi8($bytes, $stream);
@@ -1131,6 +1173,7 @@ var tagHandler=(function (global) {
     $.clamp = readUb($bytes, $stream, 1);
     $.preserveAlpha = readUb($bytes, $stream, 1);
   }
+
   function filterColorMatrix($bytes, $stream, $, swfVersion, tagCode) {
     var $20 = $.matrix = [];
     var $21 = 20;
@@ -1138,31 +1181,33 @@ var tagHandler=(function (global) {
       $20.push(readFloat($bytes, $stream));
     }
   }
+
   function anyFilter($bytes, $stream, $, swfVersion, tagCode) {
     var type = $.type = readUi8($bytes, $stream);
-    switch(type) {
-    case 0:
-    case 2:
-    case 3:
-    case 4:
-    case 7:
-      filterGlow($bytes, $stream, $, swfVersion, tagCode, type);
-      break;
-    case 1:
-      filterBlur($bytes, $stream, $, swfVersion, tagCode);
-      break;
-    case 5:
-      filterConvolution($bytes, $stream, $, swfVersion, tagCode);
-      break;
-    case 6:
-      filterColorMatrix($bytes, $stream, $, swfVersion, tagCode);
-      break;
-    default:
+    switch (type) {
+      case 0:
+      case 2:
+      case 3:
+      case 4:
+      case 7:
+        filterGlow($bytes, $stream, $, swfVersion, tagCode, type);
+        break;
+      case 1:
+        filterBlur($bytes, $stream, $, swfVersion, tagCode);
+        break;
+      case 5:
+        filterConvolution($bytes, $stream, $, swfVersion, tagCode);
+        break;
+      case 6:
+        filterColorMatrix($bytes, $stream, $, swfVersion, tagCode);
+        break;
+      default:
     }
   }
+
   function events($bytes, $stream, $, swfVersion, tagCode) {
     var flags, keyPress;
-    if (swfVersion  >= 6) {
+    if (swfVersion >= 6) {
       flags = readUi32($bytes, $stream);
     }
     else {
@@ -1177,7 +1222,7 @@ var tagHandler=(function (global) {
     $.onUnload = flags >> 2 & 1;
     $.onEnterFrame = flags >> 1 & 1;
     $.onLoad = flags & 1;
-    if (swfVersion  >= 6) {
+    if (swfVersion >= 6) {
       $.onDragOver = flags >> 15 & 1;
       $.onRollOut = flags >> 14 & 1;
       $.onRollOver = flags >> 13 & 1;
@@ -1186,7 +1231,7 @@ var tagHandler=(function (global) {
       $.onPress = flags >> 10 & 1;
       $.onInitialize = flags >> 9 & 1;
       $.onData = flags >> 8 & 1;
-      if (swfVersion  >= 7) {
+      if (swfVersion >= 7) {
         $.onConstruct = flags >> 18 & 1;
       } else {
         $.onConstruct = 0;
@@ -1203,6 +1248,7 @@ var tagHandler=(function (global) {
     }
     return {eoe: eoe};
   }
+
   function kerning($bytes, $stream, $, swfVersion, tagCode, wide) {
     if (wide) {
       $.code1 = readUi16($bytes, $stream);
@@ -1214,10 +1260,12 @@ var tagHandler=(function (global) {
     }
     $.adjustment = readUi16($bytes, $stream);
   }
+
   function textEntry($bytes, $stream, $, swfVersion, tagCode, glyphBits, advanceBits) {
     $.glyphIndex = readUb($bytes, $stream, glyphBits);
     $.advance = readSb($bytes, $stream, advanceBits);
   }
+
   function textRecordSetup($bytes, $stream, $, swfVersion, tagCode, flags) {
     var hasFont = $.hasFont = flags >> 3 & 1;
     var hasColor = $.hasColor = flags >> 2 & 1;
@@ -1245,6 +1293,7 @@ var tagHandler=(function (global) {
       $.fontHeight = readUi16($bytes, $stream);
     }
   }
+
   function textRecord($bytes, $stream, $, swfVersion, tagCode, glyphBits, advanceBits) {
     var glyphCount;
     align($bytes, $stream);
@@ -1268,11 +1317,13 @@ var tagHandler=(function (global) {
     }
     return {eot: eot};
   }
+
   function soundEnvelope($bytes, $stream, $, swfVersion, tagCode) {
     $.pos44 = readUi32($bytes, $stream);
     $.volumeLeft = readUi16($bytes, $stream);
     $.volumeRight = readUi16($bytes, $stream);
   }
+
   function soundInfo($bytes, $stream, $, swfVersion, tagCode) {
     var reserved = readUb($bytes, $stream, 2);
     $.stop = readUb($bytes, $stream, 1);
@@ -1301,11 +1352,12 @@ var tagHandler=(function (global) {
       }
     }
   }
+
   function button($bytes, $stream, $, swfVersion, tagCode) {
     var hasFilters, blend;
     var flags = readUi8($bytes, $stream);
     var eob = $.eob = !flags;
-    if (swfVersion  >= 8) {
+    if (swfVersion >= 8) {
       blend = $.blend = flags >> 5 & 1;
       hasFilters = $.hasFilters = flags >> 4 & 1;
     }
@@ -1337,6 +1389,7 @@ var tagHandler=(function (global) {
     }
     return {eob: eob};
   }
+
   function buttonCondAction($bytes, $stream, $, swfVersion, tagCode) {
     var buttonCondSize = readUi16($bytes, $stream);
     var buttonConditions = readUi16($bytes, $stream);
@@ -1350,16 +1403,17 @@ var tagHandler=(function (global) {
     $.idleToOverUp = buttonConditions & 1;
     $.mouseEventFlags = buttonConditions & 511;
     $.keyPress = buttonConditions >> 9 & 127;
-    $.overDownToIdle = buttonConditions  >> 8  & 1;
-    if (! buttonCondSize) {
+    $.overDownToIdle = buttonConditions >> 8 & 1;
+    if (!buttonCondSize) {
       $.actionsData = readBinary($bytes, $stream, 0);
     } else {
       $.actionsData = readBinary($bytes, $stream, buttonCondSize - 4);
     }
   }
+
   function shape($bytes, $stream, $, swfVersion, tagCode) {
-    var eos;
-    var temp = styleBits($bytes, $stream, $, swfVersion, tagCode);
+    var eos: boolean, bits: number, temp: any;
+    temp = styleBits($bytes, $stream, $, swfVersion, tagCode);
     var fillBits = temp.fillBits;
     var lineBits = temp.lineBits;
     var $4 = $.records = [];
@@ -1367,16 +1421,17 @@ var tagHandler=(function (global) {
       var $5 = {};
       var isMorph = false; // FIXME Is this right?
       var hasStrokes = false;  // FIXME Is this right?
-      var temp = shapeRecord($bytes, $stream, $5, swfVersion, tagCode, isMorph,
-                             fillBits, lineBits, hasStrokes, bits);
+      temp = shapeRecord($bytes, $stream, $5, swfVersion, tagCode, isMorph,
+        fillBits, lineBits, hasStrokes, bits);
       eos = temp.eos;
       var fillBits = temp.fillBits;
       var lineBits = temp.lineBits;
-      var bits = bits;
+      bits = bits;
       $4.push($5);
     } while (!eos);
   }
-  return {
+
+  export var tagHandler:any = {
     /* End */                            0: undefined,
     /* ShowFrame */                      1: undefined,
     /* DefineShape */                    2: defineShape,
@@ -1443,24 +1498,25 @@ var tagHandler=(function (global) {
     /* DefineBitsJPEG4 */               90: defineImage,
     /* DefineFont4 */                   91: undefined
   };
-})(this);
 
-var readHeader = function readHeader($bytes, $stream, $, swfVersion, tagCode) {
-  $ || ($ = {});
-  var $0 = $.bbox = {};
-  align($bytes, $stream);
-  var bits = readUb($bytes, $stream, 5);
-  var xMin = readSb($bytes, $stream, bits);
-  var xMax = readSb($bytes, $stream, bits);
-  var yMin = readSb($bytes, $stream, bits);
-  var yMax = readSb($bytes, $stream, bits);
-  $0.xMin = xMin;
-  $0.xMax = xMax;
-  $0.yMin = yMin;
-  $0.yMax = yMax;
-  align($bytes, $stream);
-  var frameRateFraction = readUi8($bytes, $stream);
-  $.frameRate = readUi8($bytes, $stream) + frameRateFraction/256;
-  $.frameCount = readUi16($bytes, $stream);
-  return $;
-};
+
+  export function readHeader($bytes, $stream, $, swfVersion, tagCode) {
+    $ || ($ = {});
+    var $0: any = $.bbox = {};
+    align($bytes, $stream);
+    var bits = readUb($bytes, $stream, 5);
+    var xMin = readSb($bytes, $stream, bits);
+    var xMax = readSb($bytes, $stream, bits);
+    var yMin = readSb($bytes, $stream, bits);
+    var yMax = readSb($bytes, $stream, bits);
+    $0.xMin = xMin;
+    $0.xMax = xMax;
+    $0.yMin = yMin;
+    $0.yMax = yMax;
+    align($bytes, $stream);
+    var frameRateFraction = readUi8($bytes, $stream);
+    $.frameRate = readUi8($bytes, $stream) + frameRateFraction / 256;
+    $.frameCount = readUi16($bytes, $stream);
+    return $;
+  }
+}

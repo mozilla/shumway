@@ -165,30 +165,26 @@ limitations under the License.
 
     <!-- Load SWF Dependencies -->
     <script> console.time("Load SWF Dependencies"); </script>
-    <script src="../../src/swf/util.js"></script>
-    <script src="../../src/swf/swf.js"></script>
-    <script src="../../src/swf/inflate.js"></script>
-    <script src="../../src/swf/stream.js"></script>
+    <script src="../../build/ts/swf/inflate.js"></script>
+    <script src="../../build/ts/swf/stream.js"></script>
     <script src="../../build/ts/swf/parser/bitmap.js"></script>
     <script src="../../build/ts/swf/parser/button.js"></script>
     <script src="../../build/ts/swf/parser/font.js"></script>
-    <script src="../../src/swf/image.js"></script>
+    <script src="../../build/ts/swf/parser/image.js"></script>
     <script src="../../build/ts/swf/parser/label.js"></script>
     <script src="../../build/ts/swf/parser/shape.js"></script>
-    <script src="../../src/swf/sound.js"></script>
-    <script src="../../src/swf/text.js"></script>
+    <script src="../../build/ts/swf/parser/sound.js"></script>
+    <script src="../../build/ts/swf/parser/text.js"></script>
     <script> console.timeEnd("Load SWF Dependencies"); </script>
 
     <script> console.time("Load SWF Parser"); </script>
-    <script src="../../src/swf/types.js"></script>
-    <script src="../../src/swf/structs.js"></script>
-    <script src="../../src/swf/tags.js"></script>
-    <script src="../../src/swf/templates.js"></script>
-    <script src="../../src/swf/handlers.js"></script>
-    <script src="../../src/swf/parser.js"></script>
+    <script src="../../build/ts/swf/parser/swfTag.js"></script>
+    <script src="../../build/ts/swf/parser/templates.js"></script>
+    <script src="../../build/ts/swf/parser/handlers.js"></script>
+    <script src="../../build/ts/swf/parser/parser.js"></script>
     <script> console.timeEnd("Load SWF Parser"); </script>
 
-    <script src="../../src/swf/resourceloader.js"></script>
+    <script src="../../build/ts/swf/resourceLoader.js"></script>
 
     <script> console.timeEnd("Load Parser Dependencies"); </script>
 
@@ -667,6 +663,7 @@ limitations under the License.
     <script src="../../build/ts/tools/profiler/flameChart.js"></script>
     <script src="../../build/ts/tools/profiler/flameChartHeader.js"></script>
     <script src="../../build/ts/tools/profiler/flameChartOverview.js"></script>
+    <script src="../../build/ts/tools/profiler/theme/ui.js"></script>
 
     <script src="../../build/ts/player/embed.js"></script>
 

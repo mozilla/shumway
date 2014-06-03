@@ -127,6 +127,7 @@ module Shumway.GFX {
       }
       var timelineDetails = "convertImage: " + ImageType[sourceFormat] + " to " + ImageType[targetFormat] + " (" + memorySizeToString(source.length) + ")";
       enterTimeline(timelineDetails);
+
       if (sourceFormat === ImageType.PremultipliedAlphaARGB &&
           targetFormat === ImageType.StraightAlphaRGBA) {
         Shumway.ColorUtilities.ensureUnpremultiplyTable();
@@ -164,19 +165,35 @@ module Shumway.GFX {
 
     public updateFromDataBuffer(type: ImageType, dataBuffer: DataBuffer) {
       enterTimeline("RenderableBitmap.updateFromDataBuffer");
+
       var context = this._canvas.getContext("2d");
-      var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
 
-      RenderableBitmap._convertImage (
-        type,
-        ImageType.StraightAlphaRGBA,
-        new Int32Array(dataBuffer.buffer),
-        new Int32Array(imageData.data.buffer)
-      );
+      if (type === ImageType.JPEG ||
+          type === ImageType.PNG ||
+          type === ImageType.GIF)
+      {
+        var img = new Image();
+        img.src = URL.createObjectURL(dataBuffer.toBlob());
+        img.onload = function () {
+          context.drawImage(img, 0, 0);
+        };
+        img.onerror = function () {
+          throw "img error";
+        };
+      } else {
+        var imageData: ImageData = context.createImageData(this._bounds.w, this._bounds.h);
 
-      enterTimeline("putImageData");
-      context.putImageData(imageData, 0, 0);
-      leaveTimeline("putImageData");
+        RenderableBitmap._convertImage (
+          type,
+          ImageType.StraightAlphaRGBA,
+          new Int32Array(dataBuffer.buffer),
+          new Int32Array(imageData.data.buffer)
+        );
+
+        enterTimeline("putImageData");
+        context.putImageData(imageData, 0, 0);
+        leaveTimeline("putImageData");
+      }
 
       this.setFlags(RenderableFlags.Dirty);
       leaveTimeline("RenderableBitmap.updateFromDataBuffer");
@@ -197,6 +214,24 @@ module Shumway.GFX {
       context.restore();
     }
 
+    draw(source: RenderableBitmap, matrix: Shumway.GFX.Geometry.Matrix, colorMatrix: Shumway.GFX.ColorMatrix, blendMode: number, clipRect: Rectangle): void {
+      var context = this._canvas.getContext('2d');
+      context.save();
+      if (clipRect) {
+        context.rect(clipRect.x, clipRect.y, clipRect.w, clipRect.h);
+        context.clip();
+      }
+      var bounds = source.getBounds();
+      if (bounds.x || bounds.y) {
+        matrix.translate(bounds.x, bounds.y);
+      }
+      if (matrix) {
+        context.transform(matrix.a, matrix.b, matrix.c, matrix.d, matrix.tx, matrix.ty);
+      }
+      context.drawImage(source._canvas, 0, 0);
+      context.restore();
+    }
+
     private _renderFallback(context: CanvasRenderingContext2D) {
       if (!this.fillStyle) {
         this.fillStyle = Shumway.ColorStyle.randomStyle();
@@ -208,10 +243,6 @@ module Shumway.GFX {
       context.fillStyle = this.fillStyle;
       context.fillRect(bounds.x, bounds.y, bounds.w, bounds.h);
       context.restore();
-    }
-
-    public getContext(): CanvasRenderingContext2D {
-      return this._canvas.getContext('2d');
     }
   }
 
