@@ -16,6 +16,8 @@
 
 ///<reference path='../references.ts' />
 ///<reference path='swfTag.ts' />
+///<reference path='templates.ts' />
+///<reference path='handlers.ts' />
 ///<reference path='parser.ts' />
 
 ///<reference path='bitmap.ts' />

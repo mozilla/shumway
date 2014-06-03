@@ -24,13 +24,6 @@ module Shumway.SWF.Parser {
   declare var StreamNoDataError;
   declare var InflateNoDataError;
 
-  declare var tagHandler;
-  declare function readHeader(bytes, stream, $, swfVersion, tagCode);
-
-  declare function readUi16(bytes, stream) : number;
-  declare function readUi32(bytes, stream) : number;
-
-
   declare class Stream {
     constructor(buffer, offset, length);
     pos: number;
