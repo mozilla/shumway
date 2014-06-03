@@ -23,30 +23,69 @@ module Shumway.Tools.Profiler {
   export class Controller {
 
     private _container: HTMLElement;
-    private _profile: Profile;
+    private _profiles: Profile [];
+    private _activeProfile: Profile;
 
     private _overviewHeader: FlameChartHeader;
     private _overview: FlameChartOverview;
     private _headers: FlameChartHeader [];
     private _charts: FlameChart [];
+
     private _themeType: UIThemeType;
     private _theme: Theme.UITheme;
 
-    constructor(profile:Profile, container:HTMLElement, themeType: UIThemeType = UIThemeType.DARK) {
-      this._profile = profile;
+    constructor(container: HTMLElement, themeType: UIThemeType = UIThemeType.DARK) {
       this._container = container;
       this._headers = [];
       this._charts = [];
+      this._profiles = [];
+      this._activeProfile = null;
       this.themeType = themeType;
-      this._createViews();
     }
+
+    createProfile(buffers: TimelineBuffer [], activate: boolean = true): Profile {
+      var profile = new Profile(buffers);
+      profile.createSnapshots();
+      this._profiles.push(profile);
+      if (activate) {
+        this.activateProfile(profile);
+      }
+      return profile;
+    }
+
+    activateProfile(profile: Profile) {
+      this.deactivateProfile();
+      this._activeProfile = profile;
+      this._createViews();
+      this._initializeViews();
+    }
+
+    activateProfileAt(index: number) {
+      this.activateProfile(this.getProfileAt(index));
+    }
+
+    deactivateProfile() {
+      if (this._activeProfile) {
+        this._destroyViews();
+        this._activeProfile = null;
+      }
+    }
+
+    getProfileAt(index: number): Profile {
+      return this._profiles[index];
+    }
+
+    get activeProfile(): Profile {
+      return this._activeProfile;
+    }
+
+    get profileCount(): number {
+      return this._profiles.length;
+    }
+
 
     get container(): HTMLElement {
       return this._container;
-    }
-
-    get profile(): Profile {
-      return this._profile;
     }
 
     set themeType(value: UIThemeType) {
@@ -67,27 +106,17 @@ module Shumway.Tools.Profiler {
       return this._theme;
     }
 
-    createSnapshot() {
-      this._profile.createSnapshots();
-      this._initializeViews();
-    }
-
-    reset() {
-      this._destroyViews();
-      this._profile.reset();
-    }
-
-    getBufferAt(index: number): TimelineBuffer {
-      return this._profile.getBufferAt(index);
+    getSnapshotAt(index: number): TimelineBufferSnapshot {
+      return this._activeProfile.getSnapshotAt(index);
     }
 
     private _createViews() {
       var self = this;
       this._overviewHeader = new Profiler.FlameChartHeader(this, FlameChartHeaderType.OVERVIEW);
       this._overview = new Profiler.FlameChartOverview(this, FlameChartOverviewMode.OVERLAY);
-      this._profile.forEachBuffer(function(buffer: TimelineBuffer, index: number) {
+      this._activeProfile.forEachSnapshot(function(snapshot: TimelineBufferSnapshot, index: number) {
         self._headers.push(new Profiler.FlameChartHeader(self, FlameChartHeaderType.CHART));
-        self._charts.push(new Profiler.FlameChart(self, index));
+        self._charts.push(new Profiler.FlameChart(self, snapshot));
       });
       window.addEventListener("resize", this._onResize.bind(this));
     }
@@ -106,11 +135,11 @@ module Shumway.Tools.Profiler {
 
     private _initializeViews() {
       var self = this;
-      var startTime = this._profile.startTime;
-      var endTime = this._profile.endTime;
+      var startTime = this._activeProfile.startTime;
+      var endTime = this._activeProfile.endTime;
       this._overviewHeader.initialize(startTime, endTime);
       this._overview.initialize(startTime, endTime);
-      this._profile.forEachBuffer(function(buffer: TimelineBuffer, index: number) {
+      this._activeProfile.forEachSnapshot(function(snapshot: TimelineBufferSnapshot, index: number) {
         self._headers[index].initialize(startTime, endTime);
         self._charts[index].initialize(startTime, endTime);
       });
@@ -121,7 +150,7 @@ module Shumway.Tools.Profiler {
       var width = this._container.offsetWidth;
       this._overviewHeader.setSize(width);
       this._overview.setSize(width);
-      this._profile.forEachBuffer(function(buffer: TimelineBuffer, index: number) {
+      this._activeProfile.forEachSnapshot(function(snapshot: TimelineBufferSnapshot, index: number) {
         self._headers[index].setSize(width);
         self._charts[index].setSize(width);
       });
@@ -129,11 +158,11 @@ module Shumway.Tools.Profiler {
 
     private _updateViews() {
       var self = this;
-      var start = this._profile.windowStart;
-      var end = this._profile.windowEnd;
+      var start = this._activeProfile.windowStart;
+      var end = this._activeProfile.windowEnd;
       this._overviewHeader.setWindow(start, end);
       this._overview.setWindow(start, end);
-      this._profile.forEachBuffer(function(buffer: TimelineBuffer, index: number) {
+      this._activeProfile.forEachSnapshot(function(snapshot: TimelineBufferSnapshot, index: number) {
         self._headers[index].setWindow(start, end);
         self._charts[index].setWindow(start, end);
       });
@@ -144,7 +173,7 @@ module Shumway.Tools.Profiler {
       this._overviewHeader.draw();
       /*
       this._overview.setWindow(start, end);
-      this._profile.forEachBuffer(function(buffer: TimelineBuffer, index: number) {
+      this._profile.forEachBuffer(function(buffer: TimelineBufferSnapshot, index: number) {
         self._headers[index].setWindow(start, end);
         self._charts[index].setWindow(start, end);
       });
@@ -156,16 +185,16 @@ module Shumway.Tools.Profiler {
      */
 
     setWindow(start: number, end: number) {
-      this._profile.setWindow(start, end);
+      this._activeProfile.setWindow(start, end);
       this._updateViews();
     }
 
     moveWindowTo(time: number) {
-      this._profile.moveWindowTo(time);
+      this._activeProfile.moveWindowTo(time);
       this._updateViews();
     }
 
-    showTooltip(bufferIndex: number, frame: TimelineFrame) {
+    showTooltip(snapshot: TimelineBufferSnapshot, frame: TimelineFrame) {
       //console.log("show tooltip", frame);
     }
 
@@ -176,4 +205,3 @@ module Shumway.Tools.Profiler {
   }
 
 }
-
