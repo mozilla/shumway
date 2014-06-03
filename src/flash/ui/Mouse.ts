@@ -159,7 +159,7 @@ module Shumway.AVM2.AS.flash.ui {
           if (target === currentTarget) {
             break;
           }
-          var commonAncestor = target.findNearestCommonAncestor(currentTarget) || stage;
+          var commonAncestor = target.findNearestCommonAncestor(currentTarget);
           if (currentTarget && currentTarget !== stage) {
             this._dispatchMouseEvent(currentTarget, events.MouseEvent.MOUSE_OUT, data, target);
             var nodeLeft = currentTarget;
