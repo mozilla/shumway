@@ -19,12 +19,9 @@
 
 module Shumway.SWF {
   import SwfTag = Shumway.SWF.Parser.SwfTag;
-
-  declare function defineSound(swfTag, symbols);
+  import createSoundStream = Shumway.SWF.Parser.createSoundStream;
 
   declare function defineText(swfTag, symbols);
-
-  declare function createSoundStream(swfTag);
 
   declare class FileReaderSync {
     readAsArrayBuffer(request):ArrayBuffer;
@@ -50,7 +47,7 @@ module Shumway.SWF {
         symbol = Shumway.SWF.Parser.defineButton(swfTag, symbols);
         break;
       case SwfTag.CODE_DEFINE_EDIT_TEXT:
-        symbol = defineText(swfTag, symbols);
+        symbol = Shumway.SWF.Parser.defineText(swfTag, symbols);
         break;
       case SwfTag.CODE_DEFINE_FONT:
       case SwfTag.CODE_DEFINE_FONT2:
@@ -67,7 +64,7 @@ module Shumway.SWF {
         symbol = Shumway.SWF.Parser.defineShape(swfTag, symbols);
         break;
       case SwfTag.CODE_DEFINE_SOUND:
-        symbol = defineSound(swfTag, symbols);
+        symbol = Shumway.SWF.Parser.defineSound(swfTag, symbols);
         break;
       case SwfTag.CODE_DEFINE_BINARY_DATA:
         symbol = {

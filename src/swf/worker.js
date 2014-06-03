@@ -65,8 +65,8 @@ load("../../build/ts/swf/parser/font.js");
 load("../../build/ts/swf/image.js");
 load("../../build/ts/swf/parser/label.js");
 load("../../build/ts/swf/parser/shape.js");
-load("../../src/swf/sound.js");
-load("../../src/swf/text.js");
+load("../../build/ts/swf/parser/sound.js");
+load("../../build/ts/swf/parser/text.js");
 console.timeEnd("Load SWF Dependencies");
 
 console.time("Load SWF Parser");

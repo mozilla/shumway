@@ -12,8 +12,8 @@ build/ts/swf/parser/font.js
 build/ts/swf/image.js
 build/ts/swf/parser/label.js
 build/ts/swf/parser/shape.js
-src/swf/sound.js
-src/swf/text.js
+build/ts/swf/parser/sound.js
+build/ts/swf/parser/text.js
 #!inline console.timeEnd("Load SWF Dependencies");
 
 #!inline console.time("Load SWF Parser");
