@@ -4,7 +4,6 @@ lib/jpgjs/jpg.js
 
 ## Load SWF Dependencies
 #!inline console.time("Load SWF Dependencies");
-src/swf/util.js
 build/ts/swf/inflate.js
 build/ts/swf/stream.js
 build/ts/swf/parser/bitmap.js

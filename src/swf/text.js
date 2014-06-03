@@ -16,13 +16,14 @@
  * limitations under the License.
  */
 
+
 function defineText(tag, dictionary) {
   var dependencies = [];
   var bold = false;
   var italic = false;
   if (tag.hasFont) {
     var font = dictionary[tag.fontId];
-    assert(font, 'undefined font', 'label');
+    Shumway.Debug.assert(font, 'undefined font', 'label');
     dependencies.push(font.id);
     bold = font.bold;
     italic = font.italic;

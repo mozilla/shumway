@@ -57,7 +57,6 @@ load("../../lib/jpgjs/jpg.js");
 
 // Load SWF Dependencies
 console.time("Load SWF Dependencies");
-load("../../src/swf/util.js");
 load("../../build/ts/swf/inflate.js");
 load("../../build/ts/swf/stream.js");
 load("../../build/ts/swf/parser/bitmap.js");
