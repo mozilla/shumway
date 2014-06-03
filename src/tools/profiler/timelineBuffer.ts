@@ -190,9 +190,7 @@ module Shumway.Tools.Profiler {
         currentStack = stack;
       }
       while (sample = currentStack.pop()) {
-        if(currentStack.length) {
-          buffer.leave(sample.location, time);
-        }
+        buffer.leave(sample.location, time);
       }
       return buffer;
     }
@@ -231,9 +229,7 @@ module Shumway.Tools.Profiler {
         currentStack = stack;
       }
       while (sample = currentStack.pop()) {
-        if(currentStack.length) {
-          buffer.leave(sample.functionName, time);
-        }
+        buffer.leave(sample.functionName, time);
       }
       return buffer;
     }
