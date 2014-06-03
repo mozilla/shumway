@@ -23,6 +23,7 @@
 ///<reference path='bitmap.ts' />
 ///<reference path='button.ts' />
 ///<reference path='font.ts' />
+///<reference path='image.ts' />
 ///<reference path='label.ts' />
 ///<reference path='shape.ts' />
 ///<reference path='sound.ts' />

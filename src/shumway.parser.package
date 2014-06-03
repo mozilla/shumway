@@ -9,7 +9,7 @@ build/ts/swf/stream.js
 build/ts/swf/parser/bitmap.js
 build/ts/swf/parser/button.js
 build/ts/swf/parser/font.js
-build/ts/swf/image.js
+build/ts/swf/parser/image.js
 build/ts/swf/parser/label.js
 build/ts/swf/parser/shape.js
 build/ts/swf/parser/sound.js
@@ -17,9 +17,6 @@ build/ts/swf/parser/text.js
 #!inline console.timeEnd("Load SWF Dependencies");
 
 #!inline console.time("Load SWF Parser");
-#src/swf/parser/types.js
-#src/swf/parser/structs.js
-#src/swf/parser/tags.js
 build/ts/swf/parser/swfTag.js
 build/ts/swf/parser/templates.js
 build/ts/swf/parser/handlers.js

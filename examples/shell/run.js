@@ -61,7 +61,7 @@ load("../../build/ts/swf/stream.js");
 load("../../build/ts/swf/parser/bitmap.js");
 load("../../build/ts/swf/parser/button.js");
 load("../../build/ts/swf/parser/font.js");
-load("../../build/ts/swf/image.js");
+load("../../build/ts/swf/parser/image.js");
 load("../../build/ts/swf/parser/label.js");
 load("../../build/ts/swf/parser/shape.js");
 load("../../build/ts/swf/parser/sound.js");
@@ -69,9 +69,6 @@ load("../../build/ts/swf/parser/text.js");
 console.timeEnd("Load SWF Dependencies");
 
 console.time("Load SWF Parser");
-//../../src/swf/parser/types.js
-//../../src/swf/parser/structs.js
-//../../src/swf/parser/tags.js
 load("../../build/ts/swf/parser/swfTag.js");
 load("../../build/ts/swf/parser/templates.js");
 load("../../build/ts/swf/parser/handlers.js");

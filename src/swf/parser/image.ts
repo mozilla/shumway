@@ -18,7 +18,7 @@
 
 
 /// <reference path='references.ts'/>
-module Shumway.SWF {
+module Shumway.SWF.Parser {
   function getUint16(buff, pos) {
     return (buff[pos] << 8) | buff[pos + 1];
   }
@@ -53,9 +53,7 @@ module Shumway.SWF {
     assert(imgDef.width && imgDef.height, 'bad image', 'jpeg');
     return chunks;
   }
-}
 
-module Shumway.SWF.Parser {
   declare class JpegImage {
     width:number;
     height:number;

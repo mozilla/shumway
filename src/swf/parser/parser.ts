@@ -18,8 +18,6 @@
 
 /// <reference path='references.ts'/>
 module Shumway.SWF.Parser {
-  declare function parseJpegChunks(props, buffer);
-
   function readTags(context, stream, swfVersion, final, onprogress, onexception) {
     var tags = context.tags;
     var bytes = stream.bytes;
