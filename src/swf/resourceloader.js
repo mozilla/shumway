@@ -17,70 +17,49 @@
  */
 /* global importScripts, FileReader, FileReaderSync, SWF,
  defineBitmap, defineImage, defineFont, defineShape, defineSound,
- defineLabel, defineButton, defineText, createSoundStream,
- SWF_TAG_CODE_DEFINE_BITS, SWF_TAG_CODE_DEFINE_BITS_JPEG2,
- SWF_TAG_CODE_DEFINE_BITS_JPEG3, SWF_TAG_CODE_DEFINE_BITS_JPEG4,
- SWF_TAG_CODE_DEFINE_BITS_LOSSLESS, SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2,
- SWF_TAG_CODE_DEFINE_BUTTON, SWF_TAG_CODE_DEFINE_BUTTON2,
- SWF_TAG_CODE_DEFINE_EDIT_TEXT, SWF_TAG_CODE_DEFINE_FONT,
- SWF_TAG_CODE_DEFINE_FONT2, SWF_TAG_CODE_DEFINE_FONT3,
- SWF_TAG_CODE_DEFINE_FONT4, SWF_TAG_CODE_DEFINE_MORPH_SHAPE,
- SWF_TAG_CODE_DEFINE_MORPH_SHAPE2, SWF_TAG_CODE_DEFINE_SCALING_GRID,
- SWF_TAG_CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA, SWF_TAG_CODE_DEFINE_SHAPE,
- SWF_TAG_CODE_DEFINE_SHAPE2, SWF_TAG_CODE_DEFINE_SHAPE3,
- SWF_TAG_CODE_DEFINE_SHAPE4, SWF_TAG_CODE_DEFINE_SOUND,
- SWF_TAG_CODE_DEFINE_SPRITE, SWF_TAG_CODE_DEFINE_TEXT,
- SWF_TAG_CODE_DEFINE_TEXT2, SWF_TAG_CODE_DO_ABC,
- SWF_TAG_CODE_DO_ABC_, SWF_TAG_CODE_DO_ACTION,
- SWF_TAG_CODE_DO_INIT_ACTION, SWF_TAG_CODE_FRAME_LABEL,
- SWF_TAG_CODE_JPEG_TABLES, SWF_TAG_CODE_PLACE_OBJECT,
- SWF_TAG_CODE_PLACE_OBJECT2, SWF_TAG_CODE_PLACE_OBJECT3,
- SWF_TAG_CODE_REMOVE_OBJECT, SWF_TAG_CODE_REMOVE_OBJECT2,
- SWF_TAG_CODE_SET_BACKGROUND_COLOR, SWF_TAG_CODE_SHOW_FRAME,
- SWF_TAG_CODE_SOUND_STREAM_BLOCK, SWF_TAG_CODE_SOUND_STREAM_HEAD,
- SWF_TAG_CODE_START_SOUND, SWF_TAG_CODE_SYMBOL_CLASS,
- SWF_TAG_CODE_DEFINE_BINARY_DATA, SWF_TAG_CODE_EXPORT_ASSETS */
+ defineLabel, defineButton, defineText, createSoundStream */
 
 function defineSymbol(swfTag, symbols) {
   var symbol;
 
+  var SwfTag = Shumway.SWF.Parser.SwfTag;
   switch (swfTag.code) {
-    case SWF_TAG_CODE_DEFINE_BITS:
-    case SWF_TAG_CODE_DEFINE_BITS_JPEG2:
-    case SWF_TAG_CODE_DEFINE_BITS_JPEG3:
-    case SWF_TAG_CODE_DEFINE_BITS_JPEG4:
-    case SWF_TAG_CODE_JPEG_TABLES:
+    case SwfTag.CODE_DEFINE_BITS:
+    case SwfTag.CODE_DEFINE_BITS_JPEG2:
+    case SwfTag.CODE_DEFINE_BITS_JPEG3:
+    case SwfTag.CODE_DEFINE_BITS_JPEG4:
+    case SwfTag.CODE_JPEG_TABLES:
       symbol = defineImage(swfTag, symbols);
       break;
-    case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS:
-    case SWF_TAG_CODE_DEFINE_BITS_LOSSLESS2:
+    case SwfTag.CODE_DEFINE_BITS_LOSSLESS:
+    case SwfTag.CODE_DEFINE_BITS_LOSSLESS2:
       symbol = Shumway.SWF.Parser.defineBitmap(swfTag);
       break;
-    case SWF_TAG_CODE_DEFINE_BUTTON:
-    case SWF_TAG_CODE_DEFINE_BUTTON2:
+    case SwfTag.CODE_DEFINE_BUTTON:
+    case SwfTag.CODE_DEFINE_BUTTON2:
       symbol = Shumway.SWF.Parser.defineButton(swfTag, symbols);
       break;
-    case SWF_TAG_CODE_DEFINE_EDIT_TEXT:
+    case SwfTag.CODE_DEFINE_EDIT_TEXT:
       symbol = defineText(swfTag, symbols);
       break;
-    case SWF_TAG_CODE_DEFINE_FONT:
-    case SWF_TAG_CODE_DEFINE_FONT2:
-    case SWF_TAG_CODE_DEFINE_FONT3:
-    case SWF_TAG_CODE_DEFINE_FONT4:
+    case SwfTag.CODE_DEFINE_FONT:
+    case SwfTag.CODE_DEFINE_FONT2:
+    case SwfTag.CODE_DEFINE_FONT3:
+    case SwfTag.CODE_DEFINE_FONT4:
       symbol = Shumway.SWF.Parser.defineFont(swfTag, symbols);
       break;
-    case SWF_TAG_CODE_DEFINE_MORPH_SHAPE:
-    case SWF_TAG_CODE_DEFINE_MORPH_SHAPE2:
-    case SWF_TAG_CODE_DEFINE_SHAPE:
-    case SWF_TAG_CODE_DEFINE_SHAPE2:
-    case SWF_TAG_CODE_DEFINE_SHAPE3:
-    case SWF_TAG_CODE_DEFINE_SHAPE4:
+    case SwfTag.CODE_DEFINE_MORPH_SHAPE:
+    case SwfTag.CODE_DEFINE_MORPH_SHAPE2:
+    case SwfTag.CODE_DEFINE_SHAPE:
+    case SwfTag.CODE_DEFINE_SHAPE2:
+    case SwfTag.CODE_DEFINE_SHAPE3:
+    case SwfTag.CODE_DEFINE_SHAPE4:
       symbol = Shumway.SWF.Parser.defineShape(swfTag, symbols);
       break;
-    case SWF_TAG_CODE_DEFINE_SOUND:
+    case SwfTag.CODE_DEFINE_SOUND:
       symbol = defineSound(swfTag, symbols);
       break;
-    case SWF_TAG_CODE_DEFINE_BINARY_DATA:
+    case SwfTag.CODE_DEFINE_BINARY_DATA:
       symbol = {
         type: 'binary',
         id: swfTag.id,
@@ -88,7 +67,7 @@ function defineSymbol(swfTag, symbols) {
         data: swfTag.data
       };
       break;
-    case SWF_TAG_CODE_DEFINE_SPRITE:
+    case SwfTag.CODE_DEFINE_SPRITE:
       var commands = [];
       var frame = { type: 'frame' };
       var frames = [];
@@ -99,18 +78,18 @@ function defineSymbol(swfTag, symbols) {
       for (var i = 0, n = tags.length; i < n; i++) {
         var tag = tags[i];
         switch (tag.code) {
-          case SWF_TAG_CODE_DO_ACTION:
+          case SwfTag.CODE_DO_ACTION:
             if (!frameScripts)
               frameScripts = [];
             frameScripts.push(frameIndex);
             frameScripts.push(tag.actionsData);
             break;
-          // case SWF_TAG_CODE_DO_INIT_ACTION: ??
-          case SWF_TAG_CODE_START_SOUND:
+          // case SwfTag.CODE_DO_INIT_ACTION: ??
+          case SwfTag.CODE_START_SOUND:
             var startSounds = frame.startSounds || (frame.startSounds = []);
             startSounds.push(tag);
             break;
-          case SWF_TAG_CODE_SOUND_STREAM_HEAD:
+          case SwfTag.CODE_SOUND_STREAM_HEAD:
             try {
               // TODO: make transferable
               soundStream = createSoundStream(tag);
@@ -120,24 +99,24 @@ function defineSymbol(swfTag, symbols) {
               // console.error('ERROR: ' + e.message);
             }
             break;
-          case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
+          case SwfTag.CODE_SOUND_STREAM_BLOCK:
             if (soundStream) {
               frame.soundStreamBlock = soundStream.decode(tag.data);
             }
             break;
-          case SWF_TAG_CODE_FRAME_LABEL:
+          case SwfTag.CODE_FRAME_LABEL:
             frame.labelName = tag.name;
             break;
-          case SWF_TAG_CODE_PLACE_OBJECT:
-          case SWF_TAG_CODE_PLACE_OBJECT2:
-          case SWF_TAG_CODE_PLACE_OBJECT3:
+          case SwfTag.CODE_PLACE_OBJECT:
+          case SwfTag.CODE_PLACE_OBJECT2:
+          case SwfTag.CODE_PLACE_OBJECT3:
             commands.push(tag);
             break;
-          case SWF_TAG_CODE_REMOVE_OBJECT:
-          case SWF_TAG_CODE_REMOVE_OBJECT2:
+          case SwfTag.CODE_REMOVE_OBJECT:
+          case SwfTag.CODE_REMOVE_OBJECT2:
             commands.push(tag);
             break;
-          case SWF_TAG_CODE_SHOW_FRAME:
+          case SwfTag.CODE_SHOW_FRAME:
             frameIndex += tag.repeat;
             frame.repeat = tag.repeat;
             frame.commands = commands;
@@ -155,8 +134,8 @@ function defineSymbol(swfTag, symbols) {
         frameScripts: frameScripts
       };
       break;
-    case SWF_TAG_CODE_DEFINE_TEXT:
-    case SWF_TAG_CODE_DEFINE_TEXT2:
+    case SwfTag.CODE_DEFINE_TEXT:
+    case SwfTag.CODE_DEFINE_TEXT2:
       symbol = Shumway.SWF.Parser.defineLabel(swfTag, symbols);
       break;
   }
@@ -194,6 +173,7 @@ function createParsingContext(commitData) {
         }
       }
 
+      var SwfTag = Shumway.SWF.Parser.SwfTag;
       var tags = result.tags;
       for (var n = tags.length; tagsProcessed < n; tagsProcessed++) {
         var tag = tags[tagsProcessed];
@@ -204,10 +184,10 @@ function createParsingContext(commitData) {
         }
 
         switch (tag.code) {
-          case SWF_TAG_CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA:
+          case SwfTag.CODE_DEFINE_SCENE_AND_FRAME_LABEL_DATA:
             frame.sceneData = tag;
             break;
-          case SWF_TAG_CODE_DEFINE_SCALING_GRID:
+          case SwfTag.CODE_DEFINE_SCALING_GRID:
             var symbolUpdate = {
               isSymbol: true,
               id: tag.symbolId,
@@ -217,8 +197,8 @@ function createParsingContext(commitData) {
             };
             commitData(symbolUpdate);
             break;
-          case SWF_TAG_CODE_DO_ABC:
-          case SWF_TAG_CODE_DO_ABC_:
+          case SwfTag.CODE_DO_ABC:
+          case SwfTag.CODE_DO_ABC_:
             commitData({
               type: 'abc',
               flags: tag.flags,
@@ -226,25 +206,25 @@ function createParsingContext(commitData) {
               data: tag.data
             });
             break;
-          case SWF_TAG_CODE_DO_ACTION:
+          case SwfTag.CODE_DO_ACTION:
             var actionBlocks = frame.actionBlocks;
             if (actionBlocks)
               actionBlocks.push(tag.actionsData);
             else
               frame.actionBlocks = [tag.actionsData];
             break;
-          case SWF_TAG_CODE_DO_INIT_ACTION:
+          case SwfTag.CODE_DO_INIT_ACTION:
             var initActionBlocks = frame.initActionBlocks ||
                                    (frame.initActionBlocks = []);
             initActionBlocks.push({spriteId: tag.spriteId, actionsData: tag.actionsData});
             break;
-          case SWF_TAG_CODE_START_SOUND:
+          case SwfTag.CODE_START_SOUND:
             var startSounds = frame.startSounds;
             if (!startSounds)
               frame.startSounds = startSounds = [];
             startSounds.push(tag);
             break;
-          case SWF_TAG_CODE_SOUND_STREAM_HEAD:
+          case SwfTag.CODE_SOUND_STREAM_HEAD:
             try {
               // TODO: make transferable
               soundStream = createSoundStream(tag);
@@ -254,41 +234,41 @@ function createParsingContext(commitData) {
               // console.error('ERROR: ' + e.message);
             }
             break;
-          case SWF_TAG_CODE_SOUND_STREAM_BLOCK:
+          case SwfTag.CODE_SOUND_STREAM_BLOCK:
             if (soundStream) {
               frame.soundStreamBlock = soundStream.decode(tag.data);
             }
             break;
-          case SWF_TAG_CODE_EXPORT_ASSETS:
+          case SwfTag.CODE_EXPORT_ASSETS:
             var exports = frame.exports;
             if (exports)
               frame.exports = exports.concat(tag.exports);
             else
               frame.exports = tag.exports.slice(0);
             break;
-          case SWF_TAG_CODE_SYMBOL_CLASS:
+          case SwfTag.CODE_SYMBOL_CLASS:
             var symbolClasses = frame.symbolClasses;
             if (symbolClasses)
               frame.symbolClasses = symbolClasses.concat(tag.exports);
             else
               frame.symbolClasses = tag.exports.slice(0);
             break;
-          case SWF_TAG_CODE_FRAME_LABEL:
+          case SwfTag.CODE_FRAME_LABEL:
             frame.labelName = tag.name;
             break;
-          case SWF_TAG_CODE_PLACE_OBJECT:
-          case SWF_TAG_CODE_PLACE_OBJECT2:
-          case SWF_TAG_CODE_PLACE_OBJECT3:
+          case SwfTag.CODE_PLACE_OBJECT:
+          case SwfTag.CODE_PLACE_OBJECT2:
+          case SwfTag.CODE_PLACE_OBJECT3:
             commands.push(tag);
             break;
-          case SWF_TAG_CODE_REMOVE_OBJECT:
-          case SWF_TAG_CODE_REMOVE_OBJECT2:
+          case SwfTag.CODE_REMOVE_OBJECT:
+          case SwfTag.CODE_REMOVE_OBJECT2:
             commands.push(tag);
             break;
-          case SWF_TAG_CODE_SET_BACKGROUND_COLOR:
+          case SwfTag.CODE_SET_BACKGROUND_COLOR:
             frame.bgcolor = tag.color;
             break;
-          case SWF_TAG_CODE_SHOW_FRAME:
+          case SwfTag.CODE_SHOW_FRAME:
             frame.repeat = tag.repeat;
             frame.commands = commands;
             frame.complete = !!tag.finalTag;

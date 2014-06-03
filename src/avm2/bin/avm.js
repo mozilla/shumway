@@ -204,6 +204,7 @@ for (var f = 0; f < files.length; f++) {
       load(homePath + "src/swf/shape.js");
       load(homePath + "src/swf/text.js");
     }
+    var SWF_TAG_CODE_DO_ABC = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC;
     Shumway.SWF.Parser.parse(snarf(file, "binary"), {
       oncomplete: function(result) {
         var tags = result.tags;

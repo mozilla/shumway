@@ -78,6 +78,7 @@
       var path = paths[i];
 
       new BinaryFileReader(path).readAll(null, function (buffer) {
+        var SWF_TAG_CODE_DO_ABC = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC;
         Shumway.SWF.Parser.parse(buffer, {
           oncomplete: function(result) {
             var tags = result.tags;
