@@ -29,9 +29,10 @@ document.createElement = (function () {
   };
 })();
 
-var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
-var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
-var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
+var shumwayOptions = Shumway.Settings.shumwayOptions;
+var avm2Options = shumwayOptions.register(new Shumway.Options.OptionSet("AVM2"));
+var sysCompiler = avm2Options.register(new Shumway.Options.Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
+var appCompiler = avm2Options.register(new Shumway.Options.Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
 
 var asyncLoading = getQueryVariable("async") === "true";
 asyncLoading = true;
@@ -159,9 +160,10 @@ function IFramePlayer(playerWorker) {
 IFramePlayer._updatesListener = null;
 IFramePlayer.sendUpdates = function (data) {
   var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  var updates = DataBuffer.fromArrayBuffer(data.updates.buffer);
-  var assets = data.assets.map(function (assetBytes) {
-    return DataBuffer.fromArrayBuffer(assetBytes.buffer);
+  var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
+  var assetLengths = data.assetLengths;
+  var assets = data.assets.map(function (assetBytes, index) {
+    return DataBuffer.FromArrayBuffer(assetBytes.buffer, assetLengths[index]);
   });
   IFramePlayer._updatesListener(updates, assets);
 };
@@ -481,6 +483,7 @@ function createEasel() {
   var canvas = document.createElement("canvas");
   canvas.style.backgroundColor = "#14171a";
   document.getElementById("stageContainer").appendChild(canvas);
-  _easel = new Easel(canvas, backend.value|0);
+  var backend = Shumway.GFX.backend.value | 0;
+  _easel = new Easel(canvas, backend);
   return _easel;
 }

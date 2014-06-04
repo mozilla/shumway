@@ -34,12 +34,9 @@ load("../../build/ts/ShapeData.js");
 load("../../build/ts/options.js");
 load("../../build/ts/settings.js");
 
-load("../../src/swf/options.js");
 load("../../src/avm2/avm2Util.js");
-load("../../build/ts/avm2/options.js");
 load("../../build/ts/metrics.js");
 
-load("../../build/ts/player/references.js");
 load("../../build/ts/player/remoting.js");
 
 load("../../build/ts/tools/profiler/timelineFrame.js");
@@ -87,6 +84,7 @@ console.time("Load Player Dependencies");
 // Load AVM2 Dependencies
 console.time("Load AVM2 Dependencies");
 load("../../src/avm2/constants.js");
+load("../../build/ts/avm2/options.js");
 load("../../build/ts/avm2/errors.js");
 load("../../build/ts/avm2/parser.js");
 load("../../build/ts/avm2/bytecode.js");
@@ -536,6 +534,7 @@ load("../../build/ts/avm1lib/AS2TextFormat.js");
 load("../../build/ts/avm1lib/AS2Utils.js");
 console.timeEnd("Load avm1lib Dependencies");
 
+load("../../build/ts/player/options.js");
 load("../../build/ts/player/timeline.js");
 load("../../build/ts/player/remotingPlayer.js");
 load("../../build/ts/player/player.js");

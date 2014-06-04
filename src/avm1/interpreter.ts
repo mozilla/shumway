@@ -76,7 +76,7 @@ module Shumway.AVM1 {
     constructor(obj: string);
   }
 
-  declare var shumwayOptions: OptionSet;
+  import shumwayOptions = Shumway.Settings.shumwayOptions;
 
   var avm1Options = shumwayOptions.register(new OptionSet("AVM1"));
   export var avm1TraceEnabled = avm1Options.register(new Option("t1", "traceAvm1", "boolean", false, "trace AVM1 execution"));

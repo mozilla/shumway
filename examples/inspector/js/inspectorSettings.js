@@ -36,6 +36,8 @@ function saveInspectorState() {
 }
 
 var GUI = (function () {
+  var Option = Shumway.Options.Option;
+  var OptionSet = Shumway.Options.OptionSet;
 
   var gui = new dat.GUI({ autoPlace: false, width: 300 });
 
@@ -53,7 +55,8 @@ var GUI = (function () {
   gui.domElement.addEventListener("click", function(e) {
     if (e.target.nodeName.toLowerCase() == "li" && e.target.classList.contains("title")) {
       var isOpen = !e.target.parentElement.classList.contains("closed");
-      var option = findOptionSetByName(e.target.textContent, shumwayOptions);
+      var option = findOptionSetByName(e.target.textContent,
+                                       Shumway.Settings.shumwayOptions);
       if (option) {
         option.open = isOpen;
         Shumway.Settings.save();
@@ -157,7 +160,7 @@ var GUI = (function () {
   }
 
   // shumwayOptions.register(webGLOptions);
-  addOptionSet(gui, shumwayOptions);
+  addOptionSet(gui, Shumway.Settings.shumwayOptions);
 
   document.getElementById("settingsContainer").appendChild(gui.domElement);
 
@@ -166,36 +169,37 @@ var GUI = (function () {
 })();
 
 function syncGFXOptions(options) {
-  options.perspectiveCamera = perspectiveCamera.value;
-  options.perspectiveCameraFOV = perspectiveCameraFOV.value;
-  options.perspectiveCameraAngle = perspectiveCameraAngle.value;
-  options.perspectiveCameraDistance = perspectiveCameraDistance.value;
+  var GFX = Shumway.GFX;
+  options.perspectiveCamera = GFX.perspectiveCamera.value;
+  options.perspectiveCameraFOV = GFX.perspectiveCameraFOV.value;
+  options.perspectiveCameraAngle = GFX.perspectiveCameraAngle.value;
+  options.perspectiveCameraDistance = GFX.perspectiveCameraDistance.value;
 
-  options.drawTiles = drawTiles.value;
-  options.drawTextures = drawTextures.value;
-  options.drawTexture = drawTexture.value;
-  options.drawElements = drawElements.value;
-  options.ignoreViewport = ignoreViewport.value;
-  options.ignoreColorTransform = ignoreColorTransform.value;
-  options.clipDirtyRegions = clipDirtyRegions.value;
-  options.clipCanvas = clipCanvas.value;
+  options.drawTiles = GFX.drawTiles.value;
+  options.drawTextures = GFX.drawTextures.value;
+  options.drawTexture = GFX.drawTexture.value;
+  options.drawElements = GFX.drawElements.value;
+  options.ignoreViewport = GFX.ignoreViewport.value;
+  options.ignoreColorTransform = GFX.ignoreColorTransform.value;
+  options.clipDirtyRegions = GFX.clipDirtyRegions.value;
+  options.clipCanvas = GFX.clipCanvas.value;
 
-  options.premultipliedAlpha = premultipliedAlpha.value;
-  options.unpackPremultiplyAlpha = unpackPremultiplyAlpha.value;
+  options.premultipliedAlpha = GFX.premultipliedAlpha.value;
+  options.unpackPremultiplyAlpha = GFX.unpackPremultiplyAlpha.value;
 
-  options.sourceBlendFactor = sourceBlendFactor.value;
-  options.destinationBlendFactor = destinationBlendFactor.value;
+  options.sourceBlendFactor = GFX.sourceBlendFactor.value;
+  options.destinationBlendFactor = GFX.destinationBlendFactor.value;
 
   // These are set by holding down F and B in the easel, we don't want to
   // override them here.
-  // options.paintFlashing = paintFlashing.value;
-  // options.paintBounds = paintBounds.value;
+  // options.paintFlashing = GFX.paintFlashing.value;
+  // options.paintBounds = GFX.paintBounds.value;
 
-  options.cull = cull.value;
-  options.disableMasking = disableMasking.value;
-  options.debug = debugStage.value;
-  options.forcePaint = forcePaint.value;
-  // options.disable = disableStage.value;
-  options.compositeMask = compositeMask.value;
-  options.disableTextureUploads = disableTextureUploads.value;
+  options.cull = GFX.cull.value;
+  options.disableMasking = GFX.disableMasking.value;
+  options.debug = GFX.debugStage.value;
+  options.forcePaint = GFX.forcePaint.value;
+  // options.disable = GFX.disableStage.value;
+  options.compositeMask = GFX.compositeMask.value;
+  options.disableTextureUploads = GFX.disableTextureUploads.value;
 }

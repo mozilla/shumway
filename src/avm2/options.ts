@@ -2,7 +2,7 @@ module Shumway.AVM2 {
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
 
-  declare var shumwayOptions: OptionSet;
+  import shumwayOptions = Shumway.Settings.shumwayOptions;
 
   var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
 

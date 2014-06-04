@@ -15,11 +15,14 @@
  */
 
 /// <reference path='../utilities.ts' />
+/// <reference path='../options.ts'/>
+/// <reference path='../settings.ts'/>
 /// <reference path='../tools/profiler/references.ts' />
-/// <reference path='utilities.ts' />
 /// <reference path='../dataBuffer.ts' />
 /// <reference path='../ShapeData.ts' />
-/// <reference path='../avm2/natives/byteArray.ts' />
+
+/// <reference path='utilities.ts' />
+/// <reference path='options.ts'/>
 /// <reference path='geometry.ts'/>
 /// <reference path='regionAllocator.ts'/>
 /// <reference path='frame.ts'/>

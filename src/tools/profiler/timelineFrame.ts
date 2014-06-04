@@ -40,6 +40,21 @@ module Shumway.Tools.Profiler {
         this.maxDepth = 0;
     }
 
+    get totalTime(): number {
+      return this.endTime - this.startTime;
+    }
+
+    get selfTime(): number {
+      var selfTime = this.totalTime;
+      if (this.children) {
+        for (var i = 0, n = this.children.length; i < n; i++) {
+          var child = this.children[i];
+          selfTime -= (child.endTime - child.startTime);
+        }
+      }
+      return selfTime;
+    }
+
     /**
      * Gets the child index of the first child to overlap the specified time.
      */

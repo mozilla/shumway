@@ -41,12 +41,9 @@ limitations under the License.
     <script src="../../build/ts/options.js"></script>
     <script src="../../build/ts/settings.js"></script>
 
-    <script src="../../src/swf/options.js"></script>
     <script src="../../src/avm2/avm2Util.js"></script>
-    <script src="../../build/ts/avm2/options.js"></script>
     <script src="../../build/ts/metrics.js"></script>
 
-    <script src="../../build/ts/player/references.js"></script>
     <script src="../../build/ts/player/remoting.js"></script>
 
     <script src="../../build/ts/tools/profiler/timelineFrame.js"></script>
@@ -65,6 +62,7 @@ limitations under the License.
     <script src="../../src/gfx/filters/filters_cxform.js"></script>
     <script src="../../build/ts/gfx/references.js"></script>
     <script src="../../build/ts/gfx/utilities.js"></script>
+    <script src="../../build/ts/gfx/options.js"></script>
     <script src="../../build/ts/gfx/geometry.js"></script>
     <script src="../../build/ts/gfx/regionAllocator.js"></script>
     <script src="../../build/ts/gfx/frame.js"></script>
@@ -126,6 +124,7 @@ limitations under the License.
     <!-- Load AVM2 Dependencies -->
     <script> console.time("Load AVM2 Dependencies"); </script>
     <script src="../../src/avm2/constants.js"></script>
+    <script src="../../build/ts/avm2/options.js"></script>
     <script src="../../build/ts/avm2/errors.js"></script>
     <script src="../../build/ts/avm2/parser.js"></script>
     <script src="../../build/ts/avm2/bytecode.js"></script>
@@ -575,6 +574,7 @@ limitations under the License.
     <script src="../../build/ts/avm1lib/AS2Utils.js"></script>
     <script> console.timeEnd("Load avm1lib Dependencies"); </script>
 
+    <script src="../../build/ts/player/options.js"></script>
     <script src="../../build/ts/player/timeline.js"></script>
     <script src="../../build/ts/player/remotingPlayer.js"></script>
     <script src="../../build/ts/player/player.js"></script>
@@ -592,6 +592,7 @@ limitations under the License.
         var FrameCounter = new metrics.Counter(true);
         var Timer = metrics.Timer;
 
+        var shumwayOptions = Shumway.Settings.shumwayOptions;
         var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
         var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter"));
         var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter"));

@@ -107,7 +107,7 @@ module Shumway.Tools.Profiler {
     private _hoverInfo: HoverInfo;
     private _wheelDisabled: boolean;
 
-    private static HOVER_TIMEOUT = 400;
+    private static HOVER_TIMEOUT = 500;
 
     private static _cursor = MouseCursor.DEFAULT;
     private static _cursorOwner: MouseControllerTarget;

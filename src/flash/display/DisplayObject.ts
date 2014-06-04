@@ -1253,7 +1253,8 @@ module Shumway.AVM2.AS.flash.display {
      */
     globalToLocal(point: flash.geom.Point): flash.geom.Point {
       var m = this._getInvertedConcatenatedMatrix();
-      return m.transformCoords(point.x, point.y, true).toPixels();
+      var p = m.transformPointInPlace(point.clone().toTwips());
+      return p.toPixels();
     }
 
     /**
@@ -1261,7 +1262,8 @@ module Shumway.AVM2.AS.flash.display {
      */
     localToGlobal(point: flash.geom.Point): flash.geom.Point {
       var m = this._getConcatenatedMatrix();
-      return m.transformCoords(point.x, point.y, true).toPixels();
+      var p = m.transformPointInPlace(point.clone().toTwips());
+      return p.toPixels();
     }
 
     /**
@@ -1386,7 +1388,8 @@ module Shumway.AVM2.AS.flash.display {
       x = +x;
       y = +y;
       shapeFlag = !!shapeFlag;
-      var point = this._getInvertedConcatenatedMatrix().transformCoords(x, y, true);
+      var point = new flash.geom.Point(x, y).toTwips();
+      this._getInvertedConcatenatedMatrix().transformPointInPlace(point);
       if (!this._getContentBounds().contains(point.x, point.y)) {
         return false;
       }

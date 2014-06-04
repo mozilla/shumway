@@ -57,5 +57,3 @@ module Shumway.Settings {
   }
 
 }
-
-import shumwayOptions = Shumway.Settings.shumwayOptions;

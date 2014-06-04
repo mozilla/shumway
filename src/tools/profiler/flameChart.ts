@@ -67,7 +67,7 @@ module Shumway.Tools.Profiler {
       var context = this._context;
       var ratio = window.devicePixelRatio;
 
-      ColorStyle.reset(); 
+      ColorStyle.reset();
 
       context.save();
       context.scale(ratio, ratio);
@@ -190,9 +190,9 @@ module Shumway.Tools.Profiler {
 
     private _getFrameAtPosition(x: number, y: number): TimelineFrame {
       var time = this._toTime(x);
-      var depth = (y / 12.5) | 0;
+      var depth = 1 + (y / 12.5) | 0;
       var frame = this._snapshot.query(time);
-      if (frame) {
+      if (frame && frame.depth >= depth) {
         while (frame && frame.depth > depth) {
           frame = frame.parent;
         }
@@ -240,7 +240,7 @@ module Shumway.Tools.Profiler {
       var frame = this._getFrameAtPosition(x, y);
       if (frame) {
         this._hoveredFrame = frame;
-        this._controller.showTooltip(this._snapshot, frame);
+        this._controller.showTooltip(this, frame, x, y);
         //this._draw();
       }
     }
