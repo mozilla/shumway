@@ -48,7 +48,7 @@ module Shumway.Remoting.Player {
       stage.visit(function (displayObject) {
         serializer.writeDisplayObject(displayObject);
         return VisitorFlags.Continue;
-      }, VisitorFlags.None);
+      }, VisitorFlags.Filter, DisplayObjectFlags.Dirty);
     }
 
     writeGraphics(graphics: Graphics) {
