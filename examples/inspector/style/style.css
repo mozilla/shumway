@@ -240,9 +240,12 @@ body.simple #stageContainer {
   top: 32px;
   right: 300px;
   left: 0;
+  /*
   height: 100px;
   background-color: black;
   border-bottom: 1px solid #666;
+  */
+  height: 0;
 }
 #profilePanelContainer > canvas {
   display: block;
