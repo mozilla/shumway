@@ -97,20 +97,22 @@ module Shumway.AVM2.AS.flash.events {
     private _movementX: number;
     private _movementY: number;
 
+    private _position: flash.geom.Point;
+
     get localX(): number {
-      return this._localX;
+      return (this._localX * 0.05) | 0;
     }
 
     set localX(value: number) {
-      this._localX = +value;
+      this._localX = (value * 20) | 0;
     }
 
     get localY(): number {
-      return this._localY;
+      return (this._localY * 0.05) | 0;
     }
 
     set localY(value: number) {
-      this._localY = +value;
+      this._localY = (value * 20) | 0;
     }
 
     get movementX(): number {
@@ -136,22 +138,26 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     private _getGlobalPoint(): flash.geom.Point {
-      var localPoint = new flash.geom.Point(this._localX, this._localY);
-      return (<flash.display.DisplayObject>this._target).localToGlobal(localPoint);
+      var point = this._position;
+      if (!point) {
+        point = this._position = new flash.geom.Point();
+      }
+      if (this.target) {
+        point.setTo(this._localX, this._localY);
+        var m = (<flash.display.DisplayObject>this._target)._getConcatenatedMatrix();
+        m.transformPointInPlace(point);
+      } else {
+        point.setTo(0, 0);
+      }
+      return point;
     }
 
     getStageX(): number {
-      if (!this._target) {
-        return 0;
-      }
-      return this._getGlobalPoint().x;
+      return (this._getGlobalPoint().x * 0.05) | 0;
     }
 
     getStageY(): number {
-      if (!this._target) {
-        return 0;
-      }
-      return this._getGlobalPoint().y;
+      return (this._getGlobalPoint().y * 0.05) | 0;
     }
   }
 }
