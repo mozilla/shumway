@@ -210,17 +210,22 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Not used yet, should probably just stop the visitor.
      */
-    Stop         = 1,
+    Stop         = 0x01,
 
     /**
      * Skip processing current node.
      */
-    Skip         = 2,
+    Skip         = 0x02,
 
     /**
      * Visit front to back.
      */
-    FrontToBack  = 8
+    FrontToBack  = 0x08,
+
+    /**
+     * Only visit the nodes matching a certain flag set.
+     */
+    Filter       = 0x10
   }
 
   /*
@@ -784,14 +789,14 @@ module Shumway.AVM2.AS.flash.display {
      * Sets the |DirtyMatrix| flag.
      */
     private _dirtyMatrix() {
-      this._setFlags(DisplayObjectFlags.DirtyMatrix);
+      this._setDirtyFlags(DisplayObjectFlags.DirtyMatrix);
     }
 
     /**
      * Sets the |DirtyColorTransform| flag.
      */
     private _dirtyColorTransform() {
-      this._setFlags(DisplayObjectFlags.DirtyColorTransform);
+      this._setDirtyFlags(DisplayObjectFlags.DirtyColorTransform);
     }
 
     /**
@@ -1262,7 +1267,7 @@ module Shumway.AVM2.AS.flash.display {
     /**
      * Tree visitor that lets you skip nodes or return early.
      */
-    public visit(visitor: (DisplayObject) => VisitorFlags, visitorFlags: VisitorFlags) {
+    public visit(visitor: (DisplayObject) => VisitorFlags, visitorFlags: VisitorFlags, displayObjectFlags: DisplayObjectFlags = DisplayObjectFlags.None) {
       var stack: DisplayObject [];
       var displayObject: DisplayObject;
       var displayObjectContainer: DisplayObjectContainer;
@@ -1270,7 +1275,12 @@ module Shumway.AVM2.AS.flash.display {
       stack = [this];
       while (stack.length > 0) {
         displayObject = stack.pop();
-        var flags = visitor(displayObject);
+        var flags = VisitorFlags.None;
+        if (visitorFlags & VisitorFlags.Filter && !displayObject._hasAnyFlags(displayObjectFlags)) {
+          flags = VisitorFlags.Skip;
+        } else {
+          flags = visitor(displayObject);
+        }
         if (flags === VisitorFlags.Continue) {
           if (DisplayObjectContainer.isType(displayObject)) {
             displayObjectContainer = <DisplayObjectContainer>displayObject;
@@ -1330,7 +1340,7 @@ module Shumway.AVM2.AS.flash.display {
       this._graphics = new flash.display.Graphics();
       this._graphics._setParent(this);
       this._invalidateFillAndLineBounds();
-      this._setFlags(DisplayObjectFlags.DirtyGraphics);
+      this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
       return this._graphics;
     }
 
@@ -1341,7 +1351,7 @@ module Shumway.AVM2.AS.flash.display {
       if (this._canHaveGraphics()) {
         this._graphics = graphics;
         this._invalidateFillAndLineBounds();
-        this._setFlags(DisplayObjectFlags.DirtyGraphics);
+        this._setDirtyFlags(DisplayObjectFlags.DirtyGraphics);
         return;
       }
       unexpected("Cannot set graphics on this type of display object.");
