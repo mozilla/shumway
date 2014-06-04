@@ -193,10 +193,10 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     clear(): void {
-      if (this._graphicsData.length === 0) {
+      if (this._graphicsData.isEmpty()) {
         return;
       }
-      this._graphicsData.length = 0;
+      this._graphicsData.clear();
       this._textures.length = 0;
       this._fillBounds.setToSentinels();
       this._lineBounds.setToSentinels();
@@ -248,7 +248,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     endFill(): void {
-      this._graphicsData.writeUnsignedByte(PathCommand.EndFill);
+      this._graphicsData.endFill();
     }
 
 //    beginShaderFill(shader: flash.display.Shader, matrix: flash.geom.Matrix = null): void {
@@ -274,7 +274,7 @@ module Shumway.AVM2.AS.flash.display {
       if (isNaN(thickness)) {
 
         this._setStrokeWidth(0);
-        this._graphicsData.writeUnsignedByte(PathCommand.LineEnd);
+        this._graphicsData.endLine();
         return;
       }
       // thickness is rounded to the nearest pixel value.
@@ -307,12 +307,15 @@ module Shumway.AVM2.AS.flash.display {
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
+      // TODO: only emit this if a stroke width has been set by calling `lineStyle`
       this._writeGradientStyle(PathCommand.LineStyleGradient, type, colors, alphas, ratios, matrix,
                               spreadMethod, interpolationMethod, focalPointRatio);
     }
 
     lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
-                    repeat: boolean = true, smooth: boolean = false): void {
+                    repeat: boolean = true, smooth: boolean = false): void
+    {
+      // TODO: only emit this if a stroke width has been set by calling `lineStyle`
       //bitmap = bitmap; matrix = matrix;
       //this._closePath();
       //var fill = this._graphicsData.push(new GraphicsBitmapFill(bitmap, matrix, !!repeat, !!smooth));
@@ -569,10 +572,13 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     copyFrom(sourceGraphics: flash.display.Graphics): void {
-      var graphicsData = this._graphicsData;
-      graphicsData.position = 0;
-      graphicsData.length = sourceGraphics._graphicsData.length;
-      graphicsData.writeBytes(sourceGraphics._graphicsData, 0);
+      this._graphicsData = sourceGraphics._graphicsData.clone();
+      this._fillBounds = sourceGraphics._fillBounds.clone();
+      this._lineBounds = sourceGraphics._lineBounds.clone();
+      this._textures = sourceGraphics._textures.concat();
+      this._lastX = sourceGraphics._lastX;
+      this._lastY = sourceGraphics._lastY;
+      this._boundsIncludeLastCoordinates = sourceGraphics._boundsIncludeLastCoordinates;
       this._invalidateParent();
     }
 

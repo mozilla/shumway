@@ -21,6 +21,7 @@ module Shumway.Remoting.GFX {
   import RenderableBitmap = Shumway.GFX.RenderableBitmap;
   import ColorMatrix = Shumway.GFX.ColorMatrix;
   import FrameContainer = Shumway.GFX.FrameContainer;
+  import ShapeData = Shumway.ShapeData;
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   import Stage = Shumway.GFX.Stage;
   import Canvas2DStageRenderer = Shumway.GFX.Canvas2DStageRenderer;
@@ -95,7 +96,7 @@ module Shumway.Remoting.GFX {
 
   export class GFXChannelDeserializer {
     input: IDataInput;
-    inputAssets: Array<DataBuffer>;
+    inputAssets: any[];
     context: GFXChannelDeserializerContext;
 
     public read() {
@@ -185,7 +186,7 @@ module Shumway.Remoting.GFX {
       var asset = context._assets[id];
       var bounds = this._readRectangle();
       var assetId = input.readInt();
-      var pathData = this.inputAssets[assetId];
+      var pathData = ShapeData.FromPlainObject(this.inputAssets[assetId]);
       this.inputAssets[assetId] = null;
       var numTextures = input.readInt();
       var textures = [];
@@ -206,7 +207,7 @@ module Shumway.Remoting.GFX {
       var bounds = this._readRectangle();
       var type: ImageType = input.readInt();
       var assetId = input.readInt();
-      var dataBuffer = this.inputAssets[assetId];
+      var dataBuffer = DataBuffer.FromPlainObject(this.inputAssets[assetId]);
       this.inputAssets[assetId] = null;
       if (!asset) {
         context._assets[id] = RenderableBitmap.FromDataBuffer(type, dataBuffer, bounds);

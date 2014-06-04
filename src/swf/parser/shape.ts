@@ -404,7 +404,8 @@ module Shumway.SWF.Parser {
       lineBoundsMorph: tag.strokeBboxMorph,
       fillBoundsMorph: tag.bboxMorph,
       isMorph: tag.isMorph,
-      shape: shape.getBytes(),
+      shape: shape.toPlainObject(),
+      transferables: shape.buffers,
       require: dependencies.length ? dependencies : null
     };
   }
@@ -562,20 +563,16 @@ module Shumway.SWF.Parser {
       for (var i = commandsCount; i-- > 1;) {
         dataPosition -= dataStride;
         var command: PathCommand = commands[i];
-        shape.writeUnsignedByte(command);
-        shape.writeInt(data[dataPosition]);
-        shape.writeInt(data[dataPosition + 1]);
+        shape.writeCommand(command);
+        shape.writeCoordinates(data[dataPosition], data[dataPosition + 1]);
         if (isMorph) {
-          shape.writeInt(data[dataPosition + 2]);
-          shape.writeInt(data[dataPosition + 3]);
+          shape.writeCoordinates(data[dataPosition] + 2, data[dataPosition + 3]);
         }
         if (command === PathCommand.CurveTo) {
           dataPosition -= dataStride;
-          shape.writeInt(data[dataPosition]);
-          shape.writeInt(data[dataPosition + 1]);
+          shape.writeCoordinates(data[dataPosition], data[dataPosition + 1]);
           if (isMorph) {
-            shape.writeInt(data[dataPosition + 2]);
-            shape.writeInt(data[dataPosition + 3]);
+            shape.writeCoordinates(data[dataPosition] + 2, data[dataPosition + 3]);
           }
         } else {
         }
@@ -587,19 +584,15 @@ module Shumway.SWF.Parser {
     private _writeCommand(command: PathCommand, position: number, data: Uint32Array,
                           isMorph: boolean, shape: ShapeData): number
     {
-      shape.writeUnsignedByte(command);
-      shape.writeInt(data[position++]);
-      shape.writeInt(data[position++]);
+      shape.writeCommand(command);
+      shape.writeCoordinates(data[position++], data[position++]);
       if (command === PathCommand.CurveTo) {
-        shape.writeInt(data[position++]);
-        shape.writeInt(data[position++]);
+        shape.writeCoordinates(data[position++], data[position++]);
       }
       if (isMorph) {
-        shape.writeInt(data[position++]);
-        shape.writeInt(data[position++]);
+        shape.writeCoordinates(data[position++], data[position++]);
         if (command === PathCommand.CurveTo) {
-          shape.writeInt(data[position++]);
-          shape.writeInt(data[position++]);
+          shape.writeCoordinates(data[position++], data[position++]);
         }
       }
       return position;

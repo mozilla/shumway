@@ -44,11 +44,7 @@ module Shumway {
       switch (type) {
         case 'player':
           var updates = DataBuffer.FromArrayBuffer(e.data.updates.buffer);
-          var assetLengths = e.data.assetLengths;
-          var assets = e.data.assets.map(function (assetBytes, index) {
-            return DataBuffer.FromArrayBuffer(assetBytes.buffer, assetLengths[index]);
-          });
-          this._channelUpdatesListener(updates, assets);
+          this._channelUpdatesListener(updates, e.data.assets);
           break;
         case 'gfx':
           var updates = DataBuffer.FromArrayBuffer(e.data.updates.buffer);
@@ -58,18 +54,12 @@ module Shumway {
     }
 
     // IPlayerChannel
-    sendUpdates(updates: DataBuffer, assets: Array<DataBuffer>) : void {
+    sendUpdates(updates: DataBuffer, assets: any[]) : void {
       var bytes = updates.getBytes();
-      var assetLengths = [];
-      var assetsBytes = assets.map(function (asset) {
-        assetLengths.push(asset.length);
-        return asset.getBytes();
-      });
       this._worker.postMessage({
         type: 'player',
         updates: bytes,
-        assets: assetsBytes,
-        assetLengths: assetLengths
+        assets: assets,
       }, [bytes.buffer]);
     }
     registerForEventUpdates(listener: (updates: DataBuffer) => void) : void {

@@ -92,6 +92,11 @@ module Shumway.ArrayUtilities {
     endian: string;
   }
 
+  export class PlainObjectDataBuffer {
+    constructor(public buffer: ArrayBuffer, public length: number, public littleEndian: boolean) {
+    }
+  }
+
   export class DataBuffer implements IDataInput, IDataOutput {
     private static _nativeLittleEndian = new Int8Array(new Int32Array([1]).buffer)[0] === 1;
 
@@ -111,8 +116,8 @@ module Shumway.ArrayUtilities {
     private _bitBuffer: number;
     private _bitLength: number;
 
-    constructor() {
-      this._buffer = new ArrayBuffer(DataBuffer.INITIAL_SIZE);
+    constructor(initialSize: number = DataBuffer.INITIAL_SIZE) {
+      this._buffer = new ArrayBuffer(initialSize);
       this._length = 0;
       this._position = 0;
       this._cacheViews();
@@ -131,6 +136,16 @@ module Shumway.ArrayUtilities {
       dataBuffer._bitBuffer = 0;
       dataBuffer._bitLength = 0;
       return dataBuffer;
+    }
+
+    static FromPlainObject(source: PlainObjectDataBuffer): DataBuffer {
+      var dataBuffer = DataBuffer.FromArrayBuffer(source.buffer, source.length);
+      dataBuffer._littleEndian = source.littleEndian;
+      return dataBuffer;
+    }
+
+    toPlainObject(): PlainObjectDataBuffer {
+      return new PlainObjectDataBuffer(this._buffer, this._length, this._littleEndian);
     }
 
     private _get(m: string, size: number) {
