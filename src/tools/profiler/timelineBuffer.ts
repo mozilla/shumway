@@ -33,23 +33,22 @@ module Shumway.Tools.Profiler {
     static LEAVE = 0xDEAD0000 | 0;
 
     private _depth: number;
-    private _maxDepth: number;
     private _kindCount: number;
     private _kinds: TimelineItemKind [];
     private _kindNameMap: Shumway.Map<TimelineItemKind>;
     private _marks: Shumway.CircularBuffer;
     private _times: Shumway.CircularBuffer;
-    private _snapshot: TimelineFrame;
 
-    constructor() {
+    public name: string;
+
+    constructor(name?: string) {
+      this.name = name || "";
       this._depth = 0;
-      this._maxDepth = 0;
       this._kindCount = 0;
       this._kinds = [];
       this._kindNameMap = createEmptyObject();
       this._marks = new Shumway.CircularBuffer(Int32Array, 20);
       this._times = new Shumway.CircularBuffer(Float64Array, 20);
-      this._snapshot = null;
     }
 
     getKind(kind: number): TimelineItemKind {
@@ -58,14 +57,6 @@ module Shumway.Tools.Profiler {
 
     get kinds(): TimelineItemKind [] {
       return this._kinds.concat();
-    }
-
-    get snapshot(): TimelineFrame {
-      return this._snapshot;
-    }
-
-    get maxDepth(): number {
-      return this._maxDepth;
     }
 
     get depth(): number {
@@ -100,11 +91,11 @@ module Shumway.Tools.Profiler {
     /**
      * Constructs an easier to work with TimelineFrame data structure.
      */
-    createSnapshot(count: number = Number.MAX_VALUE) {
+    createSnapshot(count: number = Number.MAX_VALUE): TimelineBufferSnapshot {
       var times = this._times;
       var kinds = this._kinds;
-      var range = new TimelineFrame(null, null, NaN, NaN);
-      var stack: TimelineFrame [] = [range];
+      var snapshot = new TimelineBufferSnapshot(this.name);
+      var stack: TimelineFrame [] = [snapshot];
       var topLevelFrameCount = 0;
 
       this._marks.forEachInReverse(function (mark, i) {
@@ -143,24 +134,17 @@ module Shumway.Tools.Profiler {
           }
         }
       });
-
-      if (range.children && range.children.length) {
-        range.startTime = range.children[0].startTime;
-        range.endTime = range.children[range.children.length - 1].endTime;
-        this._maxDepth = range.maxDepth;
-        this._snapshot = range;
-      } else {
-        this._maxDepth = 0;
-        this._snapshot = null;
+      if (snapshot.children && snapshot.children.length) {
+        snapshot.startTime = snapshot.children[0].startTime;
+        snapshot.endTime = snapshot.children[snapshot.children.length - 1].endTime;
       }
+      return snapshot;
     }
 
     reset() {
       this._depth = 0;
-      this._maxDepth = 0;
       this._marks.reset();
       this._times.reset();
-      this._snapshot = null;
     }
 
     static FromFirefoxProfile(profile) {

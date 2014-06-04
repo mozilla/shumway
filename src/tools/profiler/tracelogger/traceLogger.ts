@@ -52,9 +52,17 @@ module Shumway.Tools.Profiler.TraceLogger {
       this._loadData([url], this._onLoadPage.bind(this));
     }
 
+    get buffers(): TimelineBuffer [] {
+      var buffers = [];
+      for (var i = 0, n = this._threads.length; i < n; i++) {
+        buffers.push(this._threads[i].buffer);
+      }
+      return buffers;
+    }
+
     private _onProgress() {
       if (this._pageLoadProgressCallback) {
-        this._pageLoadProgressCallback(this._progressInfo);
+        this._pageLoadProgressCallback.call(this, this._progressInfo);
       }
     }
 
@@ -79,13 +87,15 @@ module Shumway.Tools.Profiler.TraceLogger {
             (function(index: number) {
               return function(result: any []): any {
                 if (result) {
-                  self._threads[index] = new Thread(result);
+                  var thread = new Thread(result);
+                  thread.buffer.name = "Thread " + index;
+                  self._threads[index] = thread;
                 }
                 count++;
                 self._progressInfo.threadsLoaded++;
                 self._onProgress();
                 if (count === threadCount) {
-                  self._pageLoadCallback(null, self._threads);
+                  self._pageLoadCallback.call(self, null, self._threads);
                 }
               };
             })(i),
@@ -97,7 +107,7 @@ module Shumway.Tools.Profiler.TraceLogger {
         }
         this._onProgress();
       } else {
-        this._pageLoadCallback("Error loading page.", null);
+        this._pageLoadCallback.call(this, "Error loading page.", null);
       }
     }
 

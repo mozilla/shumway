@@ -43,7 +43,7 @@ module Shumway {
 
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
 
-  export var playerTimelineBuffer = new TimelineBuffer();
+  export var playerTimelineBuffer = new TimelineBuffer("Player");
 
   export function enterPlayerTimeline(name: string) {
     playerTimelineBuffer && playerTimelineBuffer.enter(name);

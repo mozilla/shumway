@@ -103,7 +103,7 @@ module Shumway.GFX {
 
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
 
-  export var timelineBuffer = new TimelineBuffer();
+  export var timelineBuffer = new TimelineBuffer("GFX");
 
   export function enterTimeline(name: string) {
     timelineBuffer && timelineBuffer.enter(name);

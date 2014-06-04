@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+var profiler = new Shumway.Tools.Profiler.Controller(document.getElementById("profilePanelContainer"));
+
 var LC_KEY_INSPECTOR_SETTINGS = "Inspector Options";
 
 var state = Shumway.Settings.load(LC_KEY_INSPECTOR_SETTINGS);
@@ -81,16 +83,14 @@ var GUI = (function () {
 
   function viewProfile() {
     //alert("Not Implemented");
-    var Profiler = Shumway.Tools.Profiler;
-    var profile = new Profiler.Profile();
+    var buffers = [];
     if (Shumway.playerTimelineBuffer) {
-      profile.addBuffer(Shumway.playerTimelineBuffer, "Player");
+      buffers.push(Shumway.playerTimelineBuffer);
     }
     if (Shumway.GFX.timelineBuffer) {
-      profile.addBuffer(Shumway.GFX.timelineBuffer, "GFX");
+      buffers.push(Shumway.GFX.timelineBuffer);
     }
-    var profileController = new Profiler.Controller(profile, document.getElementById("profilePanelContainer"));
-    profileController.createSnapshot();
+    profiler.createProfile(buffers);
   }
 
   function toggleProfile() {

@@ -37,7 +37,7 @@ module Shumway.Tools.Profiler {
       public kind: TimelineItemKind,
       public startTime: number,
       public endTime: number) {
-      this.maxDepth = 0;
+        this.maxDepth = 0;
     }
 
     /**
@@ -189,6 +189,12 @@ module Shumway.Tools.Profiler {
         self = self.parent;
       }
       return depth;
+    }
+  }
+
+  export class TimelineBufferSnapshot extends TimelineFrame {
+    constructor (public name: string) {
+      super(null, null, NaN, NaN);
     }
   }
 
