@@ -307,12 +307,15 @@ module Shumway.AVM2.AS.flash.display {
                       matrix: flash.geom.Matrix = null, spreadMethod: string = "pad",
                       interpolationMethod: string = "rgb", focalPointRatio: number = 0): void
     {
+      // TODO: only emit this if a stroke width has been set by calling `lineStyle`
       this._writeGradientStyle(PathCommand.LineStyleGradient, type, colors, alphas, ratios, matrix,
                               spreadMethod, interpolationMethod, focalPointRatio);
     }
 
     lineBitmapStyle(bitmap: flash.display.BitmapData, matrix: flash.geom.Matrix = null,
-                    repeat: boolean = true, smooth: boolean = false): void {
+                    repeat: boolean = true, smooth: boolean = false): void
+    {
+      // TODO: only emit this if a stroke width has been set by calling `lineStyle`
       //bitmap = bitmap; matrix = matrix;
       //this._closePath();
       //var fill = this._graphicsData.push(new GraphicsBitmapFill(bitmap, matrix, !!repeat, !!smooth));

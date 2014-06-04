@@ -14,6 +14,128 @@
  * limitations under the License.
  */
 
+/**
+ * Serialization format for shape data:
+ * (canonical, update this instead of anything else!)
+ *
+ * Shape data is serialized into a set of three buffers:
+ * - `commands`: a Uint8Array for commands*
+ *  - valid values: [1-11] (i.e. one of the PathCommand enum values)
+ *                  OR uint8 thickness iff the previous value is PathCommand.LineStyleSolid
+ * - `coordinates`: an Int32Array for path coordinates
+ *  - valid values: the full range of 32bit numbers, representing x,y coordinates in twips
+ * - `styles`: a DataBuffer for style definitions
+ *  - valid values: structs for the various style definitions as described below
+ *
+ * (*: with one exception: to make various things faster, stroke widths are stored in the
+ * command buffer, too.)
+ *
+ * All entries always contain all fields, default values aren't omitted.
+ *
+ * the various commands write the following sets of values into the various buffers:
+ *
+ * moveTo:
+ * commands:      PathCommand.MoveTo
+ * coordinates:   target x coordinate, in twips
+ *                target y coordinate, in twips
+ * styles:        n/a
+ *
+ * lineTo:
+ * commands:      PathCommand.LineTo
+ * coordinates:   target x coordinate, in twips
+ *                target y coordinate, in twips
+ * styles:        n/a
+ *
+ * curveTo:
+ * commands:      PathCommand.CurveTo
+ * coordinates:   control point x coordinate, in twips
+ *                control point y coordinate, in twips
+ *                target x coordinate, in twips
+ *                target y coordinate, in twips
+ * styles:        n/a
+ *
+ * cubicCurveTo:
+ * commands:      PathCommand.CubicCurveTo
+ * coordinates:   control point 1 x coordinate, in twips
+ *                control point 1 y coordinate, in twips
+ *                control point 2 x coordinate, in twips
+ *                control point 2 y coordinate, in twips
+ *                target x coordinate, in twips
+ *                target y coordinate, in twips
+ * styles:        n/a
+ *
+ * beginFill:
+ * commands:      PathCommand.BeginSolidFill
+ * coordinates:   n/a
+ * styles:        uint32 - RGBA color
+ *
+ * beginGradientFill:
+ * commands:      PathCommand.BeginGradientFill
+ * coordinates:   n/a
+ * Note: the style fields are ordered this way to optimize performance in the rendering backend
+ * Note: the style record has a variable length depending on the number of color stops
+ * styles:        uint8  - GradientType.{LINEAR,RADIAL}
+ *                int8   - focalPoint [-128,127]
+ *                matrix - transform (see Matrix#writeExternal for details)
+ *                uint8  - colorStops (Number of color stop records that follow)
+ *                list of uint8,uint32 pairs:
+ *                    uint8  - ratio [0-0xff]
+ *                    uint32 - RGBA color
+ *                uint8  - SpreadMethod.{PAD,REFLECT,REPEAT}
+ *                uint8  - InterpolationMethod.{RGB,LINEAR_RGB}
+ *
+ * beginBitmapFill:
+ * commands:      PathCommand.BeginBitmapFill
+ * coordinates:   n/a
+ * styles:        uint32 - Index of the bitmapData object in the Graphics object's `textures`
+ *                         array
+ *                matrix - transform (see Matrix#writeExternal for details)
+ *                bool   - repeat
+ *                bool   - smooth
+ *
+ * lineStyle:
+ * commands:      PathCommand.LineStyleSolid
+ *                uint8  - thickness (!)
+ * coordinates:   n/a
+ * style:         uint32 - RGBA color
+ *                bool   - pixelHinting
+ *                uint8  - LineScaleMode, [0-3] see LineScaleMode.fromNumber for meaning
+ *                uint8  - CapsStyle, [0-2] see CapsStyle.fromNumber for meaning
+ *                uint8  - JointStyle, [0-2] see JointStyle.fromNumber for meaning
+ *                uint8  - miterLimit
+ *
+ * lineGradientStyle:
+ * commands:      PathCommand.LineStyleGradient
+ * coordinates:   n/a
+ * Note: the style fields are ordered this way to optimize performance in the rendering backend
+ * Note: the style record has a variable length depending on the number of color stops
+ * styles:        uint8  - GradientType.{LINEAR,RADIAL}
+ *                int8   - focalPoint [-128,127]
+ *                matrix - transform (see Matrix#writeExternal for details)
+ *                uint8  - colorStops (Number of color stop records that follow)
+ *                list of uint8,uint32 pairs:
+ *                    uint8  - ratio [0-0xff]
+ *                    uint32 - RGBA color
+ *                uint8  - SpreadMethod.{PAD,REFLECT,REPEAT}
+ *                uint8  - InterpolationMethod.{RGB,LINEAR_RGB}
+ *
+ * lineBitmapStyle:
+ * commands:      PathCommand.LineBitmapStyle
+ * coordinates:   n/a
+ * styles:        uint32 - Index of the bitmapData object in the Graphics object's `textures`
+ *                         array
+ *                matrix - transform (see Matrix#writeExternal for details)
+ *                bool   - repeat
+ *                bool   - smooth
+ *
+ * lineEnd:
+ * Note: emitted for invalid `lineStyle` calls
+ * commands:      PathCommand.LineEnd
+ * coordinates:   n/a
+ * styles:        n/a
+ *
+ */
+
 ///<reference path='dataBuffer.ts' />
 module Shumway {
   import DataBuffer = Shumway.ArrayUtilities.DataBuffer;
@@ -75,78 +197,6 @@ module Shumway {
     Styles = 16
   }
 
-  /**
-   * Serialization format for graphics path commands:
-   * (canonical, update this instead of anything else!)
-   *
-   * All entries begin with a byte representing the command:
-   * command: byte [1-11] (i.e. one of the PathCommand enum values)
-   *
-   * All entries always contain all fields, default values aren't omitted.
-   *
-   * moveTo:
-   * byte command:  PathCommand.MoveTo
-   * int x:         target x coordinate, in twips
-   * int y:         target y coordinate, in twips
-   *
-   * lineTo:
-   * byte command:  PathCommand.LineTo
-   * int x:         target x coordinate, in twips
-   * int y:         target y coordinate, in twips
-   *
-   * curveTo:
-   * byte command:  PathCommand.CurveTo
-   * int  controlX: control point x coordinate, in twips
-   * int  controlY: control point y coordinate, in twips
-   * int  anchorX:  target x coordinate, in twips
-   * int  anchorY:  target y coordinate, in twips
-   *
-   * cubicCurveTo:
-   * byte command:   PathCommand.CubicCurveTo
-   * int controlX1:  control point 1 x coordinate, in twips
-   * int controlY1:  control point 1 y coordinate, in twips
-   * int controlX2:  control point 2 x coordinate, in twips
-   * int controlY2:  control point 2 y coordinate, in twips
-   * int anchorX:    target x coordinate, in twips
-   * int anchorY:    target y coordinate, in twips
-   *
-   * beginFill:
-   * byte command:  PathCommand.BeginSolidFill
-   * uint color:    [RGBA color]
-   *
-   * beginGradientFill:
-   * Note: these fields are ordered this way to optimize performance in the rendering backend
-   * byte command:        PathCommand.BeginGradientFill
-   * byte gradientType:   GradientType.{LINEAR,RADIAL}
-   * i8   focalPoint:     [-128,127]
-   * matrix matrix:       transform matrix (see Matrix#writeExternal for details)
-   * byte colorStops:     Number of color stop records that follow
-   * list of byte,uint pairs:
-   *      byte ratio:     [0-0xff]
-   *      uint color:     [RGBA color]
-   * byte spread:         SpreadMethod.{PAD,REFLECT,REPEAT}
-   * byte interpolation:  InterpolationMethod.{RGB,LINEAR_RGB}
-   *
-   * beginBitmapFill:
-   * byte command:  PathCommand.BeginBitmapFill
-   * uint bitmapId: Id of the bitmapData object being used as the fill's texture
-   * matrix matrix: transform matrix (see Matrix#writeExternal for details)
-   * bool repeat
-   * bool smooth
-   *
-   *
-   * lineStyle:
-   * byte command:      PathCommand.LineStyleSolid OR PathCommand.LineEnd
-   * The following values are only emitted if the command is PathCommand.LineStyleSolid:
-   * byte thickness:    [0-0xff]
-   * uint color:        [RGBA color]
-   * bool pixelHinting
-   * byte scaleMode:    [0-3] see LineScaleMode.fromNumber for meaning
-   * byte caps:         [0-2] see CapsStyle.fromNumber for meaning
-   * byte joints:       [0-2] see JointStyle.fromNumber for meaning
-   * byte miterLimit:   [0-0xff]
-   *
-   */
   export class ShapeData {
 
     commands: Uint8Array;
