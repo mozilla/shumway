@@ -159,11 +159,7 @@ IFramePlayer._updatesListener = null;
 IFramePlayer.sendUpdates = function (data) {
   var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
   var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
-  var assetLengths = data.assetLengths;
-  var assets = data.assets.map(function (assetBytes, index) {
-    return DataBuffer.FromArrayBuffer(assetBytes.buffer, assetLengths[index]);
-  });
-  IFramePlayer._updatesListener(updates, assets);
+  IFramePlayer._updatesListener(updates, data.assets);
 };
 IFramePlayer.prototype = {
   sendEventUpdates: function(updates) {

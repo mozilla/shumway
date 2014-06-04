@@ -166,16 +166,10 @@ IFramePlayerChannel.sendEventUpdates = function (data) {
 IFramePlayerChannel.prototype = {
   sendUpdates: function (updates, assets) {
     var bytes = updates.getBytes();
-    var assetLengths = [];
-    var assetsBytes = assets.map(function (asset) {
-      assetLengths.push(asset.length);
-      return asset.getBytes();
-    });
     window.parent.postMessage({
       type: 'player',
       updates: bytes,
-      assets: assetsBytes,
-      assetLengths: assetLengths
+      assets: assets
     }, '*', [bytes.buffer]);
   },
   registerForEventUpdates: function (listener) {
