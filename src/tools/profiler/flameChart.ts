@@ -67,6 +67,8 @@ module Shumway.Tools.Profiler {
       var context = this._context;
       var ratio = window.devicePixelRatio;
 
+      ColorStyle.reset(); 
+
       context.save();
       context.scale(ratio, ratio);
       context.fillStyle = this._controller.theme.sidebarBackground(1); //"#181d20";
