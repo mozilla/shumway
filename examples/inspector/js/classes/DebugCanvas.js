@@ -1,4 +1,6 @@
 var DebugCanvasRenderingContext2D = (function () {
+  var Option = Shumway.Options.Option;
+  var OptionSet = Shumway.Options.OptionSet;
   function debugCanvasRenderingContext2D(target, counter, options) {
     this.target = target;
     this.counter = counter;
