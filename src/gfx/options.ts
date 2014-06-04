@@ -20,7 +20,7 @@ module Shumway.GFX {
   import Option = Shumway.Options.Option;
   import OptionSet = Shumway.Options.OptionSet;
 
-  declare var shumwayOptions: OptionSet;
+  import shumwayOptions = Shumway.Settings.shumwayOptions;
 
   var rendererOptions = shumwayOptions.register(new OptionSet("Renderer Options"));
   export var traceRenderer = rendererOptions.register(new Option("tr", "traceRenderer", "number", 0, "trace renderer execution"));

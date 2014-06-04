@@ -36,10 +36,8 @@ load("../../build/ts/options.js");
 load("../../build/ts/settings.js");
 
 load("../../src/avm2/avm2Util.js");
-load("../../build/ts/avm2/options.js");
 load("../../build/ts/metrics.js");
 
-load("../../build/ts/player/references.js");
 load("../../build/ts/player/remoting.js");
 
 load("../../build/ts/tools/profiler/timelineFrame.js");

@@ -16,6 +16,7 @@
 
 /// <reference path='../utilities.ts' />
 /// <reference path='../options.ts'/>
+/// <reference path='../settings.ts'/>
 /// <reference path='../tools/profiler/references.ts' />
 /// <reference path='../dataBuffer.ts' />
 /// <reference path='../ShapeData.ts' />

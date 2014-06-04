@@ -55,7 +55,8 @@ var GUI = (function () {
   gui.domElement.addEventListener("click", function(e) {
     if (e.target.nodeName.toLowerCase() == "li" && e.target.classList.contains("title")) {
       var isOpen = !e.target.parentElement.classList.contains("closed");
-      var option = findOptionSetByName(e.target.textContent, shumwayOptions);
+      var option = findOptionSetByName(e.target.textContent,
+                                       Shumway.Settings.shumwayOptions);
       if (option) {
         option.open = isOpen;
         Shumway.Settings.save();
@@ -159,7 +160,7 @@ var GUI = (function () {
   }
 
   // shumwayOptions.register(webGLOptions);
-  addOptionSet(gui, shumwayOptions);
+  addOptionSet(gui, Shumway.Settings.shumwayOptions);
 
   document.getElementById("settingsContainer").appendChild(gui.domElement);
 
