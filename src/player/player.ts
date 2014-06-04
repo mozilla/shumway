@@ -238,6 +238,10 @@ module Shumway {
       leavePlayerTimeline("sendUpdates");
     }
 
+    public requestRendering(): void {
+      this._pumpDisplayListUpdates();
+    }
+
     /**
      * Update the frame container with the latest changes from the display list.
      */

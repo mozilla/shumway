@@ -94,6 +94,8 @@ module Shumway.AVM2.AS.flash.events {
     // AS -> JS Bindings
     private _localX: number;
     private _localY: number;
+    private _movementX: number;
+    private _movementY: number;
 
     get localX(): number {
       return this._localX;
@@ -112,42 +114,44 @@ module Shumway.AVM2.AS.flash.events {
     }
 
     get movementX(): number {
-      notImplemented("public flash.events.MouseEvent::get movementX");
-      return 0;
-      // return this._movementX;
+      somewhatImplemented("public flash.events.MouseEvent::set movementX");
+      return this._movementX || 0;
     }
 
     set movementX(value: number) {
-      value = +value;
-      notImplemented("public flash.events.MouseEvent::set movementX");
-      // this._movementX = value;
+      this._movementX = +value;
     }
 
     get movementY(): number {
-      notImplemented("public flash.events.MouseEvent::get movementY");
-      return 0;
-      // return this._movementY;
+      somewhatImplemented("public flash.events.MouseEvent::set movementY");
+      return this._movementY || 0;
     }
 
     set movementY(value: number) {
-      value = +value;
-      notImplemented("public flash.events.MouseEvent::set movementY");
-      // this._movementY = value;
+      this._movementY = +value;
     }
 
     updateAfterEvent(): void {
-      somewhatImplemented("public flash.events.MouseEvent::updateAfterEvent");
-      return;
+      Shumway.AVM2.Runtime.AVM2.instance.globals['Shumway.Player.Utils'].requestRendering();
+    }
+
+    private _getGlobalPoint(): flash.geom.Point {
+      var localPoint = new flash.geom.Point(this._localX, this._localY);
+      return (<flash.display.DisplayObject>this._target).localToGlobal(localPoint);
     }
 
     getStageX(): number {
-      notImplemented("public flash.events.MouseEvent::getStageX");
-      return 0;
+      if (!this._target) {
+        return 0;
+      }
+      return this._getGlobalPoint().x;
     }
 
     getStageY(): number {
-      notImplemented("public flash.events.MouseEvent::getStageY");
-      return 0;
+      if (!this._target) {
+        return 0;
+      }
+      return this._getGlobalPoint().y;
     }
   }
 }

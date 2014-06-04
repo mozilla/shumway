@@ -224,6 +224,7 @@ module Shumway.AVM2.AS.flash.display {
     }
 
     set mouseLock(value: boolean) {
+      somewhatImplemented("public flash.display.Stage::set mouseLock");
       this._mouseLock = !!value;
     }
 
