@@ -24,6 +24,8 @@ module Shumway.GFX.GL {
   import radianToDegrees = Geometry.radianToDegrees;
   import degreesToRadian = Geometry.degreesToRadian;
 
+  import notImplemented = Shumway.Debug.notImplemented;
+
   export var SHADER_ROOT = "shaders/";
 
   function endsWith(str, end) {

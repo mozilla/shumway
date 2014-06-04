@@ -41,7 +41,6 @@
 declare function randomStyle(): string;
 declare function assert(...args : any[]);
 declare function unexpected(...args : any[]);
-declare function notImplemented(...args : any[]);
 declare var release: boolean;
 
 declare class IndentingWriter {

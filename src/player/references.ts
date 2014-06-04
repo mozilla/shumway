@@ -17,6 +17,7 @@
 ///<reference path='../tools/profiler/references.ts' />
 ///<reference path='../swf/references.ts' />
 ///<reference path='../flash/references.ts' />
+///<reference path='../gfx/references.ts' />
 ///<reference path='options.ts' />
 ///<reference path='frameScheduler.ts' />
 ///<reference path='remoting.ts' />
