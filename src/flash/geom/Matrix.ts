@@ -44,7 +44,7 @@ module Shumway.AVM2.AS.flash.geom {
       this.ty = +ty;
     }
 
-    public static FromAny(obj: any): Matrix {
+    public static FromUntyped(obj: any): Matrix {
       return new flash.geom.Matrix(obj.a, obj.b, obj.c, obj.d, obj.tx, obj.ty);
     }
 
