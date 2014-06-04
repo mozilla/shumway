@@ -245,4 +245,39 @@
     eq(r, 'C');
   });
 
+  unitTests.push(function () {
+    Random.seed(0x12343);
+
+    var c = new Sprite();
+    c.graphics.beginFill(0xff0000);
+    c.graphics.drawRect(0, 0, 100, 100);
+    c.x = 100;
+    c.y = 50;
+    var evt = new MouseEvent('mouseMove', true, false, 50, 25);
+
+    c.dispatchEvent(evt);
+    eq(evt.target, null);
+    eq(evt.getStageX(), 0);
+    eq(evt.getStageY(), 0);
+    eq(evt.movementX, 0);
+    eq(evt.movementY, 0);
+
+    var eventWasTriggered = false;
+    c.addEventListener('mouseMove', function (e) {
+      eventWasTriggered = true;
+      eq(e.localX, 50);
+      eq(e.localY, 25);
+      eq(e.getStageX(), 150);
+      eq(e.getStageY(), 75);
+      e.localX = 0;
+      e.localY = 0;
+      eq(e.localX, 0);
+      eq(e.localY, 0);
+      eq(e.getStageX(), 100);
+      eq(e.getStageY(), 50);
+    });
+    c.dispatchEvent(evt);
+    check(eventWasTriggered);
+  });
+
 })();

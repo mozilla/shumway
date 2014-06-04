@@ -71,7 +71,7 @@ module Shumway.AVM2.AS.flash.ui {
      * Converts DOM mouse event data into AS3 mouse events.
      */
     private _dispatchMouseEvent(target: flash.display.InteractiveObject, type: string, data: MouseEventAndPointData, relatedObject: flash.display.InteractiveObject = null) {
-      var localPoint = target.globalToLocal(data.point).toTwips();
+      var localPoint = target.globalToLocal(data.point);
       var event = new events.MouseEvent (
         type,
         type !== events.MouseEvent.ROLL_OVER &&
