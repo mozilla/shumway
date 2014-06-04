@@ -315,6 +315,26 @@ module Shumway.AVM2.AS.flash.geom {
       return this;
     }
 
+    public snapInPlace(): Rectangle  {
+      var x1 = Math.ceil(this.x + this.width);
+      var y1 = Math.ceil(this.y + this.height);
+      this.x = Math.floor(this.x);
+      this.y = Math.floor(this.y);
+      this.width = x1 - this.x;
+      this.height = y1 - this.y;
+      return this;
+    }
+
+    public roundInPlace(): Rectangle  {
+      var x1 = Math.round(this.x + this.width);
+      var y1 = Math.round(this.y + this.height);
+      this.x = Math.round(this.x);
+      this.y = Math.round(this.y);
+      this.width = x1 - this.x;
+      this.height = y1 - this.y;
+      return this;
+    }
+
     public toString(): string {
       return "(x=" + this.x + ", y=" + this.y + ", w=" + this.width + ", h=" + this.height + ")";
     }
