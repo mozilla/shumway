@@ -34,6 +34,8 @@ module Shumway.Tools.Profiler {
     private _themeType: UIThemeType;
     private _theme: Theme.UITheme;
 
+    private _tooltip: HTMLElement;
+
     constructor(container: HTMLElement, themeType: UIThemeType = UIThemeType.DARK) {
       this._container = container;
       this._headers = [];
@@ -41,6 +43,7 @@ module Shumway.Tools.Profiler {
       this._profiles = [];
       this._activeProfile = null;
       this.themeType = themeType;
+      this._tooltip = this._createTooltip();
     }
 
     createProfile(buffers: TimelineBuffer [], activate: boolean = true): Profile {
@@ -180,6 +183,15 @@ module Shumway.Tools.Profiler {
       */
     }
 
+    private _createTooltip() {
+      var el = document.createElement("div");
+      el.classList.add("profiler-tooltip");
+      el.style.display = "none";
+      this._container.insertBefore(el, this._container.firstChild);
+      return el;
+    }
+
+
     /**
      * View callbacks
      */
@@ -194,12 +206,28 @@ module Shumway.Tools.Profiler {
       this._updateViews();
     }
 
-    showTooltip(snapshot: TimelineBufferSnapshot, frame: TimelineFrame) {
-      //console.log("show tooltip", frame);
+    showTooltip(chart: FlameChart, frame: TimelineFrame, x: number, y: number) {
+      var totalTime = Math.round(frame.totalTime * 100000) / 100000;
+      var selfTime = Math.round(frame.selfTime * 100000) / 100000;
+      var selfPercent = Math.round(frame.selfTime * 100 * 100 / frame.totalTime) / 100;
+      this._tooltip.innerHTML = "<div>"
+                              +   "<h1>" + frame.kind.name + "</h1>"
+                              +   "<p>Total time: " + totalTime + " ms</p>"
+                              +   "<p>Self time: " + selfTime + " ms (" + selfPercent + "%)</p>"
+                              + "</div>";
+      this._tooltip.style.display = "block";
+      var elContent = <HTMLElement>this._tooltip.firstChild;
+      var tooltipWidth = elContent.clientWidth;
+      var tooltipHeight = elContent.clientHeight;
+      var totalWidth = chart.canvas.clientWidth;
+      x += (x + tooltipWidth >= totalWidth - 50) ? -(tooltipWidth + 20) : 25;
+      y += chart.canvas.offsetTop - tooltipHeight / 2;
+      this._tooltip.style.left = x + "px";
+      this._tooltip.style.top = y + "px";
     }
 
     hideTooltip() {
-      //console.log("hide tooltip");
+      this._tooltip.style.display = "none";
     }
 
   }
