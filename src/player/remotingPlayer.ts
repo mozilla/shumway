@@ -48,7 +48,7 @@ module Shumway.Remoting.Player {
       stage.visit(function (displayObject) {
         serializer.writeDisplayObject(displayObject);
         return VisitorFlags.Continue;
-      }, VisitorFlags.None);
+      }, VisitorFlags.Filter, DisplayObjectFlags.Dirty);
     }
 
     writeGraphics(graphics: Graphics) {
@@ -164,8 +164,8 @@ module Shumway.Remoting.Player {
       }
     }
 
-    writeBitmapDataDraw(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
-      this.output.writeInt(MessageTag.BitmapDataDraw);
+    writeCacheAsBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
+      this.output.writeInt(MessageTag.CacheAsBitmap);
       this.output.writeInt(bitmapData._id);
       if (BitmapData.isType(source)) {
         this.output.writeInt(IDMask.Asset | source._id);

@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+var shumwayOptions = Shumway.Settings.shumwayOptions;
 var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
 var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
 var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));

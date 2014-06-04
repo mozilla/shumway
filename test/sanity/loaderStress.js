@@ -21,7 +21,7 @@
       new BinaryFileReader(path).readAll(null, function (buffer) {
         timeline && timeline.enter("SWF");
         try {
-          SWF.parse(buffer, { });
+          Shumway.SWF.Parser.parse(buffer, { });
         } catch (e) {
           log("Failed to Parse: " + path);
         }
@@ -78,7 +78,8 @@
       var path = paths[i];
 
       new BinaryFileReader(path).readAll(null, function (buffer) {
-        SWF.parse(buffer, {
+        var SWF_TAG_CODE_DO_ABC = Shumway.SWF.Parser.SwfTag.CODE_DO_ABC;
+        Shumway.SWF.Parser.parse(buffer, {
           oncomplete: function(result) {
             var tags = result.tags;
             var abcs = []; // Group SWF ABCs in their own array.

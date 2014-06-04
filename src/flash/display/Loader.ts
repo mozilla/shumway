@@ -28,8 +28,6 @@ module Shumway.AVM2.AS.flash.display {
 
   import Bounds = Shumway.Bounds;
 
-  declare var ResourceLoader;
-
   enum LoadStatus {
     Unloaded    = 0,
     Opened      = 1,
@@ -498,6 +496,7 @@ module Shumway.AVM2.AS.flash.display {
       if (Loader.WORKERS_ENABLED) {
         worker = new Worker(Loader.SHUMWAY_ROOT + Loader.LOADER_PATH);
       } else {
+        var ResourceLoader = (<any>Shumway).SWF.ResourceLoader;
         worker = new ResourceLoader(window, false);
       }
       var loader = this;

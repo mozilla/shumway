@@ -383,8 +383,6 @@ module Shumway.GFX {
       context.clearRect(0, 0, context.canvas.width, context.canvas.height);
 
       context.save();
-
-
       var options = this._options;
 
       var lastDirtyRectangles: Rectangle[] = [];
@@ -413,7 +411,6 @@ module Shumway.GFX {
             context.fillRule = context.mozFillRule = savedFillRule;
           }
         }
-
       }
 
       var dirtyRectangles = lastDirtyRectangles.slice(0);
@@ -474,123 +471,6 @@ module Shumway.GFX {
         var hasColorMatrix: boolean = (!frame.colorMatrix.isIdentity() && !(target & RenderTarget.ColorMatrix));
         var hasBlendMode: boolean = (frame.blendMode > 1 && !(target & RenderTarget.BlendMode));
 
-        if (false && (hasFilters || hasColorMatrix || hasBlendMode)) {
-          var boundsAABB = frame.getBounds().clone();
-          transform.transformRectangleAABB(boundsAABB);
-          var tx = boundsAABB.x;
-          var ty = boundsAABB.y;
-          boundsAABB.snap();
-          var tx = boundsAABB.x - tx;
-          var ty = boundsAABB.y - ty;
-          //console.log(fbx.toFixed(3), fby.toFixed(3), fbw.toFixed(3), fbh.toFixed(3), boundsAABB.x, boundsAABB.y, boundsAABB.w, boundsAABB.h);
-
-          var region: Region = frame.properties["regionCanvas2D"]
-                             = self.canvasCache.allocateOrUpdate(boundsAABB.w,
-                                                                 boundsAABB.h,
-                                                                 frame.properties["regionCanvas2D"]);
-          if (region) {
-            var needsImageData: boolean = false;
-            if (hasFilters) {
-              target |= RenderTarget.Filters;
-              needsImageData = true;
-            }
-            if (hasColorMatrix) {
-              target |= RenderTarget.ColorMatrix;
-              needsImageData = true;
-            }
-            if (hasBlendMode) {
-              target |= RenderTarget.BlendMode;
-            }
-
-            var allocator: CanvasGrid = <CanvasGrid>region.allocator;
-            var scratchContext: CanvasRenderingContext2D = allocator.context;
-            Canvas2DStageRenderer.clearContext(scratchContext, region);
-            transform.translate(region.x + tx - boundsAABB.x, region.y + ty - boundsAABB.y);
-            self.renderFrame(scratchContext, frame, transform, region, null, target, options);
-            transform.translate(-region.x - tx + boundsAABB.x, -region.y - ty + boundsAABB.y);
-
-            var image;
-            var imageData;
-            if (needsImageData) {
-              image = scratchContext.getImageData(region.x, region.y, region.w, region.h);
-              imageData = image.data;
-            }
-
-            if (hasFilters) {
-              //for (var i = 0, n = filters.length; i < n; i++) {
-              //  filters[i].applyFilter(imageData);
-              //}
-            }
-
-            if (hasColorMatrix) {
-              var ct = frame.colorMatrix.getColorTransform();
-              FILTERS.colortransform(imageData, image.width, image.height, ct[0], ct[1], ct[2], ct[4], ct[5], ct[6]);
-            }
-
-            if (needsImageData) {
-              scratchContext.putImageData(image, region.x, region.y);
-            }
-
-            context.save();
-            context.setTransform(1, 0, 0, 1, 0, 0);
-
-            if (hasBlendMode) {
-              context.globalCompositeOperation = self.getCompositeOperation(frame.blendMode);
-            }
-
-            tx = boundsAABB.x;
-            ty = boundsAABB.y;
-            boundsAABB.intersect(self._viewport);
-            tx = boundsAABB.x - tx;
-            ty = boundsAABB.y - ty;
-            //console.log(boundsAABB.x, boundsAABB.y, boundsAABB.w, boundsAABB.h, region.x, region.y, region.w, region.h)
-
-            context.drawImage(scratchContext.canvas, region.x + tx, region.y + ty, boundsAABB.w, boundsAABB.h, boundsAABB.x, boundsAABB.y, boundsAABB.w, boundsAABB.h);
-
-            context.restore();
-            context.restore();
-            return VisitorFlags.Skip;
-          }
-        }
-
-        if (!options.disableMasking && frame.mask && !frame._hasFlags(FrameFlags.IgnoreMask) && !(target & RenderTarget.Mask)) {
-          frame._setFlags(FrameFlags.IgnoreMask);
-
-          var maskCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
-          var maskeeCanvasContext = self.createScratchContext(context); // TODO: FIX THIS!
-
-          var maskTransform = frame.mask.getConcatenatedMatrix();
-          var maskBoundsAABB = frame.mask.getBounds().clone();
-          maskTransform.transformRectangleAABB(maskBoundsAABB);
-          maskBoundsAABB.intersect(self._viewport);
-
-          var frameBoundsAABB = frame.getBounds().clone();
-          transform.transformRectangleAABB(frameBoundsAABB);
-          maskBoundsAABB.intersect(frameBoundsAABB);
-          maskBoundsAABB.snap();
-
-          //Canvas2DStageRenderer.clearContext(maskCanvasContext, maskBoundsAABB);
-          self.renderFrame(maskCanvasContext, frame.mask, maskTransform, maskBoundsAABB, null, target | RenderTarget.Mask, options);
-
-          //Canvas2DStageRenderer.clearContext(maskeeCanvasContext, maskBoundsAABB);
-          maskeeCanvasContext.globalCompositeOperation = 'source-over';
-          self.renderFrame(maskeeCanvasContext, frame, transform, maskBoundsAABB, null, target | RenderTarget.Maskee, options);
-
-          if (options.compositeMask) {
-            maskeeCanvasContext.globalCompositeOperation = 'destination-in';
-          }
-          maskeeCanvasContext.drawImage(maskCanvasContext.canvas, maskBoundsAABB.x, maskBoundsAABB.y, maskBoundsAABB.w, maskBoundsAABB.h, maskBoundsAABB.x, maskBoundsAABB.y, maskBoundsAABB.w, maskBoundsAABB.h);
-          context.save();
-          context.setTransform(1, 0, 0, 1, 0, 0);
-          context.drawImage(maskeeCanvasContext.canvas, maskBoundsAABB.x, maskBoundsAABB.y, maskBoundsAABB.w, maskBoundsAABB.h, maskBoundsAABB.x, maskBoundsAABB.y, maskBoundsAABB.w, maskBoundsAABB.h);
-          if (options.debug) {
-            context.strokeStyle = "red";
-            context.strokeRect(maskBoundsAABB.x, maskBoundsAABB.y, maskBoundsAABB.w, maskBoundsAABB.h);
-          }
-          context.restore();
-          context.restore();
-          return VisitorFlags.Skip;
-        }
 
         var inverseTransform: Matrix = Matrix.createIdentity();
         frame.getConcatenatedMatrix().inverse(inverseTransform);

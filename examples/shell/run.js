@@ -34,12 +34,9 @@ load("../../build/ts/ShapeData.js");
 load("../../build/ts/options.js");
 load("../../build/ts/settings.js");
 
-load("../../src/swf/options.js");
 load("../../src/avm2/avm2Util.js");
-load("../../build/ts/avm2/options.js");
 load("../../build/ts/metrics.js");
 
-load("../../build/ts/player/references.js");
 load("../../build/ts/player/remoting.js");
 
 load("../../build/ts/tools/profiler/timelineFrame.js");
@@ -56,30 +53,26 @@ load("../../lib/jpgjs/jpg.js");
 
 // Load SWF Dependencies
 console.time("Load SWF Dependencies");
-load("../../src/swf/util.js");
-load("../../src/swf/swf.js");
-load("../../src/swf/inflate.js");
-load("../../src/swf/stream.js");
+load("../../build/ts/swf/inflate.js");
+load("../../build/ts/swf/stream.js");
 load("../../build/ts/swf/parser/bitmap.js");
 load("../../build/ts/swf/parser/button.js");
 load("../../build/ts/swf/parser/font.js");
-load("../../src/swf/image.js");
+load("../../build/ts/swf/parser/image.js");
 load("../../build/ts/swf/parser/label.js");
 load("../../build/ts/swf/parser/shape.js");
-load("../../src/swf/sound.js");
-load("../../src/swf/text.js");
+load("../../build/ts/swf/parser/sound.js");
+load("../../build/ts/swf/parser/text.js");
 console.timeEnd("Load SWF Dependencies");
 
 console.time("Load SWF Parser");
-load("../../src/swf/types.js");
-load("../../src/swf/structs.js");
-load("../../src/swf/tags.js");
-load("../../src/swf/templates.js");
-load("../../src/swf/handlers.js");
-load("../../src/swf/parser.js");
+load("../../build/ts/swf/parser/swfTag.js");
+load("../../build/ts/swf/parser/templates.js");
+load("../../build/ts/swf/parser/handlers.js");
+load("../../build/ts/swf/parser/parser.js");
 console.timeEnd("Load SWF Parser");
 
-load("../../src/swf/resourceloader.js");
+load("../../build/ts/swf/resourceLoader.js");
 
 console.timeEnd("Load Parser Dependencies");
 
@@ -91,6 +84,7 @@ console.time("Load Player Dependencies");
 // Load AVM2 Dependencies
 console.time("Load AVM2 Dependencies");
 load("../../src/avm2/constants.js");
+load("../../build/ts/avm2/options.js");
 load("../../build/ts/avm2/errors.js");
 load("../../build/ts/avm2/parser.js");
 load("../../build/ts/avm2/bytecode.js");
@@ -540,6 +534,7 @@ load("../../build/ts/avm1lib/AS2TextFormat.js");
 load("../../build/ts/avm1lib/AS2Utils.js");
 console.timeEnd("Load avm1lib Dependencies");
 
+load("../../build/ts/player/options.js");
 load("../../build/ts/player/timeline.js");
 load("../../build/ts/player/remotingPlayer.js");
 load("../../build/ts/player/player.js");

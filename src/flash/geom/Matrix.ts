@@ -44,7 +44,7 @@ module Shumway.AVM2.AS.flash.geom {
       this.ty = +ty;
     }
 
-    public static FromAny(obj: any): Matrix {
+    public static FromUntyped(obj: any): Matrix {
       return new flash.geom.Matrix(obj.a, obj.b, obj.c, obj.d, obj.tx, obj.ty);
     }
 
@@ -283,17 +283,10 @@ module Shumway.AVM2.AS.flash.geom {
       return new Point(this.a * point.x + this.c * point.y + this.tx, this.b * point.x + this.d * point.y + this.ty);
     }
 
-    public transformCoords(x: number, y: number, inPixels: boolean = false): Point {
-      x = +x;
-      y = +y;
-      if (inPixels) {
-        x = (x * 20) | 0;
-        y = (y * 20) | 0;
-      }
-      return new Point (
-        this.a * x + this.c * y + this.tx,
-        this.b * x + this.d * y + this.ty
-      );
+    public transformPointInPlace(point): Point {
+      point.setTo(this.a * point.x + this.c * point.y + this.tx,
+                  this.b * point.x + this.d * point.y + this.ty);
+      return point;
     }
 
     transformRectAABB (rectangle: Rectangle): Rectangle {

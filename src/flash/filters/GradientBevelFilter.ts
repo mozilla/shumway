@@ -33,7 +33,7 @@ module Shumway.AVM2.AS.flash.filters {
     // List of instance symbols to link.
     static instanceSymbols: string [] = null;
 
-    public static FromAny(obj: any) {
+    public static FromUntyped(obj: any) {
       // obj.colors is an array of objects with separate color components
       // the rgb and alpha components must be separated into colors and alphas arrays
       var colors = obj.colors.map(function(value) {

@@ -26,8 +26,7 @@ module Shumway.Tools.Profiler {
 
   export class FlameChart extends FlameChartBase implements MouseControllerTarget {
 
-    private _bufferIndex: number;
-    private _buffer: TimelineBuffer;
+    private _snapshot: TimelineBufferSnapshot;
 
     private _kindStyle: Shumway.Map<KindStyle>;
     private _textWidth = {};
@@ -41,10 +40,9 @@ module Shumway.Tools.Profiler {
      */
     private _minFrameWidthInPixels = 1;
 
-    constructor(controller: Controller, bufferIndex: number) {
+    constructor(controller: Controller, snapshot: TimelineBufferSnapshot) {
       super(controller);
-      this._bufferIndex = bufferIndex;
-      this._buffer = controller.getBufferAt(bufferIndex);
+      this._snapshot = snapshot;
       this._kindStyle = createEmptyObject();
     }
 
@@ -54,7 +52,7 @@ module Shumway.Tools.Profiler {
 
     initialize(rangeStart: number, rangeEnd: number) {
       this._initialized = true;
-      this._maxDepth = this._buffer.maxDepth;
+      this._maxDepth = this._snapshot.maxDepth;
       this.setRange(rangeStart, rangeEnd, false);
       this.setWindow(rangeStart, rangeEnd, false);
       this.setSize(this._width, this._maxDepth * 12.5);
@@ -62,12 +60,14 @@ module Shumway.Tools.Profiler {
 
     destroy() {
       super.destroy();
-      this._buffer = null;
+      this._snapshot = null;
     }
 
     draw() {
       var context = this._context;
       var ratio = window.devicePixelRatio;
+
+      ColorStyle.reset();
 
       context.save();
       context.scale(ratio, ratio);
@@ -75,7 +75,7 @@ module Shumway.Tools.Profiler {
       context.fillRect(0, 0, this._width, this._height);
 
       if (this._initialized) {
-        this._drawChildren(this._buffer.snapshot);
+        this._drawChildren(this._snapshot);
       }
 
       context.restore();
@@ -101,7 +101,7 @@ module Shumway.Tools.Profiler {
       var width = right - left;
       if (width <= this._minFrameWidthInPixels) {
         context.fillStyle = this._controller.theme.tabToolbar(1);
-        context.fillRect(left, depth * (12 + frameHPadding), 1, 12 + (frame.maxDepth - frame.depth) * 12.5);
+        context.fillRect(left, depth * (12 + frameHPadding), this._minFrameWidthInPixels, 12 + (frame.maxDepth - frame.depth) * 12.5);
         return false;
       }
       if (left < 0) {
@@ -190,10 +190,9 @@ module Shumway.Tools.Profiler {
 
     private _getFrameAtPosition(x: number, y: number): TimelineFrame {
       var time = this._toTime(x);
-      var depth = (y / 12.5) | 0;
-      var snapshot = this._buffer.snapshot;
-      var frame = snapshot.query(time);
-      if (frame) {
+      var depth = 1 + (y / 12.5) | 0;
+      var frame = this._snapshot.query(time);
+      if (frame && frame.depth >= depth) {
         while (frame && frame.depth > depth) {
           frame = frame.parent;
         }
@@ -241,7 +240,7 @@ module Shumway.Tools.Profiler {
       var frame = this._getFrameAtPosition(x, y);
       if (frame) {
         this._hoveredFrame = frame;
-        this._controller.showTooltip(this._bufferIndex, frame);
+        this._controller.showTooltip(this, frame, x, y);
         //this._draw();
       }
     }

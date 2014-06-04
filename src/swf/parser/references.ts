@@ -15,10 +15,16 @@
  */
 
 ///<reference path='../references.ts' />
+///<reference path='swfTag.ts' />
+///<reference path='templates.ts' />
+///<reference path='handlers.ts' />
+///<reference path='parser.ts' />
+
 ///<reference path='bitmap.ts' />
 ///<reference path='button.ts' />
 ///<reference path='font.ts' />
+///<reference path='image.ts' />
 ///<reference path='label.ts' />
 ///<reference path='shape.ts' />
-
-declare function createInflatedStream(bytes: Uint8Array, outputLength: number): any;
+///<reference path='sound.ts' />
+///<reference path='text.ts' />

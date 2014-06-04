@@ -58,7 +58,8 @@ module Shumway.AVM2.AS.flash.display {
       }
       if (width > BitmapData.MAXIMUM_WIDTH ||
           height > BitmapData.MAXIMUM_HEIGHT ||
-          width * height > BitmapData.MAXIMUM_DIMENSION) {
+          width * height > BitmapData.MAXIMUM_DIMENSION)
+      {
         throwError('ArgumentError', Errors.ArgumentError);
       }
       this._transparent = !!transparent;
@@ -277,9 +278,73 @@ module Shumway.AVM2.AS.flash.display {
       sourceBitmapData = sourceBitmapData; sourceRect = sourceRect; destPoint = destPoint; sourceChannel = sourceChannel >>> 0; destChannel = destChannel >>> 0;
       notImplemented("public flash.display.BitmapData::copyChannel"); return;
     }
-    copyPixels(sourceBitmapData: flash.display.BitmapData, sourceRect: flash.geom.Rectangle, destPoint: flash.geom.Point, alphaBitmapData: flash.display.BitmapData = null, alphaPoint: flash.geom.Point = null, mergeAlpha: boolean = false): void {
+
+    /**
+     * Copies a rectangular region of pixels into the current bitmap data.
+     */
+    copyPixels(sourceBitmapData: flash.display.BitmapData,
+               sourceRect: flash.geom.Rectangle,
+               destPoint: flash.geom.Point,
+               alphaBitmapData: flash.display.BitmapData = null,
+               alphaPoint: flash.geom.Point = null,
+               mergeAlpha: boolean = false): void
+    {
       sourceBitmapData = sourceBitmapData; sourceRect = sourceRect; destPoint = destPoint; alphaBitmapData = alphaBitmapData; alphaPoint = alphaPoint; mergeAlpha = !!mergeAlpha;
-      notImplemented("public flash.display.BitmapData::copyPixels"); return;
+      // Deal with fractional pixel coordinates, looks like Flash "rounds" the corners of the source rect, however a width
+      // of |0.5| rounds down rather than up so we're not quite correct here.
+      var sR = sourceRect.clone().roundInPlace();
+
+      // Remember the original source rect in case in case the intersection changes it.
+      var rR = sR.clone();
+      var sR = sR.intersectInPlace(sourceBitmapData._rect);
+
+      // Clipped source rect is empty so there's nothing to do.
+      if (sR.isEmpty()) {
+        return;
+      }
+
+      // Compute source rect offsets (in case the source rect had negative x, y coordinates).
+      var oX = sR.x - rR.x;
+      var oY = sR.y - rR.y;
+
+      // Compute the target rect taking into account the offsets and then clip it against the
+      // target.
+      var tR = new geom.Rectangle (
+        destPoint.x | 0 + oX,
+        destPoint.y | 0 + oY,
+        rR.width - oX,
+        rR.height - oY
+      );
+
+      tR.intersectInPlace(this._rect);
+
+      var sX = sR.x;
+      var sY = sR.y;
+
+      var tX = tR.x;
+      var tY = tR.y;
+
+      var tW = tR.width;
+      var tH = tR.height;
+
+      var sStride = sourceBitmapData._rect.width;
+      var tStride = this._rect.width;
+
+      var s = sourceBitmapData._view;
+      var t = this._view;
+
+      // Finally do the copy. All the math above is needed just so we don't do any branches inside
+      // this hot loop.
+      for (var y = 0; y < tH; y++) {
+        for (var x = 0; x < tW; x++) {
+          var sp = (sY + y) * sStride + (sX + x);
+          var tp = (tY + y) * tStride + (tX + x);
+          t[tp] = s[sp];
+        }
+      }
+      this._isDirty = true;
+      somewhatImplemented("public flash.display.BitmapData::copyPixels");
+      return;
     }
 
     dispose(): void {
@@ -294,7 +359,7 @@ module Shumway.AVM2.AS.flash.display {
       if (matrix) {
         matrix = matrix.clone().toTwips();
       }
-      serializer.bitmapDataDraw(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
+      serializer.cacheAsBitmap(this, source, matrix, colorTransform, blendMode, clipRect, smoothing);
     }
     drawWithQuality(source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false, quality: string = null): void {
       source = source; matrix = matrix; colorTransform = colorTransform; blendMode = asCoerceString(blendMode); clipRect = clipRect; smoothing = !!smoothing; quality = asCoerceString(quality);
@@ -428,6 +493,6 @@ module Shumway.AVM2.AS.flash.display {
   }
 
   export interface IBitmapDataSerializer {
-    bitmapDataDraw(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix, colorTransform: flash.geom.ColorTransform, blendMode: string, clipRect: flash.geom.Rectangle, smoothing: boolean);
+    cacheAsBitmap(bitmapData: flash.display.BitmapData, source: flash.display.IBitmapDrawable, matrix: flash.geom.Matrix, colorTransform: flash.geom.ColorTransform, blendMode: string, clipRect: flash.geom.Rectangle, smoothing: boolean);
   }
 }

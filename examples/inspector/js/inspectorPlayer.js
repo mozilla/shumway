@@ -21,9 +21,10 @@ var CanvasCounter = new Shumway.Metrics.Counter(true);
 
 var timeline = null;
 
-var avm2Options = shumwayOptions.register(new OptionSet("AVM2"));
-var sysCompiler = avm2Options.register(new Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
-var appCompiler = avm2Options.register(new Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
+var shumwayOptions = Shumway.Settings.shumwayOptions;
+var avm2Options = shumwayOptions.register(new Shumway.Options.OptionSet("AVM2"));
+var sysCompiler = avm2Options.register(new Shumway.Options.Option("sysCompiler", "sysCompiler", "boolean", true, "system compiler/interpreter (requires restart)"));
+var appCompiler = avm2Options.register(new Shumway.Options.Option("appCompiler", "appCompiler", "boolean", true, "application compiler/interpreter (requires restart)"));
 
 
 // avm2 must be global.
@@ -164,19 +165,22 @@ IFramePlayerChannel.sendEventUpdates = function (data) {
     return;
   }
   var DataBuffer = Shumway.ArrayUtilities.DataBuffer;
-  var updates = DataBuffer.fromArrayBuffer(data.updates.buffer);
+  var updates = DataBuffer.FromArrayBuffer(data.updates.buffer);
   IFramePlayerChannel._eventUpdatesListener(updates);
 };
 IFramePlayerChannel.prototype = {
   sendUpdates: function (updates, assets) {
     var bytes = updates.getBytes();
+    var assetLengths = [];
     var assetsBytes = assets.map(function (asset) {
+      assetLengths.push(asset.length);
       return asset.getBytes();
     });
     window.parent.postMessage({
       type: 'player',
       updates: bytes,
-      assets: assetsBytes
+      assets: assetsBytes,
+      assetLengths: assetLengths
     }, '*', [bytes.buffer]);
   },
   registerForEventUpdates: function (listener) {

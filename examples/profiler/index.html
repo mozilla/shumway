@@ -18,14 +18,16 @@
   <script src="../../build/ts/tools/profiler/flameChartOverview.js"></script>
   <script src="../../build/ts/tools/profiler/timelineFrame.js"></script>
   <script src="../../build/ts/tools/profiler/timelineBuffer.js"></script>
+  <script src="../../build/ts/tools/profiler/theme/ui.js"></script>
   <script>
-
-    var container = document.getElementById("container");
-
-    var Profiler = Shumway.Tools.Profiler;
 
     if (!jsGlobal.performance) { jsGlobal.performance = {}; }
     if (!jsGlobal.performance.now) { jsGlobal.performance.now = Date.now; }
+
+    var Profiler = Shumway.Tools.Profiler;
+
+    var container = document.getElementById("container");
+    var controller = new Profiler.Controller(container);
 
     getJSON("data/CPU-20140520T215105.json", function(profile1) {
       getJSON("data/CPU-20140520T092003.json", function(profile2) {
@@ -33,19 +35,14 @@
         var buffer1 = Profiler.TimelineBuffer.FromChromeProfile(profile1);
         var buffer2 = Profiler.TimelineBuffer.FromChromeProfile(profile2);
 
-        var profile = new Profiler.Profile();
-        profile.addBuffer(buffer1, "Thread 1");
-        profile.addBuffer(buffer2, "Thread 2");
-
-        var controller = new Profiler.Controller(profile, container);
-        controller.createSnapshot();
+        controller.createProfile([buffer1, buffer2]);
 
       });
     });
 
     //getJSON("data/Profile 1.json", function(result) {
     //  var buffer = Profiler.TimelineBuffer.FromFirefoxProfile(result);
-    //  new Profiler.FlameChart(container, buffer);
+    //  controller.createProfile([buffer]);
     //});
 
     function getJSON(url, callback) {

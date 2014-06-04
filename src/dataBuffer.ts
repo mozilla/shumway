@@ -494,6 +494,10 @@ module Shumway.ArrayUtilities {
       return utf8encode(new Int8Array(this._buffer, 0, this._length));
     }
 
+    toBlob(): Blob {
+      return new Blob([new Int8Array(this._buffer, this._position, this._length)]);
+    }
+
     writeMultiByte(value: string, charSet: string): void {
       value = asCoerceString(value); charSet = asCoerceString(charSet);
       notImplemented("packageInternal flash.utils.ObjectOutput::writeMultiByte"); return;

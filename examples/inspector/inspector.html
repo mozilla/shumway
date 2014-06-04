@@ -111,12 +111,9 @@ limitations under the License.
     <script src="../../build/ts/options.js"></script>
     <script src="../../build/ts/settings.js"></script>
 
-    <script src="../../src/swf/options.js"></script>
     <script src="../../src/avm2/avm2Util.js"></script>
-    <script src="../../build/ts/avm2/options.js"></script>
     <script src="../../build/ts/metrics.js"></script>
 
-    <script src="../../build/ts/player/references.js"></script>
     <script src="../../build/ts/player/remoting.js"></script>
 
     <script src="../../build/ts/tools/profiler/timelineFrame.js"></script>
@@ -135,6 +132,7 @@ limitations under the License.
     <script src="../../src/gfx/filters/filters_cxform.js"></script>
     <script src="../../build/ts/gfx/references.js"></script>
     <script src="../../build/ts/gfx/utilities.js"></script>
+    <script src="../../build/ts/gfx/options.js"></script>
     <script src="../../build/ts/gfx/geometry.js"></script>
     <script src="../../build/ts/gfx/regionAllocator.js"></script>
     <script src="../../build/ts/gfx/frame.js"></script>
@@ -165,30 +163,26 @@ limitations under the License.
 
     <!-- Load SWF Dependencies -->
     <script> console.time("Load SWF Dependencies"); </script>
-    <script src="../../src/swf/util.js"></script>
-    <script src="../../src/swf/swf.js"></script>
-    <script src="../../src/swf/inflate.js"></script>
-    <script src="../../src/swf/stream.js"></script>
+    <script src="../../build/ts/swf/inflate.js"></script>
+    <script src="../../build/ts/swf/stream.js"></script>
     <script src="../../build/ts/swf/parser/bitmap.js"></script>
     <script src="../../build/ts/swf/parser/button.js"></script>
     <script src="../../build/ts/swf/parser/font.js"></script>
-    <script src="../../src/swf/image.js"></script>
+    <script src="../../build/ts/swf/parser/image.js"></script>
     <script src="../../build/ts/swf/parser/label.js"></script>
     <script src="../../build/ts/swf/parser/shape.js"></script>
-    <script src="../../src/swf/sound.js"></script>
-    <script src="../../src/swf/text.js"></script>
+    <script src="../../build/ts/swf/parser/sound.js"></script>
+    <script src="../../build/ts/swf/parser/text.js"></script>
     <script> console.timeEnd("Load SWF Dependencies"); </script>
 
     <script> console.time("Load SWF Parser"); </script>
-    <script src="../../src/swf/types.js"></script>
-    <script src="../../src/swf/structs.js"></script>
-    <script src="../../src/swf/tags.js"></script>
-    <script src="../../src/swf/templates.js"></script>
-    <script src="../../src/swf/handlers.js"></script>
-    <script src="../../src/swf/parser.js"></script>
+    <script src="../../build/ts/swf/parser/swfTag.js"></script>
+    <script src="../../build/ts/swf/parser/templates.js"></script>
+    <script src="../../build/ts/swf/parser/handlers.js"></script>
+    <script src="../../build/ts/swf/parser/parser.js"></script>
     <script> console.timeEnd("Load SWF Parser"); </script>
 
-    <script src="../../src/swf/resourceloader.js"></script>
+    <script src="../../build/ts/swf/resourceLoader.js"></script>
 
     <script> console.timeEnd("Load Parser Dependencies"); </script>
 
@@ -200,6 +194,7 @@ limitations under the License.
     <!-- Load AVM2 Dependencies -->
     <script> console.time("Load AVM2 Dependencies"); </script>
     <script src="../../src/avm2/constants.js"></script>
+    <script src="../../build/ts/avm2/options.js"></script>
     <script src="../../build/ts/avm2/errors.js"></script>
     <script src="../../build/ts/avm2/parser.js"></script>
     <script src="../../build/ts/avm2/bytecode.js"></script>
@@ -649,6 +644,7 @@ limitations under the License.
     <script src="../../build/ts/avm1lib/AS2Utils.js"></script>
     <script> console.timeEnd("Load avm1lib Dependencies"); </script>
 
+    <script src="../../build/ts/player/options.js"></script>
     <script src="../../build/ts/player/timeline.js"></script>
     <script src="../../build/ts/player/remotingPlayer.js"></script>
     <script src="../../build/ts/player/player.js"></script>
@@ -667,6 +663,7 @@ limitations under the License.
     <script src="../../build/ts/tools/profiler/flameChart.js"></script>
     <script src="../../build/ts/tools/profiler/flameChartHeader.js"></script>
     <script src="../../build/ts/tools/profiler/flameChartOverview.js"></script>
+    <script src="../../build/ts/tools/profiler/theme/ui.js"></script>
 
     <script src="../../build/ts/player/embed.js"></script>
 

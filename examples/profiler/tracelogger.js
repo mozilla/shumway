@@ -5,24 +5,19 @@ var container = document.getElementById("container");
 var Profiler = Shumway.Tools.Profiler;
 var TraceLogger = Shumway.Tools.Profiler.TraceLogger;
 
+var controller = new Profiler.Controller(container);
 var traceLogger = new TraceLogger.TraceLogger("data/tracelogger/");
-var controller;
 
 function load(name) {
   traceLogger.loadPage(name, onLoad, onProgress);
 }
 
 function onLoad(err, threads) {
+  var self = this;
   setTimeout(function() {
     setProgress(0);
     setModalVisibility(false);
-    var profile = new Profiler.Profile();
-    for (var i = 0, n = threads.length; i < n; i++) {
-      profile.addBuffer(threads[i].buffer, "Thread " + i);
-    }
-    if (controller) { controller.reset(); }
-    controller = new Profiler.Controller(profile, container);
-    controller.createSnapshot();
+    controller.createProfile(self.buffers);
   }, 400);
 }
 

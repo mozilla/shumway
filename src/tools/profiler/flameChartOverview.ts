@@ -136,7 +136,7 @@ module Shumway.Tools.Profiler {
       var ratio = window.devicePixelRatio;
       var width = this._width;
       var height = this._height;
-      var profile = this._controller.profile;
+      var profile = this._controller.activeProfile;
       var samplesPerPixel = 4;
       var samplesCount = width * samplesPerPixel;
       var sampleTimeInterval = profile.totalTime / samplesCount;
@@ -151,10 +151,9 @@ module Shumway.Tools.Profiler {
       if (this._mode == FlameChartOverviewMode.STACK) {
         contextOverview.scale(1, 1 / profile.snapshotCount);
       }
-      var bufferCount = profile.bufferCount;
-      for (var i = 0; i < bufferCount; i++) {
-        var buffer = profile.getBufferAt(i);
-        if (buffer.snapshot) {
+      for (var i = 0, n = profile.snapshotCount; i < n; i++) {
+        var snapshot = profile.getSnapshotAt(i);
+        if (snapshot) {
           var deepestFrame = null;
           var depth = 0;
           contextOverview.beginPath();
@@ -162,7 +161,7 @@ module Shumway.Tools.Profiler {
           for (var x = 0; x < samplesCount; x++) {
             var time = profile.startTime + x * sampleTimeInterval;
             if (!deepestFrame) {
-              deepestFrame = buffer.snapshot.query(time);
+              deepestFrame = snapshot.query(time);
             } else {
               deepestFrame = deepestFrame.queryNext(time);
             }

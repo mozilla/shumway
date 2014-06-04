@@ -54,7 +54,7 @@ module Shumway.AVM2.AS.flash.display {
     constructor () {
       false && super();
       InteractiveObject.instanceConstructorNoInitialize.call(this);
-      this._setFlags(DisplayObjectFlags.DirtyChildren);
+      this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
     }
 
     private _tabChildren: boolean;
@@ -66,10 +66,7 @@ module Shumway.AVM2.AS.flash.display {
      * This object's children have changed.
      */
     private _invalidateChildren() {
-      this._setFlags(DisplayObjectFlags.DirtyChildren);
-      if (this._parent) {
-        this._parent._propagateFlags(DisplayObjectFlags.DirtyChild, Direction.Upward);
-      }
+      this._setDirtyFlags(DisplayObjectFlags.DirtyChildren);
       this._invalidateFillAndLineBounds();
     }
 

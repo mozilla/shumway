@@ -14,6 +14,19 @@
  * limitations under the License.
  */
 
+function cloneObject(obj) {
+  var clone = Object.create(null);
+  for (var prop in obj)
+    clone[prop] = obj[prop];
+  return clone;
+}
+
+function assert(cond, msg, context) {
+  if (!cond) {
+    throw new Error((context ? context + ': ' : '') + msg);
+  }
+}
+
 var head = document.head;
 head.insertBefore(document.createElement('style'), head.firstChild);
 var style = document.styleSheets[0];

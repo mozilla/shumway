@@ -16,43 +16,34 @@
 module Shumway.Tools.Profiler {
 
   export class Profile {
-    private _controller: Controller;
+    private _snapshots: TimelineBufferSnapshot [];
     private _buffers: TimelineBuffer [];
-    private _bufferNames: string [];
     private _startTime: number;
     private _endTime: number;
     private _windowStart: number;
     private _windowEnd: number;
     private _maxDepth: number;
-    private _snapshotCount: number;
 
-    constructor() {
-      this._controller = null;
-      this._buffers = [];
-      this._bufferNames = [];
+    constructor(buffers?: TimelineBuffer []) {
+      this._buffers = buffers || [];
+      this._snapshots = [];
       this._maxDepth = 0;
-      this._snapshotCount = 0;
     }
 
-    get bufferCount(): number {
-      return this._buffers.length;
-    }
-
-    getBufferAt(index: number): TimelineBuffer {
-      return this._buffers[index];
-    }
-
-    addBuffer(buffer:TimelineBuffer, name: string) {
+    addBuffer(buffer: TimelineBuffer) {
       this._buffers.push(buffer);
-      this._bufferNames.push(name);
+    }
+
+    getSnapshotAt(index: number): TimelineBufferSnapshot {
+      return this._snapshots[index];
     }
 
     get hasSnapshots(): boolean {
-      return (this._snapshotCount > 0);
+      return (this.snapshotCount > 0);
     }
 
     get snapshotCount(): number {
-      return this._snapshotCount;
+      return this._snapshots.length;
     }
 
     get startTime(): number {
@@ -83,19 +74,9 @@ module Shumway.Tools.Profiler {
       return this._maxDepth;
     }
 
-    forEachBuffer(visitor: (buffer: TimelineBuffer, index: number) => void) {
-      for (var i = 0, n = this.bufferCount; i < n; i++) {
-        visitor(this._buffers[i], i);
-      }
-    }
-
-    forEachSnapshot(visitor: (snapshot: TimelineFrame, bufferIndex: number) => void) {
-      if (!this.hasSnapshots) { return; }
-      for (var i = 0, n = this.bufferCount; i < n; i++) {
-        var buffer = this._buffers[i];
-        if (buffer && buffer.snapshot) {
-          visitor(buffer.snapshot, i);
-        }
+    forEachSnapshot(visitor: (snapshot: TimelineBufferSnapshot, index: number) => void) {
+      for (var i = 0, n = this.snapshotCount; i < n; i++) {
+        visitor(this._snapshots[i], i);
       }
     }
 
@@ -103,21 +84,21 @@ module Shumway.Tools.Profiler {
       var startTime = Number.MAX_VALUE;
       var endTime = Number.MIN_VALUE;
       var maxDepth = 0;
-      this._snapshotCount = 0;
-      for (var i = 0; i < this._buffers.length; i++) {
-        var buffer: TimelineBuffer = this._buffers[i];
-        buffer.createSnapshot();
-        if (buffer.snapshot) {
-          if (startTime > buffer.snapshot.startTime) {
-            startTime = buffer.snapshot.startTime;
+      this._snapshots = [];
+      while (this._buffers.length > 0) {
+        var buffer = this._buffers.shift();
+        var snapshot = buffer.createSnapshot();
+        if (snapshot) {
+          if (startTime > snapshot.startTime) {
+            startTime = snapshot.startTime;
           }
-          if (endTime < buffer.snapshot.endTime) {
-            endTime = buffer.snapshot.endTime;
+          if (endTime < snapshot.endTime) {
+            endTime = snapshot.endTime;
           }
-          if (maxDepth < buffer.maxDepth) {
-            maxDepth = buffer.maxDepth;
+          if (maxDepth < snapshot.maxDepth) {
+            maxDepth = snapshot.maxDepth;
           }
-          this._snapshotCount++;
+          this._snapshots.push(snapshot);
         }
       }
       this._startTime = startTime;
@@ -149,12 +130,5 @@ module Shumway.Tools.Profiler {
       this.setWindow(time - this.windowLength / 2, time + this.windowLength / 2);
     }
 
-    reset() {
-      for (var i = 0; i < this._buffers.length; i++) {
-        var buffer: TimelineBuffer = this._buffers[i];
-        buffer.reset();
-      }
-      this._snapshotCount = 0;
-    }
   }
 }

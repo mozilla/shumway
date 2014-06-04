@@ -64,6 +64,10 @@ module Shumway.Tools.Profiler {
       this.setSize(rect.width);
     }
 
+    get canvas(): HTMLCanvasElement {
+      return this._canvas;
+    }
+
     public setSize(width: number, height: number = 20) {
       this._width = width;
       this._height = height;
@@ -144,6 +148,7 @@ module Shumway.Tools.Profiler {
       var start = windowStart + (windowStart - time) * maxDelta;
       var end = windowEnd + (windowEnd - time) * maxDelta;
       this._controller.setWindow(start, end);
+      this.onHoverEnd();
     }
 
     onMouseDown(x:number, y:number):void {}

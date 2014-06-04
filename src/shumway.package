@@ -6,12 +6,9 @@ build/ts/ShapeData.js
 build/ts/options.js
 build/ts/settings.js
 
-src/swf/options.js
 src/avm2/avm2Util.js
-build/ts/avm2/options.js
 build/ts/metrics.js
 
-build/ts/player/references.js
 build/ts/player/remoting.js
 
 build/ts/tools/profiler/timelineFrame.js

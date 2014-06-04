@@ -80,6 +80,10 @@ module Shumway.GFX.GL {
 
     premultipliedAlpha: boolean = false;
     unpackPremultiplyAlpha: boolean = true;
+    showTemporaryCanvases: boolean = false;
+
+    sourceBlendFactor: WebGLBlendFactor = WebGLBlendFactor.ONE;
+    destinationBlendFactor: WebGLBlendFactor = WebGLBlendFactor.ONE_MINUS_SRC_ALPHA;
   }
 
   export class WebGLStageRenderer extends StageRenderer {
@@ -130,8 +134,10 @@ module Shumway.GFX.GL {
         willReadFrequently: true
       });
 
-//      document.getElementById("stageContainer").appendChild(this._uploadCanvas);
-//      document.getElementById("stageContainer").appendChild(this._scratchCanvas);
+      if (options.showTemporaryCanvases) {
+        document.getElementById("temporaryCanvasPanelContainer").appendChild(this._uploadCanvas);
+        document.getElementById("temporaryCanvasPanelContainer").appendChild(this._scratchCanvas);
+      }
     }
 
     private _cachedTiles = [];

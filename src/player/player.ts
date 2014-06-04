@@ -43,7 +43,7 @@ module Shumway {
 
   import TimelineBuffer = Shumway.Tools.Profiler.TimelineBuffer;
 
-  export var playerTimelineBuffer = new TimelineBuffer();
+  export var playerTimelineBuffer = new TimelineBuffer("Player");
 
   export function enterPlayerTimeline(name: string) {
     playerTimelineBuffer && playerTimelineBuffer.enter(name);
@@ -204,7 +204,7 @@ module Shumway {
       leavePlayerTimeline("sendUpdates");
     }
 
-    public bitmapDataDraw(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
+    public cacheAsBitmap(bitmapData: flash.display.BitmapData, source: Shumway.Remoting.IRemotable, matrix: flash.geom.Matrix = null, colorTransform: flash.geom.ColorTransform = null, blendMode: string = null, clipRect: flash.geom.Rectangle = null, smoothing: boolean = false) {
       var updates = new DataBuffer();
       var assets = [];
       var serializer = new Shumway.Remoting.Player.PlayerChannelSerializer();
@@ -229,13 +229,17 @@ module Shumway {
         leavePlayerTimeline("cacheAsBitmap 2");
       }
 
-      serializer.writeBitmapDataDraw(bitmapData, source, matrix, colorTransform, blendMode, clipRect, smoothing);
+      serializer.writeCacheAsBitmap(bitmapData, source, matrix, colorTransform, blendMode, clipRect, smoothing);
 
       updates.writeInt(Shumway.Remoting.MessageTag.EOF);
 
       enterPlayerTimeline("sendUpdates");
       this._channel.sendUpdates(updates, assets);
       leavePlayerTimeline("sendUpdates");
+    }
+
+    public requestRendering(): void {
+      this._pumpDisplayListUpdates();
     }
 
     /**

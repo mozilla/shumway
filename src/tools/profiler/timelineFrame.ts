@@ -37,7 +37,22 @@ module Shumway.Tools.Profiler {
       public kind: TimelineItemKind,
       public startTime: number,
       public endTime: number) {
-      this.maxDepth = 0;
+        this.maxDepth = 0;
+    }
+
+    get totalTime(): number {
+      return this.endTime - this.startTime;
+    }
+
+    get selfTime(): number {
+      var selfTime = this.totalTime;
+      if (this.children) {
+        for (var i = 0, n = this.children.length; i < n; i++) {
+          var child = this.children[i];
+          selfTime -= (child.endTime - child.startTime);
+        }
+      }
+      return selfTime;
     }
 
     /**
@@ -189,6 +204,12 @@ module Shumway.Tools.Profiler {
         self = self.parent;
       }
       return depth;
+    }
+  }
+
+  export class TimelineBufferSnapshot extends TimelineFrame {
+    constructor (public name: string) {
+      super(null, null, NaN, NaN);
     }
   }
 

@@ -3,6 +3,7 @@
 ## Load AVM2 Dependencies
 #!inline console.time("Load AVM2 Dependencies");
 src/avm2/constants.js
+build/ts/avm2/options.js
 build/ts/avm2/errors.js
 build/ts/avm2/parser.js
 build/ts/avm2/bytecode.js
@@ -452,6 +453,7 @@ build/ts/avm1lib/AS2TextFormat.js
 build/ts/avm1lib/AS2Utils.js
 #!inline console.timeEnd("Load avm1lib Dependencies");
 
+build/ts/player/options.js
 build/ts/player/timeline.js
 build/ts/player/remotingPlayer.js
 build/ts/player/player.js

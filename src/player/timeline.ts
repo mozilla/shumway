@@ -21,6 +21,9 @@ module Shumway.Timeline {
   import flash = Shumway.AVM2.AS.flash;
   import Bounds = Shumway.Bounds;
 
+  /**
+   * TODO document
+   */
   export class Symbol {
     id: number = -1;
     symbolClass: Shumway.AVM2.AS.ASClass;
@@ -217,7 +220,7 @@ module Shumway.Timeline {
         if (commands.length === 1) {
           var cmd = commands[0];
           character = loaderInfo.getSymbolById(cmd.symbolId);
-          matrix = flash.geom.Matrix.FromAny(cmd.matrix);
+          matrix = flash.geom.Matrix.FromUntyped(cmd.matrix);
           if (cmd.cxform) {
             colorTransform = flash.geom.ColorTransform.FromCXForm(cmd.cxform);
           }
@@ -335,6 +338,9 @@ module Shumway.Timeline {
     }
   }
 
+  /**
+   * TODO document
+   */
   export class AnimationState {
     constructor(public symbol: Symbol = null,
                 public depth: number = 0,
@@ -359,6 +365,9 @@ module Shumway.Timeline {
     }
   }
 
+  /**
+   * TODO document
+   */
   export class Frame {
     loaderInfo: flash.display.LoaderInfo;
     stateAtDepth: Shumway.Map<AnimationState>;
@@ -390,7 +399,7 @@ module Shumway.Timeline {
               assert (symbol, "Symbol is not defined.");
             }
             if (cmd.hasMatrix) {
-              matrix = flash.geom.Matrix.FromAny(cmd.matrix);
+              matrix = flash.geom.Matrix.FromUntyped(cmd.matrix);
             }
             if (cmd.hasCxform) {
               colorTransform = flash.geom.ColorTransform.FromCXForm(cmd.cxform);
@@ -402,14 +411,14 @@ module Shumway.Timeline {
                 var obj = swfFilters[j];
                 var filter: flash.filters.BitmapFilter;
                 switch (obj.type) {
-                  case 0: filter = flash.filters.DropShadowFilter.FromAny(obj); break;
-                  case 1: filter = flash.filters.BlurFilter.FromAny(obj); break;
-                  case 2: filter = flash.filters.GlowFilter.FromAny(obj); break;
-                  case 3: filter = flash.filters.BevelFilter.FromAny(obj); break;
-                  case 4: filter = flash.filters.GradientGlowFilter.FromAny(obj); break;
-                  case 5: filter = flash.filters.ConvolutionFilter.FromAny(obj); break;
-                  case 6: filter = flash.filters.ColorMatrixFilter.FromAny(obj); break;
-                  case 7: filter = flash.filters.GradientBevelFilter.FromAny(obj); break;
+                  case 0: filter = flash.filters.DropShadowFilter.FromUntyped(obj); break;
+                  case 1: filter = flash.filters.BlurFilter.FromUntyped(obj); break;
+                  case 2: filter = flash.filters.GlowFilter.FromUntyped(obj); break;
+                  case 3: filter = flash.filters.BevelFilter.FromUntyped(obj); break;
+                  case 4: filter = flash.filters.GradientGlowFilter.FromUntyped(obj); break;
+                  case 5: filter = flash.filters.ConvolutionFilter.FromUntyped(obj); break;
+                  case 6: filter = flash.filters.ColorMatrixFilter.FromUntyped(obj); break;
+                  case 7: filter = flash.filters.GradientBevelFilter.FromUntyped(obj); break;
                 }
                 assert (filter, "Unknown filter type.");
                 filters.push(filter);

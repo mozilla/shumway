@@ -2224,6 +2224,10 @@ module Shumway {
       var yiq = (((c >> 16) * 299) + (((c >> 8) & 0xff) * 587) + ((c & 0xff) * 114)) / 1000;
       return (yiq >= 128) ? '#000000' : '#ffffff';
     }
+
+    static reset() {
+      ColorStyle._nextStyle = 0;
+    }
   }
 
   export interface UntypedBounds {
