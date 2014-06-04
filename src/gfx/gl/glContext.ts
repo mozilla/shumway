@@ -247,7 +247,7 @@ module Shumway.GFX.GL {
         regions[i].texture = null;
       }
       texture.atlas.reset();
-      count("evictTexture");
+      frameCount("evictTexture");
       return texture;
     }
 

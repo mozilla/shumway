@@ -19,6 +19,9 @@
 module Shumway.AVM2.Compiler.Backend {
   import unexpected = Shumway.Debug.unexpected;
   import pushUnique = Shumway.ArrayUtilities.pushUnique;
+  import Timer = Shumway.Metrics.Timer;
+
+  var counter = Shumway.Metrics.Counter.instance;
 
   import AST = Shumway.AVM2.Compiler.AST;
   import Literal = AST.Literal;
@@ -47,7 +50,6 @@ module Shumway.AVM2.Compiler.Backend {
   import ContinueStatement = AST.ContinueStatement;
   import SwitchStatement = AST.SwitchStatement;
   import SwitchCase = AST.SwitchCase;
-
 
   declare var objectConstantName;
 
@@ -709,7 +711,7 @@ module Shumway.AVM2.Compiler.Backend {
     }
 
     if (cx.variables.length) {
-      Counter.count("Backend: Locals", cx.variables.length);
+      counter.count("Backend: Locals", cx.variables.length);
       var variables = variableDeclaration(cx.variables.map(function (variable) {
         return new VariableDeclarator(id(variable.name));
       }));

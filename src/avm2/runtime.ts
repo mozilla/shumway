@@ -103,8 +103,7 @@ module Shumway.AVM2.Runtime {
   var useSurrogates = true;
 
   var callCounter = new Shumway.Metrics.Counter(true);
-
-  declare var Counter: Shumway.Metrics.Counter;
+  var counter = Shumway.Metrics.Counter.instance;
 
   import Map = Shumway.Map;
   import Multiname = Shumway.AVM2.ABC.Multiname;
@@ -1381,7 +1380,7 @@ module Shumway.AVM2.Runtime {
     var cacheInfo = CODE_CACHE[methodInfo.abc.hash];
     if (!cacheInfo) {
       warn("Cannot Find Code Cache For ABC, name: " + methodInfo.abc.name + ", hash: " + methodInfo.abc.hash);
-      Counter.count("Code Cache ABC Miss");
+      counter.count("Code Cache ABC Miss");
       return;
     }
     if (!cacheInfo.isInitialized) {
@@ -1396,17 +1395,17 @@ module Shumway.AVM2.Runtime {
     var method = cacheInfo.methods[methodInfo.index];
     if (!method) {
       if (methodInfo.isInstanceInitializer || methodInfo.isClassInitializer) {
-        Counter.count("Code Cache Query On Initializer");
+        counter.count("Code Cache Query On Initializer");
       } else {
-        Counter.count("Code Cache MISS ON OTHER");
+        counter.count("Code Cache MISS ON OTHER");
         warn("Shouldn't MISS: " + methodInfo + " " + methodInfo.debugName);
       }
       // warn("Cannot Find Code Cache For Method, name: " + methodInfo);
-      Counter.count("Code Cache Miss");
+      counter.count("Code Cache Miss");
       return;
     }
     log("Linking CC: " + methodInfo);
-    Counter.count("Code Cache Hit");
+    counter.count("Code Cache Hit");
     return method;
   }
 

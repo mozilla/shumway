@@ -6,6 +6,8 @@
   var DisplayObject = flash.display.DisplayObject;
   var DisplayObjectContainer = flash.display.DisplayObjectContainer;
 
+  var timeline = null;
+
   function log(message) {
     console.info(message);
   }

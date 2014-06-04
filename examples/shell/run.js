@@ -21,7 +21,6 @@ load("./domstubs.js");
 
 var SHUMWAY_ROOT = "../../src/";
 
-var timeline;
 var playerglobal;
 var playerglobalLoadedPromise;
 

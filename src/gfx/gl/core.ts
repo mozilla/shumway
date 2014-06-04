@@ -250,11 +250,11 @@ module Shumway.GFX.GL {
       }
       if (image) {
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        timeline && timeline.enter("texSubImage2D");
+        timelineBuffer && timelineBuffer.enter("texSubImage2D");
         gl.texSubImage2D(gl.TEXTURE_2D, 0, region.x, region.y, gl.RGBA, gl.UNSIGNED_BYTE, image);
         traceLevel >= TraceLevel.Verbose && writer.writeLn("texSubImage2D: " + region);
-        timeline && timeline.leave("texSubImage2D");
-        count("texSubImage2D");
+        timelineBuffer && timelineBuffer.leave("texSubImage2D");
+        frameCount("texSubImage2D");
       }
       return region;
     }

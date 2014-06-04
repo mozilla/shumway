@@ -52,8 +52,7 @@
     var DOMStageRenderer = Shumway.GFX.DOMStageRenderer;
     var FontAtlas = Shumway.GFX.Elements.FontAtlas;
 
-    var Counter = new metrics.Counter(true);
-    var FrameCounter = new metrics.Counter(true);
+    var FrameCounter = Shumway.GFX.frameCounter;
   </script>
   <style>
     #debugInfoContainer {
@@ -571,10 +570,10 @@
       timelineLeave("FRAME");
 
       // writer.writeLn("Counter");
-      // console.info(Counter.counts);
+      // console.info(Shumway.Mertics.Counter.instance.counts);
 
       // writer.writeLn("Frame Counter");
-      // FrameCounter.trace(writer);
+      // Shumway.GFX.frameCounter.trace(writer);
 
       stage.dirtyRegion.clear();
       if (frames ++ < sceneOptions.frameCount) {
