@@ -26,6 +26,7 @@ module Shumway.Remoting.Player {
   import DisplayObject = flash.display.DisplayObject;
   import DisplayObjectFlags = flash.display.DisplayObjectFlags;
   import DisplayObjectContainer = flash.display.DisplayObjectContainer;
+  import SimpleButton = flash.display.SimpleButton;
   import BlendMode = flash.display.BlendMode;
   import VisitorFlags = flash.display.VisitorFlags;
 
