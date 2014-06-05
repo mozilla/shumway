@@ -273,8 +273,11 @@ module Shumway {
       var self = this;
       var stage = this._stage;
       var rootInitialized = false;
-      frameRateOption.value = stage.frameRate;
-      frameRateOption.ctrl.updateDisplay();
+      // TODO remove, player.ts will not have access to the DOM
+      if (frameRateOption.ctrl) {
+        frameRateOption.value = stage.frameRate;
+        frameRateOption.ctrl.updateDisplay();
+      }
       (function tick() {
         self._frameTimeout = setTimeout(tick, 1000 / frameRateOption.value);
         if (!frameEnabledOption.value || self._shouldThrottleDownFrameExecution()) {
@@ -306,6 +309,7 @@ module Shumway {
       this._frameTimeout = -1;
     }
 
+    // TODO remove, player.ts will not have access to the DOM
     private _enterInspectorMode() {
       var stage = this._stage;
       var loader = this._loader;

@@ -243,6 +243,7 @@ module Shumway.Options {
     /**
      * Dat GUI control.
      */
+    // TODO remove, player will not have access to the DOM
     ctrl: any;
     // config:
     //  { range: { min: 1, max: 5, step: 1 } }
