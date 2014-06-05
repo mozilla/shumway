@@ -104,12 +104,12 @@ module Shumway.Remoting.GFX {
       var tag = 0;
       var input = this.input;
 
-      enterPlayerTimeline("GFXChannelDeserializer.read");
+      Shumway.GFX.enterTimeline("GFXChannelDeserializer.read");
       while (input.bytesAvailable > 0) {
         tag = input.readInt();
         switch (tag) {
           case MessageTag.EOF:
-            leavePlayerTimeline("GFXChannelDeserializer.read");
+            Shumway.GFX.leaveTimeline("GFXChannelDeserializer.read");
             return;
           case MessageTag.UpdateGraphics:
             this._readUpdateGraphics();
@@ -128,7 +128,7 @@ module Shumway.Remoting.GFX {
             break;
         }
       }
-      leavePlayerTimeline("GFXChannelDeserializer.read");
+      Shumway.GFX.leaveTimeline("GFXChannelDeserializer.read");
     }
 
     private _readMatrix(): Matrix {
