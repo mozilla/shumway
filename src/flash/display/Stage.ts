@@ -281,10 +281,13 @@ module Shumway.AVM2.AS.flash.display {
       return this._displayContextInfo;
     }
 
-    removeChildAt(index: number /*int*/): flash.display.DisplayObject {
+    /*
+    removeChildAt(index: number): flash.display.DisplayObject {
       index = index | 0;
       notImplemented("public flash.display.Stage::removeChildAt"); return;
     }
+    */
+
     swapChildrenAt(index1: number /*int*/, index2: number /*int*/): void {
       index1 = index1 | 0; index2 = index2 | 0;
       notImplemented("public flash.display.Stage::swapChildrenAt"); return;

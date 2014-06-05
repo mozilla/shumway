@@ -239,6 +239,10 @@ module Shumway.Options {
     value: any;
     description: string;
     config: any;
+    /**
+     * Dat GUI control.
+     */
+    ctrl: any;
     // config:
     //  { range: { min: 1, max: 5, step: 1 } }
     //  { list: [ "item 1", "item 2", "item 3" ] }

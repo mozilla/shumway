@@ -47,4 +47,12 @@ module Shumway {
   export var frameRateMultiplierOption = playerOptions.register (
     new Shumway.Options.Option("", "Frame Rate Multiplier", "number", 1, "Play frames at a faster rate.", {range: { min: 1, max: 16, step: 1 }})
   );
+
+  export var autoPlayOption = playerOptions.register (
+    new Shumway.Options.Option("", "Auto Play", "boolean", true, "Starts playing the SWF file automatically.")
+  );
+
+  export var playSymbolOption = playerOptions.register (
+    new Shumway.Options.Option("", "Play Symbol", "number", -1, "Plays a specific symbol.", { choices: { None: -1 } })
+  );
 }

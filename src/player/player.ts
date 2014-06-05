@@ -119,20 +119,23 @@ module Shumway {
       var loader = this._loader = flash.display.Loader.getRootLoader();
       var loaderInfo = this._loaderInfo = loader.contentLoaderInfo;
 
-      loaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, function onProgress() {
-        var root = loader.content;
-        if (!root) {
-          return;
-        }
-        loaderInfo.removeEventListener(flash.events.ProgressEvent.PROGRESS, onProgress);
-        stage.frameRate = loaderInfo.frameRate;
-        stage.stageWidth = loaderInfo.width;
-        stage.stageHeight = loaderInfo.height;
-        stage.addChildAtDepth(root, 0);
-        // self._pumpUpdates();
-        self._enterLoops();
-      });
-
+      if (autoPlayOption.value) {
+        loaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, function onProgress() {
+          var root = loader.content;
+          if (!root) {
+            return;
+          }
+          loaderInfo.removeEventListener(flash.events.ProgressEvent.PROGRESS, onProgress);
+          stage.frameRate = loaderInfo.frameRate;
+          stage.stageWidth = loaderInfo.width;
+          stage.stageHeight = loaderInfo.height;
+          stage.addChildAtDepth(root, 0);
+          // self._pumpUpdates();
+          self._enterLoops();
+        });
+      } else {
+        this._enterInspectorMode();
+      }
       this._loader.load(new flash.net.URLRequest(url));
     }
 
@@ -188,14 +191,14 @@ module Shumway {
       serializer.outputAssets = assets;
 
       serializer.phase = Remoting.RemotingPhase.Objects;
-      enterPlayerTimeline("writeStage");
+      enterPlayerTimeline("remoteObjects");
       serializer.writeStage(this._stage);
-      leavePlayerTimeline("writeStage");
+      leavePlayerTimeline("remoteObjects");
 
       serializer.phase = Remoting.RemotingPhase.References;
-      enterPlayerTimeline("writeStage 2");
+      enterPlayerTimeline("remoteReferences");
       serializer.writeStage(this._stage);
-      leavePlayerTimeline("writeStage 2");
+      leavePlayerTimeline("remoteReferences");
 
       updates.writeInt(Remoting.MessageTag.EOF);
 
@@ -271,6 +274,7 @@ module Shumway {
       var stage = this._stage;
       var rootInitialized = false;
       frameRateOption.value = stage.frameRate;
+      frameRateOption.ctrl.updateDisplay();
       (function tick() {
         self._frameTimeout = setTimeout(tick, 1000 / frameRateOption.value);
         if (!frameEnabledOption.value || self._shouldThrottleDownFrameExecution()) {
@@ -282,7 +286,7 @@ module Shumway {
           MovieClip.initFrame();
           leavePlayerTimeline("initFrame");
           enterPlayerTimeline("constructFrame");
-          MovieClip.constructFrame();
+          MovieClip.constructFrame(!autoPlayOption.value);
           leavePlayerTimeline("constructFrame");
           Loader.progress();
           leavePlayerTimeline("eventLoop");
@@ -300,6 +304,51 @@ module Shumway {
       assert (this._frameTimeout > -1);
       clearInterval(this._frameTimeout);
       this._frameTimeout = -1;
+    }
+
+    private _enterInspectorMode() {
+      var stage = this._stage;
+      var loader = this._loader;
+      var loaderInfo = this._loaderInfo;
+      var self = this;
+
+      loaderInfo.addEventListener(flash.events.ProgressEvent.PROGRESS, function onProgress() {
+        var root = loader.content;
+        if (!root) {
+          return;
+        }
+        loaderInfo.removeEventListener(flash.events.ProgressEvent.PROGRESS, onProgress);
+        self._enterLoops();
+      });
+
+      loaderInfo.addEventListener(flash.events.Event.COMPLETE, function onProgress() {
+        stage.stageWidth = 1024;
+        stage.stageHeight = 1024;
+
+        /**
+         * Create options list with all the symbols.
+         */
+        var options = {};
+        loaderInfo._dictionary.forEach(function (value, key) {
+          var label = key + ": " + value.originalSymbolClass.toString();
+          if (value.symbolClass !== value.originalSymbolClass) {
+            label += " (" + value.symbolClass.toString() + ")";
+          }
+          options[label] = key;
+        });
+
+        playSymbolOption.ctrl.updateOptions(options);
+        playSymbolOption.ctrl.onChange(function () {
+          var key = playSymbolOption.value | 0;
+          var symbol = loaderInfo.getSymbolById(key);
+          var symbolInstance = symbol.originalSymbolClass.initializeFrom(symbol);
+          symbol.originalSymbolClass.instanceConstructorNoInitialize.call(symbolInstance);
+          while (stage.numChildren > 0) {
+            stage.removeChildAt(0);
+          }
+          stage.addChild(symbolInstance);
+        });
+      });
     }
   }
 }

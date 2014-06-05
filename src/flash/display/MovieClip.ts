@@ -87,14 +87,16 @@ module Shumway.AVM2.AS.flash.display {
       DisplayObject._broadcastFrameEvent(events.Event.ENTER_FRAME);
     }
 
-    static constructFrame() {
+    static constructFrame(ignoreFrameScripts?) {
       DisplayObjectContainer.constructChildren();
       DisplayObject._broadcastFrameEvent(events.Event.FRAME_CONSTRUCTED);
       var queue = MovieClip._callQueue;
       while (queue.length) {
         var instance = queue.shift();
         instance._allowFrameNavigation = false;
-        instance.callFrame(instance._currentFrameAbs);
+        if (!ignoreFrameScripts) {
+          instance.callFrame(instance._currentFrameAbs);
+        }
         instance._allowFrameNavigation = true;
         if (instance._nextFrameAbs !== instance._currentFrameAbs) {
           instance._advanceFrame();

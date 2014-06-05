@@ -155,6 +155,7 @@ var GUI = (function () {
           Shumway.Settings.save();
         });
         addTooltip(ctrl, option.description);
+        option.ctrl = ctrl;
       }
     });
   }
