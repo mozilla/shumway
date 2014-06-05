@@ -140,15 +140,25 @@ module.exports = function(grunt) {
 
   grunt.registerTask('lint', ['jshint:all', 'exec:lint_success']);
 
-  grunt.registerTask('update-flash-refs', function  () {
-    var updateFlashRefs = require('./utils/update-flash-refs.js');
-    updateFlashRefs('examples/inspector/inspector.html', 'src', {gfx: true, parser: true, player: true});
-    updateFlashRefs('test/harness/slave.html', 'src', {gfx: true, parser: true, player: true});
-    updateFlashRefs('examples/xlsimport/index.html', 'src', {gfx: true, parser: true, player: true});
-    updateFlashRefs('examples/inspector/inspector.player.html', 'src', {parser: true, player: true});
-    updateFlashRefs('examples/shell/run.js', 'src', {parser: true, player: true});
-    updateFlashRefs('src/swf/worker.js', 'src', {parser: true});
+  grunt.registerTask('update-refs', function  () {
+    var updateRefs = require('./utils/update-flash-refs.js').updateRefs;
+    updateRefs('examples/inspector/inspector.html', {gfx: true, parser: true, player: true});
+    updateRefs('test/harness/slave.html', {gfx: true, parser: true, player: true});
+    updateRefs('examples/xlsimport/index.html', {gfx: true, parser: true, player: true});
+    updateRefs('examples/inspector/inspector.player.html', {parser: true, player: true});
+    updateRefs('examples/shell/run.js', {parser: true, player: true});
+    updateRefs('src/swf/worker.js', {parser: true});
   });
+  grunt.registerTask('update-flash-refs', ['update-refs']); // TODO deprecated
+
+  grunt.registerTask('bundles', function () {
+    var packageRefs = require('./utils/update-flash-refs.js').packageRefs;
+    packageRefs(['gfx'], 'build/bundles/shumway.gfx.js');
+    packageRefs(['player'], 'build/bundles/shumway.player.js');
+    packageRefs(['parser'], 'build/bundles/shumway.parser.js');
+    packageRefs(['gfx', 'parser', 'player'], 'build/bundles/shumway.combined.js');
+  });
+
 
   grunt.registerTask('server', function () {
     var WebServer = require('./utils/webserver.js').WebServer;
@@ -201,6 +211,7 @@ module.exports = function(grunt) {
     'exec:build_avm1_ts',
     'exec:build_swf_ts',
     'exec:build_gfx_ts',
-    'exec:build_player_ts'
+    'exec:build_player_ts',
+    'bundles'
   ]);
 };

@@ -107,9 +107,11 @@ function endsWith(string, value) {
   return string.substring(string.length - value.length, string.length) === value;
 }
 
-var packageFilesBase = path.join(__dirname, '../src/');
 
-function updateFlashRefs(filePath, srcDir, includes) {
+var homeBase = path.join(__dirname, '../');
+var packageFilesBase = path.join(homeBase, 'src/');
+
+function updateRefs(filePath, includes) {
   var updateFn = endsWith(filePath, ".js") ? updateJSLibRefs : updateLibRefs;
   if (includes.gfx) {
     updateFn(filePath, path.join(packageFilesBase, '/shumway.gfx.package'), 'gfx');
@@ -121,5 +123,42 @@ function updateFlashRefs(filePath, srcDir, includes) {
     updateFn(filePath, path.join(packageFilesBase, '/shumway.player.package'), 'player');
   }
 }
+module.exports.updateRefs = updateRefs;
 
-module.exports = updateFlashRefs;
+function packageRefs(includes, output) {
+  var refs = '';
+  includes.forEach(function (manifest) {
+    refs += '## Manifest ' + manifest + '\n' +
+      fs.readFileSync(path.join(packageFilesBase, '/shumway.' + manifest + '.package')) +
+      '\n';
+  });
+  var content = '', included = {};
+  refs.split('\n').forEach(function (entry) {
+    if (entry.trim() === '') {
+      return;
+    }
+    if (entry[0] !== '#') {
+      if (included[entry]) {
+        return; // skipping duplicates
+      }
+      included[entry] = true;
+      content += fs.readFileSync(path.join(homeBase, entry)) + '\n';
+      return;
+    }
+    if (entry[1] === '!') {
+      if (entry.indexOf('#!inline ') === 0) {
+        content += entry.substr(9).trim() + '\n';
+        return;
+      }
+      console.error('Skipping unknown ' + entry);
+      return;
+    }
+    if (entry[1] === '#') {
+      content += '// ' + entry.substr(2).trim() + '\n';
+      return;
+    }
+  });
+  fs.writeFileSync(output, content);
+}
+
+module.exports.packageRefs = packageRefs;
