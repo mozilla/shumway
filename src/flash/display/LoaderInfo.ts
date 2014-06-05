@@ -101,7 +101,7 @@ module Shumway.AVM2.AS.flash.display {
     _bytes: flash.utils.ByteArray;
     _uncaughtErrorEvents: flash.events.UncaughtErrorEvents;
 
-    private _dictionary: Shumway.Timeline.Symbol [];
+    _dictionary: Shumway.Timeline.Symbol [];
 
     get loaderURL(): string {
       return this._loaderURL;
