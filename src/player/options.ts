@@ -53,6 +53,8 @@ module Shumway {
   );
 
   export var playSymbolOption = playerOptions.register (
-    new Shumway.Options.Option("", "Play Symbol", "number", -1, "Plays a specific symbol.", { choices: { None: -1 } })
+    new Shumway.Options.Option("", "Play Symbol", "number", -2, "Plays a specific symbol.", {
+      choices: { None: -2 }
+    })
   );
 }

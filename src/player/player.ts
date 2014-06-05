@@ -328,7 +328,12 @@ module Shumway {
         /**
          * Create options list with all the symbols.
          */
-        var options = {};
+        var options = {
+          "None":         -3,
+          "All Shapes":   -2,
+          "All Sprites":  -1
+        };
+
         loaderInfo._dictionary.forEach(function (value, key) {
           var label = key + ": " + value.originalSymbolClass.toString();
           if (value.symbolClass !== value.originalSymbolClass) {
@@ -339,14 +344,35 @@ module Shumway {
 
         playSymbolOption.ctrl.updateOptions(options);
         playSymbolOption.ctrl.onChange(function () {
-          var key = playSymbolOption.value | 0;
-          var symbol = loaderInfo.getSymbolById(key);
-          var symbolInstance = symbol.originalSymbolClass.initializeFrom(symbol);
-          symbol.originalSymbolClass.instanceConstructorNoInitialize.call(symbolInstance);
-          while (stage.numChildren > 0) {
-            stage.removeChildAt(0);
+          var id = playSymbolOption.value | 0;
+          if (id === -2 || id === -1) {
+            while (stage.numChildren > 0) {
+              stage.removeChildAt(0);
+            }
+            loaderInfo._dictionary.forEach(function (_, key) {
+              var symbol = loaderInfo.getSymbolById(key);
+              if (id === -2) {
+                if (!(symbol instanceof Shumway.Timeline.ShapeSymbol)) {
+                  return;
+                }
+              } else if (id === -1) {
+                if (!(symbol instanceof Shumway.Timeline.SpriteSymbol)) {
+                  return;
+                }
+              }
+              var symbolInstance = symbol.originalSymbolClass.initializeFrom(symbol);
+              symbol.originalSymbolClass.instanceConstructorNoInitialize.call(symbolInstance);
+              stage.addChild(symbolInstance);
+            });
+          } else {
+            var symbol = loaderInfo.getSymbolById(id);
+            var symbolInstance = symbol.originalSymbolClass.initializeFrom(symbol);
+            symbol.originalSymbolClass.instanceConstructorNoInitialize.call(symbolInstance);
+            while (stage.numChildren > 0) {
+              stage.removeChildAt(0);
+            }
+            stage.addChild(symbolInstance);
           }
-          stage.addChild(symbolInstance);
         });
       });
     }
