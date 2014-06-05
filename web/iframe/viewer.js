@@ -95,7 +95,7 @@ Shumway.FileLoadingService.instance = {
         var self = this;
         var path = Shumway.FileLoadingService.instance.resolveUrl(request.url);
         console.log('FileLoadingService: loading ' + path);
-        new BinaryFileReader(path).readAsync(
+        new Shumway.BinaryFileReader(path).readAsync(
           function (data, progress) {
             self.onprogress(data, {bytesLoaded: progress.loaded, bytesTotal: progress.total});
           },
