@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-var filter = new Option("f", "filter", "string", "SpciMsmNtu", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames, S[t]atistics, [u]tf");
+var filter = new Shumway.Options.Option("f", "filter", "string", "SpciMsmNtu", "[S]ource, constant[p]ool, [c]lasses, [i]nstances, [M]etadata, [s]cripts, [m]ethods, multi[N]ames, S[t]atistics, [u]tf");
 
 function traceArray(writer, name, array, abc) {
   if (array.length === 0) {

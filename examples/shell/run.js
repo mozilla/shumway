@@ -579,9 +579,6 @@ FakePlayerChannel._eventUpdatesListener
 FakePlayerChannel.prototype = {
   sendUpdates: function (updates, assets) {
     var bytes = updates.getBytes();
-    var assetsBytes = assets.map(function (asset) {
-      return asset.getBytes();
-    });
     // console.log('Updates sent');
   },
   registerForEventUpdates: function (listener) {

@@ -3178,3 +3178,8 @@ module Shumway {
 
   global.Promise = Promise;
 })();
+
+declare var exports;
+if (typeof exports !== "undefined") {
+  exports["Shumway"] = Shumway;
+}
