@@ -314,6 +314,8 @@ module Shumway.AVM2.AS.flash.display {
       self._mouseDown = false;
 
       self._symbol = null;
+      self._graphics = null;
+      self._children = null;
 
       if (symbol) {
         if (symbol.scale9Grid) {
@@ -537,6 +539,10 @@ module Shumway.AVM2.AS.flash.display {
     _symbol: Shumway.Timeline.Symbol;
     _graphics: flash.display.Graphics;
 
+    /**
+     * This is only ever used in classes that can have children, like |DisplayObjectContainer| or |SimpleButton|.
+     */
+    _children: DisplayObject [];
 
     /**
      * Finds the nearest ancestor with a given set of flags that are either turned on or off.
@@ -1285,9 +1291,8 @@ module Shumway.AVM2.AS.flash.display {
           flags = visitor(displayObject);
         }
         if (flags === VisitorFlags.Continue) {
-          if (DisplayObjectContainer.isType(displayObject)) {
-            displayObjectContainer = <DisplayObjectContainer>displayObject;
-            var children = displayObjectContainer._children;
+          var children = displayObject._children;
+          if (children) {
             var length = children.length;
             for (var i = 0; i < length; i++) {
               var child = children[frontToBack ? i : length - 1 - i];
