@@ -195,7 +195,7 @@ module Shumway.Remoting.GFX {
         textures.push(context._assets[bitmapId]);
       }
       if (!asset) {
-        context._assets[id] = new RenderableShape(pathData, textures, bounds);
+        context._assets[id] = new RenderableShape(id, pathData, textures, bounds);
       }
     }
 

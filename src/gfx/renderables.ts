@@ -248,9 +248,11 @@ module Shumway.GFX {
   }
 
   export class RenderableShape extends Renderable {
-    _flags: RenderableFlags = RenderableFlags.Dirty | RenderableFlags.Scalable | RenderableFlags.Tileable;
+    _flags: RenderableFlags = RenderableFlags.Dirty | RenderableFlags.Scalable |
+                              RenderableFlags.Tileable;
     properties: {[name: string]: any} = {};
 
+    private _id: number;
     private fillStyle: ColorStyle;
     private _pathData: ShapeData;
     private _textures: RenderableBitmap[];
@@ -258,8 +260,9 @@ module Shumway.GFX {
     private static LINE_CAP_STYLES = ['round', 'butt', 'square'];
     private static LINE_JOINT_STYLES = ['round', 'bevel', 'miter'];
 
-    constructor(pathData: ShapeData, textures: RenderableBitmap[], bounds: Rectangle) {
+    constructor(id: number, pathData: ShapeData, textures: RenderableBitmap[], bounds: Rectangle) {
       super(bounds);
+      this._id = id;
       this._pathData = pathData;
       this._textures = textures;
     }
@@ -363,7 +366,7 @@ module Shumway.GFX {
             context.fillStyle = ColorUtilities.rgbaToCSSStyle(styles.readUnsignedInt());
             break;
           case PathCommand.BeginBitmapFill:
-            assert(styles.bytesAvailable >= 6 + 6 * 8 /* matrix fields as floats */ + 1 + 1);
+            assert(styles.bytesAvailable >= 4 + 6 * 4 /* matrix fields as floats */ + 1 + 1);
             if (fillPath) {
               context.fill(fillPath, 'evenodd');
             }
@@ -381,15 +384,8 @@ module Shumway.GFX {
             break;
           case PathCommand.BeginGradientFill:
             // Assert at least one color stop.
-            if (styles.bytesAvailable < 1 + 1 + 6 * 8 /* matrix fields as floats */ +
-                                            1 + 1 + 4 + 1 + 1)
-            {
-              // We have issues with some data here, but this will at least allow us to continue
-              // execution for now. Will be fixed tomorrow.
-              continue;
-            }
-//            assert(styles.bytesAvailable >= 1 + 1 + 6 * 8 /* matrix fields as floats */ +
-//                                            1 + 1 + 4 + 1 + 1);
+            assert(styles.bytesAvailable >= 1 + 1 + 6 * 4 /* matrix fields as floats */ +
+                                            1 + 1 + 4 + 1 + 1);
             if (fillPath) {
               context.fill(fillPath, 'evenodd');
             }
@@ -452,6 +448,9 @@ module Shumway.GFX {
                               (commandIndex - 1) + ' of ' + commandsCount);
         }
       }
+      assert(styles.bytesAvailable === 0);
+      assert(commandIndex === commandsCount);
+      assert(coordinatesIndex === data.coordinatesPosition);
       if (formOpen && fillPath) {
         fillPath.lineTo(formOpenX, formOpenY);
         strokePath && strokePath.lineTo(formOpenX, formOpenY);
